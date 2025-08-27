@@ -740,23 +740,24 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       // the ones from the original file.
       // First find a file name that doesn't exist yet (use some
       // arbitrary numbers).
-      xstrlcpy(IObuff, fname, IOSIZE);
+      size_t dirlen = (size_t)(path_tail(fname) - fname);
+      assert(dirlen < MAXPATHL);
+      char tmp_fname[MAXPATHL];
+      xmemcpyz(tmp_fname, fname, dirlen);
       for (int i = 4913;; i += 123) {
-        char *tail = path_tail(IObuff);
-        size_t size = (size_t)(tail - IObuff);
-        snprintf(tail, IOSIZE - size, "%d", i);
-        if (!os_fileinfo_link(IObuff, &file_info)) {
+        snprintf(tmp_fname + dirlen, sizeof(tmp_fname) - dirlen, "%d", i);
+        if (!os_fileinfo_link(tmp_fname, &file_info)) {
           break;
         }
       }
-      int fd = os_open(IObuff,
+      int fd = os_open(tmp_fname,
                        O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
       if (fd < 0) {           // can't write in directory
         *backup_copyp = true;
       } else {
 #ifdef UNIX
         os_fchown(fd, (uv_uid_t)file_info_old->stat.st_uid, (uv_gid_t)file_info_old->stat.st_gid);
-        if (!os_fileinfo(IObuff, &file_info)
+        if (!os_fileinfo(tmp_fname, &file_info)
             || file_info.stat.st_uid != file_info_old->stat.st_uid
             || file_info.stat.st_gid != file_info_old->stat.st_gid
             || (int)file_info.stat.st_mode != perm) {
@@ -766,7 +767,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         // Close the file before removing it, on MS-Windows we
         // can't delete an open file.
         close(fd);
-        os_remove(IObuff);
+        os_remove(tmp_fname);
       }
     }
   }
