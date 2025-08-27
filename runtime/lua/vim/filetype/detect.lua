@@ -1026,6 +1026,42 @@ function M.m(_, bufnr)
   end
 end
 
+--- @type vim.filetype.mapfn
+function M.m4(path, bufnr)
+  local fname = fn.fnamemodify(path, ':t')
+  path = fn.fnamemodify(path, ':p:h')
+
+  -- Case 0: canonical Autoconf file
+  if fname == 'aclocal.m4' then
+    return 'config'
+  end
+
+  -- Case 1: html.m4
+  if fname:find('html%.m4$') then
+    return 'htmlm4'
+  end
+
+  -- Case 2: repo heuristic (nearby configure.ac)
+  if
+    fn.filereadable(path .. '/../configure.ac') ~= 0
+    or fn.filereadable(path .. '/configure.ac') ~= 0
+  then
+    return 'config'
+  end
+
+  -- Case 3: content heuristic (scan first ~200 lines)
+  -- Signals:
+  --   - Autoconf macro prefixes: AC_/AM_/AS_/AU_/AT_
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if line:find('^%s*A[CMSUT]_') then
+      return 'config'
+    end
+  end
+
+  -- Case 4: default to POSIX M4
+  return 'm4'
+end
+
 --- @param contents string[]
 --- @return string?
 local function m4(contents)

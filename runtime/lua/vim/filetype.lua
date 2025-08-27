@@ -734,13 +734,10 @@ local extension = {
   luau = 'luau',
   lrc = 'lyrics',
   m = detect.m,
-  at = 'm4',
+  at = 'config',
   mc = detect.mc,
   quake = 'm3quake',
-  m4 = function(path, _bufnr)
-    local pathl = path:lower()
-    return not (pathl:find('html%.m4$') or pathl:find('fvwm2rc')) and 'm4' or nil
-  end,
+  m4 = detect.m4,
   eml = 'mail',
   mk = detect.make,
   mak = detect.make,
@@ -2493,7 +2490,6 @@ local pattern = {
       end
     end,
     ['^hg%-editor%-.*%.txt$'] = 'hgcommit',
-    ['%.html%.m4$'] = 'htmlm4',
     ['^JAM.*%.'] = starsetf('jam'),
     ['^Prl.*%.'] = starsetf('jam'),
     ['^${HOME}/.*/Code/User/.*%.json$'] = 'jsonc',
