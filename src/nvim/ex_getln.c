@@ -159,7 +159,7 @@ typedef struct {
   int save_b_u_seq_cur;
   time_t save_b_u_time_cur;
   int save_b_u_save_nr_cur;
-  char *save_b_u_line_ptr;
+  undoline_T save_b_u_line_ptr;
   linenr_T save_b_u_line_lnum;
   colnr_T save_b_u_line_colnr;
 } CpUndoInfo;
