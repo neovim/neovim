@@ -863,11 +863,29 @@ describe('default statusline', function()
       { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
     )
     eq('Progress: 2 items 35% ', get_progress())
-    api.nvim_echo(
-      { { 'searching' } },
-      true,
-      { id = id1, kind = 'progress', percent = 100, status = 'success', title = 'terminal(ripgrep)' }
-    )
+    api.nvim_echo({ { 'searching' } }, true, {
+      id = id1,
+      kind = 'progress',
+      percent = 100,
+      status = 'success',
+      title = 'terminal(ripgrep)',
+    })
     eq('second-item: 20% ', get_progress())
+
+    -- works with custom formater
+    eq(
+      '20/100',
+      exec_lua(function()
+        return vim.ui.get_progress_status({
+          fmt = function(items)
+            local tot = 0
+            for _, item in ipairs(items) do
+              tot = tot + item.percent
+            end
+            return tostring(math.floor(tot / #items)) .. '/100'
+          end,
+        })
+      end)
+    )
   end)
 end)

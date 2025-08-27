@@ -315,7 +315,6 @@ do
     end
   end
 
-
   ---@class vim.ui.get_progress_status.Opts
   ---custom formater for progress messages
   ---@field fmt? fun(running: ProgressMessage[]):string
