@@ -306,6 +306,7 @@ BufUnload			Before unloading a buffer, when the text in
 				going to exit.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
+								*E1546*
 				Do not switch buffers or windows!
 				Not triggered when exiting and v:dying is 2 or
 				more.
