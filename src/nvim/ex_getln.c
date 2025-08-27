@@ -1033,7 +1033,7 @@ static int command_line_check(VimState *state)
                            // cause the command not to be executed.
 
   if (ccline.cmdbuff != NULL) {
-    s->prev_cmdbuff = xmemdupz(ccline.cmdbuff, (size_t)ccline.cmdpos);
+    s->prev_cmdbuff = xstrdup(ccline.cmdbuff);
   }
 
   // Trigger SafeState if nothing is pending.
@@ -2827,8 +2827,7 @@ static int command_line_changed(CommandLineState *s)
   }
 
   if (ccline.cmdpos != s->prev_cmdpos
-      || (s->prev_cmdbuff != NULL
-          && strncmp(s->prev_cmdbuff, ccline.cmdbuff, (size_t)s->prev_cmdpos) != 0)) {
+      || (s->prev_cmdbuff != NULL && strcmp(s->prev_cmdbuff, ccline.cmdbuff) != 0)) {
     // Trigger CmdlineChanged autocommands.
     do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
   }

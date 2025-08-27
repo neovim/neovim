@@ -2103,6 +2103,17 @@ func Test_Cmdline()
         \ '0abc1abc2abc3',
         \ ], g:log)
 
+  " <Del> should trigger CmdlineChanged
+  let g:log = []
+  call feedkeys(":foo\<Left>\<Left>\<Del>\<Del>\<Esc>", 'xt')
+  call assert_equal([
+        \ 'f',
+        \ 'fo',
+        \ 'foo',
+        \ 'fo',
+        \ 'f',
+        \ ], g:log)
+
   unlet g:log
   au! CmdlineChanged
 
