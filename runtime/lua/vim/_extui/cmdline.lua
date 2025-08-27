@@ -41,7 +41,7 @@ local promptlen = 0 -- Current length of the last line in the prompt.
 ---@param prompt string
 local function set_text(content, prompt)
   local lines = {} ---@type string[]
-  for line in prompt:gmatch('[^\n]+') do
+  for line in (prompt .. '\n'):gmatch('(.-)\n') do
     lines[#lines + 1] = fn.strtrans(line)
   end
   cmdbuff, promptlen, M.erow = '', #lines[#lines], M.srow + #lines - 1

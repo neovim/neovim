@@ -88,4 +88,13 @@ describe('cmdline2', function()
                                                            |
     ]])
   end)
+
+  it('handles empty prompt', function()
+    feed(":call input('')<CR>")
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      ^                                                     |
+    ]])
+  end)
 end)
