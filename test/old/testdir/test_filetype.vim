@@ -191,7 +191,7 @@ func s:GetFilenameChecks() abort
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master', 'file.conf', 'texdoc.cnf', '.x11vncrc', '.chktexrc', '.ripgreprc', 'ripgreprc', 'file.ctags'],
-    \ 'config': ['/etc/hostname.file', 'any/etc/hostname.file', 'configure.in', 'configure.ac', 'alocal.m4', 'file.at'],
+    \ 'config': ['/etc/hostname.file', 'any/etc/hostname.file', 'configure.in', 'configure.ac', 'file.at'],
     \ 'confini': ['pacman.conf', 'paru.conf', 'mpv.conf', 'any/.aws/config', 'any/.aws/credentials', 'file.nmconnection',
     \             'any/.gnuradio/grc.conf', 'any/gnuradio/config.conf', 'any/gnuradio/conf.d/modtool.conf'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
@@ -3110,6 +3110,25 @@ func Test_diff_format()
   call assert_true(empty(&filetype))
   bwipe!
 
+  filetype off
+endfunc
+
+func Test_m4_format()
+  filetype on
+
+  call mkdir('Xm4', 'D')
+  cd Xm4
+  call writefile([''], 'alocal.m4', 'D')
+  split alocal.m4
+  call assert_equal('m4', &filetype)
+  bwipe!
+  " an accompanying configure.ac in the current directory changes the filetype
+  call writefile([''], 'configure.ac')
+  split alocal.m4
+  call assert_equal('config', &filetype)
+  bwipe!
+
+  cd -
   filetype off
 endfunc
 
