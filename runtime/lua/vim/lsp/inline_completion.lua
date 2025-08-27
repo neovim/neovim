@@ -42,7 +42,7 @@ Capability.all[Completor.name] = Completor
 function Completor:new(bufnr)
   self = Capability.new(self, bufnr)
   self.client_state = {}
-  api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI', 'CursorHoldI' }, {
+  api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI' }, {
     group = self.augroup,
     callback = function()
       self:automatic_request()
