@@ -147,7 +147,7 @@ func s:GetFilenameChecks() abort
     \ 'brightscript': ['file.brs'],
     \ 'bsdl': ['file.bsd', 'file.bsdl'],
     \ 'bst': ['file.bst'],
-    \ 'bzl': ['file.bazel', 'file.bzl', 'WORKSPACE', 'WORKSPACE.bzlmod'],
+    \ 'bzl': ['file.bazel', 'file.bzl', 'file.bxl', 'WORKSPACE', 'WORKSPACE.bzlmod'],
     \ 'bzr': ['bzr_log.any', 'bzr_log.file'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c', 'some-enlightenment/file.cfg', 'file.mdh', 'file.epro'],
     \ 'c3': ['file.c3', 'file.c3i', 'file.c3t'],
