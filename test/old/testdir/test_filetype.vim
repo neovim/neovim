@@ -191,7 +191,7 @@ func s:GetFilenameChecks() abort
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master', 'file.conf', 'texdoc.cnf', '.x11vncrc', '.chktexrc', '.ripgreprc', 'ripgreprc', 'file.ctags'],
-    \ 'config': ['/etc/hostname.file', 'any/etc/hostname.file', 'configure.in', 'configure.ac', 'file.at'],
+    \ 'config': ['/etc/hostname.file', 'any/etc/hostname.file', 'configure.in', 'configure.ac', 'file.at', 'aclocal.m4'],
     \ 'confini': ['pacman.conf', 'paru.conf', 'mpv.conf', 'any/.aws/config', 'any/.aws/credentials', 'file.nmconnection',
     \             'any/.gnuradio/grc.conf', 'any/gnuradio/config.conf', 'any/gnuradio/conf.d/modtool.conf'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
