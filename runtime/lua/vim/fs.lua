@@ -159,7 +159,13 @@ function M.dir(path, opts)
   vim.validate('path', path, 'string')
   vim.validate('depth', opts.depth, 'number', true)
   vim.validate('skip', opts.skip, 'function', true)
+  vim.validate('filter', opts.filter, 'function', true)
   vim.validate('follow', opts.follow, 'boolean', true)
+
+  if opts.skip ~= nil then
+    vim.deprecate('opts.skip', 'opts.filter', '1.0')
+    opts.filter = opts.filter or opts.skip --- @type fun(dir_name: string): boolean|nil
+  end
 
   path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
@@ -193,7 +199,7 @@ function M.dir(path, opts)
           and (t == 'directory' or (t == 'link' and opts.follow and (vim.uv.fs_stat(
             M.joinpath(path, f)
           ) or {}).type == 'directory'))
-          and (not opts.skip or opts.skip(f) ~= false)
+          and (not opts.filter or opts.filter(f) ~= false)
         then
           dirs[#dirs + 1] = { f, level + 1 }
         end
@@ -230,6 +236,10 @@ end
 --- Follow symbolic links.
 --- (default: `false`)
 --- @field follow? boolean
+---
+--- Predicate that decides if a directory is traversed. Return true to traverse a directory, or false to skip.
+--- If omitted, all directories are searched recursively.
+--- @field filter? (fun(dir: string): boolean)
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -278,6 +288,7 @@ function M.find(names, opts)
   vim.validate('type', opts.type, 'string', true)
   vim.validate('limit', opts.limit, 'number', true)
   vim.validate('follow', opts.follow, 'boolean', true)
+  vim.validate('filter', opts.filter, 'function', true)
 
   if type(names) == 'string' then
     names = { names }
@@ -368,8 +379,10 @@ function M.find(names, opts)
         end
 
         if
-          type_ == 'directory'
-          or (type_ == 'link' and opts.follow and (vim.uv.fs_stat(f) or {}).type == 'directory')
+          (
+            type_ == 'directory'
+            or (type_ == 'link' and opts.follow and (vim.uv.fs_stat(f) or {}).type == 'directory')
+          ) and (not opts.filter or opts.filter(f) ~= false)
         then
           dirs[#dirs + 1] = f
         end

@@ -43,6 +43,7 @@ LSP
 LUA
 
 • *vim.diff()*				Renamed to |vim.text.diff()|
+• The "skip" parameter used by |vim.fs.dir()| is deprecated in favor of "filter"
 
 VIMSCRIPT
 
