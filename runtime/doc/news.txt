@@ -236,6 +236,7 @@ LSP
 • |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
 • Support for `textDocument/inlineCompletion` |lsp-inline_completion|
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
+• |vim.lsp.inline_completion.get()| now accepts a `on_accept` callback.
 
 LUA
 
