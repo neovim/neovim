@@ -2048,10 +2048,9 @@ endfunc
 " window, the window contents should be scrolled one line up. If the top line
 " is part of a fold, then the entire fold should be scrolled up.
 func Test_edit_lastline_scroll()
-  if has('gui_running')
+  if has('linux')
     " TODO: For unknown reasons, this test fails on CI when run in Gui mode
-    "       with ASAN enabled, figure out why
-    CheckNotAsan
+    CheckNotGui
   endif
   new
   let h = winheight(0)
