@@ -3178,5 +3178,5 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   int row = wlv->row;
   int coloff = 0;
   ScreenGrid *g = grid_adjust(grid, &row, &coloff);
-  grid_put_linebuf(g, row, coloff, startcol, endcol, clear_width, bg_attr, wlv->vcol - 1, flags);
+  grid_put_linebuf(g, row, coloff, startcol, endcol, clear_width, bg_attr, 0, wlv->vcol - 1, flags);
 }
