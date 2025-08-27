@@ -1145,7 +1145,7 @@ static int expand_in_path(garray_T *const gap, char *const pattern, const int fl
     return 0;
   }
 
-  char *const paths = ga_concat_strings(&path_ga);
+  char *const paths = ga_concat_strings(&path_ga, ",");
   ga_clear_strings(&path_ga);
 
   int glob_flags = 0;
