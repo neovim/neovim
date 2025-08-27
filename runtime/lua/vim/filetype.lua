@@ -268,6 +268,7 @@ local extension = {
       or 'btm'
   end,
   bzl = 'bzl',
+  bxl = 'bzl',
   bazel = 'bzl',
   BUILD = 'bzl',
   mdh = 'c',
