@@ -23,11 +23,9 @@ func Test_equal()
   call assert_false([base.method] == [instance.other])
 
   call assert_fails('echo base.method > instance.method')
-  " Nvim doesn't have null functions
-  " call assert_equal(0, test_null_function() == function('min'))
-  " call assert_equal(1, test_null_function() == test_null_function())
-  " Nvim doesn't have test_unknown()
-  " call assert_fails('eval 10 == test_unknown()', 'E685:')
+  call assert_equal(0, v:_null_function == function('min'))
+  call assert_equal(1, v:_null_function == v:_null_function)
+  call assert_fails('eval 10 == test_unknown()', 'E685:')
 endfunc
 
 func Test_version()
@@ -85,8 +83,7 @@ func Test_op_falsy()
       call assert_equal(456, v:_null_blob ?? 456)
       call assert_equal(456, v:_null_list ?? 456)
       call assert_equal(456, v:_null_dict ?? 456)
-      #" Nvim doesn't have null functions
-      #" call assert_equal(456, test_null_function() ?? 456)
+      call assert_equal(456, v:_null_function ?? 456)
       #" Nvim doesn't have null partials
       #" call assert_equal(456, test_null_partial() ?? 456)
       if has('job')
@@ -674,6 +671,7 @@ func Test_funcref()
   let OneByRef = funcref("One", repeat(["foo"], 20))
   call assert_fails('let OneByRef = funcref("One", repeat(["foo"], 21))', 'E118:')
   call assert_fails('echo function("min") =~ function("min")', 'E694:')
+  call assert_fails('echo v:_null_function->funcref()', 'E475: Invalid argument: NULL')
 endfunc
 
 " Test for calling function() and funcref() outside of a Vim script context.

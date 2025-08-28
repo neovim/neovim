@@ -767,6 +767,11 @@ void f_test_garbagecollect_now(typval_T *argvars, typval_T *rettv, EvalFuncData 
   }
 }
 
+void f_test_unknown(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->v_type = VAR_UNKNOWN;
+}
+
 /// "test_write_list_log()" function
 void f_test_write_list_log(typval_T *const argvars, typval_T *const rettv, EvalFuncData fptr)
 {

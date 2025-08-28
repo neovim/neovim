@@ -933,6 +933,13 @@ void internal_error(const char *where)
   siemsg(_(e_intern2), where);
 }
 
+/// Like internal_error() but do not call abort(), to avoid tests using
+/// test_unknown() causing Vim to exit.
+void internal_error_no_abort(const char *where)
+{
+  semsg(_(e_intern2), where);
+}
+
 static void msg_semsg_event(void **argv)
 {
   char *s = argv[0];
