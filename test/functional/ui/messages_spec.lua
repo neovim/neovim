@@ -3198,11 +3198,6 @@ describe('progress-message', function()
       messages = {
         {
           content = { { 'test-message' } },
-          progress = {
-            percent = 10,
-            status = 'running',
-            title = 'testsuit',
-          },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3233,11 +3228,6 @@ describe('progress-message', function()
       messages = {
         {
           content = { { 'test-message-updated' } },
-          progress = {
-            percent = 50,
-            status = 'running',
-            title = 'TestSuit',
-          },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3298,11 +3288,6 @@ describe('progress-message', function()
           history = true,
           id = 1,
           kind = 'progress',
-          progress = {
-            percent = 10,
-            status = 'running',
-            title = 'TestSuit',
-          },
         },
       },
     })
@@ -3495,11 +3480,6 @@ describe('progress-message', function()
           history = true,
           id = 'str-id',
           kind = 'progress',
-          progress = {
-            percent = 30,
-            status = 'running',
-            title = 'TestSuit',
-          },
         },
       },
     })
