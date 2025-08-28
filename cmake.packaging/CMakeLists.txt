@@ -1,4 +1,4 @@
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "(?i)^(arm64|aarch64)$")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
   set(CMAKE_SYSTEM_PROCESSOR arm64)
 endif()
 
@@ -27,7 +27,7 @@ set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
 
 
 if(WIN32)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "(?i)^(arm64|aarch64)$")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
     # Windows ARM64 - only generate artifacts ZIP, since WIX is not available for Win-ARM64
     set(CPACK_PACKAGE_FILE_NAME "nvim-winarm64")
     set(CPACK_GENERATOR ZIP)
