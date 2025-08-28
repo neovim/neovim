@@ -323,9 +323,11 @@ local function check_tmux()
       '$TERM differs from the tmux `default-terminal` setting. Colors might look wrong.',
       { '$TERM may have been set by some rc (.bashrc, .zshrc, ...).' }
     )
-  elseif not vim.regex([[\v(tmux-256color|screen-256color)]]):match_str(vim.env.TERM) then
+  elseif
+    not vim.regex([[\v(tmux-256color|tmux-direct|screen-256color)]]):match_str(vim.env.TERM)
+  then
     health.error(
-      '$TERM should be "screen-256color" or "tmux-256color" in tmux. Colors might look wrong.',
+      '$TERM should be "screen-256color", "tmux-256color", or "tmux-direct" in tmux. Colors might look wrong.',
       {
         'Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal "screen-256color"',
         suggest_faq,
