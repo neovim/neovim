@@ -3197,7 +3197,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message' } },
+          content = { { 'testsuit: test-message...10%' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3227,7 +3227,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message-updated' } },
+          content = { { 'TestSuit: test-message-updated...50%' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3284,7 +3284,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message' } },
+          content = { { 'TestSuit: test-message...10%' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3476,7 +3476,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'supports str-id' } },
+          content = { { 'TestSuit: supports str-id...30%' } },
           history = true,
           id = 'str-id',
           kind = 'progress',
@@ -3498,5 +3498,20 @@ describe('progress-message', function()
       id = 'str-id',
       data = {},
     })
+  end)
+
+  it('tui displays progress message in proper format', function()
+    clear()
+    setup_screen(false)
+    api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*3
+      TestSuit: test-message...10%            |
+    ]])
   end)
 end)

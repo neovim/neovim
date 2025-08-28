@@ -311,6 +311,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
+  bool is_progress = strequal(kind, "progress");
 
   // provide a new id if not given
   if (id.type == kObjectTypeNil) {
@@ -322,6 +323,14 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
   }
 
+  // progress message are special displayed as "title: msg...percent%"
+  if (is_progress && msg_data && msg_data->title.size != 0) {
+    // this block draws the "title:" before the progress-message
+    String title = cstr_as_string(concat_str(msg_data->title.data, ": "));
+    msg_multiline(title, 0, true, false, &need_clear);
+    api_free_string(title);
+  }
+
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -330,6 +339,13 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
       msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
+  }
+
+  if (is_progress && msg_data && msg_data->percent > 0) {
+    // this block draws the "...percent%" before the progress-message
+    char percent_buf[10];
+    vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)msg_data->percent);
+    msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
   }
   if (history && kv_size(hl_msg)) {
     msg_hist_add_multihl(id, hl_msg, false, msg_data);
