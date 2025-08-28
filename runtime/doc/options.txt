@@ -1359,7 +1359,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
-						*'chistory'* *'chi'*
+					*'chistory'* *'chi'* *E1542* *E1543*
 'chistory' 'chi'	number	(default 10)
 			global
 	Number of quickfix lists that should be remembered for the quickfix

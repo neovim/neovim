@@ -1205,6 +1205,7 @@ local options = {
       full_name = 'chistory',
       scope = { 'global' },
       short_desc = N_('number of quickfix lists stored in history'),
+      tags = { 'E1542', 'E1543' },
       type = 'number',
       varname = 'p_chi',
     },
