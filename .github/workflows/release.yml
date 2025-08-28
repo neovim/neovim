@@ -136,7 +136,7 @@ jobs:
       matrix:
         include:
           - runner: windows-2022
-            arch: x64
+            arch: x86_64
             zip_name: nvim-win64.zip
           - runner: windows-11-arm
             arch: arm64
@@ -145,6 +145,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          # Perform a full checkout #13471
           fetch-depth: 0
       - run: .github/scripts/env.ps1
         env:
@@ -160,10 +161,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.arch == 'x64' && 'nvim-win64' || 'nvim-win-arm64' }}
+          name: ${{ matrix.arch == 'x86_64' && 'nvim-win64' || 'nvim-win-arm64' }}
           path: |
             build/${{ matrix.zip_name }}
-            ${{ matrix.arch == 'x64' && format('build/nvim-win64.msi') || '' }}
+            ${{ matrix.arch == 'x86_64' && format('build/nvim-win64.msi') || '' }}
           retention-days: 1
 
   publish:
