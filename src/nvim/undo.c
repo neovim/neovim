@@ -1651,7 +1651,9 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   goto theend;
 
 error:
-  xfree(line_ptr.ul_line);
+  if (line_ptr.ul_line != NULL) {
+    XFREE_CLEAR(line_ptr.ul_line);
+  }
   if (uhp_table != NULL) {
     for (int i = 0; i < num_read_uhps; i++) {
       if (uhp_table[i] != NULL) {
@@ -2368,7 +2370,9 @@ static void u_undoredo(bool undo, bool do_buf_event)
         } else {
           ml_append_flags(lnum, uep->ue_array[i].ul_line, (colnr_T)uep->ue_array[i].ul_len, 0);  // ML_APPEND_UNDO
         }
-        xfree(uep->ue_array[i].ul_line);
+        if (uep->ue_array[i].ul_line != NULL) {
+          xfree(uep->ue_array[i].ul_line);
+        }
       }
       xfree(uep->ue_array);
     }
@@ -2968,7 +2972,10 @@ static void u_freeentries(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 static void u_freeentry(u_entry_T *uep, int n)
 {
   while (n > 0) {
-    xfree(uep->ue_array[--n].ul_line);
+    n--;
+    if (uep->ue_array[n].ul_line != NULL) {
+      xfree(uep->ue_array[n].ul_line);
+    }
   }
   xfree(uep->ue_array);
 #ifdef U_DEBUG
@@ -2999,7 +3006,9 @@ void u_blockfree(buf_T *buf)
     u_freeheader(buf, buf->b_u_oldhead, NULL);
     assert(buf->b_u_oldhead != previous_oldhead);
   }
-  xfree(buf->b_u_line_ptr.ul_line);
+  if (buf->b_u_line_ptr.ul_line != NULL) {
+    XFREE_CLEAR(buf->b_u_line_ptr.ul_line);
+  }
 }
 
 /// Free all allocated memory blocks for the buffer 'buf'.
