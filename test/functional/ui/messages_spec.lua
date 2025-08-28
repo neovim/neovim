@@ -3197,12 +3197,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message' } },
-          progress = {
-            percent = 10,
-            status = 'running',
-            title = 'testsuit',
-          },
+          content = { { 'testsuit: test-message...10%' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3232,12 +3227,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message-updated' } },
-          progress = {
-            percent = 50,
-            status = 'running',
-            title = 'TestSuit',
-          },
+          content = { { 'TestSuit: test-message-updated...50%' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3294,15 +3284,10 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message' } },
+          content = { { 'TestSuit: test-message...10%' } },
           history = true,
           id = 1,
           kind = 'progress',
-          progress = {
-            percent = 10,
-            status = 'running',
-            title = 'TestSuit',
-          },
         },
       },
     })
@@ -3491,15 +3476,10 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'supports str-id' } },
+          content = { { 'TestSuit: supports str-id...30%' } },
           history = true,
           id = 'str-id',
           kind = 'progress',
-          progress = {
-            percent = 30,
-            status = 'running',
-            title = 'TestSuit',
-          },
         },
       },
     })
@@ -3518,5 +3498,20 @@ describe('progress-message', function()
       id = 'str-id',
       data = {},
     })
+  end)
+
+  it('tui displays progress message in proper format', function()
+    clear()
+    setup_screen(false)
+    api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*3
+      TestSuit: test-message...10%            |
+    ]])
   end)
 end)

@@ -152,7 +152,6 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
 static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 0 };
-static DictOf(Object) msg_ext_progress = ARRAY_DICT_INIT;
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
@@ -312,6 +311,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
+  bool is_progress = strequal(kind, "progress");
 
   // provide a new id if not given
   if (id.type == kObjectTypeNil) {
@@ -323,6 +323,14 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
   }
 
+  // progress message are special displayed as "title: msg...percent%"
+  if (is_progress && msg_data && msg_data->title.size != 0) {
+    // this block draws the "title:" before the progress-message
+    String title = cstr_as_string(concat_str(msg_data->title.data, ": "));
+    msg_multiline(title, 0, true, false, &need_clear);
+    api_free_string(title);
+  }
+
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -331,6 +339,13 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
       msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
+  }
+
+  if (is_progress && msg_data && msg_data->percent > 0) {
+    // this block draws the "...percent%" before the progress-message
+    char percent_buf[10];
+    vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)msg_data->percent);
+    msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
   }
   if (history && kv_size(hl_msg)) {
     msg_hist_add_multihl(id, hl_msg, false, msg_data);
@@ -1106,18 +1121,6 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
   msg_ext_history = true;
 
   msg_ext_id = msg_id;
-  if (strequal(msg_ext_kind, "progress") && msg_data != NULL && ui_has(kUIMessages)) {
-    kv_resize(msg_ext_progress, 3);
-    if (msg_data->title.size != 0) {
-      PUT_C(msg_ext_progress, "title", STRING_OBJ(msg_data->title));
-    }
-    if (msg_data->status.size != 0) {
-      PUT_C(msg_ext_progress, "status", STRING_OBJ(msg_data->status));
-    }
-    if (msg_data->percent >= 0) {
-      PUT_C(msg_ext_progress, "percent", INTEGER_OBJ(msg_data->percent));
-    }
-  }
   msg_hist_clear(msg_hist_max);
 }
 
@@ -2210,8 +2213,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
-                       INTEGER_OBJ(-1),
-                       (Dict)ARRAY_DICT_INIT);
+                       INTEGER_OBJ(-1));
     }
     return;
   }
@@ -3239,7 +3241,7 @@ void msg_ext_ui_flush(void)
     Array *tofree = msg_ext_init_chunks();
 
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
-                     msg_ext_append, msg_ext_id, msg_ext_progress);
+                     msg_ext_append, msg_ext_id);
     // clear info after emiting message.
     if (msg_ext_history) {
       api_free_array(*tofree);
@@ -3260,7 +3262,6 @@ void msg_ext_ui_flush(void)
     msg_ext_append = false;
     msg_ext_kind = NULL;
     msg_ext_id = INTEGER_OBJ(0);
-    kv_destroy(msg_ext_progress);
   }
 }
 
