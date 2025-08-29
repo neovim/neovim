@@ -153,7 +153,7 @@ jobs:
       - name: Install Wix
         run: |
           Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -OutFile "wix314-binaries.zip"
-          Expand-Archive -Path "wix314-binaries.zip" -DestinationPath "C:\wix"
+          Expand-Archive -Path "wix314-binaries.zip" -DestinationPath "C:/wix"
           echo "C:\wix" >> $env:GITHUB_PATH
       - name: Build deps
         run: |
