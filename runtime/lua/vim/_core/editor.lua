@@ -9,7 +9,7 @@
 --    2. runtime/lua/vim/ (the runtime): Lazy-loaded modules. Examples: `inspect`, `lpeg`.
 --    3. runtime/lua/vim/shared.lua: pure Lua functions which always are available. Used in the test
 --       runner, and worker threads/processes launched from Nvim.
---    4. runtime/lua/vim/_editor.lua: Eager-loaded code which directly interacts with the Nvim
+--    4. runtime/lua/vim/_core/*: Eager-loaded code which directly interacts with the Nvim
 --       editor state. Only available in the main thread.
 --
 -- The top level "vim.*" namespace is for fundamental Lua and editor features. Use submodules for
@@ -1316,7 +1316,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   end
 end
 
-require('vim._options')
+require('vim._core.options')
 
 --- Remove at Nvim 1.0
 ---@deprecated

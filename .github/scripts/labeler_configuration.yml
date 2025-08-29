@@ -24,7 +24,7 @@ comment:
 
 defaults:
   - changed-files:
-    - any-glob-to-any-file: [ runtime/lua/vim/_defaults.lua ]
+    - any-glob-to-any-file: [ runtime/lua/vim/_core/defaults.lua ]
 
 diagnostic:
   - changed-files:

@@ -1,3 +1,5 @@
+-- For "--listen" and related functionality.
+
 local M = {}
 
 --- Called by builtin serverlist(). Returns all running servers in stdpath("run").

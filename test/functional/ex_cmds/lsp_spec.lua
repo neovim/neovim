@@ -29,7 +29,7 @@ describe(':lsp', function()
       env = { VIMRUNTIME = 'non-existent' },
     }
     eq(
-      [[Vim(lsp):Lua: [string "<nvim>"]:0: module 'vim._core.ex_cmd.lsp' not found:]],
+      [[Vim(lsp):Lua: vim/_init_packages.lua:0: module 'vim.lsp' not found:]],
       vim.split(t.pcall_err(n.command, 'lsp enable dummy'), '\n')[1]
     )
   end)

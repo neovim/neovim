@@ -740,7 +740,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
         // The second argument tells us whether the OS theme is set to light
         // mode or dark mode, but all we care about is the background color of
         // the terminal emulator. We query for that with OSC 11 and the response
-        // is handled by the autocommand created in _defaults.lua. The terminal
+        // is handled by the autocommand created in _core/defaults.lua. The terminal
         // may send us multiple notifications all at once so we use a timer to
         // coalesce the queries.
         if (uv_timer_get_due_in(&input->bg_query_timer) > 0) {
