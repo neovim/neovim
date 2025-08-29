@@ -15648,7 +15648,7 @@ static int nfa_regtry(nfa_regprog_T *prog, colnr_T startcol, colnr_T stopcol, pr
 ///
 /// @param line String in which to search or NULL
 /// @param startcol Column to start looking for match
-/// @param stopcol Column to stop looking for match
+/// @param stopcol Column to stop looking for match if > 0
 /// @param tm Timeout limit or NULL
 /// @param timed_out Flag set on timeout or NULL
 ///

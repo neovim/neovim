@@ -4544,7 +4544,6 @@ void global_exe(char *cmd, exarg_T *eap)
     if ((eap->col1 > 0 || eap->col2 > 0) &&
         eap->addr_count == 2) {
       col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-      // col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : 0;
       col2 = lnum == eap->line2 && eap->col2 > 0
              ? eap->col2
              : ml_get_buf_len(curbuf, lnum) + 1;
