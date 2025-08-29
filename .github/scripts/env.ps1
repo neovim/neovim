@@ -1,6 +1,6 @@
 # This script enables Developer Command Prompt
 # See https://github.com/microsoft/vswhere/wiki/Start-Developer-Command-Prompt#using-powershell
-$arch = "${env:BUILD_ARCH}"
+$arch = if ($env:BUILD_ARCH -eq "x86_64") { "x64" } else { "arm64" } 
 $installationPath = vswhere.exe -latest -requiresAny -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -requires Microsoft.VisualStudio.Component.VC.Tools.arm64 -property installationPath
 
 if ($installationPath) {
