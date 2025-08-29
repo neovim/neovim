@@ -3198,7 +3198,11 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'testsuit: ' }, { ' 10% ', 19, 'WarningMsg' }, { 'test-message' } },
+          content = {
+            { 'testsuit: ', 5, 'ModeMsg' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message' },
+          },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3228,7 +3232,11 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'TestSuit: ' }, { ' 50% ', 19, 'WarningMsg' }, { 'test-message-updated' } },
+          content = {
+            { 'TestSuit: ', 5, 'ModeMsg' },
+            { ' 50% ', 19, 'WarningMsg' },
+            { 'test-message-updated' },
+          },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3327,12 +3335,14 @@ describe('progress-message', function()
         ^                         |
         {1:~                        }|*4
       ]],
-      messages = { {
-        content = { { "test-message (no-tile or percent)" } },
-        history = true,
-        id = 5,
-        kind = "progress"
-      } },
+      messages = {
+        {
+          content = { { 'test-message (no-tile or percent)' } },
+          history = true,
+          id = 5,
+          kind = 'progress',
+        },
+      },
     })
 
     -- progress event can filter by title
@@ -3375,7 +3385,11 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'TestSuit: ' }, { ' 10% ', 19, 'WarningMsg' }, { 'test-message' } },
+          content = {
+            { 'TestSuit: ', 5, 'ModeMsg' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message' },
+          },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3573,7 +3587,11 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'TestSuit: ' }, { ' 30% ', 19, 'WarningMsg' }, { 'supports str-id' } },
+          content = {
+            { 'TestSuit: ', 5, 'ModeMsg' },
+            { ' 30% ', 19, 'WarningMsg' },
+            { 'supports str-id' },
+          },
           history = true,
           id = 'str-id',
           kind = 'progress',
@@ -3608,7 +3626,7 @@ describe('progress-message', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*3
-      TestSuit: {19: 10% }test-message             |
+      {5:TestSuit: }{19: 10% }test-message             |
     ]])
   end)
 end)

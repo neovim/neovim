@@ -311,7 +311,7 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
     } else if (strequal(msg_data->status.data, "failed")) {
       hl_id = syn_check_group("ErrorMsg", STRLEN_LITERAL("ErrorMsg"));
     } else if (strequal(msg_data->status.data, "running")) {
-      hl_id = 0;
+      hl_id = syn_check_group("ModeMsg", STRLEN_LITERAL("ModeMsg"));
     } else if (strequal(msg_data->status.data, "cancel")) {
       hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
     }
