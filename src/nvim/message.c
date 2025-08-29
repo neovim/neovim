@@ -296,10 +296,10 @@ static bool is_multihl = false;
 ///
 /// @param hl_msg Message chunks
 /// @param msg_data Additional data for progress messages
-static HlMessage fomrat_progress_message(HlMessage hl_msg, MessageData *msg_data)
+static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data)
 {
   HlMessage updated_msg = KV_INITIAL_VALUE;
-  // progress message are special displayed as "title: percent% msg"
+  // progress messages are special. displayed as "title: percent% msg"
   if (msg_data->title.size != 0) {
     // this block draws the "title:" before the progress-message
     String title = cstr_as_string(concat_str(msg_data->title.data, ": "));
@@ -370,7 +370,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
 
   // progress message are special displayed as "title: percent% msg"
   if (strequal(kind, "progress") && msg_data) {
-    HlMessage formated_message = fomrat_progress_message(hl_msg, msg_data);
+    HlMessage formated_message = format_progress_message(hl_msg, msg_data);
     if (formated_message.items != hl_msg.items) {
       *needs_msg_clear = true;
       hl_msg = formated_message;
