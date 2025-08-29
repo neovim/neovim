@@ -150,6 +150,11 @@ jobs:
       - run: .github/scripts/env.ps1
         env:
           BUILD_ARCH: ${{ matrix.arch }}
+      - name: Install Wix
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -OutFile "wix314-binaries.zip"
+          Expand-Archive -Path "wix314-binaries.zip" -DestinationPath "C:\wix"
+          echo "C:\wix" >> $env:GITHUB_PATH
       - name: Build deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
@@ -164,7 +169,7 @@ jobs:
           name: ${{ matrix.arch == 'x86_64' && 'nvim-win64' || 'nvim-win-arm64' }}
           path: |
             build/${{ matrix.zip_name }}
-            ${{ matrix.arch == 'x86_64' && format('build/nvim-win64.msi') || '' }}
+            ${{ matrix.arch == 'x86_64' && format('build/nvim-win64.msi') || format('build/nvim-winarm64.msi') }}
           retention-days: 1
 
   publish:
