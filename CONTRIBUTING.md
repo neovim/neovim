@@ -232,10 +232,10 @@ See [#549][549] for more details.
 
 ### Lua runtime files
 
-Most of the Lua core [`runtime/`](./runtime) modules are precompiled to
-bytecode, so changes to those files won't get used unless you rebuild Nvim or
-by passing `--luamod-dev` and `$VIMRUNTIME`. For example, try adding a function
-to `runtime/lua/vim/_editor.lua` then:
+The Lua [`runtime/lua/vim/_core/`](./runtime/lua/vim/_core/) modules are
+precompiled to bytecode, so changes won't be usable unless you (1) rebuild Nvim
+or (2) start Nvim with `--luamod-dev` and `$VIMRUNTIME`. For example try adding
+a function to `runtime/lua/vim/editor.lua`, then:
 
 ```bash
 VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev

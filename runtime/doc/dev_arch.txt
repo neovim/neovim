@@ -20,16 +20,63 @@ The purpose of this document is to give:
                                   Type |gO| to see the table of contents.
 
 ==============================================================================
-Filename conventions
+Project layout: where things go
 
-The source filenames use extensions to hint about their purpose.
+C CODE
 
+- Nvim C code lives in `src/nvim/`.
+    - This includes third-party components which we have forked and fully
+      "own", meaning we no longer track the upstream. In particular: `vterm/`
+      and `tui/termkey/`.
+- Vendored third-party components live in `src/*`.
+    - `src/tee/` and `src/xxd/` have their own build files. They are shipped
+      with the Windows artifact to ensure those tools exists there.
+    - Other components like `src/cjson/` and `src/mpack/` are included with
+      Nvim itself. These vendored sources are synced from upstream, we do not
+      "own" them.
+
+See also "MAINTAIN.md".
+
+Generated C files use these filename conventions to hint their purpose:
 - `*.c`, `*.generated.c` - full C files, with all includes, etc.
 - `*.c.h` - parametrized C files, contain all necessary includes, but require
   defining macros before actually using. Example: `typval_encode.c.h`
-- `*.h` - full headers, with all includes. Does *not* apply to `*.generated.h`.
+- `*.h` - full headers, with all includes. Does not apply to `*.generated.h`.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
+
+
+LUA CODE
+
+Lua code lives in one of four places:
+
+1. Plugins! Not everything needs to live on `vim.*`. Plugins are the correct
+   model for non-essential features which the user may disable or replace with
+   a third-party plugin, and which do not have a formal API. Examples:
+   "editorconfig", "comment".
+   - "opt-out": `runtime/plugin/`
+   - "opt-in": `runtime/pack/dist/opt/`
+2. `runtime/lua/vim/` (the runtime): Lazy-loaded modules. Examples: `treesitter`, `lpeg`.
+3. `runtime/lua/vim/_core/shared.lua`: pure Lua functions which always are available.
+   Used in the test runner, and worker threads/processes launched from Nvim.
+4. `runtime/lua/vim/_core/`: Eager-loaded code which directly interacts with the Nvim
+   editor state. Only available in the main thread. See |dev-lua-builtin|
+   below.
+
+The top-level `vim.` namespace is for fundamental Lua and editor features. Use
+submodules (`vim.foo`) for everything else (but avoid excessive "nesting"), or
+plugins (see above).
+
+Compatibility with Vim's `if_lua` is explicitly a non-goal.
+
+                                                             *dev-lua-builtin*
+Lua modules that are necessary even if VIMRUNTIME is invalid (generally, data
+structures and essential utilties), must be compiled into the `nvim` binary.
+There are two ways to do that:
+- if they are private, put the code file in `runtime/lua/vim/_core/`
+- if they are public, choose a new filepath in `runtime/lua/vim/`
+  and add it to VIM_MODULE_FILE in src/nvim/CMakeLists.txt.
+
 
 ==============================================================================
 Data structures

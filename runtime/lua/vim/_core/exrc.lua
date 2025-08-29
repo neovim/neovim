@@ -1,3 +1,5 @@
+-- For 'exrc' and related functionality.
+
 local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
   type = 'file',
   upward = true,

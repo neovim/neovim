@@ -2875,7 +2875,7 @@ static char *get_lsp_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 
     ADD_C(args, CSTR_AS_OBJ(xp->xp_line));
     // Build the current command line as a Lua string argument
-    Object res = NLUA_EXEC_STATIC("return require'vim._core.ex_cmd.lsp'.lsp_complete(...)", args,
+    Object res = NLUA_EXEC_STATIC("return require'vim._core.ex_cmd'.lsp_complete(...)", args,
                                   kRetObject, NULL,
                                   &err);
     api_clear_error(&err);

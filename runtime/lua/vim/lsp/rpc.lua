@@ -1,7 +1,7 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local lsp_transport = require('vim.lsp._transport')
-local strbuffer = require('vim._stringbuffer')
+local strbuffer = require('vim._core.stringbuffer')
 local validate, schedule_wrap = vim.validate, vim.schedule_wrap
 
 --- Embeds the given string into a table and correctly computes `Content-Length`.
