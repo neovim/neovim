@@ -354,6 +354,18 @@ set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
 set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
 set(LUA_TEXT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/text.lua)
 
+# Find all Lua files in the _core directory
+file(GLOB LUA_CORE_MODULE_SOURCES ${NVIM_RUNTIME_DIR}/lua/vim/_core/*.lua)
+
+# Build command arguments and dependencies for _core modules
+set(LUA_CORE_COMMAND_ARGS)
+set(LUA_CORE_DEPENDENCIES)
+foreach(core_source ${LUA_CORE_MODULE_SOURCES})
+  get_filename_component(core_filename ${core_source} NAME_WE)
+  list(APPEND LUA_CORE_COMMAND_ARGS ${core_source} "vim._core.${core_filename}")
+  list(APPEND LUA_CORE_DEPENDENCIES ${core_source})
+endforeach()
+
 file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
 file(GLOB MSGPACK_RPC_HEADERS CONFIGURE_DEPENDS msgpack_rpc/*.h)
@@ -641,6 +653,7 @@ add_custom_command(
       ${LUA_OPTIONS_MODULE_SOURCE} "vim._options"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
       ${LUA_TEXT_MODULE_SOURCE} "vim.text"
+      ${LUA_CORE_COMMAND_ARGS}
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
@@ -656,6 +669,7 @@ add_custom_command(
     ${LUA_OPTIONS_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_TEXT_MODULE_SOURCE}
+    ${LUA_CORE_DEPENDENCIES}
   VERBATIM
 )
 
