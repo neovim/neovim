@@ -1156,7 +1156,7 @@ func Test_mkvimrc()
   " set pastetoggle=<F5>
   set wildchar=<F6>
   set wildcharm=<F7>
-  call assert_fails('mkvimrc Xtestvimrc')
+  call assert_fails('mkvimrc Xtestvimrc', 'E189: "Xtestvimrc" exists')
   mkvimrc! Xtestvimrc
   " call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set pastetoggle=<F5>'))
   call assert_notequal(-1, index(readfile('Xtestvimrc'), 'set wildchar=<F6>'))
