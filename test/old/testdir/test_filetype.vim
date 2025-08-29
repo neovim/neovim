@@ -1,5 +1,10 @@
 " Test :setfiletype
 
+" Make VIMRUNTIME and &rtp absolute.
+" Otherwise, a :lcd inside a test would break the relative ../../runtime path.
+let $VIMRUNTIME = fnamemodify($VIMRUNTIME, ':p')
+let &rtp = join(map(split(&rtp, ','), 'fnamemodify(v:val, ":p")'), ',')
+
 func Test_backup_strip()
   filetype on
   let fname = 'Xdetect.js~~~~~~~~~~~'
@@ -186,7 +191,7 @@ func s:GetFilenameChecks() abort
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master', 'file.conf', 'texdoc.cnf', '.x11vncrc', '.chktexrc', '.ripgreprc', 'ripgreprc', 'file.ctags'],
-    \ 'config': ['configure.in', 'configure.ac', '/etc/hostname.file', 'any/etc/hostname.file'],
+    \ 'config': ['/etc/hostname.file', 'any/etc/hostname.file', 'configure.in', 'configure.ac', 'file.at', 'aclocal.m4'],
     \ 'confini': ['pacman.conf', 'paru.conf', 'mpv.conf', 'any/.aws/config', 'any/.aws/credentials', 'file.nmconnection',
     \             'any/.gnuradio/grc.conf', 'any/gnuradio/config.conf', 'any/gnuradio/conf.d/modtool.conf'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
@@ -303,7 +308,8 @@ func s:GetFilenameChecks() abort
     \ 'fstab': ['fstab', 'mtab'],
     \ 'func': ['file.fc'],
     \ 'fusion': ['file.fusion'],
-    \ 'fvwm': ['/.fvwm/file', 'any/.fvwm/file'],
+    \ 'fvwm': ['/.fvwm/file', 'any/.fvwm/file', '.fvwmrc', 'foo.fvwmrc', 'fvwmrc.foo', '.fvwm2rc', 'foo.fvwm2rc', 'fvwm2rc.foo', 'foo.fvwm95.hook', 'fvwm95.foo.hook'],
+    \ 'fvwm2m4': ['.fvwm2rc.m4', 'foo.fvwm2rc.m4', 'fvwm2rc.foo.m4'],
     \ 'gdb': ['.gdbinit', 'gdbinit', '.cuda-gdbinit', 'cuda-gdbinit', 'file.gdb', '.config/gdbearlyinit', '.gdbearlyinit'],
     \ 'gdmo': ['file.mo', 'file.gdmo'],
     \ 'gdresource': ['file.tscn', 'file.tres'],
@@ -463,7 +469,7 @@ func s:GetFilenameChecks() abort
     \            'any/m17n-db/file.ali', 'any/m17n-db/file.cs', 'any/m17n-db/file.dir', 'any/m17n-db/FLT/file.flt', 'any/m17n-db/file.fst', 'any/m17n-db/LANGDATA/file.lnm', 'any/m17n-db/file.mic', 'any/m17n-db/MIM/file.mim', 'any/m17n-db/file.tbl'],
     \ 'm3build': ['m3makefile', 'm3overrides'],
     \ 'm3quake': ['file.quake', 'cm3.cfg'],
-    \ 'm4': ['file.at', '.m4_history'],
+    \ 'm4': ['.m4_history'],
     \ 'mail': ['snd.123', '.letter', '.letter.123', '.followup', '.article', '.article.123', 'pico.123', 'mutt-xx-xxx', 'muttng-xx-xxx', 'ae123.txt', 'file.eml', 'reportbug-file'],
     \ 'mailaliases': ['/etc/mail/aliases', '/etc/aliases', 'any/etc/aliases', 'any/etc/mail/aliases'],
     \ 'mailcap': ['.mailcap', 'mailcap'],
@@ -1145,6 +1151,43 @@ endfunc
 " Tests for specific extensions and filetypes.
 " Keep sorted.
 """""""""""""""""""""""""""""""""""""""""""""""""
+
+" Since dist#ft#FTm4() looks around for configure.ac
+" the test needs to isolate itself in a fresh temporary project tree,
+" so that no configure.ac from another test (or from the repo root)
+" accidentally influences detection.
+func Test_autoconf_file()
+  filetype on
+  " Make a fresh sandbox far away from any configure.ac
+  let save_cwd = getcwd()
+  call mkdir('Xproj_autoconf/a/b', 'p')
+  execute 'lcd Xproj_autoconf/a/b'
+
+  try
+    call writefile(['AC_CHECK_HEADERS([stdio.h])'], 'foo.m4', 'D')
+    split foo.m4
+    call assert_equal('config', &filetype)
+    bwipe!
+
+    call writefile(['AS_IF([true], [:])'], 'bar.m4', 'D')
+    split bar.m4
+    call assert_equal('config', &filetype)
+    bwipe!
+
+    call writefile(['AC_INIT([foo],[1.0])'], 'configure.ac')
+    call mkdir('m4', 'p')
+    call writefile([], 'm4/empty.m4', 'D')
+    split m4/empty.m4
+    call assert_equal('config', &filetype)
+    bwipe!
+  finally
+    call delete('m4', 'rf')
+    call delete('configure.ac')
+    execute 'lcd' fnameescape(save_cwd)
+    call delete('Xproj_autoconf', 'rf')
+    filetype off
+  endtry
+endfunc
 
 func Test_bas_file()
   filetype on
@@ -1889,6 +1932,30 @@ func Test_m_file()
   bwipe!
 
   filetype off
+endfunc
+
+" Since dist#ft#FTm4() looks around for configure.ac
+" the test needs to isolate itself in a fresh temporary project tree,
+" so that no configure.ac from another test (or from the repo root)
+" accidentally influences detection.
+func Test_m4_file()
+  filetype on
+  let save_cwd = getcwd()
+
+  " Make a fresh sandbox far away from any configure.ac
+  call mkdir('Xsandbox/level1/level2', 'p')
+  execute 'lcd Xsandbox/level1/level2'
+
+  try
+    call writefile(["define(`FOO', `bar')", "FOO"], 'plain.m4', 'D')
+    split plain.m4
+    call assert_equal('m4', &filetype)
+    bwipe!
+  finally
+    execute 'lcd' fnameescape(save_cwd)
+    call delete('Xsandbox', 'rf')
+    filetype off
+  endtry
 endfunc
 
 func Test_mod_file()
@@ -3044,6 +3111,25 @@ func Test_diff_format()
   call assert_true(empty(&filetype))
   bwipe!
 
+  filetype off
+endfunc
+
+func Test_m4_format()
+  filetype on
+
+  call mkdir('Xm4', 'D')
+  cd Xm4
+  call writefile([''], 'alocal.m4', 'D')
+  split alocal.m4
+  call assert_equal('m4', &filetype)
+  bwipe!
+  " an accompanying configure.ac in the current directory changes the filetype
+  call writefile([''], 'configure.ac')
+  split alocal.m4
+  call assert_equal('config', &filetype)
+  bwipe!
+
+  cd -
   filetype off
 endfunc
 
