@@ -1142,6 +1142,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   // Not drawing text when line is concealed or drawing filler lines beyond last line.
   const bool draw_text = !concealed && (lnum != buf->b_ml.ml_line_count + 1);
 
+  int decor_provider_end_col;
+  bool check_decor_providers = false;
+
   if (col_rows == 0 && draw_text) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -1163,14 +1166,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
     }
 
-    decor_providers_invoke_line(wp, lnum - 1);  // may invalidate wp->w_virtcol
-    validate_virtcol(wp);
-
-    has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
-
-    if (has_decor) {
-      extra_check = true;
-    }
+    check_decor_providers = true;
 
     // Check for columns to display for 'colorcolumn'.
     wlv.color_cols = wp->w_buffer->terminal ? NULL : wp->w_p_cc_cols;
@@ -1466,22 +1462,22 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
   // first character to be displayed.
-  const int start_col = wp->w_p_wrap
-                        ? (startrow == 0 ? wp->w_skipcol : 0)
-                        : wp->w_leftcol;
+  const int start_vcol = wp->w_p_wrap
+                         ? (startrow == 0 ? wp->w_skipcol : 0)
+                         : wp->w_leftcol;
 
   if (has_foldtext) {
-    wlv.vcol = start_col;
-  } else if (start_col > 0 && col_rows == 0) {
+    wlv.vcol = start_vcol;
+  } else if (start_vcol > 0 && col_rows == 0) {
     char *prev_ptr = ptr;
     CharSize cs = { 0 };
 
     CharsizeArg csarg;
     CSType cstype = init_charsize_arg(&csarg, wp, lnum, line);
-    csarg.max_head_vcol = start_col;
+    csarg.max_head_vcol = start_vcol;
     int vcol = wlv.vcol;
     StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
-    while (vcol < start_col && *ci.ptr != NUL) {
+    while (vcol < start_vcol && *ci.ptr != NUL) {
       cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg);
       vcol += cs.width;
       prev_ptr = ci.ptr;
@@ -1518,23 +1514,23 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     // - the visual mode is active, or
     // - drawing a fold
     // the end of the line may be before the start of the displayed part.
-    if (wlv.vcol < start_col && (wp->w_p_cuc
-                                 || wlv.color_cols
-                                 || virtual_active(wp)
-                                 || (VIsual_active && wp->w_buffer == curwin->w_buffer)
-                                 || has_fold)) {
-      wlv.vcol = start_col;
+    if (wlv.vcol < start_vcol && (wp->w_p_cuc
+                                  || wlv.color_cols
+                                  || virtual_active(wp)
+                                  || (VIsual_active && wp->w_buffer == curwin->w_buffer)
+                                  || has_fold)) {
+      wlv.vcol = start_vcol;
     }
 
     // Handle a character that's not completely on the screen: Put ptr at
     // that character but skip the first few screen characters.
-    if (wlv.vcol > start_col) {
+    if (wlv.vcol > start_vcol) {
       wlv.vcol -= charsize;
       ptr = prev_ptr;
     }
 
-    if (start_col > wlv.vcol) {
-      wlv.skip_cells = start_col - wlv.vcol - head;
+    if (start_vcol > wlv.vcol) {
+      wlv.skip_cells = start_vcol - wlv.vcol - head;
     }
 
     // Adjust for when the inverted text is before the screen,
@@ -1586,6 +1582,23 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         syntax_start(wp, lnum);
       }
     }
+  }
+
+  if (check_decor_providers) {
+    int const col = (int)(ptr - line);
+    decor_provider_end_col = decor_providers_setup(endrow - startrow,
+                                                   start_vcol == 0,
+                                                   lnum,
+                                                   col,
+                                                   wp);
+    line = ml_get_buf(wp->w_buffer, lnum);
+    ptr = line + col;
+  }
+
+  decor_redraw_line(wp, lnum - 1, &decor_state);
+  if (!has_decor && decor_has_more_decorations(&decor_state, lnum - 1)) {
+    has_decor = true;
+    extra_check = true;
   }
 
   // Correct highlighting for cursor that can't be disabled.
@@ -1641,6 +1654,18 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     int decor_conceal = 0;
 
     bool did_decrement_ptr = false;
+
+    // Get next chunk of extmark highlights if previous approximation was smaller than needed.
+    if (check_decor_providers && (int)(ptr - line) >= decor_provider_end_col) {
+      int const col = (int)(ptr - line);
+      decor_provider_end_col = invoke_range_next(wp, lnum, col, 100);
+      line = ml_get_buf(wp->w_buffer, lnum);
+      ptr = line + col;
+      if (!has_decor && decor_has_more_decorations(&decor_state, lnum - 1)) {
+        has_decor = true;
+        extra_check = true;
+      }
+    }
 
     // Skip this quickly when working on the text.
     if (draw_cols) {
@@ -2740,7 +2765,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
 
       // check if line ends before left margin
-      wlv.vcol = MAX(wlv.vcol, start_col + wlv.col - win_col_off(wp));
+      wlv.vcol = MAX(wlv.vcol, start_vcol + wlv.col - win_col_off(wp));
       // Get rid of the boguscols now, we want to draw until the right
       // edge for 'cursorcolumn'.
       wlv.col -= wlv.boguscols;
@@ -2762,7 +2787,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       if (((wp->w_p_cuc
             && wp->w_virtcol >= vcol_hlc(wlv) - eol_hl_off
-            && wp->w_virtcol < view_width * (ptrdiff_t)(wlv.row - startrow + 1) + start_col
+            && wp->w_virtcol < view_width * (ptrdiff_t)(wlv.row - startrow + 1) + start_vcol
             && lnum != wp->w_cursor.lnum)
            || wlv.color_cols || wlv.line_attr_lowprio || wlv.line_attr
            || wlv.diff_hlf != 0 || wp->w_buffer->terminal)) {
@@ -3179,4 +3204,51 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   int coloff = 0;
   ScreenGrid *g = grid_adjust(grid, &row, &coloff);
   grid_put_linebuf(g, row, coloff, startcol, endcol, clear_width, bg_attr, 0, wlv->vcol - 1, flags);
+}
+
+static int decor_providers_setup(int rows_to_draw, bool draw_from_line_start, linenr_T lnum,
+                                 colnr_T col, win_T *wp)
+{
+  // Approximate the number of bytes that will be drawn.
+  // Assume we're dealing with 1-cell ascii and ignore
+  // the effects of 'linebreak', 'breakindent', etc.
+  int rem_vcols;
+  if (wp->w_p_wrap) {
+    int width = wp->w_view_width - win_col_off(wp);
+    int width2 = width + win_col_off2(wp);
+
+    int first_row_width = draw_from_line_start ? width : width2;
+    rem_vcols = first_row_width + (rows_to_draw - 1) * width2;
+  } else {
+    rem_vcols = wp->w_view_height - win_col_off(wp);
+  }
+
+  // Call it here since we need to invalidate the line pointer anyway.
+  decor_providers_invoke_line(wp, lnum - 1);
+  validate_virtcol(wp);
+
+  return invoke_range_next(wp, lnum, col, rem_vcols + 1);
+}
+
+/// @return New begin column, or INT_MAX.
+static int invoke_range_next(win_T *wp, int lnum, colnr_T begin_col, colnr_T col_off)
+{
+  char const *const line = ml_get_buf(wp->w_buffer, lnum);
+  int const line_len = ml_get_buf_len(wp->w_buffer, lnum);
+  col_off = MAX(col_off, 1);
+
+  colnr_T new_col;
+  if (col_off <= line_len - begin_col) {
+    int end_col = begin_col + col_off;
+    end_col += mb_off_next(line, line + end_col);
+    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum - 1, end_col);
+    validate_virtcol(wp);
+    new_col = end_col;
+  } else {
+    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum, 0);
+    validate_virtcol(wp);
+    new_col = INT_MAX;
+  }
+
+  return new_col;
 }
