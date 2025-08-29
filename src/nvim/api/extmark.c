@@ -1051,6 +1051,13 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///                 ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
 ///               ```
+///
+///               In addition to returning a boolean, it is also allowed to
+///               return a `skip_row, skip_col` pair of integers. This implies
+///               that this function does not need to be called until a range
+///               which continues beyond the skipped position. A single integer
+///               return value `skip_row` is short for `skip_row, 0`
+///
 ///             - on_end: called at the end of a redraw cycle
 ///               ```
 ///                 ["end", tick]

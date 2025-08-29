@@ -145,6 +145,9 @@ typedef struct {
     kDecorProviderDisabled = 4,
   } state;
 
+  int win_skip_row;
+  int win_skip_col;
+
   LuaRef redraw_start;
   LuaRef redraw_buf;
   LuaRef redraw_win;
@@ -159,3 +162,8 @@ typedef struct {
 
   uint8_t error_count;
 } DecorProvider;
+
+#define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
+  { ns_id, kDecorProviderDisabled, 0, 0, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, LUA_NOREF, -1, false, false, 0 }

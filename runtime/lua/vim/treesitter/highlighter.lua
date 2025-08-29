@@ -53,15 +53,12 @@ function TSHighlighterQuery:query()
   return self._query
 end
 
----@alias MarkInfo { start_line: integer, start_col: integer, opts: vim.api.keyset.set_extmark }
-
 ---@class (private) vim.treesitter.highlighter.State
 ---@field tstree TSTree
 ---@field next_row integer
 ---@field next_col integer
 ---@field iter vim.treesitter.highlighter.Iter?
 ---@field highlighter_query vim.treesitter.highlighter.Query
----@field prev_marks MarkInfo[]
 
 ---@nodoc
 ---@class vim.treesitter.highlighter
@@ -238,7 +235,6 @@ function TSHighlighter:prepare_highlight_states(win, srow, erow)
       next_col = 0,
       iter = nil,
       highlighter_query = hl_query,
-      prev_marks = {},
     })
   end)
 end
@@ -330,44 +326,6 @@ local function get_spell(capture_name)
   return nil, 0
 end
 
----Adds the mark to the buffer, clipped by the line.
----Queues the remainder if the mark continues after the line.
----@param m MarkInfo
----@param buf integer
----@param range_start_row integer
----@param range_start_col integer
----@param range_end_row integer
----@param range_end_col integer
----@param next_marks MarkInfo[]
-local function add_mark(
-  m,
-  buf,
-  range_start_row,
-  range_start_col,
-  range_end_row,
-  range_end_col,
-  next_marks
-)
-  local cur_start_l = m.start_line
-  local cur_start_c = m.start_col
-  if cmp_lt(cur_start_l, cur_start_c, range_start_row, range_start_col) then
-    cur_start_l = range_start_row
-    cur_start_c = range_start_col
-  end
-
-  local cur_opts = m.opts
-  if cmp_lt(range_end_row, range_end_col, cur_opts.end_line, cur_opts.end_col) then
-    cur_opts = vim.deepcopy(cur_opts, true)
-    cur_opts.end_line = range_end_row
-    cur_opts.end_col = range_end_col
-    table.insert(next_marks, m)
-  end
-
-  if cmp_lt(cur_start_l, cur_start_c, cur_opts.end_line, cur_opts.end_col) then
-    api.nvim_buf_set_extmark(buf, ns, cur_start_l, cur_start_c, cur_opts)
-  end
-end
-
 ---@param self vim.treesitter.highlighter
 ---@param win integer
 ---@param buf integer
@@ -398,6 +356,10 @@ local function on_range_impl(
   for i = range_start_row, range_end_row - 1 do
     self._conceal_checked[i] = self._conceal_line or nil
   end
+
+  local MAX_ROW = 2147483647 -- sentinel for skipping to the end of file
+  local skip_until_row = MAX_ROW
+  local skip_until_col = 0
   self:for_each_highlight_state(win, function(state)
     local root_node = state.tstree:root()
     ---@type { [1]: integer, [2]: integer, [3]: integer, [4]: integer }
@@ -409,24 +371,14 @@ local function on_range_impl(
         { range_start_row, range_start_col, range_end_row, range_end_col }
       )
     then
+      if cmp_lt(root_range[1], root_range[2], skip_until_row, skip_until_col) then
+        skip_until_row = root_range[1]
+        skip_until_col = root_range[2]
+      end
       return
     end
 
     local tree_region = state.tstree:included_ranges(true)
-
-    local next_marks = {}
-
-    for _, mark in ipairs(state.prev_marks) do
-      add_mark(
-        mark,
-        buf,
-        range_start_row,
-        range_start_col,
-        range_end_row,
-        range_end_col,
-        next_marks
-      )
-    end
 
     local next_row = state.next_row
     local next_col = state.next_col
@@ -488,7 +440,7 @@ local function on_range_impl(
           local url = get_url(match, buf, capture, metadata)
 
           if hl and not on_conceal and (not on_spell or spell ~= nil) then
-            local opts = {
+            api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
               end_line = end_row,
               end_col = end_col,
               hl_group = hl,
@@ -497,17 +449,7 @@ local function on_range_impl(
               conceal = conceal,
               spell = spell,
               url = url,
-            }
-            local mark = { start_line = start_row, start_col = start_col, opts = opts }
-            add_mark(
-              mark,
-              buf,
-              range_start_row,
-              range_start_col,
-              range_end_row,
-              range_end_col,
-              next_marks
-            )
+            })
           end
 
           if
@@ -525,8 +467,12 @@ local function on_range_impl(
 
     state.next_row = next_row
     state.next_col = next_col
-    state.prev_marks = next_marks
+    if cmp_lt(next_row, next_col, skip_until_row, skip_until_col) then
+      skip_until_row = next_row
+      skip_until_col = next_col
+    end
   end)
+  return skip_until_row, skip_until_col
 end
 
 ---@private
@@ -542,7 +488,7 @@ function TSHighlighter._on_range(_, win, buf, br, bc, er, ec, _)
     return
   end
 
-  on_range_impl(self, win, buf, br, bc, er, ec, false, false)
+  return on_range_impl(self, win, buf, br, bc, er, ec, false, false)
 end
 
 ---@private
