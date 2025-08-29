@@ -3197,7 +3197,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'testsuit: test-message...10%' } },
+          content = { { 'testsuit: ' }, { ' 10% ', 19, 'WarningMsg' }, { 'test-message' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3227,7 +3227,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'TestSuit: test-message-updated...50%' } },
+          content = { { 'TestSuit: ' }, { ' 50% ', 19, 'WarningMsg' }, { 'test-message-updated' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3284,7 +3284,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'TestSuit: test-message...10%' } },
+          content = { { 'TestSuit: ' }, { ' 10% ', 19, 'WarningMsg' }, { 'test-message' } },
           history = true,
           id = 1,
           kind = 'progress',
@@ -3373,23 +3373,29 @@ describe('progress-message', function()
       true,
       { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
     )
-    eq('test-message 10', exec_capture('messages'))
+    eq('TestSuit:  10% test-message 10', exec_capture('messages'))
 
     api.nvim_echo(
       { { 'test-message 20' } },
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
     )
-    eq('test-message 10\ntest-message 20', exec_capture('messages'))
+    eq('TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20', exec_capture('messages'))
 
     api.nvim_echo({ { 'middle msg' } }, true, {})
-    eq('test-message 10\ntest-message 20\nmiddle msg', exec_capture('messages'))
+    eq(
+      'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg',
+      exec_capture('messages')
+    )
     api.nvim_echo(
       { { 'test-message 30' } },
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq('test-message 10\ntest-message 20\nmiddle msg\ntest-message 30', exec_capture('messages'))
+    eq(
+      'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg\nTestSuit:  30% test-message 30',
+      exec_capture('messages')
+    )
 
     api.nvim_echo(
       { { 'test-message 50' } },
@@ -3397,7 +3403,7 @@ describe('progress-message', function()
       { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
     )
     eq(
-      'test-message 10\ntest-message 20\nmiddle msg\ntest-message 30\ntest-message 50',
+      'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg\nTestSuit:  30% test-message 30\nTestSuit:  50% test-message 50',
       exec_capture('messages')
     )
   end)
@@ -3476,7 +3482,7 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'TestSuit: supports str-id...30%' } },
+          content = { { 'TestSuit: ' }, { ' 30% ', 19, 'WarningMsg' }, { 'supports str-id' } },
           history = true,
           id = 'str-id',
           kind = 'progress',
@@ -3511,7 +3517,7 @@ describe('progress-message', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*3
-      TestSuit: test-message...10%            |
+      TestSuit: {19: 10% }test-message             |
     ]])
   end)
 end)

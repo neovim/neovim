@@ -796,6 +796,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   }
 
   bool is_progress = strequal(kind, "progress");
+  bool needs_clear = !history;
 
   VALIDATE(is_progress
            || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
@@ -822,7 +823,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   MessageData msg_data = { .title = opts->title, .status = opts->status,
                            .percent = opts->percent, .data = opts->data };
 
-  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data);
+  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
 
   if (opts->verbose) {
     verbose_leave();
@@ -833,7 +834,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     do_autocmd_progress(id, hl_msg, &msg_data);
   }
 
-  if (history) {
+  if (!needs_clear) {
     // history takes ownership
     return id;
   }
