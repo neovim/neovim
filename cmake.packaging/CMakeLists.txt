@@ -27,14 +27,13 @@ set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
 
 
 if(WIN32)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
     set(CPACK_PACKAGE_FILE_NAME "nvim-winarm64")
   else()
     set(CPACK_PACKAGE_FILE_NAME "nvim-win64")
   endif()
   
   set(CPACK_GENERATOR ZIP WIX)
-  
   # WIX
   # CPACK_WIX_UPGRADE_GUID should be set, but should never change.
   # CPACK_WIX_PRODUCT_GUID should not be set (leave as default to auto-generate).
