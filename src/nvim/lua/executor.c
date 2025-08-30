@@ -175,10 +175,14 @@ int nlua_pcall(lua_State *lstate, int nargs, int nresults)
   lua_getfield(lstate, -1, "traceback");
   lua_remove(lstate, -2);
   lua_insert(lstate, -2 - nargs);
+  int top = lua_gettop(lstate);
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
   if (status) {
     lua_remove(lstate, -2);
   } else {
+    if (nresults == LUA_MULTRET) {
+      nresults = lua_gettop(lstate) - (top - nargs - 1);
+    }
     lua_remove(lstate, -1 - nresults);
   }
   return status;
@@ -1522,6 +1526,7 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
 {
   lua_State *const lstate = global_lstate;
 
+  int top = lua_gettop(lstate);
   const char *name = (chunkname && chunkname[0]) ? chunkname : "<nvim>";
   if (luaL_loadbuffer(lstate, str.data, str.size, name)) {
     size_t len;
@@ -1541,7 +1546,7 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
     return NIL;
   }
 
-  return nlua_call_pop_retval(lstate, mode, arena, err);
+  return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
 bool nlua_ref_is_function(LuaRef ref)
@@ -1572,10 +1577,16 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
   return nlua_call_ref_ctx(false, ref, name, args, mode, arena, err);
 }
 
+static int mode_ret(LuaRetMode mode)
+{
+  return mode == kRetMultiArray ? LUA_MULTRET : 1;
+}
+
 Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
                          Arena *arena, Error *err)
 {
   lua_State *const lstate = global_lstate;
+  int top = lua_gettop(lstate);
   nlua_pushref(lstate, ref);
   int nargs = (int)args.size;
   if (name != NULL) {
@@ -1587,12 +1598,12 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
   }
 
   if (fast) {
-    if (nlua_fast_cfpcall(lstate, nargs, 1, -1) < 0) {
+    if (nlua_fast_cfpcall(lstate, nargs, mode_ret(mode), -1) < 0) {
       // error is already scheduled, set anyways to convey failure.
       api_set_error(err, kErrorTypeException, "fast context failure");
       return NIL;
     }
-  } else if (nlua_pcall(lstate, nargs, 1)) {
+  } else if (nlua_pcall(lstate, nargs, mode_ret(mode))) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
@@ -1604,16 +1615,18 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
     return NIL;
   }
 
-  return nlua_call_pop_retval(lstate, mode, arena, err);
+  return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
-static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, Error *err)
+static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, int pretop,
+                                   Error *err)
 {
-  if (lua_isnil(lstate, -1)) {
+  if (mode != kRetMultiArray && lua_isnil(lstate, -1)) {
     lua_pop(lstate, 1);
     return NIL;
   }
   Error dummy = ERROR_INIT;
+  Error *perr = err ? err : &dummy;
 
   switch (mode) {
   case kRetNilBool: {
@@ -1629,7 +1642,22 @@ static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *ar
     return LUAREF_OBJ(ref);
   }
   case kRetObject:
-    return nlua_pop_Object(lstate, false, arena, err ? err : &dummy);
+    return nlua_pop_Object(lstate, false, arena, perr);
+  case kRetMultiArray:
+    ;
+    int nres = lua_gettop(lstate) - pretop;
+    if (nres < 0) {
+      abort();
+    }
+    Array res = arena_array(arena, (size_t)nres);
+    for (int i = 0; i < nres; i++) {
+      res.items[nres - i - 1] = nlua_pop_Object(lstate, false, arena, perr);
+      if (ERROR_SET(err)) {
+        return NIL;
+      }
+    }
+    res.size = (size_t)nres;
+    return ARRAY_OBJ(res);
   }
   UNREACHABLE;
 }
