@@ -1037,6 +1037,34 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end)
 
+  it('insert two characters at once triggers clients matching only the second one', function()
+    local results1 = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'first',
+        },
+      },
+    }
+    create_server('dummy1', results1, { trigger_chars = { '-' } })
+    local results2 = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'second',
+        },
+      },
+    }
+    create_server('dummy2', results2, { trigger_chars = { '>' } })
+
+    feed('i->')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq('second', matches[1].word)
+    end)
+  end)
+
   it('executes commands', function()
     local completion_list = {
       isIncomplete = false,
