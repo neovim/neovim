@@ -133,6 +133,16 @@ end
 --- @param url string
 --- @param path string
 local function git_clone(url, path)
+  local can_ping = async.await(5,
+    vim.system,
+    { "git", 'ls-remote', url, 'HEAD' },
+    { env = { GIT_TERMINAL_PROMPT = "0", GIT_ASKPASS = "echo" } }
+  )
+  if can_ping.code ~= 0 then
+    error(string.format("Unable to reach repo '%s'", url))
+    return
+  end
+
   local cmd = { 'clone', '--quiet', '--origin', 'origin' }
 
   if vim.startswith(url, 'file://') then
