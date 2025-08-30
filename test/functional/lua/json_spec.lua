@@ -192,6 +192,43 @@ describe('vim.json.encode()', function()
     )
   end)
 
+  it('indent', function()
+    eq('"Test"', exec_lua([[return vim.json.encode('Test', { indent = "  " })]]))
+    eq('[]', exec_lua([[return vim.json.encode({}, { indent = "  " })]]))
+    eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict(), { indent = "  " })]]))
+    eq(
+      '[\n  {\n    "a": "a"\n  },\n  {\n    "b": "b"\n  }\n]',
+      exec_lua([[return vim.json.encode({ { a = "a" }, { b = "b" } }, { indent = "  " })]])
+    )
+    eq(
+      '[\n\t{\n\t\t"a": "a"\n\t},\n\t{\n\t\t"b": "b"\n\t}\n]',
+      exec_lua([[return vim.json.encode({ { a = "a" }, { b = "b" } }, { indent = "\t" })]])
+    )
+    eq(
+      '[{"a":"a"},{"b":"b"}]',
+      exec_lua([[return vim.json.encode({ { a = "a" }, { b = "b" } }, { indent = "" })]])
+    )
+
+    -- Test validation
+    eq(
+      'indent must contain only spaces, tabs, line feeds, or carriage returns',
+      pcall_err(exec_lua, [[return vim.json.encode({}, { indent = "abc" })]])
+    )
+    eq(
+      'indent must contain only spaces, tabs, line feeds, or carriage returns',
+      pcall_err(exec_lua, [[return vim.json.encode({}, { indent = "\t\r1" })]])
+    )
+
+    -- Checks for for global side-effects
+    eq(
+      '[{"a":"a"},{"b":"b"}]',
+      exec_lua([[
+        vim.json.encode('', { indent = "  " })
+        return vim.json.encode({ { a = "a" }, { b = "b" } })
+      ]])
+    )
+  end)
+
   it('dumps strings', function()
     eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
     eq('""', exec_lua([[return vim.json.encode('')]]))
