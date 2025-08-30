@@ -905,7 +905,7 @@ func Test_cmdline_paste()
 
   " Test for pasting register containing CTRL-H using CTRL-R and CTRL-R CTRL-R
   let @a = "xy\<C-H>z"
-  call feedkeys(":\"\<C-R>a\<CR>", 'xt')
+  call feedkeys(":\"\<C-R>=@a\<CR>\<CR>", 'xt')
   call assert_equal('"xz', @:)
   call feedkeys(":\"\<C-R>\<C-R>a\<CR>", 'xt')
   call assert_equal("\"xy\<C-H>z", @:)

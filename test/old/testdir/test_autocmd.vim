@@ -2090,7 +2090,7 @@ func Test_Cmdline()
 
   let g:log = []
   let @r = 'abc'
-  call feedkeys(":0\<C-R>r1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
+  call feedkeys(":0\<C-R>=@r\<CR>1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
   call assert_equal([
         \ '0',
         \ '0a',
