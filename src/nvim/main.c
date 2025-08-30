@@ -159,6 +159,7 @@ void event_init(void)
   channel_init();
   terminal_init();
   ui_init();
+  autocmd_init();
   TIME_MSG("event init");
 }
 
