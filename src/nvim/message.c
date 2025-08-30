@@ -302,7 +302,6 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
   // progress messages are special. displayed as "title: percent% msg"
   if (msg_data->title.size != 0) {
     // this block draws the "title:" before the progress-message
-    String title = cstr_as_string(concat_str(msg_data->title.data, ": "));
     int hl_id = 0;
     if (msg_data->status.data == NULL) {
       hl_id = 0;
@@ -315,7 +314,9 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
     } else if (strequal(msg_data->status.data, "cancel")) {
       hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
     }
-    kv_push(updated_msg, ((HlMessageChunk){ .text = title, .hl_id = hl_id }));
+    kv_push(updated_msg,
+            ((HlMessageChunk){ .text = copy_string(msg_data->title, NULL), .hl_id = hl_id }));
+    kv_push(updated_msg, ((HlMessageChunk){ .text = cstr_to_string(": "), .hl_id = 0 }));
   }
   if (msg_data->percent > 0) {
     char percent_buf[10];

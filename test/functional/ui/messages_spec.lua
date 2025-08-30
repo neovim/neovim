@@ -3194,13 +3194,14 @@ describe('progress-message', function()
 
     screen:expect({
       grid = [[
-        ^                         |
-        {1:~                        }|*4
-      ]],
+    ^                         |
+    {1:~                        }|*4
+  ]],
       messages = {
         {
           content = {
-            { 'testsuit: ', 6, 'MoreMsg' },
+            { 'testsuit', 6, 'MoreMsg' },
+            { ': ' },
             { ' 10% ', 19, 'WarningMsg' },
             { 'test-message' },
           },
@@ -3210,7 +3211,6 @@ describe('progress-message', function()
         },
       },
     })
-
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
@@ -3234,7 +3234,8 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 6, 'MoreMsg' },
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
             { ' 50% ', 19, 'WarningMsg' },
             { 'test-message-updated' },
           },
@@ -3268,7 +3269,8 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 102, 'OkMsg' },
+            { 'TestSuit', 102, 'OkMsg' },
+            { ': ' },
             { '100% ', 19, 'WarningMsg' },
             { 'test-message (success)' },
           },
@@ -3293,7 +3295,8 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 9, 'ErrorMsg' },
+            { 'TestSuit', 9, 'ErrorMsg' },
+            { ': ' },
             { ' 35% ', 19, 'WarningMsg' },
             { 'test-message (success)' },
           },
@@ -3312,12 +3315,17 @@ describe('progress-message', function()
     )
     screen:expect({
       grid = [[
-        ^                         |
-        {1:~                        }|*4
-      ]],
+    ^                         |
+    {1:~                        }|*4
+  ]],
       messages = {
         {
-          content = { { 'TestSuit:  30% ', 19, 'WarningMsg' }, { 'test-message (success)' } },
+          content = {
+            { 'TestSuit', 19, 'WarningMsg' },
+            { ': ' },
+            { ' 30% ', 19, 'WarningMsg' },
+            { 'test-message (success)' },
+          },
           history = true,
           id = 4,
           kind = 'progress',
@@ -3387,7 +3395,8 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 6, 'MoreMsg' },
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
             { ' 10% ', 19, 'WarningMsg' },
             { 'test-message' },
           },
@@ -3589,7 +3598,8 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 6, 'MoreMsg' },
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
             { ' 30% ', 19, 'WarningMsg' },
             { 'supports str-id' },
           },
@@ -3627,7 +3637,7 @@ describe('progress-message', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*3
-      {6:TestSuit: }{19: 10% }test-message             |
+      {6:TestSuit}: {19: 10% }test-message             |
     ]])
   end)
 end)
