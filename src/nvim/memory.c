@@ -863,7 +863,7 @@ void free_all_mem(void)
 
   // Close all tabs and windows.  Reset 'equalalways' to avoid redraws.
   p_ea = false;
-  if (first_tabpage->tp_next != NULL) {
+  if (first_tabpage != NULL && first_tabpage->tp_next != NULL) {
     do_cmdline_cmd("tabonly!");
   }
 
@@ -873,18 +873,22 @@ void free_all_mem(void)
   // Clear user commands (before deleting buffers).
   ex_comclear(NULL);
 
-  // Clear menus.
-  do_cmdline_cmd("aunmenu *");
-  do_cmdline_cmd("tlunmenu *");
-  do_cmdline_cmd("menutranslate clear");
+  // When exiting from mainerr_arg_missing curbuf has not been initialized,
+  // and not much else.
+  if (curbuf != NULL) {
+    // Clear menus.
+    do_cmdline_cmd("aunmenu *");
+    do_cmdline_cmd("tlunmenu *");
+    do_cmdline_cmd("menutranslate clear");
 
-  // Clear mappings, abbreviations, breakpoints.
-  // NB: curbuf not used with local=false arg
-  map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
-  map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
-  do_cmdline_cmd("breakdel *");
-  do_cmdline_cmd("profdel *");
-  do_cmdline_cmd("set keymap=");
+    // Clear mappings, abbreviations, breakpoints.
+    // NB: curbuf not used with local=false arg
+    map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
+    map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
+    do_cmdline_cmd("breakdel *");
+    do_cmdline_cmd("profdel *");
+    do_cmdline_cmd("set keymap=");
+  }
 
   free_titles();
   free_findfile();
@@ -905,7 +909,9 @@ void free_all_mem(void)
   free_cd_dir();
   free_signs();
   set_expr_line(NULL);
-  diff_clear(curtab);
+  if (curtab != NULL) {
+    diff_clear(curtab);
+  }
   clear_sb_text(true);            // free any scrollback text
 
   // Free some global vars.
@@ -922,8 +928,10 @@ void free_all_mem(void)
   // Close all script inputs.
   close_all_scripts();
 
-  // Destroy all windows.  Must come before freeing buffers.
-  win_free_all();
+  if (curwin != NULL) {
+    // Destroy all windows.  Must come before freeing buffers.
+    win_free_all();
+  }
 
   // Free all option values.  Must come after closing windows.
   free_all_options();
@@ -957,8 +965,10 @@ void free_all_mem(void)
 
   reset_last_sourcing();
 
-  free_tabpage(first_tabpage);
-  first_tabpage = NULL;
+  if (first_tabpage != NULL) {
+    free_tabpage(first_tabpage);
+    first_tabpage = NULL;
+  }
 
   // message history
   msg_hist_clear(0);
