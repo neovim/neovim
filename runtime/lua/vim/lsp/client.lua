@@ -211,6 +211,9 @@ local all_clients = {}
 ---
 --- @field _enabled_capabilities table<vim.lsp.capability.Name, boolean?>
 ---
+--- Whether on-type formatting is enabled for this client.
+--- @field _otf_enabled boolean?
+---
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
 --- @field private _graceful_shutdown_failed true?
