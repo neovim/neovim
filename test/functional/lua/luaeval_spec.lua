@@ -16,6 +16,7 @@ local feed = n.feed
 local assert_alive = n.assert_alive
 local NIL = vim.NIL
 local eq = t.eq
+local matches = t.matches
 
 before_each(clear)
 
@@ -266,6 +267,8 @@ describe('luaeval()', function()
 
       return true
     ]])
+    -- v:errmsg is set properly #35554
+    matches(': dead function\n', api.nvim_get_vvar('errmsg'))
   end)
 
   it('should handle passing functions around', function()
