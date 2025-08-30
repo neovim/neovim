@@ -60,9 +60,9 @@ the Nvim editor. (There is an unrelated, low-level concept defined by the
 `event/defs.h#Event` struct, which is just a bag of data passed along the
 internal |event-loop|.)
 
-All new editor events must be implemented using `aucmd_defer()` (and where
-possible, old events should be migrated to this), so that they are processed
-in a predictable manner, which avoids crashes and race conditions. See
+Where possible, new editor events should be implemented using `aucmd_defer()`
+(and where possible, old events migrate to this), so they are processed in
+a predictable manner, which avoids crashes and race conditions. See
 `do_markset_autocmd` for an example.
 
 ==============================================================================

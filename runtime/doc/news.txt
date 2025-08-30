@@ -226,6 +226,8 @@ EVENTS
 • New `msg_id` parameter for |ui-messages| `msg_show` event.
 • 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
 • Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
+• |MarkSet| is triggered after a |mark| is set by the user (currently doesn't
+  support implicit marks like |'[| or |'<|, …).
 
 HIGHLIGHTS
 

@@ -10,6 +10,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/event/defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
@@ -67,5 +68,9 @@ enum { BUFLOCAL_PAT_LEN = 25, };
 /// Iterates over all the events for auto commands
 #define FOR_ALL_AUEVENTS(event) \
   for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))
+
+/// Stores events for execution until a known safe state.
+/// This should be the default for all new autocommands.
+EXTERN MultiQueue *deferred_events INIT( = NULL);
 
 #include "autocmd.h.generated.h"
