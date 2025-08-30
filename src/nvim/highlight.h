@@ -26,7 +26,6 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_M] = "MoreMsg",
   [HLF_CM] = "ModeMsg",
   [HLF_N] = "LineNr",
-  [HLF_OK] = "OkMsg",
   [HLF_LNA] = "LineNrAbove",
   [HLF_LNB] = "LineNrBelow",
   [HLF_CLN] = "CursorLineNr",
@@ -85,6 +84,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_BFOOTER] = "FloatFooter",
   [HLF_TS] = "StatusLineTerm",
   [HLF_TSNC] = "StatusLineTermNC",
+  [HLF_OK] = "OkMsg",
 });
 
 EXTERN int highlight_attr[HLF_COUNT];     // Highl. attr for each context.

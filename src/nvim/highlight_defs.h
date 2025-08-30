@@ -72,7 +72,6 @@ typedef enum {
   HLF_M,          ///< "--More--" message
   HLF_CM,         ///< Mode (e.g., "-- INSERT --")
   HLF_N,          ///< line number for ":number" and ":#" commands
-  HLF_OK,         ///< OK message
   HLF_LNA,        ///< LineNrAbove
   HLF_LNB,        ///< LineNrBelow
   HLF_CLN,        ///< current line number when 'cursorline' is set
@@ -133,6 +132,7 @@ typedef enum {
   HLF_TSNC,       ///< status line for non-current terminal window
   HLF_SE,         ///< stderr messages (from shell)
   HLF_SO,         ///< stdout messages (from shell)
+  HLF_OK,         ///< OK message
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
