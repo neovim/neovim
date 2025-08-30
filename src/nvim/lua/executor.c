@@ -1496,7 +1496,7 @@ int typval_exec_lua_callable(LuaRef lua_cb, int argcount, typval_T *argvars, typ
   PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
 
   if (nlua_pcall(lstate, argcount, 1)) {
-    nlua_print(lstate);
+    nlua_error(lstate, _("Lua callback: %.*s"));
     return FCERR_OTHER;
   }
 
