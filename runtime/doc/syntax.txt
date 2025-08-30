@@ -5263,6 +5263,8 @@ EndOfBuffer	Filler lines (~) after the last line in the buffer.
 		By default, this is highlighted like |hl-NonText|.
 							*hl-TermCursor*
 TermCursor	Cursor in a focused terminal.
+							*hl-OkMsg*
+OkMsg		Success messages on the command line.
 							*hl-ErrorMsg*
 ErrorMsg	Error messages on the command line.
 							*hl-StderrMsg*

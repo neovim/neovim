@@ -26,6 +26,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_M] = "MoreMsg",
   [HLF_CM] = "ModeMsg",
   [HLF_N] = "LineNr",
+  [HLF_OK] = "OkMsg",
   [HLF_LNA] = "LineNrAbove",
   [HLF_LNB] = "LineNrBelow",
   [HLF_CLN] = "CursorLineNr",

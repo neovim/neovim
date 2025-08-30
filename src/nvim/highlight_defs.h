@@ -72,6 +72,7 @@ typedef enum {
   HLF_M,          ///< "--More--" message
   HLF_CM,         ///< Mode (e.g., "-- INSERT --")
   HLF_N,          ///< line number for ":number" and ":#" commands
+  HLF_OK,         ///< OK message
   HLF_LNA,        ///< LineNrAbove
   HLF_LNB,        ///< LineNrBelow
   HLF_CLN,        ///< current line number when 'cursorline' is set

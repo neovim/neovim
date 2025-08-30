@@ -3172,6 +3172,7 @@ describe('progress-message', function()
       screen:add_extra_attr_ids {
         [100] = { undercurl = true, special = Screen.colors.Red },
         [101] = { foreground = Screen.colors.Magenta1, bold = true },
+        [102] = { foreground = Screen.colors.NvimDarkGreen },
       }
     else
       screen = Screen.new(40, 5)
@@ -3199,7 +3200,7 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'testsuit: ', 5, 'ModeMsg' },
+            { 'testsuit: ', 6, 'MoreMsg' },
             { ' 10% ', 19, 'WarningMsg' },
             { 'test-message' },
           },
@@ -3233,7 +3234,7 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 5, 'ModeMsg' },
+            { 'TestSuit: ', 6, 'MoreMsg' },
             { ' 50% ', 19, 'WarningMsg' },
             { 'test-message-updated' },
           },
@@ -3267,7 +3268,7 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 6, 'MoreMsg' },
+            { 'TestSuit: ', 102, 'OkMsg' },
             { '100% ', 19, 'WarningMsg' },
             { 'test-message (success)' },
           },
@@ -3386,7 +3387,7 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 5, 'ModeMsg' },
+            { 'TestSuit: ', 6, 'MoreMsg' },
             { ' 10% ', 19, 'WarningMsg' },
             { 'test-message' },
           },
@@ -3588,7 +3589,7 @@ describe('progress-message', function()
       messages = {
         {
           content = {
-            { 'TestSuit: ', 5, 'ModeMsg' },
+            { 'TestSuit: ', 6, 'MoreMsg' },
             { ' 30% ', 19, 'WarningMsg' },
             { 'supports str-id' },
           },
@@ -3626,7 +3627,7 @@ describe('progress-message', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*3
-      {5:TestSuit: }{19: 10% }test-message             |
+      {6:TestSuit: }{19: 10% }test-message             |
     ]])
   end)
 end)

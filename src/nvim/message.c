@@ -307,11 +307,11 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
     if (msg_data->status.data == NULL) {
       hl_id = 0;
     } else if (strequal(msg_data->status.data, "success")) {
-      hl_id = syn_check_group("MoreMsg", STRLEN_LITERAL("MoreMsg"));
+      hl_id = syn_check_group("OkMsg", STRLEN_LITERAL("OkMsg"));
     } else if (strequal(msg_data->status.data, "failed")) {
       hl_id = syn_check_group("ErrorMsg", STRLEN_LITERAL("ErrorMsg"));
     } else if (strequal(msg_data->status.data, "running")) {
-      hl_id = syn_check_group("ModeMsg", STRLEN_LITERAL("ModeMsg"));
+      hl_id = syn_check_group("MoreMsg", STRLEN_LITERAL("MoreMsg"));
     } else if (strequal(msg_data->status.data, "cancel")) {
       hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
     }
