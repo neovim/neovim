@@ -28,9 +28,9 @@ set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
 
 if(WIN32)
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-    set(CPACK_PACKAGE_FILE_NAME "nvim-winarm64")
+    set(CPACK_PACKAGE_FILE_NAME "nvim-win-arm64")
   else()
-    set(CPACK_PACKAGE_FILE_NAME "nvim-win64")
+    set(CPACK_PACKAGE_FILE_NAME "nvim-win-x64")
   endif()
   
   set(CPACK_GENERATOR ZIP WIX)
