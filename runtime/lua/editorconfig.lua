@@ -150,7 +150,7 @@ function properties.trim_trailing_whitespace(bufnr, val)
   if val == 'true' then
     vim.api.nvim_create_autocmd('BufWritePre', {
       group = 'nvim.editorconfig',
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         local view = vim.fn.winsaveview()
         vim.api.nvim_command('silent! undojoin')
@@ -162,7 +162,7 @@ function properties.trim_trailing_whitespace(bufnr, val)
     vim.api.nvim_clear_autocmds({
       event = 'BufWritePre',
       group = 'nvim.editorconfig',
-      buffer = bufnr,
+      buf = bufnr,
     })
   end
 end
@@ -179,7 +179,7 @@ function properties.insert_final_newline(bufnr, val)
   if vim.bo[bufnr].endofline ~= endofline then
     vim.api.nvim_create_autocmd('BufWritePre', {
       group = 'nvim.editorconfig',
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         vim.bo[bufnr].endofline = endofline

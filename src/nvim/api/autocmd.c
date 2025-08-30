@@ -66,8 +66,11 @@ static int64_t next_autocmd_id = 1;
 /// match any combination of them.
 ///
 /// @param opts Dict with at least one of the following:
-///             - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands
+///             - buf: (integer) Buffer number or list of buffer numbers for buffer local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}
+///             - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands 
+///             |autocmd-buflocal|. Cannot be used with {pattern}
+///             (deprecated) use buf instead
 ///             - event: (vim.api.keyset.events|vim.api.keyset.events[])
 ///               event or events to match against |autocmd-events|.
 ///             - id: (integer) Autocommand ID to match.
@@ -151,7 +154,11 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
     }
   }
 
-  VALIDATE((!HAS_KEY(opts, get_autocmds, pattern) || !HAS_KEY(opts, get_autocmds, buffer)),
+  bool has_buffer = HAS_KEY(opts, get_autocmds, buffer);
+  bool has_buf = HAS_KEY(opts, get_autocmds, buf);
+  bool has_any_buffer = has_buffer || has_buf;
+
+  VALIDATE((!HAS_KEY(opts, get_autocmds, pattern) || !has_any_buffer),
            "%s", "Cannot use both 'pattern' and 'buffer'", {
     goto cleanup;
   });
@@ -183,8 +190,21 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
     }
   }
 
-  if (opts->buffer.type == kObjectTypeInteger || opts->buffer.type == kObjectTypeBuffer) {
-    buf_T *buf = find_buffer_by_handle((Buffer)opts->buffer.data.integer, err);
+
+  ObjectType buf_type;
+  if (has_buf) {
+    buf_type = opts->buf.type;
+  } else {
+    buf_type = opts->buffer.type;
+  }
+  if (buf_type == kObjectTypeInteger || buf_type == kObjectTypeBuffer) {
+    Integer buf_integer;
+    if (has_buf) {
+      buf_integer = opts->buf.data.integer;
+    } else {
+      buf_integer = opts->buffer.data.integer;
+    }
+    buf_T *buf = find_buffer_by_handle((Buffer)buf_integer, err);
     if (ERROR_SET(err)) {
       goto cleanup;
     }
@@ -192,15 +212,21 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
     String pat = arena_printf(arena, "<buffer=%d>", (int)buf->handle);
     buffers = arena_array(arena, 1);
     ADD_C(buffers, STRING_OBJ(pat));
-  } else if (opts->buffer.type == kObjectTypeArray) {
-    if (opts->buffer.data.array.size > AUCMD_MAX_PATTERNS) {
+  } else if (buf_type == kObjectTypeArray) {
+    Array buf_array;
+    if (has_buf) {
+      buf_array = opts->buf.data.array;
+    } else {
+      buf_array = opts->buffer.data.array;
+    }
+    if (buf_array.size > AUCMD_MAX_PATTERNS) {
       api_set_error(err, kErrorTypeValidation, "Too many buffers (maximum of %d)",
                     AUCMD_MAX_PATTERNS);
       goto cleanup;
     }
 
-    buffers = arena_array(arena, kv_size(opts->buffer.data.array));
-    FOREACH_ITEM(opts->buffer.data.array, bufnr, {
+    buffers = arena_array(arena, kv_size(buf_array));
+    FOREACH_ITEM(buf_array, bufnr, {
       VALIDATE_EXP((bufnr.type == kObjectTypeInteger || bufnr.type == kObjectTypeBuffer),
                    "buffer", "Integer", api_typename(bufnr.type), {
         goto cleanup;
@@ -214,7 +240,11 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
       ADD_C(buffers, STRING_OBJ(arena_printf(arena, "<buffer=%d>", (int)buf->handle)));
     });
   } else if (HAS_KEY(opts, get_autocmds, buffer)) {
-    VALIDATE_EXP(false, "buffer", "Integer or Array", api_typename(opts->buffer.type), {
+    VALIDATE_EXP(false, "buffer", "Integer or Array", api_typename(buf_type), {
+      goto cleanup;
+    });
+  } else if (HAS_KEY(opts, get_autocmds, buf)) {
+    VALIDATE_EXP(false, "buffer", "Integer or Array", api_typename(buf_type), {
       goto cleanup;
     });
   }
@@ -364,7 +394,8 @@ cleanup:
 /// @param opts Options dict:
 ///             - group (string|integer) optional: autocommand group name or id to match against.
 ///             - pattern (string|array) optional: pattern(s) to match literally |autocmd-pattern|.
-///             - buffer (integer) optional: buffer number for buffer-local autocommands
+///             - buf (integer) optional: buffer number for buffer-local autocommands
+///             - buffer (integer) optional: buffer number for buffer-local autocommands. (deprecated) use buf.
 ///             |autocmd-buflocal|. Cannot be used with {pattern}.
 ///             - desc (string) optional: description (for documentation and troubleshooting).
 ///             - callback (function|string) optional: Lua function (or Vimscript function name, if
@@ -448,13 +479,22 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   }
 
   bool has_buffer = HAS_KEY(opts, create_autocmd, buffer);
+  bool has_buf = HAS_KEY(opts, create_autocmd, buf);
+  bool has_any_buf = has_buffer || has_buf;
 
-  VALIDATE((!HAS_KEY(opts, create_autocmd, pattern) || !has_buffer),
+  VALIDATE((!HAS_KEY(opts, create_autocmd, pattern) || !has_any_buf),
            "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
     goto cleanup;
   });
 
-  Array patterns = get_patterns_from_pattern_or_buf(opts->pattern, has_buffer, opts->buffer, "*",
+  Buffer buf;
+  if (has_buffer) {
+    buf = opts->buffer;
+  } else {
+    buf = opts->buf;
+  };
+
+  Array patterns = get_patterns_from_pattern_or_buf(opts->pattern, has_any_buf, buf, "*",
                                                     arena, err);
   if (ERROR_SET(err)) {
     goto cleanup;
@@ -534,7 +574,10 @@ void nvim_del_autocmd(Integer id, Error *err)
 ///                   match the pattern.
 ///             - defaults to clearing all patterns.
 ///             - NOTE: Cannot be used with {buffer}
-///         - buffer: (bufnr)
+///         - buf: (bufnr)
+///             - clear only |autocmd-buflocal| autocommands.
+///             - NOTE: Cannot be used with {pattern}
+///         - buffer: (bufnr) (deprecatd) use buf.
 ///             - clear only |autocmd-buflocal| autocommands.
 ///             - NOTE: Cannot be used with {pattern}
 ///         - group: (string|int) The augroup name or id.
@@ -555,8 +598,10 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
   }
 
   bool has_buffer = HAS_KEY(opts, clear_autocmds, buffer);
+  bool has_buf = HAS_KEY(opts, clear_autocmds, buf);
+  bool has_any_buf = has_buffer || has_buf;
 
-  VALIDATE((!HAS_KEY(opts, clear_autocmds, pattern) || !has_buffer),
+  VALIDATE((!HAS_KEY(opts, clear_autocmds, pattern) || !has_any_buf),
            "%s", "Cannot use both 'pattern' and 'buffer'", {
     return;
   });
@@ -566,9 +611,15 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
     return;
   }
 
+  int buf;
+  if (has_buf) {
+    buf = opts->buf;
+  } else {
+    buf = opts->buffer;
+  }
   // When we create the autocmds, we want to say that they are all matched, so that's *
   // but when we clear them, we want to say that we didn't pass a pattern, so that's NUL
-  Array patterns = get_patterns_from_pattern_or_buf(opts->pattern, has_buffer, opts->buffer, "",
+  Array patterns = get_patterns_from_pattern_or_buf(opts->pattern, has_any_buf,  buf, "",
                                                     arena, err);
   if (ERROR_SET(err)) {
     return;
@@ -679,10 +730,12 @@ void nvim_del_augroup_by_name(String name, Error *err)
 ///             id to match against. |autocmd-groups|.
 ///             - pattern (string|array) optional: defaults to "*" |autocmd-pattern|. Cannot be used
 ///             with {buffer}.
-///             - buffer (integer) optional: buffer number |autocmd-buflocal|. Cannot be used with
+///             - buf (integer) optional: buffer number |autocmd-buflocal|. Cannot be used with
 ///             {pattern}.
 ///             - modeline (bool) optional: defaults to true. Process the
 ///             modeline after the autocommands [<nomodeline>].
+///             - buffer (integer) optional: buffer number |autocmd-buflocal|. Cannot be used with
+///             {pattern}. (deprecated) use buf.
 ///             - data (any): arbitrary data to send to the autocommand callback. See
 ///             |nvim_create_autocmd()| for details.
 /// @see |:doautocmd|
@@ -692,7 +745,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
   int au_group = AUGROUP_ALL;
   bool modeline = true;
 
-  buf_T *buf = curbuf;
+  buf_T *b = curbuf;
 
   Object *data = NULL;
 
@@ -724,21 +777,43 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
   }
 
   bool has_buffer = false;
-  if (HAS_KEY(opts, exec_autocmds, buffer)) {
+  if (HAS_KEY(opts, exec_autocmds, buffer) ) {
     VALIDATE((!HAS_KEY(opts, exec_autocmds, pattern)),
              "%s", "Cannot use both 'pattern' and 'buffer' for the same autocmd", {
       return;
     });
 
     has_buffer = true;
-    buf = find_buffer_by_handle(opts->buffer, err);
+    b = find_buffer_by_handle(opts->buffer, err);
 
     if (ERROR_SET(err)) {
       return;
     }
   }
 
-  Array patterns = get_patterns_from_pattern_or_buf(opts->pattern, has_buffer, opts->buffer, "",
+  bool has_buf = false;
+  if (HAS_KEY(opts, exec_autocmds, buf) ) {
+    VALIDATE((!HAS_KEY(opts, exec_autocmds, pattern)),
+             "%s", "Cannot use both 'pattern' and 'buf' for the same autocmd", {
+      return;
+    });
+
+    has_buf = true;
+    b = find_buffer_by_handle(opts->buf, err);
+
+    if (ERROR_SET(err)) {
+      return;
+    }
+  }
+  bool has_any_buf = has_buffer || has_buf;
+  int buf;
+  if (has_buffer) {
+    buf = opts->buffer;
+  } else { 
+    buf = opts->buf;
+  }
+
+  Array patterns = get_patterns_from_pattern_or_buf(opts->pattern, has_any_buf, buf, "",
                                                     arena, err);
   if (ERROR_SET(err)) {
     return;
@@ -756,7 +831,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Arena *arena, E
 
     FOREACH_ITEM(patterns, pat, {
       char *fname = !has_buffer ? pat.data.string.data : NULL;
-      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, data);
+      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, b, NULL, data);
     })
   })
 

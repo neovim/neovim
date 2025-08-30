@@ -18,6 +18,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.clear_autocmds
 --- @field buffer? integer
+--- @field buf? integer
 --- @field event? vim.api.keyset.events|vim.api.keyset.events[]
 --- @field group? integer|string
 --- @field pattern? string|string[]
@@ -221,6 +222,7 @@ error('Cannot require a meta file')
 --- |'WinScrolled'
 
 --- @class vim.api.keyset.create_autocmd
+--- @field buf? integer
 --- @field buffer? integer
 --- @field callback? string|fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?
 --- @field command? string
@@ -253,6 +255,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.exec_autocmds
 --- @field buffer? integer
+--- @field buf? integer
 --- @field group? integer|string
 --- @field modeline? boolean
 --- @field pattern? string|string[]
