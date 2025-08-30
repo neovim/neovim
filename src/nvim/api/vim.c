@@ -332,7 +332,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
     if (!dangerous) {
       ex_normal_busy++;
     }
-    exec_normal(true);
+    exec_normal(true, lowlevel);
     if (!dangerous) {
       ex_normal_busy--;
     }
