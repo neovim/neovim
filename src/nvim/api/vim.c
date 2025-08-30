@@ -835,7 +835,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   }
 
   if (!needs_clear) {
-    // history takes ownership
+    // history takes ownership of `hl_msg`
     return id;
   }
 
