@@ -135,7 +135,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: windows-2022
+          - runner: windows-latest
             arch: x86_64
             zip_name: nvim-win-x64.zip
           - runner: windows-11-arm
