@@ -64,3 +64,10 @@ struct AutoPatCmd_S {
 };
 
 typedef kvec_t(AutoCmd) AutoCmdVec;
+
+typedef struct {
+  event_T event;
+  char *fname;
+  char *fname_io;
+  Buffer buf;
+} SafeAutocommandEvent;
