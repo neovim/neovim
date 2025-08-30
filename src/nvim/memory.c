@@ -873,8 +873,6 @@ void free_all_mem(void)
   // Clear user commands (before deleting buffers).
   ex_comclear(NULL);
 
-  // When exiting from mainerr_arg_missing curbuf has not been initialized,
-  // and not much else.
   if (curbuf != NULL) {
     // Clear menus.
     do_cmdline_cmd("aunmenu *");
