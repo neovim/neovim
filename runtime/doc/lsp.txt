@@ -135,7 +135,7 @@ following (in increasing priority):
 
 1. Configuration defined for the `'*'` name.
 2. Configuration from the result of merging all tables returned by
-   `lsp/<name>.lua` files in 'runtimepath' for a server of name `name`.
+   `lsp/<config>.lua` files in 'runtimepath' for the config named `<config>`.
 3. Configurations defined anywhere else.
 
 Note: The merge semantics of configurations follow the behaviour of
@@ -256,6 +256,12 @@ FAQ                                                     *lsp-faq*
      " (async = false is the default for format)
      autocmd BufWritePre *.rs lua vim.lsp.buf.format({ async = false })
 <
+
+- Q: How to avoid my own lsp/ folder being overridden?
+- A: Place your configs under "after/lsp/". Files in "after/lsp/" are loaded
+     after those in "nvim/lsp/", so your settings will take precedence over
+     the defaults provided by nvim-lspconfig. See also: |after-directory|
+
                                                         *lsp-vs-treesitter*
 - Q: How do LSP, Treesitter and Ctags compare?
 - A: LSP requires a client and language server. The language server uses
