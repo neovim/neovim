@@ -146,6 +146,7 @@ void stream_close_handle(Stream *stream, bool rstream)
 static void rstream_close_cb(uv_handle_t *handle)
 {
   RStream *stream = handle->data;
+  // check if stream exists first to avoid race condition in :connect
   if (stream && stream->buffer) {
     free_block(stream->buffer);
   }
@@ -155,9 +156,11 @@ static void rstream_close_cb(uv_handle_t *handle)
 static void close_cb(uv_handle_t *handle)
 {
   Stream *stream = handle->data;
+  // check if stream exists first to avoid race condition in :connect
   if (stream && stream->close_cb) {
     stream->close_cb(stream, stream->close_cb_data);
   }
+  // check if stream exists first to avoid race condition in :connect
   if (stream && stream->internal_close_cb) {
     stream->internal_close_cb(stream, stream->internal_data);
   }
