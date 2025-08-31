@@ -1602,7 +1602,7 @@ void nv_mouse(cmdarg_T *cap)
   do_mouse(cap->oap, cap->cmdchar, BACKWARD, cap->count1, 0);
 }
 
-/// Compute the position in the buffer line from the posn on the screen in
+/// Compute the buffer line position from the screen position "rowp" / "colp" in
 /// window "win".
 /// Returns true if the position is below the last line.
 bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
