@@ -173,7 +173,11 @@ describe('luaeval(vim.api.…)', function()
       )
     )
     eq(
-      { foo = 2 },
+      {
+        [1] = 42,
+        [5] = 1,
+        foo = 2,
+      },
       fn.luaeval(
         'vim.api.nvim__id({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'
       )
@@ -204,7 +208,11 @@ describe('luaeval(vim.api.…)', function()
       )
     )
     eq(
-      { { foo = 2 } },
+      { {
+        [1] = 42,
+        [5] = 1,
+        foo = 2,
+      } },
       fn.luaeval(
         'vim.api.nvim__id_array({{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'
       )
@@ -238,7 +246,11 @@ describe('luaeval(vim.api.…)', function()
       )
     )
     eq(
-      { foo = 2 },
+      {
+        [1] = 42,
+        [5] = 1,
+        foo = 2,
+      },
       fn.luaeval(
         'vim.api.nvim__id_dict({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'
       )
@@ -304,11 +316,6 @@ describe('luaeval(vim.api.…)', function()
   end)
 
   it('validation', function()
-    -- Conversion errors
-    eq(
-      [[Vim(call):E5108: Lua: [string "luaeval()"]:0: Invalid 'obj': Cannot convert given Lua table]],
-      remove_trace(pcall_err(n.command, [[call luaeval("vim.api.nvim__id({1, foo=42})")]]))
-    )
     -- Errors in number of arguments
     eq(
       'Vim(call):E5108: Lua: [string "luaeval()"]:0: Expected 1 argument',
@@ -410,5 +417,38 @@ describe('luaeval(vim.api.…)', function()
 
   it('serializes sparse arrays in Lua', function()
     eq({ [1] = vim.NIL, [2] = 2 }, exec_lua [[ return { [2] = 2 } ]])
+  end)
+
+  it('serializes mixed tables in Lua', function()
+    eq({
+      [1] = '1',
+      ['one'] = 'one',
+    }, exec_lua [[ return { [1] = "1", ["one"] = "one", } ]])
+  end)
+
+  it('preserves integer keys of mixed tables across RPC', function()
+    eq({
+      [1] = 'a',
+      [2] = 'b',
+      c = 'd',
+    }, exec_lua [[ return vim.api.nvim__id({ "a", "b", c = "d" }) ]])
+  end)
+
+  it('passes mixed tables through event data', function()
+    local data = exec_lua([[
+      local captured
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'TestMixed',
+        callback = function(args)
+          captured = args.data
+        end,
+      })
+      vim.api.nvim_exec_autocmds('User', {
+        pattern = 'TestMixed',
+        data = { values = { 'a', 'b', c = 'd' } },
+      })
+      return captured
+    ]])
+    eq({ values = { 'a', 'b', c = 'd' } }, data)
   end)
 end)

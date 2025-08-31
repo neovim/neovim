@@ -37,6 +37,12 @@
 #define CBUF_TO_ARENA_STR(arena, s, len) arena_string(arena, cbuf_as_string((char *)(s), len))
 #define CBUF_TO_ARENA_OBJ(arena, s, len) STRING_OBJ(CBUF_TO_ARENA_STR(arena, s, len))
 
+/// Prefix of synthetic `Dict` keys that encode a Lua integer table key.
+/// `Dict` (and Vimscript dicts) can only hold string keys.
+/// To bridge them, we store the integer keys of mixed
+/// array/dict Lua tables as `__unkeyed-<integer>`.
+#define UNKEYED_KEY_PREFIX "__unkeyed-"
+
 #define BUFFER_OBJ(s) ((Object) { \
     .type = kObjectTypeBuffer, \
     .data.integer = s })

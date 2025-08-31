@@ -432,6 +432,9 @@ LUA
 • |vim.o| now accepts table style values for assignment.
 • |vim.keycode()| returns structured info as return value 2.
 • |Iter:count()| counts items in the iterator.
+• Lua tables with mixed integer and string keys are now accepted by API
+  functions. Integer keys round-trip through Lua/msgpack; Vimscript keeps
+  them as `__unkeyed-<n>` string keys (|lua-table-ambiguous|).
 
 OPTIONS
 

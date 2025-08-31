@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -32,6 +34,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/types_defs.h"
+#include "nvim/vim_defs.h"
 
 #include "api/private/api_metadata.generated.h"
 #include "api/private/helpers.c.generated.h"  // IWYU pragma: keep
@@ -635,6 +638,48 @@ String copy_string(String str, Arena *arena)
   } else {
     return (String)STRING_INIT;
   }
+}
+
+/// Try to parse a synthetic `__unkeyed-<n>` key.
+/// Returns `true` on success, if `key` is a synthetic `__unkeyed-<n>` key.
+///
+/// @see UNKEYED_KEY_PREFIX
+bool unkeyed_key_parse(String key, int64_t *out)
+{
+  static const char prefix[] = UNKEYED_KEY_PREFIX;
+  const size_t prefix_len = sizeof(prefix) - 1;
+  if (key.size <= prefix_len || memcmp(key.data, prefix, prefix_len) != 0) {
+    return false;
+  }
+  const char *int_part = key.data + prefix_len;
+  const size_t int_len = key.size - prefix_len;
+  if (int_len == 0 || int_len >= NUMBUFLEN
+      || !(ascii_isdigit(int_part[0])
+           || (int_part[0] == '-' && int_len > 1 && ascii_isdigit(int_part[1])))) {
+    return false;
+  }
+  char buf[NUMBUFLEN];
+  memcpy(buf, int_part, int_len);
+  buf[int_len] = NUL;
+  char *endptr = NULL;
+  errno = 0;
+  const intmax_t value = strtoimax(buf, &endptr, 10);
+  if (errno != 0 || endptr != buf + int_len) {
+    return false;
+  }
+  *out = (int64_t)value;
+  return true;
+}
+
+/// Create the synthetic `Dict` key for integer `n`.
+///
+/// @see UNKEYED_KEY_PREFIX
+String unkeyed_key_from_int(int64_t n, Arena *arena)
+{
+  char buf[sizeof(UNKEYED_KEY_PREFIX) + NUMBUFLEN];
+  const int len = snprintf(buf, sizeof(buf), UNKEYED_KEY_PREFIX "%" PRId64, n);
+  assert(len > 0 && (size_t)len < sizeof(buf));
+  return (String){ .data = arena_memdupz(arena, buf, (size_t)len), .size = (size_t)len };
 }
 
 Array copy_array(Array array, Arena *arena)

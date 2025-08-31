@@ -163,6 +163,10 @@ describe('luaeval()', function()
     eq(nested_by_level[level].o, fn.luaeval('_A', nested_by_level[level].o))
   end)
 
+  it('passes `__unkeyed-<n>` keys as integers to Lua', function()
+    eq('number', eval([[luaeval('type(next(_A))', {'__unkeyed-1': 'a'})]]))
+  end)
+
   local function sp(typ, val)
     return ('{"_TYPE": v:msgpack_types.%s, "_VAL": %s}'):format(typ, val)
   end
@@ -197,8 +201,8 @@ describe('luaeval()', function()
 
   it('failure modes', function()
     eq(
-      'Vim(call):E5100: Cannot convert given Lua table: table should contain either only integer keys or only string keys',
-      pcall_err(command, 'call luaeval("{1, foo=2}")')
+      'Vim(call):E5100: Cannot convert given Lua table: table should contain only integer and/or string keys',
+      pcall_err(command, 'call luaeval("{[true]=1}")')
     )
 
     startswith(
@@ -460,7 +464,7 @@ describe('luaeval()', function()
       fn.luaeval('{[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}')
     )
     eq(
-      { foo = 2 },
+      { [1] = 42, [5] = 1, foo = 2 },
       fn.luaeval('{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}')
     )
     eq(10, fn.luaeval('{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))

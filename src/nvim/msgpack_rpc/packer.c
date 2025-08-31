@@ -287,7 +287,12 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
       Dict dict = container->data.dict;
       KeyValuePair *it = &dict.items[container_idx++];
       mpack_check_buffer(packer);
-      mpack_str(it->key, packer);
+      int64_t int_key;
+      if (unkeyed_key_parse(it->key, &int_key)) {
+        mpack_integer(&packer->ptr, int_key);
+      } else {
+        mpack_str(it->key, packer);
+      }
       current = &it->value;
       if (container_idx >= dict.size) {
         container = NULL;

@@ -355,7 +355,10 @@ numbers. To disambiguate these cases, we define:
 1. Table with N consecutive (no `nil` values, aka "holes") integer keys 1…N is
    a list. See also |list-iterator|.
                                                                     *lua-dict*
-2. Table with string keys, none of which contains NUL byte, is a dict.
+2. Table with string keys, none of which contains NUL byte, is a dict. A
+   table with both integer and string keys is also a dict; its integer keys
+   are encoded as `__unkeyed-<n>` string keys. Vimscript keeps these as
+   `__unkeyed-<n>` strings, Lua and msgpack round-trip them to integer keys.
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
@@ -367,10 +370,10 @@ numbers. To disambiguate these cases, we define:
      converted to |Number|s, non-integral are converted to |Float|s. This
      variant allows integral |Float|s.
    - `{[vim.type_idx]=vim.types.dictionary}` is converted to an empty
-     dictionary, `{[vim.type_idx]=vim.types.dictionary, [42]=1, a=2}` is
-     converted to a dictionary `{'a': 42}`: non-string keys are ignored.
-     Without `vim.type_idx` key tables with keys not fitting in 1., 2. or 3.
-     are errors.
+     dictionary; `{[vim.type_idx]=vim.types.dictionary, [42]=1, a=2}` is
+     converted to a dictionary whose integer keys are encoded as
+     `__unkeyed-<n>` string keys. Without `vim.type_idx` key tables with
+     keys not fitting in 1., 2. or 3. are errors.
    - `{[vim.type_idx]=vim.types.array}` is converted to an empty list. As well
      as `{[vim.type_idx]=vim.types.array, [42]=1}`: integral keys that do not
      form a 1-step sequence from 1 to N are ignored, as well as all
