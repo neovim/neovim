@@ -142,7 +142,7 @@ endif()
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 11)
 set(NVIM_VERSION_PATCH 4)
-set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
+set(NVIM_VERSION_PRERELEASE "") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 13)        # Bump this after any API/stdlib change.
