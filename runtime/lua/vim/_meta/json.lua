@@ -38,5 +38,7 @@ function vim.json.decode(str, opts) end
 ---@param opts? table<string,any> Options table with keys:
 ---                                 - escape_slash: (boolean) (default false) Escape slash
 ---                                   characters "/" in string values.
+---                                 - sort_keys: (boolean) (default false) Sort object
+---                                   keys in alphabetical order.
 ---@return string
 function vim.json.encode(obj, opts) end

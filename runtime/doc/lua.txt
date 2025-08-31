@@ -3375,6 +3375,8 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
       • {opts}  (`table<string,any>?`) Options table with keys:
                 • escape_slash: (boolean) (default false) Escape slash
                   characters "/" in string values.
+                • sort_keys: (boolean) (default false) Sort object keys in
+                  alphabetical order.
 
     Return: ~
         (`string`)
