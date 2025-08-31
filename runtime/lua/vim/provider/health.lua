@@ -724,10 +724,9 @@ local function python()
       local message = 'Detected pip upgrade failure: Python executable can import "pynvim" but not "neovim": '
         .. pynvim_exe
       local advice = {
-        'Use that Python version to reinstall "pynvim" and optionally "neovim".',
+        'Use that Python version to uninstall any "pynvim" or "neovim", e.g.:',
         pynvim_exe .. ' -m pip uninstall pynvim neovim',
-        pynvim_exe .. ' -m pip install pynvim',
-        pynvim_exe .. ' -m pip install neovim  # only if needed by third-party software',
+        'Then see :help provider-python for "pynvim" installation steps.',
       }
       health.error(message, advice)
     end
@@ -753,7 +752,7 @@ local function python()
     if is_bad_response(current) then
       health.error(
         'pynvim is not installed.\nError: ' .. current,
-        'Run in shell: ' .. python_exe .. ' -m pip install pynvim'
+        'See :help provider-python for "pynvim" installation steps.'
       )
     end
 
