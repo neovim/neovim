@@ -2378,6 +2378,33 @@ set_level({level})                                   *vim.lsp.log.set_level()*
 
 
 ==============================================================================
+Lua module: vim.lsp.on_type_formatting                *lsp-on_type_formatting*
+
+enable({enable}, {filter})               *vim.lsp.on_type_formatting.enable()*
+    Enables/disables on-type formatting globally or for the {filter}ed scope.
+    The following are some practical usage examples: >lua
+        -- Enable for all clients
+        vim.lsp.on_type_formatting.enable()
+
+        -- Enable for a specific client
+        vim.api.nvim_create_autocmd('LspAttach', {
+          callback = function(args)
+            local client_id = args.data.client_id
+            local client = assert(vim.lsp.get_client_by_id(client_id))
+            if client.name == 'rust-analyzer' then
+              vim.lsp.on_type_formatting.enable(true, { client_id = client_id })
+            end
+          end,
+        })
+<
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable.
+      • {filter}  (`table?`) Optional filters |kwargs|:
+                  • {client_id} (`integer?`) Client ID, or `nil` for all.
+
+
+==============================================================================
 Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
 *vim.lsp.rpc.PublicClient*
