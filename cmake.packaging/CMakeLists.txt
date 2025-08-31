@@ -30,7 +30,7 @@ if(WIN32)
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
     set(CPACK_PACKAGE_FILE_NAME "nvim-win-arm64")
   else()
-    set(CPACK_PACKAGE_FILE_NAME "nvim-win-x64")
+    set(CPACK_PACKAGE_FILE_NAME "nvim-win64")
   endif()
   
   set(CPACK_GENERATOR ZIP WIX)
