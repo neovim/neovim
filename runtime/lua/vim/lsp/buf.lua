@@ -574,6 +574,11 @@ end
 --- (Default: current selection in visual mode, `nil` in other modes,
 --- formatting the full buffer)
 --- @field range? {start:[integer,integer],end:[integer, integer]}|{start:[integer,integer],end:[integer,integer]}[]
+---
+--- Notify if no languagage servers match.
+--- If no language servers match, print a warning using `vim.notify()`.
+--- (Default: true)
+--- @field notify? boolean
 
 --- Formats a buffer using the attached (and optionally filtered) language
 --- server clients.
@@ -611,7 +616,7 @@ function M.format(opts)
     clients = vim.tbl_filter(opts.filter, clients)
   end
 
-  if #clients == 0 then
+  if #clients == 0 and opts.notify ~= false then
     vim.notify('[LSP] Format request failed, no matching language servers.')
   end
 

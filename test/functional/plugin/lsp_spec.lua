@@ -5168,6 +5168,32 @@ describe('LSP', function()
       }
     end)
 
+    it('aborts without notify if no client matches filter and notify is set to false', function()
+      local client --- @type vim.lsp.Client
+      test_rpc_server {
+        test_name = 'basic_init',
+        on_init = function(c)
+          client = c
+        end,
+        on_handler = function()
+          local notify_msg = exec_lua(function()
+            local bufnr = vim.api.nvim_get_current_buf()
+            vim.lsp.buf_attach_client(bufnr, _G.TEST_RPC_CLIENT_ID)
+            local notify_msg --- @type string?
+            local notify = vim.notify
+            vim.notify = function(msg, _)
+              notify_msg = msg
+            end
+            vim.lsp.buf.format({ name = 'does-not-exist', notify = false })
+            vim.notify = notify
+            return notify_msg
+          end)
+          eq(nil, notify_msg)
+          client:stop()
+        end,
+      }
+    end)
+
     it('sends textDocument/formatting request to format buffer', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },

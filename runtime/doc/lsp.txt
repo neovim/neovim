@@ -1444,6 +1444,9 @@ format({opts})                                          *vim.lsp.buf.format()*
                   using (1,0) indexing. Can also be a list of tables that
                   contain `start` and `end` keys as described above, in which
                   case `textDocument/rangesFormatting` support is required.
+                • {notify}? (`boolean`, default: true) Notify if there are
+                  no matching language servers.
+
 
 hover({config})                                          *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
