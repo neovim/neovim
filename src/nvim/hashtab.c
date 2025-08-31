@@ -317,7 +317,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
     // Use specified size.
     minitems = MAX(minitems, ht->ht_used);
     // array is up to 2/3 full
-    minsize = minitems * 3 / 2;
+    minsize = (minitems * 3 + 1) / 2;
   }
 
   size_t newsize = HT_INIT_SIZE;
