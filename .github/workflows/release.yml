@@ -135,9 +135,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: windows-latest
+          - runner: windows-2022
             arch: x86_64
-            zip_name: nvim-win-x64.zip
+            zip_name: nvim-win64.zip
           - runner: windows-11-arm
             arch: arm64
             zip_name: nvim-win-arm64.zip
@@ -161,15 +161,15 @@ jobs:
           cmake --build .deps
       - name: Build package
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }}
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build build --target package
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.arch == 'x86_64' && 'nvim-win-x64' || 'nvim-win-arm64' }}
+          name: nvim-win-${{ matrix.arch }}
           path: |
             build/${{ matrix.zip_name }}
-            ${{ matrix.arch == 'x86_64' && format('build/nvim-win-x64.msi') || format('build/nvim-win-arm64.msi') }}
+            ${{ matrix.arch == 'x86_64' && format('build/nvim-win64.msi') || format('build/nvim-win-arm64.msi') }}
           retention-days: 1
 
   publish:
