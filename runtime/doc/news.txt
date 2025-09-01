@@ -204,6 +204,7 @@ HIGHLIGHTS
 • |hl-DiffTextAdd| highlights added text within a changed line.
 • |hl-StderrMsg| |hl-StdoutMsg|
 • |hl-SnippetTabstopActive| highlights the currently active tabstop.
+• |hl-OkMsg| highlights success messages.
 
 LSP
 

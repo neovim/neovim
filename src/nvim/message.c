@@ -292,14 +292,61 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
 static bool is_multihl = false;
 
+/// Format a progress message, adding title and percent if given.
+///
+/// @param hl_msg Message chunks
+/// @param msg_data Additional data for progress messages
+static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data)
+{
+  HlMessage updated_msg = KV_INITIAL_VALUE;
+  // progress messages are special. displayed as "title: percent% msg"
+  if (msg_data->title.size != 0) {
+    // this block draws the "title:" before the progress-message
+    int hl_id = 0;
+    if (msg_data->status.data == NULL) {
+      hl_id = 0;
+    } else if (strequal(msg_data->status.data, "success")) {
+      hl_id = syn_check_group("OkMsg", STRLEN_LITERAL("OkMsg"));
+    } else if (strequal(msg_data->status.data, "failed")) {
+      hl_id = syn_check_group("ErrorMsg", STRLEN_LITERAL("ErrorMsg"));
+    } else if (strequal(msg_data->status.data, "running")) {
+      hl_id = syn_check_group("MoreMsg", STRLEN_LITERAL("MoreMsg"));
+    } else if (strequal(msg_data->status.data, "cancel")) {
+      hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
+    }
+    kv_push(updated_msg,
+            ((HlMessageChunk){ .text = copy_string(msg_data->title, NULL), .hl_id = hl_id }));
+    kv_push(updated_msg, ((HlMessageChunk){ .text = cstr_to_string(": "), .hl_id = 0 }));
+  }
+  if (msg_data->percent > 0) {
+    char percent_buf[10];
+    vim_snprintf(percent_buf, sizeof(percent_buf), "%3ld%% ", (long)msg_data->percent);
+    String percent = cstr_to_string(percent_buf);
+    int hl_id = syn_check_group("WarningMsg", STRLEN_LITERAL("WarningMsg"));
+    kv_push(updated_msg, ((HlMessageChunk){ .text = percent, .hl_id = hl_id }));
+  }
+
+  if (kv_size(updated_msg) != 0) {
+    for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+      kv_push(updated_msg,
+              ((HlMessageChunk){ .text = copy_string(kv_A(hl_msg, i).text, NULL),
+                                 .hl_id = kv_A(hl_msg, i).hl_id }));
+    }
+    return updated_msg;
+  } else {
+    return hl_msg;
+  }
+}
+
 /// Print message chunks, each with their own highlight ID.
 ///
 /// @param hl_msg Message chunks
 /// @param kind Message kind (can be NULL to avoid setting kind)
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
+/// @param msg_data Additional data for progress messages
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
-                  MessageData *msg_data)
+                  MessageData *msg_data, bool *needs_msg_clear)
 {
   no_wait_return++;
   msg_start();
@@ -311,7 +358,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
-  bool is_progress = strequal(kind, "progress");
 
   // provide a new id if not given
   if (id.type == kObjectTypeNil) {
@@ -323,12 +369,13 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
   }
 
-  // progress message are special displayed as "title: msg...percent%"
-  if (is_progress && msg_data && msg_data->title.size != 0) {
-    // this block draws the "title:" before the progress-message
-    String title = cstr_as_string(concat_str(msg_data->title.data, ": "));
-    msg_multiline(title, 0, true, false, &need_clear);
-    api_free_string(title);
+  // progress message are special displayed as "title: percent% msg"
+  if (strequal(kind, "progress") && msg_data) {
+    HlMessage formated_message = format_progress_message(hl_msg, msg_data);
+    if (formated_message.items != hl_msg.items) {
+      *needs_msg_clear = true;
+      hl_msg = formated_message;
+    }
   }
 
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
@@ -341,12 +388,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
 
-  if (is_progress && msg_data && msg_data->percent > 0) {
-    // this block draws the "...percent%" before the progress-message
-    char percent_buf[10];
-    vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)msg_data->percent);
-    msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
-  }
   if (history && kv_size(hl_msg)) {
     msg_hist_add_multihl(id, hl_msg, false, msg_data);
   }
@@ -1265,7 +1306,8 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(INTEGER_OBJ(0), p->msg, p->kind, false, false, NULL);
+      bool needs_clear = false;
+      msg_multihl(INTEGER_OBJ(0), p->msg, p->kind, false, false, NULL, &needs_clear);
       msg_silent -= ui_has(kUIMessages);
     }
   }
