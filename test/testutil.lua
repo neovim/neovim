@@ -73,24 +73,28 @@ end
 --- @param fn function
 --- @return any
 function M.retry(max, max_ms, fn)
-  luaassert(max == nil or max > 0)
-  luaassert(max_ms == nil or max_ms > 0)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
   local tries = 1
   local timeout = (max_ms and max_ms or 10000)
-  local start_time = uv.now()
-  while true do
+
+  local status, result = vim.wait(timeout, function()
     --- @type boolean, any
     local status, result = pcall(fn)
     if status then
-      return result
+      return status, result
     end
-    uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-    if (max and tries >= max) or (uv.now() - start_time > timeout) then
-      busted.fail(string.format('retry() attempts: %d\n%s', tries, tostring(result)), 2)
+    if max and tries >= max then
+      return false
     end
     tries = tries + 1
-    uv.sleep(20) -- Avoid hot loop...
+  end, 20)
+
+  if not status then
+    busted.fail(string.format('retry() attempts: %d\n%s', tries, tostring(result)), 2)
   end
+
+  return result
 end
 
 local check_logs_useless_lines = {
