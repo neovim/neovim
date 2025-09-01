@@ -2236,6 +2236,7 @@ local pattern = {
   },
   ['/%.'] = {
     ['/%.aws/credentials$'] = 'confini',
+    ['/%.aws/cli/alias$'] = 'confini',
     ['/%.gitconfig%.d/'] = starsetf('gitconfig'),
     ['/%.gnupg/gpg%.conf$'] = 'gpg',
     ['/%.gnupg/options$'] = 'gpg',
