@@ -3223,7 +3223,7 @@ static int decor_providers_setup(int rows_to_draw, bool draw_from_line_start, li
     int first_row_width = draw_from_line_start ? width : width2;
     rem_vcols = first_row_width + (rows_to_draw - 1) * width2;
   } else {
-    rem_vcols = wp->w_view_height - win_col_off(wp);
+    rem_vcols = wp->w_view_width - win_col_off(wp);
   }
 
   // Call it here since we need to invalidate the line pointer anyway.
