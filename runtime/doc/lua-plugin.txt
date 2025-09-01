@@ -2,7 +2,7 @@
 
                             NVIM REFERENCE MANUAL
 
-		  Guide to developing Lua plugins for Nvim
+                   Guide to developing Lua plugins for Nvim
 
 
                                        Type |gO| to see the table of contents.
@@ -10,11 +10,32 @@
 ==============================================================================
 Introduction                                                       *lua-plugin*
 
-This is a guide for getting started with Nvim plugin development. It is not
-intended as a set of rules, but as a collection of recommendations for good
-practices.
+This document provides guidance for developing Nvim (Lua) plugins:
 
-For a guide to using Lua in Nvim, please refer to |lua-guide|.
+See |lua-guide| for guidance on using Lua to configure and operate Nvim.
+See |luaref| and |lua-concepts| for details on the Lua programming language.
+
+==============================================================================
+Creating your first plugin                                    *lua-plugin-new*
+
+Any Vimscript or Lua code file that lives in the right directory,
+automatically is a "plugin". There's no maniest or "registration" required.
+
+You can try it right now:
+
+1. Visit your config directory: >
+    :exe 'edit' stdpath('config')
+<
+2. Create a `plugin/foo.lua` file in there.
+3. Add something to it, like: >lua
+    vim.print('Hello World')
+<
+4. Start `nvim` and notice that it prints "Hello World" in the messages area.
+   Check `:messages` if you don't see it.
+
+Besides `plugin/foo.lua`, which is always run at startup, you can define Lua
+modules in the `lua/` directory. Those modules aren't loaded until your
+`plugin/foo.lua`, the user, calls `require(…)`.
 
 ==============================================================================
 Type safety                                            *lua-plugin-type-safety*
@@ -24,24 +45,24 @@ virtually immediate feedback.
 But for larger projects, this can be a double-edged sword, leaving your plugin
 susceptible to unexpected bugs at the wrong time.
 
-You can leverage LuaCATS https://luals.github.io/wiki/annotations/
-annotations, along with lua-language-server https://luals.github.io/ to catch
-potential bugs in your CI before your plugin's users do.
+You can leverage LuaCATS or "emmylua" annotations https://luals.github.io/wiki/annotations/
+along with lua-language-server ("LuaLS") https://luals.github.io/ to catch
+potential bugs in your CI before your plugin's users do. The Nvim codebase
+uses these annotations extensively.
 
-------------------------------------------------------------------------------
-Tools						 *lua-plugin-type-safety-tools*
+TOOLS
 
 - lua-typecheck-action https://github.com/marketplace/actions/lua-typecheck-action
 - lua-language-server https://luals.github.io
 
 ==============================================================================
-Keymaps							   *lua-plugin-keymaps*
+Keymaps                                                   *lua-plugin-keymaps*
 
-Avoid creating keymaps automatically, unless they are not controversial. Doing
-so can easily lead to conflicts with user |mapping|s.
+Avoid creating excessive keymaps automatically. Doing so can conflict with
+user |mapping|s.
 
 NOTE: An example for uncontroversial keymaps are buffer-local |mapping|s for
-      specific file types or floating windows.
+      specific file types or floating windows, or <Plug> mappings.
 
 A common approach to allow keymap configuration is to define a declarative DSL
 https://en.wikipedia.org/wiki/Domain-specific_language via a `setup` function.
@@ -81,25 +102,24 @@ Some benefits of exposing a Lua function are:
 NOTE: If your function takes an options table, users may still benefit
       from |<Plug>| mappings for the most common combinations.
 
-------------------------------------------------------------------------------
-Example					      *lua-plugin-plug-mapping-example*
+KEYMAP EXAMPLE
 
 In your plugin:
 >lua
-    vim.keymap.set("n", "<Plug>(SayHello)", function()
-        print("Hello from normal mode")
+    vim.keymap.set('n', '<Plug>(SayHello)', function()
+        print('Hello from normal mode')
     end, { noremap = true })
 
-    vim.keymap.set("v", "<Plug>(SayHello)", function()
-        print("Hello from visual mode")
+    vim.keymap.set('v', '<Plug>(SayHello)', function()
+        print('Hello from visual mode')
     end, { noremap = true })
 <
 In the user's config:
 >lua
-    vim.keymap.set({"n", "v"}, "<leader>h", "<Plug>(SayHello)")
+    vim.keymap.set({'n', 'v'}, '<leader>h', '<Plug>(SayHello)')
 <
 ==============================================================================
-Initialization					    *lua-plugin-initialization*
+Initialization                                               *lua-plugin-init*
 
 Newcomers to Lua plugin development will often put all initialization logic in
 a single `setup` function, which takes a table of options.
@@ -109,8 +129,8 @@ your plugin, even if they are happy with the default configuration.
 Strictly separated configuration and smart initialization allow your plugin to
 work out of the box.
 
-NOTE: A well designed plugin has minimal impact on startup time.
-      See also |lua-plugin-lazy-loading|.
+NOTE: A well designed plugin has minimal impact on startup time. See also
+|lua-plugin-lazy|.
 
 Common approaches to a strictly separated configuration are:
 
@@ -124,37 +144,45 @@ Typically, automatic initialization logic is done in a |plugin| or |ftplugin|
 script. See also |'runtimepath'|.
 
 ==============================================================================
-Lazy loading					      *lua-plugin-lazy-loading*
+Lazy loading                                                 *lua-plugin-lazy*
 
-When it comes to initializing your plugin, assume your users may not be using
-a plugin manager that takes care of lazy loading for you.
-Making sure your plugin does not unnecessarily impact startup time is your
-responsibility. A plugin's functionality may evolve over time, potentially
-leading to breakage if users have to hack into the loading mechanisms.
-Furthermore, a plugin that implements its own lazy initialization properly will
-likely have less overhead than the mechanisms used by a plugin manager or user
-to load that plugin lazily.
+Some users like to micro-manage "lazy loading" of plugins by explicitly
+configuring which commands and key mappings load the plugin.
+
+Your plugin should not depend on every user micro-managing their configuration
+in such a way. Nvim has a mechanism for every plugin to do its own implicit
+lazy-loading (in Vimscript it's called |autoload|), via `autoload/`
+(Vimscript) and `lua/` (Lua). Plugin authors can provide "lazy loading" by
+providing a `plugin/<name>.lua` file which defines their commands and
+keymappings. This file should be small, and should not eagerly `require()` the
+rest of your plugin. Commands and mappings should do the `require()`.
+
+Guidance:
+
+- Plugins should arrange their "lazy" behavior once, instead of expecting every user to micromanage it.
+- Keep `plugin/<name>.lua` small, avoid eagerly calling `require()` on modules
+  until a command or mapping is actually used.
 
 ------------------------------------------------------------------------------
-Defer `require` calls			*lua-plugin-lazy-loading-defer-require*
+Defer require() calls                               *lua-plugin-defer-require*
 
-|plugin| scripts should not eagerly `require` Lua modules.
+`plugin/<name>.lua` scripts (|plugin|) are eagerly run at startup; this is
+intentional, so that plugins can setup the (minimal) commands and keymappings
+that users will use to invoke the plugin. This also means these "plugin/"
+files should NOT eagerly `require` Lua modules.
 
 For example, instead of:
 >lua
-    local foo = require("foo")
-    vim.api.nvim_create_user_command("MyCommand", function()
+    local foo = require('foo')
+    vim.api.nvim_create_user_command('MyCommand', function()
         foo.do_something()
-    end, {
-      -- ...
-    })
+    end, { -- ... })
 <
-which will eagerly load the `foo` module and any other modules it imports
-eagerly, you can lazy load it by moving the `require` into the command's
-implementation.
+which calls `require('foo')` as soon as the module is loaded, you can
+lazy-load it by moving the `require` into the command's implementation:
 >lua
-    vim.api.nvim_create_user_command("MyCommand", function()
-        local foo = require("foo")
+    vim.api.nvim_create_user_command('MyCommand', function()
+        local foo = require('foo')
         foo.do_something()
     end, {
       -- ...
@@ -165,23 +193,23 @@ defer `require` calls too.
 
 NOTE: For a Vimscript alternative to `require`, see |autoload|.
 
-NOTE: In case you are worried about eagerly creating user commands, autocommands
-      or keymaps at startup:
-      Plugin managers that provide abstractions for lazy-loading plugins on
-      such events will need to create these themselves.
+NOTE: If you are worried about eagerly creating user commands, autocommands or
+keymaps at startup: Plugin managers that provide abstractions for lazy-loading
+plugins on such events do the same amount of work. There is no performance
+benefit for users to define lazy-loading entrypoints in their configuration
+instead of plugins defining it in `plugin/<name>.lua`.
 
 NOTE: You can use |--startuptime| to |profile| the impact a plugin has on
-      startup time.
+startup time.
 
 ------------------------------------------------------------------------------
-Filetype-specific functionality		     *lua-plugin-lazy-loading-filetype*
+Filetype-specific functionality                          *lua-plugin-filetype*
 
-Consider making use of |filetype| for any functionality that is specific to a
-filetype, by putting the initialization logic in a `ftplugin/{filetype}.lua`
+Consider making use of 'filetype' for any functionality that is specific to
+a filetype, by putting the initialization logic in a `ftplugin/{filetype}.lua`
 script.
 
-------------------------------------------------------------------------------
-Example				     *lua-plugin-lazy-loading-filetype-example*
+FILETYPE EXAMPLE
 
 A plugin tailored to Rust development might have initialization in
 `ftplugin/rust.lua`:
@@ -197,12 +225,12 @@ A plugin tailored to Rust development might have initialization in
     local bufnr = vim.api.nvim_get_current_buf()
     -- do something specific to this buffer,
     -- e.g. add a |<Plug>| mapping or create a command
-    vim.keymap.set("n", "<Plug>(MyPluginBufferAction)", function()
-        print("Hello")
+    vim.keymap.set('n', '<Plug>(MyPluginBufferAction)', function()
+        print('Hello')
     end, { noremap = true, buffer = bufnr, })
 <
 ==============================================================================
-Configuration				             *lua-plugin-configuration*
+Configuration                                              *lua-plugin-config*
 
 Once you have merged the default configuration with the user's config, you
 should validate configs.
@@ -215,12 +243,18 @@ Validations could include:
   check, to reduce overhead.
 
 ==============================================================================
-Troubleshooting					   *lua-plugin-troubleshooting*
+Troubleshooting                                   *lua-plugin-troubleshooting*
 
-------------------------------------------------------------------------------
-Health                                      *lua-plugin-troubleshooting-health*
+While developing a plugin, you can use the |:restart| command to see the
+result of code changes in your plugin.
 
-Provide health checks in `lua/{plugin}/health.lua`.
+HEALTH
+
+Nvim's "health" framework gives plugins a simple way to report status checks
+to users. See |health-dev| for an example.
+
+Basically, this just means your plugin will have a `lua/{plugin}/health.lua`
+file. |:checkhealth| will automatically find this file when it runs.
 
 Some things to validate:
 
@@ -229,19 +263,18 @@ Some things to validate:
 - Presence of Lua dependencies (e.g. other plugins)
 - Presence of external dependencies
 
-See also |vim.health| and |health-dev|.
-
-------------------------------------------------------------------------------
-Minimal config template             *lua-plugin-troubleshooting-minimal-config*
+MINIMAL CONFIG TEMPLATE
 
 It can be useful to provide a template for a minimal configuration, along with
 a guide on how to use it to reproduce issues.
 
 ==============================================================================
-Versioning and releases                        *lua-plugin-versioning-releases*
+Versioning and releases                                *lua-plugin-versioning*
 
-Consider
+Consider:
 
+- Use |vim.deprecate()| or a `---@deprecate` annotation when you need to
+  communicate a (future) breaking change or discourged practice.
 - Using SemVer https://semver.org/ tags and releases to properly communicate
   bug fixes, new features, and breaking changes.
 - Automating versioning and releases in CI.
@@ -249,13 +282,11 @@ Consider
   has dependencies or components that need to be built; or if it could be a
   dependency for another plugin.
 
-------------------------------------------------------------------------------
-Further reading		       *lua-plugin-versioning-releases-further-reading*
+FURTHER READING
 
-- Luarocks <3 Nvim https://github.com/nvim-neorocks/sample-luarocks-plugin
+- Luarocks ❤️ Nvim https://github.com/nvim-neorocks/sample-luarocks-plugin
 
-------------------------------------------------------------------------------
-Tools			                 *lua-plugin-versioning-releases-tools*
+VERSIONING TOOLS
 
 - luarocks-tag-release
   https://github.com/marketplace/actions/luarocks-tag-release
@@ -265,14 +296,14 @@ Tools			                 *lua-plugin-versioning-releases-tools*
   https://github.com/semantic-release/semantic-release
 
 ==============================================================================
-Documentation                                        *lua-plugin-documentation*
+Documentation                                                 *lua-plugin-doc*
 
 Provide vimdoc (see |help-writing|), so that users can read your plugin's
 documentation in Nvim, by entering `:h {plugin}` in |command-mode|.
 
-------------------------------------------------------------------------------
-Tools			                       *lua-plugin-documentation-tools*
+DOCUMENTATION TOOLS
 
 - panvimdoc https://github.com/kdheepak/panvimdoc
+
 
 vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
