@@ -1262,7 +1262,8 @@ retnomove:
     return IN_UNKNOWN;
   }
 
-  // find the window where the row is in
+  // find the window where the row is in and adjust "row" and "col" to be
+  // relative to top-left of the window
   win_T *wp = mouse_find_win(&grid, &row, &col);
   if (wp == NULL) {
     return IN_UNKNOWN;
