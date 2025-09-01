@@ -137,10 +137,10 @@ jobs:
         include:
           - runner: windows-2022
             arch: x86_64
-            zip_name: nvim-win64.zip
+            archive_name: nvim-win64
           - runner: windows-11-arm
             arch: arm64
-            zip_name: nvim-win-arm64.zip
+            archive_name: nvim-win-arm64
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
@@ -168,8 +168,8 @@ jobs:
         with:
           name: nvim-win-${{ matrix.arch }}
           path: |
-            build/${{ matrix.zip_name }}
-            ${{ matrix.arch == 'x86_64' && format('build/nvim-win64.msi') || format('build/nvim-win-arm64.msi') }}
+            build/${{ matrix.archive_name }}.zip
+            build/${{ matrix.archive_name }}.msi
           retention-days: 1
 
   publish:
