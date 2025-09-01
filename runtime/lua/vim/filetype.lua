@@ -2244,6 +2244,7 @@ local pattern = {
     ['/%.pinforc$'] = 'pinfo',
     ['/%.cargo/credentials$'] = 'toml',
     ['/%.init/.*%.override$'] = 'upstart',
+    ['/%.kube/kuberc$'] = 'yaml',
   },
   ['calendar/'] = {
     ['/%.calendar/'] = starsetf('calendar'),
