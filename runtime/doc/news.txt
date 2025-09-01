@@ -64,7 +64,7 @@ DIAGNOSTICS
 EDITOR
 
 • |i_CTRL-R| inserts named registers (A-Z,a-z,0-9) literally like pasting instead of
-  as typed. To get the old behavior you can use `<C-R>=@x.
+  as typed. To get the old behavior you can use `<C-R>=@x`.
 
 EVENTS
 
