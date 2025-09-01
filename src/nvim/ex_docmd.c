@@ -7360,7 +7360,7 @@ ssize_t find_cmdline_var(const char *src, size_t *usedlen)
 char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnump,
                 const char **errormsg, int *escaped, bool empty_is_error)
 {
-  char *result;
+  char *result = "";
   char *resultbuf = NULL;
   size_t resultlen;
   int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
@@ -7576,7 +7576,6 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
     default:
       // should not happen
       *errormsg = "";
-      result = "";    // avoid gcc warning
       break;
     }
 
