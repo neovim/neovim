@@ -10,18 +10,17 @@
 ==============================================================================
 Introduction                                                         *lua-guide*
 
-This guide will go through the basics of using Lua in Nvim. It is not meant
-to be a comprehensive encyclopedia of all available features, nor will it
-detail all intricacies. Think of it as a survival kit -- the bare minimum
-needed to know to comfortably get started on using Lua in Nvim.
-
-An important thing to note is that this isn't a guide to the Lua language
-itself. Rather, this is a guide on how to configure and modify Nvim through
-the Lua language and the functions we provide to help with this. Take a look
-at |luaref| and |lua-concepts| if you'd like to learn more about Lua itself.
-Similarly, this guide assumes some familiarity with the basics of Nvim
+This guide introduces the basics of everyday usage of Lua to configure and
+operate Nvim. It assumes some familiarity with the (non-Lua) basics of Nvim
 (commands, options, mappings, autocommands), which are covered in the
 |user-manual|.
+
+This is not a comprehensive encyclopedia of all available features. Think of
+it as a survival kit: the bare minimum needed to comfortably get started on
+using Lua in Nvim.
+
+See |lua-plugin| for guidance on developing Lua plugins.
+See |luaref| and |lua-concepts| for details on the Lua programming language.
 
 ------------------------------------------------------------------------------
 Some words on the API                                            *lua-guide-api*
