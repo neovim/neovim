@@ -355,16 +355,25 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
   }
 
   // note: ns_id=-1 allowed, represented as UINT32_MAX
+  // For reverse ranges, we need all marks to return them in correct order
+  // For forward ranges, we can optimize by limiting collection early
+  int64_t collection_limit = reverse ? INT64_MAX : (int64_t)rv_limit;
+  
   ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
-                                       u_col, (int64_t)limit, type, opts->overlap);
+                                       u_col, collection_limit, type, opts->overlap);
 
-  rv = arena_array(arena, MIN(kv_size(marks), rv_limit));
+  size_t marks_to_process = MIN(kv_size(marks), rv_limit);
+  rv = arena_array(arena, marks_to_process);
+  
   if (reverse) {
-    for (int i = (int)kv_size(marks) - 1; i >= 0 && kv_size(rv) < rv_limit; i--) {
-      ADD_C(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name, arena)));
+    // For reverse, start from end and take up to rv_limit items
+    size_t start_idx = kv_size(marks) > rv_limit ? kv_size(marks) - rv_limit : 0;
+    for (size_t i = kv_size(marks); i > start_idx; i--) {
+      ADD_C(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i - 1), true, details, hl_name, arena)));
     }
   } else {
-    for (size_t i = 0; i < kv_size(marks); i++) {
+    // For forward, we already limited collection, so process all
+    for (size_t i = 0; i < marks_to_process; i++) {
       ADD_C(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name, arena)));
     }
   }
