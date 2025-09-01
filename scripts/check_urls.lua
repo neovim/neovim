@@ -1,25 +1,8 @@
 local ts = vim.treesitter
-local async = require('vim._async')
 
 local query = ts.query.parse('vimdoc', '(url) @url')
 
-local function curl(url, cb)
-  local cmd = {
-    'curl',
-    '--silent',
-    '-L',
-    '--max-time',
-    '5',
-    '--fail',
-    '--output',
-    '/dev/null',
-    url,
-  }
-  vim.system(cmd, cb)
-end
-local request = async.wrap(2, curl)
-
-local function read_file_uv_sync(path)
+local function read(path)
   local fd = assert(vim.uv.fs_open(path, 'r', tonumber('644', 8)))
   local stat = assert(vim.uv.fs_fstat(fd))
   local data = assert(vim.uv.fs_read(fd, stat.size, 0))
@@ -29,7 +12,7 @@ end
 
 local function extract_urls(helpfile)
   local urls = {}
-  local source = read_file_uv_sync(helpfile)
+  local source = read(helpfile)
   local tree = ts.get_string_parser(source, 'vimdoc'):parse()[1]:root()
 
   for id, node in query:iter_captures(tree:root(), source) do
@@ -46,28 +29,20 @@ end
 
 local function find_urls(files)
   local all_urls = {}
-  async.join(vim
-    .iter(files)
-    :map(function(file)
-      return async.run(function()
-        local urls = extract_urls(file)
-        all_urls[file] = urls
-      end)
-    end)
-    :totable())
+  for _, file in ipairs(files) do
+    all_urls[file] = extract_urls(file)
+  end
 
-  local tasks = {}
   for filename, file_urls in pairs(all_urls) do
     for _, url in ipairs(file_urls) do
-      tasks[#tasks + 1] = async.run(function()
-        local result = request(url)
-        if result.code ~= 0 then
-          print(('%s in %s (%d)'):format(url, filename, result.code))
+      -- if output is not specified, err will always be nil (seems curl-specific)
+      vim.net.request(url, { retry = 1, outpath = '/dev/null' }, function(err, _)
+        if err then
+          vim.print(('Unreachable url in %s: %s'):format(filename, url))
         end
       end)
     end
   end
-  async.join(tasks)
 end
 
 local function get_helpfiles()
@@ -83,11 +58,7 @@ local function get_helpfiles()
     )
   end
 
-  async
-    .run(function()
-      find_urls(files)
-    end)
-    :wait()
+  find_urls(files)
 end
 
 get_helpfiles()
