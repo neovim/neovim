@@ -213,6 +213,7 @@ jobs:
       - name: Publish release
         env:
           NVIM_VERSION: ${{ needs.linux.outputs.version }}
+          NVIM_COMMIT: ${{ github.sha }}
           DEBUG: api
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
