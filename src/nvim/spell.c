@@ -1268,7 +1268,7 @@ static TriState decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_ln
     decor_redraw_line(wp, lnum - 1, &decor_state);
     *decor_lnum = lnum;
   }
-  decor_redraw_col(wp, col, 0, false, &decor_state);
+  decor_redraw_col(wp, col, 0, false, &decor_state, MAXCOL);
   return decor_state.spell;
 }
 
