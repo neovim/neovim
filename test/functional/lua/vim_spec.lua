@@ -2096,6 +2096,31 @@ stack traceback:
       exec_lua [[vim.wait(100, function() return true end)]]
     end)
 
+    it('returns all (multiple) callback results', function()
+      eq({ true, false }, exec_lua [[return { vim.wait(200, function() return true, false end) }]])
+      eq(
+        { true, 'a', 42, { ok = { 'yes' } } },
+        exec_lua [[
+          local ok, rv1, rv2, rv3 = vim.wait(200, function()
+            return true, 'a', 42, { ok = { 'yes' } }
+          end)
+
+          return { ok, rv1, rv2, rv3 }
+        ]]
+      )
+    end)
+
+    it('does not return callback results on timeout', function()
+      eq(
+        { false, -1 },
+        exec_lua [[
+          return { vim.wait(1, function()
+            return false, 'a', 42, { ok = { 'yes' } }
+          end) }
+        ]]
+      )
+    end)
+
     it('waits the expected time if false', function()
       eq(
         { time = true, wait_result = { false, -1 } },
@@ -2184,38 +2209,36 @@ stack traceback:
       eq({ false, '[string "<nvim>"]:1: As Expected' }, { result[1], remove_trace(result[2]) })
     end)
 
-    it('if callback is passed, it must be a function', function()
+    it('callback must be a function', function()
       eq(
-        { false, 'vim.wait: if passed, condition must be a function' },
-        exec_lua [[
-        return {pcall(function() vim.wait(1000, 13) end)}
-      ]]
+        { false, 'vim.wait: callback must be callable' },
+        exec_lua [[return {pcall(function() vim.wait(1000, 13) end)}]]
       )
     end)
 
-    it('allows waiting with no callback, explicit', function()
+    it('waits if callback arg is nil', function()
       eq(
         true,
         exec_lua [[
         local start_time = vim.uv.hrtime()
-        vim.wait(50, nil)
+        vim.wait(50, nil) -- select('#', ...) == 1
         return vim.uv.hrtime() - start_time > 25000
       ]]
       )
     end)
 
-    it('allows waiting with no callback, implicit', function()
+    it('waits if callback arg is omitted', function()
       eq(
         true,
         exec_lua [[
         local start_time = vim.uv.hrtime()
-        vim.wait(50)
+        vim.wait(50) -- select('#', ...) == 0
         return vim.uv.hrtime() - start_time > 25000
       ]]
       )
     end)
 
-    it('calls callbacks exactly once if they return true immediately', function()
+    it('invokes callback exactly once if it returns true immediately', function()
       eq(
         true,
         exec_lua [[

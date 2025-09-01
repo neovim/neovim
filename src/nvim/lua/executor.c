@@ -175,11 +175,18 @@ int nlua_pcall(lua_State *lstate, int nargs, int nresults)
   lua_getfield(lstate, -1, "traceback");
   lua_remove(lstate, -2);
   lua_insert(lstate, -2 - nargs);
+  int pre_top = lua_gettop(lstate);
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
   if (status) {
     lua_remove(lstate, -2);
   } else {
-    lua_remove(lstate, -1 - nresults);
+    if (nresults == LUA_MULTRET) {
+      int new_top = lua_gettop(lstate);
+      int actual_nres = new_top - pre_top + nargs + 1;
+      lua_remove(lstate, -1 - actual_nres);
+    } else {
+      lua_remove(lstate, -1 - nresults);
+    }
   }
   return status;
 }
@@ -415,16 +422,28 @@ static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
   xfree(tw);
 }
 
-static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_result)
+static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_result,
+                                int *nresults)
 {
+  int top = lua_gettop(lstate);
   lua_pushvalue(lstate, 2);
-  *status = nlua_pcall(lstate, 0, 1);
+  *status = nlua_pcall(lstate, 0, LUA_MULTRET);
   if (*status) {
     return true;  // break on error, but keep error on stack
   }
-  *callback_result = lua_toboolean(lstate, -1);
-  lua_pop(lstate, 1);
-  return *callback_result;  // break if true
+  *nresults = lua_gettop(lstate) - top;
+  if (*nresults == 0) {
+    *callback_result = false;
+    return false;
+  }
+  *callback_result = lua_toboolean(lstate, top + 1);
+  if (!*callback_result) {
+    lua_settop(lstate, top);
+    return false;
+  }
+  lua_remove(lstate, top + 1);
+  (*nresults)--;
+  return true;  // break if true
 }
 
 /// "vim.wait(timeout, condition[, interval])" function
@@ -454,8 +473,7 @@ static int nlua_wait(lua_State *lstate)
     }
 
     if (!is_function) {
-      lua_pushliteral(lstate,
-                      "vim.wait: if passed, condition must be a function");
+      lua_pushliteral(lstate, "vim.wait: callback must be callable");
       return lua_error(lstate);
     }
   }
@@ -488,6 +506,7 @@ static int nlua_wait(lua_State *lstate)
 
   int pcall_status = 0;
   bool callback_result = false;
+  int nresults = 0;
 
   // Flush screen updates before blocking.
   ui_flush();
@@ -497,7 +516,8 @@ static int nlua_wait(lua_State *lstate)
                             (int)timeout,
                             got_int || (is_function ? nlua_wait_condition(lstate,
                                                                           &pcall_status,
-                                                                          &callback_result)
+                                                                          &callback_result,
+                                                                          &nresults)
                                                     : false));
 
   // Stop dummy timer
@@ -508,18 +528,26 @@ static int nlua_wait(lua_State *lstate)
     return lua_error(lstate);
   } else if (callback_result) {
     lua_pushboolean(lstate, 1);
-    lua_pushnil(lstate);
+    if (nresults == 0) {
+      lua_pushnil(lstate);
+      nresults = 1;
+    } else {
+      lua_insert(lstate, -1 - nresults);
+    }
+    return nresults + 1;
   } else if (got_int) {
     got_int = false;
     vgetc();
     lua_pushboolean(lstate, 0);
     lua_pushinteger(lstate, -2);
+    return 2;
   } else {
     lua_pushboolean(lstate, 0);
     lua_pushinteger(lstate, -1);
+    return 2;
   }
 
-  return 2;
+  abort();
 }
 
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
