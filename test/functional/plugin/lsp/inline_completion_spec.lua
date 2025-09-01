@@ -4,6 +4,7 @@ local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
 local dedent = t.dedent
+local eq = t.eq
 
 local api = n.api
 local exec_lua = n.exec_lua
@@ -182,6 +183,59 @@ describe('vim.lsp.inline_completion', function()
       end)
       feed('<Esc>')
       screen:expect({ grid = grid_applied_candidates })
+    end)
+
+    it('accepts on_accept callback', function()
+      feed('i')
+      screen:expect({ grid = grid_with_candidates })
+      local result = exec_lua(function()
+        ---@type vim.lsp.inline_completion.Item
+        local result
+        vim.lsp.inline_completion.get({
+          on_accept = function(item)
+            result = item
+          end,
+        })
+        vim.wait(1000, function()
+          return result ~= nil
+        end) -- Wait for async callback.
+        return result
+      end)
+      feed('<Esc>')
+      screen:expect({ grid = grid_without_candidates })
+      eq({
+        _index = 1,
+        client_id = 1,
+        command = {
+          command = 'dummy',
+          title = 'Completion Accepted',
+        },
+        insert_text = dedent([[
+        function fibonacci(n) {
+          if (n <= 0) return 0;
+          if (n === 1) return 1;
+
+          let a = 0, b = 1, c;
+          for (let i = 2; i <= n; i++) {
+            c = a + b;
+            a = b;
+            b = c;
+          }
+          return b;
+        }]]),
+        range = {
+          end_ = {
+            buf = 1,
+            col = 20,
+            row = 0,
+          },
+          start = {
+            buf = 1,
+            col = 0,
+            row = 0,
+          },
+        },
+      }, result)
     end)
   end)
 
