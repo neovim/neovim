@@ -1523,7 +1523,7 @@ func Test_complete_reginsert()
   exe "normal Goa\<C-P>\<C-R>=\"\\<C-P>\"\<CR>"
   call assert_equal('a123', getline(5))
   let @r = "\<C-P>\<C-P>"
-  exe "normal GCa\<C-P>\<C-R>r"
+  exe "normal GCa\<C-P>\<C-R>=@r\<CR>"
   call assert_equal('a12', getline(5))
   exe "normal GCa\<C-P>\<C-R>=\"x\"\<CR>"
   call assert_equal('a1234x', getline(5))

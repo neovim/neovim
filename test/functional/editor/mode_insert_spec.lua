@@ -83,6 +83,36 @@ describe('insert-mode', function()
         {5:-- INSERT --}                                      |
       ]])
     end)
+
+    it('inserts named registers literally', function()
+      local screen = Screen.new(50, 6)
+      -- regular text without special charecter command
+      command('let @a = "test"')
+      feed('i<C-R>a<ESC>')
+      screen:expect([[
+        tes^t                                              |
+        {1:~                                                 }|*4
+                                                          |
+      ]])
+
+      -- text with backspace character gets written literally by default
+      command('let @a = "test\\<C-H>"')
+      feed('cc<C-R>a<ESC>')
+      screen:expect([[
+        test{18:^^H}                                            |
+        {1:~                                                 }|*4
+                                                          |
+      ]])
+
+      -- =@reg<CR> can be used to get effect of keypress
+      command('let @a = "test\\<C-H>"')
+      feed('cc<C-R>=@a<CR><ESC>')
+      screen:expect([[
+        te^s                                               |
+        {1:~                                                 }|*4
+                                                          |
+      ]])
+    end)
   end)
 
   describe('Ctrl-O', function()

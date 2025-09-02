@@ -316,6 +316,8 @@ Commands:
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
+- |i_CTRL-R| inserts named registers (A-Z,a-z,0-9) literally like pasting instead of
+  as typed. To get the old behavior you can use `<C-R>=@x`.
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
