@@ -277,6 +277,13 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     });
     if (wp) {
       wp->w_config = fconfig;
+      // Without room for the requested size, window sizes may have been equalized instead.
+      // If the size differs from what was requested, try to set it again now.
+      if ((flags & WSP_VERT) && wp->w_width != fconfig.width) {
+        win_setwidth_win(fconfig.width, wp);
+      } else if (!(flags & WSP_VERT) && wp->w_height != fconfig.height) {
+        win_setheight_win(fconfig.height, wp);
+      }
     }
   } else {
     if (!check_split_disallowed_err(curwin, err)) {
