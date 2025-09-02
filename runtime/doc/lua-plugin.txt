@@ -299,7 +299,9 @@ VERSIONING TOOLS
 Documentation                                                 *lua-plugin-doc*
 
 Provide vimdoc (see |help-writing|), so that users can read your plugin's
-documentation in Nvim, by entering `:h {plugin}` in |command-mode|.
+documentation in Nvim, by entering `:h {plugin}` in |command-mode|. The
+help-tags (the right-aligned "search keywords" in the help documents) are
+regenerated using the |:helptags| command.
 
 DOCUMENTATION TOOLS
 
