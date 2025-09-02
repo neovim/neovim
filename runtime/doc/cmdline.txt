@@ -179,7 +179,7 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				sure the expression evaluates to an empty
 				string.  E.g.: >
 					<C-R><C-R>=setcmdpos(2)[-1]<CR>
-<			        You can use this to insert a register as
+<				You can use this to insert a register as
 				typed with CTRL-R =@reg.
 		See |registers| about registers.
 		Implementation detail: When using the |expression| register
