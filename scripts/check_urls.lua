@@ -2,7 +2,7 @@
 
 -- Usage:
 --    ./scripts/check_urls.lua [DIR...]
--- If [DIR...] is not provided, defaults to all 'doc' directories in the RTP.
+-- [DIR...] defaults to all 'doc' directories in the runtimepath.
 
 local ts = vim.treesitter
 
@@ -44,21 +44,7 @@ local function run()
     dirs = vim.api.nvim_get_runtime_file('doc', true)
   end
 
-  for filename, file_urls in pairs(all_urls) do
-    for _, url in ipairs(file_urls) do
-      -- if output is not specified, err will always be nil (seems curl-specific)
-      vim.net.request(url, { retry = 1, outpath = '/dev/null' }, function(err, _)
-        if err then
-          vim.print(('Unreachable url in %s: %s'):format(filename, url))
-        end
-      end)
-    end
-  end
-end
-
-local function get_helpfiles()
-  local dirs = vim.api.nvim_get_runtime_file('doc', true)
-
+  ---@type string[]
   local files = {}
   for _, directory in ipairs(dirs) do
     vim.list_extend(
@@ -69,7 +55,29 @@ local function get_helpfiles()
     )
   end
 
-  find_urls(files)
+  ---@type table<string, string[]>
+  local all_urls = {}
+  local pending = 0
+  for _, file in ipairs(files) do
+    local urls = extract_urls(file)
+    pending = pending + #urls
+    all_urls[file] = urls
+  end
+
+  for filename, file_urls in pairs(all_urls) do
+    for _, url in ipairs(file_urls) do
+      vim.net.request(url, { retry = 1 }, function(err, _)
+        if err then
+          vim.print(('Unreachable url in %s: %s'):format(filename, url))
+        end
+        pending = pending - 1
+        if pending <= 0 then
+          vim.uv.stop()
+        end
+      end)
+    end
+  end
+  vim.uv.run()
 end
 
-get_helpfiles()
+run()
