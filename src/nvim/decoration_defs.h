@@ -36,6 +36,7 @@ enum {
 typedef kvec_t(struct virt_line { VirtText line; int flags; }) VirtLines;
 
 typedef uint16_t DecorPriority;
+typedef uint32_t DecorPriorityInternal;
 #define DECOR_PRIORITY_BASE 0x1000
 
 /// Keep in sync with hl_mode_str[] in decoration.h

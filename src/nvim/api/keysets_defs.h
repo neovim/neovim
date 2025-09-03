@@ -62,6 +62,8 @@ typedef struct {
   Boolean undo_restore;
   String url;
   Boolean scoped;
+
+  Integer _subpriority;
 } Dict(set_extmark);
 
 typedef struct {
