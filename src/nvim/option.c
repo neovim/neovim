@@ -1824,9 +1824,9 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
   }
 }
 
-/// Apply the OptionSet autocommand.
-static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
-                                    OptVal oldval_l, OptVal newval, const char *errmsg)
+/// Fire OptionSet autocmd directly (called from deferred context, bypasses defer logic).
+void fire_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
+                            OptVal oldval_l, OptVal newval, const char *errmsg)
 {
   // Don't do this while starting up, failure or recursively.
   if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
@@ -1862,6 +1862,22 @@ static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldv
   }
   apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
   reset_v_option_vars();
+}
+
+/// Apply the OptionSet autocommand.
+/// For 'modified', defers to maintain consistent event ordering with
+/// internal changes triggered by changed_internal()/unchanged().
+static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
+                                    OptVal oldval_l, OptVal newval, const char *errmsg)
+{
+  if (starting || errmsg != NULL) {
+    return;
+  }
+  if (opt_idx == kOptModified) {
+    aucmd_defer_modified(curbuf, newval.data.boolean);
+    return;
+  }
+  fire_optionset_autocmd(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval, errmsg);
 }
 
 /// Process the updated 'arabic' option value.

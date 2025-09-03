@@ -400,9 +400,6 @@ struct file_buffer {
 
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
-  bool b_changed_invalid;       // Set if BufModified autocmd has not been
-                                // triggered since the last time b_changed was
-                                // modified.
 
   /// Change-identifier incremented for each change, including undo.
   ///

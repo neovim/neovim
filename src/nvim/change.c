@@ -150,12 +150,15 @@ void changed(buf_T *buf)
 /// Also used for recovery.
 void changed_internal(buf_T *buf)
 {
+  bool was_changed = buf->b_changed;
   buf->b_changed = true;
-  buf->b_changed_invalid = true;
   ml_setflags(buf);
   redraw_buf_status_later(buf);
   redraw_tabline = true;
   need_maketitle = true;  // set window title later
+  if (!was_changed) {
+    aucmd_defer_modified(buf, true);
+  }
 }
 
 /// Invalidate a window's w_valid flags and w_lines[] entries after changing lines.
@@ -606,8 +609,8 @@ void changed_lines(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnume, linen
 void unchanged(buf_T *buf, bool ff, bool always_inc_changedtick)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
+    bool was_changed = buf->b_changed;
     buf->b_changed = false;
-    buf->b_changed_invalid = true;
     ml_setflags(buf);
     if (ff) {
       save_file_ff(buf);
@@ -616,6 +619,9 @@ void unchanged(buf_T *buf, bool ff, bool always_inc_changedtick)
     redraw_tabline = true;
     need_maketitle = true;  // set window title later
     buf_inc_changedtick(buf);
+    if (was_changed) {
+      aucmd_defer_modified(buf, false);
+    }
   } else if (always_inc_changedtick) {
     buf_inc_changedtick(buf);
   }

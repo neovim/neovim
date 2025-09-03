@@ -1363,12 +1363,14 @@ describe(':terminal buffer', function()
   end)
 
   it('does not allow OptionSet or b:term_title watcher to delete buffer', function()
-    local au = api.nvim_create_autocmd('OptionSet', { command = 'bwipeout!' })
-    local chan = api.nvim_open_term(0, {})
+    local chan = exec_lua([[
+      local au = vim.api.nvim_create_autocmd('OptionSet', { command = 'bwipeout!' })
+      local chan = vim.api.nvim_open_term(0, {})
+      vim.api.nvim_del_autocmd(au)
+      return chan
+    ]])
     matches('^E937: ', api.nvim_get_vvar('errmsg'))
-    api.nvim_del_autocmd(au)
     api.nvim_set_vvar('errmsg', '')
-
     api.nvim_chan_send(chan, '\027]2;SOME_TITLE\007')
     eq('SOME_TITLE', api.nvim_buf_get_var(0, 'term_title'))
     command([[call dictwatcheradd(b:, 'term_title', {-> execute('bwipe!')})]])

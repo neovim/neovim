@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "nvim/api/private/converter.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
@@ -1557,6 +1558,31 @@ static void deferred_event(void **argv)
     xfree(data);
   }
   xfree(e);
+}
+
+static void deferred_optionset_modified(void **argv)
+{
+  Error err = ERROR_INIT;
+  buf_T *buf = find_buffer_by_handle((handle_T)(uintptr_t)argv[0], &err);
+  api_clear_error(&err);
+  if (buf) {
+    bool new_val = (bool)(uintptr_t)argv[1];
+    OptVal old = BOOLEAN_OPTVAL(!new_val);
+    OptVal new = BOOLEAN_OPTVAL(new_val);
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
+    fire_optionset_autocmd(kOptModified, OPT_LOCAL, old, old, old, new, NULL);
+    aucmd_restbuf(&aco);
+  }
+}
+
+void aucmd_defer_modified(buf_T *buf, bool new_val)
+{
+  if (!has_event(EVENT_OPTIONSET) || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
+    return;
+  }
+  multiqueue_put(deferred_events, deferred_optionset_modified, (void *)(uintptr_t)buf->handle,
+                 (void *)(uintptr_t)new_val);
 }
 
 /// Execute autocommands for "event" and file name "fname".
