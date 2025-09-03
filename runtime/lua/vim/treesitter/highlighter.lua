@@ -360,7 +360,10 @@ local function on_range_impl(
   local MAX_ROW = 2147483647 -- sentinel for skipping to the end of file
   local skip_until_row = MAX_ROW
   local skip_until_col = 0
+
+  local subtree_counter = 0
   self:for_each_highlight_state(win, function(state)
+    subtree_counter = subtree_counter + 1
     local root_node = state.tstree:root()
     ---@type { [1]: integer, [2]: integer, [3]: integer, [4]: integer }
     local root_range = { root_node:range() }
@@ -449,6 +452,7 @@ local function on_range_impl(
               conceal = conceal,
               spell = spell,
               url = url,
+              _subpriority = subtree_counter,
             })
           end
 

@@ -548,7 +548,7 @@ describe('treesitter highlighting (C)', function()
           lua = [[
             ; query
             (string) @string
-            ((comment) @comment (#set! priority 90))
+            (comment) @comment
             (function_call (identifier) @function.call)
             [ "(" ")" ] @punctuation.bracket
           ]],
