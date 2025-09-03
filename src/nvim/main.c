@@ -190,6 +190,7 @@ static bool event_teardown(void)
 /// Needed for unit tests.
 void early_init(mparm_T *paramp)
 {
+  os_hint_priority();
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
