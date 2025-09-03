@@ -3138,6 +3138,10 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
   if (win == win_tp->tp_curwin) {
     win_tp->tp_curwin = wp;
   }
+  // Avoid executing cmdline_win logic after it is closed.
+  if (win == cmdline_win) {
+    cmdline_win = NULL;
+  }
 
   return wp;
 }
