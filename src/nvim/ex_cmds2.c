@@ -449,6 +449,12 @@ int buf_write_all(buf_T *buf, bool forceit)
   int retval = (buf_write(buf, buf->b_ffname, buf->b_fname,
                           1, buf->b_ml.ml_line_count, NULL,
                           false, forceit, true, false));
+
+  if (retval == OK && has_event(EVENT_BUFMODIFIEDSET) && buf->b_changed_invalid) {
+    aucmd_defer(EVENT_BUFMODIFIEDSET, buf->b_ffname, NULL, AUGROUP_ALL, buf, NULL, NULL);
+    buf->b_changed_invalid = false;
+  }
+
   if (curbuf != old_curbuf) {
     msg_source(HLF_W);
     msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"), 0);
