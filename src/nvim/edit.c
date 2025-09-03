@@ -1456,18 +1456,8 @@ void ins_redraw(bool ready)
     may_trigger_win_scrolled_resized();
   }
 
-  // Trigger BufModified if b_changed_invalid is set.
-  if (ready && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_invalid == true
-      && !pum_visible()) {
-    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_invalid = false;
-  }
-
   // Trigger SafeState if nothing is pending.
-  may_trigger_safestate(ready
-                        && !ins_compl_active()
-                        && !pum_visible());
+  may_trigger_safestate(ready && !ins_compl_active() && !pum_visible());
 
   pum_check_clear();
   show_cursor_info_later(false);
