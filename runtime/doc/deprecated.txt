@@ -24,6 +24,9 @@ API
   • |nvim_exec_autocmds()|
   • |nvim_clear_autocmds()|
 
+EVENTS
+• *BufModifiedSet*	Use |OptionSet| with pattern "modified" instead.
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*
 

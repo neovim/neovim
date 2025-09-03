@@ -88,7 +88,6 @@ error('Cannot require a meta file')
 --- |'BufFilePre'
 --- |'BufHidden'
 --- |'BufLeave'
---- |'BufModifiedSet'
 --- |'BufNew'
 --- |'BufNewFile'
 --- |'BufRead'

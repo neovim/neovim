@@ -81,6 +81,8 @@ EDITOR
 
 EVENTS
 
+• |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
+  "modified" instead.
 • todo
 
 LSP
