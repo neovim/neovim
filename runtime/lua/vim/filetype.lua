@@ -2348,7 +2348,7 @@ local pattern = {
   },
   ['require'] = {
     ['%-requirements%.txt$'] = 'requirements',
-    ['requirements%-.*%.txt$'] = 'requirements',
+    ['^requirements%-.*%.txt$'] = 'requirements',
     ['^requirements/.*%.txt$'] = 'requirements',
     ['^requires/.*%.txt$'] = 'requirements',
   },
@@ -2530,6 +2530,8 @@ local pattern = {
     [',v$'] = 'rcs',
     ['^svn%-commit.*%.tmp$'] = 'svn',
     ['%.swift%.gyb$'] = 'swiftgyb',
+    ['^vivado.*%.jou$'] = 'tcl',
+    ['^vivado.*%.log$'] = 'tcl',
     ['termcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('term')
     end),
