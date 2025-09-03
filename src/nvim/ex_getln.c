@@ -14,6 +14,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+#include "nvim/arabic.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -451,6 +452,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
 {
   int skiplen, patlen;
   int search_delim;
+  const bool did_do_incsearch = s->did_incsearch;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
@@ -459,6 +461,10 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen, &patlen)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
+    if (did_do_incsearch && vpeekc() == NUL) {
+      // may have skipped a redraw, do it now
+      redrawcmd();
+    }
     return;
   }
 
@@ -2869,7 +2875,7 @@ static int command_line_changed(CommandLineState *s)
 
   may_trigger_cursormovedc(s);
 
-  if (p_arshape && !p_tbidi) {
+  if (p_arshape && !p_tbidi && cmdline_has_arabic(0, ccline.cmdlen)) {
     // Always redraw the whole command line to fix shaping and
     // right-left typing.  Not efficient, but it works.
     // Do it only when there are no characters left to read
@@ -4480,6 +4486,23 @@ int get_list_range(char **str, int *num1, int *num2)
     *num2 = *num1;
   }
   return OK;
+}
+
+/// @return  true if the command line has an Arabic character at
+///          or after "start" for "len" bytes.
+static bool cmdline_has_arabic(int start, int len)
+{
+  int mb_l, firstc;
+
+  for (int j = start; j < start + len; j += mb_l) {
+    char *p = ccline.cmdbuff + j;
+    schar_T u8c = utfc_ptrlen2schar(p, start + len - j, &firstc);
+    mb_l = utfc_ptr2len_len(p, start + len - j);
+    if (ARABIC_CHAR(u8c)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void cmdline_init(void)
