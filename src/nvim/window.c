@@ -3412,7 +3412,7 @@ void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
   if (frp->fr_parent->fr_layout == FR_COL && frp->fr_prev != NULL) {
     if (global_stl_height() == 0 && wp->w_status_height == 0) {
       frame_add_statusline(frp->fr_prev);
-    } else if (wp->w_hsep_height == 0) {
+    } else if (global_stl_height() > 0 && wp->w_hsep_height == 0) {
       frame_add_hsep(frp->fr_prev);
     }
   }
