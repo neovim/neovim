@@ -39,6 +39,10 @@
 # include "nvim/fileio.h"
 #endif
 
+#ifdef __APPLE__
+# include <mach/task.h>
+#endif
+
 #ifdef HAVE__NSGETENVIRON
 # include <crt_externs.h>
 #endif
@@ -349,6 +353,18 @@ int64_t os_get_pid(void)
   return (int64_t)GetCurrentProcessId();
 #else
   return (int64_t)getpid();
+#endif
+}
+
+/// Signals to the OS that Nvim is an application for "interactive work"
+/// which should be prioritized similar to a GUI app.
+void os_hint_priority(void)
+{
+#ifdef __APPLE__
+  // By default, processes have the TASK_UNSPECIFIED "role", which means all of its threads are
+  // clamped to Default QoS. Setting the role to TASK_DEFAULT_APPLICATION removes this clamp.
+  integer_t policy = TASK_DEFAULT_APPLICATION;
+  task_policy_set(mach_task_self(), TASK_CATEGORY_POLICY, &policy, 1);
 #endif
 }
 
