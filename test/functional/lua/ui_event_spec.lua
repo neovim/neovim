@@ -390,6 +390,13 @@ describe('vim.ui_attach', function()
       9              bufname(        {12: }        |
       Excommand:call bufadd^(                  |
     ]])
+    -- No crash after _cmdline_offset window is closed #35584.
+    exec_lua(function()
+      vim.ui_detach(_G.ns)
+      vim.api.nvim_win_close(_G.win, true)
+    end)
+    feed('<Esc>:<Tab>')
+    n.assert_alive()
   end)
 end)
 
