@@ -649,11 +649,11 @@ ask you where to write the file (there must be a writable directory in
 'runtimepath' for this).
 
 The plugin has a default place where to look for spell files, on the Vim ftp
-server.  The protocol used is SSL (https://) for security.  If you want to use
-another location or another protocol, set the g:spellfile_URL variable to the
-directory that holds the spell files.  You can use http:// or ftp://, but you
-are taking a security risk then.  The |netrw| plugin is used for getting the
-file, look there for the specific syntax of the URL.  Example: >
+server.  The protocol used is TLS (`https://`) for security.  If you want to
+use another location or another protocol, set the g:spellfile_URL variable to
+the directory that holds the spell files.  You can use `http://` or `ftp://`,
+but you are taking a security risk then.  The |netrw| plugin is used for
+getting the file, look there for the specific syntax of the URL.  Example: >
 	let g:spellfile_URL = 'https://ftp.nluug.nl/vim/runtime/spell'
 You may need to escape special characters.
 
