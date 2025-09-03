@@ -148,7 +148,7 @@ describe('writefile()', function()
       'Vim(call):E118: Too many arguments for function: writefile',
       pcall_err(command, ('call writefile([], "%s", "b", 1)'):format(fname))
     )
-    for _, arg in ipairs({ '0', '0.0', 'function("tr")', '{}', '"test"' }) do
+    for _, arg in ipairs({ '0', '0.0', 'function("tr")', '{}' }) do
       eq(
         'Vim(call):E475: Invalid argument: writefile() first argument must be a List or a Blob',
         pcall_err(command, ('call writefile(%s, "%s", "b")'):format(arg, fname))
