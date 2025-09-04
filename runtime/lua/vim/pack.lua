@@ -148,13 +148,13 @@ local function git_clone(url, path)
 end
 
 --- @async
---- @param rev string
+--- @param ref string
 --- @param cwd string
 --- @return string
-local function git_get_hash(rev, cwd)
-  -- Using `rev-list -1` shows a commit of revision, while `rev-parse` shows
-  -- hash of revision. Those are different for annotated tags.
-  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', rev }, cwd)
+local function git_get_hash(ref, cwd)
+  -- Using `rev-list -1` shows a commit of reference, while `rev-parse` shows
+  -- hash of reference. Those are different for annotated tags.
+  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', ref }, cwd)
 end
 
 --- @async
@@ -169,11 +169,14 @@ end
 --- @param cwd string
 --- @return string[]
 local function git_get_branches(cwd)
+  local def_branch = git_get_default_branch(cwd)
   local cmd = { 'branch', '--remote', '--list', '--format=%(refname:short)', '--', 'origin/**' }
   local stdout = git_cmd(cmd, cwd)
   local res = {} --- @type string[]
   for l in vim.gsplit(stdout, '\n') do
-    res[#res + 1] = l:match('^origin/(.+)$')
+    local branch = l:match('^origin/(.+)$')
+    local pos = branch == def_branch and 1 or (#res + 1)
+    table.insert(res, pos, branch)
   end
   return res
 end
@@ -182,8 +185,8 @@ end
 --- @param cwd string
 --- @return string[]
 local function git_get_tags(cwd)
-  local cmd = { 'tag', '--list', '--sort=-v:refname' }
-  return vim.split(git_cmd(cmd, cwd), '\n')
+  local tags = git_cmd({ 'tag', '--list', '--sort=-v:refname' }, cwd)
+  return tags == '' and {} or vim.split(tags, '\n')
 end
 
 -- Plugin operations ----------------------------------------------------------
@@ -476,7 +479,7 @@ end
 --- @param p vim.pack.Plug
 local function resolve_version(p)
   local function list_in_line(name, list)
-    return #list == 0 and '' or ('\n' .. name .. ': ' .. table.concat(list, ', '))
+    return ('\n%s: %s'):format(name, table.concat(list, ', '))
   end
 
   -- Resolve only once

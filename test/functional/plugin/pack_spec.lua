@@ -597,7 +597,8 @@ describe('vim.pack', function()
         '`basic`:\n',
         -- Should report available branches and tags if revision is absent
         '`wrong%-version`',
-        'Available:\nTags: some%-tag\nBranches: feat%-branch, main',
+        -- Should list default branch first
+        'Available:\nTags: some%-tag\nBranches: main, feat%-branch',
         -- Should report available branches and versions if no constraint match
         '`semver`',
         'Available:\nVersions: v1%.0%.0, v0%.4, 0%.3%.1, v0%.3%.0.*\nBranches: main\n',
