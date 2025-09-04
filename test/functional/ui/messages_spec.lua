@@ -3640,4 +3640,41 @@ describe('progress-message', function()
       {6:TestSuit}: {19: 10% }test-message             |
     ]])
   end)
+
+  it('works with history off', function()
+    api.nvim_echo({ { 'test-message' } }, false, {
+      kind = 'progress',
+      title = 'TestSuit',
+      percent = 10,
+      status = 'running',
+    })
+
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = {
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message' },
+          },
+          id = 1,
+          kind = 'progress',
+        },
+      },
+    })
+
+    assert_progress_autocmd({
+      text = { 'test-message' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuit',
+      id = 1,
+      data = {},
+    }, 'progress autocmd receives progress messages')
+  end)
 end)
