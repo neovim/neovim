@@ -1558,7 +1558,7 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
 /// `name`.)
 ///
-/// Can be called more than once; the caller should merge old info if appropriate. Example: library
+/// Can be called more than once; caller should merge old info if appropriate. Example: a library
 /// first identifies the channel, then a plugin using that library later identifies itself.
 ///
 /// @param channel_id
@@ -2220,15 +2220,6 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   PUT_C(result, "str", CSTR_AS_OBJ(buf));
 
   return result;
-}
-
-/// @nodoc
-void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
-  FUNC_API_REMOTE_ONLY
-{
-  // TODO(bfredl): consider printing message to user, as will be relevant
-  // if we fork nvim processes as async workers
-  ELOG("async error on channel %" PRId64 ": %s", channel_id, data.size ? data.data : "");
 }
 
 /// EXPERIMENTAL: this API may change in the future.

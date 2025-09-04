@@ -104,14 +104,13 @@ CTRL-R {register}				*i_CTRL-R*
 		Insert the contents of a register. Between typing CTRL-R and
 		the second character, '"' will be displayed to indicate that
 		you are expected to enter the name of a register. When used
-		with When used with named or clipboard registers
-		(A-Z,a-z,0-9,+) text is inserted literally like pasting with
-		"p". For other registers, the text is inserted as if you typed
-		it, but mappings and abbreviations are not used.  If you have
-		options like 'textwidth', 'formatoptions', or 'autoindent'
-		set, this will influence what will be inserted. This is
-		different from what happens with the "p" command and pasting
-		with the mouse.
+		with named or clipboard registers (A-Z,a-z,0-9,+) text is
+		inserted literally like pasting with "p". For other registers,
+		the text is inserted as if you typed it, but mappings and
+		abbreviations are not used.  If you have options like
+		'textwidth', 'formatoptions', or 'autoindent' set, this will
+		influence what will be inserted. This is different from what
+		happens with the "p" command and pasting with the mouse.
 		Special registers:
 			'"'	the unnamed register, containing the text of
 				the last delete or yank

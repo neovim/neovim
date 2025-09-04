@@ -409,12 +409,17 @@ name, etc.
 
 All the global variables are declared in `globals.h`.
 
-### The main loop
+### The main event-loop
 
 The main loop is implemented in state_enter. The basic idea is that Vim waits
 for the user to type a character and processes it until another character is
 needed.  Thus there are several places where Vim waits for a character to be
 typed.  The `vgetc()` function is used for this.  It also handles mapping.
+
+What we consider the "Nvim event loop" is actually a wrapper around `uv_run` to
+handle both the `fast_events` queue and possibly (a suitable subset of) deferred
+events. Therefore "raw" `vim.uv.run()` is often not enough to "yield" from Lua
+plugins; instead they can call `vim.wait(0)`.
 
 Updating the screen is mostly postponed until a command or a sequence of
 commands has finished.  The work is done by `update_screen()`, which calls

@@ -68,8 +68,9 @@ DIAGNOSTICS
 
 EDITOR
 
-• |i_CTRL-R| inserts named registers (A-Z,a-z,0-9) literally like pasting instead of
-  as typed. To get the old behavior you can use `<C-R>=@x`.
+- |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
+  pasting instead of like user input. Improves performance, avoids broken
+  formatting. To get the old behavior you can use `<C-R>=@x`.
 
 EVENTS
 
@@ -203,9 +204,8 @@ EVENTS
 HIGHLIGHTS
 
 • |hl-DiffTextAdd| highlights added text within a changed line.
-• |hl-StderrMsg| |hl-StdoutMsg|
+• |hl-OkMsg| |hl-StderrMsg| |hl-StdoutMsg|
 • |hl-SnippetTabstopActive| highlights the currently active tabstop.
-• |hl-OkMsg| highlights success messages.
 
 LSP
 
@@ -244,6 +244,7 @@ LSP
 • |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
 • Support for `textDocument/inlineCompletion` |lsp-inline_completion|
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
+  See |lsp-inline_completion| for quickstart instructions.
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 
@@ -291,6 +292,7 @@ PERFORMANCE
   support for nested braces and follows LSP 3.17 specification with
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
+- |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
 
 PLUGINS
 
