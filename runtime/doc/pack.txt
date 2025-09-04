@@ -360,8 +360,8 @@ get()                                                         *vim.pack.get()*
 
     Return: ~
         (`table[]`) A list of objects with the following fields:
-        • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with defaults
-          made explicit.
+        • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
+          `name`.
         • {path} (`string`) Plugin's path on disk.
         • {active} (`boolean`) Whether plugin was added via |vim.pack.add()|
           to current session.

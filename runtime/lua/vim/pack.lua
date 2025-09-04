@@ -358,13 +358,7 @@ end
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
 local function trigger_event(p, event_name, kind)
-  local spec = vim.deepcopy(p.spec)
-  -- Infer default branch for fuller `event-data` (if possible)
-  -- Doing it only on event trigger level allows keeping `spec` close to what
-  -- user supplied without performance issues during startup.
-  spec.version = spec.version or (uv.fs_stat(p.path) and git_get_default_branch(p.path))
-
-  local data = { kind = kind, spec = spec, path = p.path }
+  local data = { kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
   api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
@@ -1006,7 +1000,7 @@ end
 
 --- @inlinedoc
 --- @class vim.pack.PlugData
---- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with defaults made explicit.
+--- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
 --- @field path string Plugin's path on disk.
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
 
@@ -1037,13 +1031,6 @@ function M.get()
       if t == 'directory' and not active_plugins[path] then
         local spec = { name = n, src = git_cmd({ 'remote', 'get-url', 'origin' }, path) }
         res[#res + 1] = { spec = spec, path = path, active = false }
-      end
-    end
-
-    -- Make default `version` explicit
-    for _, p_data in ipairs(res) do
-      if not p_data.spec.version then
-        p_data.spec.version = git_get_default_branch(p_data.path)
       end
     end
   end

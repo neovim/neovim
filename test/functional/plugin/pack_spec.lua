@@ -441,7 +441,7 @@ describe('vim.pack', function()
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
       exec_lua(function()
-        -- Should provide event-data respecting manual and inferred default `version`
+        -- Should provide event-data respecting manual `version` without inferring default
         vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' }, repos_src.defbranch })
       end)
 
@@ -449,11 +449,11 @@ describe('vim.pack', function()
       local installpre_basic = find_in_log(log, 'PackChangedPre', 'install', 'basic', 'feat-branch')
       local installpre_defbranch = find_in_log(log, 'PackChangedPre', 'install', 'defbranch', nil)
       local updatepre_basic = find_in_log(log, 'PackChangedPre', 'update', 'basic', 'feat-branch')
-      local updatepre_defbranch = find_in_log(log, 'PackChangedPre', 'update', 'defbranch', 'dev')
+      local updatepre_defbranch = find_in_log(log, 'PackChangedPre', 'update', 'defbranch', nil)
       local update_basic = find_in_log(log, 'PackChanged', 'update', 'basic', 'feat-branch')
-      local update_defbranch = find_in_log(log, 'PackChanged', 'update', 'defbranch', 'dev')
+      local update_defbranch = find_in_log(log, 'PackChanged', 'update', 'defbranch', nil)
       local install_basic = find_in_log(log, 'PackChanged', 'install', 'basic', 'feat-branch')
-      local install_defbranch = find_in_log(log, 'PackChanged', 'install', 'defbranch', 'dev')
+      local install_defbranch = find_in_log(log, 'PackChanged', 'install', 'defbranch', nil)
       eq(8, #log)
 
       -- NOTE: There is no guaranteed installation order among separate plugins (as it is async)
@@ -547,9 +547,7 @@ describe('vim.pack', function()
         eq({}, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
 
         -- Plugins should still be marked as "active", since they were added
-        plugindirs_data.spec.version = 'main'
         plugindirs_data.active = true
-        basic_data.spec.version = 'main'
         basic_data.active = true
         eq({ plugindirs_data, basic_data }, n.exec_lua('return vim.pack.get()'))
       end
@@ -1117,8 +1115,8 @@ describe('vim.pack', function()
       -- Should trigger relevant events only for actually updated plugins
       n.exec('write')
       local log = exec_lua('return _G.event_log')
-      eq(1, find_in_log(log, 'PackChangedPre', 'update', 'fetch', 'main'))
-      eq(2, find_in_log(log, 'PackChanged', 'update', 'fetch', 'main'))
+      eq(1, find_in_log(log, 'PackChangedPre', 'update', 'fetch', nil))
+      eq(2, find_in_log(log, 'PackChanged', 'update', 'fetch', nil))
       eq(2, #log)
     end)
 
@@ -1166,15 +1164,15 @@ describe('vim.pack', function()
   end)
 
   describe('get()', function()
-    local basic_spec = { name = 'basic', src = repos_src.basic, version = 'main' }
+    local basic_spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
     local basic_path = pack_get_plug_path('basic')
-    local defbranch_spec = { name = 'defbranch', src = repos_src.defbranch, version = 'dev' }
+    local defbranch_spec = { name = 'defbranch', src = repos_src.defbranch }
     local defbranch_path = pack_get_plug_path('defbranch')
 
     it('returns list of available plugins', function()
       -- Should work just after installation
       exec_lua(function()
-        vim.pack.add({ repos_src.defbranch, repos_src.basic })
+        vim.pack.add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
       end)
       eq({
         -- Should preserve order in which plugins were `vim.pack.add()`ed
@@ -1186,7 +1184,7 @@ describe('vim.pack', function()
       n.clear()
 
       exec_lua(function()
-        vim.pack.add({ repos_src.basic })
+        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
       end)
       eq({
         -- Should first list active, then non-active
@@ -1198,7 +1196,7 @@ describe('vim.pack', function()
     it('respects `data` field', function()
       local out = exec_lua(function()
         vim.pack.add({
-          { src = repos_src.basic, data = { test = 'value' } },
+          { src = repos_src.basic, version = 'feat-branch', data = { test = 'value' } },
           { src = repos_src.defbranch, data = 'value' },
         })
         local plugs = vim.pack.get()
@@ -1210,7 +1208,7 @@ describe('vim.pack', function()
 
     it('works with `del()`', function()
       exec_lua(function()
-        vim.pack.add({ repos_src.defbranch, repos_src.basic })
+        vim.pack.add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
       end)
 
       exec_lua(function()
@@ -1261,8 +1259,8 @@ describe('vim.pack', function()
 
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
-      eq(1, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', 'main'))
-      eq(2, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', 'main'))
+      eq(1, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', nil))
+      eq(2, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', nil))
       eq(3, find_in_log(log, 'PackChangedPre', 'delete', 'basic', 'feat-branch'))
       eq(4, find_in_log(log, 'PackChanged', 'delete', 'basic', 'feat-branch'))
       eq(4, #log)
