@@ -368,6 +368,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
       msg_id_next = id.data.integer + 1;
     }
   }
+  msg_ext_id = id;
 
   // progress message are special displayed as "title: percent% msg"
   if (strequal(kind, "progress") && msg_data) {
@@ -1161,7 +1162,6 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
   msg_hist_last = entry;
   msg_ext_history = true;
 
-  msg_ext_id = msg_id;
   msg_hist_clear(msg_hist_max);
 }
 
