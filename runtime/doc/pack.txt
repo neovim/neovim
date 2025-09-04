@@ -272,8 +272,9 @@ Switch plugin's version:
 
 Freeze plugin from being updated:
 • Update 'init.lua' for plugin to have `version` set to current commit hash.
-  You can get it by running `vim.pack.update({ 'plugin-name' })` and yanking
-  the word describing current state (looks like `abc12345`).
+  You can get it by running
+  `:=vim.pack.get({ 'plugin-name' }, { details = true })` (located at
+  `details.state`; looks like `abc12345`).
 • |:restart|.
 
 Unfreeze plugin to start receiving updates:
@@ -355,8 +356,15 @@ del({names})                                                  *vim.pack.del()*
                  be managed by |vim.pack|, not necessarily already added to
                  current session.
 
-get()                                                         *vim.pack.get()*
-    Get data about all plugins managed by |vim.pack|
+get({names}, {opts})                                          *vim.pack.get()*
+    Get data about plugins managed by |vim.pack|
+
+    Parameters: ~
+      • {names}  (`string[]?`) List of plugin names. Default: all plugins
+                 managed by |vim.pack|.
+      • {opts}   (`table?`) A table with the following fields:
+                 • {details} (`boolean`) Whether to include plugin details.
+                   Default `false`.
 
     Return: ~
         (`table[]`) A list of objects with the following fields:
@@ -365,6 +373,10 @@ get()                                                         *vim.pack.get()*
         • {path} (`string`) Plugin's path on disk.
         • {active} (`boolean`) Whether plugin was added via |vim.pack.add()|
           to current session.
+        • {details}? (`{ branches: string[], state: string, tags: string[] }`)
+          • `branches` lists available Git branches (first is default).
+          • `state` is a current Git state.
+          • `tags` lists available Git tags.
 
 update({names}, {opts})                                    *vim.pack.update()*
     Update plugins

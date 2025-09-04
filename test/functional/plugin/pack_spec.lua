@@ -1170,7 +1170,7 @@ describe('vim.pack', function()
     local defbranch_spec = { name = 'defbranch', src = repos_src.defbranch }
     local defbranch_path = pack_get_plug_path('defbranch')
 
-    it('returns list of available plugins', function()
+    it('returns list with necessary data', function()
       -- Should work just after installation
       exec_lua(function()
         vim.pack.add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
@@ -1187,11 +1187,33 @@ describe('vim.pack', function()
       exec_lua(function()
         vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
       end)
-      eq({
-        -- Should first list active, then non-active
-        { active = true, path = basic_path, spec = basic_spec },
-        { active = false, path = defbranch_path, spec = defbranch_spec },
-      }, exec_lua('return vim.pack.get()'))
+      local basic_data = { active = true, path = basic_path, spec = basic_spec }
+      local defbranch_data = { active = false, path = defbranch_path, spec = defbranch_spec }
+      -- Should first list active, then non-active
+      eq({ basic_data, defbranch_data }, exec_lua('return vim.pack.get()'))
+
+      -- Should respect `names` for both active and not active plugins
+      eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" })'))
+      eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" })'))
+      eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get({ "defbranch", "basic" })'))
+
+      local bad_get_cmd = 'return vim.pack.get({ "ccc", "basic", "aaa" })'
+      matches('Plugin `ccc` is not installed', pcall_err(exec_lua, bad_get_cmd))
+
+      -- Should respect `opts.details`
+      basic_data.details = {
+        branches = { 'main', 'feat-branch' },
+        state = git_get_hash('feat-branch', 'basic'),
+        tags = { 'some-tag' },
+      }
+      defbranch_data.details = {
+        branches = { 'dev', 'main' },
+        state = git_get_hash('HEAD', 'defbranch'),
+        tags = {},
+      }
+      eq({ basic_data, defbranch_data }, exec_lua('return vim.pack.get(nil, { details = true })'))
+      eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" }, { details = true })'))
+      eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { details = true })'))
     end)
 
     it('respects `data` field', function()
