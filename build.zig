@@ -393,6 +393,10 @@ pub fn test_fixture(
         }),
     });
     const source = if (std.mem.eql(u8, name, "pwsh-test")) "shell-test" else name;
+    if (std.mem.eql(u8, name, "printenv-test")) {
+        fixture.mingw_unicode_entry_point = true; // uses UNICODE on WINDOWS :scream:
+    }
+
     fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})), .flags = flags });
     fixture.linkLibC();
     if (libuv) |uv| fixture.linkLibrary(uv);
