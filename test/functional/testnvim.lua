@@ -21,6 +21,7 @@ local lib_path = t.is_zig_build() and './zig-out/lib' or './build/lib/nvim/'
 M.runtime_set = 'set runtimepath^=' .. lib_path
 
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
+print("LOCALIZE ".. M.nvim_prog)io.stdout:flush()
 -- Default settings for the test session.
 M.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent startofline'
