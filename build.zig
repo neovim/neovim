@@ -351,12 +351,12 @@ pub fn build(b: *std.Build) !void {
     test_deps.dependOn(&nvim_exe_install.step);
     test_deps.dependOn(&runtime_install.step);
 
-    test_deps.dependOn(test_fixture(b, "shell-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "tty-test", libuv, target, optimize));
-    test_deps.dependOn(test_fixture(b, "pwsh-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "printargs-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "printenv-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "streams-test", libuv, target, optimize));
+    test_deps.dependOn(test_fixture(b, "shell-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "tty-test", libuv, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "pwsh-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "printargs-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "printenv-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "streams-test", libuv, target, optimize, &flags));
 
     const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize });
     test_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize));
@@ -383,6 +383,7 @@ pub fn test_fixture(
     libuv: ?*std.Build.Step.Compile,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    flags: []const []const u8,
 ) *std.Build.Step {
     const fixture = b.addExecutable(.{
         .name = name,
@@ -392,7 +393,7 @@ pub fn test_fixture(
         }),
     });
     const source = if (std.mem.eql(u8, name, "pwsh-test")) "shell-test" else name;
-    fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})) });
+    fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})), .flags = flags });
     fixture.linkLibC();
     if (libuv) |uv| fixture.linkLibrary(uv);
     return &b.addInstallArtifact(fixture, .{}).step;
