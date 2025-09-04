@@ -1,13 +1,19 @@
 #!/usr/bin/env -S nvim -l
 
+-- Finds unreachable URLs in help files.
+--
 -- Usage:
---    ./scripts/check_urls.lua [DIR...]
+--    $ ./scripts/check_urls.lua [DIR...]
+--
 -- [DIR...] defaults to all 'doc' directories in the runtimepath.
 
 local ts = vim.treesitter
 
 local query = ts.query.parse('vimdoc', '(url) @url')
 
+---Read and return full content of given file path.
+---@param path string
+---@return string
 local function read_file(path)
   local fd = assert(vim.uv.fs_open(path, 'r', tonumber('644', 8)))
   local stat = assert(vim.uv.fs_fstat(fd))
@@ -16,8 +22,9 @@ local function read_file(path)
   return data
 end
 
----@param helpfile string
----@return string[]
+---Extract URLs from a vimdoc file using the vimdoc TS parser.
+---@param helpfile string Path to help file
+---@return string[] # list of URLs found in the document
 local function extract_urls(helpfile)
   ---@type string[]
   local urls = {}
@@ -45,38 +52,40 @@ local function run()
   end
 
   ---@type string[]
-  local files = {}
-  for _, directory in ipairs(dirs) do
+  local help_files = {}
+  for _, dir in ipairs(dirs) do
     vim.list_extend(
-      files,
+      help_files,
       vim.fs.find(function(name, _)
         return vim.endswith(name, '.txt')
-      end, { path = directory, type = 'file', limit = math.huge })
+      end, { path = dir, type = 'file', limit = math.huge })
     )
   end
 
   ---@type table<string, string[]>
   local all_urls = {}
-  local pending = 0
-  for _, file in ipairs(files) do
+  local requests = 0
+  for _, file in ipairs(help_files) do
     local urls = extract_urls(file)
-    pending = pending + #urls
+    requests = requests + #urls
     all_urls[file] = urls
   end
 
-  for filename, file_urls in pairs(all_urls) do
+  for file, file_urls in pairs(all_urls) do
     for _, url in ipairs(file_urls) do
-      vim.net.request(url, { retry = 1 }, function(err, _)
+      vim.net.request(url, { retry = 3 }, function(err, _)
         if err then
-          vim.print(('Unreachable url in %s: %s'):format(filename, url))
+          vim.print(('Unreachable url %s in %s'):format(url, file))
         end
-        pending = pending - 1
-        if pending <= 0 then
+        requests = requests - 1
+        if requests <= 0 then
           vim.uv.stop()
         end
       end)
     end
   end
+
+  -- wait for all pending async requests to finish (by calling vim.uv.stop())
   vim.uv.run()
 end
 
