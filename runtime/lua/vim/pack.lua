@@ -69,8 +69,8 @@
 ---
 ---Freeze plugin from being updated:
 ---- Update 'init.lua' for plugin to have `version` set to current commit hash.
----You can get it by running `vim.pack.update({ 'plugin-name' })` and yanking
----the word describing current state (looks like `abc12345`).
+---You can get it by running `:=vim.pack.get({ 'plugin-name' }, { details = true })`
+---(located at `details.state`; looks like `abc12345`).
 ---- |:restart|.
 ---
 ---Unfreeze plugin to start receiving updates:
@@ -1006,10 +1006,45 @@ end
 --- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
 --- @field path string Plugin's path on disk.
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
+---
+---     • `branches` lists available Git branches (first is default).
+---     - `state` is a current Git state.
+---     - `tags` lists available Git tags.
+--- @field details? { branches: string[], state: string, tags: string[] }
 
---- Get data about all plugins managed by |vim.pack|
+--- @class vim.pack.keyset.get
+--- @inlinedoc
+--- @field details boolean Whether to include plugin details. Default `false`.
+
+--- @param p_data_list vim.pack.PlugData[]
+local function add_plugin_details(p_data_list)
+  local funs = {} --- @type (async fun())[]
+  for i = 1, #p_data_list do
+    local path = p_data_list[i].path
+    --- @async
+    funs[i] = function()
+      p_data_list[i].details = {
+        branches = git_get_branches(path),
+        state = git_get_hash('HEAD', path),
+        tags = git_get_tags(path),
+      }
+    end
+  end
+  --- @async
+  local function joined_f()
+    async.join(n_threads, funs)
+  end
+  async.run(joined_f):wait()
+end
+
+--- Get data about plugins managed by |vim.pack|
+--- @param names? string[] List of plugin names. Default: all plugins managed by |vim.pack|.
+--- @param opts? vim.pack.keyset.get
 --- @return vim.pack.PlugData[]
-function M.get()
+function M.get(names, opts)
+  vim.validate('names', names, vim.islist, true, 'list')
+  opts = vim.tbl_extend('force', { details = false }, opts or {})
+
   -- Process active plugins in order they were added. Take into account that
   -- there might be "holes" after `vim.pack.del()`.
   local active = {} --- @type table<integer,vim.pack.Plug?>
@@ -1017,11 +1052,12 @@ function M.get()
     active[p_active.id] = p_active.plug
   end
 
-  --- @type vim.pack.PlugData[]
-  local res = {}
+  local res = {} --- @type vim.pack.PlugData[]
+  local used_names = {} --- @type table<string,boolean>
   for i = 1, n_active_plugins do
-    if active[i] then
+    if active[i] and (not names or vim.tbl_contains(names, active[i].spec.name)) then
       res[#res + 1] = { spec = vim.deepcopy(active[i].spec), path = active[i].path, active = true }
+      used_names[active[i].spec.name] = true
     end
   end
 
@@ -1031,13 +1067,33 @@ function M.get()
     local plug_dir = get_plug_dir()
     for n, t in vim.fs.dir(plug_dir, { depth = 1 }) do
       local path = vim.fs.joinpath(plug_dir, n)
-      if t == 'directory' and not active_plugins[path] then
+      local is_in_names = not names or vim.tbl_contains(names, n)
+      if t == 'directory' and not active_plugins[path] and is_in_names then
         local spec = { name = n, src = git_cmd({ 'remote', 'get-url', 'origin' }, path) }
         res[#res + 1] = { spec = spec, path = path, active = false }
+        used_names[n] = true
       end
     end
   end
   async.run(do_get):wait()
+
+  if names ~= nil then
+    -- Align result with input
+    local names_order = {} --- @type table<string,integer>
+    for i, n in ipairs(names) do
+      if not used_names[n] then
+        error(('Plugin `%s` is not installed'):format(tostring(n)))
+      end
+      names_order[n] = i
+    end
+    table.sort(res, function(a, b)
+      return names_order[a.spec.name] < names_order[b.spec.name]
+    end)
+  end
+
+  if opts.details then
+    add_plugin_details(res)
+  end
 
   return res
 end
