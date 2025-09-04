@@ -186,9 +186,11 @@ local config = {
       -- Sections at the end, in a specific order:
       'tohtml.lua',
       '_extui.lua',
+      'undotree.lua',
     },
     files = {
       'runtime/lua/tohtml.lua',
+      'runtime/lua/undotree.lua',
       'runtime/lua/vim/_editor.lua',
       'runtime/lua/vim/_extui.lua',
       'runtime/lua/vim/_inspector.lua',
@@ -251,6 +253,8 @@ local config = {
       end
       if name == 'tohtml' then
         return 'Lua module: tohtml'
+      elseif name == 'undotree' then
+        return 'Lua module: undotree'
       end
       return 'Lua module: vim.' .. name
     end,
@@ -263,6 +267,8 @@ local config = {
         return 'lua-vimscript'
       elseif name == 'tohtml' then
         return 'tohtml'
+      elseif name == 'undotree' then
+        return 'undotree'
       end
       return 'vim.' .. name:lower()
     end,
