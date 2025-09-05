@@ -31,6 +31,7 @@
 #include "nvim/syntax.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -380,6 +381,24 @@ static int win_split_flags(WinSplit split, bool toplevel)
   return flags;
 }
 
+static bool can_move(win_T *wp, bool switch_tab, Error *err)
+{
+  if (is_aucmd_win(wp) && switch_tab) {
+    api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
+    return false;
+  }
+  // Can't move the cmdwin or its old curwin to a different tabpage.
+  if ((wp == cmdwin_win || wp == cmdwin_old_curwin) && switch_tab) {
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+    return false;
+  }
+  if (wp->w_floating && wp->w_config.external) {
+    api_set_error(err, kErrorTypeException, "%s", "Cannot move external floating window");
+    return false;
+  }
+  return true;
+}
+
 /// Configures window layout. Cannot be used to move the last window in a
 /// tabpage to a different one.
 ///
@@ -416,36 +435,35 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     return;
   }
 
+  win_T *parent = NULL;
+  tabpage_T *parent_tp = NULL;
+  bool curwin_moving_tp = false;
+  if (config->win == 0) {
+    parent = curwin;
+    parent_tp = curtab;
+  } else if (config->win > 0) {
+    parent = find_window_by_handle(fconfig.window, err);
+    if (!parent) {
+      return;
+    }
+    parent_tp = win_find_tabpage(parent);
+    if (!parent_tp) {
+      return;
+    }
+  }
+
   if (was_split && !to_split) {
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
     redraw_later(win, UPD_NOT_VALID);
   } else if (to_split) {
-    win_T *parent = NULL;
-    tabpage_T *parent_tp = NULL;
-    if (config->win == 0) {
-      parent = curwin;
-      parent_tp = curtab;
-    } else if (config->win > 0) {
-      parent = find_window_by_handle(fconfig.window, err);
-      if (!parent) {
-        return;
-      }
-      parent_tp = win_find_tabpage(parent);
-    }
     if (parent) {
       if (parent->w_floating) {
         api_set_error(err, kErrorTypeException, "Cannot split a floating window");
         return;
       }
-      if (is_aucmd_win(win) && win_tp != parent_tp) {
-        api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
-        return;
-      }
-      // Can't move the cmdwin or its old curwin to a different tabpage.
-      if ((win == cmdwin_win || win == cmdwin_old_curwin) && win_tp != parent_tp) {
-        api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+      if (!can_move(win, win_tp != parent_tp, err)) {
         return;
       }
     }
@@ -481,7 +499,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     bool to_split_ok = false;
     // If we are moving curwin to another tabpage, switch windows *before* we remove it from the
     // window list or remove its frame (if non-floating), so it's valid for autocommands.
-    const bool curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
+    curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
     if (curwin_moving_tp) {
       if (was_split) {
         int dir;
@@ -617,14 +635,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       if (!ERROR_SET(err)) {
         api_set_error(err, kErrorTypeException, "Failed to move window %d into split", win->handle);
       }
-
-restore_curwin:
-      // If `win` was the original curwin, and autocommands didn't move it outside of curtab, be a
-      // good citizen and try to return to it.
-      if (curwin_moving_tp && win_valid(win)) {
-        win_goto(win);
-      }
-      return;
+      goto restore_curwin;
     }
 
     // If `win` moved tabpages and was the curwin of its old one, select a new curwin for it.
@@ -639,18 +650,82 @@ restore_curwin:
       win_setheight_win(fconfig.height, win);
     }
   } else {
+    if (win->w_floating && parent && parent_tp != win_tp) {
+      if (!can_move(win, win_tp != parent_tp, err)) {
+        return;
+      }
+      if (win == curwin) {
+        curwin_moving_tp = true;
+        win_goto(win_float_find_altwin(win, NULL));
+
+        // Autocommands may have been a real nuisance and messed things up...
+        if (curwin == win) {
+          api_set_error(err, kErrorTypeException, "Failed to switch away from window %d",
+                        win->handle);
+          return;
+        }
+        win_tp = win_find_tabpage(win);
+        parent_tp = win_find_tabpage(parent);
+        if (!win_tp || !parent_tp) {
+          api_set_error(err, kErrorTypeException, "Target windows were closed");
+          goto restore_curwin;
+        }
+        if (!win->w_floating) {
+          api_set_error(err, kErrorTypeException, "Window %d was made non-floating",
+                        win->handle);
+          goto restore_curwin;
+        }
+        if (!can_move(win, win_tp != parent_tp, err)) {
+          goto restore_curwin;
+        }
+      }
+
+      if (win_tp != parent_tp) {
+        win_remove(win, win_tp == curtab ? NULL : win_tp);
+        win_T *target_after;
+        if (parent_tp == curtab) {
+          target_after = lastwin_nofloating();
+        } else {
+          target_after = parent_tp->tp_lastwin;
+          while (target_after->w_floating) {
+            target_after = target_after->w_prev;
+          }
+        }
+
+        win_append(target_after, win, parent_tp == curtab ? NULL : parent_tp);
+        // If `win` was the curwin of its old tabpage, select a new curwin for it.
+        if (win_tp != curtab && win_tp->tp_curwin == win) {
+          win_tp->tp_curwin = win_float_find_altwin(win, win_tp);
+        }
+
+        if (parent_tp != curtab) {
+          if (ui_has(kUIMultigrid)) {
+            ui_call_win_hide(win->w_grid_alloc.handle);
+          }
+          ui_comp_remove_grid(&win->w_grid_alloc);
+        } else {
+          win->w_hl_needs_update = true;
+        }
+      }
+    }
     win_config_float(win, fconfig);
   }
-  if (HAS_KEY_X(config, style)) {
-    if (fconfig.style == kWinStyleMinimal) {
-      win_set_minimal_style(win);
-      didset_window_options(win, true);
-    }
+  if (HAS_KEY_X(config, style) && fconfig.style == kWinStyleMinimal) {
+    win_set_minimal_style(win);
+    didset_window_options(win, true);
   }
   if (fconfig._cmdline_offset < INT_MAX) {
     cmdline_win = win;
   } else if (win == cmdline_win && fconfig._cmdline_offset == INT_MAX) {
     cmdline_win = NULL;
+  }
+  return;
+
+restore_curwin:
+  // If `win` was the original curwin, and autocommands didn't move it outside of curtab, be a
+  // good citizen and try to return to it.
+  if (curwin_moving_tp && win_valid(win)) {
+    win_goto(win);
   }
 #undef HAS_KEY_X
 }
