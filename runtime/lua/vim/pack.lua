@@ -368,35 +368,16 @@ local function trigger_event(p, event_name, kind)
   api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
---- @param title string
+--- @param action string
 --- @return fun(kind: 'begin'|'report'|'end', percent: integer, fmt: string, ...:any): nil
-local function new_progress_report(title)
-  -- TODO(echasnovski): currently print directly in command line because
-  -- there is no robust built-in way of showing progress:
-  -- - `vim.ui.progress()` is planned and is a good candidate to use here.
-  -- - Use `'$/progress'` implementation in 'vim.pack._lsp' if there is
-  --   a working built-in '$/progress' handler. Something like this:
-  --   ```lua
-  --   local progress_token_count = 0
-  --   function M.new_progress_report(title)
-  --     progress_token_count = progress_token_count + 1
-  --     return vim.schedule_wrap(function(kind, msg, percent)
-  --       local value = { kind = kind, message = msg, percentage = percent }
-  --       dispatchers.notification(
-  --         '$/progress',
-  --         { token = progress_token_count, value = value }
-  --       )
-  --     end
-  --   end
-  --   ```
-  -- Any of these choices is better as users can tweak how progress is shown.
+local function new_progress_report(action)
+  local progress = { kind = 'progress', title = 'vim.pack' }
 
   return vim.schedule_wrap(function(kind, percent, fmt, ...)
-    local progress = kind == 'end' and 'done' or ('%3d%%'):format(percent)
-    local details = (' %s %s'):format(title, fmt:format(...))
-    local chunks = { { 'vim.pack', 'ModeMsg' }, { ': ' }, { progress, 'WarningMsg' }, { details } }
-    -- TODO: need to add support for progress-messages api
-    api.nvim_echo(chunks, true, {})
+    progress.status = kind == 'end' and 'success' or 'running'
+    progress.percent = percent
+    local msg = ('%s %s'):format(action, fmt:format(...))
+    progress.id = api.nvim_echo({ { msg } }, kind ~= 'report', progress)
     -- Force redraw to show installation progress during startup
     vim.cmd.redraw({ bang = true })
   end)
@@ -408,9 +389,9 @@ local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
 --- Execute function in parallel for each non-errored plugin in the list
 --- @param plug_list vim.pack.Plug[]
 --- @param f async fun(p: vim.pack.Plug)
---- @param progress_title string
-local function run_list(plug_list, f, progress_title)
-  local report_progress = new_progress_report(progress_title)
+--- @param progress_action string
+local function run_list(plug_list, f, progress_action)
+  local report_progress = new_progress_report(progress_action)
 
   -- Construct array of functions to execute in parallel
   local n_finished = 0

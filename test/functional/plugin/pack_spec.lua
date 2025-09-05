@@ -243,32 +243,55 @@ local function find_in_log(log, event, kind, repo_name, version)
   return res
 end
 
-local function validate_progress_report(title, step_names)
-  -- NOTE: Assumes that message history contains only progress report messages
-  local messages = vim.split(n.exec_capture('messages'), '\n')
-  local n_steps = #step_names
-  eq(n_steps + 2, #messages)
+local function track_nvim_echo()
+  exec_lua(function()
+    _G.echo_log = {}
+    local nvim_echo_orig = vim.api.nvim_echo
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_echo = function(...)
+      table.insert(_G.echo_log, vim.deepcopy({ ... }))
+      return nvim_echo_orig(...)
+    end
+  end)
+end
 
-  local init_msg = ('vim.pack:   0%% %s (0/%d)'):format(title, n_steps)
-  eq(init_msg, messages[1])
+local function validate_progress_report(action, step_names)
+  -- NOTE: Assume that `nvim_echo` mocked log has only progress report messages
+  local echo_log = exec_lua('return _G.echo_log') ---@type table[]
+  local n_steps = #step_names
+  eq(n_steps + 2, #echo_log)
+
+  local progress = { kind = 'progress', title = 'vim.pack', status = 'running', percent = 0 }
+  local init_step = { { { ('%s (0/%d)'):format(action, n_steps) } }, true, progress }
+  eq(init_step, echo_log[1])
 
   local steps_seen = {} --- @type table<string,boolean>
   for i = 1, n_steps do
-    local percent = math.floor(100 * i / n_steps)
-    local msg = ('vim.pack: %3d%% %s (%d/%d)'):format(percent, title, i, n_steps)
+    local echo_args = echo_log[i + 1]
+
     -- NOTE: There is no guaranteed order (as it is async), so check that some
-    -- expected step name is used
+    -- expected step name is used in the message
+    local msg = ('%s (%d/%d)'):format(action, i, n_steps)
     local pattern = '^' .. vim.pesc(msg) .. ' %- (%S+)$'
-    local step = messages[i + 1]:match(pattern)
+    local step = echo_args[1][1][1]:match(pattern) ---@type string
     eq(true, vim.tbl_contains(step_names, step))
     steps_seen[step] = true
+
+    -- Should not add intermediate progress report to history
+    eq(echo_args[2], false)
+
+    -- Should update a single message by its id (computed after first call)
+    progress.id = progress.id or echo_args[3].id ---@type integer
+    progress.percent = math.floor(100 * i / n_steps)
+    eq(echo_args[3], progress)
   end
 
   -- Should report all steps
   eq(n_steps, vim.tbl_count(steps_seen))
 
-  local final_msg = ('vim.pack: done %s (%d/%d)'):format(title, n_steps, n_steps)
-  eq(final_msg, messages[n_steps + 2])
+  progress.percent, progress.status = 100, 'success'
+  local final_step = { { { ('%s (%d/%d)'):format(action, n_steps, n_steps) } }, true, progress }
+  eq(final_step, echo_log[n_steps + 2])
 end
 
 local function is_jit()
@@ -431,6 +454,7 @@ describe('vim.pack', function()
     end)
 
     it('shows progress report during installation', function()
+      track_nvim_echo()
       exec_lua(function()
         vim.pack.add({ repos_src.basic, repos_src.defbranch })
       end)
@@ -1080,6 +1104,7 @@ describe('vim.pack', function()
     end)
 
     it('shows progress report', function()
+      track_nvim_echo()
       exec_lua(function()
         vim.pack.add({ repos_src.fetch, repos_src.defbranch })
         vim.pack.update()
@@ -1087,7 +1112,7 @@ describe('vim.pack', function()
 
       -- During initial download
       validate_progress_report('Downloading updates', { 'fetch', 'defbranch' })
-      n.exec('messages clear')
+      exec_lua('_G.echo_log = {}')
 
       -- During application (only for plugins that have updates)
       n.exec('write')
@@ -1095,6 +1120,7 @@ describe('vim.pack', function()
 
       -- During force update
       n.clear()
+      track_nvim_echo()
       repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new 3"')
       git_add_commit('Commit to be added 3', 'fetch')
 
