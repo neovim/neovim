@@ -635,4 +635,54 @@ gc			Text object for the largest contiguous block of
 			`gcgc` uncomments a comment block; `dgc` deletes it).
 			Works only in Operator-pending mode.
 
+==============================================================================
+3. Matching							*matching*
+
+Nvim supports highlighting and jumping to matching groups based on |treesitter|
+nodes or |syntax| groups.
+
+The groups are highlighted with |hl-MatchParen|.
+
+							*matching-groups*
+Treesitter capture groups that count as groups:
+- `@punctuation.bracket`: Braces, brackets, and parentheses pairs.
+- `@keyword`: Language-specific keywords.
+
+Syntax supported matching groups:
+- 'matchpairs': Braces, brackets, and parentheses pairs.
+- |b:match_words|: Language-specific keywords.
+
+						*matching-%* *%-default*
+%			Jump forwards through the |matching-groups|.
+
+						*matching-g%* *g%-default*
+g%			Jump backwards through the |matching-groups|.
+
+CONFIGURATION					*matching-configuration*
+
+For filetypes without |treesitter| parser the words that are recognized as
+matching group can be expanded using |matching-b:match_words| and
+'matchpairs'. This is mostly compatible with matchit's |b:match_words|, except
+that it does not support mutiple, possibly nested, backref groups
+|matchit-\1|.
+
+							*matching-b:match_words*
+The format for |b:match_words| is similar to 'matchpairs': a comma
+(,)-separated list of groups. Each group is a colon (:)-separated list of
+patterns |pattern|. Here's an example for some Lua keywords:
+>vim
+	:let b:match_words = '\<if\>:\<elseif\>:\<else\>:\<end\>,'
+		\ . '\<function\>:\<end\>'
+<
+Where |\<| and |\>| denote word boundaries. |b:match_words| also supports a
+|Funcref| as value:
+>vim
+	:let b:match_words = 'GetMatchWords()'
+<
+The group definitions also support a single backref group |\1|. For example,
+>vim
+	:let b:match_words = '\<\(if|function\)\>:\<end\1\>'
+<
+matches "if" with "endif" and "function" with "endfunction".
+
  vim:noet:tw=78:ts=8:ft=help:norl:
