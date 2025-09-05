@@ -2409,7 +2409,7 @@ function vim.api.nvim_win_get_buf(window) end
 --- `relative` is empty for normal windows.
 ---
 --- @param window integer `window-ID`, or 0 for current window
---- @return vim.api.keyset.win_config # Map defining the window configuration, see |nvim_open_win()|
+--- @return vim.api.keyset.win_config_ret # Map defining the window configuration, see |nvim_open_win()|
 function vim.api.nvim_win_get_config(window) end
 
 --- Gets the (1,0)-indexed, buffer-relative cursor position for a given window
