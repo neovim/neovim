@@ -229,10 +229,10 @@ syn region  pythonFStringField
     \ start=/{/
     \ end=/\%(=\s*\)\=\%(!\a\s*\)\=\%(:\%({\_[^}]*}\|[^{}]*\)\+\)\=}/
     \ contained
-    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonDoctest,pythonDoctestValue,@Spell
+    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonType,pythonDoctest,pythonDoctestValue,@Spell
 syn match   pythonFStringFieldSkip  /(\_[^()]*)\|\[\_[^][]*]\|{\_[^{}]*}/
     \ contained
-    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonDoctest,pythonDoctestValue,@Spell
+    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonType,pythonDoctest,pythonDoctestValue,@Spell
 
 " Doubled braces are not replacement fields
 syn match   pythonFStringSkip	/{{/ transparent contained contains=NONE
