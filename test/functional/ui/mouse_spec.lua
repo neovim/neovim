@@ -30,58 +30,38 @@ describe('ui/mouse/input', function()
     }
     command('set mousemodel=extend')
     feed('itesting<cr>mouse<cr>support and selection<esc>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      support and selectio^n    |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'testing                  ',
+        'mouse                    ',
+        'support and selectio%^n    ',
+      },
+    })
   end)
 
   it('single left click moves cursor', function()
     feed('<LeftMouse><2,1>')
-    screen:expect {
-      grid = [[
-      testing                  |
-      mo^use                    |
-      support and selection    |
-      {1:~                        }|
-                               |
-    ]],
+    screen:expect({
+      any = 'mo%^use',
       mouse_enabled = true,
-    }
+    })
     feed('<LeftMouse><0,0>')
-    screen:expect([[
-      ^testing                  |
-      mouse                    |
-      support and selection    |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = '%^testing',
+    })
   end)
 
   it("in external ui works with unset 'mouse'", function()
     api.nvim_set_option_value('mouse', '', {})
     feed('<LeftMouse><2,1>')
-    screen:expect {
-      grid = [[
-      testing                  |
-      mo^use                    |
-      support and selection    |
-      {1:~                        }|
-                               |
-    ]],
+    screen:expect({
+      any = 'mo%^use',
       mouse_enabled = false,
-    }
+    })
     feed('<LeftMouse><0,0>')
-    screen:expect([[
-      ^testing                  |
-      mouse                    |
-      support and selection    |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = '%^testing',
+    })
   end)
 
   it('double left click enters visual mode', function()
@@ -89,13 +69,12 @@ describe('ui/mouse/input', function()
     feed('<LeftRelease><0,0>')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
-    screen:expect([[
-      {17:testin}^g                  |
-      mouse                    |
-      support and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        '{17:testin}%^g',
+        'VISUAL',
+      },
+    })
   end)
 
   it('triple left click enters visual line mode', function()
@@ -105,13 +84,12 @@ describe('ui/mouse/input', function()
     feed('<LeftRelease><0,0>')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
-    screen:expect([[
-      ^t{17:esting}                  |
-      mouse                    |
-      support and selection    |
-      {1:~                        }|
-      {5:-- VISUAL LINE --}        |
-    ]])
+    screen:expect({
+      any = {
+        '%^t{17:esting}',
+        'VISUAL LINE',
+      },
+    })
   end)
 
   it('quadruple left click enters visual block mode', function()
@@ -123,13 +101,12 @@ describe('ui/mouse/input', function()
     feed('<LeftRelease><0,0>')
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
-    screen:expect([[
-      ^testing                  |
-      mouse                    |
-      support and selection    |
-      {1:~                        }|
-      {5:-- VISUAL BLOCK --}       |
-    ]])
+    screen:expect({
+      any = {
+        '%^testing',
+        'VISUAL BLOCK',
+      },
+    })
   end)
 
   describe('tab drag', function()
@@ -138,26 +115,26 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><4,0>')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
       feed('<LeftDrag><14,0>')
-      screen:expect([[
-        {24: + bar }{5: + foo }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ bar }{5: %+ foo }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
     end)
 
     it('in tabline to the left moves tab left', function()
@@ -165,32 +142,30 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><11,0>')
       -- Prevent the case where screen:expect() with "unchanged" returns too early,
       -- causing the click position to be overwritten by the next drag.
       poke_eventloop()
-      screen:expect {
-        grid = [[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]],
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
         unchanged = true,
-      }
+      })
       feed('<LeftDrag><6,0>')
-      screen:expect([[
-        {5: + bar }{24: + foo }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ bar }{24: %+ foo }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
     end)
 
     it('in tabline to the right moves tab right', function()
@@ -198,26 +173,26 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><4,0>')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
       feed('<LeftDrag><7,0>')
-      screen:expect([[
-        {24: + bar }{5: + foo }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ bar }{5: %+ foo }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
     end)
 
     it('out of tabline under filler space moves tab to the end', function()
@@ -225,36 +200,34 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><4,0>')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
       feed('<LeftDrag><4,1>')
-      screen:expect {
-        grid = [[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]],
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
         unchanged = true,
-      }
+      })
       feed('<LeftDrag><14,1>')
-      screen:expect([[
-        {24: + bar }{5: + foo }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ bar }{5: %+ foo }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
     end)
 
     it('out of tabline to the left moves tab left', function()
@@ -262,42 +235,38 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><11,0>')
       -- Prevent the case where screen:expect() with "unchanged" returns too early,
       -- causing the click position to be overwritten by the next drag.
       poke_eventloop()
-      screen:expect {
-        grid = [[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]],
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
         unchanged = true,
-      }
+      })
       feed('<LeftDrag><11,1>')
-      screen:expect {
-        grid = [[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]],
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
         unchanged = true,
-      }
+      })
       feed('<LeftDrag><6,1>')
-      screen:expect([[
-        {5: + bar }{24: + foo }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ bar }{24: %+ foo }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
     end)
 
     it('out of tabline to the right moves tab right', function()
@@ -305,36 +274,34 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><4,0>')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
       feed('<LeftDrag><4,1>')
-      screen:expect {
-        grid = [[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]],
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
         unchanged = true,
-      }
+      })
       feed('<LeftDrag><7,1>')
-      screen:expect([[
-        {24: + bar }{5: + foo }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ bar }{5: %+ foo }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
     end)
   end)
 
@@ -344,28 +311,28 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><4,0>')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
       feed('<LeftMouse><6,0>')
       screen:expect_unchanged()
       feed('<LeftMouse><10,0>')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><12,0>')
       screen:expect_unchanged()
     end)
@@ -375,26 +342,26 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><20,0>')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+          'this is fo%^o',
+        },
+      })
       feed('<LeftMouse><22,0>')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
     end)
 
     it('left click in default tabline (close label) closes tab', function()
@@ -403,18 +370,23 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<LeftMouse><24,0>')
-      screen:expect([[
-        this is fo^o              |
-        {1:~                        }|*3
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'this is fo%^o',
+        },
+        none = {
+          '{24:X}',
+          '%+ foo',
+          '%+ bar',
+        },
+      })
     end)
 
     it('double click in default tabline opens new tab before', function()
@@ -422,47 +394,47 @@ describe('ui/mouse/input', function()
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:%$}',
+        },
+      })
       feed('<2-LeftMouse><4,0>')
-      screen:expect([[
-        {5:  Name] }{24: + foo  + bar }{2:  }{24:X}|
-        {1:^$}                        |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5:  Name] }{24: %+ foo  %+ bar }{2:  }{24:X}|',
+          '{1:%^$}',
+        },
+      })
       command('tabclose')
-      screen:expect([[
-        {5: + foo }{24: + bar }{2:          }{24:X}|
-        this is fo^o              |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{5: %+ foo }{24: %+ bar }{2:          }{24:X}|',
+          'this is fo%^o',
+        },
+      })
       feed('<2-LeftMouse><20,0>')
-      screen:expect([[
-        {24: + foo  + bar }{5:  Name] }{2:  }{24:X}|
-        {1:^$}                        |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo  %+ bar }{5:  Name] }{2:  }{24:X}',
+          '{1:%^$}',
+        },
+      })
       command('tabclose')
-      screen:expect([[
-        {24: + foo }{5: + bar }{2:          }{24:X}|
-        this is ba^r{1:$}             |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+          'this is ba%^r{1:$}',
+        },
+      })
       feed('<2-LeftMouse><10,0>')
-      screen:expect([[
-        {24: + foo }{5:  Name] }{24: + bar }{2:  }{24:X}|
-        {1:^$}                        |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '{24: %+ foo }{5:  Name] }{24: %+ bar }{2:  }{24:X}',
+          '{1:%^$}',
+        },
+      })
     end)
 
     describe('%@ label', function()
@@ -480,13 +452,14 @@ describe('ui/mouse/input', function()
         ]])
         api.nvim_set_option_value('tabline', '%@Test@test%X-%5@Test2@test2', {})
         api.nvim_set_option_value('showtabline', 2, {})
-        screen:expect([[
-          {2:test-test2               }|
-          testing                  |
-          mouse                    |
-          support and selectio^n    |
-                                   |
-        ]])
+        screen:expect({
+          any = {
+            '{2:test%-test2               }',
+            'testing',
+            'mouse',
+            'support and selectio%^n',
+          },
+        })
         api.nvim_set_var('reply', {})
       end)
 
@@ -562,66 +535,77 @@ describe('ui/mouse/input', function()
   it('left drag changes visual selection', function()
     -- drag events must be preceded by a click
     feed('<LeftMouse><2,1>')
-    screen:expect([[
-      testing                  |
-      mo^use                    |
-      support and selection    |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mo%^use',
+        'support and selection',
+      },
+    })
     feed('<LeftDrag><4,1>')
-    screen:expect([[
-      testing                  |
-      mo{17:us}^e                    |
-      support and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mo{17:us}%^e',
+        'support and selection',
+        'VISUAL',
+      },
+    })
     feed('<LeftDrag><2,2>')
-    screen:expect([[
-      testing                  |
-      mo{17:use}                    |
-      {17:su}^pport and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mo{17:use}',
+        '{17:su}%^pport and selection',
+        'VISUAL',
+      },
+    })
     feed('<LeftDrag><0,0>')
-    screen:expect([[
-      ^t{17:esting}                  |
-      {17:mou}se                    |
-      support and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        '%^t{17:esting}',
+        '{17:mou}se ',
+        'support and selection',
+        'VISUAL',
+      },
+    })
   end)
 
   it('left drag changes visual selection after tab click', function()
     feed_command('silent file foo | tabnew | file bar')
     insert('this is bar')
     feed_command('tabprevious') -- go to first tab
-    screen:expect([[
-      {5: + foo }{24: + bar }{2:          }{24:X}|
-      testing                  |
-      mouse                    |
-      support and selectio^n    |
-      :tabprevious             |
-    ]])
+    screen:expect({
+      any = {
+        '{5: %+ foo }{24: %+ bar }{2:          }{24:X}|',
+        'testing',
+        'mouse',
+        'support and selectio%^n',
+        ':tabprevious',
+      },
+    })
     feed('<LeftMouse><10,0><LeftRelease>') -- go to second tab
     n.poke_eventloop()
     feed('<LeftMouse><0,1>')
-    screen:expect([[
-      {24: + foo }{5: + bar }{2:          }{24:X}|
-      ^this is bar{1:$}             |
-      {1:~                        }|*2
-      :tabprevious             |
-    ]])
+    screen:expect({
+      any = {
+        '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+        '%^this is bar{1:%$}',
+        ':tabprevious',
+      },
+      none = {
+        'mouse',
+        'support and selection',
+      },
+    })
     feed('<LeftDrag><4,1>')
-    screen:expect([[
-      {24: + foo }{5: + bar }{2:          }{24:X}|
-      {17:this}^ is bar{1:$}             |
-      {1:~                        }|*2
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
+        '{17:this}%^ is bar{1:%$}',
+        'VISUAL',
+      },
+    })
   end)
 
   it('left drag changes visual selection in split layout', function()
@@ -632,90 +616,68 @@ describe('ui/mouse/input', function()
     command('below split')
     command('enew')
     feed('ifoo\nbar<esc>')
-
-    screen:expect {
-      grid = [[
-      testing                   │testing                   |
-      mouse                     │mouse                     |
-      support and selection     │support and selection     |
-      {1:~                         }│{1:~                         }|*2
-      {1:~                         }│{2:[No Name] [+]             }|
-      {1:~                         }│foo{1:$}                      |
-      {1:~                         }│ba^r{1:$}                      |
-      {1:~                         }│{1:~                         }|*4
-      {2:[No Name] [+]              }{3:[No Name] [+]             }|
-                                                           |
-    ]],
-    }
-
+    screen:expect({
+      any = {
+        'foo{1:%$}',
+        'ba%^r{1:%$}',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 6, 27)
-    screen:expect {
-      grid = [[
-      testing                   │testing                   |
-      mouse                     │mouse                     |
-      support and selection     │support and selection     |
-      {1:~                         }│{1:~                         }|*2
-      {1:~                         }│{2:[No Name] [+]             }|
-      {1:~                         }│^foo{1:$}                      |
-      {1:~                         }│bar{1:$}                      |
-      {1:~                         }│{1:~                         }|*4
-      {2:[No Name] [+]              }{3:[No Name] [+]             }|
-                                                           |
-    ]],
-    }
+    screen:expect({
+      any = {
+        '%^foo{1:%$}',
+        'bar{1:%$}',
+      },
+    })
     api.nvim_input_mouse('left', 'drag', '', 0, 7, 30)
-
-    screen:expect {
-      grid = [[
-      testing                   │testing                   |
-      mouse                     │mouse                     |
-      support and selection     │support and selection     |
-      {1:~                         }│{1:~                         }|*2
-      {1:~                         }│{2:[No Name] [+]             }|
-      {1:~                         }│{17:foo}{100:$}                      |
-      {1:~                         }│{17:bar}{1:^$}                      |
-      {1:~                         }│{1:~                         }|*4
-      {2:[No Name] [+]              }{3:[No Name] [+]             }|
-      {5:-- VISUAL --}                                         |
-    ]],
-    }
+    screen:expect({
+      any = {
+        '{17:foo}{100:%$}',
+        '{17:bar}{1:%^%$}',
+        'VISUAL',
+      },
+    })
   end)
 
   it('two clicks will enter VISUAL and dragging selects words', function()
     feed('<LeftMouse><2,2>')
     feed('<LeftRelease><2,2>')
     feed('<LeftMouse><2,2>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      {17:suppor}^t and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mouse',
+        '{17:suppor}%^t and selection',
+        'VISUAL',
+      },
+    })
     feed('<LeftDrag><0,1>')
-    screen:expect([[
-      testing                  |
-      ^m{17:ouse}                    |
-      {17:support} and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        '%^m{17:ouse}',
+        '{17:support} and selection',
+        'VISUAL',
+      },
+    })
     feed('<LeftDrag><4,0>')
-    screen:expect([[
-      ^t{17:esting}                  |
-      {17:mouse}                    |
-      {17:support} and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        '%^t{17:esting}',
+        '{17:mouse}',
+        '{17:support} and selection',
+        'VISUAL',
+      },
+    })
     feed('<LeftDrag><14,2>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      {17:support and selectio}^n    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mouse',
+        '{17:support and selectio}%^n',
+        'VISUAL',
+      },
+    })
   end)
 
   it('three clicks will enter VISUAL LINE and dragging selects lines', function()
@@ -724,37 +686,41 @@ describe('ui/mouse/input', function()
     feed('<LeftMouse><2,2>')
     feed('<LeftRelease><2,2>')
     feed('<LeftMouse><2,2>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      {17:su}^p{17:port and selection}    |
-      {1:~                        }|
-      {5:-- VISUAL LINE --}        |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mouse',
+        '{17:su}%^p{17:port and selection}',
+        'VISUAL LINE',
+      },
+    })
     feed('<LeftDrag><0,1>')
-    screen:expect([[
-      testing                  |
-      ^m{17:ouse}                    |
-      {17:support and selection}    |
-      {1:~                        }|
-      {5:-- VISUAL LINE --}        |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        '%^m{17:ouse}',
+        '{17:support and selection}',
+        'VISUAL LINE',
+      },
+    })
     feed('<LeftDrag><4,0>')
-    screen:expect([[
-      {17:test}^i{17:ng}                  |
-      {17:mouse}                    |
-      {17:support and selection}    |
-      {1:~                        }|
-      {5:-- VISUAL LINE --}        |
-    ]])
+    screen:expect({
+      any = {
+        '{17:test}%^i{17:ng}',
+        '{17:mouse}',
+        '{17:support and selection}',
+        'VISUAL LINE',
+      },
+    })
     feed('<LeftDrag><14,2>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      {17:support and se}^l{17:ection}    |
-      {1:~                        }|
-      {5:-- VISUAL LINE --}        |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mouse',
+        '{17:support and se}%^l{17:ection}',
+        'VISUAL LINE',
+      },
+    })
   end)
 
   it('four clicks will enter VISUAL BLOCK and dragging selects blockwise', function()
@@ -765,68 +731,75 @@ describe('ui/mouse/input', function()
     feed('<LeftMouse><2,2>')
     feed('<LeftRelease><2,2>')
     feed('<LeftMouse><2,2>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      su^pport and selection    |
-      {1:~                        }|
-      {5:-- VISUAL BLOCK --}       |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mouse',
+        'su%^pport and selection',
+        'VISUAL BLOCK',
+      },
+    })
     feed('<LeftDrag><0,1>')
-    screen:expect([[
-      testing                  |
-      ^m{17:ou}se                    |
-      {17:sup}port and selection    |
-      {1:~                        }|
-      {5:-- VISUAL BLOCK --}       |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        '%^m{17:ou}se',
+        '{17:sup}port and selection',
+        'VISUAL BLOCK',
+      },
+    })
     feed('<LeftDrag><4,0>')
-    screen:expect([[
-      te{17:st}^ing                  |
-      mo{17:use}                    |
-      su{17:ppo}rt and selection    |
-      {1:~                        }|
-      {5:-- VISUAL BLOCK --}       |
-    ]])
+    screen:expect({
+      any = {
+        'te{17:st}%^ing',
+        'mo{17:use}',
+        'su{17:ppo}rt and selection',
+        'VISUAL BLOCK',
+      },
+    })
     feed('<LeftDrag><14,2>')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      su{17:pport and se}^lection    |
-      {1:~                        }|
-      {5:-- VISUAL BLOCK --}       |
-    ]])
+    screen:expect({
+      any = {
+        'testing',
+        'mouse',
+        'su{17:pport and se}%^lection',
+        'VISUAL BLOCK',
+      },
+    })
   end)
 
   it('right click extends visual selection to the clicked location', function()
     feed('<LeftMouse><0,0>')
-    screen:expect([[
-      ^testing                  |
-      mouse                    |
-      support and selection    |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        '%^testing',
+        'mouse',
+        'support and selection',
+      },
+    })
     feed('<RightMouse><2,2>')
-    screen:expect([[
-      {17:testing}                  |
-      {17:mouse}                    |
-      {17:su}^pport and selection    |
-      {1:~                        }|
-      {5:-- VISUAL --}             |
-    ]])
+    screen:expect({
+      any = {
+        '{17:testing}',
+        '{17:mouse}',
+        '{17:su}^pport and selection',
+        'VISUAL',
+      },
+    })
   end)
 
   it('ctrl + left click will search for a tag', function()
     api.nvim_set_option_value('tags', './non-existent-tags-file', {})
     feed('<C-LeftMouse><0,0>')
-    screen:expect([[
-      {9:E433: No tags file}       |
-      {9:E426: Tag not found: test}|
-      {9:ing}                      |
-      {6:Press ENTER or type comma}|
-      {6:nd to continue}^           |
-    ]])
+    screen:expect({
+      any = {
+        '{9:E433: No tags file}',
+        '{9:E426: Tag not found: test}',
+        '{9:ing}',
+        '{6:Press ENTER or type comma}',
+        '{6:nd to continue}%^',
+      },
+    })
     feed('<cr>')
   end)
 
@@ -854,57 +827,68 @@ describe('ui/mouse/input', function()
     command('setlocal nowrap')
     local oldwin = api.nvim_get_current_win()
     command('rightbelow vnew')
-    screen:expect([[
-      testing               │{1:^$}                     |
-      mouse                 │{1:~                     }|
-      support and selection │{1:~                     }|
-      {2:[No Name] [+]          }{3:[No Name]             }|
-                                                   |
-    ]])
+    screen:expect({
+      any = {
+        'testing               ',
+        'mouse                 ',
+        'support and selection ',
+        '{1:%^%$}                     ',
+        '{2:%[No Name%] %[%+%]          }{3:%[No Name%]             }',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
     poke_eventloop()
     api.nvim_input_mouse('left', 'drag', '', 0, 1, 12)
-    screen:expect([[
-      testing     │{1:^$}                               |
-      mouse       │{1:~                               }|
-      support and │{1:~                               }|
-      {2:< Name] [+]  }{3:[No Name]                       }|
-                                                   |
-    ]])
+    screen:expect({
+      any = {
+        'testing     ',
+        'mouse       ',
+        'support and ',
+        '{1:%^$}                               ',
+        '{2:< Name%] %[%+%]  }{3:%[No Name%]                       }',
+      },
+    })
     api.nvim_input_mouse('left', 'drag', '', 0, 2, 2)
-    screen:expect([[
-      te│{1:^$}                                         |
-      mo│{1:~                                         }|
-      su│{1:~                                         }|
-      {2:<  }{3:[No Name]                                 }|
-                                                   |
-    ]])
+    screen:expect({
+      any = {
+        'te',
+        'mo',
+        'su',
+        '{1:%^%$}                                         ',
+        '{2:<  }{3:%[No Name%]                                 }',
+      },
+    })
     api.nvim_input_mouse('left', 'release', '', 0, 2, 2)
     api.nvim_set_option_value('statuscolumn', 'foobar', { win = oldwin })
-    screen:expect([[
-      {8:fo}│{1:^$}                                         |
-      {8:fo}│{1:~                                         }|*2
-      {2:<  }{3:[No Name]                                 }|
-                                                   |
-    ]])
+    screen:expect({
+      any = {
+        '{8:fo}',
+        '{1:%^%$}                                         ',
+        '{2:<  }{3:%[No Name%]                                 }',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 0, 2)
     poke_eventloop()
     api.nvim_input_mouse('left', 'drag', '', 0, 1, 12)
-    screen:expect([[
-      {8:foobar}testin│{1:^$}                               |
-      {8:foobar}mouse │{1:~                               }|
-      {8:foobar}suppor│{1:~                               }|
-      {2:< Name] [+]  }{3:[No Name]                       }|
-                                                   |
-    ]])
+    screen:expect({
+      any = {
+        '{8:foobar}testin',
+        '{8:foobar}mouse ',
+        '{8:foobar}suppor',
+        '{1:%^%$}                               ',
+        '{2:< Name%] %[%+%]  }{3:%[No Name%]                       }',
+      },
+    })
     api.nvim_input_mouse('left', 'drag', '', 0, 2, 22)
-    screen:expect([[
-      {8:foobar}testing         │{1:^$}                     |
-      {8:foobar}mouse           │{1:~                     }|
-      {8:foobar}support and sele│{1:~                     }|
-      {2:[No Name] [+]          }{3:[No Name]             }|
-                                                   |
-    ]])
+    screen:expect({
+      any = {
+        '{8:foobar}testing         ',
+        '{8:foobar}mouse           ',
+        '{8:foobar}support and sele',
+        '{1:%^%$}                     ',
+        '{2:%[No Name%] %[%+%]          }{3:%[No Name%]             }',
+      },
+    })
     api.nvim_input_mouse('left', 'release', '', 0, 2, 22)
   end)
 
@@ -922,87 +906,145 @@ describe('ui/mouse/input', function()
     ]])
     screen:try_resize(53, 14)
     feed('k')
-    feed_command('sp', 'vsp')
-    screen:expect([[
-      lines                     │lines                     |
-      to                        │to                        |
-      test                      │test                      |
-      ^mouse scrolling           │mouse scrolling           |
-                                │                          |
-      {1:~                         }│{1:~                         }|
-      {3:[No Name] [+]              }{2:[No Name] [+]             }|
-      to                                                   |
-      test                                                 |
-      mouse scrolling                                      |
-                                                           |
-      {1:~                                                    }|
-      {2:[No Name] [+]                                        }|
-      :vsp                                                 |
-    ]])
+    api.nvim_set_option_value('statuscolumn', 'C', { win = api.nvim_get_current_win() })
+    feed_command('sp')
+    api.nvim_set_option_value('statuscolumn', 'B', { win = api.nvim_get_current_win() })
+    feed_command('vsp')
+    api.nvim_set_option_value('statuscolumn', 'A', { win = api.nvim_get_current_win() })
+    screen:expect({
+      any = {
+        '{8:A}lines                    ',
+        '{8:A}to                       ',
+        '{8:A}test                     ',
+        '{8:A}^mouse scrolling          ',
+        '{8:B}lines                    ',
+        '{8:B}to                       ',
+        '{8:B}test                     ',
+        '{8:B}mouse scrolling          ',
+        '{3:%[No Name%] %[%+%]              }{2:%[No Name%] %[%+%]             }',
+        '{8:C}to                                                  ',
+        '{8:C}test                                                ',
+        '{8:C}mouse scrolling                                     ',
+        '{2:%[No Name%] %[%+%]                                        }',
+      },
+      none = {
+        '{8:A}Inserting',
+        '{8:A}text',
+        '{8:A}with',
+        '{8:A}many',
+        '{8:B}Inserting',
+        '{8:B}text',
+        '{8:B}with',
+        '{8:B}many',
+        '{8:C}Inserting',
+        '{8:C}text',
+        '{8:C}with',
+        '{8:C}many',
+        '{8:C}lines',
+      },
+    })
     if use_api then
       api.nvim_input_mouse('wheel', 'down', '', 0, 0, 0)
     else
       feed('<ScrollWheelDown><0,0>')
     end
-    screen:expect([[
-      ^mouse scrolling           │lines                     |
-                                │to                        |
-      {1:~                         }│test                      |
-      {1:~                         }│mouse scrolling           |
-      {1:~                         }│                          |
-      {1:~                         }│{1:~                         }|
-      {3:[No Name] [+]              }{2:[No Name] [+]             }|
-      to                                                   |
-      test                                                 |
-      mouse scrolling                                      |
-                                                           |
-      {1:~                                                    }|
-      {2:[No Name] [+]                                        }|
-      :vsp                                                 |
-    ]])
+    screen:expect({
+      any = {
+        '{8:A}^mouse scrolling          ',
+        '{8:B}lines                    ',
+        '{8:B}to                       ',
+        '{8:B}test                     ',
+        '{8:B}mouse scrolling          ',
+        '{3:%[No Name%] %[%+%]              }{2:%[No Name%] %[%+%]             }',
+        '{8:C}to                                                  ',
+        '{8:C}test                                                ',
+        '{8:C}mouse scrolling                                     ',
+        '{2:%[No Name%] %[%+%]                                        }',
+      },
+      none = {
+        '{8:A}lines',
+        '{8:A}to',
+        '{8:A}test',
+        '{8:B}Inserting',
+        '{8:B}text',
+        '{8:B}with',
+        '{8:B}many',
+        '{8:C}Inserting',
+        '{8:C}text',
+        '{8:C}with',
+        '{8:C}many',
+        '{8:C}lines',
+      },
+    })
     if use_api then
       api.nvim_input_mouse('wheel', 'up', '', 0, 0, 27)
     else
       feed('<ScrollWheelUp><27,0>')
     end
-    screen:expect([[
-      ^mouse scrolling           │text                      |
-                                │with                      |
-      {1:~                         }│many                      |
-      {1:~                         }│lines                     |
-      {1:~                         }│to                        |
-      {1:~                         }│test                      |
-      {3:[No Name] [+]              }{2:[No Name] [+]             }|
-      to                                                   |
-      test                                                 |
-      mouse scrolling                                      |
-                                                           |
-      {1:~                                                    }|
-      {2:[No Name] [+]                                        }|
-      :vsp                                                 |
-    ]])
+    screen:expect({
+      any = {
+        '{8:A}^mouse scrolling          ',
+        '{8:B}lines                    ',
+        '{8:B}to                       ',
+        '{8:B}test                     ',
+        '{3:%[No Name%] %[%+%]              }{2:%[No Name%] %[%+%]             }',
+        '{8:C}to                                                  ',
+        '{8:C}test                                                ',
+        '{8:C}mouse scrolling                                     ',
+        '{2:%[No Name%] %[%+%]                                        }',
+      },
+      none = {
+        '{8:A}Inserting',
+        '{8:A}text',
+        '{8:A}with',
+        '{8:A}many',
+        '{8:A}lines',
+        '{8:A}to',
+        '{8:A}test',
+        '{8:B}Inserting',
+        '{8:B}mouse scrolling',
+        '{8:C}Inserting',
+        '{8:C}text',
+        '{8:C}with',
+        '{8:C}many',
+        '{8:C}lines',
+      },
+    })
     if use_api then
       api.nvim_input_mouse('wheel', 'up', '', 0, 7, 27)
       api.nvim_input_mouse('wheel', 'up', '', 0, 7, 27)
     else
       feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     end
-    screen:expect([[
-      ^mouse scrolling           │text                      |
-                                │with                      |
-      {1:~                         }│many                      |
-      {1:~                         }│lines                     |
-      {1:~                         }│to                        |
-      {1:~                         }│test                      |
-      {3:[No Name] [+]              }{2:[No Name] [+]             }|
-      Inserting                                            |
-      text                                                 |
-      with                                                 |
-      many                                                 |
-      lines                                                |
-      {2:[No Name] [+]                                        }|
-      :vsp                                                 |
-    ]])
+    screen:expect({
+      any = {
+        '{8:A}^mouse scrolling          ',
+        '{8:B}lines                    ',
+        '{8:B}to                       ',
+        '{8:B}test                     ',
+        '{3:%[No Name%] %[%+%]              }{2:%[No Name%] %[%+%]             }',
+        '{8:C}Inserting                                           ',
+        '{8:C}text                                                ',
+        '{8:C}with                                                ',
+        '{8:C}many                                                ',
+        '{8:C}lines                                               ',
+        '{2:%[No Name%] %[%+%]                                        }',
+      },
+      none = {
+        '{8:A}Inserting',
+        '{8:A}text',
+        '{8:A}with',
+        '{8:A}many',
+        '{8:A}lines',
+        '{8:A}to',
+        '{8:A}test',
+        '{8:B}Inserting',
+        '{8:B}mouse scrolling',
+        '{8:C}to',
+        '{8:C}test',
+        '{8:C}mouse scrolling',
+      },
+    })
   end
 
   it('mouse wheel will target the hovered window (pseudokey)', function()
@@ -1018,29 +1060,26 @@ describe('ui/mouse/input', function()
     feed('<esc>:set nowrap<cr>')
 
     feed('a <esc>17Ab<esc>3Ab<esc>')
-    screen:expect([[
-                               |*2
-      bbbbbbbbbbbbbbb^b         |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'bbbbbbbbbbbbbbb%^b        ',
+      },
+    })
 
     feed('<ScrollWheelLeft><0,0>')
-    screen:expect([[
-                               |*2
-      n bbbbbbbbbbbbbbbbbbb^b   |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'n bbbbbbbbbbbbbbbbbbb%^b   ',
+      },
+    })
 
     feed('^<ScrollWheelRight><0,0>')
-    screen:expect([[
-      g                        |
-                               |
-      ^t and selection bbbbbbbbb|
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'g                        ',
+        '%^t and selection bbbbbbbbb',
+      },
+    })
   end)
 
   it('horizontal scrolling (nvim_input_mouse)', function()
@@ -1048,30 +1087,27 @@ describe('ui/mouse/input', function()
     feed('<esc>:set nowrap<cr>')
 
     feed('a <esc>17Ab<esc>3Ab<esc>')
-    screen:expect([[
-                               |*2
-      bbbbbbbbbbbbbbb^b         |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'bbbbbbbbbbbbbbb%^b        ',
+      },
+    })
 
     api.nvim_input_mouse('wheel', 'left', '', 0, 0, 27)
-    screen:expect([[
-                               |*2
-      n bbbbbbbbbbbbbbbbbbb^b   |
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'n bbbbbbbbbbbbbbbbbbb%^b   ',
+      },
+    })
 
     feed('^')
     api.nvim_input_mouse('wheel', 'right', '', 0, 0, 0)
-    screen:expect([[
-      g                        |
-                               |
-      ^t and selection bbbbbbbbb|
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'g                        ',
+        '%^t and selection bbbbbbbbb',
+      },
+    })
   end)
 
   it("'sidescrolloff' applies to horizontal scrolling", function()
@@ -1079,42 +1115,42 @@ describe('ui/mouse/input', function()
     command('set sidescrolloff=4')
 
     feed('I <esc>020ib<esc>0')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      ^bbbbbbbbbbbbbbbbbbbb supp|
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'testing                  ',
+        'mouse                    ',
+        '%^bbbbbbbbbbbbbbbbbbbb supp',
+      },
+    })
 
     api.nvim_input_mouse('wheel', 'right', '', 0, 0, 27)
-    screen:expect([[
-      g                        |
-                               |
-      bbbb^bbbbbbbbbb support an|
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'g                        ',
+        '                         ',
+        'bbbb%^bbbbbbbbbb support an',
+      },
+    })
 
     -- window-local 'sidescrolloff' should override global value. #21162
     command('setlocal sidescrolloff=2')
     feed('0')
-    screen:expect([[
-      testing                  |
-      mouse                    |
-      ^bbbbbbbbbbbbbbbbbbbb supp|
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'testing                  ',
+        'mouse                    ',
+        '%^bbbbbbbbbbbbbbbbbbbb supp',
+      },
+    })
 
     api.nvim_input_mouse('wheel', 'right', '', 0, 0, 27)
-    screen:expect([[
-      g                        |
-                               |
-      bb^bbbbbbbbbbbb support an|
-      {1:~                        }|
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'g                        ',
+        '                         ',
+        'bb%^bbbbbbbbbbbb support an',
+      },
+    })
   end)
 
   local function test_mouse_click_conceal()
@@ -1122,290 +1158,279 @@ describe('ui/mouse/input', function()
       feed_command('let &conceallevel=1', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
-      screen:expect([[
-        ^Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        {14:>} 私は猫が大好き{1:>---}{14: X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          '%^Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><1,0>')
-      screen:expect([[
-        S^ection{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        {14:>} 私は猫が大好き{1:>---}{14: X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'S%^ection{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><21,0>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }^t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        {14:>} 私は猫が大好き{1:>---}{14: X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }%^t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><21,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t^3{14: } {14: }|
-        {14:>} 私は猫が大好き{1:>---}{14: X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t%^3{14: } {14: }',
+          '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><0,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        {14:^>} 私は猫が大好き{1:>---}{14: X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '{14:%^>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><7,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        {14:>} 私は^猫が大好き{1:>---}{14: X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '{14:>} 私は%^猫が大好き{1:>---}{14: X } {1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><21,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        {14:>} 私は猫が大好き{1:>---}{14: ^X } {1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '{14:>} 私は猫が大好き{1:>---}{14: %^X } {1:>}',
+        },
+      })
     end) -- level 1 - non wrapped
 
     it('(level 1) click on wrapped lines', function()
       feed_command('let &conceallevel=1', 'let &wrap=1', 'echo')
 
       feed('<esc><LeftMouse><24,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14:^ }|
-        t4{14: }                      |
-        {14:>} 私は猫が大好き{1:>---}{14: X}   |
-        {14: } ✨🐈✨                 |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14:%^ }',
+          't4{14: }                      ',
+          '{14:>} 私は猫が大好き{1:>---}{14: X}   ',
+          '{14: } ✨🐈✨                 ',
+        },
+      })
 
       feed('<esc><LeftMouse><0,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        ^t4{14: }                      |
-        {14:>} 私は猫が大好き{1:>---}{14: X}   |
-        {14: } ✨🐈✨                 |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          '%^t4{14: }                      ',
+          '{14:>} 私は猫が大好き{1:>---}{14: X}   ',
+          '{14: } ✨🐈✨                 ',
+        },
+      })
 
       feed('<esc><LeftMouse><8,3>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        t4{14: }                      |
-        {14:>} 私は猫^が大好き{1:>---}{14: X}   |
-        {14: } ✨🐈✨                 |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          't4{14: }                      ',
+          '{14:>} 私は猫%^が大好き{1:>---}{14: X}   ',
+          '{14: } ✨🐈✨                 ',
+        },
+      })
 
       feed('<esc><LeftMouse><21,3>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        t4{14: }                      |
-        {14:>} 私は猫が大好き{1:>---}{14: ^X}   |
-        {14: } ✨🐈✨                 |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          't4{14: }                      ',
+          '{14:>} 私は猫が大好き{1:>---}{14: %^X}   ',
+          '{14: } ✨🐈✨                 ',
+        },
+      })
 
       feed('<esc><LeftMouse><4,4>')
-      screen:expect([[
-        Section{1:>>--->--->---}{14: }t1{14: } |
-        {1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }|
-        t4{14: }                      |
-        {14:>} 私は猫が大好き{1:>---}{14: X}   |
-        {14: } ✨^🐈✨                 |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}{14: }t1{14: } ',
+          '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+          't4{14: }                      ',
+          '{14:>} 私は猫が大好き{1:>---}{14: X}   ',
+          '{14: } ✨%^🐈✨                 ',
+        },
+      })
     end) -- level 1 - wrapped
 
     it('(level 2) click on non-wrapped lines', function()
       feed_command('let &conceallevel=2', 'echo')
 
       feed('<esc><LeftMouse><20,0>')
-      screen:expect([[
-        Section{1:>>--->--->---}^t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}%^t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><14,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  ^t2 t3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  %^t2 t3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><18,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t^3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t%^3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><0,2>') -- Weirdness
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:^>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:%^>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><8,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:>} 私は猫^が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:>} 私は猫%^が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<esc><LeftMouse><20,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:^X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:%^X} ✨{1:>}',
+        },
+      })
     end) -- level 2 - non wrapped
 
     it('(level 2) click on non-wrapped lines (insert mode)', function()
       feed_command('let &conceallevel=2', 'echo')
 
       feed('<esc>i<LeftMouse><20,0>')
-      screen:expect([[
-        Section{1:>>--->--->---}^t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-        {5:-- INSERT --}             |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}%^t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<LeftMouse><14,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  ^t2 t3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-        {5:-- INSERT --}             |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  %^t2 t3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<LeftMouse><18,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t^3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-        {5:-- INSERT --}             |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t%^3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<LeftMouse><0,2>') -- Weirdness
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:^>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-        {5:-- INSERT --}             |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:%^>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<LeftMouse><8,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:>} 私は猫^が大好き{1:>---}{14:X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-        {5:-- INSERT --}             |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:>} 私は猫%^が大好き{1:>---}{14:X} ✨{1:>}',
+        },
+      })
 
       feed('<LeftMouse><20,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        {14:>} 私は猫が大好き{1:>---}{14:^X} ✨{1:>}|
-                                 |
-        {1:~                        }|*2
-        {5:-- INSERT --}             |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '{14:>} 私は猫が大好き{1:>---}{14:%^X} ✨{1:>}',
+        },
+      })
     end) -- level 2 - non wrapped (insert mode)
 
     it('(level 2) click on wrapped lines', function()
       feed_command('let &conceallevel=2', 'let &wrap=1', 'echo')
 
       feed('<esc><LeftMouse><20,0>')
-      screen:expect([[
-        Section{1:>>--->--->---}^t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}%^t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><14,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  ^t2 t3      |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  %^t2 t3      ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><18,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t^3      |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t%^3      ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       -- NOTE: The click would ideally be on the 't' in 't4', but wrapping
       -- caused the invisible '*' right before 't4' to remain on the previous
@@ -1414,193 +1439,203 @@ describe('ui/mouse/input', function()
       -- concealed characters change in the future, this case should be
       -- reevaluated.
       feed('<esc><LeftMouse><0,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 ^     |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 %^     ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><1,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t^4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't%^4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><0,3>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-        {14:^>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          '{14:%^>} 私は猫が大好き{1:>---}{14:X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><20,3>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:^X}    |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:%^X}    ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><1,4>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ^✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          '%^✨🐈✨                 ',
+        },
+      })
 
       feed('<esc><LeftMouse><5,4>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-        {14:>} 私は猫が大好き{1:>---}{14:X}    |
-         ✨🐈^✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          '{14:>} 私は猫が大好き{1:>---}{14:X}    ',
+          '✨🐈%^✨                  ',
+        },
+      })
     end) -- level 2 - wrapped
 
     it('(level 3) click on non-wrapped lines', function()
       feed_command('let &conceallevel=3', 'echo')
 
       feed('<esc><LeftMouse><0,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-        ^ 私は猫が大好き{1:>----} ✨🐈|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          '%^ 私は猫が大好き{1:>----} ✨🐈',
+        },
+      })
 
       feed('<esc><LeftMouse><1,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-         ^私は猫が大好き{1:>----} ✨🐈|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          ' %^私は猫が大好き{1:>----} ✨🐈',
+        },
+      })
 
       feed('<esc><LeftMouse><13,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-         私は猫が大好^き{1:>----} ✨🐈|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          ' 私は猫が大好%^き{1:>----} ✨🐈',
+        },
+      })
 
       feed('<esc><LeftMouse><20,2>')
       feed('zH') -- FIXME: unnecessary horizontal scrolling
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3 t4   |
-         私は猫が大好き{1:>----}^ ✨🐈|
-                                 |
-        {1:~                        }|*2
-                                 |
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3 t4   ',
+          ' 私は猫が大好き{1:>----}%^ ✨🐈',
+        },
+      })
     end) -- level 3 - non wrapped
 
     it('(level 3) click on wrapped lines', function()
       feed_command('let &conceallevel=3', 'let &wrap=1', 'echo')
 
       feed('<esc><LeftMouse><14,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  ^t2 t3      |
-        t4                       |
-         私は猫が大好き{1:>----}     |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  %^t2 t3      ',
+          't4                       ',
+          ' 私は猫が大好き{1:>----}     ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><18,1>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t^3      |
-        t4                       |
-         私は猫が大好き{1:>----}     |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t%^3      ',
+          't4                       ',
+          ' 私は猫が大好き{1:>----}     ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><1,2>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t^4                       |
-         私は猫が大好き{1:>----}     |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't%^4                       ',
+          ' 私は猫が大好き{1:>----}     ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><0,3>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-        ^ 私は猫が大好き{1:>----}     |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          '%^ 私は猫が大好き{1:>----}     ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><20,3>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-         私は猫が大好き{1:>----}^     |
-         ✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          ' 私は猫が大好き{1:>----}%^     ',
+          ' ✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><1,4>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-         私は猫が大好き{1:>----}     |
-         ^✨🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          ' 私は猫が大好き{1:>----}     ',
+          ' %^✨🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><3,4>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-         私は猫が大好き{1:>----}     |
-         ✨^🐈✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          ' 私は猫が大好き{1:>----}     ',
+          ' ✨%^🐈✨                  ',
+        },
+      })
 
       feed('<esc><LeftMouse><5,4>')
-      screen:expect([[
-        Section{1:>>--->--->---}t1   |
-        {1:>--->--->---}  t2 t3      |
-        t4                       |
-         私は猫が大好き{1:>----}     |
-         ✨🐈^✨                  |
-                                 |*2
-      ]])
+      screen:expect({
+        any = {
+          'Section{1:>>--->--->---}t1   ',
+          '{1:>--->--->---}  t2 t3      ',
+          't4                       ',
+          ' 私は猫が大好き{1:>----}     ',
+          ' ✨🐈%^✨                  ',
+        },
+      })
     end) -- level 3 - wrapped
   end
 
@@ -1671,52 +1706,52 @@ describe('ui/mouse/input', function()
     insert('aaaaaaaaaa|hidden|bbbbbbbbbb|hidden|cccccccccc')
     command('syntax match test /|hidden|/ conceal cchar=X')
     command('set conceallevel=2 concealcursor=n virtualedit=all')
-    screen:expect([[
-      aaaaaaaaaa{14:X}bbbbbbb       |
-      bbb{14:X}ccccccccc^c           |
-      {1:~                        }|*2
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'aaaaaaaaaa{14:X}bbbbbbb       ',
+        'bbb{14:X}ccccccccc%^c           ',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
-    screen:expect([[
-      aaaaaaaaaa{14:X}bbbbbb^b       |
-      bbb{14:X}cccccccccc           |
-      {1:~                        }|*2
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'aaaaaaaaaa{14:X}bbbbbb%^b       ',
+        'bbb{14:X}cccccccccc           ',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 1, 16)
-    screen:expect([[
-      aaaaaaaaaa{14:X}bbbbbbb       |
-      bbb{14:X}cccccccccc  ^         |
-      {1:~                        }|*2
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'aaaaaaaaaa{14:X}bbbbbbb       ',
+        'bbb{14:X}cccccccccc  %^         ',
+      },
+    })
 
     api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 0, 0, {
       virt_text = { { '?', 'ErrorMsg' } },
       virt_text_pos = 'right_align',
       virt_text_repeat_linebreak = true,
     })
-    screen:expect([[
-      aaaaaaaaaa{14:X}bbbbbbb      {9:?}|
-      bbb{14:X}cccccccccc  ^        {9:?}|
-      {1:~                        }|*2
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'aaaaaaaaaa{14:X}bbbbbbb      {9:%?}',
+        'bbb{14:X}cccccccccc  %^        {9:%?}',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 0, 22)
-    screen:expect([[
-      aaaaaaaaaa{14:X}bbbbbb^b      {9:?}|
-      bbb{14:X}cccccccccc          {9:?}|
-      {1:~                        }|*2
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'aaaaaaaaaa{14:X}bbbbbb%^b      {9:%?}',
+        'bbb{14:X}cccccccccc          {9:%?}',
+      },
+    })
     api.nvim_input_mouse('left', 'press', '', 0, 1, 16)
-    screen:expect([[
-      aaaaaaaaaa{14:X}bbbbbbb      {9:?}|
-      bbb{14:X}cccccccccc  ^        {9:?}|
-      {1:~                        }|*2
-                               |
-    ]])
+    screen:expect({
+      any = {
+        'aaaaaaaaaa{14:X}bbbbbbb      {9:%?}',
+        'bbb{14:X}cccccccccc  %^        {9:%?}',
+      },
+    })
   end)
 
   it("mouse click on window separator in statusline doesn't crash", function()
