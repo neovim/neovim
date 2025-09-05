@@ -844,27 +844,29 @@ function M.inc(path, bufnr)
   if vim.g.filetype_inc then
     return vim.g.filetype_inc
   end
-  local lines = table.concat(getlines(bufnr, 1, 3))
-  if lines:lower():find('perlscript') then
-    return 'aspperl'
-  elseif lines:find('<%%') then
-    return 'aspvbs'
-  elseif lines:find('<%?') then
-    return 'php'
+  for _, line in ipairs(getlines(bufnr, 1, 20)) do
+    if line:lower():find('perlscript') then
+      return 'aspperl'
+    elseif line:find('<%%') then
+      return 'aspvbs'
+    elseif line:find('<%?') then
+      return 'php'
     -- Pascal supports // comments but they're vary rarely used for file
     -- headers so assume POV-Ray
-  elseif findany(lines, { '^%s{', '^%s%(%*' }) or matchregex(lines, pascal_keywords) then
-    return 'pascal'
-  elseif findany(lines, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}]*%s+%??[?:+]?= ' }) then
-    return 'bitbake'
-  else
-    local syntax = M.asm_syntax(path, bufnr)
-    if not syntax or syntax == '' then
-      return 'pov'
+    elseif findany(line, { '^%s{', '^%s%(%*' }) or matchregex(line, pascal_keywords) then
+      return 'pascal'
+    elseif
+      findany(line, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}/]*%s+%??[?:+.]?=.? ' })
+    then
+      return 'bitbake'
     end
-    return syntax, function(b)
-      vim.b[b].asmsyntax = syntax
-    end
+  end
+  local syntax = M.asm_syntax(path, bufnr)
+  if not syntax or syntax == '' then
+    return 'pov'
+  end
+  return syntax, function(b)
+    vim.b[b].asmsyntax = syntax
   end
 end
 
