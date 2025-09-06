@@ -25,7 +25,7 @@ function M.request(url, opts, on_response)
   local retry = opts.retry or 3
 
   -- Build curl command
-  local args = { 'curl' }
+  local args = { 'curl', '--max-time', '5' }
   if opts.verbose then
     table.insert(args, '--verbose')
   else
