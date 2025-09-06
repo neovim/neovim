@@ -121,18 +121,8 @@ In the user's config:
 ==============================================================================
 Initialization                                               *lua-plugin-init*
 
-Newcomers to Lua plugin development will often put all initialization logic in
-a single `setup` function, which takes a table of options.
-If you do this, users will be forced to call this function in order to use
-your plugin, even if they are happy with the default configuration.
-
 Strictly separated configuration and smart initialization allow your plugin to
-work out of the box.
-
-NOTE: A well designed plugin has minimal impact on startup time. See also
-|lua-plugin-lazy|.
-
-Common approaches to a strictly separated configuration are:
+work out of the box. Common approaches are:
 
 - A Lua function, e.g. `setup(opts)` or `configure(opts)`, which only overrides the
   default configuration and does not contain any initialization logic.
@@ -142,6 +132,22 @@ Common approaches to a strictly separated configuration are:
 
 Typically, automatic initialization logic is done in a |plugin| or |ftplugin|
 script. See also |'runtimepath'|.
+
+On the other hand, a single `setup(opts)` that combines configuration and
+initialization may be useful in specific cases:
+
+- Customizing complex initialization, where there is a significant risk of
+  misconfiguration.
+- Requiring users to opt in for plugin functionality that should not be
+  initialized automatically.
+
+Keep in mind that this approach requires users to call `setup` in order to
+use your plugin, even if the default configuration is enough for them.
+Consider carefully whether your plugin benefits from combined `setup()` pattern
+before adopting it.
+
+NOTE: A well designed plugin has minimal impact on startup time. See also
+|lua-plugin-lazy|.
 
 ==============================================================================
 Lazy loading                                                 *lua-plugin-lazy*
