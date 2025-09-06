@@ -247,3 +247,24 @@ error('Cannot require a meta file')
 --- @field fill integer
 --- @field end_row integer
 --- @field end_vcol integer
+
+-- Inherit from vim.api.keyset.win_config so this type can be passed to nvim_open_win().
+-- Because of this we only need to define the fields with different types (nil or non-nil).
+
+--- @class vim.api.keyset.win_config_ret : vim.api.keyset.win_config
+--- @field focusable boolean
+--- @field external boolean
+--- @field hide boolean
+--- @field mouse boolean
+--- @field width integer
+--- @field height integer
+--- @field relative 'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'
+---
+--- @field noautocmd nil
+--- @field title nil
+--- @field title_pos nil
+--- @field footer nil
+--- @field footer_pos nil
+--- @field style nil
+--- @field fixed nil
+--- @field vertical nil
