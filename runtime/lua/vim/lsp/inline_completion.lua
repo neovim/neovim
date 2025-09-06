@@ -439,11 +439,7 @@ end
 ---   if not vim.lsp.inline_completion.get() then
 ---     return '<Tab>'
 ---   end
---- end, {
----   expr = true,
----   replace_keycodes = true,
----   desc = 'Get the current inline completion',
---- })
+--- end, { expr = true, desc = 'Accept the current inline completion' })
 --- ````
 ---@param opts? vim.lsp.inline_completion.get.Opts
 ---@return boolean `true` if a completion was applied, else `false`.
