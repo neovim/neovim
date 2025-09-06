@@ -37,7 +37,7 @@ typedef struct {
   int end_row;
   int end_col;
   int ordering;  ///< range insertion order
-  DecorPriority priority;
+  DecorPriorityInternal priority_internal;
   bool owned;  ///< ephemeral decoration, free memory immediately
   DecorRangeKind kind;
   // next pointers MUST NOT be used, these are separate ranges
