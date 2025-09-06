@@ -193,6 +193,7 @@ EDITOR
    and |:vimgrep| commands.
 • For security, 'exrc' no longer shows an "(a)llow" choice. Instead you must
   "(v)iew" then run `:trust`.
+• |:Undotree| for visually navigating the |undo-tree|
 
 EVENTS
 
