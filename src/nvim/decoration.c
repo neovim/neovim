@@ -525,7 +525,7 @@ void decor_redraw_line(win_T *wp, int row, DecorState *state)
   }
 
   state->row = row;
-  state->col_until = -1;
+  state->col_last = -1;
   state->eol_col = -1;
 }
 
@@ -687,11 +687,12 @@ void decor_recheck_draw_col(int win_col, bool hidden, DecorState *state)
   }
 }
 
-int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorState *state)
+int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorState *state,
+                          int max_col_last)
 {
   buf_T *const buf = wp->w_buffer;
   int const row = state->row;
-  int col_until = MAXCOL;
+  int col_last = max_col_last;
 
   while (true) {
     // TODO(bfredl): check duplicate entry in "intersection"
@@ -700,7 +701,7 @@ int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorSta
     if (mark.pos.row < 0 || mark.pos.row > row) {
       break;
     } else if (mark.pos.row == row && mark.pos.col > col) {
-      col_until = mark.pos.col - 1;
+      col_last = MIN(col_last, mark.pos.col - 1);
       break;
     }
 
@@ -755,7 +756,7 @@ next_mark:
   if (fut_beg < count) {
     DecorRange *r = &slots[indices[fut_beg]].range;
     if (r->start_row == row) {
-      col_until = MIN(col_until, r->start_col - 1);
+      col_last = MIN(col_last, r->start_col - 1);
     }
   }
 
@@ -779,7 +780,7 @@ next_mark:
       keep = true;
 
       if (r->end_row == row && r->end_col > col) {
-        col_until = MIN(col_until, r->end_col - 1);
+        col_last = MIN(col_last, r->end_col - 1);
       }
 
       if (r->attr_id > 0) {
@@ -792,7 +793,7 @@ next_mark:
           DecorSignHighlight *sh = &r->data.sh;
           conceal = 2;
           conceal_char = sh->text[0];
-          col_until = MIN(col_until, r->start_col);
+          col_last = MIN(col_last, r->start_col);
           conceal_attr = r->attr_id;
         }
       }
@@ -840,7 +841,7 @@ next_mark:
   kv_size(state->ranges_i) = (size_t)count;
   state->future_begin = fut_beg;
   state->current_end = cur_end;
-  state->col_until = col_until;
+  state->col_last = col_last;
 
   state->current = attr;
   state->conceal = conceal;
@@ -1094,7 +1095,7 @@ void decor_redraw_end(DecorState *state)
 
 bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 {
-  decor_redraw_col(wp, MAXCOL, MAXCOL, false, state);
+  decor_redraw_col(wp, MAXCOL, MAXCOL, false, state, MAXCOL);
   state->eol_col = eol_col;
 
   int const count = state->current_end;
