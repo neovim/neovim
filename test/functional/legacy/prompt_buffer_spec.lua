@@ -622,6 +622,12 @@ describe('prompt buffer', function()
     -- ': mark is only available in prompt buffer.
     source('set buftype=')
     eq("Invalid mark name: ':'", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
+
+    -- mark can be moved
+    source('set buftype=prompt')
+    eq({ 11, 1 }, api.nvim_buf_get_mark(0, ':'))
+    eq(true, api.nvim_buf_set_mark(0, ':', 1, 1, {}))
+    eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
   end)
 
   describe('prompt_getinput', function()
