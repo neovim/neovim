@@ -1,3 +1,4 @@
+-- Highlighting
 local ns = vim.api.nvim_create_namespace('nvim.pack.confirm')
 vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
@@ -49,3 +50,31 @@ for i, l in ipairs(lines) do
     hi_range(i, 4, l:len(), 'DiagnosticHint')
   end
 end
+
+-- Mappings
+local jump = function(direction)
+  local lnum = vim.api.nvim_win_get_cursor(0)[1]
+  local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local from, to, by = lnum + 1, #buf_lines, 1
+  if direction == 'prev' then
+    from, to, by = lnum - 1, 1, -1
+  end
+
+  for i = from, to, by do
+    if buf_lines[i]:match('^## ') then
+      vim.api.nvim_win_set_cursor(0, { i, 0 })
+      return
+    end
+  end
+end
+
+vim.keymap.set({ 'n', 'x' }, '[[', function()
+  for _ = 1, vim.v.count1 do
+    jump('prev')
+  end
+end, { buffer = 0, desc = 'Previous plugin' })
+vim.keymap.set({ 'n', 'x' }, ']]', function()
+  for _ = 1, vim.v.count1 do
+    jump('next')
+  end
+end, { buffer = 0, desc = 'Next plugin' })
