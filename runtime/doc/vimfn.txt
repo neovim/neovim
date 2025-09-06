@@ -7780,6 +7780,9 @@ range({expr} [, {max} [, {stride}]])                         *range()* *E726* *E
 			echo range(0)		" []
 			echo range(2, 0)	" error!
 <
+		Can also be used as a |method|: >vim
+			GetExpr()->range()
+<
 
                 Parameters: ~
                   • {expr} (`any`)
@@ -7851,6 +7854,10 @@ readdir({directory} [, {expr}])                                      *readdir()*
 <
 		Returns an empty List on error.
 
+		Can also be used as a |method|: >vim
+			GetDirName()->readdir()
+<
+
                 Parameters: ~
                   • {directory} (`string`)
                   • {expr} (`integer?`)
@@ -7890,6 +7897,10 @@ readfile({fname} [, {type} [, {max}]])                              *readfile()*
 		When the file can't be opened an error message is given and
 		the result is an empty list.
 		Also see |writefile()|.
+
+		Can also be used as a |method|: >vim
+			GetFileName()->readfile()
+<
 
                 Parameters: ~
                   • {fname} (`string`)
@@ -7968,6 +7979,10 @@ reltime({start}, {end})
 		The {start} and {end} arguments must be values returned by
 		reltime().  Returns zero on error.
 
+		Can also be used as a |method|: >vim
+			GetStart()->reltime()
+<
+
 		Note: |localtime()| returns the current (non-relative) time.
 
                 Parameters: ~
@@ -7988,6 +8003,10 @@ reltimefloat({time})                                            *reltimefloat()*
 		Also see |profiling|.
 		If there is an error an empty string is returned
 
+		Can also be used as a |method|: >vim
+			reltime(start)->reltimefloat()
+<
+
                 Parameters: ~
                   • {time} (`any`)
 
@@ -8007,6 +8026,10 @@ reltimestr({time})                                                *reltimestr()*
 			echo split(reltimestr(reltime(start)))[0]
 <		Also see |profiling|.
 		If there is an error an empty string is returned
+
+		Can also be used as a |method|: >vim
+			reltime(start)->reltimestr()
+<
 
                 Parameters: ~
                   • {time} (`any`)
@@ -8082,6 +8105,10 @@ rename({from}, {to})                                                  *rename()*
 		NOTE: If {to} exists it is overwritten without warning.
 		This function is not available in the |sandbox|.
 
+		Can also be used as a |method|: >vim
+			GetOldName()->rename(newname)
+<
+
                 Parameters: ~
                   • {from} (`string`)
                   • {to} (`string`)
@@ -8118,6 +8145,10 @@ resolve({filename})                                             *resolve()* *E65
 		resolve() keeps a leading path component specifying the
 		current directory (provided the result is still a relative
 		path name) and also keeps a trailing path separator.
+
+		Can also be used as a |method|: >vim
+			GetName()->resolve()
+<
 
                 Parameters: ~
                   • {filename} (`string`)
@@ -8201,6 +8232,10 @@ rubyeval({expr})                                                    *rubyeval()*
 		Hashes are represented as Vim |Dictionary| type.
 		Other objects are represented as strings resulted from their
 		"Object#to_s" method.
+
+		Can also be used as a |method|: >vim
+			GetRubyExpr()->rubyeval()
+<
 
                 Parameters: ~
                   • {expr} (`any`)

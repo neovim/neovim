@@ -8587,6 +8587,9 @@ M.funcs = {
       	echo range(0)		" []
       	echo range(2, 0)	" error!
       <
+      Can also be used as a |method|: >vim
+      	GetExpr()->range()
+      <
     ]=],
     name = 'range',
     params = { { 'expr', 'any' }, { 'max', 'integer' }, { 'stride', 'integer' } },
@@ -8657,6 +8660,9 @@ M.funcs = {
       <
       Returns an empty List on error.
 
+      Can also be used as a |method|: >vim
+      	GetDirName()->readdir()
+      <
     ]=],
     name = 'readdir',
     params = { { 'directory', 'string' }, { 'expr', 'integer' } },
@@ -8698,6 +8704,9 @@ M.funcs = {
       the result is an empty list.
       Also see |writefile()|.
 
+      Can also be used as a |method|: >vim
+      	GetFileName()->readfile()
+      <
     ]=],
     name = 'readfile',
     params = { { 'fname', 'string' }, { 'type', 'string' }, { 'max', 'integer' } },
@@ -8802,6 +8811,10 @@ M.funcs = {
       The {start} and {end} arguments must be values returned by
       reltime().  Returns zero on error.
 
+      Can also be used as a |method|: >vim
+      	GetStart()->reltime()
+      <
+
       Note: |localtime()| returns the current (non-relative) time.
     ]=],
     fast = true,
@@ -8823,6 +8836,9 @@ M.funcs = {
       Also see |profiling|.
       If there is an error an empty string is returned
 
+      Can also be used as a |method|: >vim
+      	reltime(start)->reltimefloat()
+      <
     ]=],
     fast = true,
     name = 'reltimefloat',
@@ -8846,6 +8862,9 @@ M.funcs = {
       <Also see |profiling|.
       If there is an error an empty string is returned
 
+      Can also be used as a |method|: >vim
+      	reltime(start)->reltimestr()
+      <
     ]=],
     fast = true,
     name = 'reltimestr',
@@ -8934,6 +8953,9 @@ M.funcs = {
       NOTE: If {to} exists it is overwritten without warning.
       This function is not available in the |sandbox|.
 
+      Can also be used as a |method|: >vim
+      	GetOldName()->rename(newname)
+      <
     ]=],
     name = 'rename',
     params = { { 'from', 'string' }, { 'to', 'string' } },
@@ -8976,6 +8998,9 @@ M.funcs = {
       current directory (provided the result is still a relative
       path name) and also keeps a trailing path separator.
 
+      Can also be used as a |method|: >vim
+      	GetName()->resolve()
+      <
     ]=],
     fast = true,
     name = 'resolve',
@@ -9093,6 +9118,9 @@ M.funcs = {
       Other objects are represented as strings resulted from their
       "Object#to_s" method.
 
+      Can also be used as a |method|: >vim
+      	GetRubyExpr()->rubyeval()
+      <
     ]=],
     name = 'rubyeval',
     params = { { 'expr', 'any' } },
