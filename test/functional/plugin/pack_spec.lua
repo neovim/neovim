@@ -1153,7 +1153,7 @@ describe('vim.pack', function()
         vim.pack.add({ repos_src.basic })
       end)
 
-      validate('The following plugins are not installed: aaa, ccc', { 'aaa', 'basic', 'ccc' })
+      validate('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
 
       -- Empty list is allowed with warning
       n.exec('messages clear')
@@ -1276,16 +1276,16 @@ describe('vim.pack', function()
       eq(false, pack_exists('plugindirs'))
 
       eq(
-        "vim.pack: Removed plugin 'plugindirs'\nvim.pack: Removed plugin 'basic'",
+        "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'",
         n.exec_capture('messages')
       )
 
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
-      eq(1, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', nil))
-      eq(2, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', nil))
-      eq(3, find_in_log(log, 'PackChangedPre', 'delete', 'basic', 'feat-branch'))
-      eq(4, find_in_log(log, 'PackChanged', 'delete', 'basic', 'feat-branch'))
+      eq(1, find_in_log(log, 'PackChangedPre', 'delete', 'basic', 'feat-branch'))
+      eq(2, find_in_log(log, 'PackChanged', 'delete', 'basic', 'feat-branch'))
+      eq(3, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', nil))
+      eq(4, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', nil))
       eq(4, #log)
     end)
 
@@ -1305,7 +1305,7 @@ describe('vim.pack', function()
         vim.pack.add({ repos_src.basic })
       end)
 
-      validate('The following plugins are not installed: aaa, ccc', { 'aaa', 'basic', 'ccc' })
+      validate('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
       eq(true, pack_exists('basic'))
 
       -- Empty list is allowed with warning
