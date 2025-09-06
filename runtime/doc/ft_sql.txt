@@ -8,27 +8,7 @@ The Structured Query Language (SQL) is a standard which specifies statements
 that allow a user to interact with a relational database.  Vim includes
 features for navigation, indentation and syntax highlighting.
 
-1. Navigation					|sql-navigation|
-    1.1 Matchit					|sql-matchit|
-    1.2 Text Object Motions			|sql-object-motions|
-    1.3 Predefined Object Motions		|sql-predefined-objects|
-    1.4 Macros					|sql-macros|
-2. SQL Dialects					|sql-dialects|
-    2.1 SQLSetType				|SQLSetType|
-    2.2 SQLGetType				|SQLGetType|
-    2.3 SQL Dialect Default			|sql-type-default|
-3. Adding new SQL Dialects			|sql-adding-dialects|
-4. OMNI SQL Completion				|sql-completion|
-    4.1 Static mode				|sql-completion-static|
-    4.2 Dynamic mode				|sql-completion-dynamic|
-    4.3 Tutorial				|sql-completion-tutorial|
-	4.3.1 Complete Tables			|sql-completion-tables|
-	4.3.2 Complete Columns			|sql-completion-columns|
-	4.3.3 Complete Procedures		|sql-completion-procedures|
-	4.3.4 Complete Views			|sql-completion-views|
-    4.4 Completion Customization		|sql-completion-customization|
-    4.5 SQL Maps				|sql-completion-maps|
-    4.6 Using with other filetypes		|sql-completion-filetypes|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Navigation					*sql-navigation*

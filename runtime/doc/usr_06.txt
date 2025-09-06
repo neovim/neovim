@@ -106,7 +106,7 @@ Or the colors could be wrong:
 	scroll back a bit and then forward again.
 	For a real fix, see |:syn-sync|.  Some syntax files have a way to make
 	it look further back, see the help for the specific syntax file.  For
-	example, |tex.vim| for the TeX syntax.
+	example, |ft-tex-syntax| for the TeX syntax.
 
 ==============================================================================
 *06.3*	Different colors				*:syn-default-override*
