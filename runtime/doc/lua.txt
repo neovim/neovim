@@ -2403,6 +2403,10 @@ vim.filetype.match({args})                              *vim.filetype.match()*
                 • {contents}? (`string[]`) An array of lines representing file
                   contents to use for matching. Can be used with {filename}.
                   Mutually exclusive with {buf}.
+                • {fast}? (`boolean`) Whether to skip time consuming detection
+                  steps, like pattern and content matching. Makes detection
+                  significantly faster at the cost of slightly fewer filetypes
+                  detected.
 
     Return (multiple): ~
         (`string?`) If a match was found, the matched filetype.
