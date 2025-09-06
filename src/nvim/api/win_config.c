@@ -411,6 +411,8 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     return;
   }
   win_T *parent = config->win == 0 ? curwin : NULL;
+  tabpage_T *parent_tp = config->win == 0 ? curtab : NULL;
+
   if (config->win > 0) {
     parent = find_window_by_handle(fconfig.window, err);
     if (!parent) {
@@ -419,13 +421,15 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       api_set_error(err, kErrorTypeException, "Cannot split a floating window");
       return;
     }
+    parent_tp = win_find_tabpage(parent);
 
     // Prevent autocmd window from being moved into another tabpage
-    if (is_aucmd_win(win) && win_find_tabpage(win) != win_find_tabpage(parent)) {
+    if (is_aucmd_win(win) && win_tp != parent_tp) {
       api_set_error(err, kErrorTypeException, "Cannot move autocmd win to another tabpage");
       return;
     }
   }
+
   if (was_split && !to_split) {
     if (!win_new_float(win, false, fconfig, err)) {
       return;
@@ -435,17 +439,9 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     WinSplit old_split = win_split_dir(win);
     if (has_vertical && !has_split) {
       if (config->vertical) {
-        if (old_split == kWinSplitRight || p_spr) {
-          fconfig.split = kWinSplitRight;
-        } else {
-          fconfig.split = kWinSplitLeft;
-        }
+        fconfig.split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
       } else {
-        if (old_split == kWinSplitBelow || p_sb) {
-          fconfig.split = kWinSplitBelow;
-        } else {
-          fconfig.split = kWinSplitAbove;
-        }
+        fconfig.split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
       }
     }
     merge_win_config(&win->w_config, fconfig);
@@ -468,8 +464,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
       return;  // error already set
     }
     // Can't move the cmdwin or its old curwin to a different tabpage.
-    if ((win == cmdwin_win || win == cmdwin_old_curwin) && parent != NULL
-        && win_find_tabpage(parent) != win_tp) {
+    if ((win == cmdwin_win || win == cmdwin_old_curwin) && parent && parent_tp != win_tp) {
       api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
       return;
     }
@@ -477,8 +472,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     bool to_split_ok = false;
     // If we are moving curwin to another tabpage, switch windows *before* we remove it from the
     // window list or remove its frame (if non-floating), so it's valid for autocommands.
-    const bool curwin_moving_tp
-      = win == curwin && parent != NULL && win_tp != win_find_tabpage(parent);
+    const bool curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
     if (curwin_moving_tp) {
       if (was_split) {
         int dir;
@@ -578,7 +572,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     }
 
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
-    tabpage_T *const parent_tp = parent ? win_find_tabpage(parent) : curtab;
+    parent_tp = parent ? win_find_tabpage(parent) : curtab;
 
     TRY_WRAP(err, {
       const bool need_switch = parent != NULL && parent != curwin;
