@@ -50,7 +50,7 @@ lsp._resolve_to_request = {
 ---@param method (vim.lsp.protocol.Method.ClientToServer) name of the method
 function lsp._unsupported_method(method)
   local msg = string.format(
-    'method %s is not supported by any of the servers registered for the current buffer',
+    'vim.lsp: method %q is not supported by any server activated for this buffer',
     method
   )
   log.warn(msg)
