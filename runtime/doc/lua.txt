@@ -3372,6 +3372,9 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
       • {opts}  (`table<string,any>?`) Options table with keys:
                 • escape_slash: (boolean) (default false) Escape slash
                   characters "/" in string values.
+                • indent: (string) (default "") String used for indentation at
+                  each nesting level. If non-empty enables newlines and a
+                  space after colons.
 
     Return: ~
         (`string`)
