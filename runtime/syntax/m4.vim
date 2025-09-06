@@ -3,6 +3,7 @@
 " Maintainer:	Claudio Fleiner (claudio@fleiner.com)
 " Last Change:	2022 Jun 12
 " 2025 Sep 2 by Vim project: fix a few syntax issues #18192
+" 2025 Sep 5 by Vim project: introduce m4Disabled region #18200
 
 " This file will highlight user function calls if they use only
 " capital letters and have at least one argument (i.e. the '('
@@ -24,7 +25,7 @@ endif
 " – Quotes are nestable;
 " – The delimiters can be redefined with changequote(); here we only handle
 "   the default pair: ` ... ';
-" – Quoted text in M4 is rescanned, not treated as a literal string;
+" – Quoted text in M4 is rescanned, not treated as a literal string.
 "   Therefore the region is marked transparent so contained items retain
 "   their normal highlighting.
 syn region m4Quoted
@@ -34,11 +35,20 @@ syn region m4Quoted
   \ contains=@m4Top
   \ transparent
 
+" Comments in M4:
+" – According to the Open Group Base Specification, comments start with
+"   a <number-sign> (#) and end at <newline>, unless redefined with changecom().
+"   We only handle the default here.
+" – Comments in M4 are not like in most languages: they do not remove the text,
+"   they simply prevent any macros from being expanded, while the text remains
+"   in the output. This region therefore disables any other matches.
+" – Comments themselves are disabled when quoted.
+syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted
+
 " define the m4 syntax
 syn match  m4Variable contained "\$\d\+"
 syn match  m4Special  contained "$[@*#]"
 syn match  m4Comment  "\<\(m4_\)\=dnl\>.*" contains=SpellErrors
-syn match  m4Comment  "#.*" contains=SpellErrors
 syn match  m4Constants "\<\(m4_\)\=__file__"
 syn match  m4Constants "\<\(m4_\)\=__line__"
 syn keyword m4Constants divnum sysval m4_divnum m4_sysval
