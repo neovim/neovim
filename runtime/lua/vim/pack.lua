@@ -326,32 +326,20 @@ local function normalize_plugs(plugs)
   return res
 end
 
---- @param names string[]?
+--- @param names? string[]
 --- @return vim.pack.Plug[]
 local function plug_list_from_names(names)
-  local all_plugins = M.get()
+  local p_data_list = M.get(names)
   local plug_dir = get_plug_dir()
   local plugs = {} --- @type vim.pack.Plug[]
-  local used_names = {} --- @type table<string,boolean>
-  -- Preserve plugin order; might be important during checkout or event trigger
-  for _, p_data in ipairs(all_plugins) do
+  for _, p_data in ipairs(p_data_list) do
     -- NOTE: By default include only active plugins (and not all on disk). Using
     -- not active plugins might lead to a confusion as default `version` and
     -- user's desired one might mismatch.
-    -- TODO(echasnovski): Consider changing this if/when there is lockfile.
-    --- @cast names string[]
-    if (not names and p_data.active) or vim.tbl_contains(names or {}, p_data.spec.name) then
+    -- TODO(echasnovski): Change this when there is lockfile.
+    if names ~= nil or p_data.active then
       plugs[#plugs + 1] = new_plug(p_data.spec, plug_dir)
-      used_names[p_data.spec.name] = true
     end
-  end
-
-  if vim.islist(names) and #plugs ~= #names then
-    --- @param n string
-    local unused = vim.tbl_filter(function(n)
-      return not used_names[n]
-    end, names)
-    error('The following plugins are not installed: ' .. table.concat(unused, ', '))
   end
 
   return plugs
