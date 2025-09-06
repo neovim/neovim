@@ -359,8 +359,13 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 --- @param opts vim.api.keyset.get_extmark Optional parameters. Keys:
 --- - details: Whether to include the details dict
 --- - hl_name: Whether to include highlight group name instead of id, true if omitted
---- @return [integer, integer, vim.api.keyset.extmark_details?] # 0-indexed (row, col) tuple or empty list () if extmark id was
---- absent
+--- @return [integer, integer, vim.api.keyset.extmark_details?] # 0-indexed (row, col, details?) tuple or empty list () if extmark id was absent.  The
+--- optional `details` dictionary contains the same keys as `opts` in |nvim_buf_set_extmark()|,
+--- except for `id`, `conceal_lines` and `ephemeral`. It also contains the following keys:
+---
+--- - ns_id: |namespace| id
+--- - invalid: boolean that indicates whether the mark is hidden because the entirety of
+--- text span range is deleted. See also the key `invalidate` in |nvim_buf_set_extmark()|.
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
 --- Gets `extmarks` in "traversal order" from a `charwise` region defined by
@@ -419,7 +424,8 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 --- - overlap: Also include marks which overlap the range, even if
 ---            their start position is less than `start`
 --- - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
---- @return vim.api.keyset.get_extmark_item[] # List of `[extmark_id, row, col]` tuples in "traversal order".
+--- @return vim.api.keyset.get_extmark_item[] # List of `[extmark_id, row, col, details?]` tuples in "traversal order". For the
+--- `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
 function vim.api.nvim_buf_get_extmarks(buffer, ns_id, start, end_, opts) end
 
 --- Gets a list of buffer-local `mapping` definitions.

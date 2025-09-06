@@ -197,8 +197,13 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 ///          - details: Whether to include the details dict
 ///          - hl_name: Whether to include highlight group name instead of id, true if omitted
 /// @param[out] err   Error details, if any
-/// @return 0-indexed (row, col) tuple or empty list () if extmark id was
-/// absent
+/// @return 0-indexed (row, col, details?) tuple or empty list () if extmark id was absent.  The
+/// optional `details` dictionary contains the same keys as `opts` in |nvim_buf_set_extmark()|,
+/// except for `id`, `conceal_lines` and `ephemeral`. It also contains the following keys:
+///
+/// - ns_id: |namespace| id
+/// - invalid: boolean that indicates whether the mark is hidden because the entirety of
+/// text span range is deleted. See also the key `invalidate` in |nvim_buf_set_extmark()|.
 Tuple(Integer, Integer, *DictAs(extmark_details))
 nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_extmark) * opts,
                            Arena *arena, Error *err)
@@ -284,7 +289,8 @@ nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_ex
 ///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
-/// @return List of `[extmark_id, row, col]` tuples in "traversal order".
+/// @return List of `[extmark_id, row, col, details?]` tuples in "traversal order". For the
+/// `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
 ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
                                                         Object end,
                                                         Dict(get_extmarks) *opts, Arena *arena,
