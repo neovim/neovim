@@ -172,6 +172,9 @@ distclean:
 install: checkprefix nvim
 	$(CMAKE) --install build
 
+uninstall:
+	$(CMAKE) --build build --target uninstall
+
 appimage:
 	bash scripts/genappimage.sh
 
@@ -181,7 +184,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST) uninstall
 
 .PHONY: emmylua-check
 emmylua-check:
