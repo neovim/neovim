@@ -7066,6 +7066,9 @@ function vim.fn.rand(expr) end
 ---   echo range(0)    " []
 ---   echo range(2, 0)  " error!
 --- <
+--- Can also be used as a |method|: >vim
+---   GetExpr()->range()
+--- <
 ---
 --- @param expr any
 --- @param max? integer
@@ -7131,6 +7134,10 @@ function vim.fn.readblob(fname, offset, size) end
 --- <
 --- Returns an empty List on error.
 ---
+--- Can also be used as a |method|: >vim
+---   GetDirName()->readdir()
+--- <
+---
 --- @param directory string
 --- @param expr? integer
 --- @return any
@@ -7167,6 +7174,10 @@ function vim.fn.readdir(directory, expr) end
 --- When the file can't be opened an error message is given and
 --- the result is an empty list.
 --- Also see |writefile()|.
+---
+--- Can also be used as a |method|: >vim
+---   GetFileName()->readfile()
+--- <
 ---
 --- @param fname string
 --- @param type? string
@@ -7242,6 +7253,10 @@ function vim.fn.reltime(start) end
 --- The {start} and {end} arguments must be values returned by
 --- reltime().  Returns zero on error.
 ---
+--- Can also be used as a |method|: >vim
+---   GetStart()->reltime()
+--- <
+---
 --- Note: |localtime()| returns the current (non-relative) time.
 ---
 --- @param start? any
@@ -7259,6 +7274,10 @@ function vim.fn.reltime(start, end_) end
 --- Also see |profiling|.
 --- If there is an error an empty string is returned
 ---
+--- Can also be used as a |method|: >vim
+---   reltime(start)->reltimefloat()
+--- <
+---
 --- @param time any
 --- @return any
 function vim.fn.reltimefloat(time) end
@@ -7275,6 +7294,10 @@ function vim.fn.reltimefloat(time) end
 ---   echo split(reltimestr(reltime(start)))[0]
 --- <Also see |profiling|.
 --- If there is an error an empty string is returned
+---
+--- Can also be used as a |method|: >vim
+---   reltime(start)->reltimestr()
+--- <
 ---
 --- @param time any
 --- @return any
@@ -7346,6 +7369,10 @@ function vim.fn.remove(dict, key) end
 --- NOTE: If {to} exists it is overwritten without warning.
 --- This function is not available in the |sandbox|.
 ---
+--- Can also be used as a |method|: >vim
+---   GetOldName()->rename(newname)
+--- <
+---
 --- @param from string
 --- @param to string
 --- @return integer
@@ -7376,6 +7403,10 @@ vim.fn['repeat'] = function(expr, count) end
 --- resolve() keeps a leading path component specifying the
 --- current directory (provided the result is still a relative
 --- path name) and also keeps a trailing path separator.
+---
+--- Can also be used as a |method|: >vim
+---   GetName()->resolve()
+--- <
 ---
 --- @param filename string
 --- @return string
@@ -7467,6 +7498,10 @@ function vim.fn.rpcstop(...) end
 --- Hashes are represented as Vim |Dictionary| type.
 --- Other objects are represented as strings resulted from their
 --- "Object#to_s" method.
+---
+--- Can also be used as a |method|: >vim
+---   GetRubyExpr()->rubyeval()
+--- <
 ---
 --- @param expr any
 --- @return any
