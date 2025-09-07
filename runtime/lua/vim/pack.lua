@@ -328,7 +328,7 @@ end
 --- @param names? string[]
 --- @return vim.pack.Plug[]
 local function plug_list_from_names(names)
-  local p_data_list = M.get(names)
+  local p_data_list = M.get(names, { info = false })
   local plug_dir = get_plug_dir()
   local plugs = {} --- @type vim.pack.Plug[]
   for _, p_data in ipairs(p_data_list) do
