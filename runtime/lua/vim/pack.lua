@@ -107,7 +107,9 @@ local M = {}
 local function git_cmd(cmd, cwd)
   -- Use '-c gc.auto=0' to disable `stderr` "Auto packing..." messages
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
-  local sys_opts = { cwd = cwd, text = true, clear_env = true }
+  local env = vim.fn.environ() --- @type table<string,string>
+  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
+  local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
   async.await(1, vim.schedule)
   if out.code ~= 0 then

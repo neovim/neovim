@@ -664,6 +664,19 @@ describe('vim.pack', function()
       eq('basic main', exec_lua('return require("basic")'))
     end)
 
+    it('is not affected by special environment variables', function()
+      fn.setenv('GIT_WORK_TREE', fn.getcwd())
+      fn.setenv('GIT_DIR', vim.fs.joinpath(fn.getcwd(), '.git'))
+      local ref_environ = fn.environ()
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      eq('basic main', exec_lua('return require("basic")'))
+
+      eq(ref_environ, fn.environ())
+    end)
+
     it('validates input', function()
       local validate = function(err_pat, input)
         local add_input = function()
@@ -1161,6 +1174,20 @@ describe('vim.pack', function()
 
       -- Update should still be applied
       eq({ 'return "fetch new 2"' }, fn.readfile(fetch_lua_file))
+    end)
+
+    it('is not affected by special environment variables', function()
+      fn.setenv('GIT_WORK_TREE', fn.getcwd())
+      fn.setenv('GIT_DIR', vim.fs.joinpath(fn.getcwd(), '.git'))
+      local ref_environ = fn.environ()
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.fetch })
+        vim.pack.update({ 'fetch' }, { force = true })
+      end)
+      eq({ 'return "fetch new 2"' }, fn.readfile(fetch_lua_file))
+
+      eq(ref_environ, fn.environ())
     end)
 
     it('validates input', function()
