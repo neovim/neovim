@@ -1179,16 +1179,25 @@ static int command_line_wildchar_complete(CommandLineState *s)
 
     // Display matches
     if (res == OK && s->xpc.xp_numfiles > (wim_noselect ? 0 : 1)) {
-      // If "longest" fails to identify the longest item, try other
-      // 'wim' values if available
-      if (wim_longest && ccline.cmdpos == cmdpos_before) {
-        if (wim_full) {
-          nextwild(&s->xpc, WILD_NEXT, options, escape);
-        }
+      if (wim_longest) {
+        bool found_longest_prefix = (ccline.cmdpos != cmdpos_before);
         if (wim_list || (p_wmnu && wim_full)) {
-          showmatches(&s->xpc, p_wmnu, wim_list, false);
+          showmatches(&s->xpc, p_wmnu, wim_list, true);
+        } else if (!found_longest_prefix) {
+          bool wim_list_next = (wim_flags[1] & kOptWimFlagList);
+          bool wim_full_next = (wim_flags[1] & kOptWimFlagFull);
+          bool wim_noselect_next = (wim_flags[1] & kOptWimFlagNoselect);
+          if (wim_list_next || (p_wmnu && (wim_full_next || wim_noselect_next))) {
+            if (wim_noselect_next) {
+              options |= WILD_NOSELECT;
+            }
+            if (wim_full_next || wim_noselect_next) {
+              nextwild(&s->xpc, WILD_NEXT, options, escape);
+            }
+            showmatches(&s->xpc, p_wmnu, wim_list_next, wim_noselect_next);
+          }
         }
-      } else if (!wim_longest) {
+      } else {
         if (wim_list || (p_wmnu && (wim_full || wim_noselect))) {
           showmatches(&s->xpc, p_wmnu, wim_list, wim_noselect);
         } else {
