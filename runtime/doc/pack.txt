@@ -271,10 +271,8 @@ Switch plugin's version:
   run |vim.pack.update()|.
 
 Freeze plugin from being updated:
-• Update 'init.lua' for plugin to have `version` set to current commit hash.
-  You can get it by running
-  `:=vim.pack.get({ 'plugin-name' }, { details = true })` (located at
-  `details.state`; looks like `abc12345`).
+• Update 'init.lua' for plugin to have `version` set to current revision. Get
+  it with `:=vim.pack.get({ 'plug-name' })[1].rev` (looks like `abc12345`).
 • |:restart|.
 
 Unfreeze plugin to start receiving updates:
@@ -357,26 +355,26 @@ del({names})                                                  *vim.pack.del()*
                  current session.
 
 get({names}, {opts})                                          *vim.pack.get()*
-    Get data about plugins managed by |vim.pack|
+    Gets |vim.pack| plugin info, optionally filtered by `names`.
 
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names. Default: all plugins
                  managed by |vim.pack|.
       • {opts}   (`table?`) A table with the following fields:
-                 • {details} (`boolean`) Whether to include plugin details.
-                   Default `false`.
+                 • {info} (`boolean`) Whether to include extra plugin info.
+                   Default `true`.
 
     Return: ~
         (`table[]`) A list of objects with the following fields:
-        • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
-          `name`.
-        • {path} (`string`) Plugin's path on disk.
         • {active} (`boolean`) Whether plugin was added via |vim.pack.add()|
           to current session.
-        • {details}? (`{ branches: string[], state: string, tags: string[] }`)
-          • `branches` lists available Git branches (first is default).
-          • `state` is a current Git state.
-          • `tags` lists available Git tags.
+        • {branches}? (`string[]`) Available Git branches (first is default).
+          Missing if `info=false`.
+        • {path} (`string`) Plugin's path on disk.
+        • {rev}? (`string`) Current Git revision. Missing if `info=false`.
+        • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
+          `name`.
+        • {tags}? (`string[]`) Available Git tags. Missing if `info=false`.
 
 update({names}, {opts})                                    *vim.pack.update()*
     Update plugins

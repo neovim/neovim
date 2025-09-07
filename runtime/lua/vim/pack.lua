@@ -68,9 +68,8 @@
 ---you run |vim.pack.update()|.
 ---
 ---Freeze plugin from being updated:
----- Update 'init.lua' for plugin to have `version` set to current commit hash.
----You can get it by running `:=vim.pack.get({ 'plugin-name' }, { details = true })`
----(located at `details.state`; looks like `abc12345`).
+---- Update 'init.lua' for plugin to have `version` set to current revision.
+---Get it with `:=vim.pack.get({ 'plug-name' })[1].rev` (looks like `abc12345`).
 ---- |:restart|.
 ---
 ---Unfreeze plugin to start receiving updates:
@@ -991,31 +990,27 @@ end
 
 --- @inlinedoc
 --- @class vim.pack.PlugData
---- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
---- @field path string Plugin's path on disk.
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
----
----     • `branches` lists available Git branches (first is default).
----     - `state` is a current Git state.
----     - `tags` lists available Git tags.
---- @field details? { branches: string[], state: string, tags: string[] }
+--- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
+--- @field path string Plugin's path on disk.
+--- @field rev? string Current Git revision. Missing if `info=false`.
+--- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
+--- @field tags? string[] Available Git tags. Missing if `info=false`.
 
 --- @class vim.pack.keyset.get
 --- @inlinedoc
---- @field details boolean Whether to include plugin details. Default `false`.
+--- @field info boolean Whether to include extra plugin info. Default `true`.
 
 --- @param p_data_list vim.pack.PlugData[]
-local function add_plugin_details(p_data_list)
+local function add_p_data_info(p_data_list)
   local funs = {} --- @type (async fun())[]
-  for i = 1, #p_data_list do
-    local path = p_data_list[i].path
+  for i, p_data in ipairs(p_data_list) do
+    local path = p_data.path
     --- @async
     funs[i] = function()
-      p_data_list[i].details = {
-        branches = git_get_branches(path),
-        state = git_get_hash('HEAD', path),
-        tags = git_get_tags(path),
-      }
+      p_data.branches = git_get_branches(path)
+      p_data.rev = git_get_hash('HEAD', path)
+      p_data.tags = git_get_tags(path)
     end
   end
   --- @async
@@ -1025,13 +1020,13 @@ local function add_plugin_details(p_data_list)
   async.run(joined_f):wait()
 end
 
---- Get data about plugins managed by |vim.pack|
+--- Gets |vim.pack| plugin info, optionally filtered by `names`.
 --- @param names? string[] List of plugin names. Default: all plugins managed by |vim.pack|.
 --- @param opts? vim.pack.keyset.get
 --- @return vim.pack.PlugData[]
 function M.get(names, opts)
   vim.validate('names', names, vim.islist, true, 'list')
-  opts = vim.tbl_extend('force', { details = false }, opts or {})
+  opts = vim.tbl_extend('force', { info = true }, opts or {})
 
   -- Process active plugins in order they were added. Take into account that
   -- there might be "holes" after `vim.pack.del()`.
@@ -1079,8 +1074,8 @@ function M.get(names, opts)
     end)
   end
 
-  if opts.details then
-    add_plugin_details(res)
+  if opts.info then
+    add_p_data_info(res)
   end
 
   return res
