@@ -633,7 +633,6 @@ restore_curwin:
     }
   } else {
     win_config_float(win, fconfig);
-    win->w_pos_changed = true;
   }
   if (HAS_KEY_X(config, style)) {
     if (fconfig.style == kWinStyleMinimal) {
