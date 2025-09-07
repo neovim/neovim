@@ -667,7 +667,7 @@ void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, I
   bot += curgrid->comp_row;
   left += curgrid->comp_col;
   right += curgrid->comp_col;
-  bool covered = curgrid_covered_above((int)(bot - MAX(rows, 0)));
+  bool covered = curgrid_covered_above((int)bot - 1);
 
   if (covered || curgrid->blending) {
     // TODO(bfredl):
