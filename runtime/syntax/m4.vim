@@ -4,10 +4,7 @@
 " Last Change:	2022 Jun 12
 " 2025 Sep 2 by Vim project: fix a few syntax issues #18192
 " 2025 Sep 5 by Vim project: introduce m4Disabled region #18200
-
-" This file will highlight user function calls if they use only
-" capital letters and have at least one argument (i.e. the '('
-" must be there). Let me know if this is a problem.
+" 2025 Sep 6 by Vim project: remove m4Function heuristics #18211
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -45,6 +42,13 @@ syn region m4Quoted
 " – Comments themselves are disabled when quoted.
 syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted
 
+" Macros in M4:
+" – Name tokens consist of the longest possible sequence of letters, digits,
+"   and underscores, where the first character is not a digit.
+" – In GNU M4, this can be altered with changeword().
+" – Any name token may be defined as a macro and quoting prevents expansion.
+"   Thus correct highlighting requires running M4.
+
 " define the m4 syntax
 syn match  m4Variable contained "\$\d\+"
 syn match  m4Special  contained "$[@*#]"
@@ -59,15 +63,13 @@ syn region m4Command  matchgroup=m4Statement start="\<\(m4_\)\=\(syscmd\|esyscmd
 syn region m4Command  matchgroup=m4Builtin start="\<\(m4_\)\=\(len\|index\|regexp\|substr\|translit\|patsubst\|format\|incr\|decr\|eval\|maketemp\)("he=e-1 end=")" contains=@m4Top
 syn keyword m4Statement divert undivert
 syn region m4Command  matchgroup=m4Type      start="\<\(m4_\)\=\(undefine\|popdef\)("he=e-1 end=")" contains=@m4Top
-syn region m4Function matchgroup=m4Type      start="\<[_A-Z][_A-Z0-9]*("he=e-1 end=")" contains=@m4Top
-syn cluster m4Top     contains=m4Comment,m4Constants,m4Special,m4Variable,m4Paren,m4Command,m4Statement,m4Function,m4Quoted
+syn cluster m4Top     contains=m4Comment,m4Constants,m4Special,m4Variable,m4Paren,m4Command,m4Statement,m4Quoted
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 hi def link m4QuoteDelim  Delimiter
 hi def link m4Delimiter   Delimiter
 hi def link m4Comment     Comment
-hi def link m4Function    Function
 hi def link m4Keyword     Keyword
 hi def link m4Special     Special
 hi def link m4Statement   Statement
