@@ -1188,13 +1188,11 @@ static int command_line_wildchar_complete(CommandLineState *s)
           bool wim_full_next = (wim_flags[1] & kOptWimFlagFull);
           bool wim_noselect_next = (wim_flags[1] & kOptWimFlagNoselect);
           if (wim_list_next || (p_wmnu && (wim_full_next || wim_noselect_next))) {
-            if (wim_noselect_next) {
-              options |= WILD_NOSELECT;
-            }
-            if (wim_full_next || wim_noselect_next) {
+            if (wim_full_next && !wim_noselect_next) {
               nextwild(&s->xpc, WILD_NEXT, options, escape);
+            } else {
+              showmatches(&s->xpc, p_wmnu, wim_list_next, wim_noselect_next);
             }
-            showmatches(&s->xpc, p_wmnu, wim_list_next, wim_noselect_next);
             if (wim_list_next) {
               s->did_wild_list = true;
             }

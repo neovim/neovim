@@ -3044,6 +3044,23 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, ":cn\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_64', {})
 
+  " If "longest" finds no candidate in "longest,full", "full" is used
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest,full\<CR>")
+  call term_sendkeys(buf, ":set wildoptions=pum\<CR>")
+  call term_sendkeys(buf, ":sign un\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
+
+  " Similarly for "longest,noselect:full"
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest,noselect:full\<CR>")
+  call term_sendkeys(buf, ":sign un\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_65', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
+
   call term_sendkeys(buf, "\<C-U>\<Esc>")
   call StopVimInTerminal(buf)
 endfunc

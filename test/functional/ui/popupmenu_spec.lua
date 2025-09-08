@@ -4795,8 +4795,9 @@ describe('builtin popupmenu', function()
           :cn^                             |
         ]])
 
-        feed('<C-U><Esc>')
         command('set wildmode& wildoptions=pum')
+
+        feed('<C-U><Esc>')
 
         -- check positioning with multibyte char in pattern
         command('e långfile1')
@@ -4981,24 +4982,52 @@ describe('builtin popupmenu', function()
 
         -- pressing <Tab> should display the wildmenu
         feed('<Tab>')
-        screen:expect([[
+        local s1 = [[
                                         |
           {1:~                             }|*4
           {1:~    }{12: undefine       }{1:         }|
           {1:~    }{n: unplace        }{1:         }|
           :sign undefine^                |
-        ]])
+        ]]
+        screen:expect(s1)
         eq(1, fn.wildmenumode())
 
         -- pressing <Tab> second time should select the next entry in the menu
         feed('<Tab>')
-        screen:expect([[
+        local s2 = [[
                                         |
           {1:~                             }|*4
           {1:~    }{n: undefine       }{1:         }|
           {1:~    }{12: unplace        }{1:         }|
           :sign unplace^                 |
+        ]]
+        screen:expect(s2)
+        eq(1, fn.wildmenumode())
+
+        -- If "longest" finds no candidate in "longest,full", "full" is used
+        feed('<Esc>')
+        command('set wildmode=longest,full')
+        command('set wildoptions=pum')
+        feed(':sign un<Tab>')
+        screen:expect(s1)
+        feed('<Tab>')
+        screen:expect(s2)
+
+        -- Similarly for "longest,noselect:full"
+        feed('<Esc>')
+        command('set wildmode=longest,noselect:full')
+        feed(':sign un<Tab>')
+        screen:expect([[
+                                        |
+          {1:~                             }|*4
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign un^                      |
         ]])
+        feed('<Tab>')
+        screen:expect(s1)
+        feed('<Tab>')
+        screen:expect(s2)
       end)
 
       it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()
