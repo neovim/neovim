@@ -424,7 +424,7 @@ newwindow:
   // move window to new tab page
   case 'T':
     CHECK_CMDWIN;
-    if (one_window(curwin)) {
+    if (one_window(curwin, NULL)) {
       msg(_(m_onlyone), 0);
     } else {
       tabpage_T *oldtab = curtab;
@@ -497,7 +497,7 @@ newwindow:
   case 'H':
   case 'L':
     CHECK_CMDWIN;
-    if (one_window(curwin)) {
+    if (one_window(curwin, NULL)) {
       beep_flush();
     } else {
       const int dir = ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
@@ -1094,7 +1094,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
   bool toplevel = flags & (WSP_TOP | WSP_BOT);
 
   // add a status line when p_ls == 1 and splitting the first window
-  if (one_window(firstwin) && p_ls == 1 && oldwin->w_status_height == 0) {
+  if (one_window(firstwin, NULL) && p_ls == 1 && oldwin->w_status_height == 0) {
     if (oldwin->w_height <= p_wmh) {
       emsg(_(e_noroom));
       return NULL;
@@ -1804,7 +1804,7 @@ static void win_exchange(int Prenum)
     return;
   }
 
-  if (one_window(curwin)) {
+  if (one_window(curwin, NULL)) {
     // just one window
     beep_flush();
     return;
@@ -1896,7 +1896,7 @@ static void win_rotate(bool upwards, int count)
     return;
   }
 
-  if (count <= 0 || one_window(curwin)) {
+  if (count <= 0 || one_window(curwin, NULL)) {
     // nothing to do
     beep_flush();
     return;
@@ -1979,7 +1979,7 @@ int win_splitmove(win_T *wp, int size, int flags)
   int dir = 0;
   int height = wp->w_height;
 
-  if (one_window(wp)) {
+  if (one_window(wp, NULL)) {
     return OK;  // nothing to do
   }
   if (is_aucmd_win(wp) || check_split_disallowed(wp) == FAIL) {
@@ -2508,7 +2508,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
-  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp));) {
+  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp, NULL));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false, false) == FAIL) {
@@ -2553,17 +2553,19 @@ void close_windows(buf_T *buf, bool keep_curwin)
 /// Check if "win" is the last non-floating window that exists.
 bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return one_window(win) && first_tabpage->tp_next == NULL;
+  return one_window(win, NULL) && first_tabpage->tp_next == NULL;
 }
 
-/// Check if "win" is the only non-floating window in the current tabpage.
+/// Check if "win" is the only non-floating window in tabpage "tp", or NULL for current tabpage.
 ///
 /// This should be used in place of ONE_WINDOW when necessary,
 /// with "firstwin" or the affected window as argument depending on the situation.
-bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+bool one_window(win_T *win, tabpage_T *tp)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  assert(!firstwin->w_floating);
-  return firstwin == win && (win->w_next == NULL || win->w_next->w_floating);
+  win_T *first = tp ? tp->tp_firstwin : firstwin;
+  assert((!tp || tp != curtab) && !first->w_floating);
+  return first == win && (win->w_next == NULL || win->w_next->w_floating);
 }
 
 /// Check if floating windows in tabpage `tp` can be closed.
@@ -2712,7 +2714,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_autocmd_close));
     return FAIL;
   }
-  if (lastwin->w_floating && one_window(win)) {
+  if (lastwin->w_floating && one_window(win, NULL)) {
     if (is_aucmd_win(lastwin)) {
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
@@ -2996,7 +2998,7 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   }
 
   // Check if closing this window would leave only floating windows.
-  if (tp->tp_firstwin == win && win->w_next && win->w_next->w_floating) {
+  if (tp->tp_lastwin->w_floating && one_window(win, tp)) {
     if (force || can_close_floating_windows(tp)) {
       // close the last window until the there are no floating windows
       while (tp->tp_lastwin->w_floating) {
@@ -3046,7 +3048,7 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   }
   // Autocommands may again cause closing this window to leave only floats.
   // Check again; we'll not bother closing floating windows this time.
-  if (tp->tp_firstwin == win && win->w_next && win->w_next->w_floating) {
+  if (tp->tp_lastwin->w_floating && one_window(win, tp)) {
     emsg(e_floatonly);
     goto leave_open;
   }
@@ -3253,14 +3255,15 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
 /// @param tp    tab page "win" is in, NULL for current
 /// @param altfr if not NULL, set to pointer of frame that will get the space
 ///
-/// @return      a pointer to the window that will get the freed up space.
+/// @return      a pointer to the window that will get the freed up space, or NULL
+///              if there is no other non-float to receive the space.
 win_T *winframe_find_altwin(win_T *win, int *dirp, tabpage_T *tp, frame_T **altfr)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   assert(tp == NULL || tp != curtab);
 
-  // If there is only one window there is nothing to remove.
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
+  // If there is only one non-floating window there is nothing to remove.
+  if (one_window(win, tp)) {
     return NULL;
   }
 
@@ -3457,7 +3460,7 @@ static frame_T *win_altframe(win_T *win, tabpage_T *tp)
 {
   assert(tp == NULL || tp != curtab);
 
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
+  if (one_window(win, tp)) {
     return alt_tabpage()->tp_curwin->w_frame;
   }
 
@@ -4023,7 +4026,7 @@ void close_others(int message, int forceit)
     return;
   }
 
-  if (one_window(firstwin) && !lastwin->w_floating) {
+  if (one_window(firstwin, NULL) && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
       msg(_(m_onlyone), 0);
@@ -7063,7 +7066,7 @@ int global_stl_height(void)
 /// @param morewin  pretend there are two or more windows if true.
 int last_stl_height(bool morewin)
 {
-  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_window(firstwin)))) ? STATUS_HEIGHT : 0;
+  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_window(firstwin, NULL)))) ? STATUS_HEIGHT : 0;
 }
 
 /// Return the minimal number of rows that is needed on the screen to display

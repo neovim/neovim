@@ -2309,11 +2309,42 @@ describe('API/win', function()
       eq('editor', api.nvim_win_get_config(win).relative)
     end)
 
-    it('throws error when attempting to move the last window', function()
+    it('throws error when attempting to move the last non-floating window', function()
       local err = pcall_err(api.nvim_win_set_config, 0, {
         vertical = false,
       })
-      eq('Cannot move last window', err)
+      eq('Cannot move last non-floating window', err)
+
+      local win1 = api.nvim_get_current_win()
+      command('tabnew')
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
+      api.nvim_open_win(0, false, { relative = 'editor', width = 5, height = 5, row = 1, col = 1 })
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
+
+      -- If it's no longer the last non-float, still an error if autocommands make it the last
+      -- non-float again before it's moved.
+      command('vsplit')
+      exec_lua(function()
+        vim.api.nvim_create_autocmd('WinEnter', {
+          once = true,
+          callback = function()
+            vim.api.nvim_win_set_config(
+              0,
+              { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+            )
+          end,
+        })
+      end)
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
     end)
 
     it('passing retval of get_config results in no-op', function()
