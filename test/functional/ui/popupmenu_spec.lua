@@ -4853,7 +4853,7 @@ describe('builtin popupmenu', function()
         ]])
 
         feed('<esc>')
-        command('close')
+        command('%bwipe')
         command('set wildmode=full')
 
         -- special case: when patterns ends with "/", show menu items aligned
@@ -4865,6 +4865,18 @@ describe('builtin popupmenu', function()
           {1:~         }{12: file1          }{1:                        }|
           {1:~         }{n: file2          }{1:                        }|
           :e compdir/file1^                                  |
+        ]])
+
+        -- position is correct when expanding environment variable #20348
+        command('cd ..')
+        fn.setenv('XNDIR', 'wildpum/Xnamedir')
+        feed('<C-U>e $XNDIR/<Tab>')
+        screen:expect([[
+                                                            |
+          {1:~                                                 }|*11
+          {1:~                  }{12: XdirA/         }{1:               }|
+          {1:~                  }{n: XfileA         }{1:               }|
+          :e wildpum/Xnamedir/XdirA/^                        |
         ]])
       end)
     end

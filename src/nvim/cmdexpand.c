@@ -381,7 +381,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   return OK;
 }
 
-/// Create completion popup menu with items from 'matches'.
+/// Create completion popup menu with items from "matches".
 static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
                               bool showtail, bool noselect)
 {
