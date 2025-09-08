@@ -14,7 +14,8 @@ vim.v.argv = ...
 
 --- Argument for evaluating 'formatexpr' and used for the typed
 --- character when using <expr> in an abbreviation `:map-<expr>`.
---- It is also used by the `InsertCharPre` and `InsertEnter` events.
+--- It is also used by the `InsertCharPre`, `InsertEnter`,
+--- `CmdlineLeave` and `CmdlineLeavePre` events.
 --- @type string
 vim.v.char = ...
 

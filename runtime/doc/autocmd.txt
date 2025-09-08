@@ -400,6 +400,8 @@ CmdlineLeave			Before leaving the command-line (including
 				non-interactive use of ":" in a mapping: use
 				|<Cmd>| instead to avoid this).
 				<afile> expands to the |cmdline-char|.
+				Sets the |v:char| to the key that exited the
+				command-line (e.g. <CR>, <CTRL-C>, <Esc>).
 				Sets these |v:event| keys:
 				    abort (mutable)
 				    cmdlevel
@@ -417,6 +419,7 @@ CmdlineLeavePre			Just before leaving the command line, and
 				not when using |<Cmd>|.  Also triggered when
 				abandoning the command line by typing CTRL-C
 				or <Esc>.  <afile> is set to |cmdline-char|.
+				Sets |v:char| as with |CmdlineLeave|.
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for

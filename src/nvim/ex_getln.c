@@ -897,6 +897,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   // Trigger CmdlineLeavePre autocommands if not already triggered.
   if (!s->event_cmdlineleavepre_triggered) {
+    set_vim_var_char(s->c);  // Set v:char
     trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
   }
 
@@ -910,6 +911,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     // not readonly:
     tv_dict_add_bool(dict, S_LEN("abort"),
                      s->gotesc ? kBoolVarTrue : kBoolVarFalse);
+    set_vim_var_char(s->c);  // Set v:char
     TRY_WRAP(&err, {
       apply_autocmds(EVENT_CMDLINELEAVE, firstcbuf, firstcbuf, false, curbuf);
       // error printed below, to avoid redraw issues
@@ -1361,6 +1363,7 @@ static int command_line_execute(VimState *state, int key)
   // Trigger CmdlineLeavePre autocommand
   if ((KeyTyped && (s->c == '\n' || s->c == '\r' || s->c == K_KENTER || s->c == ESC))
       || s->c == Ctrl_C) {
+    set_vim_var_char(s->c);  // Set v:char
     trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
     s->event_cmdlineleavepre_triggered = true;
     if ((s->c == ESC || s->c == Ctrl_C) && (wim_flags[0] & kOptWimFlagList)) {
