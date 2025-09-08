@@ -4986,4 +4986,28 @@ func Test_CmdlineLeave_vchar_keys()
   unlet g:leave_key
 endfunc
 
+" Skip wildmenu during history navigation via Up/Down keys
+func Test_skip_wildtrigger_hist_navigation()
+  call Ntest_override("char_avail", 1)
+  cnoremap <F8> <C-R>=wildtrigger()[-1]<CR>
+  set wildmenu
+
+  call feedkeys(":ech\<F8>\<F4>\<C-B>\"\<CR>", "tx")
+  call assert_match('echo*', g:Sline)
+  call assert_equal('"echo', @:)
+
+  call feedkeys(":echom \"foo\"", "tx")
+  call feedkeys(":echom \"foobar\"", "tx")
+  call feedkeys(":ech\<F8>\<C-E>\<UP>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"echom "foobar"', @:)
+  call feedkeys(":ech\<F8>\<C-E>\<UP>\<UP>\<UP>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"echom "foo"', @:)
+  call feedkeys(":ech\<F8>\<C-E>\<UP>\<UP>\<UP>\<Down>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"echom "foobar"', @:)
+
+  call Ntest_override("char_avail", 0)
+  set wildmenu&
+  cunmap <F8>
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
