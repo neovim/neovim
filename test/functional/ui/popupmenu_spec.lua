@@ -4517,7 +4517,7 @@ describe('builtin popupmenu', function()
 
         feed('<esc>')
 
-        -- Check "list" still works
+        -- Check that when "longest" produces no result, "list" works
         command('set wildmode=longest,list')
         feed(':cn<Tab>')
         screen:expect([[
@@ -4530,6 +4530,8 @@ describe('builtin popupmenu', function()
           cnfile       cnoremenu          |
           :cn^                             |
         ]])
+        feed('<Tab>')
+        screen:expect_unchanged()
         feed('s')
         screen:expect([[
                                           |

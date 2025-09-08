@@ -1195,6 +1195,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
               nextwild(&s->xpc, WILD_NEXT, options, escape);
             }
             showmatches(&s->xpc, p_wmnu, wim_list_next, wim_noselect_next);
+            if (wim_list_next) {
+              s->did_wild_list = true;
+            }
           }
         }
       } else {
