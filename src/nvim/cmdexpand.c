@@ -254,6 +254,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   CmdlineInfo *const ccline = get_cmdline_info();
   char *p;
   bool from_wildtrigger_func = options & WILD_FUNC_TRIGGER;
+  bool wild_navigate = (type == WILD_NEXT || type == WILD_PREV
+                        || type == WILD_PAGEUP || type == WILD_PAGEDOWN
+                        || type == WILD_PUM_WANT);
 
   if (xp->xp_numfiles == -1) {
     pre_incsearch_pos = xp->xp_pre_incsearch_pos;
@@ -292,15 +295,13 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   // If cmd_silent is set then don't show the dots, because redrawcmd() below
   // won't remove them.
-  if (!cmd_silent && !from_wildtrigger_func
+  if (!cmd_silent && !from_wildtrigger_func && !wild_navigate
       && !(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
     msg_puts("...");  // show that we are busy
     ui_flush();
   }
 
-  if (type == WILD_NEXT || type == WILD_PREV
-      || type == WILD_PAGEUP || type == WILD_PAGEDOWN
-      || type == WILD_PUM_WANT) {
+  if (wild_navigate) {
     // Get next/previous match for a previous expanded pattern.
     p = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
@@ -313,7 +314,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
       tmp = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     }
     // Translate string into pattern and expand it.
-    const int use_options = ((options & ~WILD_KEEP_SOLE_ITEM)
+    const int use_options = (options
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
@@ -337,7 +338,13 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     }
   }
 
-  if (p != NULL && !got_int) {
+  // Save cmdline before inserting selected item
+  if (!wild_navigate && ccline->cmdbuff != NULL) {
+    xfree(cmdline_orig);
+    cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
+  }
+
+  if (p != NULL && !got_int && !(options & WILD_NOSELECT)) {
     size_t plen = strlen(p);
     int difflen = (int)plen - (int)(xp->xp_pattern_len);
     if (ccline->cmdlen + difflen + 4 > ccline->cmdbufflen) {
@@ -364,7 +371,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles <= 0 && p == NULL) {
     beep_flush();
-  } else if (xp->xp_numfiles == 1 && !(options & WILD_KEEP_SOLE_ITEM)) {
+  } else if (xp->xp_numfiles == 1 && !(options & WILD_NOSELECT) && !wild_navigate) {
     // free expanded pattern
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
@@ -374,10 +381,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   return OK;
 }
 
-/// Create and display a cmdline completion popup menu with items from
-/// "matches".
+/// Create completion popup menu with items from "matches".
 static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                              bool showtail)
+                              bool showtail, bool noselect)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
@@ -395,18 +401,12 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
   }
 
   // Compute the popup menu starting column
-  char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, true) : xp->xp_pattern;
+  char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, noselect) : xp->xp_pattern;
   if (ui_has(kUICmdline) && cmdline_win == NULL) {
     compl_startcol = (int)(endpos - ccline->cmdbuff);
   } else {
     compl_startcol = cmd_screencol((int)(endpos - ccline->cmdbuff));
   }
-
-  // no default selection
-  compl_selected = -1;
-
-  pum_clear();
-  cmdline_pum_display(true);
 
   return EXPAND_OK;
 }
@@ -420,8 +420,7 @@ void cmdline_pum_display(bool changed_array)
 /// Returns true if the cmdline completion popup menu is being displayed.
 bool cmdline_pum_active(void)
 {
-  // compl_match_array != NULL should already imply pum_visible() in Nvim.
-  return compl_match_array != NULL;
+  return pum_visible() && compl_match_array != NULL;
 }
 
 /// Remove the cmdline completion popup menu (if present), free the list of items.
@@ -745,11 +744,20 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
   }
 
   // Display matches on screen
-  if (compl_match_array) {
-    compl_selected = findex;
-    cmdline_pum_display(false);
-  } else if (p_wmnu) {
-    redraw_wildmenu(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
+  if (p_wmnu) {
+    if (compl_match_array) {
+      compl_selected = findex;
+      cmdline_pum_display(false);
+    } else if (wop_flags & kOptWopFlagPum) {
+      if (cmdline_pum_create(get_cmdline_info(), xp, xp->xp_files,
+                             xp->xp_numfiles, cmd_showtail, false) == EXPAND_OK) {
+        compl_selected = findex;
+        pum_clear();
+        cmdline_pum_display(true);
+      }
+    } else {
+      redraw_wildmenu(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
+    }
   }
 
   xp->xp_selected = findex;
@@ -925,7 +933,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
       cmdline_pum_remove();
     }
   }
-  xp->xp_selected = 0;
+  xp->xp_selected = (options & WILD_NOSELECT) ? -1 : 0;
 
   if (mode == WILD_FREE) {      // only release file name
     return NULL;
@@ -1084,49 +1092,49 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
   }
 }
 
-/// Show all matches for completion on the command line.
-/// Returns EXPAND_NOTHING when the character that triggered expansion should
-/// be inserted like a normal character.
-int showmatches(expand_T *xp, bool wildmenu)
+/// Display completion matches.
+/// Returns EXPAND_NOTHING when the character that triggered expansion should be
+///   inserted as a normal character.
+int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool noselect)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   int numMatches;
   char **matches;
-  int j;
   int maxlen;
   int lines;
   int columns;
   bool showtail;
-
-  // Save cmdline before expansion
-  if (ccline->cmdbuff != NULL) {
-    xfree(cmdline_orig);
-    cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
-  }
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
     }
-    int i = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
-                           &numMatches, &matches);
-    showtail = expand_showtail(xp);
-    if (i != EXPAND_OK) {
-      return i;
+    int retval = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
+                                &numMatches, &matches);
+    if (retval != EXPAND_OK) {
+      return retval;
     }
+    showtail = expand_showtail(xp);
   } else {
     numMatches = xp->xp_numfiles;
     matches = xp->xp_files;
     showtail = cmd_showtail;
   }
 
-  if (((!ui_has(kUICmdline) || cmdline_win != NULL) && wildmenu && (wop_flags & kOptWopFlagPum))
+  if (((!ui_has(kUICmdline) || cmdline_win != NULL) && display_wildmenu && !display_list
+       && (wop_flags & kOptWopFlagPum))
       || ui_has(kUIWildmenu) || (ui_has(kUICmdline) && ui_has(kUIPopupmenu))) {
-    return cmdline_pum_create(ccline, xp, matches, numMatches, showtail);
+    int retval = cmdline_pum_create(ccline, xp, matches, numMatches, showtail, noselect);
+    if (retval == EXPAND_OK) {
+      compl_selected = noselect ? -1 : 0;
+      pum_clear();
+      cmdline_pum_display(true);
+    }
+    return retval;
   }
 
-  if (!wildmenu) {
+  if (display_list) {
     msg_didany = false;                 // lines_left will be set
     msg_start();                        // prepare for paging
     msg_putchar('\n');
@@ -1138,22 +1146,24 @@ int showmatches(expand_T *xp, bool wildmenu)
   }
 
   if (got_int) {
-    got_int = false;            // only int. the completion, not the cmd line
-  } else if (wildmenu) {
-    redraw_wildmenu(xp, numMatches, matches, -1, showtail);
-  } else {
+    got_int = false;  // only interrupt the completion, not the cmd line
+  } else if (display_wildmenu && !display_list) {
+    redraw_wildmenu(xp, numMatches, matches, noselect ? -1 : 0,
+                    showtail);  // display statusbar menu
+  } else if (display_list) {
     // find the length of the longest file name
     maxlen = 0;
     for (int i = 0; i < numMatches; i++) {
+      int len;
       if (!showtail && (xp->xp_context == EXPAND_FILES
                         || xp->xp_context == EXPAND_SHELLCMD
                         || xp->xp_context == EXPAND_BUFFERS)) {
         home_replace(NULL, matches[i], NameBuff, MAXPATHL, true);
-        j = vim_strsize(NameBuff);
+        len = vim_strsize(NameBuff);
       } else {
-        j = vim_strsize(SHOW_MATCH(i));
+        len = vim_strsize(SHOW_MATCH(i));
       }
-      maxlen = MAX(maxlen, j);
+      maxlen = MAX(maxlen, len);
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
@@ -3569,7 +3579,7 @@ int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wi
 {
   int c = key;
 
-  if (did_wild_list) {
+  if (cmdline_pum_active() || did_wild_list || wild_menu_showing) {
     if (c == K_LEFT) {
       c = Ctrl_P;
     } else if (c == K_RIGHT) {

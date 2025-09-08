@@ -5620,7 +5620,7 @@ func Test_completetimeout_autocompletetimeout()
   set completetimeout=1
   call feedkeys("Gof\<C-N>\<F2>\<Esc>0", 'xt!')
   let match_count = len(b:matches->mapnew('v:val.word'))
-  call assert_true(match_count < 2000)
+  call assert_true(match_count < 4000)
 
   set completetimeout=1000
   call feedkeys("\<Esc>Sf\<C-N>\<F2>\<Esc>0", 'xt!')

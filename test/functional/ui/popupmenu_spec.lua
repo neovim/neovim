@@ -1060,6 +1060,7 @@ describe('builtin popupmenu', function()
         [110] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkYellow },
         [111] = { background = Screen.colors.Plum1, foreground = Screen.colors.DarkBlue },
         [112] = { background = Screen.colors.Plum1, foreground = Screen.colors.DarkGreen },
+        [113] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
         -- popup non-selected item
         n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
@@ -4516,7 +4517,7 @@ describe('builtin popupmenu', function()
 
         feed('<esc>')
 
-        -- Check "list" still works
+        -- Check that when "longest" produces no result, "list" works
         command('set wildmode=longest,list')
         feed(':cn<Tab>')
         screen:expect([[
@@ -4529,6 +4530,8 @@ describe('builtin popupmenu', function()
           cnfile       cnoremenu          |
           :cn^                             |
         ]])
+        feed('<Tab>')
+        screen:expect_unchanged()
         feed('s')
         screen:expect([[
                                           |
@@ -4694,6 +4697,108 @@ describe('builtin popupmenu', function()
 
         feed('<Esc>')
 
+        -- "longest:list" shows list whether it finds a candidate or not
+        command('set wildmode=longest:list,full wildoptions=')
+        feed(':cn<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*3
+          {3:                                }|
+          :cn                             |
+          cnewer       cnoreabbrev        |
+          cnext        cnoremap           |
+          cnfile       cnoremenu          |
+          :cn^                             |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*2
+          {3:                                }|
+          :cn                             |
+          cnewer       cnoreabbrev        |
+          cnext        cnoremap           |
+          cnfile       cnoremenu          |
+          {113:cnewer}{3:  cnext  cnfile  >        }|
+          :cnewer^                         |
+        ]])
+        feed('<Esc>:sign u<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*5
+          {3:                                }|
+          :sign un                        |
+          undefine  unplace               |
+          :sign un^                        |
+        ]])
+
+        -- "longest:full" shows wildmenu whether it finds a candidate or not;
+        -- item not selected
+        feed('<Esc>')
+        command('set wildmode=longest:full,full')
+        feed(':sign u<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*7
+          {3:undefine  unplace               }|
+          :sign un^                        |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*7
+          {113:undefine}{3:  unplace               }|
+          :sign undefine^                  |
+        ]])
+
+        feed('<Esc>:cn<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*7
+          {3:cnewer  cnext  cnfile  >        }|
+          :cn^                             |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*7
+          {113:cnewer}{3:  cnext  cnfile  >        }|
+          :cnewer^                         |
+        ]])
+
+        -- If "longest,full" finds a candidate, wildmenu is not shown
+        feed('<Esc>')
+        command('set wildmode=longest,full')
+        feed(':sign u<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*8
+          :sign un^                        |
+        ]])
+        -- Subsequent wildchar shows wildmenu
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*7
+          {113:undefine}{3:  unplace               }|
+          :sign undefine^                  |
+        ]])
+
+        -- 'longest' does not find candidate, and displays menu without selecting item
+        feed('<Esc>')
+        command('set wildmode=longest,noselect')
+        feed(':cn<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*7
+          {3:cnewer  cnext  cnfile  >        }|
+          :cn^                             |
+        ]])
+
+        command('set wildmode& wildoptions=pum')
+
+        feed('<C-U><Esc>')
+
         -- check positioning with multibyte char in pattern
         command('e långfile1')
         command('sp långfile2')
@@ -4748,7 +4853,7 @@ describe('builtin popupmenu', function()
         ]])
 
         feed('<esc>')
-        command('close')
+        command('%bwipe')
         command('set wildmode=full')
 
         -- special case: when patterns ends with "/", show menu items aligned
@@ -4760,6 +4865,18 @@ describe('builtin popupmenu', function()
           {1:~         }{12: file1          }{1:                        }|
           {1:~         }{n: file2          }{1:                        }|
           :e compdir/file1^                                  |
+        ]])
+
+        -- position is correct when expanding environment variable #20348
+        command('cd ..')
+        fn.setenv('XNDIR', 'wildpum/Xnamedir')
+        feed('<C-U>e $XNDIR/<Tab>')
+        screen:expect([[
+                                                            |
+          {1:~                                                 }|*11
+          {1:~                  }{12: XdirA/         }{1:               }|
+          {1:~                  }{n: XfileA         }{1:               }|
+          :e wildpum/Xnamedir/XdirA/^                        |
         ]])
       end)
     end
@@ -4877,24 +4994,52 @@ describe('builtin popupmenu', function()
 
         -- pressing <Tab> should display the wildmenu
         feed('<Tab>')
-        screen:expect([[
+        local s1 = [[
                                         |
           {1:~                             }|*4
           {1:~    }{12: undefine       }{1:         }|
           {1:~    }{n: unplace        }{1:         }|
           :sign undefine^                |
-        ]])
+        ]]
+        screen:expect(s1)
         eq(1, fn.wildmenumode())
 
         -- pressing <Tab> second time should select the next entry in the menu
         feed('<Tab>')
-        screen:expect([[
+        local s2 = [[
                                         |
           {1:~                             }|*4
           {1:~    }{n: undefine       }{1:         }|
           {1:~    }{12: unplace        }{1:         }|
           :sign unplace^                 |
+        ]]
+        screen:expect(s2)
+        eq(1, fn.wildmenumode())
+
+        -- If "longest" finds no candidate in "longest,full", "full" is used
+        feed('<Esc>')
+        command('set wildmode=longest,full')
+        command('set wildoptions=pum')
+        feed(':sign un<Tab>')
+        screen:expect(s1)
+        feed('<Tab>')
+        screen:expect(s2)
+
+        -- Similarly for "longest,noselect:full"
+        feed('<Esc>')
+        command('set wildmode=longest,noselect:full')
+        feed(':sign un<Tab>')
+        screen:expect([[
+                                        |
+          {1:~                             }|*4
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign un^                      |
         ]])
+        feed('<Tab>')
+        screen:expect(s1)
+        feed('<Tab>')
+        screen:expect(s2)
       end)
 
       it('wildoptions=pum with a wrapped line in buffer vim-patch:8.2.4655', function()

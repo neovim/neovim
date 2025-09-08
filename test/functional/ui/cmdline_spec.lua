@@ -535,12 +535,40 @@ local function test_cmdline(linegrid)
         {2:långfile1                }|
                                  |
       ]],
+      cmdline = { { content = { { 'b långfile1' } }, firstc = ':', pos = 12 } },
       popupmenu = {
         anchor = { -1, 0, 2 },
         items = { { 'långfile1', '', '', '' }, { 'långfile2', '', '', '' } },
         pos = 0,
       },
-      cmdline = { { content = { { 'b långfile1' } }, firstc = ':', pos = 12 } },
+    }
+
+    feed('<Esc>')
+    command('silent %bwipe')
+
+    command('set shellslash')
+    -- position is correct when expanding environment variable #20348
+    command('silent cd test/functional/fixtures')
+    n.fn.setenv('XNDIR', 'wildpum/Xnamedir')
+    feed(':e $XNDIR/<Tab>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = {
+        {
+          content = { { 'e wildpum/Xnamedir/XdirA/' } },
+          firstc = ':',
+          pos = 25,
+        },
+      },
+      popupmenu = {
+        anchor = { -1, 0, 19 },
+        items = { { 'XdirA/', '', '', '' }, { 'XfileA', '', '', '' } },
+        pos = 0,
+      },
     }
   end)
 
