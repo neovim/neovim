@@ -196,6 +196,7 @@ EDITOR
 
 EVENTS
 
+• |CmdlineLeave| sets |v:char| to the character that stops the Cmdline mode.
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` paremeter for |ui-messages| `msg_show` event.
 • New `msg_id` paremeter for |ui-messages| `msg_show` event.

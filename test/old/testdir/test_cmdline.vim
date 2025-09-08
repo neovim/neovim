@@ -4967,4 +4967,23 @@ func Test_long_line_noselect()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_CmdlineLeave_vchar_keys()
+  func OnLeave()
+    let g:leave_key = v:char
+  endfunction
+
+  new
+  for event in ["CmdlineLeavePre", "CmdlineLeave"]
+    exec "autocmd" event "* :call OnLeave()"
+    for key in ["\<C-C>", "\<Esc>", "\<CR>"]
+      call feedkeys($":echo{key}", 'tx')
+      call assert_equal(key, g:leave_key)
+    endfor
+    exec "autocmd!" event
+  endfor
+  bwipe!
+  delfunc OnLeave
+  unlet g:leave_key
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
