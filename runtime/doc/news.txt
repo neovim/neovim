@@ -200,6 +200,7 @@ EVENTS
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` paremeter for |ui-messages| `msg_show` event.
 • New `msg_id` paremeter for |ui-messages| `msg_show` event.
+• 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
 • Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
 
 HIGHLIGHTS

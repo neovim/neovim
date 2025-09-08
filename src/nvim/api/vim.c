@@ -2141,8 +2141,8 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
     if (opts->use_winbar) {
       fillchar = wp->w_p_fcs_chars.wbr;
     } else {
-      int attr;
-      fillchar = fillchar_status(&attr, wp);
+      hlf_T group;
+      fillchar = fillchar_status(&group, wp);
     }
   }
 

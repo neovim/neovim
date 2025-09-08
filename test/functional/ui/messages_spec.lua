@@ -852,7 +852,7 @@ describe('ui/ext_messages', function()
     }
   end)
 
-  it('supports &showcmd and &ruler', function()
+  it("supports 'showcmd' and 'ruler(format)'", function()
     command('set showcmd ruler')
     command('hi link MsgArea ErrorMsg')
     screen:expect({
@@ -940,19 +940,26 @@ describe('ui/ext_messages', function()
       ]],
       ruler = { { '2,0-1   All', 'MsgArea' } },
     }
-
-    -- when ruler is part of statusline it is not externalized.
-    -- this will be added as part of future ext_statusline support
-    command('set laststatus=2')
+    command('set rulerformat=Foo%#ErrorMsg#Bar')
     screen:expect({
       grid = [[
         abcde                    |
         ^                         |
-        {1:~                        }|*2
-        {3:<] [+] 2,0-1          All}|
+        {1:~                        }|*3
       ]],
-      ruler = { { '2,0-1   All', 'MsgArea' } },
+      ruler = { { 'Foo', 'MsgArea' }, { 'Bar', 9, 'ErrorMsg' } },
     })
+    command('set rulerformat=')
+
+    -- when ruler is part of statusline it is not externalized.
+    -- this will be added as part of future ext_statusline support
+    command('set laststatus=2')
+    screen:expect([[
+      abcde                    |
+      ^                         |
+      {1:~                        }|*2
+      {3:<] [+] 2,0-1          All}|
+    ]])
   end)
 
   it('keeps history of message of different kinds', function()
