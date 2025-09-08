@@ -1143,23 +1143,23 @@ first word).  You can use the "']" or "`]" command after the put command to
 move the cursor to the end of the inserted text, or use "'[" or "`[" to move
 the cursor to the start.
 
-						*put-Visual-mode* *v_p* *v_P*
+							     *put-Visual-mode*
 When using a put command like |p| or |P| in Visual mode, Vim will try to
-replace the selected text with the contents of the register.  Whether this
-works well depends on the type of selection and the type of the text in the
-register.  With blockwise selection it also depends on the size of the block
-and whether the corners are on an existing character.  (Implementation detail:
-it actually works by first putting the register after the selection and then
-deleting the selection.)
-With |p| the previously selected text is put in the unnamed register (and
-possibly the selection and/or clipboard).  This is useful if you want to put
-that text somewhere else.  But you cannot repeat the same change.
-With |P| the unnamed register is not changed (and neither the selection or
-clipboard), you can repeat the same change. But the deleted text cannot be
-used.  If you do need it you can use |p| with another register.  E.g., yank
-the text to copy, Visually select the text to replace and use "0p .  You can
-repeat this as many times as you like, and the unnamed register will be
-changed each time.
+replace the selected text with the contents of the register.  How this
+works depends on the type of selection and the text. With blockwise selection
+it also depends on the size of the block and whether the corners are on an
+existing character.  (Implementation detail: it actually works by first
+putting the register after the selection and then deleting the selection.)
+									 *v_p*
+|p| in Visual mode puts text and sets the default register (unnamed,
+selection, or clipboard) to the previously-selected text.  Useful if you want
+to put that text somewhere else.  But you cannot repeat the same change.
+									 *v_P*
+|P| in Visual mode puts text without setting the default register. You can
+repeat the change, but the deleted text cannot be used.  If you do need it you
+can use |p| with another register.  E.g., yank the text to copy, Visually
+select the text to replace and use "0p .  You can repeat this as many times as
+you like, and the unnamed register will be changed each time.
 							*blockwise-put*
 When a register contains text from one line (characterwise), using a
 blockwise Visual selection, putting that register will paste that text
