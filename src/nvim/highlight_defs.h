@@ -133,6 +133,7 @@ typedef enum {
   HLF_SE,         ///< stderr messages (from shell)
   HLF_SO,         ///< stdout messages (from shell)
   HLF_OK,         ///< OK message
+  HLF_PRE,        ///< "preinsert" in 'completeopt'
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 

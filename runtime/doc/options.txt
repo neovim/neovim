@@ -1516,10 +1516,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'complete'* *'cpt'* *E535*
 'complete' 'cpt'	string	(default ".,w,b,u,t")
 			local to buffer
-	This option specifies how keyword completion |ins-completion| works
-	when CTRL-P or CTRL-N are used.  It is also used for whole-line
-	completion |i_CTRL-X_CTRL-L|.  It indicates the type of completion
-	and the places to scan.  It is a comma-separated list of flags:
+	This option controls how completion |ins-completion| behaves when
+	using CTRL-P, CTRL-N, or |ins-autocompletion|.  It is also used for
+	whole-line completion |i_CTRL-X_CTRL-L|.  It indicates the type of
+	completion and the places to scan.  It is a comma-separated list of
+	flags:
 	.	scan the current buffer ('wrapscan' is ignored)
 	w	scan buffers from other windows
 	b	scan other loaded buffers that are in the buffer list
@@ -1564,9 +1565,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(gzipped files for example).  Unloaded buffers are not scanned for
 	whole-line completion.
 
-	As you can see, CTRL-N and CTRL-P can be used to do any 'iskeyword'-
-	based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
-	|i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
+	CTRL-N, CTRL-P, and |ins-autocompletion| can be used for any
+	'iskeyword'-based completion (dictionary |i_CTRL-X_CTRL-K|, included
+	patterns |i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]|, and normal
+	expansions).  With the "F" and "o" flags in 'complete', non-keywords
+	can also be completed.
 
 	An optional match limit can be specified for a completion source by
 	appending a caret ("^") followed by a {count} to the source flag.
@@ -1672,17 +1675,22 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    with "menu" or "menuone".  Overrides "preview".
 
 	   preinsert
-		    Preinsert the portion of the first candidate word that is
-		    not part of the current completion leader and using the
-		    |hl-ComplMatchIns| highlight group.  In order for it to
-		    work, "fuzzy" must not be set and "menuone" must be set.
+		    When autocompletion is not enabled, inserts the part of the
+		    first candidate word beyond the current completion leader,
+		    highlighted with |hl-ComplMatchIns|.  The cursor does not
+		    move.  Requires "fuzzy" unset and "menuone" in 'completeopt'.
+
+		    When 'autocomplete' is enabled, inserts the longest common
+		    prefix of matches (from all shown items or buffer-specific
+		    matches), highlighted with |hl-PreInsert|.  This occurs only
+		    when no menu item is selected.  Press CTRL-Y to accept.
 
 	   preview  Show extra information about the currently selected
 		    completion in the preview window.  Only works in
 		    combination with "menu" or "menuone".
 
-	Only "fuzzy", "popup" and "preview" have an effect when 'autocomplete'
-	is enabled.
+	Only "fuzzy", "popup", "preinsert" and "preview" have an effect when
+	'autocomplete' is enabled.
 
 	This option does not apply to |cmdline-completion|. See 'wildoptions'
 	for that.
