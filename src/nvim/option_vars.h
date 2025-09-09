@@ -19,7 +19,7 @@
   "R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel,k:PmenuMatch,<:PmenuMatchSel,[:PmenuKind," \
   "]:PmenuKindSel,{:PmenuExtra,}:PmenuExtraSel,x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel," \
   "_:TabLineFill,!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine,z:StatusLineTerm," \
-  "Z:StatusLineTermNC,g:MsgArea,h:ComplMatchIns,0:Whitespace,I:NormalNC"
+  "Z:StatusLineTermNC,g:MsgArea,h:ComplMatchIns,0:Whitespace,I:PreInsert"
 
 // Default values for 'errorformat'.
 // The "%f|%l| %m" one is used for when the contents of the quickfix window is
