@@ -124,8 +124,6 @@ jobs:
             build: { flavor: puc-lua }
           - test: oldtest
             build: { flavor: tsan }
-          - test: unittest
-            build: { runner: ubuntu-24.04-arm }
           - test: oldtest
             build: { runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.build.runner }}
