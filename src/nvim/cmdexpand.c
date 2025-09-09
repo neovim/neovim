@@ -451,6 +451,16 @@ bool cmdline_compl_is_fuzzy(void)
   return xp != NULL && cmdline_fuzzy_completion_supported(xp);
 }
 
+/// Checks whether popup menu should be used for cmdline completion wildmenu.
+///
+/// @param wildmenu  whether wildmenu is needed by current 'wildmode' part
+bool cmdline_compl_use_pum(bool need_wildmenu)
+{
+  return ((need_wildmenu && (wop_flags & kOptWopFlagPum)
+           && !(ui_has(kUICmdline) && cmdline_win == NULL))
+          || ui_has(kUIWildmenu) || (ui_has(kUICmdline) && ui_has(kUIPopupmenu)));
+}
+
 /// Return the number of characters that should be skipped in the wildmenu
 /// These are backslashes used for escaping.  Do show backslashes in help tags
 /// and in search pattern completion matches.
@@ -748,7 +758,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
     if (compl_match_array) {
       compl_selected = findex;
       cmdline_pum_display(false);
-    } else if (wop_flags & kOptWopFlagPum) {
+    } else if (cmdline_compl_use_pum(true)) {
       if (cmdline_pum_create(get_cmdline_info(), xp, xp->xp_files,
                              xp->xp_numfiles, cmd_showtail, false) == EXPAND_OK) {
         compl_selected = findex;
@@ -1122,9 +1132,7 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool nos
     showtail = cmd_showtail;
   }
 
-  if (((!ui_has(kUICmdline) || cmdline_win != NULL) && display_wildmenu && !display_list
-       && (wop_flags & kOptWopFlagPum))
-      || ui_has(kUIWildmenu) || (ui_has(kUICmdline) && ui_has(kUIPopupmenu))) {
+  if (cmdline_compl_use_pum(display_wildmenu && !display_list)) {
     int retval = cmdline_pum_create(ccline, xp, matches, numMatches, showtail, noselect);
     if (retval == EXPAND_OK) {
       compl_selected = noselect ? -1 : 0;
