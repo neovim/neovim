@@ -553,12 +553,12 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id);
+      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id, 0);
       idx = sh->next;
     }
   } else {
     DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
-    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
+    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id, 0);
   }
 }
 
@@ -619,14 +619,15 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
     .data.vt = vt,
     .attr_id = 0,
     .owned = owned,
-    .priority = vt->priority,
+    .priority_internal = ((DecorPriorityInternal)vt->priority << 16),
     .draw_col = -10,
   };
   decor_range_insert(state, &range);
 }
 
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
+                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id,
+                        DecorPriority subpriority)
 {
   if (sh->flags & kSHIsSign) {
     return;
@@ -638,7 +639,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .data.sh = *sh,
     .attr_id = 0,
     .owned = owned,
-    .priority = sh->priority,
+    .priority_internal = ((DecorPriorityInternal)sh->priority << 16) + subpriority,
     .draw_col = -10,
   };
 
@@ -731,7 +732,7 @@ next_mark:
       break;
     }
     int const ordering = r->ordering;
-    DecorPriority const priority = r->priority;
+    DecorPriorityInternal const priority = r->priority_internal;
 
     int begin = 0;
     int end = cur_end;
@@ -739,7 +740,8 @@ next_mark:
       int mid = begin + ((end - begin) >> 1);
       int mi = indices[mid];
       DecorRange *mr = &slots[mi].range;
-      if (mr->priority < priority || (mr->priority == priority && mr->ordering < ordering)) {
+      if (mr->priority_internal < priority
+          || (mr->priority_internal == priority && mr->ordering < ordering)) {
         begin = mid + 1;
       } else {
         end = mid;

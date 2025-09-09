@@ -836,6 +836,15 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       col2 = c;
     }
 
+    DecorPriority subpriority = 0;
+    if (HAS_KEY(opts, set_extmark, _subpriority)) {
+      VALIDATE_RANGE((opts->_subpriority >= 0 && opts->_subpriority <= UINT16_MAX),
+                     "_subpriority", {
+        goto error;
+      });
+      subpriority = (DecorPriority)opts->_subpriority;
+    }
+
     if (kv_size(virt_text.data.virt_text)) {
       decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true);
     }
@@ -845,7 +854,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
       sh.url = url;
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id,
+                         subpriority);
     }
   } else {
     if (opts->ephemeral) {
@@ -1051,6 +1061,13 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///                 ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
 ///               ```
+///
+///               In addition to returning a boolean, it is also allowed to
+///               return a `skip_row, skip_col` pair of integers. This implies
+///               that this function does not need to be called until a range
+///               which continues beyond the skipped position. A single integer
+///               return value `skip_row` is short for `skip_row, 0`
+///
 ///             - on_end: called at the end of a redraw cycle
 ///               ```
 ///                 ["end", tick]
