@@ -4989,25 +4989,30 @@ endfunc
 " Skip wildmenu during history navigation via Up/Down keys
 func Test_skip_wildtrigger_hist_navigation()
   call Ntest_override("char_avail", 1)
-  cnoremap <F8> <C-R>=wildtrigger()[-1]<CR>
-  set wildmenu
-
-  call feedkeys(":ech\<F8>\<F4>\<C-B>\"\<CR>", "tx")
-  call assert_match('echo*', g:Sline)
-  call assert_equal('"echo', @:)
+  set wildmenu wildmode=noselect,full
+  augroup TestSkipWildtrigger | autocmd!
+    autocmd CmdlineChanged : call wildtrigger()
+  augroup END
+  cnoremap <expr> <Up>   wildmenumode() ? "\<C-E>\<Up>"   : "\<Up>"
+  cnoremap <expr> <Down> wildmenumode() ? "\<C-E>\<Down>" : "\<Down>"
 
   call feedkeys(":echom \"foo\"", "tx")
   call feedkeys(":echom \"foobar\"", "tx")
-  call feedkeys(":ech\<F8>\<C-E>\<UP>\<C-B>\"\<CR>", "tx")
+
+  call feedkeys(":ech\<Up>\<C-B>\"\<CR>", "tx")
   call assert_equal('"echom "foobar"', @:)
-  call feedkeys(":ech\<F8>\<C-E>\<UP>\<UP>\<UP>\<C-B>\"\<CR>", "tx")
+  call feedkeys(":ech\<Up>\<Up>\<C-B>\"\<CR>", "tx")
   call assert_equal('"echom "foo"', @:)
-  call feedkeys(":ech\<F8>\<C-E>\<UP>\<UP>\<UP>\<Down>\<C-B>\"\<CR>", "tx")
+  call feedkeys(":ech\<Up>\<Up>\<Down>\<C-B>\"\<CR>", "tx")
   call assert_equal('"echom "foobar"', @:)
+  call feedkeys(":ech\<Up>\<Up>\<Down>\<Down>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"ech', @:)
 
   call Ntest_override("char_avail", 0)
-  set wildmenu&
-  cunmap <F8>
+  set wildmenu& wildmode& wildoptions&
+  augroup TestSkipWildtrigger | autocmd! | augroup END
+  cunmap <Up>
+  cunmap <Down>
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
