@@ -214,6 +214,7 @@ If you want to keep the changed buffer without saving it, switch on the
 							*:fin* *:find*
 :fin[d][!] [++opt] [+cmd] {file}
 			Find {file} in 'path' and then |:edit| it.
+			See also: 'findfunc'.
 
 :{count}fin[d][!] [++opt] [+cmd] {file}
 			Just like ":find", but use the {count} match in
