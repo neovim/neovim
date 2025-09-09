@@ -240,9 +240,8 @@ static String compl_leader = STRING_INIT;
 
 static bool compl_get_longest = false;  ///< put longest common string in compl_leader
 
-/// This flag indicates that one of the items in the match list is currently
-/// selected.  False when no match is selected or the match was edited or using
-/// the longest common string.
+/// This flag is false when no match is selected (by ^N/^P) or the match was
+/// edited or using the longest common string.
 static bool compl_used_match;
 
 /// didn't finish finding completions.
@@ -5153,7 +5152,8 @@ int ins_compl_insert(bool move_cursor, bool preinsert_prefix)
       }
     }
   }
-  compl_used_match = !(match_at_original_text(compl_shown_match) || preinsert);
+  compl_used_match = !(match_at_original_text(compl_shown_match)
+                       || (preinsert && !compl_autocomplete));
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
