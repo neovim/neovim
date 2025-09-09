@@ -146,6 +146,7 @@ typedef struct {
   buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
   int cmdline_type;
   bool event_cmdlineleavepre_triggered;
+  bool did_hist_navigate;
 } CommandLineState;
 
 typedef struct {
@@ -1254,6 +1255,12 @@ static int command_line_execute(VimState *state, int key)
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
+  // Skip wildmenu during history navigation via Up/Down keys
+  if (s->c == K_WILD && s->did_hist_navigate) {
+    s->did_hist_navigate = false;
+    return 1;
+  }
+
   if (s->c == K_EVENT || s->c == K_COMMAND || s->c == K_LUA) {
     if (s->c == K_EVENT) {
       state_handle_k_event();
@@ -2227,6 +2234,7 @@ static int command_line_handle_key(CommandLineState *s)
     } else {
       switch (command_line_browse_history(s)) {
       case CMDLINE_CHANGED:
+        s->did_hist_navigate = true;
         return command_line_changed(s);
       case GOTO_NORMAL_MODE:
         return 0;
