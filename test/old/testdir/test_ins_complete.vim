@@ -5747,6 +5747,13 @@ func Test_autocomplete_completeopt_preinsert()
   " Should not work with fuzzy
   set cot+=fuzzy
   call DoTest("f", 'f', 2)
+  set cot-=fuzzy
+
+  " Verify that redo (dot) works
+  call setline(1, ["foobar", "foozbar", "foobaz", "changed", "change"])
+  call feedkeys($"/foo\<CR>", 'tx')
+  call feedkeys($"cwch\<C-N>\<Esc>n.n.", 'tx')
+  call assert_equal(repeat(['changed'], 3), getline(1, 3))
 
   %delete _
   let &l:undolevels = &l:undolevels
