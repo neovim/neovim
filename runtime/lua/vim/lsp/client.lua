@@ -1099,6 +1099,9 @@ function Client:on_attach(bufnr)
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
   -- opt-out (deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
     for _, Capability in pairs(lsp._capability.all) do
       if
         self:supports_method(Capability.method)
