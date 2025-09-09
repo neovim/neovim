@@ -2730,7 +2730,7 @@ bool may_show_intro(void)
           && (curbuf->b_fname == NULL)
           && (curbuf->handle == 1)
           && (curwin->handle == LOWEST_WIN_ID)
-          && one_window(curwin)
+          && one_window(curwin, NULL)
           && (vim_strchr(p_shm, SHM_INTRO) == NULL));
 }
 
