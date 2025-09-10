@@ -1268,7 +1268,7 @@ automatically showing a popup menu of suggestions as you type, whether
 searching (/ or ?) or entering commands (:).
 
 A basic setup is: >
-	autocmd CmdlineChanged [:/\?] call wildtrigger()
+	autocmd CmdlineChanged [:\/\?] call wildtrigger()
 	set wildmode=noselect:lastused,full
 	set wildoptions=pum
 
@@ -1281,8 +1281,8 @@ To retain normal command-line history navigation with <Up>/<Down>: >
 
 Options can also be applied only for specific command-lines.  For
 example, to use a shorter popup menu height only during search: >
-	autocmd CmdlineEnter [/\?] set pumheight=8
-	autocmd CmdlineLeave [/\?] set pumheight&
+	autocmd CmdlineEnter [\/\?] set pumheight=8
+	autocmd CmdlineLeave [\/\?] set pumheight&
 
 EXTRAS					*fuzzy-file-picker* *live-grep*
 
