@@ -256,6 +256,9 @@ if vim.o.background == 'light' then
   hi('Type',             { fg = 'SeaGreen', bold = true,                ctermfg = 'DarkGreen' })
   hi('Underlined',       { fg = 'SlateBlue', underline = true,          ctermfg = 'DarkMagenta', cterm = { underline = true } })
   hi('Ignore',           {                                              ctermfg = 'White' })
+  hi('Added',            { fg = 'SeaGreen',                             ctermfg = 'DarkGreen' })
+  hi('Changed',          { fg = 'DodgerBlue',                           ctermfg = 'Blue' })
+  hi('Removed',          { fg = 'Red',                                  ctermfg = 'Red' })
 else
   -- Default colors only used with a dark background.
   hi('ColorColumn',      { bg = 'DarkRed',                               ctermbg = 'DarkRed' })
@@ -297,5 +300,8 @@ else
   hi('Type',             { fg = '#60ff60', bold = true,                  ctermfg = 'LightGreen' })
   hi('Underlined',       { fg = '#80a0ff', underline = true,             ctermfg = 'LightBlue', cterm = { underline = true } })
   hi('Ignore',           {                                               ctermfg = 'Black' })
+  hi('Added',            { fg = 'LimeGreen',                             ctermfg = 'Green' })
+  hi('Changed',          { fg = 'DodgerBlue',                            ctermfg = 'Blue' })
+  hi('Removed',          { fg = 'Red',                                   ctermfg = 'Red' })
 end
 --stylua: ignore end

@@ -860,13 +860,13 @@ describe('vim.pack', function()
           ),
           '                                                                                     |',
           'Pending updates:                                                                     |',
-          ('{104:< %s │ Commit from `main` to be removed}                                         |'):format(
+          ('{19:< %s │ Commit from `main` to be removed}                                         |'):format(
             hashes.fetch_head
           ),
-          ('{105:> %s │ Commit to be added 2}                                                     |'):format(
+          ('{104:> %s │ Commit to be added 2}                                                     |'):format(
             hashes.fetch_new
           ),
-          ('{105:> %s │ Commit to be added 1 (tag: dev-tag)}                                      |'):format(
+          ('{104:> %s │ Commit to be added 1 (tag: dev-tag)}                                      |'):format(
             hashes.fetch_new_prev
           ),
           '                                                                                     |',
@@ -891,8 +891,7 @@ describe('vim.pack', function()
           [101] = { foreground = Screen.colors.Orange },
           [102] = { foreground = Screen.colors.LightGray },
           [103] = { foreground = Screen.colors.LightBlue },
-          [104] = { foreground = Screen.colors.NvimDarkRed },
-          [105] = { foreground = Screen.colors.NvimDarkGreen },
+          [104] = { foreground = Screen.colors.SeaGreen },
         })
         -- NOTE: Non LuaJIT reports errors differently due to 'coxpcall'
         if is_jit() then
