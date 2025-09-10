@@ -382,8 +382,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 }
 
 /// Create completion popup menu with items from "matches".
-static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                              bool showtail, bool noselect)
+static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
+                               bool showtail, bool noselect)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
@@ -407,8 +407,6 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
   } else {
     compl_startcol = cmd_screencol((int)(endpos - ccline->cmdbuff));
   }
-
-  return EXPAND_OK;
 }
 
 void cmdline_pum_display(bool changed_array)
@@ -454,7 +452,7 @@ bool cmdline_compl_is_fuzzy(void)
 /// Checks whether popup menu should be used for cmdline completion wildmenu.
 ///
 /// @param wildmenu  whether wildmenu is needed by current 'wildmode' part
-bool cmdline_compl_use_pum(bool need_wildmenu)
+static bool cmdline_compl_use_pum(bool need_wildmenu)
 {
   return ((need_wildmenu && (wop_flags & kOptWopFlagPum)
            && !(ui_has(kUICmdline) && cmdline_win == NULL))
@@ -759,12 +757,11 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
       compl_selected = findex;
       cmdline_pum_display(false);
     } else if (cmdline_compl_use_pum(true)) {
-      if (cmdline_pum_create(get_cmdline_info(), xp, xp->xp_files,
-                             xp->xp_numfiles, cmd_showtail, false) == EXPAND_OK) {
-        compl_selected = findex;
-        pum_clear();
-        cmdline_pum_display(true);
-      }
+      cmdline_pum_create(get_cmdline_info(), xp, xp->xp_files, xp->xp_numfiles,
+                         cmd_showtail, false);
+      compl_selected = findex;
+      pum_clear();
+      cmdline_pum_display(true);
     } else {
       redraw_wildmenu(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
     }
@@ -1133,13 +1130,11 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool nos
   }
 
   if (cmdline_compl_use_pum(display_wildmenu && !display_list)) {
-    int retval = cmdline_pum_create(ccline, xp, matches, numMatches, showtail, noselect);
-    if (retval == EXPAND_OK) {
-      compl_selected = noselect ? -1 : 0;
-      pum_clear();
-      cmdline_pum_display(true);
-    }
-    return retval;
+    cmdline_pum_create(ccline, xp, matches, numMatches, showtail, noselect);
+    compl_selected = noselect ? -1 : 0;
+    pum_clear();
+    cmdline_pum_display(true);
+    return EXPAND_OK;
   }
 
   if (display_list) {
