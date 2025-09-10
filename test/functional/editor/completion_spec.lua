@@ -26,6 +26,7 @@ describe('completion', function()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Gray0, background = Screen.colors.Yellow },
       [101] = { background = Screen.colors.Gray0 },
+      [102] = { foreground = Screen.colors.SeaGreen },
     }
   end)
 
@@ -1501,7 +1502,7 @@ describe('completion', function()
       foo                                                         |
       foobar                                                      |
       foobarbaz                                                   |
-      f^oo                                                         |
+      f{102:^oo}                                                         |
       {12:foo            }{1:                                             }|
       {4:foobar         }{1:                                             }|
       {4:foobarbaz      }{1:                                             }|
