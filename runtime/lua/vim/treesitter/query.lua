@@ -333,12 +333,28 @@ M.get = memoize('concat-2', function(lang, query_name)
   return M.parse(lang, query_string)
 end, false)
 
+-- Clears the query information cache for a given tuple of [language, query], or all cached query
+-- info if either is not given.
+--
+---@param lang string? Language to use for the query
+---@param query_name string? Name of the query (e.g. "highlights")
+M.clear_cache = function(lang, query_name)
+  if lang and query_name then
+    -- LuaLS is confused.
+    ---@diagnostic disable-next-line: undefined-field
+    M.get:clear(lang, query_name)
+  else
+    -- LuaLS is confused.
+    ---@diagnostic disable-next-line: undefined-field
+    M.get:clear()
+  end
+end
+
 api.nvim_create_autocmd('OptionSet', {
   pattern = { 'runtimepath' },
   group = api.nvim_create_augroup('nvim.treesitter.query_cache_reset', { clear = true }),
   callback = function()
-    --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
-    M.get:clear()
+    M.clear_cache()
   end,
 })
 
