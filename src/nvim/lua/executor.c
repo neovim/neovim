@@ -1671,7 +1671,7 @@ static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *ar
     Array res = arena_array(arena, (size_t)nres);
     for (int i = 0; i < nres; i++) {
       res.items[nres - i - 1] = nlua_pop_Object(lstate, false, arena, perr);
-      if (ERROR_SET(err)) {
+      if (ERROR_SET(perr)) {
         return NIL;
       }
     }
