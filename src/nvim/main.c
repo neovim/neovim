@@ -709,6 +709,7 @@ void getout(int exitval)
     exitval += ex_exitval;
   }
 
+  set_vim_var_type(VV_EXITING, VAR_NUMBER);
   set_vim_var_nr(VV_EXITING, exitval);
 
   // Invoked all deferred functions in the function stack.

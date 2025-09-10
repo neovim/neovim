@@ -5481,7 +5481,8 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
     b_ret = rettv->vval.v_blob;
   }
 
-  vimvars[VV_KEY].vv_type = VAR_NUMBER;
+  // set_vim_var_nr() doesn't set the type
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   const VarLockStatus prev_lock = b->bv_lock;
   if (b->bv_lock == 0) {
@@ -5532,7 +5533,8 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  vimvars[VV_KEY].vv_type = VAR_NUMBER;
+  // set_vim_var_nr() doesn't set the type
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
@@ -5598,8 +5600,8 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
     tv_list_alloc_ret(rettv, kListLenUnknown);
     l_ret = rettv->vval.v_list;
   }
-
-  vimvars[VV_KEY].vv_type = VAR_NUMBER;
+  // set_vim_var_nr() doesn't set the type
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   const VarLockStatus prev_lock = tv_list_locked(l);
   if (tv_list_locked(l) == VAR_UNLOCKED) {
@@ -6965,14 +6967,23 @@ void set_vcount(int64_t count, int64_t count1, bool set_prevcount)
   vimvars[VV_COUNT1].vv_nr = count1;
 }
 
+/// Set type of v: variable to the given type.
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  type  Type to set to.
+void set_vim_var_type(const VimVarIndex idx, const VarType type)
+{
+  vimvars[idx].vv_type = type;
+}
+
 /// Set number v: variable to the given value
+/// Note that this does not set the type, use set_vim_var_type() for that.
 ///
 /// @param[in]  idx  Index of variable to set.
 /// @param[in]  val  Value to set to.
 void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 {
   tv_clear(&vimvars[idx].vv_tv);
-  vimvars[idx].vv_type = VAR_NUMBER;
   vimvars[idx].vv_nr = val;
 }
 
