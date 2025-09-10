@@ -1,4 +1,4 @@
--- vim: tw=80
+-- vim: tw=78
 
 --- @class vim.option_meta
 --- @field full_name string
@@ -1700,12 +1700,12 @@ local options = {
         	    with "menu" or "menuone".  Overrides "preview".
 
            preinsert
-        	    When autocompletion is not enabled, inserts the part of the
+        	    When 'autocomplete' is not active, inserts the part of the
         	    first candidate word beyond the current completion leader,
-        	    highlighted with |hl-PreInsert|.  The cursor does not
-        	    move.  Requires "fuzzy" unset and "menuone" in 'completeopt'.
+        	    highlighted with |hl-PreInsert|.  The cursor doesn't move.
+        	    Requires "fuzzy" unset and "menuone" in 'completeopt'.
 
-        	    When 'autocomplete' is enabled, inserts the longest common
+        	    When 'autocomplete' is active, inserts the longest common
         	    prefix of matches (from all shown items or from the
         	    current buffer items).  This occurs only when no menu item
         	    is selected.  Press CTRL-Y to accept.

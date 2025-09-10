@@ -1134,7 +1134,7 @@ autocompletion.  To use |i_CTRL-N| or |i_CTRL-X_CTRL-N| specifically, press
 |CTRL-E| first to dismiss the popup menu (see |complete_CTRL-E|).
 
 						*ins-autocompletion-example*
-Example setup~
+Example setup ~
 A typical configuration for automatic completion with a popup menu: >
 	set autocomplete
 	set complete=.^5,w^5,b^5,u^5
