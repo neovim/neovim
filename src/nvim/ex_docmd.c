@@ -12,9 +12,11 @@
 #include <uv.h>
 
 #include "auto/config.h"
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
@@ -5981,12 +5983,43 @@ static void ex_syncbind(exarg_T *eap)
   }
 }
 
+/// Implements ":read :foo ...", i.e. reads the output of a ":foo ..." cmd.
+static void do_read_cmd(exarg_T *eap)
+{
+  Object cmd = CSTR_AS_OBJ(eap->arg + 1);
+  String cmd_var_name = cstr_as_string("_ex_cmd");
+  StringBuilder put_cmd = KV_INITIAL_VALUE;
+  Error error = ERROR_INIT;
+  nvim_set_var(cmd_var_name, cmd, &error);
+  if (error.type != kErrorTypeNone) {
+    emsg(error.msg);
+    return;
+  }
+
+  kv_printf(put_cmd, "%dput=execute(g:%s) | ", eap->line2, cmd_var_name.data);
+  kv_printf(put_cmd, "execute 'norm! )`.' | ");
+  kv_printf(put_cmd, "execute 'd _' | ");
+
+  do_cmdline(put_cmd.items, eap->ea_getline, eap->cookie, eap->flags);
+  kv_destroy(put_cmd);
+  nvim_del_var(cmd_var_name, &error);
+  if (error.type != kErrorTypeNone) {
+    emsg(error.msg);
+    return;
+  }
+}
+
 static void ex_read(exarg_T *eap)
 {
   int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
   if (eap->usefilter) {  // :r!cmd
     do_bang(1, eap, false, false, true);
+    return;
+  }
+
+  if (*eap->arg == ':') {
+    do_read_cmd(eap);
     return;
   }
 
