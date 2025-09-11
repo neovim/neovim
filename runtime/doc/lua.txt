@@ -5140,39 +5140,6 @@ vim.version.range({spec})                                *vim.version.range()*
 
 
 ==============================================================================
-Lua module: tohtml                                                *vim.tohtml*
-
-
-:[range]TOhtml {file}                                                *:TOhtml*
-Converts the buffer shown in the current window to HTML, opens the generated
-HTML in a new split window, and saves its contents to {file}. If {file} is not
-given, a temporary file (created by |tempname()|) is used.
-
-
-tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
-    Converts the buffer shown in the window {winid} to HTML and returns the
-    output as a list of string.
-
-    Parameters: ~
-      • {winid}  (`integer?`) Window to convert (defaults to current window)
-      • {opt}    (`table?`) Optional parameters.
-                 • {title}? (`string|false`, default: buffer name) Title tag
-                   to set in the generated HTML code.
-                 • {number_lines}? (`boolean`, default: `false`) Show line
-                   numbers.
-                 • {font}? (`string[]|string`, default: `guifont`) Fonts to
-                   use.
-                 • {width}? (`integer`, default: 'textwidth' if non-zero or
-                   window width otherwise) Width used for items which are
-                   either right aligned or repeat a character infinitely.
-                 • {range}? (`integer[]`, default: entire buffer) Range of
-                   rows to use.
-
-    Return: ~
-        (`string[]`)
-
-
-==============================================================================
 Lua module: vim._extui                                            *vim._extui*
 
 WARNING: This is an experimental interface intended to replace the message
