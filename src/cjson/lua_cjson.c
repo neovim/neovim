@@ -1293,7 +1293,7 @@ static void json_next_number_token(json_parse_t *json, json_token_t *token)
 {
     char *endptr;
 
-    token->value.integer = strtoll(json->ptr, &endptr, 10);
+    long long tmpval = strtoll(json->ptr, &endptr, 10);
     if (json->ptr == endptr || *endptr == '.' || *endptr == 'e' ||
         *endptr == 'E' || *endptr == 'x') {
         token->type = T_NUMBER;
@@ -1302,8 +1302,16 @@ static void json_next_number_token(json_parse_t *json, json_token_t *token)
             json_set_token_error(token, json, "invalid number");
             return;
         }
+    } else if (tmpval > PTRDIFF_MAX || tmpval < PTRDIFF_MIN) {
+        /* Typical Lua builds typedef ptrdiff_t to lua_Integer. If tmpval is
+         * outside the range of that type, we need to use T_NUMBER to avoid
+         * truncation.
+         */
+        token->type = T_NUMBER;
+        token->value.number = tmpval;
     } else {
         token->type = T_INTEGER;
+        token->value.integer = tmpval;
     }
     json->ptr = endptr;     /* Skip the processed number */
 
