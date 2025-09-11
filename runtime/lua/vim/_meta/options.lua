@@ -3564,8 +3564,8 @@ vim.bo.inex = vim.bo.includeexpr
 --- ```vim
 --- 	augroup vimrc-incsearch-highlight
 --- 	  autocmd!
---- 	  autocmd CmdlineEnter /,\? :set hlsearch
---- 	  autocmd CmdlineLeave /,\? :set nohlsearch
+--- 	  autocmd CmdlineEnter [\/\?] :set hlsearch
+--- 	  autocmd CmdlineLeave [\/\?] :set nohlsearch
 --- 	augroup END
 --- ```
 ---

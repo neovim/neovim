@@ -1341,8 +1341,9 @@ The pattern is interpreted like mostly used in file names:
 	[^ch]   match any character but 'c' and 'h'
 
 Note that for all systems the '/' character is used for path separator (even
-Windows). This was done because the backslash is difficult to use in a pattern
-and to make the autocommands portable across different systems.
+for MS-Windows).  This was done because the backslash is difficult to use in a
+pattern and to make the autocommands portable across different systems.  To
+only match a '/' on all platforms (e.g. in a non-file pattern), use "\/".
 
 It is possible to use |pattern| items, but they may not work as expected,
 because of the translation done for the above.
