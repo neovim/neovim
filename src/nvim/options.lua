@@ -4431,8 +4431,8 @@ local options = {
         autocmd.  Example: >vim
         	augroup vimrc-incsearch-highlight
         	  autocmd!
-        	  autocmd CmdlineEnter /,\? :set hlsearch
-        	  autocmd CmdlineLeave /,\? :set nohlsearch
+        	  autocmd CmdlineEnter [\/\?] :set hlsearch
+        	  autocmd CmdlineLeave [\/\?] :set nohlsearch
         	augroup END
         <
         CTRL-L can be used to add one character from after the current match
