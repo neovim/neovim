@@ -5755,6 +5755,12 @@ func Test_autocomplete_completeopt_preinsert()
   call feedkeys($"cwch\<C-N>\<Esc>n.n.", 'tx')
   call assert_equal(repeat(['changed'], 3), getline(1, 3))
 
+  " Select a match and delete up to text equal to another match
+  %delete
+  call setline(1, ["foobar", "foo"])
+  call feedkeys("Go\<ESC>", 'tx')
+  call DoTest("f\<C-N>\<C-N>\<BS>\<BS>\<BS>\<BS>", 'foo', 3)
+
   %delete _
   let &l:undolevels = &l:undolevels
   normal! ifoo

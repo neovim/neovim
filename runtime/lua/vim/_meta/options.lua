@@ -1218,15 +1218,15 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    with "menu" or "menuone".  Overrides "preview".
 ---
 ---    preinsert
---- 	    When autocompletion is not enabled, inserts the part of the
+--- 	    When 'autocomplete' is not active, inserts the part of the
 --- 	    first candidate word beyond the current completion leader,
---- 	    highlighted with `hl-ComplMatchIns`.  The cursor does not
---- 	    move.  Requires "fuzzy" unset and "menuone" in 'completeopt'.
+--- 	    highlighted with `hl-PreInsert`.  The cursor doesn't move.
+--- 	    Requires "fuzzy" unset and "menuone" in 'completeopt'.
 ---
---- 	    When 'autocomplete' is enabled, inserts the longest common
---- 	    prefix of matches (from all shown items or buffer-specific
---- 	    matches), highlighted with `hl-PreInsert`.  This occurs only
---- 	    when no menu item is selected.  Press CTRL-Y to accept.
+--- 	    When 'autocomplete' is active, inserts the longest common
+--- 	    prefix of matches (from all shown items or from the
+--- 	    current buffer items).  This occurs only when no menu item
+--- 	    is selected.  Press CTRL-Y to accept.
 ---
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in

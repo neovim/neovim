@@ -5354,7 +5354,7 @@ PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
 							*hl-ComplMatchIns*
 ComplMatchIns	Matched text of the currently inserted completion.
 							*hl-PreInsert*
-PreInsert	Text inserted during autocompletion when "preinsert".
+PreInsert	Text inserted when "preinsert" is in 'completeopt'.
 							*hl-ComplHint*
 ComplHint	Virtual text of the currently selected completion.
 							*hl-ComplHintMore*
