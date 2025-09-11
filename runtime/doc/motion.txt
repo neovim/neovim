@@ -1262,9 +1262,7 @@ remembered.
 					C preprocessor conditionals (when the
 					cursor is on the # or no ([{
 					is following)
-			For other items the matchit plugin can be used, see
-			|matchit|.  This plugin also helps to skip matches in
-			comments.
+			For other items see |matching|.
 
 			When 'cpoptions' contains "M" |cpo-M| backslashes
 			before parens and braces are ignored.  Without "M" the
@@ -1280,10 +1278,6 @@ remembered.
 			are also ignored (parens and braces inside single
 			quotes).  Note that this works fine for C, but not for
 			Perl, where single quotes are used for strings.
-
-			Nothing special is done for matches in comments.  You
-			can either use the |matchit| plugin or put quotes around
-			matches.
 
 			No count is allowed, {count}% jumps to a line {count}
 			percentage down the file |N%|.  Using '%' on
