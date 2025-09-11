@@ -157,11 +157,17 @@ func Test_helptag_cmd()
   call delete('Xtagdir/tags')
 
   " Test parsing tags
-  call writefile(['*tag1*', 'Example: >', '  *notag*', 'Example end: *tag2*'],
+  call writefile(['*tag1*', 'Example: >', '  *notag1*', 'Example end: *tag2*',
+                \ '>', '  *notag2*', '<',
+                \ '*tag3*', 'Code: >vim', '  *notag3*', 'Code end: *tag4*',
+                \ '>i3config', '  *notag4*', '<'],
     \ 'Xtagdir/a/doc/sample.txt')
   helptags Xtagdir
   call assert_equal(["tag1\ta/doc/sample.txt\t/*tag1*",
-                  \  "tag2\ta/doc/sample.txt\t/*tag2*"], readfile('Xtagdir/tags'))
+                   \ "tag2\ta/doc/sample.txt\t/*tag2*",
+                   \ "tag3\ta/doc/sample.txt\t/*tag3*",
+                   \ "tag4\ta/doc/sample.txt\t/*tag4*"],
+    \ readfile('Xtagdir/tags'))
 
   " Duplicate tags in the help file
   call writefile(['*tag1*', '*tag1*', '*tag2*'], 'Xtagdir/a/doc/sample.txt')

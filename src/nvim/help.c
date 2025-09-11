@@ -972,10 +972,15 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         }
         p1 = p2;
       }
-      size_t len = strlen(IObuff);
-      if ((len == 2 && strcmp(&IObuff[len - 2], ">\n") == 0)
-          || (len >= 3 && strcmp(&IObuff[len - 3], " >\n") == 0)) {
-        in_example = true;
+      size_t off = strlen(IObuff);
+      if (off >= 2 && IObuff[off - 1] == '\n') {
+        off -= 2;
+        while (off > 0 && (ASCII_ISLOWER(IObuff[off]) || ascii_isdigit(IObuff[off]))) {
+          off--;
+        }
+        if (IObuff[off] == '>' && (off == 0 || IObuff[off - 1] == ' ')) {
+          in_example = true;
+        }
       }
       line_breakcheck();
     }
