@@ -314,7 +314,7 @@ if !exists("python_no_builtin_highlight")
 	\ contains=ALLBUT,pythonBuiltin,pythonClass,pythonFunction,pythonType,pythonAsync
 	\ transparent
   " the ellipsis literal `...` can be used in multiple syntactic contexts
-  syn match   pythonEllipsis	"\.\@1<!.\.\.\ze\.\@!" display
+  syn match   pythonEllipsis	"\.\@1<!\.\.\.\ze\.\@!" display
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
