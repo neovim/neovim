@@ -536,7 +536,7 @@ describe('startup', function()
 
   it('if stdin is empty and - is last: selects buffer 1, deletes buffer 3 #35269', function()
     eq(
-      '\r\n  1 %a   "file1"                        line 0\r\n  2 #h   "file2"                        line 1',
+      '\r\n  1 %a   "file1"                        line 0\r\n  2      "file2"                        line 0',
       fn.system({
         nvim_prog,
         '-n',
@@ -549,6 +549,30 @@ describe('startup', function()
         '+qall!',
         'file1',
         'file2',
+        '-',
+      }, { '' })
+    )
+  end)
+
+  it("empty stdin with terminal split doesn't crash #35681", function()
+    eq(
+      'nocrash',
+      fn.system({
+        nvim_prog,
+        '-n',
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '--cmd',
+        'term',
+        '+split',
+        '+quit!',
+        '+bw!',
+        '+bw!',
+        '+echo "nocrash"',
+        "+call timer_start(1, { -> execute('qa') })", -- need to let event handling happen
         '-',
       }, { '' })
     )
