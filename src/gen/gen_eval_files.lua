@@ -178,7 +178,7 @@ local function get_api_meta()
   --- @type table<string,nvim.cdoc.parser.fun>
   local functions = {}
   for path, ty in vim.fs.dir(f) do
-    if ty == 'file' then
+    if ty == 'file' and (vim.endswith(path, '.c') or vim.endswith(path, '.h')) then
       local filename = vim.fs.joinpath(f, path)
       local _, funs = cdoc_parser.parse(filename)
       for _, fn in ipairs(funs) do
