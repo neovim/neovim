@@ -25,7 +25,7 @@ endfunction
 
 function! netrw#fs#ComposePath(base, subdir)
     if has('amiga')
-        let ec = a:base[s:Strlen(a:base)-1]
+        let ec = a:base[strdisplaywidth(a:base)-1]
         if ec != '/' && ec != ':'
             let ret = a:base . '/' . a:subdir
         else

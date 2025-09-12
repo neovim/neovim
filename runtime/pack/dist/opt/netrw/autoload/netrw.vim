@@ -4680,7 +4680,7 @@ fun! s:NetrwHidden(islocal)
   if g:netrw_list_hide =~ '\(^\|,\)\\(^\\|\\s\\s\\)\\zs\\.\\S\\+'
     " remove .file pattern from hiding list
     let g:netrw_list_hide= substitute(g:netrw_list_hide,'\(^\|,\)\\(^\\|\\s\\s\\)\\zs\\.\\S\\+','','')
-  elseif s:Strlen(g:netrw_list_hide) >= 1
+  elseif strdisplaywidth(g:netrw_list_hide) >= 1
     let g:netrw_list_hide= g:netrw_list_hide . ',\(^\|\s\s\)\zs\.\S\+'
   else
     let g:netrw_list_hide= '\(^\|\s\s\)\zs\.\S\+'
@@ -7769,7 +7769,8 @@ fun! s:NetrwTreeListing(dirname)
       let w:netrw_treetop= a:dirname
       let s:netrw_treetop= w:netrw_treetop
     " use \V in case the directory contains specials chars like '$' or '~'
-    elseif (w:netrw_treetop =~ ('^'.'\V'.a:dirname) && s:Strlen(a:dirname) < s:Strlen(w:netrw_treetop))
+    elseif (w:netrw_treetop =~ ('^'.'\V'.a:dirname)
+          \ && strdisplaywidth(a:dirname) < strdisplaywidth(w:netrw_treetop))
           \ || a:dirname !~ ('^'.'\V'.w:netrw_treetop)
       let w:netrw_treetop= a:dirname
       let s:netrw_treetop= w:netrw_treetop
@@ -9422,7 +9423,6 @@ endfun
 " ---------------------------------------------------------------------
 " s:FileReadable: o/s independent filereadable {{{2
 fun! s:FileReadable(fname)
-
   if g:netrw_cygwin
     let ret = filereadable(s:NetrwFile(substitute(a:fname,g:netrw_cygdrive.'/\(.\)','\1:/','')))
   else
@@ -10115,51 +10115,6 @@ fun! s:ShowStyle()
   endif
 endfun
 
-" ---------------------------------------------------------------------
-" s:Strlen: this function returns the length of a string, even if its using multi-byte characters. {{{2
-"           Solution from Nicolai Weibull, vim docs (:help strlen()),
-"           Tony Mechelynck, and my own invention.
-fun! s:Strlen(x)
-
-  if exists("*strdisplaywidth")
-    let ret = strdisplaywidth(a:x)
-
-  elseif type(g:Align_xstrlen) == 1
-    " allow user to specify a function to compute the string length  (ie. let g:Align_xstrlen="mystrlenfunc")
-    exe "let ret= ".g:Align_xstrlen."('".substitute(a:x,"'","''","g")."')"
-
-  elseif g:Align_xstrlen == 1
-    " number of codepoints (Latin a + combining circumflex is two codepoints)
-    " (comment from TM, solution from NW)
-    let ret = strlen(substitute(a:x,'.','c','g'))
-
-  elseif g:Align_xstrlen == 2
-    " number of spacing codepoints (Latin a + combining circumflex is one spacing
-    " codepoint; a hard tab is one; wide and narrow CJK are one each; etc.)
-    " (comment from TM, solution from TM)
-    let ret = strlen(substitute(a:x, '.\Z', 'x', 'g'))
-
-  elseif g:Align_xstrlen == 3
-    " virtual length (counting, for instance, tabs as anything between 1 and
-    " 'tabstop', wide CJK as 2 rather than 1, Arabic alif as zero when immediately
-    " preceded by lam, one otherwise, etc.)
-    " (comment from TM, solution from me)
-    let modkeep= &l:mod
-    exe "norm! o\<esc>"
-    call setline(line("."),a:x)
-    let ret = virtcol("$") - 1
-    d
-    NetrwKeepj norm! k
-    let &l:mod = modkeep
-
-  else
-    " at least give a decent default
-    let ret = strlen(a:x)
-  endif
-  return ret
-endfun
-
-" ---------------------------------------------------------------------
 " ---------------------------------------------------------------------
 " s:TreeListMove: supports [[, ]], [], and ][ in tree mode {{{2
 fun! s:TreeListMove(dir)
