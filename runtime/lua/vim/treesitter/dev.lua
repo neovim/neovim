@@ -456,7 +456,7 @@ function M.inspect_tree(opts)
 
   api.nvim_create_autocmd('CursorMoved', {
     group = group,
-    buffer = b,
+    buf = b,
     callback = function()
       if not api.nvim_buf_is_loaded(buf) then
         return true
@@ -490,7 +490,7 @@ function M.inspect_tree(opts)
 
   api.nvim_create_autocmd('CursorMoved', {
     group = group,
-    buffer = buf,
+    buf = buf,
     callback = function()
       if not api.nvim_buf_is_loaded(b) then
         return true
@@ -502,7 +502,7 @@ function M.inspect_tree(opts)
 
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
     group = group,
-    buffer = buf,
+    buf = buf,
     callback = function()
       if not api.nvim_buf_is_loaded(b) then
         return true
@@ -517,7 +517,7 @@ function M.inspect_tree(opts)
 
   api.nvim_create_autocmd('BufLeave', {
     group = group,
-    buffer = b,
+    buf = b,
     callback = function()
       if not api.nvim_buf_is_loaded(buf) then
         return true
@@ -528,7 +528,7 @@ function M.inspect_tree(opts)
 
   api.nvim_create_autocmd('BufLeave', {
     group = group,
-    buffer = buf,
+    buf = buf,
     callback = function()
       if not api.nvim_buf_is_loaded(b) then
         return true
@@ -539,7 +539,7 @@ function M.inspect_tree(opts)
 
   api.nvim_create_autocmd({ 'BufHidden', 'BufUnload', 'QuitPre' }, {
     group = group,
-    buffer = buf,
+    buf = buf,
     callback = function()
       -- don't close inpector window if source buffer
       -- has more than one open window
@@ -656,7 +656,7 @@ function M.edit_query(lang)
   local group = api.nvim_create_augroup('nvim.treesitter.dev_edit', {})
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
     group = group,
-    buffer = query_buf,
+    buf = query_buf,
     desc = 'Update query editor diagnostics when the query changes',
     callback = function()
       vim.treesitter.query.lint(query_buf, { langs = lang, clear = false })
@@ -664,7 +664,7 @@ function M.edit_query(lang)
   })
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave', 'CursorMoved', 'BufEnter' }, {
     group = group,
-    buffer = query_buf,
+    buf = query_buf,
     desc = 'Update query editor highlights when the cursor moves',
     callback = function()
       if api.nvim_win_is_valid(win) then
@@ -674,7 +674,7 @@ function M.edit_query(lang)
   })
   api.nvim_create_autocmd('BufLeave', {
     group = group,
-    buffer = query_buf,
+    buf = query_buf,
     desc = 'Clear highlights when leaving the query editor',
     callback = function()
       api.nvim_buf_clear_namespace(buf, edit_ns, 0, -1)
@@ -682,7 +682,7 @@ function M.edit_query(lang)
   })
   api.nvim_create_autocmd('BufLeave', {
     group = group,
-    buffer = buf,
+    buf = buf,
     desc = 'Clear the query editor highlights when leaving the source buffer',
     callback = function()
       if not api.nvim_buf_is_loaded(query_buf) then
@@ -694,7 +694,7 @@ function M.edit_query(lang)
   })
   api.nvim_create_autocmd({ 'BufHidden', 'BufUnload' }, {
     group = group,
-    buffer = buf,
+    buf = buf,
     desc = 'Close the editor window when the source buffer is hidden or unloaded',
     once = true,
     callback = function()
