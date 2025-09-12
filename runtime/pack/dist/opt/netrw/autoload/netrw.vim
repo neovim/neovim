@@ -19,7 +19,7 @@ if &cp || exists("g:loaded_netrw")
     finish
 endif
 
-let g:loaded_netrw = "v180"
+let g:loaded_netrw = "v181"
 
 if !has("patch-9.1.1054") && !has('nvim')
     echoerr 'netrw needs Vim v9.1.1054'
@@ -46,39 +46,10 @@ setl cpo&vim
 "          (this function can optionally take a list of messages)
 "  Mar 03, 2025 : max errnum currently is 107
 function! netrw#ErrorMsg(level, msg, errnum)
-    if a:level < g:netrw_errorlvl
-        return
-    endif
-
-    if a:level == 1
-        let level = "**warning** (netrw) "
-    elseif a:level == 2
-        let level = "**error** (netrw) "
-    else
-        let level = "**note** (netrw) "
-    endif
-
     if has('nvim')
-        call v:lua.vim.notify(level . a:msg, a:level + 2)
+        call v:lua.vim.notify(a:msg, a:level + 2)
     else
-        " (optional) netrw will show messages using echomsg.  Even if the
-        " message doesn't appear, at least it'll be recallable via :messages
-        "   redraw!
-        if a:level == s:WARNING
-            echohl WarningMsg
-        elseif a:level == s:ERROR
-            echohl ErrorMsg
-        endif
-
-        if type(a:msg) == 3
-            for msg in a:msg
-                echomsg level.msg
-            endfor
-        else
-            echomsg level.a:msg
-        endif
-
-        echohl None
+        call netrw#msg#Notify(a:level, a:msg)
     endif
 endfunction
 
@@ -114,7 +85,7 @@ endif
 let s:NOTE    = 0
 let s:WARNING = 1
 let s:ERROR   = 2
-call s:NetrwInit("g:netrw_errorlvl", s:NOTE)
+let g:_netrw_log = {'NOTE': 0, 'WARN': 1, 'ERROR': 2}
 
 let s:has_balloon = !has('nvim') &&
             \ has("balloon_eval") &&
@@ -325,42 +296,31 @@ if exists("g:netrw_local_copycmd")
   let g:netrw_localcopycmd= g:netrw_local_copycmd
   call netrw#ErrorMsg(s:NOTE,"g:netrw_local_copycmd is deprecated in favor of g:netrw_localcopycmd",84)
 endif
+
 if !exists("g:netrw_localcmdshell")
   let g:netrw_localcmdshell= ""
 endif
+
 if !exists("g:netrw_localcopycmd")
-  if has("win32")
-    if g:netrw_cygwin
-      let g:netrw_localcopycmd= "cp"
-    else
-      let g:netrw_localcopycmd   = expand("$COMSPEC", v:true)
-      call s:NetrwInit("g:netrw_localcopycmdopt"," /c copy")
+    let g:netrw_localcopycmd = 'cp'
+    let g:netrw_localcopycmdopt = ''
+
+    if has("win32") && !g:netrw_cygwin
+        let g:netrw_localcopycmd   = expand("$COMSPEC", v:true)
+        let g:netrw_localcopycmdopt = '/c copy'
     endif
-  elseif has("unix") || has("macunix")
-    let g:netrw_localcopycmd= "cp"
-  else
-    let g:netrw_localcopycmd= ""
-  endif
 endif
+
 if !exists("g:netrw_localcopydircmd")
-  if has("win32")
-    if g:netrw_cygwin
-      let g:netrw_localcopydircmd   = "cp"
-      call s:NetrwInit("g:netrw_localcopydircmdopt"," -R")
-    else
-      let g:netrw_localcopydircmd   = expand("$COMSPEC", v:true)
-      call s:NetrwInit("g:netrw_localcopydircmdopt"," /c xcopy /e /c /h /i /k")
+    let g:netrw_localcopydircmd = 'cp'
+    let g:netrw_localcopydircmdopt = '-R'
+
+    if has("win32") && !g:netrw_cygwin
+        let g:netrw_localcopydircmd   = "cp"
+        call s:NetrwInit("g:netrw_localcopydircmdopt", "-R")
     endif
-  elseif has("unix")
-    let g:netrw_localcopydircmd   = "cp"
-    call s:NetrwInit("g:netrw_localcopydircmdopt"," -R")
-  elseif has("macunix")
-    let g:netrw_localcopydircmd   = "cp"
-    call s:NetrwInit("g:netrw_localcopydircmdopt"," -R")
-  else
-    let g:netrw_localcopydircmd= ""
-  endif
 endif
+
 if exists("g:netrw_local_mkdir")
   let g:netrw_localmkdir= g:netrw_local_mkdir
   call netrw#ErrorMsg(s:NOTE,"g:netrw_local_mkdir is deprecated in favor of g:netrw_localmkdir",87)
@@ -6212,24 +6172,18 @@ fun! s:NetrwMarkFileCopy(islocal,...)
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
     NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
-    "   call Dret("s:NetrwMarkFileCopy")
     return
   endif
-  "  call Decho("sanity chk passed: s:netrwmarkfilelist_".curbufnr."<".string(s:netrwmarkfilelist_{curbufnr}),'~'.expand("<slnum>"))
 
   if !exists("s:netrwmftgt")
     NetrwKeepj call netrw#ErrorMsg(s:ERROR,"your marked file target is empty! (:help netrw-mt)",67)
-    "   call Dret("s:NetrwMarkFileCopy 0")
     return 0
   endif
-  "  call Decho("sanity chk passed: s:netrwmftgt<".s:netrwmftgt.">",'~'.expand("<slnum>"))
 
   if a:islocal &&  s:netrwmftgt_islocal
     " Copy marked files, local directory to local directory
-    "   call Decho("copy from local to local",'~'.expand("<slnum>"))
     if !executable(g:netrw_localcopycmd)
       call netrw#ErrorMsg(s:ERROR,"g:netrw_localcopycmd<".g:netrw_localcopycmd."> not executable on your system, aborting",91)
-      "    call Dfunc("s:NetrwMarkFileMove : g:netrw_localcopycmd<".g:netrw_localcopycmd."> n/a!")
       return
     endif
 
@@ -6237,17 +6191,14 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     if simplify(s:netrwmftgt) ==# simplify(b:netrw_curdir)
       if len(s:netrwmarkfilelist_{bufnr('%')}) == 1
         " only one marked file
-        "     call Decho("case: only one marked file",'~'.expand("<slnum>"))
         let args    = netrw#os#Escape(b:netrw_curdir.s:netrwmarkfilelist_{bufnr('%')}[0])
         let oldname = s:netrwmarkfilelist_{bufnr('%')}[0]
       elseif a:0 == 1
-        "     call Decho("case: handling one input argument",'~'.expand("<slnum>"))
         " this happens when the next case was used to recursively call s:NetrwMarkFileCopy()
         let args    = netrw#os#Escape(b:netrw_curdir.a:1)
         let oldname = a:1
       else
         " copy multiple marked files inside the same directory
-        "     call Decho("case: handling a multiple marked files",'~'.expand("<slnum>"))
         let s:recursive= 1
         for oldname in s:netrwmarkfilelist_{bufnr("%")}
           let ret= s:NetrwMarkFileCopy(a:islocal,oldname)
@@ -6257,59 +6208,49 @@ fun! s:NetrwMarkFileCopy(islocal,...)
         endfor
         unlet s:recursive
         call s:NetrwUnmarkList(curbufnr,curdir)
-        "     call Dret("s:NetrwMarkFileCopy ".ret)
         return ret
       endif
 
       call inputsave()
-      let newname= input("Copy ".oldname." to : ",oldname,"file")
+      let newname= input(printf("Copy %s to: ", oldname), oldname, 'file')
       call inputrestore()
-      if newname == ""
-        "     call Dret("s:NetrwMarkFileCopy 0")
+
+      if empty(newname)
         return 0
       endif
-      let args= netrw#os#Escape(oldname)
+
+      let args = netrw#os#Escape(oldname)
       let tgt = netrw#os#Escape(s:netrwmftgt.'/'.newname)
     else
-      let args= join(map(deepcopy(s:netrwmarkfilelist_{bufnr('%')}),"netrw#os#Escape(b:netrw_curdir.\"/\".v:val)"))
+      let args = join(map(deepcopy(s:netrwmarkfilelist_{bufnr('%')}),"netrw#os#Escape(b:netrw_curdir.\"/\".v:val)"))
       let tgt = netrw#os#Escape(s:netrwmftgt)
     endif
+
     if !g:netrw_cygwin && has("win32")
-      let args= substitute(args,'/','\\','g')
+      let args = substitute(args,'/','\\','g')
       let tgt = substitute(tgt, '/','\\','g')
     endif
+
     if args =~ "'" |let args= substitute(args,"'\\(.*\\)'",'\1','')|endif
     if tgt  =~ "'" |let tgt = substitute(tgt ,"'\\(.*\\)'",'\1','')|endif
     if args =~ '//'|let args= substitute(args,'//','/','g')|endif
     if tgt  =~ '//'|let tgt = substitute(tgt ,'//','/','g')|endif
-    "   call Decho("args   <".args.">",'~'.expand("<slnum>"))
-    "   call Decho("tgt    <".tgt.">",'~'.expand("<slnum>"))
+
+    let copycmd = g:netrw_localcopycmd
+    let copycmdopt = g:netrw_localcopycmdopt
+
     if isdirectory(s:NetrwFile(args))
-      "    call Decho("args<".args."> is a directory",'~'.expand("<slnum>"))
-      let copycmd= g:netrw_localcopydircmd
-      "    call Decho("using copydircmd<".copycmd.">",'~'.expand("<slnum>"))
-      if !g:netrw_cygwin && has("win32")
+      let copycmd = g:netrw_localcopydircmd
+      let copycmdopt = g:netrw_localcopydircmdopt
+      if has('win32') && !g:netrw_cygwin
         " window's xcopy doesn't copy a directory to a target properly.  Instead, it copies a directory's
         " contents to a target.  One must append the source directory name to the target to get xcopy to
         " do the right thing.
         let tgt= tgt.'\'.substitute(a:1,'^.*[\\/]','','')
-        "     call Decho("modified tgt for xcopy",'~'.expand("<slnum>"))
       endif
-    else
-      let copycmd= g:netrw_localcopycmd
     endif
-    if g:netrw_localcopycmd =~ '\s'
-      let copycmd     = substitute(copycmd,'\s.*$','','')
-      let copycmdargs = substitute(copycmd,'^.\{-}\(\s.*\)$','\1','')
-      let copycmd     = netrw#fs#WinPath(copycmd).copycmdargs
-    else
-      let copycmd = netrw#fs#WinPath(copycmd)
-    endif
-    "   call Decho("args   <".args.">",'~'.expand("<slnum>"))
-    "   call Decho("tgt    <".tgt.">",'~'.expand("<slnum>"))
-    "   call Decho("copycmd<".copycmd.">",'~'.expand("<slnum>"))
-    "   call Decho("system(".copycmd." '".args."' '".tgt."')",'~'.expand("<slnum>"))
-    call system(copycmd.g:netrw_localcopycmdopt." '".args."' '".tgt."'")
+
+    call system(printf("%s %s '%s' '%s'", copycmd, copycmdopt, args, tgt))
     if v:shell_error != 0
       if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && g:netrw_keepdir
         call netrw#ErrorMsg(s:ERROR,"copy failed; perhaps due to vim's current directory<".getcwd()."> not matching netrw's (".b:netrw_curdir.") (see :help netrw-cd)",101)

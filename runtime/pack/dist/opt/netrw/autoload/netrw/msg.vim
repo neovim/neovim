@@ -27,4 +27,33 @@ function! netrw#msg#Deprecate(name, version, alternatives)
     call add(s:deprecation_msgs, a:name)
 endfunction
 
+" netrw#msg#Notify: {{{
+"   Usage: netrw#ErrorMsg(g:_netrw_log, 'some message')
+"          netrw#ErrorMsg(g:_netrw_log, ["message1","message2",...],error-number)
+"          (this function can optionally take a list of messages)
+function! netrw#msg#Notify(level, msg)
+    if has('nvim')
+        call v:lua.vim.notify(level . a:msg, a:level + 2)
+        return
+    endif
+
+    if a:level == g:_netrw_log.WARN
+        echohl WarningMsg
+    elseif a:level == g:_netrw_log.ERROR
+        echohl ErrorMsg
+    endif
+
+    if type(a:msg) == v:t_list
+        for msg in a:msg
+            echomsg msg
+        endfor
+    else
+        echomsg a:msg
+    endif
+
+    echohl None
+endfunction
+
+" }}}
+
 " vim:ts=8 sts=4 sw=4 et fdm=marker

@@ -2533,12 +2533,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				    |g:netrw_maxfilenamelen|, which affects
 				    local file long listing.
 
-  *g:netrw_errorlvl*		=0: error levels greater than or equal to
-				    this are permitted to be displayed
-				    0: notes
-				    1: warnings
-				    2: errors
-
   *g:netrw_fastbrowse*		=0: slow speed directory browsing;
 				    never re-uses directory listings;
 				    always obtains directory listings.
