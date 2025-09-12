@@ -33,7 +33,7 @@ setl cpo&vim
 
 " s:NetrwInit: initializes variables if they haven't been defined {{{2
 "            Loosely,  varname = value.
-fun s:NetrwInit(varname,value)
+function s:NetrwInit(varname,value)
   if !exists(a:varname)
     if type(a:value) == 0
       exe "let ".a:varname."=".a:value
@@ -45,7 +45,7 @@ fun s:NetrwInit(varname,value)
       exe "let ".a:varname."=".a:value
     endif
   endif
-endfun
+endfunction
 
 "  Netrw Constants: {{{2
 call s:NetrwInit("g:netrw_dirhistcnt",0)
@@ -423,7 +423,7 @@ endif
 " netrw#BalloonHelp: {{{2
 
 if s:has_balloon
-    function! netrw#BalloonHelp()
+    function netrw#BalloonHelp()
         if exists("s:popuperr_id") && popup_getpos(s:popuperr_id) != {}
             if exists("s:popuperr_text") && s:popuperr_text != "" && v:beval_text != s:popuperr_text
                 " text under mouse hasn't changed; only close window when it changes
@@ -477,7 +477,7 @@ endif
 "                == 2: Hexplore    style == 3: Hexplore!
 "                == 4: Vexplore    style == 5: Vexplore!
 "                == 6: Texplore
-fun! netrw#Explore(indx,dosplit,style,...)
+function netrw#Explore(indx,dosplit,style,...)
   if !exists("b:netrw_curdir")
     let b:netrw_curdir= getcwd()
   endif
@@ -874,7 +874,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
     if @+ != keepregplus | sil! let @+ = keepregplus | endif
   endif
   sil! let @/ = keepregslash
-endfun
+endfunction
 
 " netrw#Lexplore: toggle Explorer window, keeping it on the left of the current tab {{{2
 "   Uses  g:netrw_chgwin  : specifies the window where Lexplore files are to be opened
@@ -882,7 +882,7 @@ endfun
 "         t:netrw_lexbufnr: the buffer number of the Lexplore buffer  (internal to this function)
 "         s:lexplore_win  : window number of Lexplore window (serves to indicate which window is a Lexplore window)
 "         w:lexplore_buf  : buffer number of Lexplore window (serves to indicate which window is a Lexplore window)
-fun! netrw#Lexplore(count,rightside,...)
+function netrw#Lexplore(count,rightside,...)
   let curwin= winnr()
 
   if a:0 > 0 && a:1 != ""
@@ -971,10 +971,10 @@ fun! netrw#Lexplore(count,rightside,...)
     endif
   endif
 
-endfun
+endfunction
 
 " netrw#MakeTgt: make a target out of the directory name provided {{{2
-fun! netrw#MakeTgt(dname)
+function netrw#MakeTgt(dname)
   " simplify the target (eg. /abc/def/../ghi -> /abc/ghi)
   let svpos               = winsaveview()
   let s:netrwmftgt_islocal= (a:dname !~ '^\a\{3,}://')
@@ -993,7 +993,7 @@ fun! netrw#MakeTgt(dname)
     call s:NetrwRefresh((b:netrw_curdir !~ '\a\{3,}://'),b:netrw_curdir)
   endif
   call winrestview(svpos)
-endfun
+endfunction
 
 " netrw#Obtain: {{{2
 "   netrw#Obtain(islocal,fname[,tgtdirectory])
@@ -1001,7 +1001,7 @@ endfun
 "            =1  obtain from local source
 "     fname  :   a filename or a list of filenames
 "     tgtdir :   optional place where files are to go  (not present, uses getcwd())
-fun! netrw#Obtain(islocal,fname,...)
+function netrw#Obtain(islocal,fname,...)
   " NetrwStatusLine support - for obtaining support
 
   if type(a:fname) == 1
@@ -1193,10 +1193,10 @@ fun! netrw#Obtain(islocal,fname,...)
     endif
   endif
 
-endfun
+endfunction
 
 " netrw#Nread: save position, call netrw#NetRead(), and restore position {{{2
-fun! netrw#Nread(mode,fname)
+function netrw#Nread(mode,fname)
   let svpos= winsaveview()
   call netrw#NetRead(a:mode,a:fname)
   call winrestview(svpos)
@@ -1207,7 +1207,7 @@ fun! netrw#Nread(mode,fname)
       exe w:netrw_bannercnt
     endif
   endif
-endfun
+endfunction
 
 " s:NetrwOptionsSave: save options prior to setting to "netrw-buffer-standard" form {{{2
 "             Options get restored by s:NetrwOptionsRestore()
@@ -1219,7 +1219,7 @@ endfun
 "              * restore user's options                                  (s:netrwOPtionsRestore)
 "                - restore a user option when != safe option             (s:NetrwRestoreSetting)
 "             vt: (variable type) normally its either "w:" or "s:"
-fun! s:NetrwOptionsSave(vt)
+function s:NetrwOptionsSave(vt)
 
   if !exists("{a:vt}netrw_optionsave")
     let {a:vt}netrw_optionsave= 1
@@ -1285,12 +1285,12 @@ fun! s:NetrwOptionsSave(vt)
   endif
   sil! let {a:vt}netrw_slashkeep= @/
 
-endfun
+endfunction
 
 " s:NetrwOptionsSafe: sets options to help netrw do its job {{{2
 "                     Use  s:NetrwSaveOptions() to save user settings
 "                     Use  s:NetrwOptionsRestore() to restore user settings
-fun! s:NetrwOptionsSafe(islocal)
+function s:NetrwOptionsSafe(islocal)
   if exists("+acd") | call s:NetrwSetSafeSetting("&l:acd",0)|endif
   call s:NetrwSetSafeSetting("&l:ai",0)
   call s:NetrwSetSafeSetting("&l:aw",0)
@@ -1339,10 +1339,10 @@ fun! s:NetrwOptionsSafe(islocal)
     keepalt NetrwKeepj doau FileType netrw
   endif
 
-endfun
+endfunction
 
 " s:NetrwOptionsRestore: restore options (based on prior s:NetrwOptionsSave) {{{2
-fun! s:NetrwOptionsRestore(vt)
+function s:NetrwOptionsRestore(vt)
   if !exists("{a:vt}netrw_optionsave")
     " filereadable() returns zero for remote files (e.g. scp://user@localhost//etc/fstab)
     " Note: @ may not be in 'isfname', so '^\w\+://\f\+/' may not match
@@ -1444,7 +1444,7 @@ fun! s:NetrwOptionsRestore(vt)
   if &ft != "netrw"
     filetype detect
   endif
-endfun
+endfunction
 
 " s:NetrwSetSafeSetting: sets an option to a safe setting {{{2
 "                        but only when the options' value and the safe setting differ
@@ -1453,7 +1453,7 @@ endfun
 "
 "                        Called from s:NetrwOptionsSafe
 "                          ex. call s:NetrwSetSafeSetting("&l:sel","inclusive")
-fun! s:NetrwSetSafeSetting(setting,safesetting)
+function s:NetrwSetSafeSetting(setting,safesetting)
 
   if a:setting =~ '^&'
     exe "let settingval= ".a:setting
@@ -1469,7 +1469,7 @@ fun! s:NetrwSetSafeSetting(setting,safesetting)
     endif
   endif
 
-endfun
+endfunction
 
 " s:NetrwRestoreSetting: restores specified setting using associated keepvar, {{{2
 "                        but only if the setting value differs from the associated keepvar.
@@ -1478,7 +1478,7 @@ endfun
 "
 "                        Used by s:NetrwOptionsRestore() to restore each netrw-sensitive setting
 "                        keepvars are set up by s:NetrwOptionsSave
-fun! s:NetrwRestoreSetting(keepvar,setting)
+function s:NetrwRestoreSetting(keepvar,setting)
 
   " typically called from s:NetrwOptionsRestore
   "   call s:NetrwRestoreSettings(keep-option-variable-name,'associated-option')
@@ -1502,39 +1502,19 @@ fun! s:NetrwRestoreSetting(keepvar,setting)
     exe "unlet ".a:keepvar
   endif
 
-endfun
+endfunction
 
 " NetrwStatusLine: {{{2
-fun! NetrwStatusLine()
 
-  " vvv NetrwStatusLine() debugging vvv
-  "  let g:stlmsg=""
-  "  if !exists("w:netrw_explore_bufnr")
-  "   let g:stlmsg="!X<explore_bufnr>"
-  "  elseif w:netrw_explore_bufnr != bufnr("%")
-  "   let g:stlmsg="explore_bufnr!=".bufnr("%")
-  "  endif
-  "  if !exists("w:netrw_explore_line")
-  "   let g:stlmsg=" !X<explore_line>"
-  "  elseif w:netrw_explore_line != line(".")
-  "   let g:stlmsg=" explore_line!={line(.)<".line(".").">"
-  "  endif
-  "  if !exists("w:netrw_explore_list")
-  "   let g:stlmsg=" !X<explore_list>"
-  "  endif
-  " ^^^ NetrwStatusLine() debugging ^^^
-
-  if !exists("w:netrw_explore_bufnr") || w:netrw_explore_bufnr != bufnr("%") || !exists("w:netrw_explore_line") || w:netrw_explore_line != line(".") || !exists("w:netrw_explore_list")
-    " restore user's status line
-    let &l:stl      = s:netrw_users_stl
-    let &laststatus = s:netrw_users_ls
-    if exists("w:netrw_explore_bufnr")|unlet w:netrw_explore_bufnr|endif
-    if exists("w:netrw_explore_line") |unlet w:netrw_explore_line |endif
-    return ""
-  else
-    return "Match ".w:netrw_explore_mtchcnt." of ".w:netrw_explore_listlen
-  endif
-endfun
+function NetrwStatusLine()
+    if !exists("w:netrw_explore_bufnr") || w:netrw_explore_bufnr != bufnr("%") || !exists("w:netrw_explore_line") || w:netrw_explore_line != line(".") || !exists("w:netrw_explore_list")
+        let &stl= s:netrw_explore_stl
+        unlet! w:netrw_explore_bufnr w:netrw_explore_line
+        return ""
+    else
+        return "Match ".w:netrw_explore_mtchcnt." of ".w:netrw_explore_listlen
+    endif
+endfunction
 
 "  Netrw Transfer Functions: {{{1
 
@@ -1543,7 +1523,7 @@ endfun
 "         =1 read remote file and insert after current line
 "         =2 replace with remote file
 "         =3 obtain file, but leave in temporary format
-fun! netrw#NetRead(mode,...)
+function netrw#NetRead(mode,...)
 
     " NetRead: save options {{{3
     call s:NetrwOptionsSave("w:")
@@ -1902,10 +1882,10 @@ fun! netrw#NetRead(mode,...)
     endif
     NetrwKeepj call s:NetrwOptionsRestore("w:")
 
-endfun
+endfunction
 
 " netrw#NetWrite: responsible for writing a file over the net {{{2
-fun! netrw#NetWrite(...) range
+function netrw#NetWrite(...) range
 
     " NetWrite: option handling {{{3
     let mod= 0
@@ -2235,13 +2215,13 @@ fun! netrw#NetWrite(...) range
         setl nomod
     endif
 
-endfun
+endfunction
 
 " netrw#NetSource: source a remotely hosted Vim script {{{2
 " uses NetRead to get a copy of the file into a temporarily file,
 "              then sources that file,
 "              then removes that file.
-fun! netrw#NetSource(...)
+function netrw#NetSource(...)
     if a:0 > 0 && a:1 == '?'
         " give help
         echomsg 'NetSource Usage:'
@@ -2270,11 +2250,11 @@ fun! netrw#NetSource(...)
             let i= i + 1
         endwhile
     endif
-endfun
+endfunction
 
 " netrw#SetTreetop: resets the tree top to the current directory/specified directory {{{2
 "                   (implements the :Ntree command)
-fun! netrw#SetTreetop(iscmd,...)
+function netrw#SetTreetop(iscmd,...)
 
     " iscmd==0: netrw#SetTreetop called using gn mapping
     " iscmd==1: netrw#SetTreetop called using :Ntree from the command line
@@ -2317,14 +2297,14 @@ fun! netrw#SetTreetop(iscmd,...)
         call s:NetrwBrowse(islocal,s:NetrwBrowseChgDir(islocal,treedir,0))
     endif
 
-endfun
+endfunction
 
 " s:NetrwGetFile: Function to read temporary file "tfile" with command "readcmd". {{{2
 "    readcmd == %r : replace buffer with newly read file
 "            == 0r : read file at top of buffer
 "            == r  : read file after current line
 "            == t  : leave file in temporary form (ie. don't read into buffer)
-fun! s:NetrwGetFile(readcmd, tfile, method)
+function s:NetrwGetFile(readcmd, tfile, method)
 
     " readcmd=='t': simply do nothing
     if a:readcmd == 't'
@@ -2415,7 +2395,7 @@ fun! s:NetrwGetFile(readcmd, tfile, method)
     " make sure file is being displayed
     "  redraw!
 
-endfun
+endfunction
 
 " s:NetrwMethod:  determine method of transfer {{{2
 " Input:
@@ -2435,7 +2415,7 @@ endfun
 "  b:netrw_fname  = filename
 "  g:netrw_port   = optional port number (for ftp)
 "  g:netrw_choice = copy of input url (choice)
-fun! s:NetrwMethod(choice)
+function s:NetrwMethod(choice)
 
     " sanity check: choice should have at least three slashes in it
     if strlen(substitute(a:choice,'[^/]','','g')) < 3
@@ -2545,7 +2525,7 @@ fun! s:NetrwMethod(choice)
 
         if curmachine != g:netrw_machine
             if exists("s:netrw_hup[".g:netrw_machine."]")
-                call NetUserPass("ftp:".g:netrw_machine)
+                call netrw#NetUserPass("ftp:".g:netrw_machine)
             elseif exists("s:netrw_passwd")
                 " if there's a change in hostname, require password re-entry
                 unlet s:netrw_passwd
@@ -2560,7 +2540,7 @@ fun! s:NetrwMethod(choice)
         else
             let host= substitute(g:netrw_machine,'\..*$','','')
             if exists("s:netrw_hup[host]")
-                call NetUserPass("ftp:".host)
+                call netrw#NetUserPass("ftp:".host)
 
             elseif has("win32") && s:netrw_ftp_cmd =~# '-[sS]:'
                 if g:netrw_ftp_cmd =~# '-[sS]:\S*MACHINE\>'
@@ -2571,9 +2551,9 @@ fun! s:NetrwMethod(choice)
                 let b:netrw_method= 2
             else
                 if !exists("g:netrw_uid") || g:netrw_uid == ""
-                    call NetUserPass()
+                    call netrw#NetUserPass()
                 elseif !exists("s:netrw_passwd") || s:netrw_passwd == ""
-                    call NetUserPass(g:netrw_uid)
+                    call netrw#NetUserPass(g:netrw_uid)
                     " else just use current g:netrw_uid and s:netrw_passwd
                 endif
                 let b:netrw_method= 3
@@ -2595,7 +2575,7 @@ fun! s:NetrwMethod(choice)
         let g:netrw_uid     = substitute(a:choice,mipf,'\2',"")
         let s:netrw_passwd  = substitute(a:choice,mipf,'\3',"")
         let b:netrw_fname   = substitute(a:choice,mipf,'\4',"")
-        call NetUserPass(g:netrw_machine,g:netrw_uid,s:netrw_passwd)
+        call netrw#NetUserPass(g:netrw_machine,g:netrw_uid,s:netrw_passwd)
 
     " Method#3: Issue an ftp: "hostname [path/]filename" {{{3
     elseif match(a:choice,mf) == 0
@@ -2646,26 +2626,26 @@ fun! s:NetrwMethod(choice)
         let g:netrw_port= netrw_port
     endif
 
-endfun
+endfunction
 
 " s:NetrwValidateHostname:  Validate that the hostname is valid {{{2
 " Input:
 "   hostname
 " Output:
 "  true if g:netrw_machine is valid according to RFC1123 #Section 2
-fun! s:NetrwValidateHostname(hostname)
+function s:NetrwValidateHostname(hostname)
     " RFC1123#section-2 mandates, a valid hostname starts with letters or digits
     " so reject everyhing else
     return a:hostname =~? '^[a-z0-9]'
-endfun
+endfunction
 
 " NetUserPass: set username and password for subsequent ftp transfer {{{2
-"   Usage:  :call NetUserPass()                        -- will prompt for userid and password
-"           :call NetUserPass("uid")                   -- will prompt for password
-"           :call NetUserPass("uid","password")        -- sets global userid and password
-"           :call NetUserPass("ftp:host")              -- looks up userid and password using hup dictionary
-"           :call NetUserPass("host","uid","password") -- sets hup dictionary with host, userid, password
-fun! NetUserPass(...)
+"   Usage:  :call netrw#NetUserPass()                        -- will prompt for userid and password
+"           :call netrw#NetUserPass("uid")                   -- will prompt for password
+"           :call netrw#NetUserPass("uid","password")        -- sets global userid and password
+"           :call netrw#NetUserPass("ftp:host")              -- looks up userid and password using hup dictionary
+"           :call netrw#NetUserPass("host","uid","password") -- sets hup dictionary with host, userid, password
+function netrw#NetUserPass(...)
 
 
     if !exists('s:netrw_hup')
@@ -2755,17 +2735,17 @@ fun! NetUserPass(...)
         let s:netrw_passwd           = s:netrw_hup[host].passwd
     endif
 
-endfun
+endfunction
 
 "  Shared Browsing Support:    {{{1
 
 " s:ExplorePatHls: converts an Explore pattern into a regular expression search pattern {{{2
-fun! s:ExplorePatHls(pattern)
+function s:ExplorePatHls(pattern)
     let repat= substitute(a:pattern,'^**/\{1,2}','','')
     let repat= escape(repat,'][.\')
     let repat= '\<'.substitute(repat,'\*','\\(\\S\\+ \\)*\\S\\+','g').'\>'
     return repat
-endfun
+endfunction
 
 "  s:NetrwBookHistHandler: {{{2
 "    0: (user: <mb>)   bookmark current directory
@@ -2775,7 +2755,7 @@ endfun
 "    4: (user: <u>)    go up   (previous) directory, using history
 "    5: (user: <U>)    go down (next)     directory, using history
 "    6: (user: <mB>)   delete bookmark
-fun! s:NetrwBookHistHandler(chg,curdir)
+function s:NetrwBookHistHandler(chg,curdir)
     if !exists("g:netrw_dirhistmax") || g:netrw_dirhistmax <= 0
         return
     endif
@@ -2924,12 +2904,12 @@ fun! s:NetrwBookHistHandler(chg,curdir)
     call s:NetrwBookmarkMenu()
     call s:NetrwTgtMenu()
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwBookHistRead: this function reads bookmarks and history {{{2
 "  Will source the history file (.netrwhist) only if the g:netrw_disthistmax is > 0.
 "                      Sister function: s:NetrwBookHistSave()
-fun! s:NetrwBookHistRead()
+function s:NetrwBookHistRead()
     if !exists("g:netrw_dirhistmax") || g:netrw_dirhistmax <= 0
         return
     endif
@@ -2955,7 +2935,7 @@ fun! s:NetrwBookHistRead()
     endif
 
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwBookHistSave: this function saves bookmarks and history to files {{{2
 "                      Sister function: s:NetrwBookHistRead()
@@ -2964,7 +2944,7 @@ endfun
 "                      If g:netrw_dirhistmax is <= 0, no history or bookmarks
 "                      will be saved.
 "                      (s:NetrwBookHistHandler(3,...) used to record history)
-fun! s:NetrwBookHistSave()
+function s:NetrwBookHistSave()
     if !exists("g:netrw_dirhistmax") || g:netrw_dirhistmax <= 0
         return
     endif
@@ -3035,14 +3015,14 @@ fun! s:NetrwBookHistSave()
     q!
     exe "keepalt ".bgone."bwipe!"
 
-endfun
+endfunction
 
 " s:NetrwBrowse: This function uses the command in g:netrw_list_cmd to provide a {{{2
 "  list of the contents of a local or remote directory.  It is assumed that the
 "  g:netrw_list_cmd has a string, USEPORT HOSTNAME, that needs to be substituted
 "  with the requested remote hostname first.
 "    Often called via:  Explore/e dirname/etc -> netrw#LocalBrowseCheck() -> s:NetrwBrowse()
-fun! s:NetrwBrowse(islocal,dirname)
+function s:NetrwBrowse(islocal,dirname)
     if !exists("w:netrw_liststyle")|let w:netrw_liststyle= g:netrw_liststyle|endif
 
     " save alternate-file's filename if w:netrw_rexlocal doesn't exist
@@ -3281,14 +3261,14 @@ fun! s:NetrwBrowse(islocal,dirname)
     " installed by s:LocalFastBrowser() when g:netrw_fastbrowse <= 1 (ie. slow or medium speed).
     " However, s:NetrwBrowse() causes the FocusGained event to fire the first time.
     return
-endfun
+endfunction
 
 " s:NetrwFile: because of g:netrw_keepdir, isdirectory(), type(), etc may or {{{2
 " may not apply correctly; ie. netrw's idea of the current directory may
 " differ from vim's.  This function insures that netrw's idea of the current
 " directory is used.
 " Returns a path to the file specified by a:fname
-fun! s:NetrwFile(fname)
+function s:NetrwFile(fname)
 
     " clean up any leading treedepthstring
     if exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST
@@ -3325,10 +3305,10 @@ fun! s:NetrwFile(fname)
     endif
 
     return ret
-endfun
+endfunction
 
 " s:NetrwFileInfo: supports qf (query for file information) {{{2
-fun! s:NetrwFileInfo(islocal,fname)
+function s:NetrwFileInfo(islocal,fname)
     let ykeep= @@
     if a:islocal
         let lsopt= "-lsad"
@@ -3369,13 +3349,13 @@ fun! s:NetrwFileInfo(islocal,fname)
         echo "sorry, \"qf\" not supported yet for remote files"
     endif
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwGetBuffer: [get a new|find an old netrw] buffer for a netrw listing {{{2
 "   returns 0=cleared buffer
 "           1=re-used buffer (buffer not cleared)
 "  Nov 09, 2020: tst952 shows that when user does :set hidden that NetrwGetBuffer will come up with a [No Name] buffer (hid fix)
-fun! s:NetrwGetBuffer(islocal,dirname)
+function s:NetrwGetBuffer(islocal,dirname)
     let dirname= a:dirname
 
     " re-use buffer if possible {{{3
@@ -3500,10 +3480,10 @@ fun! s:NetrwGetBuffer(islocal,dirname)
     sil! keepalt NetrwKeepj %d _
 
     return 0
-endfun
+endfunction
 
 "  s:NetrwGetWord: it gets the directory/file named under the cursor {{{2
-fun! s:NetrwGetWord()
+function s:NetrwGetWord()
     let keepsol= &l:sol
     setl nosol
 
@@ -3606,12 +3586,12 @@ fun! s:NetrwGetWord()
     let &l:sol= keepsol
 
     return dirname
-endfun
+endfunction
 
 " s:NetrwListSettings: make standard settings for making a netrw listing {{{2
 "                      g:netrw_bufsettings will be used after the listing is produced.
 "                      Called by s:NetrwGetBuffer()
-fun! s:NetrwListSettings(islocal)
+function s:NetrwListSettings(islocal)
     let fname= bufname("%")
     "              nobl noma nomod nonu noma nowrap ro   nornu  (std g:netrw_bufsettings)
     setl bt=nofile nobl ma         nonu      nowrap noro nornu
@@ -3626,12 +3606,12 @@ fun! s:NetrwListSettings(islocal)
     else
         setl bh=delete
     endif
-endfun
+endfunction
 
 "  s:NetrwListStyle: change list style (thin - long - wide - tree) {{{2
 "  islocal=0: remote browsing
 "         =1: local browsing
-fun! s:NetrwListStyle(islocal)
+function s:NetrwListStyle(islocal)
     let ykeep             = @@
     let fname             = s:NetrwGetWord()
     if !exists("w:netrw_liststyle")|let w:netrw_liststyle= g:netrw_liststyle|endif
@@ -3684,10 +3664,10 @@ fun! s:NetrwListStyle(islocal)
     NetrwKeepj call winrestview(svpos)
     let @@= ykeep
 
-endfun
+endfunction
 
 " s:NetrwBannerCtrl: toggles the display of the banner {{{2
-fun! s:NetrwBannerCtrl(islocal)
+function s:NetrwBannerCtrl(islocal)
     let ykeep= @@
     " toggle the banner (enable/suppress)
     let g:netrw_banner= !g:netrw_banner
@@ -3706,7 +3686,7 @@ fun! s:NetrwBannerCtrl(islocal)
         endif
     endif
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwBookmark: supports :NetrwMB[!] [file]s                 {{{2
 "
@@ -3718,7 +3698,7 @@ endfun
 "   Has arguments: globs them individually and bookmarks them
 "
 "  With bang: deletes files/directories from Netrw's bookmark system
-fun! s:NetrwBookmark(del,...)
+function s:NetrwBookmark(del,...)
     if a:0 == 0
         if &ft == "netrw"
             let curbufnr = bufnr("%")
@@ -3771,13 +3751,13 @@ fun! s:NetrwBookmark(del,...)
 
     " update the menu
     call s:NetrwBookmarkMenu()
-endfun
+endfunction
 
 " s:NetrwBookmarkMenu: Uses menu priorities {{{2
 "                      .2.[cnt] for bookmarks, and
 "                      .3.[cnt] for history
 "                      (see s:NetrwMenu())
-fun! s:NetrwBookmarkMenu()
+function s:NetrwBookmarkMenu()
     if !exists("s:netrw_menucnt")
         return
     endif
@@ -3829,7 +3809,7 @@ fun! s:NetrwBookmarkMenu()
         endif
 
     endif
-endfun
+endfunction
 
 "  s:NetrwBrowseChgDir: constructs a new directory based on the current {{{2
 "                       directory and a new directory name.  Also, if the
@@ -3838,7 +3818,7 @@ endfun
 "    cursor=0: newdir is relative to b:netrw_curdir
 "          =1: newdir is relative to the path to the word under the cursor in
 "              tree view
-fun! s:NetrwBrowseChgDir(islocal,newdir,cursor,...)
+function s:NetrwBrowseChgDir(islocal,newdir,cursor,...)
     let ykeep= @@
     if !exists("b:netrw_curdir")
         let @@= ykeep
@@ -4165,12 +4145,12 @@ fun! s:NetrwBrowseChgDir(islocal,newdir,cursor,...)
     let @@= ykeep
 
     return dirname
-endfun
+endfunction
 
 " s:NetrwBrowseUpDir: implements the "-" mappings {{{2
 "    for thin, long, and wide: cursor placed just after banner
 "    for tree, keeps cursor on current filename
-fun! s:NetrwBrowseUpDir(islocal)
+function s:NetrwBrowseUpDir(islocal)
     if exists("w:netrw_bannercnt") && line(".") < w:netrw_bannercnt-1
         " this test needed because occasionally this function seems to be incorrectly called
         " when multiple leftmouse clicks are taken when atop the one line help in the banner.
@@ -4229,12 +4209,12 @@ fun! s:NetrwBrowseUpDir(islocal)
         let curdir= '\<'. escape(curdir, '~'). '/'
         call search(curdir,'wc')
     endif
-endfun
+endfunction
 
 " netrw#BrowseX:  (implements "x") executes a special "viewer" script or program for the {{{2
 "              given filename; typically this means given their extension.
 "              0=local, 1=remote
-fun! netrw#BrowseX(fname,remote)
+function netrw#BrowseX(fname,remote)
     if a:remote == 1 && a:fname !~ '^https\=:' && a:fname =~ '/$'
         " remote directory, not a webpage access, looks like an attempt to do a directory listing
         norm! gf
@@ -4331,12 +4311,12 @@ fun! netrw#BrowseX(fname,remote)
     call winrestview(screenposn)
     let @@ = ykeep
     let &aw= awkeep
-endfun
+endfunction
 
 " s:NetrwBufRename: renames a buffer without the side effect of retaining an unlisted buffer having the old name {{{2
 "                   Using the file command on a "[No Name]" buffer does not seem to cause the old "[No Name]" buffer
 "                   to become an unlisted buffer, so in that case don't bwipe it.
-fun! s:NetrwBufRename(newname)
+function s:NetrwBufRename(newname)
     let oldbufname= bufname(bufnr("%"))
 
     if oldbufname != a:newname
@@ -4348,10 +4328,10 @@ fun! s:NetrwBufRename(newname)
         endif
     endif
 
-endfun
+endfunction
 
 " netrw#CheckIfRemote: returns 1 if current file looks like an url, 0 else {{{2
-fun! netrw#CheckIfRemote(...)
+function netrw#CheckIfRemote(...)
     if a:0 > 0
         let curfile= a:1
     else
@@ -4366,10 +4346,10 @@ fun! netrw#CheckIfRemote(...)
     else
         return 0
     endif
-endfun
+endfunction
 
 " s:NetrwChgPerm: (implements "gp") change file permission {{{2
-fun! s:NetrwChgPerm(islocal,curdir)
+function s:NetrwChgPerm(islocal,curdir)
     let ykeep  = @@
     call inputsave()
     let newperm= input("Enter new permission: ")
@@ -4384,10 +4364,10 @@ fun! s:NetrwChgPerm(islocal,curdir)
         NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     endif
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwClearExplore: clear explore variables (if any) {{{2
-fun! s:NetrwClearExplore()
+function s:NetrwClearExplore()
     2match none
     if exists("s:explore_match")        |unlet s:explore_match        |endif
     if exists("s:explore_indx")         |unlet s:explore_indx         |endif
@@ -4399,20 +4379,20 @@ fun! s:NetrwClearExplore()
     if exists("w:netrw_explore_list")   |unlet w:netrw_explore_list   |endif
     if exists("w:netrw_explore_bufnr")  |unlet w:netrw_explore_bufnr  |endif
     "   redraw!
-endfun
+endfunction
 
 " s:NetrwEditBuf: decides whether or not to use keepalt to edit a buffer {{{2
-fun! s:NetrwEditBuf(bufnum)
+function s:NetrwEditBuf(bufnum)
     if exists("g:netrw_altfile") && g:netrw_altfile && &ft == "netrw"
         exe "sil! NetrwKeepj keepalt noswapfile b ".fnameescape(a:bufnum)
     else
         exe "sil! NetrwKeepj noswapfile b ".fnameescape(a:bufnum)
     endif
-endfun
+endfunction
 
 " s:NetrwEditFile: decides whether or not to use keepalt to edit a file {{{2
 "    NetrwKeepj [keepalt] <OPT> <CMD> <FILENAME>
-fun! s:NetrwEditFile(cmd,opt,fname)
+function s:NetrwEditFile(cmd,opt,fname)
     if exists("g:netrw_altfile") && g:netrw_altfile && &ft == "netrw"
         exe "NetrwKeepj keepalt ".a:opt." ".a:cmd." ".fnameescape(a:fname)
     else
@@ -4421,10 +4401,10 @@ fun! s:NetrwEditFile(cmd,opt,fname)
         endif
         exe "NetrwKeepj ".a:opt." ".a:cmd." ".fnameescape(a:fname)
     endif
-endfun
+endfunction
 
 " s:NetrwExploreListUniq: {{{2
-fun! s:NetrwExploreListUniq(explist)
+function s:NetrwExploreListUniq(explist)
     " this assumes that the list is already sorted
     let newexplist= []
     for member in a:explist
@@ -4434,10 +4414,10 @@ fun! s:NetrwExploreListUniq(explist)
         endif
     endfor
     return newexplist
-endfun
+endfunction
 
 " s:NetrwForceChgDir: (gd support) Force treatment as a directory {{{2
-fun! s:NetrwForceChgDir(islocal,newdir)
+function s:NetrwForceChgDir(islocal,newdir)
     let ykeep= @@
     if a:newdir !~ '/$'
         " ok, looks like force is needed to get directory-style treatment
@@ -4455,10 +4435,10 @@ fun! s:NetrwForceChgDir(islocal,newdir)
     let newdir= s:NetrwBrowseChgDir(a:islocal,newdir,0)
     call s:NetrwBrowse(a:islocal,newdir)
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwForceFile: (gf support) Force treatment as a file {{{2
-fun! s:NetrwForceFile(islocal,newfile)
+function s:NetrwForceFile(islocal,newfile)
     if a:newfile =~ '[/@*=|\\]$'
         let newfile= substitute(a:newfile,'.$','','')
     else
@@ -4469,7 +4449,7 @@ fun! s:NetrwForceFile(islocal,newfile)
     else
         call s:NetrwBrowse(a:islocal,s:NetrwBrowseChgDir(a:islocal,newfile,0))
     endif
-endfun
+endfunction
 
 " s:NetrwHide: this function is invoked by the "a" map for browsing {{{2
 "          and switches the hiding mode.  The actual hiding is done by
@@ -4477,7 +4457,7 @@ endfun
 "             g:netrw_hide= 0: show all
 "                           1: show not-hidden files
 "                           2: show hidden files only
-fun! s:NetrwHide(islocal)
+function s:NetrwHide(islocal)
     let ykeep= @@
     let svpos= winsaveview()
 
@@ -4517,10 +4497,10 @@ fun! s:NetrwHide(islocal)
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwHideEdit: allows user to edit the file/directory hiding list {{{2
-fun! s:NetrwHideEdit(islocal)
+function s:NetrwHideEdit(islocal)
     let ykeep= @@
     " save current cursor position
     let svpos= winsaveview()
@@ -4537,10 +4517,10 @@ fun! s:NetrwHideEdit(islocal)
     " restore cursor position
     call winrestview(svpos)
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwHidden: invoked by "gh" {{{2
-fun! s:NetrwHidden(islocal)
+function s:NetrwHidden(islocal)
     let ykeep= @@
     "  save current position
     let svpos  = winsaveview()
@@ -4561,10 +4541,10 @@ fun! s:NetrwHidden(islocal)
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
     let @@= ykeep
-endfun
+endfunction
 
 "  s:NetrwHome: this function determines a "home" for saving bookmarks and history {{{2
-function! s:NetrwHome()
+function s:NetrwHome()
     if has('nvim')
         let home = netrw#fs#PathJoin(stdpath('state'), 'netrw')
     elseif exists('g:netrw_home')
@@ -4605,7 +4585,7 @@ function! s:NetrwHome()
 endfunction
 
 " s:NetrwLeftmouse: handles the <leftmouse> when in a netrw browsing window {{{2
-fun! s:NetrwLeftmouse(islocal)
+function s:NetrwLeftmouse(islocal)
     if exists("s:netrwdrag")
         return
     endif
@@ -4647,22 +4627,22 @@ fun! s:NetrwLeftmouse(islocal)
         endif
     endif
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwCLeftmouse: used to select a file/directory for a target {{{2
-fun! s:NetrwCLeftmouse(islocal)
+function s:NetrwCLeftmouse(islocal)
     if &ft != "netrw"
         return
     endif
     call s:NetrwMarkFileTgt(a:islocal)
-endfun
+endfunction
 
 " s:NetrwServerEdit: edit file in a server gvim, usually NETRWSERVER  (implements <c-r>){{{2
 "   a:islocal=0 : <c-r> not used, remote
 "   a:islocal=1 : <c-r> not used, local
 "   a:islocal=2 : <c-r>     used, remote
 "   a:islocal=3 : <c-r>     used, local
-fun! s:NetrwServerEdit(islocal,fname)
+function s:NetrwServerEdit(islocal,fname)
     let islocal = a:islocal%2      " =0: remote           =1: local
     let ctrlr   = a:islocal >= 2   " =0: <c-r> not used   =1: <c-r> used
 
@@ -4757,10 +4737,10 @@ fun! s:NetrwServerEdit(islocal,fname)
         call netrw#ErrorMsg(s:ERROR,"you need a gui-capable vim and client-server to use <ctrl-r>",98)
     endif
 
-endfun
+endfunction
 
 " s:NetrwSLeftmouse: marks the file under the cursor.  May be dragged to select additional files {{{2
-fun! s:NetrwSLeftmouse(islocal)
+function s:NetrwSLeftmouse(islocal)
     if &ft != "netrw"
         return
     endif
@@ -4768,11 +4748,11 @@ fun! s:NetrwSLeftmouse(islocal)
     let s:ngw= s:NetrwGetWord()
     call s:NetrwMarkFile(a:islocal,s:ngw)
 
-endfun
+endfunction
 
 " s:NetrwSLeftdrag: invoked via a shift-leftmouse and dragging {{{2
 "                   Used to mark multiple files.
-fun! s:NetrwSLeftdrag(islocal)
+function s:NetrwSLeftdrag(islocal)
     if !exists("s:netrwdrag")
         let s:netrwdrag = winnr()
         if a:islocal
@@ -4786,10 +4766,10 @@ fun! s:NetrwSLeftdrag(islocal)
         call s:NetrwMarkFile(a:islocal,ngw)
     endif
     let s:ngw= ngw
-endfun
+endfunction
 
 " s:NetrwSLeftrelease: terminates shift-leftmouse dragging {{{2
-fun! s:NetrwSLeftrelease(islocal)
+function s:NetrwSLeftrelease(islocal)
     if exists("s:netrwdrag")
         nunmap <s-leftrelease>
         let ngw = s:NetrwGetWord()
@@ -4801,11 +4781,11 @@ fun! s:NetrwSLeftrelease(islocal)
         endif
         unlet s:netrwdrag
     endif
-endfun
+endfunction
 
 " s:NetrwListHide: uses [range]g~...~d to delete files that match       {{{2
 "                  comma-separated patterns given in g:netrw_list_hide
-fun! s:NetrwListHide()
+function s:NetrwListHide()
     let ykeep= @@
 
     " find a character not in the "hide" string to use as a separator for :g and :v commands
@@ -4850,11 +4830,11 @@ fun! s:NetrwListHide()
     exe 'sil! NetrwKeepj 1,$g@^\s*$@d'
 
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwMakeDir: this function makes a directory (both local and remote) {{{2
 "                 implements the "d" mapping.
-fun! s:NetrwMakeDir(usrhost)
+function s:NetrwMakeDir(usrhost)
 
     let ykeep= @@
     " get name of new directory from user.  A bare <CR> will skip.
@@ -4960,10 +4940,10 @@ fun! s:NetrwMakeDir(usrhost)
     endif
 
     let @@= ykeep
-endfun
+endfunction
 
 " s:TreeSqueezeDir: allows a shift-cr (gvim only) to squeeze the current tree-listing directory {{{2
-fun! s:TreeSqueezeDir(islocal)
+function s:TreeSqueezeDir(islocal)
     if exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST && exists("w:netrw_treedict")
         " its a tree-listing style
         let curdepth = substitute(getline('.'),'^\(\%('.s:treedepthstring.'\)*\)[^'.s:treedepthstring.'].\{-}$','\1','e')
@@ -4984,10 +4964,10 @@ fun! s:TreeSqueezeDir(islocal)
             exe srch
         endif
     endif
-endfun
+endfunction
 
 " s:NetrwMaps: {{{2
-fun! s:NetrwMaps(islocal)
+function s:NetrwMaps(islocal)
 
     " mouse <Plug> maps: {{{3
     if g:netrw_mousemaps && g:netrw_retmap
@@ -5236,13 +5216,13 @@ fun! s:NetrwMaps(islocal)
         " support user-specified maps
         call netrw#UserMaps(0)
     endif " }}}3
-endfun
+endfunction
 
 " s:NetrwCommands: set up commands                              {{{2
 "  If -buffer, the command is only available from within netrw buffers
 "  Otherwise, the command is available from any window, so long as netrw
 "  has been used at least once in the session.
-fun! s:NetrwCommands(islocal)
+function s:NetrwCommands(islocal)
 
     com! -nargs=* -complete=file -bang    NetrwMB call s:NetrwBookmark(<bang>0,<f-args>)
     com! -nargs=*                         NetrwC  call s:NetrwSetChgwin(<q-args>)
@@ -5254,11 +5234,11 @@ fun! s:NetrwCommands(islocal)
     endif
     com! -buffer -nargs=? -complete=file  MT      call s:NetrwMarkTarget(<q-args>)
 
-endfun
+endfunction
 
 " s:NetrwMarkFiles: apply s:NetrwMarkFile() to named file(s) {{{2
 "                   glob()ing only works with local files
-fun! s:NetrwMarkFiles(islocal,...)
+function s:NetrwMarkFiles(islocal,...)
     let curdir = s:NetrwGetCurdir(a:islocal)
     let i      = 1
     while i <= a:0
@@ -5272,10 +5252,10 @@ fun! s:NetrwMarkFiles(islocal,...)
         endfor
         let i= i + 1
     endwhile
-endfun
+endfunction
 
 " s:NetrwMarkTarget: implements :MT (mark target) {{{2
-fun! s:NetrwMarkTarget(...)
+function s:NetrwMarkTarget(...)
     if a:0 == 0 || (a:0 == 1 && a:1 == "")
         let curdir = s:NetrwGetCurdir(1)
         let tgt    = b:netrw_curdir
@@ -5289,7 +5269,7 @@ fun! s:NetrwMarkTarget(...)
     let svpos                = winsaveview()
     call s:NetrwRefresh(curislocal,s:NetrwBrowseChgDir(curislocal,'./',0))
     call winrestview(svpos)
-endfun
+endfunction
 
 " s:NetrwMarkFile: (invoked by mf) This function is used to both {{{2
 "                  mark and unmark files.  If a markfile list exists,
@@ -5307,7 +5287,7 @@ endfun
 "
 "  Creates a buffer version of islocal
 "    b:netrw_islocal
-fun! s:NetrwMarkFile(islocal,fname)
+function s:NetrwMarkFile(islocal,fname)
 
     " sanity check
     if empty(a:fname)
@@ -5398,12 +5378,12 @@ fun! s:NetrwMarkFile(islocal,fname)
         endif
     endif
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwMarkFileArgList: ma: move the marked file list to the argument list (tomflist=0) {{{2
 "                         mA: move the argument list to marked file list     (tomflist=1)
 "                            Uses the global marked file list
-fun! s:NetrwMarkFileArgList(islocal,tomflist)
+function s:NetrwMarkFileArgList(islocal,tomflist)
     let svpos    = winsaveview()
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -5431,7 +5411,7 @@ fun! s:NetrwMarkFileArgList(islocal,tomflist)
             NetrwKeepj call winrestview(svpos)
         endif
     endif
-endfun
+endfunction
 
 " s:NetrwMarkFileCompress: (invoked by mz) This function is used to {{{2
 "                          compress/decompress files using the programs
@@ -5440,7 +5420,7 @@ endfun
 "                          do.  By default:
 "                            g:netrw_compress        = "gzip"
 "                            g:netrw_decompress      = { ".gz" : "gunzip" , ".bz2" : "bunzip2" , ".zip" : "unzip" , ".tar" : "tar -xf", ".xz" : "unxz"}
-fun! s:NetrwMarkFileCompress(islocal)
+function s:NetrwMarkFileCompress(islocal)
     let svpos    = winsaveview()
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -5494,7 +5474,7 @@ fun! s:NetrwMarkFileCompress(islocal)
         NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
         NetrwKeepj call winrestview(svpos)
     endif
-endfun
+endfunction
 
 " s:NetrwMarkFileCopy: (invoked by mc) copy marked files to target {{{2
 "                      If no marked files, then set up directory as the
@@ -5502,7 +5482,7 @@ endfun
 "                      directories.  Uses the local-buffer marked file list.
 "                      Returns 1=success  (used by NetrwMarkFileMove())
 "                              0=failure
-fun! s:NetrwMarkFileCopy(islocal,...)
+function s:NetrwMarkFileCopy(islocal,...)
 
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -5681,13 +5661,13 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     endif
 
     return 1
-endfun
+endfunction
 
 " s:NetrwMarkFileDiff: (invoked by md) This function is used to {{{2
 "                      invoke vim's diff mode on the marked files.
 "                      Either two or three files can be so handled.
 "                      Uses the global marked file list.
-fun! s:NetrwMarkFileDiff(islocal)
+function s:NetrwMarkFileDiff(islocal)
     let curbufnr= bufnr("%")
 
     " sanity check
@@ -5715,11 +5695,11 @@ fun! s:NetrwMarkFileDiff(islocal)
         call s:NetrwUnmarkList(curbufnr,curdir)
     endif
 
-endfun
+endfunction
 
 " s:NetrwMarkFileEdit: (invoked by me) put marked files on arg list and start editing them {{{2
 "                       Uses global markfilelist
-fun! s:NetrwMarkFileEdit(islocal)
+function s:NetrwMarkFileEdit(islocal)
 
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -5740,10 +5720,10 @@ fun! s:NetrwMarkFileEdit(islocal)
     endif
     echo "(use :bn, :bp to navigate files; :Rex to return)"
 
-endfun
+endfunction
 
 " s:NetrwMarkFileQFEL: convert a quickfix-error or location list into a marked file list {{{2
-fun! s:NetrwMarkFileQFEL(islocal,qfel)
+function s:NetrwMarkFileQFEL(islocal,qfel)
     call s:NetrwUnmarkAll()
     let curbufnr= bufnr("%")
 
@@ -5764,12 +5744,12 @@ fun! s:NetrwMarkFileQFEL(islocal,qfel)
         call netrw#msg#Notify('WARNING', "can't convert quickfix error list; its empty!")
     endif
 
-endfun
+endfunction
 
 " s:NetrwMarkFileExe: (invoked by mx and mX) execute arbitrary system command on marked files {{{2
 "                     mx enbloc=0: Uses the local marked-file list, applies command to each file individually
 "                     mX enbloc=1: Uses the global marked-file list, applies command to entire list
-fun! s:NetrwMarkFileExe(islocal,enbloc)
+function s:NetrwMarkFileExe(islocal,enbloc)
     let svpos    = winsaveview()
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -5863,12 +5843,12 @@ fun! s:NetrwMarkFileExe(islocal,enbloc)
         NetrwKeepj call winrestview(svpos)
 
     endif
-endfun
+endfunction
 
 " s:NetrwMarkHideSfx: (invoked by mh) (un)hide files having same suffix
 "                  as the marked file(s) (toggles suffix presence)
 "                  Uses the local marked file list.
-fun! s:NetrwMarkHideSfx(islocal)
+function s:NetrwMarkHideSfx(islocal)
     let svpos    = winsaveview()
     let curbufnr = bufnr("%")
 
@@ -5914,11 +5894,11 @@ fun! s:NetrwMarkHideSfx(islocal)
     else
         call netrw#msg#Notify('ERROR', 'no files marked!')
     endif
-endfun
+endfunction
 
 " s:NetrwMarkFileVimCmd: (invoked by mv) execute arbitrary vim command on marked files, one at a time {{{2
 "                     Uses the local marked-file list.
-fun! s:NetrwMarkFileVimCmd(islocal)
+function s:NetrwMarkFileVimCmd(islocal)
     let svpos    = winsaveview()
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -5960,62 +5940,11 @@ fun! s:NetrwMarkFileVimCmd(islocal)
     else
         call netrw#msg#Notify('ERROR', 'no files marked!')
     endif
-endfun
-
-" s:NetrwMarkHideSfx: (invoked by mh) (un)hide files having same suffix
-"                  as the marked file(s) (toggles suffix presence)
-"                  Uses the local marked file list.
-fun! s:NetrwMarkHideSfx(islocal)
-    let svpos    = winsaveview()
-    let curbufnr = bufnr("%")
-
-    " s:netrwmarkfilelist_{curbufnr}: the List of marked files
-    if exists("s:netrwmarkfilelist_{curbufnr}")
-
-        for fname in s:netrwmarkfilelist_{curbufnr}
-            " construct suffix pattern
-            if fname =~ '\.'
-                let sfxpat= "^.*".substitute(fname,'^.*\(\.[^. ]\+\)$','\1','')
-            else
-                let sfxpat= '^\%(\%(\.\)\@!.\)*$'
-            endif
-            " determine if its in the hiding list or not
-            let inhidelist= 0
-            if g:netrw_list_hide != ""
-                let itemnum = 0
-                let hidelist= split(g:netrw_list_hide,',')
-                for hidepat in hidelist
-                    if sfxpat == hidepat
-                        let inhidelist= 1
-                        break
-                    endif
-                    let itemnum= itemnum + 1
-                endfor
-            endif
-            if inhidelist
-                " remove sfxpat from list
-                call remove(hidelist,itemnum)
-                let g:netrw_list_hide= join(hidelist,",")
-            elseif g:netrw_list_hide != ""
-                " append sfxpat to non-empty list
-                let g:netrw_list_hide= g:netrw_list_hide.",".sfxpat
-            else
-                " set hiding list to sfxpat
-                let g:netrw_list_hide= sfxpat
-            endif
-        endfor
-
-        " refresh the listing
-        NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
-        NetrwKeepj call winrestview(svpos)
-    else
-        call netrw#msg#Notify('ERROR', 'no files marked!')
-    endif
-endfun
+endfunction
 
 " s:NetrwMarkFileGrep: (invoked by mg) This function applies vimgrep to marked files {{{2
 "                     Uses the global markfilelist
-fun! s:NetrwMarkFileGrep(islocal)
+function s:NetrwMarkFileGrep(islocal)
     let svpos    = winsaveview()
     let curbufnr = bufnr("%")
     let curdir   = s:NetrwGetCurdir(a:islocal)
@@ -6062,13 +5991,13 @@ fun! s:NetrwMarkFileGrep(islocal)
         endif
     endif
 
-endfun
+endfunction
 
 " s:NetrwMarkFileMove: (invoked by mm) execute arbitrary command on marked files, one at a time {{{2
 "                      uses the global marked file list
 "                      s:netrwmfloc= 0: target directory is remote
 "                                  = 1: target directory is local
-fun! s:NetrwMarkFileMove(islocal)
+function s:NetrwMarkFileMove(islocal)
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
 
@@ -6170,11 +6099,11 @@ fun! s:NetrwMarkFileMove(islocal)
         NetrwKeepj call s:LocalBrowseRefresh()
     endif
 
-endfun
+endfunction
 
 " s:NetrwMarkFilePrint: (invoked by mp) This function prints marked files {{{2
 "                       using the hardcopy command.  Local marked-file list only.
-fun! s:NetrwMarkFilePrint(islocal)
+function s:NetrwMarkFilePrint(islocal)
     let curbufnr= bufnr("%")
 
     " sanity check
@@ -6203,12 +6132,12 @@ fun! s:NetrwMarkFilePrint(islocal)
         endfor
         2match none
     endif
-endfun
+endfunction
 
 " s:NetrwMarkFileRegexp: (invoked by mr) This function is used to mark {{{2
 "                        files when given a regexp (for which a prompt is
 "                        issued) (matches to name of files).
-fun! s:NetrwMarkFileRegexp(islocal)
+function s:NetrwMarkFileRegexp(islocal)
 
     " get the regular expression
     call inputsave()
@@ -6272,11 +6201,11 @@ fun! s:NetrwMarkFileRegexp(islocal)
     endif
     echo "  (use me to edit marked files)"
 
-endfun
+endfunction
 
 " s:NetrwMarkFileSource: (invoked by ms) This function sources marked files {{{2
 "                        Uses the local marked file list.
-fun! s:NetrwMarkFileSource(islocal)
+function s:NetrwMarkFileSource(islocal)
     let curbufnr= bufnr("%")
 
     " sanity check
@@ -6302,11 +6231,11 @@ fun! s:NetrwMarkFileSource(islocal)
         endfor
         2match none
     endif
-endfun
+endfunction
 
 " s:NetrwMarkFileTag: (invoked by mT) This function applies g:netrw_ctags to marked files {{{2
 "                     Uses the global markfilelist
-fun! s:NetrwMarkFileTag(islocal)
+function s:NetrwMarkFileTag(islocal)
     let svpos    = winsaveview()
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
@@ -6343,14 +6272,14 @@ fun! s:NetrwMarkFileTag(islocal)
         call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
         call winrestview(svpos)
     endif
-endfun
+endfunction
 
 " s:NetrwMarkFileTgt:  (invoked by mt) This function sets up a marked file target {{{2
 "   Sets up two variables,
 "     s:netrwmftgt         : holds the target directory
 "     s:netrwmftgt_islocal : 0=target directory is remote
 "                            1=target directory is local
-fun! s:NetrwMarkFileTgt(islocal)
+function s:NetrwMarkFileTgt(islocal)
     let svpos  = winsaveview()
     let curdir = s:NetrwGetCurdir(a:islocal)
     let hadtgt = exists("s:netrwmftgt")
@@ -6412,10 +6341,10 @@ fun! s:NetrwMarkFileTgt(islocal)
     if !hadtgt
         sil! NetrwKeepj norm! j
     endif
-endfun
+endfunction
 
 " s:NetrwGetCurdir: gets current directory and sets up b:netrw_curdir if necessary {{{2
-fun! s:NetrwGetCurdir(islocal)
+function s:NetrwGetCurdir(islocal)
 
     if exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST
         let b:netrw_curdir = s:NetrwTreePath(w:netrw_treetop)
@@ -6431,10 +6360,10 @@ fun! s:NetrwGetCurdir(islocal)
     endif
 
     return b:netrw_curdir
-endfun
+endfunction
 
 " s:NetrwOpenFile: query user for a filename and open it {{{2
-fun! s:NetrwOpenFile(islocal)
+function s:NetrwOpenFile(islocal)
     let ykeep= @@
     call inputsave()
     let fname= input("Enter filename: ")
@@ -6466,13 +6395,13 @@ fun! s:NetrwOpenFile(islocal)
         exe "NetrwKeepj e ".fnameescape(fname)
     endif
     let @@= ykeep
-endfun
+endfunction
 
 " netrw#Shrink: shrinks/expands a netrw or Lexplorer window {{{2
 "               For the mapping to this function be made via
 "               netrwPlugin, you'll need to have had
 "               g:netrw_usetab set to non-zero.
-fun! netrw#Shrink()
+function netrw#Shrink()
     let curwin  = winnr()
     let wiwkeep = &wiw
     set wiw=1
@@ -6509,10 +6438,10 @@ fun! netrw#Shrink()
     endif
     let wiw= wiwkeep
 
-endfun
+endfunction
 
 " s:NetSortSequence: allows user to edit the sorting sequence {{{2
-fun! s:NetSortSequence(islocal)
+function s:NetSortSequence(islocal)
     let ykeep= @@
     let svpos= winsaveview()
     call inputsave()
@@ -6524,12 +6453,12 @@ fun! s:NetSortSequence(islocal)
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwUnmarkList: delete local marked file list and remove their contents from the global marked-file list {{{2
 "   User access provided by the <mF> mapping. (see :help netrw-mF)
 "   Used by many MarkFile functions.
-fun! s:NetrwUnmarkList(curbufnr,curdir)
+function s:NetrwUnmarkList(curbufnr,curdir)
 
     "  remove all files in local marked-file list from global list
     if exists("s:netrwmarkfilelist")
@@ -6549,19 +6478,19 @@ fun! s:NetrwUnmarkList(curbufnr,curdir)
         unlet s:netrwmarkfilemtch_{a:curbufnr}
     endif
     2match none
-endfun
+endfunction
 
 " s:NetrwUnmarkAll: remove the global marked file list and all local ones {{{2
-fun! s:NetrwUnmarkAll()
+function s:NetrwUnmarkAll()
     if exists("s:netrwmarkfilelist")
         unlet s:netrwmarkfilelist
     endif
     sil call s:NetrwUnmarkAll2()
     2match none
-endfun
+endfunction
 
 " s:NetrwUnmarkAll2: unmark all files from all buffers {{{2
-fun! s:NetrwUnmarkAll2()
+function s:NetrwUnmarkAll2()
     redir => netrwmarkfilelist_let
     let
     redir END
@@ -6573,7 +6502,7 @@ fun! s:NetrwUnmarkAll2()
         unlet s:netrwmarkfilelist_{curbufnr}
         unlet s:netrwmarkfilemtch_{curbufnr}
     endfor
-endfun
+endfunction
 
 " s:NetrwUnMarkFile: called via mu map; unmarks *all* marked files, both global and buffer-local {{{2
 "
@@ -6583,7 +6512,7 @@ endfun
 "
 " Marked files suitable for use with 2match are in:
 "    s:netrwmarkfilemtch_#   -- used with 2match to display marked files
-fun! s:NetrwUnMarkFile(islocal)
+function s:NetrwUnMarkFile(islocal)
     let svpos    = winsaveview()
     let curbufnr = bufnr("%")
 
@@ -6605,10 +6534,10 @@ fun! s:NetrwUnMarkFile(islocal)
 
     "  call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     call winrestview(svpos)
-endfun
+endfunction
 
 " s:NetrwMenu: generates the menu for gvim and netrw {{{2
-fun! s:NetrwMenu(domenu)
+function s:NetrwMenu(domenu)
 
     if !exists("g:NetrwMenuPriority")
         let g:NetrwMenuPriority= 80
@@ -6705,11 +6634,11 @@ fun! s:NetrwMenu(domenu)
     return
   endif
 
-endfun
+endfunction
 
 " s:NetrwObtain: obtain file under cursor or from markfile list {{{2
 "                Used by the O maps (as <SID>NetrwObtain())
-fun! s:NetrwObtain(islocal)
+function s:NetrwObtain(islocal)
 
     let ykeep= @@
     if exists("s:netrwmarkfilelist_{bufnr('%')}")
@@ -6721,7 +6650,7 @@ fun! s:NetrwObtain(islocal)
     endif
     let @@= ykeep
 
-endfun
+endfunction
 
 " s:NetrwPrevWinOpen: open file/directory in previous window.  {{{2
 "   If there's only one window, then the window will first be split.
@@ -6730,7 +6659,7 @@ endfun
 "     choice = 1 : saved modified file in window first
 "     choice = 2 : didn't save modified file, opened window
 "     choice = 3 : cancel open
-fun! s:NetrwPrevWinOpen(islocal)
+function s:NetrwPrevWinOpen(islocal)
     let ykeep= @@
     " grab a copy of the b:netrw_curdir to pass it along to newly split windows
     let curdir = b:netrw_curdir
@@ -6836,13 +6765,13 @@ fun! s:NetrwPrevWinOpen(islocal)
     endif
     let @@= ykeep
     return choice
-endfun
+endfunction
 
 " s:NetrwUpload: load fname to tgt (used by NetrwMarkFileCopy()) {{{2
 "                Always assumed to be local -> remote
 "                call s:NetrwUpload(filename, target)
 "                call s:NetrwUpload(filename, target, fromdirectory)
-fun! s:NetrwUpload(fname,tgt,...)
+function s:NetrwUpload(fname,tgt,...)
 
     if a:tgt =~ '^\a\{3,}://'
         let tgtdir= substitute(a:tgt,'^\a\{3,}://[^/]\+/\(.\{-}\)$','\1','')
@@ -6996,10 +6925,10 @@ fun! s:NetrwUpload(fname,tgt,...)
         endif
     endif
 
-endfun
+endfunction
 
 " s:NetrwPreview: supports netrw's "p" map {{{2
-fun! s:NetrwPreview(path) range
+function s:NetrwPreview(path) range
     let ykeep= @@
     NetrwKeepj call s:NetrwOptionsSave("s:")
     if a:path !~ '^\*\{1,2}/' && a:path !~ '^\a\{3,}://'
@@ -7043,10 +6972,10 @@ fun! s:NetrwPreview(path) range
     endif
     NetrwKeepj call s:NetrwOptionsRestore("s:")
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwRefresh: {{{2
-fun! s:NetrwRefresh(islocal,dirname)
+function s:NetrwRefresh(islocal,dirname)
     " at the current time (Mar 19, 2007) all calls to NetrwRefresh() call NetrwBrowseChgDir() first.
     setl ma noro
     let ykeep      = @@
@@ -7085,12 +7014,12 @@ fun! s:NetrwRefresh(islocal,dirname)
 
     "  restore
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwRefreshDir: refreshes a directory by name {{{2
 "                    Called by NetrwMarkFileCopy()
 "                    Interfaces to s:NetrwRefresh() and s:LocalBrowseRefresh()
-fun! s:NetrwRefreshDir(islocal,dirname)
+function s:NetrwRefreshDir(islocal,dirname)
     if g:netrw_fastbrowse == 0
         " slowest mode (keep buffers refreshed, local or remote)
         let tgtwin= bufwinnr(a:dirname)
@@ -7110,13 +7039,13 @@ fun! s:NetrwRefreshDir(islocal,dirname)
     elseif g:netrw_fastbrowse <= 1
         NetrwKeepj call s:LocalBrowseRefresh()
     endif
-endfun
+endfunction
 
 " s:NetrwSetChgwin: set g:netrw_chgwin; a <cr> will use the specified
 " window number to do its editing in.
 " Supports   [count]C  where the count, if present, is used to specify
 " a window to use for editing via the <cr> mapping.
-fun! s:NetrwSetChgwin(...)
+function s:NetrwSetChgwin(...)
     if a:0 > 0
         if a:1 == ""    " :NetrwC win#
             let g:netrw_chgwin= winnr()
@@ -7129,14 +7058,14 @@ fun! s:NetrwSetChgwin(...)
         let g:netrw_chgwin= winnr()
     endif
     echo "editing window now set to window#".g:netrw_chgwin
-endfun
+endfunction
 
 " s:NetrwSetSort: sets up the sort based on the g:netrw_sort_sequence {{{2
 "          What this function does is to compute a priority for the patterns
 "          in the g:netrw_sort_sequence.  It applies a substitute to any
 "          "files" that satisfy each pattern, putting the priority / in
 "          front.  An "*" pattern handles the default priority.
-fun! s:NetrwSetSort()
+function s:NetrwSetSort()
     let ykeep= @@
     if w:netrw_liststyle == s:LONGLIST
         let seqlist  = substitute(g:netrw_sort_sequence,'\$','\\%(\t\\|\$\\)','ge')
@@ -7198,13 +7127,13 @@ fun! s:NetrwSetSort()
     NetrwKeepj call histdel("/",-1)
     let @@= ykeep
 
-endfun
+endfunction
 
 " s:NetrwSetTgt: sets the target to the specified choice index {{{2
 "    Implements [count]Tb  (bookhist<b>)
 "               [count]Th  (bookhist<h>)
 "               See :help netrw-qb for how to make the choice.
-fun! s:NetrwSetTgt(islocal,bookhist,choice)
+function s:NetrwSetTgt(islocal,bookhist,choice)
 
     if     a:bookhist == 'b'
         " supports choosing a bookmark as a target using a qb-generated list
@@ -7232,10 +7161,10 @@ fun! s:NetrwSetTgt(islocal,bookhist,choice)
     endif
     call s:NetrwRefresh(a:islocal,b:netrw_curdir)
 
-endfun
+endfunction
 
 " s:NetrwSortStyle: change sorting style (name - time - size - exten) and refresh display {{{2
-fun! s:NetrwSortStyle(islocal)
+function s:NetrwSortStyle(islocal)
     NetrwKeepj call s:NetrwSaveWordPosn()
     let svpos= winsaveview()
 
@@ -7243,7 +7172,7 @@ fun! s:NetrwSortStyle(islocal)
     NetrwKeepj norm! 0
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
-endfun
+endfunction
 
 " s:NetrwSplit: mode {{{2
 "           =0 : net   and o
@@ -7252,7 +7181,7 @@ endfun
 "           =3 : local and o
 "           =4 : local and t
 "           =5 : local and v
-fun! s:NetrwSplit(mode)
+function s:NetrwSplit(mode)
 
     let ykeep= @@
     call s:SaveWinVars()
@@ -7338,10 +7267,10 @@ fun! s:NetrwSplit(mode)
     endif
 
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwTgtMenu: {{{2
-fun! s:NetrwTgtMenu()
+function s:NetrwTgtMenu()
     if !exists("s:netrw_menucnt")
         return
     endif
@@ -7393,11 +7322,11 @@ fun! s:NetrwTgtMenu()
             endwhile
         endif
     endif
-endfun
+endfunction
 
 " s:NetrwTreeDir: determine tree directory given current cursor position {{{2
 " (full path directory with trailing slash returned)
-fun! s:NetrwTreeDir(islocal)
+function s:NetrwTreeDir(islocal)
 
     if exists("s:treedir") && exists("s:prevwinopen")
         " s:NetrwPrevWinOpen opens a "previous" window -- and thus needs to and does call s:NetrwTreeDir early
@@ -7452,10 +7381,10 @@ fun! s:NetrwTreeDir(islocal)
     " sanity maintenance: keep those //s away...
     let treedir= substitute(treedir,'//$','/','')
     return treedir
-endfun
+endfunction
 
 " s:NetrwTreeDisplay: recursive tree display {{{2
-fun! s:NetrwTreeDisplay(dir,depth)
+function s:NetrwTreeDisplay(dir,depth)
     " ensure that there are no folds
     setl nofen
 
@@ -7526,10 +7455,10 @@ fun! s:NetrwTreeDisplay(dir,depth)
             sil! NetrwKeepj call setline(line("$")+1,depth.entry)
         endif
     endfor
-endfun
+endfunction
 
 " s:NetrwRefreshTreeDict: updates the contents information for a tree (w:netrw_treedict) {{{2
-fun! s:NetrwRefreshTreeDict(dir)
+function s:NetrwRefreshTreeDict(dir)
     if !exists("w:netrw_treedict")
         return
     endif
@@ -7555,11 +7484,11 @@ fun! s:NetrwRefreshTreeDict(dir)
         else
         endif
     endfor
-endfun
+endfunction
 
 " s:NetrwTreeListing: displays tree listing from treetop on down, using NetrwTreeDisplay() {{{2
 "                     Called by s:PerformListing()
-fun! s:NetrwTreeListing(dirname)
+function s:NetrwTreeListing(dirname)
     if exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST
 
         " update the treetop
@@ -7609,13 +7538,13 @@ fun! s:NetrwTreeListing(dirname)
 
         return
     endif
-endfun
+endfunction
 
 " s:NetrwTreePath: returns path to current file/directory in tree listing {{{2
 "                  Normally, treetop is w:netrw_treetop, but a
 "                  user of the function ( netrw#SetTreetop() )
 "                  wipes that out prior to calling this function
-fun! s:NetrwTreePath(treetop)
+function s:NetrwTreePath(treetop)
     if line(".") < w:netrw_bannercnt + 2
         let treedir= a:treetop
         if treedir !~ '/$'
@@ -7650,10 +7579,10 @@ fun! s:NetrwTreePath(treetop)
     let treedir= substitute(treedir,'//$','/','')
     call winrestview(svpos)
     return treedir
-endfun
+endfunction
 
 " s:NetrwWideListing: {{{2
-fun! s:NetrwWideListing()
+function s:NetrwWideListing()
 
     if w:netrw_liststyle == s:WIDELIST
         " look for longest filename (cpf=characters per filename)
@@ -7730,10 +7659,10 @@ fun! s:NetrwWideListing()
             sil! nunmap <buffer> b
         endif
     endif
-endfun
+endfunction
 
 " s:PerformListing: {{{2
-fun! s:PerformListing(islocal)
+function s:PerformListing(islocal)
     sil! NetrwKeepj %d _
     "  call DechoBuf(bufnr("%"))
 
@@ -7954,10 +7883,10 @@ fun! s:PerformListing(islocal)
         unlet s:treecurpos
     endif
 
-endfun
+endfunction
 
 " s:SetupNetrwStatusLine: {{{2
-fun! s:SetupNetrwStatusLine(statline)
+function s:SetupNetrwStatusLine(statline)
 
     if !exists("s:netrw_setup_statline")
         let s:netrw_setup_statline= 1
@@ -7993,7 +7922,7 @@ fun! s:SetupNetrwStatusLine(statline)
     setl laststatus=2
     redraw
 
-endfun
+endfunction
 
 "  Remote Directory Browsing Support:  {{{1
 
@@ -8001,7 +7930,7 @@ endfun
 "  This function assumes that a long listing will be received.  Size, time,
 "  and reverse sorts will be requested of the server but not otherwise
 "  enforced here.
-fun! s:NetrwRemoteFtpCmd(path,listcmd)
+function s:NetrwRemoteFtpCmd(path,listcmd)
     " sanity check: {{{3
     if !exists("w:netrw_method")
         if exists("b:netrw_method")
@@ -8049,7 +7978,7 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
         " handle userid and password
         let host= substitute(g:netrw_machine,'\..*$','','')
         if exists("s:netrw_hup") && exists("s:netrw_hup[host]")
-            call NetUserPass("ftp:".host)
+            call netrw#NetUserPass("ftp:".host)
         endif
         if exists("g:netrw_uid") && g:netrw_uid != ""
             if exists("g:netrw_ftp") && g:netrw_ftp == 1
@@ -8122,10 +8051,10 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
 
     " restore settings " {{{3
     let &l:ff= ffkeep
-endfun
+endfunction
 
 " s:NetrwRemoteListing: {{{2
-fun! s:NetrwRemoteListing()
+function s:NetrwRemoteListing()
 
     if !exists("w:netrw_bannercnt") && exists("s:bannercnt")
         let w:netrw_bannercnt= s:bannercnt
@@ -8286,10 +8215,10 @@ fun! s:NetrwRemoteListing()
 
 
     return 0
-endfun
+endfunction
 
 " s:NetrwRemoteRm: remove/delete a remote file or directory {{{2
-fun! s:NetrwRemoteRm(usrhost,path) range
+function s:NetrwRemoteRm(usrhost,path) range
     let svpos= winsaveview()
 
     let all= 0
@@ -8330,10 +8259,10 @@ fun! s:NetrwRemoteRm(usrhost,path) range
     " refresh the (remote) directory listing
     NetrwKeepj call s:NetrwRefresh(0,s:NetrwBrowseChgDir(0,'./',0))
     NetrwKeepj call winrestview(svpos)
-endfun
+endfunction
 
 " s:NetrwRemoteRmFile: {{{2
-fun! s:NetrwRemoteRmFile(path,rmfile,all)
+function s:NetrwRemoteRmFile(path,rmfile,all)
 
     let all= a:all
     let ok = ""
@@ -8428,10 +8357,10 @@ fun! s:NetrwRemoteRmFile(path,rmfile,all)
     endif
 
     return ok
-endfun
+endfunction
 
 " s:NetrwRemoteRename: rename a remote file or directory {{{2
-fun! s:NetrwRemoteRename(usrhost,path) range
+function s:NetrwRemoteRename(usrhost,path) range
 
     " preparation for removing multiple files/directories
     let svpos      = winsaveview()
@@ -8495,7 +8424,7 @@ fun! s:NetrwRemoteRename(usrhost,path) range
     " refresh the directory
     NetrwKeepj call s:NetrwRefresh(0,s:NetrwBrowseChgDir(0,'./',0))
     NetrwKeepj call winrestview(svpos)
-endfun
+endfunction
 
 "  Local Directory Browsing Support:    {{{1
 
@@ -8509,7 +8438,7 @@ endfun
 "                    file://c:/foo.txt
 "                    file:///c:/foo.txt
 " and %XX (where X is [0-9a-fA-F] is converted into a character with the given hexadecimal value
-fun! netrw#FileUrlEdit(fname)
+function netrw#FileUrlEdit(fname)
     let fname = a:fname
     if fname =~ '^file://localhost/'
         let fname= substitute(fname,'^file://localhost/','file:///','')
@@ -8533,10 +8462,10 @@ fun! netrw#FileUrlEdit(fname)
     exe 'sil! NetrwKeepj keepalt bdelete '.fnameescape(a:fname)
 
     exe "sil doau BufReadPost ".fname2396e
-endfun
+endfunction
 
 " netrw#LocalBrowseCheck: {{{2
-fun! netrw#LocalBrowseCheck(dirname)
+function netrw#LocalBrowseCheck(dirname)
     " This function is called by netrwPlugin.vim's s:LocalBrowseCheck(), s:NetrwRexplore(),
     " and by <cr> when atop a listed file/directory (via a buffer-local map)
     "
@@ -8581,13 +8510,13 @@ fun! netrw#LocalBrowseCheck(dirname)
     endif
     let @@= ykeep
     " not a directory, ignore it
-endfun
+endfunction
 
 " s:LocalBrowseRefresh: this function is called after a user has {{{2
 " performed any shell command.  The idea is to cause all local-browsing
 " buffers to be refreshed after a user has executed some shell command,
 " on the chance that s/he removed/created a file/directory with it.
-fun! s:LocalBrowseRefresh()
+function s:LocalBrowseRefresh()
     " determine which buffers currently reside in a tab
     if !exists("s:netrw_browselist")
         return
@@ -8642,7 +8571,7 @@ fun! s:LocalBrowseRefresh()
     endfor
     call win_gotoid(curwinid)
     let @@= ykeep
-endfun
+endfunction
 
 " s:LocalFastBrowser: handles setting up/taking down fast browsing for the local browser {{{2
 "
@@ -8661,7 +8590,7 @@ endfun
 "                       BufEnter may be first event, then a FocusGained event.  Ignore the first FocusGained event.
 "                       If :Explore used: it sets s:netrw_events to 2, so no FocusGained events are ignored.
 "                   =2: autocmds installed (doesn't ignore any FocusGained events)
-fun! s:LocalFastBrowser()
+function s:LocalFastBrowser()
 
     " initialize browselist, a list of buffer numbers that the local browser has used
     if !exists("s:netrw_browselist")
@@ -8699,9 +8628,9 @@ fun! s:LocalFastBrowser()
         augroup END
         augroup! AuNetrwEvent
     endif
-endfun
+endfunction
 
-fun! s:NetrwLocalListingList(dirname,setmaxfilenamelen)
+function s:NetrwLocalListingList(dirname,setmaxfilenamelen)
     " get the list of files contained in the current directory
     let dirname    = a:dirname
     let dirnamelen = strlen(dirname)
@@ -8801,10 +8730,10 @@ fun! s:NetrwLocalListingList(dirname,setmaxfilenamelen)
     endfor
 
     return resultfilelist
-endfun
+endfunction
 
 "  s:LocalListing: does the job of "ls" for local directories {{{2
-fun! s:LocalListing()
+function s:LocalListing()
 
     let filelist = s:NetrwLocalListingList(b:netrw_curdir, 1)
     for filename in filelist
@@ -8816,10 +8745,10 @@ fun! s:LocalListing()
     sil! NetrwKeepj %s/\r$//e
     call histdel("/",-1)
     exe "setl ts=".(g:netrw_maxfilenamelen+1)
-endfun
+endfunction
 
 " s:NetrwLocalExecute: uses system() to execute command under cursor ("X" command support) {{{2
-fun! s:NetrwLocalExecute(cmd)
+function s:NetrwLocalExecute(cmd)
     let ykeep= @@
     " sanity check
     if !executable(a:cmd)
@@ -8838,10 +8767,10 @@ fun! s:NetrwLocalExecute(cmd)
     echomsg result
     let @@= ykeep
 
-endfun
+endfunction
 
 " s:NetrwLocalRename: rename a local file or directory {{{2
-fun! s:NetrwLocalRename(path) range
+function s:NetrwLocalRename(path) range
 
     if !exists("w:netrw_bannercnt")
         let w:netrw_bannercnt= b:netrw_bannercnt
@@ -8926,10 +8855,10 @@ fun! s:NetrwLocalRename(path) range
     NetrwKeepj call s:NetrwRefresh(1,s:NetrwBrowseChgDir(1,'./',0))
     NetrwKeepj call winrestview(svpos)
     let @@= ykeep
-endfun
+endfunction
 
 " s:NetrwLocalRm: {{{2
-function! s:NetrwLocalRm(path) range
+function s:NetrwLocalRm(path) range
     if !exists("w:netrw_bannercnt")
         let w:netrw_bannercnt = b:netrw_bannercnt
     endif
@@ -8997,7 +8926,7 @@ endfunction
 
 " s:NetrwLocalRmFile: remove file fname given the path {{{2
 "                     Give confirmation prompt unless all==1
-function! s:NetrwLocalRmFile(path, fname, all)
+function s:NetrwLocalRmFile(path, fname, all)
     let all = a:all
     let ok = ""
     let dir = 0
@@ -9050,15 +8979,15 @@ endfunction
 " Support Functions: {{{1
 
 " netrw#Call: allows user-specified mappings to call internal netrw functions {{{2
-fun! netrw#Call(funcname,...)
+function netrw#Call(funcname,...)
     return call("s:".a:funcname,a:000)
-endfun
+endfunction
 
 " netrw#Expose: allows UserMaps and pchk to look at otherwise script-local variables {{{2
 "               I expect this function to be used in
 "                 :PChkAssert netrw#Expose("netrwmarkfilelist")
 "               for example.
-fun! netrw#Expose(varname)
+function netrw#Expose(varname)
     if exists("s:".a:varname)
         exe "let retval= s:".a:varname
         if exists("g:netrw_pchk")
@@ -9078,18 +9007,18 @@ fun! netrw#Expose(varname)
     endif
 
     return retval
-endfun
+endfunction
 
 " netrw#Modify: allows UserMaps to set (modify) script-local variables {{{2
-fun! netrw#Modify(varname,newvalue)
+function netrw#Modify(varname,newvalue)
     exe "let s:".a:varname."= ".string(a:newvalue)
-endfun
+endfunction
 
 "  netrw#RFC2396: converts %xx into characters {{{2
-fun! netrw#RFC2396(fname)
+function netrw#RFC2396(fname)
     let fname = escape(substitute(a:fname,'%\(\x\x\)','\=printf("%c","0x".submatch(1))','ge')," \t")
     return fname
-endfun
+endfunction
 
 " netrw#UserMaps: supports user-specified maps {{{2
 "                 see :help function()
@@ -9108,7 +9037,7 @@ endfun
 "                   netrw#Expose(varname)          -- see s:varname variables
 "                   netrw#Modify(varname,newvalue) -- modify value of s:varname variable
 "                   netrw#Call(funcname,...)       -- call internal netrw function with optional arguments
-fun! netrw#UserMaps(islocal)
+function netrw#UserMaps(islocal)
 
     " set up usermaplist
     if exists("g:Netrw_UserMaps") && type(g:Netrw_UserMaps) == 3
@@ -9121,13 +9050,13 @@ fun! netrw#UserMaps(islocal)
             endif
         endfor
     endif
-endfun
+endfunction
 
 " s:NetrwBadd: adds marked files to buffer list or vice versa {{{2
 "              cb : bl2mf=0  add marked files to buffer list
 "              cB : bl2mf=1  use bufferlist to mark files
 "              (mnemonic: cb = copy (marked files) to buffer list)
-fun! s:NetrwBadd(islocal,bl2mf)
+function s:NetrwBadd(islocal,bl2mf)
     if a:bl2mf
         " cB: add buffer list to marked files
         redir => bufl
@@ -9146,11 +9075,11 @@ fun! s:NetrwBadd(islocal,bl2mf)
         let curdir   = s:NetrwGetCurdir(a:islocal)
         call s:NetrwUnmarkList(curbufnr,curdir)                   " remove markings from local buffer
     endif
-endfun
+endfunction
 
 " s:DeleteBookmark: deletes a file/directory from Netrw's bookmark system {{{2
 "   Related Functions: s:MakeBookmark() s:NetrwBookHistHandler() s:NetrwBookmark()
-fun! s:DeleteBookmark(fname)
+function s:DeleteBookmark(fname)
     call s:MergeBookmarks()
 
     if exists("g:netrw_bookmarklist")
@@ -9170,10 +9099,10 @@ fun! s:DeleteBookmark(fname)
         endif
     endif
 
-endfun
+endfunction
 
 " s:FileReadable: o/s independent filereadable {{{2
-fun! s:FileReadable(fname)
+function s:FileReadable(fname)
     if g:netrw_cygwin
         let ret = filereadable(s:NetrwFile(substitute(a:fname,g:netrw_cygdrive.'/\(.\)','\1:/','')))
     else
@@ -9181,12 +9110,12 @@ fun! s:FileReadable(fname)
     endif
 
     return ret
-endfun
+endfunction
 
 "  s:GetTempfile: gets a tempname that'll work for various o/s's {{{2
 "                 Places correct suffix on end of temporary filename,
 "                 using the suffix provided with fname
-fun! s:GetTempfile(fname)
+function s:GetTempfile(fname)
 
     if !exists("b:netrw_tmpfile")
         " get a brand new temporary filename
@@ -9236,11 +9165,11 @@ fun! s:GetTempfile(fname)
     endif
 
     return tmpfile
-endfun
+endfunction
 
 " s:MakeSshCmd: transforms input command using USEPORT HOSTNAME into {{{2
 "               a correct command for use with a system() call
-fun! s:MakeSshCmd(sshcmd)
+function s:MakeSshCmd(sshcmd)
     if s:user == ""
         let sshcmd = substitute(a:sshcmd,'\<HOSTNAME\>',s:machine,'')
     else
@@ -9254,10 +9183,10 @@ fun! s:MakeSshCmd(sshcmd)
         let sshcmd= substitute(sshcmd,"USEPORT ",'','')
     endif
     return sshcmd
-endfun
+endfunction
 
 " s:MakeBookmark: enters a bookmark into Netrw's bookmark system   {{{2
-fun! s:MakeBookmark(fname)
+function s:MakeBookmark(fname)
 
     if !exists("g:netrw_bookmarklist")
         let g:netrw_bookmarklist= []
@@ -9275,20 +9204,20 @@ fun! s:MakeBookmark(fname)
         call sort(g:netrw_bookmarklist)
     endif
 
-endfun
+endfunction
 
 " s:MergeBookmarks: merge current bookmarks with saved bookmarks {{{2
-fun! s:MergeBookmarks()
+function s:MergeBookmarks()
     " get bookmarks from .netrwbook file
     let savefile= s:NetrwHome()."/.netrwbook"
     if filereadable(s:NetrwFile(savefile))
         NetrwKeepj call s:NetrwBookHistSave()
         NetrwKeepj call delete(savefile)
     endif
-endfun
+endfunction
 
 " s:NetrwBMShow: {{{2
-fun! s:NetrwBMShow()
+function s:NetrwBMShow()
     redir => bmshowraw
     menu
     redir END
@@ -9302,10 +9231,10 @@ fun! s:NetrwBMShow()
             endif
         endif
     endif
-endfun
+endfunction
 
 " s:NetrwCursor: responsible for setting cursorline/cursorcolumn based upon g:netrw_cursor {{{2
-fun! s:NetrwCursor(editfile)
+function s:NetrwCursor(editfile)
     if !exists("w:netrw_liststyle")
         let w:netrw_liststyle= g:netrw_liststyle
     endif
@@ -9362,30 +9291,30 @@ fun! s:NetrwCursor(editfile)
         let &l:cursorcolumn = s:netrw_usercuc
     endif
 
-endfun
+endfunction
 
 " s:RestoreCursorline: restores cursorline/cursorcolumn to original user settings {{{2
-fun! s:RestoreCursorline()
+function s:RestoreCursorline()
     if exists("s:netrw_usercul")
         let &l:cursorline   = s:netrw_usercul
     endif
     if exists("s:netrw_usercuc")
         let &l:cursorcolumn = s:netrw_usercuc
     endif
-endfun
+endfunction
 
 " s:RestoreRegister: restores all registers given in the dict {{{2
-fun! s:RestoreRegister(dict)
+function s:RestoreRegister(dict)
     for [key, val] in items(a:dict)
         if key == 'unnamed'
             let key = ''
         endif
         call setreg(key, val[0], val[1])
     endfor
-endfun
+endfunction
 
 " s:NetrwEnew: opens a new buffer, passes netrw buffer variables through {{{2
-fun! s:NetrwEnew(...)
+function s:NetrwEnew(...)
 
     " Clean out the last buffer:
     " Check if the last buffer has # > 1, is unlisted, is unnamed, and does not appear in a window
@@ -9460,10 +9389,10 @@ fun! s:NetrwEnew(...)
         let &l:bexpr = "netrw#BalloonHelp()"
     endif
 
-endfun
+endfunction
 
 " s:NetrwInsureWinVars: insure that a netrw buffer has its w: variables in spite of a wincmd v or s {{{2
-fun! s:NetrwInsureWinVars()
+function s:NetrwInsureWinVars()
     if !exists("w:netrw_liststyle")
         let curbuf = bufnr("%")
         let curwin = winnr()
@@ -9484,12 +9413,12 @@ fun! s:NetrwInsureWinVars()
             endfor
         endif
     endif
-endfun
+endfunction
 
 " s:NetrwLcd: handles changing the (local) directory {{{2
 "   Returns: 0=success
 "           -1=failed
-fun! s:NetrwLcd(newdir)
+function s:NetrwLcd(newdir)
 
     let err472= 0
     try
@@ -9523,17 +9452,17 @@ fun! s:NetrwLcd(newdir)
     endif
 
     return 0
-endfun
+endfunction
 
 " s:NetrwSaveWordPosn: used to keep cursor on same word after refresh, {{{2
 " changed sorting, etc.  Also see s:NetrwRestoreWordPosn().
-fun! s:NetrwSaveWordPosn()
+function s:NetrwSaveWordPosn()
     let s:netrw_saveword= '^'.fnameescape(getline('.')).'$'
-endfun
+endfunction
 
 " s:NetrwHumanReadable: takes a number and makes it "human readable" {{{2
 "                       1000 -> 1K, 1000000 -> 1M, 1000000000 -> 1G
-fun! s:NetrwHumanReadable(sz)
+function s:NetrwHumanReadable(sz)
 
     if g:netrw_sizestyle == 'h'
         if a:sz >= 1000000000
@@ -9570,16 +9499,16 @@ fun! s:NetrwHumanReadable(sz)
     endif
 
     return sz
-endfun
+endfunction
 
 " s:NetrwRestoreWordPosn: used to keep cursor on same word after refresh, {{{2
 "  changed sorting, etc.  Also see s:NetrwSaveWordPosn().
-fun! s:NetrwRestoreWordPosn()
+function s:NetrwRestoreWordPosn()
     sil! call search(s:netrw_saveword,'w')
-endfun
+endfunction
 
 " s:RestoreBufVars: {{{2
-fun! s:RestoreBufVars()
+function s:RestoreBufVars()
 
     if exists("s:netrw_curdir")        |let b:netrw_curdir         = s:netrw_curdir        |endif
     if exists("s:netrw_lastfile")      |let b:netrw_lastfile       = s:netrw_lastfile      |endif
@@ -9588,10 +9517,10 @@ fun! s:RestoreBufVars()
     if exists("s:netrw_machine")       |let b:netrw_machine        = s:netrw_machine       |endif
     if exists("s:netrw_browser_active")|let b:netrw_browser_active = s:netrw_browser_active|endif
 
-endfun
+endfunction
 
 " s:RemotePathAnalysis: {{{2
-fun! s:RemotePathAnalysis(dirname)
+function s:RemotePathAnalysis(dirname)
 
     "                method   ://    user  @      machine      :port            /path
     let dirpat  = '^\(\w\{-}\)://\(\(\w\+\)@\)\=\([^/:#]\+\)\%([:#]\(\d\+\)\)\=/\(.*\)$'
@@ -9608,14 +9537,14 @@ fun! s:RemotePathAnalysis(dirname)
     endif
 
 
-endfun
+endfunction
 
 " s:RemoteSystem: runs a command on a remote host using ssh {{{2
 "                 Returns status
 " Runs system() on
 "    [cd REMOTEDIRPATH;] a:cmd
 " Note that it doesn't do netrw#os#Escape(a:cmd)!
-fun! s:RemoteSystem(cmd)
+function s:RemoteSystem(cmd)
     if !executable(g:netrw_ssh_cmd)
         call netrw#msg#Notify('ERROR', printf('g:netrw_ssh_cmd<%s> is not executable!', g:netrw_ssh_cmd))
     elseif !exists("b:netrw_curdir")
@@ -9632,10 +9561,10 @@ fun! s:RemoteSystem(cmd)
         let ret= system(cmd)
     endif
     return ret
-endfun
+endfunction
 
 " s:RestoreWinVars: (used by Explore() and NetrwSplit()) {{{2
-fun! s:RestoreWinVars()
+function s:RestoreWinVars()
     if exists("s:bannercnt")      |let w:netrw_bannercnt       = s:bannercnt      |unlet s:bannercnt      |endif
     if exists("s:col")            |let w:netrw_col             = s:col            |unlet s:col            |endif
     if exists("s:curdir")         |let w:netrw_curdir          = s:curdir         |unlet s:curdir         |endif
@@ -9654,7 +9583,7 @@ fun! s:RestoreWinVars()
     if exists("s:treedict")       |let w:netrw_treedict        = s:treedict       |unlet s:treedict       |endif
     if exists("s:treetop")        |let w:netrw_treetop         = s:treetop        |unlet s:treetop        |endif
     if exists("s:winnr")          |let w:netrw_winnr           = s:winnr          |unlet s:winnr          |endif
-endfun
+endfunction
 
 " s:Rexplore: implements returning from a buffer to a netrw directory {{{2
 "
@@ -9664,7 +9593,7 @@ endfun
 "             s:netrw_posn is set up by s:NetrwBrowseChgDir()
 "
 "             s:rexposn_BUFNR used to save/restore cursor position
-fun! s:NetrwRexplore(islocal,dirname)
+function s:NetrwRexplore(islocal,dirname)
     if exists("s:netrwdrag")
         return
     endif
@@ -9709,11 +9638,11 @@ fun! s:NetrwRexplore(islocal,dirname)
         endif
     endif
 
-endfun
+endfunction
 
 " s:SaveBufVars: save selected b: variables to s: variables {{{2
 "                use s:RestoreBufVars() to restore b: variables from s: variables
-fun! s:SaveBufVars()
+function s:SaveBufVars()
 
     if exists("b:netrw_curdir")        |let s:netrw_curdir         = b:netrw_curdir        |endif
     if exists("b:netrw_lastfile")      |let s:netrw_lastfile       = b:netrw_lastfile      |endif
@@ -9722,10 +9651,10 @@ fun! s:SaveBufVars()
     if exists("b:netrw_machine")       |let s:netrw_machine        = b:netrw_machine       |endif
     if exists("b:netrw_browser_active")|let s:netrw_browser_active = b:netrw_browser_active|endif
 
-endfun
+endfunction
 
 " s:SavePosn: saves position associated with current buffer into a dictionary {{{2
-fun! s:SavePosn(posndict)
+function s:SavePosn(posndict)
 
     if !exists("a:posndict[bufnr('%')]")
         let a:posndict[bufnr("%")]= []
@@ -9733,10 +9662,10 @@ fun! s:SavePosn(posndict)
     call add(a:posndict[bufnr("%")],winsaveview())
 
     return a:posndict
-endfun
+endfunction
 
 " s:RestorePosn: restores position associated with current buffer using dictionary {{{2
-fun! s:RestorePosn(posndict)
+function s:RestorePosn(posndict)
     if exists("a:posndict")
         if has_key(a:posndict,bufnr("%"))
             let posnlen= len(a:posndict[bufnr("%")])
@@ -9747,10 +9676,10 @@ fun! s:RestorePosn(posndict)
             endif
         endif
     endif
-endfun
+endfunction
 
 " s:SaveWinVars: (used by Explore() and NetrwSplit()) {{{2
-fun! s:SaveWinVars()
+function s:SaveWinVars()
     if exists("w:netrw_bannercnt")      |let s:bannercnt       = w:netrw_bannercnt      |endif
     if exists("w:netrw_col")            |let s:col             = w:netrw_col            |endif
     if exists("w:netrw_curdir")         |let s:curdir          = w:netrw_curdir         |endif
@@ -9769,7 +9698,7 @@ fun! s:SaveWinVars()
     if exists("w:netrw_treedict")       |let s:treedict        = w:netrw_treedict       |endif
     if exists("w:netrw_treetop")        |let s:treetop         = w:netrw_treetop        |endif
     if exists("w:netrw_winnr")          |let s:winnr           = w:netrw_winnr          |endif
-endfun
+endfunction
 
 " s:SetBufWinVars: (used by NetrwBrowse() and LocalBrowseCheck()) {{{2
 "   To allow separate windows to have their own activities, such as
@@ -9777,7 +9706,7 @@ endfun
 "   However, when the user splits a browser window (ex: ctrl-w s), these
 "   variables are not inherited by the new window.  SetBufWinVars() and
 "   UseBufWinVars() get around that.
-fun! s:SetBufWinVars()
+function s:SetBufWinVars()
     if exists("w:netrw_liststyle")      |let b:netrw_liststyle      = w:netrw_liststyle      |endif
     if exists("w:netrw_bannercnt")      |let b:netrw_bannercnt      = w:netrw_bannercnt      |endif
     if exists("w:netrw_method")         |let b:netrw_method         = w:netrw_method         |endif
@@ -9788,17 +9717,17 @@ fun! s:SetBufWinVars()
     if exists("w:netrw_explore_bufnr")  |let b:netrw_explore_bufnr  = w:netrw_explore_bufnr  |endif
     if exists("w:netrw_explore_line")   |let b:netrw_explore_line   = w:netrw_explore_line   |endif
     if exists("w:netrw_explore_list")   |let b:netrw_explore_list   = w:netrw_explore_list   |endif
-endfun
+endfunction
 
 " s:SetRexDir: set directory for :Rexplore {{{2
-fun! s:SetRexDir(islocal,dirname)
+function s:SetRexDir(islocal,dirname)
     let w:netrw_rexdir         = a:dirname
     let w:netrw_rexlocal       = a:islocal
     let s:rexposn_{bufnr("%")} = winsaveview()
-endfun
+endfunction
 
 " s:ShowLink: used to modify thin and tree listings to show links {{{2
-fun! s:ShowLink()
+function s:ShowLink()
     if exists("b:netrw_curdir")
         keepp :norm! $?\a
         "call histdel("/",-1)
@@ -9818,10 +9747,10 @@ fun! s:ShowLink()
         call setline(".",modline)
         setl ro noma nomod
     endif
-endfun
+endfunction
 
 " s:ShowStyle: {{{2
-fun! s:ShowStyle()
+function s:ShowStyle()
     if !exists("w:netrw_liststyle")
         let liststyle= g:netrw_liststyle
     else
@@ -9838,10 +9767,10 @@ fun! s:ShowStyle()
     else
         return 'n/a'
     endif
-endfun
+endfunction
 
 " s:TreeListMove: supports [[, ]], [], and ][ in tree mode {{{2
-fun! s:TreeListMove(dir)
+function s:TreeListMove(dir)
     let curline      = getline('.')
     let prvline      = (line(".") > 1)?         getline(line(".")-1) : ''
     let nxtline      = (line(".") < line("$"))? getline(line(".")+1) : ''
@@ -9866,13 +9795,13 @@ fun! s:TreeListMove(dir)
         endif
     endif
 
-endfun
+endfunction
 
 " s:UpdateBuffersMenu: does emenu Buffers.Refresh (but due to locale, the menu item may not be called that) {{{2
 "                      The Buffers.Refresh menu calls s:BMShow(); unfortunately, that means that that function
 "                      can't be called except via emenu.  But due to locale, that menu line may not be called
 "                      Buffers.Refresh; hence, s:NetrwBMShow() utilizes a "cheat" to call that function anyway.
-fun! s:UpdateBuffersMenu()
+function s:UpdateBuffersMenu()
     if has("gui") && has("menu") && has("gui_running") && &go =~# 'm' && g:netrw_menu
         try
             sil emenu Buffers.Refresh\ menu
@@ -9881,11 +9810,11 @@ fun! s:UpdateBuffersMenu()
             sil NetrwKeepj call s:NetrwBMShow()
         endtry
     endif
-endfun
+endfunction
 
 " s:UseBufWinVars: (used by NetrwBrowse() and LocalBrowseCheck() {{{2
 "              Matching function to s:SetBufWinVars()
-fun! s:UseBufWinVars()
+function s:UseBufWinVars()
     if exists("b:netrw_liststyle")       && !exists("w:netrw_liststyle")      |let w:netrw_liststyle       = b:netrw_liststyle      |endif
     if exists("b:netrw_bannercnt")       && !exists("w:netrw_bannercnt")      |let w:netrw_bannercnt       = b:netrw_bannercnt      |endif
     if exists("b:netrw_method")          && !exists("w:netrw_method")         |let w:netrw_method          = b:netrw_method         |endif
@@ -9896,13 +9825,13 @@ fun! s:UseBufWinVars()
     if exists("b:netrw_explore_bufnr")   && !exists("w:netrw_explore_bufnr")  |let w:netrw_explore_bufnr   = b:netrw_explore_bufnr  |endif
     if exists("b:netrw_explore_line")    && !exists("w:netrw_explore_line")   |let w:netrw_explore_line    = b:netrw_explore_line   |endif
     if exists("b:netrw_explore_list")    && !exists("w:netrw_explore_list")   |let w:netrw_explore_list    = b:netrw_explore_list   |endif
-endfun
+endfunction
 
 " s:UserMaps: supports user-defined UserMaps {{{2
 "               * calls a user-supplied funcref(islocal,curdir)
 "               * interprets result
 "             See netrw#UserMaps()
-fun! s:UserMaps(islocal,funcname)
+function s:UserMaps(islocal,funcname)
     if !exists("b:netrw_curdir")
         let b:netrw_curdir= getcwd()
     endif
@@ -9927,7 +9856,7 @@ fun! s:UserMaps(islocal,funcname)
             endif
         endfor
     endif
-endfun
+endfunction
 
 " Deprecated: {{{1
 
