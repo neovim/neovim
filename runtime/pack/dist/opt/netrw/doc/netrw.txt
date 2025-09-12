@@ -1435,7 +1435,7 @@ With a "dirname", the specified directory name is used.
 The "gn" map will take the word below the cursor and use that for
 changing the top of the tree listing.
 
-
+							*netrw-curdir*
 DELETING BOOKMARKS					*netrw-mB* {{{2
 
 To delete a bookmark, use >
