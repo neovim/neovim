@@ -4,6 +4,7 @@
 " Last Change:
 " 2025 Aug 07 by Vim Project (use correct "=~#" for netrw_stylesize option #17901)
 " 2025 Aug 07 by Vim Project (netrw#BrowseX() distinguishes remote files #17794)
+" 2025 Aug 22 by Vim Project netrw#Explore handle terminal correctly #18069
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -430,9 +431,12 @@ function netrw#Explore(indx,dosplit,style,...)
 
   " record current directory
   let curdir     = simplify(b:netrw_curdir)
-  let curfiledir = substitute(expand("%:p"),'^\(.*[/\\]\)[^/\\]*$','\1','e')
   if !exists("g:netrw_cygwin") && has("win32")
     let curdir= substitute(curdir,'\','/','g')
+  endif
+  let curfiledir = substitute(expand("%:p"),'^\(.*[/\\]\)[^/\\]*$','\1','e')
+  if &buftype == "terminal"
+      let curfiledir = curdir
   endif
 
   " using completion, directories with spaces in their names (thanks, Bill Gates, for a truly dumb idea)
@@ -456,9 +460,9 @@ function netrw#Explore(indx,dosplit,style,...)
   sil! let keepregslash= @/
 
   " if   dosplit
-  " -or- file has been modified AND file not hidden when abandoned
+  " -or- buffer is not a terminal AND file has been modified AND file not hidden when abandoned
   " -or- Texplore used
-  if a:dosplit || (&modified && &hidden == 0 && &bufhidden != "hide") || a:style == 6
+  if a:dosplit || (&buftype != "terminal" && &modified && &hidden == 0 && &bufhidden != "hide") || a:style == 6
     call s:SaveWinVars()
     let winsz= g:netrw_winsize
     if a:indx > 0
