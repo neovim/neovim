@@ -5296,30 +5296,32 @@ endfun
 " ---------------------------------------------------------------------
 "  s:NetrwHome: this function determines a "home" for saving bookmarks and history {{{2
 function! s:NetrwHome()
-  if has('nvim')
-    let home = netrw#own#PathJoin(stdpath('state'), 'netrw')
-  elseif exists("g:netrw_home")
-    let home = expand(g:netrw_home)
-  else
-    let home = expand("$MYVIMDIR")->substitute("/$", "", "")
-  endif
-
-  " insure that the home directory exists
-  if g:netrw_dirhistmax > 0 && !isdirectory(s:NetrwFile(home))
-    if exists("g:netrw_mkdir")
-      call system(g:netrw_mkdir." ".s:ShellEscape(s:NetrwFile(home)))
+    if has('nvim')
+        let home = netrw#own#PathJoin(stdpath('state'), 'netrw')
+    elseif exists('g:netrw_home')
+        let home = expand(g:netrw_home)
+    elseif exists('$MYVIMDIR')
+        let home = expand('$MYVIMDIR')->substitute('/$', '', '')
     else
-      call mkdir(home)
+        let home = netrw#own#PathJoin(expand('~'), '.vim')
     endif
-  endif
 
-  " Normalize directory if on Windows
-  if has("win32")
-    let home = substitute(home, '/', '\\', 'g')
-  endif
+    " insure that the home directory exists
+    if g:netrw_dirhistmax > 0 && !isdirectory(s:NetrwFile(home))
+        if exists("g:netrw_mkdir")
+            call system(g:netrw_mkdir." ".s:ShellEscape(s:NetrwFile(home)))
+        else
+            call mkdir(home)
+        endif
+    endif
 
-  let g:netrw_home = home
-  return home
+    " Normalize directory if on Windows
+    if has("win32")
+        let home = substitute(home, '/', '\\', 'g')
+    endif
+
+    let g:netrw_home = home
+    return home
 endfunction
 
 " ---------------------------------------------------------------------
