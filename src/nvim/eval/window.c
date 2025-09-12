@@ -27,10 +27,12 @@
 #include "nvim/move.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "eval/window.c.generated.h"
 
@@ -346,6 +348,35 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("quickfix"), bt_quickfix(wp->w_buffer));
   tv_dict_add_nr(dict, S_LEN("loclist"),
                  (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL));
+
+  dict_T *scrollbar_dict = tv_dict_alloc();
+  tv_dict_add_nr(scrollbar_dict, S_LEN("visible"), wp->w_has_scrollbar);
+
+  if (wp->w_has_scrollbar) {
+    int height = wp->w_view_height;
+    linenr_T end_lnum = wp->w_buffer->b_ml.ml_line_count;
+    int64_t end_vcol = -1;
+    int total_lines = (int)win_text_height(wp, 1, -1, &end_lnum, &end_vcol, NULL, INT64_MAX);
+    int scroll_offset = 0;
+    if (wp->w_topline > 1) {
+      end_lnum = wp->w_topline - 1;
+      end_vcol = -1;
+      scroll_offset = (int)win_text_height(wp, 1, -1, &end_lnum, &end_vcol, NULL, INT64_MAX);
+    }
+
+    tv_dict_add_nr(scrollbar_dict, S_LEN("total_lines"), total_lines);
+    tv_dict_add_nr(scrollbar_dict, S_LEN("visible_lines"), height);
+    tv_dict_add_nr(scrollbar_dict, S_LEN("scroll_offset"), scroll_offset);
+
+    if (total_lines > height) {
+      double scroll_ratio = (double)scroll_offset / (total_lines - height);
+      double visible_ratio = (double)height / total_lines;
+      tv_dict_add_float(scrollbar_dict, S_LEN("scroll_ratio"), scroll_ratio);
+      tv_dict_add_float(scrollbar_dict, S_LEN("visible_ratio"), visible_ratio);
+    }
+  }
+
+  tv_dict_add_dict(dict, S_LEN("scrollbar"), scrollbar_dict);
 
   // Add a reference to window variables
   tv_dict_add_dict(dict, S_LEN("variables"), wp->w_vars);

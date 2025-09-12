@@ -4056,6 +4056,33 @@ function vim.fn.gettext(text) end
 ---   winnr    window number
 ---   winrow    topmost screen line of the window;
 ---       "row" from |win_screenpos()|
+---   scrollbar  Dictionary with scrollbar information. Only
+---       present when the window has a scrollbar.
+---
+--- Each item in the scrollbar is a dictionary with the following
+--- entries:
+---   visible         Whether scrollbar is displayed
+---   total_lines     Accounts for line wrapping and folds.
+---   visible_lines   Window height in lines
+---   scroll_offset   Screen lines from top to w_topline
+---   scroll_ratio    Scroll position as ratio:
+---                   scroll_offset / (total_lines - visible_lines)
+---                   (Float, 0.0 to 1.0)
+---   visible_ratio   Visible portion as ratio:
+---                   visible_lines / total_lines (Float)
+---
+---   Example: Calculate relative scroll position for a given
+---   line number: >lua
+---     function line_to_scroll_position(winid, lnum)
+---       local info = vim.fn.getwininfo(winid)[1]
+---       local sb = info.scrollbar
+---       if not sb.visible then
+---         return nil
+---       end
+---       local offset = vim.fn.win_text_height(winid, 1, lnum)
+---       return offset / sb.total_lines
+---     end
+---   <
 ---
 --- @param winid? integer
 --- @return vim.fn.getwininfo.ret.item[]

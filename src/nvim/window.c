@@ -1655,6 +1655,7 @@ void win_init(win_T *newp, win_T *oldp, int flags)
   win_init_some(newp, oldp);
 
   newp->w_winbar_height = oldp->w_winbar_height;
+  newp->w_p_scrollbar = oldp->w_p_scrollbar;
 }
 
 // Initialize window "newp" from window "old".
@@ -6768,7 +6769,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   }
 
   wp->w_height_outer = (wp->w_view_height + win_border_height(wp) + wp->w_winbar_height);
-  wp->w_width_outer = (wp->w_view_width + win_border_width(wp));
+  wp->w_width_outer = (wp->w_view_width + win_border_width(wp) + win_scrollbar_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
 
@@ -6787,6 +6788,9 @@ void win_new_width(win_T *wp, int width)
   // Should we give an error if width < 0?
   wp->w_width = width < 0 ? 0 : width;
   wp->w_pos_changed = true;
+  if (wp->w_has_scrollbar && !wp->w_floating) {
+    wp->w_width -= 1;
+  }
   win_set_inner_size(wp, true);
 }
 

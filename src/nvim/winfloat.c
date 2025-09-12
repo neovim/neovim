@@ -9,6 +9,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
@@ -24,6 +25,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -178,6 +180,15 @@ int win_border_width(win_T *wp)
   return wp->w_border_adj[1] + wp->w_border_adj[3];
 }
 
+int win_scrollbar_width(win_T *wp)
+{
+  if (wp->w_floating) {
+    return wp->w_has_scrollbar ? (wp->w_border_adj[1] ? 0 : 1) : 0;
+  } else {
+    return (int)wp->w_has_scrollbar;
+  }
+}
+
 void win_config_float(win_T *wp, WinConfig fconfig)
 {
   wp->w_width = MAX(fconfig.width, 1);
@@ -320,6 +331,11 @@ void win_reconfig_floats(void)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     win_config_float(wp, wp->w_config);
+    if (wp->w_has_scrollbar && !wp->w_config.border) {
+      wp->w_width_request = wp->w_width - 1;
+      win_set_inner_size(wp, false);
+      wp->w_width_request = 0;
+    }
   }
 }
 
@@ -436,4 +452,48 @@ win_T *win_float_create(bool enter, bool new_buf)
     win_enter(wp, false);
   }
   return wp;
+}
+
+void win_update_scrollbar_state(win_T *wp, int *thumb_pos, int *thumb_size)
+{
+  if (bt_terminal(wp->w_buffer) || bt_quickfix(wp->w_buffer) || bt_prompt(wp->w_buffer)) {
+    return;
+  }
+
+  bool before_has = wp->w_has_scrollbar;
+  int height = wp->w_view_height;
+  linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+
+  linenr_T end_lnum = line_count;
+  int64_t end_vcol = -1;
+  int64_t total_lines = win_text_height(wp, 1, -1, &end_lnum, &end_vcol, NULL, INT64_MAX);
+  bool content_fits = (wp->w_topline == 1 && total_lines <= height);
+
+  wp->w_has_scrollbar = wp->w_p_scrollbar && (wp->w_topline > 1 || !content_fits);
+
+  if (before_has != wp->w_has_scrollbar) {
+    if (wp->w_has_scrollbar) {
+      wp->w_width_request = wp->w_width - 1;
+    } else {
+      wp->w_width_request = wp->w_width;
+    }
+    win_set_inner_size(wp, false);
+    wp->w_width_request = 0;
+  }
+
+  if (wp->w_has_scrollbar && total_lines > height && thumb_pos && thumb_size) {
+    double visible_ratio = (double)height / (double)total_lines;
+    int min_thumb = MAX(1, height / 10);
+    *thumb_size = MAX(min_thumb, (int)(visible_ratio * height));
+    int scrollable_area = height - *thumb_size;
+    int scroll_offset = 0;
+    if (wp->w_topline > 1) {
+      end_lnum = wp->w_topline - 1;
+      end_vcol = -1;
+      scroll_offset = (int)win_text_height(wp, 1, -1, &end_lnum, &end_vcol, NULL, INT64_MAX);
+    }
+
+    *thumb_pos = scroll_offset * scrollable_area / ((int)total_lines - height);
+    *thumb_pos = MIN(*thumb_pos, scrollable_area);
+  }
 }

@@ -120,6 +120,7 @@
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 /// corner value flags for hsep_connected and vsep_connected
 typedef enum {
@@ -743,6 +744,50 @@ void end_search_hl(void)
 
   vim_regfree(screen_search_hl.rm.regprog);
   screen_search_hl.rm.regprog = NULL;
+}
+
+static void win_draw_scrollbar(win_T *wp)
+{
+  bool before_has = wp->w_has_scrollbar;
+  int thumb_pos = 0;
+  int thumb_size = 0;
+  win_update_scrollbar_state(wp, &thumb_pos, &thumb_size);
+  if (!before_has && !wp->w_has_scrollbar) {
+    return;
+  }
+
+  int height = wp->w_view_height;
+  int scrollbar_col = 0;
+  ScreenGrid *grid = NULL;
+  if (wp->w_floating) {
+    grid = &wp->w_grid_alloc;
+    scrollbar_col = wp->w_view_width + wp->w_border_adj[3];
+  } else {
+    grid = &default_grid;
+    scrollbar_col = wp->w_wincol + wp->w_view_width;
+  }
+
+  schar_T border_char = schar_from_str(wp->w_config.border_chars[3]);
+  int border_attr = wp->w_config.border_attr[3];
+  int thumb_attr = win_hl_attr(wp, HLF_SBT);
+  int bar_attr = win_hl_attr(wp, HLF_SBR);
+  schar_T fill_char = schar_from_ascii(' ');
+  bool has_border = wp->w_config.border;
+
+  for (int i = 0; i < height; i++) {
+    int row = i + wp->w_border_adj[0];
+    screengrid_line_start(grid, row, 0);
+
+    if (wp->w_has_scrollbar) {
+      bool is_thumb = (i >= thumb_pos && i < thumb_pos + thumb_size);
+      grid_line_put_schar(scrollbar_col,
+                          is_thumb ? fill_char : (has_border ? border_char : fill_char),
+                          is_thumb ? thumb_attr : (has_border ? border_attr : bar_attr));
+    } else if (has_border) {
+      grid_line_put_schar(scrollbar_col, border_char, border_attr);
+    }
+    grid_line_flush();
+  }
 }
 
 /// Set cursor to its position in the current window.
@@ -2376,6 +2421,10 @@ redr_statuscol:
   wp->w_redr_type = 0;
   wp->w_old_topfill = wp->w_topfill;
   wp->w_old_botfill = wp->w_botfill;
+
+  if (wp->w_p_scrollbar) {
+    win_draw_scrollbar(wp);
+  }
 
   // Send win_extmarks if needed
   for (size_t n = 0; n < kv_size(win_extmark_arr); n++) {
