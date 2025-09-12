@@ -334,13 +334,13 @@ func Test_printf_pos_errors()
   call CheckLegacyAndVim9Failure(["call printf('%1$*123456789$.*987654321$d', 5)"], "E1510:")
   call CheckLegacyAndVim9Failure(["call printf('%123456789$*1$.*987654321$d', 5)"], "E1510:")
 
-  call CheckLegacyAndVim9Failure(["call printf('%1$*2$.*1$d', 5, 9999)"], "E1510:")
-  call CheckLegacyAndVim9Failure(["call printf('%1$*1$.*2$d', 5, 9999)"], "E1510:")
-  call CheckLegacyAndVim9Failure(["call printf('%2$*3$.*1$d', 5, 9123, 9321)"], "E1510:")
-  call CheckLegacyAndVim9Failure(["call printf('%1$*2$.*3$d', 5, 9123, 9321)"], "E1510:")
-  call CheckLegacyAndVim9Failure(["call printf('%2$*1$.*3$d', 5, 9123, 9312)"], "E1510:")
+  call CheckLegacyAndVim9Failure(["call printf('%1$*2$.*1$d', 5, 9999999)"], "E1510:")
+  call CheckLegacyAndVim9Failure(["call printf('%1$*1$.*2$d', 5, 9999999)"], "E1510:")
+  call CheckLegacyAndVim9Failure(["call printf('%2$*3$.*1$d', 5, 9999123, 9999321)"], "E1510:")
+  call CheckLegacyAndVim9Failure(["call printf('%1$*2$.*3$d', 5, 9999123, 9999321)"], "E1510:")
+  call CheckLegacyAndVim9Failure(["call printf('%2$*1$.*3$d', 5, 9999123, 9999312)"], "E1510:")
 
-  call CheckLegacyAndVim9Failure(["call printf('%1$*2$d', 5, 9999)"], "E1510:")
+  call CheckLegacyAndVim9Failure(["call printf('%1$*2$d', 5, 9999999)"], "E1510:")
 endfunc
 
 func Test_printf_pos_64bit()

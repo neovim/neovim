@@ -82,7 +82,7 @@ describe('treesitter node API', function()
     ]])
 
     exec_lua(function()
-      local parser = vim.treesitter.get_parser(0, 'c')
+      local parser = assert(vim.treesitter.get_parser(0, 'c'))
       local tree = parser:parse()[1]
       _G.root = tree:root()
       vim.treesitter.language.inspect('c')
@@ -92,7 +92,7 @@ describe('treesitter node API', function()
       end
     end)
 
-    exec_lua 'node = root:descendant_for_range(0, 11, 0, 16)'
+    exec_lua 'node = root:descendant_for_range(0, 9, 0, 14)'
     eq('int x', lua_eval('node_text(node)'))
 
     exec_lua 'node = node:next_sibling()'

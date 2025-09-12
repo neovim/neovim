@@ -1,0 +1,65 @@
+.{
+    .name = .neovim,
+    .fingerprint = 0x66eb090879307a38,
+    .version = "0.12.0",
+    .minimum_zig_version = "0.14.0",
+
+    .dependencies = .{
+        .lua_wrapper = .{
+            .url = "git+https://github.com/natecraddock/ziglua#7bfb3c2b87220cdc89ef01cc99a200dad7a28e50",
+            .hash = "lua_wrapper-0.1.0-OyMC27fOBAAU3E2ueB-EWGSgsuCFQZL83pT0nQJ1ufOI",
+        },
+        .lpeg = .{
+            .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
+            .hash = "122084badadeb91106dd06b2055119a944c340563536caefd8e22d4064182f7cd6e6",
+        },
+        .luv = .{
+            .url = "git+https://github.com/luvit/luv?ref=1.51.0-1#4c9fbc6cf6f3338bb0e0426710cf885ee557b540",
+            .hash = "N-V-__8AAMlNDwCY07jUoMiq3iORXdZy0uFWKiHsy8MaDBJA",
+        },
+        .lua_compat53 = .{
+            .url = "https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz",
+            .hash = "1220e75685f00c242fbf6c1c60e98dd1b24ba99e38277970a10636e44ed08cf2af8a",
+        },
+        .treesitter = .{
+            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.6#50622f71f87fa97f1ec463f83447d524d5156286",
+            .hash = "tree_sitter-0.26.0-Tw2sR965CwDPmv5Xf5TZ9MiqGP_CasCBRJE5252Vs_tA",
+        },
+        .libuv = .{ .path = "./deps/libuv" },
+        .utf8proc = .{ .path = "./deps/utf8proc/" },
+        .unibilium = .{ .path = "./deps/unibilium/" },
+        .iconv_apple = .{ .path = "./deps/iconv_apple/", .lazy = true },
+        .lua_dev_deps = .{
+            .url = "https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz",
+            .hash = "N-V-__8AAGevEQCHAkCozca5AIdN9DFc3Luf3g3r2AcbyOrm",
+        },
+        .treesitter_c = .{
+            .url = "git+https://github.com/tree-sitter/tree-sitter-c?ref=v0.24.1#7fa1be1b694b6e763686793d97da01f36a0e5c12",
+            .hash = "N-V-__8AANxPSABzw3WBTSH_YkwaGAfrK6PBqAMqQedkDDim",
+        },
+        .treesitter_markdown = .{
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-markdown?ref=v0.5.0#afaa4138517363362f54c89330c9d79391e81168",
+            .hash = "N-V-__8AAIIZUwD3CGdyI2DiHu7Suj2jIF_EAVlM6REFGwju",
+        },
+        .treesitter_lua = .{
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-lua?ref=v0.4.0#4569d1c361129e71a205b94a05e158bd71b1709f",
+            .hash = "N-V-__8AAEF5CABqSL9zqc03aQsT6Nni54ZCcL98pnuDL2D3",
+        },
+        .treesitter_vim = .{
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-vim?ref=v0.6.0#2f9e2be0a3af4999f615d69a6261efc699e5985c",
+            .hash = "N-V-__8AAHIQUwAO7lkXegMUhQxMCiIltH69Kgcpo17B0K6z",
+        },
+        .treesitter_vimdoc = .{
+            .url = "git+https://github.com/neovim/tree-sitter-vimdoc?ref=v4.0.0#9f6191a98702edc1084245abd5523279d4b681fb",
+            .hash = "N-V-__8AAI4YCgD7OqxCEAmz2RqT_ohl6eA4F0fGMtLIe7nb",
+        },
+        .treesitter_query = .{
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.6.1#892ebd701a79be0412ff1478177030a725d0c7b7",
+            .hash = "N-V-__8AAGhSBABzxHSGplnXv-x-Ax8TRrRe6QaPo0gSplIz",
+        },
+    },
+    .paths = .{
+        // TODO(bfredl): explicitly list the subdirs which actually are used
+        "",
+    },
+}

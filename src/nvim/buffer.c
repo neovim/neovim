@@ -480,11 +480,6 @@ static bool can_unload_buffer(buf_T *buf)
   return can_unload;
 }
 
-bool buf_locked(buf_T *buf)
-{
-  return buf->b_locked || buf->b_locked_split;
-}
-
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -1300,11 +1295,17 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     return FAIL;
   }
 
-  if (action == DOBUF_GOTO
-      && buf != curbuf
-      && !check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) ? true : false)) {
-    // disallow navigating to another buffer when 'winfixbuf' is applied
-    return FAIL;
+  if (action == DOBUF_GOTO && buf != curbuf) {
+    if (!check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) != 0)) {
+      // disallow navigating to another buffer when 'winfixbuf' is applied
+      return FAIL;
+    }
+    if (buf->b_locked_split) {
+      // disallow navigating to a closing buffer, which like splitting,
+      // can result in more windows displaying it
+      emsg(_(e_cannot_switch_to_a_closing_buffer));
+      return FAIL;
+    }
   }
 
   if ((action == DOBUF_GOTO || action == DOBUF_SPLIT) && (buf->b_flags & BF_DUMMY)) {
@@ -1772,6 +1773,10 @@ void enter_buffer(buf_T *buf)
   }
   curbuf->b_last_used = time(NULL);
 
+  if (curbuf->terminal != NULL) {
+    terminal_check_size(curbuf->terminal);
+  }
+
   redraw_later(curwin, UPD_NOT_VALID);
 }
 
@@ -1899,17 +1904,20 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   // buffer.)
   buf = NULL;
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
+    bufref_T bufref;
+
     assert(curbuf != NULL);
     buf = curbuf;
+    set_bufref(&bufref, buf);
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
     buf_freeall(buf, BFA_WIPE | BFA_DEL);
-    if (buf != curbuf) {  // autocommands deleted the buffer!
-      return NULL;
-    }
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
       return NULL;
+    }
+    if (!bufref_valid(&bufref)) {
+      buf = NULL;  // buf was deleted; allocate a new buffer
     }
   }
   if (buf != curbuf || curbuf == NULL) {
@@ -1954,7 +1962,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     pmap_put(int)(&buffer_handles, buf->b_fnum, buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
       emsg(_("W14: Warning: List of file names overflow"));
-      if (emsg_silent == 0 && !in_assert_fails) {
+      if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
         ui_flush();
         os_delay(3001, true);  // make sure it is noticed
       }
@@ -2083,12 +2091,14 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_cinw);
   clear_string_option(&buf->b_p_cot);
   clear_string_option(&buf->b_p_cpt);
+  clear_string_option(&buf->b_p_ise);
   clear_string_option(&buf->b_p_cfu);
   callback_free(&buf->b_cfu_cb);
   clear_string_option(&buf->b_p_ofu);
   callback_free(&buf->b_ofu_cb);
   clear_string_option(&buf->b_p_tsrfu);
   callback_free(&buf->b_tsrfu_cb);
+  clear_string_option(&buf->b_p_gefm);
   clear_string_option(&buf->b_p_gp);
   clear_string_option(&buf->b_p_mp);
   clear_string_option(&buf->b_p_efm);
@@ -4135,5 +4145,56 @@ void buf_set_changedtick(buf_T *const buf, const varnumber_T changedtick)
                            (char *)buf->changedtick_di.di_key,
                            &buf->changedtick_di.di_tv,
                            &old_val);
+  }
+}
+
+/// Read the given buffer contents into a string.
+void read_buffer_into(buf_T *buf, linenr_T start, linenr_T end, StringBuilder *sb)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(buf);
+  assert(sb);
+
+  if (buf->b_ml.ml_flags & ML_EMPTY) {
+    return;
+  }
+
+  size_t written = 0;
+  size_t len = 0;
+  linenr_T lnum = start;
+  char *lp = ml_get_buf(buf, lnum);
+  size_t lplen = (size_t)ml_get_buf_len(buf, lnum);
+
+  while (true) {
+    if (lplen == 0) {
+      len = 0;
+    } else if (lp[written] == NL) {
+      // NL -> NUL translation
+      len = 1;
+      kv_push(*sb, NUL);
+    } else {
+      char *s = vim_strchr(lp + written, NL);
+      len = s == NULL ? lplen - written : (size_t)(s - (lp + written));
+      kv_concat_len(*sb, lp + written, len);
+    }
+
+    if (len == lplen - written) {
+      // Finished a line, add a NL, unless this line should not have one.
+      if (lnum != end
+          || (!buf->b_p_bin && buf->b_p_fixeol)
+          || (lnum != buf->b_no_eol_lnum
+              && (lnum != buf->b_ml.ml_line_count || buf->b_p_eol))) {
+        kv_push(*sb, NL);
+      }
+      lnum++;
+      if (lnum > end) {
+        break;
+      }
+      lp = ml_get_buf(buf, lnum);
+      lplen = (size_t)ml_get_buf_len(buf, lnum);
+      written = 0;
+    } else if (len > 0) {
+      written += len;
+    }
   }
 }

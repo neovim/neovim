@@ -16,6 +16,7 @@
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/window.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memline.h"
@@ -381,7 +382,7 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
   int winid;
   bool found_buf = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    winnr++;
+    winnr += win_has_winnr(wp);
     if (wp->w_buffer == buf) {
       found_buf = true;
       winid = wp->handle;

@@ -146,6 +146,7 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_CTRL-N|	CTRL-X CTRL-N	next completion
 |i_CTRL-X_CTRL-O|	CTRL-X CTRL-O	omni completion
 |i_CTRL-X_CTRL-P|	CTRL-X CTRL-P	previous completion
+|i_CTRL-X_CTRL-R|	CTRL-X CTRL-R	complete contents from registers
 |i_CTRL-X_CTRL-S|	CTRL-X CTRL-S	spelling suggestions
 |i_CTRL-X_CTRL-T|	CTRL-X CTRL-T	complete identifiers from thesaurus
 |i_CTRL-X_CTRL-Y|	CTRL-X CTRL-Y	scroll down
@@ -786,8 +787,7 @@ tag		char	      note action in Normal mode	~
 |gu|		gu{motion}	2  make Nmove text lowercase
 |gv|		gv		   reselect the previous Visual area
 |gw|		gw{motion}	2  format Nmove text and keep cursor
-|netrw-gx|	gx		   execute application for file name under the
-				   cursor (only with |netrw| plugin)
+|gx|		gx		   execute application for filepath at cursor
 |g@|		g@{motion}	   call 'operatorfunc'
 |g~|		g~{motion}	2  swap case for Nmove text
 |g<Down>|	g<Down>		1  same as "gj"
@@ -1349,6 +1349,8 @@ tag		command		action ~
 |:inoreabbrev|	:inorea[bbrev]	like ":noreabbrev" but for Insert mode
 |:inoremenu|	:inoreme[nu]	like ":noremenu" but for Insert mode
 |:intro|	:int[ro]	print the introductory message
+|:iput|		:ip[ut]		like |:put|, but adjust the indent to the
+				current line
 |:isearch|	:is[earch]	list one line where identifier matches
 |:isplit|	:isp[lit]	split window and jump to definition of
 				identifier

@@ -68,9 +68,11 @@ The main Vim window can hold several split windows.  There are also tab pages
 If a window is focusable, it is part of the "navigation stack", that is,
 editor commands such as :windo, |CTRL-W|, etc., will consider the window as
 one that can be made the "current window". A non-focusable window will be
-skipped by such commands (though it can be explicitly focused by
-|nvim_set_current_win()|). Non-focusable windows are not listed by |:tabs|, and
-are not counted by the default 'tabline'.
+skipped by such commands as it isn't assigned a window number. It can be
+explicitly focused by |nvim_set_current_win()|, because it is still
+assigned a |window-ID|. If it is focused, it will also have a window number.
+Non-focusable windows are not listed by |:tabs|, or counted by the default
+'tabline'. Their buffer content is not included in 'complete' "w" completion.
 
 Windows (especially floating windows) can have many other |api-win_config|
 properties such as "hide" and "fixed" which also affect behavior.
@@ -438,18 +440,17 @@ CTRL-W l	Move cursor to Nth window right of current one.  Uses the
 
 CTRL-W w					*CTRL-W_w* *CTRL-W_CTRL-W*
 CTRL-W CTRL-W	Without count: move cursor to the |focusable| window
-		below/right of the current one.  If there is no (focusable)
-		window below or right, go to top-left window. With count: go
-		to Nth window (windows are numbered from top-left to
-		bottom-right).  To obtain the window number see |bufwinnr()|
-		and |winnr()|.  When N is larger than the number of windows go
-		to the last window.
+		below/right of the current one.  If none, go to the top-left
+		window.  With count: go to Nth window (numbered top-left to
+		bottom-right), skipping unfocusable windows.  To obtain the
+		window number see |bufwinnr()| and |winnr()|.  When N is
+		larger than the number of windows go to the last focusable
+		window.
 
 						*CTRL-W_W*
 CTRL-W W	Without count: move cursor to the |focusable| window
-		above/left of current one.  If there is no window above or
-		left, go to bottom-right window.  With count: go to Nth
-		window, like with CTRL-W w.
+		above/left of current one.  If none, go to the bottom-right
+		window.  With count: go to Nth window, like CTRL-W w.
 
 CTRL-W t					*CTRL-W_t* *CTRL-W_CTRL-T*
 CTRL-W CTRL-T	Move cursor to top-left window.
@@ -1248,7 +1249,9 @@ list of buffers. |unlisted-buffer|
 		name also works, so long as it is unique in the list of
 		buffers.
 		Note that a buffer whose name is a number cannot be referenced
-		by that name; use the buffer number instead.
+		by that name; use the buffer number instead.  Same is true if
+		the buffer name starts with a `+`, it will be interpreted as
+		the start of a |+cmd|.
 		Insert a backslash before a space in a buffer name.
 		See |:buffer-!| for [!].
 		This will also edit a buffer that is not in the buffer list,
@@ -1272,7 +1275,7 @@ list of buffers. |unlisted-buffer|
 			:w foobar | sp #
 <		Also see |+cmd|.
 
-:[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *[b* *E87*
+:[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *E87*
 		Go to [N]th next buffer in buffer list.  [N] defaults to one.
 		Wraps around the end of the buffer list.
 		See |:buffer-!| for [!].
@@ -1284,13 +1287,20 @@ list of buffers. |unlisted-buffer|
 		the way when you're browsing code/text buffers.  The next three
 		commands also work like this.
 
+								*]b*
+]b		Mapped to |:bnext|. |default-mappings|
+
 							*:sbn* *:sbnext*
 :[N]sbn[ext] [+cmd] [N]
 		Split window and go to [N]th next buffer in buffer list.
 		Wraps around the end of the buffer list.  Uses 'switchbuf'
 		Also see |+cmd|.
 
-:[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *]b* *E88*
+:[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *E88*
+
+								*[b*
+[b		Mapped to |:bprevious|. |default-mappings|
+
 :[N]bp[revious][!] [+cmd] [N]
 		Go to [N]th previous buffer in buffer list.  [N] defaults to
 		one.  Wraps around the start of the buffer list.
@@ -1304,10 +1314,13 @@ list of buffers. |unlisted-buffer|
 		Uses 'switchbuf'.
 		Also see |+cmd|.
 
-:br[ewind][!] [+cmd]					*:br* *:bre* *:brewind* *[B*
+:br[ewind][!] [+cmd]					*:br* *:bre* *:brewind*
 		Go to first buffer in buffer list.  If the buffer list is
 		empty, go to the first unlisted buffer.
 		See |:buffer-!| for [!].
+
+								*[B*
+[B		Mapped to |:brewind|. |default-mappings|
 
 :bf[irst] [+cmd]					*:bf* *:bfirst*
 		Same as |:brewind|.
@@ -1322,10 +1335,13 @@ list of buffers. |unlisted-buffer|
 :sbf[irst] [+cmd]					*:sbf* *:sbfirst*
 		Same as ":sbrewind".
 
-:bl[ast][!] [+cmd]					*:bl* *:blast* *]B*
+:bl[ast][!] [+cmd]					*:bl* *:blast*
 		Go to last buffer in buffer list.  If the buffer list is
 		empty, go to the last unlisted buffer.
 		See |:buffer-!| for [!].
+
+								*]B*
+]B		Mapped to |:blast|. |default-mappings|
 
 :sbl[ast] [+cmd]					*:sbl* *:sblast*
 		Split window and go to last buffer in buffer list.  If the

@@ -104,14 +104,14 @@ struct map_arguments {
   char alt_lhs[MAXMAPLEN + 1];
   size_t alt_lhs_len;
 
-  char *rhs;  /// The {rhs} of the mapping.
+  char *rhs;  ///< The {rhs} of the mapping.
   size_t rhs_len;
-  LuaRef rhs_lua;  /// lua function as {rhs}
-  bool rhs_is_noop;  /// True when the {rhs} should be <Nop>.
+  LuaRef rhs_lua;  ///< lua function as {rhs}
+  bool rhs_is_noop;  ///< True when the {rhs} should be <Nop>.
 
-  char *orig_rhs;  /// The original text of the {rhs}.
+  char *orig_rhs;  ///< The original text of the {rhs}.
   size_t orig_rhs_len;
-  char *desc;  /// map description
+  char *desc;  ///< map description
 };
 typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, false, \
@@ -681,12 +681,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
           if ((mp->m_mode & mode) != 0
               && mp->m_keylen == len
               && strncmp(mp->m_keys, lhs, (size_t)len) == 0) {
-            if (is_abbrev) {
-              semsg(_(e_global_abbreviation_already_exists_for_str), mp->m_keys);
-            } else {
-              semsg(_(e_global_mapping_already_exists_for_str), mp->m_keys);
-            }
-            retval = 5;
+            retval = 6;
             goto theend;
           }
         }
@@ -799,11 +794,6 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 did_it = true;
                 break;
               } else if (args->unique) {
-                if (is_abbrev) {
-                  semsg(_(e_abbreviation_already_exists_for_str), p);
-                } else {
-                  semsg(_(e_mapping_already_exists_for_str), p);
-                }
                 retval = 5;
                 goto theend;
               } else {
@@ -962,6 +952,7 @@ theend:
 ///         - 2 for no match
 ///         - 4 for out of mem (deprecated, WON'T HAPPEN)
 ///         - 5 for entry not unique
+///         - 6 for buflocal unique entry conflicts with global entry
 ///
 int do_map(int maptype, char *arg, int mode, bool is_abbrev)
 {
@@ -1664,7 +1655,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
     }
     api_free_object(ret);
     if (ERROR_SET(&err)) {
-      semsg_multiline("E5108: %s", err.msg);
+      semsg_multiline("emsg", "E5108: %s", err.msg);
       api_clear_error(&err);
     }
   } else {
@@ -1935,7 +1926,17 @@ int put_escstr(FILE *fd, const char *strstart, int what)
       if (str[1] == KS_MODIFIER) {
         modifiers = str[2];
         str += 3;
-        c = *str;
+
+        // Modifiers can be applied too to multi-byte characters.
+        p = mb_unescape((const char **)&str);
+
+        if (p == NULL) {
+          c = *str;
+        } else {
+          // retrieve codepoint (character number) from unescaped string
+          c = utf_ptr2char(p);
+          str--;
+        }
       }
       if (c == K_SPECIAL) {
         c = TO_SPECIAL(str[1], str[2]);
@@ -2637,16 +2638,47 @@ static void do_exmap(exarg_T *eap, int isabbrev)
   char *cmdp = eap->cmd;
   int mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
 
-  switch (do_map((*cmdp == 'n') ? MAPTYPE_NOREMAP
-                                : (*cmdp == 'u') ? MAPTYPE_UNMAP : MAPTYPE_MAP,
-                 eap->arg, mode, isabbrev)) {
+  int maptype;
+  if (*cmdp == 'n') {
+    maptype = MAPTYPE_NOREMAP;
+  } else if (*cmdp == 'u') {
+    maptype = MAPTYPE_UNMAP;
+  } else {
+    maptype = MAPTYPE_MAP;
+  }
+  MapArguments parsed_args;
+  int result = str_to_mapargs(eap->arg, maptype == MAPTYPE_UNMAP, &parsed_args);
+  switch (result) {
+  case 0:
+    break;
+  case 1:
+    emsg(_(e_invarg));
+    goto free_rhs;
+    break;
+  default:
+    assert(false && "Unknown return code from str_to_mapargs!");
+    goto free_rhs;
+  }
+  switch (buf_do_map(maptype, &parsed_args, mode, isabbrev, curbuf)) {
   case 1:
     emsg(_(e_invarg));
     break;
   case 2:
     emsg(isabbrev ? _(e_noabbr) : _(e_nomap));
     break;
+  case 5:
+    semsg(isabbrev ? _(e_abbreviation_already_exists_for_str)
+                   : _(e_mapping_already_exists_for_str),
+          parsed_args.lhs);
+    break;
+  case 6:
+    semsg(isabbrev ? _(e_global_abbreviation_already_exists_for_str)
+                   : _(e_global_mapping_already_exists_for_str),
+          parsed_args.lhs);
   }
+free_rhs:
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
 }
 
 /// ":abbreviate" and friends.
@@ -2805,7 +2837,14 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   case 5:
     api_set_error(err, kErrorTypeException,
-                  "E227: mapping already exists for %s", parsed_args.lhs);
+                  is_abbrev ? e_abbreviation_already_exists_for_str
+                            : e_mapping_already_exists_for_str, lhs.data);
+    goto fail_and_free;
+    break;
+  case 6:
+    api_set_error(err, kErrorTypeException,
+                  is_abbrev ? e_global_abbreviation_already_exists_for_str
+                            : e_global_mapping_already_exists_for_str, lhs.data);
     goto fail_and_free;
   default:
     assert(false && "Unrecognized return code!");

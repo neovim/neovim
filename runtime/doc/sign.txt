@@ -123,8 +123,8 @@ See |sign_define()| for the equivalent Vim script function.
 
 	numhl={group}
 		Highlighting group used for the line number on the line where
-		the sign is placed.  Overrides |hl-LineNr|, |hl-LineNrAbove|,
-		|hl-LineNrBelow|, and |hl-CursorLineNr|.
+		the sign is placed.  Combines with |hl-LineNr|,
+		|hl-LineNrAbove|, |hl-LineNrBelow|, and |hl-CursorLineNr|.
 
 	text={text}						*E239*
 		Define the text that is displayed when there is no icon or the

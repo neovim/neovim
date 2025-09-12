@@ -888,8 +888,9 @@ describe('stdpath()', function()
     os.remove(testlog)
   end)
 
-  -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
-  -- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
+  --- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
+  --- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
+  --- @param name string
   local function maybe_data(name)
     return is_os('win') and name .. '-data' or name
   end
@@ -898,7 +899,7 @@ describe('stdpath()', function()
   local statedir = maybe_data('nvim')
   local env_sep = is_os('win') and ';' or ':'
 
-  it('acceptance', function()
+  it('works', function()
     clear() -- Do not explicitly set any env vars.
 
     eq('nvim', fn.fnamemodify(fn.stdpath('cache'), ':t'))
@@ -909,6 +910,15 @@ describe('stdpath()', function()
     eq('table', type(fn.stdpath('data_dirs')))
     eq('string', type(fn.stdpath('run')))
     assert_alive() -- Check for crash. #8393
+  end)
+
+  it('failure modes', function()
+    clear()
+    eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
+    eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
+    eq('Vim(call):E6100: "23" is not a valid stdpath', exc_exec('call stdpath(23)'))
+    eq('Vim(call):E731: Using a Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call stdpath([23])'))
   end)
 
   it('$NVIM_APPNAME', function()
@@ -1161,7 +1171,11 @@ describe('stdpath()', function()
           set_paths_via_system(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
           if not is_os('win') then
-            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+            assert_log(
+              '$TMPDIR tempdir not a directory[^\n]*TMPDIR%-should%-be%-ignored',
+              testlog,
+              100
+            )
           end
         end)
 
@@ -1169,7 +1183,11 @@ describe('stdpath()', function()
           set_paths_at_runtime(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
           if not is_os('win') then
-            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+            assert_log(
+              '$TMPDIR tempdir not a directory[^\n]*TMPDIR%-should%-be%-ignored',
+              testlog,
+              100
+            )
           end
         end)
       end)
@@ -1261,21 +1279,6 @@ describe('stdpath()', function()
         t.fix_slashes('~/.oldconfig/nvim'),
         t.fix_slashes('~/.olderconfig/nvim'),
       })
-    end)
-  end)
-
-  describe('errors', function()
-    before_each(clear)
-
-    it('on unknown strings', function()
-      eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
-      eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
-      eq('Vim(call):E6100: "23" is not a valid stdpath', exc_exec('call stdpath(23)'))
-    end)
-
-    it('on non-strings', function()
-      eq('Vim(call):E731: Using a Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
-      eq('Vim(call):E730: Using a List as a String', exc_exec('call stdpath([23])'))
     end)
   end)
 end)

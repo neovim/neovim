@@ -714,10 +714,13 @@ list of the current window.
 			omitted the current entry is used.
 			Also see |++opt| and |+cmd|.
 
-:[count]n[ext] [++opt] [+cmd]			*:n* *:ne* *:next* *]a* *E165* *E163*
+:[count]n[ext] [++opt] [+cmd]			*:n* *:ne* *:next* *E165* *E163*
 			Edit [count] next file.  This fails when changes have
 			been made and Vim does not want to |abandon| the
 			current buffer.  Also see |++opt| and |+cmd|.
+
+								*]a*
+]a			Mapped to |:next|. |default-mappings|
 
 :[count]n[ext]! [++opt] [+cmd]
 			Edit [count] next file, discard any changes to the
@@ -740,15 +743,21 @@ list of the current window.
 			any changes to the buffer.  Also see |++opt| and
 			|+cmd|.
 
-:[count]prev[ious] [count] [++opt] [+cmd]		*:prev* *:previous* *[a*
+:[count]prev[ious] [count] [++opt] [+cmd]		*:prev* *:previous*
 			Same as :Next.  Also see |++opt| and |+cmd|.
 
-							*:rew* *:rewind* *[A*
+							*[a*
+[a			Mapped to |:previous|. |default-mappings|
+
+							*:rew* *:rewind*
 :rew[ind] [++opt] [+cmd]
 			Start editing the first file in the argument list.
 			This fails when changes have been made and Vim does
 			not want to |abandon| the current buffer.
 			Also see |++opt| and |+cmd|.
+
+								*[A*
+[A			Mapped to |:rewind|. |default-mappings|
 
 :rew[ind]! [++opt] [+cmd]
 			Start editing the first file in the argument list.
@@ -759,12 +768,15 @@ list of the current window.
 :fir[st][!] [++opt] [+cmd]
 			Other name for ":rewind".
 
-							*:la* *:last* *]A*
+							*:la* *:last*
 :la[st] [++opt] [+cmd]
 			Start editing the last file in the argument list.
 			This fails when changes have been made and Vim does
 			not want to |abandon| the current buffer.
 			Also see |++opt| and |+cmd|.
+
+								*]A*
+]A			Mapped to |:last|. |default-mappings|
 
 :la[st]! [++opt] [+cmd]
 			Start editing the last file in the argument list.
@@ -948,8 +960,9 @@ Note: When the 'write' option is off, you are not able to write any file.
 			executed like with ":!{cmd}", any '!' is replaced with
 			the previous command |:!|.
 
-The default [range] for the ":w" command is the whole buffer (1,$).  If you
-write the whole buffer, it is no longer considered changed.  When you
+The default [range] for the ":w" command is the whole buffer (1,$).  The |'[|
+and |']| marks will be set to the [range] being used for the write command.
+If you write the whole buffer, it is no longer considered changed.  When you
 write it to a different file with ":w somefile" it depends on the "+" flag in
 'cpoptions'.  When included, the write command will reset the 'modified' flag,
 even though the buffer itself may still be different from its file.
@@ -1303,9 +1316,15 @@ b:browsefilter variable.  You would most likely set b:browsefilter in a
 filetype plugin, so that the browse dialog would contain entries related to
 the type of file you are currently editing.  Disadvantage: This makes it
 difficult to start editing a file of a different type.  To overcome this, you
-may want to add "All Files (*.*)\t*\n" as the final filter on Windows or "All
-Files (*)\t*\n" on other platforms, so that the user can still access any
-desired file.
+may want to add >
+
+	All Files\t(*.*)\t*\n
+<
+as the final filter on Windows or >
+
+	All Files\t(*)\t*\n"
+<
+on other platforms, so that the user can still access any desired file.
 
 To avoid setting browsefilter when Vim does not actually support it, you can
 use has("browsefilter"): >
@@ -1496,9 +1515,8 @@ Or, when starting gvim from a shell: >
 Note that if a FileChangedShell autocommand is defined you will not get a
 warning message or prompt.  The autocommand is expected to handle this.
 
-There is no warning for a directory (e.g., with |netrw-browse|).  But you do
-get warned if you started editing a new file and it was created as a directory
-later.
+There is no warning for a directory.  But you do get warned if you started
+editing a new file and it was created as a directory later.
 
 When Vim notices the timestamp of a file has changed, and the file is being
 edited in a buffer but has not changed, Vim checks if the contents of the file

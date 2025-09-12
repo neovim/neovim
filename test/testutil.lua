@@ -5,17 +5,6 @@ local Paths = require('test.cmakeconfig.paths')
 
 luaassert:set_parameter('TableFormatLevel', 100)
 
-local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
-
---- @param str string
---- @return string
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
-  end
-  return str
-end
-
 --- Functions executing in the context of the test runner (not the current nvim test session).
 --- @class test.testutil
 local M = {
@@ -66,19 +55,15 @@ function M.argss_to_cmd(...)
   for i = 1, select('#', ...) do
     local arg = select(i, ...)
     if type(arg) == 'string' then
-      cmd[#cmd + 1] = shell_quote(arg)
+      cmd[#cmd + 1] = arg
     else
       --- @cast arg string[]
       for _, subarg in ipairs(arg) do
-        cmd[#cmd + 1] = shell_quote(subarg)
+        cmd[#cmd + 1] = subarg
       end
     end
   end
-  return table.concat(cmd, ' ')
-end
-
-function M.popen_r(...)
-  return io.popen(M.argss_to_cmd(...), 'r')
+  return cmd
 end
 
 --- Calls fn() until it succeeds, up to `max` times or until `max_ms`
@@ -148,17 +133,20 @@ end
 --- @param actual string
 --- @return boolean
 function M.matches(pat, actual)
+  assert(pat and pat ~= '', 'pat must be a non-empty string')
   if nil ~= string.match(actual, pat) then
     return true
   end
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
---- Asserts that `pat` matches (or *not* if inverse=true) any line in the tail of `logfile`.
+--- Asserts that `pat` matches (or *not* if inverse=true) any text in the tail of `logfile`.
+---
+--- Matches are not restricted to a single line.
 ---
 --- Retries for 1 second in case of filesystem delay.
 ---
----@param pat (string) Lua pattern to match lines in the log file
+---@param pat (string) Lua pattern to match text in the log file
 ---@param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
 ---@param nrlines? (number) Search up to this many log lines (default 10)
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
@@ -166,28 +154,20 @@ function M.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   luaassert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
-  inverse = inverse or false
 
   M.retry(nil, 1000, function()
     local lines = M.read_file_list(logfile, -nrlines) or {}
-    local msg = string.format(
-      'Pattern %q %sfound in log (last %d lines): %s:\n%s',
-      pat,
-      (inverse and '' or 'not '),
-      nrlines,
-      logfile,
-      '    ' .. table.concat(lines, '\n    ')
-    )
-    for _, line in ipairs(lines) do
-      if line:match(pat) then
-        if inverse then
-          error(msg)
-        else
-          return
-        end
-      end
-    end
-    if not inverse then
+    local text = table.concat(lines, '\n')
+    local ismatch = not not text:match(pat)
+    if (ismatch and inverse) or not (ismatch or inverse) then
+      local msg = string.format(
+        'Pattern %s %sfound in log (last %d lines): %s:\n%s',
+        vim.inspect(pat),
+        (inverse and '' or 'not '),
+        nrlines,
+        logfile,
+        vim.text.indent(4, text)
+      )
       error(msg)
     end
   end)
@@ -273,7 +253,7 @@ function M.pcall_err_withtrace(fn, ...)
   return (
     errmsg
       :gsub('^%.%.%./testnvim%.lua:0: ', '')
-      :gsub('^Error executing lua:- ', '')
+      :gsub('^Lua:- ', '')
       :gsub('^%[string "<nvim>"%]:0: ', '')
   )
 end
@@ -361,7 +341,7 @@ function M.check_logs()
           local status, f
           local out = io.stdout
           if os.getenv('SYMBOLIZER') then
-            status, f = pcall(M.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
+            status, f = pcall(M.repeated_read_cmd, os.getenv('SYMBOLIZER'), '-l', file)
           end
           out:write(start_msg .. '\n')
           if status then
@@ -415,6 +395,14 @@ function M.is_arch(s)
     error('unknown architecture: ' .. tostring(s))
   end
   return s == architecture
+end
+
+function M.is_asan()
+  return M.paths.is_asan
+end
+
+function M.is_zig_build()
+  return M.paths.is_zig_build
 end
 
 local tmpname_id = 0
@@ -536,16 +524,37 @@ end
 
 --- @return string?
 function M.repeated_read_cmd(...)
-  for _ = 1, 10 do
-    local stream = M.popen_r(...)
-    local ret = stream:read('*a')
-    stream:close()
-    if ret then
-      return ret
+  local cmd = M.argss_to_cmd(...)
+  local data = {}
+  local got_code = nil
+  local stdout = assert(vim.uv.new_pipe(false))
+  local handle = assert(
+    vim.uv.spawn(
+      cmd[1],
+      { args = vim.list_slice(cmd, 2), stdio = { nil, stdout, 2 }, hide = true },
+      function(code, _signal)
+        got_code = code
+      end
+    )
+  )
+  stdout:read_start(function(err, chunk)
+    if err or chunk == nil then
+      stdout:read_stop()
+      stdout:close()
+    else
+      table.insert(data, chunk)
     end
+  end)
+
+  while not stdout:is_closing() or got_code == nil do
+    vim.uv.run('once')
   end
-  print('ERROR: Failed to execute ' .. M.argss_to_cmd(...) .. ': nil return after 10 attempts')
-  return nil
+
+  if got_code ~= 0 then
+    error('command ' .. vim.inspect(cmd) .. 'unexpectedly exited with status ' .. got_code)
+  end
+  handle:close()
+  return table.concat(data)
 end
 
 --- @generic T
@@ -641,28 +650,9 @@ end
 --- @param leave_indent? integer
 --- @return string
 function M.dedent(str, leave_indent)
-  -- find minimum common indent across lines
-  local indent --- @type string?
-  for line in str:gmatch('[^\n]+') do
-    local line_indent = line:match('^%s+') or ''
-    if indent == nil or #line_indent < #indent then
-      indent = line_indent
-    end
-  end
-
-  if not indent or #indent == 0 then
-    -- no minimum common indent
-    return str
-  end
-
-  local left_indent = (' '):rep(leave_indent or 0)
-  -- create a pattern for the indent
-  indent = indent:gsub('%s', '[ \t]')
-  -- strip it from the first line
-  str = str:gsub('^' .. indent, left_indent)
-  -- strip it from the remaining lines
-  str = str:gsub('[\n]' .. indent, '\n' .. left_indent)
-  return str
+  -- Last blank line often has non-matching indent, so remove it.
+  str = str:gsub('\n[ ]+$', '\n')
+  return (vim.text.indent(leave_indent or 0, str))
 end
 
 function M.intchar2lua(ch)
@@ -856,6 +846,10 @@ function M.skip_fragile(pending_fn, cond)
     return true
   end
   return false
+end
+
+function M.translations_enabled()
+  return M.paths.translations_enabled
 end
 
 return M

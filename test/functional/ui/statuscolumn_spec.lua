@@ -500,7 +500,7 @@ describe('statuscolumn', function()
       {8:buffer  0 5}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:wrapped 1 5}aaaaaaaa                                  |
       {8:virtual-2 5}virt_line                                 |
-      {8:virtual-1 5}virt_line above                           |
+      {8:virtual-1 6}virt_line above                           |
       {8:buffer  0 6}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:wrapped 1 6}aaaaaaaa                                  |
       {8:buffer  0 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -510,10 +510,26 @@ describe('statuscolumn', function()
       {8:wrapped 1 9}aaaaaaaa                                  |
                                                            |
     ]])
-    -- Also test virt_lines at the end of buffer
-    exec_lua([[
-      vim.api.nvim_buf_set_extmark(0, ns, 15, 0, { virt_lines = {{{"END", ""}}} })
+    -- Also correct v:lnum with a partial redraw
+    exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 4, 0, { virt_lines = {{{"virt_line", ""}}} })')
+    screen:expect([[
+      {8:buffer  0 4}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {8:wrapped 1 4}aaaaaaaa                                  |
+      {8:buffer  0 5}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {8:wrapped 1 5}aaaaaaaa                                  |
+      {8:virtual-3 5}virt_line                                 |
+      {8:virtual-2 5}virt_line                                 |
+      {8:virtual-1 6}virt_line above                           |
+      {8:buffer  0 6}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {8:wrapped 1 6}aaaaaaaa                                  |
+      {8:buffer  0 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {8:wrapped 1 7}aaaaaaaa                                  |
+      {15:buffer  0 8}{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {8:buffer  0 9}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:@@@}|
+                                                           |
     ]])
+    -- Also test virt_lines at the end of buffer
+    exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 15, 0, { virt_lines = {{{"END", ""}}} })')
     feed('GkJzz')
     screen:expect([[
       {8:buffer  0 12}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|

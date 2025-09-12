@@ -1,14 +1,15 @@
-/build/
-/.deps/
-/runtime/lua/coxpcall.lua
-/runtime/lua/vim/_meta
-/runtime/lua/vim/re.lua
+build/
+.deps/
+runtime/lua/coxpcall.lua
+runtime/lua/uv/_meta.lua
+runtime/lua/vim/_meta
+runtime/lua/vim/re.lua
 
+# These are formatted explicitly by the "formatlua2" build task.
 test/functional/ui/decorations_spec.lua
 test/functional/ui/float_spec.lua
 test/functional/ui/multigrid_spec.lua
-/test/functional/fixtures/lua/syntax_error.lua
-/test/functional/legacy/030_fileformats_spec.lua
-/test/functional/legacy/044_099_regexp_multibyte_magic_spec.lua
-/test/functional/legacy/093_mksession_cursor_cols_latin1_spec.lua
-/test/functional/lua/luaeval_spec.lua
+test/functional/fixtures/lua/syntax_error.lua
+test/functional/legacy/030_fileformats_spec.lua
+test/functional/legacy/044_099_regexp_multibyte_magic_spec.lua
+test/functional/legacy/093_mksession_cursor_cols_latin1_spec.lua

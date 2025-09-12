@@ -577,7 +577,7 @@ describe('Buffer highlighting', function()
   end)
 
   describe('virtual text decorations', function()
-    local id1, id2
+    local id1, id2 ---@type integer, integer
     before_each(function()
       insert([[
         1 + 2
@@ -709,7 +709,7 @@ describe('Buffer highlighting', function()
           0,
           0,
           {
-            ns_id = 1,
+            ns_id = id1,
             priority = 0,
             virt_text = s1,
             -- other details
@@ -729,7 +729,7 @@ describe('Buffer highlighting', function()
           lastline,
           0,
           {
-            ns_id = 1,
+            ns_id = id1,
             priority = 0,
             virt_text = s2,
             -- other details
@@ -898,11 +898,15 @@ describe('Buffer highlighting', function()
   end)
 
   it('and virtual text use the same namespace counter', function()
-    eq(1, add_highlight(0, 0, 'String', 0, 0, -1))
-    eq(2, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
-    eq(3, api.nvim_create_namespace('my-ns'))
-    eq(4, add_highlight(0, 0, 'String', 0, 0, -1))
-    eq(5, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
-    eq(6, api.nvim_create_namespace('other-ns'))
+    local base = vim.iter(api.nvim_get_namespaces()):fold(0, function(acc, _, v)
+      return math.max(acc, v)
+    end)
+
+    eq(base + 1, add_highlight(0, 0, 'String', 0, 0, -1))
+    eq(base + 2, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
+    eq(base + 3, api.nvim_create_namespace('my-ns'))
+    eq(base + 4, add_highlight(0, 0, 'String', 0, 0, -1))
+    eq(base + 5, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
+    eq(base + 6, api.nvim_create_namespace('other-ns'))
   end)
 end)

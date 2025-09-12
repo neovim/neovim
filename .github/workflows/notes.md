@@ -36,7 +36,7 @@ Note: On Windows "Server" you may need to [install vcruntime140.dll](https://lea
 
 ### Linux (x86_64)
 
-glibc 2.35 or newer is required. Or you may try the (unsupported) [builds for older glibc](https://github.com/neovim/neovim-releases).
+If your system does not have the required glibc version, try the (unsupported) [builds for older glibc](https://github.com/neovim/neovim-releases).
 
 #### AppImage
 
@@ -75,5 +75,3 @@ glibc 2.35 or newer is required. Or you may try the (unsupported) [builds for ol
 ### Other
 
 - Install by [package manager](https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package)
-
-## SHA256 Checksums

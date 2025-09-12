@@ -63,12 +63,11 @@ describe(
       /^here
     ]])
       feed('C<C-R>=Table("xxx", 4, "asdf")<cr>')
-      -- Using a actual space will not work as feed() calls dedent on the input.
-      feed('<space><C-R>=Compute(45, 0, "retval")<cr>')
-      feed('<space><C-R>=retval<cr>')
-      feed('<space><C-R>=Compute(45, 5, "retval")<cr>')
-      feed('<space><C-R>=retval<cr>')
-      feed('<space><C-R>=g:FuncRef(333)<cr>')
+      feed(' <C-R>=Compute(45, 0, "retval")<cr>')
+      feed(' <C-R>=retval<cr>')
+      feed(' <C-R>=Compute(45, 5, "retval")<cr>')
+      feed(' <C-R>=retval<cr>')
+      feed(' <C-R>=g:FuncRef(333)<cr>')
       feed('<cr>')
       feed('XX+-XX<cr>')
       feed('---*---<cr>')

@@ -143,4 +143,11 @@ func Test_expand_wildignore()
   set wildignore&
 endfunc
 
+" Passing a long string to expand with 'wildignorecase' should not crash Vim.
+func Test_expand_long_str()
+  set wildignorecase
+  call expand('a'->repeat(99999))
+  set wildignorecase&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

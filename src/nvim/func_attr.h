@@ -1,6 +1,6 @@
 // Undefined DEFINE_FUNC_ATTRIBUTES and undefined DEFINE_EMPTY_ATTRIBUTES
 // leaves file with untouched FUNC_ATTR_* macros. This variant is used for
-// scripts/gen_declarations.lua.
+// src/gen/gen_declarations.lua.
 //
 // Empty macros are used for *.c files.
 // (undefined DEFINE_FUNC_ATTRIBUTES and defined DEFINE_EMPTY_ATTRIBUTES)

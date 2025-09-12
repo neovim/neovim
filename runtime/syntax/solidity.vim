@@ -2,10 +2,11 @@
 " Language:		Solidity
 " Maintainer:		Cothi (jiungdev@gmail.com)
 " Original Author:	tomlion (https://github.com/tomlion/vim-solidity/blob/master/syntax/solidity.vim)
-" Last Change:		2022 Sep 27
+" Last Change:		2025 Mar 25
 "
 " Contributors:
 "       Modified by thesis (https://github.com/thesis/vim-solidity/blob/main/indent/solidity.vim)
+"       Modified by S0AndS0 (https://github.com/S0AndS0/vim/blob/syntax-solidity-updates/runtime/syntax/solidity.vim)
 
 if exists("b:current_syntax")
   finish
@@ -15,7 +16,7 @@ endif
 syn keyword solKeyword           abstract anonymous as break calldata case catch constant constructor continue default switch revert require
 syn keyword solKeyword           ecrecover addmod mulmod keccak256
 syn keyword solKeyword           delete do else emit enum external final for function if immutable import in indexed inline
-syn keyword solKeyword           interface internal is let match memory modifier new of payable pragma private public pure override virtual
+syn keyword solKeyword           interface internal is let match memory modifier new of payable pragma private public pure override virtual transient
 syn keyword solKeyword           relocatable return returns static storage struct throw try type typeof using
 syn keyword solKeyword           var view while
 
@@ -157,6 +158,15 @@ syn match   solEventArgSpecial   contained 'indexed'
 hi def link solEvent             Type
 hi def link solEventName         Function
 hi def link solEventArgSpecial   Label
+
+" Error
+syn match   solError             /\<error\>/ nextgroup=solErrorName,solErrorArgs skipwhite
+syn match   solErrorName         contained /\<[a-zA-Z_$][0-9a-zA-Z_$]*/ nextgroup=solErrorArgs skipwhite
+syn region  solErrorArgs         contained matchgroup=solFuncParens start='(' end=')' contains=solErrorArgCommas,solBuiltinType skipwhite skipempty
+syn match   solErrorArgCommas    contained ','
+
+hi def link solError             Type
+hi def link solErrorName         Function
 
 " Comment
 syn keyword solCommentTodo       TODO FIXME XXX TBD contained

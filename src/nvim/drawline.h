@@ -19,8 +19,6 @@ typedef struct {
 } WinExtmark;
 EXTERN kvec_t(WinExtmark) win_extmark_arr INIT( = KV_INITIAL_VALUE);
 
-EXTERN bool conceal_cursor_used INIT( = false);
-
 /// Spell checking variables passed from win_update() to win_line().
 typedef struct {
   bool spv_has_spell;         ///< drawn window has spell checking

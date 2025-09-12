@@ -1,4 +1,25 @@
--- Logger for language client plugin.
+--- @brief
+--- The `vim.lsp.log` module provides logging for the Nvim LSP client.
+---
+--- When debugging language servers, it is helpful to enable extra-verbose logging of the LSP client
+--- RPC events. Example:
+--- ```lua
+--- vim.lsp.set_log_level 'trace'
+--- require('vim.lsp.log').set_format_func(vim.inspect)
+--- ```
+---
+--- Then try to run the language server, and open the log with:
+--- ```vim
+--- :lua vim.cmd('tabnew ' .. vim.lsp.get_log_path())
+--- ```
+---
+--- (Or use `:LspLog` if you have nvim-lspconfig installed.)
+---
+--- Note:
+--- - Remember to DISABLE verbose logging ("debug" or "trace" level), else you may encounter
+---   performance issues.
+--- - "ERROR" messages containing "stderr" only indicate that the log was sent to stderr. Many
+---   servers send harmless messages via stderr.
 
 local log = {}
 
@@ -18,8 +39,28 @@ local current_log_level = log_levels.WARN
 
 local log_date_format = '%F %H:%M:%S'
 
-local function format_func(arg)
-  return vim.inspect(arg, { newline = ' ', indent = '' })
+--- Default formatting function.
+--- @param level? string
+local function format_func(level, ...)
+  if log_levels[level] < current_log_level then
+    return nil
+  end
+
+  local info = debug.getinfo(2, 'Sl')
+  local header = string.format(
+    '[%s][%s] %s:%s',
+    level,
+    os.date(log_date_format),
+    info.short_src,
+    info.currentline
+  )
+  local parts = { header }
+  local argc = select('#', ...)
+  for i = 1, argc do
+    local arg = select(i, ...)
+    table.insert(parts, arg == nil and 'nil' or vim.inspect(arg, { newline = ' ', indent = '' }))
+  end
+  return table.concat(parts, '\t') .. '\n'
 end
 
 local function notify(msg, level)
@@ -43,6 +84,11 @@ vim.fn.mkdir(vim.fn.stdpath('log') --[[@as string]], 'p')
 ---@return string log filename
 function log.get_filename()
   return logfilename
+end
+
+--- @param s string
+function log._set_filename(s)
+  logfilename = s
 end
 
 --- @type file*?, string?
@@ -90,13 +136,9 @@ for level, levelnr in pairs(log_levels) do
 end
 
 --- @param level string
---- @param levelnr integer
 --- @return fun(...:any): boolean?
-local function create_logger(level, levelnr)
+local function create_logger(level)
   return function(...)
-    if not log.should_log(levelnr) then
-      return false
-    end
     local argc = select('#', ...)
     if argc == 0 then
       return true
@@ -104,22 +146,12 @@ local function create_logger(level, levelnr)
     if not open_logfile() then
       return false
     end
-    local info = debug.getinfo(2, 'Sl')
-    local header = string.format(
-      '[%s][%s] ...%s:%s',
-      level,
-      os.date(log_date_format),
-      info.short_src:sub(-16),
-      info.currentline
-    )
-    local parts = { header }
-    for i = 1, argc do
-      local arg = select(i, ...)
-      table.insert(parts, arg == nil and 'nil' or format_func(arg))
+    local message = format_func(level, ...)
+    if message then
+      assert(logfile)
+      logfile:write(message)
+      logfile:flush()
     end
-    assert(logfile)
-    logfile:write(table.concat(parts, '\t'), '\n')
-    logfile:flush()
   end
 end
 
@@ -128,28 +160,29 @@ end
 -- log at that level (if applicable, it is checked either way).
 
 --- @nodoc
-log.debug = create_logger('DEBUG', log_levels.DEBUG)
+log.debug = create_logger('DEBUG')
 
 --- @nodoc
-log.error = create_logger('ERROR', log_levels.ERROR)
+log.error = create_logger('ERROR')
 
 --- @nodoc
-log.info = create_logger('INFO', log_levels.INFO)
+log.info = create_logger('INFO')
 
 --- @nodoc
-log.trace = create_logger('TRACE', log_levels.TRACE)
+log.trace = create_logger('TRACE')
 
 --- @nodoc
-log.warn = create_logger('WARN', log_levels.WARN)
+log.warn = create_logger('WARN')
 
 --- Sets the current log level.
----@param level (string|integer) One of `vim.lsp.log.levels`
+---@param level (string|integer) One of |vim.log.levels|
 function log.set_level(level)
+  vim.validate('level', level, { 'string', 'number' })
+
   if type(level) == 'string' then
     current_log_level =
       assert(log.levels[level:upper()], string.format('Invalid log level: %q', level))
   else
-    assert(type(level) == 'number', 'level must be a number or string')
     assert(log.levels[level], string.format('Invalid log level: %d', level))
     current_log_level = level
   end
@@ -161,17 +194,27 @@ function log.get_level()
   return current_log_level
 end
 
---- Sets formatting function used to format logs
----@param handle function function to apply to logging arguments, pass vim.inspect for multi-line formatting
+--- Sets the formatting function used to format logs. If the formatting function returns nil, the entry won't
+--- be written to the log file.
+---@param handle fun(level:string, ...): string? Function to apply to log entries. The default will log the level,
+---date, source and line number of the caller, followed by the arguments.
 function log.set_format_func(handle)
-  assert(handle == vim.inspect or type(handle) == 'function', 'handle must be a function')
+  vim.validate('handle', handle, function(h)
+    return type(h) == 'function' or h == vim.inspect
+  end, false, 'handle must be a function')
+
   format_func = handle
 end
 
 --- Checks whether the level is sufficient for logging.
+---@deprecated
 ---@param level integer log level
 ---@return boolean : true if would log, false if not
 function log.should_log(level)
+  vim.deprecate('vim.lsp.log.should_log', 'vim.lsp.log.set_format_func', '0.13')
+
+  vim.validate('level', level, 'number')
+
   return level >= current_log_level
 end
 

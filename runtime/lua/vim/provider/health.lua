@@ -107,8 +107,21 @@ local function provider_disabled(provider)
   return false
 end
 
+--- Checks the hygiene of a `g:loaded_xx_provider` variable.
+local function check_loaded_var(var)
+  if vim.g[var] == 1 then
+    health.error(('`g:%s=1` may have been set by mistake.'):format(var), {
+      ('Remove `vim.g.%s=1` from your config.'):format(var),
+      'To disable the provider, set this to 0, not 1.',
+      'If you want to enable the provider but skip automatic detection, set the respective `g:…_host_prog` var. See :help provider',
+    })
+  end
+end
+
 local function clipboard()
   health.start('Clipboard (optional)')
+
+  check_loaded_var('loaded_clipboard_provider')
 
   if
     os.getenv('TMUX')
@@ -143,6 +156,8 @@ end
 
 local function node()
   health.start('Node.js provider (optional)')
+
+  check_loaded_var('loaded_node_provider')
 
   if provider_disabled('node') then
     return
@@ -247,6 +262,8 @@ end
 local function perl()
   health.start('Perl provider (optional)')
 
+  check_loaded_var('loaded_perl_provider')
+
   if provider_disabled('perl') then
     return
   end
@@ -256,7 +273,7 @@ local function perl()
   if not perl_exec then
     health.warn(assert(perl_warnings), {
       'See :help provider-perl for more information.',
-      'You may disable this provider (and warning) by adding `let g:loaded_perl_provider = 0` to your init.vim',
+      'You can disable this provider (and warning) by adding `let g:loaded_perl_provider = 0` to your init.vim',
     })
     health.warn('No usable perl executable found')
     return
@@ -547,7 +564,7 @@ local function version_info(python)
 
   local nvim_path_base = vim.fn.fnamemodify(nvim_path, [[:~:h]])
   local version_status = 'unknown; ' .. nvim_path_base
-  if is_bad_response(nvim_version) and is_bad_response(pypi_version) then
+  if not is_bad_response(nvim_version) and not is_bad_response(pypi_version) then
     if vim.version.lt(nvim_version, pypi_version) then
       version_status = 'outdated; from ' .. nvim_path_base
     else
@@ -560,6 +577,8 @@ end
 
 local function python()
   health.start('Python 3 provider (optional)')
+
+  check_loaded_var('loaded_python3_provider')
 
   local python_exe = ''
   local virtual_env = os.getenv('VIRTUAL_ENV')
@@ -595,7 +614,7 @@ local function python()
   if pythonx_warnings then
     health.warn(pythonx_warnings, {
       'See :help provider-python for more information.',
-      'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim',
+      'You can disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim',
     })
   elseif pyname and pyname ~= '' and python_exe == '' then
     if not vim.g[host_prog_var] then
@@ -840,6 +859,8 @@ end
 local function ruby()
   health.start('Ruby provider (optional)')
 
+  check_loaded_var('loaded_ruby_provider')
+
   if provider_disabled('ruby') then
     return
   end
@@ -860,7 +881,7 @@ local function ruby()
       'Run `gem environment` to ensure the gem bin directory is in $PATH.',
       'If you are using rvm/rbenv/chruby, try "rehashing".',
       'See :help g:ruby_host_prog for non-standard gem installations.',
-      'You may disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim',
+      'You can disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim',
     })
     return
   end

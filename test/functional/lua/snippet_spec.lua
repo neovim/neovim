@@ -18,6 +18,20 @@ local retry = t.retry
 describe('vim.snippet', function()
   before_each(function()
     clear()
+    exec_lua(function()
+      local function set_snippet_jump(direction, key)
+        vim.keymap.set({ 'i', 's' }, key, function()
+          if vim.snippet.active({ direction = direction }) then
+            return string.format('<Cmd>lua vim.snippet.jump(%d)<CR>', direction)
+          else
+            return key
+          end
+        end, { silent = true, expr = true })
+      end
+
+      set_snippet_jump(1, '<Tab>')
+      set_snippet_jump(-1, '<S-Tab>')
+    end)
   end)
   after_each(clear)
 
@@ -65,6 +79,10 @@ describe('vim.snippet', function()
     -- Regression test: #29658
     api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
     test_expand_success({ '${1:foo^bar}\n' }, { 'foo^bar', '' })
+
+    -- Regression test: #30950
+    api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
+    test_expand_success({ 'a^ b$1', 'b$2', 'd' }, { 'a^ b', 'b', 'd' })
   end)
 
   it('replaces tabs with spaces when expandtab is set', function()
@@ -290,23 +308,9 @@ describe('vim.snippet', function()
     )
   end)
 
-  it('restores snippet navigation keymaps', function()
-    -- Create a buffer keymap in insert mode that deletes all lines.
-    local curbuf = api.nvim_get_current_buf()
-    exec_lua('vim.api.nvim_buf_set_keymap(..., "i", "<Tab>", "<cmd>normal ggdG<cr>", {})', curbuf)
-
-    test_expand_success({ 'var $1 = $2' }, { 'var  = ' })
-
-    -- While the snippet is active, <Tab> should navigate between tabstops.
-    feed('x')
-    poke_eventloop()
-    feed('<Tab>0')
-    eq({ 'var x = 0' }, buf_lines(0))
-
-    exec_lua('vim.snippet.stop()')
-
-    -- After exiting the snippet, the buffer keymap should be restored.
-    feed('<Esc>O<cr><Tab>')
-    eq({ '' }, buf_lines(0))
+  it('correct visual selection with multi-byte text', function()
+    test_expand_success({ 'function(${1:var})' }, { '口口function(var)' }, nil, '口口')
+    feed('foo')
+    eq({ '口口function(foo)' }, buf_lines(0))
   end)
 end)

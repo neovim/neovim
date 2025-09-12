@@ -117,17 +117,20 @@ void ui_comp_layers_adjust(size_t layer_idx, bool raise)
     while (layer_idx < size - 1 && layer->zindex > layers.items[layer_idx + 1]->zindex) {
       layers.items[layer_idx] = layers.items[layer_idx + 1];
       layers.items[layer_idx]->comp_index = layer_idx;
+      layers.items[layer_idx]->pending_comp_index_update = true;
       layer_idx++;
     }
   } else {
     while (layer_idx > 0 && layer->zindex < layers.items[layer_idx - 1]->zindex) {
       layers.items[layer_idx] = layers.items[layer_idx - 1];
       layers.items[layer_idx]->comp_index = layer_idx;
+      layers.items[layer_idx]->pending_comp_index_update = true;
       layer_idx--;
     }
   }
   layers.items[layer_idx] = layer;
   layer->comp_index = layer_idx;
+  layer->pending_comp_index_update = true;
 }
 
 /// Places `grid` at (col,row) position with (width * height) size.
@@ -140,6 +143,7 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
                       bool on_top)
 {
   bool moved;
+  grid->pending_comp_index_update = true;
 
   grid->comp_height = height;
   grid->comp_width = width;
@@ -193,12 +197,14 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     for (size_t i = kv_size(layers) - 1; i > insert_at; i--) {
       kv_A(layers, i) = kv_A(layers, i - 1);
       kv_A(layers, i)->comp_index = i;
+      kv_A(layers, i)->pending_comp_index_update = true;
     }
     kv_A(layers, insert_at) = grid;
 
     grid->comp_row = row;
     grid->comp_col = col;
     grid->comp_index = insert_at;
+    grid->pending_comp_index_update = true;
   }
   if (moved && valid && ui_comp_should_draw()) {
     compose_area(grid->comp_row, grid->comp_row + grid->rows,
@@ -222,9 +228,11 @@ void ui_comp_remove_grid(ScreenGrid *grid)
   for (size_t i = grid->comp_index; i < kv_size(layers) - 1; i++) {
     kv_A(layers, i) = kv_A(layers, i + 1);
     kv_A(layers, i)->comp_index = i;
+    kv_A(layers, i)->pending_comp_index_update = true;
   }
   (void)kv_pop(layers);
   grid->comp_index = 0;
+  grid->pending_comp_index_update = true;
 
   // recompose the area under the grid
   // inefficient when being overlapped: only draw up to grid->comp_index
@@ -256,9 +264,11 @@ void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
   for (size_t i = old_index; i < new_index; i++) {
     kv_A(layers, i) = kv_A(layers, i + 1);
     kv_A(layers, i)->comp_index = i;
+    kv_A(layers, i)->pending_comp_index_update = true;
   }
   kv_A(layers, new_index) = grid;
   grid->comp_index = new_index;
+  grid->pending_comp_index_update = true;
   for (size_t i = old_index; i < new_index; i++) {
     ScreenGrid *grid2 = kv_A(layers, i);
     int startcol = MAX(grid->comp_col, grid2->comp_col);
@@ -272,7 +282,7 @@ void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
 
 void ui_comp_grid_cursor_goto(Integer grid_handle, Integer r, Integer c)
 {
-  if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid_handle)) {
+  if (!ui_comp_set_grid((int)grid_handle)) {
     return;
   }
   int cursor_row = curgrid->comp_row + (int)r;
@@ -318,6 +328,14 @@ ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
 {
   for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
     ScreenGrid *grid = kv_A(layers, i);
+    if (row >= grid->comp_row && row < grid->comp_row + grid->rows
+        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
+      return grid;
+    }
+  }
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    ScreenGrid *grid = &wp->w_grid_alloc;
     if (row >= grid->comp_row && row < grid->comp_row + grid->rows
         && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
       return grid;
@@ -412,10 +430,12 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       for (int i = col - (int)startcol; i < until - startcol; i += width) {
         width = 1;
         // negative space
-        bool thru = linebuf[i] == schar_from_ascii(' ') && bg_line[i] != NUL;
+        bool thru = (linebuf[i] == schar_from_ascii(' ')
+                     || linebuf[i] == schar_from_char(L'\u2800')) && bg_line[i] != NUL;
         if (i + 1 < endcol - startcol && bg_line[i + 1] == NUL) {
           width = 2;
-          thru &= linebuf[i + 1] == schar_from_ascii(' ');
+          thru &= (linebuf[i + 1] == schar_from_ascii(' ')
+                   || linebuf[i + 1] == schar_from_char(L'\u2800'));
         }
         attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], &thru);
         if (width == 2) {
@@ -593,8 +613,10 @@ bool ui_comp_set_screen_valid(bool valid)
   return old_val;
 }
 
-void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
+void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char,
+                         Integer zindex, Integer compindex)
 {
+  msg_grid.pending_comp_index_update = true;
   msg_grid.comp_row = (int)row;
   if (scrolled && row > 0) {
     msg_sep_row = (int)row - 1;

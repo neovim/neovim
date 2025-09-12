@@ -661,7 +661,7 @@ static inline void nlua_create_typed_table(lua_State *lstate, const size_t narr,
 void nlua_push_String(lua_State *lstate, const String s, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_pushlstring(lstate, s.data, s.size);
+  lua_pushlstring(lstate, s.size ? s.data : "", s.size);
 }
 
 /// Convert given Integer to Lua number

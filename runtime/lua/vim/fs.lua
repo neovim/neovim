@@ -6,7 +6,7 @@
 ---
 --- >lua
 ---   if vim.uv.fs_stat(file) then
----     vim.print("file exists")
+---     vim.print('file exists')
 ---   end
 --- <
 
@@ -19,21 +19,21 @@ local sysname = uv.os_uname().sysname:lower()
 local iswin = not not (sysname:find('windows') or sysname:find('mingw'))
 local os_sep = iswin and '\\' or '/'
 
---- Iterate over all the parents of the given path.
+--- Iterate over all the parents of the given path (not expanded/resolved, the caller must do that).
 ---
 --- Example:
 ---
 --- ```lua
 --- local root_dir
 --- for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
----   if vim.fn.isdirectory(dir .. "/.git") == 1 then
+---   if vim.fn.isdirectory(dir .. '/.git') == 1 then
 ---     root_dir = dir
 ---     break
 ---   end
 --- end
 ---
 --- if root_dir then
----   print("Found git repository at", root_dir)
+---   print('Found git repository at', root_dir)
 --- end
 --- ```
 ---
@@ -55,7 +55,7 @@ function M.parents(start)
     start
 end
 
---- Return the parent directory of the given path
+--- Gets the parent directory of the given path (not expanded/resolved, the caller must do that).
 ---
 ---@since 10
 ---@generic T : string|nil
@@ -136,7 +136,7 @@ end
 ---             - skip: (fun(dir_name: string): boolean)|nil Predicate
 ---               to control traversal. Return false to stop searching the current directory.
 ---               Only useful when depth > 1
----             - follow: boolean|nil Follow symbolic links. (default: true)
+---             - follow: boolean|nil Follow symbolic links. (default: false)
 ---
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
@@ -179,7 +179,7 @@ function M.dir(path, opts)
         if
           opts.depth
           and level < opts.depth
-          and (t == 'directory' or (t == 'link' and opts.follow ~= false and (vim.uv.fs_stat(
+          and (t == 'directory' or (t == 'link' and opts.follow and (vim.uv.fs_stat(
             M.joinpath(path, f)
           ) or {}).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
@@ -217,7 +217,7 @@ end
 --- @field limit? number
 ---
 --- Follow symbolic links.
---- (default: `true`)
+--- (default: `false`)
 --- @field follow? boolean
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
@@ -234,16 +234,17 @@ end
 --- Examples:
 ---
 --- ```lua
---- -- list all test directories under the runtime directory
---- local test_dirs = vim.fs.find(
----   {'test', 'tst', 'testdir'},
----   {limit = math.huge, type = 'directory', path = './runtime/'}
+--- -- List all test directories under the runtime directory.
+--- local dirs = vim.fs.find(
+---   { 'test', 'tst', 'testdir' },
+---   { limit = math.huge, type = 'directory', path = './runtime/' }
 --- )
 ---
---- -- get all files ending with .cpp or .hpp inside lib/
---- local cpp_hpp = vim.fs.find(function(name, path)
+--- -- Get all "lib/*.cpp" and "lib/*.hpp" files, using Lua patterns.
+--- -- Or use `vim.glob.to_lpeg(…):match(…)` for glob/wildcard matching.
+--- local files = vim.fs.find(function(name, path)
 ---   return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
---- end, {limit = math.huge, type = 'file'})
+--- end, { limit = math.huge, type = 'file' })
 --- ```
 ---
 ---@since 10
@@ -357,11 +358,7 @@ function M.find(names, opts)
 
         if
           type_ == 'directory'
-          or (
-            type_ == 'link'
-            and opts.follow ~= false
-            and (vim.uv.fs_stat(f) or {}).type == 'directory'
-          )
+          or (type_ == 'link' and opts.follow and (vim.uv.fs_stat(f) or {}).type == 'directory')
         then
           dirs[#dirs + 1] = f
         end

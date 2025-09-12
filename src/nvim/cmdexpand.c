@@ -91,6 +91,8 @@ static int compl_match_arraysize;
 /// First column in cmdline of the matched item for completion.
 static int compl_startcol;
 static int compl_selected;
+/// cmdline before expansion
+static char *cmdline_orig = NULL;
 
 #define SHOW_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
 
@@ -108,6 +110,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_FILES
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
+         && xp->xp_context != EXPAND_FILETYPECMD
          && xp->xp_context != EXPAND_FINDFUNC
          && xp->xp_context != EXPAND_HELP
          && xp->xp_context != EXPAND_KEYMAP
@@ -242,7 +245,12 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   char *p2;
 
   if (xp->xp_numfiles == -1) {
-    set_expand_context(xp);
+    if (ccline->input_fn && ccline->xp_context == EXPAND_COMMANDS) {
+      // Expand commands typed in input() function
+      set_cmd_context(xp, ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, false);
+    } else {
+      set_expand_context(xp);
+    }
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
     }
@@ -283,7 +291,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
       p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     }
     // Translate string into pattern and expand it.
-    const int use_options = (options
+    const int use_options = ((options & ~WILD_KEEP_SOLE_ITEM)
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
@@ -334,7 +342,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles <= 0 && p2 == NULL) {
     beep_flush();
-  } else if (xp->xp_numfiles == 1) {
+  } else if (xp->xp_numfiles == 1 && !(options & WILD_KEEP_SOLE_ITEM)) {
     // free expanded pattern
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
@@ -364,7 +372,7 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
 
   // Compute the popup menu starting column
   char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, true) : xp->xp_pattern;
-  if (ui_has(kUICmdline)) {
+  if (ui_has(kUICmdline) && cmdline_win == NULL) {
     compl_startcol = (int)(endpos - ccline->cmdbuff);
   } else {
     compl_startcol = cmd_screencol((int)(endpos - ccline->cmdbuff));
@@ -396,6 +404,7 @@ void cmdline_pum_remove(void)
 {
   pum_undisplay(true);
   XFREE_CLEAR(compl_match_array);
+  compl_match_arraysize = 0;
 }
 
 void cmdline_pum_cleanup(CmdlineInfo *cclp)
@@ -624,7 +633,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 
     // Tricky: wildmenu can be drawn either over a status line, or at empty
     // scrolled space in the message output
-    grid_line_start((wild_menu_showing == WM_SCROLLED) ? &msg_grid_adj : &default_grid, row);
+    grid_line_start((wild_menu_showing == WM_SCROLLED) ? &msg_grid_adj : &default_gridview, row);
 
     grid_line_puts(0, buf, -1, attr);
     if (selstart != NULL && highlight) {
@@ -974,6 +983,11 @@ void ExpandCleanup(expand_T *xp)
   XFREE_CLEAR(xp->xp_orig);
 }
 
+void clear_cmdline_orig(void)
+{
+  XFREE_CLEAR(cmdline_orig);
+}
+
 /// Display one line of completion matches. Multiple matches are displayed in
 /// each line (used by wildmode=list and CTRL-D)
 ///
@@ -1054,6 +1068,12 @@ int showmatches(expand_T *xp, bool wildmenu)
   int columns;
   bool showtail;
 
+  // Save cmdline before expansion
+  if (ccline->cmdbuff != NULL) {
+    xfree(cmdline_orig);
+    cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
+  }
+
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
     if (xp->xp_context == EXPAND_LUA) {
@@ -1071,13 +1091,8 @@ int showmatches(expand_T *xp, bool wildmenu)
     showtail = cmd_showtail;
   }
 
-  bool compl_use_pum = (ui_has(kUICmdline)
-                        ? ui_has(kUIPopupmenu)
-                        : wildmenu && (wop_flags & kOptWopFlagPum))
-                       || ui_has(kUIWildmenu);
-
-  if (compl_use_pum) {
-    // cmdline completion popup menu (with wildoptions=pum)
+  if (((!ui_has(kUICmdline) || cmdline_win != NULL) && wildmenu && (wop_flags & kOptWopFlagPum))
+      || ui_has(kUIWildmenu) || (ui_has(kUICmdline) && ui_has(kUIPopupmenu))) {
     return cmdline_pum_create(ccline, xp, matches, numMatches, showtail);
   }
 
@@ -1746,6 +1761,19 @@ static const char *set_context_in_lang_cmd(expand_T *xp, const char *arg)
 }
 
 static enum {
+  EXP_FILETYPECMD_ALL,     ///< expand all :filetype values
+  EXP_FILETYPECMD_PLUGIN,  ///< expand plugin on off
+  EXP_FILETYPECMD_INDENT,  ///< expand indent on off
+  EXP_FILETYPECMD_ONOFF,   ///< expand on off
+} filetype_expand_what;
+
+enum {
+  EXPAND_FILETYPECMD_PLUGIN = 0x01,
+  EXPAND_FILETYPECMD_INDENT = 0x02,
+  EXPAND_FILETYPECMD_ONOFF  = 0x04,
+};
+
+static enum {
   EXP_BREAKPT_ADD,  ///< expand ":breakadd" sub-commands
   EXP_BREAKPT_DEL,  ///< expand ":breakdel" sub-commands
   EXP_PROFDEL,      ///< expand ":profdel" sub-commands
@@ -1812,6 +1840,47 @@ static const char *set_context_in_scriptnames_cmd(expand_T *xp, const char *arg)
   }
 
   xp->xp_context = EXPAND_SCRIPTNAMES;
+  xp->xp_pattern = p;
+
+  return NULL;
+}
+
+/// Set the completion context for the :filetype command. Always returns NULL.
+static const char *set_context_in_filetype_cmd(expand_T *xp, const char *arg)
+{
+  xp->xp_context = EXPAND_FILETYPECMD;
+  xp->xp_pattern = (char *)arg;
+  filetype_expand_what = EXP_FILETYPECMD_ALL;
+
+  char *p = skipwhite(arg);
+  if (*p == NUL) {
+    return NULL;
+  }
+
+  int val = 0;
+
+  while (true) {
+    if (strncmp(p, "plugin", 6) == 0) {
+      val |= EXPAND_FILETYPECMD_PLUGIN;
+      p = skipwhite(p + 6);
+      continue;
+    }
+    if (strncmp(p, "indent", 6) == 0) {
+      val |= EXPAND_FILETYPECMD_INDENT;
+      p = skipwhite(p + 6);
+      continue;
+    }
+    break;
+  }
+
+  if ((val & EXPAND_FILETYPECMD_PLUGIN) && (val & EXPAND_FILETYPECMD_INDENT)) {
+    filetype_expand_what = EXP_FILETYPECMD_ONOFF;
+  } else if ((val & EXPAND_FILETYPECMD_PLUGIN)) {
+    filetype_expand_what = EXP_FILETYPECMD_INDENT;
+  } else if ((val & EXPAND_FILETYPECMD_INDENT)) {
+    filetype_expand_what = EXP_FILETYPECMD_PLUGIN;
+  }
+
   xp->xp_pattern = p;
 
   return NULL;
@@ -2179,6 +2248,9 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_scriptnames:
     return set_context_in_scriptnames_cmd(xp, arg);
 
+  case CMD_filetype:
+    return set_context_in_filetype_cmd(xp, arg);
+
   case CMD_lua:
   case CMD_equal:
     xp->xp_context = EXPAND_LUA;
@@ -2402,6 +2474,10 @@ void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
     xp->xp_context = ccline->xp_context;
     xp->xp_pattern = ccline->cmdbuff;
     xp->xp_arg = ccline->xp_arg;
+    if (xp->xp_context == EXPAND_SHELLCMDLINE) {
+      int context = xp->xp_context;
+      set_context_for_wildcard_arg(NULL, xp->xp_pattern, false, xp, &context);
+    }
   } else {
     while (nextcomm != NULL) {
       nextcomm = set_one_cmd_context(xp, nextcomm);
@@ -2543,6 +2619,30 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
+/// ":filetype {plugin,indent}" command.
+static char *get_filetypecmd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  char *opts_all[] = { "indent", "plugin", "on", "off" };
+  char *opts_plugin[] = { "plugin", "on", "off" };
+  char *opts_indent[] = { "indent", "on", "off" };
+  char *opts_onoff[] = { "on", "off" };
+
+  if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 4) {
+    return opts_all[idx];
+  }
+  if (filetype_expand_what == EXP_FILETYPECMD_PLUGIN && idx < 3) {
+    return opts_plugin[idx];
+  }
+  if (filetype_expand_what == EXP_FILETYPECMD_INDENT && idx < 3) {
+    return opts_indent[idx];
+  }
+  if (filetype_expand_what == EXP_FILETYPECMD_ONOFF && idx < 2) {
+    return opts_onoff[idx];
+  }
+  return NULL;
+}
+
+/// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":breakadd {expr, file, func, here}" command.
 /// ":breakdel {func, file, here}" command.
 static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
@@ -2637,6 +2737,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     int escaped;
   } tab[] = {
     { EXPAND_COMMANDS, get_command_name, false, true },
+    { EXPAND_FILETYPECMD, get_filetypecmd_arg, true, true },
     { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
     { EXPAND_MESSAGES, get_messages_arg, true, true },
     { EXPAND_HISTORY, get_history_arg, true, true },
@@ -3233,7 +3334,7 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
 
 static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 {
-  typval_T rettv;
+  typval_T rettv = TV_INITIAL_VALUE;
   nlua_call_user_expand_func(xp, &rettv);
   if (rettv.v_type != VAR_LIST) {
     tv_clear(&rettv);
@@ -3620,6 +3721,9 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     set_context_for_wildcard_arg(NULL, xpc.xp_pattern, false, &xpc, &context);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
+  if (xpc.xp_context == EXPAND_FILETYPECMD) {
+    filetype_expand_what = EXP_FILETYPECMD_ALL;
+  }
 
 theend:
   if (xpc.xp_context == EXPAND_LUA) {
@@ -3643,4 +3747,31 @@ theend:
   }
   xfree(pat);
   ExpandCleanup(&xpc);
+}
+
+/// "cmdcomplete_info()" function
+void f_cmdcomplete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  CmdlineInfo *ccline = get_cmdline_info();
+
+  tv_dict_alloc_ret(rettv);
+  if (ccline == NULL || ccline->xpc == NULL || ccline->xpc->xp_files == NULL) {
+    return;
+  }
+
+  dict_T *retdict = rettv->vval.v_dict;
+  int ret = tv_dict_add_str(retdict, S_LEN("cmdline_orig"), cmdline_orig);
+  if (ret == OK) {
+    ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
+  }
+  if (ret == OK) {
+    ret = tv_dict_add_nr(retdict, S_LEN("selected"), ccline->xpc->xp_selected);
+  }
+  if (ret == OK) {
+    list_T *li = tv_list_alloc(ccline->xpc->xp_numfiles);
+    ret = tv_dict_add_list(retdict, S_LEN("matches"), li);
+    for (int idx = 0; ret == OK && idx < ccline->xpc->xp_numfiles; idx++) {
+      tv_list_append_string(li, ccline->xpc->xp_files[idx], -1);
+    }
+  }
 }

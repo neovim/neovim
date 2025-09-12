@@ -391,7 +391,7 @@ int ignorecase(char *pat)
   return ignorecase_opt(pat, p_ic, p_scs);
 }
 
-/// As ignorecase() put pass the "ic" and "scs" flags.
+/// As ignorecase() but pass the "ic" and "scs" flags.
 int ignorecase_opt(char *pat, int ic_in, int scs)
 {
   int ic = ic_in;
@@ -1264,6 +1264,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       // do not fill the msgbuf buffer, if cmd_silent is set, leave it
       // empty for the search_stat feature.
       if (!cmd_silent) {
+        ui_busy_start();
         msgbuf[0] = (char)dirc;
         if (utf_iscomposing_first(utf_ptr2char(p))) {
           // Use a space to draw the composing char on.
@@ -1310,6 +1311,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
 
         gotocmdline(false);
         ui_flush();
+        ui_busy_stop();
         msg_nowait = true;  // don't wait for this message
       }
 
@@ -2363,7 +2365,7 @@ void showmatch(int c)
 
   bool col_visible = curwin->w_p_wrap
                      || (vcol >= curwin->w_leftcol
-                         && vcol < curwin->w_leftcol + curwin->w_width_inner);
+                         && vcol < curwin->w_leftcol + curwin->w_view_width);
   if (!col_visible) {
     return;
   }
@@ -2722,12 +2724,9 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
                 || (dirc == '/' && lt(p, lastpos)));
 
   // If anything relevant changed the count has to be recomputed.
-  // STRNICMP ignores case, but we should not ignore case.
-  // Unfortunately, there is no STRNICMP function.
-  // XXX: above comment should be "no MB_STRCMP function" ?
   if (!(chgtick == buf_get_changedtick(curbuf)
         && (lastpat != NULL  // suppress clang/NULL passed as nonnull parameter
-            && mb_strnicmp(lastpat, spats[last_idx].pat, lastpatlen) == 0
+            && strncmp(lastpat, spats[last_idx].pat, lastpatlen) == 0
             && lastpatlen == spats[last_idx].patlen)
         && equalpos(lastpos, *cursor_pos)
         && lbuf == curbuf)
@@ -2996,7 +2995,7 @@ typedef struct {
 /// are in "matches".
 static int fuzzy_match_compute_score(const char *const fuzpat, const char *const str,
                                      const int strSz, const uint32_t *const matches,
-                                     const int numMatches)
+                                     const int numMatches, bool camelcase)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   assert(numMatches > 0);  // suppress clang "result of operation is garbage"
@@ -3055,7 +3054,7 @@ static int fuzzy_match_compute_score(const char *const fuzpat, const char *const
       curr = utf_ptr2char(p);
 
       // Enhanced camel case scoring
-      if (mb_islower(neighbor) && mb_isupper(curr)) {
+      if (camelcase && mb_islower(neighbor) && mb_isupper(curr)) {
         score += CAMEL_BONUS * 2;  // Double the camel case bonus
         is_camel = true;
         consecutive_camel++;
@@ -3114,7 +3113,8 @@ static int fuzzy_match_compute_score(const char *const fuzpat, const char *const
 static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t strIdx,
                                  int *const outScore, const char *const strBegin, const int strLen,
                                  const uint32_t *const srcMatches, uint32_t *const matches,
-                                 const int maxMatches, int nextMatch, int *const recursionCount)
+                                 const int maxMatches, int nextMatch, int *const recursionCount,
+                                 bool camelcase)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Recursion params
@@ -3161,7 +3161,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
       if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1, &recursiveScore, strBegin, strLen,
                                 matches, recursiveMatches,
                                 sizeof(recursiveMatches) / sizeof(recursiveMatches[0]), nextMatch,
-                                recursionCount)) {
+                                recursionCount, camelcase)) {
         // Pick best recursive score
         if (!recursiveMatch || recursiveScore > bestRecursiveScore) {
           memcpy(bestRecursiveMatches, recursiveMatches,
@@ -3184,7 +3184,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
 
   // Calculate score
   if (matched) {
-    *outScore = fuzzy_match_compute_score(fuzpat, strBegin, strLen, matches, nextMatch);
+    *outScore = fuzzy_match_compute_score(fuzpat, strBegin, strLen, matches, nextMatch, camelcase);
   }
 
   // Return best result
@@ -3213,7 +3213,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
 /// @return true if "pat_arg" matches "str". Also returns the match score in
 /// "outScore" and the matching character positions in "matches".
 bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq,
-                 int *const outScore, uint32_t *const matches, const int maxMatches)
+                 int *const outScore, uint32_t *const matches, const int maxMatches, bool camelcase)
   FUNC_ATTR_NONNULL_ALL
 {
   const int len = mb_charlen(str);
@@ -3251,7 +3251,7 @@ bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq
     const int matchCount
       = fuzzy_match_recursive(pat, str, 0, &score, str, len, NULL,
                               matches + numMatches,
-                              maxMatches - numMatches, 0, &recursionCount);
+                              maxMatches - numMatches, 0, &recursionCount, camelcase);
     if (matchCount == 0) {
       numMatches = 0;
       break;
@@ -3301,7 +3301,7 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
 static void fuzzy_match_in_list(list_T *const l, char *const str, const bool matchseq,
                                 const char *const key, Callback *const item_cb,
                                 const bool retmatchpos, list_T *const fmatchlist,
-                                const int max_matches)
+                                const int max_matches, bool camelcase)
   FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
   int len = tv_list_len(l);
@@ -3352,7 +3352,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
 
     int score;
     if (itemstr != NULL && fuzzy_match(itemstr, str, matchseq, &score, matches,
-                                       MAX_FUZZY_MATCHES)) {
+                                       MAX_FUZZY_MATCHES, camelcase)) {
       items[match_count].idx = (int)match_count;
       items[match_count].item = li;
       items[match_count].score = score;
@@ -3452,6 +3452,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   const char *key = NULL;
   bool matchseq = false;
   int max_matches = 0;
+  bool camelcase = true;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (tv_check_for_nonnull_dict_arg(argvars, 2) == FAIL) {
       return;
@@ -3464,7 +3465,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
     if ((di = tv_dict_find(d, "key", -1)) != NULL) {
       if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL
           || *di->di_tv.vval.v_string == NUL) {
-        semsg(_(e_invarg2), tv_get_string(&di->di_tv));
+        semsg(_(e_invargNval), "key", tv_get_string(&di->di_tv));
         return;
       }
       key = tv_get_string(&di->di_tv);
@@ -3475,10 +3476,18 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
 
     if ((di = tv_dict_find(d, "limit", -1)) != NULL) {
       if (di->di_tv.v_type != VAR_NUMBER) {
-        semsg(_(e_invarg2), tv_get_string(&di->di_tv));
+        semsg(_(e_invargval), "limit");
         return;
       }
       max_matches = (int)tv_get_number_chk(&di->di_tv, NULL);
+    }
+
+    if ((di = tv_dict_find(d, "camelcase", -1)) != NULL) {
+      if (di->di_tv.v_type != VAR_BOOL) {
+        semsg(_(e_invargval), "camelcase");
+        return;
+      }
+      camelcase = tv_get_bool_chk(&di->di_tv, NULL);
     }
 
     if (tv_dict_find(d, "matchseq", -1) != NULL) {
@@ -3500,7 +3509,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
 
   fuzzy_match_in_list(argvars[0].vval.v_list,
                       (char *)tv_get_string(&argvars[1]), matchseq, key,
-                      &cb, retmatchpos, rettv->vval.v_list, max_matches);
+                      &cb, retmatchpos, rettv->vval.v_list, max_matches, camelcase);
   callback_free(&cb);
 }
 
@@ -3584,7 +3593,7 @@ int fuzzy_match_str(char *const str, const char *const pat)
 
   int score = 0;
   uint32_t matchpos[MAX_FUZZY_MATCHES];
-  fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]));
+  fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]), true);
 
   return score;
 }
@@ -3602,7 +3611,7 @@ garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
 
   unsigned matches[MAX_FUZZY_MATCHES];
   int score = 0;
-  if (!fuzzy_match(str, pat, false, &score, matches, MAX_FUZZY_MATCHES)
+  if (!fuzzy_match(str, pat, false, &score, matches, MAX_FUZZY_MATCHES, true)
       || score == 0) {
     ga_clear(match_positions);
     xfree(match_positions);
@@ -3618,6 +3627,163 @@ garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
   }
 
   return match_positions;
+}
+
+/// This function splits the line pointed to by `*ptr` into words and performs
+/// a fuzzy match for the pattern `pat` on each word. It iterates through the
+/// line, moving `*ptr` to the start of each word during the process.
+///
+/// If a match is found:
+/// - `*ptr` points to the start of the matched word.
+/// - `*len` is set to the length of the matched word.
+/// - `*score` contains the match score.
+///
+/// If no match is found, `*ptr` is updated to the end of the line.
+bool fuzzy_match_str_in_line(char **ptr, char *pat, int *len, pos_T *current_pos, int *score)
+{
+  char *str = *ptr;
+  char *strBegin = str;
+  char *end = NULL;
+  char *start = NULL;
+  bool found = false;
+
+  if (str == NULL || pat == NULL) {
+    return found;
+  }
+  char *line_end = find_line_end(str);
+
+  while (str < line_end) {
+    // Skip non-word characters
+    start = find_word_start(str);
+    if (*start == NUL) {
+      break;
+    }
+    end = find_word_end(start);
+
+    // Extract the word from start to end
+    char save_end = *end;
+    *end = NUL;
+
+    // Perform fuzzy match
+    *score = fuzzy_match_str(start, pat);
+    *end = save_end;
+
+    if (*score > 0) {
+      *len = (int)(end - start);
+      found = true;
+      *ptr = start;
+      if (current_pos) {
+        current_pos->col += (int)(end - strBegin);
+      }
+      break;
+    }
+
+    // Move to the end of the current word for the next iteration
+    str = end;
+    // Ensure we continue searching after the current word
+    while (*str != NUL && !vim_iswordp(str)) {
+      MB_PTR_ADV(str);
+    }
+  }
+
+  if (!found) {
+    *ptr = line_end;
+  }
+
+  return found;
+}
+
+/// Search for the next fuzzy match in the specified buffer.
+/// This function attempts to find the next occurrence of the given pattern
+/// in the buffer, starting from the current position. It handles line wrapping
+/// and direction of search.
+///
+/// Return true if a match is found, otherwise false.
+bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_T *start_pos,
+                            int *len, char **ptr, int *score)
+{
+  pos_T current_pos = *pos;
+  pos_T circly_end;
+  bool found_new_match = false;
+  bool looped_around = false;
+
+  bool whole_line = ctrl_x_mode_whole_line();
+
+  if (buf == curbuf) {
+    circly_end = *start_pos;
+  } else {
+    circly_end.lnum = buf->b_ml.ml_line_count;
+    circly_end.col = 0;
+    circly_end.coladd = 0;
+  }
+
+  if (whole_line && start_pos->lnum != pos->lnum) {
+    current_pos.lnum += dir;
+  }
+
+  while (true) {
+    // Check if looped around and back to start position
+    if (looped_around && equalpos(current_pos, circly_end)) {
+      break;
+    }
+
+    // Ensure current_pos is valid
+    if (current_pos.lnum >= 1 && current_pos.lnum <= buf->b_ml.ml_line_count) {
+      // Get the current line buffer
+      *ptr = ml_get_buf(buf, current_pos.lnum);
+      if (!whole_line) {
+        *ptr += current_pos.col;
+      }
+
+      // If ptr is end of line is reached, move to next line
+      // or previous line based on direction
+      if (*ptr != NULL && **ptr != NUL) {
+        if (!whole_line) {
+          // Try to find a fuzzy match in the current line starting
+          // from current position
+          found_new_match = fuzzy_match_str_in_line(ptr, pattern,
+                                                    len, &current_pos, score);
+          if (found_new_match) {
+            *pos = current_pos;
+            break;
+          } else if (looped_around && current_pos.lnum == circly_end.lnum) {
+            break;
+          }
+        } else {
+          if (fuzzy_match_str(*ptr, pattern) > 0) {
+            found_new_match = true;
+            *pos = current_pos;
+            *len = ml_get_buf_len(buf, current_pos.lnum);
+            break;
+          }
+        }
+      }
+    }
+
+    // Move to the next line or previous line based on direction
+    if (dir == FORWARD) {
+      if (++current_pos.lnum > buf->b_ml.ml_line_count) {
+        if (p_ws) {
+          current_pos.lnum = 1;
+          looped_around = true;
+        } else {
+          break;
+        }
+      }
+    } else {
+      if (--current_pos.lnum < 1) {
+        if (p_ws) {
+          current_pos.lnum = buf->b_ml.ml_line_count;
+          looped_around = true;
+        } else {
+          break;
+        }
+      }
+    }
+    current_pos.col = 0;
+  }
+
+  return found_new_match;
 }
 
 /// Copy a list of fuzzy matches into a string list after sorting the matches by
@@ -4071,7 +4237,7 @@ search_line:
         const int add_r = ins_compl_add_infercase(aux, i, p_ic,
                                                   curr_fname == curbuf->b_fname
                                                   ? NULL : curr_fname,
-                                                  dir, cont_s_ipos);
+                                                  dir, cont_s_ipos, 0);
         if (add_r == OK) {
           // if dir was BACKWARD then honor it just once
           dir = FORWARD;

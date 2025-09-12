@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     Debian version information
 " Maintainer:   Debian Vim Maintainers
-" Last Change:  2024 Nov 04
+" Last Change:  2025 Apr 24
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/shared/debversions.vim
 
 let s:cpo = &cpo
@@ -9,9 +9,9 @@ set cpo-=C
 
 let g:debSharedSupportedVersions = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental', 'sid', 'rc-buggy',
-      \ 'bullseye', 'bookworm', 'trixie', 'forky',
+      \ 'bullseye', 'bookworm', 'trixie', 'forky', 'duke',
       \
-      \ 'focal', 'jammy', 'noble', 'oracular', 'plucky',
+      \ 'focal', 'jammy', 'noble', 'oracular', 'plucky', 'questing',
       \ 'devel'
       \ ]
 let g:debSharedUnsupportedVersions = [

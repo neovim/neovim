@@ -159,6 +159,7 @@ local function test_generates_html(guifont, expect_font)
 
   local out_file = api.nvim_buf_get_name(api.nvim_get_current_buf())
   eq({
+    '<!-- vim: set nomodeline: -->',
     '<!DOCTYPE html>',
     '<html>',
     '<head>',
@@ -212,6 +213,7 @@ describe(':TOhtml', function()
     n.command('2,2TOhtml')
     local out_file = api.nvim_buf_get_name(api.nvim_get_current_buf())
     eq({
+      '<!-- vim: set nomodeline: -->',
       '<!DOCTYPE html>',
       '<html>',
       '<head>',

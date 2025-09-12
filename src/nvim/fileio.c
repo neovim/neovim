@@ -3041,7 +3041,7 @@ int buf_check_timestamp(buf_T *buf)
         }
         msg_clr_eos();
         msg_end();
-        if (emsg_silent == 0 && !in_assert_fails) {
+        if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
           ui_flush();
           // give the user some time to think about it
           os_delay(1004, true);
@@ -3278,7 +3278,7 @@ static void vim_mktempdir(void)
     expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
     if (!os_isdir(tmp)) {
       if (strequal("$TMPDIR", temp_dirs[i])) {
-        if (!os_getenv("TMPDIR")) {
+        if (!os_env_exists("TMPDIR", true)) {
           DLOG("$TMPDIR is unset");
         } else {
           WLOG("$TMPDIR tempdir not a directory (or does not exist): \"%s\"", tmp);

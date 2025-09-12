@@ -734,7 +734,7 @@ M.cmds = {
   },
   {
     command = 'detach',
-    flags = bit.bor(BANG, FILES, CMDARG, ARGOPT, TRLBAR, CMDWIN, LOCK_OK),
+    flags = TRLBAR,
     addr_type = 'ADDR_NONE',
     func = 'ex_detach',
   },
@@ -1217,6 +1217,12 @@ M.cmds = {
     flags = bit.bor(TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'ex_intro',
+  },
+  {
+    command = 'iput',
+    flags = bit.bor(RANGE, WHOLEFOLD, BANG, REGSTR, TRLBAR, ZEROR, CMDWIN, LOCK_OK, MODIFY),
+    addr_type = 'ADDR_LINES',
+    func = 'ex_iput',
   },
   {
     command = 'isearch',
@@ -2241,6 +2247,12 @@ M.cmds = {
     func = 'ex_resize',
   },
   {
+    command = 'restart',
+    flags = bit.bor(BANG, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_restart',
+  },
+  {
     command = 'retab',
     flags = bit.bor(TRLBAR, RANGE, WHOLEFOLD, DFLALL, BANG, WORD1, CMDWIN, LOCK_OK, MODIFY),
     addr_type = 'ADDR_LINES',
@@ -2533,7 +2545,7 @@ M.cmds = {
   },
   {
     command = 'source',
-    flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
+    flags = bit.bor(RANGE, DFLALL, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',
     func = 'ex_source',
   },

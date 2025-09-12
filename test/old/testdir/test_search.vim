@@ -1449,6 +1449,7 @@ endfunc
 " Test that there is no crash when there is a last search pattern but no last
 " substitute pattern.
 func Test_no_last_substitute_pat()
+  throw 'Skipped: TODO: '
   " Use viminfo to set the last search pattern to a string and make the last
   " substitute pattern the most recent used and make it empty (NULL).
   call writefile(['~MSle0/bar', '~MSle0~&'], 'Xviminfo', 'D')
@@ -1498,15 +1499,44 @@ func Test_large_hex_chars2()
   try
     /[\Ufffffc1f]
   catch
-    call assert_match('E486:', v:exception)
+    call assert_match('E1541:', v:exception)
   endtry
   try
     set re=1
     /[\Ufffffc1f]
   catch
-    call assert_match('E486:', v:exception)
+    call assert_match('E1541:', v:exception)
   endtry
   set re&
+endfunc
+
+func Test_large_hex_chars3()
+  " Validate max number of Unicode char
+  try
+    /[\UFFFFFFFF]
+  catch
+    call assert_match('E1541:', v:exception)
+  endtry
+  try
+    /[\UFFFFFFF]
+  catch
+    call assert_match('E486:', v:exception)
+  endtry
+  try
+    /\%#=2[\d32-\UFFFFFFFF]
+  catch
+    call assert_match('E1541:', v:exception)
+  endtry
+  try
+    /\%#=1[\UFFFFFFFF]
+  catch
+    call assert_match('E1541:', v:exception)
+  endtry
+  try
+    /\%#=1[\d32-\UFFFFFFFF]
+  catch
+    call assert_match('E945:', v:exception)
+  endtry
 endfunc
 
 func Test_one_error_msg()

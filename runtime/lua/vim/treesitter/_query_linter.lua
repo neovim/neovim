@@ -17,7 +17,7 @@ local M = {}
 --- @field is_first_lang boolean Whether this is the first language of a linter run checking queries for multiple `langs`
 
 --- Adds a diagnostic for node in the query buffer
---- @param diagnostics vim.Diagnostic[]
+--- @param diagnostics vim.Diagnostic.Set[]
 --- @param range Range4
 --- @param lint string
 --- @param lang string?
@@ -126,7 +126,7 @@ end)
 --- @param match table<integer,TSNode[]>
 --- @param query vim.treesitter.Query
 --- @param lang_context QueryLinterLanguageContext
---- @param diagnostics vim.Diagnostic[]
+--- @param diagnostics vim.Diagnostic.Set[]
 local function lint_match(buf, match, query, lang_context, diagnostics)
   local lang = lang_context.lang
   local parser_info = lang_context.parser_info
@@ -162,7 +162,7 @@ function M.lint(buf, opts)
     buf = api.nvim_get_current_buf()
   end
 
-  local diagnostics = {}
+  local diagnostics = {} --- @type vim.Diagnostic.Set[]
   local query = vim.treesitter.query.parse('query', lint_query)
 
   opts = normalize_opts(buf, opts)

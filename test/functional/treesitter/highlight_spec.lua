@@ -82,7 +82,7 @@ local hl_grid_legacy_c = [[
     {15:return} {26:0};                                                      |
   }                                                                |
   {1:~                                                                }|*2
-                                                                   |
+  14 more lines                                                    |
 ]]
 
 local hl_grid_ts_c = [[
@@ -102,7 +102,7 @@ local hl_grid_ts_c = [[
     {15:return} {26:0};                                                      |
   }                                                                |
   {1:~                                                                }|*2
-                                                                   |
+  {MATCH:1?4? m?o?r?e? l?i?n?e?s?.*}|
 ]]
 
 local test_text_c = [[
@@ -513,6 +513,120 @@ describe('treesitter highlighting (C)', function()
     screen:expect { grid = injection_grid_expected_c }
   end)
 
+  it('supports combined injections #31777', function()
+    insert([=[
+      -- print([[
+      -- some
+      -- random
+      -- text
+      -- here]])
+    ]=])
+
+    exec_lua(function()
+      local parser = vim.treesitter.get_parser(0, 'lua', {
+        injections = {
+          lua = [[
+          ; query
+          ((comment_content) @injection.content
+            (#set! injection.self)
+            (#set! injection.combined))
+          ]],
+        },
+      })
+      local highlighter = vim.treesitter.highlighter
+      highlighter.new(parser, {
+        queries = {
+          lua = [[
+            ; query
+            (string) @string
+            (comment) @comment
+            (function_call (identifier) @function.call)
+            [ "(" ")" ] @punctuation.bracket
+          ]],
+        },
+      })
+    end)
+
+    screen:expect([=[
+      {18:-- }{25:print}{16:(}{26:[[}                                                      |
+      {18:--}{26: some}                                                          |
+      {18:-- random}                                                        |
+      {18:-- text}                                                          |
+      {18:-- here]])}                                                       |
+      ^                                                                 |
+      {1:~                                                                }|*11
+                                                                       |
+    ]=])
+    -- NOTE: Once #31777 is fixed, this test case should be updated to the following:
+    -- screen:expect([=[
+    --   {18:-- }{25:print}{16:(}{26:[[}                                                      |
+    --   {18:--}{26: some}                                                          |
+    --   {18:--}{26: random}                                                        |
+    --   {18:--}{26: text}                                                          |
+    --   {18:--}{26: here]]}{16:)}                                                       |
+    --   ^                                                                   |
+    --   {1:~                                                                }|*11
+    --                                                                    |
+    -- ]=])
+  end)
+
+  it('supports complicated combined injections', function()
+    insert([[
+      -- # Markdown here
+      --
+      -- ```c
+      -- int main() {
+      --   printf("Hello, world!");
+      -- }
+      -- ```
+    ]])
+
+    exec_lua(function()
+      local parser = vim.treesitter.get_parser(0, 'lua', {
+        injections = {
+          lua = [[
+          ; query
+          ((comment) @injection.content
+            (#offset! @injection.content 0 3 0 1)
+            (#lua-match? @injection.content "[-][-] ")
+            (#set! injection.combined)
+            (#set! injection.include-children)
+            (#set! injection.language "markdown"))
+          ]],
+        },
+      })
+      local highlighter = vim.treesitter.highlighter
+      highlighter.new(parser, {
+        queries = {
+          lua = [[
+            ; query
+            (string) @string
+            (comment) @comment
+            (function_call (identifier) @function.call)
+            [ "(" ")" ] @punctuation.bracket
+          ]],
+        },
+      })
+    end)
+
+    screen:add_extra_attr_ids({
+      [131] = { foreground = Screen.colors.Fuchsia, bold = true },
+    })
+
+    screen:expect([[
+      {18:-- }{131:# Markdown here}                                               |
+      {18:--}                                                               |
+      {18:-- ```}{15:c}                                                          |
+      {18:-- }{16:int}{18: }{25:main}{16:()}{18: }{16:{}                                                  |
+      {18:--   }{25:printf}{16:(}{26:"Hello, world!"}{16:);}                                    |
+      {18:-- }{16:}}                                                             |
+      {18:-- ```}                                                           |
+      ^                                                                 |
+      {1:~                                                                }|*9
+                                                                       |
+    ]])
+  end)
+
   it("supports injecting by ft name in metadata['injection.language']", function()
     insert(injection_text_c)
 
@@ -640,8 +754,14 @@ describe('treesitter highlighting (C)', function()
     }
 
     eq({
-      { capture = 'constant', metadata = { priority = '101' }, lang = 'c', id = 14 },
-      { capture = 'type', metadata = {}, lang = 'c', id = 3 },
+      {
+        capture = 'constant',
+        metadata = { priority = '101' },
+        lang = 'c',
+        id = 14,
+        pattern_id = 23,
+      },
+      { capture = 'type', metadata = {}, lang = 'c', id = 3, pattern_id = 16 },
     }, exec_lua [[ return vim.treesitter.get_captures_at_pos(0, 0, 2) ]])
   end)
 
@@ -786,9 +906,9 @@ describe('treesitter highlighting (C)', function()
 
     screen:expect({
       grid = [[
-          {26:int x = 4;}                                                     |
-          {26:int y = 5;}                                                     |
-          {26:int z = 6;}                                                     |
+        {26:int x = 4;}                                                       |
+        {26:int y = 5;}                                                       |
+        {26:int z = 6;}                                                       |
         ^                                                                 |
         {1:~                                                                }|*13
                                                                          |
@@ -815,7 +935,7 @@ describe('treesitter highlighting (C)', function()
 
     screen:expect({
       grid = [[
-          void foo(int {15:*}{25:bar});                                            |
+        void foo(int {15:*}{25:bar});                                              |
         ^                                                                 |
         {1:~                                                                }|*15
                                                                          |
@@ -883,8 +1003,8 @@ describe('treesitter highlighting (lua)', function()
 
     screen:expect({
       grid = [[
-          {15:local} {25:ffi} {15:=} {16:require(}{26:'ffi'}{16:)}                                     |
-          {25:ffi}{16:.}{25:cdef}{16:(}{26:"}{16:int}{26: }{16:(}{15:*}{26:fun}{16:)(int,}{26: }{16:char}{26: }{15:*}{16:);}{26:"}{16:)}                           |
+        {15:local} {25:ffi} {15:=} {16:require(}{26:'ffi'}{16:)}                                       |
+        {25:ffi}{16:.}{25:cdef}{16:(}{26:"}{16:int}{26: }{16:(}{15:*}{26:fun}{16:)(int,}{26: }{16:char}{26: }{15:*}{16:);}{26:"}{16:)}                             |
         ^                                                                 |
         {1:~                                                                }|*14
                                                                          |
@@ -1152,14 +1272,16 @@ describe('treesitter highlighting (markdown)', function()
     })
   end)
 
-  it('works with spellchecked and smoothscrolled topline', function()
-    insert([[
+  local code_block = [[
 - $f(0)=\sum_{k=1}^{\infty}\frac{2}{\pi^{2}k^{2}}+\lim_{w \to 0}x$.
 
 ```c
 printf('Hello World!');
 ```
-    ]])
+    ]]
+
+  it('works with spellchecked and smoothscrolled topline', function()
+    insert(code_block)
     command('set spell smoothscroll')
     feed('gg<C-E>')
     screen:add_extra_attr_ids({ [100] = { undercurl = true, special = Screen.colors.Red } })
@@ -1173,6 +1295,129 @@ printf('Hello World!');
                                                 |
       ]],
     })
+  end)
+
+  it('works with concealed lines', function()
+    insert(code_block)
+    screen:expect({
+      grid = [[
+                                                |
+        {18:```}{15:c}                                    |
+        {25:printf}{16:(}{26:'Hello World!'}{16:);}                 |
+        {18:```}                                     |
+        ^                                        |
+                                                |
+      ]],
+    })
+    feed('ggj')
+    command('set number conceallevel=3')
+    screen:expect({
+      grid = [[
+        {8:  1 }{16:- }$f(0)=\sum_{k=1}^{\infty}\frac{2}{|
+        {8:    }\pi^{2}k^{2}}+\lim_{w \to 0}x$.     |
+        {8:  2 }^                                    |
+        {8:  4 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+        {8:  6 }                                    |
+                                                |
+      ]],
+    })
+    feed('j')
+    screen:expect({
+      grid = [[
+        {8:  1 }{16:- }$f(0)=\sum_{k=1}^{\infty}\frac{2}{|
+        {8:    }\pi^{2}k^{2}}+\lim_{w \to 0}x$.     |
+        {8:  2 }                                    |
+        {8:  3 }{18:^```}{15:c}                                |
+        {8:  4 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+                                                |
+      ]],
+    })
+    feed('j')
+    screen:expect({
+      grid = [[
+        {8:  1 }{16:- }$f(0)=\sum_{k=1}^{\infty}\frac{2}{|
+        {8:    }\pi^{2}k^{2}}+\lim_{w \to 0}x$.     |
+        {8:  2 }                                    |
+        {8:  4 }{25:^printf}{16:(}{26:'Hello World!'}{16:);}             |
+        {8:  6 }                                    |
+                                                |
+      ]],
+    })
+    feed('j')
+    screen:expect({
+      grid = [[
+        {8:  1 }{16:- }$f(0)=\sum_{k=1}^{\infty}\frac{2}{|
+        {8:    }\pi^{2}k^{2}}+\lim_{w \to 0}x$.     |
+        {8:  2 }                                    |
+        {8:  4 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+        {8:  5 }{18:^```}                                 |
+                                                |
+      ]],
+    })
+    -- Concealed lines highlight until changed botline
+    screen:try_resize(screen._width, 16)
+    feed('y3k30P:<Esc><C-F><C-B>')
+    screen:expect([[
+      {8:  1 }{16:- }$f(0)=\sum_{k=1}^{\infty}\frac{2}{|
+      {8:    }\pi^{2}k^{2}}+\lim_{w \to 0}x$.     |
+      {8:  2 }                                    |
+      {8:  4 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:  6 }                                    |
+      {8:  8 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 10 }                                    |
+      {8: 12 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 14 }                                    |
+      {8: 16 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 18 }                                    |
+      {8: 20 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 22 }                                    |
+      {8: 24 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 25 }{18:^```}                                 |
+                                              |
+    ]])
+    feed('G')
+    screen:expect([[
+      {8: 98 }                                    |
+      {8:100 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:102 }                                    |
+      {8:104 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:106 }                                    |
+      {8:108 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:110 }                                    |
+      {8:112 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:114 }                                    |
+      {8:116 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:118 }                                    |
+      {8:120 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:122 }                                    |
+      {8:124 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:126 }^                                    |
+                                              |
+    ]])
+    feed('ggdj')
+    command('set concealcursor=n')
+    screen:expect([[
+      {8:  2 }{25:^printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:  4 }                                    |
+      {8:  6 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:  8 }                                    |
+      {8: 10 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 12 }                                    |
+      {8: 14 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 16 }                                    |
+      {8: 18 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 20 }                                    |
+      {8: 22 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 24 }                                    |
+      {8: 26 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 28 }                                    |
+      {8: 30 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+                                              |
+    ]])
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, {})
+      assert(vim.api.nvim_win_text_height(0, {}).all == 1, 'line concealed')
+    end)
   end)
 end)
 
@@ -1196,4 +1441,17 @@ it('starting and stopping treesitter highlight in init.lua works #29541', functi
   feed('i<C-R><C-O>r<Esc>gg')
   -- legacy syntax highlighting is used
   screen:expect(hl_grid_legacy_c)
+end)
+
+it('no nil index for missing highlight query', function()
+  clear()
+  local cqueries = vim.uv.cwd() .. '/runtime/queries/c/'
+  os.rename(cqueries .. 'highlights.scm', cqueries .. '_highlights.scm')
+  finally(function()
+    os.rename(cqueries .. '_highlights.scm', cqueries .. 'highlights.scm')
+  end)
+  exec_lua([[
+    local parser = vim.treesitter.get_parser(0, 'c')
+    vim.treesitter.highlighter.new(parser)
+  ]])
 end)

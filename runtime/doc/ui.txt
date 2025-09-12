@@ -123,7 +123,7 @@ UI embedders (clients that start Nvim with |--embed| and later call
     nvim --embed
 Nvim will pause before loading startup files and reading buffers, so the UI
 has a chance to invoke requests and do early initialization. Startup will
-continue as soon as the UI invokes |nvim_ui_attach()|.
+continue when the UI invokes |nvim_ui_attach()|.
 
 A simple UI only needs to do a single |nvim_ui_attach()| request and then
 prepare to handle any UI event. A more featureful UI, which might need
@@ -149,17 +149,14 @@ procedure:
    entering normal mode, for example reading variables set by init.vim.
 
 							   *ui-startup-stdin*
-An UI can support the native read from stdin feature as invoked with
-`command | nvim -` for the builtin TUI. |--|
-The embedding process can detect that its stdin is open to a file which
-not is a terminal, just like Nvim does. It then needs to forward this fd
-to Nvim. As fd=0 is already is used to send rpc data from the embedder to
-Nvim, it needs to use some other file descriptor, like fd=3 or higher.
+UIs can support reading from stdin (like `command | nvim -`, see |--|) as follows:
 
-Then, `stdin_fd` option should be passed to `nvim_ui_attach` and Nvim will
-implicitly read it as a buffer. This option can only be used when Nvim is
-launched with `--embed` option, as described above.
-
+1. The embedding process detects that the stdin fd is not a terminal.
+2. It then needs to forward this fd to Nvim. Because fd=0 is already is used
+   to send RPC data from embedder to Nvim, it must use some other file
+   descriptor, like fd=3 or higher.
+3. Then pass the fd as the `stdin_fd` parameter of `nvim_ui_attach`. Nvim will
+   read it as text into buffer 1.
 
 ==============================================================================
 Global Events							    *ui-global*
@@ -275,9 +272,9 @@ Grid Events (line-based)					  *ui-linegrid*
 Activated by the `ext_linegrid` |ui-option|. Recommended for all new UIs.
 Deactivates |ui-grid-old| implicitly.
 
-The biggest change compared to |ui-grid-old| is to use a single `grid_line`
-event to update the contents of a screen line (whereas the old protocol used
-a combination of cursor, highlight and text events)
+Unlike |ui-grid-old|, this UI extension emits a single `grid_line` event to
+update a screen-line (whereas the old protocol emitted separate cursor,
+highlight and text events per screen-line).
 
 Most of these events take a `grid` index as first parameter.  Grid 1 is the
 global grid used by default for the entire editor screen state. The
@@ -354,8 +351,7 @@ numerical highlight ids to the actual attributes.
 	affected by redefined ids, so UIs do not need to keep track of this
 	themselves.
 
-	`info` is an empty array by default, and will be used by the
-	|ui-hlstate| extension explained below.
+	`info` is an empty array unless |ui-hlstate| is enabled.
 
 ["hl_group_set", name, hl_id] ~
 	The built-in highlight group `name` was set to use the attributes `hl_id`
@@ -543,20 +539,23 @@ is not active. New UIs should implement |ui-linegrid| instead.
 		+-------------------------+
 <
 ==============================================================================
-Detailed highlight state Extension				  *ui-hlstate*
+Highlight Events						  *ui-hlstate*
 
 Activated by the `ext_hlstate` |ui-option|.
 Activates |ui-linegrid| implicitly.
 
-By default Nvim will only describe grid cells using the final calculated
-highlight attributes, as described by the dict keys in |ui-event-highlight_set|.
-The `ext_hlstate` extension allows to the UI to also receive a semantic
-description of the highlights active in a cell. In this mode highlights will be
-predefined in a table, see |ui-event-hl_attr_define| and |ui-event-grid_line|.
-The `info` parameter in `hl_attr_define` will contain a semantic description
-of the highlights. As highlight groups can be combined, this will be an array
-of items, with the item with highest priority last. Each item is a dictionary
-with the following possible keys:
+If `ext_hlstate` is enabled, Nvim will emit detailed highlight state in
+|ui-linegrid| events. Otherwise (by default) Nvim only describes grid cells
+using the final calculated highlight attributes described at
+|ui-event-highlight_set|.
+
+`ext_hlstate` provides a semantic description of active highlights for each
+grid cell. Highlights are predefined in a table, see |ui-event-hl_attr_define|
+and |ui-event-grid_line|.
+
+The `info` parameter in `hl_attr_define` contains a semantic description of
+the highlights. Because highlight groups can be combined, this is an array
+where the highest-priority item is last. Each item is a dict with these keys:
 
     `kind`:	always present. One of the following values:
 	"ui":       Builtin UI highlight. |highlight-groups|
@@ -610,12 +609,31 @@ tabs.
 	size). If the window was previously hidden, it should now be shown
 	again.
 
-["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, mouse_enabled, zindex] ~
-	Display or reconfigure floating window `win`. The window should be
-	displayed above another grid `anchor_grid` at the specified position
-	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more details
-	of positioning, see |nvim_open_win()|. `mouse_enabled` is true if the
-	window can receive mouse events.
+["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, mouse_enabled, zindex, compindex, screen_row, screen_col] ~
+	Display or reconfigure floating window `win`.
+
+	There are two alternative ways of positioning the window
+	  -  Manually - The window should be displayed above another grid
+	     `anchor_grid` at the specified position `anchor_row` and
+	     `anchor_col`. For the meaning of `anchor` and more details of
+	     positioning, see |nvim_open_win()|. NOTE: you have to manually
+	     ensure that the window fits the screen, possibly by further
+	     reposition it. Ignore `screen_row` and `screen_col` in this case.
+	  - Let nvim take care of the positioning - You can ignore `anchor`
+	    and display the window at `screen_row` and `screen_col`.
+
+	`mouse_enabled` is true if the window can receive mouse events.
+
+	`zindex` is the configured zindex, while `compindex` is the exact
+	rendering order of the windows determined by nvim. To render exactly
+	like the TUI, first render all the non-floating windows, then render
+	in the `compindex` order, overwriting any floating window cells.
+	Finally, blend the floating window cells against the non-floating
+	background. To add more blending, you can group the windows by zindex,
+	and blend between the layers. But note that windows inside the same
+	zindex should still overwrite previous cells inside the same layer
+	without blending. This ensures that plugins that render multiple
+	windows, to add borders for example, work as expected.
 
 ["win_external_pos", grid, win] ~
 	Display or reconfigure external window `win`. The window should be
@@ -628,7 +646,7 @@ tabs.
 ["win_close", grid] ~
 	Close the window.
 
-["msg_set_pos", grid, row, scrolled, sep_char] ~
+["msg_set_pos", grid, row, scrolled, sep_char, zindex, compindex] ~
 	Display messages on `grid`.  The grid will be displayed at `row` on
 	the default grid (grid=1), covering the full column width. `scrolled`
 	indicates whether the message area has been scrolled to cover other
@@ -638,6 +656,10 @@ tabs.
 
 	When |ui-messages| is active, no message grid is used, and this event
 	will not be sent.
+
+	`zindex` and `compindex` have the same meaning as for `win_float_pos`.
+	The `zindex` always has a fixed value of 200 and included for
+	completeness.
 
 ["win_viewport", grid, win, topline, botline, curline, curcol, line_count, scroll_delta] ~
 	Indicates the range of buffer text displayed in the window, as well
@@ -673,6 +695,10 @@ Activated by the `ext_popupmenu` |ui-option|.
 
 This UI extension delegates presentation of the |popupmenu-completion| and
 command-line 'wildmenu'.
+
+The UI decides how to present the menu. For example, depending on the last
+`mode_change` event, command-line wildmenu may be presented horizontally,
+while insert-mode completion would show a vertical popupmenu.
 
 ["popupmenu_show", items, selected, row, col, grid] ~
 	Show |popupmenu-completion|. `items` is an array of completion items
@@ -749,9 +775,10 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 	Should be hidden at next cmdline_show.
 
-["cmdline_hide", abort] ~
-	Hide the cmdline. `abort` is true if the cmdline is hidden after an
-	aborting condition (|c_Esc| or |c_CTRL-C|).
+["cmdline_hide", level, abort] ~
+	Hide the cmdline. `level` is the nesting level of the cmdline being hidden.
+	`abort` is true if the cmdline is hidden after an aborting condition
+	(|c_Esc| or |c_CTRL-C|).
 
 ["cmdline_block_show", lines] ~
 	Show a block of context to the current command line. For example if
@@ -784,7 +811,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last, history] ~
+["msg_show", kind, content, replace_last, history, append] ~
 	Display a message to the user.
 
 	kind
@@ -792,7 +819,7 @@ must handle.
 		"" (empty)	Unknown (consider a |feature-request|)
 		"bufwrite"	|:write| message
 		"confirm"	Message preceding a prompt (|:confirm|,
-				|confirm()|, |inputlist()|, |z=,|, …)
+				|confirm()|, |inputlist()|, |z=|, …)
 		"emsg"		Error (|errors|, internal error, |:throw|, …)
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message
@@ -806,6 +833,7 @@ must handle.
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
+		"shell_cmd"	|:!cmd| executed command
 		"shell_err"	|:!cmd| shell stderr output
 		"shell_out"	|:!cmd| shell stdout output
 		"shell_ret"	|:!cmd| shell return code
@@ -833,6 +861,10 @@ must handle.
 	history
 	    True if the message was added to the |:messages| history.
 
+	append
+	    True if the message should be appeneded to the previous message,
+	    rather than started on a new line. Is set for |:echon|.
+
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show". (Messages sent
 	by other "msg_" events below will not be affected).
@@ -858,5 +890,4 @@ must handle.
 ["msg_history_clear"] ~
 	Clear the |:messages| history.
 
-==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

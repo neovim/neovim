@@ -2,7 +2,7 @@
 " Language: PoV-Ray(tm) 3.7 Scene Description Language
 " Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2011-04-23
-" Required Vim Version: 6.0
+" 2025 Apr 21 by Vim Project (deprecate render and statistics #17177)
 
 " Setup
 " quit when a syntax file was already loaded
@@ -86,7 +86,8 @@ syn keyword povDeclareOption deprecated once contained nextgroup=povDeclareOptio
 syn match povIncludeDir "#\s*include\>"
 syn match povFileDir "#\s*\(fclose\|fopen\|read\|write\)\>"
 syn keyword povFileDataType uint8 sint8 unit16be uint16le sint16be sint16le sint32le sint32be
-syn match povMessageDir "#\s*\(debug\|error\|render\|statistics\|warning\)\>"
+syn match povMessageDir "#\s*\(debug\|error\|warning\)\>"
+syn match povMessageDirDeprecated "#\s*\%(render\|statistics\)\>"
 syn region povFileOpen start="#\s*fopen\>" skip=+"[^"]*"+ matchgroup=povOpenType end="\<\(read\|write\|append\)\>" contains=ALLBUT,PovParenError,PovBraceError,@PovPRIVATE transparent keepend
 
 " Literal strings
@@ -126,6 +127,7 @@ hi def link povIncludeDir Include
 hi def link povFileDir PreProc
 hi def link povFileDataType Special
 hi def link povMessageDir Debug
+hi def link povMessageDirDeprecated povError
 hi def link povAppearance povDescriptors
 hi def link povObjects povDescriptors
 hi def link povGlobalSettings povDescriptors

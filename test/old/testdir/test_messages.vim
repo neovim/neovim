@@ -387,6 +387,29 @@ func Test_message_not_cleared_after_mode()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_mode_cleared_after_silent_message()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    edit XsilentMessageMode.txt
+    call setline(1, 'foobar')
+    autocmd TextChanged * silent update
+  END
+  call writefile(lines, 'XsilentMessageMode', 'D')
+  let buf = RunVimInTerminal('-S XsilentMessageMode', {'rows': 10})
+
+  call term_sendkeys(buf, 'v')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_cleared_after_silent_message_1', {})
+
+  call term_sendkeys(buf, 'd')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_cleared_after_silent_message_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XsilentMessageMode.txt')
+endfunc
+
 " Test verbose message before echo command
 func Test_echo_verbose_system()
   CheckRunVimInTerminal

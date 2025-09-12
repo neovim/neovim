@@ -67,6 +67,8 @@ end
 --- This state is kept during rendering across each line update.
 ---@field private _highlight_states vim.treesitter.highlighter.State[]
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
+---@field  _conceal_line boolean?
+---@field  _conceal_checked table<integer, boolean>
 ---@field tree vim.treesitter.LanguageTree
 ---@field private redraw_count integer
 ---@field parsing boolean true if we are parsing asynchronously
@@ -99,13 +101,34 @@ function TSHighlighter.new(tree, opts)
     end,
   })
 
+  -- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
+  local function set_conceal_lines(lang)
+    if not self._conceal_line and self:get_query(lang):query() then
+      self._conceal_line = self:get_query(lang):query().has_conceal_line
+    end
+  end
+
   tree:register_cbs({
+    on_bytes = function(buf)
+      -- Clear conceal_lines marks whenever the buffer text changes. Marks are added
+      -- back as either the _conceal_line or on_win callback comes across them.
+      local hl = TSHighlighter.active[buf]
+      if hl and next(hl._conceal_checked) then
+        api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+        hl._conceal_checked = {}
+      end
+    end,
     on_changedtree = function(...)
       self:on_changedtree(...)
     end,
     on_child_removed = function(child)
       child:for_each_tree(function(t)
         self:on_changedtree(t:included_ranges(true))
+      end)
+    end,
+    on_child_added = function(child)
+      child:for_each_tree(function(t)
+        set_conceal_lines(t:lang())
       end)
     end,
   }, true)
@@ -115,17 +138,19 @@ function TSHighlighter.new(tree, opts)
 
   self.bufnr = source
   self.redraw_count = 0
-  self._highlight_states = {}
+  self._conceal_checked = {}
   self._queries = {}
+  self._highlight_states = {}
 
   -- Queries for a specific language can be overridden by a custom
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
       self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
+      set_conceal_lines(lang)
     end
   end
-
+  set_conceal_lines(tree:lang())
   self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
 
   vim.bo[self.bufnr].syntax = ''
@@ -141,7 +166,7 @@ function TSHighlighter.new(tree, opts)
   -- immediately afterwards will not error.
   if vim.g.syntax_on ~= 1 then
     vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
-    vim.api.nvim_create_augroup('syntaxset', { clear = false })
+    api.nvim_create_augroup('syntaxset', { clear = false })
   end
 
   vim._with({ buf = self.bufnr }, function()
@@ -159,6 +184,7 @@ function TSHighlighter:destroy()
   if api.nvim_buf_is_loaded(self.bufnr) then
     vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
     vim.b[self.bufnr].ts_highlight = nil
+    api.nvim_buf_clear_namespace(self.bufnr, ns, 0, -1)
     if vim.g.syntax_on == 1 then
       api.nvim_exec_autocmds(
         'FileType',
@@ -187,10 +213,9 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
       return
     end
 
-    local highlighter_query = self:get_query(tree:lang())
-
+    local hl_query = self:get_query(tree:lang())
     -- Some injected languages may not have highlight queries.
-    if not highlighter_query:query() then
+    if not hl_query:query() then
       return
     end
 
@@ -200,7 +225,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
       tstree = tstree,
       next_row = 0,
       iter = nil,
-      highlighter_query = highlighter_query,
+      highlighter_query = hl_query,
     })
   end)
 end
@@ -223,6 +248,14 @@ end
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes) do
     api.nvim__redraw({ buf = self.bufnr, range = { ch[1], ch[4] + 1 }, flush = false })
+    -- Only invalidate the _conceal_checked range if _conceal_line is set and
+    -- ch[4] is not UINT32_MAX (empty range on first changedtree).
+    if ch[4] == 2 ^ 32 - 1 then
+      self._conceal_checked = {}
+    end
+    for i = ch[1], self._conceal_line and ch[4] ~= 2 ^ 32 - 1 and ch[4] or 0 do
+      self._conceal_checked[i] = false
+    end
   end
 end
 
@@ -286,8 +319,10 @@ end
 ---@param self vim.treesitter.highlighter
 ---@param buf integer
 ---@param line integer
----@param is_spell_nav boolean
-local function on_line_impl(self, buf, line, is_spell_nav)
+---@param on_spell boolean
+---@param on_conceal boolean
+local function on_line_impl(self, buf, line, on_spell, on_conceal)
+  self._conceal_checked[line] = self._conceal_line and true or nil
   self:for_each_highlight_state(function(state)
     local root_node = state.tstree:root()
     local root_start_row, _, root_end_row, _ = root_node:range()
@@ -296,6 +331,8 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     if root_start_row > line or root_end_row < line then
       return
     end
+
+    local tree_region = state.tstree:included_ranges(true)
 
     if state.iter == nil or state.next_row < line then
       -- Mainly used to skip over folds
@@ -311,46 +348,63 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     while line >= state.next_row do
       local capture, node, metadata, match = state.iter(line)
 
-      local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
+      local outer_range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
-        range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
+        outer_range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
       end
-      local start_row, start_col, end_row, end_col = Range.unpack4(range)
+      local outer_range_start_row = outer_range[1]
 
-      if capture then
-        local hl = state.highlighter_query:get_hl_from_capture(capture)
+      for _, range in ipairs(tree_region) do
+        local intersection = Range.intersection(range, outer_range)
+        if intersection then
+          local start_row, start_col, end_row, end_col = Range.unpack4(intersection)
 
-        local capture_name = captures[capture]
+          if capture then
+            local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-        local spell, spell_pri_offset = get_spell(capture_name)
+            local capture_name = captures[capture]
 
-        -- The "priority" attribute can be set at the pattern level or on a particular capture
-        local priority = (
-          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-          or vim.hl.priorities.treesitter
-        ) + spell_pri_offset
+            local spell, spell_pri_offset = get_spell(capture_name)
 
-        -- The "conceal" attribute can be set at the pattern level or on a particular capture
-        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+            -- The "priority" attribute can be set at the pattern level or on a particular capture
+            local priority = (
+              tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+              or vim.hl.priorities.treesitter
+            ) + spell_pri_offset
 
-        local url = get_url(match, buf, capture, metadata)
+            -- The "conceal" attribute can be set at the pattern level or on a particular capture
+            local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
 
-        if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-          api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-            end_line = end_row,
-            end_col = end_col,
-            hl_group = hl,
-            ephemeral = true,
-            priority = priority,
-            conceal = conceal,
-            spell = spell,
-            url = url,
-          })
+            local url = get_url(match, buf, capture, metadata)
+
+            if hl and end_row >= line and not on_conceal and (not on_spell or spell ~= nil) then
+              api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
+                end_line = end_row,
+                end_col = end_col,
+                hl_group = hl,
+                ephemeral = true,
+                priority = priority,
+                conceal = conceal,
+                spell = spell,
+                url = url,
+              })
+            end
+
+            if
+              (metadata.conceal_lines or metadata[capture] and metadata[capture].conceal_lines)
+              and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }, {}) == 0
+            then
+              api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
+                end_line = end_row,
+                conceal_lines = '',
+              })
+            end
+          end
         end
       end
 
-      if start_row > line then
-        state.next_row = start_row
+      if outer_range_start_row > line then
+        state.next_row = outer_range_start_row
       end
     end
   end)
@@ -366,7 +420,7 @@ function TSHighlighter._on_line(_, _win, buf, line, _)
     return
   end
 
-  on_line_impl(self, buf, line, false)
+  on_line_impl(self, buf, line, false, false)
 end
 
 ---@private
@@ -385,8 +439,25 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   self:prepare_highlight_states(srow, erow)
 
   for row = srow, erow do
-    on_line_impl(self, buf, row, true)
+    on_line_impl(self, buf, row, true, false)
   end
+  self._highlight_states = highlight_states
+end
+
+---@private
+---@param buf integer
+---@param row integer
+function TSHighlighter._on_conceal_line(_, _, buf, row)
+  local self = TSHighlighter.active[buf]
+  if not self or not self._conceal_line or self._conceal_checked[row] then
+    return
+  end
+
+  -- Do not affect potentially populated highlight state.
+  local highlight_states = self._highlight_states
+  self.tree:parse({ row, row })
+  self:prepare_highlight_states(row, row)
+  on_line_impl(self, buf, row, false, true)
   self._highlight_states = highlight_states
 end
 
@@ -394,19 +465,37 @@ end
 ---@param buf integer
 ---@param topline integer
 ---@param botline integer
-function TSHighlighter._on_win(_, _, buf, topline, botline)
+function TSHighlighter._on_win(_, win, buf, topline, botline)
   local self = TSHighlighter.active[buf]
-  if not self or self.parsing then
+  if not self then
     return false
   end
-  self.parsing = self.tree:parse({ topline, botline + 1 }, function(_, trees)
-    if trees and self.parsing then
-      self.parsing = false
-      api.nvim__redraw({ buf = buf, valid = false, flush = false })
-    end
-  end) == nil
-  self.redraw_count = self.redraw_count + 1
-  self:prepare_highlight_states(topline, botline)
+  self.parsing = self.parsing
+    or nil
+      == self.tree:parse({ topline, botline + 1 }, function(_, trees)
+        if trees and self.parsing then
+          self.parsing = false
+          api.nvim__redraw({ win = win, valid = false, flush = false })
+        end
+      end)
+  if not self.parsing then
+    self.redraw_count = self.redraw_count + 1
+    self:prepare_highlight_states(topline, botline)
+  else
+    self:for_each_highlight_state(function(state)
+      -- TODO(ribru17): Inefficient. Eventually all marks should be applied in on_buf, and all
+      -- non-folded ranges of each open window should be merged, and iterators should only be
+      -- created over those regions. This would also fix #31777.
+      --
+      -- Currently this is not possible because the parser discards previously parsed injection
+      -- trees upon parsing a different region.
+      --
+      -- It would also be nice if rather than re-querying extmarks for old trees, we could tell the
+      -- decoration provider to not clear previous ephemeral marks for this redraw cycle.
+      state.iter = nil
+      state.next_row = 0
+    end)
+  end
   return #self._highlight_states > 0
 end
 
@@ -414,6 +503,7 @@ api.nvim_set_decoration_provider(ns, {
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,
   _on_spell_nav = TSHighlighter._on_spell_nav,
+  _on_conceal_line = TSHighlighter._on_conceal_line,
 })
 
 return TSHighlighter

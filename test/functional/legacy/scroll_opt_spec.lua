@@ -1053,7 +1053,7 @@ describe('smoothscroll', function()
       {8:    }21 22 23 24 25 26 27 28 29                              |
       {8: 11 }|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 |
       {8:    }21 22 23 24 25 26 27 28 29                              |
-      {2:[Quickfix List]                                             }|
+      {2:[Quickfix List] [-]                                         }|
                                                                   |
     ]])
 
@@ -1064,7 +1064,7 @@ describe('smoothscroll', function()
       {3:[No Name]                                                   }|
       {8:  1 }                                                        |
       {1:~                                                           }|*4
-      {2:[Quickfix List]                                             }|
+      {2:[Quickfix List] [-]                                         }|
       :call setqflist([], 'r')                                    |
     ]]
     screen:expect(screen_empty)
@@ -1079,7 +1079,7 @@ describe('smoothscroll', function()
       {8:    }21 22 23 24 25 26 27 28 29                              |
       {8:  3 }|| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 |
       {8:    }21 22 23 24 25 26 27 28 29                              |
-      {2:[Quickfix List]                                             }|
+      {2:[Quickfix List] [-]                                         }|
       :call setqflist(g:l, 'r')                                   |
     ]]
     screen:expect(screen_l_top)
@@ -1094,7 +1094,7 @@ describe('smoothscroll', function()
       {8:    }{10: 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 5}|
       {8:    }{10:8 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 }|
       {8:    }{10:77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95}|
-      {2:[Quickfix List]                                             }|
+      {2:[Quickfix List] [-]                                         }|
       :call setqflist(g:l1, 'r')                                  |
     ]]
     screen:expect(screen_l1_top)
@@ -1109,7 +1109,7 @@ describe('smoothscroll', function()
       {8:    }{10: 965 966 967 968 969 970 971 972 973 974 975 976 977 978}|
       {8:    }{10: 979 980 981 982 983 984 985 986 987 988 989 990 991 992}|
       {8:    }{10: 993 994 995 996 997 998 999                            }|
-      {2:[Quickfix List]                                             }|
+      {2:[Quickfix List] [-]                                         }|
       :call setqflist(g:l1, 'r')                                  |
     ]]
     screen:expect(screen_l1_bot)
@@ -1202,14 +1202,9 @@ describe('smoothscroll', function()
 
   it('<<< marker shows with tabline, winbar and splits', function()
     screen:try_resize(40, 12)
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Blue1, bold = true },
-      [2] = { reverse = true },
-      [3] = { bold = true, reverse = true },
-      [4] = { background = Screen.colors.LightMagenta },
-      [5] = { bold = true },
-      [31] = { foreground = Screen.colors.Fuchsia, bold = true },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.Magenta1, bold = true },
+    }
     exec([[
       call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
       set smoothscroll scrolloff=0
@@ -1232,7 +1227,7 @@ describe('smoothscroll', function()
     exec('set showtabline=2')
     feed('<C-E>')
     screen:expect([[
-      {5: }{31:2}{5:+ [No Name] }{2:                          }|
+      {5: }{100:2}{5:+ [No Name] }{2:                          }|
       {1:<<<}e text with some text with some text |
       with some text with some text           |
       Line with some text with some text with |
@@ -1248,7 +1243,7 @@ describe('smoothscroll', function()
     exec('set winbar=winbar')
     feed('<C-w>k<C-E>')
     screen:expect([[
-      {5: }{31:2}{5:+ [No Name] }{2:                          }|
+      {5: }{100:2}{5:+ [No Name] }{2:                          }|
       {5:winbar                                  }|
       {1:<<<}e text with some text with some text |
       ^with some text with some text           |

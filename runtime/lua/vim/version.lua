@@ -238,8 +238,8 @@ function VersionRange:has(version)
     version = setmetatable(vim.deepcopy(version, true), Version)
   end
   if version then
-    if version.prerelease ~= self.from.prerelease then
-      return false
+    if self.from == self.to then
+      return version == self.from
     end
     return version >= self.from and (self.to == nil or version < self.to)
   end
@@ -310,9 +310,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
     local from = semver --- @type vim.Version?
     local to = vim.deepcopy(semver, true) --- @type vim.Version?
     ---@diagnostic disable: need-check-nil
-    if mods == '' or mods == '=' then
-      to.patch = to.patch + 1
-    elseif mods == '<' then
+    if mods == '<' then
       from = M._version({})
     elseif mods == '<=' then
       from = M._version({})

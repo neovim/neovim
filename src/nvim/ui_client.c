@@ -12,6 +12,7 @@
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
@@ -37,6 +38,10 @@
 #endif
 
 static TUIData *tui = NULL;
+static int tui_width = 0;
+static int tui_height = 0;
+static char *tui_term = "";
+static bool tui_rgb = false;
 static bool ui_client_is_remote = false;
 
 // uncrustify:off
@@ -63,7 +68,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
 
 #ifdef MSWIN
   // TODO(justinmk): detach breaks `tt.setup_child_nvim` tests on Windows?
-  bool detach = os_env_exists("__NVIM_DETACH");
+  bool detach = os_env_exists("__NVIM_DETACH", true);
 #else
   bool detach = true;
 #endif
@@ -164,15 +169,11 @@ void ui_client_run(bool remote_ui)
   FUNC_ATTR_NORETURN
 {
   ui_client_is_remote = remote_ui;
-  int width, height;
-  char *term;
-  bool rgb;
-  tui_start(&tui, &width, &height, &term, &rgb);
-
-  ui_client_attach(width, height, term, rgb);
+  tui_start(&tui, &tui_width, &tui_height, &tui_term, &tui_rgb);
+  ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
-  if (os_env_exists("__NVIM_TEST_LOG")) {
+  if (os_env_exists("__NVIM_TEST_LOG", true)) {
     ELOG("test log message");
   }
 
@@ -186,6 +187,7 @@ void ui_client_run(bool remote_ui)
 
 void ui_client_stop(void)
 {
+  ui_client_attached = false;
   if (!tui_is_stopped(tui)) {
     tui_stop(tui);
   }
@@ -200,6 +202,8 @@ void ui_client_set_size(int width, int height)
     ADD_C(args, INTEGER_OBJ((int)height));
     rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
   }
+  tui_width = width;
+  tui_height = height;
 }
 
 UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, Error *error)
@@ -281,6 +285,59 @@ void ui_client_event_raw_line(GridLineEvent *g)
 
   tui_raw_line(tui, grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
+}
+
+/// Restarts the embedded server without killing the UI.
+void ui_client_event_restart(Array args)
+{
+  // 1. Client-side server detach.
+  ui_client_detach();
+
+  // 2. Close ui client channel (auto kills the `nvim --embed` server due to self-exit).
+  const char *error;
+  bool success = channel_close(ui_client_channel_id, kChannelPartAll, &error);
+  if (!success) {
+    ELOG("%s", error);
+    return;
+  }
+
+  // 3. Get v:argv.
+  typval_T *tv = get_vim_var_tv(VV_ARGV);
+  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
+    ELOG("failed to get vim var typval");
+    return;
+  }
+  list_T *l = tv->vval.v_list;
+  int argc = tv_list_len(l);
+
+  // Assert to be positive for safe conversion to size_t.
+  assert(argc > 0);
+
+  char **argv = xmalloc(sizeof(char *) * ((size_t)argc + 1));
+  listitem_T *li = tv_list_first(l);
+  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
+      argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
+    } else {
+      argv[i] = "";
+    }
+  }
+  argv[argc] = NULL;
+
+  // 4. Start a new `nvim --embed` server.
+  uint64_t rv = ui_client_start_server(argc, argv);
+  if (!rv) {
+    ELOG("failed to start nvim server");
+    goto cleanup;
+  }
+
+  // 5. Client-side server re-attach.
+  ui_client_channel_id = rv;
+  ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
+
+  ILOG("restarted server id=%" PRId64, rv);
+cleanup:
+  xfree(argv);
 }
 
 #ifdef EXITFREE

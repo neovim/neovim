@@ -13,6 +13,38 @@ They should not be used in new scripts, and old scripts should be updated.
 Deprecated features
 
 ------------------------------------------------------------------------------
+DEPRECATED IN 0.12					*deprecated-0.12*
+
+API
+
+• todo
+
+DIAGNOSTICS
+
+• "float" in |vim.diagnostic.JumpOpts|.		Use "on_jump" instead.
+• "float" in |vim.diagnostic.Opts.Jump|.	Use "on_jump" instead.
+
+HIGHLIGHTS
+
+• todo
+
+LSP
+
+• *vim.lsp.client_is_stopped()*		Use |vim.lsp.get_client_by_id()| instead.
+• *vim.lsp.util.stylize_markdown()*	Use |vim.treesitter.start()| with
+					`vim.wo.conceallevel = 2`.
+• *vim.lsp.log.should_log()*		Use |vim.lsp.log.set_format_func()| instead
+					and return `nil` to omit entries from the logfile.
+
+LUA
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
+------------------------------------------------------------------------------
 DEPRECATED IN 0.11					*deprecated-0.11*
 
 API
@@ -42,7 +74,7 @@ LSP
 • *vim.lsp.util.jump_to_location*	Use |vim.lsp.util.show_document()| with
 					`{focus=true}` instead.
 • *vim.lsp.buf.execute_command*		Use |Client:exec_cmd()| instead.
-• *vim.lsp.buf.completion*		Use |vim.lsp.completion.trigger()| instead.
+• *vim.lsp.buf.completion*		Use |vim.lsp.completion.get()| instead.
 • vim.lsp.buf_request_all		The `error` key has been renamed to `err` inside
 					the result parameter of the handler.
 • *vim.lsp.with()*			Pass configuration to equivalent
@@ -66,7 +98,7 @@ LUA
 • vim.validate(opts: table) Use form 1. See |vim.validate()|.
 
 VIMSCRIPT
-• *termopen()* Use |jobstart() with `{term: v:true}`.
+• *termopen()* Use |jobstart()| with `{term: v:true}`.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
@@ -178,8 +210,8 @@ ENVIRONMENT VARIABLES
     • get the server name (use |v:servername| instead)
     • detect a parent Nvim (use |$NVIM| instead)
   • Ignored if --listen is given.
-  • Unset by |terminal| and |jobstart()| unless explicitly given by the "env"
-    option. Example: >vim
+  • Unset at startup (after |v:servername| is initialized). Can be explicitly
+    provided to |terminal| and |jobstart()| by the "env" option. Example: >vim
 	call jobstart(['foo'], { 'env': { 'NVIM_LISTEN_ADDRESS': v:servername  } })
 <
 

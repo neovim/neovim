@@ -13,6 +13,9 @@
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <libutil.h>
+// TODO(bfredl): this is avaliable on darwin, but there is an issue with cross-compile headers
+#elif defined(__APPLE__) && !defined(HAVE_FORKPTY)
+int forkpty(int *, char *, const struct termios *, const struct winsize *);
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
 #elif defined(__sun)

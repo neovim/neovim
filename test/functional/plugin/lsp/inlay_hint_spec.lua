@@ -7,6 +7,7 @@ local eq = t.eq
 local dedent = t.dedent
 local exec_lua = n.exec_lua
 local insert = n.insert
+local feed = n.feed
 local api = n.api
 
 local clear_notrace = t_lsp.clear_notrace
@@ -296,6 +297,50 @@ int main() {
         end)
       )
     end)
+
+    it('does not request hints from lsp when disabled', function()
+      exec_lua(function()
+        _G.server2 = _G._create_server({
+          capabilities = {
+            inlayHintProvider = true,
+          },
+          handlers = {
+            ['textDocument/inlayHint'] = function(_, _, callback)
+              _G.got_inlay_hint_request = true
+              callback(nil, {})
+            end,
+          },
+        })
+        _G.client2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
+      end)
+
+      local function was_request_sent()
+        return exec_lua(function()
+          return _G.got_inlay_hint_request == true
+        end)
+      end
+
+      eq(false, was_request_sent())
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.get()
+      end)
+
+      eq(false, was_request_sent())
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+        vim.lsp.inlay_hint.get()
+      end)
+
+      eq(false, was_request_sent())
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      end)
+
+      eq(true, was_request_sent())
+    end)
   end)
 end)
 
@@ -316,13 +361,13 @@ test text
 
   local grid_without_inlay_hints = [[
   test text                                         |
-   ^                                                 |
+  ^                                                  |
                                                     |
 ]]
 
   local grid_with_inlay_hints = [[
   {1:01234}test text                                    |
-   ^                                                 |
+  ^                                                  |
                                                     |
 ]]
 
@@ -367,6 +412,27 @@ test text
       vim.lsp.stop_client(client_id)
     end)
     screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+  end)
+
+  it('refreshes hints on request', function()
+    exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
+    screen:expect({ grid = grid_with_inlay_hints })
+    feed('kibefore <Esc>')
+    screen:expect([[
+      before^ {1:01234}test text                             |
+                                                        |*2
+    ]])
+    exec_lua(function()
+      vim.lsp.inlay_hint.on_refresh(
+        nil,
+        nil,
+        { method = 'workspace/inlayHint/refresh', client_id = client_id }
+      )
+    end)
+    screen:expect([[
+      {1:01234}before^ test text                             |
+                                                        |*2
+    ]])
   end)
 
   after_each(function()

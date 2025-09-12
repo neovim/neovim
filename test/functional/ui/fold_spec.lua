@@ -56,6 +56,7 @@ describe('folded lines', function()
         [20] = { background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue },
         [21] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Green },
         [22] = { background = Screen.colors.Red, foreground = Screen.colors.Green },
+        [23] = { foreground = Screen.colors.Blue1, bold = true, background = Screen.colors.Yellow },
       })
     end)
 
@@ -1593,6 +1594,45 @@ describe('folded lines', function()
                                                        |
         ]])
       end
+
+      eq({ 0, 1, 2, 0, 2 }, fn.getcurpos())
+      api.nvim_input_mouse('left', 'press', '', multigrid and 2 or 0, 2, 4)
+      eq({ 0, 3, 2, 0, 2 }, fn.getcurpos())
+      feed('2k')
+      eq({ 0, 1, 2, 0, 2 }, fn.getcurpos())
+
+      api.nvim_set_option_value('foldtext', "'αβγ'", { win = 0 })
+      -- No crash or memory leak when scrolling beyond end of folded line #33931
+      fn.append('$', ('!'):rep(100))
+      feed('G$')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {8:  1 }                                         |
+          {8:  2 }                                         |
+          {8:  3 }{5:αβγ······································}|
+          {8:  5 }                                         |
+          {8:  6 }                                         |
+          {8:  7 }!!!!!!!!!!!!!!!!!!!!^!                    |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {8:  1 }                                         |
+          {8:  2 }                                         |
+          {8:  3 }{5:αβγ······································}|
+          {8:  5 }                                         |
+          {8:  6 }                                         |
+          {8:  7 }!!!!!!!!!!!!!!!!!!!!^!                    |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
     end)
 
     it('fold attached virtual lines are drawn and scrolled correctly #21837', function()
@@ -2624,8 +2664,6 @@ describe('folded lines', function()
       screen:try_resize(30, 7)
       insert(content1)
       command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
-      command('hi F0 guibg=Red guifg=Black')
-      command('hi F1 guifg=White')
       command([[syn match Keyword /\<sentence\>/]])
       command('hi! Keyword guibg=NONE guifg=Green')
       api.nvim_set_option_value('cursorline', true, {})
@@ -2734,6 +2772,252 @@ describe('folded lines', function()
           {11:-- VISUAL LINE --}             |
         ]])
       end
+
+      api.nvim_set_option_value('rightleft', false, {})
+      api.nvim_set_option_value('wrap', false, {})
+      feed('<Esc>zl')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }his is a                  |
+          {7:-   }{12:^alid English              }|
+          {7:│+  }{21:entence}{5: composed by·······}|
+          {7:│+  }{5:n his cave.···············}|
+          {1:~                             }|*2
+        ## grid 3
+                                        |
+        ]])
+      else
+        screen:expect([[
+          {7:    }his is a                  |
+          {7:-   }{12:^alid English              }|
+          {7:│+  }{21:entence}{5: composed by·······}|
+          {7:│+  }{5:n his cave.···············}|
+          {1:~                             }|*2
+                                        |
+        ]])
+      end
+
+      fn.append(0, ('!'):rep(15))
+      feed('gg$zs')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }{12:^!                         }|
+          {7:    }                          |
+          {7:-   }                          |
+          {7:│+  }{5:sed by····················}|
+          {7:│+  }{5:··························}|
+          {1:~                             }|
+        ## grid 3
+                                        |
+        ]])
+      else
+        screen:expect([[
+          {7:    }{12:^!                         }|
+          {7:    }                          |
+          {7:-   }                          |
+          {7:│+  }{5:sed by····················}|
+          {7:│+  }{5:··························}|
+          {1:~                             }|
+                                        |
+        ]])
+      end
+    end)
+
+    it('transparent foldtext filler text search highlighting', function()
+      screen:try_resize(30, 7)
+      insert(content1)
+      api.nvim_set_option_value('foldtext', '', {})
+
+      command("3,4fold | let v:hlsearch = 1 | let @/ = '.'")
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:------------------------------]|*6
+            [3:------------------------------]|
+          ## grid 2
+            {6:This is a}                     |
+            {6:valid English}                 |
+            {19:sentence composed by}{5:··········}|
+            {6:in his cave.}                  |
+            ^                              |
+            {1:~                             }|
+          ## grid 3
+                                          |
+          ]],
+        })
+      else
+        screen:expect([[
+          {6:This is a}                     |
+          {6:valid English}                 |
+          {19:sentence composed by}{5:··········}|
+          {6:in his cave.}                  |
+          ^                              |
+          {1:~                             }|
+                                        |
+        ]])
+      end
+
+      command("let @/ = '$'")
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:------------------------------]|*6
+            [3:------------------------------]|
+          ## grid 2
+            This is a{6: }                    |
+            valid English{6: }                |
+            {5:sentence composed by}{19:·}{5:·········}|
+            in his cave.{6: }                 |
+            {6:^ }                             |
+            {1:~                             }|
+          ## grid 3
+                                          |
+          ]],
+        })
+      else
+        screen:expect([[
+          This is a{6: }                    |
+          valid English{6: }                |
+          {5:sentence composed by}{19:·}{5:·········}|
+          in his cave.{6: }                 |
+          {6:^ }                             |
+          {1:~                             }|
+                                        |
+        ]])
+      end
+
+      command("let @/ = '.\\?'")
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:------------------------------]|*6
+            [3:------------------------------]|
+          ## grid 2
+            {6:This is a }                    |
+            {6:valid English }                |
+            {19:sentence composed by·}{5:·········}|
+            {6:in his cave. }                 |
+            {6:^ }                             |
+            {1:~                             }|
+          ## grid 3
+                                          |
+          ]],
+        })
+      else
+        screen:expect([[
+          {6:This is a }                    |
+          {6:valid English }                |
+          {19:sentence composed by·}{5:·········}|
+          {6:in his cave. }                 |
+          {6:^ }                             |
+          {1:~                             }|
+                                        |
+        ]])
+      end
+
+      command('set list')
+      screen:expect_unchanged() -- No "eol" set for &listchars yet.
+
+      command("set listchars+=eol:& | let @/ = '.'")
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:------------------------------]|*6
+            [3:------------------------------]|
+          ## grid 2
+            {6:This is a}{1:&}                    |
+            {6:valid English}{1:&}                |
+            {19:sentence composed by}{18:&}{5:·········}|
+            {6:in his cave.}{1:&}                 |
+            {1:^&}                             |
+            {1:~                             }|
+          ## grid 3
+                                          |
+          ]],
+        })
+      else
+        screen:expect([[
+          {6:This is a}{1:&}                    |
+          {6:valid English}{1:&}                |
+          {19:sentence composed by}{18:&}{5:·········}|
+          {6:in his cave.}{1:&}                 |
+          {1:^&}                             |
+          {1:~                             }|
+                                        |
+        ]])
+      end
+
+      command("let @/ = '$'")
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:------------------------------]|*6
+            [3:------------------------------]|
+          ## grid 2
+            This is a{23:&}                    |
+            valid English{23:&}                |
+            {5:sentence composed by}{23:&}{5:·········}|
+            in his cave.{23:&}                 |
+            {23:^&}                             |
+            {1:~                             }|
+          ## grid 3
+                                          |
+          ]],
+        })
+      else
+        screen:expect([[
+          This is a{23:&}                    |
+          valid English{23:&}                |
+          {5:sentence composed by}{23:&}{5:·········}|
+          in his cave.{23:&}                 |
+          {23:^&}                             |
+          {1:~                             }|
+                                        |
+        ]])
+      end
+
+      command("let @/ = '.\\?'")
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:------------------------------]|*6
+            [3:------------------------------]|
+          ## grid 2
+            {6:This is a}{23:&}                    |
+            {6:valid English}{23:&}                |
+            {19:sentence composed by}{23:&}{5:·········}|
+            {6:in his cave.}{23:&}                 |
+            {23:^&}                             |
+            {1:~                             }|
+          ## grid 3
+                                          |
+          ]],
+        })
+      else
+        screen:expect([[
+          {6:This is a}{23:&}                    |
+          {6:valid English}{23:&}                |
+          {19:sentence composed by}{23:&}{5:·········}|
+          {6:in his cave.}{23:&}                 |
+          {23:^&}                             |
+          {1:~                             }|
+                                        |
+        ]])
+      end
     end)
   end
 
@@ -2743,5 +3027,24 @@ describe('folded lines', function()
 
   describe('without ext_multigrid', function()
     with_ext_multigrid(false)
+  end)
+
+  it("do not interfere with corrected cursor position for 'scrolloff'", function()
+    local screen = Screen.new(40, 7)
+    exec([[
+      call setline(1, range(10))
+      6,7fold
+      set scrolloff=1
+      norm L
+    ]])
+    screen:expect([[
+      0                                       |
+      1                                       |
+      2                                       |
+      3                                       |
+      ^4                                       |
+      {13:+--  2 lines: 5·························}|
+                                              |
+    ]])
   end)
 end)

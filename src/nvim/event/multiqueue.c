@@ -67,7 +67,7 @@ struct multiqueue_item {
 struct multiqueue {
   MultiQueue *parent;
   QUEUE headtail;  // circularly-linked
-  PutCallback put_cb;
+  PutCallback on_put;  // Called on the parent (if any) when an item is enqueued in a child.
   void *data;
   size_t size;
 };
@@ -84,26 +84,28 @@ typedef struct {
 
 static Event NILEVENT = { .handler = NULL, .argv = { NULL } };
 
-MultiQueue *multiqueue_new_parent(PutCallback put_cb, void *data)
+/// Creates a new root (parentless) queue, which may gain child queues via `multiqueue_new_child`.
+MultiQueue *multiqueue_new(PutCallback on_put, void *data)
 {
-  return multiqueue_new(NULL, put_cb, data);
+  return _multiqueue_new(NULL, on_put, data);
 }
 
+/// Creates a new queue as a child of a `parent` queue.
 MultiQueue *multiqueue_new_child(MultiQueue *parent)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(!parent->parent);  // parent cannot have a parent, more like a "root"
   parent->size++;
-  return multiqueue_new(parent, NULL, NULL);
+  return _multiqueue_new(parent, NULL, NULL);
 }
 
-static MultiQueue *multiqueue_new(MultiQueue *parent, PutCallback put_cb, void *data)
+static MultiQueue *_multiqueue_new(MultiQueue *parent, PutCallback on_put, void *data)
 {
   MultiQueue *rv = xmalloc(sizeof(MultiQueue));
   QUEUE_INIT(&rv->headtail);
   rv->size = 0;
   rv->parent = parent;
-  rv->put_cb = put_cb;
+  rv->on_put = on_put;
   rv->data = data;
   return rv;
 }
@@ -135,8 +137,18 @@ void multiqueue_put_event(MultiQueue *self, Event event)
 {
   assert(self);
   multiqueue_push(self, event);
-  if (self->parent && self->parent->put_cb) {
-    self->parent->put_cb(self->parent, self->parent->data);
+  if (self->parent && self->parent->on_put) {
+    self->parent->on_put(self->parent, self->parent->data);
+  }
+}
+
+/// Move events from src to dest.
+void multiqueue_move_events(MultiQueue *dest, MultiQueue *src)
+  FUNC_ATTR_NONNULL_ALL
+{
+  while (!multiqueue_empty(src)) {
+    Event event = multiqueue_get(src);
+    multiqueue_put_event(dest, event);
   }
 }
 

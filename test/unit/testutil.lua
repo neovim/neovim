@@ -19,6 +19,11 @@ for _, p in ipairs(paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
+-- add some nonstandard header locations
+if paths.apple_sysroot ~= '' then
+  Preprocess.add_apple_sysroot(paths.apple_sysroot)
+end
+
 local child_pid = nil --- @type integer?
 --- @generic F: function
 --- @param func F
@@ -876,18 +881,6 @@ local function ptr2key(ptr)
   return ffi.string(s)
 end
 
-local function is_asan()
-  cimport('./src/nvim/version.h')
-  local status, res = pcall(function()
-    return lib.version_cflags
-  end)
-  if status then
-    return ffi.string(res):match('-fsanitize=[a-z,]*address')
-  else
-    return false
-  end
-end
-
 --- @class test.unit.testutil.module
 local M = {
   cimport = cimport,
@@ -916,7 +909,6 @@ local M = {
   ptr2addr = ptr2addr,
   ptr2key = ptr2key,
   debug_log = debug_log,
-  is_asan = is_asan,
 }
 --- @class test.unit.testutil: test.unit.testutil.module, test.testutil
 M = vim.tbl_extend('error', M, t_global)

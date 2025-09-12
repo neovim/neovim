@@ -93,6 +93,7 @@ typedef enum {
   HLF_CHD,        ///< Changed diff line
   HLF_DED,        ///< Deleted diff line
   HLF_TXD,        ///< Text Changed in diff line
+  HLF_TXA,        ///< Text Added in changed diff line
   HLF_SC,         ///< Sign column
   HLF_CONCEAL,    ///< Concealed text
   HLF_SPB,        ///< SpellBad
@@ -129,6 +130,8 @@ typedef enum {
   HLF_BFOOTER,    ///< Float Border Footer
   HLF_TS,         ///< status line for terminal window
   HLF_TSNC,       ///< status line for non-current terminal window
+  HLF_SE,         ///< stderr messages (from shell)
+  HLF_SO,         ///< stdout messages (from shell)
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 

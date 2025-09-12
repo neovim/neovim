@@ -317,15 +317,15 @@ describe('global statusline', function()
     screen:expect([[
                           │                │ │^                    |
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
-      {1:~                   }│{2:< Name] 0,0-1   }│{1:~}│{1:~                   }|
+      {1:~                   }│{2:<-1          All}│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{3:<No Name] 0,0-1  All}|
+      {1:~                   }│{1:~               }│{1:~}│{3:< 0,0-1          All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {2:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {2:< 0,0-1          All <-1          All <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*3
-      {2:[No Name]            0,0-1          All <No Name] 0,0-1  All}|
+      {2:[No Name]            0,0-1          All < 0,0-1          All}|
                                                                   |
     ]])
 
@@ -349,12 +349,12 @@ describe('global statusline', function()
     screen:expect([[
                           │                │ │^                    |
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
-      {1:~                   }│{2:< Name] 0,0-1   }│{1:~}│{1:~                   }|
+      {1:~                   }│{2:<-1          All}│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{3:<No Name] 0,0-1  All}|
+      {1:~                   }│{1:~               }│{1:~}│{3:< 0,0-1          All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {2:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {2:< 0,0-1          All <-1          All <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*4
                                                 0,0-1         All |
@@ -676,7 +676,7 @@ describe('statusline', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*2
-      {3:[No Name]             1longlonglong     }|
+      {3:[No Name]                  1longlonglong}|
                           │                   |
       {1:~                   }│{1:~                  }|*2
                             3longlonglong     |
@@ -687,7 +687,7 @@ describe('statusline', function()
     screen:expect([[
                                               |
       {1:~                                       }|*2
-      {2:[No Name]             1longlonglong     }|
+      {2:[No Name]                  1longlonglong}|
       ^                    │                   |
       {1:~                   }│{1:~                  }|*2
                             2longlonglong     |
@@ -697,7 +697,7 @@ describe('statusline', function()
     screen:expect([[
                                               |
       {1:~                                       }|*2
-      {2:[No Name]             1longlonglong     }|
+      {2:[No Name]                  1longlonglong}|
                           │^                   |
       {1:~                   }│{1:~                  }|*2
                             3longlonglong     |
@@ -723,7 +723,7 @@ describe('statusline', function()
     screen:expect([[
                          │^                    |
       {1:~                  }│{1:~                   }|*5
-      {2:[No Name]           }{3:[No Name] 1234      }|
+      {2:[No Name]           }{3:<o Name] 1234       }|
                                               |
     ]])
     feed('<Esc>')
@@ -764,6 +764,39 @@ describe('statusline', function()
       {1:~                                       }|*5
       {101:B:[No Name]                             }|
                                               |
+    ]])
+  end)
+end)
+
+describe('default statusline', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 16)
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.Magenta1, bold = true },
+    }
+    command('set laststatus=2')
+    command('set ruler')
+  end)
+
+  it('setting statusline to empty string sets default statusline', function()
+    exec_lua("vim.o.statusline = 'asdf'")
+    eq('asdf', eval('&statusline'))
+
+    local default_statusline =
+      "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+
+    exec_lua("vim.o.statusline = ''")
+
+    eq(default_statusline, eval('&statusline'))
+
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
     ]])
   end)
 end)

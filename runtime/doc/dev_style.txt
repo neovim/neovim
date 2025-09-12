@@ -901,8 +901,8 @@ Return Values ~
 
 Do not needlessly surround the `return` expression with parentheses.
 
-Use parentheses in `return expr`; only where you would use them in `x =
-expr;`. >c
+Use parentheses in `return expr;` only where you would also use them in
+`x = expr;`. >c
 
     return result;
     return (some_long_condition && another_condition);

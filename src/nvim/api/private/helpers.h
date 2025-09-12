@@ -186,13 +186,7 @@ typedef struct {
 
 #define WITH_SCRIPT_CONTEXT(channel_id, code) \
   do { \
-    const sctx_T save_current_sctx = current_sctx; \
-    const uint64_t save_channel_id = current_channel_id; \
-    current_sctx.sc_sid = \
-      (channel_id) == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT; \
-    current_sctx.sc_lnum = 0; \
-    current_channel_id = channel_id; \
+    const sctx_T save_current_sctx = api_set_sctx(channel_id); \
     code; \
-    current_channel_id = save_channel_id; \
     current_sctx = save_current_sctx; \
   } while (0);

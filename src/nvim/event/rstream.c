@@ -184,6 +184,7 @@ static void read_event(void **argv)
   }
   stream->s.pending_reqs--;
   if (stream->s.closed && !stream->s.pending_reqs) {
+    // Last pending read; free the stream.
     stream_close_handle(&stream->s, true);
   }
 }

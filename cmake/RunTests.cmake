@@ -7,6 +7,7 @@ set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg/share)
 set(ENV{XDG_STATE_HOME} ${BUILD_DIR}/Xtest_xdg/state)
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
+unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
 
 # TODO(dundargoc): The CIRRUS_CI environment variable isn't passed to here from
 # the main CMakeLists.txt, so we have to manually pass it to this script and
@@ -68,16 +69,16 @@ endif()
 execute_process(
   # Note: because of "-ll" (low-level interpreter mode), some modules like
   # _editor.lua are not loaded.
-  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR} busted -v -o test.busted.outputHandlers.nvim
+  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR}/share/lua/5.1/ busted -v -o test.busted.outputHandlers.nvim
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
+    --lpath=${WORKING_DIR}/src/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
     --lpath=?.lua
     ${BUSTED_ARGS}
     ${TEST_PATH}
   TIMEOUT $ENV{TEST_TIMEOUT}
   WORKING_DIRECTORY ${WORKING_DIR}
-  ERROR_VARIABLE err
   RESULT_VARIABLE res
   ${EXTRA_ARGS})
 
@@ -86,11 +87,6 @@ file(REMOVE_RECURSE ${RM_FILES})
 
 if(res)
   message(STATUS "Tests exited non-zero: ${res}")
-  if("${err}" STREQUAL "")
-    message(STATUS "No output to stderr.")
-  else()
-    message(STATUS "Output to stderr:\n${err}")
-  endif()
 
   # Dump the logfile on CI (if not displayed and moved already).
   if(CI_BUILD)

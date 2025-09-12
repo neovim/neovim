@@ -250,6 +250,24 @@ describe('ShaDa support code', function()
     end
   end)
 
+  it('":wshada/:rshada [filename]" works when shadafile=NONE', function()
+    nvim_command('set shadafile=NONE')
+    nvim_command('wshada ' .. shada_fname)
+    eq(1, read_shada_file(shada_fname)[1].type)
+
+    wshada('Some text file')
+    eq(
+      'Vim(rshada):E576: Error while reading ShaDa file: last entry specified that it occupies 109 bytes, but file ended earlier',
+      t.pcall_err(n.command, 'rshada ' .. shada_fname)
+    )
+  end)
+
+  it(':wshada/:rshada without arguments is no-op when shadafile=NONE', function()
+    nvim_command('set shadafile=NONE')
+    nvim_command('wshada')
+    nvim_command('rshada')
+  end)
+
   it('does not crash when ShaDa file directory is not writable', function()
     skip(is_os('win'))
 

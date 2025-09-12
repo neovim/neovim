@@ -5,13 +5,12 @@
   },
   "workspace": {
     "library": [
-      "runtime/lua",
-      "${3rd}/busted/library",
-      "${3rd}/luv/library"
+      "${3rd}/busted/library"
     ],
     "ignoreDir": [
-      "test",
-      "_vim9script.lua"
+      ".deps",
+      "build",
+      "test"
     ],
     "checkThirdParty": "Disable"
   },

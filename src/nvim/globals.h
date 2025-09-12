@@ -298,9 +298,7 @@ EXTERN bool garbage_collect_at_exit INIT( = false);
 #define SID_STR         (-10)     // for sourcing a string with no script item
 
 // Script CTX being sourced or was sourced to define the current function.
-EXTERN sctx_T current_sctx INIT( = { 0, 0, 0 });
-// ID of the current channel making a client API call
-EXTERN uint64_t current_channel_id INIT( = 0);
+EXTERN sctx_T current_sctx INIT( = { 0, 0, 0, 0 });
 /// Last channel that invoked 'nvim_input` or got FocusGained.
 EXTERN uint64_t current_ui INIT( = 0);
 
@@ -466,6 +464,8 @@ EXTERN bool VIsual_active INIT( = false);
 EXTERN bool VIsual_select INIT( = false);
 /// Register name for Select mode
 EXTERN int VIsual_select_reg INIT( = 0);
+/// Whether incremented cursor during exclusive selection
+EXTERN bool VIsual_select_exclu_adj INIT( = false);
 /// Restart Select mode when next cmd finished
 EXTERN int restart_VIsual_select INIT( = 0);
 /// Whether to restart the selection after a Select-mode mapping or menu.
@@ -746,6 +746,7 @@ EXTERN int cmdwin_level INIT( = 0);   ///< cmdline recursion level
 EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< buffer of cmdline window or NULL
 EXTERN win_T *cmdwin_win INIT( = NULL);  ///< window of cmdline window or NULL
 EXTERN win_T *cmdwin_old_curwin INIT( = NULL);  ///< curwin before opening cmdline window or NULL
+EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));
 

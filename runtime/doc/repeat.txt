@@ -192,14 +192,23 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
-:[range]so[urce] [file]	Runs |Ex-commands| or Lua code (".lua" files) from
-			[file].
-			If no [file], the current buffer is used and treated
-			as Lua code if 'filetype' is "lua" or its filename
-			ends with ".lua".
+:so[urce] {file}	Runs |Ex-commands| or Lua code (".lua" files) from
+			{file}.
 			Triggers the |SourcePre| autocommand.
+
+:[range]so[urce]	Read Ex commands or Lua code from the [range] of lines
+			in the current buffer.  When [range] is omitted read
+			all lines.  The buffer is treated as Lua code if its
+			'filetype' is "lua" or its filename ends with ".lua".
+
+			When sourcing commands or Lua code from the current
+			buffer, the same script-ID |<SID>| is used even if the
+			buffer is sourced multiple times. If a buffer is
+			sourced more than once, then the functions in the
+			buffer are defined again.
+
 							*:source!*
-:[range]so[urce]! {file}
+:so[urce]! {file}
 			Runs |Normal-mode| commands from {file}. When used
 			after |:global|, |:argdo|, |:windo|, |:bufdo|, in
 			a loop or when another command follows the display
@@ -265,9 +274,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 				pack/*/start/{name} ~
 
 			Note that {name} is the directory name, not the name
-			of the .vim file.  All the files matching the pattern
+			of the .vim file.  All files matching the patterns
 				pack/*/opt/{name}/plugin/**/*.vim ~
-			and
 				pack/*/opt/{name}/plugin/**/*.lua ~
 			will be sourced.  This allows for using subdirectories
 			below "plugin", just like with plugins in
@@ -389,10 +397,10 @@ An alternative is to put the commands in a file, and execute them with the
 ':source!' command.  Useful for long command sequences.  Can be combined with
 the ':map' command to put complicated commands under a function key.
 
-The ':source' command reads Ex commands from a file line by line.  You will
-have to type any needed keyboard input.  The ':source!' command reads from a
-script file character by character, interpreting each character as if you
-typed it.
+The ':source' command reads Ex commands from a file or a buffer line by line.
+You will have to type any needed keyboard input.  The ':source!' command reads
+from a script file character by character, interpreting each character as if
+you typed it.
 
 Example: When you give the ":!ls" command you get the |hit-enter| prompt.  If
 you ':source' a file with the line "!ls" in it, you will have to type the

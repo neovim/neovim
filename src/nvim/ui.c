@@ -6,6 +6,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
@@ -222,12 +223,15 @@ void ui_refresh(void)
 
   // Reset 'cmdheight' for all tabpages when ext_messages toggles.
   if (had_message != ui_ext[kUIMessages]) {
-    set_option_value(kOptCmdheight, NUMBER_OPTVAL(had_message), 0);
-    FOR_ALL_TABS(tp) {
-      tp->tp_ch_used = had_message;
+    if (ui_refresh_cmdheight) {
+      set_option_value(kOptCmdheight, NUMBER_OPTVAL(had_message), 0);
+      FOR_ALL_TABS(tp) {
+        tp->tp_ch_used = had_message;
+      }
     }
     msg_scroll_flush();
   }
+  msg_ui_refresh();
 
   if (!ui_active()) {
     return;
@@ -535,7 +539,21 @@ void ui_flush(void)
   if (!ui_active()) {
     return;
   }
+
+  static bool was_busy = false;
+
   cmdline_ui_flush();
+
+  if (State != MODE_CMDLINE && curwin->w_floating && curwin->w_config.hide) {
+    if (!was_busy) {
+      ui_call_busy_start();
+      was_busy = true;
+    }
+  } else if (was_busy) {
+    ui_call_busy_stop();
+    was_busy = false;
+  }
+
   win_ui_flush(false);
   msg_ext_ui_flush();
   msg_scroll_flush();
@@ -543,6 +561,12 @@ void ui_flush(void)
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
+    // The cursor move might change the composition order,
+    // so flush again to update the windows that changed
+    // TODO(bfredl): refactor the flow of information so that win_ui_flush()
+    // only is called once. (as order state is exposed, it should be owned
+    // by nvim core, not the compositor)
+    win_ui_flush(false);
   }
   if (pending_mode_info_update) {
     Arena arena = ARENA_EMPTY;
@@ -712,6 +736,13 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
   }
 }
 
+static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
+{
+  const char *ns = describe_ns((NS)ns_id, "(UNKNOWN PLUGIN)");
+  ELOG("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
+  msg_schedule_semsg_multiline("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
+}
+
 void ui_call_event(char *name, bool fast, Array args)
 {
   bool handled = false;
@@ -735,7 +766,7 @@ void ui_call_event(char *name, bool fast, Array args)
       handled = true;
     }
     if (ERROR_SET(&err)) {
-      ELOG("Error executing UI event callback: %s", err.msg);
+      ui_attach_error(ns_id, name, err.msg);
       ui_remove_cb(ns_id, true);
     }
     api_clear_error(&err);
@@ -792,13 +823,14 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
 void ui_remove_cb(uint32_t ns_id, bool checkerr)
 {
   UIEventCallback *item = pmap_get(uint32_t)(&ui_event_cbs, ns_id);
-  if (item && (!checkerr || ++item->errors > 10)) {
+  if (item && (!checkerr || ++item->errors > CB_MAX_ERROR)) {
     pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
     free_ui_event_callback(item);
     ui_cb_update_ext();
     ui_refresh();
     if (checkerr) {
-      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback from ns: %d.", ns_id);
+      const char *ns = describe_ns((NS)ns_id, "(UNKNOWN PLUGIN)");
+      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback (ns=%s)", ns);
     }
   }
 }

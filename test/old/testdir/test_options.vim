@@ -277,6 +277,23 @@ func Test_complete()
   call feedkeys("i\<C-N>\<Esc>", 'xt')
   bwipe!
   call assert_fails('set complete=ix', 'E535:')
+  call assert_fails('set complete=x', 'E539:')
+  call assert_fails('set complete=..', 'E535:')
+  set complete=.,w,b,u,k,\ s,i,d,],t,U,F,o
+  call assert_fails('set complete=i^-10', 'E535:')
+  call assert_fails('set complete=i^x', 'E535:')
+  call assert_fails('set complete=k^2,t^-1,s^', 'E535:')
+  call assert_fails('set complete=t^-1', 'E535:')
+  call assert_fails('set complete=kfoo^foo2', 'E535:')
+  call assert_fails('set complete=kfoo^', 'E535:')
+  call assert_fails('set complete=.^', 'E535:')
+  set complete=.,w,b,u,k,s,i,d,],t,U,F,o
+  set complete=.
+  set complete=.^10,t^0
+  set complete+=Ffuncref('foo'\\,\ [10])
+  set complete=Ffuncref('foo'\\,\ [10])^10
+  set complete&
+  set complete+=Ffunction('g:foo'\\,\ [10\\,\ 20])
   set complete&
 endfun
 
@@ -313,11 +330,18 @@ func Test_set_completion()
   call feedkeys(":set suffixes:\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set suffixes:.bak,~,.o,.h,.info,.swp,.obj', @:)
 
-  " Expand key codes.
+  " " Expand key codes.
   " call feedkeys(":set <H\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"set <Help> <Home>', @:)
-
-  " Expand terminal options.
+  " " <BackSpace> (alt name) and <BS> should both show up in auto-complete
+  " call feedkeys(":set <B\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <BackSpace> <Bar> <BS> <Bslash>', @:)
+  " " <ScrollWheelDown> has alt name <MouseUp> but it should not show up here
+  " " nor show up as duplicates
+  " call feedkeys(":set <ScrollWheel\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <ScrollWheelDown> <ScrollWheelLeft> <ScrollWheelRight> <ScrollWheelUp>', @:)
+  "
+  " " Expand terminal options.
   " call feedkeys(":set t_A\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"set t_AB t_AF t_AU t_AL', @:)
   " call assert_fails('call feedkeys(":set <t_afoo>=\<C-A>\<CR>", "xt")', 'E474:')
@@ -513,6 +537,7 @@ func Test_set_completion_string_values()
   endif
   call assert_equal('.', getcompletion('set complete=', 'cmdline')[1])
   call assert_equal('menu', getcompletion('set completeopt=', 'cmdline')[1])
+  call assert_equal('keyword', getcompletion('set completefuzzycollect=', 'cmdline')[0])
   if exists('+completeslash')
     call assert_equal('backslash', getcompletion('set completeslash=', 'cmdline')[1])
   endif
@@ -589,6 +614,7 @@ func Test_set_completion_string_values()
 
   " Other string options that queries the system rather than fixed enum names
   call assert_equal(['all', 'BufAdd'], getcompletion('set eventignore=', 'cmdline')[0:1])
+  call assert_equal(['-BufAdd', '-BufCreate'], getcompletion('set eventignore=all,-', 'cmdline')[0:1])
   call assert_equal(['WinLeave', 'WinResized', 'WinScrolled'], getcompletion('set eiw=', 'cmdline')[-3:-1])
   call assert_equal('latin1', getcompletion('set fileencodings=', 'cmdline')[1])
   " call assert_equal('top', getcompletion('set printoptions=', 'cmdline')[0])
@@ -621,10 +647,11 @@ func Test_set_completion_string_values()
   " call assert_equal([], getcompletion('set completepopup=bogusname:', 'cmdline'))
   " set previewpopup& completepopup&
 
-  " diffopt: special handling of algorithm:<alg_list>
+  " diffopt: special handling of algorithm:<alg_list> and inline:<inline_type>
   call assert_equal('filler', getcompletion('set diffopt+=', 'cmdline')[0])
   call assert_equal([], getcompletion('set diffopt+=iblank,foldcolumn:', 'cmdline'))
   call assert_equal('patience', getcompletion('set diffopt+=iblank,algorithm:pat*', 'cmdline')[0])
+  call assert_equal('char', getcompletion('set diffopt+=iwhite,inline:ch*', 'cmdline')[0])
 
   " highlight: special parsing, including auto-completing highlight groups
   " after ':'
@@ -714,7 +741,7 @@ func Test_set_completion_string_values()
   call assert_equal([], getcompletion('set diffopt-=', 'cmdline'))
   " Test all possible values
   call assert_equal(['filler', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
-        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'linematch:'],
+        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'inline:', 'linematch:'],
         \ getcompletion('set diffopt=', 'cmdline'))
   set diffopt&
 
@@ -1128,11 +1155,14 @@ func Test_backupskip()
     call setenv(var, '/duplicate/path')
   endfor
 
+  " unset $HOME, so that it won't try to read init files
+  let saveenv['HOME'] = getenv("HOME")
+  call setenv('HOME', v:null)
   exe 'silent !' . cmd
   call assert_equal(['errors:'], readfile('Xtestout'))
 
   " restore environment variables
-  for var in ['TMPDIR', 'TMP', 'TEMP']
+  for var in ['TMPDIR', 'TMP', 'TEMP', 'HOME']
     call setenv(var, saveenv[var])
   endfor
 

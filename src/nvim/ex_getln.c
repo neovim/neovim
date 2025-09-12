@@ -142,6 +142,8 @@ typedef struct {
   expand_T xpc;
   OptInt *b_im_ptr;
   buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
+  int cmdline_type;
+  bool event_cmdlineleavepre_triggered;
 } CommandLineState;
 
 typedef struct {
@@ -745,6 +747,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   ExpandInit(&s->xpc);
   ccline.xpc = &s->xpc;
+  clear_cmdline_orig();
 
   cmdmsg_rl = (curwin->w_p_rl && *curwin->w_p_rlc == 's'
                && (s->firstc == '/' || s->firstc == '?'));
@@ -792,11 +795,11 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
 
   setmouse();
-  setcursor();
 
+  s->cmdline_type = firstc > 0 ? firstc : '-';
   Error err = ERROR_INIT;
   char firstcbuf[2];
-  firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
+  firstcbuf[0] = (char)s->cmdline_type;
   firstcbuf[1] = 0;
 
   if (has_event(EVENT_CMDLINEENTER)) {
@@ -867,6 +870,11 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   state_enter(&s->state);
 
+  // Trigger CmdlineLeavePre autocommands if not already triggered.
+  if (!s->event_cmdlineleavepre_triggered) {
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
+  }
+
   if (has_event(EVENT_CMDLINELEAVE)) {
     save_v_event_T save_v_event;
     dict_T *dict = get_v_event(&save_v_event);
@@ -901,6 +909,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   ExpandCleanup(&s->xpc);
   ccline.xpc = NULL;
+  clear_cmdline_orig();
 
   finish_incsearch_highlighting(s->gotesc, &s->is_state, false);
 
@@ -1082,6 +1091,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
   if (wim_flags[s->wim_index] & kOptWimFlagLastused) {
     options |= WILD_BUFLASTUSED;
   }
+  if (wim_flags[0] & kOptWimFlagNoselect) {
+    options |= WILD_KEEP_SOLE_ITEM;
+  }
   if (s->xpc.xp_numfiles > 0) {       // typed p_wc at least twice
     // if 'wildmode' contains "list" may still need to list
     if (s->xpc.xp_numfiles > 1
@@ -1124,19 +1136,20 @@ static int command_line_wildchar_complete(CommandLineState *s)
     // when more than one match, and 'wildmode' first contains
     // "list", or no change and 'wildmode' contains "longest,list",
     // list all matches
-    if (res == OK && s->xpc.xp_numfiles > 1) {
+    if (res == OK
+        && s->xpc.xp_numfiles > ((wim_flags[s->wim_index] & kOptWimFlagNoselect) ? 0 : 1)) {
       // a "longest" that didn't do anything is skipped (but not
       // "list:longest")
       if (wim_flags[0] == kOptWimFlagLongest && ccline.cmdpos == j) {
         s->wim_index = 1;
       }
       if ((wim_flags[s->wim_index] & kOptWimFlagList)
-          || (p_wmnu && (wim_flags[s->wim_index] & kOptWimFlagFull) != 0)) {
+          || (p_wmnu && (wim_flags[s->wim_index] & (kOptWimFlagFull|kOptWimFlagNoselect)))) {
         if (!(wim_flags[0] & kOptWimFlagLongest)) {
           int p_wmnu_save = p_wmnu;
           p_wmnu = 0;
           // remove match
-          nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
+          nextwild(&s->xpc, WILD_PREV, options, s->firstc != '@');
           p_wmnu = p_wmnu_save;
         }
 
@@ -1146,7 +1159,8 @@ static int command_line_wildchar_complete(CommandLineState *s)
 
         if (wim_flags[s->wim_index] & kOptWimFlagLongest) {
           nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
-        } else if (wim_flags[s->wim_index] & kOptWimFlagFull) {
+        } else if ((wim_flags[s->wim_index] & kOptWimFlagFull)
+                   && !(wim_flags[s->wim_index] & kOptWimFlagNoselect)) {
           nextwild(&s->xpc, WILD_NEXT, options, s->firstc != '@');
         }
       } else {
@@ -1294,6 +1308,13 @@ static int command_line_execute(VimState *state, int key)
       wild_type = (s->c == Ctrl_E) ? WILD_CANCEL : WILD_APPLY;
       nextwild(&s->xpc, wild_type, WILD_NO_BEEP, s->firstc != '@');
     }
+  }
+
+  // Trigger CmdlineLeavePre autocommand
+  if ((KeyTyped && (s->c == '\n' || s->c == '\r' || s->c == K_KENTER || s->c == ESC))
+      || s->c == Ctrl_C) {
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
+    s->event_cmdlineleavepre_triggered = true;
   }
 
   // The wildmenu is cleared if the pressed key is not used for
@@ -2221,7 +2242,7 @@ end:
 static void may_trigger_cursormovedc(CommandLineState *s)
 {
   if (ccline.cmdpos != s->prev_cmdpos) {
-    trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CURSORMOVEDC);
     s->prev_cmdpos = ccline.cmdpos;
     ccline.redraw_state = MAX(ccline.redraw_state, kCmdRedrawPos);
   }
@@ -2875,6 +2896,8 @@ int check_opt_wim(void)
       new_wim_flags[idx] |= kOptWimFlagList;
     } else if (i == 8 && strncmp(p, "lastused", 8) == 0) {
       new_wim_flags[idx] |= kOptWimFlagLastused;
+    } else if (i == 8 && strncmp(p, "noselect", 8) == 0) {
+      new_wim_flags[idx] |= kOptWimFlagNoselect;
     } else {
       return FAIL;
     }
@@ -2984,10 +3007,9 @@ static int cmd_startcol(void)
 int cmd_screencol(int bytepos)
 {
   int m;  // maximum column
-
   int col = cmd_startcol();
   if (KeyTyped) {
-    m = Columns * Rows;
+    m = cmdline_win ? cmdline_win->w_view_width * cmdline_win->w_view_height : Columns * Rows;
     if (m < 0) {        // overflow, Columns or Rows at weird value
       m = MAXCOL;
     }
@@ -4521,7 +4543,7 @@ static int open_cmdwin(void)
   State = MODE_NORMAL;
   setmouse();
 
-  // Reset here so it can be set by a CmdWinEnter autocommand.
+  // Reset here so it can be set by a CmdwinEnter autocommand.
   cmdwin_result = 0;
 
   // Trigger CmdwinEnter autocommands.

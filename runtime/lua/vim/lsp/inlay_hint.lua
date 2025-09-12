@@ -94,7 +94,10 @@ function M.on_refresh(err, _, ctx)
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
     for _, winid in ipairs(api.nvim_list_wins()) do
       if api.nvim_win_get_buf(winid) == bufnr then
-        util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+        if bufstates[bufnr] and bufstates[bufnr].enabled then
+          bufstates[bufnr].applied = {}
+          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+        end
       end
     end
   end
@@ -228,7 +231,6 @@ end
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@param opts? vim.lsp.util._refresh.Opts Additional options to pass to util._refresh
----@private
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr

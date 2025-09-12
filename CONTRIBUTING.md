@@ -256,24 +256,24 @@ make lintdoc
 ```
 
 If you need to modify or debug the documentation flow, these are the main files:
-- `./scripts/gen_vimdoc.lua`:
+- `./src/gen/gen_vimdoc.lua`:
   Main doc generator. Parses C and Lua files to render vimdoc files.
-- `./scripts/luacats_parser.lua`:
+- `./src/gen/luacats_parser.lua`:
   Documentation parser for Lua files.
-- `./scripts/cdoc_parser.lua`:
+- `./src/gen/cdoc_parser.lua`:
   Documentation parser for C files.
-- `./scripts/luacats_grammar.lua`:
+- `./src/gen/luacats_grammar.lua`:
   Lpeg grammar for LuaCATS
-- `./scripts/cdoc_grammar.lua`:
+- `./src/gen/cdoc_grammar.lua`:
   Lpeg grammar for C doc comments
-- `./scripts/gen_eval_files.lua`:
+- `./src/gen/gen_eval_files.lua`:
   Generates documentation and Lua type files from metadata files:
   ```
   runtime/lua/vim/*     =>  runtime/doc/lua.txt
   runtime/lua/vim/*     =>  runtime/doc/lua.txt
   runtime/lua/vim/lsp/  =>  runtime/doc/lsp.txt
   src/nvim/api/*        =>  runtime/doc/api.txt
-  src/nvim/eval.lua     =>  runtime/doc/builtin.txt
+  src/nvim/eval.lua     =>  runtime/doc/vimfn.txt
   src/nvim/options.lua  =>  runtime/doc/options.txt
   ```
 
@@ -299,7 +299,7 @@ types, etc. See [:help dev-lua-doc][dev-lua-doc].
 - If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
 - If a function in your Lua module should _not_ be documented, add `@nodoc`.
 - If the function is internal or otherwise non-public add `@private`.
-      - Private functions usually should be underscore-prefixed (named "_foo", not "foo").
+      - Private functions usually should be underscore-prefixed (named "_foo", not "foo"). Prefixing with an underscore implies `@nodoc`.
 - Mark deprecated functions with `@deprecated`.
 
 Third-party dependencies

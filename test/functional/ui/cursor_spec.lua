@@ -258,11 +258,11 @@ describe('ui/cursor', function()
         end
       end
       if m.hl_id then
-        m.hl_id = 65
+        m.hl_id = 66
         m.attr = { background = Screen.colors.DarkGray }
       end
       if m.id_lm then
-        m.id_lm = 72
+        m.id_lm = 75
         m.attr_lm = {}
       end
     end
@@ -379,12 +379,18 @@ describe('ui/cursor', function()
   end)
 
   it(':sleep does not hide cursor when sleeping', function()
-    n.feed(':sleep 100m | echo 42\n')
+    n.feed(':sleep 300m | echo 42')
+    screen:expect([[
+                               |
+      {1:~                        }|*3
+      :sleep 300m | echo 42^    |
+    ]])
+    n.feed('\n')
     screen:expect({
       grid = [[
       ^                         |
       {1:~                        }|*3
-      :sleep 100m | echo 42    |
+      :sleep 300m | echo 42    |
     ]],
       timeout = 100,
     })
@@ -396,12 +402,18 @@ describe('ui/cursor', function()
   end)
 
   it(':sleep! hides cursor when sleeping', function()
-    n.feed(':sleep! 100m | echo 42\n')
+    n.feed(':sleep! 300m | echo 42')
+    screen:expect([[
+                               |
+      {1:~                        }|*3
+      :sleep! 300m | echo 42^   |
+    ]])
+    n.feed('\n')
     screen:expect({
       grid = [[
                                |
       {1:~                        }|*3
-      :sleep! 100m | echo 42   |
+      :sleep! 300m | echo 42   |
     ]],
       timeout = 100,
     })

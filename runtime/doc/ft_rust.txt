@@ -475,4 +475,4 @@ MAPPINGS                                                       *rust-mappings*
 This plugin defines mappings for |[[| and |]]| to support hanging indents.
 
 
-vim:tw=78:sw=4:noet:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:noet:ts=8:ft=help:norl:

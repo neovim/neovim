@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 
 local clear, eq, eval, next_msg, ok, source = n.clear, t.eq, n.eval, n.next_msg, t.ok, n.source
 local command, fn, api = n.command, n.fn, n.api
+local feed = n.feed
+local exec_lua = n.exec_lua
 local matches = t.matches
 local sleep = vim.uv.sleep
 local get_session, set_session = n.get_session, n.set_session
@@ -415,6 +417,53 @@ describe('channels', function()
 
     -- works correctly with no output
     eq({ 'notification', 'exit', { id, 1, { '' } } }, next_msg())
+  end)
+
+  it('ChanOpen works with vim.wait() from another autocommand #32706', function()
+    exec_lua([[
+      vim.api.nvim_create_autocmd('ChanOpen', {
+        callback = function(ev)
+          _G.chan = vim.v.event.info.id
+        end,
+      })
+      vim.api.nvim_create_autocmd('InsertEnter', {
+        buffer = 0,
+        callback = function()
+          local chan = vim.fn.jobstart({ 'cat' })
+          _G.result = vim.wait(3000, function()
+            return _G.chan == chan
+          end)
+        end,
+      })
+    ]])
+    feed('i')
+    retry(nil, 4000, function()
+      eq(true, exec_lua('return _G.result'))
+    end)
+  end)
+
+  it('ChanInfo works with vim.wait() from another autocommand #32706', function()
+    exec_lua([[
+      vim.api.nvim_create_autocmd('ChanInfo', {
+        callback = function(ev)
+          _G.foo = vim.v.event.info.client.attributes.foo
+        end,
+      })
+      vim.api.nvim_create_autocmd('InsertEnter', {
+        buffer = 0,
+        callback = function()
+          local chan = vim.fn.jobstart({ 'cat' })
+          _G.result = vim.wait(3000, function()
+            return _G.foo == 'bar'
+          end)
+        end,
+      })
+    ]])
+    feed('i')
+    api.nvim_set_client_info('test', {}, 'remote', {}, { foo = 'bar' })
+    retry(nil, 4000, function()
+      eq(true, exec_lua('return _G.result'))
+    end)
   end)
 end)
 

@@ -65,11 +65,11 @@ describe('python3 provider', function()
     matches(
       string.format(
         dedent([[
-      ^Error invoking 'python_execute' on channel 3 %%(python3%%-script%%-host%%):
-        File "<string>", line 1
-          print%%(%s b%%)
-      %%C*
-      SyntaxError: invalid syntax%%C*$]]),
+          ^Invoking 'python_execute' on channel 3 %%(python3%%-script%%-host%%):
+            File "<string>", line 1
+              print%%(%s b%%)
+          %%C*
+          SyntaxError: invalid syntax%%C*$]]),
         very_long_symbol
       ),
       eval('v:errmsg')

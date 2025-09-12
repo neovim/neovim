@@ -314,7 +314,7 @@ static bool is_executable_ext(const char *name, char **abspath)
   size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
   char *buf_end = xstrchrnul(os_buf, NUL);
-  const char *pathext = os_getenv("PATHEXT");
+  const char *pathext = os_getenv_noalloc("PATHEXT");
   if (!pathext) {
     pathext = ".com;.exe;.bat;.cmd";
   }
@@ -361,14 +361,14 @@ static bool is_executable_ext(const char *name, char **abspath)
 static bool is_executable_in_path(const char *name, char **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char *path_env = os_getenv("PATH");
+  char *path_env = os_getenv("PATH");
   if (path_env == NULL) {
     return false;
   }
 
 #ifdef MSWIN
   char *path = NULL;
-  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath")) {
+  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath", false)) {
     // Prepend ".;" to $PATH.
     size_t pathlen = strlen(path_env);
     path = xmallocz(pathlen + 2);
@@ -419,6 +419,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
 end:
   xfree(buf);
   xfree(path);
+  xfree(path_env);
   return rv;
 }
 

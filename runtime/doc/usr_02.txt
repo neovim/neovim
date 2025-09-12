@@ -428,9 +428,9 @@ of the tag given by the word under the cursor.)
    After a few jumps, you might want to go back.  CTRL-T (pop tag) takes you
 back to the preceding position.  CTRL-O (jump to older position) also works
 nicely here.
-   At the top of the help screen, there is the notation *help.txt*.  This name
-between "*" characters is used by the help system to define a tag (hyperlink
-destination).
+   At the top of the help screen, there is the notation "*help.txt*".  This
+name between "*" characters is used by the help system to define a tag
+(hyperlink destination).
    See |29.1| for details about using tags.
 
 To get help on a given subject, use the following command: >

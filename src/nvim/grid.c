@@ -64,13 +64,11 @@ static Set(glyph) glyph_cache = SET_INIT;
 ///
 /// If the default_grid is used, adjust window relative positions to global
 /// screen positions.
-void grid_adjust(ScreenGrid **grid, int *row_off, int *col_off)
+ScreenGrid *grid_adjust(GridView *grid, int *row_off, int *col_off)
 {
-  if ((*grid)->target) {
-    *row_off += (*grid)->row_offset;
-    *col_off += (*grid)->col_offset;
-    *grid = (*grid)->target;
-  }
+  *row_off += grid->row_offset;
+  *col_off += grid->col_offset;
+  return grid->target;
 }
 
 schar_T schar_from_str(const char *str)
@@ -337,8 +335,6 @@ static bool grid_invalid_row(ScreenGrid *grid, int row)
 /// @param[out] attrp  set to the character's attribute (optional)
 schar_T grid_getchar(ScreenGrid *grid, int row, int col, int *attrp)
 {
-  grid_adjust(&grid, &row, &col);
-
   // safety check
   if (grid->chars == NULL || row >= grid->rows || col >= grid->cols) {
     return NUL;
@@ -365,11 +361,16 @@ static int grid_line_flags = 0;
 ///
 /// Must be matched with a grid_line_flush call before moving to
 /// another line.
-void grid_line_start(ScreenGrid *grid, int row)
+void grid_line_start(GridView *view, int row)
 {
   int col = 0;
+  ScreenGrid *grid = grid_adjust(view, &row, &col);
+  screengrid_line_start(grid, row, col);
+}
+
+void screengrid_line_start(ScreenGrid *grid, int row, int col)
+{
   grid_line_maxcol = grid->cols;
-  grid_adjust(&grid, &row, &col);
   assert(grid_line_grid == NULL);
   grid_line_row = row;
   grid_line_grid = grid;
@@ -534,23 +535,23 @@ void grid_line_cursor_goto(int col)
   ui_grid_cursor_goto(grid_line_grid->handle, grid_line_row, col);
 }
 
-void grid_line_mirror(void)
+void grid_line_mirror(int width)
 {
   grid_line_clear_to = MAX(grid_line_last, grid_line_clear_to);
   if (grid_line_first >= grid_line_clear_to) {
     return;
   }
-  linebuf_mirror(&grid_line_first, &grid_line_last, &grid_line_clear_to, grid_line_maxcol);
+  linebuf_mirror(&grid_line_first, &grid_line_last, &grid_line_clear_to, width);
   grid_line_flags |= SLF_RIGHTLEFT;
 }
 
-void linebuf_mirror(int *firstp, int *lastp, int *clearp, int maxcol)
+void linebuf_mirror(int *firstp, int *lastp, int *clearp, int width)
 {
   int first = *firstp;
   int last = *lastp;
 
   size_t n = (size_t)(last - first);
-  int mirror = maxcol - 1;  // Mirrors are more fun than television.
+  int mirror = width - 1;  // Mirrors are more fun than television.
   schar_T *scratch_char = (schar_T *)linebuf_scratch;
   memcpy(scratch_char + first, linebuf_char + first, n * sizeof(schar_T));
   for (int col = first; col < last; col++) {
@@ -577,9 +578,9 @@ void linebuf_mirror(int *firstp, int *lastp, int *clearp, int maxcol)
     linebuf_vcol[mirror - col] = scratch_vcol[col];
   }
 
-  *firstp = maxcol - *clearp;
-  *clearp = maxcol - first;
-  *lastp = maxcol - last;
+  *firstp = width - *clearp;
+  *clearp = width - first;
+  *lastp = width - last;
 }
 
 /// End a group of grid_line_puts calls and send the screen buffer to the UI layer.
@@ -613,7 +614,7 @@ void grid_line_flush_if_valid_row(void)
   grid_line_flush();
 }
 
-void grid_clear(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int attr)
+void grid_clear(GridView *grid, int start_row, int end_row, int start_col, int end_col, int attr)
 {
   for (int row = start_row; row < end_row; row++) {
     grid_line_start(grid, row);
@@ -924,21 +925,20 @@ void grid_free_all_mem(void)
 /// resized grid.
 void win_grid_alloc(win_T *wp)
 {
-  ScreenGrid *grid = &wp->w_grid;
+  GridView *grid = &wp->w_grid;
   ScreenGrid *grid_allocated = &wp->w_grid_alloc;
 
-  int rows = wp->w_height_inner;
-  int cols = wp->w_width_inner;
   int total_rows = wp->w_height_outer;
   int total_cols = wp->w_width_outer;
 
   bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
   bool has_allocation = (grid_allocated->chars != NULL);
 
-  if (grid->rows != rows) {
+  if (wp->w_view_height > wp->w_lines_size) {
     wp->w_lines_valid = 0;
     xfree(wp->w_lines);
-    wp->w_lines = xcalloc((size_t)rows + 1, sizeof(wline_T));
+    wp->w_lines = xcalloc((size_t)wp->w_view_height + 1, sizeof(wline_T));
+    wp->w_lines_size = wp->w_view_height;
   }
 
   bool was_resized = false;
@@ -962,9 +962,6 @@ void win_grid_alloc(win_T *wp)
     grid_invalidate(grid_allocated);
     grid_allocated->valid = true;
   }
-
-  grid->rows = rows;
-  grid->cols = cols;
 
   if (want_allocation) {
     grid->target = grid_allocated;
@@ -1009,11 +1006,6 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   int j;
   unsigned temp;
 
-  int row_off = 0;
-  grid_adjust(&grid, &row_off, &col);
-  row += row_off;
-  end += row_off;
-
   if (line_count <= 0) {
     return;
   }
@@ -1053,11 +1045,6 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 {
   int j;
   unsigned temp;
-
-  int row_off = 0;
-  grid_adjust(&grid, &row_off, &col);
-  row += row_off;
-  end += row_off;
 
   if (line_count <= 0) {
     return;

@@ -417,11 +417,11 @@ void remove_bom(char *s)
   }
 }
 
-// Get class of pointer:
-// 0 for blank or NUL
-// 1 for punctuation
-// 2 for an (ASCII) word character
-// >2 for other word characters
+/// Get class of pointer:
+/// 0 for blank or NUL
+/// 1 for punctuation
+/// 2 for an alphanumeric word character
+/// >2 for other word characters, including CJK and emoji
 int mb_get_class(const char *p)
   FUNC_ATTR_PURE
 {
@@ -2412,14 +2412,15 @@ char *enc_locale(void)
   char buf[50];
 
   const char *s;
+
 #ifdef HAVE_NL_LANGINFO_CODESET
   if (!(s = nl_langinfo(CODESET)) || *s == NUL)
 #endif
   {
     if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL) {
-      if ((s = os_getenv("LC_ALL"))) {
-        if ((s = os_getenv("LC_CTYPE"))) {
-          s = os_getenv("LANG");
+      if ((s = os_getenv_noalloc("LC_ALL"))) {
+        if ((s = os_getenv_noalloc("LC_CTYPE"))) {
+          s = os_getenv_noalloc("LANG");
         }
       }
     }

@@ -45,7 +45,6 @@
 --- @type table<string,fun(bufnr: integer, val: string, opts?: table)>
 local properties = {}
 
---- @private
 --- Modified version of the builtin assert that does not include error position information
 ---
 --- @param v any Condition
@@ -55,7 +54,6 @@ local function assert(v, message)
   return v or error(message, 0)
 end
 
---- @private
 --- Show a warning message
 --- @param msg string Message to show
 local function warn(msg, ...)
@@ -211,7 +209,6 @@ function properties.spelling_language(bufnr, val)
   end
 end
 
---- @private
 --- Modified version of [glob2regpat()] that does not match path separators on `*`.
 ---
 --- This function replaces single instances of `*` with the regex pattern `[^/]*`.
@@ -233,7 +230,6 @@ local function glob2regpat(glob)
   return (regpat:gsub(placeholder, '[^/]*'))
 end
 
---- @private
 --- Parse a single line in an EditorConfig file
 --- @param line string Line
 --- @return string? glob pattern if the line contains a pattern
@@ -256,7 +252,6 @@ local function parse_line(line)
   end
 end
 
---- @private
 --- Parse options from an `.editorconfig` file
 --- @param filepath string File path of the file to apply EditorConfig settings to
 --- @param dir string Current directory

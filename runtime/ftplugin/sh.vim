@@ -6,6 +6,7 @@
 "			Eisuke Kawashima
 " Last Change:		2024 Sep 19 by Vim Project (compiler shellcheck)
 "			2024 Dec 29 by Vim Project (improve setting shellcheck compiler)
+"			2025 Mar 09 by Vim Project (set b:match_skip)
 
 if exists("b:did_ftplugin")
   finish
@@ -30,7 +31,8 @@ if exists("loaded_matchit") && !exists("b:match_words")
 	\  s:sol .. '\%(for\|while\)\>:' .. s:sol .. 'done\>,' ..
 	\  s:sol .. 'case\>:' .. s:sol .. 'esac\>'
   unlet s:sol
-  let b:undo_ftplugin ..= " | unlet! b:match_ignorecase b:match_words"
+  let b:match_skip = "synIDattr(synID(line('.'),col('.'),0),'name') =~ 'shSnglCase'" 
+  let b:undo_ftplugin ..= " | unlet! b:match_ignorecase b:match_words b:match_skip"
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")

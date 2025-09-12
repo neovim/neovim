@@ -235,3 +235,26 @@ func Test_zip_glob_fname()
 
   bw
 endfunc
+
+func Test_zip_fname_leading_hyphen()
+  CheckNotMSWindows
+
+  "## copy sample zip file
+  if !filecopy("samples/poc.zip", "X.zip")
+    call assert_report("Can't copy samples/poc.zip")
+    return
+  endif
+  defer delete("X.zip")
+  defer delete('-d', 'rf')
+  defer delete('/tmp/pwned', 'rf')
+
+  e X.zip
+
+  :1
+  let fname = '-d/tmp'
+  call search('\V' .. fname)
+  normal x
+  call assert_true(filereadable('-d/tmp'))
+  call assert_false(filereadable('/tmp/pwned'))
+  bw
+endfunc

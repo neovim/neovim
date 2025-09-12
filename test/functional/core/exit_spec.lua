@@ -97,14 +97,26 @@ describe(':cquit', function()
   end)
 
   it('exits with redir msg for multiple exit codes after :cquit 1 2', function()
-    test_cq('cquit 1 2', nil, 'nvim_exec2(): Vim(cquit):E488: Trailing characters: 2: cquit 1 2')
+    test_cq(
+      'cquit 1 2',
+      nil,
+      'nvim_exec2(), line 1: Vim(cquit):E488: Trailing characters: 2: cquit 1 2'
+    )
   end)
 
   it('exits with redir msg for non-number exit code after :cquit X', function()
-    test_cq('cquit X', nil, 'nvim_exec2(): Vim(cquit):E488: Trailing characters: X: cquit X')
+    test_cq(
+      'cquit X',
+      nil,
+      'nvim_exec2(), line 1: Vim(cquit):E488: Trailing characters: X: cquit X'
+    )
   end)
 
   it('exits with redir msg for negative exit code after :cquit -1', function()
-    test_cq('cquit -1', nil, 'nvim_exec2(): Vim(cquit):E488: Trailing characters: -1: cquit -1')
+    test_cq(
+      'cquit -1',
+      nil,
+      'nvim_exec2(), line 1: Vim(cquit):E488: Trailing characters: -1: cquit -1'
+    )
   end)
 end)

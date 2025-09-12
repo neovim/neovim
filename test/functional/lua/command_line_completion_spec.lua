@@ -18,19 +18,36 @@ end
 before_each(clear)
 
 describe('nlua_expand_pat', function()
-  it('should complete exact matches', function()
+  it('completes exact matches', function()
     eq({ { 'exact' }, 0 }, get_completions('exact', { exact = true }))
   end)
 
-  it('should return empty table when nothing matches', function()
+  it('returns empty table when nothing matches', function()
     eq({ {}, 0 }, get_completions('foo', { bar = true }))
+
+    -- can access non-exist field
+    for _, m in ipairs {
+      'vim.',
+      'vim.lsp.',
+      'vim.treesitter.',
+      'vim.deepcopy.',
+      'vim.fn.',
+      'vim.api.',
+      'vim.o.',
+      'vim.b.',
+    } do
+      eq({ {}, m:len() }, get_completions(m .. 'foo'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.bar'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.bar.'))
+    end
   end)
 
-  it('should return nice completions with function call prefix', function()
+  it('returns nice completions with function call prefix', function()
     eq({ { 'FOO' }, 6 }, get_completions('print(F', { FOO = true, bawr = true }))
   end)
 
-  it('should return keys for nested dictionaries', function()
+  it('returns keys for nested dicts', function()
     eq(
       { {
         'nvim_buf_set_lines',
@@ -47,7 +64,7 @@ describe('nlua_expand_pat', function()
     )
   end)
 
-  it('it should work with colons', function()
+  it('with colons', function()
     eq(
       { {
         'bawr',
@@ -63,7 +80,7 @@ describe('nlua_expand_pat', function()
     )
   end)
 
-  it('should return keys for string reffed dictionaries', function()
+  it('returns keys after string key', function()
     eq(
       { {
         'nvim_buf_set_lines',
@@ -78,9 +95,7 @@ describe('nlua_expand_pat', function()
         },
       })
     )
-  end)
 
-  it('should return keys for string reffed dictionaries', function()
     eq(
       { {
         'nvim_buf_set_lines',
@@ -99,15 +114,55 @@ describe('nlua_expand_pat', function()
     )
   end)
 
-  it('should work with lazy submodules of "vim" global', function()
+  it('with lazy submodules of "vim" global', function()
     eq({ { 'inspect', 'inspect_pos' }, 4 }, get_completions('vim.inspec'))
-
     eq({ { 'treesitter' }, 4 }, get_completions('vim.treesi'))
-
+    eq({ { 'dev' }, 15 }, get_completions('vim.treesitter.de'))
+    eq({ { 'edit_query' }, 19 }, get_completions('vim.treesitter.dev.edit_'))
     eq({ { 'set' }, 11 }, get_completions('vim.keymap.se'))
   end)
 
-  it('should be able to interpolate globals', function()
+  it('include keys in mt.__index and ._submodules', function()
+    eq(
+      { { 'bar1', 'bar2', 'bar3' }, 4 },
+      exec_lua(function() -- metatable cannot be serialized
+        return {
+          vim._expand_pat('foo.', {
+            foo = setmetatable(
+              { bar1 = true, _submodules = { bar2 = true } },
+              { __index = { bar3 = true } }
+            ),
+          }),
+        }
+      end)
+    )
+  end)
+
+  it('excludes private fields after "."', function()
+    eq(
+      { { 'bar' }, 4 },
+      get_completions('foo.', {
+        foo = {
+          _bar = true,
+          bar = true,
+        },
+      })
+    )
+  end)
+
+  it('includes private fields after "._"', function()
+    eq(
+      { { '_bar' }, 4 },
+      get_completions('foo._', {
+        foo = {
+          _bar = true,
+          bar = true,
+        },
+      })
+    )
+  end)
+
+  it('can interpolate globals', function()
     eq(
       { {
         'nvim_buf_set_lines',
@@ -125,8 +180,8 @@ describe('nlua_expand_pat', function()
     )
   end)
 
-  describe('should complete vim.fn', function()
-    it('correctly works for simple completion', function()
+  describe('vim.fn', function()
+    it('simple completion', function()
       local actual = get_completions('vim.fn.did')
       local expected = {
         { 'did_filetype' },
@@ -134,7 +189,7 @@ describe('nlua_expand_pat', function()
       }
       eq(expected, actual)
     end)
-    it('should not suggest items with #', function()
+    it('does not suggest "#" items', function()
       exec_lua [[
         -- ensure remote#host#... functions exist
         vim.cmd [=[
@@ -152,7 +207,7 @@ describe('nlua_expand_pat', function()
     end)
   end)
 
-  describe('should complete for variable accessors for', function()
+  describe('completes', function()
     it('vim.v', function()
       local actual = get_completions('vim.v.t_')
       local expected = {
@@ -214,9 +269,21 @@ describe('nlua_expand_pat', function()
       }
       eq(expected, actual)
     end)
+
+    it('vim.env', function()
+      exec_lua [[
+        vim.env.NLUA_ENV_VAR = 'foo'
+      ]]
+      local actual = get_completions('vim.env.NLUA')
+      local expected = {
+        { 'NLUA_ENV_VAR' },
+        #'vim.env.',
+      }
+      eq(expected, actual)
+    end)
   end)
 
-  describe('should complete for option accessors for', function()
+  describe('completes', function()
     -- for { vim.o, vim.go, vim.opt, vim.opt_local, vim.opt_global }
     local test_opt = function(accessor)
       do
@@ -247,7 +314,7 @@ describe('nlua_expand_pat', function()
     test_opt('vim.opt_local')
     test_opt('vim.opt_global')
 
-    it('vim.o, suggesting all the known options', function()
+    it('vim.o, suggesting all known options', function()
       local completions = get_completions('vim.o.')[1] ---@type string[]
       eq(
         exec_lua [[
@@ -290,45 +357,19 @@ describe('nlua_expand_pat', function()
     end)
   end)
 
-  it('should return everything if the input is of length 0', function()
+  it('returns everything if input is empty', function()
     eq({ { 'other', 'vim' }, 0 }, get_completions('', { vim = true, other = true }))
   end)
 
-  describe('get_parts', function()
-    it('should return an empty list for no separators', function()
-      eq({ {}, 1 }, get_compl_parts('vim'))
-    end)
-
-    it('just the first item before a period', function()
-      eq({ { 'vim' }, 5 }, get_compl_parts('vim.ap'))
-    end)
-
-    it('should return multiple parts just for period', function()
-      eq({ { 'vim', 'api' }, 9 }, get_compl_parts('vim.api.nvim_buf'))
-    end)
-
-    it('should be OK with colons', function()
-      eq({ { 'vim', 'api' }, 9 }, get_compl_parts('vim:api.nvim_buf'))
-    end)
-
-    it('should work for just one string ref', function()
-      eq({ { 'vim', 'api' }, 12 }, get_compl_parts("vim['api'].nvim_buf"))
-    end)
-
-    it('should work for just one string ref, with double quote', function()
-      eq({ { 'vim', 'api' }, 12 }, get_compl_parts('vim["api"].nvim_buf'))
-    end)
-
-    it('should allows back-to-back string ref', function()
-      eq({ { 'vim', 'nested', 'api' }, 22 }, get_compl_parts('vim["nested"]["api"].nvim_buf'))
-    end)
-
-    it('should allows back-to-back string ref with spaces before and after', function()
-      eq({ { 'vim', 'nested', 'api' }, 25 }, get_compl_parts('vim[ "nested"  ]["api"].nvim_buf'))
-    end)
-
-    it('should allow VAR style loolup', function()
-      eq({ { 'vim', { 'NESTED' }, 'api' }, 20 }, get_compl_parts('vim[NESTED]["api"].nvim_buf'))
-    end)
+  it('get_parts', function()
+    eq({ {}, 1 }, get_compl_parts('vim'))
+    eq({ { 'vim' }, 5 }, get_compl_parts('vim.ap'))
+    eq({ { 'vim', 'api' }, 9 }, get_compl_parts('vim.api.nvim_buf'))
+    eq({ { 'vim', 'api' }, 9 }, get_compl_parts('vim:api.nvim_buf'))
+    eq({ { 'vim', 'api' }, 12 }, get_compl_parts("vim['api'].nvim_buf"))
+    eq({ { 'vim', 'api' }, 12 }, get_compl_parts('vim["api"].nvim_buf'))
+    eq({ { 'vim', 'nested', 'api' }, 22 }, get_compl_parts('vim["nested"]["api"].nvim_buf'))
+    eq({ { 'vim', 'nested', 'api' }, 25 }, get_compl_parts('vim[ "nested"  ]["api"].nvim_buf'))
+    eq({ { 'vim', { 'NESTED' }, 'api' }, 20 }, get_compl_parts('vim[NESTED]["api"].nvim_buf'))
   end)
 end)

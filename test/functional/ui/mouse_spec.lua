@@ -1719,6 +1719,20 @@ describe('ui/mouse/input', function()
     ]])
   end)
 
+  it("mouse click on window separator in statusline doesn't crash", function()
+    api.nvim_set_option_value('winwidth', 1, {})
+    api.nvim_set_option_value('statusline', '%f', {})
+
+    command('vsplit')
+    command('redraw')
+
+    local lines = api.nvim_get_option_value('lines', {})
+    local columns = api.nvim_get_option_value('columns', {})
+
+    api.nvim_input_mouse('left', 'press', '', 0, lines - 1, math.floor(columns / 2))
+    command('redraw')
+  end)
+
   it('getmousepos() works correctly', function()
     local winwidth = api.nvim_get_option_value('winwidth', {})
     -- Set winwidth=1 so that window sizes don't change.
@@ -2067,5 +2081,20 @@ describe('ui/mouse/input', function()
     api.nvim_input_mouse('right', 'release', '', 0, 23, 0)
     feed('<Down><Down><CR>')
     eq('bar', api.nvim_get_var('menustr'))
+  end)
+
+  it('below a concealed line #33450', function()
+    api.nvim_set_option_value('conceallevel', 2, {})
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 1, 0, { conceal_lines = '' })
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 0)
+    api.nvim_input_mouse('left', 'release', '', 0, 1, 0)
+    eq(3, fn.line('.'))
+    -- No error when clicking below last line that is concealed.
+    screen:try_resize(80, 10) -- Prevent hit-enter
+    api.nvim_set_option_value('cmdheight', 3, {})
+    local count = api.nvim_buf_line_count(0)
+    api.nvim_buf_set_extmark(0, 1, count - 1, 0, { conceal_lines = '' })
+    api.nvim_input_mouse('left', 'press', '', 0, count, 0)
+    eq('', api.nvim_get_vvar('errmsg'))
   end)
 end)

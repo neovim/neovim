@@ -83,7 +83,7 @@ end
 describe('API/extmarks', function()
   local screen
   local marks, positions, init_text, row, col
-  local ns, ns2
+  local ns, ns2 ---@type integer, integer
 
   before_each(function()
     -- Initialize some namespaces and insert 12345 into a buffer
@@ -331,30 +331,30 @@ describe('API/extmarks', function()
     rv = get_extmarks(ns, lower, upper)
     eq({ { marks[3], positions[3][1], positions[3][2] } }, rv)
 
-    -- prev with mark id
+    -- reverse with mark id
     rv = get_extmarks(ns, marks[3], { 0, 0 }, { limit = 1 })
     eq({ { marks[3], positions[3][1], positions[3][2] } }, rv)
     rv = get_extmarks(ns, marks[2], { 0, 0 }, { limit = 1 })
     eq({ { marks[2], positions[2][1], positions[2][2] } }, rv)
-    -- prev with positional when mark exists at position
+    -- reverse with positional when mark exists at position
     rv = get_extmarks(ns, positions[3], { 0, 0 }, { limit = 1 })
     eq({ { marks[3], positions[3][1], positions[3][2] } }, rv)
-    -- prev with positional index (no mark at position)
+    -- reverse with positional index (no mark at position)
     rv = get_extmarks(ns, { positions[1][1], positions[1][2] + 1 }, { 0, 0 }, { limit = 1 })
     eq({ { marks[1], positions[1][1], positions[1][2] } }, rv)
-    -- prev with Extremity index
+    -- reverse with Extremity index
     rv = get_extmarks(ns, { -1, -1 }, { 0, 0 }, { limit = 1 })
     eq({ { marks[3], positions[3][1], positions[3][2] } }, rv)
 
-    -- prevrange with mark id
+    -- reverse with mark id
     rv = get_extmarks(ns, marks[3], marks[1])
     eq({ marks[3], positions[3][1], positions[3][2] }, rv[1])
     eq({ marks[2], positions[2][1], positions[2][2] }, rv[2])
     eq({ marks[1], positions[1][1], positions[1][2] }, rv[3])
-    -- prevrange with limit
+    -- reverse with limit
     rv = get_extmarks(ns, marks[3], marks[1], { limit = 2 })
     eq(2, #rv)
-    -- prevrange with positional when mark exists at position
+    -- reverse with positional when mark exists at position
     rv = get_extmarks(ns, positions[3], positions[1])
     eq({
       { marks[3], positions[3][1], positions[3][2] },
@@ -363,7 +363,7 @@ describe('API/extmarks', function()
     }, rv)
     rv = get_extmarks(ns, positions[2], positions[1])
     eq(2, #rv)
-    -- prevrange with positional index (no mark at position)
+    -- reverse with positional index (no mark at position)
     lower = { positions[2][1], positions[2][2] + 1 }
     upper = { positions[3][1], positions[3][2] + 1 }
     rv = get_extmarks(ns, upper, lower)
@@ -372,7 +372,7 @@ describe('API/extmarks', function()
     upper = { positions[3][1], positions[3][2] + 2 }
     rv = get_extmarks(ns, upper, lower)
     eq({}, rv)
-    -- prevrange with extremity index
+    -- reverse with extremity index
     lower = { 0, 0 }
     upper = { positions[2][1], positions[2][2] - 1 }
     rv = get_extmarks(ns, upper, lower)
@@ -428,6 +428,14 @@ describe('API/extmarks', function()
     set_extmark(ns, marks[3], 0, 2) -- check is inclusive
     local rv = get_extmarks(ns, { 2, 3 }, { 0, 2 })
     eq({ { marks[1], 2, 1 }, { marks[2], 1, 4 }, { marks[3], 0, 2 } }, rv)
+    -- doesn't include paired marks whose start pos > lower bound twice
+    -- and returns mark overlapping start pos but not end pos
+    local m1 = set_extmark(ns, nil, 0, 0, { end_row = 1, end_col = 4 })
+    local m2 = set_extmark(ns, nil, 0, 0, { end_row = 1, end_col = 2 })
+    local m3 = set_extmark(ns, nil, 1, 0, { end_row = 1, end_col = 4 })
+    local m4 = set_extmark(ns, nil, 1, 2, { end_row = 1, end_col = 4 })
+    rv = get_extmarks(ns, { 1, 3 }, { 1, 2 }, { overlap = true })
+    eq({ { m4, 1, 2 }, { m3, 1, 0 }, { m2, 0, 0 }, { m1, 0, 0 } }, rv)
   end)
 
   it('get_marks limit=0 returns nothing', function()
@@ -973,7 +981,7 @@ describe('API/extmarks', function()
     eq(1, #rv)
     rv = get_extmarks(ns2, { 0, 0 }, positions[2], { limit = 1 })
     eq(1, #rv)
-    -- get_prev (limit set)
+    -- reverse (limit set)
     rv = get_extmarks(ns, positions[1], { 0, 0 }, { limit = 1 })
     eq(1, #rv)
     rv = get_extmarks(ns2, positions[1], { 0, 0 }, { limit = 1 })
@@ -984,7 +992,7 @@ describe('API/extmarks', function()
     eq(2, #rv)
     rv = get_extmarks(ns2, positions[1], positions[2])
     eq(2, #rv)
-    -- get_prev (no limit)
+    -- reverse (no limit)
     rv = get_extmarks(ns, positions[2], positions[1])
     eq(2, #rv)
     rv = get_extmarks(ns2, positions[2], positions[1])
@@ -1425,14 +1433,12 @@ describe('API/extmarks', function()
   end)
 
   it('throws consistent error codes', function()
-    local ns_invalid = ns2 + 1
-    eq(
-      "Invalid 'ns_id': 3",
-      pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2])
-    )
-    eq("Invalid 'ns_id': 3", pcall_err(api.nvim_buf_del_extmark, 0, ns_invalid, marks[1]))
-    eq("Invalid 'ns_id': 3", pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
-    eq("Invalid 'ns_id': 3", pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
+    local ns_invalid = ns2 + 1 ---@type integer
+    local err = string.format("Invalid 'ns_id': %d", ns_invalid)
+    eq(err, pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2]))
+    eq(err, pcall_err(api.nvim_buf_del_extmark, 0, ns_invalid, marks[1]))
+    eq(err, pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
+    eq(err, pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
   end)
 
   it('when col = line-length, set the mark on eol', function()
@@ -1535,7 +1541,7 @@ describe('API/extmarks', function()
         0,
         0,
         {
-          ns_id = 1,
+          ns_id = ns,
           end_col = 0,
           end_row = 1,
           right_gravity = true,
@@ -1556,6 +1562,7 @@ describe('API/extmarks', function()
   it('can get details', function()
     set_extmark(ns, marks[1], 0, 0, {
       conceal = 'c',
+      conceal_lines = '',
       cursorline_hl_group = 'Statement',
       end_col = 0,
       end_right_gravity = true,
@@ -1585,6 +1592,7 @@ describe('API/extmarks', function()
       0,
       {
         conceal = 'c',
+        conceal_lines = '',
         cursorline_hl_group = 'Statement',
         end_col = 0,
         end_right_gravity = true,
@@ -1593,7 +1601,7 @@ describe('API/extmarks', function()
         hl_group = 'String',
         hl_mode = 'blend',
         line_hl_group = 'Statement',
-        ns_id = 1,
+        ns_id = ns,
         number_hl_group = 'Statement',
         priority = 0,
         right_gravity = false,
@@ -1624,7 +1632,7 @@ describe('API/extmarks', function()
       0,
       0,
       {
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         priority = 0,
         virt_text = { { '', 'Macro' }, { '', { 'Type', 'Search' } }, { '' } },
@@ -1645,7 +1653,7 @@ describe('API/extmarks', function()
       0,
       0,
       {
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         ui_watched = true,
         priority = 0,
@@ -1661,7 +1669,7 @@ describe('API/extmarks', function()
       0,
       0,
       {
-        ns_id = 1,
+        ns_id = ns,
         cursorline_hl_group = 'Statement',
         priority = 4096,
         right_gravity = true,
@@ -1681,7 +1689,7 @@ describe('API/extmarks', function()
         end_col = 1,
         end_right_gravity = false,
         end_row = 0,
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         spell = true,
       },
@@ -1698,7 +1706,7 @@ describe('API/extmarks', function()
         end_col = 1,
         end_right_gravity = false,
         end_row = 0,
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         spell = false,
       },

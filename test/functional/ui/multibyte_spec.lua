@@ -465,9 +465,9 @@ describe('multibyte rendering: statusline', function()
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {3:🧑�💻                                   }|
+      {3:🧑<200b>💻                              }|
                                               |
-    ]],
+      ]],
     }
   end)
 

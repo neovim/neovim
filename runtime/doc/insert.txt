@@ -212,6 +212,10 @@ CTRL-Q		Same as CTRL-V.
 CTRL-SHIFT-V				*i_CTRL-SHIFT-V* *i_CTRL-SHIFT-Q*
 CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
 		modifier into the key.
+		Note: When CTRL-SHIFT-V is intercepted by your system (e.g.,
+		to paste text) you can often use CTRL-SHIFT-Q instead.
+		However, in some terminals (e.g. GNOME Terminal), CTRL-SHIFT-Q
+		quits the terminal without confirmation.
 
 CTRL-X		Enter CTRL-X mode.  This is a sub-mode where commands can
 		be given to complete words or scroll the window.  See
@@ -625,6 +629,7 @@ Completion can be done for:
 11. omni completion					|i_CTRL-X_CTRL-O|
 12. Spelling suggestions				|i_CTRL-X_s|
 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
+14. contents from registers				|i_CTRL-X_CTRL-R|
 
 Additionally, |i_CTRL-X_CTRL-Z| stops completion without changing the text.
 
@@ -639,18 +644,19 @@ Also see the 'infercase' option if you want to adjust the case of the match.
 
 When inserting a selected candidate word from the |popup-menu|, the part of
 the candidate word that does not match the query is highlighted using
-|hl-ComplMatchIns|. If fuzzy is enabled in 'completopt', highlighting will not
-be applied.
+|hl-ComplMatchIns|.  If fuzzy is enabled in 'completeopt', highlighting will
+not be applied.
 
 							*complete_CTRL-E*
 When completion is active you can use CTRL-E to stop it and go back to the
 originally typed text.  The CTRL-E will not be inserted.
 
 							*complete_CTRL-Y*
-When the popup menu is displayed you can use CTRL-Y to stop completion and
-accept the currently selected entry.  The CTRL-Y is not inserted.  Typing a
-space, Enter, or some other unprintable character will leave completion mode
-and insert that typed character.
+When the popup menu is displayed, CTRL-Y stops completion and accepts the
+currently selected entry.  Typing a space, Enter, or some other unprintable
+character will leave completion mode and insert that typed character. If you
+want to use <Enter> to accept a completion item, use this mapping: >vim
+    inoremap <expr> <cr> pumvisible() ? '<c-y>' : '<cr>'
 
 When the popup menu is displayed there are a few more special keys, see
 |popupmenu-keys|.
@@ -994,6 +1000,25 @@ CTRL-X CTRL-V		Guess what kind of item is in front of the cursor and
 			completion, for example: >
 				:imap <Tab> <C-X><C-V>
 
+Completing contents from registers			*compl-register-words*
+							*i_CTRL-X_CTRL-R*
+CTRL-X CTRL-R		Guess what kind of item is in front of the cursor from
+			all registers and find the first match for it.
+			Further use of CTRL-R (without CTRL-X) will insert the
+			register content, see |i_CTRL-R|.
+			'ignorecase' applies to the matching.
+
+	CTRL-N		Search forwards for next match.  This match replaces
+			the previous one.
+
+	CTRL-P		Search backwards for previous match.  This match
+			replaces the previous one.
+
+	CTRL-X CTRL-R	Further use of CTRL-X CTRL-R will copy the line
+			following the previous expansion in other contexts
+			unless a double CTRL-X is used (e.g. this switches
+			from completing register words to register contents).
+
 User defined completion					*compl-function*
 
 Completion is done by a function that can be defined by the user with the
@@ -1011,7 +1036,7 @@ CTRL-X CTRL-U		Guess what kind of item is in front of the cursor and
 			previous one.
 
 
-Omni completion						*compl-omni*
+Omni completion					*omnicompletion* *compl-omni*
 
 Completion is done by a function that can be defined by the user with the
 'omnifunc' option.  This is to be used for filetype-specific completion.
@@ -1088,19 +1113,20 @@ CTRL-X CTRL-Z		Stop completion without changing the text.
 
 AUTO-COMPLETION						*compl-autocomplete*
 
-To get basic "autocompletion" without installing a plugin, try this script: >lua
+To get LSP-driven auto-completion, see |lsp-completion|. To get basic
+auto-completion without installing plugins or LSP, try this: >lua
 
-  local triggers = {"."}
-  vim.api.nvim_create_autocmd("InsertCharPre", {
+  local triggers = {'.'}
+  vim.api.nvim_create_autocmd('InsertCharPre', {
     buffer = vim.api.nvim_get_current_buf(),
     callback = function()
-      if vim.fn.pumvisible() == 1 or vim.fn.state("m") == "m" then
+      if vim.fn.pumvisible() == 1 or vim.fn.state('m') == 'm' then
         return
       end
       local char = vim.v.char
       if vim.list_contains(triggers, char) then
-        local key = vim.keycode("<C-x><C-n>")
-        vim.api.nvim_feedkeys(key, "m", false)
+        local key = vim.keycode('<C-x><C-n>')
+        vim.api.nvim_feedkeys(key, 'm', false)
       end
     end
   })
@@ -1157,6 +1183,9 @@ For example, the function can contain this: >
 	let matches = ... list of words ...
 	return {'words': matches, 'refresh': 'always'}
 <
+If looking for matches is time-consuming, |complete_check()| may be used to
+maintain responsiveness.
+
 						*complete-items*
 Each list item can either be a string or a Dictionary.  When it is a string it
 is used as the completion.  When it is a Dictionary it can contain these
@@ -1291,6 +1320,7 @@ use all space available.
 The 'pumwidth' option can be used to set a minimum width.  The default is 15
 characters.
 
+							*compl-states*
 There are three states:
 1. A complete match has been inserted, e.g., after using CTRL-N or CTRL-P.
 2. A cursor key has been used to select another match.  The match was not
@@ -1500,6 +1530,11 @@ Regardless from state of implementation in browsers but if element is defined
 in standards, completion plugin will place element in suggestion list. When
 both major engines implemented element, even if this is not in standards it
 will be suggested. All other elements are not placed in suggestion list.
+
+
+LUA                                                     *ft-lua-omni*
+
+Lua |ftplugin| sets 'omnifunc' to |vim.lua_omnifunc()|.
 
 
 PHP							*ft-php-omni*
@@ -1913,7 +1948,7 @@ These commands are used to start inserting text.  You can end insert mode with
 <Esc>.  See |mode-ins-repl| for the other special characters in Insert mode.
 The effect of [count] takes place after Insert mode is exited.
 
-The following commands insert text, but stay in normal mode:
+The following |default-mappings| insert text, but stay in normal mode:
 
 							*]<Space>*
 ]<Space>		Insert an empty line below the cursor without leaving

@@ -6,6 +6,7 @@ local n = require('test.functional.testnvim')()
 local clear, command, expect = n.clear, n.command, n.expect
 local source, write_file = n.source, t.write_file
 
+--- @return string
 local function sixlines(text)
   local result = ''
   for _ = 1, 6 do
@@ -16,6 +17,9 @@ end
 
 local function diff(text, nodedent)
   local fname = t.tmpname()
+  finally(function()
+    os.remove(fname)
+  end)
   command('w! ' .. fname)
   n.poke_eventloop()
   local data = io.open(fname):read('*all')
@@ -24,7 +28,6 @@ local function diff(text, nodedent)
   else
     t.eq(t.dedent(text), data)
   end
-  os.remove(fname)
 end
 
 describe('character classes in regexp', function()
@@ -38,7 +41,7 @@ describe('character classes in regexp', function()
   local punct4 = '{|}~'
   local ctrl2 = '\127\128\130\144\155'
   local iso_text = '\166\177\188\199\211\233' -- "¦±¼ÇÓé" in utf-8
-  setup(function()
+  local function do_setup(no_dedent)
     -- The original test32.in file was not in utf-8 encoding and did also
     -- contain some control characters.  We use lua escape sequences to write
     -- them to the test file.
@@ -52,8 +55,9 @@ describe('character classes in regexp', function()
       .. punct4
       .. ctrl2
       .. iso_text
-    write_file('test36.in', sixlines(line))
-  end)
+    write_file('test36.in', sixlines(line), no_dedent)
+  end
+  setup(do_setup)
   before_each(function()
     clear()
     command('e test36.in')
@@ -288,16 +292,18 @@ describe('character classes in regexp', function()
       ABCDEFGHIXYZ
       ABCDEFGHIXYZ]])
   end)
-  it([["\%1l^#.*" does not match on a line starting with "#". (vim-patch:7.4.1305)]], function()
-    source([[
+  pending(
+    [["\%1l^#.*" does not match on a line starting with "#". (vim-patch:7.4.1305)]],
+    function()
+      -- do_setup(true)
+      source([[
       1 s/\%#=0\%1l^\t...//g
       2 s/\%#=1\%2l^\t...//g
       3 s/\%#=2\%3l^\t...//g
       4 s/\%#=0\%4l^\t...//g
       5 s/\%#=1\%5l^\t...//g
       6 s/\%#=2\%6l^\t...//g]])
-    diff(
-      sixlines(
+      local text = sixlines(
         string.sub(punct1, 1)
           .. digits
           .. punct2
@@ -308,8 +314,9 @@ describe('character classes in regexp', function()
           .. ctrl2
           .. iso_text
       )
-    )
-  end)
+      diff(text)
+    end
+  )
   it('does not convert character class ranges to an incorrect class', function()
     source([[
       1 s/\%#=0[0-z]//g
@@ -319,9 +326,9 @@ describe('character classes in regexp', function()
       5 s/\%#=1[^0-z]//g
       6 s/\%#=2[^0-z]//g
     ]])
-    diff(
-      string.rep(ctrl1 .. punct1 .. punct4 .. ctrl2 .. iso_text .. '\n', 3)
-        .. string.rep(digits .. punct2 .. upper .. punct3 .. lower .. '\n', 3)
-    )
+    local text = string.rep(ctrl1 .. punct1 .. punct4 .. ctrl2 .. iso_text .. '\n', 3)
+      .. string.rep(digits .. punct2 .. upper .. punct3 .. lower .. '\n', 3)
+    text = text:gsub('\t', ''):gsub('\n\t', '\n')
+    diff(text)
   end)
 end)

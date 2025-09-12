@@ -120,7 +120,7 @@ The following predicates are built in:
         match.
 
     `lua-match?`                              *treesitter-predicate-lua-match?*
-         Match |lua-patterns| against the text corresponding to a node,
+         Match |lua-pattern|s against the text corresponding to a node,
          similar to `match?`
 
     `any-lua-match?`                      *treesitter-predicate-any-lua-match?*
@@ -492,10 +492,10 @@ capture marks comments as to be checked: >query
 There is also `@nospell` which disables spellchecking regions with `@spell`.
 
                                                 *treesitter-highlight-conceal*
-Treesitter highlighting supports |conceal| via the `conceal` metadata. By
-convention, nodes to be concealed are captured as `@conceal`, but any capture
-can be used. For example, the following query can be used to hide code block
-delimiters in Markdown: >query
+Treesitter highlighting supports |conceal| via the `conceal` and `conceal_lines`
+metadata. By convention, nodes to be concealed are captured as `@conceal`, but
+any capture can be used. For example, the following query can be used to hide
+code block delimiters in Markdown: >query
 
     ((fenced_code_block_delimiter) @conceal (#set! conceal ""))
 <
@@ -506,7 +506,13 @@ still highlighted the same as other operators: >query
 
     "!=" @operator (#set! conceal "≠")
 <
-Conceals specified in this way respect 'conceallevel'.
+To conceal an entire line (do not draw it at all), a query with `conceal_lines`
+metadata can be used: >query
+
+    ((comment) @comment @spell
+      (#set! conceal_lines ""))
+<
+Conceals specified in this way respect 'conceallevel' and 'concealcursor'.
 
 Note that although you can use any string for `conceal`, only the first
 character will be used: >query
@@ -524,6 +530,19 @@ attribute: >query
 
     ((super_important_node) @superimportant (#set! priority 105))
 <
+
+                                          *treesitter-highlight-commentstring*
+Treesitter highlighting supports finer-grained 'commentstring's, used by the
+built-in |commenting| plugin. When the cursor is within a node that sets the
+`bo.commentstring` metadata property (|treesitter-directive-set!|), that
+property defines the comment delimiter (where "innermost wins"). This is
+useful for languages like `JSX` that have different comment syntax depending
+on the code region, for example: >query
+
+    ((jsx_element) @_tag (#set! @_tag bo.commentstring "{/* %s */}"))
+<
+When multiple captures set this metadata over a region, only the innermost
+(most specific) one is applied to a given area.
 
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
@@ -785,6 +804,12 @@ TSNode:named_child_count()                        *TSNode:named_child_count()*
     Return: ~
         (`integer`)
 
+TSNode:named_children()                              *TSNode:named_children()*
+    Returns a list of the node's named children.
+
+    Return: ~
+        (`TSNode[]`)
+
                                          *TSNode:named_descendant_for_range()*
 TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row},
                                   {end_col})
@@ -908,7 +933,7 @@ get_captures_at_cursor({winnr})
     Returns a list of highlight capture names under the cursor
 
     Parameters: ~
-      • {winnr}  (`integer?`) Window handle or 0 for current window (default)
+      • {winnr}  (`integer?`) |window-ID| or 0 for current window (default)
 
     Return: ~
         (`string[]`) List of capture names
@@ -1186,13 +1211,16 @@ get_lang({filetype})                      *vim.treesitter.language.get_lang()*
 inspect({lang})                            *vim.treesitter.language.inspect()*
     Inspects the provided language.
 
-    Inspecting provides some useful information on the language like node and
-    field names, ABI version, and whether the language came from a WASM
-    module.
+    Inspecting provides some useful information on the language like ABI
+    version, parser state count (a measure of parser complexity), node and
+    field names, and whether the language came from a WASM module.
 
     Node names are returned in a table mapping each node name to a `boolean`
     indicating whether or not the node is named (i.e., not anonymous).
     Anonymous nodes are surrounded with double quotes (`"`).
+
+    For ABI 15 parsers, also show parser metadata (major, minor, patch
+    version) and a table of supertypes with their respective subtypes.
 
     Parameters: ~
       • {lang}  (`string`) Language
@@ -1216,6 +1244,26 @@ Lua module: vim.treesitter.query                        *lua-treesitter-query*
 
 This Lua |treesitter-query| interface allows you to create queries and use
 them to parse text. See |vim.treesitter.query.parse()| for a working example.
+
+
+*vim.treesitter.Query*
+    Parsed query, see |vim.treesitter.query.parse()|
+
+    Fields: ~
+      • {lang}                     (`string`) parser language name
+      • {captures}                 (`string[]`) list of (unique) capture names
+                                   defined in query
+      • {info}                     (`vim.treesitter.QueryInfo`) query context
+                                   (e.g. captures, predicates, directives)
+      • {has_conceal_line}         (`boolean`) whether the query sets
+                                   conceal_lines metadata
+      • {has_combined_injections}  (`boolean`) whether the query contains
+                                   combined injections
+      • {query}                    (`TSQuery`) userdata query object
+      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+                                   See |Query:iter_captures()|.
+      • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
+                                   See |Query:iter_matches()|.
 
 
                                         *vim.treesitter.query.add_directive()*
@@ -1285,7 +1333,7 @@ get({lang}, {query_name})                         *vim.treesitter.query.get()*
 
     Return: ~
         (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
-        found.
+        found. See |vim.treesitter.Query|.
 
                                             *vim.treesitter.query.get_files()*
 get_files({lang}, {query_name}, {is_included})
@@ -1351,10 +1399,12 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
     Parses a {query} string and returns a `Query` object
     (|lua-treesitter-query|), which can be used to search the tree for the
     query patterns (via |Query:iter_captures()|, |Query:iter_matches()|), or
-    inspect the query via these fields:
+    inspect/modify the query via these fields:
     • `captures`: a list of unique capture names defined in the query (alias:
       `info.captures`).
     • `info.patterns`: information about predicates.
+    • `query`: the underlying |TSQuery| which can be used to disable patterns
+      or captures.
 
     Example: >lua
         local query = vim.treesitter.query.parse('vimdoc', [[
@@ -1374,13 +1424,13 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • {query}  (`string`) Query text, in s-expr syntax
 
     Return: ~
-        (`vim.treesitter.Query`) Parsed query
+        (`vim.treesitter.Query`) Parsed query . See |vim.treesitter.Query|.
 
     See also: ~
       • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start}, {stop})
+Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
     Iterates over all captures from all matches in {node}.
 
     {source} is required if the query contains predicates; then the caller
@@ -1419,6 +1469,12 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   `node:start()`.
       • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
                   Defaults to `node:end_()`.
+      • {opts}    (`table?`) Optional keyword arguments:
+                  • max_start_depth (integer) if non-zero, sets the maximum
+                    start depth for each match. This is used to prevent
+                    traversing too deep into a tree.
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
 
     Return: ~
         (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
@@ -1490,6 +1546,56 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g., "highlights")
       • {text}        (`string`) Query text (unparsed).
+
+
+
+
+*TSQuery*
+    Extends: |userdata|
+
+    Reference to an object held by the treesitter library that is used as a
+    component of the |vim.treesitter.Query| for language feature support. See
+    |treesitter-query| for more about queries or
+    |vim.treesitter.query.parse()| for an example of how to obtain a query
+    object.
+
+    Fields: ~
+      • {disable_capture}  (`fun(self: TSQuery, capture_name: string)`) See
+                           |TSQuery:disable_capture()|.
+      • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
+                           |TSQuery:disable_pattern()|.
+
+
+TSQuery:disable_capture({capture_name})            *TSQuery:disable_capture()*
+    Disable a specific capture in this query; once disabled the capture cannot
+    be re-enabled. {capture_name} should not include a leading "@".
+
+    Example: To disable the `@variable.parameter` capture from the vimdoc
+    highlights query: >lua
+        local query = vim.treesitter.query.get('vimdoc', 'highlights')
+        query.query:disable_capture("variable.parameter")
+        vim.treesitter.get_parser():parse()
+<
+
+    Parameters: ~
+      • {capture_name}  (`string`)
+
+TSQuery:disable_pattern({pattern_index})           *TSQuery:disable_pattern()*
+    Disable a specific pattern in this query; once disabled the pattern cannot
+    be re-enabled. The {pattern_index} for a particular match can be obtained
+    with |:Inspect!|, or by reading the source of the query (i.e. from
+    |vim.treesitter.query.get_files()|).
+
+    Example: To disable `|` links in vimdoc but keep other `@markup.link`s
+    highlighted: >lua
+        local link_pattern = 9 -- from :Inspect!
+        local query = vim.treesitter.query.get('vimdoc', 'highlights')
+        query.query:disable_pattern(link_pattern)
+        local tree = vim.treesitter.get_parser():parse()[1]
+<
+
+    Parameters: ~
+      • {pattern_index}  (`integer`)
 
 
 ==============================================================================

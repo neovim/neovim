@@ -3,7 +3,7 @@ if exists('s:did_load')
   set commentstring=/*\ %s\ */
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define
-  set diffopt=internal,filler,closeoff
+  set diffopt=internal,filler,closeoff,inline:simple
   set directory^=.
   set display=
   set fillchars=vert:\|,foldsep:\|,fold:-
@@ -19,6 +19,7 @@ if exists('s:did_load')
   set nohlsearch noincsearch
   set nrformats=bin,octal,hex
   set shortmess=filnxtToOS
+  set shelltemp
   set sidescroll=0
   set tags=./tags,tags
   set undodir^=.
@@ -107,6 +108,14 @@ endif
 let $PYTHONUSERBASE = $HOME . '/.local'
 if executable('gem')
   let $GEM_PATH = system('gem env gempath')
+endif
+
+" Have current $HOME available as $ORIGHOME.  $HOME is used for option
+" defaults before we get here, and test_mksession checks that.
+let $ORIGHOME = $HOME
+
+if !exists('$XDG_CONFIG_HOME')
+  let $XDG_CONFIG_HOME = $HOME .. '/.config'
 endif
 
 " Make sure $HOME does not get read or written.

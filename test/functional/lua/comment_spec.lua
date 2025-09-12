@@ -47,7 +47,8 @@ local setup_treesitter = function()
 end
 
 before_each(function()
-  clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+  -- avoid options, but we still need TS parsers
+  clear({ args_rm = { '--cmd' }, args = { '--clean', '--cmd', n.runtime_set } })
 end)
 
 describe('commenting', function()
@@ -585,6 +586,173 @@ describe('commenting', function()
       set_cursor(3, 0)
       feed('.')
       eq(get_lines(), { '"set background=dark', 'lua << EOF', '-- print(1)', 'EOF' })
+    end)
+
+    it('respects tree-sitter commentstring metadata', function()
+      exec_lua [=[
+        vim.treesitter.query.set('vim', 'highlights', [[
+          ((list) @_list (#set! @_list bo.commentstring "!! %s"))
+        ]])
+      ]=]
+      setup_treesitter()
+
+      local lines = {
+        'set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('gcc')
+      eq(
+        { '"set background=dark', 'let mylist = [', [[  \"a",]], [[  \"b",]], [[  \"c",]], '  \\]' },
+        get_lines()
+      )
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq({
+        '"set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  !! \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }, get_lines())
+    end)
+
+    it('only applies the innermost tree-sitter commentstring metadata', function()
+      exec_lua [=[
+        vim.treesitter.query.set('vim', 'highlights', [[
+          ((list) @_list (#gsub! @_list "(.*)" "%1") (#set! bo.commentstring "!! %s"))
+          ((script_file) @_src (#set! @_src bo.commentstring "## %s"))
+        ]])
+      ]=]
+      setup_treesitter()
+
+      local lines = {
+        'set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('gcc')
+      eq({
+        '## set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }, get_lines())
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq({
+        '## set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  !! \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }, get_lines())
+    end)
+
+    it('respects injected tree-sitter commentstring metadata', function()
+      exec_lua [=[
+        vim.treesitter.query.set('lua', 'highlights', [[
+          ((string) @string (#set! @string bo.commentstring "; %s"))
+        ]])
+      ]=]
+      setup_treesitter()
+
+      local lines = {
+        'set background=dark',
+        'lua << EOF',
+        'print[[',
+        'Inside string',
+        ']]',
+        'EOF',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('gcc')
+      eq({
+        '"set background=dark',
+        'lua << EOF',
+        'print[[',
+        'Inside string',
+        ']]',
+        'EOF',
+      }, get_lines())
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq({
+        '"set background=dark',
+        'lua << EOF',
+        'print[[',
+        '; Inside string',
+        ']]',
+        'EOF',
+      }, get_lines())
+
+      set_cursor(3, 0)
+      feed('.')
+      eq({
+        '"set background=dark',
+        'lua << EOF',
+        '-- print[[',
+        '; Inside string',
+        ']]',
+        'EOF',
+      }, get_lines())
+    end)
+
+    it('works across combined injections #30799', function()
+      exec_lua [=[
+        vim.treesitter.query.set('lua', 'injections', [[
+          ((function_call
+            name: (_) @_vimcmd_identifier
+            arguments: (arguments
+              (string
+                content: _ @injection.content)))
+            (#eq? @_vimcmd_identifier "vim.cmd")
+            (#set! injection.language "vim")
+            (#set! injection.combined))
+        ]])
+      ]=]
+
+      api.nvim_set_option_value('filetype', 'lua', { buf = 0 })
+      exec_lua('vim.treesitter.start()')
+
+      local lines = {
+        'vim.cmd([[" some text]])',
+        'local a = 123',
+        'vim.cmd([[" some more text]])',
+      }
+      set_lines(lines)
+
+      set_cursor(2, 0)
+      feed('gcc')
+      eq({
+        'vim.cmd([[" some text]])',
+        '-- local a = 123',
+        'vim.cmd([[" some more text]])',
+      }, get_lines())
     end)
   end)
 

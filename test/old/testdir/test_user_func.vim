@@ -166,14 +166,35 @@ func Test_default_arg()
 	\ execute('func Args2'))
 
   " Error in default argument expression
-  let l =<< trim END
-    func F1(x = y)
-      return a:x * 2
-    endfunc
-    echo F1()
-  END
-  let @a = l->join("\n")
-  call assert_fails("exe @a", 'E121:')
+  func! s:f(x = s:undefined)
+    return a:x
+  endfunc
+  call assert_fails('echo s:f()', ['E121: Undefined variable: s:undefined',
+        \ 'E121: Undefined variable: a:x'])
+
+  func! s:f(x = s:undefined) abort
+    return a:x
+  endfunc
+  const expected_error = 'E121: Undefined variable: s:undefined'
+  " Only one error should be output; execution of the function should be aborted
+  " after the default argument expression error.
+  call assert_fails('echo s:f()', [expected_error, expected_error])
+endfunc
+
+func Test_default_argument_expression_error_while_inside_of_a_try_block()
+  func! s:f(v = s:undefined_variable)
+    let s:entered_fn_body = 1
+    return a:v
+  endfunc
+
+  unlet! s:entered_fn_body
+  try
+    call s:f()
+    throw "No exception."
+  catch
+    call assert_exception("E121: Undefined variable: s:undefined_variable")
+  endtry
+  call assert_false(exists('s:entered_fn_body'), "exists('s:entered_fn_body')")
 endfunc
 
 func s:addFoo(lead)

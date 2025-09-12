@@ -8,7 +8,7 @@
 #include "auto/config.h"
 #include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -778,7 +778,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   }
 
   // Add the redirection stuff
-  char *command = make_filter_cmd(cmd, infile, tempname);
+  char *command = make_filter_cmd(cmd, infile, tempname, false);
 
   // Call the shell to execute the command (errors are ignored).
   // Don't check timestamps here.
@@ -856,7 +856,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
 {
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
-  bool has_input = (input != NULL && input[0] != NUL);
+  bool has_input = (input != NULL && len > 0);
 
   // the output buffer
   StringBuilder buf = KV_INITIAL_VALUE;
@@ -1104,7 +1104,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
   msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_E : 0);
+      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_SE : HLF_SO);
       p++;
     } else {
       // Note: this is not 100% precise:
@@ -1120,7 +1120,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
         goto end;
       }
 
-      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_E : 0, false);
+      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_SE : HLF_SO, false);
       p += i;
     }
   }
@@ -1204,45 +1204,7 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(StringBuilder *buf)
 {
-  size_t written = 0;
-  size_t len = 0;
-  linenr_T lnum = curbuf->b_op_start.lnum;
-  char *lp = ml_get(lnum);
-  size_t lplen = (size_t)ml_get_len(lnum);
-
-  while (true) {
-    lplen -= written;
-    if (lplen == 0) {
-      len = 0;
-    } else if (lp[written] == NL) {
-      // NL -> NUL translation
-      len = 1;
-      kv_push(*buf, NUL);
-    } else {
-      char *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? lplen : (size_t)(s - (lp + written));
-      kv_concat_len(*buf, lp + written, len);
-    }
-
-    if (len == lplen) {
-      // Finished a line, add a NL, unless this line should not have one.
-      if (lnum != curbuf->b_op_end.lnum
-          || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
-          || (lnum != curbuf->b_no_eol_lnum
-              && (lnum != curbuf->b_ml.ml_line_count || curbuf->b_p_eol))) {
-        kv_push(*buf, NL);
-      }
-      lnum++;
-      if (lnum > curbuf->b_op_end.lnum) {
-        break;
-      }
-      lp = ml_get(lnum);
-      lplen = (size_t)ml_get_len(lnum);
-      written = 0;
-    } else if (len > 0) {
-      written += len;
-    }
-  }
+  read_buffer_into(curbuf, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum, buf);
 }
 
 static size_t write_output(char *output, size_t remaining, bool eof)
@@ -1254,11 +1216,19 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   char *start = output;
   size_t off = 0;
   while (off < remaining) {
-    if (output[off] == NL) {
+    // CRLF
+    if (output[off] == CAR && output[off + 1] == NL) {
+      output[off] = NUL;
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
+      size_t skip = off + 2;
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      continue;
+    } else if (output[off] == CAR || output[off] == NL) {
       // Insert the line
       output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
-                false);
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -1277,7 +1247,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (remaining) {
       // append unfinished line
       ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the NL was missing
+      // remember that the line ending was missing
       curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       output += remaining;
     } else {

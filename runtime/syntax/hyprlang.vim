@@ -1,11 +1,14 @@
 " Vim syntax file
 " Language:     hyprlang
 " Maintainer:   Luca Saccarola <github.e41mv@aleeas.com>
-" Last Change:  2025 Jan 29
+" Last Change:  2025 Mar 26
 
 if exists("b:current_syntax")
   finish
 endif
+let s:cpo= &cpo
+set cpo&vim
+
 let b:current_syntax = "hyprlang"
 
 syn case ignore
@@ -56,4 +59,6 @@ hi def link hyprString    String
 hi def link hyprColor     Structure
 hi def link hyprCommand   Keyword
 
+let &cpo = s:cpo
+unlet s:cpo
 " vim: ts=8 sts=2 sw=2 et

@@ -11,6 +11,6 @@ function! provider#ruby#Call(method, args) abort
 endfunction
 
 let s:prog = v:lua.vim.provider.ruby.detect()
-let g:loaded_ruby_provider = empty(s:prog) ? 1 : 2
+let g:loaded_ruby_provider = empty(s:prog) ? 0 : 2
 let s:plugin_path = expand('<sfile>:p:h') . '/script_host.rb'
 call v:lua.require'vim.provider.ruby'.start(s:plugin_path)

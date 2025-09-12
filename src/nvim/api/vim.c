@@ -80,7 +80,6 @@
 #include "nvim/state.h"
 #include "nvim/statusline.h"
 #include "nvim/statusline_defs.h"
-#include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -661,7 +660,7 @@ String nvim_get_current_line(Arena *arena, Error *err)
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
 
-/// Sets the current line.
+/// Sets the text on the current line.
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
@@ -759,6 +758,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
 ///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
+///          - kind: Set the |ui-messages| kind with which this message will be emitted.
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
@@ -769,11 +769,13 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
     goto error;
   }
 
+  char *kind = opts->kind.data;
   if (opts->verbose) {
     verbose_enter();
+  } else if (kind == NULL) {
+    kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  char *kind = opts->verbose ? NULL : opts->err ? "echoerr" : history ? "echomsg" : "echo";
   msg_multihl(hl_msg, kind, history, opts->err);
 
   if (opts->verbose) {
@@ -790,12 +792,12 @@ error:
   hl_msg_free(hl_msg);
 }
 
-/// Gets the current list of buffer handles
+/// Gets the current list of buffers.
 ///
 /// Includes unlisted (unloaded/deleted) buffers, like `:ls!`.
 /// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 ///
-/// @return List of buffer handles
+/// @return List of buffer ids
 ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -816,16 +818,16 @@ ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
 
 /// Gets the current buffer.
 ///
-/// @return Buffer handle
+/// @return Buffer id
 Buffer nvim_get_current_buf(void)
   FUNC_API_SINCE(1)
 {
   return curbuf->handle;
 }
 
-/// Sets the current buffer.
+/// Sets the current window's buffer to `buffer`.
 ///
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer id
 /// @param[out] err Error details, if any
 void nvim_set_current_buf(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
@@ -842,9 +844,9 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   });
 }
 
-/// Gets the current list of window handles.
+/// Gets the current list of all |window-ID|s in all tabpages.
 ///
-/// @return List of window handles
+/// @return List of |window-ID|s
 ArrayOf(Window) nvim_list_wins(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -865,16 +867,16 @@ ArrayOf(Window) nvim_list_wins(Arena *arena)
 
 /// Gets the current window.
 ///
-/// @return Window handle
+/// @return |window-ID|
 Window nvim_get_current_win(void)
   FUNC_API_SINCE(1)
 {
   return curwin->handle;
 }
 
-/// Sets the current window.
+/// Sets the current window (and tabpage, implicitly).
 ///
-/// @param window Window handle
+/// @param window |window-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
@@ -897,7 +899,7 @@ void nvim_set_current_win(Window window, Error *err)
 /// @param scratch Creates a "throwaway" |scratch-buffer| for temporary work
 ///                (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 /// @param[out] err Error details, if any
-/// @return Buffer handle, or 0 on error
+/// @return Buffer id, or 0 on error
 ///
 /// @see buf_open_scratch
 Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
@@ -974,7 +976,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// By default (and currently the only option) the terminal will not be
 /// connected to an external process. Instead, input sent on the channel
 /// will be echoed directly by the terminal. This is useful to display
-/// ANSI terminal sequences returned as part of a rpc message, or similar.
+/// ANSI terminal sequences returned as part of an RPC message, or similar.
 ///
 /// Note: to directly initiate the terminal using the right size, display the
 /// buffer in a configured window before calling this. For instance, for a
@@ -989,14 +991,12 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// ```lua
 /// vim.api.nvim_create_user_command('TermHl', function()
-///   local b = vim.api.nvim_create_buf(false, true)
-///   local chan = vim.api.nvim_open_term(b, {})
-///   vim.api.nvim_chan_send(chan, table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'))
-///   vim.api.nvim_win_set_buf(0, b)
+///   vim.api.nvim_open_term(0, {})
 /// end, { desc = 'Highlights ANSI termcodes in curbuf' })
 /// ```
 ///
-/// @param buffer the buffer to use (expected to be empty)
+/// @param buffer Buffer to use. Buffer contents (if any) will be written
+///               to the PTY.
 /// @param opts   Optional parameters.
 ///          - on_input: Lua callback for input sent, i e keypresses in terminal
 ///            mode. Note: keypresses are sent raw as they would be to the pty
@@ -1034,19 +1034,33 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .data = chan,
     // NB: overridden in terminal_check_size if a window is already
     // displaying the buffer
-    .width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0),
-    .height = (uint16_t)curwin->w_height_inner,
+    .width = (uint16_t)MAX(curwin->w_view_width - win_col_off(curwin), 0),
+    .height = (uint16_t)curwin->w_view_height,
     .write_cb = term_write,
     .resize_cb = term_resize,
     .close_cb = term_close,
     .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
+
+  // Read existing buffer contents (if any)
+  StringBuilder contents = KV_INITIAL_VALUE;
+  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }
   channel_decref(chan);
+
+  // Write buffer contents to channel. channel_send takes ownership of the
+  // buffer so we do not need to free it.
+  if (contents.size > 0) {
+    const char *error = NULL;
+    channel_send(chan->id, contents.items, contents.size, true, &error);
+    VALIDATE(!error, "%s", error, {});
+  }
+
   return (Integer)chan->id;
 }
 
@@ -1106,9 +1120,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
   VALIDATE(!error, "%s", error, {});
 }
 
-/// Gets the current list of tabpage handles.
+/// Gets the current list of |tab-ID|s.
 ///
-/// @return List of tabpage handles
+/// @return List of |tab-ID|s
 ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -1129,7 +1143,7 @@ ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
 
 /// Gets the current tabpage.
 ///
-/// @return Tabpage handle
+/// @return |tab-ID|
 Tabpage nvim_get_current_tabpage(void)
   FUNC_API_SINCE(1)
 {
@@ -1138,7 +1152,7 @@ Tabpage nvim_get_current_tabpage(void)
 
 /// Sets the current tabpage.
 ///
-/// @param tabpage  Tabpage handle
+/// @param tabpage  |tab-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
@@ -1985,8 +1999,7 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
 ///                     the "highlights" key in {opts} is true. Each element of the array is a
 ///                     |Dict| with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
-///           - group: (string) Name of highlight group. May be removed in the future, use
-///           `groups` instead.
+///           - group: (string) Deprecated. Use `groups` instead.
 ///           - groups: (array) Names of stacked highlight groups (highest priority last).
 Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(8) FUNC_API_FAST
@@ -2198,11 +2211,13 @@ static void redraw_status(win_T *wp, Dict(redraw) *opts, bool *flush)
     wp->w_nrwidth_line_count = 0;
     changed_window_setting(wp);
   }
+
+  int old_row_offset = wp->w_grid.row_offset;
   win_grid_alloc(wp);
 
   // Flush later in case winbar was just hidden or shown for the first time, or
   // statuscolumn is being drawn.
-  if (wp->w_lines_valid == 0) {
+  if (wp->w_lines_valid == 0 || wp->w_grid.row_offset != old_row_offset) {
     *flush = true;
   }
 

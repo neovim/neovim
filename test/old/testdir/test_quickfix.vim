@@ -43,6 +43,8 @@ func s:setup_commands(cchar)
     command! -count=1 -nargs=0 Xabove <mods><count>cabove
     command! -count=1 -nargs=0 Xbefore <mods><count>cbefore
     command! -count=1 -nargs=0 Xafter <mods><count>cafter
+    command! -nargs=1 Xsethist <mods>set chistory=<args>
+    command! -nargs=0 Xsethistdefault <mods>set chistory&
     let g:Xgetlist = function('getqflist')
     let g:Xsetlist = function('setqflist')
     call setqflist([], 'f')
@@ -80,6 +82,9 @@ func s:setup_commands(cchar)
     command! -count=1 -nargs=0 Xabove <mods><count>labove
     command! -count=1 -nargs=0 Xbefore <mods><count>lbefore
     command! -count=1 -nargs=0 Xafter <mods><count>lafter
+    command! -nargs=1 Xsethist <mods>set lhistory=<args>
+    command! -nargs=1 Xsetlocalhist <mods>setlocal lhistory=<args>
+    command! -nargs=0 Xsethistdefault <mods>set lhistory&
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
     call setloclist(0, [], 'f')
@@ -2213,6 +2218,25 @@ func Test_grep()
 
   call s:test_xgrep('c')
   call s:test_xgrep('l')
+endfunc
+
+func Test_local_grepformat()
+  let save_grepformat = &grepformat
+  set grepformat=%f:%l:%m
+  " The following line are used for the local grep test. Don't remove.
+  " UNIQUEPREFIX:2:3: Local grepformat test
+  new
+  setlocal grepformat=UNIQUEPREFIX:%c:%n:%m
+  call assert_equal('UNIQUEPREFIX:%c:%n:%m', &l:grepformat)
+  call assert_equal('%f:%l:%m', &g:grepformat)
+
+  set grepprg=internal
+  silent grep "^[[:space:]]*\" UNIQUEPREFIX:" test_quickfix.vim
+  call assert_equal(1, len(getqflist()))
+  set grepprg&vim
+
+  bwipe!
+  let &grepformat = save_grepformat
 endfunc
 
 func Test_two_windows()
@@ -6594,6 +6618,223 @@ func Test_hardlink_fname()
   CheckExecutable ln
   call Xtest_hardlink_fname('c')
   call Xtest_hardlink_fname('l')
+endfunc
+
+" Test for checking if correct number of tests are deleted
+" and current list stays the same after setting Xhistory
+" to a smaller number. Do roughly the same for growing the stack.
+func Xtest_resize_list_stack(cchar)
+  call s:setup_commands(a:cchar)
+  Xsethist 100
+
+  for i in range(1, 100)
+    Xexpr string(i)
+  endfor
+  Xopen
+  call assert_equal(g:Xgetlist({'nr': '$'}).nr, 100)
+  call assert_equal("|| 100", getline(1))
+  Xsethist 8
+  call assert_equal("|| 100", getline(1))
+  Xolder 5
+  call assert_equal("|| 95", getline(1))
+  Xsethist 6
+  call assert_equal("|| 95", getline(1))
+  Xsethist 1
+  call assert_equal("|| 100", getline(1))
+
+  " grow array again
+  Xsethist 100
+  for i in range(1, 99)
+    Xexpr string(i)
+  endfor
+  call assert_equal("|| 99", getline(1))
+  Xolder 99
+  call assert_equal("|| 100", getline(1))
+
+  Xsethistdefault
+endfunc
+
+func Test_resize_list_stack()
+  call Xtest_resize_list_stack('c')
+  call Xtest_resize_list_stack('l')
+endfunc
+
+" Test to check if order of lists is from
+" oldest at the bottom to newest at the top
+func Xtest_Xhistory_check_order(cchar)
+
+  Xsethist 100
+
+  for i in range(1, 100)
+    Xexpr string(i)
+  endfor
+
+  Xopen
+  for i in range(100, 1, -1)
+    let l:ret = assert_equal("|| " .. i, getline(1))
+
+    if ret == 1 || i == 1
+      break
+    endif
+    Xolder
+  endfor
+
+  for i in range(1, 50)
+    Xexpr string(i)
+  endfor
+
+  for i in range(50, 1, -1)
+    let l:ret = assert_equal("|| " .. i, getline(1))
+
+    if ret == 1 || i == 50
+      break
+    endif
+    Xolder
+  endfor
+
+  for i in range(50, 1, -1)
+    let l:ret = assert_equal("|| " .. i, getline(1))
+
+    if ret == 1 || i == 50
+      break
+    endif
+    Xolder
+  endfor
+
+  Xsethistdefault
+endfunc
+
+func Test_set_history_to_check_order()
+  call Xtest_Xhistory_check_order('c')
+  call Xtest_Xhistory_check_order('l')
+endfunc
+
+" Check if 'lhistory' is the same between the location list window
+" and associated normal window
+func Test_win_and_loc_synced()
+  new
+  set lhistory=2
+  lexpr "Text"
+  lopen
+
+  " check if lhistory is synced when modified inside the
+  " location list window
+  setlocal lhistory=1
+  wincmd k
+  call assert_equal(&lhistory, 1)
+
+  " check if lhistory is synced when modified inside the
+  " normal window
+  setlocal lhistory=10
+  lopen
+  call assert_equal(&lhistory, 10)
+
+  wincmd k
+  lclose
+  wincmd q
+
+  set lhistory&
+endfunc
+
+" Test if setting the lhistory of one window doesn't affect the other
+func Test_two_win_are_independent_of_history()
+  setlocal lhistory=10
+  new
+  setlocal lhistory=20
+  wincmd  w
+  call assert_equal(&lhistory, 10)
+  wincmd w
+  wincmd q
+
+  set lhistory&
+endfunc
+
+" Test if lhistory is copied over to a new window
+func Test_lhistory_copied_over()
+  setlocal lhistory=3
+  split
+  call assert_equal(&lhistory, 3)
+  wincmd q
+
+  set lhistory&
+endfunc
+
+" Test if error occurs when given invalid history number
+func Xtest_invalid_history_num(cchar)
+  call s:setup_commands(a:cchar)
+
+  call assert_fails('Xsethist -10000', "E1542:")
+  call assert_fails('Xsethist 10000', "E1543:")
+  Xsethistdefault
+endfunc
+
+func Test_invalid_history_num()
+  call Xtest_invalid_history_num('c')
+  call Xtest_invalid_history_num('l')
+endfunc
+
+" Test if chistory and lhistory don't affect each other
+func Test_chi_and_lhi_are_independent()
+  set chistory=100
+  set lhistory=100
+
+  set chistory=10
+  call assert_equal(&lhistory, 100)
+
+  set lhistory=1
+  call assert_equal(&chistory, 10)
+
+  set chistory&
+  set lhistory&
+endfunc
+
+func Test_quickfix_close_buffer_crash()
+  new
+  lexpr 'test' | lopen
+  wincmd k
+  lclose
+  wincmd q
+endfunc
+
+func Test_vimgrep_dummy_buffer_crash()
+  augroup DummyCrash
+    autocmd!
+    " Make the dummy buffer non-current, but still open in a window.
+    autocmd BufReadCmd * ++once let s:dummy_buf = bufnr()
+          \| split | wincmd p | enew
+
+    " Autocmds from cleaning up the dummy buffer in this case should be blocked.
+    autocmd BufWipeout *
+          \ call assert_notequal(s:dummy_buf, str2nr(expand('<abuf>')))
+  augroup END
+
+  silent! vimgrep /./ .
+  redraw! " Window to freed dummy buffer used to remain; heap UAF.
+  call assert_equal([], win_findbuf(s:dummy_buf))
+  call assert_equal(0, bufexists(s:dummy_buf))
+
+  unlet! s:dummy_buf
+  autocmd! DummyCrash
+  %bw!
+endfunc
+
+func Test_vimgrep_dummy_buffer_keep()
+  augroup DummyKeep
+    autocmd!
+    " Trigger a wipe of the dummy buffer by aborting script processing. Prevent
+    " wiping it by splitting it from the autocmd window into an only window.
+    autocmd BufReadCmd * ++once let s:dummy_buf = bufnr()
+          \| tab split | call interrupt()
+  augroup END
+
+  call assert_fails('vimgrep /./ .')
+  call assert_equal(1, bufexists(s:dummy_buf))
+  " Ensure it's no longer considered a dummy; should be able to switch to it.
+  execute s:dummy_buf 'sbuffer'
+
+  unlet! s:dummy_buf
+  autocmd! DummyKeep
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

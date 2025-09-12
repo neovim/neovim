@@ -152,6 +152,9 @@ describe('swapfile detection', function()
 
   it('redrawing during prompt does not break treesitter', function()
     local testfile = 'Xtest_swapredraw.lua'
+    finally(function()
+      os.remove(testfile)
+    end)
     write_file(
       testfile,
       [[
@@ -166,7 +169,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     exec(init)
     command('edit! ' .. testfile)
     command('preserve')
-    local nvim2 = n.new_session(true, { args = { '--clean', '--embed' }, merge = false })
+    local args2 = { '--clean', '--embed', '--cmd', n.runtime_set }
+    local nvim2 = n.new_session(true, { args = args2, merge = false })
     set_session(nvim2)
     local screen2 = Screen.new(100, 40)
     screen2:add_extra_attr_ids({
@@ -194,8 +198,7 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       {100:vim.o.foldexpr} {100:=} {101:'v:lua.vim.treesitter.foldexpr()'}                                                  |
       {102:+--  3 lines: vim.defer_fn(function()·······························································}|
       {104:pcall}{100:(vim.cmd.edit,} {101:'Xtest_swapredraw.lua'}{100:)}                                                         |
-                                                                                                          |
-      {105:~                                                                                                   }|*33
+      {105:~                                                                                                   }|*34
       {106:Xtest_swapredraw.lua                                                              1,1            All}|
                                                                                                           |
     ]])
@@ -448,8 +451,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       screen:expect({
         any = table.concat({
           pesc('{2:E325: ATTENTION}'),
-          'file name: .*Xswaptest',
-          'process ID: %d* %(STILL RUNNING%)',
+          '\n        process ID: %d* %(STILL RUNNING%)',
+          '\nWhile opening file "Xswaptest"',
           pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
         }, '.*'),
       })
@@ -589,8 +592,10 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     api.nvim_chan_send(chan, 'q')
     retry(nil, nil, function()
       eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
+        { '[Process exited 1]' },
+        eval(
+          "[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})"
+        )
       )
     end)
   end)

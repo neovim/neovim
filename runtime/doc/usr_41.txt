@@ -921,6 +921,7 @@ Command line:					*command-line-functions*
 	getcmdwintype()		return the current command-line window type
 	getcompletion()		list of command-line completion matches
 	fullcommand()		get full command name
+	cmdcomplete_info()	get command-line completion information
 
 Quickfix and location lists:			*quickfix-functions*
 	getqflist()		list of quickfix errors
@@ -933,6 +934,8 @@ Insert mode completion:				*completion-functions*
 	complete_add()		add to found matches
 	complete_check()	check if completion should be aborted
 	complete_info()		get current completion information
+	complete_match()	get insert completion start match col and
+				trigger text
 	pumvisible()		check if the popup menu is displayed
 	pum_getpos()		position and size of popup menu if visible
 

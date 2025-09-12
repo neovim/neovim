@@ -194,7 +194,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
     const int x = find_wl_entry(win, lnum);
     if (x >= 0) {
       first = win->w_lines[x].wl_lnum;
-      last = win->w_lines[x].wl_lastlnum;
+      last = win->w_lines[x].wl_foldend;
       had_folded = win->w_lines[x].wl_folded;
     }
   }
@@ -971,7 +971,7 @@ int find_wl_entry(win_T *win, linenr_T lnum)
       if (lnum < win->w_lines[i].wl_lnum) {
         return -1;
       }
-      if (lnum <= win->w_lines[i].wl_lastlnum) {
+      if (lnum <= win->w_lines[i].wl_foldend) {
         return i;
       }
     }
@@ -1731,7 +1731,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
 
       curwin = wp;
       curbuf = wp->w_buffer;
-      current_sctx = wp->w_p_script_ctx[kWinOptFoldtext].script_ctx;
+      current_sctx = wp->w_p_script_ctx[kWinOptFoldtext];
 
       emsg_off++;  // handle exceptions, but don't display errors
 
@@ -3099,7 +3099,7 @@ static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off)
     if (put_folds_recurse(fd, &fp->fd_nested, off + fp->fd_top) == FAIL) {
       return FAIL;
     }
-    if (fprintf(fd, "%" PRId64 ",%" PRId64 "fold",
+    if (fprintf(fd, "sil! %" PRId64 ",%" PRId64 "fold",
                 (int64_t)fp->fd_top + off,
                 (int64_t)(fp->fd_top + off + fp->fd_len - 1)) < 0
         || put_eol(fd) == FAIL) {
@@ -3121,9 +3121,10 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
     if (fp->fd_flags != FD_LEVEL) {
       if (!GA_EMPTY(&fp->fd_nested)) {
         // open nested folds while this fold is open
+        // ignore errors
         if (fprintf(fd, "%" PRId64, (int64_t)fp->fd_top + off) < 0
             || put_eol(fd) == FAIL
-            || put_line(fd, "normal! zo") == FAIL) {
+            || put_line(fd, "sil! normal! zo") == FAIL) {
           return FAIL;
         }
         if (put_foldopen_recurse(fd, wp, &fp->fd_nested,
@@ -3164,7 +3165,7 @@ static int put_fold_open_close(FILE *fd, fold_T *fp, linenr_T off)
 {
   if (fprintf(fd, "%" PRIdLINENR, fp->fd_top + off) < 0
       || put_eol(fd) == FAIL
-      || fprintf(fd, "normal! z%c",
+      || fprintf(fd, "sil! normal! z%c",
                  fp->fd_flags == FD_CLOSED ? 'c' : 'o') < 0
       || put_eol(fd) == FAIL) {
     return FAIL;

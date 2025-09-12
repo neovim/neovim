@@ -11,5 +11,5 @@ function! provider#perl#Require(host) abort
 endfunction
 
 let s:prog = v:lua.vim.provider.perl.detect()
-let g:loaded_perl_provider = empty(s:prog) ? 1 : 2
+let g:loaded_perl_provider = empty(s:prog) ? 0 : 2
 call v:lua.require'vim.provider.perl'.start()

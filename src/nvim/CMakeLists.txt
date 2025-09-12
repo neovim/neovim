@@ -292,7 +292,7 @@ set(UI_METADATA ${PROJECT_BINARY_DIR}/ui_metadata.mpack)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
-set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
+set(GENERATOR_DIR ${PROJECT_SOURCE_DIR}/src/gen)
 set(GEN_EVAL_TOUCH ${TOUCHES_DIR}/gen_doc_eval)
 set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 set(NVIM_RUNTIME_DIR ${PROJECT_SOURCE_DIR}/runtime)
@@ -304,9 +304,11 @@ set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(EVENTS_GENERATOR ${GENERATOR_DIR}/gen_events.lua)
 set(EX_CMDS_GENERATOR ${GENERATOR_DIR}/gen_ex_cmds.lua)
 set(FUNCS_GENERATOR ${GENERATOR_DIR}/gen_eval.lua)
+set(KEYCODES_GENERATOR ${GENERATOR_DIR}/gen_keycodes.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
 set(GENERATOR_HASHY ${GENERATOR_DIR}/hashy.lua)
-set(GENERATOR_PRELOAD ${GENERATOR_DIR}/preload.lua)
+set(GENERATOR_PRELOAD ${GENERATOR_DIR}/preload_nlua.lua)
+set(NVIM_LUA_PRELOAD ${GENERATOR_DIR}/preload.lua)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(OPTIONS_GENERATOR ${GENERATOR_DIR}/gen_options.lua)
 
@@ -317,6 +319,7 @@ set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
+set(GENERATED_KEYCODE_NAMES ${GENERATED_DIR}/keycode_names.generated.h)
 set(GENERATED_API_METADATA ${GENERATED_DIR}/api/private/api_metadata.generated.h)
 set(GENERATED_KEYSETS_DEFS ${GENERATED_DIR}/keysets_defs.generated.h)
 set(GENERATED_OPTIONS ${GENERATED_DIR}/options.generated.h)
@@ -341,6 +344,7 @@ set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
 set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
 set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
 set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
+set(LUA_TEXT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/text.lua)
 
 file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
@@ -477,11 +481,13 @@ foreach(target ${targets})
     message(STATUS "${target} props '${prop}'")
     foreach(gen_include ${prop})
       list(APPEND gen_cflags "-I${gen_include}")
+      list(APPEND TEST_INCLUDE_DIRS "${gen_include}")
     endforeach()
   endif()
 endforeach()
 
 list(REMOVE_DUPLICATES gen_cflags)
+list(REMOVE_DUPLICATES TEST_INCLUDE_DIRS)
 
 if(APPLE AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot" "${CMAKE_OSX_SYSROOT}")
@@ -513,6 +519,9 @@ add_custom_command(
 
 set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
 set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
+
+# Like LUA_GEN but includes also vim.fn, vim.api, vim.uv, etc
+set(NVIM_LUA $<TARGET_FILE:nvim_bin> -u NONE -l ${NVIM_LUA_PRELOAD} ${PROJECT_SOURCE_DIR})
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
@@ -588,14 +597,19 @@ add_custom_command(
                          ${LUA_API_C_BINDINGS}
                          ${GENERATED_KEYSETS_DEFS}
                          ${UI_METADATA}
-                         ${NVIM_VERSION_GIT_H}
+                         ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
+                         ${GENERATOR_DIR}/dump_bin_array.lua
+                         ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
                          ${API_HEADERS}
+
   DEPENDS
     ${LUA_GEN_DEPS}
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
     ${API_DISPATCH_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
+    ${GENERATOR_HASHY}
+    ${GENERATOR_DIR}/dump_bin_array.lua
     ${UI_METADATA}
     ${NVIM_VERSION_LUA}
     ${NVIM_VERSION_GIT_H}
@@ -620,6 +634,7 @@ add_custom_command(
       ${LUA_DEFAULTS_MODULE_SOURCE} "vim._defaults"
       ${LUA_OPTIONS_MODULE_SOURCE} "vim._options"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
+      ${LUA_TEXT_MODULE_SOURCE} "vim.text"
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
@@ -633,6 +648,7 @@ add_custom_command(
     ${LUA_DEFAULTS_MODULE_SOURCE}
     ${LUA_OPTIONS_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
+    ${LUA_TEXT_MODULE_SOURCE}
   VERBATIM
 )
 
@@ -651,7 +667,33 @@ add_custom_command(
     ${LUA_GEN_DEPS}
     ${API_UI_EVENTS_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
+    ${GENERATOR_HASHY}
     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+)
+
+add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
+  COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
+  DEPENDS ${LUA_GEN_DEPS} ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
+)
+
+add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
+  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
+  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${FUNCS_METADATA}
+)
+
+add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
+  COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
+  DEPENDS ${LUA_GEN_DEPS} ${EVENTS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
+)
+
+add_custom_command(OUTPUT ${GENERATED_KEYCODE_NAMES}
+  COMMAND ${LUA_GEN} ${KEYCODES_GENERATOR} ${GENERATED_KEYCODE_NAMES} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
+  DEPENDS ${LUA_GEN_DEPS} ${KEYCODES_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
+)
+
+add_custom_command(OUTPUT ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS}
+  COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS} ${CMAKE_CURRENT_LIST_DIR}/options.lua
+  DEPENDS ${LUA_GEN_DEPS} ${OPTIONS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/options.lua
 )
 
 list(APPEND NVIM_GENERATED_FOR_HEADERS
@@ -666,32 +708,12 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_API_DISPATCH}"
   "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_NAMES_MAP}"
+  "${GENERATED_FUNCS}"
+  "${GENERATED_KEYCODE_NAMES}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_OPTIONS_MAP}"
   "${VIM_MODULE_FILE}"
   "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.h"
-)
-
-add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
-  COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
-  DEPENDS ${LUA_GEN_DEPS} ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
-)
-
-add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
-  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_DIR} ${FUNCS_METADATA} ${FUNCS_DATA}
-  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${FUNCS_METADATA}
-)
-list(APPEND NVIM_GENERATED_FOR_SOURCES
-  "${GENERATED_FUNCS}")
-
-add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  DEPENDS ${LUA_GEN_DEPS} ${EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
-)
-
-add_custom_command(OUTPUT ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS}
-  COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS}
-  DEPENDS ${LUA_GEN_DEPS} ${OPTIONS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/options.lua
 )
 
 # NVIM_GENERATED_FOR_SOURCES and NVIM_GENERATED_FOR_HEADERS must be mutually exclusive.
@@ -937,12 +959,12 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
 )
 
 add_target(doc-vim
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/gen_vimdoc.lua
+  COMMAND ${NVIM_LUA} src/gen/gen_vimdoc.lua
   DEPENDS
     nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
-    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.lua
+    ${PROJECT_SOURCE_DIR}/src/gen/gen_vimdoc.lua
     ${NVIM_RUNTIME_DIR}/doc/api.txt
     ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
     ${NVIM_RUNTIME_DIR}/doc/lsp.txt
@@ -951,22 +973,22 @@ add_target(doc-vim
   )
 
 add_target(doc-eval
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND ${NVIM_LUA} ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua ${FUNCS_METADATA}
   DEPENDS
     nvim
     ${FUNCS_METADATA}
-    ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+    ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
-    ${NVIM_RUNTIME_DIR}/doc/builtin.txt
+    ${NVIM_RUNTIME_DIR}/doc/vimfn.txt
   )
 
 add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
 
 add_target(lintdoc
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/lintdoc.lua
+  COMMAND ${NVIM_LUA} scripts/lintdoc.lua
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)

@@ -455,6 +455,8 @@ between Vi and Vim.
 			first column.  When used after an operator, then also
 			stops below a "}" in the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
+			In a :terminal buffer each shell prompt is treated as
+			a section. |terminal_]]|
 
 							*][*
 ][			[count] |section|s forward or to the next '}' in the
@@ -465,6 +467,8 @@ between Vi and Vim.
 [[			[count] |section|s backward or to the previous "{" in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
+			In a :terminal buffer each shell prompt is treated as
+			a section. |terminal_]]|
 
 							*[]*
 []			[count] |section|s backward or to the previous "}" in
@@ -498,6 +502,7 @@ A section begins after a form-feed (<C-L>) in the first column and at each of
 a set of section macros, specified by the pairs of characters in the
 'sections' option.  The default is "SHNHH HUnhsh", which defines a section to
 start at the nroff macros ".SH", ".NH", ".H", ".HU", ".nh" and ".sh".
+In a :terminal buffer each shell prompt is treated as a section. |terminal_]]|
 
 The "]]" and "[[" commands stop at the '{' in the first column.  This is
 useful to find the start of a function in a C program.  To search for a '}' in
@@ -847,7 +852,7 @@ unrelated.
 
 'a - 'z		lowercase marks, valid within one file
 'A - 'Z		uppercase marks, also called file marks, valid between files
-'0 - '9		numbered marks, set from .shada file
+'0 - '9		numbered marks, set from |shada| file
 
 Lowercase marks 'a to 'z are remembered as long as the file remains in the
 buffer list.  If you remove the file from the buffer list, all its marks are
@@ -873,12 +878,12 @@ Numbered mark should be stored.  See |shada-file-marks|.
 
 
 							*'[* *`[*
-'[  `[			To the first character of the previously changed
-			or yanked text.
+'[  `[			To the first character of the previously changed,
+			or yanked text.  Also set when writing the buffer.
 
 							*']* *`]*
 ']  `]			To the last character of the previously changed or
-			yanked text.
+			yanked text.  Also set when writing the buffer.
 
 After executing an operator the Cursor is put at the beginning of the text
 that was operated upon.  After a put command ("p" or "P") the cursor is

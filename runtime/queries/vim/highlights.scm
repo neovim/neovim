@@ -127,6 +127,7 @@
   "eval"
   "sign"
   "abort"
+  "substitute"
 ] @keyword
 
 (map_statement
@@ -312,6 +313,9 @@
 
 (binary_operation
   "." @operator)
+
+(lua_statement
+  "=" @keyword)
 
 ; Punctuation
 [

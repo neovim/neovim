@@ -3,11 +3,15 @@
 " Maintainer:	Vito <vito.blog@gmail.com>
 " Last Change:	2024 Apr 17
 " Upstream: https://github.com/vito-c/jq.vim
+" 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 "
 " Quit when a (custom) syntax file was already loaded
 if exists('b:current_syntax')
   finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 " syn include @jqHtml syntax/html.vim  " Doc comment HTML
 
@@ -128,3 +132,6 @@ hi def link jqString                 String
 hi def link jqInterpolationDelimiter Delimiter
 hi def link jqConditional            Conditional
 hi def link jqNumber                 Number
+
+let &cpo = s:cpo_save
+unlet s:cpo_save

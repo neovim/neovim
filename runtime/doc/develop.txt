@@ -201,7 +201,7 @@ Docstring format:
 - Markdown is supported.
 - Tags are written as `[tag]()`.
 - References are written as `[tag]`
-- Use ``` for code samples.
+- Use "```" for code samples.
   Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
@@ -245,7 +245,7 @@ Docstring format:
 - Markdown is supported.
 - Tags are written as `[tag]()`.
 - References are written as `[tag]`
-- Use ``` for code samples.
+- Use "```" for code samples.
   Code samples can be annotated as `vim` or `lua`
 - Use `@since <api-level>` to note the |api-level| when the function became
   "stable". If `<api-level>` is greater than the current stable release (or
@@ -376,10 +376,10 @@ Where possible, these patterns apply to _both_ Lua and the API:
   - See |vim.lsp.inlay_hint.enable()| and |vim.lsp.inlay_hint.is_enabled()|
     for a reference implementation of these "best practices".
   - NOTE: open questions: https://github.com/neovim/neovim/issues/28603
-- Transformation functions should also have a filter functionality when
-  appropriate. That is, when the function returns a nil value it "filters" its
-  input, otherwise the transformed value is used.
-  - Example: |vim.diagnostic.config.format()|
+- Transformation functions should also have "filter" functionality (when
+  appropriate): when the function returns a nil value it excludes (filters
+  out) its input, else the transformed value is used.
+  - Example: See the format() field of |vim.diagnostic.Opts.Float|.
 
 API DESIGN GUIDELINES                                   *dev-api*
 

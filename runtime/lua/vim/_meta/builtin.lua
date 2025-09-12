@@ -223,12 +223,8 @@ function vim.schedule(fn) end
 ---     - If {callback} errors, the error is raised.
 function vim.wait(time, callback, interval, fast_only) end
 
---- Attach to |ui-events|, similar to |nvim_ui_attach()| but receive events
---- as Lua callback. Can be used to implement screen elements like
---- popupmenu or message handling in Lua.
----
---- {options} should be a dictionary-like table, where `ext_...` options should
---- be set to true to receive events for the respective external element.
+--- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
+--- Used to implement screen elements like popupmenu or message handling in Lua.
 ---
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
@@ -250,26 +246,30 @@ function vim.wait(time, callback, interval, fast_only) end
 --- ns = vim.api.nvim_create_namespace('my_fancy_pum')
 ---
 --- vim.ui_attach(ns, {ext_popupmenu=true}, function(event, ...)
----   if event == "popupmenu_show" then
+---   if event == 'popupmenu_show' then
 ---     local items, selected, row, col, grid = ...
----     print("display pum ", #items)
----   elseif event == "popupmenu_select" then
+---     print('display pum ', #items)
+---   elseif event == 'popupmenu_select' then
 ---     local selected = ...
----     print("selected", selected)
----   elseif event == "popupmenu_hide" then
----     print("FIN")
+---     print('selected', selected)
+---   elseif event == 'popupmenu_hide' then
+---     print('FIN')
 ---   end
 --- end)
 --- ```
 ---
 --- @since 0
 ---
---- @param ns integer
---- @param options table<string, any>
---- @param callback fun()
-function vim.ui_attach(ns, options, callback) end
+--- @param ns integer Namespace ID
+--- @param opts table<string, any> Optional parameters.
+---             - {ext_…}? (`boolean`) Any of |ui-ext-options|, if true
+---               enable events for the respective UI element.
+---             - {set_cmdheight}? (`boolean`) If false, avoid setting
+---               'cmdheight' to 0 when `ext_messages` is enabled.
+--- @param callback fun(event: string, ...) Function called for each UI event
+function vim.ui_attach(ns, opts, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the
 --- given namespace {ns}.
---- @param ns integer
+--- @param ns integer Namespace ID
 function vim.ui_detach(ns) end

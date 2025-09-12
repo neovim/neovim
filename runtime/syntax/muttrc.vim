@@ -3,6 +3,7 @@
 " Original:	Preben 'Peppe' Guldberg <peppe-vim@wielders.org>
 " Maintainer:	Luna Celeste <luna@unixpoet.dev>
 " Last Change:	14 Aug 2023
+" 2025 May 19 re-include missing mutt Keywords #17344
 
 " This file covers mutt version 2.2.10
 
@@ -235,7 +236,7 @@ syn keyword muttrcVarBool	skipwhite contained
 			\ invpop_auth_try_all invpop_last invpostpone_encrypt invpostpone_encrypt_as
 			\ invprint_decode invprint_decode_weed invprint_split invprompt_after invread_only
 			\ invreflow_space_quotes invreflow_text invreflow_wrap invreply_self invresolve
-			\ invresume_draft_file sinvresume_edited_draft_files invreverse_alias
+			\ invresume_draft_files invresume_edited_draft_files invreverse_alias
 			\ invreverse_name invreverse_realname invrfc2047_parameters invsave_address
 			\ invsave_empty invsave_name invscore invsidebar_folder_indent
 			\ invsidebar_new_mail_only invsidebar_next_new_wrap invsidebar_relative_shortpath_indent
@@ -413,7 +414,7 @@ syn keyword muttrcVarStr	contained skipwhite
 		        \ hdr_format header_cache header_cache_compress header_cache_pagesize history_file
 		        \ hostname imap_authenticators imap_delim_chars imap_headers imap_idle imap_login
 		        \ imap_oauth_refresh_command imap_pass imap_user indent_str indent_string ispell locale
-		        \ mailcap_pat hmark_macro_prefix mask mbox mbox_type message_cachedir mh_seq_flagged
+		        \ mailcap_path mark_macro_prefix mask mbox mbox_type message_cachedir mh_seq_flagged
 		        \ mh_seq_replied mh_seq_unseen mime_type_query_command mixmaster msg_format new_mail_command
 		        \ pager pgp_default_key pgp_decryption_okay pgp_good_sign pgp_mime_signature_description
 		        \ pgp_mime_signature_filename pgp_sign_as pgp_sort_keys pipe_sep pop_authenticators

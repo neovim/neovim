@@ -8,6 +8,10 @@ local M = {}
 --- @param env? table<string,string|number>
 --- @return string
 local function system(cmd, silent, env)
+  if vim.fn.executable(cmd[1]) == 0 then
+    error(string.format('executable not found: "%s"', cmd[1]), 0)
+  end
+
   local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
   if not silent then
@@ -411,11 +415,12 @@ local function get_page(path, silent)
   -- Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   -- Soft-wrap: ftplugin/man.lua sets wrap/breakindent/….
   -- Hard-wrap: driven by `man`.
-  local manwidth --- @type integer|string
+  local manwidth --- @type integer
   if (vim.g.man_hardwrap or 1) ~= 1 then
     manwidth = 999
   elseif vim.env.MANWIDTH then
-    manwidth = vim.env.MANWIDTH --- @type string|integer
+    vim.env.MANWIDTH = tonumber(vim.env.MANWIDTH) or 0
+    manwidth = math.min(vim.env.MANWIDTH, api.nvim_win_get_width(0) - vim.o.wrapmargin)
   else
     manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin
   end
@@ -577,7 +582,10 @@ function M.man_complete(arg_lead, cmd_line)
     return {}
   end
 
-  local pages = get_paths(name, sect)
+  local ok, pages = pcall(get_paths, name, sect)
+  if not ok then
+    return nil
+  end
 
   -- We check for duplicates in case the same manpage in different languages
   -- was found.
@@ -639,8 +647,21 @@ function M.init_pager()
   local _, sect, err = pcall(parse_ref, ref)
   vim.b.man_sect = err ~= nil and sect or ''
 
-  if not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
-    vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
+  local man_bufname = 'man://' .. fn.fnameescape(ref):lower()
+
+  -- Raw manpage into (:Man!) overlooks `match('man://')` condition,
+  -- so if the buffer already exists, create new with a non existing name.
+  if vim.fn.bufexists(man_bufname) == 1 then
+    local new_bufname = man_bufname
+    for i = 1, 100 do
+      if vim.fn.bufexists(new_bufname) == 0 then
+        break
+      end
+      new_bufname = ('%s?new=%s'):format(man_bufname, i)
+    end
+    vim.cmd.file({ new_bufname, mods = { silent = true } })
+  elseif not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
+    vim.cmd.file({ man_bufname, mods = { silent = true } })
   end
 
   set_options()
@@ -800,9 +821,11 @@ function M.show_toc()
   end
 
   fn.setloclist(0, toc, ' ')
-  fn.setloclist(0, {}, 'a', { title = 'Man TOC' })
+  fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
   vim.cmd.lopen()
   vim.w.qf_toc = bufname
+  -- reload syntax file after setting qf_toc variable
+  vim.bo.filetype = 'qf'
 end
 
 return M

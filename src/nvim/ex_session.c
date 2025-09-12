@@ -468,7 +468,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   if (do_cursor) {
     // Restore the cursor line in the file and relatively in the
     // window.  Don't use "G", it changes the jumplist.
-    if (wp->w_height_inner <= 0) {
+    if (wp->w_view_height <= 0) {
       if (fprintf(fd, "let s:l = %" PRIdLINENR "\n", wp->w_cursor.lnum) < 0) {
         return FAIL;
       }
@@ -477,8 +477,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
                        " * winheight(0) + %d) / %d)\n",
                        wp->w_cursor.lnum,
                        wp->w_cursor.lnum - wp->w_topline,
-                       (wp->w_height_inner / 2),
-                       wp->w_height_inner) < 0) {
+                       (wp->w_view_height / 2),
+                       wp->w_view_height) < 0) {
       return FAIL;
     }
     if (fprintf(fd,

@@ -2636,8 +2636,7 @@ describe('plugin/shada.vim', function()
     wshada('\004\000\009\147\000\196\002ab\196\001a')
     wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
 
-    local bufread_commands =
-      api.nvim_get_autocmds({ group = 'ShaDaCommands', event = 'BufReadCmd' })
+    local bufread_commands = api.nvim_get_autocmds({ group = 'nvim.shada', event = 'BufReadCmd' })
     eq(2, #bufread_commands--[[, vim.inspect(bufread_commands) ]])
 
     -- Need to set nohidden so that the buffer containing 'fname' is not unloaded
@@ -3170,8 +3169,8 @@ describe('syntax/shada.vim', function()
       month = htsnum(os.date('%m', 0)),
       day = htsnum(os.date('%d', 0)),
       hour = htsnum(os.date('!%H', 0)),
-      minute = htsnum(os.date('%M', 0)),
-      second = htsnum(os.date('%S', 0)),
+      minute = htsnum(os.date('!%M', 0)),
+      second = htsnum(os.date('!%S', 0)),
     }
     local msh = function(s)
       return {

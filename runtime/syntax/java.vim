@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Jan 02
+" Last Change:		2025 Jun 01
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -46,8 +46,10 @@ function! s:ff.RightConstant(x, y) abort
   return a:y
 endfunction
 
-function! s:ff.IsRequestedPreviewFeature(n) abort
-  return exists("g:java_syntax_previews") && index(g:java_syntax_previews, a:n) + 1
+function! s:ff.IsAnyRequestedPreviewFeatureOf(ns) abort
+  return exists("g:java_syntax_previews") &&
+    \ !empty(filter(a:ns, printf('index(%s, v:val) + 1',
+			    \ string(g:java_syntax_previews))))
 endfunction
 
 if !exists("*s:ReportOnce")
@@ -108,7 +110,7 @@ syn keyword javaTypedef		this super
 syn keyword javaOperator	new instanceof
 syn match   javaOperator	"\<var\>\%(\s*(\)\@!"
 
-if s:ff.IsRequestedPreviewFeature(476)
+if s:ff.IsAnyRequestedPreviewFeatureOf([476, 494])
   " Module imports can be used in any source file.
   syn match   javaExternal	"\<import\s\+module\>" contains=javaModuleImport
   syn keyword javaModuleImport	contained module
@@ -227,15 +229,15 @@ endif
 if exists("g:java_highlight_java_lang_ids")
   let g:java_highlight_all = 1
 endif
+
 if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("g:java_highlight_java_lang")
   " java.lang.*
   "
-  " The keywords of javaR_JavaLang, javaC_JavaLang, javaE_JavaLang,
-  " and javaX_JavaLang are sub-grouped according to the Java version
-  " of their introduction, and sub-group keywords (that is, class
-  " names) are arranged in alphabetical order, so that future newer
-  " keywords can be pre-sorted and appended without disturbing
-  " the current keyword placement. The below _match_es follow suit.
+  " The type names in ":syn-keyword"s (and in ":syn-match"es) of the
+  " "java[CEIRX]_JavaLang" syntax groups are sub-grouped according to
+  " the Java version of their introduction, and sub-group names are
+  " arranged in alphabetical order, so that future newer names can be
+  " pre-sorted and appended without disturbing their placement.
 
   syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
   syn cluster javaClasses add=javaR_JavaLang
@@ -262,8 +264,12 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
     syn keyword javaC_JavaLang Class InheritableThreadLocal ThreadLocal Enum ClassValue
   endif
 
-  " As of JDK 21, java.lang.Compiler is no more (deprecated in JDK 9).
-  syn keyword javaLangDeprecated Compiler
+  " As of JDK 24, SecurityManager is rendered non-functional
+  "	(JDK-8338625).
+  "	(Note that SecurityException and RuntimePermission are still
+  "	not deprecated.)
+  " As of JDK 21, Compiler is no more (JDK-8205129).
+  syn keyword javaLangDeprecated Compiler SecurityManager
   syn cluster javaClasses add=javaC_JavaLang
   hi def link javaC_JavaLang javaC_Java
   syn keyword javaE_JavaLang AbstractMethodError ClassCircularityError ClassFormatError Error IllegalAccessError IncompatibleClassChangeError InstantiationError InternalError LinkageError NoClassDefFoundError NoSuchFieldError NoSuchMethodError OutOfMemoryError StackOverflowError ThreadDeath UnknownError UnsatisfiedLinkError VerifyError VirtualMachineError ExceptionInInitializerError UnsupportedClassVersionError AssertionError BootstrapMethodError
@@ -272,15 +278,35 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn keyword javaX_JavaLang ClassNotFoundException CloneNotSupportedException Exception IllegalAccessException InstantiationException InterruptedException NoSuchMethodException Throwable NoSuchFieldException ReflectiveOperationException
   syn cluster javaClasses add=javaX_JavaLang
   hi def link javaX_JavaLang javaX_Java
+  syn keyword javaI_JavaLang Cloneable Runnable CharSequence Appendable Deprecated Override Readable SuppressWarnings AutoCloseable SafeVarargs FunctionalInterface ProcessHandle
+  " Member interfaces:
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<UncaughtExceptionHandler\>"'
+  exec 'syn match javaI_JavaLang "\%(\<ProcessHandle\.\)\@' . s:ff.Peek('14', '') . '<=\<Info\>"'
+  exec 'syn match javaI_JavaLang "\%(\<System\.\)\@' . s:ff.Peek('7', '') . '<=\<Logger\>"'
+  exec 'syn match javaI_JavaLang "\%(\<StackWalker\.\)\@' . s:ff.Peek('12', '') . '<=\<StackFrame\>"'
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<Builder\>"'
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfPlatform\>"'
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfVirtual\>"'
 
+  if !exists("g:java_highlight_generics")
+    " The non-class parameterised names of java.lang members.
+    syn keyword javaI_JavaLang Comparable Iterable
+  endif
+
+  syn cluster javaClasses add=javaI_JavaLang
+  hi def link javaI_JavaLang javaI_Java
+
+  " Common groups for generated "javaid.vim" syntax items.
   hi def link javaR_Java javaR_
   hi def link javaC_Java javaC_
   hi def link javaE_Java javaE_
   hi def link javaX_Java javaX_
+  hi def link javaI_Java javaI_
   hi def link javaX_ javaExceptions
   hi def link javaR_ javaExceptions
   hi def link javaE_ javaExceptions
   hi def link javaC_ javaConstant
+  hi def link javaI_ javaTypedef
 
   syn keyword javaLangObject getClass notify notifyAll wait
 
@@ -295,9 +321,7 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   hi def link javaLangObject javaConstant
 endif
 
-if filereadable(expand("<sfile>:p:h") . "/javaid.vim")
-  source <sfile>:p:h/javaid.vim
-endif
+runtime syntax/javaid.vim
 
 if exists("g:java_space_errors")
   if !exists("g:java_no_trail_space_error")
@@ -311,7 +335,7 @@ endif
 
 exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*::\@!"he=e-1'
 
-if s:ff.IsRequestedPreviewFeature(455)
+if s:ff.IsAnyRequestedPreviewFeatureOf([455, 488])
   syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaBoolean,javaNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaType,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
 else
   syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
@@ -381,15 +405,30 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
   " Include HTML syntax coloring for Javadoc comments.
   if s:with_html
     try
+      if exists("g:html_syntax_folding") && !exists("g:java_consent_to_html_syntax_folding")
+	let s:html_syntax_folding_copy = g:html_syntax_folding
+	unlet g:html_syntax_folding
+      endif
+
       syntax include @javaHtml syntax/html.vim
     finally
       unlet! b:current_syntax
+
+      if exists("s:html_syntax_folding_copy")
+	let g:html_syntax_folding = s:html_syntax_folding_copy
+	unlet s:html_syntax_folding_copy
+      endif
     endtry
   endif
 
   " Include Markdown syntax coloring (v7.2.437) for Javadoc comments.
   if s:with_markdown
     try
+      if exists("g:html_syntax_folding") && !exists("g:java_consent_to_html_syntax_folding")
+	let s:html_syntax_folding_copy = g:html_syntax_folding
+	unlet g:html_syntax_folding
+      endif
+
       syntax include @javaMarkdown syntax/markdown.vim
 
       try
@@ -406,6 +445,11 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
       let s:no_support = 1
     finally
       unlet! b:current_syntax
+
+      if exists("s:html_syntax_folding_copy")
+	let g:html_syntax_folding = s:html_syntax_folding_copy
+	unlet s:html_syntax_folding_copy
+      endif
 
       if exists("s:no_support")
 	unlet s:no_support
@@ -609,7 +653,7 @@ syn region  javaString		start=+"+ end=+"+ end=+$+ contains=javaSpecialChar,javaS
 syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
 syn match   javaTextBlockError	+"""\s*"""+
 
-if s:ff.IsRequestedPreviewFeature(430)
+if s:ff.IsAnyRequestedPreviewFeatureOf([430])
   syn region javaStrTemplEmbExp	contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
   exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell'
   exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell'
@@ -688,7 +732,7 @@ if exists("g:java_highlight_debug")
   syn region  javaDebugString		contained start=+"+ end=+"+ contains=javaDebugSpecial
   syn region  javaDebugString		contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugSpecial,javaDebugTextBlockError
 
-  if s:ff.IsRequestedPreviewFeature(430)
+  if s:ff.IsAnyRequestedPreviewFeatureOf([430])
     " The highlight groups of java{StrTempl,Debug{,Paren,StrTempl}}\,
     " share one colour by default. Do not conflate unrelated parens.
     syn region javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*

@@ -5,27 +5,30 @@ error('Cannot require a meta file')
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
 ---@class TSParser: userdata
----@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: boolean): TSTree, (Range4|Range6)[]
+---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: boolean, timeout_ns: integer?): TSTree?, (Range4|Range6)[]
 ---@field reset fun(self: TSParser)
 ---@field included_ranges fun(self: TSParser, include_bytes: boolean?): integer[]
 ---@field set_included_ranges fun(self: TSParser, ranges: (Range6|TSNode)[])
----@field set_timeout fun(self: TSParser, timeout: integer)
----@field timeout fun(self: TSParser): integer
 ---@field _set_logger fun(self: TSParser, lex: boolean, parse: boolean, cb: TSLoggerCallback)
 ---@field _logger fun(self: TSParser): TSLoggerCallback
-
----@class TSQuery: userdata
----@field inspect fun(self: TSQuery): TSQueryInfo
 
 ---@class (exact) TSQueryInfo
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
 ---
+---@class TSLangMetadata
+---@field major_version integer
+---@field minor_version integer
+---@field patch_version integer
+---
 ---@class TSLangInfo
+---@field abi_version integer
+---@field metadata? TSLangMetadata  -- ABI 15 only
+---@field state_count integer
 ---@field fields string[]
 ---@field symbols table<string,boolean>
+---@field supertypes table<string,string[]>
 ---@field _wasm boolean
----@field _abi_version integer
 
 --- @param lang string
 --- @return TSLangInfo

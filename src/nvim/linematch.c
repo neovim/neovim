@@ -8,7 +8,6 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
-#include "nvim/strings.h"
 #include "xdiff/xdiff.h"
 
 #define LN_MAX_BUFS 8
@@ -345,10 +344,11 @@ size_t linematch_nbuffers(const mmfile_t **diff_blk, const int *diff_len, const 
   // create the flattened path matrix
   diffcmppath_T *diffcmppath = xmalloc(sizeof(diffcmppath_T) * memsize);
   // allocate memory here
+  size_t n = (size_t)pow(2.0, (double)ndiffs);
   for (size_t i = 0; i < memsize; i++) {
     diffcmppath[i].df_lev_score = 0;
     diffcmppath[i].df_path_n = 0;
-    for (size_t j = 0; j < (size_t)pow(2, (double)ndiffs); j++) {
+    for (size_t j = 0; j < n; j++) {
       diffcmppath[i].df_choice_mem[j] = -1;
     }
   }

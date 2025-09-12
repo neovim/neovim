@@ -803,11 +803,23 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('throws appropriate error messages when setting <unique> maps', function()
     api.nvim_set_keymap('l', 'lhs', 'rhs', {})
     eq(
-      'E227: mapping already exists for lhs',
+      'E227: Mapping already exists for lhs',
       pcall_err(api.nvim_set_keymap, 'l', 'lhs', 'rhs', { unique = true })
     )
     -- different mapmode, no error should be thrown
     api.nvim_set_keymap('t', 'lhs', 'rhs', { unique = true })
+
+    api.nvim_set_keymap('n', '<tab>', 'rhs', {})
+    eq(
+      'E227: Mapping already exists for <tab>',
+      pcall_err(api.nvim_set_keymap, 'n', '<tab>', 'rhs', { unique = true })
+    )
+
+    api.nvim_set_keymap('ia', 'lhs', 'rhs', {})
+    eq(
+      'E226: Abbreviation already exists for lhs',
+      pcall_err(api.nvim_set_keymap, 'ia', 'lhs', 'rhs', { unique = true })
+    )
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
@@ -1452,5 +1464,25 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', n.exec_capture('nmap <C-I>'))
+  end)
+
+  it('does not overwrite in <unique> mappings', function()
+    api.nvim_buf_set_keymap(0, 'i', 'lhs', 'rhs', {})
+    eq(
+      'E227: Mapping already exists for lhs',
+      pcall_err(api.nvim_buf_set_keymap, 0, 'i', 'lhs', 'rhs', { unique = true })
+    )
+
+    api.nvim_buf_set_keymap(0, 'ia', 'lhs2', 'rhs2', {})
+    eq(
+      'E226: Abbreviation already exists for lhs2',
+      pcall_err(api.nvim_buf_set_keymap, 0, 'ia', 'lhs2', 'rhs2', { unique = true })
+    )
+
+    api.nvim_set_keymap('n', 'lhs', 'rhs', {})
+    eq(
+      'E225: Global mapping already exists for lhs',
+      pcall_err(api.nvim_buf_set_keymap, 0, 'n', 'lhs', 'rhs', { unique = true })
+    )
   end)
 end)

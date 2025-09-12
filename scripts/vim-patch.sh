@@ -293,6 +293,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/option\.h/\1\/option_vars.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename runtime/doc/eval.txt to runtime/doc/vimeval.txt
+  LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/eval\.txt/\1\/vimeval.txt/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename version*.txt to news.txt
   LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/version[0-9]+\.txt/\1\/news.txt/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

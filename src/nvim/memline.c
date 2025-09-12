@@ -2088,6 +2088,9 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     dp = hp->bh_data;
   }
 
+  if (buf->b_prev_line_count == 0) {
+    buf->b_prev_line_count = buf->b_ml.ml_line_count;
+  }
   buf->b_ml.ml_line_count++;
 
   if ((int)dp->db_free >= space_needed) {       // enough room in data block
@@ -2573,6 +2576,9 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   int count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 2;
   int idx = lnum - buf->b_ml.ml_locked_low;
 
+  if (buf->b_prev_line_count == 0) {
+    buf->b_prev_line_count = buf->b_ml.ml_line_count;
+  }
   buf->b_ml.ml_line_count--;
 
   int line_start = ((dp->db_index[idx]) & DB_INDEX_MASK);

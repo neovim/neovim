@@ -1,0 +1,194 @@
+# Welcome to the Neovim Tutorial
+
+# Chapter 2
+
+  Hic Sunt Dracones: if this is your first exposure to vim and you
+  intended to avail yourself of the introductory chapter, kindly type
+  on the command line of the Vim editor
+~~~ cmd
+        :Tutor vim-01-beginner
+~~~
+  Or just open the [first chapter](@tutor:vim-01-beginner) of the tutor at the link.
+
+  The approximate time required to complete this chapter is 8-10 minutes,
+  depending upon how much time is spent with experimentation.
+
+
+# Lesson 2.1.1: THE NAMED REGISTERS
+
+** Store two yanked words concurrently and then paste them **
+
+  1. Move the cursor to the line below marked ✓
+
+  2. Navigate to any point on the word 'Edward' and type `"ayiw`{normal}
+
+**MNEMONIC**: *into register(") named (a) (y)ank (i)nner (w)ord*
+
+  3. Navigate forward to the word 'cookie' (`fk`{normal} or `2fc`{normal}
+     or `$2b`{normal} or `/co`{normal} `<ENTER>`{normal}) and type `"byiw`{normal}
+
+  4. Navigate to any point on the word 'Vince' and type `ciw<CTRL-r>a<ESC>`{normal}
+
+**MNEMONIC**: *(c)hange (i)nner (w)ord with <contents of (r)egister> named (a)*
+
+  5. Navigate to any point on the word 'cake' and type `ciw<CTRL-r>b<ESC>`{normal}
+
+a) Edward will henceforth be in charge of the cookie rations
+b) In this capacity, Vince will have sole cake discretionary powers
+
+NOTE: Delete also works into registers, i.e. `"sdiw`{normal} will delete
+      the word under the cursor into register s.
+
+REFERENCE: [Registers](registers)
+           [Named Registers](quotea)
+           [Motion](text-objects)
+           [CTRL-R](i_CTRL-R)
+
+
+# Lesson 2.1.2: THE EXPRESSION REGISTER
+
+** Insert the results of calculations on the fly **
+
+  1. Move the cursor to the line below marked ✗
+
+  2. Navigate to any point on the supplied number
+
+  3. Type `ciw<CTRL-r>=`{normal}60\*60\*24 `<ENTER>`{normal}
+
+  4. On the next line, enter insert mode and add today's date with 
+     `<CTRL-r>=`{normal}`system('date')`{vim} `<ENTER>`{normal}
+
+NOTE: All calls to system are OS dependent, e.g. on Windows use 
+      `system('date /t')`{vim}   or  `:r!date /t`{vim}
+
+I have forgotten the exact number of seconds in a day, is it 84600?
+Today's date is: 
+
+NOTE: the same can be achieved with `:pu=`{normal}`system('date')`{vim}
+      or, with fewer keystrokes `:r!date`{vim}
+
+REFERENCE: [Expression Register](quote=)
+
+
+# Lesson 2.1.3: THE NUMBERED REGISTERS
+
+** Press `yy`{normal} and `dd`{normal} to witness their effect on the registers **
+
+  1. Move the cursor to the line below marked ✓
+
+  2. yank the zeroth line, then inspect registers with `:reg`{vim} `<ENTER>`{normal}
+
+  3. delete line 0. with `"cdd`{normal}, then inspect registers
+     (Where do you expect line 0 to be?)
+
+  4. continue deleting each successive line, inspecting `:reg`{vim} as you go
+
+NOTE: You should notice that old full-line deletions move down the list
+      as new full-line deletions are added
+
+  5. Now (p)aste the following registers in order; c, 7, 4, 8, 2. i.e. `"7p`{normal}
+
+0. This
+9. wobble
+8. secret
+7. is
+6. on
+5. axis
+4. a
+3. war
+2. message
+1. tribute
+
+
+NOTE: Whole line deletions (`dd`{normal}) are much longer lived in the
+      numbered registers than whole line yanks, or deletions involving
+      smaller movements
+
+REFERENCE: [Numbered Registers](quote0)
+
+
+# Lesson 2.1.4: THE BEAUTY OF MARKS
+
+** Code monkey arithmetic avoidance **
+
+NOTE: a common conundrum when coding is moving around large chunks of code.
+      The following technique helps avoid number line calculations associated
+      with operations like `"a147d`{normal} or `:945,1091d a`{vim} or even worse
+      using `i<CTRL-r>=`{normal}1091-945 `<ENTER>`{normal} first
+
+  1. Move the cursor to the line below marked ✓
+
+  2. Go to the first line of the function and mark it with `ma`{normal}
+
+NOTE: exact position on line is NOT important!
+
+  3. Navigate to the end of the line and then the end of the code block 
+     with `$%`{normal}
+
+  4. Delete the block into register a with `"ad'a`{normal}
+
+**MNEMONIC**: *into register(") named (a) put the (d)eletion from the cursor to
+          the LINE containing mark(') (a)*
+
+  5. Paste the block between BBB and CCC `"ap`{normal}
+
+NOTE: practice this operation multiple times to become fluent `ma$%"ad'a`{normal}
+
+~~~ cmd
+AAA
+function itGotRealBigRealFast() {
+  if ( somethingIsTrue ) {
+    doIt()
+  }
+  // the taxonomy of our function has changed and it
+  // no longer makes alphabetical sense in its current position
+
+  // imagine hundreds of lines of code
+
+  // naively you could navigate to the start and end and record or
+  // remember each line number
+}
+BBB
+CCC
+~~~
+
+NOTE: marks and registers do not share a namespace, therefore register a is
+      completely independent of mark a. This is not true of registers and
+      macros.
+
+REFERENCE: [Marks](marks)
+           [Mark Motions](mark-motions)  (difference between ' and \`)
+
+
+# Lesson 2.1 SUMMARY
+
+  1. To store (yank, delete) text into, and retrieve (paste) from, a total of
+     26 registers (a-z) 
+  2. Yank a whole word from anywhere within a word: `yiw`{normal}
+  3. Change a whole word from anywhere within a word: `ciw`{normal}
+  4. Insert text directly from registers in insert mode: `<CTRL-r>a`{normal}
+
+  5. Insert the results of simple arithmetic operations:
+     `<CTRL-r>=`{normal}60\*60 `<ENTER>`{normal} in insert mode
+  6. Insert the results of system calls:
+     `<CTRL-r>=`{normal}`system('ls -1')`{vim} in insert mode
+
+  7. Inspect registers with `:reg`{vim}
+  8. Learn the final destination of whole line deletions: `dd`{normal} in
+     the numbered registers, i.e. descending from register 1 - 9.  Appreciate
+     that whole line deletions are preserved in the numbered registers longer
+     than any other operation
+  9. Learn the final destination of all yanks in the numbered registers and
+     how ephemeral they are
+
+ 10. Place marks from command mode `m[a-zA-Z0-9]`{normal}
+ 11. Move line-wise to a mark with `'`{normal}
+
+
+# CONCLUSION
+
+  This concludes chapter two of the Vim Tutor. It is a work in progress.
+
+  This chapter was written by Paul D. Parker.
+
+  Modified for vim-tutor-mode by Restorer.

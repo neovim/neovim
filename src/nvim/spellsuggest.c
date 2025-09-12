@@ -588,7 +588,9 @@ void spell_suggest(int count)
         msg_advance(30);
         msg_puts(IObuff);
       }
-      msg_putchar('\n');
+      if (!ui_has(kUIMessages) || i < sug.su_ga.ga_len - 1) {
+        msg_putchar('\n');
+      }
     }
 
     cmdmsg_rl = false;

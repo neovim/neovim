@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "klib/kvec.h"
+
 // dummy to pass an ACL to a function
 typedef void *vim_acl_T;
 
@@ -66,3 +68,5 @@ typedef struct {
   uint32_t nbytes;
   char data[];
 } AdditionalData;
+
+typedef kvec_t(char) StringBuilder;

@@ -6,6 +6,7 @@
 "		2024 Apr 03 by the Vim Project (removed :CompilerSet definition)
 "		2024 Apr 05 by the Vim Project (avoid leaving behind g:makeprg)
 "		2024 Nov 19 by the Vim Project (properly escape makeprg setting)
+"		2025 Mar 11 by the Vim Project (add comment for Dispatch)
 
 if exists("current_compiler")
   finish
@@ -50,6 +51,8 @@ let s:makeprg = g:ps1_makeprg_cmd .. ' %:p:S'
 "         + CategoryInfo          : ObjectNotFound: (Write-Ouput:String) [], CommandNotFoundException
 "         + FullyQualifiedErrorId : CommandNotFoundException
 
+" CompilerSet makeprg=pwsh
+" CompilerSet makeprg=powershell
 execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' \|"')
 
 " Showing error in context with underlining.

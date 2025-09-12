@@ -10,8 +10,6 @@ error('Cannot require a meta file')
 
 ---@nodoc
 ---@class TSNode: userdata
----@field named_children fun(self: TSNode): TSNode[]
----@field __has_ancestor fun(self: TSNode, node_types: string[]): boolean
 local TSNode = {} -- luacheck: no unused
 
 --- Get the node's immediate parent.
@@ -61,6 +59,15 @@ function TSNode:child(index) end
 --- Get the node's number of named children.
 --- @return integer
 function TSNode:named_child_count() end
+
+--- Returns a list of the node's named children.
+--- @return TSNode[]
+function TSNode:named_children() end
+
+--- Check if the node has any of the given node types as its ancestor.
+--- @param node_types string[]
+--- @return boolean
+function TSNode:__has_ancestor(node_types) end
 
 --- Get the node's named child at the given {index}, where zero represents the
 --- first named child.

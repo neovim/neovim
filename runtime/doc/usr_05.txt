@@ -117,23 +117,27 @@ This switches on three very clever mechanisms:
    filetypes.  See |:filetype-indent-on| and 'indentexpr'.
 
 
-				*restore-cursor* *last-position-jump*  >
+				*restore-cursor* *last-position-jump*  >vim
     augroup RestoreCursor
       autocmd!
       autocmd BufReadPre * autocmd FileType <buffer> ++once
         \ let s:line = line("'\"")
         \ | if s:line >= 1 && s:line <= line("$") && &filetype !~# 'commit'
         \      && index(['xxd', 'gitrebase'], &filetype) == -1
+        \      && !&diff
         \ |   execute "normal! g`\""
         \ | endif
     augroup END
 
 Another autocommand.  This time it is used after reading any file.  The
 complicated stuff after it checks if the '" mark is defined, and jumps to it
-if so.  It doesn't do that for a commit or rebase message, which are likely
-a different one than last time, and when using xxd(1) to filter and edit
-binary files, which transforms input files back and forth, causing them to
-have dual nature, so to speak.  See also |using-xxd|.
+if so.  It doesn't do that when:
+ - editing a commit or rebase message, which are likely a different one than
+   last time,
+ - using xxd(1) to filter and edit binary files, which transforms input files
+   back and forth, causing them to have dual nature, so to speak (see also
+   |using-xxd|) and
+ - Vim is in diff mode
 
 The backslash at the start of a line is used to continue the command from the
 previous line.  That avoids a line getting very long.  See |line-continuation|.

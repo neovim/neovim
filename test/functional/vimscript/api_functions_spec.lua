@@ -192,7 +192,7 @@ describe('eval-API', function()
     local screen = Screen.new(40, 8)
 
     command('set ft=vim')
-    command('set rtp^=build/runtime/')
+    n.add_builddir_to_rtp()
     command('syntax on')
     insert([[
       call bufnr('%')

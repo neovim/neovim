@@ -263,7 +263,7 @@ void ex_align(exarg_T *eap)
       width = (int)curbuf->b_p_tw;
     }
     if (width == 0 && curbuf->b_p_wm > 0) {
-      width = curwin->w_width_inner - (int)curbuf->b_p_wm;
+      width = curwin->w_view_width - (int)curbuf->b_p_wm;
     }
     if (width <= 0) {
       width = 80;
@@ -1025,6 +1025,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   if (addr_count == 0) {                // :!
     // echo the command
     msg_start();
+    msg_ext_set_kind("shell_cmd");
     msg_putchar(':');
     msg_putchar('!');
     msg_outtrans(newcmd, 0, false);
@@ -1146,7 +1147,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   }
 
   // Create the shell command in allocated memory.
-  char *cmd_buf = make_filter_cmd(cmd, itmp, otmp);
+  char *cmd_buf = make_filter_cmd(cmd, itmp, otmp, do_in);
   ui_cursor_goto(Rows - 1, 0);
 
   if (do_out) {
@@ -1344,8 +1345,9 @@ static char *find_pipe(const char *cmd)
 /// @param cmd  Command to execute.
 /// @param itmp NULL or the input file.
 /// @param otmp NULL or the output file.
+/// @param do_in true if stdin is needed.
 /// @returns an allocated string with the shell command.
-char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
+char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
 {
   bool is_fish_shell =
 #if defined(UNIX)
@@ -1367,6 +1369,11 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
     len += is_pwsh ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
                    : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
+
+  if (do_in && is_pwsh) {
+    len += sizeof(" $input | ");
+  }
+
   if (otmp != NULL) {
     len += strlen(otmp) + strlen(p_srr) + 2;  // two extra spaces ("  "),
   }
@@ -1380,8 +1387,11 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
       xstrlcat(buf, " | & ", len - 1);  // FIXME: add `&` ourself or leave to user?
       xstrlcat(buf, cmd, len - 1);
       xstrlcat(buf, " }", len - 1);
+    } else if (do_in) {
+      xstrlcpy(buf, " $input | ", len - 1);
+      xstrlcat(buf, cmd, len);
     } else {
-      xstrlcpy(buf, cmd, len - 1);
+      xstrlcpy(buf, cmd, len);
     }
   } else {
 #if defined(UNIX)
@@ -1461,7 +1471,7 @@ void append_redir(char *const buf, const size_t buflen, const char *const opt,
   }
 }
 
-void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
+void print_line_no_prefix(linenr_T lnum, bool use_number, bool list)
 {
   char numbuf[30];
 
@@ -1474,7 +1484,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
 }
 
 /// Print a text line.  Also in silent mode ("ex -s").
-void print_line(linenr_T lnum, int use_number, bool list)
+void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 {
   bool save_silent = silent_mode;
 
@@ -1483,12 +1493,17 @@ void print_line(linenr_T lnum, int use_number, bool list)
     return;
   }
 
-  msg_start();
   silent_mode = false;
   info_message = true;  // use stdout, not stderr
+  if (first) {
+    msg_start();
+    msg_ext_set_kind("list_cmd");
+  } else if (!save_silent) {
+    msg_putchar('\n');  // don't want trailing newline with regular messaging
+  }
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
-    msg_putchar('\n');
+    msg_putchar('\n');  // batch mode message should always end in newline
     silent_mode = save_silent;
   }
   info_message = false;
@@ -2068,6 +2083,29 @@ theend:
   return retval;
 }
 
+/// set v:swapcommand for the SwapExists autocommands.
+///
+/// @param command  [+cmd] to be executed (e.g. +10).
+/// @param newlnum  if > 0: put cursor on this line number (if possible)
+//
+/// @return 1 if swapcommand was actually set, 0 otherwise
+bool set_swapcommand(char *command, linenr_T newlnum)
+{
+  if ((command == NULL && newlnum <= 0) || *get_vim_var_str(VV_SWAPCOMMAND) != NUL) {
+    return false;
+  }
+  const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
+  char *const p = xmalloc(len);
+  if (command != NULL) {
+    vim_snprintf(p, len, ":%s\r", command);
+  } else {
+    vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
+  }
+  set_vim_var_string(VV_SWAPCOMMAND, p, -1);
+  xfree(p);
+  return true;
+}
+
 /// start editing a new file
 ///
 /// @param fnum     file number; if zero use ffname/sfname
@@ -2201,20 +2239,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     oldwin = NULL;
   }
 
-  if ((command != NULL || newlnum > 0)
-      && *get_vim_var_str(VV_SWAPCOMMAND) == NUL) {
-    // Set v:swapcommand for the SwapExists autocommands.
-    const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
-    char *const p = xmalloc(len);
-    if (command != NULL) {
-      vim_snprintf(p, len, ":%s\r", command);
-    } else {
-      vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
-    }
-    set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-    did_set_swapcommand = true;
-    xfree(p);
-  }
+  did_set_swapcommand = set_swapcommand(command, newlnum);
 
   // If we are starting to edit another file, open a (new) buffer.
   // Otherwise we re-use the current buffer.
@@ -2264,14 +2289,16 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (buf == NULL) {
       goto theend;
     }
-    // autocommands try to edit a file that is going to be removed, abort
-    if (buf_locked(buf)) {
+    // autocommands try to edit a closing buffer, which like splitting, can
+    // result in more windows displaying it; abort
+    if (buf->b_locked_split) {
       // window was split, but not editing the new buffer, reset b_nwindows again
       if (oldwin == NULL
           && curwin->w_buffer != NULL
           && curwin->w_buffer->b_nwindows > 1) {
         curwin->w_buffer->b_nwindows--;
       }
+      emsg(_(e_cannot_switch_to_a_closing_buffer));
       goto theend;
     }
     if (curwin->w_alt_fnum == buf->b_fnum && prev_alt_fnum != 0) {
@@ -2720,6 +2747,9 @@ theend:
   if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->terminal != NULL) {
     terminal_check_size(old_curbuf.br_buf->terminal);
   }
+  if ((!bufref_valid(&old_curbuf) || curbuf != old_curbuf.br_buf) && curbuf->terminal != NULL) {
+    terminal_check_size(curbuf->terminal);
+  }
 
   if (did_inc_redrawing_disabled) {
     RedrawingDisabled--;
@@ -2934,7 +2964,7 @@ void ex_z(exarg_T *eap)
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {
-    bigness = curwin->w_height_inner - 3;
+    bigness = curwin->w_view_height - 3;
   }
   bigness = MAX(bigness, 1);
 
@@ -3022,7 +3052,7 @@ void ex_z(exarg_T *eap)
       }
     }
 
-    print_line(i, eap->flags & EXFLAG_NR, eap->flags & EXFLAG_LIST);
+    print_line(i, eap->flags & EXFLAG_NR, eap->flags & EXFLAG_LIST, i == start);
 
     if (minus && i == lnum) {
       msg_putchar('\n');
@@ -3792,7 +3822,6 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               redraw_later(curwin, UPD_SOME_VALID);
               show_cursor_info_later(true);
               update_screen();
-              highlight_match = false;
               redraw_later(curwin, UPD_SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
@@ -3801,6 +3830,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               snprintf(IObuff, IOSIZE, p, sub);
               p = xstrdup(IObuff);
               typed = prompt_for_input(p, HLF_R, true, NULL);
+              highlight_match = false;
               xfree(p);
 
               msg_didout = false;                 // don't scroll up
@@ -4242,7 +4272,7 @@ skip:
       global_need_beginline = true;
     }
     if (subflags.do_print) {
-      print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list);
+      print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list, true);
     }
   } else if (!global_busy) {
     if (got_int) {

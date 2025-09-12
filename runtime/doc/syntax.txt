@@ -246,12 +246,6 @@ Added		added line in a diff
 Changed		changed line in a diff
 Removed		removed line in a diff
 
-The names marked with * are the preferred groups; the others are minor groups.
-For the preferred groups, the "syntax.vim" file contains default highlighting.
-The minor groups are linked to the preferred groups, so they get the same
-highlighting.  You can override these defaults by using ":highlight" commands
-after sourcing the "syntax.vim" file.
-
 Note that highlight group names are not case sensitive.  "String" and "string"
 can be used for the same group.
 
@@ -342,7 +336,7 @@ Upon loading a file, Vim finds the relevant syntax file as follows:
 ==============================================================================
 4. Conversion to HTML				*convert-to-HTML* *2html.vim*
 
-The old to html converter has ben replaced by a Lua version and the
+The old to html converter has been replaced by a Lua version and the
 documentation has been moved to |:TOhtml|.
 
 ==============================================================================
@@ -817,6 +811,21 @@ doesn't work for you, or you don't edit Progress at all, use this in your
 startup vimrc: >
    :let filetype_w = "cweb"
 
+CSHARP							 *cs.vim* *ft-cs-syntax*
+
+C# raw string literals may use any number of quote marks to encapsulate the
+block, and raw interpolated string literals may use any number of braces to
+encapsulate the interpolation, e.g. >
+
+    $$$""""Hello {{{name}}}""""
+<
+By default, Vim highlights 3-8 quote marks, and 1-8 interpolation braces.
+The maximum numbers of quotes and braces recognized can configured using the
+following variables:
+
+    Variable					Default ~
+    g:cs_raw_string_quote_count			8
+    g:cs_raw_string_interpolation_brace_count	8
 
 DART						*dart.vim* *ft-dart-syntax*
 
@@ -1573,13 +1582,8 @@ old way, put the following line into your Vim startup file: >
 All (exported) public types declared in `java.lang` are always automatically
 imported and available as simple names.  To highlight them, use: >
 	:let g:java_highlight_java_lang_ids = 1
-
-You can also highlight types of most standard Java packages if you download
-the javaid.vim script at https://www.fleiner.com/vim/download.html.  If you
-prefer to only highlight types of a certain package, say `java.io`, use the
-following: >
-	:let g:java_highlight_java_io = 1
-Check the javaid.vim file for a list of all the packages that are supported.
+You can also generate syntax items for other public and protected types and
+opt in to highlight some of their names; see |java-package-info-url|.
 
 Headers of indented function declarations can be highlighted (along with parts
 of lambda expressions and method reference expressions), but it depends on how
@@ -1643,7 +1647,7 @@ diverge as follows:
   1. The first sentence (all characters up to the first period `.`, which is
      followed by a whitespace character or a line terminator, or up to the
      first block tag, e.g. `@param`, `@return`) is colored as
-	*SpecialComment	special comments.
+	`*SpecialComment`	special comments.
   2. The text is colored as
 	`*Comment`	comments.
   3. HTML comments are colored as
@@ -1680,6 +1684,13 @@ line for any comments written in this way, and showing the contents of a first
 line otherwise, with >
 	:let g:java_foldtext_show_first_or_second_line = 1
 
+HTML tags in Javadoc comments can additionally be folded by following the
+instructions listed under |html-folding| and giving explicit consent with >
+	:let g:java_consent_to_html_syntax_folding = 1
+Do not default to this kind of folding unless ALL start tags and optional end
+tags are balanced in Javadoc comments; otherwise, put up with creating runaway
+folds that break syntax highlighting.
+
 Trailing whitespace characters or a run of space characters before a tab
 character can be marked as an error with >
 	:let g:java_space_errors = 1
@@ -1714,17 +1725,18 @@ cycles for such a feature to become either integrated into the platform or
 withdrawn from this effort.  To cater for early adopters, there is optional
 support in Vim for syntax related preview features that are implemented.  You
 can request it by specifying a list of preview feature numbers as follows: >
-	:let g:java_syntax_previews = [455, 476]
+	:let g:java_syntax_previews = [488, 494]
 
 The supported JEP numbers are to be drawn from this table:
 	`430`: String Templates [JDK 21]
-	`455`: Primitive types in Patterns, instanceof, and switch
-	`476`: Module Import Declarations
+	`488`: Primitive types in Patterns, instanceof, and switch
+	`494`: Module Import Declarations
 
 Note that as soon as the particular preview feature will have been integrated
 into the Java platform, its entry will be removed from the table and related
 optionality will be discontinued.
-
+						*java-package-info-url*
+https://github.com/zzzyxwvut/java-vim/blob/master/tools/javaid/src/javaid/package-info.java
 
 JSON			*json.vim* *ft-json-syntax* *g:vim_json_conceal*
 						*g:vim_json_warnings*
@@ -1870,13 +1882,9 @@ instead, and the name of your source file should be `*.pike`
 
 LUA						*lua.vim* *ft-lua-syntax*
 
-The Lua syntax file can be used for versions 4.0, 5.0, 5.1 and 5.2 (5.2 is
-the default). You can select one of these versions using the global variables
-lua_version and lua_subversion. For example, to activate Lua
-5.1 syntax highlighting, set the variables like this: >
-
-	:let lua_version = 5
-	:let lua_subversion = 1
+The Lua syntax file can be used for versions 4.0, 5.0+. You can select one of
+these versions using the global variables |g:lua_version| and
+|g:lua_subversion|.
 
 
 MAIL						*mail.vim* *ft-mail.vim*
@@ -1886,9 +1894,9 @@ quoted text and URLs / email addresses).  In keeping with standard conventions,
 signatures begin in a line containing only "--" followed optionally by
 whitespaces and end with a newline.
 
-Vim treats lines beginning with ']', '}', '|', '>' or a word followed by '>'
+Vim treats lines beginning with "]", "}", "|", ">" or a word followed by ">"
 as quoted text.  However Vim highlights headers and signatures in quoted text
-only if the text is quoted with '>' (optionally followed by one space).
+only if the text is quoted with ">" (optionally followed by one space).
 
 By default mail.vim synchronises syntax to 100 lines before the first
 displayed line.  If you have a slow machine, and generally deal with emails
@@ -1909,11 +1917,16 @@ Comments are also highlighted by default.  You can turn this off by using: >
 
 	:let make_no_comments = 1
 
-Microsoft Makefile handles variable expansion and comments differently
-(backslashes are not used for escape).  If you see any wrong highlights
-because of this, you can try this: >
+There are various Make implementations, which add extensions other than the
+POSIX specification and thus are mutually incompatible.  If the filename is
+BSDmakefile or GNUmakefile, the corresponding implementation is automatically
+determined; otherwise vim tries to detect it by the file contents.  If you see
+any wrong highlights because of this, you can enforce a flavor by setting one
+of the following: >
 
-	:let make_microsoft = 1
+	:let g:make_flavor = 'bsd'  " or
+	:let g:make_flavor = 'gnu'  " or
+	:let g:make_flavor = 'microsoft'
 
 
 MAPLE						*maple.vim* *ft-maple-syntax*
@@ -1966,6 +1979,12 @@ Empty `*.m` files will automatically be presumed to be Matlab files unless you
 have the following in your vimrc: >
 
 	let filetype_m = "mma"
+
+MBSYNC					*mbsync.vim* *ft-mbsync-syntax*
+
+The mbsync application uses a configuration file to setup mailboxes names,
+user and password. All files ending with `.mbsyncrc` or with the name
+`isyncrc` will be recognized as mbsync configuration files.
 
 MEDIAWIKI					*ft-mediawiki-syntax*
 
@@ -2041,8 +2060,8 @@ To disable highlighting of pronoun substitution patterns inside strings: >
 
 	:let moo_no_pronoun_sub = 1
 
-To disable highlighting of the regular expression operator '%|', and matching
-'%(' and '%)' inside strings: >
+To disable highlighting of the regular expression operator "%|", and matching
+"%(" and "%)" inside strings: >
 
 	:let moo_no_regexp = 1
 
@@ -2596,7 +2615,7 @@ PRINTCAP + TERMCAP	*ft-ptcap-syntax* *ft-termcap-syntax*
 This syntax file applies to the printcap and termcap databases.
 
 In order for Vim to recognize printcap/termcap files that do not match
-the patterns *printcap*, or *termcap*, you must put additional patterns
+the patterns "*printcap*", or "*termcap*", you must put additional patterns
 appropriate to your system in your |myfiletypefile| file.  For these
 patterns, you must set the variable "b:ptcap_type" to either "print" or
 "term", and then the 'filetype' option to ptcap.
@@ -2871,7 +2890,7 @@ The value is a space-separated list of keywords:
     [	       Array literal
     %	       Literal with "%" notation, e.g.: %w(STRING), %!STRING!
     /	       Regexp
-    string     String and shell command output (surrounded by ', ", `)
+    string     String and shell command output (surrounded by ', ", "`")
     :	       Symbol
     #	       Multiline comment
     <<	       Here documents
@@ -3027,24 +3046,28 @@ cases pertain, then the first line of the file is examined (ex. looking for
 /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a shelltype, then
 that shelltype is used.  However some files (ex. .profile) are known to be
 shell files but the type is not apparent.  Furthermore, on many systems sh is
-symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
+symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (POSIX).
 
 One may specify a global default by instantiating one of the following
 variables in your vimrc:
 
    ksh: >
 	let g:is_kornshell = 1
-<   posix:  (using this is nearly the same as setting g:is_kornshell to 1) >
+<   posix: (default) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
-<   sh: (default) Bourne shell >
+<   dash: >
+	let g:is_dash	   = 1
+<   sh: Bourne shell >
 	let g:is_sh	   = 1
 
-<   (dash users should use posix)
+Specific shell features are automatically enabled based on the shell detected
+from the shebang line ("#! ...").  For KornShell Vim detects different shell
+features for mksh, ksh88, ksh93, ksh93u, ksh93v, and ksh2020.
 
 If there's no "#! ..." line, and the user hasn't availed themself of a default
-sh.vim syntax setting as just shown, then syntax/sh.vim will assume the Bourne
+sh.vim syntax setting as just shown, then syntax/sh.vim will assume the POSIX
 shell syntax.  No need to quote RFCs or market penetration statistics in error
 reports, please -- just select the default version of the sh your system uses
 and install the associated "let..." in your <.vimrc>.
@@ -3484,6 +3507,7 @@ names whose syntax definitions will be included in Typst files. Example: >
 
 VIM			*vim.vim*		*ft-vim-syntax*
 			*g:vimsyn_minlines*	*g:vimsyn_maxlines*
+
 There is a trade-off between more accurate syntax highlighting versus screen
 updating speed.  To improve accuracy, you may wish to increase the
 g:vimsyn_minlines variable.  The g:vimsyn_maxlines variable may be used to
@@ -3502,18 +3526,19 @@ embedded script highlighting they wish to have. >
    g:vimsyn_embed == 0      : disable (don't embed any scripts)
    g:vimsyn_embed == 'lpPr' : support embedded Lua, Perl, Python and Ruby
 <
-This option is disabled by default.
+By default, g:vimsyn_embed is unset, and embedded Lua scripts are supported.
+
 						*g:vimsyn_folding*
 Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : fold augroups
    g:vimsyn_folding =~ 'f' : fold functions
-   g:vimsyn_folding =~ 'h' : fold heredocs
-   g:vimsyn_folding =~ 'l' : fold Lua      script
-   g:vimsyn_folding =~ 'p' : fold Perl     script
-   g:vimsyn_folding =~ 'P' : fold Python   script
-   g:vimsyn_folding =~ 'r' : fold Ruby     script
+   g:vimsyn_folding =~ 'h' : fold let heredocs
+   g:vimsyn_folding =~ 'l' : fold Lua      heredocs
+   g:vimsyn_folding =~ 'p' : fold Perl     heredocs
+   g:vimsyn_folding =~ 'P' : fold Python   heredocs
+   g:vimsyn_folding =~ 'r' : fold Ruby     heredocs
 <
 
 By default, g:vimsyn_folding is unset.  Concatenate the indicated characters
@@ -4820,16 +4845,20 @@ is mostly used, because it looks better.
 ==============================================================================
 13. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
 
-There are two types of highlight groups:
-- The built-in |highlight-groups|.
-- The ones used for specific languages.  For these the name starts with the
-  name of the language.  Many of these don't have any attributes, but are
-  linked to a group of the second type.
-							*hitest.vim*
-You can see all the groups currently active with this command: >
-    :so $VIMRUNTIME/syntax/hitest.vim
-This will open a new window containing all highlight group names, displayed
-in their own color.
+Nvim uses a range of highlight groups which fall into two categories: Editor
+interface and syntax highlighting. In rough order of importance, these are
+- basic editor |highlight-groups|
+- standard syntax |group-name|s (in addition, syntax files can define
+  language-specific groups, which are prefixed with the language name)
+- |diagnostic-highlights|
+- |treesitter-highlight-groups|
+- |lsp-semantic-highlight| groups
+- |lsp-highlight| of symbols and references
+
+Where appropriate, highlight groups are linked by default to one of the more basic
+groups, but colorschemes are expected to cover all of them. Under each tag,
+the corresponding highlight groups are highlighted using the current
+colorscheme.
 
 						*:colo* *:colorscheme* *E185*
 :colo[rscheme]		Output the name of the currently active color scheme.
@@ -5168,13 +5197,20 @@ DiffChange	Diff mode: Changed line. |diff.txt|
 DiffDelete	Diff mode: Deleted line. |diff.txt|
 							*hl-DiffText*
 DiffText	Diff mode: Changed text within a changed line. |diff.txt|
+							*hl-DiffTextAdd*
+DiffTextAdd	Diff mode: Added text within a changed line.  Linked to
+		|hl-DiffText| by default. |diff.txt|
 							*hl-EndOfBuffer*
-EndOfBuffer	Filler lines (~) after the end of the buffer.
+EndOfBuffer	Filler lines (~) after the last line in the buffer.
 		By default, this is highlighted like |hl-NonText|.
 							*hl-TermCursor*
 TermCursor	Cursor in a focused terminal.
 							*hl-ErrorMsg*
 ErrorMsg	Error messages on the command line.
+							*hl-StderrMsg*
+StderrMsg	Messages in stderr from shell commands.
+							*hl-StdoutMsg*
+StdoutMsg	Messages in stdout from shell commands.
 							*hl-WinSeparator*
 WinSeparator	Separators between window splits.
 							*hl-Folded*

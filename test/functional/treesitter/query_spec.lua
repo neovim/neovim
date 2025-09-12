@@ -8,7 +8,6 @@ local insert = n.insert
 local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local api = n.api
-local fn = n.fn
 
 local function get_query_result(query_text)
   local cquery = vim.treesitter.query.parse('c', query_text)
@@ -386,8 +385,8 @@ void ui_refresh(void)
       [[((primitive_type) @c-keyword (#any-of? @c-keyword "int" "float"))]]
     )
     eq({
-      { 'c-keyword', 'primitive_type', { 2, 2, 2, 5 }, 'int' },
-      { 'c-keyword', 'primitive_type', { 3, 4, 3, 7 }, 'int' },
+      { 'c-keyword', 'primitive_type', { 2, 0, 2, 3 }, 'int' },
+      { 'c-keyword', 'primitive_type', { 3, 2, 3, 5 }, 'int' },
     }, res0)
 
     local res1 = exec_lua(
@@ -401,9 +400,9 @@ void ui_refresh(void)
       ]]
     )
     eq({
-      { 'fizzbuzz-strings', 'string_literal', { 6, 15, 6, 38 }, '"number= %d FizzBuzz\\n"' },
-      { 'fizzbuzz-strings', 'string_literal', { 8, 15, 8, 34 }, '"number= %d Fizz\\n"' },
-      { 'fizzbuzz-strings', 'string_literal', { 10, 15, 10, 34 }, '"number= %d Buzz\\n"' },
+      { 'fizzbuzz-strings', 'string_literal', { 6, 13, 6, 36 }, '"number= %d FizzBuzz\\n"' },
+      { 'fizzbuzz-strings', 'string_literal', { 8, 13, 8, 32 }, '"number= %d Fizz\\n"' },
+      { 'fizzbuzz-strings', 'string_literal', { 10, 13, 10, 32 }, '"number= %d Buzz\\n"' },
     }, res1)
   end)
 
@@ -550,7 +549,7 @@ void ui_refresh(void)
       end)
 
       -- Remove this 'do' block in 0.12
-      eq(0, fn.has('nvim-0.12'))
+      -- eq(0, n.fn.has('nvim-0.12'))
       eq({ { 0, 4, 0, 8 } }, res)
     end
 
@@ -608,9 +607,9 @@ void ui_refresh(void)
 
     eq(
       {
-        { 0, 2, 0, 8 },
-        { 1, 2, 1, 8 },
-        { 2, 2, 2, 8 },
+        { 0, 0, 0, 6 },
+        { 1, 0, 1, 6 },
+        { 2, 0, 2, 6 },
       },
       test(
         [[
@@ -636,9 +635,9 @@ void ui_refresh(void)
 
     eq(
       {
-        { 0, 2, 0, 7 },
-        { 1, 2, 1, 8 },
-        { 2, 2, 2, 7 },
+        { 0, 0, 0, 5 },
+        { 1, 0, 1, 6 },
+        { 2, 0, 2, 5 },
       },
       test(
         [[
@@ -675,15 +674,15 @@ void ui_refresh(void)
     end)
 
     eq({
-      { 0, 2, 0, 12 },
-      { 1, 2, 1, 12 },
-      { 2, 2, 2, 12 },
+      { 0, 0, 0, 10 },
+      { 1, 0, 1, 10 },
+      { 2, 0, 2, 10 },
     }, result)
   end)
 
   it('supports the old broken version of iter_matches #24738', function()
     -- Delete this test in 0.12 when iter_matches is removed
-    eq(0, fn.has('nvim-0.12'))
+    -- eq(0, n.fn.has('nvim-0.12'))
 
     insert(test_text)
     local res = exec_lua(function()
@@ -910,6 +909,54 @@ void ui_refresh(void)
       end)
 
       eq({ 2, { 1, 1, 2, 2 } }, result)
+    end)
+  end)
+
+  describe('TSQuery', function()
+    local source = [[
+      void foo(int x, int y);
+    ]]
+
+    local query_text = [[
+      ((identifier) @func
+        (#eq? @func "foo"))
+      ((identifier) @param
+        (#eq? @param "x"))
+      ((identifier) @param
+        (#eq? @param "y"))
+    ]]
+
+    ---@param query string
+    ---@param disabled { capture: string?, pattern: integer? }
+    local function get_patterns(query, disabled)
+      local q = vim.treesitter.query.parse('c', query)
+      if disabled.capture then
+        q.query:disable_capture(disabled.capture)
+      end
+      if disabled.pattern then
+        q.query:disable_pattern(disabled.pattern)
+      end
+
+      local parser = vim.treesitter.get_parser(0, 'c')
+      local root = parser:parse()[1]:root()
+      local captures = {} ---@type {id: number, pattern: number}[]
+      for id, _, _, match in q:iter_captures(root, 0) do
+        local _, pattern = match:info()
+        captures[#captures + 1] = { id = id, pattern = pattern }
+      end
+      return captures
+    end
+
+    it('supports disabling patterns', function()
+      insert(source)
+      local result = exec_lua(get_patterns, query_text, { pattern = 2 })
+      eq({ { id = 1, pattern = 1 }, { id = 2, pattern = 3 } }, result)
+    end)
+
+    it('supports disabling captures', function()
+      insert(source)
+      local result = exec_lua(get_patterns, query_text, { capture = 'param' })
+      eq({ { id = 1, pattern = 1 } }, result)
     end)
   end)
 end)

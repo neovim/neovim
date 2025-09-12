@@ -53,6 +53,18 @@ describe('vim.system', function()
 
   for name, system in pairs { sync = system_sync, async = system_async } do
     describe('(' .. name .. ')', function()
+      it('failure modes', function()
+        t.matches(
+          "ENOENT%: no such file .* %(cmd%): 'non%-existent%-cmd'",
+          t.pcall_err(system, { 'non-existent-cmd', 'arg1', 'arg2' }, { text = true })
+        )
+
+        t.matches(
+          "ENOENT%: no such file .* %(cwd%): 'non%-existent%-cwd'",
+          t.pcall_err(system, { 'echo', 'hello' }, { cwd = 'non-existent-cwd', text = true })
+        )
+      end)
+
       it('can run simple commands', function()
         eq('hello\n', system({ 'echo', 'hello' }, { text = true }).stdout)
       end)

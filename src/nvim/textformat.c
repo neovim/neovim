@@ -355,7 +355,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state, we will backspace over the text to be
       // wrapped, so save a copy now to put on the next line.
-      saved_text = xstrdup(get_cursor_pos_ptr());
+      saved_text = xstrnsave(get_cursor_pos_ptr(), (size_t)get_cursor_pos_len());
       curwin->w_cursor.col = orig_col;
       saved_text[startcol] = NUL;
 
@@ -547,7 +547,7 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
 
   // Get current line and next line, compare the leaders.
   // The first line has to be saved, only one line can be locked at a time.
-  char *line1 = xstrdup(ml_get(lnum));
+  char *line1 = xstrnsave(ml_get(lnum), (size_t)ml_get_len(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
   char *line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; idx2++) {
@@ -734,7 +734,7 @@ void check_auto_format(bool end_insert)
 
 /// Find out textwidth to be used for formatting:
 ///      if 'textwidth' option is set, use it
-///      else if 'wrapmargin' option is set, use curwin->w_width_inner-'wrapmargin'
+///      else if 'wrapmargin' option is set, use curwin->w_view_width-'wrapmargin'
 ///      if invalid value, use 0.
 ///      Set default to window width (maximum 79) for "gq" operator.
 ///
@@ -745,7 +745,7 @@ int comp_textwidth(bool ff)
   if (textwidth == 0 && curbuf->b_p_wm) {
     // The width is the window width minus 'wrapmargin' minus all the
     // things that add to the margin.
-    textwidth = curwin->w_width_inner - (int)curbuf->b_p_wm;
+    textwidth = curwin->w_view_width - (int)curbuf->b_p_wm;
     if (curbuf == cmdwin_buf) {
       textwidth -= 1;
     }
@@ -758,7 +758,7 @@ int comp_textwidth(bool ff)
   }
   textwidth = MAX(textwidth, 0);
   if (ff && textwidth == 0) {
-    textwidth = MIN(curwin->w_width_inner - 1, 79);
+    textwidth = MIN(curwin->w_view_width - 1, 79);
   }
   return textwidth;
 }
@@ -865,7 +865,7 @@ int fex_format(linenr_T lnum, long count, int c)
 
   // Make a copy, the option could be changed while calling it.
   char *fex = xstrdup(curbuf->b_p_fex);
-  current_sctx = curbuf->b_p_script_ctx[kBufOptFormatexpr].script_ctx;
+  current_sctx = curbuf->b_p_script_ctx[kBufOptFormatexpr];
 
   // Evaluate the function.
   if (use_sandbox) {

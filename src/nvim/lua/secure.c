@@ -26,7 +26,7 @@ char *nlua_read_secure(const char *path)
   lua_getfield(lstate, -1, "read");
   lua_pushstring(lstate, path);
   if (nlua_pcall(lstate, 1, 1)) {
-    nlua_error(lstate, _("Error executing vim.secure.read: %.*s"));
+    nlua_error(lstate, _("vim.secure.read: %.*s"));
     lua_settop(lstate, top);
     return NULL;
   }
@@ -68,7 +68,7 @@ static bool nlua_trust(const char *action, const char *path)
   }
 
   if (nlua_pcall(lstate, 1, 2)) {
-    nlua_error(lstate, _("Error executing vim.secure.trust: %.*s"));
+    nlua_error(lstate, _("vim.secure.trust: %.*s"));
     lua_settop(lstate, top);
     return false;
   }

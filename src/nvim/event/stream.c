@@ -120,7 +120,7 @@ void stream_may_close(Stream *stream, bool rstream)
 
   if (!stream->pending_reqs) {
     stream_close_handle(stream, rstream);
-  }
+  }  // Else: rstream.c:read_event() or wstream.c:write_cb() will call stream_close_handle().
 }
 
 void stream_close_handle(Stream *stream, bool rstream)

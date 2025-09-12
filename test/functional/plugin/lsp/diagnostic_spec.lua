@@ -108,7 +108,7 @@ describe('vim.lsp.diagnostic', function()
 
     exec_lua(function()
       diagnostic_bufnr = vim.uri_to_bufnr(fake_uri)
-      local lines = { '1st line of text', '2nd line of text', 'wow', 'cool', 'more', 'lines' }
+      local lines = { '1st line', '2nd line of text', 'wow', 'cool', 'more', 'lines' }
       vim.fn.bufload(diagnostic_bufnr)
       vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
       vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
@@ -215,7 +215,8 @@ describe('vim.lsp.diagnostic', function()
             diagnosticProvider = {},
           },
           handlers = {
-            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function()
+            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function(_, params)
+              _G.params = params
               _G.requests = _G.requests + 1
             end,
           },
@@ -275,12 +276,43 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
 
         return vim.diagnostic.get(diagnostic_bufnr)
       end)
       eq(1, #diags)
       eq('Pull Diagnostic', diags[1].message)
+    end)
+
+    it('handles multiline diagnostic ranges #33782', function()
+      local diags = exec_lua(function()
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {
+            _G.make_error('Pull Diagnostic', 0, 6, 1, 10),
+          },
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        return vim.diagnostic.get(diagnostic_bufnr)
+      end)
+      local lines = exec_lua(function()
+        return vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, -1, false)
+      end)
+      -- This test case must be run over a multiline diagnostic in which the start line is shorter
+      -- than the end line, and the end_col exceeds the start line's length.
+      eq(#lines[1], 8)
+      eq(#lines[2], 16)
+      eq(1, #diags)
+      eq(6, diags[1].col)
+      eq(10, diags[1].end_col)
     end)
 
     it('severity defaults to error if missing', function()
@@ -300,6 +332,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
         return vim.diagnostic.get(diagnostic_bufnr)
       end)
@@ -320,6 +353,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
       end)
 
@@ -358,6 +392,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
       end)
 
@@ -392,6 +427,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
@@ -408,6 +444,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
@@ -424,9 +461,40 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
+        end)
+      )
+    end)
+
+    it('requests with the `previousResultId`', function()
+      eq(
+        'dummy_server',
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic(nil, {
+            kind = 'full',
+            resultId = 'dummy_server',
+            items = {
+              _G.make_error('Pull Diagnostic', 4, 4, 4, 4),
+            },
+          }, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            client_id = client_id,
+            bufnr = diagnostic_bufnr,
+          })
+          vim.api.nvim_exec_autocmds('LspNotify', {
+            buffer = diagnostic_bufnr,
+            data = {
+              method = vim.lsp.protocol.Methods.textDocument_didChange,
+              client_id = client_id,
+            },
+          })
+          return _G.params.previousResultId
         end)
       )
     end)

@@ -122,12 +122,12 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
       }
     }
   } else {
-    int width = wp->w_width_inner - win_col_off(wp);
+    int width = wp->w_view_width - win_col_off(wp);
     int csize = 0;
 
     if (finetune
         && wp->w_p_wrap
-        && wp->w_width_inner != 0
+        && wp->w_view_width != 0
         && wcol >= (colnr_T)width
         && width > 0) {
       csize = linetabsize_eol(wp, pos->lnum);
@@ -233,7 +233,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
       int b = (int)wcol - (int)col;
 
       // The difference between wcol and col is used to set coladd.
-      if (b > 0 && b < (MAXCOL - 2 * wp->w_width_inner)) {
+      if (b > 0 && b < (MAXCOL - 2 * wp->w_view_width)) {
         pos->coladd = b;
       }
 
@@ -437,7 +437,7 @@ bool set_leftcol(colnr_T leftcol)
   changed_cline_bef_curs(curwin);
   // TODO(hinidu): I think it should be colnr_T or int, but p_siso is long.
   // Perhaps we can change p_siso to int.
-  int64_t lastcol = curwin->w_leftcol + curwin->w_width_inner - win_col_off(curwin) - 1;
+  int64_t lastcol = curwin->w_leftcol + curwin->w_view_width - win_col_off(curwin) - 1;
   validate_virtcol(curwin);
 
   bool retval = false;

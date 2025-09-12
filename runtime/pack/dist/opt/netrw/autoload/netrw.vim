@@ -2663,7 +2663,7 @@ fun! netrw#NetWrite(...) range
 endfun
 
 " ---------------------------------------------------------------------
-" netrw#NetSource: source a remotely hosted vim script {{{2
+" netrw#NetSource: source a remotely hosted Vim script {{{2
 " uses NetRead to get a copy of the file into a temporarily file,
 "              then sources that file,
 "              then removes that file.

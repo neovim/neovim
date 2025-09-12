@@ -3,7 +3,7 @@ set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
 set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
 set(GENERATED_PACKAGE_DIR ${GENERATED_RUNTIME_DIR}/pack/dist/opt)
 set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
-set(SYN_VIM_GENERATOR ${PROJECT_SOURCE_DIR}/src/nvim/generators/gen_vimvim.lua)
+set(SYN_VIM_GENERATOR ${PROJECT_SOURCE_DIR}/src/gen/gen_vimvim.lua)
 
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax/vim)
 
@@ -12,12 +12,17 @@ get_directory_property(LUA_GEN_DEPS DIRECTORY ${PROJECT_SOURCE_DIR}/src/nvim DEF
 
 add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
   COMMAND ${LUA_GEN} ${SYN_VIM_GENERATOR} ${GENERATED_SYN_VIM} ${FUNCS_DATA}
+    ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
   DEPENDS
     ${LUA_GEN_DEPS}
     ${SYN_VIM_GENERATOR}
     ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.c
     ${FUNCS_DATA}
 )

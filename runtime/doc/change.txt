@@ -141,8 +141,8 @@ the 'joinspaces' option is on, these commands insert two spaces after a '.',
 The 'B' and 'M' flags in 'formatoptions' change the behavior for inserting
 spaces before and after a multibyte character |fo-table|.
 
-The '[ mark is set at the end of the first line that was joined, '] at the end
-of the resulting line.
+The |'[| mark is set at the end of the first line that was joined, |']| at the
+end of the resulting line.
 
 
 ==============================================================================
@@ -282,9 +282,9 @@ gr{char}		Replace the virtual characters under the cursor with
 			most CTRL-keys, cannot be used.
 
 							*gr-default*
-			Nvim creates default mappings with "gr" as a prefix,
-			which may inhibit the behavior of |gr|. Use the
-			following to restore the builtin behavior: >
+			Nvim creates |lsp-defaults| mappings which may inhibit
+			the builtin behavior of |gr|. Use this to restore the
+			builtin behavior: >
 				nnoremap <nowait> gr gr
 <
 
@@ -367,7 +367,7 @@ CTRL-A			Add [count] to the number or alphabetic character at
 							*v_g_CTRL-A*
 {Visual}g CTRL-A	Add [count] to the number or alphabetic character in
 			the highlighted text. If several lines are
-		        highlighted, each one will be incremented by an
+			highlighted, each one will be incremented by an
 			additional [count] (so effectively creating a
 			[count] incrementing sequence).
 			For Example, if you have this list of numbers:
@@ -644,8 +644,9 @@ original user.
 			Repeat last :substitute with same search pattern and
 			substitute string, but without the same flags.  You
 			may add [flags], see |:s_flags|.
-			Note that after `:substitute` the '&' flag can't be
-			used, it's recognized as a pattern separator.
+			Note that after `:substitute` the '&' and '#' flags
+			can't be used, they're recognized as a pattern
+			separator.
 			The space between `:substitute` and the 'c', 'g',
 			'i', 'I' and 'r' flags isn't required, but in scripts
 			it's a good idea to keep it to avoid confusion.
@@ -1105,6 +1106,11 @@ inside of strings can change!  Also see 'softtabstop' option. >
 :[line]pu[t]! [x]	Put the text [from register x] before [line] (default
 			current line).
 
+							*:ip* *:iput*
+:[line]ip[ut] [x]	like |:put|, but adjust indent to the current line
+
+:[line]ip[ut]! [x]	like |:put|!, but adjust indent to the current line
+
 ["x]]p		    or					*]p* *]<MiddleMouse>*
 ["x]]<MiddleMouse>	Like "p", but adjust the indent to the current line.
 			Using the mouse only works when 'mouse' contains 'n'
@@ -1139,8 +1145,8 @@ the ":put" command, Vim always inserts the text in the next line.  You can
 exchange two characters with the command sequence "xp".  You can exchange two
 lines with the command sequence "ddp".  You can exchange two words with the
 command sequence "deep" (start with the cursor in the blank space before the
-first word).  You can use the "']" or "`]" command after the put command to
-move the cursor to the end of the inserted text, or use "'[" or "`[" to move
+first word).  You can use the |']| or |`]| command after the put command to
+move the cursor to the end of the inserted text, or use |'[| or |`[| to move
 the cursor to the start.
 
 						*put-Visual-mode* *v_p* *v_P*
@@ -1239,6 +1245,18 @@ mapped.  E.g. |%| is mapped by the matchit plugin.
    With each successive deletion or change, Vim shifts the previous contents
 of register 1 into register 2, 2 into 3, and so forth, losing the previous
 contents of register 9.
+							*yankring*
+To also store yanks (not only deletions) in registers 1-9, try this: >lua
+    -- Yank-ring: store yanked text in registers 1-9.
+    vim.api.nvim_create_autocmd('TextYankPost', {
+      callback = function()
+        if vim.v.event.operator == 'y' then
+          for i = 9, 1, -1 do -- Shift all numbered registers.
+            vim.fn.setreg(tostring(i), vim.fn.getreg(tostring(i - 1)))
+          end
+        end
+      end,
+    })
 
 3. Small delete register "-				*quote_-* *quote-*
 This register contains text from commands that delete less than one line,
@@ -1714,7 +1732,7 @@ B	When joining lines, don't insert a space between two multibyte
 j	Where it makes sense, remove a comment leader when joining lines.  For
 	example, joining:
 		int i;   // the index ~
-		         // in the list ~
+			 // in the list ~
 	Becomes:
 		int i;   // the index in the list ~
 							*fo-p*

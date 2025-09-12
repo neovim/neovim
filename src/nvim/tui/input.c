@@ -21,6 +21,7 @@
 #include "nvim/tui/input_defs.h"
 #include "nvim/tui/termkey/driver-csi.h"
 #include "nvim/tui/termkey/termkey.h"
+#include "nvim/tui/termkey/termkey_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ui_client.h"
 
@@ -137,15 +138,14 @@ void tinput_init(TermInput *input, Loop *loop)
     pmap_put(int)(&kitty_key_map, kitty_key_map_entry[i].key, (ptr_t)kitty_key_map_entry[i].name);
   }
 
-  input->in_fd = STDIN_FILENO;
+  const char *term = os_getenv_noalloc("TERM");
 
-  const char *term = os_getenv("TERM");
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
 
-  input->tk = termkey_new_abstract(term,
-                                   TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
+  input->tk = termkey_new_abstract(term, (TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART
+                                          | TERMKEY_FLAG_KEEPC0));
   termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE);
   termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, input);
   termkey_start(input->tk);
@@ -248,6 +248,13 @@ static size_t handle_termkey_modifiers(TermKeyKey *key, char *buf, size_t buflen
   return len;
 }
 
+enum {
+  KEYMOD_SUPER      = 1 << 3,
+  KEYMOD_META       = 1 << 5,
+  KEYMOD_RECOGNIZED = (TERMKEY_KEYMOD_SHIFT | TERMKEY_KEYMOD_ALT | TERMKEY_KEYMOD_CTRL
+                       | KEYMOD_SUPER | KEYMOD_META),
+};
+
 /// Handle modifiers not handled by libtermkey.
 /// Currently only Super ("D-") and Meta ("T-") are supported in Nvim.
 ///
@@ -256,10 +263,10 @@ static size_t handle_more_modifiers(TermKeyKey *key, char *buf, size_t buflen)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t len = 0;
-  if (key->modifiers & 8) {  // Super
+  if (key->modifiers & KEYMOD_SUPER) {
     len += (size_t)snprintf(buf + len, buflen - len, "D-");
   }
-  if (key->modifiers & 32) {  // Meta
+  if (key->modifiers & KEYMOD_META) {
     len += (size_t)snprintf(buf + len, buflen - len, "T-");
   }
   assert(len < buflen);
@@ -444,7 +451,7 @@ static void tk_getkeys(TermInput *input, bool force)
       continue;
     }
 
-    if (key.type == TERMKEY_TYPE_UNICODE && !key.modifiers) {
+    if (key.type == TERMKEY_TYPE_UNICODE && !(key.modifiers & KEYMOD_RECOGNIZED)) {
       forward_simple_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNICODE
                || key.type == TERMKEY_TYPE_FUNCTION
@@ -642,24 +649,19 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     switch (initial) {
     case '?':
       // Kitty keyboard protocol query response.
-      if (input->waiting_for_kkp_response) {
-        input->waiting_for_kkp_response = false;
-        input->key_encoding = kKeyEncodingKitty;
-        tui_set_key_encoding(input->tui_data);
-      }
-
+      input->key_encoding = kKeyEncodingKitty;
       break;
     }
     break;
   case 'c':
     switch (initial) {
     case '?':
-      // Primary Device Attributes response
-      if (input->waiting_for_kkp_response) {
-        input->waiting_for_kkp_response = false;
-
-        // Enable the fallback key encoding (if any)
-        tui_set_key_encoding(input->tui_data);
+      // Primary Device Attributes (DA1) response
+      if (input->callbacks.primary_device_attr) {
+        void (*cb_save)(TUIData *) = input->callbacks.primary_device_attr;
+        // Clear the callback before invoking it, as it may set a new callback. #34031
+        input->callbacks.primary_device_attr = NULL;
+        cb_save(input->tui_data);
       }
 
       break;

@@ -1101,6 +1101,50 @@ func Test_exclusive_selection()
   bw!
 endfunc
 
+" Test for inclusive motion in visual mode with 'exclusive' selection
+func Test_inclusive_motion_selection_exclusive()
+  func s:compare_exclu_inclu(line, keys, expected_exclu)
+    let msg = "data: '" . a:line . "' operation: '" . a:keys . "'"
+    call setline(1, a:line)
+    set selection=exclusive
+    call feedkeys(a:keys, 'xt')
+    call assert_equal(a:expected_exclu, getpos('.'), msg)
+    let pos_ex = col('.')
+    set selection=inclusive
+    call feedkeys(a:keys, 'xt')
+    let pos_in = col('.')
+    call assert_equal(1, pos_ex - pos_in, msg)
+  endfunc
+
+  new
+  " Test 'e' motion
+  set selection=exclusive
+  call setline(1, 'eins zwei drei')
+  norm! ggvey
+  call assert_equal('eins', @")
+  call setline(1, 'abc(abc)abc')
+  norm! ggveeed
+  call assert_equal(')abc', getline(1))
+  call setline(1, 'abc(abc)abc')
+  norm! gg3lvey
+  call assert_equal('(abc', @")
+  call s:compare_exclu_inclu('abc(abc)abc', 'ggveee', [0, 1, 8, 0])
+  " Test 'f' motion
+  call s:compare_exclu_inclu('geschwindigkeit', 'ggvfefe', [0, 1, 14, 0])
+  call s:compare_exclu_inclu('loooooooooooong', 'ggv2fo2fo2fo', [0, 1, 8, 0])
+  " Test 't' motion
+  call s:compare_exclu_inclu('geschwindigkeit', 'ggv2te', [0, 1, 13, 0])
+  call s:compare_exclu_inclu('loooooooooooong', 'gglv2to2to2to', [0, 1, 6, 0])
+  " Test ';' motion
+  call s:compare_exclu_inclu('geschwindigkeit', 'ggvfi;;', [0, 1, 15, 0])
+  call s:compare_exclu_inclu('geschwindigkeit', 'ggvti;;', [0, 1, 14, 0])
+  call s:compare_exclu_inclu('loooooooooooong', 'ggv2fo;;', [0, 1, 6, 0])
+  call s:compare_exclu_inclu('loooooooooooong', 'ggvl2to;;', [0, 1, 6, 0])
+  " Clean up
+  set selection&
+  bw!
+endfunc
+
 " Test for starting linewise visual with a count.
 " This test needs to be run without any previous visual mode. Otherwise the
 " count will use the count from the previous visual mode.

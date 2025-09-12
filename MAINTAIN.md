@@ -81,7 +81,7 @@ When a (non-experimental) feature is slated to be removed it should:
       as described for Lua features.
     - `vim.deprecate(…, 'x.y.z')` where major version `x` is greater than the
       current Nvim major version, is always treated as _soft_ deprecation.
-2. Be _hard_ deprecated in a following a release in which it was soft deprecated.
+2. Be _hard_ deprecated in a release following the release in which it was soft deprecated.
     - Use of the deprecated feature will still work but should issue a warning.
     - Features implemented in C will need bespoke implementations to communicate
       to users that the feature is deprecated.
@@ -127,7 +127,9 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [LuaJIT](https://github.com/LuaJIT/LuaJIT)
 * [Lua](https://www.lua.org/download.html)
 * [Luv](https://github.com/luvit/luv)
-    * When bumping, also sync [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs.md).
+    * When bumping, also sync
+      - [our bundled meta file](https://github.com/neovim/neovim/blob/master/runtime/lua/uv/_meta.lua) with [the upstream meta file](https://github.com/luvit/luv/blob/master/meta.lua);
+      - [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs.md).
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libuv](https://github.com/libuv/libuv)
@@ -152,7 +154,7 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.
 * `runtime/lua/vim/lsp/_meta/protocol.lua`: LSP specification
-    * Run `scripts/gen_lsp.lua` to update.
+    * Run `src/gen/gen_lsp.lua` to update.
 * `runtime/lua/vim/_meta/lpeg.lua`: LPeg definitions.
     * Refer to [`LuaCATS/lpeg`](https://github.com/LuaCATS/lpeg) for updates.
     * Update the git SHA revision from which the documentation was taken.
@@ -241,4 +243,4 @@ See also
 --------
 
 * https://github.com/neovim/neovim/issues/862
-* https://github.com/git/git/blob/master/Documentation/howto/maintain-git.txt
+* https://github.com/git/git/blob/master/Documentation/howto/maintain-git.adoc

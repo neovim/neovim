@@ -6,17 +6,6 @@ local uv = vim.uv
 
 local M = {}
 
-local default_border = {
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { ' ', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { ' ', 'NormalFloat' },
-}
-
 --- @param border string|(string|[string,string])[]
 local function border_error(border)
   error(
@@ -35,6 +24,7 @@ local border_size = {
   rounded = { 2, 2 },
   solid = { 2, 2 },
   shadow = { 1, 1 },
+  bold = { 2, 2 },
 }
 
 --- Check the border given by opts or the default border for the additional
@@ -43,7 +33,11 @@ local border_size = {
 --- @return integer height
 --- @return integer width
 local function get_border_size(opts)
-  local border = opts and opts.border or default_border
+  local border = opts and opts.border or vim.o.winborder
+
+  if border == '' then
+    border = 'none'
+  end
 
   if type(border) == 'string' then
     if not border_size[border] then
@@ -884,7 +878,7 @@ function M.make_floating_popup_options(width, height, opts)
       or 'cursor',
     style = 'minimal',
     width = width,
-    border = opts.border or default_border,
+    border = opts.border,
     zindex = opts.zindex or (api.nvim_win_get_config(0).zindex or 49) + 1,
     title = title,
     title_pos = title_pos,
@@ -1086,6 +1080,7 @@ local function get_markdown_fences()
   return fences
 end
 
+--- @deprecated
 --- Converts markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
 --- This will by default insert a blank line separator after those code block
@@ -1106,6 +1101,7 @@ end
 ---  - separator insert separator after code block
 ---@return table stripped content
 function M.stylize_markdown(bufnr, contents, opts)
+  vim.deprecate('vim.lsp.util.stylize_markdown', nil, '0.14')
   validate('contents', contents, 'table')
   validate('opts', opts, 'table', true)
   opts = opts or {}
@@ -1145,10 +1141,8 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- Clean up
   contents = vim.split(table.concat(contents, '\n'), '\n', { trimempty = true })
 
-  local stripped = {}
+  local stripped = {} --- @type string[]
   local highlights = {} --- @type {ft:string,start:integer,finish:integer}[]
-  -- keep track of lnums that contain markdown
-  local markdown_lines = {} --- @type table<integer,boolean>
 
   local i = 1
   while i <= #contents do
@@ -1163,7 +1157,7 @@ function M.stylize_markdown(bufnr, contents, opts)
           i = i + 1
           break
         end
-        table.insert(stripped, line)
+        stripped[#stripped + 1] = line
         i = i + 1
       end
       table.insert(highlights, {
@@ -1173,30 +1167,23 @@ function M.stylize_markdown(bufnr, contents, opts)
       })
       -- add a separator, but not on the last line
       if opts.separator and i < #contents then
-        table.insert(stripped, '---')
-        markdown_lines[#stripped] = true
+        stripped[#stripped + 1] = '---'
       end
     else
       -- strip any empty lines or separators prior to this separator in actual markdown
       if line:match('^---+$') then
         while
-          markdown_lines[#stripped]
+          stripped[#stripped]
           and (stripped[#stripped]:match('^%s*$') or stripped[#stripped]:match('^---+$'))
         do
-          markdown_lines[#stripped] = false
-          table.remove(stripped, #stripped)
+          stripped[#stripped] = nil
         end
       end
       -- add the line if its not an empty line following a separator
       if
-        not (
-          line:match('^%s*$')
-          and markdown_lines[#stripped]
-          and stripped[#stripped]:match('^---+$')
-        )
+        not (line:match('^%s*$') and stripped[#stripped] and stripped[#stripped]:match('^---+$'))
       then
-        table.insert(stripped, line)
-        markdown_lines[#stripped] = true
+        stripped[#stripped + 1] = line
       end
       i = i + 1
     end
@@ -1227,7 +1214,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   local sep_line = string.rep('─', math.min(width, opts.wrap_at or width))
 
-  for l in pairs(markdown_lines) do
+  for l in ipairs(stripped) do
     if stripped[l]:match('^---+$') then
       stripped[l] = sep_line
     end
@@ -1345,7 +1332,7 @@ local function close_preview_window(winnr, bufnrs)
       return
     end
 
-    local augroup = 'preview_window_' .. winnr
+    local augroup = 'nvim.preview_window_' .. winnr
     pcall(api.nvim_del_augroup_by_name, augroup)
     pcall(api.nvim_win_close, winnr, true)
   end)
@@ -1418,9 +1405,15 @@ function M._make_floating_popup_size(contents, opts)
   width = math.min(width, screen_width - border_width)
 
   -- Make sure that the width is large enough to fit the title.
-  if opts.title then
-    width = math.max(width, vim.fn.strdisplaywidth(opts.title))
+  local title_length = 0
+  local chunks = type(opts.title) == 'string' and { { opts.title } } or opts.title or {}
+  for _, chunk in
+    ipairs(chunks --[=[@as [string, string][]]=])
+  do
+    title_length = title_length + vim.fn.strdisplaywidth(chunk[1])
   end
+
+  width = math.max(width, title_length)
 
   if wrap_at then
     wrap_at = math.min(wrap_at, width)
@@ -1497,12 +1490,13 @@ end
 --- @field offset_y? integer
 --- @field border? string|(string|[string,string])[] override `border`
 --- @field zindex? integer override `zindex`, defaults to 50
---- @field title? string
+--- @field title? string|[string,string][]
 --- @field title_pos? 'left'|'center'|'right'
 ---
 --- (default: `'cursor'`)
 --- @field relative? 'mouse'|'cursor'|'editor'
 ---
+--- Adjusts placement relative to cursor.
 --- - "auto": place window based on which side of the cursor has more lines
 --- - "above": place the window above the cursor unless there are not enough lines
 ---   to display the full window height.
@@ -1621,23 +1615,24 @@ function M.open_floating_preview(contents, syntax, opts)
       api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
     end
     api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
+    api.nvim_win_set_var(floating_winnr, 'lsp_floating_bufnr', bufnr)
   end
 
-  local augroup_name = ('nvim.closing_floating_preview_%d'):format(floating_winnr)
-  local ok =
-    pcall(api.nvim_get_autocmds, { group = augroup_name, pattern = tostring(floating_winnr) })
-  if not ok then
-    api.nvim_create_autocmd('WinClosed', {
-      group = api.nvim_create_augroup(augroup_name, {}),
-      pattern = tostring(floating_winnr),
-      callback = function()
-        if api.nvim_buf_is_valid(bufnr) then
-          vim.b[bufnr].lsp_floating_preview = nil
-        end
-        api.nvim_del_augroup_by_name(augroup_name)
-      end,
-    })
-  end
+  api.nvim_create_autocmd('WinClosed', {
+    group = api.nvim_create_augroup('nvim.closing_floating_preview', { clear = true }),
+    callback = function(args)
+      local winid = tonumber(args.match)
+      local ok, preview_bufnr = pcall(api.nvim_win_get_var, winid, 'lsp_floating_bufnr')
+      if
+        ok
+        and api.nvim_buf_is_valid(preview_bufnr)
+        and winid == vim.b[preview_bufnr].lsp_floating_preview
+      then
+        vim.b[bufnr].lsp_floating_preview = nil
+        return true
+      end
+    end,
+  })
 
   vim.wo[floating_winnr].foldenable = false -- Disable folding.
   vim.wo[floating_winnr].wrap = opts.wrap -- Soft wrapping.
@@ -1649,8 +1644,17 @@ function M.open_floating_preview(contents, syntax, opts)
 
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
+    vim.wo[floating_winnr].concealcursor = 'n'
     vim.bo[floating_bufnr].filetype = 'markdown'
     vim.treesitter.start(floating_bufnr)
+    if not opts.height then
+      -- Reduce window height if TS highlighter conceals code block backticks.
+      local win_height = api.nvim_win_get_height(floating_winnr)
+      local text_height = api.nvim_win_text_height(floating_winnr, { max_height = win_height }).all
+      if text_height < win_height then
+        api.nvim_win_set_height(floating_winnr, text_height)
+      end
+    end
   end
 
   return floating_bufnr, floating_winnr
@@ -1792,7 +1796,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       'symbols_to_items must be called with valid position encoding',
       vim.log.levels.WARN
     )
-    position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
+    position_encoding = vim.lsp.get_clients({ bufnr = bufnr })[1].offset_encoding
   end
 
   local items = {} --- @type vim.quickfix.entry[]
@@ -1890,7 +1894,7 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
----@param window integer?: window handle or 0 for current, defaults to current
+---@param window integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 local function make_position_param(window, position_encoding)
   window = window or 0
@@ -1909,7 +1913,7 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window integer?: window handle or 0 for current, defaults to current
+---@param window integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.TextDocumentPositionParams
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
@@ -1968,7 +1972,7 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window integer? window handle or 0 for current, defaults to current
+---@param window integer?: |window-ID| or 0 for current, defaults to current
 ---@param position_encoding "utf-8"|"utf-16"|"utf-32"
 ---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
 function M.make_range_params(window, position_encoding)
@@ -2161,7 +2165,7 @@ end
 ---@class (private) vim.lsp.util._cancel_requests.Filter
 ---@field bufnr? integer
 ---@field clients? vim.lsp.Client[]
----@field method? string
+---@field method? vim.lsp.protocol.Method.ClientToServer.Request
 ---@field type? string
 
 ---@private
@@ -2197,6 +2201,7 @@ end
 ---@field bufnr integer? Buffer to refresh (default: 0)
 ---@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
 ---@field client_id? integer Client ID to refresh (default: all clients)
+---@field handler? lsp.Handler
 
 ---@private
 --- Request updated LSP information for a buffer.
@@ -2230,7 +2235,7 @@ function M._refresh(method, opts)
           client:request(method, {
             textDocument = textDocument,
             range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
-          }, nil, bufnr)
+          }, opts.handler, bufnr)
         end
       end
     end
@@ -2244,7 +2249,7 @@ function M._refresh(method, opts)
           api.nvim_buf_line_count(bufnr) - 1,
           client.offset_encoding
         ),
-      }, nil, bufnr)
+      }, opts.handler, bufnr)
     end
   end
 end

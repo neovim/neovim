@@ -1,0 +1,491 @@
+#!/usr/bin/env -S nvim -l
+-- Generates lua-ls annotations for lsp.
+
+local USAGE = [[
+Generates lua-ls annotations for lsp.
+
+Also updates types in runtime/lua/vim/lsp/protocol.lua
+
+Usage:
+  src/gen/gen_lsp.lua [options]
+
+Options:
+  --version <version>  LSP version to use (default: 3.18)
+  --out <out>          Output file (default: runtime/lua/vim/lsp/_meta/protocol.lua)
+  --help               Print this help message
+]]
+
+--- The LSP protocol JSON data (it's partial, non-exhaustive).
+--- https://raw.githubusercontent.com/microsoft/language-server-protocol/gh-pages/_specifications/lsp/3.18/metaModel/metaModel.schema.json
+--- @class vim._gen_lsp.Protocol
+--- @field requests vim._gen_lsp.Request[]
+--- @field notifications vim._gen_lsp.Notification[]
+--- @field structures vim._gen_lsp.Structure[]
+--- @field enumerations vim._gen_lsp.Enumeration[]
+--- @field typeAliases vim._gen_lsp.TypeAlias[]
+
+--- @class vim._gen_lsp.Notification
+--- @field deprecated? string
+--- @field documentation? string
+--- @field messageDirection string
+--- @field clientCapability? string
+--- @field serverCapability? string
+--- @field method string
+--- @field params? any
+--- @field proposed? boolean
+--- @field registrationMethod? string
+--- @field registrationOptions? any
+--- @field since? string
+
+--- @class vim._gen_lsp.Request : vim._gen_lsp.Notification
+--- @field errorData? any
+--- @field partialResult? any
+--- @field result any
+
+--- @class vim._gen_lsp.Structure translated to @class
+--- @field deprecated? string
+--- @field documentation? string
+--- @field extends? { kind: string, name: string }[]
+--- @field mixins? { kind: string, name: string }[]
+--- @field name string
+--- @field properties? vim._gen_lsp.Property[]  members, translated to @field
+--- @field proposed? boolean
+--- @field since? string
+
+--- @class vim._gen_lsp.StructureLiteral translated to anonymous @class.
+--- @field deprecated? string
+--- @field description? string
+--- @field properties vim._gen_lsp.Property[]
+--- @field proposed? boolean
+--- @field since? string
+
+--- @class vim._gen_lsp.Property translated to @field
+--- @field deprecated? string
+--- @field documentation? string
+--- @field name string
+--- @field optional? boolean
+--- @field proposed? boolean
+--- @field since? string
+--- @field type { kind: string, name: string }
+
+--- @class vim._gen_lsp.Enumeration translated to @enum
+--- @field deprecated string?
+--- @field documentation string?
+--- @field name string?
+--- @field proposed boolean?
+--- @field since string?
+--- @field suportsCustomValues boolean?
+--- @field values { name: string, value: string, documentation?: string, since?: string }[]
+
+--- @class vim._gen_lsp.TypeAlias translated to @alias
+--- @field deprecated? string?
+--- @field documentation? string
+--- @field name string
+--- @field proposed? boolean
+--- @field since? string
+--- @field type vim._gen_lsp.Type
+
+--- @class vim._gen_lsp.Type
+--- @field kind string a common field for all Types.
+--- @field name? string for ReferenceType, BaseType
+--- @field element? any for ArrayType
+--- @field items? vim._gen_lsp.Type[] for OrType, AndType
+--- @field key? vim._gen_lsp.Type for MapType
+--- @field value? string|vim._gen_lsp.Type for StringLiteralType, MapType, StructureLiteralType
+
+--- @param fname string
+--- @param text string
+local function tofile(fname, text)
+  local f = assert(io.open(fname, 'w'), ('failed to open: %s'):format(fname))
+  f:write(text)
+  f:close()
+  print('Written to:', fname)
+end
+
+---@param opt vim._gen_lsp.opt
+---@return vim._gen_lsp.Protocol
+local function read_json(opt)
+  local uri = 'https://raw.githubusercontent.com/microsoft/language-server-protocol/gh-pages/_specifications/lsp/'
+    .. opt.version
+    .. '/metaModel/metaModel.json'
+  print('Reading ' .. uri)
+
+  local res = vim.system({ 'curl', '--no-progress-meter', uri, '-o', '-' }):wait()
+  if res.code ~= 0 or (res.stdout or ''):len() < 999 then
+    print(('URL failed: %s'):format(uri))
+    vim.print(res)
+    error(res.stdout)
+  end
+  return vim.json.decode(res.stdout)
+end
+
+--- Gets the Lua symbol for a given fully-qualified LSP method name.
+--- @param s string
+--- @return string
+local function to_luaname(s)
+  -- "$/" prefix is special: https://microsoft.github.io/language-server-protocol/specification/#dollarRequests
+  return (s:gsub('^%$', 'dollar'):gsub('/', '_'))
+end
+
+--- @param a vim._gen_lsp.Notification
+--- @param b vim._gen_lsp.Notification
+--- @return boolean
+local function compare_method(a, b)
+  return to_luaname(a.method) < to_luaname(b.method)
+end
+
+---@param protocol vim._gen_lsp.Protocol
+local function write_to_vim_protocol(protocol)
+  local all = {} --- @type (vim._gen_lsp.Request|vim._gen_lsp.Notification)[]
+  vim.list_extend(all, protocol.notifications)
+  vim.list_extend(all, protocol.requests)
+
+  table.sort(all, compare_method)
+  table.sort(protocol.requests, compare_method)
+  table.sort(protocol.notifications, compare_method)
+
+  local output = { '-- Generated by gen_lsp.lua, keep at end of file.' }
+
+  do -- methods
+    for _, dir in ipairs({ 'clientToServer', 'serverToClient' }) do
+      local dir1 = dir:sub(1, 1):upper() .. dir:sub(2)
+      local alias = ('vim.lsp.protocol.Method.%s'):format(dir1)
+      for _, b in ipairs({
+        { title = 'Request', methods = protocol.requests },
+        { title = 'Notification', methods = protocol.notifications },
+      }) do
+        output[#output + 1] = ('--- @alias %s.%s'):format(alias, b.title)
+        for _, item in ipairs(b.methods) do
+          if item.messageDirection == dir then
+            output[#output + 1] = ("--- | '%s',"):format(item.method)
+          end
+        end
+        output[#output + 1] = ''
+      end
+
+      vim.list_extend(output, {
+        ('--- @alias %s'):format(alias),
+        ('--- | %s.Request'):format(alias),
+        ('--- | %s.Notification'):format(alias),
+        '',
+      })
+    end
+
+    vim.list_extend(output, {
+      '--- @alias vim.lsp.protocol.Method',
+      '--- | vim.lsp.protocol.Method.ClientToServer',
+      '--- | vim.lsp.protocol.Method.ServerToClient',
+      '',
+      '-- Generated by gen_lsp.lua, keep at end of file.',
+      '--- @enum vim.lsp.protocol.Methods',
+      '--- @see https://microsoft.github.io/language-server-protocol/specification/#metaModel',
+      '--- LSP method names.',
+      'protocol.Methods = {',
+    })
+
+    for _, item in ipairs(all) do
+      if item.method then
+        if item.documentation then
+          local document = vim.split(item.documentation, '\n?\n', { trimempty = true })
+          for _, docstring in ipairs(document) do
+            output[#output + 1] = '  --- ' .. docstring
+          end
+        end
+        output[#output + 1] = ("  %s = '%s',"):format(to_luaname(item.method), item.method)
+      end
+    end
+    output[#output + 1] = '}'
+  end
+
+  do -- capabilities
+    vim.list_extend(output, {
+      '',
+      '-- stylua: ignore start',
+      '-- Generated by gen_lsp.lua, keep at end of file.',
+      '--- Maps method names to the required client capability',
+      'protocol._request_name_to_client_capability = {',
+    })
+
+    for _, item in ipairs(all) do
+      if item.clientCapability then
+        output[#output + 1] = ("  ['%s'] = { %s },"):format(
+          item.method,
+          "'" .. item.clientCapability:gsub('%.', "', '") .. "'"
+        )
+      end
+    end
+
+    output[#output + 1] = '}'
+    output[#output + 1] = '-- stylua: ignore end'
+
+    vim.list_extend(output, {
+      '',
+      '-- stylua: ignore start',
+      '-- Generated by gen_lsp.lua, keep at end of file.',
+      '--- Maps method names to the required server capability',
+      'protocol._request_name_to_server_capability = {',
+    })
+
+    for _, item in ipairs(all) do
+      if item.serverCapability then
+        output[#output + 1] = ("  ['%s'] = { %s },"):format(
+          item.method,
+          "'" .. item.serverCapability:gsub('%.', "', '") .. "'"
+        )
+      end
+    end
+
+    output[#output + 1] = '}'
+    output[#output + 1] = '-- stylua: ignore end'
+  end
+
+  output[#output + 1] = ''
+  output[#output + 1] = 'return protocol'
+
+  local fname = './runtime/lua/vim/lsp/protocol.lua'
+  local bufnr = vim.fn.bufadd(fname)
+  vim.fn.bufload(bufnr)
+  vim.api.nvim_set_current_buf(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local index = vim.iter(ipairs(lines)):find(function(key, item)
+    return vim.startswith(item, '-- Generated by') and key or nil
+  end)
+  index = index and index - 1 or vim.api.nvim_buf_line_count(bufnr) - 1
+  vim.api.nvim_buf_set_lines(bufnr, index, -1, true, output)
+  vim.cmd.write()
+end
+
+--- @param doc string
+local function process_documentation(doc)
+  doc = doc:gsub('\n', '\n---')
+  -- Remove <200b> (zero-width space) unicode characters: e.g., `**/<200b>*`
+  doc = doc:gsub('\226\128\139', '')
+  -- Escape annotations that are not recognized by lua-ls
+  doc = doc:gsub('%^---@sample', '---\\@sample')
+  return '---' .. doc
+end
+
+local simple_types = {
+  string = true,
+  boolean = true,
+  integer = true,
+  uinteger = true,
+  decimal = true,
+}
+
+local anonymous_num = 0
+
+--- @type string[]
+local anonym_classes = {}
+
+--- @param type vim._gen_lsp.Type
+--- @param prefix? string Optional prefix associated with the this type, made of (nested) field name.
+---              Used to generate class name for structure literal types.
+--- @return string
+local function parse_type(type, prefix)
+  if type.kind == 'reference' or type.kind == 'base' then
+    if simple_types[type.name] then
+      return type.name
+    end
+    return 'lsp.' .. type.name
+  elseif type.kind == 'array' then
+    local parsed_items = parse_type(type.element, prefix)
+    if type.element.items and #type.element.items > 1 then
+      parsed_items = '(' .. parsed_items .. ')'
+    end
+    return parsed_items .. '[]'
+  elseif type.kind == 'or' then
+    local types = {} --- @type string[]
+    for _, item in ipairs(type.items) do
+      types[#types + 1] = parse_type(item, prefix)
+    end
+    return table.concat(types, '|')
+  elseif type.kind == 'stringLiteral' then
+    return '"' .. type.value .. '"'
+  elseif type.kind == 'map' then
+    local key = assert(type.key)
+    local value = type.value --[[ @as vim._gen_lsp.Type ]]
+    return ('table<%s, %s>'):format(parse_type(key, prefix), parse_type(value, prefix))
+  elseif type.kind == 'literal' then
+    -- can I use ---@param disabled? {reason: string}
+    -- use | to continue the inline class to be able to add docs
+    -- https://github.com/LuaLS/lua-language-server/issues/2128
+    anonymous_num = anonymous_num + 1
+    local anonymous_classname = 'lsp._anonym' .. anonymous_num
+    if prefix then
+      anonymous_classname = anonymous_classname .. '.' .. prefix
+    end
+
+    local anonym = { '---@class ' .. anonymous_classname }
+    if anonymous_num > 1 then
+      table.insert(anonym, 1, '')
+    end
+
+    ---@type vim._gen_lsp.StructureLiteral
+    local structural_literal = assert(type.value) --[[ @as vim._gen_lsp.StructureLiteral ]]
+    for _, field in ipairs(structural_literal.properties) do
+      anonym[#anonym + 1] = '---'
+      if field.documentation then
+        anonym[#anonym + 1] = process_documentation(field.documentation)
+      end
+      anonym[#anonym + 1] = ('---@field %s%s %s'):format(
+        field.name,
+        (field.optional and '?' or ''),
+        parse_type(field.type, prefix .. '.' .. field.name)
+      )
+    end
+    for _, line in ipairs(anonym) do
+      if line then
+        anonym_classes[#anonym_classes + 1] = line
+      end
+    end
+    return anonymous_classname
+  elseif type.kind == 'tuple' then
+    local types = {} --- @type string[]
+    for _, value in ipairs(type.items) do
+      types[#types + 1] = parse_type(value, prefix)
+    end
+    return '[' .. table.concat(types, ', ') .. ']'
+  end
+
+  vim.print('WARNING: Unknown type ', type)
+  return ''
+end
+
+--- @param protocol vim._gen_lsp.Protocol
+--- @param version string
+--- @param output_file string
+local function write_to_meta_protocol(protocol, version, output_file)
+  local output = {
+    '--' .. '[[',
+    'THIS FILE IS GENERATED by src/gen/gen_lsp.lua',
+    'DO NOT EDIT MANUALLY',
+    '',
+    'Based on LSP protocol ' .. version,
+    '',
+    'Regenerate:',
+    ([=[nvim -l src/gen/gen_lsp.lua --version %s]=]):format(version),
+    '--' .. ']]',
+    '',
+    '---@meta',
+    "error('Cannot require a meta file')",
+    '',
+    '---@alias lsp.null nil',
+    '---@alias uinteger integer',
+    '---@alias decimal number',
+    '---@alias lsp.DocumentUri string',
+    '---@alias lsp.URI string',
+    '',
+  }
+
+  for _, structure in ipairs(protocol.structures) do
+    if structure.documentation then
+      output[#output + 1] = process_documentation(structure.documentation)
+    end
+    local class_string = ('---@class lsp.%s'):format(structure.name)
+    if structure.extends or structure.mixins then
+      local inherits_from = table.concat(
+        vim.list_extend(
+          vim.tbl_map(parse_type, structure.extends or {}),
+          vim.tbl_map(parse_type, structure.mixins or {})
+        ),
+        ', '
+      )
+      class_string = class_string .. ': ' .. inherits_from
+    end
+    output[#output + 1] = class_string
+
+    for _, field in ipairs(structure.properties or {}) do
+      output[#output + 1] = '---' -- Insert a single newline between @fields (and after @class)
+      if field.documentation then
+        output[#output + 1] = process_documentation(field.documentation)
+      end
+      output[#output + 1] = ('---@field %s%s %s'):format(
+        field.name,
+        (field.optional and '?' or ''),
+        parse_type(field.type, field.name)
+      )
+    end
+    output[#output + 1] = ''
+  end
+
+  for _, enum in ipairs(protocol.enumerations) do
+    if enum.documentation then
+      output[#output + 1] = process_documentation(enum.documentation)
+    end
+    output[#output + 1] = '---@alias lsp.' .. enum.name
+    for _, value in ipairs(enum.values) do
+      local value1 = (type(value.value) == 'string' and ('"%s"'):format(value.value) or value.value)
+      output[#output + 1] = ('---| %s # %s'):format(value1, value.name)
+    end
+    output[#output + 1] = ''
+  end
+
+  for _, alias in ipairs(protocol.typeAliases) do
+    if alias.documentation then
+      output[#output + 1] = process_documentation(alias.documentation)
+    end
+
+    local alias_type --- @type string
+
+    if alias.type.kind == 'or' then
+      local alias_types = {} --- @type string[]
+      for _, item in ipairs(alias.type.items) do
+        alias_types[#alias_types + 1] = parse_type(item, alias.name)
+      end
+      alias_type = table.concat(alias_types, '|')
+    else
+      alias_type = parse_type(alias.type, alias.name)
+    end
+    output[#output + 1] = ('---@alias lsp.%s %s'):format(alias.name, alias_type)
+    output[#output + 1] = ''
+  end
+
+  -- anonymous classes
+  vim.list_extend(output, anonym_classes)
+
+  tofile(output_file, table.concat(output, '\n') .. '\n')
+end
+
+---@class vim._gen_lsp.opt
+---@field output_file string
+---@field version string
+
+--- @return vim._gen_lsp.opt
+local function parse_args()
+  ---@type vim._gen_lsp.opt
+  local opt = {
+    output_file = 'runtime/lua/vim/lsp/_meta/protocol.lua',
+    version = '3.18',
+  }
+
+  local i = 1
+  while i <= #_G.arg do
+    local cur_arg = _G.arg[i]
+    if cur_arg == '--out' then
+      opt.output_file = assert(_G.arg[i + 1], '--out <outfile> needed')
+      i = i + 1
+    elseif cur_arg == '--version' then
+      opt.version = assert(_G.arg[i + 1], '--version <version> needed')
+      i = i + 1
+    elseif cur_arg == '--help' or cur_arg == '-h' then
+      print(USAGE)
+      os.exit(0)
+    elseif vim.startswith(cur_arg, '-') then
+      print('Unrecognized option:', cur_arg, '\n')
+      os.exit(1)
+    end
+    i = i + 1
+  end
+
+  return opt
+end
+
+local function main()
+  local opt = parse_args()
+  local protocol = read_json(opt)
+  write_to_vim_protocol(protocol)
+  write_to_meta_protocol(protocol, opt.version, opt.output_file)
+end
+
+main()

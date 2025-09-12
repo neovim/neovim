@@ -359,6 +359,7 @@ describe('Signs', function()
       ]])
     end)
 
+    -- oldtest: Test_sign_number_without_signtext()
     it('ignores signs with no icon and text when calculating the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       exec([[
@@ -680,5 +681,12 @@ describe('Signs', function()
       {3:[No Name] [+]              }{2:[No Name] [+]             }|
       :lua log, needs_clear = {}, true                     |
     ]])
+  end)
+
+  it('signcolumn tracking does not consider signs beyond eob', function()
+    api.nvim_set_option_value('signcolumn', 'auto:2', {})
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 1, 0, { sign_text = 's' })
+    api.nvim_buf_set_lines(0, 0, -1, false, {})
+    n.assert_alive()
   end)
 end)

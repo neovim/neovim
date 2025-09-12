@@ -4,6 +4,7 @@
 " Previous Maintainer:	Pedro Alejandro López-Valencia <palopezv@gmail.com>
 " Previous Maintainer:	Jérôme Plût <Jerome.Plut@ens.fr>
 " Last Change:	2021 Mar 28
+"	2025 Apr 24 by Eisuke Kawashima (move options from syntax to ftplugin #17174)
 "
 " {{{1 Todo
 "
@@ -39,19 +40,6 @@ syn case match
 if exists("nroff_space_errors")
 	syn match nroffError /\s\+$/
 	syn match nroffSpaceError /[.,:;!?]\s\{2,}/
-endif
-"
-"
-" {{{1 Special file settings
-"
-" {{{2  ms exdented paragraphs are not in the default paragraphs list.
-"
-setlocal paragraphs+=XP
-"
-" {{{2 Activate navigation to preprocessor sections.
-"
-if exists("b:preprocs_as_sections")
-	setlocal sections=EQTSPS[\ G1GS
 endif
 
 " {{{1 Escape sequences

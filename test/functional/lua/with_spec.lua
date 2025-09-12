@@ -1189,9 +1189,9 @@ describe('vim._with', function()
       ]]
       screen:expect [[
         19                            |
-        {1:[No Name] [+]  20,1         3%}|
+        {1:< Name] [+] 20,1            3%}|
         ^19                            |
-        {2:[No Name] [+]  20,1         3%}|
+        {2:< Name] [+] 20,1            3%}|
                                       |
       ]]
       exec_lua [[
@@ -1200,9 +1200,9 @@ describe('vim._with', function()
       ]]
       screen:expect [[
         99                            |
-        {1:[No Name] [+]  100,1       19%}|
+        {1:< Name] [+] 100,1          19%}|
         ^19                            |
-        {2:[No Name] [+]  20,1         3%}|
+        {2:< Name] [+] 20,1            3%}|
                                       |
       ]]
     end)

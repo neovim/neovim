@@ -718,6 +718,12 @@ t3]])
   end)
 
   it("doesn't open folds that are not touched", function()
+    -- test is known to be flaky
+    -- https://github.com/neovim/neovim/issues/33910
+    if t.skip_fragile(pending) then
+      return
+    end
+
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
       [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },

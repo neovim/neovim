@@ -45,11 +45,6 @@ describe('display', function()
 
   local function run_test_display_lastline(euro)
     local screen = Screen.new(75, 10)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { bold = true, reverse = true }, -- StatusLine
-      [3] = { reverse = true }, -- StatusLineNC
-    })
     exec([[
       call setline(1, ['aaa', 'b'->repeat(200)])
       set display=truncate
@@ -68,7 +63,7 @@ describe('display', function()
       b│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                   |
       b│{1:~                                                                        }|*3
       {1:@}│{1:~                                                                        }|
-      {2:< }{3:[No Name] [+]                                                            }|
+      {3:< }{2:[No Name] [+]                                                            }|
                                                                                  |
     ]]):gsub('@', fillchar)))
 
@@ -82,7 +77,7 @@ describe('display', function()
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                   │b|
       {1:~                                                                        }│b|*3
       {1:~                                                                        }│{1:@}|
-      {2:[No Name] [+]                                                             }{3:<}|
+      {3:[No Name] [+]                                                             }{2:<}|
                                                                                  |
     ]]):gsub('@', fillchar)))
 
@@ -95,11 +90,11 @@ describe('display', function()
       ^aaa                                                                        |
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
       {1:@@@                                                                        }|
-      {2:[No Name] [+]                                                              }|
+      {3:[No Name] [+]                                                              }|
       aaa                                                                        |
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*2
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                         |
-      {3:[No Name] [+]                                                              }|
+      {2:[No Name] [+]                                                              }|
                                                                                  |
     ]]):gsub('@', fillchar)))
 
@@ -112,7 +107,7 @@ describe('display', function()
       bb│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                |
       bb│{1:~                                                                       }|*3
       {1:@@}│{1:~                                                                       }|
-      {2:<  }{3:[No Name] [+]                                                           }|
+      {3:<  }{2:[No Name] [+]                                                           }|
                                                                                  |
     ]]):gsub('@', fillchar)))
   end

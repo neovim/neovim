@@ -214,14 +214,28 @@ The diffs are highlighted with these groups:
 |hl-DiffAdd|	DiffAdd		Added (inserted) lines.  These lines exist in
 				this buffer but not in another.
 |hl-DiffChange|	DiffChange	Changed lines.
-|hl-DiffText|	DiffText	Changed text inside a Changed line.  Vim
-				finds the first character that is different,
-				and the last character that is different
-				(searching from the end of the line).  The
-				text in between is highlighted.  This means
-				that parts in the middle that are still the
-				same are highlighted anyway.  The 'diffopt'
-				flags "iwhite" and "icase" are used here.
+|hl-DiffText|	DiffText	Changed text inside a Changed line.  Exact
+				behavior depends on the `inline:` setting in
+				'diffopt'.
+				With `inline:` set to "simple", Vim finds the
+				first character that is different, and the
+				last character that is different (searching
+				from the end of the line).  The text in
+				between is highlighted.  This means that parts
+				in the middle that are still the same are
+				highlighted anyway.  The 'diffopt' flags
+				"iwhite" and "icase" are used here.
+				With `inline:` set to "char" or "word", Vim
+				uses the internal diff library to perform a
+				detailed diff between the changed blocks and
+				highlight the exact difference between the
+				two.  Will respect any 'diffopt' flag that
+				affects internal diff.
+				Not used when `inline:` is set to "none".
+|hl-DiffTextAdd|  DiffTextAdd	Added text inside a Changed line.  Similar to
+				DiffText, but used when there is no
+				corresponding text in other buffers.  Not used
+				when `inline:` is set to "simple" or "none".
 |hl-DiffDelete|	DiffDelete	Deleted lines.  Also called filler lines,
 				because they don't really exist in this
 				buffer.

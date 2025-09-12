@@ -759,7 +759,7 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
     return;
   }
 
-  if (getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
+  if (sourcing_a_script(eap)) {
     evalarg->eval_getline = eap->ea_getline;
     evalarg->eval_cookie = eap->cookie;
   }
@@ -1368,7 +1368,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
   char *arg = skipwhite(wp->w_p_fde);
-  current_sctx = wp->w_p_script_ctx[kWinOptFoldexpr].script_ctx;
+  current_sctx = wp->w_p_script_ctx[kWinOptFoldexpr];
 
   emsg_off++;
   if (use_sandbox) {
@@ -5323,7 +5323,7 @@ size_t string2float(const char *const text, float_T *const ret_value)
     *ret_value = (float_T)INFINITY;
     return 3;
   }
-  if (STRNICMP(text, "-inf", 3) == 0) {
+  if (STRNICMP(text, "-inf", 4) == 0) {
     *ret_value = (float_T)(-INFINITY);
     return 4;
   }
@@ -7653,26 +7653,8 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
                  || current_sctx.sc_sid == SID_LUA)
              && current_sctx.sc_sid <= script_items.ga_len) {
     // For anonymous scripts without a script item, create one now so script vars can be used
-    if (current_sctx.sc_sid == SID_LUA) {
-      // try to resolve lua filename & line no so it can be shown in lastset messages.
-      nlua_set_sctx(&current_sctx);
-      if (current_sctx.sc_sid != SID_LUA) {
-        // Great we have valid location. Now here this out we'll create a new
-        // script context with the name and lineno of this one. why ?
-        // for behavioral consistency. With this different anonymous exec from
-        // same file can't access each others script local stuff. We need to do
-        // this all other cases except this will act like that otherwise.
-        const LastSet last_set = (LastSet){
-          .script_ctx = current_sctx,
-          .channel_id = LUA_INTERNAL_CALL,
-        };
-        bool should_free;
-        // should_free is ignored as script_ctx will be resolved to a fname
-        // and new_script_item() will consume it.
-        char *sc_name = get_scriptname(last_set, &should_free);
-        new_script_item(sc_name, &current_sctx.sc_sid);
-      }
-    }
+    // Try to resolve lua filename & linenr so it can be shown in last-set messages.
+    nlua_set_sctx(&current_sctx);
     if (current_sctx.sc_sid == SID_STR || current_sctx.sc_sid == SID_LUA) {
       // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
       new_script_item(NULL, &current_sctx.sc_sid);
@@ -7888,6 +7870,7 @@ void ex_echo(exarg_T *eap)
       char *tofree = encode_tv2echo(&rettv, NULL);
       if (*tofree != NUL) {
         msg_ext_set_kind("echo");
+        msg_ext_append = eap->cmdidx == CMD_echon;
         msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
       }
       xfree(tofree);
@@ -8050,31 +8033,21 @@ void var_set_global(const char *const name, typval_T vartv)
 /// Should only be invoked when 'verbose' is non-zero.
 void last_set_msg(sctx_T script_ctx)
 {
-  const LastSet last_set = (LastSet){
-    .script_ctx = script_ctx,
-    .channel_id = 0,
-  };
-  option_last_set_msg(last_set);
-}
-
-/// Displays where an option was last set.
-///
-/// Should only be invoked when 'verbose' is non-zero.
-void option_last_set_msg(LastSet last_set)
-{
-  if (last_set.script_ctx.sc_sid == 0) {
+  if (script_ctx.sc_sid == 0) {
     return;
   }
 
   bool should_free;
-  char *p = get_scriptname(last_set, &should_free);
+  char *p = get_scriptname(script_ctx, &should_free);
 
   verbose_enter();
   msg_puts(_("\n\tLast set from "));
   msg_puts(p);
-  if (last_set.script_ctx.sc_lnum > 0) {
+  if (script_ctx.sc_lnum > 0) {
     msg_puts(_(line_msg));
-    msg_outnum(last_set.script_ctx.sc_lnum);
+    msg_outnum(script_ctx.sc_lnum);
+  } else if (script_is_lua(script_ctx.sc_sid)) {
+    msg_puts(_(" (run Nvim with -V1 for more details)"));
   }
   if (should_free) {
     xfree(p);
@@ -8565,7 +8538,7 @@ void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments, bool discard)
 {
   if (!eval_has_provider(provider, false)) {
-    semsg("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
+    semsg("E319: No \"%s\" provider found. Run \":checkhealth vim.provider\"",
           provider);
     return (typval_T){
       .v_type = VAR_NUMBER,

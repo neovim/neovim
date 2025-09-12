@@ -165,7 +165,7 @@ void event_init(void)
 }
 
 /// @returns false if main_loop could not be closed gracefully
-bool event_teardown(void)
+static bool event_teardown(void)
 {
   if (!main_loop.events) {
     input_stop();
@@ -238,6 +238,9 @@ void early_init(mparm_T *paramp)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
+
+  // initialize quickfix list
+  qf_init_stack();
 }
 
 #ifdef MAKE_LIB
@@ -811,7 +814,7 @@ void getout(int exitval)
 
 #ifdef MSWIN
   // Restore Windows console icon before exiting.
-  os_icon_set(NULL, NULL);
+  os_icon_reset();
   os_title_reset();
 #endif
 
@@ -935,12 +938,11 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
     if (!chan) {
       fprintf(stderr, "Remote ui failed to start: %s\n", connect_error);
       os_exit(1);
-    } else if (strequal(server_addr, os_getenv("NVIM"))) {
+    } else if (strequal(server_addr, os_getenv_noalloc("NVIM"))) {
       fprintf(stderr, "%s", "Cannot attach UI of :terminal child to its parent. ");
       fprintf(stderr, "%s\n", "(Unset $NVIM to skip this check)");
       os_exit(1);
     }
-
     ui_client_channel_id = chan;
     return;
   }
@@ -2065,8 +2067,8 @@ static void do_exrc_initialization(void)
       nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
       xfree(str);
       if (ERROR_SET(&err)) {
-        semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
-        semsg_multiline(err.msg);
+        semsg("Error in %s:", VIMRC_LUA_FILE);
+        semsg_multiline("emsg", err.msg);
         api_clear_error(&err);
       }
     }
@@ -2117,7 +2119,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *initstr = os_getenv(env);
+  char *initstr = os_getenv(env);
   if (initstr == NULL) {
     return FAIL;
   }
@@ -2131,6 +2133,8 @@ static int execute_env(char *env)
 
   estack_pop();
   current_sctx = save_current_sctx;
+
+  xfree(initstr);
   return OK;
 }
 
