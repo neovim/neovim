@@ -19,7 +19,7 @@ if &cp || exists("g:loaded_netrw")
     finish
 endif
 
-let g:loaded_netrw = "v179"
+let g:loaded_netrw = "v180"
 
 if !has("patch-9.1.1054") && !has('nvim')
     echoerr 'netrw needs Vim v9.1.1054'
@@ -58,70 +58,8 @@ function! netrw#ErrorMsg(level, msg, errnum)
         let level = "**note** (netrw) "
     endif
 
-    if g:netrw_use_errorwindow == 2 && exists("*popup_atcursor")
-        " use popup window
-        if type(a:msg) == 3
-            let msg = [level]+a:msg
-        else
-            let msg = level.a:msg
-        endif
-        let s:popuperr_id = popup_atcursor(msg, {})
-        let s:popuperr_text = ""
-    elseif has('nvim')
+    if has('nvim')
         call v:lua.vim.notify(level . a:msg, a:level + 2)
-    elseif g:netrw_use_errorwindow
-        " (default) netrw creates a one-line window to show error/warning
-        " messages (reliably displayed)
-
-        " record current window number
-        let s:winBeforeErr = winnr()
-        "   call Decho("s:winBeforeErr=".s:winBeforeErr,'~'.expand("<slnum>"))
-
-        " getting messages out reliably is just plain difficult!
-        " This attempt splits the current window, creating a one line window.
-        if bufexists("NetrwMessage") && bufwinnr("NetrwMessage") > 0
-            "    call Decho("write to NetrwMessage buffer",'~'.expand("<slnum>"))
-            exe bufwinnr("NetrwMessage")."wincmd w"
-            "    call Decho("setl ma noro",'~'.expand("<slnum>"))
-            setl ma noro
-            if type(a:msg) == 3
-                for msg in a:msg
-                    NetrwKeepj call setline(line("$")+1,level.msg)
-                endfor
-            else
-                NetrwKeepj call setline(line("$")+1,level.a:msg)
-            endif
-            NetrwKeepj $
-        else
-            "    call Decho("create a NetrwMessage buffer window",'~'.expand("<slnum>"))
-            bo 1split
-            sil! call s:NetrwEnew()
-            sil! NetrwKeepj call s:NetrwOptionsSafe(1)
-            setl bt=nofile
-            NetrwKeepj file NetrwMessage
-            "    call Decho("setl ma noro",'~'.expand("<slnum>"))
-            setl ma noro
-            if type(a:msg) == 3
-                for msg in a:msg
-                    NetrwKeepj call setline(line("$")+1,level.msg)
-                endfor
-            else
-                NetrwKeepj call setline(line("$"),level.a:msg)
-            endif
-            NetrwKeepj $
-        endif
-        "   call Decho("wrote msg<".level.a:msg."> to NetrwMessage win#".winnr(),'~'.expand("<slnum>"))
-        if &fo !~ '[ta]'
-            syn clear
-            syn match netrwMesgNote     "^\*\*note\*\*"
-            syn match netrwMesgWarning  "^\*\*warning\*\*"
-            syn match netrwMesgError    "^\*\*error\*\*"
-            hi link netrwMesgWarning WarningMsg
-            hi link netrwMesgError   Error
-        endif
-        "   call Decho("setl noma ro bh=wipe",'~'.expand("<slnum>"))
-        setl ro nomod noma bh=wipe
-
     else
         " (optional) netrw will show messages using echomsg.  Even if the
         " message doesn't appear, at least it'll be recallable via :messages
@@ -129,15 +67,15 @@ function! netrw#ErrorMsg(level, msg, errnum)
         if a:level == s:WARNING
             echohl WarningMsg
         elseif a:level == s:ERROR
-            echohl Error
+            echohl ErrorMsg
         endif
 
         if type(a:msg) == 3
             for msg in a:msg
-                unsilent echomsg level.msg
+                echomsg level.msg
             endfor
         else
-            unsilent echomsg level.a:msg
+            echomsg level.a:msg
         endif
 
         echohl None
@@ -186,16 +124,13 @@ let s:has_balloon = !has('nvim') &&
 
 " ---------------------------------------------------------------------
 " Default option values: {{{2
-let g:netrw_localcopycmdopt    = ""
-let g:netrw_localcopydircmdopt = ""
-let g:netrw_localmkdiropt      = ""
-let g:netrw_localmovecmdopt    = ""
+call s:NetrwInit("g:netrw_localcopycmdopt","")
+call s:NetrwInit("g:netrw_localcopydircmdopt","")
+call s:NetrwInit("g:netrw_localmkdiropt","")
+call s:NetrwInit("g:netrw_localmovecmdopt","")
 
 " ---------------------------------------------------------------------
 " Default values for netrw's global protocol variables {{{2
-if !exists("g:netrw_use_errorwindow")
-  let g:netrw_use_errorwindow = 0
-endif
 
 if !exists("g:netrw_dav_cmd")
   if executable("cadaver")
@@ -399,7 +334,7 @@ if !exists("g:netrw_localcopycmd")
       let g:netrw_localcopycmd= "cp"
     else
       let g:netrw_localcopycmd   = expand("$COMSPEC", v:true)
-      let g:netrw_localcopycmdopt= " /c copy"
+      call s:NetrwInit("g:netrw_localcopycmdopt"," /c copy")
     endif
   elseif has("unix") || has("macunix")
     let g:netrw_localcopycmd= "cp"
@@ -411,17 +346,17 @@ if !exists("g:netrw_localcopydircmd")
   if has("win32")
     if g:netrw_cygwin
       let g:netrw_localcopydircmd   = "cp"
-      let g:netrw_localcopydircmdopt= " -R"
+      call s:NetrwInit("g:netrw_localcopydircmdopt"," -R")
     else
       let g:netrw_localcopydircmd   = expand("$COMSPEC", v:true)
-      let g:netrw_localcopydircmdopt= " /c xcopy /e /c /h /i /k"
+      call s:NetrwInit("g:netrw_localcopydircmdopt"," /c xcopy /e /c /h /i /k")
     endif
   elseif has("unix")
     let g:netrw_localcopydircmd   = "cp"
-    let g:netrw_localcopydircmdopt= " -R"
+    call s:NetrwInit("g:netrw_localcopydircmdopt"," -R")
   elseif has("macunix")
     let g:netrw_localcopydircmd   = "cp"
-    let g:netrw_localcopydircmdopt= " -R"
+    call s:NetrwInit("g:netrw_localcopydircmdopt"," -R")
   else
     let g:netrw_localcopydircmd= ""
   endif
@@ -434,8 +369,8 @@ if has("win32")
   if g:netrw_cygwin
     call s:NetrwInit("g:netrw_localmkdir","mkdir")
   else
-    let g:netrw_localmkdir   = expand("$COMSPEC", v:true)
-    let g:netrw_localmkdiropt= " /c mkdir"
+    call s:NetrwInit("g:netrw_localmkdir",expand("$COMSPEC", v:true))
+    call s:NetrwInit("g:netrw_localmkdiropt"," /c mkdir")
   endif
 else
   call s:NetrwInit("g:netrw_localmkdir","mkdir")
@@ -453,7 +388,7 @@ if !exists("g:netrw_localmovecmd")
       let g:netrw_localmovecmd= "mv"
     else
       let g:netrw_localmovecmd   = expand("$COMSPEC", v:true)
-      let g:netrw_localmovecmdopt= " /c move"
+      call s:NetrwInit("g:netrw_localmovecmdopt"," /c move")
     endif
   elseif has("unix") || has("macunix")
     let g:netrw_localmovecmd= "mv"
@@ -2218,7 +2153,7 @@ fun! netrw#NetRead(mode,...)
   endif
   if s:FileReadable(tmpfile) && tmpfile !~ '.tar.bz2$' && tmpfile !~ '.tar.gz$' && tmpfile !~ '.zip' && tmpfile !~ '.tar' && readcmd != 't' && tmpfile !~ '.tar.xz$' && tmpfile !~ '.txz'
     "   call Decho("cleanup by deleting tmpfile<".tmpfile.">",'~'.expand("<slnum>"))
-    NetrwKeepj call s:NetrwDelete(tmpfile)
+    call netrw#fs#Remove(tmpfile)
   endif
   NetrwKeepj call s:NetrwOptionsRestore("w:")
 
@@ -2586,7 +2521,7 @@ fun! netrw#NetWrite(...) range
   "  call Decho("cleanup",'~'.expand("<slnum>"))
   if s:FileReadable(tmpfile)
     "   call Decho("tmpfile<".tmpfile."> readable, will now delete it",'~'.expand("<slnum>"))
-    call s:NetrwDelete(tmpfile)
+    call netrw#fs#Remove(tmpfile)
   endif
   call s:NetrwOptionsRestore("w:")
 
@@ -6423,7 +6358,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
       NetrwKeepj call s:NetrwUpload(localfiles,s:netrwmftgt)
       if getcwd() == tmpdir
         for fname in s:netrwmarkfilelist_{bufnr('%')}
-          NetrwKeepj call s:NetrwDelete(fname)
+          call netrw#fs#Remove(fname)
         endfor
         if s:NetrwLcd(curdir)
           "      call Dret("s:NetrwMarkFileCopy : lcd failure")
@@ -7630,7 +7565,9 @@ fun! s:NetrwMenu(domenu)
     elseif !a:domenu
       let s:netrwcnt = 0
       let curwin     = winnr()
-      windo if getline(2) =~# "Netrw" | let s:netrwcnt= s:netrwcnt + 1 | endif
+      keepjumps windo if getline(2) =~# "Netrw"
+        let s:netrwcnt = s:netrwcnt + 1
+      endif
       exe curwin."wincmd w"
 
       if s:netrwcnt <= 1
@@ -10290,7 +10227,7 @@ function! s:NetrwLocalRmFile(path, fname, all)
 
     if !dir && (all || empty(ok))
         " This works because delete return 0 if successful
-        if s:NetrwDelete(rmfile)
+        if netrw#fs#Remove(rmfile)
             call netrw#ErrorMsg(s:ERROR, printf("unable to delete <%s>!", rmfile), 103)
         else
             " Remove file only if there are no pending changes
@@ -10740,51 +10677,6 @@ fun! s:RestoreRegister(dict)
 endfun
 
 " ---------------------------------------------------------------------
-" s:NetrwDelete: Deletes a file. {{{2
-"           Uses Steve Hall's idea to insure that Windows paths stay
-"           acceptable.  No effect on Unix paths.
-"  Examples of use:  let result= s:NetrwDelete(path)
-function! s:NetrwDelete(path)
-    let path = netrw#fs#WinPath(a:path)
-
-    if !g:netrw_cygwin && has("win32") && exists("+shellslash")
-        let sskeep = &shellslash
-        setl noshellslash
-        let result = delete(path)
-        let &shellslash = sskeep
-    else
-        let result = delete(path)
-    endif
-
-    if result < 0
-        NetrwKeepj call netrw#ErrorMsg(s:WARNING, "delete(".path.") failed!", 71)
-    endif
-
-    return result
-endfunction
-
-" ---------------------------------------------------------------------
-" s:NetrwBufRemover: removes a buffer that: {{{2s
-"                    has buffer-id > 1
-"                    is unlisted
-"                    is unnamed
-"                    does not appear in any window
-fun! s:NetrwBufRemover(bufid)
-  "  call Dfunc("s:NetrwBufRemover(".a:bufid.")")
-  "  call Decho("buf#".a:bufid."           ".((a:bufid > 1)? ">" : "≯")." must be >1 for removal","~".expand("<slnum>"))
-  "  call Decho("buf#".a:bufid." is        ".(buflisted(a:bufid)? "listed" : "unlisted"),"~".expand("<slnum>"))
-  "  call Decho("buf#".a:bufid." has name <".bufname(a:bufid).">","~".expand("<slnum>"))
-  "  call Decho("buf#".a:bufid." has winid#".bufwinid(a:bufid),"~".expand("<slnum>"))
-
-  if a:bufid > 1 && !buflisted(a:bufid) && bufloaded(a:bufid) && bufname(a:bufid) == "" && bufwinid(a:bufid) == -1
-    "   call Decho("(s:NetrwBufRemover) removing buffer#".a:bufid,"~".expand("<slnum>"))
-    exe "sil! bd! ".a:bufid
-  endif
-
-  "  call Dret("s:NetrwBufRemover")
-endfun
-
-" ---------------------------------------------------------------------
 " s:NetrwEnew: opens a new buffer, passes netrw buffer variables through {{{2
 fun! s:NetrwEnew(...)
   "  call Dfunc("s:NetrwEnew() a:0=".a:0." win#".winnr()." winnr($)=".winnr("$")." bufnr($)=".bufnr("$")." expand(%)<".expand("%").">")
@@ -10793,7 +10685,10 @@ fun! s:NetrwEnew(...)
   " Clean out the last buffer:
   " Check if the last buffer has # > 1, is unlisted, is unnamed, and does not appear in a window
   " If so, delete it.
-  call s:NetrwBufRemover(bufnr("$"))
+  let bufid = bufnr('$')
+  if bufid > 1 && !buflisted(bufid) && bufloaded(bufid) && bufname(bufid) == "" && bufwinid(bufid) == -1
+    execute printf("silent! bdelete! %s", bufid)
+  endif
 
   " grab a function-local-variable copy of buffer variables
   "  call Decho("make function-local copy of netrw variables",'~'.expand("<slnum>"))

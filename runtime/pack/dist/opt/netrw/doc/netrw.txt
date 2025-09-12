@@ -426,15 +426,6 @@ preferences.  Most such settings are described below, in
   *g:netrw_silent*	=0 : transfers done normally
 			=1 : transfers done silently
 
- *g:netrw_use_errorwindow* =2: messages from netrw will use a popup window
-			     Move the mouse and pause to remove the popup window.
-			 =1 : messages from netrw will use a separate one
-			      line window.  This window provides reliable
-			      delivery of messages.
-			 =0 : (default) messages from netrw will use echoerr ;
-			      messages don't always seem to show up this
-			      way, but one doesn't have to quit the window.
-
  *g:netrw_cygwin*	=1 assume scp under windows is from cygwin. Also
 			   permits network browsing to use ls with time and
 			   size sorting (default if windows)

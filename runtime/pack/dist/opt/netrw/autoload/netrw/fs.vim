@@ -163,5 +163,29 @@ function! netrw#fs#WinPath(path)
 endfunction
 
 " }}}
+" netrw#fs#Remove: deletes a file. {{{
+"           Uses Steve Hall's idea to insure that Windows paths stay
+"           acceptable.  No effect on Unix paths.
+
+function! netrw#fs#Remove(path)
+    let path = netrw#fs#WinPath(a:path)
+
+    if !g:netrw_cygwin && has("win32") && exists("+shellslash")
+        let sskeep = &shellslash
+        setl noshellslash
+        let result = delete(path)
+        let &shellslash = sskeep
+    else
+        let result = delete(path)
+    endif
+
+    if result < 0
+        call netrw#ErrorMsg(netrw#LogLevel('WARNING'), printf('delete("%s") failed!', path), 71)
+    endif
+
+    return result
+endfunction
+
+" }}}
 
 " vim:ts=8 sts=4 sw=4 et fdm=marker

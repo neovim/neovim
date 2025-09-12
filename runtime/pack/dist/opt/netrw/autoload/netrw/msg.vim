@@ -3,7 +3,7 @@
 " BREAKAGES IF USED OUTSIDE OF NETRW.VIM ARE EXPECTED.
 
 let s:deprecation_msgs = []
-function! netrw#own#Deprecate(name, version, alternatives)
+function! netrw#msg#Deprecate(name, version, alternatives)
     " If running on neovim use vim.deprecate
     if has('nvim')
         let s:alternative = a:alternatives->get('nvim', v:null)
