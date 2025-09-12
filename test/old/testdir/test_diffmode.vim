@@ -849,22 +849,6 @@ func Test_diff_nomodifiable()
   %bwipe!
 endfunc
 
-func Test_diff_filler()
-  new
-  call setline(1, [1, 2, 3, 'x', 4])
-  diffthis
-  vnew
-  call setline(1, [1, 2, 'y', 'y', 3, 4])
-  diffthis
-  redraw
-
-  call assert_equal([0, 0, 0, 0, 0, 0, 0, 1, 0], map(range(-1, 7), 'v:val->diff_filler()'))
-  wincmd w
-  call assert_equal([0, 0, 0, 0, 2, 0, 0, 0], map(range(-1, 6), 'diff_filler(v:val)'))
-
-  %bwipe!
-endfunc
-
 func Test_diff_hlID()
   new
   call setline(1, [1, 2, 3, 'Yz', 'a dxxg',])
@@ -906,6 +890,22 @@ func Test_diff_hlID()
   call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
   call assert_equal(synIDattr(diff_hlID(2, 1), "name"), "")
   call assert_equal(synIDattr(diff_hlID(3, 1), "name"), "")
+
+  %bwipe!
+endfunc
+
+func Test_diff_filler()
+  new
+  call setline(1, [1, 2, 3, 'x', 4])
+  diffthis
+  vnew
+  call setline(1, [1, 2, 'y', 'y', 3, 4])
+  diffthis
+  redraw
+
+  call assert_equal([0, 0, 0, 0, 0, 0, 0, 1, 0], map(range(-1, 7), 'v:val->diff_filler()'))
+  wincmd w
+  call assert_equal([0, 0, 0, 0, 2, 0, 0, 0], map(range(-1, 6), 'diff_filler(v:val)'))
 
   %bwipe!
 endfunc
