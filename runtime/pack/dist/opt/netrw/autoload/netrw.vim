@@ -5,6 +5,7 @@
 " 2025 Aug 07 by Vim Project (use correct "=~#" for netrw_stylesize option #17901)
 " 2025 Aug 07 by Vim Project (netrw#BrowseX() distinguishes remote files #17794)
 " 2025 Aug 22 by Vim Project netrw#Explore handle terminal correctly #18069
+" 2025 Sep 05 by Vim Project ensure netrw#fs#Dirname() returns trailing slash #18199
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright

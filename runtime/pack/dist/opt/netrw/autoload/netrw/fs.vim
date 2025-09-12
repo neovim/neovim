@@ -87,7 +87,8 @@ endfunction
 " netrw#fs#Dirname: {{{
 
 function netrw#fs#Dirname(path)
-    return netrw#fs#AbsPath(a:path)->fnamemodify(':h')
+    " Keep a slash as directory recognition pattern
+    return netrw#fs#AbsPath(a:path) . s:slash
 endfunction
 
 " }}}
