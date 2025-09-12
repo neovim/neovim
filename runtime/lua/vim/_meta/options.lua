@@ -1936,7 +1936,7 @@ vim.go.dex = vim.go.diffexpr
 ---
 ---
 --- @type string
-vim.o.diffopt = "internal,filler,closeoff,inline:simple,linematch:40"
+vim.o.diffopt = "internal,filler,closeoff,indent-heuristic,inline:char,linematch:40"
 vim.o.dip = vim.o.diffopt
 vim.go.diffopt = vim.o.diffopt
 vim.go.dip = vim.go.diffopt

@@ -1220,7 +1220,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     command('windo diffthis')
     screen:expect([[
       {7:  }{9:line 1 some text       }│{7:  }{9:^line 1 some text      }|
-      {7:  }{4:line 2 mo}{27:Re text!}{4:      }│{7:  }{4:line 2 mo}{27:re text}{4:      }|
+      {7:  }{4:line 2 mo}{27:R}{4:e text}{27:!}{4:      }│{7:  }{4:line 2 mo}{27:r}{4:e text      }|
       {7:  }{22:extra line!            }│{7:  }{23:----------------------}|
       {7:  }extra line!            │{7:  }extra line!           |*2
       {7:  }last line ...          │{7:  }last line ...         |
@@ -1232,7 +1232,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     feed('jjjjj')
     screen:expect([[
       {7:  }line 1 some text       │{7:  }line 1 some text      |
-      {7:  }{4:line 2 mo}{27:Re text!}{4:      }│{7:  }{4:line 2 mo}{27:re text}{4:      }|
+      {7:  }{4:line 2 mo}{27:R}{4:e text}{27:!}{4:      }│{7:  }{4:line 2 mo}{27:r}{4:e text      }|
       {7:  }{22:extra line!            }│{7:  }{23:----------------------}|
       {7:  }extra line!            │{7:  }extra line!           |*2
       {7:  }last line ...          │{7:  }last line ...         |
@@ -1248,7 +1248,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     feed('kkkk')
     screen:expect([[
       {7:  }line 1 some text       │{7:  }line 1 some text      |
-      {7:  }{100:line 2 mo}{101:Re text!}{100:      }│{7:  }{100:^line 2 mo}{101:re text}{100:      }|
+      {7:  }{100:line 2 mo}{101:R}{100:e text}{101:!}{100:      }│{7:  }{100:^line 2 mo}{101:r}{100:e text      }|
       {7:  }{22:extra line!            }│{7:  }{23:----------------------}|
       {7:  }extra line!            │{7:  }extra line!           |*2
       {7:  }last line ...          │{7:  }last line ...         |

@@ -302,11 +302,43 @@ func Test_smoothscroll_diff_mode()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_diff_change_line_default()
+  CheckScreendump
+
+  " Uses the new diffopt default with indent-heuristic and inline:char
+  let lines =<< trim END
+    set diffopt=internal,filler,closeoff,indent-heuristic,inline:char,followwrap smoothscroll
+    call setline(1, repeat(' abc', &columns))
+    call setline(2, 'bar')
+    call setline(3, repeat(' abc', &columns))
+    vnew
+    call setline(1, repeat(' abc', &columns))
+    call setline(2, 'foo')
+    call setline(3, 'bar')
+    call setline(4, repeat(' abc', &columns))
+    windo exe "normal! 2gg5\<C-E>"
+    windo diffthis
+  END
+  call writefile(lines, 'XSmoothDiffChangeLine', 'D')
+  let buf = RunVimInTerminal('-S XSmoothDiffChangeLine', #{rows: 20, columns: 55})
+
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_1', {})
+  call term_sendkeys(buf, "Abar")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_2', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_3a', {})
+  call term_sendkeys(buf, "yyp")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_4', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_smoothscroll_diff_change_line()
   CheckScreendump
 
+  " Uses the old diffopt default
   let lines =<< trim END
-    set diffopt+=followwrap smoothscroll
+    set diffopt=internal,filler,closeoff,followwrap,inline:simple smoothscroll
     call setline(1, repeat(' abc', &columns))
     call setline(2, 'bar')
     call setline(3, repeat(' abc', &columns))

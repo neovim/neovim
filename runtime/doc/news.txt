@@ -160,6 +160,7 @@ BUILD
 
 DEFAULTS
 
+• 'diffopt' default value now includes "indent-heuristic" and "inline:char".
 • 'statusline' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
 • 'statusline' includes |vim.diagnostic.status()|
