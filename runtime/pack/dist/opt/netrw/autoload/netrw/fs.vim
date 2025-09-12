@@ -72,18 +72,22 @@ endfunction
 " }}}
 " netrw#fs#AbsPath: returns the full path to a directory and/or file {{{
 
-function! netrw#fs#AbsPath(filename)
-    let filename = a:filename
+function! netrw#fs#AbsPath(path)
+    let path = a:path->substitute(s:slash . '$', '', 'e')
 
-    if filename !~ '^/'
-        let filename = resolve(getcwd() . '/' . filename)
+    " Nothing to do
+    if isabsolutepath(path)
+        return path
     endif
 
-    if filename != "/" && filename =~ '/$'
-        let filename = substitute(filename, '/$', '', '')
-    endif
+    return path->fnamemodify(':p')->substitute(s:slash . '$', '', 'e')
+endfunction
 
-    return filename
+" }}}
+" netrw#fs#Dirname: {{{
+
+function netrw#fs#Dirname(path)
+    return netrw#fs#AbsPath(a:path)->fnamemodify(':h')
 endfunction
 
 " }}}

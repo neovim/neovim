@@ -2710,11 +2710,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				     rightmouse      : remove file/directory
 				=0: disables mouse maps
 
-  *g:netrw_nobeval*		doesn't exist (default)
-				If this variable exists, then balloon
-				evaluation will be suppressed
-				(see |'ballooneval'|)
-
  *g:netrw_sizestyle*		not defined: actual bytes (default)
 				="b" : actual bytes       (default)
 				="h" : human-readable (ex. 5k, 4m, 3g)
