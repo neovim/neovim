@@ -2,7 +2,7 @@
 " THESE FUNCTIONS DON'T COMMIT TO ANY BACKWARDS COMPATIBILITY. SO CHANGES AND
 " BREAKAGES IF USED OUTSIDE OF NETRW.VIM ARE EXPECTED.
 
-let s:slash = &shellslash ? '/' : '\'
+let s:slash = !exists('+shellslash') || &shellslash ? '/' : '\'
 
 " netrw#fs#PathJoin: Appends a new part to a path taking different systems into consideration {{{
 
