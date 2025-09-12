@@ -21,6 +21,11 @@ endif
 
 let g:loaded_netrw = "v176"
 
+if !has("patch-9.1.1054") && !has('nvim')
+  echoerr 'netrw needs Vim v9.1.1054'
+  finish
+endif
+
 let s:keepcpo= &cpo
 setl cpo&vim
 "DechoFuncName 1
