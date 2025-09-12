@@ -4053,6 +4053,7 @@ function vim.fn.gettext(text) end
 ---   winnr    window number
 ---   winrow    topmost screen line of the window;
 ---       "row" from |win_screenpos()|
+---   scrollbar       todo
 ---
 --- @param winid? integer
 --- @return vim.fn.getwininfo.ret.item[]

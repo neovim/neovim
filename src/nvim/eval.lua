@@ -5006,6 +5006,7 @@ M.funcs = {
       	winnr		window number
       	winrow		topmost screen line of the window;
       			"row" from |win_screenpos()|
+        scrollbar       todo
 
     ]=],
     name = 'getwininfo',

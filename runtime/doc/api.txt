@@ -444,8 +444,6 @@ Other highlight groups specific to floating windows:
 - |hl-FloatTitle| for window's title
 - |hl-FloatFooter| for window's footer
 
-Currently, floating windows don't support some widgets like scrollbar.
-
 The output of |:mksession| does not include commands for restoring floating
 windows.
 
@@ -3898,6 +3896,10 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                   • _cmdline_offset: (EXPERIMENTAL) When provided, anchor the
                     |cmdline-completion| popupmenu to this window, with an
                     offset in screen cell width.
+                  • scrollbar: If true then display scrollbar on the right
+                    border when text does not fit. |hl-FloatSbarThumb|
+                    highlight is used. Requires `border` and the right border
+                    set.
 
     Return: ~
         (`integer`) |window-ID|, or 0 on error

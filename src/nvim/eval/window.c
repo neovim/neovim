@@ -31,6 +31,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "eval/window.c.generated.h"
 
@@ -346,6 +347,19 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("quickfix"), bt_quickfix(wp->w_buffer));
   tv_dict_add_nr(dict, S_LEN("loclist"),
                  (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL));
+
+ if (wp->w_floating && wp->w_has_scrollbar) {
+    int thumb_pos = 0;
+    int thumb_size = 0;
+    win_update_scrollbar_state(wp, &thumb_pos, &thumb_size);
+
+    dict_T *sb_dict = tv_dict_alloc();
+    tv_dict_add_nr(sb_dict, S_LEN("thumb_pos"), thumb_pos);
+    tv_dict_add_nr(sb_dict, S_LEN("thumb_size"), thumb_size);
+    tv_dict_add_nr(sb_dict, S_LEN("screen_col"), wp->w_wincol + wp->w_view_width + wp->w_border_adj[3]);
+    tv_dict_add_nr(sb_dict, S_LEN("screen_row"), wp->w_winrow + wp->w_border_adj[0]);
+    tv_dict_add_dict(dict, S_LEN("scrollbar"), sb_dict);
+  }
 
   // Add a reference to window variables
   tv_dict_add_dict(dict, S_LEN("variables"), wp->w_vars);

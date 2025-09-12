@@ -655,12 +655,13 @@ of the first line changes).  Note that |WinScrolled| will trigger many more
 times than |WinResized|, it may slow down editing a bit.
 
 The information provided by |WinScrolled| is a dictionary for each window that
-has changes, using the window ID as the key, and a total count of the changes
-with the key "all".  Example value for |v:event|: >
+has changes and scrollbar information, using the window ID as the key, and a
+total count of the changes with the key "all".  Example value for |v:event|: >
 	{
 	   all: {width: 0, height: 2, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
 	   1003: {width: 0, height: -1, leftcol: 0, skipcol: 0, topline: 0, topfill: 0},
 	   1006: {width: 0, height: 1, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
+	   1009: {scrolllbar: 1, scrollbar_info: {screen_col: 2, screen_row: 2 thumb_pos: 0, thumb_size: 1}},
 	}
 
 Note that the "all" entry has the absolute values of the individual windows
