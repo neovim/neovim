@@ -19,7 +19,7 @@ if &cp || exists("g:loaded_netrw")
     finish
 endif
 
-let g:loaded_netrw = "v181"
+let g:loaded_netrw = "v184"
 
 if !has("patch-9.1.1054") && !has('nvim')
     echoerr 'netrw needs Vim v9.1.1054'
@@ -4865,7 +4865,6 @@ function s:NetrwMaps(islocal)
         nnoremap <buffer> <silent> <nowait> mg       :<c-u>call <SID>NetrwMarkFileGrep(1)<cr>
         nnoremap <buffer> <silent> <nowait> mh       :<c-u>call <SID>NetrwMarkHideSfx(1)<cr>
         nnoremap <buffer> <silent> <nowait> mm       :<c-u>call <SID>NetrwMarkFileMove(1)<cr>
-        " nnoremap <buffer> <silent> <nowait> mp       :<c-u>call <SID>NetrwMarkFilePrint(1)<cr>
         nnoremap <buffer> <silent> <nowait> mr       :<c-u>call <SID>NetrwMarkFileRegexp(1)<cr>
         nnoremap <buffer> <silent> <nowait> ms       :<c-u>call <SID>NetrwMarkFileSource(1)<cr>
         nnoremap <buffer> <silent> <nowait> mT       :<c-u>call <SID>NetrwMarkFileTag(1)<cr>
@@ -4977,7 +4976,6 @@ function s:NetrwMaps(islocal)
         nnoremap <buffer> <silent> <nowait> mg       :<c-u>call <SID>NetrwMarkFileGrep(0)<cr>
         nnoremap <buffer> <silent> <nowait> mh       :<c-u>call <SID>NetrwMarkHideSfx(0)<cr>
         nnoremap <buffer> <silent> <nowait> mm       :<c-u>call <SID>NetrwMarkFileMove(0)<cr>
-        " nnoremap <buffer> <silent> <nowait> mp       :<c-u>call <SID>NetrwMarkFilePrint(0)<cr>
         nnoremap <buffer> <silent> <nowait> mr       :<c-u>call <SID>NetrwMarkFileRegexp(0)<cr>
         nnoremap <buffer> <silent> <nowait> ms       :<c-u>call <SID>NetrwMarkFileSource(0)<cr>
         nnoremap <buffer> <silent> <nowait> mT       :<c-u>call <SID>NetrwMarkFileTag(0)<cr>
@@ -5936,39 +5934,6 @@ function s:NetrwMarkFileMove(islocal)
 
 endfunction
 
-" s:NetrwMarkFilePrint: (invoked by mp) This function prints marked files {{{2
-"                       using the hardcopy command.  Local marked-file list only.
-function s:NetrwMarkFilePrint(islocal)
-    let curbufnr= bufnr("%")
-
-    " sanity check
-    if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-        call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
-        return
-    endif
-    let curdir= s:NetrwGetCurdir(a:islocal)
-
-    if exists("s:netrwmarkfilelist_{curbufnr}")
-        let netrwmarkfilelist = s:netrwmarkfilelist_{curbufnr}
-        call s:NetrwUnmarkList(curbufnr,curdir)
-        for fname in netrwmarkfilelist
-            if a:islocal
-                if g:netrw_keepdir
-                    let fname= netrw#fs#ComposePath(curdir,fname)
-                endif
-            else
-                let fname= curdir.fname
-            endif
-            1split
-            " the autocmds will handle both local and remote files
-            exe "sil NetrwKeepj e ".fnameescape(fname)
-            hardcopy
-            q
-        endfor
-        2match none
-    endif
-endfunction
-
 " s:NetrwMarkFileRegexp: (invoked by mr) This function is used to mark {{{2
 "                        files when given a regexp (for which a prompt is
 "                        issued) (matches to name of files).
@@ -6199,37 +6164,20 @@ endfunction
 
 " s:NetrwOpenFile: query user for a filename and open it {{{2
 function s:NetrwOpenFile(islocal)
-    let ykeep= @@
     call inputsave()
-    let fname= input("Enter filename: ")
+    let fname = input("Enter filename: ")
     call inputrestore()
 
-    " determine if Lexplore is in use
-    if exists("t:netrw_lexbufnr")
-        " check if t:netrw_lexbufnr refers to a netrw window
-        let lexwinnr = bufwinnr(t:netrw_lexbufnr)
-        if lexwinnr != -1 && exists("g:netrw_chgwin") && g:netrw_chgwin != -1
-            exe "NetrwKeepj keepalt ".g:netrw_chgwin."wincmd w"
-            exe "NetrwKeepj e ".fnameescape(fname)
-            let @@= ykeep
-        endif
+    if empty(fname)
+        return
     endif
 
-    " Does the filename contain a path?
-    if fname !~ '[/\\]'
-        if exists("b:netrw_curdir")
-            " save position for benefit of Rexplore
-            let s:rexposn_{bufnr("%")}= winsaveview()
-            if b:netrw_curdir =~ '/$'
-                exe "NetrwKeepj e ".fnameescape(b:netrw_curdir.fname)
-            else
-                exe "e ".fnameescape(b:netrw_curdir."/".fname)
-            endif
-        endif
-    else
-        exe "NetrwKeepj e ".fnameescape(fname)
-    endif
-    let @@= ykeep
+    " save position for benefit of Rexplore
+    let s:rexposn_{bufnr("%")}= winsaveview()
+
+    execute "NetrwKeepj e " . fnameescape(!isabsolutepath(fname)
+                \ ? netrw#fs#ComposePath(b:netrw_curdir, fname)
+                \ : fname)
 endfunction
 
 " netrw#Shrink: shrinks/expands a netrw or Lexplorer window {{{2
@@ -6429,7 +6377,6 @@ function s:NetrwMenu(domenu)
             exe 'sil! menu '.g:NetrwMenuPriority.'.14.8   '.g:NetrwTopLvlMenu.'Marked\ Files.Exe\ Cmd<tab>mx    mx'
             exe 'sil! menu '.g:NetrwMenuPriority.'.14.9   '.g:NetrwTopLvlMenu.'Marked\ Files.Move\ To\ Target<tab>mm    mm'
             exe 'sil! menu '.g:NetrwMenuPriority.'.14.10  '.g:NetrwTopLvlMenu.'Marked\ Files.Obtain<tab>O       O'
-            exe 'sil! menu '.g:NetrwMenuPriority.'.14.11  '.g:NetrwTopLvlMenu.'Marked\ Files.Print<tab>mp       mp'
             exe 'sil! menu '.g:NetrwMenuPriority.'.14.12  '.g:NetrwTopLvlMenu.'Marked\ Files.Replace<tab>R      R'
             exe 'sil! menu '.g:NetrwMenuPriority.'.14.13  '.g:NetrwTopLvlMenu.'Marked\ Files.Set\ Target<tab>mt mt'
             exe 'sil! menu '.g:NetrwMenuPriority.'.14.14  '.g:NetrwTopLvlMenu.'Marked\ Files.Tag<tab>mT mT'
