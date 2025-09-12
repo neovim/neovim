@@ -19,7 +19,7 @@ if &cp || exists("g:loaded_netrw")
   finish
 endif
 
-let g:loaded_netrw = "v176"
+let g:loaded_netrw = "v177"
 
 if !has("patch-9.1.1054") && !has('nvim')
   echoerr 'netrw needs Vim v9.1.1054'
@@ -45,109 +45,104 @@ setl cpo&vim
 "          netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,["message1","message2",...],error-number)
 "          (this function can optionally take a list of messages)
 "  Dec 2, 2019 : max errnum currently is 106
-fun! netrw#ErrorMsg(level,msg,errnum)
-  "  call Dfunc("netrw#ErrorMsg(level=".a:level." msg<".a:msg."> errnum=".a:errnum.") g:netrw_use_errorwindow=".g:netrw_use_errorwindow)
+function! netrw#ErrorMsg(level, msg, errnum)
+    if a:level < g:netrw_errorlvl
+        return
+    endif
 
-  if a:level < g:netrw_errorlvl
-    "   call Dret("netrw#ErrorMsg : suppressing level=".a:level." since g:netrw_errorlvl=".g:netrw_errorlvl)
-    return
-  endif
-
-  if a:level == 1
-    let level= "**warning** (netrw) "
-  elseif a:level == 2
-    let level= "**error** (netrw) "
-  else
-    let level= "**note** (netrw) "
-  endif
-  "  call Decho("level=".level,'~'.expand("<slnum>"))
-
-  if g:netrw_use_errorwindow == 2 && exists("*popup_atcursor")
-    " use popup window
-    if type(a:msg) == 3
-      let msg = [level]+a:msg
+    if a:level == 1
+        let level = "**warning** (netrw) "
+    elseif a:level == 2
+        let level = "**error** (netrw) "
     else
-      let msg= level.a:msg
+        let level = "**note** (netrw) "
     endif
-    let s:popuperr_id  = popup_atcursor(msg,{})
-    let s:popuperr_text= ""
-  elseif g:netrw_use_errorwindow
-    " (default) netrw creates a one-line window to show error/warning
-    " messages (reliably displayed)
 
-    " record current window number
-    let s:winBeforeErr= winnr()
-    "   call Decho("s:winBeforeErr=".s:winBeforeErr,'~'.expand("<slnum>"))
+    if g:netrw_use_errorwindow == 2 && exists("*popup_atcursor")
+        " use popup window
+        if type(a:msg) == 3
+            let msg = [level]+a:msg
+        else
+            let msg = level.a:msg
+        endif
+        let s:popuperr_id = popup_atcursor(msg, {})
+        let s:popuperr_text = ""
+    elseif has('nvim')
+        call v:lua.vim.notify(level . a:msg, a:level + 2)
+    elseif g:netrw_use_errorwindow
+        " (default) netrw creates a one-line window to show error/warning
+        " messages (reliably displayed)
 
-    " getting messages out reliably is just plain difficult!
-    " This attempt splits the current window, creating a one line window.
-    if bufexists("NetrwMessage") && bufwinnr("NetrwMessage") > 0
-      "    call Decho("write to NetrwMessage buffer",'~'.expand("<slnum>"))
-      exe bufwinnr("NetrwMessage")."wincmd w"
-      "    call Decho("setl ma noro",'~'.expand("<slnum>"))
-      setl ma noro
-      if type(a:msg) == 3
-        for msg in a:msg
-          NetrwKeepj call setline(line("$")+1,level.msg)
-        endfor
-      else
-        NetrwKeepj call setline(line("$")+1,level.a:msg)
-      endif
-      NetrwKeepj $
+        " record current window number
+        let s:winBeforeErr = winnr()
+        "   call Decho("s:winBeforeErr=".s:winBeforeErr,'~'.expand("<slnum>"))
+
+        " getting messages out reliably is just plain difficult!
+        " This attempt splits the current window, creating a one line window.
+        if bufexists("NetrwMessage") && bufwinnr("NetrwMessage") > 0
+            "    call Decho("write to NetrwMessage buffer",'~'.expand("<slnum>"))
+            exe bufwinnr("NetrwMessage")."wincmd w"
+            "    call Decho("setl ma noro",'~'.expand("<slnum>"))
+            setl ma noro
+            if type(a:msg) == 3
+                for msg in a:msg
+                    NetrwKeepj call setline(line("$")+1,level.msg)
+                endfor
+            else
+                NetrwKeepj call setline(line("$")+1,level.a:msg)
+            endif
+            NetrwKeepj $
+        else
+            "    call Decho("create a NetrwMessage buffer window",'~'.expand("<slnum>"))
+            bo 1split
+            sil! call s:NetrwEnew()
+            sil! NetrwKeepj call s:NetrwOptionsSafe(1)
+            setl bt=nofile
+            NetrwKeepj file NetrwMessage
+            "    call Decho("setl ma noro",'~'.expand("<slnum>"))
+            setl ma noro
+            if type(a:msg) == 3
+                for msg in a:msg
+                    NetrwKeepj call setline(line("$")+1,level.msg)
+                endfor
+            else
+                NetrwKeepj call setline(line("$"),level.a:msg)
+            endif
+            NetrwKeepj $
+        endif
+        "   call Decho("wrote msg<".level.a:msg."> to NetrwMessage win#".winnr(),'~'.expand("<slnum>"))
+        if &fo !~ '[ta]'
+            syn clear
+            syn match netrwMesgNote     "^\*\*note\*\*"
+            syn match netrwMesgWarning  "^\*\*warning\*\*"
+            syn match netrwMesgError    "^\*\*error\*\*"
+            hi link netrwMesgWarning WarningMsg
+            hi link netrwMesgError   Error
+        endif
+        "   call Decho("setl noma ro bh=wipe",'~'.expand("<slnum>"))
+        setl ro nomod noma bh=wipe
+
     else
-      "    call Decho("create a NetrwMessage buffer window",'~'.expand("<slnum>"))
-      bo 1split
-      sil! call s:NetrwEnew()
-      sil! NetrwKeepj call s:NetrwOptionsSafe(1)
-      setl bt=nofile
-      NetrwKeepj file NetrwMessage
-      "    call Decho("setl ma noro",'~'.expand("<slnum>"))
-      setl ma noro
-      if type(a:msg) == 3
-        for msg in a:msg
-          NetrwKeepj call setline(line("$")+1,level.msg)
-        endfor
-      else
-        NetrwKeepj call setline(line("$"),level.a:msg)
-      endif
-      NetrwKeepj $
-    endif
-    "   call Decho("wrote msg<".level.a:msg."> to NetrwMessage win#".winnr(),'~'.expand("<slnum>"))
-    if &fo !~ '[ta]'
-      syn clear
-      syn match netrwMesgNote     "^\*\*note\*\*"
-      syn match netrwMesgWarning  "^\*\*warning\*\*"
-      syn match netrwMesgError    "^\*\*error\*\*"
-      hi link netrwMesgWarning WarningMsg
-      hi link netrwMesgError   Error
-    endif
-    "   call Decho("setl noma ro bh=wipe",'~'.expand("<slnum>"))
-    setl ro nomod noma bh=wipe
+        " (optional) netrw will show messages using echomsg.  Even if the
+        " message doesn't appear, at least it'll be recallable via :messages
+        "   redraw!
+        if a:level == s:WARNING
+            echohl WarningMsg
+        elseif a:level == s:ERROR
+            echohl Error
+        endif
 
-  else
-    " (optional) netrw will show messages using echomsg.  Even if the
-    " message doesn't appear, at least it'll be recallable via :messages
-    "   redraw!
-    if a:level == s:WARNING
-      echohl WarningMsg
-    elseif a:level == s:ERROR
-      echohl Error
+        if type(a:msg) == 3
+            for msg in a:msg
+                unsilent echomsg level.msg
+            endfor
+        else
+            unsilent echomsg level.a:msg
+        endif
+
+        echohl None
     endif
-
-    if type(a:msg) == 3
-      for msg in a:msg
-        unsilent echomsg level.msg
-      endfor
-    else
-      unsilent echomsg level.a:msg
-    endif
-
-    "   call Decho("echomsg ***netrw*** ".a:msg,'~'.expand("<slnum>"))
-    echohl None
-  endif
-
-  "  call Dret("netrw#ErrorMsg")
-endfun
+endfunction
 
 " ---------------------------------------------------------------------
 " s:NetrwInit: initializes variables if they haven't been defined {{{2
@@ -518,11 +513,9 @@ call s:NetrwInit("g:netrw_sort_by"       , "name") " alternatives: date         
 call s:NetrwInit("g:netrw_sort_options"  , "")
 call s:NetrwInit("g:netrw_sort_direction", "normal") " alternative: reverse  (z y x ...)
 if !exists("g:netrw_sort_sequence")
-  if has("unix")
-    let g:netrw_sort_sequence= '[\/]$,\<core\%(\.\d\+\)\=\>,\.h$,\.c$,\.cpp$,\~\=\*$,*,\.o$,\.obj$,\.info$,\.swp$,\.bak$,\~$'
-  else
-    let g:netrw_sort_sequence= '[\/]$,\.h$,\.c$,\.cpp$,*,\.o$,\.obj$,\.info$,\.swp$,\.bak$,\~$'
-  endif
+    let g:netrw_sort_sequence = !empty(&suffixes)
+                \ ? printf('[\/]$,*,\%(%s\)[*@]\=$', &suffixes->split(',')->map('escape(v:val, ".*$~")')->join('\|'))
+                \ : '[\/]$,*'
 endif
 call s:NetrwInit("g:netrw_special_syntax"   , 0)
 call s:NetrwInit("g:netrw_ssh_browse_reject", '^total\s\+\d\+$')
@@ -4888,7 +4881,7 @@ fun! s:NetrwBrowseUpDir(islocal)
 endfun
 
 " ---------------------------------------------------------------------
-" netrw#BrowseX:  (implements "x" and "gx") executes a special "viewer" script or program for the {{{2
+" netrw#BrowseX:  (implements "x") executes a special "viewer" script or program for the {{{2
 "              given filename; typically this means given their extension.
 "              0=local, 1=remote
 fun! netrw#BrowseX(fname,remote)
@@ -4988,17 +4981,6 @@ fun! netrw#BrowseX(fname,remote)
   call winrestview(screenposn)
   let @@ = ykeep
   let &aw= awkeep
-endfun
-
-" ---------------------------------------------------------------------
-" netrw#BrowseXVis: used by gx in visual mode to select a file for browsing {{{2
-fun! netrw#BrowseXVis()
-  let dict={}
-  let dict.a=[getreg('a'), getregtype('a')]
-  norm! gv"ay
-  let gxfile= @a
-  call s:RestoreRegister(dict)
-  call netrw#BrowseX(gxfile,netrw#CheckIfRemote(gxfile))
 endfun
 
 " ---------------------------------------------------------------------
@@ -5315,7 +5297,7 @@ endfun
 "  s:NetrwHome: this function determines a "home" for saving bookmarks and history {{{2
 function! s:NetrwHome()
   if has('nvim')
-    let home = netrw#own#JoinPath(stdpath('state'), 'netrw')
+    let home = netrw#own#PathJoin(stdpath('state'), 'netrw')
   elseif exists("g:netrw_home")
     let home = expand(g:netrw_home)
   else
@@ -6349,7 +6331,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     endif
 
     " copy marked files while within the same directory (ie. allow renaming)
-    if s:StripTrailingSlash(simplify(s:netrwmftgt)) == s:StripTrailingSlash(simplify(b:netrw_curdir))
+    if simplify(s:netrwmftgt) ==# simplify(b:netrw_curdir)
       if len(s:netrwmarkfilelist_{bufnr('%')}) == 1
         " only one marked file
         "     call Decho("case: only one marked file",'~'.expand("<slnum>"))
@@ -10236,131 +10218,124 @@ endfun
 
 " ---------------------------------------------------------------------
 " s:NetrwLocalRm: {{{2
-fun! s:NetrwLocalRm(path) range
-  if !exists("w:netrw_bannercnt")
-    let w:netrw_bannercnt= b:netrw_bannercnt
-  endif
+function! s:NetrwLocalRm(path) range
+    if !exists("w:netrw_bannercnt")
+        let w:netrw_bannercnt = b:netrw_bannercnt
+    endif
 
-  " preparation for removing multiple files/directories
-  let ykeep = @@
-  let ret   = 0
-  let all   = 0
-  let svpos = winsaveview()
+    " preparation for removing multiple files/directories
+    let ykeep = @@
+    let ret = 0
+    let all = 0
+    let svpos = winsaveview()
 
-  if exists("s:netrwmarkfilelist_{bufnr('%')}")
-    " remove all marked files
-    for fname in s:netrwmarkfilelist_{bufnr("%")}
-      let ok= s:NetrwLocalRmFile(a:path,fname,all)
-      if ok =~# 'q\%[uit]' || ok == "no"
-        break
-      elseif ok =~# '^a\%[ll]$'
-        let all= 1
-      endif
-    endfor
-    call s:NetrwUnMarkFile(1)
+    if exists("s:netrwmarkfilelist_{bufnr('%')}")
+        " remove all marked files
+        for fname in s:netrwmarkfilelist_{bufnr("%")}
+            let ok = s:NetrwLocalRmFile(a:path, fname, all)
+            if ok =~# '^a\%[ll]$'
+                let all = 1
+            elseif ok =~# "n\%[o]"
+                break
+            endif
+        endfor
+        call s:NetrwUnMarkFile(1)
 
-  else
-    " remove (multiple) files and directories
+    else
+        " remove (multiple) files and directories
 
-    let keepsol= &l:sol
-    setl nosol
-    let ctr = a:firstline
-    while ctr <= a:lastline
-      exe "NetrwKeepj ".ctr
+        let keepsol = &l:sol
+        setl nosol
+        let ctr = a:firstline
+        while ctr <= a:lastline
+            exe "NetrwKeepj ".ctr
 
-      " sanity checks
-      if line(".") < w:netrw_bannercnt
-        let ctr= ctr + 1
-        continue
-      endif
-      let curword= s:NetrwGetWord()
-      if curword == "./" || curword == "../"
-        let ctr= ctr + 1
-        continue
-      endif
-      let ok= s:NetrwLocalRmFile(a:path,curword,all)
-      if ok =~# 'q\%[uit]' || ok == "no"
-        break
-      elseif ok =~# '^a\%[ll]$'
-        let all= 1
-      endif
-      let ctr= ctr + 1
-    endwhile
-    let &l:sol= keepsol
-  endif
+            " sanity checks
+            if line(".") < w:netrw_bannercnt
+                let ctr = ctr + 1
+                continue
+            endif
 
-  " refresh the directory
-  if bufname("%") != "NetrwMessage"
-    NetrwKeepj call s:NetrwRefresh(1,s:NetrwBrowseChgDir(1,'./',0))
-    NetrwKeepj call winrestview(svpos)
-  endif
-  let @@= ykeep
-endfun
+            let curword = s:NetrwGetWord()
+            if curword == "./" || curword == "../"
+                let ctr = ctr + 1
+                continue
+            endif
+
+            let ok = s:NetrwLocalRmFile(a:path, curword, all)
+            if ok =~# '^a\%[ll]$'
+                let all = 1
+            elseif ok =~# "n\%[o]"
+                break
+            endif
+
+            let ctr = ctr + 1
+        endwhile
+
+        let &l:sol = keepsol
+    endif
+
+    " refresh the directory
+    if bufname("%") != "NetrwMessage"
+        NetrwKeepj call s:NetrwRefresh(1, s:NetrwBrowseChgDir(1, './', 0))
+        NetrwKeepj call winrestview(svpos)
+    endif
+
+    let @@= ykeep
+endfunction
 
 " ---------------------------------------------------------------------
 " s:NetrwLocalRmFile: remove file fname given the path {{{2
 "                     Give confirmation prompt unless all==1
-fun! s:NetrwLocalRmFile(path,fname,all)
-  "  call Dfunc("s:NetrwLocalRmFile(path<".a:path."> fname<".a:fname."> all=".a:all)
+function! s:NetrwLocalRmFile(path, fname, all)
+    let all = a:all
+    let ok = ""
+    let dir = 0
+    NetrwKeepj norm! 0
+    let rmfile = s:NetrwFile(s:ComposePath(a:path, escape(a:fname, '\\')))->fnamemodify(':.')
 
-  let all= a:all
-  let ok = ""
-  NetrwKeepj norm! 0
-  let rmfile= s:NetrwFile(s:ComposePath(a:path,escape(a:fname, '\\')))
-  "  call Decho("rmfile<".rmfile.">",'~'.expand("<slnum>"))
+    " if not a directory
+    if rmfile !~ '^"' && (rmfile =~ '@$' || rmfile !~ '[\/]$')
+        let msg = "Confirm deletion of file <%s> [{y(es)},n(o),a(ll)]: "
+    else
+        let msg = "Confirm *recursive* deletion of directory <%s> [{y(es)},n(o),a(ll)]: "
+        let dir = 1
+    endif
 
-  if rmfile !~ '^"' && (rmfile =~ '@$' || rmfile !~ '[\/]$')
-    " attempt to remove file
-    "   call Decho("attempt to remove file<".rmfile.">",'~'.expand("<slnum>"))
+    " Ask confirmation
     if !all
-      echohl Statement
-      call inputsave()
-      let ok= input("Confirm deletion of file <".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
-      call inputrestore()
-      echohl NONE
-      if ok == ""
-        let ok="no"
-      endif
-      "    call Decho("response: ok<".ok.">",'~'.expand("<slnum>"))
-      let ok= substitute(ok,'\[{y(es)},n(o),a(ll),q(uit)]\s*','','e')
-      "    call Decho("response: ok<".ok."> (after sub)",'~'.expand("<slnum>"))
-      if ok =~# '^a\%[ll]$'
-        let all= 1
-      endif
+        echohl Statement
+        call inputsave()
+        let ok = input(printf(msg, rmfile))
+        call inputrestore()
+        echohl NONE
+        if ok =~# '^a\%[ll]$' || ok =~# '^y\%[es]$'
+            let all = 1
+        else
+            let ok = 'no'
+        endif
     endif
 
-    if all || ok =~# '^y\%[es]$' || ok == ""
-      let ret= s:NetrwDelete(rmfile)
-      "    call Decho("errcode=".v:shell_error." ret=".ret,'~'.expand("<slnum>"))
+    if !dir && (all || empty(ok))
+        " This works because delete return 0 if successful
+        if s:NetrwDelete(rmfile)
+            call netrw#ErrorMsg(s:ERROR, printf("unable to delete <%s>!", rmfile), 103)
+        else
+            " Remove file only if there are no pending changes
+            execute printf('silent! bwipeout %s', rmfile)
+        endif
+
+    elseif dir && (all || empty(ok))
+        " Remove trailing /
+        let rmfile = substitute(rmfile, '[\/]$', '', 'e')
+        if delete(rmfile, "rf")
+            call netrw#ErrorMsg(s:ERROR, printf("unable to delete directory <%s>!", rmfile), 103)
+        endif
+
     endif
 
-  else
-    " attempt to remove directory
-    if !all
-      echohl Statement
-      call inputsave()
-      let ok= input("Confirm *recursive* deletion of directory <".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
-      call inputrestore()
-      let ok= substitute(ok,'\[{y(es)},n(o),a(ll),q(uit)]\s*','','e')
-      if ok == ""
-        let ok="no"
-      endif
-      if ok =~# '^a\%[ll]$'
-        let all= 1
-      endif
-    endif
-    let rmfile= substitute(rmfile,'[\/]$','','e')
-
-    if all || ok =~# '^y\%[es]$' || ok == ""
-      if delete(rmfile,"rf")
-        call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".rmfile.">!",103)
-      endif
-    endif
-  endif
-
-  "  call Dret("s:NetrwLocalRmFile ".ok)
-  return ok
-endfun
+    return ok
+endfunction
 
 " =====================================================================
 " Support Functions: {{{1
@@ -10480,13 +10455,6 @@ fun! netrw#WinPath(path)
   endif
   "  call Dret("netrw#WinPath <".path.">")
   return path
-endfun
-
-" ---------------------------------------------------------------------
-" s:StripTrailingSlash: removes trailing slashes from a path {{{2
-fun! s:StripTrailingSlash(path)
-  " remove trailing slash
-  return substitute(a:path, '[/\\]$', '', 'g')
 endfun
 
 " ---------------------------------------------------------------------
@@ -10610,9 +10578,9 @@ fun! s:FileReadable(fname)
   "  call Dfunc("s:FileReadable(fname<".a:fname.">)")
 
   if g:netrw_cygwin
-    let ret= filereadable(s:NetrwFile(substitute(a:fname,g:netrw_cygdrive.'/\(.\)','\1:/','')))
+    let ret = filereadable(s:NetrwFile(substitute(a:fname,g:netrw_cygdrive.'/\(.\)','\1:/','')))
   else
-    let ret= filereadable(s:NetrwFile(a:fname))
+    let ret = filereadable(s:NetrwFile(a:fname))
   endif
 
   "  call Dret("s:FileReadable ".ret)
@@ -10871,31 +10839,24 @@ endfun
 "           Uses Steve Hall's idea to insure that Windows paths stay
 "           acceptable.  No effect on Unix paths.
 "  Examples of use:  let result= s:NetrwDelete(path)
-fun! s:NetrwDelete(path)
-  "  call Dfunc("s:NetrwDelete(path<".a:path.">)")
+function! s:NetrwDelete(path)
+    let path = netrw#WinPath(a:path)
 
-  let path = netrw#WinPath(a:path)
-  if !g:netrw_cygwin && has("win32")
-    if exists("+shellslash")
-      let sskeep= &shellslash
-      setl noshellslash
-      let result      = delete(path)
-      let &shellslash = sskeep
+    if !g:netrw_cygwin && has("win32") && exists("+shellslash")
+        let sskeep = &shellslash
+        setl noshellslash
+        let result = delete(path)
+        let &shellslash = sskeep
     else
-      "    call Decho("exe let result= ".a:cmd."('".path."')",'~'.expand("<slnum>"))
-      let result= delete(path)
+        let result = delete(path)
     endif
-  else
-    "   call Decho("let result= delete(".path.")",'~'.expand("<slnum>"))
-    let result= delete(path)
-  endif
-  if result < 0
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"delete(".path.") failed!",71)
-  endif
 
-  "  call Dret("s:NetrwDelete ".result)
-  return result
-endfun
+    if result < 0
+        NetrwKeepj call netrw#ErrorMsg(s:WARNING, "delete(".path.") failed!", 71)
+    endif
+
+    return result
+endfunction
 
 " ---------------------------------------------------------------------
 " s:NetrwBufRemover: removes a buffer that: {{{2s
@@ -11649,7 +11610,7 @@ fun! s:UserMaps(islocal,funcname)
   endif
 endfun
 
-" Deprecated: {{{
+" Deprecated: {{{1
 
 function! netrw#Launch(args)
     call netrw#own#Deprecate('netrw#Launch', 'v180', {'vim': 'dist#vim9#Launch', 'nvim': 'vim.system'})
@@ -11664,14 +11625,11 @@ function! netrw#Open(file)
 endfunction
 
 " }}}
-" ==========================
 " Settings Restoration: {{{1
 " ==========================
 let &cpo= s:keepcpo
 unlet s:keepcpo
 
-" ===============
-" Modelines: {{{1
-" ===============
+" }}}
 
 " vim:ts=8 sts=4 sw=4 et fdm=marker
