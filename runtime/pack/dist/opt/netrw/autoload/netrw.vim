@@ -11383,23 +11383,6 @@ endfun
 
 " Deprecated: {{{1
 
-function! netrw#Launch(args)
-    call netrw#msg#Deprecate('netrw#Launch', 'v180', {'vim': 'dist#vim9#Launch', 'nvim': 'vim.system'})
-    if !has('nvim')
-        call dist#vim9#Launch(args)
-    endif
-endfunction
-
-function! netrw#Open(file)
-    call netrw#msg#Deprecate('netrw#Open', 'v180', {'vim': 'dist#vim9#Open', 'nvim': 'vim.ui.open'})
-    call netrw#os#Open(a:file)
-endfunction
-
-function! netrw#WinPath(path)
-    call netrw#msg#Deprecate('netrw#WinPath', 'v180', {})
-    call netrw#fs#WinPath(a:path)
-endfunction
-
 " }}}
 " Settings Restoration: {{{1
 " ==========================
