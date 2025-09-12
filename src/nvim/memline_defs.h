@@ -42,6 +42,7 @@ typedef struct {
 ///
 typedef struct {
   linenr_T ml_line_count;       // number of lines in the buffer
+  linenr_T ml_vline_count;      // visible lines count
 
   memfile_T *ml_mfp;          // pointer to associated memfile
 
