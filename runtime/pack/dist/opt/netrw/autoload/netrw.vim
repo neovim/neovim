@@ -31,22 +31,6 @@ setl cpo&vim
 
 "  Netrw Variables: {{{1
 
-" netrw#ErrorMsg: {{{2
-"   0=note     = s:NOTE
-"   1=warning  = s:WARNING
-"   2=error    = s:ERROR
-"   Usage: netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,"some message",error-number)
-"          netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,["message1","message2",...],error-number)
-"          (this function can optionally take a list of messages)
-"  Mar 03, 2025 : max errnum currently is 107
-function! netrw#ErrorMsg(level, msg, errnum)
-    if has('nvim')
-        call v:lua.vim.notify(a:msg, a:level + 2)
-    else
-        call netrw#msg#Notify(a:level, a:msg)
-    endif
-endfunction
-
 " s:NetrwInit: initializes variables if they haven't been defined {{{2
 "            Loosely,  varname = value.
 fun s:NetrwInit(varname,value)
@@ -72,11 +56,6 @@ if !exists("s:LONGLIST")
   call s:NetrwInit("s:TREELIST",3)
   call s:NetrwInit("s:MAXLIST" ,4)
 endif
-
-let s:NOTE    = 0
-let s:WARNING = 1
-let s:ERROR   = 2
-let g:_netrw_log = {'NOTE': 0, 'WARN': 1, 'ERROR': 2}
 
 let s:has_balloon = !has('nvim') &&
             \ has("balloon_eval") &&
@@ -189,10 +168,6 @@ call s:NetrwInit("g:netrw_chgwin"      , -1)
 call s:NetrwInit("g:netrw_clipboard"   , 1)
 call s:NetrwInit("g:netrw_compress"    , "gzip")
 call s:NetrwInit("g:netrw_ctags"       , "ctags")
-if exists("g:netrw_cursorline") && !exists("g:netrw_cursor")
-  call netrw#ErrorMsg(s:NOTE,'g:netrw_cursorline is deprecated; use g:netrw_cursor instead',77)
-  let g:netrw_cursor= g:netrw_cursorline
-endif
 call s:NetrwInit("g:netrw_cursor"      , 2)
 let s:netrw_usercul = &cursorline
 let s:netrw_usercuc = &cursorcolumn
@@ -278,11 +253,6 @@ if !exists("g:netrw_list_cmd")
 endif
 call s:NetrwInit("g:netrw_list_hide","")
 " Default values - lh-lz ---------- {{{3
-if exists("g:netrw_local_copycmd")
-  let g:netrw_localcopycmd= g:netrw_local_copycmd
-  call netrw#ErrorMsg(s:NOTE,"g:netrw_local_copycmd is deprecated in favor of g:netrw_localcopycmd",84)
-endif
-
 if !exists("g:netrw_localcmdshell")
   let g:netrw_localcmdshell= ""
 endif
@@ -307,10 +277,6 @@ if !exists("g:netrw_localcopydircmd")
     endif
 endif
 
-if exists("g:netrw_local_mkdir")
-  let g:netrw_localmkdir= g:netrw_local_mkdir
-  call netrw#ErrorMsg(s:NOTE,"g:netrw_local_mkdir is deprecated in favor of g:netrw_localmkdir",87)
-endif
 if has("win32")
   if g:netrw_cygwin
     call s:NetrwInit("g:netrw_localmkdir","mkdir")
@@ -322,11 +288,6 @@ else
   call s:NetrwInit("g:netrw_localmkdir","mkdir")
 endif
 call s:NetrwInit("g:netrw_remote_mkdir","mkdir")
-
-if exists("g:netrw_local_movecmd")
-  let g:netrw_localmovecmd= g:netrw_local_movecmd
-  call netrw#ErrorMsg(s:NOTE,"g:netrw_local_movecmd is deprecated in favor of g:netrw_localmovecmd",88)
-endif
 
 if !exists("g:netrw_localmovecmd")
   if has("win32")
@@ -463,8 +424,6 @@ endif
 
 if s:has_balloon
     function! netrw#BalloonHelp()
-        " popup error window is still showing
-        " s:pouperr_id and s:popuperr_text are set up in netrw#ErrorMsg()
         if exists("s:popuperr_id") && popup_getpos(s:popuperr_id) != {}
             if exists("s:popuperr_text") && s:popuperr_text != "" && v:beval_text != s:popuperr_text
                 " text under mouse hasn't changed; only close window when it changes
@@ -715,7 +674,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
       if indx == -1
         " Nexplore
         if !exists("w:netrw_explore_list") " sanity check
-          NetrwKeepj call netrw#ErrorMsg(s:WARNING,"using Nexplore or <s-down> improperly; see help for netrw-starstar",40)
+          call netrw#msg#Notify('WARNING', 'using Nexplore or <s-down> improperly; see help for netrw-starstar')
           if !has('nvim') && has("clipboard") && g:netrw_clipboard
             if @* != keepregstar | sil! let @* = keepregstar | endif
             if @+ != keepregplus | sil! let @+ = keepregplus | endif
@@ -735,7 +694,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
       elseif indx == -2
         " Pexplore
         if !exists("w:netrw_explore_list") " sanity check
-          NetrwKeepj call netrw#ErrorMsg(s:WARNING,"using Pexplore or <s-up> improperly; see help for netrw-starstar",41)
+          call netrw#msg#Notify('WARNING', 'using Pexplore or <s-up> improperly; see help for netrw-starstar')
           if !has('nvim') && has("clipboard") && g:netrw_clipboard
             if @* != keepregstar | sil! let @* = keepregstar | endif
             if @+ != keepregplus | sil! let @+ = keepregplus | endif
@@ -767,7 +726,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
           try
             exe "NetrwKeepj noautocmd vimgrep /".pattern."/gj ".fnameescape(b:netrw_curdir)."/*"
           catch /^Vim\%((\a\+)\)\=:E480/
-            keepalt call netrw#ErrorMsg(s:WARNING,"no match with pattern<".pattern.">",76)
+            call netrw#msg#Notify('WARNING', printf("no match with pattern<%s>", pattern))
             return
           endtry
           let w:netrw_explore_list = s:NetrwExploreListUniq(map(getqflist(),'bufname(v:val.bufnr)'))
@@ -778,7 +737,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
           try
             exe "sil NetrwKeepj noautocmd keepalt vimgrep /".pattern."/gj "."**/*"
           catch /^Vim\%((\a\+)\)\=:E480/
-            keepalt call netrw#ErrorMsg(s:WARNING,'no files matched pattern<'.pattern.'>',45)
+            call netrw#msg#Notify('WARNING', printf('no files matched pattern<%s>', pattern))
             if &hls | let keepregslash= s:ExplorePatHls(pattern) | endif
             if !has('nvim') && has("clipboard") && g:netrw_clipboard
               if @* != keepregstar | sil! let @* = keepregstar | endif
@@ -808,7 +767,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
         let w:netrw_explore_listlen = len(w:netrw_explore_list)
 
         if w:netrw_explore_listlen == 0 || (w:netrw_explore_listlen == 1 && w:netrw_explore_list[0] =~ '\*\*\/')
-          keepalt NetrwKeepj call netrw#ErrorMsg(s:WARNING,"no files matched",42)
+          call netrw#msg#Notify('WARNING', 'no files matched')
           if !has('nvim') && has("clipboard") && g:netrw_clipboard
             if @* != keepregstar | sil! let @* = keepregstar | endif
             if @+ != keepregplus | sil! let @+ = keepregplus | endif
@@ -825,7 +784,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
       if indx >= w:netrw_explore_listlen || indx < 0
         let indx                = (indx < 0)? ( w:netrw_explore_listlen - 1 ) : 0
         let w:netrw_explore_indx= indx
-        keepalt NetrwKeepj call netrw#ErrorMsg(s:NOTE,"no more files match Explore pattern",43)
+        call netrw#msg#Notify('NOTE', 'no more files match Explore pattern')
       endif
 
       exe "let dirfile= w:netrw_explore_list[".indx."]"
@@ -847,7 +806,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
 
     else
       if !exists("g:netrw_quiet")
-        keepalt NetrwKeepj call netrw#ErrorMsg(s:WARNING,"your vim needs the +path_extra feature for Exploring with **!",44)
+        call netrw#msg#Notify('WARNING', 'your vim needs the +path_extra feature for Exploring with **!')
       endif
       if !has('nvim') && has("clipboard") && g:netrw_clipboard
         if @* != keepregstar | sil! let @* = keepregstar | endif
@@ -1052,7 +1011,7 @@ fun! netrw#Obtain(islocal,fname,...)
   elseif type(a:fname) == 3
     let fnamelist= a:fname
   else
-    call netrw#ErrorMsg(s:ERROR,"attempting to use NetrwObtain on something not a filename or a list",62)
+    call netrw#msg#Notify('ERROR', 'attempting to use NetrwObtain on something not a filename or a list')
     return
   endif
   if a:0 > 0
@@ -1070,7 +1029,7 @@ fun! netrw#Obtain(islocal,fname,...)
         for fname in fnamelist
           call system(g:netrw_localcopycmd.g:netrw_localcopycmdopt." ".netrw#os#Escape(fname)." ".netrw#os#Escape(topath))
           if v:shell_error != 0
-            call netrw#ErrorMsg(s:WARNING,"consider setting g:netrw_localcopycmd<".g:netrw_localcopycmd."> to something that works",80)
+            call netrw#msg#Notify('WARNING', printf('consider setting g:netrw_localcopycmd<%s> to something that works', g:netrw_localcopycmd))
             return
           endif
         endfor
@@ -1079,14 +1038,14 @@ fun! netrw#Obtain(islocal,fname,...)
         let filelist= join(map(deepcopy(fnamelist),"netrw#os#Escape(v:val)"))
         call system(g:netrw_localcopycmd.g:netrw_localcopycmdopt." ".filelist." ".netrw#os#Escape(topath))
         if v:shell_error != 0
-          call netrw#ErrorMsg(s:WARNING,"consider setting g:netrw_localcopycmd<".g:netrw_localcopycmd."> to something that works",80)
+          call netrw#msg#Notify('WARNING', printf('consider setting g:netrw_localcopycmd<%s> to something that works', g:netrw_localcopycmd))
           return
         endif
       endif
     elseif !exists("b:netrw_curdir")
-      call netrw#ErrorMsg(s:ERROR,"local browsing directory doesn't exist!",36)
+      call netrw#msg#Notify('ERROR', "local browsing directory doesn't exist!")
     else
-      call netrw#ErrorMsg(s:WARNING,"local browsing directory and current directory are identical",37)
+      call netrw#msg#Notify('WARNING', 'local browsing directory and current directory are identical')
     endif
 
   else
@@ -1096,7 +1055,7 @@ fun! netrw#Obtain(islocal,fname,...)
     endif
     call s:NetrwMethod(b:netrw_curdir)
     if !s:NetrwValidateHostname(g:netrw_machine)
-        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+        call netrw#msg#Notify('ERROR', 'Rejecting invalid hostname: <%s>', g:netrw_machine)
         return
     endif
 
@@ -1143,7 +1102,7 @@ fun! netrw#Obtain(islocal,fname,...)
       if getline(1) !~ "^$" && !exists("g:netrw_quiet") && getline(1) !~ '^Trying '
         let debugkeep= &debug
         setl debug=msg
-        call netrw#ErrorMsg(s:ERROR,getline(1),4)
+        call netrw#msg#Notify('ERROR', getline(1))
         let &debug= debugkeep
       endif
 
@@ -1199,7 +1158,7 @@ fun! netrw#Obtain(islocal,fname,...)
       " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
       if getline(1) !~ "^$"
         if !exists("g:netrw_quiet")
-          NetrwKeepj call netrw#ErrorMsg(s:ERROR,getline(1),5)
+          call netrw#msg#Notify('ERROR', getline(1))
         endif
       endif
 
@@ -1219,7 +1178,7 @@ fun! netrw#Obtain(islocal,fname,...)
     else
       " protocol recognized but not supported for Obtain (yet?)
       if !exists("g:netrw_quiet")
-        NetrwKeepj call netrw#ErrorMsg(s:ERROR,"current protocol not supported for obtaining file",97)
+        call netrw#msg#Notify('ERROR', 'current protocol not supported for obtaining file')
       endif
       return
     endif
@@ -1511,7 +1470,7 @@ fun! s:NetrwSetSafeSetting(setting,safesetting)
       elseif type(a:safesetting) == 1
         exe "let ".a:setting."= '".a:safesetting."'"
       else
-        call netrw#ErrorMsg(s:ERROR,"(s:NetrwRestoreSetting) doesn't know how to restore ".a:setting." with a safesetting of type#".type(a:safesetting),105)
+        call netrw#msg#Notify('ERROR', printf("(s:NetrwRestoreSetting) doesn't know how to restore %s with a safesetting of type#%s", a:setting, type(a:safesetting)))
       endif
     endif
   endif
@@ -1542,7 +1501,7 @@ fun! s:NetrwRestoreSetting(keepvar,setting)
       elseif type(a:setting) == 1
         exe "let ".a:setting."= '".substitute(keepvarval,"'","''","g")."'"
       else
-        call netrw#ErrorMsg(s:ERROR,"(s:NetrwRestoreSetting) doesn't know how to restore ".a:keepvar." with a setting of type#".type(a:setting),105)
+        call netrw#msg#Notify('ERROR', printf("(s:NetrwRestoreSetting) doesn't know how to restore %s with a setting of type#%s", a:keepvar, type(a:setting)))
       endif
     endif
 
@@ -1665,7 +1624,7 @@ fun! netrw#NetRead(mode,...)
             let ichoice     = ichoice + 1
             if ichoice > a:0
               if !exists("g:netrw_quiet")
-                call netrw#ErrorMsg(s:ERROR,"Unbalanced string in filename '". wholechoice ."'",3)
+                call netrw#msg#Notify('ERROR', printf('Unbalanced string in filename "%s"', wholechoice))
               endif
               return
             endif
@@ -1684,7 +1643,7 @@ fun! netrw#NetRead(mode,...)
       return
     endif
     if !s:NetrwValidateHostname(g:netrw_machine)
-        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+        call netrw#msg#Notify('ERROR', printf('Rejecting invalid hostname: <%s>', g:netrw_machine))
         return
     endif
     let tmpfile= s:GetTempfile(b:netrw_fname) " apply correct suffix
@@ -1748,7 +1707,7 @@ fun! netrw#NetRead(mode,...)
       if getline(1) !~ "^$" && !exists("g:netrw_quiet") && getline(1) !~ '^Trying '
         let debugkeep = &debug
         setl debug=msg
-        NetrwKeepj call netrw#ErrorMsg(s:ERROR,getline(1),4)
+        call netrw#msg#Notify('ERROR', getline(1))
         let &debug    = debugkeep
       endif
       call s:SaveBufVars()
@@ -1803,7 +1762,7 @@ fun! netrw#NetRead(mode,...)
       " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
       if getline(1) !~ "^$"
         if !exists("g:netrw_quiet")
-          call netrw#ErrorMsg(s:ERROR,getline(1),5)
+          call netrw#msg#Notify('ERROR', getline(1))
         endif
       endif
       call s:SaveBufVars()|keepj bd!|call s:RestoreBufVars()
@@ -1834,7 +1793,7 @@ fun! netrw#NetRead(mode,...)
     elseif     b:netrw_method  == 5
       if g:netrw_http_cmd == ""
         if !exists("g:netrw_quiet")
-          call netrw#ErrorMsg(s:ERROR,"neither the wget nor the fetch command is available",6)
+          call netrw#msg#Notify('ERROR', 'neither the wget nor the fetch command is available')
         endif
         return
       endif
@@ -1864,7 +1823,7 @@ fun! netrw#NetRead(mode,...)
     elseif     b:netrw_method  == 6
 
       if !executable(g:netrw_dav_cmd)
-        call netrw#ErrorMsg(s:ERROR,g:netrw_dav_cmd." is not executable",73)
+        call netrw#msg#Notify('ERROR', printf('%s is not executable', g:netrw_dav_cmd))
         return
       endif
       if g:netrw_dav_cmd =~ "curl"
@@ -1906,7 +1865,7 @@ fun! netrw#NetRead(mode,...)
     elseif     b:netrw_method  == 8
       if g:netrw_fetch_cmd == ""
         if !exists("g:netrw_quiet")
-          NetrwKeepj call netrw#ErrorMsg(s:ERROR,"fetch command not available",7)
+          call netrw#msg#Notify('ERROR', "fetch command not available")
         endif
         return
       endif
@@ -1943,7 +1902,7 @@ fun! netrw#NetRead(mode,...)
       ".........................................
     " NetRead: Complain {{{3
     else
-      call netrw#ErrorMsg(s:WARNING,"unable to comply with your request<" . choice . ">",8)
+      call netrw#msg#Notify('WARNING', printf('unable to comply with your request<%s>', choice))
     endif
   endwhile
 
@@ -2042,7 +2001,7 @@ fun! netrw#NetWrite(...) range
             let ichoice    = ichoice + 1
             if choice > a:0
               if !exists("g:netrw_quiet")
-                call netrw#ErrorMsg(s:ERROR,"Unbalanced string in filename '". wholechoice ."'",13)
+                call netrw#msg#Notify('ERROR', printf('Unbalanced string in filename "%s"', wholechoice))
               endif
               return
             endif
@@ -2060,7 +2019,7 @@ fun! netrw#NetWrite(...) range
       return
     endif
     if !s:NetrwValidateHostname(g:netrw_machine)
-        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+        call netrw#msg#Notify('ERROR', printf('Rejecting invalid hostname: <%s>', g:netrw_machine))
         return
     endif
 
@@ -2115,7 +2074,7 @@ fun! netrw#NetWrite(...) range
       " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
       if getline(1) !~ "^$"
         if !exists("g:netrw_quiet")
-          NetrwKeepj call netrw#ErrorMsg(s:ERROR,getline(1),14)
+          call netrw#msg#Notify('ERROR', getline(1))
         endif
         let mod=1
       endif
@@ -2173,7 +2132,7 @@ fun! netrw#NetWrite(...) range
       " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
       if getline(1) !~ "^$"
         if  !exists("g:netrw_quiet")
-          call netrw#ErrorMsg(s:ERROR,getline(1),15)
+          call netrw#msg#Notify('ERROR', getline(1))
         endif
         let mod=1
       endif
@@ -2203,7 +2162,7 @@ fun! netrw#NetWrite(...) range
         let url= g:netrw_choice
         call netrw#os#Execute(s:netrw_silentxfer."!".g:netrw_http_put_cmd." ".netrw#os#Escape(tmpfile,1)." ".netrw#os#Escape(url,1) )
       elseif !exists("g:netrw_quiet")
-        call netrw#ErrorMsg(s:ERROR,"can't write to http using <".g:netrw_http_put_cmd.">",16)
+        call netrw#msg#Notify('ERROR', printf("can't write to http using <%s>", g:netrw_http_put_cmd))
       endif
 
       ".........................................
@@ -2277,7 +2236,7 @@ fun! netrw#NetWrite(...) range
       ".........................................
     " NetWrite: Complain {{{3
     else
-      call netrw#ErrorMsg(s:WARNING,"unable to comply with your request<" . choice . ">",17)
+      call netrw#msg#Notify('WARNING', printf('unable to comply with your request<%s>', choice))
       let leavemod= 1
     endif
   endwhile
@@ -2322,11 +2281,11 @@ fun! netrw#NetSource(...)
       if s:FileReadable(s:netrw_tmpfile)
         exe "so ".fnameescape(s:netrw_tmpfile)
         if delete(s:netrw_tmpfile)
-          call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".s:netrw_tmpfile.">!",103)
+          call netrw#msg#Notify('ERROR', 'unable to delete directory <%s>', s:netrw_tmpfile)
         endif
         unlet s:netrw_tmpfile
       else
-        call netrw#ErrorMsg(s:ERROR,"unable to source <".a:{i}.">!",48)
+        call netrw#msg#Notify('ERROR', printf('unable to source <%s>!', a:{i}))
       endif
       let i= i + 1
     endwhile
@@ -2361,7 +2320,7 @@ fun! netrw#SetTreetop(iscmd,...)
       " normally the cursor is left in the message window.
       " However, here this results in the directory being listed in the message window, which is not wanted.
       let netrwbuf= bufnr("%")
-      call netrw#ErrorMsg(s:ERROR,"sorry, ".a:1." doesn't seem to be a directory!",95)
+      call netrw#msg#Notify('ERROR', printf("sorry, %s doesn't seem to be a directory!", a:1))
       exe bufwinnr(netrwbuf)."wincmd w"
       let treedir         = "."
       let s:netrw_treetop = getcwd()
@@ -2445,7 +2404,7 @@ fun! s:NetrwGetFile(readcmd, tfile, method)
 
   elseif !&ma
     " attempting to read a file after the current line in the file, but the buffer is not modifiable
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"attempt to read<".a:tfile."> into a non-modifiable buffer!",94)
+    call netrw#msg#Notify('WARNING', printf('attempt to read<%s> into a non-modifiable buffer!', a:tfile))
     return
 
   elseif s:FileReadable(a:tfile)
@@ -2458,7 +2417,7 @@ fun! s:NetrwGetFile(readcmd, tfile, method)
 
   else
     " not readable
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"file <".a:tfile."> not readable",9)
+    call netrw#msg#Notify('WARNING', printf('file <%s> not readable', a:tfile))
     return
   endif
 
@@ -2500,7 +2459,7 @@ fun! s:NetrwMethod(choice)
 
   " sanity check: choice should have at least three slashes in it
   if strlen(substitute(a:choice,'[^/]','','g')) < 3
-    call netrw#ErrorMsg(s:ERROR,"not a netrw-style url; netrw uses protocol://[user@]hostname[:port]/[path])",78)
+    call netrw#msg#Notify('ERROR', 'not a netrw-style url; netrw uses protocol://[user@]hostname[:port]/[path])')
     let b:netrw_method = -1
     return
   endif
@@ -2695,7 +2654,7 @@ fun! s:NetrwMethod(choice)
   " Cannot Determine Method {{{3
   else
     if !exists("g:netrw_quiet")
-      call netrw#ErrorMsg(s:WARNING,"cannot determine method (format: protocol://[user@]hostname[:port]/[path])",45)
+      call netrw#msg#Notify('WARNING', 'cannot determine method (format: protocol://[user@]hostname[:port]/[path])')
     endif
     let b:netrw_method  = -1
   endif
@@ -3137,11 +3096,11 @@ fun! s:NetrwBrowse(islocal,dirname)
     return
   endif
   if !exists("*shellescape")
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"netrw can't run -- your vim is missing shellescape()",69)
+    call netrw#msg#Notify('ERROR', "netrw can't run -- your vim is missing shellescape()")
     return
   endif
   if !exists("*fnameescape")
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"netrw can't run -- your vim is missing fnameescape()",70)
+    call netrw#msg#Notify('ERROR', "netrw can't run -- your vim is missing fnameescape()")
     return
   endif
 
@@ -3297,7 +3256,7 @@ fun! s:NetrwBrowse(islocal,dirname)
     let dirpat  = '^\(\w\{-}\)://\(\w\+@\)\=\([^/]\+\)/\(.*\)$'
     if dirname !~ dirpat
       if !exists("g:netrw_quiet")
-        NetrwKeepj call netrw#ErrorMsg(s:ERROR,"netrw doesn't understand your dirname<".dirname.">",20)
+        call netrw#msg#Notify('ERROR', printf("netrw doesn't understand your dirname<%s>", dirname))
       endif
       NetrwKeepj call s:NetrwOptionsRestore("w:")
       setl noma nomod nowrap
@@ -3724,7 +3683,7 @@ fun! s:NetrwListStyle(islocal)
     let g:netrw_list_cmd = substitute(g:netrw_list_cmd,' -l','','ge')
 
   else
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"bad value for g:netrw_liststyle (=".w:netrw_liststyle.")",46)
+    call netrw#msg#Notify('WARNING', printf('bad value for g:netrw_liststyle (=%s)', w:netrw_liststyle))
     let g:netrw_liststyle = s:THINLIST
     let w:netrw_liststyle = g:netrw_liststyle
     let g:netrw_list_cmd  = substitute(g:netrw_list_cmd,' -l','','ge')
@@ -3906,8 +3865,6 @@ endfun
 fun! s:NetrwBrowseChgDir(islocal,newdir,cursor,...)
   let ykeep= @@
   if !exists("b:netrw_curdir")
-    " Don't try to change-directory: this can happen, for example, when netrw#ErrorMsg has been called
-    " and the current window is the NetrwMessage window.
     let @@= ykeep
     return
   endif
@@ -4575,7 +4532,7 @@ fun! s:NetrwHide(islocal)
     let g:netrw_hide=(g:netrw_hide+1)%3
     exe "NetrwKeepj norm! 0"
     if g:netrw_hide && g:netrw_list_hide == ""
-      NetrwKeepj call netrw#ErrorMsg(s:WARNING,"your hiding list is empty!",49)
+      call netrw#msg#Notify('WARNING', 'your hiding list is empty!')
       let @@= ykeep
       return
     endif
@@ -4943,14 +4900,14 @@ fun! s:NetrwMakeDir(usrhost)
     let fullnewdir= b:netrw_curdir.'/'.newdirname
     if isdirectory(s:NetrwFile(fullnewdir))
       if !exists("g:netrw_quiet")
-        NetrwKeepj call netrw#ErrorMsg(s:WARNING,"<".newdirname."> is already a directory!",24)
+        call netrw#msg#Notify('WARNING', printf('<%s> is already a directory!', newdirname))
       endif
       let @@= ykeep
       return
     endif
     if s:FileReadable(fullnewdir)
       if !exists("g:netrw_quiet")
-        NetrwKeepj call netrw#ErrorMsg(s:WARNING,"<".newdirname."> is already a file!",25)
+        call netrw#msg#Notify('WARNING', printf('<%s> is already a file!', newdirname))
       endif
       let @@= ykeep
       return
@@ -4972,7 +4929,7 @@ fun! s:NetrwMakeDir(usrhost)
       call netrw#os#Execute("sil! !".g:netrw_localmkdir.g:netrw_localmkdiropt.' '.netrw#os#Escape(newdirname,1))
       if v:shell_error != 0
         let @@= ykeep
-        call netrw#ErrorMsg(s:ERROR,"consider setting g:netrw_localmkdir<".g:netrw_localmkdir."> to something that works",80)
+        call netrw#msg#Notify('ERROR', printf('consider setting g:netrw_localmkdir<%s> to something that works', g:netrw_localmkdir))
         return
       endif
       if !g:netrw_keepdir
@@ -4988,7 +4945,7 @@ fun! s:NetrwMakeDir(usrhost)
       call s:NetrwRefresh(1,s:NetrwBrowseChgDir(1,'./',0))
       call winrestview(svpos)
     elseif !exists("g:netrw_quiet")
-      call netrw#ErrorMsg(s:ERROR,"unable to make directory<".newdirname.">",26)
+      call netrw#msg#Notify('ERROR', printf('unable to make directory<%s>', newdirname))
     endif
 
   elseif !exists("b:netrw_method") || b:netrw_method == 4
@@ -5002,7 +4959,7 @@ fun! s:NetrwMakeDir(usrhost)
       NetrwKeepj call s:NetrwRefresh(0,s:NetrwBrowseChgDir(0,'./',0))
       NetrwKeepj call winrestview(svpos)
     elseif !exists("g:netrw_quiet")
-      NetrwKeepj call netrw#ErrorMsg(s:ERROR,"unable to make directory<".newdirname.">",27)
+      call netrw#msg#Notify('ERROR', printf('unable to make directory<%s>', newdirname))
     endif
 
   elseif b:netrw_method == 2
@@ -5317,7 +5274,7 @@ fun! s:NetrwCommands(islocal)
 
   com! -nargs=* -complete=file -bang    NetrwMB call s:NetrwBookmark(<bang>0,<f-args>)
   com! -nargs=*                         NetrwC  call s:NetrwSetChgwin(<q-args>)
-  com! Rexplore if exists("w:netrw_rexlocal")|call s:NetrwRexplore(w:netrw_rexlocal,exists("w:netrw_rexdir")? w:netrw_rexdir : ".")|else|call netrw#ErrorMsg(s:WARNING,"win#".winnr()." not a former netrw window",79)|endif
+  com! Rexplore if exists("w:netrw_rexlocal")|call s:NetrwRexplore(w:netrw_rexlocal,exists("w:netrw_rexdir")? w:netrw_rexdir : ".")|else|call netrw#msg#Notify('WARNING', "win#".winnr()." not a former netrw window")|endif
   if a:islocal
     com! -buffer -nargs=+ -complete=file MF      call s:NetrwMarkFiles(1,<f-args>)
   else
@@ -5518,7 +5475,7 @@ fun! s:NetrwMarkFileCompress(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
 
@@ -5537,7 +5494,7 @@ fun! s:NetrwMarkFileCompress(islocal)
           endif
           call system(exe." ".fname)
           if v:shell_error
-            NetrwKeepj call netrw#ErrorMsg(s:WARNING,"unable to apply<".exe."> to file<".fname.">",50)
+            call netrw#msg#Notify('WARNING', printf('unable to apply<%s> to file<%s>', exe, fname))
           endif
         else
           let fname= netrw#os#Escape(b:netrw_curdir.fname,1)
@@ -5553,7 +5510,7 @@ fun! s:NetrwMarkFileCompress(islocal)
         " fname not a compressed file, so compress it
         call system(netrw#fs#WinPath(g:netrw_compress)." ".netrw#os#Escape(netrw#fs#ComposePath(b:netrw_curdir,fname)))
         if v:shell_error
-          call netrw#ErrorMsg(s:WARNING,"consider setting g:netrw_compress<".g:netrw_compress."> to something that works",104)
+          call netrw#msg#Notify('WARNING', printf('consider setting g:netrw_compress<%s> to something that works', g:netrw_compress))
         endif
       else
         " fname not a compressed file, so compress it
@@ -5586,19 +5543,19 @@ fun! s:NetrwMarkFileCopy(islocal,...)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
 
   if !exists("s:netrwmftgt")
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"your marked file target is empty! (:help netrw-mt)",67)
+    call netrw#msg#Notify('ERROR', 'your marked file target is empty! (:help netrw-mt)')
     return 0
   endif
 
   if a:islocal &&  s:netrwmftgt_islocal
     " Copy marked files, local directory to local directory
     if !executable(g:netrw_localcopycmd)
-      call netrw#ErrorMsg(s:ERROR,"g:netrw_localcopycmd<".g:netrw_localcopycmd."> not executable on your system, aborting",91)
+      call netrw#msg#Notify('ERROR', printf('g:netrw_localcopycmd<%s> not executable on your system, aborting', g:netrw_localcopycmd))
       return
     endif
 
@@ -5668,9 +5625,9 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     call system(printf("%s %s '%s' '%s'", copycmd, copycmdopt, args, tgt))
     if v:shell_error != 0
       if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && g:netrw_keepdir
-        call netrw#ErrorMsg(s:ERROR,"copy failed; perhaps due to vim's current directory<".getcwd()."> not matching netrw's (".b:netrw_curdir.") (see :help netrw-cd)",101)
+        call netrw#msg#Notify('ERROR', printf("copy failed; perhaps due to vim's current directory<%s> not matching netrw's (%s) (see :help netrw-cd)", getcwd(), b:netrw_curdir))
       else
-        call netrw#ErrorMsg(s:ERROR,"tried using g:netrw_localcopycmd<".g:netrw_localcopycmd.">; it doesn't work!",80)
+        call netrw#msg#Notify('ERROR', printf("tried using g:netrw_localcopycmd<%s>; it doesn't work!", g:netrw_localcopycmd))
       endif
       return 0
     endif
@@ -5695,7 +5652,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     else
       call netrw#os#Execute("sil! !".g:netrw_localmkdir.g:netrw_localmkdiropt.' '.netrw#os#Escape(tmpdir,1))
       if v:shell_error != 0
-        call netrw#ErrorMsg(s:WARNING,"consider setting g:netrw_localmkdir<".g:netrw_localmkdir."> to something that works",80)
+        call netrw#msg#Notify('WARNING', printf("consider setting g:netrw_localmkdir<%s> to something that works", g:netrw_localmkdir))
         return
       endif
     endif
@@ -5714,7 +5671,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
           return
         endif
         if delete(tmpdir,"d")
-          call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".tmpdir.">!",103)
+          call netrw#msg#Notify('ERROR', printf('unable to delete directory <%s>!', tmpdir))
         endif
       else
         if s:NetrwLcd(curdir)
@@ -5763,7 +5720,7 @@ fun! s:NetrwMarkFileDiff(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
   let curdir= s:NetrwGetCurdir(a:islocal)
@@ -5797,7 +5754,7 @@ fun! s:NetrwMarkFileEdit(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
 
@@ -5832,7 +5789,7 @@ fun! s:NetrwMarkFileQFEL(islocal,qfel)
     endfor
     echo "(use me to edit marked files)"
   else
-    call netrw#ErrorMsg(s:WARNING,"can't convert quickfix error list; its empty!",92)
+    call netrw#msg#Notify('WARNING', "can't convert quickfix error list; its empty!")
   endif
 
 endfun
@@ -5849,7 +5806,7 @@ fun! s:NetrwMarkFileExe(islocal,enbloc)
     " individually apply command to files, one at a time
     " sanity check
     if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-      NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+      call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
       return
     endif
 
@@ -5883,7 +5840,7 @@ fun! s:NetrwMarkFileExe(islocal,enbloc)
           let ret= s:RemoteSystem(xcmd)
         endif
         if v:shell_error < 0
-          NetrwKeepj call netrw#ErrorMsg(s:ERROR,"command<".xcmd."> failed, aborting",54)
+          call netrw#msg#Notify('ERROR', printf('command<%s> failed, aborting', xcmd))
           break
         else
           if ret !=# ''
@@ -5903,7 +5860,7 @@ fun! s:NetrwMarkFileExe(islocal,enbloc)
       NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
       NetrwKeepj call winrestview(svpos)
     else
-      NetrwKeepj call netrw#ErrorMsg(s:ERROR,"no files marked!",59)
+      call netrw#msg#Notify('ERROR', 'no files marked!')
     endif
 
   else " apply command to global list of files, en bloc
@@ -5922,7 +5879,7 @@ fun! s:NetrwMarkFileExe(islocal,enbloc)
     if a:islocal
       call system(cmd)
       if v:shell_error < 0
-        NetrwKeepj call netrw#ErrorMsg(s:ERROR,"command<".xcmd."> failed, aborting",54)
+        call netrw#msg#Notify('ERROR', printf('command<%s> failed, aborting',xcmd))
       endif
     else
       let ret= s:RemoteSystem(cmd)
@@ -5983,7 +5940,7 @@ fun! s:NetrwMarkHideSfx(islocal)
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
   else
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"no files marked!",59)
+    call netrw#msg#Notify('ERROR', 'no files marked!')
   endif
 endfun
 
@@ -5996,7 +5953,7 @@ fun! s:NetrwMarkFileVimCmd(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
 
@@ -6029,7 +5986,7 @@ fun! s:NetrwMarkFileVimCmd(islocal)
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
   else
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"no files marked!",59)
+    call netrw#msg#Notify('ERROR', 'no files marked!')
   endif
 endfun
 
@@ -6080,7 +6037,7 @@ fun! s:NetrwMarkHideSfx(islocal)
     NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
     NetrwKeepj call winrestview(svpos)
   else
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"no files marked!",59)
+    call netrw#msg#Notify('ERROR', 'no files marked!')
   endif
 endfun
 
@@ -6118,7 +6075,7 @@ fun! s:NetrwMarkFileGrep(islocal)
   try
     exe "NetrwKeepj noautocmd vimgrep".patbang." ".pat." ".netrwmarkfilelist
   catch /^Vim\%((\a\+)\)\=:E480/
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"no match with pattern<".pat.">",76)
+    call netrw#msg#Notify('WARNING', printf('no match with pattern<%s>', pat))
     return
   endtry
   echo "(use :cn, :cp to navigate, :Rex to return)"
@@ -6145,19 +6102,19 @@ fun! s:NetrwMarkFileMove(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
 
   if !exists("s:netrwmftgt")
-    NetrwKeepj call netrw#ErrorMsg(2,"your marked file target is empty! (:help netrw-mt)",67)
+    call netrw#msg#Notify('ERROR', 'your marked file target is empty! (:help netrw-mt)')
     return 0
   endif
 
   if      a:islocal &&  s:netrwmftgt_islocal
     " move: local -> local
     if !executable(g:netrw_localmovecmd)
-      call netrw#ErrorMsg(s:ERROR,"g:netrw_localmovecmd<".g:netrw_localmovecmd."> not executable on your system, aborting",90)
+      call netrw#msg#Notify('ERROR', printf('g:netrw_localmovecmd<%s> not executable on your system, aborting', g:netrw_localmovecmd))
       return
     endif
     let tgt = netrw#os#Escape(s:netrwmftgt)
@@ -6184,9 +6141,9 @@ fun! s:NetrwMarkFileMove(islocal)
       let ret= system(movecmd.g:netrw_localmovecmdopt." ".netrw#os#Escape(fname)." ".tgt)
       if v:shell_error != 0
         if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && !g:netrw_keepdir
-          call netrw#ErrorMsg(s:ERROR,"move failed; perhaps due to vim's current directory<".getcwd()."> not matching netrw's (".b:netrw_curdir.") (see :help netrw-cd)",100)
+          call netrw#msg#Notify('ERROR', printf("move failed; perhaps due to vim's current directory<%s> not matching netrw's (%s) (see :help netrw-cd)", getcwd(), b:netrw_curdir))
         else
-          call netrw#ErrorMsg(s:ERROR,"tried using g:netrw_localmovecmd<".g:netrw_localmovecmd.">; it doesn't work!",54)
+          call netrw#msg#Notify('ERROR', printf("tried using g:netrw_localmovecmd<%s>; it doesn't work!", g:netrw_localmovecmd))
         endif
         break
       endif
@@ -6250,7 +6207,7 @@ fun! s:NetrwMarkFilePrint(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
   let curdir= s:NetrwGetCurdir(a:islocal)
@@ -6352,7 +6309,7 @@ fun! s:NetrwMarkFileSource(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
   let curdir= s:NetrwGetCurdir(a:islocal)
@@ -6384,7 +6341,7 @@ fun! s:NetrwMarkFileTag(islocal)
 
   " sanity check
   if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
-    NetrwKeepj call netrw#ErrorMsg(2,"there are no marked files in this window (:help netrw-mf)",66)
+    call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
     return
   endif
 
@@ -6396,7 +6353,7 @@ fun! s:NetrwMarkFileTag(islocal)
 
       call system(g:netrw_ctags." ".netrwmarkfilelist)
       if v:shell_error
-        call netrw#ErrorMsg(s:ERROR,"g:netrw_ctags<".g:netrw_ctags."> is not executable!",51)
+        call netrw#msg#Notify('ERROR', printf('g:netrw_ctags<%s> is not executable!', g:netrw_ctags))
       endif
 
     else
@@ -6882,7 +6839,7 @@ fun! s:NetrwPrevWinOpen(islocal)
           let v:errmsg= ""
           sil w
           if v:errmsg != ""
-            call netrw#ErrorMsg(s:ERROR,"unable to write <".(exists("prevbufname")? prevbufname : 'n/a').">!",30)
+            call netrw#msg#Notify('ERROR', printf('unable to write <%s>!', (exists("prevbufname") ? prevbufname : 'n/a')))
             exe origwin."wincmd w"
             let &ei = eikeep
             let @@  = ykeep
@@ -6972,7 +6929,7 @@ fun! s:NetrwUpload(fname,tgt,...)
     elseif a:tgt =~ '^ftp:'
       call s:NetrwMethod(a:tgt)
       if !s:NetrwValidateHostname(g:netrw_machine)
-          call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+          call netrw#msg#Notify('ERROR', printf('Rejecting invalid hostname: <%s>', g:netrw_machine))
           return
       endif
 
@@ -7007,7 +6964,7 @@ fun! s:NetrwUpload(fname,tgt,...)
         sil NetrwKeepj g/Local directory now/d
         call histdel("/",-1)
         if getline(1) !~ "^$" && !exists("g:netrw_quiet") && getline(1) !~ '^Trying '
-          call netrw#ErrorMsg(s:ERROR,getline(1),14)
+          call netrw#msg#Notify('ERROR', getline(1))
         else
           bw!|q
         endif
@@ -7062,7 +7019,7 @@ fun! s:NetrwUpload(fname,tgt,...)
         if getline(1) !~ "^$" && !exists("g:netrw_quiet") && getline(1) !~ '^Trying '
           let debugkeep= &debug
           setl debug=msg
-          call netrw#ErrorMsg(s:ERROR,getline(1),15)
+          call netrw#msg#Notify('ERROR', getline(1))
           let &debug = debugkeep
           let mod    = 1
         else
@@ -7072,7 +7029,7 @@ fun! s:NetrwUpload(fname,tgt,...)
         return
       endif
     else
-      call netrw#ErrorMsg(s:ERROR,"can't obtain files with protocol from<".a:tgt.">",63)
+      call netrw#msg#Notify('ERROR', printf("can't obtain files with protocol from<%s>", a:tgt))
     endif
   endif
 
@@ -7116,10 +7073,10 @@ fun! s:NetrwPreview(path) range
         let &pvh= pvhkeep
       endif
     elseif !exists("g:netrw_quiet")
-      NetrwKeepj call netrw#ErrorMsg(s:WARNING,"sorry, cannot preview a directory such as <".a:path.">",38)
+      call netrw#msg#Notify('WARNING', printf('sorry, cannot preview a directory such as <%s>', a:path))
     endif
   elseif !exists("g:netrw_quiet")
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"sorry, to preview your vim needs the quickfix feature compiled in",39)
+    call netrw#msg#Notify('WARNING', 'sorry, to preview your vim needs the quickfix feature compiled in')
   endif
   NetrwKeepj call s:NetrwOptionsRestore("s:")
   let @@= ykeep
@@ -7414,7 +7371,7 @@ fun! s:NetrwSplit(mode)
     unlet s:didsplit
 
   else
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"(NetrwSplit) unsupported mode=".a:mode,45)
+    call netrw#msg#Notify('ERROR', '(NetrwSplit) unsupported mode='.a:mode)
   endif
 
   let @@= ykeep
@@ -8087,7 +8044,7 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
     if exists("b:netrw_method")
       let w:netrw_method= b:netrw_method
     else
-      call netrw#ErrorMsg(2,"(s:NetrwRemoteFtpCmd) internal netrw error",93)
+      call netrw#msg#Notify('ERROR', '(s:NetrwRemoteFtpCmd) internal netrw error')
       return
     endif
   endif
@@ -8170,7 +8127,7 @@ fun! s:NetrwRemoteFtpCmd(path,listcmd)
 
     ".........................................
   else  " {{{3
-    NetrwKeepj call netrw#ErrorMsg(s:WARNING,"unable to comply with your request<" . bufname("%") . ">",23)
+    call netrw#msg#Notify('WARNING', printf('unable to comply with your request<%s>', bufname("%")))
   endif
 
   " cleanup for Windows " {{{3
@@ -8220,7 +8177,7 @@ fun! s:NetrwRemoteListing()
   if exists("b:netrw_method") && b:netrw_method =~ '[235]'
     if !executable("ftp")
       if !exists("g:netrw_quiet")
-        call netrw#ErrorMsg(s:ERROR,"this system doesn't support remote directory listing via ftp",18)
+        call netrw#msg#Notify('ERROR', "this system doesn't support remote directory listing via ftp")
       endif
       call s:NetrwOptionsRestore("w:")
       return -1
@@ -8229,9 +8186,9 @@ fun! s:NetrwRemoteListing()
   elseif !exists("g:netrw_list_cmd") || g:netrw_list_cmd == ''
     if !exists("g:netrw_quiet")
       if g:netrw_list_cmd == ""
-        NetrwKeepj call netrw#ErrorMsg(s:ERROR,"your g:netrw_list_cmd is empty; perhaps ".g:netrw_ssh_cmd." is not executable on your system",47)
+        call netrw#msg#Notify('ERROR', printf('your g:netrw_list_cmd is empty; perhaps %s is not executable on your system', g:netrw_ssh_cmd))
       else
-        NetrwKeepj call netrw#ErrorMsg(s:ERROR,"this system doesn't support remote directory listing via ".g:netrw_list_cmd,19)
+        call netrw#msg#Notify('ERROR', "this system doesn't support remote directory listing via ".g:netrw_list_cmd)
       endif
     endif
 
@@ -8263,7 +8220,7 @@ fun! s:NetrwRemoteListing()
         setl noma
       endif
       NetrwKeepj call s:NetrwOptionsRestore("w:")
-      call netrw#ErrorMsg(s:WARNING,mesg,96)
+      call netrw#msg#Notify('WARNING', mesg)
       return -1
     endif
 
@@ -8450,7 +8407,7 @@ fun! s:NetrwRemoteRmFile(path,rmfile,all)
       else
         let netrw_rm_cmd= s:MakeSshCmd(g:netrw_rm_cmd)
         if !exists("b:netrw_curdir")
-          NetrwKeepj call netrw#ErrorMsg(s:ERROR,"for some reason b:netrw_curdir doesn't exist!",53)
+          call netrw#msg#Notify('ERROR', "for some reason b:netrw_curdir doesn't exist!")
           let ok="q"
         else
           let remotedir= substitute(b:netrw_curdir,'^.\{-}//[^/]\+/\(.*\)$','\1','')
@@ -8462,12 +8419,12 @@ fun! s:NetrwRemoteRmFile(path,rmfile,all)
           let ret= system(netrw_rm_cmd)
           if v:shell_error != 0
             if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && !g:netrw_keepdir
-              call netrw#ErrorMsg(s:ERROR,"remove failed; perhaps due to vim's current directory<".getcwd()."> not matching netrw's (".b:netrw_curdir.") (see :help netrw-cd)",102)
+              call netrw#msg#Notify('ERROR', printf("remove failed; perhaps due to vim's current directory<%s> not matching netrw's (%s) (see :help netrw-cd)", getcwd(), b:netrw_curdir))
             else
-              call netrw#ErrorMsg(s:WARNING,"cmd<".netrw_rm_cmd."> failed",60)
+              call netrw#msg#Notify('WARNING', printf('cmd<%s> failed', netrw_rm_cmd))
             endif
           elseif ret != 0
-            call netrw#ErrorMsg(s:WARNING,"cmd<".netrw_rm_cmd."> failed",60)
+            call netrw#msg#Notify('WARNING', printf('cmd<%s> failed', netrw_rm_cmd))
           endif
         endif
       endif
@@ -8502,7 +8459,7 @@ fun! s:NetrwRemoteRmFile(path,rmfile,all)
           let ret= system(netrw_rmf_cmd)
 
           if v:shell_error != 0 && !exists("g:netrw_quiet")
-            NetrwKeepj call netrw#ErrorMsg(s:ERROR,"unable to remove directory<".rmfile."> -- is it empty?",22)
+            call netrw#msg#Notify('ERROR', printf('unable to remove directory<%s> -- is it empty?', rmfile))
           endif
         endif
       endif
@@ -8907,7 +8864,7 @@ fun! s:NetrwLocalExecute(cmd)
   let ykeep= @@
   " sanity check
   if !executable(a:cmd)
-    call netrw#ErrorMsg(s:ERROR,"the file<".a:cmd."> is not executable!",89)
+    call netrw#msg#Notify('ERROR', printf("the file<%s> is not executable!", a:cmd))
     let @@= ykeep
     return
   endif
@@ -9113,7 +9070,7 @@ function! s:NetrwLocalRmFile(path, fname, all)
     if !dir && (all || empty(ok))
         " This works because delete return 0 if successful
         if netrw#fs#Remove(rmfile)
-            call netrw#ErrorMsg(s:ERROR, printf("unable to delete <%s>!", rmfile), 103)
+            call netrw#msg#Notify('ERROR', printf("unable to delete <%s>!", rmfile))
         else
             " Remove file only if there are no pending changes
             execute printf('silent! bwipeout %s', rmfile)
@@ -9123,7 +9080,7 @@ function! s:NetrwLocalRmFile(path, fname, all)
         " Remove trailing /
         let rmfile = substitute(rmfile, '[\/]$', '', 'e')
         if delete(rmfile, "rf")
-            call netrw#ErrorMsg(s:ERROR, printf("unable to delete directory <%s>!", rmfile), 103)
+            call netrw#msg#Notify('ERROR', printf("unable to delete directory <%s>!", rmfile))
         endif
 
     endif
@@ -9136,17 +9093,6 @@ endfunction
 " netrw#Call: allows user-specified mappings to call internal netrw functions {{{2
 fun! netrw#Call(funcname,...)
   return call("s:".a:funcname,a:000)
-endfun
-
-" netrw#LogLevel: returns the specified loglevel
-fun! netrw#LogLevel(level)
-  if a:level == 'WARNING'
-    return s:WARNING
-  elseif a:level == 'NOTE'
-    return s:NOTE
-  elseif a:level == 'ERROR'
-    return s:ERROR
-  endif
 endfun
 
 " netrw#Expose: allows UserMaps and pchk to look at otherwise script-local variables {{{2
@@ -9212,7 +9158,7 @@ fun! netrw#UserMaps(islocal)
       if type(umap[0]) == 1 && type(umap[1]) == 1
         exe "nno <buffer> <silent> ".umap[0]." :call <SID>UserMaps(".a:islocal.",'".umap[1]."')<cr>"
       else
-        call netrw#ErrorMsg(s:WARNING,"ignoring usermap <".string(umap[0])."> -- not a [string,funcref] entry",99)
+        call netrw#msg#Notify('WARNING', printf('ignoring usermap <%s> -- not a [string,funcref] entry', string(umap[0])))
       endif
     endfor
   endif
@@ -9291,7 +9237,7 @@ fun! s:GetTempfile(fname)
 
     " sanity check -- does the temporary file's directory exist?
     if !isdirectory(s:NetrwFile(substitute(tmpfile,'[^/]\+$','','e')))
-      NetrwKeepj call netrw#ErrorMsg(s:ERROR,"your <".substitute(tmpfile,'[^/]\+$','','e')."> directory is missing!",2)
+      call netrw#msg#Notify('ERROR', printf('your <%s> directory is missing!', substitute(tmpfile,'[^/]\+$','','e')))
       return ""
     endif
 
@@ -9606,7 +9552,7 @@ fun! s:NetrwLcd(newdir)
   endtry
 
   if err472
-    call netrw#ErrorMsg(s:ERROR,"unable to change directory to <".a:newdir."> (permissions?)",61)
+    call netrw#msg#Notify('ERROR', printf('unable to change directory to <%s> (permissions?)', a:newdir))
     if exists("w:netrw_prvdir")
       let a:newdir= w:netrw_prvdir
     else
@@ -9712,9 +9658,9 @@ endfun
 " Note that it doesn't do netrw#os#Escape(a:cmd)!
 fun! s:RemoteSystem(cmd)
   if !executable(g:netrw_ssh_cmd)
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"g:netrw_ssh_cmd<".g:netrw_ssh_cmd."> is not executable!",52)
+    call netrw#msg#Notify('ERROR', printf('g:netrw_ssh_cmd<%s> is not executable!', g:netrw_ssh_cmd))
   elseif !exists("b:netrw_curdir")
-    NetrwKeepj call netrw#ErrorMsg(s:ERROR,"for some reason b:netrw_curdir doesn't exist!",53)
+    call netrw#msg#Notify('ERROR', "for some reason b:netrw_curdir doesn't exist!")
   else
     let cmd      = s:MakeSshCmd(g:netrw_ssh_cmd." USEPORT HOSTNAME")
     let remotedir= substitute(b:netrw_curdir,'^.*//[^/]\+/\(.*\)$','\1','')

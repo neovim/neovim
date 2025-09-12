@@ -28,19 +28,30 @@ function! netrw#msg#Deprecate(name, version, alternatives)
 endfunction
 
 " netrw#msg#Notify: {{{
-"   Usage: netrw#ErrorMsg(g:_netrw_log, 'some message')
-"          netrw#ErrorMsg(g:_netrw_log, ["message1","message2",...],error-number)
+"   Usage: netrw#msg#Notify('ERROR'|'WARNING'|'NOTE', 'some message')
+"          netrw#msg#Notify('ERROR'|'WARNING'|'NOTE', ["message1","message2",...])
 "          (this function can optionally take a list of messages)
 function! netrw#msg#Notify(level, msg)
     if has('nvim')
-        call v:lua.vim.notify(level . a:msg, a:level + 2)
+        " Convert string to corresponding vim.log.level value
+        if a:level ==# 'ERROR'
+            let level = 4
+        elseif a:level ==# 'WARNING'
+            let level = 3
+        elseif a:level ==# 'NOTE'
+            let level = 2
+        endif
+        call v:lua.vim.notify(a:msg, level)
         return
     endif
 
-    if a:level == g:_netrw_log.WARN
+    if a:level ==# 'WARNING'
         echohl WarningMsg
-    elseif a:level == g:_netrw_log.ERROR
+    elseif a:level ==# 'ERROR'
         echohl ErrorMsg
+    else
+        echoerr printf('"%s" is not a valid level', a:level)
+        return
     endif
 
     if type(a:msg) == v:t_list
