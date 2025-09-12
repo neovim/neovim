@@ -19,7 +19,7 @@ function! netrw#os#Execute(cmd)
     endif
 
     if v:shell_error
-        call netrw#ErrorMsg(s:WARNING, "shell signalled an error", 106)
+        call netrw#ErrorMsg(netrw#LogLevel('ERROR'), "shell signalled an error", 106)
     endif
 endfunction
 

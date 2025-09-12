@@ -19,7 +19,7 @@ if &cp || exists("g:loaded_netrw")
     finish
 endif
 
-let g:loaded_netrw = "v178"
+let g:loaded_netrw = "v179"
 
 if !has("patch-9.1.1054") && !has('nvim')
     echoerr 'netrw needs Vim v9.1.1054'
@@ -44,7 +44,7 @@ setl cpo&vim
 "   Usage: netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,"some message",error-number)
 "          netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,["message1","message2",...],error-number)
 "          (this function can optionally take a list of messages)
-"  Dec 2, 2019 : max errnum currently is 106
+"  Mar 03, 2025 : max errnum currently is 107
 function! netrw#ErrorMsg(level, msg, errnum)
     if a:level < g:netrw_errorlvl
         return
@@ -1244,6 +1244,10 @@ fun! netrw#Obtain(islocal,fname,...)
       call s:SetupNetrwStatusLine('%f %h%m%r%=%9*Obtaining '.a:fname)
     endif
     call s:NetrwMethod(b:netrw_curdir)
+    if !s:NetrwValidateHostname(g:netrw_machine)
+        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+        return
+    endif
 
     if b:netrw_method == 4
       " obtain file using scp
@@ -1906,6 +1910,10 @@ fun! netrw#NetRead(mode,...)
       "    call Dret("netrw#NetRead : unsupported method")
       return
     endif
+    if !s:NetrwValidateHostname(g:netrw_machine)
+        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+        return
+    endif
     let tmpfile= s:GetTempfile(b:netrw_fname) " apply correct suffix
 
     " Check whether or not NetrwBrowse() should be handling this request
@@ -2327,6 +2335,10 @@ fun! netrw#NetWrite(...) range
     if !exists("b:netrw_method") || b:netrw_method < 0
       "    call Dfunc("netrw#NetWrite : unsupported method")
       return
+    endif
+    if !s:NetrwValidateHostname(g:netrw_machine)
+        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+        return
     endif
 
     " =============
@@ -3079,6 +3091,17 @@ fun! s:NetrwMethod(choice)
   "  endif                                        "Decho
   "  call Decho("b:netrw_fname  <".b:netrw_fname.">",'~'.expand("<slnum>"))
   "  call Dret("s:NetrwMethod : b:netrw_method=".b:netrw_method." g:netrw_port=".g:netrw_port)
+endfun
+
+" s:NetrwValidateHostname:  Validate that the hostname is valid {{{2
+" Input:
+"   hostname
+" Output:
+"  true if g:netrw_machine is valid according to RFC1123 #Section 2
+fun! s:NetrwValidateHostname(hostname)
+    " RFC1123#section-2 mandates, a valid hostname starts with letters or digits
+    " so reject everyhing else
+    return a:hostname =~? '^[a-z0-9]'
 endfun
 
 " ---------------------------------------------------------------------
@@ -7824,6 +7847,10 @@ fun! s:NetrwUpload(fname,tgt,...)
 
     elseif a:tgt =~ '^ftp:'
       call s:NetrwMethod(a:tgt)
+      if !s:NetrwValidateHostname(g:netrw_machine)
+          call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
+          return
+      endif
 
       if b:netrw_method == 2
         " handle uploading a list of files via ftp+.netrc
@@ -10292,6 +10319,18 @@ fun! netrw#Call(funcname,...)
 endfun
 
 " ---------------------------------------------------------------------
+" netrw#LogLevel: returns the specified loglevel
+fun! netrw#LogLevel(level)
+  if a:level == 'WARNING'
+    return s:WARNING
+  elseif a:level == 'NOTE'
+    return s:NOTE
+  elseif a:level == 'ERROR'
+    return s:ERROR
+  endif
+endfun
+
+" ---------------------------------------------------------------------
 " netrw#Expose: allows UserMaps and pchk to look at otherwise script-local variables {{{2
 "               I expect this function to be used in
 "                 :PChkAssert netrw#Expose("netrwmarkfilelist")
@@ -10380,26 +10419,6 @@ fun! netrw#UserMaps(islocal)
     endfor
   endif
   "  call Dret("netrw#UserMaps")
-endfun
-
-" ---------------------------------------------------------------------
-" netrw#WinPath: tries to insure that the path is windows-acceptable, whether cygwin is used or not {{{2
-fun! netrw#WinPath(path)
-  "  call Dfunc("netrw#WinPath(path<".a:path.">)")
-  if (!g:netrw_cygwin || &shell !~ '\%(\<bash\>\|\<zsh\>\)\%(\.exe\)\=$') && has("win32")
-    " remove cygdrive prefix, if present
-    let path = substitute(a:path,g:netrw_cygdrive.'/\(.\)','\1:','')
-    " remove trailing slash (Win95)
-    let path = substitute(path, '\(\\\|/\)$', '', 'g')
-    " remove escaped spaces
-    let path = substitute(path, '\ ', ' ', 'g')
-    " convert slashes to backslashes
-    let path = substitute(path, '/', '\', 'g')
-  else
-    let path= a:path
-  endif
-  "  call Dret("netrw#WinPath <".path.">")
-  return path
 endfun
 
 " ---------------------------------------------------------------------
