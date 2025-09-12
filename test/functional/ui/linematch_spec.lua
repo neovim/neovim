@@ -31,7 +31,7 @@ describe('Diff mode screen with 3 diffs open', function()
 
   before_each(function()
     clear()
-    feed(':set diffopt+=linematch:30<cr>')
+    feed(':set diffopt=internal,filler,linematch:30<cr>')
     feed(':e ' .. fname .. '<cr>')
     feed(':vnew ' .. fname_2 .. '<cr>')
     feed(':vnew ' .. fname_3 .. '<cr>')
@@ -218,7 +218,7 @@ describe('Diff mode screen with 2 diffs open', function()
 
   describe('setup a diff with 2 files and set linematch:30', function()
     before_each(function()
-      feed(':set diffopt+=linematch:30<cr>')
+      feed(':set diffopt=internal,filler,linematch:30<cr>')
       local f1 = [[
 
 common line
@@ -701,7 +701,7 @@ something
   end)
   describe('setup a diff with 2 files and set linematch:30', function()
     before_each(function()
-      feed(':set diffopt+=linematch:30<cr>')
+      feed(':set diffopt=internal,filler,linematch:30<cr>')
       local f1 = [[
 // abc d
 // d
@@ -731,7 +731,7 @@ d
   end)
   describe('setup a diff with 2 files and set linematch:30, with ignore white', function()
     before_each(function()
-      feed(':set diffopt+=linematch:30<cr>:set diffopt+=iwhiteall<cr>')
+      feed(':set diffopt=internal,filler,linematch:30,iwhiteall<cr>')
       local f1 = [[
 void testFunction () {
   for (int i = 0; i < 10; i++) {
@@ -767,7 +767,7 @@ void testFunction () {
   end)
   describe('a diff that would result in multiple groups before grouping optimization', function()
     before_each(function()
-      feed(':set diffopt+=linematch:30<cr>')
+      feed(':set diffopt=internal,filler,linematch:30<cr>')
       local f1 = [[
 !A
 !B
@@ -806,7 +806,7 @@ void testFunction () {
   end)
   describe('a diff that would result in multiple groups before grouping optimization', function()
     before_each(function()
-      feed(':set diffopt+=linematch:30<cr>')
+      feed(':set diffopt=internal,filler,linematch:30<cr>')
       local f1 = [[
 !A
 !B
@@ -845,7 +845,7 @@ void testFunction () {
   end)
   describe('setup a diff with 2 files and set linematch:10', function()
     before_each(function()
-      feed(':set diffopt+=linematch:10<cr>')
+      feed(':set diffopt=internal,filler,linematch:10<cr>')
       local f1 = [[
 common line
 HIL
@@ -1024,7 +1024,7 @@ describe('regressions', function()
 
   it("doesn't crash with long lines", function()
     clear()
-    feed(':set diffopt+=linematch:30<cr>')
+    feed(':set diffopt=internal.filler,linematch:30<cr>')
     screen = Screen.new(100, 20)
     -- line must be greater than MATCH_CHAR_MAX_LEN
     n.api.nvim_buf_set_lines(0, 0, -1, false, { string.rep('a', 1000) .. 'hello' })
@@ -1035,7 +1035,7 @@ describe('regressions', function()
 
   it('properly computes filler lines for hunks bigger than linematch limit', function()
     clear()
-    feed(':set diffopt+=linematch:10<cr>')
+    feed(':set diffopt=internal,filler,linematch:10<cr>')
     screen = Screen.new(100, 20)
     local lines = {}
     for i = 0, 29 do
@@ -1093,7 +1093,7 @@ describe('regressions', function()
     n.exec('rightbelow vnew')
     n.api.nvim_buf_set_lines(0, 0, -1, false, { 'hijklm', 'nopqr', 'stuv' })
     n.exec([[
-      set diffopt+=linematch:60
+      set diffopt=internal,filler,linematch:60
       windo diffthis | wincmd t
       call feedkeys("Aq\<esc>")
       call feedkeys("GAklm\<esc>")
