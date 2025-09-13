@@ -1,6 +1,6 @@
-" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
-" Former Maintainer: Charles E Campbell
-" Upstream: <https://github.com/saccarosium/netrw.vim>
+" Creator: Charles E Campbell
+" Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer: This runtime file is looking for a new maintainer.
 " Copyright:    Copyright (C) 1999-2021 Charles E. Campbell {{{
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
