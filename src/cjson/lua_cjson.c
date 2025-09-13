@@ -88,6 +88,7 @@
 #define DEFAULT_ENCODE_ESCAPE_FORWARD_SLASH 1
 #define DEFAULT_ENCODE_SKIP_UNSUPPORTED_VALUE_TYPES 0
 #define DEFAULT_ENCODE_INDENT NULL
+#define DEFAULT_ENCODE_SORT_KEYS 0
 
 #ifdef DISABLE_INVALID_NUMBERS
 #undef DEFAULT_DECODE_INVALID_NUMBERS
@@ -153,12 +154,42 @@ static const char *json_token_type_name[] = {
 };
 
 typedef struct {
+    strbuf_t *buf;
+    size_t offset;
+    size_t length;
+    int raw_typ;
+    union {
+        lua_Number number;
+        const char *string;
+    } raw;
+} key_entry_t;
+
+/* Stores all keys for a table when key sorting is enabled.
+ * - buf: buffer holding serialized key strings
+ * - keys: array of key_entry_t pointing into buf
+ * - size: number of keys stored
+ * - capacity: allocated capacity of keys array
+ */
+typedef struct {
+    strbuf_t buf;
+    key_entry_t *keys;
+    size_t size;
+    size_t capacity;
+} keybuf_t;
+
+#define KEYBUF_DEFAULT_CAPACITY 32
+
+typedef struct {
     json_token_type_t ch2token[256];
     char escape2char[256];  /* Decoding */
 
     /* encode_buf is only allocated and used when
      * encode_keep_buffer is set */
     strbuf_t encode_buf;
+
+    /* encode_keybuf is only allocated and used when
+     * sort_keys is set */
+    keybuf_t encode_keybuf;
 
     int encode_sparse_convert;
     int encode_sparse_ratio;
@@ -170,6 +201,7 @@ typedef struct {
     int encode_empty_table_as_object;
     int encode_escape_forward_slash;
     const char *encode_indent;
+    int encode_sort_keys;
 
     int decode_invalid_numbers;
     int decode_max_depth;
@@ -180,6 +212,11 @@ typedef struct {
 typedef struct {
     const char **char2escape[256];
     const char *indent;
+    int sort_keys;
+
+    /* keybuf is only allocated and used when
+     * sort_keys is set */
+    keybuf_t keybuf;
 } json_encode_options_t;
 
 typedef struct {
@@ -522,6 +559,17 @@ static int json_cfg_encode_escape_forward_slash(lua_State *l)
 }
 */
 
+/*
+static int json_cfg_encode_sort_keys(lua_State *l)
+{
+    json_config_t *cfg = json_arg_init(l, 1);
+
+    json_enum_option(l, 1, &cfg->encode_sort_keys, NULL, 1);
+
+    return 1;
+}
+*/
+
 static int json_destroy_config(lua_State *l)
 {
     json_config_t *cfg;
@@ -565,6 +613,7 @@ static void json_create_config(lua_State *l)
     cfg->encode_escape_forward_slash = DEFAULT_ENCODE_ESCAPE_FORWARD_SLASH;
     cfg->encode_skip_unsupported_value_types = DEFAULT_ENCODE_SKIP_UNSUPPORTED_VALUE_TYPES;
     cfg->encode_indent = DEFAULT_ENCODE_INDENT;
+    cfg->encode_sort_keys = DEFAULT_ENCODE_SORT_KEYS;
 
 #if DEFAULT_ENCODE_KEEP_BUFFER > 0
     strbuf_init(&cfg->encode_buf, 0);
@@ -623,23 +672,27 @@ static void json_encode_exception(lua_State *l, json_encode_t *ctx, int lindex,
 {
     if (!ctx->cfg->encode_keep_buffer)
         strbuf_free(ctx->json);
+
+    if (ctx->options->sort_keys) {
+        strbuf_free(&ctx->options->keybuf.buf);
+        free(ctx->options->keybuf.keys);
+    }
+
     luaL_error(l, "Cannot serialise %s: %s",
                   lua_typename(l, lua_type(l, lindex)), reason);
 }
 
-/* json_append_string args:
- * - lua_State
- * - JSON strbuf
- * - String (Lua stack index)
- *
- * Returns nothing. Doesn't remove string from Lua stack */
-static void json_append_string(lua_State *l, json_encode_t *ctx, int lindex)
+static void json_append_string_contents(lua_State *l, json_encode_t *ctx,
+                                        int lindex, int use_keybuf)
 {
     const char *escstr;
     const char *str;
     size_t len;
     size_t i;
     strbuf_t *json = ctx->json;
+    if (use_keybuf) {
+        json = &ctx->options->keybuf.buf;
+    }
 
     str = lua_tolstring(l, lindex, &len);
 
@@ -647,11 +700,10 @@ static void json_append_string(lua_State *l, json_encode_t *ctx, int lindex)
      * This buffer is reused constantly for small strings
      * If there are any excess pages, they won't be hit anyway.
      * This gains ~5% speedup. */
-    if (len > SIZE_MAX / 6 - 3)
-        abort(); /*Overflow check */
-    strbuf_ensure_empty_length(json, len * 6 + 2);
+    if (len >= SIZE_MAX / 6)
+        abort(); /* Overflow check */
+    strbuf_ensure_empty_length(json, len * 6);
 
-    strbuf_append_char_unsafe(json, '\"');
     for (i = 0; i < len; i++) {
         escstr = (*ctx->options->char2escape)[(unsigned char)str[i]];
         if (escstr)
@@ -659,7 +711,19 @@ static void json_append_string(lua_State *l, json_encode_t *ctx, int lindex)
         else
             strbuf_append_char_unsafe(json, str[i]);
     }
-    strbuf_append_char_unsafe(json, '\"');
+}
+
+/* json_append_string args:
+ * - lua_State
+ * - JSON encode ctx
+ * - String (Lua stack index)
+ *
+ * Returns nothing. Doesn't remove string from Lua stack */
+static void json_append_string(lua_State *l, json_encode_t *ctx, int lindex)
+{
+    strbuf_append_char(ctx->json, '\"');
+    json_append_string_contents(l, ctx, lindex, false);
+    strbuf_append_char(ctx->json, '\"');
 }
 
 /* Find the size of the array on the top of the Lua stack
@@ -795,7 +859,7 @@ static void json_append_array(lua_State *l, json_encode_t *ctx, int current_dept
 }
 
 static void json_append_number(lua_State *l, json_encode_t *ctx,
-                               int lindex)
+                               int lindex, int use_keybuf)
 {
     int len;
     #if LUA_VERSION_NUM >= 503
@@ -810,6 +874,9 @@ static void json_append_number(lua_State *l, json_encode_t *ctx,
     double num = lua_tonumber(l, lindex);
     json_config_t *cfg = ctx->cfg;
     strbuf_t *json = ctx->json;
+    if (use_keybuf) {
+        json = &ctx->options->keybuf.buf;
+    }
 
     if (cfg->encode_invalid_numbers == 0) {
         /* Prevent encoding invalid numbers */
@@ -843,6 +910,18 @@ static void json_append_number(lua_State *l, json_encode_t *ctx,
     strbuf_extend_length(json, len);
 }
 
+/* Compare key_entry_t for qsort. */
+static int cmp_key_entries(const void *a, const void *b) {
+    const key_entry_t *ka = a;
+    const key_entry_t *kb = b;
+    int res = memcmp(ka->buf->buf + ka->offset,
+                     kb->buf->buf + kb->offset,
+                     ka->length < kb->length ? ka->length : kb->length);
+    if (res == 0)
+        return (ka->length - kb->length);
+    return res;
+}
+
 static void json_append_object(lua_State *l, json_encode_t *ctx,
                                int current_depth)
 {
@@ -853,49 +932,123 @@ static void json_append_object(lua_State *l, json_encode_t *ctx,
     /* Object */
     strbuf_append_char(json, '{');
 
-    lua_pushnil(l);
-    /* table, startkey */
     comma = 0;
-    while (lua_next(l, -2) != 0) {
-        has_items = 1;
+    lua_pushnil(l);
+    if (ctx->options->sort_keys) {
+        keybuf_t *keybuf = &ctx->options->keybuf;
+        size_t init_keybuf_size = keybuf->size;
+        size_t init_keybuf_length = strbuf_length(&keybuf->buf);
 
-        json_pos = strbuf_length(json);
-        if (comma++ > 0)
-            strbuf_append_char(json, ',');
-        else
-            comma = 1;
-
-        if (ctx->options->indent)
-            json_append_newline_and_indent(json, ctx, current_depth);
-
-        /* table, key, value */
-        keytype = lua_type(l, -2);
-        if (keytype == LUA_TNUMBER) {
-            strbuf_append_char(json, '"');
-            json_append_number(l, ctx, -2);
-            strbuf_append_mem(json, "\":", 2);
-        } else if (keytype == LUA_TSTRING) {
-            json_append_string(l, ctx, -2);
-            strbuf_append_char(json, ':');
-        } else {
-            json_encode_exception(l, ctx, -2,
-                                  "table key must be a number or string");
-            /* never returns */
-        }
-        if (ctx->options->indent)
-            strbuf_append_char(json, ' ');
-
-        /* table, key, value */
-        err = json_append_data(l, ctx, current_depth);
-        if (err) {
-            strbuf_set_length(json, json_pos);
-            if (comma == 1) {
-                comma = 0;
+        while (lua_next(l, -2) != 0) {
+            has_items = 1;
+            if (keybuf->size == keybuf->capacity) {
+                keybuf->capacity *= 2;
+                key_entry_t *tmp = realloc(keybuf->keys,
+                                           keybuf->capacity * sizeof(key_entry_t));
+                if (!tmp)
+                    json_encode_exception(l, ctx, -1, "out of memory");
+                keybuf->keys = tmp;
             }
+
+            keytype = lua_type(l, -2);
+            key_entry_t key_entry = {
+                .buf = &keybuf->buf,
+                .offset = strbuf_length(&keybuf->buf),
+                .raw_typ = keytype,
+            };
+            if (keytype == LUA_TSTRING) {
+                json_append_string_contents(l, ctx, -2, true);
+                key_entry.raw.string = lua_tostring(l, -2);
+            } else if (keytype == LUA_TNUMBER) {
+                json_append_number(l, ctx, -2, true);
+                key_entry.raw.number = lua_tointeger(l, -2);
+            } else {
+                json_encode_exception(l, ctx, -2,
+                                      "table key must be number or string");
+            }
+            key_entry.length = strbuf_length(&keybuf->buf) - key_entry.offset;
+            keybuf->keys[keybuf->size++] = key_entry;
+            lua_pop(l, 1);
         }
 
-        lua_pop(l, 1);
-        /* table, key */
+        size_t keys_count = keybuf->size - init_keybuf_size;
+        qsort(keybuf->keys + init_keybuf_size, keys_count,
+              sizeof (key_entry_t), cmp_key_entries);
+
+        for (size_t i = init_keybuf_size; i < init_keybuf_size + keys_count; i++) {
+            key_entry_t *current_key = &keybuf->keys[i];
+            json_pos = strbuf_length(json);
+            if (comma++ > 0)
+                strbuf_append_char(json, ',');
+
+            if (ctx->options->indent)
+                json_append_newline_and_indent(json, ctx, current_depth);
+
+            strbuf_ensure_empty_length(json, current_key->length + 3);
+            strbuf_append_char_unsafe(json, '"');
+            strbuf_append_mem_unsafe(json, keybuf->buf.buf + current_key->offset,
+                                     current_key->length);
+            strbuf_append_mem_unsafe(json, "\":", 2);
+
+            if (ctx->options->indent)
+                strbuf_append_char(json, ' ');
+
+            if (current_key->raw_typ == LUA_TSTRING)
+                lua_pushstring(l, current_key->raw.string);
+            else
+                lua_pushnumber(l, current_key->raw.number);
+
+            lua_gettable(l, -2);
+            err = json_append_data(l, ctx, current_depth);
+            if (err) {
+                strbuf_set_length(json, json_pos);
+                if (comma == 1)
+                    comma = 0;
+            }
+            lua_pop(l, 1);
+        }
+        /* resize encode_keybuf to reuse allocated memory for forward keys */
+        strbuf_set_length(&keybuf->buf, init_keybuf_length);
+        keybuf->size = init_keybuf_size;
+    } else {
+        while (lua_next(l, -2) != 0) {
+            has_items = 1;
+
+            json_pos = strbuf_length(json);
+            if (comma++ > 0)
+                strbuf_append_char(json, ',');
+
+            if (ctx->options->indent)
+                json_append_newline_and_indent(json, ctx, current_depth);
+
+            /* table, key, value */
+            keytype = lua_type(l, -2);
+            if (keytype == LUA_TNUMBER) {
+                strbuf_append_char(json, '"');
+                json_append_number(l, ctx, -2, false);
+                strbuf_append_mem(json, "\":", 2);
+            } else if (keytype == LUA_TSTRING) {
+                json_append_string(l, ctx, -2);
+                strbuf_append_char(json, ':');
+            } else {
+                json_encode_exception(l, ctx, -2,
+                                      "table key must be a number or string");
+                /* never returns */
+            }
+            if (ctx->options->indent)
+                strbuf_append_char(json, ' ');
+
+            /* table, key, value */
+            err = json_append_data(l, ctx, current_depth);
+            if (err) {
+                strbuf_set_length(json, json_pos);
+                if (comma == 1)
+                    comma = 0;
+            }
+
+            lua_pop(l, 1);
+            /* table, key */
+        }
     }
 
     if (has_items && ctx->options->indent)
@@ -921,7 +1074,7 @@ static int json_append_data(lua_State *l, json_encode_t *ctx,
         json_append_string(l, ctx, -1);
         break;
     case LUA_TNUMBER:
-        json_append_number(l, ctx, -1);
+        json_append_number(l, ctx, -1, false);
         break;
     case LUA_TBOOLEAN:
         if (lua_toboolean(l, -1))
@@ -1029,6 +1182,7 @@ static int json_encode(lua_State *l)
     json_encode_options_t options = {
         .char2escape = { char2escape },
         .indent = DEFAULT_ENCODE_INDENT,
+        .sort_keys = DEFAULT_ENCODE_SORT_KEYS,
     };
     json_encode_t ctx = { .options = &options, .cfg = cfg };
     strbuf_t local_encode_buf;
@@ -1063,6 +1217,23 @@ static int json_encode(lua_State *l)
             options.indent = luaL_checkstring(l, -1);
             if (options.indent[0] == '\0') options.indent = NULL;
         }
+        lua_pop(l, 1);
+
+        lua_getfield(l, 2, "sort_keys");
+        if (!lua_isnil(l, -1)) {
+            luaL_checktype(l, -1, LUA_TBOOLEAN);
+
+            int sort_keys = lua_toboolean(l, -1);
+            if (sort_keys) {
+                options.sort_keys = sort_keys;
+                strbuf_init(&options.keybuf.buf, 0);
+                options.keybuf.size = 0;
+                options.keybuf.capacity = KEYBUF_DEFAULT_CAPACITY;
+                options.keybuf.keys = malloc(options.keybuf.capacity * sizeof(key_entry_t));
+                if (!options.keybuf.keys)
+                    return luaL_error (l, "out of memory");
+            }
+        }
 
         /* Also pop the opts table */
         lua_pop(l, 2);
@@ -1089,6 +1260,11 @@ static int json_encode(lua_State *l)
 
     if (!cfg->encode_keep_buffer)
         strbuf_free(encode_buf);
+
+    if (options.sort_keys) {
+        strbuf_free(&options.keybuf.buf);
+        free(options.keybuf.keys);
+    }
 
     return 1;
 }
@@ -1785,6 +1961,7 @@ int lua_cjson_new(lua_State *l)
         { "encode_escape_forward_slash", json_cfg_encode_escape_forward_slash },
         { "encode_skip_unsupported_value_types", json_cfg_encode_skip_unsupported_value_types },
         { "encode_indent", json_cfg_encode_indent },
+        { "encode_sort_keys", json_cfg_encode_sort_keys },
         */
         { "new", lua_cjson_new },
         { NULL, NULL }

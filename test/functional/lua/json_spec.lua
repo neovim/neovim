@@ -227,6 +227,44 @@ describe('vim.json.encode()', function()
     )
   end)
 
+  it('sort_keys', function()
+    eq('"string"', exec_lua([[return vim.json.encode('string', { sort_keys = true })]]))
+    eq('[]', exec_lua([[return vim.json.encode({}, { sort_keys = true })]]))
+    eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict(), { sort_keys = true })]]))
+    eq(
+      '{"$":0,"%":0,"1":0,"4":0,"a":0,"ab":0,"b":0}',
+      exec_lua(
+        [[return vim.json.encode({ a = 0, b = 0, ab = 0, [1] = 0, ["$"] = 0, [4] = 0, ["%"] = 0 }, { sort_keys = true })]]
+      )
+    )
+    eq(
+      '{"aa":1,"ab":2,"ba":3,"bc":4,"cc":5}',
+      exec_lua(
+        [[return vim.json.encode({ aa = 1, ba = 3, ab = 2, bc = 4, cc = 5 }, { sort_keys = true })]]
+      )
+    )
+    eq(
+      '{"a":{"a":1,"b":2,"c":3},"b":{"a":{"a":0,"b":0},"b":{"a":0,"b":0}},"c":0}',
+      exec_lua(
+        [[return vim.json.encode({ a = { b = 2, a = 1, c = 3 }, c = 0, b = { b = { a = 0, b = 0 }, a = { a = 0, b = 0 } } }, { sort_keys = true })]]
+      )
+    )
+    eq(
+      '[{"1":0,"4":0,"a":0,"b":0},{"10":0,"5":0,"f":0,"x":0},{"-2":0,"2":0,"c":0,"d":0}]',
+      exec_lua([[return vim.json.encode({
+        { a = 0, [1] = 0, [4] = 0, b = 0 },
+        { f = 0, [5] = 0, [10] = 0, x = 0 },
+        { c = 0, [-2] = 0, [2] = 0, d = 0 },
+      }, { sort_keys = true })]])
+    )
+    eq(
+      '{"a":2,"ß":3,"é":1,"中":4}',
+      exec_lua(
+        [[return vim.json.encode({ ["é"] = 1, ["a"] = 2, ["ß"] = 3, ["中"] = 4 }, { sort_keys = true })]]
+      )
+    )
+  end)
+
   it('dumps strings', function()
     eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
     eq('""', exec_lua([[return vim.json.encode('')]]))

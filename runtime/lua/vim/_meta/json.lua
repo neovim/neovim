@@ -40,5 +40,7 @@ function vim.json.decode(str, opts) end
 ---                                   characters "/" in string values.
 ---                                 - indent: (string) (default "") String used for indentation at each nesting level.
 ---                                   If non-empty enables newlines and a space after colons.
+---                                 - sort_keys: (boolean) (default false) Sort object
+---                                   keys in alphabetical order.
 ---@return string
 function vim.json.encode(obj, opts) end
