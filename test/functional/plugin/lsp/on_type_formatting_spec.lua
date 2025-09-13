@@ -171,4 +171,60 @@ describe('vim.lsp.on_type_formatting', function()
       )
     end)
   end)
+
+  it('supports dynamic registration', function()
+    exec_lua(function()
+      vim.lsp.on_type_formatting.enable(true)
+
+      _G.server2 = _G._create_server({
+        handlers = {
+          ---@param params lsp.DocumentOnTypeFormattingParams
+          ---@param callback fun(err?: lsp.ResponseError, result?: lsp.TextEdit[])
+          ['textDocument/onTypeFormatting'] = function(_, params, callback)
+            callback(nil, {
+              {
+                newText = ';',
+                range = { start = params.position, ['end'] = params.position },
+              },
+            })
+          end,
+        },
+      })
+
+      local client_id2 = vim.lsp.start({
+        name = 'dummy2',
+        cmd = _G.server2.cmd,
+      })
+
+      -- Register the capability after the client has already attached to the buffer.
+      vim.lsp.handlers['client/registerCapability'](nil, {
+        registrations = {
+          {
+            id = 'otf',
+            method = 'textDocument/onTypeFormatting',
+            registerOptions = {
+              documentSelector = vim.NIL,
+              firstTriggerCharacter = '.',
+            },
+          },
+        },
+      }, { client_id = client_id2 })
+
+      local win = vim.api.nvim_get_current_win()
+      vim.api.nvim_win_set_cursor(win, { 2, 0 })
+    end)
+    feed('A .')
+    retry(nil, 100, function()
+      eq(
+        {
+          'int main() {',
+          '  int hi .;',
+          '}',
+        },
+        exec_lua(function()
+          return vim.api.nvim_buf_get_lines(0, 0, -1, false)
+        end)
+      )
+    end)
+  end)
 end)
