@@ -2259,6 +2259,58 @@ describe('API/win', function()
       )
       eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
     end)
+    it('removes vsep from new lastwin when rightmost window closed #32854', function()
+      local screen = Screen.new(50, 10)
+      exec_lua([[
+        local win1 = vim.api.nvim_open_win(0, false, { win = -1, split = "right", width=20})
+        vim.api.nvim_set_option_value("winfixwidth", true, { win = win1 })
+        local win2 = nil
+        local toggle_win2 = function()
+          if win2 == nil then
+            win2 = vim.api.nvim_open_win(0, false, { win = -1, split = "right", width=20})
+          else
+            vim.api.nvim_win_close(win2, true)
+            win2 = nil
+          end
+        end
+        vim.keymap.set("n", "w", toggle_win2)
+        vim.o.winbar = "%{%v:lua.wn()%}"
+        _G.wn = function()
+          return vim.api.nvim_get_current_win()
+        end
+      ]])
+      feed('w')
+      local wins = api.nvim_list_wins()
+      eq(20, api.nvim_win_get_width(wins[#wins]))
+      feed('w')
+      screen:expect([[
+        {5:1000                         }│{5:1001                }|
+        ^                             │                    |
+        {1:~                            }│{1:~                   }|*6
+        {3:[No Name]                     }{2:[No Name]           }|
+                                                          |
+      ]])
+      feed('wwwww')
+      wins = api.nvim_list_wins()
+      eq(
+        { 20, 20 },
+        { api.nvim_win_get_width(wins[#wins]), api.nvim_win_get_width(wins[#wins - 1]) }
+      )
+      -- If a 'winfixwidth' window gets the space anyway, check it has the correct size.
+      command('set winfixwidth | only | mode')
+      screen:expect([[
+        {5:1000                                              }|
+        ^                                                  |
+        {1:~                                                 }|*7
+                                                          |
+      ]])
+      eq(eval('&columns'), api.nvim_win_get_width(0))
+    end)
+    it('opens a large right split window without crashing', function()
+      api.nvim_command('vsplit')
+      api.nvim_open_win(0, false, { win = -1, split = 'right', width = 9999 })
+      assert_alive()
+    end)
   end)
 
   describe('set_config', function()
