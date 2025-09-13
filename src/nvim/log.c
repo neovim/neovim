@@ -297,6 +297,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
 {
   // Name of the Nvim instance that produced the log.
   static char name[32] = { 0 };
+  static char *serv_name = NULL;
 
   static const char *log_levels[] = {
     [LOGLVL_DBG] = "DBG",
@@ -324,11 +325,18 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
 
   bool ui = !!ui_client_channel_id;  // Running as a UI client (--remote-ui).
 
+  char const *serv = path_tail(get_vim_var_str(VV_SEND_SERVER));
+
   // Regenerate the name when:
   // - UI client (to ensure "ui" is in the name)
   // - not set yet
   // - no v:servername yet
   bool regen = ui || name[0] == NUL || name[0] == '?';
+  if (!strequal(serv_name, serv)) {
+    xfree(serv_name);
+    serv_name = xstrdup(serv);
+    regen = true;
+  }
 
   // Get a name for this Nvim instance.
   // TODO(justinmk): expose this as v:name ?
@@ -336,7 +344,6 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
     // Parent servername ($NVIM).
     const char *parent = path_tail(os_getenv_noalloc(ENV_NVIM));
     // Servername. Empty until starting=false.
-    const char *serv = path_tail(get_vim_var_str(VV_SEND_SERVER));
     if (parent[0] != NUL) {
       snprintf(name, sizeof(name), ui ? "ui/c/%s" : "c/%s", parent);  // "c/" = child of $NVIM.
     } else if (serv[0] != NUL) {

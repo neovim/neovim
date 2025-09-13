@@ -701,10 +701,11 @@ describe('messages', function()
       hide buffer a.txt
 
       autocmd CursorHold * buf b.txt | w | echo "'b' written"
+
+      set updatetime=50
+      normal! 0$
     ]])
 
-    command('set updatetime=50')
-    feed('0$')
     screen:expect([[
       ^hi                                      |
       {1:~                                       }|*4
