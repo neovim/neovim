@@ -646,8 +646,13 @@ void tui_stop(TUIData *tui)
   tui->input.callbacks.primary_device_attr = tui_stop_cb;
   terminfo_disable(tui);
 
-  // Wait until DA1 response is received
-  LOOP_PROCESS_EVENTS_UNTIL(tui->loop, tui->loop->events, EXIT_TIMEOUT_MS, tui->stopped);
+  // Wait until DA1 response is received, or stdin is closed (#35744).
+  LOOP_PROCESS_EVENTS_UNTIL(tui->loop, tui->loop->events, EXIT_TIMEOUT_MS,
+                            tui->stopped || tui->input.read_stream.did_eof);
+  if (!tui->stopped && !tui->input.read_stream.did_eof) {
+    WLOG("TUI: timed out waiting for DA1 response");
+  }
+  tui->stopped = true;
 
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
