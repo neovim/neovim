@@ -804,7 +804,7 @@ local function feedback_log(plug_list)
 end
 
 --- @param lines string[]
---- @param on_finish fun()
+--- @param on_finish fun(bufnr: integer)
 local function show_confirm_buf(lines, on_finish)
   -- Show buffer in a separate tabpage
   local bufnr = api.nvim_create_buf(true, true)
@@ -824,7 +824,7 @@ local function show_confirm_buf(lines, on_finish)
 
   -- Define action on accepting confirm
   local function finish()
-    on_finish()
+    on_finish(bufnr)
     delete_buffer()
   end
   -- - Use `nested` to allow other events (useful for statuslines)
@@ -852,6 +852,28 @@ local function show_confirm_buf(lines, on_finish)
   vim.lsp.buf_attach_client(bufnr, require('vim.pack._lsp').client_id)
 end
 
+--- Get map of plugin names that need update based on confirmation buffer
+--- content: all plugin sections present in "# Update" section.
+--- @param bufnr integer
+--- @return table<string,boolean>
+local function get_update_map(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  --- @type table<string,boolean>, boolean
+  local res, is_in_update = {}, false
+  for _, l in ipairs(lines) do
+    local name = l:match('^## (.+)$')
+    if name and is_in_update then
+      res[name] = true
+    end
+
+    local group = l:match('^# (%S+)')
+    if group then
+      is_in_update = group == 'Update'
+    end
+  end
+  return res
+end
+
 --- @class vim.pack.keyset.update
 --- @inlinedoc
 --- @field force? boolean Whether to skip confirmation and make updates immediately. Default `false`.
@@ -864,6 +886,9 @@ end
 ---     - If `false`, show confirmation buffer. It lists data about all set to
 ---       update plugins. Pending changes starting with `>` will be applied while
 ---       the ones starting with `<` will be reverted.
+---       It has dedicated buffer-local mappings:
+---       - |]]| and |[[| to navigate through plugin sections.
+---
 ---       It has special in-process LSP server attached to provide more interactive
 ---       features. Currently supported methods:
 ---         - 'textDocument/documentSymbol' (`gO` via |lsp-defaults|
@@ -871,6 +896,9 @@ end
 ---         - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) -
 ---           show more information at cursor. Like details of particular pending
 ---           change or newer tag.
+---         - 'textDocument/codeAction' (`gra` via |lsp-defaults| or |vim.lsp.buf.code_action()|) -
+---           show code actions available for "plugin at cursor". Like "delete", "update",
+---           or "skip updating".
 ---
 ---       Execute |:write| to confirm update, execute |:quit| to discard the update.
 ---     - If `true`, make updates right away.
@@ -900,11 +928,11 @@ function M.update(names, opts)
   --- @param p vim.pack.Plug
   local function do_update(p)
     -- Fetch
-    -- Using '--tags --force' means conflicting tags will be synced with remote
-    git_cmd(
-      { 'fetch', '--quiet', '--tags', '--force', '--recurse-submodules=yes', 'origin' },
-      p.path
-    )
+    if not opts._offline then
+      -- Using '--tags --force' means conflicting tags will be synced with remote
+      local args = { 'fetch', '--quiet', '--tags', '--force', '--recurse-submodules=yes', 'origin' }
+      git_cmd(args, p.path)
+    end
 
     -- Compute change info: changelog if any, new tags if nothing to update
     infer_update_details(p)
@@ -914,7 +942,8 @@ function M.update(names, opts)
       checkout(p, timestamp, true)
     end
   end
-  local progress_title = opts.force and 'Updating' or 'Downloading updates'
+  local progress_title = opts.force and (opts._offline and 'Applying updates' or 'Updating')
+    or 'Downloading updates'
   run_list(plug_list, do_update, progress_title)
 
   if opts.force then
@@ -924,16 +953,17 @@ function M.update(names, opts)
 
   -- Show report in new buffer in separate tabpage
   local lines = compute_feedback_lines(plug_list, false)
-  show_confirm_buf(lines, function()
-    -- TODO(echasnovski): Allow to not update all plugins via LSP code actions
-    --- @param p vim.pack.Plug
-    local plugs_to_checkout = vim.tbl_filter(function(p)
-      return p.info.err == '' and p.info.sha_head ~= p.info.sha_target
-    end, plug_list)
-    if #plugs_to_checkout == 0 then
+  show_confirm_buf(lines, function(bufnr)
+    local to_update = get_update_map(bufnr)
+    if not next(to_update) then
       notify('Nothing to update', 'WARN')
       return
     end
+
+    --- @param p vim.pack.Plug
+    local plugs_to_checkout = vim.tbl_filter(function(p)
+      return to_update[p.spec.name]
+    end, plug_list)
 
     local timestamp2 = get_timestamp()
     --- @async
