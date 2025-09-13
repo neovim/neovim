@@ -433,9 +433,11 @@ local config = {
     filename = 'plugins.txt',
     section_order = {
       'tohtml.lua',
+      'undotree.lua',
     },
     files = {
       'runtime/lua/tohtml.lua',
+      'runtime/pack/dist/opt/nvim.undotree/lua/undotree.lua',
     },
     section_fmt = function(name)
       return 'Builtin plugin: ' .. name:lower()
