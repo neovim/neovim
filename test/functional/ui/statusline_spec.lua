@@ -789,7 +789,7 @@ describe('default statusline', function()
       '%<',
       '%f %h%w%m%r ',
       '%=',
-      "%{% luaeval('(package.loaded[''vim.ui''] and vim.ui.get_progress_status()) or '''' ')%}",
+      "%{% luaeval('(package.loaded[''vim.ui''] and vim.ui.progress_status()) or '''' ')%}",
       "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
       "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
       "%{% &busy > 0 ? '◐ ' : '' %}",
@@ -838,7 +838,7 @@ describe('default statusline', function()
   it('shows and updates progress status', function()
     local function get_progress()
       return exec_lua(function()
-        local stl_str = vim.ui.get_progress_status()
+        local stl_str = vim.ui.progress_status()
         return vim.api.nvim_eval_statusline(stl_str, {}).str
       end)
     end
@@ -876,7 +876,7 @@ describe('default statusline', function()
     eq(
       '20/100',
       exec_lua(function()
-        return vim.ui.get_progress_status({
+        return vim.ui.progress_status({
           fmt = function(items)
             local tot = 0
             for _, item in ipairs(items) do

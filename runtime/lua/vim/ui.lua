@@ -318,14 +318,16 @@ do
     end
   end
 
-  ---@class vim.ui.get_progress_status.Opts
+  ---@class vim.ui.progress_status.Opts
+  ---@inlinedoc
+  ---
   ---custom formater for progress messages
   ---@field fmt? fun(running: ProgressMessage[]):string
   --
   --- Function to format the list of running progress messages for statusline
-  ---@param opts? vim.ui.get_progress_status.Opts Options
+  ---@param opts? vim.ui.progress_status.Opts Options
   ---@return string Statusline component text
-  function M.get_progress_status(opts)
+  function M.progress_status(opts)
     vim.validate('opts', opts, 'table', true)
     if opts ~= nil then
       vim.validate('fmt', opts.fmt, 'function', true)
