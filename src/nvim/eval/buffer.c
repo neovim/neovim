@@ -36,9 +36,7 @@ typedef struct {
   int cob_save_VIsual_active;
 } cob_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/buffer.c.generated.h"
-#endif
+#include "eval/buffer.c.generated.h"
 
 /// Find a buffer by number or exact name.
 buf_T *find_buffer(typval_T *avar)
@@ -382,8 +380,8 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
   int winid;
   bool found_buf = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    winnr += win_has_winnr(wp);
-    if (wp->w_buffer == buf) {
+    winnr += win_has_winnr(wp, curtab);
+    if (wp->w_buffer == buf && (!get_nr || win_has_winnr(wp, curtab))) {
       found_buf = true;
       winid = wp->handle;
       break;
@@ -455,7 +453,7 @@ void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   for (linenr_T lnum = first; lnum <= last; lnum++) {
-    ml_delete(first, true);
+    ml_delete_flags(first, ML_DEL_MESSAGE);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -705,28 +703,4 @@ void restore_buffer(bufref_T *save_curbuf)
     curbuf = save_curbuf->br_buf;
     curbuf->b_nwindows++;
   }
-}
-
-/// Find a window for buffer "buf".
-/// If found true is returned and "wp" and "tp" are set to
-/// the window and tabpage.
-/// If not found, false is returned.
-///
-/// @param       buf  buffer to find a window for
-/// @param[out]  wp   stores the found window
-/// @param[out]  tp   stores the found tabpage
-///
-/// @return  true if a window was found for the buffer.
-bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
-{
-  *wp = NULL;
-  *tp = NULL;
-  FOR_ALL_TAB_WINDOWS(tp2, wp2) {
-    if (wp2->w_buffer == buf) {
-      *tp = tp2;
-      *wp = wp2;
-      return true;
-    }
-  }
-  return false;
 }

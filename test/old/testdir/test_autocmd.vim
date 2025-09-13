@@ -128,8 +128,7 @@ if has('timers')
   endfunc
 
   func Test_OptionSet_modeline()
-    CheckFunction test_override
-    call test_override('starting', 1)
+    call Ntest_override('starting', 1)
     au! OptionSet
     augroup set_tabstop
       au OptionSet tabstop call timer_start(1, {-> execute("echo 'Handler called'", "")})
@@ -146,7 +145,7 @@ if has('timers')
     augroup END
     bwipe!
     set ts&
-    call test_override('starting', 0)
+    call Ntest_override('starting', 0)
   endfunc
 
 endif "has('timers')
@@ -860,7 +859,7 @@ func Test_BufReadCmdNofile()
             \ 'quickfix',
             \ 'help',
             "\ 'terminal',
-            \ 'prompt',
+            "\ 'prompt',
             "\ 'popup',
             \ ]
     new somefile
@@ -978,7 +977,7 @@ func Test_BufEnter()
             \ 'quickfix',
             \ 'help',
             "\ 'terminal',
-            \ 'prompt',
+            "\ 'prompt',
             "\ 'popup',
             \ ]
     new somefile
@@ -1103,7 +1102,8 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
-  CheckFunction test_override
+  " Use test/functional/legacy/autocmd_option_spec.lua
+  throw 'Skipped: Nvim changed types of OptionSet v: variables'
   CheckOption autochdir
 
   call test_override('starting', 1)
@@ -1705,8 +1705,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
-  CheckFunction test_override
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   " 18: Changing an option when entering diff mode
   new
   au OptionSet diff :let &l:cul = v:option_new
@@ -1735,12 +1734,11 @@ func Test_OptionSet_diffmode()
 
   " Cleanup
   au! OptionSet
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 func Test_OptionSet_diffmode_close()
-  CheckFunction test_override
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
   new
@@ -1760,7 +1758,7 @@ func Test_OptionSet_diffmode_close()
 
   " Cleanup
   au! OptionSet
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
   "delfunc! AutoCommandOptionSet
 endfunc
 
@@ -2092,7 +2090,7 @@ func Test_Cmdline()
 
   let g:log = []
   let @r = 'abc'
-  call feedkeys(":0\<C-R>r1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
+  call feedkeys(":0\<C-R>=@r\<CR>1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
   call assert_equal([
         \ '0',
         \ '0a',
@@ -2103,6 +2101,17 @@ func Test_Cmdline()
         \ '0abc1abc2',
         \ '0abc1abc2abc',
         \ '0abc1abc2abc3',
+        \ ], g:log)
+
+  " <Del> should trigger CmdlineChanged
+  let g:log = []
+  call feedkeys(":foo\<Left>\<Left>\<Del>\<Del>\<Esc>", 'xt')
+  call assert_equal([
+        \ 'f',
+        \ 'fo',
+        \ 'foo',
+        \ 'fo',
+        \ 'f',
         \ ], g:log)
 
   unlet g:log
@@ -2661,10 +2670,9 @@ endfunc
 
 " Test TextChangedI and TextChangedP
 func Test_ChangedP()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
   call setline(1, ['foo', 'bar', 'foobar'])
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   set complete=. completeopt=menuone
 
   func! TextChangedAutocmd(char)
@@ -2705,7 +2713,7 @@ func Test_ChangedP()
   " TODO: how should it handle completeopt=noinsert,noselect?
 
   " CleanUp
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   au! TextChanged
   au! TextChangedI
   au! TextChangedP
@@ -2725,9 +2733,8 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
-  call test_override('char_avail', 1)
+  call Ntest_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
   call feedkeys("i(\<CR>\<Esc>", 'tx')
   call assert_equal('(', getline(1))
@@ -2736,7 +2743,7 @@ func Test_TextChangedI_with_setline()
   call assert_equal('', getline(1))
   call assert_equal('', getline(2))
 
-  call test_override('char_avail', 0)
+  call Ntest_override('char_avail', 0)
   bwipe!
 endfunc
 
@@ -3599,8 +3606,7 @@ func Test_Visual_doautoall_redraw()
 endfunc
 
 func Test_get_Visual_selection_in_curbuf_autocmd()
-  throw 'Skipped: use test/functional/legacy/autocmd_spec.lua'
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   new
   autocmd OptionSet list let b:text = getregion(getpos('.'), getpos('v'))
   call setline(1, 'foo bar baz')
@@ -3617,7 +3623,7 @@ func Test_get_Visual_selection_in_curbuf_autocmd()
 
   autocmd! OptionSet list
   bwipe!
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 " This was using freed memory.

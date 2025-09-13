@@ -49,9 +49,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "sign.c.generated.h"
-#endif
+#include "sign.c.generated.h"
 
 static PMap(cstr_t) sign_map = MAP_INIT;
 static kvec_t(Integer) sign_ns = KV_INITIAL_VALUE;

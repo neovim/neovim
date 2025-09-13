@@ -1,0 +1,73 @@
+*plugins.txt*  Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+Plugins and modules included with Nvim
+
+Nvim includes various Lua and Vim plugins or modules which may provide
+commands (such as :TOhtml) or modules that you can optionally require() or
+:packadd. The Lua ones are not part of the |lua-stdlib|, that is, they are not
+available from the global `vim` module namespace. Some of the plugins are by
+default loaded while others require a |:packadd| to be loaded.
+
+==============================================================================
+Standard plugins ~
+						*standard-plugin-list*
+Help-link		Loaded	Short description
+|package-cfilter|	No	Filtering quickfix/location list
+|package-justify|	No	Justify text
+|package-nohlsearch|	No	Automatically run :nohlsearch
+|package-termdebug|	No	Debug inside Nvim with gdb
+|matchit|		Yes	Extended |%| matching
+|editorconfig.txt|	Yes	Detect and internet editorconfig
+|spellfile.vim|		Yes	Install spellfile if missing
+|pi_tutor.txt|		Yes	Interactive tutorial
+|pi_gzip.txt|		Yes	Reading and writing compressed files
+|pi_msgpack.txt|	No	msgpack utilities
+|pi_paren.txt|		Yes	Highlight matching parens
+|pi_tar.txt|		Yes	Tar file explorer
+|pi_zip.txt|		Yes	Zip archive explorer
+|netrw|			Yes	Reading and writing files over a network
+|ftplugin-docs|		*	Filetype specific plugins
+    |man.lua|		Yes	Opening and viewing manpages
+    |pi_spec.txt|	Yes	Filetype plugin to work with rpm spec files
+|tohtml|		Yes	Convert buffer to html, syntax included
+
+==============================================================================
+Builtin plugin: tohtml                                                *tohtml*
+
+
+:[range]TOhtml {file}                                                *:TOhtml*
+Converts the buffer shown in the current window to HTML, opens the generated
+HTML in a new split window, and saves its contents to {file}. If {file} is not
+given, a temporary file (created by |tempname()|) is used.
+
+
+tohtml({winid}, {opt})                                       *tohtml.tohtml()*
+    Converts the buffer shown in the window {winid} to HTML and returns the
+    output as a list of string.
+
+    Parameters: ~
+      • {winid}  (`integer?`) Window to convert (defaults to current window)
+      • {opt}    (`table?`) Optional parameters.
+                 • {title}? (`string|false`, default: buffer name) Title tag
+                   to set in the generated HTML code.
+                 • {number_lines}? (`boolean`, default: `false`) Show line
+                   numbers.
+                 • {font}? (`string[]|string`, default: `guifont`) Fonts to
+                   use.
+                 • {width}? (`integer`, default: 'textwidth' if non-zero or
+                   window width otherwise) Width used for items which are
+                   either right aligned or repeat a character infinitely.
+                 • {range}? (`integer[]`, default: entire buffer) Range of
+                   rows to use.
+
+    Return: ~
+        (`string[]`)
+
+
+ vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

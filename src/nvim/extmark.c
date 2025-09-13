@@ -45,9 +45,7 @@
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "extmark.c.generated.h"
-#endif
+#include "extmark.c.generated.h"
 
 /// Create or update an extmark
 ///

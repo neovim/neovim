@@ -74,3 +74,4 @@ typedef enum file_comparison {
 # define CLEANUP_CLONE_PATH_FOR_OS(p) MUTATE_PATH_NO_OP
 
 #endif
+#include "path.h.generated.h"

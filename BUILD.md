@@ -165,11 +165,40 @@ https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv
       mingw32-make install
       ```
 
+### Windows WSL
+
+Build Ubuntu/Debian linux binary on [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (Windows Subsystem for Linux).
+
+```bash
+# Install build prerequisites
+sudo apt-get install ninja-build gettext cmake build-essential
+
+# Build the linux binary in WSL
+make CMAKE_BUILD_TYPE=RelWithDebInfo
+
+# Install the linux binary in WSL (with `<arch>` either `x86_64` or `arm64`)
+cd build && cpack -G DEB && sudo dpkg -i nvim-linux-<arch>.deb
+
+# Verify the installation
+nvim --version && which nvim # should be debug build in /usr/bin/nvim
+```
+
+**Note**: If you encounter linker errors or segfaults during the build, Windows libraries in your PATH may be interfering. Use a clean PATH to avoid conflicts:
+
+```bash
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" make CMAKE_BUILD_TYPE=RelWithDebInfo
+```
+
 ## Localization
 
 ### Localization build
 
-A normal build will create `.mo` files in `build/src/nvim/po`.
+Translations are turned off by default. Enable by building Nvim with the CMake flag `ENABLE_TRANSLATIONS=ON`.
+Doing this will create `.mo` files in `build/src/nvim/po`. Example:
+
+```
+make CMAKE_EXTRA_FLAGS="-DENABLE_TRANSLATIONS=ON"
+```
 
 * If you see `msgfmt: command not found`, you need to install [`gettext`](http://en.wikipedia.org/wiki/Gettext). On most systems, the package is just called `gettext`.
 
@@ -259,6 +288,29 @@ cmake --build build
     - Using `ninja` is strongly recommended.
 4. If treesitter parsers are not bundled, they need to be available in a `parser/` runtime directory (e.g. `/usr/share/nvim/runtime/parser/`).
 
+### How to build static binary (on Linux)
+
+1. Use a linux distribution which uses musl C. We will use Alpine Linux but any distro with musl should work. (glibc does not support static linking)
+2. Run make passing the `STATIC_BUILD` variable: `make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"`
+
+In case you are not using Alpine Linux you can use a container to do the build the binary:
+
+```bash
+podman run \
+  --rm \
+  -it \
+  -v "$PWD:/workdir" \
+  -w /workdir \
+  alpine:latest \
+  bash -c 'apk add build-base cmake coreutils curl gettext-tiny-dev git && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
+```
+
+The resulting binary in `build/bin/nvim` will have all the dependencies statically linked:
+
+```
+build/bin/nvim: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, BuildID[sha1]=b93fa8e678d508ac0a76a2e3da20b119105f1b2d, with debug_info, not stripped
+```
+
 #### Debian 10 (Buster) example:
 
 ```sh
@@ -294,31 +346,31 @@ Platform-specific requirements are listed below.
 ### Ubuntu / Debian
 
 ```sh
-sudo apt-get install ninja-build gettext cmake curl build-essential
+sudo apt-get install ninja-build gettext cmake curl build-essential git
 ```
 
 ### RHEL / Fedora
 
 ```
-sudo dnf -y install ninja-build cmake gcc make gettext curl glibc-gconv-extra
+sudo dnf -y install ninja-build cmake gcc make gettext curl glibc-gconv-extra git
 ```
 
 ### openSUSE
 
 ```
-sudo zypper install ninja cmake gcc-c++ gettext-tools curl
+sudo zypper install ninja cmake gcc-c++ gettext-tools curl git
 ```
 
 ### Arch Linux
 
 ```
-sudo pacman -S base-devel cmake ninja curl
+sudo pacman -S base-devel cmake ninja curl git
 ```
 
 ### Alpine Linux
 
 ```
-apk add build-base cmake coreutils curl gettext-tiny-dev
+apk add build-base cmake coreutils curl gettext-tiny-dev git
 ```
 
 ### Void Linux
@@ -382,7 +434,7 @@ or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f
 ### FreeBSD
 
 ```
-sudo pkg install cmake gmake sha wget gettext curl
+sudo pkg install cmake gmake sha wget gettext curl git
 ```
 
 If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 hash is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, then this is your issue (that's the `sha256sum` of an empty file).
@@ -390,7 +442,7 @@ If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 h
 ### OpenBSD
 
 ```sh
-doas pkg_add gmake cmake curl gettext-tools
+doas pkg_add gmake cmake curl gettext-tools git
 ```
 
 Build can sometimes fail when using the top level `Makefile`, apparently due to some third-party component (see [#2445-comment](https://github.com/neovim/neovim/issues/2445#issuecomment-108124236)). The following instructions use CMake:
@@ -415,7 +467,7 @@ gmake
 2. Install [Homebrew](http://brew.sh)
 3. Install Neovim build dependencies:
     ```
-    brew install ninja cmake gettext curl
+    brew install ninja cmake gettext curl git
     ```
   - **Note**: If you see Wget certificate errors (for older macOS versions less than 10.10):
     ```sh
@@ -433,7 +485,7 @@ gmake
 2. Install [MacPorts](http://www.macports.org)
 3. Install Neovim build dependencies:
     ```
-    sudo port install ninja cmake gettext
+    sudo port install ninja cmake gettext git
     ```
   - **Note**: If you see Wget certificate errors (for older macOS versions less than 10.10):
     ```sh

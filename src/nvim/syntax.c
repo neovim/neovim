@@ -157,9 +157,7 @@ typedef struct {
   char *pattern;
 } time_entry_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "syntax.c.generated.h"
-#endif
+#include "syntax.c.generated.h"
 
 static char *(spo_name_tab[SPO_COUNT]) =
 { "ms=", "me=", "hs=", "he=", "rs=", "re=", "lc=" };
@@ -5252,6 +5250,7 @@ void ex_syntax(exarg_T *eap)
   }
 }
 
+/// @deprecated
 void ex_ownsyntax(exarg_T *eap)
 {
   if (curwin->w_s == &curwin->w_buffer->b_s) {

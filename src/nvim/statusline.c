@@ -415,7 +415,7 @@ void redraw_ruler(void)
     return;
   }
 
-  // Check if cursor.lnum is valid, since win_redr_ruler() may be called
+  // Check if cursor.lnum is valid, since redraw_ruler() may be called
   // after deleting lines, before cursor.lnum is corrected.
   if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
     return;

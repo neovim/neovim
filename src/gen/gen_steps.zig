@@ -9,8 +9,6 @@ pub fn nvim_gen_sources(
     nvim_sources: *std.ArrayList(SourceItem),
     nvim_headers: *std.ArrayList([]u8),
     api_headers: *std.ArrayList(LazyPath),
-    include_path: []const LazyPath,
-    target: std.Build.ResolvedTarget,
     versiondef_git: LazyPath,
     version_lua: LazyPath,
 ) !struct { *std.Build.Step.WriteFile, LazyPath } {
@@ -19,12 +17,12 @@ pub fn nvim_gen_sources(
     for (nvim_sources.items) |s| {
         const api_export = if (s.api_export) api_headers else null;
         const input_file = b.path(b.fmt("src/nvim/{s}", .{s.name}));
-        _ = try generate_header_for(b, s.name, input_file, api_export, nlua0, include_path, target, gen_headers, false);
+        _ = try generate_header_for(b, s.name, input_file, api_export, nlua0, gen_headers, false);
     }
 
     for (nvim_headers.items) |s| {
         const input_file = b.path(b.fmt("src/nvim/{s}", .{s}));
-        _ = try generate_header_for(b, s, input_file, null, nlua0, include_path, target, gen_headers, true);
+        _ = try generate_header_for(b, s, input_file, null, nlua0, gen_headers, true);
     }
 
     {
@@ -75,6 +73,7 @@ pub fn nvim_gen_sources(
             "_init_packages",
             "inspect",
             "_editor",
+            "_system",
             "filetype",
             "fs",
             "F",
@@ -94,17 +93,17 @@ pub fn nvim_gen_sources(
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_api_ui_events.lua"));
         gen_step.addFileArg(b.path("src/nvim/api/ui_events.in.h"));
-        _ = try gen_header_with_header(b, gen_step, "ui_events_call.generated.h", nlua0, include_path, target, gen_headers);
-        _ = try gen_header_with_header(b, gen_step, "ui_events_remote.generated.h", nlua0, include_path, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "ui_events_call.generated.h", nlua0, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "ui_events_remote.generated.h", nlua0, gen_headers);
         const ui_metadata = gen_step.addOutputFileArg("ui_metadata.mpack");
-        _ = try gen_header_with_header(b, gen_step, "ui_events_client.generated.h", nlua0, include_path, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "ui_events_client.generated.h", nlua0, gen_headers);
         break :ui_step ui_metadata;
     };
 
     const funcs_metadata = api_step: {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_api_dispatch.lua"));
-        _ = try gen_header_with_header(b, gen_step, "api/private/dispatch_wrappers.generated.h", nlua0, include_path, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "api/private/dispatch_wrappers.generated.h", nlua0, gen_headers);
         _ = gen_header(b, gen_step, "api/private/api_metadata.generated.h", gen_headers);
         const funcs_metadata = gen_step.addOutputFileArg("funcs_metadata.mpack");
         _ = gen_header(b, gen_step, "lua_api_c_bindings.generated.h", gen_headers);
@@ -152,13 +151,11 @@ fn gen_header_with_header(
     gen_step: *std.Build.Step.Run,
     name: []const u8,
     nlua0: *std.Build.Step.Compile,
-    include_path: []const LazyPath,
-    target: ?std.Build.ResolvedTarget,
     gen_headers: *std.Build.Step.WriteFile,
 ) !std.Build.LazyPath {
     if (name.len < 12 or !std.mem.eql(u8, ".generated.h", name[name.len - 12 ..])) return error.InvalidBaseName;
     const h = gen_header(b, gen_step, name, gen_headers);
-    _ = try generate_header_for(b, b.fmt("{s}.h", .{name[0 .. name.len - 12]}), h, null, nlua0, include_path, target, gen_headers, false);
+    _ = try generate_header_for(b, b.fmt("{s}.h", .{name[0 .. name.len - 12]}), h, null, nlua0, gen_headers, false);
     return h;
 }
 
@@ -168,55 +165,17 @@ pub const PreprocessorOptions = struct {
     target: ?std.Build.ResolvedTarget = null,
 };
 
-fn run_preprocessor(
-    b: *std.Build,
-    src: LazyPath,
-    output_name: []const u8,
-    options: PreprocessorOptions,
-) !LazyPath {
-    const run_step = std.Build.Step.Run.create(b, b.fmt("preprocess to get {s}", .{output_name}));
-    run_step.addArgs(&.{ b.graph.zig_exe, "cc", "-E" });
-    run_step.addFileArg(src);
-    run_step.addArg("-o");
-    const output = run_step.addOutputFileArg(output_name);
-    // upstream issue: include path logic for addCSourceFiles and TranslateC is _very_ different
-    for (options.include_dirs) |include_dir| {
-        run_step.addArg("-I");
-        run_step.addDirectoryArg(include_dir);
-    }
-    for (options.c_macros) |c_macro| {
-        run_step.addArg(b.fmt("-D{s}", .{c_macro}));
-    }
-    if (options.target) |t| {
-        if (!t.query.isNative()) {
-            run_step.addArgs(&.{
-                "-target", try t.query.zigTriple(b.allocator),
-            });
-        }
-    }
-    run_step.addArgs(&.{ "-MMD", "-MF" });
-    _ = run_step.addDepFileOutputArg(b.fmt("{s}.d", .{output_name}));
-    return output;
-}
-
 fn generate_header_for(
     b: *std.Build,
     name: []const u8,
     input_file: LazyPath,
     api_export: ?*std.ArrayList(LazyPath),
     nlua0: *std.Build.Step.Compile,
-    include_path: []const LazyPath,
-    target: ?std.Build.ResolvedTarget,
     gen_headers: *std.Build.Step.WriteFile,
     nvim_header: bool,
 ) !*std.Build.Step.Run {
     if (name.len < 2 or !(std.mem.eql(u8, ".c", name[name.len - 2 ..]) or std.mem.eql(u8, ".h", name[name.len - 2 ..]))) return error.InvalidBaseName;
     const basename = name[0 .. name.len - 2];
-    const i_file = try run_preprocessor(b, input_file, b.fmt("{s}.i", .{basename}), .{
-        .include_dirs = include_path,
-        .c_macros = &.{ "_GNU_SOURCE", "ZIG_BUILD" },
-        .target = target,
-    });
     const run_step = b.addRunArtifact(nlua0);
     run_step.addFileArg(b.path("src/gen/gen_declarations.lua"));
     run_step.addFileArg(input_file);
@@ -231,7 +190,6 @@ fn generate_header_for(
         }
     }
 
-    run_step.addFileArg(i_file);
     run_step.addArg(gen_name);
     return run_step;
 }

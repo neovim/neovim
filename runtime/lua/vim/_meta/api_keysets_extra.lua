@@ -20,7 +20,7 @@ error('Cannot require a meta file')
 --- @field hl_group? string
 --- @field hl_eol? boolean
 ---
---- @field conceal? boolean
+--- @field conceal? string
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field url? string
@@ -53,12 +53,6 @@ error('Cannot require a meta file')
 --- @field [2] integer row
 --- @field [3] integer col
 --- @field [4] vim.api.keyset.extmark_details?
-
---- @class vim.api.keyset.get_mark
---- @field [1] integer row
---- @field [2] integer col
---- @field [3] integer buffer
---- @field [4] string buffername
 
 --- @class vim.api.keyset.get_autocmds.ret
 --- @field id? integer
@@ -212,7 +206,7 @@ error('Cannot require a meta file')
 --- @field default string|boolean|integer
 --- @field allows_duplicates boolean
 
---- @class vim.api.keyset.parse_cmd.mods
+--- @class vim.api.keyset.cmd.mods
 --- @field filter { force: boolean, pattern: string }
 --- @field silent boolean
 --- @field emsg_silent boolean
@@ -234,15 +228,43 @@ error('Cannot require a meta file')
 --- @field horizontal boolean
 --- @field split ''|'botright'|'topleft'|'belowright'|'aboveleft'
 
---- @class vim.api.keyset.parse_cmd
---- @field addr 'line'|'arg'|'buf'|'load'|'win'|'tab'|'qf'|'none'|'?'
---- @field args string[]
---- @field bang boolean
---- @field cmd string
---- @field magic {bar: boolean, file: boolean}
---- @field mods vim.api.keyset.parse_cmd.mods
---- @field nargs '0'|'1'|'?'|'+'|'*'
---- @field nextcmd string
---- @field range? integer[]
---- @field count? integer
---- @field reg? string
+--- @class vim.api.keyset.cmd.magic
+--- @field bar boolean
+--- @field file boolean
+
+--- @class vim.api.keyset.eval_statusline_ret.highlight
+--- @field start integer
+--- @field group string
+--- @field groups string[]
+
+--- @class vim.api.keyset.eval_statusline_ret
+--- @field str string
+--- @field width integer
+--- @field highlights vim.api.keyset.eval_statusline_ret.highlight[]
+
+--- @class vim.api.keyset.win_text_height_ret
+--- @field all integer
+--- @field fill integer
+--- @field end_row integer
+--- @field end_vcol integer
+
+-- Inherit from vim.api.keyset.win_config so this type can be passed to nvim_open_win().
+-- Because of this we only need to define the fields with different types (nil or non-nil).
+
+--- @class vim.api.keyset.win_config_ret : vim.api.keyset.win_config
+--- @field focusable boolean
+--- @field external boolean
+--- @field hide boolean
+--- @field mouse boolean
+--- @field width integer
+--- @field height integer
+--- @field relative 'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'
+---
+--- @field noautocmd nil
+--- @field title nil
+--- @field title_pos nil
+--- @field footer nil
+--- @field footer_pos nil
+--- @field style nil
+--- @field fixed nil
+--- @field vertical nil

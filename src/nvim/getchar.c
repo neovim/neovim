@@ -160,9 +160,7 @@ enum {
   KEYLEN_PART_MAP = -2,  ///< keylen value for incomplete mapping
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.c.generated.h"
-#endif
+#include "getchar.c.generated.h"
 
 static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
 static const char e_cmd_mapping_must_end_with_cr[]
@@ -1282,7 +1280,7 @@ void may_sync_undo(void)
 }
 
 /// Make "typebuf" empty and allocate new buffers.
-void alloc_typebuf(void)
+static void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
@@ -1298,7 +1296,7 @@ void alloc_typebuf(void)
 }
 
 /// Free the buffers of "typebuf".
-void free_typebuf(void)
+static void free_typebuf(void)
 {
   if (typebuf.tb_buf == typebuf_init) {
     internal_error("Free typebuf 1");
@@ -1866,6 +1864,9 @@ int vpeekc_any(void)
 /// @return  true if a character is available, false otherwise.
 bool char_avail(void)
 {
+  if (test_disable_char_avail) {
+    return false;
+  }
   no_mapping++;
   int retval = vpeekc();
   no_mapping--;
@@ -2197,7 +2198,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       && !(p_paste && (State & (MODE_INSERT | MODE_CMDLINE)))
       && !(State == MODE_HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
       && State != MODE_ASKMORE
-      && State != MODE_CONFIRM
       && !at_ins_compl_key()) {
     int mlen;
     int nolmaplen;
@@ -2675,7 +2675,7 @@ static int vgetorpeek(bool advance)
 
           if (result == map_result_get) {
             // get a character: 2. from the typeahead buffer
-            c = typebuf.tb_buf[typebuf.tb_off] & 255;
+            c = typebuf.tb_buf[typebuf.tb_off];
             if (advance) {  // remove chars from tb_buf
               cmd_silent = (typebuf.tb_silent > 0);
               if (typebuf.tb_maplen > 0) {

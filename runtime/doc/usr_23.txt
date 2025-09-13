@@ -116,7 +116,7 @@ Someone sends you an e-mail message, which refers to a file by its URL.  For
 example:
 
 	You can find the information here: ~
-		ftp://ftp.vim.org/pub/vim/README ~
+		https://ftp.nluug.nl/pub/vim/README
 
 You could start a program to download the file, save it on your local disk and
 then start Vim to edit it.
@@ -136,10 +136,10 @@ might want to try the manual way of downloading the file.
 Accessing files over the internet works with the netrw plugin.  Currently URLs
 with these formats are recognized:
 
-	ftp://		uses ftp
-	rcp://		uses rcp
-	scp://		uses scp
-	http://		uses wget (reading only)
+	`ftp://`	uses ftp
+	`rcp://`	uses rcp
+	`scp://`	uses scp
+	`http://`	uses wget (reading only)
 
 Vim doesn't do the communication itself, it relies on the mentioned programs
 to be available on your computer.  On most Unix systems "ftp" and "rcp" will
@@ -147,7 +147,7 @@ be present.  "scp" and "wget" might need to be installed.
 
 Vim detects these URLs for each command that starts editing a new file, also
 with ":edit" and ":split", for example.  Write commands also work, except for
-http://.
+`http://`.
 
 For more information, also about passwords, see |netrw|.
 

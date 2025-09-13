@@ -2,6 +2,7 @@
 " Language:	mbsyncrc
 " Maintainer:	Pierrick Guillaume  <pguillaume@fymyte.com>
 " Last Change:	2025 Apr 13
+" 2025 Jun 04 by Vim project: match TLSType configuration variable
 "
 " Syntax support for mbsync config file
 
@@ -80,8 +81,9 @@ syn match mbsIAConfStPassCmd      '^PassCmd\s\+\ze.*$'        contains=mbsIAConf
 syn match mbsIAConfStUseKeychain  '^UseKeychain\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsBool transparent
 syn match mbsIAConfStTunnel       '^Tunnel\s\+\ze.*$'         contains=mbsIAConfItemK contained nextgroup=mbsCommand transparent
 syn match mbsIAConfStAuthMechs    '^AuthMechs\s\+\ze.*$'      contains=mbsIAConfItemK contained nextgroup=mbsPath transparent
-syn keyword mbsIAConfSSLTypeOpt None STARTTLS IMAPS contained
-syn match mbsIAConfStSSLType      '^SSLType\s\+\ze.*$'        contains=mbsIAConfItemK contained nextgroup=mbsIAConfSSLTypeOpt transparent
+syn keyword mbsIAConfTLSTypeOpt None STARTTLS IMAPS contained
+syn match mbsIAConfStSSLType      '^SSLType\s\+\ze.*$'        contains=mbsIAConfItemK contained nextgroup=mbsIAConfTLSTypeOpt transparent
+syn match mbsIAConfStTLSType      '^TLSType\s\+\ze.*$'        contains=mbsIAConfItemK contained nextgroup=mbsIAConfTLSTypeOpt transparent
 syn match mbsIAConfSSLVersionsOpt '\%(SSLv3\|TLSv1\%(.[123]\)\?\)\%(\s\+\%(SSLv3\|TLSv1\%(.[123]\)\?\)\)*' contained
 syn match mbsIAConfStSSLVersions  '^SSLVersions\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsIAConfSSLVersionsOpt transparent
 syn match mbsIAConfStSystemCertificates  '^SystemCertificates\s\+\ze.*$'    contains=mbsIAConfItemK contained nextgroup=mbsBool transparent
@@ -96,7 +98,7 @@ syn cluster mbsIAConfItem contains=mbsIAConfSt.*
 
 syn keyword mbsIAConfItemK
   \ IMAPAccount Host Port Timeout User UserCmd Pass PassCmd UseKeychain Tunnel
-  \ AuthMechs SSLType SSLVersions SystemCertificates CertificateFile ClientCertificate
+  \ AuthMechs SSLType TLSType SSLVersions SystemCertificates CertificateFile ClientCertificate
   \ ClientKey CipherString PipelineDepth DisableExtension[s] contained
 
 syn region mbsIMAP4AccontsStore start="^IMAPAccount" end="^$" end="\%$" contains=@mbsGlobConfItem,mbsCommentL,@mbsIAConfItem,mbsError transparent
@@ -195,7 +197,7 @@ hi def link mbsMdSConfItemK   Statement
 hi def link mbsMdSConfSubFoldersOpt Keyword
 
 hi def link mbsIAConfItemK    Statement
-hi def link mbsIAConfSSLTypeOpt Keyword
+hi def link mbsIAConfTLSTypeOpt Keyword
 hi def link mbsIAConfSSLVersionsOpt Keyword
 
 hi def link mbsISConfItemK    Statement

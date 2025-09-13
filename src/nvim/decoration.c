@@ -28,9 +28,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration.c.generated.h"
-#endif
+#include "decoration.c.generated.h"
 
 uint32_t decor_freelist = UINT32_MAX;
 
@@ -515,7 +513,7 @@ static void decor_state_pack(DecorState *state)
   state->future_begin = fut_beg;
 }
 
-bool decor_redraw_line(win_T *wp, int row, DecorState *state)
+void decor_redraw_line(win_T *wp, int row, DecorState *state)
 {
   decor_state_pack(state);
 
@@ -529,7 +527,11 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   state->row = row;
   state->col_until = -1;
   state->eol_col = -1;
+}
 
+// Checks if there are (likely) more decorations on the current line.
+bool decor_has_more_decorations(DecorState *state, int row)
+{
   if (state->current_end != 0 || state->future_begin != (int)kv_size(state->ranges_i)) {
     return true;
   }
@@ -551,12 +553,12 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id);
+      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id, 0);
       idx = sh->next;
     }
   } else {
     DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
-    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
+    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id, 0);
   }
 }
 
@@ -617,14 +619,15 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
     .data.vt = vt,
     .attr_id = 0,
     .owned = owned,
-    .priority = vt->priority,
+    .priority_internal = ((DecorPriorityInternal)vt->priority << 16),
     .draw_col = -10,
   };
   decor_range_insert(state, &range);
 }
 
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
+                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id,
+                        DecorPriority subpriority)
 {
   if (sh->flags & kSHIsSign) {
     return;
@@ -636,7 +639,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .data.sh = *sh,
     .attr_id = 0,
     .owned = owned,
-    .priority = sh->priority,
+    .priority_internal = ((DecorPriorityInternal)sh->priority << 16) + subpriority,
     .draw_col = -10,
   };
 
@@ -729,7 +732,7 @@ next_mark:
       break;
     }
     int const ordering = r->ordering;
-    DecorPriority const priority = r->priority;
+    DecorPriorityInternal const priority = r->priority_internal;
 
     int begin = 0;
     int end = cur_end;
@@ -737,7 +740,8 @@ next_mark:
       int mid = begin + ((end - begin) >> 1);
       int mi = indices[mid];
       DecorRange *mr = &slots[mi].range;
-      if (mr->priority < priority || (mr->priority == priority && mr->ordering < ordering)) {
+      if (mr->priority_internal < priority
+          || (mr->priority_internal == priority && mr->ordering < ordering)) {
         begin = mid + 1;
       } else {
         end = mid;
@@ -1068,7 +1072,10 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
     int prevwidth = MIN(SIGN_SHOW_MAX, count[i] - add);
     if (clear != kNone && prevwidth > 0) {
       buf->b_signcols.count[prevwidth - 1]--;
+#ifndef RELDEBUG
+      // TODO(bfredl): correct marktree splicing so that this doesn't fail
       assert(buf->b_signcols.count[prevwidth - 1] >= 0);
+#endif
     }
     int width = MIN(SIGN_SHOW_MAX, count[i]);
     if (clear != kTrue && width > 0) {

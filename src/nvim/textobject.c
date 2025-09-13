@@ -27,9 +27,7 @@
 #include "nvim/textobject.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "textobject.c.generated.h"
-#endif
+#include "textobject.c.generated.h"
 
 /// Find the start of the next sentence, searching in the direction specified
 /// by the "dir" argument.  The cursor is positioned on the start of the next

@@ -176,7 +176,7 @@ func Test_signcolumn()
   call assert_equal("auto", &signcolumn)
   set signcolumn=yes
   set signcolumn=no
-  call assert_fails('set signcolumn=nope')
+  call assert_fails('set signcolumn=nope', 'E474: Invalid argument: signcolumn=nope')
 endfunc
 
 func Test_filetype_valid()
@@ -276,36 +276,42 @@ func Test_complete()
   new
   call feedkeys("i\<C-N>\<Esc>", 'xt')
   bwipe!
-  call assert_fails('set complete=ix', 'E535:')
-  call assert_fails('set complete=x', 'E539:')
-  call assert_fails('set complete=..', 'E535:')
+  call assert_fails('set complete=ix', 'E535: Illegal character after <i>')
+  call assert_fails('set complete=x', 'E539: Illegal character <x>')
+  call assert_fails('set complete=..', 'E535: Illegal character after <.>')
   set complete=.,w,b,u,k,\ s,i,d,],t,U,F,o
-  call assert_fails('set complete=i^-10', 'E535:')
-  call assert_fails('set complete=i^x', 'E535:')
-  call assert_fails('set complete=k^2,t^-1,s^', 'E535:')
-  call assert_fails('set complete=t^-1', 'E535:')
-  call assert_fails('set complete=kfoo^foo2', 'E535:')
-  call assert_fails('set complete=kfoo^', 'E535:')
-  call assert_fails('set complete=.^', 'E535:')
+  call assert_fails('set complete=i^-10', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=i^x', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=k^2,t^-1,s^', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=t^-1', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=kfoo^foo2', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=kfoo^', 'E535: Illegal character after <^>')
+  call assert_fails('set complete=.^', 'E535: Illegal character after <^>')
   set complete=.,w,b,u,k,s,i,d,],t,U,F,o
   set complete=.
   set complete=.^10,t^0
-  set complete+=Ffuncref('foo'\\,\ [10])
-  set complete=Ffuncref('foo'\\,\ [10])^10
+
+  func Foo(a, b)
+    return ''
+  endfunc
+
+  set complete+=Ffuncref('Foo'\\,\ [10])
+  set complete=Ffuncref('Foo'\\,\ [10])^10
   set complete&
-  set complete+=Ffunction('g:foo'\\,\ [10\\,\ 20])
+  set complete+=Ffunction('g:Foo'\\,\ [10\\,\ 20])
   set complete&
+  delfunc Foo
 endfun
 
 func Test_set_completion()
   call feedkeys(":set di\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set dictionary diff diffexpr diffopt digraph directory display', @:)
+  call assert_equal('"set dictionary diff diffanchors diffexpr diffopt digraph directory display', @:)
 
   call feedkeys(":setlocal di\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"setlocal dictionary diff diffexpr diffopt digraph directory display', @:)
+  call assert_equal('"setlocal dictionary diff diffanchors diffexpr diffopt digraph directory display', @:)
 
   call feedkeys(":setglobal di\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"setglobal dictionary diff diffexpr diffopt digraph directory display', @:)
+  call assert_equal('"setglobal dictionary diff diffanchors diffexpr diffopt digraph directory display', @:)
 
   " Expand boolean options. When doing :set no<Tab> Vim prefixes the option
   " names with "no".
@@ -357,7 +363,7 @@ func Test_set_completion()
   call assert_match(' ./samples/.* ./summarize.vim', @:)
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
+  call assert_equal('"set tags=./\\ diff diffanchors diffexpr diffopt', @:)
 
   " Expand files with spaces/commas in them. Make sure we delimit correctly.
   "
@@ -740,7 +746,7 @@ func Test_set_completion_string_values()
   set diffopt=
   call assert_equal([], getcompletion('set diffopt-=', 'cmdline'))
   " Test all possible values
-  call assert_equal(['filler', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
+  call assert_equal(['filler', 'anchor', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
         \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'inline:', 'linematch:'],
         \ getcompletion('set diffopt=', 'cmdline'))
   set diffopt&
@@ -2265,7 +2271,7 @@ func Test_VIM_POSIX()
     qall
   [CODE]
   if RunVim([], after, '')
-    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;',
+    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;~',
           \            'AS'], readfile('X_VIM_POSIX'))
   endif
 
@@ -2527,8 +2533,8 @@ func Test_string_option_revert_on_failure()
         \ ['completeopt', 'preview', 'a123'],
         "\ ['completepopup', 'width:20', 'border'],
         \ ['concealcursor', 'v', 'xyz'],
-        "\ ['cpoptions', 'HJ', '~'],
-        \ ['cpoptions', 'J', '~'],
+        "\ ['cpoptions', 'HJ', 'Q'],
+        \ ['cpoptions', 'J', 'Q'],
         "\ ['cryptmethod', 'zip', 'a123'],
         \ ['cursorlineopt', 'screenline', 'a123'],
         \ ['debug', 'throw', 'a123'],
@@ -2690,7 +2696,7 @@ func GetGlobalLocalWindowOptions()
   " Filter for global or local to window
   v/^'.*'.*\n.*global or local to window |global-local/d
   " get option value and type
-  sil %s/^'\([^']*\)'.*'\s\+\(\w\+\)\s\+(default \%(\(".*"\|\d\+\|empty\)\).*/\1 \2 \3/g
+  sil %s/^'\([^']*\)'.*'\s\+\(\w\+\)\s\+(default \%(\(".*"\|\d\+\|empty\|is very long\)\).*/\1 \2 \3/g
   " sil %s/empty/""/g
   " split the result
   " let result=getline(1,'$')->map({_, val -> split(val, ' ')})
@@ -2705,6 +2711,10 @@ func Test_set_option_window_global_local_all()
   let optionlist = GetGlobalLocalWindowOptions()
   for [opt, type, default] in optionlist
     let _old = eval('&g:' .. opt)
+    if opt == 'statusline'
+      " parsed default value is "is very long" as it is a doc string, not actual value
+      let default = "\"" . _old . "\""
+    endif
     if type == 'string'
       if opt == 'fillchars'
         exe 'setl ' .. opt .. '=vert:+'

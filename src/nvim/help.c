@@ -48,9 +48,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "help.c.generated.h"
-#endif
+#include "help.c.generated.h"
 
 /// ":help": open a read-only window on a help file
 void ex_help(exarg_T *eap)
@@ -141,7 +139,7 @@ void ex_help(exarg_T *eap)
     } else {
       wp = NULL;
       FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
-        if (bt_help(wp2->w_buffer)) {
+        if (bt_help(wp2->w_buffer) && !wp2->w_config.hide && wp2->w_config.focusable) {
           wp = wp2;
           break;
         }
@@ -941,10 +939,15 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         }
         p1 = p2;
       }
-      size_t len = strlen(IObuff);
-      if ((len == 2 && strcmp(&IObuff[len - 2], ">\n") == 0)
-          || (len >= 3 && strcmp(&IObuff[len - 3], " >\n") == 0)) {
-        in_example = true;
+      size_t off = strlen(IObuff);
+      if (off >= 2 && IObuff[off - 1] == '\n') {
+        off -= 2;
+        while (off > 0 && (ASCII_ISLOWER(IObuff[off]) || ascii_isdigit(IObuff[off]))) {
+          off--;
+        }
+        if (IObuff[off] == '>' && (off == 0 || IObuff[off - 1] == ' ')) {
+          in_example = true;
+        }
       }
       line_breakcheck();
     }

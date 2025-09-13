@@ -352,7 +352,7 @@ settings, depending on which syntax is active.	Example: >
 
 
 
-ABEL						*abel.vim* *ft-abel-syntax*
+ABEL							*ft-abel-syntax*
 
 ABEL highlighting provides some user-defined options.  To enable them, assign
 any value to the respective variable.  Example: >
@@ -370,7 +370,7 @@ ADA
 See |ft-ada-syntax|
 
 
-ANT						*ant.vim* *ft-ant-syntax*
+ANT							*ft-ant-syntax*
 
 The ant syntax file provides syntax highlighting for javascript and python
 by default.  Syntax highlighting for other script languages can be installed
@@ -388,15 +388,14 @@ will install syntax perl highlighting for the following ant code >
 See |mysyntaxfile-add| for installing script languages permanently.
 
 
-APACHE						*apache.vim* *ft-apache-syntax*
+APACHE							*ft-apache-syntax*
 
 The apache syntax file provides syntax highlighting for Apache HTTP server
 version 2.2.3.
 
 
-		*asm.vim* *asmh8300.vim* *nasm.vim* *masm.vim* *asm68k*
-ASSEMBLY	*ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*
-		*ft-masm-syntax* *ft-asm68k-syntax* *fasm.vim*
+ASSEMBLY	*asm68k* *ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*
+		*ft-masm-syntax* *ft-asm68k-syntax*
 
 Files matching "*.i" could be Progress or Assembly.  If the automatic detection
 doesn't work for you, or you don't edit Progress at all, use this in your
@@ -457,7 +456,7 @@ nasm_loose_syntax	unofficial parser allowed syntax not as Error
 nasm_ctx_outside_macro	contexts outside macro not as Error
 nasm_no_warn		potentially risky syntax not as ToDo
 
-ASTRO						*astro.vim* *ft-astro-syntax*
+ASTRO							*ft-astro-syntax*
 
 Configuration
 
@@ -485,7 +484,7 @@ For Visual Basic use: >
 	:let g:filetype_asa = "aspvbs"
 	:let g:filetype_asp = "aspvbs"
 
-ASYMPTOTE					*asy.vim* *ft-asy-syntax*
+ASYMPTOTE						*ft-asy-syntax*
 
 By default, only basic Asymptote keywords are highlighted. To highlight
 extended geometry keywords: >
@@ -505,7 +504,7 @@ or for Xorg colors (e.g: AliceBlue): >
 
 	:let g:asy_syn_x11colors = 1
 
-BAAN						    *baan.vim* *baan-syntax*
+BAAN								*baan-syntax*
 
 The baan.vim gives syntax support for BaanC of release BaanIV up to SSA ERP LN
 for both 3 GL and 4 GL programming. Large number of standard defines/constants
@@ -538,7 +537,7 @@ in .../after/syntax/baan.vim (see |after-directory|). Eg: >
 	set foldnestmax=6
 
 
-BASIC			*basic.vim* *vb.vim* *ft-basic-syntax* *ft-vb-syntax*
+BASIC					*ft-basic-syntax* *ft-vb-syntax*
 
 Both Visual Basic and "normal" BASIC use the extension ".bas".	To detect
 which one should be used, Vim checks for the string "VB_Name" in the first
@@ -551,7 +550,7 @@ example, FreeBASIC files, use this in your startup vimrc: >
    :let filetype_bas = "freebasic"
 
 
-C							*c.vim* *ft-c-syntax*
+C								*ft-c-syntax*
 
 A few things in C highlighting are optional.  To enable them assign any value
 (including zero) to the respective variable.  Example: >
@@ -634,27 +633,45 @@ in the "after" directory in 'runtimepath'.  For Unix this would be
     syn sync fromstart
     set foldmethod=syntax
 
-CH						*ch.vim* *ft-ch-syntax*
+CANGJIE						*ft-cangjie-syntax*
+
+This file provides syntax highlighting for the Cangjie programming language, a
+new-generation language oriented to full-scenario intelligence.
+
+All highlighting is enabled by default.  To disable highlighting for a
+specific group, set the corresponding variable to 0 in your |vimrc|.
+All options to disable highlighting are: >
+	:let g:cangjie_comment_color = 0
+	:let g:cangjie_identifier_color = 0
+	:let g:cangjie_keyword_color = 0
+	:let g:cangjie_macro_color = 0
+	:let g:cangjie_number_color = 0
+	:let g:cangjie_operator_color = 0
+	:let g:cangjie_string_color = 0
+	:let g:cangjie_type_color = 0
+
+CH							*ft-ch-syntax*
 
 C/C++ interpreter.  Ch has similar syntax highlighting to C and builds upon
-the C syntax file.  See |c.vim| for all the settings that are available for C.
+the C syntax file.  See |ft-c-syntax| for all the settings that are available
+for C.
 
 By setting a variable you can tell Vim to use Ch syntax for `*.h` files, instead
 of C or C++: >
 	:let ch_syntax_for_h = 1
 
 
-CHILL						*chill.vim* *ft-chill-syntax*
+CHILL							*ft-chill-syntax*
 
-Chill syntax highlighting is similar to C.  See |c.vim| for all the settings
-that are available.  Additionally there is:
+Chill syntax highlighting is similar to C.  See |ft-c-syntax| for all the
+settings that are available.  Additionally there is:
 
 chill_space_errors	like c_space_errors
 chill_comment_string	like c_comment_strings
 chill_minlines		like c_minlines
 
 
-CHANGELOG				*changelog.vim* *ft-changelog-syntax*
+CHANGELOG					*ft-changelog-syntax*
 
 ChangeLog supports highlighting spaces at the start of a line.
 If you do not like this, add following line to your vimrc: >
@@ -714,7 +731,7 @@ Note that this option will not correctly highlight stacked discard macros
 (e.g. `#_#_`).
 
 
-COBOL						*cobol.vim* *ft-cobol-syntax*
+COBOL							*ft-cobol-syntax*
 
 COBOL highlighting has different needs for legacy code than it does for fresh
 development.  This is due to differences in what is being done (maintenance
@@ -725,7 +742,7 @@ To disable it again, use this: >
 	:unlet cobol_legacy_code
 
 
-COLD FUSION			*coldfusion.vim* *ft-coldfusion-syntax*
+COLD FUSION				*ft-coldfusion-syntax*
 
 The ColdFusion has its own version of HTML comments.  To turn on ColdFusion
 comment highlighting, add the following line to your startup file: >
@@ -735,7 +752,7 @@ comment highlighting, add the following line to your startup file: >
 The ColdFusion syntax file is based on the HTML syntax file.
 
 
-CPP						*cpp.vim* *ft-cpp-syntax*
+CPP							*ft-cpp-syntax*
 
 Most things are the same as |ft-c-syntax|.
 
@@ -746,7 +763,7 @@ cpp_no_cpp17		don't highlight C++17 standard items
 cpp_no_cpp20		don't highlight C++20 standard items
 
 
-CSH						*csh.vim* *ft-csh-syntax*
+CSH							*ft-csh-syntax*
 
 This covers the shell named "csh".  Note that on some systems tcsh is actually
 used.
@@ -784,7 +801,7 @@ And afterwards save and reload the file: >
 Now the syntax engine should determine the newly changed CSV delimiter.
 
 
-CYNLIB						*cynlib.vim* *ft-cynlib-syntax*
+CYNLIB							*ft-cynlib-syntax*
 
 Cynlib files are C++ files that use the Cynlib class library to enable
 hardware modelling and simulation using C++.  Typically Cynlib files have a .cc
@@ -804,14 +821,14 @@ To disable these again, use this: >
 	:unlet cynlib_cyntax_for_cpp
 <
 
-CWEB						*cweb.vim* *ft-cweb-syntax*
+CWEB							*ft-cweb-syntax*
 
 Files matching "*.w" could be Progress or cweb.  If the automatic detection
 doesn't work for you, or you don't edit Progress at all, use this in your
 startup vimrc: >
    :let filetype_w = "cweb"
 
-CSHARP							 *cs.vim* *ft-cs-syntax*
+CSHARP								*ft-cs-syntax*
 
 C# raw string literals may use any number of quote marks to encapsulate the
 block, and raw interpolated string literals may use any number of braces to
@@ -827,7 +844,7 @@ following variables:
     g:cs_raw_string_quote_count			8
     g:cs_raw_string_interpolation_brace_count	8
 
-DART						*dart.vim* *ft-dart-syntax*
+DART							*ft-dart-syntax*
 
 Dart is an object-oriented, typed, class defined, garbage collected language
 used for developing mobile, desktop, web, and back-end applications.  Dart uses
@@ -847,7 +864,7 @@ Changes, fixes?  Submit an issue or pull request via:
 https://github.com/pr3d4t0r/dart-vim-syntax/
 
 
-DESKTOP					   *desktop.vim* *ft-desktop-syntax*
+DESKTOP							   *ft-desktop-syntax*
 
 Primary goal of this syntax file is to highlight .desktop and .directory files
 according to freedesktop.org standard:
@@ -869,7 +886,7 @@ there are very long lines in the file.  To disable translations: >
 
 Also see |diff-slow|.
 
-DIRCOLORS			       *dircolors.vim* *ft-dircolors-syntax*
+DIRCOLORS						   *ft-dircolors-syntax*
 
 The dircolors utility highlighting definition has one option.  It exists to
 provide compatibility with the Slackware GNU/Linux distributions version of
@@ -880,9 +897,9 @@ line to your startup file: >
 	let dircolors_is_slackware = 1
 
 
-DOCBOOK					*docbk.vim* *ft-docbk-syntax* *docbook*
-DOCBOOK XML				*docbkxml.vim* *ft-docbkxml-syntax*
-DOCBOOK SGML				*docbksgml.vim* *ft-docbksgml-syntax*
+DOCBOOK						*ft-docbk-syntax* *docbook*
+DOCBOOK XML					*ft-docbkxml-syntax*
+DOCBOOK SGML					*ft-docbksgml-syntax*
 
 There are two types of DocBook files: SGML and XML.  To specify what type you
 are using the "b:docbk_type" variable should be set.  Vim does this for you
@@ -903,7 +920,7 @@ You can specify the DocBook version: >
 When not set 4 is used.
 
 
-DOSBATCH				*dosbatch.vim* *ft-dosbatch-syntax*
+DOSBATCH					*ft-dosbatch-syntax*
 
 Select the set of Windows Command interpreter extensions that should be
 supported with the variable dosbatch_cmdextversion.  For versions of Windows
@@ -942,7 +959,7 @@ is used by default.  You may select the former with the following line: >
 If this variable is undefined or zero, btm syntax is selected.
 
 
-DOXYGEN						*doxygen.vim* *doxygen-syntax*
+DOXYGEN							*doxygen-syntax*
 
 Doxygen generates code documentation using a special documentation format
 (similar to Javadoc).  This syntax script adds doxygen highlighting to c, cpp,
@@ -987,7 +1004,7 @@ doxygenLinkError		The colour of an end-comment when missing the
 				\endlink from a \link section.
 
 
-DTD						*dtd.vim* *ft-dtd-syntax*
+DTD							*ft-dtd-syntax*
 
 The DTD syntax highlighting is case sensitive by default.  To disable
 case-sensitive highlighting, add the following line to your startup file: >
@@ -1011,7 +1028,7 @@ delimiters % and ;.  This can be turned off by setting: >
 The DTD syntax file is also included by xml.vim to highlight included dtd's.
 
 
-EIFFEL					*eiffel.vim* *ft-eiffel-syntax*
+EIFFEL						*ft-eiffel-syntax*
 
 While Eiffel is not case-sensitive, its style guidelines are, and the
 syntax highlighting file encourages their use.  This also allows to
@@ -1054,7 +1071,7 @@ Finally, some vendors support hexadecimal constants.  To handle them, add >
 to your startup file.
 
 
-EUPHORIA	    *euphoria3.vim* *euphoria4.vim* *ft-euphoria-syntax*
+EUPHORIA						     *ft-euphoria-syntax*
 
 Two syntax highlighting files exist for Euphoria. One for Euphoria
 version 3.1.1, which is the default syntax highlighting file, and one for
@@ -1086,22 +1103,54 @@ filetype will be set as Euphoria. Otherwise, the filetype will default to
 Elixir.
 
 
-ERLANG						*erlang.vim* *ft-erlang-syntax*
+ERLANG							*ft-erlang-syntax*
 
 Erlang is a functional programming language developed by Ericsson.  Files with
 the following extensions are recognized as Erlang files: erl, hrl, yaws.
 
-The BIFs (built-in functions) are highlighted by default. To disable this,
-put the following line in your vimrc: >
+Vim highlights triple-quoted docstrings as comments by default.
 
-      :let g:erlang_highlight_bifs = 0
+If you want triple-quoted docstrings highlighted as Markdown, add the
+following line to your |vimrc|: >
 
-To enable highlighting some special atoms, put this in your vimrc: >
+	:let g:erlang_use_markdown_for_docs = 1
 
-      :let g:erlang_highlight_special_atoms = 1
+The plain text inside the docstrings (that is, the characters that are not
+highlighted by the Markdown syntax) is still highlighted as a comment.
 
+If you want to highlight the plain text inside the docstrings using a
+different highlight group, add the following line to your |vimrc| (the
+example highlights plain text using the String highlight group): >
 
-ELIXIR						*elixir.vim* *ft-elixir-syntax*
+	:let g:erlang_docstring_default_highlight = 'String'
+
+If you don't enable Markdown, this line highlights the full docstrings
+according to the specified highlight group.
+
+Use the following line to disable highlighting for the plain text: >
+
+	:let g:erlang_docstring_default_highlight = ''
+
+Configuration examples: >
+
+	" Highlight docstrings as Markdown.
+	:let g:erlang_use_markdown_for_docs = 1
+
+	" 1. Highlight Markdown elements in docstrings as Markdown.
+	" 2. Highlight the plain text in docstrings as String.
+	:let g:erlang_use_markdown_for_docs = 1
+	:let g:erlang_docstring_default_highlight = 'String'
+
+	" Highlight docstrings as strings (no Markdown).
+	:let g:erlang_docstring_default_highlight = 'String'
+
+	" 1. Highlight Markdown elements in docstrings as Markdown.
+	" 2. Don't highlight the plain text in docstrings.
+	:let g:erlang_use_markdown_for_docs = 1
+	:let g:erlang_docstring_default_highlight = ''
+<
+
+ELIXIR							*ft-elixir-syntax*
 
 Elixir is a dynamic, functional language for building scalable and
 maintainable applications.
@@ -1117,10 +1166,10 @@ filetype will be set as Euphoria. Otherwise, the filetype will default to
 Elixir.
 
 
-FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
+FLEXWIKI					*ft-flexwiki-syntax*
 
 FlexWiki is an ASP.NET-based wiki package available at
-https://www.flexwiki.com
+www.flexwiki.com
 NOTE: This site currently doesn't work, on Wikipedia is mentioned that
 development stopped in 2009.
 
@@ -1137,7 +1186,7 @@ move up and down by display lines, add this to your vimrc: >
 	:let flexwiki_maps = 1
 
 
-FORM						*form.vim* *ft-form-syntax*
+FORM							*ft-form-syntax*
 
 The coloring scheme for syntax elements in the FORM file uses the default
 modes Conditional, Number, Statement, Comment, PreProc, Type, and String,
@@ -1179,7 +1228,7 @@ example, FORM files, use this in your startup vimrc: >
    :let filetype_frm = "form"
 
 
-FORTH						*forth.vim* *ft-forth-syntax*
+FORTH							*ft-forth-syntax*
 
 Files matching "*.f" could be Fortran or Forth and those matching "*.fs" could
 be F# or Forth.  If the automatic detection doesn't work for you, or you don't
@@ -1188,7 +1237,7 @@ edit F# or Fortran at all, use this in your startup vimrc: >
    :let filetype_fs = "forth"
 
 
-FORTRAN					*fortran.vim* *ft-fortran-syntax*
+FORTRAN						*ft-fortran-syntax*
 
 Default highlighting and dialect ~
 Vim highlights according to Fortran 2023 (the most recent standard). This
@@ -1293,7 +1342,7 @@ because Fortran90 has no reserved words.
 For further information related to Fortran, see |ft-fortran-indent| and
 |ft-fortran-plugin|.
 
-FREEBASIC				*freebasic.vim* *ft-freebasic-syntax*
+FREEBASIC					*ft-freebasic-syntax*
 
 FreeBASIC files will be highlighted differently for each of the four available
 dialects, "fb", "qb", "fblite" and "deprecated".  See |ft-freebasic-plugin|
@@ -1309,7 +1358,7 @@ Variable			Highlight ~
 
 
 
-FVWM CONFIGURATION FILES			*fvwm.vim* *ft-fvwm-syntax*
+FVWM CONFIGURATION FILES				*ft-fvwm-syntax*
 
 In order for Vim to recognize Fvwm configuration files that do not match
 the patterns *fvwmrc* or *fvwm2rc* , you must put additional patterns
@@ -1324,12 +1373,12 @@ as Fvwm2 configuration files, add the following: >
 					 \ set filetype=fvwm
 
 
-GSP						*gsp.vim* *ft-gsp-syntax*
+GSP							*ft-gsp-syntax*
 
-The default coloring style for GSP pages is defined by |html.vim|, and
-the coloring for java code (within java tags or inline between backticks)
-is defined by |java.vim|.  The following HTML groups defined in |html.vim|
-are redefined to incorporate and highlight inline java code:
+The default coloring style for GSP pages is defined by |ft-html-syntax|, and
+the coloring for java code (within java tags or inline between backticks) is
+defined by |ft-java-syntax|.  The following HTML groups defined in
+|ft-html-syntax| are redefined to incorporate and highlight inline java code:
 
     htmlString
     htmlValue
@@ -1340,23 +1389,23 @@ are redefined to incorporate and highlight inline java code:
 Highlighting should look fine most of the places where you'd see inline
 java code, but in some special cases it may not.  To add another HTML
 group where you will have inline java code where it does not highlight
-correctly, just copy the line you want from |html.vim| and add gspJava
+correctly, just copy the line you want from |ft-html-syntax| and add gspJava
 to the contains clause.
 
 The backticks for inline java are highlighted according to the htmlError
 group to make them easier to see.
 
 
-GROFF						*groff.vim* *ft-groff-syntax*
+GROFF							*ft-groff-syntax*
 
-The groff syntax file is a wrapper for |nroff.vim|, see the notes
+The groff syntax file is a wrapper for |ft-nroff-syntax|, see the notes
 under that heading for examples of use and configuration.  The purpose
 of this wrapper is to set up groff syntax extensions by setting the
 filetype from a |modeline| or in a personal filetype definitions file
 (see |filetype.txt|).
 
 
-HASKELL			     *haskell.vim* *lhaskell.vim* *ft-haskell-syntax*
+HASKELL							   *ft-haskell-syntax*
 
 The Haskell syntax files support plain Haskell code as well as literate
 Haskell code, the latter in both Bird style and TeX style.  The Haskell
@@ -1400,7 +1449,7 @@ set before turning syntax highlighting on for the buffer or
 loading a file.
 
 
-HTML						*html.vim* *ft-html-syntax*
+HTML							*ft-html-syntax*
 
 The coloring scheme for tags in the HTML file works as follows.
 
@@ -1487,7 +1536,7 @@ Note: Syntax folding might slow down syntax highlighting significantly,
 especially for large files.
 
 
-HTML/OS (BY AESTIVA)				*htmlos.vim* *ft-htmlos-syntax*
+HTML/OS (BY AESTIVA)					*ft-htmlos-syntax*
 
 The coloring scheme for HTML/OS works as follows:
 
@@ -1508,16 +1557,16 @@ Lastly, it should be noted that the opening and closing characters to begin a
 block of HTML/OS code can either be << or [[ and >> or ]], respectively.
 
 
-IA64				*ia64.vim* *intel-itanium* *ft-ia64-syntax*
+IA64					*intel-itanium* *ft-ia64-syntax*
 
-Highlighting for the Intel Itanium 64 assembly language.  See |asm.vim| for
-how to recognize this filetype.
+Highlighting for the Intel Itanium 64 assembly language.  See |ft-asm-syntax|
+for how to recognize this filetype.
 
 To have `*.inc` files be recognized as IA64, add this to your vimrc file: >
 	:let g:filetype_inc = "ia64"
 
 
-INFORM						*inform.vim* *ft-inform-syntax*
+INFORM							*ft-inform-syntax*
 
 Inform highlighting includes symbols provided by the Inform Library, as
 most programs make extensive use of it.  If do not wish Library symbols
@@ -1545,7 +1594,7 @@ Inform development environment, you may with to add this to your
 startup sequence: >
 	:let inform_highlight_old=1
 
-IDL							*idl.vim* *idl-syntax*
+IDL								*idl-syntax*
 
 IDL (Interface Definition Language) files are used to define RPC calls.  In
 Microsoft land, this is also used for defining COM interfaces and calls.
@@ -1569,7 +1618,7 @@ idlsyntax_showerror		Show IDL errors (can be rather intrusive, but
 idlsyntax_showerror_soft	Use softer colours by default for errors
 
 
-JAVA						*java.vim* *ft-java-syntax*
+JAVA							*ft-java-syntax*
 
 The java.vim syntax highlighting file offers several options.
 
@@ -1641,9 +1690,9 @@ respectively.
 
 Javadoc is a program that takes special comments out of Java program files and
 creates HTML pages.  The standard configuration will highlight this HTML code
-similarly to HTML files (see |html.vim|).  You can even add JavaScript and CSS
-inside this code (see below).  The HTML rendering and the Markdown rendering
-diverge as follows:
+similarly to HTML files (see |ft-html-syntax|).  You can even add JavaScript
+and CSS inside this code (see below).  The HTML rendering and the Markdown
+rendering diverge as follows:
   1. The first sentence (all characters up to the first period `.`, which is
      followed by a whitespace character or a line terminator, or up to the
      first block tag, e.g. `@param`, `@return`) is colored as
@@ -1710,6 +1759,15 @@ Certain modifiers are incompatible with each other, e.g. `abstract` and
 and can be differently highlighted as a group than other modifiers with >
 	:hi link javaConceptKind NonText
 
+All instances of variable-width lookbehind assertions (|/\@<!| and |/\@<=|),
+resorted to in syntax item definitions, are confined to arbitrary byte counts.
+Another arbitrary value can be selected for a related group of definitions.
+For example: >
+	:let g:java_lookbehind_byte_counts = {'javaMarkdownCommentTitle': 240}
+Where each key name of this dictionary is the name of a syntax item.  The use
+of these assertions in syntax items may vary among revisions, so no definitive
+set of supported key names is committed to.
+
 If you notice highlighting errors while scrolling backwards, which are fixed
 when redrawing with CTRL-L, try setting the "g:java_minlines" variable to
 a larger number: >
@@ -1738,7 +1796,7 @@ optionality will be discontinued.
 						*java-package-info-url*
 https://github.com/zzzyxwvut/java-vim/blob/master/tools/javaid/src/javaid/package-info.java
 
-JSON			*json.vim* *ft-json-syntax* *g:vim_json_conceal*
+JSON				*ft-json-syntax* *g:vim_json_conceal*
 						*g:vim_json_warnings*
 
 The json syntax file provides syntax highlighting with conceal support by
@@ -1749,7 +1807,7 @@ To disable syntax highlighting of errors: >
 	let g:vim_json_warnings = 0
 
 
-JQ				*jq.vim* *jq_quote_highlight* *ft-jq-syntax*
+JQ					*jq_quote_highlight* *ft-jq-syntax*
 
 To disable numbers having their own color add the following to your vimrc: >
 	hi link jqNumber Normal
@@ -1768,7 +1826,7 @@ To configure a bit more (heavier) highlighting, set the following variable: >
 
 	let kconfig_syntax_heavy = 1
 
-LACE						*lace.vim* *ft-lace-syntax*
+LACE							*ft-lace-syntax*
 
 Lace (Language for Assembly of Classes in Eiffel) is case insensitive, but the
 style guide lines are not.  If you prefer case insensitive highlighting, just
@@ -1776,7 +1834,7 @@ define the vim variable 'lace_case_insensitive' in your startup file: >
 	:let lace_case_insensitive=1
 
 
-LF (LFRC)		*lf.vim* *ft-lf-syntax* *g:lf_shell_syntax*
+LF (LFRC)			*ft-lf-syntax* *g:lf_shell_syntax*
 						*b:lf_shell_syntax*
 
 For the lf file manager configuration files (lfrc) the shell commands syntax
@@ -1790,7 +1848,7 @@ These variables are unset by default.
 The default 'include' command search pattern is 'syntax/sh.vim'.
 
 
-LEX						*lex.vim* *ft-lex-syntax*
+LEX							*ft-lex-syntax*
 
 Lex uses brute-force synchronizing as the "^%%$" section delimiter
 gives no clue as to what section follows.  Consequently, the value for >
@@ -1799,14 +1857,14 @@ may be changed by the user if they are experiencing synchronization
 difficulties (such as may happen with large lex files).
 
 
-LIFELINES				*lifelines.vim* *ft-lifelines-syntax*
+LIFELINES					*ft-lifelines-syntax*
 
 To highlight deprecated functions as errors, add in your vimrc: >
 
 	:let g:lifelines_deprecated = 1
 <
 
-LISP						*lisp.vim* *ft-lisp-syntax*
+LISP							*ft-lisp-syntax*
 
 The lisp syntax highlighting provides two options: >
 
@@ -1822,10 +1880,10 @@ the parentheses and backquoted parentheses.  Because of the quantity of
 colorization levels, unlike non-rainbow highlighting, the rainbow mode
 specifies its highlighting using ctermfg and guifg, thereby bypassing the
 usual color scheme control using standard highlighting groups.  The actual
-highlighting used depends on the dark/bright setting  (see |'bg'|).
+highlighting used depends on the dark/bright setting  (see 'bg').
 
 
-LITE						*lite.vim* *ft-lite-syntax*
+LITE							*ft-lite-syntax*
 
 There are two options for the lite syntax highlighting.
 
@@ -1839,7 +1897,7 @@ set "lite_minlines" to the value you desire.  Example: >
 	:let lite_minlines = 200
 
 
-LPC						*lpc.vim* *ft-lpc-syntax*
+LPC							*ft-lpc-syntax*
 
 LPC stands for a simple, memory-efficient language: Lars Pensjö C.  The
 file name of LPC is usually `*.c`.  Recognizing these files as LPC would bother
@@ -1880,14 +1938,14 @@ uLPC has been developed to Pike, so you should use Pike syntax
 instead, and the name of your source file should be `*.pike`
 
 
-LUA						*lua.vim* *ft-lua-syntax*
+LUA							*ft-lua-syntax*
 
 The Lua syntax file can be used for versions 4.0, 5.0+. You can select one of
 these versions using the global variables |g:lua_version| and
 |g:lua_subversion|.
 
 
-MAIL						*mail.vim* *ft-mail.vim*
+MAIL							*ft-mail.vim*
 
 Vim highlights all the standard elements of an email (headers, signatures,
 quoted text and URLs / email addresses).  In keeping with standard conventions,
@@ -1905,7 +1963,7 @@ with short headers, you can change this to a smaller value: >
 	:let mail_minlines = 30
 
 
-MAKE						*make.vim* *ft-make-syntax*
+MAKE							*ft-make-syntax*
 
 In makefiles, commands are usually highlighted to make it easy for you to spot
 errors.  However, this may be too much coloring for you.  You can turn this
@@ -1929,7 +1987,7 @@ of the following: >
 	:let g:make_flavor = 'microsoft'
 
 
-MAPLE						*maple.vim* *ft-maple-syntax*
+MAPLE							*ft-maple-syntax*
 
 Maple V, by Waterloo Maple Inc, supports symbolic algebra.  The language
 supports many packages of functions which are selectively loaded by the user.
@@ -1973,14 +2031,14 @@ To disable markdown syntax concealing add the following to your vimrc: >
 	:let g:markdown_syntax_conceal = 0
 
 
-MATHEMATICA		*mma.vim* *ft-mma-syntax* *ft-mathematica-syntax*
+MATHEMATICA			*ft-mma-syntax* *ft-mathematica-syntax*
 
 Empty `*.m` files will automatically be presumed to be Matlab files unless you
 have the following in your vimrc: >
 
 	let filetype_m = "mma"
 
-MBSYNC					*mbsync.vim* *ft-mbsync-syntax*
+MBSYNC						*ft-mbsync-syntax*
 
 The mbsync application uses a configuration file to setup mailboxes names,
 user and password. All files ending with `.mbsyncrc` or with the name
@@ -1989,7 +2047,7 @@ user and password. All files ending with `.mbsyncrc` or with the name
 MEDIAWIKI					*ft-mediawiki-syntax*
 
 By default, syntax highlighting includes basic HTML tags like style and
-headers |html.vim|. For strict Mediawiki syntax highlighting: >
+headers |ft-html-syntax|. For strict Mediawiki syntax highlighting: >
 
 	let g:html_no_rendering = 1
 
@@ -1998,7 +2056,7 @@ and italic is possible by: >
 
 	let g:html_style_rendering = 1
 
-MODULA2					*modula2.vim* *ft-modula2-syntax*
+MODULA2						*ft-modula2-syntax*
 
 Vim will recognise comments with dialect tags to automatically select a given
 dialect.
@@ -2048,7 +2106,7 @@ Variable			Highlight ~
 
 *modula2_r10_allow_lowline*	allow low line in identifiers
 
-MOO						*moo.vim* *ft-moo-syntax*
+MOO							*ft-moo-syntax*
 
 If you use C-style comments inside expressions and find it mangles your
 highlighting, you may want to use extended (slow!) matches for C-style
@@ -2084,7 +2142,7 @@ An example of adding sprintf() to the list of known builtin functions: >
 	:syn keyword mooKnownBuiltinFunction sprintf contained
 
 
-MSQL						*msql.vim* *ft-msql-syntax*
+MSQL							*ft-msql-syntax*
 
 There are two options for the msql syntax highlighting.
 
@@ -2098,14 +2156,14 @@ set "msql_minlines" to the value you desire.  Example: >
 	:let msql_minlines = 200
 
 
-NEOMUTT					*neomutt.vim* *ft-neomuttrc-syntax*
+NEOMUTT						*ft-neomuttrc-syntax*
 					*ft-neomuttlog-syntax*
 
 To disable the default NeoMutt log colors: >
 
 	:let g:neolog_disable_default_colors = 1
 
-N1QL						*n1ql.vim* *ft-n1ql-syntax*
+N1QL							*ft-n1ql-syntax*
 
 N1QL is a SQL-like declarative language for manipulating JSON documents in
 Couchbase Server databases.
@@ -2115,7 +2173,7 @@ and special values.  Vim ignores syntactical elements specific to SQL or its
 many dialects, like COLUMN or CHAR, that don't exist in N1QL.
 
 
-NCF						*ncf.vim* *ft-ncf-syntax*
+NCF							*ft-ncf-syntax*
 
 There is one option for NCF syntax highlighting.
 
@@ -2127,7 +2185,7 @@ errors, use this: >
 If you don't want to highlight these errors, leave it unset.
 
 
-NROFF						*nroff.vim* *ft-nroff-syntax*
+NROFF							*ft-nroff-syntax*
 
 The nroff syntax file works with AT&T n/troff out of the box.  You need to
 activate the GNU groff extra features included in the syntax file before you
@@ -2194,11 +2252,12 @@ file: >
 As well, the syntax file adds an extra paragraph marker for the extended
 paragraph macro (.XP) in the ms package.
 
-Finally, there is a |groff.vim| syntax file that can be used for enabling
-groff syntax highlighting either on a file basis or globally by default.
+Finally, there is a |ft-groff-syntax| syntax file that can be used for
+enabling groff syntax highlighting either on a file basis or globally by
+default.
 
 
-OCAML						*ocaml.vim* *ft-ocaml-syntax*
+OCAML							*ft-ocaml-syntax*
 
 The OCaml syntax file handles files having the following prefixes: .ml,
 .mli, .mll and .mly.  By setting the following variable >
@@ -2303,7 +2362,7 @@ syntax for items in g:pandoc#syntax#codeblocks#embeds#langs. >
 
 Disables embedded highlighting for language LANG in codeblocks.
 
-PAPP						*papp.vim* *ft-papp-syntax*
+PAPP							*ft-papp-syntax*
 
 The PApp syntax file handles .papp files and, to a lesser extent, .pxml
 and .pxsl files which are all a mixture of perl/xml/html/other using xml
@@ -2321,7 +2380,7 @@ The newest version of the papp.vim syntax file can usually be found at
 http://papp.plan9.de.
 
 
-PASCAL						*pascal.vim* *ft-pascal-syntax*
+PASCAL							*ft-pascal-syntax*
 
 Files matching "*.p" could be Progress or Pascal and those matching "*.pp"
 could be Puppet or Pascal.  If the automatic detection doesn't work for you,
@@ -2376,7 +2435,7 @@ will be highlighted as Error. >
 
 
 
-PERL						*perl.vim* *ft-perl-syntax*
+PERL							*ft-perl-syntax*
 
 There are a number of possible options to the perl syntax highlighting.
 
@@ -2452,7 +2511,7 @@ behavior, set 'perl_nofold_packages': >
 
 	:let perl_nofold_packages = 1
 
-PHP3 and PHP4		*php.vim* *php3.vim* *ft-php-syntax* *ft-php3-syntax*
+PHP3 and PHP4				*ft-php-syntax* *ft-php3-syntax*
 
 [Note: Previously this was called "php3", but since it now also supports php4
 it has been renamed to "php"]
@@ -2505,7 +2564,7 @@ x > 0 to sync at least x lines backwards,
 x = 0 to sync from start.
 
 
-PLAINTEX				*plaintex.vim* *ft-plaintex-syntax*
+PLAINTEX					*ft-plaintex-syntax*
 
 TeX is a typesetting language, and plaintex is the file type for the "plain"
 variant of TeX.  If you never want your `*.tex` files recognized as plain TeX,
@@ -2518,7 +2577,7 @@ This syntax file has the option >
 if you want to highlight brackets "[]" and braces "{}".
 
 
-PPWIZARD					*ppwiz.vim* *ft-ppwiz-syntax*
+PPWIZARD						*ft-ppwiz-syntax*
 
 PPWizard is a preprocessor for HTML and OS/2 INF files
 
@@ -2540,7 +2599,7 @@ This syntax file has the options:
   HTML code; if 0, treat HTML code like ordinary text.
 
 
-PHTML						*phtml.vim* *ft-phtml-syntax*
+PHTML							*ft-phtml-syntax*
 
 There are two options for the phtml syntax highlighting.
 
@@ -2554,7 +2613,7 @@ set "phtml_minlines" to the value you desire.  Example: >
 	:let phtml_minlines = 200
 
 
-POSTSCRIPT				*postscr.vim* *ft-postscr-syntax*
+POSTSCRIPT					*ft-postscr-syntax*
 
 There are several options when it comes to highlighting PostScript.
 
@@ -2609,7 +2668,7 @@ postscr_andornot_binary as follows: >
 	:let postscr_andornot_binary=1
 <
 
-			*ptcap.vim* *ft-printcap-syntax*
+				*ft-printcap-syntax*
 PRINTCAP + TERMCAP	*ft-ptcap-syntax* *ft-termcap-syntax*
 
 This syntax file applies to the printcap and termcap databases.
@@ -2635,7 +2694,7 @@ internal variable to a larger number: >
 (The default is 20 lines.)
 
 
-PROGRESS				*progress.vim* *ft-progress-syntax*
+PROGRESS					*ft-progress-syntax*
 
 Files matching "*.w" could be Progress or cweb.  If the automatic detection
 doesn't work for you, or you don't edit cweb at all, use this in your
@@ -2647,7 +2706,7 @@ Pascal.  Use this if you don't use assembly and Pascal: >
    :let filetype_p = "progress"
 
 
-PYTHON						*python.vim* *ft-python-syntax*
+PYTHON							*ft-python-syntax*
 
 There are six options to control Python syntax highlighting.
 
@@ -2684,7 +2743,7 @@ Note: Only existence of these options matters, not their value.
       You can replace 1 above with anything.
 
 
-QUAKE						*quake.vim* *ft-quake-syntax*
+QUAKE							*ft-quake-syntax*
 
 The Quake syntax definition should work for most FPS (First Person Shooter)
 based on one of the Quake engines.  However, the command names vary a bit
@@ -2706,7 +2765,7 @@ Any combination of these three variables is legal, but might highlight more
 commands than are actually available to you by the game.
 
 
-R							*r.vim* *ft-r-syntax*
+R								*ft-r-syntax*
 
 The parsing of R code for syntax highlight starts 40 lines backwards, but you
 can set a different value in your |vimrc|. Example: >
@@ -2723,7 +2782,7 @@ and highlight as functions all keywords followed by an opening parenthesis: >
 	let r_syntax_fun_pattern = 1
 
 
-R MARKDOWN					*rmd.vim* *ft-rmd-syntax*
+R MARKDOWN						*ft-rmd-syntax*
 
 To disable syntax highlight of YAML header, add to your |vimrc|: >
 	let rmd_syn_hl_yaml = 0
@@ -2752,20 +2811,20 @@ the example: >
 	let rmd_fenced_languages = ['r', 'python']
 
 
-R RESTRUCTURED TEXT				*rrst.vim* *ft-rrst-syntax*
+R RESTRUCTURED TEXT					*ft-rrst-syntax*
 
 To highlight R code in knitr chunk headers, add to your |vimrc|: >
 	let rrst_syn_hl_chunk = 1
 
 
-RASI					*rasi.vim* *ft-rasi-syntax*
+RASI						*ft-rasi-syntax*
 
 Rasi stands for Rofi Advanced Style Information. It is used by the program
 rofi to style the rendering of the search window. The language is heavily
 inspired by CSS stylesheet. Files with the following extensions are recognized
 as rasi files: .rasi.
 
-READLINE				*readline.vim* *ft-readline-syntax*
+READLINE					*ft-readline-syntax*
 
 The readline library is primarily used by the BASH shell, which adds quite a
 few commands and options to the ones already available.  To highlight these
@@ -2777,14 +2836,14 @@ This will add highlighting for the commands that BASH (version 2.05a and
 later, and part earlier) adds.
 
 
-REGO						*rego.vim* *ft-rego-syntax*
+REGO							*ft-rego-syntax*
 
 Rego is a query language developed by Styra.  It is mostly used as a policy
 language for kubernetes, but can be applied to almost anything.  Files with
 the following extensions are recognized as rego files: .rego.
 
 
-RESTRUCTURED TEXT			*rst.vim* *ft-rst-syntax*
+RESTRUCTURED TEXT				*ft-rst-syntax*
 
 Syntax highlighting is enabled for code blocks within the document for a
 select number of file types.  See $VIMRUNTIME/syntax/rst.vim for the default
@@ -2810,7 +2869,7 @@ To enable folding of sections: >
 Note that folding can cause performance issues on some platforms.
 
 
-REXX						*rexx.vim* *ft-rexx-syntax*
+REXX							*ft-rexx-syntax*
 
 If you notice highlighting errors while scrolling backwards, which are fixed
 when redrawing with CTRL-L, try setting the "rexx_minlines" internal variable
@@ -2827,7 +2886,7 @@ your vimrc:							*g:filetype_r*
 	:let g:filetype_r = "r"
 
 
-RUBY						*ruby.vim* *ft-ruby-syntax*
+RUBY							*ft-ruby-syntax*
 
     Ruby: Operator highlighting		|ruby_operators|
     Ruby: Whitespace errors		|ruby_space_errors|
@@ -2928,7 +2987,7 @@ Ruby syntax will perform spellchecking of strings if you define
 	:let ruby_spellcheck_strings = 1
 <
 
-SCHEME						*scheme.vim* *ft-scheme-syntax*
+SCHEME							*ft-scheme-syntax*
 
 By default only R7RS keywords are highlighted and properly indented.
 
@@ -2936,7 +2995,7 @@ scheme.vim also supports extensions of the CHICKEN Scheme->C compiler.
 Define b:is_chicken or g:is_chicken, if you need them.
 
 
-SDL						*sdl.vim* *ft-sdl-syntax*
+SDL							*ft-sdl-syntax*
 
 The SDL highlighting probably misses a few keywords, but SDL has so many
 of them it's almost impossibly to cope.
@@ -2956,7 +3015,7 @@ The indentation is probably also incomplete, but right now I am very
 satisfied with it for my own projects.
 
 
-SED						*sed.vim* *ft-sed-syntax*
+SED							*ft-sed-syntax*
 
 To make tabs stand out from regular blanks (accomplished by using Todo
 highlighting on the tabs), define "g:sed_highlight_tabs" by putting >
@@ -2988,7 +3047,7 @@ Bugs:
   each plausible pattern delimiter).
 
 
-SGML						*sgml.vim* *ft-sgml-syntax*
+SGML							*ft-sgml-syntax*
 
 The coloring scheme for tags in the SGML file works as follows.
 
@@ -3030,7 +3089,7 @@ vimrc file: >
 
 
 		*ft-posix-syntax* *ft-dash-syntax*
-SH		*sh.vim*  *ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
+SH		*ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
 
 This covers syntax highlighting for the older Unix (Bourne) sh, and newer
 shells such as bash, dash, posix, and the Korn shells.
@@ -3136,7 +3195,7 @@ be highlighted using the awk highlighting syntax.  Clearly this may be
 extended to other languages.
 
 
-SPEEDUP						*spup.vim* *ft-spup-syntax*
+SPEEDUP							*ft-spup-syntax*
 (AspenTech plant simulator)
 
 The Speedup syntax file has some options:
@@ -3169,9 +3228,9 @@ fast enough, you can increase minlines and/or maxlines near the end of
 the syntax file.
 
 
-SQL						*sql.vim* *ft-sql-syntax*
-				*sqlinformix.vim* *ft-sqlinformix-syntax*
-				*sqlanywhere.vim* *ft-sqlanywhere-syntax*
+SQL							*ft-sql-syntax*
+					*ft-sqlinformix-syntax*
+					*ft-sqlanywhere-syntax*
 
 While there is an ANSI standard for SQL, most database engines add their own
 custom extensions.  Vim currently supports the Oracle and Informix dialects of
@@ -3185,7 +3244,7 @@ buffer by buffer basis.
 For more detailed instructions see |ft_sql.txt|.
 
 
-SQUIRREL				*squirrel.vim* *ft-squirrel-syntax*
+SQUIRREL					*ft-squirrel-syntax*
 
 Squirrel is a high level imperative, object-oriented programming language,
 designed to be a light-weight scripting language that fits in the size, memory
@@ -3193,10 +3252,10 @@ bandwidth, and real-time requirements of applications like video games.  Files
 with the following extensions are recognized as squirrel files: .nut.
 
 
-TCSH						*tcsh.vim* *ft-tcsh-syntax*
+TCSH							*ft-tcsh-syntax*
 
-This covers the shell named "tcsh".  It is a superset of csh.  See |csh.vim|
-for how the filetype is detected.
+This covers the shell named "tcsh".  It is a superset of csh.  See
+|ft-csh-syntax| for how the filetype is detected.
 
 Tcsh does not allow \" in strings unless the "backslash_quote" shell variable
 is set.  If you want VIM to assume that no backslash quote constructs exist
@@ -3217,7 +3276,7 @@ tcsh_minlines is 100.  The disadvantage of using a larger number is that
 redrawing can become slow.
 
 
-TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
+TEX					*ft-tex-syntax* *latex-syntax*
 				*syntax-tex* *syntax-latex*
 
 			Tex Contents~
@@ -3389,7 +3448,7 @@ always accept such use of @.
 					*tex-cchar* *tex-cole* *tex-conceal*
  Tex: Taking Advantage of Conceal Mode~
 
-If you have |'conceallevel'| set to 2 and if your encoding is utf-8, then a
+If you have 'conceallevel' set to 2 and if your encoding is utf-8, then a
 number of character sequences can be translated into appropriate utf-8 glyphs,
 including various accented characters, Greek characters in MathZones, and
 superscripts and subscripts in MathZones.  Not all characters can be made into
@@ -3397,7 +3456,7 @@ superscripts or subscripts; the constraint is due to what utf-8 supports.
 In fact, only a few characters are supported as subscripts.
 
 One way to use this is to have vertically split windows (see |CTRL-W_v|); one
-with |'conceallevel'| at 0 and the other at 2; and both using |'scrollbind'|.
+with 'conceallevel' at 0 and the other at 2; and both using 'scrollbind'.
 
 					*g:tex_conceal*
  Tex: Selective Conceal Mode~
@@ -3474,7 +3533,7 @@ syntax highlighting script handles this with the following logic:
 		let g:tex_excludematcher= 1
 <	will prevent the texMatcher group from being included in those regions.
 
-TF						*tf.vim* *ft-tf-syntax*
+TF							*ft-tf-syntax*
 
 There is one option for the tf syntax highlighting.
 
@@ -3483,8 +3542,7 @@ set "tf_minlines" to the value you desire.  Example: >
 
 	:let tf_minlines = your choice
 <
-TYPESCRIPT				*typescript.vim* *ft-typescript-syntax*
-			    *typescriptreact.vim* *ft-typescriptreact-syntax*
+TYPESCRIPT		     *ft-typescript-syntax* *ft-typescriptreact-syntax*
 
 There is one option to control the TypeScript syntax highlighting.
 
@@ -3505,8 +3563,7 @@ names whose syntax definitions will be included in Typst files. Example: >
 
     let g:typst_embedded_languages = ['python', 'r']
 
-VIM			*vim.vim*		*ft-vim-syntax*
-			*g:vimsyn_minlines*	*g:vimsyn_maxlines*
+VIM		    *ft-vim-syntax* *g:vimsyn_minlines* *g:vimsyn_maxlines*
 
 There is a trade-off between more accurate syntax highlighting versus screen
 updating speed.  To improve accuracy, you may wish to increase the
@@ -3523,8 +3580,8 @@ improve screen updating rates (see |:syn-sync| for more on this). >
 The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
-   g:vimsyn_embed == 0      : disable (don't embed any scripts)
-   g:vimsyn_embed == 'lpPr' : support embedded Lua, Perl, Python and Ruby
+   g:vimsyn_embed == 0       : disable (don't embed any scripts)
+   g:vimsyn_embed ==# 'lpPr' : support embedded Lua, Perl, Python and Ruby
 <
 By default, g:vimsyn_embed is unset, and embedded Lua scripts are supported.
 
@@ -3532,13 +3589,13 @@ By default, g:vimsyn_embed is unset, and embedded Lua scripts are supported.
 Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
-   g:vimsyn_folding =~ 'a' : fold augroups
-   g:vimsyn_folding =~ 'f' : fold functions
-   g:vimsyn_folding =~ 'h' : fold let heredocs
-   g:vimsyn_folding =~ 'l' : fold Lua      heredocs
-   g:vimsyn_folding =~ 'p' : fold Perl     heredocs
-   g:vimsyn_folding =~ 'P' : fold Python   heredocs
-   g:vimsyn_folding =~ 'r' : fold Ruby     heredocs
+   g:vimsyn_folding =~# 'a' : fold augroups
+   g:vimsyn_folding =~# 'f' : fold functions
+   g:vimsyn_folding =~# 'h' : fold let heredocs
+   g:vimsyn_folding =~# 'l' : fold Lua      heredocs
+   g:vimsyn_folding =~# 'p' : fold Perl     heredocs
+   g:vimsyn_folding =~# 'P' : fold Python   heredocs
+   g:vimsyn_folding =~# 'r' : fold Ruby     heredocs
 <
 
 By default, g:vimsyn_folding is unset.  Concatenate the indicated characters
@@ -3558,7 +3615,7 @@ highlighting is to put the following line in your |vimrc|: >
 <
 
 
-WDL							*wdl.vim* *wdl-syntax*
+WDL								*wdl-syntax*
 
 The Workflow Description Language is a way to specify data processing workflows
 with a human-readable and writeable syntax.  This is used a lot in
@@ -3566,7 +3623,7 @@ bioinformatics.  More info on the spec can be found here:
 https://github.com/openwdl/wdl
 
 
-XF86CONFIG				*xf86conf.vim* *ft-xf86conf-syntax*
+XF86CONFIG					*ft-xf86conf-syntax*
 
 The syntax of XF86Config file differs in XFree86 v3.x and v4.x.  Both
 variants are supported.  Automatic detection is used, but is far from perfect.
@@ -3581,7 +3638,7 @@ Note that spaces and underscores in option names are not supported.  Use
 highlighted.
 
 
-XML						*xml.vim* *ft-xml-syntax*
+XML							*ft-xml-syntax*
 
 Xml namespaces are highlighted by default.  This can be inhibited by
 setting a global variable: >
@@ -3599,7 +3656,7 @@ Note: Syntax folding might slow down syntax highlighting significantly,
 especially for large files.
 
 
-X Pixmaps (XPM)					*xpm.vim* *ft-xpm-syntax*
+X Pixmaps (XPM)						*ft-xpm-syntax*
 
 xpm.vim creates its syntax items dynamically based upon the contents of the
 XPM file.  Thus if you make changes e.g. in the color specification strings,
@@ -3625,7 +3682,7 @@ It will look much better with a font in a quadratic cell size, e.g. for X: >
 	:set guifont=-*-clean-medium-r-*-*-8-*-*-*-*-80-*
 
 
-YAML						*yaml.vim* *ft-yaml-syntax*
+YAML							*ft-yaml-syntax*
 
 					*g:yaml_schema* *b:yaml_schema*
 A YAML schema is a combination of a set of tags and a mechanism for resolving
@@ -3651,7 +3708,7 @@ only difference between schemas defined in YAML specification and the only
 difference defined in the syntax file.
 
 
-ZSH						    *zsh.vim* *ft-zsh-syntax*
+ZSH							       *ft-zsh-syntax*
 
 The syntax script for zsh allows for syntax-based folding: >
 
@@ -3793,13 +3850,13 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
 DEFINING KEYWORDS					*:syn-keyword*
 
-:sy[ntax] keyword {group-name} [{options}] {keyword} .. [{options}]
+:sy[ntax] keyword {group-name} [{options}] {keyword} ... [{options}]
 
 	This defines a number of keywords.
 
 	{group-name}	Is a syntax group name such as "Comment".
 	[{options}]	See |:syn-arguments| below.
-	{keyword} ..	Is a list of keywords which are part of this group.
+	{keyword} ...	Is a list of keywords which are part of this group.
 
 	Example: >
   :syntax keyword   Type   int long char
@@ -4616,11 +4673,11 @@ two different ways:
 	  that list. >
 
    " In perl.vim:
-   :syntax include @Pod <sfile>:p:h/pod.vim
+   :syntax include @Pod <script>:p:h/pod.vim
    :syntax region perlPOD start="^=head" end="^=cut" contains=@Pod
 <
 	  When {file-name} is an absolute path (starts with "/", "c:", "$VAR"
-	  or "<sfile>") that file is sourced.  When it is a relative path
+	  or "<script>") that file is sourced.  When it is a relative path
 	  (e.g., "syntax/pod.vim") the file is searched for in 'runtimepath'.
 	  All matching files are loaded.  Using a relative path is
 	  recommended, because it allows a user to replace the included file
@@ -5205,8 +5262,12 @@ EndOfBuffer	Filler lines (~) after the last line in the buffer.
 		By default, this is highlighted like |hl-NonText|.
 							*hl-TermCursor*
 TermCursor	Cursor in a focused terminal.
+							*hl-OkMsg*
+OkMsg		Success messages.
+							*hl-WarningMsg*
+WarningMsg	Warning messages.
 							*hl-ErrorMsg*
-ErrorMsg	Error messages on the command line.
+ErrorMsg	Error messages.
 							*hl-StderrMsg*
 StderrMsg	Messages in stderr from shell commands.
 							*hl-StdoutMsg*
@@ -5292,6 +5353,12 @@ PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
 		|hl-PmenuMatch| and |hl-PmenuSel|.
 							*hl-ComplMatchIns*
 ComplMatchIns	Matched text of the currently inserted completion.
+							*hl-PreInsert*
+PreInsert	Text inserted when "preinsert" is in 'completeopt'.
+							*hl-ComplHint*
+ComplHint	Virtual text of the currently selected completion.
+							*hl-ComplHintMore*
+ComplHintMore	The additional information of the virtual text.
 							*hl-Question*
 Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*
@@ -5302,6 +5369,9 @@ Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
 							*hl-SnippetTabstop*
 SnippetTabstop	Tabstops in snippets. |vim.snippet|
+							*hl-SnippetTabstopActive*
+SnippetTabstopActive
+		The currently active tabstop. |vim.snippet|
 							*hl-SpecialKey*
 SpecialKey	Unprintable characters: Text displayed differently from what
 		it really is. But not 'listchars' whitespace. |hl-Whitespace|
@@ -5340,8 +5410,6 @@ Title		Titles for output from ":set all", ":autocmd" etc.
 Visual		Visual mode selection.
 							*hl-VisualNOS*
 VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
-							*hl-WarningMsg*
-WarningMsg	Warning messages.
 							*hl-Whitespace*
 Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
 		in 'listchars'.
@@ -5505,38 +5573,7 @@ And put these lines in your vimrc: >
    autocmd BufRead,BufNewFile *.[ch] endif
 
 ==============================================================================
-17. Window-local syntax				*:ownsyntax*
-
-Normally all windows on a buffer share the same syntax settings. It is
-possible, however, to set a particular window on a file to have its own
-private syntax setting. A possible example would be to edit LaTeX source
-with conventional highlighting in one window, while seeing the same source
-highlighted differently (so as to hide control sequences and indicate bold,
-italic etc regions) in another. The 'scrollbind' option is useful here.
-
-To set the current window to have the syntax "foo", separately from all other
-windows on the buffer: >
-   :ownsyntax foo
-<						*w:current_syntax*
-This will set the "w:current_syntax" variable to "foo".  The value of
-"b:current_syntax" does not change.  This is implemented by saving and
-restoring "b:current_syntax", since the syntax files do set
-"b:current_syntax".  The value set by the syntax file is assigned to
-"w:current_syntax".
-Note: This resets the 'spell', 'spellcapcheck', 'spellfile' and 'spelloptions'
-options.
-
-Once a window has its own syntax, syntax commands executed from other windows
-on the same buffer (including :syntax clear) have no effect. Conversely,
-syntax commands executed from that window do not affect other windows on the
-same buffer.
-
-A window with its own syntax reverts to normal behavior when another buffer
-is loaded into that window or the file is reloaded.
-When splitting the window, the new window will use the original syntax.
-
-==============================================================================
-18. Color xterms				*xterm-color* *color-xterm*
+17. Color xterms				*xterm-color* *color-xterm*
 
 							*colortest.vim*
 To test your color setup, a file has been included in the Vim distribution.
@@ -5546,7 +5583,7 @@ To use it, execute this command: >
 Nvim uses 256-color and |true-color| terminal capabilities wherever possible.
 
 ==============================================================================
-19. When syntax is slow						*:syntime*
+18. When syntax is slow						*:syntime*
 
 This is aimed at authors of a syntax file.
 

@@ -32,6 +32,11 @@ encoded for every character (or group of characters) are not supported either
 as this kind of support is out of the scope of a simple addition to an
 existing editor (and it's not sanctioned by Unicode either).
 
+As many people working on the code do not use the right-to-left mode, this
+feature may not work in some situations.  If you can describe what is wrong
+and how it would work when fixed, please create an issue on github, see
+|bug-report|.
+
 
 ------------------------------------------------------------------------------
 Highlights

@@ -56,9 +56,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "change.c.generated.h"
-#endif
+#include "change.c.generated.h"
 
 /// If the file is readonly, give a warning message with the first change.
 /// Don't do this for autocommands.
@@ -957,118 +955,6 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   return OK;
 }
 
-/// Copy the indent from ptr to the current line (and fill to size).
-/// Leaves the cursor on the first non-blank in the line.
-///
-/// @return true if the line was changed.
-bool copy_indent(int size, char *src)
-{
-  char *p = NULL;
-  char *line = NULL;
-  int ind_len;
-  int line_len = 0;
-  int tab_pad;
-
-  // Round 1: compute the number of characters needed for the indent
-  // Round 2: copy the characters.
-  for (int round = 1; round <= 2; round++) {
-    int todo = size;
-    ind_len = 0;
-    int ind_done = 0;
-    int ind_col = 0;
-    char *s = src;
-
-    // Count/copy the usable portion of the source line.
-    while (todo > 0 && ascii_iswhite(*s)) {
-      if (*s == TAB) {
-        tab_pad = tabstop_padding(ind_done,
-                                  curbuf->b_p_ts,
-                                  curbuf->b_p_vts_array);
-
-        // Stop if this tab will overshoot the target.
-        if (todo < tab_pad) {
-          break;
-        }
-        todo -= tab_pad;
-        ind_done += tab_pad;
-        ind_col += tab_pad;
-      } else {
-        todo--;
-        ind_done++;
-        ind_col++;
-      }
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = *s;
-      }
-      s++;
-    }
-
-    // Fill to next tabstop with a tab, if possible.
-    tab_pad = tabstop_padding(ind_done, curbuf->b_p_ts, curbuf->b_p_vts_array);
-
-    if ((todo >= tab_pad) && !curbuf->b_p_et) {
-      todo -= tab_pad;
-      ind_len++;
-      ind_col += tab_pad;
-
-      if (p != NULL) {
-        *p++ = TAB;
-      }
-    }
-
-    // Add tabs required for indent.
-    if (!curbuf->b_p_et) {
-      while (true) {
-        tab_pad = tabstop_padding(ind_col,
-                                  curbuf->b_p_ts,
-                                  curbuf->b_p_vts_array);
-        if (todo < tab_pad) {
-          break;
-        }
-        todo -= tab_pad;
-        ind_len++;
-        ind_col += tab_pad;
-        if (p != NULL) {
-          *p++ = TAB;
-        }
-      }
-    }
-
-    // Count/add spaces required for indent.
-    while (todo > 0) {
-      todo--;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = ' ';
-      }
-    }
-
-    if (p == NULL) {
-      // Allocate memory for the result: the copied indent, new indent
-      // and the rest of the line.
-      line_len = get_cursor_line_len() + 1;
-      assert(ind_len + line_len >= 0);
-      size_t line_size;
-      STRICT_ADD(ind_len, line_len, &line_size, size_t);
-      line = xmalloc(line_size);
-      p = line;
-    }
-  }
-
-  // Append the original line
-  memmove(p, get_cursor_line_ptr(), (size_t)line_len);
-
-  // Replace the line
-  ml_replace(curwin->w_cursor.lnum, line, false);
-
-  // Put the cursor after the indent.
-  curwin->w_cursor.col = ind_len;
-  return true;
-}
-
 /// open_line: Add a new line below or above the current line.
 ///
 /// For MODE_VREPLACE state, we only add a new line when we get to the end of
@@ -1746,7 +1632,27 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   curbuf_splice_pending++;
   old_cursor = curwin->w_cursor;
+  int old_cmod_flags = cmdmod.cmod_flags;
+  char *prompt_moved = NULL;
   if (dir == BACKWARD) {
+    // In case of prompt buffer, when we are applying 'normal O' operation on line of prompt,
+    // we can't add a new line before the prompt. In this case, we move the prompt text one
+    // line below and create a new prompt line as current line.
+    if (bt_prompt(curbuf) && curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
+      char *prompt_line = ml_get(curwin->w_cursor.lnum);
+      char *prompt = prompt_text();
+      size_t prompt_len = strlen(prompt);
+
+      if (strncmp(prompt_line, prompt, prompt_len) == 0) {
+        STRMOVE(prompt_line, prompt_line + prompt_len);
+        // We are moving the lines but the b_prompt_start mark needs to stay in
+        // place so freezing marks before making the move.
+        cmdmod.cmod_flags = cmdmod.cmod_flags | CMOD_LOCKMARKS;
+        ml_replace(curwin->w_cursor.lnum, prompt_line, true);
+        prompt_moved = concat_str(prompt, p_extra);
+        p_extra = prompt_moved;
+      }
+    }
     curwin->w_cursor.lnum--;
   }
   if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
@@ -1936,6 +1842,8 @@ theend:
   xfree(saved_line);
   xfree(next_line);
   xfree(allocated);
+  xfree(prompt_moved);
+  cmdmod.cmod_flags = old_cmod_flags;
   return retval;
 }
 
@@ -1982,7 +1890,7 @@ void del_lines(linenr_T nlines, bool undo)
       break;
     }
 
-    ml_delete(first, true);
+    ml_delete_flags(first, ML_DEL_MESSAGE);
     n++;
 
     // If we delete the last line in the file, stop

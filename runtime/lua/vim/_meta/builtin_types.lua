@@ -39,6 +39,14 @@
 --- @field pos [integer, integer, integer, integer]
 --- @field file string
 
+--- @class vim.fn.getmatches.ret.item
+--- @field id integer
+--- @field group string
+--- @field pattern? string
+--- @field priority integer
+--- @field conceal? string
+--- @field [string] [integer, integer, integer] all strings of format 'pos%d'
+
 --- @class vim.fn.getmousepos.ret
 --- @field screenrow integer
 --- @field screencol integer
@@ -145,7 +153,7 @@
 --- list number in the quickfix stack; zero
 --- means the current quickfix list and "$" means
 --- the last quickfix list.
---- @field nr? integer
+--- @field nr? integer|'$'
 ---
 --- function to get the text to display in the
 --- quickfix window. The value can be the name of

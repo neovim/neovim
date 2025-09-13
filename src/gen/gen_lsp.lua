@@ -370,7 +370,7 @@ local function write_to_meta_protocol(protocol, version, output_file)
     '---@meta',
     "error('Cannot require a meta file')",
     '',
-    '---@alias lsp.null nil',
+    '---@alias lsp.null vim.NIL',
     '---@alias uinteger integer',
     '---@alias decimal number',
     '---@alias lsp.DocumentUri string',

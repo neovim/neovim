@@ -8,22 +8,27 @@ pub fn build_nlua0(
     use_luajit: bool,
     ziglua: *std.Build.Dependency,
     lpeg: *std.Build.Dependency,
+    libluv: *std.Build.Step.Compile,
 ) *std.Build.Step.Compile {
     const options = b.addOptions();
     options.addOption(bool, "use_luajit", use_luajit);
 
     const nlua0_exe = b.addExecutable(.{
         .name = "nlua0",
-        .root_source_file = b.path("src/nlua0.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/nlua0.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     const nlua0_mod = nlua0_exe.root_module;
 
     const exe_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/nlua0.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/nlua0.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     const embedded_data = b.addModule("embedded_data", .{
@@ -31,10 +36,11 @@ pub fn build_nlua0(
     });
 
     for ([2]*std.Build.Module{ nlua0_mod, exe_unit_tests.root_module }) |mod| {
-        mod.addImport("ziglua", ziglua.module("lua_wrapper"));
+        mod.addImport("ziglua", ziglua.module("zlua"));
         mod.addImport("embedded_data", embedded_data);
         // addImport already links by itself. but we need headers as well..
         mod.linkLibrary(ziglua.artifact("lua"));
+        mod.linkLibrary(libluv);
 
         mod.addOptions("options", options);
 
@@ -112,10 +118,13 @@ pub fn build_libluv(
 ) !*std.Build.Step.Compile {
     const upstream = b.dependency("luv", .{});
     const compat53 = b.dependency("lua_compat53", .{});
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "luv",
-        .target = target,
-        .optimize = optimize,
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     lib.linkLibrary(lua);

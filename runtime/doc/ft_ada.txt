@@ -3,27 +3,12 @@
 
 		    ADA FILE TYPE PLUG-INS REFERENCE MANUAL~
 
-ADA								      *ada.vim*
+ADA								*ft-ada-syntax*
 
-1.  Syntax Highlighting			    |ft-ada-syntax|
-2.  File type Plug-in			    |ft-ada-plugin|
-3.  Omni Completion			    |ft-ada-omni|
-    3.1 Omni Completion with "gnat xref"	|gnat-xref|
-    3.2 Omni Completion with "ctags"		|ada-ctags|
-4.  Compiler Support			    |ada-compiler|
-    4.1 GNAT					|compiler-gnat|
-    4.2 Dec Ada					|compiler-decada|
-5.  References				    |ada-reference|
-    5.1 Options					|ft-ada-options|
-    5.2 Commands				|ft-ada-commands|
-    5.3 Variables				|ft-ada-variables|
-    5.4 Constants				|ft-ada-constants|
-    5.5 Functions				|ft-ada-functions|
-6.  Extra Plug-ins			    |ada-extra-plugins|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Syntax Highlighting ~
-							       *ft-ada-syntax*
 
 This mode is designed for the 2005 edition of Ada ("Ada 2005"), which includes
 support for objected-programming, protected types, and so on.  It handles code
@@ -76,8 +61,8 @@ The Ada plug-in provides support for:
  - user completion	(|i_CTRL-X_CTRL-U|)
  - tag searches		(|tagsrch.txt|)
  - Quick Fix		(|quickfix.txt|)
- - backspace handling	(|'backspace'|)
- - comment handling	(|'comments'|, |'commentstring'|)
+ - backspace handling	('backspace')
+ - comment handling	('comments', 'commentstring')
 
 The plug-in only activates the features of the Ada mode whenever an Ada
 file is opened and adds Ada related entries to the main and pop-up menu.
@@ -197,7 +182,7 @@ g:gnat.Project_File	string
 
 							 *g:gnat.Make_Command*
 g:gnat.Make_Command	string
-		External command used for |g:gnat.Make()| (|'makeprg'|).
+		External command used for |g:gnat.Make()| ('makeprg').
 
 						       *g:gnat.Pretty_Program*
 g:gnat.Pretty_Program	string
@@ -213,7 +198,7 @@ g:gnat.Tags_Command	string
 
 							 *g:gnat.Error_Format*
 g:gnat.Error_Format	string
-		Error format (|'errorformat'|)
+		Error format ('errorformat')
 
 ------------------------------------------------------------------------------
 4.2 Dec Ada ~
@@ -243,11 +228,11 @@ g:decada.Unit_Name()	function
 
 						       *g:decada.Make_Command*
 g:decada.Make_Command	string
-		External command used for |g:decada.Make()| (|'makeprg'|).
+		External command used for |g:decada.Make()| ('makeprg').
 
 						       *g:decada.Error_Format*
 g:decada.Error_Format	string
-		Error format (|'errorformat'|).
+		Error format ('errorformat').
 
 ==============================================================================
 5. References ~

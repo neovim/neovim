@@ -2,21 +2,26 @@
 ${NVIM_VERSION}
 ```
 
+## Release notes
+
+- [Changelog](https://github.com/neovim/neovim/commit/${NVIM_COMMIT}) (fixes + features)
+- [News](./runtime/doc/news.txt) (`:help news` in Nvim)
+
 ## Install
 
 ### Windows
 
 #### Zip
 
-1. Download **nvim-win64.zip**
+1. Download **nvim-win64.zip** (or **nvim-win-arm64.zip** for ARM)
 2. Extract the zip
-3. Run `nvim.exe` on your CLI of choice
+3. Run `nvim.exe` in your terminal
 
 #### MSI
 
-1. Download **nvim-win64.msi**
+1. Download **nvim-win64.msi** (or **nvim-win-arm64.msi** for ARM)
 2. Run the MSI
-3. Run `nvim.exe` on your CLI of choice
+3. Run `nvim.exe` in your terminal
 
 Note: On Windows "Server" you may need to [install vcruntime140.dll](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170).
 
@@ -54,7 +59,7 @@ If your system does not have the required glibc version, try the (unsupported) [
 2. Extract: `tar xzvf nvim-linux-x86_64.tar.gz`
 3. Run `./nvim-linux-x86_64/bin/nvim`
 
-### Linux (arm64) - Untested
+### Linux (arm64)
 
 #### AppImage
 

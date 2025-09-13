@@ -12,6 +12,4 @@ enum {
   CCGD_EXCMD   = 16,  ///< may suggest using !
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds2.h.generated.h"
-#endif
+#include "ex_cmds2.h.generated.h"

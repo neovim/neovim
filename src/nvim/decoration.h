@@ -37,7 +37,7 @@ typedef struct {
   int end_row;
   int end_col;
   int ordering;  ///< range insertion order
-  DecorPriority priority;
+  DecorPriorityInternal priority_internal;
   bool owned;  ///< ephemeral decoration, free memory immediately
   DecorRangeKind kind;
   // next pointers MUST NOT be used, these are separate ranges
@@ -104,10 +104,8 @@ EXTERN DecorState decor_state INIT( = { 0 });
 // associated with a buffer can be freed when the buffer is unloaded.
 EXTERN kvec_t(DecorSignHighlight) decor_items INIT( = KV_INITIAL_VALUE);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration.h.generated.h"
-# include "decoration.h.inline.generated.h"
-#endif
+#include "decoration.h.generated.h"
+#include "decoration.h.inline.generated.h"
 
 static inline int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *state)
   FUNC_ATTR_ALWAYS_INLINE

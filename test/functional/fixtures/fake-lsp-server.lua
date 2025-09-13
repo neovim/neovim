@@ -172,7 +172,7 @@ function tests.prepare_rename_nil()
     body = function()
       notify('start')
       expect_request('textDocument/prepareRename', function()
-        return nil, nil
+        return {}, nil
       end)
       notify('shutdown')
     end,
@@ -197,7 +197,7 @@ function tests.prepare_rename_placeholder()
       end)
       expect_request('textDocument/rename', function(params)
         assert_eq(params.newName, 'renameto')
-        return nil, nil
+        return {}, nil
       end)
       notify('shutdown')
     end,
@@ -226,7 +226,7 @@ function tests.prepare_rename_range()
       end)
       expect_request('textDocument/rename', function(params)
         assert_eq(params.newName, 'renameto')
-        return nil, nil
+        return {}, nil
       end)
       notify('shutdown')
     end,

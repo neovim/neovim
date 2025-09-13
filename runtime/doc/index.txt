@@ -516,7 +516,7 @@ tag		command		   action in op-pending and Visual mode	~
 tag		command		   action in Normal mode	~
 ------------------------------------------------------------------------------ ~
 |CTRL-W_CTRL-B|	CTRL-W CTRL-B	   same as "CTRL-W b"
-|CTRL-W_CTRL-C|	CTRL-W CTRL-C	   same as "CTRL-W c"
+|CTRL-W_CTRL-C|	CTRL-W CTRL-C	   no-op
 |CTRL-W_CTRL-D|	CTRL-W CTRL-D	   same as "CTRL-W d"
 |CTRL-W_CTRL-F|	CTRL-W CTRL-F	   same as "CTRL-W f"
 		CTRL-W CTRL-G	   same as "CTRL-W g .."
@@ -1017,7 +1017,7 @@ tag		command		action in Command-line editing mode	~
 |c_CTRL-D|	CTRL-D		list completions that match the pattern in
 				front of the cursor
 |c_CTRL-E|	CTRL-E		cursor to end of command-line
-|'cedit'|	CTRL-F		default value for 'cedit': opens the
+'cedit'		CTRL-F		default value for 'cedit': opens the
 				command-line window; otherwise not used
 |c_CTRL-G|	CTRL-G		next match when 'incsearch' is active
 |c_<BS>|	<BS>		delete the character in front of the cursor
@@ -1266,6 +1266,7 @@ tag		command		action ~
 |:delcommand|	:delc[ommand]	delete user-defined command
 |:delfunction|	:delf[unction]	delete a user function
 |:delmarks|	:delm[arks]	delete marks
+|:detach|	:detach		detach the current UI
 |:diffupdate|	:dif[fupdate]	update 'diff' buffers
 |:diffget|	:diffg[et]	remove differences in current buffer
 |:diffoff|	:diffo[ff]	switch off diff mode
@@ -1472,7 +1473,6 @@ tag		command		action ~
 |:options|	:opt[ions]	open the options-window
 |:ounmap|	:ou[nmap]	like ":unmap" but for Operator-pending mode
 |:ounmenu|	:ounme[nu]	remove menu for Operator-pending mode
-|:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pbuffer|	:pb[uffer]	edit buffer in the preview window
@@ -1525,6 +1525,7 @@ tag		command		action ~
 |:redrawtabline|  :redrawt[abline]  force a redraw of the tabline
 |:registers|	:reg[isters]	display the contents of registers
 |:resize|	:res[ize]	change current window height
+|:restart|	:restart	restart the Nvim server
 |:retab|	:ret[ab]	change tab size
 |:return|	:retu[rn]	return from a user function
 |:rewind|	:rew[ind]	go to the first file in the argument list
@@ -1666,6 +1667,7 @@ tag		command		action ~
 |:unabbreviate|	:una[bbreviate]	remove abbreviation
 |:unhide|	:unh[ide]	open a window for each loaded file in the
 				buffer list
+|:uniq|		:uni[q]		uniq lines
 |:unlet|	:unl[et]	delete variable
 |:unlockvar|	:unlo[ckvar]	unlock variables
 |:unmap|	:unm[ap]	remove mapping

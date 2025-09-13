@@ -873,15 +873,22 @@ function vim.fn.charcol(expr, winid) end
 --- @return integer
 function vim.fn.charidx(string, idx, countcc, utf16) end
 
---- Change the current working directory to {dir}.  The scope of
---- the directory change depends on the directory of the current
---- window:
----   - If the current window has a window-local directory
----     (|:lcd|), then changes the window local directory.
----   - Otherwise, if the current tabpage has a local
----     directory (|:tcd|) then changes the tabpage local
----     directory.
----   - Otherwise, changes the global directory.
+--- Changes the current working directory to {dir}.  The scope of
+--- the change is determined as follows:
+--- If {scope} is not present, the current working directory is
+--- changed to the scope of the current directory:
+---     - If the window local directory (|:lcd|) is set, it
+---       changes the current working directory for that scope.
+---     - Otherwise, if the tab page local directory (|:tcd|) is
+---       set, it changes the current directory for that scope.
+---     - Otherwise, changes the global directory for that scope.
+---
+--- If {scope} is present, changes the current working directory
+--- for the specified scope:
+---     "window"  Changes the window local directory.  |:lcd|
+---     "tabpage"  Changes the tab page local directory.  |:tcd|
+---     "global"  Changes the global directory.  |:cd|
+---
 --- {dir} must be a String.
 --- If successful, returns the previous working directory.  Pass
 --- this to another chdir() to restore the directory.
@@ -896,8 +903,9 @@ function vim.fn.charidx(string, idx, countcc, utf16) end
 --- <
 ---
 --- @param dir string
+--- @param scope? string
 --- @return string
-function vim.fn.chdir(dir) end
+function vim.fn.chdir(dir, scope) end
 
 --- Get the amount of indent for line {lnum} according the
 --- |C-indenting| rules, as with 'cindent'.
@@ -1123,8 +1131,8 @@ function vim.fn.complete_info(what) end
 ---   or empty string if no match was found or when using the
 ---   default 'iskeyword' pattern.
 ---
---- When 'isexpand' is empty, uses the 'iskeyword' pattern
---- "\k\+$" to find the start of the current keyword.
+--- When 'isexpand' is empty, uses the 'iskeyword' pattern "\k\+$"
+--- to find the start of the current keyword.
 ---
 --- Examples: >vim
 ---   set isexpand=.,->,/,/*,abc
@@ -1855,34 +1863,35 @@ function vim.fn.exp(expr) end
 --- done like for the |cmdline-special| variables with their
 --- associated modifiers.  Here is a short overview:
 ---
----   %    current file name
----   #    alternate file name
----   #n    alternate file name n
----   <cfile>    file name under the cursor
----   <afile>    autocmd file name
----   <abuf>    autocmd buffer number (as a String!)
----   <amatch>  autocmd matched name
+---   %    Current file name
+---   #    Alternate file name
+---   #n    Alternate file name n
+---   <cfile>    File name under the cursor
+---   <afile>    Autocmd file name
+---   <abuf>    Autocmd buffer number (as a String!)
+---   <amatch>  Autocmd matched name
 ---   <cexpr>    C expression under the cursor
----   <sfile>    sourced script file or function name
----   <slnum>    sourced script line number or function
+---   <sfile>    Deprecated, use <script> or <stack>
+---   <slnum>    Sourced script line number or function
 ---       line number
----   <sflnum>  script file line number, also when in
+---   <sflnum>  Script file line number, also when in
 ---       a function
 ---   <SID>    "<SNR>123_"  where "123" is the
 ---       current script ID  |<SID>|
----   <script>  sourced script file, or script file
----       where the current function was defined
----   <stack>    call stack
----   <cword>    word under the cursor
+---   <script>  Sourced script file, or script file
+---       where the current function was defined.
+---       For Lua see |lua-script-location|.
+---   <stack>    Call stack
+---   <cword>    Word under the cursor
 ---   <cWORD>    WORD under the cursor
----   <client>  the {clientid} of the last received
+---   <client>  The {clientid} of the last received
 ---       message
 --- Modifiers:
----   :p    expand to full path
----   :h    head (last path component removed)
----   :t    tail (last path component only)
----   :r    root (one extension removed)
----   :e    extension only
+---   :p    Expand to full path
+---   :h    Head (last path component removed)
+---   :t    Tail (last path component only)
+---   :r    Root (one extension removed)
+---   :e    Extension only
 ---
 --- Example: >vim
 ---   let &tags = expand("%:p:h") .. "/tags"
@@ -2785,6 +2794,7 @@ function vim.fn.getbufoneline(buf, lnum) end
 --- Examples: >vim
 ---   let bufmodified = getbufvar(1, "&mod")
 ---   echo "todo myvar = " .. getbufvar("todo", "myvar")
+--- <
 ---
 --- @param buf integer|string
 --- @param varname string
@@ -2826,8 +2836,7 @@ function vim.fn.getchangelist(buf) end
 ---   Return zero otherwise.
 --- If {expr} is 1, only check if a character is available, it is
 ---   not consumed.  Return zero if no character available.
---- If you prefer always getting a string use |getcharstr()|, or
---- specify |FALSE| as "number" in {opts}.
+--- To always get a string, specify "number" as |FALSE| in {opts}.
 ---
 --- Without {expr} and when {expr} is 0 a whole character or
 --- special key is returned.  If it is a single character, the
@@ -3000,6 +3009,9 @@ function vim.fn.getcmdcomplpat() end
 --- |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
+--- To get the type of the command-line completion for a specified
+--- string, use |getcompletiontype()|.
+---
 --- @return string
 function vim.fn.getcmdcompltype() end
 
@@ -3089,13 +3101,13 @@ function vim.fn.getcmdwintype() end
 --- customlist,{func} custom completion, defined via {func}
 --- diff_buffer  |:diffget| and |:diffput| completion
 --- dir    directory names
---- dir_in_path  directory names in |'cdpath'|
+--- dir_in_path  directory names in 'cdpath'
 --- environment  environment variable names
 --- event    autocommand events
 --- expression  Vim expression
 --- file    file and directory names
---- file_in_path  file and directory names in |'path'|
---- filetype  filetype names |'filetype'|
+--- file_in_path  file and directory names in 'path'
+--- filetype  filetype names 'filetype'
 --- filetypecmd  |:filetype| suboptions
 --- function  function name
 --- help    help subjects
@@ -3109,12 +3121,13 @@ function vim.fn.getcmdwintype() end
 --- messages  |:messages| suboptions
 --- option    options
 --- packadd    optional package |pack-add| names
+--- retab    |:retab| suboptions
 --- runtime    |:runtime| completion
 --- scriptnames  sourced script names |:scriptnames|
 --- shellcmd  Shell command
 --- shellcmdline  Shell command line with filename arguments
 --- sign    |:sign| suboptions
---- syntax    syntax file names |'syntax'|
+--- syntax    syntax file names 'syntax'
 --- syntime    |:syntime| suboptions
 --- tag    tags
 --- tag_listfiles  tags, file names
@@ -3150,6 +3163,16 @@ function vim.fn.getcmdwintype() end
 --- @return string[]
 function vim.fn.getcompletion(pat, type, filtered) end
 
+--- Return the type of the command-line completion using {pat}.
+--- When no corresponding completion type is found, an empty
+--- string is returned.
+--- To get the current command-line completion type, use
+--- |getcmdcompltype()|.
+---
+--- @param pat string
+--- @return string
+function vim.fn.getcompletiontype(pat) end
+
 --- Get the position of the cursor.  This is like getpos('.'), but
 --- includes an extra "curswant" item in the list:
 ---     [0, lnum, col, off, curswant] ~
@@ -3175,7 +3198,7 @@ function vim.fn.getcompletion(pat, type, filtered) end
 --- |winrestview()| for restoring more state.
 ---
 --- @param winid? integer
---- @return any
+--- @return [integer, integer, integer, integer, integer]
 function vim.fn.getcurpos(winid) end
 
 --- Same as |getcurpos()| but the column number in the returned
@@ -3450,7 +3473,7 @@ function vim.fn.getmarklist(buf) end
 --- <
 ---
 --- @param win? integer
---- @return any
+--- @return vim.fn.getmatches.ret.item[]
 function vim.fn.getmatches(win) end
 
 --- Returns a |Dictionary| with the last known position of the
@@ -3551,7 +3574,7 @@ function vim.fn.getpid() end
 --- Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 ---
 --- @param expr string
---- @return integer[]
+--- @return [integer, integer, integer, integer]
 function vim.fn.getpos(expr) end
 
 --- Returns a |List| with all the current quickfix errors.  Each
@@ -3776,9 +3799,9 @@ function vim.fn.getreginfo(regname) end
 ---   \ getpos('v'), getpos('.'), #{ type: mode() })<CR>
 --- <
 ---
---- @param pos1 table
---- @param pos2 table
---- @param opts? table
+--- @param pos1 [integer, integer, integer, integer]
+--- @param pos2 [integer, integer, integer, integer]
+--- @param opts? {type?:string, exclusive?:boolean}
 --- @return string[]
 function vim.fn.getregion(pos1, pos2, opts) end
 
@@ -3813,10 +3836,10 @@ function vim.fn.getregion(pos1, pos2, opts) end
 ---       value of 0 is used for both positions.
 ---       (default: |FALSE|)
 ---
---- @param pos1 table
---- @param pos2 table
---- @param opts? table
---- @return integer[][][]
+--- @param pos1 [integer, integer, integer, integer]
+--- @param pos2 [integer, integer, integer, integer]
+--- @param opts? {type?:string, exclusive?:boolean, eol?:boolean}
+--- @return [ [integer, integer, integer, integer], [integer, integer, integer, integer] ][]
 function vim.fn.getregionpos(pos1, pos2, opts) end
 
 --- The result is a String, which is type of register {regname}.
@@ -4079,6 +4102,7 @@ function vim.fn.getwinposy() end
 --- Examples: >vim
 ---   let list_is_on = getwinvar(2, '&list')
 ---   echo "myvar = " .. getwinvar(1, 'myvar')
+--- <
 ---
 --- @param winnr integer
 --- @param varname string
@@ -4735,6 +4759,7 @@ function vim.fn.inputdialog(...) end
 --- Example: >vim
 ---   let color = inputlist(['Select color:', '1. red',
 ---     \ '2. green', '3. blue'])
+--- <
 ---
 --- @param textlist string[]
 --- @return any
@@ -4883,22 +4908,27 @@ function vim.fn.islocked(expr) end
 --- @return 0|1
 function vim.fn.isnan(expr) end
 
---- Return a |List| with all the key-value pairs of {dict}.  Each
---- |List| item is a list with two items: the key of a {dict}
---- entry and the value of this entry.  The |List| is in arbitrary
---- order.  Also see |keys()| and |values()|.
---- Example: >vim
----   for [key, value] in items(mydict)
----      echo key .. ': ' .. value
----   endfor
---- <
---- A List or a String argument is also supported.  In these
---- cases, items() returns a List with the index and the value at
---- the index.
+--- Return a |List| with all key/index and value pairs of {expr}.
+--- Each |List| item is a list with two items:
+--- - for a |Dict|: the key and the value
+--- - for a |List| or |String|: the index and the value
+--- The returned |List| is in arbitrary order for a |Dict|,
+--- otherwise it's in ascending order of the index.
 ---
---- @param dict table
+--- Also see |keys()| and |values()|.
+---
+--- Example: >vim
+---   let mydict = #{a: 'red', b: 'blue'}
+---   for [key, value] in items(mydict)
+---      echo $"{key} = {value}"
+---   endfor
+---   echo items([1, 2, 3])
+---   echo items("foobar")
+--- <
+---
+--- @param expr table|string
 --- @return any
-function vim.fn.items(dict) end
+function vim.fn.items(expr) end
 
 --- @deprecated
 --- Obsolete name for |chanclose()|
@@ -5190,6 +5220,7 @@ function vim.fn.len(expr) end
 --- object code must be compiled as position-independent ('PIC').
 --- Examples: >vim
 ---   echo libcall("libc.so", "getenv", "HOME")
+--- <
 ---
 --- @param libname string
 --- @param funcname string
@@ -5892,9 +5923,6 @@ function vim.fn.matchend(expr, pat, start, count) end
 ---     given sequence.
 ---     limit  Maximum number of matches in {list} to be
 ---     returned.  Zero means no limit.
----     camelcase  Use enhanced camel case scoring making results
----     better suited for completion related to
----     programming languages.  Defaults to v:true.
 ---
 --- If {list} is a list of dictionaries, then the optional {dict}
 --- argument supports the following additional items:
@@ -6863,6 +6891,16 @@ function vim.fn.prevnonblank(lnum) end
 --- @return string
 function vim.fn.printf(fmt, expr1) end
 
+--- Gets the current user-input in |prompt-buffer| {buf} without invoking
+--- prompt_callback. {buf} can be a buffer name or number.
+---
+--- If the buffer doesn't exist or isn't a prompt buffer, an empty
+--- string is returned.
+---
+--- @param buf integer|string
+--- @return any
+function vim.fn.prompt_getinput(buf) end
+
 --- Returns the effective prompt text for buffer {buf}.  {buf} can
 --- be a buffer name or number.  See |prompt-buffer|.
 ---
@@ -7133,7 +7171,7 @@ function vim.fn.readdir(directory, expr) end
 --- @param fname string
 --- @param type? string
 --- @param max? integer
---- @return any
+--- @return string[]
 function vim.fn.readfile(fname, type, max) end
 
 --- {func} is called for every item in {object}, which can be a
@@ -7671,11 +7709,12 @@ function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 ---
 --- To get the last search count when |n| or |N| was pressed, call
 --- this function with `recompute: 0` . This sometimes returns
---- wrong information because |n| and |N|'s maximum count is 999.
---- If it exceeded 999 the result must be max count + 1 (1000). If
---- you want to get correct information, specify `recompute: 1`: >vim
+--- wrong information because of 'maxsearchcount'.
+--- If the count exceeded 'maxsearchcount', the result must be
+--- 'maxsearchcount' + 1. If you want to get correct information,
+--- specify `recompute: 1`: >vim
 ---
----   " result == maxcount + 1 (1000) when many matches
+---   " result == 'maxsearchcount' + 1 when many matches
 ---   let result = searchcount(#{recompute: 0})
 ---
 ---   " Below returns correct result (recompute defaults
@@ -7762,7 +7801,7 @@ function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 ---         result.  if search exceeded
 ---         total count, "total" value
 ---         becomes `maxcount + 1`
----         (default: 0)
+---         (default: 'maxsearchcount')
 ---   pos    |List|    `[lnum, col, off]` value
 ---         when recomputing the result.
 ---         this changes "current" result
@@ -7935,12 +7974,20 @@ function vim.fn.searchpos(pattern, flags, stopline, timeout, skip) end
 
 --- Returns a list of server addresses, or empty if all servers
 --- were stopped. |serverstart()| |serverstop()|
+---
+--- The optional argument {opts} is a Dict and supports the following items:
+---
+---   peer  : If |TRUE|, servers not started by |serverstart()|
+---           will also be returned. (default: |FALSE|)
+---           Not supported on Windows yet.
+---
 --- Example: >vim
 ---   echo serverlist()
 --- <
 ---
+--- @param opts? table
 --- @return string[]
-function vim.fn.serverlist() end
+function vim.fn.serverlist(opts) end
 
 --- Opens a socket or named pipe at {address} and listens for
 --- |RPC| messages. Clients can send |API| commands to the
@@ -8256,7 +8303,7 @@ function vim.fn.setloclist(nr, list, action, what) end
 --- If {win} is specified, use the window with this number or
 --- window ID instead of the current window.
 ---
---- @param list any
+--- @param list vim.fn.getmatches.ret.item[]
 --- @param win? integer
 --- @return any
 function vim.fn.setmatches(list, win) end
@@ -8489,6 +8536,7 @@ function vim.fn.setqflist(list, action, what) end
 --- You can also change the type of a register by appending
 --- nothing: >vim
 ---   call setreg('a', '', 'al')
+--- <
 ---
 --- @param regname string
 --- @param value any
@@ -8574,6 +8622,7 @@ function vim.fn.settagstack(nr, dict, action) end
 --- Examples: >vim
 ---   call setwinvar(1, "&list", 0)
 ---   call setwinvar(2, "myvar", "foobar")
+--- <
 ---
 --- @param nr integer
 --- @param varname string
@@ -9018,6 +9067,7 @@ function vim.fn.sign_undefine(list) end
 ---
 ---   " Remove all the placed signs from all the buffers
 ---   call sign_unplace('*')
+--- <
 ---
 --- @param group string
 --- @param dict? vim.fn.sign_unplace.dict
@@ -9428,8 +9478,8 @@ function vim.fn.stdioopen(opts) end
 --- log          String  Logs directory (for use by plugins too).
 --- run          String  Run directory: temporary, local storage
 ---          for sockets, named pipes, etc.
---- state        String  Session state directory: storage for file
----          drafts, swap, undo, |shada|.
+--- state        String  Session state: storage for backupdir,
+---          file drafts, |shada|, swap, undo, 'viewdir'.
 ---
 --- Example: >vim
 ---   echo stdpath("config")
@@ -9610,6 +9660,7 @@ function vim.fn.strdisplaywidth(string, col) end
 ---   echo strftime("%H:%M")       " 11:55
 ---   echo strftime("%c", getftime("file.c"))
 ---            " Show mod time of file.c.
+--- <
 ---
 --- @param format string
 --- @param time? number
@@ -9775,7 +9826,7 @@ function vim.fn.strptime(format, timestring) end
 function vim.fn.strridx(haystack, needle, start) end
 
 --- The result is a String, which is {string} with all unprintable
---- characters translated into printable characters |'isprint'|.
+--- characters translated into printable characters 'isprint'.
 --- Like they are shown in a window.  Example: >vim
 ---   echo strtrans(\@a)
 --- <This displays a newline in register a as "^\@" instead of
@@ -9918,6 +9969,7 @@ function vim.fn.substitute(string, pat, sub, flags) end
 ---   let &directory = '.'
 ---   let swapfiles = swapfilelist()
 ---   let &directory = save_dir
+--- <
 ---
 --- @return string[]
 function vim.fn.swapfilelist() end
@@ -10268,7 +10320,7 @@ function vim.fn.tagfiles() end
 --- Refer to |tag-regexp| for more information about the tag
 --- search regular expression pattern.
 ---
---- Refer to |'tags'| for information about how the tags file is
+--- Refer to 'tags' for information about how the tags file is
 --- located by Vim. Refer to |tags-file-format| for the format of
 --- the tags file generated by the different ctags tools.
 ---
@@ -10586,12 +10638,15 @@ function vim.fn.undofile(name) end
 --- @return vim.fn.undotree.ret
 function vim.fn.undotree(buf) end
 
+--- Note: Prefer |vim.list.unique()| in Lua.
+---
 --- Remove second and succeeding copies of repeated adjacent
 --- {list} items in-place.  Returns {list}.  If you want a list
 --- to remain unmodified make a copy first: >vim
 ---   let newlist = uniq(copy(mylist))
 --- <The default compare function uses the string representation of
 --- each item.  For the use of {func} and {dict} see |sort()|.
+--- For deduplicating text in the current buffer see |:uniq|.
 ---
 --- Returns zero if {list} is not a |List|.
 ---
@@ -10662,7 +10717,7 @@ function vim.fn.values(dict) end
 --- last character.  When "off" is omitted zero is used.  When
 --- Virtual editing is active in the current mode, a position
 --- beyond the end of the line can be returned.  Also see
---- |'virtualedit'|
+--- 'virtualedit'
 ---
 --- If {list} is present and non-zero then virtcol() returns a
 --- List with the first and last screen position occupied by the
@@ -10693,7 +10748,7 @@ function vim.fn.values(dict) end
 --- @param expr string|any[]
 --- @param list? boolean
 --- @param winid? integer
---- @return any
+--- @return integer|[integer, integer]
 function vim.fn.virtcol(expr, list, winid) end
 
 --- The result is a Number, which is the byte index of the
@@ -10777,6 +10832,29 @@ function vim.fn.wait(timeout, condition, interval) end
 ---
 --- @return any
 function vim.fn.wildmenumode() end
+
+--- Start wildcard expansion in the command-line, using the
+--- behavior defined by the 'wildmode' and 'wildoptions' settings.
+---
+--- This function also enables completion in search patterns such
+--- as |/|, |?|, |:s|, |:g|, |:v| and |:vimgrep|.
+---
+--- Unlike pressing 'wildchar' manually, this function does not
+--- produce a beep when no matches are found and generally
+--- operates more quietly.  This makes it suitable for triggering
+--- completion automatically.
+---
+--- Note: After navigating command-line history, the first call to
+--- wildtrigger() is a no-op; a second call is needed to start
+--- expansion.  This is to support history navigation in
+--- command-line autocompletion.
+---
+--- See |cmdline-autocompletion|.
+---
+--- Return value is always 0.
+---
+--- @return number
+function vim.fn.wildtrigger() end
 
 --- Like `execute()` but in the context of window {id}.
 --- The window will temporarily be made the current window,

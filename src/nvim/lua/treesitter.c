@@ -51,7 +51,8 @@ typedef struct {
 } TSLuaLoggerOpts;
 
 typedef struct {
-  TSTree *tree;
+  // We derive TSNode's, TSQueryCursor's, etc., from the TSTree, so it must not be mutated.
+  const TSTree *tree;
 } TSLuaTree;
 
 typedef struct {
@@ -59,9 +60,7 @@ typedef struct {
   uint64_t timeout_threshold_ns;
 } TSLuaParserCallbackPayload;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/treesitter.c.generated.h"
-#endif
+#include "lua/treesitter.c.generated.h"
 
 static PMap(cstr_t) langs = MAP_INIT;
 
@@ -504,7 +503,7 @@ static bool on_parser_progress(TSParseState *state)
 static int parser_parse(lua_State *L)
 {
   TSParser *p = parser_check(L, 1);
-  TSTree *old_tree = NULL;
+  const TSTree *old_tree = NULL;
   if (!lua_isnil(L, 2)) {
     TSLuaTree *ud = luaL_checkudata(L, 2, TS_META_TREE);
     old_tree = ud ? ud->tree : NULL;
@@ -768,8 +767,8 @@ static struct luaL_Reg tree_meta[] = {
 /// Push tree interface on to the lua stack.
 ///
 /// The tree is not copied. Ownership of the tree is transferred from C to
-/// Lua. If needed use ts_tree_copy() in the caller
-static void push_tree(lua_State *L, TSTree *tree)
+/// Lua. If needed use ts_tree_copy() in the caller.
+static void push_tree(lua_State *L, const TSTree *tree)
 {
   if (tree == NULL) {
     lua_pushnil(L);
@@ -777,20 +776,9 @@ static void push_tree(lua_State *L, TSTree *tree)
   }
 
   TSLuaTree *ud = lua_newuserdata(L, sizeof(TSLuaTree));  // [udata]
-
   ud->tree = tree;
-
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_TREE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
-
-  // To prevent the tree from being garbage collected, create a reference to it
-  // in the fenv which will be passed to userdata nodes of the tree.
-  // Note: environments (fenvs) associated with userdata have no meaning in Lua
-  // and are only used to associate a table.
-  lua_createtable(L, 1, 0);  // [udata, reftable]
-  lua_pushvalue(L, -2);  // [udata, reftable, udata]
-  lua_rawseti(L, -2, 1);  // [udata, reftable]
-  lua_setfenv(L, -2);  // [udata]
 }
 
 static int tree_copy(lua_State *L)
@@ -821,9 +809,12 @@ static int tree_edit(lua_State *L)
   TSInputEdit edit = { start_byte, old_end_byte, new_end_byte,
                        start_point, old_end_point, new_end_point };
 
-  ts_tree_edit(ud->tree, &edit);
+  TSTree *new_tree = ts_tree_copy(ud->tree);
+  ts_tree_edit(new_tree, &edit);
 
-  return 0;
+  push_tree(L, new_tree);  // [tree]
+
+  return 1;
 }
 
 static int tree_get_ranges(lua_State *L)
@@ -844,7 +835,12 @@ static int tree_get_ranges(lua_State *L)
 static int tree_gc(lua_State *L)
 {
   TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
-  ts_tree_delete(ud->tree);
+
+  // SAFETY: we can cast the const away because the tree is only garbage collected after all of its
+  // TSNode's, TSQuerCurors, etc., are unreachable (each contains a reference to the TSLuaTree)
+  TSTree *tree = (TSTree *)ud->tree;
+
+  ts_tree_delete(tree);
   return 0;
 }
 
@@ -857,8 +853,23 @@ static int tree_tostring(lua_State *L)
 static int tree_root(lua_State *L)
 {
   TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
+
   TSNode root = ts_tree_root_node(ud->tree);
-  push_node(L, root, 1);
+
+  TSNode *node_ud = lua_newuserdata(L, sizeof(TSNode));  // [node]
+  *node_ud = root;
+  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_NODE);  // [node, meta]
+  lua_setmetatable(L, -2);  // [node]
+
+  // To prevent the tree from being garbage collected, create a reference to it
+  // in the fenv which will be passed to userdata nodes of the tree.
+  // Note: environments (fenvs) associated with userdata have no meaning in Lua
+  // and are only used to associate a table.
+  lua_createtable(L, 1, 0);  // [node, reftable]
+  lua_pushvalue(L, 1);  // [node, reftable, tree]
+  lua_rawseti(L, -2, 1);  // [node, reftable]
+  lua_setfenv(L, -2);  // [node]
+
   return 1;
 }
 
@@ -905,9 +916,9 @@ static struct luaL_Reg node_meta[] = {
 
 /// Push node interface on to the Lua stack
 ///
-/// Top of stack must either be the tree this node belongs to or another node
-/// of the same tree! This value is not popped. Can only be called inside a
-/// cfunction with the tslua environment.
+/// Stack at `uindex` must have a value with a fenv with a reference to node's
+/// tree. This value is not popped. Can only be called inside a cfunction with
+/// the tslua environment.
 static void push_node(lua_State *L, TSNode node, int uindex)
 {
   assert(uindex > 0 || uindex < -LUA_MINSTACK);
@@ -915,12 +926,13 @@ static void push_node(lua_State *L, TSNode node, int uindex)
     lua_pushnil(L);  // [nil]
     return;
   }
+
   TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [udata]
   *ud = node;
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_NODE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
 
-  // Copy the fenv which contains the nodes tree.
+  // Copy the fenv to keep alive a reference to the node's tree.
   lua_getfenv(L, uindex);  // [udata, reftable]
   lua_setfenv(L, -2);  // [udata]
 }
@@ -1307,8 +1319,12 @@ static int node_root(lua_State *L)
 static int node_tree(lua_State *L)
 {
   node_check(L, 1);
-  lua_getfenv(L, 1);  // [udata, reftable]
-  lua_rawgeti(L, -1, 1);  // [udata, reftable, tree_udata]
+
+  // Get the tree from the node fenv. We cannot use `push_tree(node.tree)` here because that would
+  // cause a double free.
+  lua_getfenv(L, 1);  // [node, reftable]
+  lua_rawgeti(L, 2, 1);  // [node, reftable, tree]
+
   return 1;
 }
 
@@ -1345,33 +1361,45 @@ static int tslua_push_querycursor(lua_State *L)
 
   TSQuery *query = query_check(L, 2);
   TSQueryCursor *cursor = ts_query_cursor_new();
+
+  if (lua_gettop(L) >= 3 && !lua_isnil(L, 3)) {
+    luaL_argcheck(L, lua_istable(L, 3), 3, "table expected");
+  }
+
+  lua_getfield(L, 3, "start_row");
+  uint32_t start_row = (uint32_t)luaL_checkinteger(L, -1);
+  lua_pop(L, 1);
+
+  lua_getfield(L, 3, "start_col");
+  uint32_t start_col = (uint32_t)luaL_checkinteger(L, -1);
+  lua_pop(L, 1);
+
+  lua_getfield(L, 3, "end_row");
+  uint32_t end_row = (uint32_t)luaL_checkinteger(L, -1);
+  lua_pop(L, 1);
+
+  lua_getfield(L, 3, "end_col");
+  uint32_t end_col = (uint32_t)luaL_checkinteger(L, -1);
+  lua_pop(L, 1);
+
+  ts_query_cursor_set_point_range(cursor, (TSPoint){ start_row, start_col },
+                                  (TSPoint){ end_row, end_col });
+
+  lua_getfield(L, 3, "max_start_depth");
+  if (!lua_isnil(L, -1)) {
+    uint32_t max_start_depth = (uint32_t)luaL_checkinteger(L, -1);
+    ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
+  }
+  lua_pop(L, 1);
+
+  lua_getfield(L, 3, "match_limit");
+  if (!lua_isnil(L, -1)) {
+    uint32_t match_limit = (uint32_t)luaL_checkinteger(L, -1);
+    ts_query_cursor_set_match_limit(cursor, match_limit);
+  }
+  lua_pop(L, 1);
+
   ts_query_cursor_exec(cursor, query, node);
-
-  if (lua_gettop(L) >= 3) {
-    uint32_t start = (uint32_t)luaL_checkinteger(L, 3);
-    uint32_t end = lua_gettop(L) >= 4 ? (uint32_t)luaL_checkinteger(L, 4) : MAXLNUM;
-    ts_query_cursor_set_point_range(cursor, (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
-  }
-
-  if (lua_gettop(L) >= 5 && !lua_isnil(L, 5)) {
-    luaL_argcheck(L, lua_istable(L, 5), 5, "table expected");
-    lua_pushnil(L);  // [dict, ..., nil]
-    while (lua_next(L, 5)) {
-      // [dict, ..., key, value]
-      if (lua_type(L, -2) == LUA_TSTRING) {
-        char *k = (char *)lua_tostring(L, -2);
-        if (strequal("max_start_depth", k)) {
-          uint32_t max_start_depth = (uint32_t)lua_tointeger(L, -1);
-          ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
-        } else if (strequal("match_limit", k)) {
-          uint32_t match_limit = (uint32_t)lua_tointeger(L, -1);
-          ts_query_cursor_set_match_limit(cursor, match_limit);
-        }
-      }
-      // pop the value; lua_next will pop the key.
-      lua_pop(L, 1);  // [dict, ..., key]
-    }
-  }
 
   TSQueryCursor **ud = lua_newuserdata(L, sizeof(*ud));  // [node, query, ..., udata]
   *ud = cursor;

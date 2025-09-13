@@ -82,9 +82,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "window.c.generated.h"
-#endif
+#include "window.c.generated.h"
 
 #define NOWIN           ((win_T *)-1)   // non-existing window
 
@@ -426,7 +424,7 @@ newwindow:
   // move window to new tab page
   case 'T':
     CHECK_CMDWIN;
-    if (one_window(curwin)) {
+    if (one_window(curwin, NULL)) {
       msg(_(m_onlyone), 0);
     } else {
       tabpage_T *oldtab = curtab;
@@ -499,7 +497,7 @@ newwindow:
   case 'H':
   case 'L':
     CHECK_CMDWIN;
-    if (one_window(curwin)) {
+    if (one_window(curwin, NULL)) {
       beep_flush();
     } else {
       const int dir = ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
@@ -640,8 +638,8 @@ wingotofile:
     // Make a copy, if the line was changed it will be freed.
     ptr = xmemdupz(ptr, len);
 
-    find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
-                         type, Prenum1, ACTION_SPLIT, 1, MAXLNUM, false);
+    find_pattern_in_path(ptr, 0, len, true, Prenum == 0, type,
+                         Prenum1, ACTION_SPLIT, 1, MAXLNUM, false, false);
     xfree(ptr);
     curwin->w_set_curswant = true;
     break;
@@ -753,15 +751,17 @@ static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum
 void win_set_buf(win_T *win, buf_T *buf, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
+  const handle_T win_handle = win->handle;
   tabpage_T *tab = win_find_tabpage(win);
 
   // no redrawing and don't set the window title
   RedrawingDisabled++;
 
   switchwin_T switchwin;
+  int win_result;
 
   TRY_WRAP(err, {
-    int win_result = switch_win_noblock(&switchwin, win, tab, true);
+    win_result = switch_win_noblock(&switchwin, win, tab, true);
     if (win_result != FAIL) {
       const int save_acd = p_acd;
       if (!switchwin.sw_same_win) {
@@ -776,6 +776,9 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
       }
     }
   });
+  if (win_result == FAIL && !ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win_handle);
+  }
 
   // If window is not current, state logic will not validate its cursor. So do it now.
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
@@ -844,6 +847,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
         }
         int row_off = 0;
         int col_off = 0;
+        win_grid_alloc(win);
         grid = grid_adjust(&win->w_grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
@@ -1090,7 +1094,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
   bool toplevel = flags & (WSP_TOP | WSP_BOT);
 
   // add a status line when p_ls == 1 and splitting the first window
-  if (one_window(firstwin) && p_ls == 1 && oldwin->w_status_height == 0) {
+  if (one_window(firstwin, NULL) && p_ls == 1 && oldwin->w_status_height == 0) {
     if (oldwin->w_height <= p_wmh) {
       emsg(_(e_noroom));
       return NULL;
@@ -1800,7 +1804,7 @@ static void win_exchange(int Prenum)
     return;
   }
 
-  if (one_window(curwin)) {
+  if (one_window(curwin, NULL)) {
     // just one window
     beep_flush();
     return;
@@ -1892,7 +1896,7 @@ static void win_rotate(bool upwards, int count)
     return;
   }
 
-  if (count <= 0 || one_window(curwin)) {
+  if (count <= 0 || one_window(curwin, NULL)) {
     // nothing to do
     beep_flush();
     return;
@@ -1975,7 +1979,7 @@ int win_splitmove(win_T *wp, int size, int flags)
   int dir = 0;
   int height = wp->w_height;
 
-  if (one_window(wp)) {
+  if (one_window(wp, NULL)) {
     return OK;  // nothing to do
   }
   if (is_aucmd_win(wp) || check_split_disallowed(wp) == FAIL) {
@@ -2504,7 +2508,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
-  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp));) {
+  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp, NULL));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false, false) == FAIL) {
@@ -2529,7 +2533,10 @@ void close_windows(buf_T *buf, bool keep_curwin)
       for (win_T *wp = tp->tp_lastwin; wp != NULL; wp = wp->w_prev) {
         if (wp->w_buffer == buf
             && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
-          win_close_othertab(wp, false, tp);
+          if (!win_close_othertab(wp, false, tp, false)) {
+            // If closing the window fails give up, to avoid looping forever.
+            break;
+          }
 
           // Start all over, the tab page may be closed and
           // autocommands may change the window layout.
@@ -2546,27 +2553,30 @@ void close_windows(buf_T *buf, bool keep_curwin)
 /// Check if "win" is the last non-floating window that exists.
 bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return one_window(win) && first_tabpage->tp_next == NULL;
+  return one_window(win, NULL) && first_tabpage->tp_next == NULL;
 }
 
-/// Check if "win" is the only non-floating window in the current tabpage.
+/// Check if "win" is the only non-floating window in tabpage "tp", or NULL for current tabpage.
 ///
 /// This should be used in place of ONE_WINDOW when necessary,
 /// with "firstwin" or the affected window as argument depending on the situation.
-bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+bool one_window(win_T *win, tabpage_T *tp)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  assert(!firstwin->w_floating);
-  return firstwin == win && (win->w_next == NULL || win->w_next->w_floating);
+  win_T *first = tp ? tp->tp_firstwin : firstwin;
+  assert((!tp || tp != curtab) && !first->w_floating);
+  return first == win && (win->w_next == NULL || win->w_next->w_floating);
 }
 
-/// Check if floating windows in the current tab can be closed.
+/// Check if floating windows in tabpage `tp` can be closed.
 /// Do not call this when the autocommand window is in use!
 ///
+/// @param tp tabpage to check. Must be NULL for the current tabpage.
 /// @return true if all floating windows can be closed
-static bool can_close_floating_windows(void)
+static bool can_close_floating_windows(tabpage_T *tp)
 {
-  assert(!is_aucmd_win(lastwin));
-  for (win_T *wp = lastwin; wp->w_floating; wp = wp->w_prev) {
+  assert(tp != curtab && (tp || !is_aucmd_win(lastwin)));
+  for (win_T *wp = tp ? tp->tp_lastwin : lastwin; wp->w_floating; wp = wp->w_prev) {
     buf_T *buf = wp->w_buffer;
     int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
 
@@ -2625,10 +2635,10 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // that below.
   goto_tabpage_tp(alt_tabpage(), false, true);
 
-  // Safety check: Autocommands may have closed the window when jumping
-  // to the other tab page.
-  if (valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
-    win_close_othertab(win, free_buf, prev_curtab);
+  // Safety check: Autocommands may have switched back to the old tab page
+  // or closed the window when jumping to the other tab page.
+  if (curtab != prev_curtab && valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
+    win_close_othertab(win, free_buf, prev_curtab, false);
   }
   entering_window(curwin);
 
@@ -2704,12 +2714,12 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_autocmd_close));
     return FAIL;
   }
-  if (lastwin->w_floating && one_window(win)) {
+  if (lastwin->w_floating && one_window(win, NULL)) {
     if (is_aucmd_win(lastwin)) {
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
     }
-    if (force || can_close_floating_windows()) {
+    if (force || can_close_floating_windows(NULL)) {
       // close the last window until the there are no floating windows
       while (lastwin->w_floating) {
         // `force` flag isn't actually used when closing a floating window.
@@ -2752,15 +2762,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 
     // Guess which window is going to be the new current window.
     // This may change because of the autocommands (sigh).
-    if (!win->w_floating) {
-      wp = frame2win(win_altframe(win, NULL));
-    } else {
-      if (win_valid(prevwin) && prevwin != win) {
-        wp = prevwin;
-      } else {
-        wp = firstwin;
-      }
-    }
+    wp = win->w_floating ? win_float_find_altwin(win, NULL) : frame2win(win_altframe(win, NULL));
 
     // Be careful: If autocommands delete the window or cause this window
     // to be the last one left, return now.
@@ -2818,7 +2820,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   if (curtab != prev_curtab && win_valid_any_tab(win)
       && win->w_buffer == NULL) {
     // Need to close the window anyway, since the buffer is NULL.
-    win_close_othertab(win, false, prev_curtab);
+    win_close_othertab(win, false, prev_curtab, force);
     return FAIL;
   }
 
@@ -2976,14 +2978,43 @@ static void do_autocmd_winclosed(win_T *win)
 // thus "tp" may become invalid!
 // Caller must check if buffer is hidden and whether the tabline needs to be
 // updated.
-void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
+// @return false when the window was not closed as a direct result of this call
+//         (e.g: not via autocmds).
+bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   FUNC_ATTR_NONNULL_ALL
 {
+  assert(tp != curtab);
+  bool did_decrement = false;
+
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
   if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
-    return;  // window is already being closed
+    return false;  // window is already being closed
+  }
+  if (is_aucmd_win(win)) {
+    emsg(_(e_autocmd_close));
+    return false;
+  }
+
+  // Check if closing this window would leave only floating windows.
+  if (tp->tp_lastwin->w_floating && one_window(win, tp)) {
+    if (force || can_close_floating_windows(tp)) {
+      // close the last window until the there are no floating windows
+      while (tp->tp_lastwin->w_floating) {
+        // `force` flag isn't actually used when closing a floating window.
+        if (!win_close_othertab(tp->tp_lastwin, free_buf, tp, true)) {
+          // If closing the window fails give up, to avoid looping forever.
+          goto leave_open;
+        }
+      }
+      if (!win_valid_any_tab(win)) {
+        return false;  // window already closed by autocommands
+      }
+    } else {
+      emsg(e_floatonly);
+      goto leave_open;
+    }
   }
 
   // Fire WinClosed just before starting to free window-related resources.
@@ -2993,87 +3024,92 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     do_autocmd_winclosed(win);
     // autocmd may have freed the window already.
     if (!win_valid_any_tab(win)) {
-      return;
+      return false;
     }
   }
+
+  bufref_T bufref;
+  set_bufref(&bufref, win->w_buffer);
 
   if (win->w_buffer != NULL) {
     // Close the link to the buffer.
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, true);
+    did_decrement = close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, true);
   }
-
-  tabpage_T *ptp = NULL;
 
   // Careful: Autocommands may have closed the tab page or made it the
   // current tab page.
-  for (ptp = first_tabpage; ptp != NULL && ptp != tp; ptp = ptp->tp_next) {}
-  if (ptp == NULL || tp == curtab) {
-    // If the buffer was removed from the window we have to give it any
-    // buffer.
-    if (win_valid_any_tab(win) && win->w_buffer == NULL) {
-      win->w_buffer = firstbuf;
-      firstbuf->b_nwindows++;
-      win_init_empty(win);
-    }
-    return;
+  if (!valid_tabpage(tp) || tp == curtab) {
+    goto leave_open;
+  }
+  // Autocommands may have closed the window already, or nvim_win_set_config
+  // moved it to a different tab page.
+  if (!tabpage_win_valid(tp, win)) {
+    goto leave_open;
+  }
+  // Autocommands may again cause closing this window to leave only floats.
+  // Check again; we'll not bother closing floating windows this time.
+  if (tp->tp_lastwin->w_floating && one_window(win, tp)) {
+    emsg(e_floatonly);
+    goto leave_open;
   }
 
-  // Autocommands may have closed the window already.
-  {
-    bool found_window = false;
-    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-      if (wp == win) {
-        found_window = true;
-        break;
-      }
-    }
-    if (!found_window) {
-      return;
-    }
-  }
-
-  bool free_tp = false;
+  int free_tp_idx = 0;
 
   // When closing the last window in a tab page remove the tab page.
   if (tp->tp_firstwin == tp->tp_lastwin) {
-    char prev_idx[NUMBUFLEN];
-    if (has_event(EVENT_TABCLOSED)) {
-      vim_snprintf(prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
-    }
-
+    free_tp_idx = tabpage_index(tp);
     int h = tabline_height();
 
     if (tp == first_tabpage) {
       first_tabpage = tp->tp_next;
     } else {
+      tabpage_T *ptp;
       for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tp;
            ptp = ptp->tp_next) {
         // loop
       }
       if (ptp == NULL) {
         internal_error("win_close_othertab()");
-        return;
+        return false;
       }
       ptp->tp_next = tp->tp_next;
     }
-    free_tp = true;
     redraw_tabline = true;
     if (h != tabline_height()) {
       win_new_screen_rows();
     }
-
-    if (has_event(EVENT_TABCLOSED)) {
-      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
-    }
   }
 
   // Free the memory used for the window.
+  buf_T *buf = win->w_buffer;
   int dir;
   win_free_mem(win, &dir, tp);
 
-  if (free_tp) {
+  if (free_tp_idx > 0) {
     free_tabpage(tp);
+
+    if (has_event(EVENT_TABCLOSED)) {
+      char prev_idx[NUMBUFLEN];
+      vim_snprintf(prev_idx, NUMBUFLEN, "%i", free_tp_idx);
+      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, buf);
+    }
   }
+  return true;
+
+leave_open:
+  if (win_valid_any_tab(win)) {
+    if (win->w_buffer == NULL) {
+      // If the buffer was removed from the window we have to give it any buffer.
+      win->w_buffer = firstbuf;
+      firstbuf->b_nwindows++;
+      win_init_empty(win);
+    } else if (did_decrement && win->w_buffer == bufref.br_buf && bufref_valid(&bufref)) {
+      // close_buffer decremented the window count, but we're keeping the window.
+      // As the window is still viewing the buffer, increment the count.
+      win->w_buffer->b_nwindows++;
+    }
+  }
+  return false;
 }
 
 /// Free the memory used for a window.
@@ -3103,6 +3139,10 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
   // window.
   if (win == win_tp->tp_curwin) {
     win_tp->tp_curwin = wp;
+  }
+  // Avoid executing cmdline_win logic after it is closed.
+  if (win == cmdline_win) {
+    cmdline_win = NULL;
   }
 
   return wp;
@@ -3215,14 +3255,15 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
 /// @param tp    tab page "win" is in, NULL for current
 /// @param altfr if not NULL, set to pointer of frame that will get the space
 ///
-/// @return      a pointer to the window that will get the freed up space.
+/// @return      a pointer to the window that will get the freed up space, or NULL
+///              if there is no other non-float to receive the space.
 win_T *winframe_find_altwin(win_T *win, int *dirp, tabpage_T *tp, frame_T **altfr)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   assert(tp == NULL || tp != curtab);
 
-  // If there is only one window there is nothing to remove.
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
+  // If there is only one non-floating window there is nothing to remove.
+  if (one_window(win, tp)) {
     return NULL;
   }
 
@@ -3378,7 +3419,7 @@ void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
   if (frp->fr_parent->fr_layout == FR_COL && frp->fr_prev != NULL) {
     if (global_stl_height() == 0 && wp->w_status_height == 0) {
       frame_add_statusline(frp->fr_prev);
-    } else if (wp->w_hsep_height == 0) {
+    } else if (global_stl_height() > 0 && wp->w_hsep_height == 0) {
       frame_add_hsep(frp->fr_prev);
     }
   }
@@ -3419,7 +3460,7 @@ static frame_T *win_altframe(win_T *win, tabpage_T *tp)
 {
   assert(tp == NULL || tp != curtab);
 
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
+  if (one_window(win, tp)) {
     return alt_tabpage()->tp_curwin->w_frame;
   }
 
@@ -3985,7 +4026,7 @@ void close_others(int message, int forceit)
     return;
   }
 
-  if (one_window(firstwin) && !lastwin->w_floating) {
+  if (one_window(firstwin, NULL) && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
       msg(_(m_onlyone), 0);
@@ -4245,6 +4286,10 @@ int win_new_tabpage(int after, char *filename)
     newtp->tp_topframe = topframe;
     last_status(false);
 
+    if (curbuf->terminal) {
+      terminal_check_size(curbuf->terminal);
+    }
+
     redraw_all_later(UPD_NOT_VALID);
 
     tabpage_check_windows(old_curtab);
@@ -4269,7 +4314,7 @@ int win_new_tabpage(int after, char *filename)
 // Open a new tab page if ":tab cmd" was used.  It will edit the same buffer,
 // like with ":split".
 // Returns OK if a new tab page was created, FAIL otherwise.
-int may_open_tabpage(void)
+static int may_open_tabpage(void)
 {
   int n = (cmdmod.cmod_tab == 0) ? postponed_split_tab : cmdmod.cmod_tab;
 
@@ -4448,18 +4493,17 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
 
   use_tabpage(tp);
 
-  if (p_ch != curtab->tp_ch_used) {
-    // Use the stored value of p_ch, so that it can be different for each tab page.
-    // Handle other side-effects but avoid setting frame sizes, which are still correct.
-    OptInt new_ch = curtab->tp_ch_used;
-    curtab->tp_ch_used = p_ch;
-    command_frame_height = false;
-    set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
-    command_frame_height = true;
-  }
-
   if (old_curtab != curtab) {
     tabpage_check_windows(old_curtab);
+    if (p_ch != curtab->tp_ch_used) {
+      // Use the stored value of p_ch, so that it can be different for each tab page.
+      // Handle other side-effects but avoid setting frame sizes, which are still correct.
+      OptInt new_ch = curtab->tp_ch_used;
+      curtab->tp_ch_used = p_ch;
+      command_frame_height = false;
+      set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
+      command_frame_height = true;
+    }
   }
 
   // We would like doing the TabEnter event first, but we don't have a
@@ -5862,7 +5906,7 @@ void win_setheight_win(int height, win_T *win)
   height = MAX(height, (int)(win == curwin ? MAX(p_wmh, 1) : p_wmh) + win->w_winbar_height);
 
   if (win->w_floating) {
-    win->w_config.height = height;
+    win->w_config.height = MAX(height, 1);
     win_config_float(win, win->w_config);
     redraw_later(win, UPD_VALID);
   } else {
@@ -7022,7 +7066,7 @@ int global_stl_height(void)
 /// @param morewin  pretend there are two or more windows if true.
 int last_stl_height(bool morewin)
 {
-  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_window(firstwin)))) ? STATUS_HEIGHT : 0;
+  return (p_ls > 1 || (p_ls == 1 && (morewin || !one_window(firstwin, NULL)))) ? STATUS_HEIGHT : 0;
 }
 
 /// Return the minimal number of rows that is needed on the screen to display
@@ -7464,11 +7508,13 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
   FOR_ALL_TABS(tp) {
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (wp->handle == id) {
-        *winnr = wnum;
-        *tabnr = tnum;
+        if (win_has_winnr(wp, tp)) {
+          *winnr = wnum;
+          *tabnr = tnum;
+        }
         return;
       }
-      wnum += win_has_winnr(wp);
+      wnum += win_has_winnr(wp, tp);
     }
     tnum++;
     wnum = 1;

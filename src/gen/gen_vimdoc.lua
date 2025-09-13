@@ -1,5 +1,8 @@
 #!/usr/bin/env -S nvim -l
---- Generates Nvim :help docs from Lua/C docstrings
+--- Generates Nvim :help docs from Lua/C docstrings.
+---
+--- Usage:
+---     make doc
 ---
 --- The generated :help text for each function is formatted as follows:
 --- - Max width of 78 columns (`TEXT_WIDTH`).
@@ -37,8 +40,6 @@ local INDENTATION = 4
 ---
 --- List of files/directories for doxygen to read, relative to `base_dir`.
 --- @field files string[]
----
---- @field exclude_types? true
 ---
 --- Section name overrides. Key: filename (e.g., vim.c)
 --- @field section_name? table<string,string>
@@ -107,92 +108,115 @@ local config = {
   api = {
     filename = 'api.txt',
     section_order = {
+      -- Sections at the top, in a specific order:
+      'events.c',
       'vim.c',
       'vimscript.c',
-      'command.c',
-      'options.c',
-      'buffer.c',
-      'extmark.c',
-      'window.c',
-      'win_config.c',
-      'tabpage.c',
+
+      -- Sections in alphanumeric order:
       'autocmd.c',
+      'buffer.c',
+      'command.c',
+      'extmark.c',
+      'options.c',
+      'tabpage.c',
       'ui.c',
+      'win_config.c',
+      'window.c',
     },
-    exclude_types = true,
     fn_name_pat = 'nvim_.*',
     files = { 'src/nvim/api' },
     section_name = {
       ['vim.c'] = 'Global',
     },
     section_fmt = function(name)
+      if name == 'Events' then
+        return 'Global Events'
+      end
+
       return name .. ' Functions'
     end,
     helptag_fmt = function(name)
       return fmt('api-%s', name:lower())
     end,
+    fn_helptag_fmt = function(fun)
+      local name = fun.name
+      if vim.endswith(name, '_event') then
+        return name
+      end
+      return fn_helptag_fmt_common(fun)
+    end,
   },
   lua = {
     filename = 'lua.txt',
     section_order = {
-      'hl.lua',
-      'diff.lua',
-      'mpack.lua',
-      'json.lua',
-      'base64.lua',
-      'spell.lua',
+      -- Sections at the top, in a specific order:
       'builtin.lua',
       '_options.lua',
       '_editor.lua',
       '_inspector.lua',
       'shared.lua',
-      'loader.lua',
-      'uri.lua',
-      'ui.lua',
-      '_extui.lua',
+
+      -- Sections in alphanumeric order:
+      'base64.lua',
       'filetype.lua',
-      'keymap.lua',
       'fs.lua',
       'glob.lua',
+      'hl.lua',
+      'iter.lua',
+      'json.lua',
+      'keymap.lua',
+      'loader.lua',
       'lpeg.lua',
+      'mpack.lua',
+      'net.lua',
+      'pos.lua',
+      'range.lua',
       're.lua',
       'regex.lua',
       'secure.lua',
-      'version.lua',
-      'iter.lua',
       'snippet.lua',
+      'spell.lua',
+      '_system.lua',
       'text.lua',
-      'tohtml.lua',
+      'ui.lua',
+      'uri.lua',
+      'version.lua',
+
+      -- Sections at the end, in a specific order:
+      '_extui.lua',
     },
     files = {
-      'runtime/lua/vim/iter.lua',
       'runtime/lua/vim/_editor.lua',
-      'runtime/lua/vim/_options.lua',
-      'runtime/lua/vim/shared.lua',
-      'runtime/lua/vim/loader.lua',
-      'runtime/lua/vim/uri.lua',
-      'runtime/lua/vim/ui.lua',
       'runtime/lua/vim/_extui.lua',
-      'runtime/lua/vim/filetype.lua',
-      'runtime/lua/vim/keymap.lua',
-      'runtime/lua/vim/fs.lua',
-      'runtime/lua/vim/hl.lua',
-      'runtime/lua/vim/secure.lua',
-      'runtime/lua/vim/version.lua',
       'runtime/lua/vim/_inspector.lua',
+      'runtime/lua/vim/_meta/base64.lua',
+      'runtime/lua/vim/_meta/builtin.lua',
+      'runtime/lua/vim/_meta/json.lua',
+      'runtime/lua/vim/_meta/lpeg.lua',
+      'runtime/lua/vim/_meta/mpack.lua',
+      'runtime/lua/vim/_meta/re.lua',
+      'runtime/lua/vim/_meta/regex.lua',
+      'runtime/lua/vim/_meta/spell.lua',
+      'runtime/lua/vim/_options.lua',
+      'runtime/lua/vim/_system.lua',
+      'runtime/lua/vim/filetype.lua',
+      'runtime/lua/vim/fs.lua',
+      'runtime/lua/vim/glob.lua',
+      'runtime/lua/vim/hl.lua',
+      'runtime/lua/vim/iter.lua',
+      'runtime/lua/vim/keymap.lua',
+      'runtime/lua/vim/loader.lua',
+      'runtime/lua/vim/net.lua',
+      'runtime/lua/vim/pos.lua',
+      'runtime/lua/vim/range.lua',
+      'runtime/lua/vim/secure.lua',
+      'runtime/lua/vim/shared.lua',
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
-      'runtime/lua/vim/glob.lua',
-      'runtime/lua/vim/_meta/builtin.lua',
-      'runtime/lua/vim/_meta/diff.lua',
-      'runtime/lua/vim/_meta/mpack.lua',
-      'runtime/lua/vim/_meta/json.lua',
-      'runtime/lua/vim/_meta/base64.lua',
-      'runtime/lua/vim/_meta/regex.lua',
-      'runtime/lua/vim/_meta/lpeg.lua',
-      'runtime/lua/vim/_meta/re.lua',
-      'runtime/lua/vim/_meta/spell.lua',
-      'runtime/lua/tohtml.lua',
+      'runtime/lua/vim/ui.lua',
+      'runtime/lua/vim/uri.lua',
+      'runtime/lua/vim/version.lua',
     },
     fn_xform = function(fun)
       if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._editor' }) then
@@ -216,38 +240,22 @@ local config = {
       name = name:lower()
       if name == '_editor' then
         return 'Lua module: vim'
+      elseif name == '_system' then
+        return 'Lua module: vim.system'
       elseif name == '_options' then
         return 'LUA-VIMSCRIPT BRIDGE'
       elseif name == 'builtin' then
         return 'VIM'
-      end
-      if
-        contains(name, {
-          'hl',
-          'mpack',
-          'json',
-          'base64',
-          'diff',
-          'spell',
-          'regex',
-          'lpeg',
-          're',
-        })
-      then
-        return 'VIM.' .. name:upper()
-      end
-      if name == 'tohtml' then
-        return 'Lua module: tohtml'
       end
       return 'Lua module: vim.' .. name
     end,
     helptag_fmt = function(name)
       if name == '_editor' then
         return 'lua-vim'
+      elseif name == '_system' then
+        return 'lua-vim-system'
       elseif name == '_options' then
         return 'lua-vimscript'
-      elseif name == 'tohtml' then
-        return 'tohtml'
       end
       return 'vim.' .. name:lower()
     end,
@@ -270,21 +278,29 @@ local config = {
   lsp = {
     filename = 'lsp.txt',
     section_order = {
+      -- Sections at the top, in a specific order:
       'lsp.lua',
-      'client.lua',
+
+      -- Sections in alphanumeric order:
       'buf.lua',
-      'diagnostic.lua',
+      'client.lua',
       'codelens.lua',
       'completion.lua',
-      'folding_range.lua',
-      'inlay_hint.lua',
-      'tagfunc.lua',
-      'semantic_tokens.lua',
+      'diagnostic.lua',
       'document_color.lua',
+      'folding_range.lua',
       'handlers.lua',
-      'util.lua',
+      'inlay_hint.lua',
+      'inline_completion.lua',
+      'linked_editing_range.lua',
       'log.lua',
+      'on_type_formatting.lua',
       'rpc.lua',
+      'semantic_tokens.lua',
+      'tagfunc.lua',
+
+      -- Sections at the end, in a specific order:
+      'util.lua',
       'protocol.lua',
     },
     files = {
@@ -326,15 +342,18 @@ local config = {
   treesitter = {
     filename = 'treesitter.txt',
     section_order = {
+      -- Sections at the top, in a specific order:
       'tstree.lua',
       'tsnode.lua',
       'treesitter.lua',
+
+      -- Sections in alphanumeric order:
+      'dev.lua',
+      'highlighter.lua',
       'language.lua',
+      'languagetree.lua',
       'query.lua',
       'tsquery.lua',
-      'highlighter.lua',
-      'languagetree.lua',
-      'dev.lua',
     },
     append_only = { 'tsquery.lua' },
     files = {
@@ -397,6 +416,32 @@ local config = {
     end,
     helptag_fmt = function()
       return { 'vim.health', 'health' }
+    end,
+  },
+  pack = {
+    filename = 'pack.txt',
+    files = { 'runtime/lua/vim/pack.lua' },
+    section_order = { 'pack.lua' },
+    section_fmt = function(_name)
+      return 'Plugin manager'
+    end,
+    helptag_fmt = function()
+      return { 'vim.pack' }
+    end,
+  },
+  plugins = {
+    filename = 'plugins.txt',
+    section_order = {
+      'tohtml.lua',
+    },
+    files = {
+      'runtime/lua/tohtml.lua',
+    },
+    section_fmt = function(name)
+      return 'Builtin plugin: ' .. name:lower()
+    end,
+    helptag_fmt = function(name)
+      return name:lower()
     end,
   },
 }
@@ -550,9 +595,8 @@ end
 --- @param xs (nvim.luacats.parser.param|nvim.luacats.parser.field)[]
 --- @param generics? table<string,string>
 --- @param classes? table<string,nvim.luacats.parser.class>
---- @param exclude_types? true
 --- @param cfg nvim.gen_vimdoc.Config
-local function render_fields_or_params(xs, generics, classes, exclude_types, cfg)
+local function render_fields_or_params(xs, generics, classes, cfg)
   local ret = {} --- @type string[]
 
   xs = vim.tbl_filter(should_render_field_or_param, xs)
@@ -561,9 +605,6 @@ local function render_fields_or_params(xs, generics, classes, exclude_types, cfg
   for _, p in ipairs(xs) do
     if p.type or p.desc then
       indent = math.max(indent, #p.name + 3)
-    end
-    if exclude_types then
-      p.type = nil
     end
   end
 
@@ -574,7 +615,7 @@ local function render_fields_or_params(xs, generics, classes, exclude_types, cfg
     inline_type(p, classes)
     local nm, ty = p.name, p.type
 
-    local desc = p.classvar and string.format('See |%s|.', cfg.fn_helptag_fmt(p)) or p.desc
+    local desc = p.classvar and fmt('See |%s|.', cfg.fn_helptag_fmt(p)) or p.desc
 
     local fnm = p.kind == 'operator' and fmt('op(%s)', nm) or fmt_field_name(nm)
     local pnm = fmt('      • %-' .. indent .. 's', fnm)
@@ -627,7 +668,7 @@ local function render_class(class, classes, cfg)
     table.insert(ret, md_to_vimdoc(class.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
   end
 
-  local fields_txt = render_fields_or_params(class.fields, nil, classes, nil, cfg)
+  local fields_txt = render_fields_or_params(class.fields, nil, classes, cfg)
   if not fields_txt:match('^%s*$') then
     table.insert(ret, '\n    Fields: ~\n')
     table.insert(ret, fields_txt)
@@ -692,15 +733,12 @@ end
 --- @param returns nvim.luacats.parser.return[]
 --- @param generics? table<string,string>
 --- @param classes? table<string,nvim.luacats.parser.class>
---- @param exclude_types boolean
-local function render_returns(returns, generics, classes, exclude_types)
+--- @return string?
+local function render_returns(returns, generics, classes)
   local ret = {} --- @type string[]
 
-  returns = vim.deepcopy(returns)
-  if exclude_types then
-    for _, r in ipairs(returns) do
-      r.type = nil
-    end
+  if #returns == 1 and returns[1].type == 'nil' then
+    return
   end
 
   if #returns > 1 then
@@ -720,7 +758,7 @@ local function render_returns(returns, generics, classes, exclude_types)
     blk[#blk + 1] = rnm
     blk[#blk + 1] = desc
 
-    table.insert(ret, md_to_vimdoc(table.concat(blk, ' '), 8, 8, TEXT_WIDTH, true))
+    ret[#ret + 1] = md_to_vimdoc(table.concat(blk, ' '), 8, 8, TEXT_WIDTH, true)
   end
 
   return table.concat(ret)
@@ -758,7 +796,7 @@ local function render_fun(fun, classes, cfg)
     else
       local v = assert(util.version_level[since], 'invalid @since on ' .. fun.name)
       fun.attrs = fun.attrs or {}
-      table.insert(fun.attrs, ('Since: %s'):format(v))
+      table.insert(fun.attrs, fmt('Since: %s', v))
     end
   end
 
@@ -788,17 +826,23 @@ local function render_fun(fun, classes, cfg)
   end
 
   if fun.params and #fun.params > 0 then
-    local param_txt =
-      render_fields_or_params(fun.params, fun.generics, classes, cfg.exclude_types, cfg)
+    local param_txt = render_fields_or_params(fun.params, fun.generics, classes, cfg)
     if not param_txt:match('^%s*$') then
       table.insert(ret, '\n    Parameters: ~\n')
       ret[#ret + 1] = param_txt
     end
   end
 
+  if fun.overloads then
+    table.insert(ret, '\n    Overloads: ~\n')
+    for _, p in ipairs(fun.overloads) do
+      table.insert(ret, fmt('      • `%s`\n', p))
+    end
+  end
+
   if fun.returns then
-    local txt = render_returns(fun.returns, fun.generics, classes, cfg.exclude_types)
-    if not txt:match('^%s*$') then
+    local txt = render_returns(fun.returns, fun.generics, classes)
+    if txt and not txt:match('^%s*$') then
       table.insert(ret, '\n')
       ret[#ret + 1] = txt
     end
@@ -887,14 +931,16 @@ end
 --- @field title string
 --- @field help_tag string
 --- @field funs_txt string
---- @field doc? string[]
+--- @field classes_txt string
+--- @field briefs string[]
 
 --- @param filename string
 --- @param cfg nvim.gen_vimdoc.Config
---- @param section_docs table<string,nvim.gen_vimdoc.Section>
+--- @param briefs string[]
 --- @param funs_txt string
+--- @param classes_txt string
 --- @return nvim.gen_vimdoc.Section?
-local function make_section(filename, cfg, section_docs, funs_txt)
+local function make_section(filename, cfg, briefs, funs_txt, classes_txt)
   -- filename: e.g., 'autocmd.c'
   -- name: e.g. 'autocmd'
   local name = filename:match('(.*)%.[a-z]+')
@@ -910,7 +956,7 @@ local function make_section(filename, cfg, section_docs, funs_txt)
   end
   local help_tags = '*' .. help_labels .. '*'
 
-  if funs_txt == '' and #section_docs == 0 then
+  if funs_txt == '' and classes_txt == '' and #briefs == 0 then
     return
   end
 
@@ -919,7 +965,8 @@ local function make_section(filename, cfg, section_docs, funs_txt)
     title = cfg.section_fmt(sectname),
     help_tag = help_tags,
     funs_txt = funs_txt,
-    doc = section_docs,
+    classes_txt = classes_txt,
+    briefs = briefs,
   }
 end
 
@@ -937,12 +984,24 @@ local function render_section(section, add_header)
     })
   end
 
-  local sdoc = '\n\n' .. table.concat(section.doc or {}, '\n')
-  if sdoc:find('[^%s]') then
-    doc[#doc + 1] = sdoc
+  if next(section.briefs) then
+    local briefs_txt = {} --- @type string[]
+    for _, b in ipairs(section.briefs) do
+      briefs_txt[#briefs_txt + 1] = md_to_vimdoc(b, 0, 0, TEXT_WIDTH)
+    end
+
+    local sdoc = '\n\n' .. table.concat(briefs_txt, '\n')
+    if sdoc:find('[^%s]') then
+      doc[#doc + 1] = sdoc
+    end
   end
 
-  if section.funs_txt then
+  if section.classes_txt ~= '' then
+    table.insert(doc, '\n\n')
+    table.insert(doc, (section.classes_txt:gsub('\n+$', '\n')))
+  end
+
+  if section.funs_txt ~= '' then
     table.insert(doc, '\n\n')
     table.insert(doc, section.funs_txt)
   end
@@ -966,6 +1025,17 @@ local function expand_files(files)
           table.insert(files, vim.fs.joinpath(f, path))
         end
       end
+    end
+  end
+end
+
+--- @param classes table<string,nvim.luacats.parser.class>
+--- @return string?
+local function find_module_class(classes, modvar)
+  for nm, cls in pairs(classes) do
+    local _, field = next(cls.fields or {})
+    if cls.desc and field and field.classvar == modvar then
+      return nm
     end
   end
 end
@@ -998,21 +1068,26 @@ local function gen_target(cfg)
   for f, r in vim.spairs(file_results) do
     local classes, funs, briefs = r[1], r[2], r[3]
 
-    local briefs_txt = {} --- @type string[]
-    for _, b in ipairs(briefs) do
-      briefs_txt[#briefs_txt + 1] = md_to_vimdoc(b, 0, 0, TEXT_WIDTH)
+    local mod_cls_nm = find_module_class(classes, 'M')
+    if mod_cls_nm then
+      local mod_cls = classes[mod_cls_nm]
+      classes[mod_cls_nm] = nil
+      -- If the module documentation is present, add it to the briefs
+      -- so it appears at the top of the section.
+      briefs[#briefs + 1] = mod_cls.desc
     end
+
     print('    Processing file:', f)
-    local funs_txt = render_funs(funs, all_classes, cfg)
-    if next(classes) then
-      local classes_txt = render_classes(classes, cfg)
-      if vim.trim(classes_txt) ~= '' then
-        funs_txt = classes_txt .. '\n' .. funs_txt
-      end
-    end
+
     -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
     local f_base = vim.fs.basename(f)
-    sections[f_base] = make_section(f_base, cfg, briefs_txt, funs_txt)
+    sections[f_base] = make_section(
+      f_base,
+      cfg,
+      briefs,
+      render_funs(funs, all_classes, cfg),
+      render_classes(classes, cfg)
+    )
   end
 
   local first_section_tag = sections[cfg.section_order[1]].help_tag
@@ -1020,7 +1095,7 @@ local function gen_target(cfg)
   for _, f in ipairs(cfg.section_order) do
     local section = sections[f]
     if section then
-      print(string.format("    Rendering section: '%s'", section.title))
+      print(fmt("    Rendering section: '%s'", section.title))
       local add_sep_and_header = not vim.tbl_contains(cfg.append_only or {}, f)
       docs[#docs + 1] = render_section(section, add_sep_and_header)
     end

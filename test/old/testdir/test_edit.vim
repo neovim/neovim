@@ -716,23 +716,19 @@ func Test_edit_CTRL_K()
   %d
   call setline(1, 'A')
   call cursor(1, 1)
-  let v:testing = 1
   try
     call feedkeys("A\<c-x>\<c-k>\<esc>", 'tnix')
   catch
-    " error sleeps 2 seconds, when v:testing is not set
-    let v:testing = 0
   endtry
 
-  if exists('*test_override')
-    call test_override("char_avail", 1)
-    set showcmd
-    %d
-    call feedkeys("A\<c-k>a:\<esc>", 'tnix')
-    call assert_equal(['ä'], getline(1, '$'))
-    call test_override("char_avail", 0)
-    set noshowcmd
-  endif
+  call Ntest_override("char_avail", 1)
+  set showcmd
+  %d
+  call feedkeys("A\<c-k>a:\<esc>", 'tnix')
+  call assert_equal(['ä'], getline(1, '$'))
+  call Ntest_override("char_avail", 0)
+  set noshowcmd
+
   bw!
 endfunc
 
@@ -764,9 +760,9 @@ func Test_edit_CTRL_L()
   call assert_equal(['one', 'two', 'three', 'three', "\<c-l>\<c-p>\<c-n>", '', ''], getline(1, '$'))
   set complete&
   %d
-  if has("conceal") && has("syntax") && !has("nvim")
+  if has("conceal") && has("syntax")
     call setline(1, ['foo', 'bar', 'foobar'])
-    call test_override("char_avail", 1)
+    call Ntest_override("char_avail", 1)
     set conceallevel=2 concealcursor=n
     syn on
     syn match ErrorMsg "^bar"
@@ -782,7 +778,7 @@ func Test_edit_CTRL_L()
     call assert_equal(['foo', 'bar ', 'foobar'], getline(1, '$'))
     call assert_equal(1, g:change)
 
-    call test_override("char_avail", 0)
+    call Ntest_override("char_avail", 0)
     call clearmatches()
     syn off
     au! TextChangedI
@@ -971,12 +967,9 @@ func Test_edit_CTRL_T()
   %d
   call setline(1, 'mad')
   call cursor(1, 1)
-  let v:testing = 1
   try
     call feedkeys("A\<c-x>\<c-t>\<esc>", 'tnix')
   catch
-    " error sleeps 2 seconds, when v:testing is not set
-    let v:testing = 0
   endtry
   call assert_equal(['mad'], getline(1, '$'))
   bw!
@@ -1157,7 +1150,7 @@ func Test_edit_CTRL_V()
 
   " force some redraws
   set showmode showcmd
-  " call test_override('char_avail', 1)
+  call Ntest_override('char_avail', 1)
 
   call feedkeys("A\<c-v>\<c-n>\<c-v>\<c-l>\<c-v>\<c-b>\<esc>", 'tnix')
   call assert_equal(["abc\x0e\x0c\x02"], getline(1, '$'))
@@ -1172,7 +1165,7 @@ func Test_edit_CTRL_V()
   endif
 
   set noshowmode showcmd
-  " call test_override('char_avail', 0)
+  call Ntest_override('char_avail', 0)
 
   " No modifiers should be applied to the char typed using i_CTRL-V_digit.
   call feedkeys(":append\<CR>\<C-V>76c\<C-V>76\<C-F2>\<C-V>u3c0j\<C-V>u3c0\<M-F3>\<CR>.\<CR>", 'tnix')
@@ -1723,7 +1716,7 @@ func Test_edit_special_chars()
   exe "normal " . t
   call assert_equal("ABC !a\<C-O>g\<C-G>8", getline(2))
 
-  close!
+  bw!
 endfunc
 
 func Test_edit_startinsert()
@@ -1754,7 +1747,7 @@ func Test_edit_startreplace()
   call assert_equal("axyz\tb", getline(1))
   call feedkeys("0i\<C-R>=execute('startreplace')\<CR>12\e", 'xt')
   call assert_equal("12axyz\tb", getline(1))
-  close!
+  bw!
 endfunc
 
 func Test_edit_noesckeys()
@@ -1793,7 +1786,7 @@ func Test_edit_ctrl_o_invalid_cmd()
   call assert_equal('abc', getline(1))
   set showmode& showcmd&
   " call test_override('ui_delay', 0)
-  close!
+  bw!
 endfunc
 
 " Test for editing a file with a very long name
@@ -1997,7 +1990,7 @@ func Test_edit_hkmap()
   call assert_equal(expected, getline(1))
 
   set revins& hkmap& hkmapp&
-  close!
+  bw!
 endfunc
 
 " Test for 'allowrevins' and using CTRL-_ in insert mode
@@ -2008,7 +2001,7 @@ func Test_edit_allowrevins()
   call feedkeys("iABC\<C-_>DEF\<C-_>GHI", 'xt')
   call assert_equal('ABCFEDGHI', getline(1))
   set allowrevins&
-  close!
+  bw!
 endfunc
 
 " Test for inserting a register in insert mode using CTRL-R
@@ -2032,7 +2025,7 @@ func Test_edit_insert_reg()
   call feedkeys("a\<C-R>=[]\<CR>", "xt")
   call assert_equal(['r'], getbufline('', 1, '$'))
   call test_override('ALL', 0)
-  close!
+  bw!
 endfunc
 
 " Test for positioning cursor after CTRL-R expression failed
@@ -2055,6 +2048,10 @@ endfunc
 " window, the window contents should be scrolled one line up. If the top line
 " is part of a fold, then the entire fold should be scrolled up.
 func Test_edit_lastline_scroll()
+  if has('linux')
+    " TODO: For unknown reasons, this test fails on CI when run in Gui mode
+    CheckNotGui
+  endif
   new
   let h = winheight(0)
   let lines = ['one', 'two', 'three']
@@ -2075,7 +2072,7 @@ func Test_edit_lastline_scroll()
   call assert_equal(h - 1, winline())
   call assert_equal(3, line('w0'))
 
-  close!
+  bw!
 endfunc
 
 func Test_edit_browse()

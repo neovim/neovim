@@ -29,9 +29,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"
-#endif
+#include "state.c.generated.h"
 
 void state_enter(VimState *s)
   FUNC_ATTR_NONNULL_ALL
@@ -184,12 +182,12 @@ void get_mode(char *buf)
 {
   int i = 0;
 
-  if (State == MODE_HITRETURN || State == MODE_ASKMORE
-      || State == MODE_SETWSIZE || State == MODE_CONFIRM) {
+  if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
+      || ((State & MODE_CMDLINE) && get_cmdline_info()->one_key)) {
     buf[i++] = 'r';
     if (State == MODE_ASKMORE) {
       buf[i++] = 'm';
-    } else if (State == MODE_CONFIRM) {
+    } else if (State & MODE_CMDLINE) {
       buf[i++] = '?';
     }
   } else if (State == MODE_EXTERNCMD) {

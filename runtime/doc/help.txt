@@ -112,7 +112,6 @@ API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 |channel|		Nvim asynchronous IO
 |vimscript|		Vimscript reference
 |vimscript-functions|	Vimscript functions
-|testing.txt|		Vimscript testing functions
 |remote-plugin|		Nvim remote plugins
 |health|		Health checking
 
@@ -177,14 +176,8 @@ DEVELOPING NVIM
 |dev-vimpatch|		Merging patches from Vim
 
 Standard plugins ~
-						*standard-plugin-list*
-|pi_gzip.txt|		Reading and writing compressed files
-|pi_msgpack.txt|	msgpack utilities
-|pi_paren.txt|		Highlight matching parens
-|pi_spec.txt|		Filetype plugin to work with rpm spec files
-|pi_tar.txt|		Tar file explorer
-|pi_zip.txt|		Zip archive explorer
-|netrw|			Reading and writing files over a network
+
+See |standard-plugin-list|.
 
 Local additions ~
 							*local-additions*

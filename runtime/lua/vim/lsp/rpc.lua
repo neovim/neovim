@@ -36,6 +36,7 @@ end
 local M = {}
 
 --- Mapping of error codes used by the client
+--- @enum vim.lsp.rpc.ClientErrors
 local client_errors = {
   INVALID_SERVER_MESSAGE = 1,
   INVALID_SERVER_JSON = 2,
@@ -150,6 +151,7 @@ local default_dispatchers = {
 
 local strbuffer = require('vim._stringbuffer')
 
+--- @async
 local function request_parser_loop()
   local buf = strbuffer.new()
   while true do
@@ -279,7 +281,7 @@ function Client:request(method, params, callback, notify_reply_callback)
 end
 
 ---@package
----@param errkind integer
+---@param errkind vim.lsp.rpc.ClientErrors
 ---@param ... any
 function Client:on_error(errkind, ...)
   assert(M.client_errors[errkind])
@@ -321,7 +323,7 @@ end
 --- @package
 --- @param body string
 function Client:handle_body(body)
-  local ok, decoded = pcall(vim.json.decode, body, { luanil = { object = true } })
+  local ok, decoded = pcall(vim.json.decode, body)
   if not ok then
     self:on_error(M.client_errors.INVALID_SERVER_JSON, decoded)
     return
@@ -353,7 +355,6 @@ function Client:handle_body(body)
           )
         end
         if err then
-          ---@cast err lsp.ResponseError
           assert(
             type(err) == 'table',
             'err must be a table. Use rpc_response_error to help format errors.'
@@ -372,10 +373,18 @@ function Client:handle_body(body)
       end
       self:send_response(decoded.id, err, result)
     end))
-    -- This works because we are expecting vim.NIL here
-  elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
+  -- Proceed only if exactly one of 'result' or 'error' is present, as required by the LSP spec:
+  -- - If 'error' is nil, then 'result' must be present.
+  -- - If 'result' is nil, then 'error' must be present (and not vim.NIL).
+  elseif
+    decoded.id
+    and (
+      (decoded.error == nil and decoded.result ~= nil)
+      or (decoded.result == nil and decoded.error ~= nil and decoded.error ~= vim.NIL)
+    )
+  then
     -- We sent a number, so we expect a number.
-    local result_id = assert(tonumber(decoded.id), 'response id must be a number')
+    local result_id = assert(tonumber(decoded.id), 'response id must be a number') --[[@as integer]]
 
     -- Notify the user that a response was received for the request
     local notify_reply_callback = self.notify_reply_callbacks[result_id]
@@ -413,7 +422,7 @@ function Client:handle_body(body)
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
         callback,
         decoded.error,
-        decoded.result
+        decoded.result ~= vim.NIL and decoded.result or nil
       )
     else
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
@@ -517,11 +526,11 @@ local function merge_dispatchers(dispatchers)
   ---@type vim.lsp.rpc.Dispatchers
   local merged = {
     notification = (
-      dispatchers.notification and vim.schedule_wrap(dispatchers.notification)
+      dispatchers.notification and schedule_wrap(dispatchers.notification)
       or default_dispatchers.notification
     ),
     on_error = (
-      dispatchers.on_error and vim.schedule_wrap(dispatchers.on_error)
+      dispatchers.on_error and schedule_wrap(dispatchers.on_error)
       or default_dispatchers.on_error
     ),
     on_exit = dispatchers.on_exit or default_dispatchers.on_exit,

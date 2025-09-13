@@ -18,7 +18,7 @@ local function check_log()
     )
   end
 
-  local log_path = vim.lsp.get_log_path()
+  local log_path = log.get_filename()
   report_info(string.format('Log path: %s', log_path))
 
   local log_file = vim.uv.fs_stat(log_path)
@@ -26,6 +26,38 @@ local function check_log()
 
   local report_fn = (log_size / 1000000 > 100 and report_warn or report_info)
   report_fn(string.format('Log size: %d KB', log_size / 1000))
+end
+
+local function check_active_features()
+  vim.health.start('vim.lsp: Active Features')
+  for _, Capability in pairs(vim.lsp._capability.all) do
+    ---@type string[]
+    local buf_infos = {}
+    for bufnr, instance in pairs(Capability.active) do
+      local client_info = vim
+        .iter(pairs(instance.client_state))
+        :map(function(client_id)
+          local client = vim.lsp.get_client_by_id(client_id)
+          if client then
+            return string.format('%s (id: %d)', client.name, client.id)
+          else
+            return string.format('unknow (id: %d)', client_id)
+          end
+        end)
+        :join(', ')
+      if client_info == '' then
+        client_info = 'No supported client attached'
+      end
+
+      buf_infos[#buf_infos + 1] = string.format('    [%d]: %s', bufnr, client_info)
+    end
+
+    report_info(table.concat({
+      Capability.name,
+      '- Active buffers:',
+      string.format(table.concat(buf_infos, '\n')),
+    }, '\n'))
+  end
 end
 
 --- @param f function
@@ -198,7 +230,7 @@ local function check_enabled_configs()
         local v_str --- @type string?
         if k == 'name' then
           v_str = nil
-        elseif k == 'filetypes' or (k == 'root_markers' and type(v[1]) == 'string') then
+        elseif k == 'filetypes' then
           v_str = table.concat(v, ', ')
         elseif type(v) == 'function' then
           v_str = func_tostring(v)
@@ -223,6 +255,7 @@ end
 --- Performs a healthcheck for LSP
 function M.check()
   check_log()
+  check_active_features()
   check_active_clients()
   check_enabled_configs()
   check_watcher()

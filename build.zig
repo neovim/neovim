@@ -54,14 +54,14 @@ pub fn build(b: *std.Build) !void {
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
 
-    const ziglua = b.dependency("lua_wrapper", .{
+    const ziglua = b.dependency("zlua", .{
         .target = target,
         .optimize = optimize_lua,
         .lang = if (use_luajit) E.luajit else E.lua51,
         .shared = false,
     });
 
-    const ziglua_host = if (cross_compiling) b.dependency("lua_wrapper", .{
+    const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
         .optimize = optimize_lua,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
@@ -70,24 +70,32 @@ pub fn build(b: *std.Build) !void {
 
     const lpeg = b.dependency("lpeg", .{});
 
-    const iconv_apple = if (cross_compiling and is_darwin) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
+    const iconv = if (is_windows or is_darwin) b.lazyDependency("libiconv", .{ .target = target, .optimize = optimize }) else null;
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
-    // const lua = lazyArtifact(ziglua, "lua") orelse return;
-    const lua = ziglua.artifact("lua");
+    const lua = lazyArtifact(ziglua, "lua") orelse return;
+    if (cross_compiling) {
+        _ = lazyArtifact(ziglua_host, "lua") orelse return;
+    }
+    // const lua = ziglua.artifact("lua");
 
     const libuv_dep = b.dependency("libuv", .{ .target = target, .optimize = optimize });
     const libuv = libuv_dep.artifact("uv");
-
     const libluv = try build_lua.build_libluv(b, target, optimize, lua, libuv);
+
+    const libluv_host = if (cross_compiling) libluv_host: {
+        const libuv_dep_host = b.dependency("libuv", .{ .target = target_host, .optimize = optimize_host });
+        const libuv_host = libuv_dep_host.artifact("uv");
+        break :libluv_host try build_lua.build_libluv(b, target_host, optimize_host, ziglua_host.artifact("lua"), libuv_host);
+    } else libluv;
 
     const utf8proc = b.dependency("utf8proc", .{ .target = target, .optimize = optimize });
     const unibilium = b.dependency("unibilium", .{ .target = target, .optimize = optimize });
     // TODO(bfredl): fix upstream bugs with UBSAN
     const treesitter = b.dependency("treesitter", .{ .target = target, .optimize = .ReleaseFast });
 
-    const nlua0 = build_lua.build_nlua0(b, target_host, optimize_host, host_use_luajit, ziglua_host, lpeg);
+    const nlua0 = build_lua.build_nlua0(b, target_host, optimize_host, host_use_luajit, ziglua_host, lpeg, libluv_host);
 
     // usual caveat emptor: might need to force a rebuild if the only change is
     // addition of new .c files, as those are not seen by any hash
@@ -232,9 +240,9 @@ pub fn build(b: *std.Build) !void {
         \\
     , .{medium}));
 
-    // TODO(zig): using getEmittedIncludeTree() is ugly af. we want run_preprocessor()
-    // to use the std.build.Module include_path thing
-    const include_path = [_]LazyPath{
+    // TODO(zig): using getEmittedIncludeTree() is ugly af. we want unittests
+    // to reuse the std.build.Module include_path thing
+    const unittest_include_path = [_]LazyPath{
         b.path("src/"),
         gen_config.getDirectory(),
         lua.getEmittedIncludeTree(),
@@ -243,9 +251,10 @@ pub fn build(b: *std.Build) !void {
         utf8proc.artifact("utf8proc").getEmittedIncludeTree(),
         unibilium.artifact("unibilium").getEmittedIncludeTree(),
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
+        if (iconv) |dep| dep.artifact("iconv").getEmittedIncludeTree() else b.path("UNUSED_PATH/"),
     };
 
-    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, &include_path, target, versiondef_git, version_lua);
+    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, versiondef_git, version_lua);
 
     const test_config_step = b.addWriteFiles();
     _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
@@ -257,20 +266,23 @@ pub fn build(b: *std.Build) !void {
 
     const nvim_exe = b.addExecutable(.{
         .name = "nvim",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     nvim_exe.rdynamic = true; // -E
 
     nvim_exe.linkLibrary(lua);
     nvim_exe.linkLibrary(libuv);
     nvim_exe.linkLibrary(libluv);
-    if (iconv_apple) |iconv| {
-        nvim_exe.linkLibrary(iconv.artifact("iconv"));
-    }
+    if (iconv) |dep| nvim_exe.linkLibrary(dep.artifact("iconv"));
     nvim_exe.linkLibrary(utf8proc.artifact("utf8proc"));
     nvim_exe.linkLibrary(unibilium.artifact("unibilium"));
     nvim_exe.linkLibrary(treesitter.artifact("tree-sitter"));
+    if (is_windows) {
+        nvim_exe.linkSystemLibrary("netapi32");
+    }
     nvim_exe.addIncludePath(b.path("src"));
     nvim_exe.addIncludePath(gen_config.getDirectory());
     nvim_exe.addIncludePath(gen_headers.getDirectory());
@@ -297,11 +309,13 @@ pub fn build(b: *std.Build) !void {
 
     const flags = [_][]const u8{
         "-std=gnu99",
-        "-DINCLUDE_GENERATED_DECLARATIONS",
         "-DZIG_BUILD",
         "-D_GNU_SOURCE",
         if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
+        if (is_windows) "-DMSWIN" else "",
+        if (is_windows) "-DWIN32_LEAN_AND_MEAN" else "",
+        if (is_windows) "-DUTF8PROC_STATIC" else "",
     };
     nvim_exe.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
 
@@ -322,7 +336,7 @@ pub fn build(b: *std.Build) !void {
 
     nvim_exe_step.dependOn(&nvim_exe_install.step);
 
-    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, nvim_exe, funcs_data);
+    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, funcs_data);
     const runtime_install = b.addInstallDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "runtime/" });
 
     const nvim = b.step("nvim", "build the editor");
@@ -357,7 +371,7 @@ pub fn build(b: *std.Build) !void {
     const parser_query = b.dependency("treesitter_query", .{ .target = target, .optimize = optimize });
     test_deps.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize));
 
-    const unit_headers: ?[]const LazyPath = if (support_unittests) &(include_path ++ .{gen_headers.getDirectory()}) else null;
+    const unit_headers: ?[]const LazyPath = if (support_unittests) &(unittest_include_path ++ .{gen_headers.getDirectory()}) else null;
 
     try tests.test_steps(b, nvim_exe, test_deps, lua_dev_deps.path("."), test_config_step.getDirectory(), unit_headers);
 }
@@ -371,8 +385,10 @@ pub fn test_fixture(
 ) *std.Build.Step {
     const fixture = b.addExecutable(.{
         .name = name,
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     const source = if (std.mem.eql(u8, name, "pwsh-test")) "shell-test" else name;
     fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})) });

@@ -17,9 +17,7 @@
 # include "nvim/os/os.h"
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/terminfo.c.generated.h"
-#endif
+#include "tui/terminfo.c.generated.h"
 
 bool terminfo_is_term_family(const char *term, const char *family)
 {

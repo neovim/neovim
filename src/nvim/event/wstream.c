@@ -18,9 +18,7 @@ typedef struct {
   uv_write_t uv_req;
 } WRequest;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/wstream.c.generated.h"
-#endif
+#include "event/wstream.c.generated.h"
 
 void wstream_init_fd(Loop *loop, Stream *stream, int fd, size_t maxmem)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)

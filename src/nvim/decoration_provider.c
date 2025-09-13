@@ -19,16 +19,9 @@
 #include "nvim/move.h"
 #include "nvim/pos_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration_provider.c.generated.h"
-#endif
+#include "decoration_provider.c.generated.h"
 
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
-
-#define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-  { ns_id, kDecorProviderDisabled, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, -1, false, false, 0 }
 
 static void decor_provider_error(DecorProvider *provider, const char *name, const char *msg)
 {
@@ -40,21 +33,28 @@ static void decor_provider_error(DecorProvider *provider, const char *name, cons
 // Note we pass in a provider index as this function may cause decor_providers providers to be
 // reallocated so we need to be careful with DecorProvider pointers
 static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref, Array args,
-                                  bool default_true)
+                                  bool default_true, Array *res)
 {
   Error err = ERROR_INIT;
 
   textlock++;
-  Object ret = nlua_call_ref(ref, name, args, kRetNilBool, NULL, &err);
+  Object ret = nlua_call_ref(ref, name, args, res ? kRetMulti : kRetNilBool, NULL, &err);
   textlock--;
 
   // We get the provider here via an index in case the above call to nlua_call_ref causes
   // decor_providers to be reallocated.
   DecorProvider *provider = &kv_A(decor_providers, provider_idx);
-  if (!ERROR_SET(&err)
-      && api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
+  if (!ERROR_SET(&err)) {
     provider->error_count = 0;
-    return true;
+    if (res) {
+      assert(ret.type == kObjectTypeArray);
+      *res = ret.data.array;
+      return true;
+    } else {
+      if (api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
+        return true;
+      }
+    }
   }
 
   if (ERROR_SET(&err) && provider->error_count < CB_MAX_ERROR) {
@@ -67,7 +67,7 @@ static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref
   }
 
   api_clear_error(&err);
-  api_free_object(ret);
+  api_free_object(ret);  // TODO(bfredl): wants to be on an arena
   return false;
 }
 
@@ -83,7 +83,7 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
       ADD_C(args, INTEGER_OBJ(start_col));
       ADD_C(args, INTEGER_OBJ(end_row));
       ADD_C(args, INTEGER_OBJ(end_col));
-      decor_provider_invoke((int)i, "spell", p->spell_nav, args, true);
+      decor_provider_invoke((int)i, "spell", p->spell_nav, args, true, NULL);
     }
   }
 }
@@ -99,7 +99,7 @@ bool decor_providers_invoke_conceal_line(win_T *wp, int row)
       ADD_C(args, INTEGER_OBJ(wp->handle));
       ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, true);
+      decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, true, NULL);
     }
   }
   return wp->w_buffer->b_marktree->n_keys > keys;
@@ -116,7 +116,7 @@ void decor_providers_start(void)
     if (p->state != kDecorProviderDisabled && p->redraw_start != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      bool active = decor_provider_invoke((int)i, "start", p->redraw_start, args, true);
+      bool active = decor_provider_invoke((int)i, "start", p->redraw_start, args, true, NULL);
       kv_A(decor_providers, i).state = active ? kDecorProviderActive : kDecorProviderRedrawDisabled;
     } else if (p->state != kDecorProviderDisabled) {
       kv_A(decor_providers, i).state = kDecorProviderActive;
@@ -149,6 +149,9 @@ void decor_providers_invoke_win(win_T *wp)
       p->state = kDecorProviderActive;
     }
 
+    p->win_skip_row = 0;
+    p->win_skip_col = 0;
+
     if (p->state == kDecorProviderActive && p->redraw_win != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 4);
       ADD_C(args, WINDOW_OBJ(wp->handle));
@@ -156,7 +159,8 @@ void decor_providers_invoke_win(win_T *wp)
       // TODO(bfredl): we are not using this, but should be first drawn line?
       ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
       ADD_C(args, INTEGER_OBJ(botline - 1));
-      if (!decor_provider_invoke((int)i, "win", p->redraw_win, args, true)) {
+      // TODO(bfredl): could skip a call if retval was interpreted like range?
+      if (!decor_provider_invoke((int)i, "win", p->redraw_win, args, true, NULL)) {
         kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }
     }
@@ -180,10 +184,62 @@ void decor_providers_invoke_line(win_T *wp, int row)
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      if (!decor_provider_invoke((int)i, "line", p->redraw_line, args, true)) {
+      if (!decor_provider_invoke((int)i, "line", p->redraw_line, args, true, NULL)) {
         // return 'false' or error: skip rest of this window
         kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }
+
+      hl_check_ns();
+    }
+  }
+  decor_state.running_decor_provider = false;
+}
+
+void decor_providers_invoke_range(win_T *wp, int start_row, int start_col, int end_row, int end_col)
+{
+  decor_state.running_decor_provider = true;
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state == kDecorProviderActive && p->redraw_range != LUA_NOREF) {
+      if (p->win_skip_row > end_row || (p->win_skip_row == end_row && p->win_skip_col >= end_col)) {
+        continue;
+      }
+
+      MAXSIZE_TEMP_ARRAY(args, 6);
+      ADD_C(args, WINDOW_OBJ(wp->handle));
+      ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
+      ADD_C(args, INTEGER_OBJ(start_row));
+      ADD_C(args, INTEGER_OBJ(start_col));
+      ADD_C(args, INTEGER_OBJ(end_row));
+      ADD_C(args, INTEGER_OBJ(end_col));
+      Array res = ARRAY_DICT_INIT;
+      bool status = decor_provider_invoke((int)i, "range", p->redraw_range, args, true, &res);
+      p = &kv_A(decor_providers, i);  // lua call might have reallocated decor_providers
+
+      if (!status) {
+        // error: skip rest of this window
+        p->state = kDecorProviderWinDisabled;
+      } else if (res.size >= 1) {
+        Object first = res.items[0];
+        if (first.type == kObjectTypeBoolean) {
+          if (first.data.boolean == false) {
+            p->state = kDecorProviderWinDisabled;
+          }
+        } else if (first.type == kObjectTypeInteger) {
+          Integer row = first.data.integer;
+          Integer col = 0;
+          if (res.size >= 2) {
+            Object second = res.items[1];
+            if (second.type == kObjectTypeInteger) {
+              col = second.data.integer;
+            }
+          }
+          p->win_skip_row = (int)row;
+          p->win_skip_col = (int)col;
+        }
+      }
+
+      api_free_array(res);
 
       hl_check_ns();
     }
@@ -204,7 +260,7 @@ void decor_providers_invoke_buf(buf_T *buf)
       MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, BUFFER_OBJ(buf->handle));
       ADD_C(args, INTEGER_OBJ((int64_t)display_tick));
-      decor_provider_invoke((int)i, "buf", p->redraw_buf, args, true);
+      decor_provider_invoke((int)i, "buf", p->redraw_buf, args, true, NULL);
     }
   }
 }
@@ -221,7 +277,7 @@ void decor_providers_invoke_end(void)
     if (p->state != kDecorProviderDisabled && p->redraw_end != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      decor_provider_invoke((int)i, "end", p->redraw_end, args, true);
+      decor_provider_invoke((int)i, "end", p->redraw_end, args, true, NULL);
     }
   }
   decor_check_to_be_deleted();
@@ -274,6 +330,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_buf);
   NLUA_CLEAR_REF(p->redraw_win);
   NLUA_CLEAR_REF(p->redraw_line);
+  NLUA_CLEAR_REF(p->redraw_range);
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
   NLUA_CLEAR_REF(p->conceal_line);

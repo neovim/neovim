@@ -214,6 +214,7 @@ If you want to keep the changed buffer without saving it, switch on the
 							*:fin* *:find*
 :fin[d][!] [++opt] [+cmd] {file}
 			Find {file} in 'path' and then |:edit| it.
+			See also: 'findfunc'.
 
 :{count}fin[d][!] [++opt] [+cmd] {file}
 			Just like ":find", but use the {count} match in
@@ -630,7 +631,7 @@ list of the current window.
 			buffer.
 			Also see |++opt| and |+cmd|.
 
-:[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
+:[count]arge[dit][!] [++opt] [+cmd] {name} ...		*:arge* *:argedit*
 			Add {name}s to the argument list and edit it.
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice |:argded|.
@@ -645,7 +646,7 @@ list of the current window.
 			edited. No check for duplicates is done.
 			Also see |++opt| and |+cmd|.
 
-:[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*
+:[count]arga[dd] {name} ...			*:arga* *:argadd* *E479*
 :[count]arga[dd]						*E1156*
 			Add the {name}s to the argument list.  When {name} is
 			omitted add the current buffer name to the argument
@@ -676,7 +677,7 @@ list of the current window.
 			If your current file is a duplicate, your current file
 			will change to the original file index.
 
-:argd[elete] {pattern} ..		*:argd* *:argdelete* *E480* *E610*
+:argd[elete] {pattern} ...		*:argd* *:argdelete* *E480* *E610*
 			Delete files from the argument list that match the
 			{pattern}s.  {pattern} is used like a file pattern,
 			see |file-pattern|.  "%" can be used to delete the
@@ -1242,10 +1243,10 @@ MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 							*:confirm* *:conf*
 :conf[irm] {command}	Execute {command}, and use a dialog when an
 			operation has to be confirmed.  Can be used on the
-			|:edit|, |:q|, |:qa| and |:w| commands (the latter to
-			override a read-only setting), and any commands that
-			can fail because of unsaved changes, such as |:only|,
-			|:buffer|, |:bdelete|, etc.
+			|:edit|, |:restart|, |:q|, |:qa| and |:w| commands
+			(the latter to override a read-only setting), and any
+			commands that can fail because of unsaved changes,
+			such as |:only|, |:buffer|, |:bdelete|, etc.
 
 Examples: >
   :confirm w foo
@@ -1316,15 +1317,15 @@ b:browsefilter variable.  You would most likely set b:browsefilter in a
 filetype plugin, so that the browse dialog would contain entries related to
 the type of file you are currently editing.  Disadvantage: This makes it
 difficult to start editing a file of a different type.  To overcome this, you
-may want to add >
+can add the following as the final filter on Windows: >
 
 	All Files\t(*.*)\t*\n
 <
-as the final filter on Windows or >
+Or the following on other platforms, so that the user can still access any
+desired file: >
 
-	All Files\t(*)\t*\n"
+	All Files\t(*)\t*\n
 <
-on other platforms, so that the user can still access any desired file.
 
 To avoid setting browsefilter when Vim does not actually support it, you can
 use has("browsefilter"): >
@@ -1356,7 +1357,7 @@ exist, the next-higher scope in the hierarchy applies.
 
 :cd[!] {path}		Change the current directory to {path}.
 			If {path} is relative, it is searched for in the
-			directories listed in |'cdpath'|.
+			directories listed in 'cdpath'.
 			Clear any window-local directory.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from

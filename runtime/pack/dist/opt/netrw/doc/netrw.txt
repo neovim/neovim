@@ -6,8 +6,8 @@
 Original Author:  Charles E. Campbell
 Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
 	The VIM LICENSE applies to the files in this package, including
-        netrw.vim, netrw.txt, netrwSettings.vim, and
-	syntax/netrw.vim.  Like anything else that's free, netrw.vim and its
+	netrw.vim, netrw.txt, and syntax/netrw.vim.
+	Like anything else that's free, netrw.vim and its
 	associated files are provided *as is* and comes with no warranty of
 	any kind, either expressed or implied.  No guarantees of
 	merchantability.  No guarantees of suitability for any purpose.  By
@@ -97,7 +97,6 @@ Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
       Marked Files: Unmarking.............................|netrw-mu|
       Netrw Browser Variables.............................|netrw-browser-var|
       Netrw Browsing And Option Incompatibilities.........|netrw-incompatible|
-      Netrw Settings Window...............................|netrw-settings-window|
       Obtaining A File....................................|netrw-O|
       Preview Window......................................|netrw-p|
       Previous Window.....................................|netrw-P|
@@ -120,7 +119,7 @@ you'll need to have at least the following in your <.vimrc>:
 	set nocp                    " 'compatible' is not set
 	filetype plugin on          " plugins are enabled
 <
-(see |'cp'| and |:filetype-plugin-on|)
+(see 'cp' and |:filetype-plugin-on|)
 
 Netrw supports "transparent" editing of files on other machines using urls
 (see |netrw-transparent|). As an example of this, let's assume you have an
@@ -337,10 +336,8 @@ NETRW VARIABLES AND SETTINGS				*netrw-variables* {{{2
     )
 
 Netrw provides a lot of variables which allow you to customize netrw to your
-preferences.  One way to look at them is via the command :NetrwSettings (see
-|netrw-settings|) which will display your current netrw settings.  Most such
-settings are described below, in |netrw-browser-options|, and in
-|netrw-externapp|:
+preferences.  Most such settings are described below, in
+|netrw-browser-options|, and in |netrw-externapp|:
 
  *b:netrw_lastfile*	last file Network-read/written retained on a
 			per-buffer basis (supports plain :Nw )
@@ -677,7 +674,7 @@ However, |netrw-ssh-hack| can help with this problem.
 5. Activation						*netrw-activate* {{{1
 
 Network-oriented file transfers are available by default whenever Vim's
-|'nocompatible'| mode is enabled.  Netrw's script files reside in your
+'nocompatible' mode is enabled.  Netrw's script files reside in your
 system's plugin, autoload, and syntax directories; just the
 plugin/netrwPlugin.vim script is sourced automatically whenever you bring up
 vim.  The main script in autoload/netrw.vim is only loaded when you actually
@@ -771,9 +768,6 @@ below, a {netfile} is a URL to a remote file.
 		effectively remove the user-id and password by using empty
 		strings (ie. "").
 		(related: |netrw-userpass|)
-
-:NetrwSettings  This command is described in |netrw-settings| -- used to
-		display netrw settings and change netrw behavior.
 
 
 ==============================================================================
@@ -1132,7 +1126,6 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 				*netrw-quickcom* *netrw-quickcoms*
 QUICK REFERENCE: COMMANDS	*netrw-explore-cmds* *netrw-browse-cmds* {{{2
      :NetrwClean[!]............................................|netrw-clean|
-     :NetrwSettings............................................|netrw-settings|
      :Ntree....................................................|netrw-ntree|
      :Explore[!]  [dir] Explore directory of current file......|netrw-explore|
      :Hexplore[!] [dir] Horizontal Split & Explore.............|netrw-explore|
@@ -1185,7 +1178,7 @@ The :NetrwMB command is available outside of netrw buffers (once netrw has been
 invoked in the session).
 
 The file ".netrwbook" holds bookmarks when netrw (and vim) is not active.  By
-default, its stored on the first directory on the user's |'runtimepath'|.
+default, its stored on the first directory on the user's 'runtimepath'.
 
 Related Topics:
 	|netrw-gb| how to return (go) to a bookmark
@@ -1411,7 +1404,7 @@ used in that count.
 See |g:netrw_dirhistmax| for how to control the quantity of history stack
 slots.  The file ".netrwhist" holds history when netrw (and vim) is not
 active.  By default, its stored on the first directory on the user's
-|'runtimepath'|.
+'runtimepath'.
 
 Related Topics:
 	|netrw-U| changing to a successor directory
@@ -1544,7 +1537,7 @@ DIRECTORY EXPLORATION COMMANDS  {{{2
 						*netrw-:Explore*
 :Explore  will open the local-directory browser on the current file's
           directory (or on directory [dir] if specified).  The window will be
-	  split only if the file has been modified and |'hidden'| is not set,
+	  split only if the file has been modified and 'hidden' is not set,
 	  otherwise the browsing window will take over that window.  Normally
 	  the splitting is taken horizontally.
 	  Also see: |netrw-:Rexplore|
@@ -1936,9 +1929,6 @@ passwords:
 
 	Thomer Gil has provided a hint on how to speed up netrw+ssh:
 	    http://thomer.com/howtos/netrw_ssh.html
-
-	Alex Young has several hints on speeding ssh up:
-	    http://usevim.com/2012/03/16/editing-remote-files/
 
 
 LISTING BOOKMARKS AND HISTORY		*netrw-qb* *netrw-listbookmark* {{{2
@@ -2429,11 +2419,11 @@ your browsing preferences.  (see also: |netrw-settings|)
 
   *g:netrw_alto*		change from above splitting to below splitting
 				by setting this variable (see |netrw-o|)
-				 default: =&sb           (see |'sb'|)
+				 default: =&sb           (see 'sb')
 
   *g:netrw_altv*		change from left splitting to right splitting
 				by setting this variable (see |netrw-v|)
-				 default: =&spr          (see |'spr'|)
+				 default: =&spr          (see 'spr')
 
   *g:netrw_banner*		enable/suppress the banner
 				=0: suppress the banner
@@ -2500,7 +2490,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 
   *g:netrw_cursor*		= 2 (default)
 				This option controls the use of the
-				|'cursorline'| (cul) and |'cursorcolumn'|
+				'cursorline' (cul) and 'cursorcolumn'
 				(cuc) settings by netrw:
 
 				Value   Thin-Long-Tree      Wide
@@ -2515,15 +2505,15 @@ your browsing preferences.  (see also: |netrw-settings|)
 				 =8        cul U-cuc        cul   cuc
 
 				Where
-				  u-cul : user's |'cursorline'|   initial setting used
-				  u-cuc : user's |'cursorcolumn'| initial setting used
-				  U-cul : user's |'cursorline'|   current setting used
-				  U-cuc : user's |'cursorcolumn'| current setting used
-				  cul   : |'cursorline'|   will be locally set
-				  cuc   : |'cursorcolumn'| will be locally set
+				  u-cul : user's 'cursorline'   initial setting used
+				  u-cuc : user's 'cursorcolumn' initial setting used
+				  U-cul : user's 'cursorline'   current setting used
+				  U-cuc : user's 'cursorcolumn' current setting used
+				  cul   : 'cursorline'   will be locally set
+				  cuc   : 'cursorcolumn' will be locally set
 
 				  The "initial setting" means the values of
-				  the |'cuc'| and |'cul'| settings in effect when
+				  the 'cuc' and 'cul' settings in effect when
 				  netrw last saw |g:netrw_cursor| >= 5 or when
 				  netrw was initially run.
 
@@ -2600,7 +2590,7 @@ your browsing preferences.  (see also: |netrw-settings|)
   *g:netrw_ffkeep*		(default: doesn't exist)
 				If this variable exists and is zero, then
 				netrw will not do a save and restore for
-				|'fileformat'|.
+				'fileformat'.
 
   *g:netrw_fname_escape*	=' ?&;%'
 				Used on filenames before remote reading/writing
@@ -2852,7 +2842,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 					netrwYacc    : *.y
 
 				In addition, those groups mentioned in
-				|'suffixes'| are also added to the special
+				'suffixes' are also added to the special
 				file highlighting group.
 				 These syntax highlighting groups are linked
 				to netrwGray or Folded by default
@@ -2938,7 +2928,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				used to specify the quantity of lines or
 				columns for the new window.
 				 If g:netrw_winsize is zero, then a normal
-				split will be made (ie. |'equalalways'| will
+				split will be made (ie. 'equalalways' will
 				take effect, for example).
 				 default: 50  (for 50%)
 
@@ -2957,7 +2947,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				    codepoint; a hard tab is one; wide and
 				    narrow CJK are one each; etc.)
 				=3: virtual length (counting tabs as anything
-				    between 1 and |'tabstop'|, wide CJK as 2
+				    between 1 and 'tabstop', wide CJK as 2
 				    rather than 1, Arabic alif as zero when
 				    immediately preceded by lam, one
 				    otherwise, etc)
@@ -2977,17 +2967,6 @@ is problematic.  Autochdir sets the current directory to that containing the
 file you edit; this apparently also applies to directories.  In other words,
 autochdir sets the current directory to that containing the "file" (even if
 that "file" is itself a directory).
-
-NETRW SETTINGS WINDOW				*netrw-settings-window* {{{2
-
-With the NetrwSettings.vim plugin, >
-	:NetrwSettings
-will bring up a window with the many variables that netrw uses for its
-settings.  You may change any of their values; when you save the file, the
-settings therein will be used.  One may also press "?" on any of the lines for
-help on what each of the variables do.
-
-(also see: |netrw-browser-var| |netrw-protocol| |netrw-variables|)
 
 
 ==============================================================================
@@ -3060,7 +3039,7 @@ These will:
 	Related: if you like this idea, you may also find :Lexplore
 	         (|netrw-:Lexplore|) or |g:netrw_chgwin| of interest
 
-Also see: |g:netrw_chgwin| |netrw-P| |'previewwindow'| |CTRL-W_z| |:pclose|
+Also see: |g:netrw_chgwin| |netrw-P| 'previewwindow' |CTRL-W_z| |:pclose|
 
 
 PREVIOUS WINDOW					*netrw-P* *netrw-prvwin* {{{2
@@ -3458,7 +3437,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		not by netrw, and there appears to be no way to work around
 		it.  Coupled with the default cmdheight of 1, this message
 		causes the "Press ENTER..." prompt.  So:  read |hit-enter|;
-		I also suggest that you set your |'cmdheight'| to 2 (or more) in
+		I also suggest that you set your 'cmdheight' to 2 (or more) in
 		your <.vimrc> file.
 
 								*netrw-p10*
@@ -3577,7 +3556,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 		I expect both buffers to exist, but only the last one does.
 
 	   (Lance) Problem is caused by "set autochdir" in .vimrc.
-	   (drchip) I am able to duplicate this problem with |'acd'| set.
+	   (drchip) I am able to duplicate this problem with 'acd' set.
 	            It appears that the buffers are not exactly closed;
 		    a ":ls!" will show them (although ":ls" does not).
 

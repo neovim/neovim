@@ -133,9 +133,7 @@ typedef struct {
   linenr_T lines_needed;  // lines needed in the preview window
 } PreviewLines;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds.c.generated.h"
-#endif
+#include "ex_cmds.c.generated.h"
 
 static const char e_non_numeric_argument_to_z[]
   = N_("E144: Non-numeric argument to :z");
@@ -488,8 +486,7 @@ void ex_sort(exarg_T *eap)
       format_found++;
     } else if (*p == 'u') {
       unique = true;
-    } else if (*p == '"') {
-      // comment start
+    } else if (*p == '"') {  // comment start
       break;
     } else if (check_nextcmd(p) != NULL) {
       eap->nextcmd = check_nextcmd(p);
@@ -659,7 +656,7 @@ void ex_sort(exarg_T *eap)
   // delete the original lines if appending worked
   if (i == count) {
     for (i = 0; i < count; i++) {
-      ml_delete(eap->line1, false);
+      ml_delete(eap->line1);
     }
   } else {
     count = 0;
@@ -678,7 +675,6 @@ void ex_sort(exarg_T *eap)
     extmark_splice(curbuf, eap->line1 - 1, 0,
                    (int)count, 0, old_count,
                    lnum - eap->line2, 0, new_count, kExtmarkUndo);
-
     changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, -deleted, true);
   }
 
@@ -689,6 +685,203 @@ sortend:
   xfree(nrs);
   xfree(sortbuf1);
   xfree(sortbuf2);
+  vim_regfree(regmatch.regprog);
+  if (got_int) {
+    emsg(_(e_interr));
+  }
+}
+
+/// ":uniq".
+void ex_uniq(exarg_T *eap)
+{
+  regmatch_T regmatch;
+  int maxlen = 0;
+  linenr_T count = eap->line2 - eap->line1 + 1;
+  bool keep_only_unique = false;
+  bool keep_only_not_unique = eap->forceit;
+  linenr_T deleted = 0;
+
+  // Uniq one line is really quick!
+  if (count <= 1) {
+    return;
+  }
+
+  if (u_save((linenr_T)(eap->line1 - 1), (linenr_T)(eap->line2 + 1)) == FAIL) {
+    return;
+  }
+  sortbuf1 = NULL;
+  regmatch.regprog = NULL;
+
+  sort_abort = sort_ic = sort_lc = sort_rx = sort_nr = sort_flt = false;
+  bool change_occurred = false;    // Buffer contents changed.
+
+  for (char *p = eap->arg; *p != NUL; p++) {
+    if (ascii_iswhite(*p)) {
+      // Skip
+    } else if (*p == 'i') {
+      sort_ic = true;
+    } else if (*p == 'l') {
+      sort_lc = true;
+    } else if (*p == 'r') {
+      sort_rx = true;
+    } else if (*p == 'u') {
+      // 'u' is only valid when '!' is not given.
+      if (!keep_only_not_unique) {
+        keep_only_unique = true;
+      }
+    } else if (*p == '"') {  // comment start
+      break;
+    } else if (eap->nextcmd == NULL && check_nextcmd(p) != NULL) {
+      eap->nextcmd = check_nextcmd(p);
+      break;
+    } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
+      char *s = skip_regexp_err(p + 1, *p, true);
+      if (s == NULL) {
+        goto uniqend;
+      }
+      *s = NUL;
+      // Use last search pattern if uniq pattern is empty.
+      if (s == p + 1) {
+        if (last_search_pat() == NULL) {
+          emsg(_(e_noprevre));
+          goto uniqend;
+        }
+        regmatch.regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
+      } else {
+        regmatch.regprog = vim_regcomp(p + 1, RE_MAGIC);
+      }
+      if (regmatch.regprog == NULL) {
+        goto uniqend;
+      }
+      p = s;              // continue after the regexp
+      regmatch.rm_ic = p_ic;
+    } else {
+      semsg(_(e_invarg2), p);
+      goto uniqend;
+    }
+  }
+
+  // Find the length of the longest line.
+  for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
+    int len = ml_get_len(lnum);
+    if (maxlen < len) {
+      maxlen = len;
+    }
+
+    if (got_int) {
+      goto uniqend;
+    }
+  }
+
+  // Allocate a buffer that can hold the longest line.
+  sortbuf1 = xmalloc((size_t)maxlen + 1);
+
+  // Delete lines according to options.
+  bool match_continue = false;
+  bool next_is_unmatch = false;
+  linenr_T done_lnum = eap->line1 - 1;
+  linenr_T delete_lnum = 0;
+  for (linenr_T i = 0; i < count; i++) {
+    linenr_T get_lnum = eap->line1 + i;
+
+    char *s = ml_get(get_lnum);
+    int len = ml_get_len(get_lnum);
+
+    colnr_T start_col = 0;
+    colnr_T end_col = len;
+    if (regmatch.regprog != NULL && vim_regexec(&regmatch, s, 0)) {
+      if (sort_rx) {
+        start_col = (colnr_T)(regmatch.startp[0] - s);
+        end_col = (colnr_T)(regmatch.endp[0] - s);
+      } else {
+        start_col = (colnr_T)(regmatch.endp[0] - s);
+      }
+    } else if (regmatch.regprog != NULL) {
+      end_col = 0;
+    }
+    char save_c = NUL;  // temporary character storage
+    if (end_col > 0) {
+      save_c = s[end_col];
+      s[end_col] = NUL;
+    }
+
+    bool is_match = i > 0 ? !string_compare(&s[start_col], sortbuf1) : false;
+    delete_lnum = 0;
+    if (next_is_unmatch) {
+      is_match = false;
+      next_is_unmatch = false;
+    }
+
+    if (!keep_only_unique && !keep_only_not_unique) {
+      if (is_match) {
+        delete_lnum = get_lnum;
+      } else {
+        STRCPY(sortbuf1, &s[start_col]);
+      }
+    } else if (keep_only_not_unique) {
+      if (is_match) {
+        done_lnum = get_lnum - 1;
+        delete_lnum = get_lnum;
+        match_continue = true;
+      } else {
+        if (i > 0 && !match_continue && get_lnum - 1 > done_lnum) {
+          delete_lnum = get_lnum - 1;
+          next_is_unmatch = true;
+        } else if (i >= count - 1) {
+          delete_lnum = get_lnum;
+        }
+        match_continue = false;
+        STRCPY(sortbuf1, &s[start_col]);
+      }
+    } else {  // keep_only_unique
+      if (is_match) {
+        if (!match_continue) {
+          delete_lnum = get_lnum - 1;
+        } else {
+          delete_lnum = get_lnum;
+        }
+        match_continue = true;
+      } else {
+        if (i == 0 && match_continue) {
+          delete_lnum = get_lnum;
+        }
+        match_continue = false;
+        STRCPY(sortbuf1, &s[start_col]);
+      }
+    }
+
+    if (end_col > 0) {
+      s[end_col] = save_c;
+    }
+
+    if (delete_lnum > 0) {
+      ml_delete(delete_lnum);
+      i -= get_lnum - delete_lnum + 1;
+      count--;
+      deleted++;
+      change_occurred = true;
+    }
+
+    fast_breakcheck();
+    if (got_int) {
+      goto uniqend;
+    }
+  }
+
+  // Adjust marks for deleted lines and prepare for displaying.
+  mark_adjust(eap->line2 - deleted, eap->line2, MAXLNUM, -deleted,
+              change_occurred ? kExtmarkUndo : kExtmarkNOOP);
+  msgmore(-deleted);
+
+  if (change_occurred) {
+    changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, -deleted, true);
+  }
+
+  curwin->w_cursor.lnum = eap->line1;
+  beginline(BL_WHITE | BL_FIX);
+
+uniqend:
+  xfree(sortbuf1);
   vim_regfree(regmatch.regprog);
   if (got_int) {
     emsg(_(e_interr));
@@ -806,7 +999,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
 
   for (l = line1; l <= line2; l++) {
-    ml_delete(line1 + extra, true);
+    ml_delete_flags(line1 + extra, ML_DEL_MESSAGE);
   }
   if (!global_busy && num_lines > p_report) {
     smsg(0, NGETTEXT("%" PRId64 " line moved",
@@ -1953,7 +2146,7 @@ void do_wqall(exarg_T *eap)
 /// Check the 'write' option.
 ///
 /// @return  true and give a message when it's not st.
-bool not_writing(void)
+static bool not_writing(void)
 {
   if (p_write) {
     return false;
@@ -2531,13 +2724,11 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         goto theend;
       }
       u_unchanged(curbuf);
-      buf_updates_unload(curbuf, false);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
       readfile_flags = READ_KEEP_UNDO;
     } else {
-      buf_updates_unload(curbuf, false);
       buf_freeall(curbuf, 0);  // Free all things for buffer.
     }
     // If autocommands deleted the buffer we were going to re-edit, give
@@ -2888,11 +3079,12 @@ void ex_append(exarg_T *eap)
     lnum++;
 
     if (empty) {
-      ml_delete(2, false);
+      ml_delete(2);
       empty = false;
     }
   }
   State = MODE_NORMAL;
+  ui_cursor_shape();
 
   if (eap->forceit) {
     curbuf->b_p_ai = !curbuf->b_p_ai;
@@ -2938,7 +3130,7 @@ void ex_change(exarg_T *eap)
     if (curbuf->b_ml.ml_flags & ML_EMPTY) {         // nothing to delete
       break;
     }
-    ml_delete(eap->line1, false);
+    ml_delete(eap->line1);
   }
 
   // make sure the cursor is not beyond the end of the file now
@@ -3720,12 +3912,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
 
         if (subflags.do_ask && cmdpreview_ns <= 0) {
           int typed = 0;
-
-          // change State to MODE_CONFIRM, so that the mouse works
-          // properly
           int save_State = State;
-          State = MODE_CONFIRM;
-          setmouse();                   // disable mouse in xterm
           curwin->w_cursor.col = regmatch.startpos[0].col;
 
           if (curwin->w_p_crb) {
@@ -4133,7 +4320,7 @@ skip:
                 break;
               }
               for (i = 0; i < nmatch_tl; i++) {
-                ml_delete(lnum, false);
+                ml_delete(lnum);
               }
               mark_adjust(lnum, lnum + nmatch_tl - 1, MAXLNUM, -nmatch_tl, kExtmarkNOOP);
               if (subflags.do_ask) {

@@ -26,9 +26,7 @@
 
 static garray_T watchers = GA_EMPTY_INIT_VALUE;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/server.c.generated.h"
-#endif
+#include "msgpack_rpc/server.c.generated.h"
 
 /// Initializes resources, handles `--listen`, starts the primary server at v:servername.
 ///

@@ -169,6 +169,17 @@ func Test_bnext_bprev_help()
   b XHelp1
   blast   | call assert_equal(b4, bufnr())
 
+  " Cycling through help buffers works even if they aren't listed.
+  b XHelp1
+  setlocal nobuflisted
+  bnext | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  setlocal nobuflisted
+  bprev | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+
   %bwipe!
 endfunc
 
@@ -596,6 +607,33 @@ func Test_closed_buffer_still_in_window()
   unlet! s:w s:b
   autocmd! ViewClosedBuffer
   %bw!
+endfunc
+
+" Cursor position should be restored when switching to a buffer previously
+" viewed in a window, regardless of whether it's visible in another one.
+func Test_switch_to_previously_viewed_buffer()
+  set nostartofline
+  new Xviewbuf
+  call setline(1, range(1, 200))
+  let oldwin = win_getid()
+  vsplit
+
+  call cursor(100, 3)
+  edit Xotherbuf
+  buffer Xviewbuf
+  call assert_equal([0, 100, 3, 0], getpos('.'))
+
+  exe win_id2win(oldwin) .. 'close'
+  setlocal bufhidden=hide
+
+  call cursor(200, 3)
+  edit Xotherbuf
+  buffer Xviewbuf
+  call assert_equal([0, 200, 3, 0], getpos('.'))
+
+  bwipe! Xotherbuf
+  bwipe! Xviewbuf
+  set startofline&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

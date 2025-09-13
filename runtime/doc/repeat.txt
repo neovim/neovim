@@ -191,7 +191,7 @@ Using Vim scripts					*using-scripts*
 
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
-					*:so* *:source* *load-vim-script*
+					*:so* *:source*
 :so[urce] {file}	Runs |Ex-commands| or Lua code (".lua" files) from
 			{file}.
 			Triggers the |SourcePre| autocommand.
@@ -207,9 +207,13 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			sourced more than once, then the functions in the
 			buffer are defined again.
 
+			Implementation detail: When sourcing a [range] of
+			lines that falls inside a folded region, the range
+			will be adjusted to the start and end of the fold,
+			but only if a two line specifiers range was used.
+
 							*:source!*
-:so[urce]! {file}
-			Runs |Normal-mode| commands from {file}. When used
+:so[urce]! {file}	Runs |Normal-mode| commands from {file}. When used
 			after |:global|, |:argdo|, |:windo|, |:bufdo|, in
 			a loop or when another command follows the display
 			won't be updated while executing the commands.
@@ -260,24 +264,24 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			about each searched file.
 
 							*:pa* *:packadd* *E919*
-:pa[ckadd][!] {name}	Search for an optional plugin directory in 'packpath'
-			and source any plugin files found.  The directory must
-			match:
-				pack/*/opt/{name} ~
-			The directory is added to 'runtimepath' if it wasn't
-			there yet.
-			If the directory pack/*/opt/{name}/after exists it is
+:pa[ckadd][!] {name}	|pack-add| Search for an optional plugin directory in
+			'packpath', source any plugin files found, and add it
+			to 'runtimepath'.  The directory must match: >
+				pack/*/opt/{name}
+<			If the directory pack/*/opt/{name}/after exists it is
 			added at the end of 'runtimepath'.
 
-			If loading packages from "pack/*/start" was skipped,
-			then this directory is searched first:
-				pack/*/start/{name} ~
+			Note: Use |vim.pack.add()| to install from a URL.
 
+			If loading packages from "pack/*/start" was skipped,
+			then this directory is searched first: >
+				pack/*/start/{name}
+<
 			Note that {name} is the directory name, not the name
-			of the .vim file.  All files matching the patterns
-				pack/*/opt/{name}/plugin/**/*.vim ~
-				pack/*/opt/{name}/plugin/**/*.lua ~
-			will be sourced.  This allows for using subdirectories
+			of the .vim file.  All files matching the patterns >
+				pack/*/opt/{name}/plugin/**/*.vim
+				pack/*/opt/{name}/plugin/**/*.lua
+<			will be sourced.  This allows for using subdirectories
 			below "plugin", just like with plugins in
 			'runtimepath'.
 
@@ -288,17 +292,14 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			"pack/*/opt/{name}", this command will also look
 			for "{name}/ftdetect/*.vim" files.
 
-			When the optional ! is added no plugin files or
-			ftdetect scripts are loaded, only the matching
+			When the optional "!" is given, no plugin/ files or
+			ftdetect/ scripts are loaded, only the matching
 			directories are added to 'runtimepath'.  This is
 			useful in your |init.vim|.  The plugins will then be
-			loaded during |initialization|, see |load-plugins| (note
-			that the loading order will be reversed, because each
-			directory is inserted before others). In this case, the
-			ftdetect scripts will be loaded during |initialization|,
-			before the |load-plugins| step.
-
-			Also see |pack-add|.
+			loaded during the |load-plugins| |initialization| step
+			(note that the loading order will be reversed because
+			each directory is inserted before others), after
+			loading the ftdetect scripts.
 
 						*:packl* *:packloadall*
 :packl[oadall][!]	Load all packages in the "start" directory under each
@@ -413,12 +414,12 @@ make a top-down hierarchy of script files.  The ':source' command can be
 nested as deep as the number of files that can be opened at one time (about
 15).  The ':source!' command can be nested up to 15 levels deep.
 
-You can use the "<sfile>" string (literally, this is not a special key) inside
+You can use the "<script>" string (literally, this is not a special key) inside
 of the sourced file, in places where a file name is expected.  It will be
 replaced by the file name of the sourced file.  For example, if you have a
 "other.vimrc" file in the same directory as your |init.vim| file, you can
 source it from your |init.vim| file with this command: >
-	:source <sfile>:h/other.vimrc
+	:source <script>:h/other.vimrc
 
 In script files terminal-dependent key codes are represented by
 terminal-independent two character codes.  This means that they can be used
@@ -518,203 +519,6 @@ Rationale:
 	that was a valid continuation line.  Using `'"\ '` comes closest, even
 	though it may look a bit weird.  Requiring the space after the
 	backslash is to make it very unlikely this is a normal comment line.
-
-==============================================================================
-Using Vim packages					*packages*
-
-A Vim "package" is a directory that contains |plugin|s.  Compared to normal
-plugins, a package can...
-- be downloaded as an archive and unpacked in its own directory, so the files
-  are not mixed with files of other plugins.
-- be a git, mercurial, etc. repository, thus easy to update.
-- contain multiple plugins that depend on each other.
-- contain plugins that are automatically loaded on startup ("start" packages,
-  located in "pack/*/start/*") and ones that are only loaded when needed with
-  |:packadd| ("opt" packages, located in "pack/*/opt/*").
-
-							*runtime-search-path*
-Nvim searches for |:runtime| files in:
-	1. all paths in 'runtimepath'
-	2. all "pack/*/start/*" dirs
-
-Note that the "pack/*/start/*" paths are not explicitly included in
-'runtimepath', so they will not be reported by ":set rtp" or "echo &rtp".
-Scripts can use |nvim_list_runtime_paths()| to list all used directories, and
-|nvim_get_runtime_file()| to query for specific files or sub-folders within
-the runtime path. Example: >
-	" List all runtime dirs and packages with Lua paths.
-	:echo nvim_get_runtime_file("lua/", v:true)
-
-Using a package and loading automatically ~
-
-Let's assume your Nvim files are in "~/.local/share/nvim/site" and you want to
-add a package from a zip archive "/tmp/foopack.zip": >
-	% mkdir -p ~/.local/share/nvim/site/pack/foo
-	% cd ~/.local/share/nvim/site/pack/foo
-	% unzip /tmp/foopack.zip
-
-The directory name "foo" is arbitrary, you can pick anything you like.
-
-You would now have these files under ~/.local/share/nvim/site:
-	pack/foo/README.txt
-	pack/foo/start/foobar/plugin/foo.vim
-	pack/foo/start/foobar/syntax/some.vim
-	pack/foo/opt/foodebug/plugin/debugger.vim
-
-On startup after processing your |config|, Nvim scans all directories in
-'packpath' for plugins in "pack/*/start/*", then loads the plugins.
-
-To allow for calling into package functionality while parsing your |vimrc|,
-|:colorscheme| and |autoload| will both automatically search under 'packpath'
-as well in addition to 'runtimepath'.  See the documentation for each for
-details.
-
-In the example Nvim will find "pack/foo/start/foobar/plugin/foo.vim" and load
-it.
-
-If the "foobar" plugin kicks in and sets the 'filetype' to "some", Nvim will
-find the syntax/some.vim file, because its directory is in the runtime search
-path.
-
-Nvim will also load ftdetect files, if there are any.
-
-Note that the files under "pack/foo/opt" are not loaded automatically, only the
-ones under "pack/foo/start".  See |pack-add| below for how the "opt" directory
-is used.
-
-Loading packages automatically will not happen if loading plugins is disabled,
-see |load-plugins|.
-
-To load packages earlier, so that plugin/ files are sourced:
-	:packloadall
-This also works when loading plugins is disabled.  The automatic loading will
-only happen once.
-
-If the package has an "after" directory, that directory is added to the end of
-'runtimepath', so that anything there will be loaded later.
-
-
-Using a single plugin and loading it automatically ~
-
-If you don't have a package but a single plugin, you need to create the extra
-directory level: >
-	% mkdir -p ~/.local/share/nvim/site/pack/foo/start/foobar
-	% cd ~/.local/share/nvim/site/pack/foo/start/foobar
-	% unzip /tmp/someplugin.zip
-
-You would now have these files:
-	pack/foo/start/foobar/plugin/foo.vim
-	pack/foo/start/foobar/syntax/some.vim
-
-From here it works like above.
-
-
-Optional plugins ~
-							*pack-add*
-To load an optional plugin from a pack use the `:packadd` command: >
-	:packadd foodebug
-This searches for "pack/*/opt/foodebug" in 'packpath' and will find
-~/.local/share/nvim/site/pack/foo/opt/foodebug/plugin/debugger.vim and source
-it.
-
-This could be done if some conditions are met.  For example, depending on
-whether Nvim supports a feature or a dependency is missing.
-
-You can also load an optional plugin at startup, by putting this command in
-your |config|: >
-	:packadd! foodebug
-The extra "!" is so that the plugin isn't loaded if Nvim was started with
-|--noplugin|.
-
-It is perfectly normal for a package to only have files in the "opt"
-directory.  You then need to load each plugin when you want to use it.
-
-
-Where to put what ~
-
-Since color schemes, loaded with `:colorscheme`, are found below
-"pack/*/start" and "pack/*/opt", you could put them anywhere.  We recommend
-you put them below "pack/*/opt", for example
-"~/.config/nvim/pack/mycolors/opt/dark/colors/very_dark.vim".
-
-Filetype plugins should go under "pack/*/start", so that they are always
-found.  Unless you have more than one plugin for a file type and want to
-select which one to load with `:packadd`.  E.g. depending on the compiler
-version: >
-	if foo_compiler_version > 34
-	  packadd foo_new
-	else
-	  packadd foo_old
-	endif
-
-The "after" directory is most likely not useful in a package.  It's not
-disallowed though.
-
-==============================================================================
-Creating Vim packages					*package-create*
-
-This assumes you write one or more plugins that you distribute as a package.
-
-If you have two unrelated plugins you would use two packages, so that Vim
-users can choose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the preferred ones with
-`:packadd`.
-
-Decide how you want to distribute the package.  You can create an archive or
-you could use a repository.  An archive can be used by more users, but is a
-bit harder to update to a new version.  A repository can usually be kept
-up-to-date easily, but it requires a program like "git" to be available.
-You can do both, github can automatically create an archive for a release.
-
-Your directory layout would be like this:
-   start/foobar/plugin/foo.vim		" always loaded, defines commands
-   start/foobar/plugin/bar.vim		" always loaded, defines commands
-   start/foobar/autoload/foo.vim	" loaded when foo command used
-   start/foobar/doc/foo.txt		" help for foo.vim
-   start/foobar/doc/tags		" help tags
-   opt/fooextra/plugin/extra.vim	" optional plugin, defines commands
-   opt/fooextra/autoload/extra.vim	" loaded when extra command used
-   opt/fooextra/doc/extra.txt		" help for extra.vim
-   opt/fooextra/doc/tags		" help tags
-
-This allows for the user to do: >
-	mkdir ~/.local/share/nvim/site/pack
-	cd ~/.local/share/nvim/site/pack
-	git clone https://github.com/you/foobar.git myfoobar
-
-Here "myfoobar" is a name that the user can choose, the only condition is that
-it differs from other packages.
-
-In your documentation you explain what the plugins do, and tell the user how
-to load the optional plugin: >
-	:packadd! fooextra
-
-You could add this packadd command in one of your plugins, to be executed when
-the optional plugin is needed.
-
-Run the `:helptags` command to generate the doc/tags file.  Including this
-generated file in the package means that the user can drop the package in the
-pack directory and the help command works right away.  Don't forget to re-run
-the command after changing the plugin help: >
-	:helptags path/start/foobar/doc
-	:helptags path/opt/fooextra/doc
-
-
-Dependencies between plugins ~
-							*packload-two-steps*
-Suppose you have two plugins that depend on the same functionality. You can
-put the common functionality in an autoload directory, so that it will be
-found automatically.  Your package would have these files:
-
-	pack/foo/start/one/plugin/one.vim  >
-		call foolib#getit()
-<	pack/foo/start/two/plugin/two.vim >
-		call foolib#getit()
-<	pack/foo/start/lib/autoload/foolib.vim >
-		func foolib#getit()
-
-This works, because start packages will be searched for autoload files, when
-sourcing the plugins.
 
 ==============================================================================
 Debugging scripts					*debug-scripts*

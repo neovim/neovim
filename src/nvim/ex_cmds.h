@@ -20,6 +20,4 @@ enum {
   ECMD_ONE   = 1,   ///< use first line
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds.h.generated.h"
-#endif
+#include "ex_cmds.h.generated.h"

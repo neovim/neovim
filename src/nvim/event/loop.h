@@ -37,6 +37,4 @@ struct loop {
   bool closing;  ///< Set to true if loop_close() has been called
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/loop.h.generated.h"
-#endif
+#include "event/loop.h.generated.h"

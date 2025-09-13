@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -28,6 +29,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -41,6 +43,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/shada.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
@@ -51,9 +54,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "optionstr.c.generated.h"
-#endif
+#include "optionstr.c.generated.h"
 
 static const char e_illegal_character_after_chr[]
   = N_("E535: Illegal character after <%c>");
@@ -115,6 +116,15 @@ char *illegal_char(char *errbuf, size_t errbuflen, int c)
   return errbuf;
 }
 
+static char *illegal_char_after_chr(char *errbuf, size_t errbuflen, int c)
+{
+  if (errbuf == NULL) {
+    return "";
+  }
+  vim_snprintf(errbuf, errbuflen, _(e_illegal_character_after_chr), c);
+  return errbuf;
+}
+
 /// Check string options in a buffer for NULL value.
 void check_buf_options(buf_T *buf)
 {
@@ -168,6 +178,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tfu);
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
+  check_string_option(&buf->b_p_dia);
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_tsrfu);
   check_string_option(&buf->b_p_lw);
@@ -695,6 +706,14 @@ const char *did_set_buftype(optset_T *args)
       || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
     return e_invarg;
   }
+  // buftype=prompt:
+  if (buf->b_p_bt[0] == 'p') {
+    // Set default value for 'comments'
+    set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
+    // set the prompt start position to lastline.
+    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
+    RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+  }
   if (win->w_status_height || global_stl_height()) {
     win->w_redr_status = true;
     redraw_later(win, UPD_VALID);
@@ -890,9 +909,8 @@ const char *did_set_complete(optset_T *args)
     }
     if (char_before != NUL) {
       if (args->os_errbuf != NULL) {
-        vim_snprintf(args->os_errbuf, args->os_errbuflen,
-                     _(e_illegal_character_after_chr), char_before);
-        return args->os_errbuf;
+        return illegal_char_after_chr(args->os_errbuf, args->os_errbuflen,
+                                      char_before);
       }
       return NULL;
     }
@@ -900,6 +918,10 @@ const char *did_set_complete(optset_T *args)
     while (*p == ',' || *p == ' ') {
       p++;
     }
+  }
+
+  if (set_cpt_callbacks(args) != OK) {
+    return illegal_char_after_chr(args->os_errbuf, args->os_errbuflen, 'F');
   }
   return NULL;
 }
@@ -1022,6 +1044,16 @@ const char *did_set_cursorlineopt(optset_T *args)
 
   // This could be changed to use opt_strings_flags() instead.
   if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
+    return e_invarg;
+  }
+
+  return NULL;
+}
+
+/// The 'diffanchors' option is changed.
+const char *did_set_diffanchors(optset_T *args)
+{
+  if (diffanchors_changed(args->os_flags & OPT_LOCAL) == FAIL) {
     return e_invarg;
   }
 
@@ -2090,6 +2122,19 @@ const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_winbar(optset_T *args)
 {
   return did_set_statustabline_rulerformat(args, false, false);
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  Error err = ERROR_INIT;
+  if (!parse_winborder(&fconfig, &err)) {
+    api_clear_error(&err);
+    return e_invarg;
+  }
+  api_clear_error(&err);
+  return NULL;
 }
 
 /// The 'winhighlight' option is changed.

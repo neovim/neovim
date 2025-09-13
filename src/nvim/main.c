@@ -135,9 +135,7 @@ enum {
   EDIT_QF = 4,     // start in quickfix mode
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "main.c.generated.h"
-#endif
+#include "main.c.generated.h"
 
 Loop main_loop;
 
@@ -190,6 +188,7 @@ static bool event_teardown(void)
 /// Needed for unit tests.
 void early_init(mparm_T *paramp)
 {
+  os_hint_priority();
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
@@ -334,7 +333,8 @@ int main(int argc, char **argv)
 
   if (use_builtin_ui && !remote_ui) {
     ui_client_forward_stdin = !stdin_isatty;
-    uint64_t rv = ui_client_start_server(params.argc, params.argv);
+    uint64_t rv = ui_client_start_server(get_vim_var_str(VV_PROGPATH),
+                                         (size_t)params.argc, params.argv);
     if (!rv) {
       fprintf(stderr, "Failed to start Nvim server!\n");
       os_exit(1);
@@ -709,6 +709,7 @@ void getout(int exitval)
     exitval += ex_exitval;
   }
 
+  set_vim_var_type(VV_EXITING, VAR_NUMBER);
   set_vim_var_nr(VV_EXITING, exitval);
 
   // Invoked all deferred functions in the function stack.
@@ -806,6 +807,17 @@ void getout(int exitval)
   // Apply 'titleold'.
   if (p_title && *p_titleold != NUL) {
     ui_call_set_title(cstr_as_string(p_titleold));
+  }
+
+  if (restarting) {
+    Error err = ERROR_INIT;
+    if (!remote_ui_restart(current_ui, &err)) {
+      if (ERROR_SET(&err)) {
+        ELOG("%s", err.msg);  // UI disappeared already?
+        api_clear_error(&err);
+      }
+    }
+    restarting = false;
   }
 
   if (garbage_collect_at_exit) {
@@ -960,7 +972,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   ADD_C(a, CSTR_AS_OBJ(connect_error));
   ADD_C(a, ARRAY_OBJ(args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
-  Object o = nlua_exec(s, a, kRetObject, NULL, &err);
+  Object o = nlua_exec(s, NULL, a, kRetObject, NULL, &err);
   kv_destroy(args);
   if (ERROR_SET(&err)) {
     fprintf(stderr, "%s\n", err.msg);
@@ -1615,15 +1627,49 @@ static void read_stdin(void)
   swap_exists_action = SEA_DIALOG;
   no_wait_return = true;
   bool save_msg_didany = msg_didany;
-  set_buflisted(true);
-  // Create memfile and read from stdin.
-  open_buffer(true, NULL, 0);
-  if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
-    // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
-    do_cmdline_cmd("silent! bnext");
-    // Delete the empty stdin buffer.
-    do_cmdline_cmd("bwipeout 1");
+
+  if (curbuf->b_ffname) {
+    // curbuf is already opened for a file, create a new buffer for stdin. #35269
+    buf_T *stdin_buf = buflist_new(NULL, NULL, 0, BLN_LISTED);
+    if (stdin_buf == NULL) {
+      semsg("Failed to create buffer for stdin");
+      return;
+    }
+
+    // remember the current buffer number so we can go back to it
+    handle_T initial_buf_handle = curbuf->handle;
+
+    // set the buffer we just created as curbuf so we can read stdin into it
+    set_curbuf(stdin_buf, 0, false);
+    readfile(NULL, NULL, 0, 0, (linenr_T)MAXLNUM, NULL, READ_NEW + READ_STDIN, true);
+
+    // remember stdin_buf_handle so we can close it if stdin_buf ends up empty
+    handle_T stdin_buf_handle = stdin_buf->handle;
+    bool stdin_buf_empty = buf_is_empty(curbuf);
+
+    // switch back to the original starting buffer
+    char buf[100];
+    vim_snprintf(buf, sizeof(buf), "silent! buffer %d", initial_buf_handle);
+    do_cmdline_cmd(buf);
+
+    if (stdin_buf_empty) {
+      // stdin buffer may be first or last ("echo foo | nvim file1 -"). #35269
+      // only wipe buffer after having switched to original starting buffer. #35681
+      vim_snprintf(buf, sizeof(buf), "silent! bwipeout! %d", stdin_buf_handle);
+      do_cmdline_cmd(buf);
+    }
+  } else {
+    // stdin buffer is first so we can just use curbuf
+    set_buflisted(true);
+    // Create memfile and read from stdin.
+    open_buffer(true, NULL, 0);
+    // stdin was empty so we should wipe it (e.g. "echo file1 | xargs nvim"). #8561
+    if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
+      do_cmdline_cmd("silent! bnext");
+      do_cmdline_cmd("silent! bwipeout 1");
+    }
   }
+
   no_wait_return = false;
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
@@ -1650,9 +1696,8 @@ static void create_windows(mparm_T *parmp)
     if (parmp->window_layout == WIN_TABS) {
       parmp->window_count = make_tabpages(parmp->window_count);
       TIME_MSG("making tab pages");
-    } else if (firstwin->w_next == NULL) {
-      parmp->window_count = make_windows(parmp->window_count,
-                                         parmp->window_layout == WIN_VER);
+    } else if (firstwin->w_next == NULL || firstwin->w_next->w_floating) {
+      parmp->window_count = make_windows(parmp->window_count, parmp->window_layout == WIN_VER);
       TIME_MSG("making windows");
     } else {
       parmp->window_count = win_count();
@@ -2064,7 +2109,8 @@ static void do_exrc_initialization(void)
     str = nlua_read_secure(VIMRC_LUA_FILE);
     if (str != NULL) {
       Error err = ERROR_INIT;
-      nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
+      nlua_exec(cstr_as_string(str), "@"VIMRC_LUA_FILE, (Array)ARRAY_DICT_INIT, kRetNilBool, NULL,
+                &err);
       xfree(str);
       if (ERROR_SET(&err)) {
         semsg("Error in %s:", VIMRC_LUA_FILE);

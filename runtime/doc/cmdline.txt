@@ -142,13 +142,16 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		typing CTRL-R and the second character '"' will be displayed
 		to indicate that you are expected to enter the name of a
 		register.
-		The text is inserted as if you typed it, but mappings and
-		abbreviations are not used.  Command-line completion through
-		'wildchar' is not triggered though.  And characters that end
-		the command line are inserted literally (<Esc>, <CR>, <NL>,
-		<C-C>).  A <BS> or CTRL-W could still end the command line
-		though, and remaining characters will then be interpreted in
-		another mode, which might not be what you intended.
+		When used with named or clipboard registers (A-Z,a-z,0-9,+)
+		text is inserted literally like pasting with "p". For other
+		registers, the text is inserted as if you typed it, but
+		mappings and abbreviations are not used. Command-line
+		completion through 'wildchar' is not triggered though.  And
+		characters that end the command line are inserted literally
+		(<Esc>, <CR>, <NL>, <C-C>).  A <BS> or CTRL-W could still end
+		the command line though, and remaining characters will then be
+		interpreted in another mode, which might not be what you
+		intended.
 		Special registers:
 			'"'	the unnamed register, containing the text of
 				the last delete or yank
@@ -176,7 +179,9 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				sure the expression evaluates to an empty
 				string.  E.g.: >
 					<C-R><C-R>=setcmdpos(2)[-1]<CR>
-<		See |registers| about registers.
+<				You can use this to insert a register as
+				typed with CTRL-R =@reg.
+		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
@@ -379,6 +384,9 @@ word before the cursor.  This is available for:
 The number of help item matches is limited (currently to 300) to avoid a long
 delay when there are very many matches.
 
+For automatic completion as you type (without pressing a key like <Tab>),
+see |cmdline-autocompletion|.
+
 These are the commands that can be used:
 
 							*c_CTRL-D*
@@ -388,7 +396,7 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.
-					*c_CTRL-I* *c_wildchar* *c_<Tab>*
+				*c_CTRL-I* *c_wildchar* *c_<Tab>* */_<Tab>*
 'wildchar' option
 		A match is done on the pattern in front of the cursor.  The
 		match (if there are several, the first match) is inserted
@@ -398,6 +406,10 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		again and there were multiple matches, the next
 		match is inserted.  After the last match, the first is used
 		again (wrap around).
+
+		In search context use <CTRL-V><Tab> or "\t" to search for a
+		literal <Tab> instead of triggering completion.
+
 		The behavior can be changed with the 'wildmode' option.
 							*c_<S-Tab>*
 <S-Tab>		Like 'wildchar' or <Tab>, but begin with the last match and
@@ -430,7 +442,7 @@ CTRL-G		When 'incsearch' is set, entering a search pattern for "/" or
 		"?" and the current match is displayed then CTRL-G will move
 		to the next match (does not take |search-offset| into account)
 		Use CTRL-T to move to the previous match.  Hint: on a regular
-		keyboard T is above G.
+		keyboard G is below T.
 	                                            *c_CTRL-T* */_CTRL-T*
 CTRL-T		When 'incsearch' is set, entering a search pattern for "/" or
 		"?" and the current match is displayed then CTRL-T will move
@@ -564,7 +576,6 @@ that see the '"' as part of their argument:
     :menu (and the like)
     :mkspell
     :normal
-    :ownsyntax
     :popup
     :registers
     :return
@@ -862,7 +873,7 @@ to insert special things while typing you can use the CTRL-R command.  For
 example, "%" stands for the current file name, while CTRL-R % inserts the
 current file name right away.  See |c_CTRL-R|.
 
-Note:  If you want to avoid the effects of special characters in a Vim script
+Note: If you want to avoid the effects of special characters in a Vim script
 you may want to use |fnameescape()|.  Also see |`=|.
 
 
@@ -937,14 +948,6 @@ Note: these are typed literally, they are not special keys!
 		   events).
 		   When the match is with a file name, it is expanded to the
 		   full path.
-							*:<sfile>* *<sfile>*
-	<sfile>    When executing a `:source` command, is replaced with the
-		   file name of the sourced file.  *E498*
-		   When executing a function, is replaced with the call stack,
-		   as with <stack> (this is for backwards compatibility, using
-		   <stack> or <script> is preferred).
-		   Note that filename-modifiers are useless when <sfile> is
-		   not used inside a script.
 							*:<stack>* *<stack>*
 	<stack>	   is replaced with the call stack, using
 		   "function {function-name}[{lnum}]" for a function line
@@ -952,7 +955,7 @@ Note: these are typed literally, they are not special keys!
 		   ".." in between items.  E.g.:
 		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
 		   If there is no call stack you get error *E489* .
-							*:<script>* *<script>*
+							*:<script>* *<script>* *E498*
 	<script>   When executing a `:source` command, is replaced with the file
 		   name of the sourced file.  When executing a function, is
 		   replaced with the file name of the script where it is
@@ -971,7 +974,7 @@ Note: these are typed literally, they are not special keys!
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
-The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<sfile>",
+The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<script>",
 "<afile>" or "<abuf>".  They are also used with the |fnamemodify()| function.
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
@@ -1242,8 +1245,10 @@ Example: >
 	:au CmdwinLeave :  let &cpt = b:cpt_save
 This sets 'complete' to use completion in the current window for |i_CTRL-N|.
 Another example: >
-	:au CmdwinEnter [/?]  startinsert
+	:au CmdwinEnter [/\?]  startinsert
 This will make Vim start in Insert mode in the command-line window.
+Note: The "?" needs to be escaped, as this is a |file-pattern|.  See also
+|cmdline-autocompletion|.
 
 					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:
@@ -1254,5 +1259,84 @@ The character used for the pattern indicates the type of command-line:
 	=	expression for "= |expr-register|
 	@	string for |input()|
 	`-`	text for |:insert| or |:append|
+
+==============================================================================
+8. Command-line autocompletion			 *cmdline-autocompletion*
+
+Autocompletion makes the command-line more efficient and easier to navigate by
+automatically showing a popup menu of suggestions as you type, whether
+searching (/ or ?) or entering commands (:).
+
+A basic setup is: >
+	autocmd CmdlineChanged [:\/\?] call wildtrigger()
+	set wildmode=noselect:lastused,full
+	set wildoptions=pum
+
+With this configuration, suggestions appear immediately, and you can
+move through them with <Tab> or the arrow keys.
+
+To retain normal command-line history navigation with <Up>/<Down>: >
+	cnoremap <expr> <Up>   wildmenumode() ? "\<C-E>\<Up>"   : "\<Up>"
+	cnoremap <expr> <Down> wildmenumode() ? "\<C-E>\<Down>" : "\<Down>"
+
+Options can also be applied only for specific command-lines.  For
+example, to use a shorter popup menu height only during search: >
+	autocmd CmdlineEnter [\/\?] set pumheight=8
+	autocmd CmdlineLeave [\/\?] set pumheight&
+
+EXTRAS					*fuzzy-file-picker* *live-grep*
+
+Command-line autocompletion can also be extended for advanced uses.
+For example, you can turn the native |:find| command into a fuzzy, interactive
+file picker: >
+
+	set findfunc=Find
+	func Find(arg, _)
+	  if get(s:, 'filescache', []) == []
+	    let s:filescache = systemlist(
+		\ 'find . -path "*/.git" -prune -o -type f -print')
+	  endif
+	  return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)
+	endfunc
+	autocmd CmdlineEnter : let s:filescache = []
+
+The `:Grep` command searches for lines matching a pattern and updates the
+results dynamically as you type (triggered after two characters; note: needs
+the `CmdlineLeavePre` autocmd from the next section): >
+
+	command! -nargs=+ -complete=customlist,<SID>Grep
+		\ Grep call <SID>VisitFile()
+
+	func s:Grep(arglead, cmdline, cursorpos)
+	  let cmd = $'grep -REIHns "{a:arglead}" --exclude-dir=.git
+		\ --exclude=".*"'
+	  return len(a:arglead) > 1 ? systemlist(cmd) : []
+	endfunc
+
+	func s:VisitFile()
+	  let item = getqflist(#{lines: [s:selected]}).items[0]
+	  let pos  = '[0,\ item.lnum,\ item.col,\ 0]'
+	  exe $':b +call\ setpos(".",\ {pos}) {item.bufnr}'
+	  call setbufvar(item.bufnr, '&buflisted', 1)
+	endfunc
+
+Automatically select the first item in the completion list when leaving the
+command-line, and for `:Grep`, add the typed pattern to the command-line
+history: >
+
+	autocmd CmdlineLeavePre :
+	      \ if get(cmdcomplete_info(), 'matches', []) != [] |
+	      \   let s:info = cmdcomplete_info() |
+	      \   if getcmdline() =~ '^\s*fin\%[d]\s' && s:info.selected == -1 |
+	      \     call setcmdline($'find {s:info.matches[0]}') |
+	      \   endif |
+	      \   if getcmdline() =~ '^\s*Grep\s' |
+	      \     let s:selected = s:info.selected != -1
+	      \         ? s:info.matches[s:info.selected] : s:info.matches[0] |
+	      \     call setcmdline(s:info.cmdline_orig) |
+	      \   endif |
+	      \ endif
+
+For autocompletion in insert mode, see |ins-autocompletion|.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

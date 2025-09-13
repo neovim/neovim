@@ -31,9 +31,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/deprecated.c.generated.h"
-#endif
+#include "api/deprecated.c.generated.h"
 
 /// @deprecated Use nvim_exec2() instead.
 /// @see nvim_exec2
@@ -62,7 +60,7 @@ Object nvim_execute_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return nlua_exec(code, args, kRetObject, arena, err);
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
 }
 
 /// Gets the buffer number
@@ -603,7 +601,7 @@ static int64_t convert_index(int64_t index)
 /// @param          name Option name
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dict nvim_get_option_info(String name, Arena *arena, Error *err)
+DictAs(get_option_info) nvim_get_option_info(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {

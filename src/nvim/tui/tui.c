@@ -95,6 +95,7 @@ struct TUIData {
   kvec_t(Rect) invalid_regions;
   int row, col;
   int out_fd;
+  int pending_resize_events;
   bool can_change_scroll_region;
   bool has_left_and_right_margin_mode;
   bool can_set_lr_margin;  // smglr
@@ -112,7 +113,15 @@ struct TUIData {
   bool set_cursor_color_as_str;
   bool cursor_has_color;
   bool is_starting;
-  bool did_set_grapheme_cluster_mode;
+  bool resize_events_enabled;
+
+  // Terminal modes that Nvim enabled that it must disable on exit
+  struct {
+    bool grapheme_clusters : 1;
+    bool theme_updates : 1;
+    bool resize_events : 1;
+  } modes;
+
   FILE *screenshot;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
@@ -142,7 +151,6 @@ struct TUIData {
   char *space_buf;
   size_t space_buf_len;
   bool stopped;
-  int seen_error_exit;
   int width;
   int height;
   bool rgb;
@@ -150,11 +158,8 @@ struct TUIData {
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
 };
 
-static int got_winch = 0;
 static bool cursor_style_enabled = false;
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/tui.c.generated.h"
-#endif
+#include "tui/tui.c.generated.h"
 
 static Set(cstr_t) urls = SET_INIT;
 
@@ -165,7 +170,6 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->is_starting = true;
   tui->screenshot = NULL;
   tui->stopped = false;
-  tui->seen_error_exit = 0;
   tui->loop = &main_loop;
   tui->url = -1;
 
@@ -247,19 +251,23 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     case kTermModeGraphemeClusters:
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
-        tui->did_set_grapheme_cluster_mode = true;
+        tui->modes.grapheme_clusters = true;
       }
       break;
     case kTermModeThemeUpdates:
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
+        tui->modes.theme_updates = true;
       }
       break;
     case kTermModeResizeEvents:
-      signal_watcher_stop(&tui->winch_handle);
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
+        tui->modes.resize_events = true;
       }
+
+      // We track both whether the mode is enabled AND if Nvim was the one to enable it
+      tui->resize_events_enabled = true;
       break;
     case kTermModeLeftAndRightMargins:
       tui->has_left_and_right_margin_mode = true;
@@ -367,7 +375,10 @@ static void terminfo_start(TUIData *tui)
   tui->overflow = false;
   tui->set_cursor_color_as_str = false;
   tui->cursor_has_color = false;
-  tui->did_set_grapheme_cluster_mode = false;
+  tui->resize_events_enabled = false;
+  tui->modes.grapheme_clusters = false;
+  tui->modes.resize_events = false;
+  tui->modes.theme_updates = false;
   tui->showing_mode = SHAPE_IDX_N;
   tui->unibi_ext.set_cursor_color = -1;
   tui->unibi_ext.reset_cursor_color = -1;
@@ -379,6 +390,7 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.reset_scroll_region = -1;
   tui->unibi_ext.set_cursor_style = -1;
   tui->unibi_ext.reset_cursor_style = -1;
+  tui->unibi_ext.set_title = -1;
   tui->unibi_ext.set_underline_style = -1;
   tui->unibi_ext.set_underline_color = -1;
   tui->unibi_ext.sync = -1;
@@ -388,10 +400,12 @@ static void terminfo_start(TUIData *tui)
 
   char *term = os_getenv("TERM");
 #ifdef MSWIN
-  os_tty_guess_term(&term, tui->out_fd);
-  os_setenv("TERM", term, 1);
-  // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
-  term = os_getenv("TERM");
+  const char *guessed_term = NULL;
+  os_tty_guess_term(&guessed_term, tui->out_fd);
+  if (term == NULL && guessed_term != NULL) {
+    term = xstrdup(guessed_term);
+    os_setenv("TERM", guessed_term, 1);
+  }
 #endif
 
   // Set up unibilium/terminfo.
@@ -528,7 +542,9 @@ static void terminfo_disable(TUIData *tui)
 {
   // Disable theme update notifications. We do this first to avoid getting any
   // more notifications after we reset the cursor and any color palette changes.
-  tui_set_term_mode(tui, kTermModeThemeUpdates, false);
+  if (tui->modes.theme_updates) {
+    tui_set_term_mode(tui, kTermModeThemeUpdates, false);
+  }
 
   // Destroy output stuff
   tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
@@ -541,9 +557,12 @@ static void terminfo_disable(TUIData *tui)
   // Reset the key encoding
   tui_reset_key_encoding(tui);
 
-  // Disable resize events
-  tui_set_term_mode(tui, kTermModeResizeEvents, false);
-  if (tui->did_set_grapheme_cluster_mode) {
+  // Disable terminal modes that we enabled
+  if (tui->modes.resize_events) {
+    tui_set_term_mode(tui, kTermModeResizeEvents, false);
+  }
+
+  if (tui->modes.grapheme_clusters) {
     tui_set_term_mode(tui, kTermModeGraphemeClusters, false);
   }
 
@@ -568,14 +587,16 @@ static void terminfo_disable(TUIData *tui)
 /// Disable the alternate screen and prepare for the TUI to close.
 static void terminfo_stop(TUIData *tui)
 {
-  if (ui_client_exit_status == 0) {
-    ui_client_exit_status = tui->seen_error_exit;
+  if (ui_client_exit_status == 0 && ui_client_error_exit > 0) {
+    ui_client_exit_status = ui_client_error_exit;
   }
 
-  // if nvim exited with nonzero status, without indicated this was an
+  // If Nvim exited with nonzero status, without indicating this was an
   // intentional exit (like `:1cquit`), it likely was an internal failure.
-  // Don't clobber the stderr error message in this case.
-  if (ui_client_exit_status == tui->seen_error_exit) {
+  // Don't clobber the stderr error message in this case. #21608
+  if (ui_client_exit_status == MAX(ui_client_error_exit, 0)) {
+    // Position the cursor on the last screen line, below all the text
+    cursor_goto(tui, tui->height - 1, 0);
     // Exit alternate screen.
     unibi_out(tui, unibi_exit_ca_mode);
   }
@@ -612,12 +633,6 @@ static void tui_terminal_after_startup(TUIData *tui)
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   unibi_out_ext(tui, tui->unibi_ext.enable_focus_reporting);
   flush_buf(tui);
-}
-
-void tui_error_exit(TUIData *tui, Integer status)
-  FUNC_ATTR_NONNULL_ALL
-{
-  tui->seen_error_exit = (int)status;
 }
 
 void tui_stop(TUIData *tui)
@@ -660,8 +675,6 @@ static void tui_terminal_stop(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
   tinput_stop(&tui->input);
-  // Position the cursor on the last screen line, below all the text
-  cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
 }
 
@@ -693,9 +706,8 @@ void tui_free_all_mem(TUIData *tui)
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *cbdata)
 {
-  got_winch++;
   TUIData *tui = cbdata;
-  if (tui_is_stopped(tui)) {
+  if (tui_is_stopped(tui) || tui->resize_events_enabled) {
     return;
   }
 
@@ -1210,13 +1222,14 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
     r->right = MIN(r->right, grid->width);
   }
 
-  if (!got_winch && !tui->is_starting) {
+  if (tui->pending_resize_events == 0 && !tui->is_starting) {
     // Resize the _host_ terminal.
     UNIBI_SET_NUM_VAR(tui->params[0], (int)height);
     UNIBI_SET_NUM_VAR(tui->params[1], (int)width);
     unibi_out_ext(tui, tui->unibi_ext.resize_screen);
-  } else {  // Already handled the SIGWINCH signal; avoid double-resize.
-    got_winch = got_winch > 0 ? got_winch - 1 : 0;
+  } else {  // Already handled the resize; avoid double-resize.
+    tui->pending_resize_events = tui->pending_resize_events >
+                                 0 ? tui->pending_resize_events - 1 : 0;
     grid->row = -1;
   }
 }
@@ -1520,6 +1533,19 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
+/// Writes directly to the TTY, bypassing the buffer.
+void tui_ui_send(TUIData *tui, String content)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_write_t req;
+  uv_buf_t buf = { .base = content.data, .len = UV_BUF_LEN(content.size) };
+  int ret = uv_write(&req, (uv_stream_t *)&tui->output_handle, &buf, 1, NULL);
+  if (ret) {
+    ELOG("uv_write failed: %s", uv_strerror(ret));
+  }
+  uv_run(&tui->write_loop, UV_RUN_DEFAULT);
+}
+
 /// Flushes TUI grid state to a buffer (which is later flushed to the TTY by `flush_buf`).
 ///
 /// @see flush_buf
@@ -1634,7 +1660,7 @@ static void tui_suspend_cb(TUIData *tui)
 
 void tui_set_title(TUIData *tui, String title)
 {
-  if (!unibi_get_ext_str(tui->ut, (unsigned)tui->unibi_ext.set_title)) {
+  if (tui->unibi_ext.set_title == -1) {
     return;
   }
   if (title.size > 0) {
@@ -1659,12 +1685,16 @@ void tui_set_icon(TUIData *tui, String icon)
 
 void tui_screenshot(TUIData *tui, String path)
 {
+  FILE *f = fopen(path.data, "w");
+  if (f == NULL) {
+    return;
+  }
+
   UGrid *grid = &tui->grid;
   flush_buf(tui);
   grid->row = 0;
   grid->col = 0;
 
-  FILE *f = fopen(path.data, "w");
   tui->screenshot = f;
   fprintf(f, "%d,%d\n", grid->height, grid->width);
   unibi_out(tui, unibi_clear_screen);
@@ -1804,9 +1834,11 @@ static void ensure_space_buf_size(TUIData *tui, size_t len)
 void tui_set_size(TUIData *tui, int width, int height)
   FUNC_ATTR_NONNULL_ALL
 {
+  tui->pending_resize_events++;
   tui->width = width;
   tui->height = height;
   ensure_space_buf_size(tui, (size_t)tui->width);
+  ui_client_set_size(width, height);
 }
 
 /// Tries to get the user's wanted dimensions (columns and rows) for the entire
@@ -1846,9 +1878,6 @@ void tui_guess_size(TUIData *tui)
   }
 
   tui_set_size(tui, width, height);
-
-  // Redraw on SIGWINCH event if size didn't change. #23411
-  ui_client_set_size(width, height);
 
   xfree(lines);
   xfree(columns);

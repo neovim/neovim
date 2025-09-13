@@ -25,9 +25,9 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *02.1*	Running Vim for the First Time
 
-To start Vim, enter this command: >
+To start Nvim, enter this command: >
 
-	gvim file.txt
+	nvim file.txt
 
 On Unix you can type this at any command prompt.  If you are running Microsoft
 Windows, open a Command Prompt and enter the command.  In either case, Vim
@@ -49,20 +49,6 @@ runs out of file to display, it displays tilde lines.  At the bottom of the
 screen, a message line indicates the file is named file.txt and shows that you
 are creating a new file.  The message information is temporary and other
 information overwrites it.
-
-
-THE VIM COMMAND
-
-The gvim command causes the editor to create a new window for editing.  If you
-use this command: >
-
-	vim file.txt
-
-the editing occurs inside your command window.  In other words, if you are
-running inside an xterm, the editor uses your xterm window.  If you are using
-the command prompt under Microsoft Windows, the editing occurs inside this
-window.  The text in the window will look the same for both versions, but with
-gvim you have extra features, like a menu bar.  More about that later.
 
 ==============================================================================
 *02.2*	Inserting text
@@ -580,7 +566,7 @@ Summary:					*help-summary*  >
 	:help quote:
 
 13) Vim Script is available at >
-	:help eval.txt
+	:help vimeval.txt
 <   Certain aspects of the language are available at :h expr-X where "X" is a
    single letter. E.g.  >
 	:help expr-!
@@ -604,7 +590,7 @@ Summary:					*help-summary*  >
 <    for how the '|' is handled in mappings.
 
 15) Command definitions are talked about :h command-topic, so use >
-	:help command-bar
+	:help command-bang
 <    to find out about the '!' argument for custom commands.
 
 16) Window management commands always start with CTRL-W, so you find the
@@ -660,10 +646,13 @@ Summary:					*help-summary*  >
     command switch of Vim use: >
 	:help -f
 
-24) Optional features always start with "+".  To find out about the
-    conceal feature use: >
-	:help +conceal
-
+24) Lua language and Nvim's Lua standard library are available at >vim
+	:help lua.txt
+<    Guide to using Lua in Nvim is available at >vim
+	:help lua-guide.txt
+<    Lua 5.1 reference manual is available at >vim
+	:help luaref.txt
+<
 25) Documentation for included filetype specific functionality is usually
     available  in the form ft-<filetype>-<functionality>.  So >
 	:help ft-c-syntax

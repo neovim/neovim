@@ -179,34 +179,30 @@ function vim.iconv(str, from, to, opts) end
 --- @param fn fun()
 function vim.schedule(fn) end
 
---- Wait for {time} in milliseconds until {callback} returns `true`.
+--- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
+--- `callback` immediately, then at intervals of approximately `interval` milliseconds (default
+--- 200). Returns all `callback` results on success.
 ---
---- Executes {callback} immediately and at approximately {interval}
---- milliseconds (default 200). Nvim still processes other events during
---- this time.
----
---- Cannot be called while in an |api-fast| event.
+--- Nvim processes other events while waiting.
+--- Cannot be called during an |api-fast| event.
 ---
 --- Examples:
 ---
 --- ```lua
---- ---
---- -- Wait for 100 ms, allowing other events to process
---- vim.wait(100, function() end)
+--- -- Wait for 100 ms, allowing other events to process.
+--- vim.wait(100)
 ---
---- ---
---- -- Wait for 100 ms or until global variable set.
---- vim.wait(100, function() return vim.g.waiting_for_var end)
+--- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+--- vim.wait(1000, function() return vim.g.foo end, 500)
 ---
---- ---
---- -- Wait for 1 second or until global variable set, checking every ~500 ms
---- vim.wait(1000, function() return vim.g.waiting_for_var end, 500)
+--- -- Wait up to 100 ms or until `vim.g.foo` is true, and get the callback results.
+--- local ok, rv1, rv2, rv3 = vim.wait(100, function()
+---   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+--- end)
 ---
---- ---
---- -- Schedule a function to set a value in 100ms
+--- -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+--- -- only waits 100ms because `vim.wait` processes other events while waiting.
 --- vim.defer_fn(function() vim.g.timer_result = true end, 100)
----
---- -- Would wait ten seconds if results blocked. Actually only waits  100 ms
 --- if vim.wait(10000, function() return vim.g.timer_result end) then
 ---   print('Only waiting a little bit of time!')
 --- end
@@ -216,11 +212,11 @@ function vim.schedule(fn) end
 --- @param callback? fun(): boolean Optional callback. Waits until {callback} returns true
 --- @param interval? integer (Approximate) number of milliseconds to wait between polls
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
---- @return boolean, nil|-1|-2
----     - If {callback} returns `true` during the {time}: `true, nil`
----     - If {callback} never returns `true` during the {time}: `false, -1`
----     - If {callback} is interrupted during the {time}: `false, -2`
----     - If {callback} errors, the error is raised.
+--- @return boolean, nil|-1|-2, ...
+---     - If callback returns `true` before timeout: `true, nil, ...`
+---     - On timeout: `false, -1`
+---     - On interrupt: `false, -2`
+---     - On error: the error is raised.
 function vim.wait(time, callback, interval, fast_only) end
 
 --- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
@@ -266,7 +262,9 @@ function vim.wait(time, callback, interval, fast_only) end
 ---               enable events for the respective UI element.
 ---             - {set_cmdheight}? (`boolean`) If false, avoid setting
 ---               'cmdheight' to 0 when `ext_messages` is enabled.
---- @param callback fun(event: string, ...) Function called for each UI event
+--- @param callback fun(event: string, ...): any Function called for each UI event.
+---                 A truthy return value signals to Nvim that the event is handled,
+---                 in which case it is not propagated to remote UIs.
 function vim.ui_attach(ns, opts, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the

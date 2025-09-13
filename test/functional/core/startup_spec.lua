@@ -534,6 +534,50 @@ describe('startup', function()
     )
   end)
 
+  it('if stdin is empty and - is last: selects buffer 1, deletes buffer 3 #35269', function()
+    eq(
+      '\r\n  1 %a   "file1"                        line 0\r\n  2      "file2"                        line 0',
+      fn.system({
+        nvim_prog,
+        '-n',
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '+ls!',
+        '+qall!',
+        'file1',
+        'file2',
+        '-',
+      }, { '' })
+    )
+  end)
+
+  it("empty stdin with terminal split doesn't crash #35681", function()
+    eq(
+      'nocrash',
+      fn.system({
+        nvim_prog,
+        '-n',
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '--cmd',
+        'term',
+        '+split',
+        '+quit!',
+        '+bw!',
+        '+bw!',
+        '+echo "nocrash"',
+        "+call timer_start(1, { -> execute('qa') })", -- need to let event handling happen
+        '-',
+      }, { '' })
+    )
+  end)
+
   it('stdin with -es/-Es #7679', function()
     local input = { 'append', 'line1', 'line2', '.', '%print', '' }
     local inputstr = table.concat(input, '\n')
@@ -761,7 +805,8 @@ describe('startup', function()
             \   'row': 3,
             \   'col': 3
             \ }
-      autocmd WinEnter * let g:float_win = nvim_open_win(bufnr, v:false, config)]]
+      autocmd WinEnter * let g:float_win = nvim_open_win(bufnr, v:false, config)
+    ]]
     )
     finally(function()
       os.remove('Xdiff.vim')
@@ -772,6 +817,81 @@ describe('startup', function()
     local float_win = eval('g:float_win')
     eq('editor', api.nvim_win_get_config(float_win).relative)
     eq(false, api.nvim_get_option_value('diff', { win = float_win }))
+  end)
+
+  it('still opens arglist windows if init only opens floating windows', function()
+    write_file(
+      'Xfloat.vim',
+      [[
+      let config = {
+            \   'relative': 'editor',
+            \   'focusable': v:false,
+            \   'width': 1,
+            \   'height': 1,
+            \   'row': 1,
+            \   'col': 1
+            \ }
+      call nvim_open_win(0, v:false, config)
+    ]]
+    )
+    finally(function()
+      os.remove('Xfloat.vim')
+    end)
+    clear { args = { '-u', 'Xfloat.vim', '-d', 'Xfloat.vim', 'foo' } }
+    local screen = Screen.new(40, 5)
+    screen:add_extra_attr_ids({
+      [101] = {
+        bold = true,
+        background = Screen.colors.LightBlue,
+        foreground = Screen.colors.Brown,
+      },
+      [102] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.LightBlue },
+      [103] = { foreground = Screen.colors.Magenta, background = Screen.colors.LightBlue },
+      [104] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.LightBlue },
+    })
+    screen:expect([[
+      {7:  }{101:^let}{22: config }{101:=}{22: }{102:{}{22:                      }│{23:-}|
+      {7: }{101:l}{22:      }{102:\}{22:   }{103:'relative'}{22:: }{103:'editor'}{22:,     }│{23:-}|
+      {7:  }{22:      }{102:\}{22:   }{103:'focusable'}{22:: }{104:v:}{22:false,     }│ |
+      {3:Xfloat.vim                             }{2:<}|
+                                              |
+    ]])
+  end)
+
+  it("default 'diffopt' is applied with -d", function()
+    clear({
+      args = {
+        '-d',
+        'test/functional/fixtures/diff/startup_old.txt',
+        'test/functional/fixtures/diff/startup_new.txt',
+        '--cmd',
+        'set laststatus=0',
+      },
+    })
+    local screen = Screen.new(80, 24)
+    screen:expect([[
+      {7:+ }{13:^+-- 15 lines: package main············}│{7:+ }{13:+-- 15 lines: package main···········}|
+      {7:  }                                      │{7:  }                                     |
+      {7:  }func printCharacters(str string) strin│{7:  }func printCharacters(str string) stri|
+      {7:  }        return str                    │{7:  }        return str                   |
+      {7:  }}                                     │{7:  }}                                    |
+      {7:  }                                      │{7:  }                                     |
+      {7:  }func main() {                         │{7:  }func main() {                        |
+      {7:  }{23:--------------------------------------}│{7:  }{22:        hello := "Hello, World!"     }|
+      {7:  }{23:--------------------------------------}│{7:  }{22:                                     }|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(compressString("aa}│{7:  }{4:        fmt.Print(compressString("aaa}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(compressString("go}│{7:  }{4:        fmt.Print(compressString("gol}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(removeDuplicate("a}│{7:  }{4:        fmt.Print(removeDuplicate("aa}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(reverseAndDouble("}│{7:  }{4:        fmt.Print(reverseAndDouble("a}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(printCharacters("g}│{7:  }{4:        fmt.Print(printCharacters("go}|
+      {7:  }{23:--------------------------------------}│{7:  }{22:                                     }|
+      {7:  }{23:--------------------------------------}│{7:  }{22:        fmt.Println(hello)           }|
+      {7:  }}                                     │{7:  }}                                    |
+      {1:~                                       }│{1:~                                      }|*6
+                                                                                      |
+    ]])
+    command('let &diffopt = &diffopt')
+    screen:expect_unchanged()
   end)
 
   it('does not crash if --embed is given twice', function()
@@ -788,20 +908,12 @@ describe('startup', function()
   it("sets 'shortmess' when loading other tabs", function()
     clear({ args = { '-p', 'a', 'b', 'c' } })
     local screen = Screen.new(25, 4)
-    screen:expect({
-      grid = [[
-        {1: a }{2: b  c }{3:               }{2:X}|
-        ^                         |
-        {4:~                        }|
-                                 |
-          ]],
-      attr_ids = {
-        [1] = { bold = true },
-        [2] = { background = Screen.colors.LightGrey, underline = true },
-        [3] = { reverse = true },
-        [4] = { bold = true, foreground = Screen.colors.Blue1 },
-      },
-    })
+    screen:expect([[
+      {5: a }{24: b  c }{2:               }{24:X}|
+      ^                         |
+      {1:~                        }|
+                               |
+    ]])
   end)
 end)
 
@@ -1108,6 +1220,7 @@ describe('user config init', function()
           string.format(
             [[
           vim.g.exrc_file = "%s"
+          vim.g.exrc_path = debug.getinfo(1, 'S').source:sub(2)
           vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
         ]],
             exrc_path
@@ -1119,6 +1232,7 @@ describe('user config init', function()
           string.format(
             [[
           let g:exrc_file = "%s"
+          " let g:exrc_path = ??
           let g:exrc_count = get(g:, 'exrc_count', 0) + 1
         ]],
             exrc_path
@@ -1166,9 +1280,11 @@ describe('user config init', function()
             VIMRUNTIME = os.getenv('VIMRUNTIME'),
           },
         })
-        screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
-        -- `i` to enter Terminal mode, `a` to allow
-        feed('ia')
+        screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:') })
+        -- `i` to enter Terminal mode, `v` to view then `:trust`
+        feed('iv')
+        feed(':trust<CR>')
+        feed(':q<CR>')
         screen:expect([[
           ^                                                  |
           ~                                                 |*4
@@ -1185,11 +1301,17 @@ describe('user config init', function()
           %s%s|
           -- TERMINAL --                                    |
         ]],
-          filename,
-          string.rep(' ', 50 - #filename)
+          '---',
+          string.rep(' ', 50 - #'---')
         ))
 
         clear { args_rm = { '-u' }, env = xstateenv }
+        if string.find(exrc_path, '%.lua$') then
+          eq(
+            vim.fs.normalize(vim.fs.abspath(filename)),
+            vim.fs.normalize(vim.fs.abspath(eval('g:exrc_path')))
+          )
+        end
         -- The 'exrc' file is now trusted.
         eq(filename, eval('g:exrc_file'))
       end)
@@ -1199,7 +1321,8 @@ describe('user config init', function()
       setup_exrc_file('.nvim.lua')
       setup_exrc_file('../.exrc')
       clear { args_rm = { '-u' }, env = xstateenv }
-      local screen = Screen.new(50, 8)
+      -- use a screen wide width to avoid wrapping the word `.exrc`, `.nvim.lua` below.
+      local screen = Screen.new(500, 8)
       screen._default_attr_ids = nil
       fn.jobstart({ nvim_prog }, {
         term = true,
@@ -1209,13 +1332,36 @@ describe('user config init', function()
       })
       -- current directory exrc is found first
       screen:expect({ any = '.nvim.lua' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:'), unchanged = true })
-      feed('ia')
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:'), unchanged = true })
+      feed('iv')
 
       -- after that the exrc in the parent directory
-      screen:expect({ any = '.exrc' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:'), unchanged = true })
-      feed('a')
+      screen:expect({ any = '.exrc', unchanged = true })
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:'), unchanged = true })
+      feed('v')
+
+      -- trust .exrc
+      feed(':trust<CR>')
+      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.exrc"' })
+      feed(':q<CR>')
+      -- trust .nvim.lua
+      feed(':trust<CR>')
+      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.nvim%.lua"' })
+      feed(':q<CR>')
+      -- no exrc file is executed
+      feed(':echo g:exrc_count<CR>')
+      screen:expect({ any = 'E121: Undefined variable: g:exrc_count' })
+
+      -- restart nvim
+      feed(':restart<CR>')
+      screen:expect([[
+        ^{MATCH: +}|
+        ~{MATCH: +}|*4
+        [No Name]{MATCH: +}0,0-1{MATCH: +}All|
+        {MATCH: +}|
+        -- TERMINAL --{MATCH: +}|
+      ]])
+
       -- a total of 2 exrc files are executed
       feed(':echo g:exrc_count<CR>')
       screen:expect({ any = '2' })
@@ -1476,20 +1622,18 @@ describe('inccommand on ex mode', function()
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     fn.chansend(id, '%s/N')
-    screen:expect {
-      grid = [[
-      {1:^                                                            }|
-      {1:                                                            }|*6
-      {1:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
-      {1::%s/N                                                       }|
-                                                                  |
-    ]],
-      attr_ids = {
-        [1] = {
-          background = Screen.colors.NvimDarkGrey2,
-          foreground = Screen.colors.NvimLightGrey2,
-        },
+    screen:add_extra_attr_ids({
+      [101] = {
+        background = Screen.colors.NvimDarkGrey2,
+        foreground = Screen.colors.NvimLightGrey2,
       },
-    }
+    })
+    screen:expect([[
+      {101:^                                                            }|
+      {101:                                                            }|*6
+      {101:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
+      {101::%s/N                                                       }|
+                                                                  |
+    ]])
   end)
 end)

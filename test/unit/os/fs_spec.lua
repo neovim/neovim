@@ -278,7 +278,7 @@ describe('fs.c', function()
       itp('does not change owner and group if respective IDs are equal to -1', function()
         local uid = uv.fs_stat(filename).uid
         local gid = uv.fs_stat(filename).gid
-        eq(0, os_fchown(filename, -1, -1))
+        eq(0, os_fchown(filename, -1ULL, -1ULL))
         eq(uid, uv.fs_stat(filename).uid)
         return eq(gid, uv.fs_stat(filename).gid)
       end)
@@ -304,7 +304,7 @@ describe('fs.c', function()
             -- User can be a member of only one group.
             -- In that case we can not perform this test.
             if new_gid then
-              eq(0, (os_fchown(filename, -1, new_gid)))
+              eq(0, (os_fchown(filename, -1ULL, new_gid)))
               eq(new_gid, uv.fs_stat(filename).gid)
             end
           end

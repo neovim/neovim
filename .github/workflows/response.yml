@@ -13,8 +13,8 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/github-script@v7
+      - uses: actions/checkout@v5
+      - uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.github/scripts/close_unresponsive.js')
@@ -27,8 +27,8 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/github-script@v7
+      - uses: actions/checkout@v5
+      - uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.github/scripts/remove_response_label.js')

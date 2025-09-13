@@ -253,6 +253,9 @@
 (heredoc
   (parameter) @keyword)
 
+(script
+  (parameter) @keyword)
+
 [
   (marker_definition)
   (endmarker)

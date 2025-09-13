@@ -12,9 +12,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/secure.c.generated.h"
-#endif
+#include "lua/secure.c.generated.h"
 
 char *nlua_read_secure(const char *path)
 {
@@ -78,11 +76,11 @@ static bool nlua_trust(const char *action, const char *path)
   if (msg != NULL) {
     if (success) {
       if (strcmp(action, "allow") == 0) {
-        smsg(0, "Allowed \"%s\" in trust database.", msg);
+        smsg(0, "Allowed in trust database: \"%s\"", msg);
       } else if (strcmp(action, "deny") == 0) {
-        smsg(0, "Denied \"%s\" in trust database.", msg);
+        smsg(0, "Denied in trust database: \"%s\"", msg);
       } else if (strcmp(action, "remove") == 0) {
-        smsg(0, "Removed \"%s\" from trust database.", msg);
+        smsg(0, "Removed from trust database: \"%s\"", msg);
       }
     } else {
       semsg(e_trustfile, msg);

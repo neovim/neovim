@@ -50,9 +50,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mouse.c.generated.h"
-#endif
+#include "mouse.c.generated.h"
 
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
@@ -1264,7 +1262,8 @@ retnomove:
     return IN_UNKNOWN;
   }
 
-  // find the window where the row is in
+  // find the window where the row is in and adjust "row" and "col" to be
+  // relative to top-left of the window
   win_T *wp = mouse_find_win(&grid, &row, &col);
   if (wp == NULL) {
     return IN_UNKNOWN;
@@ -1604,7 +1603,7 @@ void nv_mouse(cmdarg_T *cap)
   do_mouse(cap->oap, cap->cmdchar, BACKWARD, cap->count1, 0);
 }
 
-/// Compute the position in the buffer line from the posn on the screen in
+/// Compute the buffer line position from the screen position "rowp" / "colp" in
 /// window "win".
 /// Returns true if the position is below the last line.
 bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)

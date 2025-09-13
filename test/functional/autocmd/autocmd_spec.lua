@@ -8,6 +8,7 @@ local dedent = t.dedent
 local eq = t.eq
 local neq = t.neq
 local eval = n.eval
+local exec = n.exec
 local feed = n.feed
 local clear = n.clear
 local matches = t.matches
@@ -16,7 +17,6 @@ local pcall_err = t.pcall_err
 local fn = n.fn
 local expect = n.expect
 local command = n.command
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local retry = t.retry
 local source = n.source
@@ -150,7 +150,10 @@ describe('autocmd', function()
       })
 
       command('autocmd BufLeave * bwipeout yy')
-      eq('Vim(edit):E143: Autocommands unexpectedly deleted new buffer yy', exc_exec('edit yy'))
+      eq(
+        'Vim(edit):E143: Autocommands unexpectedly deleted new buffer yy',
+        pcall_err(command, 'edit yy')
+      )
 
       expect([[
         start of test file xx
@@ -426,6 +429,23 @@ describe('autocmd', function()
         return _G.config.relative
       ]]
     )
+  end)
+
+  it('cannot close `aucmd_win` in non-current tabpage', function()
+    exec([[
+      file Xa
+      tabnew Xb
+      call setline(1, 'foo')
+      tabfirst
+      autocmd BufWriteCmd Xb tablast | bwipe! Xa
+    ]])
+    eq(
+      'BufWriteCmd Autocommands for "Xb": Vim(bwipeout):E813: Cannot close autocmd window',
+      pcall_err(command, 'wall')
+    )
+    -- Sanity check: :bwipe failing to close all windows into Xa should keep it loaded.
+    -- (So there's no risk of it being left unloaded inside a window)
+    eq(1, eval('bufloaded("Xa")'))
   end)
 
   describe('closing last non-floating window in tab from `aucmd_win`', function()

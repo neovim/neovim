@@ -3399,12 +3399,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ACHTUNG"
 
 #: ../memline.c:3179
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Auslagerungsdatei mit folgendem Namen gefunden: \""
+msgid "Found a swap file by the name \""
+msgstr "Auslagerungsdatei mit folgendem Namen gefunden: \""
 
 #: ../memline.c:3183
 msgid "While opening file \""

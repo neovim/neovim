@@ -366,6 +366,36 @@ describe('vim.fs', function()
       )
     end)
 
+    it('nested markers have equal priority', function()
+      local bufnr = api.nvim_get_current_buf()
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional'),
+        exec_lua(
+          [[return vim.fs.root(..., { 'example_spec.lua', {'CMakeLists.txt', 'CMakePresets.json'}, '.luarc.json'})]],
+          bufnr
+        )
+      )
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua(
+          [[return vim.fs.root(..., { {'CMakeLists.txt', 'CMakePresets.json'}, 'example_spec.lua', '.luarc.json'})]],
+          bufnr
+        )
+      )
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua(
+          [[return vim.fs.root(..., {
+            function(name, _)
+              return name:match('%.txt$')
+            end,
+            'example_spec.lua',
+            '.luarc.json' })]],
+          bufnr
+        )
+      )
+    end)
+
     it('works with a function', function()
       ---@type string
       local result = exec_lua(function()

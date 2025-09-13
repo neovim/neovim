@@ -30,9 +30,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_compositor.c.generated.h"
-#endif
+#include "ui_compositor.c.generated.h"
 
 static int composed_uis = 0;
 kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
@@ -337,7 +335,8 @@ ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ScreenGrid *grid = &wp->w_grid_alloc;
     if (row >= grid->comp_row && row < grid->comp_row + grid->rows
-        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
+        && col >= grid->comp_col && col < grid->comp_col + grid->cols
+        && !wp->w_config.hide) {
       return grid;
     }
   }

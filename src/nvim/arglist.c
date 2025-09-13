@@ -64,9 +64,7 @@ typedef struct {
   tabpage_T *new_curtab;
 } arg_all_state_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "arglist.c.generated.h"
-#endif
+#include "arglist.c.generated.h"
 
 static const char e_window_layout_changed_unexpectedly[]
   = N_("E249: Window layout changed unexpectedly");
@@ -500,7 +498,7 @@ void check_arg_idx(win_T *win)
   }
 }
 
-/// ":args", ":argslocal" and ":argsglobal".
+/// ":args", ":arglocal" and ":argglobal".
 void ex_args(exarg_T *eap)
 {
   if (eap->cmdidx != CMD_args) {

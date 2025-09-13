@@ -28,6 +28,4 @@ static inline bool ns_in_win(uint32_t ns_id, win_T *wp)
   return set_has(uint32_t, &wp->w_ns_set, ns_id);
 }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/extmark.h.generated.h"
-#endif
+#include "api/extmark.h.generated.h"

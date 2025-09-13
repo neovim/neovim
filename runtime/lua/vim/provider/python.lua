@@ -83,6 +83,10 @@ function M.detect_by_module(module)
     return vim.fn.exepath(vim.fn.expand(python_exe, true)), nil
   end
 
+  if vim.fn.executable('pynvim-python') == 1 then
+    return 'pynvim-python'
+  end
+
   local errors = {}
   for _, exe in ipairs(python_candidates) do
     local error = check_for_module(exe, module)

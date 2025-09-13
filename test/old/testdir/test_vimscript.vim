@@ -6813,6 +6813,52 @@ func Test_script_lines()
     catch
 	call assert_exception('Vim(function):E1145: Missing heredoc end marker: .')
     endtry
+
+    " More test for :append, :change, :insert
+    let cmds = ["append", "change", "insert"]
+    let suffixes = ["", "!", "|", "|xyz", " "]
+
+    for c in cmds
+      " Single character (with some accepted trailing characters)
+      for s in suffixes
+        let cmd = c[:0] .. s
+        let line = ["func LinesCheck()", cmd, "", "endfunc", "call LinesCheck()"]
+        call writefile(line, 'Xfunc', 'D')
+        call assert_fails('source Xfunc', 'E1145: Missing heredoc end marker: .', $'"{cmd}"')
+      endfor
+
+      " Unnecessary arguments
+      let cmd = c[:2] .. " end"
+      let line[1] = cmd
+      call writefile(line, 'Xfunc', 'D')
+      call assert_fails('source Xfunc', 'E488: Trailing characters: end:', $'"{cmd}"')
+
+      " Extra characters at the end (i.e., other commands)
+      let cmd = c .. "x"
+      let line[1] = cmd
+      call writefile(line, 'Xfunc', 'D')
+      call assert_fails('source Xfunc', 'E492: Not an editor command:', $'"{cmd}"')
+    endfor
+
+    let line =<< trim END
+    func AppendCheck()
+      apple
+    endfunc
+    call AppendCheck()
+    END
+    call writefile(line, 'Xfunc', 'D')
+    call assert_fails('source Xfunc', 'E492: Not an editor command:   apple')
+
+    let line =<< trim END
+    func AppendCheck()
+      command! apple :echo "hello apple"
+      apple
+    endfunc
+    call AppendCheck()
+    END
+    call writefile(line, 'Xfunc', 'D')
+    call assert_fails('source Xfunc', 'E183: User defined commands must start with an uppercase letter')
+
 endfunc
 
 "-------------------------------------------------------------------------------
@@ -7477,6 +7523,7 @@ func Test_deeply_nested_source()
   call system(cmd)
 endfunc
 
+" Test for impact of silent! on an exception  {{{1
 func Test_exception_silent()
   XpathINIT
   let lines =<< trim END
@@ -7500,6 +7547,70 @@ func Test_exception_silent()
   END
 
   call RunInNewVim(lines, verify)
+endfunc
+
+" Test for an error message starting with "Vim E123: " {{{1
+func Test_skip_prefix_in_exception()
+  let emsg = ''
+  try
+    echoerr "Vim E123:"
+  catch
+    let emsg = v:exception
+  endtry
+  call assert_equal('Vim(echoerr):Vim E123:', emsg)
+
+  let emsg = ''
+  try
+    echoerr "Vim E123: abc"
+  catch
+    let emsg = v:exception
+  endtry
+  call assert_equal('Vim(echoerr):E123: abc', emsg)
+endfunc
+
+" Test for try/except messages displayed with 'verbose' level set to 13 {{{1
+func Test_verbose_try_except_messages()
+  let msgs = ''
+  redir => msgs
+  set verbose=13
+  try
+    echoerr 'foo'
+  catch
+    echo v:exception
+  endtry
+  set verbose=0
+  redir END
+  let expected =<< trim END
+    Exception thrown: Vim(echoerr):foo
+
+    Exception caught: Vim(echoerr):foo
+
+    Vim(echoerr):foo
+    Exception finished: Vim(echoerr):foo
+  END
+  call assert_equal(expected, msgs->split("\n"))
+endfunc
+
+" Test for trailing characters after a catch pattern {{{1
+func Test_catch_pattern_trailing_chars()
+  let lines =<< trim END
+    try
+      echoerr 'foo'
+    catch /foo/xxx
+      echo 'caught foo'
+    endtry
+  END
+
+  new
+  call setline(1, lines)
+  let caught_exception = v:false
+  try
+    source
+  catch /E488: Trailing characters: \/xxx/
+    let caught_exception = v:true
+  endtry
+  call assert_true(caught_exception)
+  bw!
 endfunc
 
 "-------------------------------------------------------------------------------
