@@ -2094,6 +2094,7 @@ static const char *did_set_laststatus(optset_T *args)
     win_comp_pos();
   }
 
+  status_redraw_curbuf();
   last_status(false);  // (re)set last window status line.
   return NULL;
 }

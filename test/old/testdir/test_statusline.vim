@@ -315,6 +315,8 @@ func Test_statusline()
   call assert_equal(sa3, screenattr(&lines - 1, 7))
 
   " %*: Set highlight group to User{N}
+  " Nvim: Combined with hl-StatusLine so needs to be set.
+  hi link User1 ErrorMsg
   set statusline=a%1*b%0*c
   call assert_match('^abc\s*$', s:get_statusline())
   let sa1=screenattr(&lines - 1, 1)

@@ -513,17 +513,13 @@ static int wildmenu_match_len(expand_T *xp, char *s)
 /// @param matches  list of matches
 static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, bool showtail)
 {
-  int len;
-  int clen;                     // length in screen cells
-  int attr;
-  int i;
   bool highlight = true;
   char *selstart = NULL;
   int selstart_col = 0;
   char *selend = NULL;
   static int first_match = 0;
   bool add_left = false;
-  int l;
+  int i, l;
 
   if (matches == NULL) {        // interrupted completion?
     return;
@@ -536,7 +532,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     highlight = false;
   }
   // count 1 for the ending ">"
-  clen = wildmenu_match_len(xp, SHOW_MATCH(match)) + 3;
+  int clen = wildmenu_match_len(xp, SHOW_MATCH(match)) + 3;  // length in screen cells
   if (match == 0) {
     first_match = 0;
   } else if (match < first_match) {
@@ -577,7 +573,10 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     }
   }
 
-  schar_T fillchar = fillchar_status(&attr, curwin);
+  int len;
+  hlf_T group;
+  schar_T fillchar = fillchar_status(&group, curwin);
+  int attr = win_hl_attr(curwin, (int)group);
 
   if (first_match == 0) {
     *buf = NUL;
