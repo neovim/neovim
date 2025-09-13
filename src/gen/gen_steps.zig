@@ -186,7 +186,7 @@ fn generate_header_for(
     } else {
         const h_file = gen_header(b, run_step, b.fmt("{s}.h.generated.h", .{basename}), gen_headers);
         if (api_export) |api_files| {
-            try api_files.append(h_file);
+            try api_files.append(b.allocator, h_file);
         }
     }
 

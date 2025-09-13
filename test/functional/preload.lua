@@ -4,8 +4,8 @@
 local t = require('test.testutil')
 require('test.functional.ui.screen')
 
-if t.is_os('win') then
-  local ffi = require('ffi')
+local has_ffi, ffi = pcall(require, 'ffi')
+if t.is_os('win') and has_ffi then
   ffi.cdef [[
   typedef int errno_t;
   errno_t _set_fmode(int mode);
