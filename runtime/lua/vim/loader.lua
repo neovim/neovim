@@ -116,8 +116,6 @@ end
 --- @param name string can be a module name, or a file name
 --- @return string file_name
 local function cache_filename(name)
-  -- Simplify the name of AppImage mounted file, to prevent
-  -- random part in it from creating cache misses.
   if os.getenv('APPIMAGE') ~= nil then
     -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
     -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
