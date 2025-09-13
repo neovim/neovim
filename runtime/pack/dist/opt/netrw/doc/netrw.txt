@@ -426,15 +426,6 @@ preferences.  Most such settings are described below, in
   *g:netrw_silent*	=0 : transfers done normally
 			=1 : transfers done silently
 
- *g:netrw_use_errorwindow* =2: messages from netrw will use a popup window
-			     Move the mouse and pause to remove the popup window.
-			 =1 : messages from netrw will use a separate one
-			      line window.  This window provides reliable
-			      delivery of messages.
-			 =0 : (default) messages from netrw will use echoerr ;
-			      messages don't always seem to show up this
-			      way, but one doesn't have to quit the window.
-
  *g:netrw_cygwin*	=1 assume scp under windows is from cygwin. Also
 			   permits network browsing to use ls with time and
 			   size sorting (default if windows)
@@ -1125,7 +1116,6 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 
 				*netrw-quickcom* *netrw-quickcoms*
 QUICK REFERENCE: COMMANDS	*netrw-explore-cmds* *netrw-browse-cmds* {{{2
-     :NetrwClean[!]............................................|netrw-clean|
      :Ntree....................................................|netrw-ntree|
      :Explore[!]  [dir] Explore directory of current file......|netrw-explore|
      :Hexplore[!] [dir] Horizontal Split & Explore.............|netrw-explore|
@@ -1435,20 +1425,6 @@ With a "dirname", the specified directory name is used.
 
 The "gn" map will take the word below the cursor and use that for
 changing the top of the tree listing.
-
-
-NETRW CLEAN					*netrw-clean* *:NetrwClean* {{{2
-
-With :NetrwClean one may easily remove netrw from one's home directory;
-more precisely, from the first directory on your |'runtimepath'|.
-
-With :NetrwClean!, netrw will attempt to remove netrw from all directories on
-your |'runtimepath'|.  Of course, you have to have write/delete permissions
-correct to do this.
-
-With either form of the command, netrw will first ask for confirmation
-that the removal is in fact what you want to do.  If netrw doesn't have
-permission to remove a file, it will issue an error message.
 
 							*netrw-curdir*
 DELETING BOOKMARKS					*netrw-mB* {{{2
@@ -2557,12 +2533,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				    |g:netrw_maxfilenamelen|, which affects
 				    local file long listing.
 
-  *g:netrw_errorlvl*		=0: error levels greater than or equal to
-				    this are permitted to be displayed
-				    0: notes
-				    1: warnings
-				    2: errors
-
   *g:netrw_fastbrowse*		=0: slow speed directory browsing;
 				    never re-uses directory listings;
 				    always obtains directory listings.
@@ -2740,11 +2710,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				     rightmouse      : remove file/directory
 				=0: disables mouse maps
 
-  *g:netrw_nobeval*		doesn't exist (default)
-				If this variable exists, then balloon
-				evaluation will be suppressed
-				(see |'ballooneval'|)
-
  *g:netrw_sizestyle*		not defined: actual bytes (default)
 				="b" : actual bytes       (default)
 				="h" : human-readable (ex. 5k, 4m, 3g)
@@ -2885,14 +2850,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				to use instead of ssh for remote actions
 				such as listing, file removal, etc.
 				 default: ssh
-
- *g:netrw_suppress_gx_mesg*	=1 : browsers sometimes produce messages
-				which are normally unwanted intermixed
-				with the page.
-				However, when using links, for example,
-				those messages are what the browser produces.
-				By setting this option to 0, netrw will not
-				suppress browser messages.
 
   *g:netrw_tmpfile_escape*	=' &;'
 				escape() is applied to all temporary files
