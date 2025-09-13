@@ -11053,4 +11053,22 @@ describe('float window', function()
   describe('without ext_multigrid', function()
     with_ext_multigrid(false)
   end)
+
+  it('no ghost cmdline on down-scroll #34512', function()
+    local screen = Screen.new(20, 4)
+    command('set ruler')
+    api.nvim_open_win(0, true, { relative = 'editor', width = 20, height = 4, row = 0, col = 0 })
+    insert([[
+      hello
+      hello
+      hello
+      hello]])
+    feed('Gzz')
+    screen:expect([[
+  {4:hello               }|
+  {4:^hello               }|
+  {11:~                   }|
+            4,1   Bot |
+    ]])
+  end)
 end)
