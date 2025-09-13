@@ -258,8 +258,8 @@ vim.go.bg = vim.go.background
 --- eol	allow backspacing over line breaks (join lines)
 --- start	allow backspacing over the start of insert; CTRL-W and CTRL-U
 --- 	stop once at the start of insert.
---- nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
---- 	insert.
+--- nostop	like start, except CTRL-W and CTRL-U do not stop at the start
+--- 	of insert.
 ---
 --- When the value is empty, Vi compatible backspacing is used, none of
 --- the ways mentioned for the items above are possible.
@@ -1077,19 +1077,19 @@ vim.bo.cms = vim.bo.commentstring
 --- 	name of a function or a `Funcref`.  For `Funcref` values,
 --- 	spaces must be escaped with a backslash ('\'), and commas with
 --- 	double backslashes ('\\') (see `option-backslash`).
---- 	Unlike other sources, functions can provide completions starting
---- 	from a non-keyword character before the cursor, and their
---- 	start position for replacing text may differ from other sources.
---- 	If the Dict returned by the {func} includes {"refresh": "always"},
---- 	the function will be invoked again whenever the leading text
---- 	changes.
+--- 	Unlike other sources, functions can provide completions
+--- 	starting from a non-keyword character before the cursor, and
+--- 	their start position for replacing text may differ from other
+--- 	sources.  If the Dict returned by the {func} includes
+--- 	`{"refresh": "always"}`, the function will be invoked again
+--- 	whenever the leading text changes.
 --- 	If generating matches is potentially slow, call
---- 	`complete_check()` periodically to keep Vim responsive. This
+--- 	`complete_check()` periodically to keep Vim responsive.  This
 --- 	is especially important for `ins-autocompletion`.
---- F	equivalent to using "F{func}", where the function is taken from
---- 	the 'completefunc' option.
---- o	equivalent to using "F{func}", where the function is taken from
---- 	the 'omnifunc' option.
+--- F	equivalent to using "F{func}", where the function is taken
+--- 	from the 'completefunc' option.
+--- o	equivalent to using "F{func}", where the function is taken
+--- 	from the 'omnifunc' option.
 ---
 --- Unloaded buffers are not loaded, thus their autocmds `:autocmd` are
 --- not executed, this may lead to unexpected completions from some files
@@ -1104,8 +1104,8 @@ vim.bo.cms = vim.bo.commentstring
 ---
 --- An optional match limit can be specified for a completion source by
 --- appending a caret ("^") followed by a {count} to the source flag.
---- For example: ".^9,w,u,t^5" limits matches from the current buffer
---- to 9 and from tags to 5.  Other sources remain unlimited.
+--- For example: ".^9,w,u,t^5" limits matches from the current buffer to 9
+--- and from tags to 5.  Other sources remain unlimited.
 --- Note: The match limit takes effect only during forward completion
 --- (CTRL-N) and is ignored during backward completion (CTRL-P).
 ---
@@ -1171,7 +1171,7 @@ vim.go.cia = vim.go.completeitemalign
 --- A comma-separated list of options for Insert mode completion
 --- `ins-completion`.  The supported values are:
 ---
----    fuzzy    Enable `fuzzy-matching` for completion candidates. This
+---    fuzzy    Enable `fuzzy-matching` for completion candidates.  This
 --- 	    allows for more flexible and intuitive matching, where
 --- 	    characters can be skipped and matches can be found even
 --- 	    if the exact sequence is not typed.  Note: This option
@@ -1249,9 +1249,9 @@ vim.go.cot = vim.go.completeopt
 --- 		only modifiable in MS-Windows
 --- When this option is set it overrules 'shellslash' for completion:
 --- - When this option is set to "slash", a forward slash is used for path
----   completion in insert mode. This is useful when editing HTML tag, or
+---   completion in insert mode.  This is useful when editing HTML tag, or
 ---   Makefile with 'noshellslash' on MS-Windows.
---- - When this option is set to "backslash", backslash is used. This is
+--- - When this option is set to "backslash", backslash is used.  This is
 ---   useful when editing a batch file with 'shellslash' set on MS-Windows.
 --- - When this option is empty, same character is used as for
 ---   'shellslash'.
@@ -1572,7 +1572,7 @@ vim.bo.ci = vim.bo.copyindent
 --- 							*cpo-;*
 --- 	;	When using `,` or `;` to repeat the last `t` search
 --- 		and the cursor is right in front of the searched
---- 		character, the cursor won't move. When not included,
+--- 		character, the cursor won't move.  When not included,
 --- 		the cursor would skip over it and jump to the
 --- 		following occurrence.
 --- 							*cpo-~*
@@ -1733,7 +1733,7 @@ vim.go.deco = vim.go.delcombine
 ---
 --- When this option is empty or an entry "spell" is present, and spell
 --- checking is enabled, words in the word lists for the currently active
---- 'spelllang' are used. See `spell`.
+--- 'spelllang' are used.  See `spell`.
 ---
 --- To include a comma in a file name precede it with a backslash.  Spaces
 --- after a comma are ignored, otherwise spaces are included in the file
@@ -1806,7 +1806,7 @@ vim.go.dex = vim.go.diffexpr
 --- All are optional.  Items must be separated by a comma.
 ---
 --- 	algorithm:{text} Use the specified diff algorithm with the
---- 			internal diff engine. Currently supported
+--- 			internal diff engine.  Currently supported
 --- 			algorithms are:
 --- 			myers      the default algorithm
 --- 			minimal    spend extra time to generate the
@@ -1829,7 +1829,7 @@ vim.go.dex = vim.go.diffexpr
 --- 			When omitted a context of six lines is used.
 --- 			When using zero the context is actually one,
 --- 			since folds require a line in between, also
---- 			for a deleted line. Set it to a very large
+--- 			for a deleted line.  Set it to a very large
 --- 			value (999999) to disable folding completely.
 --- 			See `fold-diff`.
 ---
@@ -1912,14 +1912,14 @@ vim.go.dex = vim.go.diffexpr
 --- 			exactly.
 ---
 --- 	linematch:{n}   Align and mark changes between the most
---- 			similar lines between the buffers. When the
+--- 			similar lines between the buffers.  When the
 --- 			total number of lines in the diff hunk exceeds
 --- 			{n}, the lines will not be aligned because for
 --- 			very large diff hunks there will be a
---- 			noticeable lag. A reasonable setting is
+--- 			noticeable lag.  A reasonable setting is
 --- 			"linematch:60", as this will enable alignment
---- 			for a 2 buffer diff hunk of 30 lines each,
---- 			or a 3 buffer diff hunk of 20 lines each.
+--- 			for a 2 buffer diff hunk of 30 lines each, or
+--- 			a 3 buffer diff hunk of 20 lines each.
 --- 			Implicitly sets "filler" when this is set.
 ---
 --- 	vertical	Start diff mode with vertical splits (unless
@@ -1972,7 +1972,7 @@ vim.go.dg = vim.go.digraph
 ---   file name uniqueness in the preserve directory.
 ---   On Win32, it is also possible to end with "\\".  However, When a
 ---   separating comma is following, you must use "//", since "\\" will
----   include the comma in the file name. Therefore it is recommended to
+---   include the comma in the file name.  Therefore it is recommended to
 ---   use '//', instead of '\\'.
 --- - Spaces after the comma are ignored, other spaces are considered part
 ---   of the directory name.  To have a space at the start of a directory
@@ -2136,7 +2136,7 @@ vim.go.ep = vim.go.equalprg
 --- makes a difference for error messages, the bell will be used always
 --- for a lot of errors without a message (e.g., hitting <Esc> in Normal
 --- mode).  See 'visualbell' to make the bell behave like a screen flash
---- or do nothing. See 'belloff' to finetune when to ring the bell.
+--- or do nothing.  See 'belloff' to finetune when to ring the bell.
 ---
 --- @type boolean
 vim.o.errorbells = false
@@ -3025,7 +3025,7 @@ vim.go.fs = vim.go.fsync
 --- 	:s///gg		  subst. all	  subst. one
 ---
 --- NOTE: Setting this option may break plugins that rely on the default
---- behavior of the 'g' flag. This will also make the 'g' flag have the
+--- behavior of the 'g' flag.  This will also make the 'g' flag have the
 --- opposite effect of that documented in `:s_g`.
 ---
 --- @type boolean
@@ -3556,7 +3556,7 @@ vim.bo.inex = vim.bo.includeexpr
 --- avoid that Vim hangs while you are typing the pattern.
 --- The `hl-IncSearch` highlight group determines the highlighting.
 --- When 'hlsearch' is on, all matched strings are highlighted too while
---- typing a search command. See also: 'hlsearch'.
+--- typing a search command.  See also: 'hlsearch'.
 --- If you don't want to turn 'hlsearch' on, but want to highlight all
 --- matches while searching, you can turn on and off 'hlsearch' with
 --- autocmd.  Example:
@@ -4033,8 +4033,8 @@ vim.wo.lhi = vim.wo.lhistory
 --- than at the last character that fits on the screen.  Unlike
 --- 'wrapmargin' and 'textwidth', this does not insert <EOL>s in the file,
 --- it only affects the way the file is displayed, not its contents.
---- If 'breakindent' is set, line is visually indented. Then, the value
---- of 'showbreak' is used to put in front of wrapped lines. This option
+--- If 'breakindent' is set, line is visually indented.  Then, the value
+--- of 'showbreak' is used to put in front of wrapped lines.  This option
 --- is not used when the 'wrap' option is off.
 --- Note that <Tab> characters after an <EOL> are mostly not displayed
 --- with the right amount of white space.
@@ -4737,8 +4737,8 @@ vim.go.mousemodel = vim.o.mousemodel
 vim.go.mousem = vim.go.mousemodel
 
 --- When on, mouse move events are delivered to the input queue and are
---- available for mapping `<MouseMove>`. The default, off, avoids the mouse
---- movement overhead except when needed.
+--- available for mapping `<MouseMove>`.  The default, off, avoids the
+--- mouse movement overhead except when needed.
 --- Warning: Setting this option can make pending mappings to be aborted
 --- when the mouse is moved.
 ---
@@ -4796,7 +4796,7 @@ vim.go.mouset = vim.go.mousetime
 --- bin	If included, numbers starting with "0b" or "0B" will be
 --- 	considered to be binary.  Example: Using CTRL-X on
 --- 	"0b1000" subtracts one, resulting in "0b0111".
---- unsigned    If included, numbers are recognized as unsigned. Thus a
+--- unsigned    If included, numbers are recognized as unsigned.  Thus a
 --- 	leading dash or negative sign won't be considered as part of
 --- 	the number.  Examples:
 --- 	    Using CTRL-X on "2020" in "9-2020" results in "9-2019"
@@ -4860,14 +4860,14 @@ vim.wo.nu = vim.wo.number
 
 --- Minimal number of columns to use for the line number.  Only relevant
 --- when the 'number' or 'relativenumber' option is set or printing lines
---- with a line number. Since one space is always between the number and
+--- with a line number.  Since one space is always between the number and
 --- the text, there is one less character for the number itself.
 --- The value is the minimum width.  A bigger width is used when needed to
 --- fit the highest line number in the buffer respectively the number of
 --- rows in the window, depending on whether 'number' or 'relativenumber'
---- is set. Thus with the Vim default of 4 there is room for a line number
---- up to 999. When the buffer has 1000 lines five columns will be used.
---- The minimum value is 1, the maximum value is 20.
+--- is set.  Thus with the Vim default of 4 there is room for a line
+--- number up to 999. When the buffer has 1000 lines five columns will be
+--- used. The minimum value is 1, the maximum value is 20.
 ---
 --- @type integer
 vim.o.numberwidth = 4
@@ -5269,12 +5269,12 @@ vim.go.regexpengine = vim.o.regexpengine
 vim.go.re = vim.go.regexpengine
 
 --- Show the line number relative to the line with the cursor in front of
---- each line. Relative line numbers help you use the `count` you can
+--- each line.  Relative line numbers help you use the `count` you can
 --- precede some vertical motion commands (e.g. j k + -) with, without
---- having to calculate it yourself. Especially useful in combination with
---- other commands (e.g. y d c < > gq gw =).
---- When the 'n' option is excluded from 'cpoptions' a wrapped
---- line will not use the column of line numbers.
+--- having to calculate it yourself.  Especially useful in combination
+--- with other commands (e.g. y d c < > gq gw =).
+--- When the 'n' option is excluded from 'cpoptions' a wrapped line will
+--- not use the column of line numbers.
 --- The 'numberwidth' option can be used to set the room used for the line
 --- number.
 --- When a long, wrapped line doesn't start with the first character, '-'
@@ -6027,7 +6027,7 @@ vim.go.sxe = vim.go.shellxescape
 --- the "!" and ":!" commands.  Includes the redirection.  See
 --- 'shellquote' to exclude the redirection.  It's probably not useful
 --- to set both options.
---- When the value is '(' then ')' is appended. When the value is '"('
+--- When the value is '(' then ')' is appended.  When the value is '"('
 --- then ')"' is appended.
 --- When the value is '(' then also see 'shellxescape'.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
@@ -6298,12 +6298,12 @@ vim.wo.siso = vim.wo.sidescrolloff
 vim.go.sidescrolloff = vim.o.sidescrolloff
 vim.go.siso = vim.go.sidescrolloff
 
---- When and how to draw the signcolumn. Valid values are:
+--- When and how to draw the signcolumn.  Valid values are:
 ---    "auto"	only when there is a sign to display
 ---    "auto:[1-9]" resize to accommodate multiple signs up to the
----                 given number (maximum 9), e.g. "auto:4"
+--- 		given number (maximum 9), e.g. "auto:4"
 ---    "auto:[1-8]-[2-9]"
----                 resize to accommodate multiple signs up to the
+--- 		resize to accommodate multiple signs up to the
 --- 		given maximum number (maximum 9) while keeping
 --- 		at least the given minimum (maximum 8) fixed
 --- 		space. The minimum number should always be less
@@ -6311,8 +6311,8 @@ vim.go.siso = vim.go.sidescrolloff
 ---    "no"		never
 ---    "yes"	always
 ---    "yes:[1-9]"  always, with fixed space for signs up to the given
----                 number (maximum 9), e.g. "yes:3"
----    "number"	display signs in the 'number' column. If the number
+--- 		number (maximum 9), e.g. "yes:3"
+---    "number"	display signs in the 'number' column.  If the number
 --- 		column is not present, then behaves like "auto".
 ---
 --- @type 'yes'|'no'|'auto'|'auto:1'|'auto:2'|'auto:3'|'auto:4'|'auto:5'|'auto:6'|'auto:7'|'auto:8'|'auto:9'|'yes:1'|'yes:2'|'yes:3'|'yes:4'|'yes:5'|'yes:6'|'yes:7'|'yes:8'|'yes:9'|'number'
@@ -6378,7 +6378,7 @@ vim.go.sta = vim.go.smarttab
 
 --- Scrolling works with screen lines.  When 'wrap' is set and the first
 --- line in the window wraps part of it may not be visible, as if it is
---- above the window. "<<<" is displayed at the start of the first line,
+--- above the window.  "<<<" is displayed at the start of the first line,
 --- highlighted with `hl-NonText`.
 --- You may also want to add "lastline" to the 'display' option to show as
 --- much of the last line as possible.
@@ -6484,7 +6484,7 @@ vim.bo.spf = vim.bo.spellfile
 --- the two-letter, lower case region name.  You can use more than one
 --- region by listing them: "en_us,en_ca" supports both US and Canadian
 --- English, but not words specific for Australia, New Zealand or Great
---- Britain. (Note: currently en_au and en_nz dictionaries are older than
+--- Britain.  (Note: currently en_au and en_nz dictionaries are older than
 --- en_ca, en_gb and en_us).
 --- If the name "cjk" is included East Asian characters are excluded from
 --- spell checking.  This is useful when editing text that also has Asian
@@ -6623,9 +6623,9 @@ vim.go.sb = vim.go.splitbelow
 ---   topline	Keep the topline the same.
 ---
 --- For the "screen" and "topline" values, the cursor position will be
---- changed when necessary. In this case, the jumplist will be populated
---- with the previous cursor position. For "screen", the text cannot always
---- be kept on the same screen line when 'wrap' is enabled.
+--- changed when necessary.  In this case, the jumplist will be populated
+--- with the previous cursor position.  For "screen", the text cannot
+--- always be kept on the same screen line when 'wrap' is enabled.
 ---
 --- @type 'cursor'|'screen'|'topline'
 vim.o.splitkeep = "cursor"
@@ -7422,7 +7422,7 @@ vim.go.thesaurus = vim.o.thesaurus
 vim.go.tsr = vim.go.thesaurus
 
 --- This option specifies a function to be used for thesaurus completion
---- with CTRL-X CTRL-T. `i_CTRL-X_CTRL-T` See `compl-thesaurusfunc`.
+--- with CTRL-X CTRL-T.  `i_CTRL-X_CTRL-T` See `compl-thesaurusfunc`.
 --- The value can be the name of a function, a `lambda` or a `Funcref`.
 --- See `option-value-function` for more information.
 ---
@@ -7712,9 +7712,9 @@ vim.o.vsts = vim.o.varsofttabstop
 vim.bo.varsofttabstop = vim.o.varsofttabstop
 vim.bo.vsts = vim.bo.varsofttabstop
 
---- Defines variable-width tab stops. The value is a comma-separated list
---- of widths in columns.  Each width defines the number of columns
---- before the next tab stop; the last value repeats indefinitely.
+--- Defines variable-width tab stops.  The value is a comma-separated list
+--- of widths in columns.  Each width defines the number of columns before
+--- the next tab stop; the last value repeats indefinitely.
 ---
 --- For example:
 --- ```
@@ -8129,16 +8129,16 @@ vim.go.wim = vim.go.wildmode
 --- 		expressions or with 'smartcase' enabled.  However, the
 --- 		case of the appended matched word may not exactly
 --- 		match the case of the word in the buffer.
----   fuzzy		Use `fuzzy-matching` to find completion matches. When
+---   fuzzy		Use `fuzzy-matching` to find completion matches.  When
 --- 		this value is specified, wildcard expansion will not
 --- 		be used for completion.  The matches will be sorted by
 --- 		the "best match" rather than alphabetically sorted.
 --- 		This will find more matches than the wildcard
---- 		expansion. Currently fuzzy matching based completion
+--- 		expansion.  Currently fuzzy matching based completion
 --- 		is not supported for file and directory names and
 --- 		instead wildcard expansion is used.
----   pum		Display the completion matches using the popup menu
---- 		in the same style as the `ins-completion-menu`.
+---   pum		Display the completion matches using the popup menu in
+--- 		the same style as the `ins-completion-menu`.
 ---   tagfile	When using CTRL-D to list matching tags, the kind of
 --- 		tag and the file of the tag is listed.	Only one match
 --- 		is displayed per line.  Often used tag kinds are:
