@@ -394,7 +394,7 @@ Overview of which map command works in which mode.  More details below.
 
 Same information in a table:
 							*map-table*
-         Mode  | Norm | Ins | Cmd | Vis | Sel | Opr | Term | Lang | ~
+         Mode  | Norm | Ins | Cmd | Vis | Sel | Opr | Term | Lang | ~
 Command        +------+-----+-----+-----+-----+-----+------+------+ ~
 [nore]map      | yes  |  -  |  -  | yes | yes | yes |  -   |  -   |
 n[nore]map     | yes  |  -  |  -  |  -  |  -  |  -  |  -   |  -   |
