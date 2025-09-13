@@ -338,6 +338,7 @@ UI
   • "Error executing Lua:" changed to "Lua:".
 • 'busy' status is shown in default statusline with symbol ◐
 • Improved LSP signature help rendering.
+• Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
 
 VIMSCRIPT
 

@@ -243,9 +243,7 @@ void screenclear(void)
   redraw_popupmenu = true;
   pum_invalidate();
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_floating) {
-      wp->w_redr_type = UPD_CLEAR;
-    }
+    wp->w_redr_type = UPD_CLEAR;
   }
   if (must_redraw == UPD_CLEAR) {
     must_redraw = UPD_NOT_VALID;  // no need to clear again
@@ -509,11 +507,9 @@ int update_screen(void)
       }
     }
     msg_grid.throttled = false;
-    bool was_invalidated = false;
 
     // UPD_CLEAR is already handled
-    if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
-      was_invalidated = ui_comp_set_screen_valid(false);
+    if (type == UPD_NOT_VALID && msg_scrolled) {
       for (int i = valid; i < Rows - p_ch; i++) {
         grid_clear_line(&default_grid, default_grid.line_offset[i],
                         Columns, false);
@@ -537,12 +533,6 @@ int update_screen(void)
     }
     msg_grid_set_pos(Rows - (int)p_ch, false);
     msg_grid_invalid = false;
-    if (was_invalidated) {
-      // screen was only invalid for the msgarea part.
-      // @TODO(bfredl): using the same "valid" flag
-      // for both messages and floats moving is bit of a mess.
-      ui_comp_set_screen_valid(true);
-    }
     msg_scrolled = 0;
     msg_scrolled_at_flush = 0;
     msg_grid_scroll_discount = 0;
@@ -646,7 +636,7 @@ int update_screen(void)
   screen_search_hl.rm.regprog = NULL;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_redr_type == UPD_CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
+    if (wp->w_redr_type == UPD_CLEAR && wp->w_grid_alloc.chars) {
       grid_invalidate(&wp->w_grid_alloc);
       wp->w_redr_type = UPD_NOT_VALID;
     }
@@ -666,12 +656,6 @@ int update_screen(void)
         start_search_hl();
       }
       win_update(wp);
-    }
-
-    // redraw status line and window bar after the window to minimize cursor movement
-    if (wp->w_redr_status) {
-      win_redr_winbar(wp);
-      win_redr_status(wp);
     }
   }
 
@@ -696,6 +680,8 @@ int update_screen(void)
   if (need_maketitle) {
     maketitle();
   }
+
+  redraw_statuslines();
 
   // Clear or redraw the command line.  Done last, because scrolling may
   // mess up the command line.

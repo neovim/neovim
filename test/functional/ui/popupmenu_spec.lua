@@ -42,31 +42,43 @@ describe('ui/ext_popupmenu', function()
       foo^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 0, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     feed('<c-p>')
     screen:expect {
       grid = [[
-                                                                    |
-        ^                                                            |
-        {1:~                                                           }|*5
-        {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = -1, anchor = { 1, 1, 0 } },
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     -- down moves the selection in the menu, but does not insert anything
     feed('<down><down>')
     screen:expect {
       grid = [[
-                                                                    |
-        ^                                                            |
-        {1:~                                                           }|*5
-        {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 1, anchor = { 1, 1, 0 } },
+                                                                  |
+      ^                                                            |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     feed('<cr>')
@@ -86,8 +98,12 @@ describe('ui/ext_popupmenu', function()
       foo^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 0, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(1, false, false, {})
@@ -97,8 +113,12 @@ describe('ui/ext_popupmenu', function()
       foo^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 1, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(2, true, false, {})
@@ -108,8 +128,12 @@ describe('ui/ext_popupmenu', function()
       spam^                                                        |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 2, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 2,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(0, true, true, {})
@@ -127,8 +151,12 @@ describe('ui/ext_popupmenu', function()
       foo^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 0, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(-1, false, false, {})
@@ -138,8 +166,12 @@ describe('ui/ext_popupmenu', function()
       foo^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = -1, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(1, true, false, {})
@@ -149,8 +181,12 @@ describe('ui/ext_popupmenu', function()
       bar^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 1, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(-1, true, false, {})
@@ -160,8 +196,12 @@ describe('ui/ext_popupmenu', function()
       ^                                                            |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = -1, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(0, true, false, {})
@@ -171,8 +211,12 @@ describe('ui/ext_popupmenu', function()
       foo^                                                         |
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
-      ]],
-      popupmenu = { items = expected, pos = 0, anchor = { 1, 1, 0 } },
+    ]],
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     api.nvim_select_popupmenu_item(-1, true, true, {})
@@ -259,7 +303,11 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|*5
         {5:-- INSERT --}                                                |
       ]],
-        popupmenu = { items = expected, pos = 0, anchor = { 1, 1, 0 } },
+        popupmenu = {
+          items = expected,
+          pos = 0,
+          anchor = { 2, 1, 0 },
+        },
       }
 
       feed('<f1>')
@@ -270,7 +318,11 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|*5
         {5:-- INSERT --}                                                |
       ]],
-        popupmenu = { items = expected, pos = 2, anchor = { 1, 1, 0 } },
+        popupmenu = {
+          items = expected,
+          pos = 2,
+          anchor = { 2, 1, 0 },
+        },
       }
 
       feed('<f2>')
@@ -281,7 +333,11 @@ describe('ui/ext_popupmenu', function()
         {1:~                                                           }|*5
         {5:-- INSERT --}                                                |
       ]],
-        popupmenu = { items = expected, pos = -1, anchor = { 1, 1, 0 } },
+        popupmenu = {
+          items = expected,
+          pos = -1,
+          anchor = { 2, 1, 0 },
+        },
       }
 
       feed('<f3>')
@@ -522,7 +578,11 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
       ]],
-        popupmenu = { items = month_expected, pos = pum_height - 2, anchor = { 1, 1, 0 } },
+        popupmenu = {
+          items = month_expected,
+          pos = pum_height - 2,
+          anchor = { 2, 1, 0 },
+        },
       }
     end)
 
@@ -570,7 +630,11 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
       ]],
-        popupmenu = { items = month_expected, pos = pum_height - 2, anchor = { 1, 1, 0 } },
+        popupmenu = {
+          items = month_expected,
+          pos = pum_height - 2,
+          anchor = { 2, 1, 0 },
+        },
       }
     end)
 
@@ -621,7 +685,11 @@ describe('ui/ext_popupmenu', function()
     {1:~                                                           }|*5
     {5:-- INSERT --}                                                |
     ]],
-      popupmenu = { items = month_expected, pos = 3, anchor = { 1, 1, 0 } },
+      popupmenu = {
+        items = month_expected,
+        pos = 3,
+        anchor = { 2, 1, 0 },
+      },
     }
     feed('<PageUp>')
     screen:expect {
@@ -631,7 +699,11 @@ describe('ui/ext_popupmenu', function()
     {1:~                                                           }|*5
     {5:-- INSERT --}                                                |
     ]],
-      popupmenu = { items = month_expected, pos = 0, anchor = { 1, 1, 0 } },
+      popupmenu = {
+        items = month_expected,
+        pos = 0,
+        anchor = { 2, 1, 0 },
+      },
     }
   end)
 
@@ -750,7 +822,11 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
     ]],
-      popupmenu = { items = expected, pos = 0, anchor = { 1, 1, 0 } },
+      popupmenu = {
+        items = expected,
+        pos = 0,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     feed('<c-p>')
@@ -761,7 +837,11 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
     ]],
-      popupmenu = { items = expected, pos = -1, anchor = { 1, 1, 0 } },
+      popupmenu = {
+        items = expected,
+        pos = -1,
+        anchor = { 2, 1, 0 },
+      },
     }
 
     feed('<esc>')
@@ -1018,7 +1098,7 @@ end)
 describe('builtin popupmenu', function()
   before_each(clear)
 
-  local function with_ext_multigrid(multigrid)
+  local function with_ext_multigrid(multigrid, send_mouse_grid)
     local screen
     before_each(function()
       screen = Screen.new(32, 20, { ext_multigrid = multigrid })
@@ -1129,7 +1209,9 @@ describe('builtin popupmenu', function()
           {n:gg             }{12: }|
           {n:hh             }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 2, 2, 0, false, 100, 1, 11, 0 } },
+          float_pos = {
+            [5] = { -1, 'NW', 2, 2, 0, false, 100, 3, 11, 0 },
+          },
         }
       else
         screen:expect([[
@@ -1185,7 +1267,9 @@ describe('builtin popupmenu', function()
           {n:gg             }{12: }|
           {n:hh             }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+          float_pos = {
+            [5] = { -1, 'NW', 2, 2, 0, false, 100, 3, 2, 0 },
+          },
         }
       else
         screen:expect([[
@@ -1259,7 +1343,9 @@ describe('builtin popupmenu', function()
           {n:ll             }{12: }|
           {n:mm             }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'SW', 2, 12, 0, false, 100, 1, 4, 0 } },
+          float_pos = {
+            [5] = { -1, 'SW', 2, 12, 0, false, 100, 3, 4, 0 },
+          },
         }
       else
         screen:expect([[
@@ -1333,7 +1419,9 @@ describe('builtin popupmenu', function()
           {n:hh             }{c: }|
           {n:ii             }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'SW', 2, 8, 0, false, 100, 1, 8, 0 } },
+          float_pos = {
+            [5] = { -1, 'SW', 2, 8, 0, false, 100, 3, 8, 0 },
+          },
         }
       else
         screen:expect([[
@@ -1406,7 +1494,9 @@ describe('builtin popupmenu', function()
           {n:gg             }{12: }|
           {n:hh             }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'SW', 2, 8, 0, false, 100, 1, 0, 0 } },
+          float_pos = {
+            [5] = { -1, 'SW', 2, 8, 0, false, 100, 3, 0, 0 },
+          },
         }
       else
         screen:expect([[
@@ -1489,7 +1579,9 @@ describe('builtin popupmenu', function()
               {n:ab5            }{12: }|
               {n:ab6            }{12: }|
             ]],
-            float_pos = { [5] = { -1, 'SW', 2, 6, 0, false, 100, 1, 9, 0 } },
+            float_pos = {
+              [5] = { -1, 'SW', 2, 6, 0, false, 100, 3, 9, 0 },
+            },
           })
         else
           screen:expect([[
@@ -1565,7 +1657,9 @@ describe('builtin popupmenu', function()
               {n:ab4            }{12: }|
               {n:ab5            }{12: }|
             ]],
-            float_pos = { [5] = { -1, 'SW', 2, 5, 0, false, 100, 1, 9, 0 } },
+            float_pos = {
+              [5] = { -1, 'SW', 2, 5, 0, false, 100, 3, 9, 0 },
+            },
           })
         else
           screen:expect([[
@@ -1622,7 +1716,9 @@ describe('builtin popupmenu', function()
             {n:two            }|
             {n:three          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
+          },
         })
       else
         screen:expect([[
@@ -1657,7 +1753,9 @@ describe('builtin popupmenu', function()
             1info                           |
             {1:~                               }|*2
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 5, 0 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 0, false, 100, 3, 5, 0 },
+          },
         })
       else
         screen:expect([[
@@ -1713,7 +1811,9 @@ describe('builtin popupmenu', function()
             {n:aa6bb          }{12: }|
             {n:aa7bb          }{12: }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
+          },
         })
       else
         screen:expect([[
@@ -1801,8 +1901,8 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
-              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 3, 1, 0 },
+              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 2, 1, 19 },
             },
             win_viewport = {
               [2] = {
@@ -1861,8 +1961,8 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
-              [4] = { 1001, 'NW', 1, 1, 15, false, 50, 1, 1, 15 },
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 3, 1, 0 },
+              [4] = { 1001, 'NW', 1, 1, 15, false, 50, 2, 1, 15 },
             },
             win_viewport = {
               [2] = {
@@ -1916,8 +2016,18 @@ describe('builtin popupmenu', function()
             ## grid 5
               {n:one            }|
             ]],
-            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
-            float_pos = { [5] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 40,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
+            },
             win_viewport = {
               [2] = {
                 win = 1000,
@@ -1976,8 +2086,8 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
-              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 3, 1, 0 },
+              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 2, 1, 19 },
             },
             win_viewport = {
               [2] = {
@@ -2040,8 +2150,8 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { -1, 'NW', 2, 1, 18, false, 100, 2, 1, 18 },
-              [4] = { 1001, 'NW', 1, 1, 13, false, 50, 1, 1, 13 },
+              [5] = { -1, 'NW', 2, 1, 18, false, 100, 3, 1, 18 },
+              [4] = { 1001, 'NW', 1, 1, 13, false, 50, 2, 1, 13 },
             },
             win_viewport = {
               [2] = {
@@ -2108,8 +2218,8 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
-              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 3, 1, 0 },
+              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 2, 1, 19 },
             },
             win_viewport = {
               [2] = {
@@ -2180,8 +2290,8 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
-              [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
+              [5] = { 1001, 'NW', 1, 1, 19, false, 50, 2, 1, 19 },
+              [4] = { -1, 'NW', 2, 1, 0, false, 100, 3, 1, 0 },
             },
             win_viewport = {
               [2] = {
@@ -2289,7 +2399,9 @@ describe('builtin popupmenu', function()
           {n: aab            }|
           {n: aac            }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 4, 2, 3, false, 100, 1, 2, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 2, 3, false, 100, 3, 2, 3 },
+          },
         }
       else
         screen:expect([[
@@ -2329,7 +2441,9 @@ describe('builtin popupmenu', function()
           {n: aab            }|
           {n: aac            }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 2, 3, 1, false, 100, 1, 3, 13 } },
+          float_pos = {
+            [5] = { -1, 'NW', 2, 3, 1, false, 100, 3, 3, 13 },
+          },
         }
       else
         screen:expect([[
@@ -2371,7 +2485,9 @@ describe('builtin popupmenu', function()
           {n: aac     }|
           {n: aaabcdef}|
         ]],
-          float_pos = { [5] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 23 } },
+          float_pos = {
+            [5] = { -1, 'NW', 2, 3, 11, false, 100, 3, 3, 23 },
+          },
         }
       else
         screen:expect([[
@@ -2414,7 +2530,9 @@ describe('builtin popupmenu', function()
           {n: aab            }{12: }|
           {n: aac            }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 2, 4, -1, false, 100, 1, 4, 11 } },
+          float_pos = {
+            [5] = { -1, 'NW', 2, 4, -1, false, 100, 3, 4, 11 },
+          },
         }
       else
         screen:expect([[
@@ -2532,7 +2650,9 @@ describe('builtin popupmenu', function()
             {n: laborum        }{c: }|
             {12: Est            }{c: }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
         screen:expect([[
@@ -2553,8 +2673,12 @@ describe('builtin popupmenu', function()
         ]])
       end
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('wheel', 'down', '', 2, 9, 33)
+      else
+        api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
+      end
+      if multigrid then
         screen:expect({
           grid = [[
           ## grid 1
@@ -2592,10 +2716,11 @@ describe('builtin popupmenu', function()
             {n: laborum        }{c: }|
             {12: Est            }{c: }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
-        api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
         screen:expect([[
           Est ^                                                        |
             L{n: sunt           }{12: }sit amet, consectetur                   |
@@ -2651,7 +2776,9 @@ describe('builtin popupmenu', function()
             {n: eu             }|
             {12: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
         screen:expect([[
@@ -2672,8 +2799,12 @@ describe('builtin popupmenu', function()
         ]])
       end
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('wheel', 'up', '', 2, 9, 33)
+      else
+        api.nvim_input_mouse('wheel', 'up', '', 0, 9, 40)
+      end
+      if multigrid then
         screen:expect({
           grid = [[
           ## grid 1
@@ -2709,10 +2840,11 @@ describe('builtin popupmenu', function()
             {n: eu             }|
             {12: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
-        api.nvim_input_mouse('wheel', 'up', '', 0, 9, 40)
         screen:expect([[
           Est e^                                                       |
             L{n: elit           } sit amet, consectetur                   |
@@ -2760,7 +2892,9 @@ describe('builtin popupmenu', function()
             {n: esse           }|
             {12: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
         screen:expect([[
@@ -2781,8 +2915,12 @@ describe('builtin popupmenu', function()
         ]])
       end
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('wheel', 'down', '', 2, 9, 33)
+      else
+        api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
+      end
+      if multigrid then
         screen:expect({
           grid = [[
           ## grid 1
@@ -2810,10 +2948,11 @@ describe('builtin popupmenu', function()
             {n: esse           }|
             {12: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
-        api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
         screen:expect([[
           Est es^                                                      |
             L{n: esse           } sit amet, consectetur                   |
@@ -2869,7 +3008,9 @@ describe('builtin popupmenu', function()
             {n: eu             }|
             {12: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
         screen:expect([[
@@ -2927,7 +3068,9 @@ describe('builtin popupmenu', function()
             {12: eu             }|
             {n: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
         screen:expect([[
@@ -2948,8 +3091,12 @@ describe('builtin popupmenu', function()
         ]])
       end
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('wheel', 'down', '', 2, 9, 33)
+      else
+        api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
+      end
+      if multigrid then
         screen:expect({
           grid = [[
           ## grid 1
@@ -2985,10 +3132,11 @@ describe('builtin popupmenu', function()
             {12: eu             }|
             {n: est            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 3, false, 100, 3, 1, 3 },
+          },
         })
       else
-        api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
         screen:expect([[
           Est eu^                                                      |
             L{n: elit           } sit amet, consectetur                   |
@@ -3043,7 +3191,9 @@ describe('builtin popupmenu', function()
             {n: eä                 }|
             {n: eö                 }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 2, false, 100, 3, 1, 2 },
+          },
         })
       else
         screen:expect([[
@@ -3100,7 +3250,9 @@ describe('builtin popupmenu', function()
             {n: eä             }|
             {n: eö             }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 2, false, 100, 3, 1, 2 },
+          },
         })
       else
         screen:expect([[
@@ -3157,7 +3309,9 @@ describe('builtin popupmenu', function()
             {n: eä             }|
             {n: eö             }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 2, false, 100, 3, 1, 2 },
+          },
         })
       else
         screen:expect([[
@@ -3207,7 +3361,9 @@ describe('builtin popupmenu', function()
             {12: foo            }|
             {n: bar            }|
           ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, 4, false, 100, 1, 1, 4 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, 4, false, 100, 3, 1, 4 },
+          },
         })
       else
         screen:expect([[
@@ -3295,7 +3451,9 @@ describe('builtin popupmenu', function()
             {n: text  }|
             {n: thing }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 25, false, 100, 2, 1, 25 },
+          },
         })
       else
         screen:expect([[
@@ -3328,7 +3486,9 @@ describe('builtin popupmenu', function()
             {n:text           }|
             {12:thing          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 2, 0, false, 100, 2, 2, 0 },
+          },
         })
       else
         screen:expect([[
@@ -3362,7 +3522,9 @@ describe('builtin popupmenu', function()
             {12: text  }|
             {n: thing }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 25, false, 100, 2, 1, 25 },
+          },
         })
       else
         screen:expect([[
@@ -3395,7 +3557,9 @@ describe('builtin popupmenu', function()
             {12:text           }|
             {n:thing          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 2, 0, false, 100, 2, 2, 0 },
+          },
         })
       else
         screen:expect([[
@@ -3428,7 +3592,9 @@ describe('builtin popupmenu', function()
             {12: text           }|
             {n: thing          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 27, false, 100, 1, 1, 27 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 27, false, 100, 2, 1, 27 },
+          },
         })
       else
         screen:expect([[
@@ -3461,7 +3627,9 @@ describe('builtin popupmenu', function()
             {12: text           }|
             {n: thing          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 2, 3, false, 100, 2, 2, 3 },
+          },
         })
       else
         screen:expect([[
@@ -3496,15 +3664,17 @@ describe('builtin popupmenu', function()
             {12: text           }|
             {n: thing          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 2, 3, false, 100, 2, 2, 3 },
+          },
         })
       else
         screen:expect([[
           some long   |
           prefix      |
-          bef{n: word  }  |
-          tex{n: }^        |
-          {5:-- INSERT --}|
+          bef{n: word    }|
+          tex{n: ^choice  }|
+          {2:-- INSERT --}|
         ]])
       end
 
@@ -3526,7 +3696,9 @@ describe('builtin popupmenu', function()
             {12: text           }|
             {n: thing          }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 2, 3, false, 100, 2, 2, 3 },
+          },
         })
       else
         screen:expect([[
@@ -3555,7 +3727,9 @@ describe('builtin popupmenu', function()
             {12: text    }|
             {n: thing   }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 10, false, 100, 1, 2, 10 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 2, 10, false, 100, 2, 2, 10 },
+          },
         })
       else
         screen:expect([[
@@ -3594,7 +3768,9 @@ describe('builtin popupmenu', function()
             {n: text  }|
             {n: thing }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 25, false, 100, 2, 1, 25 },
+          },
         })
       else
         screen:expect([[
@@ -3628,7 +3804,9 @@ describe('builtin popupmenu', function()
             {n: text        }|
             {n: thing       }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 3, false, 100, 1, 3, 3 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 3, 3, false, 100, 2, 3, 3 },
+          },
         })
       else
         screen:expect([[
@@ -3686,7 +3864,9 @@ describe('builtin popupmenu', function()
             {n:           txet }|
             {n:          gniht }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 2, false, 100, 1, 1, 2 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 2, false, 100, 2, 1, 2 },
+          },
         })
       else
         screen:expect([[
@@ -3718,7 +3898,9 @@ describe('builtin popupmenu', function()
             {n:           txet }|
             {n:          gniht }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 2, false, 100, 1, 1, 2 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 2, false, 100, 2, 1, 2 },
+          },
         })
       else
         screen:expect([[
@@ -3793,7 +3975,9 @@ describe('builtin popupmenu', function()
             {n: undefine       }|
             {n: unplace        }|
           ]],
-          float_pos = { [4] = { -1, 'SW', 1, 19, 5, false, 250, 2, 13, 5 } },
+          float_pos = {
+            [4] = { -1, 'SW', 1, 19, 5, false, 250, 3, 13, 5 },
+          },
         })
       else
         screen:expect([[
@@ -3846,7 +4030,9 @@ describe('builtin popupmenu', function()
           {c: }{n:           drow }|
           {12: }{n:         eciohc }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 4, 1, -11, false, 100, 1, 1, 9 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 1, -11, false, 100, 3, 1, 9 },
+          },
         }
       else
         screen:expect([[
@@ -3881,7 +4067,9 @@ describe('builtin popupmenu', function()
           {c: }{n:           drow}|
           {12: }{n:         eciohc}|
         ]],
-          float_pos = { [5] = { -1, 'NW', 4, 2, 4, false, 100, 1, 2, 24 } },
+          float_pos = {
+            [5] = { -1, 'NW', 4, 2, 4, false, 100, 3, 2, 24 },
+          },
         }
       else
         screen:expect([[
@@ -3944,7 +4132,9 @@ describe('builtin popupmenu', function()
           {12:define         }{c: }|
           {n:jump           }{12: }|
         ]],
-          float_pos = { [5] = { -1, 'SW', 1, 5, 0, false, 250, 2, 3, 0 } },
+          float_pos = {
+            [5] = { -1, 'SW', 1, 5, 0, false, 250, 4, 3, 0 },
+          },
         }
       else
         screen:expect([[
@@ -4933,7 +5123,9 @@ describe('builtin popupmenu', function()
             {n: undefine       }|
             {n: unplace        }|
           ]],
-          float_pos = { [4] = { -1, 'SW', 1, 9, 5, false, 250, 2, 3, 5 } },
+          float_pos = {
+            [4] = { -1, 'SW', 1, 9, 5, false, 250, 3, 3, 5 },
+          },
         })
       else
         screen:expect([[
@@ -5322,7 +5514,9 @@ describe('builtin popupmenu', function()
           {n: word  }{c: }|
           {n: choice}{12: }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 24, false, 100, 1, 1, 24 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 24, false, 100, 2, 1, 24 },
+          },
         }
       else
         screen:expect([[
@@ -5359,7 +5553,9 @@ describe('builtin popupmenu', function()
           {n: text  }|
           {n: thing }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 25, false, 100, 2, 1, 25 },
+          },
         }
       else
         screen:expect([[
@@ -5401,7 +5597,7 @@ describe('builtin popupmenu', function()
           {12: 123456789_123456789_123456789_a }|
           {n: 123456789_123456789_123456789_b }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 2, 3, 11 } },
         })
       else
         screen:expect([[
@@ -5435,7 +5631,7 @@ describe('builtin popupmenu', function()
           {12: 123456789>}|
           {n: 123456789>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 2, 3, 11 } },
         })
       else
         screen:expect([[
@@ -5469,7 +5665,7 @@ describe('builtin popupmenu', function()
           {12: 123456789_123456789>}|
           {n: 123456789_123456789>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 2, 3, 11 } },
         })
       else
         screen:expect([[
@@ -5503,7 +5699,7 @@ describe('builtin popupmenu', function()
           {12: 1234567>}|
           {n: 1234567>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100, 2, 3, 11 } },
         })
       else
         screen:expect([[
@@ -5538,7 +5734,7 @@ describe('builtin popupmenu', function()
           {12: 1234567>}|
           {n: 1234567>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 4, 11, false, 100, 1, 4, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 4, 11, false, 100, 2, 4, 11 } },
         })
       else
         screen:expect([[
@@ -5616,7 +5812,7 @@ describe('builtin popupmenu', function()
           {n:abcdefghij                     }|
           {n:上下左右                       }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -5650,7 +5846,7 @@ describe('builtin popupmenu', function()
           {n:abcdefghij}|
           {n:上下左右  }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -5684,7 +5880,7 @@ describe('builtin popupmenu', function()
           {n:jihgfedcba}|
           {n:  右左下上}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 50, false, 100, 1, 1, 50 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 50, false, 100, 2, 1, 50 } },
         })
       else
         screen:expect([[
@@ -5719,7 +5915,7 @@ describe('builtin popupmenu', function()
           {n:a>}|
           {n: >}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -5754,7 +5950,7 @@ describe('builtin popupmenu', function()
           {n:bar barKind b>}|
           {n:baz bazKind b>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -6076,7 +6272,7 @@ describe('builtin popupmenu', function()
           {n:<rab}|
           {n:< 一}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 28, false, 100, 1, 1, 28 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 28, false, 100, 2, 1, 28 } },
         })
       else
         screen:expect([[
@@ -6109,7 +6305,7 @@ describe('builtin popupmenu', function()
           {n:bar        一二>}|
           {n:一二三四五 multi}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -6141,7 +6337,7 @@ describe('builtin popupmenu', function()
           {n:<二一        rab}|
           {n:itlum 五四三二一}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 16, false, 100, 1, 1, 16 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 16, false, 100, 2, 1, 16 } },
         })
       else
         screen:expect([[
@@ -6348,7 +6544,7 @@ describe('builtin popupmenu', function()
         ## grid 4
           {n: 一二三四五六七八九>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 100, 1, 1, 12 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 100, 2, 1, 12 } },
         })
       else
         screen:expect([[
@@ -6375,7 +6571,7 @@ describe('builtin popupmenu', function()
         ## grid 4
           {n: 一二三 四五六 七八>}|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 100, 1, 1, 12 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 100, 2, 1, 12 } },
         })
       else
         screen:expect([[
@@ -6403,7 +6599,7 @@ describe('builtin popupmenu', function()
         ## grid 4
           {n:<九八七六五四三二一 }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -6430,7 +6626,7 @@ describe('builtin popupmenu', function()
         ## grid 4
           {n:<八七 六五四 三二一 }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -6482,7 +6678,7 @@ describe('builtin popupmenu', function()
           {n: 一二三四五六七八九>}{c: }|*2
           {n: 一二三四五六七八九>}{12: }|*2
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100, 1, 1, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100, 2, 1, 11 } },
         })
       else
         screen:expect([[
@@ -6511,7 +6707,7 @@ describe('builtin popupmenu', function()
           {n: abcdef ghijkl mnopq}{c: }|*2
           {n: 一二三 四五六 七八>}{12: }|*2
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100, 1, 1, 11 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100, 2, 1, 11 } },
         })
       else
         screen:expect([[
@@ -6541,7 +6737,7 @@ describe('builtin popupmenu', function()
           {c: }{n:<九八七六五四三二一 }|*2
           {12: }{n:<九八七六五四三二一 }|*2
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -6570,7 +6766,7 @@ describe('builtin popupmenu', function()
           {c: }{n:qponm lkjihg fedcba }|*2
           {12: }{n:<八七 六五四 三二一 }|*2
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 } },
         })
       else
         screen:expect([[
@@ -6614,9 +6810,13 @@ describe('builtin popupmenu', function()
         return new_state
       end
 
-      local no_sel_screen ---@type string|test.functional.ui.screen.Expect
-      if multigrid then
+      local no_sel_screen ---@type string|test.function.ui.screen.Expect
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
+      else
+        feed('<RightMouse><4,0>')
+      end
+      if multigrid then
         no_sel_screen = {
           grid = [[
         ## grid 1
@@ -6632,10 +6832,9 @@ describe('builtin popupmenu', function()
           {n: bar }|
           {n: baz }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 3, 1, 3 } },
         }
       else
-        feed('<RightMouse><4,0>')
         no_sel_screen = [[
           ^popup menu test                 |
           {1:~  }{n: foo }{1:                        }|
@@ -6673,8 +6872,12 @@ describe('builtin popupmenu', function()
       screen:expect(no_menu_screen)
       eq('bar', api.nvim_get_var('menustr'))
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 2, 20)
+      else
+        feed('<RightMouse><20,2>')
+      end
+      if multigrid then
         screen:expect({
           grid = [[
         ## grid 1
@@ -6690,10 +6893,9 @@ describe('builtin popupmenu', function()
           {n: bar }|
           {n: baz }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 19, false, 250, 2, 3, 19 } },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 19, false, 250, 3, 3, 19 } },
         })
       else
-        feed('<RightMouse><20,2>')
         screen:expect([[
           ^popup menu test                 |
           {1:~                               }|*2
@@ -6702,8 +6904,12 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'b{n: baz }        |
         ]])
       end
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 18)
+      else
+        feed('<RightMouse><18,0>')
+      end
+      if multigrid then
         screen:expect({
           grid = [[
         ## grid 1
@@ -6719,10 +6925,9 @@ describe('builtin popupmenu', function()
           {n: bar }|
           {n: baz }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 17, false, 250, 2, 1, 17 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 17, false, 250, 3, 1, 17 } },
         })
       else
-        feed('<RightMouse><18,0>')
         screen:expect([[
           ^popup menu test                 |
           {1:~                }{n: foo }{1:          }|
@@ -6732,8 +6937,12 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'bar'          |
         ]])
       end
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 4, 1, 3)
+      else
+        feed('<RightMouse><20,2>')
+      end
+      if multigrid then
         screen:expect({
           grid = [[
         ## grid 1
@@ -6749,10 +6958,9 @@ describe('builtin popupmenu', function()
           {n: bar }|
           {n: baz }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 3, 19, false, 250, 2, 3, 19 } },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 19, false, 250, 3, 3, 19 } },
         })
       else
-        feed('<RightMouse><20,2>')
         screen:expect([[
           ^popup menu test                 |
           {1:~                               }|*2
@@ -6761,7 +6969,7 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'b{n: baz }        |
         ]])
       end
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('left', 'press', '', 4, 2, 2)
       else
         feed('<LeftMouse><21,5>')
@@ -6770,8 +6978,12 @@ describe('builtin popupmenu', function()
       screen:expect(no_menu_screen)
       eq('baz', api.nvim_get_var('menustr'))
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
+      else
+        feed('<RightMouse><4,0>')
+      end
+      if multigrid then
         no_sel_screen = {
           grid = [[
         ## grid 1
@@ -6787,10 +6999,9 @@ describe('builtin popupmenu', function()
           {n: bar }|
           {n: baz }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 3, 1, 3 } },
         }
       else
-        feed('<RightMouse><4,0>')
         no_sel_screen = [[
           ^popup menu test                 |
           {1:~  }{n: foo }{1:                        }|
@@ -6801,13 +7012,13 @@ describe('builtin popupmenu', function()
         ]]
       end
       screen:expect(no_sel_screen)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'drag', '', 2, 3, 6)
       else
         feed('<RightDrag><6,3>')
       end
       screen:expect(screen_replace(no_sel_screen, '{n: baz }', '{12: baz }'))
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'release', '', 2, 1, 6)
       else
         feed('<RightRelease><6,1>')
@@ -6818,35 +7029,36 @@ describe('builtin popupmenu', function()
       no_sel_screen = screen_replace(no_sel_screen, [['baz']], [['foo']])
 
       eq(false, screen.options.mousemoveevent)
-      if multigrid then
+
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
       else
         feed('<RightMouse><4,0>')
       end
       screen:expect(no_sel_screen)
       eq(true, screen.options.mousemoveevent)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('wheel', 'up', '', 2, 0, 4)
       else
         feed('<ScrollWheelUp><4,0>')
       end
       screen:expect(screen_replace(no_sel_screen, '{n: foo }', '{12: foo }'))
       eq(true, screen.options.mousemoveevent)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('move', '', '', 4, 2, 3)
       else
         feed('<MouseMove><6,3>')
       end
       screen:expect(screen_replace(no_sel_screen, '{n: baz }', '{12: baz }'))
       eq(true, screen.options.mousemoveevent)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('wheel', 'down', '', 4, 2, 3)
       else
         feed('<ScrollWheelDown><6,3>')
       end
       screen:expect(screen_replace(no_sel_screen, '{n: bar }', '{12: bar }'))
       eq(true, screen.options.mousemoveevent)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('left', 'press', '', 4, 1, 3)
       else
         feed('<LeftMouse><6,2>')
@@ -6857,8 +7069,12 @@ describe('builtin popupmenu', function()
       eq('bar', api.nvim_get_var('menustr'))
 
       command('set laststatus=0 | botright split')
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 5, 1, 20)
+      else
+        feed('<RightMouse><20,4>')
+      end
+      if multigrid then
         screen:expect({
           grid = [[
         ## grid 1
@@ -6879,10 +7095,9 @@ describe('builtin popupmenu', function()
           ^popup menu test                 |
           {1:~                               }|
         ]],
-          float_pos = { [4] = { -1, 'SW', 5, 1, 19, false, 250, 2, 1, 19 } },
+          float_pos = { [4] = { -1, 'SW', 5, 1, 19, false, 250, 4, 1, 19 } },
         })
       else
-        feed('<RightMouse><20,4>')
         screen:expect([[
           popup menu test                 |
           {1:~                  }{n: foo }{1:        }|
@@ -6892,8 +7107,12 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'bar'          |
         ]])
       end
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('left', 'press', '', 4, 2, 2)
+      else
+        feed('<LeftMouse><21,3>')
+      end
+      if multigrid then
         screen:expect([[
         ## grid 1
           [2:--------------------------------]|*2
@@ -6910,7 +7129,6 @@ describe('builtin popupmenu', function()
           {1:~                               }|
         ]])
       else
-        feed('<LeftMouse><21,3>')
         screen:expect([[
           popup menu test                 |
           {1:~                               }|
@@ -6923,8 +7141,12 @@ describe('builtin popupmenu', function()
       eq('baz', api.nvim_get_var('menustr'))
 
       command('set winwidth=1 | rightbelow vsplit')
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 6, 1, 14)
+      else
+        feed('<RightMouse><30,4>')
+      end
+      if multigrid then
         screen:expect({
           grid = [[
         ## grid 1
@@ -6948,10 +7170,9 @@ describe('builtin popupmenu', function()
           ^popup menu test |
           {1:~               }|
         ]],
-          float_pos = { [4] = { -1, 'SW', 6, 1, 12, false, 250, 2, 1, 28 } },
+          float_pos = { [4] = { -1, 'SW', 6, 1, 12, false, 250, 5, 1, 28 } },
         })
       else
-        feed('<RightMouse><30,4>')
         screen:expect([[
           popup menu test                 |
           {1:~                           }{n: foo}|
@@ -6961,8 +7182,12 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'baz'          |
         ]])
       end
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('left', 'press', '', 4, 0, 2)
+      else
+        feed('<LeftMouse><31,1>')
+      end
+      if multigrid then
         screen:expect([[
         ## grid 1
           [2:--------------------------------]|*2
@@ -6982,7 +7207,6 @@ describe('builtin popupmenu', function()
           {1:~               }|
         ]])
       else
-        feed('<LeftMouse><31,1>')
         screen:expect([[
           popup menu test                 |
           {1:~                               }|
@@ -6995,8 +7219,12 @@ describe('builtin popupmenu', function()
       eq('foo', api.nvim_get_var('menustr'))
 
       command('setlocal winbar=WINBAR')
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 6, 1, 14)
+      else
+        feed('<RightMouse><30,4>')
+      end
+      if multigrid then
         no_sel_screen = {
           grid = [[
         ## grid 1
@@ -7020,10 +7248,9 @@ describe('builtin popupmenu', function()
           {5:WINBAR          }|
           ^popup menu test |
         ]],
-          float_pos = { [4] = { -1, 'SW', 6, 1, 12, false, 250, 2, 1, 28 } },
+          float_pos = { [4] = { -1, 'SW', 6, 1, 12, false, 250, 3, 1, 28 } },
         }
       else
-        feed('<RightMouse><30,4>')
         no_sel_screen = [[
           popup menu test                 |
           {1:~                           }{n: foo}|
@@ -7034,20 +7261,24 @@ describe('builtin popupmenu', function()
         ]]
       end
       screen:expect(no_sel_screen)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'drag', '', 6, 0, 15)
       else
         feed('<RightDrag><31,3>')
       end
       screen:expect(screen_replace(no_sel_screen, '{n: baz}', '{12: baz}'))
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'release', '', 6, 1, 15)
       else
         feed('<RightRelease><31,4>')
       end
       screen:expect(no_sel_screen)
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('left', 'press', '', 4, 1, 2)
+      else
+        feed('<LeftMouse><31,2>')
+      end
+      if multigrid then
         screen:expect([[
         ## grid 1
           [2:--------------------------------]|*2
@@ -7067,7 +7298,6 @@ describe('builtin popupmenu', function()
           ^popup menu test |
         ]])
       else
-        feed('<LeftMouse><31,2>')
         screen:expect([[
           popup menu test                 |
           {1:~                               }|
@@ -7156,7 +7386,7 @@ describe('builtin popupmenu', function()
         ## grid 8
           ^popup menu test                 |
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 14, false, 250, 2, 3, 19 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 14, false, 250, 3, 3, 19 } },
         }
       else
         no_sel_screen = [[
@@ -7181,7 +7411,7 @@ describe('builtin popupmenu', function()
         { 0, 5, 19 },
         { 0, 5, 18 },
       }
-      if multigrid then
+      if send_mouse_grid then
         for i = 1, 7 do
           local _, row, col = unpack(pos[i])
           pos[i] = { 2, row - 2, col - 5 }
@@ -7206,7 +7436,7 @@ describe('builtin popupmenu', function()
       screen:expect(no_menu_screen)
       eq('', api.nvim_get_var('menustr'))
 
-      if multigrid then
+      if send_mouse_grid then
         for i = 2, 6, 2 do
           local _, row, col = unpack(pos[i])
           pos[i] = { 4, row - 1, col - 14 }
@@ -7304,7 +7534,7 @@ describe('builtin popupmenu', function()
         ## grid 8
                            tset unem pupo^p|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 250, 2, 3, 17 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 250, 5, 3, 17 } },
         }
       else
         no_sel_screen = [[
@@ -7329,7 +7559,7 @@ describe('builtin popupmenu', function()
         { 0, 5, 21 },
         { 0, 5, 22 },
       }
-      if multigrid then
+      if send_mouse_grid then
         for i = 1, 7 do
           local _, row, col = unpack(pos[i])
           pos[i] = { 2, row - 2, col - 5 }
@@ -7352,7 +7582,7 @@ describe('builtin popupmenu', function()
       screen:expect(no_menu_screen)
       eq('', api.nvim_get_var('menustr'))
 
-      if multigrid then
+      if send_mouse_grid then
         for i = 2, 6, 2 do
           local _, row, col = unpack(pos[i])
           pos[i] = { 4, row - 1, col - 12 }
@@ -7551,8 +7781,12 @@ describe('builtin popupmenu', function()
         call setline(1, join(range(20)))
       ]])
 
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 45 - 1)
+      else
+        api.nvim_input_mouse('right', 'press', '', 0, 0, 45 - 1)
+      end
+      if multigrid then
         screen:expect({
           grid = [[
           ## grid 1
@@ -7575,10 +7809,11 @@ describe('builtin popupmenu', function()
             {n: Select Block    }|
             {n: Select All      }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 33, false, 250, 2, 1, 33 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 33, false, 250, 3, 1, 33 },
+          },
         })
       else
-        api.nvim_input_mouse('right', 'press', '', 0, 0, 45 - 1)
         screen:expect([[
           0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 ^18 19 |
           {1:~                                }{n: Undo            }|
@@ -7598,8 +7833,12 @@ describe('builtin popupmenu', function()
       feed('<Esc>')
 
       command('set rightleft')
-      if multigrid then
+      if send_mouse_grid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 50 - 45)
+      else
+        api.nvim_input_mouse('right', 'press', '', 0, 0, 50 - 45)
+      end
+      if multigrid then
         screen:expect({
           grid = [[
           ## grid 1
@@ -7622,10 +7861,11 @@ describe('builtin popupmenu', function()
             {n:    kcolB tceleS }|
             {n:      llA tceleS }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 250, 2, 1, 0 } },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 1, 0, false, 250, 3, 1, 0 },
+          },
         })
       else
-        api.nvim_input_mouse('right', 'press', '', 0, 0, 50 - 45)
         screen:expect([[
            91 8^1 71 61 51 41 31 21 11 01 9 8 7 6 5 4 3 2 1 0|
           {n:            odnU }{1:                                ~}|
@@ -8678,11 +8918,15 @@ describe('builtin popupmenu', function()
     end
   end
 
-  describe('with ext_multigrid', function()
-    with_ext_multigrid(true)
+  describe('with ext_multigrid and actual mouse grid', function()
+    with_ext_multigrid(true, true)
+  end)
+
+  describe('with ext_multigrid and mouse grid 0', function()
+    with_ext_multigrid(true, false)
   end)
 
   describe('without ext_multigrid', function()
-    with_ext_multigrid(false)
+    with_ext_multigrid(false, false)
   end)
 end)
