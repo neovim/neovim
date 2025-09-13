@@ -21,6 +21,9 @@ end
 --- @param header string The header to parse
 --- @return integer
 local function get_content_length(header)
+  if header:sub(1, 3) == '\u{FEFF}' then
+    header = header:sub(4)
+  end
   for line in header:gmatch('(.-)\r\n') do
     if line == '' then
       break
