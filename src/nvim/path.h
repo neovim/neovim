@@ -40,10 +40,6 @@ typedef enum file_comparison {
   kEqualFileNames = 7,  ///< Both don't exist and file names are same.
 } FileComparison;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "path.h.generated.h"
-#endif
-
 #define MUTATE_PATH_NO_OP do { } while (0)
 #ifdef BACKSLASH_IN_FILENAME
 
