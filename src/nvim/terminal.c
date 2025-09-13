@@ -1907,7 +1907,7 @@ static bool send_mouse_event(Terminal *term, int c)
   int row = mouse_row;
   int col = mouse_col;
   int grid = mouse_grid;
-  win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+  win_T *mouse_win = mouse_find_win_inner(&grid, &row, &col);
   if (mouse_win == NULL) {
     goto end;
   }
