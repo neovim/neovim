@@ -1,15 +1,15 @@
-" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
-" Former Maintainer: Charles E Campbell
-" Upstream: <https://github.com/saccarosium/netrw.vim>
-" Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
-"               Permission is hereby granted to use and distribute this code,
-"               with or without modifications, provided that this copyright
-"               notice is copied with it. Like anything else that's free,
-"               netrw.vim, netrwPlugin.vim, and netrwSettings.vim are provided
-"               *as is* and come with no warranty of any kind, either
-"               expressed or implied. By using this plugin, you agree that
-"               in no event will the copyright holder be liable for any damages
-"               resulting from the use of this software.
+" Creator:    Charles E Campbell
+" Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer: This runtime file is looking for a new maintainer.
+" Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
+"             Permission is hereby granted to use and distribute this code,
+"             with or without modifications, provided that this copyright
+"             notice is copied with it. Like anything else that's free,
+"             netrw.vim, netrwPlugin.vim, and netrwSettings.vim are provided
+"             *as is* and come with no warranty of any kind, either
+"             expressed or implied. By using this plugin, you agree that
+"             in no event will the copyright holder be liable for any damages
+"             resulting from the use of this software.
 "
 " Note: the code here was started in 1999 under a much earlier version of vim.  The directory browsing
 "       code was written using vim v6, which did not have Lists (Lists were first offered with vim-v7).
