@@ -176,7 +176,7 @@ func Test_signcolumn()
   call assert_equal("auto", &signcolumn)
   set signcolumn=yes
   set signcolumn=no
-  call assert_fails('set signcolumn=nope')
+  call assert_fails('set signcolumn=nope', 'E474: Invalid argument: signcolumn=nope')
 endfunc
 
 func Test_filetype_valid()

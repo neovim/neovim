@@ -395,6 +395,7 @@ output:write([[
 #include "nvim/api/buffer.h"
 #include "nvim/api/command.h"
 #include "nvim/api/deprecated.h"
+#include "nvim/api/events.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/options.h"
 #include "nvim/api/tabpage.h"
@@ -421,7 +422,7 @@ for _, k in ipairs(keysets) do
   local function typename(type)
     if type == 'HLGroupID' then
       return 'kObjectTypeInteger'
-    elseif not type or vim.startswith(type, 'Union') then
+    elseif not type or startswith(type, 'Union') then
       return 'kObjectTypeNil'
     elseif type == 'StringArray' then
       return 'kUnpackTypeStringArray'

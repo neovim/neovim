@@ -142,13 +142,16 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		typing CTRL-R and the second character '"' will be displayed
 		to indicate that you are expected to enter the name of a
 		register.
-		The text is inserted as if you typed it, but mappings and
-		abbreviations are not used.  Command-line completion through
-		'wildchar' is not triggered though.  And characters that end
-		the command line are inserted literally (<Esc>, <CR>, <NL>,
-		<C-C>).  A <BS> or CTRL-W could still end the command line
-		though, and remaining characters will then be interpreted in
-		another mode, which might not be what you intended.
+		When used with named or clipboard registers (A-Z,a-z,0-9,+)
+		text is inserted literally like pasting with "p". For other
+		registers, the text is inserted as if you typed it, but
+		mappings and abbreviations are not used. Command-line
+		completion through 'wildchar' is not triggered though.  And
+		characters that end the command line are inserted literally
+		(<Esc>, <CR>, <NL>, <C-C>).  A <BS> or CTRL-W could still end
+		the command line though, and remaining characters will then be
+		interpreted in another mode, which might not be what you
+		intended.
 		Special registers:
 			'"'	the unnamed register, containing the text of
 				the last delete or yank
@@ -176,7 +179,9 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				sure the expression evaluates to an empty
 				string.  E.g.: >
 					<C-R><C-R>=setcmdpos(2)[-1]<CR>
-<		See |registers| about registers.
+<				You can use this to insert a register as
+				typed with CTRL-R =@reg.
+		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
@@ -379,6 +384,9 @@ word before the cursor.  This is available for:
 The number of help item matches is limited (currently to 300) to avoid a long
 delay when there are very many matches.
 
+For automatic completion as you type (without pressing a key like <Tab>),
+see |cmdline-autocompletion|.
+
 These are the commands that can be used:
 
 							*c_CTRL-D*
@@ -450,8 +458,6 @@ accepted when matching file names.
 When repeating 'wildchar' or CTRL-N you cycle through the matches, eventually
 ending up back to what was typed.  If the first match is not what you wanted,
 you can use <S-Tab> or CTRL-P to go straight back to what you typed.
-
-See also |wildtrigger()|.
 
 The 'wildmenu' option can be set to show the matches just above the command
 line.
@@ -1253,5 +1259,84 @@ The character used for the pattern indicates the type of command-line:
 	=	expression for "= |expr-register|
 	@	string for |input()|
 	`-`	text for |:insert| or |:append|
+
+==============================================================================
+8. Command-line autocompletion			 *cmdline-autocompletion*
+
+Autocompletion makes the command-line more efficient and easier to navigate by
+automatically showing a popup menu of suggestions as you type, whether
+searching (/ or ?) or entering commands (:).
+
+A basic setup is: >
+	autocmd CmdlineChanged [:\/\?] call wildtrigger()
+	set wildmode=noselect:lastused,full
+	set wildoptions=pum
+
+With this configuration, suggestions appear immediately, and you can
+move through them with <Tab> or the arrow keys.
+
+To retain normal command-line history navigation with <Up>/<Down>: >
+	cnoremap <expr> <Up>   wildmenumode() ? "\<C-E>\<Up>"   : "\<Up>"
+	cnoremap <expr> <Down> wildmenumode() ? "\<C-E>\<Down>" : "\<Down>"
+
+Options can also be applied only for specific command-lines.  For
+example, to use a shorter popup menu height only during search: >
+	autocmd CmdlineEnter [\/\?] set pumheight=8
+	autocmd CmdlineLeave [\/\?] set pumheight&
+
+EXTRAS					*fuzzy-file-picker* *live-grep*
+
+Command-line autocompletion can also be extended for advanced uses.
+For example, you can turn the native |:find| command into a fuzzy, interactive
+file picker: >
+
+	set findfunc=Find
+	func Find(arg, _)
+	  if get(s:, 'filescache', []) == []
+	    let s:filescache = systemlist(
+		\ 'find . -path "*/.git" -prune -o -type f -print')
+	  endif
+	  return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)
+	endfunc
+	autocmd CmdlineEnter : let s:filescache = []
+
+The `:Grep` command searches for lines matching a pattern and updates the
+results dynamically as you type (triggered after two characters; note: needs
+the `CmdlineLeavePre` autocmd from the next section): >
+
+	command! -nargs=+ -complete=customlist,<SID>Grep
+		\ Grep call <SID>VisitFile()
+
+	func s:Grep(arglead, cmdline, cursorpos)
+	  let cmd = $'grep -REIHns "{a:arglead}" --exclude-dir=.git
+		\ --exclude=".*"'
+	  return len(a:arglead) > 1 ? systemlist(cmd) : []
+	endfunc
+
+	func s:VisitFile()
+	  let item = getqflist(#{lines: [s:selected]}).items[0]
+	  let pos  = '[0,\ item.lnum,\ item.col,\ 0]'
+	  exe $':b +call\ setpos(".",\ {pos}) {item.bufnr}'
+	  call setbufvar(item.bufnr, '&buflisted', 1)
+	endfunc
+
+Automatically select the first item in the completion list when leaving the
+command-line, and for `:Grep`, add the typed pattern to the command-line
+history: >
+
+	autocmd CmdlineLeavePre :
+	      \ if get(cmdcomplete_info(), 'matches', []) != [] |
+	      \   let s:info = cmdcomplete_info() |
+	      \   if getcmdline() =~ '^\s*fin\%[d]\s' && s:info.selected == -1 |
+	      \     call setcmdline($'find {s:info.matches[0]}') |
+	      \   endif |
+	      \   if getcmdline() =~ '^\s*Grep\s' |
+	      \     let s:selected = s:info.selected != -1
+	      \         ? s:info.matches[s:info.selected] : s:info.matches[0] |
+	      \     call setcmdline(s:info.cmdline_orig) |
+	      \   endif |
+	      \ endif
+
+For autocompletion in insert mode, see |ins-autocompletion|.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

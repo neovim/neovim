@@ -19,6 +19,7 @@ local lsp = vim._defer_require('vim.lsp', {
   inline_completion = ..., --- @module 'vim.lsp.inline_completion'
   linked_editing_range = ..., --- @module 'vim.lsp.linked_editing_range'
   log = ..., --- @module 'vim.lsp.log'
+  on_type_formatting = ..., --- @module 'vim.lsp.on_type_formatting'
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
   semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
@@ -1376,7 +1377,7 @@ function lsp.formatexpr(opts)
       local response =
         client:request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
       if response and response.result then
-        lsp.util.apply_text_edits(response.result, bufnr, client.offset_encoding)
+        util.apply_text_edits(response.result, bufnr, client.offset_encoding)
         return 0
       end
     end

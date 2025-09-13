@@ -754,9 +754,13 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 
         vim_snprintf(buf + len, buflen - len, "%s", path_end);
         if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
-          // need to expand another component of the path
-          // remove backslashes for the remaining components only
-          do_path_expand(gap, buf, len + 1, flags, false);
+          if (stardepth < 100) {
+            stardepth++;
+            // need to expand another component of the path
+            // remove backslashes for the remaining components only
+            do_path_expand(gap, buf, len + 1, flags, false);
+            stardepth--;
+          }
         } else {
           FileInfo file_info;
 
@@ -1145,7 +1149,7 @@ static int expand_in_path(garray_T *const gap, char *const pattern, const int fl
     return 0;
   }
 
-  char *const paths = ga_concat_strings(&path_ga);
+  char *const paths = ga_concat_strings(&path_ga, ",");
   ga_clear_strings(&path_ga);
 
   int glob_flags = 0;

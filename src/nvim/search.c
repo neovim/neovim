@@ -3253,7 +3253,7 @@ search_line:
         }
         found = true;
         char *aux = p = startp;
-        if (compl_status_adding()) {
+        if (compl_status_adding() && (int)strlen(p) >= ins_compl_len()) {
           p += ins_compl_len();
           if (vim_iswordp(p)) {
             goto exit_matched;

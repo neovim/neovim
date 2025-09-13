@@ -12,6 +12,15 @@ describe('statusline', function()
 
   before_each(function()
     screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({
+      [100] = {
+        background = Screen.colors.Red,
+        foreground = Screen.colors.Gray100,
+        reverse = true,
+        bold = true,
+      },
+      [101] = { foreground = Screen.colors.Blue, reverse = true, bold = true },
+    })
   end)
 
   it('is updated in cmdline mode when using window-local statusline vim-patch:8.2.2737', function()
@@ -51,7 +60,7 @@ describe('statusline', function()
     screen:expect([[
       ^                                                  |
       {1:~                                                 }|*4
-      {9:<F}{18:GHI                                             }|
+      {100:<F}{101:GHI                                             }|
                                                         |
     ]])
   end)

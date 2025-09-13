@@ -48,7 +48,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'complete' excludes "i"
 - 'completeopt' defaults to "menu,popup"
 - 'define' defaults to "". The C ftplugin sets it to "^\\s*#\\s*define"
-- 'diffopt' defaults to "internal,filler,closeoff,inline:simple,linematch:40"
+- 'diffopt' includes "linematch:40"
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
@@ -300,6 +300,7 @@ Command-line:
 
 Commands:
 - |:checkhealth|
+- |:connect|
 - |:detach|
 - |:drop| is always available
 - |:EditQuery|
@@ -316,9 +317,14 @@ Commands:
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
+- |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
+  pasting instead of like user input. Improves performance, avoids broken
+  formatting. To get the old behavior you can use `<C-R>=@x`.
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
+- |BufModifiedSet|
+- |Progress|
 - |RecordingEnter|
 - |RecordingLeave|
 - |SearchWrapped|
@@ -326,6 +332,7 @@ Events (autocommands):
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|
+- |TermRequest|
 - |TermResponse| is fired for DCS, OSC, and APC sequences received from the terminal,
   in addition to the Primary Device Attributes response. |v:termresponse|
 - |UIEnter|
@@ -353,6 +360,9 @@ Highlight groups:
 - |hl-NormalNC| highlights non-current windows
 - |hl-MsgArea| highlights messages/cmdline area
 - |hl-MsgSeparator| highlights separator for scrolled messages
+- |hl-OkMsg|
+- |hl-StderrMsg|
+- |hl-StdoutMsg|
 - |hl-Substitute|
 - |hl-TermCursor|
 - |hl-WinSeparator| highlights window separators

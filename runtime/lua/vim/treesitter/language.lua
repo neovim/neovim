@@ -188,7 +188,7 @@ end
 
 --- Returns available treesitter languages.
 function M._complete()
-  local parsers = vim.api.nvim_get_runtime_file('parser/*', true)
+  local parsers = api.nvim_get_runtime_file('parser/*', true)
   local parser_names_set = {} ---@type table<string, boolean>
   for _, parser in ipairs(parsers) do
     local parser_name = vim.fn.fnamemodify(parser, ':t:r')

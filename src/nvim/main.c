@@ -188,6 +188,7 @@ static bool event_teardown(void)
 /// Needed for unit tests.
 void early_init(mparm_T *paramp)
 {
+  os_hint_priority();
   estack_init();
   cmdline_init();
   eval_init();          // init global variables
@@ -708,6 +709,7 @@ void getout(int exitval)
     exitval += ex_exitval;
   }
 
+  set_vim_var_type(VV_EXITING, VAR_NUMBER);
   set_vim_var_nr(VV_EXITING, exitval);
 
   // Invoked all deferred functions in the function stack.
@@ -1623,37 +1625,47 @@ static void read_stdin(void)
   swap_exists_action = SEA_DIALOG;
   no_wait_return = true;
   bool save_msg_didany = msg_didany;
-  buf_T *prev_buf = NULL;
 
   if (curbuf->b_ffname) {
     // curbuf is already opened for a file, create a new buffer for stdin. #35269
-    buf_T *newbuf = buflist_new(NULL, NULL, 0, BLN_LISTED);
-    if (newbuf == NULL) {
+    buf_T *stdin_buf = buflist_new(NULL, NULL, 0, BLN_LISTED);
+    if (stdin_buf == NULL) {
       semsg("Failed to create buffer for stdin");
       return;
     }
 
-    // remember the current buffer so we can go back to it
-    prev_buf = curbuf;
-    set_curbuf(newbuf, 0, false);
+    // remember the current buffer number so we can go back to it
+    handle_T initial_buf_handle = curbuf->handle;
+
+    // set the buffer we just created as curbuf so we can read stdin into it
+    set_curbuf(stdin_buf, 0, false);
     readfile(NULL, NULL, 0, 0, (linenr_T)MAXLNUM, NULL, READ_NEW + READ_STDIN, true);
+
+    // remember stdin_buf_handle so we can close it if stdin_buf ends up empty
+    handle_T stdin_buf_handle = stdin_buf->handle;
+    bool stdin_buf_empty = buf_is_empty(curbuf);
+
+    // switch back to the original starting buffer
+    char buf[100];
+    vim_snprintf(buf, sizeof(buf), "silent! buffer %d", initial_buf_handle);
+    do_cmdline_cmd(buf);
+
+    if (stdin_buf_empty) {
+      // stdin buffer may be first or last ("echo foo | nvim file1 -"). #35269
+      // only wipe buffer after having switched to original starting buffer. #35681
+      vim_snprintf(buf, sizeof(buf), "silent! bwipeout! %d", stdin_buf_handle);
+      do_cmdline_cmd(buf);
+    }
   } else {
+    // stdin buffer is first so we can just use curbuf
     set_buflisted(true);
     // Create memfile and read from stdin.
     open_buffer(true, NULL, 0);
-  }
-
-  if (buf_is_empty(curbuf)) {
     // stdin was empty so we should wipe it (e.g. "echo file1 | xargs nvim"). #8561
-    // stdin buffer may be first or last ("echo foo | nvim file1 -"). #35269
-    if ((curbuf->b_next != NULL) || (curbuf->b_prev != NULL)) {
-      do_bufdel(DOBUF_WIPE, NULL, 0, 0, 0, 1);
+    if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
+      do_cmdline_cmd("silent! bnext");
+      do_cmdline_cmd("silent! bwipeout 1");
     }
-  }
-
-  // we had to switch buffers to load stdin, switch back
-  if (prev_buf) {
-    set_curbuf(prev_buf, 0, false);
   }
 
   no_wait_return = false;

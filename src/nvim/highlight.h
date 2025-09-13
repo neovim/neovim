@@ -17,6 +17,8 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_TERM] = "TermCursor",
   [HLF_AT] = "NonText",
   [HLF_D] = "Directory",
+  [HLF_OK] = "OkMsg",
+  [HLF_W] = "WarningMsg",
   [HLF_E] = "ErrorMsg",
   [HLF_SE] = "StderrMsg",
   [HLF_SO] = "StdoutMsg",
@@ -39,7 +41,6 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_V] = "Visual",
   [HLF_VNC] = "VisualNC",
   [HLF_VSP] = "VertSplit",
-  [HLF_W] = "WarningMsg",
   [HLF_WM] = "WildMenu",
   [HLF_FL] = "Folded",
   [HLF_FC] = "FoldColumn",
@@ -84,6 +85,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_BFOOTER] = "FloatFooter",
   [HLF_TS] = "StatusLineTerm",
   [HLF_TSNC] = "StatusLineTermNC",
+  [HLF_PRE] = "PreInsert",
 });
 
 EXTERN int highlight_attr[HLF_COUNT];     // Highl. attr for each context.

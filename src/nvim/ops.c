@@ -99,7 +99,7 @@ static const char e_search_pattern_and_expression_register_may_not_contain_two_o
 /// The names of operators.
 /// IMPORTANT: Index must correspond with defines in ops.h!!!
 /// The third field indicates whether the operator always works on lines.
-static char opchars[][3] = {
+static const char opchars[][3] = {
   { NUL, NUL, 0 },                       // OP_NOP
   { 'd', NUL, OPF_CHANGE },              // OP_DELETE
   { 'y', NUL, 0 },                       // OP_YANK

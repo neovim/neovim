@@ -1,7 +1,7 @@
 " Language:    Typst
-" Previous Maintainer:  Gregory Anders
-" Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
-" Last Change: 2024 Dec 09
+" Previous Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
+" Maintainer: This runtime file is looking for a new maintainer.
+" Last Change: 2025 Aug 05
 " Based on:    https://github.com/kaarmu/typst.vim
 
 function! typst#indentexpr() abort

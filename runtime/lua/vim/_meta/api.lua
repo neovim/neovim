@@ -359,8 +359,13 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 --- @param opts vim.api.keyset.get_extmark Optional parameters. Keys:
 --- - details: Whether to include the details dict
 --- - hl_name: Whether to include highlight group name instead of id, true if omitted
---- @return [integer, integer, vim.api.keyset.extmark_details?] # 0-indexed (row, col) tuple or empty list () if extmark id was
---- absent
+--- @return [integer, integer, vim.api.keyset.extmark_details?] # 0-indexed (row, col, details?) tuple or empty list () if extmark id was absent.  The
+--- optional `details` dictionary contains the same keys as `opts` in |nvim_buf_set_extmark()|,
+--- except for `id`, `conceal_lines` and `ephemeral`. It also contains the following keys:
+---
+--- - ns_id: |namespace| id
+--- - invalid: boolean that indicates whether the mark is hidden because the entirety of
+--- text span range is deleted. See also the key `invalidate` in |nvim_buf_set_extmark()|.
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
 --- Gets `extmarks` in "traversal order" from a `charwise` region defined by
@@ -419,7 +424,8 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 --- - overlap: Also include marks which overlap the range, even if
 ---            their start position is less than `start`
 --- - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
---- @return vim.api.keyset.get_extmark_item[] # List of `[extmark_id, row, col]` tuples in "traversal order".
+--- @return vim.api.keyset.get_extmark_item[] # List of `[extmark_id, row, col, details?]` tuples in "traversal order". For the
+--- `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
 function vim.api.nvim_buf_get_extmarks(buffer, ns_id, start, end_, opts) end
 
 --- Gets a list of buffer-local `mapping` definitions.
@@ -1600,7 +1606,8 @@ function vim.api.nvim_input(keys) end
 --- The same specifiers are used as for a key press, except
 --- that the "-" separator is optional, so "C-A-", "c-a"
 --- and "CA" can all be used to specify Ctrl+Alt+click.
---- @param grid integer Grid number if the client uses `ui-multigrid`, else 0.
+--- @param grid integer Grid number (used by `ui-multigrid` client), or 0 to let Nvim decide positioning of
+--- windows. For more information, see [dev-ui-multigrid]
 --- @param row integer Mouse row-position (zero-based, like redraw events)
 --- @param col integer Mouse column-position (zero-based, like redraw events)
 function vim.api.nvim_input_mouse(button, action, modifier, grid, row, col) end
@@ -2128,7 +2135,7 @@ function vim.api.nvim_set_current_win(window) end
 --- Note: this function should not be called often. Rather, the callbacks
 --- themselves can be used to throttle unneeded callbacks. the `on_start`
 --- callback can return `false` to disable the provider until the next redraw.
---- Similarly, return `false` in `on_win` will skip the `on_line` calls
+--- Similarly, return `false` in `on_win` will skip the `on_line` and `on_range` calls
 --- for that window (but any extmarks set in `on_win` will still be used).
 --- A plugin managing multiple sources of decoration should ideally only set
 --- one provider, and merge the sources internally. You can use multiple `ns_id`
@@ -2140,7 +2147,7 @@ function vim.api.nvim_set_current_win(window) end
 --- Doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 --- for the moment.
 ---
---- Note: It is not allowed to remove or update extmarks in `on_line` callbacks.
+--- Note: It is not allowed to remove or update extmarks in `on_line` or `on_range` callbacks.
 ---
 --- @param ns_id integer Namespace id from `nvim_create_namespace()`
 --- @param opts vim.api.keyset.set_decoration_provider Table of callbacks:
@@ -2157,11 +2164,25 @@ function vim.api.nvim_set_current_win(window) end
 ---   ```
 ---     ["win", winid, bufnr, toprow, botrow]
 ---   ```
---- - on_line: called for each buffer line being redrawn.
----     (The interaction with fold lines is subject to change)
+--- - on_line: (deprecated, use on_range instead)
 ---   ```
 ---     ["line", winid, bufnr, row]
 ---   ```
+--- - on_range: called for each buffer range being redrawn.
+---   Range is end-exclusive and may span multiple lines. Range
+---   bounds point to the first byte of a character. An end position
+---   of the form (lnum, 0), including (number of lines, 0), is valid
+---   and indicates that EOL of the preceding line is included.
+---   ```
+---     ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
+---   ```
+---
+---   In addition to returning a boolean, it is also allowed to
+---   return a `skip_row, skip_col` pair of integers. This implies
+---   that this function does not need to be called until a range
+---   which continues beyond the skipped position. A single integer
+---   return value `skip_row` is short for `skip_row, 0`
+---
 --- - on_end: called at the end of a redraw cycle
 ---   ```
 ---     ["end", tick]
@@ -2402,7 +2423,7 @@ function vim.api.nvim_win_get_buf(window) end
 --- `relative` is empty for normal windows.
 ---
 --- @param window integer `window-ID`, or 0 for current window
---- @return vim.api.keyset.win_config # Map defining the window configuration, see |nvim_open_win()|
+--- @return vim.api.keyset.win_config_ret # Map defining the window configuration, see |nvim_open_win()|
 function vim.api.nvim_win_get_config(window) end
 
 --- Gets the (1,0)-indexed, buffer-relative cursor position for a given window

@@ -255,19 +255,6 @@ The idea is "versionless evolution", in the words of Rich Hickey:
 - Strengthening a promise should be a compatible change.
 
 ==============================================================================
-Global events                                               *api-global-events*
-
-When a client invokes an API request as an async notification, it is not
-possible for Nvim to send an error response. Instead, in case of error, the
-following notification will be sent to the client:
-
-                                                             *nvim_error_event*
-nvim_error_event[{type}, {message}]
-
-{type} is a numeric id as defined by `api_info().error_types`, and {message} is
-a string with the error message.
-
-==============================================================================
 Buffer update events                                    *api-buffer-updates*
 
 API clients can "attach" to Nvim buffers to subscribe to buffer update events.
@@ -552,6 +539,38 @@ created by another plugin.
 Extmark positions changed by an edit will be restored on undo/redo. Creating
 and deleting extmarks is not a buffer change, thus new undo states are not
 created for extmark changes.
+
+==============================================================================
+Global Events                                                     *api-events*
+
+nvim_error_event({type}, {msg})                             *nvim_error_event*
+    Emitted on the client channel if an async API request responds with an
+    error.
+
+    Attributes: ~
+        |RPC| only
+
+    Parameters: ~
+      • {type}  (`integer`) Error type id as defined by
+                `api_info().error_types`.
+      • {msg}   (`string`) Error message.
+
+nvim_ui_term_event({event}, {value})                      *nvim_ui_term_event*
+    Emitted by the TUI client to signal when a host-terminal event occurred.
+
+    Supports these events:
+    • "termresponse": The host-terminal sent a DA1, OSC, DCS, or APC response
+      sequence to Nvim. The payload is the received response. Sets
+      |v:termresponse| and fires |TermResponse|.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.10.0
+
+    Parameters: ~
+      • {event}  (`string`) Event name
+      • {value}  (`any`) Event payload
+
 
 ==============================================================================
 Global Functions                                                  *api-global*
@@ -1128,8 +1147,9 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
                     press, except that the "-" separator is optional, so
                     "C-A-", "c-a" and "CA" can all be used to specify
                     Ctrl+Alt+click.
-      • {grid}      (`integer`) Grid number if the client uses |ui-multigrid|,
-                    else 0.
+      • {grid}      (`integer`) Grid number (used by |ui-multigrid| client),
+                    or 0 to let Nvim decide positioning of windows. For more
+                    information, see |dev-ui-multigrid|
       • {row}       (`integer`) Mouse row-position (zero-based, like redraw
                     events)
       • {col}       (`integer`) Mouse column-position (zero-based, like redraw
@@ -1385,9 +1405,9 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
     debugging and orchestration. (Note: Something is better than nothing!
     Fields are optional, but at least set `name`.)
 
-    Can be called more than once; the caller should merge old info if
-    appropriate. Example: library first identifies the channel, then a plugin
-    using that library later identifies itself.
+    Can be called more than once; caller should merge old info if appropriate.
+    Example: a library first identifies the channel, then a plugin using that
+    library later identifies itself.
 
     Attributes: ~
         |RPC| only
@@ -3022,7 +3042,14 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
 
     Return: ~
         (`[integer, integer, vim.api.keyset.extmark_details?]`) 0-indexed
-        (row, col) tuple or empty list () if extmark id was absent
+        (row, col, details?) tuple or empty list () if extmark id was absent.
+        The optional `details` dictionary contains the same keys as `opts` in
+        |nvim_buf_set_extmark()|, except for `id`, `conceal_lines` and
+        `ephemeral`. It also contains the following keys:
+        • ns_id: |namespace| id
+        • invalid: boolean that indicates whether the mark is hidden because
+          the entirety of text span range is deleted. See also the key
+          `invalidate` in |nvim_buf_set_extmark()|.
 
                                                      *nvim_buf_get_extmarks()*
 nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
@@ -3089,8 +3116,9 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
                     "virt_text" and "virt_lines"
 
     Return: ~
-        (`vim.api.keyset.get_extmark_item[]`) List of `[extmark_id, row, col]`
-        tuples in "traversal order".
+        (`vim.api.keyset.get_extmark_item[]`) List of
+        `[extmark_id, row, col, details?]` tuples in "traversal order". For
+        the `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
 
                                                       *nvim_buf_set_extmark()*
 nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
@@ -3290,11 +3318,12 @@ nvim_set_decoration_provider({ns_id}, {opts})
     Note: this function should not be called often. Rather, the callbacks
     themselves can be used to throttle unneeded callbacks. the `on_start`
     callback can return `false` to disable the provider until the next redraw.
-    Similarly, return `false` in `on_win` will skip the `on_line` calls for
-    that window (but any extmarks set in `on_win` will still be used). A
-    plugin managing multiple sources of decoration should ideally only set one
-    provider, and merge the sources internally. You can use multiple `ns_id`
-    for the extmarks set/modified inside the callback anyway.
+    Similarly, return `false` in `on_win` will skip the `on_line` and
+    `on_range` calls for that window (but any extmarks set in `on_win` will
+    still be used). A plugin managing multiple sources of decoration should
+    ideally only set one provider, and merge the sources internally. You can
+    use multiple `ns_id` for the extmarks set/modified inside the callback
+    anyway.
 
     Note: doing anything other than setting extmarks is considered
     experimental. Doing things like changing options are not explicitly
@@ -3302,8 +3331,8 @@ nvim_set_decoration_provider({ns_id}, {opts})
     consumption). Doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is
     quite dubious for the moment.
 
-    Note: It is not allowed to remove or update extmarks in `on_line`
-    callbacks.
+    Note: It is not allowed to remove or update extmarks in `on_line` or
+    `on_range` callbacks.
 
     Attributes: ~
         Lua |vim.api| only
@@ -3323,10 +3352,23 @@ nvim_set_decoration_provider({ns_id}, {opts})
                  • on_win: called when starting to redraw a specific window. >
                     ["win", winid, bufnr, toprow, botrow]
 <
-                 • on_line: called for each buffer line being redrawn. (The
-                   interaction with fold lines is subject to change) >
+                 • on_line: (deprecated, use on_range instead) >
                     ["line", winid, bufnr, row]
 <
+                 • on_range: called for each buffer range being redrawn. Range
+                   is end-exclusive and may span multiple lines. Range bounds
+                   point to the first byte of a character. An end position of
+                   the form (lnum, 0), including (number of lines, 0), is
+                   valid and indicates that EOL of the preceding line is
+                   included. >
+                    ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
+<
+                   In addition to returning a boolean, it is also allowed to
+                   return a `skip_row, skip_col` pair of integers. This
+                   implies that this function does not need to be called until
+                   a range which continues beyond the skipped position. A
+                   single integer return value `skip_row` is short for
+                   `skip_row, 0`
                  • on_end: called at the end of a redraw cycle >
                     ["end", tick]
 <
@@ -3651,22 +3693,6 @@ nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
     Parameters: ~
       • {name}   (`string`)
       • {value}  (`any`)
-
-nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
-    Tells Nvim when a host-terminal event occurred.
-
-    Supports these events:
-    • "termresponse": The host-terminal sent a DA1, OSC, DCS, or APC response
-      sequence to Nvim. The payload is the received response. Sets
-      |v:termresponse| and fires |TermResponse|.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.10.0
-
-    Parameters: ~
-      • {event}  (`string`) Event name
-      • {value}  (`any`) Event payload
 
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
 

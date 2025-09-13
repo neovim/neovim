@@ -688,10 +688,7 @@ function M.fvwm_v1(_, _)
 end
 
 --- @type vim.filetype.mapfn
-function M.fvwm_v2(path, _)
-  if fn.fnamemodify(path, ':e') == 'm4' then
-    return 'fvwm2m4'
-  end
+function M.fvwm_v2(_, _)
   return 'fvwm', function(bufnr)
     vim.b[bufnr].fvwm_version = 2
   end
@@ -847,27 +844,29 @@ function M.inc(path, bufnr)
   if vim.g.filetype_inc then
     return vim.g.filetype_inc
   end
-  local lines = table.concat(getlines(bufnr, 1, 3))
-  if lines:lower():find('perlscript') then
-    return 'aspperl'
-  elseif lines:find('<%%') then
-    return 'aspvbs'
-  elseif lines:find('<%?') then
-    return 'php'
+  for _, line in ipairs(getlines(bufnr, 1, 20)) do
+    if line:lower():find('perlscript') then
+      return 'aspperl'
+    elseif line:find('<%%') then
+      return 'aspvbs'
+    elseif line:find('<%?') then
+      return 'php'
     -- Pascal supports // comments but they're vary rarely used for file
     -- headers so assume POV-Ray
-  elseif findany(lines, { '^%s{', '^%s%(%*' }) or matchregex(lines, pascal_keywords) then
-    return 'pascal'
-  elseif findany(lines, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}]*%s+%??[?:+]?= ' }) then
-    return 'bitbake'
-  else
-    local syntax = M.asm_syntax(path, bufnr)
-    if not syntax or syntax == '' then
-      return 'pov'
+    elseif findany(line, { '^%s{', '^%s%(%*' }) or matchregex(line, pascal_keywords) then
+      return 'pascal'
+    elseif
+      findany(line, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}/]*%s+%??[?:+.]?=.? ' })
+    then
+      return 'bitbake'
     end
-    return syntax, function(b)
-      vim.b[b].asmsyntax = syntax
-    end
+  end
+  local syntax = M.asm_syntax(path, bufnr)
+  if not syntax or syntax == '' then
+    return 'pov'
+  end
+  return syntax, function(b)
+    vim.b[b].asmsyntax = syntax
   end
 end
 
@@ -1024,6 +1023,50 @@ function M.m(_, bufnr)
     -- Default is Matlab
     return 'matlab'
   end
+end
+
+--- For files ending in *.m4, distinguish:
+---  – *.html.m4 files
+---  - *fvwm2rc*.m4 files
+---  – files in the Autoconf M4 dialect
+---  – files in POSIX M4
+--- @type vim.filetype.mapfn
+function M.m4(path, bufnr)
+  local fname = fn.fnamemodify(path, ':t')
+  path = fn.fnamemodify(path, ':p:h')
+
+  if fname:find('html%.m4$') then
+    return 'htmlm4'
+  end
+
+  if fname:find('fvwm2rc') then
+    return 'fvwm2m4'
+  end
+
+  -- Canonical Autoconf file
+  if fname == 'aclocal.m4' then
+    return 'config'
+  end
+
+  -- Repo heuristic for Autoconf M4 (nearby configure.ac)
+  if
+    fn.filereadable(path .. '/../configure.ac') ~= 0
+    or fn.filereadable(path .. '/configure.ac') ~= 0
+  then
+    return 'config'
+  end
+
+  -- Content heuristic for Autoconf M4 (scan first ~200 lines)
+  -- Signals:
+  --   - Autoconf macro prefixes: AC_/AM_/AS_/AU_/AT_
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if line:find('^%s*A[CMSUT]_') then
+      return 'config'
+    end
+  end
+
+  -- Default to POSIX M4
+  return 'm4'
 end
 
 --- @param contents string[]

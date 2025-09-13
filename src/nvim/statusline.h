@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 
+#include "nvim/highlight_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/statusline_defs.h"  // IWYU pragma: keep

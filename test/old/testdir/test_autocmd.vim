@@ -2090,7 +2090,7 @@ func Test_Cmdline()
 
   let g:log = []
   let @r = 'abc'
-  call feedkeys(":0\<C-R>r1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
+  call feedkeys(":0\<C-R>=@r\<CR>1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
   call assert_equal([
         \ '0',
         \ '0a',
@@ -2101,6 +2101,17 @@ func Test_Cmdline()
         \ '0abc1abc2',
         \ '0abc1abc2abc',
         \ '0abc1abc2abc3',
+        \ ], g:log)
+
+  " <Del> should trigger CmdlineChanged
+  let g:log = []
+  call feedkeys(":foo\<Left>\<Left>\<Del>\<Del>\<Esc>", 'xt')
+  call assert_equal([
+        \ 'f',
+        \ 'fo',
+        \ 'foo',
+        \ 'fo',
+        \ 'f',
         \ ], g:log)
 
   unlet g:log

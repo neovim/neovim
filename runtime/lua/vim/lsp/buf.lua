@@ -69,11 +69,26 @@ function M.hover(config)
         lsp.log.error(err.code, err.message)
       elseif result and result.contents then
         -- Make sure the response is not empty
+        -- Five response shapes:
+        -- - MarkupContent: { kind="markdown", value="doc" }
+        -- - MarkedString-string: "doc"
+        -- - MarkedString-pair: { language="c", value="doc" }
+        -- - MarkedString[]-string: { "doc1", ... }
+        -- - MarkedString[]-pair: { { language="c", value="doc1" }, ... }
         if
           (
             type(result.contents) == 'table'
-            and #(vim.tbl_get(result.contents, 'value') or result.contents[1] or '') > 0
-          ) or (type(result.contents) == 'string' and #result.contents > 0)
+            and #(
+                vim.tbl_get(result.contents, 'value') -- MarkupContent or MarkedString-pair
+                or vim.tbl_get(result.contents, 1, 'value') -- MarkedString[]-pair
+                or result.contents[1] -- MarkedString[]-string
+                or ''
+              )
+              > 0
+          )
+          or (
+            type(result.contents) == 'string' and #result.contents > 0 -- MarkedString-string
+          )
         then
           results1[client_id] = result
         else
@@ -428,7 +443,7 @@ function M.signature_help(config)
       local buf, win = util.open_floating_preview(lines, 'markdown', config)
 
       if hl then
-        vim.api.nvim_buf_clear_namespace(buf, sig_help_ns, 0, -1)
+        api.nvim_buf_clear_namespace(buf, sig_help_ns, 0, -1)
         vim.hl.range(
           buf,
           sig_help_ns,
@@ -1057,7 +1072,7 @@ end
 --- @param opts? vim.lsp.WorkspaceDiagnosticsOpts
 --- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
 function M.workspace_diagnostics(opts)
-  vim.validate('opts', opts, 'table', true)
+  validate('opts', opts, 'table', true)
 
   lsp.diagnostic._workspace_diagnostics(opts or {})
 end
@@ -1420,7 +1435,7 @@ function M.selection_range(direction)
 
   lsp.buf_request(
     0,
-    ms.textDocument_selectionRange,
+    method,
     params,
     ---@param response lsp.SelectionRange[]?
     function(err, response)

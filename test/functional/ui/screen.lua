@@ -362,6 +362,7 @@ local expect_keys = {
   condition = true,
   mouse_enabled = true,
   any = true,
+  none = true,
   mode = true,
   unchanged = true,
   intermediate = true,
@@ -408,7 +409,13 @@ end
 --- following chars are magic characters
 ---    ( ) . % + - * ? [ ^ $
 --- and must be escaped with a preceding % for a literal match.
---- @field any? string
+--- @field any? string|table<string>
+---
+--- Lua pattern string expected to not match a screen line. NB: the
+--- following chars are magic characters
+---    ( ) . % + - * ? [ ^ $
+--- and must be escaped with a preceding % for a literal match.
+--- @field none? string|table<string>
 ---
 --- Expected mode as signaled by "mode_change" event
 --- @field mode? string
@@ -492,7 +499,7 @@ function Screen:expect(expected, attr_ids, ...)
     grid = expected.grid
     attr_ids = expected.attr_ids
     condition = expected.condition
-    assert(expected.any == nil or grid == nil)
+    assert((expected.any == nil and expected.none == nil) or grid == nil)
   elseif type(expected) == 'string' then
     grid = expected
     expected = {}
@@ -541,22 +548,55 @@ function Screen:expect(expected, attr_ids, ...)
 
     local actual_rows
     if expected.any or grid then
-      actual_rows = self:render(not expected.any, attr_state)
+      actual_rows = self:render(not (expected.any or expected.none), attr_state)
     end
 
-    if expected.any then
-      -- Search for `any` anywhere in the screen lines.
+    local any_or_none = function(screen_str, value, is_any)
+      if value then
+        local v = value
+        if type(v) == 'string' then
+          v = { v }
+        end
+        local msg
+        if is_any then
+          msg = 'Expected (anywhere): "'
+        else
+          msg = 'Expected (nowhere): "'
+        end
+        for _, v2 in ipairs(v) do
+          local test = screen_str:find(v2)
+          if is_any then
+            test = not test
+          end
+          -- Search for `any` anywhere in the screen lines.
+          if test then
+            return (
+              'Failed to match any screen lines.\n'
+              .. msg
+              .. v2
+              .. '"\n'
+              .. 'Actual:\n  |'
+              .. table.concat(actual_rows, '\n  |')
+              .. '\n\n'
+            )
+          end
+        end
+      end
+      return nil
+    end
+    if expected.any or expected.none then
       local actual_screen_str = table.concat(actual_rows, '\n')
-      if not actual_screen_str:find(expected.any) then
-        return (
-          'Failed to match any screen lines.\n'
-          .. 'Expected (anywhere): "'
-          .. expected.any
-          .. '"\n'
-          .. 'Actual:\n  |'
-          .. table.concat(actual_rows, '\n  |')
-          .. '\n\n'
-        )
+      if expected.any then
+        local res = any_or_none(actual_screen_str, expected.any, true)
+        if res then
+          return res
+        end
+      end
+      if expected.none then
+        local res = any_or_none(actual_screen_str, expected.none, false)
+        if res then
+          return res
+        end
       end
     end
 

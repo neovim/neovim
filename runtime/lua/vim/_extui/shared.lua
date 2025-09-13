@@ -17,6 +17,7 @@ local M = {
     },
   },
 }
+--- @type vim.api.keyset.win_config
 local wincfg = { -- Default cfg for nvim_open_win().
   relative = 'laststatus',
   style = 'minimal',

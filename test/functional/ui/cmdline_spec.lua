@@ -454,7 +454,7 @@ local function test_cmdline(linegrid)
     }
   end)
 
-  it('works together with ext_popupmenu', function()
+  local function test_ext_cmdline_popupmenu()
     local expected = {
       { 'define', '', '', '' },
       { 'jump', '', '', '' },
@@ -535,13 +535,85 @@ local function test_cmdline(linegrid)
         {2:långfile1                }|
                                  |
       ]],
+      cmdline = { { content = { { 'b långfile1' } }, firstc = ':', pos = 12 } },
       popupmenu = {
         anchor = { -1, 0, 2 },
         items = { { 'långfile1', '', '', '' }, { 'långfile2', '', '', '' } },
         pos = 0,
       },
-      cmdline = { { content = { { 'b långfile1' } }, firstc = ':', pos = 12 } },
     }
+
+    feed('<Esc>')
+    command('silent %bwipe')
+
+    command('set shellslash')
+    -- position is correct when expanding environment variable #20348
+    command('silent cd test/functional/fixtures')
+    n.fn.setenv('XNDIR', 'wildpum/Xnamedir')
+    feed(':e $XNDIR/<Tab>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { content = { { 'e wildpum/Xnamedir/XdirA/' } }, firstc = ':', pos = 25 } },
+      popupmenu = {
+        anchor = { -1, 0, 19 },
+        items = { { 'XdirA/', '', '', '' }, { 'XfileA', '', '', '' } },
+        pos = 0,
+      },
+    }
+
+    feed('<Esc>')
+    command('set wildmode=longest,full')
+    feed(':sign u<tab>')
+    screen:expect {
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { content = { { 'sign un' } }, firstc = ':', pos = 7 } },
+    }
+
+    feed('<tab>')
+    local s_undefine_unplace_0 = {
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { content = { { 'sign undefine' } }, firstc = ':', pos = 13 } },
+      popupmenu = {
+        anchor = { -1, 0, 5 },
+        items = { { 'undefine', '', '', '' }, { 'unplace', '', '', '' } },
+        pos = 0,
+      },
+    }
+    screen:expect(s_undefine_unplace_0)
+
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    feed(':sign un<tab>')
+    screen:expect(s_undefine_unplace_0)
+  end
+
+  describe('works together with ext_popupmenu', function()
+    it('with wildoptions=pum', function()
+      command('set wildoptions=pum')
+      test_ext_cmdline_popupmenu()
+    end)
+
+    it('with wildoptions=', function()
+      command('set wildoptions=')
+      test_ext_cmdline_popupmenu()
+    end)
   end)
 
   it('ext_wildmenu takes precedence over ext_popupmenu', function()

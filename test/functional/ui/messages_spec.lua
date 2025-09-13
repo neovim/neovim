@@ -852,7 +852,7 @@ describe('ui/ext_messages', function()
     }
   end)
 
-  it('supports &showcmd and &ruler', function()
+  it("supports 'showcmd' and 'ruler(format)'", function()
     command('set showcmd ruler')
     command('hi link MsgArea ErrorMsg')
     screen:expect({
@@ -940,19 +940,26 @@ describe('ui/ext_messages', function()
       ]],
       ruler = { { '2,0-1   All', 'MsgArea' } },
     }
-
-    -- when ruler is part of statusline it is not externalized.
-    -- this will be added as part of future ext_statusline support
-    command('set laststatus=2')
+    command('set rulerformat=Foo%#ErrorMsg#Bar')
     screen:expect({
       grid = [[
         abcde                    |
         ^                         |
-        {1:~                        }|*2
-        {3:<] [+] 2,0-1          All}|
+        {1:~                        }|*3
       ]],
-      ruler = { { '2,0-1   All', 'MsgArea' } },
+      ruler = { { 'Foo', 'MsgArea' }, { 'Bar', 9, 'ErrorMsg' } },
     })
+    command('set rulerformat=')
+
+    -- when ruler is part of statusline it is not externalized.
+    -- this will be added as part of future ext_statusline support
+    command('set laststatus=2')
+    screen:expect([[
+      abcde                    |
+      ^                         |
+      {1:~                        }|*2
+      {3:<] [+] 2,0-1          All}|
+    ]])
   end)
 
   it('keeps history of message of different kinds', function()
@@ -3145,6 +3152,7 @@ describe('progress-message', function()
   local function setup_autocmd(pattern)
     exec_lua(function()
       local grp = vim.api.nvim_create_augroup('ProgressListener', { clear = true })
+      _G.progress_autocmd_result = nil
       vim.api.nvim_create_autocmd('Progress', {
         pattern = pattern,
         group = grp,
@@ -3171,6 +3179,7 @@ describe('progress-message', function()
       screen:add_extra_attr_ids {
         [100] = { undercurl = true, special = Screen.colors.Red },
         [101] = { foreground = Screen.colors.Magenta1, bold = true },
+        [102] = { foreground = Screen.colors.NvimDarkGreen },
       }
     else
       screen = Screen.new(40, 5)
@@ -3183,7 +3192,7 @@ describe('progress-message', function()
     setup_autocmd()
   end)
 
-  it('can be sent by nvim_echo', function()
+  it('emitted by nvim_echo', function()
     local id = api.nvim_echo(
       { { 'test-message' } },
       true,
@@ -3197,11 +3206,11 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message' } },
-          progress = {
-            percent = 10,
-            status = 'running',
-            title = 'testsuit',
+          content = {
+            { 'testsuit', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message' },
           },
           history = true,
           id = 1,
@@ -3209,7 +3218,6 @@ describe('progress-message', function()
         },
       },
     })
-
     assert_progress_autocmd({
       text = { 'test-message' },
       percent = 10,
@@ -3232,11 +3240,11 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message-updated' } },
-          progress = {
-            percent = 50,
-            status = 'running',
-            title = 'TestSuit',
+          content = {
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 50% ', 19, 'WarningMsg' },
+            { 'test-message-updated' },
           },
           history = true,
           id = 1,
@@ -3253,6 +3261,105 @@ describe('progress-message', function()
       id = 1,
       data = {},
     }, 'Progress autocmd receives progress update')
+
+    -- success status
+    api.nvim_echo(
+      { { 'test-message (success)' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 100, status = 'success' }
+    )
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = {
+            { 'TestSuit', 102, 'OkMsg' },
+            { ': ' },
+            { '100% ', 19, 'WarningMsg' },
+            { 'test-message (success)' },
+          },
+          history = true,
+          id = 2,
+          kind = 'progress',
+        },
+      },
+    })
+
+    -- failed status
+    api.nvim_echo(
+      { { 'test-message (fail)' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 35, status = 'failed' }
+    )
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = {
+            { 'TestSuit', 9, 'ErrorMsg' },
+            { ': ' },
+            { ' 35% ', 19, 'WarningMsg' },
+            { 'test-message (fail)' },
+          },
+          history = true,
+          id = 3,
+          kind = 'progress',
+        },
+      },
+    })
+
+    -- cancel status
+    api.nvim_echo(
+      { { 'test-message (cancel)' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'cancel' }
+    )
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = {
+            { 'TestSuit', 19, 'WarningMsg' },
+            { ': ' },
+            { ' 30% ', 19, 'WarningMsg' },
+            { 'test-message (cancel)' },
+          },
+          history = true,
+          id = 4,
+          kind = 'progress',
+        },
+      },
+    })
+
+    -- without title and percent
+    api.nvim_echo(
+      { { 'test-message (no-tile or percent)' } },
+      true,
+      { kind = 'progress', status = 'cancel' }
+    )
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'test-message (no-tile or percent)' } },
+          history = true,
+          id = 5,
+          kind = 'progress',
+        },
+      },
+    })
 
     -- progress event can filter by title
     setup_autocmd('Special Title')
@@ -3294,15 +3401,15 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'test-message' } },
+          content = {
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message' },
+          },
           history = true,
           id = 1,
           kind = 'progress',
-          progress = {
-            percent = 10,
-            status = 'running',
-            title = 'TestSuit',
-          },
         },
       },
     })
@@ -3388,23 +3495,29 @@ describe('progress-message', function()
       true,
       { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
     )
-    eq('test-message 10', exec_capture('messages'))
+    eq('TestSuit:  10% test-message 10', exec_capture('messages'))
 
     api.nvim_echo(
       { { 'test-message 20' } },
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
     )
-    eq('test-message 10\ntest-message 20', exec_capture('messages'))
+    eq('TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20', exec_capture('messages'))
 
     api.nvim_echo({ { 'middle msg' } }, true, {})
-    eq('test-message 10\ntest-message 20\nmiddle msg', exec_capture('messages'))
+    eq(
+      'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg',
+      exec_capture('messages')
+    )
     api.nvim_echo(
       { { 'test-message 30' } },
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq('test-message 10\ntest-message 20\nmiddle msg\ntest-message 30', exec_capture('messages'))
+    eq(
+      'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg\nTestSuit:  30% test-message 30',
+      exec_capture('messages')
+    )
 
     api.nvim_echo(
       { { 'test-message 50' } },
@@ -3412,7 +3525,7 @@ describe('progress-message', function()
       { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
     )
     eq(
-      'test-message 10\ntest-message 20\nmiddle msg\ntest-message 30\ntest-message 50',
+      'TestSuit:  10% test-message 10\nTestSuit:  20% test-message 20\nmiddle msg\nTestSuit:  30% test-message 30\nTestSuit:  50% test-message 50',
       exec_capture('messages')
     )
   end)
@@ -3491,15 +3604,15 @@ describe('progress-message', function()
       ]],
       messages = {
         {
-          content = { { 'supports str-id' } },
+          content = {
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 30% ', 19, 'WarningMsg' },
+            { 'supports str-id' },
+          },
           history = true,
           id = 'str-id',
           kind = 'progress',
-          progress = {
-            percent = 30,
-            status = 'running',
-            title = 'TestSuit',
-          },
         },
       },
     })
@@ -3518,5 +3631,57 @@ describe('progress-message', function()
       id = 'str-id',
       data = {},
     })
+  end)
+
+  it('tui displays progress message in proper format', function()
+    clear()
+    setup_screen(false)
+    api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*3
+      {6:TestSuit}: {19: 10% }test-message             |
+    ]])
+  end)
+
+  it('works with history off', function()
+    api.nvim_echo({ { 'test-message' } }, false, {
+      kind = 'progress',
+      title = 'TestSuit',
+      percent = 10,
+      status = 'running',
+    })
+
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = {
+            { 'TestSuit', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message' },
+          },
+          id = 1,
+          kind = 'progress',
+        },
+      },
+    })
+
+    assert_progress_autocmd({
+      text = { 'test-message' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuit',
+      id = 1,
+      data = {},
+    }, 'progress autocmd receives progress messages')
   end)
 end)

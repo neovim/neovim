@@ -8,9 +8,10 @@ local M = {}
 --- @param listed string[] Already listed servers
 --- @return string[] # List of servers found on the current machine in stdpath("run").
 function M.serverlist(listed)
+  local root = vim.fs.normalize(vim.fn.stdpath('run') .. '/..')
   local socket_paths = vim.fs.find(function(name, _)
     return name:match('nvim.*')
-  end, { path = vim.fn.stdpath('run'), type = 'socket', limit = math.huge })
+  end, { path = root, type = 'socket', limit = math.huge })
 
   local found = {} ---@type string[]
   for _, socket in ipairs(socket_paths) do

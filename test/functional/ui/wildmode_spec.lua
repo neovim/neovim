@@ -593,7 +593,7 @@ describe('ui/ext_wildmenu', function()
     screen = Screen.new(25, 5, { rgb = true, ext_wildmenu = true })
   end)
 
-  it('works with :sign <tab>', function()
+  local function test_ext_wildmenu_sign_cmd()
     local expected = {
       'define',
       'jump',
@@ -650,12 +650,53 @@ describe('ui/ext_wildmenu', function()
     }
 
     feed('a')
-    screen:expect {
-      grid = [[
+    screen:expect([[
                                |
       {1:~                        }|*3
       :sign definea^            |
+    ]])
+
+    feed('<Esc>')
+    command('set wildmode=longest,full')
+    feed(':sign u<tab>')
+    screen:expect([[
+                               |
+      {1:~                        }|*3
+      :sign un^                 |
+    ]])
+
+    feed('<tab>')
+    local s_undefine_unplace_0 = {
+      grid = [[
+                               |
+      {1:~                        }|*3
+      :sign undefine^           |
     ]],
+      wildmenu_items = { 'undefine', 'unplace' },
+      wildmenu_pos = 0,
     }
+    screen:expect(s_undefine_unplace_0)
+
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    feed(':sign un<tab>')
+    screen:expect(s_undefine_unplace_0)
+  end
+
+  describe('works with :sign <tab>', function()
+    it('with wildoptions=pum', function()
+      command('set wildoptions=pum')
+      test_ext_wildmenu_sign_cmd()
+    end)
+
+    it('with wildoptions=', function()
+      command('set wildoptions=')
+      test_ext_wildmenu_sign_cmd()
+    end)
   end)
 end)

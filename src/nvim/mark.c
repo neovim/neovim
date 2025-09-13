@@ -146,6 +146,11 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
     return OK;
   }
 
+  if (c == ':' && bt_prompt(buf)) {
+    RESET_FMARK(&buf->b_prompt_start, *pos, buf->b_fnum, view);
+    return OK;
+  }
+
   if (ASCII_ISLOWER(c)) {
     i = c - 'a';
     RESET_FMARK(buf->b_namedm + i, *pos, fnum, view);
@@ -1720,8 +1725,7 @@ bool mark_set_local(const char name, buf_T *const buf, const fmark_T fm, const b
   } else if (name == '^') {
     fm_tgt = &(buf->b_last_insert);
   } else if (name == ':') {
-    // Readonly mark for prompt buffer. Can't be edited on user side.
-    return false;
+    fm_tgt = &(buf->b_prompt_start);
   } else if (name == '.') {
     fm_tgt = &(buf->b_last_change);
   } else {

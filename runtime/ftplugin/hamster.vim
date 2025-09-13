@@ -4,6 +4,7 @@
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
 " Last Change: 2021 Jan 19
 "              2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
+"              2025 Sep 05 by Vim Project, disable setting global ignorecase
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -57,7 +58,7 @@ if exists("loaded_matchit")
   "	\ synIDattr(synID(line("."),col("."),1),"name") =~? "comment\\|string"'
 endif
 
-setlocal ignorecase
+" setlocal ignorecase
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

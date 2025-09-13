@@ -2567,36 +2567,46 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
 void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int endrow, hlf_T hl)
 {
   assert(hl >= 0 && hl < HLF_COUNT);
+  const int view_width = wp->w_view_width;
+  const int fdc = compute_foldcolumn(wp, 0);
+  const int scwidth = wp->w_scwidth;
+
   for (int row = startrow; row < endrow; row++) {
     grid_line_start(&wp->w_grid, row);
 
     int n = 0;
     if (draw_margin) {
       // draw the fold column
-      int fdc = MAX(0, compute_foldcolumn(wp, 0));
-      n = grid_line_fill(n, n + fdc, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      if (fdc > 0) {
+        n = grid_line_fill(n, MIN(view_width, n + fdc),
+                           schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      }
 
       // draw the sign column
-      n = grid_line_fill(n, n + wp->w_scwidth, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      if (scwidth > 0) {
+        n = grid_line_fill(n, MIN(view_width, n + scwidth * SIGN_WIDTH),
+                           schar_from_ascii(' '), win_hl_attr(wp, HLF_SC));
+      }
 
       // draw the number column
       if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
         int width = number_width(wp) + 1;
-        n = grid_line_fill(n, n + width, schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
+        n = grid_line_fill(n, MIN(view_width, n + width),
+                           schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
       }
     }
 
-    int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+    int attr = win_hl_attr(wp, (int)hl);
 
-    if (n < wp->w_view_width) {
-      grid_line_put_schar(n, c1, 0);  // base attr is inherited from clear
+    if (n < view_width) {
+      grid_line_put_schar(n, c1, attr);
       n++;
     }
 
-    grid_line_clear_end(n, wp->w_view_width, attr);
+    grid_line_clear_end(n, view_width, win_bg_attr(wp), attr);
 
     if (wp->w_p_rl) {
-      grid_line_mirror(wp->w_view_width);
+      grid_line_mirror(view_width);
     }
     grid_line_flush();
   }

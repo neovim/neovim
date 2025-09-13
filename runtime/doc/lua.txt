@@ -843,32 +843,29 @@ vim.ui_detach({ns})                                          *vim.ui_detach()*
       • {ns}  (`integer`) Namespace ID
 
 vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
-    Wait for {time} in milliseconds until {callback} returns `true`.
+    Waits up to `time` milliseconds, until `callback` returns `true`
+    (success). Executes `callback` immediately, then at intervals of
+    approximately `interval` milliseconds (default 200). Returns all
+    `callback` results on success.
 
-    Executes {callback} immediately and at approximately {interval}
-    milliseconds (default 200). Nvim still processes other events during this
-    time.
-
-    Cannot be called while in an |api-fast| event.
+    Nvim processes other events while waiting. Cannot be called during an
+    |api-fast| event.
 
     Examples: >lua
-        ---
-        -- Wait for 100 ms, allowing other events to process
-        vim.wait(100, function() end)
+        -- Wait for 100 ms, allowing other events to process.
+        vim.wait(100)
 
-        ---
-        -- Wait for 100 ms or until global variable set.
-        vim.wait(100, function() return vim.g.waiting_for_var end)
+        -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+        vim.wait(1000, function() return vim.g.foo end, 500)
 
-        ---
-        -- Wait for 1 second or until global variable set, checking every ~500 ms
-        vim.wait(1000, function() return vim.g.waiting_for_var end, 500)
+        -- Wait up to 100 ms or until `vim.g.foo` is true, and get the callback results.
+        local ok, rv1, rv2, rv3 = vim.wait(100, function()
+          return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+        end)
 
-        ---
-        -- Schedule a function to set a value in 100ms
+        -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+        -- only waits 100ms because `vim.wait` processes other events while waiting.
         vim.defer_fn(function() vim.g.timer_result = true end, 100)
-
-        -- Would wait ten seconds if results blocked. Actually only waits  100 ms
         if vim.wait(10000, function() return vim.g.timer_result end) then
           print('Only waiting a little bit of time!')
         end
@@ -886,10 +883,10 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Return (multiple): ~
         (`boolean`)
         (`-1|-2?`)
-        • If {callback} returns `true` during the {time}: `true, nil`
-        • If {callback} never returns `true` during the {time}: `false, -1`
-        • If {callback} is interrupted during the {time}: `false, -2`
-        • If {callback} errors, the error is raised.
+        • If callback returns `true` before timeout: `true, nil, ...`
+        • On timeout: `false, -1`
+        • On interrupt: `false, -2`
+        • On error: the error is raised.
 
 
 ==============================================================================
@@ -3375,6 +3372,9 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
       • {opts}  (`table<string,any>?`) Options table with keys:
                 • escape_slash: (boolean) (default false) Escape slash
                   characters "/" in string values.
+                • indent: (string) (default "") String used for indentation at
+                  each nesting level. If non-empty enables newlines and a
+                  space after colons.
 
     Return: ~
         (`string`)
@@ -5148,39 +5148,6 @@ vim.version.range({spec})                                *vim.version.range()*
 
     Return: ~
         (`vim.VersionRange?`) See |vim.VersionRange|.
-
-
-==============================================================================
-Lua module: tohtml                                                *vim.tohtml*
-
-
-:[range]TOhtml {file}                                                *:TOhtml*
-Converts the buffer shown in the current window to HTML, opens the generated
-HTML in a new split window, and saves its contents to {file}. If {file} is not
-given, a temporary file (created by |tempname()|) is used.
-
-
-tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
-    Converts the buffer shown in the window {winid} to HTML and returns the
-    output as a list of string.
-
-    Parameters: ~
-      • {winid}  (`integer?`) Window to convert (defaults to current window)
-      • {opt}    (`table?`) Optional parameters.
-                 • {title}? (`string|false`, default: buffer name) Title tag
-                   to set in the generated HTML code.
-                 • {number_lines}? (`boolean`, default: `false`) Show line
-                   numbers.
-                 • {font}? (`string[]|string`, default: `guifont`) Fonts to
-                   use.
-                 • {width}? (`integer`, default: 'textwidth' if non-zero or
-                   window width otherwise) Width used for items which are
-                   either right aligned or repeat a character infinitely.
-                 • {range}? (`integer[]`, default: entire buffer) Range of
-                   rows to use.
-
-    Return: ~
-        (`string[]`)
 
 
 ==============================================================================

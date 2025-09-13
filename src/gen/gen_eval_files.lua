@@ -24,6 +24,10 @@ local TEXT_WIDTH = 78
 --- @field remote boolean
 --- @field since integer
 
+local LUA_API_RETURN_OVERRIDES = {
+  nvim_win_get_config = 'vim.api.keyset.win_config_ret',
+}
+
 local LUA_META_HEADER = {
   '--- @meta _',
   '-- THIS FILE IS GENERATED',
@@ -174,7 +178,7 @@ local function get_api_meta()
   --- @type table<string,nvim.cdoc.parser.fun>
   local functions = {}
   for path, ty in vim.fs.dir(f) do
-    if ty == 'file' then
+    if ty == 'file' and (vim.endswith(path, '.c') or vim.endswith(path, '.h')) then
       local filename = vim.fs.joinpath(f, path)
       local _, funs = cdoc_parser.parse(filename)
       for _, fn in ipairs(funs) do
@@ -306,7 +310,8 @@ local function render_api_meta(_f, fun, write)
 
   if fun.returns ~= 'nil' then
     local ret_desc = fun.returns_desc and ' # ' .. fun.returns_desc or ''
-    write(util.prefix_lines('--- ', '@return ' .. fun.returns .. ret_desc))
+    local ret = LUA_API_RETURN_OVERRIDES[fun.name] or fun.returns
+    write(util.prefix_lines('--- ', '@return ' .. ret .. ret_desc))
   end
   local param_str = table.concat(param_names, ', ')
 

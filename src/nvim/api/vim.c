@@ -332,7 +332,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
     if (!dangerous) {
       ex_normal_busy++;
     }
-    exec_normal(true);
+    exec_normal(true, lowlevel);
     if (!dangerous) {
       ex_normal_busy--;
     }
@@ -382,7 +382,8 @@ Integer nvim_input(uint64_t channel_id, String keys)
 ///                 The same specifiers are used as for a key press, except
 ///                 that the "-" separator is optional, so "C-A-", "c-a"
 ///                 and "CA" can all be used to specify Ctrl+Alt+click.
-/// @param grid Grid number if the client uses |ui-multigrid|, else 0.
+/// @param grid Grid number (used by |ui-multigrid| client), or 0 to let Nvim decide positioning of
+///             windows. For more information, see [dev-ui-multigrid]
 /// @param row Mouse row-position (zero-based, like redraw events)
 /// @param col Mouse column-position (zero-based, like redraw events)
 /// @param[out] err Error details, if any
@@ -796,6 +797,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   }
 
   bool is_progress = strequal(kind, "progress");
+  bool needs_clear = !history;
 
   VALIDATE(is_progress
            || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
@@ -822,7 +824,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
   MessageData msg_data = { .title = opts->title, .status = opts->status,
                            .percent = opts->percent, .data = opts->data };
 
-  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data);
+  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
 
   if (opts->verbose) {
     verbose_leave();
@@ -833,8 +835,8 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     do_autocmd_progress(id, hl_msg, &msg_data);
   }
 
-  if (history) {
-    // history takes ownership
+  if (!needs_clear) {
+    // history takes ownership of `hl_msg`
     return id;
   }
 
@@ -1557,7 +1559,7 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
 /// `name`.)
 ///
-/// Can be called more than once; the caller should merge old info if appropriate. Example: library
+/// Can be called more than once; caller should merge old info if appropriate. Example: a library
 /// first identifies the channel, then a plugin using that library later identifies itself.
 ///
 /// @param channel_id
@@ -2140,8 +2142,8 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
     if (opts->use_winbar) {
       fillchar = wp->w_p_fcs_chars.wbr;
     } else {
-      int attr;
-      fillchar = fillchar_status(&attr, wp);
+      hlf_T group;
+      fillchar = fillchar_status(&group, wp);
     }
   }
 
@@ -2219,15 +2221,6 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   PUT_C(result, "str", CSTR_AS_OBJ(buf));
 
   return result;
-}
-
-/// @nodoc
-void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
-  FUNC_API_REMOTE_ONLY
-{
-  // TODO(bfredl): consider printing message to user, as will be relevant
-  // if we fork nvim processes as async workers
-  ELOG("async error on channel %" PRId64 ": %s", channel_id, data.size ? data.data : "");
 }
 
 /// EXPERIMENTAL: this API may change in the future.

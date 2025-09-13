@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2025 Aug 23
+" Last Change:	2025 Sep 08
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -218,21 +218,24 @@ syn region  pythonRawBytes
 
 " F-string replacement fields
 "
-" - Matched parentheses, brackets and braces are ignored
-" - A bare # is ignored to end of line
-" - A bare = (surrounded by optional whitespace) enables debugging
-" - A bare ! prefixes a conversion field
+" - Matched parentheses, brackets and braces are skipped
+" - A bare = (followed by optional whitespace) enables debugging
+" - A bare ! prefixes a conversion field (followed by optional whitespace)
 " - A bare : begins a format specification
-"     - Matched braces inside a format specification are ignored
+"     - Matched braces inside a format specification are skipped
 "
 syn region  pythonFStringField
     \ matchgroup=pythonFStringDelimiter
     \ start=/{/
-    \ skip=/([^)]*)\|\[[^]]*]\|{[^}]*}\|#.*$/
-    \ end=/\%(\s*=\s*\)\=\%(!\a\)\=\%(:\%({[^}]*}\|[^}]*\)\+\)\=}/
+    \ end=/\%(=\s*\)\=\%(!\a\s*\)\=\%(:\%({\_[^}]*}\|[^{}]*\)\+\)\=}/
     \ contained
-" Doubled braces and Unicode escapes are not replacement fields
-syn match   pythonFStringSkip	/{{\|\\N{/ transparent contained contains=NONE
+    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonType,pythonDoctest,pythonDoctestValue,@Spell
+syn match   pythonFStringFieldSkip  /(\_[^()]*)\|\[\_[^][]*]\|{\_[^{}]*}/
+    \ contained
+    \ contains=ALLBUT,pythonFStringField,pythonClass,pythonFunction,pythonType,pythonDoctest,pythonDoctestValue,@Spell
+
+" Doubled braces are not replacement fields
+syn match   pythonFStringSkip	/{{/ transparent contained contains=NONE
 
 syn match   pythonEscape	+\\[abfnrtv'"\\]+ contained
 syn match   pythonEscape	"\\\o\{1,3}" contained
@@ -268,7 +271,7 @@ if !exists("python_no_number_highlight")
   syn match   pythonNumber
         \ "\<\d\%(_\=\d\)*\.\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\%(\W\|$\)\@="
   syn match   pythonNumber
-        \ "\%(^\|\W\)\zs\%(\d\%(_\=\d\)*\)\=\.\d\%(_\=\d\)*\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\>"
+        \ "\%(^\|\W\)\@1<=\%(\d\%(_\=\d\)*\)\=\.\d\%(_\=\d\)*\%([eE][+-]\=\d\%(_\=\d\)*\)\=[jJ]\=\>"
 endif
 
 " Group the built-ins in the order in the 'Python Library Reference' for
@@ -310,6 +313,8 @@ if !exists("python_no_builtin_highlight")
   syn match   pythonAttribute	/\.\h\w*/hs=s+1
 	\ contains=ALLBUT,pythonBuiltin,pythonClass,pythonFunction,pythonType,pythonAsync
 	\ transparent
+  " the ellipsis literal `...` can be used in multiple syntactic contexts
+  syn match   pythonEllipsis	"\.\@1<!\.\.\.\ze\.\@!" display
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
@@ -365,10 +370,12 @@ if !exists("python_no_doctest_highlight")
   if !exists("python_no_doctest_code_highlight")
     syn region pythonDoctest
 	  \ start="^\s*>>>\s" end="^\s*$"
-	  \ contained contains=ALLBUT,pythonDoctest,pythonClass,pythonFunction,pythonType,@Spell
+	  \ contained contains=ALLBUT,pythonDoctest,pythonEllipsis,pythonClass,pythonFunction,pythonType,@Spell
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
-	  \ contained
+	  \ contained contains=pythonEllipsis
+    syn match pythonEllipsis "\%(^\s*\)\@<!\.\@1<!\zs\.\.\.\ze\.\@!" display
+	  \ contained containedin=pythonDoctest
   else
     syn region pythonDoctest
 	  \ start="^\s*>>>" end="^\s*$"
@@ -411,6 +418,7 @@ if !exists("python_no_number_highlight")
 endif
 if !exists("python_no_builtin_highlight")
   hi def link pythonBuiltin		Function
+  hi def link pythonEllipsis		pythonBuiltin
 endif
 if !exists("python_no_exception_highlight")
   hi def link pythonExceptions		Structure

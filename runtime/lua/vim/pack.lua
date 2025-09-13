@@ -68,9 +68,8 @@
 ---you run |vim.pack.update()|.
 ---
 ---Freeze plugin from being updated:
----- Update 'init.lua' for plugin to have `version` set to current commit hash.
----You can get it by running `vim.pack.update({ 'plugin-name' })` and yanking
----the word describing current state (looks like `abc12345`).
+---- Update 'init.lua' for plugin to have `version` set to current revision.
+---Get it with `:=vim.pack.get({ 'plug-name' })[1].rev` (looks like `abc12345`).
 ---- |:restart|.
 ---
 ---Unfreeze plugin to start receiving updates:
@@ -108,7 +107,9 @@ local M = {}
 local function git_cmd(cmd, cwd)
   -- Use '-c gc.auto=0' to disable `stderr` "Auto packing..." messages
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
-  local sys_opts = { cwd = cwd, text = true, clear_env = true }
+  local env = vim.fn.environ() --- @type table<string,string>
+  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
+  local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
   async.await(1, vim.schedule)
   if out.code ~= 0 then
@@ -148,13 +149,13 @@ local function git_clone(url, path)
 end
 
 --- @async
---- @param rev string
+--- @param ref string
 --- @param cwd string
 --- @return string
-local function git_get_hash(rev, cwd)
-  -- Using `rev-list -1` shows a commit of revision, while `rev-parse` shows
-  -- hash of revision. Those are different for annotated tags.
-  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', rev }, cwd)
+local function git_get_hash(ref, cwd)
+  -- Using `rev-list -1` shows a commit of reference, while `rev-parse` shows
+  -- hash of reference. Those are different for annotated tags.
+  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', ref }, cwd)
 end
 
 --- @async
@@ -169,11 +170,14 @@ end
 --- @param cwd string
 --- @return string[]
 local function git_get_branches(cwd)
+  local def_branch = git_get_default_branch(cwd)
   local cmd = { 'branch', '--remote', '--list', '--format=%(refname:short)', '--', 'origin/**' }
   local stdout = git_cmd(cmd, cwd)
   local res = {} --- @type string[]
   for l in vim.gsplit(stdout, '\n') do
-    res[#res + 1] = l:match('^origin/(.+)$')
+    local branch = l:match('^origin/(.+)$')
+    local pos = branch == def_branch and 1 or (#res + 1)
+    table.insert(res, pos, branch)
   end
   return res
 end
@@ -182,8 +186,8 @@ end
 --- @param cwd string
 --- @return string[]
 local function git_get_tags(cwd)
-  local cmd = { 'tag', '--list', '--sort=-v:refname' }
-  return vim.split(git_cmd(cmd, cwd), '\n')
+  local tags = git_cmd({ 'tag', '--list', '--sort=-v:refname' }, cwd)
+  return tags == '' and {} or vim.split(tags, '\n')
 end
 
 -- Plugin operations ----------------------------------------------------------
@@ -323,32 +327,20 @@ local function normalize_plugs(plugs)
   return res
 end
 
---- @param names string[]?
+--- @param names? string[]
 --- @return vim.pack.Plug[]
 local function plug_list_from_names(names)
-  local all_plugins = M.get()
+  local p_data_list = M.get(names, { info = false })
   local plug_dir = get_plug_dir()
   local plugs = {} --- @type vim.pack.Plug[]
-  local used_names = {} --- @type table<string,boolean>
-  -- Preserve plugin order; might be important during checkout or event trigger
-  for _, p_data in ipairs(all_plugins) do
+  for _, p_data in ipairs(p_data_list) do
     -- NOTE: By default include only active plugins (and not all on disk). Using
     -- not active plugins might lead to a confusion as default `version` and
     -- user's desired one might mismatch.
-    -- TODO(echasnovski): Consider changing this if/when there is lockfile.
-    --- @cast names string[]
-    if (not names and p_data.active) or vim.tbl_contains(names or {}, p_data.spec.name) then
+    -- TODO(echasnovski): Change this when there is lockfile.
+    if names ~= nil or p_data.active then
       plugs[#plugs + 1] = new_plug(p_data.spec, plug_dir)
-      used_names[p_data.spec.name] = true
     end
-  end
-
-  if vim.islist(names) and #plugs ~= #names then
-    --- @param n string
-    local unused = vim.tbl_filter(function(n)
-      return not used_names[n]
-    end, names)
-    error('The following plugins are not installed: ' .. table.concat(unused, ', '))
   end
 
   return plugs
@@ -358,45 +350,20 @@ end
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
 local function trigger_event(p, event_name, kind)
-  local spec = vim.deepcopy(p.spec)
-  -- Infer default branch for fuller `event-data` (if possible)
-  -- Doing it only on event trigger level allows keeping `spec` close to what
-  -- user supplied without performance issues during startup.
-  spec.version = spec.version or (uv.fs_stat(p.path) and git_get_default_branch(p.path))
-
-  local data = { kind = kind, spec = spec, path = p.path }
-  vim.api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
+  local data = { kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
+  api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
---- @param title string
+--- @param action string
 --- @return fun(kind: 'begin'|'report'|'end', percent: integer, fmt: string, ...:any): nil
-local function new_progress_report(title)
-  -- TODO(echasnovski): currently print directly in command line because
-  -- there is no robust built-in way of showing progress:
-  -- - `vim.ui.progress()` is planned and is a good candidate to use here.
-  -- - Use `'$/progress'` implementation in 'vim.pack._lsp' if there is
-  --   a working built-in '$/progress' handler. Something like this:
-  --   ```lua
-  --   local progress_token_count = 0
-  --   function M.new_progress_report(title)
-  --     progress_token_count = progress_token_count + 1
-  --     return vim.schedule_wrap(function(kind, msg, percent)
-  --       local value = { kind = kind, message = msg, percentage = percent }
-  --       dispatchers.notification(
-  --         '$/progress',
-  --         { token = progress_token_count, value = value }
-  --       )
-  --     end
-  --   end
-  --   ```
-  -- Any of these choices is better as users can tweak how progress is shown.
+local function new_progress_report(action)
+  local progress = { kind = 'progress', title = 'vim.pack' }
 
   return vim.schedule_wrap(function(kind, percent, fmt, ...)
-    local progress = kind == 'end' and 'done' or ('%3d%%'):format(percent)
-    local details = (' %s %s'):format(title, fmt:format(...))
-    local chunks = { { 'vim.pack', 'ModeMsg' }, { ': ' }, { progress, 'WarningMsg' }, { details } }
-    -- TODO: need to add support for progress-messages api
-    api.nvim_echo(chunks, true, {})
+    progress.status = kind == 'end' and 'success' or 'running'
+    progress.percent = percent
+    local msg = ('%s %s'):format(action, fmt:format(...))
+    progress.id = api.nvim_echo({ { msg } }, kind ~= 'report', progress)
     -- Force redraw to show installation progress during startup
     vim.cmd.redraw({ bang = true })
   end)
@@ -408,9 +375,9 @@ local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
 --- Execute function in parallel for each non-errored plugin in the list
 --- @param plug_list vim.pack.Plug[]
 --- @param f async fun(p: vim.pack.Plug)
---- @param progress_title string
-local function run_list(plug_list, f, progress_title)
-  local report_progress = new_progress_report(progress_title)
+--- @param progress_action string
+local function run_list(plug_list, f, progress_action)
+  local report_progress = new_progress_report(progress_action)
 
   -- Construct array of functions to execute in parallel
   local n_finished = 0
@@ -449,18 +416,25 @@ local function run_list(plug_list, f, progress_title)
   report_progress('end', 100, '(%d/%d)', #funs, #funs)
 end
 
+local confirm_all = false
+
 --- @param plug_list vim.pack.Plug[]
 --- @return boolean
 local function confirm_install(plug_list)
+  if confirm_all then
+    return true
+  end
+
   local src = {} --- @type string[]
   for _, p in ipairs(plug_list) do
     src[#src + 1] = p.spec.src
   end
   local src_text = table.concat(src, '\n')
   local confirm_msg = ('These plugins will be installed:\n\n%s\n'):format(src_text)
-  local res = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No', 1, 'Question') == 1
+  local res = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question')
+  confirm_all = res == 3
   vim.cmd.redraw()
-  return res
+  return res ~= 2
 end
 
 --- @param tags string[]
@@ -482,7 +456,7 @@ end
 --- @param p vim.pack.Plug
 local function resolve_version(p)
   local function list_in_line(name, list)
-    return #list == 0 and '' or ('\n' .. name .. ': ' .. table.concat(list, ', '))
+    return ('\n%s: %s'):format(name, table.concat(list, ', '))
   end
 
   -- Resolve only once
@@ -1006,13 +980,44 @@ end
 
 --- @inlinedoc
 --- @class vim.pack.PlugData
---- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with defaults made explicit.
---- @field path string Plugin's path on disk.
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
+--- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
+--- @field path string Plugin's path on disk.
+--- @field rev? string Current Git revision. Missing if `info=false`.
+--- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
+--- @field tags? string[] Available Git tags. Missing if `info=false`.
 
---- Get data about all plugins managed by |vim.pack|
+--- @class vim.pack.keyset.get
+--- @inlinedoc
+--- @field info boolean Whether to include extra plugin info. Default `true`.
+
+--- @param p_data_list vim.pack.PlugData[]
+local function add_p_data_info(p_data_list)
+  local funs = {} --- @type (async fun())[]
+  for i, p_data in ipairs(p_data_list) do
+    local path = p_data.path
+    --- @async
+    funs[i] = function()
+      p_data.branches = git_get_branches(path)
+      p_data.rev = git_get_hash('HEAD', path)
+      p_data.tags = git_get_tags(path)
+    end
+  end
+  --- @async
+  local function joined_f()
+    async.join(n_threads, funs)
+  end
+  async.run(joined_f):wait()
+end
+
+--- Gets |vim.pack| plugin info, optionally filtered by `names`.
+--- @param names? string[] List of plugin names. Default: all plugins managed by |vim.pack|.
+--- @param opts? vim.pack.keyset.get
 --- @return vim.pack.PlugData[]
-function M.get()
+function M.get(names, opts)
+  vim.validate('names', names, vim.islist, true, 'list')
+  opts = vim.tbl_extend('force', { info = true }, opts or {})
+
   -- Process active plugins in order they were added. Take into account that
   -- there might be "holes" after `vim.pack.del()`.
   local active = {} --- @type table<integer,vim.pack.Plug?>
@@ -1020,11 +1025,12 @@ function M.get()
     active[p_active.id] = p_active.plug
   end
 
-  --- @type vim.pack.PlugData[]
-  local res = {}
+  local res = {} --- @type vim.pack.PlugData[]
+  local used_names = {} --- @type table<string,boolean>
   for i = 1, n_active_plugins do
-    if active[i] then
+    if active[i] and (not names or vim.tbl_contains(names, active[i].spec.name)) then
       res[#res + 1] = { spec = vim.deepcopy(active[i].spec), path = active[i].path, active = true }
+      used_names[active[i].spec.name] = true
     end
   end
 
@@ -1034,20 +1040,33 @@ function M.get()
     local plug_dir = get_plug_dir()
     for n, t in vim.fs.dir(plug_dir, { depth = 1 }) do
       local path = vim.fs.joinpath(plug_dir, n)
-      if t == 'directory' and not active_plugins[path] then
+      local is_in_names = not names or vim.tbl_contains(names, n)
+      if t == 'directory' and not active_plugins[path] and is_in_names then
         local spec = { name = n, src = git_cmd({ 'remote', 'get-url', 'origin' }, path) }
         res[#res + 1] = { spec = spec, path = path, active = false }
-      end
-    end
-
-    -- Make default `version` explicit
-    for _, p_data in ipairs(res) do
-      if not p_data.spec.version then
-        p_data.spec.version = git_get_default_branch(p_data.path)
+        used_names[n] = true
       end
     end
   end
   async.run(do_get):wait()
+
+  if names ~= nil then
+    -- Align result with input
+    local names_order = {} --- @type table<string,integer>
+    for i, n in ipairs(names) do
+      if not used_names[n] then
+        error(('Plugin `%s` is not installed'):format(tostring(n)))
+      end
+      names_order[n] = i
+    end
+    table.sort(res, function(a, b)
+      return names_order[a.spec.name] < names_order[b.spec.name]
+    end)
+  end
+
+  if opts.info then
+    add_p_data_info(res)
+  end
 
   return res
 end

@@ -148,7 +148,7 @@ end
 ---@return fun(line: string): string
 local function make_comment_function(parts, indent)
   local prefix, nonindent_start, suffix = indent .. parts.left, indent:len() + 1, parts.right
-  local blank_comment = indent .. vim.trim(parts.left) .. vim.trim(parts.right)
+  local blank_comment = indent .. vim.trim(parts.left) .. vim.trim(suffix)
 
   return function(line)
     if is_blank(line) then

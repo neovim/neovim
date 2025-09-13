@@ -22,8 +22,8 @@
             .hash = "N-V-__8AADi-AwDnVoXwDCQvv2wcYOmN0bJLqZ44J3lwoQY2",
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter#d87921bb9c39b0b06c811f2082f9a9991cdca027",
-            .hash = "tree_sitter-0.26.0-Tw2sRxO7CwC0NyDrSygSi7UXRHMNUFEF8GRq6dK81lRF",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#e659dddad1f371b390ccca1cee6232ae172963d1",
+            .hash = "tree_sitter-0.26.0-Tw2sRwrJCwDrfb_78FsK0w0PWdgQQowLwBg4fZRq8TuM",
         },
         .libuv = .{
             .url = "git+https://github.com/allyourcodebase/libuv#a2dfd385bd2a00d6d290fda85a40a55a9d6cffc5",
@@ -61,8 +61,8 @@
             .hash = "N-V-__8AAI4YCgD7OqxCEAmz2RqT_ohl6eA4F0fGMtLIe7nb",
         },
         .treesitter_query = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.6.2#8a43889f89fd0667289936341bff3a77bafade17",
-            .hash = "N-V-__8AAARLBACBLGiXGFTijEzLv8AwiqT_kJpmVjir1BgX",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.7.0#60e253d3c9d6b1131a0f75c85e4bdcc9a48d5b42",
+            .hash = "N-V-__8AAGNUBAAvnkA99VqpVeC-dHymIp78MhFEixP8w7Tj",
         },
     },
     .paths = .{

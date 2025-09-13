@@ -177,7 +177,7 @@ function M.get(filter)
     --- @param buf integer
     vim.tbl_map(function(buf)
       vim.list_extend(hints, M.get(vim.tbl_extend('keep', { bufnr = buf }, filter)))
-    end, vim.api.nvim_list_bufs())
+    end, api.nvim_list_bufs())
     return hints
   else
     bufnr = vim._resolve_bufnr(bufnr)

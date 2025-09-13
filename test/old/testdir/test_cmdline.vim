@@ -475,12 +475,13 @@ func Test_highlight_completion()
   call assert_equal('"hi clear', getreg(':'))
 
   " A cleared group does not show up in completions.
+  hi clear Added
   hi Anders ctermfg=green
-  call assert_equal(['Aardig', 'Added', 'Anders'], getcompletion('A', 'highlight'))
+  call assert_equal(['Aardig', 'Anders'], getcompletion('A', 'highlight'))
   hi clear Aardig
-  call assert_equal(['Added', 'Anders'], getcompletion('A', 'highlight'))
+  call assert_equal(['Anders'], getcompletion('A', 'highlight'))
   hi clear Anders
-  call assert_equal(['Added'], getcompletion('A', 'highlight'))
+  call assert_equal([], getcompletion('A', 'highlight'))
 endfunc
 
 func Test_getcompletion()
@@ -905,7 +906,7 @@ func Test_cmdline_paste()
 
   " Test for pasting register containing CTRL-H using CTRL-R and CTRL-R CTRL-R
   let @a = "xy\<C-H>z"
-  call feedkeys(":\"\<C-R>a\<CR>", 'xt')
+  call feedkeys(":\"\<C-R>=@a\<CR>\<CR>", 'xt')
   call assert_equal('"xz', @:)
   call feedkeys(":\"\<C-R>\<C-R>a\<CR>", 'xt')
   call assert_equal("\"xy\<C-H>z", @:)
@@ -2286,8 +2287,11 @@ func Wildmode_tests()
   " when using longest completion match, matches shorter than the argument
   " should be ignored (happens with :help)
   set wildmode=longest,full
-  call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"help a', @:)
+  " XXX: This test is incorrect.  ':help a*' will never yield 'help a'
+  "   because '`a' exists as a menu item.  The intent was to test a case
+  "   handled by nextwild().
+  " call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
+  " call assert_equal('"help a', @:)
   " non existing file
   call feedkeys(":e a1b2y3z4\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e a1b2y3z4', @:)
@@ -2893,9 +2897,11 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, "sign xyz\<Esc>:sign \<Tab>\<C-E>\<Up>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_29', {})
 
-  " Check "list" still works
+  " Check that when "longest" produces no result, "list" works
   call term_sendkeys(buf, "\<C-U>set wildmode=longest,list\<CR>")
   call term_sendkeys(buf, ":cn\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_30', {})
+  call term_sendkeys(buf, "\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_30', {})
   call term_sendkeys(buf, "s")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_31', {})
@@ -2997,7 +3003,66 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, "\<Esc>:set wildchazz\<Left>\<Left>\<Tab>\<C-Y>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_53', {})
 
-  call term_sendkeys(buf, "\<C-U>\<CR>")
+  call term_sendkeys(buf, "\<Esc>:set showtabline& laststatus& lazyredraw&\<CR>")
+
+  " "longest:list" shows list whether it finds a candidate or not
+  call term_sendkeys(buf, ":set wildmode=longest:list,full wildoptions&\<CR>")
+  call term_sendkeys(buf, ":cn\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_55', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_56', {})
+  call term_sendkeys(buf, "\<Esc>:sign u\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_57', {})
+
+  " "longest:full" shows wildmenu whether it finds a candidate or not; item not selected
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest:full,full\<CR>")
+  call term_sendkeys(buf, ":sign u\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_58', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_59', {})
+  call term_sendkeys(buf, "\<Esc>:cn\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_60', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_61', {})
+
+  " If "longest,full" finds a candidate, wildmenu is not shown
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest,full\<CR>")
+  call term_sendkeys(buf, ":sign u\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_62', {})
+  " Subsequent wildchar shows wildmenu
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_63', {})
+
+  " 'longest' does not find candidate, and displays menu without selecting item
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest,noselect\<CR>")
+  call term_sendkeys(buf, ":cn\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_64', {})
+
+  " If "longest" finds no candidate in "longest,full", "full" is used
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest,full\<CR>")
+  call term_sendkeys(buf, ":set wildoptions=pum\<CR>")
+  call term_sendkeys(buf, ":sign un\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
+
+  " Similarly for "longest,noselect:full"
+  call term_sendkeys(buf, "\<Esc>:set wildmode=longest,noselect:full\<CR>")
+  call term_sendkeys(buf, ":sign un\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_65', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
+
+  call term_sendkeys(buf, "\<C-U>\<Esc>")
   call StopVimInTerminal(buf)
 endfunc
 
@@ -4406,7 +4471,7 @@ func Test_cmdcomplete_info()
     call feedkeys(":h echom\<cr>", "tx") " No expansion
     call assert_equal('{}', g:cmdcomplete_info)
     call feedkeys($":h echoms{trig}\<cr>", "tx")
-    call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+    call assert_equal('{''cmdline_orig'': ''h echoms'', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
     call feedkeys($":h echom{trig}\<cr>", "tx")
     call assert_equal(
           \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
@@ -4422,7 +4487,7 @@ func Test_cmdcomplete_info()
 
     set wildoptions=pum
     call feedkeys($":h echoms{trig}\<cr>", "tx")
-    call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+    call assert_equal('{''cmdline_orig'': ''h echoms'', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
     call feedkeys($":h echom{trig}\<cr>", "tx")
     call assert_equal(
           \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
@@ -4872,6 +4937,83 @@ func Test_cmdline_changed()
   delfunc TestComplete
   delcommand Test
   call Ntest_override("char_avail", 0)
+endfunc
+
+" Issue #18035: long lines should not get listed twice in the menu when
+" 'wildmode' contains 'noselect'
+func Test_long_line_noselect()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    set wildmenu wildoptions=pum wildmode=noselect,full
+    command -nargs=1 -complete=custom,Entries DoubleEntry echo
+    func Entries(a, b, c)
+      return 'loooooooooooooooong quite loooooooooooong, really loooooooooooong, probably too looooooooooooooooooooooooooong entry'
+    endfunc
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildmenu', 'D')
+  let buf = RunVimInTerminal('-S XTest_wildmenu', {'rows': 8, 'cols': 60})
+
+  call term_sendkeys(buf, ":DoubleEntry \<Tab>")
+  call VerifyScreenDump(buf, 'Test_long_line_noselect_1', {})
+
+  call term_sendkeys(buf, "\<Esc>:DoubleEntry \<Tab>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_long_line_noselect_2', {})
+
+  call term_sendkeys(buf, "\<Esc>:DoubleEntry \<Tab>\<C-N>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_long_line_noselect_3', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_CmdlineLeave_vchar_keys()
+  func OnLeave()
+    let g:leave_key = v:char
+  endfunction
+
+  new
+  for event in ["CmdlineLeavePre", "CmdlineLeave"]
+    exec "autocmd" event "* :call OnLeave()"
+    for key in ["\<C-C>", "\<Esc>", "\<CR>"]
+      call feedkeys($":echo{key}", 'tx')
+      call assert_equal(key, g:leave_key)
+    endfor
+    exec "autocmd!" event
+  endfor
+  bwipe!
+  delfunc OnLeave
+  unlet g:leave_key
+endfunc
+
+" Skip wildmenu during history navigation via Up/Down keys
+func Test_skip_wildtrigger_hist_navigation()
+  call Ntest_override("char_avail", 1)
+  set wildmenu wildmode=noselect,full
+  augroup TestSkipWildtrigger | autocmd!
+    autocmd CmdlineChanged : call wildtrigger()
+  augroup END
+  cnoremap <expr> <Up>   wildmenumode() ? "\<C-E>\<Up>"   : "\<Up>"
+  cnoremap <expr> <Down> wildmenumode() ? "\<C-E>\<Down>" : "\<Down>"
+
+  call feedkeys(":echom \"foo\"", "tx")
+  call feedkeys(":echom \"foobar\"", "tx")
+
+  call feedkeys(":ech\<Up>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"echom "foobar"', @:)
+  call feedkeys(":ech\<Up>\<Up>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"echom "foo"', @:)
+  call feedkeys(":ech\<Up>\<Up>\<Down>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"echom "foobar"', @:)
+  call feedkeys(":ech\<Up>\<Up>\<Down>\<Down>\<C-B>\"\<CR>", "tx")
+  call assert_equal('"ech', @:)
+
+  call Ntest_override("char_avail", 0)
+  set wildmenu& wildmode& wildoptions&
+  augroup TestSkipWildtrigger | autocmd! | augroup END
+  cunmap <Up>
+  cunmap <Down>
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

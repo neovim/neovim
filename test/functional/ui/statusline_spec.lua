@@ -504,6 +504,20 @@ describe('global statusline', function()
       {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
+
+    -- Shouldn't gain a hsep if the global statusline is turned off.
+    command('set laststatus=2')
+    eq('Vim(wincmd):E36: Not enough room', pcall_err(command, 'wincmd L'))
+    command('mode')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {2:[No Name]                                 0,0-1          All}|
+      ^                                                            |
+      {1:~                                                           }|*6
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
   end)
 end)
 

@@ -101,13 +101,15 @@ CTRL-N		Find next keyword (see |i_CTRL-N|).
 CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
 CTRL-R {register}				*i_CTRL-R*
-		Insert the contents of a register.  Between typing CTRL-R and
+		Insert the contents of a register. Between typing CTRL-R and
 		the second character, '"' will be displayed to indicate that
-		you are expected to enter the name of a register.
-		The text is inserted as if you typed it, but mappings and
+		you are expected to enter the name of a register. When used
+		with named or clipboard registers (A-Z,a-z,0-9,+) text is
+		inserted literally like pasting with "p". For other registers,
+		the text is inserted as if you typed it, but mappings and
 		abbreviations are not used.  If you have options like
 		'textwidth', 'formatoptions', or 'autoindent' set, this will
-		influence what will be inserted.  This is different from what
+		influence what will be inserted. This is different from what
 		happens with the "p" command and pasting with the mouse.
 		Special registers:
 			'"'	the unnamed register, containing the text of
@@ -131,6 +133,8 @@ CTRL-R {register}				*i_CTRL-R*
 				special keys.  E.g., you can use this to move
 				the cursor up:
 					CTRL-R ="\<Up>"
+				you can use this to insert a register as
+				typed with CTRL-R =@reg.
 				Use CTRL-R CTRL-R to insert text literally.
 				When the result is a |List| the items are used
 				as lines.  They can have line breaks inside
@@ -1129,7 +1133,26 @@ any of them at any time by typing |CTRL-X|, which temporarily suspends
 autocompletion.  To use |i_CTRL-N| or |i_CTRL-X_CTRL-N| specifically, press
 |CTRL-E| first to dismiss the popup menu (see |complete_CTRL-E|).
 
-See also 'autocomplete', 'autocompletetimeout' and 'autocompletedelay'.
+						*ins-autocompletion-example*
+Example setup ~
+A typical configuration for automatic completion with a popup menu: >
+	set autocomplete
+	set complete=.^5,w^5,b^5,u^5
+	set completeopt=popup
+
+	inoremap <silent><expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+	inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+<
+This enables automatic completion with suggestions from the current buffer,
+other windows, and listed buffers, displayed in a popup menu.  Each source is
+limited to 5 candidates.  <Tab> and <S-Tab> move through the items when the
+menu is visible.  Optionally, add "preinsert" to 'completeopt' to insert the
+longest common prefix automatically.  You can also add other completion
+sources to 'complete' as needed.
+
+See also 'autocomplete', 'autocompletedelay' and 'autocompletetimeout'.
+
+For command-line autocompletion, see |cmdline-autocompletion|.
 
 To get LSP-driven auto-completion, see |lsp-completion|.
 

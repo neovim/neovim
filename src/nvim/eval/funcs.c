@@ -3344,6 +3344,9 @@ static varnumber_T indexof_blob(blob_T *b, varnumber_T startidx, typval_T *expr)
     }
   }
 
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
+  set_vim_var_type(VV_VAL, VAR_NUMBER);
+
   const int called_emsg_start = called_emsg;
   for (varnumber_T idx = startidx; idx < tv_blob_len(b); idx++) {
     set_vim_var_nr(VV_KEY, idx);
@@ -3384,6 +3387,8 @@ static varnumber_T indexof_list(list_T *l, varnumber_T startidx, typval_T *expr)
       assert(item != NULL);
     }
   }
+
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   const int called_emsg_start = called_emsg;
   for (; item != NULL; item = TV_LIST_ITEM_NEXT(l, item), idx++) {

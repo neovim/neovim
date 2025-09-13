@@ -243,32 +243,67 @@ local function find_in_log(log, event, kind, repo_name, version)
   return res
 end
 
-local function validate_progress_report(title, step_names)
-  -- NOTE: Assumes that message history contains only progress report messages
-  local messages = vim.split(n.exec_capture('messages'), '\n')
-  local n_steps = #step_names
-  eq(n_steps + 2, #messages)
+local function track_nvim_echo()
+  exec_lua(function()
+    _G.echo_log = {}
+    local nvim_echo_orig = vim.api.nvim_echo
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_echo = function(...)
+      table.insert(_G.echo_log, vim.deepcopy({ ... }))
+      return nvim_echo_orig(...)
+    end
+  end)
+end
 
-  local init_msg = ('vim.pack:   0%% %s (0/%d)'):format(title, n_steps)
-  eq(init_msg, messages[1])
+local function validate_progress_report(action, step_names)
+  -- NOTE: Assume that `nvim_echo` mocked log has only progress report messages
+  local echo_log = exec_lua('return _G.echo_log') ---@type table[]
+  local n_steps = #step_names
+  eq(n_steps + 2, #echo_log)
+
+  local progress = { kind = 'progress', title = 'vim.pack', status = 'running', percent = 0 }
+  local init_step = { { { ('%s (0/%d)'):format(action, n_steps) } }, true, progress }
+  eq(init_step, echo_log[1])
 
   local steps_seen = {} --- @type table<string,boolean>
   for i = 1, n_steps do
-    local percent = math.floor(100 * i / n_steps)
-    local msg = ('vim.pack: %3d%% %s (%d/%d)'):format(percent, title, i, n_steps)
+    local echo_args = echo_log[i + 1]
+
     -- NOTE: There is no guaranteed order (as it is async), so check that some
-    -- expected step name is used
+    -- expected step name is used in the message
+    local msg = ('%s (%d/%d)'):format(action, i, n_steps)
     local pattern = '^' .. vim.pesc(msg) .. ' %- (%S+)$'
-    local step = messages[i + 1]:match(pattern)
+    local step = echo_args[1][1][1]:match(pattern) ---@type string
     eq(true, vim.tbl_contains(step_names, step))
     steps_seen[step] = true
+
+    -- Should not add intermediate progress report to history
+    eq(echo_args[2], false)
+
+    -- Should update a single message by its id (computed after first call)
+    progress.id = progress.id or echo_args[3].id ---@type integer
+    progress.percent = math.floor(100 * i / n_steps)
+    eq(echo_args[3], progress)
   end
 
   -- Should report all steps
   eq(n_steps, vim.tbl_count(steps_seen))
 
-  local final_msg = ('vim.pack: done %s (%d/%d)'):format(title, n_steps, n_steps)
-  eq(final_msg, messages[n_steps + 2])
+  progress.percent, progress.status = 100, 'success'
+  local final_step = { { { ('%s (%d/%d)'):format(action, n_steps, n_steps) } }, true, progress }
+  eq(final_step, echo_log[n_steps + 2])
+end
+
+local function mock_confirm(output_value)
+  exec_lua(function()
+    _G.confirm_log = _G.confirm_log or {}
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.confirm = function(...)
+      table.insert(_G.confirm_log, { ... })
+      return output_value
+    end
+  end)
 end
 
 local function is_jit()
@@ -328,14 +363,8 @@ describe('vim.pack', function()
     end)
 
     it('asks for installation confirmation', function()
-      exec_lua(function()
-        ---@diagnostic disable-next-line: duplicate-set-field
-        vim.fn.confirm = function(...)
-          _G.confirm_args = { ... }
-          -- Do not confirm installation to see what happens
-          return 0
-        end
-      end)
+      -- Do not confirm installation to see what happens
+      mock_confirm(2)
 
       local err = pcall_err(exec_lua, function()
         vim.pack.add({ repos_src.basic })
@@ -345,23 +374,43 @@ describe('vim.pack', function()
       eq(false, exec_lua('return pcall(require, "basic")'))
 
       local confirm_msg = 'These plugins will be installed:\n\n' .. repos_src.basic .. '\n'
-      eq({ confirm_msg, 'Proceed? &Yes\n&No', 1, 'Question' }, exec_lua('return _G.confirm_args'))
+      local ref_log = { { confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question' } }
+      eq(ref_log, exec_lua('return _G.confirm_log'))
     end)
 
     it('respects `opts.confirm`', function()
+      mock_confirm(1)
       exec_lua(function()
-        _G.confirm_used = false
-        ---@diagnostic disable-next-line: duplicate-set-field
-        vim.fn.confirm = function()
-          _G.confirm_used = true
-          return 1
-        end
-
         vim.pack.add({ repos_src.basic }, { confirm = false })
       end)
 
-      eq(false, exec_lua('return _G.confirm_used'))
+      eq(0, exec_lua('return #_G.confirm_log'))
       eq('basic main', exec_lua('return require("basic")'))
+    end)
+
+    it('can always confirm in current session', function()
+      mock_confirm(3)
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      eq(1, exec_lua('return #_G.confirm_log'))
+      eq('basic main', exec_lua('return require("basic")'))
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.defbranch })
+      end)
+      eq(1, exec_lua('return #_G.confirm_log'))
+      eq('defbranch dev', exec_lua('return require("defbranch")'))
+
+      -- Should still ask in next session
+      n.clear()
+      mock_confirm(3)
+      exec_lua(function()
+        vim.pack.add({ repos_src.plugindirs })
+      end)
+      eq(1, exec_lua('return #_G.confirm_log'))
+      eq('plugindirs main', exec_lua('return require("plugindirs")'))
     end)
 
     it('installs at proper version', function()
@@ -431,6 +480,7 @@ describe('vim.pack', function()
     end)
 
     it('shows progress report during installation', function()
+      track_nvim_echo()
       exec_lua(function()
         vim.pack.add({ repos_src.basic, repos_src.defbranch })
       end)
@@ -441,7 +491,7 @@ describe('vim.pack', function()
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
       exec_lua(function()
-        -- Should provide event-data respecting manual and inferred default `version`
+        -- Should provide event-data respecting manual `version` without inferring default
         vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' }, repos_src.defbranch })
       end)
 
@@ -449,11 +499,11 @@ describe('vim.pack', function()
       local installpre_basic = find_in_log(log, 'PackChangedPre', 'install', 'basic', 'feat-branch')
       local installpre_defbranch = find_in_log(log, 'PackChangedPre', 'install', 'defbranch', nil)
       local updatepre_basic = find_in_log(log, 'PackChangedPre', 'update', 'basic', 'feat-branch')
-      local updatepre_defbranch = find_in_log(log, 'PackChangedPre', 'update', 'defbranch', 'dev')
+      local updatepre_defbranch = find_in_log(log, 'PackChangedPre', 'update', 'defbranch', nil)
       local update_basic = find_in_log(log, 'PackChanged', 'update', 'basic', 'feat-branch')
-      local update_defbranch = find_in_log(log, 'PackChanged', 'update', 'defbranch', 'dev')
+      local update_defbranch = find_in_log(log, 'PackChanged', 'update', 'defbranch', nil)
       local install_basic = find_in_log(log, 'PackChanged', 'install', 'basic', 'feat-branch')
-      local install_defbranch = find_in_log(log, 'PackChanged', 'install', 'defbranch', 'dev')
+      local install_defbranch = find_in_log(log, 'PackChanged', 'install', 'defbranch', nil)
       eq(8, #log)
 
       -- NOTE: There is no guaranteed installation order among separate plugins (as it is async)
@@ -547,11 +597,9 @@ describe('vim.pack', function()
         eq({}, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
 
         -- Plugins should still be marked as "active", since they were added
-        plugindirs_data.spec.version = 'main'
         plugindirs_data.active = true
-        basic_data.spec.version = 'main'
         basic_data.active = true
-        eq({ plugindirs_data, basic_data }, n.exec_lua('return vim.pack.get()'))
+        eq({ plugindirs_data, basic_data }, exec_lua('return vim.pack.get(nil, { info = false })'))
       end
 
       -- Works on initial install
@@ -599,7 +647,8 @@ describe('vim.pack', function()
         '`basic`:\n',
         -- Should report available branches and tags if revision is absent
         '`wrong%-version`',
-        'Available:\nTags: some%-tag\nBranches: feat%-branch, main',
+        -- Should list default branch first
+        'Available:\nTags: some%-tag\nBranches: main, feat%-branch',
         -- Should report available branches and versions if no constraint match
         '`semver`',
         'Available:\nVersions: v1%.0%.0, v0%.4, 0%.3%.1, v0%.3%.0.*\nBranches: main\n',
@@ -639,6 +688,19 @@ describe('vim.pack', function()
         vim.pack.add({ { src = repos_src.basic, name = 'bad % name' } })
       end)
       eq('basic main', exec_lua('return require("basic")'))
+    end)
+
+    it('is not affected by special environment variables', function()
+      fn.setenv('GIT_WORK_TREE', fn.getcwd())
+      fn.setenv('GIT_DIR', vim.fs.joinpath(fn.getcwd(), '.git'))
+      local ref_environ = fn.environ()
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      eq('basic main', exec_lua('return require("basic")'))
+
+      eq(ref_environ, fn.environ())
     end)
 
     it('validates input', function()
@@ -824,13 +886,13 @@ describe('vim.pack', function()
           ),
           '                                                                                     |',
           'Pending updates:                                                                     |',
-          ('{104:< %s │ Commit from `main` to be removed}                                         |'):format(
+          ('{19:< %s │ Commit from `main` to be removed}                                         |'):format(
             hashes.fetch_head
           ),
-          ('{105:> %s │ Commit to be added 2}                                                     |'):format(
+          ('{104:> %s │ Commit to be added 2}                                                     |'):format(
             hashes.fetch_new
           ),
-          ('{105:> %s │ Commit to be added 1 (tag: dev-tag)}                                      |'):format(
+          ('{104:> %s │ Commit to be added 1 (tag: dev-tag)}                                      |'):format(
             hashes.fetch_new_prev
           ),
           '                                                                                     |',
@@ -855,8 +917,7 @@ describe('vim.pack', function()
           [101] = { foreground = Screen.colors.Orange },
           [102] = { foreground = Screen.colors.LightGray },
           [103] = { foreground = Screen.colors.LightBlue },
-          [104] = { foreground = Screen.colors.NvimDarkRed },
-          [105] = { foreground = Screen.colors.NvimDarkGreen },
+          [104] = { foreground = Screen.colors.SeaGreen },
         })
         -- NOTE: Non LuaJIT reports errors differently due to 'coxpcall'
         if is_jit() then
@@ -1080,6 +1141,7 @@ describe('vim.pack', function()
     end)
 
     it('shows progress report', function()
+      track_nvim_echo()
       exec_lua(function()
         vim.pack.add({ repos_src.fetch, repos_src.defbranch })
         vim.pack.update()
@@ -1087,7 +1149,7 @@ describe('vim.pack', function()
 
       -- During initial download
       validate_progress_report('Downloading updates', { 'fetch', 'defbranch' })
-      n.exec('messages clear')
+      exec_lua('_G.echo_log = {}')
 
       -- During application (only for plugins that have updates)
       n.exec('write')
@@ -1095,6 +1157,7 @@ describe('vim.pack', function()
 
       -- During force update
       n.clear()
+      track_nvim_echo()
       repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new 3"')
       git_add_commit('Commit to be added 3', 'fetch')
 
@@ -1117,8 +1180,8 @@ describe('vim.pack', function()
       -- Should trigger relevant events only for actually updated plugins
       n.exec('write')
       local log = exec_lua('return _G.event_log')
-      eq(1, find_in_log(log, 'PackChangedPre', 'update', 'fetch', 'main'))
-      eq(2, find_in_log(log, 'PackChanged', 'update', 'fetch', 'main'))
+      eq(1, find_in_log(log, 'PackChangedPre', 'update', 'fetch', nil))
+      eq(2, find_in_log(log, 'PackChanged', 'update', 'fetch', nil))
       eq(2, #log)
     end)
 
@@ -1138,6 +1201,20 @@ describe('vim.pack', function()
       eq({ 'return "fetch new 2"' }, fn.readfile(fetch_lua_file))
     end)
 
+    it('is not affected by special environment variables', function()
+      fn.setenv('GIT_WORK_TREE', fn.getcwd())
+      fn.setenv('GIT_DIR', vim.fs.joinpath(fn.getcwd(), '.git'))
+      local ref_environ = fn.environ()
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.fetch })
+        vim.pack.update({ 'fetch' }, { force = true })
+      end)
+      eq({ 'return "fetch new 2"' }, fn.readfile(fetch_lua_file))
+
+      eq(ref_environ, fn.environ())
+    end)
+
     it('validates input', function()
       local validate = function(err_pat, input)
         local update_input = function()
@@ -1154,7 +1231,7 @@ describe('vim.pack', function()
         vim.pack.add({ repos_src.basic })
       end)
 
-      validate('The following plugins are not installed: aaa, ccc', { 'aaa', 'basic', 'ccc' })
+      validate('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
 
       -- Empty list is allowed with warning
       n.exec('messages clear')
@@ -1166,39 +1243,73 @@ describe('vim.pack', function()
   end)
 
   describe('get()', function()
-    local basic_spec = { name = 'basic', src = repos_src.basic, version = 'main' }
-    local basic_path = pack_get_plug_path('basic')
-    local defbranch_spec = { name = 'defbranch', src = repos_src.defbranch, version = 'dev' }
-    local defbranch_path = pack_get_plug_path('defbranch')
+    local make_basic_data = function(active, info)
+      local spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
+      local path = pack_get_plug_path('basic')
+      local res = { active = active, path = path, spec = spec }
+      if info then
+        res.branches = { 'main', 'feat-branch' }
+        res.rev = git_get_hash('feat-branch', 'basic')
+        res.tags = { 'some-tag' }
+      end
+      return res
+    end
 
-    it('returns list of available plugins', function()
+    local make_defbranch_data = function(active, info)
+      local spec = { name = 'defbranch', src = repos_src.defbranch }
+      local path = pack_get_plug_path('defbranch')
+      local res = { active = active, path = path, spec = spec }
+      if info then
+        res.branches = { 'dev', 'main' }
+        res.rev = git_get_hash('dev', 'defbranch')
+        res.tags = {}
+      end
+      return res
+    end
+
+    it('returns list with necessary data', function()
+      local basic_data, defbranch_data
+
       -- Should work just after installation
       exec_lua(function()
-        vim.pack.add({ repos_src.defbranch, repos_src.basic })
+        vim.pack.add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
       end)
-      eq({
-        -- Should preserve order in which plugins were `vim.pack.add()`ed
-        { active = true, path = defbranch_path, spec = defbranch_spec },
-        { active = true, path = basic_path, spec = basic_spec },
-      }, exec_lua('return vim.pack.get()'))
+      defbranch_data = make_defbranch_data(true, true)
+      basic_data = make_basic_data(true, true)
+      -- Should preserve order in which plugins were `vim.pack.add()`ed
+      eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get()'))
 
       -- Should also list non-active plugins
       n.clear()
 
       exec_lua(function()
-        vim.pack.add({ repos_src.basic })
+        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
       end)
-      eq({
-        -- Should first list active, then non-active
-        { active = true, path = basic_path, spec = basic_spec },
-        { active = false, path = defbranch_path, spec = defbranch_spec },
-      }, exec_lua('return vim.pack.get()'))
+      defbranch_data = make_defbranch_data(false, true)
+      basic_data = make_basic_data(true, true)
+      -- Should first list active, then non-active
+      eq({ basic_data, defbranch_data }, exec_lua('return vim.pack.get()'))
+
+      -- Should respect `names` for both active and not active plugins
+      eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" })'))
+      eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" })'))
+      eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get({ "defbranch", "basic" })'))
+
+      local bad_get_cmd = 'return vim.pack.get({ "ccc", "basic", "aaa" })'
+      matches('Plugin `ccc` is not installed', pcall_err(exec_lua, bad_get_cmd))
+
+      -- Should respect `opts.info`
+      defbranch_data = make_defbranch_data(false, false)
+      basic_data = make_basic_data(true, false)
+      eq({ basic_data, defbranch_data }, exec_lua('return vim.pack.get(nil, { info = false })'))
+      eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" }, { info = false })'))
+      eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { info = false })'))
     end)
 
     it('respects `data` field', function()
       local out = exec_lua(function()
         vim.pack.add({
-          { src = repos_src.basic, data = { test = 'value' } },
+          { src = repos_src.basic, version = 'feat-branch', data = { test = 'value' } },
           { src = repos_src.defbranch, data = 'value' },
         })
         local plugs = vim.pack.get()
@@ -1210,7 +1321,7 @@ describe('vim.pack', function()
 
     it('works with `del()`', function()
       exec_lua(function()
-        vim.pack.add({ repos_src.defbranch, repos_src.basic })
+        vim.pack.add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
       end)
 
       exec_lua(function()
@@ -1225,15 +1336,9 @@ describe('vim.pack', function()
       -- Should not include removed plugins immediately after they are removed,
       -- while still returning list without holes
       exec_lua('vim.pack.del({ "defbranch" })')
-      eq({
-        {
-          { active = true, path = defbranch_path, spec = defbranch_spec },
-          { active = true, path = basic_path, spec = basic_spec },
-        },
-        {
-          { active = true, path = basic_path, spec = basic_spec },
-        },
-      }, exec_lua('return _G.get_log'))
+      local defbranch_data = make_defbranch_data(true, true)
+      local basic_data = make_basic_data(true, true)
+      eq({ { defbranch_data, basic_data }, { basic_data } }, exec_lua('return _G.get_log'))
     end)
   end)
 
@@ -1255,16 +1360,16 @@ describe('vim.pack', function()
       eq(false, pack_exists('plugindirs'))
 
       eq(
-        "vim.pack: Removed plugin 'plugindirs'\nvim.pack: Removed plugin 'basic'",
+        "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'",
         n.exec_capture('messages')
       )
 
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
-      eq(1, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', 'main'))
-      eq(2, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', 'main'))
-      eq(3, find_in_log(log, 'PackChangedPre', 'delete', 'basic', 'feat-branch'))
-      eq(4, find_in_log(log, 'PackChanged', 'delete', 'basic', 'feat-branch'))
+      eq(1, find_in_log(log, 'PackChangedPre', 'delete', 'basic', 'feat-branch'))
+      eq(2, find_in_log(log, 'PackChanged', 'delete', 'basic', 'feat-branch'))
+      eq(3, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', nil))
+      eq(4, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', nil))
       eq(4, #log)
     end)
 
@@ -1284,7 +1389,7 @@ describe('vim.pack', function()
         vim.pack.add({ repos_src.basic })
       end)
 
-      validate('The following plugins are not installed: aaa, ccc', { 'aaa', 'basic', 'ccc' })
+      validate('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
       eq(true, pack_exists('basic'))
 
       -- Empty list is allowed with warning

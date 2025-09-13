@@ -7139,5 +7139,33 @@ describe('LSP', function()
 
       eq('Empty hover response', n.exec_capture('lua vim.lsp.buf.hover()'))
     end)
+
+    it('treats markedstring array as not empty', function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            hoverProvider = true,
+          },
+          handlers = {
+            ['textDocument/hover'] = function(_, _, callback)
+              local res = {
+                contents = {
+                  {
+                    language = 'java',
+                    value = 'Example',
+                  },
+                  'doc comment',
+                },
+              }
+              callback(nil, res)
+            end,
+          },
+        })
+        vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      end)
+
+      eq('', n.exec_capture('lua vim.lsp.buf.hover()'))
+    end)
   end)
 end)

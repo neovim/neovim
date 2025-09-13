@@ -175,10 +175,14 @@ int nlua_pcall(lua_State *lstate, int nargs, int nresults)
   lua_getfield(lstate, -1, "traceback");
   lua_remove(lstate, -2);
   lua_insert(lstate, -2 - nargs);
+  int pre_top = lua_gettop(lstate);
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
   if (status) {
     lua_remove(lstate, -2);
   } else {
+    if (nresults == LUA_MULTRET) {
+      nresults = lua_gettop(lstate) - (pre_top - nargs - 1);
+    }
     lua_remove(lstate, -1 - nresults);
   }
   return status;
@@ -415,16 +419,28 @@ static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
   xfree(tw);
 }
 
-static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_result)
+static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_result,
+                                int *nresults)
 {
+  int top = lua_gettop(lstate);
   lua_pushvalue(lstate, 2);
-  *status = nlua_pcall(lstate, 0, 1);
+  *status = nlua_pcall(lstate, 0, LUA_MULTRET);
   if (*status) {
     return true;  // break on error, but keep error on stack
   }
-  *callback_result = lua_toboolean(lstate, -1);
-  lua_pop(lstate, 1);
-  return *callback_result;  // break if true
+  *nresults = lua_gettop(lstate) - top;
+  if (*nresults == 0) {
+    *callback_result = false;
+    return false;
+  }
+  *callback_result = lua_toboolean(lstate, top + 1);
+  if (!*callback_result) {
+    lua_settop(lstate, top);
+    return false;
+  }
+  lua_remove(lstate, top + 1);
+  (*nresults)--;
+  return true;  // break if true
 }
 
 /// "vim.wait(timeout, condition[, interval])" function
@@ -454,8 +470,7 @@ static int nlua_wait(lua_State *lstate)
     }
 
     if (!is_function) {
-      lua_pushliteral(lstate,
-                      "vim.wait: if passed, condition must be a function");
+      lua_pushliteral(lstate, "vim.wait: callback must be callable");
       return lua_error(lstate);
     }
   }
@@ -488,6 +503,7 @@ static int nlua_wait(lua_State *lstate)
 
   int pcall_status = 0;
   bool callback_result = false;
+  int nresults = 0;
 
   // Flush screen updates before blocking.
   ui_flush();
@@ -497,7 +513,8 @@ static int nlua_wait(lua_State *lstate)
                             (int)timeout,
                             got_int || (is_function ? nlua_wait_condition(lstate,
                                                                           &pcall_status,
-                                                                          &callback_result)
+                                                                          &callback_result,
+                                                                          &nresults)
                                                     : false));
 
   // Stop dummy timer
@@ -508,18 +525,26 @@ static int nlua_wait(lua_State *lstate)
     return lua_error(lstate);
   } else if (callback_result) {
     lua_pushboolean(lstate, 1);
-    lua_pushnil(lstate);
+    if (nresults == 0) {
+      lua_pushnil(lstate);
+      nresults = 1;
+    } else {
+      lua_insert(lstate, -1 - nresults);
+    }
+    return nresults + 1;
   } else if (got_int) {
     got_int = false;
     vgetc();
     lua_pushboolean(lstate, 0);
     lua_pushinteger(lstate, -2);
+    return 2;
   } else {
     lua_pushboolean(lstate, 0);
     lua_pushinteger(lstate, -1);
+    return 2;
   }
 
-  return 2;
+  abort();
 }
 
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
@@ -966,7 +991,8 @@ static void nlua_print_event(void **argv)
   HlMessage msg = KV_INITIAL_VALUE;
   HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
   kv_push(msg, chunk);
-  msg_multihl(INTEGER_OBJ(0), msg, "lua_print", true, false, NULL);
+  bool needs_clear = false;
+  msg_multihl(INTEGER_OBJ(0), msg, "lua_print", true, false, NULL, &needs_clear);
 }
 
 /// Print as a Vim message
@@ -1472,7 +1498,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
 
 void nlua_exec_ga(garray_T *ga, char *name)
 {
-  char *code = ga_concat_strings_sep(ga, "\n");
+  char *code = ga_concat_strings(ga, "\n");
   size_t len = strlen(code);
   nlua_typval_exec(code, len, name, NULL, 0, false, NULL);
   xfree(code);
@@ -1496,7 +1522,7 @@ int typval_exec_lua_callable(LuaRef lua_cb, int argcount, typval_T *argvars, typ
   PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
 
   if (nlua_pcall(lstate, argcount, 1)) {
-    nlua_print(lstate);
+    nlua_error(lstate, _("Lua callback: %.*s"));
     return FCERR_OTHER;
   }
 
@@ -1522,6 +1548,7 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
 {
   lua_State *const lstate = global_lstate;
 
+  int top = lua_gettop(lstate);
   const char *name = (chunkname && chunkname[0]) ? chunkname : "<nvim>";
   if (luaL_loadbuffer(lstate, str.data, str.size, name)) {
     size_t len;
@@ -1541,7 +1568,7 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
     return NIL;
   }
 
-  return nlua_call_pop_retval(lstate, mode, arena, err);
+  return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
 bool nlua_ref_is_function(LuaRef ref)
@@ -1572,10 +1599,16 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
   return nlua_call_ref_ctx(false, ref, name, args, mode, arena, err);
 }
 
+static int mode_ret(LuaRetMode mode)
+{
+  return mode == kRetMulti ? LUA_MULTRET : 1;
+}
+
 Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
                          Arena *arena, Error *err)
 {
   lua_State *const lstate = global_lstate;
+  int top = lua_gettop(lstate);
   nlua_pushref(lstate, ref);
   int nargs = (int)args.size;
   if (name != NULL) {
@@ -1587,12 +1620,12 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
   }
 
   if (fast) {
-    if (nlua_fast_cfpcall(lstate, nargs, 1, -1) < 0) {
+    if (nlua_fast_cfpcall(lstate, nargs, mode_ret(mode), -1) < 0) {
       // error is already scheduled, set anyways to convey failure.
       api_set_error(err, kErrorTypeException, "fast context failure");
       return NIL;
     }
-  } else if (nlua_pcall(lstate, nargs, 1)) {
+  } else if (nlua_pcall(lstate, nargs, mode_ret(mode))) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
@@ -1604,16 +1637,18 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
     return NIL;
   }
 
-  return nlua_call_pop_retval(lstate, mode, arena, err);
+  return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
-static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, Error *err)
+static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *arena, int pretop,
+                                   Error *err)
 {
-  if (lua_isnil(lstate, -1)) {
+  if (mode != kRetMulti && lua_isnil(lstate, -1)) {
     lua_pop(lstate, 1);
     return NIL;
   }
   Error dummy = ERROR_INIT;
+  Error *perr = err ? err : &dummy;
 
   switch (mode) {
   case kRetNilBool: {
@@ -1629,7 +1664,19 @@ static Object nlua_call_pop_retval(lua_State *lstate, LuaRetMode mode, Arena *ar
     return LUAREF_OBJ(ref);
   }
   case kRetObject:
-    return nlua_pop_Object(lstate, false, arena, err ? err : &dummy);
+    return nlua_pop_Object(lstate, false, arena, perr);
+  case kRetMulti:
+    ;
+    int nres = lua_gettop(lstate) - pretop;
+    Array res = arena_array(arena, (size_t)nres);
+    for (int i = 0; i < nres; i++) {
+      res.items[nres - i - 1] = nlua_pop_Object(lstate, false, arena, perr);
+      if (ERROR_SET(perr)) {
+        return NIL;
+      }
+    }
+    res.size = (size_t)nres;
+    return ARRAY_OBJ(res);
   }
   UNREACHABLE;
 }

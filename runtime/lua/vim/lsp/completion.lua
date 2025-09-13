@@ -864,7 +864,7 @@ end
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function M._omnifunc(findstart, base)
-  vim.lsp.log.debug('omnifunc.findstart', { findstart = findstart, base = base })
+  lsp.log.debug('omnifunc.findstart', { findstart = findstart, base = base })
   assert(base) -- silence luals
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })

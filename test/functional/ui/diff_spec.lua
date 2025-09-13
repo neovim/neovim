@@ -1249,7 +1249,7 @@ end)
 it('diff updates line numbers below filler lines', function()
   local screen = Screen.new(40, 14)
   exec([[
-    set diffopt=internal,filler,closeoff
+    set diffopt=internal,filler
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])

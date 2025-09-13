@@ -415,42 +415,47 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   if (!parse_win_config(win, config, &fconfig, !was_split || to_split, err)) {
     return;
   }
-  win_T *parent = config->win == 0 ? curwin : NULL;
-  if (config->win > 0) {
-    parent = find_window_by_handle(fconfig.window, err);
-    if (!parent) {
-      return;
-    } else if (to_split && parent->w_floating) {
-      api_set_error(err, kErrorTypeException, "Cannot split a floating window");
-      return;
-    }
 
-    // Prevent autocmd window from being moved into another tabpage
-    if (is_aucmd_win(win) && win_find_tabpage(win) != win_find_tabpage(parent)) {
-      api_set_error(err, kErrorTypeException, "Cannot move autocmd win to another tabpage");
-      return;
-    }
-  }
   if (was_split && !to_split) {
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
     redraw_later(win, UPD_NOT_VALID);
   } else if (to_split) {
+    win_T *parent = NULL;
+    tabpage_T *parent_tp = NULL;
+    if (config->win == 0) {
+      parent = curwin;
+      parent_tp = curtab;
+    } else if (config->win > 0) {
+      parent = find_window_by_handle(fconfig.window, err);
+      if (!parent) {
+        return;
+      }
+      parent_tp = win_find_tabpage(parent);
+    }
+    if (parent) {
+      if (parent->w_floating) {
+        api_set_error(err, kErrorTypeException, "Cannot split a floating window");
+        return;
+      }
+      if (is_aucmd_win(win) && win_tp != parent_tp) {
+        api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
+        return;
+      }
+      // Can't move the cmdwin or its old curwin to a different tabpage.
+      if ((win == cmdwin_win || win == cmdwin_old_curwin) && win_tp != parent_tp) {
+        api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+        return;
+      }
+    }
+
     WinSplit old_split = win_split_dir(win);
     if (has_vertical && !has_split) {
       if (config->vertical) {
-        if (old_split == kWinSplitRight || p_spr) {
-          fconfig.split = kWinSplitRight;
-        } else {
-          fconfig.split = kWinSplitLeft;
-        }
+        fconfig.split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
       } else {
-        if (old_split == kWinSplitBelow || p_sb) {
-          fconfig.split = kWinSplitBelow;
-        } else {
-          fconfig.split = kWinSplitAbove;
-        }
+        fconfig.split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
       }
     }
     merge_win_config(&win->w_config, fconfig);
@@ -472,22 +477,22 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     if (!check_split_disallowed_err(win, err)) {
       return;  // error already set
     }
-    // Can't move the cmdwin or its old curwin to a different tabpage.
-    if ((win == cmdwin_win || win == cmdwin_old_curwin) && parent != NULL
-        && win_find_tabpage(parent) != win_tp) {
-      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-      return;
-    }
 
     bool to_split_ok = false;
     // If we are moving curwin to another tabpage, switch windows *before* we remove it from the
     // window list or remove its frame (if non-floating), so it's valid for autocommands.
-    const bool curwin_moving_tp
-      = win == curwin && parent != NULL && win_tp != win_find_tabpage(parent);
+    const bool curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
     if (curwin_moving_tp) {
       if (was_split) {
         int dir;
-        win_goto(winframe_find_altwin(win, &dir, NULL, NULL));
+        win_T *altwin = winframe_find_altwin(win, &dir, NULL, NULL);
+        // Autocommands may still make this the last non-float after this check.
+        // That case will be caught later when trying to move the window.
+        if (!altwin) {
+          api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
+          return;
+        }
+        win_goto(altwin);
       } else {
         win_goto(win_float_find_altwin(win, NULL));
       }
@@ -520,7 +525,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         // FIXME(willothy): if the window is the last in the tabpage but there is another tabpage
         // and the target window is in that other tabpage, should we move the window to that
         // tabpage and close the previous one, or just error?
-        api_set_error(err, kErrorTypeException, "Cannot move last window");
+        api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
         goto restore_curwin;
       } else if (parent != NULL && parent->handle == win->handle) {
         int n_frames = 0;
@@ -583,7 +588,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     }
 
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
-    tabpage_T *const parent_tp = parent ? win_find_tabpage(parent) : curtab;
+    parent_tp = parent ? win_find_tabpage(parent) : curtab;
 
     TRY_WRAP(err, {
       const bool need_switch = parent != NULL && parent != curwin;
@@ -635,7 +640,6 @@ restore_curwin:
     }
   } else {
     win_config_float(win, fconfig);
-    win->w_pos_changed = true;
   }
   if (HAS_KEY_X(config, style)) {
     if (fconfig.style == kWinStyleMinimal) {

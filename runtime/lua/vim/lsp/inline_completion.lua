@@ -1,3 +1,35 @@
+--- @brief
+--- This module provides the LSP "inline completion" feature, for completing multiline text (e.g.,
+--- whole methods) instead of just a word or line, which may result in "syntactically or
+--- semantically incorrect" code. Unlike regular completion, this is typically presented as overlay
+--- text instead of a menu of completion candidates.
+---
+--- LSP spec: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
+---
+--- To try it out, here is a quickstart example using Copilot: [lsp-copilot]()
+---
+--- 1. Install Copilot:
+---    ```sh
+---    npm install --global @github/copilot-language-server
+---    ```
+--- 2. Define a config, (or copy `lsp/copilot.lua` from https://github.com/neovim/nvim-lspconfig):
+---    ```lua
+---    vim.lsp.config('copilot', {
+---      cmd = { 'copilot-language-server', '--stdio', },
+---      root_markers = { '.git' },
+---    })
+---    ```
+--- 3. Activate the config:
+---    ```lua
+---    vim.lsp.enable('copilot')
+---    ```
+--- 4. Sign in to Copilot, or use the `:LspCopilotSignIn` command from https://github.com/neovim/nvim-lspconfig
+--- 5. Enable inline completion:
+---    ```lua
+---    vim.lsp.inline_completion.enable()
+---    ```
+--- 6. Set a keymap for `vim.lsp.inline_completion.get()` and invoke the keymap.
+
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
@@ -11,11 +43,11 @@ local M = {}
 
 local namespace = api.nvim_create_namespace('nvim.lsp.inline_completion')
 
----@class (private) vim.lsp.inline_completion.CurrentItem
----@field index integer The index among all items form all clients.
+---@class vim.lsp.inline_completion.Item
+---@field _index integer The index among all items form all clients.
 ---@field client_id integer Client ID
 ---@field insert_text string|lsp.StringValue The text to be inserted, can be a snippet.
----@field filter_text? string
+---@field _filter_text? string
 ---@field range? vim.Range Which range it be applied.
 ---@field command? lsp.Command Corresponding server command.
 
@@ -25,7 +57,7 @@ local namespace = api.nvim_create_namespace('nvim.lsp.inline_completion')
 ---@class (private) vim.lsp.inline_completion.Completor : vim.lsp.Capability
 ---@field active table<integer, vim.lsp.inline_completion.Completor?>
 ---@field timer? uv.uv_timer_t Timer for debouncing automatic requests
----@field current? vim.lsp.inline_completion.CurrentItem Currently selected item
+---@field current? vim.lsp.inline_completion.Item Currently selected item
 ---@field client_state table<integer, vim.lsp.inline_completion.ClientState>
 local Completor = {
   name = 'inline_completion',
@@ -42,7 +74,7 @@ Capability.all[Completor.name] = Completor
 function Completor:new(bufnr)
   self = Capability.new(self, bufnr)
   self.client_state = {}
-  api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI', 'CursorHoldI' }, {
+  api.nvim_create_autocmd({ 'InsertEnter', 'CursorMovedI', 'TextChangedP' }, {
     group = self.augroup,
     callback = function()
       self:automatic_request()
@@ -146,11 +178,11 @@ function Completor:select(index, show_index)
   local client = assert(vim.lsp.get_client_by_id(client_id))
   local range = item.range and vim.range.lsp(self.bufnr, item.range, client.offset_encoding)
   self.current = {
-    index = index,
+    _index = index,
     client_id = client_id,
     insert_text = item.insertText,
     range = range,
-    filter_text = item.filterText,
+    _filter_text = item.filterText,
     command = item.command,
   }
 
@@ -281,19 +313,14 @@ function Completor:abort()
   self.current = nil
 end
 
---- Apply the current completion item to the buffer.
+--- Accept the current completion item to the buffer.
 ---
 ---@package
-function Completor:apply()
-  local current = self.current
-  self:abort()
-  if not current then
-    return
-  end
-
-  local insert_text = current.insert_text
+---@param item vim.lsp.inline_completion.Item
+function Completor:accept(item)
+  local insert_text = item.insert_text
   if type(insert_text) == 'string' then
-    local range = current.range
+    local range = item.range
     if range then
       local lines = vim.split(insert_text, '\n')
       api.nvim_buf_set_text(
@@ -304,7 +331,7 @@ function Completor:apply()
         range.end_.col,
         lines
       )
-      local pos = current.range.start:to_cursor()
+      local pos = item.range.start:to_cursor()
       api.nvim_win_set_cursor(vim.fn.bufwinid(self.bufnr), {
         pos[1] + #lines - 1,
         (#lines == 1 and pos[2] or 0) + #lines[#lines],
@@ -317,9 +344,9 @@ function Completor:apply()
   end
 
   -- Execute the command *after* inserting this completion.
-  if current.command then
-    local client = assert(vim.lsp.get_client_by_id(current.client_id))
-    client:exec_cmd(current.command, { bufnr = self.bufnr })
+  if item.command then
+    local client = assert(vim.lsp.get_client_by_id(item.client_id))
+    client:exec_cmd(item.command, { bufnr = self.bufnr })
   end
 end
 
@@ -373,7 +400,7 @@ function M.select(opts)
   end
 
   local count = opts.count or vim.v.count1
-  local wrap = opts.wrap or true
+  local wrap = opts.wrap ~= false
 
   local current = completor.current
   if not current then
@@ -381,7 +408,7 @@ function M.select(opts)
   end
 
   local n = completor:count_items()
-  local index = current.index + count
+  local index = current._index + count
   if wrap then
     index = (index - 1) % n + 1
   else
@@ -396,10 +423,15 @@ end
 --- Buffer handle, or 0 for current.
 --- (default: 0)
 ---@field bufnr? integer
-
---- Apply the currently displayed completion candidate to the buffer.
 ---
---- It returns false when no candidate can be applied,
+--- Accept handler, called with the accepted item.
+--- If not provided, the default handler is used,
+--- which applies changes to the buffer based on the completion item.
+---@field on_accept? fun(item: vim.lsp.inline_completion.Item)
+
+--- Accept the currently displayed completion candidate to the buffer.
+---
+--- It returns false when no candidate can be accepted,
 --- so you can use the return value to implement a fallback:
 ---
 --- ```lua
@@ -407,11 +439,7 @@ end
 ---   if not vim.lsp.inline_completion.get() then
 ---     return '<Tab>'
 ---   end
---- end, {
----   expr = true,
----   replace_keycodes = true,
----   desc = 'Get the current inline completion',
---- })
+--- end, { expr = true, desc = 'Accept the current inline completion' })
 --- ````
 ---@param opts? vim.lsp.inline_completion.get.Opts
 ---@return boolean `true` if a completion was applied, else `false`.
@@ -420,11 +448,23 @@ function M.get(opts)
   opts = opts or {}
 
   local bufnr = vim._resolve_bufnr(opts.bufnr)
+  local on_accept = opts.on_accept
+
   local completor = Completor.active[bufnr]
   if completor and completor.current then
     -- Schedule apply to allow `get()` can be mapped with `<expr>`.
     vim.schedule(function()
-      completor:apply()
+      local item = completor.current
+      completor:abort()
+      if not item then
+        return
+      end
+
+      if on_accept then
+        on_accept(item)
+      else
+        completor:accept(item)
+      end
     end)
     return true
   end

@@ -2309,11 +2309,42 @@ describe('API/win', function()
       eq('editor', api.nvim_win_get_config(win).relative)
     end)
 
-    it('throws error when attempting to move the last window', function()
+    it('throws error when attempting to move the last non-floating window', function()
       local err = pcall_err(api.nvim_win_set_config, 0, {
         vertical = false,
       })
-      eq('Cannot move last window', err)
+      eq('Cannot move last non-floating window', err)
+
+      local win1 = api.nvim_get_current_win()
+      command('tabnew')
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
+      api.nvim_open_win(0, false, { relative = 'editor', width = 5, height = 5, row = 1, col = 1 })
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
+
+      -- If it's no longer the last non-float, still an error if autocommands make it the last
+      -- non-float again before it's moved.
+      command('vsplit')
+      exec_lua(function()
+        vim.api.nvim_create_autocmd('WinEnter', {
+          once = true,
+          callback = function()
+            vim.api.nvim_win_set_config(
+              0,
+              { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+            )
+          end,
+        })
+      end)
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
     end)
 
     it('passing retval of get_config results in no-op', function()
@@ -3324,6 +3355,59 @@ describe('API/win', function()
         assert_alive()
         eq({ { 'OLD_FOOTER' } }, api.nvim_win_get_config(win).footer)
       end)
+    end)
+
+    it('cannot split from a float', function()
+      local win = api.nvim_get_current_win()
+      local float_win = api.nvim_open_win(0, true, {
+        relative = 'editor',
+        width = 10,
+        height = 10,
+        row = 10,
+        col = 10,
+      })
+      eq(
+        'Cannot split a floating window',
+        pcall_err(api.nvim_win_set_config, win, { win = float_win, split = 'right' })
+      )
+      eq(
+        'Cannot split a floating window',
+        pcall_err(api.nvim_win_set_config, win, { win = 0, split = 'right' })
+      )
+    end)
+
+    it('cannot move autocmd window between tabpages', function()
+      local win_type, split_ok, err = exec_lua(function()
+        local other_tp_win = vim.api.nvim_get_current_win()
+        vim.cmd.tabnew()
+
+        local win_type, split_ok, err
+        vim.api.nvim_buf_call(vim.api.nvim_create_buf(true, true), function()
+          win_type = vim.fn.win_gettype()
+          split_ok, err =
+            pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
+        end)
+        return win_type, split_ok, err
+      end)
+      eq('autocmd', win_type)
+      eq({ false, 'Cannot move autocmd window to another tabpage' }, { split_ok, err })
+    end)
+
+    it('cannot move cmdwin between tabpages', function()
+      local other_tp_win = api.nvim_get_current_win()
+      command('tabnew')
+      local old_curwin = api.nvim_get_current_win()
+      feed('q:')
+      eq('command', fn.win_gettype())
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
+      )
+      -- Shouldn't move the old curwin from before we entered the cmdwin either.
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(api.nvim_win_set_config, old_curwin, { win = other_tp_win, split = 'right' })
+      )
     end)
   end)
 end)

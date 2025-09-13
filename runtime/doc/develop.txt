@@ -451,6 +451,8 @@ Use existing common {verb} names (actions) if possible:
                     a handler. |dev-name-events|
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
+    - request:      Calls a remote (network, RPC) operation.
+    - send:         Writes data or a message to a channel.
     - set:          Sets a thing (or group of things)
     - start:        Spin up a long-lived process. Prefer "enable" except when
                     "start" is obviously more appropriate.
@@ -461,7 +463,7 @@ Do NOT use these deprecated verbs:
     - contains:     Prefer "has".
     - disable:      Prefer `enable(enable: boolean)`.
     - exit:         Prefer "cancel" (or "stop" if appropriate).
-    - is_disabled:  Prefer `is_enabled()`.
+    - is_disabled:  Prefer `!is_enabled()`.
     - list:         Redundant with "get"
     - notify:       Redundant with "print", "echo"
     - show:         Redundant with "print", "echo"
@@ -683,5 +685,23 @@ External UIs are expected to implement these common features:
 - Handle the "restart" UI event so that |:restart| works.
 - Detect capslock and show an indicator if capslock is active.
 
+Multigrid UI ~
+                                                        *dev-ui-multigrid*
+- A multigrid UI should display floating windows using one of the following
+  methods, using the `win_float_pos` |ui-multigrid| event. Different methods
+  can be selected for each window as needed.
+
+  1. Let Nvim determine the position and z-order of the windows. This can be
+  achieved by using the `compindex`, `screen_row`, and `screen_col` information from
+  the `win_float_pos` UI event. To allow Nvim to automatically determine the grid,
+  the UI should call `nvim_input_mouse` with 0 as the `grid` parameter.
+  2. Use the `anchor`, `anchor_grid`, `anchor_row`, `anchor_col`, and `zindex` as
+  references for positioning the windows. If windows are outside the screen,
+  it is the UI's responsibility to reposition and/or resize them. Since Nvim
+  lacks information about actual window placement in this case, the UI must
+  call `nvim_input_mouse` with the actual grid id, factoring in `mouse_enabled`.
+  Note: Some API functions may return unexpected results for these windows due
+  to the missing information.
+- For external windows, the grid id should also be passed to `nvim_input_mouse`.
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:
