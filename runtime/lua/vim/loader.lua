@@ -119,8 +119,9 @@ local function cache_filename(name)
   -- Simplify the name of AppImage mounted file, to prevent
   -- random part in it from creating cache misses.
   if os.getenv('APPIMAGE') ~= nil then
-    local idx = name:find('/usr/', 1, true) --- @type integer?
-    name = idx and name:sub(idx) or name
+    -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
+    -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
+    name = name:match("(/usr/.*)") or name
   end
 
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
