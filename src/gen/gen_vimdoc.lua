@@ -384,25 +384,6 @@ local config = {
       return 'treesitter-' .. name:lower()
     end,
   },
-  editorconfig = {
-    filename = 'editorconfig.txt',
-    files = {
-      'runtime/lua/editorconfig.lua',
-    },
-    section_order = {
-      'editorconfig.lua',
-    },
-    section_fmt = function(_name)
-      return 'EditorConfig integration'
-    end,
-    helptag_fmt = function(name)
-      return name:lower()
-    end,
-    fn_xform = function(fun)
-      fun.table = true
-      fun.name = vim.split(fun.name, '.', { plain = true })[2]
-    end,
-  },
   health = {
     filename = 'health.txt',
     files = {
@@ -432,11 +413,20 @@ local config = {
   plugins = {
     filename = 'plugins.txt',
     section_order = {
+      'editorconfig.lua',
       'tohtml.lua',
     },
     files = {
+      'runtime/lua/editorconfig.lua',
       'runtime/lua/tohtml.lua',
     },
+    fn_xform = function(fun)
+      if fun.module == 'editorconfig' then
+        -- Example: "editorconfig.properties.root()" => "editorconfig.root"
+        fun.table = true
+        fun.name = vim.split(fun.name, '.', { plain = true })[2] or fun.name
+      end
+    end,
     section_fmt = function(name)
       return 'Builtin plugin: ' .. name:lower()
     end,

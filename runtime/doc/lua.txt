@@ -2057,12 +2057,12 @@ vim.tbl_extend({behavior}, {...})                           *vim.tbl_extend()*
     See also: ~
       • |extend()|
 
-vim.tbl_filter({func}, {t})                                 *vim.tbl_filter()*
+vim.tbl_filter({fn}, {t})                                   *vim.tbl_filter()*
     Filter a table using a predicate function
 
     Parameters: ~
-      • {func}  (`function`) Function
-      • {t}     (`table`) Table
+      • {fn}  (`function`) Function
+      • {t}   (`table`) Table
 
     Return: ~
         (`any[]`) Table of filtered values
@@ -2110,12 +2110,14 @@ vim.tbl_keys({t})                                             *vim.tbl_keys()*
       • From
         https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
-vim.tbl_map({func}, {t})                                       *vim.tbl_map()*
-    Apply a function to all values of a table.
+vim.tbl_map({fn}, {t})                                         *vim.tbl_map()*
+    Applies function `fn` to all values of table `t`, in `pairs()` iteration
+    order (which is not guaranteed to be stable, even when the data doesn't
+    change).
 
     Parameters: ~
-      • {func}  (`fun(value: T): any`) Function
-      • {t}     (`table<any, T>`) Table
+      • {fn}  (`fun(value: T): any`) Function
+      • {t}   (`table<any, T>`) Table
 
     Return: ~
         (`table`) Table of transformed values
