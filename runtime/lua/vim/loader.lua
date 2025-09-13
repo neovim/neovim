@@ -116,6 +116,13 @@ end
 --- @param name string can be a module name, or a file name
 --- @return string file_name
 local function cache_filename(name)
+  -- Simplify the name of AppImage mounted file, to prevent
+  -- random part in it from creating cache misses.
+  if os.getenv('APPIMAGE') ~= nil then
+    local idx = name:find('/usr/', 1, true) --- @type integer?
+    name = idx and name:sub(idx) or name
+  end
+
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
