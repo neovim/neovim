@@ -170,6 +170,7 @@ static void ui_ext_msg_set_pos(int row, bool scrolled)
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
                       (String){ .data = buf, .size = size }, msg_grid.zindex,
                       (int)msg_grid.comp_index);
+  ui_comp_put_grid(&msg_grid, row, 0, msg_grid.rows, msg_grid.cols, true, true);
   msg_grid.pending_comp_index_update = false;
 }
 
@@ -2628,7 +2629,7 @@ void msg_reset_scroll(void)
 
 void msg_ui_refresh(void)
 {
-  if (ui_has(kUIMultigrid) && msg_grid.chars) {
+  if (msg_grid.chars) {
     ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
     ui_ext_msg_set_pos(msg_grid_pos, msg_scrolled);
   }
@@ -2636,7 +2637,7 @@ void msg_ui_refresh(void)
 
 void msg_ui_flush(void)
 {
-  if (ui_has(kUIMultigrid) && msg_grid.chars && msg_grid.pending_comp_index_update) {
+  if (msg_grid.chars && msg_grid.pending_comp_index_update) {
     ui_ext_msg_set_pos(msg_grid_pos, msg_scrolled);
   }
 }

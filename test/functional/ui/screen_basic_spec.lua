@@ -614,7 +614,8 @@ local function screen_tests(linegrid)
     it('messages from the same Ex command as resize are visible #22225', function()
       feed(':set columns=20 | call<CR>')
       screen:expect([[
-                            |*9
+                            |
+        {0:~                   }|*8
         {1:                    }|
         {8:E471: Argument requi}|
         {8:red}                 |

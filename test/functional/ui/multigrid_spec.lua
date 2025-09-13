@@ -736,7 +736,7 @@ describe('ext_multigrid', function()
         {22:~    }|*4
       ]],
         float_pos = {
-          [4] = { 1001, 'SE', 2, 16, 58, true, 50, 1, 8, 48 },
+          [4] = { 1001, 'SE', 2, 16, 58, true, 50, 2, 8, 48 },
         },
       }
     end)
@@ -761,7 +761,7 @@ describe('ext_multigrid', function()
         {21: bar}|
       ]],
         float_pos = {
-          [4] = { -1, 'NW', 2, 15, 55, false, 100, 1, 15, 55 },
+          [4] = { -1, 'NW', 2, 15, 55, false, 100, 2, 15, 55 },
         },
       }
       feed('<C-E><Esc>')
@@ -786,7 +786,7 @@ describe('ext_multigrid', function()
         {21:            rab}|
       ]],
         float_pos = {
-          [4] = { -1, 'NW', 2, 16, 45, false, 100, 1, 16, 45 },
+          [4] = { -1, 'NW', 2, 16, 45, false, 100, 2, 16, 45 },
         },
       }
       feed('<C-E><Esc>')
@@ -811,7 +811,7 @@ describe('ext_multigrid', function()
         {21: unplace        }|
       ]],
         float_pos = {
-          [4] = { -1, 'SW', 1, 13, 5, false, 250, 2, 11, 5 },
+          [4] = { -1, 'SW', 1, 13, 5, false, 250, 3, 11, 5 },
         },
       }
     end)
@@ -1468,7 +1468,7 @@ describe('ext_multigrid', function()
       {21: Copy }|
     ]],
       float_pos = {
-        [6] = { -1, 'NW', 2, 2, 5, false, 250, 2, 7, 36 },
+        [6] = { -1, 'NW', 2, 2, 5, false, 250, 5, 7, 36 },
       },
     }
     feed('<Down><CR>')
@@ -1549,7 +1549,7 @@ describe('ext_multigrid', function()
       {21: Copy }|
     ]],
       float_pos = {
-        [6] = { -1, 'NW', 4, 1, 63, false, 250, 2, 1, 63 },
+        [6] = { -1, 'NW', 4, 1, 63, false, 250, 5, 1, 63 },
       },
     }
     feed('<Down><CR>')
@@ -1680,7 +1680,7 @@ describe('ext_multigrid', function()
       {21: Copy }|
     ]],
       float_pos = {
-        [6] = { -1, 'SW', 4, 9, 0, false, 250, 2, 14, 0 },
+        [6] = { -1, 'SW', 4, 9, 0, false, 250, 5, 14, 0 },
       },
     }
     feed('<Down><CR>')
@@ -1821,7 +1821,7 @@ describe('ext_multigrid', function()
       {21: Copy }|
     ]],
       float_pos = {
-        [6] = { -1, 'NW', 4, 10, 0, false, 250, 2, 16, 0 },
+        [6] = { -1, 'NW', 4, 10, 0, false, 250, 5, 16, 0 },
       },
     }
     feed('<Down><CR>')

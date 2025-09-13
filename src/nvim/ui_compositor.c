@@ -29,6 +29,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
+#include "nvim/ui_defs.h"
 
 #include "ui_compositor.c.generated.h"
 
@@ -38,6 +39,8 @@ kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
 static size_t bufsize = 0;
 static schar_T *linebuf;
 static sattr_T *attrbuf;
+static schar_T *bg_linebuf;
+static sattr_T *bg_attrbuf;
 
 #ifndef NDEBUG
 static int chk_width = 0, chk_height = 0;
@@ -66,6 +69,8 @@ void ui_comp_free_all_mem(void)
   kv_destroy(layers);
   xfree(linebuf);
   xfree(attrbuf);
+  XFREE_CLEAR(bg_linebuf);
+  XFREE_CLEAR(bg_attrbuf);
 }
 #endif
 
@@ -89,6 +94,8 @@ void ui_comp_detach(RemoteUI *ui)
   if (composed_uis == 0) {
     XFREE_CLEAR(linebuf);
     XFREE_CLEAR(attrbuf);
+    XFREE_CLEAR(bg_linebuf);
+    XFREE_CLEAR(bg_attrbuf);
     bufsize = 0;
   }
   ui->composed = false;
@@ -96,7 +103,7 @@ void ui_comp_detach(RemoteUI *ui)
 
 bool ui_comp_should_draw(void)
 {
-  return composed_uis != 0 && valid_screen;
+  return composed_uis != 0 && valid_screen && linebuf;
 }
 
 /// Raises or lowers the layer, syncing comp_index with zindex.
@@ -141,31 +148,33 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
                       bool on_top)
 {
   bool moved;
-  grid->pending_comp_index_update = true;
 
-  grid->comp_height = height;
-  grid->comp_width = width;
   if (grid->comp_index != 0) {
-    moved = (row != grid->comp_row) || (col != grid->comp_col);
+    moved = row != grid->comp_row || col != grid->comp_col || height != grid->comp_height
+            || width != grid->comp_width;
     if (ui_comp_should_draw()) {
       // Redraw the area covered by the old position, and is not covered
       // by the new position. Disable the grid so that compose_area() will not
       // use it.
       grid->comp_disabled = true;
+      // Top
       compose_area(grid->comp_row, row,
-                   grid->comp_col, grid->comp_col + grid->cols);
+                   grid->comp_col, grid->comp_col + grid->comp_width);
+      // Left
       if (grid->comp_col < col) {
-        compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->rows),
+        compose_area(grid->comp_row,
+                     grid->comp_row + grid->comp_height,
                      grid->comp_col, col);
       }
-      if (col + width < grid->comp_col + grid->cols) {
-        compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->rows),
-                     col + width, grid->comp_col + grid->cols);
+      // Right
+      if (col + width < grid->comp_col + grid->comp_width) {
+        compose_area(grid->comp_row,
+                     grid->comp_row + grid->comp_height,
+                     col + width, grid->comp_col + grid->comp_width);
       }
-      compose_area(row + height, grid->comp_row + grid->rows,
-                   grid->comp_col, grid->comp_col + grid->cols);
+      // Bottom
+      compose_area(row + height, grid->comp_row + grid->comp_height,
+                   grid->comp_col, grid->comp_col + grid->comp_width);
       grid->comp_disabled = false;
     }
     grid->comp_row = row;
@@ -174,6 +183,9 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     moved = true;
 #ifndef NDEBUG
     for (size_t i = 0; i < kv_size(layers); i++) {
+      if (kv_A(layers, i)->comp_index != i) {
+        abort();
+      }
       if (kv_A(layers, i) == grid) {
         abort();
       }
@@ -199,11 +211,13 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     }
     kv_A(layers, insert_at) = grid;
 
-    grid->comp_row = row;
-    grid->comp_col = col;
     grid->comp_index = insert_at;
     grid->pending_comp_index_update = true;
   }
+  grid->comp_row = row;
+  grid->comp_col = col;
+  grid->comp_height = height;
+  grid->comp_width = width;
   if (moved && valid && ui_comp_should_draw()) {
     compose_area(grid->comp_row, grid->comp_row + grid->rows,
                  grid->comp_col, grid->comp_col + grid->cols);
@@ -318,6 +332,15 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
       return grid;
     }
   }
+  if (ui_has(kUIMultigrid)) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      ScreenGrid *grid = &wp->w_grid_alloc;
+      if (grid->mouse_enabled && row >= wp->w_winrow && row < wp->w_winrow + grid->rows
+          && col >= wp->w_wincol && col < wp->w_wincol + grid->cols) {
+        return grid;
+      }
+    }
+  }
   return NULL;
 }
 
@@ -343,38 +366,32 @@ ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
   return &default_grid;
 }
 
-/// Baseline implementation. This is always correct, but we can sometimes
-/// do something more efficient (where efficiency means smaller deltas to
-/// the downstream UI.)
-static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlags flags)
+static void compose_bg_or_fg_line(int row, int startcol, int endcol, int skipstart, int skipend,
+                                  LineFlags flags, bool is_bg)
 {
-  // If rightleft is set, startcol may be -1. In such cases, the assertions
-  // will fail because no overlap is found. Adjust startcol to prevent it.
-  startcol = MAX(startcol, 0);
-  // in case we start on the right half of a double-width char, we need to
-  // check the left half. But skip it in output if it wasn't doublewidth.
-  int skipstart = 0;
-  int skipend = 0;
-  if (startcol > 0 && (flags & kLineFlagInvalid)) {
-    startcol--;
-    skipstart = 1;
-  }
-  if (endcol < default_grid.cols && (flags & kLineFlagInvalid)) {
-    endcol++;
-    skipend = 1;
-  }
-
-  int col = (int)startcol;
-  ScreenGrid *grid = NULL;
   schar_T *bg_line = &default_grid.chars[default_grid.line_offset[row]
                                          + (size_t)startcol];
   sattr_T *bg_attrs = &default_grid.attrs[default_grid.line_offset[row]
                                           + (size_t)startcol];
+  schar_T *dest_line = linebuf;
+  sattr_T *dest_attrs = attrbuf;
+  if (is_bg) {
+    dest_line = bg_linebuf;
+    dest_attrs = bg_attrbuf;
+  } else {
+    bg_line = bg_linebuf;
+    bg_attrs = bg_attrbuf;
+  }
 
+  ScreenGrid *grid = NULL;
+  int col = startcol;
   while (col < endcol) {
     int until = 0;
     for (size_t i = 0; i < kv_size(layers); i++) {
       ScreenGrid *g = kv_A(layers, i);
+      if (is_bg && g->zindex > 0) {
+        break;
+      }
       // compose_line may have been called after a shrinking operation but
       // before the resize has actually been applied. Therefore, we need to
       // first check to see if any grids have pending updates to width/height,
@@ -400,23 +417,23 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
     assert(until <= default_grid.cols);
     size_t n = (size_t)(until - col);
 
-    if (row == msg_sep_row && grid->comp_index <= msg_grid.comp_index) {
+    if (!is_bg && row == msg_sep_row && grid->comp_index <= msg_grid.comp_index) {
       // TODO(bfredl): when we implement borders around floating windows, then
       // msgsep can just be a border "around" the message grid.
       grid = &msg_grid;
       sattr_T msg_sep_attr = (sattr_T)HL_ATTR(HLF_MSGSEP);
       for (int i = col; i < until; i++) {
-        linebuf[i - startcol] = msg_sep_char;
-        attrbuf[i - startcol] = msg_sep_attr;
+        dest_line[i - startcol] = msg_sep_char;
+        dest_attrs[i - startcol] = msg_sep_attr;
       }
     } else {
       size_t off = grid->line_offset[row - grid->comp_row]
                    + (size_t)(col - grid->comp_col);
-      memcpy(linebuf + (col - startcol), grid->chars + off, n * sizeof(*linebuf));
-      memcpy(attrbuf + (col - startcol), grid->attrs + off, n * sizeof(*attrbuf));
+      memcpy(dest_line + (col - startcol), grid->chars + off, n * sizeof(*linebuf));
+      memcpy(dest_attrs + (col - startcol), grid->attrs + off, n * sizeof(*attrbuf));
       if (grid->comp_col + grid->cols > until
           && grid->chars[off + n] == NUL) {
-        linebuf[until - 1 - startcol] = schar_from_ascii(' ');
+        dest_line[until - 1 - startcol] = schar_from_ascii(' ');
         if (col == startcol && n == 1) {
           skipstart = 0;
         }
@@ -429,38 +446,40 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       for (int i = col - (int)startcol; i < until - startcol; i += width) {
         width = 1;
         // negative space
-        bool thru = (linebuf[i] == schar_from_ascii(' ')
+        bool thru = (dest_line[i] == schar_from_ascii(' ')
                      || linebuf[i] == schar_from_char(L'\u2800')) && bg_line[i] != NUL;
         if (i + 1 < endcol - startcol && bg_line[i + 1] == NUL) {
           width = 2;
-          thru &= (linebuf[i + 1] == schar_from_ascii(' ')
+          thru &= (dest_line[i + 1] == schar_from_ascii(' ')
                    || linebuf[i + 1] == schar_from_char(L'\u2800'));
         }
-        attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], &thru);
+        dest_attrs[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], dest_attrs[i], &thru);
         if (width == 2) {
-          attrbuf[i + 1] = (sattr_T)hl_blend_attrs(bg_attrs[i + 1],
-                                                   attrbuf[i + 1], &thru);
+          dest_attrs[i + 1] = (sattr_T)hl_blend_attrs(bg_attrs[i + 1],
+                                                      dest_attrs[i + 1], &thru);
         }
         if (thru) {
-          memcpy(linebuf + i, bg_line + i, (size_t)width * sizeof(linebuf[i]));
+          memcpy(dest_line + i, bg_line + i, (size_t)width * sizeof(dest_line[i]));
         }
       }
     }
 
     // Tricky: if overlap caused a doublewidth char to get cut-off, must
     // replace the visible half with a space.
-    if (linebuf[col - startcol] == NUL) {
-      linebuf[col - startcol] = schar_from_ascii(' ');
+    if (dest_line[col - startcol] == NUL) {
+      if (!is_bg) {
+        dest_line[col - startcol] = schar_from_ascii(' ');
+      }
       if (col == endcol - 1) {
         skipend = 0;
       }
-    } else if (col == startcol && n > 1 && linebuf[1] == NUL) {
+    } else if (col == startcol && n > 1 && dest_line[1] == NUL) {
       skipstart = 0;
     }
 
     col = until;
   }
-  if (linebuf[endcol - startcol - 1] == NUL) {
+  if (dest_line[endcol - startcol - 1] == NUL) {
     skipend = 0;
   }
 
@@ -471,19 +490,47 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
     flags = flags & ~kLineFlagWrap;
   }
 
-  for (int i = skipstart; i < (endcol - skipend) - startcol; i++) {
-    if (attrbuf[i] < 0) {
-      if (rdb_flags & kOptRdbFlagInvalid) {
-        abort();
-      } else {
-        attrbuf[i] = 0;
+  if (!is_bg) {
+    for (int i = skipstart; i < (endcol - skipend) - startcol; i++) {
+      if (dest_attrs[i] < 0) {
+        dest_attrs[i] = 0;
+        if (rdb_flags & kOptRdbFlagInvalid) {
+          // abort();
+        } else {}
       }
     }
+    ui_composed_call_raw_line(1, row, startcol + skipstart,
+                              endcol - skipend, endcol - skipend, 0, flags,
+                              (const schar_T *)linebuf + skipstart,
+                              (const sattr_T *)attrbuf + skipstart);
   }
-  ui_composed_call_raw_line(1, row, startcol + skipstart,
-                            endcol - skipend, endcol - skipend, 0, flags,
-                            (const schar_T *)linebuf + skipstart,
-                            (const sattr_T *)attrbuf + skipstart);
+}
+
+/// Baseline implementation. This is always correct, but we can sometimes
+/// do something more efficient (where efficiency means smaller deltas to
+/// the downstream UI.)
+static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlags flags)
+{
+  // If rightleft is set, startcol may be -1. In such cases, the assertions
+  // will fail because no overlap is found. Adjust startcol to prevent it.
+  startcol = MAX(startcol, 0);
+  // in case we start on the right half of a double-width char, we need to
+  // check the left half. But skip it in output if it wasn't doublewidth.
+  int skipstart = 0;
+  int skipend = 0;
+  if (startcol > 0 && (flags & kLineFlagInvalid)) {
+    startcol--;
+    skipstart = 1;
+  }
+  if (endcol < default_grid.cols && (flags & kLineFlagInvalid)) {
+    endcol++;
+    skipend = 1;
+  }
+
+  // Compose the bg (all grids with zindex = 0) first
+  compose_bg_or_fg_line(row, startcol, endcol, skipstart, skipend, flags, true);
+  // Then the fg
+  compose_bg_or_fg_line(row, startcol, endcol, skipstart, skipend, flags, false);
 }
 
 static void compose_debug(Integer startrow, Integer endrow, Integer startcol, Integer endcol,
@@ -707,6 +754,10 @@ void ui_comp_grid_resize(Integer grid, Integer width, Integer height)
       xfree(attrbuf);
       linebuf = xmalloc(new_bufsize * sizeof(*linebuf));
       attrbuf = xmalloc(new_bufsize * sizeof(*attrbuf));
+      xfree(bg_linebuf);
+      xfree(bg_attrbuf);
+      bg_linebuf = xmalloc(new_bufsize * sizeof(*linebuf));
+      bg_attrbuf = xmalloc(new_bufsize * sizeof(*attrbuf));
       bufsize = new_bufsize;
     }
   }
