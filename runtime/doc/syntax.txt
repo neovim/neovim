@@ -5327,6 +5327,8 @@ FloatBorder	Border of floating windows.
 FloatTitle	Title of floating windows.
 							*hl-FloatFooter*
 FloatFooter	Footer of floating windows.
+							*hl-FloatSbarThumb*
+FloatSbarThumb	Float Scrollbar thumb
 							*hl-NormalNC*
 NormalNC	Normal text in non-current windows.
 							*hl-Pmenu*

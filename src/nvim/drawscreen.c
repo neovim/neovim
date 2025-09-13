@@ -772,6 +772,61 @@ int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
   UNREACHABLE;
 }
 
+static void win_draw_scrollbar(win_T *wp)
+{
+  int height = wp->w_view_height;
+  linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+  linenr_T visible_start = wp->w_topline;
+  linenr_T visible_end = visible_start + height - 1;
+  bool content_fits = (visible_start == 1) && (visible_end >= line_count);
+
+  if (wp->w_p_wrap && !content_fits) {
+    int lines_shown = plines_m_win(wp, visible_start,
+                                   MIN(visible_end, line_count), height);
+    content_fits = (visible_start == 1) && (lines_shown >= line_count);
+  }
+
+  bool show_scrollbar = wp->w_config.scrollbar
+                        && !wp->w_buffer->terminal
+                        && (wp->w_topline > 1 || !content_fits);
+
+  int scrollbar_col = wp->w_view_width + wp->w_border_adj[3];
+  schar_T border_char = schar_from_str(wp->w_config.border_chars[3]);
+  int border_attr = wp->w_config.border_attr[3];
+
+  int thumb_size = 0, scroll_position = 0, thumb_attr = 0;
+  if (show_scrollbar) {
+    int total_content_lines = wp->w_p_wrap
+                              ? plines_m_win(wp, 1, line_count, INT_MAX) : line_count;
+
+    thumb_attr = win_hl_attr(wp, HLF_FST);
+    thumb_size = MAX(1, (height * height) / total_content_lines);
+    int scrollable_area = height - thumb_size;
+
+    int scroll_offset = wp->w_p_wrap
+                        ? plines_m_win(wp, 1, wp->w_topline - 1, INT_MAX) : (wp->w_topline - 1);
+    scroll_position = scroll_offset * scrollable_area / (total_content_lines - height);
+    scroll_position = MIN(scroll_position, scrollable_area);
+  }
+
+  ScreenGrid *grid = &wp->w_grid_alloc;
+  for (int i = 0; i < height; i++) {
+    int row = i + wp->w_border_adj[0];
+    screengrid_line_start(grid, row, 0);
+
+    if (show_scrollbar) {
+      bool is_thumb = (i >= scroll_position && i < scroll_position + thumb_size);
+      int attr = is_thumb ? thumb_attr : border_attr;
+      schar_T ch = is_thumb ? schar_from_ascii(' ') : border_char;
+      grid_line_put_schar(scrollbar_col, ch, attr);
+    } else {
+      grid_line_put_schar(scrollbar_col, border_char, border_attr);
+    }
+
+    grid_line_flush();
+  }
+}
+
 static void win_redr_border(win_T *wp)
 {
   wp->w_redr_border = false;
@@ -846,6 +901,10 @@ static void win_redr_border(win_T *wp)
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
     }
     grid_line_flush();
+  }
+
+  if (wp->w_border_adj[1] && wp->w_config.scrollbar) {
+    win_draw_scrollbar(wp);
   }
 }
 
@@ -2480,6 +2539,10 @@ redr_statuscol:
   wp->w_redr_type = 0;
   wp->w_old_topfill = wp->w_topfill;
   wp->w_old_botfill = wp->w_botfill;
+
+  if (wp->w_floating && wp->w_config.scrollbar && wp->w_border_adj[1]) {
+    win_draw_scrollbar(wp);
+  }
 
   // Send win_extmarks if needed
   for (size_t n = 0; n < kv_size(win_extmark_arr); n++) {
