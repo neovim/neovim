@@ -235,7 +235,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
   }
 
   // find the window where the row is in
-  win_T *wp = mouse_find_win(&grid, &row, &col);
+  win_T *wp = mouse_find_win_inner(&grid, &row, &col);
   if (wp == NULL) {
     return IN_UNKNOWN;
   }
@@ -663,7 +663,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     int click_grid = mouse_grid;
     int click_row = mouse_row;
     int click_col = mouse_col;
-    win_T *wp = mouse_find_win(&click_grid, &click_row, &click_col);
+    win_T *wp = mouse_find_win_inner(&click_grid, &click_row, &click_col);
     if (wp == NULL) {
       return false;
     }
@@ -1093,7 +1093,7 @@ void ins_mousescroll(int dir)
     int grid = mouse_grid;
     int row = mouse_row;
     int col = mouse_col;
-    curwin = mouse_find_win(&grid, &row, &col);
+    curwin = mouse_find_win_inner(&grid, &row, &col);
     if (curwin == NULL) {
       curwin = old_curwin;
       return;
@@ -1263,8 +1263,8 @@ retnomove:
   }
 
   // find the window where the row is in and adjust "row" and "col" to be
-  // relative to top-left of the window
-  win_T *wp = mouse_find_win(&grid, &row, &col);
+  // relative to top-left of the window inner area
+  win_T *wp = mouse_find_win_inner(&grid, &row, &col);
   if (wp == NULL) {
     return IN_UNKNOWN;
   }
@@ -1581,7 +1581,7 @@ void nv_mousescroll(cmdarg_T *cap)
     int grid = mouse_grid;
     int row = mouse_row;
     int col = mouse_col;
-    curwin = mouse_find_win(&grid, &row, &col);
+    curwin = mouse_find_win_inner(&grid, &row, &col);
     if (curwin == NULL) {
       curwin = old_curwin;
       return;
@@ -1695,10 +1695,10 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 }
 
 /// Find the window at "grid" position "*rowp" and "*colp".  The positions are
-/// updated to become relative to the top-left of the window.
+/// updated to become relative to the top-left of the window inner area.
 ///
 /// @return NULL when something is wrong.
-win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
+win_T *mouse_find_win_inner(int *gridp, int *rowp, int *colp)
 {
   win_T *wp_grid = mouse_find_grid_win(gridp, rowp, colp);
   if (wp_grid) {
@@ -1740,6 +1740,20 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   return NULL;
 }
 
+/// Find the window at "grid" position "*rowp" and "*colp".  The positions are
+/// updated to become relative to the top-left of the window.
+///
+/// @return NULL when something is wrong.
+win_T *mouse_find_win_outer(int *gridp, int *rowp, int *colp)
+{
+  win_T *wp = mouse_find_win_inner(gridp, rowp, colp);
+  if (wp) {
+    *rowp += wp->w_winrow_off;
+    *colp += wp->w_wincol_off;
+  }
+  return wp;
+}
+
 static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 {
   if (*gridp == msg_grid.handle) {
@@ -1755,18 +1769,26 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     }
   } else if (*gridp == 0) {
     ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (&wp->w_grid_alloc != grid) {
-        continue;
-      }
+    if (grid == &pum_grid) {
       *gridp = grid->handle;
-      *rowp -= grid->comp_row + wp->w_grid.row_offset;
-      *colp -= grid->comp_col + wp->w_grid.col_offset;
-      return wp;
+      *rowp -= grid->comp_row;
+      *colp -= grid->comp_col;
+      // The popup menu doesn't have a window, so return NULL
+      return NULL;
+    } else {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        if (&wp->w_grid_alloc != grid) {
+          continue;
+        }
+        *gridp = grid->handle;
+        *rowp -= wp->w_winrow + wp->w_grid.row_offset;
+        *colp -= wp->w_wincol + wp->w_grid.col_offset;
+        return wp;
+      }
     }
 
-    // no float found, click on the default grid
-    // TODO(bfredl): grid can be &pum_grid, allow select pum items by mouse?
+    // No grid found, return the default grid. With multigrid this happens for split separators for
+    // example.
     *gridp = DEFAULT_GRID_HANDLE;
   }
   return NULL;
@@ -1877,7 +1899,7 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int click_col = mouse_col;
 
   // XXX: this doesn't change click_grid if it is 1, even with multigrid
-  if (mouse_find_win(&click_grid, &click_row, &click_col) != curwin
+  if (mouse_find_win_inner(&click_grid, &click_row, &click_col) != curwin
       // Only use vcols[] after the window was redrawn.  Mainly matters
       // for tests, a user would not click before redrawing.
       || curwin->w_redr_type != 0) {
@@ -1931,7 +1953,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_nr(d, S_LEN("screenrow"), (varnumber_T)mouse_row + 1);
   tv_dict_add_nr(d, S_LEN("screencol"), (varnumber_T)mouse_col + 1);
 
-  win_T *wp = mouse_find_win(&grid, &row, &col);
+  win_T *wp = mouse_find_win_inner(&grid, &row, &col);
   if (wp != NULL) {
     int height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
     // The height is adjusted by 1 when there is a bottom border. This is not
