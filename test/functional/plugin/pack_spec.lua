@@ -294,6 +294,18 @@ local function validate_progress_report(action, step_names)
   eq(final_step, echo_log[n_steps + 2])
 end
 
+local function mock_confirm(output_value)
+  exec_lua(function()
+    _G.confirm_log = _G.confirm_log or {}
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.confirm = function(...)
+      table.insert(_G.confirm_log, { ... })
+      return output_value
+    end
+  end)
+end
+
 local function is_jit()
   return exec_lua('return package.loaded.jit ~= nil')
 end
@@ -351,14 +363,8 @@ describe('vim.pack', function()
     end)
 
     it('asks for installation confirmation', function()
-      exec_lua(function()
-        ---@diagnostic disable-next-line: duplicate-set-field
-        vim.fn.confirm = function(...)
-          _G.confirm_args = { ... }
-          -- Do not confirm installation to see what happens
-          return 0
-        end
-      end)
+      -- Do not confirm installation to see what happens
+      mock_confirm(2)
 
       local err = pcall_err(exec_lua, function()
         vim.pack.add({ repos_src.basic })
@@ -368,23 +374,43 @@ describe('vim.pack', function()
       eq(false, exec_lua('return pcall(require, "basic")'))
 
       local confirm_msg = 'These plugins will be installed:\n\n' .. repos_src.basic .. '\n'
-      eq({ confirm_msg, 'Proceed? &Yes\n&No', 1, 'Question' }, exec_lua('return _G.confirm_args'))
+      local ref_log = { { confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question' } }
+      eq(ref_log, exec_lua('return _G.confirm_log'))
     end)
 
     it('respects `opts.confirm`', function()
+      mock_confirm(1)
       exec_lua(function()
-        _G.confirm_used = false
-        ---@diagnostic disable-next-line: duplicate-set-field
-        vim.fn.confirm = function()
-          _G.confirm_used = true
-          return 1
-        end
-
         vim.pack.add({ repos_src.basic }, { confirm = false })
       end)
 
-      eq(false, exec_lua('return _G.confirm_used'))
+      eq(0, exec_lua('return #_G.confirm_log'))
       eq('basic main', exec_lua('return require("basic")'))
+    end)
+
+    it('can always confirm in current session', function()
+      mock_confirm(3)
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      eq(1, exec_lua('return #_G.confirm_log'))
+      eq('basic main', exec_lua('return require("basic")'))
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.defbranch })
+      end)
+      eq(1, exec_lua('return #_G.confirm_log'))
+      eq('defbranch dev', exec_lua('return require("defbranch")'))
+
+      -- Should still ask in next session
+      n.clear()
+      mock_confirm(3)
+      exec_lua(function()
+        vim.pack.add({ repos_src.plugindirs })
+      end)
+      eq(1, exec_lua('return #_G.confirm_log'))
+      eq('plugindirs main', exec_lua('return require("plugindirs")'))
     end)
 
     it('installs at proper version', function()

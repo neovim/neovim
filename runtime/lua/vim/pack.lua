@@ -416,18 +416,25 @@ local function run_list(plug_list, f, progress_action)
   report_progress('end', 100, '(%d/%d)', #funs, #funs)
 end
 
+local confirm_all = false
+
 --- @param plug_list vim.pack.Plug[]
 --- @return boolean
 local function confirm_install(plug_list)
+  if confirm_all then
+    return true
+  end
+
   local src = {} --- @type string[]
   for _, p in ipairs(plug_list) do
     src[#src + 1] = p.spec.src
   end
   local src_text = table.concat(src, '\n')
   local confirm_msg = ('These plugins will be installed:\n\n%s\n'):format(src_text)
-  local res = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No', 1, 'Question') == 1
+  local res = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question')
+  confirm_all = res == 3
   vim.cmd.redraw()
-  return res
+  return res ~= 2
 end
 
 --- @param tags string[]
