@@ -2891,6 +2891,11 @@ end
 --- matching. Can be used with {filename}. Mutually exclusive
 --- with {buf}.
 --- @field contents? string[]
+---
+--- Whether to skip time consuming detection steps, like
+--- pattern and content matching. Makes detection significantly
+--- faster at the cost of slightly fewer filetypes detected.
+--- @field fast? boolean
 
 --- Perform filetype detection.
 ---
@@ -2937,6 +2942,7 @@ function M.match(args)
   local bufnr = args.buf
   local name = args.filename
   local contents = args.contents
+  local not_fast = not args.fast
 
   if bufnr and not name then
     name = api.nvim_buf_get_name(bufnr)
@@ -2965,11 +2971,13 @@ function M.match(args)
     -- Next, check the file path against available patterns with non-negative priority
     -- Cache match results of all parent patterns to improve performance
     local parent_matches = {}
-    do
-      local ft, on_detect =
-        match_pattern_sorted(name, path, tail, pattern_sorted_pos, parent_matches, bufnr)
-      if ft then
-        return ft, on_detect
+    if not_fast then
+      do
+        local ft, on_detect =
+          match_pattern_sorted(name, path, tail, pattern_sorted_pos, parent_matches, bufnr)
+        if ft then
+          return ft, on_detect
+        end
       end
     end
 
@@ -2984,17 +2992,20 @@ function M.match(args)
       end
     end
 
-    do -- Next, check patterns with negative priority
-      local ft, on_detect =
-        match_pattern_sorted(name, path, tail, pattern_sorted_neg, parent_matches, bufnr)
-      if ft then
-        return ft, on_detect
+    -- Next, check patterns with negative priority
+    if not_fast then
+      do
+        local ft, on_detect =
+          match_pattern_sorted(name, path, tail, pattern_sorted_neg, parent_matches, bufnr)
+        if ft then
+          return ft, on_detect
+        end
       end
     end
   end
 
   -- Finally, check file contents
-  if contents or bufnr then
+  if not_fast and (contents or bufnr) then
     if contents == nil then
       assert(bufnr)
       if api.nvim_buf_line_count(bufnr) > 101 then
