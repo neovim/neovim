@@ -360,8 +360,8 @@ is used as a method: >
 ==============================================================================
 
 3. Cleaning up in a function ~
-							*:defer*
-:defer {func}({args})	Call {func} when the current function is done.
+							*:defe* *:defer*
+:defe[r] {func}({args})	Call {func} when the current function is done.
 			{args} are evaluated here.
 
 Quite often a command in a function has a global effect, which must be undone
