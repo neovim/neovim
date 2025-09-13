@@ -112,6 +112,19 @@ vim.keymap.set('n', 'g==', function()
   end
 end, { buffer = true })
 
+local tag_query = vim.treesitter.query.parse(
+  'vimdoc',
+  [[
+    (taglink text: (_) @string.special.url)
+    (tag     text: (_) @string.special.url)
+  ]]
+)
+for _, node, _, _ in tag_query:iter_captures(root, 0, 0, -1) do
+  local text = vim.treesitter.get_node_text(node, 0)
+  vim.notify(text)
+end
+
+
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
   .. '\n sil! exe "nunmap <buffer> gO" | sil! exe "nunmap <buffer> g=="'
   .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
