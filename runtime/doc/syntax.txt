@@ -2015,21 +2015,26 @@ $VIMRUNTIME/syntax/syntax.vim).
 MARKDOWN			*ft-markdown-syntax* *g:markdown_minlines*
 		 *g:markdown_fenced_languages* *g:markdown_syntax_conceal*
 
-If you have long regions there might be wrong highlighting.  At the cost of
+If you have long regions there may be incorrect highlighting.  At the cost of
 slowing down displaying, you can have the engine look further back to sync on
 the start of a region, for example 500 lines (default is 50): >
 
 	:let g:markdown_minlines = 500
 
-If you want to enable fenced code block syntax highlighting in your markdown
-documents you can enable like this: >
+If you want to enable fenced code block syntax highlighting in your Markdown
+documents, set the following variable: >
 
 	:let g:markdown_fenced_languages = ['html', 'python', 'bash=sh']
 
-To disable markdown syntax concealing add the following to your vimrc: >
+To disable Markdown syntax concealing, add the following to your vimrc: >
 
 	:let g:markdown_syntax_conceal = 0
 
+For extended Markdown support with enhanced features such as citations,
+footnotes, mathematical formulas, academic writing elements and embedded code
+block highlighting, consider using the pandoc syntax plugin.  Set
+`g:filetype_md` to "pandoc" and see |ft-pandoc-syntax| for configuration
+details.
 
 MATHEMATICA			*ft-mma-syntax* *ft-mathematica-syntax*
 
