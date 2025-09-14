@@ -549,7 +549,7 @@ local options = {
           ensure file name uniqueness in the backup directory.
           On Win32, it is also possible to end with "\\".  However, When a
           separating comma is following, you must use "//", since "\\" will
-          include the comma in the file name. Therefore it is recommended to
+          include the comma in the file name.  Therefore it is recommended to
           use '//', instead of '\\'.
         - Environment variables are expanded |:set_env|.
         - Careful with '\' characters, type one before a space, type two to
@@ -6376,7 +6376,7 @@ local options = {
         fit the highest line number in the buffer respectively the number of
         rows in the window, depending on whether 'number' or 'relativenumber'
         is set.  Thus with the Vim default of 4 there is room for a line
-        number up to 999. When the buffer has 1000 lines five columns will be
+        number up to 999.  When the buffer has 1000 lines five columns will be
         used. The minimum value is 1, the maximum value is 20.
       ]=],
       full_name = 'numberwidth',
