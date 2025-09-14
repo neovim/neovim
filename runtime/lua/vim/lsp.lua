@@ -488,16 +488,21 @@ local function validate_config(config)
 end
 
 --- @param bufnr integer
---- @param name string
 --- @param config vim.lsp.Config
-local function can_start(bufnr, name, config)
-  local config_ok, err = pcall(validate_config, config)
-  if not config_ok then
-    log.error(('cannot start %s due to config error: %s'):format(name, err))
+--- @param logging boolean
+local function can_start(bufnr, config, logging)
+  if
+    type(config.filetypes) == 'table'
+    and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype)
+  then
     return false
   end
 
-  if config.filetypes and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
+  local config_ok, err = pcall(validate_config, config)
+  if not config_ok then
+    if logging then
+      log.error(('invalid "%s" config: %s'):format(config.name, err))
+    end
     return false
   end
 
@@ -524,9 +529,7 @@ local function lsp_enable_callback(bufnr)
   -- Stop any clients that no longer apply to this buffer.
   local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
   for _, client in ipairs(clients) do
-    if
-      lsp.is_enabled(client.name) and not can_start(bufnr, client.name, lsp.config[client.name])
-    then
+    if lsp.is_enabled(client.name) and not can_start(bufnr, lsp.config[client.name], false) then
       lsp.buf_detach_client(bufnr, client.id)
     end
   end
@@ -534,7 +537,7 @@ local function lsp_enable_callback(bufnr)
   -- Start any clients that apply to this buffer.
   for name in vim.spairs(lsp._enabled_configs) do
     local config = lsp.config[name]
-    if config and can_start(bufnr, name, config) then
+    if config and can_start(bufnr, config, true) then
       -- Deepcopy config so changes done in the client
       -- do not propagate back to the enabled configs.
       config = vim.deepcopy(config)
