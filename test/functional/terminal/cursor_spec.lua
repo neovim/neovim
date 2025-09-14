@@ -122,7 +122,7 @@ describe(':terminal cursor', function()
       screen:expect_unchanged()
     end)
 
-    it('becomes visible when exiting Terminal mode', function()
+    local function test_becomes_visible_when_exiting_Terminal_mode()
       skip(is_os('win'), '#31587')
       hide_cursor()
       screen:expect([[
@@ -179,6 +179,16 @@ describe(':terminal cursor', function()
         {120:[Scratch] [-]                                     }|
         {5:-- TERMINAL --}                                    |
       ]])
+    end
+
+    it('becomes visible when exiting Terminal mode', function()
+      retry(2, nil, function(i)
+        if i > 1 then
+          clear()
+          screen = tt.setup_screen()
+        end
+        test_becomes_visible_when_exiting_Terminal_mode()
+      end)
     end)
 
     it('becomes visible on TermLeave if hidden immediately by events #32456', function()

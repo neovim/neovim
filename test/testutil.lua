@@ -66,11 +66,11 @@ function M.argss_to_cmd(...)
   return cmd
 end
 
---- Calls fn() until it succeeds, up to `max` times or until `max_ms`
---- milliseconds have passed.
+--- Calls fn() until it succeeds, up to `max` times or until `max_ms` milliseconds have passed.
+---
 --- @param max integer?
 --- @param max_ms integer?
---- @param fn function
+--- @param fn fun(try: number)
 --- @return any
 function M.retry(max, max_ms, fn)
   luaassert(max == nil or max > 0)
@@ -80,7 +80,7 @@ function M.retry(max, max_ms, fn)
   local start_time = uv.now()
   while true do
     --- @type boolean, any
-    local status, result = pcall(fn)
+    local status, result = pcall(fn, tries)
     if status then
       return result
     end
