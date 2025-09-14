@@ -769,9 +769,22 @@ Lua module: vim.lsp                                                 *lsp-core*
                          See `cmd` in |vim.lsp.ClientConfig|. See also
                          `reuse_client` to dynamically decide (per-buffer)
                          when `cmd` should be re-invoked.
-      • {filetypes}?     (`string[]`) Filetypes the client will attach to, if
-                         activated by `vim.lsp.enable()`. If not provided, the
-                         client will attach to all filetypes.
+      • {filetypes}?     (`string[]`) Filetypes the client will attach to, or
+                         `nil` for ALL filetypes. To match files by name,
+                         pattern, or contents, you can define a custom
+                         filetype using |vim.filetype.add()|: >lua
+                             vim.filetype.add({
+                               filename = {
+                                 ['my_filename'] = 'my_filetype1',
+                               },
+                               pattern = {
+                                 ['.*/etc/my_file_pattern/.*'] = 'my_filetype2',
+                               },
+                             })
+                             vim.lsp.config('…', {
+                               filetypes = { 'my_filetype1', 'my_filetype2' },
+                             }
+<
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                          Predicate which decides if a client should be
                          re-used. Used on all running clients. The default
@@ -793,23 +806,21 @@ Lua module: vim.lsp                                                 *lsp-core*
                          defined. The list order decides priority. To indicate
                          "equal priority", specify names in a nested list
                          `{ { 'a.txt', 'b.lua' }, ... }`.
-
-                         For each item, Nvim will search upwards (from the
-                         buffer file) for that marker, or list of markers;
-                         search stops at the first directory containing that
-                         marker, and the directory is used as the root dir
-                         (workspace folder).
-
-                         Example: Find the first ancestor directory containing
-                         file or directory "stylua.toml"; if not found, find
-                         the first ancestor containing ".git": >lua
-                               root_markers = { 'stylua.toml', '.git' }
+                         • For each item, Nvim will search upwards (from the
+                           buffer file) for that marker, or list of markers;
+                           search stops at the first directory containing that
+                           marker, and the directory is used as the root dir
+                           (workspace folder).
+                         • Example: Find the first ancestor directory
+                           containing file or directory "stylua.toml"; if not
+                           found, find the first ancestor containing ".git": >
+                           root_markers = { 'stylua.toml', '.git' }
 <
-
-                         Example: Find the first ancestor directory containing
-                         EITHER "stylua.toml" or ".luarc.json"; if not found,
-                         find the first ancestor containing ".git": >lua
-                               root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
+                         • Example: Find the first ancestor directory
+                           containing EITHER "stylua.toml" or ".luarc.json";
+                           if not found, find the first ancestor containing
+                           ".git": >
+                           root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 <
 
 

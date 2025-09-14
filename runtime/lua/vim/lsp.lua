@@ -199,8 +199,21 @@ end
 --- See also `reuse_client` to dynamically decide (per-buffer) when `cmd` should be re-invoked.
 --- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
 ---
---- Filetypes the client will attach to, if activated by `vim.lsp.enable()`. If not provided, the
---- client will attach to all filetypes.
+--- Filetypes the client will attach to, or `nil` for ALL filetypes. To match files by name,
+--- pattern, or contents, you can define a custom filetype using |vim.filetype.add()|:
+--- ```lua
+--- vim.filetype.add({
+---   filename = {
+---     ['my_filename'] = 'my_filetype1',
+---   },
+---   pattern = {
+---     ['.*/etc/my_file_pattern/.*'] = 'my_filetype2',
+---   },
+--- })
+--- vim.lsp.config('…', {
+---   filetypes = { 'my_filetype1', 'my_filetype2' },
+--- }
+--- ```
 --- @field filetypes? string[]
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
@@ -219,22 +232,19 @@ end
 --- Filename(s) (".git/", "package.json", …) used to decide the workspace root. Unused if `root_dir`
 --- is defined. The list order decides priority. To indicate "equal priority", specify names in
 --- a nested list `{ { 'a.txt', 'b.lua' }, ... }`.
----
---- For each item, Nvim will search upwards (from the buffer file) for that marker, or list of
---- markers; search stops at the first directory containing that marker, and the directory is used
---- as the root dir (workspace folder).
----
---- Example: Find the first ancestor directory containing file or directory "stylua.toml"; if not
---- found, find the first ancestor containing ".git":
---- ```lua
+--- - For each item, Nvim will search upwards (from the buffer file) for that marker, or list of
+---   markers; search stops at the first directory containing that marker, and the directory is used
+---   as the root dir (workspace folder).
+--- - Example: Find the first ancestor directory containing file or directory "stylua.toml"; if not
+---   found, find the first ancestor containing ".git":
+---   ```
 ---   root_markers = { 'stylua.toml', '.git' }
---- ```
----
---- Example: Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
---- not found, find the first ancestor containing ".git":
---- ```lua
+---   ```
+--- - Example: Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json";
+---   if not found, find the first ancestor containing ".git":
+---   ```
 ---   root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
---- ```
+---   ```
 ---
 --- @field root_markers? (string|string[])[]
 

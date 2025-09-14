@@ -6280,7 +6280,7 @@ match({expr}, {pat} [, {start} [, {count}]])                           *match()*
                   • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
                                                 *matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
@@ -6349,7 +6349,7 @@ matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
                   • {dict} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])   *matchaddpos()*
 		Same as |matchadd()|, but requires a list of positions {pos}
@@ -6396,7 +6396,7 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])   *matchaddpos()*
                   • {dict} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer|table`)
 
 matcharg({nr})                                                      *matcharg()*
 		Selects the {nr} match item, as set with a |:match|,
@@ -6414,7 +6414,7 @@ matcharg({nr})                                                      *matcharg()*
                   • {nr} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])           *matchbufline()*
 		Returns the |List| of matches in lines from {lnum} to {end} in
@@ -6468,7 +6468,7 @@ matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])           *matchbufline()*
                   • {dict} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 matchdelete({id} [, {win}])                            *matchdelete()* *E802* *E803*
 		Deletes a match with ID {id} previously defined by |matchadd()|
@@ -6511,7 +6511,7 @@ matchend({expr}, {pat} [, {start} [, {count}]])                     *matchend()*
                   • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 matchfuzzy({list}, {str} [, {dict}])                              *matchfuzzy()*
 		If {list} is a list of strings, then returns a |List| with all
@@ -6582,7 +6582,7 @@ matchfuzzy({list}, {str} [, {dict}])                              *matchfuzzy()*
                   • {dict} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`table`)
 
 matchfuzzypos({list}, {str} [, {dict}])                        *matchfuzzypos()*
 		Same as |matchfuzzy()|, but returns the list of matched
@@ -6612,7 +6612,7 @@ matchfuzzypos({list}, {str} [, {dict}])                        *matchfuzzypos()*
                   • {dict} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`table`)
 
 matchlist({expr}, {pat} [, {start} [, {count}]])                   *matchlist()*
 		Same as |match()|, but return a |List|.  The first item in the
@@ -6633,7 +6633,7 @@ matchlist({expr}, {pat} [, {start} [, {count}]])                   *matchlist()*
                   • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 matchstr({expr}, {pat} [, {start} [, {count}]])                     *matchstr()*
 		Same as |match()|, but return the matched string.  Example: >vim
@@ -6655,7 +6655,7 @@ matchstr({expr}, {pat} [, {start} [, {count}]])                     *matchstr()*
                   • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 matchstrlist({list}, {pat} [, {dict}])                          *matchstrlist()*
 		Returns the |List| of matches in {list} where {pat} matches.
@@ -6696,7 +6696,7 @@ matchstrlist({list}, {pat} [, {dict}])                          *matchstrlist()*
                   • {dict} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 matchstrpos({expr}, {pat} [, {start} [, {count}]])               *matchstrpos()*
 		Same as |matchstr()|, but return the matched string, the start
@@ -6723,7 +6723,7 @@ matchstrpos({expr}, {pat} [, {start} [, {count}]])               *matchstrpos()*
                   • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`table`)
 
 max({expr})                                                              *max()*
 		Return the maximum value of all items in {expr}. Example: >vim

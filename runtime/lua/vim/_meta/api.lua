@@ -1117,11 +1117,9 @@ function vim.api.nvim_del_var(name) end
 ---   - success: The progress item completed successfully
 ---   - running: The progress is ongoing
 ---   - failed: The progress item failed
----   - cancel: The progressing process should be canceled.
----             note: Cancel needs to be handled by progress
----             initiator by listening for the `Progress` event
---- - percent: How much progress is done on the progress
----   message
+---   - cancel: The progressing process should be canceled. NOTE: Cancel must be handled by
+---     progress initiator by listening for the `Progress` event
+--- - percent: How much progress is done on the progress message
 --- - data: dictionary containing additional information
 --- @return integer|string # Message id.
 --- - -1 means nvim_echo didn't show a message
@@ -2116,7 +2114,7 @@ function vim.api.nvim_set_current_line(line) end
 --- @param tabpage integer `tab-ID` to focus
 function vim.api.nvim_set_current_tabpage(tabpage) end
 
---- Sets the current window (and tabpage, implicitly).
+--- Navigates to the given window (and tabpage, implicitly).
 ---
 --- @param window integer `window-ID` to focus
 function vim.api.nvim_set_current_win(window) end
