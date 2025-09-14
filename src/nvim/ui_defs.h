@@ -34,7 +34,7 @@ typedef struct {
   bool rgb;
   bool override;  ///< Force highest-requested UI capabilities.
   bool composed;
-  bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
+  bool ui_ext[kUIExtCount];  ///< UI capabilities/extensions.
   int width;
   int height;
   int pum_nlines;  ///< actual nr. lines shown in PUM

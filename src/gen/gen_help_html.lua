@@ -89,10 +89,11 @@ local new_layout = {
 
 -- Map of new:old pages, to redirect renamed pages.
 local redirects = {
+  ['api-ui-events'] = 'ui',
   ['credits'] = 'backers',
+  ['plugins'] = 'editorconfig',
   ['terminal'] = 'nvim_terminal_emulator',
   ['tui'] = 'term',
-  ['api-ui-events'] = 'ui',
 }
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
