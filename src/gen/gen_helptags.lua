@@ -48,7 +48,7 @@ for _, fn in ipairs(files) do
       end
     end
 
-    if line == '>' or vim.endswith(line, ' >') then
+    if line:find('^>[a-z0-9]*$') or line:find(' >[a-z0-9]*$') then
       in_example = true
     end
   end
