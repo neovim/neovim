@@ -266,6 +266,7 @@ LUA
 • |vim.list.bisect()| for binary search.
 • Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
 • |vim.json.encode()| has an `indent` option for pretty-formatting.
+• |vim.json.encode()| has an `sort_keys` option.
 
 OPTIONS
 
