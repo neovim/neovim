@@ -1674,6 +1674,30 @@ nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
         • winid: (number) floating window id
         • bufnr: (number) buffer id in floating window
 
+nvim__exec_lua_fast({code}, {args})                    *nvim__exec_lua_fast()*
+    WARNING: This feature is experimental/unstable.
+
+    EXPERIMENTAL: this API may change or be removed in the future.
+
+    Like |nvim_exec_lua()|, but can be called during |api-fast| contexts.
+
+    Execute Lua code. Parameters (if any) are available as `...` inside the
+    chunk. The chunk can return a value.
+
+    Only statements are executed. To evaluate an expression, prefix it with
+    `return`: return my_function(...)
+
+    Attributes: ~
+        |api-fast|
+        |RPC| only
+
+    Parameters: ~
+      • {code}  (`string`) Lua code to execute
+      • {args}  (`any[]`) Arguments to the code
+
+    Return: ~
+        (`any`) Return value of Lua code if present or NIL.
+
 nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
     Find files in runtime directories
 
