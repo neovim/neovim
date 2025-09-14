@@ -874,7 +874,7 @@ static int diff_write(buf_T *buf, diffin_T *din, linenr_T start, linenr_T end)
   cmdmod.cmod_flags = save_cmod_flags;
   free_string_option(buf->b_p_ff);
   buf->b_p_ff = save_ff;
-  buf->b_ml.ml_flags = save_ml_flags;
+  buf->b_ml.ml_flags = (buf->b_ml.ml_flags & ~ML_EMPTY) | (save_ml_flags & ML_EMPTY);
   return r;
 }
 

@@ -3286,4 +3286,29 @@ func Test_diffget_diffput_diffanchors()
   set diffanchors&
 endfunc
 
+func Test_diff_add_prop_in_autocmd()
+  CheckScreendump
+
+  let lines =<< trim END
+    func MyDiff() abort
+      let f1 = readfile(v:fname_in)
+      let f2 = readfile(v:fname_new)
+      let f0 = diff(f1, f2)
+      call writefile(split(f0, "\n"), v:fname_out)
+    endfunc
+
+    call prop_type_add('myprop', #{highlight: 'Search', override: 1})
+    autocmd OptionSet diff call prop_add(1, 1, #{type: 'myprop', length: 100})
+    set diffexpr=MyDiff()
+  END
+  call writefile(lines, 'Xtest_diff_add_prop_in_autocmd', 'D')
+  call writefile(['foo', 'bar', 'baz'], 'Xdiffsplit_file', 'D')
+
+  let buf = RunVimInTerminal('-S Xtest_diff_add_prop_in_autocmd', {})
+  call term_sendkeys(buf, ":diffsplit Xdiffsplit_file\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_add_prop_in_autocmd_01', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
