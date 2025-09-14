@@ -54,5 +54,6 @@ WASMTIME_SHA256 b94b6c6fd6aebaf05d4c69c1b12b5dc217b0d42c1a95f435b33af63dddfa5304
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.81.0.tar.gz
 UNCRUSTIFY_SHA256 484623dc16b92206adc6ac0770077c6c67c6e441102148c2a121a19549330ff9
+# This is where we get busted, luassert, ...
 LUA_DEV_DEPS_URL https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz
 LUA_DEV_DEPS_SHA256 49f8399e453103064a23c65534f266f3067cda716b6502f016bfafeed5799354
