@@ -3539,7 +3539,7 @@ describe('extmark decorations', function()
     ]])
   end)
 
-  it('redraws extmark that starts and ends outisde the screen', function()
+  it('redraws extmark that starts and ends outside the screen', function()
     local lines = vim.split(('1'):rep(20), '', { plain = true })
     api.nvim_buf_set_lines(0, 0, -1, true, lines)
     api.nvim_buf_set_extmark(0, ns, 0, 0, { hl_group = 'ErrorMsg', end_row = 19, end_col = 0 })
