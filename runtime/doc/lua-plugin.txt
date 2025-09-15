@@ -131,7 +131,7 @@ work out of the box. Common approaches are:
   See also |lua-vim-variables|.
 
 Typically, automatic initialization logic is done in a |plugin| or |ftplugin|
-script. See also |'runtimepath'|.
+script. See also 'runtimepath'.
 
 On the other hand, a single `setup(opts)` that combines configuration and
 initialization may be useful in specific cases:
