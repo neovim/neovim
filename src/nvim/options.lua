@@ -545,7 +545,7 @@ local options = {
         - A directory name may end in an '/'.
         - For Unix and Win32, if a directory ends in two path separators "//",
           the swap file name will be built from the complete path to the file
-          with all path separators changed to percent '%' signs. This will
+          with all path separators changed to percent '%' signs.  This will
           ensure file name uniqueness in the backup directory.
           On Win32, it is also possible to end with "\\".  However, When a
           separating comma is following, you must use "//", since "\\" will
@@ -669,10 +669,10 @@ local options = {
       flags = true,
       deny_duplicates = true,
       desc = [=[
-        Specifies for which events the bell will not be rung. It is a comma-
-        separated list of items. For each item that is present, the bell
-        will be silenced. This is most useful to specify specific events in
-        insert mode to be silenced.
+        Specifies for which events the bell will not be rung.  It is a comma-
+        separated list of items.  For each item that is present, the bell will
+        be silenced.  This is most useful to specify specific events in insert
+        mode to be silenced.
         You can also make it flash by using 'visualbell'.
 
         item	    meaning when present	~
@@ -702,8 +702,8 @@ local options = {
         	    (depends on the 'wildmode' setting).
 
         This is most useful to fine tune when in Insert mode the bell should
-        be rung. For Normal mode and Ex commands, the bell is often rung to
-        indicate that an error occurred. It can be silenced by adding the
+        be rung.  For Normal mode and Ex commands, the bell is often rung to
+        indicate that an error occurred.  It can be silenced by adding the
         "error" keyword.
       ]=],
       full_name = 'belloff',
@@ -823,11 +823,11 @@ local options = {
       values = { 'shift:', 'min:', 'sbr', 'list:', 'column:' },
       deny_duplicates = true,
       desc = [=[
-        Settings for 'breakindent'. It can consist of the following optional
+        Settings for 'breakindent'.  It can consist of the following optional
         items and must be separated by a comma:
         	min:{n}	    Minimum text width that will be kept after
         		    applying 'breakindent', even if the resulting
-        		    text should normally be narrower. This prevents
+        		    text should normally be narrower.  This prevents
         		    text indented almost to the right window border
         		    occupying lots of vertical space when broken.
         		    (default: 20)
@@ -846,8 +846,8 @@ local options = {
         		    (default: 0)
         	list:-1	    Uses the width of a match with 'formatlistpat' for
         		    indentation.
-        	column:{n}  Indent at column {n}. Will overrule the other
-        		    sub-options. Note: an additional indent may be
+        	column:{n}  Indent at column {n}.  Will overrule the other
+        		    sub-options.  Note: an additional indent may be
         		    added for the 'showbreak' setting.
         		    (default: off)
       ]=],
@@ -1172,7 +1172,7 @@ local options = {
         faster, see |expr-option-function|.
 
         If the 'charconvert' expression starts with s: or |<SID>|, then it is
-        replaced with the script ID (|local-function|). Example: >vim
+        replaced with the script ID (|local-function|).  Example: >vim
         	set charconvert=s:MyConvert()
         	set charconvert=<SID>SomeConvert()
         <	Otherwise the expression is evaluated in the context of the script
@@ -1562,7 +1562,7 @@ local options = {
         with CTRL-X CTRL-U. |i_CTRL-X_CTRL-U|
         See |complete-functions| for an explanation of how the function is
         invoked and what it should return.  The value can be the name of a
-        function, a |lambda| or a |Funcref|. See |option-value-function| for
+        function, a |lambda| or a |Funcref|.  See |option-value-function| for
         more information.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
@@ -1717,7 +1717,7 @@ local options = {
         Only "fuzzy", "popup", "preinsert" and "preview" have an effect when
         'autocomplete' is enabled.
 
-        This option does not apply to |cmdline-completion|. See 'wildoptions'
+        This option does not apply to |cmdline-completion|.  See 'wildoptions'
         for that.
       ]=],
       full_name = 'completeopt',
@@ -2574,7 +2574,7 @@ local options = {
         - For Unix and Win32, if a directory ends in two path separators "//",
           the swap file name will be built from the complete path to the file
           with all path separators replaced by percent '%' signs (including
-          the colon following the drive letter on Win32). This will ensure
+          the colon following the drive letter on Win32).  This will ensure
           file name uniqueness in the preserve directory.
           On Win32, it is also possible to end with "\\".  However, When a
           separating comma is following, you must use "//", since "\\" will
@@ -3729,7 +3729,7 @@ local options = {
         the internal format mechanism.
 
         If the expression starts with s: or |<SID>|, then it is replaced with
-        the script ID (|local-function|). Example: >vim
+        the script ID (|local-function|).  Example: >vim
         	set formatexpr=s:MyFormatExpr()
         	set formatexpr=<SID>SomeFormatExpr()
         <	Otherwise, the expression is evaluated in the context of the script
@@ -4652,7 +4652,7 @@ local options = {
         Note: Not used for |<cfile>|.
 
         If the expression starts with s: or |<SID>|, then it is replaced with
-        the script ID (|local-function|). Example: >vim
+        the script ID (|local-function|).  Example: >vim
         	setlocal includeexpr=s:MyIncludeExpr()
         	setlocal includeexpr=<SID>SomeIncludeExpr()
         <	Otherwise, the expression is evaluated in the context of the script
@@ -4733,7 +4733,7 @@ local options = {
         when the expression is evaluated (but it may be moved around).
 
         If the expression starts with s: or |<SID>|, then it is replaced with
-        the script ID (|local-function|). Example: >vim
+        the script ID (|local-function|).  Example: >vim
         	set indentexpr=s:MyIndentExpr()
         	set indentexpr=<SID>SomeIndentExpr()
         <	Otherwise, the expression is evaluated in the context of the script
@@ -6394,7 +6394,7 @@ local options = {
         completion with CTRL-X CTRL-O. |i_CTRL-X_CTRL-O|
         See |complete-functions| for an explanation of how the function is
         invoked and what it should return.  The value can be the name of a
-        function, a |lambda| or a |Funcref|. See |option-value-function| for
+        function, a |lambda| or a |Funcref|.  See |option-value-function| for
         more information.
         This option is usually set by a filetype plugin:
         |:filetype-plugin-on|
@@ -6433,7 +6433,7 @@ local options = {
       desc = [=[
         This option specifies a function to be called by the |g@| operator.
         See |:map-operator| for more info and an example.  The value can be
-        the name of a function, a |lambda| or a |Funcref|. See
+        the name of a function, a |lambda| or a |Funcref|.  See
         |option-value-function| for more information.
 
         This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -6771,7 +6771,7 @@ local options = {
         for each entry in the corresponding quickfix or location list.  See
         |quickfix-window-function| for an explanation of how to write the
         function and an example.  The value can be the name of a function, a
-        |lambda| or a |Funcref|. See |option-value-function| for more
+        |lambda| or a |Funcref|.  See |option-value-function| for more
         information.
 
         This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -8011,7 +8011,7 @@ local options = {
         	`:silent` was used for the command; note that this also
         	affects messages from 'autoread' reloading
           S	do not show search count message when searching, e.g.	*shm-S*
-        	"[1/5]". When the "S" flag is not present (e.g. search count
+        	"[1/5]".  When the "S" flag is not present (e.g. search count
         	is shown), the "search hit BOTTOM, continuing at TOP" and
         	"search hit TOP, continuing at BOTTOM" messages are only
         	indicated by a "W" (Mnemonic: Wrapped) letter before the
@@ -8591,7 +8591,7 @@ local options = {
 
         timeout:{millisec}   Limit the time searching for suggestions to
         		{millisec} milliseconds.  Applies to the following
-        		methods.  When omitted the limit is 5000. When
+        		methods.  When omitted the limit is 5000.  When
         		negative there is no limit.
 
         file:{filename} Read file {filename}, which must have two columns,
@@ -9366,7 +9366,7 @@ local options = {
         The function gets the tag pattern and should return a List of matching
         tags.  See |tag-function| for an explanation of how to write the
         function and an example.  The value can be the name of a function, a
-        |lambda| or a |Funcref|. See |option-value-function| for more
+        |lambda| or a |Funcref|.  See |option-value-function| for more
         information.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
@@ -10484,7 +10484,7 @@ local options = {
         			d	#define
         			f	function
 
-        This option does not apply to |ins-completion|. See 'completeopt' for
+        This option does not apply to |ins-completion|.  See 'completeopt' for
         that.
       ]=],
       full_name = 'wildoptions',
