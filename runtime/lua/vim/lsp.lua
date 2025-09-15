@@ -784,7 +784,6 @@ function lsp._set_defaults(client, bufnr)
   if client:supports_method(ms.textDocument_diagnostic) then
     lsp.diagnostic._enable(bufnr)
   end
-  lsp.document_color.enable(true, bufnr)
 end
 
 --- @deprecated
