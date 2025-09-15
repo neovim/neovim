@@ -4,6 +4,7 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local matches = t.matches
 local pcall_err = t.pcall_err
 
 describe('xdiff bindings', function()
@@ -169,25 +170,25 @@ describe('xdiff bindings', function()
   end)
 
   it('can handle bad args', function()
-    eq([[Expected at least 2 arguments]], pcall_err(exec_lua, [[vim.text.diff('a')]]))
+    matches([[Expected at least 2 arguments$]], pcall_err(exec_lua, [[vim.text.diff('a')]]))
 
-    t.matches(
+    matches(
       [[bad argument %#1 to '_?diff' %(expected string%)]],
       pcall_err(exec_lua, [[vim.text.diff(1, 2)]])
     )
 
-    t.matches(
+    matches(
       [[bad argument %#3 to '_?diff' %(expected table%)]],
       pcall_err(exec_lua, [[vim.text.diff('a', 'b', true)]])
     )
 
-    eq(
-      [[invalid key: bad_key]],
+    matches(
+      [[invalid key: bad_key$]],
       pcall_err(exec_lua, [[vim.text.diff('a', 'b', { bad_key = true })]])
     )
 
-    eq(
-      [[on_hunk is not a function]],
+    matches(
+      [[on_hunk is not a function$]],
       pcall_err(exec_lua, [[vim.text.diff('a', 'b', { on_hunk = true })]])
     )
   end)
