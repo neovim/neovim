@@ -13,7 +13,7 @@ local poke_eventloop = n.poke_eventloop
 
 describe('vim.ui', function()
   before_each(function()
-    clear()
+    clear({ args_rm = { '-u' }, args = { '--clean' } })
   end)
 
   describe('select()', function()
@@ -179,6 +179,29 @@ describe('vim.ui', function()
           return cmd:wait()
         end, { n.testprg('printargs-test'), 'arg1' })
       )
+    end)
+
+    it('gx on a help tag opens URL', function()
+      n.command('helptags $VIMRUNTIME/doc')
+      n.command('help nvim.txt')
+
+      local link_ns = n.api.nvim_create_namespace('nvim.help.urls')
+      local tag = n.api.nvim_buf_get_extmarks(0, link_ns, 0, -1, {
+        limit = 1,
+        details = true,
+      })[1]
+
+      local url = tag[4].url
+      assert(url)
+
+      --- points to the neovim.io site
+      eq(true, vim.startswith(url, 'https://neovim.io/doc'))
+
+      -- tag is URI encoded
+      local param = url:match('%?tag=(.*)')
+      local tagname =
+        n.api.nvim_buf_get_text(0, tag[2], tag[3], tag[4].end_row, tag[4].end_col, {})[1]
+      eq(vim.uri_encode(tagname), param)
     end)
   end)
 end)
