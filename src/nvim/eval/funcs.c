@@ -3667,6 +3667,9 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "isinf()" function
 static void f_isinf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
   if (argvars[0].v_type == VAR_FLOAT
       && xisinf(argvars[0].vval.v_float)) {
     rettv->vval.v_number = argvars[0].vval.v_float > 0.0 ? 1 : -1;
@@ -3676,6 +3679,7 @@ static void f_isinf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "isnan()" function
 static void f_isnan(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = argvars[0].v_type == VAR_FLOAT
                          && xisnan(argvars[0].vval.v_float);
 }
