@@ -191,7 +191,9 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     exec(init)
     command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
     feed(':edit ' .. testfile .. '<CR>')
+    eq('r?', api.nvim_get_mode().mode)
     feed('E:source<CR>')
+    eq('r?', api.nvim_get_mode().mode)
     screen2:sleep(1000)
     feed('E')
     screen2:expect([[
