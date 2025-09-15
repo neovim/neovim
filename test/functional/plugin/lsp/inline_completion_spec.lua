@@ -172,6 +172,18 @@ describe('vim.lsp.inline_completion', function()
       feed('<Esc>')
       screen:expect({ grid = grid_without_candidates })
     end)
+
+    it('no request when leaving insert mode immediately after typing', function()
+      screen:expect({ grid = grid_without_candidates })
+      feed('ifoobar<Esc>')
+      screen:expect([[
+        function fibonacci()                                 |
+        fooba^r                                               |
+        {1:~                                                    }|*11
+                                                             |
+      ]])
+      screen:expect_unchanged(false, 500)
+    end)
   end)
 
   describe('get()', function()

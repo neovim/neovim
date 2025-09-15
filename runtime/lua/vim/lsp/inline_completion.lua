@@ -309,6 +309,7 @@ function Completor:abort()
     method = ms.textDocument_inlineCompletion,
     type = 'pending',
   })
+  self:reset_timer()
   self:hide()
   self.current = nil
 end
