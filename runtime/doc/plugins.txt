@@ -36,6 +36,7 @@ Help-link		Loaded	Short description ~
     |man.lua|		Yes	Opening and viewing manpages
     |pi_spec.txt|	Yes	Filetype plugin to work with rpm spec files
 |tohtml|		Yes	Convert buffer to html, syntax included
+|undotree|		No	Interactive textual undotree
 
 ==============================================================================
 Builtin plugin: editorconfig                                    *editorconfig*
@@ -153,6 +154,35 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
 
     Return: ~
         (`string[]`)
+
+
+==============================================================================
+Builtin plugin: undotree                                            *undotree*
+
+undotree({opts})                                         *undotree.undotree()*
+    Open a window that displays a textual representation of the undotree.
+
+    While in the window, moving the cursor changes the undo.
+
+    Load the plugin with this command: >
+                packadd nvim.undotree
+<
+
+    Can also be shown with `:Undotree`.                            *:Undotree*
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {bufnr} (`integer?`) Buffer to draw the tree into. If
+                  omitted, a new buffer is created.
+                • {winid} (`integer?`) Window id to display the tree buffer
+                  in. If omitted, a new window is created with {command}.
+                • {command} (`string?`) Vimscript command to create the
+                  window. Default value is "30vnew". Only used when {winid} is
+                  nil.
+                • {title} (`string|fun(bufnr:integer):string?`) Title of the
+                  window. If a function, it accepts the buffer number of the
+                  source buffer as its only argument and should return a
+                  string.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
