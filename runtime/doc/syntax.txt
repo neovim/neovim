@@ -4336,6 +4336,12 @@ The "containedin" argument is followed by a list of syntax group names.  The
 item will be allowed to begin inside these groups.  This works as if the
 containing item has a "contains=" argument that includes this item.
 
+Only the immediate containing item (the one at the top of the syntax stack) is
+considered.  Vim does not search other ancestors.  If the immediate container
+neither contains this item via |:syn-contains| nor is named in this item's
+"containedin=", the match will not start even if some ancestor would allow it.
+Note that a |:syn-transparent| region still enforces its own |:syn-contains| list.
+
 The {group-name}... can be used just like for "contains", as explained above.
 
 This is useful when adding a syntax item afterwards.  An item can be told to
@@ -4350,6 +4356,7 @@ Matches for "containedin" are added to the other places where the item can
 appear.  A "contains" argument may also be added as usual.  Don't forget that
 keywords never contain another item, thus adding them to "containedin" won't
 work.
+See also: |:syn-contains|, |:syn-transparent|.
 
 
 nextgroup={group-name},..				*:syn-nextgroup*
