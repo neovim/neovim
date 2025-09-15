@@ -81,7 +81,7 @@ other numbers.
 
 The CTRL-X command does subtraction in a similar way.
 
-The behavior of CTRL-A and CTRL-X depends on the value of |'nrformats'|. For
+The behavior of CTRL-A and CTRL-X depends on the value of 'nrformats'. For
 example, if you use: >
 
         :set nrformats+=octal

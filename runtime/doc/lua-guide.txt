@@ -98,13 +98,13 @@ not both at the same time. This should be placed in your |config| directory
 Lua in `init.vim` and Vimscript in `init.lua`, which will be covered below.
 
 If you'd like to run any other Lua script on |startup| automatically, then you
-can simply put it in `plugin/` in your |'runtimepath'|.
+can simply put it in `plugin/` in your 'runtimepath'.
 
 ------------------------------------------------------------------------------
 Lua modules                                                  *lua-guide-modules*
 
 If you want to load Lua files on demand, you can place them in the `lua/`
-directory in your |'runtimepath'| and load them with `require`. (This is the
+directory in your 'runtimepath' and load them with `require`. (This is the
 Lua equivalent of Vimscript's |autoload| mechanism.)
 
 Let's assume you have the following directory structure:
@@ -154,7 +154,7 @@ its functions if this succeeds and prints an error message otherwise:
     end
 <
 In contrast to |:source|, |require()| not only searches through all `lua/` directories
-under |'runtimepath'|, it also caches the module on first use. Calling
+under 'runtimepath', it also caches the module on first use. Calling
 `require()` a second time will therefore _not_ execute the script again and
 instead return the cached file. To rerun the file, you need to remove it from
 the cache manually first:
@@ -234,7 +234,7 @@ e.g., |autoload| functions have to be called with this syntax:
 See also:
 • |vimscript-functions|: descriptions of all Vimscript functions
 • |function-list|: Vimscript functions grouped by topic
-• |:runtime|: run all Lua scripts matching a pattern in |'runtimepath'|
+• |:runtime|: run all Lua scripts matching a pattern in 'runtimepath'
 
 ==============================================================================
 Variables                                                  *lua-guide-variables*

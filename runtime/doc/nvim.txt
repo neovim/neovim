@@ -71,9 +71,9 @@ See |provider-python| and |provider-clipboard| for additional software you
 might need to use some features.
 
 Your Vim configuration might not be entirely Nvim-compatible (see
-|vim-differences|). For example the |'ttymouse'| option was removed from Nvim,
+|vim-differences|). For example the 'ttymouse' option was removed from Nvim,
 because mouse support is always enabled if possible. If you use the same
-|vimrc| for Vim and Nvim you could guard |'ttymouse'| in your configuration
+|vimrc| for Vim and Nvim you could guard 'ttymouse' in your configuration
 like so:
 >vim
     if !has('nvim')

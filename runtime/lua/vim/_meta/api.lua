@@ -1726,7 +1726,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- provided or `win == 0`, a window will be created adjacent to the current window.
 --- If -1 is provided, a top-level split will be created. `vertical` and `split` are
 --- only valid for normal windows, and are used to control split direction. For `vertical`,
---- the exact direction is determined by `'splitright'` and `'splitbelow'`.
+--- the exact direction is determined by 'splitright' and 'splitbelow'.
 --- Split windows cannot have `bufpos`/`row`/`col`/`border`/`title`/`footer`
 --- properties.
 ---

@@ -54,7 +54,7 @@
 /// Unloaded Buffers: ~
 ///
 /// Buffers may be unloaded by the |:bunload| command or the buffer's
-/// |'bufhidden'| option. When a buffer is unloaded its file contents are freed
+/// 'bufhidden' option. When a buffer is unloaded its file contents are freed
 /// from memory and vim cannot operate on the buffer lines until it is reloaded
 /// (usually by opening the buffer again in a new window). API methods such as
 /// |nvim_buf_get_lines()| and |nvim_buf_line_count()| will be affected.

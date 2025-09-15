@@ -95,7 +95,7 @@ BUFFER-LOCAL DEFAULTS
 - 'formatexpr' is set to |vim.lsp.formatexpr()|, so you can format lines via
   |gq| if the language server supports it.
   - To opt out of this use |gw| instead of gq, or clear 'formatexpr' on |LspAttach|.
-- |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
+- |K| is mapped to |vim.lsp.buf.hover()| unless 'keywordprg' is customized or
   a custom keymap for `K` exists.
 - Document colors are enabled for highlighting color references in a document.
   - To opt out call `vim.lsp.document_color.enable(false, args.buf)` on |LspAttach|.
