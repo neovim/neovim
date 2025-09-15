@@ -1443,7 +1443,8 @@ describe('TUI', function()
     ]])
     feed_data('\027[201~') -- End paste.
     poke_both_eventloop()
-    screen:expect_unchanged()
+    -- Don't use screen:expect_unchanged() here, as redrawing may move cursor.
+    -- screen:expect_unchanged()
     feed_data('\027[27u') -- ESC: go to Normal mode.
     wait_for_mode('n')
     screen:expect([[
