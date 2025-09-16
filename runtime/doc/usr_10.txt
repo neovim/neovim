@@ -339,6 +339,8 @@ then ":".  For example, when you type "5:", you will get: >
 Now you can type the command you want to use.  It will use the range "."
 (current line) until ".+4" (four lines down).  Thus it spans five lines.
 
+See also |:range|, for an overview of all possible ways to specify a range.
+
 ==============================================================================
 *10.4*	The global command
 
