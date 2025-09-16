@@ -3947,7 +3947,7 @@ vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
 
     This function operates in one mode:
     • Asynchronous (non-blocking): Returns immediately and passes the response
-      object to the provided `on_response` handler on completetion.
+      object to the provided `on_response` handler on completion.
 
     Parameters: ~
       • {url}          (`string`) The URL for the request.
@@ -3960,7 +3960,7 @@ vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
                          Response Object will be `true` instead of the
                          response body.
       • {on_response}  (`fun(err?: string, response?: { body: string|boolean })`)
-                       Callback invoked on request completetion. The `body`
+                       Callback invoked on request completion. The `body`
                        field in the response object contains the raw response
                        data (text or binary). Called with (err, nil) on
                        failure, or (nil, { body = string|boolean }) on
@@ -4111,7 +4111,7 @@ Provides operations to compare, calculate, and convert ranges represented by
 
         -- Create a range from two positions.
         local range1 = vim.range(pos1, pos2)
-        -- Or createa range from four integers representing start and end positions.
+        -- Or create a range from four integers representing start and end positions.
         local range2 = vim.range(3, 5, 4, 0)
 
         -- Because `vim.Range` is end exclusive, `range1` and `range2` both represent
@@ -4421,7 +4421,7 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
            else
              return '<Tab>'
            end
-         end, { descr = '...', expr = true, silent = true })
+         end, { desc = '...', expr = true, silent = true })
 <
 
     Parameters: ~
@@ -4621,7 +4621,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                    return of SystemObj:wait().
 
     Overloads: ~
-      • `fun(cmd: string, on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`
+      • `fun(cmd: string[], on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`
 
     Return: ~
         (`vim.SystemObj`) See |vim.SystemObj|.

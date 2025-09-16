@@ -3290,7 +3290,7 @@ void msg_ext_ui_flush(void)
 
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
                      msg_ext_append, msg_ext_id);
-    // clear info after emiting message.
+    // clear info after emitting message.
     if (msg_ext_history) {
       api_free_array(*tofree);
     } else {

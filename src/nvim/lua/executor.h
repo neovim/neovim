@@ -42,7 +42,7 @@ typedef enum {
   kRetNilBool,  ///< NIL preserved as such, other values return their booleanness
                 ///< Should also be used when return value is ignored, as it is allocation-free
   kRetLuaref,   ///< return value becomes a single Luaref, regardless of type (except NIL)
-  kRetMulti,    ///< like kRetObject but return muliple return values as an Array
+  kRetMulti,    ///< like kRetObject but return multiple return values as an Array
 } LuaRetMode;
 
 /// Maximum number of errors in vim.ui_attach() and decor provider callbacks.

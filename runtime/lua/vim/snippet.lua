@@ -613,7 +613,7 @@ end
 ---    else
 ---      return '<Tab>'
 ---    end
----  end, { descr = '...', expr = true, silent = true })
+---  end, { desc = '...', expr = true, silent = true })
 --- ```
 ---
 --- @param direction (vim.snippet.Direction) Navigation direction. -1 for previous, 1 for next.

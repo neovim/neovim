@@ -338,7 +338,7 @@ hard to see what the actual edit on it was.  You can use diff anchors to pin
 that function so the diff algorithm will align based on it.
 
 To use it, set anchors using 'diffanchors' which is a comma-separated list of
-{address} in each file, and then add "anchor" to 'diffopt'.  Internaly, Vim
+{address} in each file, and then add "anchor" to 'diffopt'.  Internally, Vim
 splits each file up into sections split by the anchors.  It performs the diff
 on each pair of sections separately before merging the results back.
 

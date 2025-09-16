@@ -1446,7 +1446,7 @@ function M.selection_range(direction)
       if not response then
         return
       end
-      -- We only requested one range, thus we get the first and only reponse here.
+      -- We only requested one range, thus we get the first and only response here.
       response = response[1]
       local ranges = {} ---@type lsp.Range[]
       local lines = api.nvim_buf_get_lines(0, 0, -1, false)

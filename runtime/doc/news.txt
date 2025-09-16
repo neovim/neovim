@@ -77,7 +77,7 @@ EVENTS
 • |ui-messages| no longer emits the `msg_show.return_prompt`, and
   `msg_history_clear` events. The `msg_clear` event was repurposed and is now
   emitted after the screen is cleared. These events arbitrarily assumed a
-  message UI that mimicks the legacy message grid. Benefit: reduced UI event
+  message UI that mimics the legacy message grid. Benefit: reduced UI event
   traffic and more flexibility for UIs.
   The `msg_history_show` event has an additional "prev_cmd" argument.
 • A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
@@ -201,8 +201,8 @@ EVENTS
 
 • |CmdlineLeave| sets |v:char| to the character that stops the Cmdline mode.
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
-• New `append` paremeter for |ui-messages| `msg_show` event.
-• New `msg_id` paremeter for |ui-messages| `msg_show` event.
+• New `append` parameter for |ui-messages| `msg_show` event.
+• New `msg_id` parameter for |ui-messages| `msg_show` event.
 • 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
 • Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
 
@@ -282,7 +282,7 @@ OPTIONS
   • "F"         complete using 'completefunc'
   • "o"         complete using 'omnifunc'
 • 'complete' allows limiting matches for sources using "{flag}^<limit>".
-• 'completeopt' flag "nearset" sorts completion results by distance to cursor.
+• 'completeopt' flag "nearest" sorts completion results by distance to cursor.
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'grepformat' is now a |global-local| option.
