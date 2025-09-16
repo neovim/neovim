@@ -189,6 +189,7 @@ func s:GetFilenameChecks() abort
     \ 'cmusrc': ['any/.cmus/autosave', 'any/.cmus/rc', 'any/.cmus/command-history', 'any/.cmus/file.theme', 'any/cmus/rc', 'any/cmus/file.theme', '/.cmus/autosave', '/.cmus/command-history', '/.cmus/file.theme', '/.cmus/rc', '/cmus/file.theme', '/cmus/rc'],
     \ 'cobol': ['file.cbl', 'file.cob'],
     \ 'coco': ['file.atg'],
+    \ 'codeowners': ['CODEOWNERS'],
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master', 'file.conf', 'texdoc.cnf', '.x11vncrc', '.chktexrc', '.ripgreprc', 'ripgreprc', 'file.ctags'],
     \ 'config': ['/etc/hostname.file', 'any/etc/hostname.file', 'configure.in', 'configure.ac', 'file.at', 'aclocal.m4'],
