@@ -299,7 +299,7 @@ Note the use of ":noremap" instead of "map" to avoid a recursive mapping.
 Map the X1 and X2 buttons to go forwards and backwards in the jump list, see
 |CTRL-O| and |CTRL-I|.
 
-                                                *mouse-swap-buttons*
+                                       *mouse-swap-buttons* *pi_swapmouse*
 To swap the meaning of the left and right mouse buttons: >vim
         :noremap        <LeftMouse>     <RightMouse>
         :noremap        <LeftDrag>      <RightDrag>
@@ -315,6 +315,10 @@ To swap the meaning of the left and right mouse buttons: >vim
         :noremap!       <RightMouse>    <LeftMouse>
         :noremap!       <RightDrag>     <LeftDrag>
         :noremap!       <RightRelease>  <LeftRelease>
+<
+
+The `swapmouse` plugin does exactly this. Use |pack-add| to load it: >vim
+    :packadd! swapmouse
 <
 
 ==============================================================================
