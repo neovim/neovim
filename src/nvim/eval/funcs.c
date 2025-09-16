@@ -7950,17 +7950,6 @@ static void f_synstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// f_system - the Vimscript system() function
-static void f_system(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  get_system_output_as_rettv(argvars, rettv, false);
-}
-
-static void f_systemlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  get_system_output_as_rettv(argvars, rettv, true);
-}
-
 /// "tabpagebuflist()" function
 static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
