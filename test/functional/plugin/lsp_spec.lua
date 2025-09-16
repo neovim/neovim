@@ -5313,22 +5313,18 @@ describe('LSP', function()
                 notify_msg = msg
               end
 
-              local handler = vim.lsp.handlers['textDocument/formatting']
-              local handler_called = false
-              vim.lsp.handlers['textDocument/formatting'] = function()
-                handler_called = true
-              end
-
+              _G.handler_called = false
               vim.lsp.buf.format({ bufnr = bufnr, async = true })
               vim.wait(1000, function()
-                return handler_called
+                return _G.handler_called
               end)
 
               vim.notify = notify
-              vim.lsp.handlers['textDocument/formatting'] = handler
-              return { notify = notify_msg, handler_called = handler_called }
+              return { notify_msg = notify_msg, handler_called = _G.handler_called }
             end)
             eq({ handler_called = true }, result)
+          elseif ctx.method == 'textDocument/formatting' then
+            exec_lua('_G.handler_called = true')
           elseif ctx.method == 'shutdown' then
             client:stop()
           end
