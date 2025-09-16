@@ -6,6 +6,7 @@
 " 2025 Sep 5 by Vim project: introduce m4Disabled region #18200
 " 2025 Sep 6 by Vim project: remove m4Function heuristics #18211
 " 2025 Sep 6 by Vim project: remove m4Type and m4Function #18223
+" 2025 Sep 15 by Vim project: highlight m4Parameters #18306
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -18,6 +19,9 @@ endif
 
 " Reference: The Open Group Base Specifications, M4
 " https://pubs.opengroup.org/onlinepubs/9799919799/
+
+" Early definition of a cluster
+syn cluster m4Top contains=NONE
 
 " Quoting in M4:
 " – Quotes are nestable;
@@ -32,6 +36,7 @@ syn region m4Quoted
   \ end=+'+
   \ contains=@m4Top
   \ transparent
+syn cluster m4Top add=m4Quoted
 
 " Comments in M4:
 " – According to the Open Group Base Specification, comments start with
@@ -41,7 +46,7 @@ syn region m4Quoted
 "   they simply prevent any macros from being expanded, while the text remains
 "   in the output. This region therefore disables any other matches.
 " – Comments themselves are disabled when quoted.
-syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted
+syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted,m4ParamCount
 
 " Macros in M4:
 " – Name tokens consist of the longest possible sequence of letters, digits,
@@ -50,9 +55,17 @@ syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted
 " – Any name token may be defined as a macro and quoting prevents expansion.
 "   Thus correct highlighting requires running M4.
 
-" define the m4 syntax
-syn match  m4Variable contained "\$\d\+"
-syn match  m4Special  contained "$[@*#]"
+" Parameters in M4:
+" $0 = macro name; $1..$9 = positional (single digit only); $# = count;
+" $* = args comma-joined; $@ = args quoted+comma; "${" = unspecified.
+syn match  m4ParamZero  contained "\$0"
+syn match  m4ParamPos   contained "\$[1-9]"
+syn match  m4ParamCount contained "\$#"
+syn match  m4ParamAll   contained "\$[@*]"
+syn match  m4ParamBad   contained '\${'
+syn cluster m4Top add=m4ParamZero,m4ParamPos,m4ParamCount,m4ParamAll,m4ParamBad
+
+" define the rest of M4 syntax
 syn match  m4Comment  "\<\(m4_\)\=dnl\>.*" contains=SpellErrors
 syn match  m4Constants "\<\(m4_\)\=__file__"
 syn match  m4Constants "\<\(m4_\)\=__line__"
@@ -64,19 +77,22 @@ syn region m4Command  matchgroup=m4Statement start="\<\(m4_\)\=\(syscmd\|esyscmd
 syn region m4Command  matchgroup=m4Builtin start="\<\(m4_\)\=\(len\|index\|regexp\|substr\|translit\|patsubst\|format\|incr\|decr\|eval\|maketemp\)("he=e-1 end=")" contains=@m4Top
 syn keyword m4Statement divert undivert
 syn region m4Command  matchgroup=m4Define      start="\<\(m4_\)\=\(undefine\|popdef\)("he=e-1 end=")" contains=@m4Top
-syn cluster m4Top     contains=m4Comment,m4Constants,m4Special,m4Variable,m4Paren,m4Command,m4Statement,m4Quoted
+syn cluster m4Top     add=m4Comment,m4Constants,m4Paren,m4Command,m4Statement
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 hi def link m4QuoteDelim  Delimiter
 hi def link m4Delimiter   Delimiter
 hi def link m4Comment     Comment
+hi def link m4ParamZero   Macro
+hi def link m4ParamPos    Special
+hi def link m4ParamCount  Keyword
+hi def link m4ParamAll    Keyword
+hi def link m4ParamBad    Error
 hi def link m4Keyword     Keyword
 hi def link m4Define      Define
-hi def link m4Special     Special
 hi def link m4Statement   Statement
 hi def link m4Preproc     PreProc
-hi def link m4Variable    Special
 hi def link m4Constants   Constant
 hi def link m4Builtin     Statement
 
