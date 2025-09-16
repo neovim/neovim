@@ -236,7 +236,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (macos 15)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.15.1
@@ -253,7 +253,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (windows)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.15.1
