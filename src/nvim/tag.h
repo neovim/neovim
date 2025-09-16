@@ -45,6 +45,4 @@ typedef struct {
   void *tn_search_ctx;
 } tagname_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tag.h.generated.h"
-#endif
+#include "tag.h.generated.h"

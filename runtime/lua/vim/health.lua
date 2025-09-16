@@ -389,15 +389,17 @@ function M._check(mods, plugin_names)
     and type(vim.g.health) == 'table'
     and vim.tbl_get(vim.g.health, 'style') == 'float'
   then
-    local max_height = math.floor(vim.o.lines * 0.8)
+    local available_lines = vim.o.lines - 12
+    local max_height = math.min(math.floor(vim.o.lines * 0.8), available_lines)
     local max_width = 80
     local float_winid
     bufnr, float_winid = vim.lsp.util.open_floating_preview({}, '', {
       height = max_height,
       width = max_width,
       offset_x = math.floor((vim.o.columns - max_width) / 2),
-      offset_y = math.floor((vim.o.lines - max_height) / 2) - 1,
+      offset_y = math.floor((available_lines - max_height) / 2),
       relative = 'editor',
+      close_events = {},
     })
     vim.api.nvim_set_current_win(float_winid)
     vim.bo[bufnr].modifiable = true

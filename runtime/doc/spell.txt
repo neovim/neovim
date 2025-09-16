@@ -207,7 +207,7 @@ CTRL-X s to find suggestions.  This works like Insert mode completion.  Use
 CTRL-N to use the next suggestion, CTRL-P to go back. |i_CTRL-X_s|
 
 The 'spellsuggest' option influences how the list of suggestions is generated
-and sorted.  See |'spellsuggest'|.
+and sorted.  See 'spellsuggest'.
 
 The 'spellcapcheck' option is used to check the first word of a sentence
 starts with a capital.  This doesn't work for the first word in the file.
@@ -649,11 +649,11 @@ ask you where to write the file (there must be a writable directory in
 'runtimepath' for this).
 
 The plugin has a default place where to look for spell files, on the Vim ftp
-server.  The protocol used is SSL (https://) for security.  If you want to use
-another location or another protocol, set the g:spellfile_URL variable to the
-directory that holds the spell files.  You can use http:// or ftp://, but you
-are taking a security risk then.  The |netrw| plugin is used for getting the
-file, look there for the specific syntax of the URL.  Example: >
+server.  The protocol used is TLS (`https://`) for security.  If you want to
+use another location or another protocol, set the g:spellfile_URL variable to
+the directory that holds the spell files.  You can use `http://` or `ftp://`,
+but you are taking a security risk then.  The |netrw| plugin is used for
+getting the file, look there for the specific syntax of the URL.  Example: >
 	let g:spellfile_URL = 'https://ftp.nluug.nl/vim/runtime/spell'
 You may need to escape special characters.
 

@@ -45,9 +45,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/fs.c.generated.h"
-#endif
+#include "eval/fs.c.generated.h"
 
 static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s");
 
@@ -74,7 +72,19 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   xfree(cwd);
 
   CdScope scope = kCdScopeGlobal;
-  if (curwin->w_localdir != NULL) {
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    const char *s = tv_get_string(&argvars[1]);
+    if (strcmp(s, "global") == 0) {
+      scope = kCdScopeGlobal;
+    } else if (strcmp(s, "tabpage") == 0) {
+      scope = kCdScopeTabpage;
+    } else if (strcmp(s, "window") == 0) {
+      scope = kCdScopeWindow;
+    } else {
+      semsg(_(e_invargNval), "scope", s);
+      return;
+    }
+  } else if (curwin->w_localdir != NULL) {
     scope = kCdScopeWindow;
   } else if (curtab->tp_localdir != NULL) {
     scope = kCdScopeTabpage;
@@ -564,7 +574,7 @@ void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     globpath((char *)tv_get_string(&argvars[0]), (char *)file, &ga, flags, false);
 
     if (rettv->v_type == VAR_STRING) {
-      rettv->vval.v_string = ga_concat_strings_sep(&ga, "\n");
+      rettv->vval.v_string = ga_concat_strings(&ga, "\n");
     } else {
       tv_list_alloc_ret(rettv, ga.ga_len);
       for (int i = 0; i < ga.ga_len; i++) {

@@ -24,10 +24,8 @@
 #include "nvim/option_vars.h"
 #include "nvim/strings.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keycode_names.generated.h"
-# include "keycodes.c.generated.h"
-#endif
+#include "keycode_names.generated.h"
+#include "keycodes.c.generated.h"
 
 // Some useful tables.
 
@@ -326,10 +324,11 @@ char *get_special_key_name(int c, int modifiers)
       string[idx++] = (char)(uint8_t)KEY2TERMCAP1(c);
     } else {
       // Not a special key, only modifiers, output directly.
-      if (utf_char2len(c) > 1) {
-        idx += utf_char2bytes(c, string + idx);
-      } else if (vim_isprintc(c)) {
+      int len = utf_char2len(c);
+      if (len == 1 && vim_isprintc(c)) {
         string[idx++] = (char)(uint8_t)c;
+      } else if (len > 1) {
+        idx += utf_char2bytes(c, string + idx);
       } else {
         char *s = transchar(c);
         while (*s) {

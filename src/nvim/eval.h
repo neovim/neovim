@@ -162,6 +162,7 @@ typedef enum {
   VV_TYPE_BOOL,
   VV_TYPE_BLOB,
   VV_EVENT,
+  VV_VERSIONLONG,
   VV_ECHOSPACE,
   VV_ARGV,
   VV_COLLATE,
@@ -252,6 +253,4 @@ enum {
 /// Passed to an eval() function to enable evaluation.
 EXTERN evalarg_T EVALARG_EVALUATE INIT( = { EVAL_EVALUATE, NULL, NULL, NULL });
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval.h.generated.h"
-#endif
+#include "eval.h.generated.h"

@@ -255,8 +255,7 @@ functions. >c
 
 Integration with declarations generator ~
 
-Every C file must contain #include of the generated header file, guarded by
-#ifdef INCLUDE_GENERATED_DECLARATIONS.
+Every C file must contain #include of the generated header file.
 
 Include must go after other #includes and typedefs in .c files and after
 everything else in header files. It is allowed to omit #include in a .c file
@@ -272,9 +271,7 @@ contain only non-static function declarations. >c
 
     typedef int FooType;
 
-    #ifdef INCLUDE_GENERATED_DECLARATIONS
-    # include "foo.c.generated.h"
-    #endif
+    #include "foo.c.generated.h"
 
     …
 
@@ -284,9 +281,7 @@ contain only non-static function declarations. >c
 
     …
 
-    #ifdef INCLUDE_GENERATED_DECLARATIONS
-    # include "foo.h.generated.h"
-    #endif
+    #include "foo.h.generated.h"
 
 
 64-bit Portability ~
@@ -901,8 +896,8 @@ Return Values ~
 
 Do not needlessly surround the `return` expression with parentheses.
 
-Use parentheses in `return expr`; only where you would use them in `x =
-expr;`. >c
+Use parentheses in `return expr;` only where you would also use them in
+`x = expr;`. >c
 
     return result;
     return (some_long_condition && another_condition);

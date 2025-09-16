@@ -660,7 +660,7 @@ $
   it('fails on invalid ShaDa file (failing skip in second item)', function()
     wshada('\001\000\001\128#!/')
     eq(
-      'Vim(rshada):E576: Error while reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier',
+      'Vim(rshada):E576: Reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier',
       exc_exec(sdrcmd())
     )
     eq(

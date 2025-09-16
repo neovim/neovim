@@ -10,6 +10,8 @@ compile_commands.json
 /.idea/
 
 # Build/deps dir
+/.zig-cache/
+/zig-out/
 /.deps/
 /tmp/
 /.clangd/

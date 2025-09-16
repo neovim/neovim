@@ -171,8 +171,8 @@ USING GDBSERVER IN TMUX
 Consider using a custom makefile
 https://github.com/neovim/neovim/blob/master/BUILD.md#custom-makefile to
 quickly start debugging sessions using the `gdbserver` method mentioned above.
-This example `local.mk` will create the debugging session when you type `make
-debug`.
+This example `local.mk` will create the debugging session when you type
+`make debug`.
 >make
     .PHONY: dbg-start dbg-attach debug build
 

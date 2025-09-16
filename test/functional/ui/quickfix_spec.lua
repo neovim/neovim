@@ -4,30 +4,22 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, api = n.clear, n.feed, n.api
 local insert, command = n.insert, n.command
 
-describe('quickfix selection highlight', function()
+describe('quickfix', function()
   local screen
 
   before_each(function()
     clear()
-
     screen = Screen.new(25, 10)
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Blue, bold = true },
-      [2] = { reverse = true },
-      [3] = { foreground = Screen.colors.Brown },
-      [4] = { reverse = true, bold = true },
-      [5] = { background = Screen.colors.WebGreen },
-      [6] = { background = Screen.colors.WebGreen, foreground = Screen.colors.Brown },
-      [7] = { background = Screen.colors.Red1 },
-      [8] = { background = Screen.colors.Red1, foreground = Screen.colors.Brown },
-      [9] = { background = Screen.colors.Magenta },
-      [10] = { background = Screen.colors.Magenta, foreground = Screen.colors.Red1 },
-      [11] = { foreground = Screen.colors.Red1 },
-      [12] = { background = Screen.colors.Magenta, foreground = Screen.colors.Brown },
-      [13] = { background = Screen.colors.WebGreen, foreground = Screen.colors.SlateBlue },
-      [14] = { foreground = Screen.colors.SlateBlue },
-      [15] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Red1 },
-      [16] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Fuchsia },
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.WebGreen },
+      [101] = { foreground = Screen.colors.Brown, background = Screen.colors.WebGreen },
+      [102] = { background = Screen.colors.WebGreen },
+      [103] = { background = Screen.colors.Red, foreground = Screen.colors.SlateBlue },
+      [104] = { background = Screen.colors.Red, foreground = Screen.colors.Brown },
+      [105] = { background = Screen.colors.Fuchsia },
+      [106] = { foreground = Screen.colors.Red, background = Screen.colors.Fuchsia },
+      [107] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Fuchsia },
+      [108] = { foreground = Screen.colors.Brown, background = Screen.colors.Fuchsia },
     })
 
     api.nvim_set_option_value('errorformat', '%m %l', {})
@@ -57,19 +49,19 @@ describe('quickfix selection highlight', function()
     ]])
   end)
 
-  it('using default Search highlight group', function()
+  it('Search selection highlight', function()
     command('copen')
 
     screen:expect([[
       Line 1                   |
       {2:[No Name] [+]            }|
-      {13:^|}{6:1}{13:|}{5: Line                 }|
-      {14:|}{3:2}{14:|} Line                 |
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {100:^|}{101:1}{100:|}{102: Line                 }|
+      {16:|}{8:2}{16:|} Line                 |
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
 
@@ -78,18 +70,18 @@ describe('quickfix selection highlight', function()
     screen:expect([[
       Line 1                   |
       {2:[No Name] [+]            }|
-      {14:|}{3:1}{14:|} Line                 |
-      {13:^|}{6:2}{13:|}{5: Line                 }|
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {16:|}{8:1}{16:|} Line                 |
+      {100:^|}{101:2}{100:|}{102: Line                 }|
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
   end)
 
-  it('using QuickFixLine highlight group', function()
+  it('QuickFixLine selection highlight', function()
     command('highlight QuickFixLine guibg=Red guifg=NONE gui=NONE')
 
     command('copen')
@@ -97,13 +89,13 @@ describe('quickfix selection highlight', function()
     screen:expect([[
       Line 1                   |
       {2:[No Name] [+]            }|
-      {15:^|}{8:1}{15:|}{7: Line                 }|
-      {14:|}{3:2}{14:|} Line                 |
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {103:^|}{104:1}{103:|}{30: Line                 }|
+      {16:|}{8:2}{16:|} Line                 |
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
 
@@ -112,18 +104,18 @@ describe('quickfix selection highlight', function()
     screen:expect([[
       Line 1                   |
       {2:[No Name] [+]            }|
-      {14:|}{3:1}{14:|} Line                 |
-      {15:^|}{8:2}{15:|}{7: Line                 }|
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {16:|}{8:1}{16:|} Line                 |
+      {103:^|}{104:2}{103:|}{30: Line                 }|
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
   end)
 
-  it('combines with CursorLine', function()
+  it('selection highlight combines with CursorLine', function()
     command('set cursorline')
     command('highlight QuickFixLine guifg=Red guibg=NONE gui=NONE')
     command('highlight CursorLine guibg=Fuchsia')
@@ -131,35 +123,35 @@ describe('quickfix selection highlight', function()
     command('copen')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {105:Line 1                   }|
       {2:[No Name] [+]            }|
-      {10:^|1| Line                 }|
-      {14:|}{3:2}{14:|} Line                 |
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {106:^|1| Line                 }|
+      {16:|}{8:2}{16:|} Line                 |
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
 
     feed('j')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {105:Line 1                   }|
       {2:[No Name] [+]            }|
-      {11:|1| Line                 }|
-      {16:^|}{12:2}{16:|}{9: Line                 }|
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {19:|1| Line                 }|
+      {107:^|}{108:2}{107:|}{105: Line                 }|
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
   end)
 
-  it('QuickFixLine background takes precedence over CursorLine', function()
+  it('QuickFixLine selection highlight background takes precedence over CursorLine', function()
     command('set cursorline')
     command('highlight QuickFixLine guibg=Red guifg=NONE gui=NONE')
     command('highlight CursorLine guibg=Fuchsia')
@@ -167,30 +159,48 @@ describe('quickfix selection highlight', function()
     command('copen')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {105:Line 1                   }|
       {2:[No Name] [+]            }|
-      {15:^|}{8:1}{15:|}{7: Line                 }|
-      {14:|}{3:2}{14:|} Line                 |
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {103:^|}{104:1}{103:|}{30: Line                 }|
+      {16:|}{8:2}{16:|} Line                 |
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
 
     feed('j')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {105:Line 1                   }|
       {2:[No Name] [+]            }|
-      {15:|}{8:1}{15:|}{7: Line                 }|
-      {16:^|}{12:2}{16:|}{9: Line                 }|
-      {14:|}{3:3}{14:|} Line                 |
-      {14:|}{3:4}{14:|} Line                 |
-      {14:|}{3:5}{14:|} Line                 |
-      {14:||}                       |
-      {4:[Quickfix List] [-]      }|
+      {103:|}{104:1}{103:|}{30: Line                 }|
+      {107:^|}{108:2}{107:|}{105: Line                 }|
+      {16:|}{8:3}{16:|} Line                 |
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
+                               |
+    ]])
+  end)
+
+  it('does not inherit from non-current floating window', function()
+    api.nvim_open_win(0, true, { width = 6, height = 2, relative = 'win', bufpos = { 3, 0 } })
+    api.nvim_set_option_value('rightleft', true, { win = 0 })
+    command('wincmd w | copen')
+    screen:expect([[
+      Line 1                   |
+      {2:[No Name] [+]            }|
+      {100:^|}{101:1}{100:|}{102: Line                 }|
+      {16:|}{8:2}{16:|} Line           {4:1 eniL}|
+      {16:|}{8:3}{16:|} Line           {4:2 eniL}|
+      {16:|}{8:4}{16:|} Line                 |
+      {16:|}{8:5}{16:|} Line                 |
+      {16:||}                       |
+      {3:[Quickfix List] [-]      }|
                                |
     ]])
   end)

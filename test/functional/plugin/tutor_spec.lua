@@ -16,16 +16,21 @@ describe(':Tutor', function()
     command('Tutor')
     screen = Screen.new(81, 30)
     screen:set_default_attr_ids({
-      [0] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
+      [0] = { foreground = Screen.colors.Blue4, background = Screen.colors.Grey },
       [1] = { bold = true },
       [2] = { underline = true, foreground = tonumber('0x0088ff') },
       [3] = { foreground = Screen.colors.SlateBlue },
       [4] = { bold = true, foreground = Screen.colors.Brown },
       [5] = { bold = true, foreground = Screen.colors.Magenta1 },
       [6] = { italic = true },
+      [7] = { foreground = tonumber('0x00ff88'), bold = true, background = Screen.colors.Grey },
+      [8] = { bold = true, foreground = Screen.colors.Blue },
+      [9] = { foreground = Screen.colors.Magenta1 },
+      [10] = { foreground = tonumber('0xff2000'), bold = true },
+      [11] = { foreground = tonumber('0xff2000'), bold = true, background = Screen.colors.Grey },
+      [12] = { foreground = tonumber('0x6a0dad') },
     })
   end)
-
   it('applies {unix:…,win:…} transform', function()
     local expected = is_os('win')
         and [[
@@ -93,14 +98,14 @@ describe(':Tutor', function()
       {0:  }                                                                               |
     ]]
 
-    feed(':700<CR>zt')
+    feed(':702<CR>zt')
     screen:expect(expected)
   end)
 
   it('applies hyperlink highlighting', function()
     local expected = [[
-      {0:  }^                                                                               |
-      {0:  }{3:#}{5: CONCLUSION}                                                                   |
+      {0:  }^This concludes Chapter 1 of the Vim Tutor.  Consider continuing with           |
+      {0:  }{2:Chapter 2}.                                                                     |
       {0:  }                                                                               |
       {0:  }This was intended to give a brief overview of the Neovim editor, just enough to|
       {0:  }allow you to use it fairly easily. It is far from complete as Neovim has       |
@@ -131,7 +136,153 @@ describe(':Tutor', function()
       {0:  }University. E-mail: {2:bware@mines.colorado.edu}.                                  |
     ]]
 
-    feed(':973<CR>zt')
+    feed(':983<CR>zt')
     screen:expect(expected)
+  end)
+
+  it("removing a line doesn't affect highlight/mark of other lines", function()
+    -- Do lesson 2.6
+    feed(':294<CR>zt')
+    screen:expect([[
+      {0:  }{3:^#}{5: Lesson 2.6: OPERATING ON LINES}                                               |
+      {0:  }                                                                               |
+      {0:  }{1: Type }{4:dd}{1: to delete a whole line. }                                              |
+      {0:  }                                                                               |
+      {0:  }Due to the frequency of whole line deletion, the designers of Vi decided       |
+      {0:  }it would be easier to simply type two d's to delete a line.                    |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the second line in the phrase below.                    |
+      {0:  }                                                                               |
+      {0:  } 2. Type {2:dd} to delete the line.                                                |
+      {0:  }                                                                               |
+      {0:  } 3. Now move to the fourth line.                                               |
+      {0:  }                                                                               |
+      {0:  } 4. Type {9:2}{4:dd} to delete two lines.                                              |
+      {0:  }                                                                               |
+      {7:✓ }{3:1)  Roses are red,                                                             }|
+      {11:✗ }{3:2)  Mud is fun,                                                                }|
+      {7:✓ }{3:3)  Violets are blue,                                                          }|
+      {11:✗ }{3:4)  I have a car,                                                              }|
+      {11:✗ }{3:5)  Clocks tell time,                                                          }|
+      {7:✓ }{3:6)  Sugar is sweet                                                             }|
+      {7:✓ }{3:7)  And so are you.                                                            }|
+      {0:  }                                                                               |
+      {0:  }{3:#}{5: Lesson 2.7: THE UNDO COMMAND}                                                 |
+      {0:  }                                                                               |
+      {0:  }{1: Press }{4:u}{1: to undo the last commands, }{4:U}{1: to fix a whole line. }                    |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the line below marked {10:✗} and place it on the first error.|
+      {0:  }                                                                               |
+      {0:  } 2. Type {4:x} to delete the first unwanted character.                             |
+]])
+
+    feed('<Cmd>310<CR>dd<Cmd>311<CR>2dd')
+    screen:expect([[
+      {0:  }{3:#}{5: Lesson 2.6: OPERATING ON LINES}                                               |
+      {0:  }                                                                               |
+      {0:  }{1: Type }{4:dd}{1: to delete a whole line. }                                              |
+      {0:  }                                                                               |
+      {0:  }Due to the frequency of whole line deletion, the designers of Vi decided       |
+      {0:  }it would be easier to simply type two d's to delete a line.                    |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the second line in the phrase below.                    |
+      {0:  }                                                                               |
+      {0:  } 2. Type {2:dd} to delete the line.                                                |
+      {0:  }                                                                               |
+      {0:  } 3. Now move to the fourth line.                                               |
+      {0:  }                                                                               |
+      {0:  } 4. Type {9:2}{4:dd} to delete two lines.                                              |
+      {0:  }                                                                               |
+      {7:✓ }{3:1)  Roses are red,                                                             }|
+      {7:✓ }{3:3)  Violets are blue,                                                          }|
+      {7:✓ }{3:^6)  Sugar is sweet                                                             }|
+      {7:✓ }{3:7)  And so are you.                                                            }|
+      {0:  }                                                                               |
+      {0:  }{3:#}{5: Lesson 2.7: THE UNDO COMMAND}                                                 |
+      {0:  }                                                                               |
+      {0:  }{1: Press }{4:u}{1: to undo the last commands, }{4:U}{1: to fix a whole line. }                    |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the line below marked {10:✗} and place it on the first error.|
+      {0:  }                                                                               |
+      {0:  } 2. Type {4:x} to delete the first unwanted character.                             |
+      {0:  }                                                                               |
+      {0:  } 3. Now type {4:u} to undo the last command executed.                              |
+      {0:  }                                                                               |
+    ]])
+  end)
+
+  it("inserting text at start of line doesn't affect highlight/sign", function()
+    -- Go to lesson 1.3 and make it top line in the window
+    feed('<Cmd>92<CR>zt')
+    screen:expect([[
+      {0:  }{3:^#}{5: Lesson 1.3: TEXT EDITING: DELETION}                                           |
+      {0:  }                                                                               |
+      {0:  }{1: Press }{4:x}{1: to delete the character under the cursor. }                            |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the line below marked {10:✗}.                                |
+      {0:  }                                                                               |
+      {0:  } 2. To fix the errors, move the cursor until it is on top of the               |
+      {0:  }    character to be deleted.                                                   |
+      {0:  }                                                                               |
+      {0:  } 3. Press {2:the x key} to delete the unwanted character.                          |
+      {0:  }                                                                               |
+      {0:  } 4. Repeat steps 2 through 4 until the sentence is correct.                    |
+      {0:  }                                                                               |
+      {11:✗ }{3:The ccow jumpedd ovverr thhe mooon.                                            }|
+      {0:  }                                                                               |
+      {0:  } 5. Now that the line is correct, go on to Lesson 1.4.                         |
+      {0:  }                                                                               |
+      {0:  }{1:NOTE}: As you go through this tutorial, do not try to memorize everything,      |
+      {0:  }      your Neovim vocabulary will expand with usage. Consider returning to     |
+      {0:  }      this tutorial periodically for a refresher.                              |
+      {0:  }                                                                               |
+      {0:  }{3:#}{5: Lesson 1.4: TEXT EDITING: INSERTION}                                          |
+      {0:  }                                                                               |
+      {0:  }{1: Press }{12:i}{1: to insert text. }                                                      |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the first line below marked {10:✗}.                          |
+      {0:  }                                                                               |
+      {0:  } 2. To make the first line the same as the second, move the cursor on top      |
+      {0:  }    of the first character AFTER where the text is to be inserted.             |
+      {0:  }                                                                               |
+    ]])
+    -- Go to the test line and insert text at the start of the line
+    feed('<Cmd>105<CR>iThe <Esc>')
+    -- Remove redundant characters
+    feed('fcxfdxfvxfrxfhxfox')
+    -- Remove the original "The " text (not the just-inserted one)
+    feed('^4ldw^')
+    screen:expect([[
+      {0:  }{3:#}{5: Lesson 1.3: TEXT EDITING: DELETION}                                           |
+      {0:  }                                                                               |
+      {0:  }{1: Press }{4:x}{1: to delete the character under the cursor. }                            |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the line below marked {10:✗}.                                |
+      {0:  }                                                                               |
+      {0:  } 2. To fix the errors, move the cursor until it is on top of the               |
+      {0:  }    character to be deleted.                                                   |
+      {0:  }                                                                               |
+      {0:  } 3. Press {2:the x key} to delete the unwanted character.                          |
+      {0:  }                                                                               |
+      {0:  } 4. Repeat steps 2 through 4 until the sentence is correct.                    |
+      {0:  }                                                                               |
+      {7:✓ }{3:^The cow jumped over the moon.                                                  }|
+      {0:  }                                                                               |
+      {0:  } 5. Now that the line is correct, go on to Lesson 1.4.                         |
+      {0:  }                                                                               |
+      {0:  }{1:NOTE}: As you go through this tutorial, do not try to memorize everything,      |
+      {0:  }      your Neovim vocabulary will expand with usage. Consider returning to     |
+      {0:  }      this tutorial periodically for a refresher.                              |
+      {0:  }                                                                               |
+      {0:  }{3:#}{5: Lesson 1.4: TEXT EDITING: INSERTION}                                          |
+      {0:  }                                                                               |
+      {0:  }{1: Press }{12:i}{1: to insert text. }                                                      |
+      {0:  }                                                                               |
+      {0:  } 1. Move the cursor to the first line below marked {10:✗}.                          |
+      {0:  }                                                                               |
+      {0:  } 2. To make the first line the same as the second, move the cursor on top      |
+      {0:  }    of the first character AFTER where the text is to be inserted.             |
+      {0:  }                                                                               |
+    ]])
   end)
 end)

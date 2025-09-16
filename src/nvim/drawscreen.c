@@ -128,9 +128,7 @@ typedef enum {
   WC_BOTTOM_RIGHT,
 } WindowCorner;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "drawscreen.c.generated.h"
-#endif
+#include "drawscreen.c.generated.h"
 
 static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
@@ -255,7 +253,7 @@ void screenclear(void)
   compute_cmdrow();
   msg_row = cmdline_row;  // put cursor on last line for messages
   msg_col = 0;
-  msg_scrolled = 0;  // can't scroll back
+  msg_reset_scroll();     // can't scroll back
   msg_didany = false;
   msg_didout = false;
   if (HL_ATTR(HLF_MSG) > 0 && msg_use_grid() && msg_grid.chars) {
@@ -266,12 +264,19 @@ void screenclear(void)
   }
 }
 
+/// Unlike cmdline "one_key" prompts, the message part of the prompt is not stored
+/// to be re-emitted: avoid clearing the prompt from the message grid.
+static bool cmdline_number_prompt(void)
+{
+  return !ui_has(kUIMessages) && (State & MODE_CMDLINE) && get_cmdline_info()->mouse_used != NULL;
+}
+
 /// Set dimensions of the Nvim application "screen".
 void screen_resize(int width, int height)
 {
   // Avoid recursiveness, can happen when setting the window size causes
   // another window-changed signal.
-  if (updating_screen || resizing_screen) {
+  if (updating_screen || resizing_screen || cmdline_number_prompt()) {
     return;
   }
 
@@ -348,7 +353,7 @@ void screen_resize(int width, int height)
   resizing_autocmd = false;
   redraw_all_later(UPD_CLEAR);
 
-  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD && State != MODE_CONFIRM) {
+  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD) {
     screenclear();
   }
 
@@ -364,8 +369,11 @@ void screen_resize(int width, int height)
     // - While editing the command line, only redraw that. TODO: lies
     // - in Ex mode, don't redraw anything.
     // - Otherwise, redraw right now, and position the cursor.
-    if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || State == MODE_CONFIRM
-        || exmode_active) {
+    if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || exmode_active
+        || ((State & MODE_CMDLINE) && get_cmdline_info()->one_key)) {
+      if (State & MODE_CMDLINE) {
+        update_screen();
+      }
       if (msg_grid.chars) {
         msg_grid_validate();
       }
@@ -451,7 +459,7 @@ int update_screen(void)
 
   // Postpone the redrawing when it's not needed and when being called
   // recursively.
-  if (!redrawing() || updating_screen) {
+  if (!redrawing() || updating_screen || cmdline_number_prompt()) {
     return FAIL;
   }
 
@@ -542,7 +550,6 @@ int update_screen(void)
   }
 
   win_ui_flush(true);
-  msg_ext_check_clear();
 
   // reset cmdline_row now (may have been changed temporarily)
   compute_cmdrow();
@@ -558,6 +565,9 @@ int update_screen(void)
     screenclear();  // will reset clear_cmdline
                     // and set UPD_NOT_VALID for each window
     cmdline_screen_cleared();   // clear external cmdline state
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_clear();
+    }
     type = UPD_NOT_VALID;
     // must_redraw may be set indirectly, avoid another redraw later
     must_redraw = 0;
@@ -593,6 +603,11 @@ int update_screen(void)
       && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu || *curwin->w_p_stc)
                                ? number_width(curwin) : 0)) {
     curwin->w_redr_type = UPD_NOT_VALID;
+  }
+
+  if (curwin->w_redr_type == UPD_INVERTED) {
+    // Update w_curswant so that the end of Visual selection is correct.
+    update_curswant();
   }
 
   // Redraw the tab pages line if needed.
@@ -692,6 +707,7 @@ int update_screen(void)
   if (still_may_intro) {
     intro_message(false);
   }
+  repeat_message();
 
   decor_providers_invoke_end();
 
@@ -949,10 +965,6 @@ int showmode(void)
 {
   int length = 0;
 
-  if (ui_has(kUIMessages) && clear_cmdline) {
-    msg_ext_clear(true);
-  }
-
   // Don't make non-flushed message part of the showmode.
   msg_ext_ui_flush();
 
@@ -1118,20 +1130,7 @@ int showmode(void)
     clear_showcmd();
   }
 
-  // If the current or last window has no status line and global statusline is disabled,
-  // the ruler is after the mode message and must be redrawn
-  win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
-  if (redrawing() && ruler_win->w_status_height == 0 && global_stl_height() == 0
-      && !(p_ch == 0 && !ui_has(kUIMessages))) {
-    if (!ui_has(kUIMessages)) {
-      grid_line_start(&msg_grid_adj, Rows - 1);
-    }
-    win_redr_ruler(ruler_win);
-    if (!ui_has(kUIMessages)) {
-      grid_line_flush();
-    }
-  }
-
+  redraw_ruler();      // check if ruler should be redrawn
   redraw_cmdline = false;
   redraw_mode = false;
   clear_cmdline = false;
@@ -2540,21 +2539,26 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
     return;
   }
 
-  // No lines are being moved, just draw over the entire area
-  if (row + abs(line_count) >= wp->w_view_height) {
-    return;
-  }
-
   int col = 0;
   int row_off = 0;
   ScreenGrid *grid = grid_adjust(&wp->w_grid, &row_off, &col);
 
+  // TODO(bfredl): this is due to the call in curs_columns(). We really don't want to
+  // fiddle with the screen outside of update_screen() like this.
+  int checked_width = MIN(grid->cols - col, wp->w_view_width);
+  int checked_height = MIN(grid->rows - row_off, wp->w_view_height);
+
+  // No lines are being moved, just draw over the entire area
+  if (row + abs(line_count) >= checked_height) {
+    return;
+  }
+
   if (line_count < 0) {
     grid_del_lines(grid, row + row_off, -line_count,
-                   wp->w_view_height + row_off, col, wp->w_view_width);
+                   checked_height + row_off, col, checked_width);
   } else {
     grid_ins_lines(grid, row + row_off, line_count,
-                   wp->w_view_height + row_off, col, wp->w_view_width);
+                   checked_height + row_off, col, checked_width);
   }
 }
 
@@ -2563,36 +2567,46 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
 void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int endrow, hlf_T hl)
 {
   assert(hl >= 0 && hl < HLF_COUNT);
+  const int view_width = wp->w_view_width;
+  const int fdc = compute_foldcolumn(wp, 0);
+  const int scwidth = wp->w_scwidth;
+
   for (int row = startrow; row < endrow; row++) {
     grid_line_start(&wp->w_grid, row);
 
     int n = 0;
     if (draw_margin) {
       // draw the fold column
-      int fdc = MAX(0, compute_foldcolumn(wp, 0));
-      n = grid_line_fill(n, n + fdc, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      if (fdc > 0) {
+        n = grid_line_fill(n, MIN(view_width, n + fdc),
+                           schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      }
 
       // draw the sign column
-      n = grid_line_fill(n, n + wp->w_scwidth, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      if (scwidth > 0) {
+        n = grid_line_fill(n, MIN(view_width, n + scwidth * SIGN_WIDTH),
+                           schar_from_ascii(' '), win_hl_attr(wp, HLF_SC));
+      }
 
       // draw the number column
       if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
         int width = number_width(wp) + 1;
-        n = grid_line_fill(n, n + width, schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
+        n = grid_line_fill(n, MIN(view_width, n + width),
+                           schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
       }
     }
 
-    int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+    int attr = win_hl_attr(wp, (int)hl);
 
-    if (n < wp->w_view_width) {
-      grid_line_put_schar(n, c1, 0);  // base attr is inherited from clear
+    if (n < view_width) {
+      grid_line_put_schar(n, c1, attr);
       n++;
     }
 
-    grid_line_clear_end(n, wp->w_view_width, attr);
+    grid_line_clear_end(n, view_width, win_bg_attr(wp), attr);
 
     if (wp->w_p_rl) {
-      grid_line_mirror(wp->w_view_width);
+      grid_line_mirror(view_width);
     }
     grid_line_flush();
   }

@@ -123,9 +123,7 @@ enum {
   kColorIdxBg = -4,
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight_group.c.generated.h"
-#endif
+#include "highlight_group.c.generated.h"
 
 static const char e_highlight_group_name_not_found_str[]
   = N_("E411: Highlight group not found: %s");
@@ -176,7 +174,10 @@ static const char *highlight_init_both[] = {
   "default link PmenuKind        Pmenu",
   "default link PmenuKindSel     PmenuSel",
   "default link PmenuSbar        Pmenu",
+  "default link PreInsert        Added",
   "default link ComplMatchIns    NONE",
+  "default link ComplHint        NonText",
+  "default link ComplHintMore    MoreMsg",
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
   "default link StatusLineTermNC StatusLineNC",
@@ -223,6 +224,7 @@ static const char *highlight_init_both[] = {
   "default link LspReferenceTarget          LspReferenceText",
   "default link LspSignatureActiveParameter Visual",
   "default link SnippetTabstop              Visual",
+  "default link SnippetTabstopActive        SnippetTabstop",
 
   // Diagnostic
   "default link DiagnosticFloatingError    DiagnosticError",
@@ -374,6 +376,7 @@ static const char *highlight_init_light[] = {
   "MoreMsg              guifg=NvimDarkCyan                                   ctermfg=6",
   "NonText              guifg=NvimLightGrey4",
   "NormalFloat                               guibg=NvimLightGrey1",
+  "OkMsg                guifg=NvimDarkGreen                                  ctermfg=2",
   "Pmenu                                     guibg=NvimLightGrey3            cterm=reverse",
   "PmenuThumb                                guibg=NvimLightGrey4",
   "Question             guifg=NvimDarkCyan                                   ctermfg=6",
@@ -458,6 +461,7 @@ static const char *highlight_init_dark[] = {
   "MoreMsg              guifg=NvimLightCyan                                 ctermfg=14",
   "NonText              guifg=NvimDarkGrey4",
   "NormalFloat                                guibg=NvimDarkGrey1",
+  "OkMsg                guifg=NvimLightGreen                                ctermfg=10",
   "Pmenu                                      guibg=NvimDarkGrey3           cterm=reverse",
   "PmenuThumb                                 guibg=NvimDarkGrey4",
   "Question             guifg=NvimLightCyan                                 ctermfg=14",

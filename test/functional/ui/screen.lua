@@ -48,6 +48,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local busted = require('busted')
+local uv = vim.uv
 
 local deepcopy = vim.deepcopy
 local shallowcopy = t.shallowcopy
@@ -81,13 +82,15 @@ end
 --- @field cmdline table<integer,table>
 --- @field cmdline_hide_level integer?
 --- @field cmdline_block table[]
---- @field hl_groups table<string,integer>
+--- @field hl_groups table<string,integer> Highlight group to attr ID map
+--- @field hl_names table<integer,string> Highlight ID to group map
 --- @field messages table<integer,table>
 --- @field private _cursor {grid:integer,row:integer,col:integer}
 --- @field private _grids table<integer,test.functional.ui.screen.Grid>
 --- @field private _grid_win_extmarks table<integer,table>
 --- @field private _attr_table table<integer,table>
 --- @field private _hl_info table<integer,table>
+--- @field private _stdout uv.uv_pipe_t?
 local Screen = {}
 Screen.__index = Screen
 
@@ -154,6 +157,11 @@ local function _init_colors()
     [29] = { foreground = Screen.colors.SlateBlue, bold = true },
     [30] = { background = Screen.colors.Red },
   }
+
+  Screen._global_hl_names = {}
+  for group in pairs(n.api.nvim_get_hl(0, {})) do
+    Screen._global_hl_names[n.api.nvim_get_hl_id_by_name(group)] = group
+  end
 end
 
 --- @class test.functional.ui.screen.Opts
@@ -210,6 +218,7 @@ function Screen.new(width, height, options, session)
     showcmd = {},
     ruler = {},
     hl_groups = {},
+    hl_names = vim.deepcopy(Screen._global_hl_names),
     _default_attr_ids = nil,
     mouse_enabled = true,
     _attrs = {},
@@ -228,6 +237,7 @@ function Screen.new(width, height, options, session)
       col = 1,
     },
     _busy = false,
+    _stdout = nil,
   }, Screen)
 
   local function ui(method, ...)
@@ -267,12 +277,14 @@ function Screen:add_extra_attr_ids(extra_attr_ids)
   self._default_attr_ids = attr_ids
 end
 
-function Screen:get_default_attr_ids()
-  return deepcopy(self._default_attr_ids)
-end
-
 function Screen:set_rgb_cterm(val)
   self._rgb_cterm = val
+end
+
+--- @param fd number
+function Screen:set_stdout(fd)
+  self._stdout = assert(uv.new_pipe())
+  self._stdout:open(fd)
 end
 
 --- @param session? test.Session
@@ -350,6 +362,7 @@ local expect_keys = {
   condition = true,
   mouse_enabled = true,
   any = true,
+  none = true,
   mode = true,
   unchanged = true,
   intermediate = true,
@@ -365,7 +378,7 @@ for _, v in ipairs(ext_keys) do
   expect_keys[v] = true
 end
 
---- @class test.function.ui.screen.Expect
+--- @class test.functional.ui.screen.Expect
 ---
 --- Expected screen state (string). Each line represents a screen
 --- row. Last character of each row (typically "|") is stripped.
@@ -396,7 +409,13 @@ end
 --- following chars are magic characters
 ---    ( ) . % + - * ? [ ^ $
 --- and must be escaped with a preceding % for a literal match.
---- @field any? string
+--- @field any? string|table<string>
+---
+--- Lua pattern string expected to not match a screen line. NB: the
+--- following chars are magic characters
+---    ( ) . % + - * ? [ ^ $
+--- and must be escaped with a preceding % for a literal match.
+--- @field none? string|table<string>
 ---
 --- Expected mode as signaled by "mode_change" event
 --- @field mode? string
@@ -460,7 +479,7 @@ end
 --- or keyword args (supports more options):
 ---    screen:expect({ grid=[[...]], cmdline={...}, condition=function() ... end })
 ---
---- @param expected string|function|test.function.ui.screen.Expect
+--- @param expected string|function|test.functional.ui.screen.Expect
 --- @param attr_ids? table<integer,table<string,any>>
 function Screen:expect(expected, attr_ids, ...)
   --- @type string, fun()
@@ -480,7 +499,7 @@ function Screen:expect(expected, attr_ids, ...)
     grid = expected.grid
     attr_ids = expected.attr_ids
     condition = expected.condition
-    assert(expected.any == nil or grid == nil)
+    assert((expected.any == nil and expected.none == nil) or grid == nil)
   elseif type(expected) == 'string' then
     grid = expected
     expected = {}
@@ -529,22 +548,55 @@ function Screen:expect(expected, attr_ids, ...)
 
     local actual_rows
     if expected.any or grid then
-      actual_rows = self:render(not expected.any, attr_state)
+      actual_rows = self:render(not (expected.any or expected.none), attr_state)
     end
 
-    if expected.any then
-      -- Search for `any` anywhere in the screen lines.
+    local any_or_none = function(screen_str, value, is_any)
+      if value then
+        local v = value
+        if type(v) == 'string' then
+          v = { v }
+        end
+        local msg
+        if is_any then
+          msg = 'Expected (anywhere): "'
+        else
+          msg = 'Expected (nowhere): "'
+        end
+        for _, v2 in ipairs(v) do
+          local test = screen_str:find(v2)
+          if is_any then
+            test = not test
+          end
+          -- Search for `any` anywhere in the screen lines.
+          if test then
+            return (
+              'Failed to match any screen lines.\n'
+              .. msg
+              .. v2
+              .. '"\n'
+              .. 'Actual:\n  |'
+              .. table.concat(actual_rows, '\n  |')
+              .. '\n\n'
+            )
+          end
+        end
+      end
+      return nil
+    end
+    if expected.any or expected.none then
       local actual_screen_str = table.concat(actual_rows, '\n')
-      if not actual_screen_str:find(expected.any) then
-        return (
-          'Failed to match any screen lines.\n'
-          .. 'Expected (anywhere): "'
-          .. expected.any
-          .. '"\n'
-          .. 'Actual:\n  |'
-          .. table.concat(actual_rows, '\n  |')
-          .. '\n\n'
-        )
+      if expected.any then
+        local res = any_or_none(actual_screen_str, expected.any, true)
+        if res then
+          return res
+        end
+      end
+      if expected.none then
+        local res = any_or_none(actual_screen_str, expected.none, false)
+        if res then
+          return res
+        end
       end
     end
 
@@ -586,6 +638,7 @@ function Screen:expect(expected, attr_ids, ...)
             after = after:sub(e + 1)
           end
         end
+        pat = pat and '^' .. pat .. '$'
         if row ~= actual_rows[i] and (not pat or not actual_rows[i]:match(pat)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
@@ -699,6 +752,7 @@ screen:redraw_debug() to show all intermediate screen states.]]
     self.cmdline[self.cmdline_hide_level] = nil
     self.cmdline_hide_level = nil
   end
+  self.messages, self.msg_history = {}, {}
 end
 
 function Screen:expect_unchanged(intermediate, waittime_ms)
@@ -1341,12 +1395,12 @@ function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level
     firstc = firstc,
     prompt = prompt,
     indent = indent,
-    hl_id = prompt and hl_id,
+    hl = hl_id,
   }
 end
 
 function Screen:_handle_cmdline_hide(level, abort)
-  self.cmdline[level] = { abort = abort }
+  self.cmdline[level] = abort and { abort = abort } or nil
   self.cmdline_hide_level = level
 end
 
@@ -1383,12 +1437,19 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_handle_msg_show(kind, chunks, replace_last, history)
+function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id, progress)
   local pos = #self.messages
   if not replace_last or pos == 0 then
     pos = pos + 1
   end
-  self.messages[pos] = { kind = kind, content = chunks, history = history }
+  self.messages[pos] = {
+    kind = kind,
+    content = chunks,
+    history = history,
+    append = append,
+    id = id,
+    progress = progress,
+  }
 end
 
 function Screen:_handle_msg_clear()
@@ -1407,12 +1468,14 @@ function Screen:_handle_msg_ruler(msg)
   self.ruler = msg
 end
 
-function Screen:_handle_msg_history_show(entries)
-  self.msg_history = entries
+function Screen:_handle_msg_history_show(entries, prev_cmd)
+  self.msg_history = { entries, prev_cmd }
 end
 
-function Screen:_handle_msg_history_clear()
-  self.msg_history = {}
+function Screen:_handle_ui_send(content)
+  if self._stdout then
+    self._stdout:write(content)
+  end
 end
 
 function Screen:_clear_block(grid, top, bot, left, right)
@@ -1487,6 +1550,13 @@ function Screen:_row_repr(gridnr, rownr, attr_state, cursor)
   return table.concat(rv, '') --:gsub('%s+$', '')
 end
 
+local function hl_id_to_name(self, id)
+  if id and id > 0 and not self.hl_names[id] then
+    self.hl_names[id] = n.fn.synIDattr(id, 'name')
+  end
+  return id and self.hl_names[id] or nil
+end
+
 function Screen:_extstate_repr(attr_state)
   local cmdline = {}
   for i, entry in pairs(self.cmdline) do
@@ -1494,6 +1564,7 @@ function Screen:_extstate_repr(attr_state)
     if entry.content ~= nil then
       entry.content = self:_chunks_repr(entry.content, attr_state)
     end
+    entry.hl = hl_id_to_name(self, entry.hl)
     cmdline[i] = entry
   end
 
@@ -1507,13 +1578,20 @@ function Screen:_extstate_repr(attr_state)
     messages[i] = {
       kind = entry.kind,
       content = self:_chunks_repr(entry.content, attr_state),
-      history = entry.history,
+      history = entry.history or nil,
+      append = entry.append or nil,
+      id = entry.kind == 'progress' and entry.id or nil,
+      progress = entry.kind == 'progress' and entry.progress or nil,
     }
   end
 
-  local msg_history = {}
-  for i, entry in ipairs(self.msg_history) do
-    msg_history[i] = { kind = entry[1], content = self:_chunks_repr(entry[2], attr_state) }
+  local msg_history = { prev_cmd = self.msg_history[2] or nil }
+  for i, entry in ipairs(self.msg_history[1] or {}) do
+    msg_history[i] = {
+      kind = entry[1],
+      content = self:_chunks_repr(entry[2], attr_state),
+      append = entry[3] or nil,
+    }
   end
 
   local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
@@ -1549,7 +1627,8 @@ function Screen:_chunks_repr(chunks, attr_state)
       attrs = hl
     end
     local attr_id = self:_get_attr_id(attr_state, attrs, hl)
-    repr_chunks[i] = { text, attr_id, attr_id and id or nil }
+    repr_chunks[i] = { text, attr_id }
+    repr_chunks[i][#repr_chunks[i] + 1] = hl_id_to_name(self, id)
   end
   return repr_chunks
 end

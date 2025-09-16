@@ -55,7 +55,7 @@ jobs:
     outputs:
       version: ${{ steps.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -132,27 +132,44 @@ jobs:
 
   windows:
     needs: setup
-    runs-on: windows-2019
+    strategy:
+      matrix:
+        include:
+          - runner: windows-2022
+            arch: x86_64
+            archive_name: nvim-win64
+          - runner: windows-11-arm
+            arch: arm64
+            archive_name: nvim-win-arm64
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
       - run: .github/scripts/env.ps1
+        env:
+          BUILD_ARCH: ${{ matrix.arch }}
+      - name: Install Wix
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -OutFile "wix314-binaries.zip"
+          Expand-Archive -Path "wix314-binaries.zip" -DestinationPath "C:/wix"
+          echo "C:\wix" >> $env:GITHUB_PATH
       - name: Build deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build .deps
-      - name: build package
+      - name: Build package
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build build --target package
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: nvim-win64
+          name: nvim-win-${{ matrix.arch }}
           path: |
-            build/nvim-win64.msi
-            build/nvim-win64.zip
+            build/${{ matrix.archive_name }}.zip
+            build/${{ matrix.archive_name }}.msi
           retention-days: 1
 
   publish:
@@ -166,9 +183,9 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y gettext-base
@@ -193,25 +210,14 @@ jobs:
            echo 'PRERELEASE=') >> $GITHUB_ENV
           gh release delete stable --yes || true
           git push origin :stable || true
-      # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
-      # containing folder from the output.
-      - run: |
-          for i in nvim-*; do
-              (
-                  cd $i || exit
-                  sha256sum * >> $GITHUB_WORKSPACE/shasum.txt
-              )
-          done
       - name: Publish release
         env:
           NVIM_VERSION: ${{ needs.linux.outputs.version }}
+          NVIM_COMMIT: ${{ github.sha }}
           DEBUG: api
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
-          echo '```' >> "$RUNNER_TEMP/notes.md"
-          cat shasum.txt >> "$RUNNER_TEMP/notes.md"
-          echo '```' >> "$RUNNER_TEMP/notes.md"
           if [ "$TAG_NAME" != "nightly" ]; then
-            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/* shasum.txt
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win-x86_64/* nvim-win-arm64/*
           fi
-          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/* shasum.txt
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win-x86_64/* nvim-win-arm64/*

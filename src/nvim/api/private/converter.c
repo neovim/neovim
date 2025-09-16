@@ -26,9 +26,7 @@ typedef struct {
   bool reuse_strdata;
 } EncodedData;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/converter.c.generated.h"
-#endif
+#include "api/private/converter.c.generated.h"
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 #define TYPVAL_ENCODE_CHECK_BEFORE

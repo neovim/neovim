@@ -646,9 +646,7 @@ typedef struct {
 static regengine_T bt_regengine;
 static regengine_T nfa_regengine;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "regexp.c.generated.h"
-#endif
+#include "regexp.c.generated.h"
 
 // Return true if compiled regular expression "prog" can match a line break.
 int re_multiline(const regprog_T *prog)
@@ -1585,6 +1583,7 @@ static void reg_nextline(void)
 // Returns RA_FAIL, RA_NOMATCH or RA_MATCH.
 // If "bytelen" is not NULL, it is set to the byte length of the match in the
 // last line.
+// Optional: ignore case if rex.reg_ic is set.
 static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T end_lnum,
                               colnr_T end_col, int *bytelen)
 {
@@ -1622,7 +1621,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       len = reg_getline_len(clnum) - ccol;
     }
 
-    if (cstrncmp(p + ccol, (char *)rex.input, &len) != 0) {
+    if ((!rex.reg_ic && cstrncmp(p + ccol, (char *)rex.input, &len) != 0)
+        || (rex.reg_ic && mb_strnicmp(p + ccol, (char *)rex.input, (size_t)len) != 0)) {
       return RA_NOMATCH;  // doesn't match
     }
     if (bytelen != NULL) {
@@ -1730,7 +1730,8 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
     *c3 = d.c;
   } else {
     *c1 = c;
-    *c2 = *c3 = 0;
+    *c2 = 0;
+    *c3 = 0;
   }
 }
 

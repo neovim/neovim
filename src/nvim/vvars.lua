@@ -14,7 +14,8 @@ M.vars = {
     desc = [=[
       Argument for evaluating 'formatexpr' and used for the typed
       character when using <expr> in an abbreviation |:map-<expr>|.
-      It is also used by the |InsertCharPre| and |InsertEnter| events.
+      It is also used by the |InsertCharPre|, |InsertEnter|,
+      |CmdlineLeave| and |CmdlineLeavePre| events.
     ]=],
   },
   charconvert_from = {
@@ -876,6 +877,21 @@ M.vars = {
       Use |has()| to check the Nvim (not Vim) version: >vim
         :if has("nvim-0.2.1")
       <
+    ]=],
+  },
+  versionlong = {
+    type = 'integer',
+    desc = [=[
+      Like v:version, but also including the patchlevel in the last
+      four digits.  Version 8.1 with patch 123 has value 8010123.
+      This can be used like this: >
+        if v:versionlong >= 8010123
+      <
+      However, if there are gaps in the list of patches included
+      this will not work well.  This can happen if a recent patch
+      was included into an older version, e.g. for a security fix.
+      Use the has() function to make sure the patch is actually
+      included.
     ]=],
   },
   vim_did_enter = {

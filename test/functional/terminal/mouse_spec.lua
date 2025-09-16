@@ -33,7 +33,7 @@ describe(':terminal mouse', function()
       line29                                            |
       line30                                            |
       ^                                                  |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -108,7 +108,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
           ^                                                  |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
@@ -122,7 +122,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
            "#^                                               |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftDrag><2,2>')
         screen:expect([[
@@ -132,7 +132,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
              @##^                                            |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftDrag><3,2>')
         screen:expect([[
@@ -142,7 +142,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
                 @$#^                                         |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftRelease><3,2>')
         screen:expect([[
@@ -152,7 +152,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
                    #$#^                                      |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
@@ -166,7 +166,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
           `!!^                                               |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
@@ -180,7 +180,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
            "#^                                               |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<ScrollWheelUp><1,2>')
         screen:expect([[
@@ -190,7 +190,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
              `"#^                                            |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftDrag><2,2>')
         screen:expect([[
@@ -200,7 +200,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
                 @##^                                         |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<ScrollWheelUp><2,2>')
         screen:expect([[
@@ -210,7 +210,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
                    `##^                                      |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftRelease><2,2>')
         screen:expect([[
@@ -220,7 +220,7 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
                       ###^                                   |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
@@ -232,25 +232,25 @@ describe(':terminal mouse', function()
         feed('<LeftMouse><3,0>')
         eq('nt', eval('mode(1)'))
         screen:expect([[
-          {7: 11 }^line28                                        |
-          {7: 12 }line29                                        |
-          {7: 13 }line30                                        |
-          {7: 14 }mouse enabled                                 |
-          {7: 15 }rows: 6, cols: 46                             |
-          {7: 16 }                                              |
+          {121: 11 }^line28                                        |
+          {121: 12 }line29                                        |
+          {121: 13 }line30                                        |
+          {121: 14 }mouse enabled                                 |
+          {121: 15 }rows: 6, cols: 46                             |
+          {121: 16 }                                              |
                                                             |
         ]])
         -- If click on the coordinate (0,1) of the region of the terminal
         -- (i.e. the coordinate (4,1) of vim), 'CSI !"' is sent to the terminal.
         feed('i<LeftMouse><4,1>')
         screen:expect([[
-          {7: 11 }line28                                        |
-          {7: 12 }line29                                        |
-          {7: 13 }line30                                        |
-          {7: 14 }mouse enabled                                 |
-          {7: 15 }rows: 6, cols: 46                             |
-          {7: 16 } !"^                                           |
-          {3:-- TERMINAL --}                                    |
+          {121: 11 }line28                                        |
+          {121: 12 }line29                                        |
+          {121: 13 }line30                                        |
+          {121: 14 }mouse enabled                                 |
+          {121: 15 }rows: 6, cols: 46                             |
+          {121: 16 } !"^                                           |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
@@ -263,7 +263,7 @@ describe(':terminal mouse', function()
           rows: 5, cols: 50                                 |
           ^                                                  |
           ==========                                        |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftMouse><0,5>')
         screen:expect([[
@@ -290,30 +290,30 @@ describe(':terminal mouse', function()
         command('rightbelow vnew | wincmd p | startinsert')
         screen:expect([[
           line29                  │                         |
-          line30                  │{4:~                        }|
-          mouse enabled           │{4:~                        }|
-          rows: 5, cols: 24       │{4:~                        }|
-          ^                        │{4:~                        }|
+          line30                  │{100:~                        }|
+          mouse enabled           │{100:~                        }|
+          rows: 5, cols: 24       │{100:~                        }|
+          ^                        │{100:~                        }|
           ==========               ==========               |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftMouse><24,0>')
         screen:expect([[
           line29                  │                         |
-          line30                  │{4:~                        }|
-          mouse enabled           │{4:~                        }|
-          rows: 5, cols: 24       │{4:~                        }|
-          ^                        │{4:~                        }|
+          line30                  │{100:~                        }|
+          mouse enabled           │{100:~                        }|
+          rows: 5, cols: 24       │{100:~                        }|
+          ^                        │{100:~                        }|
           ==========               ==========               |
                                                             |
         ]])
         feed('<LeftDrag><23,0>')
         screen:expect([[
           line30                 │                          |
-          mouse enabled          │{4:~                         }|
-          rows: 5, cols: 24      │{4:~                         }|
-          rows: 5, cols: 23      │{4:~                         }|
-          ^                       │{4:~                         }|
+          mouse enabled          │{100:~                         }|
+          rows: 5, cols: 24      │{100:~                         }|
+          rows: 5, cols: 23      │{100:~                         }|
+          ^                       │{100:~                         }|
           ==========              ==========                |
                                                             |
         ]])
@@ -322,17 +322,17 @@ describe(':terminal mouse', function()
       it('will lose focus if winbar/tabline is clicked', function()
         command('setlocal winbar=WINBAR')
         screen:expect([[
-          {3:WINBAR                                            }|
+          {5:WINBAR                                            }|
           line29                                            |
           line30                                            |
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           ^                                                  |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftMouse><0,0>')
         screen:expect([[
-          {3:WINBAR                                            }|
+          {5:WINBAR                                            }|
           line29                                            |
           line30                                            |
           mouse enabled                                     |
@@ -342,18 +342,18 @@ describe(':terminal mouse', function()
         ]])
         command('set showtabline=2 tabline=TABLINE | startinsert')
         screen:expect([[
-          {1:TABLINE                                           }|
-          {3:WINBAR                                            }|
+          {2:TABLINE                                           }|
+          {5:WINBAR                                            }|
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           rows: 4, cols: 50                                 |
           ^                                                  |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftMouse><0,0>')
         screen:expect([[
-          {1:TABLINE                                           }|
-          {3:WINBAR                                            }|
+          {2:TABLINE                                           }|
+          {5:WINBAR                                            }|
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           rows: 4, cols: 50                                 |
@@ -362,17 +362,17 @@ describe(':terminal mouse', function()
         ]])
         command('setlocal winbar= | startinsert')
         screen:expect([[
-          {1:TABLINE                                           }|
+          {2:TABLINE                                           }|
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           rows: 4, cols: 50                                 |
           rows: 5, cols: 50                                 |
           ^                                                  |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<LeftMouse><0,0>')
         screen:expect([[
-          {1:TABLINE                                           }|
+          {2:TABLINE                                           }|
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           rows: 4, cols: 50                                 |
@@ -397,80 +397,80 @@ describe(':terminal mouse', function()
         ]])
         feed(':enew | set number<cr>')
         screen:expect([[
-          {7:  1 }^                     │line29                  |
-          {4:~                        }│line30                  |
-          {4:~                        }│rows: 5, cols: 25       |
-          {4:~                        }│rows: 5, cols: 24       |
-          {4:~                        }│                        |
+          {121:  1 }^                     │line29                  |
+          {100:~                        }│line30                  |
+          {100:~                        }│rows: 5, cols: 25       |
+          {100:~                        }│rows: 5, cols: 24       |
+          {100:~                        }│                        |
           ==========                ==========              |
           :enew | set number                                |
         ]])
         feed('30iline\n<esc>')
         screen:expect([[
-          {7: 27 }line                 │line29                  |
-          {7: 28 }line                 │line30                  |
-          {7: 29 }line                 │rows: 5, cols: 25       |
-          {7: 30 }line                 │rows: 5, cols: 24       |
-          {7: 31 }^                     │                        |
+          {121: 27 }line                 │line29                  |
+          {121: 28 }line                 │line30                  |
+          {121: 29 }line                 │rows: 5, cols: 25       |
+          {121: 30 }line                 │rows: 5, cols: 24       |
+          {121: 31 }^                     │                        |
           ==========                ==========              |
                                                             |
         ]])
         feed('<c-w>li')
         screen:expect([[
-          {7: 27 }line                 │line29                  |
-          {7: 28 }line                 │line30                  |
-          {7: 29 }line                 │rows: 5, cols: 25       |
-          {7: 30 }line                 │rows: 5, cols: 24       |
-          {7: 31 }                     │^                        |
+          {121: 27 }line                 │line29                  |
+          {121: 28 }line                 │line30                  |
+          {121: 29 }line                 │rows: 5, cols: 25       |
+          {121: 30 }line                 │rows: 5, cols: 24       |
+          {121: 31 }                     │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
 
         -- enabling mouse won't affect interaction with other windows
         tt.enable_mouse()
         tt.feed_data('mouse enabled\n')
         screen:expect([[
-          {7: 27 }line                 │line30                  |
-          {7: 28 }line                 │rows: 5, cols: 25       |
-          {7: 29 }line                 │rows: 5, cols: 24       |
-          {7: 30 }line                 │mouse enabled           |
-          {7: 31 }                     │^                        |
+          {121: 27 }line                 │line30                  |
+          {121: 28 }line                 │rows: 5, cols: 25       |
+          {121: 29 }line                 │rows: 5, cols: 24       |
+          {121: 30 }line                 │mouse enabled           |
+          {121: 31 }                     │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
       it("scrolling another window keeps focus and respects 'mousescroll'", function()
         feed('<ScrollWheelUp><4,0><ScrollWheelUp><4,0>')
         screen:expect([[
-          {7: 21 }line                 │line30                  |
-          {7: 22 }line                 │rows: 5, cols: 25       |
-          {7: 23 }line                 │rows: 5, cols: 24       |
-          {7: 24 }line                 │mouse enabled           |
-          {7: 25 }line                 │^                        |
+          {121: 21 }line                 │line30                  |
+          {121: 22 }line                 │rows: 5, cols: 25       |
+          {121: 23 }line                 │rows: 5, cols: 24       |
+          {121: 24 }line                 │mouse enabled           |
+          {121: 25 }line                 │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<S-ScrollWheelDown><4,0>')
         screen:expect([[
-          {7: 26 }line                 │line30                  |
-          {7: 27 }line                 │rows: 5, cols: 25       |
-          {7: 28 }line                 │rows: 5, cols: 24       |
-          {7: 29 }line                 │mouse enabled           |
-          {7: 30 }line                 │^                        |
+          {121: 26 }line                 │line30                  |
+          {121: 27 }line                 │rows: 5, cols: 25       |
+          {121: 28 }line                 │rows: 5, cols: 24       |
+          {121: 29 }line                 │mouse enabled           |
+          {121: 30 }line                 │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=ver:10')
         feed('<ScrollWheelUp><0,0>')
         screen:expect([[
-          {7: 16 }line                 │line30                  |
-          {7: 17 }line                 │rows: 5, cols: 25       |
-          {7: 18 }line                 │rows: 5, cols: 24       |
-          {7: 19 }line                 │mouse enabled           |
-          {7: 20 }line                 │^                        |
+          {121: 16 }line                 │line30                  |
+          {121: 17 }line                 │rows: 5, cols: 25       |
+          {121: 18 }line                 │rows: 5, cols: 24       |
+          {121: 19 }line                 │mouse enabled           |
+          {121: 20 }line                 │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=ver:0')
         feed('<ScrollWheelUp><0,0>')
@@ -479,45 +479,45 @@ describe(':terminal mouse', function()
         command('setlocal nowrap')
         feed('0<C-V>gg3ly$4p<C-W>wi')
         screen:expect([[
-          {7:  1 }linelinelinelineline │line30                  |
-          {7:  2 }linelinelinelineline │rows: 5, cols: 25       |
-          {7:  3 }linelinelinelineline │rows: 5, cols: 24       |
-          {7:  4 }linelinelinelineline │mouse enabled           |
-          {7:  5 }linelinelinelineline │^                        |
+          {121:  1 }linelinelinelineline │line30                  |
+          {121:  2 }linelinelinelineline │rows: 5, cols: 25       |
+          {121:  3 }linelinelinelineline │rows: 5, cols: 24       |
+          {121:  4 }linelinelinelineline │mouse enabled           |
+          {121:  5 }linelinelinelineline │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         feed('<ScrollWheelRight><4,0>')
         screen:expect([[
-          {7:  1 }nelinelineline       │line30                  |
-          {7:  2 }nelinelineline       │rows: 5, cols: 25       |
-          {7:  3 }nelinelineline       │rows: 5, cols: 24       |
-          {7:  4 }nelinelineline       │mouse enabled           |
-          {7:  5 }nelinelineline       │^                        |
+          {121:  1 }nelinelineline       │line30                  |
+          {121:  2 }nelinelineline       │rows: 5, cols: 25       |
+          {121:  3 }nelinelineline       │rows: 5, cols: 24       |
+          {121:  4 }nelinelineline       │mouse enabled           |
+          {121:  5 }nelinelineline       │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=hor:4')
         feed('<ScrollWheelLeft><4,0>')
         screen:expect([[
-          {7:  1 }nelinelinelineline   │line30                  |
-          {7:  2 }nelinelinelineline   │rows: 5, cols: 25       |
-          {7:  3 }nelinelinelineline   │rows: 5, cols: 24       |
-          {7:  4 }nelinelinelineline   │mouse enabled           |
-          {7:  5 }nelinelinelineline   │^                        |
+          {121:  1 }nelinelinelineline   │line30                  |
+          {121:  2 }nelinelinelineline   │rows: 5, cols: 25       |
+          {121:  3 }nelinelinelineline   │rows: 5, cols: 24       |
+          {121:  4 }nelinelinelineline   │mouse enabled           |
+          {121:  5 }nelinelinelineline   │^                        |
           ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
 
       it('will lose focus if another window is clicked', function()
         feed('<LeftMouse><5,1>')
         screen:expect([[
-          {7: 27 }line                 │line30                  |
-          {7: 28 }l^ine                 │rows: 5, cols: 25       |
-          {7: 29 }line                 │rows: 5, cols: 24       |
-          {7: 30 }line                 │mouse enabled           |
-          {7: 31 }                     │                        |
+          {121: 27 }line                 │line30                  |
+          {121: 28 }l^ine                 │rows: 5, cols: 25       |
+          {121: 29 }line                 │rows: 5, cols: 24       |
+          {121: 30 }line                 │mouse enabled           |
+          {121: 31 }                     │                        |
           ==========                ==========              |
                                                             |
         ]])
@@ -527,11 +527,11 @@ describe(':terminal mouse', function()
         api.nvim_set_option_value('hidden', true, {})
         feed('<c-\\><c-n><c-w><c-w>')
         screen:expect([[
-          {7: 27 }line                 │line30                  |
-          {7: 28 }line                 │rows: 5, cols: 25       |
-          {7: 29 }line                 │rows: 5, cols: 24       |
-          {7: 30 }line                 │mouse enabled           |
-          {7: 31 }^                     │                        |
+          {121: 27 }line                 │line30                  |
+          {121: 28 }line                 │rows: 5, cols: 25       |
+          {121: 29 }line                 │rows: 5, cols: 24       |
+          {121: 30 }line                 │mouse enabled           |
+          {121: 31 }^                     │                        |
           ==========                ==========              |
                                                             |
         ]])
@@ -547,11 +547,11 @@ describe(':terminal mouse', function()
         ]])
         feed(':bn<cr>')
         screen:expect([[
-          {7: 27 }line                 │rows: 5, cols: 24       |
-          {7: 28 }line                 │mouse enabled           |
-          {7: 29 }line                 │rows: 5, cols: 25       |
-          {7: 30 }line                 │rows: 5, cols: 24       |
-          {7: 31 }^                     │                        |
+          {121: 27 }line                 │rows: 5, cols: 24       |
+          {121: 28 }line                 │mouse enabled           |
+          {121: 29 }line                 │rows: 5, cols: 25       |
+          {121: 30 }line                 │rows: 5, cols: 24       |
+          {121: 31 }^                     │                        |
           ==========                ==========              |
           :bn                                               |
         ]])

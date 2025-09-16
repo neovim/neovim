@@ -45,52 +45,37 @@ describe('autoread TUI FocusGained/FocusLost', function()
     local atime = os.time() - 10
     vim.uv.fs_utime(path, atime, atime)
 
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                  |
-      {4:~                                                 }|*3
-      {5:[No Name]                                         }|
+      {100:~                                                 }|*3
+      {3:[No Name]                                         }|
                                                         |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+      {5:-- TERMINAL --}                                    |
+    ]])
     feed_command('edit ' .. path)
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                  |
-      {4:~                                                 }|*3
-      {5:xtest-foo                                         }|
+      {100:~                                                 }|*3
+      {3:xtest-foo                                         }|
       :edit xtest-foo                                   |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+      {5:-- TERMINAL --}                                    |
+    ]])
     feed_data('\027[O')
     feed_data('\027[O')
-    screen:expect {
-      grid = [[
-      ^                                                  |
-      {4:~                                                 }|*3
-      {5:xtest-foo                                         }|
-      :edit xtest-foo                                   |
-      {3:-- TERMINAL --}                                    |
-    ]],
-      unchanged = true,
-    }
+    screen:expect_unchanged()
 
     t.write_file(path, expected_addition)
 
     feed_data('\027[I')
 
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^line 1                                            |
       line 2                                            |
       line 3                                            |
       line 4                                            |
-      {5:xtest-foo                                         }|
+      {3:xtest-foo                                         }|
       :edit xtest-foo                                   |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 end)

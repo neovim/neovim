@@ -825,6 +825,20 @@ describe('API: buffer events:', function()
       },
     }, next_msg())
   end)
+
+  it('when updating quickfix list #34610', function()
+    command('copen')
+
+    local b = api.nvim_get_current_buf()
+    ok(api.nvim_buf_attach(b, true, {}))
+    expectn('nvim_buf_lines_event', { b, 2, 0, -1, { '' }, false })
+
+    command("cexpr ['Xa', 'Xb']")
+    expectn('nvim_buf_lines_event', { b, 3, 0, 1, { '|| Xa', '|| Xb' }, false })
+
+    command("caddexpr ['Xc']")
+    expectn('nvim_buf_lines_event', { b, 4, 2, 2, { '|| Xc' }, false })
+  end)
 end)
 
 describe('API: buffer events:', function()

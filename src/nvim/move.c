@@ -56,9 +56,7 @@ typedef struct {
   int height;                   // height of added line
 } lineoff_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "move.c.generated.h"
-#endif
+#include "move.c.generated.h"
 
 /// Get the number of screen lines skipped with "wp->w_skipcol".
 int adjust_plines_for_skipcol(win_T *wp)
@@ -1335,56 +1333,55 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
   hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
   validate_cursor(wp);            // w_wrow needs to be valid
   for (int todo = line_count; todo > 0; todo--) {
-    if (wp->w_topfill < win_get_fill(wp, wp->w_topline)
-        && wp->w_topfill < wp->w_view_height - 1) {
+    bool can_fill = wp->w_topfill < wp->w_view_height - 1
+                    && wp->w_topfill < win_get_fill(wp, wp->w_topline);
+    // break when at the very top
+    if (wp->w_topline == 1 && !can_fill && (!do_sms || wp->w_skipcol < width1)) {
+      break;
+    }
+    if (do_sms && wp->w_skipcol >= width1) {
+      // scroll a screen line down
+      if (wp->w_skipcol >= width1 + width2) {
+        wp->w_skipcol -= width2;
+      } else {
+        wp->w_skipcol -= width1;
+      }
+      redraw_later(wp, UPD_NOT_VALID);
+      done++;
+    } else if (can_fill) {
       wp->w_topfill++;
       done++;
     } else {
-      // break when at the very top
-      if (wp->w_topline == 1 && (!do_sms || wp->w_skipcol < width1)) {
-        break;
-      }
-      if (do_sms && wp->w_skipcol >= width1) {
-        // scroll a screen line down
-        if (wp->w_skipcol >= width1 + width2) {
-          wp->w_skipcol -= width2;
-        } else {
-          wp->w_skipcol -= width1;
+      // scroll a text line down
+      wp->w_topline--;
+      wp->w_skipcol = 0;
+      wp->w_topfill = 0;
+      // A sequence of folded lines only counts for one logical line
+      linenr_T first;
+      if (hasFolding(wp, wp->w_topline, &first, NULL)) {
+        done += !decor_conceal_line(wp, first - 1, false);
+        if (!byfold) {
+          todo -= wp->w_topline - first - 1;
         }
-        redraw_later(wp, UPD_NOT_VALID);
-        done++;
+        wp->w_botline -= wp->w_topline - first;
+        wp->w_topline = first;
+      } else if (decor_conceal_line(wp, wp->w_topline - 1, false)) {
+        todo++;
       } else {
-        // scroll a text line down
-        wp->w_topline--;
-        wp->w_skipcol = 0;
-        wp->w_topfill = 0;
-        // A sequence of folded lines only counts for one logical line
-        linenr_T first;
-        if (hasFolding(wp, wp->w_topline, &first, NULL)) {
-          done += !decor_conceal_line(wp, first - 1, false);
-          if (!byfold) {
-            todo -= wp->w_topline - first - 1;
+        if (do_sms) {
+          int size = linetabsize_eol(wp, wp->w_topline);
+          if (size > width1) {
+            wp->w_skipcol = width1;
+            size -= width1;
+            redraw_later(wp, UPD_NOT_VALID);
           }
-          wp->w_botline -= wp->w_topline - first;
-          wp->w_topline = first;
-        } else if (decor_conceal_line(wp, wp->w_topline - 1, false)) {
-          todo++;
+          while (size > width2) {
+            wp->w_skipcol += width2;
+            size -= width2;
+          }
+          done++;
         } else {
-          if (do_sms) {
-            int size = linetabsize_eol(wp, wp->w_topline);
-            if (size > width1) {
-              wp->w_skipcol = width1;
-              size -= width1;
-              redraw_later(wp, UPD_NOT_VALID);
-            }
-            while (size > width2) {
-              wp->w_skipcol += width2;
-              size -= width2;
-            }
-            done++;
-          } else {
-            done += plines_win_nofill(wp, wp->w_topline, true);
-          }
+          done += plines_win_nofill(wp, wp->w_topline, true);
         }
       }
     }
@@ -2428,11 +2425,16 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
     if (labs(curwin->w_topline - prev_topline) > (dir == BACKWARD)) {
       fixdir = dir * -1;
     }
-    while (curwin->w_skipcol > 0
-           && curwin->w_topline < curbuf->b_ml.ml_line_count) {
-      scroll_redraw(fixdir == FORWARD, 1);
-      *curscount += (fixdir == dir ? 1 : -1);
+
+    int width1 = curwin->w_view_width - win_col_off(curwin);
+    int width2 = width1 + win_col_off2(curwin);
+    count = 1 + (curwin->w_skipcol - width1 - 1) / width2;
+    if (fixdir == FORWARD) {
+      count = 1 + (linetabsize_eol(curwin, curwin->w_topline)
+                   - curwin->w_skipcol - width1 + width2 - 1) / width2;
     }
+    scroll_redraw(fixdir == FORWARD, count);
+    *curscount += count * (fixdir == dir ? 1 : -1);
   }
   curwin->w_p_sms = prev_sms;
 

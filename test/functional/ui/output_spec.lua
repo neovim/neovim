@@ -35,9 +35,9 @@ describe('shell command :!', function()
     })
     screen:expect([[
       ^                                                  |
-      {4:~                                                 }|*4
+      {100:~                                                 }|*4
                                                         |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -52,11 +52,11 @@ describe('shell command :!', function()
     tt.feed_data(':!printf foo; sleep 200\n')
     screen:expect([[
                                                         |
-      {4:~                                                 }|*2
-      {5:                                                  }|
+      {100:~                                                 }|*2
+      {3:                                                  }|
       :!printf foo; sleep 200                           |
       foo                                               |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -71,23 +71,15 @@ describe('shell command :!', function()
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
-    screen:expect(
-      [[
+    screen:expect([[
       29997: foo                                        |
       29998: foo                                        |
       29999: foo                                        |
       30000: foo                                        |
                                                         |
-      {10:Press ENTER or type command to continue}^           |
-      {3:-- TERMINAL --}                                    |
-    ]],
-      {
-        -- test/functional/testnvim.lua defaults to background=light.
-        [1] = { reverse = true },
-        [3] = { bold = true },
-        [10] = { foreground = 2 },
-      }
-    )
+      {123:Press ENTER or type command to continue}^           |
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 end)
 
@@ -111,14 +103,12 @@ describe('shell command :!', function()
     local screen = Screen.new(50, 4)
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])
-    screen:expect {
-      grid = [[
+    screen:expect([[
       {3:                                                  }|
       :!printf '1\t2\t3'                                |
       1       2       3                                 |
       {6:Press ENTER or type command to continue}^           |
-    ]],
-    }
+    ]])
     feed([[<CR>]])
 
     -- Print BELL control code. #4338
@@ -126,11 +116,11 @@ describe('shell command :!', function()
     feed([[:!printf '\007\007\007\007text'<CR>]])
     screen:expect {
       grid = [[
-      {3:                                                  }|
-      :!printf '\007\007\007\007text'                   |
-      text                                              |
-      {6:Press ENTER or type command to continue}^           |
-    ]],
+        {3:                                                  }|
+        :!printf '\007\007\007\007text'                   |
+        text                                              |
+        {6:Press ENTER or type command to continue}^           |
+      ]],
       condition = function()
         eq(true, screen.bell)
       end,
@@ -199,17 +189,17 @@ describe('shell command :!', function()
       screen.bell = false
       screen:expect {
         grid = [[
-                                                             |
-        {1:~                                                    }|
-        {3:                                                     }|
-        :!cat test/functional/fixtures/shell_data.txt        |
-        ^@^A^B^C^D^E^F^H                                     |
-        ^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_                 |
-        ö 한글 <a5><c3>                                      |
-        t       <ff>                                         |
-                                                             |
-        {6:Press ENTER or type command to continue}^              |
-      ]],
+                                                               |
+          {1:~                                                    }|
+          {3:                                                     }|
+          :!cat test/functional/fixtures/shell_data.txt        |
+          ^@^A^B^C^D^E^F^H                                     |
+          ^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_                 |
+          ö 한글 <a5><c3>                                      |
+          t       <ff>                                         |
+                                                               |
+          {6:Press ENTER or type command to continue}^              |
+        ]],
         condition = function()
           eq(true, screen.bell)
         end,

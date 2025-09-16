@@ -56,6 +56,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
 #include "nvim/fold.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
@@ -97,7 +98,6 @@
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
-#include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
@@ -157,18 +157,14 @@ typedef enum {
   PREFIX_INV,     ///< "inv" prefix
 } set_prefix_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "option.c.generated.h"
-#endif
+#include "option.c.generated.h"
 
 // options[] is initialized in options.generated.h.
 // The options with a NULL variable are 'hidden': a set command for them is
 // ignored and they are not printed.
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "options.generated.h"
-# include "options_map.generated.h"
-#endif
+#include "options.generated.h"
+#include "options_map.generated.h"
 
 static int p_bin_dep_opts[] = {
   kOptTextwidth, kOptWrapmargin, kOptModeline, kOptExpandtab, kOptInvalid
@@ -1537,40 +1533,6 @@ void set_options_bin(int oldval, int newval, int opt_flags)
   didset_options_sctx(opt_flags, p_bin_dep_opts);
 }
 
-/// Find the parameter represented by the given character (eg ', :, ", or /),
-/// and return its associated value in the 'shada' string.
-/// Only works for number parameters, not for 'r' or 'n'.
-/// If the parameter is not specified in the string or there is no following
-/// number, return -1.
-int get_shada_parameter(int type)
-{
-  char *p = find_shada_parameter(type);
-  if (p != NULL && ascii_isdigit(*p)) {
-    return atoi(p);
-  }
-  return -1;
-}
-
-/// Find the parameter represented by the given character (eg ''', ':', '"', or
-/// '/') in the 'shada' option and return a pointer to the string after it.
-/// Return NULL if the parameter is not specified in the string.
-char *find_shada_parameter(int type)
-{
-  for (char *p = p_shada; *p; p++) {
-    if (*p == type) {
-      return p + 1;
-    }
-    if (*p == 'n') {                // 'n' is always the last one
-      break;
-    }
-    p = vim_strchr(p, ',');         // skip until next ','
-    if (p == NULL) {                // hit the end without finding parameter
-      break;
-    }
-  }
-  return NULL;
-}
-
 /// Expand environment variables for some string options.
 /// These string options cannot be indirect!
 /// If "val" is NULL expand the current value of the option.
@@ -1593,13 +1555,13 @@ static char *option_expand(OptIndex opt_idx, const char *val)
   }
 
   // Expanding this with NameBuff, expand_env() must not be passed IObuff.
-  // Escape spaces when expanding 'tags', they are used to separate file
-  // names.
+  // Escape spaces when expanding 'tags' or 'path', they are used to separate
+  // file names.
   // For 'spellsuggest' expand after "file:".
-  expand_env_esc(val, NameBuff, MAXPATHL,
-                 (char **)options[opt_idx].var == &p_tags, false,
-                 (char **)options[opt_idx].var == &p_sps ? "file:"
-                                                         : NULL);
+  char **var = (char **)options[opt_idx].var;
+  bool esc = var == &p_tags || var == &p_path;
+  expand_env_esc(val, NameBuff, MAXPATHL, esc, false,
+                 (char **)options[opt_idx].var == &p_sps ? "file:" : NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
   }
@@ -2132,6 +2094,7 @@ static const char *did_set_laststatus(optset_T *args)
     win_comp_pos();
   }
 
+  status_redraw_curbuf();
   last_status(false);  // (re)set last window status line.
   return NULL;
 }
@@ -2840,6 +2803,9 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
     return e_invarg;
   }
 
+  // if you increase this, also increase SEARCH_STAT_BUF_LEN in search.c
+  enum { MAX_SEARCH_COUNT = 9999, };
+
   switch (opt_idx) {
   case kOptHelpheight:
   case kOptTitlelen:
@@ -2970,6 +2936,13 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
       return e_cannot_have_negative_or_zero_number_of_quickfix;
     } else if (value > 100) {
       return e_cannot_have_more_than_hundred_quickfix;
+    }
+    break;
+  case kOptMaxsearchcount:
+    if (value <= 0) {
+      return e_positive;
+    } else if (value > MAX_SEARCH_COUNT) {
+      return e_invarg;
     }
     break;
   default:
@@ -4436,6 +4409,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_ffu);
     case kOptErrorformat:
       return &(buf->b_p_efm);
+    case kOptGrepformat:
+      return &(buf->b_p_gefm);
     case kOptGrepprg:
       return &(buf->b_p_gp);
     case kOptMakeprg:
@@ -4466,6 +4441,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_ise);
     case kOptDictionary:
       return &(buf->b_p_dict);
+    case kOptDiffanchors:
+      return &(buf->b_p_dia);
     case kOptThesaurus:
       return &(buf->b_p_tsr);
     case kOptThesaurusfunc:
@@ -4553,6 +4530,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_ise != NUL ? &(buf->b_p_ise) : p->var;
   case kOptDictionary:
     return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : p->var;
+  case kOptDiffanchors:
+    return *buf->b_p_dia != NUL ? &(buf->b_p_dia) : p->var;
   case kOptThesaurus:
     return *buf->b_p_tsr != NUL ? &(buf->b_p_tsr) : p->var;
   case kOptThesaurusfunc:
@@ -4563,6 +4542,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
   case kOptErrorformat:
     return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
+  case kOptGrepformat:
+    return *buf->b_p_gefm != NUL ? &(buf->b_p_gefm) : p->var;
   case kOptGrepprg:
     return *buf->b_p_gp != NUL ? &(buf->b_p_gp) : p->var;
   case kOptMakeprg:
@@ -4677,6 +4658,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_bt);
   case kOptBuflisted:
     return &(buf->b_p_bl);
+  case kOptBusy:
+    return &(buf->b_p_busy);
   case kOptChannel:
     return &(buf->b_p_channel);
   case kOptCopyindent:
@@ -4930,7 +4913,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
 }
 
 /// Check string options in a window for a NULL value.
-void check_win_options(win_T *win)
+static void check_win_options(win_T *win)
 {
   check_winopt(&win->w_onebuf_opt);
   check_winopt(&win->w_allbuf_opt);
@@ -5123,6 +5106,7 @@ void buf_copy_options(buf_T *buf, int flags)
       }
       buf->b_p_cpt = xstrdup(p_cpt);
       COPY_OPT_SCTX(buf, kBufOptComplete);
+      set_buflocal_cpt_callbacks(buf);
 #ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = xstrdup(p_csl);
       COPY_OPT_SCTX(buf, kBufOptCompleteslash);
@@ -5224,6 +5208,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_string_option;
       buf->b_bkc_flags = 0;
+      buf->b_p_gefm = empty_string_option;
       buf->b_p_gp = empty_string_option;
       buf->b_p_mp = empty_string_option;
       buf->b_p_efm = empty_string_option;
@@ -5241,6 +5226,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_cot = empty_string_option;
       buf->b_cot_flags = 0;
       buf->b_p_dict = empty_string_option;
+      buf->b_p_dia = empty_string_option;
       buf->b_p_tsr = empty_string_option;
       buf->b_p_ise = empty_string_option;
       buf->b_p_tsrfu = empty_string_option;
@@ -5589,7 +5575,7 @@ static bool match_str(char *const str, regmatch_T *const regmatch, char **const 
     }
   } else {
     const int score = fuzzy_match_str(str, fuzzystr);
-    if (score != 0) {
+    if (score != FUZZY_SCORE_NONE) {
       if (!test_only) {
         fuzmatch[idx].idx = idx;
         fuzmatch[idx].str = xstrdup(str);
@@ -6316,7 +6302,8 @@ dict_T *get_winbuf_options(const int bufopt)
 int get_scrolloff_value(win_T *wp)
 {
   // Disallow scrolloff in terminal-mode. #11915
-  if (State & MODE_TERMINAL) {
+  // Still allow 'scrolloff' for non-terminal buffers. #34447
+  if ((State & MODE_TERMINAL) && wp->w_buffer->terminal) {
     return 0;
   }
   return (int)(wp->w_p_so < 0 ? p_so : wp->w_p_so);

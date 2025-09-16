@@ -13,8 +13,11 @@ local int_type = t_eval.int_type
 local flt_type = t_eval.flt_type
 local type_key = t_eval.type_key
 
-local api =
-  cimport('./src/nvim/api/private/defs.h', './src/nvim/api/private/t.h', './src/nvim/memory.h')
+local api = cimport(
+  './src/nvim/api/private/defs.h',
+  './src/nvim/api/private/helpers.h',
+  './src/nvim/memory.h'
+)
 
 local obj2lua
 

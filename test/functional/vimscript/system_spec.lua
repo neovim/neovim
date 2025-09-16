@@ -374,8 +374,8 @@ describe('system()', function()
     describe('with linefeed characters inside List items', function()
       it('converts linefeed characters to NULs', function()
         eq(
-          'l1\001p2\nline2\001a\001b\nl3',
-          eval([[system('cat -', ["l1\np2", "line2\na\nb", 'l3'])]])
+          '\001l1\001p2\nline2\001a\001b\nl3',
+          eval([[system('cat -', ["\nl1\np2", "line2\na\nb", 'l3'])]])
         )
       end)
     end)
@@ -496,8 +496,8 @@ describe('systemlist()', function()
     describe('with linefeed characters inside list items', function()
       it('converts linefeed characters to NULs', function()
         eq(
-          { 'l1\np2', 'line2\na\nb', 'l3' },
-          eval([[systemlist('cat -', ["l1\np2", "line2\na\nb", 'l3'])]])
+          { '\nl1\np2', 'line2\na\nb', 'l3' },
+          eval([[systemlist('cat -', ["\nl1\np2", "line2\na\nb", 'l3'])]])
         )
       end)
     end)
@@ -557,6 +557,12 @@ end)
 
 describe('shell :!', function()
   before_each(clear)
+
+  it(':{range}! works when the first char is NUL #34163', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { '\0hello', 'hello' })
+    command('%!cat')
+    eq({ '\0hello', 'hello' }, api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
 
   it(':{range}! with powershell using "commands" filter/redirect #16271 #19250', function()
     if not n.has_powershell() then

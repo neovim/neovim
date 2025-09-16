@@ -20,6 +20,4 @@ enum {
   MAX_SWAP_PAGE_SIZE = 50000,
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memfile.h.generated.h"
-#endif
+#include "memfile.h.generated.h"

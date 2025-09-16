@@ -23,9 +23,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "input.c.generated.h"  // IWYU pragma: export
-#endif
+#include "input.c.generated.h"  // IWYU pragma: export
 
 /// Ask for a reply from the user, a 'y' or a 'n', with prompt "str" (which
 /// should have been translated already).
@@ -41,8 +39,6 @@ int ask_yesno(const char *const str)
   const int save_State = State;
 
   no_wait_return++;
-  State = MODE_CONFIRM;  // Mouse behaves like with :confirm.
-  setmouse();  // Disable mouse in xterm.
   snprintf(IObuff, IOSIZE, _("%s (y/n)?"), str);
   char *prompt = xstrdup(IObuff);
 

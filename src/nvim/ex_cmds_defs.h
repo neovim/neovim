@@ -9,9 +9,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds_enum.generated.h"
-#endif
+#include "ex_cmds_enum.generated.h"
 
 // When adding an Ex command:
 // 1. Add an entry to the table in src/nvim/ex_cmds.lua.  Keep it sorted on the
@@ -32,9 +30,8 @@
 //
 //    All keys not described in the above table are reserved for future use.
 //
-// 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
-// 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
-// 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
+// 2. Add an entry in the index for Ex commands at ":help ex-cmd-index".
+// 3. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
 //    long name of the command.
 #define EX_RANGE           0x001u  // allow a linespecs
 #define EX_BANG            0x002u  // allow a ! after the command name

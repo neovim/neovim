@@ -540,7 +540,7 @@ attempting a symlink attack (could happen when editing a file in /tmp or when
 
 Vim (and Vi) expect tags files to be sorted in ASCII order.  Binary searching
 can then be used, which is a lot faster than a linear search.  If your tags
-files are not properly sorted, reset the |'tagbsearch'| option.
+files are not properly sorted, reset the 'tagbsearch' option.
 This message is only given when Vim detects a problem when searching for a
 tag.  Sometimes this message is not given, even though the tags file is not
 properly sorted.
@@ -844,5 +844,37 @@ and typeahead is ignored.
 The |g<| command can be used to see the last page of previous command output.
 This is especially useful if you accidentally typed <Space> at the hit-enter
 prompt.
+
+==============================================================================
+4. PROGRESS MESSAGE                                    *progress-message*
+
+Plugins and core Nvim features can emit "progress" |ui-messages| to report the
+state of long-running tasks.
+
+Create or update a progress-message by calling |nvim_echo()| with
+`kind='progress'`. Each message has a unique message-id, returned by
+`nvim_echo`. You can specify the id when calling `nvim_echo` to update an
+existing progress-message.
+
+Events: ~
+    • msg_show |ui-messages| event is fired for ext-ui upon creation/update of a
+    progress-message
+    • Updating or creating a progress message also triggers the |Progress| autocommand.
+
+Example: >lua
+    local progress = {
+      kind = 'progress',
+      status = 'running',
+      percent = 10,
+      title = 'term',
+    }
+    progress.id = vim.api.nvim_echo({ { 'searching...' } }, true, progress)
+    progress.percent = 50
+    vim.api.nvim_echo({ { 'searching' } }, true, progress)
+    progress.status = 'success'
+    progress.percent = 100
+    vim.api.nvim_echo({ { 'done' } }, true, progress)
+<
+See also: |nvim_echo()| |ui-messages| |Progress|
 
  vim:tw=78:ts=8:noet:ft=help:norl:

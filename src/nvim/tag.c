@@ -192,9 +192,7 @@ typedef struct {
   hashtab_T ht_match[MT_COUNT];  ///< stores matches by key
 } findtags_state_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tag.c.generated.h"
-#endif
+#include "tag.c.generated.h"
 
 static const char e_tag_stack_empty[]
   = N_("E73: Tag stack empty");
@@ -2455,7 +2453,9 @@ static bool found_tagfile_cb(int num_fnames, char **fnames, bool all, void *cook
 void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);
-  do_tag(NULL, DT_FREE, 0, 0, 0);
+  if (curwin != NULL) {
+    do_tag(NULL, DT_FREE, 0, 0, 0);
+  }
   tag_freematch();
 
   tagstack_clear_entry(&ptag_entry);

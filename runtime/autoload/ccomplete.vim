@@ -114,6 +114,11 @@ func ccomplete#Complete(findstart, base)
     endif
   endwhile
 
+  if complete_check()
+      " return v:none
+      return []
+  endif
+
   " Find the variable items[0].
   " 1. in current function (like with "gd")
   " 2. in tags file(s) (like with ":tag")
@@ -128,6 +133,9 @@ func ccomplete#Complete(findstart, base)
       " Handle multiple declarations on the same line.
       let col2 = col - 1
       while line[col2] != ';'
+        if complete_check()
+            return res
+        endif
 	let col2 -= 1
       endwhile
       let line = strpart(line, col2 + 1)
@@ -138,6 +146,9 @@ func ccomplete#Complete(findstart, base)
       " declaration.
       let col2 = col - 1
       while line[col2] != ','
+        if complete_check()
+            return res
+        endif
 	let col2 -= 1
       endwhile
       if strpart(line, col2 + 1, col - col2 - 1) =~ ' *[^ ][^ ]*  *[^ ]'
@@ -203,6 +214,9 @@ func ccomplete#Complete(findstart, base)
 
     let res = []
     for i in range(len(diclist))
+      if complete_check()
+          return res
+      endif
       " New ctags has the "typeref" field.  Patched version has "typename".
       if has_key(diclist[i], 'typename')
 	call extend(res, s:StructMembers(diclist[i]['typename'], items[1:], 1))
@@ -234,6 +248,9 @@ func ccomplete#Complete(findstart, base)
   let last = len(items) - 1
   let brackets = ''
   while last >= 0
+    if complete_check()
+        return res
+    endif
     if items[last][0] != '['
       break
     endif
@@ -295,6 +312,9 @@ endfunc
 func s:Dict2info(dict)
   let info = ''
   for k in sort(keys(a:dict))
+    if complete_check()
+        return info
+    endif
     let info  .= k . repeat(' ', 10 - len(k))
     if k == 'cmd'
       let info .= substitute(matchstr(a:dict['cmd'], '/^\s*\zs.*\ze$/'), '\\\(.\)', '\1', 'g')
@@ -323,6 +343,9 @@ func s:ParseTagline(line)
       endwhile
     endif
     for i in range(n + 1, len(l) - 1)
+      if complete_check()
+        return d
+      endif
       if l[i] == 'file:'
 	let d['static'] = 1
       elseif l[i] !~ ':'
@@ -409,6 +432,9 @@ func s:Nextitem(lead, items, depth, all)
   " Try to recognize the type of the variable.  This is rough guessing...
   let res = []
   for tidx in range(len(tokens))
+    if complete_check()
+        return res
+    endif
 
     " Skip tokens starting with a non-ID character.
     if tokens[tidx] !~ '^\h'
@@ -431,6 +457,11 @@ func s:Nextitem(lead, items, depth, all)
     " Use the tags file to find out if this is a typedef.
     let diclist = taglist('^' . tokens[tidx] . '$')
     for tagidx in range(len(diclist))
+
+      if complete_check()
+        return res
+      endif
+
       let item = diclist[tagidx]
 
       " New ctags has the "typeref" field.  Patched version has "typename".
@@ -514,6 +545,9 @@ func s:StructMembers(typename, items, all)
   endif
   if !cached
     while 1
+      if complete_check()
+        return []
+      endif
       exe 'silent! keepj noautocmd ' . n . 'vimgrep /\t' . typename . '\(\t\|$\)/j ' . fnames
 
       let qflist = getqflist()
@@ -533,6 +567,9 @@ func s:StructMembers(typename, items, all)
   " Skip over [...] items
   let idx = 0
   while 1
+    if complete_check()
+        return []
+    endif
     if idx >= len(a:items)
       let target = ''		" No further items, matching all members
       break
@@ -570,6 +607,9 @@ func s:StructMembers(typename, items, all)
     " Skip over next [...] items
     let idx += 1
     while 1
+      if complete_check()
+        return matches
+      endif
       if idx >= len(a:items)
 	return matches		" No further items, return the result.
       endif
@@ -594,6 +634,9 @@ endfunc
 func s:SearchMembers(matches, items, all)
   let res = []
   for i in range(len(a:matches))
+    if complete_check()
+        return res
+    endif
     let typename = ''
     if has_key(a:matches[i], 'dict')
       if has_key(a:matches[i].dict, 'typename')

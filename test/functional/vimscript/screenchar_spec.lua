@@ -76,7 +76,39 @@ describe('screenchar() and family respect floating windows', function()
   describe('with ext_multigrid', function()
     with_ext_multigrid(true)
   end)
+
   describe('without ext_multigrid', function()
     with_ext_multigrid(false)
+  end)
+
+  describe('hidden windows', function()
+    before_each(function()
+      clear()
+      Screen.new(40, 7, {})
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'aaa' })
+    end)
+
+    local assert_screen_funcs = function()
+      eq('a', fn.screenstring(1, 1))
+      eq(97, fn.screenchar(1, 1))
+      eq({ 97 }, fn.screenchars(1, 1))
+      eq(fn.screenattr(2, 1), fn.screenattr(1, 1))
+    end
+
+    it('manual', function()
+      local bufnr = api.nvim_create_buf(false, true)
+      api.nvim_buf_set_lines(bufnr, 0, -1, true, { 'bb' })
+      local win_opts = { relative = 'editor', row = 0, col = 0, height = 1, width = 2, hide = true }
+      api.nvim_open_win(bufnr, false, win_opts)
+
+      assert_screen_funcs()
+    end)
+
+    it('from ui2', function()
+      n.exec_lua('require("vim._extui").enable({ enable = true })')
+      command('echo "foo"')
+
+      assert_screen_funcs()
+    end)
   end)
 end)

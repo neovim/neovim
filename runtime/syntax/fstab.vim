@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/syntax/fstab.vim
-" Last Change: 2024 Jul 11
-" Version: 1.6.4
+" Last Change: 2025 Aug 21
+" Version: 1.7.0
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -18,6 +18,9 @@
 "
 "   let fstab_unknown_device_errors = 0
 "     do not highlight unknown devices as errors
+"
+" Changelog:
+" - 2025 Aug 21 added support for mtab
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -401,6 +404,28 @@ syn match fsFreqPass /\s\+.\{-}$/ contains=@fsFreqPassCluster,@fsGeneralCluster 
 
 " Whole line comments
 syn match fsCommentLine /^#.*$/ contains=@Spell
+
+if exists('b:fstab_enable_mtab') && b:fstab_enable_mtab == 1
+  " mtab
+  " ----
+  syn keyword fsDeviceKeyword contained binfmt_misc bpf cgroup2 configfs debugfs efivarfs fusectl hugetlbfs mqueue portal pstore securityfs udev ramfs
+  syn match fsDeviceKeyword contained /^systemd-1/
+  syn match fsDeviceKeyword contained /^\/dev\S\+/
+
+  " devpts
+  syn match fsOptionsKeywords contained /\<ptmxmode=/ nextgroup=fsOptionsNumber
+
+  " cgroup2
+  syn keyword fsTypeKeyword contained cgroup2
+  syn keyword fsOptionsKeywords contained nsdelegate memory_recursiveprot
+
+  " hugetlbfs
+  syn match fsOptionsKeywords contained /\<pagesize=/ nextgroup=fsOptionsString
+
+  " systemd
+  syn match fsOptionsKeywords contained /\<\%(pgrp\|timeout\|minproto\|maxproto\|pipe_ino\)=/ nextgroup=fsOptionsNumber
+  syn keyword fsOptionsKeywords contained direct
+endif
 
 hi def link fsOperator Operator
 hi def link fsComment Comment

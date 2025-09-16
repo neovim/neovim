@@ -34,6 +34,4 @@ enum {
   INSCHAR_COM_LIST = 16,  ///< format comments with list/2nd line indent
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "edit.h.generated.h"
-#endif
+#include "edit.h.generated.h"

@@ -1,5 +1,9 @@
 local platform = vim.uv.os_uname()
 local deps_install_dir = table.remove(_G.arg, 1)
+_G.c_include_path = {}
+while vim.startswith(_G.arg[1], '-I') do
+  table.insert(_G.c_include_path, string.sub(table.remove(_G.arg, 1), 3))
+end
 local subcommand = table.remove(_G.arg, 1)
 local suffix = (platform and platform.sysname:lower():find 'windows') and '.dll' or '.so'
 package.path = (deps_install_dir .. '/?.lua;')

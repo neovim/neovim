@@ -114,6 +114,7 @@ an 50.20.110 &Syntax.C.C++ :cal SetSyn("cpp")<CR>
 an 50.20.120 &Syntax.C.C# :cal SetSyn("cs")<CR>
 an 50.20.130 &Syntax.C.Cabal\ Haskell\ build\ file :cal SetSyn("cabal")<CR>
 an 50.20.140 &Syntax.C.Calendar :cal SetSyn("calendar")<CR>
+an 50.20.140 &Syntax.C.Cangjie :cal SetSyn("cangjie")<CR>
 an 50.20.150 &Syntax.C.Cascading\ Style\ Sheets :cal SetSyn("css")<CR>
 an 50.20.160 &Syntax.C.CDL :cal SetSyn("cdl")<CR>
 an 50.20.170 &Syntax.C.Cdrdao\ TOC :cal SetSyn("cdrtoc")<CR>

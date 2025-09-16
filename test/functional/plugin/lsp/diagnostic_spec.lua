@@ -108,7 +108,7 @@ describe('vim.lsp.diagnostic', function()
 
     exec_lua(function()
       diagnostic_bufnr = vim.uri_to_bufnr(fake_uri)
-      local lines = { '1st line of text', '2nd line of text', 'wow', 'cool', 'more', 'lines' }
+      local lines = { '1st line', '2nd line of text', 'wow', 'cool', 'more', 'lines' }
       vim.fn.bufload(diagnostic_bufnr)
       vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
       vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
@@ -285,6 +285,36 @@ describe('vim.lsp.diagnostic', function()
       eq('Pull Diagnostic', diags[1].message)
     end)
 
+    it('handles multiline diagnostic ranges #33782', function()
+      local diags = exec_lua(function()
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {
+            _G.make_error('Pull Diagnostic', 0, 6, 1, 10),
+          },
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        return vim.diagnostic.get(diagnostic_bufnr)
+      end)
+      local lines = exec_lua(function()
+        return vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, -1, false)
+      end)
+      -- This test case must be run over a multiline diagnostic in which the start line is shorter
+      -- than the end line, and the end_col exceeds the start line's length.
+      eq(#lines[1], 8)
+      eq(#lines[2], 16)
+      eq(1, #diags)
+      eq(6, diags[1].col)
+      eq(10, diags[1].end_col)
+    end)
+
     it('severity defaults to error if missing', function()
       ---@type vim.Diagnostic[]
       local diagnostics = exec_lua(function()
@@ -440,6 +470,7 @@ describe('vim.lsp.diagnostic', function()
     end)
 
     it('requests with the `previousResultId`', function()
+      -- Full reports
       eq(
         'dummy_server',
         exec_lua(function()
@@ -467,6 +498,85 @@ describe('vim.lsp.diagnostic', function()
           return _G.params.previousResultId
         end)
       )
+
+      -- Unchanged reports
+      eq(
+        'squidward',
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic(nil, {
+            kind = 'unchanged',
+            resultId = 'squidward',
+          }, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            client_id = client_id,
+            bufnr = diagnostic_bufnr,
+          })
+          vim.api.nvim_exec_autocmds('LspNotify', {
+            buffer = diagnostic_bufnr,
+            data = {
+              method = vim.lsp.protocol.Methods.textDocument_didChange,
+              client_id = client_id,
+            },
+          })
+          return _G.params.previousResultId
+        end)
+      )
+    end)
+
+    it('handles relatedDocuments diagnostics', function()
+      local fake_uri_2 = 'file:///fake/uri2'
+      ---@type vim.Diagnostic[], vim.Diagnostic[], string?
+      local diagnostics, related_diagnostics, relatedPreviousResultId = exec_lua(function()
+        local second_buf = vim.uri_to_bufnr(fake_uri_2)
+        vim.fn.bufload(second_buf)
+
+        -- Attach the client to both buffers.
+        vim.api.nvim_win_set_buf(0, second_buf)
+        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          relatedDocuments = {
+            [fake_uri_2] = {
+              kind = 'full',
+              resultId = 'spongebob',
+              items = {
+                {
+                  range = _G.make_range(4, 4, 4, 4),
+                  message = 'related bad!',
+                },
+              },
+            },
+          },
+          items = {},
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        vim.api.nvim_exec_autocmds('LspNotify', {
+          buffer = second_buf,
+          data = {
+            method = vim.lsp.protocol.Methods.textDocument_didChange,
+            client_id = client_id,
+          },
+        })
+
+        return vim.diagnostic.get(diagnostic_bufnr),
+          vim.diagnostic.get(second_buf),
+          _G.params.previousResultId
+      end)
+      eq(0, #diagnostics)
+      eq(1, #related_diagnostics)
+      eq('related bad!', related_diagnostics[1].message)
+      eq('spongebob', relatedPreviousResultId)
     end)
   end)
 end)

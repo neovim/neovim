@@ -67,8 +67,19 @@ describe(':checkhealth', function()
     assert_alive()
   end)
 
-  it('vim.g.health', function()
+  it('cmdline completion works with multiple args #35054', function()
     clear()
+    n.feed(':checkhealth vim.ls<Tab>')
+    eq('checkhealth vim.lsp', fn.getcmdline())
+    n.feed(' vim.prov<Tab>')
+    eq('checkhealth vim.lsp vim.provider', fn.getcmdline())
+  end)
+
+  it('vim.g.health', function()
+    clear {
+      args_rm = { '-u' },
+      args = { '--clean', '+set runtimepath+=test/functional/fixtures' },
+    }
     command("let g:health = {'style':'float'}")
     command('checkhealth lsp')
     eq(
@@ -77,6 +88,14 @@ describe(':checkhealth', function()
       return vim.api.nvim_win_get_config(0).relative
     ]])
     )
+
+    -- gO should not close the :checkhealth floating window. #34784
+    command('checkhealth full_render')
+    local win = api.nvim_get_current_win()
+    api.nvim_win_set_cursor(win, { 5, 1 })
+    n.feed('gO')
+    eq(true, api.nvim_win_is_valid(win))
+    eq('qf', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
   it("vim.provider works with a misconfigured 'shell'", function()

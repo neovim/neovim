@@ -138,35 +138,43 @@ exposes via the |TermRequest| event.
 
 OSC 7: change working directory			*terminal-osc7*
 
-To handle OSC 7 emitted from :terminal processes, this code will :cd to the
-directory indicated in the request. >lua
+Shells can emit the "OSC 7" sequence to announce when the current directory
+(CWD) changed.
+
+You can configure your shell init (e.g. ~/.bashrc) to emit OSC 7, or your
+terminal may attempt to do it for you.
+
+To configure bash to emit OSC 7: >bash
+  function print_osc7() {
+    printf '\033]7;file://%s\033\\' "$PWD"
+  }
+  PROMPT_COMMAND='print_osc7'
+
+Having ensured that your shell emits OSC 7, you can now handle it in Nvim. The
+following code will run :lcd whenever your shell CWD changes in a :terminal
+buffer: >lua
 
   vim.api.nvim_create_autocmd({ 'TermRequest' }, {
     desc = 'Handles OSC 7 dir change requests',
     callback = function(ev)
-      if string.sub(ev.data.sequence, 1, 4) == '\x1b]7;' then
-        local dir = string.gsub(ev.data.sequence, '\x1b]7;file://[^/]*', '')
+      local val, n = string.gsub(ev.data.sequence, '\027]7;file://[^/]*', '')
+      if n > 0 then
+        -- OSC 7: dir-change
+        local dir = val
         if vim.fn.isdirectory(dir) == 0 then
           vim.notify('invalid dir: '..dir)
           return
         end
-        vim.api.nvim_buf_set_var(ev.buf, 'osc7_dir', dir)
-        if vim.o.autochdir and vim.api.nvim_get_current_buf() == ev.buf then
-          vim.cmd.cd(dir)
+        vim.b[ev.buf].osc7_dir = dir
+        if vim.api.nvim_get_current_buf() == ev.buf then
+          vim.cmd.lcd(dir)
         end
       end
     end
   })
-  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter', 'DirChanged' }, {
-    callback = function(ev)
-      if vim.b.osc7_dir and vim.fn.isdirectory(vim.b.osc7_dir) == 1 then
-        vim.cmd.cd(vim.b.osc7_dir)
-      end
-    end
-  })
 
-To try it out, select the above code and source it with `:'<,'>lua` (or
-`g==`), then run this command in a :terminal buffer: >
+To try it out, select the above code and source it with `:'<,'>lua`, then run
+this command in a :terminal buffer: >
 
     printf "\033]7;file://./foo/bar\033\\"
 
@@ -191,7 +199,7 @@ Shells can emit semantic escape sequences (OSC 133) to mark where each prompt
 starts and ends. The start of a prompt is marked by sequence `OSC 133 ; A ST`,
 and the end by `OSC 133 ; B ST`.
 
-You can configure your shell "rc" (e.g. ~/.bashrc) to emit OSC 133 sequences,
+You can configure your shell init (e.g. ~/.bashrc) to emit OSC 133 sequences,
 or your terminal may attempt to do it for you (assuming your shell config
 doesn't interfere).
 
@@ -240,7 +248,7 @@ Example: >vim
 - *b:term_title*  Terminal title (user-writable), typically displayed in the
   window title or tab title of a graphical terminal emulator. Terminal
   programs can set this by emitting an escape sequence.
-- |'channel'|  Terminal PTY |job-id|.  Can be used with |chansend()| to send
+- 'channel'  Terminal PTY |job-id|.  Can be used with |chansend()| to send
   input to the terminal.
 - The |TermClose| event gives the terminal job exit code in the |v:event|
   "status" field. For example, this autocommand outputs the terminal's exit
@@ -656,6 +664,9 @@ You may also use decimal breakpoint signs instead, in which case IDs greater
 than 99 will be displayed as "9+".
 
 If you want to customize the breakpoint signs to show `>>` in the signcolumn: >vim
+	let g:termdebug_config['sign'] = '>>'
+You can also specify individual signs for the first several breakpoints: >vim
+	let g:termdebug_config['signs'] = ['>1', '>2', '>3', '>4', '>5', '>6', '>7', '>8', '>9']
 	let g:termdebug_config['sign'] = '>>'
 If you would like to use decimal (base 10) breakpoint signs: >vim
 	let g:termdebug_config['sign_decimal'] = 1

@@ -48,9 +48,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "help.c.generated.h"
-#endif
+#include "help.c.generated.h"
 
 /// ":help": open a read-only window on a help file
 void ex_help(exarg_T *eap)
@@ -141,7 +139,7 @@ void ex_help(exarg_T *eap)
     } else {
       wp = NULL;
       FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
-        if (bt_help(wp2->w_buffer)) {
+        if (bt_help(wp2->w_buffer) && !wp2->w_config.hide && wp2->w_config.focusable) {
           wp = wp2;
           break;
         }
@@ -839,8 +837,6 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   int filecount;
   char **files;
   char *s;
-  TriState utf8 = kNone;
-  bool mix = false;             // detected mixed encodings
 
   // Find all *.txt files.
   size_t dirlen = xstrlcpy(NameBuff, dir, sizeof(NameBuff));
@@ -905,36 +901,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     const char *const fname = files[fi] + dirlen + 1;
 
     bool in_example = false;
-    bool firstline = true;
     while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
-      if (firstline) {
-        // Detect utf-8 file by a non-ASCII char in the first line.
-        TriState this_utf8 = kNone;
-        for (s = IObuff; *s != NUL; s++) {
-          if ((uint8_t)(*s) >= 0x80) {
-            this_utf8 = kTrue;
-            const int l = utf_ptr2len(s);
-            if (l == 1) {
-              // Illegal UTF-8 byte sequence.
-              this_utf8 = kFalse;
-              break;
-            }
-            s += l - 1;
-          }
-        }
-        if (this_utf8 == kNone) {           // only ASCII characters found
-          this_utf8 = kFalse;
-        }
-        if (utf8 == kNone) {                // first file
-          utf8 = this_utf8;
-        } else if (utf8 != this_utf8) {
-          semsg(_("E670: Mix of help file encodings within a language: %s"),
-                files[fi]);
-          mix = !got_int;
-          got_int = true;
-        }
-        firstline = false;
-      }
       if (in_example) {
         // skip over example; a non-white in the first column ends it
         if (vim_strchr(" \t\n\r", (uint8_t)IObuff[0])) {
@@ -972,10 +939,15 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         }
         p1 = p2;
       }
-      size_t len = strlen(IObuff);
-      if ((len == 2 && strcmp(&IObuff[len - 2], ">\n") == 0)
-          || (len >= 3 && strcmp(&IObuff[len - 3], " >\n") == 0)) {
-        in_example = true;
+      size_t off = strlen(IObuff);
+      if (off >= 2 && IObuff[off - 1] == '\n') {
+        off -= 2;
+        while (off > 0 && (ASCII_ISLOWER(IObuff[off]) || ascii_isdigit(IObuff[off]))) {
+          off--;
+        }
+        if (IObuff[off] == '>' && (off == 0 || IObuff[off - 1] == ' ')) {
+          in_example = true;
+        }
       }
       line_breakcheck();
     }
@@ -1008,10 +980,6 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
       }
     }
 
-    if (utf8 == kTrue) {
-      fprintf(fd_tags, "!_TAG_FILE_ENCODING\tutf-8\t//\n");
-    }
-
     // Write the tags into the file.
     for (int i = 0; i < ga.ga_len; i++) {
       s = ((char **)ga.ga_data)[i];
@@ -1030,9 +998,6 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         fprintf(fd_tags, "*\n");
       }
     }
-  }
-  if (mix) {
-    got_int = false;        // continue with other languages
   }
 
   GA_DEEP_CLEAR_PTR(&ga);

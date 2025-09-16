@@ -140,7 +140,7 @@ The following new APIs or features were added.
 
 • 'diffopt' now includes a `linematch` option to enable a second-stage diff on
   individual hunks to provide much more accurate diffs. This option is also
-  available to |vim.diff()|
+  available to |vim.text.diff()|
 
   See https://github.com/neovim/neovim/pull/14537.
 
@@ -186,7 +186,7 @@ The following new APIs or features were added.
   Additionally |TSNode:range()| now takes an optional {include_bytes} argument.
 
 • Treesitter injection queries now use the format described at
-  https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection .
+  https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection .
   Support for the previous format will be removed in a future release.
 
 • Added |nvim_get_hl()| for getting highlight group definitions in a format

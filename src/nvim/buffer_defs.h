@@ -12,6 +12,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/statusline_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/undo_defs.h"
 
 /// Reference to a buffer that stores the value of buf_free_count.
@@ -368,7 +369,7 @@ struct file_buffer {
   int b_locked;                 // Buffer is being closed or referenced, don't
                                 // let autocommands wipe it out.
   int b_locked_split;           // Buffer is being closed, don't allow opening
-                                // a new window with it.
+                                // it in more windows.
   int b_ro_locked;              // Non-zero when the buffer can't be changed.
                                 // Used for FileChangedRO
 
@@ -398,7 +399,7 @@ struct file_buffer {
 
   varnumber_T b_last_changedtick;       // b:changedtick when TextChanged was
                                         // last triggered.
-  varnumber_T b_last_changedtick_i;     // b:changedtick for TextChangedI
+  varnumber_T b_last_changedtick_i;     // b:changedtick for TextChangedI/T
   varnumber_T b_last_changedtick_pum;   // b:changedtick for TextChangedP
 
   bool b_saving;                // Set to true if we are in the middle of
@@ -522,6 +523,7 @@ struct file_buffer {
   int b_p_bomb;                 ///< 'bomb'
   char *b_p_bh;                 ///< 'bufhidden'
   char *b_p_bt;                 ///< 'buftype'
+  OptInt b_p_busy;              ///< 'busy'
   int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
   OptInt b_p_channel;           ///< 'channel'
@@ -538,6 +540,8 @@ struct file_buffer {
 #ifdef BACKSLASH_IN_FILENAME
   char *b_p_csl;                ///< 'completeslash'
 #endif
+  Callback *b_p_cpt_cb;         ///< F{func} in 'complete' callback
+  int b_p_cpt_count;            ///< Count of values in 'complete'
   char *b_p_cfu;                ///< 'completefunc'
   Callback b_cfu_cb;            ///< 'completefunc' callback
   char *b_p_ofu;                ///< 'omnifunc'
@@ -606,6 +610,7 @@ struct file_buffer {
   char *b_p_keymap;             ///< 'keymap'
 
   // local values for options which are normally global
+  char *b_p_gefm;               ///< 'grepformat' local value
   char *b_p_gp;                 ///< 'grepprg' local value
   char *b_p_mp;                 ///< 'makeprg' local value
   char *b_p_efm;                ///< 'errorformat' local value
@@ -616,6 +621,7 @@ struct file_buffer {
   char *b_p_tc;                 ///< 'tagcase' local value
   unsigned b_tc_flags;          ///< flags for 'tagcase'
   char *b_p_dict;               ///< 'dictionary' local value
+  char *b_p_dia;                ///< 'diffanchors' local value
   char *b_p_tsr;                ///< 'thesaurus' local value
   char *b_p_tsrfu;              ///< 'thesaurusfunc' local value
   Callback b_tsrfu_cb;          ///< 'thesaurusfunc' callback
@@ -698,6 +704,7 @@ struct file_buffer {
   Callback b_prompt_interrupt;  // set by prompt_setinterrupt()
   int b_prompt_insert;          // value for restart_edit when entering
                                 // a prompt buffer window.
+  fmark_T b_prompt_start;       // Start of the editable area of a prompt buffer.
 
   synblock_T b_s;               // Info related to syntax highlighting.  w_s
                                 // normally points to this, but some windows
@@ -755,9 +762,11 @@ struct file_buffer {
 /// and how many lines it occupies in that buffer.  When the lines are missing
 /// in the buffer the df_count[] is zero.  This is all counted in
 /// buffer lines.
-/// There is always at least one unchanged line in between the diffs (unless
-/// linematch is used).  Otherwise it would have been included in the diff above
-/// or below it.
+/// Usually there is always at least one unchanged line in between the diffs as
+/// otherwise it would have been included in the diff above or below it.  When
+/// linematch or diff anchors are used, this is no longer guaranteed, and we may
+/// have adjacent diff blocks.  In all cases they will not overlap, although it
+/// is possible to have multiple 0-count diff blocks at the same line.
 /// df_lnum[] + df_count[] is the lnum below the change.  When in one buffer
 /// lines have been inserted, in the other buffer df_lnum[] is the line below
 /// the insertion and df_count[] is zero.  When appending lines at the end of

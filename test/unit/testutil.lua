@@ -19,6 +19,11 @@ for _, p in ipairs(paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
+-- add some nonstandard header locations
+if paths.apple_sysroot ~= '' then
+  Preprocess.add_apple_sysroot(paths.apple_sysroot)
+end
+
 local child_pid = nil --- @type integer?
 --- @generic F: function
 --- @param func F
@@ -141,6 +146,13 @@ local function filter_complex_blocks(body)
         or string.find(line, '_Float')
         or string.find(line, '__s128')
         or string.find(line, '__u128')
+        or string.find(line, '__SVFloat32_t')
+        or string.find(line, '__SVFloat64_t')
+        or string.find(line, '__SVBool_t')
+        or string.find(line, '__f32x4_t')
+        or string.find(line, '__f64x2_t')
+        or string.find(line, '__sv_f32_t')
+        or string.find(line, '__sv_f64_t')
         or string.find(line, 'msgpack_zone_push_finalizer')
         or string.find(line, 'msgpack_unpacker_reserve_buffer')
         or string.find(line, 'value_init_')

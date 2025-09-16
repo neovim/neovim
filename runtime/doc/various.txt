@@ -29,7 +29,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			screen if "!" is included.  To CLEAR the screen use
 			|:mode| or |CTRL-L|.
 			It can be used to redraw the screen in a script
-			or function (or a mapping if |'lazyredraw'| is set).
+			or function (or a mapping if 'lazyredraw' is set).
 			See also |nvim__redraw()|.
 
 						*:redraws* *:redrawstatus*
@@ -103,11 +103,11 @@ g8			Print the hex values of the bytes used in the
 							*gx*
 gx			Opens the current filepath or URL (decided by
 			|<cfile>|, 'isfname') at cursor using the system
-			default handler, by calling |vim.ui.open()|.
+			default handler. Mapped to |vim.ui.open()|.
 
 							*v_gx*
 {Visual}gx		Opens the selected text using the system default
-			handler, by calling |vim.ui.open()|.
+			handler. Mapped to |vim.ui.open()|.
 
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
@@ -248,10 +248,15 @@ gx			Opens the current filepath or URL (decided by
 :sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
-:te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new
-			|terminal-emulator| buffer. Without {cmd}, start an
+:te[rminal][!] [cmd]	Run [cmd] in a non-interactive 'shell' in a new
+			|terminal-emulator| buffer. Without [cmd], start an
 			interactive 'shell'.
 
+			By default the current window is used. To open in
+			a split window, use |:horizontal| or |:vertical|: >
+				:hor te
+				:vert te
+<
 			Type |i| to enter |Terminal-mode|, then keys are sent to
 			the job running in the terminal. Type <C-\><C-N> to
 			leave Terminal-mode. |CTRL-\_CTRL-N|. Type <C-\><C-O>
@@ -260,7 +265,7 @@ gx			Opens the current filepath or URL (decided by
 			Fails if changes have been made to the current buffer,
 			unless 'hidden' is set.
 
-			If {cmd} is omitted, and the 'shell' job exits with no
+			If [cmd] is omitted, and the 'shell' job exits with no
 			error, the buffer is closed automatically
 			|default-autocmds|.
 
@@ -404,7 +409,7 @@ gx			Opens the current filepath or URL (decided by
 			to lines that do NOT match {pattern}.
 
 			{pattern} is a Vim search pattern.  Instead of enclosing
-			it in / any non-ID character (see |'isident'|) can be
+			it in / any non-ID character (see 'isident') can be
 			used, so long as it does not appear in {pattern}.
 			Without the enclosing character the pattern cannot
 			include the bar character. 'ignorecase' is not used.
@@ -612,6 +617,8 @@ If the filetype of the buffer is associated with a language for which a
 to look up the value of 'commentstring' corresponding to the cursor position.
 (This can be different from the buffer's 'commentstring' in case of
 |treesitter-language-injections|.)
+
+The following |default-mappings| are defined:
 
 							*gc* *gc-default*
 gc{motion}		Comment or uncomment lines covered by {motion}.

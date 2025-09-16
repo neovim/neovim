@@ -878,12 +878,12 @@ Numbered mark should be stored.  See |shada-file-marks|.
 
 
 							*'[* *`[*
-'[  `[			To the first character of the previously changed
-			or yanked text.
+'[  `[			To the first character of the previously changed,
+			or yanked text.  Also set when writing the buffer.
 
 							*']* *`]*
 ']  `]			To the last character of the previously changed or
-			yanked text.
+			yanked text.  Also set when writing the buffer.
 
 After executing an operator the Cursor is put at the beginning of the text
 that was operated upon.  After a put command ("p" or "P") the cursor is
@@ -941,6 +941,11 @@ was made yet in the current file.
 			command changed.  For example when inserting a word,
 			the position will be on the last character.
 			To jump to older changes use |g;|.
+
+							*':* *`:*
+':			In a prompt buffer, the start of the current prompt.
+			Text from this line until end of buffer will be
+			submitted when the user submits the prompt.
 
 							*'(* *`(*
 '(  `(			To the start of the current sentence, like the |(|

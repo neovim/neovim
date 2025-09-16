@@ -645,6 +645,6 @@ To check if `pyx*` functions and commands are available: >vim
 	if has('pythonx')
 	  echo 'pyx* commands are available. (Python ' .. &pyx .. ')'
 	endif
+<
 
-==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

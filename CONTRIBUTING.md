@@ -273,7 +273,7 @@ If you need to modify or debug the documentation flow, these are the main files:
   runtime/lua/vim/*     =>  runtime/doc/lua.txt
   runtime/lua/vim/lsp/  =>  runtime/doc/lsp.txt
   src/nvim/api/*        =>  runtime/doc/api.txt
-  src/nvim/eval.lua     =>  runtime/doc/builtin.txt
+  src/nvim/eval.lua     =>  runtime/doc/vimfn.txt
   src/nvim/options.lua  =>  runtime/doc/options.txt
   ```
 
@@ -299,7 +299,7 @@ types, etc. See [:help dev-lua-doc][dev-lua-doc].
 - If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
 - If a function in your Lua module should _not_ be documented, add `@nodoc`.
 - If the function is internal or otherwise non-public add `@private`.
-      - Private functions usually should be underscore-prefixed (named "_foo", not "foo").
+      - Private functions usually should be underscore-prefixed (named "_foo", not "foo"). Prefixing with an underscore implies `@nodoc`.
 - Mark deprecated functions with `@deprecated`.
 
 Third-party dependencies

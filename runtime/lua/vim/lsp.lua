@@ -2,6 +2,7 @@ local api = vim.api
 local validate = vim.validate
 
 local lsp = vim._defer_require('vim.lsp', {
+  _capability = ..., --- @module 'vim.lsp._capability'
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
   _folding_range = ..., --- @module 'vim.lsp._folding_range'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
@@ -15,7 +16,10 @@ local lsp = vim._defer_require('vim.lsp', {
   document_color = ..., --- @module 'vim.lsp.document_color'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
+  inline_completion = ..., --- @module 'vim.lsp.inline_completion'
+  linked_editing_range = ..., --- @module 'vim.lsp.linked_editing_range'
   log = ..., --- @module 'vim.lsp.log'
+  on_type_formatting = ..., --- @module 'vim.lsp.on_type_formatting'
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
   semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
@@ -41,20 +45,18 @@ lsp._resolve_to_request = {
 
 -- TODO improve handling of scratch buffers with LSP attached.
 
----@private
 --- Called by the client when trying to call a method that's not
 --- supported in any of the servers registered for the current buffer.
 ---@param method (vim.lsp.protocol.Method.ClientToServer) name of the method
 function lsp._unsupported_method(method)
   local msg = string.format(
-    'method %s is not supported by any of the servers registered for the current buffer',
+    'vim.lsp: method %q is not supported by any server activated for this buffer',
     method
   )
   log.warn(msg)
   return msg
 end
 
----@private
 ---@param workspace_folders string|lsp.WorkspaceFolder[]?
 ---@return lsp.WorkspaceFolder[]?
 function lsp._get_workspace_folders(workspace_folders)
@@ -78,15 +80,11 @@ local format_line_ending = {
   ['mac'] = '\r',
 }
 
----@private
----@param bufnr (number)
+---@param bufnr integer
 ---@return string
 function lsp._buf_get_line_ending(bufnr)
   return format_line_ending[vim.bo[bufnr].fileformat] or '\n'
 end
-
--- Tracks all clients created via lsp.start_client
-local all_clients = {} --- @type table<integer,vim.lsp.Client>
 
 local client_errors_base = table.maxn(lsp.rpc.client_errors)
 local client_errors_offset = 0
@@ -110,10 +108,9 @@ lsp.client_errors = vim.tbl_extend(
   client_error('ON_EXIT_CALLBACK_ERROR')
 )
 
----@private
 --- Returns full text of buffer {bufnr} as a string.
 ---
----@param bufnr (number) Buffer handle, or 0 for current.
+---@param bufnr integer Buffer handle, or 0 for current.
 ---@return string # Buffer text as string.
 function lsp._buf_get_full_text(bufnr)
   local line_ending = lsp._buf_get_line_ending(bufnr)
@@ -148,7 +145,7 @@ end
 --- @param config vim.lsp.ClientConfig
 --- @return boolean
 local function reuse_client_default(client, config)
-  if client.name ~= config.name then
+  if client.name ~= config.name or client:is_stopped() then
     return false
   end
 
@@ -177,78 +174,6 @@ local function reuse_client_default(client, config)
   return true
 end
 
---- Reset defaults set by `set_defaults`.
---- Must only be called if the last client attached to a buffer exits.
-local function reset_defaults(bufnr)
-  if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
-    vim.bo[bufnr].tagfunc = nil
-  end
-  if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
-    vim.bo[bufnr].omnifunc = nil
-  end
-  if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
-    vim.bo[bufnr].formatexpr = nil
-  end
-  vim._with({ buf = bufnr }, function()
-    local keymap = vim.fn.maparg('K', 'n', false, true)
-    if keymap and keymap.callback == vim.lsp.buf.hover and keymap.buffer == 1 then
-      vim.keymap.del('n', 'K', { buffer = bufnr })
-    end
-  end)
-end
-
---- @param code integer
---- @param signal integer
---- @param client_id integer
-local function on_client_exit(code, signal, client_id)
-  local client = all_clients[client_id]
-
-  vim.schedule(function()
-    for bufnr in pairs(client.attached_buffers) do
-      if client and client.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
-        api.nvim_exec_autocmds('LspDetach', {
-          buffer = bufnr,
-          modeline = false,
-          data = { client_id = client_id },
-        })
-      end
-
-      client.attached_buffers[bufnr] = nil
-
-      if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
-        reset_defaults(bufnr)
-      end
-    end
-
-    local namespace = vim.lsp.diagnostic.get_namespace(client_id)
-    vim.diagnostic.reset(namespace)
-  end)
-
-  local name = client.name or 'unknown'
-
-  -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
-  -- autocommands
-  vim.schedule(function()
-    all_clients[client_id] = nil
-
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if client then
-      changetracking.reset(client)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg = string.format(
-        'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
-        name,
-        code,
-        signal,
-        lsp.get_log_path()
-      )
-      vim.notify(msg, vim.log.levels.WARN)
-    end
-  end)
-end
-
 --- Creates and initializes a client with the given configuration.
 --- @param config vim.lsp.ClientConfig Configuration for the server.
 --- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
@@ -263,11 +188,6 @@ local function create_and_init_client(config)
 
   local client = assert(res)
 
-  --- @diagnostic disable-next-line: invisible
-  table.insert(client._on_exit_cbs, on_client_exit)
-
-  all_clients[client.id] = client
-
   client:initialize()
 
   return client.id, nil
@@ -276,7 +196,8 @@ end
 --- @class vim.lsp.Config : vim.lsp.ClientConfig
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
---- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
+--- See also `reuse_client` to dynamically decide (per-buffer) when `cmd` should be re-invoked.
+--- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
 ---
 --- Filetypes the client will attach to, if activated by `vim.lsp.enable()`. If not provided, the
 --- client will attach to all filetypes.
@@ -284,44 +205,36 @@ end
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
 --- implementation re-uses a client if name and root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean #
 ---
---- [lsp-root_dir()]() Directory where the LSP server will base its workspaceFolders, rootUri, and
---- rootPath on initialization. The function form receives a buffer number and `on_dir` callback
---- which it must call to provide root_dir, or LSP will not be activated for the buffer. Thus
---- a `root_dir()` function can dynamically decide per-buffer whether to activate (or skip) LSP. See
---- example at |vim.lsp.enable()|.
+--- [lsp-root_dir()]()
+--- Decides the workspace root: the directory where the LSP server will base its workspaceFolders,
+--- rootUri, and rootPath on initialization. The function form must call the `on_dir` callback to
+--- provide the root dir, or LSP will not be activated for the buffer. Thus a `root_dir()` function
+--- can dynamically decide per-buffer whether to activate (or skip) LSP.
+--- See example at |vim.lsp.enable()|.
 --- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
---- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders,
---- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
+--- [lsp-root_markers]()
+--- Filename(s) (".git/", "package.json", …) used to decide the workspace root. Unused if `root_dir`
+--- is defined. The list order decides priority. To indicate "equal priority", specify names in
+--- a nested list `{ { 'a.txt', 'b.lua' }, ... }`.
 ---
---- The list order decides the priority. To indicate "equal priority", specify names in a nested list (`{ { 'a', 'b' }, ... }`)
---- Each entry in this list is a set of one or more markers. For each set, Nvim
---- will search upwards for each marker contained in the set. If a marker is
---- found, the directory which contains that marker is used as the root
---- directory. If no markers from the set are found, the process is repeated
---- with the next set in the list.
+--- For each item, Nvim will search upwards (from the buffer file) for that marker, or list of
+--- markers; search stops at the first directory containing that marker, and the directory is used
+--- as the root dir (workspace folder).
 ---
---- Example:
----
+--- Example: Find the first ancestor directory containing file or directory "stylua.toml"; if not
+--- found, find the first ancestor containing ".git":
 --- ```lua
 ---   root_markers = { 'stylua.toml', '.git' }
 --- ```
 ---
---- Find the first parent directory containing the file `stylua.toml`. If not
---- found, find the first parent directory containing the file or directory
---- `.git`.
----
---- Example:
----
+--- Example: Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
+--- not found, find the first ancestor containing ".git":
 --- ```lua
 ---   root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 --- ```
----
---- Find the first parent directory containing EITHER `stylua.toml` or
---- `.luarc.json`. If not found, find the first parent directory containing the
---- file or directory `.git`.
 ---
 --- @field root_markers? (string|string[])[]
 
@@ -475,7 +388,8 @@ lsp.config = setmetatable({ _configs = {} }, {
   --- @param cfg vim.lsp.Config
   __newindex = function(self, name, cfg)
     validate_config_name(name)
-    validate('cfg', cfg, 'table')
+    local msg = ('table (hint: to resolve a config, use vim.lsp.config["%s"])'):format(name)
+    validate('cfg', cfg, 'table', msg)
     invalidate_enabled_config(name)
     self._configs[name] = cfg
   end,
@@ -485,7 +399,8 @@ lsp.config = setmetatable({ _configs = {} }, {
   --- @param cfg vim.lsp.Config
   __call = function(self, name, cfg)
     validate_config_name(name)
-    validate('cfg', cfg, 'table')
+    local msg = ('table (hint: to resolve a config, use vim.lsp.config["%s"])'):format(name)
+    validate('cfg', cfg, 'table', msg)
     invalidate_enabled_config(name)
     self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
   end,
@@ -511,16 +426,21 @@ local function validate_config(config)
 end
 
 --- @param bufnr integer
---- @param name string
 --- @param config vim.lsp.Config
-local function can_start(bufnr, name, config)
-  local config_ok, err = pcall(validate_config, config)
-  if not config_ok then
-    log.error(('cannot start %s due to config error: %s'):format(name, err))
+--- @param logging boolean
+local function can_start(bufnr, config, logging)
+  if
+    type(config.filetypes) == 'table'
+    and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype)
+  then
     return false
   end
 
-  if config.filetypes and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
+  local config_ok, err = pcall(validate_config, config)
+  if not config_ok then
+    if logging then
+      log.error(('invalid "%s" config: %s'):format(config.name, err))
+    end
     return false
   end
 
@@ -544,9 +464,18 @@ local function lsp_enable_callback(bufnr)
     return
   end
 
+  -- Stop any clients that no longer apply to this buffer.
+  local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
+  for _, client in ipairs(clients) do
+    if lsp.is_enabled(client.name) and not can_start(bufnr, lsp.config[client.name], false) then
+      lsp.buf_detach_client(bufnr, client.id)
+    end
+  end
+
+  -- Start any clients that apply to this buffer.
   for name in vim.spairs(lsp._enabled_configs) do
     local config = lsp.config[name]
-    if config and can_start(bufnr, name, config) then
+    if config and can_start(bufnr, config, true) then
       -- Deepcopy config so changes done in the client
       -- do not propagate back to the enabled configs.
       config = vim.deepcopy(config)
@@ -576,6 +505,14 @@ end
 --- vim.lsp.enable({'luals', 'pyright'})
 --- ```
 ---
+--- Example: [lsp-restart]() Passing `false` stops and detaches the client(s). Thus you can
+--- "restart" LSP by disabling and re-enabling a given config:
+---
+--- ```lua
+--- vim.lsp.enable('clangd', false)
+--- vim.lsp.enable('clangd', true)
+--- ```
+---
 --- Example: To _dynamically_ decide whether LSP is activated, define a |lsp-root_dir()| function
 --- which calls `on_dir()` only when you want that config to activate:
 ---
@@ -592,7 +529,8 @@ end
 ---@since 13
 ---
 --- @param name string|string[] Name(s) of client(s) to enable.
---- @param enable? boolean `true|nil` to enable, `false` to disable.
+--- @param enable? boolean `true|nil` to enable, `false` to disable (actively stops and detaches
+--- clients as needed)
 function lsp.enable(name, enable)
   validate('name', name, { 'string', 'table' })
 
@@ -633,6 +571,16 @@ function lsp.enable(name, enable)
       end
     end
   end
+end
+
+--- Checks if the given LSP config is enabled (globally, not per-buffer).
+---
+--- Unlike `vim.lsp.config['…']`, this does not have the side-effect of resolving the config.
+---
+--- @param name string Config name
+--- @return boolean
+function lsp.is_enabled(name)
+  return lsp._enabled_configs[name] ~= nil
 end
 
 --- @class vim.lsp.start.Opts
@@ -706,13 +654,7 @@ function lsp.start(config, opts)
     validate('root_markers', opts._root_markers, 'table')
     config = vim.deepcopy(config)
 
-    for _, marker in ipairs(opts._root_markers) do
-      local root = vim.fs.root(bufnr, marker)
-      if root ~= nil then
-        config.root_dir = root
-        break
-      end
-    end
+    config.root_dir = vim.fs.root(bufnr, opts._root_markers)
   end
 
   if
@@ -726,7 +668,7 @@ function lsp.start(config, opts)
     return
   end
 
-  for _, client in pairs(all_clients) do
+  for _, client in pairs(lsp.client._all) do
     if reuse_client(client, config) then
       if opts.attach == false then
         return client.id
@@ -808,7 +750,6 @@ local function is_empty_or_default(bufnr, option)
   return vim.startswith(scriptinfo[1].name, vim.fn.expand('$VIMRUNTIME'))
 end
 
----@private
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 function lsp._set_defaults(client, bufnr)
@@ -898,29 +839,6 @@ local function text_document_did_save_handler(bufnr)
   end
 end
 
----@param bufnr integer resolved buffer
----@param client vim.lsp.Client
-local function buf_detach_client(bufnr, client)
-  api.nvim_exec_autocmds('LspDetach', {
-    buffer = bufnr,
-    modeline = false,
-    data = { client_id = client.id },
-  })
-
-  changetracking.reset_buf(client, bufnr)
-
-  if client:supports_method(ms.textDocument_didClose) then
-    local uri = vim.uri_from_bufnr(bufnr)
-    local params = { textDocument = { uri = uri } }
-    client:notify(ms.textDocument_didClose, params)
-  end
-
-  client.attached_buffers[bufnr] = nil
-
-  local namespace = lsp.diagnostic.get_namespace(client.id)
-  vim.diagnostic.reset(namespace, bufnr)
-end
-
 --- @type table<integer,true>
 local attached_buffers = {}
 
@@ -997,7 +915,7 @@ local function buf_attach(bufnr)
     on_detach = function()
       local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
       for _, client in ipairs(clients) do
-        buf_detach_client(bufnr, client)
+        client:_on_detach(bufnr)
       end
       attached_buffers[bufnr] = nil
       util.buf_versions[bufnr] = nil
@@ -1060,7 +978,7 @@ function lsp.buf_detach_client(bufnr, client_id)
   validate('client_id', client_id, 'number')
   bufnr = vim._resolve_bufnr(bufnr)
 
-  local client = all_clients[client_id]
+  local client = lsp.get_client_by_id(client_id)
   if not client or not client.attached_buffers[bufnr] then
     vim.notify(
       string.format(
@@ -1071,14 +989,14 @@ function lsp.buf_detach_client(bufnr, client_id)
     )
     return
   else
-    buf_detach_client(bufnr, client)
+    client:_on_detach(bufnr)
   end
 end
 
 --- Checks if a buffer is attached for a particular client.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current
----@param client_id (integer) the client id
+---@param bufnr integer Buffer handle, or 0 for current
+---@param client_id integer the client id
 function lsp.buf_is_attached(bufnr, client_id)
   return lsp.get_clients({ bufnr = bufnr, id = client_id, _uninitialized = true })[1] ~= nil
 end
@@ -1088,9 +1006,9 @@ end
 ---
 ---@param client_id integer client id
 ---
----@return (nil|vim.lsp.Client) client rpc object
+---@return vim.lsp.Client? client rpc object
 function lsp.get_client_by_id(client_id)
-  return all_clients[client_id]
+  return lsp.client._all[client_id]
 end
 
 --- Returns list of buffers attached to client_id.
@@ -1098,7 +1016,7 @@ end
 ---@param client_id integer client id
 ---@return integer[] buffers list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
-  local client = all_clients[client_id]
+  local client = lsp.get_client_by_id(client_id)
   return client and vim.tbl_keys(client.attached_buffers) or {}
 end
 
@@ -1126,7 +1044,7 @@ function lsp.stop_client(client_id, force)
       end
     else
       --- @cast id -vim.lsp.Client
-      local client = all_clients[id]
+      local client = lsp.get_client_by_id(id)
       if client then
         client:stop(force)
       end
@@ -1168,7 +1086,7 @@ function lsp.get_clients(filter)
 
   local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
 
-  for _, client in pairs(all_clients) do
+  for _, client in pairs(lsp.client._all) do
     if
       client
       and (filter.id == nil or client.id == filter.id)
@@ -1183,7 +1101,6 @@ function lsp.get_clients(filter)
   return clients
 end
 
----@private
 ---@deprecated
 function lsp.get_active_clients(filter)
   vim.deprecate('vim.lsp.get_active_clients()', 'vim.lsp.get_clients()', '0.12')
@@ -1195,7 +1112,7 @@ api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
     local active_clients = lsp.get_clients()
     log.info('exit_handler', active_clients)
-    for _, client in pairs(all_clients) do
+    for _, client in pairs(lsp.client._all) do
       client:stop()
     end
 
@@ -1239,7 +1156,7 @@ api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
----@private
+---@nodoc
 --- Sends an async request for all active clients attached to the
 --- buffer.
 ---
@@ -1293,8 +1210,10 @@ function lsp.buf_request(bufnr, method, params, handler, on_unsupported)
 
   local function _cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do
-      local client = all_clients[client_id]
-      client:cancel_request(request_id)
+      local client = lsp.get_client_by_id(client_id)
+      if client and client.requests[request_id] then
+        client:cancel_request(request_id)
+      end
     end
   end
 
@@ -1316,7 +1235,7 @@ end
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {} --- @type table<integer,{err: lsp.ResponseError?, result: any}>
+  local results = {} --- @type table<integer,{err: lsp.ResponseError?, result: any, context: lsp.HandlerContext}>
   local remaining --- @type integer?
 
   local _, cancel = lsp.buf_request(bufnr, method, params, function(err, result, ctx, config)
@@ -1326,7 +1245,7 @@ function lsp.buf_request_all(bufnr, method, params, handler)
     end
 
     -- The error key is deprecated and will be removed in 0.13
-    results[ctx.client_id] = { err = err, error = err, result = result }
+    results[ctx.client_id] = { err = err, error = err, result = result, context = ctx }
     remaining = remaining - 1
 
     if remaining == 0 then
@@ -1377,9 +1296,9 @@ end
 ---
 ---@since 7
 ---
----@param bufnr (integer|nil) The number of the buffer
----@param method (vim.lsp.protocol.Method.ClientToServer.Notification) Name of the request method
----@param params (any) Arguments to send to the server
+---@param bufnr integer? The number of the buffer
+---@param method vim.lsp.protocol.Method.ClientToServer.Notification Name of the request method
+---@param params any Arguments to send to the server
 ---
 ---@return boolean success true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
@@ -1460,7 +1379,7 @@ function lsp.formatexpr(opts)
       local response =
         client:request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
       if response and response.result then
-        lsp.util.apply_text_edits(response.result, bufnr, client.offset_encoding)
+        util.apply_text_edits(response.result, bufnr, client.offset_encoding)
         return 0
       end
     end
@@ -1549,18 +1468,18 @@ end
 ---@deprecated Use |vim.lsp.get_client_by_id()| instead.
 ---Checks whether a client is stopped.
 ---
----@param client_id (integer)
+---@param client_id integer
 ---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
   vim.deprecate('vim.lsp.client_is_stopped()', 'vim.lsp.get_client_by_id()', '0.14')
   assert(client_id, 'missing client_id param')
-  return not all_clients[client_id]
+  return not lsp.get_client_by_id(client_id)
 end
 
 --- Gets a map of client_id:client pairs for the given buffer, where each value
 --- is a |vim.lsp.Client| object.
 ---
----@param bufnr (integer|nil): Buffer handle, or 0 for current
+---@param bufnr integer? Buffer handle, or 0 for current
 ---@return table result is table of (client_id, client) pairs
 ---@deprecated Use |vim.lsp.get_clients()| instead.
 function lsp.buf_get_clients(bufnr)
@@ -1589,10 +1508,13 @@ lsp.log_levels = log.levels
 ---
 --- Use `lsp.log_levels` for reverse lookup.
 ---
+---@deprecated
 ---@see |vim.lsp.log_levels|
 ---
 ---@param level (integer|string) the case insensitive level name or number
 function lsp.set_log_level(level)
+  vim.deprecate('vim.lsp.set_log_level()', 'vim.lsp.log.set_level()', '0.13')
+
   if type(level) == 'string' or type(level) == 'number' then
     log.set_level(level)
   else
@@ -1601,12 +1523,16 @@ function lsp.set_log_level(level)
 end
 
 --- Gets the path of the logfile used by the LSP client.
+---
+---@deprecated
 ---@return string path to log file
 function lsp.get_log_path()
+  vim.deprecate('vim.lsp.get_log_path()', 'vim.lsp.log.get_filename()', '0.13')
+
   return log.get_filename()
 end
 
----@private
+---@nodoc
 --- Invokes a function for each LSP client attached to a buffer.
 ---
 ---@param bufnr integer Buffer number
@@ -1637,14 +1563,12 @@ function lsp.with(handler, override_config)
   end
 end
 
---- Registry (a table) for client-side handlers, for custom server-commands that are not in the LSP
---- specification.
+--- Map of client-defined handlers implementing custom (off-spec) commands which a server may
+--- invoke. Each key is a unique command name; each value is a function which is called when an LSP
+--- action (code action, code lenses, …) requests it by name.
 ---
---- If an LSP response contains a command which is not found in `vim.lsp.commands`, the command will
---- be executed via the LSP server using `workspace/executeCommand`.
----
---- Each key in the table is a unique command name, and each value is a function which is called
---- when an LSP action (code action, code lenses, …) triggers the command.
+--- If an LSP response requests a command not defined client-side, Nvim will forward it to the
+--- server as `workspace/executeCommand`.
 ---
 --- - Argument 1 is the `Command`:
 ---   ```
@@ -1670,7 +1594,7 @@ end
 --- end
 --- ```
 ---
---- @type table<string,function>
+--- @type table<string,fun(command: lsp.Command, ctx: table)>
 lsp.commands = setmetatable({}, {
   __newindex = function(tbl, key, value)
     assert(type(key) == 'string', 'The key for commands in `vim.lsp.commands` must be a string')

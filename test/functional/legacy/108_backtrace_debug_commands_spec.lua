@@ -119,14 +119,14 @@ describe('108', function()
       - undefined vars:
 
       undefined var3 on former level:
-      Error detected while processing function Foo[2]..Bar[2]..Bazz:
+      Error in function Foo[2]..Bar[2]..Bazz:
       line    3:
       E121: Undefined variable: var3
       here var3 is defined with "another var":
       another var
 
       undefined var2 on former level
-      Error detected while processing function Foo[2]..Bar:
+      Error in function Foo[2]..Bar:
       line    3:
       E121: Undefined variable: var2
       here var2 is defined with 10:

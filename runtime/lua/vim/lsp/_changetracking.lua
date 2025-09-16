@@ -104,7 +104,7 @@ local function incremental_changes(state, encoding, bufnr, firstline, lastline, 
 
   local line_ending = vim.lsp._buf_get_line_ending(bufnr)
   local incremental_change = sync.compute_diff(
-    state.lines,
+    prev_lines,
     curr_lines,
     firstline,
     lastline,

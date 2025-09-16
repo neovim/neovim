@@ -66,11 +66,13 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
   You can then copy your spell files over (for English, located
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.sug));
-- For Python plugins you need the `pynvim` module. "Virtual envs" are recommended. After activating the virtual env do `pip install pynvim` (in *both*). Edit your `init.vim` so that it contains the path to the env's Python executable:
-    ```vim
-    let g:python3_host_prog='C:/Users/foo/Envs/neovim3/Scripts/python.exe'
+- For Python plugins you need the `pynvim` module. Installation via uv
+  (https://docs.astral.sh/uv/) is recommended; the `--upgrade` switch ensures
+  installation of the latest version:
     ```
-    - Run `:checkhealth` and read `:help provider-python`.
+    uv tool install --upgrade pynvim
+    ```
+    - Run `:checkhealth` and read `:help provider-python` for more details.
 - **init.vim ("vimrc"):** If you already have Vim installed you can copy `%userprofile%\_vimrc` to `%userprofile%\AppData\Local\nvim\init.vim` to use your Vim config with Neovim.
 
 
@@ -109,7 +111,7 @@ The [Releases](https://github.com/neovim/neovim/releases) page provides pre-buil
 
 ```sh
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-sudo rm -rf /opt/nvim
+sudo rm -rf /opt/nvim-linux-x86_64
 sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 ```
 

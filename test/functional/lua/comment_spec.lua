@@ -721,6 +721,39 @@ describe('commenting', function()
         'EOF',
       }, get_lines())
     end)
+
+    it('works across combined injections #30799', function()
+      exec_lua [=[
+        vim.treesitter.query.set('lua', 'injections', [[
+          ((function_call
+            name: (_) @_vimcmd_identifier
+            arguments: (arguments
+              (string
+                content: _ @injection.content)))
+            (#eq? @_vimcmd_identifier "vim.cmd")
+            (#set! injection.language "vim")
+            (#set! injection.combined))
+        ]])
+      ]=]
+
+      api.nvim_set_option_value('filetype', 'lua', { buf = 0 })
+      exec_lua('vim.treesitter.start()')
+
+      local lines = {
+        'vim.cmd([[" some text]])',
+        'local a = 123',
+        'vim.cmd([[" some more text]])',
+      }
+      set_lines(lines)
+
+      set_cursor(2, 0)
+      feed('gcc')
+      eq({
+        'vim.cmd([[" some text]])',
+        '-- local a = 123',
+        'vim.cmd([[" some more text]])',
+      }, get_lines())
+    end)
   end)
 
   describe('Textobject', function()

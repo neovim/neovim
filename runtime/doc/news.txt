@@ -18,13 +18,18 @@ BREAKING CHANGES IN HEAD OR EXPERIMENTAL                    *news-breaking-dev*
 The following changes to UNRELEASED features were made during the development
 cycle (Nvim HEAD, the "master" branch).
 
+EVENTS
+
+• Renamed "nvim.find_exrc" |default-autocmds| group to "nvim.exrc".
+
 EXPERIMENTS
 
 • todo
 
 LSP
 
-• todo
+• |vim.lsp.buf.selection_range()| now accepts an integer which specifies its
+  direction, rather than a string `'outer'` or `'inner'`.
 
 OPTIONS
 
@@ -34,6 +39,11 @@ TREESITTER
 
 • todo
 
+UI
+
+• `progress` attribute removed form |ui-messages| msg_show event
+
+
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*
 
@@ -41,7 +51,7 @@ These changes may require adaptations in your config or plugins.
 
 API
 
-• todo
+• Decoration provider has `on_range()` callback.
 
 BUILD
 
@@ -58,11 +68,19 @@ DIAGNOSTICS
 
 EDITOR
 
-• todo
+- |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
+  pasting instead of like user input. Improves performance, avoids broken
+  formatting. To get the old behavior you can use `<C-R>=@x`.
 
 EVENTS
 
-• todo
+• |ui-messages| no longer emits the `msg_show.return_prompt`, and
+  `msg_history_clear` events. The `msg_clear` event was repurposed and is now
+  emitted after the screen is cleared. These events arbitrarily assumed a
+  message UI that mimics the legacy message grid. Benefit: reduced UI event
+  traffic and more flexibility for UIs.
+  The `msg_history_show` event has an additional "prev_cmd" argument.
+• A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
 
 HIGHLIGHTS
 
@@ -71,10 +89,21 @@ HIGHLIGHTS
 LSP
 
 • `root_markers` in |vim.lsp.Config| can now be ordered by priority.
+• The function set with |vim.lsp.log.set_format_func()| is now given all
+  arguments corresponding to a log entry instead of the individual arguments.
+• `vim.lsp.semantic_tokens.start/stop` now renamed to
+  `vim.lsp.semantic_tokens.enable`
+• Missing fields in LSP messages are now represented using |vim.NIL| instead of nil.
+• |vim.lsp.util.convert_signature_help_to_markdown_lines()| activeParameter
+  handling updated:
+    • Values < 0 are now treated as `nil` instead of 0.
+    • Values outside the range of `signatures[activeSignature].parameters`
+      are now treated as `nil` instead of `#signatures[activeSignature].parameters`
 
 LUA
 
-• todo
+• Renamed `vim.diff` to `vim.text.diff`.
+• |vim.net.request()| adds a minimal HTTP GET API using curl.
 
 OPTIONS
 
@@ -86,7 +115,12 @@ PLUGINS
 
 TREESITTER
 
-• todo
+• |treesitter-directive-offset!| can now be applied to quantified captures. It
+  no longer sets `metadata[capture_id].range`; it instead sets
+  `metadata[capture_id].offset`. The offset will be applied in
+  |vim.treesitter.get_range()|, which should be preferred over reading
+  metadata directly for retrieving node ranges.
+• |Query:iter_captures()| supports specifying starting and ending columns.
 
 TUI
 
@@ -103,12 +137,20 @@ The following new features were added.
 
 API
 
+• |api-contract| allows existing functions to change return-type from `void =>
+  non-void`.
 • |nvim_win_text_height()| can limit the lines checked when a certain
   `max_height` is reached, and returns the `end_row` and `end_vcol` for which
   `max_height` or the calculated height is reached.
 • |vim.secure.read()| now returns `true` for trusted directories. Previously
   it would return `nil`, which made it impossible to tell if the directory was
   actually trusted.
+• Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
+  by |vim.lsp.enable()|.
+• |nvim_ui_send()| writes arbitrary data to a UI's stdout. Use this to write
+  escape sequences to the terminal when Nvim is running in the |TUI|.
+• |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
+• |nvim_echo()| can create |Progress| messages
 
 BUILD
 
@@ -118,59 +160,156 @@ BUILD
 
 DEFAULTS
 
+• 'diffopt' default value now includes "indent-heuristic" and "inline:char".
 • 'statusline' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
+• 'statusline' includes |vim.diagnostic.status()|
+• Project-local configuration ('exrc') is also loaded from parent directories.
+  Unset 'exrc' to stop further search.
+• Mappings:
+  • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
 
 DIAGNOSTICS
 
-• todo
+• |vim.diagnostic.setloclist()| and |vim.diagnostic.setqflist()| now support a
+  `format` function to modify (or filter) diagnostics before being set in the
+  location/quickfix list.
+• |vim.diagnostic.get()| now accepts an `enabled` filter to only return
+  enabled or disabled diagnostics.
+• |vim.diagnostic.status()| returns a formatted string with current buffer
+  diagnostics
 
 EDITOR
 
 • |:iput| works like |:put| but adjusts indent.
+• |:retab| accepts new optional parameter -indentonly to only change leading
+  whitespace in indented lines.
+• |:uniq| deduplicates text in the current buffer.
 • |omnicompletion| in `help` buffer. |ft-help-omni|
+• Setting "'0" in 'shada' prevents storing the jumplist in the shada file.
+• 'shada' now correctly respects "/0" and "f0".
+• |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
+  commands.
+• 'wildchar' now enables completion in search contexts using |/|, |?|, |:g|, |:v|
+   and |:vimgrep| commands.
+• For security, 'exrc' no longer shows an "(a)llow" choice. Instead you must
+  "(v)iew" then run `:trust`.
+• |gx| in help buffers opens the online documentation for the tag under the
+  cursor.
 
 EVENTS
 
+• |CmdlineLeave| sets |v:char| to the character that stops the Cmdline mode.
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
+• New `append` parameter for |ui-messages| `msg_show` event.
+• New `msg_id` parameter for |ui-messages| `msg_show` event.
+• 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
+• Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
 
 HIGHLIGHTS
 
 • |hl-DiffTextAdd| highlights added text within a changed line.
+• |hl-OkMsg| |hl-StderrMsg| |hl-StdoutMsg|
+• |hl-SnippetTabstopActive| highlights the currently active tabstop.
 
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• You can control priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
+• Support for `textDocument/colorPresentation |lsp-document_color|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
+• |vim.lsp.enable()| start/stops clients as necessary. And detaches
+  non-applicable LSP clients.
+• |vim.lsp.is_enabled()| checks if a LSP config is enabled (without
+  "resolving" it).
+• Support for `workspace/diagnostic`: |vim.lsp.buf.workspace_diagnostics()|
+  https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+• Incremental selection is now supported via `textDocument/selectionRange`.
+  `an` selects outwards and `in` selects inwards.
+• Support for multiline semantic tokens.
+• Support for the `disabled` field on code actions.
+• The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
+  receives the resolved config as the second arg: `cmd(dispatchers, config)`.
+• Support for annotated text edits.
+• `:checkhealth vim.lsp` is now available to check which buffers the active LSP features are attached to.
+• LSP `DiagnosticRelatedInformation` is now shown in
+  |vim.diagnostic.open_float()|. It is read from the LSP diagnostic object
+  stored in the `user_data` field.
+• When inside the float created by |vim.diagnostic.open_float()| and the
+  cursor is on a line with `DiagnosticRelatedInformation`, |gf| can be used to
+  jump to the problematic location.
+• Support for `textDocument/linkedEditingRange`: |lsp-linked_editing_range|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
+• Support for related documents in pull diagnostics:
+  https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
+• |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
+• Support for `textDocument/inlineCompletion` |lsp-inline_completion|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
+  See |lsp-inline_completion| for quickstart instructions.
+• Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 
 LUA
 
+• |vim.wait()| returns the callback results.
 • Lua type annotations for `vim.uv`.
 • |vim.hl.range()| now allows multiple timed highlights.
+• |vim.tbl_extend()| and |vim.tbl_deep_extend()| now accept a function behavior argument.
+• |vim.fs.root()| can define "equal priority" via nested lists.
+• |vim.version.range()| output can be converted to human-readable string with |tostring()|.
+• |vim.version.intersect()| computes intersection of two version ranges.
+• |Iter:take()| and |Iter:skip()| now optionally accept predicates.
+• Built-in plugin manager |vim.pack|
+• |vim.list.unique()| to deduplicate lists.
+• |vim.list.bisect()| for binary search.
+• Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
+• |vim.json.encode()| has an `indent` option for pretty-formatting.
+• |vim.json.encode()| has an `sort_keys` option.
 
 OPTIONS
 
+• 'autocomplete' enables |ins-autocompletion|.
 • 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 • 'chistory' and 'lhistory' set size of the |quickfix-stack|.
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
-• 'completeopt' flag "nearset" sorts completion results by distance to cursor.
+• 'complete' new flags:
+  • "F{func}"   complete using given function
+  • "F"         complete using 'completefunc'
+  • "o"         complete using 'omnifunc'
+• 'complete' allows limiting matches for sources using "{flag}^<limit>".
+• 'completeopt' flag "nearest" sorts completion results by distance to cursor.
+• 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'grepformat' is now a |global-local| option.
+• 'maxsearchcount' sets maximum value for |searchcount()| and defaults to 999.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
-• 'winborder' "bold" style.
+• 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
+• 'busy' sets a buffer "busy" status. Indicated in the default statusline.
 
 PERFORMANCE
 
-• todo
+• |vim.glob.to_lpeg()| uses a new LPeg-based implementation (Peglob) that
+  provides ~50% speedup for complex patterns. The implementation restores
+  support for nested braces and follows LSP 3.17 specification with
+  additional constraints for improved correctness and resistance to
+  backtracking edge cases.
+- |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
 
 PLUGINS
 
 • Customize :checkhealth by handling a `FileType checkhealth` event.
   |health-usage|
+
+• Simplify Python provider setup to a single step: `uv tool install pynvim`
+  Nvim will detect the plugin's location without user configuration, even if
+  unrelated Python virtual environments are activated.
+  |provider-python|
 
 STARTUP
 
@@ -183,31 +322,51 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |:EditQuery| command gained tab-completion, works with injected languages.
 
 TUI
 
-• todo
+• |TermResponse| now supports DA1 and APC query responses.
 
 UI
 
+• |:restart| restarts Nvim and reattaches the current UI.
+• |:connect| dynamically connects the current UI to the server at the given
+  address.
 • |:checkhealth| shows a summary in the header for every healthcheck.
 • |ui-multigrid| provides composition information and absolute coordinates.
 • `vim._extui` provides an experimental commandline and message UI intended to
   replace the message grid in the TUI.
+• Error messages are more concise:
+  • "Error detected while processing:" changed to "Error in:".
+  • "Error executing Lua:" changed to "Lua:".
+• 'busy' status is shown in default statusline with symbol ◐
+• Improved LSP signature help rendering.
+• Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
 
 VIMSCRIPT
 
+• |chdir()| allows optionally specifying a scope argument.
 • |cmdcomplete_info()| gets current cmdline completion info.
+• |getcompletiontype()| gets command-line completion type for any string.
+• |prompt_getinput()| gets current user-input in prompt-buffer.
+• |wildtrigger()| triggers command-line expansion.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• |gv| works in operator pending mode and does not abort.
+• 'smartcase' applies to completion filtering.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
+• |$VIM| and |$VIMRUNTIME| no longer check for Vim version-specific runtime
+  directory `vim{number}` (e.g. `vim82`).
+• 'scrollback' maximum value increased from 100000 to 1000000
+• |matchfuzzy()| and |matchfuzzypos()| use an improved fuzzy matching algorithm
+  (same as fzy).
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

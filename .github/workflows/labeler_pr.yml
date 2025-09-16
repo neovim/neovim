@@ -9,8 +9,8 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/labeler@v5
+    - uses: actions/checkout@v5
+    - uses: actions/labeler@v6
       with:
         configuration-path: .github/scripts/labeler_configuration.yml
 
@@ -40,7 +40,7 @@ jobs:
       pull-requests: write
     steps:
     - if: startsWith(github.base_ref, 'release')
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           github.rest.issues.addLabels({

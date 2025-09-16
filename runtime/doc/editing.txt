@@ -214,6 +214,7 @@ If you want to keep the changed buffer without saving it, switch on the
 							*:fin* *:find*
 :fin[d][!] [++opt] [+cmd] {file}
 			Find {file} in 'path' and then |:edit| it.
+			See also: 'findfunc'.
 
 :{count}fin[d][!] [++opt] [+cmd] {file}
 			Just like ":find", but use the {count} match in
@@ -630,7 +631,7 @@ list of the current window.
 			buffer.
 			Also see |++opt| and |+cmd|.
 
-:[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
+:[count]arge[dit][!] [++opt] [+cmd] {name} ...		*:arge* *:argedit*
 			Add {name}s to the argument list and edit it.
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice |:argded|.
@@ -645,7 +646,7 @@ list of the current window.
 			edited. No check for duplicates is done.
 			Also see |++opt| and |+cmd|.
 
-:[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*
+:[count]arga[dd] {name} ...			*:arga* *:argadd* *E479*
 :[count]arga[dd]						*E1156*
 			Add the {name}s to the argument list.  When {name} is
 			omitted add the current buffer name to the argument
@@ -676,7 +677,7 @@ list of the current window.
 			If your current file is a duplicate, your current file
 			will change to the original file index.
 
-:argd[elete] {pattern} ..		*:argd* *:argdelete* *E480* *E610*
+:argd[elete] {pattern} ...		*:argd* *:argdelete* *E480* *E610*
 			Delete files from the argument list that match the
 			{pattern}s.  {pattern} is used like a file pattern,
 			see |file-pattern|.  "%" can be used to delete the
@@ -714,10 +715,13 @@ list of the current window.
 			omitted the current entry is used.
 			Also see |++opt| and |+cmd|.
 
-:[count]n[ext] [++opt] [+cmd]			*:n* *:ne* *:next* *]a* *E165* *E163*
+:[count]n[ext] [++opt] [+cmd]			*:n* *:ne* *:next* *E165* *E163*
 			Edit [count] next file.  This fails when changes have
 			been made and Vim does not want to |abandon| the
 			current buffer.  Also see |++opt| and |+cmd|.
+
+								*]a*
+]a			Mapped to |:next|. |default-mappings|
 
 :[count]n[ext]! [++opt] [+cmd]
 			Edit [count] next file, discard any changes to the
@@ -740,15 +744,21 @@ list of the current window.
 			any changes to the buffer.  Also see |++opt| and
 			|+cmd|.
 
-:[count]prev[ious] [count] [++opt] [+cmd]		*:prev* *:previous* *[a*
+:[count]prev[ious] [count] [++opt] [+cmd]		*:prev* *:previous*
 			Same as :Next.  Also see |++opt| and |+cmd|.
 
-							*:rew* *:rewind* *[A*
+							*[a*
+[a			Mapped to |:previous|. |default-mappings|
+
+							*:rew* *:rewind*
 :rew[ind] [++opt] [+cmd]
 			Start editing the first file in the argument list.
 			This fails when changes have been made and Vim does
 			not want to |abandon| the current buffer.
 			Also see |++opt| and |+cmd|.
+
+								*[A*
+[A			Mapped to |:rewind|. |default-mappings|
 
 :rew[ind]! [++opt] [+cmd]
 			Start editing the first file in the argument list.
@@ -759,12 +769,15 @@ list of the current window.
 :fir[st][!] [++opt] [+cmd]
 			Other name for ":rewind".
 
-							*:la* *:last* *]A*
+							*:la* *:last*
 :la[st] [++opt] [+cmd]
 			Start editing the last file in the argument list.
 			This fails when changes have been made and Vim does
 			not want to |abandon| the current buffer.
 			Also see |++opt| and |+cmd|.
+
+								*]A*
+]A			Mapped to |:last|. |default-mappings|
 
 :la[st]! [++opt] [+cmd]
 			Start editing the last file in the argument list.
@@ -948,8 +961,9 @@ Note: When the 'write' option is off, you are not able to write any file.
 			executed like with ":!{cmd}", any '!' is replaced with
 			the previous command |:!|.
 
-The default [range] for the ":w" command is the whole buffer (1,$).  If you
-write the whole buffer, it is no longer considered changed.  When you
+The default [range] for the ":w" command is the whole buffer (1,$).  The |'[|
+and |']| marks will be set to the [range] being used for the write command.
+If you write the whole buffer, it is no longer considered changed.  When you
 write it to a different file with ":w somefile" it depends on the "+" flag in
 'cpoptions'.  When included, the write command will reset the 'modified' flag,
 even though the buffer itself may still be different from its file.
@@ -1229,10 +1243,10 @@ MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 							*:confirm* *:conf*
 :conf[irm] {command}	Execute {command}, and use a dialog when an
 			operation has to be confirmed.  Can be used on the
-			|:edit|, |:q|, |:qa| and |:w| commands (the latter to
-			override a read-only setting), and any commands that
-			can fail because of unsaved changes, such as |:only|,
-			|:buffer|, |:bdelete|, etc.
+			|:edit|, |:restart|, |:q|, |:qa| and |:w| commands
+			(the latter to override a read-only setting), and any
+			commands that can fail because of unsaved changes,
+			such as |:only|, |:buffer|, |:bdelete|, etc.
 
 Examples: >
   :confirm w foo
@@ -1303,9 +1317,15 @@ b:browsefilter variable.  You would most likely set b:browsefilter in a
 filetype plugin, so that the browse dialog would contain entries related to
 the type of file you are currently editing.  Disadvantage: This makes it
 difficult to start editing a file of a different type.  To overcome this, you
-may want to add "All Files (*.*)\t*\n" as the final filter on Windows or "All
-Files (*)\t*\n" on other platforms, so that the user can still access any
-desired file.
+can add the following as the final filter on Windows: >
+
+	All Files\t(*.*)\t*\n
+<
+Or the following on other platforms, so that the user can still access any
+desired file: >
+
+	All Files\t(*)\t*\n
+<
 
 To avoid setting browsefilter when Vim does not actually support it, you can
 use has("browsefilter"): >
@@ -1337,7 +1357,7 @@ exist, the next-higher scope in the hierarchy applies.
 
 :cd[!] {path}		Change the current directory to {path}.
 			If {path} is relative, it is searched for in the
-			directories listed in |'cdpath'|.
+			directories listed in 'cdpath'.
 			Clear any window-local directory.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from

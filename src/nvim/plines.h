@@ -36,10 +36,8 @@ typedef struct {
   int head;  ///< Size of 'breakindent' etc. before the character (included in width).
 } CharSize;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "plines.h.generated.h"
-# include "plines.h.inline.generated.h"
-#endif
+#include "plines.h.generated.h"
+#include "plines.h.inline.generated.h"
 
 /// Get the number of cells taken up on the screen by the given character at vcol.
 /// "csarg->cur_text_width_left" and "csarg->cur_text_width_right" are set

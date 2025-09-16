@@ -140,5 +140,4 @@ msgpack#equal({msgpack-value}, {msgpack-value})		*msgpack#equal()*
 	|msgpack-special-dict| with equivalent non-special-dict value
 	evaluates to 1.
 
-==============================================================================
-vim:tw=78:ts=8:ft=help:fdm=marker
+ vim:tw=78:ts=8:ft=help:fdm=marker

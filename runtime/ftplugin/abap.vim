@@ -5,6 +5,7 @@
 " License:	You may redistribute this under the same terms as Vim itself
 " Last Change:	2023 Aug 28 by Vim Project (undo_ftplugin)
 "               2024 Jan 14 by Vim Project (browsefilter)
+"               2025 Jun 08 by Riley Bruins <ribru17@gmail.com> ('comments', 'commentstring')
 " --------------------------------------------------------------------------
 
 " Only do this when not done yet for this buffer
@@ -18,8 +19,10 @@ set cpo&vim
 
 setlocal softtabstop=2 shiftwidth=2
 setlocal suffixesadd=.abap
+setlocal commentstring=\"\ %s
+setlocal comments=:\",:*
 
-let b:undo_ftplugin = "setl sts< sua< sw<"
+let b:undo_ftplugin = "setl sts< sua< sw< com< cms<"
 
 " Windows allows you to filter the open file dialog
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")

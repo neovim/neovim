@@ -200,7 +200,9 @@ function vim.show_pos(bufnr, row, col, filter)
         capture,
         string.format(
           'priority: %d   language: %s',
-          capture.metadata.priority or vim.hl.priorities.treesitter,
+          capture.metadata.priority
+            or (capture.metadata[capture.id] and capture.metadata[capture.id].priority)
+            or vim.hl.priorities.treesitter,
           capture.lang
         )
       )
@@ -270,5 +272,5 @@ function vim.show_pos(bufnr, row, col, filter)
       },
     }
   end
-  vim.api.nvim_echo(chunks, false, {})
+  vim.api.nvim_echo(chunks, false, { kind = 'list_cmd' })
 end

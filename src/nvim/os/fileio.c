@@ -24,9 +24,7 @@
 # include <sys/uio.h>
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fileio.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "os/fileio.c.generated.h"  // IWYU pragma: keep
 
 /// Open file
 ///

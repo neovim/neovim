@@ -3976,10 +3976,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ATENCIÓ"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr "\nS'ha trobat un fitxer d'intercanvi amb nom \""
+msgid "Found a swap file by the name \""
+msgstr "S'ha trobat un fitxer d'intercanvi amb nom \""
 
 #: ../memline.c:3226
 msgid "While opening file \""

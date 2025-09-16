@@ -14,7 +14,8 @@ vim.v.argv = ...
 
 --- Argument for evaluating 'formatexpr' and used for the typed
 --- character when using <expr> in an abbreviation `:map-<expr>`.
---- It is also used by the `InsertCharPre` and `InsertEnter` events.
+--- It is also used by the `InsertCharPre`, `InsertEnter`,
+--- `CmdlineLeave` and `CmdlineLeavePre` events.
 --- @type string
 vim.v.char = ...
 
@@ -771,6 +772,21 @@ vim.v.val = ...
 --- ```
 --- @type integer
 vim.v.version = ...
+
+--- Like v:version, but also including the patchlevel in the last
+--- four digits.  Version 8.1 with patch 123 has value 8010123.
+--- This can be used like this:
+--- ```
+---   if v:versionlong >= 8010123
+--- ```
+---
+--- However, if there are gaps in the list of patches included
+--- this will not work well.  This can happen if a recent patch
+--- was included into an older version, e.g. for a security fix.
+--- Use the has() function to make sure the patch is actually
+--- included.
+--- @type integer
+vim.v.versionlong = ...
 
 --- 0 during startup, 1 just before `VimEnter`.
 --- Read-only.

@@ -105,7 +105,7 @@ end
 --- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
-  local trimempty = false
+  local trimempty = false --- @type boolean?
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
@@ -244,20 +244,21 @@ function vim.tbl_values(t)
   return values
 end
 
---- Apply a function to all values of a table.
+--- Applies function `fn` to all values of table `t`, in `pairs()` iteration order (which is not
+--- guaranteed to be stable, even when the data doesn't change).
 ---
 ---@generic T
----@param func fun(value: T): any Function
+---@param fn fun(value: T): any Function
 ---@param t table<any, T> Table
 ---@return table : Table of transformed values
-function vim.tbl_map(func, t)
-  vim.validate('func', func, 'callable')
+function vim.tbl_map(fn, t)
+  vim.validate('fn', fn, 'callable')
   vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local rettab = {} --- @type table<any,any>
   for k, v in pairs(t) do
-    rettab[k] = func(v)
+    rettab[k] = fn(v)
   end
   return rettab
 end
@@ -265,17 +266,17 @@ end
 --- Filter a table using a predicate function
 ---
 ---@generic T
----@param func fun(value: T): boolean (function) Function
+---@param fn fun(value: T): boolean (function) Function
 ---@param t table<any, T> (table) Table
 ---@return T[] : Table of filtered values
-function vim.tbl_filter(func, t)
-  vim.validate('func', func, 'callable')
+function vim.tbl_filter(fn, t)
+  vim.validate('fn', fn, 'callable')
   vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local rettab = {} --- @type table<any,any>
   for _, entry in pairs(t) do
-    if func(entry) then
+    if fn(entry) then
       rettab[#rettab + 1] = entry
     end
   end
@@ -348,6 +349,189 @@ function vim.list_contains(t, value)
   return false
 end
 
+vim.list = {}
+
+---TODO(ofseed): memoize, string value support, type alias.
+---@generic T
+---@param v T
+---@param key? fun(v: T): any
+---@return any
+local function key_fn(v, key)
+  return key and key(v) or v
+end
+
+--- Removes duplicate values from a list-like table in-place.
+---
+--- Only the first occurrence of each value is kept.
+--- The operation is performed in-place and the input table is modified.
+---
+--- Accepts an optional `key` argument that if provided is called for each
+--- value in the list to compute a hash key for uniqueness comparison.
+--- This is useful for deduplicating table values or complex objects.
+---
+--- Example:
+--- ```lua
+---
+--- local t = {1, 2, 2, 3, 1}
+--- vim.list.unique(t)
+--- -- t is now {1, 2, 3}
+---
+--- local t = { {id=1}, {id=2}, {id=1} }
+--- vim.list.unique(t, function(x) return x.id end)
+--- -- t is now { {id=1}, {id=2} }
+--- ```
+---
+--- @generic T
+--- @param t T[]
+--- @param key? fun(x: T): any Optional hash function to determine uniqueness of values
+--- @return T[] : The deduplicated list
+function vim.list.unique(t, key)
+  vim.validate('t', t, 'table')
+  local seen = {} --- @type table<any,boolean>
+
+  local finish = #t
+
+  local j = 1
+  for i = 1, finish do
+    local v = t[i]
+    local vh = key_fn(v, key)
+    if not seen[vh] then
+      t[j] = v
+      if vh ~= nil then
+        seen[vh] = true
+      end
+      j = j + 1
+    end
+  end
+
+  for i = j, finish do
+    t[i] = nil
+  end
+
+  return t
+end
+
+---@class vim.list.bisect.Opts
+---@inlinedoc
+---
+--- Start index of the list.
+--- (default: `1`)
+---@field lo? integer
+---
+--- End index of the list, exclusive.
+--- (default: `#t + 1`)
+---@field hi? integer
+---
+--- Optional, compare the return value instead of the {val} itself if provided.
+---@field key? fun(val: any): any
+---
+--- Specifies the search variant.
+---   - "lower": returns the first position
+---     where inserting {val} keeps the list sorted.
+---   - "upper": returns the last position
+---     where inserting {val} keeps the list sorted..
+--- (default: `'lower'`)
+---@field bound? 'lower' | 'upper'
+
+---@generic T
+---@param t T[]
+---@param val T
+---@param key? fun(val: any): any
+---@param lo integer
+---@param hi integer
+---@return integer i in range such that `t[j]` < {val} for all j < i,
+---                and `t[j]` >= {val} for all j >= i,
+---                or return {hi} if no such index is found.
+local function lower_bound(t, val, lo, hi, key)
+  local bit = require('bit') -- Load bitop on demand
+  local val_key = key_fn(val, key)
+  while lo < hi do
+    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2)
+    if key_fn(t[mid], key) < val_key then
+      lo = mid + 1
+    else
+      hi = mid
+    end
+  end
+  return lo
+end
+
+---@generic T
+---@param t T[]
+---@param val T
+---@param key? fun(val: any): any
+---@param lo integer
+---@param hi integer
+---@return integer i in range such that `t[j]` <= {val} for all j < i,
+---                and `t[j]` > {val} for all j >= i,
+---                or return {hi} if no such index is found.
+local function upper_bound(t, val, lo, hi, key)
+  local bit = require('bit') -- Load bitop on demand
+  local val_key = key_fn(val, key)
+  while lo < hi do
+    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2)
+    if val_key < key_fn(t[mid], key) then
+      hi = mid
+    else
+      lo = mid + 1
+    end
+  end
+  return lo
+end
+
+--- Search for a position in a sorted list {t}
+--- where {val} can be inserted while keeping the list sorted.
+---
+--- Use {bound} to determine whether to return the first or the last position,
+--- defaults to "lower", i.e., the first position.
+---
+--- NOTE: Behavior is undefined on unsorted lists!
+---
+--- Example:
+--- ```lua
+---
+--- local t = { 1, 2, 2, 3, 3, 3 }
+--- local first = vim.list.bisect(t, 3)
+--- -- `first` is `val`'s first index if found,
+--- -- useful for existence checks.
+--- print(t[first]) -- 3
+---
+--- local last = vim.list.bisect(t, 3, { bound = 'upper' })
+--- -- Note that `last` is 7, not 6,
+--- -- this is suitable for insertion.
+---
+--- table.insert(t, last, 4)
+--- -- t is now { 1, 2, 2, 3, 3, 3, 4 }
+---
+--- -- You can use lower bound and upper bound together
+--- -- to obtain the range of occurrences of `val`.
+---
+--- -- 3 is in [first, last)
+--- for i = first, last - 1 do
+---   print(t[i]) -- { 3, 3, 3 }
+--- end
+--- ```
+---@generic T
+---@param t T[] A comparable list.
+---@param val T The value to search.
+---@param opts? vim.list.bisect.Opts
+---@return integer index serves as either the lower bound or the upper bound position.
+function vim.list.bisect(t, val, opts)
+  vim.validate('t', t, 'table')
+  vim.validate('opts', opts, 'table', true)
+
+  opts = opts or {}
+  local lo = opts.lo or 1
+  local hi = opts.hi or #t + 1
+  local key = opts.key
+
+  if opts.bound == 'upper' then
+    return upper_bound(t, val, lo, hi, key)
+  else
+    return lower_bound(t, val, lo, hi, key)
+  end
+end
+
 --- Checks if a table is empty.
 ---
 ---@see https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -366,7 +550,7 @@ local function can_merge(v)
 end
 
 --- Recursive worker for tbl_extend
---- @param behavior 'error'|'keep'|'force'
+--- @param behavior 'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any
 --- @param deep_extend boolean
 --- @param ... table<any,any>
 local function tbl_extend_rec(behavior, deep_extend, ...)
@@ -381,6 +565,8 @@ local function tbl_extend_rec(behavior, deep_extend, ...)
       for k, v in pairs(tbl) do
         if deep_extend and can_merge(v) and can_merge(ret[k]) then
           ret[k] = tbl_extend_rec(behavior, true, ret[k], v)
+        elseif type(behavior) == 'function' then
+          ret[k] = behavior(k, ret[k], v)
         elseif behavior ~= 'force' and ret[k] ~= nil then
           if behavior == 'error' then
             error('key found in more than one map: ' .. k)
@@ -395,11 +581,16 @@ local function tbl_extend_rec(behavior, deep_extend, ...)
   return ret
 end
 
---- @param behavior 'error'|'keep'|'force'
+--- @param behavior 'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any
 --- @param deep_extend boolean
 --- @param ... table<any,any>
 local function tbl_extend(behavior, deep_extend, ...)
-  if behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force' then
+  if
+    behavior ~= 'error'
+    and behavior ~= 'keep'
+    and behavior ~= 'force'
+    and type(behavior) ~= 'function'
+  then
     error('invalid "behavior": ' .. tostring(behavior))
   end
 
@@ -420,10 +611,12 @@ end
 ---
 ---@see |extend()|
 ---
----@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
+---      - If a function, it receives the current key, the previous value in the currently merged table (if present), the current value and should
+---        return the value for the given key in the merged table.
 ---@param ... table Two or more tables
 ---@return table : Merged table
 function vim.tbl_extend(behavior, ...)
@@ -441,10 +634,12 @@ end
 ---
 ---@generic T1: table
 ---@generic T2: table
----@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
+---      - If a function, it receives the current key, the previous value in the currently merged table (if present), the current value and should
+---        return the value for the given key in the merged table.
 ---@param ... T2 Two or more tables
 ---@return T1|T2 (table) Merged table
 function vim.tbl_deep_extend(behavior, ...)
@@ -605,7 +800,7 @@ function vim.spairs(t)
   --- @cast t table<any,any>
 
   -- collect the keys
-  local keys = {}
+  local keys = {} --- @type string[]
   for k in pairs(t) do
     table.insert(keys, k)
   end
@@ -677,7 +872,7 @@ end
 ---
 ---@see |vim.isarray()|
 ---
----@param t? table
+---@param t? any
 ---@return boolean `true` if list-like table, else `false`.
 function vim.islist(t)
   if type(t) ~= 'table' then
@@ -790,7 +985,9 @@ end
 ---@return string String with whitespace removed from its beginning and end
 function vim.trim(s)
   vim.validate('s', s, 'string')
-  return s:match('^%s*(.*%S)') or ''
+  -- `s:match('^%s*(.*%S)')` is slow for long whitespace strings,
+  -- so we are forced to split it into two parts to prevent this
+  return s:gsub('^%s+', ''):match('^.*%S') or ''
 end
 
 --- Escapes magic chars in |lua-pattern|s.
@@ -854,7 +1051,7 @@ do
   --- @param param_name string
   --- @param val any
   --- @param validator vim.validate.Validator
-  --- @param message? string
+  --- @param message? string "Expected" message
   --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
   --- @return string?
   local function is_valid(param_name, val, validator, message, allow_alias)
@@ -866,18 +1063,18 @@ do
       end
 
       if not is_type(val, expected) then
-        return string.format('%s: expected %s, got %s', param_name, expected, type(val))
+        return ('%s: expected %s, got %s'):format(param_name, message or expected, type(val))
       end
     elseif vim.is_callable(validator) then
       -- Check user-provided validation function
       local valid, opt_msg = validator(val)
       if not valid then
-        local err_msg =
-          string.format('%s: expected %s, got %s', param_name, message or '?', tostring(val))
-
-        if opt_msg then
-          err_msg = string.format('%s. Info: %s', err_msg, opt_msg)
-        end
+        local err_msg = ('%s: expected %s, got %s'):format(
+          param_name,
+          message or '?',
+          tostring(val)
+        )
+        err_msg = opt_msg and ('%s. Info: %s'):format(err_msg, opt_msg) or err_msg
 
         return err_msg
       end
@@ -1014,7 +1211,7 @@ do
   ---
   --- @param name string Argument name
   --- @param value any Argument value
-  --- @param validator vim.validate.Validator
+  --- @param validator vim.validate.Validator :
   ---   - (`string|string[]`): Any value that can be returned from |lua-type()| in addition to
   ---     `'callable'`: `'boolean'`, `'callable'`, `'function'`, `'nil'`, `'number'`, `'string'`, `'table'`,
   ---     `'thread'`, `'userdata'`.
@@ -1035,7 +1232,7 @@ do
         err_msg = is_valid(name, value, validator, msg, false)
       end
     elseif type(name) == 'table' then -- Form 2
-      vim.deprecate('vim.validate', 'vim.validate(name, value, validator, optional_or_msg)', '1.0')
+      vim.deprecate('vim.validate{<table>}', 'vim.validate(<params>)', '1.0')
       err_msg = validate_spec(name)
     else
       error('invalid arguments')
@@ -1181,7 +1378,6 @@ do
   end
 end
 
---- @private
 --- @generic T
 --- @param root string
 --- @param mod T
@@ -1201,7 +1397,6 @@ function vim._defer_require(root, mod)
   })
 end
 
---- @private
 --- Creates a module alias/shim that lazy-loads a target module.
 ---
 --- Unlike `vim.defaulttable()` this also:
@@ -1410,7 +1605,7 @@ function vim._resolve_bufnr(bufnr)
 end
 
 --- @generic T
---- @param x elem_or_list<T>?
+--- @param x T|T[]
 --- @return T[]
 function vim._ensure_list(x)
   if type(x) == 'table' then
@@ -1418,5 +1613,8 @@ function vim._ensure_list(x)
   end
   return { x }
 end
+
+-- Use max 32-bit signed int value to avoid overflow on 32-bit systems. #31633
+vim._maxint = 2 ^ 32 - 1
 
 return vim

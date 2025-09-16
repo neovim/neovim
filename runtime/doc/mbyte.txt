@@ -476,7 +476,7 @@ and what the keymaps are to get those characters:
 
 glyph   encoding	   keymap ~
 Char UTF-8 cp1255  hebrew  hebrewp  name ~
-א    0x5d0  0xe0     t	      a     ´alef
+א    0x5d0  0xe0     t	      a     alef
 ב    0x5d1  0xe1     c	      b     bet
 ג    0x5d2  0xe2     d	      g     gimel
 ד    0x5d3  0xe3     s	      d     dalet
@@ -494,7 +494,7 @@ Char UTF-8 cp1255  hebrew  hebrewp  name ~
 ן    0x5df  0xef     i	      N     nun sofit
 נ    0x5e0  0xf0     b	      n     nun
 ס    0x5e1  0xf1     x	      s     samech
-ע    0x5e2  0xf2     g	      u     `ayin
+ע    0x5e2  0xf2     g	      u     ayin
 ף    0x5e3  0xf3     ;	      P     pe sofit
 פ    0x5e4  0xf4     p	      p     pe
 ץ    0x5e5  0xf5     .	      X     tsadi sofit
@@ -556,8 +556,8 @@ Char UTF-8 hebrew name
 ב֯    0x5af   CC   masora circle
 
 Combining forms:
-ﬠ    0xfb20  X`   Alternative `ayin
-ﬡ    0xfb21  X'   Alternative ´alef
+ﬠ    0xfb20  X`   Alternative ayin
+ﬡ    0xfb21  X'   Alternative alef
 ﬢ    0xfb22  X-d  Alternative dalet
 ﬣ    0xfb23  X-h  Alternative he
 ﬤ    0xfb24  X-k  Alternative kaf

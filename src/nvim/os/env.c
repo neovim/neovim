@@ -39,6 +39,10 @@
 # include "nvim/fileio.h"
 #endif
 
+#ifdef __APPLE__
+# include <mach/task.h>
+#endif
+
 #ifdef HAVE__NSGETENVIRON
 # include <crt_externs.h>
 #endif
@@ -47,10 +51,9 @@
 # include <sys/utsname.h>
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "auto/pathdef.h"
-# include "os/env.c.generated.h"
-#endif
+#include "auto/pathdef.h"
+
+#include "os/env.c.generated.h"
 
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
@@ -147,9 +150,6 @@ bool os_env_exists(const char *name, bool nonempty)
 /// Sets an environment variable.
 ///
 /// Windows (Vim-compat): Empty string (:let $FOO="") undefines the env var.
-///
-/// @warning Existing pointers to the result of os_getenv("foo") are
-///          INVALID after os_setenv("foo", …).
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -371,6 +371,18 @@ int64_t os_get_pid(void)
 #endif
 }
 
+/// Signals to the OS that Nvim is an application for "interactive work"
+/// which should be prioritized similar to a GUI app.
+void os_hint_priority(void)
+{
+#ifdef __APPLE__
+  // By default, processes have the TASK_UNSPECIFIED "role", which means all of its threads are
+  // clamped to Default QoS. Setting the role to TASK_DEFAULT_APPLICATION removes this clamp.
+  integer_t policy = TASK_DEFAULT_APPLICATION;
+  task_policy_set(mach_task_self(), TASK_CATEGORY_POLICY, &policy, 1);
+#endif
+}
+
 /// Gets the hostname of the current machine.
 ///
 /// @param hostname   Buffer to store the hostname.
@@ -577,9 +589,9 @@ char *expand_env_save_opt(char *src, bool one)
 /// @param src        Input string e.g. "$HOME/vim.hlp"
 /// @param dst[out]   Where to put the result
 /// @param dstlen     Maximum length of the result
-void expand_env(char *src, char *dst, int dstlen)
+size_t expand_env(char *src, char *dst, int dstlen)
 {
-  expand_env_esc(src, dst, dstlen, false, false, NULL);
+  return expand_env_esc(src, dst, dstlen, false, false, NULL);
 }
 
 /// Expand environment variable with path name and escaping.
@@ -591,8 +603,8 @@ void expand_env(char *src, char *dst, int dstlen)
 /// @param esc        Escape spaces in expanded variables
 /// @param one        `srcp` is a single filename
 /// @param prefix     Start again after this (can be NULL)
-void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
-                    char *prefix)
+size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
+                      char *prefix)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *tail;
@@ -600,6 +612,7 @@ void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, b
   bool copy_char;
   bool mustfree;  // var was allocated, need to free it later
   bool at_start = true;  // at start of a name
+  char *const dst_start = dst;
 
   int prefix_len = (prefix == NULL) ? 0 : (int)strlen(prefix);
 
@@ -731,23 +744,24 @@ void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, b
         mustfree = true;
       }
 
-      if (var != NULL && *var != NUL
-          && (strlen(var) + strlen(tail) + 1 < (unsigned)dstlen)) {
-        STRCPY(dst, var);
-        dstlen -= (int)strlen(var);
+      if (var != NULL && *var != NUL) {
         int c = (int)strlen(var);
-        // if var[] ends in a path separator and tail[] starts
-        // with it, skip a character
-        if (after_pathsep(dst, dst + c)
+        if ((size_t)c + strlen(tail) + 1 < (unsigned)dstlen) {
+          STRCPY(dst, var);
+          dstlen -= c;
+          // if var[] ends in a path separator and tail[] starts
+          // with it, skip a character
+          if (after_pathsep(dst, dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
-            && dst[c - 1] != ':'
+              && dst[c - 1] != ':'
 #endif
-            && vim_ispathsep(*tail)) {
-          tail++;
+              && vim_ispathsep(*tail)) {
+            tail++;
+          }
+          dst += c;
+          src = tail;
+          copy_char = false;
         }
-        dst += c;
-        src = tail;
-        copy_char = false;
       }
       if (mustfree) {
         xfree(var);
@@ -778,22 +792,19 @@ void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, b
     }
   }
   *dst = NUL;
+
+  return (size_t)(dst - dst_start);
 }
 
-/// Check if the directory "vimdir/<version>" or "vimdir/runtime" exists.
+/// Check if the directory "vimdir/runtime" exists.
 /// Return NULL if not, return its name in allocated memory otherwise.
 /// @param vimdir directory to test
-static char *vim_version_dir(const char *vimdir)
+static char *vim_runtime_dir(const char *vimdir)
 {
   if (vimdir == NULL || *vimdir == NUL) {
     return NULL;
   }
-  char *p = concat_fnames(vimdir, VIM_VERSION_NODOT, true);
-  if (os_isdir(p)) {
-    return p;
-  }
-  xfree(p);
-  p = concat_fnames(vimdir, RUNTIME_DIRNAME, true);
+  char *p = concat_fnames(vimdir, RUNTIME_DIRNAME, true);
   if (os_isdir(p)) {
     return p;
   }
@@ -945,7 +956,7 @@ char *vim_getenv(const char *name)
       && *default_vimruntime_dir == NUL) {
     kos_env_path = os_getenv("VIM");    // kos_env_path was NULL.
     if (kos_env_path != NULL) {
-      vim_path = vim_version_dir(kos_env_path);
+      vim_path = vim_runtime_dir(kos_env_path);
       if (vim_path == NULL) {
         vim_path = kos_env_path;
       } else {
@@ -980,10 +991,9 @@ char *vim_getenv(const char *name)
         vim_path_end = remove_tail(vim_path, vim_path_end, "doc");
       }
 
-      // for $VIM, remove "runtime/" or "vim54/", if present
+      // for $VIM, remove "runtime/", if present
       if (!vimruntime) {
         vim_path_end = remove_tail(vim_path, vim_path_end, RUNTIME_DIRNAME);
-        vim_path_end = remove_tail(vim_path, vim_path_end, VIM_VERSION_NODOT);
       }
 
       // remove trailing path separator
@@ -1011,7 +1021,7 @@ char *vim_getenv(const char *name)
       vim_path = xstrdup(default_vimruntime_dir);
     } else if (*default_vim_dir != NUL) {
       if (vimruntime
-          && (vim_path = vim_version_dir(default_vim_dir)) == NULL) {
+          && (vim_path = vim_runtime_dir(default_vim_dir)) == NULL) {
         vim_path = xstrdup(default_vim_dir);
       }
     }

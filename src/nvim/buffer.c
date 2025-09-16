@@ -58,6 +58,7 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -68,6 +69,7 @@
 #include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/insexpand.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
@@ -99,7 +101,6 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
-#include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/state_defs.h"
 #include "nvim/statusline.h"
@@ -114,9 +115,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "buffer.c.generated.h"
-#endif
+#include "buffer.c.generated.h"
 
 static const char e_attempt_to_delete_buffer_that_is_in_use_str[]
   = N_("E937: Attempt to delete a buffer that is in use: %s");
@@ -158,12 +157,12 @@ static int read_buffer(bool read_stdin, exarg_T *eap, int flags)
   if (retval == OK) {
     // Delete the binary lines.
     while (--line_count >= 0) {
-      ml_delete(1, false);
+      ml_delete(1);
     }
   } else {
     // Delete the converted lines.
     while (curbuf->b_ml.ml_line_count > line_count) {
-      ml_delete(line_count, false);
+      ml_delete(line_count);
     }
   }
   // Put the cursor on the first line.
@@ -480,11 +479,6 @@ static bool can_unload_buffer(buf_T *buf)
   return can_unload;
 }
 
-bool buf_locked(buf_T *buf)
-{
-  return buf->b_locked || buf->b_locked_split;
-}
-
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -505,7 +499,7 @@ bool buf_locked(buf_T *buf)
 ///               close all other windows.
 /// @param ignore_abort
 ///               If true, don't abort even when aborting() returns true.
-/// @return  true when we got to the end and b_nwindows was decremented.
+/// @return  true if b_nwindows was decremented directly by this call (e.g: not via autocmds).
 bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool ignore_abort)
 {
   bool unload_buf = (action != 0);
@@ -576,7 +570,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     }
     buf->b_locked--;
     buf->b_locked_split--;
-    if (abort_if_last && one_window(win)) {
+    if (abort_if_last && win != NULL && one_window(win, NULL)) {
       // Autocommands made this the only window.
       emsg(_(e_auabort));
       return false;
@@ -595,7 +589,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
       }
       buf->b_locked--;
       buf->b_locked_split--;
-      if (abort_if_last && one_window(win)) {
+      if (abort_if_last && win != NULL && one_window(win, NULL)) {
         // Autocommands made this the only window.
         emsg(_(e_auabort));
         return false;
@@ -630,7 +624,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   // Return when a window is displaying the buffer or when it's not
   // unloaded.
   if (buf->b_nwindows > 0 || !unload_buf) {
-    return false;
+    return true;
   }
 
   if (buf->terminal) {
@@ -684,10 +678,6 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     return false;
   }
 
-  // Disable buffer-updates for the current buffer.
-  // No need to check `unload_buf`: in that case the function returned above.
-  buf_updates_unload(buf, false);
-
   if (win != NULL  // Avoid bogus clang warning.
       && win_valid_any_tab(win)
       && win->w_buffer == buf) {
@@ -704,7 +694,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   if (wipe_buf) {
     // Do not wipe out the buffer if it is used in a window.
     if (buf->b_nwindows > 0) {
-      return false;
+      return true;
     }
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       mark_forget_file(wp, buf->b_fnum);
@@ -768,7 +758,7 @@ void buf_clear(void)
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete(1, false);
+    ml_delete(1);
   }
   deleted_lines_mark(1, line_count);  // prepare for display
 }
@@ -794,6 +784,11 @@ void buf_freeall(buf_T *buf, int flags)
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
+  buf_updates_unload(buf, false);
+  if (!bufref_valid(&bufref)) {
+    // on_detach callback deleted the buffer.
+    return;
+  }
   if ((buf->b_ml.ml_mfp != NULL)
       && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
       && !bufref_valid(&bufref)) {
@@ -883,6 +878,7 @@ static void free_buffer(buf_T *buf)
   clear_fmark(&buf->b_last_cursor, 0);
   clear_fmark(&buf->b_last_insert, 0);
   clear_fmark(&buf->b_last_change, 0);
+  clear_fmark(&buf->b_prompt_start, 0);
   for (size_t i = 0; i < NMARKS; i++) {
     free_fmark(buf->b_namedm[i]);
   }
@@ -940,7 +936,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
 
-  buf_updates_unload(buf, false);
+  buf_free_callbacks(buf);
 }
 
 /// Go to another buffer.  Handles the result of the ATTENTION dialog.
@@ -1260,8 +1256,11 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       buf = buf->b_next;
     }
   } else {
+    const bool help_only = (flags & DOBUF_SKIPHELP) != 0 && buf->b_help;
+
     bp = NULL;
-    while (count > 0 || (!unload && !buf->b_p_bl && bp != buf)) {
+    while (count > 0 || (bp != buf && !unload
+                         && !(help_only ? buf->b_help : buf->b_p_bl))) {
       // remember the buffer where we start, we come back there when all
       // buffers are unlisted.
       if (bp == NULL) {
@@ -1269,12 +1268,13 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       }
       buf = dir == FORWARD ? (buf->b_next != NULL ? buf->b_next : firstbuf)
                            : (buf->b_prev != NULL ? buf->b_prev : lastbuf);
+      // Avoid non-help buffers if the starting point was a help buffer
+      // and vice-versa.
       // Don't count unlisted buffers.
-      // Avoid non-help buffers if the starting point was a non-help buffer and
-      // vice-versa.
       if (unload
-          || (buf->b_p_bl
-              && ((flags & DOBUF_SKIPHELP) == 0 || buf->b_help == bp->b_help))) {
+          || (help_only
+              ? buf->b_help
+              : (buf->b_p_bl && ((flags & DOBUF_SKIPHELP) == 0 || !buf->b_help)))) {
         count--;
         bp = NULL;              // use this buffer as new starting point
       }
@@ -1300,11 +1300,17 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     return FAIL;
   }
 
-  if (action == DOBUF_GOTO
-      && buf != curbuf
-      && !check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) ? true : false)) {
-    // disallow navigating to another buffer when 'winfixbuf' is applied
-    return FAIL;
+  if (action == DOBUF_GOTO && buf != curbuf) {
+    if (!check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) != 0)) {
+      // disallow navigating to another buffer when 'winfixbuf' is applied
+      return FAIL;
+    }
+    if (buf->b_locked_split) {
+      // disallow navigating to a closing buffer, which like splitting,
+      // can result in more windows displaying it
+      emsg(_(e_cannot_switch_to_a_closing_buffer));
+      return FAIL;
+    }
   }
 
   if ((action == DOBUF_GOTO || action == DOBUF_SPLIT) && (buf->b_flags & BF_DUMMY)) {
@@ -1681,7 +1687,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
 /// Enter a new current buffer.
 /// Old curbuf must have been abandoned already!  This also means "curbuf" may
 /// be pointing to freed memory.
-void enter_buffer(buf_T *buf)
+static void enter_buffer(buf_T *buf)
 {
   // when closing the current buffer stop Visual mode
   if (VIsual_active
@@ -1771,6 +1777,10 @@ void enter_buffer(buf_T *buf)
     parse_spelllang(curwin);
   }
   curbuf->b_last_used = time(NULL);
+
+  if (curbuf->terminal != NULL) {
+    terminal_check_size(curbuf->terminal);
+  }
 
   redraw_later(curwin, UPD_NOT_VALID);
 }
@@ -1899,17 +1909,20 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   // buffer.)
   buf = NULL;
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
+    bufref_T bufref;
+
     assert(curbuf != NULL);
     buf = curbuf;
+    set_bufref(&bufref, buf);
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
     buf_freeall(buf, BFA_WIPE | BFA_DEL);
-    if (buf != curbuf) {  // autocommands deleted the buffer!
-      return NULL;
-    }
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
       return NULL;
+    }
+    if (!bufref_valid(&bufref)) {
+      buf = NULL;  // buf was deleted; allocate a new buffer
     }
   }
   if (buf != curbuf || curbuf == NULL) {
@@ -2016,6 +2029,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   buf->b_prompt_callback.type = kCallbackNone;
   buf->b_prompt_interrupt.type = kCallbackNone;
   buf->b_prompt_text = NULL;
+  clear_fmark(&buf->b_prompt_start, 0);
 
   return buf;
 }
@@ -2090,6 +2104,9 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   callback_free(&buf->b_ofu_cb);
   clear_string_option(&buf->b_p_tsrfu);
   callback_free(&buf->b_tsrfu_cb);
+  clear_cpt_callbacks(&buf->b_p_cpt_cb, buf->b_p_cpt_count);
+  buf->b_p_cpt_count = 0;
+  clear_string_option(&buf->b_p_gefm);
   clear_string_option(&buf->b_p_gp);
   clear_string_option(&buf->b_p_mp);
   clear_string_option(&buf->b_p_efm);
@@ -2102,6 +2119,7 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_ffu);
   callback_free(&buf->b_ffu_cb);
   clear_string_option(&buf->b_p_dict);
+  clear_string_option(&buf->b_p_dia);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
   buf->b_p_ar = -1;
@@ -2195,7 +2213,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 }
 
 /// Go to the last known line number for the current buffer.
-void buflist_getfpos(void)
+static void buflist_getfpos(void)
 {
   pos_T *fpos = &buflist_findfmark(curbuf)->mark;
 
@@ -2458,12 +2476,12 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
       } else {
         p = NULL;
         // first try matching with the short file name
-        if ((score = fuzzy_match_str(buf->b_sfname, pat)) != 0) {
+        if ((score = fuzzy_match_str(buf->b_sfname, pat)) != FUZZY_SCORE_NONE) {
           p = buf->b_sfname;
         }
         if (p == NULL) {
           // next try matching with the full path file name
-          if ((score = fuzzy_match_str(buf->b_ffname, pat)) != 0) {
+          if ((score = fuzzy_match_str(buf->b_ffname, pat)) != FUZZY_SCORE_NONE) {
             p = buf->b_ffname;
           }
         }

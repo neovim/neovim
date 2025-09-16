@@ -201,7 +201,7 @@ Docstring format:
 - Markdown is supported.
 - Tags are written as `[tag]()`.
 - References are written as `[tag]`
-- Use ``` for code samples.
+- Use "```" for code samples.
   Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
@@ -245,7 +245,7 @@ Docstring format:
 - Markdown is supported.
 - Tags are written as `[tag]()`.
 - References are written as `[tag]`
-- Use ``` for code samples.
+- Use "```" for code samples.
   Code samples can be annotated as `vim` or `lua`
 - Use `@since <api-level>` to note the |api-level| when the function became
   "stable". If `<api-level>` is greater than the current stable release (or
@@ -353,7 +353,7 @@ Where possible, these patterns apply to _both_ Lua and the API:
   - Examples: |vim.lsp.codelens.clear()| |vim.diagnostic.enable()|
 - Any function signature that accepts a callback (example: |table.foreach()|)
   should place it as the LAST parameter (after opts), if possible (or ALWAYS
-  for "continuation callbacks"—functions called exactly once).
+  for |continuation|s——functions called exactly once).
   - Improves readability by placing the less "noisy" arguments near the start.
   - Consistent with luv.
   - Useful for future async lib which transforms functions of the form
@@ -426,6 +426,9 @@ Use existing common {verb} names (actions) if possible:
     - add:          Appends or inserts into a collection
     - attach:       Listens to something to get events from it (TODO: rename to "on"?)
     - call:         Calls a function
+    - callback      |continuation|: Function parameter (NOT a field) that
+                    returns the result of an async function. Use the "on_…"
+                    naming-convention for all other callbacks and event handlers.
     - cancel:       Cancels or dismisses an event or interaction, typically
                     user-initiated and without error. (Compare "abort", which
                     cancels and signals error/failure.)
@@ -441,10 +444,15 @@ Use existing common {verb} names (actions) if possible:
     - get:          Gets things. Two variants (overloads):
                     1. `get<T>(id: int): T` returns one item.
                     2. `get<T>(filter: dict): T[]` returns a list.
+    - has:          Checks for the presence of an item, feature, etc.
     - inspect:      Presents a high-level, often interactive, view
     - is_enabled:   Checks if functionality is enabled.
+    - on_…:         Handles events or async results, or registers such
+                    a handler. |dev-name-events|
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
+    - request:      Calls a remote (network, RPC) operation.
+    - send:         Writes data or a message to a channel.
     - set:          Sets a thing (or group of things)
     - start:        Spin up a long-lived process. Prefer "enable" except when
                     "start" is obviously more appropriate.
@@ -452,9 +460,10 @@ Use existing common {verb} names (actions) if possible:
     - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
+    - contains:     Prefer "has".
     - disable:      Prefer `enable(enable: boolean)`.
     - exit:         Prefer "cancel" (or "stop" if appropriate).
-    - is_disabled:  Prefer `is_enabled()`.
+    - is_disabled:  Prefer `!is_enabled()`.
     - list:         Redundant with "get"
     - notify:       Redundant with "print", "echo"
     - show:         Redundant with "print", "echo"
@@ -475,7 +484,6 @@ everywhere, not "buffer" in some places and "buf" in others.
 
 Do NOT use these deprecated nouns:
     - buffer        Use "buf" instead
-    - callback      Use on_foo instead
     - command       Use "cmd" instead
     - window        Use "win" instead
 
@@ -493,6 +501,14 @@ Use this format to name API (RPC) events: >
 Example: >
     nvim_buf_changedtick_event
 <
+                                                        *continuation*
+A "continuation" is implemented as a callback function that returns the result
+of an async function and is called exactly once. Often accepts `err` as the
+first parameter, to avoid erroring on the main thread. Example: >
+    foo(…, callback: fun(err, …))
+Use the name `callback` only for a continuation. All other callbacks and event
+handlers should be named with the |dev-name-events| "on_…" convention.
+
                                                         *dev-api-name*
 Use this format to name new RPC |API| functions: >
     nvim_{topic}_{verb}_{arbitrary-qualifiers}
@@ -666,6 +682,26 @@ External UIs are expected to implement these common features:
   the user).
 - Support the text decorations/attributes given by |ui-event-hl_attr_define|.
   The "url" attr should be presented as a clickable hyperlink.
+- Handle the "restart" UI event so that |:restart| works.
+- Detect capslock and show an indicator if capslock is active.
 
+Multigrid UI ~
+                                                        *dev-ui-multigrid*
+- A multigrid UI should display floating windows using one of the following
+  methods, using the `win_float_pos` |ui-multigrid| event. Different methods
+  can be selected for each window as needed.
+
+  1. Let Nvim determine the position and z-order of the windows. This can be
+  achieved by using the `compindex`, `screen_row`, and `screen_col` information from
+  the `win_float_pos` UI event. To allow Nvim to automatically determine the grid,
+  the UI should call `nvim_input_mouse` with 0 as the `grid` parameter.
+  2. Use the `anchor`, `anchor_grid`, `anchor_row`, `anchor_col`, and `zindex` as
+  references for positioning the windows. If windows are outside the screen,
+  it is the UI's responsibility to reposition and/or resize them. Since Nvim
+  lacks information about actual window placement in this case, the UI must
+  call `nvim_input_mouse` with the actual grid id, factoring in `mouse_enabled`.
+  Note: Some API functions may return unexpected results for these windows due
+  to the missing information.
+- For external windows, the grid id should also be passed to `nvim_input_mouse`.
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

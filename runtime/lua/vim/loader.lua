@@ -66,7 +66,7 @@ local indexed = {}
 --- @return uv.fs_stat.result?
 local function fs_stat_cached(path)
   if not fs_stat_cache then
-    return uv.fs_stat(path)
+    return (uv.fs_stat(path))
   end
 
   if not fs_stat_cache[path] then
@@ -458,7 +458,7 @@ end
 --- @return F
 local function track(stat, f)
   return function(...)
-    local start = vim.uv.hrtime()
+    local start = uv.hrtime()
     local r = { f(...) }
     stats[stat] = stats[stat] or { total = 0, time = 0 }
     stats[stat].total = stats[stat].total + 1

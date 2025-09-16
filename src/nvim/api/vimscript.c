@@ -29,9 +29,7 @@
 #include "nvim/viml/parser/parser.h"
 #include "nvim/viml/parser/parser_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vimscript.c.generated.h"
-#endif
+#include "api/vimscript.c.generated.h"
 
 /// Executes Vimscript (multiline block of Ex commands), like anonymous
 /// |:source|.
@@ -72,6 +70,7 @@ Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *e
 String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
 {
   const int save_msg_silent = msg_silent;
+  const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
   garray_T capture_local;
@@ -83,6 +82,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
   TRY_WRAP(err, {
     if (opts->output) {
       msg_silent++;
+      redir_off = false;
       msg_col = 0;  // prevent leading spaces
     }
 
@@ -92,6 +92,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
+      redir_off = save_redir_off;
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }

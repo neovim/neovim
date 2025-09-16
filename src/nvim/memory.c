@@ -42,7 +42,6 @@
 #include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/usercmd.h"
-#include "nvim/vim_defs.h"
 
 #ifdef UNIT_TESTING
 # define malloc(size) mem_malloc(size)
@@ -55,9 +54,7 @@ MemCalloc mem_calloc = &calloc;
 MemRealloc mem_realloc = &realloc;
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memory.c.generated.h"
-#endif
+#include "memory.c.generated.h"
 
 #ifdef EXITFREE
 bool entered_free_all_mem = false;
@@ -65,7 +62,7 @@ bool entered_free_all_mem = false;
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
-void try_to_free_memory(void)
+static void try_to_free_memory(void)
 {
   static bool trying_to_free = false;
   // avoid recursive calls
@@ -82,6 +79,24 @@ void try_to_free_memory(void)
   arena_free_reuse_blks();
 
   trying_to_free = false;
+}
+
+/// Avoid repeating the error message many times (they take 1 second each).
+/// `did_outofmem_msg` is reset when a character is read.
+static void do_outofmem_msg(size_t size)
+{
+  if (did_outofmem_msg) {
+    return;
+  }
+
+  // Don't hide this message
+  emsg_silent = 0;
+
+  // Must come first to avoid coming back here when printing the error
+  // message fails, e.g. when setting v:errmsg.
+  did_outofmem_msg = true;
+
+  semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
 }
 
 /// malloc() wrapper
@@ -540,24 +555,6 @@ bool strnequal(const char *a, const char *b, size_t n)
   return (a == NULL && b == NULL) || (a && b && strncmp(a, b, n) == 0);
 }
 
-// Avoid repeating the error message many times (they take 1 second each).
-// Did_outofmem_msg is reset when a character is read.
-void do_outofmem_msg(size_t size)
-{
-  if (did_outofmem_msg) {
-    return;
-  }
-
-  // Don't hide this message
-  emsg_silent = 0;
-
-  // Must come first to avoid coming back here when printing the error
-  // message fails, e.g. when setting v:errmsg.
-  did_outofmem_msg = true;
-
-  semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
-}
-
 /// Writes time_t to "buf[8]".
 void time_to_bytes(time_t time_, uint8_t buf[8])
 {
@@ -566,6 +563,115 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
   for (size_t i = 7, bufi = 0; bufi < 8; i--, bufi++) {
     buf[bufi] = (uint8_t)((uint64_t)time_ >> (i * 8));
   }
+}
+
+/// Iterative merge sort for doubly linked list.
+/// O(NlogN) worst case, and stable.
+///  - The list is divided into blocks of increasing size (1, 2, 4, 8, ...).
+///  - Each pair of blocks is merged in sorted order.
+///  - Merged blocks are reconnected to build the sorted list.
+void *mergesort_list(void *head, MergeSortGetFunc get_next, MergeSortSetFunc set_next,
+                     MergeSortGetFunc get_prev, MergeSortSetFunc set_prev,
+                     MergeSortCompareFunc compare)
+{
+  if (!head || !get_next(head)) {
+    return head;
+  }
+
+  // Count length
+  int n = 0;
+  void *curr = head;
+  while (curr) {
+    n++;
+    curr = get_next(curr);
+  }
+
+  for (int size = 1; size < n; size *= 2) {
+    void *new_head = NULL;
+    void *tail = NULL;
+    curr = head;
+
+    while (curr) {
+      // Split two runs
+      void *left = curr;
+      void *right = left;
+      for (int i = 0; i < size && right; i++) {
+        right = get_next(right);
+      }
+
+      void *next = right;
+      for (int i = 0; i < size && next; i++) {
+        next = get_next(next);
+      }
+
+      // Break links
+      void *l_end = right ? get_prev(right) : NULL;
+      if (l_end) {
+        set_next(l_end, NULL);
+      }
+      if (right) {
+        set_prev(right, NULL);
+      }
+
+      void *r_end = next ? get_prev(next) : NULL;
+      if (r_end) {
+        set_next(r_end, NULL);
+      }
+      if (next) {
+        set_prev(next, NULL);
+      }
+
+      // Merge
+      void *merged = NULL;
+      void *merged_tail = NULL;
+
+      while (left || right) {
+        void *chosen = NULL;
+        if (!left) {
+          chosen = right;
+          right = get_next(right);
+        } else if (!right) {
+          chosen = left;
+          left = get_next(left);
+        } else if (compare(left, right) <= 0) {
+          chosen = left;
+          left = get_next(left);
+        } else {
+          chosen = right;
+          right = get_next(right);
+        }
+
+        if (merged_tail) {
+          set_next(merged_tail, chosen);
+          set_prev(chosen, merged_tail);
+          merged_tail = chosen;
+        } else {
+          merged = merged_tail = chosen;
+          set_prev(chosen, NULL);
+        }
+      }
+
+      // Connect to full list
+      if (!new_head) {
+        new_head = merged;
+      } else {
+        set_next(tail, merged);
+        set_prev(merged, tail);
+      }
+
+      // Move tail to end
+      while (get_next(merged_tail)) {
+        merged_tail = get_next(merged_tail);
+      }
+      tail = merged_tail;
+
+      curr = next;
+    }
+
+    head = new_head;
+  }
+
+  return head;
 }
 
 #define REUSE_MAX 4
@@ -757,7 +863,7 @@ void free_all_mem(void)
 
   // Close all tabs and windows.  Reset 'equalalways' to avoid redraws.
   p_ea = false;
-  if (first_tabpage->tp_next != NULL) {
+  if (first_tabpage != NULL && first_tabpage->tp_next != NULL) {
     do_cmdline_cmd("tabonly!");
   }
 
@@ -767,18 +873,20 @@ void free_all_mem(void)
   // Clear user commands (before deleting buffers).
   ex_comclear(NULL);
 
-  // Clear menus.
-  do_cmdline_cmd("aunmenu *");
-  do_cmdline_cmd("tlunmenu *");
-  do_cmdline_cmd("menutranslate clear");
+  if (curbuf != NULL) {
+    // Clear menus.
+    do_cmdline_cmd("aunmenu *");
+    do_cmdline_cmd("tlunmenu *");
+    do_cmdline_cmd("menutranslate clear");
 
-  // Clear mappings, abbreviations, breakpoints.
-  // NB: curbuf not used with local=false arg
-  map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
-  map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
-  do_cmdline_cmd("breakdel *");
-  do_cmdline_cmd("profdel *");
-  do_cmdline_cmd("set keymap=");
+    // Clear mappings, abbreviations, breakpoints.
+    // NB: curbuf not used with local=false arg
+    map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
+    map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
+    do_cmdline_cmd("breakdel *");
+    do_cmdline_cmd("profdel *");
+    do_cmdline_cmd("set keymap=");
+  }
 
   free_titles();
   free_findfile();
@@ -799,7 +907,9 @@ void free_all_mem(void)
   free_cd_dir();
   free_signs();
   set_expr_line(NULL);
-  diff_clear(curtab);
+  if (curtab != NULL) {
+    diff_clear(curtab);
+  }
   clear_sb_text(true);            // free any scrollback text
 
   // Free some global vars.
@@ -816,8 +926,10 @@ void free_all_mem(void)
   // Close all script inputs.
   close_all_scripts();
 
-  // Destroy all windows.  Must come before freeing buffers.
-  win_free_all();
+  if (curwin != NULL) {
+    // Destroy all windows.  Must come before freeing buffers.
+    win_free_all();
+  }
 
   // Free all option values.  Must come after closing windows.
   free_all_options();
@@ -851,8 +963,10 @@ void free_all_mem(void)
 
   reset_last_sourcing();
 
-  free_tabpage(first_tabpage);
-  first_tabpage = NULL;
+  if (first_tabpage != NULL) {
+    free_tabpage(first_tabpage);
+    first_tabpage = NULL;
+  }
 
   // message history
   msg_hist_clear(0);

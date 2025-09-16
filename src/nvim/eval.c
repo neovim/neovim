@@ -78,6 +78,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
+#include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -265,6 +266,7 @@ static struct vimvar {
   VV(VV_TYPE_BOOL,        "t_bool",           VAR_NUMBER, VV_RO),
   VV(VV_TYPE_BLOB,        "t_blob",           VAR_NUMBER, VV_RO),
   VV(VV_EVENT,            "event",            VAR_DICT, VV_RO),
+  VV(VV_VERSIONLONG,      "versionlong",      VAR_NUMBER, VV_RO),
   VV(VV_ECHOSPACE,        "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_ARGV,             "argv",             VAR_LIST, VV_RO),
   VV(VV_COLLATE,          "collate",          VAR_STRING, VV_RO),
@@ -313,9 +315,7 @@ typedef enum {
   FILTERMAP_FOREACH,
 } filtermap_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval.c.generated.h"
-#endif
+#include "eval.c.generated.h"
 
 static uint64_t last_timer_id = 1;
 static PMap(uint64_t) timers = MAP_INIT;
@@ -432,6 +432,7 @@ void eval_init(void)
     }
   }
   vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
+  vimvars[VV_VERSIONLONG].vv_nr = VIM_VERSION_100 * 10000 + highest_patch();
 
   dict_T *const msgpack_types_dict = tv_dict_alloc();
   for (size_t i = 0; i < ARRAY_SIZE(msgpack_type_names); i++) {
@@ -2552,7 +2553,6 @@ void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 /// Handle zero level expression.
 /// This calls eval1() and handles error message and nextcmd.
 /// Put the result in "rettv" when returning OK and "evaluate" is true.
-/// Note: "rettv.v_lock" is not set.
 ///
 /// @param evalarg  can be NULL, &EVALARG_EVALUATE or a pointer.
 ///
@@ -2649,11 +2649,11 @@ int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *co
 /// "arg" must point to the first non-white of the expression.
 /// "arg" is advanced to the next non-white after the recognized expression.
 ///
-/// Note: "rettv.v_lock" is not set.
-///
 /// @return  OK or FAIL.
 int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
+  CLEAR_POINTER(rettv);
+
   // Get the first variable.
   if (eval2(arg, rettv, evalarg) == FAIL) {
     return FAIL;
@@ -4792,6 +4792,9 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_in_callback)(&buf->b_tsrfu_cb, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_tfu_cb, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_ffu_cb, copyID, NULL, NULL);
+    if (!abort && buf->b_p_cpt_cb != NULL) {
+      ABORTING(set_ref_in_cpt_callbacks)(buf->b_p_cpt_cb, buf->b_p_cpt_count, copyID);
+    }
   }
 
   // 'completefunc', 'omnifunc' and 'thesaurusfunc' callbacks
@@ -5409,8 +5412,6 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
     d_ret = rettv->vval.v_dict;
   }
 
-  vimvars[VV_KEY].vv_type = VAR_STRING;
-
   const VarLockStatus prev_lock = d->dv_lock;
   if (d->dv_lock == VAR_UNLOCKED) {
     d->dv_lock = VAR_LOCKED;
@@ -5422,11 +5423,11 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
             || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE))) {
       break;
     }
-    vimvars[VV_KEY].vv_str = xstrdup(di->di_key);
+    set_vim_var_string(VV_KEY, di->di_key, -1);
     typval_T newtv;
     bool rem;
     int r = filter_map_one(&di->di_tv, expr, filtermap, &newtv, &rem);
-    tv_clear(&vimvars[VV_KEY].vv_tv);
+    tv_clear(get_vim_var_tv(VV_KEY));
     if (r == FAIL || did_emsg) {
       tv_clear(&newtv);
       break;
@@ -5478,7 +5479,8 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
     b_ret = rettv->vval.v_blob;
   }
 
-  vimvars[VV_KEY].vv_type = VAR_NUMBER;
+  // set_vim_var_nr() doesn't set the type
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   const VarLockStatus prev_lock = b->bv_lock;
   if (b->bv_lock == 0) {
@@ -5492,7 +5494,7 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
       .v_lock = VAR_UNLOCKED,
       .vval.v_number = val,
     };
-    vimvars[VV_KEY].vv_nr = idx;
+    set_vim_var_nr(VV_KEY, idx);
     typval_T newtv;
     bool rem;
     if (filter_map_one(&tv, expr, filtermap, &newtv, &rem) == FAIL
@@ -5529,7 +5531,8 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  vimvars[VV_KEY].vv_type = VAR_NUMBER;
+  // set_vim_var_nr() doesn't set the type
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
@@ -5595,8 +5598,8 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
     tv_list_alloc_ret(rettv, kListLenUnknown);
     l_ret = rettv->vval.v_list;
   }
-
-  vimvars[VV_KEY].vv_type = VAR_NUMBER;
+  // set_vim_var_nr() doesn't set the type
+  set_vim_var_type(VV_KEY, VAR_NUMBER);
 
   const VarLockStatus prev_lock = tv_list_locked(l);
   if (tv_list_locked(l) == VAR_UNLOCKED) {
@@ -5609,7 +5612,7 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
         && value_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg, TV_TRANSLATE)) {
       break;
     }
-    vimvars[VV_KEY].vv_nr = idx;
+    set_vim_var_nr(VV_KEY, idx);
     typval_T newtv;
     bool rem;
     if (filter_map_one(TV_LIST_ITEM_TV(li), expr, filtermap, &newtv, &rem) == FAIL) {
@@ -5679,15 +5682,16 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
   }
 
   typval_T save_val;
+  typval_T save_key;
+
   prepare_vimvar(VV_VAL, &save_val);
+  prepare_vimvar(VV_KEY, &save_key);
 
   // We reset "did_emsg" to be able to detect whether an error
   // occurred during evaluation of the expression.
   int save_did_emsg = did_emsg;
   did_emsg = false;
 
-  typval_T save_key;
-  prepare_vimvar(VV_KEY, &save_key);
   if (argvars[0].v_type == VAR_DICT) {
     filter_map_dict(argvars[0].vval.v_dict, filtermap, func_name,
                     arg_errmsg, expr, rettv);
@@ -6962,14 +6966,23 @@ void set_vcount(int64_t count, int64_t count1, bool set_prevcount)
   vimvars[VV_COUNT1].vv_nr = count1;
 }
 
+/// Set type of v: variable to the given type.
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  type  Type to set to.
+void set_vim_var_type(const VimVarIndex idx, const VarType type)
+{
+  vimvars[idx].vv_type = type;
+}
+
 /// Set number v: variable to the given value
+/// Note that this does not set the type, use set_vim_var_type() for that.
 ///
 /// @param[in]  idx  Index of variable to set.
 /// @param[in]  val  Value to set to.
 void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 {
   tv_clear(&vimvars[idx].vv_tv);
-  vimvars[idx].vv_type = VAR_NUMBER;
   vimvars[idx].vv_nr = val;
 }
 
@@ -7846,6 +7859,7 @@ void ex_echo(exarg_T *eap)
     if (!eap->skip) {
       if (atstart) {
         atstart = false;
+        msg_ext_set_kind("echo");
         // Call msg_start() after eval1(), evaluating the expression
         // may cause a message to appear.
         if (eap->cmdidx == CMD_echo) {
@@ -7861,10 +7875,8 @@ void ex_echo(exarg_T *eap)
         msg_puts_hl(" ", echo_hl_id, false);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      if (*tofree != NUL) {
-        msg_ext_set_kind("echo");
-        msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
-      }
+      msg_ext_append = eap->cmdidx == CMD_echon;
+      msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
       xfree(tofree);
     }
     tv_clear(&rettv);
@@ -8665,11 +8677,43 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
   }
 }
 
-void invoke_prompt_callback(void)
+/// Gets the current user-input in prompt buffer `buf`, or NULL if buffer is not a prompt buffer.
+char *prompt_get_input(buf_T *buf)
+{
+  if (!bt_prompt(buf)) {
+    return NULL;
+  }
+  linenr_T lnum_start = buf->b_prompt_start.mark.lnum;
+  linenr_T lnum_last = buf->b_ml.ml_line_count;
+
+  char *text = ml_get_buf(buf, lnum_start);
+  char *prompt = prompt_text();
+  if (strlen(text) >= strlen(prompt)) {
+    text += strlen(prompt);
+  }
+
+  char *full_text = xstrdup(text);
+  for (linenr_T i = lnum_start + 1; i <= lnum_last; i++) {
+    char *half_text = concat_str(full_text, "\n");
+    xfree(full_text);
+    full_text = concat_str(half_text, ml_get_buf(buf, i));
+    xfree(half_text);
+  }
+  return full_text;
+}
+
+/// Invokes the user-defined callback defined for the current prompt-buffer.
+void prompt_invoke_callback(void)
 {
   typval_T rettv;
   typval_T argv[2];
   linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+  char *user_input = prompt_get_input(curbuf);
+
+  if (!user_input) {
+    return;
+  }
 
   // Add a new line for the prompt before invoking the callback, so that
   // text can always be inserted above the last line.
@@ -8677,22 +8721,26 @@ void invoke_prompt_callback(void)
   appended_lines_mark(lnum, 1);
   curwin->w_cursor.lnum = lnum + 1;
   curwin->w_cursor.col = 0;
+  curbuf->b_prompt_start.mark.lnum = lnum + 1;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
-    return;
+    xfree(user_input);
+    goto theend;
   }
-  char *text = ml_get(lnum);
-  char *prompt = prompt_text();
-  if (strlen(text) >= strlen(prompt)) {
-    text += strlen(prompt);
-  }
+
   argv[0].v_type = VAR_STRING;
-  argv[0].vval.v_string = xstrdup(text);
+  argv[0].vval.v_string = user_input;
   argv[1].v_type = VAR_UNKNOWN;
 
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
   tv_clear(&argv[0]);
   tv_clear(&rettv);
+
+theend:
+  // clear undo history on submit
+  u_clearallandblockfree(curbuf);
+
+  curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
 }
 
 /// @return  true when the interrupt callback was invoked.

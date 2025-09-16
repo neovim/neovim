@@ -128,8 +128,7 @@ if has('timers')
   endfunc
 
   func Test_OptionSet_modeline()
-    CheckFunction test_override
-    call test_override('starting', 1)
+    call Ntest_override('starting', 1)
     au! OptionSet
     augroup set_tabstop
       au OptionSet tabstop call timer_start(1, {-> execute("echo 'Handler called'", "")})
@@ -146,7 +145,7 @@ if has('timers')
     augroup END
     bwipe!
     set ts&
-    call test_override('starting', 0)
+    call Ntest_override('starting', 0)
   endfunc
 
 endif "has('timers')
@@ -860,7 +859,7 @@ func Test_BufReadCmdNofile()
             \ 'quickfix',
             \ 'help',
             "\ 'terminal',
-            \ 'prompt',
+            "\ 'prompt',
             "\ 'popup',
             \ ]
     new somefile
@@ -978,7 +977,7 @@ func Test_BufEnter()
             \ 'quickfix',
             \ 'help',
             "\ 'terminal',
-            \ 'prompt',
+            "\ 'prompt',
             "\ 'popup',
             \ ]
     new somefile
@@ -1103,7 +1102,8 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
-  CheckFunction test_override
+  " Use test/functional/legacy/autocmd_option_spec.lua
+  throw 'Skipped: Nvim changed types of OptionSet v: variables'
   CheckOption autochdir
 
   call test_override('starting', 1)
@@ -1705,8 +1705,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
-  CheckFunction test_override
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   " 18: Changing an option when entering diff mode
   new
   au OptionSet diff :let &l:cul = v:option_new
@@ -1735,12 +1734,11 @@ func Test_OptionSet_diffmode()
 
   " Cleanup
   au! OptionSet
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 func Test_OptionSet_diffmode_close()
-  CheckFunction test_override
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
   new
@@ -1760,7 +1758,7 @@ func Test_OptionSet_diffmode_close()
 
   " Cleanup
   au! OptionSet
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
   "delfunc! AutoCommandOptionSet
 endfunc
 
@@ -2092,7 +2090,7 @@ func Test_Cmdline()
 
   let g:log = []
   let @r = 'abc'
-  call feedkeys(":0\<C-R>r1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
+  call feedkeys(":0\<C-R>=@r\<CR>1\<C-R>\<C-O>r2\<C-R>\<C-R>r3\<Esc>", 'xt')
   call assert_equal([
         \ '0',
         \ '0a',
@@ -2103,6 +2101,17 @@ func Test_Cmdline()
         \ '0abc1abc2',
         \ '0abc1abc2abc',
         \ '0abc1abc2abc3',
+        \ ], g:log)
+
+  " <Del> should trigger CmdlineChanged
+  let g:log = []
+  call feedkeys(":foo\<Left>\<Left>\<Del>\<Del>\<Esc>", 'xt')
+  call assert_equal([
+        \ 'f',
+        \ 'fo',
+        \ 'foo',
+        \ 'fo',
+        \ 'f',
         \ ], g:log)
 
   unlet g:log
@@ -2661,10 +2670,9 @@ endfunc
 
 " Test TextChangedI and TextChangedP
 func Test_ChangedP()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
   call setline(1, ['foo', 'bar', 'foobar'])
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   set complete=. completeopt=menuone
 
   func! TextChangedAutocmd(char)
@@ -2705,7 +2713,7 @@ func Test_ChangedP()
   " TODO: how should it handle completeopt=noinsert,noselect?
 
   " CleanUp
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   au! TextChanged
   au! TextChangedI
   au! TextChangedP
@@ -2725,9 +2733,8 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
-  call test_override('char_avail', 1)
+  call Ntest_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
   call feedkeys("i(\<CR>\<Esc>", 'tx')
   call assert_equal('(', getline(1))
@@ -2736,7 +2743,7 @@ func Test_TextChangedI_with_setline()
   call assert_equal('', getline(1))
   call assert_equal('', getline(2))
 
-  call test_override('char_avail', 0)
+  call Ntest_override('char_avail', 0)
   bwipe!
 endfunc
 
@@ -3598,6 +3605,27 @@ func Test_Visual_doautoall_redraw()
   %bwipe!
 endfunc
 
+func Test_get_Visual_selection_in_curbuf_autocmd()
+  call Ntest_override('starting', 1)
+  new
+  autocmd OptionSet list let b:text = getregion(getpos('.'), getpos('v'))
+  call setline(1, 'foo bar baz')
+
+  normal! gg0fbvtb
+  setlocal list
+  call assert_equal(['bar '], b:text)
+  exe "normal! \<Esc>"
+
+  normal! v0
+  call setbufvar('%', '&list', v:false)
+  call assert_equal(['foo bar '], b:text)
+  exe "normal! \<Esc>"
+
+  autocmd! OptionSet list
+  bwipe!
+  call Ntest_override('starting', 0)
+endfunc
+
 " This was using freed memory.
 func Test_BufNew_arglocal()
   arglocal
@@ -4314,7 +4342,8 @@ func Test_autocmd_BufWinLeave_with_vsp()
   exe "e " fname
   vsp
   augroup testing
-    exe "au BufWinLeave " .. fname .. " :e " dummy .. "| vsp " .. fname
+    exe 'au BufWinLeave' fname 'e' dummy
+          \ '| call assert_fails(''vsp' fname ''', ''E1546:'')'
   augroup END
   bw
   call CleanUpTestAuGroup()
@@ -4403,6 +4432,150 @@ func Test_WinScrolled_Resized_eiw()
   call WaitForAssert({-> assert_equal('1000 1001 1 1', term_getline(buf, 10))}, 1000)
 
   call StopVimInTerminal(buf)
+endfunc
+
+func Test_eventignorewin_non_current()
+  defer CleanUpTestAuGroup()
+  let s:triggered = ''
+  augroup testing
+    " Will set <abuf> to the buffer of the closing window.
+    autocmd WinClosed * let s:triggered = 'WinClosed'
+  augroup END
+  let initial_win = win_getid()
+
+  new
+  let new_buf = bufnr()
+  " Only set for one of the windows into the new buffer.
+  setlocal eventignorewin=all
+  split
+  setlocal eventignorewin=
+  let close_winnr = winnr()
+
+  " Return to the window where the buffer is non-current. WinClosed should
+  " trigger as not all windows into new_buf have 'eventignorewin' set for it.
+  call win_gotoid(initial_win)
+  call assert_notequal(new_buf, bufnr())
+  execute close_winnr 'close'
+  call assert_equal('WinClosed', s:triggered)
+
+  wincmd w
+  call assert_equal(new_buf, bufnr())
+  tab split
+  setlocal eventignorewin=
+  let close_winnr = win_getid()
+
+  " Ensure that new_buf's window in the other tabpage with 'eventignorewin'
+  " unset allows WinClosed to run when new_buf is non-current.
+  call win_gotoid(initial_win)
+  call assert_notequal(new_buf, bufnr())
+  let s:triggered = ''
+  only!
+  call assert_equal('WinClosed', s:triggered)
+  call assert_equal(1, win_findbuf(new_buf)->len())
+
+  " Create an only window to new_buf with 'eventignorewin' set.
+  tabonly!
+  execute new_buf 'sbuffer'
+  setlocal eventignorewin=all
+  wincmd p
+  call assert_equal(1, win_findbuf(new_buf)->len())
+  call assert_notequal(new_buf, bufnr())
+
+  " Closing a window unrelated to new_buf should not block WinClosed.
+  split
+  let s:triggered = ''
+  close
+  call assert_equal('WinClosed', s:triggered)
+  call assert_equal(1, win_findbuf(new_buf)->len())
+
+  " Check WinClosed is blocked when we close the only window to new_buf (that
+  " has 'eventignorewin' set) while new_buf is non-current.
+  call assert_notequal(new_buf, bufnr())
+  let s:triggered = ''
+  only!
+  call assert_equal('', s:triggered)
+  call assert_equal(0, win_findbuf(new_buf)->len())
+
+  augroup testing
+    autocmd!
+    autocmd BufNew * ++once let s:triggered = 'BufNew'
+  augroup END
+
+  " Buffer not shown in a window, 'eventignorewin' should not block (and
+  " can't even be set for it anyway in this case).
+  badd foo
+  call assert_equal('BufNew', s:triggered)
+
+  unlet! s:triggered
+  %bw!
+endfunc
+
+func Test_reuse_curbuf_leak()
+  new bar
+  let s:bar_buf = bufnr()
+  augroup testing
+    autocmd!
+    autocmd BufDelete * ++once let s:triggered = 1 | execute s:bar_buf 'buffer'
+  augroup END
+  enew
+  let empty_buf = bufnr()
+
+  " Old curbuf should be reused, firing BufDelete. As BufDelete changes curbuf,
+  " reusing the buffer would fail and leak the ffname.
+  edit foo
+  call assert_equal(1, s:triggered)
+  " Wasn't reused because the buffer changed, but buffer "foo" is still created.
+  call assert_equal(1, bufexists(empty_buf))
+  call assert_notequal(empty_buf, bufnr())
+  call assert_equal('foo', bufname())
+  call assert_equal('bar', bufname(s:bar_buf))
+
+  unlet! s:bar_buf s:triggered
+  call CleanUpTestAuGroup()
+  %bw!
+endfunc
+
+func Test_reuse_curbuf_switch()
+  edit asdf
+  let s:asdf_win = win_getid()
+  new
+  let other_buf = bufnr()
+  let other_win = win_getid()
+  augroup testing
+    autocmd!
+    autocmd BufUnload * ++once let s:triggered = 1
+          \| call assert_fails('split', 'E1159:')
+          \| call win_gotoid(s:asdf_win)
+  augroup END
+
+  " Check BufUnload changing curbuf does not cause buflist_new to create a new
+  " buffer while leaving "other_buf" unloaded in a window.
+  enew
+  call assert_equal(1, s:triggered)
+  call assert_equal(other_buf, bufnr())
+  call assert_equal(other_win, win_getid())
+  call assert_equal(1, win_findbuf(other_buf)->len())
+  call assert_equal(1, bufloaded(other_buf))
+
+  unlet! s:asdf_win s:triggered
+  call CleanUpTestAuGroup()
+  %bw!
+endfunc
+
+func Test_eventignore_subtract()
+  set eventignore=all,-WinEnter
+  augroup testing
+    autocmd!
+    autocmd WinEnter * ++once let s:triggered = 1
+  augroup END
+
+  new
+  call assert_equal(1, s:triggered)
+
+  set eventignore&
+  unlet! s:triggered
+  call CleanUpTestAuGroup()
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

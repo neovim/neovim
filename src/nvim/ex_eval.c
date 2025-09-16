@@ -33,9 +33,7 @@
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_eval.c.generated.h"
-#endif
+#include "ex_eval.c.generated.h"
 
 static const char e_multiple_else[] = N_("E583: Multiple :else");
 static const char e_multiple_finally[] = N_("E607: Multiple :finally");
@@ -799,7 +797,7 @@ void report_make_pending(int pending, void *value)
 
 /// If something pending in a finally clause is resumed at the ":endtry", report
 /// it if required by the 'verbose' option or when debugging.
-void report_resume_pending(int pending, void *value)
+static void report_resume_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
     if (debug_break_level <= 0) {
@@ -814,7 +812,7 @@ void report_resume_pending(int pending, void *value)
 
 /// If something pending in a finally clause is discarded, report it if required
 /// by the 'verbose' option or when debugging.
-void report_discard_pending(int pending, void *value)
+static void report_discard_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
     if (debug_break_level <= 0) {

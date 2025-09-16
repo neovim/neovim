@@ -36,20 +36,17 @@ itself).
 
 For Python 3 plugins:
 1. Make sure Python 3.9+ is available in your $PATH.
-2. Install the module (try "python" if "python3" is missing): >bash
-   python3 -m pip install --user --upgrade pynvim
+2. Install either uv (https://docs.astral.sh/uv/) or pipx
+   (https://pipx.pypa.io/stable/).
+3. Install the module: >bash
+   uv tool install --upgrade pynvim
+   # or:
+   pipx install --upgrade pynvim
 
-The pip `--upgrade` flag ensures that you get the latest version even if
+The `--upgrade` flag ensures that you get the latest version even if
 a previous version was already installed.
 
 See also |python-virtualenv|.
-
-Note: The old "neovim" module was renamed to "pynvim".
-https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-If you run into problems, uninstall _both_ then install "pynvim" again: >bash
-  python -m pip uninstall neovim pynvim
-  python -m pip install --user --upgrade pynvim
-
 
 PYTHON PROVIDER CONFIGURATION ~
 						*g:python3_host_prog*
@@ -65,20 +62,18 @@ To disable Python 3 support: >vim
 
 PYTHON VIRTUALENVS ~
 						*python-virtualenv*
-If you plan to use per-project virtualenvs often, you should assign one
-virtualenv for Nvim and hard-code the interpreter path via
-|g:python3_host_prog| so that the "pynvim" package is not required
-for each virtualenv.
+Using pynvim 0.6.0+ installed via uv or pipx, Nvim will automatically detect
+pynvim even if other Python virtual environments are activated (technical
+note: via the "pynvim-python" global python tool).  For older pynvim (or older
+Neovim), where detection involved finding the first Python interpreter and
+checking if it could import pynvim, automatic detection would fail when
+another virtual environment is active.  Upgrading to the latest pynvim is the
+recommended solution to this; but if that's not an option, then you can set
+the variable |g:python3_host_prog| in `init.vim` to point to the full path to
+the Python interpreter where `pynvim` is installed, e.g.: >vim
 
-Example using pyenv: >bash
-    pyenv install 3.4.4
-    pyenv virtualenv 3.4.4 py3nvim
-    pyenv activate py3nvim
-    python3 -m pip install pynvim
-    pyenv which python  # Note the path
-The last command reports the interpreter path, add it to your init.vim: >vim
-    let g:python3_host_prog = '/path/to/py3nvim/bin/python'
-
+  let g:python3_host_prog = '/path/to/pynvim-venv/bin/python'
+<
 See also: https://github.com/zchee/deoplete-jedi/wiki/Setting-up-Python-for-Neovim
 
 ==============================================================================
@@ -197,7 +192,7 @@ registers. Nvim supports these clipboard tools, in order of priority:
 - "win32yank" : *win32yank* (Windows)
 - "putclip"   : putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
 - "clip"      : clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
-- "termux"    : termux (via termux-clipboard-set, termux-clipboard-set)
+- "termux"    : termux (via termux-clipboard-set, termux-clipboard-get)
 - "tmux"      : tmux (if $TMUX is set)
 - "osc52"     : |clipboard-osc52| (if supported by your terminal)
 
@@ -366,5 +361,4 @@ generally inserted with the middle mouse button.
 Nvim's X11 clipboard providers only use the PRIMARY and CLIPBOARD selections,
 for the "*" and "+" registers, respectively.
 
-==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
