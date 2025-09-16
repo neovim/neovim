@@ -4371,6 +4371,7 @@ describe('API', function()
         args = {},
         bang = false,
         range = { 4, 8, 5, 9 },
+        count = 8,
         addr = 'char',
         magic = {
           file = false,
@@ -4425,6 +4426,7 @@ describe('API', function()
       feed('$gNgNgNgnx')
       eq('lust of a last', fn.getreg('@'))
     end)
+
     it('works with count', function()
       eq({
         cmd = 'buffer',
@@ -5107,11 +5109,27 @@ describe('API', function()
         selection line5
         line6
       ]]
+      command('3.5,5.9g/.*/delete')
+      expect [[
+        line1
+        line2
+        line3line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
       api.nvim_cmd({
         cmd = 'global',
         addr = 'char',
         args = { '/.*/delete' },
-        range = { 3, 5, 5, 10 },
+        range = { 3, 5, 5, 9 },
       }, {})
       expect [[
         line1
@@ -5133,7 +5151,7 @@ describe('API', function()
       api.nvim_cmd({
         cmd = 'delete',
         addr = 'char',
-        range = { 3, 5, 5, 10 },
+        range = { 3, 5, 5, 9 },
       }, {})
       expect [[
         line1
@@ -5152,7 +5170,7 @@ describe('API', function()
         selection line5
         line6
       ]]
-      api.nvim_input([[:3.5,5.10delete<CR>]])
+      api.nvim_input([[:3.5,5.9delete<CR>]])
       expect [[
         line1
         line2
@@ -5218,8 +5236,8 @@ describe('API', function()
         line5
       ]]
       local buf = api.nvim_get_current_buf()
-      api.nvim_buf_set_mark(buf, '<', 3, 3, {})
-      api.nvim_buf_set_mark(buf, '>', 5, 11, {})
+      api.nvim_buf_set_mark(buf, '<', 3, 2, {})
+      api.nvim_buf_set_mark(buf, '>', 5, 10, {})
       command("`<,`>!tr 'a' 'b'")
       expect [[
         line1
@@ -5237,8 +5255,8 @@ describe('API', function()
         line4
       ]]
       buf = api.nvim_get_current_buf()
-      api.nvim_buf_set_mark(buf, '<', 3, 5, {})
-      api.nvim_buf_set_mark(buf, '>', 3, 9, {})
+      api.nvim_buf_set_mark(buf, '<', 3, 4, {})
+      api.nvim_buf_set_mark(buf, '>', 3, 8, {})
       command("`<,`>!tr 'b' 'g'")
       expect [[
         line1

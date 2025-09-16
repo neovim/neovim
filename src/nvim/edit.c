@@ -1886,7 +1886,8 @@ static bool del_char_after_col(int limit_col)
     if (*get_cursor_pos_ptr() == NUL || curwin->w_cursor.col == ecol) {
       return false;
     }
-    del_bytes_pos(curwin->w_cursor.lnum, curwin->w_cursor.col, ecol - curwin->w_cursor.col, false, true);
+    del_bytes_pos(curwin->w_cursor.lnum, curwin->w_cursor.col, ecol - curwin->w_cursor.col, false,
+                  true);
   } else {
     del_char(false);
   }

@@ -1069,6 +1069,13 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
   linenr_T line2 = eap->line2;
   colnr_T col1 = eap->col1;
   colnr_T col2 = eap->col2;
+  if (col1 > 0
+      && col2 == 0
+      && eap->addr_count >= 2
+      && eap->addr_type == ADDR_LINES) {
+    // -1 to make it an index
+    col2 = ml_get_buf_len(curbuf, line2) - 1;
+  }
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
   const int stmp = p_stmp;
@@ -1197,7 +1204,9 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
 
     if (shell_flags & kShellOptRead) {
       curbuf->b_op_start.lnum = line2 + 1;
+      // curbuf->b_op_start.col = col2;
       curbuf->b_op_end.lnum = curwin->w_cursor.lnum;
+      // curbuf->b_op_end.col = curwin->w_cursor.col;
       appended_lines_mark(line2, read_linecount);
     }
 
@@ -4369,18 +4378,22 @@ bool do_sub_msg(bool count_only)
   return false;
 }
 
-static void global_exe_one(char *const cmd, const linenr_T lnum, colnr_T col1, colnr_T col2)
+static void global_exe_one(char *const cmd, const linenr_T line1, linenr_T line2, colnr_T col1,
+                           colnr_T col2)
 {
-  curwin->w_cursor.lnum = lnum;
-  curwin->w_cursor.col = col1;
+  curwin->w_cursor.lnum = line1;
   exarg_T ea = {
-    .line1 = lnum,
-    .line2 = lnum,
+    .line1 = line1,
+    .line2 = line2,
     .col1 = col1,
     .col2 = col2,
-    .addr_count = 2,  // TODO(616b2f): check if this makes sense
-    .addr_type = ADDR_LINES
   };
+  if (line1 > 0 && (col1 > 0 || col2 > 0)) {
+    curwin->w_cursor.col = col1;
+    ea.addr_count = 2;  // TODO(616b2f): check if this makes sense
+    ea.addr_type = ADDR_LINES;
+  }
+
   if (*cmd == NUL || *cmd == '\n') {
     ea.cmd = "p";
     do_cmdline(&ea, DOCMD_NOWAIT);
@@ -4474,22 +4487,37 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-    colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : MAXCOL;
+    colnr_T col1 = 0;
+    colnr_T col2 = 0;
+    if (eap->addr_type == ADDR_LINES) {
+      col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+      // col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : 0;
+      col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+
+      // if (col1 > 0 && col2 == 0) {
+      //   col2 = ml_get_buf_len(curbuf, lnum);
+      // }
+    }
 
     int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
-      col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-      col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum) + 1;
-      global_exe_one(cmd, lnum, col1, col2);
+      global_exe_one(cmd, lnum, lnum, col1, col2);
     }
   } else {
     int ndone = 0;
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-      colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : MAXCOL;
+      colnr_T col1 = 0;
+      colnr_T col2 = 0;
+      if (eap->addr_type == ADDR_LINES) {
+        col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+        col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+
+        // if (col1 > 0 && col2 == 0) {
+        //   col2 = ml_get_buf_len(curbuf, lnum);
+        // }
+      }
       int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
       if (regmatch.regprog == NULL) {
         break;  // re-compiling regprog failed
@@ -4538,19 +4566,79 @@ void global_exe(char *cmd, exarg_T *eap)
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;
 
-  while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-    colnr_T col1 = 0;
-    colnr_T col2 = 0;
-    if ((eap->col1 > 0 || eap->col2 > 0) &&
-        eap->addr_count == 2) {
-      col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-      col2 = lnum == eap->line2 && eap->col2 > 0
-             ? eap->col2
-             : ml_get_buf_len(curbuf, lnum) + 1;
+  if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
+    linenr_T line1 = 0;
+    linenr_T line2 = 0;  // we use end of the range to check when the next mark starts in a new range
+    linenr_T lines = 0;
+    while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
+      colnr_T col1 = 0;
+      colnr_T col2 = 0;
+
+      if (line2 == 0) {
+        line1 = lnum;
+        line2 = lnum;
+        lines++;
+        continue;
+      }
+
+      if (line2 == lnum - 1) {
+        line2 = lnum;
+        lines++;
+        os_breakcheck();
+
+        continue;
+      } else if (lines > 0) {
+        if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
+          col1 = (line1 == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+          col2 = (line2 == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+        }
+
+        global_exe_one(cmd, line1, line2, col1, col2);
+        line1 = 0;
+        line2 = 0;
+        lines = 0;
+      } else {
+        if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
+          col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+          col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+        }
+
+        global_exe_one(cmd, lnum, lnum, col1, col2);
+        line1 = 0;
+        line2 = 0;
+        lines = 0;
+      }
+
+      os_breakcheck();
     }
 
-    global_exe_one(cmd, lnum, col1, col2);
-    os_breakcheck();
+    // execute on the last discovered range
+    // because we cannot know upfront if we have another marked line
+    // and therefor we need to traverse all marked lines
+    if (lines > 0) {
+      colnr_T col1 = 0;
+      colnr_T col2 = 0;
+      if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
+        col1 = (line1 == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+        col2 = (line2 == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+      }
+
+      global_exe_one(cmd, line1, line2, col1, col2);
+    }
+  } else {
+    while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
+      colnr_T col1 = 0;
+      colnr_T col2 = 0;
+
+      if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
+        col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+        col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+      }
+
+      global_exe_one(cmd, lnum, lnum, col1, col2);
+
+      os_breakcheck();
+    }
   }
 
   global_busy = 0;

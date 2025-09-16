@@ -2859,8 +2859,8 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
   if (eap->line1 > 0
       && eap->line2 > 0
-      && (eap->col1 > 0 && eap->col2 > 0)
-      && eap->addr_count == 2
+      && (eap->col1 > 0 || eap->col2 > 0)
+      && eap->addr_count >= 2
       && eap->addr_type == ADDR_LINES) {
     need_check_cursor = true;
     ret = OK;
@@ -2962,14 +2962,12 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           }
           assert(fm != NULL);
           eap->line1 = fm->mark.lnum;
-          eap->col1 = fm->mark.col;
           fm = mark_get_visual(curbuf, '>');
           if (!mark_check(fm, errormsg)) {
             goto theend;
           }
           assert(fm != NULL);
           eap->line2 = fm->mark.lnum;
-          eap->col2 = fm->mark.col;
           eap->addr_count++;
         }
       }
@@ -3441,7 +3439,7 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
       case ADDR_LINES:
       case ADDR_OTHER:
         lnum = curwin->w_cursor.lnum;
-        cnum = curwin->w_cursor.col;
+        // cnum = curwin->w_cursor.col;
         break;
       case ADDR_WINDOWS:
         lnum = CURRENT_WIN_NR;
@@ -3828,7 +3826,8 @@ char *invalid_range(exarg_T *eap)
     switch (eap->addr_type) {
     case ADDR_LINES:
       if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget))
-          || eap->col2 > (ml_get_buf_len(curbuf, eap->line2) + 1)) {
+          || eap->col2 > (ml_get_buf_len(curbuf,
+                                         (eap->line2 - (eap->cmdidx == CMD_diffget))) + 1)) {
         return _(e_invrange);
       }
       break;
@@ -6362,8 +6361,8 @@ static void ex_operators(exarg_T *eap)
 
   if (eap->line1 > 0
       && eap->line2 > 0
-      && (eap->col1 > 0 && eap->col2 > 0)
-      && eap->addr_count == 2
+      && (eap->col1 > 0 || eap->col2 > 0)
+      && eap->addr_count >= 2
       && eap->addr_type == ADDR_LINES) {
     oa.motion_type = kMTCharWise;
   } else {
@@ -6383,6 +6382,13 @@ static void ex_operators(exarg_T *eap)
 
   switch (eap->cmdidx) {
   case CMD_delete:
+    if (eap->line1 > 0
+        && eap->line2 > 0
+        && (eap->col1 > 0 || eap->col2 > 0)
+        && eap->addr_count >= 2
+        && eap->addr_type == ADDR_LINES) {
+      oa.inclusive = true;
+    }
     oa.op_type = OP_DELETE;
     op_delete(&oa);
     break;

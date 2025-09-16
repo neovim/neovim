@@ -1239,21 +1239,22 @@ static size_t write_output(char *output, size_t remaining, bool eof)
       if (curbuf->b_op_start.lnum == cur_ln_nr
           && curbuf->b_op_end.lnum == cur_ln_nr) {
         char *old_line = ml_get(cur_ln_nr);
-        size_t old_chars_count = (size_t)curbuf->b_op_start.col - 1;
-        char *old_txt = xcalloc(old_chars_count, sizeof(char));
-        memcpy(old_txt, old_line, old_chars_count * sizeof(char));
-        char *new_line = concat_str(concat_str(old_txt, output), old_line + curbuf->b_op_end.col);
+        size_t old_chars_indx = (size_t)curbuf->b_op_start.col;
+        char *old_txt = xcalloc(old_chars_indx, sizeof(char));
+        memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
+        char *new_line = concat_str(concat_str(old_txt, output),
+                                    old_line + curbuf->b_op_end.col + 1);
         ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
       } else if (curbuf->b_op_start.lnum == cur_ln_nr) {
         char *old_line = ml_get(cur_ln_nr);
-        int old_chars_count = (curbuf->b_op_start.col - 1);
-        char *old_txt = xcalloc(old_chars_count, sizeof(char));
-        memcpy(old_txt, old_line, old_chars_count * sizeof(char));
+        int old_chars_indx = (curbuf->b_op_start.col);
+        char *old_txt = xcalloc(old_chars_indx, sizeof(char));
+        memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
         char *new_line = concat_str(old_txt, output);
         ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
       } else if (curbuf->b_op_end.lnum == cur_ln_nr) {
         char *old_line = ml_get(cur_ln_nr);
-        char *new_line = concat_str(output, old_line + curbuf->b_op_end.col);
+        char *new_line = concat_str(output, old_line + curbuf->b_op_end.col + 1);
         ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
       } else {
         ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
