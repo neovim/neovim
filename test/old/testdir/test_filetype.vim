@@ -451,7 +451,7 @@ func s:GetFilenameChecks() abort
     \ 'lite': ['file.lite', 'file.lt'],
     \ 'litestep': ['/LiteStep/any/file.rc', 'any/LiteStep/any/file.rc'],
     \ 'livebook': ['file.livemd'],
-    \ 'log': ['file.log', 'file_log', 'file.LOG', 'file_LOG'],
+    "\ 'log': ['file.log', 'file_log', 'file.LOG', 'file_LOG'],
     \ 'logcheck': ['/etc/logcheck/file.d-some/file', '/etc/logcheck/file.d/file', 'any/etc/logcheck/file.d-some/file', 'any/etc/logcheck/file.d/file'],
     \ 'loginaccess': ['/etc/login.access', 'any/etc/login.access'],
     \ 'logindefs': ['/etc/login.defs', 'any/etc/login.defs'],
