@@ -1516,6 +1516,7 @@ local filename = {
   ['.trans'] = 'clojure',
   ['CMakeLists.txt'] = 'cmake',
   ['CMakeCache.txt'] = 'cmakecache',
+  ['CODEOWNERS'] = 'codeowners',
   ['.cling_history'] = 'cpp',
   ['.alias'] = detect.csh,
   ['.cshrc'] = detect.csh,
