@@ -1368,6 +1368,8 @@ In the first state these keys have a special meaning:
 <BS> and CTRL-H   Delete one character, find the matches for the word before
 		  the cursor.  This reduces the list of matches, often to one
 		  entry, and switches to the second state.
+		  When 'autocomplete' is active, clears the selected item in
+		  the menu.
 Any non-special character:
 		  Stop completion without changing the match and insert the
 		  typed character.
@@ -1375,6 +1377,8 @@ Any non-special character:
 In the second and third state these keys have a special meaning:
 <BS> and CTRL-H   Delete one character, find the matches for the shorter word
 		  before the cursor.  This may find more matches.
+		  When 'autocomplete' is active, clears the selected item in
+		  the menu.
 CTRL-L		  Add one character from the current match, may reduce the
 		  number of matches.
 any printable, non-white character:
