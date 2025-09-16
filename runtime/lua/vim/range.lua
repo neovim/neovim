@@ -22,7 +22,7 @@ local validate = vim.validate
 ---
 --- -- Create a range from two positions.
 --- local range1 = vim.range(pos1, pos2)
---- -- Or createa range from four integers representing start and end positions.
+--- -- Or create a range from four integers representing start and end positions.
 --- local range2 = vim.range(3, 5, 4, 0)
 ---
 --- -- Because `vim.Range` is end exclusive, `range1` and `range2` both represent

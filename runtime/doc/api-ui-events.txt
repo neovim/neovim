@@ -880,7 +880,7 @@ must handle.
 	    True if the message was added to the |:messages| history.
 
 	append
-	    True if the message should be appeneded to the previous message,
+	    True if the message should be appended to the previous message,
 	    rather than started on a new line. Is set for |:echon|.
 
 	msg_id

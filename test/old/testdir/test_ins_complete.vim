@@ -5135,7 +5135,7 @@ func Test_nonkeyword_trigger()
   call assert_equal('a#', getline('.'))
   set completeopt&
 
-  " Test 2: Filter nonkeyword and keyword matches with differet startpos
+  " Test 2: Filter nonkeyword and keyword matches with different startpos
   set completeopt+=menuone,noselect
   call feedkeys("S#a\<C-N>b\<F2>\<F3>\<Esc>0", 'tx!')
   call assert_equal(['abc', 'abcd', '#abar'], b:matches->mapnew('v:val.word'))
@@ -5256,7 +5256,7 @@ func Test_autocomplete_trigger()
   call assert_equal(2, g:CallCount)
   call assert_equal('a#', getline('.'))
 
-  " Test 2: Filter nonkeyword and keyword matches with differet startpos
+  " Test 2: Filter nonkeyword and keyword matches with different startpos
   for fuzzy in range(2)
     if fuzzy
       set completeopt+=fuzzy

@@ -3854,7 +3854,7 @@ M.funcs = {
     ]=],
     name = 'getcmdtype',
     params = {},
-    returns = "':'|'>'|'/'|'?'|'@'|'-'|'='",
+    returns = "':'|'>'|'/'|'?'|'@'|'-'|'='|''",
     signature = 'getcmdtype()',
   },
   getcmdwintype = {
@@ -3865,7 +3865,7 @@ M.funcs = {
     ]=],
     name = 'getcmdwintype',
     params = {},
-    returns = "':'|'>'|'/'|'?'|'@'|'-'|'='",
+    returns = "':'|'>'|'/'|'?'|'@'|'-'|'='|''",
     signature = 'getcmdwintype()',
   },
   getcompletion = {

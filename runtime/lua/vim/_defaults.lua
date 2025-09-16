@@ -405,7 +405,7 @@ do
     vim.keymap.set('n', '[<C-T>', function()
       -- count doesn't work with :ptprevious, must use range. See #30641.
       cmd({ cmd = 'ptprevious', range = { vim.v.count1 } })
-    end, { desc = ' :ptprevious' })
+    end, { desc = ':ptprevious' })
 
     vim.keymap.set('n', ']<C-T>', function()
       -- count doesn't work with :ptnext, must use range. See #30641.

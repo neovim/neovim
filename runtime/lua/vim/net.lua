@@ -4,7 +4,7 @@ local M = {}
 ---
 --- This function operates in one mode:
 ---   - Asynchronous (non-blocking): Returns immediately and passes the response object to the
----   provided `on_response` handler on completetion.
+---   provided `on_response` handler on completion.
 ---
 --- @param url string The URL for the request.
 --- @param opts? table Optional parameters:
@@ -12,7 +12,7 @@ local M = {}
 ---   - `retry`   (integer|nil): Number of retries on transient failures (default: 3).
 ---   - `outpath`  (string|nil): File path to save the response body to. If set, the `body` value in the Response Object will be `true` instead of the response body.
 --- @param on_response fun(err?: string, response?: { body: string|boolean }) Callback invoked on request
---- completetion. The `body` field in the response object contains the raw response data (text or binary).
+--- completion. The `body` field in the response object contains the raw response data (text or binary).
 --- Called with (err, nil) on failure, or (nil, { body = string|boolean }) on success.
 function M.request(url, opts, on_response)
   vim.validate({

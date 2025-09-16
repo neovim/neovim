@@ -503,7 +503,7 @@ end
 ---   asynchronously. See return of SystemObj:wait().
 ---
 --- @return vim.SystemObj
---- @overload fun(cmd: string, on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj
+--- @overload fun(cmd: string[], on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj
 function vim.system(cmd, opts, on_exit)
   if type(opts) == 'function' then
     on_exit = opts

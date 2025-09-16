@@ -3026,7 +3026,7 @@ int set_cpt_callbacks(optset_T *args)
     }
   }
 
-  if (!local) {  // ':set' used insted of ':setlocal'
+  if (!local) {  // ':set' used instead of ':setlocal'
     // Cache the callback array
     copy_cpt_callbacks(&cpt_cb, &cpt_cb_count, curbuf->b_p_cpt_cb,
                        curbuf->b_p_cpt_count);
