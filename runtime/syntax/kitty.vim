@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:          Kitty configuration files
 " Maintainer:        MD. Mouinul Hossain Shawon <mdmouinulhossainshawon [at] gmail.com>
-" Last Change:       Sun Sep 14 13:56:41 +06 2025
+" Last Change:       Tue Sep 16 19:10:59 +06 2025
 
 if exists("b:current_syntax")
   finish
@@ -12,10 +12,10 @@ syn sync fromstart
 " Option """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Format: `<option_name> ...`<
 
-syn match kittyString /\S\+/ contains=Alpha contained
+syn match kittyString /\S\+/ contains=kittyAlpha contained
 syn match kittyNumber /[+\-*\/]\{0,1}[0-9.]\+/ contained
 syn match kittyAlpha /@[0-9.]\+/ contained
-syn match kittyColor /#[0-9a-fA-F]\{3,6}/ nextgroup=Alpha contained
+syn match kittyColor /#[0-9a-fA-F]\{3,6}/ nextgroup=kittyAlpha contained
 syn keyword kittyBoolean contained yes no
 syn keyword kittyConstant contained none auto monospace bold italic ratio always never
 
