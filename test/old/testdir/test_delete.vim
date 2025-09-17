@@ -114,7 +114,6 @@ func Test_delete_ml_get_errors()
   CheckRunVimInTerminal
   let lines =<< trim END
     set noshowcmd noruler scrolloff=0
-    source samples/matchparen.vim
   END
   call writefile(lines, 'XDelete_ml_get_error', 'D')
   let buf = RunVimInTerminal('-S XDelete_ml_get_error samples/box.txt', #{rows: 10, wait_for_ruler: 0})

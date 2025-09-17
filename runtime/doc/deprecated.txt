@@ -104,6 +104,16 @@ LUA
 VIMSCRIPT
 • *termopen()* Use |jobstart()| with `{term: v:true}`.
 
+PLUGINS
+• *matchparen*				Builtin Lua alternative: |matching|.
+  • *:NoMatchParen*			Use `:autocmd! nvim.matching` instead.
+  • *:DoMatchParen*
+  • `matchparen_disable_cursor_hl`
+• *matchit*				Builtin Lua alternative: |matching|.
+  • *:MatchDisable*			Unmap |%-default|, |g%-default|.
+  • *:MatchEnable*
+  • *matchit-backref*			Only `\1` is supported
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
 

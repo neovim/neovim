@@ -4311,8 +4311,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	assignment, useful for languages like C and Java: >vim
 		au FileType c,cpp,java set mps+==:;
 
-<	For a more advanced way of using "%", see the matchit.vim plugin in
-	the $VIMRUNTIME/plugin directory. |add-local-help|
+<	See |matching-configuration|.
 
 						*'matchtime'* *'mat'*
 'matchtime' 'mat'	number	(default 5)
@@ -5850,8 +5849,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The 'matchpairs' option can be used to specify the characters to show
 	matches for.  'rightleft' and 'revins' are used to look for opposite
 	matches.
-	Also see the matchparen plugin for highlighting the match when moving
-	around |pi_paren.txt|.
+	Also see |matching| for highlighting the match when moving around.
 	Note: Use of the short form is rated PG.
 
 				*'showmode'* *'smd'* *'noshowmode'* *'nosmd'*
