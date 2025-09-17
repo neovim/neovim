@@ -150,27 +150,24 @@ you never want any default mappings, call |:mapclear| early in your config.
 - * |v_star-default|
 - gc |gc-default| |v_gc-default| |o_gc-default|
 - gcc |gcc-default|
-- gr prefix |gr-default|
-  - |grn|
-  - |grr|
-  - |gra|
-  - |gri|
-  - |grt|
-  - |gO|
-- <C-S> |i_CTRL-S|
+- |gO|
 - ]d |]d-default|
 - [d |[d-default|
 - [D |[D-default|
 - ]D |]D-default|
 - <C-W>d |CTRL-W_d-default|
-- |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q|
-- |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L|
-- |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
-- |[a|, |]a|, |[A|, |]A|
-- |[b|, |]b|, |[B|, |]B|
-- |[<Space>|, |]<Space>|
-- Nvim LSP client defaults |lsp-defaults|
+- |[q| |]q| |[Q| |]Q| |[CTRL-Q| |]CTRL-Q|
+- |[l| |]l| |[L| |]L| |[CTRL-L| |]CTRL-L|
+- |[t| |]t| |[T| |]T| |[CTRL-T| |]CTRL-T|
+- |[a| |]a| |[A| |]A|
+- |[b| |]b| |[B| |]B|
+- |[<Space>| |]<Space>|
+- LSP defaults |lsp-defaults|
   - K |K-lsp-default|
+  - |v_an| |v_in|
+  - gr prefix |gr-default|
+    - |gra| |gri| |grn| |grr| |grt|
+  - <C-S> |i_CTRL-S|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
