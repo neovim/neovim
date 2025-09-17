@@ -111,7 +111,7 @@ OPTIONS
 
 PLUGINS
 
-• todo
+• Removed "shellmenu" plugin, an old menu-based quasi-snippet plugin for shell scripts.
 
 TREESITTER
 
