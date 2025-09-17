@@ -111,7 +111,11 @@ OPTIONS
 
 PLUGINS
 
-• todo
+• The |tohtml| plugin is now an "opt-in" plugin: to use it, call: >
+  :packadd nvim.tohtml
+• The |tohtml| Lua module moved from the top-level of the module search-path
+  into the "nvim" namespace. Any scripts that load it must call
+  `require('nvim.tohtml')` instead of `require('tohtml')`.
 
 TREESITTER
 

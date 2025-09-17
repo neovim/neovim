@@ -3,17 +3,17 @@
 -- Lua code lives in one of four places:
 --    1. Plugins! Not everything needs to live on "vim.*". Plugins are the correct model for
 --       non-essential features which the user may want to disable or replace with a third-party
---       plugin. Examples: "editorconfig", "comment".
---       - "opt-out": runtime/plugin/*.lua
---       - "opt-in": runtime/pack/dist/opt/
+--       plugin. Examples: require("nvim.editorconfig"), require("nvim.tohtml").
+--       - "opt-in": runtime/pack/dist/opt/nvim.*/…
+--       - "opt-out": runtime/plugin/nvim/*.lua
 --    2. runtime/lua/vim/ (the runtime): Lazy-loaded modules. Examples: `inspect`, `lpeg`.
 --    3. runtime/lua/vim/shared.lua: pure Lua functions which always are available. Used in the test
 --       runner, and worker threads/processes launched from Nvim.
---    4. runtime/lua/vim/_editor.lua: Eager-loaded code which directly interacts with the Nvim
---       editor state. Only available in the main thread.
+--    4. runtime/lua/vim/_core/: Lua code compiled-in to the `nvim` binary. May directly interact
+--       with the editor state. Only available in the main thread.
 --
 -- The top level "vim.*" namespace is for fundamental Lua and editor features. Use submodules for
--- everything else (but avoid excessive "nesting"), or plugins (see above).
+-- everything else (but avoid excessive "nesting"), or plugins (`require("nvim.foo")`, see above).
 --
 -- Compatibility with Vim's `if_lua` is explicitly a non-goal.
 --
