@@ -571,7 +571,10 @@ local function on_insert_char_pre(handle)
 
   local char = api.nvim_get_vvar('char')
   local matched_clients = handle.triggers[char]
-  if not completion_timer and matched_clients then
+  -- Discard pending trigger char, complete the "latest" one.
+  -- Can happen if a mapping inputs multiple trigger chars simultaneously.
+  reset_timer()
+  if matched_clients then
     completion_timer = assert(vim.uv.new_timer())
     completion_timer:start(25, 0, function()
       reset_timer()
