@@ -111,7 +111,7 @@ OPTIONS
 
 PLUGINS
 
-• The `shellmenu` plugin is removed.
+• Removed "shellmenu" plugin, an old menu-based quasi-snippet plugin for shell scripts.
 
 TREESITTER
 
