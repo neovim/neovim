@@ -18,23 +18,25 @@ loaded by default while others are not loaded until requested by |:packadd|.
 Standard plugins ~
 						*standard-plugin-list*
 Help-link		Loaded	Short description ~
+|editorconfig|		Yes	Detect and interpret editorconfig
+|ft-shada|		Yes	Allows editing binary |shada| files
+|man.lua|		Yes	View manpages in Nvim
+|matchit|		Yes	Extended |%| matching
+|matchparen|		Yes	Highlight matching pairs
+|netrw|			Yes	Reading and writing files over a network
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
 |package-termdebug|	No	Debug inside Nvim with gdb
-|matchit|		Yes	Extended |%| matching
-|editorconfig|		Yes	Detect and internet editorconfig
-|spellfile.vim|		Yes	Install spellfile if missing
-|pi_tutor.txt|		Yes	Interactive tutorial
 |pi_gzip.txt|		Yes	Reading and writing compressed files
 |pi_msgpack.txt|	No	msgpack utilities
 |pi_paren.txt|		Yes	Highlight matching parens
+|pi_spec.txt|		Yes	Filetype plugin to work with rpm spec files
+|pi_swapmouse|		No	Swap meaning of left and right mouse buttons
 |pi_tar.txt|		Yes	Tar file explorer
+|pi_tutor.txt|		Yes	Interactive tutorial
 |pi_zip.txt|		Yes	Zip archive explorer
-|netrw|			Yes	Reading and writing files over a network
-|ftplugin-docs|		*	Filetype specific plugins
-    |man.lua|		Yes	Opening and viewing manpages
-    |pi_spec.txt|	Yes	Filetype plugin to work with rpm spec files
+|spellfile.vim|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
 
 ==============================================================================
