@@ -89,7 +89,7 @@ hi link kittyBoolean Boolean
 hi link kittyConstant Constant
 
 hi link kittyFlag Constant
-hi link kittyParameter Specual
+hi link kittyParameter Special
 
 hi link kittyOptionName Keyword
 hi link kittyModName Keyword
