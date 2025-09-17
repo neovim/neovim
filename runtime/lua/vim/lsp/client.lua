@@ -806,12 +806,12 @@ end
 ---
 --- @param force? boolean
 function Client:stop(force)
-  if self:is_stopped() then
+  local rpc = self.rpc
+  if rpc.is_closing() then
     return
   end
 
   self._is_stopping = true
-  local rpc = self.rpc
 
   vim.lsp._watchfiles.cancel(self.id)
 
