@@ -868,9 +868,10 @@ Plugins:
 - logiPat
 - rrhelper
 - *vimball*
+- shellmenu
 - macmap.vim
 - tools/check_colors.vim
-- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+- macros/{justify,matchit,swapmous}.vim: use `packadd! justify` etc.
   directly
 - HelpToc: Use |gO| instead.
 

@@ -111,7 +111,7 @@ OPTIONS
 
 PLUGINS
 
-• todo
+• The `shellmenu` plugin is removed.
 
 TREESITTER
 
