@@ -9,6 +9,7 @@ local clear = n.clear
 local command = n.command
 local feed = n.feed
 local fn = n.fn
+local neq = t.neq
 local nvim_prog = n.nvim_prog
 local ok = t.ok
 local rmdir = n.rmdir
@@ -51,7 +52,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set swapfile fileformat=unix undolevels=-1
   ]]
 
-  local nvim0
+  local nvim0 --- @type test.Session
   before_each(function()
     nvim0 = n.new_session(false)
     set_session(nvim0)
@@ -63,12 +64,13 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     rmdir(swapdir)
   end)
 
+  --- @return string
   local function setup_swapname()
     exec(init)
     command('edit! ' .. testfile)
     feed('isometext<esc>')
     exec('redir => g:swapname | silent swapname | redir END')
-    return eval('g:swapname')
+    return eval('g:swapname'):match('[^\n]*$')
   end
 
   local function test_recover(swappath1)
@@ -99,6 +101,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   it('with :preserve and SIGKILL', function()
     local swappath1 = setup_swapname()
     command('preserve')
+    neq(nil, uv.fs_stat(swappath1))
     eq(0, vim.uv.kill(eval('getpid()'), 'sigkill'))
     test_recover(swappath1)
   end)
@@ -106,6 +109,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   it('closing stdio channel without :preserve #22096', function()
     local swappath1 = setup_swapname()
     nvim0:close()
+    neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
   end)
 
@@ -124,13 +128,46 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set_session(nvim0)
     command('call chanclose(&channel)') -- Kill the child process.
     screen0:expect({ any = pesc('[Process exited 1]') }) -- Wait for the child process to stop.
+    neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
+  end)
+
+  it('manual :recover with multiple swapfiles', function()
+    local swappath1 = setup_swapname()
+    eq('.swp', swappath1:match('%.[^.]+$'))
+    nvim0:close()
+    neq(nil, uv.fs_stat(swappath1))
+    local swappath2 = swappath1:gsub('%.swp$', '.swo')
+    eq(true, uv.fs_copyfile(swappath1, swappath2))
+    clear()
+    exec(init)
+    local screen = Screen.new(256, 40)
+    feed(':recover! ' .. testfile .. '<CR>')
+    screen:expect({
+      any = {
+        '\nSwap files found:',
+        '\n   In directory ',
+        vim.pesc('\n1.    '),
+        vim.pesc('\n2.    '),
+        vim.pesc('\nEnter number of swap file to use (0 to quit): ^'),
+      },
+      none = vim.pesc('{18:^@}'),
+    })
+    feed('2<CR>')
+    screen:expect({
+      any = {
+        vim.pesc('\nRecovery completed.'),
+        vim.pesc('\n{6:Press ENTER or type command to continue}^'),
+      },
+    })
+    feed('<CR>')
+    expect('sometext')
   end)
 end)
 
 describe('swapfile detection', function()
   local swapdir = uv.cwd() .. '/Xtest_swapdialog_dir'
-  local nvim0
+  local nvim0 --- @type test.Session
   -- Put swapdir at the start of the 'directory' list. #1836
   -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
   -- attempt to create a swapfile in different directory.
