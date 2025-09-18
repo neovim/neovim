@@ -77,7 +77,6 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
 - 'shortmess' includes "CF", excludes "S"
-- 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
 - 'spellfile' defaults to `stdpath("data").."/site/spell/"`
