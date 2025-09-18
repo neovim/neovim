@@ -3423,8 +3423,8 @@ static const char *addr_error(cmd_addr_T addr_type)
 /// @param address_count  1 for first, >1 after comma
 /// @param errormsg       Error message, if any
 ///
-/// @return               MAXLNUM when no Ex address was found.
-static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
+/// @return               MAXLNUM and MAXCOL when no Ex address was found.
+pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
                          int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ARG(2, 8)
 {
