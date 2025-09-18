@@ -3425,7 +3425,7 @@ static const char *addr_error(cmd_addr_T addr_type)
 ///
 /// @return               MAXLNUM and MAXCOL when no Ex address was found.
 pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
-                         int to_other_file, int address_count, const char **errormsg)
+                  int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ARG(2, 8)
 {
   int c;
@@ -3833,9 +3833,11 @@ char *invalid_range(exarg_T *eap)
   if (eap->argt & EX_RANGE) {
     switch (eap->addr_type) {
     case ADDR_LINES:
-      if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget || eap->cmdidx == CMD_diffput))
+      if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget
+                                                      || eap->cmdidx == CMD_diffput))
           || eap->col2 > (ml_get_buf_len(curbuf,
-                                         (eap->line2 - (eap->cmdidx == CMD_diffget || eap->cmdidx == CMD_diffput))) + 1)) {
+                                         (eap->line2 - (eap->cmdidx == CMD_diffget
+                                                        || eap->cmdidx == CMD_diffput))) + 1)) {
         return _(e_invrange);
       }
       break;

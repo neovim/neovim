@@ -1745,7 +1745,7 @@ int op_delete(oparg_T *oap)
 
       // delete from start of line until op_end
       int n = (oap->end.col + 1 - !oap->inclusive);
-      curwin->w_cursor.col = 0;  //TODO(616b2f): if this makes sense
+      curwin->w_cursor.col = 0;  // TODO(616b2f): if this makes sense
       del_bytes_pos(curwin->w_cursor.lnum, curwin->w_cursor.col, (colnr_T)n, !virtual_op,
                     oap->op_type == OP_DELETE && !oap->is_VIsual);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
