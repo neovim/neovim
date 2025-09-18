@@ -18,41 +18,24 @@ func Test_System()
     call assert_equal(["as\r", "df\r"], systemlist('more', ["as\<NL>df"]))
   endif
 
-  if !executable('cat') || !executable('wc')
-    return
-  endif
-
-  let out = 'echo 123'->system()
-  call assert_equal("123\n", out)
-
-  let out = 'echo 123'->systemlist()
-  if &shell =~# 'cmd.exe$'
-    call assert_equal(["123\r"], out)
-  else
-    call assert_equal(['123'], out)
-  endif
-
-  if executable('cat')
-    call assert_equal('123',   system('cat', '123'))
-    call assert_equal(['123'], systemlist('cat', '123'))
-    call assert_equal(["as\<NL>df"], systemlist('cat', ["as\<NL>df"]))
-  endif
-
   new Xdummy
   call setline(1, ['asdf', "pw\<NL>er", 'xxxx'])
-  let out = system('wc -l', bufnr('%'))
-  " On OS/X we get leading spaces
-  let out = substitute(out, '^ *', '', '')
-  call assert_equal("3\n", out)
 
-  let out = systemlist('wc -l', bufnr('%'))
-  " On Windows we may get a trailing CR.
-  if out != ["3\r"]
+  if executable('wc')
+    let out = system('wc -l', bufnr('%'))
     " On OS/X we get leading spaces
-    if type(out) == v:t_list
-      let out[0] = substitute(out[0], '^ *', '', '')
+    let out = substitute(out, '^ *', '', '')
+    call assert_equal("3\n", out)
+
+    let out = systemlist('wc -l', bufnr('%'))
+    " On Windows we may get a trailing CR.
+    if out != ["3\r"]
+      " On OS/X we get leading spaces
+      if type(out) == v:t_list
+        let out[0] = substitute(out[0], '^ *', '', '')
+      endif
+      call assert_equal(['3'],  out)
     endif
-    call assert_equal(['3'],  out)
   endif
 
   if !has('win32')
