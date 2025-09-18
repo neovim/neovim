@@ -17,6 +17,17 @@ describe('messages2', function()
       require('vim._extui').enable({})
     end)
   end)
+  after_each(function()
+    -- Since vim._extui lasts until Nvim exits, there may be unfinished timers.
+    -- Close unfinished timers to avoid 2s delay on exit with ASAN or TSAN.
+    exec_lua(function()
+      vim.uv.walk(function(handle)
+        if not handle:is_closing() then
+          handle:close()
+        end
+      end)
+    end)
+  end)
 
   it('multiline messages and pager', function()
     command('echo "foo\nbar"')
