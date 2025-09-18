@@ -2386,7 +2386,10 @@ func Test_BufReadCmd()
 
   call writefile(['one', 'two', 'three'], 'Xcmd.test', 'D')
   edit Xcmd.test
+  set noruler
   call assert_match('Xcmd.test" line 1 of 3', execute('file'))
+  set ruler
+  call assert_match('Xcmd.test" 3 lines --33%--', execute('file'))
   normal! Gofour
   write
   call assert_equal(['one', 'two', 'three', 'four'], readfile('Xcmd.test'))

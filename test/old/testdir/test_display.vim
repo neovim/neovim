@@ -187,9 +187,29 @@ func Test_edit_long_file_name()
 
   let longName = 'x'->repeat(min([&columns, 255]))
   call writefile([], longName, 'D')
-  let buf = RunVimInTerminal('-N -u NONE ' .. longName, #{rows: 8})
+  let buf = RunVimInTerminal('-N -u NONE --cmd ":set noshowcmd noruler" ' .. longName, #{rows: 8})
 
   call VerifyScreenDump(buf, 'Test_long_file_name_1', {})
+
+  call term_sendkeys(buf, ":set showcmd\<cr>:e!\<cr>")
+  call VerifyScreenDump(buf, 'Test_long_file_name_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  set ruler&vim
+endfunc
+
+func Test_edit_long_file_name_with_ruler()
+  CheckScreendump
+
+  let longName = 'x'->repeat(min([&columns, 255]))
+  call writefile([], longName, 'D')
+  let buf = RunVimInTerminal('-N -u NONE --cmd ":set noshowcmd" ' .. longName, #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_long_file_name_3', {})
+
+  call term_sendkeys(buf, ":set showcmd\<cr>:e!\<cr>")
+  call VerifyScreenDump(buf, 'Test_long_file_name_4', {})
 
   " clean up
   call StopVimInTerminal(buf)
