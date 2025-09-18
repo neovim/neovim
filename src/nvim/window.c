@@ -2631,9 +2631,11 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // page and then close the window and the tab page.  This avoids that
   // curwin and curtab are invalid while we are freeing memory, they may
   // be used in GUI events.
-  // Don't trigger autocommands yet, they may use wrong values, so do
+  // Don't trigger *Enter autocommands yet, they may use wrong values, so do
   // that below.
-  goto_tabpage_tp(alt_tabpage(), false, true);
+  // Do trigger *Leave autocommands, unless win->w_buffer is NULL, in which
+  // case they have already been triggered.
+  goto_tabpage_tp(alt_tabpage(), false, win->w_buffer != NULL);
 
   // Safety check: Autocommands may have switched back to the old tab page
   // or closed the window when jumping to the other tab page.
@@ -2925,6 +2927,14 @@ int win_close(win_T *win, bool free_buf, bool force)
       // careful: after this wp and win may be invalid!
       apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
     }
+  }
+
+  if (ONE_WINDOW && curwin->w_locked && curbuf->b_locked_split
+      && first_tabpage->tp_next != NULL) {
+    // The new curwin is the last window in the current tab page, and it is
+    // already being closed.  Trigger TabLeave now, as after its buffer is
+    // removed it's no longer safe to do that.
+    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf);
   }
 
   split_disallowed--;
