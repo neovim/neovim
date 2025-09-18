@@ -341,6 +341,8 @@ describe('vim.pack', function()
   after_each(function()
     vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
     vim.fs.rm(get_lock_path(), { force = true })
+    local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
+    pcall(vim.fs.rm, log_path, { force = true })
   end)
 
   teardown(function()
@@ -498,6 +500,43 @@ describe('vim.pack', function()
         vim.pack.add({ { src = repos_src.basic, version = 'main' } })
       end)
 
+      ref_lockfile.plugins.basic.version = "'main'"
+      eq(ref_lockfile, get_lock_tbl())
+    end)
+
+    it('uses lockfile revision during install', function()
+      exec_lua(function()
+        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
+      end)
+
+      -- Mock clean initial install, but with lockfile present
+      n.clear()
+      local basic_plug_path = vim.fs.joinpath(pack_get_dir(), 'basic')
+      vim.fs.rm(basic_plug_path, { force = true, recursive = true })
+
+      local basic_rev = git_get_hash('feat-branch', 'basic')
+      local ref_lockfile = {
+        plugins = {
+          basic = { rev = basic_rev, src = repos_src.basic, version = "'feat-branch'" },
+        },
+      }
+      eq(ref_lockfile, get_lock_tbl())
+
+      exec_lua(function()
+        -- Should use revision from lockfile (pointing at latest 'feat-branch'
+        -- commit) and not use latest `main` commit
+        vim.pack.add({ { src = repos_src.basic, version = 'main' } })
+      end)
+      local basic_lua_file = vim.fs.joinpath(pack_get_plug_path('basic'), 'lua', 'basic.lua')
+      eq({ 'return "basic feat-branch"' }, fn.readfile(basic_lua_file))
+
+      -- Running `update()` should still update to use `main`
+      exec_lua(function()
+        vim.pack.update(nil, { force = true })
+      end)
+      eq({ 'return "basic main"' }, fn.readfile(basic_lua_file))
+
+      ref_lockfile.plugins.basic.rev = git_get_hash('main', 'basic')
       ref_lockfile.plugins.basic.version = "'main'"
       eq(ref_lockfile, get_lock_tbl())
     end)
