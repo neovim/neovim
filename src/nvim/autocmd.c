@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
@@ -1493,6 +1494,18 @@ win_found:
   }
 }
 
+/// Execute a safe autocommand event
+void safe_autocmd_event(void **argv)
+{
+  SafeAutocommandEvent *e = argv[0];
+  event_T event = e->event;
+  char *fname = e->fname;
+  char *fname_io = e->fname_io;
+  buf_T *buf = &e->buf;
+
+  apply_autocmds(event, fname, fname_io, false, buf);
+}
+
 /// Execute autocommands for "event" and file name "fname".
 ///
 /// @param event event that occurred
@@ -2595,6 +2608,20 @@ static void vimresume_event(void **argv)
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
   pending_vimresume = kFalse;
 }
+
+/// Initialize the safe autocommand event queue.
+void autocmd_init(void)
+{
+  safe_autocmd_events = multiqueue_new_child(main_loop.events);
+}
+
+#ifdef EXITFREE
+void autocmd_free_all_mem(void)
+{
+  multiqueue_free(safe_autocmd_events);
+}
+#endif
+
 
 /// Trigger VimSuspend or VimResume autocommand.
 void may_trigger_vim_suspend_resume(bool suspend)
