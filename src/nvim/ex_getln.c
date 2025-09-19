@@ -1241,10 +1241,11 @@ static int command_line_wildchar_complete(CommandLineState *s)
   return (res == OK) ? CMDLINE_CHANGED : CMDLINE_NOT_CHANGED;
 }
 
-static void command_line_end_wildmenu(CommandLineState *s)
+static void command_line_end_wildmenu(CommandLineState *s, bool key_is_wc)
 {
   if (cmdline_pum_active()) {
-    s->skip_pum_redraw = (s->skip_pum_redraw
+    s->skip_pum_redraw = (s->skip_pum_redraw && !key_is_wc
+                          && !ascii_iswhite(s->c)
                           && (vim_isprintc(s->c)
                               || s->c == K_BS || s->c == Ctrl_H || s->c == K_DEL
                               || s->c == K_KDEL || s->c == Ctrl_W || s->c == Ctrl_U));
@@ -1301,7 +1302,7 @@ static int command_line_execute(VimState *state, int key)
         nextwild(&s->xpc, WILD_PUM_WANT, 0, s->firstc != '@');
         if (pum_want.finish) {
           nextwild(&s->xpc, WILD_APPLY, WILD_NO_BEEP, s->firstc != '@');
-          command_line_end_wildmenu(s);
+          command_line_end_wildmenu(s, false);
         }
       }
       pum_want.active = false;
@@ -1408,7 +1409,7 @@ static int command_line_execute(VimState *state, int key)
 
   // free expanded names when finished walking through matches
   if (end_wildmenu) {
-    command_line_end_wildmenu(s);
+    command_line_end_wildmenu(s, key_is_wc);
   }
 
   if (p_wmnu) {

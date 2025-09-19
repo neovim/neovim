@@ -627,6 +627,35 @@ describe('cmdline', function()
 
     feed('<Esc>')
   end)
+
+  -- oldtest: Test_update_screen_after_wildtrigger()
+  it('pum is dismissed after wildtrigger() and whitespace', function()
+    local screen = Screen.new(40, 10)
+    exec([[
+      set wildmode=noselect:lastused,full wildmenu wildoptions=pum
+      autocmd CmdlineChanged : if getcmdcompltype() != 'shellcmd' | call wildtrigger() | endif
+    ]])
+
+    feed(':term')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*7
+      {4: terminal       }{1:                        }|
+      :term^                                   |
+    ]])
+    feed(' ')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*8
+      :term ^                                  |
+    ]])
+    feed('foo')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*8
+      :term foo^                               |
+    ]])
+  end)
 end)
 
 describe('cmdwin', function()

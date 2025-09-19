@@ -5053,4 +5053,23 @@ func Test_skip_wildtrigger_hist_navigation()
   cunmap <Down>
 endfunc
 
+" Issue 18298: wildmenu should be dismissed after wildtrigger and whitespace
+func Test_update_screen_after_wildtrigger()
+  CheckScreendump
+  let lines =<< trim [SCRIPT]
+    call test_override("char_avail", 1)
+    set wildmode=noselect:lastused,full wildmenu wildoptions=pum
+    autocmd CmdlineChanged : if getcmdcompltype() != 'shellcmd' | call wildtrigger() | endif
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildtrigger', 'D')
+  let buf = RunVimInTerminal('-S XTest_wildtrigger', {'rows': 10})
+
+  call term_sendkeys(buf, ":term foo")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_update_screen_wildtrigger_1', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
