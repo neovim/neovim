@@ -5069,10 +5069,11 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
 
       if (!match_limit_exceeded
           && (!curbuf_only || cpt_sources_array[cur_source].cs_flag == '.')) {
-        if (first == NULL) {
+        if (first == NULL && strncmp(ins_compl_leader(), compl->cp_str.data,
+                                     ins_compl_leader_len()) == 0) {
           first = compl->cp_str.data;
           len = (int)strlen(first);
-        } else {
+        } else if (first != NULL) {
           int j = 0;  // count in bytes
           char *s1 = first;
           char *s2 = compl->cp_str.data;
@@ -5100,7 +5101,7 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
 
   xfree(match_count);
 
-  if (len > get_compl_len()) {
+  if (len > (int)ins_compl_leader_len()) {
     *prefix_len = (size_t)len;
     return first;
   }
