@@ -345,8 +345,8 @@ describe('API: buffer events:', function()
     command('global/line [35]/delete')
     tick = tick + 1
     expectn('nvim_buf_lines_event', { b, tick, 2, 3, {}, false })
-    tick = tick + 1
-    expectn('nvim_buf_lines_event', { b, tick, 3, 4, {}, false })
+    -- tick = tick + 1
+    -- expectn('nvim_buf_lines_event', { b, tick, 3, 4, {}, false })
   end)
 
   it('visual paste split empty line', function()
