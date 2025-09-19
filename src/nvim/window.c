@@ -5723,6 +5723,27 @@ static void check_window_scroll_resize(int *size_count, win_T **first_scroll_win
   }
 }
 
+static void set_event_scrollbar_info(win_T *wp, dict_T *dict)
+{
+  int thumb_pos, thumb_size;
+  win_update_scrollbar_state(wp, &thumb_pos, &thumb_size);
+  tv_dict_add_bool(dict, S_LEN("scrollbar"),
+                   wp->w_has_scrollbar ? kBoolVarTrue : kBoolVarFalse);
+
+  if (wp->w_has_scrollbar) {
+    dict_T *sb_dict = tv_dict_alloc();
+    tv_dict_add_nr(sb_dict, S_LEN("thumb_pos"), thumb_pos);
+    tv_dict_add_nr(sb_dict, S_LEN("thumb_size"), thumb_size);
+
+    int scrollbar_col = wp->w_view_width + wp->w_border_adj[3];
+    tv_dict_add_nr(sb_dict, S_LEN("screen_col"), wp->w_wincol + scrollbar_col);
+    tv_dict_add_nr(sb_dict, S_LEN("screen_row"), wp->w_winrow + wp->w_border_adj[0]);
+
+    tv_dict_add_dict(dict, S_LEN("scrollbar_info"), sb_dict);
+    sb_dict->dv_refcount--;
+  }
+}
+
 /// Trigger WinScrolled and/or WinResized if any window in the current tab page
 /// scrolled or changed size.
 void may_trigger_win_scrolled_resized(void)
@@ -5792,11 +5813,17 @@ void may_trigger_win_scrolled_resized(void)
 
     // Move the entries from scroll_dict to v_event.
     tv_dict_extend(v_event, scroll_dict, "move");
-    tv_dict_set_keys_readonly(v_event);
-    tv_dict_unref(scroll_dict);
-
     char winid[NUMBUFLEN];
     vim_snprintf(winid, sizeof(winid), "%d", first_scroll_win->handle);
+    if (first_scroll_win->w_want_scrollbar) {
+      dictitem_T *di = tv_dict_find(v_event, winid, -1);
+      if (di != NULL && di->di_tv.v_type == VAR_DICT) {
+        dict_T *win_dict = di->di_tv.vval.v_dict;
+        set_event_scrollbar_info(first_scroll_win, win_dict);
+      }
+    }
+    tv_dict_set_keys_readonly(v_event);
+    tv_dict_unref(scroll_dict);
     apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, first_scroll_win->w_buffer);
 
     restore_v_event(v_event, &save_v_event);

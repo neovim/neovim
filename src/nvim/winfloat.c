@@ -108,6 +108,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
   wp->w_vsep_width = 0;
+  wp->w_want_scrollbar = fconfig.scrollbar;
 
   win_config_float(wp, fconfig);
   win_set_inner_size(wp, true);

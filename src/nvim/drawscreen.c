@@ -772,6 +772,70 @@ int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
   UNREACHABLE;
 }
 
+void win_update_scrollbar_state(win_T *wp, int *thumb_pos, int *thumb_size)
+{
+  int height = wp->w_view_height;
+  linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+  linenr_T visible_start = wp->w_topline;
+  linenr_T visible_end = visible_start + height - 1;
+  bool content_fits = (visible_start == 1) && (visible_end >= line_count);
+  if (wp->w_p_wrap && !content_fits) {
+    int lines_shown = plines_m_win(wp, visible_start, MIN(visible_end, line_count), height);
+    content_fits = (visible_start == 1) && (lines_shown >= line_count);
+  }
+
+  wp->w_has_scrollbar = wp->w_want_scrollbar
+                        && !wp->w_buffer->terminal
+                        && (wp->w_topline > 1 || !content_fits);
+
+  if (wp->w_has_scrollbar) {
+    int total_content_lines = wp->w_p_wrap
+                              ? plines_m_win(wp, 1, line_count, INT_MAX) : line_count;
+
+    double visible_ratio = (double)height / total_content_lines;
+    int min_thumb = MAX(1, height / 10);
+    *thumb_size = MAX(min_thumb, (int)(visible_ratio * height));
+    int scrollable_area = height - *thumb_size;
+    int scroll_offset = wp->w_p_wrap
+                        ? plines_m_win(wp, 1, wp->w_topline - 1, INT_MAX) : (wp->w_topline - 1);
+    *thumb_pos = scroll_offset * scrollable_area / (total_content_lines - height);
+    *thumb_pos = MIN(*thumb_pos, scrollable_area);
+  }
+}
+
+static void win_draw_scrollbar(win_T *wp)
+{
+  bool before_has = wp->w_has_scrollbar;
+  int thumb_pos = 0;
+  int thumb_size = 0;
+  win_update_scrollbar_state(wp, &thumb_pos, &thumb_size);
+  if (!before_has && !wp->w_has_scrollbar) {
+    return;
+  }
+
+  int height = wp->w_view_height;
+  int scrollbar_col = wp->w_view_width + wp->w_border_adj[3];
+  schar_T border_char = schar_from_str(wp->w_config.border_chars[3]);
+  int border_attr = wp->w_config.border_attr[3];
+  int thumb_attr = win_hl_attr(wp, HLF_SBT);
+
+  ScreenGrid *grid = &wp->w_grid_alloc;
+  for (int i = 0; i < height; i++) {
+    int row = i + wp->w_border_adj[0];
+    screengrid_line_start(grid, row, 0);
+
+    if (wp->w_has_scrollbar) {
+      bool is_thumb = (i >= thumb_pos && i < thumb_pos + thumb_size);
+      grid_line_put_schar(scrollbar_col,
+                          is_thumb ? schar_from_ascii(' ') : border_char,
+                          is_thumb ? thumb_attr : border_attr);
+    } else {
+      grid_line_put_schar(scrollbar_col, border_char, border_attr);
+    }
+    grid_line_flush();
+  }
+}
+
 static void win_redr_border(win_T *wp)
 {
   wp->w_redr_border = false;
@@ -846,6 +910,10 @@ static void win_redr_border(win_T *wp)
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
     }
     grid_line_flush();
+  }
+
+  if (wp->w_border_adj[1] && wp->w_config.scrollbar) {
+    win_draw_scrollbar(wp);
   }
 }
 
@@ -2480,6 +2548,10 @@ redr_statuscol:
   wp->w_redr_type = 0;
   wp->w_old_topfill = wp->w_topfill;
   wp->w_old_botfill = wp->w_botfill;
+
+  if (wp->w_floating && wp->w_config.scrollbar && wp->w_border_adj[1]) {
+    win_draw_scrollbar(wp);
+  }
 
   // Send win_extmarks if needed
   for (size_t n = 0; n < kv_size(win_extmark_arr); n++) {

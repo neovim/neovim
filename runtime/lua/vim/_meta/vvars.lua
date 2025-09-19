@@ -191,8 +191,16 @@ vim.v.errors = ...
 ---   row              Row count of popup menu on `CompleteChanged`,
 ---                    relative to screen.
 ---   scope            Event-specific scope name.
----   scrollbar        `v:true` if popup menu has a scrollbar, or
----                    `v:false` if not.
+---   scrollbar        `v:true` if popup menu or float window has
+---                    a scrollbar, `v:false` if not.
+---   scrollbar_info   Dictionary with detailed scrollbar information if the
+---                    window has a scrollbar, omitted if not. Contains:
+---                      • "thumb_pos"   position of the scrollbar.
+---                      • "thumb_size"  size of the scrollbar thumb
+---                      • "screen_col"  screen column where the
+---                                      scrollbar is drawn.
+---                      • "screen_row"  screen row where the
+---                                      scrollbar starts.
 ---   size             Total number of completion items on
 ---                    `CompleteChanged`.
 ---   status           Job status or exit code, -1 means "unknown". `TermClose`

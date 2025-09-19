@@ -134,6 +134,7 @@ typedef enum {
   HLF_SO,         ///< stdout messages (from shell)
   HLF_OK,         ///< OK message
   HLF_PRE,        ///< "preinsert" in 'completeopt'
+  HLF_SBT,        ///< Float Scrollbar thumb
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
