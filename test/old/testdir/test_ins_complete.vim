@@ -5824,4 +5824,27 @@ func Test_autocomplete_completeopt_preinsert()
   call Ntest_override("char_avail", 0)
 endfunc
 
+" Issue #18326
+func Test_fuzzy_select_item_when_acl()
+  CheckScreendump
+  let lines =<< trim [SCRIPT]
+    call setline(1, ["v", "vi", "vim"])
+    set autocomplete completeopt=menuone,noinsert,fuzzy autocompletedelay=300
+  [SCRIPT]
+  call writefile(lines, 'XTest_autocomplete_delay', 'D')
+  let buf = RunVimInTerminal('-S XTest_autocomplete_delay', {'rows': 10})
+
+  call term_sendkeys(buf, "Govi")
+  call VerifyScreenDump(buf, 'Test_fuzzy_autocompletedelay_1', {})
+
+  call term_sendkeys(buf, "\<Esc>Sv")
+  call VerifyScreenDump(buf, 'Test_fuzzy_autocompletedelay_2', {})
+  sleep 500m
+  call term_sendkeys(buf, "i")
+  call VerifyScreenDump(buf, 'Test_fuzzy_autocompletedelay_3', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
