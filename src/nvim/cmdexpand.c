@@ -422,16 +422,16 @@ bool cmdline_pum_active(void)
 }
 
 /// Remove the cmdline completion popup menu (if present), free the list of items.
-void cmdline_pum_remove(void)
+void cmdline_pum_remove(bool defer_redraw)
 {
-  pum_undisplay(true);
+  pum_undisplay(!defer_redraw);
   XFREE_CLEAR(compl_match_array);
   compl_match_arraysize = 0;
 }
 
 void cmdline_pum_cleanup(CmdlineInfo *cclp)
 {
-  cmdline_pum_remove();
+  cmdline_pum_remove(false);
   wildmenu_cleanup(cclp);
 }
 
@@ -936,7 +936,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 
     // The entries from xp_files may be used in the PUM, remove it.
     if (compl_match_array != NULL) {
-      cmdline_pum_remove();
+      cmdline_pum_remove(false);
     }
   }
   xp->xp_selected = (options & WILD_NOSELECT) ? -1 : 0;

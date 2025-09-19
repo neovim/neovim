@@ -4939,6 +4939,43 @@ func Test_cmdline_changed()
   call Ntest_override("char_avail", 0)
 endfunc
 
+func Test_wildtrigger_update_screen()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    command! -nargs=* -complete=customlist,TestFn TestCmd echo
+    func TestFn(cmdarg, b, c)
+      if a:cmdarg == 'ax'
+        return []
+      else
+        return map(range(1, 5), 'printf("abc%d", v:val)')
+      endif
+    endfunc
+    set wildmode=noselect,full
+    set wildoptions=pum
+    set wildmenu
+    cnoremap <F8> <C-R>=wildtrigger()[-1]<CR>
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildtrigger', 'D')
+  let buf = RunVimInTerminal('-S XTest_wildtrigger', {'rows': 10})
+
+  call term_sendkeys(buf, ":TestCmd a\<F8>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_1', {})
+
+  " Typing a character when pum is open does not close the pum window
+  " This is needed to prevent pum window from flickering during
+  " ':h cmdline-autocompletion'.
+  call term_sendkeys(buf, "x")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_2', {})
+
+  " pum window is closed when no completion candidates are available
+  call term_sendkeys(buf, "\<F8>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_3', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " Issue #18035: long lines should not get listed twice in the menu when
 " 'wildmode' contains 'noselect'
 func Test_long_line_noselect()
