@@ -387,10 +387,14 @@ describe('TUI :connect', function()
     local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
     screen1:expect({ any = vim.pesc('[No Name]') })
 
-    tt.feed_data(':connect\013')
-    screen1:expect({ any = 'E471: Argument required' })
-
     tt.feed_data('iThis is server 1.\027')
+    screen1:expect({ any = vim.pesc('This is server 1^.') })
+
+    -- If no argument is passed to connect, a list of options should be presented
+    tt.feed_data(':connect\013')
+    screen1:expect({ any = '(.*)Server(.*)' })
+    -- Input q to exit out of the selection
+    tt.feed_data('q\027')
     screen1:expect({ any = vim.pesc('This is server 1^.') })
 
     -- Prevent screen2 from receiving the old terminal state.
