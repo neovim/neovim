@@ -115,7 +115,7 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
         -- Unmap K
         vim.keymap.del('n', 'K', { buffer = args.buf })
         -- Disable document colors
-        vim.lsp.buf.document_color.enable(false, args.buf)
+        vim.lsp.document_color.enable(false, args.buf)
       end,
     })
 <
