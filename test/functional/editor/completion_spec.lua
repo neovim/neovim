@@ -1413,11 +1413,11 @@ describe('completion', function()
 
   -- oldtest: Test_autocompletedelay()
   it("'autocompletedelay' option", function()
+    screen:try_resize(60, 10)
     source([[
       call setline(1, ['foo', 'foobar', 'foobarbaz'])
       set autocomplete
     ]])
-    screen:try_resize(60, 10)
     screen:expect([[
       ^foo                                                         |
       foobar                                                      |
@@ -1578,5 +1578,49 @@ describe('completion', function()
     ]])
 
     feed('<esc>')
+  end)
+
+  it([[first item isn't selected with "fuzzy" and 'acl']], function()
+    screen:try_resize(60, 10)
+    source([[
+      call setline(1, ["v", "vi", "vim"])
+      set autocomplete completeopt=menuone,noinsert,fuzzy autocompletedelay=300
+    ]])
+
+    feed('Govi')
+    screen:expect([[
+      v                                                           |
+      vi                                                          |
+      vim                                                         |
+      vi^                                                          |
+      {4:vi             }{1:                                             }|
+      {4:vim            }{1:                                             }|
+      {1:~                                                           }|*3
+      {5:-- INSERT --}                                                |
+    ]])
+
+    feed('<Esc>Sv')
+    screen:expect([[
+      v                                                           |
+      vi                                                          |
+      vim                                                         |
+      v^                                                           |
+      {4:v              }{1:                                             }|
+      {4:vi             }{1:                                             }|
+      {4:vim            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
+    feed('i')
+    screen:expect([[
+      v                                                           |
+      vi                                                          |
+      vim                                                         |
+      vi^                                                          |
+      {4:vi             }{1:                                             }|
+      {4:vim            }{1:                                             }|
+      {1:~                                                           }|*3
+      {5:-- INSERT --}                                                |
+    ]])
   end)
 end)

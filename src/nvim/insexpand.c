@@ -2274,7 +2274,7 @@ static void ins_compl_new_leader(void)
       if ((cur_cot_flags & (kOptCotFlagNoinsert|kOptCotFlagNoselect)) == kOptCotFlagNoinsert
           && compl_first_match) {
         compl_shown_match = compl_first_match;
-        if (compl_shows_dir_forward()) {
+        if (compl_shows_dir_forward() && !compl_autocomplete) {
           compl_shown_match = compl_first_match->cp_next;
         }
       }
