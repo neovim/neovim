@@ -2443,7 +2443,8 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
         fname = fm.fname;
       } else {
         const buf_T *const buf = buflist_findnr(fm.fmark.fnum);
-        if (ignore_buf(buf, &removable_bufs)) {
+        if (buf == NULL || buf->b_ffname == NULL
+            || set_has(ptr_t, &removable_bufs, (ptr_t)buf)) {
           continue;
         }
         fname = buf->b_ffname;
