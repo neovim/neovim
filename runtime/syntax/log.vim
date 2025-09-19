@@ -2,7 +2,7 @@
 " Language:         Generic log file
 " Maintainer:       Mao-Yining <https://github.com/mao-yining>
 " Former Maintainer:	MTDL9 <https://github.com/MTDL9>
-" Latest Revision:  2025-09-13
+" Latest Revision:  2025-09-16
 
 if exists('b:current_syntax')
   finish
@@ -31,9 +31,9 @@ syn match logFloatNumber  '\<\d.\d\+[eE]\?\>'
 syn keyword logBoolean    true false
 syn keyword logNull       null nil nullptr none
 
-syn region logString      start=/"/ end=/"/ end=/$/ skip=/\\./
+syn region logString      start=/"/ end=/"/ end=/$/ skip=/\\./ contains=logJavaError
 " Quoted strings, but no match on quotes like "don't", "plurals' elements"
-syn region logString      start=/'\(s \|t \| \w\)\@!/ end=/'/ end=/$/ end=/s / skip=/\\./
+syn region logString      start=/'\(s \|t \| \w\)\@!/ end=/'/ end=/$/ end=/s / skip=/\\./ contains=logJavaError
 
 
 " Dates and Times
@@ -67,6 +67,10 @@ syn match logIPV6       '\<\x\{1,4}\(:\x\{1,4}\)\{7}\>'
 syn match logMacAddress '\<\x\{2}\(:\x\{2}\)\{5}'
 syn match logFilePath   '\<\w:\\\f\+'
 syn match logFilePath   '[^a-zA-Z0-9"']\@<=/\f\+'
+
+" Java Errors
+"---------------------------------------------------------------------------
+syn match logJavaError   '\%(\%(Error\|Exception\):\s*\)\zs\w.\{-}\ze\(\\n\|$\)' contained
 
 
 " Syslog Columns
@@ -127,6 +131,8 @@ hi def link logIPV4 Label
 hi def link logIPV6 ErrorMsg
 hi def link logMacAddress Label
 hi def link logFilePath Conditional
+
+hi def link logJavaError ErrorMsg
 
 hi def link logSysColumns Conditional
 hi def link logSysProcess Include
