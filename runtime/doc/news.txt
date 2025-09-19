@@ -252,6 +252,8 @@ LSP
   See |lsp-inline_completion| for quickstart instructions.
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
+• High-level LSP features such as inlay hints, semantic tokens, etc. can now
+  be enabled/disabled from the client setup. See |vim.lsp.Client.Features|.
 
 LUA
 
