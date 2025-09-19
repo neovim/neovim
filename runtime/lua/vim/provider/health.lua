@@ -364,7 +364,7 @@ end
 
 -- Resolves Python executable path by invoking and checking `sys.executable`.
 local function python_exepath(invocation)
-  if invocation == "" or invocation == nil then
+  if invocation == '' or invocation == nil then
     return nil
   end
   local p = vim.system({ invocation, '-c', 'import sys; sys.stdout.write(sys.executable)' }):wait()
