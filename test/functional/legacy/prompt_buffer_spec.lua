@@ -610,7 +610,15 @@ describe('prompt buffer', function()
   end)
 
   it("sets the ': mark", function()
-    source_script()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setcallback(buf, function(str)
+        local last_line = vim.api.nvim_buf_line_count(buf)
+        vim.api.nvim_buf_set_lines(buf, last_line - 1, last_line - 1, true, vim.split(str, '\n'))
+      end)
+    end)
+
     feed('asdf')
     eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
     feed('<cr>')
@@ -620,12 +628,13 @@ describe('prompt buffer', function()
     eq({ 11, 1 }, api.nvim_buf_get_mark(0, ':'))
 
     -- ': mark is only available in prompt buffer.
-    source('set buftype=')
+    api.nvim_set_option_value('buftype', '', { buf = 0 })
     eq("Invalid mark name: ':'", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
 
     -- mark can be moved
-    source('set buftype=prompt')
-    eq({ 11, 1 }, api.nvim_buf_get_mark(0, ':'))
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    local last_line = api.nvim_buf_line_count(0)
+    eq({ last_line, 1 }, api.nvim_buf_get_mark(0, ':'))
     eq(true, api.nvim_buf_set_mark(0, ':', 1, 1, {}))
     eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
   end)
