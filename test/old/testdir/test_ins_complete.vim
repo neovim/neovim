@@ -5771,7 +5771,18 @@ func Test_autocomplete_completeopt_preinsert()
   call DoTest("f", 'f', 2)
   set cot-=fuzzy
 
+  " leader should match prefix of inserted word
+  %delete
+  set smartcase ignorecase
+  call setline(1, ["FOO"])
+  call feedkeys($"Gof\<F5>\<Esc>", 'tx')
+  call assert_equal('f', g:line)
+  call feedkeys($"SF\<F5>\<Esc>", 'tx')
+  call assert_equal('FOO', g:line)
+  set smartcase& ignorecase&
+
   " Verify that redo (dot) works
+  %delete
   call setline(1, ["foobar", "foozbar", "foobaz", "changed", "change"])
   call feedkeys($"/foo\<CR>", 'tx')
   call feedkeys($"cwch\<C-N>\<Esc>n.n.", 'tx')
