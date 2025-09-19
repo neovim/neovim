@@ -1268,7 +1268,6 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (output[off] == NUL) {
       // Translate NUL to NL
       output[off] = NL;
-      cur_ln_nr++;
     }
     off++;
   }

@@ -228,19 +228,18 @@ describe('vim.fs', function()
       eq(lexp, run('testd', 2, nil, true))
     end)
 
-    -- TODO(616b2f): resolve the timeout here
-    -- it('follow=true handles symlink loop', function()
-    --   local cwd = 'testd/a/b/c'
-    --   local symlink = cwd .. '/link_loop' ---@type string
-    --   vim.uv.fs_symlink(vim.uv.fs_realpath(cwd), symlink, { junction = true, dir = true })
-    --
-    --   eq(
-    --     link_limit,
-    --     exec_lua(function()
-    --       return #vim.iter(vim.fs.dir(cwd, { depth = math.huge, follow = true })):totable()
-    --     end)
-    --   )
-    -- end)
+    it('follow=true handles symlink loop', function()
+      local cwd = 'testd/a/b/c'
+      local symlink = cwd .. '/link_loop' ---@type string
+      vim.uv.fs_symlink(vim.uv.fs_realpath(cwd), symlink, { junction = true, dir = true })
+
+      eq(
+        link_limit,
+        exec_lua(function()
+          return #vim.iter(vim.fs.dir(cwd, { depth = math.huge, follow = true })):totable()
+        end)
+      )
+    end)
   end)
 
   describe('find()', function()
@@ -291,26 +290,25 @@ describe('vim.fs', function()
       )
     end)
 
-    -- TODO(616b2f): resolve the timeout here
-    -- it('follow=true handles symlink loop', function()
-    --   if t.is_zig_build() then
-    --     return pending('broken/slow with build.zig')
-    --   end
-    --   local cwd = test_source_path ---@type string
-    --   local symlink = test_source_path .. '/loop_link' ---@type string
-    --   vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
-    --
-    --   finally(function()
-    --     vim.uv.fs_unlink(symlink)
-    --   end)
-    --
-    --   eq(link_limit, #vim.fs.find(nvim_prog_basename, {
-    --     path = test_source_path,
-    --     type = 'file',
-    --     limit = math.huge,
-    --     follow = true,
-    --   }))
-    -- end)
+    it('follow=true handles symlink loop', function()
+      if t.is_zig_build() then
+        return pending('broken/slow with build.zig')
+      end
+      local cwd = test_source_path ---@type string
+      local symlink = test_source_path .. '/loop_link' ---@type string
+      vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
+
+      finally(function()
+        vim.uv.fs_unlink(symlink)
+      end)
+
+      eq(link_limit, #vim.fs.find(nvim_prog_basename, {
+        path = test_source_path,
+        type = 'file',
+        limit = math.huge,
+        follow = true,
+      }))
+    end)
 
     it('accepts predicate as names', function()
       local opts = { path = nvim_dir, upward = true, type = 'directory' }
