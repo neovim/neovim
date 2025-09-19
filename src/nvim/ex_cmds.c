@@ -1612,8 +1612,8 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
         xstrlcpy(buf, cmd, len);
       }
       if (itmp != NULL) {
-        xstrlcat(buf, " < ", len - 1);
-        xstrlcat(buf, itmp, len - 1);
+        xstrlcat(buf, " < ", len);
+        xstrlcat(buf, itmp, len);
       }
     } else {
       // If there is a pipe, we have to put the '<' in front of it.
