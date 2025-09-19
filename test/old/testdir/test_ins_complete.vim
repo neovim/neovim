@@ -5359,7 +5359,7 @@ func Test_autocomplete_trigger()
   call feedkeys("Sazx\<Left>\<BS>\<F2>\<Esc>0", 'tx!')
   call assert_equal(['and', 'afoo'], b:matches->mapnew('v:val.word'))
 
-  " Test 6: <BS> should clear the selected item
+  " Test 6: <BS> should clear the selected item (PR #18265)
   %d
   call setline(1, ["foobarfoo", "foobar", "foobarbaz"])
   call feedkeys("Gofo\<C-N>\<C-N>\<F2>\<F3>\<Esc>0", 'tx!')
@@ -5373,6 +5373,13 @@ func Test_autocomplete_trigger()
   call assert_equal(['foobarbaz', 'foobar', 'foobarfoo'], b:matches->mapnew('v:val.word'))
   call assert_equal(0, b:selected)
   call assert_equal('foobarbaz', getline(4))
+
+  " Test 7: Remove selection when menu contents change (PR #18265)
+  %d
+  call setline(1, ["foobar", "fodxyz", "fodabc"])
+  call feedkeys("Gofoo\<C-N>\<BS>\<BS>\<BS>\<BS>d\<F2>\<F3>\<Esc>0", 'tx!')
+  call assert_equal(['fodabc', 'fodxyz'], b:matches->mapnew('v:val.word'))
+  call assert_equal(-1, b:selected)
 
   bw!
   call Ntest_override("char_avail", 0)
