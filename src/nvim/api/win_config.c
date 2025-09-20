@@ -204,6 +204,9 @@
 ///   - split: Split direction: "left", "right", "above", "below".
 ///   - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the |cmdline-completion|
 ///     popupmenu to this window, with an offset in screen cell width.
+///   - draggable: If true allow dragging the floating window by dragging within content area.
+///     mouse visual selection is disabled within the window as drag gestures
+///     will move the window instead. Default false.
 ///
 /// @param[out] err Error details, if any
 ///
@@ -1390,6 +1393,9 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     fconfig->_cmdline_offset = (int)config->_cmdline_offset;
   }
 
+  if (HAS_KEY_X(config, draggable)) {
+    fconfig->draggable = config->draggable;
+  }
   return true;
 
 fail:

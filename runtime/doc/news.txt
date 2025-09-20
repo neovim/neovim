@@ -343,6 +343,8 @@ UI
 • 'busy' status is shown in default statusline with symbol ◐
 • Improved LSP signature help rendering.
 • Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
+• floating window support resizing by dragging the border and moving by
+  dragging the title.
 
 VIMSCRIPT
 

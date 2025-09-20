@@ -50,6 +50,7 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "mouse.c.generated.h"
 
@@ -326,6 +327,56 @@ static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
   show_popupmenu();
   got_click = false;  // ignore release events
   return jump_flags;
+}
+
+static int mouse_on_float(win_T *wp)
+{
+  int rel_row = mouse_row - wp->w_winrow;
+  int rel_col = mouse_col - wp->w_wincol;
+
+  if (wp->w_config.draggable && rel_row > 0 && rel_row <= wp->w_height
+      && rel_col > 0 && rel_col <= wp->w_width) {
+    return FLOAT_DRAG_MOVE;
+  }
+
+  int corner = 0;
+  if (rel_row == 0 && rel_col >= 0 && rel_col <= wp->w_width + 1) {
+    if (wp->w_config.title && wp->w_config.title_width > 0) {
+      int title_start, title_end;
+      if (wp->w_config.title_pos == kAlignCenter) {
+        title_start = (wp->w_width + 2 - wp->w_config.title_width) / 2;
+        title_end = title_start + wp->w_config.title_width;
+      } else if (wp->w_config.title_pos == kAlignRight) {
+        title_end = wp->w_width + 1;
+        title_start = title_end - wp->w_config.title_width;
+      } else {
+        title_start = 1;
+        title_end = title_start + wp->w_config.title_width;
+      }
+
+      if (rel_col >= title_start && rel_col < title_end) {
+        return FLOAT_DRAG_MOVE;
+      }
+    }
+    if (rel_row == 0) {
+      corner = rel_col == wp->w_width + 1 ? FLOAT_DRAG_RIGHT : (rel_col == 0 ? FLOAT_DRAG_LEFT : 0);
+    }
+    return FLOAT_DRAG_TOP | corner;
+  }
+
+  if (rel_row == wp->w_height + 1 && rel_col >= 0 && rel_col <= wp->w_width + 1) {
+    if (rel_row == wp->w_height + 1) {
+      corner = rel_col ==
+               wp->w_height + 1 ? FLOAT_DRAG_RIGHT : (rel_col == 0 ? FLOAT_DRAG_LEFT : 0);
+    }
+    return FLOAT_DRAG_BOT | corner;
+  } else if (rel_col == 0 && rel_row >= 0 && rel_row <= wp->w_height + 1) {
+    return FLOAT_DRAG_LEFT;
+  } else if (rel_col == wp->w_width + 1 && rel_row >= 0 && rel_row <= wp->w_height + 1) {
+    return FLOAT_DRAG_RIGHT;
+  }
+
+  return 0;
 }
 
 /// Do the appropriate action for the current mouse click in the current mode.
@@ -658,6 +709,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
   bool in_global_statusline = in_status_line && global_stl_height() > 0;
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
+  bool in_floatwin_edge = (jump_flags & MOUSE_FLOATWIN);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
     // Handle click event on window bar, status line or status column
@@ -888,7 +940,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     } else {  // MOUSE_RIGHT
       stuffcharReadbuff('#');
     }
-  } else if (in_status_line || in_sep_line) {
+  } else if (in_status_line || in_sep_line || in_floatwin_edge) {
     // Do nothing if on status line or vertical separator
     // Handle double clicks otherwise
   } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))) {
@@ -1205,6 +1257,9 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
   static int prev_row = -1;
   static int prev_col = -1;
   static int did_drag = false;          // drag was noticed
+  static int float_edge_type = 0;
+  static int float_mouse_col_offset = 0;
+  static int float_mouse_row_offset = 0;
 
   int count;
   bool first;
@@ -1225,6 +1280,9 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
     }
     dragwin = NULL;
     did_drag = false;
+    float_edge_type = 0;
+    float_mouse_row_offset = 0;
+    float_mouse_col_offset = 0;
   }
 
   if ((flags & MOUSE_DID_MOVE)
@@ -1321,6 +1379,15 @@ retnomove:
       status_line_offset = 0;
     }
 
+    if (float_edge_type == 0 && wp->w_floating && (wp->w_config.border || wp->w_config.draggable)) {
+      float_edge_type = mouse_on_float(wp);
+      if (float_edge_type > 0) {
+        float_mouse_col_offset = mouse_col - wp->w_wincol;
+        float_mouse_row_offset = mouse_row - wp->w_winrow;
+        dragwin = wp;
+      }
+    }
+
     if (grid == DEFAULT_GRID_HANDLE && col >= wp->w_width) {
       // In separator line
       sep_line_offset = col - wp->w_width + 1;
@@ -1412,6 +1479,83 @@ retnomove:
   } else if (on_statuscol && which_button == MOUSE_RIGHT) {
     // After a click on the status column don't start Visual mode.
     return IN_OTHER_WIN | MOUSE_STATUSCOL;
+  } else if (float_edge_type && which_button == MOUSE_LEFT) {
+    if (dragwin) {
+      WinConfig new_config = dragwin->w_config;
+      new_config.col = dragwin->w_wincol +
+                       ((new_config.anchor & kFloatAnchorEast) ? dragwin->w_width_outer : 0);
+      new_config.row = dragwin->w_winrow +
+                       ((new_config.anchor & kFloatAnchorSouth) ? dragwin->w_height_outer : 0);
+      new_config.relative = kFloatRelativeEditor;
+      new_config.bufpos.lnum = -1;
+      new_config.bufpos.col = 0;
+      FloatAnchor anchor = dragwin->w_config.anchor;
+
+      if (float_edge_type == FLOAT_DRAG_MOVE) {
+        new_config.row = mouse_row -
+                         (anchor & kFloatAnchorSouth ? -(dragwin->w_height_outer -
+                                                         float_mouse_row_offset)
+                                                     : float_mouse_row_offset);
+
+        new_config.col = mouse_col -
+                         (anchor &
+                          kFloatAnchorEast ? -(dragwin->w_width_outer - float_mouse_col_offset)
+                                           : float_mouse_col_offset);
+      } else if (float_edge_type & FLOAT_DRAG_TOP) {
+        if ((anchor & kFloatAnchorSouth) == 0) {
+          new_config.row = mouse_row;
+        }
+        new_config.height = dragwin->w_winrow + dragwin->w_height - mouse_row;
+        if (float_edge_type & FLOAT_DRAG_LEFT) {
+          if ((anchor & kFloatAnchorEast) == 0) {
+            new_config.col = mouse_col;
+          }
+          new_config.width = (dragwin->w_wincol + dragwin->w_width) - mouse_col;
+        } else if (float_edge_type & FLOAT_DRAG_RIGHT) {
+          if (anchor & kFloatAnchorEast) {
+            new_config.col = mouse_col;
+          }
+          new_config.width = mouse_col - dragwin->w_wincol - 1;
+        }
+      } else if (float_edge_type & FLOAT_DRAG_BOT) {
+        if (anchor & kFloatAnchorSouth) {
+          new_config.row = mouse_row;
+        }
+        new_config.height = mouse_row - dragwin->w_winrow - 1;
+        if (float_edge_type & FLOAT_DRAG_LEFT) {
+          if ((anchor & kFloatAnchorEast) == 0) {
+            new_config.col = mouse_col;
+          }
+          new_config.width = (dragwin->w_wincol + dragwin->w_width) - mouse_col;
+        } else if (float_edge_type & FLOAT_DRAG_RIGHT) {
+          if (anchor & kFloatAnchorEast) {
+            new_config.col = mouse_col;
+          }
+          new_config.width = mouse_col - dragwin->w_wincol - 1;
+        }
+      } else if (float_edge_type == FLOAT_DRAG_LEFT) {
+        if ((anchor & kFloatAnchorEast) == 0) {
+          new_config.col = mouse_col;
+        }
+        new_config.width = (dragwin->w_wincol + dragwin->w_width) - mouse_col;
+      } else if (float_edge_type == FLOAT_DRAG_RIGHT) {
+        if (anchor & kFloatAnchorEast) {
+          new_config.col = mouse_col;
+        }
+        new_config.width = mouse_col - dragwin->w_wincol - 1;
+      }
+
+      new_config.width = MAX(1, new_config.width);
+      new_config.height = MAX(1, new_config.height);
+
+      if (float_edge_type == FLOAT_DRAG_MOVE) {
+        new_config.row = MAX(0, new_config.row);
+        new_config.col = MAX(0, new_config.col);
+      }
+      win_config_float(dragwin, new_config);
+      did_drag = true;
+    }
+    return MOUSE_FLOATWIN;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode

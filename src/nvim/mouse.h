@@ -18,6 +18,15 @@ enum {
   MOUSE_FOLD_OPEN  = 0x400,   ///< clicked on '+' in fold column
   MOUSE_WINBAR     = 0x800,   ///< in window toolbar
   MOUSE_STATUSCOL  = 0x1000,  ///< in 'statuscolumn'
+  MOUSE_FLOATWIN   = 0x2000,  ///< in float window
+};
+
+enum {
+  FLOAT_DRAG_MOVE = 1,
+  FLOAT_DRAG_TOP = 2,
+  FLOAT_DRAG_BOT = 4,
+  FLOAT_DRAG_LEFT = 8,
+  FLOAT_DRAG_RIGHT = 0x100,
 };
 
 /// flags for jump_to_mouse()
