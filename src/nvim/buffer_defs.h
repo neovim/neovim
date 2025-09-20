@@ -514,6 +514,7 @@ struct file_buffer {
 
   sctx_T b_p_script_ctx[kBufOptCount];  // SCTXs for buffer-local options
 
+  int b_p_ac;                   ///< 'autocomplete'
   int b_p_ai;                   ///< 'autoindent'
   int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode
   char *b_p_bkc;                ///< 'backupco

@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Aug 23
+" Last Change:	2025 Sep 20
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -736,6 +736,7 @@ if has("insert_expand")
   call append("$", "\t" .. s:local_to_buffer)
   call <SID>OptionL("cpt")
   call <SID>AddOption("autocomplete", gettext("automatic completion in insert mode"))
+  call append("$", "\t" .. s:global_or_local)
   call <SID>BinOptionG("ac", &ac)
   call <SID>AddOption("autocompletetimeout", gettext("initial decay timeout for 'autocomplete' algorithm"))
   call append("$", " \tset act=" . &act)

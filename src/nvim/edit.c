@@ -605,7 +605,7 @@ static int insert_execute(VimState *state, int key)
                && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
           && stop_arrow() == OK) {
         ins_compl_delete(false);
-        if (ins_compl_has_preinsert() && ins_compl_has_autocomplete()) {
+        if (ins_compl_has_preinsert() && ins_compl_autocomplete_enabled()) {
           (void)ins_compl_insert(false, true);
         } else {
           (void)ins_compl_insert(false, false);
@@ -851,7 +851,8 @@ static int insert_handle_key(InsertState *s)
   case Ctrl_H:
     s->did_backspace = ins_bs(s->c, BACKSPACE_CHAR, &s->inserted_space);
     auto_format(false, true);
-    if (s->did_backspace && p_ac && !char_avail() && curwin->w_cursor.col > 0) {
+    if (s->did_backspace && ins_compl_has_autocomplete() && !char_avail()
+        && curwin->w_cursor.col > 0) {
       s->c = char_before_cursor();
       if (vim_isprintc(s->c)) {
         redraw_later(curwin, UPD_VALID);
@@ -1238,7 +1239,7 @@ normalchar:
     // closed fold.
     foldOpenCursor();
     // Trigger autocompletion
-    if (p_ac && !char_avail() && vim_isprintc(s->c)) {
+    if (ins_compl_has_autocomplete() && !char_avail() && vim_isprintc(s->c)) {
       redraw_later(curwin, UPD_VALID);
       update_screen();  // Show character immediately
       ui_flush();

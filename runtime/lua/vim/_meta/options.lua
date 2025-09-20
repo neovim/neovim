@@ -117,6 +117,8 @@ vim.go.acd = vim.go.autochdir
 --- @type boolean
 vim.o.autocomplete = false
 vim.o.ac = vim.o.autocomplete
+vim.bo.autocomplete = vim.o.autocomplete
+vim.bo.ac = vim.bo.autocomplete
 vim.go.autocomplete = vim.o.autocomplete
 vim.go.ac = vim.go.autocomplete
 

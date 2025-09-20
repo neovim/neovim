@@ -1416,7 +1416,7 @@ describe('completion', function()
     screen:try_resize(60, 10)
     source([[
       call setline(1, ['foo', 'foobar', 'foobarbaz'])
-      set autocomplete
+      setlocal autocomplete
     ]])
     screen:expect([[
       ^foo                                                         |
