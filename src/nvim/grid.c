@@ -1124,7 +1124,7 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
   }
 }
 
-static int get_bordertext_col(int total_col, int text_width, AlignTextPos align)
+int get_bordertext_col(int total_col, int text_width, AlignTextPos align)
 {
   switch (align) {
   case kAlignLeft:

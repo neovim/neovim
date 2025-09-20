@@ -483,6 +483,7 @@ error('Cannot require a meta file')
 --- @field height? integer
 --- @field hide? boolean
 --- @field mouse? boolean
+--- @field mousedrag? vim.api.keyset.win_config_mousedrag
 --- @field noautocmd? boolean
 --- @field relative? "cursor"|"editor"|"laststatus"|"mouse"|"tabline"|"win"
 --- @field row? number
@@ -495,6 +496,11 @@ error('Cannot require a meta file')
 --- @field win? integer
 --- @field zindex? integer
 --- @field _cmdline_offset? integer
+
+--- @class vim.api.keyset.win_config_mousedrag
+--- @field border? "none"|"move"|"resize"
+--- @field content? boolean
+--- @field title? boolean
 
 --- @class vim.api.keyset.win_resize
 --- @field anchor? string
