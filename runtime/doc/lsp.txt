@@ -1313,13 +1313,6 @@ the current buffer.
       • {context}?  (`{ bufnr: integer, method: string }`) Subset of `ctx`
                     from |lsp-handler|.
 
-*vim.lsp.buf.hover.Opts*
-    Extends: |vim.lsp.util.open_floating_preview.Opts|
-
-
-    Fields: ~
-      • {silent}?  (`boolean`)
-
 *vim.lsp.buf.signature_help.Opts*
     Extends: |vim.lsp.util.open_floating_preview.Opts|
 
@@ -1462,7 +1455,14 @@ hover({config})                                          *vim.lsp.buf.hover()*
 <
 
     Parameters: ~
-      • {config}  (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
+      • {config}  (`vim.lsp.util.open_floating_preview.Opts?`) See
+                  |vim.lsp.util.open_floating_preview.Opts|.
+
+    Return (multiple): ~
+        (`boolean`) `true` if hover was successfully show, `false` and an
+        error message otherwise.
+        (`string?`) `true` if hover was successfully show, `false` and an
+        error message otherwise.
 
 implementation({opts})                          *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
