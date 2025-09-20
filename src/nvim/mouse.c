@@ -53,6 +53,7 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "mouse.c.generated.h"
 
@@ -685,6 +686,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
   bool in_global_statusline = in_status_line && global_stl_height() > 0;
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
+  bool in_floatwin_edge = (jump_flags & MOUSE_FLOATWIN);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
     // Handle click event on window bar, status line or status column
@@ -744,8 +746,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       }
     }
     return false;
-  } else if (in_winbar || in_statuscol) {
-    // A drag or release event in the window bar and status column has no side effects.
+  } else if (in_winbar || in_statuscol || in_floatwin_edge) {
+    // A drag or release event in the window bar, status column, or float edge has no side effects.
     return false;
   }
 
@@ -1228,11 +1230,27 @@ static bool mouse_model_popup(void)
 }
 
 static win_T *dragwin = NULL;  ///< window being dragged
+static int float_drag_action = 0;   ///< WinDragFlags for the gesture in progress
 
 /// Reset the window being dragged.  To be called when switching tab page.
 void reset_dragwin(void)
 {
   dragwin = NULL;
+  float_drag_action = 0;
+}
+
+/// Mouse position in screen coordinates.  ext_multigrid reports it per grid.
+static void mouse_screen_pos(int *rowp, int *colp)
+{
+  *rowp = mouse_row;
+  *colp = mouse_col;
+  if (mouse_grid > 1) {
+    win_T *wp = get_win_by_grid_handle(mouse_grid);
+    if (wp != NULL) {
+      *rowp += wp->w_grid_alloc.comp_row;
+      *colp += wp->w_grid_alloc.comp_col;
+    }
+  }
 }
 
 /// Move the cursor to the specified row and column on the screen.
@@ -1266,6 +1284,8 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
 {
   static int status_line_offset = 0;        // #lines offset from status line
   static int sep_line_offset = 0;           // #cols offset from sep line
+  static int float_drag_row_offset = 0;     // #lines offset from the float's top
+  static int float_drag_col_offset = 0;     // #cols offset from the float's left
   static bool on_status_line = false;
   static bool on_sep_line = false;
   static bool on_winbar = false;
@@ -1295,9 +1315,9 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
     did_drag = false;
   }
 
-  if ((flags & MOUSE_DID_MOVE)
-      && prev_row == mouse_row
-      && prev_col == mouse_col) {
+  // A dragged float follows the mouse, so mouse_row doesn't change with it.
+  if ((flags & MOUSE_DID_MOVE) && !float_drag_action
+      && prev_row == mouse_row && prev_col == mouse_col) {
 retnomove:
     // before moving the cursor for a left click which is NOT in a status
     // line, stop Visual mode
@@ -1369,6 +1389,35 @@ retnomove:
   win_T *old_curwin = curwin;
   pos_T old_cursor = curwin->w_cursor;
   if (!keep_focus) {
+    // Must be before the returns below, a stale offset can reach a float.
+    dragwin = NULL;
+    status_line_offset = 0;
+    sep_line_offset = 0;
+    float_drag_action = 0;
+
+    if (which_button == MOUSE_LEFT && wp->w_floating
+        && (wp->w_config.mousedrag_title
+            || wp->w_config.mousedrag_border
+            || wp->w_config.mousedrag_content)) {
+      int srow, scol;
+      mouse_screen_pos(&srow, &scol);
+      float_drag_action = win_float_drag_action(wp, srow, scol);
+      // A winbar or 'statuscolumn' keeps its own clicks; the border wins.
+      if ((float_drag_action & kDragContent) && (on_winbar || on_statuscol)) {
+        float_drag_action = 0;
+      }
+      if (float_drag_action) {
+        float_drag_row_offset = srow - wp->w_winrow;
+        float_drag_col_offset = scol - wp->w_wincol;
+      }
+    }
+
+    // A handle, not a click: don't enter the window, don't move the cursor.
+    if (float_drag_action && !(float_drag_action & kDragContent)) {
+      dragwin = wp;
+      return MOUSE_FLOATWIN;
+    }
+
     if (on_winbar) {
       return IN_OTHER_WIN | MOUSE_WINBAR;
     }
@@ -1378,7 +1427,6 @@ retnomove:
     }
 
     fdc = win_fdccol_count(wp);
-    dragwin = NULL;
 
     // winpos and height may change in win_enter()!
     if (below_window) {
@@ -1426,6 +1474,9 @@ retnomove:
     if (dragwin == NULL || (flags & MOUSE_RELEASED)) {
       win_enter(wp, true);                      // can make wp invalid!
     }
+    if (float_drag_action && win_valid(wp)) {
+      dragwin = wp;
+    }
     // set topline, to be able to check for double click ourselves
     if (curwin != old_curwin) {
       set_mouse_topline(curwin);
@@ -1472,6 +1523,19 @@ retnomove:
   } else if (on_statuscol && which_button == MOUSE_RIGHT) {
     // After a click on the status column don't start Visual mode.
     return IN_OTHER_WIN | MOUSE_STATUSCOL;
+  } else if (float_drag_action && which_button == MOUSE_LEFT) {
+    int srow, scol;
+    mouse_screen_pos(&srow, &scol);
+    if (flags & MOUSE_RELEASED) {
+      if (!(flags & MOUSE_FOCUS) && win_float_drag_action(wp, srow, scol)) {
+        win_enter(wp, true);
+      }
+      float_drag_action = 0;
+    } else if (win_valid(dragwin)) {
+      did_drag |= win_float_drag(dragwin, float_drag_action, srow, scol,
+                                 float_drag_row_offset, float_drag_col_offset);
+    }
+    return MOUSE_FLOATWIN;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode

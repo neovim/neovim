@@ -3990,6 +3990,15 @@ nvim_open_win({buf}, {enter}, {config})                      *nvim_open_win()*
                   • mouse: (default: `focusable` value) If true, mouse events
                     interact with the window normally; if false, they pass
                     through to the window behind it.
+                  • mousedrag: (`table?`) What the mouse can drag the window
+                    by. Only the given fields are changed. A drag makes the
+                    window editor-relative and NW-anchored.
+                    • title: (default: false) Drag the title or footer text to
+                      move the window.
+                    • content: (default: false) Drag the text area to move the
+                      window. Dragging there no longer selects text.
+                    • border: (default: false) Drag the border or a corner to
+                      resize the window.
                   • noautocmd: Block all autocommands for the duration of the
                     call. Cannot be changed by |nvim_win_set_config()|.
                   • relative: Sets the window layout to "floating", placed at

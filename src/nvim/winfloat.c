@@ -615,3 +615,128 @@ bool win_previewpopup_config(WinConfig *config)
   }
   return true;
 }
+
+static bool in_bordertext(win_T *wp, int rel_col, int width, AlignTextPos pos)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int w = MIN(width, wp->w_view_width);
+  int start = get_bordertext_col(wp->w_view_width, w, pos);
+  return rel_col >= start && rel_col < start + w;
+}
+
+/// What a mouse gesture at (row, col), a screen position, does to a float.
+///
+/// @return 0, kDragMove (plus kDragContent inside the text area), or a bitmask
+///         of kDrag{Top,Bot,Left,Right}.
+int win_float_drag_action(win_T *wp, int row, int col)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (wp->w_config.external) {
+    return 0;
+  }
+
+  int rel_row = row - wp->w_winrow;
+  int rel_col = col - wp->w_wincol;
+  bool on_top = wp->w_border_adj[0] && rel_row == 0;
+  bool on_bot = wp->w_border_adj[2] && rel_row == wp->w_height_outer - 1;
+  bool on_left = wp->w_border_adj[3] && rel_col == 0;
+  bool on_right = wp->w_border_adj[1] && rel_col == wp->w_width_outer - 1;
+
+  if (!(on_top || on_bot || on_left || on_right)) {
+    return wp->w_config.mousedrag_content ? (kDragMove | kDragContent) : 0;
+  }
+
+  if (wp->w_config.mousedrag_title) {
+    if (on_top && wp->w_config.title
+        && in_bordertext(wp, rel_col, wp->w_config.title_width, wp->w_config.title_pos)) {
+      return kDragMove;
+    }
+    if (on_bot && wp->w_config.footer
+        && in_bordertext(wp, rel_col, wp->w_config.footer_width, wp->w_config.footer_pos)) {
+      return kDragMove;
+    }
+  }
+
+  if (wp->w_config.mousedrag_border) {
+    int hit = 0;
+    if (on_top) {
+      hit |= kDragTop;
+    }
+    if (on_bot) {
+      hit |= kDragBot;
+    }
+    if (on_left) {
+      hit |= kDragLeft;
+    }
+    if (on_right) {
+      hit |= kDragRight;
+    }
+    return hit;
+  }
+
+  return 0;
+}
+
+/// Move or resize a float so the dragged point follows the mouse at (row, col).
+///
+/// @param action            WinDragFlags: kDragMove, or a mask of dragged edges.
+/// @param row_off, col_off  where in the float the drag started.
+///
+/// @return  true if the window actually moved or resized.
+bool win_float_drag(win_T *wp, int action, int row, int col, int row_off, int col_off)
+  FUNC_ATTR_NONNULL_ALL
+{
+  WinConfig cfg = wp->w_config;
+  int chrome_h = wp->w_height_outer - wp->w_height;  // border and statusline
+  int chrome_w = wp->w_width_outer - wp->w_width;
+  int top = wp->w_winrow;
+  int left = wp->w_wincol;
+  int bot = top + wp->w_height_outer - 1;
+  int right = left + wp->w_width_outer - 1;
+  int above_ch = cfg.zindex < kZIndexMessages ? (int)p_ch : 0;
+
+  // Everything below is in screen coordinates, so the anchor becomes NW.
+  cfg.anchor = 0;
+  cfg.relative = kFloatRelativeEditor;
+  cfg.bufpos.lnum = -1;
+  cfg.bufpos.col = 0;
+  cfg.window = 0;
+  cfg._cmdline_offset = 0;
+  // A drag uses what is drawn, so a size that did not fit is normalised too.
+  cfg.height = wp->w_height;
+  cfg.width = wp->w_width;
+
+  if (action & kDragMove) {
+    top = MAX(MIN(row - row_off, Rows - wp->w_height_outer - above_ch), 0);
+    left = col - col_off;
+    if (!cfg.fixed) {
+      left = MAX(MIN(left, Columns - wp->w_width_outer), 0);
+    }
+  } else {
+    if (action & kDragTop) {
+      top = MIN(MAX(row, 0), bot - chrome_h);
+    } else if (action & kDragBot) {
+      bot = MAX(MIN(row, Rows - 1 - above_ch), top + chrome_h);
+    }
+    if (action & kDragLeft) {
+      left = MIN(MAX(col, 0), right - chrome_w);
+    } else if (action & kDragRight) {
+      right = MAX(MIN(col, Columns - 1), left + chrome_w);
+    }
+    cfg.height = MAX(bot - top + 1 - chrome_h, 1);
+    cfg.width = MAX(right - left + 1 - chrome_w, 1);
+  }
+
+  cfg.row = top;
+  cfg.col = left;
+
+  const WinConfig *old = &wp->w_config;
+  if (cfg.relative == old->relative && cfg.anchor == old->anchor
+      && (int)cfg.row == (int)old->row && (int)cfg.col == (int)old->col
+      && cfg.width == old->width && cfg.height == old->height) {
+    return false;
+  }
+
+  win_config_float(wp, cfg);
+  return true;
+}
