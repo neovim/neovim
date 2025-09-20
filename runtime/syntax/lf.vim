@@ -3,10 +3,10 @@
 " Maintainer: Andis Sprinkis <andis@sprinkis.com>
 " Former Maintainer: Cameron Wright
 " URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 16 August 2025
+" Last Change: 7 Sep 2025
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 37
+" lf version: 38
 
 if exists("b:current_syntax") | finish | endif
 
@@ -56,6 +56,7 @@ syn keyword lfOptions
   \ cmd-history-next
   \ cmd-history-prev
   \ cmd-home
+  \ cmd-insert
   \ cmd-interrupt
   \ cmd-left
   \ cmd-lowercase-word
@@ -78,12 +79,10 @@ syn keyword lfOptions
   \ cut
   \ cutfmt
   \ delete
-  \ dircache
   \ dircounts
   \ dirfirst
   \ dironly
   \ dirpreviews
-  \ doc
   \ down
   \ draw
   \ drawbox
@@ -104,6 +103,7 @@ syn keyword lfOptions
   \ glob-unselect
   \ half-down
   \ half-up
+  \ help
   \ hidden
   \ hiddenfiles
   \ high
@@ -121,12 +121,14 @@ syn keyword lfOptions
   \ jump-next
   \ jump-prev
   \ load
-  \ locale
   \ low
   \ maps
   \ mark-load
   \ mark-remove
   \ mark-save
+  \ menufmt
+  \ menuheaderfmt
+  \ menuselectfmt
   \ middle
   \ mouse
   \ nmaps
@@ -180,7 +182,7 @@ syn keyword lfOptions
   \ shellflag
   \ shellopts
   \ showbinds
-  \ sixel
+  \ sizeunits
   \ smartcase
   \ smartdia
   \ sortby
