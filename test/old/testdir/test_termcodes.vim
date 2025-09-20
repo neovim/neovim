@@ -835,10 +835,10 @@ func Test_mouse_alt_leftclick()
   " let &ttymouse = save_ttymouse
   set mousetime& mousemodel&
   " call test_override('no_query_mouse', 0)
-  close!
+  bw!
 endfunc
 
-func Test_xterm_mouse_click_in_fold_columns()
+func Run_test_xterm_mouse_click_in_fold_columns()
   new
   let save_mouse = &mouse
   let save_term = &term
@@ -890,6 +890,15 @@ func Test_xterm_mouse_click_in_fold_columns()
   " let &term = save_term
   let &mouse = save_mouse
   bwipe!
+endfunc
+
+func Test_xterm_mouse_click_in_fold_columns()
+  call Run_test_xterm_mouse_click_in_fold_columns()
+  set fillchars+=foldclose:▶
+  call Run_test_xterm_mouse_click_in_fold_columns()
+  set fillchars-=foldclose:▶ fillchars+=foldclose:!
+  call Run_test_xterm_mouse_click_in_fold_columns()
+  set fillchars&
 endfunc
 
 " Test for the 'h' flag in the 'mouse' option. Using mouse in the help window.
