@@ -10419,13 +10419,14 @@ M.funcs = {
     base = 1,
     desc = [=[
       Returns a String with 64 hex characters, which is the SHA256
-      checksum of {string}.
+      checksum of {expr}.
+      {expr} is a String or a Blob.
 
     ]=],
     name = 'sha256',
-    params = { { 'string', 'string' } },
+    params = { { 'expr', 'string' } },
     returns = 'string',
-    signature = 'sha256({string})',
+    signature = 'sha256({expr})',
   },
   shellescape = {
     args = { 1, 2 },

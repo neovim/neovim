@@ -9468,12 +9468,13 @@ setwinvar({nr}, {varname}, {val})                                  *setwinvar()*
                 Return: ~
                   (`any`)
 
-sha256({string})                                                      *sha256()*
+sha256({expr})                                                        *sha256()*
 		Returns a String with 64 hex characters, which is the SHA256
-		checksum of {string}.
+		checksum of {expr}.
+		{expr} is a String or a Blob.
 
                 Parameters: ~
-                  • {string} (`string`)
+                  • {expr} (`string`)
 
                 Return: ~
                   (`string`)

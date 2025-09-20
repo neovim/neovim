@@ -8631,11 +8631,12 @@ function vim.fn.settagstack(nr, dict, action) end
 function vim.fn.setwinvar(nr, varname, val) end
 
 --- Returns a String with 64 hex characters, which is the SHA256
---- checksum of {string}.
+--- checksum of {expr}.
+--- {expr} is a String or a Blob.
 ---
---- @param string string
+--- @param expr string
 --- @return string
-function vim.fn.sha256(string) end
+function vim.fn.sha256(expr) end
 
 --- Escape {string} for use as a shell command argument.
 ---
