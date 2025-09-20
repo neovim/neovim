@@ -718,9 +718,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
       }
 
 #ifdef BACKSLASH_IN_FILENAME
-      // If 'shellslash' is set change backslashes to forward slashes.
-      // Can't use slash_adjust(), p_ssl may be set temporarily.
-      if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
+      if (var != NULL && vim_strchr(var, '\\') != NULL) {
         char *p = xstrdup(var);
 
         if (mustfree) {
