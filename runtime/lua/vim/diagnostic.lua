@@ -2823,13 +2823,16 @@ end
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
 ---@param list table[] List of quickfix items from |getqflist()| or |getloclist()|.
+---@param include_invalid boolean? Whether to include items with valid field set to 0.
 ---@return vim.Diagnostic[]
-function M.fromqflist(list)
+function M.fromqflist(list, include_invalid)
   vim.validate('list', list, 'table')
+  vim.validate('include_invalid', include_invalid, 'boolean', true)
 
+  include_invalid = include_invalid == nil and false or include_invalid
   local diagnostics = {} --- @type vim.Diagnostic[]
   for _, item in ipairs(list) do
-    if item.valid == 1 then
+    if item.valid == 1 or (include_invalid and item.valid == 0) then
       local lnum = math.max(0, item.lnum - 1)
       local col = math.max(0, item.col - 1)
       local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
