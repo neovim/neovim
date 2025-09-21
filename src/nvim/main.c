@@ -156,12 +156,12 @@ void event_init(void)
   loop_init(&main_loop, NULL);
   resize_events = multiqueue_new_child(main_loop.events);
 
+  autocmd_init();
   signal_init();
   // mspgack-rpc initialization
   channel_init();
   terminal_init();
   ui_init();
-  autocmd_init();
   TIME_MSG("event init");
 }
 

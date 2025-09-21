@@ -305,13 +305,7 @@ void may_trigger_safestate(bool safe)
     DLOG(is_safe ? "SafeState: Start triggering" : "SafeState: Stop triggering");
   }
   if (is_safe) {
-    SafeAutocommandEvent *evdata = xmalloc(sizeof(SafeAutocommandEvent));
-    evdata->event = EVENT_SAFESTATE;
-    evdata->fname = NULL;
-    evdata->fname_io = NULL;
-    evdata->buf = curbuf->handle;
-    multiqueue_put(safe_autocmd_events, safe_autocmd_event, evdata);
-    multiqueue_process_events(safe_autocmd_events);
+    apply_autocmds(EVENT_SAFESTATE, NULL, NULL, false, curbuf);
   }
   was_safe = is_safe;
 }
