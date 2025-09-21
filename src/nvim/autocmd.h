@@ -71,6 +71,6 @@ enum { BUFLOCAL_PAT_LEN = 25, };
 
 /// Saves autocommands for execution until a known safe state.
 /// This should be the default for all new autocommands.
-EXTERN MultiQueue *safe_autocmd_events INIT( = NULL);
+EXTERN MultiQueue *deferred_autocmd_events INIT( = NULL);
 
 #include "autocmd.h.generated.h"

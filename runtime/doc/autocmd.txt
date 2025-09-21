@@ -759,6 +759,18 @@ LspNotify			See |LspNotify|
 LspProgress			See |LspProgress|
 LspRequest			See |LspRequest|
 LspTokenUpdate			See |LspTokenUpdate|
+							*MarkSet*
+MarkSet				Just after a |mark| is set by |m|, |:mark|, and
+				|nvim_buf_set_mark()|. The pattern is matched
+				against the name of the mark. For example,
+				`[ab]` matches marks `a` and `b`. `*` matches
+				all marks. The |event-data| is a table with the
+				following fields:
+
+				- name: the name of the set mark. (ex: `a`)
+				- line: the line the mark was set at.
+				- col: the column the mark was set at.
+
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the

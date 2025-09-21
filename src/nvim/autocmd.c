@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/converter.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
@@ -111,6 +112,18 @@ static char *old_termresponse = NULL;
 //  ID -> name
 static Map(String, int) map_augroup_name_to_id = MAP_INIT;
 static Map(int, String) map_augroup_id_to_name = MAP_INIT;
+
+void autocmd_init(void)
+{
+  deferred_autocmd_events = multiqueue_new_child(main_loop.events);
+}
+
+#ifdef EXITFREE
+void autocmd_free_all_mem(void)
+{
+  multiqueue_free(deferred_autocmd_events);
+}
+#endif
 
 static void augroup_map_del(int id, const char *name)
 {
@@ -1494,22 +1507,83 @@ win_found:
   }
 }
 
-/// Execute a safe autocommand event
-void safe_autocmd_event(void **argv)
+/// Schedules an autocommand event, to be executed at the next event-loop tick.
+///
+/// @param event Event to schedule
+/// @param fname filename, NULL or empty means use actual file name
+/// @param fname_io Filename to use for <afile> on cmdline,
+///                 NULL means use `fname`.
+/// @param group Group ID or AUGROUP_ALL
+/// @param buf Buffer for <abuf>
+/// @param eap Ex command arguments
+/// @param data Event-specific data. Will be copied, caller must free `data`.
+/// The `data` items will also be copied to `v:event`.
+void aucmd_defer(event_T event, char *fname, char *fname_io, int group, buf_T *buf, exarg_T *eap,
+                 Object *data)
 {
-  SafeAutocommandEvent *e = argv[0];
+  AutoCmdEvent *evdata = xmalloc(sizeof(AutoCmdEvent));
+  evdata->event = event;
+  evdata->fname = fname != NULL ? xstrdup(fname) : NULL;
+  evdata->fname_io = fname_io != NULL ? xstrdup(fname_io) : NULL;
+  evdata->group = group;
+  evdata->buf = buf->handle;
+  evdata->eap = eap;
+  if (data) {
+    evdata->data = xmalloc(sizeof(Object));
+    *evdata->data = copy_object(*data, NULL);
+  } else {
+    evdata->data = NULL;
+  }
+
+  multiqueue_put(deferred_autocmd_events, deferred_event, evdata);
+}
+
+/// Execute a deferred autocommand event
+static void deferred_event(void **argv)
+{
+  AutoCmdEvent *e = argv[0];
   event_T event = e->event;
   char *fname = e->fname;
   char *fname_io = e->fname_io;
+  int group = e->group;
+  exarg_T *eap = e->eap;
+  Object *data = e->data;
 
   Error err = ERROR_INIT;
   buf_T *buf = find_buffer_by_handle(e->buf, &err);
-  if (!buf) {
-    xfree(e);
-    return;
+  if (buf) {
+    // Copy `data` to `v:event`.
+    save_v_event_T save_v_event;
+    dict_T *v_event = get_v_event(&save_v_event);
+    if (data && data->type == kObjectTypeDict) {
+      for (size_t i = 0; i < data->data.dict.size; i++) {
+        KeyValuePair item = data->data.dict.items[i];
+        typval_T tv;
+        object_to_vim(item.value, &tv, &err);
+        if (ERROR_SET(&err)) {
+          api_clear_error(&err);
+          continue;
+        }
+        tv_dict_add_tv(v_event, item.key.data, item.key.size, &tv);
+        tv_clear(&tv);
+      }
+    }
+    tv_dict_set_keys_readonly(v_event);
+
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
+    apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data);
+    aucmd_restbuf(&aco);
+
+    restore_v_event(v_event, &save_v_event);
   }
 
-  apply_autocmds(event, fname, fname_io, false, buf);
+  xfree(fname);
+  xfree(fname_io);
+  if (data) {
+    api_free_object(*data);
+    xfree(data);
+  }
   xfree(e);
 }
 
@@ -1700,7 +1774,8 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   // invalid.
   if (fname_io == NULL) {
     if (event == EVENT_COLORSCHEME || event == EVENT_COLORSCHEMEPRE
-        || event == EVENT_OPTIONSET || event == EVENT_MODECHANGED) {
+        || event == EVENT_OPTIONSET || event == EVENT_MODECHANGED
+        || event == EVENT_MARKSET) {
       autocmd_fname = NULL;
     } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
@@ -1762,6 +1837,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_DIRCHANGEDPRE
         || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
+        || event == EVENT_MARKSET
         || event == EVENT_MENUPOPUP
         || event == EVENT_MODECHANGED
         || event == EVENT_OPTIONSET
@@ -2609,19 +2685,6 @@ static void vimresume_event(void **argv)
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
   pending_vimresume = kFalse;
 }
-
-/// Initialize the safe autocommand event queue.
-void autocmd_init(void)
-{
-  safe_autocmd_events = multiqueue_new_child(main_loop.events);
-}
-
-#ifdef EXITFREE
-void autocmd_free_all_mem(void)
-{
-  multiqueue_free(safe_autocmd_events);
-}
-#endif
 
 /// Trigger VimSuspend or VimResume autocommand.
 void may_trigger_vim_suspend_resume(bool suspend)
