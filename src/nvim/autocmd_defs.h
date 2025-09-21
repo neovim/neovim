@@ -70,4 +70,7 @@ typedef struct {
   char *fname;
   char *fname_io;
   Buffer buf;
-} SafeAutocommandEvent;
+  int group;
+  exarg_T *eap;
+  Object *data;
+} DeferredEvent;
