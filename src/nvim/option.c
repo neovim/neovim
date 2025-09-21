@@ -2989,8 +2989,6 @@ bool is_tty_option(const char *name)
   return find_tty_option_end(name) != NULL;
 }
 
-#define TCO_BUFFER_SIZE 8
-
 /// Get value of TTY option.
 ///
 /// @param  name  Name of TTY option.
@@ -3004,8 +3002,8 @@ OptVal get_tty_option(const char *name)
     if (t_colors <= 1) {
       value = xstrdup("");
     } else {
-      value = xmalloc(TCO_BUFFER_SIZE);
-      snprintf(value, TCO_BUFFER_SIZE, "%d", t_colors);
+      value = xmalloc(NUMBUFLEN);
+      snprintf(value, NUMBUFLEN, "%d", t_colors);
     }
   } else if (strequal(name, "term")) {
     value = p_term ? xstrdup(p_term) : xstrdup("nvim");
