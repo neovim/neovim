@@ -228,7 +228,12 @@ describe('UI can set terminal option', function()
   it('term_colors', function()
     eq('256', eval '&t_Co')
 
-    local _ = Screen.new(20, 5, { term_colors = 8 })
+    local screen = Screen.new(20, 5, { term_colors = 8 })
     eq('8', eval '&t_Co')
+    screen:detach()
+
+    screen = Screen.new(20, 5, { term_colors = 16777216 })
+    eq('16777216', eval '&t_Co')
+    screen:detach()
   end)
 end)
