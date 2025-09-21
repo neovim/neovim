@@ -186,7 +186,7 @@ end
 ---
 --- @field focus_id? string
 ---
---- @field border? string see |nvim_open_win()|.
+--- @field border? string|string[] see |nvim_open_win()|.
 
 --- @class vim.diagnostic.Opts.Underline
 ---
