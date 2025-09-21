@@ -2508,12 +2508,6 @@ char *aucmd_handler_to_string(AutoCmd *ac)
   return callback_to_string(&ac->handler_fn, NULL);
 }
 
-bool au_event_is_empty(event_T event)
-  FUNC_ATTR_PURE
-{
-  return kv_size(autocmds[(int)event]) == 0;
-}
-
 // Arg Parsing Functions
 
 /// Scan over the events.  "*" stands for all events.
