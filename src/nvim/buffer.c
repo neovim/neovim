@@ -2122,6 +2122,7 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_dia);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
+  buf->b_p_ac = -1;
   buf->b_p_ar = -1;
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);

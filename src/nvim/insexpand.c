@@ -2151,7 +2151,7 @@ bool ins_compl_preinsert_effect(void)
 }
 
 /// Returns true if autocompletion is active.
-bool ins_compl_has_autocomplete(void)
+bool ins_compl_autocomplete_enabled(void)
 {
   return compl_autocomplete;
 }
@@ -2227,6 +2227,13 @@ static bool ins_compl_need_restart(void)
   return compl_was_interrupted || ins_compl_refresh_always();
 }
 
+/// Return true if 'autocomplete' option is set
+bool ins_compl_has_autocomplete(void)
+{
+  // Use buffer-local setting if defined (>= 0), otherwise use global
+  return curbuf->b_p_ac >= 0 ? curbuf->b_p_ac : p_ac;
+}
+
 /// Called after changing "compl_leader".
 /// Show the popup menu with a different set of matches.
 /// May also search for matches again if the previous search was interrupted.
@@ -2256,9 +2263,7 @@ static void ins_compl_new_leader(void)
     // Matches were cleared, need to search for them now.
     // Set "compl_restarting" to avoid that the first match is inserted.
     compl_restarting = true;
-    if (p_ac) {
-      compl_autocomplete = true;
-    }
+    compl_autocomplete = ins_compl_has_autocomplete();
     if (ins_complete(Ctrl_N, true) == FAIL) {
       compl_cont_status = 0;
     }

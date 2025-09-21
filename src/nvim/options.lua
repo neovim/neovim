@@ -236,7 +236,7 @@ local options = {
         |i_CTRL-N|, but triggered automatically.  See |ins-autocompletion|.
       ]=],
       full_name = 'autocomplete',
-      scope = { 'global' },
+      scope = { 'global', 'buf' },
       short_desc = N_('automatic completion in insert mode'),
       type = 'boolean',
       varname = 'p_ac',
