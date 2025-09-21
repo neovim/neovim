@@ -1523,6 +1523,17 @@ describe('completion', function()
       {5:-- INSERT --}                                                |
     ]])
     vim.uv.sleep(500)
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {4:foobarbaz      }{1:                                             }|
+      {4:foobar         }{1:                                             }|
+      {4:foo            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
     feed('<C-N>')
     screen:expect([[
       foo                                                         |
