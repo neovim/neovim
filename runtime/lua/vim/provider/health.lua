@@ -797,27 +797,32 @@ local function python()
       local nvim_py_bin = python_exepath(vim.fn.exepath(py_bin_basename))
       if nvim_py_bin then
         local subshell_py_bin = python_exepath(py_bin_basename)
-        if venv_bin ~= nvim_py_bin then
-          errors[#errors + 1] = '$PATH yields this '
-            .. py_bin_basename
-            .. ' executable: '
-            .. nvim_py_bin
-          local hint = '$PATH ambiguities arise if the virtualenv is not '
-            .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
-            .. 'check that invoking Python from the command line launches the correct one, '
-            .. 'then relaunch Nvim.'
-          hints[hint] = true
-        end
-        if venv_bin ~= subshell_py_bin then
-          errors[#errors + 1] = '$PATH in subshells yields this '
-            .. py_bin_basename
-            .. ' executable: '
-            .. subshell_py_bin
-          local hint = '$PATH ambiguities in subshells typically are '
-            .. 'caused by your shell config overriding the $PATH previously set by the '
-            .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
-            .. 'https://vi.stackexchange.com/a/34996'
-          hints[hint] = true
+        local bintable = {
+          ['nvim'] = {
+            ['path'] = nvim_py_bin,
+            ['hint'] = '$PATH ambiguities arise if the virtualenv is not '
+              .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
+              .. 'check that invoking Python from the command line launches the correct one, '
+              .. 'then relaunch Nvim.',
+          },
+          ['subshell'] = {
+            ['path'] = subshell_py_bin,
+            ['hint'] = '$PATH ambiguities in subshells typically are '
+              .. 'caused by your shell config overriding the $PATH previously set by the '
+              .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
+              .. 'https://vi.stackexchange.com/a/34996',
+          },
+        }
+        for bintype, bin in pairs(bintable) do
+          if vim.fn.resolve(venv_bin) ~= vim.fn.resolve(bin['path']) then
+            local type_of_path = bintype == 'subshell' and '$PATH' or '$PATH in subshell'
+            errors[#errors + 1] = type_of_path
+              .. ' yields this '
+              .. py_bin_basename
+              .. ' executable: '
+              .. bin['path']
+            hints[bin['hint']] = true
+          end
         end
       end
     end
