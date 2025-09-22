@@ -543,8 +543,6 @@ static int nlua_wait(lua_State *lstate)
     lua_pushinteger(lstate, -1);
     return 2;
   }
-
-  abort();
 }
 
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
