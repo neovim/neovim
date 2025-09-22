@@ -1090,6 +1090,12 @@ static void ins_compl_insert_bytes(char *p, int len)
   compl_ins_end_col = curwin->w_cursor.col;
 }
 
+/// Get current completion leader
+char *ins_compl_leader(void)
+{
+  return compl_leader.data != NULL ? compl_leader.data : compl_orig_text.data;
+}
+
 /// Get current completion leader length
 static size_t ins_compl_leader_len(void)
 {
@@ -1739,12 +1745,6 @@ bool compl_match_curr_select(int selected)
 
 #define DICT_FIRST      (1)     ///< use just first element in "dict"
 #define DICT_EXACT      (2)     ///< "dict" is the exact name of a file
-
-/// Get current completion leader
-char *ins_compl_leader(void)
-{
-  return compl_leader.data != NULL ? compl_leader.data : compl_orig_text.data;
-}
 
 /// Add any identifiers that match the given pattern "pat" in the list of
 /// dictionary files "dict_start" to the list of completions.
