@@ -2501,7 +2501,13 @@ vim.o.ffs = vim.o.fileformats
 vim.go.fileformats = vim.o.fileformats
 vim.go.ffs = vim.go.fileformats
 
---- When set case is ignored when using file names and directories.
+--- When set, case is ignored when using file and directory names.
+---
+--- This option is on by default on systems where the filesystem is
+--- traditionally case-insensitive (for example MS-Windows and macOS).
+--- However, Vim cannot determine at runtime whether a particular
+--- filesystem is case-sensitive or case-insensitive.
+---
 --- See 'wildignorecase' for only ignoring case when doing completion.
 ---
 --- @type boolean
