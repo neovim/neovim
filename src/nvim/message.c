@@ -1108,6 +1108,10 @@ static bool do_clear_hist_temp = true;
 
 void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
 {
+  if (!has_event(EVENT_PROGRESS)) {
+    return;
+  }
+
   MAXSIZE_TEMP_DICT(data, 7);
   ArrayOf(String) messages = ARRAY_DICT_INIT;
   for (size_t i = 0; i < msg.size; i++) {
@@ -1124,8 +1128,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   }
 
   apply_autocmds_group(EVENT_PROGRESS, msg_data ? msg_data->title.data : "", NULL, true,
-                       AUGROUP_ALL, NULL,
-                       NULL, &DICT_OBJ(data));
+                       AUGROUP_ALL, NULL, NULL, &DICT_OBJ(data));
   kv_destroy(messages);
 }
 
