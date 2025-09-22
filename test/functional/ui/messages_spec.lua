@@ -2053,6 +2053,16 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     feed('<CR>')
     assert_alive()
   end)
+
+  it('no wait return before delayed exception error message', function()
+    feed('ia<esc>:lua vim.cmd.quit()<CR>')
+    screen:expect({
+      any = {
+        '{9:.*Vim:E37: No write since.*}',
+        '{6:Press ENTER or type command to continue}^',
+      },
+    })
+  end)
 end)
 
 it('calling screenstring() after redrawing between messages without UI #20999', function()
