@@ -47,7 +47,7 @@ local wshada_tmp, _, fname_tmp = get_shada_rw('Xtest-functional-plugin-shada.sha
 
 describe('autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
-  before_each(function()
+  setup(function()
     reset()
     nvim_command([[
     function ModifyVal(val)

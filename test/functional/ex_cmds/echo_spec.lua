@@ -27,7 +27,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     end
   end
 
-  before_each(function()
+  setup(function()
     clear()
     source([[
       function String(s)
@@ -149,7 +149,7 @@ describe(':echo :echon :echomsg :echoerr', function()
   end)
 
   describe('used to represent funcrefs', function()
-    before_each(function()
+    setup(function()
       source([[
         function Test1()
         endfunction
