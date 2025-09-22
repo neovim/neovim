@@ -129,6 +129,7 @@ end
 --- @return any
 function M.request(method, ...)
   assert(session, 'no Nvim session')
+  assert(not session.eof_err, 'sending request after EOF from Nvim')
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
@@ -326,10 +327,10 @@ end
 function M.expect_exit(fn_or_timeout, ...)
   local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    t.matches(eof_err_msg, t.pcall_err(fn_or_timeout, ...))
+    t.matches(vim.pesc(eof_err_msg), t.pcall_err(fn_or_timeout, ...))
   else
     t.matches(
-      eof_err_msg,
+      vim.pesc(eof_err_msg),
       t.pcall_err(function(timeout, fn, ...)
         fn(...)
         assert(session)
@@ -699,7 +700,9 @@ end
 --- @param method string
 --- @param ... any
 function M.nvim_async(method, ...)
-  assert(session):notify(method, ...)
+  assert(session, 'no Nvim session')
+  assert(not session.eof_err, 'sending notification after EOF from Nvim')
+  session:notify(method, ...)
 end
 
 --- Executes a Vimscript function via RPC.
