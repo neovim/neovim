@@ -11,7 +11,7 @@ local ok = t.ok
 local NIL = vim.NIL
 
 describe('autoload/msgpack.vim', function()
-  before_each(function()
+  setup(function()
     clear { args = { '-u', 'NORC' } }
   end)
 

@@ -30,7 +30,7 @@ local setup_floating_windows = function()
 end
 
 describe('screenchar() and family respect floating windows', function()
-  before_each(function()
+  setup(function()
     clear()
     -- These commands result into visible text `aabc`.
     -- `aab` - from floating windows, `c` - from text in regular window.
