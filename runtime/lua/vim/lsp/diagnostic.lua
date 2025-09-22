@@ -421,7 +421,7 @@ function M._enable(bufnr)
   end
 
   api.nvim_create_autocmd('LspNotify', {
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(opts)
       if
         opts.data.method ~= ms.textDocument_didChange
@@ -449,7 +449,7 @@ function M._enable(bufnr)
   })
 
   api.nvim_create_autocmd('LspDetach', {
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(args)
       local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_diagnostic })
 

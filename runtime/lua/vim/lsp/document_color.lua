@@ -190,7 +190,7 @@ local function buf_disable(bufnr)
   buf_clear(bufnr)
   reset_bufstate(bufnr, false)
   api.nvim_clear_autocmds({
-    buffer = bufnr,
+    buf = bufnr,
     group = document_color_augroup,
   })
 end
@@ -199,7 +199,7 @@ end
 local function buf_enable(bufnr)
   reset_bufstate(bufnr, true)
   api.nvim_clear_autocmds({
-    buffer = bufnr,
+    buf = bufnr,
     group = document_color_augroup,
   })
 
@@ -216,7 +216,7 @@ local function buf_enable(bufnr)
   })
 
   api.nvim_create_autocmd('LspNotify', {
-    buffer = bufnr,
+    buf = bufnr,
     group = document_color_augroup,
     desc = 'Refresh document_color on document changes',
     callback = function(args)
@@ -232,7 +232,7 @@ local function buf_enable(bufnr)
   })
 
   api.nvim_create_autocmd('LspDetach', {
-    buffer = bufnr,
+    buf = bufnr,
     group = document_color_augroup,
     desc = 'Disable document_color if all supporting clients detach',
     callback = function(args)
