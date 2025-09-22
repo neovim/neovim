@@ -2791,7 +2791,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 'fileignorecase' 'fic'	boolean	(default on for systems where case in file
                                  names is normally ignored)
 			global
-	When set case is ignored when using file names and directories.
+	When set, case is ignored when using file and directory names.
+
+	This option is on by default on systems where the filesystem is
+	traditionally case-insensitive (for example MS-Windows and macOS).
+	However, Vim cannot determine at runtime whether a particular
+	filesystem is case-sensitive or case-insensitive.
+
 	See 'wildignorecase' for only ignoring case when doing completion.
 
 						*'filetype'* *'ft'*
