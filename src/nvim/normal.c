@@ -69,6 +69,7 @@
 #include "nvim/plines.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/register.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/spell_defs.h"

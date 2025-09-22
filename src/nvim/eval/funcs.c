@@ -114,6 +114,7 @@
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/search.h"
