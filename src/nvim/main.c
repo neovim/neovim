@@ -602,6 +602,9 @@ int main(int argc, char **argv)
     TIME_MSG("UIEnter autocommands");
   }
 
+  // validate VIMRUNTIME env
+  validate_vimruntime_env();
+
 #ifdef MSWIN
   if (use_remote_ui) {
     os_icon_init();
