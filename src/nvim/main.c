@@ -298,6 +298,8 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
+  set_argf_var();
+
   nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
 
@@ -1499,6 +1501,22 @@ scripterror:
   }
 
   TIME_MSG("parsing arguments");
+}
+
+static void set_argf_var(void)
+{
+  list_T *list = tv_list_alloc(kListLenMayKnow);
+
+  for (int i = 0; i < GARGCOUNT; i++) {
+    char *fname = alist_name(&GARGLIST[i]);
+    if (fname != NULL) {
+      (void)vim_FullName(fname, NameBuff, sizeof(NameBuff), false);
+      tv_list_append_string(list, NameBuff, -1);
+    }
+  }
+
+  tv_list_set_lock(list, VAR_FIXED);
+  set_vim_var_list(VV_ARGF, list);
 }
 
 // Many variables are in "params" so that we can pass them to invoked
