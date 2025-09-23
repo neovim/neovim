@@ -388,10 +388,12 @@ bool check_changed_any(bool hidden, bool unload)
       msg_col = 0;
       msg_didout = false;
     }
-    if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
-        ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
-        : semsg(_("E162: No write since last change for buffer \"%s\""),
-                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
+    if (((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
+         ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
+         : semsg(_("E162: No write since last change for buffer \"%s\""),
+                 buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname))
+        // Only makes sense if error is shown, which cause_errthrow() may prevent.
+        && msg_didany) {
       int save = no_wait_return;
       no_wait_return = false;
       wait_return(false);
