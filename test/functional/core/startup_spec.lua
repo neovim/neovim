@@ -1806,3 +1806,88 @@ describe('inccommand on ex mode', function()
     ]])
   end)
 end)
+
+describe('v:argf', function()
+  local files = {}
+
+  before_each(function()
+    clear()
+    files = {}
+
+    for _, f in ipairs({
+      'Xargf_file1',
+      'Xargf_file2',
+      'Xargf_sep1',
+      'Xargf_sep2',
+      'Xargf_sep3',
+    }) do
+      os.remove(f)
+    end
+  end)
+
+  after_each(function()
+    for _, f in ipairs(files) do
+      os.remove(f)
+    end
+  end)
+
+  it('stores full path of file args', function()
+    local file1, file2 = 'Xargf_file1', 'Xargf_file2'
+    write_file(file1, '')
+    write_file(file2, '')
+    files = { file1, file2 }
+
+    local abs1 = fn.fnamemodify(file1, ':p')
+    local abs2 = fn.fnamemodify(file2, ':p')
+
+    local p = n.spawn_wait('--cmd', 'echo v:argf', '-c', 'qall', file1, file2)
+
+    eq(0, p.status)
+    matches(pesc(abs1), p.stderr)
+    matches(pesc(abs2), p.stderr)
+  end)
+
+  it('argadd does not affect v:argf', function()
+    local file1, file2 = 'Xargf_file1', 'Xargf_file2'
+    write_file(file1, '')
+    write_file(file2, '')
+    files = { file1, file2 }
+
+    local p = n.spawn_wait(
+      '--cmd',
+      'argadd extrafile.txt',
+      '--cmd',
+      'echo v:argf',
+      '-c',
+      'qall',
+      file1,
+      file2
+    )
+
+    eq(0, p.status)
+    eq(nil, string.find(p.stderr, 'extrafile.txt'))
+  end)
+
+  it('handles -- separator correctly', function()
+    local file1, file2, file3 = 'Xargf_sep1', 'Xargf_sep2', 'Xargf_sep3'
+    write_file(file1, '')
+    write_file(file2, '')
+    write_file(file3, '')
+    files = { file1, file2, file3 }
+
+    local abs1 = fn.fnamemodify(file1, ':p')
+    local abs2 = fn.fnamemodify(file2, ':p')
+    local abs3 = fn.fnamemodify(file3, ':p')
+
+    local p = n.spawn_wait(file1, '--cmd', 'echo v:argf', '-c', 'qall', '--', file2, file3)
+
+    eq(0, p.status)
+    matches(pesc(abs1), p.stderr)
+    matches(pesc(abs2), p.stderr)
+    matches(pesc(abs3), p.stderr)
+  end)
+
+  it('is read-only', function()
+    matches('E46', t.pcall_err(command, "let v:argf = ['foo']"))
+  end)
+end)
