@@ -813,7 +813,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       len = opts->ephemeral ? MAXCOL : ml_get_buf_len(buf, (linenr_T)line2 + 1);
     } else if (line2 == buf->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
-      len = 0;
+      // TODO(skewb1k): workaround for #35814. Investigate proper concurrency-safe handling of extmarks.
+      len = opts->ephemeral ? MAXCOL : 0;
     } else {
       // reuse len from before
       line2 = (int)line;
