@@ -17,6 +17,16 @@ v:argv
 		list of strings.  The first item is the Vim command.
 		See |v:progpath| for the command with full path.
 
+						*v:argf* *argf-variable*
+v:argf
+		The list of "file arguments" given on the command line when
+		starting Nvim.
+
+		Unlike |v:argv|, this does not include option arguments such
+		as `-u` or `--cmd`.  Unlike |argv()|, it is not affected by
+		later |:args| commands or plugin modifications.  It always
+		reflects exactly the filenames that were passed at startup.
+
 						*v:char* *char-variable*
 v:char
 		Argument for evaluating 'formatexpr' and used for the typed
