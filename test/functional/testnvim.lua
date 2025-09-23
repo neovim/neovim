@@ -492,7 +492,34 @@ function M.clear(...)
   return M.get_session()
 end
 
---- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
+--- @type test.Session[]
+local session_pool = {}
+
+--- @param ... string Nvim CLI args (or see overload)
+--- @return test.Session
+--- @overload fun(opts: test.session.Opts): test.Session
+local function create_session(...)
+  local argv, env, io_extra = M._new_argv(...)
+  local proc = ProcStream.spawn(argv, env, io_extra)
+  return Session.new(proc)
+end
+
+--- Starts a new, global Nvim session and clears the current one.
+--- Unlike `clear()`, doesn't use instances from the pool.
+---
+--- @see clear()
+---
+--- @param ... string Nvim CLI args
+--- @return test.Session
+--- @overload fun(opts: test.session.Opts): test.Session
+function M.clear_without_pool(...)
+  M.check_close()
+  M.set_session(create_session(...))
+  return M.get_session()
+end
+
+--- Picks a Nvim process from the pool or starts a new one with the given args
+--- and returns a msgpack-RPC session.
 ---
 --- Does not replace the current global session, unlike `clear()`.
 ---
@@ -505,10 +532,23 @@ function M.new_session(keep, ...)
     M.check_close()
   end
 
-  local argv, env, io_extra = M._new_argv(...)
+  local args = { ... }
+  if #args == 0 then
+    for _ = #session_pool + 1, 10 do
+      table.insert(session_pool, create_session({ skip_rpc_server = true }))
+    end
+    local new_session = table.remove(session_pool, 1)
 
-  local proc = ProcStream.spawn(argv, env, io_extra)
-  return Session.new(proc)
+    if _G._nvim_test_id then
+      -- Set the server name to the test-id for logging. #8519
+      local cmd = 'vim.fn.serverstop(vim.v.servername); vim.fn.serverstart(...)'
+      new_session:request('nvim_exec_lua', cmd, { _G._nvim_test_id })
+    end
+
+    return new_session
+  end
+
+  return create_session(...)
 end
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
@@ -540,6 +580,8 @@ end
 --- @field env? table<string,string>
 --- Used for stdin_fd, see `:help ui-option`
 --- @field io_extra? uv.uv_pipe_t
+--- Skip setting RPC server.
+--- @field skip_rpc_server? boolean
 
 --- @private
 ---
@@ -553,12 +595,12 @@ end
 function M._new_argv(...)
   --- @type test.session.Opts|string
   local opts = select(1, ...)
-  local merge = type(opts) ~= 'table' and true or opts.merge ~= false
+  local merge = type(opts) ~= 'table' or opts.merge ~= false
 
   local args = merge and { unpack(M.nvim_argv) } or { M.nvim_prog }
   if merge then
     table.insert(args, '--headless')
-    if _G._nvim_test_id then
+    if _G._nvim_test_id and (not opts or not opts.skip_rpc_server) then
       -- Set the server name to the test-id for logging. #8519
       table.insert(args, '--listen')
       table.insert(args, _G._nvim_test_id)

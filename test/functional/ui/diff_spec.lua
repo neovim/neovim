@@ -3,7 +3,6 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local feed = n.feed
-local clear = n.clear
 local command = n.command
 local insert = n.insert
 local write_file = t.write_file
@@ -11,6 +10,9 @@ local dedent = t.dedent
 local exec = n.exec
 local eq = t.eq
 local api = n.api
+
+-- See: https://github.com/neovim/neovim/pull/32644
+local clear = t.is_os('win') and n.clear_without_pool or n.clear
 
 local function WriteDiffFiles(text1, text2)
   write_file('Xdifile1', text1)
