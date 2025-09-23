@@ -1,5 +1,6 @@
 local uv = vim.uv
 local t = require('test.testutil')
+local busted = require('busted')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
@@ -434,24 +435,12 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
-function M.check_close()
+function M.check_close(noblock)
   if not session then
     return
   end
-  local start_time = uv.now()
-  session:close()
-  uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-  local end_time = uv.now()
-  local delta = end_time - start_time
-  if delta > 500 then
-    print(
-      'nvim took '
-        .. delta
-        .. ' milliseconds to exit after last test\n'
-        .. 'This indicates a likely problem with the test even if it passed!\n'
-    )
-    io.stdout:flush()
-  end
+
+  session:close(nil, noblock)
   session = nil
 end
 
@@ -488,6 +477,8 @@ function M.clear(...)
   return M.get_session()
 end
 
+local n_processes = 0
+
 --- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
 ---
 --- Does not replace the current global session, unlike `clear()`.
@@ -497,15 +488,43 @@ end
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
 function M.new_session(keep, ...)
-  if not keep then
-    M.check_close()
+  local test_id = _G._nvim_test_id
+  if not keep and session ~= nil then
+    -- Don't block for the previous session's exit if it's from a different test.
+    session:close(nil, session.data and session.data.test_id ~= test_id)
+    session = nil
   end
 
   local argv, env, io_extra = M._new_argv(...)
 
-  local proc = ProcStream.spawn(argv, env, io_extra)
-  return Session.new(proc)
+  local proc = ProcStream.spawn(argv, env, io_extra, function(closed)
+    n_processes = n_processes - 1
+    local delta = 0
+    if closed then
+      uv.update_time() -- Update cached value of uv.now() (libuv: uv_now()).
+      delta = uv.now() - closed
+    end
+    if delta > 500 then
+      print(
+        ('Nvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
+          .. 'This indicates a likely problem with the test even if it passed!\n'
+      )
+      io.stdout:flush()
+    end
+  end)
+  n_processes = n_processes + 1
+
+  local new_session = Session.new(proc)
+  new_session.data = { test_id = test_id }
+  return new_session
 end
+
+busted.subscribe({ 'suite', 'end' }, function()
+  M.check_close(true)
+  while n_processes > 0 do
+    uv.run('once')
+  end
+end)
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
 ---
@@ -1009,6 +1028,11 @@ return function()
 
   if after_each then
     after_each(function()
+      if not vim.endswith(_G._nvim_test_id, 'x') then
+        -- Use a different test ID for skipped tests as well as Nvim instances spawned
+        -- between this after_each() and the next before_each() (e.g. in setup()).
+        _G._nvim_test_id = _G._nvim_test_id .. 'x'
+      end
       check_logs()
       check_cores('build/bin/nvim')
       if session then
@@ -1021,5 +1045,6 @@ return function()
       end
     end)
   end
+
   return M
 end
