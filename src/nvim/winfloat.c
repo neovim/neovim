@@ -178,6 +178,16 @@ int win_border_width(win_T *wp)
   return wp->w_border_adj[1] + wp->w_border_adj[3];
 }
 
+void win_apply_bufpos_offset(win_T *parent_win, WinConfig config, int *row, int *col)
+{
+  int lnum = MIN(config.bufpos.lnum + 1, parent_win->w_buffer->b_ml.ml_line_count);
+  pos_T pos = { lnum, config.bufpos.col, 0 };
+  int trow, tcol, tcolc, tcole;
+  textpos2screenpos(parent_win, &pos, &trow, &tcol, &tcolc, &tcole, true);
+  *row += trow - 1;
+  *col += tcol - 1;
+}
+
 void win_config_float(win_T *wp, WinConfig fconfig)
 {
   wp->w_width = MAX(fconfig.width, 1);
@@ -243,12 +253,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
       col += parent->w_wincol;
       grid_adjust(&parent->w_grid, &row, &col);
       if (wp->w_config.bufpos.lnum >= 0) {
-        pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
-                      wp->w_config.bufpos.col, 0 };
-        int trow, tcol, tcolc, tcole;
-        textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
-        row += trow - 1;
-        col += tcol - 1;
+        win_apply_bufpos_offset(parent, wp->w_config, &row, &col);
       }
     }
     api_clear_error(&dummy);

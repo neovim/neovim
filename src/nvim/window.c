@@ -833,8 +833,8 @@ void ui_ext_win_position(win_T *wp, bool validate)
   WinConfig c = wp->w_config;
   if (!c.external) {
     ScreenGrid *grid = &default_grid;
-    Float row = c.row;
-    Float col = c.col;
+    int row = (int)c.row;
+    int col = (int)c.col;
     if (c.relative == kFloatRelativeWindow) {
       Error dummy = ERROR_INIT;
       win_T *win = find_window_by_handle(c.window, &dummy);
@@ -852,12 +852,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
         row += row_off;
         col += col_off;
         if (c.bufpos.lnum >= 0) {
-          int lnum = MIN(c.bufpos.lnum + 1, win->w_buffer->b_ml.ml_line_count);
-          pos_T pos = { lnum, c.bufpos.col, 0 };
-          int trow, tcol, tcolc, tcole;
-          textpos2screenpos(win, &pos, &trow, &tcol, &tcolc, &tcole, true);
-          row += trow - 1;
-          col += tcol - 1;
+          win_apply_bufpos_offset(win, c, &row, &col);
         }
       }
     } else if (c.relative == kFloatRelativeLaststatus) {
@@ -884,8 +879,8 @@ void ui_ext_win_position(win_T *wp, bool validate)
     bool east = c.anchor & kFloatAnchorEast;
     bool south = c.anchor & kFloatAnchorSouth;
 
-    int comp_row = (int)row - (south ? wp->w_height_outer : 0);
-    int comp_col = (int)col - (east ? wp->w_width_outer : 0);
+    int comp_row = row - (south ? wp->w_height_outer : 0);
+    int comp_col = col - (east ? wp->w_width_outer : 0);
     int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
     comp_row += grid->comp_row;
     comp_col += grid->comp_col;
