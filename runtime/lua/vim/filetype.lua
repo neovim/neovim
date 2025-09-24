@@ -2388,6 +2388,7 @@ local pattern = {
     ['/%.ssh/config$'] = 'sshconfig',
     ['/%.sway/config$'] = 'swayconfig',
     ['/sway/config$'] = 'swayconfig',
+    ['/sway/config%.d/'] = 'swayconfig',
     ['/%.cargo/config$'] = 'toml',
     ['/%.bundle/config$'] = 'yaml',
     ['/%.kube/config$'] = 'yaml',
