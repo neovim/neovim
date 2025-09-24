@@ -1266,11 +1266,12 @@ end
 ---
 ---@param bufnr integer Buffer number
 ---@param fn fun()
+---@return integer?
 local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    api.nvim_create_autocmd('BufRead', {
+    return api.nvim_create_autocmd('BufRead', {
       buffer = bufnr,
       once = true,
       callback = function()
@@ -1625,6 +1626,32 @@ function M.goto_next(opts)
   goto_diagnostic(M.get_next(opts), opts)
 end
 
+---@param autocmd_key string
+---@param ns vim.diagnostic.NS
+local function cleanup_show_autocmd(autocmd_key, ns)
+  if ns.user_data[autocmd_key] then
+    api.nvim_del_autocmd(ns.user_data[autocmd_key])
+
+    ---@type integer?
+    ns.user_data[autocmd_key] = nil
+  end
+end
+
+---@param autocmd_key string
+---@param ns vim.diagnostic.NS
+---@param bufnr integer
+---@param fn fun()
+local function show_once_loaded(autocmd_key, ns, bufnr, fn)
+  cleanup_show_autocmd(autocmd_key, ns)
+
+  ---@type integer?
+  ns.user_data[autocmd_key] = once_buf_loaded(bufnr, function()
+    ---@type integer?
+    ns.user_data[autocmd_key] = nil
+    fn()
+  end)
+end
+
 M.handlers.signs = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate('namespace', namespace, 'number')
@@ -1636,12 +1663,12 @@ M.handlers.signs = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    once_buf_loaded(bufnr, function()
+    local ns = M.get_namespace(namespace)
+    show_once_loaded('sign_show_autocmd', ns, bufnr, function()
       -- 10 is the default sign priority when none is explicitly specified
       local priority = opts.signs and opts.signs.priority or 10
       local get_priority = severity_to_extmark_priority(priority, opts)
 
-      local ns = M.get_namespace(namespace)
       if not ns.user_data.sign_ns then
         ns.user_data.sign_ns =
           api.nvim_create_namespace(string.format('nvim.%s.diagnostic.signs', ns.name))
@@ -1679,6 +1706,7 @@ M.handlers.signs = {
   --- @param bufnr integer
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('sign_show_autocmd', ns)
     if ns.user_data.sign_ns and api.nvim_buf_is_valid(bufnr) then
       api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
     end
@@ -1695,8 +1723,8 @@ M.handlers.underline = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    once_buf_loaded(bufnr, function()
-      local ns = M.get_namespace(namespace)
+    local ns = M.get_namespace(namespace)
+    show_once_loaded('underline_show_autocmd', ns, bufnr, function()
       if not ns.user_data.underline_ns then
         ns.user_data.underline_ns =
           api.nvim_create_namespace(string.format('nvim.%s.diagnostic.underline', ns.name))
@@ -1735,6 +1763,7 @@ M.handlers.underline = {
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('underline_show_autocmd', ns)
     if ns.user_data.underline_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.underline_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
@@ -1791,7 +1820,8 @@ M.handlers.virtual_text = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    once_buf_loaded(bufnr, function()
+    local ns = M.get_namespace(namespace)
+    show_once_loaded('virtual_text_show_autocmd', ns, bufnr, function()
       if opts.virtual_text then
         if opts.virtual_text.format then
           diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
@@ -1804,7 +1834,6 @@ M.handlers.virtual_text = {
         end
       end
 
-      local ns = M.get_namespace(namespace)
       if not ns.user_data.virt_text_ns then
         ns.user_data.virt_text_ns =
           api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_text', ns.name))
@@ -1842,6 +1871,7 @@ M.handlers.virtual_text = {
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('virtual_text_show_autocmd', ns)
     if ns.user_data.virt_text_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
@@ -2053,8 +2083,8 @@ M.handlers.virtual_lines = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    once_buf_loaded(bufnr, function()
-      local ns = M.get_namespace(namespace)
+    local ns = M.get_namespace(namespace)
+    show_once_loaded('virtual_lines_show_autocmd', ns, bufnr, function()
       if not ns.user_data.virt_lines_ns then
         ns.user_data.virt_lines_ns =
           api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
@@ -2101,6 +2131,7 @@ M.handlers.virtual_lines = {
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('virtual_lines_show_autocmd', ns)
     if ns.user_data.virt_lines_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_lines_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
