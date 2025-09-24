@@ -53,7 +53,7 @@ local tests_windows_paths = {
   'c:\\users\\foo\\bar\\..\\',
 }
 
-before_each(clear)
+setup(clear)
 
 describe('vim.fs', function()
   describe('parents()', function()
@@ -354,6 +354,10 @@ describe('vim.fs', function()
       command('edit test/functional/fixtures/tty-test.c')
     end)
 
+    after_each(function()
+      command('bwipe!')
+    end)
+
     it('works with a single marker', function()
       eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
@@ -466,8 +470,9 @@ describe('vim.fs', function()
       eq(
         xdg_config_home .. '/nvim',
         exec_lua(function()
-          vim.env.XDG_CONFIG_HOME = xdg_config_home
-          return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+          return vim._with({ env = { XDG_CONFIG_HOME = xdg_config_home } }, function()
+            return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+          end)
         end)
       )
     end)
