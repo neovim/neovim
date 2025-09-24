@@ -519,14 +519,25 @@ function M.new_session(keep, ...)
   n_processes = n_processes + 1
 
   local new_session = Session.new(proc)
+  -- Make it possible to check whether two sessions are from the same test.
   new_session.data = { test_id = test_id }
   return new_session
 end
 
 busted.subscribe({ 'suite', 'end' }, function()
   M.check_close(true)
-  while n_processes > 0 do
+  local timed_out = false
+  local timer = assert(vim.uv.new_timer())
+  timer:start(10000, 0, function()
+    timed_out = true
+  end)
+  while n_processes > 0 and not timed_out do
     uv.run('once')
+  end
+  timer:close()
+  if timed_out then
+    print(('warning: %d dangling Nvim processes'):format(n_processes))
+    io.stdout:flush()
   end
 end)
 
