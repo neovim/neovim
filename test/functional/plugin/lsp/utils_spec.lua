@@ -184,7 +184,6 @@ describe('vim.lsp.util', function()
     end
 
     before_each(function()
-      n.clear()
       local _ = Screen.new(80, 80)
       feed('79i<CR><Esc>') -- fill screen with empty lines
     end)
@@ -280,7 +279,6 @@ describe('vim.lsp.util', function()
 
   describe('open_floating_preview', function()
     before_each(function()
-      n.clear()
       Screen.new(10, 10)
       feed('9i<CR><Esc>G4k')
     end)
