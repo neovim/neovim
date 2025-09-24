@@ -1921,6 +1921,7 @@ This does NOT work: >
 			Set environment variable {env-name} to the result of
 			the expression {expr1}.  The type is always String.
 :let ${env-name} .= {expr1}
+:let ${env-name} ..= {expr1}
 			Append {expr1} to the environment variable {env-name}.
 			If the environment variable didn't exist yet this
 			works like "=".
@@ -1940,6 +1941,7 @@ This does NOT work: >
 			that would match everywhere.
 
 :let @{reg-name} .= {expr1}
+:let @{reg-name} ..= {expr1}
 			Append {expr1} to register {reg-name}.  If the
 			register was empty it's like setting it to {expr1}.
 
@@ -1954,6 +1956,7 @@ This does NOT work: >
 				:let &path = &path .. ',/usr/local/include'
 
 :let &{option-name} .= {expr1}
+:let &{option-name} ..= {expr1}
 			For a string option: Append {expr1} to the value.
 			Does not insert a comma like |:set+=|.
 
@@ -1963,16 +1966,18 @@ This does NOT work: >
 			{expr1}.
 
 :let &l:{option-name} = {expr1}
-:let &l:{option-name} .= {expr1}
 :let &l:{option-name} += {expr1}
 :let &l:{option-name} -= {expr1}
+:let &l:{option-name} .= {expr1}
+:let &l:{option-name} ..= {expr1}
 			Like above, but only set the local value of an option
 			(if there is one).  Works like |:setlocal|.
 
 :let &g:{option-name} = {expr1}
-:let &g:{option-name} .= {expr1}
 :let &g:{option-name} += {expr1}
 :let &g:{option-name} -= {expr1}
+:let &g:{option-name} .= {expr1}
+:let &g:{option-name} ..= {expr1}
 			Like above, but only set the global value of an option
 			(if there is one).  Works like |:setglobal|.
 
@@ -1995,11 +2000,15 @@ This does NOT work: >
 				:echo x
 <			The result is [0, 2].
 
-:let [{name1}, {name2}, ...] .= {expr1}
 :let [{name1}, {name2}, ...] += {expr1}
 :let [{name1}, {name2}, ...] -= {expr1}
-			Like above, but append/add/subtract the value for each
-			|List| item.
+`:let [{name1}, {name2}, ...] *= {expr1}`
+:let [{name1}, {name2}, ...] /= {expr1}
+:let [{name1}, {name2}, ...] %= {expr1}
+:let [{name1}, {name2}, ...] .= {expr1}
+:let [{name1}, {name2}, ...] ..= {expr1}
+			Like above, but add, subtract, multiply, divide,
+			modulo, or append the value for each |List| item.
 
 :let [{name}, ..., ; {lastname}] = {expr1}				*E452*
 			Like |:let-unpack| above, but the |List| may have more
@@ -2009,10 +2018,11 @@ This does NOT work: >
 			Example: >
 				:let [a, b; rest] = ["aval", "bval", 3, 4]
 <
-:let [{name}, ..., ; {lastname}] .= {expr1}
 :let [{name}, ..., ; {lastname}] += {expr1}
 :let [{name}, ..., ; {lastname}] -= {expr1}
-			Like above, but append/add/subtract the value for each
+:let [{name}, ..., ; {lastname}] .= {expr1}
+:let [{name}, ..., ; {lastname}] ..= {expr1}
+			Like above, but add/subtract/append the value for each
 			|List| item.
 
 						*:let=<<* *:let-heredoc*

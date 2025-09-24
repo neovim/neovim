@@ -1078,7 +1078,7 @@ These modifiers can be given, in this order:
 	:S	Escape special characters for use with a shell command (see
 		|shellescape()|). Must be the last one. Examples: >
 		    :!dir <cfile>:S
-		    :call system('chmod +w -- ' . expand('%:S'))
+		    :call system('chmod +w -- ' .. expand('%:S'))
 
 Examples, when the file name is "src/version.c", current dir
 "/home/mool/vim": >
@@ -1360,7 +1360,7 @@ the `CmdlineLeavePre` autocmd from the next section): >
 		\ Grep call <SID>VisitFile()
 
 	func s:Grep(arglead, cmdline, cursorpos)
-	  if match(&grepprg, '\$\*') == -1 | let &grepprg .= ' $*' | endif
+	  if match(&grepprg, '\$\*') == -1 | let &grepprg ..= ' $*' | endif
 	  let cmd = substitute(&grepprg, '\$\*', shellescape(escape(a:arglead, '\')), '')
 	  return len(a:arglead) > 1 ? systemlist(cmd) : []
 	endfunc

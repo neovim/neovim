@@ -722,7 +722,7 @@ Otherwise, for the defined variable "g:ftplugin_java_source_path", the local
 value of the 'path' option will be further modified by prefixing the value of
 the variable, e.g.: >
 	let g:ftplugin_java_source_path = $JDK_SRC_PATH
-	let &l:path = g:ftplugin_java_source_path . ',' . &l:path
+	let &l:path = g:ftplugin_java_source_path .. ',' .. &l:path
 <
 and the "gf" command can be used on a fully-qualified type to look for a file
 in the "path" and to try to load it.
