@@ -4,6 +4,7 @@
 " Maintainer: James Eapen <james.eapen@vai.org>
 " Version: 1.2.4
 " Last Change: 2024 Oct 17
+" 2025 Sep 23 by Vim Project update swayconfig syntax #18293
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -60,6 +61,14 @@ syn keyword i3ConfigKeyword xwayland contained skipwhite nextgroup=swayConfigXOp
 syn keyword swayConfigInhibitOpts focus fullscreen open none visible contained
 syn keyword i3ConfigActionKeyword inhibit_idle contained skipwhite nextgroup=swayConfigInhibitOpts
 
+" Primary selection
+" Allow tearing
+syn keyword i3ConfigKeyword primary_selection allow_tearing contained skipwhite nextgroup=i3ConfigBoolean
+
+" Swaybg command
+" Swaynag command
+syn keyword i3ConfigKeyword swaybg_command swaynag_command contained nextgroup=i3ConfigExec
+
 " Bindswitch
 syn match swayConfigBindswitchArgument /--\(locked\|no-warn\|reload\) / contained nextgroup=swayConfigBindswitchArgument,swayConfigBindswitchType
 syn keyword swayConfigBindswitchType lid tablet contained nextgroup=swayConfigBindswitchCombo
@@ -88,7 +97,7 @@ syn match i3ConfigKeyword /titlebar_padding \(\d\+\|\$\S\+\)\( \d\+\)\?$/ contai
 syn match swayConfigDeviceOper /[*:;!]/ contained
 
 " Input devices
-syn keyword swayConfigInputOpts xkb_variant xkb_rules xkb_switch_layout xkb_numlock xkb_file xkb_capslock xkb_model repeat_delay repeat_rate map_to_output map_to_region map_from_region tool_mode accel_profile dwt dwtp drag_lock drag click_method middle_emulation tap events calibration_matrix natural_scroll left_handed pointer_accel scroll_button scroll_factor scroll_method tap_button_map contained skipwhite nextgroup=swayConfigInputOptVals,@i3ConfigValue
+syn keyword swayConfigInputOpts xkb_variant xkb_rules xkb_switch_layout xkb_numlock xkb_file xkb_capslock xkb_model repeat_delay repeat_rate map_to_output map_to_region map_from_region tool_mode accel_profile dwt dwtp drag_lock drag click_method clickfinger_button_map middle_emulation tap events calibration_matrix natural_scroll left_handed pointer_accel scroll_button scroll_button_lock scroll_factor scroll_method tap_button_map contained skipwhite nextgroup=swayConfigInputOptVals,@i3ConfigValue
 syn keyword swayConfigInputOptVals absolute relative adaptive flat none button_areas clickfinger toggle two_finger edge on_button_down lrm lmr next prev pen eraser brush pencil airbrush disabled_on_external_mouse disable enable contained skipwhite nextgroup=swayConfigInputOpts,@i3ConfigValue,swayConfigDeviceOper
 syn match swayConfigDeviceOper /,/ contained nextgroup=swayConfigXkbOptsPair,swayConfigXkbLayout
 syn match swayConfigXkbLayout /[a-z]\+/ contained nextgroup=swayConfigDeviceOper
@@ -96,6 +105,8 @@ syn keyword swayConfigInputOpts xkb_layout contained skipwhite nextgroup=swayCon
 syn match swayConfigXkbOptsPairVal /[0-9a-z_-]\+/ contained contains=i3ConfigNumber skipwhite nextgroup=swayConfigDeviceOper,swayConfigInputOpts
 syn match swayConfigXkbOptsPair /[a-z]\+:/ contained contains=i3ConfigColonOperator nextgroup=swayConfigXkbOptsPairVal
 syn keyword swayConfigInputOpts xkb_options contained skipwhite nextgroup=swayConfigXkbOptsPair
+syn match swayConfigInputAngle /\(3[0-5][0-9]\|[1-2]\?[0-9]\{1,2\}\)\(\.[0-9]\+\)\?/ skipwhite nextgroup=swayConfigInputOpts
+syn keyword swayConfigInputOpts rotation_angle contained skipwhite nextgroup=swayConfigInputAngle
 
 syn region swayConfigInput start=/\s/ skip=/\\$/ end=/\ze[,;]\|$/ contained contains=swayConfigInputOpts,@i3ConfigValue keepend
 syn region swayConfigInput matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigInputOpts,@i3ConfigValue,i3ConfigComment keepend extend
@@ -118,8 +129,8 @@ syn match swayConfigSeatIdent /[^ ]\+/ contained contains=i3ConfigOutputIdent sk
 syn keyword i3ConfigKeyword seat contained skipwhite nextgroup=swayConfigSeatIdent
 
 " Output monitors
-syn keyword swayConfigOutputOpts mode resolution res modeline position pos scale scale_filter subpixel transform disable enable power dpms max_render_time adaptive_sync render_bit_depth contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,swayConfigOutputMode
-syn keyword swayConfigOutputOptVals linear nearest smart rgb bgr vrgb vbgr none clockwise anticlockwise toggle contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue
+syn keyword swayConfigOutputOpts mode resolution res modeline position pos scale scale_filter subpixel transform disable enable power dpms max_render_time adaptive_sync render_bit_depth color_profile allow_tearing contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,swayConfigOutputMode
+syn keyword swayConfigOutputOptVals linear nearest smart rgb bgr vrgb vbgr none clockwise anticlockwise toggle srgb icc contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,i3ConfigShOper
 syn keyword swayConfigOutputBgVals solid_color fill stretch fit center tile contained skipwhite nextgroup=@i3ConfigColVar
 syn match swayConfigOutputBg /[#$]\S\+ solid_color/ contained contains=@i3ConfigColVar,swayConfigOutputBgVals
 syn match swayConfigOutputBg /[^b# '"]\S*/ contained contains=i3ConfigShOper skipwhite nextgroup=swayConfigOutputBgVals
@@ -148,6 +159,7 @@ hi def link swayConfigInputType              i3ConfigMoveType
 hi def link swayConfigInputIdent             i3ConfigMoveDir
 hi def link swayConfigInputOptVals           i3ConfigShParam
 hi def link swayConfigInputOpts              i3ConfigOption
+hi def link swayConfigInputAngle             i3ConfigNumber
 hi def link swayConfigXkbOptsPairVal         i3ConfigParamLine
 hi def link swayConfigXkbOptsPair            i3ConfigShParam
 hi def link swayConfigXkbLayout              i3ConfigParamLine
