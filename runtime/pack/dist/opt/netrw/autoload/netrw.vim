@@ -8,7 +8,7 @@
 " 2025 Sep 05 by Vim Project ensure netrw#fs#Dirname() returns trailing slash #18199
 " 2025 Sep 11 by Vim Project only keep cursor position in tree mode #18275
 " 2025 Sep 17 by Vim Project tighten the regex to handle remote compressed archives #18318
-" 2025 Sep 18 by Vim Project equalalwayse not always respected #18358
+" 2025 Sep 18 by Vim Project 'equalalways' not always respected #18358
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
