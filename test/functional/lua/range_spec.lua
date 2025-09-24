@@ -9,7 +9,6 @@ local insert = n.insert
 
 describe('vim.range', function()
   before_each(clear)
-  after_each(clear)
 
   it('creates a range with or without optional fields', function()
     local range = exec_lua(function()
