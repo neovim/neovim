@@ -48,8 +48,6 @@ describe("api_info()['version']", function()
 end)
 
 describe('api metadata', function()
-  before_each(clear)
-
   local function name_table(entries)
     local by_name = {}
     for _, e in ipairs(entries) do
@@ -131,6 +129,8 @@ describe('api metadata', function()
         clean_level_0(old_api[level])
       end
     end
+    -- No Nvim session will be used in the following tests.
+    n.check_close()
   end)
 
   it('functions are compatible with old metadata or have new level', function()

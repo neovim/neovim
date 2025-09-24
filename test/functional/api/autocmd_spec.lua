@@ -1171,8 +1171,6 @@ describe('autocmd api', function()
 
   describe('nvim_create_augroup', function()
     before_each(function()
-      clear()
-
       api.nvim_set_var('executed', 0)
     end)
 
