@@ -863,8 +863,6 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end)
 
-  after_each(clear)
-
   local function assert_matches(fn)
     retry(nil, nil, function()
       fn(exec_lua('return _G.capture.matches'))
@@ -1261,8 +1259,6 @@ describe('vim.lsp.completion: integration', function()
       vim.fn.complete = vim.schedule_wrap(vim.fn.complete)
     end)
   end)
-
-  after_each(clear)
 
   it('puts cursor at the end of completed word', function()
     local completion_list = {

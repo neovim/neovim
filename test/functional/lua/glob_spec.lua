@@ -5,7 +5,6 @@ local eq = t.eq
 
 describe('glob', function()
   before_each(n.clear)
-  after_each(n.clear)
 
   local match = function(pattern, str)
     return n.exec_lua(function()
