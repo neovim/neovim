@@ -1342,12 +1342,14 @@ file picker: >
 
 	set findfunc=Find
 	func Find(arg, _)
-	  if get(s:, 'filescache', []) == []
-	    let s:filescache = systemlist(
-		\ 'find . -path "*/.git" -prune -o -type f -print')
+	  if empty(s:filescache)
+	    let s:filescache = globpath('.', '**', 1, 1)
+	    call filter(s:filescache, '!isdirectory(v:val)')
+	    call map(s:filescache, "fnamemodify(v:val, ':.')")
 	  endif
 	  return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)
 	endfunc
+	let s:filescache = []
 	autocmd CmdlineEnter : let s:filescache = []
 
 The `:Grep` command searches for lines matching a pattern and updates the
@@ -1358,8 +1360,8 @@ the `CmdlineLeavePre` autocmd from the next section): >
 		\ Grep call <SID>VisitFile()
 
 	func s:Grep(arglead, cmdline, cursorpos)
-	  let cmd = $'grep -REIHns "{a:arglead}" --exclude-dir=.git
-		\ --exclude=".*"'
+	  if match(&grepprg, '\$\*') == -1 | let &grepprg .= ' $*' | endif
+	  let cmd = substitute(&grepprg, '\$\*', shellescape(escape(a:arglead, '\')), '')
 	  return len(a:arglead) > 1 ? systemlist(cmd) : []
 	endfunc
 
