@@ -626,14 +626,12 @@ void pum_redraw(void)
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
   }
-  if (ui_has(kUIMultigrid)) {
-    const char *anchor = pum_above ? "SW" : "NW";
-    int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
-                          pum_row - row_off - pum_win_row_offset, pum_left_col - pum_win_col_offset,
-                          false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
-                          pum_grid.comp_col);
-  }
+  const char *anchor = pum_above ? "SW" : "NW";
+  int row_off = pum_above ? -pum_height : 0;
+  ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
+                        pum_row - row_off - pum_win_row_offset, pum_left_col - pum_win_col_offset,
+                        false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
+                        pum_grid.comp_col);
 
   int scroll_range = pum_size - pum_height;
   // Never display more than we have
@@ -1221,10 +1219,8 @@ void pum_check_clear(void)
       ui_call_popupmenu_hide();
     } else {
       ui_comp_remove_grid(&pum_grid);
-      if (ui_has(kUIMultigrid)) {
-        ui_call_win_close(pum_grid.handle);
-        ui_call_grid_destroy(pum_grid.handle);
-      }
+      ui_call_win_close(pum_grid.handle);
+      ui_call_grid_destroy(pum_grid.handle);
       // TODO(bfredl): consider keeping float grids allocated.
       grid_free(&pum_grid);
     }
@@ -1585,7 +1581,7 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
 
 void pum_ui_flush(void)
 {
-  if (ui_has(kUIMultigrid) && pum_is_drawn && !pum_external && pum_grid.handle != 0
+  if (pum_is_drawn && !pum_external && pum_grid.handle != 0
       && pum_grid.pending_comp_index_update) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
