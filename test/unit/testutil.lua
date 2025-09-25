@@ -352,6 +352,9 @@ local function alloc_log_new()
         end
       end
     end
+    -- JIT-compiled FFI calls cannot call back into Lua, so disable JIT.
+    -- Ref: https://luajit.org/ext_ffi_semantics.html#callback
+    jit.off()
   end
 
   log.set_mocks = child_call(log.set_mocks)
