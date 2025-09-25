@@ -2318,7 +2318,7 @@ describe('typval.c', function()
           return lib.tv_dict_extend(d1, d2, action)
         end, emsg)
       end
-      pending('works (skip due to flakiness)', function()
+      itp('works', function()
         local d1 = dict()
         alloc_log:check({ a.dict(d1) })
         eq({}, dct2tbl(d1))
@@ -3206,7 +3206,7 @@ describe('typval.c', function()
         end)
       end)
       describe('lnum()', function()
-        pending('works (skip due to flakiness)', function()
+        itp('works', function()
           for _, v in ipairs({
             { lib.VAR_NUMBER, { v_number = 42 }, nil, 42 },
             { lib.VAR_STRING, { v_string = to_cstr('100500') }, nil, 100500 },
@@ -3335,7 +3335,7 @@ describe('typval.c', function()
         end
       end
       describe('string()', function()
-        pending('works (skip due to flakiness)', function()
+        itp('works', function()
           local buf = lib.tv_get_string(lua2typvalt(int(1)))
           local buf_chk = lib.tv_get_string_chk(lua2typvalt(int(1)))
           neq(buf, buf_chk)
