@@ -5451,7 +5451,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
 
   // Enter will select a match when the match wasn't inserted and the popup
   // menu is visible.
-  if (compl_no_insert && !started && compl_selected_item != -1) {
+  if (compl_no_insert && !started && !match_at_original_text(compl_shown_match)) {
     compl_enter_selects = true;
   } else {
     compl_enter_selects = !insert_match && compl_match_array != NULL;
