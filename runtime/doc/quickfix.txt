@@ -1440,7 +1440,7 @@ declares an only parameter of type string and puts to use a command equivalent
 of |:make|, and assigning its |Funcref| to the selected key.  For example:
 >vim
 	function! GenericPostCompilerCommand(arguments) abort
-		execute 'make ' . a:arguments
+		execute 'make ' .. a:arguments
 	endfunction
 
 	let g:spotbugs_properties = {
@@ -1471,7 +1471,7 @@ that will arrange for "PostCompilerActionExecutor" to be invoked; and then run
 	function! GenericPreCompilerCommand(arguments) abort
 		if !exists('g:spotbugs_compilation_done')
 			doautocmd java_spotbugs_post User
-			execute 'make ' . a:arguments
+			execute 'make ' .. a:arguments
 			" only run doautocmd when :make was synchronous
 			" see note below
 			doautocmd java_spotbugs_post ShellCmdPost " XXX: (a)
@@ -1484,7 +1484,7 @@ that will arrange for "PostCompilerActionExecutor" to be invoked; and then run
 	function! GenericPreCompilerTestCommand(arguments) abort
 		if !exists('g:spotbugs_test_compilation_done')
 			doautocmd java_spotbugs_post User
-			execute 'make ' . a:arguments
+			execute 'make ' .. a:arguments
 			" only run doautocmd when :make was synchronous
 			" see note below
 			doautocmd java_spotbugs_post ShellCmdPost " XXX: (b)
