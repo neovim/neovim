@@ -221,6 +221,10 @@ preprocess_patch() {
   local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|gui.*\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|listener\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|python2\.vim\|pyx2\.vim\|restricted\.vim\|shortpathname\.vim\|sound\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
+  # Remove runtime/*/testdir/ files
+  local na_runtime_testdir='.\+'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\f\+/testdir/\%('${na_runtime_testdir}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+
   # Remove N/A src/*.[ch] files: sound.c, version.c
   local na_src_c='sound\|version'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%('"${na_src_c}"'\)\.[ch]\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
