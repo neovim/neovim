@@ -1802,6 +1802,52 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                (navigation, hover) may or may not work
                                depending on the language server, even if the
                                server doesn't require a workspace.
+      • {features}?            (`vim.lsp.ClientConfig.Features`) An optional
+                               table to enable certain features for the
+                               client, such as completion, inlay hints, etc.
+                               See |vim.lsp.Client.Features| for more
+                               information. See
+                               |vim.lsp.ClientConfig.Features|.
+
+*vim.lsp.ClientConfig.Features*
+    A table representing which features to enable for a client. A `true` value
+    will enable the feature with the default configuration. A configuration
+    table can be passed to enable the feature with customizations. A `false`
+    value means the feature will be disabled.
+
+    Example: >lua
+        vim.lsp.config('lua_ls', {
+          features = {
+            semantic_tokens = false,
+            completion = true,
+          }
+        })
+<
+
+    Fields: ~
+      • {completion}?       (`boolean|vim.lsp.completion.BufferOpts`) Whether
+                            to enable |lsp-autocompletion|. Disabled by
+                            default. Opts are passed to
+                            |vim.lsp.completion.enable()|.
+      • {semantic_tokens}?  (`boolean|vim.lsp.semantic_tokens.start.Opts`)
+                            Whether to enable |lsp-semantic_tokens|. Enabled
+                            by default. Opts are passed to
+                            |vim.lsp.semantic_tokens.start()|.
+      • {inlay_hints}?      (`boolean`) Whether to enable |lsp-inlay_hint|.
+                            Disabled by default.
+      • {document_color}?   (`boolean|vim.lsp.document_color.enable.Opts`)
+                            Whether to enable |lsp-document_color|. Enabled by
+                            default. Opts are passed to
+                            |vim.lsp.document_color.enable()|.
+      • {diagnostics}?      (`boolean`) Whether to enable |lsp-diagnostic|.
+                            Enabled by default.
+      • {folding}?          (`boolean`) Whether to enable LSP folding ranges.
+                            Enabled by default.
+
+                            NOTE: This does NOT set the |'foldexpr'| to
+                            |vim.lsp.foldexpr()|.
+      • {linked_editing}?   (`boolean`) Whether to enable
+                            |lsp-linked_editing_range|. Disabled by default.
 
 
 Client:cancel_request({id})                          *Client:cancel_request()*
