@@ -98,6 +98,33 @@ local async = require('vim._async')
 
 local M = {}
 
+-- Custom Build Commands -------------------------------------------------------
+
+--- @async
+--- @param cmd string
+--- @param cwd string
+--- @return string
+local function run_build_cmd(cmd, cwd)
+  local sys_opts = { cwd = cwd, text = true }
+  local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
+  async.await(1, vim.schedule)
+  if out.code ~= 0 then
+    local err_msg = ('Build command failed:\n`%s`\n\nSTDOUT:\n%s\n\nSTDERR:\n%s'):format(
+      cmd,
+      out.stdout,
+      out.stderr
+    )
+    error(err_msg)
+  end
+  local stdout = assert(out.stdout)
+  if stdout ~= '' then
+    vim.schedule(function()
+      vim.notify(('vim.pack build output for %s:\n%s'):format(cwd, stdout), vim.log.levels.INFO)
+    end)
+  end
+  return stdout
+end
+
 -- Git ------------------------------------------------------------------------
 
 --- @async
@@ -241,9 +268,10 @@ end
 ---   inside the version constraint.
 --- @field version? string|vim.VersionRange
 ---
+--- @field build? string
 --- @field data? any Arbitrary data associated with a plugin.
 
---- @alias vim.pack.SpecResolved { src: string, name: string, version: nil|string|vim.VersionRange, data: any|nil }
+--- @alias vim.pack.SpecResolved { src: string, name: string, version: nil|string|vim.VersionRange, build: string|nil, data: any|nil }
 
 --- @param spec string|vim.pack.Spec
 --- @return vim.pack.SpecResolved
@@ -255,9 +283,14 @@ local function normalize_spec(spec)
   name = (type(name) == 'string' and name or ''):match('[^/]+$') or ''
   vim.validate('spec.name', name, is_nonempty_string, true, 'non-empty string')
   vim.validate('spec.version', spec.version, is_version, true, 'string or vim.VersionRange')
-  return { src = spec.src, name = name, version = spec.version, data = spec.data }
+  return {
+    src = spec.src,
+    name = name,
+    version = spec.version,
+    build = spec.build,
+    data = spec.data,
+  }
 end
-
 --- @class (private) vim.pack.PlugInfo
 --- @field err string The latest error when working on plugin. If non-empty,
 ---   all further actions should not be done (including triggering events).
@@ -564,7 +597,10 @@ local function install_list(plug_list, confirm)
     -- Do not skip checkout even if HEAD and target have same commit hash to
     -- have new repo in expected detached HEAD state and generated help files.
     checkout(p, timestamp, false)
-
+    -- Run the build command if it exists
+    if p.spec.build then
+      run_build_cmd(p.spec.build, p.path)
+    end
     -- "Install" event is triggered after "update" event intentionally to have
     -- it indicate "plugin is installed in its correct initial version"
     trigger_event(p, 'PackChanged', 'install')
