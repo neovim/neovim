@@ -260,9 +260,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       }
     }
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
+    int size = (flags & WSP_VERT) ? fconfig.width : fconfig.height;
 
     TRY_WRAP(err, {
-      int size = (flags & WSP_VERT) ? fconfig.width : fconfig.height;
       if (parent == NULL || parent == curwin) {
         wp = win_split_ins(size, flags, NULL, 0, NULL);
       } else {
@@ -277,6 +277,13 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     });
     if (wp) {
       wp->w_config = fconfig;
+      // Without room for the requested size, windows may have been equalized instead.
+      // If it differs from what was requested, try to set it again now.
+      if ((flags & WSP_VERT) && wp->w_width != size) {
+        win_setwidth_win(size, wp);
+      } else if (!(flags & WSP_VERT) && wp->w_height != size) {
+        win_setheight_win(size, wp);
+      }
     }
   } else {
     if (!check_split_disallowed_err(curwin, err)) {
