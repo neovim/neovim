@@ -458,8 +458,8 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
 
   // Check for inline virtual text after the end of the line.
   if (len == MAXCOL && csarg->virt_row >= 0 && *ci.ptr == NUL) {
-    (void)charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
-    vcol += csarg->cur_text_width_left + csarg->cur_text_width_right;
+    int head = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).head;
+    vcol += csarg->cur_text_width_left + csarg->cur_text_width_right + head;
     vcol_arg = vcol > MAXCOL ? MAXCOL : (int)vcol;
   }
 

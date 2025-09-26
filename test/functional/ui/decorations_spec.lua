@@ -3097,27 +3097,29 @@ describe('decorations: inline virtual text', function()
     clear()
     screen = Screen.new(50, 3)
     screen:set_default_attr_ids {
-      [1] = {bold=true, foreground=Screen.colors.Blue};
-      [2] = {foreground = Screen.colors.Brown};
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen};
-      [4] = {background = Screen.colors.Red1, foreground = Screen.colors.Gray100};
-      [5] = {background = Screen.colors.Red1, bold = true};
-      [6] = {foreground = Screen.colors.DarkCyan};
-      [7] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Black};
-      [8] = {bold = true};
-      [9] = {background = Screen.colors.Plum1};
-      [10] = {foreground = Screen.colors.SlateBlue};
-      [11] = {blend = 30, background = Screen.colors.Red1};
-      [12] = {background = Screen.colors.Yellow};
-      [13] = {reverse = true};
-      [14] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.LightMagenta};
-      [15] = {bold = true, reverse = true};
-      [16] = {foreground = Screen.colors.Red};
-      [17] = {background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue};
-      [18] = {background = Screen.colors.LightGrey, foreground = Screen.colors.Red};
-      [19] = {background = Screen.colors.Yellow, foreground = Screen.colors.SlateBlue};
-      [20] = {background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue};
-      [21] = {reverse = true, foreground = Screen.colors.SlateBlue}
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { foreground = Screen.colors.Brown },
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen },
+      [4] = { background = Screen.colors.Red1, foreground = Screen.colors.Gray100 },
+      [5] = { background = Screen.colors.Red1, bold = true },
+      [6] = { foreground = Screen.colors.DarkCyan },
+      [7] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black },
+      [8] = { bold = true },
+      [9] = { background = Screen.colors.Plum1 },
+      [10] = { foreground = Screen.colors.SlateBlue },
+      [11] = { blend = 30, background = Screen.colors.Red1 },
+      [12] = { background = Screen.colors.Yellow },
+      [13] = { reverse = true },
+      [14] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.LightMagenta },
+      [15] = { bold = true, reverse = true },
+      [16] = { foreground = Screen.colors.Red },
+      [17] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue },
+      [18] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Red },
+      [19] = { background = Screen.colors.Yellow, foreground = Screen.colors.SlateBlue },
+      [20] = { background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue },
+      [21] = { reverse = true, foreground = Screen.colors.SlateBlue },
+      [22] = { background = Screen.colors.Gray90 },
+      [23] = { background = Screen.colors.Gray90, foreground = Screen.colors.Blue, bold = true },
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -4891,6 +4893,58 @@ describe('decorations: inline virtual text', function()
       {1:~                                                 }|*6
                                                         |
     ]])
+  end)
+
+  it('line size is correct with inline virt text at EOL and showbreak', function()
+    screen:try_resize(50, 8)
+    insert(('0123456789'):rep(5) .. '\nfoo\nbar')
+    api.nvim_buf_set_extmark(0, ns, 0, 50, { virt_text = { { ('x'):rep(49), 'ErrorMsg' } }, virt_text_pos = 'inline' })
+
+    command([[set showbreak=>\  cursorline]])
+    screen:expect([[
+      01234567890123456789012345678901234567890123456789|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      {1:> }{4:x}                                               |
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+    eq(3, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+
+    feed('gg$x<C-O>')
+    screen:expect([[
+      0123456789012345678901234567890123456789012345678{4:x}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      foo                                               |
+      {22:ba^r                                               }|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+
+    command('set list listchars=eol:$')
+    screen:expect([[
+      0123456789012345678901234567890123456789012345678{4:x}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}|
+      {1:> $}                                               |
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+    eq(3, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+
+    feed('gg$x<C-O>')
+    screen:expect([[
+      012345678901234567890123456789012345678901234567{4:xx}|
+      {1:> }{4:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}{1:$}|
+      foo{1:$}                                              |
+      {22:ba^r}{23:$}{22:                                              }|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
   end)
 end)
 
