@@ -417,6 +417,16 @@ by the semantic component they are testing.
       sense, before creating a new one.
 
 
+Fixing tests
+============
+
+> nvim took 2006 milliseconds to exit after last test
+> This indicates a likely problem with the test even if it passed!
+
+This may indicate a leak, because Nvim waits on uv handles before exiting.
+Example: https://github.com/neovim/neovim/pull/35768
+
+
 Lint
 ====
 
