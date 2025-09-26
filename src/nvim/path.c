@@ -496,8 +496,16 @@ char *FullName_save(const char *fname, bool force)
   char *buf = xmalloc(MAXPATHL);
   if (vim_FullName(fname, buf, MAXPATHL, force) == FAIL) {
     xfree(buf);
-    return xstrdup(fname);
+
+    char *result = xstrdup(fname);
+
+    MUTATE_PATH_FOR_VIM(result);
+
+    return result;
   }
+
+  MUTATE_PATH_FOR_VIM(buf);
+
   return buf;
 }
 
@@ -1341,6 +1349,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
       char *t = backslash_halve_save(p);
 
+      MUTATE_PATH_FOR_VIM(t);
+
       // When EW_NOTFOUND is used, always add files and dirs.  Makes
       // "vim c:/" work.
       if (flags & EW_NOTFOUND) {
@@ -1444,15 +1454,10 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
 }
 
 #ifdef BACKSLASH_IN_FILENAME
-/// Replace all slashes by backslashes.
-/// This used to be the other way around, but MS-DOS sometimes has problems
-/// with slashes (e.g. in a command name).  We can't have mixed slashes and
-/// backslashes, because comparing file names will not work correctly.  The
-/// commands that use a file name should try to avoid the need to type a
-/// backslash twice.
-/// When 'shellslash' set do it the other way around.
-/// When the path looks like a URL leave it unmodified.
-void slash_adjust(char *p)
+/// Replace all backslashes with slashes
+/// Vim prefers slashes, 
+/// use to convert os-specific path formats to the vim-preferred format
+void path_separators_to_slash(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   if (path_with_url(p)) {
@@ -1460,7 +1465,7 @@ void slash_adjust(char *p)
   }
 
   if (*p == '`') {
-    // don't replace backslash in backtick quoted strings
+    // don't replace in backtick quoted strings?  Leftover from slash_adjust
     const size_t len = strlen(p);
     if (len > 2 && *(p + len - 1) == '`') {
       return;
@@ -1468,12 +1473,38 @@ void slash_adjust(char *p)
   }
 
   while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
+    if (*p == '\\') {
+      *p = '/';
     }
     MB_PTR_ADV(p);
   }
 }
+
+/// Replace slashes with backslashes
+/// Use specifically to convert a path from vim-preferred slashes, for an os-specific function call
+void path_separators_to_backslash(char *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (path_with_url(p)) {
+    return;
+  }
+
+  if (*p == '`') {
+    // don't replace in backtick quoted strings?  Leftover from slash_adjust
+    const size_t len = strlen(p);
+    if (len > 2 && *(p + len - 1) == '`') {
+      return;
+    }
+  }
+
+  while (*p) {
+    if (*p == '/') {
+      *p = '\\';
+    }
+    MB_PTR_ADV(p);
+  }
+}
+
 #endif
 
 /// Add a file to a file list.  Accepted flags:
@@ -1521,9 +1552,7 @@ void addfile(garray_T *gap, char *f, int flags)
   char *p = xmalloc(strlen(f) + 1 + isdir);
 
   STRCPY(p, f);
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(p);
-#endif
+
   // Append a slash or backslash after directory names if none is present.
   if (isdir && (flags & EW_ADDSLASH)) {
     add_pathsep(p);
@@ -1813,9 +1842,6 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
-#ifdef MSWIN
-    slash_adjust(buf);
-#endif
     return FAIL;
   }
 
@@ -1828,9 +1854,6 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
-#ifdef MSWIN
-  slash_adjust(buf);
-#endif
   return rv;
 }
 
@@ -1859,13 +1882,16 @@ char *fix_fname(const char *fname)
     return FullName_save(fname, false);
   }
 
-  fname = xstrdup(fname);
+  char *fname_copy = xstrdup(fname);
+
+  //Hopefully catches most incoming filenames
+  MUTATE_PATH_FOR_VIM(fname_copy);
 
 # ifdef CASE_INSENSITIVE_FILENAME
-  path_fix_case((char *)fname);  // set correct case for file name
+  path_fix_case(fname_copy);  // set correct case for file name
 # endif
 
-  return (char *)fname;
+  return fname_copy;
 #endif
 }
 
