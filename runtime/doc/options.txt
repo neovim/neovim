@@ -2891,6 +2891,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  foldclose	FoldColumn		|hl-FoldColumn|
 	  foldsep	FoldColumn		|hl-FoldColumn|
 	  diff		DiffDelete		|hl-DiffDelete|
+	  msgsep	MsgSeparator		|hl-MsgSeparator|
 	  eob		EndOfBuffer		|hl-EndOfBuffer|
 	  lastline	NonText			|hl-NonText|
 	  trunc		one of the many Popup menu highlighting groups like
