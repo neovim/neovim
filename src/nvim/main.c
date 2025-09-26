@@ -92,6 +92,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/shada.h"

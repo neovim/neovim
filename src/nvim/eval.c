@@ -73,6 +73,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/strings.h"
@@ -5865,7 +5866,7 @@ static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
 }
 
 /// os_system wrapper. Handles 'verbose', :profile, and v:shell_error.
-void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist)
+static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist)
 {
   proftime_T wait_time;
   bool profiling = do_profiling == PROF_YES;
@@ -5961,6 +5962,17 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 #endif
     rettv->vval.v_string = res;
   }
+}
+
+/// f_system - the Vimscript system() function
+void f_system(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  get_system_output_as_rettv(argvars, rettv, false);
+}
+
+void f_systemlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  get_system_output_as_rettv(argvars, rettv, true);
 }
 
 /// Get a callback from "arg".  It can be a Funcref or a function name.

@@ -114,6 +114,7 @@
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/search.h"
@@ -7948,17 +7949,6 @@ static void f_synstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       tv_list_append_number(rettv->vval.v_list, id);
     }
   }
-}
-
-/// f_system - the Vimscript system() function
-static void f_system(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  get_system_output_as_rettv(argvars, rettv, false);
-}
-
-static void f_systemlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  get_system_output_as_rettv(argvars, rettv, true);
 }
 
 /// "tabpagebuflist()" function

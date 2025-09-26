@@ -65,6 +65,7 @@
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/register.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
