@@ -607,7 +607,7 @@ function protocol.make_client_capabilities()
       inlayHint = {
         refreshSupport = true,
       },
-      workspace = {
+      diagnostics = {
         refreshSupport = false,
       },
     },
