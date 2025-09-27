@@ -2612,6 +2612,7 @@ vim.bo.ft = vim.bo.filetype
 ---   foldclose	FoldColumn		`hl-FoldColumn`
 ---   foldsep	FoldColumn		`hl-FoldColumn`
 ---   diff		DiffDelete		`hl-DiffDelete`
+---   msgsep	MsgSeparator		`hl-MsgSeparator`
 ---   eob		EndOfBuffer		`hl-EndOfBuffer`
 ---   lastline	NonText			`hl-NonText`
 ---   trunc		one of the many Popup menu highlighting groups like
