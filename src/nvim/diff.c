@@ -2570,7 +2570,7 @@ static int parse_diffanchors(bool check_only, buf_T *buf, linenr_T *anchors, int
     curbuf = buf;
     curwin = bufwin;
     const char *errormsg = NULL;
-    linenr_T lnum = get_address(NULL, &dia, ADDR_LINES, check_only, true, false, 1, &errormsg);
+    pos_T pos = get_address(NULL, &dia, ADDR_LINES, check_only, true, false, 1, &errormsg);
     curbuf = orig_curbuf;
     curwin = orig_curwin;
 
@@ -2585,13 +2585,13 @@ static int parse_diffanchors(bool check_only, buf_T *buf, linenr_T *anchors, int
     }
 
     if (!check_only
-        && (lnum == MAXLNUM || lnum <= 0 || lnum > buf->b_ml.ml_line_count + 1)) {
+        && (pos.lnum == MAXLNUM || pos.lnum <= 0 || pos.lnum > buf->b_ml.ml_line_count + 1)) {
       emsg(_(e_invrange));
       return FAIL;
     }
 
     if (anchors != NULL) {
-      anchors[i] = lnum;
+      anchors[i] = pos.lnum;
     }
 
     if (*dia == ',') {
