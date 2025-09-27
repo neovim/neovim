@@ -1683,6 +1683,7 @@ local filename = {
   ['.swcrc'] = 'json',
   ['composer.lock'] = 'json',
   ['symfony.lock'] = 'json',
+  ['nvim-pack.lock'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
   ['.hintrc'] = 'jsonc',
