@@ -22,6 +22,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/clipboard.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
