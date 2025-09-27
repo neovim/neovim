@@ -24,6 +24,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -108,6 +109,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
   wp->w_vsep_width = 0;
+  wp->w_want_scrollbar = fconfig.scrollbar;
 
   win_config_float(wp, fconfig);
   win_set_inner_size(wp, true);
@@ -436,4 +438,36 @@ win_T *win_float_create(bool enter, bool new_buf)
     win_enter(wp, false);
   }
   return wp;
+}
+
+
+void win_update_scrollbar_state(win_T *wp, int *thumb_pos, int *thumb_size)
+{
+  int height = wp->w_view_height;
+  linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+  linenr_T visible_start = wp->w_topline;
+  linenr_T visible_end = visible_start + height - 1;
+  bool content_fits = (visible_start == 1) && (visible_end >= line_count);
+  if (wp->w_p_wrap && !content_fits) {
+    int lines_shown = plines_m_win(wp, visible_start, MIN(visible_end, line_count), height);
+    content_fits = (visible_start == 1) && (lines_shown >= line_count);
+  }
+
+  wp->w_has_scrollbar = wp->w_want_scrollbar
+                        && !wp->w_buffer->terminal
+                        && (wp->w_topline > 1 || !content_fits);
+
+  if (wp->w_has_scrollbar) {
+    int total_content_lines = wp->w_p_wrap
+                              ? plines_m_win(wp, 1, line_count, INT_MAX) : line_count;
+
+    double visible_ratio = (double)height / total_content_lines;
+    int min_thumb = MAX(1, height / 10);
+    *thumb_size = MAX(min_thumb, (int)(visible_ratio * height));
+    int scrollable_area = height - *thumb_size;
+    int scroll_offset = wp->w_p_wrap
+                        ? plines_m_win(wp, 1, wp->w_topline - 1, INT_MAX) : (wp->w_topline - 1);
+    *thumb_pos = scroll_offset * scrollable_area / (total_content_lines - height);
+    *thumb_pos = MIN(*thumb_pos, scrollable_area);
+  }
 }

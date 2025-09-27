@@ -1007,6 +1007,7 @@ typedef struct {
   bool fixed;
   bool hide;
   int _cmdline_offset;
+  bool scrollbar;
 } WinConfig;
 
 #define WIN_CONFIG_INIT ((WinConfig){ .height = 0, .width = 0, \
@@ -1374,4 +1375,7 @@ struct window_S {
   size_t w_winbar_click_defs_size;              // Size of the w_winbar_click_defs array
   StlClickDefinition *w_statuscol_click_defs;   // Status column click definitions
   size_t w_statuscol_click_defs_size;           // Size of the w_statuscol_click_defs array
+                                                //
+  bool w_want_scrollbar;                // when false don't use a scrollbar
+  bool w_has_scrollbar;                 // true if scrollbar displayed otherwise false
 };

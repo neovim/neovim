@@ -1875,6 +1875,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - split: Split direction: "left", "right", "above", "below".
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
+--- - scrollbar: If true then display scrollbar on the right border when text does not fit.
+---   `hl-FloatSbarThumb` highlight is used. Requires `border` and the right border set.
 --- @return integer # |window-ID|, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 

@@ -345,6 +345,7 @@ static const char *highlight_init_both[] = {
   "default link @lsp.type.variable      @variable",
 
   "default link @lsp.mod.deprecated DiagnosticDeprecated",
+  "default link ScrollbarThumb PmenuThumb",
 
   NULL
 };
