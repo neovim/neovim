@@ -1458,10 +1458,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     csarg.max_head_vcol = start_col;
     int vcol = wlv.vcol;
     StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
-    while (vcol < start_col && *ci.ptr != NUL) {
+    while (vcol < start_col) {
       cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg);
       vcol += cs.width;
       prev_ptr = ci.ptr;
+      if (*prev_ptr == NUL) {
+        break;
+      }
       ci = utfc_next(ci);
       if (wp->w_p_list) {
         in_multispace = *prev_ptr == ' ' && (*ci.ptr == ' '
