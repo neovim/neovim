@@ -162,7 +162,6 @@ ifneq ($(wildcard build),)
 	$(CMAKE) --build build --target clean
 endif
 	$(MAKE) -C test/old/testdir clean
-	$(MAKE) -C runtime/indent clean
 
 distclean:
 	$(call rmdir, $(DEPS_BUILD_DIR))
