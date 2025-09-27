@@ -196,47 +196,47 @@ preprocess_patch() {
 
   # Remove Filelist, README
   local na_files='Filelist\|README.*'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/\<\%('"${na_files}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/\<\%('"${na_files}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove *.proto, Make*, INSTALL*, gui_*, beval.*, some if_*, gvim, libvterm, tee, VisVim, xpm, xxd
   local na_src='auto\|configure.*\|GvimExt\|hardcopy.*\|libvterm\|proto\|tee\|VisVim\|xpm\|xxd\|Make.*\|INSTALL.*\|beval.*\|gui.*\|if_cscop\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove runtime/print/
   local na_rt='print\/.*'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('"${na_rt}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/\<\%('"${na_rt}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove unwanted Vim doc files.
   local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|testing\.txt\|todo\.txt\|vim9\.txt\|tags'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
   # Remove gui, setup, screen dumps, testdir/Make_*.mak files
   local na_src_testdir='gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/testdir/\<\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove testdir/test_*.vim files
   local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|gui.*\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|listener\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|python2\.vim\|pyx2\.vim\|restricted\.vim\|shortpathname\.vim\|sound\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove runtime/*/testdir/ files
   local na_runtime_testdir='.\+'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\f\+/testdir/\%('${na_runtime_testdir}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/\f\+/testdir/\%('${na_runtime_testdir}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove N/A src/*.[ch] files: sound.c, version.c
   local na_src_c='sound\|version'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%('"${na_src_c}"'\)\.[ch]\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/\<\%('"${na_src_c}"'\)\.[ch]\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove some *.po files. #5622
   # Also remove vim.pot which is updated on almost every source change.
   local na_po='sjiscorr\.c\|ja\.sjis\.po\|ko\.po\|pl\.cp1250\.po\|pl\.po\|ru\.cp1251\.po\|uk\.cp1251\.po\|zh_CN\.cp936\.po\|zh_CN\.po\|zh_TW\.po\|vim\.pot'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\<\%('${na_po}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/src/po/\<\%('${na_po}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove vimrc_example.vim
   local na_vimrcexample='vimrc_example\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('${na_vimrcexample}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/\<\%('${na_vimrcexample}'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Rename src/testdir/ paths to test/old/testdir/
   LC_ALL=C sed -Ee 's/( [ab])\/src\/testdir/\1\/test\/old\/testdir/g' \
