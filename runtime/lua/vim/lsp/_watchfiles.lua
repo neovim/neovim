@@ -58,7 +58,7 @@ function M.register(reg, client_id)
   ---@type table<string, {pattern: vim.lpeg.Pattern, kind: lsp.WatchKind}[]> by base_dir
   local watch_regs = vim.defaulttable()
   for _, w in ipairs(register_options.watchers) do
-    local kind = w.kind
+    local kind = (w.kind ~= vim.NIL and w.kind)
       or (protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete)
     local glob_pattern = w.globPattern
 
