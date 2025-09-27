@@ -465,7 +465,6 @@ end
 --- @param generics? table<string,string>
 --- @param default? string
 local function render_type(ty, generics, default)
-  -- TODO(lewis6991): Document LSP protocol types
   ty = ty:gsub('vim%.lsp%.protocol%.Method.[%w.]+', 'string')
 
   if generics then

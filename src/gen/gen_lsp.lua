@@ -154,6 +154,7 @@ local function write_to_vim_protocol(protocol)
         { title = 'Request', methods = protocol.requests },
         { title = 'Notification', methods = protocol.notifications },
       }) do
+        output[#output + 1] = ('--- LSP %s (direction: %s)'):format(b.title, dir)
         output[#output + 1] = ('--- @alias %s.%s'):format(alias, b.title)
         for _, item in ipairs(b.methods) do
           if item.messageDirection == dir then
@@ -164,6 +165,7 @@ local function write_to_vim_protocol(protocol)
       end
 
       vim.list_extend(output, {
+        ('--- LSP Message (direction: %s).'):format(dir),
         ('--- @alias %s'):format(alias),
         ('--- | %s.Request'):format(alias),
         ('--- | %s.Notification'):format(alias),
