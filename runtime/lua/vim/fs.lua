@@ -256,16 +256,20 @@ end
 --- local files = vim.fs.find(function(name, path)
 ---   return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
 --- end, { limit = math.huge, type = 'file' })
---- ```
 ---
+--- -- Find files with globbing
+--- local files = vim.fs.find({ glob = "*.cpp" }, { limit = math.huge })
+--- ```
 ---@since 10
----@param names (string|string[]|fun(name: string, path: string): boolean) Names of the items to find.
+---@param names (string|string[]|table|fun(name: string, path: string): boolean) Names of the items to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
 ---             If {names} is a function, it is called for each traversed item with args:
 ---             - name: base name of the current item
 ---             - path: full path of the current item
 ---
 ---             The function should return `true` if the given item is considered a match.
+---
+---             When {names} is a table, the `glob` field is used to perform glob matching.
 ---
 ---@param opts? vim.fs.find.Opts Optional keyword arguments:
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
@@ -281,6 +285,13 @@ function M.find(names, opts)
 
   if type(names) == 'string' then
     names = { names }
+  end
+
+  if type(names) == 'table' and names.glob then
+    local pattern = vim.glob.to_lpeg(names.glob)
+    names = function(name, _)
+      return pattern:match(name) ~= nil
+    end
   end
 
   local path = opts.path or assert(uv.cwd())
