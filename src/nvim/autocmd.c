@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/converter.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
@@ -110,6 +112,18 @@ static char *old_termresponse = NULL;
 //  ID -> name
 static Map(String, int) map_augroup_name_to_id = MAP_INIT;
 static Map(int, String) map_augroup_id_to_name = MAP_INIT;
+
+void autocmd_init(void)
+{
+  deferred_autocmd_events = multiqueue_new_child(main_loop.events);
+}
+
+#ifdef EXITFREE
+void autocmd_free_all_mem(void)
+{
+  multiqueue_free(deferred_autocmd_events);
+}
+#endif
 
 static void augroup_map_del(int id, const char *name)
 {
@@ -1491,6 +1505,77 @@ win_found:
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
   }
+}
+
+/// Schedules an autocommand event, to be executed at the next event-loop tick.
+///
+/// @param event event that occurred
+/// @param fname filename, NULL or empty means use actual file name
+/// @param fname_io filename to use for <afile> on cmdline,
+///                 NULL means use `fname`.
+/// @param group autocmd group ID or AUGROUP_ALL
+/// @param buf Buffer for <abuf>
+/// @param eap Ex command arguments
+void aucmd_defer(event_T event, char *fname, char *fname_io, int group, buf_T *buf, exarg_T *eap,
+                 Object *data)
+{
+  DeferredEvent *evdata = xmalloc(sizeof(DeferredEvent));
+  evdata->event = event;
+  evdata->fname = fname;
+  evdata->fname_io = fname_io;
+  evdata->group = group;
+  evdata->buf = buf->handle;
+  evdata->eap = eap;
+  if (data) {
+    evdata->data = xmalloc(sizeof(Object));
+    *evdata->data = copy_object(*data, NULL);
+  } else {
+    evdata->data = NULL;
+  }
+
+  multiqueue_put(deferred_autocmd_events, deferred_event, evdata);
+}
+
+/// Execute a deferred autocommand event
+static void deferred_event(void **argv)
+{
+  DeferredEvent *e = argv[0];
+  event_T event = e->event;
+  char *fname = e->fname;
+  char *fname_io = e->fname_io;
+  int group = e->group;
+  exarg_T *eap = e->eap;
+  Object *data = e->data;
+
+  Error err = ERROR_INIT;
+  buf_T *buf = find_buffer_by_handle(e->buf, &err);
+  if (buf) {
+    // set v:event with event data (if any)
+    save_v_event_T save_v_event;
+    dict_T *v_event = get_v_event(&save_v_event);
+    if (data && data->type == kObjectTypeDict) {
+      for (size_t i = 0; i < data->data.dict.size; i++) {
+        KeyValuePair item = data->data.dict.items[i];
+        typval_T tv;
+        object_to_vim(item.value, &tv, &err);
+        if (ERROR_SET(&err)) {
+          api_clear_error(&err);
+          continue;
+        }
+        tv_dict_add_tv(v_event, item.key.data, item.key.size, &tv);
+      }
+    }
+    tv_dict_set_keys_readonly(v_event);
+
+    apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data);
+    restore_v_event(v_event, &save_v_event);
+  }
+
+  if (data) {
+    api_free_object(*data);
+    xfree(data);
+  }
+  xfree(e);
 }
 
 /// Execute autocommands for "event" and file name "fname".
