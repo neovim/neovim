@@ -164,3 +164,98 @@ describe(':write', function()
     eq("Vim(write):E166: Can't open linked file for writing", pcall_err(command, 'write!'))
   end)
 end)
+
+describe(':update', function()
+  before_each(function()
+    clear()
+    fn.mkdir('test_dir', 'p')
+  end)
+
+  after_each(function()
+    fn.delete('test_dir', 'rf')
+  end)
+
+  it('works for a new buffer', function()
+    command('edit test_dir/foo/bar/nonexist.taz | update ++p')
+    eq(1, eval("filereadable('test_dir/foo/bar/nonexist.taz')"))
+  end)
+
+  it('writes modified buffer', function()
+    command('edit test_dir/modified.txt')
+    command('call setline(1, "hello world")')
+    command('update')
+    eq({ 'hello world' }, fn.readfile('test_dir/modified.txt'))
+  end)
+
+  it('does not write unmodified existing file', function()
+    local filename = 'test_dir/existing.txt'
+    local fd = io.open(filename, 'w')
+    fd:write('content')
+    fd:close()
+    local mtime_before = fn.getftime(filename)
+    command('edit ' .. filename)
+    command('update')
+    eq(mtime_before, fn.getftime(filename))
+  end)
+
+  it('creates parent directories with ++p', function()
+    command('edit test_dir/deep/nested/path/file.txt')
+    command('call setline(1, "content")')
+    command('update ++p')
+    eq(1, eval("filereadable('test_dir/deep/nested/path/file.txt')"))
+  end)
+
+  it('fails gracefully for unnamed buffer', function()
+    command('enew')
+    command('call setline(1, "some content")')
+    eq('Vim(update):E32: No file name', pcall_err(command, 'update'))
+  end)
+
+  it('respects readonly files', function()
+    local filename = 'test_dir/readonly.txt'
+    local fd = io.open(filename, 'w')
+    fd:write('readonly content')
+    fd:close()
+    command('edit ' .. filename)
+    command('set readonly')
+    command('call setline(1, "modified")')
+    eq(
+      "Vim(update):E45: 'readonly' option is set (add ! to override)",
+      pcall_err(command, 'update')
+    )
+
+    command('update!')
+    eq({ 'modified' }, fn.readfile('test_dir/readonly.txt'))
+  end)
+
+  it('can write line ranges', function()
+    command('edit test_dir/range.txt')
+    command('call setline(1, ["line1", "line2", "line3", "line4"])')
+    command('2,3update!')
+    eq({ 'line2', 'line3' }, fn.readfile('test_dir/range.txt'))
+  end)
+
+  it('can append to existing file', function()
+    local filename = 'test_dir/append.txt'
+    local fd = io.open(filename, 'w')
+    fd:write('existing\n')
+    fd:close()
+    command('edit test_dir/new_content.txt')
+    command('call setline(1, "new content")')
+    command('update >> ' .. filename)
+
+    eq({ 'existing', 'new content' }, fn.readfile('test_dir/append.txt'))
+  end)
+
+  it('triggers autocmds properly', function()
+    command('autocmd BufWritePre * let g:write_pre = 1')
+    command('autocmd BufWritePost * let g:write_post = 1')
+
+    command('edit test_dir/autocmd.txt')
+    command('call setline(1, "trigger autocmds")')
+    command('update')
+
+    eq(1, eval('g:write_pre'))
+    eq(1, eval('g:write_post'))
+  end)
+end)

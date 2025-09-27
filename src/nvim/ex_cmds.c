@@ -1772,7 +1772,7 @@ void ex_file(exarg_T *eap)
 /// ":update".
 void ex_update(exarg_T *eap)
 {
-  if (curbufIsChanged()) {
+  if (curbufIsChanged() || (curbuf->b_ffname != NULL && !os_path_exists(curbuf->b_ffname))) {
     do_write(eap);
   }
 }
