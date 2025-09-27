@@ -296,7 +296,7 @@ static bool compl_autocomplete = false;        ///< whether autocompletion is ac
 static uint64_t compl_timeout_ms = COMPL_INITIAL_TIMEOUT_MS;
 static bool compl_time_slice_expired = false;  ///< time budget exceeded for current source
 static bool compl_from_nonkeyword = false;     ///< completion started from non-keyword
-static bool compl_autocomplete_preinsert = false;  ///< apply preinsert highlight
+static bool compl_hi_on_autocompl_longest = false;  ///< apply "PreInsert" highlight
 
 // Halve the current completion timeout, simulating exponential decay.
 #define COMPL_MIN_TIMEOUT_MS    5
@@ -889,6 +889,15 @@ static bool is_nearest_active(void)
          && !(flags & kOptCotFlagFuzzy);
 }
 
+/// Returns true if autocomplete is active and the pre-insert effect targets the
+/// longest prefix.
+bool ins_compl_preinsert_longest(void)
+{
+  return compl_autocomplete
+         && (get_cot_flags() & (kOptCotFlagLongest | kOptCotFlagPreinsert | kOptCotFlagFuzzy))
+         == kOptCotFlagLongest;
+}
+
 /// Add a match to the list of matches
 ///
 /// @param[in]  str     text of the match to add
@@ -1053,7 +1062,8 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   compl_curr_match = match;
 
   // Find the longest common string if still doing that.
-  if (compl_get_longest && (flags & CP_ORIGINAL_TEXT) == 0 && !cfc_has_mode()) {
+  if (compl_get_longest && (flags & CP_ORIGINAL_TEXT) == 0 && !cfc_has_mode()
+      && !ins_compl_preinsert_longest()) {
     ins_compl_longest_match(match);
   }
 
@@ -1107,17 +1117,12 @@ static size_t ins_compl_leader_len(void)
 /// -1 means normal item.
 int ins_compl_col_range_attr(linenr_T lnum, int col)
 {
-  const bool has_preinsert = ins_compl_has_preinsert();
+  const bool has_preinsert = ins_compl_has_preinsert() || ins_compl_preinsert_longest();
 
   int attr;
   if ((get_cot_flags() & kOptCotFlagFuzzy)
-      || (!has_preinsert
-          && (attr = syn_name2attr("ComplMatchIns")) == 0)
-      || (!compl_autocomplete && has_preinsert
-          && (attr = syn_name2attr("PreInsert")) == 0)
-      || (compl_autocomplete
-          && (!compl_autocomplete_preinsert
-              || (attr = syn_name2attr("PreInsert")) == 0))) {
+      || (!compl_hi_on_autocompl_longest && ins_compl_preinsert_longest())
+      || (attr = syn_name2attr(has_preinsert ? "PreInsert" : "ComplMatchIns")) == 0) {
     return -1;
   }
 
@@ -1511,7 +1516,8 @@ static int ins_compl_build_pum(void)
   }
 
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0 || compl_autocomplete;
+  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0
+                         || (compl_autocomplete && !ins_compl_has_preinsert());
   bool fuzzy_filter = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
 
   compl_T *match_head = NULL, *match_tail = NULL;
@@ -2132,6 +2138,9 @@ int ins_compl_len(void)
 bool ins_compl_has_preinsert(void)
 {
   unsigned cur_cot_flags = get_cot_flags();
+  if (compl_autocomplete && p_ic && !p_inf) {
+    return false;
+  }
   return (!compl_autocomplete
           ? (cur_cot_flags & (kOptCotFlagPreinsert|kOptCotFlagFuzzy|kOptCotFlagMenuone))
           == (kOptCotFlagPreinsert|kOptCotFlagMenuone)
@@ -2143,17 +2152,11 @@ bool ins_compl_has_preinsert(void)
 /// the `compl_ins_end_col` range.
 bool ins_compl_preinsert_effect(void)
 {
-  if (!ins_compl_has_preinsert()) {
+  if (!ins_compl_has_preinsert() && !ins_compl_preinsert_longest()) {
     return false;
   }
 
   return curwin->w_cursor.col < compl_ins_end_col;
-}
-
-/// Returns true if autocompletion is active.
-bool ins_compl_autocomplete_enabled(void)
-{
-  return compl_autocomplete;
 }
 
 /// Delete one character before the cursor and show the subset of the matches
@@ -2198,7 +2201,7 @@ int ins_compl_bs(void)
                                 (size_t)(p_off - (ptrdiff_t)compl_col));
 
   // Clear selection if a menu item is currently selected in autocompletion
-  if (compl_autocomplete && compl_first_match) {
+  if (compl_autocomplete && compl_first_match && !ins_compl_has_preinsert()) {
     compl_shown_match = compl_first_match;
   }
 
@@ -2291,18 +2294,14 @@ static void ins_compl_new_leader(void)
   // Show the popup menu with a different set of matches.
   ins_compl_show_pum();
 
-  compl_autocomplete_preinsert = false;
   // Don't let Enter select the original text when there is no popup menu.
   if (compl_match_array == NULL) {
     compl_enter_selects = false;
   } else if (ins_compl_has_preinsert() && compl_leader.size > 0) {
-    if (compl_started && compl_autocomplete && !ins_compl_preinsert_effect()) {
-      if (ins_compl_insert(true, true) == OK) {
-        compl_autocomplete_preinsert = true;
-      }
-    } else {
-      (void)ins_compl_insert(true, false);
-    }
+    ins_compl_insert(true, false);
+  } else if (compl_started && ins_compl_preinsert_longest()
+             && compl_leader.size > 0 && !ins_compl_preinsert_effect()) {
+    ins_compl_insert(true, true);
   }
   // Don't let Enter select when use user function and refresh_always is set
   if (ins_compl_refresh_always()) {
@@ -4388,7 +4387,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
       ptr = ins_compl_get_next_word_or_line(st->ins_buf,
                                             st->cur_match_pos, &len, &cont_s_ipos);
     }
-    if (ptr == NULL || (!compl_autocomplete && ins_compl_has_preinsert()
+    if (ptr == NULL || (ins_compl_has_preinsert()
                         && strcmp(ptr, compl_pattern.data) == 0)) {
       continue;
     }
@@ -4895,7 +4894,7 @@ static int ins_compl_get_exp(pos_T *ini)
   }
   may_trigger_modechanged();
 
-  if (is_nearest_active()) {
+  if (is_nearest_active() && !ins_compl_has_preinsert()) {
     sort_compl_match_list(cp_compare_nearest);
   }
 
@@ -5108,6 +5107,21 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
   xfree(match_count);
 
   if (len > (int)ins_compl_leader_len()) {
+    assert(first != NULL);
+    // Avoid inserting text that duplicates the text already present
+    // after the cursor.
+    if (len == (int)strlen(first)) {
+      char *line = get_cursor_line_ptr();
+      char *p = line + curwin->w_cursor.col;
+      if (p && !ascii_iswhite_or_nul(*p)) {
+        char *end = find_word_end(p);
+        int text_len = (int)(end - p);
+        if (text_len > 0 && text_len < (len - (int)ins_compl_leader_len())
+            && strncmp(first + len - text_len, p, (size_t)text_len) == 0) {
+          len -= text_len;
+        }
+      }
+    }
     *prefix_len = (size_t)len;
     return first;
   }
@@ -5117,9 +5131,9 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
 /// Insert the new text being completed.
 /// "move_cursor" is used when 'completeopt' includes "preinsert" and when true
 /// cursor needs to move back from the inserted text to the compl_leader.
-/// When "preinsert_prefix" is true the longest common prefix is inserted
-/// instead of shown match.
-int ins_compl_insert(bool move_cursor, bool preinsert_prefix)
+/// When "insert_prefix" is true the longest common prefix is inserted instead
+/// of shown match.
+void ins_compl_insert(bool move_cursor, bool insert_prefix)
 {
   int compl_len = get_compl_len();
   bool preinsert = ins_compl_has_preinsert();
@@ -5128,12 +5142,13 @@ int ins_compl_insert(bool move_cursor, bool preinsert_prefix)
   size_t leader_len = ins_compl_leader_len();
   char *has_multiple = strchr(cp_str, '\n');
 
-  if (preinsert_prefix) {
+  if (insert_prefix) {
     cp_str = find_common_prefix(&cp_str_len, false);
     if (cp_str == NULL) {
       cp_str = find_common_prefix(&cp_str_len, true);
       if (cp_str == NULL) {
-        return FAIL;
+        cp_str = compl_shown_match->cp_str.data;
+        cp_str_len = compl_shown_match->cp_str.size;
       }
     }
   } else if (cpt_sources_array != NULL) {
@@ -5160,18 +5175,18 @@ int ins_compl_insert(bool move_cursor, bool preinsert_prefix)
       ins_compl_expand_multiple(cp_str + compl_len);
     } else {
       ins_compl_insert_bytes(cp_str + compl_len,
-                             preinsert_prefix ? (int)cp_str_len - compl_len : -1);
-      if (preinsert && move_cursor) {
+                             insert_prefix ? (int)cp_str_len - compl_len : -1);
+      if ((preinsert || insert_prefix) && move_cursor) {
         curwin->w_cursor.col -= (colnr_T)(cp_str_len - leader_len);
       }
     }
   }
   compl_used_match = !(match_at_original_text(compl_shown_match)
-                       || (preinsert && !compl_autocomplete));
+                       || (preinsert && !insert_prefix));
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
-  return OK;
+  compl_hi_on_autocompl_longest = insert_prefix && move_cursor;
 }
 
 /// show the file name for the completion match (if any).  Truncate the file
@@ -5240,7 +5255,8 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
   bool found_end = false;
   compl_T *found_compl = NULL;
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0 || compl_autocomplete;
+  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0
+                         || (compl_autocomplete && !ins_compl_has_preinsert());
   bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
 
   while (--todo >= 0) {
@@ -5351,7 +5367,8 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   const bool started = compl_started;
   buf_T *const orig_curbuf = curbuf;
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_no_insert = (cur_cot_flags & kOptCotFlagNoinsert) != 0 || compl_autocomplete;
+  bool compl_no_insert = (cur_cot_flags & kOptCotFlagNoinsert) != 0
+                         || (compl_autocomplete && !ins_compl_has_preinsert());
   bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
   bool compl_preinsert = ins_compl_has_preinsert();
 
@@ -5397,35 +5414,18 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
     return -1;
   }
 
-  compl_autocomplete_preinsert = false;
-
   // Insert the text of the new completion, or the compl_leader.
-  if (compl_no_insert && !started) {
-    bool insert_orig = !compl_preinsert;
-    if (compl_preinsert && compl_autocomplete) {
-      if (ins_compl_insert(true, true) == OK) {
-        compl_autocomplete_preinsert = true;
-      } else {
-        insert_orig = true;
-      }
-    }
-    if (insert_orig) {
-      ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
-    }
+  if (!started && ins_compl_preinsert_longest()) {
+    ins_compl_insert(true, true);
+  } else if (compl_no_insert && !started && !compl_preinsert) {
+    ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
     compl_used_match = false;
     restore_orig_extmarks();
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
-      bool none_selected = match_at_original_text(compl_shown_match);
-      if (compl_preinsert && compl_autocomplete && none_selected) {
-        if (ins_compl_insert(none_selected, true) == OK) {
-          compl_autocomplete_preinsert = none_selected;
-        } else {
-          (void)ins_compl_insert(false, false);
-        }
-      } else {
-        (void)ins_compl_insert(!compl_autocomplete, false);
-      }
+      bool preinsert_longest = ins_compl_preinsert_longest()
+                               && match_at_original_text(compl_shown_match);  // none selected
+      ins_compl_insert(compl_preinsert || preinsert_longest, preinsert_longest);
     } else {
       assert(compl_leader.data != NULL);
       ins_compl_insert_bytes(compl_leader.data + get_compl_len(), -1);
@@ -5534,8 +5534,8 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
     }
   }
 
-  if (compl_pending != 0 && !got_int && !(cot_flags & kOptCotFlagNoinsert)
-      && !compl_autocomplete) {
+  if (compl_pending && !got_int && !(cot_flags & kOptCotFlagNoinsert)
+      && (!compl_autocomplete || ins_compl_has_preinsert())) {
     // Insert the first match immediately and advance compl_shown_match,
     // before finding other matches.
     int todo = compl_pending > 0 ? compl_pending : -compl_pending;
@@ -6598,4 +6598,12 @@ static void cpt_compl_refresh(void)
   xfree(cpt);
   // Make the list cyclic
   compl_matches = ins_compl_make_cyclic();
+}
+
+/// "preinserted()" function
+void f_preinserted(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (ins_compl_preinsert_effect()) {
+    rettv->vval.v_number = 1;
+  }
 }

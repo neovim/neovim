@@ -7232,6 +7232,15 @@ pow({x}, {y})                                                            *pow()*
                 Return: ~
                   (`number`)
 
+preinserted()                                                    *preinserted()*
+		Returns non-zero if text has been inserted after the cursor
+		because "preinsert" is present in 'completeopt', or if
+		"longest" is present in 'completeopt' while 'autocomplete'
+		is enabled.  Otherwise returns zero.
+
+                Return: ~
+                  (`number`)
+
 prevnonblank({lnum})                                            *prevnonblank()*
 		Return the line number of the first line at or above {lnum}
 		that is not blank.  Example: >vim

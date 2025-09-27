@@ -124,10 +124,9 @@ endfunc
 func Test_omni_dash()
   func Omni(findstart, base)
     if a:findstart
-        return 5
+      return 5
     else
-        echom a:base
-	return ['-help', '-v']
+      return ['-help', '-v']
     endif
   endfunc
   set omnifunc=Omni
@@ -4231,6 +4230,145 @@ func Test_completeopt_preinsert()
   delfunc Omni_test
 endfunc
 
+func Test_autocomplete_completeopt_preinsert()
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".") - 1
+    endif
+    return [#{word: "fobar"}, #{word: "foobar"}]
+  endfunc
+  set omnifunc=Omni_test complete+=o
+  set completeopt=preinsert autocomplete
+  " set completeopt=preinsert,menuone autocomplete
+  func GetLine()
+    let g:line = getline('.')
+    let g:col = col('.')
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  inoremap <buffer><F5> <C-R>=GetLine()<CR>
+  call feedkeys("Sfo\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(3, g:col)
+
+  call feedkeys("Sfoo\<F5>\<ESC>", 'tx')
+  call assert_equal("foobar", g:line)
+
+  call feedkeys("Sfoo\<BS>\<BS>\<BS>", 'tx')
+  call assert_equal("", getline('.'))
+
+  " delete a character
+  call feedkeys("Sfoo\<BS>b\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(4, g:col)
+
+  set complete&
+  %d
+  call setline(1, ['fobar', 'foobar'])
+
+  call feedkeys("Gofoo\<BS>\<BS>\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(2, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>f\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  fobar wo", g:line)
+  call assert_equal(9, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>f\<BS>\<F5>\<ESC>", 'tx')
+  call assert_equal("hello   wo", g:line)
+  call assert_equal(8, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>foo\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  foobar wo", g:line)
+  call assert_equal(11, g:col)
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>foo\<BS>b\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  fobar wo", g:line)
+  call assert_equal(11, g:col)
+
+  " confirm
+  call feedkeys("Sf\<C-Y>", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call assert_equal(5, col('.'))
+
+  " cancel
+  call feedkeys("Sfo\<C-E>", 'tx')
+  call assert_equal("fo", getline('.'))
+  call assert_equal(2, col('.'))
+
+  " delete preinsert part
+  call feedkeys("Sfo ", 'tx')
+  call assert_equal("fo ", getline('.'))
+  call assert_equal(3, col('.'))
+
+  " can not work with fuzzy
+  set cot+=fuzzy
+  call feedkeys("Sf", 'tx')
+  call assert_equal("f", getline('.'))
+  set cot-=fuzzy
+
+  " does not work with 'ignorecase' unless 'infercase' is also enabled
+  %d
+  call setline(1, ['FIX', 'fobar', 'foobar'])
+  set ignorecase
+  call feedkeys("Gof\<F5>\<ESC>", 'tx')
+  call assert_equal("f", g:line)  " should not produce 'FIX'
+  set infercase
+  call feedkeys("Gof\<F5>\<ESC>", 'tx')
+  call assert_equal("fix", g:line)
+  set ignorecase& infercase&
+
+  %delete _
+  let &l:undolevels = &l:undolevels
+  normal! ifoo
+  let &l:undolevels = &l:undolevels
+  normal! obar
+  let &l:undolevels = &l:undolevels
+  normal! obaz
+  let &l:undolevels = &l:undolevels
+
+  func CheckUndo()
+    let g:errmsg = ''
+    call assert_equal(['foo', 'bar', 'baz'], getline(1, '$'))
+    undo
+    call assert_equal(['foo', 'bar'], getline(1, '$'))
+    undo
+    call assert_equal(['foo'], getline(1, '$'))
+    undo
+    call assert_equal([''], getline(1, '$'))
+    later 3
+    call assert_equal(['foo', 'bar', 'baz'], getline(1, '$'))
+    call assert_equal('', v:errmsg)
+  endfunc
+
+  " Check that switching buffer with "preinsert" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>enew!<CR>
+  call feedkeys("if\<F2>\<Esc>", 'tx')
+  bwipe!
+  call CheckUndo()
+
+  " Check that closing window with "preinsert" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>close!<CR>
+  call feedkeys("if\<F2>\<Esc>", 'tx')
+  call CheckUndo()
+
+  %delete _
+  delfunc CheckUndo
+
+  bw!
+  set cot&
+  set omnifunc&
+  set autocomplete&
+  call Ntest_override("char_avail", 0)
+  delfunc Omni_test
+  delfunc GetLine
+endfunc
+
 " Check that mark positions are correct after triggering multiline completion.
 func Test_complete_multiline_marks()
   func Omni_test(findstart, base)
@@ -5696,7 +5834,7 @@ func Test_autocompletedelay()
   call VerifyScreenDump(buf, 'Test_autocompletedelay_6', {})
 
   " During delay wait, user can open menu using CTRL_N completion
-  call term_sendkeys(buf, "\<Esc>:set completeopt=menuone,preinsert\<CR>")
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menuone,longest\<CR>")
   call term_sendkeys(buf, "Sf\<C-N>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_7', {})
 
@@ -5720,16 +5858,18 @@ func Test_autocompletedelay()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_autocomplete_completeopt_preinsert()
+" Preinsert longest prefix when autocomplete
+func Test_autocomplete_longest()
   func GetLine()
     let g:line = getline('.')
     let g:col = col('.')
+    let g:preinserted = preinserted()
   endfunc
 
   call Ntest_override("char_avail", 1)
   new
   inoremap <buffer><F5> <C-R>=GetLine()<CR>
-  set completeopt=preinsert autocomplete
+  set completeopt=longest autocomplete
   call setline(1, ["foobar", "foozbar"])
   call feedkeys("Go\<ESC>", 'tx')
 
@@ -5761,10 +5901,15 @@ func Test_autocomplete_completeopt_preinsert()
   call DoTest("f\<C-P>", 'foobar', 7)
   call DoTest("fo\<BS>\<C-P>", 'foobar', 7)
 
+  " <C-Y> to accept preinserted text
+  inoremap <buffer><F6> <C-R>=pumvisible()<CR>
   call DoTest("zar\<C-O>0f", 'foozar', 2)
   call DoTest("zar\<C-O>0f\<C-Y>", 'foozar', 4)
+  call DoTest("zar\<C-O>0f\<C-Y>\<F6>", 'foo1zar', 5)
   call DoTest("zar\<C-O>0f\<C-Y>\<BS>", 'foozar', 3)
+  call DoTest("zar\<C-O>0f\<C-Y>\<BS>\<F6>", 'fo1zar', 4)
 
+  " Select items in menu
   call DoTest("zar\<C-O>0f\<C-N>", 'foozbarzar', 8)
   call DoTest("zar\<C-O>0f\<C-N>\<C-N>", 'foobarzar', 7)
   call DoTest("zar\<C-O>0f\<C-N>\<C-N>\<C-N>", 'foozar', 2)
@@ -5778,6 +5923,34 @@ func Test_autocomplete_completeopt_preinsert()
   call DoTest("f", 'f', 2)
   set cot-=fuzzy
 
+  " preinserted()
+  call DoTest("f", 'foo', 2)
+  call assert_equal(1, g:preinserted)
+  call assert_equal(0, preinserted())
+  call DoTest("f\<BS>", '', 1)
+  call assert_equal(0, g:preinserted)
+  call DoTest("f ", 'f ', 3)
+  call assert_equal(0, g:preinserted)
+  call DoTest("foob", 'foobar', 5)
+  call assert_equal(1, g:preinserted)
+  call DoTest("foob\<BS>\<BS>x", 'fox', 4)
+  call assert_equal(0, g:preinserted)
+
+  " Complete non-keyword
+  func Omni(findstart, base)
+    if a:findstart
+        return 5
+    else
+	return ['xyz:']
+    endif
+  endfunc
+  set omnifunc=Omni
+  set cpt+=o
+  call DoTest("xyz:", "xyz:xyz:", 5)
+  call DoTest("xyz:\<BS>\<BS>", "xyz:", 3)
+  set omnifunc& cpt&
+  delfunc Omni
+
   " leader should match prefix of inserted word
   %delete
   set smartcase ignorecase
@@ -5787,6 +5960,16 @@ func Test_autocomplete_completeopt_preinsert()
   call feedkeys($"SF\<F5>\<Esc>", 'tx')
   call assert_equal('FOO', g:line)
   set smartcase& ignorecase&
+
+  " avoid repeating text that is already present after the cursor
+  %delete
+  call setline(1, ["foobarbaz", ""])
+  call feedkeys($"G", 'tx')
+  call DoTest("baz\<C-O>0f", "foobarbaz", 2)
+  call feedkeys($"Sxfoozar\<CR>\<Esc>", 'tx')
+  call DoTest("baz\<C-O>0f", "foobarbaz", 2)
+  call feedkeys($"Sfoozar\<CR>\<Esc>", 'tx')
+  call DoTest("baz\<C-O>0f", "foobaz", 2)
 
   " Verify that redo (dot) works
   %delete
@@ -5824,7 +6007,7 @@ func Test_autocomplete_completeopt_preinsert()
     call assert_equal('', v:errmsg)
   endfunc
 
-  " Check that switching buffer with "preinsert" doesn't corrupt undo.
+  " Check that switching buffer with "longest" doesn't corrupt undo.
   new
   setlocal bufhidden=wipe
   inoremap <buffer> <F2> <Cmd>enew!<CR>
@@ -5832,7 +6015,7 @@ func Test_autocomplete_completeopt_preinsert()
   bwipe!
   call CheckUndo()
 
-  " Check that closing window with "preinsert" doesn't corrupt undo.
+  " Check that closing window with "longest" doesn't corrupt undo.
   new
   setlocal bufhidden=wipe
   inoremap <buffer> <F2> <Cmd>close!<CR>

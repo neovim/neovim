@@ -1183,11 +1183,22 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    to gather more alternatives for your candidate list,
 --- 	    see 'completefuzzycollect'.
 ---
----    longest  Only insert the longest common text of the matches.  If
---- 	    the menu is displayed you can use CTRL-L to add more
---- 	    characters.  Whether case is ignored depends on the kind
---- 	    of completion.  For buffer text the 'ignorecase' option is
---- 	    used.
+---    longest
+--- 	    When 'autocomplete' is not active, only the longest
+--- 	    common prefix of the matches is inserted.  If the popup
+--- 	    menu is displayed, you can use CTRL-L to add more
+--- 	    characters.  Whether case is ignored depends on the type
+--- 	    of completion.  For buffer text the 'ignorecase' option
+--- 	    applies.
+---
+--- 	    When 'autocomplete' is active and no completion item is
+--- 	    selected, the longest common prefix of the matches is
+--- 	    inserted after the cursor.  The prefix is taken either
+--- 	    from all displayed items or only from items in the current
+--- 	    buffer.  The inserted text is highlighted with
+--- 	    `hl-PreInsert`, and the cursor position does not change
+--- 	    (similar to `"preinsert"`).  Press CTRL-Y to accept.
+--- 	    See also `preinserted()`.
 ---
 ---    menu	    Use a popup menu to show the possible completions.  The
 --- 	    menu is only shown when there is more than one match and
@@ -1220,22 +1231,21 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    with "menu" or "menuone".  Overrides "preview".
 ---
 ---    preinsert
---- 	    When 'autocomplete' is not active, inserts the part of the
---- 	    first candidate word beyond the current completion leader,
---- 	    highlighted with `hl-PreInsert`.  The cursor doesn't move.
---- 	    Requires "fuzzy" unset and "menuone" in 'completeopt'.
----
---- 	    When 'autocomplete' is active, inserts the longest common
---- 	    prefix of matches (from all shown items or from the
---- 	    current buffer items).  This occurs only when no menu item
---- 	    is selected.  Press CTRL-Y to accept.
+--- 	    Inserts the text of the first completion candidate
+--- 	    beyond the current leader, highlighted with `hl-PreInsert`.
+--- 	    The cursor does not move.
+--- 	    Requires "fuzzy" to be unset, and either "menuone" in
+--- 	    'completeopt' or 'autocomplete' enabled.  When
+--- 	    'autocomplete' is enabled, this does not work if
+--- 	    'ignorecase' is set without 'infercase'.
+--- 	    See also `preinserted()`.
 ---
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in
 --- 	    combination with "menu" or "menuone".
 ---
---- Only "fuzzy", "popup", "preinsert" and "preview" have an effect when
---- 'autocomplete' is enabled.
+--- Only "fuzzy", "longest", "popup", "preinsert" and "preview" have an
+--- effect when 'autocomplete' is enabled.
 ---
 --- This option does not apply to `cmdline-completion`.  See 'wildoptions'
 --- for that.

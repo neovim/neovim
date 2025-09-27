@@ -940,6 +940,7 @@ Insert mode completion:				*completion-functions*
 	complete_info()		get current completion information
 	complete_match()	get insert completion start match col and
 				trigger text
+	preinserted()		check if text is inserted after cursor
 	pumvisible()		check if the popup menu is displayed
 	pum_getpos()		position and size of popup menu if visible
 

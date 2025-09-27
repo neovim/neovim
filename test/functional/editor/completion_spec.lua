@@ -1496,18 +1496,18 @@ describe('completion', function()
 
     -- During delay wait, user can open menu using CTRL_N completion
     feed('<Esc>')
-    command('set completeopt=menuone,preinsert')
+    command('set completeopt=menuone,longest')
     feed('Sf<C-N>')
     screen:expect([[
       foo                                                         |
       foobar                                                      |
       foobarbaz                                                   |
-      f{102:^oo}                                                         |
-      {12:foo            }{1:                                             }|
+      foo^                                                         |
+      {4:foo            }{1:                                             }|
       {4:foobar         }{1:                                             }|
       {4:foobarbaz      }{1:                                             }|
       {1:~                                                           }|*2
-      {5:-- Keyword completion (^N^P) }{6:match 1 of 3}                   |
+      {5:-- Keyword completion (^N^P) }{19:Back at original}               |
     ]])
 
     -- After the menu is open, ^N/^P and Up/Down should not delay
