@@ -255,7 +255,6 @@ For each of the functions below, use the corresponding function in
 • *vim.lsp.diagnostic.goto_next()*
 • *vim.lsp.diagnostic.goto_prev()*
 • *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
-• *vim.lsp.diagnostic.reset()*
 • *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
 • *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
 • *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
