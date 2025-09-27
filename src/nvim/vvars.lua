@@ -9,6 +9,18 @@ M.vars = {
       See |v:progpath| for the command with full path.
     ]=],
   },
+  argf = {
+    type = 'string[]',
+    desc = [=[
+      The list of "file arguments" given on the command line when
+      starting Nvim.
+
+      Unlike |v:argv|, this does not include option arguments such
+      as `-u` or `--cmd`.  Unlike |argv()|, it is not affected by
+      later |:args| commands or plugin modifications.  It always
+      reflects exactly the filenames that were passed at startup.
+    ]=],
+  },
   char = {
     type = 'string',
     desc = [=[
