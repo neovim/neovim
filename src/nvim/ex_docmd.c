@@ -5662,10 +5662,59 @@ static void ex_detach(exarg_T *eap)
 /// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
 static void ex_connect(exarg_T *eap)
 {
+  char *server_address;
+  Error err = ERROR_INIT;
+  Object rv;
+
+  if (strcmp(eap->arg, "") == 0) {
+    rv = NLUA_EXEC_STATIC("return require('vim.net._ssh').get_connect_choice()",
+                          (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
+
+    if (ERROR_SET(&err)) {
+      emsg(err.msg);
+      api_clear_error(&err);
+      return;
+    }
+
+    if (rv.type == kObjectTypeNil) {
+      return;
+    }
+    server_address = rv.data.string.data;
+  } else {
+    server_address = eap->arg;
+  }
+
+  bool is_ssh = strncmp("ssh://", server_address, 6) == 0;
+
+  if (is_ssh && eap->forceit) {
+    emsg("bang (!) and SSH not allowed together");
+    return;
+  }
+
+  if (is_ssh) {
+    char *ssh_host = xstrnsave(server_address + 6, strlen(server_address) - 6);
+    MAXSIZE_TEMP_ARRAY(args, 1);
+    ADD_C(args, CSTR_AS_OBJ(ssh_host));
+    rv = NLUA_EXEC_STATIC("return require('vim.net._ssh').connect_to_address(...)", args,
+                          kRetObject, NULL, &err);
+
+    if (ERROR_SET(&err)) {
+      emsg(err.msg);
+      api_clear_error(&err);
+      return;
+    }
+
+    server_address = rv.data.string.data;
+  }
+
+  if (strcmp(server_address, get_vim_var_str(VV_SEND_SERVER)) == 0) {
+    // Don't do anything if given server address is equal to current server address.
+    return;
+  }
+
   bool stop_server = eap->forceit ? (ui_active() == 1) : false;
 
-  Error err = ERROR_INIT;
-  remote_ui_connect(current_ui, eap->arg, &err);
+  remote_ui_connect(current_ui, server_address, &err);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);
