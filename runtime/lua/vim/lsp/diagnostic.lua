@@ -301,27 +301,6 @@ function M.on_diagnostic(error, result, ctx)
   end
 end
 
---- Clear push diagnostics and diagnostic cache.
----
---- Diagnostic producers should prefer |vim.diagnostic.reset()|. However,
---- this method signature is still used internally in some parts of the LSP
---- implementation so it's simply marked @private rather than @deprecated.
----
----@param client_id integer
----@param buffer_client_map table<integer, table<integer, table>> map of buffers to active clients
----@private
-function M.reset(client_id, buffer_client_map)
-  buffer_client_map = vim.deepcopy(buffer_client_map)
-  vim.schedule(function()
-    for bufnr, client_ids in pairs(buffer_client_map) do
-      if client_ids[client_id] then
-        local namespace = M.get_namespace(client_id, false)
-        vim.diagnostic.reset(namespace, bufnr)
-      end
-    end
-  end)
-end
-
 --- Get the diagnostics by line
 ---
 --- Marked private as this is used internally by the LSP subsystem, but
