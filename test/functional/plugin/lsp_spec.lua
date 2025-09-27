@@ -6258,6 +6258,13 @@ describe('LSP', function()
             kind = i,
           })
         end
+        table.insert(watchers, {
+          globPattern = {
+            baseUri = vim.uri_from_fname('/dir'),
+            pattern = 'watch' .. tostring(max_kind),
+          },
+          kind = vim.NIL,
+        })
         vim.lsp.handlers['client/registerCapability'](nil, {
           registrations = {
             {

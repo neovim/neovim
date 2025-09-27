@@ -2696,7 +2696,7 @@ error('Cannot require a meta file')
 ---The kind of events of interest. If omitted it defaults
 ---to WatchKind.Create | WatchKind.Change | WatchKind.Delete
 ---which is 7.
----@field kind? lsp.WatchKind
+---@field kind? lsp.WatchKind|lsp.null
 
 ---Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
 ---are only valid in the scope of a resource.
