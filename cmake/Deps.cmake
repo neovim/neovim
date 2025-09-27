@@ -91,7 +91,7 @@ function(get_externalproject_options name DEPS_IGNORE_SHA)
 
   set(EXTERNALPROJECT_OPTIONS
     DOWNLOAD_NO_PROGRESS TRUE
-    EXTERNALPROJECT_OPTIONS URL ${${name_allcaps}_URL}
+    URL ${${name_allcaps}_URL}
     CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
   if(NOT ${DEPS_IGNORE_SHA})
