@@ -633,7 +633,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return s
   elseif node_name == 'argument' then
-    return ('%s<code>{%s}</code>'):format(ws(), text)
+    return ('%s<code>%s</code>'):format(ws(), trim(node_text(root)))
   elseif node_name == 'codeblock' then
     return text
   elseif node_name == 'language' then
