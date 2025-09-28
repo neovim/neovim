@@ -6108,8 +6108,8 @@ M.funcs = {
       Note: Prefer |vim.system()| in Lua (unless using `rpc`, `pty`, or `term`).
 
       Spawns {cmd} as a job.
-      If {cmd} is a List it runs directly (no 'shell').
-      If {cmd} is a String it runs in the 'shell', like this: >vim
+      - If {cmd} is a List it runs directly (no 'shell').
+      - If {cmd} is a String it runs in the 'shell', like this: >vim
         call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
       <(See |shell-unquoting| for details.)
 
@@ -6182,10 +6182,13 @@ M.funcs = {
         stdin:      (string) Either "pipe" (default) to connect the
       	      job's stdin to a channel or "null" to disconnect
       	      stdin.
-        term:	    (boolean) Spawns {cmd} in a new pseudo-terminal session
-                connected to the current (unmodified) buffer. Implies "pty".
-                Default "height" and "width" are set to the current window
-                dimensions. |jobstart()|. Defaults $TERM to "xterm-256color".
+        term:	    (boolean) Spawns {cmd} in a new pseudo-terminal
+                    session connected to the current (unmodified)
+                    buffer. Implies "pty". The buffer name is set to
+                    a `term://` URI which represents the command
+                    as a JSON array. Default "height" and "width"
+                    are set to the current window dimensions.
+                    Defaults $TERM to "xterm-256color".
         width:      (number) Width of the `pty` terminal.
 
       {opts} is passed as |self| dictionary to the callback; the

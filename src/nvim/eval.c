@@ -4709,9 +4709,12 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool 
   }
 
   if (p_verbose > 3) {
-    char *cmdstr = shell_argv_to_str(argv);
+    char *cmdstr = shell_argv_to_json(argv, true);
     verbose_enter_scroll();
-    smsg(0, _("Executing command: \"%s\""), cmdstr);
+    // Examples:
+    //    Executing command: ["/usr/local/bin/bash", "-c", "echo foo"]
+    //    Executing command: ["/too/long/", "too", "many", "args", "..."]
+    smsg(0, _("Executing command: %s"), cmdstr);
     msg_puts("\n\n");
     verbose_leave_scroll();
     xfree(cmdstr);

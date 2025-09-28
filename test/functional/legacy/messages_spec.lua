@@ -510,7 +510,7 @@ describe('messages', function()
       -- display a page and go back, results in exactly the same view
       feed([[:4 verbose echo system('foo')<CR>]])
       screen:expect([[
-        Executing command: "'./shell-test' 'REP' '20' 'foo'"        |
+        Executing command: ["./shell-test", "REP", "20", "foo"]     |
                                                                     |
         0: foo                                                      |
         1: foo                                                      |
@@ -536,7 +536,7 @@ describe('messages', function()
       ]])
       feed('b')
       screen:expect([[
-        Executing command: "'./shell-test' 'REP' '20' 'foo'"        |
+        Executing command: ["./shell-test", "REP", "20", "foo"]     |
                                                                     |
         0: foo                                                      |
         1: foo                                                      |
@@ -558,7 +558,7 @@ describe('messages', function()
       ]])
       feed([[:4 verbose echo system('foo')<CR>]])
       screen:expect([[
-        Executing command: "'./shell-test' 'REP' '20' 'foo'"        |
+        Executing command: ["./shell-test", "REP", "20", "foo"]     |
                                                                     |
         0: foo                                                      |
         1: foo                                                      |
@@ -584,7 +584,7 @@ describe('messages', function()
       ]])
       feed('b')
       screen:expect([[
-        Executing command: "'./shell-test' 'REP' '20' 'foo'"        |
+        Executing command: ["./shell-test", "REP", "20", "foo"]     |
                                                                     |
         0: foo                                                      |
         1: foo                                                      |

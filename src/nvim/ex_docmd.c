@@ -7468,19 +7468,19 @@ ssize_t find_cmdline_var(const char *src, size_t *usedlen)
 
 /// Evaluate cmdline variables.
 ///
-/// change "%"       to curbuf->b_ffname
-///        "#"       to curwin->w_alt_fnum
-///        "<cword>" to word under the cursor
-///        "<cWORD>" to WORD under the cursor
-///        "<cexpr>" to C-expression under the cursor
-///        "<cfile>" to path name under the cursor
-///        "<sfile>" to sourced file name
-///        "<stack>" to call stack
-///        "<script>" to current script name
-///        "<slnum>" to sourced file line number
-///        "<afile>" to file name for autocommand
-///        "<abuf>"  to buffer number for autocommand
-///        "<amatch>" to matching name for autocommand
+/// - "%"       to curbuf->b_ffname
+/// - "#"       to curwin->w_alt_fnum
+/// - "<cword>" to word under the cursor
+/// - "<cWORD>" to WORD under the cursor
+/// - "<cexpr>" to C-expression under the cursor
+/// - "<cfile>" to path name under the cursor
+/// - "<sfile>" to sourced file name
+/// - "<stack>" to call stack
+/// - "<script>" to current script name
+/// - "<slnum>" to sourced file line number
+/// - "<afile>" to file name for autocommand
+/// - "<abuf>"  to buffer number for autocommand
+/// - "<amatch>" to matching name for autocommand
 ///
 /// When an error is detected, "errormsg" is set to a non-NULL pointer (may be
 /// "" for error without a message) and NULL is returned.

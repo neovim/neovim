@@ -14,6 +14,8 @@ describe(':argument', function()
   it('does not restart :terminal buffer', function()
     command('terminal')
     n.feed([[<C-\><C-N>]])
+    -- TODO(justinmk): :argadd should not care about 'isfname' (Windows) for non-file buffers.
+    command('set isfname+=[,]')
     command('argadd')
     n.feed([[<C-\><C-N>]])
     local bufname_before = fn.bufname('%')

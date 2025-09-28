@@ -528,7 +528,24 @@ do
     group = nvim_terminal_augroup,
     desc = 'Treat term:// buffers as terminal buffers',
     nested = true,
-    command = "if !exists('b:term_title')|call jobstart(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'term': v:true, 'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
+    callback = function(ev)
+      if vim.b[ev.buf].term_title then
+        return
+      end
+      local cmdstr = vim.fn.matchstr(ev.match, [[\c\mterm://\%(.\{-}//\%(\d\+:\)\?\)\?\zs.*]])
+      local ok, cmd = pcall(vim.json.decode, cmdstr)
+      --[[@type string[]|string]]
+      cmd = (ok and vim.isarray(cmd)) and cmd or cmdstr
+      if ok and vim.isarray(cmd) and cmd[#cmd] == '...' then
+        error('Command was truncated') -- Don't attempt to execute a truncated command.
+      end
+      local cmdcwd = vim.fs.normalize(
+        vim.fs.abspath(vim.fn.matchlist(ev.match, [[\c\mterm://\(.\{-}\)//]])[2] or '.')
+      )
+      if not pcall(vim.fn.jobstart, cmd, { term = true, cwd = cmdcwd }) then
+        vim.fn.jobstart(cmdstr, { term = true, cwd = cmdcwd })
+      end
+    end,
   })
 
   vim.api.nvim_create_autocmd({ 'TermClose' }, {

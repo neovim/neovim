@@ -36,7 +36,8 @@ describe('shell functions', function()
     return ret
   end
 
-  local function shell_argv_to_str(argv_table)
+  local function shell_argv_to_json(argv_table, truncate)
+    truncate = truncate or false
     -- C string array (char **).
     local argv = (argv_table and ffi.new('char*[?]', #argv_table + 1) or NULL)
 
@@ -50,7 +51,7 @@ describe('shell functions', function()
       argv[argc - 1] = NULL
     end
 
-    local res = cimported.shell_argv_to_str(argv)
+    local res = cimported.shell_argv_to_json(argv, truncate)
     return ffi.string(res)
   end
 
@@ -162,15 +163,16 @@ describe('shell functions', function()
     end)
   end)
 
-  itp('shell_argv_to_str', function()
-    eq('', shell_argv_to_str({ nil }))
-    eq("''", shell_argv_to_str({ '' }))
-    eq("'foo' '' 'bar'", shell_argv_to_str({ 'foo', '', 'bar' }))
-    eq("'/bin/sh' '-c' 'abc  def'", shell_argv_to_str({ '/bin/sh', '-c', 'abc  def' }))
-    eq("'abc  def' 'ghi  jkl'", shell_argv_to_str({ 'abc  def', 'ghi  jkl' }))
-    eq(
-      "'/bin/sh' '-c' 'abc  def' '" .. ('x'):rep(225) .. '...',
-      shell_argv_to_str({ '/bin/sh', '-c', 'abc  def', ('x'):rep(999) })
-    )
+  itp('shell_argv_to_json', function()
+    eq('[]', shell_argv_to_json({ nil }, false))
+    eq('[""]', shell_argv_to_json({ '' }, false))
+    eq('["foo", "", "bar"]', shell_argv_to_json({ 'foo', '', 'bar' }, false))
+    eq('["/bin/sh", "-c", "abc  def"]', shell_argv_to_json({ '/bin/sh', '-c', 'abc  def' }, false))
+    eq('["abc  def", "ghi  jkl"]', shell_argv_to_json({ 'abc  def', 'ghi  jkl' }, false))
+
+    -- `truncate=true`
+    local long_arg = string.rep('x', 600)
+    local truncated = shell_argv_to_json({ 'cmd', long_arg }, true)
+    eq('["cmd", "..."]', truncated)
   end)
 end)

@@ -12,13 +12,13 @@ local eq = t.eq
 local matches = t.matches
 local pesc = vim.pesc
 
-describe(':edit term://*', function()
-  before_each(function()
-    clear()
-    api.nvim_set_option_value('shell', testprg('shell-test'), {})
-    api.nvim_set_option_value('shellcmdflag', 'EXE', {})
-  end)
+before_each(function()
+  clear()
+  api.nvim_set_option_value('shell', testprg('shell-test'), {})
+  api.nvim_set_option_value('shellcmdflag', 'EXE', {})
+end)
 
+describe(':edit term://*', function()
   it('runs TermOpen event', function()
     api.nvim_set_var('termopen_runs', {})
     command('autocmd TermOpen * :call add(g:termopen_runs, expand("<amatch>"))')
@@ -26,7 +26,10 @@ describe(':edit term://*', function()
     local termopen_runs = api.nvim_get_var('termopen_runs')
     eq(1, #termopen_runs)
     local cwd = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    matches('^term://' .. pesc(cwd) .. '//%d+:$', termopen_runs[1])
+    matches(
+      '^term://' .. pesc(cwd) .. [[//%d+:%[".*shell%-test.?e?x?e?", "EXE", "\?"?\?"?"%]$]],
+      termopen_runs[1]
+    )
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
@@ -60,5 +63,43 @@ describe(':edit term://*', function()
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
     eq(bufcontents, api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
+
+  it('handles truncated command JSON', function()
+    -- jobstart(term=true) will truncate very long commands.
+    -- The term://* BufReadCmd handler should not attempt to execute them.
+    matches(
+      'Command was truncated',
+      t.pcall_err(n.command, 'edit ' .. fn.fnameescape([=[term://["ls", "..."] ]=]))
+    )
+  end)
+end)
+
+describe('jobstart(term=true)', function()
+  it('sets full command as JSON array in term://… name', function()
+    fn.jobstart({ testprg('shell-test'), 'arg1', 'arg2 with spaces' }, { term = true })
+    -- Should look like: `term:///cwd//PID:["/path/to/shell-test", "arg1", "arg2"]`
+    matches(
+      [[^term://.*/%d+:%[".*/shell%-test%.?e?x?e?", "arg1", "arg2 with spaces"%]$]],
+      fn.bufname('%')
+    )
+
+    command('enew!')
+    -- Try a command with complex quoted args.
+    fn.jobstart({ testprg('shell-test'), 'arg1', [[["arg 2"] "with" 'quotes']] }, { term = true })
+    matches(
+      [[^term://.*/%d+:%[".*/shell%-test%.?e?x?e?", "arg1", "%[\"arg 2\"%] \"with\" 'quotes'"%]$]],
+      fn.bufname('%')
+    )
+  end)
+
+  it('truncates term://… command JSON if too long', function()
+    local long_arg = string.rep('x', 600)
+    fn.jobstart({ testprg('shell-test'), 'arg1', '["arg 2"}', long_arg }, { term = true })
+    -- Should look like: `term:///cwd//PID:["/path/to/shell-test", "arg1", "..."]`
+    matches(
+      [[^term://.*/%d+:%[".*/shell%-test%.?e?x?e?", "arg1", "%[\"arg 2\"}", "%.%.%."%]$]],
+      fn.bufname('%')
+    )
   end)
 end)
