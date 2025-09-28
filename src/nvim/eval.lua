@@ -6315,8 +6315,8 @@ M.funcs = {
     args = { 1, 2 },
     desc = [=[
       Spawns {cmd} as a job.
-      If {cmd} is a List it runs directly (no 'shell').
-      If {cmd} is a String it runs in the 'shell', like this: >vim
+      - If {cmd} is a List it runs directly (no 'shell').
+      - If {cmd} is a String it runs in the 'shell', like this: >vim
         call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
       <(See |shell-unquoting| for details.)
 
@@ -6393,11 +6393,12 @@ M.funcs = {
         stdin:      (string) Either "pipe" (default) to connect the
       	      job's stdin to a channel or "null" to disconnect
       	      stdin.
-        term:       (boolean) Spawns {cmd} in a new pseudo-terminal
+        term:	    (boolean) Spawns {cmd} in a new pseudo-terminal
       	      session connected to the current (unmodified) buffer.
-      	      Implies "pty". Defaults "height" and "width" to the
-      	      current window dimensions. Defaults $TERM to
-      	      "xterm-256color".
+      	      Implies "pty". The buffer name is set to a `term://`
+      	      URI which represents the command as a JSON array.
+      	      Defaults "height" and "width" to the current window
+      	      dimensions. Defaults $TERM to "xterm-256color".
         width:      (number) Width of the `pty` pseudo-terminal.
 
       {opts} is passed as |self| dictionary to the callback; the
