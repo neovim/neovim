@@ -30,6 +30,8 @@ There are several ways to create a terminal buffer:
 - Edit a "term://" buffer. Examples: >vim
     :edit term://bash
     :vsplit term://top
+    " Specify complex commands as a JSON array (or use :terminal or jobstart):
+    :exe 'edit' fnameescape('term://["ls", "."]')
 
 <    Note: To open a "term://" buffer from an autocmd, the |autocmd-nested|
     modifier is required. >vim
