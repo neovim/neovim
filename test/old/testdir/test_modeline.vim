@@ -358,22 +358,69 @@ endfunc
 
 " Some options cannot be set from the modeline when 'diff' option is set
 func Test_modeline_diff_buffer()
-  call writefile(['vim: diff foldmethod=marker wrap'], 'Xfile')
+  call writefile(['vim: diff foldmethod=marker wrap'], 'Xmdifile', 'D')
   set foldmethod& nowrap
-  new Xfile
+  new Xmdifile
   call assert_equal('manual', &foldmethod)
   call assert_false(&wrap)
   set wrap&
-  call delete('Xfile')
   bw
 endfunc
 
 func Test_modeline_disable()
   set modeline
-  call writefile(['vim: sw=2', 'vim: nomodeline', 'vim: sw=3'], 'Xmodeline_disable')
+  call writefile(['vim: sw=2', 'vim: nomodeline', 'vim: sw=3'], 'Xmodeline_disable', 'D')
   edit Xmodeline_disable
   call assert_equal(2, &sw)
-  call delete('Xmodeline_disable')
+endfunc
+
+" If 'nowrap' is set from a modeline, '>' is used forcibly as lcs-extends.
+func Test_modeline_nowrap_lcs_extends()
+  call writefile([
+        \ 'aaa',
+        \ 'bbb',
+        \ 'ccc                    evil',
+        \ 'ddd                    vim: nowrap',
+        \ ], 'Xmodeline_nowrap', 'D')
+  call NewWindow(10, 20)
+
+  setlocal nolist listchars=
+  edit Xmodeline_nowrap
+  let expect_insecure = [
+        \ 'aaa                 ',
+        \ 'bbb                 ',
+        \ 'ccc                >',
+        \ 'ddd                >',
+        \ '~                   ',
+        \ ]
+  call assert_equal(expect_insecure, ScreenLines([1, 5], 20))
+
+  setlocal nowrap
+  let expect_secure = [
+        \ 'aaa                 ',
+        \ 'bbb                 ',
+        \ 'ccc                 ',
+        \ 'ddd                 ',
+        \ '~                   ',
+        \ ]
+  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+
+  setlocal list listchars=extends:+
+  let expect_secure = [
+        \ 'aaa                 ',
+        \ 'bbb                 ',
+        \ 'ccc                +',
+        \ 'ddd                +',
+        \ '~                   ',
+        \ ]
+  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+
+  edit Xmodeline_nowrap
+  call assert_equal(expect_insecure, ScreenLines([1, 5], 20))
+  setlocal nowrap
+  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+
+  call CloseWindow()
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
