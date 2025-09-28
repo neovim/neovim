@@ -1676,6 +1676,8 @@ uint32_t *insecure_flag(win_T *const wp, OptIndex opt_idx, int opt_flags)
   if (opt_flags & OPT_LOCAL) {
     assert(wp != NULL);
     switch (opt_idx) {
+    case kOptWrap:
+      return &wp->w_p_wrap_flags;
     case kOptStatusline:
       return &wp->w_p_stl_flags;
     case kOptWinbar:
