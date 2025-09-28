@@ -8030,6 +8030,11 @@ vim.go.wiw = vim.go.winwidth
 --- See 'sidescroll', 'listchars' and `wrap-off`.
 --- This option can't be set from a `modeline` when the 'diff' option is
 --- on.
+--- If 'nowrap' was set from a `modeline` or in the `sandbox`, '>' is used
+--- as the `lcs-extends` character regardless of the value of the 'list'
+--- and 'listchars' options.  This is to prevent malicious code outside
+--- the viewport from going unnoticed.  Use `:setlocal nowrap` manually
+--- afterwards to disable this behavior.
 ---
 --- @type boolean
 vim.o.wrap = true
