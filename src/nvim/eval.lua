@@ -8027,9 +8027,9 @@ M.funcs = {
   preinserted = {
     desc = [=[
       Returns non-zero if text has been inserted after the cursor
-      because "preinsert" is present in 'completeopt', or if
+      because "preinsert" is present in 'completeopt', or because
       "longest" is present in 'completeopt' while 'autocomplete'
-      is enabled.  Otherwise returns zero.
+      is active.  Otherwise returns zero.
     ]=],
     name = 'preinserted',
     params = {},
