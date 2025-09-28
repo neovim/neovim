@@ -308,6 +308,7 @@ Commands:
 - |:trust|
 - User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
+- |:update| command writes new file buffers even when unmodified.
 
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal

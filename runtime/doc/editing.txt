@@ -989,7 +989,8 @@ slower (but safer).
 							*:up* *:update*
 :[range]up[date][!] [++opt] [>>] [file]
 			Like ":write", but only write when the buffer has been
-			modified.
+			modified, or when the buffer represents a new file
+			that doesn't exist on disk.
 
 
 WRITING WITH MULTIPLE BUFFERS				*buffer-write*
