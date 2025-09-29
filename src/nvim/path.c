@@ -46,8 +46,7 @@ enum {
 
 /// Compare two file names.
 ///
-/// @param s1 First file name. Environment variables in this name will be
-///   expanded.
+/// @param s1 First file name. Environment variables in this name will be expanded.
 /// @param s2 Second file name.
 /// @param checkname When both files don't exist, only compare their names.
 /// @param expandenv Whether to expand environment variables in file names.
@@ -540,7 +539,6 @@ bool path_has_wildcard(const char *p)
   return false;
 }
 
-// Unix style wildcard expansion code.
 static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
@@ -1956,8 +1954,10 @@ bool same_directory(char *f1, char *f2)
 }
 
 // Compare path "p[]" to "q[]".
-// If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"
+// If `maxlen` >= 0 compare `p[maxlen]` to `q[maxlen]`
 // Return value like strcmp(p, q), but consider path separators.
+//
+// See also `path_full_compare`.
 int pathcmp(const char *p, const char *q, int maxlen)
 {
   int i, j;
@@ -2314,12 +2314,12 @@ int append_path(char *path, const char *to_append, size_t max_len)
   return OK;
 }
 
-/// Expand a given file to its absolute path.
+/// Used by `vim_FullName` and `fix_fname` to expand a filename to its full path.
 ///
-/// @param  fname  filename which should be expanded.
-/// @param  buf    buffer to store the absolute path of "fname".
-/// @param  len    length of "buf".
-/// @param  force  also expand when "fname" is already absolute.
+/// @param  fname  Filename to expand.
+/// @param  buf    Where to store the absolute path of "fname".
+/// @param  len    Length of `buf`.
+/// @param  force  Also expand when `fname` is already absolute.
 ///
 /// @return FAIL for failure, OK for success.
 static int path_to_absolute(const char *fname, char *buf, size_t len, int force)

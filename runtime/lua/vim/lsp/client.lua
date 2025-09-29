@@ -34,9 +34,9 @@ local all_clients = {}
 
 --- @class vim.lsp.ClientConfig
 ---
---- Callback invoked before the LSP "initialize" phase, where `params` contains the parameters
---- being sent to the server and `config` is the config that was passed to |vim.lsp.start()|.
---- You can use this to modify parameters before they are sent.
+--- Callback which can modify parameters before they are sent to the server. Invoked before LSP
+--- "initialize" phase (after `cmd` is invoked), where `params` is the parameters being sent to the
+--- server and `config` is the config passed to |vim.lsp.start()|.
 --- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 ---
 --- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,

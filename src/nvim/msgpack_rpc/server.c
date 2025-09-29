@@ -135,7 +135,7 @@ char *server_address_new(const char *name)
   return xstrdup(fmt);
 }
 
-/// Check if this instance owns a pipe address.
+/// Check if this instance owns a pipe address (loopback).
 bool server_owns_pipe_address(const char *address)
 {
   bool result = false;
