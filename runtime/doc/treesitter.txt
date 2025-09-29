@@ -1706,8 +1706,11 @@ Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
 
     The iterator returns four values:
     1. the numeric id identifying the capture
+
     2. the captured node
+
     3. metadata from any directives processing the match
+
     4. the match itself
 
     Example: how to get captures by name: >lua

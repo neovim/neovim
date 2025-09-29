@@ -316,6 +316,10 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
   elseif contains(ntype, { 'list_marker_minus', 'list_marker_star' }) then
     parts[#parts + 1] = '• '
   elseif ntype == 'list_item' then
+    -- HACK(MariaSolOs): Revert this after the vimdoc parser supports numbered list-items (https://github.com/neovim/tree-sitter-vimdoc/issues/144)
+    if (node[1].text or ''):match('[2-9]%.') then
+      parts[#parts + 1] = '\n'
+    end
     parts[#parts + 1] = string.rep(' ', indent)
     local offset = node[1].type == 'list_marker_dot' and 3 or 2
     for i, child in ipairs(node) do

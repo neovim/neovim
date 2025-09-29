@@ -2253,6 +2253,7 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
 1. Install Copilot: >sh
     npm install --global @github/copilot-language-server
 <
+
 2. Define a config, (or copy `lsp/copilot.lua` from
    https://github.com/neovim/nvim-lspconfig): >lua
     vim.lsp.config('copilot', {
@@ -2260,14 +2261,18 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
      root_markers = { '.git' },
    })
 <
+
 3. Activate the config: >lua
     vim.lsp.enable('copilot')
 <
+
 4. Sign in to Copilot, or use the `:LspCopilotSignIn` command from
    https://github.com/neovim/nvim-lspconfig
+
 5. Enable inline completion: >lua
     vim.lsp.inline_completion.enable()
 <
+
 6. Set a keymap for `vim.lsp.inline_completion.get()` and invoke the keymap.
 
 
