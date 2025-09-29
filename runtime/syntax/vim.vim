@@ -259,9 +259,9 @@ syn cluster vimSpecialVar	contains=vimEnvvar,vimLetRegister,vimOptionVar,vimVimV
 
 Vim9 syn match	vimVar	contained	 "\<\h\w*\ze<"		nextgroup=vim9TypeArgs
 
-Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\s\+[-+/*%]\=="
-Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\s\+\.\.="
-Vim9 syn match	vim9LhsVariable	"\s\=\%([bwgt]:\)\=\h[a-zA-Z0-9#_]*\ze\s\+=<<"	skipwhite nextgroup=vimLetHeredoc	contains=vimVarScope
+Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\s\+[-+/*%]\==\%(\s\|$\)"
+Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\s\+\.\.=\%(\s\|$\)"
+Vim9 syn match	vim9LhsVariable	"\s\=\%([bwgt]:\)\=\h[a-zA-Z0-9#_]*\ze\s\+=<<\s"	skipwhite nextgroup=vimLetHeredoc	contains=vimVarScope
 Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\["		          nextgroup=vimSubscript
 Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\."		          nextgroup=vimOper	contains=vim9Super,vim9This
 Vim9 syn match	vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\s*->"				contains=vim9Super,vim9This
