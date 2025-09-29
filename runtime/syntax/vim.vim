@@ -1161,7 +1161,7 @@ syn region	vimFor
       \ matchgroup=vimCommand
       \ start="\<for\>" end="\<in\>"
       \ skipwhite skipnl nextgroup=@vimForInContinue,vim9ForInComment,@vimExprList
-      \ contains=@vimContinue,vimVar,vimVarList,vim9VariableList
+      \ contains=@vimContinue,vimVar,vimVarList,vim9Variable,vim9VariableList
       \ transparent
 
 syn match	vim9ForInComment		contained	"#.*"	skipwhite skipempty nextgroup=vimForInComment,@vimExprList
