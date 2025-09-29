@@ -4005,7 +4005,9 @@ describe('TUI client', function()
     screen_client:expect({ any = 'GUI Running: 0' })
 
     if is_os('mac') then
-      assert_log('uv_tty_set_mode failed: Unknown system error %-102', testlog)
+      -- this might either be "Unknown system error %-102" or
+      -- "inappropriate ioctl for device" depending on the phase of the moon
+      assert_log('uv_tty_set_mode failed', testlog)
     end
   end)
 
@@ -4037,7 +4039,7 @@ describe('TUI client', function()
       ffi.C.ui_call_set_title(title)
     ]=])
     screen_client:expect_unchanged()
-    assert_log('TUI: escape sequence for ext%.set_title too long', testlog)
+    assert_log('set_title: title string too long!', testlog)
     eq(bufname, api.nvim_buf_get_var(0, 'term_title'))
 
     -- Following escape sequences are not affected.

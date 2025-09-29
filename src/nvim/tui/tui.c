@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unibilium.h>
 #include <uv.h>
 
 #include "auto/config.h"
@@ -62,28 +61,18 @@
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
-#define UNIBI_SET_NUM_VAR(var, num) \
-  do { \
-    (var) = unibi_var_from_num((num)); \
-  } while (0)
-#define UNIBI_SET_STR_VAR(var, str) \
-  do { \
-    (var) = unibi_var_from_str((str)); \
-  } while (0)
-
 typedef struct {
   int top, bot, left, right;
 } Rect;
 
 struct TUIData {
   Loop *loop;
-  unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   char *buf_to_flush;  ///< If non-null, flush this instead of buf[].
   size_t bufpos;
   TermInput input;
   uv_loop_t write_loop;
-  unibi_term *ut;
+  TerminfoEntry ti;
   char *term;  ///< value of $TERM
   union {
     uv_tty_t tty;
@@ -99,6 +88,7 @@ struct TUIData {
   int pending_resize_events;
   bool can_change_scroll_region;
   bool has_left_and_right_margin_mode;
+  bool has_sync_mode;
   bool can_set_lr_margin;  // smglr
   bool can_scroll;
   bool can_erase_chars;
@@ -110,7 +100,6 @@ struct TUIData {
   bool title_enabled;
   bool sync_output;
   bool busy, is_invisible, want_invisible;
-  bool cork, overflow;
   bool set_cursor_color_as_str;
   bool cursor_has_color;
   bool is_starting;
@@ -134,33 +123,32 @@ struct TUIData {
   ModeShape showing_mode;
   Integer verbose;
   struct {
-    int enter_strikethrough_mode;
-    int enter_altfont_mode;
-    int set_rgb_foreground, set_rgb_background;
-    int set_cursor_color;
-    int reset_cursor_color;
-    int enable_focus_reporting, disable_focus_reporting;
-    int resize_screen;
-    int reset_scroll_region;
-    int set_cursor_style, reset_cursor_style;
-    int save_title, restore_title, set_title;
-    int set_underline_style;
-    int set_underline_color;
-    int sync;
-  } unibi_ext;
-  char *set_title;
-  char *space_buf;
-  size_t space_buf_len;
+    char *enable_focus_reporting;
+    char *disable_focus_reporting;
+    char *reset_scroll_region;
+    char *enter_altfont_mode;
+  } terminfo_ext;
+  bool can_set_title;
+  bool can_set_underline_color;
+  bool can_resize_screen;
   bool stopped;
   int width;
   int height;
   bool rgb;
+  bool screen_or_tmux;
   int url;  ///< Index of URL currently being printed, if any
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
+  Arena ti_arena;
 };
 
 static bool cursor_style_enabled = false;
 #include "tui/tui.c.generated.h"
+
+#define TERMINFO_SEQ_LIMIT 128
+
+#define terminfo_print_num1(tui, what, num) terminfo_print_num(tui, what, num, 0, 0)
+#define terminfo_print_num2(tui, what, num1, num2) terminfo_print_num(tui, what, num1, num2, 0)
+#define terminfo_print_num3 terminfo_print_num
 
 static Set(cstr_t) urls = SET_INIT;
 
@@ -246,8 +234,7 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     switch (mode) {
     case kTermModeSynchronizedOutput:
       // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
-      tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
-                                                   "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
+      tui->has_sync_mode = true;
       break;
     case kTermModeGraphemeClusters:
       if (!is_set) {
@@ -290,13 +277,8 @@ static void tui_query_extended_underline(TUIData *tui)
 
 void tui_enable_extended_underline(TUIData *tui)
 {
-  if (tui->unibi_ext.set_underline_style == -1) {
-    tui->unibi_ext.set_underline_style = (int)unibi_add_ext_str(tui->ut, "ext.set_underline_style",
-                                                                "\x1b[4:%p1%dm");
-  }
-  // Only support colon syntax. #9270
-  tui->unibi_ext.set_underline_color = (int)unibi_add_ext_str(tui->ut, "ext.set_underline_color",
-                                                              "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
+  terminfo_set_if_empty(tui, kTerm_set_underline_style, "\x1b[4:%p1%dm");
+  tui->can_set_underline_color = true;
 }
 
 /// Query the terminal emulator to see if it supports Kitty's keyboard protocol.
@@ -372,8 +354,6 @@ static void terminfo_start(TUIData *tui)
   tui->is_invisible = true;
   tui->want_invisible = false;
   tui->busy = false;
-  tui->cork = false;
-  tui->overflow = false;
   tui->set_cursor_color_as_str = false;
   tui->cursor_has_color = false;
   tui->resize_events_enabled = false;
@@ -381,45 +361,41 @@ static void terminfo_start(TUIData *tui)
   tui->modes.resize_events = false;
   tui->modes.theme_updates = false;
   tui->showing_mode = SHAPE_IDX_N;
-  tui->unibi_ext.set_cursor_color = -1;
-  tui->unibi_ext.reset_cursor_color = -1;
-  tui->unibi_ext.enter_strikethrough_mode = -1;
-  tui->unibi_ext.enter_altfont_mode = -1;
-  tui->unibi_ext.enable_focus_reporting = -1;
-  tui->unibi_ext.disable_focus_reporting = -1;
-  tui->unibi_ext.resize_screen = -1;
-  tui->unibi_ext.reset_scroll_region = -1;
-  tui->unibi_ext.set_cursor_style = -1;
-  tui->unibi_ext.reset_cursor_style = -1;
-  tui->unibi_ext.set_title = -1;
-  tui->unibi_ext.set_underline_style = -1;
-  tui->unibi_ext.set_underline_color = -1;
-  tui->unibi_ext.sync = -1;
+  tui->terminfo_ext.enable_focus_reporting = NULL;
+  tui->terminfo_ext.disable_focus_reporting = NULL;
+
   tui->out_fd = STDOUT_FILENO;
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
+
+  tui->ti_arena = (Arena)ARENA_EMPTY;
 
   char *term = os_getenv("TERM");
 #ifdef MSWIN
   const char *guessed_term = NULL;
   os_tty_guess_term(&guessed_term, tui->out_fd);
   if (term == NULL && guessed_term != NULL) {
+    // TODO(bfredl): should be arena_strdup, make os_getenv ready for the BIG STAGE?
     term = xstrdup(guessed_term);
     os_setenv("TERM", guessed_term, 1);
   }
 #endif
 
-  // Set up unibilium/terminfo.
+  // Set up terminfo.
+  bool found_in_db = false;
   if (term) {
-    tui->ut = unibi_from_term(term);
-    if (tui->ut) {
+    if (terminfo_from_unibilium(&tui->ti, term, &tui->ti_arena)) {
       if (!tui->term) {
-        tui->term = xstrdup(term);
+        tui->term = arena_strdup(&tui->ti_arena, term);
       }
+      found_in_db = true;
     }
   }
-  if (!tui->ut) {
-    tui->ut = terminfo_from_builtin(term, &tui->term);
+
+  if (!found_in_db) {
+    const TerminfoEntry *new = terminfo_from_builtin(term, &tui->term);
+    // we will patch it below, so make a copy
+    memcpy(&tui->ti, new, sizeof tui->ti);
   }
 
   // None of the following work over SSH; see :help TERM .
@@ -442,35 +418,37 @@ static void terminfo_start(TUIData *tui)
   const char *weztermv = wezterm ? term_program_version_env : NULL;
   bool screen = terminfo_is_term_family(term, "screen");
   bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
+  tui->screen_or_tmux = screen || tmux;
 
   // truecolor support must be checked before patching/augmenting terminfo
   tui->rgb = term_has_truecolor(tui, colorterm);
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
-  tui->can_change_scroll_region =
-    !!unibi_get_str(tui->ut, unibi_change_scroll_region);
+
+#define TI_HAS(name) (tui->ti.defs[name] != NULL)
+  tui->can_change_scroll_region = TI_HAS(kTerm_change_scroll_region);
   // note: also gated by tui->has_left_and_right_margin_mode
-  tui->can_set_lr_margin = !!unibi_get_str(tui->ut, unibi_set_lr_margin);
+  tui->can_set_lr_margin = TI_HAS(kTerm_set_lr_margin);
   tui->can_scroll =
-    !!unibi_get_str(tui->ut, unibi_delete_line)
-    && !!unibi_get_str(tui->ut, unibi_parm_delete_line)
-    && !!unibi_get_str(tui->ut, unibi_insert_line)
-    && !!unibi_get_str(tui->ut, unibi_parm_insert_line);
-  tui->can_erase_chars = !!unibi_get_str(tui->ut, unibi_erase_chars);
+    TI_HAS(kTerm_delete_line)
+    && TI_HAS(kTerm_parm_delete_line)
+    && TI_HAS(kTerm_insert_line)
+    && TI_HAS(kTerm_parm_insert_line);
+  tui->can_erase_chars = TI_HAS(kTerm_erase_chars);
   tui->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "conemu")
     || terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "win32con")
     || terminfo_is_term_family(term, "interix");
-  tui->bce = unibi_get_bool(tui->ut, unibi_back_color_erase);
-  // Set 't_Co' from the result of unibilium & fix_terminfo.
-  t_colors = unibi_get_num(tui->ut, unibi_max_colors);
+  tui->bce = tui->ti.bce;
+  // Set 't_Co' from the result of terminfo & fix_terminfo.
+  t_colors = tui->ti.max_colors;
   // Enter alternate screen, save title, and clear.
   // NOTE: Do this *before* changing terminal settings. #6433
-  unibi_out(tui, unibi_enter_ca_mode);
-  unibi_out(tui, unibi_keypad_xmit);
-  unibi_out(tui, unibi_clear_screen);
+  terminfo_out(tui, kTerm_enter_ca_mode);
+  terminfo_out(tui, kTerm_keypad_xmit);
+  terminfo_out(tui, kTerm_clear_screen);
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
@@ -478,6 +456,7 @@ static void terminfo_start(TUIData *tui)
   tui_set_term_mode(tui, kTermModeBracketedPaste, true);
 
   tui->has_left_and_right_margin_mode = false;
+  tui->has_sync_mode = false;
 
   // Query support for private DEC modes that Nvim can take advantage of.
   // Some terminals (such as Terminal.app) do not support DECRQM, so skip the query.
@@ -491,7 +470,7 @@ static void terminfo_start(TUIData *tui)
 
   // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
   // Terminal.app also doesn't support DECRQSS.
-  if (tui->unibi_ext.set_underline_style == -1 && !(screen || tmux || nsterm)) {
+  if (!TI_HAS(kTerm_set_underline_style) && !(screen || tmux || nsterm)) {
     // Query the terminal to see if it supports extended underline.
     tui_query_extended_underline(tui);
   }
@@ -536,6 +515,7 @@ static void terminfo_start(TUIData *tui)
   xfree(vte_version_env);
   xfree(konsolev_env);
   xfree(term_program_version_env);
+#undef TI_HAS
 }
 
 /// Disable various terminal modes and other features.
@@ -550,10 +530,10 @@ static void terminfo_disable(TUIData *tui)
   // Destroy output stuff
   tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
   tui_mouse_off(tui);
-  unibi_out(tui, unibi_exit_attribute_mode);
+  terminfo_out(tui, kTerm_exit_attribute_mode);
   // Reset cursor to normal before exiting alternate screen.
-  unibi_out(tui, unibi_cursor_normal);
-  unibi_out(tui, unibi_keypad_local);
+  terminfo_out(tui, kTerm_cursor_normal);
+  terminfo_out(tui, kTerm_keypad_local);
 
   // Reset the key encoding
   tui_reset_key_encoding(tui);
@@ -570,12 +550,12 @@ static void terminfo_disable(TUIData *tui)
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, NULL_STRING);
   if (tui->cursor_has_color) {
-    unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
+    terminfo_out(tui, kTerm_reset_cursor_color);
   }
   // Disable bracketed paste
   tui_set_term_mode(tui, kTermModeBracketedPaste, false);
   // Disable focus reporting
-  unibi_out_ext(tui, tui->unibi_ext.disable_focus_reporting);
+  out_len(tui, tui->terminfo_ext.disable_focus_reporting);
 
   // Send a DA1 request. When the terminal responds we know that it has
   // processed all of our requests and won't be emitting anymore sequences.
@@ -599,7 +579,7 @@ static void terminfo_stop(TUIData *tui)
     // Position the cursor on the last screen line, below all the text
     cursor_goto(tui, tui->height - 1, 0);
     // Exit alternate screen.
-    unibi_out(tui, unibi_exit_ca_mode);
+    terminfo_out(tui, kTerm_exit_ca_mode);
   }
 
   flush_buf(tui);
@@ -609,8 +589,7 @@ static void terminfo_stop(TUIData *tui)
   if (uv_loop_close(&tui->write_loop)) {
     abort();
   }
-  unibi_destroy(tui->ut);
-  XFREE_CLEAR(tui->set_title);
+  arena_mem_free(arena_finish(&tui->ti_arena));
 }
 
 static void tui_terminal_start(TUIData *tui)
@@ -632,7 +611,7 @@ static void tui_terminal_after_startup(TUIData *tui)
 {
   // Emit this after Nvim startup, not during.  This works around a tmux
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
-  unibi_out_ext(tui, tui->unibi_ext.enable_focus_reporting);
+  out_len(tui, tui->terminfo_ext.enable_focus_reporting);
   flush_buf(tui);
 }
 
@@ -704,8 +683,6 @@ void tui_free_all_mem(TUIData *tui)
 
   kv_destroy(tui->attrs);
   kv_destroy(tui->urlbuf);
-  xfree(tui->space_buf);
-  xfree(tui->term);
   xfree(tui);
 }
 #endif
@@ -770,7 +747,7 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool underdouble;
   bool underdotted;
   bool underdashed;
-  if (tui->unibi_ext.set_underline_style != -1) {
+  if (tui->ti.defs[kTerm_set_underline_style]) {
     int ul = attr & HL_UNDERLINE_MASK;
     underline = ul == HL_UNDERLINE;
     undercurl = ul == HL_UNDERCURL;
@@ -788,71 +765,71 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool has_any_underline = undercurl || underline
                            || underdouble || underdotted || underdashed;
 
-  if (unibi_get_str(tui->ut, unibi_set_attributes)) {
+  if (tui->ti.defs[kTerm_set_attributes] != NULL) {
     if (bold || reverse || underline || standout) {
-      UNIBI_SET_NUM_VAR(tui->params[0], standout);
-      UNIBI_SET_NUM_VAR(tui->params[1], underline);
-      UNIBI_SET_NUM_VAR(tui->params[2], reverse);
-      UNIBI_SET_NUM_VAR(tui->params[3], 0);   // blink
-      UNIBI_SET_NUM_VAR(tui->params[4], 0);   // dim
-      UNIBI_SET_NUM_VAR(tui->params[5], bold);
-      UNIBI_SET_NUM_VAR(tui->params[6], 0);   // blank
-      UNIBI_SET_NUM_VAR(tui->params[7], 0);   // protect
-      UNIBI_SET_NUM_VAR(tui->params[8], 0);   // alternate character set
-      unibi_out(tui, unibi_set_attributes);
+      TPVAR params[9] = { 0 };
+      params[0].num = standout;
+      params[1].num = underline;
+      params[2].num = reverse;
+      params[3].num = 0;   // blink
+      params[4].num = 0;   // dim
+      params[5].num = bold;
+      params[6].num = 0;   // blank
+      params[7].num = 0;   // protect
+      params[8].num = 0;   // alternate character set
+      terminfo_print(tui, kTerm_set_attributes, params);
     } else if (!tui->default_attr) {
-      unibi_out(tui, unibi_exit_attribute_mode);
+      terminfo_out(tui, kTerm_exit_attribute_mode);
     }
   } else {
     if (!tui->default_attr) {
-      unibi_out(tui, unibi_exit_attribute_mode);
+      terminfo_out(tui, kTerm_exit_attribute_mode);
     }
     if (bold) {
-      unibi_out(tui, unibi_enter_bold_mode);
+      terminfo_out(tui, kTerm_enter_bold_mode);
     }
     if (underline) {
-      unibi_out(tui, unibi_enter_underline_mode);
+      terminfo_out(tui, kTerm_enter_underline_mode);
     }
     if (standout) {
-      unibi_out(tui, unibi_enter_standout_mode);
+      terminfo_out(tui, kTerm_enter_standout_mode);
     }
     if (reverse) {
-      unibi_out(tui, unibi_enter_reverse_mode);
+      terminfo_out(tui, kTerm_enter_reverse_mode);
     }
   }
   if (italic) {
-    unibi_out(tui, unibi_enter_italics_mode);
+    terminfo_out(tui, kTerm_enter_italics_mode);
   }
-  if (altfont && tui->unibi_ext.enter_altfont_mode != -1) {
-    unibi_out_ext(tui, tui->unibi_ext.enter_altfont_mode);
+  if (altfont) {
+    out_len(tui, tui->terminfo_ext.enter_altfont_mode);
   }
-  if (strikethrough && tui->unibi_ext.enter_strikethrough_mode != -1) {
-    unibi_out_ext(tui, tui->unibi_ext.enter_strikethrough_mode);
+  if (strikethrough) {
+    terminfo_out(tui, kTerm_enter_strikethrough_mode);
   }
-  if (undercurl && tui->unibi_ext.set_underline_style != -1) {
-    UNIBI_SET_NUM_VAR(tui->params[0], 3);
-    unibi_out_ext(tui, tui->unibi_ext.set_underline_style);
-  }
-  if (underdouble && tui->unibi_ext.set_underline_style != -1) {
-    UNIBI_SET_NUM_VAR(tui->params[0], 2);
-    unibi_out_ext(tui, tui->unibi_ext.set_underline_style);
-  }
-  if (underdotted && tui->unibi_ext.set_underline_style != -1) {
-    UNIBI_SET_NUM_VAR(tui->params[0], 4);
-    unibi_out_ext(tui, tui->unibi_ext.set_underline_style);
-  }
-  if (underdashed && tui->unibi_ext.set_underline_style != -1) {
-    UNIBI_SET_NUM_VAR(tui->params[0], 5);
-    unibi_out_ext(tui, tui->unibi_ext.set_underline_style);
+  if (tui->ti.defs[kTerm_set_underline_style]) {
+    if (undercurl) {
+      terminfo_print_num1(tui, kTerm_set_underline_style, 3);
+    }
+    if (underdouble) {
+      terminfo_print_num1(tui, kTerm_set_underline_style, 2);
+    }
+    if (underdotted) {
+      terminfo_print_num1(tui, kTerm_set_underline_style, 4);
+    }
+    if (underdashed) {
+      terminfo_print_num1(tui, kTerm_set_underline_style, 5);
+    }
   }
 
-  if (has_any_underline && tui->unibi_ext.set_underline_color != -1) {
+  if (has_any_underline && tui->can_set_underline_color) {
     int color = attrs.rgb_sp_color;
     if (color != -1) {
-      UNIBI_SET_NUM_VAR(tui->params[0], (color >> 16) & 0xff);  // red
-      UNIBI_SET_NUM_VAR(tui->params[1], (color >> 8) & 0xff);   // green
-      UNIBI_SET_NUM_VAR(tui->params[2], color & 0xff);          // blue
-      unibi_out_ext(tui, tui->unibi_ext.set_underline_color);
+      // Only support colon syntax. #9270
+      out_printf(tui, 128, "\x1b[58:2::%d:%d:%dm",
+                 (color >> 16) & 0xff,  // red
+                 (color >> 8) & 0xff,   // green
+                 color & 0xff);         // blue
     }
   }
 
@@ -861,17 +838,16 @@ static void update_attrs(TUIData *tui, int attr_id)
     fg = ((attrs.rgb_fg_color != -1)
           ? attrs.rgb_fg_color : tui->clear_attrs.rgb_fg_color);
     if (fg != -1) {
-      UNIBI_SET_NUM_VAR(tui->params[0], (fg >> 16) & 0xff);  // red
-      UNIBI_SET_NUM_VAR(tui->params[1], (fg >> 8) & 0xff);   // green
-      UNIBI_SET_NUM_VAR(tui->params[2], fg & 0xff);          // blue
-      unibi_out_ext(tui, tui->unibi_ext.set_rgb_foreground);
+      terminfo_print_num3(tui, kTerm_set_rgb_foreground,
+                          (fg >> 16) & 0xff,  // red
+                          (fg >> 8) & 0xff,   // green
+                          fg & 0xff);         // blue
     }
   } else {
     fg = (attrs.cterm_fg_color
           ? attrs.cterm_fg_color - 1 : (tui->clear_attrs.cterm_fg_color - 1));
     if (fg != -1) {
-      UNIBI_SET_NUM_VAR(tui->params[0], fg);
-      unibi_out(tui, unibi_set_a_foreground);
+      terminfo_print_num1(tui, kTerm_set_a_foreground, fg);
     }
   }
 
@@ -879,17 +855,16 @@ static void update_attrs(TUIData *tui, int attr_id)
     bg = ((attrs.rgb_bg_color != -1)
           ? attrs.rgb_bg_color : tui->clear_attrs.rgb_bg_color);
     if (bg != -1) {
-      UNIBI_SET_NUM_VAR(tui->params[0], (bg >> 16) & 0xff);  // red
-      UNIBI_SET_NUM_VAR(tui->params[1], (bg >> 8) & 0xff);   // green
-      UNIBI_SET_NUM_VAR(tui->params[2], bg & 0xff);          // blue
-      unibi_out_ext(tui, tui->unibi_ext.set_rgb_background);
+      terminfo_print_num3(tui, kTerm_set_rgb_background,
+                          (bg >> 16) & 0xff,  // red
+                          (bg >> 8) & 0xff,   // green
+                          bg & 0xff);         // blue
     }
   } else {
     bg = (attrs.cterm_bg_color
           ? attrs.cterm_bg_color - 1 : (tui->clear_attrs.cterm_bg_color - 1));
     if (bg != -1) {
-      UNIBI_SET_NUM_VAR(tui->params[0], bg);
-      unibi_out(tui, unibi_set_a_background);
+      terminfo_print_num1(tui, kTerm_set_a_background, bg);
     }
   }
 
@@ -996,7 +971,7 @@ static void cursor_goto(TUIData *tui, int row, int col)
   }
 
   if (0 == row && 0 == col) {
-    unibi_out(tui, unibi_cursor_home);
+    terminfo_out(tui, kTerm_cursor_home);
     ugrid_goto(grid, row, col);
     return;
   }
@@ -1014,7 +989,7 @@ static void cursor_goto(TUIData *tui, int row, int col)
                : false)))) {
     // Motion to left margin from anywhere else, or CR + printing chars is
     // even less expensive than using BSes or CUB.
-    unibi_out(tui, unibi_carriage_return);
+    terminfo_out(tui, kTerm_carriage_return);
     ugrid_goto(grid, grid->row, 0);
   }
   if (row == grid->row) {
@@ -1028,11 +1003,10 @@ static void cursor_goto(TUIData *tui, int row, int col)
       int n = grid->col - col;
       if (n <= 4) {  // This might be just BS, so it is considered really cheap.
         while (n--) {
-          unibi_out(tui, unibi_cursor_left);
+          terminfo_out(tui, kTerm_cursor_left);
         }
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], n);
-        unibi_out(tui, unibi_parm_left_cursor);
+        terminfo_print_num1(tui, kTerm_parm_left_cursor, n);
       }
       ugrid_goto(grid, row, col);
       return;
@@ -1040,11 +1014,10 @@ static void cursor_goto(TUIData *tui, int row, int col)
       int n = col - grid->col;
       if (n <= 2) {
         while (n--) {
-          unibi_out(tui, unibi_cursor_right);
+          terminfo_out(tui, kTerm_cursor_right);
         }
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], n);
-        unibi_out(tui, unibi_parm_right_cursor);
+        terminfo_print_num1(tui, kTerm_parm_right_cursor, n);
       }
       ugrid_goto(grid, row, col);
       return;
@@ -1055,11 +1028,10 @@ static void cursor_goto(TUIData *tui, int row, int col)
       int n = row - grid->row;
       if (n <= 4) {  // This might be just LF, so it is considered really cheap.
         while (n--) {
-          unibi_out(tui, unibi_cursor_down);
+          terminfo_out(tui, kTerm_cursor_down);
         }
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], n);
-        unibi_out(tui, unibi_parm_down_cursor);
+        terminfo_print_num1(tui, kTerm_parm_down_cursor, n);
       }
       ugrid_goto(grid, row, col);
       return;
@@ -1067,11 +1039,10 @@ static void cursor_goto(TUIData *tui, int row, int col)
       int n = grid->row - row;
       if (n <= 2) {
         while (n--) {
-          unibi_out(tui, unibi_cursor_up);
+          terminfo_out(tui, kTerm_cursor_up);
         }
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], n);
-        unibi_out(tui, unibi_parm_up_cursor);
+        terminfo_print_num1(tui, kTerm_parm_up_cursor, n);
       }
       ugrid_goto(grid, row, col);
       return;
@@ -1079,15 +1050,28 @@ static void cursor_goto(TUIData *tui, int row, int col)
   }
 
 safe_move:
-  unibi_goto(tui, row, col);
+  terminfo_print_num2(tui, kTerm_cursor_address, row, col);
   ugrid_goto(grid, row, col);
 }
 
 static void print_spaces(TUIData *tui, int width)
 {
   UGrid *grid = &tui->grid;
+  size_t left = (size_t)width;
 
-  out(tui, tui->space_buf, (size_t)width);
+  // spaces are not a sequence, we can squeeze whatever's left of the buffer
+  while (true) {
+    size_t buf_fit = MIN(left, sizeof tui->buf - tui->bufpos);
+    memset(tui->buf + tui->bufpos, ' ', buf_fit);
+    tui->bufpos += buf_fit;
+    left -= buf_fit;
+
+    if (left == 0) {
+      break;  // likely: didn't need to flush for sm0l spaces
+    }
+    flush_buf(tui);
+  }
+
   grid->col += width;
   if (tui->immediate_wrap_after_last_column) {
     // Printing at the right margin immediately advances the cursor.
@@ -1146,7 +1130,7 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
   if (tui->set_default_colors) {
     update_attrs(tui, attr_id);
   } else {
-    unibi_out(tui, unibi_exit_attribute_mode);
+    terminfo_out(tui, kTerm_exit_attribute_mode);
   }
 
   // Background is set to the default color and the right edge matches the
@@ -1154,11 +1138,11 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
   if (tui->can_clear_attr
       && left == 0 && right == tui->width && bot == tui->height) {
     if (top == 0) {
-      unibi_out(tui, unibi_clear_screen);
+      terminfo_out(tui, kTerm_clear_screen);
       ugrid_goto(grid, top, left);
     } else {
       cursor_goto(tui, top, 0);
-      unibi_out(tui, unibi_clr_eos);
+      terminfo_out(tui, kTerm_clr_eos);
     }
   } else {
     int width = right - left;
@@ -1167,10 +1151,9 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
     for (int row = top; row < bot; row++) {
       cursor_goto(tui, row, left);
       if (tui->can_clear_attr && right == tui->width) {
-        unibi_out(tui, unibi_clr_eol);
+        terminfo_out(tui, kTerm_clr_eol);
       } else if (tui->can_erase_chars && tui->can_clear_attr && width >= 5) {
-        UNIBI_SET_NUM_VAR(tui->params[0], width);
-        unibi_out(tui, unibi_erase_chars);
+        terminfo_print_num1(tui, kTerm_erase_chars, width);
       } else {
         print_spaces(tui, width);
       }
@@ -1182,14 +1165,10 @@ static void set_scroll_region(TUIData *tui, int top, int bot, int left, int righ
 {
   UGrid *grid = &tui->grid;
 
-  UNIBI_SET_NUM_VAR(tui->params[0], top);
-  UNIBI_SET_NUM_VAR(tui->params[1], bot);
-  unibi_out(tui, unibi_change_scroll_region);
+  terminfo_print_num2(tui, kTerm_change_scroll_region, top, bot);
   if (left != 0 || right != tui->width - 1) {
     tui_set_term_mode(tui, kTermModeLeftAndRightMargins, true);
-    UNIBI_SET_NUM_VAR(tui->params[0], left);
-    UNIBI_SET_NUM_VAR(tui->params[1], right);
-    unibi_out(tui, unibi_set_lr_margin);
+    terminfo_print_num2(tui, kTerm_set_lr_margin, left, right);
   }
   grid->row = -1;
 }
@@ -1198,17 +1177,13 @@ static void reset_scroll_region(TUIData *tui, bool fullwidth)
 {
   UGrid *grid = &tui->grid;
 
-  if (0 <= tui->unibi_ext.reset_scroll_region) {
-    unibi_out_ext(tui, tui->unibi_ext.reset_scroll_region);
+  if (tui->terminfo_ext.reset_scroll_region) {
+    out_len(tui, tui->terminfo_ext.reset_scroll_region);
   } else {
-    UNIBI_SET_NUM_VAR(tui->params[0], 0);
-    UNIBI_SET_NUM_VAR(tui->params[1], tui->height - 1);
-    unibi_out(tui, unibi_change_scroll_region);
+    terminfo_print_num2(tui, kTerm_change_scroll_region, 0, tui->height - 1);
   }
   if (!fullwidth) {
-    UNIBI_SET_NUM_VAR(tui->params[0], 0);
-    UNIBI_SET_NUM_VAR(tui->params[1], tui->width - 1);
-    unibi_out(tui, unibi_set_lr_margin);
+    terminfo_print_num2(tui, kTerm_set_lr_margin, 0, tui->width - 1);
     tui_set_term_mode(tui, kTermModeLeftAndRightMargins, false);
   }
   grid->row = -1;
@@ -1218,7 +1193,6 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
 {
   UGrid *grid = &tui->grid;
   ugrid_resize(grid, (int)width, (int)height);
-  ensure_space_buf_size(tui, (size_t)width);
 
   // resize might not always be followed by a clear before flush
   // so clip the invalid region
@@ -1230,9 +1204,7 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
 
   if (tui->pending_resize_events == 0 && !tui->is_starting) {
     // Resize the _host_ terminal.
-    UNIBI_SET_NUM_VAR(tui->params[0], (int)height);
-    UNIBI_SET_NUM_VAR(tui->params[1], (int)width);
-    unibi_out_ext(tui, tui->unibi_ext.resize_screen);
+    out_printf(tui, 64, "\x1b[8;%d;%dt", (int)height, (int)width);
   } else {  // Already handled the resize; avoid double-resize.
     tui->pending_resize_events = tui->pending_resize_events >
                                  0 ? tui->pending_resize_events - 1 : 0;
@@ -1366,23 +1338,24 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
     if (!tui->want_invisible && aep.rgb_ae_attr & HL_INVERSE) {
       // We interpret "inverse" as "default" (no termcode for "inverse"...).
       // Hopefully the user's default cursor color is inverse.
-      unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
+      terminfo_out(tui, kTerm_reset_cursor_color);
     } else if (!tui->want_invisible && aep.rgb_bg_color >= 0) {
+      TPVAR params[9] = { 0 };
       char hexbuf[8];
       if (tui->set_cursor_color_as_str) {
         snprintf(hexbuf, 7 + 1, "#%06x", aep.rgb_bg_color);
-        UNIBI_SET_STR_VAR(tui->params[0], hexbuf);
+        params[0].string = hexbuf;
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], aep.rgb_bg_color);
+        params[0].num = aep.rgb_bg_color;
       }
-      unibi_out_ext(tui, tui->unibi_ext.set_cursor_color);
+      terminfo_print(tui, kTerm_set_cursor_color, params);
       tui->cursor_has_color = true;
     }
   } else if (c.id == 0 && (tui->want_invisible || tui->cursor_has_color)) {
     // No cursor color for this mode; reset to default.
     tui->want_invisible = false;
     tui->cursor_has_color = false;
-    unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
+    terminfo_out(tui, kTerm_reset_cursor_color);
   }
 
   int shape;
@@ -1394,8 +1367,8 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
   case SHAPE_VER:
     shape = 5; break;
   }
-  UNIBI_SET_NUM_VAR(tui->params[0], shape + (int)(c.blinkon == 0 || c.blinkoff == 0));
-  unibi_out_ext(tui, tui->unibi_ext.set_cursor_style);
+  terminfo_print_num1(tui, kTerm_set_cursor_style,
+                      shape + (int)(c.blinkon == 0 || c.blinkoff == 0));
 }
 
 /// @param mode editor mode
@@ -1457,17 +1430,15 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
 
     if (rows > 0) {
       if (rows == 1) {
-        unibi_out(tui, unibi_delete_line);
+        terminfo_out(tui, kTerm_delete_line);
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], (int)rows);
-        unibi_out(tui, unibi_parm_delete_line);
+        terminfo_print_num1(tui, kTerm_parm_delete_line, (int)rows);
       }
     } else {
       if (rows == -1) {
-        unibi_out(tui, unibi_insert_line);
+        terminfo_out(tui, kTerm_insert_line);
       } else {
-        UNIBI_SET_NUM_VAR(tui->params[0], -(int)rows);
-        unibi_out(tui, unibi_parm_insert_line);
+        terminfo_print_num1(tui, kTerm_parm_insert_line, -(int)rows);
       }
     }
 
@@ -1517,12 +1488,22 @@ void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_a
 
 void tui_bell(TUIData *tui)
 {
-  unibi_out(tui, unibi_bell);
+  out(tui, S_LEN("\a"));
 }
 
 void tui_visual_bell(TUIData *tui)
 {
-  unibi_out(tui, unibi_flash_screen);
+  if (tui->screen_or_tmux) {
+    out(tui, S_LEN("\x1bg"));
+  } else {
+    out(tui, S_LEN("\x1b[?5h"));
+
+    flush_buf(tui);
+    uv_sleep(100);  // typically either 100 or 200 in terminfo. 100 seems enough
+
+    out(tui, S_LEN("\x1b[?5l"));
+  }
+  flush_buf(tui);
 }
 
 void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
@@ -1604,18 +1585,13 @@ void tui_flush(TUIData *tui)
 /// Dumps termcap info to the messages area, if 'verbose' >= 3.
 static void show_verbose_terminfo(TUIData *tui)
 {
-  const unibi_term *const ut = tui->ut;
-  if (!ut) {
-    abort();
-  }
-
   MAXSIZE_TEMP_ARRAY(chunks, 3);
   MAXSIZE_TEMP_ARRAY(title, 2);
   ADD_C(title, CSTR_AS_OBJ("\n\n--- Terminal info --- {{{\n"));
   ADD_C(title, CSTR_AS_OBJ("Title"));
   ADD_C(chunks, ARRAY_OBJ(title));
   MAXSIZE_TEMP_ARRAY(info, 1);
-  String str = terminfo_info_msg(ut, tui->term);
+  String str = terminfo_info_msg(&tui->ti, tui->term);
   ADD_C(info, STRING_OBJ(str));
   ADD_C(chunks, ARRAY_OBJ(info));
   MAXSIZE_TEMP_ARRAY(end_fold, 2);
@@ -1666,21 +1642,32 @@ static void tui_suspend_cb(TUIData *tui)
 
 void tui_set_title(TUIData *tui, String title)
 {
-  if (tui->unibi_ext.set_title == -1) {
+  if (!tui->can_set_title) {
     return;
   }
-  if (title.size > 0) {
+
+  bool too_long = (title.size > 4096);  // should be enough
+  if (too_long) {
+    ELOG("set_title: title string too long!");
+  }
+  if (title.size > 0 && !too_long) {
     if (!tui->title_enabled) {
       // Save title/icon to the "stack". #4063
-      unibi_out_ext(tui, tui->unibi_ext.save_title);
+      out(tui, S_LEN("\x1b[22;0t"));
       tui->title_enabled = true;
     }
-    UNIBI_SET_NUM_VAR(tui->params[0], 0);
-    UNIBI_SET_STR_VAR(tui->params[1], title.data);
-    unibi_out_ext(tui, tui->unibi_ext.set_title);
+
+    if ((sizeof tui->buf - tui->bufpos) < title.size + 2 * TERMINFO_SEQ_LIMIT) {
+      // The sequence to set title, is usually an OSC sequence that cannot be cut in half.
+      // flush buffer prior to printing to avoid this
+      flush_buf(tui);
+    }
+    terminfo_out(tui, kTerm_to_status_line);
+    out(tui, title.data, title.size);
+    terminfo_out(tui, kTerm_from_status_line);
   } else if (tui->title_enabled) {
     // Restore title/icon from the "stack". #4063
-    unibi_out_ext(tui, tui->unibi_ext.restore_title);
+    out(tui, S_LEN("\x1b[23;0t"));
     tui->title_enabled = false;
   }
 }
@@ -1703,7 +1690,7 @@ void tui_screenshot(TUIData *tui, String path)
 
   tui->screenshot = f;
   fprintf(f, "%d,%d\n", grid->height, grid->width);
-  unibi_out(tui, unibi_clear_screen);
+  terminfo_out(tui, kTerm_clear_screen);
   for (int i = 0; i < grid->height; i++) {
     cursor_goto(tui, i, 0);
     for (int j = 0; j < grid->width; j++) {
@@ -1828,22 +1815,12 @@ static void invalidate(TUIData *tui, int top, int bot, int left, int right)
   }
 }
 
-static void ensure_space_buf_size(TUIData *tui, size_t len)
-{
-  if (len > tui->space_buf_len) {
-    tui->space_buf = xrealloc(tui->space_buf, len);
-    memset(tui->space_buf + tui->space_buf_len, ' ', len - tui->space_buf_len);
-    tui->space_buf_len = len;
-  }
-}
-
 void tui_set_size(TUIData *tui, int width, int height)
   FUNC_ATTR_NONNULL_ALL
 {
   tui->pending_resize_events++;
   tui->width = width;
   tui->height = height;
-  ensure_space_buf_size(tui, (size_t)tui->width);
   ui_client_set_size(width, height);
 }
 
@@ -1873,8 +1850,8 @@ void tui_guess_size(TUIData *tui)
   }
 
   // 3 - read from terminfo if available
-  height = unibi_get_num(tui->ut, unibi_lines);
-  width = unibi_get_num(tui->ut, unibi_columns);
+  height = tui->ti.lines;
+  width = tui->ti.columns;
 
   end:
   if (width <= 0 || height <= 0) {
@@ -1889,73 +1866,11 @@ void tui_guess_size(TUIData *tui)
   xfree(columns);
 }
 
-static void unibi_goto(TUIData *tui, int row, int col)
+static void out(TUIData *tui, const char *str, size_t len)
 {
-  UNIBI_SET_NUM_VAR(tui->params[0], row);
-  UNIBI_SET_NUM_VAR(tui->params[1], col);
-  unibi_out(tui, unibi_cursor_address);
-}
-
-#define UNIBI_OUT(fn, name_fn) \
-  do { \
-    const char *str = NULL; \
-    if (unibi_index >= 0) { \
-      str = fn(tui->ut, (unsigned)unibi_index); \
-    } \
-    if (str) { \
-      unibi_var_t vars[26 + 26]; \
-      unibi_var_t params[9]; \
-      size_t orig_pos = tui->bufpos; \
-      memset(&vars, 0, sizeof(vars)); \
-      tui->cork = true; \
-retry: \
-      /* Copy parameters on every retry, as unibi_format() may modify them. */ \
-      memcpy(params, tui->params, sizeof(params)); \
-      unibi_format(vars, vars + 26, str, params, out, tui, pad, tui); \
-      if (tui->overflow) { \
-        tui->bufpos = orig_pos; \
-        if (orig_pos > 0) { \
-          flush_buf(tui); \
-          orig_pos = 0; \
-          goto retry; \
-        } else {  /* orig_pos == 0 */ \
-          /* There's nothing to flush and retrying won't work. */ \
-          ELOG("TUI: escape sequence for %s too long", name_fn(unibi_index)); \
-          tui->overflow = false; \
-        } \
-      } \
-      tui->cork = false; \
-    } \
-  } while (0)
-static void unibi_out(TUIData *tui, int unibi_index)
-{
-#define UNIBI_NAME_STR(i) unibi_name_str((unsigned)(i))
-  UNIBI_OUT(unibi_get_str, UNIBI_NAME_STR);
-#undef UNIBI_NAME_STR
-}
-static void unibi_out_ext(TUIData *tui, int unibi_index)
-{
-#define UNIBI_GET_EXT_STR_NAME(i) unibi_get_ext_str_name(tui->ut, (unsigned)(i))
-  UNIBI_OUT(unibi_get_ext_str, UNIBI_GET_EXT_STR_NAME);
-#undef UNIBI_GET_EXT_STR_NAME
-}
-#undef UNIBI_OUT
-
-static void out(void *ctx, const char *str, size_t len)
-{
-  TUIData *tui = ctx;
   size_t available = sizeof(tui->buf) - tui->bufpos;
 
-  if (tui->cork && tui->overflow) {
-    return;
-  }
-
   if (len > available) {
-    if (tui->cork) {
-      // Called by unibi_format(): avoid flush_buf() halfway an escape sequence.
-      tui->overflow = true;
-      return;
-    }
     flush_buf(tui);
     if (len > sizeof(tui->buf)) {
       // Don't use tui->buf[] when the string to output is too long. #30794
@@ -1970,86 +1885,110 @@ static void out(void *ctx, const char *str, size_t len)
   tui->bufpos += len;
 }
 
-/// Called by unibi_format() for padding instructions.
-/// The following parameter descriptions are extracted from unibi_format(3) and terminfo(5).
-///
-/// @param ctx    the same as `ctx2` passed to unibi_format()
-/// @param delay  the delay in tenths of milliseconds
-/// @param scale  padding is proportional to the number of lines affected
-/// @param force  padding is mandatory
-static void pad(void *ctx, size_t delay, int scale FUNC_ATTR_UNUSED, int force)
+static void out_len(TUIData *tui, const char *str)
 {
-  if (!force) {
+  if (str != NULL) {
+    out(tui, str, strlen(str));
+  }
+}
+
+/// drops the entire message if it doesn't fit in "limit"
+void out_printf(TUIData *tui, size_t limit, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
+{
+  assert(limit <= sizeof(tui->buf));
+  size_t available = sizeof(tui->buf) - tui->bufpos;
+  if (available < limit) {
+    flush_buf(tui);
+  }
+
+  va_list ap;
+  va_start(ap, fmt);
+  int printed = vsnprintf(tui->buf + tui->bufpos, limit, fmt, ap);
+  va_end(ap);
+
+  if (printed > 0) {
+    tui->bufpos += (size_t)printed;
+  }
+}
+
+static void terminfo_out(TUIData *tui, TerminfoDef what)
+{
+  TPVAR null_params[9] = { 0 };
+  terminfo_print(tui, what, null_params);
+}
+
+static void terminfo_print_num(TUIData *tui, TerminfoDef what, int num1, int num2, int num3)
+{
+  TPVAR params[9] = { 0 };
+  params[0].num = num1;
+  params[1].num = num2;
+  params[2].num = num3;
+  terminfo_print(tui, what, params);
+}
+
+static void terminfo_print(TUIData *tui, TerminfoDef what, TPVAR *params)
+{
+  if (what >= kTermCount) {
+    abort();
+  }
+
+  const char *str = tui->ti.defs[what];
+  if (str == NULL || *str == NUL) {
     return;
   }
 
-  TUIData *tui = ctx;
-
-  if (tui->overflow) {
-    return;
+  if (sizeof(tui->buf) - tui->bufpos > TERMINFO_SEQ_LIMIT) {
+    TPVAR copy_params[9];
+    memcpy(copy_params, params, sizeof copy_params);
+    size_t len = terminfo_fmt(tui->buf + tui->bufpos, tui->buf + sizeof(tui->buf), str,
+                              copy_params);
+    if (len > 0) {
+      tui->bufpos += len;
+      return;
+    }
   }
 
+  // try again with fresh buffer
   flush_buf(tui);
-  uv_sleep((unsigned)(delay/10));
+  size_t len = terminfo_fmt(tui->buf + tui->bufpos, tui->buf + sizeof(tui->buf), str, params);
+  if (len > 0) {
+    tui->bufpos += len;
+  }
 }
-
-static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str, const char *val)
+static void terminfo_set_if_empty(TUIData *tui, TerminfoDef str, const char *val)
 {
-  if (!unibi_get_str(ut, str)) {
-    unibi_set_str(ut, str, val);
+  if (!tui->ti.defs[str]) {
+    tui->ti.defs[str] = val;
   }
 }
 
-static int unibi_find_ext_str(unibi_term *ut, const char *name)
+static void terminfo_set_str(TUIData *tui, TerminfoDef str, const char *val)
 {
-  size_t max = unibi_count_ext_str(ut);
-  for (size_t i = 0; i < max; i++) {
-    const char *n = unibi_get_ext_str_name(ut, i);
-    if (n && 0 == strcmp(n, name)) {
-      return (int)i;
-    }
-  }
-  return -1;
-}
-
-static int unibi_find_ext_bool(unibi_term *ut, const char *name)
-{
-  size_t max = unibi_count_ext_bool(ut);
-  for (size_t i = 0; i < max; i++) {
-    const char *n = unibi_get_ext_bool_name(ut, i);
-    if (n && 0 == strcmp(n, name)) {
-      return (int)i;
-    }
-  }
-  return -1;
+  tui->ti.defs[str] = val;
 }
 
 /// Determine if the terminal supports truecolor or not.
 ///
+/// note: We get another chance at detecting these in the nvim server process, see
+/// the use of vim.termcap in runtime/lua/vim/_defaults.lua
+///
 /// If terminfo contains Tc, RGB, or both setrgbf and setrgbb capabilities, return true.
 static bool term_has_truecolor(TUIData *tui, const char *colorterm)
 {
-  // Check for Tc or RGB
-  for (size_t i = 0; i < unibi_count_ext_bool(tui->ut); i++) {
-    const char *n = unibi_get_ext_bool_name(tui->ut, i);
-    if (n && (!strcmp(n, "Tc") || !strcmp(n, "RGB"))) {
-      return true;
-    }
+  // Check $COLORTERM
+  if (strequal(colorterm, "truecolor") || strequal(colorterm, "24bit")) {
+    return true;
+  }
+
+  if (tui->ti.has_Tc_or_RGB) {
+    // terminfo had one of "Tc" or "RGB" extended boolean capabilities
+    return true;
   }
 
   // Check for setrgbf and setrgbb
-  bool setrgbf = false;
-  bool setrgbb = false;
-  for (size_t i = 0; i < unibi_count_ext_str(tui->ut) && (!setrgbf || !setrgbb); i++) {
-    const char *n = unibi_get_ext_str_name(tui->ut, i);
-    if (n) {
-      if (!setrgbf && !strcmp(n, "setrgbf")) {
-        setrgbf = true;
-      } else if (!setrgbb && !strcmp(n, "setrgbb")) {
-        setrgbb = true;
-      }
-    }
-  }
+  bool setrgbf = tui->ti.defs[kTerm_set_rgb_foreground];
+  bool setrgbb = tui->ti.defs[kTerm_set_rgb_background];
 
   return setrgbf && setrgbb;
 }
@@ -2060,7 +1999,6 @@ static bool term_has_truecolor(TUIData *tui, const char *colorterm)
 static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colorterm,
                                 int vte_version, int konsolev, bool iterm_env, bool nsterm)
 {
-  unibi_term *ut = tui->ut;
   char *xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
@@ -2091,7 +2029,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
   bool cygwin = terminfo_is_term_family(term, "cygwin");
 
-  char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
+  const char *fix_normal = tui->ti.defs[kTerm_cursor_normal];
   if (fix_normal) {
     if (STARTS_WITH(fix_normal, "\x1b[?12l")) {
       // terminfo typically includes DECRST 12 as part of setting up the
@@ -2099,7 +2037,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
       // set_cursor_style.  When DECRST 12 is present, skip over it, but honor
       // the rest of the cnorm setting.
       fix_normal += sizeof "\x1b[?12l" - 1;
-      unibi_set_str(ut, unibi_cursor_normal, fix_normal);
+      terminfo_set_str(tui, kTerm_cursor_normal, fix_normal);
     }
     if (linuxvt
         && strlen(fix_normal) >= (sizeof LINUXSET0C - 1)
@@ -2108,10 +2046,12 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cnorm, which similarly interferes with
       // set_cursor_style.
-      fix_normal[strlen(fix_normal) - (sizeof LINUXSET0C - 1)] = 0;
+      char *new_normal = arena_memdupz(&tui->ti_arena, fix_normal,
+                                       strlen(fix_normal) - (sizeof LINUXSET0C - 1));
+      terminfo_set_str(tui, kTerm_cursor_normal, new_normal);
     }
   }
-  char *fix_invisible = (char *)unibi_get_str(ut, unibi_cursor_invisible);
+  const char *fix_invisible = tui->ti.defs[kTerm_cursor_invisible];
   if (fix_invisible) {
     if (linuxvt
         && strlen(fix_invisible) >= (sizeof LINUXSET1C - 1)
@@ -2120,13 +2060,15 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cinvis, which similarly interferes with
       // set_cursor_style.
-      fix_invisible[strlen(fix_invisible) - (sizeof LINUXSET1C - 1)] = 0;
+      char *new_invisible = arena_memdupz(&tui->ti_arena, fix_invisible,
+                                          strlen(fix_invisible) - (sizeof LINUXSET1C - 1));
+      terminfo_set_str(tui, kTerm_cursor_invisible, new_invisible);
     }
   }
 
   if (tmux || screen || kitty) {
     // Disable BCE in some cases we know it is not working. #8806
-    unibi_set_bool(ut, unibi_back_color_erase, false);
+    tui->ti.bce = false;
   }
 
   if (xterm || hterm) {
@@ -2140,62 +2082,51 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     // 2017-04 terminfo.src lacks these.  Xterm-likes have them.
     if (!hterm) {
       // hterm doesn't have a status line.
-      unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
-      unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
-      // TODO(aktau): patch this in when DECSTBM is fixed (https://crbug.com/1298796)
-      unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
+      terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b]0;");
+      terminfo_set_if_empty(tui, kTerm_from_status_line, "\x07");
     }
-    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
-    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
+    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
 
     // 2025: This are not supported by all xterm-alikes, but it is only
     // used when kTermModeLeftAndRightMargins is detected
-    unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
+    terminfo_set_if_empty(tui, kTerm_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
 
 #ifdef MSWIN
     // XXX: workaround libuv implicit LF => CRLF conversion. #10558
-    unibi_set_str(ut, unibi_cursor_down, "\x1b[B");
+    terminfo_set_str(tui, kTerm_cursor_down, "\x1b[B");
 #endif
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
-    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
-    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
-    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
-    unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
+    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
+    terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b]2");
+    terminfo_set_if_empty(tui, kTerm_from_status_line, "\x07");
     // 2017-04 terminfo.src has older control sequences.
-    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
-    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
+    terminfo_set_str(tui, kTerm_enter_ca_mode, "\x1b[?1049h");
+    terminfo_set_str(tui, kTerm_exit_ca_mode, "\x1b[?1049l");
   } else if (screen) {
     // per the screen manual; 2017-04 terminfo.src lacks these.
-    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
-    unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
+    terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b_");
+    terminfo_set_if_empty(tui, kTerm_from_status_line, "\x1b\\");
   } else if (tmux) {
-    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
-    unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
-    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
+    terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b_");
+    terminfo_set_if_empty(tui, kTerm_from_status_line, "\x1b\\");
+    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
   } else if (terminfo_is_term_family(term, "interix")) {
     // 2017-04 terminfo.src lacks this.
-    unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
+    terminfo_set_if_empty(tui, kTerm_carriage_return, "\x0d");
   } else if (linuxvt) {
-    unibi_set_if_empty(ut, unibi_parm_up_cursor, "\x1b[%p1%dA");
-    unibi_set_if_empty(ut, unibi_parm_down_cursor, "\x1b[%p1%dB");
-    unibi_set_if_empty(ut, unibi_parm_right_cursor, "\x1b[%p1%dC");
-    unibi_set_if_empty(ut, unibi_parm_left_cursor, "\x1b[%p1%dD");
+    terminfo_set_if_empty(tui, kTerm_parm_up_cursor, "\x1b[%p1%dA");
+    terminfo_set_if_empty(tui, kTerm_parm_down_cursor, "\x1b[%p1%dB");
+    terminfo_set_if_empty(tui, kTerm_parm_right_cursor, "\x1b[%p1%dC");
+    terminfo_set_if_empty(tui, kTerm_parm_left_cursor, "\x1b[%p1%dD");
   } else if (putty) {
     // No bugs in the vanilla terminfo for our purposes.
   } else if (iterm) {
     // 2017-04 terminfo.src has older control sequences.
-    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
-    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
+    terminfo_set_str(tui, kTerm_enter_ca_mode, "\x1b[?1049h");
+    terminfo_set_str(tui, kTerm_exit_ca_mode, "\x1b[?1049l");
     // 2017-04 terminfo.src lacks these.
-    unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
-    unibi_set_if_empty(ut, unibi_orig_pair, "\x1b[39;49m");
-    unibi_set_if_empty(ut, unibi_enter_dim_mode, "\x1b[2m");
-    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
-    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
-    unibi_set_if_empty(ut, unibi_exit_underline_mode, "\x1b[24m");
-    unibi_set_if_empty(ut, unibi_exit_standout_mode, "\x1b[27m");
+    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
   }
@@ -2222,42 +2153,41 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
 
   // Terminals with 256-colour SGR support despite what terminfo says.
-  if (unibi_get_num(ut, unibi_max_colors) < 256) {
+  if (tui->ti.max_colors < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
     if (true_xterm || iterm || iterm_pretending_xterm) {
-      unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
+      tui->ti.max_colors = 256;
+      terminfo_set_str(tui, kTerm_set_a_foreground, XTERM_SETAF_256_COLON);
+      terminfo_set_str(tui, kTerm_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsolev || xterm || gnome || rxvt || st || putty
                || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
                || tmux
                || (colorterm && strstr(colorterm, "256"))
                || (term && strstr(term, "256"))) {
-      unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
+      tui->ti.max_colors = 256;
+      terminfo_set_str(tui, kTerm_set_a_foreground, XTERM_SETAF_256);
+      terminfo_set_str(tui, kTerm_set_a_background, XTERM_SETAB_256);
     }
   }
   // Terminals with 16-colour SGR support despite what terminfo says.
-  if (unibi_get_num(ut, unibi_max_colors) < 16) {
+  if (tui->ti.max_colors < 16) {
     if (colorterm) {
-      unibi_set_num(ut, unibi_max_colors, 16);
-      unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF_16);
-      unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB_16);
+      tui->ti.max_colors = 16;
+      terminfo_set_if_empty(tui, kTerm_set_a_foreground, XTERM_SETAF_16);
+      terminfo_set_if_empty(tui, kTerm_set_a_background, XTERM_SETAB_16);
     }
   }
 
   // Blacklist of terminals that cannot be trusted to report DECSCUSR support.
-  if (!(st || (vte_version != 0 && vte_version < 3900) || konsolev)) {
-    tui->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
-    tui->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
+  if ((st || (vte_version != 0 && vte_version < 3900) || konsolev)) {
+    tui->ti.defs[kTerm_reset_cursor_style] = NULL;
   }
 
   // Dickey ncurses terminfo includes Ss/Se capabilities since 2011-07-14. So
   // adding them to terminal types, that have such control sequences but lack
   // the correct terminfo entries, is a fixup, not an augmentation.
-  if (-1 == tui->unibi_ext.set_cursor_style) {
+  if (tui->ti.defs[kTerm_set_cursor_style] == NULL) {
     // DECSCUSR (cursor shape) is widely supported.
     // https://github.com/gnachman/iTerm2/pull/92
     if ((!bsdvt && (!konsolev || konsolev >= 180770))
@@ -2283,72 +2213,56 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt
                 && (xterm_version || (vte_version > 0) || colorterm)))) {
-      tui->unibi_ext.set_cursor_style =
-        (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
-      if (-1 == tui->unibi_ext.reset_cursor_style) {
-        tui->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-                                                                   "");
-      }
-      unibi_set_ext_str(ut, (size_t)tui->unibi_ext.reset_cursor_style,
-                        "\x1b[ q");
+      terminfo_set_str(tui, kTerm_set_cursor_style, "\x1b[%p1%d q");
+      terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[ q");
     } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.
       // See http://linuxgazette.net/137/anonymous.html for more info
-      tui->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-                                                               "\x1b[?"
-                                                               "%?"
-                                                               // The parameter passed to Ss is the DECSCUSR parameter, so the
-                                                               // terminal capability has to translate into the Linux idiosyncratic
-                                                               // parameter.
-                                                               //
-                                                               // linuxvt only supports block and underline. It is also only
-                                                               // possible to have a steady block (no steady underline)
-                                                               "%p1%{2}%<" "%t%{8}"       // blink block
-                                                               "%e%p1%{2}%=" "%t%{112}"   // steady block
-                                                               "%e%p1%{3}%=" "%t%{4}"     // blink underline (set to half block)
-                                                               "%e%p1%{4}%=" "%t%{4}"     // steady underline
-                                                               "%e%p1%{5}%=" "%t%{2}"     // blink bar (set to underline)
-                                                               "%e%p1%{6}%=" "%t%{2}"     // steady bar
-                                                               "%e%{0}"                   // anything else
-                                                               "%;" "%dc");
-      if (-1 == tui->unibi_ext.reset_cursor_style) {
-        tui->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-                                                                   "");
-      }
-      unibi_set_ext_str(ut, (size_t)tui->unibi_ext.reset_cursor_style,
-                        "\x1b[?c");
+      terminfo_set_str(tui, kTerm_set_cursor_style,
+                       "\x1b[?"
+                       "%?"
+                       // The parameter passed to Ss is the DECSCUSR parameter, so the
+                       // terminal capability has to translate into the Linux idiosyncratic
+                       // parameter.
+                       //
+                       // linuxvt only supports block and underline. It is also only
+                       // possible to have a steady block (no steady underline)
+                       "%p1%{2}%<" "%t%{8}"       // blink block
+                       "%e%p1%{2}%=" "%t%{112}"   // steady block
+                       "%e%p1%{3}%=" "%t%{4}"     // blink underline (set to half block)
+                       "%e%p1%{4}%=" "%t%{4}"     // steady underline
+                       "%e%p1%{5}%=" "%t%{2}"     // blink bar (set to underline)
+                       "%e%p1%{6}%=" "%t%{2}"     // steady bar
+                       "%e%{0}"                   // anything else
+                       "%;" "%dc");
+      terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[?c");
     } else if (konsolev > 0 && konsolev < 180770) {
       // Konsole before version 18.07.70: set up a nonce profile. This has
       // side effects on temporary font resizing. #6798
-      tui->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-                                                               TMUX_WRAP(tmux,
-                                                                         "\x1b]50;CursorShape=%?"
-                                                                         "%p1%{3}%<" "%t%{0}"    // block
-                                                                         "%e%p1%{5}%<" "%t%{2}"  // underline
-                                                                         "%e%{1}"                // everything else is bar
-                                                                         "%;%d;BlinkingCursorEnabled=%?"
-                                                                         "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
-                                                                         "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
-                                                                         "%;%d\x07"));
-      if (-1 == tui->unibi_ext.reset_cursor_style) {
-        tui->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-                                                                   "");
-      }
-      unibi_set_ext_str(ut, (size_t)tui->unibi_ext.reset_cursor_style,
-                        "\x1b]50;\x07");
+      terminfo_set_str(tui, kTerm_set_cursor_style,
+                       TMUX_WRAP(tmux,
+                                 "\x1b]50;CursorShape=%?"
+                                 "%p1%{3}%<" "%t%{0}"    // block
+                                 "%e%p1%{5}%<" "%t%{2}"  // underline
+                                 "%e%{1}"                // everything else is bar
+                                 "%;%d;BlinkingCursorEnabled=%?"
+                                 "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
+                                 "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
+                                 "%;%d\x07"));
+      terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b]50;\x07");
+    } else {
+      tui->ti.defs[kTerm_reset_cursor_style] = NULL;
     }
   }
 
   xfree(xterm_version);
 }
 
-/// This adds stuff that is not in standard terminfo as extended unibilium
-/// capabilities.
+/// This adds stuff that is not in standard terminfo.
 static void augment_terminfo(TUIData *tui, const char *term, int vte_version, int konsolev,
                              const char *weztermv, bool iterm_env, bool nsterm)
 {
-  unibi_term *ut = tui->ut;
   char *xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
@@ -2379,24 +2293,16 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
       || konsolev    // per commentary in VT102Emulation.cpp
       || teraterm    // per TeraTerm "Supported Control Functions" doco
       || rxvt) {     // per command.C
-    tui->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut,
-                                                          "ext.resize_screen",
-                                                          "\x1b[8;%p1%d;%p2%dt");
-  }
-  if (putty || xterm || hterm || rxvt) {
-    tui->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut,
-                                                                "ext.reset_scroll_region",
-                                                                "\x1b[r");
+    tui->can_resize_screen = true;
   }
 
-  // terminfo describes strikethrough modes as rmxx/smxx with respect
-  // to the ECMA-48 strikeout/crossed-out attributes.
-  tui->unibi_ext.enter_strikethrough_mode = unibi_find_ext_str(ut, "smxx");
+  if (putty || xterm || hterm || rxvt) {
+    tui->terminfo_ext.reset_scroll_region = "\x1b[r";
+  }
 
   // It should be pretty safe to always enable this, as terminals will ignore
   // unrecognised SGR numbers.
-  tui->unibi_ext.enter_altfont_mode = (int)unibi_add_ext_str(ut, "ext.enter_altfont_mode",
-                                                             "\x1b[11m");
+  tui->terminfo_ext.enter_altfont_mode = "\x1b[11m";
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
@@ -2416,94 +2322,61 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
                            // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
                            || true_xterm);
 
-  tui->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
-  if (-1 == tui->unibi_ext.set_rgb_foreground) {
+  if (tui->ti.defs[kTerm_set_rgb_foreground] == NULL) {
     if (has_colon_rgb) {
-      tui->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
-                                                                 "\x1b[38:2:%p1%d:%p2%d:%p3%dm");
+      tui->ti.defs[kTerm_set_rgb_foreground] = "\x1b[38:2:%p1%d:%p2%d:%p3%dm";
     } else {
-      tui->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
-                                                                 "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
+      tui->ti.defs[kTerm_set_rgb_foreground] = "\x1b[38;2;%p1%d;%p2%d;%p3%dm";
     }
   }
-  tui->unibi_ext.set_rgb_background = unibi_find_ext_str(ut, "setrgbb");
-  if (-1 == tui->unibi_ext.set_rgb_background) {
+  if (tui->ti.defs[kTerm_set_rgb_background] == NULL) {
     if (has_colon_rgb) {
-      tui->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
-                                                                 "\x1b[48:2:%p1%d:%p2%d:%p3%dm");
+      tui->ti.defs[kTerm_set_rgb_background] = "\x1b[48:2:%p1%d:%p2%d:%p3%dm";
     } else {
-      tui->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
-                                                                 "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
+      tui->ti.defs[kTerm_set_rgb_background] = "\x1b[48;2;%p1%d;%p2%d;%p3%dm";
     }
   }
 
-  tui->unibi_ext.set_cursor_color = unibi_find_ext_str(ut, "Cs");
-  if (-1 == tui->unibi_ext.set_cursor_color) {
+  if (tui->ti.defs[kTerm_set_cursor_color] == NULL) {
     if (iterm || iterm_pretending_xterm) {
       // FIXME: Bypassing tmux like this affects the cursor colour globally, in
       // all panes, which is not particularly desirable.  A better approach
       // would use a tmux control sequence and an extra if(screen) test.
-      tui->unibi_ext.set_cursor_color =
-        (int)unibi_add_ext_str(ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
+      tui->ti.defs[kTerm_set_cursor_color] = TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\");
     } else if ((xterm || hterm || rxvt || tmux || alacritty || st)
                && (vte_version == 0 || vte_version >= 3900)) {
       // Supported in urxvt, newer VTE.
       // Supported in st, but currently missing in ncurses definitions. #32217
-      tui->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
-                                                               "\033]12;%p1%s\007");
+      tui->ti.defs[kTerm_set_cursor_color] = "\033]12;%p1%s\007";
     }
   }
-  if (-1 != tui->unibi_ext.set_cursor_color) {
+  if (tui->ti.defs[kTerm_set_cursor_color] != NULL) {
     // Some terminals supporting cursor color changing specify their Cs
     // capability to take a string parameter. Others take a numeric parameter.
     // If and only if the format string contains `%s` we assume a string
     // parameter. #20628
-    const char *set_cursor_color =
-      unibi_get_ext_str(ut, (unsigned)tui->unibi_ext.set_cursor_color);
-    if (set_cursor_color) {
-      tui->set_cursor_color_as_str = strstr(set_cursor_color, "%s") != NULL;
-    }
+    tui->set_cursor_color_as_str = strstr(tui->ti.defs[kTerm_set_cursor_color], "%s") != NULL;
 
-    tui->unibi_ext.reset_cursor_color = unibi_find_ext_str(ut, "Cr");
-    if (-1 == tui->unibi_ext.reset_cursor_color) {
-      tui->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(ut, "ext.reset_cursor_color",
-                                                                 "\x1b]112\x07");
-    }
+    terminfo_set_if_empty(tui, kTerm_reset_cursor_color, "\x1b]112\x07");
   }
 
-  tui->unibi_ext.save_title = (int)unibi_add_ext_str(ut, "ext.save_title", "\x1b[22;0t");
-  tui->unibi_ext.restore_title = (int)unibi_add_ext_str(ut, "ext.restore_title", "\x1b[23;0t");
-
-  const char *tsl = unibi_get_str(ut, unibi_to_status_line);
-  const char *fsl = unibi_get_str(ut, unibi_from_status_line);
-  if (tsl != NULL && fsl != NULL) {
-    // Add a single extended capability for the whole sequence to set title,
-    // as it is usually an OSC sequence that cannot be cut in half.
-    // Use %p2 for the title string, as to_status_line may take an argument.
-    size_t set_title_len = strlen(tsl) + strlen("%p2%s") + strlen(fsl);
-    char *set_title = xmallocz(set_title_len);
-    snprintf(set_title, set_title_len + 1, "%s%s%s", tsl, "%p2%s", fsl);
-    tui->unibi_ext.set_title = (int)unibi_add_ext_str(ut, "ext.set_title", set_title);
-    tui->set_title = set_title;
+  if (tui->ti.defs[kTerm_to_status_line] != NULL && tui->ti.defs[kTerm_from_status_line] != NULL) {
+    tui->can_set_title = true;
   }
 
   // For urxvt send BOTH xterm and old urxvt sequences. #8695
-  tui->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, "ext.enable_focus",
-                                                                 rxvt
-                                                                 ? "\x1b[?1004h\x1b]777;focus;on\x7"
-                                                                 : "\x1b[?1004h");
-  tui->unibi_ext.disable_focus_reporting =
-    (int)unibi_add_ext_str(ut, "ext.disable_focus",
-                           rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
+  tui->terminfo_ext.enable_focus_reporting =
+    rxvt
+    ? "\x1b[?1004h\x1b]777;focus;on\x7"
+    : "\x1b[?1004h";
+  tui->terminfo_ext.disable_focus_reporting =
+    rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l";
 
   // Extended underline.
   // terminfo will have Smulx for this (but no support for colors yet).
-  tui->unibi_ext.set_underline_style = unibi_find_ext_str(ut, "Smulx");
-  if (tui->unibi_ext.set_underline_style == -1) {
-    int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
+  if (tui->ti.defs[kTerm_set_underline_style] == NULL) {
     if (vte_version >= 5102 || konsolev >= 221170
-        || (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))
-        || (weztermv != NULL && strcmp(weztermv, "20210203-095643") > 0)) {
+        || tui->ti.Su || (weztermv != NULL && strcmp(weztermv, "20210203-095643") > 0)) {
       tui_enable_extended_underline(tui);
     }
   } else {
@@ -2535,22 +2408,21 @@ static bool should_invisible(TUIData *tui)
 static size_t flush_buf_start(TUIData *tui, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  unibi_var_t params[9];  // Don't use tui->params[] as they may already be in use.
-
-  const char *str = NULL;
-  if (tui->sync_output && tui->unibi_ext.sync != -1) {
-    UNIBI_SET_NUM_VAR(params[0], 1);
-    str = unibi_get_ext_str(tui->ut, (size_t)tui->unibi_ext.sync);
+  if (tui->sync_output && tui->has_sync_mode) {
+    return xstrlcpy(buf, "\x1b?2026h", len);
   } else if (!tui->is_invisible) {
-    str = unibi_get_str(tui->ut, unibi_cursor_invisible);
     tui->is_invisible = true;
+
+    // TODO(bfredl): zero-param terminfo strings should be pre-filtered so we can just
+    // return a cached string here
+    TPVAR null_params[9] = { 0 };
+    const char *str = tui->ti.defs[kTerm_cursor_invisible];
+    if (str != NULL) {
+      return terminfo_fmt(buf, buf + len, str, null_params);
+    }
   }
 
-  if (str == NULL) {
-    return 0;
-  }
-
-  return unibi_run(str, params, buf, len);
+  return 0;
 }
 
 /// Write the sequence to end flushing output to `buf`.
@@ -2562,27 +2434,24 @@ static size_t flush_buf_start(TUIData *tui, char *buf, size_t len)
 static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  unibi_var_t params[9];  // Don't use tui->params[] as they may already be in use.
-
   size_t offset = 0;
-  if (tui->sync_output && tui->unibi_ext.sync != -1) {
-    UNIBI_SET_NUM_VAR(params[0], 0);
-    const char *str = unibi_get_ext_str(tui->ut, (size_t)tui->unibi_ext.sync);
-    offset = unibi_run(str, params, buf, len);
+  if (tui->sync_output && tui->has_sync_mode) {
+#define SYNC_END "\x1b?2026l"
+    memcpy(buf, SYNC_END, sizeof SYNC_END);
+    offset += sizeof SYNC_END - 1;
   }
 
   const char *str = NULL;
   if (tui->is_invisible && !should_invisible(tui)) {
-    str = unibi_get_str(tui->ut, unibi_cursor_normal);
+    str = tui->ti.defs[kTerm_cursor_normal];
     tui->is_invisible = false;
   } else if (!tui->is_invisible && should_invisible(tui)) {
-    str = unibi_get_str(tui->ut, unibi_cursor_invisible);
+    str = tui->ti.defs[kTerm_cursor_invisible];
     tui->is_invisible = true;
   }
-
+  TPVAR null_params[9] = { 0 };
   if (str != NULL) {
-    assert(len >= offset);
-    offset += unibi_run(str, params, buf + offset, len - offset);
+    offset += terminfo_fmt(buf, buf + len, str, null_params);
   }
 
   return offset;
@@ -2625,7 +2494,6 @@ static void flush_buf(TUIData *tui)
   }
   tui->buf_to_flush = NULL;
   tui->bufpos = 0;
-  tui->overflow = false;
 }
 
 /// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
