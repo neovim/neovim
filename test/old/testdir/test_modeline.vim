@@ -382,10 +382,40 @@ func Test_modeline_nowrap_lcs_extends()
         \ 'ccc                    evil',
         \ 'ddd                    vim: nowrap',
         \ ], 'Xmodeline_nowrap', 'D')
-  call NewWindow(10, 20)
+  set noequalalways
+  11new | 20vsplit
+
+  func Check_modeline_nowrap(expect_insecure, expect_secure, set_cmd)
+    edit Xmodeline_nowrap
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+
+    5split
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+    call assert_equal(a:expect_insecure, ScreenLines([7, 11], 20))
+
+    exe a:set_cmd 'nowrap'
+    call assert_equal(a:expect_secure, ScreenLines([1, 5], 20))
+    call assert_equal(a:expect_insecure, ScreenLines([7, 11], 20))
+
+    close
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+
+    setglobal nowrap
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+    setglobal wrap
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+
+    exe a:set_cmd 'nowrap'
+    call assert_equal(a:expect_secure, ScreenLines([1, 5], 20))
+
+    exe 'sandbox' a:set_cmd 'nowrap'
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+
+    exe a:set_cmd 'nowrap'
+    call assert_equal(a:expect_secure, ScreenLines([1, 5], 20))
+  endfunc
 
   setlocal nolist listchars=
-  edit Xmodeline_nowrap
   let expect_insecure = [
         \ 'aaa                 ',
         \ 'bbb                 ',
@@ -393,9 +423,6 @@ func Test_modeline_nowrap_lcs_extends()
         \ 'ddd                >',
         \ '~                   ',
         \ ]
-  call assert_equal(expect_insecure, ScreenLines([1, 5], 20))
-
-  setlocal nowrap
   let expect_secure = [
         \ 'aaa                 ',
         \ 'bbb                 ',
@@ -403,7 +430,8 @@ func Test_modeline_nowrap_lcs_extends()
         \ 'ddd                 ',
         \ '~                   ',
         \ ]
-  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
 
   setlocal list listchars=extends:+
   let expect_secure = [
@@ -414,13 +442,65 @@ func Test_modeline_nowrap_lcs_extends()
         \ '~                   ',
         \ ]
   call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
 
-  edit Xmodeline_nowrap
-  call assert_equal(expect_insecure, ScreenLines([1, 5], 20))
+  " Other 'listchars' flags are not affected.
+  call writefile([
+        \ "aa\ta",
+        \ "bb\tb",
+        \ "cc\tc              evil",
+        \ "dd\td              vim: nowrap lcs=tab\\:<->",
+        \ ], 'Xmodeline_nowrap')
+  let expect_insecure = [
+        \ 'aa<---->a           ',
+        \ 'bb<---->b           ',
+        \ 'cc<---->c          >',
+        \ 'dd<---->d          >',
+        \ '~                   ',
+        \ ]
+  let expect_secure = [
+        \ 'aa<---->a           ',
+        \ 'bb<---->b           ',
+        \ 'cc<---->c           ',
+        \ 'dd<---->d           ',
+        \ '~                   ',
+        \ ]
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
+
+  " Same behavior even if modeline sets "extends" to a space.
+  call writefile([
+        \ "aa\ta",
+        \ "bb\tb",
+        \ "cc\tc              evil",
+        \ "dd\td              vim: nowrap lcs=tab\\:<->",
+        \ ], 'Xmodeline_nowrap')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
+
+  sandbox setglobal nowrap
+  setglobal list listchars=eol:$
+  setlocal bufhidden=wipe
+  enew!
+  call setline(1, ['aaa                    bbb'])
+  call assert_equal(['aaa                >'], ScreenLines(1, 20))
+  setglobal nowrap
+  call assert_equal(['aaa                >'], ScreenLines(1, 20))
   setlocal nowrap
-  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+  call assert_equal(['aaa                 '], ScreenLines(1, 20))
+  normal! 20zl
+  call assert_equal(['   bbb$             '], ScreenLines(1, 20))
+  setlocal bufhidden=wipe
+  enew!
+  call setline(1, ['ccc                    ddd'])
+  call assert_equal(['ccc                 '], ScreenLines(1, 20))
+  normal! 20zl
+  call assert_equal(['   ddd$             '], ScreenLines(1, 20))
 
-  call CloseWindow()
+  bwipe!
+  delfunc Check_modeline_nowrap
+  set equalalways&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

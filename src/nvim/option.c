@@ -487,6 +487,7 @@ static void change_option_default(const OptIndex opt_idx, OptVal value)
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 static void set_option_default(const OptIndex opt_idx, int opt_flags)
 {
+  bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   OptVal def_val = get_option_default(opt_idx, opt_flags);
   set_option_direct(opt_idx, def_val, opt_flags, current_sctx.sc_sid);
 
@@ -497,6 +498,10 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
   // The default value is not insecure.
   uint32_t *flagsp = insecure_flag(curwin, opt_idx, opt_flags);
   *flagsp = *flagsp & ~(unsigned)kOptFlagInsecure;
+  if (both) {
+    flagsp = insecure_flag(curwin, opt_idx, OPT_LOCAL);
+    *flagsp = *flagsp & ~(unsigned)kOptFlagInsecure;
+  }
 }
 
 /// Set all options (except terminal options) to their default value.
@@ -1660,6 +1665,18 @@ uint32_t *insecure_flag(win_T *const wp, OptIndex opt_idx, int opt_flags)
       return &wp->w_buffer->b_p_fex_flags;
     case kOptIncludeexpr:
       return &wp->w_buffer->b_p_inex_flags;
+    default:
+      break;
+    }
+  } else {
+    // For global value of window-local options, use flags in w_allbuf_opt.
+    switch (opt_idx) {
+    case kOptWrap:
+      return &wp->w_allbuf_opt.wo_wrap_flags;
+    case kOptFoldexpr:
+      return &wp->w_allbuf_opt.wo_fde_flags;
+    case kOptFoldtext:
+      return &wp->w_allbuf_opt.wo_fdt_flags;
     default:
       break;
     }
@@ -3555,15 +3572,22 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   check_redraw(opt->flags);
 
   if (errmsg == NULL) {
-    uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
     opt->flags |= kOptFlagWasSet;
 
-    // When an option is set in the sandbox, from a modeline or in secure mode set the kOptFlagInsecure
-    // flag.  Otherwise, if a new value is stored reset the flag.
+    uint32_t *flagsp = insecure_flag(curwin, opt_idx, opt_flags);
+    uint32_t *flagsp_local = scope_both ? insecure_flag(curwin, opt_idx, OPT_LOCAL) : NULL;
+    // When an option is set in the sandbox, from a modeline or in secure mode set the
+    // kOptFlagInsecure flag.  Otherwise, if a new value is stored reset the flag.
     if (!value_checked && (secure || sandbox != 0 || (opt_flags & OPT_MODELINE))) {
-      *p |= kOptFlagInsecure;
+      *flagsp |= kOptFlagInsecure;
+      if (flagsp_local != NULL) {
+        *flagsp_local |= kOptFlagInsecure;
+      }
     } else if (value_replaced) {
-      *p &= ~(unsigned)kOptFlagInsecure;
+      *flagsp &= ~(unsigned)kOptFlagInsecure;
+      if (flagsp_local != NULL) {
+        *flagsp_local &= ~(unsigned)kOptFlagInsecure;
+      }
     }
   }
 
@@ -4912,6 +4936,12 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_winhl = copy_option_val(from->wo_winhl);
   to->wo_winbl = from->wo_winbl;
   to->wo_stc = copy_option_val(from->wo_stc);
+
+  to->wo_wrap_flags = from->wo_wrap_flags;
+  to->wo_stl_flags = from->wo_stl_flags;
+  to->wo_wbr_flags = from->wo_wbr_flags;
+  to->wo_fde_flags = from->wo_fde_flags;
+  to->wo_fdt_flags = from->wo_fdt_flags;
 
   // Copy the script context so that we know were the value was last set.
   memmove(to->wo_script_ctx, from->wo_script_ctx, sizeof(to->wo_script_ctx));
