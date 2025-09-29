@@ -487,6 +487,7 @@ static void change_option_default(const OptIndex opt_idx, OptVal value)
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 static void set_option_default(const OptIndex opt_idx, int opt_flags)
 {
+  bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   OptVal def_val = get_option_default(opt_idx, opt_flags);
   set_option_direct(opt_idx, def_val, opt_flags, current_sctx.sc_sid);
 
@@ -497,6 +498,10 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
   // The default value is not insecure.
   uint32_t *flagsp = insecure_flag(curwin, opt_idx, opt_flags);
   *flagsp = *flagsp & ~(unsigned)kOptFlagInsecure;
+  if (both) {
+    flagsp = insecure_flag(curwin, opt_idx, OPT_LOCAL);
+    *flagsp = *flagsp & ~(unsigned)kOptFlagInsecure;
+  }
 }
 
 /// Set all options (except terminal options) to their default value.
@@ -3555,15 +3560,22 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   check_redraw(opt->flags);
 
   if (errmsg == NULL) {
-    uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
     opt->flags |= kOptFlagWasSet;
 
-    // When an option is set in the sandbox, from a modeline or in secure mode set the kOptFlagInsecure
-    // flag.  Otherwise, if a new value is stored reset the flag.
+    uint32_t *flagsp = insecure_flag(curwin, opt_idx, opt_flags);
+    uint32_t *flagsp_local = scope_both ? insecure_flag(curwin, opt_idx, OPT_LOCAL) : NULL;
+    // When an option is set in the sandbox, from a modeline or in secure mode set the
+    // kOptFlagInsecure flag.  Otherwise, if a new value is stored reset the flag.
     if (!value_checked && (secure || sandbox != 0 || (opt_flags & OPT_MODELINE))) {
-      *p |= kOptFlagInsecure;
+      *flagsp |= kOptFlagInsecure;
+      if (flagsp_local != NULL) {
+        *flagsp_local |= kOptFlagInsecure;
+      }
     } else if (value_replaced) {
-      *p &= ~(unsigned)kOptFlagInsecure;
+      *flagsp &= ~(unsigned)kOptFlagInsecure;
+      if (flagsp_local != NULL) {
+        *flagsp_local &= ~(unsigned)kOptFlagInsecure;
+      }
     }
   }
 
