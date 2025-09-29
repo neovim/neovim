@@ -2707,7 +2707,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
           mpos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
-                                   false, 1, errormsg);
+                                    false, 1, errormsg);
           int tabnr = (int)addr.lnum;
           if (eap->cmd == NULL) {
             return false;
@@ -3438,7 +3438,7 @@ static const char *addr_error(cmd_addr_T addr_type)
 ///
 /// @return               MAXLNUM and MAXCOL when no Ex address was found.
 mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
-                  int to_other_file, int address_count, const char **errormsg)
+                   int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ARG(2, 8)
 {
   int c;

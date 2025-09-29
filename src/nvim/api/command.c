@@ -239,7 +239,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   switch (ea.addr_type) {
   case ADDR_POSITIONS:
     addr = ea.addr_mode == kOmCharWise ? "char"
-      : "line";
+                                       : "line";
     break;
   case ADDR_ARGUMENTS:
     addr = "arg";
@@ -520,11 +520,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   // since it only ever checks the first argument.
   set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
 
-  if (ea.addr_type == ADDR_POSITIONS &&
-      HAS_KEY(cmd, cmd, addr)) {
+  if (ea.addr_type == ADDR_POSITIONS
+      && HAS_KEY(cmd, cmd, addr)) {
     // TODO(616b2f): what else to validate here
 
-    if (parse_addr_type_arg(cmd->addr.data, (int)cmd->addr.size, &ea.addr_type, &ea.addr_mode) == FAIL) {
+    if (parse_addr_type_arg(cmd->addr.data, (int)cmd->addr.size, &ea.addr_type,
+                            &ea.addr_mode) == FAIL) {
       goto end;
     }
   }
@@ -1197,7 +1198,8 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
     });
 
     VALIDATE_S(OK == parse_addr_type_arg(opts->addr.data.string.data,
-                                         (int)opts->addr.data.string.size, &addr_type_arg, &addr_mode), "addr",
+                                         (int)opts->addr.data.string.size, &addr_type_arg,
+                                         &addr_mode), "addr",
                opts->addr.data.string.data, {
       goto err;
     });
@@ -1276,7 +1278,8 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
 
   WITH_SCRIPT_CONTEXT(channel_id, {
     if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
-                       compl_luaref, preview_luaref, addr_type_arg, addr_mode, luaref, force) != OK) {
+                       compl_luaref, preview_luaref, addr_type_arg, addr_mode, luaref,
+                       force) != OK) {
       api_set_error(err, kErrorTypeException, "Failed to create user command");
       // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
     }

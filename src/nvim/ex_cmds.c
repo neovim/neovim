@@ -4707,7 +4707,7 @@ void ex_global(exarg_T *eap)
       colnr_T col1 = 0;
       colnr_T col2 = ml_get_buf_len(curbuf, lnum);
       if (eap->addr_mode == kOmCharWise) {
-        col1 = (lnum == eap->line1) ? eap->col1 : col1 ;
+        col1 = (lnum == eap->line1) ? eap->col1 : col1;
         col2 = (lnum == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
       }
       int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
@@ -4765,7 +4765,6 @@ void global_exe(char *cmd, exarg_T *eap)
     colnr_T col2 = 0;
     linenr_T lines = 0;
     while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-
       // start of the marked range
       if (line2 == 0) {
         line1 = lnum;
@@ -4809,7 +4808,7 @@ void global_exe(char *cmd, exarg_T *eap)
         col1 = (line1 == eap->line1) ? eap->col1 : 0;
         col2 = (line2 == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
         lines++;
-      } 
+      }
 
       os_breakcheck();
     }

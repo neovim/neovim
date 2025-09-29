@@ -904,7 +904,8 @@ char *uc_validate_name(char *name)
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
                    int flags, int context, char *compl_arg, LuaRef compl_luaref,
-                   LuaRef preview_luaref, cmd_addr_T addr_type, addr_mode_T addr_mode, LuaRef luaref, bool force)
+                   LuaRef preview_luaref, cmd_addr_T addr_type, addr_mode_T addr_mode,
+                   LuaRef luaref, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;

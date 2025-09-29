@@ -4441,10 +4441,9 @@ describe('API', function()
         fff\nggg\nhhh\niii\njjj]])
       command('%!cat')
       eq({
-          'aaa\\nbbb\\nccc\\nddd\\neee',
-          'fff\\nggg\\nhhh\\niii\\njjj'
-        },
-        fn.getline(1, '$'))
+        'aaa\\nbbb\\nccc\\nddd\\neee',
+        'fff\\nggg\\nhhh\\niii\\njjj',
+      }, fn.getline(1, '$'))
     end)
 
     it('works with count', function()
