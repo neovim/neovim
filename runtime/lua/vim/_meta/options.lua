@@ -2413,7 +2413,7 @@ vim.bo.fenc = vim.bo.fileencoding
 --- illegal byte sequence.
 --- WRONG VALUES:			WHAT'S WRONG:
 --- 	latin1,utf-8		"latin1" will always be used
---- 	utf-8,ucs-bom,latin1	BOM won't be recognized in an utf-8
+--- 	utf-8,ucs-bom,latin1	BOM won't be recognized in a utf-8
 --- 				file
 --- 	cp1250,latin1		"cp1250" will always be used
 --- If 'fileencodings' is empty, 'fileencoding' is not modified.
