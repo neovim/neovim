@@ -384,8 +384,22 @@ func Test_modeline_nowrap_lcs_extends()
         \ ], 'Xmodeline_nowrap', 'D')
   call NewWindow(10, 20)
 
+  func Check_modeline_nowrap(expect_insecure, expect_secure, set_cmd)
+    edit Xmodeline_nowrap
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+    setglobal nowrap
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+    setglobal wrap
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+    exe a:set_cmd 'nowrap'
+    call assert_equal(a:expect_secure, ScreenLines([1, 5], 20))
+    exe 'sandbox' a:set_cmd 'nowrap'
+    call assert_equal(a:expect_insecure, ScreenLines([1, 5], 20))
+    exe a:set_cmd 'nowrap'
+    call assert_equal(a:expect_secure, ScreenLines([1, 5], 20))
+  endfunc
+
   setlocal nolist listchars=
-  edit Xmodeline_nowrap
   let expect_insecure = [
         \ 'aaa                 ',
         \ 'bbb                 ',
@@ -393,9 +407,6 @@ func Test_modeline_nowrap_lcs_extends()
         \ 'ddd                >',
         \ '~                   ',
         \ ]
-  call assert_equal(expect_insecure, ScreenLines([1, 5], 20))
-
-  setlocal nowrap
   let expect_secure = [
         \ 'aaa                 ',
         \ 'bbb                 ',
@@ -403,7 +414,8 @@ func Test_modeline_nowrap_lcs_extends()
         \ 'ddd                 ',
         \ '~                   ',
         \ ]
-  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
 
   setlocal list listchars=extends:+
   let expect_secure = [
@@ -414,13 +426,45 @@ func Test_modeline_nowrap_lcs_extends()
         \ '~                   ',
         \ ]
   call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
 
-  edit Xmodeline_nowrap
-  call assert_equal(expect_insecure, ScreenLines([1, 5], 20))
-  setlocal nowrap
-  call assert_equal(expect_secure, ScreenLines([1, 5], 20))
+  " Other 'listchars' flags are not affected.
+  call writefile([
+        \ "aa\ta",
+        \ "bb\tb",
+        \ "cc\tc              evil",
+        \ "dd\td              vim: nowrap lcs=tab\\:<->",
+        \ ], 'Xmodeline_nowrap')
+  let expect_insecure = [
+        \ 'aa<---->a           ',
+        \ 'bb<---->b           ',
+        \ 'cc<---->c          >',
+        \ 'dd<---->d          >',
+        \ '~                   ',
+        \ ]
+  let expect_secure = [
+        \ 'aa<---->a           ',
+        \ 'bb<---->b           ',
+        \ 'cc<---->c           ',
+        \ 'dd<---->d           ',
+        \ '~                   ',
+        \ ]
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
+
+  " Same behavior even if modeline sets "extends" to a space.
+  call writefile([
+        \ "aa\ta",
+        \ "bb\tb",
+        \ "cc\tc              evil",
+        \ "dd\td              vim: nowrap lcs=tab\\:<->",
+        \ ], 'Xmodeline_nowrap')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'setlocal')
+  call Check_modeline_nowrap(expect_insecure, expect_secure, 'set')
 
   call CloseWindow()
+  delfunc Check_modeline_nowrap
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
