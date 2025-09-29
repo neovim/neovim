@@ -770,11 +770,9 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///            - success: The progress item completed successfully
 ///            - running: The progress is ongoing
 ///            - failed: The progress item failed
-///            - cancel: The progressing process should be canceled.
-///                      note: Cancel needs to be handled by progress
-///                      initiator by listening for the `Progress` event
-///          - percent: How much progress is done on the progress
-///            message
+///            - cancel: The progressing process should be canceled. NOTE: Cancel must be handled by
+///              progress initiator by listening for the `Progress` event
+///          - percent: How much progress is done on the progress message
 ///          - data: dictionary containing additional information
 /// @return Message id.
 ///         - -1 means nvim_echo didn't show a message
@@ -927,7 +925,7 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window (and tabpage, implicitly).
+/// Navigates to the given window (and tabpage, implicitly).
 ///
 /// @param window |window-ID| to focus
 /// @param[out] err Error details, if any

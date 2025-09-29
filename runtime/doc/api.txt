@@ -696,8 +696,8 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                      • running: The progress is ongoing
                      • failed: The progress item failed
                      • cancel: The progressing process should be canceled.
-                       note: Cancel needs to be handled by progress initiator
-                       by listening for the `Progress` event
+                       NOTE: Cancel must be handled by progress initiator by
+                       listening for the `Progress` event
                    • percent: How much progress is done on the progress
                      message
                    • data: dictionary containing additional information
@@ -1500,7 +1500,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
       • {tabpage}  (`integer`) |tab-ID| to focus
 
 nvim_set_current_win({window})                        *nvim_set_current_win()*
-    Sets the current window (and tabpage, implicitly).
+    Navigates to the given window (and tabpage, implicitly).
 
     Attributes: ~
         not allowed when |textlock| is active or in the |cmdwin|

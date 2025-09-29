@@ -209,7 +209,7 @@ function vim.schedule(fn) end
 --- ```
 ---
 --- @param time integer Number of milliseconds to wait
---- @param callback? fun(): boolean Optional callback. Waits until {callback} returns true
+--- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
 --- @param interval? integer (Approximate) number of milliseconds to wait between polls
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
 --- @return boolean, nil|-1|-2, ...

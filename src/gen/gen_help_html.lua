@@ -1094,7 +1094,7 @@ local function gen_helptags_json(fname)
     -- "foo.html#tag"
     t[tag] = ('%s#%s'):format(htmlpage, url_encode(tag))
   end
-  tofile(fname, vim.json.encode(t))
+  tofile(fname, vim.json.encode(t, { indent = '  ', sort_keys = true }))
 end
 
 local function gen_css(fname)
