@@ -1710,7 +1710,7 @@ vim.is_callable({f})                                       *vim.is_callable()*
     Returns true if object `f` can be called as a function.
 
     Parameters: ~
-      • {f}  (`any`) Any object
+      • {f}  (`any?`) Any object
 
     Return: ~
         (`boolean`) `true` if `f` is callable, else `false`
@@ -1727,7 +1727,7 @@ vim.isarray({t})                                               *vim.isarray()*
     |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (`table?`)
+      • {t}  (`any?`)
 
     Return: ~
         (`boolean`) `true` if array-like table, else `false`.
