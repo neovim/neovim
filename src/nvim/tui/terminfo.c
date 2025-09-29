@@ -59,85 +59,144 @@ bool terminfo_is_bsd_console(const char *term)
 /// @param term $TERM value
 /// @param[out,allocated] termname decided builtin 'term' name
 /// @return [allocated] terminfo structure
-static unibi_term *terminfo_builtin(const char *term, char **termname)
+static const NeoTerminfo *terminfo_builtin(const char *term, char **termname)
 {
+// #define doit(name) *neo = &NEW__##name; return unibi_from_mem((const char *)name, sizeof name);
+#define doit(name) return &NEW__##name;
   if (terminfo_is_term_family(term, "xterm")) {
     *termname = xstrdup("builtin_xterm");
-    return unibi_from_mem((const char *)xterm_256colour_terminfo,
-                          sizeof xterm_256colour_terminfo);
+    doit(xterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "screen")) {
     *termname = xstrdup("builtin_screen");
-    return unibi_from_mem((const char *)screen_256colour_terminfo,
-                          sizeof screen_256colour_terminfo);
+    doit(screen_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "tmux")) {
     *termname = xstrdup("builtin_tmux");
-    return unibi_from_mem((const char *)tmux_256colour_terminfo,
-                          sizeof tmux_256colour_terminfo);
+    doit(tmux_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "rxvt")) {
     *termname = xstrdup("builtin_rxvt");
-    return unibi_from_mem((const char *)rxvt_256colour_terminfo,
-                          sizeof rxvt_256colour_terminfo);
+    doit(rxvt_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "putty")) {
     *termname = xstrdup("builtin_putty");
-    return unibi_from_mem((const char *)putty_256colour_terminfo,
-                          sizeof putty_256colour_terminfo);
+    doit(putty_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "linux")) {
     *termname = xstrdup("builtin_linux");
-    return unibi_from_mem((const char *)linux_16colour_terminfo,
-                          sizeof linux_16colour_terminfo);
+    doit(linux_16colour_terminfo);
   } else if (terminfo_is_term_family(term, "interix")) {
     *termname = xstrdup("builtin_interix");
-    return unibi_from_mem((const char *)interix_8colour_terminfo,
-                          sizeof interix_8colour_terminfo);
+    doit(interix_8colour_terminfo);
   } else if (terminfo_is_term_family(term, "iterm")
              || terminfo_is_term_family(term, "iterm2")
              || terminfo_is_term_family(term, "iTerm.app")
              || terminfo_is_term_family(term, "iTerm2.app")) {
     *termname = xstrdup("builtin_iterm");
-    return unibi_from_mem((const char *)iterm_256colour_terminfo,
-                          sizeof iterm_256colour_terminfo);
+    doit(iterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "st")) {
     *termname = xstrdup("builtin_st");
-    return unibi_from_mem((const char *)st_256colour_terminfo,
-                          sizeof st_256colour_terminfo);
+    doit(st_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "gnome")
              || terminfo_is_term_family(term, "vte")) {
     *termname = xstrdup("builtin_vte");
-    return unibi_from_mem((const char *)vte_256colour_terminfo,
-                          sizeof vte_256colour_terminfo);
+    doit(vte_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "cygwin")) {
     *termname = xstrdup("builtin_cygwin");
-    return unibi_from_mem((const char *)cygwin_terminfo,
-                          sizeof cygwin_terminfo);
+    doit(cygwin_terminfo);
   } else if (terminfo_is_term_family(term, "win32con")) {
     *termname = xstrdup("builtin_win32con");
-    return unibi_from_mem((const char *)win32con_terminfo,
-                          sizeof win32con_terminfo);
+    doit(win32con_terminfo);
   } else if (terminfo_is_term_family(term, "conemu")) {
     *termname = xstrdup("builtin_conemu");
-    return unibi_from_mem((const char *)conemu_terminfo,
-                          sizeof conemu_terminfo);
+    doit(conemu_terminfo);
   } else if (terminfo_is_term_family(term, "vtpcon")) {
     *termname = xstrdup("builtin_vtpcon");
-    return unibi_from_mem((const char *)vtpcon_terminfo,
-                          sizeof vtpcon_terminfo);
+    doit(vtpcon_terminfo);
   } else {
     *termname = xstrdup("builtin_ansi");
-    return unibi_from_mem((const char *)ansi_terminfo,
-                          sizeof ansi_terminfo);
+    doit(ansi_terminfo);
   }
+}
+
+static ssize_t unibi_find_ext_str(unibi_term *ut, const char *name)
+{
+  size_t max = unibi_count_ext_str(ut);
+  for (size_t i = 0; i < max; i++) {
+    const char *n = unibi_get_ext_str_name(ut, i);
+    if (n && 0 == strcmp(n, name)) {
+      return (ssize_t)i;
+    }
+  }
+  return -1;
+}
+
+static int unibi_find_ext_bool(unibi_term *ut, const char *name)
+{
+  size_t max = unibi_count_ext_bool(ut);
+  for (size_t i = 0; i < max; i++) {
+    const char *n = unibi_get_ext_bool_name(ut, i);
+    if (n && 0 == strcmp(n, name)) {
+      return (int)i;
+    }
+  }
+  return -1;
 }
 
 /// @param term $TERM value
 /// @param[out,allocated] termname decided builtin 'term' name
 /// @return [allocated] terminfo structure
-unibi_term *terminfo_from_builtin(const char *term, char **termname)
+const NeoTerminfo *terminfo_from_builtin(const char *term, char **termname)
 {
-  unibi_term *ut = terminfo_builtin(term, termname);
+  const NeoTerminfo *ti = terminfo_builtin(term, termname);
   if (*termname == NULL) {
     *termname = xstrdup("builtin_?");
   }
-  return ut;
+  return ti;
+}
+
+bool terminfo_from_unibilium(NeoTerminfo *ti, char *termname) {
+  unibi_term *ut = unibi_from_term(termname);
+  if (!ut) {
+    return false;
+  }
+
+  ti->bce = unibi_get_bool(ut, unibi_back_color_erase);
+  ti->max_colors = unibi_get_num(ut, unibi_max_colors);
+  ti->lines = unibi_get_num(ut, unibi_lines);
+  ti->columns = unibi_get_num(ut, unibi_columns);
+
+  // Check for Tc or RGB
+  ti->has_Tc_or_RGB = false;
+  for (size_t i = 0; i < unibi_count_ext_bool(ut); i++) {
+    const char *n = unibi_get_ext_bool_name(ut, i);
+    if (n && (!strcmp(n, "Tc") || !strcmp(n, "RGB"))) {
+      ti->has_Tc_or_RGB = true;
+      break;
+    }
+  }
+
+  static const enum unibi_string uni_ids[] = {
+#define X(name) unibi_##name,
+    XLIST_TERMINFO_BUILTIN
+#undef X
+  };
+
+  for (size_t i = 0; i < ARRAY_SIZE(uni_ids); i++) {
+    const char *val = unibi_get_str(ut, uni_ids[i]);
+    ti->defs[i] = val ? xstrdup(val) : NULL;
+  }
+
+  static const char *uni_ext[] = {
+#define X(informal_name, terminfo_name) #terminfo_name ,
+    XLIST_TERMINFO_EXT
+#undef X
+  };
+
+  for (size_t i = 0; i < ARRAY_SIZE(uni_ext); i++) {
+    ssize_t val = unibi_find_ext_str(ut, uni_ext[i]);
+    ti->defs[kTermExtOffset + i] = val >= 0 ? xstrdup(unibi_get_ext_str(ut, (size_t)val)) : NULL;
+  }
+  
+
+  unibi_destroy(ut);
+  return true;
 }
 
 /// Dumps termcap info to the messages area.
