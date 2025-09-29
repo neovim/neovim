@@ -6346,7 +6346,7 @@ matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
                   • {pattern} (`string`)
                   • {priority} (`integer?`)
                   • {id} (`integer?`)
-                  • {dict} (`string?`)
+                  • {dict} (`table?`)
 
                 Return: ~
                   (`integer`)
@@ -6393,7 +6393,7 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])   *matchaddpos()*
                   • {pos} (`any[]`)
                   • {priority} (`integer?`)
                   • {id} (`integer?`)
-                  • {dict} (`string?`)
+                  • {dict} (`table?`)
 
                 Return: ~
                   (`integer|table`)

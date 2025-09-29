@@ -5761,7 +5761,7 @@ function vim.fn.match(expr, pat, start, count) end
 --- @param pattern string
 --- @param priority? integer
 --- @param id? integer
---- @param dict? string
+--- @param dict? table
 --- @return integer
 function vim.fn.matchadd(group, pattern, priority, id, dict) end
 
@@ -5805,7 +5805,7 @@ function vim.fn.matchadd(group, pattern, priority, id, dict) end
 --- @param pos any[]
 --- @param priority? integer
 --- @param id? integer
---- @param dict? string
+--- @param dict? table
 --- @return integer|table
 function vim.fn.matchaddpos(group, pos, priority, id, dict) end
 
