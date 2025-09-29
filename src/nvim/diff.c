@@ -2570,7 +2570,7 @@ static int parse_diffanchors(bool check_only, buf_T *buf, linenr_T *anchors, int
     curbuf = buf;
     curwin = bufwin;
     const char *errormsg = NULL;
-    pos_T pos = get_address(NULL, &dia, ADDR_LINES, check_only, true, false, 1, &errormsg);
+    mpos_T pos = get_address(NULL, &dia, ADDR_POSITIONS, check_only, true, false, 1, &errormsg);
     curbuf = orig_curbuf;
     curwin = orig_curwin;
 

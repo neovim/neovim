@@ -4218,11 +4218,10 @@ void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilde
       if (lnum > end_pos->lnum) {
         break;
       }
-      if (lnum == end_pos->lnum) {
-        lp = ml_get_buf(buf, lnum);
+      lp = ml_get_buf(buf, lnum);
+      if (lnum == end_pos->lnum && end_pos->col > 0) {
         lplen = (size_t)end_pos->col + 1;
       } else {
-        lp = ml_get_buf(buf, lnum);
         lplen = (size_t)ml_get_buf_len(buf, lnum);
       }
       written = 0;

@@ -32,7 +32,7 @@ error('Cannot require a meta file')
 --- @field magic? vim.api.keyset.cmd.magic
 --- @field mods? vim.api.keyset.cmd.mods
 --- @field nargs? integer|"?"|"+"|"*"
---- @field addr? "line"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
+--- @field addr? "line"|"char"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
 --- @field nextcmd? string
 
 --- @class vim.api.keyset.cmd_magic

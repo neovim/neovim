@@ -4433,6 +4433,20 @@ describe('API', function()
       eq('lust of a last', fn.getreg('@'))
     end)
 
+    -- oldtest: Test_shell_filter_buffer_with_nul_bytes()
+    it('test shell filter buffer with NUL bytes', function()
+      -- " \n is a NUL byte
+      insert([[
+        aaa\nbbb\nccc\nddd\neee
+        fff\nggg\nhhh\niii\njjj]])
+      command('%!cat')
+      eq({
+          'aaa\\nbbb\\nccc\\nddd\\neee',
+          'fff\\nggg\\nhhh\\niii\\njjj'
+        },
+        fn.getline(1, '$'))
+    end)
+
     it('works with count', function()
       eq({
         cmd = 'buffer',
@@ -5210,6 +5224,26 @@ describe('API', function()
         line1
         line2
         line3line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'delete',
+        addr = 'char',
+        range = { 3, 5, 0, 0 },
+      }, {})
+      expect [[
+        line1
+        line2
+        election line5
         line6
       ]]
     end)

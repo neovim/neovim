@@ -305,7 +305,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
     .line1 = 1,
     .line2 = 1,
     .cmd = ccline.cmdbuff,
-    .addr_type = ADDR_LINES,
+    .addr_type = ADDR_POSITIONS,
   };
 
   cmdmod_T dummy_cmdmod;

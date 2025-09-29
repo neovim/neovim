@@ -698,8 +698,10 @@ int do_cmdline(exarg_T *ea, int flags)
       .line2 = ea->line2,
       .col1 = ea->col1,
       .col2 = ea->col2,
+      .cmdidx = ea->cmdidx,
       .addr_count = ea->addr_count,
       .addr_type = ea->addr_type,
+      .addr_mode = ea->addr_mode,
       .ea_getline = cmd_getline,
       .cookie = cmd_cookie,
       .cstack = &cstack,
@@ -1310,8 +1312,9 @@ void set_cmd_addr_type(exarg_T *eap, char *p)
   if (eap->cmdidx != CMD_SIZE) {
     eap->addr_type = cmdnames[(int)eap->cmdidx].cmd_addr_type;
   } else {
-    eap->addr_type = ADDR_LINES;
+    eap->addr_type = ADDR_POSITIONS;
   }
+
   // :wincmd range depends on the argument
   if (eap->cmdidx == CMD_wincmd && p != NULL) {
     get_wincmd_addr_type(skipwhite(p), eap);
@@ -1326,7 +1329,7 @@ void set_cmd_addr_type(exarg_T *eap, char *p)
 linenr_T get_cmd_default_range(exarg_T *eap)
 {
   switch (eap->addr_type) {
-  case ADDR_LINES:
+  case ADDR_POSITIONS:
   case ADDR_OTHER:
     // Default is the cursor line number.  Avoid using an invalid
     // line number though.
@@ -1369,7 +1372,7 @@ void set_cmd_dflall_range(exarg_T *eap)
 
   eap->line1 = 1;
   switch (eap->addr_type) {
-  case ADDR_LINES:
+  case ADDR_POSITIONS:
     eap->line2 = curbuf->b_ml.ml_line_count;
     break;
   case ADDR_OTHER:
@@ -1449,7 +1452,7 @@ static void parse_register(exarg_T *eap)
 // Change line1 and line2 of Ex command to use count
 void set_cmd_count(exarg_T *eap, linenr_T count, bool validate)
 {
-  if (eap->addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
+  if (eap->addr_type != ADDR_POSITIONS) {  // e.g. :buffer 2, :sleep 3
     eap->line2 = count;
     if (eap->addr_count == 0) {
       eap->addr_count = 1;
@@ -1545,6 +1548,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
     .col2 = 0,
     .cmd = *cmdline,
     .cmdlinep = cmdline,
+    .addr_mode = kOmUnknown,
     .ea_getline = NULL,
     .cookie = NULL,
   };
@@ -1824,7 +1828,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   correct_range(eap);
 
   if (((eap->argt & EX_WHOLEFOLD) || eap->addr_count >= 2) && !global_busy
-      && eap->addr_type == ADDR_LINES) {
+      && eap->addr_type == ADDR_POSITIONS) {
     // Put the first line at the start of a closed fold, put the last line
     // at the end of a closed fold.
     hasFolding(curwin, eap->line1, &eap->line1, NULL);
@@ -2263,7 +2267,7 @@ static char *do_one_cmd(exarg_T *eap, int flags)
   correct_range(&ea);
 
   if (((ea.argt & EX_WHOLEFOLD) || ea.addr_count >= 2) && !global_busy
-      && ea.addr_type == ADDR_LINES) {
+      && ea.addr_type == ADDR_POSITIONS) {
     // Put the first line at the start of a closed fold, put the last line
     // at the end of a closed fold.
     hasFolding(curwin, ea.line1, &ea.line1, NULL);
@@ -2702,7 +2706,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     case 't':
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
-          pos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
+          mpos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
                                    false, 1, errormsg);
           int tabnr = (int)addr.lnum;
           if (eap->cmd == NULL) {
@@ -2855,15 +2859,14 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   int address_count = 1;
   linenr_T lnum;
   colnr_T cnum;
-  pos_T addr;
+  mpos_T addr;
+  addr_mode_T addr_mode;
   bool need_check_cursor = false;
   int ret = FAIL;
 
-  if (eap->line1 > 0
-      && eap->line2 > 0
-      && (eap->col1 > 0 || eap->col2 > 0)
-      && eap->addr_count >= 2
-      && eap->addr_type == ADDR_LINES) {
+  // if charwise mode is set then we already have
+  // a valid address
+  if (eap->addr_mode == kOmCharWise) {
     need_check_cursor = true;
     ret = OK;
     goto theend;
@@ -2873,13 +2876,12 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   while (true) {
     eap->line1 = eap->line2;
     eap->line2 = get_cmd_default_range(eap);
-    eap->col1 = eap->col2;
-    eap->col2 = 0;
     eap->cmd = skipwhite(eap->cmd);
     addr = get_address(eap, &eap->cmd, eap->addr_type, eap->skip, silent,
                        eap->addr_count == 0, address_count++, errormsg);
     lnum = addr.lnum;
     cnum = addr.col;
+    addr_mode = addr.mode;
 
     if (eap->cmd == NULL) {  // error detected
       goto theend;
@@ -2888,10 +2890,11 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
       if (*eap->cmd == '%') {  // '%' - all lines
         eap->cmd++;
         switch (eap->addr_type) {
-        case ADDR_LINES:
+        case ADDR_POSITIONS:
         case ADDR_OTHER:
           eap->line1 = 1;
           eap->line2 = curbuf->b_ml.ml_line_count;
+          eap->addr_mode = kOmLineWise;
           break;
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
@@ -2951,7 +2954,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
         eap->addr_count++;
       } else if (*eap->cmd == '*') {
         // '*' - visual area
-        if (eap->addr_type != ADDR_LINES) {
+        if (eap->addr_type != ADDR_POSITIONS) {
           *errormsg = _(e_invrange);
           goto theend;
         }
@@ -2964,6 +2967,12 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           }
           assert(fm != NULL);
           eap->line1 = fm->mark.lnum;
+          eap->addr_mode = kOmLineWise;
+
+          // TODO(616b2f): does this make sense to check here for
+          // col1 != 0 and col2 != ml_get_buf_len(line2) and set
+          // eap->addr_mode = kOmCharWise?
+
           fm = mark_get_visual(curbuf, '>');
           if (!mark_check(fm, errormsg)) {
             goto theend;
@@ -2975,8 +2984,10 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
       }
     } else {
       eap->line2 = lnum;
+      eap->addr_mode = addr_mode;
 
       if (cnum != MAXCOL) {
+        eap->col1 = eap->col2;
         eap->col2 = cnum;
       }
     }
@@ -3006,9 +3017,11 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   // One address given: set start and end lines.
   if (eap->addr_count == 1) {
     eap->line1 = eap->line2;
+    eap->addr_mode = kOmLineWise;
     // ... but only implicit: really no address given
     if (lnum == MAXLNUM) {
       eap->addr_count = 0;
+      eap->addr_mode = kOmUnknown;
     }
   }
   ret = OK;
@@ -3424,7 +3437,7 @@ static const char *addr_error(cmd_addr_T addr_type)
 /// @param errormsg       Error message, if any
 ///
 /// @return               MAXLNUM and MAXCOL when no Ex address was found.
-pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
+mpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
                   int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ARG(2, 8)
 {
@@ -3437,17 +3450,17 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
   char *cmd = skipwhite(*ptr);
   linenr_T lnum = MAXLNUM;
   colnr_T cnum = MAXCOL;
-  pos_T addr = { lnum, cnum, 0 };
+  mpos_T addr = { lnum, cnum, 0, kOmUnknown };
 
   do {
     switch (*cmd) {
     case '.':                               // '.' - Cursor position
       cmd++;
       switch (addr_type) {
-      case ADDR_LINES:
+      case ADDR_POSITIONS:
       case ADDR_OTHER:
         lnum = curwin->w_cursor.lnum;
-        // cnum = curwin->w_cursor.col;
+        addr.mode = kOmLineWise;
         break;
       case ADDR_WINDOWS:
         lnum = CURRENT_WIN_NR;
@@ -3481,9 +3494,10 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
     case '$':                               // '$' - last line
       cmd++;
       switch (addr_type) {
-      case ADDR_LINES:
+      case ADDR_POSITIONS:
       case ADDR_OTHER:
         lnum = curbuf->b_ml.ml_line_count;
+        addr.mode = kOmLineWise;
         break;
       case ADDR_WINDOWS:
         lnum = LAST_WIN_NR;
@@ -3534,7 +3548,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
         cmd = NULL;
         goto error;
       }
-      if (addr_type != ADDR_LINES) {
+      if (addr_type != ADDR_POSITIONS) {
         *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
@@ -3551,6 +3565,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
           mark_move_to(fm, 0);
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
+          addr.mode = kOmLineWise;
         } else {
           if (!mark_check(fm, errormsg)) {
             cmd = NULL;
@@ -3558,6 +3573,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
           }
           assert(fm != NULL);
           lnum = fm->mark.lnum;
+          addr.mode = kOmLineWise;
         }
       }
       break;
@@ -3567,7 +3583,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
         cmd = NULL;
         goto error;
       }
-      if (addr_type != ADDR_LINES) {
+      if (addr_type != ADDR_POSITIONS) {
         *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
@@ -3585,6 +3601,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
           cnum = curwin->w_cursor.col;
+          addr.mode = kOmCharWise;
         } else {
           if (!mark_check(fm, errormsg)) {
             cmd = NULL;
@@ -3593,6 +3610,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
           assert(fm != NULL);
           lnum = fm->mark.lnum;
           cnum = fm->mark.col;
+          addr.mode = kOmCharWise;
         }
       }
       break;
@@ -3600,7 +3618,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
     case '/':
     case '?':                           // '/' or '?' - search
       c = (uint8_t)(*cmd++);
-      if (addr_type != ADDR_LINES) {
+      if (addr_type != ADDR_POSITIONS) {
         *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
@@ -3629,6 +3647,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
         // line, and can match anywhere in the
         // next/previous line.
         curwin->w_cursor.col = (c == '/' && curwin->w_cursor.lnum > 0) ? MAXCOL : 0;
+
         searchcmdlen = 0;
         flags = silent ? SEARCH_KEEP : SEARCH_HIS | SEARCH_MSG;
         if (!do_search(NULL, c, c, cmd, strlen(cmd), 1, flags, NULL)) {
@@ -3637,6 +3656,8 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
           goto error;
         }
         lnum = curwin->w_cursor.lnum;
+        cnum = curwin->w_cursor.col;
+        addr.mode = kOmLineWise;
         curwin->w_cursor = pos;
         // adjust command string pointer
         cmd += searchcmdlen;
@@ -3645,7 +3666,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
 
     case '\\':                      // "\?", "\/" or "\&", repeat search
       cmd++;
-      if (addr_type != ADDR_LINES) {
+      if (addr_type != ADDR_POSITIONS) {
         *errormsg = addr_error(addr_type);
         cmd = NULL;
         goto error;
@@ -3670,6 +3691,8 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
                      *cmd == '?' ? BACKWARD : FORWARD,
                      "", 0, 1, SEARCH_MSG, i, NULL) != FAIL) {
           lnum = pos.lnum;
+          cnum = pos.col;
+          addr.mode = kOmLineWise;
         } else {
           cmd = NULL;
           goto error;
@@ -3681,6 +3704,7 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
     default:
       if (ascii_isdigit(*cmd)) {                // absolute line number
         lnum = (linenr_T)getdigits(&cmd, false, 0);
+        addr.mode = kOmLineWise;
       }
     }
 
@@ -3695,10 +3719,11 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
 
       if (lnum == MAXLNUM) {
         switch (addr_type) {
-        case ADDR_LINES:
+        case ADDR_POSITIONS:
         case ADDR_OTHER:
           // "+1" is same as ".+1"
           lnum = curwin->w_cursor.lnum;
+          addr.mode = kOmLineWise;
           break;
         case ADDR_WINDOWS:
           lnum = CURRENT_WIN_NR;
@@ -3755,12 +3780,14 @@ pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, boo
       } else {
         // Relative line addressing: need to adjust for lines in a
         // closed fold after the first address.
-        if (addr_type == ADDR_LINES && (i == '-' || i == '+')
+        if (addr_type == ADDR_POSITIONS
+            && (i == '-' || i == '+')
             && address_count >= 2) {
           hasFolding(curwin, lnum, NULL, &lnum);
         }
         if (i == '.') {
           cnum = n;
+          addr.mode = kOmCharWise;
         } else if (i == '-') {
           lnum -= n;
         } else {
@@ -3832,7 +3859,7 @@ char *invalid_range(exarg_T *eap)
 
   if (eap->argt & EX_RANGE) {
     switch (eap->addr_type) {
-    case ADDR_LINES:
+    case ADDR_POSITIONS:
       if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget
                                                       || eap->cmdidx == CMD_diffput))
           || eap->col2 > (ml_get_buf_len(curbuf,
@@ -6447,11 +6474,7 @@ static void ex_operators(exarg_T *eap)
   oa.end.col = eap->col2;
   oa.line_count = eap->line2 - eap->line1 + 1;
 
-  if (eap->line1 > 0
-      && eap->line2 > 0
-      && (eap->col1 > 0 || eap->col2 > 0)
-      && eap->addr_count >= 2
-      && eap->addr_type == ADDR_LINES) {
+  if (eap->addr_mode == kOmCharWise) {
     oa.motion_type = kMTCharWise;
   } else {
     oa.motion_type = kMTLineWise;
@@ -6470,11 +6493,7 @@ static void ex_operators(exarg_T *eap)
 
   switch (eap->cmdidx) {
   case CMD_delete:
-    if (eap->line1 > 0
-        && eap->line2 > 0
-        && (eap->col1 > 0 || eap->col2 > 0)
-        && eap->addr_count >= 2
-        && eap->addr_type == ADDR_LINES) {
+    if (eap->addr_mode == kOmCharWise) {
       oa.inclusive = true;
     }
     oa.op_type = OP_DELETE;
@@ -6532,7 +6551,7 @@ static void ex_iput(exarg_T *eap)
 static void ex_copymove(exarg_T *eap)
 {
   const char *errormsg = NULL;
-  pos_T addr = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
+  mpos_T addr = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
   linenr_T n = addr.lnum;
   if (eap->arg == NULL) {  // error detected
     if (errormsg != NULL) {

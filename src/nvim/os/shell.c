@@ -675,7 +675,12 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
     State = MODE_EXTERNCMD;
 
     if (opts & kShellOptWrite) {
-      read_input(&input);
+      /// To remain compatible with the old implementation (which forked a process
+      /// for writing) the entire text is copied to a temporary buffer before the
+      /// event loop starts. If we don't (by writing in chunks returned by `ml_get`)
+      /// the buffer being modified might get modified by reading from the process
+      /// before we finish writing.
+      read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, &input);
     }
 
     if (opts & kShellOptRead) {
@@ -694,7 +699,7 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
   kv_destroy(input);
 
   if (output) {
-    write_output(output, nread, true);
+    write_output(output, nread, true, true);
     xfree(output);
   }
 
@@ -1206,7 +1211,7 @@ static void read_input(StringBuilder *buf)
   read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, buf);
 }
 
-static size_t write_output(char *output, size_t remaining, bool eof)
+static size_t write_output(char *output, size_t remaining, bool eof, bool run_charwise)
 {
   if (!output) {
     return 0;
@@ -1235,7 +1240,8 @@ static size_t write_output(char *output, size_t remaining, bool eof)
       // len_change = (int)strlen(new_line) - (int)strlen(orig_line);
       // curwin->w_cursor.col += len_change;
       if (curbuf->b_op_start.lnum == cur_ln_nr
-          && curbuf->b_op_end.lnum == cur_ln_nr) {
+          && curbuf->b_op_end.lnum == cur_ln_nr
+          && run_charwise) {
         char *old_line = ml_get(cur_ln_nr);
         size_t old_chars_indx = (size_t)curbuf->b_op_start.col;
         char *old_txt = xcalloc(old_chars_indx, sizeof(char));
@@ -1243,14 +1249,16 @@ static size_t write_output(char *output, size_t remaining, bool eof)
         char *new_line = concat_str(concat_str(old_txt, output),
                                     old_line + curbuf->b_op_end.col + 1);
         ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
-      } else if (curbuf->b_op_start.lnum == cur_ln_nr) {
+      } else if (curbuf->b_op_start.lnum == cur_ln_nr
+          && run_charwise) {
         char *old_line = ml_get(cur_ln_nr);
         size_t old_chars_indx = (size_t)curbuf->b_op_start.col;
         char *old_txt = xcalloc(old_chars_indx, sizeof(char));
         memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
         char *new_line = concat_str(old_txt, output);
         ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
-      } else if (curbuf->b_op_end.lnum == cur_ln_nr) {
+      } else if (curbuf->b_op_end.lnum == cur_ln_nr
+          && run_charwise) {
         char *old_line = ml_get(cur_ln_nr);
         char *new_line = concat_str(output, old_line + curbuf->b_op_end.col + 1);
         ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);

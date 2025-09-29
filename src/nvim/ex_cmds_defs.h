@@ -67,7 +67,7 @@
 
 /// values for cmd_addr_type
 typedef enum {
-  ADDR_LINES,           ///< buffer line numbers
+  ADDR_POSITIONS,       ///< buffer line and column numbers
   ADDR_WINDOWS,         ///< window number
   ADDR_ARGUMENTS,       ///< argument number
   ADDR_LOADED_BUFFERS,  ///< buffer number of loaded buffer
@@ -122,6 +122,7 @@ struct exarg {
   colnr_T col1;                 ///< the first column number
   colnr_T col2;                 ///< the second column number or count
   cmd_addr_T addr_type;         ///< type of the count/range
+  addr_mode_T addr_mode;        ///< mode for ADDR_POSITIONS, 'linewise' or 'charwise'
   int flags;                    ///< extra flags after count: EXFLAG_
   char *do_ecmd_cmd;            ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file

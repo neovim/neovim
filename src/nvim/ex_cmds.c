@@ -1263,10 +1263,10 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
   linenr_T line2 = eap->line2;
   colnr_T col1 = eap->col1;
   colnr_T col2 = eap->col2;
-  if (col1 > 0
-      && col2 == 0
-      && eap->addr_count >= 2
-      && eap->addr_type == ADDR_LINES) {
+
+  if (eap->addr_mode == kOmLineWise) {
+    // this is needed because we consider columns
+    // in subsequent function calls.
     // -1 to make it an index
     col2 = ml_get_buf_len(curbuf, line2) - 1;
   }
@@ -4576,28 +4576,23 @@ bool do_sub_msg(bool count_only)
   return false;
 }
 
-static void global_exe_one(char *const cmd, const linenr_T line1, linenr_T line2, colnr_T col1,
-                           colnr_T col2)
+static void global_exe_one(exarg_T *ea)
 {
-  curwin->w_cursor.lnum = line1;
-  exarg_T ea = {
-    .line1 = line1,
-    .line2 = line2,
-    .col1 = col1,
-    .col2 = col2,
-  };
-  if (line1 > 0 && (col1 > 0 || col2 > 0)) {
-    curwin->w_cursor.col = col1;
-    ea.addr_count = 2;  // TODO(616b2f): check if this makes sense
-    ea.addr_type = ADDR_LINES;
+  curwin->w_cursor.lnum = ea->line1;
+  if (ea->addr_mode == kOmCharWise) {
+    curwin->w_cursor.col = ea->col1;
   }
 
-  if (*cmd == NUL || *cmd == '\n') {
-    ea.cmd = "p";
-    do_cmdline(&ea, DOCMD_NOWAIT);
+  if (*ea->cmd == NUL || *ea->cmd == '\n') {
+    ea->cmd = "p";
+    do_cmdline(ea, DOCMD_NOWAIT);
   } else {
-    ea.cmd = cmd;
-    do_cmdline(&ea, DOCMD_NOWAIT);
+    do_cmdline(ea, DOCMD_NOWAIT);
+  }
+
+  // fix cursor position e.g. after delete operation
+  if (curwin->w_cursor.col > ml_get_buf_len(curbuf, curwin->w_cursor.lnum)) {
+    curwin->w_cursor.col--;
   }
 }
 
@@ -4685,21 +4680,24 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    colnr_T col1 = 0;
-    colnr_T col2 = 0;
-    if (eap->addr_type == ADDR_LINES) {
-      col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-      // col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : 0;
-      col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
 
-      // if (col1 > 0 && col2 == 0) {
-      //   col2 = ml_get_buf_len(curbuf, lnum);
-      // }
+    exarg_T ea = {
+      .cmd = cmd,
+      .line1 = lnum,
+      .line2 = lnum,
+      .col1 = 0,
+      .col2 = ml_get_buf_len(curbuf, lnum),
+      .addr_type = eap->addr_type,
+      .addr_mode = eap->addr_mode,
+    };
+    if (eap->addr_mode == kOmCharWise) {
+      ea.col1 = (lnum == eap->line1) ? eap->col1 : 0;
+      ea.col2 = (lnum == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
     }
 
-    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
+    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, ea.col1, ea.col2, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
-      global_exe_one(cmd, lnum, lnum, col1, col2);
+      global_exe_one(&ea);
     }
   } else {
     int ndone = 0;
@@ -4707,14 +4705,10 @@ void ex_global(exarg_T *eap)
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
       colnr_T col1 = 0;
-      colnr_T col2 = 0;
-      if (eap->addr_type == ADDR_LINES) {
-        col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-        col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
-
-        // if (col1 > 0 && col2 == 0) {
-        //   col2 = ml_get_buf_len(curbuf, lnum);
-        // }
+      colnr_T col2 = ml_get_buf_len(curbuf, lnum);
+      if (eap->addr_mode == kOmCharWise) {
+        col1 = (lnum == eap->line1) ? eap->col1 : col1 ;
+        col2 = (lnum == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
       }
       int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
       if (regmatch.regprog == NULL) {
@@ -4764,48 +4758,58 @@ void global_exe(char *cmd, exarg_T *eap)
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;
 
-  if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
+  if (eap->addr_mode == kOmCharWise) {
     linenr_T line1 = 0;
     linenr_T line2 = 0;  // we use end of the range to check when the next mark starts in a new range
+    colnr_T col1 = 0;
+    colnr_T col2 = 0;
     linenr_T lines = 0;
     while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-      colnr_T col1 = 0;
-      colnr_T col2 = 0;
 
+      // start of the marked range
       if (line2 == 0) {
         line1 = lnum;
         line2 = lnum;
+        col1 = (line1 == eap->line1) ? eap->col1 : 0;
+        col2 = (line2 == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
         lines++;
         continue;
       }
 
+      // prevoiusly remembered end of the range is right before current line
+      // add current line as the new end of the range
       if (line2 == lnum - 1) {
         line2 = lnum;
+        col2 = (line2 == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
         lines++;
         os_breakcheck();
 
         continue;
       } else if (lines > 0) {
-        if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
-          col1 = (line1 == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-          col2 = (line2 == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
-        }
+        // we land here if we have a mark in a line which does not follow directly
+        // the remembered range, so there is at least one line in between
+        // when this happens we run the global command and set the new
+        // range
+        exarg_T ea = {
+          .cmd = cmd,
+          .line1 = line1,
+          .line2 = line2,
+          .col1 = col1,
+          .col2 = col2,
+          .addr_count = 2,
+          .cmdidx = eap->cmdidx,
+          .addr_type = eap->addr_type,
+          .addr_mode = eap->addr_mode,
+        };
 
-        global_exe_one(cmd, line1, line2, col1, col2);
-        line1 = 0;
-        line2 = 0;
-        lines = 0;
-      } else {
-        if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
-          col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-          col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
-        }
+        global_exe_one(&ea);
 
-        global_exe_one(cmd, lnum, lnum, col1, col2);
-        line1 = 0;
-        line2 = 0;
-        lines = 0;
-      }
+        line1 = lnum;
+        line2 = lnum;
+        col1 = (line1 == eap->line1) ? eap->col1 : 0;
+        col2 = (line2 == eap->line2) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
+        lines++;
+      } 
 
       os_breakcheck();
     }
@@ -4814,26 +4818,32 @@ void global_exe(char *cmd, exarg_T *eap)
     // because we cannot know upfront if we have another marked line
     // and therefor we need to traverse all marked lines
     if (lines > 0) {
-      colnr_T col1 = 0;
-      colnr_T col2 = 0;
-      if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
-        col1 = (line1 == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-        col2 = (line2 == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
-      }
+      exarg_T ea = {
+        .cmd = cmd,
+        .line1 = line1,
+        .line2 = line2,
+        .col1 = col1,
+        .col2 = col2,
+        .addr_count = 2,
+        .cmdidx = eap->cmdidx,
+        .addr_type = eap->addr_type,
+        .addr_mode = eap->addr_mode,
+      };
 
-      global_exe_one(cmd, line1, line2, col1, col2);
+      global_exe_one(&ea);
     }
   } else {
     while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-      colnr_T col1 = 0;
-      colnr_T col2 = 0;
-
-      if (eap->addr_type == ADDR_LINES && (eap->col1 > 0 || eap->col2 > 0)) {
-        col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-        col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum);
-      }
-
-      global_exe_one(cmd, lnum, lnum, col1, col2);
+      exarg_T ea = {
+        .cmd = cmd,
+        .line1 = lnum,
+        .line2 = lnum,
+        .col1 = 0,
+        .col2 = 0,
+        .addr_type = eap->addr_type,
+        .addr_mode = eap->addr_mode,
+      };
+      global_exe_one(&ea);
 
       os_breakcheck();
     }
