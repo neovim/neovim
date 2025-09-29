@@ -213,7 +213,7 @@ endif
 
 " Nulls {{{2
 " =====
-Vim9 syn keyword  vim9Null	null null_blob null_channel null_class null_dict null_function null_job null_list null_object null_partial null_string
+Vim9 syn keyword  vim9Null	null null_blob null_channel null_class null_dict null_function null_job null_list null_object null_partial null_string null_tuple
 
 " Booleans {{{2
 " ========
