@@ -1272,7 +1272,7 @@ syn region	vimEcho
       \ end="\ze|"
       \ excludenl end="$"
       \ nextgroup=vimCmdSep
-      \ contains=@vimContinue,@vimExprList
+      \ contains=@vimContinue,@vimExprList,vim9Comment
       \ transparent
 
 syn match	vimEchohl	"\<echohl\=\>"	skipwhite nextgroup=vimGroup,vimHLGroup,vimEchohlNone,vimOnlyHLGroup,nvimHLGroup
@@ -1289,7 +1289,7 @@ syn region	vimExecute
       \ end="\ze|"
       \ excludenl end="$"
       \ nextgroup=vimCmdSep
-      \ contains=@vimContinue,@vimExprList
+      \ contains=@vimContinue,@vimExprList,vim9Comment
       \ transparent
 
 syn region	vimEval
@@ -1299,7 +1299,7 @@ syn region	vimEval
       \ end="\ze|"
       \ excludenl end="$"
       \ nextgroup=vimCmdSep
-      \ contains=@vimContinue,@vimExprList
+      \ contains=@vimContinue,@vimExprList,vimComment,vim9Comment
       \ transparent
 
 " Filter: {{{2
