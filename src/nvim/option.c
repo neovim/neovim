@@ -1668,6 +1668,18 @@ uint32_t *insecure_flag(win_T *const wp, OptIndex opt_idx, int opt_flags)
     default:
       break;
     }
+  } else {
+    // For global value of window-local options, use flags in w_allbuf_opt.
+    switch (opt_idx) {
+    case kOptWrap:
+      return &wp->w_allbuf_opt.wo_wrap_flags;
+    case kOptFoldexpr:
+      return &wp->w_allbuf_opt.wo_fde_flags;
+    case kOptFoldtext:
+      return &wp->w_allbuf_opt.wo_fdt_flags;
+    default:
+      break;
+    }
   }
   // Nothing special, return global flags field.
   return &options[opt_idx].flags;
@@ -4924,6 +4936,12 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_winhl = copy_option_val(from->wo_winhl);
   to->wo_winbl = from->wo_winbl;
   to->wo_stc = copy_option_val(from->wo_stc);
+
+  to->wo_wrap_flags = from->wo_wrap_flags;
+  to->wo_stl_flags = from->wo_stl_flags;
+  to->wo_wbr_flags = from->wo_wbr_flags;
+  to->wo_fde_flags = from->wo_fde_flags;
+  to->wo_fdt_flags = from->wo_fdt_flags;
 
   // Copy the script context so that we know were the value was last set.
   memmove(to->wo_script_ctx, from->wo_script_ctx, sizeof(to->wo_script_ctx));

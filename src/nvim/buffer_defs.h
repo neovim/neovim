@@ -211,6 +211,18 @@ typedef struct {
   OptInt wo_winbl;
 #define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
 
+  // A few options have local flags for kOptFlagInsecure.
+  uint32_t wo_wrap_flags;               // flags for 'wrap'
+#define w_p_wrap_flags w_onebuf_opt.wo_wrap_flags
+  uint32_t wo_stl_flags;                // flags for 'statusline'
+#define w_p_stl_flags w_onebuf_opt.wo_stl_flags
+  uint32_t wo_wbr_flags;                // flags for 'winbar'
+#define w_p_wbr_flags w_onebuf_opt.wo_wbr_flags
+  uint32_t wo_fde_flags;                // flags for 'foldexpr'
+#define w_p_fde_flags w_onebuf_opt.wo_fde_flags
+  uint32_t wo_fdt_flags;                // flags for 'foldtext'
+#define w_p_fdt_flags w_onebuf_opt.wo_fdt_flags
+
   sctx_T wo_script_ctx[kWinOptCount];  // SCTXs for window-local options
 #define w_p_script_ctx w_onebuf_opt.wo_script_ctx
 } winopt_T;
@@ -1302,12 +1314,6 @@ struct window_S {
   // transform a pointer to a "onebuf" option into a "allbuf" option
 #define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
-  // A few options have local flags for kOptFlagInsecure.
-  uint32_t w_p_wrap_flags;          // flags for 'wrap'
-  uint32_t w_p_stl_flags;           // flags for 'statusline'
-  uint32_t w_p_wbr_flags;           // flags for 'winbar'
-  uint32_t w_p_fde_flags;           // flags for 'foldexpr'
-  uint32_t w_p_fdt_flags;           // flags for 'foldtext'
   int *w_p_cc_cols;                 // array of columns to highlight or NULL
   uint8_t w_p_culopt_flags;         // flags for cursorline highlighting
 

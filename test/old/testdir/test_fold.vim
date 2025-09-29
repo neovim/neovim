@@ -1518,6 +1518,11 @@ func Test_foldtext_in_modeline()
     call assert_equal('folded text', foldtextresult(1))
     call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
 
+    split
+    call assert_equal('folded text', foldtextresult(1))
+    call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+    close
+
     setglobal foldtext=ModelineFoldText()
     call assert_equal('folded text', foldtextresult(1))
     call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
@@ -1544,6 +1549,28 @@ func Test_foldtext_in_modeline()
   set modeline modelineexpr
   call Check_foldtext_in_modeline('setlocal')
   call Check_foldtext_in_modeline('set')
+
+  new Xa
+  sandbox setglobal foldenable foldtext=ModelineFoldText()
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldtext_write', 'D')
+  edit! Xb
+  call setline(1, ['func T()', '  let i = 1', 'endfunc']) | %fold
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+  setglobal foldtext=ModelineFoldText()
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['before'], readfile('Xmodelinefoldtext_write'))
+  setlocal foldtext=ModelineFoldText()
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['after'], readfile('Xmodelinefoldtext_write'))
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldtext_write', 'D')
+  edit! Xc
+  call setline(1, ['func T()', '  let i = 1', 'endfunc']) | %fold
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(['after'], readfile('Xmodelinefoldtext_write'))
+  bwipe!
 
   set modeline& modelineexpr&
   delfunc ModelineFoldText
@@ -1574,6 +1601,11 @@ func Test_foldexpr_in_modeline()
     call assert_equal(2, foldlevel(3))
     call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
 
+    split
+    call assert_equal(2, foldlevel(3))
+    call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+    close
+
     setglobal foldexpr=ModelineFoldExpr()
     call assert_equal(2, foldlevel(3))
     call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
@@ -1600,6 +1632,28 @@ func Test_foldexpr_in_modeline()
   set modeline modelineexpr
   call Check_foldexpr_in_modeline('setlocal')
   call Check_foldexpr_in_modeline('set')
+
+  new Xa
+  sandbox setglobal foldenable foldmethod=expr foldexpr=ModelineFoldExpr()
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldexpr_write', 'D')
+  edit! Xb
+  call setline(1, lines[0:5])
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+  setglobal foldexpr=ModelineFoldExpr()
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['before'], readfile('Xmodelinefoldexpr_write'))
+  setlocal foldexpr=ModelineFoldExpr()
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['after'], readfile('Xmodelinefoldexpr_write'))
+  setlocal bufhidden=wipe
+  call writefile(['before'], 'Xmodelinefoldexpr_write', 'D')
+  edit! Xc
+  call setline(1, lines[0:5])
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(['after'], readfile('Xmodelinefoldexpr_write'))
+  bwipe!
 
   set modeline& modelineexpr&
   delfunc ModelineFoldExpr
