@@ -2736,7 +2736,8 @@ bool ins_compl_prep(int c)
   // Set "compl_get_longest" when finding the first matches.
   if (ctrl_x_mode_not_defined_yet()
       || (ctrl_x_mode_normal() && !compl_started)) {
-    compl_get_longest = (get_cot_flags() & kOptCotFlagLongest) != 0;
+    compl_get_longest = (get_cot_flags() & kOptCotFlagLongest) != 0
+                        && !ins_compl_has_autocomplete();
     compl_used_match = true;
   }
 

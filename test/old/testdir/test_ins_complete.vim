@@ -5834,7 +5834,7 @@ func Test_autocompletedelay()
   call VerifyScreenDump(buf, 'Test_autocompletedelay_6', {})
 
   " During delay wait, user can open menu using CTRL_N completion
-  call term_sendkeys(buf, "\<Esc>:set completeopt=menuone,longest\<CR>")
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menuone\<CR>")
   call term_sendkeys(buf, "Sf\<C-N>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_7', {})
 
@@ -5984,6 +5984,16 @@ func Test_autocomplete_longest()
   call feedkeys("Go\<ESC>", 'tx')
   call DoTest("f\<C-N>\<C-N>\<BS>\<BS>\<BS>\<BS>", 'foo', 3)
 
+  " Issue #18410: When both 'preinsert' and 'longest' are set, 'preinsert'
+  " takes precedence
+  %delete
+  set autocomplete completeopt+=longest,preinsert
+  call setline(1, ['foobar', 'foofoo', 'foobaz', ''])
+  call feedkeys("G", 'tx')
+  call DoTest("f", 'foobar', 2)
+  call assert_equal(1, g:preinserted)
+
+  " Undo
   %delete _
   let &l:undolevels = &l:undolevels
   normal! ifoo
