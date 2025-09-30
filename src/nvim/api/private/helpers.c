@@ -14,6 +14,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
@@ -274,6 +275,22 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   }
 
   return rv;
+}
+
+buf_T *find_loaded_buffer_by_handle(Buffer buffer, Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return NULL;
+  }
+
+  // Load buffer if necessary
+  if (buf->b_ml.ml_mfp == NULL && !buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return NULL;
+  }
+
+  return buf;
 }
 
 win_T *find_window_by_handle(Window window, Error *err)
