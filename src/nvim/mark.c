@@ -89,7 +89,7 @@ void clear_fmark(fmark_T *const fm, const Timestamp timestamp)
   fm->timestamp = timestamp;
 }
 
-/// Execute "MarkSet" autocommand.
+/// Schedules "MarkSet" event.
 ///
 /// @param c The name of the mark, e.g., 'a'.
 /// @param pos Position of the mark in the buffer.

@@ -1509,11 +1509,11 @@ win_found:
 
 /// Schedules an autocommand event, to be executed at the next event-loop tick.
 ///
-/// @param event event that occurred
+/// @param event Event to schedule
 /// @param fname filename, NULL or empty means use actual file name
-/// @param fname_io filename to use for <afile> on cmdline,
+/// @param fname_io Filename to use for <afile> on cmdline,
 ///                 NULL means use `fname`.
-/// @param group autocmd group ID or AUGROUP_ALL
+/// @param group Group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
 /// @param eap Ex command arguments
 void aucmd_defer(event_T event, char *fname, char *fname_io, int group, buf_T *buf, exarg_T *eap,
