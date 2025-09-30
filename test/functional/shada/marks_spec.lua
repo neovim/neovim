@@ -419,7 +419,7 @@ describe('ShaDa support code', function()
     nvim_command('normal! `A')
   end)
 
-  it('preserves marks after bdelete #35770', function()
+  it('preserves marks after :bdelete #35770', function()
     nvim_command('edit foo')
     nvim_command('mark X')
     nvim_command('bdelete')
