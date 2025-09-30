@@ -4095,7 +4095,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
     backslash_halve(eap->arg);
 #endif
 
-    if (has_wildcards) {
+    if (has_wildcards && !path_with_url(eap->arg)) {
       expand_T xpc;
       int options = WILD_LIST_NOTFOUND | WILD_NOERROR | WILD_ADD_SLASH;
 

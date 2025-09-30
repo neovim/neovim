@@ -27,22 +27,47 @@ There are several ways to create a terminal buffer:
 
 - Run the |:terminal| command.
 - Call |nvim_open_term()| or `jobstart(…, {'term': v:true})`.
-- Edit a "term://" buffer. Examples: >vim
+- Edit a "term://" buffer. See |terminal-uri|. Examples: >vim
     :edit term://bash
     :vsplit term://top
-    " Specify complex commands as a JSON array (or use :terminal or jobstart):
-    :exe 'edit' fnameescape('term://["ls", "."]')
-
-<    Note: To open a "term://" buffer from an autocmd, the |autocmd-nested|
-    modifier is required. >vim
-        autocmd VimEnter * ++nested split term://sh
-<    (This is only mentioned for reference; use |:terminal| instead.)
 
 When the terminal starts, the buffer contents are updated and the buffer is
-named in the form of `term://{cwd}//{pid}:{cmd}`. This naming scheme is used
-by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
+named in the form of `term://{cwd}//{cmd}#{pid}` (|terminal-uri|). The
+terminal environment is initialized as in |jobstart-env|.
 
-The terminal environment is initialized as in |jobstart-env|.
+==============================================================================
+Terminal URI                                    *terminal-uri*
+
+Terminal buffers created by `jobstart(…{term=true})` are named with a URI
+format that represents the command and its arguments unambiguously: >
+
+    term://CWD//PID:["cmd", "arg1", "arg2", "…"]#fragment
+    term://CWD//PID:cmd arg1 arg2 #fragment
+
+This naming scheme is used by |:mksession| to restore terminal buffers (by
+re-invoking the command).
+
+You can edit a "term://" URI to start a terminal. The URI supports two ways to
+specify the command and its arguments.
+
+1. The "string" form invokes `cmd arg1 arg2` in a 'shell': >
+    term://CWD//cmd arg1 arg2 #fragment
+Example: >vim
+    :edit term://top #my-terminal
+<
+2. The "array" form invokes `["cmd", "arg1", "arg2"]` directly (no shell): >
+    term://CWD//["cmd", "arg1", "arg2", "…"]#PID
+Example: >vim
+    :edit term://[\"top\"] \#my-terminal
+
+You may optionally append a `#fragment` as a mnemonic. (Note: The fragment
+must not contain a "]" character. Prefer alphanumeric + hyphen.)
+
+Note: To open a "term://" buffer from an autocmd, the |autocmd-nested|
+modifier is required: >vim
+        autocmd VimEnter * ++nested split term://sh
+(This is only mentioned for reference; use |:terminal|  or `jobstart()` to
+start a terminal programmatically.)
 
 ==============================================================================
 Input						*terminal-input*
