@@ -62,6 +62,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/file_search.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"

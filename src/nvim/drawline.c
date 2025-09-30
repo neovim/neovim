@@ -21,7 +21,7 @@
 #include "nvim/diff.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/fold.h"
 #include "nvim/fold_defs.h"
 #include "nvim/globals.h"

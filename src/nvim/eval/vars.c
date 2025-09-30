@@ -34,12 +34,14 @@
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/os.h"
 #include "nvim/register.h"
+#include "nvim/runtime.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -62,6 +64,49 @@ static const char e_setting_v_str_to_value_with_wrong_type[]
   = N_("E963: Setting v:%s to value with wrong type");
 static const char e_missing_end_marker_str[] = N_("E990: Missing end marker '%s'");
 static const char e_cannot_use_heredoc_here[] = N_("E991: Cannot use =<< here");
+
+bool garbage_collect_vimvars(int copyID)
+{
+  return set_ref_in_ht(&vimvarht, copyID, NULL);
+}
+
+bool garbage_collect_scriptvars(int copyID)
+{
+  bool abort = false;
+
+  for (int i = 1; i <= script_items.ga_len; i++) {
+    abort = abort || set_ref_in_ht(&SCRIPT_VARS(i), copyID, NULL);
+  }
+
+  return abort;
+}
+
+/// Set an internal variable to a string value. Creates the variable if it does
+/// not already exist.
+void set_internal_string_var(const char *name, char *value)  // NOLINT(readability-non-const-parameter)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  typval_T tv = {
+    .v_type = VAR_STRING,
+    .vval.v_string = value,
+  };
+
+  set_var(name, strlen(name), &tv, true);
+}
+
+/// List Vim variables.
+static void list_vim_vars(int *first)
+{
+  list_hashtable_vars(&vimvarht, "v:", false, first);
+}
+
+/// List script-local variables, if there is a script.
+static void list_script_vars(int *first)
+{
+  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
+    list_hashtable_vars(&SCRIPT_VARS(current_sctx.sc_sid), "s:", false, first);
+  }
+}
 
 /// Evaluate one Vim expression {expr} in string "p" and append the
 /// resulting string to "gap".  "p" points to the opening "{".
@@ -1290,6 +1335,325 @@ static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap
   return ret;
 }
 
+/// Get number v: variable value.
+varnumber_T get_vim_var_nr(const VimVarIndex idx) FUNC_ATTR_PURE
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  return tv->vval.v_number;
+}
+
+/// Get List v: variable value.  Caller must take care of reference count when
+/// needed.
+list_T *get_vim_var_list(const VimVarIndex idx) FUNC_ATTR_PURE
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  return tv->vval.v_list;
+}
+
+/// Get Dictionary v: variable value.  Caller must take care of reference count
+/// when needed.
+dict_T *get_vim_var_dict(const VimVarIndex idx) FUNC_ATTR_PURE
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  return tv->vval.v_dict;
+}
+
+/// Get string v: variable value.  Uses a static buffer, can only be used once.
+/// If the String variable has never been set, return an empty string.
+/// Never returns NULL.
+char *get_vim_var_str(const VimVarIndex idx)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+{
+  return (char *)tv_get_string(get_vim_var_tv(idx));
+}
+
+/// Set type of v: variable to the given type.
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  type  Type to set to.
+void set_vim_var_type(const VimVarIndex idx, const VarType type)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv->v_type = type;
+}
+
+/// Set number v: variable to the given value
+/// Note that this does not set the type, use set_vim_var_type() for that.
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv_clear(tv);
+  tv->vval.v_number = val;
+}
+
+/// Set boolean v: {true, false} to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_bool(const VimVarIndex idx, const BoolVarValue val)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv_clear(tv);
+  tv->v_type = VAR_BOOL;
+  tv->vval.v_bool = val;
+}
+
+/// Set special v: variable to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv_clear(tv);
+  tv->v_type = VAR_SPECIAL;
+  tv->vval.v_special = val;
+}
+
+/// Set v:char to character "c".
+void set_vim_var_char(int c)
+{
+  char buf[MB_MAXCHAR + 1];
+
+  buf[utf_char2bytes(c, buf)] = NUL;
+  set_vim_var_string(VV_CHAR, buf, -1);
+}
+
+/// Set string v: variable to the given string
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to. Will be copied.
+/// @param[in]  len  Length of that value or -1 in which case strlen() will be
+///                  used.
+void set_vim_var_string(const VimVarIndex idx, const char *const val, const ptrdiff_t len)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv_clear(tv);
+  tv->v_type = VAR_STRING;
+  if (val == NULL) {
+    tv->vval.v_string = NULL;
+  } else if (len == -1) {
+    tv->vval.v_string = xstrdup(val);
+  } else {
+    tv->vval.v_string = xstrndup(val, (size_t)len);
+  }
+}
+
+/// Set list v: variable to the given list
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+void set_vim_var_list(const VimVarIndex idx, list_T *const val)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv_clear(tv);
+  tv->v_type = VAR_LIST;
+  tv->vval.v_list = val;
+  if (val != NULL) {
+    tv_list_ref(val);
+  }
+}
+
+/// Set Dictionary v: variable to the given dictionary
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+///                      Also keys of the dictionary will be made read-only.
+void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
+{
+  typval_T *tv = get_vim_var_tv(idx);
+  tv_clear(tv);
+  tv->v_type = VAR_DICT;
+  tv->vval.v_dict = val;
+  if (val == NULL) {
+    return;
+  }
+
+  val->dv_refcount++;
+  // Set readonly
+  tv_dict_set_keys_readonly(val);
+}
+
+/// Set v:register if needed.
+void set_reg_var(int c)
+{
+  char regname;
+
+  if (c == 0 || c == ' ') {
+    regname = '"';
+  } else {
+    regname = (char)c;
+  }
+  // Avoid free/alloc when the value is already right.
+  typval_T *tv = get_vim_var_tv(VV_REG);
+  if (tv->vval.v_string == NULL || tv->vval.v_string[0] != c) {
+    set_vim_var_string(VV_REG, &regname, 1);
+  }
+}
+
+/// Get or set v:exception.  If "oldval" == NULL, return the current value.
+/// Otherwise, restore the value to "oldval" and return NULL.
+/// Must always be called in pairs to save and restore v:exception!  Does not
+/// take care of memory allocations.
+char *v_exception(char *oldval)
+{
+  typval_T *tv = get_vim_var_tv(VV_EXCEPTION);
+  if (oldval == NULL) {
+    return tv->vval.v_string;
+  }
+
+  tv->vval.v_string = oldval;
+  return NULL;
+}
+
+/// Set v:cmdarg.
+/// If "eap" != NULL, use "eap" to generate the value and return the old value.
+/// If "oldarg" != NULL, restore the value to "oldarg" and return NULL.
+/// Must always be called in pairs!
+char *set_cmdarg(exarg_T *eap, char *oldarg)
+{
+  typval_T *tv = get_vim_var_tv(VV_CMDARG);
+  char *oldval = tv->vval.v_string;
+  if (eap == NULL) {
+    goto error;
+  }
+
+  size_t len = 0;
+  if (eap->force_bin == FORCE_BIN) {
+    len += 6;  // " ++bin"
+  } else if (eap->force_bin == FORCE_NOBIN) {
+    len += 8;  // " ++nobin"
+  }
+
+  if (eap->read_edit) {
+    len += 7;  // " ++edit"
+  }
+
+  if (eap->force_ff != 0) {
+    len += 10;  // " ++ff=unix"
+  }
+  if (eap->force_enc != 0) {
+    len += strlen(eap->cmd + eap->force_enc) + 7;
+  }
+  if (eap->bad_char != 0) {
+    len += 7 + 4;  // " ++bad=" + "keep" or "drop"
+  }
+  if (eap->mkdir_p != 0) {
+    len += 4;  // " ++p"
+  }
+
+  const size_t newval_len = len + 1;
+  char *newval = xmalloc(newval_len);
+  size_t xlen = 0;
+  int rc = 0;
+
+  if (eap->force_bin == FORCE_BIN) {
+    rc = snprintf(newval, newval_len, " ++bin");
+  } else if (eap->force_bin == FORCE_NOBIN) {
+    rc = snprintf(newval, newval_len, " ++nobin");
+  } else {
+    *newval = NUL;
+  }
+  if (rc < 0) {
+    goto error;
+  }
+  xlen += (size_t)rc;
+
+  if (eap->read_edit) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++edit");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  }
+
+  if (eap->force_ff != 0) {
+    rc = snprintf(newval + xlen,
+                  newval_len - xlen,
+                  " ++ff=%s",
+                  eap->force_ff == 'u' ? "unix"
+                                       : eap->force_ff == 'd' ? "dos" : "mac");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  }
+  if (eap->force_enc != 0) {
+    rc = snprintf(newval + (xlen), newval_len - xlen, " ++enc=%s", eap->cmd + eap->force_enc);
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  }
+
+  if (eap->bad_char == BAD_KEEP) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=keep");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  } else if (eap->bad_char == BAD_DROP) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=drop");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  } else if (eap->bad_char != 0) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=%c", eap->bad_char);
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  }
+
+  if (eap->mkdir_p != 0) {
+    rc = snprintf(newval + xlen, newval_len - xlen, " ++p");
+    if (rc < 0) {
+      goto error;
+    }
+    xlen += (size_t)rc;
+  }
+  assert(xlen <= newval_len);
+
+  tv->vval.v_string = newval;
+  return oldval;
+
+error:
+  xfree(oldval);
+  tv->vval.v_string = oldarg;
+  return NULL;
+}
+
+/// Get or set v:throwpoint.  If "oldval" == NULL, return the current value.
+/// Otherwise, restore the value to "oldval" and return NULL.
+/// Must always be called in pairs to save and restore v:throwpoint!  Does not
+/// take care of memory allocations.
+char *v_throwpoint(char *oldval)
+{
+  typval_T *tv = get_vim_var_tv(VV_THROWPOINT);
+  if (oldval == NULL) {
+    return tv->vval.v_string;
+  }
+
+  tv->vval.v_string = oldval;
+  return NULL;
+}
+
+/// Set v:count to "count" and v:count1 to "count1".
+///
+/// @param set_prevcount  if true, first set v:prevcount from v:count.
+void set_vcount(int64_t count, int64_t count1, bool set_prevcount)
+{
+  if (set_prevcount) {
+    get_vim_var_tv(VV_PREVCOUNT)->vval.v_number = get_vim_var_nr(VV_COUNT);
+  }
+  get_vim_var_tv(VV_COUNT)->vval.v_number = count;
+  get_vim_var_tv(VV_COUNT1)->vval.v_number = count1;
+}
+
 /// Get the value of internal variable "name".
 /// Return OK or FAIL.  If OK is returned "rettv" must be cleared.
 ///
@@ -1325,6 +1689,67 @@ int eval_variable(const char *name, int len, typval_T *rettv, dictitem_T **dip, 
   return ret;
 }
 
+/// Check if variable "name[len]" is a local variable or an argument.
+/// If so, "*eval_lavars_used" is set to true.
+void check_vars(const char *name, size_t len)
+{
+  if (eval_lavars_used == NULL) {
+    return;
+  }
+
+  const char *varname;
+  hashtab_T *ht = find_var_ht(name, len, &varname);
+
+  if (ht == get_funccal_local_ht() || ht == get_funccal_args_ht()) {
+    if (find_var(name, len, NULL, true) != NULL) {
+      *eval_lavars_used = true;
+    }
+  }
+}
+
+/// Find variable "name" in the list of variables.
+/// Careful: "a:0" variables don't have a name.
+/// When "htp" is not NULL we are writing to the variable, set "htp" to the
+/// hashtab_T used.
+///
+/// @return  a pointer to it if found, NULL if not found.
+dictitem_T *find_var(const char *const name, const size_t name_len, hashtab_T **htp,
+                     int no_autoload)
+{
+  const char *varname;
+  hashtab_T *const ht = find_var_ht(name, name_len, &varname);
+  if (htp != NULL) {
+    *htp = ht;
+  }
+  if (ht == NULL) {
+    return NULL;
+  }
+  dictitem_T *const ret = find_var_in_ht(ht, *name,
+                                         varname,
+                                         name_len - (size_t)(varname - name),
+                                         no_autoload || htp != NULL);
+  if (ret != NULL) {
+    return ret;
+  }
+
+  // Search in parent scope for lambda
+  return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
+}
+
+/// Find the hashtable used for a variable
+///
+/// @param[in]  name  Variable name, possibly with scope prefix.
+/// @param[in]  name_len  Variable name length.
+/// @param[out]  varname  Will be set to the start of the name without scope
+///                       prefix.
+///
+/// @return Scope hashtab, NULL if name is not valid.
+hashtab_T *find_var_ht(const char *name, const size_t name_len, const char **varname)
+{
+  dict_T *d;
+  return find_var_ht_dict(name, name_len, varname, &d);
+}
+
 /// @return  the string value of a (global/local) variable or
 ///          NULL when it doesn't exist.
 ///
@@ -1338,6 +1763,41 @@ char *get_var_value(const char *const name)
     return NULL;
   }
   return (char *)tv_get_string(&v->di_tv);
+}
+
+/// Allocate a new hashtab for a sourced script.  It will be used while
+/// sourcing this script and when executing functions defined in the script.
+void new_script_vars(scid_T id)
+{
+  scriptvar_T *sv = xcalloc(1, sizeof(scriptvar_T));
+  init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
+  SCRIPT_ITEM(id)->sn_vars = sv;
+}
+
+/// Initialize dictionary "dict" as a scope and set variable "dict_var" to
+/// point to it.
+void init_var_dict(dict_T *dict, ScopeDictDictItem *dict_var, ScopeType scope)
+{
+  hash_init(&dict->dv_hashtab);
+  dict->dv_lock = VAR_UNLOCKED;
+  dict->dv_scope = scope;
+  dict->dv_refcount = DO_NOT_FREE_CNT;
+  dict->dv_copyID = 0;
+  dict_var->di_tv.vval.v_dict = dict;
+  dict_var->di_tv.v_type = VAR_DICT;
+  dict_var->di_tv.v_lock = VAR_FIXED;
+  dict_var->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+  dict_var->di_key[0] = NUL;
+  QUEUE_INIT(&dict->watchers);
+}
+
+/// Unreference a dictionary initialized by init_var_dict().
+void unref_var_dict(dict_T *dict)
+{
+  // Now the dict needs to be freed if no one else is using it, go back to
+  // normal reference counting.
+  dict->dv_refcount -= DO_NOT_FREE_CNT - 1;
+  tv_dict_unref(dict);
 }
 
 /// Clean up a list of internal variables.
@@ -1575,7 +2035,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
     // Handle setting internal v: variables separately where needed to
     // prevent changing the type.
     bool type_error = false;
-    if (is_vimvarht(ht)
+    if (ht == &vimvarht
         && !before_set_vvar(varname, di, tv, copy, watched, &type_error)) {
       if (type_error) {
         semsg(_(e_setting_v_str_to_value_with_wrong_type), varname);
@@ -1589,7 +2049,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
     tv_clear(&di->di_tv);
   } else {  // Add a new variable.
     // Can't add "v:" or "a:" variable.
-    if (is_vimvarht(ht) || ht == get_funccal_args_ht()) {
+    if (ht == &vimvarht || ht == get_funccal_args_ht()) {
       semsg(_(e_illvar), name);
       return;
     }
@@ -2051,6 +2511,30 @@ static void setwinvar(typval_T *argvars, int off)
   if (need_switch_win) {
     restore_win(&switchwin, true);
   }
+}
+
+// reset v:option_new, v:option_old, v:option_oldlocal, v:option_oldglobal,
+// v:option_type, and v:option_command.
+void reset_v_option_vars(void)
+{
+  set_vim_var_string(VV_OPTION_NEW, NULL, -1);
+  set_vim_var_string(VV_OPTION_OLD, NULL, -1);
+  set_vim_var_string(VV_OPTION_OLDLOCAL, NULL, -1);
+  set_vim_var_string(VV_OPTION_OLDGLOBAL, NULL, -1);
+  set_vim_var_string(VV_OPTION_COMMAND, NULL, -1);
+  set_vim_var_string(VV_OPTION_TYPE, NULL, -1);
+}
+
+/// Add an assert error to v:errors.
+void assert_error(garray_T *gap)
+{
+  typval_T *tv = get_vim_var_tv(VV_ERRORS);
+
+  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
+    // Make sure v:errors is a list.
+    set_vim_var_list(VV_ERRORS, tv_list_alloc(1));
+  }
+  tv_list_append_string(get_vim_var_list(VV_ERRORS), gap->ga_data, (ptrdiff_t)gap->ga_len);
 }
 
 bool var_exists(const char *var)

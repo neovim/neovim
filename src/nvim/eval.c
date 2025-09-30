@@ -125,9 +125,6 @@ static hashtab_T compat_hashtab;
 /// Used for checking if local variables or arguments used in a lambda.
 bool *eval_lavars_used = NULL;
 
-#define SCRIPT_SV(id) (SCRIPT_ITEM(id)->sn_vars)
-#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
-
 static int echo_hl_id = 0;   // highlight id used for ":echo"
 
 /// Info used by a ":for" loop.
@@ -290,13 +287,8 @@ static struct vimvar {
 // shorthand
 #define vv_type         vv_di.di_tv.v_type
 #define vv_nr           vv_di.di_tv.vval.v_number
-#define vv_bool         vv_di.di_tv.vval.v_bool
-#define vv_special      vv_di.di_tv.vval.v_special
-#define vv_float        vv_di.di_tv.vval.v_float
 #define vv_str          vv_di.di_tv.vval.v_string
 #define vv_list         vv_di.di_tv.vval.v_list
-#define vv_dict         vv_di.di_tv.vval.v_dict
-#define vv_blob         vv_di.di_tv.vval.v_blob
 #define vv_partial      vv_di.di_tv.vval.v_partial
 #define vv_tv           vv_di.di_tv
 
@@ -304,9 +296,6 @@ static struct vimvar {
 static ScopeDictDictItem vimvars_var;
 
 static partial_T *vvlua_partial;
-
-/// v: hashtab
-#define vimvarht  vimvardict.dv_hashtab
 
 /// Enum used by filter(), map(), mapnew() and foreach()
 typedef enum {
@@ -545,19 +534,6 @@ void eval_clear(void)
 }
 
 #endif
-
-/// Set an internal variable to a string value. Creates the variable if it does
-/// not already exist.
-void set_internal_string_var(const char *name, char *value)  // NOLINT(readability-non-const-parameter)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  typval_T tv = {
-    .v_type = VAR_STRING,
-    .vval.v_string = value,
-  };
-
-  set_var(name, strlen(name), &tv, true);
-}
 
 static lval_T *redir_lval = NULL;
 static garray_T redir_ga;  // Only valid when redir_lval is not NULL.
@@ -1146,25 +1122,6 @@ static typval_T *eval_expr_ext(char *arg, exarg_T *eap, const bool use_simple_fu
   return tv;
 }
 
-/// List Vim variables.
-void list_vim_vars(int *first)
-{
-  list_hashtable_vars(&vimvarht, "v:", false, first);
-}
-
-/// List script-local variables, if there is a script.
-void list_script_vars(int *first)
-{
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
-    list_hashtable_vars(&SCRIPT_VARS(current_sctx.sc_sid), "s:", false, first);
-  }
-}
-
-bool is_vimvarht(const hashtab_T *ht)
-{
-  return ht == &vimvarht;
-}
-
 bool is_compatht(const hashtab_T *ht)
 {
   return ht == &compat_hashtab;
@@ -1214,8 +1171,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
 
   // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
-  vimvars[VV_VAL].vv_type = VAR_STRING;
-  vimvars[VV_VAL].vv_str = badword;
+  set_vim_var_string(VV_VAL, badword, -1);
   if (p_verbose == 0) {
     emsg_off++;
   }
@@ -1239,6 +1195,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
   if (p_verbose == 0) {
     emsg_off--;
   }
+  tv_clear(get_vim_var_tv(VV_VAL));
   restore_vimvar(VV_VAL, &save_val);
   current_sctx = saved_sctx;
 
@@ -4777,9 +4734,7 @@ bool garbage_collect(bool testing)
   ABORTING(set_ref_in_previous_funccal)(copyID);
 
   // script-local variables
-  for (int i = 1; i <= script_items.ga_len; i++) {
-    ABORTING(set_ref_in_ht)(&SCRIPT_VARS(i), copyID, NULL);
-  }
+  ABORTING(garbage_collect_scriptvars)(copyID);
 
   FOR_ALL_BUFFERS(buf) {
     // buffer-local variables
@@ -4878,7 +4833,7 @@ bool garbage_collect(bool testing)
   ABORTING(set_ref_in_func_args)(copyID);
 
   // v: vars
-  ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
+  ABORTING(garbage_collect_vimvars)(copyID);
 
   ABORTING(set_ref_in_quickfix)(copyID);
 
@@ -5379,18 +5334,6 @@ static int eval_env_var(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-/// Add an assert error to v:errors.
-void assert_error(garray_T *gap)
-{
-  struct vimvar *vp = &vimvars[VV_ERRORS];
-
-  if (vp->vv_type != VAR_LIST || vimvars[VV_ERRORS].vv_list == NULL) {
-    // Make sure v:errors is a list.
-    set_vim_var_list(VV_ERRORS, tv_list_alloc(1));
-  }
-  tv_list_append_string(vimvars[VV_ERRORS].vv_list, gap->ga_data, (ptrdiff_t)gap->ga_len);
-}
-
 /// Implementation of map(), filter(), foreach() for a Dict.  Apply "expr" to
 /// every item in Dict "d" and return the result in "rettv".
 static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_name,
@@ -5726,7 +5669,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, const filtermap_T filter
   typval_T argv[3];
   int retval = FAIL;
 
-  tv_copy(tv, &vimvars[VV_VAL].vv_tv);
+  tv_copy(tv, get_vim_var_tv(VV_VAL));
 
   newtv->v_type = VAR_UNKNOWN;
   if (filtermap == FILTERMAP_FOREACH && expr->v_type == VAR_STRING) {
@@ -5738,8 +5681,8 @@ static int filter_map_one(typval_T *tv, typval_T *expr, const filtermap_T filter
     goto theend;
   }
 
-  argv[0] = vimvars[VV_KEY].vv_tv;
-  argv[1] = vimvars[VV_VAL].vv_tv;
+  argv[0] = *get_vim_var_tv(VV_KEY);
+  argv[1] = *get_vim_var_tv(VV_VAL);
   if (eval_expr_typval(expr, false, argv, 2, newtv) == FAIL) {
     goto theend;
   }
@@ -5759,7 +5702,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, const filtermap_T filter
   }
   retval = OK;
 theend:
-  tv_clear(&vimvars[VV_VAL].vv_tv);
+  tv_clear(get_vim_var_tv(VV_VAL));
   return retval;
 }
 
@@ -6923,153 +6866,9 @@ bool eval_isdictc(int c)
 }
 
 /// Get typval_T v: variable value.
-typval_T *get_vim_var_tv(int idx)
+typval_T *get_vim_var_tv(const VimVarIndex idx)
 {
   return &vimvars[idx].vv_tv;
-}
-
-/// Get number v: variable value.
-varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
-{
-  return vimvars[idx].vv_nr;
-}
-
-/// Get string v: variable value.  Uses a static buffer, can only be used once.
-/// If the String variable has never been set, return an empty string.
-/// Never returns NULL.
-char *get_vim_var_str(int idx)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
-{
-  return (char *)tv_get_string(&vimvars[idx].vv_tv);
-}
-
-/// Get List v: variable value.  Caller must take care of reference count when
-/// needed.
-list_T *get_vim_var_list(int idx) FUNC_ATTR_PURE
-{
-  return vimvars[idx].vv_list;
-}
-
-/// Get Dictionary v: variable value.  Caller must take care of reference count
-/// when needed.
-dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE
-{
-  return vimvars[idx].vv_dict;
-}
-
-/// Set v:char to character "c".
-void set_vim_var_char(int c)
-{
-  char buf[MB_MAXCHAR + 1];
-
-  buf[utf_char2bytes(c, buf)] = NUL;
-  set_vim_var_string(VV_CHAR, buf, -1);
-}
-
-/// Set v:count to "count" and v:count1 to "count1".
-///
-/// @param set_prevcount  if true, first set v:prevcount from v:count.
-void set_vcount(int64_t count, int64_t count1, bool set_prevcount)
-{
-  if (set_prevcount) {
-    vimvars[VV_PREVCOUNT].vv_nr = vimvars[VV_COUNT].vv_nr;
-  }
-  vimvars[VV_COUNT].vv_nr = count;
-  vimvars[VV_COUNT1].vv_nr = count1;
-}
-
-/// Set type of v: variable to the given type.
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in]  type  Type to set to.
-void set_vim_var_type(const VimVarIndex idx, const VarType type)
-{
-  vimvars[idx].vv_type = type;
-}
-
-/// Set number v: variable to the given value
-/// Note that this does not set the type, use set_vim_var_type() for that.
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in]  val  Value to set to.
-void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
-{
-  tv_clear(&vimvars[idx].vv_tv);
-  vimvars[idx].vv_nr = val;
-}
-
-/// Set boolean v: {true, false} to the given value
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in]  val  Value to set to.
-void set_vim_var_bool(const VimVarIndex idx, const BoolVarValue val)
-{
-  tv_clear(&vimvars[idx].vv_tv);
-  vimvars[idx].vv_type = VAR_BOOL;
-  vimvars[idx].vv_bool = val;
-}
-
-/// Set special v: variable to the given value
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in]  val  Value to set to.
-void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
-{
-  tv_clear(&vimvars[idx].vv_tv);
-  vimvars[idx].vv_type = VAR_SPECIAL;
-  vimvars[idx].vv_special = val;
-}
-
-/// Set string v: variable to the given string
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in]  val  Value to set to. Will be copied.
-/// @param[in]  len  Length of that value or -1 in which case strlen() will be
-///                  used.
-void set_vim_var_string(const VimVarIndex idx, const char *const val, const ptrdiff_t len)
-{
-  tv_clear(&vimvars[idx].vv_di.di_tv);
-  vimvars[idx].vv_type = VAR_STRING;
-  if (val == NULL) {
-    vimvars[idx].vv_str = NULL;
-  } else if (len == -1) {
-    vimvars[idx].vv_str = xstrdup(val);
-  } else {
-    vimvars[idx].vv_str = xstrndup(val, (size_t)len);
-  }
-}
-
-/// Set list v: variable to the given list
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in,out]  val  Value to set to. Reference count will be incremented.
-void set_vim_var_list(const VimVarIndex idx, list_T *const val)
-{
-  tv_clear(&vimvars[idx].vv_di.di_tv);
-  vimvars[idx].vv_type = VAR_LIST;
-  vimvars[idx].vv_list = val;
-  if (val != NULL) {
-    tv_list_ref(val);
-  }
-}
-
-/// Set Dictionary v: variable to the given dictionary
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in,out]  val  Value to set to. Reference count will be incremented.
-///                      Also keys of the dictionary will be made read-only.
-void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
-{
-  tv_clear(&vimvars[idx].vv_di.di_tv);
-  vimvars[idx].vv_type = VAR_DICT;
-  vimvars[idx].vv_dict = val;
-  if (val == NULL) {
-    return;
-  }
-
-  val->dv_refcount++;
-  // Set readonly
-  tv_dict_set_keys_readonly(val);
 }
 
 /// Set v:variable to tv.
@@ -7093,185 +6892,6 @@ void set_argv_var(char **argv, int argc)
     TV_LIST_ITEM_TV(tv_list_last(l))->v_lock = VAR_FIXED;
   }
   set_vim_var_list(VV_ARGV, l);
-}
-
-/// Set v:register if needed.
-void set_reg_var(int c)
-{
-  char regname;
-
-  if (c == 0 || c == ' ') {
-    regname = '"';
-  } else {
-    regname = (char)c;
-  }
-  // Avoid free/alloc when the value is already right.
-  if (vimvars[VV_REG].vv_str == NULL || vimvars[VV_REG].vv_str[0] != c) {
-    set_vim_var_string(VV_REG, &regname, 1);
-  }
-}
-
-/// Get or set v:exception.  If "oldval" == NULL, return the current value.
-/// Otherwise, restore the value to "oldval" and return NULL.
-/// Must always be called in pairs to save and restore v:exception!  Does not
-/// take care of memory allocations.
-char *v_exception(char *oldval)
-{
-  if (oldval == NULL) {
-    return vimvars[VV_EXCEPTION].vv_str;
-  }
-
-  vimvars[VV_EXCEPTION].vv_str = oldval;
-  return NULL;
-}
-
-/// Get or set v:throwpoint.  If "oldval" == NULL, return the current value.
-/// Otherwise, restore the value to "oldval" and return NULL.
-/// Must always be called in pairs to save and restore v:throwpoint!  Does not
-/// take care of memory allocations.
-char *v_throwpoint(char *oldval)
-{
-  if (oldval == NULL) {
-    return vimvars[VV_THROWPOINT].vv_str;
-  }
-
-  vimvars[VV_THROWPOINT].vv_str = oldval;
-  return NULL;
-}
-
-/// Set v:cmdarg.
-/// If "eap" != NULL, use "eap" to generate the value and return the old value.
-/// If "oldarg" != NULL, restore the value to "oldarg" and return NULL.
-/// Must always be called in pairs!
-char *set_cmdarg(exarg_T *eap, char *oldarg)
-{
-  char *oldval = vimvars[VV_CMDARG].vv_str;
-  if (eap == NULL) {
-    goto error;
-  }
-
-  size_t len = 0;
-  if (eap->force_bin == FORCE_BIN) {
-    len += 6;  // " ++bin"
-  } else if (eap->force_bin == FORCE_NOBIN) {
-    len += 8;  // " ++nobin"
-  }
-
-  if (eap->read_edit) {
-    len += 7;  // " ++edit"
-  }
-
-  if (eap->force_ff != 0) {
-    len += 10;  // " ++ff=unix"
-  }
-  if (eap->force_enc != 0) {
-    len += strlen(eap->cmd + eap->force_enc) + 7;
-  }
-  if (eap->bad_char != 0) {
-    len += 7 + 4;  // " ++bad=" + "keep" or "drop"
-  }
-  if (eap->mkdir_p != 0) {
-    len += 4;  // " ++p"
-  }
-
-  const size_t newval_len = len + 1;
-  char *newval = xmalloc(newval_len);
-  size_t xlen = 0;
-  int rc = 0;
-
-  if (eap->force_bin == FORCE_BIN) {
-    rc = snprintf(newval, newval_len, " ++bin");
-  } else if (eap->force_bin == FORCE_NOBIN) {
-    rc = snprintf(newval, newval_len, " ++nobin");
-  } else {
-    *newval = NUL;
-  }
-  if (rc < 0) {
-    goto error;
-  }
-  xlen += (size_t)rc;
-
-  if (eap->read_edit) {
-    rc = snprintf(newval + xlen, newval_len - xlen, " ++edit");
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  }
-
-  if (eap->force_ff != 0) {
-    rc = snprintf(newval + xlen,
-                  newval_len - xlen,
-                  " ++ff=%s",
-                  eap->force_ff == 'u' ? "unix"
-                                       : eap->force_ff == 'd' ? "dos" : "mac");
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  }
-  if (eap->force_enc != 0) {
-    rc = snprintf(newval + (xlen), newval_len - xlen, " ++enc=%s", eap->cmd + eap->force_enc);
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  }
-
-  if (eap->bad_char == BAD_KEEP) {
-    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=keep");
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  } else if (eap->bad_char == BAD_DROP) {
-    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=drop");
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  } else if (eap->bad_char != 0) {
-    rc = snprintf(newval + xlen, newval_len - xlen, " ++bad=%c", eap->bad_char);
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  }
-
-  if (eap->mkdir_p != 0) {
-    rc = snprintf(newval + xlen, newval_len - xlen, " ++p");
-    if (rc < 0) {
-      goto error;
-    }
-    xlen += (size_t)rc;
-  }
-  assert(xlen <= newval_len);
-
-  vimvars[VV_CMDARG].vv_str = newval;
-  return oldval;
-
-error:
-  xfree(oldval);
-  vimvars[VV_CMDARG].vv_str = oldarg;
-  return NULL;
-}
-
-/// Check if variable "name[len]" is a local variable or an argument.
-/// If so, "*eval_lavars_used" is set to true.
-static void check_vars(const char *name, size_t len)
-{
-  if (eval_lavars_used == NULL) {
-    return;
-  }
-
-  const char *varname;
-  hashtab_T *ht = find_var_ht(name, len, &varname);
-
-  if (ht == get_funccal_local_ht() || ht == get_funccal_args_ht()) {
-    if (find_var(name, len, NULL, true) != NULL) {
-      *eval_lavars_used = true;
-    }
-  }
 }
 
 /// check if special v:lua value for calling lua functions
@@ -7513,35 +7133,6 @@ void set_selfdict(typval_T *const rettv, dict_T *const selfdict)
   make_partial(selfdict, rettv);
 }
 
-/// Find variable "name" in the list of variables.
-/// Careful: "a:0" variables don't have a name.
-/// When "htp" is not NULL we are writing to the variable, set "htp" to the
-/// hashtab_T used.
-///
-/// @return  a pointer to it if found, NULL if not found.
-dictitem_T *find_var(const char *const name, const size_t name_len, hashtab_T **htp,
-                     int no_autoload)
-{
-  const char *varname;
-  hashtab_T *const ht = find_var_ht(name, name_len, &varname);
-  if (htp != NULL) {
-    *htp = ht;
-  }
-  if (ht == NULL) {
-    return NULL;
-  }
-  dictitem_T *const ret = find_var_in_ht(ht, *name,
-                                         varname,
-                                         name_len - (size_t)(varname - name),
-                                         no_autoload || htp != NULL);
-  if (ret != NULL) {
-    return ret;
-  }
-
-  // Search in parent scope for lambda
-  return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
-}
-
 /// Find variable in hashtab.
 /// When "varname" is empty returns curwin/curtab/etc vars dictionary.
 ///
@@ -7682,55 +7273,6 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
 
 end:
   return *d ? &(*d)->dv_hashtab : NULL;
-}
-
-/// Find the hashtable used for a variable
-///
-/// @param[in]  name  Variable name, possibly with scope prefix.
-/// @param[in]  name_len  Variable name length.
-/// @param[out]  varname  Will be set to the start of the name without scope
-///                       prefix.
-///
-/// @return Scope hashtab, NULL if name is not valid.
-hashtab_T *find_var_ht(const char *name, const size_t name_len, const char **varname)
-{
-  dict_T *d;
-  return find_var_ht_dict(name, name_len, varname, &d);
-}
-
-/// Allocate a new hashtab for a sourced script.  It will be used while
-/// sourcing this script and when executing functions defined in the script.
-void new_script_vars(scid_T id)
-{
-  scriptvar_T *sv = xcalloc(1, sizeof(scriptvar_T));
-  init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
-  SCRIPT_ITEM(id)->sn_vars = sv;
-}
-
-/// Initialize dictionary "dict" as a scope and set variable "dict_var" to
-/// point to it.
-void init_var_dict(dict_T *dict, ScopeDictDictItem *dict_var, ScopeType scope)
-{
-  hash_init(&dict->dv_hashtab);
-  dict->dv_lock = VAR_UNLOCKED;
-  dict->dv_scope = scope;
-  dict->dv_refcount = DO_NOT_FREE_CNT;
-  dict->dv_copyID = 0;
-  dict_var->di_tv.vval.v_dict = dict;
-  dict_var->di_tv.v_type = VAR_DICT;
-  dict_var->di_tv.v_lock = VAR_FIXED;
-  dict_var->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  dict_var->di_key[0] = NUL;
-  QUEUE_INIT(&dict->watchers);
-}
-
-/// Unreference a dictionary initialized by init_var_dict().
-void unref_var_dict(dict_T *dict)
-{
-  // Now the dict needs to be freed if no one else is using it, go back to
-  // normal reference counting.
-  dict->dv_refcount -= DO_NOT_FREE_CNT - 1;
-  tv_dict_unref(dict);
 }
 
 /// Make a copy of an item
@@ -8069,18 +7611,6 @@ void last_set_msg(sctx_T script_ctx)
     xfree(p);
   }
   verbose_leave();
-}
-
-// reset v:option_new, v:option_old, v:option_oldlocal, v:option_oldglobal,
-// v:option_type, and v:option_command.
-void reset_v_option_vars(void)
-{
-  set_vim_var_string(VV_OPTION_NEW, NULL, -1);
-  set_vim_var_string(VV_OPTION_OLD, NULL, -1);
-  set_vim_var_string(VV_OPTION_OLDLOCAL, NULL, -1);
-  set_vim_var_string(VV_OPTION_OLDGLOBAL, NULL, -1);
-  set_vim_var_string(VV_OPTION_COMMAND, NULL, -1);
-  set_vim_var_string(VV_OPTION_TYPE, NULL, -1);
 }
 
 /// Adjust a filename, according to a string of modifiers.
