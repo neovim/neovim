@@ -2442,6 +2442,9 @@ M.funcs = {
       	:r		Root (one extension removed)
       	:e		Extension only
 
+      More modifiers are supported, for the full list see
+      |filename-modifiers|.
+
       Example: >vim
       	let &tags = expand("%:p:h") .. "/tags"
       <Note that when expanding a string that starts with '%', '#' or
