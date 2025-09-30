@@ -2266,7 +2266,11 @@ static void ins_compl_new_leader(void)
     // Matches were cleared, need to search for them now.
     // Set "compl_restarting" to avoid that the first match is inserted.
     compl_restarting = true;
-    compl_autocomplete = ins_compl_has_autocomplete();
+    if (ins_compl_has_autocomplete()) {
+      ins_compl_enable_autocomplete();
+    } else {
+      compl_autocomplete = false;
+    }
     if (ins_complete(Ctrl_N, true) == FAIL) {
       compl_cont_status = 0;
     }
@@ -2736,8 +2740,7 @@ bool ins_compl_prep(int c)
   // Set "compl_get_longest" when finding the first matches.
   if (ctrl_x_mode_not_defined_yet()
       || (ctrl_x_mode_normal() && !compl_started)) {
-    compl_get_longest = (get_cot_flags() & kOptCotFlagLongest) != 0
-                        && !ins_compl_has_autocomplete();
+    compl_get_longest = (get_cot_flags() & kOptCotFlagLongest) != 0;
     compl_used_match = true;
   }
 
@@ -6293,6 +6296,7 @@ int ins_complete(int c, bool enable_pum)
 void ins_compl_enable_autocomplete(void)
 {
   compl_autocomplete = true;
+  compl_get_longest = false;
 }
 
 /// Remove (if needed) and show the popup menu

@@ -5984,7 +5984,7 @@ func Test_autocomplete_longest()
   call feedkeys("Go\<ESC>", 'tx')
   call DoTest("f\<C-N>\<C-N>\<BS>\<BS>\<BS>\<BS>", 'foo', 3)
 
-  " Issue #18410: When both 'preinsert' and 'longest' are set, 'preinsert'
+  " Issue #18410: When both "preinsert" and "longest" are set, "preinsert"
   " takes precedence
   %delete
   set autocomplete completeopt+=longest,preinsert
@@ -6034,6 +6034,21 @@ func Test_autocomplete_longest()
 
   %delete _
   delfunc CheckUndo
+
+  " Check that behavior of "longest" in manual completion is unchanged.
+  for ac in [v:false, v:true]
+    let &ac = ac
+    set completeopt=menuone,longest
+    call feedkeys("Ssign u\<C-X>\<C-V>", 'tx')
+    call assert_equal('sign un', getline('.'))
+    call feedkeys("Ssign u\<C-X>\<C-V>\<C-V>", 'tx')
+    call assert_equal('sign undefine', getline('.'))
+    call feedkeys("Ssign u\<C-X>\<C-V>\<C-V>\<C-V>", 'tx')
+    call assert_equal('sign unplace', getline('.'))
+    call feedkeys("Ssign u\<C-X>\<C-V>\<C-V>\<C-V>\<C-V>", 'tx')
+    call assert_equal('sign u', getline('.'))
+    %delete
+  endfor
 
   bw!
   set cot& autocomplete&
