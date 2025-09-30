@@ -6465,73 +6465,68 @@ static void ins_compl_make_linear(void)
 
 /// Remove the matches linked to the current completion source (as indicated by
 /// cpt_sources_index) from the completion list.
-static compl_T *remove_old_matches(void)
+static void remove_old_matches(void)
 {
-  compl_T *sublist_start = NULL, *sublist_end = NULL, *insert_at = NULL;
-  compl_T *current, *next;
-  bool compl_shown_removed = false;
+  bool shown_match_removed = false;
   bool forward = (compl_first_match->cp_cpt_source_idx < 0);
+
+  if (cpt_sources_index < 0) {
+    return;
+  }
 
   compl_direction = forward ? FORWARD : BACKWARD;
   compl_shows_dir = compl_direction;
 
-  // Identify the sublist of old matches that needs removal
-  for (current = compl_first_match; current != NULL; current = current->cp_next) {
-    if (current->cp_cpt_source_idx < cpt_sources_index
-        && (forward || (!forward && !insert_at))) {
-      insert_at = current;
-    }
-
+  // When 'fuzzy' is enabled, items are not ordered by their original source
+  // order (cpt_sources_index). So, remove items one by one.
+  for (compl_T *current = compl_first_match; current != NULL;) {
     if (current->cp_cpt_source_idx == cpt_sources_index) {
-      if (!sublist_start) {
-        sublist_start = current;
-      }
-      sublist_end = current;
-      if (!compl_shown_removed && compl_shown_match == current) {
-        compl_shown_removed = true;
-      }
-    }
+      compl_T *to_delete = current;
 
-    if ((forward && current->cp_cpt_source_idx > cpt_sources_index)
-        || (!forward && insert_at)) {
-      break;
+      if (!shown_match_removed && compl_shown_match == current) {
+        shown_match_removed = true;
+      }
+
+      current = current->cp_next;
+
+      if (to_delete == compl_first_match) {  // node to remove is at head
+        compl_first_match = to_delete->cp_next;
+        compl_first_match->cp_prev = NULL;
+      } else if (to_delete->cp_next == NULL) {  // node to remove is at tail
+        to_delete->cp_prev->cp_next = NULL;
+      } else {          // node is in the moddle
+        to_delete->cp_prev->cp_next = to_delete->cp_next;
+        to_delete->cp_next->cp_prev = to_delete->cp_prev;
+      }
+      ins_compl_item_free(to_delete);
+    } else {
+      current = current->cp_next;
     }
   }
 
   // Re-assign compl_shown_match if necessary
-  if (compl_shown_removed) {
+  if (shown_match_removed) {
     if (forward) {
       compl_shown_match = compl_first_match;
     } else {    // Last node will have the prefix that is being completed
+      compl_T *current;
       for (current = compl_first_match; current->cp_next != NULL;
            current = current->cp_next) {}
       compl_shown_match = current;
     }
   }
 
-  if (!sublist_start) {  // No nodes to remove
-    return insert_at;
+  // Re-assign compl_curr_match
+  compl_curr_match = compl_first_match;
+  for (compl_T *current = compl_first_match; current != NULL;) {
+    if ((forward ? current->cp_cpt_source_idx < cpt_sources_index
+                 : current->cp_cpt_source_idx > cpt_sources_index)) {
+      compl_curr_match = forward ? current : current->cp_next;
+      current = current->cp_next;
+    } else {
+      break;
+    }
   }
-
-  // Update links to remove sublist
-  if (sublist_start->cp_prev) {
-    sublist_start->cp_prev->cp_next = sublist_end->cp_next;
-  } else {
-    compl_first_match = sublist_end->cp_next;
-  }
-
-  if (sublist_end->cp_next) {
-    sublist_end->cp_next->cp_prev = sublist_start->cp_prev;
-  }
-
-  // Free all nodes in the sublist
-  sublist_end->cp_next = NULL;
-  for (current = sublist_start; current != NULL; current = next) {
-    next = current->cp_next;
-    ins_compl_item_free(current);
-  }
-
-  return insert_at;
 }
 
 /// Retrieve completion matches using the callback function "cb" and store the
@@ -6573,7 +6568,7 @@ static void cpt_compl_refresh(void)
     if (cpt_sources_array[cpt_sources_index].cs_refresh_always) {
       Callback *cb = get_callback_if_cpt_func(p, cpt_sources_index);
       if (cb) {
-        compl_curr_match = remove_old_matches();
+        remove_old_matches();
         int startcol;
         int ret = get_userdefined_compl_info(curwin->w_cursor.col, cb, &startcol);
         if (ret == FAIL) {

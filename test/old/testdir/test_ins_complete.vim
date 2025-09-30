@@ -6080,4 +6080,33 @@ func Test_fuzzy_select_item_when_acl()
   call StopVimInTerminal(buf)
 endfunc
 
+" Issue #18378: crash when fuzzy reorders items during refresh:always
+func Test_refresh_always_with_fuzzy()
+  func ComplFunc1(findstart, base)
+    if a:findstart
+      return 1
+    else
+      return ['foo', 'foobar']
+    endif
+  endfunc
+  func ComplFunc2(findstart, base)
+    if a:findstart
+      return 1
+    else
+      return #{words: ['foo'], refresh: 'always'}
+    endif
+  endfunc
+  set complete=.,FComplFunc1,FComplFunc2
+  set autocomplete
+  call Ntest_override("char_avail", 1)
+  new
+  call setline(1, ['fox'])
+  exe "normal! Gofo"
+  bw!
+  delfunc ComplFunc1
+  delfunc ComplFunc2
+  set complete& autocomplete&
+  call Ntest_override("char_avail", 0)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
