@@ -1496,13 +1496,13 @@ describe('completion', function()
 
     -- During delay wait, user can open menu using CTRL_N completion
     feed('<Esc>')
-    command('set completeopt=menuone,preinsert')
+    command('set completeopt=menuone')
     feed('Sf<C-N>')
     screen:expect([[
       foo                                                         |
       foobar                                                      |
       foobarbaz                                                   |
-      f{102:^oo}                                                         |
+      foo^                                                         |
       {12:foo            }{1:                                             }|
       {4:foobar         }{1:                                             }|
       {4:foobarbaz      }{1:                                             }|

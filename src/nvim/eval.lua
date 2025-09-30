@@ -8024,6 +8024,18 @@ M.funcs = {
     returns = 'number',
     signature = 'pow({x}, {y})',
   },
+  preinserted = {
+    desc = [=[
+      Returns non-zero if text has been inserted after the cursor
+      because "preinsert" is present in 'completeopt', or because
+      "longest" is present in 'completeopt' while 'autocomplete'
+      is active.  Otherwise returns zero.
+    ]=],
+    name = 'preinserted',
+    params = {},
+    returns = 'number',
+    signature = 'preinserted()',
+  },
   prevnonblank = {
     args = 1,
     base = 1,
