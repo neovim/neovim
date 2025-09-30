@@ -45,6 +45,20 @@ by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
 The terminal environment is initialized as in |jobstart-env|.
 
 ==============================================================================
+Terminal URI                                    *terminal-uri*
+
+You can edit a `term://…` URI to start a terminal, or call
+`jobstart(…{term=true})`.
+
+Terminal URI format: >
+
+    term://CWD//PID:cmd arg1 arg2 …
+    term://CWD//PID:["cmd", "arg1", "arg2", "…"]
+    # TODO
+    term://CWD//["cmd", "arg1", "arg2", "…"]#PID
+<
+
+==============================================================================
 Input						*terminal-input*
 
 To send input, enter |Terminal-mode| with |i|, |I|, |a|, |A| or
