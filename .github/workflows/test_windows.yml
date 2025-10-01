@@ -10,8 +10,7 @@ on:
   workflow_dispatch:
 
 # env:
-#   TEST_FILE: test/functional/xx/foo_spec.lua
-#   TEST_FILTER: foo
+#   TEST_FILE: test/functional\ex_cmds\mksession_spec.lua
 
 jobs:
   windows:
@@ -20,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: [functional, old]
+        test: [functional]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
