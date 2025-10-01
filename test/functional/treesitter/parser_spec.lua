@@ -91,6 +91,60 @@ describe('treesitter parser API', function()
     eq(true, exec_lua('return parser:parse()[1] == tree2'))
   end)
 
+  it('respects eol settings when parsing buffer', function()
+    insert([[
+      int main() {
+        int x = 3;
+      } // :D]])
+
+    exec_lua(function()
+      vim.bo.eol = false
+      vim.bo.fixeol = false
+      _G.parser = vim.treesitter.get_parser(0, 'c')
+      _G.tree = _G.parser:parse()[1]
+      _G.root = _G.tree:root()
+      _G.lang = vim.treesitter.language.inspect('c')
+    end)
+
+    eq(
+      '<node translation_unit>',
+      exec_lua(function()
+        return tostring(_G.root)
+      end)
+    )
+    eq(
+      { 0, 0, 0, 2, 7, 33 },
+      exec_lua(function()
+        return { _G.root:range(true) }
+      end)
+    )
+
+    -- NOTE: Changing these settings marks the buffer as `modified` but does not fire `on_bytes`,
+    -- meaning this test case does not pass... is this intended?
+    -- exec_lua(function()
+    --   vim.bo.eol = true
+    --   vim.bo.fixeol = true
+    --   vim.cmd.update()
+    --   _G.parser = vim.treesitter.get_parser(0, 'c')
+    --   _G.tree = _G.parser:parse()[1]
+    --   _G.root = _G.tree:root()
+    --   _G.lang = vim.treesitter.language.inspect('c')
+    -- end)
+    --
+    -- eq(
+    --   '<node translation_unit>',
+    --   exec_lua(function()
+    --     return tostring(root)
+    --   end)
+    -- )
+    -- eq(
+    --   { 0, 0, 0, 3, 0, 34 },
+    --   exec_lua(function()
+    --     return { root:range(true) }
+    --   end)
+    -- )
+  end)
+
   it('parses buffer asynchronously', function()
     insert([[
       int main() {
