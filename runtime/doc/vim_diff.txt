@@ -200,16 +200,20 @@ nvim.terminal:
     - |[[| and |]]| to navigate between shell prompts
 
 nvim.cmdwin:
-- CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
+- |CmdwinEnter|: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
 nvim.swapfile:
-- SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
+- |SwapExists|: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
 
 nvim.exrc:
-- VimEnter: Extend 'exrc' to also search for project-local configuration files
+- |VimEnter|: Extend 'exrc' to also search for project-local configuration files
   in all parent directories.
+
+nvim.progress:
+- |Progress|: Display native progress bars in the TUI using the OSC 9;4 escape
+  sequence.
 
 ==============================================================================
 New Features                                                   *nvim-features*
