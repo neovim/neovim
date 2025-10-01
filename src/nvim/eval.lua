@@ -12790,9 +12790,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       The result is a Number, which is the screen column of the file
-      position given with {expr}.  That is, the last screen position
-      occupied by the character at that position, when the screen
-      would be of unlimited width.  When there is a <Tab> at the
+      position given with {expr}.  That is, the total number of
+      screen cells occupied by the part of the line until the end of
+      the character at that position.  When there is a <Tab> at the
       position, the returned Number will be the column at the end of
       the <Tab>.  For example, for a <Tab> in column 1, with 'ts'
       set to 8, it returns 8. |conceal| is ignored.
