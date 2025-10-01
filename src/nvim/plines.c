@@ -930,8 +930,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, int max)
   return MIN(max, count);
 }
 
-/// Return number of window lines a physical line range will occupy.
-/// Only considers real and filler lines.
+/// Return total number of physical and filler lines in a physical line range.
+/// Doesn't treat a fold as a single line or consider a wrapped line multiple lines,
+/// unlike plines_m_win() or win_text_height().
 ///
 /// Mainly used for calculating scrolling offsets.
 int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
@@ -940,7 +941,7 @@ int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
 
   if (diffopt_filler()) {
     for (int lnum = first; lnum <= last; lnum++) {
-      // Note: this also considers folds.
+      // Note: this also considers folds (no filler lines inside folds).
       int n = diff_check_fill(wp, lnum);
       count += MAX(n, 0);
     }
