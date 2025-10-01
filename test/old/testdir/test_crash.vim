@@ -150,6 +150,13 @@ func Test_crash1_2()
     \ ' ; echo "crash 4: [OK]" >> '.. result .. "\<cr>")
   call TermWait(buf, 150)
 
+  let file = 'crash/reverse_text_overflow'
+  let cmn_args = "%s -u NONE -i NONE -n -X -m -n -e -s -S %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ ' ; echo "crash 5: [OK]" >> '.. result .. "\<cr>")
+  call TermWait(buf, 150)
+
   " clean up
   exe buf .. "bw!"
   exe "sp " .. result
@@ -158,6 +165,7 @@ func Test_crash1_2()
       \ 'crash 2: [OK]',
       \ 'crash 3: [OK]',
       \ 'crash 4: [OK]',
+      \ 'crash 5: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
