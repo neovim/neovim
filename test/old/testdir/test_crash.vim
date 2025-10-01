@@ -224,4 +224,11 @@ func Test_crash2()
   exe buf .. "bw!"
 endfunc
 
+func Test_zz_cleanup()
+  " That file is created at Test_crash1_2() by dialog_changed_uaf
+  " but cleanup in that Test, doesn't remove it. Let's try again at
+  " the end of this test script
+  call delete('Untitled')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
