@@ -1639,12 +1639,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    see 'completefuzzycollect'.
 
 	   longest
-		    When 'autocomplete' is not active, only the longest
-		    common prefix of the matches is inserted.  If the popup
-		    menu is displayed, you can use CTRL-L to add more
-		    characters.  Whether case is ignored depends on the type
-		    of completion.  For buffer text the 'ignorecase' option
-		    applies.
+		    When 'autocomplete' is not active, only the longest common
+		    prefix of the matches is inserted.  If the popup menu is
+		    displayed, you can use CTRL-L to add more characters.
+		    Whether case is ignored depends on the type of completion.
+		    For buffer text the 'ignorecase' option applies.
 
 		    When 'autocomplete' is active and no completion item is
 		    selected, the longest common prefix of the matches is
@@ -1686,8 +1685,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    with "menu" or "menuone".  Overrides "preview".
 
 	   preinsert
-		    Inserts the text of the first completion candidate
-		    beyond the current leader, highlighted with |hl-PreInsert|.
+		    Inserts the text of the first completion candidate beyond
+		    the current leader, highlighted with |hl-PreInsert|.
 		    The cursor does not move.
 		    Requires "fuzzy" to be unset, and either "menuone" in
 		    'completeopt' or 'autocomplete' enabled.  When
