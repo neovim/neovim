@@ -214,15 +214,25 @@ function Completor:show(hint)
     table.insert(lines[#lines], { hint, 'ComplHintMore' })
   end
 
-  -- The first line of the text to be inserted
-  -- usually contains characters entered by the user,
-  -- which should be skipped before displaying the virtual text.
   local pos = current.range and current.range.start:to_extmark()
     or vim.pos.cursor(api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr))):to_extmark()
   local row, col = unpack(pos)
+
+  -- To ensure that virtual text remains visible continuously (without flickering)
+  -- while the user is editing the buffer, we allow displaying expired virtual text.
+  -- Since the position of virtual text may become invalid after document changes,
+  -- out-of-range items are ignored.
+  local line_text = api.nvim_buf_get_lines(self.bufnr, row, row + 1, false)[1]
+  if not (line_text and #line_text >= col) then
+    self.current = nil
+    return
+  end
+
+  -- The first line of the text to be inserted
+  -- usually contains characters entered by the user,
+  -- which should be skipped before displaying the virtual text.
   local virt_text = lines[1]
-  local skip =
-    lcp(api.nvim_buf_get_lines(self.bufnr, row, row + 1, true)[1]:sub(col + 1), virt_text[1][1])
+  local skip = lcp(line_text:sub(col + 1), virt_text[1][1])
   local winid = api.nvim_get_current_win()
   -- At least, characters before the cursor should be skipped.
   if api.nvim_win_get_buf(winid) == self.bufnr then
