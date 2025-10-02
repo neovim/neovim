@@ -211,11 +211,11 @@ func s:WaitForCommon(expr, assert, timeout)
       call remove(v:errors, -1)
     endif
 
-    sleep 10m
+    sleep 1m
     if exists('*reltimefloat')
       let slept = float2nr(reltimefloat(reltime(start)) * 1000)
     else
-      let slept += 10
+      let slept += 1
     endif
   endwhile
 
