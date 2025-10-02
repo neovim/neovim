@@ -150,9 +150,10 @@ ProcStream.__index = ProcStream
 --- @param env string[]?
 --- @param io_extra uv.uv_pipe_t?
 --- @param on_exit fun(closed: integer?)?  Called after the child process exits.
+--- @param forward_stderr forward stderr from the nvim process. otherwise collect it.
 --- `closed` is the timestamp (uv.now()) when close() was called, or nil if it wasn't.
 --- @return test.ProcStream
-function ProcStream.spawn(argv, env, io_extra, on_exit)
+function ProcStream.spawn(argv, env, io_extra, on_exit, forward_stderr)
   local self = setmetatable({
     collect_text = false,
     output = function(self)
@@ -176,9 +177,10 @@ function ProcStream.spawn(argv, env, io_extra, on_exit)
   for i = 2, #argv do
     args[#args + 1] = argv[i]
   end
+  local stderr = forward_stderr and 1 or self._child_stderr
   --- @diagnostic disable-next-line:missing-fields
   self._proc, self._pid = uv.spawn(prog, {
-    stdio = { self._child_stdin, self._child_stdout, self._child_stderr, io_extra },
+    stdio = { self._child_stdin, self._child_stdout, stderr, io_extra },
     args = args,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = env,
