@@ -2052,7 +2052,7 @@ static void calculate_topfill_and_topline(const int fromidx, const int toidx, co
 
   // move the same amount of virtual lines in the target buffer to find the
   // cursor's line number
-  int curlinenum_to = thistopdiff->df_lnum[toidx];
+  int curlinenum_to = thistopdiff != NULL ? thistopdiff->df_lnum[toidx] : 1;
 
   int virt_lines_left = virtual_lines_passed;
   curdif = thistopdiff;

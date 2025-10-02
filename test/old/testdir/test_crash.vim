@@ -144,6 +144,28 @@ func Test_crash1_2()
   call s:RunCommandAndWait(buf, args ..
     \ ' ; echo "crash 5: [OK]" >> '.. result)
 
+  let file = 'Xdiff'
+  let lines =<< trim END
+    diffs a
+    edit Xdiff
+    file b
+    exe "norm! \<C-w>\<C-w>"
+    exe "norm! \<C-w>\<C-w>"
+    exe "norm! \<C-w>\<C-w>"
+    exe "norm! \<C-w>\<C-w>"
+    exe "norm! \<C-w>\<C-w>"
+    exe "norm! \<C-w>\L"
+    exe "norm! \<C-j>oy\<C-j>"
+    edit Xdiff
+    sil!so
+  END
+  call writefile(lines, file, 'D')
+  let cmn_args = "%s -u NONE -i NONE -X -m -n -e -s -u %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  call s:RunCommandAndWait(buf, args ..
+    \ ' && echo "crash 6: [OK]" >> '.. result)
+
+
   " clean up
   exe buf .. "bw!"
   exe "sp " .. result
@@ -153,6 +175,7 @@ func Test_crash1_2()
       \ 'crash 3: [OK]',
       \ 'crash 4: [OK]',
       \ 'crash 5: [OK]',
+      \ 'crash 6: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
