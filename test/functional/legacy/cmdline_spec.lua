@@ -602,7 +602,7 @@ describe('cmdline', function()
     screen:expect([[
                                                                   |
       {1:~                                                           }|*5
-      {1:~           }{4: loooooooooooooooong quite loooooooooooong, real}|
+      {1:~           }{4: loooooooooooooooong quite loooooooooooong, rea>}|
       :DoubleEntry ^                                               |
     ]])
 
@@ -612,7 +612,7 @@ describe('cmdline', function()
       {1:~                                                           }|*3
       {3:                                                            }|
       :DoubleEntry loooooooooooooooong quite loooooooooooong, real|
-      ly loooooooo{12: loooooooooooooooong quite loooooooooooong, real}|
+      ly loooooooo{12: loooooooooooooooong quite loooooooooooong, rea>}|
       ong entry^                                                   |
     ]])
 
@@ -620,7 +620,7 @@ describe('cmdline', function()
     screen:expect([[
                                                                   |
       {1:~                                                           }|*3
-      {3:            }{4: loooooooooooooooong quite loooooooooooong, real}|
+      {3:            }{4: loooooooooooooooong quite loooooooooooong, rea>}|
       :DoubleEntry ^                                               |
                                                                   |*2
     ]])

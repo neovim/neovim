@@ -757,11 +757,11 @@ describe('ext_multigrid', function()
       ## grid 3
         {7:-- Keyword Local completion (^N^P) }{15:match 1 of 2}      |
       ## grid 4
-        {24: foo}|
-        {21: bar}|
+        {24: foo             }|
+        {21: bar             }|
       ]],
         float_pos = {
-          [4] = { -1, 'NW', 2, 15, 55, false, 100, 1, 15, 55 },
+          [4] = { -1, 'NW', 2, 15, 43, false, 100, 1, 15, 43 },
         },
       }
       feed('<C-E><Esc>')
