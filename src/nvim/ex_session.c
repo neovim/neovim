@@ -385,12 +385,12 @@ static int put_view(FILE *fd, win_T *wp, tabpage_T *tp, bool add_edit, unsigned 
       // edit that buffer, to not lose folding information (:edit resets
       // folds in other buffers)
       if (fprintf(fd,
-                  "if bufexists(fnamemodify(\"%s\", \":p\")) | buffer %s | else | edit %s | endif\n"
+                  "let s:fname = fnamemodify(\"%s\", \":p\")\n"
+                  "if bufexists(s:fname) | exe 'buffer' bufnr(s:fname) | else | edit %s | endif\n"
                   // Fixup :terminal buffer name. #7836
                   "if &buftype ==# 'terminal'\n"
                   "  silent file %s\n"
                   "endif\n",
-                  fname_esc,
                   fname_esc,
                   fname_esc,
                   fname_esc) < 0) {
