@@ -234,7 +234,7 @@ Use a fast terminal emulator:
 
 Use an optimized build:
 
-`:checkhealth nvim` should report one of these "build types":
+`:version` should report one of these "build types":
 >
     Build type: RelWithDebInfo
     Build type: MinSizeRel
