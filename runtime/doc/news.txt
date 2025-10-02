@@ -327,6 +327,8 @@ TREESITTER
 TUI
 
 • |TermResponse| now supports DA1 and APC query responses.
+• Native progress bars are displayed for |Progress| events using the OSC 9;4
+  sequence.
 
 UI
 
