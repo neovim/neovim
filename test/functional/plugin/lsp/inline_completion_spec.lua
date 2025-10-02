@@ -83,6 +83,10 @@ describe('vim.lsp.inline_completion', function()
         },
         handlers = {
           ['textDocument/inlineCompletion'] = function(_, _, callback)
+            -- do not respond if cursor is on the first line, required for T2
+            if vim.api.nvim_win_get_cursor(0)[1] == 1 then
+              return
+            end
             callback(nil, {
               items = {
                 {
@@ -171,6 +175,18 @@ describe('vim.lsp.inline_completion', function()
       screen:expect({ grid = grid_with_candidates })
       feed('<Esc>')
       screen:expect({ grid = grid_without_candidates })
+    end)
+
+    it('discards after line removal', function()
+      screen:expect({ grid = grid_without_candidates })
+      feed('i')
+      screen:expect({ grid = grid_with_candidates })
+      feed('<BS>')
+      screen:expect([[
+        function fibonacci()^                                 |
+        {1:~                                                    }|*12
+        {3:-- INSERT --}                                         |
+      ]])
     end)
 
     it('no request when leaving insert mode immediately after typing', function()
