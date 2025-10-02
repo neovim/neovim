@@ -7042,6 +7042,36 @@ local options = {
       type = 'string',
     },
     {
+      defaults = '',
+      desc = [=[
+        The path to project-root of the current buffer.
+      ]=],
+      full_name = 'root',
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('Project root of buffer'),
+      type = 'string',
+      varname = 'p_root',
+    },
+    {
+      defaults = '.git,.hg,.svn',
+      desc = [=[
+        Makers for dectecting project-root of the current buffer.
+        This is used to set 'root' option. First directory that matches one of
+        marker that is determined as 'root'. For example, if some parent folder
+        of current file has following structure $dir/$marker[0] then $dir is
+        considered as project root. If none of the rootmarkers match root is
+        set to empty string.
+      ]=],
+      full_name = 'rootmarker',
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('Markers for detecting project root'),
+      list = 'onecomma',
+      type = 'string',
+      varname = 'p_root_marker',
+    },
+    {
       abbreviation = 'ru',
       defaults = true,
       desc = [=[

@@ -4639,6 +4639,10 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_nu);
   case kOptRelativenumber:
     return &(win->w_p_rnu);
+  case kOptRoot:
+    return &(buf->b_p_root);
+  case kOptRootmarker:
+    return &(buf->b_p_root_marker);
   case kOptNumberwidth:
     return &(win->w_p_nuw);
   case kOptWinfixbuf:
@@ -5100,6 +5104,8 @@ void buf_copy_options(buf_T *buf, int flags)
         }
         buf->b_p_bh = empty_string_option;
         buf->b_p_bt = empty_string_option;
+        buf->b_p_root = xstrdup(p_root);
+        buf->b_p_root_marker = xstrdup(p_root_marker);
       } else {
         free_buf_options(buf, false);
       }

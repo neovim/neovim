@@ -70,5 +70,8 @@ endif
 
 let b:man_default_sects = '3,2'
 
+" Set the root patterns for project root detection
+setlocal rootmarker+=.clangd,.clang-tidy,.clang-format,compile_commands.json,compile_flags.txt,configure.ac
+
 let &cpo = s:cpo_save
 unlet s:cpo_save
