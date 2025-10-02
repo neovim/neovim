@@ -99,7 +99,8 @@ local TSCallbackNames = {
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
 ---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
----@field private _source (integer|string) Buffer or string to parse
+---@field private _source integer Buffer to parse
+---@field private _has_scratch_buf boolean Whether _source is a |scratch-buffer| for string parsing.
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid_regions table<integer,true> Set of valid region IDs.
@@ -134,11 +135,26 @@ function LanguageTree.new(source, lang, opts)
     source = vim.api.nvim_get_current_buf()
   end
 
+  local has_scratch_buf = false
+
+  if type(source) == 'string' then
+    local new_source = vim.api.nvim_create_buf(false, true)
+    if new_source == 0 then
+      error('Unable to create buffer for string parser')
+    end
+    vim.bo[new_source].fixeol = false
+    vim.bo[new_source].eol = false
+    vim.api.nvim_buf_set_lines(new_source, 0, -1, false, vim.split(source, '\n', { plain = true }))
+    source = new_source
+    has_scratch_buf = true
+  end
+
   local injections = opts.injections or {}
 
   --- @class vim.treesitter.LanguageTree
   local self = {
     _source = source,
+    _has_scratch_buf = has_scratch_buf,
     _lang = lang,
     _children = {},
     _trees = {},
@@ -174,8 +190,7 @@ end
 
 --- @private
 function LanguageTree:_set_logger()
-  local source = self:source()
-  source = type(source) == 'string' and 'text' or tostring(source)
+  local source = tostring(self:source())
 
   local lang = self:lang()
 
@@ -365,8 +380,8 @@ function LanguageTree:children()
   return self._children
 end
 
---- Returns the source content of the language tree (bufnr or string).
---- @return integer|string
+--- Returns the source bufnr of the language tree.
+--- @return integer
 function LanguageTree:source()
   return self._source
 end
@@ -515,9 +530,8 @@ function LanguageTree:_async_parse(range, on_parse)
   end
 
   local source = self._source
-  local is_buffer_parser = type(source) == 'number'
-  local buf = is_buffer_parser and vim.b[source] or nil
-  local ct = is_buffer_parser and buf.changedtick or nil
+  local buf = vim.b[source]
+  local ct = buf.changedtick
   local total_parse_time = 0
   local redrawtime = vim.o.redrawtime * 1000000
 
@@ -527,19 +541,15 @@ function LanguageTree:_async_parse(range, on_parse)
   local parse = coroutine.wrap(self._parse)
 
   local function step()
-    if is_buffer_parser then
-      if
-        not vim.api.nvim_buf_is_valid(source --[[@as number]])
-      then
-        return nil
-      end
+    if not vim.api.nvim_buf_is_valid(source) then
+      return nil
+    end
 
-      -- If buffer was changed in the middle of parsing, reset parse state
-      if buf.changedtick ~= ct then
-        ct = buf.changedtick
-        total_parse_time = 0
-        parse = coroutine.wrap(self._parse)
-      end
+    -- If buffer was changed in the middle of parsing, reset parse state
+    if buf.changedtick ~= ct then
+      ct = buf.changedtick
+      total_parse_time = 0
+      parse = coroutine.wrap(self._parse)
     end
 
     thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ns or nil
@@ -725,6 +735,10 @@ end
 --- `remove_child` must be called on the parent to remove it.
 function LanguageTree:destroy()
   -- Cleanup here
+  if self._has_scratch_buf then
+    self._has_scratch_buf = false
+    vim.api.nvim_buf_delete(self._source, {})
+  end
   for _, child in pairs(self._children) do
     child:destroy()
   end
@@ -842,7 +856,7 @@ function LanguageTree:included_regions()
 end
 
 ---@param node TSNode
----@param source string|integer
+---@param source integer
 ---@param metadata vim.treesitter.query.TSMetadata
 ---@param include_children boolean
 ---@return Range6[]
