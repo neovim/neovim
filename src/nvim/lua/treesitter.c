@@ -443,8 +443,9 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
     *bytes_read = 0;
     return "";
   }
-  char *line = ml_get_buf(bp, (linenr_T)position.row + 1);
-  size_t len = (size_t)ml_get_buf_len(bp, (linenr_T)position.row + 1);
+  linenr_T lnum = (linenr_T)position.row + 1;
+  char *line = ml_get_buf(bp, lnum);
+  size_t len = (size_t)ml_get_buf_len(bp, lnum);
   if (position.column > len) {
     *bytes_read = 0;
     return "";
@@ -456,10 +457,13 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
   memchrsub(buf, '\n', NUL, tocopy);
   *bytes_read = (uint32_t)tocopy;
   if (tocopy < BUFSIZE) {
-    // now add the final \n. If it didn't fit, input_cb will be called again
-    // on the same line with advanced column.
-    buf[tocopy] = '\n';
-    (*bytes_read)++;
+    // now add the final \n, if it is meant to be present for this buffer. If it didn't fit,
+    // input_cb will be called again on the same line with advanced column.
+    if (lnum != bp->b_ml.ml_line_count || (!bp->b_p_bin && bp->b_p_fixeol)
+        || (lnum != bp->b_no_eol_lnum && bp->b_p_eol)) {
+      buf[tocopy] = '\n';
+      (*bytes_read)++;
+    }
   }
   return buf;
 #undef BUFSIZE
