@@ -1219,7 +1219,9 @@ vim.go.cia = vim.go.completeitemalign
 ---
 ---    noselect Same as "noinsert", except that no menu item is
 --- 	    pre-selected.  If both "noinsert" and "noselect" are
---- 	    present, "noselect" has precedence.
+--- 	    present, "noselect" takes precedence.  This options is
+--- 	    enabled automatically when 'autocomplete' is on, unless
+--- 	    "preinsert" is also enabled.
 ---
 ---    nosort   Disable sorting of completion candidates based on fuzzy
 --- 	    scores when "fuzzy" is enabled.  Candidates will appear
