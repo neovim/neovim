@@ -851,6 +851,7 @@ syn region	vimUserCmdReplacement contained
       \ skip=+\n\s*\%(\\\|["#]\\ \)+
       \ end="$"
       \ contains=@vimContinue,@vimUserCmdList,vimComFilter
+      \ keepend
 syn region	vimUserCmdBlock	    contained
       \ matchgroup=vimSep
       \ start="{"
