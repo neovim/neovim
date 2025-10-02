@@ -1282,9 +1282,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
         // it would be blanked out again very soon.  Show it on the
         // left, but do reverse the text.
         if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-          char *r = reverse_text(trunc != NULL ? trunc : msgbuf);
+          char *r = reverse_text(msgbuf);
           xfree(msgbuf);
           msgbuf = r;
+          msgbuflen = strlen(msgbuf);
           // move reversed text to beginning of buffer
           while (*r == ' ') {
             r++;
