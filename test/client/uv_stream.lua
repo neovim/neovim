@@ -152,7 +152,7 @@ ProcStream.__index = ProcStream
 --- @param on_exit fun(closed: integer?)?  Called after the child process exits.
 --- `closed` is the timestamp (uv.now()) when close() was called, or nil if it wasn't.
 --- @return test.ProcStream
-function ProcStream.spawn(argv, env, io_extra, on_exit)
+function ProcStream.spawn(argv, env, io_extra, on_exit, stderr_from_nvim)
   local self = setmetatable({
     collect_text = false,
     output = function(self)
@@ -178,7 +178,7 @@ function ProcStream.spawn(argv, env, io_extra, on_exit)
   end
   --- @diagnostic disable-next-line:missing-fields
   self._proc, self._pid = uv.spawn(prog, {
-    stdio = { self._child_stdin, self._child_stdout, self._child_stderr, io_extra },
+    stdio = { self._child_stdin, self._child_stdout, stderr_from_nvim and 1 or self._child_stderr, io_extra },
     args = args,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = env,
