@@ -949,6 +949,7 @@ local extension = {
   pmod = 'pike',
   rcp = 'pilrc',
   pkl = 'pkl',
+  pcf = 'pkl',
   PL = detect.pl,
   pli = 'pli',
   pl1 = 'pli',
@@ -2683,6 +2684,7 @@ local pattern = {
     ['^pacman%.log'] = starsetf(function(path, _bufnr)
       return vim.uv.fs_stat(path) and 'pacmanlog' or nil
     end),
+    ['^pkl%-lsp://'] = 'pkl',
     ['printcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('print')
     end),
