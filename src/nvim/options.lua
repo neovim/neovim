@@ -1699,8 +1699,8 @@ local options = {
 
            noselect Same as "noinsert", except that no menu item is
         	    pre-selected.  If both "noinsert" and "noselect" are
-        	    present, "noselect" takes precedence.  This options is
-        	    enabled automatically when 'autocomplete' is on, unless
+        	    present, "noselect" takes precedence.  This is enabled
+        	    automatically when 'autocomplete' is on, unless
         	    "preinsert" is also enabled.
 
            nosort   Disable sorting of completion candidates based on fuzzy
