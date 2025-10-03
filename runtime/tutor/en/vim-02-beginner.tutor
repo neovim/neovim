@@ -14,7 +14,42 @@
   depending upon how much time is spent with experimentation.
 
 
-# Lesson 2.1.1: THE NAMED REGISTERS
+# Lesson 2.1.1: MASTERING TEXT OBJECTS
+
+   ** Operate on logical text blocks with precision using text objects **
+
+  1. Practice word operations:
+     - Place cursor on any word in the line below
+     - Type `diw`{normal} to delete INNER word (word without surrounding space)
+     - Type `daw`{normal} to delete A WORD (including trailing whitespace)
+     - Try with other operators: `ciw`{normal} (change), `yiw`{normal} (yank),
+        `gqiw`{normal} (format)
+
+Practice on: "Vim's", (text_object), and 'powerful' words here.
+
+  2. Work with bracketed content:
+     - Put cursor inside any () {} [] <> pair below
+     - Type `di(`{normal} or `dib`{normal} (delete inner bracket)
+     - Type `da(`{normal} or `dab`{normal} (delete around brackets)
+     - Try same with `i"`{normal}/`a"`{normal} for quotes, `it`{normal}/`at`{normal}  for HTML/XML tags
+
+Test cases: {curly}, [square], <angle>, and "quoted" items.
+
+  3. Paragraph and sentence manipulation:
+     - Use `dip`{normal} to delete inner paragraph (cursor anywhere in paragraph)
+     - Use `vap`{normal} to visually select entire paragraph
+     - Try `das`{normal} to delete a sentence (works between .!? punctuation)
+
+  4. Advanced combinations:
+     - `ciwnew<ESC>`{normal} - Change current word to "new"
+     - `yss"<ESC>`{normal}   - Wrap entire line in quotes (vim-surround plugin style)
+     - `gUit`{normal}        - Uppercase inner HTML tag content
+     - `va"p`{normal}        - Select quoted text and paste over it
+
+Final exercise: (Modify "this" text) by [applying {various} operations]<
+
+
+# Lesson 2.1.2: THE NAMED REGISTERS
 
 ** Store two yanked words concurrently and then paste them **
 
@@ -45,7 +80,7 @@ REFERENCE: [Registers](registers)
            [CTRL-R](i_CTRL-R)
 
 
-# Lesson 2.1.2: THE EXPRESSION REGISTER
+# Lesson 2.1.3: THE EXPRESSION REGISTER
 
 ** Insert the results of calculations on the fly **
 
@@ -70,7 +105,7 @@ NOTE: the same can be achieved with `:pu=`{normal}`system('date')`{vim}
 REFERENCE: [Expression Register](quote=)
 
 
-# Lesson 2.1.3: THE NUMBERED REGISTERS
+# Lesson 2.1.4: THE NUMBERED REGISTERS
 
 ** Press `yy`{normal} and `dd`{normal} to witness their effect on the registers **
 
@@ -107,7 +142,52 @@ NOTE: Whole line deletions (`dd`{normal}) are much longer lived in the
 REFERENCE: [Numbered Registers](quote0)
 
 
-# Lesson 2.1.4: THE BEAUTY OF MARKS
+# Lesson 2.1.5: SPECIAL REGISTERS
+
+ ** Use system clipboard and blackhole registers for advanced editing **
+
+ Note: Clipboard use requires a working clipboard provider for the current
+       windowing system on Linux. Check with `:checkhealth vim.provider`{vim}
+       and `:echo has('clipboard_working')`{vim}
+
+  1. Clipboard registers `+`{normal} and `*`{normal} :
+     - `"+y`{normal} - Yank to system clipboard (e.g. `"+yy`{normal} for current line)
+     - `"+p`{normal} - Paste from system clipboard
+     - `"*`{normal} is primary selection on X11 (middle-click), `"+`{normal} is clipboard
+
+Try: "+yy then paste into another application with Ctrl-V or Cmd+V
+
+  2. Blackhole register `_`{normal} discards text:
+     - `"_daw`{normal} - Delete word without saving to any register
+     - Useful when you don't want to overwrite your default `"`{normal} register
+     - Note this is using the "a Word" text object, introduced in a previous
+       lession
+     - `"_dd`{normal}  - Delete line without saving
+     - `"_dap`{normal} - Delete paragraph without saving
+     - Combine with counts: `3"_dw`{normal}
+
+Practice: "_diw on any word to delete it without affecting yank history
+
+  3. Combine with visual selections:
+     - Select text with V then `"+y`{normal}
+     - To paste from clipboard in insert mode: `<CTRL-R>+`{normal}
+     - Try opening another application and paste from clipboard
+
+  4. Remember:
+     - Clipboard registers work across different Vim instances
+     - Clipboard register is not always working
+     - Blackhole prevents accidental register overwrites
+     - Default `"`{normal} register is still available for normal yank/paste
+     - Named registers (a-z) remain private to each Vim session
+
+  5. Clipboard troubleshooting:
+     - Check support with `:echo has('clipboard_working')`{vim}
+     - 1 means available, 0 means not
+     - On Linux, may need xsel, xclip or wl-clipboard
+       (check `:checkhealth vim.provider`{vim} result)
+
+
+# Lesson 2.1.6: THE BEAUTY OF MARKS
 
 ** Code monkey arithmetic avoidance **
 
@@ -162,33 +242,46 @@ REFERENCE: [Marks](marks)
 
 # Lesson 2.1 SUMMARY
 
-  1. To store (yank, delete) text into, and retrieve (paste) from, a total of
+  1. Text objects provide precision editing:
+     - `iw`{normal}/`aw`{normal} - inner/around word
+     - `i[`{normal}/`a[`{normal} - inner/around bracket
+     - `i"`{normal}/`a"`{normal} - inner/around quotes
+     - `it`{normal}/`at`{normal} - inner/around tag
+     - `ip`{normal}/`ap`{normal} - inner/around paragraph
+     - `is`{normal}/`as`{normal} - inner/around sentence
+
+  2. To store (yank, delete) text into, and retrieve (paste) from, a total of
      26 registers (a-z) 
-  2. Yank a whole word from anywhere within a word: `yiw`{normal}
-  3. Change a whole word from anywhere within a word: `ciw`{normal}
-  4. Insert text directly from registers in insert mode: `<CTRL-r>a`{normal}
+  3. Yank a whole word from anywhere within a word: `yiw`{normal}
+  4. Change a whole word from anywhere within a word: `ciw`{normal}
+  5. Insert text directly from registers in insert mode: `<CTRL-R>a`{normal}
 
-  5. Insert the results of simple arithmetic operations:
-     `<CTRL-r>=`{normal}60\*60 `<ENTER>`{normal} in insert mode
-  6. Insert the results of system calls:
-     `<CTRL-r>=`{normal}`system('ls -1')`{vim} in insert mode
+  6. Insert the results of simple arithmetic operations:
+     `<CTRL-r>=`{normal}60\*60`<ENTER>`{normal} in insert mode
+  7. Insert the results of system calls:
+     `<CTRL-r>=`{normal}`system('ls -1')`{vim}`<ENTER>`{normal} in insert mode
 
-  7. Inspect registers with `:reg`{vim}
-  8. Learn the final destination of whole line deletions: `dd`{normal} in
+  8. Inspect registers with `:reg`{vim}
+  9. Learn the final destination of whole line deletions: `dd`{normal} in
      the numbered registers, i.e. descending from register 1 - 9.  Appreciate
      that whole line deletions are preserved in the numbered registers longer
      than any other operation
-  9. Learn the final destination of all yanks in the numbered registers and
+ 10. Learn the final destination of all yanks in the numbered registers and
      how ephemeral they are
 
- 10. Place marks from command mode `m[a-zA-Z0-9]`{normal}
- 11. Move line-wise to a mark with `'`{normal}
+ 11. Place marks from command mode `m[a-zA-Z0-9]`{normal}
+ 12. Move line-wise to a mark with `'`{normal}
+
+ 13. Special registers:
+     - `"+`{normal}/`"*`{normal} - System clipboard (OS dependent)
+     - `"_`{normal}    - Blackhole (discard deleted/yanked text)
+     - `"=`{normal}    - Expression register
 
 
 # CONCLUSION
 
   This concludes chapter two of the Vim Tutor. It is a work in progress.
 
-  This chapter was written by Paul D. Parker.
+  This chapter was written by Paul D. Parker and Christian Brabandt.
 
   Modified for vim-tutor-mode by Restorer.
