@@ -10,7 +10,7 @@ local exc_exec = n.exc_exec
 local is_os = t.is_os
 
 describe('msgpack*() functions', function()
-  before_each(clear)
+  setup(clear)
 
   local obj_test = function(msg, obj)
     it(msg, function()
@@ -415,7 +415,7 @@ local parse_eq = function(expect, list_arg)
 end
 
 describe('msgpackparse() function', function()
-  before_each(clear)
+  setup(clear)
 
   it('restores nil as v:null', function()
     parse_eq(eval('[v:null]'), { '\192' })
@@ -525,7 +525,7 @@ describe('msgpackparse() function', function()
   end)
 
   it('fails to parse a partial', function()
-    command('function T() dict\nendfunction')
+    command('function! T() dict\nendfunction')
     eq(
       'Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
       exc_exec('call msgpackparse(function("T", [1, 2], {}))')
@@ -555,7 +555,7 @@ describe('msgpackparse() function', function()
 end)
 
 describe('msgpackdump() function', function()
-  before_each(clear)
+  setup(clear)
 
   local dump_eq = function(exp_list, arg_expr)
     eq(exp_list, eval('msgpackdump(' .. arg_expr .. ')'))
@@ -636,7 +636,7 @@ describe('msgpackdump() function', function()
   end)
 
   it('fails to dump a partial', function()
-    command('function T() dict\nendfunction')
+    command('function! T() dict\nendfunction')
     command('let Todump = function("T", [1, 2], {})')
     eq(
       'Vim(call):E5004: Error while dumping msgpackdump() argument, index 0, itself: attempt to dump function reference',
@@ -776,7 +776,7 @@ describe('msgpackdump() function', function()
   end)
 
   it('fails to dump a partial', function()
-    command('function T() dict\nendfunction')
+    command('function! T() dict\nendfunction')
     eq(
       'Vim(call):E686: Argument of msgpackdump() must be a List',
       exc_exec('call msgpackdump(function("T", [1, 2], {}))')

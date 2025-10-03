@@ -11,7 +11,7 @@ local command = n.command
 local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 
-before_each(clear)
+setup(clear)
 
 describe('sort()', function()
   it('errors out when sorting special values', function()

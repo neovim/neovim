@@ -33,7 +33,6 @@ describe('vim.snippet', function()
       set_snippet_jump(-1, '<S-Tab>')
     end)
   end)
-  after_each(clear)
 
   --- @param snippet string[]
   --- @param expected string[]

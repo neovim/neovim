@@ -115,10 +115,6 @@ describe('vim.lsp.diagnostic', function()
     end)
   end)
 
-  after_each(function()
-    clear()
-  end)
-
   describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
     it('correctly handles UTF-16 offsets', function()
       local line = 'All 💼 and no 🎉 makes Jack a dull 👦'

@@ -7,7 +7,7 @@ local command = n.command
 local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 
-before_each(clear)
+setup(clear)
 
 describe('uniq()', function()
   it('errors out when processing special values', function()

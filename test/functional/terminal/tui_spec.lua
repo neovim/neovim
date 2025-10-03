@@ -3587,6 +3587,10 @@ describe('TUI client', function()
   it('connects to remote instance (with its own TUI)', function()
     local server_super = n.new_session(false)
     local client_super = n.new_session(true)
+    finally(function()
+      server_super:close()
+      client_super:close()
+    end)
 
     set_session(server_super)
     local server_pipe = new_pipename()
@@ -3651,14 +3655,15 @@ describe('TUI client', function()
     }
 
     feed_data(':q!\n')
-
-    server_super:close()
-    client_super:close()
   end)
 
   it('connects to remote instance (--headless)', function()
     local server = n.new_session(false)
     local client_super = n.new_session(true, { env = { NVIM_LOG_FILE = testlog } })
+    finally(function()
+      client_super:close()
+      server:close()
+    end)
 
     set_session(server)
     local server_pipe = api.nvim_get_vvar('servername')
@@ -3699,8 +3704,6 @@ describe('TUI client', function()
     fn.system({ nvim_prog, '--remote-ui', '--server', server_pipe })
     eq(1, api.nvim_get_vvar('shell_error'))
 
-    client_super:close()
-    server:close()
     if is_os('mac') then
       assert_log('uv_tty_set_mode failed: Unknown system error %-102', testlog)
     end

@@ -14,8 +14,6 @@ local function lua_eval(lua_expr)
 end
 
 describe('treesitter node API', function()
-  clear()
-
   it('double free tree', function()
     insert('F')
     exec_lua(function()

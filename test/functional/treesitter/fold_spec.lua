@@ -14,8 +14,6 @@ local poke_eventloop = n.poke_eventloop
 before_each(clear)
 
 describe('treesitter foldexpr', function()
-  clear()
-
   before_each(function()
     -- open folds to avoid deleting entire folded region
     exec_lua([[vim.opt.foldlevel = 9]])
