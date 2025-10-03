@@ -92,10 +92,6 @@ TSHighlighter.__index = TSHighlighter
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
 
-  if type(tree:source()) ~= 'number' then
-    error('TSHighlighter can not be used with a string parser source.')
-  end
-
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
   tree:register_cbs({
@@ -137,7 +133,6 @@ function TSHighlighter.new(tree, opts)
   }, true)
 
   local source = tree:source()
-  assert(type(source) == 'number')
 
   self.bufnr = source
   self.redraw_count = 0
