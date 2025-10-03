@@ -1,6 +1,5 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
-local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
@@ -49,7 +48,7 @@ local function execute_lens(lens, bufnr, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
   client:exec_cmd(lens.command, { bufnr = bufnr }, function(...)
-    vim.lsp.handlers[ms.workspace_executeCommand](...)
+    vim.lsp.handlers['workspace/executeCommand'](...)
     M.refresh()
   end)
 end
@@ -276,7 +275,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
         display_line_countdown()
       else
         assert(client)
-        client:request(ms.codeLens_resolve, lens, function(_, result)
+        client:request('codeLens/resolve', lens, function(_, result)
           if api.nvim_buf_is_loaded(bufnr) and result and result.command then
             lens.command = result.command
           end
@@ -340,7 +339,7 @@ function M.refresh(opts)
 
       local request_ids = vim.lsp.buf_request(
         buf,
-        ms.textDocument_codeLens,
+        'textDocument/codeLens',
         params,
         M.on_codelens,
         function() end

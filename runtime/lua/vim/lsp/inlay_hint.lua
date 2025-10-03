@@ -1,6 +1,5 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
-local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
@@ -96,10 +95,10 @@ local function refresh(bufnr, client_id)
     ipairs(vim.lsp.get_clients({
       bufnr = bufnr,
       id = client_id,
-      method = ms.textDocument_inlayHint,
+      method = 'textDocument/inlayHint',
     }))
   do
-    client:request(ms.textDocument_inlayHint, {
+    client:request('textDocument/inlayHint', {
       textDocument = util.make_text_document_params(bufnr),
       range = util._make_line_range_params(
         bufnr,
@@ -190,7 +189,7 @@ function M.get(filter)
 
   local clients = vim.lsp.get_clients({
     bufnr = bufnr,
-    method = ms.textDocument_inlayHint,
+    method = 'textDocument/inlayHint',
   })
   if #clients == 0 then
     return {}
@@ -270,8 +269,8 @@ api.nvim_create_autocmd('LspNotify', {
     local bufnr = args.buf
 
     if
-      args.data.method ~= ms.textDocument_didChange
-      and args.data.method ~= ms.textDocument_didOpen
+      args.data.method ~= 'textDocument/didChange'
+      and args.data.method ~= 'textDocument/didOpen'
     then
       return
     end
@@ -306,7 +305,7 @@ api.nvim_create_autocmd('LspDetach', {
   callback = function(args)
     ---@type integer
     local bufnr = args.buf
-    local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_inlayHint })
+    local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
 
     if not vim.iter(clients):any(function(c)
       return c.id ~= args.data.client_id

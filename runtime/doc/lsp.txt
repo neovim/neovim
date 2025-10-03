@@ -3045,12 +3045,6 @@ make_client_capabilities()
     Return: ~
         (`lsp.ClientCapabilities`)
 
-Methods                                             *vim.lsp.protocol.Methods*
-    LSP method names.
-
-    See also: ~
-      • https://microsoft.github.io/language-server-protocol/specification/#metaModel
-
                                      *vim.lsp.protocol.resolve_capabilities()*
 resolve_capabilities({server_capabilities})
     Creates a normalized object describing LSP server capabilities.

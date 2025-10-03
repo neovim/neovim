@@ -1,6 +1,5 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local ms = protocol.Methods
 local util = require('vim.lsp.util')
 local api = vim.api
 local completion = require('vim.lsp.completion')
@@ -45,7 +44,7 @@ local function show_message_notification(params, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-RCS[ms.workspace_executeCommand] = function(_, _, _)
+RCS['workspace/executeCommand'] = function(_, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
@@ -53,7 +52,7 @@ end
 ---@param params lsp.ProgressParams
 ---@param ctx lsp.HandlerContext
 ---@diagnostic disable-next-line:no-unknown
-RSC[ms.dollar_progress] = function(_, params, ctx)
+RSC['$/progress'] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
@@ -89,7 +88,7 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
 ---@param params lsp.WorkDoneProgressCreateParams
 ---@param ctx lsp.HandlerContext
-RSC[ms.window_workDoneProgress_create] = function(_, params, ctx)
+RSC['window/workDoneProgress/create'] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
@@ -101,7 +100,7 @@ end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
 ---@param params lsp.ShowMessageRequestParams
-RSC[ms.window_showMessageRequest] = function(_, params, ctx)
+RSC['window/showMessageRequest'] = function(_, params, ctx)
   if next(params.actions or {}) then
     local co, is_main = coroutine.running()
     if co and not is_main then
@@ -143,14 +142,14 @@ end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
 --- @param params lsp.RegistrationParams
-RSC[ms.client_registerCapability] = function(_, params, ctx)
+RSC['client/registerCapability'] = function(_, params, ctx)
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   client:_register(params.registrations)
   for bufnr in pairs(client.attached_buffers) do
     vim.lsp._set_defaults(client, bufnr)
   end
   for _, reg in ipairs(params.registrations) do
-    if reg.method == ms.textDocument_documentColor then
+    if reg.method == 'textDocument/documentColor' then
       for bufnr in pairs(client.attached_buffers) do
         if vim.lsp.document_color.is_enabled(bufnr) then
           vim.lsp.document_color._buf_refresh(bufnr, client.id)
@@ -163,7 +162,7 @@ end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_unregisterCapability
 --- @param params lsp.UnregistrationParams
-RSC[ms.client_unregisterCapability] = function(_, params, ctx)
+RSC['client/unregisterCapability'] = function(_, params, ctx)
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   client:_unregister(params.unregisterations)
   return vim.NIL
@@ -171,7 +170,7 @@ end
 
 -- TODO(lewis6991): Do we need to notify other servers?
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-RSC[ms.workspace_applyEdit] = function(_, params, ctx)
+RSC['workspace/applyEdit'] = function(_, params, ctx)
   assert(
     params,
     'workspace/applyEdit must be called with `ApplyWorkspaceEditParams`. Server is violating the specification'
@@ -198,7 +197,7 @@ end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
 --- @param params lsp.ConfigurationParams
-RSC[ms.workspace_configuration] = function(_, params, ctx)
+RSC['workspace/configuration'] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message(
@@ -230,7 +229,7 @@ RSC[ms.workspace_configuration] = function(_, params, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_workspaceFolders
-RSC[ms.workspace_workspaceFolders] = function(_, _, ctx)
+RSC['workspace/workspaceFolders'] = function(_, _, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', ctx.client_id, '] client has shut down after sending the message')
@@ -239,22 +238,22 @@ RSC[ms.workspace_workspaceFolders] = function(_, _, ctx)
   return client.workspace_folders or vim.NIL
 end
 
-NSC[ms.textDocument_publishDiagnostics] = function(...)
+NSC['textDocument/publishDiagnostics'] = function(...)
   return vim.lsp.diagnostic.on_publish_diagnostics(...)
 end
 
 --- @private
-RCS[ms.textDocument_diagnostic] = function(...)
+RCS['textDocument/diagnostic'] = function(...)
   return vim.lsp.diagnostic.on_diagnostic(...)
 end
 
 --- @private
-RCS[ms.textDocument_codeLens] = function(...)
+RCS['textDocument/codeLens'] = function(...)
   return vim.lsp.codelens.on_codelens(...)
 end
 
 --- @private
-RCS[ms.textDocument_inlayHint] = function(...)
+RCS['textDocument/inlayHint'] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end
 
@@ -294,7 +293,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-RCS[ms.textDocument_documentSymbol] = response_to_list(
+RCS['textDocument/documentSymbol'] = response_to_list(
   util.symbols_to_items,
   'document symbols',
   function(ctx)
@@ -305,13 +304,13 @@ RCS[ms.textDocument_documentSymbol] = response_to_list(
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-RCS[ms.workspace_symbol] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
+RCS['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
   return string.format("Symbols matching '%s'", ctx.params.query)
 end)
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
-RCS[ms.textDocument_rename] = function(_, result, ctx)
+RCS['textDocument/rename'] = function(_, result, ctx)
   if not result then
     vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
     return
@@ -322,7 +321,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
-RCS[ms.textDocument_rangeFormatting] = function(_, result, ctx)
+RCS['textDocument/rangeFormatting'] = function(_, result, ctx)
   if not result then
     return
   end
@@ -332,7 +331,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
-RCS[ms.textDocument_formatting] = function(_, result, ctx)
+RCS['textDocument/formatting'] = function(_, result, ctx)
   if not result then
     return
   end
@@ -342,7 +341,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-RCS[ms.textDocument_completion] = function(_, result, _)
+RCS['textDocument/completion'] = function(_, result, _)
   if vim.tbl_isempty(result or {}) then
     return
   end
@@ -412,7 +411,7 @@ end
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 --- @diagnostic disable-next-line: deprecated
-RCS[ms.textDocument_hover] = M.hover
+RCS['textDocument/hover'] = M.hover
 
 local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 
@@ -481,11 +480,11 @@ end
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 --- @diagnostic disable-next-line:deprecated
-RCS[ms.textDocument_signatureHelp] = M.signature_help
+RCS['textDocument/signatureHelp'] = M.signature_help
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
-RCS[ms.textDocument_documentHighlight] = function(_, result, ctx)
+RCS['textDocument/documentHighlight'] = function(_, result, ctx)
   if not result then
     return
   end
@@ -528,11 +527,11 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_incomingCalls
-RCS[ms.callHierarchy_incomingCalls] = make_call_hierarchy_handler('from')
+RCS['callHierarchy/incomingCalls'] = make_call_hierarchy_handler('from')
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_outgoingCalls
-RCS[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
+RCS['callHierarchy/outgoingCalls'] = make_call_hierarchy_handler('to')
 
 --- Displays type hierarchy in the quickfix window.
 local function make_type_hierarchy_handler()
@@ -569,11 +568,11 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_incomingCalls
-RCS[ms.typeHierarchy_subtypes] = make_type_hierarchy_handler()
+RCS['typeHierarchy/subtypes'] = make_type_hierarchy_handler()
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_outgoingCalls
-RCS[ms.typeHierarchy_supertypes] = make_type_hierarchy_handler()
+RCS['typeHierarchy/supertypes'] = make_type_hierarchy_handler()
 
 --- @see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_logMessage
 --- @param params lsp.LogMessageParams
@@ -607,7 +606,7 @@ end
 --- @private
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showDocument
 --- @param params lsp.ShowDocumentParams
-RSC[ms.window_showDocument] = function(_, params, ctx)
+RSC['window/showDocument'] = function(_, params, ctx)
   local uri = params.uri
 
   if params.external then
@@ -649,12 +648,12 @@ RSC[ms.window_showDocument] = function(_, params, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
-RSC[ms.workspace_inlayHint_refresh] = function(err, result, ctx)
+RSC['workspace_inlayHint/refresh'] = function(err, result, ctx)
   return vim.lsp.inlay_hint.on_refresh(err, result, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-RSC[ms.workspace_semanticTokens_refresh] = function(err, result, ctx)
+RSC['workspace_semanticTokens/refresh'] = function(err, result, ctx)
   return vim.lsp.semantic_tokens._refresh(err, result, ctx)
 end
 

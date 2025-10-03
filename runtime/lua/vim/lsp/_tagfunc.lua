@@ -1,7 +1,6 @@
 local lsp = vim.lsp
 local api = vim.api
 local util = lsp.util
-local ms = lsp.protocol.Methods
 
 ---@param name string
 ---@param range lsp.Range
@@ -33,13 +32,9 @@ local function query_definition(pattern)
     table.insert(results, mk_tag_item(pattern, range, uri, position_encoding))
   end
 
-  local request_results, _ = lsp.buf_request_sync(
-    bufnr,
-    ms.textDocument_definition,
-    function(client)
-      return util.make_position_params(win, client.offset_encoding)
-    end
-  )
+  local request_results, _ = lsp.buf_request_sync(bufnr, 'textDocument/definition', function(client)
+    return util.make_position_params(win, client.offset_encoding)
+  end)
 
   for client_id, res in pairs(request_results or {}) do
     local client = assert(lsp.get_client_by_id(client_id))
@@ -69,7 +64,7 @@ end
 ---@return table[]
 local function query_workspace_symbols(pattern)
   local results_by_client, err =
-    lsp.buf_request_sync(0, ms.workspace_symbol, { query = pattern }, 1000)
+    lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
   if err then
     return {}
   end

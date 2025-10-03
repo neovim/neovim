@@ -2,7 +2,6 @@ local uv = vim.uv
 local api = vim.api
 local lsp = vim.lsp
 local log = lsp.log
-local ms = lsp.protocol.Methods
 local changetracking = lsp._changetracking
 local validate = vim.validate
 
@@ -578,7 +577,7 @@ function Client:initialize()
     self.server_info = result.serverInfo
 
     if next(self.settings) then
-      self:notify(ms.workspace_didChangeConfiguration, { settings = self.settings })
+      self:notify('workspace/didChangeConfiguration', { settings = self.settings })
     end
 
     -- If server is being restarted, make sure to re-attach to any previously attached buffers.
@@ -604,21 +603,21 @@ end
 
 -- Server capabilities for methods that support static registration.
 local static_registration_capabilities = {
-  [ms.textDocument_prepareCallHierarchy] = 'callHierarchyProvider',
-  [ms.textDocument_documentColor] = 'colorProvider',
-  [ms.textDocument_declaration] = 'declarationProvider',
-  [ms.textDocument_diagnostic] = 'diagnosticProvider',
-  [ms.textDocument_foldingRange] = 'foldingRangeProvider',
-  [ms.textDocument_implementation] = 'implementationProvider',
-  [ms.textDocument_inlayHint] = 'inlayHintProvider',
-  [ms.textDocument_inlineCompletion] = 'inlineCompletionProvider',
-  [ms.textDocument_inlineValue] = 'inlineValueProvider',
-  [ms.textDocument_linkedEditingRange] = 'linkedEditingRangeProvider',
-  [ms.textDocument_moniker] = 'monikerProvider',
-  [ms.textDocument_selectionRange] = 'selectionRangeProvider',
-  [ms.textDocument_semanticTokens_full] = 'semanticTokensProvider',
-  [ms.textDocument_typeDefinition] = 'typeDefinitionProvider',
-  [ms.textDocument_prepareTypeHierarchy] = 'typeHierarchyProvider',
+  ['textDocument/prepareCallHierarchy'] = 'callHierarchyProvider',
+  ['textDocument/documentColor'] = 'colorProvider',
+  ['textDocument/declaration'] = 'declarationProvider',
+  ['textDocument/diagnostic'] = 'diagnosticProvider',
+  ['textDocument/foldingRange'] = 'foldingRangeProvider',
+  ['textDocument/implementation'] = 'implementationProvider',
+  ['textDocument/inlayHint'] = 'inlayHintProvider',
+  ['textDocument/inlineCompletion'] = 'inlineCompletionProvider',
+  ['textDocument/inlineValue'] = 'inlineValueProvider',
+  ['textDocument/linkedEditingRange'] = 'linkedEditingRangeProvider',
+  ['textDocument/moniker'] = 'monikerProvider',
+  ['textDocument/selectionRange'] = 'selectionRangeProvider',
+  ['textDocument_semanticTokens/full'] = 'semanticTokensProvider',
+  ['textDocument/typeDefinition'] = 'typeDefinitionProvider',
+  ['textDocument/prepareTypeHierarchy'] = 'typeHierarchyProvider',
 }
 
 --- @private
@@ -628,6 +627,7 @@ function Client:_process_static_registrations()
   for method, capability in pairs(static_registration_capabilities) do
     if
       vim.tbl_get(self.server_capabilities, capability, 'id')
+      --- @cast method vim.lsp.protocol.Method
       and self:_supports_registration(method)
     then
       static_registrations[#static_registrations + 1] = {
@@ -827,7 +827,7 @@ end
 --- @return boolean status indicating if the notification was successful.
 ---                        If it is false, then the client has shutdown.
 function Client:notify(method, params)
-  if method ~= ms.textDocument_didChange then
+  if method ~= 'textDocument/didChange' then
     changetracking.flush(self)
   end
 
@@ -856,7 +856,7 @@ end
 --- @see |Client:notify()|
 function Client:cancel_request(id)
   self:_process_request(id, 'cancel')
-  return self.rpc.notify(ms.dollar_cancelRequest, { id = id })
+  return self.rpc.notify('$/cancelRequest', { id = id })
 end
 
 --- Stops a client, optionally with force.
@@ -882,9 +882,9 @@ function Client:stop(force)
   end
 
   -- Sending a signal after a process has exited is acceptable.
-  rpc.request(ms.shutdown, nil, function(err, _)
+  rpc.request('shutdown', nil, function(err, _)
     if err == nil then
-      rpc.notify(ms.exit)
+      rpc.notify('exit')
     else
       -- If there was an error in the shutdown request, then term to be safe.
       rpc.terminate()
@@ -923,7 +923,7 @@ function Client:_register(registrations)
 
   for _, reg in ipairs(registrations) do
     local method = reg.method
-    if method == ms.workspace_didChangeWatchedFiles then
+    if method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.register(reg, self.id)
     elseif not self:_supports_registration(method) then
       unsupported[#unsupported + 1] = method
@@ -957,7 +957,7 @@ end
 function Client:_unregister(unregistrations)
   self:_unregister_dynamic(unregistrations)
   for _, unreg in ipairs(unregistrations) do
-    if unreg.method == ms.workspace_didChangeWatchedFiles then
+    if unreg.method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.unregister(unreg, self.id)
     end
   end
@@ -1045,7 +1045,7 @@ function Client:exec_cmd(command, context, handler)
     command = cmdname,
     arguments = command.arguments,
   }
-  self:request(ms.workspace_executeCommand, params, handler, context.bufnr)
+  self:request('workspace/executeCommand', params, handler, context.bufnr)
 end
 
 --- Default handler for the 'textDocument/didOpen' LSP notification.
@@ -1053,14 +1053,14 @@ end
 --- @param bufnr integer Number of the buffer, or 0 for current
 function Client:_text_document_did_open_handler(bufnr)
   changetracking.init(self, bufnr)
-  if not self:supports_method(ms.textDocument_didOpen) then
+  if not self:supports_method('textDocument/didOpen') then
     return
   end
   if not api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
-  self:notify(ms.textDocument_didOpen, {
+  self:notify('textDocument/didOpen', {
     textDocument = {
       version = lsp.util.buf_versions[bufnr],
       uri = vim.uri_from_bufnr(bufnr),
@@ -1250,10 +1250,10 @@ function Client:_on_detach(bufnr)
 
   changetracking.reset_buf(self, bufnr)
 
-  if self:supports_method(ms.textDocument_didClose) then
+  if self:supports_method('textDocument/didClose') then
     local uri = vim.uri_from_bufnr(bufnr)
     local params = { textDocument = { uri = uri } }
-    self:notify(ms.textDocument_didClose, params)
+    self:notify('textDocument/didClose', params)
   end
 
   self.attached_buffers[bufnr] = nil
@@ -1340,7 +1340,7 @@ function Client:_add_workspace_folder(dir)
 
   local wf = assert(lsp._get_workspace_folders(dir))
 
-  self:notify(ms.workspace_didChangeWorkspaceFolders, {
+  self:notify('workspace/didChangeWorkspaceFolders', {
     event = { added = wf, removed = {} },
   })
 
@@ -1355,7 +1355,7 @@ end
 function Client:_remove_workspace_folder(dir)
   local wf = assert(lsp._get_workspace_folders(dir))
 
-  self:notify(ms.workspace_didChangeWorkspaceFolders, {
+  self:notify('workspace/didChangeWorkspaceFolders', {
     event = { added = {}, removed = wf },
   })
 
