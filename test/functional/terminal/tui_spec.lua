@@ -3213,10 +3213,6 @@ end)
 -- does not initialize the TUI.
 describe('TUI', function()
   local screen
-  local logfile = 'Xtest_tui_verbose_log'
-  after_each(function()
-    os.remove(logfile)
-  end)
 
   -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
   local function nvim_tui(extra_args)
@@ -3236,7 +3232,11 @@ describe('TUI', function()
   end
 
   it('-V3log logs terminfo values', function()
+    local logfile = 'Xtest_tui_verbose_log'
     nvim_tui('-V3' .. logfile)
+    finally(function()
+      os.remove(logfile)
+    end)
 
     -- Wait for TUI to start.
     feed_data('Gitext')
@@ -3248,7 +3248,7 @@ describe('TUI', function()
     ]])
 
     retry(nil, 3000, function() -- Wait for log file to be flushed.
-      local log = read_file('Xtest_tui_verbose_log') or ''
+      local log = read_file(logfile) or ''
       eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n')) -- }}}
       ok(#log > 50)
     end)
@@ -3580,19 +3580,14 @@ describe('TUI bg color', function()
 end)
 
 describe('TUI client', function()
-  after_each(function()
-    os.remove(testlog)
-  end)
-
-  it('connects to remote instance (with its own TUI)', function()
-    local server_super = n.new_session(false)
+  local function start_tui_and_remote_client()
+    local server_super = n.clear()
     local client_super = n.new_session(true)
     finally(function()
       server_super:close()
       client_super:close()
     end)
 
-    set_session(server_super)
     local server_pipe = new_pipename()
     local screen_server = tt.setup_child_nvim({
       '--clean',
@@ -3603,27 +3598,31 @@ describe('TUI client', function()
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     })
+    screen_server:expect([[
+      ^                                                  |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
 
     feed_data('iHello, World')
-    screen_server:expect {
-      grid = [[
+    screen_server:expect([[
       Hello, World^                                      |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
     feed_data('\027')
-    screen_server:expect {
-      grid = [[
+    local s0 = [[
       Hello, Worl^d                                      |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]]
+    screen_server:expect(s0)
 
     set_session(client_super)
     local screen_client = tt.setup_child_nvim({
@@ -3631,41 +3630,40 @@ describe('TUI client', function()
       '--server',
       server_pipe,
     })
+    screen_client:expect(s0)
 
-    screen_client:expect {
-      grid = [[
-      Hello, Worl^d                                      |
-      {4:~                                                 }|*3
-      {5:[No Name] [+]                                     }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    return server_super, screen_server, screen_client
+  end
+
+  it('connects to remote instance (with its own TUI)', function()
+    local _, screen_server, screen_client = start_tui_and_remote_client()
 
     -- grid smaller than containing terminal window is cleared properly
     feed_data(":call setline(1,['a'->repeat(&columns)]->repeat(&lines))\n")
     feed_data('0:set lines=3\n')
-    screen_server:expect {
-      grid = [[
+    local s1 = [[
       ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {5:[No Name] [+]                                     }|
                                                         |*4
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]]
+    screen_client:expect(s1)
+    screen_server:expect(s1)
 
     feed_data(':q!\n')
   end)
 
-  it('connects to remote instance (--headless)', function()
+  local function start_headless_server_and_client()
     local server = n.new_session(false)
     local client_super = n.new_session(true, { env = { NVIM_LOG_FILE = testlog } })
     finally(function()
       client_super:close()
       server:close()
+      os.remove(testlog)
     end)
 
     set_session(server)
+    --- @type string
     local server_pipe = api.nvim_get_vvar('servername')
     server:request('nvim_input', 'iHalloj!<Esc>')
     server:request('nvim_command', 'set notermguicolors')
@@ -3676,28 +3674,29 @@ describe('TUI client', function()
       '--server',
       server_pipe,
     })
-
-    screen_client:expect {
-      grid = [[
+    screen_client:expect([[
       Halloj^!                                           |
       {4:~                                                 }|*4
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
+
+    return server, server_pipe, screen_client
+  end
+
+  it('connects to remote instance (--headless)', function()
+    local server, server_pipe, screen_client = start_headless_server_and_client()
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen_client:expect {
-      grid = [[
+    screen_client:expect([[
       Nvim: Caught deadly signal 'SIGTERM'              |
                                                         |
       [Process exited 1]^                                |
                                                         |*3
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
 
     eq(0, api.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
@@ -3727,70 +3726,7 @@ describe('TUI client', function()
   end)
 
   local function test_remote_tui_quit(status)
-    local server_super = n.clear()
-    local client_super = n.new_session(true)
-    finally(function()
-      server_super:close()
-      client_super:close()
-    end)
-
-    local server_pipe = new_pipename()
-    local screen_server = tt.setup_child_nvim({
-      '--clean',
-      '--listen',
-      server_pipe,
-      '--cmd',
-      'colorscheme vim',
-      '--cmd',
-      nvim_set .. ' notermguicolors laststatus=2 background=dark',
-    })
-    screen_server:expect {
-      grid = [[
-      ^                                                  |
-      {4:~                                                 }|*3
-      {5:[No Name]                                         }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
-
-    feed_data('iHello, World')
-    screen_server:expect {
-      grid = [[
-      Hello, World^                                      |
-      {4:~                                                 }|*3
-      {5:[No Name] [+]                                     }|
-      {3:-- INSERT --}                                      |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
-    feed_data('\027')
-    screen_server:expect {
-      grid = [[
-      Hello, Worl^d                                      |
-      {4:~                                                 }|*3
-      {5:[No Name] [+]                                     }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
-
-    set_session(client_super)
-    local screen_client = tt.setup_child_nvim({
-      '--remote-ui',
-      '--server',
-      server_pipe,
-    })
-
-    screen_client:expect {
-      grid = [[
-      Hello, Worl^d                                      |
-      {4:~                                                 }|*3
-      {5:[No Name] [+]                                     }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    local server_super, screen_server, screen_client = start_tui_and_remote_client()
 
     -- quitting the server
     set_session(server_super)
