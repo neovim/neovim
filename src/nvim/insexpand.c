@@ -4392,7 +4392,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
                                             st->cur_match_pos, &len, &cont_s_ipos);
     }
     if (ptr == NULL || (ins_compl_has_preinsert()
-                        && strcmp(ptr, compl_pattern.data) == 0)) {
+                        && strcmp(ptr, ins_compl_leader()) == 0)) {
       continue;
     }
 
@@ -5375,6 +5375,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
                          || (compl_autocomplete && !ins_compl_has_preinsert());
   bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
   bool compl_preinsert = ins_compl_has_preinsert();
+  bool has_autocomplete_delay = (compl_autocomplete && p_acl > 0);
 
   // When user complete function return -1 for findstart which is next
   // time of 'always', compl_shown_match become NULL.
@@ -5421,6 +5422,9 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   // Insert the text of the new completion, or the compl_leader.
   if (!started && ins_compl_preinsert_longest()) {
     ins_compl_insert(true, true);
+    if (has_autocomplete_delay) {
+      update_screen();  // Show the inserted text right away
+    }
   } else if (compl_no_insert && !started && !compl_preinsert) {
     ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
     compl_used_match = false;
@@ -5445,8 +5449,10 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
     // redraw to show the user what was inserted
     update_screen();  // TODO(bfredl): no!
 
-    // display the updated popup menu
-    ins_compl_show_pum();
+    if (!has_autocomplete_delay) {
+      // display the updated popup menu
+      ins_compl_show_pum();
+    }
 
     // Delete old text to be replaced, since we're still searching and
     // don't want to match ourselves!
@@ -6273,6 +6279,10 @@ int ins_complete(int c, bool enable_pum)
     ui_flush();
     do {
       if (char_avail()) {
+        if (ins_compl_preinsert_effect() && ins_compl_win_active(curwin)) {
+          ins_compl_delete(false);  // Remove pre-inserted text
+          compl_ins_end_col = compl_col;
+        }
         ins_compl_restart();
         compl_interrupted = true;
         break;
