@@ -585,7 +585,8 @@ A closed fold is indicated with a '+'.
 These characters can be changed with the 'fillchars' option.
 
 Where the fold column is too narrow to display all nested folds, digits are
-shown to indicate the nesting level.
+shown to indicate the nesting level.  To override this behavior you can use
+the "foldinner" character of the 'fillchars' option.
 
 The mouse can also be used to open and close folds by clicking in the
 fold column:

@@ -343,6 +343,32 @@ func Test_fold_fillchars()
         \ ]
   call assert_equal(expected, lines)
 
+  " check setting foldinner
+  set fdc=1 foldmethod=indent foldlevel=10
+  call setline(1, ['one', '	two', '	two', '		three', '		three', 'four'])
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '[        two          ',
+        \ '-        two          ',
+        \ '[                three',
+        \ '2                three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  set fillchars+=foldinner:\ 
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '[        two          ',
+        \ '-        two          ',
+        \ '[                three',
+        \ '                 three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
   %bw!
   set fillchars& fdc& foldmethod& foldenable&
 endfunc
