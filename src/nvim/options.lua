@@ -7249,6 +7249,21 @@ local options = {
       varname = 'p_scbk',
     },
     {
+      abbreviation = 'scrollbar',
+      cb = 'did_set_scrollbar',
+      defaults = false,
+      desc = [=[
+        Enable scrollbar support for windows. When the buffer content exceeds
+        the window height, a scrollbar will be displayed. For floating windows
+        with a right border, the scrollbar is rendered on the border.
+      ]=],
+      full_name = 'scrollbar',
+      redraw = { 'current_window' },
+      scope = { 'win' },
+      short_desc = N_('show scrollbar in the window'),
+      type = 'boolean',
+    },
+    {
       abbreviation = 'scb',
       cb = 'did_set_scrollbind',
       defaults = false,

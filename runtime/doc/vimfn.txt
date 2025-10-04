@@ -4492,6 +4492,24 @@ getwininfo([{winid}])                                             *getwininfo()*
 			winnr		window number
 			winrow		topmost screen line of the window;
 					"row" from |win_screenpos()|
+		  scrollbar	Dictionary with scrollbar information. Only
+		                  present when the window has a scrollbar.
+		                  note: total_lines accounts for line wrapping
+		                  and folds. use scroll_offset with
+		                  |win_text_height()| to map between line
+		                  numbers and scroll positions.
+
+		Each item in the scrollbar is a dictionary with the following
+		entries:
+		  visible	        Whether scrollbar is displayed
+		  total_lines	Total screen lines in buffer
+		  visible_lines   Window height in lines
+		  scroll_offset   Screen lines from top to w_topline
+		  scroll_ratio    Scroll position as ratio:
+		                  scroll_offset / (total_lines - visible_lines)
+		                  (Float, 0.0 to 1.0)
+		  visible_ratio   Visible portion as ratio:
+		                  visible_lines / total_lines (Float)
 
                 Parameters: ~
                   • {winid} (`integer?`)

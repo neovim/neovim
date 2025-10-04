@@ -14,6 +14,7 @@
 // - Add documentation! "desc" in options.lua, and any other related places.
 // - Add an entry in runtime/optwin.vim.
 
+#include "nvim/winfloat.h"
 #define IN_OPTION_C
 #include <assert.h>
 #include <inttypes.h>
@@ -2400,6 +2401,20 @@ static const char *did_set_scrollback(optset_T *args)
     // Force the scrollback to take immediate effect only when decreasing it.
     on_scrollback_option_changed(buf->terminal);
   }
+  return NULL;
+}
+
+///  Process the 'scrollbar' option
+static const char *did_set_scrollbar(optset_T *args)
+{
+  win_T *wp = (win_T *)args->os_win;
+  if (wp != NULL) {
+    if (wp->w_has_scrollbar && !wp->w_p_scrollbar) {
+      win_update_scrollbar_state(wp, NULL, NULL);
+    }
+    redraw_later(wp, UPD_NOT_VALID);
+  }
+
   return NULL;
 }
 
@@ -4820,6 +4835,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_winbl);
   case kOptStatuscolumn:
     return &(win->w_p_stc);
+  case kOptScrollbar:
+    return &(win->w_p_scrollbar);
   default:
     iemsg(_("E356: get_varp ERROR"));
   }
