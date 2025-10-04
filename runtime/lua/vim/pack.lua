@@ -1122,6 +1122,7 @@ function M.get(names, opts)
     active[p_active.id] = p_active.plug
   end
 
+  lock_read()
   local res = {} --- @type vim.pack.PlugData[]
   local used_names = {} --- @type table<string,boolean>
   for i = 1, n_active_plugins do
@@ -1131,21 +1132,16 @@ function M.get(names, opts)
     end
   end
 
-  --- @async
-  local function do_get()
-    -- Process not active plugins
-    local plug_dir = get_plug_dir()
-    for n, t in vim.fs.dir(plug_dir, { depth = 1 }) do
-      local path = vim.fs.joinpath(plug_dir, n)
-      local is_in_names = not names or vim.tbl_contains(names, n)
-      if t == 'directory' and not active_plugins[path] and is_in_names then
-        local spec = { name = n, src = git_cmd({ 'remote', 'get-url', 'origin' }, path) }
-        res[#res + 1] = { spec = spec, path = path, active = false }
-        used_names[n] = true
-      end
+  local plug_dir = get_plug_dir()
+  for name, l_data in vim.spairs(plugin_lock.plugins) do
+    local path = vim.fs.joinpath(plug_dir, name)
+    local is_in_names = not names or vim.tbl_contains(names, name)
+    if not active_plugins[path] and is_in_names then
+      local spec = { name = name, src = l_data.src, version = l_data.version }
+      res[#res + 1] = { spec = spec, path = path, active = false }
+      used_names[name] = true
     end
   end
-  async.run(do_get):wait()
 
   if names ~= nil then
     -- Align result with input
