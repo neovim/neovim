@@ -2052,7 +2052,9 @@ static void calculate_topfill_and_topline(const int fromidx, const int toidx, co
 
   // move the same amount of virtual lines in the target buffer to find the
   // cursor's line number
-  int curlinenum_to = thistopdiff != NULL ? thistopdiff->df_lnum[toidx] : 1;
+  int curlinenum_to
+    = thistopdiff != NULL  // this should not be null, but just for safety
+      ? thistopdiff->df_lnum[toidx] : 1;
 
   int virt_lines_left = virtual_lines_passed;
   curdif = thistopdiff;
@@ -2466,7 +2468,6 @@ static int diff_cmp(char *s1, char *s2)
 void diff_set_topline(win_T *fromwin, win_T *towin)
 {
   buf_T *frombuf = fromwin->w_buffer;
-  linenr_T lnum = fromwin->w_topline;
 
   int fromidx = diff_buf_idx(frombuf, curtab);
   if (fromidx == DB_COUNT) {
@@ -2478,6 +2479,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     // update after a big change
     ex_diffupdate(NULL);
   }
+  linenr_T lnum = fromwin->w_topline;
   towin->w_topfill = 0;
 
   // search for a change that includes "lnum" in the list of diffblocks.
