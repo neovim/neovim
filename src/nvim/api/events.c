@@ -18,7 +18,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/globals.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"

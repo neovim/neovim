@@ -16,7 +16,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"

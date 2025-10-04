@@ -75,7 +75,7 @@
 #include "nvim/digraph.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/fold_defs.h"

@@ -36,7 +36,6 @@
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"
