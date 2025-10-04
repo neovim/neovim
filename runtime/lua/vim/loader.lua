@@ -7,6 +7,7 @@ local loaders = package.loaders
 local _loadfile = loadfile
 
 local VERSION = 4
+local is_appimage = (os.getenv('APPIMAGE') ~= nil)
 
 local M = {}
 
@@ -78,7 +79,15 @@ local function fs_stat_cached(path)
 end
 
 local function normalize(path)
-  return fs.normalize(path, { expand_env = false, _fast = true })
+  path = fs.normalize(path, { expand_env = false, _fast = true })
+
+  if is_appimage then
+    -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
+    -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
+    path = path:match('(/usr/.*)') or path
+  end
+
+  return path
 end
 
 local rtp_cached = {} --- @type string[]
