@@ -20,6 +20,7 @@ patches, suggestions and giving feedback about what is good and bad in Vim.
 
 Vim would never have become what it is now, without the help of these people!
 
+        |Bram| Moolenaar        Creator and benevolent dictor for life
         Ron Aaron               Win32 GUI changes
         Mohsin Ahmed            encryption
         Zoltan Arpadffy         work on VMS port
@@ -86,7 +87,16 @@ Vim would never have become what it is now, without the help of these people!
         Ken Takata              fixes and features
         Kazunobu Kuriyama       GTK 3
         Christian Brabandt      many fixes, features, user support, etc.
-        Yegappan Lakshmanan     many quickfix features
+        Yegappan Lakshmanan     many quickfix features, Vim9 script
+                                improvements
+        Doug Kearns             Runtime file maintainer
+        Foxe Chen               Wayland support, new features
+        glepnir                 completion feature
+        Girish Palya            insert & cmdline autocompletion,
+                                search/substitute completion, etc.
+        Hirohito Higashi        lots of patches and fixes
+        Yee Cheng Chin          MacVim maintainer and diff improvements
+        zeertzjq                many fixes and improvements
 
 I wish to thank all the people that sent me bug reports and suggestions.  The
 list is too long to mention them all here.  Vim would not be the same without
