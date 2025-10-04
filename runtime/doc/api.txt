@@ -762,6 +762,28 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
     Return: ~
         (`any`) Return value of Lua code if present or NIL.
 
+nvim_exec_lua_fast({code}, {args})                      *nvim_exec_lua_fast()*
+    WARNING: This feature is experimental/unstable.
+
+    Like |nvim_exec_lua()|, but can be called during |api-fast| contexts.
+
+    Execute Lua code. Parameters (if any) are available as `...` inside the
+    chunk. The chunk can return a value.
+
+    Only statements are executed. To evaluate an expression, prefix it with
+    `return`: return my_function(...)
+
+    Attributes: ~
+        |api-fast|
+        |RPC| only
+
+    Parameters: ~
+      • {code}  (`string`) Lua code to execute
+      • {args}  (`any[]`) Arguments to the code
+
+    Return: ~
+        (`any`) Return value of Lua code if present or NIL.
+
 nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
     Sends input-keys to Nvim, subject to various quirks controlled by `mode`
     flags. This is a blocking call, unlike |nvim_input()|.
