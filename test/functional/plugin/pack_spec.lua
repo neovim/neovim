@@ -1203,6 +1203,143 @@ describe('vim.pack', function()
         validate_hover({ 30, 0 }, 'Add version v1.0.0')
         validate_hover({ 31, 0 }, 'Add version v0.4')
         validate_hover({ 32, 0 }, 'Add version 0.3.1')
+
+        -- textDocument/codeAction
+        n.exec_lua(function()
+          -- Mock `vim.ui.select()` which is a default code action selection
+          _G.select_idx = 0
+
+          ---@diagnostic disable-next-line: duplicate-set-field
+          vim.ui.select = function(items, _, on_choice)
+            _G.select_items = items
+            local idx = _G.select_idx
+            if idx > 0 then
+              on_choice(items[idx], idx)
+              -- Minor delay before continue because LSP cmd execution is async
+              vim.wait(10)
+            end
+          end
+        end)
+
+        local function validate_action(pos, action_titles, select_idx)
+          api.nvim_win_set_cursor(0, pos)
+
+          local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+          n.exec_lua(function()
+            _G.select_items = nil
+            _G.select_idx = select_idx
+            vim.lsp.buf.code_action()
+          end)
+          local titles = vim.tbl_map(function(x) --- @param x table
+            return x.action.title
+          end, n.exec_lua('return _G.select_items or {}'))
+          eq(titles, action_titles)
+
+          -- If no action is asked (like via cancel), should not delete lines
+          if select_idx <= 0 then
+            eq(lines, api.nvim_buf_get_lines(0, 0, -1, false))
+          end
+        end
+
+        -- - Should not include "namespace" header as "plugin at cursor"
+        validate_action({ 1, 1 }, {}, 0)
+        validate_action({ 2, 0 }, {}, 0)
+        -- - Only deletion should be available on errored plugin
+        validate_action({ 3, 1 }, { 'Delete `defbranch`' }, 0)
+        validate_action({ 7, 0 }, { 'Delete `defbranch`' }, 0)
+        -- - Should not include separator blank line as "plugin at cursor"
+        validate_action({ 8, 0 }, {}, 0)
+        validate_action({ 9, 0 }, {}, 0)
+        validate_action({ 10, 0 }, {}, 0)
+        -- - Should also suggest updating related actions if updates available
+        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`', 'Delete `fetch`' }
+        validate_action({ 11, 0 }, fetch_actions, 0)
+        validate_action({ 14, 0 }, fetch_actions, 0)
+        validate_action({ 20, 0 }, fetch_actions, 0)
+        validate_action({ 21, 0 }, {}, 0)
+        validate_action({ 22, 0 }, {}, 0)
+        validate_action({ 23, 0 }, {}, 0)
+        -- - Only deletion should be available on plugins without update
+        validate_action({ 24, 0 }, { 'Delete `semver`' }, 0)
+        validate_action({ 28, 0 }, { 'Delete `semver`' }, 0)
+        validate_action({ 32, 0 }, { 'Delete `semver`' }, 0)
+
+        -- - Should correctly perform action and remove plugin's lines
+        local function line_match(lnum, pattern)
+          matches(pattern, api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1])
+        end
+
+        -- - Delete
+        validate_action({ 3, 0 }, { 'Delete `defbranch`' }, 1)
+        eq(false, pack_exists('defbranch'))
+        line_match(1, '^# Error')
+        line_match(2, '^$')
+        line_match(3, '^# Update')
+
+        -- - Skip udating
+        validate_action({ 5, 0 }, fetch_actions, 2)
+        eq({ 'return "fetch main"' }, fn.readfile(fetch_lua_file))
+        line_match(3, '^# Update')
+        line_match(4, '^$')
+        line_match(5, '^# Same')
+
+        -- - Update single plugin. Should not re-fetch new data.
+        n.exec('quit')
+        n.exec_lua(function()
+          vim.pack.update({ 'fetch', 'semver' })
+        end)
+        n.exec('messages clear')
+
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new 3"')
+        git_add_commit('Commit to be added 3', 'fetch')
+
+        validate_action({ 3, 0 }, fetch_actions, 1)
+
+        eq({ 'return "fetch new 2"' }, fn.readfile(fetch_lua_file))
+        validate_progress_report('Applying updates', { 'fetch' })
+        line_match(1, '^# Update')
+        line_match(2, '^$')
+        line_match(3, '^# Same')
+
+        -- - Can still respect `:write` after action
+        n.exec('messages clear')
+        n.exec('write')
+        eq('vim.pack: Nothing to update', n.exec_capture('messages'))
+        eq(api.nvim_get_option_value('filetype', {}), '')
+      end)
+
+      it('has buffer-local mappings', function()
+        t.skip(not is_jit(), "Non LuaJIT reports errors differently due to 'coxpcall'")
+        exec_lua(function()
+          vim.pack.add({
+            repos_src.fetch,
+            { src = repos_src.semver, version = 'v0.3.0' },
+            { src = repos_src.defbranch, version = 'does-not-exist' },
+          })
+          -- Enable highlighting of special filetype
+          vim.cmd('filetype plugin on')
+          vim.pack.update()
+        end)
+
+        -- Plugin sections navigation
+        local validate = function(keys, ref_cursor)
+          n.feed(keys)
+          eq(ref_cursor, api.nvim_win_get_cursor(0))
+        end
+
+        api.nvim_win_set_cursor(0, { 1, 1 })
+        validate(']]', { 3, 0 })
+        validate(']]', { 11, 0 })
+        validate(']]', { 24, 0 })
+        -- - Should not wrap around the edge
+        validate(']]', { 24, 0 })
+
+        api.nvim_win_set_cursor(0, { 32, 1 })
+        validate('[[', { 24, 0 })
+        validate('[[', { 11, 0 })
+        validate('[[', { 3, 0 })
+        -- - Should not wrap around the edge
+        validate('[[', { 3, 0 })
       end)
 
       it('suggests newer versions when on non-tagged commit', function()
