@@ -847,7 +847,7 @@ describe('vim.pack', function()
       -- Install initial versions of tested plugins
       exec_lua(function()
         vim.pack.add({
-          repos_src.fetch,
+          { src = repos_src.fetch, version = 'main' },
           { src = repos_src.semver, version = 'v0.3.0' },
           repos_src.defbranch,
         })
@@ -865,6 +865,11 @@ describe('vim.pack', function()
 
       repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new 2"')
       git_add_commit('Commit to be added 2', 'fetch')
+
+      -- Make `dev` default remote branch to check that `version` is respected
+      git_cmd({ 'checkout', '-b', 'dev' }, 'fetch')
+      repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch dev"')
+      git_add_commit('Commit from default `dev` branch', 'fetch')
     end)
 
     after_each(function()
@@ -942,8 +947,8 @@ describe('vim.pack', function()
         local screen
         screen = Screen.new(85, 35)
 
-        hashes.fetch_new = git_get_hash('HEAD', 'fetch')
-        hashes.fetch_new_prev = git_get_hash('HEAD~', 'fetch')
+        hashes.fetch_new = git_get_hash('main', 'fetch')
+        hashes.fetch_new_prev = git_get_hash('main~', 'fetch')
         hashes.semver_head = git_get_hash('v0.3.0', 'semver')
 
         local tab_name = 'n' .. (t.is_os('win') and ':' or '') .. '//2/confirm-update'
@@ -1186,15 +1191,16 @@ describe('vim.pack', function()
         exec_lua('vim.pack.update()')
         n.exec('write')
 
-        ref_fetch_lock.rev = git_get_hash('HEAD', 'fetch')
+        ref_fetch_lock.rev = git_get_hash('main', 'fetch')
         eq(ref_fetch_lock, get_lock_tbl().plugins.fetch)
       end)
     end)
 
     it('works with not active plugins', function()
+      -- No plugins are added, but they are installed in `before_each()`
       exec_lua(function()
-        -- No plugins are added, but they are installed in `before_each()`
-        vim.pack.update({ 'fetch' })
+        -- By default should also include not active plugins
+        vim.pack.update()
       end)
       eq({ 'return "fetch main"' }, fn.readfile(fetch_lua_file))
       n.exec('write')
@@ -1218,8 +1224,8 @@ describe('vim.pack', function()
       eq('', api.nvim_get_option_value('filetype', {}))
 
       -- Write to log file
-      hashes.fetch_new = git_get_hash('HEAD', 'fetch')
-      hashes.fetch_new_prev = git_get_hash('HEAD~', 'fetch')
+      hashes.fetch_new = git_get_hash('main', 'fetch')
+      hashes.fetch_new_prev = git_get_hash('main~', 'fetch')
 
       local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
       local log_lines = fn.readfile(log_path)
@@ -1242,18 +1248,19 @@ describe('vim.pack', function()
       eq(ref_log_lines, vim.list_slice(log_lines, 2))
 
       -- Should update lockfile
-      eq(git_get_hash('HEAD', 'fetch'), get_lock_tbl().plugins.fetch.rev)
+      eq(hashes.fetch_new, get_lock_tbl().plugins.fetch.rev)
     end)
 
     it('shows progress report', function()
       track_nvim_echo()
       exec_lua(function()
         vim.pack.add({ repos_src.fetch, repos_src.defbranch })
+        -- Should also include updates from not active plugins
         vim.pack.update()
       end)
 
       -- During initial download
-      validate_progress_report('Downloading updates', { 'fetch', 'defbranch' })
+      validate_progress_report('Downloading updates', { 'fetch', 'defbranch', 'semver' })
       exec_lua('_G.echo_log = {}')
 
       -- During application (only for plugins that have updates)
@@ -1270,7 +1277,7 @@ describe('vim.pack', function()
         vim.pack.add({ repos_src.fetch, repos_src.defbranch })
         vim.pack.update(nil, { force = true })
       end)
-      validate_progress_report('Updating', { 'fetch', 'defbranch' })
+      validate_progress_report('Updating', { 'fetch', 'defbranch', 'semver' })
     end)
 
     it('triggers relevant events', function()

@@ -401,15 +401,8 @@ local function plug_list_from_names(names)
   local plug_dir = get_plug_dir()
   local plugs = {} --- @type vim.pack.Plug[]
   for _, p_data in ipairs(p_data_list) do
-    -- NOTE: By default include only active plugins (and not all on disk). Using
-    -- not active plugins might lead to a confusion as default `version` and
-    -- user's desired one might mismatch.
-    -- TODO(echasnovski): Change this when there is lockfile.
-    if names ~= nil or p_data.active then
-      plugs[#plugs + 1] = new_plug(p_data.spec, plug_dir)
-    end
+    plugs[#plugs + 1] = new_plug(p_data.spec, plug_dir)
   end
-
   return plugs
 end
 
@@ -975,7 +968,7 @@ end
 ---
 --- @param names? string[] List of plugin names to update. Must be managed
 --- by |vim.pack|, not necessarily already added to current session.
---- Default: names of all plugins added to current session via |vim.pack.add()|.
+--- Default: names of all plugins managed by |vim.pack|.
 --- @param opts? vim.pack.keyset.update
 function M.update(names, opts)
   vim.validate('names', names, vim.islist, true, 'list')

@@ -410,8 +410,7 @@ update({names}, {opts})                                    *vim.pack.update()*
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names to update. Must be managed
                  by |vim.pack|, not necessarily already added to current
-                 session. Default: names of all plugins added to current
-                 session via |vim.pack.add()|.
+                 session. Default: names of all plugins managed by |vim.pack|.
       • {opts}   (`table?`) A table with the following fields:
                  • {force}? (`boolean`) Whether to skip confirmation and make
                    updates immediately. Default `false`.
