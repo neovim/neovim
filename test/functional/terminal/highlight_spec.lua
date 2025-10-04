@@ -407,6 +407,19 @@ describe(':terminal', function()
       ^This is an {100:example} of a link                      |
                                                         |*6
     ]])
+    -- Also works if OSC 8 is split into multiple fragments.
+    api.nvim_chan_send(chan, '\nThis is another \027]8;;https')
+    n.poke_eventloop()
+    api.nvim_chan_send(chan, '://')
+    n.poke_eventloop()
+    api.nvim_chan_send(chan, 'example')
+    n.poke_eventloop()
+    api.nvim_chan_send(chan, '.com\027\\EXAMPLE\027]8;;\027\\ of a link')
+    screen:expect([[
+      ^This is an {100:example} of a link                      |
+      This is another {100:EXAMPLE} of a link                 |
+                                                        |*5
+    ]])
   end)
 
   it('zoomout with large horizontal output #30374', function()
