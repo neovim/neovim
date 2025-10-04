@@ -343,7 +343,6 @@ func Test_fold_fillchars()
         \ ]
   call assert_equal(expected, lines)
 
-  " check setting foldinner
   set fdc=1 foldmethod=indent foldlevel=10
   call setline(1, ['one', '	two', '	two', '		three', '		three', 'four'])
   let lines = ScreenLines([1, 6], 22)
@@ -357,6 +356,7 @@ func Test_fold_fillchars()
         \ ]
   call assert_equal(expected, lines)
 
+  " check setting foldinner
   set fillchars+=foldinner:\ 
   let lines = ScreenLines([1, 6], 22)
   let expected = [
@@ -366,6 +366,42 @@ func Test_fold_fillchars()
         \ '[                three',
         \ '                 three',
         \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  " check Unicode chars
+  set fillchars=foldopen:▼,foldclose:▶,fold:⋯,foldsep:‖,foldinner:⋮
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '▼        two          ',
+        \ '‖        two          ',
+        \ '▼                three',
+        \ '⋮                three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  set fillchars-=foldinner:⋮
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '▼        two          ',
+        \ '‖        two          ',
+        \ '▼                three',
+        \ '2                three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  normal! 5ggzc
+  let lines = ScreenLines([1, 5], 24)
+  let expected = [
+        \ ' one                    ',
+        \ '▼        two            ',
+        \ '‖        two            ',
+        \ '▶+---  2 lines: three⋯⋯⋯',
+        \ ' four                   ',
         \ ]
   call assert_equal(expected, lines)
 
