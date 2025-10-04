@@ -221,6 +221,12 @@ Uses Git to manage plugins and requires present `git` executable of at least
 version 2.36. Target plugins should be Git repositories with versions as named
 tags following semver convention `v<major>.<minor>.<patch>`.
 
+The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
+located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
+is used to persistently track data about plugins. For a more robust config
+treat lockfile like its part: put under version control, etc. Should not be
+edited by hand or deleted.
+
 Example workflows ~
 
 Basic install and management:
@@ -260,11 +266,13 @@ Basic install and management:
     show confirmation buffer in a separate tabpage.
   • Review changes. To confirm all updates execute |:write|. To discard
     updates execute |:quit|.
+  • (Optionally) |:restart| to start using code from updated plugins.
 
 Switch plugin's version:
 • Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
   named 'plugin1' has changed to `vim.version.range('*')`.
-• |:restart|. The plugin's actual state on disk is not yet changed.
+• |:restart|. The plugin's actual state on disk is not yet changed. Only
+  plugin's `version` in |vim.pack-lockfile| is updated.
 • Execute `vim.pack.update({ 'plugin1' })`.
 • Review changes and either confirm or discard them. If discarded, revert any
   changes in 'init.lua' as well or you will be prompted again next time you
@@ -272,7 +280,7 @@ Switch plugin's version:
 
 Freeze plugin from being updated:
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
-  it with `:=vim.pack.get({ 'plug-name' })[1].rev` (looks like `abc12345`).
+  it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
 • |:restart|.
 
 Unfreeze plugin to start receiving updates:

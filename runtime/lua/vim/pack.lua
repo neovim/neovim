@@ -14,6 +14,12 @@
 ---least version 2.36. Target plugins should be Git repositories with versions
 ---as named tags following semver convention `v<major>.<minor>.<patch>`.
 ---
+---The latest state of all managed plugins is stored inside a [vim.pack-lockfile]()
+---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
+---is used to persistently track data about plugins.
+---For a more robust config treat lockfile like its part: put under version control, etc.
+---Should not be edited by hand or deleted.
+---
 ---Example workflows ~
 ---
 ---Basic install and management:
@@ -57,11 +63,13 @@
 ---      show confirmation buffer in a separate tabpage.
 ---    - Review changes. To confirm all updates execute |:write|.
 ---      To discard updates execute |:quit|.
+---    - (Optionally) |:restart| to start using code from updated plugins.
 ---
 ---Switch plugin's version:
 ---- Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
 ---named 'plugin1' has changed to `vim.version.range('*')`.
 ---- |:restart|. The plugin's actual state on disk is not yet changed.
+---  Only plugin's `version` in |vim.pack-lockfile| is updated.
 ---- Execute `vim.pack.update({ 'plugin1' })`.
 ---- Review changes and either confirm or discard them. If discarded, revert
 ---any changes in 'init.lua' as well or you will be prompted again next time
@@ -69,7 +77,7 @@
 ---
 ---Freeze plugin from being updated:
 ---- Update 'init.lua' for plugin to have `version` set to current revision.
----Get it with `:=vim.pack.get({ 'plug-name' })[1].rev` (looks like `abc12345`).
+---Get it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
 ---- |:restart|.
 ---
 ---Unfreeze plugin to start receiving updates:
@@ -190,12 +198,71 @@ local function git_get_tags(cwd)
   return tags == '' and {} or vim.split(tags, '\n')
 end
 
--- Plugin operations ----------------------------------------------------------
+-- Lockfile -------------------------------------------------------------------
 
 --- @return string
 local function get_plug_dir()
   return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
 end
+
+--- @class (private) vim.pack.LockData
+--- @field rev string Latest recorded revision.
+--- @field src string Plugin source.
+--- @field version? string|vim.VersionRange Plugin `version`, as supplied in `spec`.
+
+--- @class (private) vim.pack.Lock
+--- @field plugins table<string, vim.pack.LockData> Map from plugin name to its lock data.
+
+--- @type vim.pack.Lock
+local plugin_lock
+
+local function lock_get_path()
+  return vim.fs.joinpath(vim.fn.stdpath('config'), 'nvim-pack-lock.json')
+end
+
+local function lock_read()
+  if plugin_lock then
+    return
+  end
+  local fd = uv.fs_open(lock_get_path(), 'r', 438)
+  if not fd then
+    plugin_lock = { plugins = {} }
+    return
+  end
+  local stat = assert(uv.fs_fstat(fd))
+  local data = assert(uv.fs_read(fd, stat.size, 0))
+  assert(uv.fs_close(fd))
+  plugin_lock = vim.json.decode(data) --- @type vim.pack.Lock
+
+  -- Deserialize `version`
+  for _, l_data in pairs(plugin_lock.plugins) do
+    local version = l_data.version
+    if type(version) == 'string' then
+      l_data.version = version:match("^'(.+)'$") or vim.version.range(version)
+    end
+  end
+end
+
+local function lock_write()
+  -- Serialize `version`
+  local lock = vim.deepcopy(plugin_lock)
+  for _, l_data in pairs(lock.plugins) do
+    local version = l_data.version
+    if version then
+      l_data.version = type(version) == 'string' and ("'%s'"):format(version) or tostring(version)
+    end
+  end
+
+  local path = lock_get_path()
+  vim.fn.mkdir(vim.fs.dirname(path), 'p')
+  local fd = assert(uv.fs_open(path, 'w', 438))
+
+  local data = vim.json.encode(lock, { indent = '  ', sort_keys = true })
+  assert(uv.fs_write(fd, data))
+  assert(uv.fs_close(fd))
+end
+
+-- Plugin operations ----------------------------------------------------------
 
 --- @param msg string|string[]
 --- @param level ('DEBUG'|'TRACE'|'INFO'|'WARN'|'ERROR')?
@@ -532,6 +599,8 @@ local function checkout(p, timestamp, skip_same_sha)
 
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
 
+  plugin_lock.plugins[p.spec.name].rev = p.info.sha_target
+
   trigger_event(p, 'PackChanged', 'update')
 
   -- (Re)Generate help tags according to the current help files.
@@ -560,6 +629,8 @@ local function install_list(plug_list, confirm)
 
     git_clone(p.spec.src, p.path)
     p.info.installed = true
+
+    plugin_lock.plugins[p.spec.name].src = p.spec.src
 
     -- Do not skip checkout even if HEAD and target have same commit hash to
     -- have new repo in expected detached HEAD state and generated help files.
@@ -698,15 +769,32 @@ function M.add(specs, opts)
   end
   plugs = normalize_plugs(plugs)
 
-  -- Install
-  --- @param p vim.pack.Plug
-  local plugs_to_install = vim.tbl_filter(function(p)
-    return not p.info.installed
-  end, plugs)
+  -- Pre-process
+  lock_read()
+  local plugs_to_install = {} --- @type vim.pack.Plug[]
+  local needs_lock_write = false
+  for _, p in ipairs(plugs) do
+    -- TODO(echasnovski): check that lock's `src` is the same as in spec.
+    -- If not - cleanly reclone (delete directory and mark as not installed).
+    local p_lock = plugin_lock.plugins[p.spec.name] or {}
+    needs_lock_write = needs_lock_write or p_lock.version ~= p.spec.version
+    p_lock.version = p.spec.version
+    plugin_lock.plugins[p.spec.name] = p_lock
 
+    if not p.info.installed then
+      plugs_to_install[#plugs_to_install + 1] = p
+      needs_lock_write = true
+    end
+  end
+
+  -- Install
   if #plugs_to_install > 0 then
     git_ensure_exec()
     install_list(plugs_to_install, opts.confirm)
+  end
+
+  if needs_lock_write then
+    lock_write()
   end
 
   -- Register and load those actually on disk while collecting errors
@@ -899,6 +987,7 @@ function M.update(names, opts)
     return
   end
   git_ensure_exec()
+  lock_read()
 
   -- Perform update
   local timestamp = get_timestamp()
@@ -925,6 +1014,7 @@ function M.update(names, opts)
   run_list(plug_list, do_update, progress_title)
 
   if opts.force then
+    lock_write()
     feedback_log(plug_list)
     return
   end
@@ -950,6 +1040,7 @@ function M.update(names, opts)
     end
     run_list(plugs_to_checkout, do_checkout, 'Applying updates')
 
+    lock_write()
     feedback_log(plugs_to_checkout)
   end)
 end
@@ -967,6 +1058,8 @@ function M.del(names)
     return
   end
 
+  lock_read()
+
   for _, p in ipairs(plug_list) do
     trigger_event(p, 'PackChangedPre', 'delete')
 
@@ -974,8 +1067,12 @@ function M.del(names)
     active_plugins[p.path] = nil
     notify(("Removed plugin '%s'"):format(p.spec.name), 'INFO')
 
+    plugin_lock.plugins[p.spec.name] = nil
+
     trigger_event(p, 'PackChanged', 'delete')
   end
+
+  lock_write()
 end
 
 --- @inlinedoc

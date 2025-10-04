@@ -310,6 +310,14 @@ local function is_jit()
   return exec_lua('return package.loaded.jit ~= nil')
 end
 
+local function get_lock_path()
+  return vim.fs.joinpath(fn.stdpath('config'), 'nvim-pack-lock.json')
+end
+
+local function get_lock_tbl()
+  return vim.json.decode(fn.readblob(get_lock_path()))
+end
+
 -- Tests ======================================================================
 
 describe('vim.pack', function()
@@ -326,6 +334,7 @@ describe('vim.pack', function()
 
   after_each(function()
     vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
+    vim.fs.rm(get_lock_path(), { force = true })
   end)
 
   teardown(function()
@@ -411,6 +420,80 @@ describe('vim.pack', function()
       end)
       eq(1, exec_lua('return #_G.confirm_log'))
       eq('plugindirs main', exec_lua('return require("plugindirs")'))
+    end)
+
+    it('creates lockfile', function()
+      local helptags_rev = git_get_hash('HEAD', 'helptags')
+      exec_lua(function()
+        vim.pack.add({
+          { src = repos_src.basic, version = 'some-tag' },
+          { src = repos_src.defbranch, version = 'main' },
+          { src = repos_src.helptags, version = helptags_rev },
+          { src = repos_src.plugindirs },
+          { src = repos_src.semver, version = vim.version.range('*') },
+        })
+      end)
+
+      local basic_rev = git_get_hash('some-tag', 'basic')
+      local defbranch_rev = git_get_hash('main', 'defbranch')
+      local plugindirs_rev = git_get_hash('HEAD', 'plugindirs')
+      local semver_rev = git_get_hash('v1.0.0', 'semver')
+
+      -- Should properly format as indented JSON
+      local ref_lockfile_lines = {
+        '{',
+        '  "plugins": {',
+        '    "basic": {',
+        '      "rev": "' .. basic_rev .. '",',
+        '      "src": "' .. repos_src.basic .. '",',
+        -- Branch, tag, and commit should be serialized like `'value'` to be
+        -- distinguishable from version ranges
+        '      "version": "\'some-tag\'"',
+        '    },',
+        '    "defbranch": {',
+        '      "rev": "' .. defbranch_rev .. '",',
+        '      "src": "' .. repos_src.defbranch .. '",',
+        '      "version": "\'main\'"',
+        '    },',
+        '    "helptags": {',
+        '      "rev": "' .. helptags_rev .. '",',
+        '      "src": "' .. repos_src.helptags .. '",',
+        '      "version": "\'' .. helptags_rev .. '\'"',
+        '    },',
+        '    "plugindirs": {',
+        '      "rev": "' .. plugindirs_rev .. '",',
+        '      "src": "' .. repos_src.plugindirs .. '"',
+        -- Absent `version` should be missing and not autoresolved
+        '    },',
+        '    "semver": {',
+        '      "rev": "' .. semver_rev .. '",',
+        '      "src": "' .. repos_src.semver .. '",',
+        '      "version": ">=0.0.0"',
+        '    }',
+        '  }',
+        '}',
+      }
+      eq(ref_lockfile_lines, fn.readfile(get_lock_path()))
+    end)
+
+    it('updates lockfile', function()
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      local ref_lockfile = {
+        plugins = {
+          basic = { rev = git_get_hash('main', 'basic'), src = repos_src.basic },
+        },
+      }
+      eq(ref_lockfile, get_lock_tbl())
+
+      n.clear()
+      exec_lua(function()
+        vim.pack.add({ { src = repos_src.basic, version = 'main' } })
+      end)
+
+      ref_lockfile.plugins.basic.version = "'main'"
+      eq(ref_lockfile, get_lock_tbl())
     end)
 
     it('installs at proper version', function()
@@ -1087,6 +1170,20 @@ describe('vim.pack', function()
         local confirm_text = table.concat(api.nvim_buf_get_lines(0, 0, -1, false), '\n')
         matches('Available newer versions:\n• v1%.0%.0\n• v0%.4\n• 0%.3%.1$', confirm_text)
       end)
+
+      it('updates lockfile', function()
+        exec_lua(function()
+          vim.pack.add({ repos_src.fetch })
+        end)
+        local ref_fetch_lock = { rev = hashes.fetch_head, src = repos_src.fetch }
+        eq(ref_fetch_lock, get_lock_tbl().plugins.fetch)
+
+        exec_lua('vim.pack.update()')
+        n.exec('write')
+
+        ref_fetch_lock.rev = git_get_hash('HEAD', 'fetch')
+        eq(ref_fetch_lock, get_lock_tbl().plugins.fetch)
+      end)
     end)
 
     it('works with not active plugins', function()
@@ -1138,6 +1235,9 @@ describe('vim.pack', function()
         '',
       }
       eq(ref_log_lines, vim.list_slice(log_lines, 2))
+
+      -- Should update lockfile
+      eq(git_get_hash('HEAD', 'fetch'), get_lock_tbl().plugins.fetch.rev)
     end)
 
     it('shows progress report', function()
@@ -1350,6 +1450,10 @@ describe('vim.pack', function()
       eq(true, pack_exists('basic'))
       eq(true, pack_exists('plugindirs'))
 
+      local locked_plugins = vim.tbl_keys(get_lock_tbl().plugins)
+      table.sort(locked_plugins)
+      eq({ 'basic', 'plugindirs' }, locked_plugins)
+
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
       n.exec('messages clear')
@@ -1371,6 +1475,23 @@ describe('vim.pack', function()
       eq(3, find_in_log(log, 'PackChangedPre', 'delete', 'plugindirs', nil))
       eq(4, find_in_log(log, 'PackChanged', 'delete', 'plugindirs', nil))
       eq(4, #log)
+
+      -- Should update lockfile
+      eq({ plugins = {} }, get_lock_tbl())
+    end)
+
+    it('works without prior `add()`', function()
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      n.clear()
+
+      eq(true, pack_exists('basic'))
+      exec_lua(function()
+        vim.pack.del({ 'basic' })
+      end)
+      eq(false, pack_exists('basic'))
+      eq({ plugins = {} }, get_lock_tbl())
     end)
 
     it('validates input', function()
