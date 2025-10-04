@@ -121,6 +121,13 @@ In the user's config:
 ==============================================================================
 Initialization                                               *lua-plugin-init*
 
+Plugins (except colorschemes and ftplugins) should always create
+a `plugin/foo.lua` file, even if it is empty. This is how a plugin "declares"
+itself to Nvim. You can confirm this by checking if the plugin appears in
+|:scriptnames|. (Exception: If your "plugin" is actually just a Lua module,
+i.e. a "library" intended only for programmatic use, then a plugin/ file is
+not needed.)
+
 Strictly separated configuration and smart initialization allow your plugin to
 work out of the box. Common approaches are:
 
