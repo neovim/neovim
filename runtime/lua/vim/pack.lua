@@ -18,7 +18,8 @@
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 ---is used to persistently track data about plugins.
 ---For a more robust config treat lockfile like its part: put under version control, etc.
----Should not be edited by hand or deleted.
+---In this case initial install prefers revision from the lockfile instead of
+---inferring from `version`. Should not be edited by hand or deleted.
 ---
 ---Example workflows ~
 ---
@@ -56,7 +57,8 @@
 ---```
 ---
 ---- Restart Nvim (for example, with |:restart|). Plugins that were not yet
----installed will be available on disk in target state after `add()` call.
+---installed will be available on disk after `add()` call. Their revision is
+---taken from |vim.pack-lockfile| (if present) or inferred from the `version`.
 ---
 ---- To update all plugins with new changes:
 ---    - Execute |vim.pack.update()|. This will download updates from source and
@@ -624,6 +626,9 @@ local function install_list(plug_list, confirm)
     p.info.installed = true
 
     plugin_lock.plugins[p.spec.name].src = p.spec.src
+
+    -- Prefer revision from the lockfile instead of using `version`
+    p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
 
     -- Do not skip checkout even if HEAD and target have same commit hash to
     -- have new repo in expected detached HEAD state and generated help files.
