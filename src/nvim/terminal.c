@@ -279,19 +279,19 @@ static void schedule_termrequest(Terminal *term, char *sequence, size_t sequence
                  (void *)(intptr_t)term->cursor.col);
 }
 
-static int parse_osc8(VTermStringFragment frag, int *attr)
+static int parse_osc8(const char *str, size_t len, int *attr)
   FUNC_ATTR_NONNULL_ALL
 {
   // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
   // Skip the ID, we don't use it (for now)
   size_t i = 0;
-  for (; i < frag.len; i++) {
-    if (frag.str[i] == ';') {
+  for (; i < len; i++) {
+    if (str[i] == ';') {
       break;
     }
   }
 
-  if (frag.str[i] != ';') {
+  if (str[i] != ';') {
     // Invalid OSC sequence
     return 0;
   }
@@ -299,14 +299,13 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
   // Move past the semicolon
   i++;
 
-  if (i >= frag.len) {
+  if (i >= len) {
     // Empty OSC 8, no URL
     *attr = 0;
     return 1;
   }
 
-  char *url = xmemdupz(&frag.str[i], frag.len - i + 1);
-  url[frag.len - i] = 0;
+  char *url = xmemdupz(str + i, len - i);
   *attr = hl_add_url(0, url);
   xfree(url);
 
@@ -322,16 +321,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
     return 0;
   }
 
-  if (command == 8) {
-    int attr = 0;
-    if (parse_osc8(frag, &attr)) {
-      VTermState *state = vterm_obtain_state(term->vt);
-      VTermValue value = { .number = attr };
-      vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
-    }
-  }
-
-  if (!has_event(EVENT_TERMREQUEST)) {
+  if (command != 8 && !has_event(EVENT_TERMREQUEST)) {
     return 1;
   }
 
@@ -341,8 +331,20 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    if (command == 8) {
+      int attr = 0;
+      const int off = STRLEN_LITERAL("\x1b]8;");
+      if (parse_osc8(term->termrequest_buffer.items + off,
+                     term->termrequest_buffer.size - off, &attr)) {
+        VTermState *state = vterm_obtain_state(term->vt);
+        VTermValue value = { .number = attr };
+        vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+      }
+    }
+    if (has_event(EVENT_TERMREQUEST)) {
+      char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+      schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    }
   }
   return 1;
 }

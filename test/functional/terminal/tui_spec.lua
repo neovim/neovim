@@ -2513,14 +2513,27 @@ describe('TUI', function()
     ]])
     child_exec_lua([[
       vim.api.nvim_buf_set_lines(0, 0, 0, true, {'Hello'})
-      local ns = vim.api.nvim_create_namespace('test')
-      vim.api.nvim_buf_set_extmark(0, ns, 0, 1, {
+      _G.NS = vim.api.nvim_create_namespace('test')
+      vim.api.nvim_buf_set_extmark(0, _G.NS, 0, 1, {
         end_col = 3,
         url = 'https://example.com',
       })
     ]])
     retry(nil, 1000, function()
       eq({ { id = 0xE1EA0000, url = 'https://example.com' } }, exec_lua([[return _G.urls]]))
+    end)
+    -- No crash with very long URL #30794
+    child_exec_lua([[
+      vim.api.nvim_buf_set_extmark(0, _G.NS, 0, 3, {
+        end_col = 5,
+        url = 'https://example.com/' .. ('a'):rep(65536),
+      })
+    ]])
+    retry(nil, nil, function()
+      eq({
+        { id = 0xE1EA0000, url = 'https://example.com' },
+        { id = 0xE1EA0001, url = 'https://example.com/' .. ('a'):rep(65536) },
+      }, exec_lua([[return _G.urls]]))
     end)
   end)
 
@@ -3994,6 +4007,44 @@ describe('TUI client', function()
     if is_os('mac') then
       assert_log('uv_tty_set_mode failed: Unknown system error %-102', testlog)
     end
+  end)
+
+  it('does not crash or hang with a very long title', function()
+    local server, _, screen_client = start_headless_server_and_client()
+
+    local server_exec_lua = tt.make_lua_executor(server)
+    if not server_exec_lua('return pcall(require, "ffi")') then
+      pending('missing LuaJIT FFI')
+    end
+
+    local bufname = api.nvim_buf_get_name(0)
+    -- Normally a title cannot be longer than the 65535-byte buffer as maketitle()
+    -- limits it length. Use FFI to send a very long title directly.
+    server_exec_lua([=[
+      local ffi = require('ffi')
+      local cstr = ffi.typeof('char[?]')
+      local function to_cstr(string)
+        return cstr(#string + 1, string)
+      end
+
+      ffi.cdef([[
+        typedef struct { char *data; size_t size; } String;
+        void ui_call_set_title(String title);
+      ]])
+
+      local len = 65536
+      local title = ffi.new('String', { data = to_cstr(('a'):rep(len)), size = len })
+      ffi.C.ui_call_set_title(title)
+    ]=])
+    screen_client:expect_unchanged()
+    assert_log('TUI: escape sequence for ext%.set_title too long', testlog)
+    eq(bufname, api.nvim_buf_get_var(0, 'term_title'))
+
+    -- Following escape sequences are not affected.
+    server:request('nvim_set_option_value', 'title', true, {})
+    retry(nil, nil, function()
+      eq('[No Name] + - Nvim', api.nvim_buf_get_var(0, 'term_title'))
+    end)
   end)
 
   it('throws error when no server exists', function()
