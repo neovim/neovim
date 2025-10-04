@@ -1930,6 +1930,21 @@ describe('API/win', function()
         })
       )
     end)
+
+    it('respects requested size for large splits', function()
+      command('vsplit')
+      local win = api.nvim_open_win(0, false, { win = -1, split = 'right', width = 38 })
+      eq(38, api.nvim_win_get_width(win))
+
+      -- No zero-sized windows (e.g: from skipping forced equalization in win_split_ins) if
+      -- requesting a chonky window; that could lead to crashes!
+      api.nvim_open_win(0, false, { win = -1, split = 'right', width = 9999 })
+      eq({ 1, 1, 1, 74 }, eval("range(1, winnr('$'))->map({_, nr -> winwidth(nr)})"))
+
+      command('split')
+      win = api.nvim_open_win(0, false, { win = 0, split = 'below', height = 10 })
+      eq(10, api.nvim_win_get_height(win))
+    end)
   end)
 
   describe('set_config', function()
