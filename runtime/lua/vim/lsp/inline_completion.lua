@@ -58,6 +58,7 @@ local namespace = api.nvim_create_namespace('nvim.lsp.inline_completion')
 ---@field active table<integer, vim.lsp.inline_completion.Completor?>
 ---@field timer? uv.uv_timer_t Timer for debouncing automatic requests
 ---@field current? vim.lsp.inline_completion.Item Currently selected item
+---@field line_count? integer Buffer line count at the time completions were requested.
 ---@field client_state table<integer, vim.lsp.inline_completion.ClientState>
 local Completor = {
   name = 'inline_completion',
@@ -203,6 +204,27 @@ function Completor:show(hint)
     return
   end
 
+  local pos = current.range and current.range.start:to_extmark()
+    or vim.pos.cursor(api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr))):to_extmark()
+  local row, col = unpack(pos)
+  local line_text = api.nvim_buf_get_lines(self.bufnr, row, row + 1, false)[1]
+
+  -- Do not trust ranges received from the client.
+  if current.range then
+    -- To ensure that virtual text remains visible continuously (without flickering)
+    -- while the user is editing the buffer, we allow displaying expired virtual text.
+    -- Since the position of virtual text may become invalid after document changes,
+    -- out-of-range items are ignored.
+    if
+      not (line_text and #line_text >= col)
+      -- Discard completions if buffer has fewer lines than at the time the request was made.
+      or api.nvim_buf_line_count(self.bufnr) < self.line_count
+    then
+      self.current = nil
+      return
+    end
+  end
+
   local insert_text = current.insert_text
   local text = type(insert_text) == 'string' and insert_text
     or tostring(grammar.parse(insert_text.value))
@@ -212,20 +234,6 @@ function Completor:show(hint)
   end
   if hint then
     table.insert(lines[#lines], { hint, 'ComplHintMore' })
-  end
-
-  local pos = current.range and current.range.start:to_extmark()
-    or vim.pos.cursor(api.nvim_win_get_cursor(vim.fn.bufwinid(self.bufnr))):to_extmark()
-  local row, col = unpack(pos)
-
-  -- To ensure that virtual text remains visible continuously (without flickering)
-  -- while the user is editing the buffer, we allow displaying expired virtual text.
-  -- Since the position of virtual text may become invalid after document changes,
-  -- out-of-range items are ignored.
-  local line_text = api.nvim_buf_get_lines(self.bufnr, row, row + 1, false)[1]
-  if not (line_text and #line_text >= col) then
-    self.current = nil
-    return
   end
 
   -- The first line of the text to be inserted
@@ -264,6 +272,7 @@ end
 ---@package
 ---@param kind lsp.InlineCompletionTriggerKind
 function Completor:request(kind)
+  self.line_count = api.nvim_buf_line_count(self.bufnr)
   for client_id in pairs(self.client_state) do
     local client = assert(vim.lsp.get_client_by_id(client_id))
     ---@type lsp.InlineCompletionContext
