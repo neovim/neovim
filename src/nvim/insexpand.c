@@ -6544,16 +6544,29 @@ static void remove_old_matches(void)
 /// 'refresh:always' flag.
 static void get_cpt_func_completion_matches(Callback *cb)
 {
-  int startcol = cpt_sources_array[cpt_sources_index].cs_startcol;
+  cpt_source_T *cpt_src = &cpt_sources_array[cpt_sources_index];
+  int startcol = cpt_src->cs_startcol;
 
   if (startcol == -2 || startcol == -3) {
     return;
   }
 
   set_compl_globals(startcol, curwin->w_cursor.col, true);
+
+  // Insert the leader string (previously removed) before expansion.
+  // This prevents flicker when `func` (e.g. an LSP client) is slow and
+  // calls 'sleep', which triggers ui_flush().
+  if (!cpt_src->cs_refresh_always) {
+    ins_compl_insert_bytes(ins_compl_leader(), -1);
+  }
+
   expand_by_function(0, cpt_compl_pattern.data, cb);
 
-  cpt_sources_array[cpt_sources_index].cs_refresh_always = compl_opt_refresh_always;
+  if (!cpt_src->cs_refresh_always) {
+    ins_compl_delete(false);
+  }
+
+  cpt_src->cs_refresh_always = compl_opt_refresh_always;
   compl_opt_refresh_always = false;
 }
 
