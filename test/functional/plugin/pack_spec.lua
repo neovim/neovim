@@ -686,9 +686,8 @@ describe('vim.pack', function()
         eq({}, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
 
         -- Plugins should still be marked as "active", since they were added
-        plugindirs_data.active = true
-        basic_data.active = true
-        eq({ plugindirs_data, basic_data }, exec_lua('return vim.pack.get(nil, { info = false })'))
+        eq(true, exec_lua('return vim.pack.get({ "plugindirs" })[1].active'))
+        eq(true, exec_lua('return vim.pack.get({ "basic" })[1].active'))
       end
 
       -- Works on initial install
@@ -1352,10 +1351,10 @@ describe('vim.pack', function()
     local make_basic_data = function(active, info)
       local spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
       local path = pack_get_plug_path('basic')
-      local res = { active = active, path = path, spec = spec }
+      local rev = git_get_hash('feat-branch', 'basic')
+      local res = { active = active, path = path, spec = spec, rev = rev }
       if info then
         res.branches = { 'main', 'feat-branch' }
-        res.rev = git_get_hash('feat-branch', 'basic')
         res.tags = { 'some-tag' }
       end
       return res
@@ -1364,10 +1363,10 @@ describe('vim.pack', function()
     local make_defbranch_data = function(active, info)
       local spec = { name = 'defbranch', src = repos_src.defbranch }
       local path = pack_get_plug_path('defbranch')
-      local res = { active = active, path = path, spec = spec }
+      local rev = git_get_hash('dev', 'defbranch')
+      local res = { active = active, path = path, spec = spec, rev = rev }
       if info then
         res.branches = { 'dev', 'main' }
-        res.rev = git_get_hash('dev', 'defbranch')
         res.tags = {}
       end
       return res

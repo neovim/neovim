@@ -1080,7 +1080,7 @@ end
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
 --- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
 --- @field path string Plugin's path on disk.
---- @field rev? string Current Git revision. Missing if `info=false`.
+--- @field rev string Current Git revision.
 --- @field spec vim.pack.SpecResolved A |vim.pack.Spec| with resolved `name`.
 --- @field tags? string[] Available Git tags. Missing if `info=false`.
 
@@ -1096,7 +1096,6 @@ local function add_p_data_info(p_data_list)
     --- @async
     funs[i] = function()
       p_data.branches = git_get_branches(path)
-      p_data.rev = git_get_hash('HEAD', path)
       p_data.tags = git_get_tags(path)
     end
   end
@@ -1127,8 +1126,11 @@ function M.get(names, opts)
   local used_names = {} --- @type table<string,boolean>
   for i = 1, n_active_plugins do
     if active[i] and (not names or vim.tbl_contains(names, active[i].spec.name)) then
-      res[#res + 1] = { spec = vim.deepcopy(active[i].spec), path = active[i].path, active = true }
-      used_names[active[i].spec.name] = true
+      local name = active[i].spec.name
+      local spec = vim.deepcopy(active[i].spec)
+      local rev = (plugin_lock.plugins[name] or {}).rev
+      res[#res + 1] = { spec = spec, path = active[i].path, rev = rev, active = true }
+      used_names[name] = true
     end
   end
 
@@ -1138,7 +1140,7 @@ function M.get(names, opts)
     local is_in_names = not names or vim.tbl_contains(names, name)
     if not active_plugins[path] and is_in_names then
       local spec = { name = name, src = l_data.src, version = l_data.version }
-      res[#res + 1] = { spec = spec, path = path, active = false }
+      res[#res + 1] = { spec = spec, path = path, rev = l_data.rev, active = false }
       used_names[name] = true
     end
   end
