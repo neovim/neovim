@@ -4018,7 +4018,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   } else if (!term) {
     channel_create_event(chan, NULL);
-  } else {
+  } else {  // term=true
     if (rettv->vval.v_number <= 0) {
       return;
     }
@@ -4040,8 +4040,13 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       IObuff[2] = NUL;
     }
 
+    // Build full command JSON array: ["cmd", "arg1", "arg 2", …].
+    char *cmdjson = shell_argv_to_json(argv, true);
     // Terminal URI: "term://$CWD//$PID:$CMD"
-    snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
+    // TODO(justinmk): URI v2: https://github.com/neovim/neovim/issues/3278
+    snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmdjson);
+    xfree(cmdjson);
+
     // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
     curbuf->b_p_swf = false;
 
