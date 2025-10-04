@@ -109,7 +109,7 @@ RSC[ms.window_showMessageRequest] = function(_, params, ctx)
         kind = 'lsp_message',
         prompt = params.message .. ': ',
         format_item = function(action)
-          return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
+          return (action.title:gsub('\r\n', '\\r\\n'):gsub('\n', '\\n'))
         end,
       }
       vim.ui.select(params.actions, opts, function(choice)
