@@ -65,6 +65,19 @@ static const char e_setting_v_str_to_value_with_wrong_type[]
 static const char e_missing_end_marker_str[] = N_("E990: Missing end marker '%s'");
 static const char e_cannot_use_heredoc_here[] = N_("E991: Cannot use =<< here");
 
+static dict_T globvardict;                  // Dict with g: variables
+/// g: value
+#define globvarht globvardict.dv_hashtab
+
+static dict_T vimvardict;                   // Dict with v: variables
+/// v: hashtab
+#define vimvarht  vimvardict.dv_hashtab
+
+int garbage_collect_globvars(int copyID)
+{
+  return set_ref_in_ht(&globvarht, copyID, NULL);
+}
+
 bool garbage_collect_vimvars(int copyID)
 {
   return set_ref_in_ht(&vimvarht, copyID, NULL);
@@ -92,6 +105,153 @@ void set_internal_string_var(const char *name, char *value)  // NOLINT(readabili
   };
 
   set_var(name, strlen(name), &tv, true);
+}
+
+int eval_charconvert(const char *const enc_from, const char *const enc_to,
+                     const char *const fname_from, const char *const fname_to)
+{
+  const sctx_T saved_sctx = current_sctx;
+
+  set_vim_var_string(VV_CC_FROM, enc_from, -1);
+  set_vim_var_string(VV_CC_TO, enc_to, -1);
+  set_vim_var_string(VV_FNAME_IN, fname_from, -1);
+  set_vim_var_string(VV_FNAME_OUT, fname_to, -1);
+  sctx_T *ctx = get_option_sctx(kOptCharconvert);
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  bool err = false;
+  if (eval_to_bool(p_ccv, &err, NULL, false, true)) {
+    err = true;
+  }
+
+  set_vim_var_string(VV_CC_FROM, NULL, -1);
+  set_vim_var_string(VV_CC_TO, NULL, -1);
+  set_vim_var_string(VV_FNAME_IN, NULL, -1);
+  set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
+
+  if (err) {
+    return FAIL;
+  }
+  return OK;
+}
+
+void eval_diff(const char *const origfile, const char *const newfile, const char *const outfile)
+{
+  const sctx_T saved_sctx = current_sctx;
+  set_vim_var_string(VV_FNAME_IN, origfile, -1);
+  set_vim_var_string(VV_FNAME_NEW, newfile, -1);
+  set_vim_var_string(VV_FNAME_OUT, outfile, -1);
+
+  sctx_T *ctx = get_option_sctx(kOptDiffexpr);
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  // errors are ignored
+  typval_T *tv = eval_expr_ext(p_dex, NULL, true);
+  tv_free(tv);
+
+  set_vim_var_string(VV_FNAME_IN, NULL, -1);
+  set_vim_var_string(VV_FNAME_NEW, NULL, -1);
+  set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
+}
+
+void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
+{
+  const sctx_T saved_sctx = current_sctx;
+  set_vim_var_string(VV_FNAME_IN, origfile, -1);
+  set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
+  set_vim_var_string(VV_FNAME_OUT, outfile, -1);
+
+  sctx_T *ctx = get_option_sctx(kOptPatchexpr);
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  // errors are ignored
+  typval_T *tv = eval_expr_ext(p_pex, NULL, true);
+  tv_free(tv);
+
+  set_vim_var_string(VV_FNAME_IN, NULL, -1);
+  set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
+  set_vim_var_string(VV_FNAME_OUT, NULL, -1);
+  current_sctx = saved_sctx;
+}
+
+/// Evaluate an expression to a list with suggestions.
+/// For the "expr:" part of 'spellsuggest'.
+///
+/// @return  NULL when there is an error.
+list_T *eval_spell_expr(char *badword, char *expr)
+{
+  typval_T save_val;
+  typval_T rettv;
+  list_T *list = NULL;
+  char *p = skipwhite(expr);
+  const sctx_T saved_sctx = current_sctx;
+
+  // Set "v:val" to the bad word.
+  prepare_vimvar(VV_VAL, &save_val);
+  set_vim_var_string(VV_VAL, badword, -1);
+  if (p_verbose == 0) {
+    emsg_off++;
+  }
+  sctx_T *ctx = get_option_sctx(kOptSpellsuggest);
+  if (ctx != NULL) {
+    current_sctx = *ctx;
+  }
+
+  int r = may_call_simple_func(p, &rettv);
+  if (r == NOTDONE) {
+    r = eval1(&p, &rettv, &EVALARG_EVALUATE);
+  }
+  if (r == OK) {
+    if (rettv.v_type != VAR_LIST) {
+      tv_clear(&rettv);
+    } else {
+      list = rettv.vval.v_list;
+    }
+  }
+
+  if (p_verbose == 0) {
+    emsg_off--;
+  }
+  tv_clear(get_vim_var_tv(VV_VAL));
+  restore_vimvar(VV_VAL, &save_val);
+  current_sctx = saved_sctx;
+
+  return list;
+}
+
+/// Get spell word from an entry from spellsuggest=expr:
+///
+/// Entry in question is supposed to be a list (to be checked by the caller)
+/// with two items: a word and a score represented as an unsigned number
+/// (whether it actually is unsigned is not checked).
+///
+/// Used to get the good word and score from the eval_spell_expr() result.
+///
+/// @param[in]  list  List to get values from.
+/// @param[out]  ret_word  Suggested word. Not initialized if return value is
+///                        -1.
+///
+/// @return -1 in case of error, score otherwise.
+int get_spellword(list_T *const list, const char **ret_word)
+{
+  if (tv_list_len(list) != 2) {
+    emsg(_("E5700: Expression from 'spellsuggest' must yield lists with "
+           "exactly two values"));
+    return -1;
+  }
+  *ret_word = tv_list_find_str(list, 0);
+  if (*ret_word == NULL) {
+    return -1;
+  }
+  return (int)tv_list_find_nr(list, -1, NULL);
 }
 
 /// List Vim variables.
@@ -1335,6 +1495,38 @@ static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap
   return ret;
 }
 
+/// Delete all "menutrans_" variables.
+void del_menutrans_vars(void)
+{
+  hash_lock(&globvarht);
+  HASHTAB_ITER(&globvarht, hi, {
+    if (strncmp(hi->hi_key, "menutrans_", 10) == 0) {
+      delete_var(&globvarht, hi);
+    }
+  });
+  hash_unlock(&globvarht);
+}
+
+/// @return  global variable dictionary
+dict_T *get_globvar_dict(void)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+{
+  return &globvardict;
+}
+
+/// @return  global variable hash table
+hashtab_T *get_globvar_ht(void)
+{
+  return &globvarht;
+}
+
+/// @return  v: variable dictionary
+dict_T *get_vimvar_dict(void)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+{
+  return &vimvardict;
+}
+
 /// Get number v: variable value.
 varnumber_T get_vim_var_nr(const VimVarIndex idx) FUNC_ATTR_PURE
 {
@@ -1839,7 +2031,7 @@ void vars_clear_ext(hashtab_T *ht, bool free_val)
 
 /// Delete a variable from hashtab "ht" at item "hi".
 /// Clear the variable value and free the dictitem.
-void delete_var(hashtab_T *ht, hashitem_T *hi)
+static void delete_var(hashtab_T *ht, hashitem_T *hi)
 {
   dictitem_T *di = TV_DICT_HI2DI(hi);
 
@@ -2567,6 +2759,125 @@ bool var_exists(const char *var)
 
   xfree(tofree);
   return n;
+}
+
+static lval_T *redir_lval = NULL;
+static garray_T redir_ga;  // Only valid when redir_lval is not NULL.
+static char *redir_endp = NULL;
+static char *redir_varname = NULL;
+
+/// Start recording command output to a variable
+///
+/// @param append  append to an existing variable
+///
+/// @return  OK if successfully completed the setup.  FAIL otherwise.
+int var_redir_start(char *name, bool append)
+{
+  // Catch a bad name early.
+  if (!eval_isnamec1(*name)) {
+    emsg(_(e_invarg));
+    return FAIL;
+  }
+
+  // Make a copy of the name, it is used in redir_lval until redir ends.
+  redir_varname = xstrdup(name);
+
+  redir_lval = xcalloc(1, sizeof(lval_T));
+
+  // The output is stored in growarray "redir_ga" until redirection ends.
+  ga_init(&redir_ga, (int)sizeof(char), 500);
+
+  // Parse the variable name (can be a dict or list entry).
+  redir_endp = get_lval(redir_varname, NULL, redir_lval, false, false,
+                        0, FNE_CHECK_START);
+  if (redir_endp == NULL || redir_lval->ll_name == NULL
+      || *redir_endp != NUL) {
+    clear_lval(redir_lval);
+    if (redir_endp != NULL && *redir_endp != NUL) {
+      // Trailing characters are present after the variable name
+      semsg(_(e_trailing_arg), redir_endp);
+    } else {
+      semsg(_(e_invarg2), name);
+    }
+    redir_endp = NULL;      // don't store a value, only cleanup
+    var_redir_stop();
+    return FAIL;
+  }
+
+  // check if we can write to the variable: set it to or append an empty
+  // string
+  const int called_emsg_before = called_emsg;
+  did_emsg = false;
+  typval_T tv;
+  tv.v_type = VAR_STRING;
+  tv.vval.v_string = "";
+  if (append) {
+    set_var_lval(redir_lval, redir_endp, &tv, true, false, ".");
+  } else {
+    set_var_lval(redir_lval, redir_endp, &tv, true, false, "=");
+  }
+  clear_lval(redir_lval);
+  if (called_emsg > called_emsg_before) {
+    redir_endp = NULL;      // don't store a value, only cleanup
+    var_redir_stop();
+    return FAIL;
+  }
+
+  return OK;
+}
+
+/// Append "value[value_len]" to the variable set by var_redir_start().
+/// The actual appending is postponed until redirection ends, because the value
+/// appended may in fact be the string we write to, changing it may cause freed
+/// memory to be used:
+///   :redir => foo
+///   :let foo
+///   :redir END
+void var_redir_str(const char *value, int value_len)
+{
+  if (redir_lval == NULL) {
+    return;
+  }
+
+  int len;
+  if (value_len == -1) {
+    len = (int)strlen(value);           // Append the entire string
+  } else {
+    len = value_len;                    // Append only "value_len" characters
+  }
+
+  ga_grow(&redir_ga, len);
+  memmove((char *)redir_ga.ga_data + redir_ga.ga_len, value, (size_t)len);
+  redir_ga.ga_len += len;
+}
+
+/// Stop redirecting command output to a variable.
+/// Frees the allocated memory.
+void var_redir_stop(void)
+{
+  if (redir_lval != NULL) {
+    // If there was no error: assign the text to the variable.
+    if (redir_endp != NULL) {
+      ga_append(&redir_ga, NUL);        // Append the trailing NUL.
+      typval_T tv;
+      tv.v_type = VAR_STRING;
+      tv.vval.v_string = redir_ga.ga_data;
+      // Call get_lval() again, if it's inside a Dict or List it may
+      // have changed.
+      redir_endp = get_lval(redir_varname, NULL, redir_lval,
+                            false, false, 0, FNE_CHECK_START);
+      if (redir_endp != NULL && redir_lval->ll_name != NULL) {
+        set_var_lval(redir_lval, redir_endp, &tv, false, false, ".");
+      }
+      clear_lval(redir_lval);
+    }
+
+    // free the collected output
+    XFREE_CLEAR(redir_ga.ga_data);
+
+    XFREE_CLEAR(redir_lval);
+  }
+  XFREE_CLEAR(redir_varname);
 }
 
 /// "gettabvar()" function

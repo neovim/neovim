@@ -16,6 +16,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
@@ -578,7 +579,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Arena *arena, Error *err)
 Object vim_set_var(String name, Object value, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  return dict_set_var(&globvardict, name, value, false, true, arena, err);
+  return dict_set_var(get_globvar_dict(), name, value, false, true, arena, err);
 }
 
 /// @deprecated
@@ -586,7 +587,7 @@ Object vim_set_var(String name, Object value, Arena *arena, Error *err)
 Object vim_del_var(String name, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  return dict_set_var(&globvardict, name, NIL, true, true, arena, err);
+  return dict_set_var(get_globvar_dict(), name, NIL, true, true, arena, err);
 }
 
 static int64_t convert_index(int64_t index)

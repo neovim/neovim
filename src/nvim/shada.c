@@ -803,11 +803,12 @@ static const void *var_shada_iter(const void *const iter, const char **const nam
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
-  const hashitem_T *hifirst = globvarht.ht_array;
-  const size_t hinum = (size_t)globvarht.ht_mask + 1;
+  hashtab_T *globvarht = get_globvar_ht();
+  const hashitem_T *hifirst = globvarht->ht_array;
+  const size_t hinum = (size_t)globvarht->ht_mask + 1;
   *name = NULL;
   if (iter == NULL) {
-    hi = globvarht.ht_array;
+    hi = globvarht->ht_array;
     while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
                || !(var_flavour(hi->hi_key) & flavour))) {

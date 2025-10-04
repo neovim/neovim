@@ -13,6 +13,3 @@
 
 #define SCRIPT_SV(id) (SCRIPT_ITEM(id)->sn_vars)
 #define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
-
-/// v: hashtab
-#define vimvarht  vimvardict.dv_hashtab
