@@ -591,15 +591,19 @@ func Test_completefunc_info()
   set completefunc&
 endfunc
 
-func Test_cpt_func_cursorcol()
+" For ^N completion, `completefunc` receives the same leader string in both the
+" 'info' and 'expansion' phases (the leader is not removed before expansion).
+" This avoids flicker when `completefunc` (e.g. an LSP client) is slow and calls
+" 'sleep', which triggers out_flush().
+func Test_completefunc_leader()
   func CptColTest(findstart, query)
     if a:findstart
-      call assert_equal(b:info_compl_line, getline(1))
-      call assert_equal(b:info_cursor_col, col('.'))
+      call assert_equal(b:compl_line, getline(1))
+      call assert_equal(b:cursor_col, col('.'))
       return col('.')
     endif
-    call assert_equal(b:expn_compl_line, getline(1))
-    call assert_equal(b:expn_cursor_col, col('.'))
+    call assert_equal(b:compl_line, getline(1))
+    call assert_equal(b:cursor_col, col('.'))
     " return v:none
     return []
   endfunc
@@ -608,17 +612,13 @@ func Test_cpt_func_cursorcol()
   new
 
   " Replace mode
-  let b:info_compl_line = "foo barxyz"
-  let b:expn_compl_line = "foo barbaz"
-  let b:info_cursor_col = 10
-  let b:expn_cursor_col = 5
+  let b:compl_line = "foo barxyz"
+  let b:cursor_col = 10
   call feedkeys("ifoo barbaz\<Esc>2hRxy\<C-N>", "tx")
 
   " Insert mode
-  let b:info_compl_line = "foo bar"
-  let b:expn_compl_line = "foo "
-  let b:info_cursor_col = 8
-  let b:expn_cursor_col = 5
+  let b:compl_line = "foo bar"
+  let b:cursor_col = 8
   call feedkeys("Sfoo bar\<C-N>", "tx")
 
   set completeopt=longest
@@ -4239,7 +4239,6 @@ func Test_autocomplete_completeopt_preinsert()
   endfunc
   set omnifunc=Omni_test complete+=o
   set completeopt=preinsert autocomplete
-  " set completeopt=preinsert,menuone autocomplete
   func GetLine()
     let g:line = getline('.')
     let g:col = col('.')
