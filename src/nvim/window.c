@@ -5773,17 +5773,13 @@ void may_trigger_win_scrolled_resized(void)
 
   // Save window info before autocmds since they can free windows
   char resize_winid[NUMBUFLEN];
-  buf_T *resize_buf = NULL;
   if (trigger_resize) {
     vim_snprintf(resize_winid, sizeof(resize_winid), "%d", first_size_win->handle);
-    resize_buf = first_size_win->w_buffer;
   }
 
   char scroll_winid[NUMBUFLEN];
-  buf_T *scroll_buf = NULL;
   if (trigger_scroll) {
     vim_snprintf(scroll_winid, sizeof(scroll_winid), "%d", first_scroll_win->handle);
-    scroll_buf = first_scroll_win->w_buffer;
   }
 
   // If both are to be triggered do WinResized first.
@@ -5793,7 +5789,7 @@ void may_trigger_win_scrolled_resized(void)
 
     if (tv_dict_add_list(v_event, S_LEN("windows"), windows_list) == OK) {
       tv_dict_set_keys_readonly(v_event);
-      apply_autocmds(EVENT_WINRESIZED, resize_winid, resize_winid, false, resize_buf);
+      apply_autocmds(EVENT_WINRESIZED, resize_winid, resize_winid, false, curbuf);
     }
     restore_v_event(v_event, &save_v_event);
   }
@@ -5807,7 +5803,7 @@ void may_trigger_win_scrolled_resized(void)
     tv_dict_set_keys_readonly(v_event);
     tv_dict_unref(scroll_dict);
 
-    apply_autocmds(EVENT_WINSCROLLED, scroll_winid, scroll_winid, false, scroll_buf);
+    apply_autocmds(EVENT_WINSCROLLED, scroll_winid, scroll_winid, false, curbuf);
 
     restore_v_event(v_event, &save_v_event);
   }
