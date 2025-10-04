@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Sep 28
+" Last Change:		2025 Oct 04
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -46,11 +46,18 @@ function! s:ff.RightConstant(x, y) abort
   return a:y
 endfunction
 
-function! s:ff.IsAnyRequestedPreviewFeatureOf(ns) abort
-  return exists("g:java_syntax_previews") &&
-    \ !empty(filter(a:ns, printf('index(%s, v:val) + 1',
-			    \ string(g:java_syntax_previews))))
-endfunction
+if !empty(get(g:, 'java_syntax_previews', []))
+  " Fold the value of "g:java_syntax_previews" in this function.
+  exec printf("%s\n%s\n%s",
+    \ 'function! s:ff.IsAnyRequestedPreviewFeatureOf(ns) abort',
+    \ printf('return !empty(filter(a:ns, "index(%s, v:val) + 1"))',
+			\ string(g:java_syntax_previews)),
+    \ 'endfunction')
+else
+  function! s:ff.IsAnyRequestedPreviewFeatureOf(dummy) abort
+    return 0
+  endfunction
+endif
 
 if !exists("*s:ReportOnce")
   function s:ReportOnce(message) abort
@@ -233,7 +240,7 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
   syn cluster javaClasses add=javaR_JavaLang
   hi def link javaR_JavaLang javaR_Java
-  syn keyword javaC_JavaLang Boolean Character ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void Package RuntimePermission StrictMath StackTraceElement ProcessBuilder StringBuilder Module ModuleLayer StackWalker Record
+  syn keyword javaC_JavaLang Boolean Character ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void Package RuntimePermission StrictMath StackTraceElement ProcessBuilder StringBuilder Module ModuleLayer StackWalker Record IO
   syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
   " Generic non-interfaces:
   syn match   javaC_JavaLang "\<Class\>"
@@ -242,6 +249,7 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn match   javaC_JavaLang "\<Enum\>"
   syn match   javaC_JavaLang "\<ClassValue\>"
   exec 'syn match javaC_JavaLang "\%(\<Enum\.\)\@' . s:ff.Peek('5', '') . '<=\<EnumDesc\>"'
+  syn match   javaC_JavaLang "\<ScopedValue\>"
   " Member classes:
   exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<Subset\>"'
   exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeBlock\>"'
@@ -249,6 +257,7 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   exec 'syn match javaC_JavaLang "\%(\<ModuleLayer\.\)\@' . s:ff.Peek('12', '') . '<=\<Controller\>"'
   exec 'syn match javaC_JavaLang "\%(\<Runtime\.\)\@' . s:ff.Peek('8', '') . '<=\<Version\>"'
   exec 'syn match javaC_JavaLang "\%(\<System\.\)\@' . s:ff.Peek('7', '') . '<=\<LoggerFinder\>"'
+  exec 'syn match javaC_JavaLang "\%(\<ScopedValue\.\)\@' . s:ff.Peek('12', '') . '<=\<Carrier\>"'
   " Member enumerations:
   exec 'syn match javaC_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<State\>"'
   exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeScript\>"'
@@ -275,6 +284,7 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<Builder\>"'
   exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfPlatform\>"'
   exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfVirtual\>"'
+  exec 'syn match javaI_JavaLang "\%(\<ScopedValue\.\)\@' . s:ff.Peek('12', '') . '<=\<CallableOp\>"'
   syn cluster javaClasses add=javaI_JavaLang
   hi def link javaI_JavaLang javaI_Java
 
@@ -302,12 +312,13 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn match javaLangObject "\<toString\>"
   hi def link javaLangObject javaConstant
 
+  " As of JDK 25, RuntimePermission is deprecated for removal
+  "	(JDK-8353641).
+  "	(Note that SecurityException is still not deprecated.)
   " As of JDK 24, SecurityManager is rendered non-functional
   "	(JDK-8338625).
-  "	(Note that SecurityException and RuntimePermission are still
-  "	not deprecated.)
   " As of JDK 21, Compiler is no more (JDK-8205129).
-  syn keyword javaLangDeprecated Compiler SecurityManager
+  syn keyword javaLangDeprecated Compiler SecurityManager RuntimePermission
 endif
 
 runtime syntax/javaid.vim
@@ -350,7 +361,7 @@ endif
 
 exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*::\@!"he=e-1'
 
-if s:ff.IsAnyRequestedPreviewFeatureOf([455, 488])
+if s:ff.IsAnyRequestedPreviewFeatureOf([455, 488, 507])
   syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaBoolean,javaNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaType,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
 else
   syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
