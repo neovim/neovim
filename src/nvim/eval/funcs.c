@@ -3902,6 +3902,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool term = false;
   bool clear_env = false;
   bool overlapped = false;
+  bool keep_bufname = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
   CallbackReader on_stdout = CALLBACK_READER_INIT;
   CallbackReader on_stderr = CALLBACK_READER_INIT;
@@ -3917,6 +3918,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     pty = term || tv_dict_get_number(job_opts, "pty") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
+    keep_bufname = tv_dict_get_number(job_opts, "keep_bufname") != 0;
 
     char *s = tv_dict_get_string(job_opts, "stdin", false);
     if (s) {
@@ -4044,9 +4046,11 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
     curbuf->b_p_swf = false;
 
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-    setfname(curbuf, NameBuff, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+    if (!keep_bufname) {
+      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
+      setfname(curbuf, NameBuff, NULL, true);
+      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+    }
 
     Error err = ERROR_INIT;
     // Set (deprecated) buffer-local vars (prefer 'channel' buffer-local option).
