@@ -20,7 +20,8 @@ patches, suggestions and giving feedback about what is good and bad in Vim.
 
 Vim would never have become what it is now, without the help of these people!
 
-        |Bram| Moolenaar        Creator and benevolent dictor for life
+        |Bram| Moolenaar	Creator and benevolent dictator until his
+                                passing (3 August 2023)
         Ron Aaron               Win32 GUI changes
         Mohsin Ahmed            encryption
         Zoltan Arpadffy         work on VMS port
