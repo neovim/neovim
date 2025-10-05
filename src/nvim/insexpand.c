@@ -890,6 +890,12 @@ static bool is_nearest_active(void)
          && !(flags & kOptCotFlagFuzzy);
 }
 
+/// True if a match is selected (even if it is not inserted).
+bool ins_compl_is_match_selected(void)
+{
+  return compl_shown_match != NULL && !is_first_match(compl_shown_match);
+}
+
 /// Returns true if autocomplete is active and the pre-insert effect targets the
 /// longest prefix.
 bool ins_compl_preinsert_longest(void)
