@@ -691,13 +691,13 @@ void nvim_del_current_line(Arena *arena, Error *err)
 Object nvim_get_var(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+  dictitem_T *di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
     bool found = script_autoload(name.data, name.size, false) && !aborting();
     VALIDATE(found, "Key not found: %s", name.data, {
       return (Object)OBJECT_INIT;
     });
-    di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+    di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   }
   VALIDATE((di != NULL), "Key not found: %s", name.data, {
     return (Object)OBJECT_INIT;
@@ -713,7 +713,7 @@ Object nvim_get_var(String name, Arena *arena, Error *err)
 void nvim_set_var(String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, value, false, false, NULL, err);
+  dict_set_var(get_globvar_dict(), name, value, false, false, NULL, err);
 }
 
 /// Removes a global (g:) variable.
@@ -723,7 +723,7 @@ void nvim_set_var(String name, Object value, Error *err)
 void nvim_del_var(String name, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, NIL, true, false, NULL, err);
+  dict_set_var(get_globvar_dict(), name, NIL, true, false, NULL, err);
 }
 
 /// Gets a v: variable.
@@ -734,7 +734,7 @@ void nvim_del_var(String name, Error *err)
 Object nvim_get_vvar(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return dict_get_value(&vimvardict, name, arena, err);
+  return dict_get_value(get_vimvar_dict(), name, arena, err);
 }
 
 /// Sets a v: variable, if it is not readonly.
@@ -745,7 +745,7 @@ Object nvim_get_vvar(String name, Arena *arena, Error *err)
 void nvim_set_vvar(String name, Object value, Error *err)
   FUNC_API_SINCE(6)
 {
-  dict_set_var(&vimvardict, name, value, false, false, NULL, err);
+  dict_set_var(get_vimvar_dict(), name, value, false, false, NULL, err);
 }
 
 /// Prints a message given by a list of `[text, hl_group]` "chunks".

@@ -327,9 +327,9 @@ static dict_T *nlua_get_var_scope(lua_State *lstate)
   dict_T *dict = NULL;
   Error err = ERROR_INIT;
   if (strequal(scope, "g")) {
-    dict = &globvardict;
+    dict = get_globvar_dict();
   } else if (strequal(scope, "v")) {
-    dict = &vimvardict;
+    dict = get_vimvar_dict();
   } else if (strequal(scope, "b")) {
     buf_T *buf = find_buffer_by_handle(handle, &err);
     if (buf) {
@@ -410,7 +410,7 @@ int nlua_setvar(lua_State *lstate)
       tv_dict_add(dict, di);
     } else {
       bool type_error = false;
-      if (dict == &vimvardict
+      if (dict == get_vimvar_dict()
           && !before_set_vvar(key.data, di, &tv, true, watched, &type_error)) {
         tv_clear(&tv);
         if (type_error) {
@@ -448,7 +448,7 @@ int nlua_getvar(lua_State *lstate)
   const char *name = luaL_checklstring(lstate, 3, &len);
 
   dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
-  if (di == NULL && dict == &globvardict) {  // try to autoload script
+  if (di == NULL && dict == get_globvar_dict()) {  // try to autoload script
     if (!script_autoload(name, len, false) || aborting()) {
       return 0;  // nil
     }

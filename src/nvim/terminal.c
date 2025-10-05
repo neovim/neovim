@@ -2358,7 +2358,7 @@ static char *get_config_string(char *key)
   Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), NULL, &err);
   api_clear_error(&err);
   if (obj.type == kObjectTypeNil) {
-    obj = dict_get_value(&globvardict, cstr_as_string(key), NULL, &err);
+    obj = dict_get_value(get_globvar_dict(), cstr_as_string(key), NULL, &err);
     api_clear_error(&err);
   }
   if (obj.type == kObjectTypeString) {

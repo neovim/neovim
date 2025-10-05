@@ -2427,7 +2427,7 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
 /// If the name is wrong give an error message and return true.
 int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
 {
-  return (d == &globvardict || &d->dv_hashtab == get_funccal_local_ht())
+  return (d == get_globvar_dict() || &d->dv_hashtab == get_funccal_local_ht())
          && tv_is_func(*tv)
          && var_wrong_func_name(name, true);
 }

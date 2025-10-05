@@ -533,7 +533,7 @@ static int put_view(FILE *fd, win_T *wp, tabpage_T *tp, bool add_edit, unsigned 
 
 static int store_session_globals(FILE *fd)
 {
-  TV_DICT_ITER(&globvardict, this_var, {
+  TV_DICT_ITER(get_globvar_dict(), this_var, {
     if ((this_var->di_tv.v_type == VAR_NUMBER
          || this_var->di_tv.v_type == VAR_STRING)
         && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
