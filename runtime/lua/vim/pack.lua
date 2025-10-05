@@ -134,7 +134,7 @@ end
 --- @param url string
 --- @param path string
 local function git_clone(url, path)
-  local cmd = { 'clone', '--quiet', '--origin', 'origin' }
+  local cmd = { 'clone', '--quiet', '--origin', 'origin', '--no-checkout' }
 
   if vim.startswith(url, 'file://') then
     cmd[#cmd + 1] = '--no-hardlinks'
