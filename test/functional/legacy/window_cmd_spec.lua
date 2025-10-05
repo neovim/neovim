@@ -1,11 +1,14 @@
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local clear = n.clear
+local eq = t.eq
 local exec = n.exec
 local exec_lua = n.exec_lua
 local command = n.command
 local feed = n.feed
+local fn = n.fn
 
 -- oldtest: Test_window_cmd_ls0_split_scrolling()
 it('scrolling with laststatus=0 and :botright split', function()
@@ -353,4 +356,54 @@ describe('splitkeep', function()
       :wincmd s                               |
     ]])
   end)
+end)
+
+-- oldtest: Test_winfixsize_vsep_statusline()
+it("'winfixwidth/height' does not leave stray vseps/statuslines", function()
+  clear()
+  local screen = Screen.new(75, 8)
+  exec([[
+    set noequalalways splitbelow splitright
+    vsplit
+    setlocal winfixwidth
+    vsplit
+  ]])
+  eq(16, fn.winwidth(1))
+  eq(37, fn.winwidth(2))
+  eq(20, fn.winwidth(3))
+
+  command('quit')
+  screen:expect([[
+    ^                                    │                                      |
+    {1:~                                   }│{1:~                                     }|*5
+    {3:[No Name]                            }{2:[No Name]                             }|
+                                                                               |
+  ]])
+  -- Checks w_view_width in Nvim; especially important as the screen test may still pass if only
+  -- w_width changed to make room for the vsep.
+  eq(36, fn.winwidth(1))
+  eq(38, fn.winwidth(2))
+
+  exec([[
+    set laststatus=0
+    only
+    split
+    set winfixheight
+    split
+  ]])
+  eq(1, fn.winheight(1))
+  eq(3, fn.winheight(2))
+  eq(1, fn.winheight(3))
+
+  command('quit')
+  screen:expect([[
+    ^                                                                           |
+    {1:~                                                                          }|
+    {3:[No Name]                                                                  }|
+                                                                               |
+    {1:~                                                                          }|*3
+                                                                               |
+  ]])
+  eq(2, fn.winheight(1))
+  eq(4, fn.winheight(2))
 end)
