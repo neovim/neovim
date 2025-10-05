@@ -6149,4 +6149,25 @@ func Test_autocompletedelay_longest_preinsert()
   call StopVimInTerminal(buf)
 endfunc
 
+" Issue 18493
+func Test_longest_preinsert_accept()
+  call Ntest_override("char_avail", 1)
+  new
+  call setline(1, ['func1', 'xfunc', 'func2'])
+  set completeopt+=noselect
+
+  call feedkeys("Gof\<C-N>\<Down>\<C-Y>", 'tx')
+  call assert_equal('func1', getline('.'))
+
+  set completeopt+=longest autocomplete
+  call feedkeys("Sf\<Down>\<C-Y>", 'tx')
+  call assert_equal('func2', getline('.'))
+  call feedkeys("Sf\<C-Y>", 'tx')
+  call assert_equal('func', getline('.'))
+
+  set completeopt& autocomplete&
+  bw!
+  call Ntest_override("char_avail", 0)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
