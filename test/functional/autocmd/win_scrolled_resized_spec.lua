@@ -349,4 +349,55 @@ describe('WinScrolled', function()
       [winid_str] = { leftcol = 0, topline = -3, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
+
+  -- Test for #35803
+  it('does not crash when WinResized closes popup before WinScrolled #35803', function()
+    exec([[
+      set scrolloff=0
+      call setline(1, range(1, 100))
+
+      " Create first popup window (will be resized and closed)
+      let buf1 = nvim_create_buf(v:false, v:true)
+      call nvim_buf_set_lines(buf1, 0, -1, v:false, map(range(1, 50), 'string(v:val)'))
+      let popup1 = nvim_open_win(buf1, v:false, {
+        \ 'relative': 'editor',
+        \ 'width': 20,
+        \ 'height': 5,
+        \ 'col': 10,
+        \ 'row': 5
+        \ })
+
+      " Create second popup window (will be scrolled)
+      let buf2 = nvim_create_buf(v:false, v:true)
+      call nvim_buf_set_lines(buf2, 0, -1, v:false, map(range(1, 50), 'string(v:val)'))
+      let popup2 = nvim_open_win(buf2, v:false, {
+        \ 'relative': 'editor',
+        \ 'width': 20,
+        \ 'height': 5,
+        \ 'col': 35,
+        \ 'row': 5
+        \ })
+
+      let g:resized = 0
+      let g:scrolled = 0
+
+      " WinResized autocmd resizes and closes the first popup
+      autocmd WinResized * let g:resized += 1 | call nvim_win_set_height(popup1, 10) | call nvim_win_close(popup1, v:true)
+      " WinScrolled autocmd scrolls the second popup
+      autocmd WinScrolled * let g:scrolled += 1 | call nvim_win_call(popup2, {-> execute('normal! \<C-E>')})
+    ]])
+    eq(0, eval('g:resized'))
+    eq(0, eval('g:scrolled'))
+
+    -- Trigger a resize on popup1, which will close it
+    -- This should trigger WinResized (which closes popup1) and WinScrolled (which scrolls popup2)
+    -- Before the fix, WinScrolled would use the freed pointer causing a crash
+    api.nvim_win_set_height(eval('popup1'), 8)
+
+    -- The key is that it should not crash when WinResized closes a window
+    -- that WinScrolled might have referenced via a stale buf_T pointer
+    assert_alive()
+    -- Verify autocmds were actually triggered
+    eq(1, eval('g:resized > 0'))
+  end)
 end)
