@@ -6597,16 +6597,6 @@ typval_T *get_vim_var_tv(const VimVarIndex idx)
   return &vimvars[idx].vv_tv;
 }
 
-/// Set v:variable to tv.
-///
-/// @param[in]  idx  Index of variable to set.
-/// @param[in]  val  Value to set to. Will be copied.
-void set_vim_var_tv(const VimVarIndex idx, typval_T *const tv)
-{
-  tv_clear(&vimvars[idx].vv_di.di_tv);
-  tv_copy(tv, &vimvars[idx].vv_di.di_tv);
-}
-
 /// Set the v:argv list.
 void set_argv_var(char **argv, int argc)
 {

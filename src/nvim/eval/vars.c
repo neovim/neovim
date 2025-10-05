@@ -1527,6 +1527,17 @@ dict_T *get_vimvar_dict(void)
   return &vimvardict;
 }
 
+/// Set v:variable to tv.
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to. Will be copied.
+void set_vim_var_tv(const VimVarIndex idx, typval_T *const tv)
+{
+  typval_T *vv_tv = get_vim_var_tv(idx);
+  tv_clear(vv_tv);
+  tv_copy(tv, vv_tv);
+}
+
 /// Get number v: variable value.
 varnumber_T get_vim_var_nr(const VimVarIndex idx) FUNC_ATTR_PURE
 {
