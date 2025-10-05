@@ -5556,6 +5556,8 @@ jobstart({cmd} [, {opts}])                                          *jobstart()*
 		          connected to the current (unmodified) buffer. Implies "pty".
 		          Default "height" and "width" are set to the current window
 		          dimensions. |jobstart()|. Defaults $TERM to "xterm-256color".
+		  keep_bufname: (boolean) Don't change current (unmodified) buffer's
+			      bufname when create terminal buffer.
 		  width:      (number) Width of the `pty` terminal.
 
 		{opts} is passed as |self| dictionary to the callback; the
