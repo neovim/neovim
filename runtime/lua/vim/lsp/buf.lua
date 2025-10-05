@@ -1117,8 +1117,9 @@ end
 ---   - {triggerKind}? (`integer`) The reason why code actions were requested.
 --- @field context? lsp.CodeActionContext
 ---
---- Predicate taking an `CodeAction` and returning a boolean.
---- @field filter? fun(x: lsp.CodeAction|lsp.Command):boolean
+--- Predicate taking a code action or command and the provider's ID.
+--- If it returns false, the action is filtered out.
+--- @field filter? fun(x: lsp.CodeAction|lsp.Command, client_id: integer):boolean
 ---
 --- When set to `true`, and there is just one remaining action
 --- (after filtering), the action is applied without user query.
@@ -1142,7 +1143,8 @@ end
 ---@param opts? vim.lsp.buf.code_action.Opts
 local function on_code_action_results(results, opts)
   ---@param a lsp.Command|lsp.CodeAction
-  local function action_filter(a)
+  ---@param client_id integer
+  local function action_filter(a, client_id)
     -- filter by specified action kind
     if opts and opts.context then
       if opts.context.only then
@@ -1168,7 +1170,7 @@ local function on_code_action_results(results, opts)
       end
     end
     -- filter by user function
-    if opts and opts.filter and not opts.filter(a) then
+    if opts and opts.filter and not opts.filter(a, client_id) then
       return false
     end
     -- no filter removed this action
@@ -1179,7 +1181,7 @@ local function on_code_action_results(results, opts)
   local actions = {}
   for _, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
-      if action_filter(action) then
+      if action_filter(action, result.context.client_id) then
         table.insert(actions, { action = action, ctx = result.context })
       end
     end
