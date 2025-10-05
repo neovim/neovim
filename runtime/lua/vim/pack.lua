@@ -957,8 +957,10 @@ end
 ---     - If `false`, show confirmation buffer. It lists data about all set to
 ---       update plugins. Pending changes starting with `>` will be applied while
 ---       the ones starting with `<` will be reverted.
----       It has special in-process LSP server attached to provide more interactive
----       features. Currently supported methods:
+---       It has dedicated buffer-local mappings:
+---       - |]]| and |[[| to navigate through plugin sections.
+---
+---       Some features are provided  via LSP:
 ---         - 'textDocument/documentSymbol' (`gO` via |lsp-defaults|
 ---           or |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
 ---         - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) -

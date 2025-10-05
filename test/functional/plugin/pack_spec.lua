@@ -1205,6 +1205,40 @@ describe('vim.pack', function()
         validate_hover({ 32, 0 }, 'Add version 0.3.1')
       end)
 
+      it('has buffer-local mappings', function()
+        t.skip(not is_jit(), "Non LuaJIT reports update errors differently due to 'coxpcall'")
+        exec_lua(function()
+          vim.pack.add({
+            repos_src.fetch,
+            { src = repos_src.semver, version = 'v0.3.0' },
+            { src = repos_src.defbranch, version = 'does-not-exist' },
+          })
+          -- Enable sourcing filetype script (that creates mappings)
+          vim.cmd('filetype plugin on')
+          vim.pack.update()
+        end)
+
+        -- Plugin sections navigation
+        local validate = function(keys, ref_cursor)
+          n.feed(keys)
+          eq(ref_cursor, api.nvim_win_get_cursor(0))
+        end
+
+        api.nvim_win_set_cursor(0, { 1, 1 })
+        validate(']]', { 3, 0 })
+        validate(']]', { 11, 0 })
+        validate(']]', { 24, 0 })
+        -- - Should not wrap around the edge
+        validate(']]', { 24, 0 })
+
+        api.nvim_win_set_cursor(0, { 32, 1 })
+        validate('[[', { 24, 0 })
+        validate('[[', { 11, 0 })
+        validate('[[', { 3, 0 })
+        -- - Should not wrap around the edge
+        validate('[[', { 3, 0 })
+      end)
+
       it('suggests newer versions when on non-tagged commit', function()
         local commit = git_get_hash('0.3.1~', 'semver')
         exec_lua(function()
