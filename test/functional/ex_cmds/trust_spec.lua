@@ -13,21 +13,21 @@ local fn = n.fn
 describe(':trust', function()
   local xstate = 'Xstate'
 
-  setup(function()
-    n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
-  end)
-
-  teardown(function()
-    n.rmdir(xstate)
-  end)
-
   before_each(function()
+    n.mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     t.write_file('test_file', 'test')
     clear { env = { XDG_STATE_HOME = xstate } }
   end)
 
   after_each(function()
     os.remove('test_file')
+    n.rmdir(xstate)
+  end)
+
+  it('is not executed when inside false condition', function()
+    command('edit test_file')
+    eq('', exec_capture('if 0 | trust | endif'))
+    eq(nil, vim.uv.fs_stat(fn.stdpath('state') .. pathsep .. 'trust'))
   end)
 
   it('trust then deny then remove a file using current buffer', function()
