@@ -5,7 +5,6 @@
 
 local lsp = vim.lsp
 local protocol = lsp.protocol
-local ms = protocol.Methods
 local util = lsp.util
 
 local api = vim.api
@@ -363,7 +362,7 @@ local function refresh(bufnr, client_id, only_visible)
     return
   end
 
-  local method = ms.textDocument_diagnostic
+  local method = 'textDocument/diagnostic'
   local clients = lsp.get_clients({ bufnr = bufnr, method = method, id = client_id })
   local bufstate = bufstates[bufnr]
 
@@ -403,8 +402,8 @@ function M._enable(bufnr)
     buffer = bufnr,
     callback = function(opts)
       if
-        opts.data.method ~= ms.textDocument_didChange
-        and opts.data.method ~= ms.textDocument_didOpen
+        opts.data.method ~= 'textDocument/didChange'
+        and opts.data.method ~= 'textDocument/didOpen'
       then
         return
       end
@@ -430,7 +429,7 @@ function M._enable(bufnr)
   api.nvim_create_autocmd('LspDetach', {
     buffer = bufnr,
     callback = function(args)
-      local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_diagnostic })
+      local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
 
       if
         not vim.iter(clients):any(function(c)
@@ -469,7 +468,7 @@ end
 --- Request workspace-wide diagnostics.
 --- @param opts vim.lsp.WorkspaceDiagnosticsOpts
 function M._workspace_diagnostics(opts)
-  local clients = lsp.get_clients({ method = ms.workspace_diagnostic, id = opts.client_id })
+  local clients = lsp.get_clients({ method = 'workspace/diagnostic', id = opts.client_id })
 
   --- @param error lsp.ResponseError?
   --- @param result lsp.WorkspaceDiagnosticReport
@@ -480,7 +479,7 @@ function M._workspace_diagnostics(opts)
     if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
       if error.data == nil or error.data.retriggerRequest ~= false then
         local client = assert(lsp.get_client_by_id(ctx.client_id))
-        client:request(ms.workspace_diagnostic, ctx.params, handler)
+        client:request('workspace/diagnostic', ctx.params, handler)
       end
       return
     end
@@ -511,7 +510,7 @@ function M._workspace_diagnostics(opts)
       previousResultIds = previous_result_ids(client.id),
     }
 
-    client:request(ms.workspace_diagnostic, params, handler)
+    client:request('workspace/diagnostic', params, handler)
   end
 end
 

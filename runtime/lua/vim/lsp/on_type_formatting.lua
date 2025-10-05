@@ -1,7 +1,7 @@
 local api = vim.api
 local lsp = vim.lsp
 local util = lsp.util
-local method = lsp.protocol.Methods.textDocument_onTypeFormatting
+local method = 'textDocument/onTypeFormatting'
 
 local schedule = vim.schedule
 local current_buf = api.nvim_get_current_buf

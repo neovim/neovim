@@ -36,7 +36,6 @@ local M = {}
 local api = vim.api
 local lsp = vim.lsp
 local protocol = lsp.protocol
-local ms = protocol.Methods
 
 local rtt_ms = 50.0
 local ns_to_ms = 0.000001
@@ -448,7 +447,7 @@ local function request(clients, bufnr, win, ctx, callback)
     local params = lsp.util.make_position_params(win, client.offset_encoding)
     --- @cast params lsp.CompletionParams
     params.context = ctx
-    local ok, request_id = client:request(ms.textDocument_completion, params, function(err, result)
+    local ok, request_id = client:request('textDocument/completion', params, function(err, result)
       responses[client_id] = { err = err, result = result }
       remaining_requests = remaining_requests - 1
       if remaining_requests == 0 then
@@ -660,7 +659,7 @@ local function on_complete_done()
     local changedtick = vim.b[bufnr].changedtick
 
     --- @param result lsp.CompletionItem
-    client:request(ms.completionItem_resolve, completion_item, function(err, result)
+    client:request('completionItem/resolve', completion_item, function(err, result)
       if changedtick ~= vim.b[bufnr].changedtick then
         return
       end
@@ -870,7 +869,7 @@ function M._omnifunc(findstart, base)
   lsp.log.debug('omnifunc.findstart', { findstart = findstart, base = base })
   assert(base) -- silence luals
   local bufnr = api.nvim_get_current_buf()
-  local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
+  local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/completion' })
   local remaining = #clients
   if remaining == 0 then
     return findstart == 1 and -1 or {}

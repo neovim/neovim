@@ -126,7 +126,7 @@ local function check_watcher()
         'dynamicRegistration'
       )
       local has_dynamic_capability =
-        client.dynamic_capabilities:get(vim.lsp.protocol.Methods.workspace_didChangeWatchedFiles)
+        client.dynamic_capabilities:get('workspace/didChangeWatchedFiles')
       return has_capability == nil
         or has_dynamic_capability == nil
         or client.workspace_folders == nil

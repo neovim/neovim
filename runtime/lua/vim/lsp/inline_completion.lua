@@ -33,7 +33,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local ms = require('vim.lsp.protocol').Methods
 local grammar = require('vim.lsp._snippet_grammar')
 local api = vim.api
 
@@ -61,7 +60,7 @@ local namespace = api.nvim_create_namespace('nvim.lsp.inline_completion')
 ---@field client_state table<integer, vim.lsp.inline_completion.ClientState>
 local Completor = {
   name = 'inline_completion',
-  method = ms.textDocument_inlineCompletion,
+  method = 'textDocument/inlineCompletion',
   active = {},
 }
 Completor.__index = Completor
@@ -283,7 +282,7 @@ function Completor:request(kind)
       position = util.make_position_params(0, client.offset_encoding).position,
       context = context,
     }
-    client:request(ms.textDocument_inlineCompletion, params, function(...)
+    client:request('textDocument/inlineCompletion', params, function(...)
       self:handler(...)
     end)
   end
@@ -318,7 +317,7 @@ end
 function Completor:abort()
   util._cancel_requests({
     bufnr = self.bufnr,
-    method = ms.textDocument_inlineCompletion,
+    method = 'textDocument/inlineCompletion',
     type = 'pending',
   })
   self:reset_timer()
