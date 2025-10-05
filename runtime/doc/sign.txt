@@ -97,7 +97,7 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 
 See |sign_define()| for the equivalent Vim script function.
 
-:sign define {name} {argument}...
+:sig[n] define {name} {argument}...
 		Define a new sign or set attributes for an existing sign.
 		The {name} can either be a number (all digits) or a name
 		starting with a non-digit.  Leading zeros are ignored, thus
@@ -146,7 +146,7 @@ DELETING A SIGN						*:sign-undefine* *E155*
 
 See |sign_undefine()| for the equivalent Vim script function.
 
-:sign undefine {name}
+:sig[n] undefine {name}
 		Deletes a previously defined sign.  If signs with this {name}
 		are still placed this will cause trouble.
 
@@ -158,9 +158,9 @@ LISTING SIGNS						*:sign-list* *E156*
 
 See |sign_getdefined()| for the equivalent Vim script function.
 
-:sign list	Lists all defined signs and their attributes.
+:sig[n] list	Lists all defined signs and their attributes.
 
-:sign list {name}
+:sig[n] list {name}
 		Lists one defined sign and its attributes.
 
 
@@ -168,7 +168,7 @@ PLACING SIGNS						*:sign-place* *E158*
 
 See |sign_place()| for the equivalent Vim script function.
 
-:sign place {id} line={lnum} name={name} file={fname}
+:sig[n] place {id} line={lnum} name={name} file={fname}
 		Place sign defined as {name} at line {lnum} in file {fname}.
 							*:sign-fname*
 		The file {fname} must already be loaded in a buffer.  The
@@ -199,7 +199,7 @@ See |sign_place()| for the equivalent Vim script function.
 			:sign place 9 group=g2 priority=50 line=5
 							\ name=sign1 file=a.py
 <
-:sign place {id} line={lnum} name={name} [buffer={nr}]
+:sig[n] place {id} line={lnum} name={name} [buffer={nr}]
 		Same, but use buffer {nr}.  If the buffer argument is not
 		given, place the sign in the current buffer.
 
@@ -208,7 +208,7 @@ See |sign_place()| for the equivalent Vim script function.
 			:sign place 10 line=99 name=sign3 buffer=3
 <
 							*E885*
-:sign place {id} name={name} file={fname}
+:sig[n] place {id} name={name} file={fname}
 		Change the placed sign {id} in file {fname} to use the defined
 		sign {name}.  See remark above about {fname} |:sign-fname|.
 		This can be used to change the displayed sign without moving
@@ -222,7 +222,7 @@ See |sign_place()| for the equivalent Vim script function.
 		Example: >
 			:sign place 23 name=sign1 file=/path/to/edit.py
 <
-:sign place {id} name={name} [buffer={nr}]
+:sig[n] place {id} name={name} [buffer={nr}]
 		Same, but use buffer {nr}.  If the buffer argument is not
 		given, use the current buffer.
 
@@ -235,75 +235,75 @@ REMOVING SIGNS						*:sign-unplace* *E159*
 
 See |sign_unplace()| for the equivalent Vim script function.
 
-:sign unplace {id} file={fname}
+:sig[n] unplace {id} file={fname}
 		Remove the previously placed sign {id} from file {fname}.
 		See remark above about {fname} |:sign-fname|.
 
-:sign unplace {id} group={group} file={fname}
+:sig[n] unplace {id} group={group} file={fname}
 		Same but remove the sign {id} in sign group {group}.
 
-:sign unplace {id} group=* file={fname}
+:sig[n] unplace {id} group=* file={fname}
 		Same but remove the sign {id} from all the sign groups.
 
-:sign unplace * file={fname}
+:sig[n] unplace * file={fname}
 		Remove all placed signs in file {fname}.
 
-:sign unplace * group={group} file={fname}
+:sig[n] unplace * group={group} file={fname}
 		Remove all placed signs in group {group} from file {fname}.
 
-:sign unplace * group=* file={fname}
+:sig[n] unplace * group=* file={fname}
 		Remove all placed signs in all the groups from file {fname}.
 
-:sign unplace {id} buffer={nr}
+:sig[n] unplace {id} buffer={nr}
 		Remove the previously placed sign {id} from buffer {nr}.
 
-:sign unplace {id} group={group} buffer={nr}
+:sig[n] unplace {id} group={group} buffer={nr}
 		Remove the previously placed sign {id} in group {group} from
 		buffer {nr}.
 
-:sign unplace {id} group=* buffer={nr}
+:sig[n] unplace {id} group=* buffer={nr}
 		Remove the previously placed sign {id} in all the groups from
 		buffer {nr}.
 
-:sign unplace * buffer={nr}
+:sig[n] unplace * buffer={nr}
 		Remove all placed signs in buffer {nr}.
 
-:sign unplace * group={group} buffer={nr}
+:sig[n] unplace * group={group} buffer={nr}
 		Remove all placed signs in group {group} from buffer {nr}.
 
-:sign unplace * group=* buffer={nr}
+:sig[n] unplace * group=* buffer={nr}
 		Remove all placed signs in all the groups from buffer {nr}.
 
-:sign unplace {id}
+:sig[n] unplace {id}
 		Remove the previously placed sign {id} from all files it
 		appears in.
 
-:sign unplace {id} group={group}
+:sig[n] unplace {id} group={group}
 		Remove the previously placed sign {id} in group {group} from
 		all files it appears in.
 
-:sign unplace {id} group=*
+:sig[n] unplace {id} group=*
 		Remove the previously placed sign {id} in all the groups from
 		all the files it appears in.
 
-:sign unplace *
+:sig[n] unplace *
 		Remove all placed signs in the global group from all the files.
 
-:sign unplace * group={group}
+:sig[n] unplace * group={group}
 		Remove all placed signs in group {group} from all the files.
 
-:sign unplace * group=*
+:sig[n] unplace * group=*
 		Remove all placed signs in all the groups from all the files.
 
-:sign unplace
+:sig[n] unplace
 		Remove a placed sign at the cursor position. If multiple signs
 		are placed in the line, then only one is removed.
 
-:sign unplace group={group}
+:sig[n] unplace group={group}
 		Remove a placed sign in group {group} at the cursor
 		position.
 
-:sign unplace group=*
+:sig[n] unplace group=*
 		Remove a placed sign in any group at the cursor position.
 
 
@@ -311,32 +311,31 @@ LISTING PLACED SIGNS					*:sign-place-list*
 
 See |sign_getplaced()| for the equivalent Vim script function.
 
-:sign place file={fname}
+:sig[n] place file={fname}
 		List signs placed in file {fname}.
 		See remark above about {fname} |:sign-fname|.
 
-:sign place group={group} file={fname}
+:sig[n] place group={group} file={fname}
 		List signs in group {group} placed in file {fname}.
 
-:sign place group=* file={fname}
+:sig[n] place group=* file={fname}
 		List signs in all the groups placed in file {fname}.
 
-
-:sign place buffer={nr}
+:sig[n] place buffer={nr}
 		List signs placed in buffer {nr}.
 
-:sign place group={group} buffer={nr}
+:sig[n] place group={group} buffer={nr}
 		List signs in group {group} placed in buffer {nr}.
 
-:sign place group=* buffer={nr}
+:sig[n] place group=* buffer={nr}
 		List signs in all the groups placed in buffer {nr}.
 
-:sign place	List placed signs in the global group in all files.
+:sig[n] place	List placed signs in the global group in all files.
 
-:sign place group={group}
+:sig[n] place group={group}
 		List placed signs with sign group {group} in all files.
 
-:sign place group=*
+:sig[n] place group=*
 		List placed signs in all sign groups in all files.
 
 
@@ -344,22 +343,22 @@ JUMPING TO A SIGN					*:sign-jump* *E157*
 
 See |sign_jump()| for the equivalent Vim script function.
 
-:sign jump {id} file={fname}
+:sig[n] jump {id} file={fname}
 		Open the file {fname} or jump to the window that contains
 		{fname} and position the cursor at sign {id}.
 		See remark above about {fname} |:sign-fname|.
 		If the file isn't displayed in window and the current file can
 		not be |abandon|ed this fails.
 
-:sign jump {id} group={group} file={fname}
+:sig[n] jump {id} group={group} file={fname}
 		Same but jump to the sign in group {group}
 
-:sign jump {id} [buffer={nr}]					*E934*
+:sig[n] jump {id} [buffer={nr}]				*E934*
 		Same, but use buffer {nr}.  This fails if buffer {nr} does not
 		have a name. If the buffer argument is not given, use the
 		current buffer.
 
-:sign jump {id} group={group} [buffer={nr}]
+:sig[n] jump {id} group={group} [buffer={nr}]
 		Same but jump to the sign in group {group}
 
 
