@@ -393,14 +393,18 @@ update({names}, {opts})                                    *vim.pack.update()*
     • Depending on `force`:
       • If `false`, show confirmation buffer. It lists data about all set to
         update plugins. Pending changes starting with `>` will be applied
-        while the ones starting with `<` will be reverted. It has special
-        in-process LSP server attached to provide more interactive features.
-        Currently supported methods:
+        while the ones starting with `<` will be reverted. It has dedicated
+        buffer-local mappings:
+        • |]]| and |[[| to navigate through plugin sections.
+        Some features are provided via LSP:
         • 'textDocument/documentSymbol' (`gO` via |lsp-defaults| or
           |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
         • 'textDocument/hover' (`K` via |lsp-defaults| or
           |vim.lsp.buf.hover()|) - show more information at cursor. Like
           details of particular pending change or newer tag.
+        • 'textDocument/codeAction' (`gra` via |lsp-defaults| or
+          |vim.lsp.buf.code_action()|) - show code actions available for
+          "plugin at cursor". Like "delete", "update", or "skip updating".
         Execute |:write| to confirm update, execute |:quit| to discard the
         update.
       • If `true`, make updates right away.

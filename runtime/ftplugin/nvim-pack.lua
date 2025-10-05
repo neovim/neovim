@@ -1,3 +1,4 @@
+-- Highlighting
 local ns = vim.api.nvim_create_namespace('nvim.pack.confirm')
 vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
@@ -49,3 +50,15 @@ for i, l in ipairs(lines) do
     hi_range(i, 4, l:len(), 'DiagnosticHint')
   end
 end
+
+-- Mappings
+local map_section_jump = function(lhs, search_flags, desc)
+  vim.keymap.set({ 'n', 'x' }, lhs, function()
+    for _ = 1, vim.v.count1 do
+      vim.fn.search('^## ', search_flags)
+    end
+  end, { buffer = 0, desc = desc })
+end
+
+map_section_jump('[[', 'bsW', 'Previous plugin')
+map_section_jump(']]', 'sW', 'Next plugin')
