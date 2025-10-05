@@ -350,7 +350,6 @@ describe('WinScrolled', function()
     }, eval('g:v_event'))
   end)
 
-  -- Test for #35803
   it('does not crash when WinResized closes popup before WinScrolled #35803', function()
     exec([[
       set scrolloff=0
