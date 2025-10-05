@@ -2261,4 +2261,50 @@ func Test_winfixsize_positions()
   %bwipe
 endfunc
 
+func Test_winfixsize_vsep_statusline()
+  CheckScreendump
+  let lines =<< trim END
+    set noequalalways splitbelow splitright
+    vsplit
+    setlocal winfixwidth
+    vsplit
+    func SetupWfh()
+      set laststatus=0
+      only
+      split
+      set winfixheight
+      split
+    endfunc
+  END
+  call writefile(lines, 'XTestWinfixsizeVsepStatusline', 'D')
+  let buf = RunVimInTerminal('-S XTestWinfixsizeVsepStatusline', #{rows: 8})
+
+  call term_sendkeys(buf, ":echo winwidth(1) winwidth(2) winwidth(3)\n")
+  call WaitForAssert({-> assert_match('^16 37 20\>', term_getline(buf, 8))})
+
+  call term_sendkeys(buf, ":quit\n")
+  call VerifyScreenDump(buf, 'Test_winfixsize_vsep_statusline_1', {})
+
+  " Reported widths should be consistent with the screen dump.
+  call term_sendkeys(buf, ":echo winwidth(1) winwidth(2)\n")
+  " (May be better if 'wfw' window remains at 37 columns, but the resize is
+  " consistent with how things currently work for 'winfix*' windows)
+  call WaitForAssert({-> assert_match('^36 38\>', term_getline(buf, 8))})
+
+  " For good measure, also check bottom-most 'winfixheight' windows don't leave
+  " stray statuslines with &laststatus=0.
+  call term_sendkeys(buf,
+        \ ":call SetupWfh() | echo winheight(1) winheight(2) winheight(3)\n")
+  call WaitForAssert({-> assert_match('^1 3 1\>', term_getline(buf, 8))})
+
+  call term_sendkeys(buf, ":quit\n")
+  call VerifyScreenDump(buf, 'Test_winfixsize_vsep_statusline_2', {})
+
+  call term_sendkeys(buf, ":echo winheight(1) winheight(2)\n")
+  " (Likewise, may be better if 'wfh' window remains at 3 rows)
+  call WaitForAssert({-> assert_match('^2 4\>', term_getline(buf, 8))})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
