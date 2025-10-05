@@ -1706,8 +1706,8 @@ mark a file as trusted or untrusted using the |:trust| command or the
 			contents. The trust list is stored on disk, Nvim will
 			re-use it after restarting.
 
-			[++deny] marks [file] (or current buffer if no [file]) as
-			untrusted: it will never be executed, 'exrc' will
+			[++deny] marks [file] (or current buffer if no [file])
+			as untrusted: it will never be executed, 'exrc' will
 			ignore it.
 
 			[++remove] removes [file] (or current buffer if no
