@@ -1596,6 +1596,25 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   // Don't do this for ":read !cmd" and ":write !cmd".
   if ((eap->argt & EX_TRLBAR)) {
     separate_nextcmd(eap);
+  } else if (eap->cmdidx == CMD_execute
+             || eap->cmdidx == CMD_echo
+             || eap->cmdidx == CMD_echomsg
+             || eap->cmdidx == CMD_echoerr) {
+    // For commands without EX_TRLBAR, check for '|' separator
+    // by skipping over expressions (including string literals)
+    char *arg = eap->arg;
+    while (*arg != NUL && *arg != '|' && *arg != '\n') {
+      char *start = arg;
+      skip_expr(&arg, NULL);
+      // If skip_expr didn't advance, move forward to avoid infinite loop
+      if (arg == start) {
+        arg++;
+      }
+    }
+    if (*arg == '|' || *arg == '\n') {
+      eap->nextcmd = check_nextcmd(arg);
+      *arg = NUL;
+    }
   }
   // Fail if command doesn't support bang but is used with a bang
   if (!(eap->argt & EX_BANG) && eap->forceit) {
