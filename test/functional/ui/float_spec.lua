@@ -433,6 +433,18 @@ describe('float window', function()
     eq(5, api.nvim_get_option_value('scroll', { win = float_win }))
   end)
 
+  it("lines('w$') after nvim_win_set_height with 'splitkeep=screen' #36056", function()
+    api.nvim_set_option_value('splitkeep', 'screen', {})
+    local buf = api.nvim_create_buf(false, true)
+    local win = api.nvim_open_win(buf, false, { width = 5, height = 1, col = 0, row = 0, relative = 'cursor' })
+    api.nvim_buf_set_lines(buf, 0, -1, true, { ('1'):rep(10), ('2'):rep(10) })
+    local line = exec_lua(function()
+      vim.api.nvim_win_set_height(win, vim.api.nvim_win_get_height(win) + 3)
+      return vim.fn.line('w$', win)
+    end)
+    eq(2, line)
+  end)
+
   it(':unhide works when there are floating windows', function()
     local float_opts = { relative = 'editor', row = 1, col = 1, width = 5, height = 5 }
     local w0 = curwin()

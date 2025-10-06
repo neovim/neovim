@@ -6726,7 +6726,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
 
   if (height != prev_height) {
     if (height > 0 && valid_cursor) {
-      if (wp == curwin && *p_spk == 'c') {
+      if (wp == curwin && (*p_spk == 'c' || wp->w_floating)) {
         // w_wrow needs to be valid. When setting 'laststatus' this may
         // call win_new_height() recursively.
         validate_cursor(curwin);
@@ -6743,7 +6743,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
-    if (valid_cursor && !exiting && *p_spk == 'c') {
+    if (valid_cursor && !exiting && (*p_spk == 'c' || wp->w_floating)) {
       wp->w_skipcol = 0;
       scroll_to_fraction(wp, prev_height);
     }
@@ -6756,7 +6756,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     if (valid_cursor) {
       changed_line_abv_curs_win(wp);
       invalidate_botline(wp);
-      if (wp == curwin && *p_spk == 'c') {
+      if (wp == curwin && (*p_spk == 'c' || wp->w_floating)) {
         curs_columns(wp, true);  // validate w_wrow
       }
     }
