@@ -1,3 +1,5 @@
+// eval/list.c: List support and container (List, Dict, Blob) functions.
+
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/list.h"
@@ -7,6 +9,7 @@
 #include "nvim/garray.h"
 #include "nvim/globals.h"
 #include "nvim/mbyte.h"
+#include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 
 /// Enum used by filter(), map(), mapnew() and foreach()
@@ -19,6 +22,8 @@ typedef enum {
 
 #include "eval/list.c.generated.h"
 
+static const char e_argument_of_str_must_be_list_string_or_dictionary[]
+  = N_("E706: Argument of %s must be a List, String or Dictionary");
 static const char e_argument_of_str_must_be_list_string_dictionary_or_blob[]
   = N_("E1250: Argument of %s must be a List, String, Dictionary or Blob");
 
@@ -416,4 +421,431 @@ void f_mapnew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_foreach(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   filter_map(argvars, rettv, FILTERMAP_FOREACH);
+}
+
+/// "add(list, item)" function
+void f_add(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = 1;  // Default: failed.
+  if (argvars[0].v_type == VAR_LIST) {
+    list_T *const l = argvars[0].vval.v_list;
+    if (!value_check_lock(tv_list_locked(l), N_("add() argument"),
+                          TV_TRANSLATE)) {
+      tv_list_append_tv(l, &argvars[1]);
+      tv_copy(&argvars[0], rettv);
+    }
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+    if (b != NULL
+        && !value_check_lock(b->bv_lock, N_("add() argument"), TV_TRANSLATE)) {
+      bool error = false;
+      const varnumber_T n = tv_get_number_chk(&argvars[1], &error);
+
+      if (!error) {
+        ga_append(&b->bv_ga, (uint8_t)n);
+        tv_copy(&argvars[0], rettv);
+      }
+    }
+  } else {
+    emsg(_(e_listblobreq));
+  }
+}
+
+/// Count the number of times "needle" occurs in string "haystack".
+///
+/// @param ic  ignore case
+static varnumber_T count_string(const char *haystack, const char *needle, bool ic)
+{
+  varnumber_T n = 0;
+  const char *p = haystack;
+
+  if (p == NULL || needle == NULL || *needle == NUL) {
+    return 0;
+  }
+
+  if (ic) {
+    const size_t len = strlen(needle);
+
+    while (*p != NUL) {
+      if (mb_strnicmp(p, needle, len) == 0) {
+        n++;
+        p += len;
+      } else {
+        MB_PTR_ADV(p);
+      }
+    }
+  } else {
+    const char *next;
+    while ((next = strstr(p, needle)) != NULL) {
+      n++;
+      p = next + strlen(needle);
+    }
+  }
+
+  return n;
+}
+
+/// Count the number of times item "needle" occurs in List "l" starting at index "idx".
+///
+/// @param ic  ignore case
+static varnumber_T count_list(list_T *l, typval_T *needle, int64_t idx, bool ic)
+{
+  if (tv_list_len(l) == 0) {
+    return 0;
+  }
+
+  listitem_T *li = tv_list_find(l, (int)idx);
+  if (li == NULL) {
+    semsg(_(e_list_index_out_of_range_nr), idx);
+    return 0;
+  }
+
+  varnumber_T n = 0;
+
+  for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
+    if (tv_equal(TV_LIST_ITEM_TV(li), needle, ic)) {
+      n++;
+    }
+  }
+
+  return n;
+}
+
+/// Count the number of times item "needle" occurs in Dict "d".
+///
+/// @param ic  ignore case
+static varnumber_T count_dict(dict_T *d, typval_T *needle, bool ic)
+{
+  if (d == NULL) {
+    return 0;
+  }
+
+  varnumber_T n = 0;
+
+  TV_DICT_ITER(d, di, {
+    if (tv_equal(&di->di_tv, needle, ic)) {
+      n++;
+    }
+  });
+
+  return n;
+}
+
+/// "count()" function
+void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  varnumber_T n = 0;
+  int ic = 0;
+  bool error = false;
+
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    ic = (int)tv_get_number_chk(&argvars[2], &error);
+  }
+
+  if (!error && argvars[0].v_type == VAR_STRING) {
+    n = count_string(argvars[0].vval.v_string, tv_get_string_chk(&argvars[1]), ic);
+  } else if (!error && argvars[0].v_type == VAR_LIST) {
+    int64_t idx = 0;
+    if (argvars[2].v_type != VAR_UNKNOWN
+        && argvars[3].v_type != VAR_UNKNOWN) {
+      idx = (int64_t)tv_get_number_chk(&argvars[3], &error);
+    }
+    if (!error) {
+      n = count_list(argvars[0].vval.v_list, &argvars[1], idx, ic);
+    }
+  } else if (!error && argvars[0].v_type == VAR_DICT) {
+    dict_T *d = argvars[0].vval.v_dict;
+
+    if (d != NULL) {
+      if (argvars[2].v_type != VAR_UNKNOWN
+          && argvars[3].v_type != VAR_UNKNOWN) {
+        emsg(_(e_invarg));
+      } else {
+        n = count_dict(argvars[0].vval.v_dict, &argvars[1], ic);
+      }
+    }
+  } else if (!error) {
+    semsg(_(e_argument_of_str_must_be_list_string_or_dictionary), "count()");
+  }
+  rettv->vval.v_number = n;
+}
+
+/// extend() a Dict. Append Dict argvars[1] to Dict argvars[0] and return the
+/// resulting Dict in "rettv".
+///
+/// @param is_new  true for extendnew()
+static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, typval_T *rettv)
+{
+  dict_T *d1 = argvars[0].vval.v_dict;
+  if (d1 == NULL) {
+    const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
+    (void)locked;
+    assert(locked == true);
+    return;
+  }
+  dict_T *const d2 = argvars[1].vval.v_dict;
+  if (d2 == NULL) {
+    // Do nothing
+    tv_copy(&argvars[0], rettv);
+    return;
+  }
+
+  if (!is_new && value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    return;
+  }
+
+  if (is_new) {
+    d1 = tv_dict_copy(NULL, d1, false, get_copyID());
+    if (d1 == NULL) {
+      return;
+    }
+  }
+
+  const char *action = "force";
+  // Check the third argument.
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    const char *const av[] = { "keep", "force", "error" };
+
+    action = tv_get_string_chk(&argvars[2]);
+    if (action == NULL) {
+      if (is_new) {
+        tv_dict_unref(d1);
+      }
+      return;  // Type error; error message already given.
+    }
+    size_t i;
+    for (i = 0; i < ARRAY_SIZE(av); i++) {
+      if (strcmp(action, av[i]) == 0) {
+        break;
+      }
+    }
+    if (i == 3) {
+      if (is_new) {
+        tv_dict_unref(d1);
+      }
+      semsg(_(e_invarg2), action);
+      return;
+    }
+  }
+
+  tv_dict_extend(d1, d2, action);
+
+  if (is_new) {
+    *rettv = (typval_T){
+      .v_type = VAR_DICT,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_dict = d1,
+    };
+  } else {
+    tv_copy(&argvars[0], rettv);
+  }
+}
+
+/// extend() a List. Append List argvars[1] to List argvars[0] before index
+/// argvars[3] and return the resulting list in "rettv".
+///
+/// @param is_new  true for extendnew()
+static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, typval_T *rettv)
+{
+  bool error = false;
+
+  list_T *l1 = argvars[0].vval.v_list;
+  list_T *const l2 = argvars[1].vval.v_list;
+
+  if (!is_new && value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    return;
+  }
+
+  if (is_new) {
+    l1 = tv_list_copy(NULL, l1, false, get_copyID());
+    if (l1 == NULL) {
+      return;
+    }
+  }
+
+  listitem_T *item;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    int before = (int)tv_get_number_chk(&argvars[2], &error);
+    if (error) {
+      return;  // Type error; errmsg already given.
+    }
+
+    if (before == tv_list_len(l1)) {
+      item = NULL;
+    } else {
+      item = tv_list_find(l1, before);
+      if (item == NULL) {
+        semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
+        return;
+      }
+    }
+  } else {
+    item = NULL;
+  }
+  tv_list_extend(l1, l2, item);
+
+  if (is_new) {
+    *rettv = (typval_T){
+      .v_type = VAR_LIST,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_list = l1,
+    };
+  } else {
+    tv_copy(&argvars[0], rettv);
+  }
+}
+
+/// "extend()" or "extendnew()" function.
+///
+/// @param is_new  true for extendnew()
+static void extend(typval_T *argvars, typval_T *rettv, char *arg_errmsg, bool is_new)
+{
+  if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_LIST) {
+    extend_list(argvars, arg_errmsg, is_new, rettv);
+  } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type == VAR_DICT) {
+    extend_dict(argvars, arg_errmsg, is_new, rettv);
+  } else {
+    semsg(_(e_listdictarg), is_new ? "extendnew()" : "extend()");
+  }
+}
+
+/// "extend(list, list [, idx])" function
+/// "extend(dict, dict [, action])" function
+void f_extend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  char *errmsg = N_("extend() argument");
+  extend(argvars, rettv, errmsg, false);
+}
+
+/// "extendnew(list, list [, idx])" function
+/// "extendnew(dict, dict [, action])" function
+void f_extendnew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  char *errmsg = N_("extendnew() argument");
+  extend(argvars, rettv, errmsg, true);
+}
+
+/// "insert()" function
+void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  bool error = false;
+
+  if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+
+    if (b == NULL
+        || value_check_lock(b->bv_lock, N_("insert() argument"),
+                            TV_TRANSLATE)) {
+      return;
+    }
+
+    int before = 0;
+    const int len = tv_blob_len(b);
+
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      before = (int)tv_get_number_chk(&argvars[2], &error);
+      if (error) {
+        return;  // type error; errmsg already given
+      }
+      if (before < 0 || before > len) {
+        semsg(_(e_invarg2), tv_get_string(&argvars[2]));
+        return;
+      }
+    }
+    const int val = (int)tv_get_number_chk(&argvars[1], &error);
+    if (error) {
+      return;
+    }
+    if (val < 0 || val > 255) {
+      semsg(_(e_invarg2), tv_get_string(&argvars[1]));
+      return;
+    }
+
+    ga_grow(&b->bv_ga, 1);
+    uint8_t *const p = (uint8_t *)b->bv_ga.ga_data;
+    memmove(p + before + 1, p + before, (size_t)(len - before));
+    *(p + before) = (uint8_t)val;
+    b->bv_ga.ga_len++;
+
+    tv_copy(&argvars[0], rettv);
+  } else if (argvars[0].v_type != VAR_LIST) {
+    semsg(_(e_listblobarg), "insert()");
+  } else {
+    list_T *l = argvars[0].vval.v_list;
+    if (value_check_lock(tv_list_locked(l), N_("insert() argument"), TV_TRANSLATE)) {
+      return;
+    }
+
+    int64_t before = 0;
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      before = tv_get_number_chk(&argvars[2], &error);
+    }
+    if (error) {
+      // type error; errmsg already given
+      return;
+    }
+
+    listitem_T *item = NULL;
+    if (before != tv_list_len(l)) {
+      item = tv_list_find(l, (int)before);
+      if (item == NULL) {
+        semsg(_(e_list_index_out_of_range_nr), before);
+        l = NULL;
+      }
+    }
+    if (l != NULL) {
+      tv_list_insert_tv(l, &argvars[1], item);
+      tv_copy(&argvars[0], rettv);
+    }
+  }
+}
+
+/// "remove()" function
+void f_remove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  const char *const arg_errmsg = N_("remove() argument");
+
+  if (argvars[0].v_type == VAR_DICT) {
+    tv_dict_remove(argvars, rettv, arg_errmsg);
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    tv_blob_remove(argvars, rettv, arg_errmsg);
+  } else if (argvars[0].v_type == VAR_LIST) {
+    tv_list_remove(argvars, rettv, arg_errmsg);
+  } else {
+    semsg(_(e_listdictblobarg), "remove()");
+  }
+}
+
+/// "reverse({list})" function
+void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (tv_check_for_string_or_list_or_blob_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
+  if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+    const int len = tv_blob_len(b);
+
+    for (int i = 0; i < len / 2; i++) {
+      const uint8_t tmp = tv_blob_get(b, i);
+      tv_blob_set(b, i, tv_blob_get(b, len - i - 1));
+      tv_blob_set(b, len - i - 1, tmp);
+    }
+    tv_blob_set_ret(rettv, b);
+  } else if (argvars[0].v_type == VAR_STRING) {
+    rettv->v_type = VAR_STRING;
+    if (argvars[0].vval.v_string != NULL) {
+      rettv->vval.v_string = reverse_text(argvars[0].vval.v_string);
+    } else {
+      rettv->vval.v_string = NULL;
+    }
+  } else if (argvars[0].v_type == VAR_LIST) {
+    list_T *const l = argvars[0].vval.v_list;
+    if (!value_check_lock(tv_list_locked(l), N_("reverse() argument"),
+                          TV_TRANSLATE)) {
+      tv_list_reverse(l);
+      tv_list_set_ret(rettv, l);
+    }
+  }
 }
