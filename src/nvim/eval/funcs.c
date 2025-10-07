@@ -3640,7 +3640,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       cmd = shell_argv_to_json(argv, true);
     }
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s%s", IObuff, pid,
-             cmdjson ? cmdjson: cmd,
+             cmdjson ? cmdjson : cmd,
              uri_fragment ? uri_fragment : "");
     xfree(cmdjson);
 

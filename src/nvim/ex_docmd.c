@@ -3973,7 +3973,9 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
   // the file name contains a wildcard it should not cause expanding.
   // (it will be expanded anyway if there is a wildcard before replacing).
   bool has_wildcards = path_has_wildcard(p);
-  while (*p != NUL) {
+
+  bool is_url = path_with_url(p);  // Treat URIs literally, don't expand "#", "%", etc.
+  while (is_url && *p != NUL) {
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
       p += 2;
