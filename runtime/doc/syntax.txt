@@ -5619,8 +5619,8 @@ If your syntax causes redrawing to be slow, here are a few hints on making it
 faster.  To see slowness switch on some features that usually interfere, such
 as 'relativenumber' and |folding|.
 
-To find out what patterns are consuming most time, get an overview with this
-sequence: >
+To find out what patterns are consuming the most time, get an overview with
+this sequence: >
 	:syntime on
 	[ redraw the text at least once with CTRL-L ]
 	:syntime report
