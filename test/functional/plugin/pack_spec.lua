@@ -541,6 +541,29 @@ describe('vim.pack', function()
       eq(ref_lockfile, get_lock_tbl())
     end)
 
+    it('handles lockfile during install errors', function()
+      local repo_not_exist = 'file://' .. repo_get_path('does-not-exist')
+      pcall_err(exec_lua, function()
+        vim.pack.add({
+          repo_not_exist,
+          { src = repos_src.basic, version = 'not-exist' },
+          { src = repos_src.pluginerr, version = 'main' },
+        })
+      end)
+
+      local pluginerr_hash = git_get_hash('main', 'pluginerr')
+      local ref_lockfile = {
+        -- Should be no entry for `repo_not_exist`
+        plugins = {
+          -- No `rev` because there was no relevant checkout
+          basic = { src = repos_src.basic, version = "'not-exist'" },
+          -- Error during sourcing 'plugin/' should not affect lockfile
+          pluginerr = { rev = pluginerr_hash, src = repos_src.pluginerr, version = "'main'" },
+        },
+      }
+      eq(ref_lockfile, get_lock_tbl())
+    end)
+
     it('installs at proper version', function()
       local out = exec_lua(function()
         vim.pack.add({
