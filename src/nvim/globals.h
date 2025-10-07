@@ -724,7 +724,6 @@ EXTERN int wild_menu_showing INIT( = 0);
 enum {
   WM_SHOWN = 1,     ///< wildmenu showing
   WM_SCROLLED = 2,  ///< wildmenu showing with scroll
-  WM_LIST = 3,      ///< cmdline CTRL-D
 };
 
 // When a window has a local directory, the absolute path of the global

@@ -2076,7 +2076,6 @@ static int command_line_handle_key(CommandLineState *s)
       break;                  // Use ^D as normal char instead
     }
 
-    wild_menu_showing = WM_LIST;
     redrawcmd();
     return 1;                 // don't do incremental search now
 
@@ -4976,7 +4975,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
 void f_wildtrigger(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (!(State & MODE_CMDLINE) || char_avail()
-      || (wild_menu_showing != 0 && wild_menu_showing != WM_LIST)
+      || wild_menu_showing
       || cmdline_pum_active()) {
     return;
   }
