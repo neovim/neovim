@@ -637,7 +637,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 
   int row = cmdline_row - 1;
   if (row >= 0) {
-    if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
+    if (wild_menu_showing == 0) {
       if (msg_scrolled > 0) {
         // Put the wildmenu just above the command line.  If there is
         // no room, scroll the screen one line up.
@@ -3796,13 +3796,10 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
     redrawcmd();
     save_p_ls = -1;
     wild_menu_showing = 0;
-    // don't redraw statusline if WM_LIST is showing
-  } else if (wild_menu_showing != WM_LIST) {
+  } else {
     win_redraw_last_status(topframe);
     wild_menu_showing = 0;  // must be before redraw_statuslines #8385
     redraw_statuslines();
-  } else {
-    wild_menu_showing = 0;
   }
   KeyTyped = skt;
   if (cclp->input_fn) {
