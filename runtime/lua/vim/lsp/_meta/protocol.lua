@@ -2433,7 +2433,7 @@ error('Cannot require a meta file')
 ---@field id string
 ---
 ---The method / capability to register for.
----@field method string
+---@field method vim.lsp.protocol.Method
 ---
 ---Options necessary for the registration.
 ---@field registerOptions? lsp.LSPAny
@@ -2446,7 +2446,7 @@ error('Cannot require a meta file')
 ---@field id string
 ---
 ---The method to unregister for.
----@field method string
+---@field method vim.lsp.protocol.Method
 
 ---The initialize parameters
 ---@class lsp._InitializeParams: lsp.WorkDoneProgressParams

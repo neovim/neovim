@@ -30,7 +30,7 @@ Options:
 --- @field messageDirection string
 --- @field clientCapability? string
 --- @field serverCapability? string
---- @field method string
+--- @field method vim.lsp.protocol.Method
 --- @field params? any
 --- @field proposed? boolean
 --- @field registrationMethod? string

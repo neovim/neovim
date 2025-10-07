@@ -263,6 +263,7 @@ function M.on_diagnostic(error, result, ctx)
   if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
     if error.data == nil or error.data.retriggerRequest ~= false then
       local client = assert(lsp.get_client_by_id(ctx.client_id))
+      ---@diagnostic disable-next-line: param-type-mismatch
       client:request(ctx.method, ctx.params)
     end
     return
