@@ -83,37 +83,43 @@ describe(':edit term://*', function()
 
   it('URI fragment', function()
     local screen = Screen.new(40, 4, { rgb = false })
-    command(([[edit term://%s//\"%s\" arg1 arg2 \#my-fragment]]):format(
-      n.nvim_dir,
-      ('%sprintargs-test%s'):format(
-        t.is_os('win') and '' or './',
-        t.is_os('win') and '.exe' or ''
+    -- Don't need to escape "#" in a URI.
+    command(
+      ([[edit term://%s//\"%s\" arg1 arg2#my-fragment]]):format(
+        n.nvim_dir,
+        ('%sprintargs-test%s'):format(
+          t.is_os('win') and '' or './',
+          t.is_os('win') and '.exe' or ''
+        )
       )
-    ))
+    )
     -- "#my-fragment" should NOT be sent to the shell.
-    screen:expect{
+    screen:expect {
       grid = [[
         ^ready $ "./printargs-test" arg1 arg2    |
                                                 |
         [Process exited 0]                      |
                                                 |
-      ]]
+      ]],
     }
-    matches(
-      [[printargs%-test.?e?x?e?" arg1 arg2 #my%-fragment]],
-      uri_args()
-    )
+    matches([[printargs%-test.?e?x?e?" arg1 arg2#my%-fragment]], uri_args())
 
-    command('enew')
-    command(([[edit term://\[\"%s\", \"arg1\", \"arg2\"]\#my-fragment]]):format(testprg('printargs-test')))
-    matches('[printargs-test", "arg1", "arg2"]', uri_args())
+    command('edit test_alt_buf')
+    command('edit test_new_buf')
+    -- Don't need to escape "%", "#" in a URI.
+    command(
+      ([[edit term://\[\"%s\", \"arg#1\", \"arg%%2\"]#my-fragment]]):format(
+        testprg('printargs-test')
+      )
+    )
+    matches('[printargs-test", "arg#1", "arg%2"]', uri_args())
     -- "#my-fragment" should NOT be sent to the shell.
-    screen:expect{
+    screen:expect {
       grid = [[
-        ^arg1=arg1;arg2=arg2;                    |
+        ^arg1=arg#1;arg2=arg%2;                  |
         [Process exited 0]                      |
                                                 |*2
-      ]]
+      ]],
     }
   end)
 
@@ -168,17 +174,17 @@ describe('jobstart(term=true)', function()
   end)
 
   it('sets full command as JSON array in term://… name', function()
-    fn.jobstart({ testprg('shell-test'), 'arg1', 'arg2 with spaces' }, { term = true })
+    fn.jobstart({ testprg('shell-test'), 'arg#1', 'arg%2 with spaces' }, { term = true })
     -- Expected bufname: `term:///cwd//PID:["/path/to/shell-test", "arg1", "arg2"]`
-    eq('[shell-test", "arg1", "arg2 with spaces"]', uri_args())
+    eq('[shell-test", "arg#1", "arg%2 with spaces"]', uri_args())
 
     command('enew!')
     -- Try a command with complex quoted args.
-    fn.jobstart({ testprg('shell-test'), 'arg1', [[["arg 2"] "with" 'quotes']] }, { term = true })
-    matches(
-      [[^term://.*/%d+:%[".*/shell%-test%.?e?x?e?", "arg1", "%[\"arg 2\"%] \"with\" 'quotes'"%]$]],
-      fn.bufname('%')
+    fn.jobstart(
+      { testprg('shell-test'), 'arg#1', [[["arg % 2"] "with" 'quotes']] },
+      { term = true }
     )
+    eq([=[[shell-test", "arg#1", "[\"arg % 2\"] \"with\" 'quotes'"]]=], uri_args())
   end)
 
   it('truncates term://… command JSON if too long', function()
@@ -199,17 +205,17 @@ describe(':argument', function()
 
   it(':argadd does NOT magic-expand URI arg', function()
     eq({}, fn.argv())
-    command([=[argadd term://[\"foo\"]]=])
-    eq({ 'term://["foo"]' }, fn.argv())
+    command([=[argadd term://[\"foo\",\ \"arg%#2\"]]=])
+    eq({ 'term://["foo", "arg%#2"]' }, fn.argv())
 
     -- NOTE: :argdelete expects a Vim regex pattern, not a "filepath".
     -- Exercising it here anyway for reference.
     if t.is_os('win') then
       -- TODO(justinmk): why isn't "\[" needed on Windows?
-      command([=[argdelete term://[\"foo\"]]=])
+      command([=[argdelete term://[\"foo\",\ \"arg%#2\"]]=])
     else
       -- "\[" is needed because :argdelete expects a Vim regex pattern.
-      command([=[argdelete term://\[\"foo\"]]=])
+      command([=[argdelete term://\[\"foo\",\ \"arg%#2\"]]=])
     end
     eq({}, fn.argv())
   end)
@@ -247,6 +253,22 @@ describe(':badd', function()
       eq([=[term://["echo", "\"hi\""]]=], fn.bufname('term*'))
     end
   end)
+
+  it('handles URI with fragment and special characters', function()
+    command('edit foo')
+    eq('', fn.bufname('term*'))
+    command([=[badd term://[\"echo\", \"hi\"]#fragment]=])
+    eq('foo', fn.bufname('#'))
+    eq([=[term://["echo", "hi"]#fragment]=], fn.bufname('term*'))
+  end)
+
+  it('handles URI with percent and other special chars', function()
+    command('edit foo')
+    eq('', fn.bufname('term*'))
+    command([=[badd term://path%20with%20spaces\#frag]=])
+    eq([=[term://path%20with%20spaces#frag]=], fn.bufname('term*'))
+    eq('foo', fn.bufname('%'))
+  end)
 end)
 
 describe(':buffer', function()
@@ -256,8 +278,11 @@ describe(':buffer', function()
 
   it('does NOT magic-expand URI arg', function()
     command('enew')
-    fn.jobstart({ testprg('shell-test'), 'arg1', [[["arg 2"] "with" 'quotes']] }, { term = true })
-    local expected = [=[[shell-test", "arg1", "[\"arg 2\"] \"with\" 'quotes'"]]=]
+    fn.jobstart(
+      { testprg('shell-test'), 'arg#1', [[["arg % 2"] "with" 'quotes']] },
+      { term = true }
+    )
+    local expected = [=[[shell-test", "arg#1", "[\"arg % 2\"] \"with\" 'quotes'"]]=]
     eq(expected, uri_args())
     command('edit foo')
     eq([[foo]], fn.bufname(''))
