@@ -138,7 +138,7 @@ endfunc
 
 func Test_help_completion()
   call feedkeys(":help :undo\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"help :undo :undoj :undol :undojoin :undolist', @:)
+  call assert_equal('"help :undo :undoj :undol :undojoin :undolist :Undotree', @:)
 endfunc
 
 " Test for the :helptags command
