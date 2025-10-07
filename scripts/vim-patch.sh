@@ -250,6 +250,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/evalfunc\.c/\1\/eval\/funcs.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename list.c to eval/list.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/list\.c/\1\/eval\/list.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename evalvars.c to eval/vars.c
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/evalvars\.c/\1\/eval\/vars.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

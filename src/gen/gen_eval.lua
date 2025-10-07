@@ -23,6 +23,7 @@ hashpipe:write([[
 #include "nvim/eval/deprecated.h"
 #include "nvim/eval/fs.h"
 #include "nvim/eval/funcs.h"
+#include "nvim/eval/list.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"

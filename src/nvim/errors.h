@@ -1,5 +1,7 @@
 #pragma once
 
+#include <inttypes.h>
+
 #include "nvim/gettext_defs.h"
 #include "nvim/macros_defs.h"
 
@@ -101,6 +103,7 @@ EXTERN const char e_dictkey[] INIT(= N_("E716: Key not present in Dictionary: \"
 EXTERN const char e_dictkey_len[] INIT(= N_("E716: Key not present in Dictionary: \"%.*s\""));
 EXTERN const char e_listreq[] INIT(= N_("E714: List required"));
 EXTERN const char e_listblobreq[] INIT(= N_("E897: List or Blob required"));
+EXTERN const char e_listblobarg[] INIT(= N_("E899: Argument of %s must be a List or Blob"));
 EXTERN const char e_listdictarg[] INIT(= N_("E712: Argument of %s must be a List or Dictionary"));
 EXTERN const char e_listdictblobarg[] INIT(= N_("E896: Argument of %s must be a List, Dictionary or Blob"));
 EXTERN const char e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
@@ -141,6 +144,7 @@ EXTERN const char e_au_recursive[] INIT(= N_("E952: Autocommand caused recursive
 EXTERN const char e_menu_only_exists_in_another_mode[]
 INIT(= N_("E328: Menu only exists in another mode"));
 EXTERN const char e_autocmd_close[] INIT(= N_("E813: Cannot close autocmd window"));
+EXTERN const char e_list_index_out_of_range_nr[] INIT(= N_("E684: List index out of range: %" PRId64));
 EXTERN const char e_listarg[] INIT(= N_("E686: Argument of %s must be a List"));
 EXTERN const char e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN const char e_fnametoolong[] INIT(= N_("E856: Filename too long"));
