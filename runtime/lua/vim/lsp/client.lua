@@ -117,7 +117,7 @@ local all_clients = {}
 --- @field on_init? elem_or_list<fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)>
 ---
 --- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on initialization.
---- @field root_dir? string
+--- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
 --- Map of language server-specific settings, decided by the client. Sent to the LS if requested via
 --- `workspace/configuration`. Keys are case-sensitive.
@@ -190,7 +190,7 @@ local all_clients = {}
 --- @field requests table<integer,{ type: string, bufnr: integer, method: string}?>
 ---
 --- See [vim.lsp.ClientConfig].
---- @field root_dir string?
+--- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
 --- RPC client object, for low level interaction with the client.
 --- See |vim.lsp.rpc.start()|.
