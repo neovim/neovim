@@ -13,7 +13,8 @@ permissions:
   contents: read
 
 # env:
-#   TEST_FILE: test/functional\ex_cmds\mksession_spec.lua
+#   TEST_FILE: test/functional/xx/foo_spec.lua
+#   TEST_FILTER: foo
 
 jobs:
   windows:
@@ -22,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: [functional]
+        test: [functional, old]
     steps:
       - uses: actions/checkout@v6
         with:
