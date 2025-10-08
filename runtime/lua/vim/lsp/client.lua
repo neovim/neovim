@@ -615,7 +615,7 @@ local static_registration_capabilities = {
   ['textDocument/linkedEditingRange'] = 'linkedEditingRangeProvider',
   ['textDocument/moniker'] = 'monikerProvider',
   ['textDocument/selectionRange'] = 'selectionRangeProvider',
-  ['textDocument_semanticTokens/full'] = 'semanticTokensProvider',
+  ['textDocument/semanticTokens/full'] = 'semanticTokensProvider',
   ['textDocument/typeDefinition'] = 'typeDefinitionProvider',
   ['textDocument/prepareTypeHierarchy'] = 'typeHierarchyProvider',
 }
