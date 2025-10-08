@@ -2273,6 +2273,16 @@ describe('API/win', function()
       command('split')
       win = api.nvim_open_win(0, false, { win = 0, split = 'below', height = 10 })
       eq(10, api.nvim_win_get_height(win))
+
+      -- Still defaults to half-sized when no size was specified.
+      command('only')
+      eq(80, api.nvim_win_get_width(0))
+      api.nvim_open_win(0, true, { split = 'right' })
+      eq(40, api.nvim_win_get_width(0))
+
+      eq(22, api.nvim_win_get_height(0))
+      api.nvim_open_win(0, true, { split = 'below' })
+      eq(11, api.nvim_win_get_height(0))
     end)
   end)
 
