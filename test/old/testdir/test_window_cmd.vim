@@ -2263,6 +2263,7 @@ endfunc
 
 func Test_winfixsize_vsep_statusline()
   CheckScreendump
+
   let lines =<< trim END
     set noequalalways splitbelow splitright
     vsplit
@@ -2303,6 +2304,24 @@ func Test_winfixsize_vsep_statusline()
   call term_sendkeys(buf, ":echo winheight(1) winheight(2)\n")
   " (Likewise, may be better if 'wfh' window remains at 3 rows)
   call WaitForAssert({-> assert_match('^2 4\>', term_getline(buf, 8))})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_resize_from_another_tabpage()
+  CheckScreendump
+
+  let lines =<< trim END
+    set laststatus=2
+    vnew
+    let w = win_getid()
+    tabnew
+    call win_execute(w, 'vertical resize 20')
+    tabprev
+  END
+  call writefile(lines, 'XTestResizeFromAnotherTabpage', 'D')
+  let buf = RunVimInTerminal('-S XTestResizeFromAnotherTabpage', #{rows: 8})
+  call VerifyScreenDump(buf, 'Test_resize_from_another_tabpage_1', {})
 
   call StopVimInTerminal(buf)
 endfunc
