@@ -2366,22 +2366,22 @@ describe('builtin popupmenu', function()
           ccc aaa    |
           {1:~          }|*2
         ## grid 5
-          {12: aaa     }|
-          {n: aab     }|
-          {n: aac     }|
-          {n: aaabcdef}|
+          {12: aaa             }|
+          {n: aab             }|
+          {n: aac             }|
+          {n: aaabcdef        }|
         ]],
-          float_pos = { [5] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 23 } },
+          float_pos = { [5] = { -1, 'NW', 2, 3, 3, false, 100, 1, 3, 15 } },
         }
       else
         screen:expect([[
           aaa aab aac│aaa aab aac         |
           bbb aaa    │bbb aaa             |
           c aaabcdef │c aaabcdef ccc aaa^  |
-          ccc aaa    │{1:~          }{12: aaa     }|
-          {1:~          }│{1:~          }{n: aab     }|
-          {1:~          }│{1:~          }{n: aac     }|
-          {2:<Name] [+]  }{3:[No Name] [}{n: aaabcdef}|
+          ccc aaa    │{1:~  }{12: aaa             }|
+          {1:~          }│{1:~  }{n: aab             }|
+          {1:~          }│{1:~  }{n: aac             }|
+          {2:<Name] [+]  }{3:[No}{n: aaabcdef        }|
           {5:-- }{6:match 1 of 4}                 |
         ]])
       end
@@ -3302,20 +3302,20 @@ describe('builtin popupmenu', function()
           ## grid 3
             {5:-- INSERT --}                    |
           ## grid 4
-            {n: word  }|
-            {n: choice}|
-            {n: text  }|
-            {n: thing }|
+            {n: word            }|
+            {n: choice          }|
+            {n: text            }|
+            {n: thing           }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 15, false, 100, 1, 1, 15 } },
         })
       else
         screen:expect([[
           some long prefix before the ^    |
-          {1:~                        }{n: word  }|
-          {1:~                        }{n: choice}|
-          {1:~                        }{n: text  }|
-          {1:~                        }{n: thing }|
+          {1:~              }{n: word            }|
+          {1:~              }{n: choice          }|
+          {1:~              }{n: text            }|
+          {1:~              }{n: thing           }|
           {1:~                               }|*14
           {5:-- INSERT --}                    |
         ]])
@@ -3369,20 +3369,20 @@ describe('builtin popupmenu', function()
           ## grid 3
             {5:-- INSERT --}                    |
           ## grid 4
-            {n: word  }|
-            {n: choice}|
-            {12: text  }|
-            {n: thing }|
+            {n: word            }|
+            {n: choice          }|
+            {12: text            }|
+            {n: thing           }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 15, false, 100, 1, 1, 15 } },
         })
       else
         screen:expect([[
           some long prefix before the text|
-          {1:^~                        }{n: word  }|
-          {1:~                        }{n: choice}|
-          {1:~                        }{12: text  }|
-          {1:~                        }{n: thing }|
+          {1:^~              }{n: word            }|
+          {1:~              }{n: choice          }|
+          {1:~              }{12: text            }|
+          {1:~              }{n: thing           }|
           {1:~                               }|*14
           {5:-- INSERT --}                    |
         ]])
@@ -3562,21 +3562,21 @@ describe('builtin popupmenu', function()
           ## grid 3
             {5:-- INSERT --}        |
           ## grid 4
-            {n: word    }|
-            {n: choice  }|
-            {12: text    }|
-            {n: thing   }|
+            {n: word            }|
+            {n: choice          }|
+            {12: text            }|
+            {n: thing           }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 2, 10, false, 100, 1, 2, 10 } },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
         })
       else
         screen:expect([[
           some long prefix    |
           before the text^     |
-          {1:~         }{n: word    }{1: }|
-          {1:~         }{n: choice  }{1: }|
-          {1:~         }{12: text    }{1: }|
-          {1:~         }{n: thing   }{1: }|
+          {1:~  }{n: word            }|
+          {1:~  }{n: choice          }|
+          {1:~  }{12: text            }|
+          {1:~  }{n: thing           }|
           {1:~                   }|
           {5:-- INSERT --}        |
         ]])
@@ -3585,7 +3585,7 @@ describe('builtin popupmenu', function()
 
     it('with VimResized autocmd', function()
       feed('isome long prefix before the ')
-      command('set completeopt+=noinsert,noselect')
+      command('set completeopt+=noinsert,noselect pumwidth=12')
       command('autocmd VimResized * redraw!')
       command('set linebreak')
       fn.complete(29, { 'word', 'choice', 'text', 'thing' })
@@ -3601,20 +3601,20 @@ describe('builtin popupmenu', function()
           ## grid 3
             {5:-- INSERT --}                    |
           ## grid 4
-            {n: word  }|
-            {n: choice}|
-            {n: text  }|
-            {n: thing }|
+            {n: word         }|
+            {n: choice       }|
+            {n: text         }|
+            {n: thing        }|
           ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 18, false, 100, 1, 1, 18 } },
         })
       else
         screen:expect([[
           some long prefix before the ^    |
-          {1:~                        }{n: word  }|
-          {1:~                        }{n: choice}|
-          {1:~                        }{n: text  }|
-          {1:~                        }{n: thing }|
+          {1:~                 }{n: word         }|
+          {1:~                 }{n: choice       }|
+          {1:~                 }{n: text         }|
+          {1:~                 }{n: thing        }|
           {1:~                               }|*14
           {5:-- INSERT --}                    |
         ]])
@@ -4356,13 +4356,13 @@ describe('builtin popupmenu', function()
         screen:expect([[
                                           |
           {1:~                               }|
-          {1:~                  }{12: culhl=     }{1: }|
-          {1:~                  }{n: icon=      }{1: }|
-          {1:~                  }{n: linehl=    }{1: }|
-          {1:~                  }{n: numhl=     }{1: }|
-          {1:~                  }{n: priority=  }{1: }|
-          {1:~                  }{n: text=      }{1: }|
-          {1:~                  }{n: texthl=    }{1: }|
+          {1:~              }{12: culhl=          }|
+          {1:~              }{n: icon=           }|
+          {1:~              }{n: linehl=         }|
+          {1:~              }{n: numhl=          }|
+          {1:~              }{n: priority=       }|
+          {1:~              }{n: text=           }|
+          {1:~              }{n: texthl=         }|
           :sign define culhl= culhl=^      |
         ]])
 
@@ -4380,8 +4380,8 @@ describe('builtin popupmenu', function()
         screen:expect([[
                                           |
           {1:~                               }|*6
-          {1:~                }{12: XdirB/       }{1: }|
-          {1:~                }{n: XfileB       }{1: }|
+          {1:~              }{12: XdirB/          }|
+          {1:~              }{n: XfileB          }|
           :e Xnamedir/XdirA/XdirB/^        |
         ]])
 
@@ -5331,16 +5331,16 @@ describe('builtin popupmenu', function()
         ## grid 3
           {5:-- INSERT --}                    |
         ## grid 4
-          {n: word  }{c: }|
-          {n: choice}{12: }|
+          {n: word            }{c: }|
+          {n: choice          }{12: }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 24, false, 100, 1, 1, 24 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 14, false, 100, 1, 1, 14 } },
         }
       else
         screen:expect([[
           some long prefix before the ^    |
-          {1:~                       }{n: word  }{c: }|
-          {1:~                       }{n: choice}{12: }|
+          {1:~             }{n: word            }{c: }|
+          {1:~             }{n: choice          }{12: }|
           {1:~                               }|*4
           {5:-- INSERT --}                    |
         ]])
@@ -5366,20 +5366,20 @@ describe('builtin popupmenu', function()
         ## grid 3
           {5:-- INSERT --}                    |
         ## grid 4
-          {n: word  }|
-          {n: choice}|
-          {n: text  }|
-          {n: thing }|
+          {n: word     }|
+          {n: choice   }|
+          {n: text     }|
+          {n: thing    }|
         ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 22, false, 100, 1, 1, 22 } },
         }
       else
         screen:expect([[
           some long prefix before the ^    |
-          {1:~                        }{n: word  }|
-          {1:~                        }{n: choice}|
-          {1:~                        }{n: text  }|
-          {1:~                        }{n: thing }|
+          {1:~                     }{n: word     }|
+          {1:~                     }{n: choice   }|
+          {1:~                     }{n: text     }|
+          {1:~                     }{n: thing    }|
           {1:~                               }|*2
           {5:-- INSERT --}                    |
         ]])
@@ -6520,7 +6520,7 @@ describe('builtin popupmenu', function()
         ## grid 3
           {5:-- INSERT --}                    |
         ## grid 4
-          {n: abcdef ghijkl mnopq}{c: }|*2
+          {n: abcdef ghijkl mnop>}{c: }|*2
           {n: 一二三 四五六 七八>}{12: }|*2
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100, 1, 1, 11 } },
@@ -6528,7 +6528,7 @@ describe('builtin popupmenu', function()
       else
         screen:expect([[
                       ^                    |
-          {1:~          }{n: abcdef ghijkl mnopq}{c: }|*2
+          {1:~          }{n: abcdef ghijkl mnop>}{c: }|*2
           {1:~          }{n: 一二三 四五六 七八>}{12: }|*2
           {1:~                               }|*2
           {5:-- INSERT --}                    |
@@ -6579,7 +6579,7 @@ describe('builtin popupmenu', function()
         ## grid 3
           {5:-- INSERT --}                    |
         ## grid 4
-          {c: }{n:qponm lkjihg fedcba }|*2
+          {c: }{n:<ponm lkjihg fedcba }|*2
           {12: }{n:<八七 六五四 三二一 }|*2
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
@@ -6587,7 +6587,7 @@ describe('builtin popupmenu', function()
       else
         screen:expect([[
                              ^             |
-          {c: }{n:qponm lkjihg fedcba }{1:          ~}|*2
+          {c: }{n:<ponm lkjihg fedcba }{1:          ~}|*2
           {12: }{n:<八七 六五四 三二一 }{1:          ~}|*2
           {1:                               ~}|*2
           {5:-- INSERT --}                    |
@@ -7957,8 +7957,10 @@ describe('builtin popupmenu', function()
         feed('<C-E><Esc>')
       end)
 
+      -- oldtest: Test_pum_completefuzzycollect()
       it('completefuzzycollect', function()
         exec([[
+          set pumwidth=13
           set completefuzzycollect=keyword,files
           set completeopt=menu,menuone
         ]])
@@ -8264,8 +8266,8 @@ describe('builtin popupmenu', function()
         feed('S<C-X><C-O>')
         screen:expect([[
           loooong_foo^ |
-          {12:menu S loooo}|
-          {n:menu T loooo}|
+          {12:menu S looo>}|
+          {n:menu T looo>}|
           {1:~           }|*10
                       |
           {5:--}          |
