@@ -348,6 +348,8 @@ function M.open(opts)
     title = string.format('Undo tree for %s', vim.fn.fnamemodify(bufname, ':.'))
   elseif type(opts_title) == 'function' then
     title = opts_title(buf)
+  elseif type(opts_title) == 'string' then
+    title = opts_title
   end
 
   assert(type(title) == 'string', 'Window title must be a string')
