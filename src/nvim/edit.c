@@ -2449,10 +2449,10 @@ void cursor_up_inner(win_T *wp, linenr_T n, bool skip_conceal)
     while (n--) {
       // move up one line
       lnum--;
-      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       if (lnum <= 1) {
         break;
       }
+      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       // If we entered a fold, move to the beginning, unless in
       // Insert mode or when 'foldopen' contains "all": it will open
       // in a moment.
@@ -2506,10 +2506,10 @@ void cursor_down_inner(win_T *wp, int n, bool skip_conceal)
       } else {
         lnum++;
       }
-      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       if (lnum >= line_count) {
         break;
       }
+      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
     }
     lnum = MIN(lnum, line_count);
   } else {
