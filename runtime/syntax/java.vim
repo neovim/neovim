@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Oct 04
+" Last Change:		2025 Oct 08
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -59,6 +59,10 @@ else
   endfunction
 endif
 
+function! s:ff.QueryFoldArgForSyntaxItems(kind) abort
+  return stridx(s:java_ignore_folding, a:kind) < 0 ? "fold" : ""
+endfunction
+
 if !exists("*s:ReportOnce")
   function s:ReportOnce(message) abort
     echomsg 'syntax/java.vim: ' . a:message
@@ -90,6 +94,8 @@ if exists("g:java_foldtext_show_first_or_second_line")
   setlocal foldtext=JavaSyntaxFoldTextExpr()
 endif
 
+let s:java_ignore_folding = get(g:, 'java_ignore_folding', '')
+
 " Admit the ASCII dollar sign to keyword characters (JLS-17, §3.8):
 try
   exec 'syntax iskeyword ' . &l:iskeyword . ',$'
@@ -120,6 +126,11 @@ syn match   javaOperator	"\<var\>\%(\s*(\)\@!"
 " Module imports can be used in any source file.
 syn match   javaExternal	"\<import\s\+module\>" contains=javaModuleImport
 syn keyword javaModuleImport	contained module
+
+if !empty(s:ff.QueryFoldArgForSyntaxItems('i'))
+  " Group and fold adjacent "import" declarations.
+  syn region  javaImportDeclBlock	transparent start="\<import\s\+\K" skip="\<import\s\+\K" end="^" contains=javaExternal,@javaClasses,javaComment,javaLineComment fold
+endif
 
 " Since the yield statement, which could take a parenthesised operand,
 " and _qualified_ yield methods get along within the switch block
@@ -380,7 +391,7 @@ syn keyword javaLabelDefault	contained default
 syn keyword javaLabelVarType	contained var
 " Allow for the contingency of the enclosing region not being able to
 " _keep_ its _end_, e.g. case ':':.
-syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal,javaLambdaDef
+syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaImportDeclBlock,javaExternal,javaLambdaDef
 
 " Comments
 syn keyword javaTodo		contained TODO FIXME XXX
@@ -396,7 +407,7 @@ if exists("g:java_comment_strings")
   syn cluster javaCommentSpecial2 add=javaComment2String,javaCommentCharacter,javaNumber,javaStrTempl
 endif
 
-syn region  javaComment		matchgroup=javaCommentStart start="/\*" end="\*/" contains=@javaCommentSpecial,javaTodo,javaCommentError,javaSpaceError,@Spell fold
+exec 'syn region javaComment matchgroup=javaCommentStart start="/\*" end="\*/" contains=@javaCommentSpecial,javaTodo,javaCommentError,javaSpaceError,@Spell ' . s:ff.QueryFoldArgForSyntaxItems('c')
 syn match   javaCommentStar	contained "^\s*\*[^/]"me=e-1
 syn match   javaCommentStar	contained "^\s*\*$"
 syn match   javaLineComment	"//.*" contains=@javaCommentSpecial2,javaTodo,javaCommentMarkupTag,javaSpaceError,@Spell
@@ -510,7 +521,7 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
   endtry
 
   if s:with_markdown
-    syn region javaMarkdownComment	start="///" skip="^\s*///.*$" end="^" keepend contains=javaMarkdownCommentTitle,javaMarkdownShortcutLink,@javaMarkdown,@javaDocTags,javaTodo,@Spell nextgroup=javaMarkdownCommentTitle fold
+    exec 'syn region javaMarkdownComment start="///" skip="^\s*///.*$" end="^" keepend contains=javaMarkdownCommentTitle,javaMarkdownShortcutLink,@javaMarkdown,@javaDocTags,javaTodo,@Spell nextgroup=javaMarkdownCommentTitle ' . s:ff.QueryFoldArgForSyntaxItems('d')
     syn match javaMarkdownCommentMask	contained "^\s*///"
     exec 'syn region javaMarkdownCommentTitle contained matchgroup=javaMarkdownComment start="\%(///.*\r\=\n\s*\)\@' . s:ff.PeekFor('javaMarkdownCommentTitle', 120) . '<!///" matchgroup=javaMarkdownCommentTitle end="\.$" end="\.[ \t\r]\@=" end="\n\%(\s*///\s*$\)\@=" end="\%(^\s*///\s*\)\@' . s:ff.PeekFor('javaMarkdownCommentTitle', 120) . '<=@"me=s-2,he=s-1 contains=javaMarkdownShortcutLink,@javaMarkdown,javaMarkdownCommentMask,javaTodo,@Spell,@javaDocTags'
     exec 'syn region javaMarkdownCommentTitle contained matchgroup=javaMarkdownComment start="\%(///.*\r\=\n\s*\)\@' . s:ff.PeekFor('javaMarkdownCommentTitle', 120) . '<!///\s*\%({@return\>\)\@=" matchgroup=javaMarkdownCommentTitle end="}\%(\s*\.*\)*" contains=javaMarkdownShortcutLink,@javaMarkdown,javaMarkdownCommentMask,javaTodo,@Spell,@javaDocTags,javaTitleSkipBlock'
@@ -565,7 +576,7 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
   endif
 
   if s:with_html
-    syn region javaDocComment	start="/\*\*" end="\*/" keepend contains=javaCommentTitle,@javaHtml,@javaDocTags,javaTodo,javaCommentError,javaSpaceError,@Spell fold
+    exec 'syn region javaDocComment start="/\*\*" end="\*/" keepend contains=javaCommentTitle,@javaHtml,@javaDocTags,javaTodo,javaCommentError,javaSpaceError,@Spell ' . s:ff.QueryFoldArgForSyntaxItems('d')
     exec 'syn region javaCommentTitle contained matchgroup=javaDocComment start="/\*\*" matchgroup=javaCommentTitle end="\.$" end="\.[ \t\r]\@=" end="\%(^\s*\**\s*\)\@' . s:ff.PeekFor('javaCommentTitle', 120) . '<=@"me=s-2,he=s-1 end="\*/"me=s-1,he=s-1 contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,@javaDocTags'
     syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*\s*\r\=\n\=\s*\**\s*\%({@return\>\)\@=" matchgroup=javaCommentTitle end="}\%(\s*\.*\)*" contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,@javaDocTags,javaTitleSkipBlock
     syn region javaCommentTitle	contained matchgroup=javaDocComment start="/\*\*\s*\r\=\n\=\s*\**\s*\%({@summary\>\)\@=" matchgroup=javaCommentTitle end="}" contains=@javaHtml,javaCommentStar,javaTodo,javaCommentError,javaSpaceError,@Spell,@javaDocTags,javaTitleSkipBlock
@@ -690,7 +701,7 @@ syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=
 syn match   javaTextBlockError	+"""\s*"""+
 
 if s:ff.IsAnyRequestedPreviewFeatureOf([430])
-  syn region javaStrTemplEmbExp	contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
+  syn region javaStrTemplEmbExp	contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP,javaImportDeclBlock
   exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.PeekFor('javaStrTempl', 80) . '<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell'
   exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.PeekFor('javaStrTempl', 80) . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell'
   hi def link javaStrTempl	Macro
@@ -751,7 +762,7 @@ if exists("g:java_highlight_functions")
     " in order to not include javaFuncDef.
     syn region javaParenE transparent matchgroup=javaParen start="(" end=")" contains=@javaEnumConstants,javaInParen
     syn region javaParenE transparent matchgroup=javaParen start="\[" end="\]" contains=@javaEnumConstants
-    syn cluster javaEnumConstants contains=TOP,javaTopEnumDeclaration,javaFuncDef,javaParenT
+    syn cluster javaEnumConstants contains=TOP,javaTopEnumDeclaration,javaImportDeclBlock,javaFuncDef,javaParenT
     unlet s:indent s:last
   else
     " This is the "style" variant (:help ft-java-syntax).
@@ -822,7 +833,7 @@ syn region javaBlockOther transparent matchgroup=javaBlockOtherStart start="{" e
 
 " Try not to fold top-level-type bodies under assumption that there is
 " but one such body.
-exec 'syn region javaBlock transparent matchgroup=javaBlockStart start="\%(^\|^\S[^:]\+\)\@' . s:ff.PeekFor('javaBlock', 120) . '<!{" end="}" fold'
+exec 'syn region javaBlock transparent matchgroup=javaBlockStart start="\%(^\|^\S[^:]\+\)\@' . s:ff.PeekFor('javaBlock', 120) . '<!{" end="}" ' . s:ff.QueryFoldArgForSyntaxItems('b')
 
 " See "D.2.1 Anonymous Classes" at
 " https://web.archive.org/web/20010821025330/java.sun.com/docs/books/jls/first_edition/html/1.1Update.html#12959.
@@ -966,7 +977,7 @@ endif
 
 let b:spell_options = "contained"
 let &cpo = s:cpo_save
-unlet s:cpo_save s:ff s:with_html s:with_markdown
+unlet s:cpo_save s:ff s:java_ignore_folding s:with_html s:with_markdown
 
 " See ":help vim9-mix".
 if !has("vim9script")
