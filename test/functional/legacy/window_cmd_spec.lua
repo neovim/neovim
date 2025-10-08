@@ -407,3 +407,27 @@ it("'winfixwidth/height' does not leave stray vseps/statuslines", function()
   eq(2, fn.winheight(1))
   eq(4, fn.winheight(2))
 end)
+
+-- oldtest: Test_resize_from_another_tabpage()
+it('resizing window from another tabpage', function()
+  clear()
+  local screen = Screen.new(75, 8)
+  screen:add_extra_attr_ids({
+    [100] = { foreground = Screen.colors.Magenta1, bold = true },
+  })
+  exec([[
+    set laststatus=2
+    vnew
+    let w = win_getid()
+    tabnew
+    call win_execute(w, 'vertical resize 20')
+    tabprev
+  ]])
+  screen:expect([[
+    {5: }{100:2}{5: [No Name] }{24: [No Name] }{2:                                                  }{24:X}|
+    ^                    │                                                      |
+    {1:~                   }│{1:~                                                     }|*4
+    {3:[No Name]            }{2:[No Name]                                             }|
+                                                                               |
+  ]])
+end)
