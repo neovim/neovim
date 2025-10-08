@@ -650,12 +650,12 @@ RSC['window/showDocument'] = function(_, params, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
-RSC['workspace_inlayHint/refresh'] = function(err, result, ctx)
+RSC['workspace/inlayHint/refresh'] = function(err, result, ctx)
   return vim.lsp.inlay_hint.on_refresh(err, result, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-RSC['workspace_semanticTokens/refresh'] = function(err, result, ctx)
+RSC['workspace/semanticTokens/refresh'] = function(err, result, ctx)
   return vim.lsp.semantic_tokens._refresh(err, result, ctx)
 end
 
