@@ -1300,7 +1300,7 @@ syn region	vimEval
       \ end="\ze|"
       \ excludenl end="$"
       \ nextgroup=vimCmdSep
-      \ contains=@vimContinue,@vimExprList,vim9Comment
+      \ contains=@vimContinue,@vimExprList,vim9Comment,vimComment
       \ transparent
 
 " Filter: {{{2
