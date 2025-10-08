@@ -106,7 +106,7 @@ syn keyword vimGroup contained Added Bold BoldItalic Boolean Changed Character C
 syn keyword vimHLGroup contained ErrorMsg IncSearch ModeMsg NonText StatusLine StatusLineNC EndOfBuffer VertSplit DiffText DiffTextAdd PmenuSbar TabLineSel TabLineFill Cursor lCursor QuickFixLine CursorLineSign CursorLineFold CurSearch PmenuKind PmenuKindSel PmenuMatch PmenuMatchSel PmenuExtra PmenuExtraSel PreInsert Normal Directory LineNr CursorLineNr MoreMsg Question Search SpellBad SpellCap SpellRare SpellLocal PmenuThumb Pmenu PmenuSel SpecialKey Title WarningMsg WildMenu Folded FoldColumn SignColumn Visual DiffAdd DiffChange DiffDelete TabLine CursorColumn CursorLine ColorColumn MatchParen StatusLineTerm StatusLineTermNC
 syn keyword vimHLGroup contained CursorIM ComplMatchIns LineNrAbove LineNrBelow MsgArea User1 User2 User3 User4 User5 User6 User7 User8 User9
 syn match vimHLGroup contained "\<Conceal\>"
-syn keyword vimOnlyHLGroup contained	Menu PopupSelected MessageWindow PopupNotification Scrollbar Terminal ToolbarButton ToolbarLine Tooltip VisualNOS
+syn keyword vimOnlyHLGroup contained	Menu PopupSelected MessageWindow PopupNotification Scrollbar Terminal TitleBar TitleBarNC ToolbarButton ToolbarLine Tooltip VisualNOS
 syn keyword nvimHLGroup contained	FloatBorder FloatFooter FloatTitle MsgSeparator NormalFloat NormalNC Substitute TermCursor VisualNC Whitespace WinBar WinBarNC WinSeparator
 "}}}2
 syn case match
@@ -1300,7 +1300,7 @@ syn region	vimEval
       \ end="\ze|"
       \ excludenl end="$"
       \ nextgroup=vimCmdSep
-      \ contains=@vimContinue,@vimExprList,vimComment,vim9Comment
+      \ contains=@vimContinue,@vimExprList,vim9Comment
       \ transparent
 
 " Filter: {{{2
