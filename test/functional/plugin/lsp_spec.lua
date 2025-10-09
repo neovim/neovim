@@ -1981,15 +1981,12 @@ describe('LSP', function()
       end, expected_root_dir)
 
       eq({ 0 }, result.calls)
-      eq(
+      eq({
         {
-          {
-            uri = vim.uri_from_fname(expected_root_dir),
-            name = expected_root_dir,
-          },
+          uri = vim.uri_from_fname(expected_root_dir),
+          name = expected_root_dir,
         },
-        result.workspace_folders
-      )
+      }, result.workspace_folders)
     end)
 
     it('vim.lsp.start does not reuse client when root_dir callbacks differ', function()
