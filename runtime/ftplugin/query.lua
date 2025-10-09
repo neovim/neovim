@@ -30,6 +30,19 @@ if not vim.b.disable_query_linter and #query_lint_on > 0 then
   })
 end
 
+local query_autoreload_on = vim.g.query_autoreload_on or { 'BufWritePost' }
+if not vim.b.disable_query_autoreload and #query_autoreload_on > 0 then
+  vim.api.nvim_create_autocmd(query_autoreload_on, {
+    group = vim.api.nvim_create_augroup('nvim.queryautoreload', { clear = false }),
+    buffer = buf,
+    callback = function()
+      local guess = vim.treesitter._query_linter.guess_query_lang(buf)
+      vim.treesitter.query.clear_cache(guess and guess.lang, guess and guess.query)
+    end,
+    desc = 'Query linter',
+  })
+end
+
 -- it's a lisp!
 vim.cmd([[runtime! ftplugin/lisp.vim]])
 
