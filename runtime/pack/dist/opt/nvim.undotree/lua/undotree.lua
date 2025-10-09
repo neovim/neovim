@@ -287,7 +287,7 @@ end
 ---
 --- Title of the window. If a function, it accepts the buffer number of the
 --- source buffer as its only argument and should return a string.
---- @field title (string|fun(bufnr:integer):string|nil)
+--- @field title (string|fun(bufnr:integer):string|nil)?
 
 --- Open a window that displays a textual representation of the undotree.
 ---
