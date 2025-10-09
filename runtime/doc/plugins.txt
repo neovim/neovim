@@ -38,7 +38,7 @@ Help-link		Loaded	Short description ~
 |pi_zip.txt|		Yes	Zip archive explorer
 |spellfile.vim|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
-|undotree|		No	Interactive textual undotree
+|nvim-undotree|		No	Interactive textual undotree
 
 ==============================================================================
 Builtin plugin: editorconfig                                    *editorconfig*
@@ -159,7 +159,7 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
 
 
 ==============================================================================
-Builtin plugin: undotree                                            *undotree*
+Builtin plugin: nvim-undotree                                   *nvim-undotree*
 
 open({opts})                                                 *undotree.open()*
     Open a window that displays a textual representation of the undotree.
