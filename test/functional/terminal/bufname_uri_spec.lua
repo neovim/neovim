@@ -237,6 +237,10 @@ describe(':argument', function()
   end)
 end)
 
+-- TODO
+-- describe(':file', function()
+-- end)
+
 describe(':badd', function()
   before_each(function()
     n.clear()
