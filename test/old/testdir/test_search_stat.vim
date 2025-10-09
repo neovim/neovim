@@ -528,6 +528,10 @@ func Test_search_stat_option()
   " didn't get added to message history
   call assert_equal(messages_before, execute('messages'))
 
+  " If the test is being retried due to flakiness, extend the searchcount()
+  " timeout, too
+  let timeout = 500 * get(g:, 'run_nr', 1)
+
   " Many matches
   call cursor(line('$')-2, 1)
   let @/ = '.'
@@ -540,10 +544,10 @@ func Test_search_stat_option()
     \ searchcount(#{recompute: 0}))
   call assert_equal(
     \ #{exact_match: 1, current: 27992, incomplete: 0, maxcount:0, total: 28000},
-    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 500}))
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: timeout}))
   call assert_equal(
     \ #{exact_match: 1, current: 1, incomplete: 0, maxcount: 0, total: 28000},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 500}))
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: timeout}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
   let stat = 'W \[1/>999\]'
@@ -553,10 +557,10 @@ func Test_search_stat_option()
     \ searchcount(#{recompute: 0}))
   call assert_equal(
     \ #{current: 1, exact_match: 1, total: 28000, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 500}))
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: timeout}))
   call assert_equal(
     \ #{current: 27991, exact_match: 1, total: 28000, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 500}))
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: timeout}))
 
   " Many matches
   call cursor(1, 1)
