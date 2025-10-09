@@ -398,6 +398,7 @@ static void terminfo_start(TUIData *tui)
   tui->out_fd = STDOUT_FILENO;
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
+  ELOG("very tty: %d\n", tui->out_isatty);
 
   char *term = os_getenv("TERM");
 #ifdef MSWIN
@@ -407,6 +408,10 @@ static void terminfo_start(TUIData *tui)
     term = xstrdup(guessed_term);
     os_setenv("TERM", guessed_term, 1);
   }
+
+  uv_tty_vtermstate_t state = -1;
+  uv_tty_get_vterm_state(&state);
+  ELOG("uv otherwise thinks: %d\n", state);
 #endif
 
   // Set up unibilium/terminfo.
