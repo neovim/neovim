@@ -1,5 +1,5 @@
 local t = require('test.testutil')
-local parser = require('vim.net._ssh')
+local ssh = require('vim.net._ssh')
 local eq = t.eq
 
 describe('SSH parser', function()
@@ -45,7 +45,7 @@ describe('SSH parser', function()
       'test',
       'quoted string',
       'gh',
-    }, parser.parse_ssh_config(config))
+    }, ssh.parse_ssh_config(config))
   end)
 
   it('fails when a quote is not closed', function()
@@ -58,7 +58,7 @@ describe('SSH parser', function()
         ForwardAgent yes
     ]]
 
-    local ok, _ = pcall(parser.parse_ssh_config, config)
+    local ok, _ = pcall(ssh.parse_ssh_config, config)
     eq(false, ok)
   end)
 
@@ -72,7 +72,20 @@ describe('SSH parser', function()
         ForwardAgent yes
     ]]
 
-    local ok, _ = pcall(parser.parse_ssh_config, config)
+    local ok, _ = pcall(ssh.parse_ssh_config, config)
+    eq(false, ok)
+  end)
+end)
+
+describe('SSH connector', function()
+  it('validation', function()
+    local ok, _ = pcall(ssh.connect_to_address, '')
+    eq(false, ok)
+
+    ok, _ = pcall(ssh.connect_to_address, nil)
+    eq(false, ok)
+
+    ok, _ = pcall(ssh.connect_to_address, 'address cannot have spaces')
     eq(false, ok)
   end)
 end)
