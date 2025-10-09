@@ -331,10 +331,10 @@ void update_topline(win_T *wp)
         // scrolled).
         n = 0;
         for (linenr_T lnum = wp->w_cursor.lnum; lnum < wp->w_topline + *so_ptr; lnum++) {
-          n += !decor_conceal_line(wp, lnum, false);
           // stop at end of file or when we know we are far off
           assert(wp->w_buffer != 0);
-          if (lnum >= wp->w_buffer->b_ml.ml_line_count || n >= halfheight) {
+          if (lnum >= wp->w_buffer->b_ml.ml_line_count
+              || (n += !decor_conceal_line(wp, lnum, false)) >= halfheight) {
             break;
           }
           hasFolding(wp, lnum, NULL, &lnum);
@@ -404,23 +404,23 @@ void update_topline(win_T *wp)
         }
       }
       if (check_botline) {
-        int line_count = 0;
+        int n = 0;
         if (win_lines_concealed(wp)) {
           // Count the number of logical lines between the cursor and
           // botline - p_so (approximation of how much will be
           // scrolled).
           for (linenr_T lnum = wp->w_cursor.lnum; lnum >= wp->w_botline - *so_ptr; lnum--) {
-            line_count += !decor_conceal_line(wp, lnum - 1, false);
             // stop at end of file or when we know we are far off
-            if (lnum <= 0 || line_count > wp->w_view_height + 1) {
+            if (lnum <= 0
+                || (n += !decor_conceal_line(wp, lnum - 1, false)) > wp->w_view_height + 1) {
               break;
             }
             hasFolding(wp, lnum, &lnum, NULL);
           }
         } else {
-          line_count = wp->w_cursor.lnum - wp->w_botline + 1 + (int)(*so_ptr);
+          n = wp->w_cursor.lnum - wp->w_botline + 1 + (int)(*so_ptr);
         }
-        if (line_count <= wp->w_view_height + 1) {
+        if (n <= wp->w_view_height + 1) {
           scroll_cursor_bot(wp, scrolljump_value(wp), false);
         } else {
           scroll_cursor_halfway(wp, false, false);
@@ -513,7 +513,7 @@ void check_cursor_moved(win_T *wp)
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
 
     // Concealed line visibility toggled.
-    if (wp->w_p_cole >= 2 && !conceal_cursor_line(wp)
+    if (wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 2 && !conceal_cursor_line(wp)
         && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
             || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true))) {
       changed_window_setting(wp);

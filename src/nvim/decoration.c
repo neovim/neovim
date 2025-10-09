@@ -865,6 +865,7 @@ static const uint32_t conceal_filter[kMTMetaCount] = {[kMTMetaConcealLines] = kM
 /// @return whether "row" is concealed
 bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
 {
+  assert(row >= 0);
   if (wp->w_p_cole < 2
       || (!check_cursor && wp == curwin && row + 1 == wp->w_cursor.lnum
           && !conceal_cursor_line(wp))) {
