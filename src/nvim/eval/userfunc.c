@@ -415,10 +415,6 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
 
 errret:
   ga_clear_strings(&newargs);
-  if (fp != NULL) {
-    xfree(fp->uf_name_exp);
-    xfree(fp);
-  }
   xfree(pt);
   if (evalarg != NULL && evalarg->eval_tofree == NULL) {
     evalarg->eval_tofree = tofree;
