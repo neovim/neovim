@@ -361,7 +361,6 @@ function M.open(opts)
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
-  vim.bo[b].filetype = 'nvim-undotree'
   vim.bo[b].swapfile = false
 
   local meta = draw(buf, b)
@@ -402,6 +401,8 @@ function M.open(opts)
       end
     end,
   })
+
+  vim.bo[b].filetype = 'nvim-undotree'
 end
 
 return M
