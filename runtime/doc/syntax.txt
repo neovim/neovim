@@ -5614,7 +5614,7 @@ To use it, execute this command: >
 Nvim uses 256-color and |true-color| terminal capabilities wherever possible.
 
 ==============================================================================
-18. When syntax is slow						*:syntime*
+18. When syntax is slow					*:synti* *:syntime*
 
 This is aimed at authors of a syntax file.
 
@@ -5631,15 +5631,15 @@ this sequence: >
 This will display a list of syntax patterns that were used, sorted by the time
 it took to match them against the text.
 
-:syntime on		Start measuring syntax times.  This will add some
+:synti[me] on		Start measuring syntax times.  This will add some
 			overhead to compute the time spent on syntax pattern
 			matching.
 
-:syntime off		Stop measuring syntax times.
+:synti[me] off		Stop measuring syntax times.
 
-:syntime clear		Set all the counters to zero, restart measuring.
+:synti[me] clear	Set all the counters to zero, restart measuring.
 
-:syntime report		Show the syntax items used since ":syntime on" in the
+:synti[me] report	Show the syntax items used since ":syntime on" in the
 			current window.  Use a wider display to see more of
 			the output.
 
