@@ -401,6 +401,8 @@ function M.open(opts)
       end
     end,
   })
+
+  vim.bo[b].filetype = 'nvim-undotree'
 end
 
 return M
