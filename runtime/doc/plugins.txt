@@ -181,9 +181,9 @@ open({opts})                                                 *undotree.open()*
                 • {command} (`string?`) Vimscript command to create the
                   window. Default value is "30vnew". Only used when {winid} is
                   nil.
-                • {title} (`string|fun(bufnr:integer):string?`) Title of the
-                  window. If a function, it accepts the buffer number of the
-                  source buffer as its only argument and should return a
+                • {title} (`(string|fun(bufnr:integer):string?)?`) Title of
+                  the window. If a function, it accepts the buffer number of
+                  the source buffer as its only argument and should return a
                   string.
 
 
