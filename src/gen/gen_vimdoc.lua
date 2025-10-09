@@ -420,7 +420,7 @@ local config = {
     files = {
       'runtime/lua/editorconfig.lua',
       'runtime/lua/tohtml.lua',
-      'runtime/pack/dist/opt/nvim.undotree/lua/undotree.lua',
+      'runtime/pack/dist/opt/nvim-undotree/lua/undotree.lua',
     },
     fn_xform = function(fun)
       if fun.module == 'editorconfig' then

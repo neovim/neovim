@@ -167,7 +167,7 @@ open({opts})                                                 *undotree.open()*
     While in the window, moving the cursor changes the undo.
 
     Load the plugin with this command: >
-                packadd nvim.undotree
+                packadd nvim-undotree
 <
 
     Can also be shown with `:Undotree`.                            *:Undotree*

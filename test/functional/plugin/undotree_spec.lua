@@ -18,7 +18,7 @@ end
 ---@return string
 local function buf_get_lines_and_extmark(buf)
   local lines = api.nvim_buf_get_lines(buf, 0, -1, true)
-  local ns = api.nvim_create_namespace('nvim.undotree')
+  local ns = api.nvim_create_namespace('nvim-undotree')
   local extmarks = api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })
   for i = #extmarks, 1, -1 do
     local extmark = extmarks[i]
@@ -40,7 +40,7 @@ end
 describe(':Undotree', function()
   before_each(function()
     clear({ args = { '--clean' } })
-    exec 'packadd nvim.undotree'
+    exec 'packadd nvim-undotree'
   end)
 
   it('works', function()

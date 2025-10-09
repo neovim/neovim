@@ -6,7 +6,7 @@
 
 local M = {}
 
-local ns = vim.api.nvim_create_namespace('nvim.undotree')
+local ns = vim.api.nvim_create_namespace('nvim-undotree')
 
 --- @param buf integer
 --- @return vim.fn.undotree.entry[]
@@ -295,7 +295,7 @@ end
 ---
 --- Load the plugin with this command:
 --- ```
----         packadd nvim.undotree
+---         packadd nvim-undotree
 --- ```
 ---
 --- Can also be shown with `:Undotree`. [:Undotree]()
@@ -367,7 +367,7 @@ function M.open(opts)
 
   vim.api.nvim_win_set_cursor(w, { vim.api.nvim_buf_line_count(b), 0 })
 
-  local group = vim.api.nvim_create_augroup('nvim.undotree', { clear = false })
+  local group = vim.api.nvim_create_augroup('nvim-undotree', { clear = false })
   vim.api.nvim_clear_autocmds({ buffer = b })
   vim.api.nvim_clear_autocmds({ buffer = buf })
 
