@@ -412,6 +412,7 @@ static void terminfo_start(TUIData *tui)
   uv_tty_vtermstate_t state = -1;
   uv_tty_get_vterm_state(&state);
   ELOG("uv otherwise thinks: %d\n", state);
+  uv_tty_set_vterm_state(UV_TTY_SUPPORTED);  // LETS FUCKING GOOOOOOOO
 #endif
 
   // Set up unibilium/terminfo.
