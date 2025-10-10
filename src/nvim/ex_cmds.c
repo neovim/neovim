@@ -1806,6 +1806,14 @@ static int check_writable(const char *fname)
 }
 #endif
 
+static int handle_mkdir_p_arg(exarg_T *eap, char *fname) {
+  if (eap->mkdir_p && os_file_mkdir(fname, 0755) < 0) {
+    return FAIL;
+  }
+
+  return OK;
+}
+
 /// Write current buffer to file "eap->arg".
 /// If "eap->append" is true, append to the file.
 ///
@@ -1943,11 +1951,9 @@ int do_write(exarg_T *eap)
       fname = curbuf->b_sfname;
     }
 
-    if (eap->mkdir_p) {
-      if (os_file_mkdir(fname, 0755) < 0) {
-        retval = FAIL;
-        goto theend;
-      }
+    if (handle_mkdir_p_arg(eap, fname) == FAIL) {
+      retval = FAIL;
+      goto theend;
     }
 
     int name_was_missing = curbuf->b_ffname == NULL;
@@ -2123,7 +2129,8 @@ void do_wqall(exarg_T *eap)
     } else {
       bufref_T bufref;
       set_bufref(&bufref, buf);
-      if (buf_write_all(buf, eap->forceit) == FAIL) {
+      if (handle_mkdir_p_arg(eap, buf->b_fname) == FAIL
+        || buf_write_all(buf, eap->forceit) == FAIL) {
         error++;
       }
       // An autocommand may have deleted the buffer.
