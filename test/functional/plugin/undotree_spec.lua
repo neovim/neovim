@@ -6,6 +6,7 @@ local eq = t.eq
 local exec = n.exec
 local api = n.api
 local dedent = t.dedent
+local Screen = require('test.functional.ui.screen')
 
 ---@param reverse_tree {[integer]:integer}
 local function generate_undo_tree_from_rev(reverse_tree)
@@ -78,6 +79,28 @@ describe(':Undotree', function()
     exec '2'
     exec 'wincmd w'
     eq('foo', api.nvim_get_current_line())
+  end)
+
+  it('sync scroll pos when undo', function()
+    local screen = Screen.new(30, 10)
+    for _ = 1, n.api.nvim_get_option_value('lines', {}) do
+      api.nvim_set_current_line('foo')
+    end
+    exec 'Undotree'
+    exec 'wincmd w'
+    exec 'silent undo'
+    screen:expect([[
+      *    3   │^foo                 |
+      *    4   │{1:~                   }|
+      *    5   │{1:~                   }|
+      *    6   │{1:~                   }|
+      *    7   │{1:~                   }|
+      *    8   │{1:~                   }|
+      {21:*    9   }│{1:~                   }|
+      *    10  │{1:~                   }|
+      {2:<or  [-]  }{3:[No Name] [+]       }|
+                                    |
+    ]])
   end)
 
   describe('branch+remove is correctly graphed', function()

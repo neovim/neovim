@@ -264,9 +264,11 @@ local function draw(inbuf, outbuf)
   local curseq_line = buf_apply_graph_lines(tree, graph_lines, outbuf, meta, curseq)
   vim.bo[outbuf].modifiable = false
 
-  if vim.api.nvim_win_is_valid(vim.b[outbuf].nvim_is_undotree) then
-    vim.api.nvim_win_set_cursor(vim.b[outbuf].nvim_is_undotree, { curseq_line, 0 })
-  end
+  vim.schedule(function()
+    if vim.api.nvim_win_is_valid(vim.b[outbuf].nvim_is_undotree) then
+      vim.api.nvim_win_set_cursor(vim.b[outbuf].nvim_is_undotree, { curseq_line, 0 })
+    end
+  end)
 
   return meta
 end
