@@ -544,11 +544,11 @@ function M.set_pos(type)
           f = [[\<C-F>]],
           b = [[\<C-B>]],
         }
-        if page_keys[key] then
-          local topline = fn.getwininfo(ext.wins.dialog)[1].topline
+        local info = page_keys[key] and fn.getwininfo(ext.wins.dialog)[1]
+        if info and (key ~= 'f' or info.botline < api.nvim_buf_line_count(ext.bufs.dialog)) then
           fn.win_execute(ext.wins.dialog, ('exe "norm! %s"'):format(page_keys[key]))
           set_top_bot_spill()
-          return fn.getwininfo(ext.wins.dialog)[1].topline ~= topline and '' or nil
+          return fn.getwininfo(ext.wins.dialog)[1].topline ~= info.topline and '' or nil
         end
       end)
     elseif type == 'msg' then
