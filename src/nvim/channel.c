@@ -41,7 +41,6 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
-#include "nvim/path.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 
@@ -461,10 +460,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
   Channel *channel;
 
   if (!tcp && rpc) {
-    char *path = fix_fname(address);
-    bool loopback = server_owns_pipe_address(path);
-    xfree(path);
-    if (loopback) {
+    if (server_owns_pipe_address(address)) {
       // Create a loopback channel. This avoids deadlock if nvim connects to
       // its own named pipe.
       channel = channel_alloc(kChannelStreamInternal);
