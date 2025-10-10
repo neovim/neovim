@@ -344,7 +344,23 @@ describe('messages2', function()
       99                                                                     |
       Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
     ]])
-    feed('g')
+    -- No scrolling beyond end of buffer #36114
+    feed('f')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*3
+      {3:───────────────────────────────────────────────────────────────────────}|
+      93 [+93]                                                               |
+      94                                                                     |
+      95                                                                     |
+      96                                                                     |
+      97                                                                     |
+      98                                                                     |
+      99                                                                     |
+      Type number and <Enter> or click with the mouse (q or empty cancels): f|
+      ^                                                                       |
+    ]])
+    feed('<Backspace>g')
     screen:expect(top)
   end)
 
