@@ -13,6 +13,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -2124,16 +2125,32 @@ const char *did_set_winbar(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
-/// The 'winborder' option is changed.
-const char *did_set_winborder(optset_T *args)
+static bool parse_border_opt(const char *border_opt)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
   Error err = ERROR_INIT;
-  if (!parse_winborder(&fconfig, &err)) {
-    api_clear_error(&err);
-    return e_invarg;
+  bool result = true;
+  if (!parse_winborder(&fconfig, border_opt, &err)) {
+    result = false;
   }
   api_clear_error(&err);
+  return result;
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (!parse_border_opt(p_winborder)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
+const char *did_set_pumborder(optset_T *args)
+{
+  if (!parse_border_opt(p_pumborder)) {
+    return e_invarg;
+  }
   return NULL;
 }
 

@@ -110,6 +110,7 @@ typedef enum {
   HLF_PSX,        ///< popup menu selected item "menu" (extra text)
   HLF_PSB,        ///< popup menu scrollbar
   HLF_PST,        ///< popup menu scrollbar thumb
+  HLF_PBR,        ///< popup menu border
   HLF_TP,         ///< tabpage line
   HLF_TPS,        ///< tabpage line selected
   HLF_TPF,        ///< tabpage line filler

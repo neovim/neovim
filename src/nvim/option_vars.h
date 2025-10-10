@@ -308,6 +308,7 @@ EXTERN OptInt p_acl;            ///< 'autocompletedelay'
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
 #endif
+EXTERN char *p_pumborder;       ///< 'pumborder'
 EXTERN OptInt p_pb;             ///< 'pumblend'
 EXTERN OptInt p_ph;             ///< 'pumheight'
 EXTERN OptInt p_pw;             ///< 'pumwidth'

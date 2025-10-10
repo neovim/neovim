@@ -5129,6 +5129,13 @@ vim.o.pb = vim.o.pumblend
 vim.go.pumblend = vim.o.pumblend
 vim.go.pb = vim.go.pumblend
 
+--- Defines the default border style of popupmenu windows. Same as
+--- 'winborder'.
+---
+--- @type string
+vim.o.pumborder = ""
+vim.go.pumborder = vim.o.pumborder
+
 --- Maximum number of items to show in the popup menu
 --- (`ins-completion-menu`). Zero means "use available screen space".
 ---
