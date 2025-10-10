@@ -129,19 +129,29 @@ do
   ]]
   )
 
+  local function is_nvim_tag(tag)
+    local tagsfile = vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc', 'tags')
+    local candidates = vim.fn.taglist('^' .. tag .. '$', tagsfile)
+    if #candidates == 0 then
+      return false
+    end
+    return vim.fs.relpath(vim.env.VIMRUNTIME, candidates[1].filename) ~= nil
+  end
+
   local helpbuf = vim.api.nvim_get_current_buf()
   vim.api.nvim_set_decoration_provider(url_ns, {
-    on_win = function (_, _, buf, topline, botline)
+    on_win = function(_, _, buf, topline, botline)
       if buf ~= helpbuf then
         return
       end
+      vim.api.nvim_buf_clear_namespace(buf, url_ns, topline, botline)
       for _, match, _ in query:iter_matches(root, 0, topline, botline) do
         for id, nodes in pairs(match) do
           if query.captures[id] == 'helplink' then
             for _, node in ipairs(nodes) do
               local sl, sc, el, ec = node:range()
-              if #vim.api.nvim_buf_get_extmarks(buf, url_ns, { sl, sc }, { el, ec }, {}) == 0 then
-                local tag = vim.treesitter.get_node_text(node, 0)
+              local tag = vim.treesitter.get_node_text(node, 0)
+              if is_nvim_tag(tag) then
                 vim.api.nvim_buf_set_extmark(0, url_ns, sl, sc, {
                   end_line = el,
                   end_col = ec,
@@ -152,7 +162,7 @@ do
           end
         end
       end
-    end
+    end,
   })
 end
 
