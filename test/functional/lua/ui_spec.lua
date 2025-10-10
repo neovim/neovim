@@ -202,6 +202,15 @@ describe('vim.ui', function()
       local tagname =
         n.api.nvim_buf_get_text(0, tag[2], tag[3], tag[4].end_row, tag[4].end_col, {})[1]
       eq(vim.uri_encode(tagname), param)
+
+      -- non-nvim tags are ignored
+      local buf = n.api.nvim_create_buf(false, false)
+      n.api.nvim_buf_set_lines(buf, 0, 0, false, {
+        '|nonexisting|',
+      })
+      n.api.nvim_set_option_value('filetype', 'help', { buf = buf, scope = 'local' })
+      local tags = n.api.nvim_buf_get_extmarks(buf, link_ns, 0, -1, {})
+      eq(#tags, 0)
     end)
   end)
 end)
