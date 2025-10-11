@@ -115,8 +115,8 @@ do
   end, { buffer = true })
 end
 
+local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
 do
-  local ns = vim.api.nvim_create_namespace('nvim.help.urls')
   local base = 'https://neovim.io/doc/user/helptag.html?tag='
   local query = vim.treesitter.query.parse(
     'vimdoc',
@@ -129,21 +129,41 @@ do
   ]]
   )
 
-  for _, match, _ in query:iter_matches(root, 0, 0, -1) do
-    for id, nodes in pairs(match) do
-      if query.captures[id] == 'helplink' then
-        for _, node in ipairs(nodes) do
-          local start_line, start_col, end_line, end_col = node:range()
-          local tag = vim.treesitter.get_node_text(node, 0)
-          vim.api.nvim_buf_set_extmark(0, ns, start_line, start_col, {
-            end_line = end_line,
-            end_col = end_col,
-            url = base .. vim.uri_encode(tag),
-          })
+  local function is_nvim_tag(tag)
+    local tagsfile = vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc', 'tags')
+    local candidates = vim.fn.taglist('^' .. tag .. '$', tagsfile)
+    if #candidates == 0 then
+      return false
+    end
+    return vim.fs.relpath(vim.env.VIMRUNTIME, candidates[1].filename) ~= nil
+  end
+
+  local helpbuf = vim.api.nvim_get_current_buf()
+  vim.api.nvim_set_decoration_provider(url_ns, {
+    on_win = function(_, _, buf, topline, botline)
+      if buf ~= helpbuf then
+        return
+      end
+      vim.api.nvim_buf_clear_namespace(buf, url_ns, topline, botline)
+      for _, match, _ in query:iter_matches(root, 0, topline, botline) do
+        for id, nodes in pairs(match) do
+          if query.captures[id] == 'helplink' then
+            for _, node in ipairs(nodes) do
+              local sl, sc, el, ec = node:range()
+              local tag = vim.treesitter.get_node_text(node, 0)
+              if is_nvim_tag(tag) then
+                vim.api.nvim_buf_set_extmark(0, url_ns, sl, sc, {
+                  end_line = el,
+                  end_col = ec,
+                  url = base .. vim.uri_encode(tag),
+                })
+              end
+            end
+          end
         end
       end
-    end
-  end
+    end,
+  })
 end
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
