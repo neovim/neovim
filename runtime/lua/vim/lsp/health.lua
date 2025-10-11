@@ -89,10 +89,31 @@ local function check_active_clients()
         end
         dirs_info = ('- Workspace folders:\n    %s'):format(table.concat(wfolders, '\n    '))
       else
-        dirs_info = string.format(
-          '- Root directory: %s',
-          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
-        ) or nil
+        local root_dirs = {} ---@type string[]
+        if type(client.root_dir) == 'string' then
+          table.insert(root_dirs, client.root_dir --[[@as string]])
+        elseif type(client.root_dir) == 'function' then
+          for buf, _ in pairs(client.attached_buffers) do
+            client.root_dir(buf, function(dir)
+              if dir then
+                table.insert(root_dirs, dir)
+              end
+            end)
+          end
+        end
+        if #root_dirs == 1 then
+          dirs_info = string.format('- Root directory: %s', vim.fn.fnamemodify(root_dirs[1], ':~'))
+        elseif #root_dirs > 1 then
+          dirs_info = string.format(
+            '- Root directories:\n    %s',
+            table.concat(
+              vim.iter(root_dirs):map(function(x)
+                vim.fn.fnamemodify(x, ':~')
+              end),
+              '\n    '
+            )
+          )
+        end
       end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),

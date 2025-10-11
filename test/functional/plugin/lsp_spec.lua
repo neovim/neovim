@@ -1944,6 +1944,102 @@ describe('LSP', function()
         end)
       )
     end)
+
+    it('vim.lsp.start sends workspace folder when root_dir callback', function()
+      exec_lua(create_server_definition)
+
+      local expected_root_dir = tmpname(false)
+      mkdir(expected_root_dir)
+
+      local result = exec_lua(function(root_dir)
+        local server = _G._create_server()
+        local calls = {}
+
+        local client_id = vim.lsp.start({
+          name = 'cb-root',
+          cmd = server.cmd,
+          root_dir = function(bufnr, on_dir)
+            table.insert(calls, bufnr)
+            on_dir(root_dir)
+          end,
+        }, { attach = false })
+
+        vim.wait(1000, function()
+          return #server.messages > 0
+        end)
+
+        local initialize = server.messages[1]
+        if client_id then
+          vim.lsp.stop_client(client_id)
+        end
+
+        return {
+          calls = calls,
+          ---@diagnostic disable-next-line: no-unknown
+          workspace_folders = initialize and initialize.params.workspaceFolders,
+        }
+      end, expected_root_dir)
+
+      eq({ 0 }, result.calls)
+      eq({
+        {
+          uri = vim.uri_from_fname(expected_root_dir),
+          name = expected_root_dir,
+        },
+      }, result.workspace_folders)
+    end)
+
+    it('vim.lsp.start does not reuse client when root_dir callbacks differ', function()
+      exec_lua(create_server_definition)
+
+      local root1 = tmpname(false)
+      local root2 = tmpname(false)
+      mkdir(root1)
+      mkdir(root2)
+
+      local roots = exec_lua(function(root1_, root2_)
+        local server = _G._create_server()
+        local client_ids = {}
+
+        client_ids[1] = vim.lsp.start({
+          name = 'cb-root',
+          cmd = server.cmd,
+          root_dir = function(_, on_dir)
+            on_dir(root1_)
+          end,
+        }, { attach = false })
+
+        vim.wait(1000, function()
+          return #vim.lsp.get_clients() >= 1
+        end)
+
+        client_ids[2] = vim.lsp.start({
+          name = 'cb-root',
+          cmd = server.cmd,
+          root_dir = function(_, on_dir)
+            on_dir(root2_)
+          end,
+        }, { attach = false })
+
+        vim.wait(1000, function()
+          return #vim.lsp.get_clients() >= 2
+        end)
+
+        local clients = vim.lsp.get_clients()
+        local folders = {}
+        for i, client in ipairs(clients) do
+          local folder = client.workspace_folders and client.workspace_folders[1]
+          folders[i] = folder and folder.name or client.root_dir
+        end
+
+        vim.lsp.stop_client(client_ids)
+
+        return folders
+      end, root1, root2)
+
+      table.sort(roots)
+      eq({ root1, root2 }, roots)
+    end)
   end)
 
   describe('parsing tests', function()
