@@ -270,8 +270,8 @@ they are saved to the dedicated directory in the application data folder.
 
 You can also save and restore undo histories by using ":wundo" and ":rundo"
 respectively:
-							*:wundo* *:rundo*
-:wundo[!] {file}
+							*:wu* *:wundo*
+:wu[ndo][!] {file}
 		Write undo history to {file}.
 		When {file} exists and it does not look like an undo file
 		(the magic number at the start of the file is wrong), then
@@ -284,7 +284,8 @@ respectively:
 		name. So it is not possible to overwrite an existing undofile
 		in a write-protected directory.
 
-:rundo {file}	Read undo history from {file}.
+							*:rund* *:rundo*
+:rund[o] {file}	Read undo history from {file}.
 
 You can use these in autocommands to explicitly specify the name of the
 history file.  E.g.: >

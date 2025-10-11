@@ -1182,21 +1182,23 @@ list of buffers. |unlisted-buffer|
 		from the buffer list |unlisted-buffer| and option values,
 		variables and mappings/abbreviations for the buffer are
 		cleared. Examples: >
-                    :.,$-bdelete   "delete buffers from the current one to
-                                   " last but one
-                    :%bdelete      " delete all buffers
+		    :.,$-bdelete    " delete buffers from the current one to
+				    " last but one
+		    :%bdelete	    " delete all buffers
 <
-:bdelete[!] {bufname}						*E93* *E94*
+
+:bd[elete][!] {bufname}						*E93* *E94*
 		Like ":bdelete[!] [N]", but buffer given by name, see
 		|{bufname}|.
 
-:bdelete[!] N1 N2 ...
+:bd[elete][!] N1 N2 ...
 		Do ":bdelete[!]" for buffer N1, N2, etc.  The arguments can be
 		buffer numbers or buffer names (but not buffer names that are
 		a number).  Insert a backslash before a space in a buffer
 		name.
 
-:N,Mbdelete[!]	Do ":bdelete[!]" for all buffers in the range N to M
+:N,Mbd[elete][!]
+		Do ":bdelete[!]" for all buffers in the range N to M
 		|inclusive|.
 
 :[N]bw[ipeout][!]			*:bw* *:bwipe* *:bwipeout* *E517*
@@ -1212,6 +1214,7 @@ list of buffers. |unlisted-buffer|
 				    " one
 		    :%bwipeout	    " wipe out all buffers
 <
+
 :[N]bun[load][!]				*:bun* *:bunload* *E515*
 :bun[load][!] [N]
 		Unload buffer [N] (default: current buffer).  The memory
@@ -1224,14 +1227,15 @@ list of buffers. |unlisted-buffer|
 		This is the most recent entry in the jump list that points
 		into a loaded buffer.
 
-:bunload[!] {bufname}
+:bun[load][!] {bufname}
 		Like ":bunload[!] [N]", but buffer given by name.
 		Also see |{bufname}|.
 
-:N,Mbunload[!]	Do ":bunload[!]" for all buffers in the range N to M
+:N,Mbun[load][!]
+		Do ":bunload[!]" for all buffers in the range N to M
 		|inclusive|.
 
-:bunload[!] N1 N2 ...
+:bun[load][!] N1 N2 ...
 		Do ":bunload[!]" for buffer N1, N2, etc.  The arguments can be
 		buffer numbers or buffer names (but not buffer names that are
 		a number).  Insert a backslash before a space in a buffer
