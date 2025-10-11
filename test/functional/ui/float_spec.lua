@@ -1122,6 +1122,55 @@ describe('float window', function()
     ]])
   end)
 
+  it(':fclose does not crash from nasty autocommands', function()
+    local w1 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 6 })
+    local w2 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 5 })
+    local w3 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 4 })
+    local w4 = api.nvim_open_win(0, true, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 3 })
+    exec_lua(function()
+      vim.api.nvim_create_autocmd('WinClosed', {
+        once = true,
+        callback = function()
+          vim.api.nvim_win_close(w2, true)
+        end,
+      })
+    end)
+    -- We close just the first three floats with highest zindex, so w4 remains open.
+    -- (despite w2 being closed early by the autocommand rather than directly by :fclose)
+    command('3fclose')
+    eq(false, api.nvim_win_is_valid(w1))
+    eq(false, api.nvim_win_is_valid(w2))
+    eq(false, api.nvim_win_is_valid(w3))
+    eq(true, api.nvim_win_is_valid(w4))
+
+    -- Try switching tab pages and moving windows between tab pages via nvim_win_set_config.
+    -- Simplest if :fclose skips windows in non-current tabpages.
+    local w5 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 2 })
+    command('autocmd WinEnter * ++once tabnew')
+    eq(w4, api.nvim_get_current_win())
+    local tp1 = api.nvim_get_current_tabpage()
+    command('fclose!')
+    eq(false, api.nvim_win_is_valid(w4))
+    eq(true, api.nvim_win_is_valid(w5))
+    neq(tp1, api.nvim_get_current_tabpage())
+
+    local w_tp2 = api.nvim_get_current_win()
+    api.nvim_set_current_tabpage(tp1)
+    local w6 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 1 })
+    exec_lua(function()
+      vim.api.nvim_create_autocmd('WinClosed', {
+        once = true,
+        callback = function()
+          vim.api.nvim_win_set_config(w6, { win = w_tp2, split = 'below' })
+        end,
+      })
+    end)
+    command('fclose!')
+    eq(false, api.nvim_win_is_valid(w5))
+    eq(true, api.nvim_win_is_valid(w6))
+    neq(tp1, api.nvim_win_get_tabpage(w6))
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen, attrs
     before_each(function()
