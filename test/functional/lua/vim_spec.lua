@@ -2393,6 +2393,21 @@ stack traceback:
       feed('<CR>')
       assert_alive()
     end)
+    it('prints vim function in fast callbacks', function()
+      local screen = Screen.new(80, 10)
+      exec_lua([[
+        local timer = vim.uv.new_timer()
+        timer:start(0, 0, function()
+          timer:close()
+          vim.api.nvim_echo({ { 'chunk1-line1' } }, true, {})
+        end)
+      ]])
+      screen:expect({
+        any = pesc('E5560: nvim_echo must not be called in a fast event context'),
+      })
+      feed('<CR>')
+      assert_alive()
+    end)
   end)
 
   it('vim.notify_once', function()
