@@ -281,7 +281,7 @@ static ufunc_T *alloc_ufunc(const char *name, size_t namelen)
 {
   size_t len = offsetof(ufunc_T, uf_name) + namelen + 1;
   ufunc_T *fp = xcalloc(1, len);
-  STRCPY(fp->uf_name, name);
+  xmemcpyz(fp->uf_name, name, namelen);
   fp->uf_namelen = namelen;
 
   if ((uint8_t)name[0] == K_SPECIAL) {
