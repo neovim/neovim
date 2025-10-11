@@ -251,6 +251,32 @@ Validations could include:
   check, to reduce overhead.
 
 ==============================================================================
+UI                                                           *lua-plugin-ui*
+
+Some plugins have their own "UI" which they present in a buffer that the
+plugin "owns". In that buffer typically you will want to provide custom
+actions.
+
+Besides creating |<Plug>| mappings, you may want to consider providing actions
+by defining an in-process LSP "server". Offering actions as "code-actions"
+|vim.lsp.buf.code_action()| means the user can see all available actions using
+the default |gra| mapping to view the code-actions menu. They can even define
+mappings to a specific action by invoking `vim.lsp.buf.code_action()` with the
+`filter` + `apply` parameters: >lua
+
+    vim.lsp.buf.code_action({
+        apply = true,
+        filter = function(a)
+            return a.title == 'Do something'
+        end,
+    })
+<
+
+Example: See `runtime/lua/vim/pack/_lsp.lua` for how vim.pack defines an
+in-process LSP server to provide interactive features in its `nvim-pack://`
+buffer.
+
+==============================================================================
 Troubleshooting                                   *lua-plugin-troubleshooting*
 
 While developing a plugin, you can use the |:restart| command to see the
