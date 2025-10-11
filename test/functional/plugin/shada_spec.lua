@@ -3190,9 +3190,9 @@ describe('syntax/shada.vim', function()
       return { { 'ShaDaEntryHeader', 'ShaDaEntryTimestamp' }, s }
     end
     local synepoch = {
-      year = htsnum(os.date('%Y', 0)),
-      month = htsnum(os.date('%m', 0)),
-      day = htsnum(os.date('%d', 0)),
+      year = htsnum(os.date('!%Y', 0)),
+      month = htsnum(os.date('!%m', 0)),
+      day = htsnum(os.date('!%d', 0)),
       hour = htsnum(os.date('!%H', 0)),
       minute = htsnum(os.date('!%M', 0)),
       second = htsnum(os.date('!%S', 0)),
