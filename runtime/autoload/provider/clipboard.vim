@@ -235,6 +235,14 @@ function! provider#clipboard#Executable() abort
     return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac')
     return s:set_pbcopy()
+  elseif !empty($WAYLAND_DISPLAY) &&
+        \ index(map(['XDG_CURRENT_DESKTOP', 'XDG_SESSION_DESKTOP'],
+        \ 'tolower(getenv(v:val))'), 'gnome') >= 0
+    if executable('xsel') && s:cmd_ok('xsel -o -b')
+      return s:set_xsel()
+    elseif executable('xclip')
+      return s:set_xclip()
+    endif
   elseif !empty($WAYLAND_DISPLAY) && executable('wl-copy') && executable('wl-paste')
     return s:set_wayland()
   elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
