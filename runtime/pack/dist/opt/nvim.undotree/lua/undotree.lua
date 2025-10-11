@@ -220,7 +220,7 @@ local function buf_apply_graph_lines(tree, graph_lines, buf, meta, find_seq)
         found_seq = #meta
       end
     elseif line then
-      table.insert(extmark_buffer, { { line, 'Comment' } })
+      table.insert(extmark_buffer, { { line, 'Normal' } })
     end
 
     if next(extmark_buffer) and (v.kind == 'node' or is_last) then
