@@ -1637,3 +1637,118 @@ describe('inccommand on ex mode', function()
     ]])
   end)
 end)
+
+describe('v:argf', function()
+  local files = {}
+
+  before_each(function()
+    clear()
+    files = {}
+
+    for _, f in ipairs({
+      'Xargf_file1', 'Xargf_file2',
+      'Xargf_persist',
+      'Xargf_sep1', 'Xargf_sep2'
+    }) do
+      os.remove(f)
+    end
+  end)
+
+  after_each(function()
+    for _, f in ipairs(files) do
+      os.remove(f)
+    end
+  end)
+
+  it('contains absolute paths for startup files', function()
+    local file1, file2 = 'Xargf_file1', 'Xargf_file2'
+    write_file(file1, '')
+    write_file(file2, '')
+    files = { file1, file2 }
+
+    local abs1 = fn.fnamemodify(file1, ':p')
+    local abs2 = fn.fnamemodify(file2, ':p')
+
+    local out = fn.system({
+      nvim_prog,
+      '--headless',
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'echo v:argf',
+      file1,
+      file2,
+      '-c', 'qall',
+    })
+
+    matches(pesc(abs1), out)
+    matches(pesc(abs2), out)
+  end)
+
+  it('retains absolute paths after :cd', function()
+    local file1 = 'Xargf_persist'
+    write_file(file1, '')
+    files = { file1 }
+
+    local abs = fn.fnamemodify(file1, ':p')
+
+    local out = fn.system({
+      nvim_prog,
+      '--headless',
+      '-u', 'NONE',
+      '--cmd', 'cd /',
+      '--cmd', 'echo v:argf',
+      file1,
+      '-c', 'qall',
+    })
+
+    matches(pesc(abs), out)
+  end)
+
+  it('handles -- separator correctly', function()
+    local file1, file2 = 'Xargf_sep1', 'Xargf_sep2'
+    write_file(file1, '')
+    write_file(file2, '')
+    files = { file1, file2 }
+
+    local abs1 = fn.fnamemodify(file1, ':p')
+    local abs2 = fn.fnamemodify(file2, ':p')
+
+    local out = fn.system({
+      nvim_prog,
+      '--headless',
+      '-u', 'NONE',
+      '--cmd', 'echo v:argf',
+      '-c', 'qall',
+      '--',
+      file1,
+      file2,
+    })
+
+    matches(pesc(abs1), out)
+    matches(pesc(abs2), out)
+  end)
+
+  it('is not affected by :argadd in --cmd or -c', function()
+    local out = fn.system({
+      nvim_prog,
+      '--headless',
+      '-u', 'NONE',
+      '--cmd', 'argadd foo.txt',
+      '-c', 'argadd bar.txt',
+      '-c', 'echo len(v:argf)',
+      '-c', 'qall',
+    })
+
+    eq('0', vim.trim(out))
+  end)
+
+  it('is read-only', function()
+    local success, err = pcall(command, "let v:argf = ['foo']")
+    ok(not success)
+    if err then
+      matches('E46', err)
+    else
+      error('Expected E46 error when assigning to v:argf')
+    end
+  end)
+end)
