@@ -467,6 +467,7 @@ error('Cannot require a meta file')
 --- @field title? any
 --- @field title_pos? "center"|"left"|"right"
 --- @field _cmdline_offset? integer
+--- @field pinned? boolean
 
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer

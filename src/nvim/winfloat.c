@@ -298,6 +298,9 @@ void win_float_remove(bool bang, int count)
 {
   kvec_t(win_T *) float_win_arr = KV_INITIAL_VALUE;
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    if (wp->w_config.hide || wp->w_config.pinned) {
+      continue;
+    }
     kv_push(float_win_arr, wp);
   }
   if (float_win_arr.size > 0) {
