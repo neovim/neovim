@@ -1022,6 +1022,7 @@ typedef struct {
   bool fixed;
   bool hide;
   int _cmdline_offset;
+  bool pinned;
 } WinConfig;
 
 #define WIN_CONFIG_INIT ((WinConfig){ .height = 0, .width = 0, \
