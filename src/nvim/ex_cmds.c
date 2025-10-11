@@ -2130,7 +2130,7 @@ void do_wqall(exarg_T *eap)
       bufref_T bufref;
       set_bufref(&bufref, buf);
       if (handle_mkdir_p_arg(eap, buf->b_fname) == FAIL
-        || buf_write_all(buf, eap->forceit) == FAIL) {
+          || buf_write_all(buf, eap->forceit) == FAIL) {
         error++;
       }
       // An autocommand may have deleted the buffer.
