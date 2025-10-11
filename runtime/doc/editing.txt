@@ -996,11 +996,13 @@ slower (but safer).
 WRITING WITH MULTIPLE BUFFERS				*buffer-write*
 
 							*:wa* *:wall*
-:wa[ll]			Write all changed buffers.  Buffers without a file
+:wa[ll]	[++opt]		Write all changed buffers.  Buffers without a file
 			name cause an error message.  Buffers which are
 			readonly are not written.
+			For ++opt see |++opt|, but only ++p is effective, and
+			applies to each written file.
 
-:wa[ll]!		Write all changed buffers, even the ones that are
+:wa[ll]! [++opt]	Write all changed buffers, even the ones that are
 			readonly.  Buffers without a file name are not
 			written and cause an error message.
 

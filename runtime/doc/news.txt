@@ -197,6 +197,8 @@ EDITOR
 • |gx| in help buffers opens the online documentation for the tag under the
   cursor.
 • |:Undotree| for visually navigating the |undo-tree|
+• |:wall| permits a |++p| option for creating parent directories when writing
+  changed buffers.
 
 EVENTS
 
