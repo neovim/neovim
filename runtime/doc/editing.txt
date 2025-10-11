@@ -30,8 +30,8 @@ the |CTRL-^| command to toggle between the current and the alternate file.
 However, the alternate file name is not changed when |:keepalt| is used.
 An alternate file name is remembered for each window.
 
-							*:keepalt* *:keepa*
-:keepalt {cmd}		Execute {cmd} while keeping the current alternate file
+							*:keepa* *:keepalt*
+:keepa[lt] {cmd}	Execute {cmd} while keeping the current alternate file
 			name.  Note that commands invoked indirectly (e.g.,
 			with a function) may still set the alternate file
 			name.

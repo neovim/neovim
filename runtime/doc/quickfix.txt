@@ -540,8 +540,8 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 			Also see |:bufdo|, |:tabdo|, |:argdo|, |:windo|,
 			|:ldo|, |:cfdo| and |:lfdo|.
 
-							*:cfdo*
-:cfdo[!] {cmd}		Execute {cmd} in each file in the quickfix list.
+							*:cfd* *:cfdo*
+:cfd[o][!] {cmd}	Execute {cmd} in each file in the quickfix list.
 			It works like doing this: >
 				:cfirst
 				:{cmd}
@@ -550,7 +550,7 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				etc.
 <			Otherwise it works the same as `:cdo`.
 
-							*:ldo*
+							*:ld* *:ldo*
 :ld[o][!] {cmd}		Execute {cmd} in each valid entry in the location list
 			for the current window.
 			It works like doing this: >
@@ -562,8 +562,8 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 <			Only valid entries in the location list are used.
 			Otherwise it works the same as `:cdo`.
 
-							*:lfdo*
-:lfdo[!] {cmd}		Execute {cmd} in each file in the location list for
+							*:lfd* *:lfdo*
+:lfd[o][!] {cmd}	Execute {cmd} in each file in the location list for
 			the current window.
 			It works like doing this: >
 				:lfirst
