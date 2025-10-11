@@ -198,6 +198,7 @@ EXTERN const char e_failed_to_find_all_diff_anchors[] INIT( = N_("E1550: Failed 
 EXTERN const char e_diff_anchors_with_hidden_windows[] INIT( = N_("E1562: Diff anchors cannot be used with hidden diff windows"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
+EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \"%s\""));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 
