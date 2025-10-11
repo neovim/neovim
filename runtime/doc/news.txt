@@ -197,6 +197,7 @@ EDITOR
 • |gx| in help buffers opens the online documentation for the tag under the
   cursor.
 • |:Undotree| for visually navigating the |undo-tree|
+• The |:DiffTool| command compares directories (and files).
 
 EVENTS
 
