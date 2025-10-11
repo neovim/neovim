@@ -58,6 +58,7 @@ function M.check_targets()
         api.nvim_win_close(M.wins[type], true)
       end
       M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
+      api.nvim_win_set_var(M.wins[type], '_extui_window', true)
       setopt = true
     elseif api.nvim_win_get_buf(M.wins[type]) ~= M.bufs[type] then
       api.nvim_win_set_buf(M.wins[type], M.bufs[type])

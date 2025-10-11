@@ -10900,6 +10900,44 @@ describe('float window', function()
       -- allow use with trailing bar
       eq('hello', n.exec_capture('fclose | echo "hello"'))
     end)
+    it(':fclose skips hide and _extui floating windows #36123', function()
+      exec_lua(function()
+        require('vim._extui').enable({ enable = true, msg = { target = 'msg' } })
+      end)
+      local buf = api.nvim_create_buf(false, true)
+      local win = api.nvim_open_win(buf, false, {
+        relative = 'editor',
+        width = 20,
+        height = 2,
+        row = 0.9,
+        col = 0.9,
+        border = 'rounded',
+        style = 'minimal',
+      })
+      feed(':fclose<CR>')
+      eq(false, api.nvim_win_is_valid(win))
+      local win1 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        relative = 'editor',
+        width = 10,
+        height = 3,
+        row = 1,
+        col = 1,
+        zindex = 200,
+        hide = true,
+      })
+      local win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        relative = 'editor',
+        width = 20,
+        height = 2,
+        row = 5,
+        col = 5,
+        zindex = 50, -- Lower zindex than hidden window
+        focusable = false,
+      })
+      command('fclose')
+      eq(true, api.nvim_win_is_valid(win1))
+      eq(false, api.nvim_win_is_valid(win2))
+    end)
 
     it('correctly placed in or above message area', function()
       local float_opts = { relative = 'editor', width = 5, height = 1, row = 100, col = 1, border = 'single' }

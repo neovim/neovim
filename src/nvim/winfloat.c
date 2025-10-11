@@ -12,6 +12,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
+#include "nvim/eval/typval.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
@@ -277,6 +278,10 @@ void win_float_remove(bool bang, int count)
 {
   kvec_t(win_T *) float_win_arr = KV_INITIAL_VALUE;
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    if (wp->w_config.hide
+        || (wp->w_vars != NULL && tv_dict_find(wp->w_vars, S_LEN("_extui_window")) != NULL)) {
+      continue;
+    }
     kv_push(float_win_arr, wp);
   }
   if (float_win_arr.size > 0) {
