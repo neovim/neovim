@@ -235,7 +235,9 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
     };
 
     set_vim_var_nr(VV_KEY, idx);
-    typval_T newtv;
+    typval_T newtv = {
+      .v_type = VAR_UNKNOWN,
+    };
     bool rem;
     if (filter_map_one(&tv, expr, filtermap, &newtv, &rem) == FAIL
         || did_emsg) {

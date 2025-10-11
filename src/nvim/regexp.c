@@ -15050,7 +15050,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         int subidx;
         int bytelen;
 
-        if (t->state->c <= NFA_BACKREF9) {
+        if (t->state->c >= NFA_BACKREF1 && t->state->c <= NFA_BACKREF9) {
           subidx = t->state->c - NFA_BACKREF1 + 1;
           result = match_backref(&t->subs.norm, subidx, &bytelen);
         } else {
