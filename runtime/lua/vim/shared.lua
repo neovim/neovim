@@ -826,7 +826,7 @@ end
 ---
 ---@see https://github.com/openresty/luajit2#tableisarray
 ---
----@param t? table
+---@param t? any
 ---@return boolean `true` if array-like table, else `false`.
 function vim.isarray(t)
   if type(t) ~= 'table' then
