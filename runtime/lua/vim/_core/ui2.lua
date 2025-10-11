@@ -78,6 +78,7 @@ function M.check_targets()
       cfg.border = type ~= 'msg' and 'none' or nil
       cfg._cmdline_offset = type == 'cmd' and 0 or nil
       cfg.hide = type ~= 'cmd' or M.cmdheight == 0 or nil
+      cfg.pinned = type == 'cmd' or nil
       -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
       cfg.zindex = 201 - i
       M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
