@@ -1367,6 +1367,27 @@ function Client:_remove_workspace_folder(dir)
   end
 end
 
+--- Gets root_dir, waiting up to `ms` for a potentially async `root_dir()` result.
+---
+--- @param ms integer
+--- @param buf integer
+--- @return string|nil
+function Client._resolve_root_dir(ms, buf, root_dir)
+  if root_dir == nil or type(root_dir) == 'string' then
+    return root_dir --[[@type string|nil]]
+  end
+
+  local dir = nil --[[@type string|nil]]
+  root_dir(buf, function(d)
+    dir = d
+  end)
+  -- root_dir() may be async, wait for a result.
+  vim.wait(ms, function()
+    return not not dir
+  end)
+  return dir
+end
+
 -- Export for internal use only.
 Client._all = all_clients
 

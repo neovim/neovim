@@ -69,10 +69,7 @@ function lsp._get_workspace_folders(workspace_folders)
       },
     }
   elseif type(workspace_folders) == 'function' then
-    local name ---@type string
-    workspace_folders(0, function(root_dir)
-      name = root_dir
-    end)
+    local name = lsp.client._resolve_root_dir(1000, 0, workspace_folders)
     return name
       and {
         {
