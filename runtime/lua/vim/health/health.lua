@@ -503,10 +503,144 @@ local function check_external_tools()
   end
 end
 
+--- Checks plugin hygiene.
+local function check_plugins()
+  health.start('Plugins')
+
+  -- Collect plugin files
+  local plugin_files = vim.api.nvim_get_runtime_file('plugin/*.lua', true)
+  vim.list_extend(plugin_files, vim.api.nvim_get_runtime_file('plugin/*.vim', true))
+
+  -- Collect lua files
+  local lua_files = vim.api.nvim_get_runtime_file('lua/*.lua', true)
+
+  -- Collect lua subdirs
+  local lua_subdirs = vim.api.nvim_get_runtime_file('lua/*', true)
+  local lua_dirs = {}
+  for _, item in ipairs(lua_subdirs) do
+    if vim.uv.fs_stat(item) and vim.uv.fs_stat(item).type == 'directory' then
+      table.insert(lua_dirs, item)
+    end
+  end
+
+  -- Helper to group items by plugin directory
+  local function group_by_plugin_dir(items)
+    local result = {}
+    for _, item in ipairs(items) do
+      -- "/path/to/plugin/plugin/foo.lua" => "/path/to/plugin"
+      local plugin_dir = vim.fs.dirname(vim.fs.dirname(item))
+      result[plugin_dir] = result[plugin_dir] or {}
+      table.insert(result[plugin_dir], item)
+    end
+    return result
+  end
+
+  -- Group by plugin directory
+  local dir_to_plugin_files = group_by_plugin_dir(plugin_files)
+  local dir_to_lua_files = group_by_plugin_dir(lua_files)
+  local dir_to_lua_dirs = group_by_plugin_dir(lua_dirs)
+
+  -- Union of all plugin dirs
+  local all_plugin_dirs = {}
+  for dir in pairs(dir_to_plugin_files) do
+    all_plugin_dirs[dir] = true
+  end
+  for dir in pairs(dir_to_lua_files) do
+    all_plugin_dirs[dir] = true
+  end
+  for dir in pairs(dir_to_lua_dirs) do
+    all_plugin_dirs[dir] = true
+  end
+
+  local issues = {}
+  local ok_plugins = {}
+
+  for plugin_dir in pairs(all_plugin_dirs) do
+    -- Extract names and paths from plugin files
+    local name_to_paths = {}
+    local plugin_files_here = dir_to_plugin_files[plugin_dir] or {}
+    for _, file in ipairs(plugin_files_here) do
+      -- "/path/to/plugin/plugin/foo.lua" => "foo.lua"
+      local basename = vim.fs.basename(file)
+      -- "foo.lua" => "foo"
+      local name = basename:match('^(.-)%.') -- remove extension
+      if name and name ~= '' then
+        local rel_path = 'plugin/' .. basename
+        name_to_paths[name] = name_to_paths[name] or {}
+        table.insert(name_to_paths[name], rel_path)
+      end
+    end
+
+    -- Lua dirs
+    local lua_dirs_here = dir_to_lua_dirs[plugin_dir] or {}
+    for _, dir in ipairs(lua_dirs_here) do
+      -- "/path/to/plugin/lua/foo/" => "foo"
+      local name = vim.fs.basename(dir)
+      if name and name ~= '' then
+        local rel_path = 'lua/' .. name .. '/'
+        name_to_paths[name] = name_to_paths[name] or {}
+        table.insert(name_to_paths[name], rel_path)
+      end
+    end
+
+    -- Lua files
+    local lua_files_here = dir_to_lua_files[plugin_dir] or {}
+    for _, file in ipairs(lua_files_here) do
+      -- "/path/to/plugin/lua/foo.lua" => "foo.lua"
+      local basename = vim.fs.basename(file)
+      -- "foo.lua" => "foo"
+      local name = basename:match('^(.-)%.') -- remove .lua
+      if name and name ~= '' then
+        local rel_path = 'lua/' .. basename
+        name_to_paths[name] = name_to_paths[name] or {}
+        table.insert(name_to_paths[name], rel_path)
+      end
+    end
+
+    -- If no plugin-related files/directories, skip
+    if not vim.tbl_isempty(name_to_paths) then
+      -- Check if all names match (should be exactly one unique name)
+      local name_list = vim.tbl_keys(name_to_paths)
+      -- "/path/to/plugin" => "plugin"
+      local plugin_name = vim.fs.basename(plugin_dir)
+      if #name_list > 1 then
+        local all_paths = {}
+        for _, name in ipairs(name_list) do
+          for _, p in ipairs(name_to_paths[name]) do
+            table.insert(all_paths, p)
+          end
+        end
+        issues[plugin_name] = string.format('Plugin %s has mismatched names:\n%s', plugin_name, table.concat(all_paths, '\n'))
+      else
+        ok_plugins[plugin_name] = true
+      end
+    end
+  end
+
+  -- Sort and report ok plugins
+  local sorted_ok = vim.tbl_keys(ok_plugins)
+  table.sort(sorted_ok)
+  for _, plugin in ipairs(sorted_ok) do
+    health.ok('Plugin ' .. plugin .. ' is well-formed')
+  end
+
+  -- Sort and report issues
+  local sorted_issues = vim.tbl_keys(issues)
+  table.sort(sorted_issues)
+  for _, plugin in ipairs(sorted_issues) do
+    health.warn(issues[plugin])
+  end
+
+  if vim.tbl_isempty(ok_plugins) and vim.tbl_isempty(issues) then
+    health.info('No plugins found')
+  end
+end
+
 function M.check()
   check_config()
-  check_runtime()
   check_performance()
+  check_runtime()
+  check_plugins()
   check_rplugin_manifest()
   check_terminal()
   check_tmux()
