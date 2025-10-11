@@ -2198,7 +2198,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
         grpname = syn_id2name(-sp->userhl);
       } else {
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
-        grpname = arena_memdupz(arena, user_group, strlen(user_group));
+        grpname = arena_strdup(arena, user_group);
       }
 
       const char *combine = sp->item == STL_SIGNCOL ? syn_id2name(scl_hl_id)
