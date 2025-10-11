@@ -300,6 +300,7 @@ let test_values = {
       \		'alpha,hex,bin'],
       \		['xxx']],
       \ 'patchmode': [['', 'xxx', '.x'], [&backupext, '*']],
+      \ 'pumborder': [['rounded', 'none', 'single', 'solid'], ['xxx', 'none,solid']],
       "\ 'previewpopup': [['', 'height:13', 'width:20', 'highlight:That',
       "\ "		'align:item', 'align:menu', 'border:on', 'border:off',
       "\ "		'width:10,height:234,highlight:Mine'],

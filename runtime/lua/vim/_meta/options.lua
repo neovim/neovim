@@ -5130,7 +5130,8 @@ vim.go.pumblend = vim.o.pumblend
 vim.go.pb = vim.go.pumblend
 
 --- Defines the default border style of popupmenu windows. Same as
---- 'winborder'.
+--- 'winborder'. `hl-PmenuBorder` is used. When style is "shadow", the
+--- `hl-PmenuShadow` and `hl-PmenuShadowThrough` are used.
 ---
 --- @type string
 vim.o.pumborder = ""
