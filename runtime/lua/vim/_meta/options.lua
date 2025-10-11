@@ -2240,6 +2240,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`LspProgress`,
 --- 	`LspRequest`,
 --- 	`LspTokenUpdate`,
+--- 	`MarkSet`,
 --- 	`MenuPopup`,
 --- 	`ModeChanged`,
 --- 	`OptionSet`,
