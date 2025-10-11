@@ -140,6 +140,7 @@ typedef struct {
   Boolean fixed;
   Boolean hide;
   Integer _cmdline_offset;
+  Boolean draggable;
 } Dict(win_config);
 
 typedef struct {
