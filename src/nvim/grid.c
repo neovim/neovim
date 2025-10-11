@@ -1115,9 +1115,9 @@ static int get_bordertext_col(int total_col, int text_width, AlignTextPos align)
 }
 
 /// draw border on floating window grid
-void grid_draw_border(ScreenGrid *grid, WinConfig config, int *adj, int winbl, int *hl_attr)
+void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, int *hl_attr)
 {
-  int *attrs = config.border_attr;
+  int *attrs = config->border_attr;
   int default_adj[4] = { 1, 1, 1, 1 };
   if (adj == NULL) {
     adj = default_adj;
@@ -1128,7 +1128,7 @@ void grid_draw_border(ScreenGrid *grid, WinConfig config, int *adj, int winbl, i
   }
 
   for (int i = 0; i < 8; i++) {
-    chars[i] = schar_from_str(config.border_chars[i]);
+    chars[i] = schar_from_str(config->border_chars[i]);
   }
 
   int irow = grid->rows - adj[0] - adj[2];
@@ -1144,9 +1144,9 @@ void grid_draw_border(ScreenGrid *grid, WinConfig config, int *adj, int winbl, i
       grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
     }
 
-    if (config.title) {
-      int title_col = get_bordertext_col(icol, config.title_width, config.title_pos);
-      grid_draw_bordertext(config.title_chunks, title_col, winbl, hl_attr, kBorderTextTitle);
+    if (config->title) {
+      int title_col = get_bordertext_col(icol, config->title_width, config->title_pos);
+      grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr, kBorderTextTitle);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -1179,9 +1179,9 @@ void grid_draw_border(ScreenGrid *grid, WinConfig config, int *adj, int winbl, i
       grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
     }
 
-    if (config.footer) {
-      int footer_col = get_bordertext_col(icol, config.footer_width, config.footer_pos);
-      grid_draw_bordertext(config.footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter);
+    if (config->footer) {
+      int footer_col = get_bordertext_col(icol, config->footer_width, config->footer_pos);
+      grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
