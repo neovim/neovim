@@ -1806,7 +1806,8 @@ static int check_writable(const char *fname)
 }
 #endif
 
-static int handle_mkdir_p_arg(exarg_T *eap, char *fname) {
+static int handle_mkdir_p_arg(exarg_T *eap, char *fname)
+{
   if (eap->mkdir_p && os_file_mkdir(fname, 0755) < 0) {
     return FAIL;
   }
