@@ -710,6 +710,7 @@ static int makeopens(FILE *fd, char *dirnow)
 
   // Assume "tabpages" is in 'sessionoptions'.  If not then we only do
   // "curtab" and bail out of the loop.
+  bool restore_height_width = false;
   FOR_ALL_TABS(tp) {
     bool need_tabnext = false;
     int cnr = 1;
@@ -810,6 +811,7 @@ static int makeopens(FILE *fd, char *dirnow)
                   "set winwidth=1\n") < 0) {
         return FAIL;
       }
+      restore_height_width = true;
     }
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
@@ -900,7 +902,7 @@ static int makeopens(FILE *fd, char *dirnow)
     PUTLINE_FAIL("let &shortmess = s:shortmess_save");
   }
 
-  if (tab_firstwin != NULL && tab_firstwin->w_next != NULL) {
+  if (restore_height_width) {
     // Restore 'winminheight' and 'winminwidth'.
     PUTLINE_FAIL("let &winminheight = s:save_winminheight");
     PUTLINE_FAIL("let &winminwidth = s:save_winminwidth");
