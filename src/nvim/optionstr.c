@@ -2125,7 +2125,7 @@ const char *did_set_winbar(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
-static bool parse_border_opt(const char *border_opt)
+static bool parse_border_opt(char *border_opt)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
   Error err = ERROR_INIT;

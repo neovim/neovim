@@ -658,7 +658,7 @@ int update_screen(void)
     win_grid_alloc(wp);
 
     if (wp->w_redr_border || wp->w_redr_type >= UPD_NOT_VALID) {
-      grid_draw_border(&wp->w_grid_alloc, wp->w_config, wp->w_border_adj, (int)wp->w_p_winbl,
+      grid_draw_border(&wp->w_grid_alloc, &wp->w_config, wp->w_border_adj, (int)wp->w_p_winbl,
                        wp->w_ns_hl_attr);
     }
 

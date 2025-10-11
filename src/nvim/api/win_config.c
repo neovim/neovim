@@ -1079,7 +1079,7 @@ static void generate_api_error(win_T *wp, const char *attribute, Error *err)
 }
 
 /// Parses a border style name or custom (comma-separated) style.
-bool parse_winborder(WinConfig *fconfig, const char *border_opt, Error *err)
+bool parse_winborder(WinConfig *fconfig, char *border_opt, Error *err)
 {
   if (!fconfig) {
     return false;
@@ -1088,7 +1088,7 @@ bool parse_winborder(WinConfig *fconfig, const char *border_opt, Error *err)
 
   if (strchr(border_opt, ',')) {
     Array border_chars = ARRAY_DICT_INIT;
-    char *p = p_winborder;
+    char *p = border_opt;
     char part[MAX_SCHAR_SIZE] = { 0 };
     int count = 0;
 
@@ -1116,7 +1116,7 @@ bool parse_winborder(WinConfig *fconfig, const char *border_opt, Error *err)
 
     style = ARRAY_OBJ(border_chars);
   } else {
-    style = CSTR_TO_OBJ(p_winborder);
+    style = CSTR_TO_OBJ(border_opt);
   }
 
   parse_border_style(style, fconfig, err);
