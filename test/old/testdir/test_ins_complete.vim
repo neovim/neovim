@@ -5528,10 +5528,33 @@ func Test_autocomplete_trigger()
   call assert_equal(['fodabc', 'fodxyz'], b:matches->mapnew('v:val.word'))
   call assert_equal(-1, b:selected)
 
+  " Test 8: Ctrl_W / Ctrl_U (delete word/line) should restart autocompletion
+  func! TestComplete(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['fooze', 'faberge']
+  endfunc
+  set omnifunc=TestComplete
+  set complete+=o
+  call feedkeys("Sprefix->fo\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['fodabc', 'fodxyz', 'foobar', 'fooze'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sprefix->fo\<C-W>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sprefix->\<Esc>afo\<C-U>\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+
+  " Test 9: Trigger autocomplete immediately upon entering Insert mode
+  call feedkeys("Sprefix->foo\<Esc>a\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['foobar', 'fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+  call feedkeys("Sprefix->fooxx\<Esc>hcw\<F2>\<Esc>0", 'tx!')
+  call assert_equal(['foobar', 'fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+
   bw!
   call Ntest_override("char_avail", 0)
   delfunc NonKeywordComplete
-  set autocomplete&
+  delfunc TestComplete
+  set autocomplete& omnifunc& complete&
   unlet g:CallCount
 endfunc
 
