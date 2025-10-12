@@ -1491,7 +1491,7 @@ are read during initialization) >
 	:let html_my_rendering=1
 
 If you'd like to see an example download mysyntax.vim at
-https://www.fleiner.com/vim/download.html
+https://web.archive.org/web/20241129015117/https://www.fleiner.com/vim/download.html
 
 You can also disable this rendering by adding the following line to your
 vimrc file: >
