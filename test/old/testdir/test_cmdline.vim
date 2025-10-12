@@ -1174,11 +1174,13 @@ endfunc
 
 func Test_cmdline_complete_expression()
   let g:SomeVar = 'blah'
-  for cmd in ['exe', 'echo', 'echon', 'echomsg']
+  for cmd in ['exe', 'echo', 'echon', 'echomsg', 'echoerr',
+        "\ 'echoconsole', 'echowindow']
+        \ ]
     call feedkeys(":" .. cmd .. " SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_match('"' .. cmd .. ' SomeVar', @:)
+    call assert_match('"' .. cmd .. ' SomeVar', @:, cmd)
     call feedkeys(":" .. cmd .. " foo SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_match('"' .. cmd .. ' foo SomeVar', @:)
+    call assert_match('"' .. cmd .. ' foo SomeVar', @:, cmd)
   endfor
   unlet g:SomeVar
 endfunc
