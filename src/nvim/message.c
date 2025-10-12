@@ -1447,7 +1447,7 @@ void wait_return(int redraw)
         // to avoid that typing one 'j' too many makes the messages
         // disappear.
         if (p_more) {
-          if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
+          if (c == 'b' || c == Ctrl_B || c == 'k' || c == 'u' || c == 'g'
               || c == K_UP || c == K_PAGEUP) {
             if (msg_scrolled > Rows) {
               // scroll back to show older messages
@@ -1466,7 +1466,7 @@ void wait_return(int redraw)
               hit_return_msg(false);
             }
           } else if (msg_scrolled > Rows - 2
-                     && (c == 'j' || c == 'd' || c == 'f'
+                     && (c == 'j' || c == 'd' || c == 'f' || c == Ctrl_F
                          || c == K_DOWN || c == K_PAGEDOWN)) {
             c = K_IGNORE;
           }
@@ -2993,12 +2993,14 @@ static bool do_more_prompt(int typed_char)
       break;
 
     case 'b':                   // one page back
+    case Ctrl_B:
     case K_PAGEUP:
       toscroll = -(Rows - 1);
       break;
 
     case ' ':                   // one extra page
     case 'f':
+    case Ctrl_F:
     case K_PAGEDOWN:
     case K_LEFTMOUSE:
       toscroll = Rows - 1;

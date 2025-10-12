@@ -241,18 +241,20 @@ func Test_message_more()
   call term_sendkeys(buf, "\<Down>")
   call WaitForAssert({-> assert_equal('  9 9', term_getline(buf, 5))})
 
-  " Down a screen with <Space>, f, or <PageDown>.
+  " Down a screen with <Space>, f, <C-F> or <PageDown>.
   call term_sendkeys(buf, 'f')
   call WaitForAssert({-> assert_equal(' 14 14', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
-  call term_sendkeys(buf, ' ')
+  call term_sendkeys(buf, "\<C-F>")
   call WaitForAssert({-> assert_equal(' 19 19', term_getline(buf, 5))})
-  call term_sendkeys(buf, "\<PageDown>")
+  call term_sendkeys(buf, ' ')
   call WaitForAssert({-> assert_equal(' 24 24', term_getline(buf, 5))})
+  call term_sendkeys(buf, "\<PageDown>")
+  call WaitForAssert({-> assert_equal(' 29 29', term_getline(buf, 5))})
 
   " Down a page (half a screen) with d.
   call term_sendkeys(buf, 'd')
-  call WaitForAssert({-> assert_equal(' 27 27', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal(' 32 32', term_getline(buf, 5))})
 
   " Down all the way with 'G'.
   call term_sendkeys(buf, 'G')
@@ -267,15 +269,17 @@ func Test_message_more()
   call term_sendkeys(buf, "\<Up>")
   call WaitForAssert({-> assert_equal(' 97 97', term_getline(buf, 5))})
 
-  " Up a screen with b or <PageUp>.
+  " Up a screen with b, <C-B> or <PageUp>.
   call term_sendkeys(buf, 'b')
   call WaitForAssert({-> assert_equal(' 92 92', term_getline(buf, 5))})
-  call term_sendkeys(buf, "\<PageUp>")
+  call term_sendkeys(buf, "\<C-B>")
   call WaitForAssert({-> assert_equal(' 87 87', term_getline(buf, 5))})
+  call term_sendkeys(buf, "\<PageUp>")
+  call WaitForAssert({-> assert_equal(' 82 82', term_getline(buf, 5))})
 
   " Up a page (half a screen) with u.
   call term_sendkeys(buf, 'u')
-  call WaitForAssert({-> assert_equal(' 84 84', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal(' 79 79', term_getline(buf, 5))})
 
   " Up all the way with 'g'.
   call term_sendkeys(buf, 'g')
@@ -283,13 +287,16 @@ func Test_message_more()
   call WaitForAssert({-> assert_equal(':%p#', term_getline(buf, 1))})
   call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
 
-  " All the way down. Pressing f should do nothing but pressing
+  " All the way down. Pressing f or Ctrl-F should do nothing but pressing
   " space should end the more prompt.
   call term_sendkeys(buf, 'G')
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
   call term_sendkeys(buf, 'f')
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
+  call term_sendkeys(buf, "\<C-F>")
+  call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
   call term_sendkeys(buf, ' ')
   call WaitForAssert({-> assert_equal('100', term_getline(buf, 5))})
 
@@ -345,6 +352,11 @@ func Test_message_more_scrollback()
   call term_sendkeys(buf, 'f')
   call TermWait(buf)
   call term_sendkeys(buf, 'b')
+  call VerifyScreenDump(buf, 'Test_more_scrollback_2', {})
+
+  call term_sendkeys(buf, "\<C-F>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<C-B>")
   call VerifyScreenDump(buf, 'Test_more_scrollback_2', {})
 
   call term_sendkeys(buf, 'q')
