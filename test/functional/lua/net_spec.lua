@@ -21,9 +21,8 @@ describe('vim.net.request', function()
     local content = exec_lua([[
       local done = false
       local result
-      local M = require('vim.net')
 
-      M.request("https://httpbingo.org/anything", { retry = 3 }, function(err, body)
+      vim.net.request("https://httpbingo.org/anything", { retry = 3 }, function(err, body)
         assert(not err, err)
         result = body.body
         done = true
@@ -44,9 +43,8 @@ describe('vim.net.request', function()
     local err = exec_lua([[
       local done = false
       local result
-      local M = require('vim.net')
 
-      M.request("https://httpbingo.org/status/404", {}, function(e, _)
+      vim.net.request("https://httpbingo.org/status/404", {}, function(e, _)
         result = e
         done = true
       end)
@@ -56,5 +54,23 @@ describe('vim.net.request', function()
     ]])
 
     assert_404_error(err)
+  end)
+
+  it('plugin writes output to buffer', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+    local content = exec_lua([[
+      local lines
+
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.net.request("https://httpbingo.org", { outbuf = buf })
+
+      vim.wait(2000, function()
+        lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        return lines[1] ~= ""
+      end)
+
+      return lines
+    ]])
+    assert(content and content[1]:find('html'))
   end)
 end)
