@@ -494,7 +494,7 @@ You can create a Vim spell file from the .aff and .dic files that Myspell
 uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt
 files are zip files which contain the .aff and .dic files. You should be able
 to find them here:
-	https://extensions.services.openoffice.org/dictionary
+	https://extensions.openoffice.org/en/search@f[0]=field_project_application%253A1&f[1]=field_project_tags%253A94.html
 The older, OpenOffice 2 files may be used if this doesn't work:
 	http://wiki.services.openoffice.org/wiki/Dictionaries
 You can also use a plain word list.  The results are the same, the choice
