@@ -12,7 +12,7 @@
 ---
 --- ```ini
 --- [difftool "nvim_difftool"]
----   cmd = nvim -c "packadd nvim.difftool" -c "DiffTool $LOCAL $REMOTE"
+---   cmd = nvim -c \"packadd nvim.difftool\" -c \"DiffTool $LOCAL $REMOTE\"
 --- [diff]
 ---   tool = nvim_difftool
 --- ```
@@ -58,7 +58,7 @@ local function setup_layout(with_qf)
 
   vim.cmd.only()
   layout.left_win = vim.api.nvim_get_current_win()
-  vim.cmd.vsplit()
+  vim.cmd('rightbelow vsplit')
   layout.right_win = vim.api.nvim_get_current_win()
 
   if with_qf then
@@ -124,8 +124,7 @@ local function diff_dirs_diffr(left_dir, right_dir, opt)
   table.insert(args, left_dir)
   table.insert(args, right_dir)
 
-  local output = vim.fn.system(args)
-  local lines = vim.split(output, '\n')
+  local lines = vim.fn.systemlist(args)
   local qf_entries = {}
 
   for _, line in ipairs(lines) do
