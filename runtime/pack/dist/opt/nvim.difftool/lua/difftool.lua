@@ -140,14 +140,16 @@ local function diff_dirs_diffr(left_dir, right_dir, opt)
       elseif right_exists then
         status = 'A'
       end
+      local left = vim.fn.resolve(vim.fs.abspath(modified_left))
+      local right = vim.fn.resolve(vim.fs.abspath(modified_right))
       table.insert(qf_entries, {
-        filename = modified_right,
+        filename = right,
         text = status,
         user_data = {
           diff = true,
           rel = vim.fs.relpath(left_dir, modified_left),
-          left = vim.fs.abspath(modified_left),
-          right = vim.fs.abspath(modified_right),
+          left = left,
+          right = right,
         },
       })
     end
@@ -426,7 +428,7 @@ function M.open(left, right, opt)
   layout.group = vim.api.nvim_create_augroup('nvim.difftool.events', { clear = true })
   local hl_id = vim.api.nvim_create_namespace('nvim.difftool.hl')
 
-  local function get_diff_entry()
+  local function get_diff_entry(bufnr)
     --- @type {idx: number, items: table[], size: number}
     local qf_info = vim.fn.getqflist({ idx = 0, items = 1, size = 1 })
     if qf_info.size == 0 then
@@ -434,7 +436,12 @@ function M.open(left, right, opt)
     end
 
     local entry = qf_info.items[qf_info.idx]
-    if not entry or not entry.user_data or not entry.user_data.diff then
+    if
+      not entry
+      or not entry.user_data
+      or not entry.user_data.diff
+      or (bufnr and entry.bufnr ~= bufnr)
+    then
       return nil
     end
 
@@ -466,14 +473,16 @@ function M.open(left, right, opt)
   vim.api.nvim_create_autocmd('BufWinEnter', {
     group = layout.group,
     pattern = '*',
-    callback = function()
-      local entry = get_diff_entry()
+    callback = function(args)
+      local entry = get_diff_entry(args.buf)
       if not entry then
         return
       end
 
+      vim.w.lazyredraw = true
       vim.schedule(function()
         diff_files(entry.user_data.left, entry.user_data.right, true)
+        vim.w.lazyredraw = false
       end)
     end,
   })
