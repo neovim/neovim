@@ -1986,11 +1986,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
   }
 
   // ":exe one two" completes "two"
-  if ((cmdidx == CMD_execute
-       || cmdidx == CMD_echo
-       || cmdidx == CMD_echon
-       || cmdidx == CMD_echomsg)
-      && xp->xp_context == EXPAND_EXPRESSION) {
+  if (cmd_has_expr_args(cmdidx) && xp->xp_context == EXPAND_EXPRESSION) {
     while (true) {
       char *const n = skiptowhite(arg);
 
