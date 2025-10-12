@@ -49,6 +49,18 @@ describe('nvim.difftool', function()
     }, entries)
   end)
 
+  it('has consistent split layout', function()
+    command('set nosplitright')
+    command(('DiffTool %s %s'):format(testdir_left, testdir_right))
+    local wins = fn.getwininfo()
+    local left_win_col = wins[1].wincol
+    local right_win_col = wins[2].wincol
+    assert(
+      left_win_col < right_win_col,
+      'Left window should be to the left of right window even with nosplitright set'
+    )
+  end)
+
   it('has autocmds when diff window is opened', function()
     command(('DiffTool %s %s'):format(testdir_left, testdir_right))
     local autocmds = fn.nvim_get_autocmds({ group = 'nvim.difftool.events' })
