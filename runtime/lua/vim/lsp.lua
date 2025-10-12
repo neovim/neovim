@@ -54,7 +54,7 @@ function lsp._unsupported_method(method)
 end
 
 ---@private
----@param workspace_folders string|lsp.WorkspaceFolder[]?
+---@param workspace_folders string|lsp.WorkspaceFolder[]|fun(bufnr: integer, on_dir:fun(root_dir?:string))?
 ---@return lsp.WorkspaceFolder[]?
 function lsp._get_workspace_folders(workspace_folders)
   if type(workspace_folders) == 'table' then
@@ -66,6 +66,15 @@ function lsp._get_workspace_folders(workspace_folders)
         name = workspace_folders,
       },
     }
+  elseif type(workspace_folders) == 'function' then
+    local name = lsp.client._resolve_root_dir(1000, 0, workspace_folders)
+    return name
+      and {
+        {
+          uri = vim.uri_from_fname(name),
+          name = name,
+        },
+      }
   end
 end
 
