@@ -4510,11 +4510,12 @@ SystemObj:kill({signal})                                    *SystemObj:kill()*
 
     Example: >lua
         local obj = vim.system({'sleep', '10'})
-        obj:kill('TERM') -- sends SIGTERM to the process
+        obj:kill('sigterm') -- sends SIGTERM to the process
 <
 
     Parameters: ~
-      • {signal}  (`integer|string`) Signal to send to the process.
+      • {signal}  (`integer|string`) Signal to send to the process. See
+                  |luv-constants|.
 
 SystemObj:wait({timeout})                                   *SystemObj:wait()*
     Waits for the process to complete or until the specified timeout elapses.
