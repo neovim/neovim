@@ -5355,10 +5355,10 @@ NormalFloat	Normal text in floating windows.
 							*hl-FloatBorder*
 FloatBorder	Border of floating windows.
 							*hl-FloatShadow*
-FloatShadow	Blended areas when border is shadow.
+FloatShadow	Blended areas when border is "shadow".
 							*hl-FLoatShadowThrough*
-FloatShadownThrough
-		shadow corners when border is shadow.
+FloatShadowThrough
+		Shadow corners when border is "shadow".
 							*hl-FloatTitle*
 FloatTitle	Title of floating windows.
 							*hl-FloatFooter*
@@ -5390,10 +5390,10 @@ PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
 							*hl-PmenuBorder*
 PmenuBorder	Popup menu: border of popup menu.
 							*hl-PmenuShadow*
-PmenuShadow	Popup menu: blended areas when 'pumborder' is shadow.
+PmenuShadow	Popup menu: blended areas when 'pumborder' is "shadow".
 							*hl-PmenuShadowThrough*
-PmenuShadownThrough
-		Popup menu: shadow corners when 'pumborder' is shadow.
+PmenuShadowThrough
+		Popup menu: shadow corners when 'pumborder' is "shadow".
 							*hl-ComplMatchIns*
 ComplMatchIns	Matched text of the currently inserted completion.
 							*hl-PreInsert*
