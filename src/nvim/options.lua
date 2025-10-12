@@ -6727,7 +6727,8 @@ local options = {
       values = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' },
       desc = [=[
         Defines the default border style of popupmenu windows. Same as
-        'winborder'.
+        'winborder'. |hl-PmenuBorder| is used. When style is "shadow", the
+        |hl-PmenuShadow| and |hl-PmenuShadowThrough| are used.
       ]=],
       short_desc = N_('border of popupmenu'),
       type = 'string',

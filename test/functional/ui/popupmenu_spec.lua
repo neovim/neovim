@@ -1061,6 +1061,8 @@ describe('builtin popupmenu', function()
         [111] = { background = Screen.colors.Plum1, foreground = Screen.colors.DarkBlue },
         [112] = { background = Screen.colors.Plum1, foreground = Screen.colors.DarkGreen },
         [113] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
+        [114] = { background = Screen.colors.Grey0, blend = 100 },
+        [115] = { background = Screen.colors.Grey0, blend = 80 },
         -- popup non-selected item
         n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
@@ -9126,6 +9128,106 @@ describe('builtin popupmenu', function()
             ╰────────────────╯{1:            }|
             {1:~                             }|
             {3:[No Name] [+]                 }|
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
+      end)
+      it('custom pumborder characters', function()
+        command('set pumborder=+,+,=,+,+,-,+,+')
+        feed('S<C-x><C-o>')
+        if not multigrid then
+          screen:expect([[
+            one^                           |
+            ++++++++++++++++={n:1info}{1:        }|
+            +{12:one            }+{1:             }|
+            +{n:two            }+{1:             }|
+            +{n:three          }+{1:             }|
+            +---------------+{1:             }|
+            {1:~                             }|*4
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
+      end)
+      it('pumborder with shadow', function()
+        command('set pumborder=shadow')
+        feed('S<C-x><C-o>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*10
+              [3:------------------------------]|
+            ## grid 2
+              one^                           |
+              {1:~                             }|*9
+            ## grid 3
+              {5:-- }{6:match 1 of 3}               |
+            ## grid 4
+              {n:1info}|
+            ## grid 5
+              {12:one            }{114: }|
+              {n:two            }{115: }|
+              {n:three          }{115: }|
+              {114: }{115:               }|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
+              [4] = { 1001, 'NW', 1, 1, 17, false, 50, 1, 1, 17 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 3,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [4] = {
+                win = 1001,
+                topline = 0,
+                botline = 1,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [4] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1001,
+              },
+            },
+          })
+        else
+          screen:expect([[
+            one^                           |
+            {12:one            }{114: }{1: }{n:1info}{1:        }|
+            {n:two            }{115: }{1:              }|
+            {n:three          }{115: }{1:              }|
+            {114: }{115:               }{1:              }|
+            {1:~                             }|*5
             {5:-- }{6:match 1 of 3}               |
           ]])
         end

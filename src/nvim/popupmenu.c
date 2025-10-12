@@ -298,6 +298,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
   pum_rl = (State & MODE_CMDLINE) == 0 && curwin->w_p_rl;
 
   int pum_border_size = *p_pumborder != NUL ? 2 : 0;
+  if (strequal(p_pumborder, opt_winborder_values[3])) {
+    pum_border_size -= 1;
+  }
 
   do {
     // Mark the pum as visible already here,
@@ -605,19 +608,34 @@ void pum_redraw(void)
     pum_border_width = 2;
     fconfig.border = true;
     Error err = ERROR_INIT;
-    parse_border_style(CSTR_AS_OBJ(p_pumborder), &fconfig, &err);
-    // shadow style uses different highlights for different positions
-    if (strcmp(p_pumborder, opt_winborder_values[3]) == 0) {
+    if (!parse_winborder(&fconfig, p_pumborder, &err)) {
+      if (ERROR_SET(&err)) {
+        emsg(err.msg);
+      }
+      api_clear_error(&err);
+      return;
+    }
+
+    // Shadow style: only adds border on right and bottom edges
+    if (strequal(p_pumborder, opt_winborder_values[3])) {
+      fconfig.shadow = true;
+      pum_border_width = 1;
       int blend = SYN_GROUP_STATIC("PmenuShadow");
       int through = SYN_GROUP_STATIC("PmenuShadowThrough");
-      int attrs[] = { 0, 0, through, blend, blend, blend, through, 0 };
-      memcpy(fconfig.border_attr, attrs, sizeof(attrs));
-    } else {
-      // Non-shadow styles use PumBorder highlight for all border chars
+      fconfig.border_hl_ids[2] = through;
+      fconfig.border_hl_ids[3] = blend;
+      fconfig.border_hl_ids[4] = blend;
+      fconfig.border_hl_ids[5] = blend;
+      fconfig.border_hl_ids[6] = through;
+    }
+
+    // convert border highlight IDs to attributes, use PmenuBorder as default
+    for (int i = 0; i < 8; i++) {
       int attr = hl_attr_active[HLF_PBR];
-      for (int i = 0; i < 8; i++) {
-        fconfig.border_attr[i] = attr;
+      if (fconfig.border_hl_ids[i]) {
+        attr = hl_get_ui_attr(-1, HLF_PBR, fconfig.border_hl_ids[i], false);
       }
+      fconfig.border_attr[i] = attr;
     }
     api_clear_error(&err);
   }
@@ -653,9 +671,11 @@ void pum_redraw(void)
   // avoid set border for mouse menu
   int mouse_menu = State != MODE_CMDLINE && pum_grid.zindex == kZIndexCmdlinePopupMenu;
   if (!mouse_menu && fconfig.border) {
-    grid_draw_border(&pum_grid, fconfig, NULL, 0, NULL);
-    row++;
-    col_off++;
+    grid_draw_border(&pum_grid, &fconfig, NULL, 0, NULL);
+    if (!fconfig.shadow) {
+      row++;
+      col_off++;
+    }
   }
 
   // Never display more than we have

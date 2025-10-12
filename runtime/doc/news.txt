@@ -219,6 +219,7 @@ HIGHLIGHTS
 • |hl-DiffTextAdd| highlights added text within a changed line.
 • |hl-OkMsg| |hl-StderrMsg| |hl-StdoutMsg|
 • |hl-SnippetTabstopActive| highlights the currently active tabstop.
+• |hl-PmenuBorder |hl-PmenuShadow| |hl-PmenuShadowThrough| see 'pumborder'.
 
 LSP
 
@@ -301,6 +302,7 @@ OPTIONS
 • 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
+• 'pumborder' add a border to the popup menu.
 
 PERFORMANCE
 
