@@ -462,7 +462,7 @@ newwindow:
   // cursor to last accessed (previous) window
   case 'p':
   case Ctrl_P:
-    if (!win_valid(prevwin)) {
+    if (!win_valid(prevwin) || prevwin->w_config.hide || !prevwin->w_config.focusable) {
       beep_flush();
     } else {
       win_goto(prevwin);
