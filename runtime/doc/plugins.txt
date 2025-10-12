@@ -18,6 +18,7 @@ loaded by default while others are not loaded until requested by |:packadd|.
 Standard plugins ~
 						*standard-plugin-list*
 Help-link		Loaded	Short description ~
+|difftool|		No	Compares two directories or files side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
 |man.lua|		Yes	View manpages in Nvim
@@ -39,6 +40,46 @@ Help-link		Loaded	Short description ~
 |spellfile.vim|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
 |undotree|		No	Interactive textual undotree
+
+==============================================================================
+Builtin plugin: difftool                                            *difftool*
+
+
+:DiffTool {left} {right}                                           *:DiffTool*
+Compares two directories or files side-by-side.
+Supports directory diffing, rename detection, and highlights changes
+in quickfix list.
+
+The plugin is not loaded by default; use `:packadd nvim.difftool` before
+invoking `:DiffTool`.
+
+Example `git difftool -d` integration using `DiffTool` command: >ini
+    [difftool "nvim_difftool"]
+      cmd = nvim -c "packadd nvim.difftool" -c "DiffTool $LOCAL $REMOTE"
+    [diff]
+      tool = nvim_difftool
+<
+
+
+open({left}, {right}, {opt})                                 *difftool.open()*
+    Diff two files or directories
+
+    Parameters: ~
+      • {left}   (`string`)
+      • {right}  (`string`)
+      • {opt}    (`table?`)
+                 • {rename.detect} (`boolean`, default: `false`) Whether to
+                   detect renames
+                 • {rename.similarity} (`number`, default: `0.5`) Minimum
+                   similarity for rename detection (0 to 1)
+                 • {rename.chunk_size} (`number`, default: `4096`) Maximum
+                   chunk size to read from files for similarity calculation
+                 • {method} (`'auto'|'builtin'|'diffr'`, default: `auto`) Diff
+                   method to use
+                 • {ignore} (`string[]`, default: `{}`) List of file patterns
+                   to ignore (for example: `'.git', '*.log'`)
+                 • {rename} (`table`) Controls rename detection
+
 
 ==============================================================================
 Builtin plugin: editorconfig                                    *editorconfig*
