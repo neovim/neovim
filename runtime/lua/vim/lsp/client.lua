@@ -649,7 +649,7 @@ end
 --- Returns the handler associated with an LSP method.
 --- Returns the default handler if the user hasn't set a custom one.
 ---
---- @param method (string) LSP method name
+--- @param method (vim.lsp.protocol.Method) LSP method name
 --- @return lsp.Handler? handler for the given method, if defined, or the default from |vim.lsp.handlers|
 function Client:_resolve_handler(method)
   return self.handlers[method] or lsp.handlers[method]
@@ -659,7 +659,7 @@ end
 --- @param id integer
 --- @param req_type 'pending'|'complete'|'cancel'
 --- @param bufnr? integer (only required for req_type='pending')
---- @param method? string (only required for req_type='pending')
+--- @param method? vim.lsp.protocol.Method (only required for req_type='pending')
 function Client:_process_request(id, req_type, bufnr, method)
   local pending = req_type == 'pending'
 

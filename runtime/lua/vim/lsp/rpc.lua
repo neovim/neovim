@@ -106,8 +106,8 @@ end
 --- Dispatchers for LSP message types.
 --- @class vim.lsp.rpc.Dispatchers
 --- @inlinedoc
---- @field notification fun(method: string, params: table)
---- @field server_request fun(method: string, params: table): any?, lsp.ResponseError?
+--- @field notification fun(method: vim.lsp.protocol.Method.ClientToServer.Notification, params: table)
+--- @field server_request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table): any?, lsp.ResponseError?
 --- @field on_exit fun(code: integer, signal: integer)
 --- @field on_error fun(code: integer, err: any)
 
@@ -460,10 +460,10 @@ end
 --- @class vim.lsp.rpc.PublicClient
 ---
 --- See [vim.lsp.rpc.request()]
---- @field request fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
+--- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
 ---
 --- See [vim.lsp.rpc.notify()]
---- @field notify fun(method: string, params: any): boolean
+--- @field notify fun(method: vim.lsp.protocol.Method.ClientToServer.Notification, params: any): boolean
 ---
 --- Indicates if the RPC is closing.
 --- @field is_closing fun(): boolean
