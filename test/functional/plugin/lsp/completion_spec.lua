@@ -1401,4 +1401,29 @@ describe('vim.lsp.completion: omnifunc', function()
       eq({ 'hello' }, matches)
     end)
   end)
+
+  it('fuzzy matches', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+        { label = 'hallo' },
+      },
+    }
+    create_server('dummy', completion_list)
+
+    -- wait for one completion request to start and then request another before
+    -- the first one finishes, then wait for both to finish
+    feed('ih')
+    vim.uv.sleep(10)
+    feed('e')
+    vim.uv.sleep(500)
+
+    retry(nil, nil, function()
+      local matches = vim.tbl_map(function(m)
+        return m.word
+      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
+      eq({ 'hello' }, matches)
+    end)
+  end)
 end)
