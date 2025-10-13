@@ -2577,9 +2577,7 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
               heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
               heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
             }
-            if (skip_until != NULL) {
-              XFREE_CLEAR(skip_until);
-            }
+            XFREE_CLEAR(skip_until);
             skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
             do_concat = false;
             is_heredoc = true;
