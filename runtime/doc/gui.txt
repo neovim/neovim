@@ -478,8 +478,8 @@ the mouse button down on this will pop up a menu containing the item
 which when selected, performs the operation.
 
 To create a menu for terminal mode, use |:tlmenu| instead of |:tmenu| unlike
-key mapping (|:tmap|). This is because |:tmenu| is already used for defining
-tooltips for menus. See |terminal-input|.
+key mapping (|:tmap|).  This is because |:tmenu| is already used for defining
+tooltips for menus.  See |terminal-input|.
 
 Special characters in a menu name:
 
@@ -885,8 +885,8 @@ The tip is defined like this: >
 And delete it with: >
         :tunmenu MyMenu.Hello
 
-Tooltips are currently only supported for the X11 and Win32 GUI.  However, they
-should appear for the other gui platforms in the not too distant future.
+Tooltips are currently only supported for the X11 and Win32 GUI.  However,
+they should appear for the other gui platforms in the not too distant future.
 
 The ":tmenu" command works just like other menu commands, it uses the same
 arguments.  ":tunmenu" deletes an existing menu tip, in the same way as the

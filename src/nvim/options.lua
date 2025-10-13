@@ -806,8 +806,8 @@ local options = {
       defaults = false,
       desc = [=[
         Every wrapped line will continue visually indented (same amount of
-        space as the beginning of that line), thus preserving horizontal blocks
-        of text.
+        space as the beginning of that line), thus preserving horizontal
+        blocks of text.
       ]=],
       full_name = 'breakindent',
       redraw = { 'current_window' },
@@ -1507,12 +1507,12 @@ local options = {
         ]	tag completion
         t	same as "]"
         f	scan the buffer names (as opposed to buffer contents)
-        F{func}	call the function {func}.  Multiple "F" flags may be specified.
-        	Refer to |complete-functions| for details on how the function
-        	is invoked and what it should return.  The value can be the
-        	name of a function or a |Funcref|.  For |Funcref| values,
-        	spaces must be escaped with a backslash ('\'), and commas with
-        	double backslashes ('\\') (see |option-backslash|).
+        F{func}	call the function {func}.  Multiple "F" flags may be
+        	specified.  Refer to |complete-functions| for details on how
+        	the function is invoked and what it should return.  The value
+        	can be the name of a function or a |Funcref|.  For |Funcref|
+        	values, spaces must be escaped with a backslash ('\'), and
+        	commas with double backslashes ('\\') (see |option-backslash|).
         	Unlike other sources, functions can provide completions
         	starting from a non-keyword character before the cursor, and
         	their start position for replacing text may differ from other
@@ -1751,7 +1751,8 @@ local options = {
           completion in insert mode.  This is useful when editing HTML tag, or
           Makefile with 'noshellslash' on MS-Windows.
         - When this option is set to "backslash", backslash is used.  This is
-          useful when editing a batch file with 'shellslash' set on MS-Windows.
+          useful when editing a batch file with 'shellslash' set on
+          MS-Windows.
         - When this option is empty, same character is used as for
           'shellslash'.
         For Insert mode completion the buffer-local value is used.  For
@@ -3760,7 +3761,6 @@ local options = {
         modeline, see |sandbox-option|.  That stops the option from working,
         since changing the buffer text is not allowed.
         This option cannot be set in a modeline when 'modelineexpr' is off.
-        NOTE: This option is set to "" when 'compatible' is set.
       ]=],
       full_name = 'formatexpr',
       modelineexpr = true,
@@ -5243,9 +5243,9 @@ local options = {
       cb = 'did_set_langremap',
       defaults = false,
       desc = [=[
-        When off, setting 'langmap' does not apply to characters resulting from
-        a mapping.  If setting 'langmap' disables some of your mappings, make
-        sure this option is off.
+        When off, setting 'langmap' does not apply to characters resulting
+        from a mapping.  If setting 'langmap' disables some of your mappings,
+        make sure this option is off.
       ]=],
       full_name = 'langremap',
       scope = { 'global' },
@@ -5282,8 +5282,8 @@ local options = {
         executing macros, registers and other commands that have not been
         typed.  Also, updating the window title is postponed.  To force an
         update use |:redraw|.
-        This may occasionally cause display errors.  It is only meant to be set
-        temporarily when performing an operation where redrawing may cause
+        This may occasionally cause display errors.  It is only meant to be
+        set temporarily when performing an operation where redrawing may cause
         flickering or cause a slowdown.
       ]=],
       full_name = 'lazyredraw',
@@ -8428,9 +8428,6 @@ local options = {
         A value of 0 disables this behaviour.  A negative value makes Vim use
         'shiftwidth'.  If you plan to use 'sts' and 'shiftwidth' with
         different values, you might consider setting 'smarttab'.
-
-        'softtabstop' is temporarily set to 0 when 'paste' is on and reset
-        when it is turned off.  It is also reset when 'compatible' is set.
 
         The 'L' flag in 'cpoptions' alters tab behavior when 'list' is
         enabled.  See also |ins-expandtab| ans user manual section |30.5| for

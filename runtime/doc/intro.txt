@@ -407,8 +407,8 @@ There are six ADDITIONAL modes.  These are variants of the BASIC modes:
 
 - Replace mode:         Replace mode is a special case of Insert mode.  You
                         can do the same things as in Insert mode, but for
-                        each character you enter, one character of the existing
-                        text is deleted.  See |Replace-mode|.
+                        each character you enter, one character of the
+                        existing text is deleted.  See |Replace-mode|.
                         If the 'showmode' option is on "-- REPLACE --" is
                         shown at the bottom of the window.
 

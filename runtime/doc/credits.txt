@@ -55,7 +55,8 @@ Vim would never have become what it is now, without the help of these people!
         Felix von Leitner       Previous maintainer of Vim Mailing Lists
         David Leonard           Port of Python extensions to Unix
         Avner Lottem            Edit in right-to-left windows
-        Flemming Madsen         X11 client-server, various features and patches
+        Flemming Madsen         X11 client-server, various features and
+                                patches
         Tony Mechelynck         answers many user questions
         Paul Moore              Python interface extensions, many patches
         Katsuhito Nagano        Work on multibyte versions

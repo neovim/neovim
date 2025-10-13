@@ -368,13 +368,13 @@ gx			Opens the current filepath or URL (decided by
 :redi[r] @{a-z}>>	Append messages to register {a-z}.
 
 :redi[r] @*>
-:redi[r] @+>		Redirect messages to the selection or clipboard. For
+:redi[r] @+>		Redirect messages to the selection or clipboard.  For
 			backward compatibility, the ">" after the register
-			name can be omitted. See |quotestar| and |quoteplus|.
+			name can be omitted.  See |quotestar| and |quoteplus|.
 :redi[r] @*>>
 :redi[r] @+>>		Append messages to the selection or clipboard.
 
-:redi[r] @">		Redirect messages to the unnamed register. For
+:redi[r] @">		Redirect messages to the unnamed register.  For
 			backward compatibility, the ">" after the register
 			name can be omitted.
 :redi[r] @">>		Append messages to the unnamed register.
@@ -408,16 +408,17 @@ gx			Opens the current filepath or URL (decided by
 <			If the [!] is given, restrict the output of {command}
 			to lines that do NOT match {pattern}.
 
-			{pattern} is a Vim search pattern.  Instead of enclosing
-			it in / any non-ID character (see 'isident') can be
-			used, so long as it does not appear in {pattern}.
+			{pattern} is a Vim search pattern.  Instead of
+			enclosing it in / any non-ID character (see 'isident')
+			can be used, so long as it does not appear in
+			{pattern}.
 			Without the enclosing character the pattern cannot
-			include the bar character. 'ignorecase' is not used.
+			include the bar character.  'ignorecase' is not used.
 
 			The pattern is matched against the relevant part of
-			the output, not necessarily the whole line. Only some
+			the output, not necessarily the whole line.  Only some
 			commands support filtering, try it out to check if it
-			works. Some of the commands that support filtering:
+			works.  Some of the commands that support filtering:
 			   |:#|          - filter whole line
 			   |:clist|      - filter by file name or module name
 			   |:command|    - filter by command name
@@ -481,7 +482,7 @@ gx			Opens the current filepath or URL (decided by
 						*:verb* *:verbose*
 :[count]verb[ose] {command}
 			Execute {command} with 'verbose' set to [count].  If
-			[count] is omitted one is used. ":0verbose" can be
+			[count] is omitted one is used.  ":0verbose" can be
 			used to set 'verbose' to zero.
 			The additional use of ":silent" makes messages
 			generated but not displayed.

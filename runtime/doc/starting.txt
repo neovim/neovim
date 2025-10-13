@@ -119,7 +119,7 @@ argument.
 		"pat" in the first file being edited (see |pattern| for the
 		available search patterns).  The search starts at the cursor
 		position, which can be the first line or the cursor position
-		last used from |shada|. To force a search from the first
+		last used from |shada|.  To force a search from the first
 		line use "+1 +/pat".
 
 +{command}						*-+c* *-c*
@@ -997,8 +997,8 @@ has marks for.
 							*shada-file-marks*
 Uppercase marks ('A to 'Z) are stored when writing the ShaDa file.  The
 numbered marks ('0 to '9) are a bit special.  When the ShaDa file is written
-(when exiting or with the |:wshada| command), '0 is set to the current cursor
-position and file.  The old '0 is moved to '1, '1 to '2, etc.  This
+(when exiting or with the |:wshada| command), '0 is set to the current
+cursor position and file.  The old '0 is moved to '1, '1 to '2, etc.  This
 resembles what happens with the "1 to "9 delete registers.  If the current
 cursor position is already present in '0 to '9, it is moved to '0, to avoid
 having the same position twice.  The result is that with "'0", you can jump

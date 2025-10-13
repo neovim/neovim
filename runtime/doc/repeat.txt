@@ -77,7 +77,7 @@ line is aborted and the global command continues with the next marked or
 unmarked line.
 								*E147*
 When the command is used recursively, it only works on one line.  Giving a
-range is then not allowed. This is useful to find all lines that match a
+range is then not allowed.  This is useful to find all lines that match a
 pattern and do not match another pattern: >
 	:g/found/v/notfound/{cmd}
 This first finds all lines containing "found", but only executes {cmd} when
@@ -163,18 +163,18 @@ Q			Repeat the last recorded register [count] times.
 			See |visual-repeat|, |default-mappings|.
 
 							*:@*
-:[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex
-			command.  First set cursor at line [addr] (default is
-			current line).  When the last line in the register does
-			not have a <CR> it will be added automatically when
-			the 'e' flag is present in 'cpoptions'.
+:[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an
+			Ex command.  First set cursor at line [addr] (default
+			is current line).  When the last line in the register
+			does not have a <CR> it will be added automatically
+			when the 'e' flag is present in 'cpoptions'.
 			For ":@=" the last used expression is used.  The
 			result of evaluating the expression is executed as an
 			Ex command.
 			Mappings are not recognized in these commands.
 			When the |line-continuation| character (\) is present
 			at the beginning of a line in a linewise register,
-			then it is combined with the previous line. This is
+			then it is combined with the previous line.  This is
 			useful for yanking and executing parts of a Vim
 			script.
 
@@ -203,7 +203,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 			When sourcing commands or Lua code from the current
 			buffer, the same script-ID |<SID>| is used even if the
-			buffer is sourced multiple times. If a buffer is
+			buffer is sourced multiple times.  If a buffer is
 			sourced more than once, then the functions in the
 			buffer are defined again.
 
@@ -675,7 +675,7 @@ DEFINING BREAKPOINTS
 
 :breaka[dd] expr {expression}
 		Sets a breakpoint, that will break whenever the {expression}
-		evaluates to a different value. Example: >
+		evaluates to a different value.  Example: >
 			:breakadd expr g:lnum
 <		Will break, whenever the global variable lnum changes.
 
@@ -787,7 +787,7 @@ For example, to profile the one_script.vim script file: >
 
 :prof[ile] stop
 		Write the collected profiling information to the logfile and
-		stop profiling. You can use the `:profile start` command to
+		stop profiling.  You can use the `:profile start` command to
 		clear the profiling statistics and start profiling again.
 
 :prof[ile] pause
@@ -819,8 +819,8 @@ For example, to profile the one_script.vim script file: >
 		collect the profiling statistics.
 
 :profd[el] ...						*:profd* *:profdel*
-		Stop profiling for the arguments specified. See |:breakdel|
-		for the arguments. Examples: >
+		Stop profiling for the arguments specified.  See |:breakdel|
+		for the arguments.  Examples: >
 			profdel func MyFunc
 			profdel file MyScript.vim
 			profdel here

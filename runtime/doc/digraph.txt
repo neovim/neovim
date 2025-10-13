@@ -106,7 +106,7 @@ mode.  After leaving the Insert mode everything is fine.  On some Unix systems
 this means you have to define the environment-variable LC_CTYPE.  If you are
 using csh, then put the following line in your .cshrc: >
 	setenv LC_CTYPE en_US.utf8
-(or similar for a different language or country). The value must be a valid
+(or similar for a different language or country).  The value must be a valid
 locale on your system, i.e. on Unix-like systems it must be present in the
 output of >
 	locale -a

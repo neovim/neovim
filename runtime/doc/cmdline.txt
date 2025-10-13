@@ -157,7 +157,8 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				the last delete or yank
 			'%'	the current file name
 			'#'	the alternate file name
-			"*"	the clipboard contents (X11: primary selection)
+			"*"	the clipboard contents (X11: primary
+				selection)
 			'+'	the clipboard contents
 			'/'	the last search pattern
 			':'	the last command-line
@@ -416,7 +417,8 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		then go to the previous match.
 							*c_CTRL-N*
 CTRL-N		After using 'wildchar' which got multiple matches, go to next
-		match.  Otherwise recall more recent command-line from history.
+		match.  Otherwise recall more recent command-line from
+		history.
 							*c_CTRL-P*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
@@ -684,9 +686,9 @@ See also |`=|.
 
 							*:_!*
 The '!' (bang) character after an Ex command makes the command behave in a
-different way.  The '!' should be placed immediately after the command, without
-any blanks in between.  If you insert blanks the '!' will be seen as an
-argument for the command, which has a different meaning.  For example:
+different way.  The '!' should be placed immediately after the command,
+without any blanks in between.  If you insert blanks the '!' will be seen as
+an argument for the command, which has a different meaning.  For example:
 	:w! name	write the current buffer to file "name", overwriting
 			any existing file
 	:w !name	send the current buffer as standard input to command
@@ -1024,8 +1026,10 @@ Note: these are typed literally, they are not special keys!
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
-The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<script>",
-"<afile>" or "<abuf>".  They are also used with the |fnamemodify()| function.
+The file name modifiers can be used after "%", "#", "#n", "<cfile>",
+"<script>", "<afile>" or "<abuf>".  They are also used with the |fnamemodify()|
+function.
+
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
 		changes "~/" (and "~user/" for Unix) to the path for the home
@@ -1076,7 +1080,7 @@ These modifiers can be given, in this order:
 		Substitute all occurrences of "pat" with "sub".  Otherwise
 		this works like ":s".
 	:S	Escape special characters for use with a shell command (see
-		|shellescape()|). Must be the last one. Examples: >
+		|shellescape()|).  Must be the last one.  Examples: >
 		    :!dir <cfile>:S
 		    :call system('chmod +w -- ' .. expand('%:S'))
 
@@ -1157,9 +1161,9 @@ special meaning.  Therefore "\file\foo" is a valid file name, you don't have
 to type the backslash twice.
 
 An exception is the '$' sign.  It is a valid character in a file name.  But
-to avoid a file name like "$home" to be interpreted as an environment variable,
-it needs to be preceded by a backslash.  Therefore you need to use "/\$home"
-for the file "$home" in the root directory.  A few examples:
+to avoid a file name like "$home" to be interpreted as an environment
+variable, it needs to be preceded by a backslash.  Therefore you need to use
+"/\$home" for the file "$home" in the root directory.  A few examples:
 
 	FILE NAME	INTERPRETED AS	~
 	$home		expanded to value of environment var $home

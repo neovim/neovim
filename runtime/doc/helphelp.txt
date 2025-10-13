@@ -365,8 +365,8 @@ color.  E.g.
 Column heading ~
 
 To separate sections in a help file, place a series of '=' characters in a
-line starting from the first column.  The section separator line is highlighted
-differently.
+line starting from the first column.  The section separator line is
+highlighted differently.
 
 							      *help-codeblock*
 To quote a block of ex-commands verbatim, place a greater than (>) character

@@ -124,9 +124,9 @@ set, Vim renames or copies the original file before it will be overwritten.
 You can use this file if you discover that you need the original file.  See
 also the 'patchmode' option.  The name of the backup file is normally the same
 as the original file with 'backupext' appended.  The default "~" is a bit
-strange to avoid accidentally overwriting existing files.  If you prefer ".bak"
-change the 'backupext' option.  The backup file can be placed in another
-directory by setting 'backupdir'.
+strange to avoid accidentally overwriting existing files.  If you prefer
+".bak" change the 'backupext' option.  The backup file can be placed in
+another directory by setting 'backupdir'.
 
 When you started editing without giving a file name, "No File" is displayed in
 messages.  If the ":write" command is used with a file name argument, the file
@@ -261,7 +261,7 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			Mnemonic: "goto file".
 			Uses the 'isfname' option to find out which characters
 			are supposed to be in a file name.  Trailing
-			punctuation characters ".,:;!" are ignored. Escaped
+			punctuation characters ".,:;!" are ignored.  Escaped
 			spaces "\ " are reduced to a single space.
 			Uses the 'path' option as a list of directory names to
 			look for the file.  See the 'path' option for details
@@ -299,7 +299,7 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			the file.
 			The file name and the number must be separated by a
 			non-filename (see 'isfname') and non-numeric
-			character. " line " is also recognized, like it is
+			character.  " line " is also recognized, like it is
 			used in the output of `:verbose command UserCmd`
 			White space between the filename, the separator and
 			the number are ignored.
@@ -351,7 +351,7 @@ is to use "path\[[]abc]", this matches the file "path\[abc]".
 
 					*starstar-wildcard*
 Expanding "**" is possible on Unix, Win32, macOS and a few other systems (but
-it may depend on your 'shell' setting on Unix and macOS. It's known to work
+it may depend on your 'shell' setting on Unix and macOS.  It's known to work
 correctly for zsh; for bash this requires at least bash version >= 4.X).
 This allows searching a directory tree.  This goes up to 100 directories deep.
 Note there are some commands where this works slightly differently, see
@@ -364,7 +364,7 @@ Finds files:
 	a/b/c/d/ccc.txt ~
 When non-wildcard characters are used right before or after "**" these are
 only matched in the top directory.  They are not used for directories further
-down in the tree. For example: >
+down in the tree.  For example: >
 	:n /usr/inc**/types.h
 Finds files:
 	/usr/include/types.h ~
@@ -382,9 +382,9 @@ argument, for example: >
 Vim will run the command in backticks using the 'shell' and use the standard
 output as argument for the given Vim command (error messages from the shell
 command will be discarded).
-To see what shell command Vim is running, set the 'verbose' option to 4. When
+To see what shell command Vim is running, set the 'verbose' option to 4.  When
 the shell command returns a non-zero exit code, an error message will be
-displayed and the Vim command will be aborted. To avoid this make the shell
+displayed and the Vim command will be aborted.  To avoid this make the shell
 always return zero like so: >
        :next `find . -name ver\\*.c -print \|\| true`
 
@@ -643,7 +643,7 @@ list of the current window.
 			[count] is used like with |:argadd|.
 			If the current file cannot be |abandon|ed {name}s will
 			still be added to the argument list, but won't be
-			edited. No check for duplicates is done.
+			edited.  No check for duplicates is done.
 			Also see |++opt| and |+cmd|.
 
 :[count]arga[dd] {name} ...			*:arga* *:argadd* *E479*
@@ -1407,7 +1407,7 @@ exist, the next-higher scope in the hierarchy applies.
 			Also see |getcwd()|.
 							*:pwd-verbose*
 			When 'verbose' is non-zero, |:pwd| will also display
-			what scope the current directory was set. Example: >
+			what scope the current directory was set.  Example: >
 
 				" Set by :cd
 				:verbose pwd
@@ -1577,24 +1577,24 @@ If it has changed, Vim will ask if you really want to overwrite the file:
 	WARNING: The file has been changed since reading it!!!
 	Do you really want to write to it (y/n)?
 
-If you hit 'y' Vim will continue writing the file.  If you hit 'n' the write is
-aborted.  If you used ":wq" or "ZZ" Vim will not exit, you will get another
+If you hit 'y' Vim will continue writing the file.  If you hit 'n' the write
+is aborted.  If you used ":wq" or "ZZ" Vim will not exit, you will get another
 chance to write the file.
 
 The message would normally mean that somebody has written to the file after
 the edit session started.  This could be another person, in which case you
 probably want to check if your changes to the file and the changes from the
-other person should be merged.  Write the file under another name and check for
-differences (the "diff" program can be used for this).
+other person should be merged.  Write the file under another name and check
+for differences (the "diff" program can be used for this).
 
 It is also possible that you modified the file yourself, from another edit
 session or with another command (e.g., a filter command).  Then you will know
 which version of the file you want to keep.
 
 The accuracy of the time check depends on the filesystem.  On Unix it is
-usually sub-second.  With old file systems and on MS-Windows it is normally one
-second.  Use `has('nanotime')` to check if sub-second time stamp checks are
-available.
+usually sub-second.  With old file systems and on MS-Windows it is normally
+one second.  Use `has('nanotime')` to check if sub-second time stamp checks
+are available.
 
 There is one situation where you get the message while there is nothing wrong:
 On a Win32 system on the day daylight saving time starts.  There is something
@@ -1624,8 +1624,8 @@ There are three different types of searching:
       - It ONLY matches directories.
       - It matches up to 30 directories deep by default, so you can use it to
 	search an entire directory tree
-      - The maximum number of levels matched can be given by appending a number
-	to "**".
+      - The maximum number of levels matched can be given by appending a
+        number to "**".
 	Thus '/usr/**2' can match: >
 		/usr
 		/usr/include

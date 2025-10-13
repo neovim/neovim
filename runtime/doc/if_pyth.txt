@@ -57,9 +57,9 @@ Note: Python is very sensitive to indenting.  Make sure the "class" line and
 			{body}" for each line in the [range], with the
 			function arguments being set to the text of each line
 			in turn, without a trailing <EOL>, and the current
-			line number. The function should return a string or
-			None. If a string is returned, it becomes the text of
-			the line in the current turn. The default for [range]
+			line number.  The function should return a string or
+			None.  If a string is returned, it becomes the text of
+			the line in the current turn.  The default for [range]
 			is the whole file: "1,$".
 
 Examples:
@@ -68,7 +68,7 @@ Examples:
 	:pydo if line: return "%4d: %s" % (linenr, line)
 <
 One can use `:pydo` in possible conjunction with `:py` to filter a range using
-python. For example: >vim
+python.  For example: >vim
 
 	:py3 << EOF
 	needle = vim.eval('@a')
@@ -184,14 +184,14 @@ vim.strwidth(str)					*python-strwidth*
 vim.foreach_rtp(callable)				*python-foreach_rtp*
 	Call the given callable for each path in 'runtimepath' until either
 	callable returns something but None, the exception is raised or there
-	are no longer paths. If stopped in case callable returned non-None,
+	are no longer paths.  If stopped in case callable returned non-None,
 	vim.foreach_rtp function returns the value returned by callable.
 
 `vim.chdir(*args, **kwargs)`				*python-chdir*
 `vim.fchdir(*args, **kwargs)`				*python-fchdir*
 	Run os.chdir or os.fchdir, then all appropriate vim stuff.
 	Note: you should not use these functions directly, use os.chdir and
-	      os.fchdir instead. Behavior of vim.fchdir is undefined in case
+	      os.fchdir instead.  Behavior of vim.fchdir is undefined in case
 	      os.fchdir does not exist.
 
 Error object of the "vim" module
@@ -229,12 +229,12 @@ vim.windows						*python-windows*
 <	Note: vim.windows object always accesses current tab page.
 	|python-tabpage|.windows objects are bound to parent |python-tabpage|
 	object and always use windows from that tab page (or throw vim.error
-	in case tab page was deleted). You can keep a reference to both
+	in case tab page was deleted).  You can keep a reference to both
 	without keeping a reference to vim module object or |python-tabpage|,
 	they will not lose their properties in this case.
 
 vim.tabpages						*python-tabpages*
-	A sequence object providing access to the list of vim tab pages. The
+	A sequence object providing access to the list of vim tab pages.  The
 	object supports the following operations: >vim
 	    :py t = vim.tabpages[i]	# Indexing (read-only)
 	    :py t in vim.tabpages	# Membership test
@@ -257,10 +257,10 @@ vim.current						*python-current*
 
 	Note: When assigning to vim.current.{buffer,window,tabpage} it expects
 	valid |python-buffer|, |python-window| or |python-tabpage| objects
-	respectively. Assigning triggers normal (with |autocommand|s)
-	switching to given buffer, window or tab page. It is the only way to
+	respectively.  Assigning triggers normal (with |autocommand|s)
+	switching to given buffer, window or tab page.  It is the only way to
 	switch UI objects in python: you can't assign to
-	|python-tabpage|.window attribute. To switch without triggering
+	|python-tabpage|.window attribute.  To switch without triggering
 	autocommands use >vim
 	    py << EOF
 	    saved_eventignore = vim.options['eventignore']
@@ -279,10 +279,10 @@ vim.vvars						*python-vvars*
 vim.options						*python-options*
 	Object partly supporting mapping protocol (supports setting and
 	getting items) providing a read-write access to global options.
-	Note: unlike |:set| this provides access only to global options. You
+	Note: unlike |:set| this provides access only to global options.  You
 	cannot use this object to obtain or set local options' values or
-	access local-only options in any fashion. Raises KeyError if no global
-	option with such name exists (i.e. does not raise KeyError for
+	access local-only options in any fashion.  Raises KeyError if no
+	global option with such name exists (i.e. does not raise KeyError for
 	|global-local| options and global only options, but does for window-
 	and buffer-local ones).  Use |python-buffer| objects to access to
 	buffer-local options and |python-window| objects to access to
@@ -303,8 +303,8 @@ Output from Python					*python-output*
 
 							*python-input*
 	Input (via sys.stdin, including input() and raw_input()) is not
-	supported, and may cause the program to crash.  This should probably be
-	fixed.
+	supported, and may cause the program to crash.  This should probably
+	be fixed.
 
 				  *python3-directory* *pythonx-directory*
 Python 'runtimepath' handling				*python-special-path*
@@ -362,11 +362,11 @@ Implementation is similar to the following, but written in C: >python
 
     sys.path_hooks.append(hook)
 
-vim.VIM_SPECIAL_PATH					*python-VIM_SPECIAL_PATH*
-	String constant used in conjunction with vim path hook. If path hook
+vim.VIM_SPECIAL_PATH				*python-VIM_SPECIAL_PATH*
+	String constant used in conjunction with vim path hook.  If path hook
 	installed by vim is requested to handle anything but path equal to
-	vim.VIM_SPECIAL_PATH constant it raises ImportError. In the only other
-	case it uses special loader.
+	vim.VIM_SPECIAL_PATH constant it raises ImportError.  In the only
+	other case it uses special loader.
 
 	Note: you must not use value of this constant directly, always use
 	      vim.VIM_SPECIAL_PATH object.
@@ -381,7 +381,7 @@ vim.path_hook(path)					*python-path_hook*
 
 vim._get_paths						*python-_get_paths*
 	Methods returning a list of paths which will be searched for by path
-	hook. You should not rely on this method being present in future
+	hook.  You should not rely on this method being present in future
 	versions, but can use it for debugging.
 
 	It returns a list of {rtp}/python3 and {rtp}/pythonx
@@ -390,7 +390,8 @@ vim._get_paths						*python-_get_paths*
 ==============================================================================
 Buffer objects						*python-buffer*
 
-Buffer objects represent vim buffers.  You can obtain them in a number of ways:
+Buffer objects represent vim buffers.  You can obtain them in a number of
+ways:
 	- via vim.current.buffer (|python-current|)
 	- from indexing vim.buffers (|python-buffers|)
 	- from the "buffer" attribute of a window (|python-window|)
@@ -404,9 +405,10 @@ act as if they were lists (yes, they are mutable) of strings, with each
 element being a line of the buffer.  All of the usual sequence operations,
 including indexing, index assignment, slicing and slice assignment, work as
 you would expect.  Note that the result of indexing (slicing) a buffer is a
-string (list of strings).  This has one unusual consequence - b[:] is different
-from b.  In particular, "b[:] = None" deletes the whole of the buffer, whereas
-"b = None" merely updates the variable b, with no effect on the buffer.
+string (list of strings).  This has one unusual consequence - b[:] is
+different from b.  In particular, "b[:] = None" deletes the whole of the
+buffer, whereas "b = None" merely updates the variable b, with no effect on
+the buffer.
 
 Buffer indexes start at zero, as is normal in Python.  This differs from vim
 line numbers, which start from 1.  This is particularly relevant when dealing
@@ -417,17 +419,17 @@ The buffer object attributes are:
 			|buffer-variable|s.
 	b.options	Mapping object (supports item getting, setting and
 			deleting) that provides access to buffer-local options
-			and buffer-local values of |global-local| options. Use
+			and buffer-local values of |global-local| options.  Use
 			|python-window|.options if option is window-local,
-			this object will raise KeyError. If option is
+			this object will raise KeyError.  If option is
 			|global-local| and local value is missing getting it
 			will return None.
-	b.name		String, RW. Contains buffer name (full path).
+	b.name		String, RW.  Contains buffer name (full path).
 			Note: when assigning to b.name |BufFilePre| and
 			|BufFilePost| autocommands are launched.
-	b.number	Buffer number. Can be used as |python-buffers| key.
+	b.number	Buffer number.  Can be used as |python-buffers| key.
 			Read-only.
-	b.valid		True or False. Buffer object becomes invalid when
+	b.valid		True or False.  Buffer object becomes invalid when
 			corresponding buffer is wiped out.
 
 The buffer object methods are:
@@ -500,7 +502,8 @@ Example (assume r is the current range):
 ==============================================================================
 Window objects						*python-window*
 
-Window objects represent vim windows.  You can obtain them in a number of ways:
+Window objects represent vim windows.  You can obtain them in a number of
+ways:
 	- via vim.current.window (|python-current|)
 	- from indexing vim.windows (|python-windows|)
 	- from indexing "windows" attribute of a tab page (|python-tabpage|)

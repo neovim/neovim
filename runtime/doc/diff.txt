@@ -62,7 +62,8 @@ See `:diffoff` for an easy way to revert the options.
 The differences shown are actually the differences in the buffer.  Thus if you
 make changes after loading a file, these will be included in the displayed
 diffs.  You might have to do ":diffupdate" now and then, not all changes are
-immediately taken into account, especially when using an external diff command.
+immediately taken into account, especially when using an external diff
+command.
 
 In your vimrc file you could do something special when Vim was started in
 diff mode.  You could use a construct like this: >
@@ -279,7 +280,7 @@ that the buffers will be equal within the specified range.
 
 							*do*
 [count]do	Same as ":diffget" without range.  The "o" stands for "obtain"
-		("dg" can't be used, it could be the start of "dgg"!). Note:
+		("dg" can't be used, it could be the start of "dgg"!).  Note:
 		this doesn't work in Visual mode.
 		If you give a [count], it is used as the [bufspec] argument
 		for ":diffget".
@@ -452,7 +453,7 @@ Also see 'diffopt' and the "diff" item of 'fillchars'.
 
 					    *diff-slow* *diff_translations*
 For very long lines, the diff syntax highlighting might be slow, especially
-since it tries to match all different kind of localisations. To disable
+since it tries to match all different kind of localisations.  To disable
 localisations and speed up the syntax highlighting, set the global variable
 g:diff_translations to zero: >
 
@@ -534,7 +535,7 @@ The `redraw!` command may not be needed, depending on whether executing a
 shell command shows something on the display or not.
 
 If the 'diffexpr' expression starts with s: or |<SID>|, then it is replaced
-with the script ID (|local-function|). Example: >
+with the script ID (|local-function|).  Example: >
 		set diffexpr=s:MyDiffExpr()
 		set diffexpr=<SID>SomeDiffExpr()
 Otherwise, the expression is evaluated in the context of the script where the
@@ -595,7 +596,7 @@ directory are accidentally patched.  Vim will also delete files starting with
 v:fname_in and ending in ".rej" and ".orig".
 
 If the 'patchexpr' expression starts with s: or |<SID>|, then it is replaced
-with the script ID (|local-function|). Example: >
+with the script ID (|local-function|).  Example: >
 		set patchexpr=s:MyPatchExpr()
 		set patchexpr=<SID>SomePatchExpr()
 Otherwise, the expression is evaluated in the context of the script where the

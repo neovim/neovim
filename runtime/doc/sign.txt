@@ -50,19 +50,19 @@ The color of the column is set with the SignColumn highlight group
 If 'cursorline' is enabled, then the CursorLineSign highlight group is used
 |hl-CursorLineSign|.
 							*sign-identifier*
-Each placed sign is identified by a number called the sign identifier. This
-identifier is used to jump to the sign or to remove the sign. The identifier
+Each placed sign is identified by a number called the sign identifier.  This
+identifier is used to jump to the sign or to remove the sign.  The identifier
 is assigned when placing the sign using the |:sign-place| command or the
-|sign_place()| function. Each sign identifier should be a unique number (per
-buffer). Placing the same identifier twice will move the previously placed
-sign. The |sign_place()| function can be called with a zero sign identifier to
-allocate the next available identifier.
+|sign_place()| function.  Each sign identifier should be a unique number (per
+buffer).  Placing the same identifier twice will move the previously placed
+sign.  The |sign_place()| function can be called with a zero sign identifier
+to allocate the next available identifier.
 
 							*sign-group*
 Each placed sign can be assigned to either the global group or a named group.
 When placing a sign, if a group name is not supplied, or an empty string is
-used, then the sign is placed in the global group. Otherwise the sign is
-placed in the named group. The sign identifier is unique within a group. The
+used, then the sign is placed in the global group.  Otherwise the sign is
+placed in the named group.  The sign identifier is unique within a group.  The
 sign group allows Vim plugins to use unique signs without interfering with
 other plugins using signs.
 
@@ -188,8 +188,8 @@ See |sign_place()| for the equivalent Vim script function.
 		By default, the sign is placed in the global sign group.
 
 		By default, the sign is assigned a default priority of 10,
-		unless specified otherwise by the sign definition.  To assign a
-		different priority value, use "priority={prio}" to specify a
+		unless specified otherwise by the sign definition.  To assign
+		a different priority value, use "priority={prio}" to specify a
 		value.  The priority is used to determine the sign that is
 		displayed when multiple signs are placed on the same line.
 
@@ -287,7 +287,8 @@ See |sign_unplace()| for the equivalent Vim script function.
 		all the files it appears in.
 
 :sig[n] unplace *
-		Remove all placed signs in the global group from all the files.
+		Remove all placed signs in the global group from all the
+		files.
 
 :sig[n] unplace * group={group}
 		Remove all placed signs in group {group} from all the files.
@@ -296,8 +297,8 @@ See |sign_unplace()| for the equivalent Vim script function.
 		Remove all placed signs in all the groups from all the files.
 
 :sig[n] unplace
-		Remove a placed sign at the cursor position. If multiple signs
-		are placed in the line, then only one is removed.
+		Remove a placed sign at the cursor position.  If multiple
+		signs are placed in the line, then only one is removed.
 
 :sig[n] unplace group={group}
 		Remove a placed sign in group {group} at the cursor
@@ -355,7 +356,7 @@ See |sign_jump()| for the equivalent Vim script function.
 
 :sig[n] jump {id} [buffer={nr}]				*E934*
 		Same, but use buffer {nr}.  This fails if buffer {nr} does not
-		have a name. If the buffer argument is not given, use the
+		have a name.  If the buffer argument is not given, use the
 		current buffer.
 
 :sig[n] jump {id} group={group} [buffer={nr}]
