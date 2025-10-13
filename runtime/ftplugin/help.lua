@@ -116,7 +116,9 @@ do
 end
 
 local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
-do
+local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+
+if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
   local base = 'https://neovim.io/doc/user/helptag.html?tag='
   local query = vim.treesitter.query.parse(
     'vimdoc',
@@ -129,28 +131,17 @@ do
   ]]
   )
 
-  local function is_nvim_tag(tag)
-    local tagsfile = vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc', 'tags')
-    local candidates = vim.fn.taglist('^' .. tag .. '$', tagsfile)
-    if #candidates == 0 then
-      return false
-    end
-    return vim.fs.relpath(vim.env.VIMRUNTIME, candidates[1].filename) ~= nil
-  end
-
   for _, match, _ in query:iter_matches(root, 0, 0, -1) do
     for id, nodes in pairs(match) do
       if query.captures[id] == 'helplink' then
         for _, node in ipairs(nodes) do
           local start_line, start_col, end_line, end_col = node:range()
           local tag = vim.treesitter.get_node_text(node, 0)
-          if is_nvim_tag(tag) then
-            vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
-              end_line = end_line,
-              end_col = end_col,
-              url = base .. vim.uri_encode(tag),
-            })
-          end
+          vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
+            end_line = end_line,
+            end_col = end_col,
+            url = base .. vim.uri_encode(tag),
+          })
         end
       end
     end
