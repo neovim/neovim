@@ -56,14 +56,14 @@ To see what version of Ruby you have: >
 						*:rubydo* *:rubyd* *E265*
 :[range]rubyd[o] {cmd}	Evaluate Ruby command {cmd} for each line in the
 			[range], with $_ being set to the text of each line in
-			turn, without a trailing <EOL>.  Setting $_ will change
-			the text, but note that it is not possible to add or
-			delete lines using this command.
+			turn, without a trailing <EOL>.  Setting $_ will
+			change the text, but note that it is not possible to
+			add or delete lines using this command.
 			The default for [range] is the whole file: "1,$".
 
 							*:rubyfile* *:rubyf*
-:rubyf[ile] {file}	Execute the Ruby script in {file}.  This is the same as
-			`:ruby load 'file'`, but allows file name completion.
+:rubyf[ile] {file}	Execute the Ruby script in {file}.  This is the same
+			as `:ruby load 'file'`, but allows file name completion.
 
 Executing Ruby commands is not possible in the |sandbox|.
 
@@ -127,8 +127,8 @@ Class Methods:
 
 current		Returns the current buffer object.
 count		Returns the number of buffers.
-self[{n}]	Returns the buffer object for the number {n}.  The first number
-		is 0.
+self[{n}]	Returns the buffer object for the number {n}.  The first
+		number is 0.
 
 Methods:
 
@@ -136,10 +136,10 @@ name		Returns the full name of the buffer.
 number		Returns the number of the buffer.
 count		Returns the number of lines.
 length		Returns the number of lines.
-self[{n}]	Returns a line from the buffer. {n} is the line number.
+self[{n}]	Returns a line from the buffer.  {n} is the line number.
 self[{n}] = {str}
-		Sets a line in the buffer. {n} is the line number.
-delete({n})	Deletes a line from the buffer. {n} is the line number.
+		Sets a line in the buffer.  {n} is the line number.
+delete({n})	Deletes a line from the buffer.  {n} is the line number.
 append({n}, {str})
 		Appends a line after the line {n}.
 line		Returns the current line of the buffer if the buffer is
@@ -157,8 +157,8 @@ Class Methods:
 
 current		Returns the current window object.
 count		Returns the number of windows.
-self[{n}]	Returns the window object for the number {n}.  The first number
-		is 0.
+self[{n}]	Returns the window object for the number {n}.  The first
+		number is 0.
 
 Methods:
 

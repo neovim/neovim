@@ -397,9 +397,9 @@ version 2.2.3.
 ASSEMBLY	*asm68k* *ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*
 		*ft-masm-syntax* *ft-asm68k-syntax*
 
-Files matching "*.i" could be Progress or Assembly.  If the automatic detection
-doesn't work for you, or you don't edit Progress at all, use this in your
-startup vimrc: >
+Files matching "*.i" could be Progress or Assembly.  If the automatic
+detection doesn't work for you, or you don't edit Progress at all, use this in
+your startup vimrc: >
    :let filetype_i = "asm"
 Replace "asm" with the type of assembly you use.
 
@@ -414,7 +414,7 @@ files are included:
 	ia64		Intel Itanium 64
 	fasm		Flat assembly (https://flatassembler.net)
 	masm		Microsoft assembly (.masm files are compiled with
-			Microsoft's Macro Assembler. This is only supported
+			Microsoft's Macro Assembler.  This is only supported
 			for x86, x86_64, ARM and AARCH64 CPU families)
 	nasm		Netwide assembly
 	tasm		Turbo Assembly (with opcodes 80x86 up to Pentium, and
@@ -486,7 +486,7 @@ For Visual Basic use: >
 
 ASYMPTOTE						*ft-asy-syntax*
 
-By default, only basic Asymptote keywords are highlighted. To highlight
+By default, only basic Asymptote keywords are highlighted.  To highlight
 extended geometry keywords: >
 
 	:let g:asy_syn_plain = 1
@@ -495,7 +495,7 @@ and for highlighting keywords related to 3D constructions: >
 
 	:let g:asy_syn_three = 1
 
-By default, Asymptote-defined colors (e.g: lightblue) are highlighted. To
+By default, Asymptote-defined colors (e.g: lightblue) are highlighted.  To
 highlight TeX-defined colors (e.g: BlueViolet) use: >
 
 	:let g:asy_syn_texcolors = 1
@@ -507,8 +507,8 @@ or for Xorg colors (e.g: AliceBlue): >
 BAAN								*baan-syntax*
 
 The baan.vim gives syntax support for BaanC of release BaanIV up to SSA ERP LN
-for both 3 GL and 4 GL programming. Large number of standard defines/constants
-are supported.
+for both 3 GL and 4 GL programming.  Large number of standard
+defines/constants are supported.
 
 Some special violation of coding standards will be signalled when one specify
 in ones |init.vim|: >
@@ -517,7 +517,7 @@ in ones |init.vim|: >
 *baan-folding*
 
 Syntax folding can be enabled at various levels through the variables
-mentioned below (Set those in your |init.vim|). The more complex folding on
+mentioned below (Set those in your |init.vim|).  The more complex folding on
 source blocks and SQL can be CPU intensive.
 
 To allow any folding and enable folding at function level use: >
@@ -530,9 +530,9 @@ Folding can be enabled for embedded SQL blocks as SELECT, SELECTDO,
 SELECTEMPTY, ... The indentation preceding the begin/end keywords has to
 match (spaces are not considered equal to a tab). >
 	let baan_fold_sql=1
-Note: Block folding can result in many small folds. It is suggested to |:set|
+Note: Block folding can result in many small folds.  It is suggested to |:set|
 the options 'foldminlines' and 'foldnestmax' in |init.vim| or use |:setlocal|
-in .../after/syntax/baan.vim (see |after-directory|). Eg: >
+in .../after/syntax/baan.vim (see |after-directory|).  Eg: >
 	set foldminlines=5
 	set foldnestmax=6
 
@@ -788,7 +788,7 @@ variable.
 CSV							*ft-csv-syntax*
 
 If you change the delimiter of a CSV file, its syntax highlighting will no
-longer match the changed file content. You will need to unlet the following
+longer match the changed file content.  You will need to unlet the following
 variable: >
 
 	:unlet b:csv_delimiter
@@ -804,10 +804,10 @@ Now the syntax engine should determine the newly changed CSV delimiter.
 CYNLIB							*ft-cynlib-syntax*
 
 Cynlib files are C++ files that use the Cynlib class library to enable
-hardware modelling and simulation using C++.  Typically Cynlib files have a .cc
-or a .cpp extension, which makes it very difficult to distinguish them from a
-normal C++ file.  Thus, to enable Cynlib highlighting for .cc files, add this
-line to your vimrc file: >
+hardware modelling and simulation using C++.  Typically Cynlib files have a
+.cc or a .cpp extension, which makes it very difficult to distinguish them
+from a normal C++ file.  Thus, to enable Cynlib highlighting for .cc files,
+add this line to your vimrc file: >
 
 	:let cynlib_cyntax_for_cc=1
 
@@ -847,9 +847,9 @@ following variables:
 DART							*ft-dart-syntax*
 
 Dart is an object-oriented, typed, class defined, garbage collected language
-used for developing mobile, desktop, web, and back-end applications.  Dart uses
-a C-like syntax derived from C, Java, and JavaScript, with features adopted
-from Smalltalk, Python, Ruby, and others.
+used for developing mobile, desktop, web, and back-end applications.  Dart
+uses a C-like syntax derived from C, Java, and JavaScript, with features
+adopted from Smalltalk, Python, Ruby, and others.
 
 More information about the language and its development environment at the
 official Dart language website at https://dart.dev
@@ -965,7 +965,7 @@ Doxygen generates code documentation using a special documentation format
 (similar to Javadoc).  This syntax script adds doxygen highlighting to c, cpp,
 idl and php files, and should also work with java.
 
-There are a few of ways to turn on doxygen formatting. It can be done
+There are a few of ways to turn on doxygen formatting.  It can be done
 explicitly or in a modeline by appending '.doxygen' to the syntax of the file.
 Example: >
 	:set syntax=c.doxygen
@@ -1073,7 +1073,7 @@ to your startup file.
 
 EUPHORIA						     *ft-euphoria-syntax*
 
-Two syntax highlighting files exist for Euphoria. One for Euphoria
+Two syntax highlighting files exist for Euphoria.  One for Euphoria
 version 3.1.1, which is the default syntax highlighting file, and one for
 Euphoria version 4.0.5 or later.
 
@@ -1099,7 +1099,7 @@ add the following line to your startup file: >
 Elixir and Euphoria share the `*.ex` file extension.  If the filetype is
 specifically set as Euphoria with the g:filetype_euphoria variable, or the
 file is determined to be Euphoria based on keywords in the file, then the
-filetype will be set as Euphoria. Otherwise, the filetype will default to
+filetype will be set as Euphoria.  Otherwise, the filetype will default to
 Elixir.
 
 
@@ -1159,10 +1159,10 @@ The following file extensions are auto-detected as Elixir file types: >
 
 	*.ex, *.exs, *.eex, *.leex, *.lock
 
-Elixir and Euphoria share the `*.ex` file extension. If the filetype is
+Elixir and Euphoria share the `*.ex` file extension.  If the filetype is
 specifically set as Euphoria with the g:filetype_euphoria variable, or the
 file is determined to be Euphoria based on keywords in the file, then the
-filetype will be set as Euphoria. Otherwise, the filetype will default to
+filetype will be set as Euphoria.  Otherwise, the filetype will default to
 Elixir.
 
 
@@ -1174,12 +1174,12 @@ NOTE: This site currently doesn't work, on Wikipedia is mentioned that
 development stopped in 2009.
 
 Syntax highlighting is available for the most common elements of FlexWiki
-syntax. The associated ftplugin script sets some buffer-local options to make
-editing FlexWiki pages more convenient. FlexWiki considers a newline as the
+syntax.  The associated ftplugin script sets some buffer-local options to make
+editing FlexWiki pages more convenient.  FlexWiki considers a newline as the
 start of a new paragraph, so the ftplugin sets 'tw'=0 (unlimited line length),
 'wrap' (wrap long lines instead of using horizontal scrolling), 'linebreak'
 (to wrap at a character in 'breakat' instead of at the last char on screen),
-and so on. It also includes some keymaps that are disabled by default.
+and so on.  It also includes some keymaps that are disabled by default.
 
 If you want to enable the keymaps that make "j" and "k" and the cursor keys
 move up and down by display lines, add this to your vimrc: >
@@ -1240,7 +1240,7 @@ edit F# or Fortran at all, use this in your startup vimrc: >
 FORTRAN						*ft-fortran-syntax*
 
 Default highlighting and dialect ~
-Vim highlights according to Fortran 2023 (the most recent standard). This
+Vim highlights according to Fortran 2023 (the most recent standard).  This
 choice should be appropriate for most users most of the time because Fortran
 2023 is almost a superset of previous versions (Fortran 2018, 2008, 2003, 95,
 90, 77, and 66).  A few legacy constructs deleted or declared obsolescent,
@@ -1263,7 +1263,7 @@ If you always use fixed source form, then >
 
 If the form of the source code depends, in a non-standard way, upon the file
 extension, then it is most convenient to set fortran_free_source in a ftplugin
-file.  For more information on ftplugin files, see |ftplugin|. Note that this
+file.  For more information on ftplugin files, see |ftplugin|.  Note that this
 will work only if the "filetype plugin indent on" command precedes the "syntax
 on" command in your .vimrc file.
 
@@ -1271,14 +1271,14 @@ on" command in your .vimrc file.
 When you edit an existing Fortran file, the syntax script will assume free
 source form if the fortran_free_source variable has been set, and assumes
 fixed source form if the fortran_fixed_source variable has been set.  Suppose
-neither of these variables have been set. In that case, the syntax script
+neither of these variables have been set.  In that case, the syntax script
 attempts to determine which source form has been used by examining the file
 extension using conventions common to the ifort, gfortran, Cray, NAG, and
 PathScale compilers (.f, .for, .f77 for fixed-source, .f90, .f95, .f03, .f08
 for free-source).  No default is used for the .fpp and .ftn file extensions
-because different compilers treat them differently. If none of this works,
+because different compilers treat them differently.  If none of this works,
 then the script examines the first five columns of the first 500 lines of your
-file. If no signs of free source form are detected, then the file is assumed
+file.  If no signs of free source form are detected, then the file is assumed
 to be in fixed source form.  The algorithm should work in the vast majority of
 cases.  In some cases, such as a file that begins with 500 or more full-line
 comments, the script may incorrectly decide that the code is in fixed form.
@@ -1320,8 +1320,8 @@ fortran_fold in your .vimrc with a command such as >
 to instruct the syntax script to define fold regions for program units, that
 is main programs starting with a program statement, subroutines, function
 subprograms, modules, submodules, blocks of comment lines, and block data
-units. Block, interface, associate, critical, type definition, and change team
-constructs will also be folded.  If you also set the variable
+units.  Block, interface, associate, critical, type definition, and change
+team constructs will also be folded.  If you also set the variable
 fortran_fold_conditionals with a command such as >
     :let fortran_fold_conditionals=1
 then fold regions will also be defined for do loops, if blocks, select case,
@@ -1802,7 +1802,7 @@ JSON				*ft-json-syntax* *g:vim_json_conceal*
 						*g:vim_json_warnings*
 
 The json syntax file provides syntax highlighting with conceal support by
-default. To disable concealment: >
+default.  To disable concealment: >
 	let g:vim_json_conceal = 0
 
 To disable syntax highlighting of errors: >
@@ -1958,7 +1958,7 @@ instead, and the name of your source file should be `*.pike`
 
 LUA							*ft-lua-syntax*
 
-The Lua syntax file can be used for versions 4.0, 5.0+. You can select one of
+The Lua syntax file can be used for versions 4.0, 5.0+.  You can select one of
 these versions using the global variables |g:lua_version| and
 |g:lua_subversion|.
 
@@ -1966,9 +1966,9 @@ these versions using the global variables |g:lua_version| and
 MAIL							*ft-mail.vim*
 
 Vim highlights all the standard elements of an email (headers, signatures,
-quoted text and URLs / email addresses).  In keeping with standard conventions,
-signatures begin in a line containing only "--" followed optionally by
-whitespaces and end with a newline.
+quoted text and URLs / email addresses).  In keeping with standard
+conventions, signatures begin in a line containing only "--" followed
+optionally by whitespaces and end with a newline.
 
 Vim treats lines beginning with "]", "}", "|", ">" or a word followed by ">"
 as quoted text.  However Vim highlights headers and signatures in quoted text
@@ -2009,8 +2009,9 @@ MAPLE							*ft-maple-syntax*
 
 Maple V, by Waterloo Maple Inc, supports symbolic algebra.  The language
 supports many packages of functions which are selectively loaded by the user.
-The standard set of packages' functions as supplied in Maple V release 4 may be
-highlighted at the user's discretion.  Users may place in their vimrc file: >
+The standard set of packages' functions as supplied in Maple V release 4 may
+be highlighted at the user's discretion.  Users may place in their vimrc
+file: >
 
 	:let mvpkg_all= 1
 
@@ -2064,13 +2065,13 @@ have the following in your vimrc: >
 MBSYNC						*ft-mbsync-syntax*
 
 The mbsync application uses a configuration file to setup mailboxes names,
-user and password. All files ending with `.mbsyncrc` or with the name
+user and password.  All files ending with `.mbsyncrc` or with the name
 `isyncrc` will be recognized as mbsync configuration files.
 
 MEDIAWIKI					*ft-mediawiki-syntax*
 
 By default, syntax highlighting includes basic HTML tags like style and
-headers |ft-html-syntax|. For strict Mediawiki syntax highlighting: >
+headers |ft-html-syntax|.  For strict Mediawiki syntax highlighting: >
 
 	let g:html_no_rendering = 1
 
@@ -2098,7 +2099,7 @@ The syntax for a dialect tag comment is: >
 	  m2pim = 'm2pim', m2iso = 'm2iso', m2r10 = 'm2r10'
 
 A dialect tag comment is recognised by Vim if it occurs within the first 200
-lines of the source file. Only the very first such comment is recognised, any
+lines of the source file.  Only the very first such comment is recognised, any
 additional dialect tag comments are ignored.
 
 Example: >
@@ -2303,7 +2304,7 @@ To do so, set the *g:filetype_md* var: >
 
 	:let g:filetype_md = 'pandoc'
 
-The pandoc syntax plugin uses |conceal| for pretty highlighting. Default is 1 >
+The pandoc syntax plugin uses |conceal| for pretty highlighting.  Default is 1 >
 
 	:let g:pandoc#syntax#conceal#use = 1
 
@@ -2332,8 +2333,8 @@ This is a list of the rules which can be used here:
   - inlinecode
   - inlinemath
 
-You can customize the way concealing works. For example, if you prefer to mark
-footnotes with the `*` symbol: >
+You can customize the way concealing works.  For example, if you prefer to
+mark footnotes with the `*` symbol: >
 
 	:let g:pandoc#syntax#conceal#cchar_overrides = {"footnote" : "*"}
 
@@ -2353,8 +2354,8 @@ specified. Default = 1 >
 	:let g:pandoc#syntax#codeblocks#embeds#use = 1
 
 For specify what languages and using what syntax files to highlight embeds.
-This is a list of language names. When the language pandoc and vim use don't
-match, you can use the "PANDOC=VIM" syntax. For example: >
+This is a list of language names.  When the language pandoc and vim use don't
+match, you can use the "PANDOC=VIM" syntax.  For example: >
 
 	:let g:pandoc#syntax#codeblocks#embeds#langs = ["ruby", "bash=sh"]
 
@@ -2369,8 +2370,8 @@ To add underline subscript, superscript and strikeout text styles. Default = 1 >
 
 	:let g:pandoc#syntax#style#underline_special = 1
 
-Detect and highlight definition lists. Disabling this can improve performance.
-Default = 1 (i.e., enabled by default) >
+Detect and highlight definition lists.  Disabling this can improve
+performance. Default = 1 (i.e., enabled by default) >
 
 	:let g:pandoc#syntax#style#use_definition_lists = 1
 
@@ -2378,7 +2379,7 @@ The pandoc syntax script also comes with the following commands: >
 
 	:PandocHighlight LANG
 
-Enables embedded highlighting for language LANG in codeblocks. Uses the
+Enables embedded highlighting for language LANG in codeblocks.  Uses the
 syntax for items in g:pandoc#syntax#codeblocks#embeds#langs. >
 
 	:PandocUnhighlight LANG
@@ -2791,7 +2792,7 @@ commands than are actually available to you by the game.
 R								*ft-r-syntax*
 
 The parsing of R code for syntax highlight starts 40 lines backwards, but you
-can set a different value in your |vimrc|. Example: >
+can set a different value in your |vimrc|.  Example: >
 	let r_syntax_minlines = 60
 
 You can also turn off syntax highlighting of ROxygen: >
@@ -2817,9 +2818,9 @@ To highlight R code in knitr chunk headers: >
 	let rmd_syn_hl_chunk = 1
 
 By default, chunks of R code will be highlighted following the rules of R
-language. Moreover, whenever the buffer is saved, Vim scans the buffer and
-highlights other languages if they are present in new chunks. LaTeX code also
-is automatically recognized and highlighted when the buffer is saved. This
+language.  Moreover, whenever the buffer is saved, Vim scans the buffer and
+highlights other languages if they are present in new chunks.  LaTeX code also
+is automatically recognized and highlighted when the buffer is saved.  This
 behavior can be controlled with the variables `rmd_dynamic_fenced_languages`,
 and `rmd_include_latex` whose valid values are: >
 	let rmd_dynamic_fenced_languages = 0 " No autodetection of languages
@@ -2842,10 +2843,10 @@ To highlight R code in knitr chunk headers, add to your |vimrc|: >
 
 RASI						*ft-rasi-syntax*
 
-Rasi stands for Rofi Advanced Style Information. It is used by the program
-rofi to style the rendering of the search window. The language is heavily
-inspired by CSS stylesheet. Files with the following extensions are recognized
-as rasi files: .rasi.
+Rasi stands for Rofi Advanced Style Information.  It is used by the program
+rofi to style the rendering of the search window.  The language is heavily
+inspired by CSS stylesheet.  Files with the following extensions are
+recognized as rasi files: .rasi.
 
 READLINE					*ft-readline-syntax*
 
@@ -3197,7 +3198,7 @@ the following line in your .vimrc: >
  Sh: EMBEDDING LANGUAGES~
 
 You may wish to embed languages into sh.  I'll give an example courtesy of
-Lorance Stinson on how to do this with awk as an example. Put the following
+Lorance Stinson on how to do this with awk as an example.  Put the following
 file into $HOME/.config/nvim/after/syntax/sh/awkembed.vim: >
 
     " AWK Embedding:
@@ -3294,7 +3295,7 @@ to a larger number: >
 
 This will make the syntax synchronization start 1000 lines before the first
 displayed line.  If you set "tcsh_minlines" to "fromstart", then
-synchronization is done from the start of the file. The default value for
+synchronization is done from the start of the file.  The default value for
 tcsh_minlines is 100.  The disadvantage of using a larger number is that
 redrawing can become slow.
 
@@ -3501,7 +3502,7 @@ substitution will not be made.
 						*g:tex_isk* *g:tex_stylish*
  Tex: Controlling iskeyword~
 
-Normally, LaTeX keywords support 0-9, a-z, A-z, and 192-255 only. Latex
+Normally, LaTeX keywords support 0-9, a-z, A-z, and 192-255 only.  Latex
 keywords don't support the underscore - except when in `*.sty` files.  The
 syntax highlighting script handles this with the following logic:
 
@@ -3554,7 +3555,8 @@ syntax highlighting script handles this with the following logic:
 <	If you don't want matching to occur inside bold and italicized
 	regions, >
 		let g:tex_excludematcher= 1
-<	will prevent the texMatcher group from being included in those regions.
+<	will prevent the texMatcher group from being included in those
+	regions.
 
 TF							*ft-tf-syntax*
 
@@ -3571,7 +3573,7 @@ There is one option to control the TypeScript syntax highlighting.
 
 						*g:typescript_host_keyword*
 When this variable is set to 1, host-specific APIs such as `addEventListener`
-are highlighted. To disable set it to zero in your .vimrc: >
+are highlighted.  To disable set it to zero in your .vimrc: >
 
 	let g:typescript_host_keyword = 0
 <
@@ -3581,8 +3583,8 @@ TYPST						    *ft-typst-syntax*
 
 						*g:typst_embedded_languages*
 Typst files can embed syntax highlighting for other languages by setting the
-|g:typst_embedded_languages| variable. This variable is a list of language
-names whose syntax definitions will be included in Typst files. Example: >
+|g:typst_embedded_languages| variable.  This variable is a list of language
+names whose syntax definitions will be included in Typst files.  Example: >
 
     let g:typst_embedded_languages = ['python', 'r']
 
@@ -3640,8 +3642,8 @@ highlighting is to put the following line in your |vimrc|: >
 
 WDL								*wdl-syntax*
 
-The Workflow Description Language is a way to specify data processing workflows
-with a human-readable and writeable syntax.  This is used a lot in
+The Workflow Description Language is a way to specify data processing
+workflows with a human-readable and writeable syntax.  This is used a lot in
 bioinformatics.  More info on the spec can be found here:
 https://github.com/openwdl/wdl
 
@@ -3709,11 +3711,11 @@ YAML							*ft-yaml-syntax*
 
 					*g:yaml_schema* *b:yaml_schema*
 A YAML schema is a combination of a set of tags and a mechanism for resolving
-non-specific tags. For user this means that YAML parser may, depending on
+non-specific tags.  For user this means that YAML parser may, depending on
 plain scalar contents, treat plain scalar (which can actually be only string
 and nothing else) as a value of the other type: null, boolean, floating-point,
-integer. `g:yaml_schema` option determines according to which schema values
-will be highlighted specially. Supported schemas are
+integer.  `g:yaml_schema` option determines according to which schema values
+will be highlighted specially.  Supported schemas are
 
 Schema		Description ~
 failsafe	No additional highlighting.
@@ -4161,7 +4163,7 @@ concealends						*:syn-concealends*
 When the "concealends" argument is given, the start and end matches of
 the region, but not the contents of the region, are marked as concealable.
 Whether or not they are actually concealed depends on the setting on the
-'conceallevel' option. The ends of a region can only be concealed separately
+'conceallevel' option.  The ends of a region can only be concealed separately
 in this way when they have their own highlighting via "matchgroup".  The
 |synconcealed()| function can be used to retrieve information about conealed
 items.
@@ -4444,7 +4446,7 @@ IMPLICIT CONCEAL					*:syn-conceal-implicit*
 
 :sy[ntax] conceal [on|off]
 	This defines if the following ":syntax" commands will define keywords,
-	matches or regions with the "conceal" flag set. After ":syn conceal
+	matches or regions with the "conceal" flag set.  After ":syn conceal
 	on", all subsequent ":syn keyword", ":syn match" or ":syn region"
 	defined will have the "conceal" flag set implicitly. ":syn conceal
 	off" returns to the normal state where the "conceal" flag must be
@@ -5027,7 +5029,7 @@ also tell where it was last set.  Example: >
 	   Last set from /home/mool/vim/vim7/runtime/syntax/syncolor.vim ~
 
 When ":hi clear" is used then the script where this command is used will be
-mentioned for the default values. See |:verbose-cmd| for more information.
+mentioned for the default values.  See |:verbose-cmd| for more information.
 
 					*highlight-args* *E416* *E417* *E423*
 There are two types of UIs for highlighting:
@@ -5382,10 +5384,10 @@ PmenuSbar	Popup menu: Scrollbar.
 							*hl-PmenuThumb*
 PmenuThumb	Popup menu: Thumb of the scrollbar.
 							*hl-PmenuMatch*
-PmenuMatch	Popup menu: Matched text in normal item. Combined with
+PmenuMatch	Popup menu: Matched text in normal item.  Combined with
 		|hl-Pmenu|.
 							*hl-PmenuMatchSel*
-PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
+PmenuMatchSel	Popup menu: Matched text in selected item.  Combined with
 		|hl-PmenuMatch| and |hl-PmenuSel|.
 							*hl-PmenuBorder*
 PmenuBorder	Popup menu: border of popup menu.
@@ -5655,7 +5657,7 @@ it took to match them against the text.
 			current window.  Use a wider display to see more of
 			the output.
 
-			The list is sorted by total time. The columns are:
+			The list is sorted by total time.  The columns are:
 			TOTAL		Total time in seconds spent on
 					matching this pattern.
 			COUNT		Number of times the pattern was used.

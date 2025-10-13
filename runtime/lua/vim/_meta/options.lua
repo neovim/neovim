@@ -570,8 +570,8 @@ vim.go.breakat = vim.o.breakat
 vim.go.brk = vim.go.breakat
 
 --- Every wrapped line will continue visually indented (same amount of
---- space as the beginning of that line), thus preserving horizontal blocks
---- of text.
+--- space as the beginning of that line), thus preserving horizontal
+--- blocks of text.
 ---
 --- @type boolean
 vim.o.breakindent = false
@@ -1073,12 +1073,12 @@ vim.bo.cms = vim.bo.commentstring
 --- ]	tag completion
 --- t	same as "]"
 --- f	scan the buffer names (as opposed to buffer contents)
---- F{func}	call the function {func}.  Multiple "F" flags may be specified.
---- 	Refer to `complete-functions` for details on how the function
---- 	is invoked and what it should return.  The value can be the
---- 	name of a function or a `Funcref`.  For `Funcref` values,
---- 	spaces must be escaped with a backslash ('\'), and commas with
---- 	double backslashes ('\\') (see `option-backslash`).
+--- F{func}	call the function {func}.  Multiple "F" flags may be
+--- 	specified.  Refer to `complete-functions` for details on how
+--- 	the function is invoked and what it should return.  The value
+--- 	can be the name of a function or a `Funcref`.  For `Funcref`
+--- 	values, spaces must be escaped with a backslash ('\'), and
+--- 	commas with double backslashes ('\\') (see `option-backslash`).
 --- 	Unlike other sources, functions can provide completions
 --- 	starting from a non-keyword character before the cursor, and
 --- 	their start position for replacing text may differ from other
@@ -1265,7 +1265,8 @@ vim.go.cot = vim.go.completeopt
 ---   completion in insert mode.  This is useful when editing HTML tag, or
 ---   Makefile with 'noshellslash' on MS-Windows.
 --- - When this option is set to "backslash", backslash is used.  This is
----   useful when editing a batch file with 'shellslash' set on MS-Windows.
+---   useful when editing a batch file with 'shellslash' set on
+---   MS-Windows.
 --- - When this option is empty, same character is used as for
 ---   'shellslash'.
 --- For Insert mode completion the buffer-local value is used.  For
@@ -2959,7 +2960,6 @@ vim.wo.fdt = vim.wo.foldtext
 --- modeline, see `sandbox-option`.  That stops the option from working,
 --- since changing the buffer text is not allowed.
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
---- NOTE: This option is set to "" when 'compatible' is set.
 ---
 --- @type string
 vim.o.formatexpr = ""
@@ -4000,9 +4000,9 @@ vim.o.lm = vim.o.langmenu
 vim.go.langmenu = vim.o.langmenu
 vim.go.lm = vim.go.langmenu
 
---- When off, setting 'langmap' does not apply to characters resulting from
---- a mapping.  If setting 'langmap' disables some of your mappings, make
---- sure this option is off.
+--- When off, setting 'langmap' does not apply to characters resulting
+--- from a mapping.  If setting 'langmap' disables some of your mappings,
+--- make sure this option is off.
 ---
 --- @type boolean
 vim.o.langremap = false
@@ -4029,8 +4029,8 @@ vim.go.ls = vim.go.laststatus
 --- executing macros, registers and other commands that have not been
 --- typed.  Also, updating the window title is postponed.  To force an
 --- update use `:redraw`.
---- This may occasionally cause display errors.  It is only meant to be set
---- temporarily when performing an operation where redrawing may cause
+--- This may occasionally cause display errors.  It is only meant to be
+--- set temporarily when performing an operation where redrawing may cause
 --- flickering or cause a slowdown.
 ---
 --- @type boolean
@@ -6432,9 +6432,6 @@ vim.wo.sms = vim.wo.smoothscroll
 --- A value of 0 disables this behaviour.  A negative value makes Vim use
 --- 'shiftwidth'.  If you plan to use 'sts' and 'shiftwidth' with
 --- different values, you might consider setting 'smarttab'.
----
---- 'softtabstop' is temporarily set to 0 when 'paste' is on and reset
---- when it is turned off.  It is also reset when 'compatible' is set.
 ---
 --- The 'L' flag in 'cpoptions' alters tab behavior when 'list' is
 --- enabled.  See also `ins-expandtab` ans user manual section `30.5` for

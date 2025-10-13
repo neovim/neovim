@@ -163,7 +163,7 @@ M.funcs = {
     desc = [=[
       Like |append()| but append the text in buffer {expr}.
 
-      This function works only for loaded buffers. First call
+      This function works only for loaded buffers.  First call
       |bufload()| if needed.
 
       For the use of {buf}, see |bufname()|.
@@ -176,7 +176,7 @@ M.funcs = {
       On success 0 is returned, on failure 1 is returned.
 
       If {buf} is not a valid buffer or {lnum} is not valid, an
-      error message is given. Example: >vim
+      error message is given.  Example: >vim
       	let failed = appendbufline(13, 0, "# THE START")
       <However, when {text} is an empty list then no error is given
       for an invalid {lnum}, since {lnum} isn't actually used.
@@ -840,7 +840,11 @@ M.funcs = {
       above.
       If the buffer doesn't exist, -1 is returned.  Or, if the
       {create} argument is present and TRUE, a new, unlisted,
-      buffer is created and its number is returned.
+      buffer is created and its number is returned.  Example: >vim
+      	let newbuf = bufnr('Scratch001', 1)
+      <Using an empty name uses the current buffer.  To create a new
+      buffer with an empty name use |bufadd()|.
+
       bufnr("$") is the last buffer: >vim
       	let last_buffer = bufnr("$")
       <The result is a Number, which is the highest buffer number
@@ -1161,7 +1165,7 @@ M.funcs = {
       index in the String {expr} instead of as the byte index.
 
       Returns -1 if the arguments are invalid or if there are less
-      than {idx} bytes. If there are exactly {idx} bytes the length
+      than {idx} bytes.  If there are exactly {idx} bytes the length
       of the string in characters is returned.
 
       An error is given and -1 is returned if the first argument is
@@ -1271,7 +1275,7 @@ M.funcs = {
       		completion began.
          pum_visible	|TRUE| if popup menu is visible.
       		See |pumvisible()|.
-         matches	List of all completion candidates. Each item
+         matches	List of all completion candidates.  Each item
       		is a string.
          selected	Selected item index.  First index is zero.
       		Index is -1 if no item is selected (showing
@@ -1298,7 +1302,7 @@ M.funcs = {
       When {expr} is "$", it means the end of the cursor line, so
       the result is the number of bytes in the cursor line plus one.
       Additionally {expr} can be [lnum, col]: a |List| with the line
-      and column number. Most useful when the column is "$", to get
+      and column number.  Most useful when the column is "$", to get
       the last column of a specific line.  When "lnum" or "col" is
       out of range then col() returns zero.
 
@@ -1340,10 +1344,11 @@ M.funcs = {
     args = 2,
     base = 2,
     desc = [=[
-      Set the matches for Insert mode completion.
-      Can only be used in Insert mode.  You need to use a mapping
-      with CTRL-R = (see |i_CTRL-R|).  It does not work after CTRL-O
-      or with an expression mapping.
+      Set the matches for Insert mode completion.  Can only be used
+      in Insert mode.  Typically invoked from a mapping with
+      CTRL-R = (see |i_CTRL-R|), but may also be called from a
+      |<Cmd>| mapping.  It does not work after CTRL-O or with an
+      expression mapping.
       {startcol} is the byte offset in the line where the completed
       text start.  The text up to the cursor is the original text
       that will be replaced by the matches.  Use col('.') for an
@@ -1421,10 +1426,11 @@ M.funcs = {
       		See |pumvisible()|.
          items	List of all completion candidates.  Each item
       		is a dictionary containing the entries "word",
-      		"abbr", "menu", "kind", "info" and "user_data".
+      		"abbr", "menu", "kind", "info" and
+      		"user_data".
       		See |complete-items|.
          matches	Same as "items", but only returns items that
-      		are matching current query. If both "matches"
+      		are matching current query.  If both "matches"
       		and "items" are in "what", the returned list
       		will still be named "items", but each item
       		will have an additional "match" field.
@@ -1465,7 +1471,7 @@ M.funcs = {
       {what} are silently ignored.
 
       To get the position and size of the popup menu, see
-      |pum_getpos()|. It's also available in |v:event| during the
+      |pum_getpos()|.  It's also available in |v:event| during the
       |CompleteChanged| event.
 
       Returns an empty |Dictionary| on error.
@@ -1490,13 +1496,13 @@ M.funcs = {
     base = 0,
     desc = [=[
       Searches backward from the given position and returns a List
-      of matches according to the 'isexpand' option. When no
+      of matches according to the 'isexpand' option.  When no
       arguments are provided, uses the current cursor position.
 
       Each match is represented as a List containing
       [startcol, trigger_text] where:
       - startcol: column position where completion should start,
-        or -1 if no trigger position is found. For multi-character
+        or -1 if no trigger position is found.  For multi-character
         triggers, returns the column of the first character.
       - trigger_text: the matching trigger string from 'isexpand',
         or empty string if no match was found or when using the
@@ -1676,7 +1682,7 @@ M.funcs = {
       When {ic} is given and it's |TRUE| then case is ignored.
 
       When {comp} is a string then the number of not overlapping
-      occurrences of {expr} is returned. Zero is returned when
+      occurrences of {expr} is returned.  Zero is returned when
       {expr} is an empty string.
 
     ]=],
@@ -1798,7 +1804,7 @@ M.funcs = {
     desc = [=[
       Specifically used to interrupt a program being debugged.  It
       will cause process {pid} to get a SIGTRAP.  Behavior for other
-      processes is undefined. See |terminal-debug|.
+      processes is undefined.  See |terminal-debug|.
       (Sends a SIGINT to a process {pid} other than MS-Windows)
 
       Returns |TRUE| if successfully interrupted the program.
@@ -1876,13 +1882,13 @@ M.funcs = {
       If {last} is omitted then delete line {first} only.
       On success 0 is returned, on failure 1 is returned.
 
-      This function works only for loaded buffers. First call
+      This function works only for loaded buffers.  First call
       |bufload()| if needed.
 
       For the use of {buf}, see |bufname()| above.
 
-      {first} and {last} are used like with |getline()|. Note that
-      when using |line()| this refers to the current buffer. Use "$"
+      {first} and {last} are used like with |getline()|.  Note that
+      when using |line()| this refers to the current buffer.  Use "$"
       to refer to the last line in buffer {buf}.
 
     ]=],
@@ -2123,7 +2129,7 @@ M.funcs = {
   },
   environ = {
     desc = [=[
-      Return all of environment variables as dictionary. You can
+      Return all of environment variables as dictionary.  You can
       check if an environment variable exists like this: >vim
       	echo has_key(environ(), 'HOME')
       <Note that the variable name may be CamelCase; to ignore case
@@ -2613,14 +2619,14 @@ M.funcs = {
       {string}.
 
       To include special keys into {string}, use double-quotes
-      and "\..." notation |expr-quote|. For example,
-      feedkeys("\<CR>") simulates pressing of the <Enter> key. But
+      and "\..." notation |expr-quote|.  For example,
+      feedkeys("\<CR>") simulates pressing of the <Enter> key.  But
       feedkeys('\<CR>') pushes 5 characters.
       The |<Ignore>| keycode may be used to exit the
       wait-for-character without doing anything.
 
       {mode} is a String, which can contain these character flags:
-      'm'	Remap keys. This is default.  If {mode} is absent,
+      'm'	Remap keys.  This is default.  If {mode} is absent,
       	keys are remapped.
       'n'	Do not remap keys.
       't'	Handle keys as if typed; otherwise they are handled as
@@ -2639,7 +2645,7 @@ M.funcs = {
       	Note that if you manage to call feedkeys() while
       	executing commands, thus calling it recursively, then
       	all typeahead will be consumed by the last call.
-      '!'	When used with 'x' will not end Insert mode. Can be
+      '!'	When used with 'x' will not end Insert mode.  Can be
       	used in a test when a timer is set to exit Insert mode
       	a little later.  Useful for testing CursorHoldI.
 
@@ -2666,7 +2672,7 @@ M.funcs = {
     args = 2,
     base = 1,
     desc = [[
-      Copy the file pointed to by the name {from} to {to}. The
+      Copy the file pointed to by the name {from} to {to}.  The
       result is a Number, which is |TRUE| if the file was copied
       successfully, and |FALSE| when it failed.
       If a file with name {to} already exists, it will fail.
@@ -2738,7 +2744,7 @@ M.funcs = {
       of the current item.  For a |Dictionary| |v:key| has the key
       of the current item and for a |List| |v:key| has the index of
       the current item.  For a |Blob| |v:key| has the index of the
-      current byte. For a |String| |v:key| has the index of the
+      current byte.  For a |String| |v:key| has the index of the
       current character.
       Examples: >vim
       	call filter(mylist, 'v:val !~ "OLD"')
@@ -2775,8 +2781,8 @@ M.funcs = {
       or a new |Blob| or |String|.
       When an error is encountered while evaluating {expr2} no
       further items in {expr1} are processed.
-      When {expr2} is a Funcref errors inside a function are ignored,
-      unless it was defined with the "abort" flag.
+      When {expr2} is a Funcref errors inside a function are
+      ignored, unless it was defined with the "abort" flag.
 
     ]=],
     name = 'filter',
@@ -3094,7 +3100,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       {expr1} must be a |List|, |String|, |Blob| or |Dictionary|.
-      For each item in {expr1} execute {expr2}. {expr1} is not
+      For each item in {expr1} execute {expr2}.  {expr1} is not
       modified; its values may be, as with |:lockvar| 1. |E741|
       See |map()| and |filter()| to modify {expr1}.
 
@@ -3104,7 +3110,7 @@ M.funcs = {
       of the current item.  For a |Dictionary| |v:key| has the key
       of the current item and for a |List| |v:key| has the index of
       the current item.  For a |Blob| |v:key| has the index of the
-      current byte. For a |String| |v:key| has the index of the
+      current byte.  For a |String| |v:key| has the index of the
       current character.
       Examples: >vim
       	call foreach(mylist, 'let used[v:val] = v:true')
@@ -3124,8 +3130,8 @@ M.funcs = {
       Returns {expr1} in all cases.
       When an error is encountered while executing {expr2} no
       further items in {expr1} are processed.
-      When {expr2} is a Funcref errors inside a function are ignored,
-      unless it was defined with the "abort" flag.
+      When {expr2} is a Funcref errors inside a function are
+      ignored, unless it was defined with the "abort" flag.
     ]=],
     name = 'foreach',
     params = { { 'expr1', 'string|table' }, { 'expr2', 'string|function' } },
@@ -3170,7 +3176,7 @@ M.funcs = {
       It only works for an autoloaded function if it has already
       been loaded (to avoid mistakenly loading the autoload script
       when only intending to use the function name, use |function()|
-      instead). {name} cannot be a builtin function.
+      instead).  {name} cannot be a builtin function.
       Returns 0 on error.
 
     ]=],
@@ -3188,7 +3194,7 @@ M.funcs = {
 
       {name} can also be a Funcref or a partial. When it is a
       partial the dict stored in it will be used and the {dict}
-      argument is not allowed. E.g.: >vim
+      argument is not allowed.  E.g.: >vim
       	let FuncWithArg = function(dict.Func, [arg])
       	let Broken = function(dict.Func, [arg], dict)
       <
@@ -3197,8 +3203,8 @@ M.funcs = {
       same function.
 
       When {arglist} or {dict} is present this creates a partial.
-      That means the argument list and/or the dictionary is stored in
-      the Funcref and will be used when the Funcref is called.
+      That means the argument list and/or the dictionary is stored
+      in the Funcref and will be used when the Funcref is called.
 
       The arguments are passed to the function in front of other
       arguments, but after any argument from |method|.  Example: >vim
@@ -3235,7 +3241,7 @@ M.funcs = {
       	call Callback('one', 'two', 'name')
 
       <The Dictionary is only useful when calling a "dict" function.
-      In that case the {dict} is passed in as "self". Example: >vim
+      In that case the {dict} is passed in as "self".  Example: >vim
       	function Callback() dict
       	   echo "called for " .. self.name
       	endfunction
@@ -3543,8 +3549,8 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      Returns the |changelist| for the buffer {buf}. For the use
-      of {buf}, see |bufname()| above. If buffer {buf} doesn't
+      Returns the |changelist| for the buffer {buf}.  For the use
+      of {buf}, see |bufname()| above.  If buffer {buf} doesn't
       exist, an empty list is returned.
 
       The returned list contains two entries: a list with the change
@@ -3555,7 +3561,7 @@ M.funcs = {
       	coladd		column offset for 'virtualedit'
       	lnum		line number
       If buffer {buf} is the current buffer, then the current
-      position refers to the position in the list. For other
+      position refers to the position in the list.  For other
       buffers, it is set to the length of the list.
 
     ]=],
@@ -3690,7 +3696,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Get the position for String {expr}. Same as |getpos()| but the
+      Get the position for String {expr}.  Same as |getpos()| but the
       column number in the returned List is a character index
       instead of a byte index.
       If |getpos()| returns a very large column number, equal to
@@ -3841,7 +3847,7 @@ M.funcs = {
   },
   getcmdtype = {
     desc = [=[
-      Return the current command-line type. Possible return values
+      Return the current command-line type.  Possible return values
       are:
           :	normal Ex command
           >	debug mode command |debug-mode|
@@ -3862,8 +3868,8 @@ M.funcs = {
   },
   getcmdwintype = {
     desc = [=[
-      Return the current |command-line-window| type. Possible return
-      values are the same as |getcmdtype()|. Returns an empty string
+      Return the current |command-line-window| type.  Possible return
+      values are the same as |getcmdtype()|.  Returns an empty string
       when not in the command-line window.
     ]=],
     name = 'getcmdwintype',
@@ -3875,7 +3881,7 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      Return a list of command-line completion matches. The String
+      Return a list of command-line completion matches.  The String
       {type} argument specifies what for.  The following completion
       types are supported:
 
@@ -3930,10 +3936,10 @@ M.funcs = {
 
       If the optional {filtered} flag is set to 1, then 'wildignore'
       is applied to filter the results.  Otherwise all the matches
-      are returned. The 'wildignorecase' option always applies.
+      are returned.  The 'wildignorecase' option always applies.
 
       If the 'wildoptions' option contains "fuzzy", then fuzzy
-      matching is used to get the completion matches. Otherwise
+      matching is used to get the completion matches.  Otherwise
       regular expression matching is used.  Thus this function
       follows the user preference, what happens on the command line.
       If you do not want this you can make 'wildoptions' empty
@@ -3979,8 +3985,8 @@ M.funcs = {
       cursor vertically.  After |$| command it will be a very large
       number equal to |v:maxcol|.  Also see |getcursorcharpos()| and
       |getpos()|.
-      The first "bufnum" item is always zero. The byte position of
-      the cursor is returned in "col". To get the character
+      The first "bufnum" item is always zero.  The byte position of
+      the cursor is returned in "col".  To get the character
       position, use |getcursorcharpos()|.
 
       The optional {winid} argument can specify the window.  It can
@@ -4182,7 +4188,7 @@ M.funcs = {
       With {winnr} only use this window in the current tab page.
       {winnr} can also be a |window-ID|.
       With {winnr} and {tabnr} use the window in the specified tab
-      page.  If {winnr} or {tabnr} is invalid, an empty list is
+      page.   If {winnr} or {tabnr} is invalid, an empty list is
       returned.
 
       The returned list contains two entries: a list with the jump
@@ -4250,19 +4256,19 @@ M.funcs = {
 
       For a location list window, the displayed location list is
       returned.  For an invalid window number {nr}, an empty list is
-      returned. Otherwise, same as |getqflist()|.
+      returned.  Otherwise, same as |getqflist()|.
 
       If the optional {what} dictionary argument is supplied, then
-      returns the items listed in {what} as a dictionary. Refer to
+      returns the items listed in {what} as a dictionary.  Refer to
       |getqflist()| for the supported items in {what}.
 
       In addition to the items supported by |getqflist()| in {what},
       the following item is supported by |getloclist()|:
 
       	filewinid	id of the window used to display files
-      			from the location list. This field is
+      			from the location list.  This field is
       			applicable only when called from a
-      			location list window. See
+      			location list window.  See
       			|location-list-file-window| for more
       			details.
 
@@ -4439,7 +4445,7 @@ M.funcs = {
 
       For getting the cursor position see |getcurpos()|.
       The column number in the returned List is the byte position
-      within the line. To get the character position in the line,
+      within the line.  To get the character position in the line,
       use |getcharpos()|.
 
       Note that for '< and '> Visual mode matters: when it is "V"
@@ -4487,7 +4493,7 @@ M.funcs = {
       		any type.
 
       When there is no error list or it's empty, an empty list is
-      returned. Quickfix list entries with a non-existing buffer
+      returned.  Quickfix list entries with a non-existing buffer
       number are returned with "bufnr" set to zero (Note: some
       functions accept buffer number zero for the alternate buffer,
       you may need to explicitly check for zero).
@@ -4500,12 +4506,12 @@ M.funcs = {
       	endfor
       <
       If the optional {what} dictionary argument is supplied, then
-      returns only the items listed in {what} as a dictionary. The
+      returns only the items listed in {what} as a dictionary.  The
       following string items are supported in {what}:
       	changedtick	get the total number of changes made
       			to the list |quickfix-changedtick|
       	context	get the |quickfix-context|
-      	efm	errorformat to use when parsing "lines". If
+      	efm	errorformat to use when parsing "lines".  If
       		not present, then the 'errorformat' option
       		value is used.
       	id	get information for the quickfix list with
@@ -4519,24 +4525,24 @@ M.funcs = {
       	lines	parse a list of lines using 'efm' and return
       		the resulting entries.  Only a |List| type is
       		accepted.  The current quickfix list is not
-      		modified. See |quickfix-parse|.
+      		modified.  See |quickfix-parse|.
       	nr	get information for this quickfix list; zero
       		means the current quickfix list and "$" means
       		the last quickfix list
       	qfbufnr number of the buffer displayed in the quickfix
-      		window. Returns 0 if the quickfix buffer is
-      		not present. See |quickfix-buffer|.
+      		window.  Returns 0 if the quickfix buffer is
+      		not present.  See |quickfix-buffer|.
       	size	number of entries in the quickfix list
       	title	get the list title |quickfix-title|
       	winid	get the quickfix |window-ID|
       	all	all of the above quickfix properties
-      Non-string items in {what} are ignored. To get the value of a
+      Non-string items in {what} are ignored.  To get the value of a
       particular item, set it to zero.
       If "nr" is not present then the current quickfix list is used.
       If both "nr" and a non-zero "id" are specified, then the list
       specified by "id" is used.
       To get the number of lists in the quickfix stack, set "nr" to
-      "$" in {what}. The "nr" value in the returned dictionary
+      "$" in {what}.  The "nr" value in the returned dictionary
       contains the quickfix stack size.
       When "lines" is specified, all the other items except "efm"
       are ignored.  The returned dictionary contains the entry
@@ -4545,22 +4551,23 @@ M.funcs = {
       The returned dictionary contains the following entries:
       	changedtick	total number of changes made to the
       			list |quickfix-changedtick|
-      	context	quickfix list context. See |quickfix-context|
+      	context	quickfix list context.  See |quickfix-context|
       		If not present, set to "".
-      	id	quickfix list ID |quickfix-ID|. If not
+      	id	quickfix list ID |quickfix-ID|.  If not
       		present, set to 0.
-      	idx	index of the quickfix entry in the list. If not
-      		present, set to 0.
-      	items	quickfix list entries. If not present, set to
+      	idx	index of the quickfix entry in the list.  If
+      		not present, set to 0.
+      	items	quickfix list entries.  If not present, set to
       		an empty list.
-      	nr	quickfix list number. If not present, set to 0
+      	nr	quickfix list number.  If not present, set to
+      		0
       	qfbufnr	number of the buffer displayed in the quickfix
-      		window. If not present, set to 0.
-      	size	number of entries in the quickfix list. If not
-      		present, set to 0.
-      	title	quickfix list title text. If not present, set
+      		window.  If not present, set to 0.
+      	size	number of entries in the quickfix list.  If
+      		not present, set to 0.
+      	title	quickfix list title text.  If not present, set
       		to "".
-      	winid	quickfix |window-ID|. If not present, set to 0
+      	winid	quickfix |window-ID|.  If not present, set to 0
 
       Examples (See also |getqflist-examples|): >vim
       	echo getqflist({'all': 1})
@@ -4590,7 +4597,7 @@ M.funcs = {
       argument is ignored, thus you can always give it.
 
       If {list} is present and |TRUE|, the result type is changed
-      to |List|. Each list item is one text line. Use it if you care
+      to |List|.  Each list item is one text line.  Use it if you care
       about zero bytes possibly present inside register: without
       third argument both NLs and zero bytes are represented as NLs
       (see |NL-used-for-Nul|).
@@ -4784,7 +4791,7 @@ M.funcs = {
 
       The optional Dict argument {opts} supports the following
       optional items:
-          name	Script name match pattern. If specified,
+          name	Script name match pattern.  If specified,
       		and "sid" is not specified, information about
       		scripts with a name that match the pattern
       		"name" are returned.
@@ -4843,7 +4850,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       If {tabnr} is not specified, then information about all the
-      tab pages is returned as a |List|. Each List item is a
+      tab pages is returned as a |List|.  Each List item is a
       |Dictionary|.  Otherwise, {tabnr} specifies the tab page
       number and information about that one is returned.  If the tab
       page does not exist an empty List is returned.
@@ -4926,10 +4933,10 @@ M.funcs = {
       When window {winnr} doesn't exist, an empty Dict is returned.
 
       The returned dictionary contains the following entries:
-      	curidx		Current index in the stack. When at
+      	curidx		Current index in the stack.  When at
       			top of the stack, set to (length + 1).
       			Index of bottom of the stack is 1.
-      	items		List of items in the stack. Each item
+      	items		List of items in the stack.  Each item
       			is a dictionary containing the
       			entries described below.
       	length		Number of entries in the stack.
@@ -4940,9 +4947,9 @@ M.funcs = {
       	from		cursor position before the tag jump.
       			See |getpos()| for the format of the
       			returned list.
-      	matchnr		current matching tag number. Used when
-      			multiple matching tags are found for a
-      			name.
+      	matchnr		current matching tag number.  Used
+      			when multiple matching tags are found
+      			for a name.
       	tagname		name of the tag
 
       See |tagstack| for more information about the tag stack.
@@ -5096,7 +5103,7 @@ M.funcs = {
       'wildignorecase' always applies.
 
       When {list} is present and it is |TRUE| the result is a |List|
-      with all matching files. The advantage of using a List is,
+      with all matching files.  The advantage of using a List is,
       you also get filenames containing newlines correctly.
       Otherwise the result is a String and when there are several
       matches, they are separated by <NL> characters.
@@ -5179,10 +5186,10 @@ M.funcs = {
       'suffixes' affect the ordering of matches.
 
       When {list} is present and it is |TRUE| the result is a |List|
-      with all matching files. The advantage of using a List is, you
-      also get filenames containing newlines correctly. Otherwise
-      the result is a String and when there are several matches,
-      they are separated by <NL> characters.  Example: >vim
+      with all matching files.  The advantage of using a List is,
+      you also get filenames containing newlines correctly.
+      Otherwise the result is a String and when there are several
+      matches, they are separated by <NL> characters.  Example: >vim
       	echo globpath(&rtp, "syntax/c.vim", 0, 1)
       <
       {allinks} is used as with |glob()|.
@@ -5861,7 +5868,8 @@ M.funcs = {
       Restore typeahead that was saved with a previous |inputsave()|.
       Should be called the same number of times inputsave() is
       called.  Calling it more often is harmless though.
-      Returns TRUE when there is nothing to restore, FALSE otherwise.
+      Returns TRUE when there is nothing to restore, FALSE
+      otherwise.
     ]=],
     name = 'inputrestore',
     params = {},
@@ -5967,10 +5975,11 @@ M.funcs = {
     desc = [=[
       The result is a Number, which is |TRUE| when {path} is an
       absolute path.
-      On Unix, a path is considered absolute when it starts with '/'.
-      On MS-Windows, it is considered absolute when it starts with an
-      optional drive prefix and is followed by a '\' or '/'. UNC paths
-      are always absolute.
+      On Unix, a path is considered absolute when it starts with
+      '/'.
+      On MS-Windows, it is considered absolute when it starts with
+      an optional drive prefix and is followed by a '\' or '/'.  UNC
+      paths are always absolute.
       Example: >vim
       	echo isabsolutepath('/usr/share/')	" 1
       	echo isabsolutepath('./foobar')		" 0
@@ -6653,7 +6662,7 @@ M.funcs = {
       of the current item.  For a |Dictionary| |v:key| has the key
       of the current item and for a |List| |v:key| has the index of
       the current item.  For a |Blob| |v:key| has the index of the
-      current byte. For a |String| |v:key| has the index of the
+      current byte.  For a |String| |v:key| has the index of the
       current character.
       Example: >vim
       	call map(mylist, '"> " .. v:val .. " <"')
@@ -6667,7 +6676,7 @@ M.funcs = {
       If {expr2} is a |Funcref| it is called with two arguments:
       	1. The key or the index of the current item.
       	2. the value of the current item.
-      The function must return the new value of the item. Example
+      The function must return the new value of the item.  Example
       that changes each value by "key-value": >vim
       	func KeyValue(key, val)
       	  return a:key .. '-' .. a:val
@@ -6688,8 +6697,8 @@ M.funcs = {
       or a new |Blob| or |String|.
       When an error is encountered while evaluating {expr2} no
       further items in {expr1} are processed.
-      When {expr2} is a Funcref errors inside a function are ignored,
-      unless it was defined with the "abort" flag.
+      When {expr2} is a Funcref errors inside a function are
+      ignored, unless it was defined with the "abort" flag.
 
     ]=],
     name = 'map',
@@ -6703,8 +6712,8 @@ M.funcs = {
       When {dict} is omitted or zero: Return the rhs of mapping
       {name} in mode {mode}.  The returned String has special
       characters translated like in the output of the ":map" command
-      listing. When {dict} is TRUE a dictionary is returned, see
-      below. To get a list of all mappings see |maplist()|.
+      listing.  When {dict} is TRUE a dictionary is returned, see
+      below.  To get a list of all mappings see |maplist()|.
 
       When there is no mapping for {name}, an empty String is
       returned if {dict} is FALSE, otherwise returns an empty Dict.
@@ -6743,7 +6752,7 @@ M.funcs = {
         "script"   1 if mapping was defined with <script>.
         "expr"     1 for an expression mapping (|:map-<expr>|).
         "buffer"   1 for a buffer local mapping (|:map-local|).
-        "mode"     Modes for which the mapping is defined. In
+        "mode"     Modes for which the mapping is defined.  In
       	     addition to the modes mentioned above, these
       	     characters will be used:
       	     " "     Normal, Visual and Operator-pending
@@ -6758,7 +6767,7 @@ M.funcs = {
         "abbr"     True if this is an |abbreviation|.
         "mode_bits" Nvim's internal binary representation of "mode".
       	     |mapset()| ignores this; only "mode" is used.
-      	     See |maplist()| for usage examples. The values
+      	     See |maplist()| for usage examples.  The values
       	     are from src/nvim/state_defs.h and may change in
       	     the future.
 
@@ -6849,9 +6858,9 @@ M.funcs = {
       		\ match(get(m, 'rhs', ''), 'MultiMatch') >= 0
       		\ })
       <It can be tricky to find mappings for particular |:map-modes|.
-      |mapping-dict|'s "mode_bits" can simplify this. For example,
+      |mapping-dict|'s "mode_bits" can simplify this.  For example,
       the mode_bits for Normal, Insert or Command-line modes are
-      0x19. To find all the mappings available in those modes you
+      0x19.  To find all the mappings available in those modes you
       can do: >vim
       	let saved_maps = []
       	for m in maplist()
@@ -6862,7 +6871,7 @@ M.funcs = {
       	echo saved_maps->mapnew({_, m -> m.lhs})
       <The values of the mode_bits are defined in Nvim's
       src/nvim/state_defs.h file and they can be discovered at
-      runtime using |:map-commands| and "maplist()". Example: >vim
+      runtime using |:map-commands| and "maplist()".  Example: >vim
       	omap xyzzy <Nop>
       	let op_bit = maplist()->filter(
       	    \ {_, m -> m.lhs == 'xyzzy'})[0].mode_bits
@@ -6902,8 +6911,9 @@ M.funcs = {
       Restore a mapping from a dictionary, possibly returned by
       |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
       is true, is set on the current buffer; it is up to the caller
-      to ensure that the intended buffer is the current buffer. This
-      feature allows copying mappings from one buffer to another.
+      to ensure that the intended buffer is the current buffer.
+      This feature allows copying mappings from one buffer to
+      another.
       The dict.mode value may restore a single mapping that covers
       more than one mode, like with mode values of '!', ' ', "nox",
       or 'v'. *E1276*
@@ -7052,9 +7062,9 @@ M.funcs = {
       automatically chooses a free ID, which is at least 1000.
 
       The optional {dict} argument allows for further custom
-      values. Currently this is used to specify a match specific
+      values.  Currently this is used to specify a match specific
       conceal character that will be shown for |hl-Conceal|
-      highlighted matches. The dict can have the following members:
+      highlighted matches.  The dict can have the following members:
 
       	conceal	    Special character to show instead of the
       		    match (only for |hl-Conceal| highlighted
@@ -7095,9 +7105,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Same as |matchadd()|, but requires a list of positions {pos}
-      instead of a pattern. This command is faster than |matchadd()|
+      instead of a pattern.  This command is faster than |matchadd()|
       because it does not handle regular expressions and it sets
-      buffer line boundaries to redraw screen. It is supposed to be
+      buffer line boundaries to redraw screen.  It is supposed to be
       used when fast match additions and deletions are required, for
       example to highlight matching parentheses.
       					*E5030* *E5031*
@@ -7105,14 +7115,14 @@ M.funcs = {
       these:
       - A number.  This whole line will be highlighted.  The first
         line has number 1.
-      - A list with one number, e.g., [23]. The whole line with this
-        number will be highlighted.
-      - A list with two numbers, e.g., [23, 11]. The first number is
-        the line number, the second one is the column number (first
-        column is 1, the value must correspond to the byte index as
-        |col()| would return).  The character at this position will
-        be highlighted.
-      - A list with three numbers, e.g., [23, 11, 3]. As above, but
+      - A list with one number, e.g., [23].  The whole line with
+        this number will be highlighted.
+      - A list with two numbers, e.g., [23, 11].  The first number
+        is the line number, the second one is the column number
+        (first column is 1, the value must correspond to the byte
+        index as |col()| would return).  The character at this
+        position will be highlighted.
+      - A list with three numbers, e.g., [23, 11, 3].  As above, but
         the third number gives the length of the highlight in bytes.
 
       Entries with zero and negative line numbers are silently
@@ -7155,7 +7165,7 @@ M.funcs = {
       When there is no match item set returns ['', ''].
       This is useful to save and restore a |:match|.
       Highlighting matches using the |:match| commands are limited
-      to three matches. |matchadd()| does not have this limitation.
+      to three matches.  |matchadd()| does not have this limitation.
 
     ]=],
     name = 'matcharg',
@@ -7182,7 +7192,7 @@ M.funcs = {
           text	matched string
       Note that there can be multiple matches in a single line.
 
-      This function works only for loaded buffers. First call
+      This function works only for loaded buffers.  First call
       |bufload()| if needed.
 
       See |match-pattern| for information about the effect of some
@@ -7276,7 +7286,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       If {list} is a list of strings, then returns a |List| with all
-      the strings in {list} that fuzzy match {str}. The strings in
+      the strings in {list} that fuzzy match {str}.  The strings in
       the returned list are sorted based on the matching score.
 
       The optional {dict} argument always supports the following
@@ -7290,7 +7300,7 @@ M.funcs = {
       If {list} is a list of dictionaries, then the optional {dict}
       argument supports the following additional items:
           key		Key of the item which is fuzzy matched against
-      		{str}. The value of this item should be a
+      		{str}.  The value of this item should be a
       		string.
           text_cb	|Funcref| that will be called for every item
       		in {list} to get the text for fuzzy matching.
@@ -7306,7 +7316,7 @@ M.funcs = {
       then the list of strings that have all the words is returned.
 
       If there are no matching strings or there is an error, then an
-      empty list is returned. If length of {str} is greater than
+      empty list is returned.  If length of {str} is greater than
       256, then returns an empty list.
 
       When {limit} is given, matchfuzzy() will find up to this
@@ -7502,7 +7512,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Return the maximum value of all items in {expr}. Example: >vim
+      Return the maximum value of all items in {expr}.  Example: >vim
       	echo max([apples, pears, oranges])
 
       <{expr} can be a |List| or a |Dictionary|.  For a Dictionary,
@@ -7574,8 +7584,8 @@ M.funcs = {
     base = 1,
     desc = [=[
       Return information about the specified menu {name} in
-      mode {mode}. The menu name should be specified without the
-      shortcut character ('&'). If {name} is "", then the top-level
+      mode {mode}.  The menu name should be specified without the
+      shortcut character ('&').  If {name} is "", then the top-level
       menu names are returned.
 
       {mode} can be one of these strings:
@@ -7599,7 +7609,7 @@ M.funcs = {
         icon		name of the icon file (for toolbar)
       		|toolbar-icon|
         iconidx	index of a built-in icon
-        modes		modes for which the menu is defined. In
+        modes		modes for which the menu is defined.  In
       		addition to the modes mentioned above, these
       		characters will be used:
       		" "	Normal, Visual and Operator-pending
@@ -7607,11 +7617,11 @@ M.funcs = {
         noremenu	v:true if the {rhs} of the menu item is not
       		remappable else v:false.
         priority	menu order priority |menu-priority|
-        rhs		right-hand-side of the menu item. The returned
-      		string has special characters translated like
-      		in the output of the ":menu" command listing.
-      		When the {rhs} of a menu item is empty, then
-      		"<Nop>" is returned.
+        rhs		right-hand-side of the menu item.  The
+      		returned string has special characters
+      		translated like in the output of the ":menu"
+      		command listing.  When the {rhs} of a menu
+      		item is empty, then "<Nop>" is returned.
         script	v:true if script-local remapping of {rhs} is
       		allowed else v:false.  See |:menu-script|.
         shortcut	shortcut key (character after '&' in
@@ -7768,8 +7778,8 @@ M.funcs = {
       This is useful in the 'statusline' option or RPC calls. In
       most other places it always returns "c" or "n".
       Note that in the future more modes and more specific modes may
-      be added. It's better not to compare the whole string but only
-      the leading character(s).
+      be added.  It's better not to compare the whole string but
+      only the leading character(s).
       Also see |visualmode()|.
 
     ]=],
@@ -8104,8 +8114,8 @@ M.funcs = {
       	% [pos-argument] [flags] [field-width] [.precision] type
 
       pos-argument
-      	At most one positional argument specifier. These
-      	take the form {n$}, where n is >= 1.
+      	At most one positional argument specifier.  These take
+      	the form {n$}, where n is >= 1.
 
       flags
       	Zero or more of the following flags:
@@ -8178,7 +8188,7 @@ M.funcs = {
       positional argument specifier, and a '*' is used to indicate
       that a number argument is to be used to specify the width or
       precision, the argument(s) to be used must also be specified
-      using a {n$} positional argument specifier. See |printf-$|.
+      using a {n$} positional argument specifier.  See |printf-$|.
 
       The conversion specifiers and their meanings are:
 
@@ -8203,7 +8213,7 @@ M.funcs = {
       	The b and B conversion specifiers never take a width
       	modifier and always assume their argument is a 64 bit
       	integer.
-      	Generally, these modifiers are not useful. They are
+      	Generally, these modifiers are not useful.  They are
       	ignored when type is known from the argument.
 
       i	alias for d
@@ -8275,9 +8285,9 @@ M.funcs = {
       					*printf-$*
       In certain languages, error and informative messages are
       more readable when the order of words is different from the
-      corresponding message in English. To accommodate translations
+      corresponding message in English.  To accommodate translations
       having a different word order, positional arguments may be
-      used to indicate this. For instance: >vim
+      used to indicate this.  For instance: >vim
 
           #, c-format
           msgid "%s returning %s"
@@ -8296,9 +8306,9 @@ M.funcs = {
       	"Bram", "Moolenaar")
       <    In Belgium, vim's creator's name is: Moolenaar Bram
 
-      Width (and precision) can be specified using the '*' specifier.
-      In this case, you must specify the field width position in the
-      argument list. >vim
+      Width (and precision) can be specified using the '*'
+      specifier.  In this case, you must specify the field width
+      position in the argument list. >vim
 
           echo printf("%1$*2$.*3$d", 1, 2, 3)
       <    001 >vim
@@ -9178,13 +9188,13 @@ M.funcs = {
   screencol = {
     desc = [=[
       The result is a Number, which is the current screen column of
-      the cursor. The leftmost column has number 1.
+      the cursor.  The leftmost column has number 1.
       This function is mainly used for testing.
 
       Note: Always returns the current screen column, thus if used
       in a command (e.g. ":echo screencol()") it will return the
       column inside the command line, which is 1 when the command is
-      executed. To get the cursor position in the file use one of
+      executed.  To get the cursor position in the file use one of
       the following mappings: >vim
       	nnoremap <expr> GG ":echom " .. screencol() .. "\n"
       	nnoremap <silent> GG :echom screencol()<CR>
@@ -9284,7 +9294,7 @@ M.funcs = {
       If neither 'w' or 'W' is given, the 'wrapscan' option applies.
 
       If the 's' flag is supplied, the ' mark is set, only if the
-      cursor is moved. The 's' flag cannot be combined with the 'n'
+      cursor is moved.  The 's' flag cannot be combined with the 'n'
       flag.
 
       'ignorecase', 'smartcase' and 'magic' are used.
@@ -9387,7 +9397,7 @@ M.funcs = {
       without the "S" flag in 'shortmess'.  This works even if
       'shortmess' does contain the "S" flag.
 
-      This returns a |Dictionary|. The dictionary is empty if the
+      This returns a |Dictionary|.  The dictionary is empty if the
       previous pattern was not set and "pattern" was not specified.
 
         key		type		meaning ~
@@ -9404,10 +9414,10 @@ M.funcs = {
       For {options} see further down.
 
       To get the last search count when |n| or |N| was pressed, call
-      this function with `recompute: 0` . This sometimes returns
+      this function with `recompute: 0` .  This sometimes returns
       wrong information because of 'maxsearchcount'.
       If the count exceeded 'maxsearchcount', the result must be
-      'maxsearchcount' + 1. If you want to get correct information,
+      'maxsearchcount' + 1.  If you want to get correct information,
       specify `recompute: 1`: >vim
 
       	" result == 'maxsearchcount' + 1 when many matches
@@ -9470,7 +9480,7 @@ M.funcs = {
       	" search again
       	call searchcount()
       <
-      {options} must be a |Dictionary|. It can contain:
+      {options} must be a |Dictionary|.  It can contain:
         key		type		meaning ~
         recompute	|Boolean|	if |TRUE|, recompute the count
       				like |n| or |N| was executed.
@@ -9639,7 +9649,7 @@ M.funcs = {
     args = { 3, 7 },
     desc = [=[
       Same as |searchpair()|, but returns a |List| with the line and
-      column position of the match. The first element of the |List|
+      column position of the match.  The first element of the |List|
       is the line number and the second element is the byte index of
       the column position of the match.  If no match is found,
       returns [0, 0]. >vim
@@ -9666,9 +9676,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Same as |search()|, but returns a |List| with the line and
-      column position of the match. The first element of the |List|
+      column position of the match.  The first element of the |List|
       is the line number and the second element is the byte index of
-      the column position of the match. If no match is found,
+      the column position of the match.  If no match is found,
       returns [0, 0].
       Example: >vim
       	let [lnum, col] = searchpos('mypattern', 'n')
@@ -9772,7 +9782,7 @@ M.funcs = {
       Set line {lnum} to {text} in buffer {buf}.  This works like
       |setline()| for the specified buffer.
 
-      This function works only for loaded buffers. First call
+      This function works only for loaded buffers.  First call
       |bufload()| if needed.
 
       To insert lines use |appendbufline()|.
@@ -10020,7 +10030,7 @@ M.funcs = {
     base = 2,
     desc = [=[
       Set line {lnum} of the current buffer to {text}.  To insert
-      lines use |append()|. To set lines in another buffer use
+      lines use |append()|.  To set lines in another buffer use
       |setbufline()|.
 
       {lnum} is used like with |getline()|.
@@ -10030,8 +10040,8 @@ M.funcs = {
       converted to a String.  When {text} is an empty List then
       nothing is changed and FALSE is returned.
 
-      If this succeeds, FALSE is returned.  If this fails (most likely
-      because {lnum} is invalid) TRUE is returned.
+      If this succeeds, FALSE is returned.  If this fails (most
+      likely because {lnum} is invalid) TRUE is returned.
 
       Example: >vim
       	call setline(5, strftime("%c"))
@@ -10067,7 +10077,7 @@ M.funcs = {
       For {action} see |setqflist-action|.
 
       If the optional {what} dictionary argument is supplied, then
-      only the items listed in {what} are set. Refer to |setqflist()|
+      only the items listed in {what} are set.  Refer to |setqflist()|
       for the list of supported keys in {what}.
 
     ]=],
@@ -10114,10 +10124,10 @@ M.funcs = {
 
       "lnum" and "col" are the position in the buffer.  The first
       column is 1.  Use a zero "lnum" to delete a mark.  If "col" is
-      smaller than 1 then 1 is used. To use the character count
+      smaller than 1 then 1 is used.  To use the character count
       instead of the byte count, use |setcharpos()|.
 
-      The "off" number is only used when 'virtualedit' is set. Then
+      The "off" number is only used when 'virtualedit' is set.  Then
       it is the offset in screen columns from the start of the
       character.  E.g., a position within a <Tab> or after the last
       character.
@@ -10155,14 +10165,14 @@ M.funcs = {
       Create or replace or add to the quickfix list.
 
       If the optional {what} dictionary argument is supplied, then
-      only the items listed in {what} are set. The first {list}
+      only the items listed in {what} are set.  The first {list}
       argument is ignored.  See below for the supported items in
       {what}.
       					*setqflist-what*
-      When {what} is not present, the items in {list} are used.  Each
-      item must be a dictionary.  Non-dictionary items in {list} are
-      ignored.  Each dictionary item can contain the following
-      entries:
+      When {what} is not present, the items in {list} are used.
+      Each item must be a dictionary.  Non-dictionary items in
+      {list} are ignored.  Each dictionary item can contain the
+      following entries:
 
           bufnr	buffer number; must be the number of a valid
       		buffer
@@ -10202,7 +10212,7 @@ M.funcs = {
 
       {action} values:		*setqflist-action* *E927*
       'a'	The items from {list} are added to the existing
-      	quickfix list. If there is no existing list, then a
+      	quickfix list.  If there is no existing list, then a
       	new list is created.
 
       'r'	The items from the current quickfix list are replaced
@@ -10216,23 +10226,23 @@ M.funcs = {
       	freed.
 
       If {action} is not present or is set to ' ', then a new list
-      is created. The new quickfix list is added after the current
+      is created.  The new quickfix list is added after the current
       quickfix list in the stack and all the following lists are
-      freed. To add a new quickfix list at the end of the stack,
+      freed.  To add a new quickfix list at the end of the stack,
       set "nr" in {what} to "$".
 
       The following items can be specified in dictionary {what}:
-          context	quickfix list context. See |quickfix-context|
+          context	quickfix list context.  See |quickfix-context|
           efm		errorformat to use when parsing text from
-      		"lines". If this is not present, then the
+      		"lines".  If this is not present, then the
       		'errorformat' option value is used.
       		See |quickfix-parse|
           id		quickfix list identifier |quickfix-ID|
           idx		index of the current entry in the quickfix
-      		list specified by "id" or "nr". If set to '$',
-      		then the last entry in the list is set as the
-      		current entry.  See |quickfix-index|
-          items	list of quickfix entries. Same as the {list}
+      		list specified by "id" or "nr".  If set to
+      		'$', then the last entry in the list is set as
+      		the current entry.  See |quickfix-index|
+          items	list of quickfix entries.  Same as the {list}
       		argument.
           lines	use 'errorformat' to parse a list of lines and
       		add the resulting entries to the quickfix list
@@ -10247,11 +10257,11 @@ M.funcs = {
       		a function or a funcref or a lambda.  Refer to
       		|quickfix-window-function| for an explanation
       		of how to write the function and an example.
-          title	quickfix list title text. See |quickfix-title|
+          title	quickfix list title text.  See |quickfix-title|
       Unsupported keys in {what} are ignored.
-      If the "nr" item is not present, then the current quickfix list
-      is modified. When creating a new quickfix list, "nr" can be
-      set to a value one greater than the quickfix stack size.
+      If the "nr" item is not present, then the current quickfix
+      list is modified.  When creating a new quickfix list, "nr" can
+      be set to a value one greater than the quickfix stack size.
       When modifying a quickfix list, to guarantee that the correct
       list is modified, "id" should be used instead of "nr" to
       specify the list.
@@ -10303,14 +10313,14 @@ M.funcs = {
 
       If {options} contains no register settings, then the default
       is to use character mode unless {value} ends in a <NL> for
-      string {value} and linewise mode for list {value}. Blockwise
+      string {value} and linewise mode for list {value}.  Blockwise
       mode is never selected automatically.
       Returns zero for success, non-zero for failure.
 
       					*E883*
       Note: you may not use |List| containing more than one item to
-            set search and expression registers. Lists containing no
-            items act like empty strings.
+            set search and expression registers.  Lists containing
+            no items act like empty strings.
 
       Examples: >vim
       	call setreg(v:register, @*)
@@ -10394,7 +10404,7 @@ M.funcs = {
       {nr} can be the window number or the |window-ID|.
 
       For a list of supported items in {dict}, refer to
-      |gettagstack()|. "curidx" takes effect before changing the tag
+      |gettagstack()|.  "curidx" takes effect before changing the tag
       stack.
       					*E962*
       How the tag stack is modified depends on the {action}
@@ -10500,7 +10510,7 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      Returns the effective value of 'shiftwidth'. This is the
+      Returns the effective value of 'shiftwidth'.  This is the
       'shiftwidth' value unless it is zero, in which case it is the
       'tabstop' value.  To be backwards compatible in indent
       plugins, use this: >vim
@@ -10515,10 +10525,10 @@ M.funcs = {
       	endif
       <And then use s:sw() instead of &sw.
 
-      When there is one argument {col} this is used as column number
-      for which to return the 'shiftwidth' value. This matters for the
-      'vartabstop' feature. If no {col} argument is given, column 1
-      will be assumed.
+      for which to return the 'shiftwidth' value.  This matters for
+      the 'vartabstop' feature.  If the 'vartabstop' setting is
+      enabled and no {col} argument is given, column 1 will be
+      assumed.
 
     ]=],
     name = 'shiftwidth',
@@ -10597,7 +10607,7 @@ M.funcs = {
       This is similar to the |:sign-list| command.
 
       If the {name} is not supplied, then a list of all the defined
-      signs is returned. Otherwise the attribute of the specified
+      signs is returned.  Otherwise the attribute of the specified
       sign is returned.
 
       Each list item in the returned value is a dictionary with the
@@ -10643,15 +10653,15 @@ M.funcs = {
 
       If the optional buffer name {buf} is specified, then only the
       list of signs placed in that buffer is returned.  For the use
-      of {buf}, see |bufname()|. The optional {dict} can contain
+      of {buf}, see |bufname()|.  The optional {dict} can contain
       the following entries:
          group	select only signs in this group
          id		select sign with this identifier
-         lnum		select signs placed in this line. For the use
+         lnum		select signs placed in this line.  For the use
       		of {lnum}, see |line()|.
       If {group} is "*", then signs in all the groups including the
-      global group are returned. If {group} is not supplied or is an
-      empty string, then only signs in the global group are
+      global group are returned.  If {group} is not supplied or is
+      an empty string, then only signs in the global group are
       returned.  If no arguments are supplied, then signs in the
       global group placed in all the buffers are returned.
       See |sign-group|.
@@ -10659,12 +10669,12 @@ M.funcs = {
       Each list item in the returned value is a dictionary with the
       following entries:
       	bufnr	number of the buffer with the sign
-      	signs	list of signs placed in {bufnr}. Each list
+      	signs	list of signs placed in {bufnr}.  Each list
       		item is a dictionary with the below listed
       		entries
 
       The dictionary for each sign contains the following entries:
-      	group	 sign group. Set to '' for the global group.
+      	group	 sign group.  Set to '' for the global group.
       	id	 identifier of the sign
       	lnum	 line number where the sign is placed
       	name	 name of the defined sign
@@ -10714,7 +10724,7 @@ M.funcs = {
       If {group} is an empty string, then the global group is used.
       For the use of {buf}, see |bufname()|.
 
-      Returns the line number of the sign. Returns -1 if the
+      Returns the line number of the sign.  Returns -1 if the
       arguments are invalid.
 
       Example: >vim
@@ -10736,21 +10746,21 @@ M.funcs = {
       similar to the |:sign-place| command.
 
       If the sign identifier {id} is zero, then a new identifier is
-      allocated.  Otherwise the specified number is used. {group} is
-      the sign group name. To use the global sign group, use an
+      allocated.  Otherwise the specified number is used.  {group}
+      is the sign group name.  To use the global sign group, use an
       empty string.  {group} functions as a namespace for {id}, thus
-      two groups can use the same IDs. Refer to |sign-identifier|
+      two groups can use the same IDs.  Refer to |sign-identifier|
       and |sign-group| for more information.
 
       {name} refers to a defined sign.
-      {buf} refers to a buffer name or number. For the accepted
+      {buf} refers to a buffer name or number.  For the accepted
       values, see |bufname()|.
 
       The optional {dict} argument supports the following entries:
       	lnum		line number in the file or buffer
       			{buf} where the sign is to be placed.
       			For the accepted values, see |line()|.
-      	priority	priority of the sign. See
+      	priority	priority of the sign.  See
       			|sign-priority| for more information.
 
       If the optional {dict} is not specified, then it modifies the
@@ -10796,35 +10806,35 @@ M.funcs = {
     desc = [=[
       Place one or more signs.  This is similar to the
       |sign_place()| function.  The {list} argument specifies the
-      List of signs to place. Each list item is a dict with the
+      List of signs to place.  Each list item is a dict with the
       following sign attributes:
-          buffer	Buffer name or number. For the accepted
+          buffer	Buffer name or number.  For the accepted
       		values, see |bufname()|.
-          group	Sign group. {group} functions as a namespace
+          group	Sign group.  {group} functions as a namespace
       		for {id}, thus two groups can use the same
-      		IDs. If not specified or set to an empty
+      		IDs.  If not specified or set to an empty
       		string, then the global group is used.   See
       		|sign-group| for more information.
-          id		Sign identifier. If not specified or zero,
+          id		Sign identifier.  If not specified or zero,
       		then a new unique identifier is allocated.
-      		Otherwise the specified number is used. See
+      		Otherwise the specified number is used.  See
       		|sign-identifier| for more information.
           lnum	Line number in the buffer where the sign is to
-      		be placed. For the accepted values, see
+      		be placed.  For the accepted values, see
       		|line()|.
-          name	Name of the sign to place. See |sign_define()|
+          name	Name of the sign to place.  See |sign_define()|
       		for more information.
-          priority	Priority of the sign. When multiple signs are
+          priority	Priority of the sign.  When multiple signs are
       		placed on a line, the sign with the highest
-      		priority is used. If not specified, the
+      		priority is used.  If not specified, the
       		default value of 10 is used, unless specified
-      		otherwise by the sign definition. See
+      		otherwise by the sign definition.  See
       		|sign-priority| for more information.
 
       If {id} refers to an existing sign, then the existing sign is
       modified to use the specified {name} and/or {priority}.
 
-      Returns a List of sign identifiers. If failed to place a
+      Returns a List of sign identifiers.  If failed to place a
       sign, the corresponding list item is set to -1.
 
       Examples: >vim
@@ -10870,12 +10880,12 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      Deletes a previously defined sign {name}. This is similar to
-      the |:sign-undefine| command. If {name} is not supplied, then
+      Deletes a previously defined sign {name}.  This is similar to
+      the |:sign-undefine| command.  If {name} is not supplied, then
       deletes all the defined signs.
 
       The one argument {list} can be used to undefine a list of
-      signs. Each list item is the name of a sign.
+      signs.  Each list item is the name of a sign.
 
       Returns 0 on success and -1 on failure.  For the one argument
       {list} call, returns a list of values one for each undefined
@@ -10904,13 +10914,13 @@ M.funcs = {
       Remove a previously placed sign in one or more buffers.  This
       is similar to the |:sign-unplace| command.
 
-      {group} is the sign group name. To use the global sign group,
+      {group} is the sign group name.  To use the global sign group,
       use an empty string.  If {group} is set to "*", then all the
       groups including the global group are used.
       The signs in {group} are selected based on the entries in
       {dict}.  The following optional entries in {dict} are
       supported:
-      	buffer	buffer name or number. See |bufname()|.
+      	buffer	buffer name or number.  See |bufname()|.
       	id	sign identifier
       If {dict} is not supplied, then all the signs in {group} are
       removed.
@@ -10957,15 +10967,15 @@ M.funcs = {
 
       The {list} argument specifies the List of signs to remove.
       Each list item is a dict with the following sign attributes:
-          buffer	buffer name or number. For the accepted
-      		values, see |bufname()|. If not specified,
+          buffer	buffer name or number.  For the accepted
+      		values, see |bufname()|.  If not specified,
       		then the specified sign is removed from all
       		the buffers.
-          group	sign group name. If not specified or set to an
+          group	sign group name.  If not specified or set to an
       		empty string, then the global sign group is
-      		used. If set to "*", then all the groups
+      		used.  If set to "*", then all the groups
       		including the global group are used.
-          id		sign identifier. If not specified, then all
+          id		sign identifier.  If not specified, then all
       		the signs in the specified group are removed.
 
       Returns a List where an entry is set to 0 if the corresponding
@@ -10994,7 +11004,7 @@ M.funcs = {
       Unix) are not resolved.  If the first path component in
       {filename} designates the current directory, this will be
       valid for the result as well.  A trailing path separator is
-      not removed either. On Unix "//path" is unchanged, but
+      not removed either.  On Unix "//path" is unchanged, but
       "///path" is simplified to "/path" (this follows the Posix
       standard).
       Example: >vim
@@ -11120,11 +11130,11 @@ M.funcs = {
       ignore case.  Zero means to not ignore case.
 
       When {how} is given and it is 'l' then the current collation
-      locale is used for ordering. Implementation details: strcoll()
-      is used to compare strings. See |:language| check or set the
-      collation locale. |v:collate| can also be used to check the
-      current locale. Sorting using the locale typically ignores
-      case. Example: >vim
+      locale is used for ordering.  Implementation details:
+      strcoll() is used to compare strings.  See |:language| check
+      or set the collation locale.  |v:collate| can also be used to
+      check the current locale.  Sorting using the locale typically
+      ignores case.  Example: >vim
       	" ö is sorted similarly to o with English locale.
       	language collate en_US.UTF8
       	echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
@@ -11142,11 +11152,11 @@ M.funcs = {
       Funcrefs will be considered as being 0).
 
       When {how} is given and it is 'N' then all items will be
-      sorted numerical. This is like 'n' but a string containing
+      sorted numerical.  This is like 'n' but a string containing
       digits will be used as the number they represent.
 
       When {how} is given and it is 'f' then all items will be
-      sorted numerical. All values must be a Number or a Float.
+      sorted numerical.  All values must be a Number or a Float.
 
       When {how} is a |Funcref| or a function name, this function
       is called to compare items.  The function is invoked with two
@@ -11158,7 +11168,7 @@ M.funcs = {
       used to set the local variable "self". |Dictionary-function|
 
       The sort is stable, items which compare equal (as number or as
-      string) will keep their relative position. E.g., when sorting
+      string) will keep their relative position.  E.g., when sorting
       on numbers, text strings will sort next to each other, in the
       same order as they were originally.
 
@@ -11270,7 +11280,7 @@ M.funcs = {
       empty each white space separated sequence of characters
       becomes an item.
       Otherwise the string is split where {pattern} matches,
-      removing the matched characters. 'ignorecase' is not used
+      removing the matched characters.  'ignorecase' is not used
       here, add \c to ignore case. |/\c|
       When the first or last item is empty it is omitted, unless the
       {keepempty} argument is given and it's non-zero.
@@ -11623,7 +11633,8 @@ M.funcs = {
       matters for anything that's displayed differently, such as
       'tabstop' and 'display'.
       When {string} contains characters with East Asian Width Class
-      Ambiguous, this function's return value depends on 'ambiwidth'.
+      Ambiguous, this function's return value depends on
+      'ambiwidth'.
       Returns zero on error.
       Also see |strlen()|, |strwidth()| and |strchars()|.
 
@@ -11917,7 +11928,8 @@ M.funcs = {
       String {string} occupies.  A Tab character is counted as one
       cell, alternatively use |strdisplaywidth()|.
       When {string} contains characters with East Asian Width Class
-      Ambiguous, this function's return value depends on 'ambiwidth'.
+      Ambiguous, this function's return value depends on
+      'ambiwidth'.
       Returns zero on error.
       Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
 
@@ -12005,7 +12017,7 @@ M.funcs = {
       <results in "TESTING".
 
       When {sub} starts with "\=", the remainder is interpreted as
-      an expression. See |sub-replace-expression|.  Example: >vim
+      an expression.  See |sub-replace-expression|.  Example: >vim
       	echo substitute(s, '%\(\x\x\)',
       	   \ '\=nr2char("0x" .. submatch(1))', 'g')
 
@@ -12053,7 +12065,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       The result is a dictionary, which holds information about the
-      swapfile {fname}. The available fields are:
+      swapfile {fname}.  The available fields are:
       	version Vim version
       	user	user name
       	host	host name
@@ -12201,14 +12213,14 @@ M.funcs = {
       1. The first item in the list is 0 if the character at the
          position {lnum} and {col} is not part of a concealable
          region, 1 if it is.  {lnum} is used like with |getline()|.
-      2. The second item in the list is a string. If the first item
+      2. The second item in the list is a string.  If the first item
          is 1, the second item contains the text which will be
          displayed in place of the concealed text, depending on the
          current setting of 'conceallevel' and 'listchars'.
       3. The third and final item in the list is a number
          representing the specific syntax region matched in the
-         line. When the character is not concealed the value is
-         zero. This allows detection of the beginning of a new
+         line.  When the character is not concealed the value is
+         zero.  This allows detection of the beginning of a new
          concealable region if there are two consecutive regions
          with the same replacement character.  For an example, if
          the text is "123456" and both "23" and "45" are concealed
@@ -12323,10 +12335,10 @@ M.funcs = {
     base = 1,
     desc = [=[
       Same as |system()|, but returns a |List| with lines (parts of
-      output separated by NL) with NULs transformed into NLs. Output
-      is the same as |readfile()| will output with {binary} argument
-      set to "b", except that a final newline is not preserved,
-      unless {keepempty} is non-zero.
+      output separated by NL) with NULs transformed into NLs.
+      Output is the same as |readfile()| will output with {binary}
+      argument set to "b", except that a final newline is not
+      preserved, unless {keepempty} is non-zero.
       Note that on MS-Windows you may get trailing CR characters.
 
       To see the difference between "echo hello" and "echo -n hello"
@@ -12353,7 +12365,7 @@ M.funcs = {
     desc = [=[
       The result is a |List|, where each item is the number of the
       buffer associated with each window in the current tab page.
-      {arg} specifies the number of the tab page to be used. When
+      {arg} specifies the number of the tab page to be used.  When
       omitted the current tab page is used.
       When {arg} is invalid the number zero is returned.
       To get a list of all buffers in all tabs use this: >vim
@@ -12428,7 +12440,7 @@ M.funcs = {
       Returns a |List| of tags matching the regular expression {expr}.
 
       If {filename} is passed it is used to prioritize the results
-      in the same way that |:tselect| does. See |tag-priority|.
+      in the same way that |:tselect| does.  See |tag-priority|.
       {filename} should be the full path of the file.
 
       Each list item is a dictionary with at least the following
@@ -12464,7 +12476,7 @@ M.funcs = {
       search regular expression pattern.
 
       Refer to 'tags' for information about how the tags file is
-      located by Vim. Refer to |tags-file-format| for the format of
+      located by Vim.  Refer to |tags-file-format| for the format of
       the tags file generated by the different ctags tools.
 
     ]=],
@@ -12607,7 +12619,7 @@ M.funcs = {
     desc = [=[
       Create a timer and return the timer ID.
 
-      {time} is the waiting time in milliseconds. This is the
+      {time} is the waiting time in milliseconds.  This is the
       minimum time before invoking the callback.  When the system is
       busy or Vim is not waiting for input the time will be longer.
       Zero can be used to execute the callback when Vim is back in
@@ -12925,8 +12937,9 @@ M.funcs = {
       downwards to the beginning of that sequence.
 
       Returns -1 if the arguments are invalid or if there are less
-      than {idx} bytes in {string}. If there are exactly {idx} bytes
-      the length of the string in UTF-16 code units is returned.
+      than {idx} bytes in {string}.  If there are exactly {idx}
+      bytes the length of the string in UTF-16 code units is
+      returned.
 
       See |byteidx()| and |byteidxcomp()| for getting the byte index
       from the UTF-16 index and |charidx()| for getting the
@@ -12975,7 +12988,7 @@ M.funcs = {
       the character at that position.  When there is a <Tab> at the
       position, the returned Number will be the column at the end of
       the <Tab>.  For example, for a <Tab> in column 1, with 'ts'
-      set to 8, it returns 8. |conceal| is ignored.
+      set to 8, it returns 8.  |conceal| is ignored.
       For the byte position use |col()|.
 
       For the use of {expr} see |getpos()| and |col()|.
@@ -13040,7 +13053,7 @@ M.funcs = {
       byte in the character is returned.
 
       The {winid} argument can be the window number or the
-      |window-ID|. If this is zero, then the current window is used.
+      |window-ID|.  If this is zero, then the current window is used.
 
       Returns -1 if the window {winid} doesn't exist or the buffer
       line {lnum} or virtual column {col} is invalid.
@@ -13105,7 +13118,7 @@ M.funcs = {
       Returns |TRUE| when the wildmenu is active and |FALSE|
       otherwise.  See 'wildmenu' and 'wildmode'.
       This can be used in mappings to handle the 'wildcharm' option
-      gracefully. (Makes only sense with |mapmode-c| mappings).
+      gracefully.  (Makes only sense with |mapmode-c| mappings).
 
       For example to make <c-j> work like <down> in wildmode, use: >vim
           cnoremap <expr> <C-j> wildmenumode() ? "\<Down>\<Tab>" : "\<c-j>"
@@ -13201,7 +13214,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       Return the type of the window:
-      	"autocmd"	autocommand window. Temporary window
+      	"autocmd"	autocommand window.  Temporary window
       			used to execute autocommands.
       	"command"	command-line window |cmdwin|
       	(empty)		normal window
@@ -13268,14 +13281,14 @@ M.funcs = {
     base = 1,
     desc = [=[
       Move window {nr}'s vertical separator (i.e., the right border)
-      by {offset} columns, as if being dragged by the mouse. {nr}
-      can be a window number or |window-ID|. A positive {offset}
-      moves right and a negative {offset} moves left. Moving a
+      by {offset} columns, as if being dragged by the mouse.  {nr}
+      can be a window number or |window-ID|.  A positive {offset}
+      moves right and a negative {offset} moves left.  Moving a
       window's vertical separator will change the width of the
       window and the width of other windows adjacent to the vertical
-      separator. The magnitude of movement may be smaller than
+      separator.  The magnitude of movement may be smaller than
       specified (e.g., as a consequence of maintaining
-      'winminwidth'). Returns TRUE if the window can be found and
+      'winminwidth').  Returns TRUE if the window can be found and
       FALSE otherwise.
       This will fail for the rightmost window and a full-width
       window, since it has no separator on the right.
@@ -13291,14 +13304,14 @@ M.funcs = {
     base = 1,
     desc = [=[
       Move window {nr}'s status line (i.e., the bottom border) by
-      {offset} rows, as if being dragged by the mouse. {nr} can be a
-      window number or |window-ID|. A positive {offset} moves down
-      and a negative {offset} moves up. Moving a window's status
-      line will change the height of the window and the height of
-      other windows adjacent to the status line. The magnitude of
-      movement may be smaller than specified (e.g., as a consequence
-      of maintaining 'winminheight'). Returns TRUE if the window can
-      be found and FALSE otherwise.
+      {offset} rows, as if being dragged by the mouse.  {nr} can be
+      a window number or |window-ID|.  A positive {offset} moves
+      down and a negative {offset} moves up.  Moving a window's
+      status line will change the height of the window and the
+      height of other windows adjacent to the status line. The
+      magnitude of movement may be smaller than specified (e.g., as
+      a consequence of maintaining 'winminheight'). Returns TRUE if
+      the window can be found and FALSE otherwise.
       Only works for the current tab page.
 
     ]=],
@@ -13418,7 +13431,7 @@ M.funcs = {
       in a tabpage.
 
       Without {tabnr} use the current tabpage, otherwise the tabpage
-      with number {tabnr}. If the tabpage {tabnr} is not found,
+      with number {tabnr}.  If the tabpage {tabnr} is not found,
       returns an empty list.
 
       For a leaf window, it returns: >
@@ -13533,14 +13546,15 @@ M.funcs = {
       Uses the |Dictionary| returned by |winsaveview()| to restore
       the view of the current window.
       Note: The {dict} does not have to contain all values, that are
-      returned by |winsaveview()|. If values are missing, those
-      settings won't be restored. So you can use: >vim
+      returned by |winsaveview()|.  If values are missing, those
+      settings won't be restored.  So you can use: >vim
           call winrestview({'curswant': 4})
       <
       This will only set the curswant value (the column the cursor
       wants to move on vertical movements) of the cursor to column 5
       (yes, that is 5), while all other settings will remain the
-      same. This is useful, if you set the cursor position manually.
+      same.  This is useful, if you set the cursor position
+      manually.
 
       If you have changed the values the result is unpredictable.
       If the window size changed the result won't be the same.
@@ -13559,7 +13573,7 @@ M.funcs = {
       buffer and you want to go back to the original view.
       This does not save fold information.  Use the 'foldenable'
       option to temporarily switch off folding, so that folds are
-      not opened when moving around. This may have side effects.
+      not opened when moving around.  This may have side effects.
       The return value includes:
       	lnum		cursor line number
       	col		cursor column (Note: the first column

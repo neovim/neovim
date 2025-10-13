@@ -43,7 +43,7 @@ Dictionary	An associative, unordered array: Each entry has a key and a
 			{"blue": "#0000ff", "red": "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
 
-Blob		Binary Large Object. Stores any sequence of bytes.  See |Blob|
+Blob		Binary Large Object.  Stores any sequence of bytes.  See |Blob|
 		for details.
 		Example: 0zFF00ED015DAF
 		0z is an empty Blob.
@@ -738,7 +738,7 @@ Blob modification ~
 To change a specific byte of a blob use |:let| this way: >
 	:let blob[4] = 0x44
 
-When the index is just one beyond the end of the Blob, it is appended. Any
+When the index is just one beyond the end of the Blob, it is appended.  Any
 higher index is an error.
 
 To change a sequence of bytes the [:] notation can be used: >
@@ -1238,7 +1238,7 @@ Examples: >
 							*slice*
 If expr8 is a |List| this results in a new |List| with the items indicated by
 the indexes expr1a and expr1b.  This works like with a String, as explained
-just above. Also see |sublist| below.  Examples: >
+just above.  Also see |sublist| below.  Examples: >
 	:let l = mylist[:3]		" first four items
 	:let l = mylist[4:4]		" List with one item
 	:let l = mylist[:]		" shallow copy of a List
@@ -1416,8 +1416,8 @@ A string constant accepts these special characters:
 	Don't use <Char-xxxx> to get a UTF-8 character, use \uxxxx as
 	mentioned above.
 \<*xxx>	Like \<xxx> but prepends a modifier instead of including it in the
-	character.  E.g. "\<C-w>" is one character 0x17 while "\<*C-w>" is four
-	bytes: 3 for the CTRL modifier and then character "W".
+	character.  E.g. "\<C-w>" is one character 0x17 while "\<*C-w>" is
+	four bytes: 3 for the CTRL modifier and then character "W".
 
 Note that "\xff" is stored as the byte 255, which may be invalid in some
 encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
@@ -2049,7 +2049,8 @@ text...
 				END
 <			There can be multiple Vim expressions in a single line
 			but an expression cannot span multiple lines.  If any
-			expression evaluation fails, then the assignment fails.
+			expression evaluation fails, then the assignment
+			fails.
 
 			{endmarker} must not contain white space.
 			{endmarker} cannot start with a lower case character.

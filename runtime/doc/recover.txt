@@ -73,7 +73,7 @@ The 'swapfile' option can be reset to avoid creating a swapfile.  And the
 |:noswapfile| modifier can be used to not create a swapfile for a new buffer.
 
 :nos[wapfile]   {command}			*:nos* *:noswapfile*
-		Execute {command}. If it contains a command that loads a new
+		Execute {command}.  If it contains a command that loads a new
 		buffer, it will be loaded without creating a swapfile and the
 		'swapfile' option will be reset.  If a buffer already had a
 		swapfile it is not removed and 'swapfile' is not reset.

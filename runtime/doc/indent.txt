@@ -43,7 +43,8 @@ These five options control C program indenting:
 'cinkeys'	Specifies which keys trigger reindenting in insert mode.
 'cinoptions'	Sets your preferred indent style.
 'cinwords'	Defines keywords that start an extra indent in the next line.
-'cinscopedecls'	Defines strings that are recognized as a C++ scope declaration.
+'cinscopedecls'	Defines strings that are recognized as a C++ scope
+		declaration.
 
 If 'lisp' is not on and 'equalprg' is empty, the "=" operator indents using
 Vim's built-in algorithm rather than calling an external program.
@@ -228,8 +229,8 @@ The examples below assume a 'shiftwidth' of 4.
 		  }		      }			  }
 <
 							*cino-L*
-	LN    Controls placement of jump labels. If N is negative, the label
-	      will be placed at column 1. If N is non-negative, the indent of
+	LN    Controls placement of jump labels.  If N is negative, the label
+	      will be placed at column 1.  If N is non-negative, the indent of
 	      the label will be the prevailing indent minus N.  (default -1).
 
 		cino=               cino=L2             cino=Ls >
@@ -290,8 +291,8 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-g*
 	gN    Place C++ scope declarations N characters from the indent of the
-	      block they are in.  (default 'shiftwidth'). By default, a scope
-	      declaration is "public:", "protected:" or "private:". This can
+	      block they are in.  (default 'shiftwidth').  By default, a scope
+	      declaration is "public:", "protected:" or "private:".  This can
 	      be adjusted with the 'cinscopedecls' option.
 
 		cino=		    cino=g0 >
@@ -710,13 +711,13 @@ FORTRAN							*ft-fortran-indent*
 
 Block if, select case, select type, select rank,  where, forall, type,
 interface, associate, block, enum, critical, and change team constructs are
-indented. The indenting of subroutines, functions, modules, and program blocks
-is optional. Comments, labeled statements, and continuation lines are indented
-if the Fortran is in free source form, whereas they are not indented if the
-Fortran is in fixed source form because of the left margin requirements. Hence
-manual indent corrections will be necessary for labeled statements and
-continuation lines when fixed source form is being used.  For further
-discussion of the method used for the detection of source format see
+indented.  The indenting of subroutines, functions, modules, and program
+blocks is optional.  Comments, labeled statements, and continuation lines are
+indented if the Fortran is in free source form, whereas they are not indented
+if the Fortran is in fixed source form because of the left margin
+requirements.  Hence manual indent corrections will be necessary for labeled
+statements and continuation lines when fixed source form is being used.  For
+further discussion of the method used for the detection of source format see
 |ft-fortran-syntax|.
 
 Do loops ~
@@ -815,19 +816,19 @@ Idris 2 indentation can be configured with several variables that control the
 indentation level for different language constructs:
 
 The "g:idris2_indent_if" variable controls the indentation of `then` and `else`
-blocks after `if` statements. Defaults to 3.
+blocks after `if` statements.  Defaults to 3.
 
 The "g:idris2_indent_case" variable controls the indentation of patterns in
-`case` expressions. Defaults to 5.
+`case` expressions.  Defaults to 5.
 
 The "g:idris2_indent_let" variable controls the indentation after `let`
-bindings. Defaults to 4.
+bindings.  Defaults to 4.
 
 The "g:idris2_indent_rewrite" variable controls the indentation after `rewrite`
-expressions. Defaults to 8.
+expressions.  Defaults to 8.
 
 The "g:idris2_indent_where" variable controls the indentation of `where`
-blocks. Defaults to 6.
+blocks.  Defaults to 6.
 
 The "g:idris2_indent_do" variable controls the indentation in `do` blocks.
 Defaults to 3.
@@ -945,7 +946,7 @@ To indent 'case:' and 'default:' statements in switch() blocks: >
 
 In PHP braces are not required inside 'case/default' blocks therefore 'case:'
 and 'default:' are indented at the same level than the 'switch()' to avoid
-meaningless indentation. You can use the above option to return to the
+meaningless indentation.  You can use the above option to return to the
 traditional way.
 
 							*PHP_noArrowMatching*
@@ -970,7 +971,7 @@ You will obtain the following result: >
 Extra indentation levels to add to parameters in multi-line function calls. >
     let g:PHP_IndentFunctionCallParameters = 1
 
-Function call arguments will indent 1 extra level. For two-space indentation: >
+Function call arguments will indent 1 extra level.  For two-space indentation: >
 
     function call_the_thing(
       $with_this,
@@ -988,7 +989,7 @@ Extra indentation levels to add to arguments in multi-line function
 definitions. >
     let g:PHP_IndentFunctionDeclarationParameters = 1
 <
-Function arguments in declarations will indent 1 extra level. For two-space
+Function arguments in declarations will indent 1 extra level.  For two-space
 indentation: >
 
     function call_the_thing(
@@ -1018,8 +1019,8 @@ Indent after a nested paren: >
 Indent for a continuation line: >
 	let g:python_indent.continue = 'shiftwidth() * 2'
 
-By default, the closing paren on a multiline construct lines up under the first
-non-whitespace character of the previous line.
+By default, the closing paren on a multiline construct lines up under the
+first non-whitespace character of the previous line.
 If you prefer that it's lined up under the first character of the line that
 starts the multiline construct, reset this key: >
 	let g:python_indent.closed_paren_align_last_line = v:false
@@ -1044,15 +1045,15 @@ For backward compatibility, these variables are also supported: >
 
 R								*ft-r-indent*
 
-Function arguments are aligned if they span for multiple lines. If you prefer
+Function arguments are aligned if they span for multiple lines.  If you prefer
 do not have the arguments of functions aligned, put in your |vimrc|:
 >
    let r_indent_align_args = 0
 <
 All lines beginning with a comment character, #, get the same indentation
-level of the normal R code. Users of Emacs/ESS may be used to have lines
+level of the normal R code.  Users of Emacs/ESS may be used to have lines
 beginning with a single # indented in the 40th column, ## indented as R code,
-and ### not indented. If you prefer that lines beginning with comment
+and ### not indented.  If you prefer that lines beginning with comment
 characters are aligned as they are by Emacs/ESS, put in your |vimrc|:
 >
    let r_indent_ess_comments = 1
@@ -1063,8 +1064,8 @@ r_indent_comment_column, as in the example below:
 >
    let r_indent_comment_column = 30
 <
-Any code after a line that ends with "<-" is indented. Emacs/ESS does not
-indent the code if it is a top-level function. If you prefer a behavior like
+Any code after a line that ends with "<-" is indented.  Emacs/ESS does not
+indent the code if it is a top-level function.  If you prefer a behavior like
 Emacs/ESS one in this regard, put in your |vimrc|:
 >
    let r_indent_ess_compatible = 1
@@ -1079,7 +1080,7 @@ Below is an example of indentation with and without this option enabled:
    }                                             }
 <
 The code will be indented after lines that match the pattern
-`'\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'`. If you want indentation after
+`'\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'`.  If you want indentation after
 lines that match a different pattern, you should set the appropriate value of
 `r_indent_op_pattern` in your |vimrc|.
 
@@ -1144,7 +1145,7 @@ Make sure to do ":set cmdheight=2" first to allow the display of the message.
 
 VHDL							*ft-vhdl-indent*
 
-Alignment of generic/port mapping statements are performed by default. This
+Alignment of generic/port mapping statements are performed by default.  This
 causes the following alignment example: >
 
   ENTITY sync IS
@@ -1173,7 +1174,7 @@ to the vimrc file, which causes the previous alignment example to change: >
 
 
 Alignment of right-hand side assignment "<=" statements are performed by
-default. This causes the following alignment example: >
+default.  This causes the following alignment example: >
 
   sig_out <= (bus_a(1) AND
              (sig_b OR sig_c)) OR
@@ -1190,9 +1191,9 @@ to the vimrc file, which causes the previous alignment example to change: >
     (bus_a(0) AND sig_d);
 
 
-Full-line comments (lines that begin with "--") are indented to be aligned with
-the very previous line's comment, PROVIDED that a whitespace follows after
-"--".
+Full-line comments (lines that begin with "--") are indented to be aligned
+with the very previous line's comment, PROVIDED that a whitespace follows
+after "--".
 
 For example: >
 
@@ -1244,9 +1245,9 @@ results in: >
 Notice that "--debug_code:" does not align with "-- comment 2"
 because there is no whitespace that follows after "--" in "--debug_code:".
 
-Given the dynamic nature of indenting comments, indenting should be done TWICE.
-On the first pass, code will be indented. On the second pass, full-line
-comments will be indented according to the correctly indented code.
+Given the dynamic nature of indenting comments, indenting should be done
+TWICE.  On the first pass, code will be indented.  On the second pass,
+full-line comments will be indented according to the correctly indented code.
 
 
 VIM							*ft-vim-indent*

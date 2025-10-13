@@ -116,10 +116,10 @@ To make this easier, you could use these mappings: >
 You then lose the ability to copy text from the line above/below the cursor
 |i_CTRL-E|.
 
-Also consider setting 'scrolloff' to a larger value, so that you can always see
-some context around the cursor.  If 'scrolloff' is bigger than half the window
-height, the cursor will always be in the middle and the text is scrolled when
-the cursor is moved up/down.
+Also consider setting 'scrolloff' to a larger value, so that you can always
+see some context around the cursor.  If 'scrolloff' is bigger than half the
+window height, the cursor will always be in the middle and the text is
+scrolled when the cursor is moved up/down.
 
 ==============================================================================
 Smooth scrolling					*scroll-smooth*

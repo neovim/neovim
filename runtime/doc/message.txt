@@ -118,7 +118,7 @@ path leading to the file.
   Cannot switch buffer. 'winfixbuf' is enabled
 
 If a window has 'winfixbuf' enabled, you cannot change that window's current
-buffer. You need to set 'nowinfixbuf' before continuing. You may use [!] to
+buffer.  You need to set 'nowinfixbuf' before continuing.  You may use [!] to
 force the window to switch buffers, if your command supports it.
 
 							*E72*  >

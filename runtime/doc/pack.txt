@@ -66,9 +66,9 @@ path.
 
 Nvim will also load ftdetect files, if there are any.
 
-Note that the files under "pack/foo/opt" are not loaded automatically, only the
-ones under "pack/foo/start".  See |pack-add| below for how the "opt" directory
-is used.
+Note that the files under "pack/foo/opt" are not loaded automatically, only
+the ones under "pack/foo/start".  See |pack-add| below for how the "opt"
+directory is used.
 
 Loading packages automatically will not happen if loading plugins is disabled,
 see |load-plugins|.
@@ -145,8 +145,8 @@ This assumes you write one or more plugins that you distribute as a package.
 
 If you have two unrelated plugins you would use two packages, so that Vim
 users can choose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the preferred ones with
-`:packadd`.
+package with optional plugins, and tell the user to add the preferred ones
+with `:packadd`.
 
 Decide how you want to distribute the package.  You can create an archive or
 you could use a repository.  An archive can be used by more users, but is a
@@ -190,7 +190,7 @@ the command after changing the plugin help: >
 
 Dependencies between plugins ~
                                                         *packload-two-steps*
-Suppose you have two plugins that depend on the same functionality. You can
+Suppose you have two plugins that depend on the same functionality.  You can
 put the common functionality in an autoload directory, so that it will be
 found automatically.  Your package would have these files:
 

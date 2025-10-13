@@ -146,7 +146,7 @@ something else.
 		    :tabclose $	    " close the last tab page
 		    :tabclose #     " close the last accessed tab page
 
-When a tab page is closed the next tab page will become the current one. This
+When a tab page is closed the next tab page will become the current one.  This
 behaviour can be customized using the 'tabclose' option.
 
 							*:tabo* *:tabonly*
@@ -275,7 +275,7 @@ REORDERING TAB PAGES:
 
 
 Note that although it is possible to move a tab page behind the N-th one by
-using :Ntabmove. And move it by N places by using :+Ntabmove. For
+using :Ntabmove.  And move it by N places by using :+Ntabmove.  For
 clarification what +N means in this context see |[range]|.
 
 
