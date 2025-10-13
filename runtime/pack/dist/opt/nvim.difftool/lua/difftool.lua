@@ -28,31 +28,36 @@ local layout = {
   group = nil,
   left_win = nil,
   right_win = nil,
+  qf_win = nil,
 }
 
 local util = require('vim._core.util')
 
+--- Clean up the layout state, autocmds and quickfix list
+--- @param with_qf boolean whether the layout included a quickfix window
+local function cleanup_layout(with_qf)
+  if layout.group then
+    vim.api.nvim_del_augroup_by_id(layout.group)
+    layout.group = nil
+  end
+  layout.left_win = nil
+  layout.right_win = nil
+  layout.qf_win = nil
+
+  if with_qf then
+    vim.fn.setqflist({})
+    vim.cmd.cclose()
+  end
+end
+
 --- Set up a consistent layout with two diff windows
 --- @param with_qf boolean whether to open the quickfix window
 local function setup_layout(with_qf)
-  local wins = vim.api.nvim_tabpage_list_wins(0)
   local left_valid = layout.left_win and vim.api.nvim_win_is_valid(layout.left_win)
   local right_valid = layout.right_win and vim.api.nvim_win_is_valid(layout.right_win)
-  local wins_passed = left_valid and right_valid
+  local qf_valid = layout.qf_win and vim.api.nvim_win_is_valid(layout.qf_win)
 
-  local qf_passed = not with_qf
-  if not qf_passed and wins_passed then
-    for _, win in ipairs(wins) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      local ft = vim.bo[buf].filetype
-      if ft == 'qf' then
-        qf_passed = true
-        break
-      end
-    end
-  end
-
-  if wins_passed and qf_passed then
+  if left_valid and right_valid and (not with_qf or qf_valid) then
     return false
   end
 
@@ -63,8 +68,41 @@ local function setup_layout(with_qf)
 
   if with_qf then
     vim.cmd('botright copen')
+    layout.qf_win = vim.api.nvim_get_current_win()
+  else
+    layout.qf_win = nil
   end
   vim.api.nvim_set_current_win(layout.right_win)
+
+  -- When one of the windows is closed, clean up the layout
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = layout.group,
+    pattern = tostring(layout.left_win),
+    callback = function()
+      cleanup_layout(with_qf)
+    end,
+  })
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = layout.group,
+    pattern = tostring(layout.right_win),
+    callback = function()
+      cleanup_layout(with_qf)
+    end,
+  })
+  if with_qf then
+    vim.api.nvim_create_autocmd('WinClosed', {
+      group = layout.group,
+      pattern = tostring(layout.qf_win),
+      callback = function()
+        -- For quickfix also close one of diff windows
+        if layout.left_win and vim.api.nvim_win_is_valid(layout.left_win) then
+          vim.api.nvim_win_close(layout.left_win, true)
+        end
+
+        cleanup_layout(with_qf)
+      end,
+    })
+  end
 end
 
 --- Diff two files
@@ -74,36 +112,8 @@ end
 local function diff_files(left_file, right_file, with_qf)
   setup_layout(with_qf or false)
 
-  local left_buf = util.edit_in(layout.left_win, left_file)
-  local right_buf = util.edit_in(layout.right_win, right_file)
-
-  -- When one of the windows is closed, clean up the layout
-  vim.api.nvim_create_autocmd('WinClosed', {
-    group = layout.group,
-    buffer = left_buf,
-    callback = function()
-      if layout.group and layout.left_win then
-        vim.api.nvim_del_augroup_by_id(layout.group)
-        layout.left_win = nil
-        layout.group = nil
-        vim.fn.setqflist({})
-        vim.cmd.cclose()
-      end
-    end,
-  })
-  vim.api.nvim_create_autocmd('WinClosed', {
-    group = layout.group,
-    buffer = right_buf,
-    callback = function()
-      if layout.group and layout.right_win then
-        vim.api.nvim_del_augroup_by_id(layout.group)
-        layout.right_win = nil
-        layout.group = nil
-        vim.fn.setqflist({})
-        vim.cmd.cclose()
-      end
-    end,
-  })
+  util.edit_in(layout.left_win, left_file)
+  util.edit_in(layout.right_win, right_file)
 
   vim.cmd('diffoff!')
   vim.api.nvim_win_call(layout.left_win, vim.cmd.diffthis)
