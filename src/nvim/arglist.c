@@ -68,8 +68,6 @@ typedef struct {
 
 static const char e_window_layout_changed_unexpectedly[]
   = N_("E249: Window layout changed unexpectedly");
-static const char e_cannot_change_arglist_recursively[]
-  = N_("E1156: Cannot change the argument list recursively");
 
 enum {
   AL_SET = 1,

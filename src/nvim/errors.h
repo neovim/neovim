@@ -166,6 +166,7 @@ EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No 
 EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
 
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
+EXTERN const char e_cannot_change_arglist_recursively[] INIT(= N_("E1156: Cannot change the argument list recursively"));
 
 EXTERN const char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));
 
