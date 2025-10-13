@@ -559,7 +559,7 @@ static int cin_isdefault(const char *s)
          && s[1] != ':';
 }
 
-/// Recognize a scope declaration label set in 'cinscopedecls'.
+/// Recognize a scope declaration label from the 'cinscopedecls' option.
 static bool cin_isscopedecl(const char *p)
 {
   const char *s = cin_skipcomment(p);
