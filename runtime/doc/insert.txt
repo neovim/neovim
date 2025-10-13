@@ -69,10 +69,11 @@ CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		By default, sets a new undo point before deleting.
 		|default-mappings|
 						*i_CTRL-U*
-CTRL-U		Delete all entered characters before the cursor in the current
-		line.  If there are no newly entered characters and
-		'backspace' is not empty, delete all characters before the
-		cursor in the current line.
+CTRL-U		Delete all characters that were entered after starting Insert
+		mode and before the cursor in the current line.
+		If there are no newly entered characters and 'backspace' is
+		not empty, delete all characters before the cursor in the
+		current line.
 		If C-indenting is enabled the indent will be adjusted if the
 		line becomes blank.
 		See |i_backspacing| about joining lines.
