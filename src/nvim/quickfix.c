@@ -7716,7 +7716,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
     // Option argument was not given.
     goto skip_args;
   } else if (action_arg->v_type != VAR_STRING) {
-    emsg(_(e_stringreq));
+    emsg(_(e_string_required));
     return;
   }
   const char *const act = tv_get_string_chk(action_arg);

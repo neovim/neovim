@@ -2606,7 +2606,7 @@ static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, b
       value = CSTR_TO_OPTVAL(strval);
     } else if (!is_tty_opt) {
       err = true;
-      emsg(_(e_stringreq));
+      emsg(_(e_string_required));
     }
   } else {
     abort();  // This should never happen.

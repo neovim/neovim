@@ -27,7 +27,6 @@ EXTERN const char e_while[] INIT(= N_("E588: :endwhile without :while"));
 EXTERN const char e_for[] INIT(= N_("E588: :endfor without :for"));
 EXTERN const char e_exists[] INIT(= N_("E13: File exists (add ! to override)"));
 EXTERN const char e_failed[] INIT(= N_("E472: Command failed"));
-EXTERN const char e_internal[] INIT(= N_("E473: Internal error"));
 EXTERN const char e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN const char e_interr[] INIT(= N_("Interrupted"));
 EXTERN const char e_invarg[] INIT(= N_("E474: Invalid argument"));
@@ -37,6 +36,7 @@ EXTERN const char e_invargNval[] INIT(= N_("E475: Invalid value for argument %s:
 EXTERN const char e_duparg2[] INIT(= N_("E983: Duplicate argument: %s"));
 EXTERN const char e_invexpr2[] INIT(= N_("E15: Invalid expression: \"%s\""));
 EXTERN const char e_invrange[] INIT(= N_("E16: Invalid range"));
+EXTERN const char e_internal_error_in_regexp[] INIT(= N_("E473: Internal error in regexp"));
 EXTERN const char e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN const char e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN const char e_no_spell[] INIT(= N_("E756: Spell checking is not possible"));
@@ -93,7 +93,6 @@ EXTERN const char e_letwrong[] INIT(= N_("E734: Wrong variable type for %s="));
 EXTERN const char e_illvar[] INIT(= N_("E461: Illegal variable name: %s"));
 EXTERN const char e_cannot_mod[] INIT(= N_("E995: Cannot modify existing variable"));
 EXTERN const char e_readonlyvar[] INIT(= N_("E46: Cannot change read-only variable \"%.*s\""));
-EXTERN const char e_stringreq[] INIT(= N_("E928: String required"));
 EXTERN const char e_dictreq[] INIT(= N_("E715: Dictionary required"));
 EXTERN const char e_blobidx[] INIT(= N_("E979: Blob index out of range: %" PRId64));
 EXTERN const char e_invalblob[] INIT(= N_("E978: Invalid operation for Blob"));
@@ -167,6 +166,7 @@ EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No 
 EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
 
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
+EXTERN const char e_cannot_change_arglist_recursively[] INIT(= N_("E1156: Cannot change the argument list recursively"));
 
 EXTERN const char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));
 
@@ -176,8 +176,12 @@ EXTERN const char e_highlight_group_name_invalid_char[] INIT(= N_("E5248: Invali
 
 EXTERN const char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
+EXTERN const char e_string_required[] INIT(= N_("E928: String required"));
+
 EXTERN const char e_invalid_column_number_nr[] INIT( = N_("E964: Invalid column number: %ld"));
 EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line number: %ld"));
+
+EXTERN const char e_reduce_of_an_empty_str_with_no_initial_value[] INIT(= N_("E998: Reduce of an empty %s with no initial value"));
 
 EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));

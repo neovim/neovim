@@ -160,7 +160,6 @@ PRAGMA_DIAG_POP
 static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char e_invalid_submatch_number_nr[]
   = N_("E935: Invalid submatch number: %d");
-static const char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
 static const char e_string_list_or_blob_required[]
   = N_("E1098: String, List or Blob required");
 static const char e_missing_function_argument[]
@@ -5356,7 +5355,7 @@ static void reduce_list(typval_T *argvars, typval_T *expr, typval_T *rettv)
   const listitem_T *li = NULL;
   if (argvars[2].v_type == VAR_UNKNOWN) {
     if (tv_list_len(l) == 0) {
-      semsg(_(e_reduceempty), "List");
+      semsg(_(e_reduce_of_an_empty_str_with_no_initial_value), "List");
       return;
     }
     const listitem_T *const first = tv_list_first(l);
@@ -5403,7 +5402,7 @@ static void reduce_string(typval_T *argvars, typval_T *expr, typval_T *rettv)
 
   if (argvars[2].v_type == VAR_UNKNOWN) {
     if (*p == NUL) {
-      semsg(_(e_reduceempty), "String");
+      semsg(_(e_reduce_of_an_empty_str_with_no_initial_value), "String");
       return;
     }
     len = utfc_ptr2len(p);
@@ -5451,7 +5450,7 @@ static void reduce_blob(typval_T *argvars, typval_T *expr, typval_T *rettv)
   int i;
   if (argvars[2].v_type == VAR_UNKNOWN) {
     if (tv_blob_len(b) == 0) {
-      semsg(_(e_reduceempty), "Blob");
+      semsg(_(e_reduce_of_an_empty_str_with_no_initial_value), "Blob");
       return;
     }
     initial = (typval_T){
