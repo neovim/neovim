@@ -824,7 +824,10 @@ local function create_server(name, completion_result, opts)
       },
       handlers = {
         ['textDocument/completion'] = function(_, _, callback)
-          callback(nil, completion_result)
+          -- simulate delay in completion request, needed for some of these tests
+          vim.defer_fn(function()
+            callback(nil, completion_result)
+          end, 200)
         end,
         ['completionItem/resolve'] = function(_, _, callback)
           callback(nil, opts.resolve_result)
@@ -1341,5 +1344,61 @@ describe('vim.lsp.completion: integration', function()
         }
       end)
     )
+  end)
+end)
+
+describe('vim.lsp.completion: omnifunc', function()
+  before_each(function()
+    clear()
+    exec_lua(create_server_definition)
+    exec_lua(function()
+      -- enable buffer and omnifunc autocompletion
+      -- omnifunc will be the lsp omnifunc
+      vim.o.complete = '.,o'
+      vim.o.autocomplete = true
+    end)
+  end)
+
+  it('merges with other completions', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hallo' },
+      },
+    }
+    create_server('dummy', completion_list)
+
+    feed('ihello<cr><esc>ih')
+
+    retry(nil, nil, function()
+      local matches = vim.tbl_map(function(m)
+        return m.word
+      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
+      eq({ 'hello', 'hallo' }, matches)
+    end)
+  end)
+
+  it('does not duplicate completions', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+      },
+    }
+    create_server('dummy', completion_list)
+
+    -- wait for one completion request to start and then request another before
+    -- the first one finishes, then wait for both to finish
+    feed('ih')
+    vim.uv.sleep(10)
+    feed('e')
+    vim.uv.sleep(500)
+
+    retry(nil, nil, function()
+      local matches = vim.tbl_map(function(m)
+        return m.word
+      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
+      eq({ 'hello' }, matches)
+    end)
   end)
 end)
