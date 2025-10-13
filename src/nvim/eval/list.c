@@ -249,7 +249,7 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
       if (newtv.v_type != VAR_STRING) {
         tv_clear(&newtv);
         tv_clear(&tv);
-        emsg(_(e_stringreq));
+        emsg(_(e_string_required));
         break;
       } else {
         ga_concat(&ga, newtv.vval.v_string);

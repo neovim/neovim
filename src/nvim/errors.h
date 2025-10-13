@@ -93,7 +93,6 @@ EXTERN const char e_letwrong[] INIT(= N_("E734: Wrong variable type for %s="));
 EXTERN const char e_illvar[] INIT(= N_("E461: Illegal variable name: %s"));
 EXTERN const char e_cannot_mod[] INIT(= N_("E995: Cannot modify existing variable"));
 EXTERN const char e_readonlyvar[] INIT(= N_("E46: Cannot change read-only variable \"%.*s\""));
-EXTERN const char e_stringreq[] INIT(= N_("E928: String required"));
 EXTERN const char e_dictreq[] INIT(= N_("E715: Dictionary required"));
 EXTERN const char e_blobidx[] INIT(= N_("E979: Blob index out of range: %" PRId64));
 EXTERN const char e_invalblob[] INIT(= N_("E978: Invalid operation for Blob"));
@@ -176,8 +175,12 @@ EXTERN const char e_highlight_group_name_invalid_char[] INIT(= N_("E5248: Invali
 
 EXTERN const char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
+EXTERN const char e_string_required[] INIT(= N_("E928: String required"));
+
 EXTERN const char e_invalid_column_number_nr[] INIT( = N_("E964: Invalid column number: %ld"));
 EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line number: %ld"));
+
+EXTERN const char e_reduce_of_an_empty_str_with_no_initial_value[] INIT(= N_("E998: Reduce of an empty %s with no initial value"));
 
 EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));
