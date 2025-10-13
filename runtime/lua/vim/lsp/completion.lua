@@ -502,7 +502,8 @@ local function trigger(bufnr, clients, ctx)
       return
     end
 
-    local matches --[[@type table]] = vim.fn.complete_info({ 'items' })['items']
+    --- @type table[]
+    local matches = vim.fn.complete_info({ 'items' })['items']
     local server_start_boundary --- @type integer?
     for client_id, response in pairs(responses) do
       local client = lsp.get_client_by_id(client_id)
@@ -533,6 +534,11 @@ local function trigger(bufnr, clients, ctx)
         vim.list_extend(matches, client_matches)
       end
     end
+
+    matches = vim.list.unique(matches, function(m)
+      return vim.tbl_get(m, 'user_data', 'nvim', 'lsp', 'completion_item', 'label')
+    end)
+
     local start_col = (server_start_boundary or word_boundary) + 1
     Context.cursor = { cursor_row, start_col }
     vim.fn.complete(start_col, matches)
