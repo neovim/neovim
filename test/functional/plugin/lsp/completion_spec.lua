@@ -1389,7 +1389,7 @@ describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
   it('fuzzy matches without duplication', function()
     -- wait for one completion request to start and then request another before
     -- the first one finishes, then wait for both to finish
-    feed('ih')
+    feed('ihillo<cr>h')
     vim.uv.sleep(1)
     feed('e')
 
