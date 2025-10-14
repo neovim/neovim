@@ -2892,6 +2892,9 @@ To enable folding of sections: >
 
 Note that folding can cause performance issues on some platforms.
 
+The minimum line syntax sync is set to 50.  To modify this number: >
+	let rst_minlines = 100
+
 
 REXX							*ft-rexx-syntax*
 
