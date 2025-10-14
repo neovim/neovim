@@ -105,23 +105,33 @@ function! s:DefineOneInlineMarkup(name, start, middle, end, char_left, char_righ
     let first = a:start[0]
   endif
 
-  execute 'syn match rstEscape'.a:name.' +\\\\\|\\'.first.'+'.' contained'
+  if a:start != '``'
+    let rst_contains=' contains=rstEscape' . a:name
+    execute 'syn match rstEscape'.a:name.' +\\\\\|\\'.first.'+'.' contained'
+  else
+    let rst_contains=''
+  endif
 
   execute 'syn region rst' . a:name .
         \ ' start=+' . a:char_left . '\zs' . a:start .
         \ '\ze[^[:space:]' . a:char_right . a:start[strlen(a:start) - 1] . ']+' .
         \ a:middle .
         \ ' end=+' . a:end . '\ze\%($\|\s\|[''"’)\]}>/:.,;!?\\-]\)+' .
-        \ ' contains=rstEscape' . a:name
+        \ rst_contains
 
-  execute 'hi def link rstEscape'.a:name.' Special'
+  if a:start != '``'
+    execute 'hi def link rstEscape'.a:name.' Special'
+  endif
 endfunction
 
 function! s:DefineInlineMarkup(name, start, middle, end)
-  let middle = a:middle != "" ?
-        \ (' skip=+\\\\\|\\' . a:middle . '\|\s' . a:middle . '+') :
-        \ ""
+  if a:middle == '`'
+    let middle = ' skip=+\s'.a:middle.'+'
+  else
+    let middle = ' skip=+\\\\\|\\' . a:middle . '\|\s' . a:middle . '+'
+  endif
 
+  " Some characters may precede or follow an inline token
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, "'", "'")
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '"', '"')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '(', ')')
@@ -129,8 +139,8 @@ function! s:DefineInlineMarkup(name, start, middle, end)
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '{', '}')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '<', '>')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '’', '’')
-  " TODO: Additional Unicode Pd, Po, Pi, Pf, Ps characters
 
+  " TODO: Additional whitespace Unicode characters: Pd, Po, Pi, Pf, Ps
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\%(^\|\s\|\%ua0\|[/:]\)', '')
 
   execute 'syn match rst' . a:name .
@@ -144,7 +154,7 @@ endfunction
 call s:DefineInlineMarkup('Emphasis', '\*', '\*', '\*')
 call s:DefineInlineMarkup('StrongEmphasis', '\*\*', '\*', '\*\*')
 call s:DefineInlineMarkup('InterpretedTextOrHyperlinkReference', '`', '`', '`_\{0,2}')
-call s:DefineInlineMarkup('InlineLiteral', '``', "", '``')
+call s:DefineInlineMarkup('InlineLiteral', '``', '`', '``')
 call s:DefineInlineMarkup('SubstitutionReference', '|', '|', '|_\{0,2}')
 call s:DefineInlineMarkup('InlineInternalTargets', '_`', '`', '`')
 
