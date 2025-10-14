@@ -61,7 +61,7 @@ local function setup_layout(with_qf)
     return false
   end
 
-  vim.cmd.only()
+  vim.cmd.only({ mods = { silent = true } })
   layout.left_win = vim.api.nvim_get_current_win()
   vim.cmd('rightbelow vsplit')
   layout.right_win = vim.api.nvim_get_current_win()
