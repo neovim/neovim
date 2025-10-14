@@ -1092,12 +1092,12 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			current line).  This always works |linewise|, thus
 			this command can be used to put a yanked block as new
 			lines.
-			If no register is specified, it depends on the 'cb'
-			option: If 'cb' contains "unnamedplus", paste from the
-			+ register |quoteplus|.  Otherwise, if 'cb' contains
-			"unnamed", paste from the * register |quotestar|.
-			Otherwise, paste from the unnamed register
-			|quote_quote|.
+			If no register is specified, it depends on the
+			'clipboard' option: If 'clipboard' contains
+			"unnamedplus", paste from the + register |quoteplus|.
+			Otherwise, if 'clipboard' contains "unnamed", paste
+			from the * register |quotestar|.  Otherwise, paste from
+			the unnamed register |quote_quote|.
 			The register can also be '=' followed by an optional
 			expression.  The expression continues until the end of
 			the command.  You need to escape the '|' and '"'

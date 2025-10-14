@@ -713,12 +713,11 @@ Block if, select case, select type, select rank,  where, forall, type,
 interface, associate, block, enum, critical, and change team constructs are
 indented.  The indenting of subroutines, functions, modules, and program
 blocks is optional.  Comments, labeled statements, and continuation lines are
-indented if the Fortran is in free source form, whereas they are not indented
-if the Fortran is in fixed source form because of the left margin
-requirements.  Hence manual indent corrections will be necessary for labeled
-statements and continuation lines when fixed source form is being used.  For
-further discussion of the method used for the detection of source format see
-|ft-fortran-syntax|.
+indented in free source form, whereas they are not indented in fixed source
+form because of the left margin requirements.  Hence manual indent corrections
+will be necessary for labeled statements and continuation lines when fixed
+source form is being used.  For further discussion of the method used for the
+detection of source format see |ft-fortran-syntax|.
 
 Do loops ~
 All do loops are left unindented by default.  Do loops can be unstructured in
