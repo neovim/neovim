@@ -52,7 +52,8 @@ syn cluster rstDirectives           contains=rstFootnote,rstCitation,
       \ rstHyperlinkTarget,rstExDirective
 
 syn match   rstExplicitMarkup       '^\s*\.\.\_s'
-      \ nextgroup=@rstDirectives,rstComment,rstSubstitutionDefinition
+      \ nextgroup=@rstDirectives,rstSubstitutionDefinition
+      \ contains=rstComment
 
 " "Simple reference names are single words consisting of alphanumerics plus
 " isolated (no two adjacent) internal hyphens, underscores, periods, colons
@@ -61,10 +62,10 @@ let s:ReferenceName = '[[:alnum:]]\%([-_.:+]\?[[:alnum:]]\+\)*'
 
 syn keyword     rstTodo             contained FIXME TODO XXX NOTE
 
-execute 'syn region rstComment contained' .
-      \ ' start=/.*/'
-      \ ' skip=+^$+' .
-      \ ' end=/^\s\@!/ contains=rstTodo'
+syn region rstComment
+      \ start='\v^\z(\s*)\.\.(\_s+[\[|_]|\_s+.*::)@!' skip=+^$+ end=/^\(\z1   \)\@!/
+      \ contains=@Spell,rstTodo
+
 
 execute 'syn region rstFootnote contained matchgroup=rstDirective' .
       \ ' start=+\[\%(\d\+\|#\%(' . s:ReferenceName . '\)\=\|\*\)\]\_s+' .
