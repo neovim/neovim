@@ -987,10 +987,6 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
     buf->b_cot_flags = 0;
   }
 
-  if (opt_strings_flags(cot, opt_cot_values, NULL, true) != OK) {
-    return e_invarg;
-  }
-
   if (opt_strings_flags(cot, opt_cot_values, flags, true) != OK) {
     return e_invarg;
   }
