@@ -563,6 +563,12 @@ describe('clipboard (with fake clipboard.vim)', function()
         あいあいあいうえお
         xxx xxx
         xx  xx]])
+      feed('G0<C-V>ky')
+      feed('P')
+      expect([[
+        あいあいあいうえお
+        xxxx xxx
+        xxx  xx]])
     end)
   end)
 
