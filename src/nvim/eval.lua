@@ -109,7 +109,7 @@ M.funcs = {
     desc = [=[
       Bitwise AND on the two arguments.  The arguments are converted
       to a number.  A List, Dict or Float argument causes an error.
-      Also see `or()` and `xor()`.
+      Also see |or()| and |xor()|.
       Example: >vim
       	let flag = and(bits, 0x80)
       <
@@ -207,7 +207,7 @@ M.funcs = {
   argidx = {
     desc = [=[
       The result is the current index in the argument list.  0 is
-      the first file.  argc() - 1 is the last one.  See |arglist|.
+      the first file.  |argc()| - 1 is the last one.  See |arglist|.
     ]=],
     name = 'argidx',
     params = {},
@@ -850,7 +850,7 @@ M.funcs = {
       <The result is a Number, which is the highest buffer number
       of existing buffers.  Note that not all buffers with a smaller
       number necessarily exist, because ":bwipeout" may have removed
-      them.  Use bufexists() to test for the existence of a buffer.
+      them.  Use |bufexists()| to test for the existence of a buffer.
 
     ]=],
     name = 'bufnr',
@@ -966,7 +966,7 @@ M.funcs = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      Like byteidx(), except that a composing character is counted
+      Like |byteidx()|, except that a composing character is counted
       as a separate character.  Example: >vim
       	let s = 'e' .. nr2char(0x301)
       	echo byteidx(s, 1)
@@ -1833,7 +1833,7 @@ M.funcs = {
       this single copy.  With {noref} set to 1 every occurrence of a
       |List| or |Dictionary| results in a new copy.  This also means
       that a cyclic reference causes deepcopy() to fail.
-      						*E724*
+      					*E724*
       Nesting is possible up to 100 levels.  When there is an item
       that refers back to a higher level making a deep copy with
       {noref} set to 1 will fail.
@@ -2842,7 +2842,7 @@ M.funcs = {
       a very large number.
       The {list} is changed in place, use |flattennew()| if you do
       not want that.
-      						*E900*
+      					*E900*
       {maxdepth} means how deep in nested lists changes are made.
       {list} is not modified when {maxdepth} is 0.
       {maxdepth} must be positive number.
@@ -3599,9 +3599,9 @@ M.funcs = {
 
       When {expr} is 1 only the first byte is returned.  For a
       one-byte character it is the character itself as a number.
-      Use nr2char() to convert it to a String.
+      Use |nr2char()| to convert it to a String.
 
-      Use getcharmod() to obtain any additional modifiers.
+      Use |getcharmod()| to obtain any additional modifiers.
 
       The optional argument {opts} is a Dict and supports the
       following items:
@@ -3673,7 +3673,7 @@ M.funcs = {
   getcharmod = {
     desc = [=[
       The result is a Number which is the state of the modifiers for
-      the last obtained character with getchar() or in another way.
+      the last obtained character with |getchar()| or in another way.
       These values are added together:
       	2	shift
       	4	control
@@ -4137,7 +4137,7 @@ M.funcs = {
     desc = [=[
       The result is a Number, which is the last modification time of
       the given file {fname}.  The value is measured as seconds
-      since 1st Jan 1970, and may be passed to strftime().  See also
+      since 1st Jan 1970, and may be passed to |strftime()|.  See also
       |localtime()| and |strftime()|.
       If the file {fname} can't be found -1 is returned.
 
@@ -4474,7 +4474,7 @@ M.funcs = {
       Returns a |List| with all the current quickfix errors.  Each
       list item is a dictionary with these entries:
       	bufnr	number of buffer that has the file name, use
-      		bufname() to get the name
+      		|bufname()| to get the name
       	module	module name
       	lnum	line number in the buffer (first line is 1)
       	end_lnum
@@ -5142,7 +5142,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Convert a file pattern, as used by glob(), into a search
+      Convert a file pattern, as used by |glob()|, into a search
       pattern.  The result can be used to match with a string that
       is a file name.  E.g. >vim
       	if filename =~ glob2regpat('Make*.mak')
@@ -5167,7 +5167,7 @@ M.funcs = {
     args = { 2, 5 },
     base = 2,
     desc = [=[
-      Perform glob() for String {expr} on all directories in {path}
+      Perform |glob()| for String {expr} on all directories in {path}
       and concatenate the results.  Example: >vim
       	echo globpath(&rtp, "syntax/c.vim")
       <
@@ -5866,7 +5866,7 @@ M.funcs = {
   inputrestore = {
     desc = [=[
       Restore typeahead that was saved with a previous |inputsave()|.
-      Should be called the same number of times inputsave() is
+      Should be called the same number of times |inputsave()| is
       called.  Calling it more often is harmless though.
       Returns TRUE when there is nothing to restore, FALSE
       otherwise.
@@ -5880,9 +5880,9 @@ M.funcs = {
     desc = [=[
       Preserve typeahead (also from mappings) and clear it, so that
       a following prompt gets input from the user.  Should be
-      followed by a matching inputrestore() after the prompt.  Can
+      followed by a matching |inputrestore()| after the prompt.  Can
       be used several times, in which case there must be just as
-      many inputrestore() calls.
+      many |inputrestore()| calls.
       Returns TRUE when out of memory, FALSE otherwise.
     ]=],
     name = 'inputsave',
@@ -6412,7 +6412,7 @@ M.funcs = {
       The result is the String returned by the function.  If the
       function returns NULL, this will appear as an empty string ""
       to Vim.
-      If the function returns a number, use libcallnr()!
+      If the function returns a number, use |libcallnr()|!
       If {argument} is a number, it is passed to the function as an
       int; if {argument} is a string, it is passed as a
       null-terminated string.
@@ -6822,8 +6822,8 @@ M.funcs = {
          mapcheck("ax")	yes	no	 no
          mapcheck("b")	no	no	 no
 
-      The difference with maparg() is that mapcheck() finds a
-      mapping that matches with {name}, while maparg() only finds a
+      The difference with |maparg()| is that mapcheck() finds a
+      mapping that matches with {name}, while |maparg()| only finds a
       mapping for {name} exactly.
       When there is no mapping that starts with {name}, an empty
       String is returned.  If there is one, the RHS of that mapping
@@ -6969,10 +6969,10 @@ M.funcs = {
       	echo match("testing", "ing")	" results in 4
       	echo match([1, 'x'], '\a')	" results in 1
       <See |string-match| for how {pat} is used.
-      						*strpbrk()*
+      					*strpbrk()*
       Vim doesn't have a strpbrk() function.  But you can do: >vim
       	let sepidx = match(line, '[.,;: \t]')
-      <						*strcasestr()*
+      <					*strcasestr()*
       Vim doesn't have a strcasestr() function.  But you can add
       "\c" to the pattern to ignore case: >vim
       	let idx = match(haystack, '\cneedle')
@@ -7387,7 +7387,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       Same as |match()|, but return a |List|.  The first item in the
-      list is the matched string, same as what matchstr() would
+      list is the matched string, same as what |matchstr()| would
       return.  Following items are submatches, like "\1", "\2", etc.
       in |:substitute|.  When an optional submatch didn't match an
       empty string is used.  Example: >vim
@@ -8856,7 +8856,7 @@ M.funcs = {
       	let start = reltime()
       	call MyFunction()
       	let seconds = reltimefloat(reltime(start))
-      See the note of reltimestr() about overhead.
+      See the note of |reltimestr()| about overhead.
       Also see |profiling|.
       If there is an error an empty string is returned
 
@@ -8878,7 +8878,7 @@ M.funcs = {
       	echo reltimestr(reltime(start))
       <Note that overhead for the commands will be added to the time.
       Leading spaces are used to make the string align nicely.  You
-      can use split() to remove it. >vim
+      can use |split()| to remove it. >vim
       	echo split(reltimestr(reltime(start)))[0]
       <Also see |profiling|.
       If there is an error an empty string is returned
@@ -11131,7 +11131,7 @@ M.funcs = {
 
       When {how} is given and it is 'l' then the current collation
       locale is used for ordering.  Implementation details:
-      strcoll() is used to compare strings.  See |:language| check
+      strcoll() is used to compare strings.  See |:language| to check
       or set the collation locale.  |v:collate| can also be used to
       check the current locale.  Sorting using the locale typically
       ignores case.  Example: >vim
@@ -11373,7 +11373,7 @@ M.funcs = {
       <
       These characters indicate the state, generally indicating that
       something is busy:
-          m	halfway a mapping, :normal command, feedkeys() or
+          m	halfway a mapping, :normal command, |feedkeys()| or
       	stuffed command
           o	operator pending, e.g. after |d|
           a	Insert mode autocomplete active
@@ -11706,7 +11706,7 @@ M.funcs = {
         echo stridx("An Example", "Example")     " 3
         echo stridx("Starting point", "Start")   " 0
         echo stridx("Starting point", "start")   " -1
-      <				*strstr()* *strchr()*
+      <					*strstr()* *strchr()*
       stridx() works similar to the C function strstr().  When used
       with a single character it works similar to strchr().
 
@@ -11946,7 +11946,7 @@ M.funcs = {
     tags = { 'E935' },
     desc = [=[
       Only for an expression in a |:substitute| command or
-      substitute() function.
+      |substitute()| function.
       Returns the {nr}th submatch of the matched text.  When {nr}
       is 0 the whole matched text is returned.
       Note that a NL in the string can stand for a line break of a
@@ -11961,7 +11961,7 @@ M.funcs = {
       |substitute()| this list will always contain one or zero
       items, since there are no real line breaks.
 
-      When substitute() is used recursively only the submatches in
+      When |substitute()| is used recursively only the submatches in
       the current (deepest) call can be obtained.
 
       Returns an empty string or list on error.
@@ -12146,7 +12146,7 @@ M.funcs = {
       for that mode.  When {mode} is omitted, or an invalid value is
       used, the attributes for the currently active highlighting are
       used (GUI or cterm).
-      Use synIDtrans() to follow linked highlight groups.
+      Use |synIDtrans()| to follow linked highlight groups.
       {what}		result
       "name"		the name of the syntax item
       "fg"		foreground color (GUI: color name used to set
@@ -12656,7 +12656,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       Stop a timer.  The timer callback will no longer be invoked.
-      {timer} is an ID returned by timer_start(), thus it must be a
+      {timer} is an ID returned by |timer_start()|, thus it must be a
       Number.  If {timer} does not exist there is no error.
 
     ]=],
@@ -12938,7 +12938,7 @@ M.funcs = {
 
       Returns -1 if the arguments are invalid or if there are less
       than {idx} bytes in {string}.  If there are exactly {idx}
-      bytes the length of the string in UTF-16 code units is
+      bytes, the length of the string in UTF-16 code units is
       returned.
 
       See |byteidx()| and |byteidxcomp()| for getting the byte index
