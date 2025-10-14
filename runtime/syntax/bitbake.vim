@@ -4,6 +4,8 @@
 "               Ricardo Salveti <rsalveti@rsalveti.net>
 " Copyright:    Copyright (C) 2004  Chris Larson <kergoth@handhelds.org>
 "               Copyright (C) 2008  Ricardo Salveti <rsalveti@rsalveti.net>
+" Last Change:  2022 Jul 25
+" 2025 Oct 13 by Vim project: update multiline function syntax #18565
 "
 " This file is licensed under the MIT license, see COPYING.MIT in
 " this source distribution for the terms.
@@ -95,7 +97,7 @@ syn region bbPyFuncRegion       matchgroup=bbDelimiter start="{\s*$" end="^}\s*$
 
 " BitBake 'def'd python functions
 syn keyword bbPyDef             def contained
-syn region bbPyDefRegion        start='^\(def\s\+\)\([0-9A-Za-z_-]\+\)\(\s*(.*)\s*\):\s*$' end='^\(\s\|$\)\@!' contains=@python
+syn region bbPyDefRegion        start='^\(def\s\+\)\([0-9A-Za-z_-]\+\)\(\s*(\_.*)\s*\):\s*$' end='^\(\s\|$\)\@!' contains=@python
 
 " Highlighting Definitions
 hi def link bbUnmatched         Error
