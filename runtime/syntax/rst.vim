@@ -78,7 +78,7 @@ execute 'syn region rstCitation contained matchgroup=rstDirective' .
 execute 'syn region rstFootnote contained matchgroup=rstDirective' .
       \ ' start=+\[\%(\d\+\|#\%(' . s:ReferenceName . '\)\=\|\*\)\]\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft,@NoSpell'
+      \ ' end=+^\s\@!+ contains=@Spell,@rstCruft'
 
 syn region rstHyperlinkTarget contained matchgroup=rstDirective
       \ start='_\%(_\|[^:\\]*\%(\\.[^:\\]*\)*\):\_s' skip=+^$+ end=+^\s\@!+
@@ -92,7 +92,7 @@ syn region rstHyperlinkTarget matchgroup=rstDirective
 execute 'syn region rstExDirective contained matchgroup=rstDirective' .
       \ ' start=+' . s:ReferenceName . '::\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft,rstLiteralBlock,rstExplicitMarkup'
+      \ ' end=+^\s\@!+ contains=@Spell,@rstCruft,rstLiteralBlock,rstExplicitMarkup'
 
 execute 'syn match rstSubstitutionDefinition contained' .
       \ ' /|.*|\_s\+/ nextgroup=@rstDirectives'
@@ -106,10 +106,10 @@ function! s:DefineOneInlineMarkup(name, start, middle, end, char_left, char_righ
   endif
 
   if a:start != '``'
-    let rst_contains=' contains=rstEscape' . a:name
+    let rst_contains=' contains=@Spell,rstEscape' . a:name
     execute 'syn match rstEscape'.a:name.' +\\\\\|\\'.first.'+'.' contained'
   else
-    let rst_contains=''
+    let rst_contains=' contains=@Spell'
   endif
 
   execute 'syn region rst' . a:name .
