@@ -1625,7 +1625,7 @@ There are three different types of searching:
       - It matches up to 30 directories deep by default, so you can use it to
 	search an entire directory tree
       - The maximum number of levels matched can be given by appending a
-        number to "**".
+	number to "**".
 	Thus '/usr/**2' can match: >
 		/usr
 		/usr/include

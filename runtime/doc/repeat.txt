@@ -182,7 +182,7 @@ Q			Repeat the last recorded register [count] times.
 :[addr]@:		Repeat last command-line.  First set cursor at line
 			[addr] (default is current line).
 
-:[addr]@							*:@@*
+:[addr]@						*:@@*
 :[addr]@@		Repeat the previous :@{register}.  First set cursor at
 			line [addr] (default is current line).
 
