@@ -28,8 +28,11 @@ syn region  rstQuotedLiteralBlock   matchgroup=rstDelimiter
       \ start="::\_s*\n\ze\z([!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]\)"
       \ end='^\z1\@!' contains=@NoSpell
 
-syn region  rstDoctestBlock         oneline display matchgroup=rstDelimiter
+syn region  rstDoctestBlock         matchgroup=rstDoctestBlockPrompt
       \ start='^>>>\s' end='^$'
+      \ contains=rstDoctestBlockPrompt
+
+syn match   rstDoctestBlockPrompt   contained '^>>>\s'
 
 syn region  rstTable                transparent start='^\n\s*+[-=+]\+' end='^$'
       \ contains=rstTableLines,@rstCruft
@@ -256,6 +259,7 @@ hi def link rstTransition                   rstSections
 hi def link rstLiteralBlock                 String
 hi def link rstQuotedLiteralBlock           String
 hi def link rstDoctestBlock                 PreProc
+hi def link rstDoctestBlockPrompt           rstDelimiter
 hi def link rstTableLines                   rstDelimiter
 hi def link rstSimpleTableLines             rstTableLines
 hi def link rstExplicitMarkup               rstDirective
