@@ -146,6 +146,7 @@ bool get_clipboard(int name, yankreg_T **target, bool quiet)
 
   reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(String));
   reg->y_size = (size_t)tv_list_len(lines);
+  reg->y_width = 0;  // Will be updated by update_yankreg_width() below.
   reg->additional_data = NULL;
   reg->timestamp = 0;
   // Timestamp is not saved for clipboard registers because clipboard registers
