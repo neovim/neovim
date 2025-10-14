@@ -728,6 +728,8 @@ end
 
 --- LSP Notification (direction: clientToServer)
 --- @alias vim.lsp.protocol.Method.ClientToServer.Notification
+--- | '$/cancelRequest',
+--- | '$/progress',
 --- | '$/setTrace',
 --- | 'exit',
 --- | 'initialized',
@@ -773,7 +775,9 @@ end
 
 --- LSP Notification (direction: serverToClient)
 --- @alias vim.lsp.protocol.Method.ServerToClient.Notification
+--- | '$/cancelRequest',
 --- | '$/logTrace',
+--- | '$/progress',
 --- | 'telemetry/event',
 --- | 'textDocument/publishDiagnostics',
 --- | 'window/logMessage',

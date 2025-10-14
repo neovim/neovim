@@ -157,7 +157,7 @@ local function write_to_vim_protocol(protocol)
         output[#output + 1] = ('--- LSP %s (direction: %s)'):format(b.title, dir)
         output[#output + 1] = ('--- @alias %s.%s'):format(alias, b.title)
         for _, item in ipairs(b.methods) do
-          if item.messageDirection == dir then
+          if item.messageDirection == dir or item.messageDirection == 'both' then
             output[#output + 1] = ("--- | '%s',"):format(item.method)
           end
         end
@@ -287,6 +287,9 @@ local anonym_classes = {}
 --- @return string
 local function parse_type(type, prefix)
   if type.kind == 'reference' or type.kind == 'base' then
+    if type.kind == 'base' and type.name == 'string' and prefix == 'method' then
+      return 'vim.lsp.protocol.Method'
+    end
     if simple_types[type.name] then
       return type.name
     end
