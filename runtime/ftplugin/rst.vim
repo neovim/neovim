@@ -4,6 +4,7 @@
 " Original Maintainer: Nikolai Weibull <now@bitwi.se>
 " Website: https://github.com/marshallward/vim-restructuredtext
 " Latest Revision: 2020-03-31
+" 2025 Oct 13 by Vim project: update b:undo_ftplugin #18566
 
 if exists("b:did_ftplugin")
     finish
@@ -18,7 +19,7 @@ if !exists('g:rst_fold_enabled')
   let g:rst_fold_enabled = 0
 endif
 
-let b:undo_ftplugin = "setl com< cms< et< fo<"
+let b:undo_ftplugin = "setlocal comments< commentstring< expandtab< formatoptions<"
 
 setlocal comments=fb:.. commentstring=..\ %s expandtab
 setlocal formatoptions+=tcroql
@@ -32,15 +33,17 @@ setlocal formatoptions+=tcroql
 
 if exists("g:rst_style") && g:rst_style != 0
     setlocal expandtab shiftwidth=3 softtabstop=3 tabstop=8
+    let b:undo_ftplugin .= " | setlocal softtabstop< shiftwidth< tabstop<"
 endif
 
-if g:rst_fold_enabled != 0 && has('patch-7.3.867')  " Introduced the TextChanged event.
+if g:rst_fold_enabled != 0
   setlocal foldmethod=expr
   setlocal foldexpr=RstFold#GetRstFold()
   setlocal foldtext=RstFold#GetRstFoldText()
   augroup RstFold
     autocmd TextChanged,InsertLeave <buffer> unlet! b:RstFoldCache
   augroup END
+  let b:undo_ftplugin .= " | setlocal foldexpr< foldmethod< foldtext<"
 endif
 
 let &cpo = s:cpo_save
