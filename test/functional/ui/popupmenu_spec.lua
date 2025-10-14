@@ -839,6 +839,7 @@ describe("builtin popupmenu 'pumblend'", function()
       [142] = { background = 225, foreground = 209 },
       [143] = { foreground = 12 },
       [144] = { foreground = 2 },
+      [145] = { foreground = tonumber('0x290a0a'), background = tonumber('0xffddff') },
     })
   end)
 
@@ -924,9 +925,9 @@ describe("builtin popupmenu 'pumblend'", function()
       incidid{116:u}{117:incididunt}{116:re et}{118: }d{10:ol}ore magna aliqua.                |
       Ut enim{119: }{120:ut}{119: minim veniam}{116:,} quis nostrud                       |
       exercit{119:a}{120:labore}{119:llamco la}{116:b}oris nisi ut aliquip ex             |
-      {3:[No Nam}{121:e}{136:et}{121:[+]          }{124: }{3:                                    }|
+      {3:[No Nam}{121:e}{137:et}{121:[+]          }{124: }{3:                                    }|
       Lorem i{119:p}{120:dolor}{125:e}{126:l}{119:or sit a}{116:m}et, consectetur                     |
-      adipisi{119:c}{120:magn}{127:a}{128:l}{119:it, sed d}{116:o} eiusmod tempor                     |
+      adipisi{119:c}{120:magn}{145:a}{128:l}{119:it, sed d}{116:o} eiusmod tempor                     |
       bla bla{119: }{120:aliqua}{119:dunt     }{116: }                                    |
       incidid{119:u}{120:Ut}{119: }{129:ut}{119: labore et}{116: }d{10:ol}ore magna aliqua.                |
       Ut enim{119: }{120:enim}{119:inim veniam}{116:,} quis nostrud                       |
@@ -942,7 +943,7 @@ describe("builtin popupmenu 'pumblend'", function()
       incidid{116:u}{117:incididunt}{116:re et}{118: }d{10:ol}ore magna aliqua.                |
       Ut enim{119: }{120:ut}{119: minim veniam}{116:,} quis nostrud                       |
       exercit{119:a}{120:labore}{119:llamco la}{116:b}oris nisi ut aliquip ex             |
-      {3:[No Nam}{121:e}{136:et}{121:[+]          }{124: }{3:                                    }|
+      {3:[No Nam}{121:e}{137:et}{121:[+]          }{124: }{3:                                    }|
       incidid{119:u}{120:dol}{134:or}{120:e}{119:labore et}{116: }d{10:ol}ore magna aliqua.                |
       Ut enim{119: }{120:magna}{119:nim veniam}{116:,} quis nostrud                       |
       exercit{119:a}{120:aliqua}{119:llamco la}{116:b}oris nisi {18:ut} aliquip ex             |
@@ -962,7 +963,7 @@ describe("builtin popupmenu 'pumblend'", function()
       incidid{138: incididunt     }{118: }d{10:ol}ore magna aliqua.                |
       Ut enim{119: }{120:ut}{119: minim veniam}{116:,} quis nostrud                       |
       exercit{119:a}{120:labore}{119:llamco la}{116:b}oris nisi ut aliquip ex             |
-      {3:[No Nam}{121:e}{136:et}{121:[+]          }{124: }{3:                                    }|
+      {3:[No Nam}{121:e}{137:et}{121:[+]          }{124: }{3:                                    }|
       incidid{119:u}{120:dol}{134:or}{120:e}{119:labore et}{116: }d{10:ol}ore magna aliqua.                |
       Ut enim{119: }{120:magna}{119:nim veniam}{116:,} quis nostrud                       |
       exercit{119:a}{120:aliqua}{119:llamco la}{116:b}oris nisi {18:ut} aliquip ex             |
