@@ -321,6 +321,26 @@ describe('messages', function()
         {6:-- More --}^                                                                 |
       ]])
 
+      -- Test <C-F> and <C-B> as keycodes instead of raw control chars.
+      feed('<C-F>')
+      screen:expect([[
+        {8: 80 }80                                                                     |
+        {8: 81 }81                                                                     |
+        {8: 82 }82                                                                     |
+        {8: 83 }83                                                                     |
+        {8: 84 }84                                                                     |
+        {6:-- More --}^                                                                 |
+      ]])
+      feed('<C-B>')
+      screen:expect([[
+        {8: 75 }75                                                                     |
+        {8: 76 }76                                                                     |
+        {8: 77 }77                                                                     |
+        {8: 78 }78                                                                     |
+        {8: 79 }79                                                                     |
+        {6:-- More --}^                                                                 |
+      ]])
+
       -- Up all the way with 'g'.
       feed('g')
       screen:expect([[

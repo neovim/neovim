@@ -218,6 +218,7 @@ func Test_message_more()
   CheckRunVimInTerminal
 
   let buf = RunVimInTerminal('', {'rows': 6})
+  let chan = buf->term_getjob()->job_getchannel()
   call term_sendkeys(buf, ":call setline(1, range(1, 100))\n")
 
   call term_sendkeys(buf, ":%pfoo\<C-H>\<C-H>\<C-H>#")
@@ -281,6 +282,19 @@ func Test_message_more()
   call term_sendkeys(buf, 'u')
   call WaitForAssert({-> assert_equal(' 79 79', term_getline(buf, 5))})
 
+  " Test <C-F> and <C-B> with different keyboard protocols.
+  for [ctrl_f, ctrl_b] in [
+        \ [GetEscCodeCSI27('f', 5), GetEscCodeCSI27('b', 5)],
+        \ [GetEscCodeCSI27('F', 5), GetEscCodeCSI27('B', 5)],
+        \ [GetEscCodeCSIu('f', 5), GetEscCodeCSIu('b', 5)],
+        \ [GetEscCodeCSIu('F', 5), GetEscCodeCSIu('B', 5)],
+        \ ]
+    call ch_sendraw(chan, ctrl_f)
+    call WaitForAssert({-> assert_equal(' 84 84', term_getline(buf, 5))})
+    call ch_sendraw(chan, ctrl_b)
+    call WaitForAssert({-> assert_equal(' 79 79', term_getline(buf, 5))})
+  endfor
+
   " Up all the way with 'g'.
   call term_sendkeys(buf, 'g')
   call WaitForAssert({-> assert_equal('  4 4', term_getline(buf, 5))})
@@ -294,6 +308,7 @@ func Test_message_more()
   call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
   call term_sendkeys(buf, 'f')
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
   call term_sendkeys(buf, "\<C-F>")
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
