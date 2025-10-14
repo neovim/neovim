@@ -810,7 +810,7 @@ end)
 
 --- @param name string
 --- @param completion_result lsp.CompletionList
---- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem}
+--- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer}
 --- @return integer
 local function create_server(name, completion_result, opts)
   opts = opts or {}
@@ -824,10 +824,14 @@ local function create_server(name, completion_result, opts)
       },
       handlers = {
         ['textDocument/completion'] = function(_, _, callback)
-          -- simulate delay in completion request, needed for some of these tests
-          vim.defer_fn(function()
+          if opts.delay then
+            -- simulate delay in completion request, needed for some of these tests
+            vim.defer_fn(function()
+              callback(nil, completion_result)
+            end, opts.delay)
+          else
             callback(nil, completion_result)
-          end, 200)
+          end
         end,
         ['completionItem/resolve'] = function(_, _, callback)
           callback(nil, opts.resolve_result)
@@ -1347,7 +1351,7 @@ describe('vim.lsp.completion: integration', function()
   end)
 end)
 
-describe('vim.lsp.completion: omnifunc', function()
+describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
   before_each(function()
     clear()
     exec_lua(create_server_definition)
@@ -1357,73 +1361,38 @@ describe('vim.lsp.completion: omnifunc', function()
       vim.o.complete = '.,o'
       vim.o.autocomplete = true
     end)
+
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+        { label = 'hallo' },
+      },
+    }
+    create_server('dummy', completion_list, { delay = 10 })
   end)
+
+  local function assert_matches(expected)
+    retry(nil, nil, function()
+      local matches = vim.tbl_map(function(m)
+        return m.word
+      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
+      eq(expected, matches)
+    end)
+  end
 
   it('merges with other completions', function()
-    local completion_list = {
-      isIncomplete = false,
-      items = {
-        { label = 'hallo' },
-      },
-    }
-    create_server('dummy', completion_list)
-
-    feed('ihello<cr><esc>ih')
-
-    retry(nil, nil, function()
-      local matches = vim.tbl_map(function(m)
-        return m.word
-      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
-      eq({ 'hello', 'hallo' }, matches)
-    end)
+    feed('ihillo<cr><esc>ih')
+    assert_matches({ 'hillo', 'hallo', 'hello' })
   end)
 
-  it('does not duplicate completions', function()
-    local completion_list = {
-      isIncomplete = false,
-      items = {
-        { label = 'hello' },
-      },
-    }
-    create_server('dummy', completion_list)
-
+  it('fuzzy matches without duplication', function()
     -- wait for one completion request to start and then request another before
     -- the first one finishes, then wait for both to finish
     feed('ih')
-    vim.uv.sleep(10)
+    vim.uv.sleep(1)
     feed('e')
-    vim.uv.sleep(500)
 
-    retry(nil, nil, function()
-      local matches = vim.tbl_map(function(m)
-        return m.word
-      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
-      eq({ 'hello' }, matches)
-    end)
-  end)
-
-  it('fuzzy matches', function()
-    local completion_list = {
-      isIncomplete = false,
-      items = {
-        { label = 'hello' },
-        { label = 'hallo' },
-      },
-    }
-    create_server('dummy', completion_list)
-
-    -- wait for one completion request to start and then request another before
-    -- the first one finishes, then wait for both to finish
-    feed('ih')
-    vim.uv.sleep(10)
-    feed('e')
-    vim.uv.sleep(500)
-
-    retry(nil, nil, function()
-      local matches = vim.tbl_map(function(m)
-        return m.word
-      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
-      eq({ 'hello' }, matches)
-    end)
+    assert_matches({ 'hello' })
   end)
 end)
