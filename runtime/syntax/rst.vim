@@ -17,8 +17,9 @@ syn case ignore
 syn match   rstTransition  /^[=`:.'"~^_*+#-]\{4,}\s*$/
 
 syn cluster rstCruft                contains=rstEmphasis,rstStrongEmphasis,
-      \ rstInterpretedText,rstInlineLiteral,rstSubstitutionReference,
-      \ rstInlineInternalTargets,rstFootnoteReference,rstHyperlinkReference
+      \ rstInterpretedTextOrHyperlinkReference,rstInlineLiteral,
+      \ rstSubstitutionReference,rstInlineInternalTargets,rstFootnoteReference,
+      \ rstHyperlinkReference
 
 syn region  rstLiteralBlock         matchgroup=rstDelimiter
       \ start='\(^\z(\s*\).*\)\@<=::\n\s*\n' skip='^\s*$' end='^\(\z1\s\+\)\@!'
@@ -87,7 +88,7 @@ syn region rstHyperlinkTarget matchgroup=rstDirective
 execute 'syn region rstExDirective contained matchgroup=rstDirective' .
       \ ' start=+' . s:ReferenceName . '::\_s+' .
       \ ' skip=+^$+' .
-      \ ' end=+^\s\@!+ contains=@rstCruft,rstLiteralBlock'
+      \ ' end=+^\s\@!+ contains=@rstCruft,rstLiteralBlock,rstExplicitMarkup'
 
 execute 'syn match rstSubstitutionDefinition contained' .
       \ ' /|.*|\_s\+/ nextgroup=@rstDirectives'
