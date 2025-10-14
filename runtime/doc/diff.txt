@@ -126,7 +126,7 @@ file for a moment and come back to the same file and be in diff mode again.
 		buffers.
 
 The `:diffoff` command resets the relevant options to the values they had when
-using `:diffsplit`, `:diffpatch`, `:diffthis`. or starting Vim in diff mode.
+using `:diffsplit`, `:diffpatch`, `:diffthis`, or starting Vim in diff mode.
 When using `:diffoff` twice the last saved values are restored.
 Otherwise they are set to their default value:
 

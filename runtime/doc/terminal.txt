@@ -659,9 +659,9 @@ Change default signs ~
 							*termdebug_signs*
 Termdebug uses the hex number of the breakpoint ID in the signcolumn to
 represent breakpoints.  If it is greater than "0xFF", then it will be
-displayed as "F+", due to we really only have two screen cells for the sign.
-You may also use decimal breakpoint signs instead, in which case IDs greater
-than 99 will be displayed as "9+".
+displayed as "F+", because there are only two screen cells available for the
+sign.  You may also use decimal breakpoint signs instead, in which case IDs
+greater than 99 will be displayed as "9+".
 
 If you want to customize the breakpoint signs to show `>>` in the signcolumn: >vim
 	let g:termdebug_config['sign'] = '>>'
