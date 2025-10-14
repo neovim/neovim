@@ -30,7 +30,7 @@ Follow these steps to get LSP features:
 
 2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
-     vim.lsp.config['luals'] = {
+     vim.lsp.config['lua_ls'] = {
        -- Command and arguments to start the server.
        cmd = { 'lua-language-server' },
        -- Filetypes to automatically attach to.
@@ -52,7 +52,7 @@ Follow these steps to get LSP features:
 
 3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
-     vim.lsp.enable('luals')
+     vim.lsp.enable('lua_ls')
 <
 4. Open a code file matching one of the `filetypes` specified in the config.
    Note: Depending on the LSP server, you may need to ensure your project has
@@ -997,8 +997,8 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       filetypes = { 'c', 'cpp' },
     }
 <
-    • Get the resolved configuration for "luals": >lua
-      local cfg = vim.lsp.config.luals
+    • Get the resolved configuration for "lua_ls": >lua
+      local cfg = vim.lsp.config.lua_ls
 <
 
     Attributes: ~
@@ -1014,7 +1014,7 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
     Examples: >lua
         vim.lsp.enable('clangd')
-        vim.lsp.enable({'luals', 'pyright'})
+        vim.lsp.enable({'lua_ls', 'pyright'})
 <
 
     Example: *lsp-restart* Passing `false` stops and detaches the client(s).
@@ -1689,12 +1689,12 @@ Lua module: vim.lsp.client                                        *lsp-client*
 
     Fields: ~
       • {before_init}?         (`fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)`)
-                               Callback invoked before the LSP "initialize"
-                               phase, where `params` contains the parameters
-                               being sent to the server and `config` is the
-                               config that was passed to |vim.lsp.start()|.
-                               You can use this to modify parameters before
-                               they are sent.
+                               Callback which can modify parameters before
+                               they are sent to the server. Invoked before LSP
+                               "initialize" phase (after `cmd` is invoked),
+                               where `params` is the parameters being sent to
+                               the server and `config` is the config passed to
+                               |vim.lsp.start()|.
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
                                |vim.lsp.protocol.make_client_capabilities()|,

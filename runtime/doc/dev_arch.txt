@@ -25,7 +25,27 @@ Use `kvec.h` for most lists. When you absolutely need a linked list, use
 `lib/queue_defs.h` which defines an "intrusive" linked list.
 
 ==============================================================================
+Events
+
+All new events must be implemented using `aucmd_defer()` (and where possible,
+old events should be migrated to this), so that they are processed in
+a predictable manner, which avoids crashes and race conditions. See
+`do_markset_autocmd` for an example.
+
+==============================================================================
 UI events
+
+The long-term vision is that UI events are just another type of "editor event"
+(formerly known as "autocmds"). There is no real reason that we have separate
+types of user-facing or plugin-facing events. Events are events. Their
+"transport" is irrelevant and any event should be possible to emit over any
+transport (editor or RPC).
+
+Meanwhile the current situation is that UI events are a particular RPC event
+packaged in a generic `redraw` notification. They also can be listened to
+in-process via |vim.ui_attach()|.
+
+UI events are deferred to UIs, which implies a deepcopy of the UI event data.
 
 The source files most directly involved with UI events are:
 1. `src/nvim/ui.*`: calls handler functions of registered UI structs (independent from msgpack-rpc)
@@ -38,12 +58,8 @@ functions used by the source files above. It also generates metadata
 accessible as `api_info().ui_events`.
 
 See commit d3a8e9217f39c59dd7762bd22a76b8bd03ca85ff for an example of adding
-a new UI event.
-
-UI events are deferred to UIs, which implies a deepcopy of the UI event data.
-
-Remember to bump NVIM_API_LEVEL if it wasn't already during this development
-cycle.
+a new UI event. Remember to bump NVIM_API_LEVEL if it wasn't already during
+this development cycle.
 
 Other references:
 - |msgpack-rpc|
