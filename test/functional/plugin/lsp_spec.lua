@@ -6649,6 +6649,35 @@ describe('LSP', function()
       )
     end)
 
+    it('handle nil config (some clients may not have a config!)', function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        local server = _G._create_server()
+        vim.bo.filetype = 'lua'
+        -- Attach a client without defining a config.
+        local client_id = vim.lsp.start({
+          name = 'test_ls',
+          cmd = function(dispatchers, config)
+            _G.test_resolved_root = config.root_dir --[[@type string]]
+            return server.cmd(dispatchers, config)
+          end,
+        }, { bufnr = 0 })
+
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client = vim.lsp.get_client_by_id(client_id)
+        assert(client.attached_buffers[bufnr])
+
+        -- Exercise the codepath which had a regression:
+        vim.lsp.enable('test_ls')
+        vim.api.nvim_exec_autocmds('FileType', { buffer = bufnr })
+
+        -- enable() does _not_ detach the client since it doesn't actually have a config.
+        -- XXX: otoh, is it confusing to allow `enable("foo")` if there a "foo" _client_ without a "foo" _config_?
+        assert(client.attached_buffers[bufnr])
+        assert(client_id == vim.lsp.get_client_by_id(bufnr).id)
+      end)
+    end)
+
     it('attaches to buffers when they are opened', function()
       exec_lua(create_server_definition)
 
