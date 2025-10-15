@@ -171,7 +171,6 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   kv_push(tui->attrs, HLATTRS_INIT);
 
   tui->input.tk_ti_hook_fn = tui_tk_ti_getstr;
-  tinput_init(&tui->input, &main_loop);
   ugrid_init(&tui->grid);
   tui_terminal_start(tui);
 
@@ -597,6 +596,7 @@ static void tui_terminal_start(TUIData *tui)
 {
   tui->print_attr_id = -1;
   terminfo_start(tui);
+  tinput_init(&tui->input, &main_loop, &tui->ti);
   tui_guess_size(tui);
   tinput_start(&tui->input);
 }

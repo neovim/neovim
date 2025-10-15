@@ -52,3 +52,27 @@ typedef enum {
   kTerm_set_underline_style,
   kTermCount,  // sentinel
 } TerminfoDef;
+
+// TODO(bfredl): physical F-keys beyond F12 are uncommon. But terminfo
+// likes to represent chords with shift and/or ctrl and F keys as high
+// F-key numbers. The same chords can also be recognized by driver-csi.c
+// but will then be encoded as chords. We might actually prefer that but it is
+// potentially breaking change.
+#define kTerminfoFuncKeyMax 63
+typedef enum {
+  kTermKey_backspace,
+  kTermKey_beg,
+  kTermKey_btab,
+  kTermKey_clear,
+  kTermKey_dc,
+  kTermKey_end,
+  kTermKey_find,
+  kTermKey_home,
+  kTermKey_ic,
+  kTermKey_npage,
+  kTermKey_ppage,
+  kTermKey_select,
+  kTermKey_suspend,
+  kTermKey_undo,
+  kTermKeyCount,
+} TerminfoKey;
