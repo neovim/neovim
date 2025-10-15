@@ -302,8 +302,8 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
 
-    -- ensure cursor gets adjusted to end of user-text to prompt when insert mode
-    -- is entered from readonly region of prompt buffer
+    -- ensure cursor gets placed on first line of user input.
+    -- when insert mode is entered from read-only region of prompt buffer.
     local prompt_pos = api.nvim_buf_get_mark(0, ':')
     feed('<esc>')
     -- works before prompt
@@ -319,8 +319,8 @@ describe('prompt buffer', function()
     feed('<esc>')
     screen:expect([[
       other buffer             |
-      % line1                  |
-      line^2                    |
+      %^ line1                  |
+      line2                    |
       {1:~                        }|*6
                                |
     ]])
@@ -337,10 +337,39 @@ describe('prompt buffer', function()
     feed('<esc>')
     screen:expect([[
       other buffer             |
-      % line1                  |
-      line^2                    |
+      %^ line1                  |
+      line2                    |
       {1:~                        }|*6
                                |
+    ]])
+
+    -- i_<Left> i_<C-Left> i_<Home> i_<End> keys on prompt-line doesn't put cursor
+    -- at end of text
+    feed('a<Left><C-Left>')
+    screen:expect([[
+      other buffer             |
+      % ^line1                  |
+      line2                    |
+      {1:~                        }|*6
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<End>')
+    screen:expect([[
+      other buffer             |
+      % line1^                  |
+      line2                    |
+      {1:~                        }|*6
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<Home>')
+    screen:expect([[
+      other buffer             |
+      % ^line1                  |
+      line2                    |
+      {1:~                        }|*6
+      {5:-- INSERT --}             |
     ]])
   end)
 
