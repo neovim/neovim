@@ -236,7 +236,10 @@ local function buf_apply_graph_lines(tree, graph_lines, buf, meta, find_seq)
         local end_ = vim.api.nvim_buf_line_count(buf) - 1
         local start = end_ - #line_buffer + 3
         vim.api.nvim_buf_call(buf, function()
-          vim.cmd.fold { range = { start, end_ } }
+          local w = vim.b[buf].nvim_is_undotree
+          if vim.api.nvim_win_is_valid(w) and vim.wo[w].foldmethod == 'manual' then
+            vim.cmd.fold { range = { start, end_ } }
+          end
         end)
       end
 
