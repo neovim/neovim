@@ -371,6 +371,8 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• 'pumblend' does not apply special attributes (bold, underline) from the
+  background layer to the foreground layer.
 • |gv| works in operator pending mode and does not abort.
 • 'smartcase' applies to completion filtering.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
