@@ -492,7 +492,7 @@ static const int included_patches[] = {
   1992,
   1991,
   1990,
-  // 1989,
+  1989,
   1988,
   1987,
   1986,
