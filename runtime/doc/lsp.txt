@@ -1646,8 +1646,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 ephemerally while executing |LspRequest|
                                 autocmds when replies are received from the
                                 server.
-      • {root_dir}?             (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
-                                See |vim.lsp.ClientConfig|.
+      • {root_dir}              (`string?`) See |vim.lsp.ClientConfig|.
       • {rpc}                   (`vim.lsp.rpc.PublicClient`) RPC client
                                 object, for low level interaction with the
                                 client. See |vim.lsp.rpc.start()|.
@@ -1792,10 +1791,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                You can only modify the
                                `client.offset_encoding` here before any
                                notifications are sent.
-      • {root_dir}?            (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
-                               Directory where the LSP server will base its
-                               workspaceFolders, rootUri, and rootPath on
-                               initialization.
+      • {root_dir}?            (`string`) Directory where the LSP server will
+                               base its workspaceFolders, rootUri, and
+                               rootPath on initialization.
       • {settings}?            (`lsp.LSPObject`) Map of language
                                server-specific settings, decided by the
                                client. Sent to the LS if requested via

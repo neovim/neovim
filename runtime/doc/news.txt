@@ -30,10 +30,6 @@ LSP
 
 • |vim.lsp.buf.selection_range()| now accepts an integer which specifies its
   direction, rather than a string `'outer'` or `'inner'`.
-• LSP client can now get workspace folders considering the case
-  where `vim.lsp.Config.root_dir` is function.
-• `checkhealth vim.lsp` is now aware that `vim.lsp.Config.root_dir` can be
-  function.
 
 OPTIONS
 

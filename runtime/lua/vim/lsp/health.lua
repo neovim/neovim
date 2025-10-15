@@ -89,23 +89,10 @@ local function check_active_clients()
         end
         dirs_info = ('- Workspace folders:\n    %s'):format(table.concat(wfolders, '\n    '))
       else
-        local root_dirs = {} ---@type table<string, boolean>
-        local timeout = 1
-        local timeoutmsg = ('root_dir() took > %ds'):format(timeout)
-        for buf, _ in pairs(client.attached_buffers) do
-          local dir = client._resolve_root_dir(1000, buf, client.root_dir)
-          root_dirs[dir or timeoutmsg] = true
-        end
         dirs_info = string.format(
-          '- Root %s:\n    %s',
-          vim.tbl_count(root_dirs) > 1 and 'directories' or 'directory',
-          vim
-            .iter(root_dirs)
-            :map(function(k, _)
-              return k == timeoutmsg and timeoutmsg or vim.fn.fnamemodify(k, ':~')
-            end)
-            :join('\n    ')
-        )
+          '- Root directory: %s',
+          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
+        ) or nil
       end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
