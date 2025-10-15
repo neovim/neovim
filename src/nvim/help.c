@@ -32,6 +32,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -51,7 +52,107 @@
 
 #include "help.c.generated.h"
 
+/// Check if a character is punctuation that should be trimmed from help tags.
+/// Dots (.) are NOT included here - they're trimmed separately as a last resort.
+static bool is_trimmable_punct(char c)
+{
+  return c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == '`'
+         || c == '|' || c == '"' || c == ',' || c == '\'' || c == ' ' || c == '\t';
+}
+
+/// Trim one layer of punctuation from a help tag string.
+/// Uses cursor offset to intelligently trim: if cursor is on trimmable punctuation,
+/// removes everything before cursor and skips past punctuation after cursor.
+///
+/// @param tag     The tag to trim
+/// @param offset  Cursor position within the tag (-1 if not applicable)
+/// @return  Newly allocated trimmed string, or NULL if unchanged
+static char *trim_help_tag(const char *tag, int offset)
+{
+  if (tag == NULL || *tag == '\0') {
+    return NULL;
+  }
+
+  // Special cases: single character tags
+  if (strequal(tag, "|")) {
+    return xstrdup("bar");
+  }
+  if (strequal(tag, "\"")) {
+    return xstrdup("quote");
+  }
+
+  size_t len = strlen(tag);
+  const char *start = tag;
+  const char *end = tag + len;
+
+  // Heuristic: if cursor is on trimmable punctuation, remove everything left and skip past it
+  if (offset >= 0 && offset < (int)len && is_trimmable_punct(tag[offset])) {
+    start = tag + offset;
+    while (start < end && is_trimmable_punct(*start)) {
+      start++;
+    }
+  } else if (offset >= 0 && offset < (int)len) {
+    // Cursor is on non-trimmable char: find start of identifier at cursor
+    const char *cursor_pos = tag + offset;
+    while (cursor_pos > start && !is_trimmable_punct(*(cursor_pos - 1))) {
+      cursor_pos--;
+    }
+    start = cursor_pos;
+  } else {
+    // No cursor info: trim leading punctuation
+    while (start < end && is_trimmable_punct(*start)) {
+      start++;
+    }
+  }
+
+  // Trim trailing punctuation
+  while (end > start && is_trimmable_punct(*(end - 1))) {
+    end--;
+  }
+
+  // Trim argument lists: "[{buf}]", "({opts})", "('arg')" 
+  for (const char *p = start; p < end; p++) {
+    if (*p == '[' || *p == '{' || (*p == '(' && p + 1 < end && *(p + 1) != ')')) {
+      end = p;
+      break;
+    }
+  }
+
+  // If nothing changed, return NULL
+  if (start == tag && end == tag + len) {
+    return NULL;
+  }
+
+  // If everything was trimmed, return NULL
+  if (start >= end) {
+    return NULL;
+  }
+
+  return xstrndup(start, (size_t)(end - start));
+}
+
+/// Trim namespace prefix (dots) from a help tag.
+/// Only call this if regular trimming didn't find a match.
+/// Returns a newly allocated string with the leftmost dot-separated segment removed.
+///
+/// @param tag  The tag to trim
+/// @return  Newly allocated trimmed string, or NULL if no dots found
+static char *trim_help_tag_dots(const char *tag)
+{
+  if (tag == NULL || *tag == '\0') {
+    return NULL;
+  }
+
+  const char *first_dot = strchr(tag, '.');
+  if (first_dot && *(first_dot + 1) != '\0') {
+    return xstrdup(first_dot + 1);
+  }
+
+  return NULL;
+}
+
 /// ":help": open a read-only window on a help file
+/// ":help!": DWIM parse the best match at cursor
 void ex_help(exarg_T *eap)
 {
   char *arg;
@@ -76,10 +177,11 @@ void ex_help(exarg_T *eap)
     }
     arg = eap->arg;
 
-    if (eap->forceit && *arg == NUL && !curbuf->b_help) {
-      emsg(_("E478: Don't panic!"));
-      return;
-    }
+    // if (eap->forceit && *arg == NUL && !curbuf->b_help) {
+    //   // TODO(j): use ":help!" instead of ":help FOO".
+    //   emsg(_("E478: Don't panic!"));
+    //   return;
+    // }
 
     if (eap->skip) {        // not executing commands
       return;
@@ -97,13 +199,58 @@ void ex_help(exarg_T *eap)
   // Check for a specified language
   char *lang = check_help_lang(arg);
 
-  // When no argument given go to the index.
-  if (*arg == NUL) {
-    arg = "help.txt";
+  // Get word at cursor if arg is "FOO"
+  int cursor_offset = -1;
+  if (strequal(arg, "FOO")) {
+    // Get <cWORD> at cursor
+    char *word;
+    size_t len = find_ident_under_cursor(&word, FIND_STRING, &cursor_offset);
+    if (len > 0) {
+      char *allocated_word = xmemdupz(word, len);
+      // Free the old arg if it was allocated
+      if (arg != eap->arg) {
+        xfree(arg);
+      }
+      arg = allocated_word;
+    } else {
+      arg = NULL;
+    }
   }
 
-  // Check if there is a match for the argument.
+  // Try to find help tag
   int n = find_help_tags(arg, &num_matches, &matches, eap != NULL && eap->forceit);
+
+  // If not found, try iteratively trimming punctuation
+  if (num_matches == 0 && arg != NULL && *arg != NUL) {
+    char *candidate = xstrdup(arg);
+    // Iteratively trim punctuation and try again, up to 10 times
+    for (int i = 0; i < 10 && num_matches == 0; i++) {
+      char *trimmed = trim_help_tag(candidate, cursor_offset);
+      if (trimmed == NULL) {
+        // Try trimming namespace dots as last resort
+        trimmed = trim_help_tag_dots(candidate);
+        if (trimmed == NULL) {
+          break;
+        }
+      }
+      xfree(candidate);
+      candidate = trimmed;
+      // After first trim, offset is no longer valid
+      cursor_offset = -1;
+
+      n = find_help_tags(candidate, &num_matches, &matches, eap != NULL && eap->forceit);
+      if (num_matches > 0) {
+        // Found a match with trimmed tag
+        xfree(arg);
+        arg = candidate;
+        break;
+      }
+    }
+
+    if (num_matches == 0) {
+      xfree(candidate);
+    }
+  }
 
   int i = 0;
   if (n != FAIL && lang != NULL) {

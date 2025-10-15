@@ -7536,7 +7536,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
                                         ? (FIND_IDENT | FIND_STRING)
                                         : (spec_idx == SPEC_CEXPR
                                            ? (FIND_IDENT | FIND_STRING | FIND_EVAL)
-                                           : FIND_STRING));
+                                           : FIND_STRING), NULL);
     if (resultlen == 0) {
       *errormsg = "";
       return NULL;

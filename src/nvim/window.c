@@ -680,7 +680,7 @@ wingotofile:
     CHECK_CMDWIN;
     size_t len;
     char *ptr;
-    if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
+    if ((len = find_ident_under_cursor(&ptr, FIND_IDENT, NULL)) == 0) {
       break;
     }
 

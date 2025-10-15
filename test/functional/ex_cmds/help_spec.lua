@@ -11,7 +11,14 @@ local rmdir = n.rmdir
 local write_file = t.write_file
 
 describe(':help', function()
-  before_each(clear)
+  before_each(function()
+    os.remove('test.log')
+    clear{
+      env = {
+        -- NVIM_LOG_FILE = 'test.log',
+      },
+    }
+  end)
 
   it('{subject}', function()
     n.command('helptags ++t $VIMRUNTIME/doc')
@@ -150,5 +157,116 @@ describe(':help', function()
     command('set rtp+=Xhelptags')
     command('help …')
     eq('*…*', api.nvim_get_current_line())
+  end)
+end)
+
+describe(':help', function()
+  setup(function()
+    n.clear{
+      args = {
+        '+helptags $VIMRUNTIME/doc'
+      }
+    }
+    command('enew')
+    command('set filetype=help')
+    -- XXX: hacky way to load the `help.lua` module.
+    n.exec_lua([[
+      _G.test_help = dofile(vim.fs.joinpath(vim.env.VIMRUNTIME, 'ftplugin/help.lua'))
+    ]])
+  end)
+
+  before_each(function()
+    command('enew')
+    command('set filetype=help')
+  end)
+
+  it('":help FOO" guesses the best tag near cursor', function()
+    local function set_lines(text)
+      n.exec_lua([[vim.api.nvim_buf_set_lines(0, 0, -1, false, ...)]], text)
+    end
+    local cursor = n.api.nvim_win_set_cursor
+    local function open_helptag()
+      -- TODO: also test ":help FOO" explicitly.
+      n.exec[[:normal! K]]
+      local word = n.fn.expand('<cWORD>')
+      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
+      if n.fn.winnr('$') > 1 then
+        n.command('close')
+      end
+      return { word, bufname }
+    end
+
+    n.command[[set keywordprg=:help]]
+
+    set_lines {'some plain text'}
+    cursor(0, {1, 5}) -- on 'plain'
+    eq({'*ft-plaintex-syntax*', 'syntax.txt'}, open_helptag())
+
+    set_lines {':help command'}
+    cursor(0, {1, 4})
+    eq({'*:help*', 'helphelp.txt'}, open_helptag())
+
+    set_lines {' :help command'}
+    cursor(0, {1, 5})
+    eq({'*:help*', 'helphelp.txt'}, open_helptag())
+
+    set_lines {'v:version name'}
+    cursor(0, {1, 5})
+    eq({'*v:version*', 'vvars.txt'}, open_helptag())
+    cursor(0, {1, 2})
+    eq({'*v:version*', 'vvars.txt'}, open_helptag())
+
+    set_lines {"See 'option' for more."}
+    cursor(0, {1, 6}) -- on 'option'
+    eq({"*'option'*", 'intro.txt'}, open_helptag())
+
+    set_lines {':command-nargs'}
+    cursor(0, {1, 7}) -- on 'nargs'
+    eq({'*:command-nargs*', 'map.txt'}, open_helptag())
+
+    set_lines {'|("vim.lsp.foldtext()")|'}
+    cursor(0, {1, 10})
+    eq({'*vim.lsp.foldtext()*', 'lsp.txt'}, open_helptag())
+
+    set_lines {'nvim_buf_detach_event[{buf}]'}
+    cursor(0, {1, 10})
+    eq({'*nvim_buf_detach_event*', 'api.txt'}, open_helptag())
+
+    set_lines {'{buf}'}
+    cursor(0, {1, 1})
+    eq({'*:buf*', 'windows.txt'}, open_helptag())
+
+    set_lines {'(`vim.lsp.ClientConfig`)'}
+    cursor(0, {1, 1})
+    eq({'*vim.lsp.ClientConfig*', 'lsp.txt'}, open_helptag())
+
+    set_lines {"vim.lsp.enable('clangd')"}
+    cursor(0, {1, 3})
+    eq({'*vim.lsp.enable()*', 'lsp.txt'}, open_helptag())
+
+    set_lines {"vim.lsp.enable('clangd')"}
+    cursor(0, {1, 6})
+    eq({'*vim.lsp.enable()*', 'lsp.txt'}, open_helptag())
+
+    set_lines {"vim.lsp.enable('clangd')"}
+    cursor(0, {1, 9})
+    eq({'*vim.lsp.enable()*', 'lsp.txt'}, open_helptag())
+
+    set_lines {'assert(vim.lsp.get_client_by_id(client_id))'}
+    cursor(0, {1, 12})
+    eq({'*vim.lsp.get_client_by_id()*', 'lsp.txt'}, open_helptag())
+
+    set_lines {"vim.api.nvim_create_autocmd('LspAttach', {"}
+    cursor(0, {1, 7})
+    eq({'*nvim_create_autocmd()*', 'api.txt'}, open_helptag())
+
+    -- set_lines {' |vim.lsp.start()|. '}
+    -- cursor(0, {1, 4})
+    -- eq({'*vim.lsp.start()*', 'lsp.txt'}, open_helptag())
+    --
+    -- Examples:
+    --    (`table<integer, {error: lsp.ResponseError?, result: any}>?`) result
+    --    |vim.lsp.Config|.
+    --    "Enabled Configurations". 🌈
   end)
 end)
