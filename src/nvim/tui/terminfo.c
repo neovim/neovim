@@ -180,6 +180,38 @@ bool terminfo_from_unibilium(TerminfoEntry *ti, char *termname, Arena *arena)
     }
   }
 
+  static const enum unibi_string uni_keys[][2] = {
+#define X(name) {unibi_key_##name, unibi_string_begin_},
+#define Y(name) {unibi_key_##name, unibi_key_s##name},
+   XYLIST_TERMINFO_KEYS
+#undef X
+#undef Y
+  };
+
+  for (size_t i = 0; i < ARRAY_SIZE(uni_keys); i++) {
+    const char *val = unibi_get_str(ut, uni_keys[i][0]);
+    if (val) {
+      ti->keys[i][0] = arena_strdup(arena, val);
+      if (uni_keys[i][1] != unibi_string_begin_) {
+        const char *sval = unibi_get_str(ut, uni_keys[i][1]);
+        ti->keys[i][1] = sval ? arena_strdup(arena, sval) : NULL;
+      }
+    }
+  }
+
+  static const enum unibi_string uni_fkeys[] = {
+#define X(name) unibi_key_##name,
+   XLIST_TERMINFO_FKEYS
+#undef X
+#undef Y
+  };
+
+  for (size_t i = 0; i < ARRAY_SIZE(uni_fkeys); i++) {
+    const char *val = unibi_get_str(ut, uni_fkeys[i]);
+    ti->f_keys[i] = val ? arena_strdup(arena, val) : NULL;
+  }
+
+
   unibi_destroy(ut);
   return true;
 }
@@ -233,8 +265,43 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname)
     }
   }
 
-  kv_push(data, NUL);
+  static const char *key_names[] = {
+#define X(name) #name,
+#define Y(name) #name,
+    XYLIST_TERMINFO_KEYS
+#undef X
+  };
 
+  for (size_t i = 0 + 1; i < ARRAY_SIZE(key_names); i++) {
+    const char *s = ti->keys[i][0];
+    if (s) {
+      kv_printf(data, "  key_%-27s = ", key_names[i]);
+      kv_transstr(&data, s, false);
+      const char *ss = ti->keys[i][1];
+      if (ss) {
+        kv_printf(data, ", skey_%s = ", key_names[i]);
+        kv_transstr(&data, ss, false);
+      }
+      kv_push(data, '\n');
+    }
+  }
+
+  static const char *fkey_names[] = {
+#define X(name) #name,
+    XLIST_TERMINFO_FKEYS
+#undef X
+  };
+
+  for (size_t i = 0 + 1; i < ARRAY_SIZE(fkey_names); i++) {
+    const char *s = ti->f_keys[i];
+    if (s) {
+      kv_printf(data, "  key_%-27s = ", fkey_names[i]);
+      kv_transstr(&data, s, false);
+      kv_push(data, '\n');
+    }
+  }
+
+  kv_push(data, NUL);
   return cbuf_as_string(data.items, data.size - 1);
 }
 

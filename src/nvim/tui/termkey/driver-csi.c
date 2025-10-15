@@ -683,7 +683,7 @@ static int register_keys(void)
   return 1;
 }
 
-void *new_driver_csi(TermKey *tk, const char *term)
+void *new_driver_csi(TermKey *tk, TerminfoEntry *term)
 {
   if (!keyinfo_initialised) {
     if (!register_keys()) {
