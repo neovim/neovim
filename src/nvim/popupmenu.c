@@ -670,10 +670,7 @@ void pum_redraw(void)
   }
 
   int scroll_range = pum_size - pum_height;
-
-  // avoid set border for mouse menu
-  int mouse_menu = State != MODE_CMDLINE && pum_grid.zindex == kZIndexCmdlinePopupMenu;
-  if (!mouse_menu && fconfig.border) {
+  if (fconfig.border) {
     grid_draw_border(&pum_grid, &fconfig, NULL, 0, NULL);
     if (!fconfig.shadow) {
       row++;
@@ -1401,18 +1398,21 @@ static void pum_position_at_mouse(int min_width)
     pum_anchor_grid = grid;
   }
 
-  if (max_row - row > pum_size || max_row - row > row - min_row) {
+  // Both width and height are 1 for shadow border, otherwise 2
+  int border_width = pum_border_width();
+  int border_height = border_width;
+  if (max_row - row > pum_size + border_height || max_row - row > row - min_row) {
     // Enough space below the mouse row,
     // or there is more space below the mouse row than above.
     pum_above = false;
     pum_row = row + 1;
-    if (pum_height > max_row - pum_row) {
-      pum_height = max_row - pum_row;
+    if (pum_height + border_height > max_row - pum_row) {
+      pum_height = max_row - pum_row - border_height;
     }
   } else {
     // Show above the mouse row, reduce height if it does not fit.
     pum_above = true;
-    pum_row = row - pum_size;
+    pum_row = row - pum_size - border_height;
     if (pum_row < min_row) {
       pum_height += pum_row - min_row;
       pum_row = min_row;
@@ -1420,25 +1420,25 @@ static void pum_position_at_mouse(int min_width)
   }
 
   if (pum_rl) {
-    if (col - min_col + 1 >= pum_base_width
-        || col - min_col + 1 > min_width) {
+    if (col - min_col + 1 >= pum_base_width + border_width
+        || col - min_col + 1 > min_width + border_width) {
       // Enough space to show at mouse column.
       pum_col = col;
     } else {
       // Not enough space, left align with window.
-      pum_col = min_col + MIN(pum_base_width, min_width) - 1;
+      pum_col = min_col + MIN(pum_base_width + border_width, min_width + border_width) - 1;
     }
-    pum_width = pum_col - min_col + 1;
+    pum_width = pum_col - min_col + 1 - border_width;
   } else {
-    if (max_col - col >= pum_base_width
-        || max_col - col > min_width) {
+    if (max_col - col >= pum_base_width + border_width
+        || max_col - col > min_width + border_width) {
       // Enough space to show at mouse column.
       pum_col = col;
     } else {
       // Not enough space, right align with window.
-      pum_col = max_col - MIN(pum_base_width, min_width);
+      pum_col = max_col - MIN(pum_base_width + border_width, min_width + border_width);
     }
-    pum_width = max_col - pum_col;
+    pum_width = max_col - pum_col - border_width;
   }
 
   pum_width = MIN(pum_width, pum_base_width + 1);
@@ -1456,7 +1456,9 @@ static void pum_select_mouse_pos(void)
   }
 
   if (grid == pum_grid.handle) {
-    pum_selected = row;
+    // Offset by 1 when border width is 2 (non-shadow border)
+    int border_offset = (pum_border_width() == 2);
+    pum_selected = row >= border_offset ? row - border_offset : -1;
     return;
   }
 

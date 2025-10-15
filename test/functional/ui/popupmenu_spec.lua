@@ -9309,6 +9309,233 @@ describe('builtin popupmenu', function()
         end
       end)
     end)
+    it("'pumborder' on mouse-menu displays completely within screen", function()
+      screen:try_resize(40, 12)
+      command('set pumborder=rounded')
+      -- Click near right edge to test boundary handling
+      if send_mouse_grid then
+        api.nvim_input_mouse('right', 'press', '', 2, 2, 35)
+      else
+        feed('<RightMouse><35,2>')
+      end
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*11
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {1:~                                       }|*10
+          ## grid 3
+                                                    |
+          ## grid 4
+            {n:╭─────────────────────╮}|
+            {n:│ Inspect             │}|
+            {n:│                     │}|
+            {n:│ Paste               │}|
+            {n:│ Select All          │}|
+            {n:│                     │}|
+            {n:│ How-to disable mouse│}|
+            {n:╰─────────────────────╯}|
+          ]],
+          win_pos = {
+            [2] = {
+              height = 11,
+              startcol = 0,
+              startrow = 0,
+              width = 40,
+              win = 1000,
+            },
+          },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 3, 17, false, 250, 2, 3, 17 },
+          },
+          win_viewport = {
+            [2] = {
+              win = 1000,
+              topline = 0,
+              botline = 2,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+          },
+          win_viewport_margins = {
+            [2] = {
+              bottom = 0,
+              left = 0,
+              right = 0,
+              top = 0,
+              win = 1000,
+            },
+          },
+        })
+      else
+        screen:expect([[
+          ^                                        |
+          {1:~                                       }|*2
+          {1:~                }{n:╭─────────────────────╮}|
+          {1:~                }{n:│ Inspect             │}|
+          {1:~                }{n:│                     │}|
+          {1:~                }{n:│ Paste               │}|
+          {1:~                }{n:│ Select All          │}|
+          {1:~                }{n:│                     │}|
+          {1:~                }{n:│ How-to disable mouse│}|
+          {1:~                }{n:╰─────────────────────╯}|
+                                                  |
+        ]])
+      end
+      if send_mouse_grid then
+        api.nvim_input_mouse('move', '', '', 4, 1, 1)
+      else
+        feed('<MouseMove><25,4>')
+      end
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*11
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {1:~                                       }|*10
+          ## grid 3
+                                                    |
+          ## grid 4
+            {n:╭─────────────────────╮}|
+            {n:│}{12: Inspect             }{n:│}|
+            {n:│                     │}|
+            {n:│ Paste               │}|
+            {n:│ Select All          │}|
+            {n:│                     │}|
+            {n:│ How-to disable mouse│}|
+            {n:╰─────────────────────╯}|
+          ]],
+          win_pos = {
+            [2] = {
+              height = 11,
+              startcol = 0,
+              startrow = 0,
+              width = 40,
+              win = 1000,
+            },
+          },
+          float_pos = {
+            [4] = { -1, 'NW', 2, 3, 17, false, 250, 2, 3, 17 },
+          },
+          win_viewport = {
+            [2] = {
+              win = 1000,
+              topline = 0,
+              botline = 2,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+          },
+          win_viewport_margins = {
+            [2] = {
+              bottom = 0,
+              left = 0,
+              right = 0,
+              top = 0,
+              win = 1000,
+            },
+          },
+        })
+      else
+        screen:expect([[
+          ^                                        |
+          {1:~                                       }|*2
+          {1:~                }{n:╭─────────────────────╮}|
+          {1:~                }{n:│}{12: Inspect             }{n:│}|
+          {1:~                }{n:│                     │}|
+          {1:~                }{n:│ Paste               │}|
+          {1:~                }{n:│ Select All          │}|
+          {1:~                }{n:│                     │}|
+          {1:~                }{n:│ How-to disable mouse│}|
+          {1:~                }{n:╰─────────────────────╯}|
+                                                  |
+        ]])
+      end
+      -- when right-clicking on the bottom menu, it should appear above the mouse_row
+      if send_mouse_grid then
+        api.nvim_input_mouse('right', 'press', '', 2, 8, 20)
+      else
+        feed('<RightMouse><20,8>')
+      end
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*11
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {1:~                                       }|*10
+          ## grid 3
+                                                    |
+          ## grid 4
+            {n:╭─────────────────────╮}|
+            {n:│ Inspect             │}|
+            {n:│                     │}|
+            {n:│ Paste               │}|
+            {n:│ Select All          │}|
+            {n:│                     │}|
+            {n:│ How-to disable mouse│}|
+            {n:╰─────────────────────╯}|
+          ]],
+          win_pos = {
+            [2] = {
+              height = 11,
+              startcol = 0,
+              startrow = 0,
+              width = 40,
+              win = 1000,
+            },
+          },
+          float_pos = {
+            [4] = { -1, 'SW', 2, 6, 17, false, 250, 2, 0, 17 },
+          },
+          win_viewport = {
+            [2] = {
+              win = 1000,
+              topline = 0,
+              botline = 2,
+              curline = 0,
+              curcol = 0,
+              linecount = 1,
+              sum_scroll_delta = 0,
+            },
+          },
+          win_viewport_margins = {
+            [2] = {
+              bottom = 0,
+              left = 0,
+              right = 0,
+              top = 0,
+              win = 1000,
+            },
+          },
+        })
+      else
+        screen:expect([[
+          ^                 {n:╭─────────────────────╮}|
+          {1:~                }{n:│ Inspect             │}|
+          {1:~                }{n:│                     │}|
+          {1:~                }{n:│ Paste               │}|
+          {1:~                }{n:│ Select All          │}|
+          {1:~                }{n:│                     │}|
+          {1:~                }{n:│ How-to disable mouse│}|
+          {1:~                }{n:╰─────────────────────╯}|
+          {1:~                                       }|*3
+                                                  |
+        ]])
+      end
+    end)
   end
 
   describe('with ext_multigrid and actual mouse grid', function()

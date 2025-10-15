@@ -5133,6 +5133,9 @@ vim.go.pb = vim.go.pumblend
 --- valid values. `hl-PmenuBorder` is used for highlighting the border, and when
 --- style is "shadow" the `hl-PmenuShadow` and `hl-PmenuShadowThrough` groups are used.
 ---
+--- This option also applies to mouse popup menus when 'mousemodel' is set to
+--- "popup" or "popup_setpos", which will display borders using the same style.
+---
 --- @type string
 vim.o.pumborder = ""
 vim.go.pumborder = vim.o.pumborder

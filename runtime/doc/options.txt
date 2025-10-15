@@ -4915,6 +4915,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	valid values. |hl-PmenuBorder| is used for highlighting the border, and when
 	style is "shadow" the |hl-PmenuShadow| and |hl-PmenuShadowThrough| groups are used.
 
+	This option also applies to mouse popup menus when 'mousemodel' is set to
+	"popup" or "popup_setpos", which will display borders using the same style.
+
 						*'pumheight'* *'ph'*
 'pumheight' 'ph'	number	(default 0)
 			global
