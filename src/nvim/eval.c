@@ -3947,7 +3947,7 @@ static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpol
           flags |= FSK_SIMPLIFY;
         }
         if (find_special_key((const char **)&p, (size_t)(arg_end - p),
-                             &modifiers, flags, NULL) != 0) {
+                             &modifiers, flags, NULL, NULL) != 0) {
           p--;  // leave "p" on the ">"
         }
       }

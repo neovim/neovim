@@ -321,9 +321,10 @@ void tui_set_key_encoding(TUIData *tui)
   switch (tui->input.key_encoding) {
   case kKeyEncodingKitty:
     // Progressive enhancement flags:
-    //   0b01   (1) Disambiguate escape codes
-    //   0b10   (2) Report event types
-    out(tui, S_LEN("\x1b[>3u"));
+    //   0b001   (1) Disambiguate escape codes
+    //   0b010   (2) Report event types
+    //   0b100   (4) Report alternate keys
+    out(tui, S_LEN("\x1b[>7u"));
     break;
   case kKeyEncodingXterm:
     out(tui, S_LEN("\x1b[>4;2m"));

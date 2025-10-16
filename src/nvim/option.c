@@ -1448,7 +1448,7 @@ static int find_key_len(const char *arg_arg, size_t len, bool has_lt)
     arg--;  // put arg at the '<'
     int modifiers = 0;
     key = find_special_key(&arg, len + 1, &modifiers, FSK_KEYCODE | FSK_KEEP_X_KEY | FSK_SIMPLIFY,
-                           NULL);
+                           NULL, NULL);
     if (modifiers) {  // can't handle modifiers here
       key = 0;
     }

@@ -11,6 +11,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
@@ -347,6 +348,20 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
       buf[1] = 'S';
       buf[2] = '-';
       len += 2;
+    }
+
+    if (key->alt_codepoint) {
+      char more_buf[8];
+      size_t more_len = 0;
+
+      more_buf[more_len++] = '&';
+      more_len += (size_t)utf_char2bytes(key->alt_codepoint, &more_buf[more_len]);
+      more_buf[more_len++] = '-';
+
+      assert(len + more_len < sizeof(buf));
+      memmove(buf + 1 + more_len, buf + 1, len - 1);
+      memcpy(buf + 1, more_buf, more_len);
+      len += more_len;
     }
   }
 

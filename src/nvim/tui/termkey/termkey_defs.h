@@ -177,6 +177,8 @@ typedef struct {
   // Any Unicode character can be UTF-8 encoded in no more than 6 bytes, plus
   // terminating NUL
   char utf8[7];
+
+  int alt_codepoint;
 } TermKeyKey;
 
 // Mostly-undocumented hooks for doing evil evil things
