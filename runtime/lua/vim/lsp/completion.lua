@@ -544,8 +544,10 @@ local function trigger(bufnr, clients, ctx)
     --- @param prev_match table
     prev_matches = vim.tbl_filter(function(prev_match)
       local client_id = vim.tbl_get(prev_match, 'user_data', 'nvim', 'lsp', 'client_id')
-      local matching = vim.tbl_get(prev_match, 'match')
-      return (not client_id or responses[client_id] == nil) and matching
+      if client_id and responses[client_id] ~= nil then
+        return false
+      end
+      return vim.tbl_get(prev_match, 'match')
     end, prev_matches)
 
     matches = vim.list_extend(prev_matches, matches)
