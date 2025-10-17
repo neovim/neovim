@@ -1,4 +1,4 @@
--- Converted into Lua from https://github.com/cyjake/ssh-config
+-- The sshconfig parser was converted into Lua from https://github.com/cyjake/ssh-config
 -- TODO (siddhantdev): deal with include directives
 
 local M = {}
@@ -214,6 +214,10 @@ end
 ---@param filename string
 ---@return string[] The hostnames configured in the file located at filename
 function M.parse_config(filename)
+  if vim.fn.filereadable(filename) == 0 then
+    return {}
+  end
+
   local file = io.open(filename, 'r')
   if not file then
     error('Cannot read ssh configuration file')
@@ -232,6 +236,214 @@ function M.get_hosts()
   local config_path = vim.fs.normalize('~/.ssh/config') ---@type string
 
   return M.parse_config(config_path)
+end
+
+-- Prompts table obtained from https://github.com/amitds1997/remote-nvim.nvim/blob/9992c2fb8bf4f11aca2c8be8db286b506f92efcb/lua/remote-nvim/init.lua#L110-L145
+local ssh_prompts = {
+  {
+    prompt = 'password:',
+    type = 'secret',
+    value = '',
+  },
+  {
+    prompt = 'continue connecting (yes/no/[fingerprint])?',
+    type = 'plain',
+    value = '',
+  },
+  {
+    prompt = 'Password for',
+    type = 'secret',
+    value = '',
+  },
+  {
+    prompt = 'Password:',
+    type = 'secret',
+    value = '',
+  },
+  {
+    prompt = 'Enter passphrase',
+    type = 'secret',
+    value = '',
+  },
+}
+
+local stdout = {} ---@type string[]
+local processed_idx = 0
+local job_id = 0
+local is_remote_running = false
+
+local function _run_cmd(cmd, on_exit)
+  stdout = {}
+  processed_idx = 0
+
+  job_id = vim.fn.jobstart(cmd, {
+    pty = true,
+    on_stdout = function(_job_id, data, _event)
+      data = data ---@type string[]
+      for _, chunk in ipairs(data) do
+        local line = chunk:gsub('\r', '\n')
+        table.insert(stdout, line)
+      end
+
+      local unprocessed_data = table.concat(vim.list_slice(stdout, processed_idx + 1))
+      if unprocessed_data:find('Tunnel created successfully') then
+        is_remote_running = true
+      end
+      for i, prompt in ipairs(ssh_prompts) do
+        if unprocessed_data:find(vim.pesc(prompt.prompt)) then
+          local resp = ''
+          if prompt.value ~= '' then
+            resp = prompt.value
+          else
+            local unprocessed_data_lines = vim.split(vim.trim(unprocessed_data), '\n')
+            local input_label =
+              string.format('%s ', unprocessed_data_lines[#unprocessed_data_lines])
+            if prompt.type == 'secret' then
+              resp = vim.fn.inputsecret(input_label)
+            else
+              resp = vim.fn.input(input_label)
+            end
+            vim.cmd('redraw')
+          end
+
+          ssh_prompts[i].value = resp
+          processed_idx = #stdout
+          vim.api.nvim_chan_send(job_id, resp .. '\n')
+        end
+      end
+    end,
+    on_exit = function(chan_id, data, event)
+      if on_exit ~= nil then
+        on_exit(chan_id, data, event)
+      end
+    end,
+  })
+
+  return job_id
+end
+
+--- Starts a Nvim server on the remote machine via ssh and tunnels it to a local socket.
+---@param address string
+---@return string local_socket
+function M.connect_to_address(address)
+  if not address or address == '' then
+    error('invalid SSH address given')
+  end
+
+  if address:find(' ') ~= nil then
+    error('SSH address cannot contain spaces')
+  end
+
+  if vim.fn.executable('ssh') ~= 1 then
+    error('"ssh" client not found')
+  end
+
+  -- Reset the prompts table
+  for i, prompt in ipairs(ssh_prompts) do
+    if prompt.value ~= '' then
+      ssh_prompts[i].value = ''
+    end
+  end
+
+  local remote_has_nvim = false
+  local check_cmd = { 'ssh', '-t', address, 'nvim --clean -v' }
+  local check_on_exit = function(_job_id, _data, _event)
+    local check_str = table.concat(stdout, '')
+    if check_str:find('NVIM v.*') ~= nil then
+      remote_has_nvim = true
+    end
+  end
+  local check_id = _run_cmd(check_cmd, check_on_exit)
+
+  vim.fn.jobwait({ check_id })
+
+  if not remote_has_nvim then
+    error('Neovim needs to be installed on the remote machine')
+  end
+
+  local local_socket = vim.fn.stdpath('run') .. '/host_nvim_' .. vim.fn.getpid() .. '.pipe'
+  local remote_socket = ''
+
+  local echo_cmd = 'lua require("vim.net._ssh").get_free_socket()'
+  local find_socket_nvim_cmd = string.format("nvim --headless --cmd '%s'", echo_cmd)
+  local find_socket_cmd = {
+    'ssh',
+    '-t',
+    address,
+    find_socket_nvim_cmd,
+  }
+  vim.print(find_socket_cmd)
+  -- local find_socket_cmd = string.format('ssh -t %s %s', address, find_socket_nvim_cmd)
+  local find_socket_on_exit = function(_job_id, _data, _event)
+    for _, find_str in ipairs(stdout) do
+      local needle = 'Free socket:'
+      local serv_ind = find_str:find(needle)
+      if serv_ind ~= nil then
+        remote_socket = vim.trim(find_str:sub(serv_ind + needle:len()))
+      end
+    end
+  end
+  local find_socket_id = _run_cmd(find_socket_cmd, find_socket_on_exit)
+
+  vim.fn.jobwait({ find_socket_id })
+
+  if remote_socket == '' then
+    error('Could not find free socket on remote machine')
+  end
+
+  local forward = string.format('%s:%s', local_socket, remote_socket)
+  local tunnel_nvim_cmd = string.format(
+    'nvim --headless --listen %s --cmd \'echo "Tunnel created successfully"\'',
+    remote_socket
+  )
+  local tunnel_cmd = { 'ssh', '-t', '-L', forward, address, tunnel_nvim_cmd }
+  is_remote_running = false
+  local tunnel_id = _run_cmd(tunnel_cmd, nil)
+
+  -- Wait for the tunnel to start before returning local_socket
+  while not is_remote_running and vim.fn.jobwait({ tunnel_id }, 500)[1] == -1 do
+  end
+
+  return local_socket
+end
+
+function M.get_free_socket()
+  local socket_name = vim.fn.serverstart()
+  vim.fn.serverstop(socket_name)
+  os.remove(socket_name)
+  vim.print('Free socket: ' .. socket_name)
+  vim.cmd('qall!')
+end
+
+function M.get_connect_choice()
+  local servers = vim.fn.serverlist({ peer = true })
+  local ssh_hosts = M.get_hosts()
+
+  local retvals = {}
+  local inputs = {}
+
+  local i = 1
+  for _, server in ipairs(servers) do
+    table.insert(retvals, server)
+    local curr = i .. '. Server: ' .. server
+
+    if server == vim.v.servername then
+      curr = curr .. ' (current)'
+    end
+
+    table.insert(inputs, curr)
+    i = i + 1
+  end
+
+  for _, host in ipairs(ssh_hosts) do
+    table.insert(retvals, 'ssh://' .. host)
+    table.insert(inputs, i .. '. SSH: ' .. host)
+    i = i + 1 ---@type integer
+  end
+
+  -- Use inputlist rather than vim.ui.select for blocking select
+  local choice = vim.fn.inputlist(inputs)
+  return retvals[choice]
 end
 
 return M
