@@ -373,6 +373,39 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     'f(1, 2)',
   }
 
+  ---@type lsp.TextEdit[][]
+  local textEdits = {
+    -- for simulating resolved text edits.
+    [1] = {
+      {
+        newText = ' -> tuple[Any, Any]',
+        range = {
+          ['end'] = {
+            character = 11,
+            line = 0,
+          },
+          start = {
+            character = 11,
+            line = 0,
+          },
+        },
+      },
+      {
+        newText = 'from typing import Any\n\n\n',
+        range = {
+          ['end'] = {
+            character = 0,
+            line = 0,
+          },
+          start = {
+            character = 0,
+            line = 0,
+          },
+        },
+      },
+    },
+  }
+
   -- this is taken from basedpyright
   ---@type lsp.InlayHint[]
   local response = {
@@ -384,34 +417,7 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
         character = 11,
         line = 0,
       },
-      textEdits = {
-        {
-          newText = ' -> tuple[Any, Any]',
-          range = {
-            ['end'] = {
-              character = 11,
-              line = 0,
-            },
-            start = {
-              character = 11,
-              line = 0,
-            },
-          },
-        },
-        {
-          newText = 'from typing import Any\n\n\n',
-          range = {
-            ['end'] = {
-              character = 0,
-              line = 0,
-            },
-            start = {
-              character = 0,
-              line = 0,
-            },
-          },
-        },
-      },
+      -- text edit of this inlay hint should be added by `inlayHint/resolve`
     },
     {
       kind = 2,
@@ -475,11 +481,24 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     exec_lua(function()
       _G.server = _G._create_server({
         capabilities = {
-          inlayHintProvider = true,
+          inlayHintProvider = { resolveProvider = true },
         },
         handlers = {
           ['textDocument/inlayHint'] = function(_, _, callback)
             callback(nil, response)
+          end,
+          ---@param res lsp.InlayHint
+          ['inlayHint/resolve'] = function(_, res, callback)
+            if res.textEdits == nil then
+              for k, v in pairs(response) do
+                if vim.deep_equal(res, v) then
+                  res.textEdits = textEdits[k]
+                  break
+                end
+              end
+            end
+
+            callback(nil, res)
           end,
         },
       })
