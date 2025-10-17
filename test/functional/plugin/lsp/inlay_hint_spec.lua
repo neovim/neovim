@@ -468,6 +468,7 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
   --- @type integer
   local bufnr
 
+  local wait_time = 10
   before_each(function()
     clear_notrace()
 
@@ -502,7 +503,7 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     local new_lines = exec_lua(function()
       vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 10 })
       vim.lsp.inlay_hint.apply_text_edits()
-      vim.wait(10) -- since the edits are `vim.schedule`ed
+      vim.wait(wait_time) -- since the edits are `vim.schedule`ed
       return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     end)
 
@@ -513,7 +514,7 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     local new_lines = exec_lua(function()
       vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 1 })
       vim.lsp.inlay_hint.apply_text_edits()
-      vim.wait(10) -- since the edits are `vim.schedule`ed
+      vim.wait(wait_time) -- since the edits are `vim.schedule`ed
       return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     end)
 
@@ -524,7 +525,7 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     local new_lines = exec_lua(function()
       vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 1 })
       vim.lsp.inlay_hint.apply_text_edits({ post_filtering = false })
-      vim.wait(10) -- since the edits are `vim.schedule`ed
+      vim.wait(wait_time) -- since the edits are `vim.schedule`ed
       return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     end)
 
@@ -548,7 +549,7 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
 
       vim.lsp.inlay_hint.apply_text_edits()
 
-      vim.wait(10)
+      vim.wait(wait_time)
       return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     end)
     eq(after_inserted, new_lines)
