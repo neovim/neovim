@@ -391,6 +391,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh
 • |vim.lsp.completion.get()| accepts a `client_id` to request from only the
   given clients.
+• |vim.lsp.inlay_hint.apply_text_edits()| to insert `textEdits` from |lsp-inlay_hint|.
 
 LUA
 
