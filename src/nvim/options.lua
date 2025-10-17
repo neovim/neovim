@@ -430,7 +430,7 @@ local options = {
     },
     {
       abbreviation = 'bk',
-      defaults = false,
+      defaults = true,
       desc = [=[
         Make a backup before overwriting a file.  Leave it around after the
         file has been successfully written.  If you do not want to keep the
