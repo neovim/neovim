@@ -258,6 +258,7 @@ LSP
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 • The filter option of |vim.lsp.buf.code_action()| now receives the client ID as an argument.
+• |vim.lsp.inlay_hint.apply_text_edits()| to insert `textEdits` from |lsp-inlay_hint|.
 
 LUA
 
