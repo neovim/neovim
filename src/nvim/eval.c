@@ -6088,7 +6088,7 @@ const char *find_name_end(const char *arg, const char **expr_start, const char *
 
     if (br_nest == 0) {
       if (*p == '{') {
-       mb_nest++;
+        mb_nest++;
         if (expr_start != NULL && *expr_start == NULL) {
           *expr_start = p;
         }
