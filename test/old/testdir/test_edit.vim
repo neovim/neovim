@@ -466,6 +466,33 @@ func Test_autoindent_remove_indent()
   call delete('Xarifile')
 endfunc
 
+" Test for autoindent removing indent when insert mode is stopped and
+" autocomplete is enabled.  Some parts of the code is exercised only when
+" interactive mode is used. So use Vim in a terminal.
+func Test_autoindent_remove_indent_with_autocomplete()
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('-N Xarifile', {'rows': 6, 'cols' : 20})
+  call TermWait(buf)
+  call term_sendkeys(buf, ":set autoindent autocomplete\n")
+  " leaving insert mode in a new line with indent added by autoindent, should
+  " remove the indent.
+  call term_sendkeys(buf, "i\<Tab>foo\<CR>\<Esc>")
+  " Need to delay for some time, otherwise the code in getchar.c will not be
+  " exercised.
+  call TermWait(buf, 50)
+  " when a line is wrapped and the cursor is at the start of the second line,
+  " leaving insert mode, should move the cursor back to the first line.
+  call term_sendkeys(buf, "o" .. repeat('x', 20) .. "\<Esc>")
+  " Need to delay for some time, otherwise the code in getchar.c will not be
+  " exercised.
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, ":w\n")
+  call TermWait(buf)
+  call StopVimInTerminal(buf)
+  call assert_equal(["\tfoo", '', repeat('x', 20)], readfile('Xarifile'))
+  call delete('Xarifile')
+endfunc
+
 func Test_edit_esc_after_CR_autoindent()
   new
   setlocal autoindent
