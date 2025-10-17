@@ -486,8 +486,8 @@ function M.apply_text_edits(opts)
     range.start = cursor
     range['end'] = cursor
   else
-    local start_pos = vim.fn.getpos('v')
-    local end_pos = vim.fn.getpos('.')
+    local start_pos = fn.getpos('v')
+    local end_pos = fn.getpos('.')
     if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
       ---@type [integer, integer, integer, integer]
       start_pos, end_pos = end_pos, start_pos
@@ -498,7 +498,6 @@ function M.apply_text_edits(opts)
       ['end'] = { end_pos[2], end_pos[3] - 2 },
     }
 
-    vim.schedule_wrap(vim.notify)(vim.inspect(range))
     if mode == 'V' or mode == 'Vs' then
       range.start[2] = 0
       range['end'][1] = range['end'][1] + 1
@@ -514,7 +513,7 @@ function M.apply_text_edits(opts)
     end
 
     local params =
-      vim.lsp.util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+      util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
 
     client:request(
       'textDocument/inlayHint',
@@ -572,7 +571,7 @@ function M.apply_text_edits(opts)
             :totable()
           if #text_edits > 0 then
             return vim.schedule(function()
-              vim.lsp.util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
+              util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
             end)
           end
         end
