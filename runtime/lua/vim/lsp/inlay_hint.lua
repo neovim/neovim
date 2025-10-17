@@ -436,7 +436,7 @@ function M.enable(enable, filter)
   end
 end
 
---- @class vim.lsp.inlay_hint.apply_text_edits.Opts?
+--- @class vim.lsp.inlay_hint.apply_text_edits.Opts
 --- Whether to filter the inlay hints to strictly include the ones in the range.
 --- @field post_filtering boolean?
 
