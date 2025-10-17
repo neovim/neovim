@@ -6054,6 +6054,7 @@ static int ins_compl_start(void)
   can_si = false;
   can_si_back = false;
   if (stop_arrow() == FAIL) {
+    did_ai = save_did_ai;
     return FAIL;
   }
 
@@ -6148,6 +6149,7 @@ static int ins_compl_start(void)
     API_CLEAR_STRING(compl_pattern);
     API_CLEAR_STRING(compl_orig_text);
     kv_destroy(compl_orig_extmarks);
+    did_ai = save_did_ai;
     return FAIL;
   }
 
@@ -6162,6 +6164,7 @@ static int ins_compl_start(void)
     ui_flush();
   }
 
+  did_ai = save_did_ai;
   return OK;
 }
 
