@@ -1369,7 +1369,7 @@ describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
         { label = 'hallo' },
       },
     }
-    create_server('dummy', completion_list, { delay = 10 })
+    create_server('dummy', completion_list, { delay = 50 })
   end)
 
   local function assert_matches(expected)
