@@ -359,6 +359,169 @@ int main() {
   end)
 end)
 
+describe('vim.lsp.inlay_hint.apply_text_edits', function()
+  local original_lines = { 'def f(m, n):', '    return m, n', '', '', 'f(1, 2)' }
+
+  local after_inserted = {
+    'from typing import Any',
+    '',
+    '',
+    'def f(m, n) -> tuple[Any, Any]:',
+    '    return m, n',
+    '',
+    '',
+    'f(1, 2)',
+  }
+
+  -- this is taken from basedpyright
+  ---@type lsp.InlayHint[]
+  local response = {
+    {
+      kind = 1,
+      label = '-> tuple[Any, Any]',
+      paddingLeft = true,
+      position = {
+        character = 11,
+        line = 0,
+      },
+      textEdits = {
+        {
+          newText = ' -> tuple[Any, Any]',
+          range = {
+            ['end'] = {
+              character = 11,
+              line = 0,
+            },
+            start = {
+              character = 11,
+              line = 0,
+            },
+          },
+        },
+        {
+          newText = 'from typing import Any\n\n\n',
+          range = {
+            ['end'] = {
+              character = 0,
+              line = 0,
+            },
+            start = {
+              character = 0,
+              line = 0,
+            },
+          },
+        },
+      },
+    },
+    {
+      kind = 2,
+      label = 'm=',
+      paddingLeft = false,
+      position = {
+        character = 2,
+        line = 4,
+      },
+      textEdits = {
+        {
+          newText = 'm=',
+          range = {
+            ['end'] = {
+              character = 2,
+              line = 4,
+            },
+            start = {
+              character = 2,
+              line = 4,
+            },
+          },
+        },
+      },
+    },
+    {
+      kind = 2,
+      label = 'n=',
+      paddingLeft = false,
+      position = {
+        character = 5,
+        line = 4,
+      },
+      textEdits = {
+        {
+          newText = 'n=',
+          range = {
+            ['end'] = {
+              character = 5,
+              line = 4,
+            },
+            start = {
+              character = 5,
+              line = 4,
+            },
+          },
+        },
+      },
+    },
+  }
+
+  --- @type integer
+  local bufnr
+
+  before_each(function()
+    clear_notrace()
+
+    bufnr = n.api.nvim_get_current_buf()
+    exec_lua(create_server_definition)
+    exec_lua(function()
+      _G.server = _G._create_server({
+        capabilities = {
+          inlayHintProvider = true,
+        },
+        handlers = {
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            callback(nil, response)
+          end,
+        },
+      })
+
+      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end)
+
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, original_lines)
+      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+    end)
+  end)
+
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
+
+  it('should insert edits in normal mode', function()
+    local new_lines = exec_lua(function()
+      vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 10 })
+      vim.lsp.inlay_hint.apply_text_edits()
+      vim.wait(10) -- since the edits are `vim.schedule`ed
+      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    end)
+
+    eq(after_inserted, new_lines)
+  end)
+
+  it('should insert edits in visual mode', function()
+    local new_lines = exec_lua(function()
+      vim.api.nvim_buf_set_mark(bufnr, '<', 1, 0, {})
+      vim.api.nvim_buf_set_mark(bufnr, '>', 2, 0, {})
+      vim.cmd('normal gv')
+
+      vim.lsp.inlay_hint.apply_text_edits()
+
+      vim.wait(10)
+      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    end)
+    eq(after_inserted, new_lines)
+  end)
+end)
+
 describe('Inlay hints handler', function()
   local text = dedent([[
 test text
