@@ -293,6 +293,7 @@ LSP
 - Support for dynamic registration for `textDocument/diagnostic`
 • |:lsp| for interactively enabling, disabling, restarting, and stopping lsp
   clients.
+• |vim.lsp.inlay_hint.apply_text_edits()| to insert `textEdits` from |lsp-inlay_hint|.
 
 LUA
 
