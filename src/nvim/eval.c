@@ -2014,9 +2014,8 @@ char *cat_prefix_varname(int prefix, const char *name)
   size_t len = strlen(name) + 3;
 
   if (len > varnamebuflen) {
-    xfree(varnamebuf);
     len += 10;                          // some additional space
-    varnamebuf = xmalloc(len);
+    varnamebuf = xrealloc(varnamebuf, len);
     varnamebuflen = len;
   }
   *varnamebuf = (char)prefix;
