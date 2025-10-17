@@ -543,6 +543,7 @@ error_return:
   // We clear the search context now!
   // Even when the caller gave us a (perhaps valid) context we free it here,
   // as we might have already destroyed it.
+  XFREE_CLEAR(search_ctx->ffsc_stopdirs_v);
   vim_findfile_cleanup(search_ctx);
   return NULL;
 }
