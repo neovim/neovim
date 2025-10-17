@@ -2560,7 +2560,7 @@ static const char *did_set_undofile(optset_T *args)
          || (args->os_flags & OPT_GLOBAL) || args->os_flags == 0)
         && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
       u_compute_hash(bp, hash);
-      u_read_undo(NULL, hash, bp->b_fname);
+      u_read_undo(NULL, hash, bp->b_fname, false);
     }
   }
 

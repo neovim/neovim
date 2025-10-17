@@ -87,6 +87,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
+#include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -1368,7 +1369,8 @@ theend:
 /// a bit more verbose.
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
-void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATTR_UNUSED)
+void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATTR_UNUSED,
+                 bool u_did_resync)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
@@ -1443,15 +1445,11 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   linenr_T line_count = (linenr_T)undo_read_4c(&bi);
   if (memcmp(hash, read_hash, UNDO_HASH_SIZE) != 0
       || line_count != curbuf->b_ml.ml_line_count) {
-    if (p_verbose > 0 || name != NULL) {
-      if (name == NULL) {
-        verbose_enter();
-      }
-      give_warning(_("File contents changed, cannot use undo info"), true, true);
-      if (name == NULL) {
-        verbose_leave();
-      }
+    if (!u_did_resync) {
+      u_handle_extern_change(read_hash, line_count);
+      goto theend;
     }
+    give_warning(_("File contents changed, cannot use undo info"), true, true);
     goto error;
   }
 
@@ -3196,6 +3194,79 @@ void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_nr(dict, S_LEN("save_cur"), (varnumber_T)buf->b_u_save_nr_cur);
 
   tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(buf, buf->b_u_oldhead));
+}
+
+/// Restores undo history on external change if 'backup' is enabled.
+static void u_handle_extern_change(const uint8_t *read_hash, linenr_T line_count)
+{
+  if (!p_bk) {
+    give_warning(_("File contents changed, cannot use undo info"), true, true);
+    return;
+  }
+
+  char *backup = NULL;
+  char *fname = curbuf->b_ffname;
+  char *dirp = p_bdir;
+
+  // make sure we have a valid backup extension to use
+  // FIXME: duplicated code
+  char *backup_ext = *p_bex == NUL ? ".bak" : p_bex;
+
+  while (*dirp) {
+    backup = buf_get_backup_name(fname, &dirp, false, backup_ext);
+    if (backup != NULL && os_path_exists(backup)) {
+      break;
+    }
+  }
+
+  // Read external change in buffer
+  char *temp_fname = vim_tempname();
+  if (temp_fname == NULL) {
+    give_warning(_("Cannot create temp file, cannot use undo info"), true, true);
+    return;
+  }
+
+  msg_silent++;
+  int retval = buf_write(curbuf, temp_fname, NULL, 1, curbuf->b_ml.ml_line_count, NULL, false, true,
+                         false, false);
+  msg_silent--;
+  if (retval == FAIL) {
+    give_warning(_("Cannot write to temp file, cannot use undo info"), true, true);
+    os_remove(temp_fname);
+    xfree(temp_fname);
+    return;
+  }
+
+  // Swap buffer with backup
+  buf_clear();
+  block_autocmds();
+  readfile(backup, NULL, 0, 0, MAXLNUM, NULL, READ_NEW + READ_KEEP_UNDO, true);
+  unblock_autocmds();
+  xfree(backup);
+
+  bool mismatch = false;
+  uint8_t new_hash[UNDO_HASH_SIZE];
+  u_compute_hash(curbuf, new_hash);
+  if (memcmp(new_hash, read_hash, UNDO_HASH_SIZE) != 0
+      || line_count != curbuf->b_ml.ml_line_count) {
+    mismatch = true;
+    give_warning(_("Backup is out of sync, cannot use undo info"), true, true);
+  } else {
+    u_read_undo(NULL, new_hash, fname, true);
+    u_save(0, curbuf->b_ml.ml_line_count + 1);
+  }
+
+  // Swap buffer back in
+  buf_clear();
+  if (mismatch) {
+    // Remove duplicate noop undo entry
+    u_clearall(curbuf);
+  }
+  if (readfile(temp_fname, NULL, 0, 0, MAXLNUM, NULL, READ_NEW + READ_KEEP_UNDO, true) != OK) {
+    give_warning(_("Couldn't read temp file to restore buffer"), true, true);
+  }
+  os_remove(temp_fname);
+  xfree(temp_fname);
 }
 
 // Given the buffer, Return the undo header. If none is set, set one first.

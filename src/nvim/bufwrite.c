@@ -1772,6 +1772,14 @@ restore_backup:
     }
   }
 
+  // We want the backup to be a copy of the modified file post-write to
+  // retrieve undo data if the file was changed externally.
+  if (p_bk && backup != NULL) {
+    if (os_copy(fname, backup, UV_FS_COPYFILE_FICLONE) != 0) {
+      semsg(_("E509: Cannot create backup file (add ! to override)"));
+    }
+  }
+
   // If we kept a backup until now, and we are in patch mode, then we make
   // the backup file our 'original' file.
   if (*p_pm && dobackup) {
