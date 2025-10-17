@@ -981,6 +981,8 @@ static void normal_finish_command(NormalState *s)
     s->old_mapped_len = typebuf_maplen();
   }
 
+  const bool prev_VIsual_active = VIsual_active;
+
   // If an operation is pending, handle it.  But not for K_IGNORE or
   // K_MOUSEMOVE.
   if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_MOUSEMOVE) {
@@ -998,7 +1000,7 @@ normal_end:
 
   msg_nowait = false;
 
-  if (finish_op) {
+  if (finish_op || prev_VIsual_active) {
     set_reg_var(get_default_register_name());
   }
 
