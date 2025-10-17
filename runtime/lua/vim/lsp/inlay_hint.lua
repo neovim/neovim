@@ -1,6 +1,7 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local api = vim.api
+local fn = vim.fn
 local M = {}
 
 ---@class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints
@@ -433,6 +434,143 @@ function M.enable(enable, filter)
       _enable(filter.bufnr)
     end
   end
+end
+
+--- @class vim.lsp.inlay_hint.apply_text_edits.Opts?
+--- Whether to filter the inlay hints to strictly include the ones in the range.
+--- @field post_filtering boolean?
+
+--- For supported LSP servers, apply the `textEdit`s in the inlay hint to the buffer.
+--- - In |Normal-mode|, this function inserts inlay hints that are adjacent to the cursor.
+--- - In |Visual-mode|, this function inserts inlay hints that are in the visually selected range.
+--- Example usage:
+--- ```lua
+--- vim.keymap.set("n", "gI", vim.lsp.inlay_hint.apply_text_edits, {})
+--- ```
+---
+--- For dot-repeat, you can set up the keymap like the following:
+--- ```lua
+--- vim.keymap.set(
+---   "n",
+---   "gI",
+---   function()
+---     vim.o.operatorfunc = "v:lua.vim.lsp.inlay_hint.apply_text_edits"
+---     return vim.api.nvim_input("g@ ")
+---   end,
+---   {}
+--- )
+--- ```
+---@param opts? vim.lsp.inlay_hint.apply_text_edits.Opts|string
+function M.apply_text_edits(opts)
+  if type(opts) ~= 'table' then
+    -- TODO: how to handle dot-repeat special arg?
+    opts = {}
+  end
+  opts = vim.tbl_deep_extend('force', { strict_filtering = true }, opts or {})
+  local bufnr = api.nvim_get_current_buf()
+  local winid = fn.bufwinid(bufnr)
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
+
+  local mode = fn.mode()
+
+  -- mark position, (1, 0) indexed, end-inclusive
+  ---@type {start: [integer, integer], end: [integer, integer]}
+  local range = {}
+
+  if mode == 'n' then
+    local cursor = api.nvim_win_get_cursor(winid)
+    range.start = { cursor[1], cursor[2] }
+    range['end'] = { cursor[1], range.start[2] }
+  else
+    local start_pos = vim.fn.getpos('v')
+    local end_pos = vim.fn.getpos('.')
+    if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
+      ---@type [integer, integer, integer, integer]
+      start_pos, end_pos = end_pos, start_pos
+    end
+
+    range = {
+      start = { start_pos[2], start_pos[3] - 1 },
+      ['end'] = { end_pos[2], end_pos[3] - 1 },
+    }
+
+    if mode == 'V' or mode == 'Vs' then
+      range.start[2] = 0
+      range['end'][1] = range['end'][1] + 1
+      range['end'][2] = 0
+    end
+  end
+
+  ---@param idx? integer
+  ---@param client vim.lsp.Client
+  local function do_insert(idx, client)
+    if idx == nil then
+      return
+    end
+
+    local params =
+      vim.lsp.util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+
+    client:request(
+      'textDocument/inlayHint',
+      params,
+      ---@param result lsp.InlayHint[]?
+      function(_, result, _, _)
+        if result ~= nil then
+          ---@type lsp.TextEdit[]
+          local text_edits = vim
+            .iter(result)
+            :filter(
+              ---@param hint lsp.InlayHint
+              function(hint)
+                -- only keep those that have text edits.
+                return hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
+              end
+            )
+            :filter(
+              ---@param hint lsp.InlayHint
+              function(hint)
+                if opts.strict_filtering then
+                  local hint_pos = hint.position
+                  if
+                    hint_pos.line < params.range.start.line
+                    or hint_pos.line > params.range['end'].line
+                  then
+                    return false
+                  end
+
+                  if
+                    hint_pos.character < params.range.start.character
+                    or hint_pos.character > params.range['end'].character
+                  then
+                    return false
+                  end
+                end
+                return true
+              end
+            )
+            :map(
+              ---@param hint lsp.InlayHint
+              function(hint)
+                return hint.textEdits
+              end
+            )
+            :flatten(1)
+            :totable()
+          if #text_edits > 0 then
+            return vim.schedule(function()
+              vim.lsp.util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
+            end)
+          end
+        end
+
+        return do_insert(next(clients, idx))
+      end,
+      bufnr
+    )
+  end
+
+  do_insert(next(clients))
 end
 
 return M
