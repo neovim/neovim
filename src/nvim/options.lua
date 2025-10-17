@@ -435,6 +435,8 @@ local options = {
         When the 'backupskip' pattern matches, a backup is not made anyway.
         When 'patchmode' is set, the backup may be renamed to become the
         oldest version of a file.
+        When 'undosync' is on, the backup is overwritten by the modified
+        buffer.
       ]=],
       full_name = 'backup',
       scope = { 'global' },
@@ -9947,6 +9949,26 @@ local options = {
       short_desc = N_('max nr of lines to save for undo on a buffer reload'),
       type = 'number',
       varname = 'p_ur',
+    },
+    {
+      abbreviation = 'uds',
+      defaults = false,
+      desc = [=[
+        Vim will detect if an undo file is no longer synchronized with the
+        file it was written for (with a hash of the file contents) and
+        ignore it when the file was changed after the undo file was written,
+        to prevent corruption. If 'undosync' and 'backup' are enabled, the
+        backup file at 'backupdir' can be used to safely re-synchronize the
+        undo file by creating a new entry representing the external change.
+
+        Every write operation will necessarily be called twice to keep the
+        backup file in sync with the buffer.
+      ]=],
+      full_name = 'undosync',
+      scope = { 'global' },
+      short_desc = N_('keep undo history on external file change'),
+      type = 'boolean',
+      varname = 'p_uds',
     },
     {
       abbreviation = 'uc',
