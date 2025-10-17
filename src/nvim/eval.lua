@@ -4035,7 +4035,6 @@ M.funcs = {
       Tabs and windows are identified by their respective numbers,
       0 means current tab or window. Missing tab number implies 0.
       Thus the following are equivalent: >vim
-        getcwd()
       	getcwd(0)
       	getcwd(0, 0)
       <If {winnr} is -1 it is ignored, only the tab is resolved.
