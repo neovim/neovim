@@ -505,6 +505,37 @@ function M.apply_text_edits(opts)
     end
   end
 
+  --- returns the number of edits applied.
+  ---@param client vim.lsp.Client
+  ---@param hints lsp.InlayHint
+  ---@return integer
+  local function apply_edits(client, hints)
+    ---@type lsp.TextEdit[]
+    local text_edits = vim
+      .iter(hints)
+      :filter(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          -- only keep those that have text edits.
+          return hint ~= nil and hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
+        end
+      )
+      :map(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          return hint.textEdits
+        end
+      )
+      :flatten(1)
+      :totable()
+    if #text_edits > 0 then
+      vim.schedule(function()
+        util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
+      end)
+    end
+    return #text_edits
+  end
+
   ---@param idx? integer
   ---@param client vim.lsp.Client
   local function do_insert(idx, client)
@@ -514,6 +545,7 @@ function M.apply_text_edits(opts)
 
     local params =
       util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+    local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
 
     client:request(
       'textDocument/inlayHint',
@@ -521,16 +553,9 @@ function M.apply_text_edits(opts)
       ---@param result lsp.InlayHint[]?
       function(_, result, _, _)
         if result ~= nil then
-          ---@type lsp.TextEdit[]
-          local text_edits = vim
+          ---@type lsp.InlayHint[]
+          local hints = vim
             .iter(result)
-            :filter(
-              ---@param hint lsp.InlayHint
-              function(hint)
-                -- only keep those that have text edits.
-                return hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
-              end
-            )
             :filter(
               ---@param hint lsp.InlayHint
               function(hint)
@@ -561,22 +586,41 @@ function M.apply_text_edits(opts)
                 return true
               end
             )
-            :map(
-              ---@param hint lsp.InlayHint
-              function(hint)
-                return hint.textEdits
-              end
-            )
-            :flatten(1)
             :totable()
-          if #text_edits > 0 then
-            return vim.schedule(function()
-              util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
-            end)
-          end
-        end
+          if #hints > 0 then
+            if not support_resolve then
+              if apply_edits(client, hints) == 0 then
+                -- no edits applied. proceed with the iteration.
+                return do_insert(next(clients, idx))
+              else
+                -- we're done with the edits.
+                return
+              end
+            elseif support_resolve then
+              ---@type integer
+              local num_processed = 0
 
-        return do_insert(next(clients, idx))
+              for i, h in ipairs(hints) do
+                client:request('inlayHint/resolve', h, function(_, _result, _, _)
+                  if _result ~= nil then
+                    hints[i] = _result
+                  end
+                  num_processed = num_processed + 1
+
+                  if num_processed == #hints then
+                    apply_edits(client, hints)
+                  end
+                end, bufnr)
+              end
+            end
+          else
+            -- no hints in the given range.
+            return do_insert(next(clients, idx))
+          end
+        else
+          -- result is nil. Proceed to next client.
+          return do_insert(next(clients, idx))
+        end
       end,
       bufnr
     )
