@@ -662,6 +662,7 @@ void u_compute_hash(buf_T *buf, uint8_t *hash)
 ///
 /// @param[in]  buf_ffname  Full file name for which undo file location should
 ///                         be found.
+/// @param[in]  file_type  Kind of file to return: undo or snapshot.
 /// @param[in]  reading  If true, find the file to read by traversing all of the
 ///                      directories in &undodir. If false use the first
 ///                      existing directory. If none of the directories in
@@ -669,7 +670,7 @@ void u_compute_hash(buf_T *buf, uint8_t *hash)
 ///                      will be automatically created.
 ///
 /// @return [allocated] File name to read from/write to or NULL.
-char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
+char *u_get_undo_file_name(const char *const buf_ffname, UndoFileType file_type, const bool reading)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *ffname = buf_ffname;
@@ -690,10 +691,23 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
   char dir_name[MAXPATHL + 1];
   char *munged_name = NULL;
   char *undo_file_name = NULL;
+  char *dirp;
+  const char *extension;
+
+  switch (file_type) {
+  case SNAPSHOT_FILE:
+    dirp = p_udkdir;
+    extension = ".udk~";
+    break;
+  case UNDO_FILE:
+  default:
+    dirp = p_udir;
+    extension = ".un~";
+    break;
+  }
 
   // Loop over 'undodir'.  When reading find the first file that exists.
   // When not reading use the first directory that exists or ".".
-  char *dirp = p_udir;
   while (*dirp != NUL) {
     size_t dir_len = copy_option_part(&dirp, dir_name, MAXPATHL, ",");
     if (dir_len == 1 && dir_name[0] == '.') {
@@ -706,7 +720,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       const size_t tail_len = strlen(tail);
       memmove(tail + 1, tail, tail_len + 1);
       *tail = '.';
-      memmove(tail + tail_len + 1, ".un~", sizeof(".un~"));
+      memmove(tail + tail_len + 1, extension, strlen(extension) + 1);
     } else {
       dir_name[dir_len] = NUL;
 
@@ -1170,7 +1184,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   bool write_ok = false;
 
   if (name == NULL) {
-    file_name = u_get_undo_file_name(buf->b_ffname, false);
+    file_name = u_get_undo_file_name(buf->b_ffname, UNDO_FILE, false);
     if (file_name == NULL) {
       if (p_verbose > 0) {
         verbose_enter();
@@ -1287,6 +1301,30 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
     goto theend;
   }
 
+  if (p_udk) {
+    char *snapshot_name = u_get_undo_file_name(buf->b_ffname, SNAPSHOT_FILE, false);
+    if (snapshot_name == NULL) {
+      if (p_verbose > 0) {
+        verbose_enter();
+        smsg(0, "%s", _("Cannot write undo file in any directory in 'undodir'"));
+        verbose_leave();
+      }
+      return;
+    }
+    if (p_verbose > 0) {
+      verbose_enter();
+      smsg(0, _("Copying buffer to snapshot file: %s"), snapshot_name);
+      verbose_leave();
+    }
+    if (os_path_exists(snapshot_name)) {
+      os_remove(snapshot_name);
+    }
+    if (vim_copyfile(buf->b_ffname, snapshot_name) != OK) {
+      semsg(_("E822: Cannot create snapshot file: %s"), snapshot_name);
+    }
+    xfree(snapshot_name);
+  }
+
   // Undo must be synced.
   u_sync(true);
 
@@ -1376,7 +1414,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
 
   char *file_name;
   if (name == NULL) {
-    file_name = u_get_undo_file_name(curbuf->b_ffname, true);
+    file_name = u_get_undo_file_name(curbuf->b_ffname, UNDO_FILE, true);
     if (file_name == NULL) {
       return;
     }
@@ -1435,6 +1473,11 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     goto error;
   }
 
+  bool did_bait_and_switch = false;
+  int snapshot_len = 0;
+  garray_T new_content_ga;
+  ga_init(&new_content_ga, sizeof(char *), 100);
+
   uint8_t read_hash[UNDO_HASH_SIZE];
   if (!undo_read(&bi, read_hash, UNDO_HASH_SIZE)) {
     corruption_error("hash", file_name);
@@ -1443,16 +1486,122 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   linenr_T line_count = (linenr_T)undo_read_4c(&bi);
   if (memcmp(hash, read_hash, UNDO_HASH_SIZE) != 0
       || line_count != curbuf->b_ml.ml_line_count) {
-    if (p_verbose > 0 || name != NULL) {
-      if (name == NULL) {
-        verbose_enter();
+    if (!p_udk) {
+      if (p_verbose > 0 || name != NULL) {
+        if (name == NULL) {
+          verbose_enter();
+        }
+        give_warning(_("File contents changed, cannot use undo info"), true);
+        if (name == NULL) {
+          verbose_leave();
+        }
       }
-      give_warning(_("File contents changed, cannot use undo info"), true);
-      if (name == NULL) {
-        verbose_leave();
+      goto error;
+    }
+
+    char *snapshot_name = u_get_undo_file_name(curbuf->b_ffname, SNAPSHOT_FILE, true);
+    if (snapshot_name == NULL) {
+      if (p_verbose > 0 || name != NULL) {
+        if (name == NULL) {
+          verbose_enter();
+        }
+        give_warning(_("Snapshot file not found, cannot sync undo information"), true);
+        if (name == NULL) {
+          verbose_leave();
+        }
+      }
+      goto error;
+    }
+
+    garray_T snapshot_ga;
+    ga_init(&snapshot_ga, sizeof(char *), 100);
+    FILE *snapshot_fp = os_fopen(snapshot_name, "rb");
+    if (snapshot_fp == NULL) {
+      semsg(_("E822: Cannot open snapshot file for reading: %s"), snapshot_name);
+      xfree(snapshot_name);
+      ga_clear(&new_content_ga);
+      goto error;
+    }
+    fseek(snapshot_fp, 0, SEEK_END);
+    long size = ftell(snapshot_fp);
+    fseek(snapshot_fp, 0, SEEK_SET);
+    char *p = xmalloc((size_t)size);
+    if (size > 0 && fread(p, 1, (size_t)size, snapshot_fp) != (size_t)size) {
+      xfree(p);
+      xfree(snapshot_name);
+      fclose(snapshot_fp);
+      return;
+    }
+    xfree(snapshot_name);
+    fclose(snapshot_fp);
+
+    for (char *eof = p + size, *lnum = p; lnum < eof;) {
+      char *eol = memchr(lnum, '\n', (size_t)(eof - lnum));
+      size_t len = eol ? (size_t)(eol - lnum) : (size_t)(eof - lnum);
+      char *line_data = xmalloc(len + 1);
+      memcpy(line_data, lnum, len);
+      // In binary mode, NUL bytes are stored as NL bytes in
+      // memory. We need to do the same translation here.
+      for (size_t i = 0; i < len; i++) {
+        if (line_data[i] == '\0') {
+          line_data[i] = '\n';
+        }
+      }
+      line_data[len] = '\0';
+      GA_APPEND(char *, &snapshot_ga, line_data);
+      lnum = eol ? eol + 1 : eof;
+    }
+    xfree(p);
+
+    // Stores the current state of the file
+    for (linenr_T lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
+      GA_APPEND(char *, &new_content_ga, u_save_line_buf(curbuf, lnum));
+    }
+
+    // Swap buffer with snapshot
+    OptInt old_ul = curbuf->b_p_ul;
+    curbuf->b_p_ul = -1;
+    for (linenr_T lnum = curbuf->b_ml.ml_line_count; lnum >= 1; lnum--) {
+      ml_delete(lnum);
+    }
+    if (snapshot_ga.ga_len > 0) {
+      ml_replace(1, ((char **)snapshot_ga.ga_data)[0], false);
+      for (int i = 1; i < snapshot_ga.ga_len; i++) {
+        ml_append(i, ((char **)snapshot_ga.ga_data)[i], 0, false);
       }
     }
-    goto error;
+    curbuf->b_p_ul = old_ul;
+
+    uint8_t new_hash[UNDO_HASH_SIZE];
+    u_compute_hash(curbuf, new_hash);
+    if (memcmp(new_hash, read_hash, UNDO_HASH_SIZE) != 0) {
+      if (p_verbose > 0 || name != NULL) {
+        if (name == NULL) {
+          verbose_enter();
+        }
+        give_warning(_("Snapshot is out of sync, cannot use undo info"), true);
+        if (name == NULL) {
+          verbose_leave();
+        }
+      }
+      // Restore original content before erroring out
+      old_ul = curbuf->b_p_ul;
+      curbuf->b_p_ul = -1;
+      for (linenr_T lnum = curbuf->b_ml.ml_line_count; lnum >= 1; lnum--) {
+        ml_delete(lnum);
+      }
+      if (new_content_ga.ga_len > 0) {
+        ml_replace(1, ((char **)new_content_ga.ga_data)[0], false);
+        for (int i = 1; i < new_content_ga.ga_len; i++) {
+          ml_append(i, ((char **)new_content_ga.ga_data)[i], 0, false);
+        }
+      }
+      curbuf->b_p_ul = old_ul;
+      ga_clear(&snapshot_ga);
+    }
+    did_bait_and_switch = true;
+    snapshot_len = snapshot_ga.ga_len;
+    ga_clear(&snapshot_ga);
   }
 
   // Read undo data for "U" command.
@@ -1641,6 +1790,24 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   xfree(uhp_table_used);
   u_check(true);
 #endif
+
+  if (did_bait_and_switch) {
+    u_save_buf(curbuf, 0, curbuf->b_ml.ml_line_count + 1);
+    OptInt old_ul = curbuf->b_p_ul;
+    curbuf->b_p_ul = -1;
+    for (linenr_T lnum = curbuf->b_ml.ml_line_count; lnum >= 1; lnum--) {
+      ml_delete(lnum);
+    }
+    if (new_content_ga.ga_len > 0) {
+      ml_replace(1, ((char **)new_content_ga.ga_data)[0], false);
+      for (int i = 1; i < new_content_ga.ga_len; i++) {
+        ml_append(i, ((char **)new_content_ga.ga_data)[i], 0, false);
+      }
+    }
+    curbuf->b_p_ul = old_ul;
+    changed_lines(curbuf, 1, 0, snapshot_len + 1, new_content_ga.ga_len - snapshot_len, true);
+    ga_clear(&new_content_ga);
+  }
 
   if (name != NULL) {
     smsg(0, _("Finished reading undo file %s"), file_name);
@@ -3169,7 +3336,7 @@ void f_undofile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char *ffname = FullName_save(fname, true);
 
     if (ffname != NULL) {
-      rettv->vval.v_string = u_get_undo_file_name(ffname, false);
+      rettv->vval.v_string = u_get_undo_file_name(ffname, UNDO_FILE, false);
     }
     xfree(ffname);
   }

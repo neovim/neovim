@@ -9898,6 +9898,45 @@ local options = {
       varname = 'p_udf',
     },
     {
+      abbreviation = 'udk',
+      defaults = false,
+      desc = [=[
+        Vim will detect if an undo file is no longer synchronized with the
+        file it was written for (with a hash of the file contents) and
+        ignore it when the file was changed after the undo file was written,
+        to prevent corruption. If 'undokeep' is on, a snapshot of the file's
+        content will be saved to the directory specified by 'undokeepdir',
+        and used to safely re-synchronize the undo file by creating a new
+        entry representing the external change.
+      ]=],
+      full_name = 'undokeep',
+      scope = { 'global' },
+      short_desc = N_('keep undo history on external file change'),
+      type = 'boolean',
+      varname = 'p_udk',
+    },
+    {
+      abbreviation = 'udkdir',
+      defaults = '',
+      deny_duplicates = true,
+      desc = [=[
+        List of directory names for snapshot files, separated with commas.
+        Follows the same rules as 'undodir'. The snapshot file name for
+        "file.txt" is ".file.txt.udk~".
+
+        This option cannot be set from a |modeline| or in the |sandbox|, for
+        security reasons.
+      ]=],
+      expand = 'nodefault',
+      full_name = 'undokeepdir',
+      list = 'onecomma',
+      scope = { 'global' },
+      secure = true,
+      short_desc = N_('where to store undo snapshots'),
+      type = 'string',
+      varname = 'p_udkdir',
+    },
+    {
       abbreviation = 'ul',
       cb = 'did_set_undolevels',
       defaults = 1000,

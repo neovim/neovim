@@ -7638,6 +7638,33 @@ vim.o.udf = vim.o.undofile
 vim.bo.undofile = vim.o.undofile
 vim.bo.udf = vim.bo.undofile
 
+--- Vim will detect if an undo file is no longer synchronized with the
+--- file it was written for (with a hash of the file contents) and
+--- ignore it when the file was changed after the undo file was written,
+--- to prevent corruption. If 'undokeep' is on, a snapshot of the file's
+--- content will be saved to the directory specified by 'undokeepdir',
+--- and used to safely re-synchronize the undo file by creating a new
+--- entry representing the external change.
+---
+--- @type boolean
+vim.o.undokeep = false
+vim.o.udk = vim.o.undokeep
+vim.go.undokeep = vim.o.undokeep
+vim.go.udk = vim.go.undokeep
+
+--- List of directory names for snapshot files, separated with commas.
+--- Follows the same rules as 'undodir'. The snapshot file name for
+--- "file.txt" is ".file.txt.udk~".
+---
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
+---
+--- @type string
+vim.o.undokeepdir = "$XDG_STATE_HOME/nvim/snapshot//"
+vim.o.udkdir = vim.o.undokeepdir
+vim.go.undokeepdir = vim.o.undokeepdir
+vim.go.udkdir = vim.go.undokeepdir
+
 --- Maximum number of changes that can be undone.  Since undo information
 --- is kept in memory, higher numbers will cause more memory to be used.
 --- Nevertheless, a single change can already use a large amount of memory.
