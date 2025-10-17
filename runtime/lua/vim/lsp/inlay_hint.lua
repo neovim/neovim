@@ -441,8 +441,10 @@ end
 --- @field post_filtering boolean?
 
 --- For supported LSP servers, apply the `textEdit`s in the inlay hint to the buffer.
+---
 --- - In |Normal-mode|, this function inserts inlay hints that are adjacent to the cursor.
 --- - In |Visual-mode|, this function inserts inlay hints that are in the visually selected range.
+---
 --- Example usage:
 --- ```lua
 --- vim.keymap.set("n", "gI", vim.lsp.inlay_hint.apply_text_edits, {})
@@ -460,13 +462,15 @@ end
 ---   {}
 --- )
 --- ```
----@param opts? vim.lsp.inlay_hint.apply_text_edits.Opts|string
+---
+---
+--- @param opts? vim.lsp.inlay_hint.apply_text_edits.Opts|string
 function M.apply_text_edits(opts)
   if type(opts) ~= 'table' then
     -- TODO: how to handle dot-repeat special arg?
     opts = {}
   end
-  opts = vim.tbl_deep_extend('force', { strict_filtering = true }, opts or {})
+  opts = vim.tbl_deep_extend('force', { post_filtering = true }, opts or {})
   local bufnr = api.nvim_get_current_buf()
   local winid = fn.bufwinid(bufnr)
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
@@ -479,8 +483,8 @@ function M.apply_text_edits(opts)
 
   if mode == 'n' then
     local cursor = api.nvim_win_get_cursor(winid)
-    range.start = { cursor[1], cursor[2] }
-    range['end'] = { cursor[1], range.start[2] }
+    range.start = cursor
+    range['end'] = cursor
   else
     local start_pos = vim.fn.getpos('v')
     local end_pos = vim.fn.getpos('.')
@@ -491,9 +495,10 @@ function M.apply_text_edits(opts)
 
     range = {
       start = { start_pos[2], start_pos[3] - 1 },
-      ['end'] = { end_pos[2], end_pos[3] - 1 },
+      ['end'] = { end_pos[2], end_pos[3] - 2 },
     }
 
+    vim.schedule_wrap(vim.notify)(vim.inspect(range))
     if mode == 'V' or mode == 'Vs' then
       range.start[2] = 0
       range['end'][1] = range['end'][1] + 1
@@ -530,23 +535,28 @@ function M.apply_text_edits(opts)
             :filter(
               ---@param hint lsp.InlayHint
               function(hint)
-                if opts.strict_filtering then
+                if opts.post_filtering then
                   local hint_pos = hint.position
                   if
                     hint_pos.line < params.range.start.line
                     or hint_pos.line > params.range['end'].line
                   then
+                    -- outside of line range
                     return false
                   end
 
-                  if
-                    hint_pos.character < params.range.start.character
-                    or (
-                      hint_pos.line > params.range['end'].line
-                      and hint_pos.character > params.range['end'].character
-                    )
-                  then
-                    return false
+                  if hint_pos.line == params.range.start.line then
+                    -- pos is in the same line as range.start
+                    if hint_pos.line == params.range['end'].line then
+                      -- range.start in the same line as range.end
+                      return params.range.start.character <= hint_pos.character
+                        and hint_pos.character <= params.range['end'].character
+                    end
+                    return hint_pos.character >= params.range.start.character
+                  end
+
+                  if hint_pos.line == params.range['end'].line then
+                    return hint_pos.character <= params.range['end'].character
                   end
                 end
                 return true

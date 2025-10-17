@@ -2152,7 +2152,9 @@ apply_text_edits({opts})               *vim.lsp.inlay_hint.apply_text_edits()*
     • In |Normal-mode|, this function inserts inlay hints that are adjacent to
       the cursor.
     • In |Visual-mode|, this function inserts inlay hints that are in the
-      visually selected range. Example usage: >lua
+      visually selected range.
+
+    Example usage: >lua
         vim.keymap.set("n", "gI", vim.lsp.inlay_hint.apply_text_edits, {})
 <
 

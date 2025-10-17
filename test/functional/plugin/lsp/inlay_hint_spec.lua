@@ -507,10 +507,41 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     eq(after_inserted, new_lines)
   end)
 
+  it("shouldn't insert edits in normal mode when cursor's away", function()
+    local new_lines = exec_lua(function()
+      vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 1 })
+      vim.lsp.inlay_hint.apply_text_edits()
+      vim.wait(10) -- since the edits are `vim.schedule`ed
+      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    end)
+
+    eq(original_lines, new_lines)
+  end)
+
+  it("should insert edits in normal mode when cursor's away but post_filtering=false", function()
+    local new_lines = exec_lua(function()
+      vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 1 })
+      vim.lsp.inlay_hint.apply_text_edits({ post_filtering = false })
+      vim.wait(10) -- since the edits are `vim.schedule`ed
+      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    end)
+
+    eq({
+      'from typing import Any',
+      '',
+      '',
+      'def f(m, n) -> tuple[Any, Any]:',
+      '    return m, n',
+      '',
+      '',
+      'f(m=1, n=2)',
+    }, new_lines)
+  end)
+
   it('should insert edits in visual mode', function()
     local new_lines = exec_lua(function()
-      vim.api.nvim_buf_set_mark(bufnr, '<', 1, 0, {})
-      vim.api.nvim_buf_set_mark(bufnr, '>', 2, 0, {})
+      vim.api.nvim_buf_set_mark(bufnr, '<', 1, 10, {})
+      vim.api.nvim_buf_set_mark(bufnr, '>', 1, 11, {})
       vim.cmd('normal gv')
 
       vim.lsp.inlay_hint.apply_text_edits()
