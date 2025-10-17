@@ -460,10 +460,6 @@ describe('TUI :connect', function()
   end)
 end)
 
-if t.skip(is_os('win')) then
-  return
-end
-
 describe('TUI', function()
   local screen --[[@type test.functional.ui.screen]]
   local child_session --[[@type test.Session]]
