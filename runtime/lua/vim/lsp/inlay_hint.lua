@@ -541,7 +541,10 @@ function M.apply_text_edits(opts)
 
                   if
                     hint_pos.character < params.range.start.character
-                    or hint_pos.character > params.range['end'].character
+                    or (
+                      hint_pos.line > params.range['end'].line
+                      and hint_pos.character > params.range['end'].character
+                    )
                   then
                     return false
                   end
