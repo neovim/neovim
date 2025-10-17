@@ -157,8 +157,8 @@ EXAMPLE: DEFINE A CONFIG AS A FILE ~
 
                                                         *lsp-config-merge*
 When an LSP client starts, it resolves its configuration by merging the
-following sources (merge semantics defined by |vim.tbl_deep_extend()|), in
-order of increasing priority:
+following sources (merge semantics defined by |vim.tbl_deep_extend()| with
+"force" behavior), in order of increasing priority:
 
 1. Configuration defined for the `'*'` name.
 2. Configuration from the result of merging all tables returned by
