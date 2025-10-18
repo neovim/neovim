@@ -2451,7 +2451,7 @@ static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
   }
   TPVAR null_params[9] = { 0 };
   if (str != NULL) {
-    offset += terminfo_fmt(buf, buf + len, str, null_params);
+    offset += terminfo_fmt(buf + offset, buf + len, str, null_params);
   }
 
   return offset;
