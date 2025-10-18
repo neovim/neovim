@@ -66,7 +66,7 @@ describe('u_write_undo', function()
 
   itp('writes an undo file to undodir given a buffer and hash', function()
     u_write_undo(nil, false, file_buffer, buffer_hash)
-    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, 0, false))
     local undo_file = io.open(correct_name, 'r')
 
     neq(undo_file, nil)
@@ -109,7 +109,7 @@ describe('u_write_undo', function()
     u_write_undo(nil, false, file_buffer, buffer_hash)
 
     -- Find out the correct name of the undofile
-    local undo_file_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    local undo_file_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, 0, false))
 
     -- Find out the permissions of the new file
     local permissions = uv.fs_stat(undo_file_name).mode
@@ -150,7 +150,7 @@ describe('u_write_undo', function()
   itp('forces writing undo file for :wundo! command', function()
     local file_contents = 'testing permissions'
     -- Write a text file where the undofile should go
-    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, 0, false))
     t.write_file(correct_name, file_contents, true, false)
 
     -- Call with `forceit`.
@@ -167,7 +167,7 @@ describe('u_write_undo', function()
 
   itp('overwrites an existing undo file', function()
     u_write_undo(nil, false, file_buffer, buffer_hash)
-    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, 0, false))
 
     local file_last_modified = uv.fs_stat(correct_name).mtime.sec
 
@@ -195,7 +195,7 @@ describe('u_write_undo', function()
 
   itp('does not write an undo file if there is no undo information for the buffer', function()
     file_buffer.b_u_numhead = 0 -- Mark it as if there is no undo information
-    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
+    local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, 0, false))
 
     local existing_file = io.open(correct_name, 'r')
     if existing_file then

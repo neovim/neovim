@@ -7028,6 +7028,27 @@ A jump table for the options with a short description can be found at |Q_op|.
 	before a reload to be saved for undo.
 	When 'undofile' is turned off the undo file is NOT deleted.
 
+				*'undokeep'* *'udk'* *'noundokeep'* *'noudk'*
+'undokeep' 'udk'	boolean	(default off)
+			global
+	Vim will detect if an undo file is no longer synchronized with the
+	file it was written for (with a hash of the file contents) and
+	ignore it when the file was changed after the undo file was written,
+	to prevent corruption. If 'undokeep' is on, a snapshot of the file's
+	content will be saved to the directory specified by 'undokeepdir',
+	and used to safely re-synchronize the undo file by creating a new
+	entry representing the external change.
+
+					*'undokeepdir'* *'udkdir'*
+'undokeepdir' 'udkdir'	string	(default "$XDG_STATE_HOME/nvim/snapshot//")
+			global
+	List of directory names for snapshot files, separated with commas.
+	Follows the same rules as 'undodir'. The snapshot file name for
+	"file.txt" is ".file.txt.udk~".
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
 						*'undolevels'* *'ul'*
 'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|

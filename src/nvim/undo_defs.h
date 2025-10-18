@@ -7,6 +7,12 @@
 
 enum { UNDO_HASH_SIZE = 32, };  ///< Size in bytes of the hash used in the undo file.
 
+/// Argument to u_get_undo_file_name()
+typedef enum {
+  UNDO_FILE,
+  SNAPSHOT_FILE,
+} UndoFileType;
+
 typedef struct u_header u_header_T;
 
 /// Structure to store info about the Visual area.

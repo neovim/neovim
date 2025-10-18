@@ -369,6 +369,8 @@ void set_init_1(bool clean_arg)
                      true);
   set_string_default(kOptUndodir, stdpaths_user_state_subpath("undo", 2, true),
                      true);
+  set_string_default(kOptUndokeepdir, stdpaths_user_state_subpath("snapshot", 2, true),
+                     true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
   char *rtp = runtimepath_default(clean_arg);
