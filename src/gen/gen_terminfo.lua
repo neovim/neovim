@@ -84,6 +84,53 @@ local wanted_strings_ext = {
   { 'set_underline_style', 'Smulx' },
 }
 
+-- TODO: dublicated info, get/put this into driver-ti.c
+local wanted_termkeys = {
+
+  {"backspace", false},
+  {"beg",       true}, -- sometimes known as: "begin"
+  {"btab",      false},
+  {"cancel",    true},
+  {"clear",     false},
+  {"close",     false},
+  {"command",   true},
+  {"copy",      true},
+  {"dc",        true},
+  {"down",      false},
+  {"end",       true},
+  {"enter",     false},
+  {"exit",      true},
+  {"find",      true},
+  {"help",      true},
+  {"home",      true},
+  {"ic",        true},
+  {"left",      true},
+  {"mark",      false},
+  {"message",   true},
+  {"move",      true},
+  {"next",      true},
+  {"npage",     false},
+  {"open",      false},
+  {"options",   true},
+  {"ppage",     false},
+  {"previous",  true},
+  {"print",     true},
+  {"redo",      true},
+  {"reference", false},
+  {"refresh",   false},
+  {"replace",   true},
+  {"restart",   false},
+  {"resume",    false},
+  {"right",     true},
+  {"save",      true},
+  {"select",    false},
+  {"suspend",   true},
+  {"undo",      true},
+  {"up",        false},
+
+  {"mouse",     false},
+}
+
 local db = '/tmp/nvim_terminfo'
 if vim.uv.fs_stat(db) == nil then
   local function sys(cmd)
@@ -130,7 +177,17 @@ for _, item in ipairs(wanted_strings_ext) do
   f_enum:write('  ' .. enumify(item[1]) .. ',\n')
 end
 f_enum:write('  kTermCount,  // sentinel\n')
-f_enum:write('} TerminfoDef;\n')
+f_enum:write('} TerminfoDef;\n\n')
+
+f_enum:write('// TODO(bfredl): this is aaalmost a chunk of TermKeySym enum, remogrify?\n')
+local func_key_max = 63
+f_enum:write('#define kTerminfoFuncKeyMax '..func_key_max .. '\n')
+f_enum:write('typedef enum {\n')
+for _, item in ipairs(wanted_termkeys) do
+  f_enum:write('  kTermKey_' .. item[1] .. ',\n')
+end
+f_enum:write('  kTermKeyCount,\n')
+f_enum:write('} TerminfoKey;\n')
 f_enum:close()
 
 local f_defs = io.open(target_gen, 'wb')
@@ -186,8 +243,26 @@ for _, entry in ipairs(entries) do
   for _, item in ipairs(wanted_strings_ext) do
     f_defs:write('    [' .. enumify(item[1]) .. '] = ' .. quote(strs[item[2]]) .. ',\n')
   end
-
   f_defs:write('  },\n')
+  f_defs:write('  .keys = {\n')
+  for _, item in ipairs(wanted_termkeys) do
+    local name = item[1]
+    f_defs:write('    [kTermKey_' .. name .. '] = {' .. quote(strs["key_"..name]) .. ', '.. quote(strs["key_s"..name]) .. '},\n')
+  end
+  f_defs:write('  },\n')
+  f_defs:write('  .f_keys = {\n')
+  if strs["key_f1"] == nil then
+    f_defs:write('    NULL,\n') -- compiler get sad if list is empty
+  else
+    f_defs:write('    // note: offset by one, f_keys[0] is F1 and so on\n')
+  end
+  for i=1,func_key_max do
+    if strs["key_f"..i] ~= nil then
+      f_defs:write('    [' .. i-1 .. '] = ' .. quote(strs["key_f"..i]) .. ',\n')
+    end
+  end
+  f_defs:write('  },\n')
+
   f_defs:write('};\n')
 end
 
@@ -201,4 +276,14 @@ for _, item in ipairs(wanted_strings_ext) do
   f_defs:write('  X(' .. item[1] .. ', ' .. item[2] .. ') \\\n')
 end
 f_defs:write('// end of list\n')
+f_defs:write('\n#define XYLIST_TERMINFO_KEYS \\\n')
+for _, item in ipairs(wanted_termkeys) do
+  f_defs:write('  '..(item[2] and 'Y' or 'X')..'(' .. item[1] .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
+f_defs:write('\n#define XLIST_TERMINFO_FKEYS \\\n')
+for i=1,func_key_max do
+  f_defs:write('  X(f' .. i .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
 f_defs:close()

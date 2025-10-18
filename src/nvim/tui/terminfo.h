@@ -13,6 +13,8 @@ typedef struct {
   int lines;
   int columns;
   const char *defs[kTermCount];
+  const char *keys[kTermKeyCount][2];
+  const char *f_keys[kTerminfoFuncKeyMax];
 } TerminfoEntry;
 
 typedef struct {
