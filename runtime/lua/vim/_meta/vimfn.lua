@@ -3225,8 +3225,7 @@ function vim.fn.getcursorcharpos(winid) end
 
 --- With no arguments, returns the name of the effective
 --- |current-directory|. With {winnr} or {tabnr} the working
---- directory of that scope is returned, and 'autochdir' is
---- ignored.
+--- directory of that scope is returned, and 'autochdir' is ignored.
 --- Tabs and windows are identified by their respective numbers,
 --- 0 means current tab or window. Missing tab number implies 0.
 --- Thus the following are equivalent: >vim
@@ -3236,6 +3235,8 @@ function vim.fn.getcursorcharpos(winid) end
 --- {winnr} can be the window number or the |window-ID|.
 --- If both {winnr} and {tabnr} are -1 the global working
 --- directory is returned.
+--- Note Vim differs in its return value when {tabnr} is -1 it returns
+--- an empty string is as it is invalid.
 --- Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 ---
 --- @param winnr? integer
