@@ -1378,7 +1378,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
       return NULL;
     }
 
-    // a NULL list/blob works like an empty list/blob, allocate one now.
+    // A NULL list/blob works like an empty list/blob, allocate one now.
     if (lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list == NULL) {
       tv_list_alloc_ret(lp->ll_tv, kListLenUnknown);
     } else if (lp->ll_tv->v_type == VAR_BLOB && lp->ll_tv->vval.v_blob == NULL) {
