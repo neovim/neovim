@@ -111,6 +111,7 @@
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef BACKSLASH_IN_FILENAME
 # include "nvim/arglist.h"
@@ -2400,6 +2401,22 @@ static const char *did_set_scrollback(optset_T *args)
     // Force the scrollback to take immediate effect only when decreasing it.
     on_scrollback_option_changed(buf->terminal);
   }
+  return NULL;
+}
+
+///  Process the 'scrollbar' option
+static const char *did_set_scrollbar(optset_T *args)
+{
+  win_T *wp = (win_T *)args->os_win;
+  if (wp != NULL) {
+    bool before_has = wp->w_has_scrollbar;
+    win_update_scrollbar_state(wp, NULL, NULL);
+    // only trigger redraw when we need
+    if (wp->w_has_scrollbar || before_has) {
+      redraw_later(wp, UPD_NOT_VALID);
+    }
+  }
+
   return NULL;
 }
 
@@ -4820,6 +4837,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_winbl);
   case kOptStatuscolumn:
     return &(win->w_p_stc);
+  case kOptScrollbar:
+    return &(win->w_p_scrollbar);
   default:
     iemsg(_("E356: get_varp ERROR"));
   }

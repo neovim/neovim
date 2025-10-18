@@ -178,6 +178,8 @@ static const char *highlight_init_both[] = {
   "default link PmenuShadow        FloatShadow",
   "default link PmenuShadowThrough FloatShadowThrough",
   "default link PreInsert        Added",
+  "default link ScrollbarThumb   PmenuThumb",
+  "default link Scrollbar        PmenuSbar",
   "default link ComplMatchIns    NONE",
   "default link ComplHint        NonText",
   "default link ComplHintMore    MoreMsg",
