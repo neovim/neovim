@@ -1727,7 +1727,7 @@ vim.isarray({t})                                               *vim.isarray()*
     |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (`table?`)
+      • {t}  (`any?`)
 
     Return: ~
         (`boolean`) `true` if array-like table, else `false`.
