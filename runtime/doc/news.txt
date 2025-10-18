@@ -151,6 +151,7 @@ API
   escape sequences to the terminal when Nvim is running in the |TUI|.
 • |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
 • |nvim_echo()| can create |Progress| messages
+• |nvim_open_tabpage()| can open a new |tabpage|.
 
 BUILD
 
