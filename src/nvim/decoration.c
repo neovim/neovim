@@ -871,9 +871,10 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     return false;
   }
 
+  decor_providers_invoke_conceal_line(wp, row);
   // No need to scan the marktree if there are no conceal_line marks.
   if (!buf_meta_total(wp->w_buffer, kMTMetaConcealLines)) {
-    return decor_providers_invoke_conceal_line(wp, row);
+    return false;
   }
 
   // Scan the marktree for any conceal_line marks on this row.
@@ -899,7 +900,7 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
   }
 
-  return decor_providers_invoke_conceal_line(wp, row);
+  return false;
 }
 
 /// @return whether a window may have folded or concealed lines

@@ -1411,21 +1411,20 @@ LanguageTree:parent()                                  *LanguageTree:parent()*
         (`vim.treesitter.LanguageTree?`)
 
 LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
-    Recursively parse all regions in the language tree using
-    |treesitter-parsers| for the corresponding languages and run injection
-    queries on the parsed trees to determine whether child trees should be
-    created and parsed.
-
-    Any region with empty range (`{}`, typically only the root tree) is always
-    parsed; otherwise (typically injections) only if it intersects {range} (or
-    if {range} is `true`).
+    Parse the regions in the language tree using |treesitter-parsers| for the
+    corresponding languages, and run injection queries on the parsed trees to
+    determine whether child trees should be created and parsed.
 
     Parameters: ~
       • {range}     (`boolean|Range?`) Parse this range in the parser's
-                    source. Set to `true` to run a complete parse of the
-                    source (Note: Can be slow!) Set to `false|nil` to only
-                    parse regions with empty ranges (typically only the root
-                    tree without injections).
+                    source.
+                    • Set to `true` to run a complete, recursive parse of the
+                      source (Note: Can be slow!).
+                    • Set to a range to parse all regions (including child
+                      regions) that intersect the range.
+                    • Set to `false|nil` to only parse all regions of the
+                      current language tree, skipping children (injected
+                      trees).
       • {on_parse}  (`fun(err?: string, trees?: table<integer, TSTree>)?`)
                     Function invoked when parsing completes. When provided and
                     `vim.g._ts_force_sync_parsing` is not set, parsing will
