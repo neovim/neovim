@@ -4046,8 +4046,7 @@ void close_others(int message, int forceit)
   }
 
   if (one_window(firstwin, NULL) && !lastwin->w_floating) {
-    if (message
-        && !autocmd_busy) {
+    if (message && !autocmd_busy) {
       msg(_(m_onlyone), 0);
     }
     return;
@@ -4057,7 +4056,8 @@ void close_others(int message, int forceit)
   win_T *nextwp;
   for (win_T *wp = firstwin; win_valid(wp); wp = nextwp) {
     nextwp = wp->w_next;
-    if (wp == curwin) {                 // don't close current window
+    // don't close current window or pinned floating windows
+    if (wp == curwin || (wp->w_floating && wp->w_config.pinned)) {
       continue;
     }
 
@@ -4089,7 +4089,17 @@ void close_others(int message, int forceit)
   }
 
   if (message && !ONE_WINDOW) {
-    emsg(_("E445: Other window contains changes"));
+    // Check if remaining windows are non-pinned
+    bool has_non_pinned = false;
+    for (win_T *wp = firstwin; wp != NULL; wp = wp->w_next) {
+      if (wp != curwin && !(wp->w_floating && wp->w_config.pinned)) {
+        has_non_pinned = true;
+        break;
+      }
+    }
+    if (has_non_pinned) {
+      emsg(_("E445: Other window contains changes"));
+    }
   }
 }
 
