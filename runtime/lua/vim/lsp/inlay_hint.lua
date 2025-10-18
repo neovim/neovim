@@ -437,7 +437,8 @@ function M.enable(enable, filter)
 end
 
 --- @class vim.lsp.inlay_hint.apply_text_edits.Opts
---- Whether to filter the inlay hints to strictly include the ones in the range.
+--- @inlinedoc
+--- Whether to filter the inlay hints to strictly include the ones in the range. Default: `true`
 --- @field post_filtering boolean?
 
 --- For supported LSP servers, apply the `textEdit`s in the inlay hint to the buffer.
@@ -450,26 +451,9 @@ end
 --- vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
 --- ```
 ---
---- For dot-repeat, you can set up the keymap like the following:
---- ```lua
---- vim.keymap.set(
----   "n",
----   "gI",
----   function()
----     vim.o.operatorfunc = "v:lua.vim.lsp.inlay_hint.apply_text_edits"
----     return vim.api.nvim_input("g@ ")
----   end,
----   {}
---- )
---- ```
----
----
---- @param opts? vim.lsp.inlay_hint.apply_text_edits.Opts|string
+--- @param opts? vim.lsp.inlay_hint.apply_text_edits.Opts
 function M.apply_text_edits(opts)
-  if type(opts) ~= 'table' then
-    -- TODO: how to handle dot-repeat special arg?
-    opts = {}
-  end
+  vim.validate('opts', opts, 'table', true)
   opts = vim.tbl_deep_extend('force', { post_filtering = true }, opts or {})
   local bufnr = api.nvim_get_current_buf()
   local winid = fn.bufwinid(bufnr)
