@@ -544,6 +544,7 @@ static void normal_prepare(NormalState *s)
   }
   may_trigger_modechanged();
 
+  s->set_prevcount = false;
   // When not finishing an operator and no register name typed, reset the count.
   if (!finish_op && !s->oa.regname) {
     s->ca.opcount = 0;
@@ -964,6 +965,8 @@ static bool normal_get_command_count(NormalState *s)
 
 static void normal_finish_command(NormalState *s)
 {
+  bool did_visual_op = false;
+
   if (s->command_finished) {
     goto normal_end;
   }
@@ -983,11 +986,13 @@ static void normal_finish_command(NormalState *s)
     s->old_mapped_len = typebuf_maplen();
   }
 
-  const bool prev_VIsual_active = VIsual_active;
-
   // If an operation is pending, handle it.  But not for K_IGNORE or
   // K_MOUSEMOVE.
   if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_MOUSEMOVE) {
+    did_visual_op = VIsual_active && s->oa.op_type != OP_NOP
+                    // For OP_COLON, do_pending_operator() stuffs ':' into
+                    // the read buffer, which isn't executed immediately.
+                    && s->oa.op_type != OP_COLON;
     do_pending_operator(&s->ca, s->old_col, false);
   }
 
@@ -1002,7 +1007,7 @@ normal_end:
 
   msg_nowait = false;
 
-  if (finish_op || prev_VIsual_active) {
+  if (finish_op || did_visual_op) {
     set_reg_var(get_default_register_name());
   }
 
