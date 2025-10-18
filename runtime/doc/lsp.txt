@@ -2139,13 +2139,6 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
-*vim.lsp.inlay_hint.apply_text_edits.Opts*
-
-    Fields: ~
-      • {post_filtering}  (`boolean?`) Whether to filter the inlay hints to
-                          strictly include the ones in the range.
-
-
 apply_text_edits({opts})               *vim.lsp.inlay_hint.apply_text_edits()*
     For supported LSP servers, apply the `textEdit`s in the inlay hint to the
     buffer.
@@ -2158,20 +2151,11 @@ apply_text_edits({opts})               *vim.lsp.inlay_hint.apply_text_edits()*
         vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
 <
 
-    For dot-repeat, you can set up the keymap like the following: >lua
-        vim.keymap.set(
-          "n",
-          "gI",
-          function()
-            vim.o.operatorfunc = "v:lua.vim.lsp.inlay_hint.apply_text_edits"
-            return vim.api.nvim_input("g@ ")
-          end,
-          {}
-        )
-<
-
     Parameters: ~
-      • {opts}  (`vim.lsp.inlay_hint.apply_text_edits.Opts|string?`)
+      • {opts}  (`table?`) A table with the following fields:
+                • {post_filtering} (`boolean?`) Whether to filter the inlay
+                  hints to strictly include the ones in the range. Default:
+                  `true`
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for the {filter}ed scope.
