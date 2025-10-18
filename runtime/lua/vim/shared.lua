@@ -826,7 +826,7 @@ end
 ---
 ---@see https://github.com/openresty/luajit2#tableisarray
 ---
----@param t? table
+---@param t? any
 ---@return boolean `true` if array-like table, else `false`.
 function vim.isarray(t)
   if type(t) ~= 'table' then
@@ -1246,7 +1246,7 @@ end
 
 --- Returns true if object `f` can be called as a function.
 ---
----@param f any Any object
+---@param f? any Any object
 ---@return boolean `true` if `f` is callable, else `false`
 function vim.is_callable(f)
   if type(f) == 'function' then

@@ -475,6 +475,7 @@ everywhere, not "buffer" in some places and "buf" in others.
     - chan:         |channel|
     - cmd:          Command
     - cmdline:      Command-line UI or input
+    - dir:          Directory
     - fn:           Function
     - hl:           Highlight
     - pos:          Position
