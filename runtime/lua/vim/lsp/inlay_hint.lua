@@ -596,11 +596,15 @@ function M.apply_text_edits(opts)
                 -- we're done with the edits.
                 return
               end
-            elseif support_resolve then
-              ---@type integer
-              local num_processed = 0
+            end
 
-              for i, h in ipairs(hints) do
+            -- keep track of the number of resolved edits
+            ---@type integer
+            local num_processed = 0
+
+            for i, h in ipairs(hints) do
+              if h.textEdits == nil or #h.textEdits == 0 then
+                -- resolve if no textEdits
                 client:request('inlayHint/resolve', h, function(_, _result, _, _)
                   if _result ~= nil then
                     hints[i] = _result
@@ -608,9 +612,23 @@ function M.apply_text_edits(opts)
                   num_processed = num_processed + 1
 
                   if num_processed == #hints then
-                    apply_edits(client, hints)
+                    if apply_edits(client, hints) == 0 then
+                      return do_insert(next(clients, idx))
+                    else
+                      return
+                    end
                   end
                 end, bufnr)
+              else
+                num_processed = num_processed + 1
+
+                if num_processed == #hints then
+                  if apply_edits(client, hints) == 0 then
+                    return do_insert(next(clients, idx))
+                  else
+                    return
+                  end
+                end
               end
             end
           else
