@@ -447,7 +447,7 @@ end
 ---
 --- Example usage:
 --- ```lua
---- vim.keymap.set("n", "gI", vim.lsp.inlay_hint.apply_text_edits, {})
+--- vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
 --- ```
 ---
 --- For dot-repeat, you can set up the keymap like the following:
