@@ -2409,7 +2409,7 @@ static size_t flush_buf_start(TUIData *tui, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   if (tui->sync_output && tui->has_sync_mode) {
-    return xstrlcpy(buf, "\x1b?2026h", len);
+    return xstrlcpy(buf, "\x1b[?2026h", len);
   } else if (!tui->is_invisible) {
     tui->is_invisible = true;
 
@@ -2436,7 +2436,7 @@ static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
 {
   size_t offset = 0;
   if (tui->sync_output && tui->has_sync_mode) {
-#define SYNC_END "\x1b?2026l"
+#define SYNC_END "\x1b[?2026l"
     memcpy(buf, SYNC_END, sizeof SYNC_END);
     offset += sizeof SYNC_END - 1;
   }
