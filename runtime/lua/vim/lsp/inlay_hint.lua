@@ -1,6 +1,7 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local api = vim.api
+local fn = vim.fn
 local M = {}
 
 ---@class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints
@@ -433,6 +434,201 @@ function M.enable(enable, filter)
       _enable(filter.bufnr)
     end
   end
+end
+
+--- @class vim.lsp.inlay_hint.apply_text_edits.Opts
+--- @inlinedoc
+--- Whether to filter the inlay hints to strictly include the ones in the range. Default: `true`
+--- @field post_filtering boolean?
+
+--- For supported LSP servers, apply the `textEdit`s in the inlay hint to the buffer.
+---
+--- - In |Normal-mode|, this function inserts inlay hints that are adjacent to the cursor.
+--- - In |Visual-mode|, this function inserts inlay hints that are in the visually selected range.
+---
+--- Example usage:
+--- ```lua
+--- vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
+--- ```
+---
+--- @param opts? vim.lsp.inlay_hint.apply_text_edits.Opts
+function M.apply_text_edits(opts)
+  vim.validate('opts', opts, 'table', true)
+  opts = vim.tbl_deep_extend('force', { post_filtering = true }, opts or {})
+  local bufnr = api.nvim_get_current_buf()
+  local winid = fn.bufwinid(bufnr)
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
+
+  local mode = fn.mode()
+
+  -- mark position, (1, 0) indexed, end-inclusive
+  ---@type {start: [integer, integer], end: [integer, integer]}
+  local range = {}
+
+  if mode == 'n' then
+    local cursor = api.nvim_win_get_cursor(winid)
+    range.start = cursor
+    range['end'] = cursor
+  else
+    local start_pos = fn.getpos('v')
+    local end_pos = fn.getpos('.')
+    if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
+      ---@type [integer, integer, integer, integer]
+      start_pos, end_pos = end_pos, start_pos
+    end
+
+    range = {
+      start = { start_pos[2], start_pos[3] - 1 },
+      ['end'] = { end_pos[2], end_pos[3] - 2 },
+    }
+
+    if mode == 'V' or mode == 'Vs' then
+      range.start[2] = 0
+      range['end'][1] = range['end'][1] + 1
+      range['end'][2] = 0
+    end
+  end
+
+  --- returns the number of edits applied.
+  ---@param client vim.lsp.Client
+  ---@param hints lsp.InlayHint
+  ---@return integer
+  local function apply_edits(client, hints)
+    ---@type lsp.TextEdit[]
+    local text_edits = vim
+      .iter(hints)
+      :filter(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          -- only keep those that have text edits.
+          return hint ~= nil and hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
+        end
+      )
+      :map(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          return hint.textEdits
+        end
+      )
+      :flatten(1)
+      :totable()
+    if #text_edits > 0 then
+      vim.schedule(function()
+        util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
+      end)
+    end
+    return #text_edits
+  end
+
+  ---@param idx? integer
+  ---@param client vim.lsp.Client
+  local function do_insert(idx, client)
+    if idx == nil then
+      return
+    end
+
+    local params =
+      util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+    local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
+
+    client:request(
+      'textDocument/inlayHint',
+      params,
+      ---@param result lsp.InlayHint[]?
+      function(_, result, _, _)
+        if result ~= nil then
+          ---@type lsp.InlayHint[]
+          local hints = vim
+            .iter(result)
+            :filter(
+              ---@param hint lsp.InlayHint
+              function(hint)
+                if opts.post_filtering then
+                  local hint_pos = hint.position
+                  if
+                    hint_pos.line < params.range.start.line
+                    or hint_pos.line > params.range['end'].line
+                  then
+                    -- outside of line range
+                    return false
+                  end
+
+                  if hint_pos.line == params.range.start.line then
+                    -- pos is in the same line as range.start
+                    if hint_pos.line == params.range['end'].line then
+                      -- range.start in the same line as range.end
+                      return params.range.start.character <= hint_pos.character
+                        and hint_pos.character <= params.range['end'].character
+                    end
+                    return hint_pos.character >= params.range.start.character
+                  end
+
+                  if hint_pos.line == params.range['end'].line then
+                    return hint_pos.character <= params.range['end'].character
+                  end
+                end
+                return true
+              end
+            )
+            :totable()
+          if #hints > 0 then
+            if not support_resolve then
+              if apply_edits(client, hints) == 0 then
+                -- no edits applied. proceed with the iteration.
+                return do_insert(next(clients, idx))
+              else
+                -- we're done with the edits.
+                return
+              end
+            end
+
+            -- keep track of the number of resolved edits
+            ---@type integer
+            local num_processed = 0
+
+            for i, h in ipairs(hints) do
+              if h.textEdits == nil or #h.textEdits == 0 then
+                -- resolve if no textEdits
+                client:request('inlayHint/resolve', h, function(_, _result, _, _)
+                  if _result ~= nil then
+                    hints[i] = _result
+                  end
+                  num_processed = num_processed + 1
+
+                  if num_processed == #hints then
+                    if apply_edits(client, hints) == 0 then
+                      return do_insert(next(clients, idx))
+                    else
+                      return
+                    end
+                  end
+                end, bufnr)
+              else
+                num_processed = num_processed + 1
+
+                if num_processed == #hints then
+                  if apply_edits(client, hints) == 0 then
+                    return do_insert(next(clients, idx))
+                  else
+                    return
+                  end
+                end
+              end
+            end
+          else
+            -- no hints in the given range.
+            return do_insert(next(clients, idx))
+          end
+        else
+          -- result is nil. Proceed to next client.
+          return do_insert(next(clients, idx))
+        end
+      end,
+      bufnr
+    )
+  end
+
+  do_insert(next(clients))
 end
 
 return M
