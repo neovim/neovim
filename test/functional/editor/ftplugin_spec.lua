@@ -107,3 +107,90 @@ describe("ftplugin: Lua 'includeexpr'", function()
     command('cd -')
   end)
 end)
+
+describe('ftplugin: vimdoc/help', function()
+  setup(function()
+    n.clear{
+      args = {
+        '+helptags $VIMRUNTIME/doc'
+      }
+    }
+    command('enew')
+    command('set filetype=help')
+    -- XXX: hacky way to load the `help.lua` module.
+    exec_lua([[
+      _G.test_help = dofile(vim.fs.joinpath(vim.env.VIMRUNTIME, 'ftplugin/help.lua'))
+    ]])
+  end)
+
+  before_each(function()
+    command('enew')
+    command('set filetype=help')
+  end)
+
+  it('scrub_tag()', function()
+    local function scrub_tag(tag)
+      return exec_lua([[return _G.test_help.scrub_tag(...)]], tag)
+    end
+
+    eq('b.a.z', scrub_tag('foo|b.a.z|buz||||biz'))
+    eq('b.a.z', scrub_tag('foo|b.a.z'))
+    eq('b.a.z', scrub_tag('|b.a.z|'))
+    eq('b.a.z', scrub_tag(' |b.a.z| '))
+    eq('b.a.z', scrub_tag(' "|b.a.z|" '))
+    eq('vim.lsp.ClientConfig', scrub_tag('(`vim.lsp.ClientConfig`)'))
+    eq('vim.lsp.ClientConfig', scrub_tag('vim.lsp.ClientConfig)`)'))
+    eq('vim.lsp.ClientConfig', scrub_tag('(`vim.lsp.ClientConfig'))
+    eq('vim.lsp.linked_editing_range.enable', scrub_tag('vim.lsp.linked_editing_range.enable(true,'))
+    eq('vim.lsp.log.get_filename', scrub_tag('vim.lsp.log.get_filename())'))
+    eq('vim.lsp.foldtext()', scrub_tag('|("vim.lsp.foldtext()")|'))
+    eq('vim.lsp.foldtext', scrub_tag(scrub_tag('|("vim.lsp.foldtext()")|')))
+    -- TODO: this one needs cursor postion to make a decision.
+    -- eq('xx', scrub_tag("require('vim.lsp.log').set_format_func(vim.inspect)"))
+  end)
+
+  it('open_helptag() guesses the best tag near cursor', function()
+    local function set_lines(text)
+      exec_lua([[vim.api.nvim_buf_set_lines(0, 0, -1, false, ...)]], text)
+    end
+    local cursor = n.api.nvim_win_set_cursor
+    local function open_helptag()
+      local word = exec_lua([[return _G.test_help.open_helptag()]])
+      local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
+      if n.fn.winnr('$') > 1 then
+        n.command('close')
+      end
+      return { word, bufname }
+    end
+
+    set_lines {'some plain text'}
+    cursor(0, {1, 5}) -- on 'plain'
+    eq({'plain', 'syntax.txt'}, open_helptag())
+
+    set_lines {':help command'}
+    cursor(0, {1, 4})
+    eq({':help', 'helphelp.txt'}, open_helptag())
+
+    set_lines {' :help command'}
+    cursor(0, {1, 5})
+    eq({':help', 'helphelp.txt'}, open_helptag())
+
+    set_lines {'v:version name'}
+    cursor(0, {1, 5})
+    eq({'v:version', 'vvars.txt'}, open_helptag())
+    cursor(0, {1, 2})
+    eq({'v:version', 'vvars.txt'}, open_helptag())
+
+    set_lines {"See 'option' for more."}
+    cursor(0, {1, 6}) -- on 'option'
+    eq({"'option'", 'intro.txt'}, open_helptag())
+
+    set_lines {':command-nargs'}
+    cursor(0, {1, 7}) -- on 'nargs'
+    eq({':command-nargs', 'map.txt'}, open_helptag())
+
+    set_lines {'|("vim.lsp.foldtext()")|'}
+    cursor(0, {1, 10})
+    eq({'vim.lsp.foldtext()', 'lsp.txt'}, open_helptag())
+  end)
+end)

@@ -1,3 +1,5 @@
+local M = {}
+
 -- use treesitter over syntax (for highlighted code blocks)
 vim.treesitter.start()
 
@@ -148,8 +150,68 @@ if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
   end
 end
 
+--- Massage a string into a form acceptable to :help.
+--- @param tag string
+function M.scrub_tag(tag)
+  tag = vim.trim(tag)
+  if tag == '|' then
+    return 'bar'
+  end
+  if tag == '"' then
+    return 'quote'
+  end
+  -- In case the string has bar (|) or quotes ("):
+  --    - Drop anything upto (and including) the first (|").
+  --    - Drop anything after (and including) other cases.
+  local tag2 = tag
+    :gsub('^.-%|', '')
+    :gsub('%|.*$', '')
+    :gsub('^.-"', '')
+    :gsub('".*$', '')
+  if tag ~= tag2 then
+    return tag2
+  end
+
+  -- Remove parens "(…)", brackets "[…]".
+  tag = tag2
+  tag2 = tag:gsub('^[()%[%]`]+', ''):gsub('[()%[%]`]+$', '')
+  if tag ~= tag2 then
+    return tag2
+  end
+
+  tag = tag2
+  tag2 = tag:match('^[^()%[%]`]+')
+  return tag2
+end
+
+function M.open_helptag()
+  local word = vim.fn.expand('<cWORD>')
+
+  -- Try :help on the WORD; if it fails, scrub it and try again.
+  local ok, err = false, nil
+  for _ = 1, 20 do
+    word = M.scrub_tag(word)
+    ok, err = pcall(vim.cmd.help, word)
+    if not ok and err --[[err:find('E433')]] then
+      -- error(err)
+      vim.cmd.help(word)
+    elseif ok or word == M.scrub_tag(word) then
+      break
+    end
+  end
+
+  return word
+end
+
+vim.keymap.set('n', 'K', function()
+  M.open_helptag()
+end, { buffer = 0, silent = true, desc = 'Go to help tag at cursor' })
+
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
   .. '\n sil! exe "nunmap <buffer> gO" | sil! exe "nunmap <buffer> g=="'
   .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
+  .. '\n sil! exe "nunmap <buffer> K"'
   .. ('\n call v:lua.vim.api.nvim_buf_clear_namespace(0, %d, 0, -1)'):format(url_ns)
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'
+
+return M
