@@ -436,11 +436,6 @@ function M.enable(enable, filter)
   end
 end
 
---- @class vim.lsp.inlay_hint.apply_text_edits.Opts
---- @inlinedoc
---- Whether to filter the inlay hints to strictly include the ones in the range. Default: `true`
---- @field post_filtering boolean?
-
 --- For supported LSP servers, apply the `textEdit`s in the inlay hint to the buffer.
 ---
 --- - In |Normal-mode|, this function inserts inlay hints that are adjacent to the cursor.
@@ -451,10 +446,7 @@ end
 --- vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
 --- ```
 ---
---- @param opts? vim.lsp.inlay_hint.apply_text_edits.Opts
-function M.apply_text_edits(opts)
-  vim.validate('opts', opts, 'table', true)
-  opts = vim.tbl_deep_extend('force', { post_filtering = true }, opts or {})
+function M.apply_text_edits()
   local bufnr = api.nvim_get_current_buf()
   local winid = fn.bufwinid(bufnr)
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
@@ -543,29 +535,27 @@ function M.apply_text_edits(opts)
             :filter(
               ---@param hint lsp.InlayHint
               function(hint)
-                if opts.post_filtering then
-                  local hint_pos = hint.position
-                  if
-                    hint_pos.line < params.range.start.line
-                    or hint_pos.line > params.range['end'].line
-                  then
-                    -- outside of line range
-                    return false
-                  end
+                local hint_pos = hint.position
+                if
+                  hint_pos.line < params.range.start.line
+                  or hint_pos.line > params.range['end'].line
+                then
+                  -- outside of line range
+                  return false
+                end
 
-                  if hint_pos.line == params.range.start.line then
-                    -- pos is in the same line as range.start
-                    if hint_pos.line == params.range['end'].line then
-                      -- range.start in the same line as range.end
-                      return params.range.start.character <= hint_pos.character
-                        and hint_pos.character <= params.range['end'].character
-                    end
-                    return hint_pos.character >= params.range.start.character
-                  end
-
+                if hint_pos.line == params.range.start.line then
+                  -- pos is in the same line as range.start
                   if hint_pos.line == params.range['end'].line then
-                    return hint_pos.character <= params.range['end'].character
+                    -- range.start in the same line as range.end
+                    return params.range.start.character <= hint_pos.character
+                      and hint_pos.character <= params.range['end'].character
                   end
+                  return hint_pos.character >= params.range.start.character
+                end
+
+                if hint_pos.line == params.range['end'].line then
+                  return hint_pos.character <= params.range['end'].character
                 end
                 return true
               end

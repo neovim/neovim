@@ -2139,7 +2139,7 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
-apply_text_edits({opts})               *vim.lsp.inlay_hint.apply_text_edits()*
+apply_text_edits()                     *vim.lsp.inlay_hint.apply_text_edits()*
     For supported LSP servers, apply the `textEdit`s in the inlay hint to the
     buffer.
     • In |Normal-mode|, this function inserts inlay hints that are adjacent to
@@ -2150,12 +2150,6 @@ apply_text_edits({opts})               *vim.lsp.inlay_hint.apply_text_edits()*
     Example usage: >lua
         vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
 <
-
-    Parameters: ~
-      • {opts}  (`table?`) A table with the following fields:
-                • {post_filtering} (`boolean?`) Whether to filter the inlay
-                  hints to strictly include the ones in the range. Default:
-                  `true`
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for the {filter}ed scope.
