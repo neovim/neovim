@@ -4911,9 +4911,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*'pumborder'*
 'pumborder'		string	(default "")
 			global
-	Defines the default border style of popupmenu windows. Same as
-	'winborder'. |hl-PmenuBorder| is used. When style is "shadow", the
-	|hl-PmenuShadow| and |hl-PmenuShadowThrough| are used.
+	Defines the default border style of popupmenu windows. See 'winborder' for
+	valid values. |hl-PmenuBorder| is used for highlighting the border, and when
+	style is "shadow" the |hl-PmenuShadow| and |hl-PmenuShadowThrough| groups are used.
 
 						*'pumheight'* *'ph'*
 'pumheight' 'ph'	number	(default 0)
