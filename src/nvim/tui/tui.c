@@ -533,6 +533,7 @@ static void terminfo_disable(TUIData *tui)
   terminfo_out(tui, kTerm_exit_attribute_mode);
   // Reset cursor to normal before exiting alternate screen.
   terminfo_out(tui, kTerm_cursor_normal);
+  terminfo_out(tui, kTerm_reset_cursor_style);
   terminfo_out(tui, kTerm_keypad_local);
 
   // Reset the key encoding
@@ -2020,6 +2021,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
                || terminfo_is_term_family(term, "iTerm.app")
                || terminfo_is_term_family(term, "iTerm2.app");
   bool alacritty = terminfo_is_term_family(term, "alacritty");
+  bool foot = terminfo_is_term_family(term, "foot");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool gnome_pretending_xterm = xterm && colorterm
@@ -2209,6 +2211,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
             || teraterm   // per TeraTerm "Supported Control Functions" doco
             || alacritty  // https://github.com/jwilm/alacritty/pull/608
             || cygwin
+            || foot
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt
