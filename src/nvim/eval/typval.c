@@ -3341,7 +3341,7 @@ void tv_dict_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 ///
 /// @param[out]  ret_tv  Structure where blob is saved.
 blob_T *tv_blob_alloc_ret(typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   blob_T *const b = tv_blob_alloc();
   tv_blob_set_ret(ret_tv, b);

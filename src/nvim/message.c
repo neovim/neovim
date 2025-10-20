@@ -643,7 +643,7 @@ void reset_last_sourcing(void)
 /// @return  true if "SOURCING_NAME" differs from "last_sourcing_name".
 static bool other_sourcing_name(void)
 {
-  if (SOURCING_NAME != NULL) {
+  if (HAVE_SOURCING_INFO && SOURCING_NAME != NULL) {
     if (last_sourcing_name != NULL) {
       return strcmp(SOURCING_NAME, last_sourcing_name) != 0;
     }
@@ -659,7 +659,7 @@ static bool other_sourcing_name(void)
 static char *get_emsg_source(void)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (SOURCING_NAME != NULL && other_sourcing_name()) {
+  if (HAVE_SOURCING_INFO && SOURCING_NAME != NULL && other_sourcing_name()) {
     char *sname = estack_sfile(ESTACK_NONE);
     char *tofree = sname;
 
