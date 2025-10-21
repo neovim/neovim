@@ -6,8 +6,8 @@
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#6889b2d90ee6ae96810a9f04ec7c62d9aa91d088",
-            .hash = "zlua-0.1.0-hGRpCxctBQDEQgDArJ0Kc4RDIsD-Hw3pw9pPPw_kGmmY",
+            .url = "git+https://github.com/natecraddock/ziglua#a4d08d97795c312e63a0f09d456f7c6d280610b4",
+            .hash = "zlua-0.1.0-hGRpC5c9BQAfU5bkkFfLV9B4a7Prw8N7JPIFAZBbRCkq",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
