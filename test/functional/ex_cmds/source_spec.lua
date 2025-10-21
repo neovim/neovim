@@ -247,12 +247,15 @@ describe(':source', function()
         feed('dd')
 
         feed_command(':source')
-
+        local filepath = fn.expand('%:p')
+        if filepath == '' then
+          filepath = ':source buffer=1'
+        end
         eq(12, eval('g:c'))
         eq('  \\ 1\n "\\ 2', exec_lua('return _G.a'))
-        eq(':source buffer=1', api.nvim_get_var('sfile_value'))
-        eq(':source buffer=1', api.nvim_get_var('stack_value'))
-        eq(':source buffer=1', api.nvim_get_var('script_value'))
+        eq(filepath, api.nvim_get_var('sfile_value'))
+        eq(filepath, api.nvim_get_var('stack_value'))
+        eq(filepath, api.nvim_get_var('script_value'))
       end)
     end
 
