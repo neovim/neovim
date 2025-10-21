@@ -4041,8 +4041,10 @@ M.funcs = {
       {winnr} can be the window number or the |window-ID|.
       If both {winnr} and {tabnr} are -1 the global working
       directory is returned.
-      Note Vim differs in its return value when {tabnr} is -1 it returns
-      an empty string is as it is invalid.
+      Note: When {tabnr} is -1 Vim returns an empty string to singal
+      thgat it is invalid, whereas Nvim returns either the global working
+      directory if {winnr} is -1 or the working directory of the window
+      indicated by {winnr}.
       Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
     ]=],
