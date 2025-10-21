@@ -376,7 +376,6 @@ lsp.config = setmetatable({ _configs = {} }, {
       end
 
       if not rtp_config and not self._configs[name] then
-        log.warn(('%s does not have a configuration'):format(name))
         return
       end
 
