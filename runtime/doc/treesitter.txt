@@ -1579,9 +1579,11 @@ edit({lang})                                     *vim.treesitter.query.edit()*
     completes available parsers.
 
     If you move the cursor to a capture name ("@foo"), text matching the
-    capture is highlighted in the source buffer. The query editor is a scratch
-    buffer, use `:write` to save it. You can find example queries at
-    `$VIMRUNTIME/queries/`.
+    capture is highlighted with |hl-DiagnosticVirtualTextHint| in the source
+    buffer.
+
+    The query editor is a scratch buffer, use `:write` to save it. You can
+    find example queries at `$VIMRUNTIME/queries/`.
 
     Parameters: ~
       • {lang}  (`string?`) language to open the query editor for. If omitted,
