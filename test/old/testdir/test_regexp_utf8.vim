@@ -562,12 +562,8 @@ func Test_match_invalid_byte()
 endfunc
 
 func Test_match_illegal_byte()
-  let lines =<< trim END
-      silent! buffer ÿ\c
-      next ÿ
-      0scriptnames
-      source
-  END
+  " Text has illegal bytes which need to be set explicitly
+  let lines = ["norm :set no\x01\<CR>", "silent n\xff", "silent norm :b\xff\<CR>"]
   call writefile(lines, 'Xregexp')
   call system(GetVimCommand() .. ' -X -Z -e -s -S Xregexp -c qa!')
 
