@@ -24,10 +24,6 @@ This tutorial is interactive, and there are a few things you should know.
 - Or simply type K on any word to find its documentation!
 - You can close this help window with ":q <Enter>"
 
-When there is a ✗ sign at the left, you will be required to modify text.
-Once you have done the changes correctly, the ✗ sign at the left will change
-to ✓. I imagine you can already see how neat Neovim can be.
-
 Other times, you'll be prompted to run a command (I'll explain this later):
 
     ":help <Enter>"
@@ -260,7 +256,7 @@ NOTE: Pressing just the motion while in Normal mode without an operator
 
 ** Typing a number before a motion repeats it that many times. **
 
- 1. Move the cursor to the start of the line marked ✓ below.
+ 1. Move the cursor to the start of the line marked "--->" below.
 
  2. Type "2w" to move the cursor two words forward.
 
@@ -512,7 +508,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
 ** Type "%" to find a matching ), ], or }. **
 
- 1. Place the cursor on any (, [, or { in the line below marked ✓.
+ 1. Place the cursor on any (, [, or { in the line below marked "--->".
 
  2. Now type the % character.
 
@@ -733,7 +729,7 @@ NOTE: You can also read the output of an external command. For example,
 
 ** Type "o" to open a line below the cursor and place you in Insert mode. **
 
- 1. Move the cursor to the line below marked ✓.
+ 1. Move the cursor to the line below marked "--->".
 
  2. Type the lowercase letter "o" to open up a line BELOW the
     cursor and place you in Insert mode.
@@ -792,7 +788,7 @@ NOTE: Replace mode is like Insert mode, but every typed character
 
 ** Use the "y" operator to copy text and "p" to put it. **
 
- 1. Go to the line marked with ✓ below and place the cursor after "a)".
+ 1. Go to the line marked with "--->" below and place the cursor after "a)".
 
  2. Start Visual mode with "v" and move the cursor to just before
     "first".

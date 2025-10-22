@@ -205,36 +205,3 @@ starting with "$".
 ~~~ sh
     $ vim --version
 ~~~
-
-## INTERACTIVE ELEMENTS *interactive*
-
-As visible in this very document, vim-tutor-mode includes some interactive
-elements to provide feedback to the user about their progress. If the text in
-these elements satisfies some set condition, a ✓ sign will appear in the gutter
-to the left. Otherwise, a ✗ sign is displayed.
-
-### expect *expect*
-
-"expect" lines check that the contents of the line are identical to some preset text
-(like in the exercises above).
-
-These elements are specified in separate JSON files like this
-
-~~~ json
-{
-  "expect": {
-    "1": "This is how this line should look.",
-    "2": "This is how this line should look.",
-    "3": -1
-  }
-}
-~~~
-
-These files contain an "expect" dictionary, for which the keys are line numbers and 
-the values are the expected text. A value of -1 means that the condition for the line
-will always be satisfied, no matter what (this is useful for letting the user play a bit).
-
-This is an "expect" line that is always satisfied. Try changing it.
-
-These files conventionally have the same name as the tutorial document with the `.json`
-extension appended (for a full example, see the file that corresponds to this tutorial).

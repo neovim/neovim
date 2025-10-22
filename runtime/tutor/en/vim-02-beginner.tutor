@@ -53,7 +53,7 @@
 
 ** Store two yanked words concurrently and then paste them **
 
-  1. Move the cursor to the line below marked ✓
+  1. Move the cursor to the line below marked "--->"
 
   2. Navigate to any point on the word 'Edward' and type ""ayiw"
 
@@ -109,7 +109,7 @@ REFERENCE: Expression Register
 
 ** Press "yy" and "dd" to witness their effect on the registers **
 
-  1. Move the cursor to the line below marked ✓
+  1. Move the cursor to the line below marked "--->"
 
   2. yank the zeroth line, then inspect registers with ":reg <ENTER>"
 
@@ -196,7 +196,7 @@ NOTE: a common conundrum when coding is moving around large chunks of code.
       with operations like ""a147d" or ":945,1091d a" or even worse
       using "i<CTRL-r>="1091-945 "<ENTER>" first
 
-  1. Move the cursor to the line below marked ✓
+  1. Move the cursor to the line below marked "--->"
 
   2. Go to the first line of the function and mark it with "ma"
 
