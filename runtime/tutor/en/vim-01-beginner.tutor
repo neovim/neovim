@@ -270,7 +270,7 @@ NOTE: Pressing just the motion while in Normal mode without an operator
 
  5. Repeat steps 2 and 3 with different numbers.
 
-This is just a line with words you can move around in.
+---> This is just a line with words you can move around in.
 
  6. Move on to Lesson 2.5.
 
@@ -503,7 +503,7 @@ NOTE: You may see the cursor position in the lower right corner of the
     (keep "<Ctrl>" pressed down while pressing the letter "o").
     Repeat to go back further. "<C-i>" goes forward.
 
-"errroor" is not the way to spell error; errroor is an error.
+---> "errroor" is not the way to spell error; errroor is an error.
 
 NOTE: When the search reaches the end of the file it will continue at the
       start, unless the 'wrapscan' option has been reset.
@@ -522,7 +522,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
  5. Move the cursor to another (, ), [, ], {, or } and see what "%" does.
 
-This ( is a test line with ('s, ['s, ] and {'s } in it. ))
+---> This ( is a test line with ('s, ['s, ] and {'s } in it. ))
 
 NOTE: This is very useful in debugging a program with unmatched parentheses!
 
@@ -740,12 +740,12 @@ NOTE: You can also read the output of an external command. For example,
 
  3. Now type some text and press "<Esc>" to exit Insert mode. Remove your opened lines after you're done.
 
-After typing "o" the cursor is placed on the open line in Insert mode.
+---> After typing "o" the cursor is placed on the open line in Insert mode.
 
  4. To open up a line ABOVE the cursor, simply type a capital O, rather
     than a lowercase "o". Try this on the line below. Remove your opened lines after you're done.
 
-Open up a line above this by typing O while the cursor is on this line.
+---> Open up a line above this by typing O while the cursor is on this line.
 
 # Lesson 6.2: THE APPEND COMMAND
 

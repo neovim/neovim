@@ -25,7 +25,7 @@
      - Try with other operators: "ciw" (change), "yiw" (yank),
         "gqiw" (format)
 
-Practice on: "Vim's", (text_object), and 'powerful' words here.
+---> Practice on: "Vim's", (text_object), and 'powerful' words here.
 
   2. Work with bracketed content:
      - Put cursor inside any () {} [] <> pair below
@@ -33,7 +33,7 @@ Practice on: "Vim's", (text_object), and 'powerful' words here.
      - Type "da(" or "dab" (delete around brackets)
      - Try same with "i""/"a"" for quotes, "it"/"at"  for HTML/XML tags
 
-Test cases: {curly}, [square], <angle>, and "quoted" items.
+---> Test cases: {curly}, [square], <angle>, and "quoted" items.
 
   3. Paragraph and sentence manipulation:
      - Use "dip" to delete inner paragraph (cursor anywhere in paragraph)
@@ -46,7 +46,7 @@ Test cases: {curly}, [square], <angle>, and "quoted" items.
      - "gUit"        - Uppercase inner HTML tag content
      - "va"p"        - Select quoted text and paste over it
 
-Final exercise: (Modify "this" text) by [applying {various} operations]<
+---> Final exercise: (Modify "this" text) by [applying {various} operations]<
 
 
 # Lesson 2.1.2: THE NAMED REGISTERS
@@ -68,7 +68,7 @@ Final exercise: (Modify "this" text) by [applying {various} operations]<
 
   5. Navigate to any point on the word 'cake' and type "ciw<CTRL-r>b<ESC>"
 
-a) Edward will henceforth be in charge of the cookie rations
+---> a) Edward will henceforth be in charge of the cookie rations
 b) In this capacity, Vince will have sole cake discretionary powers
 
 NOTE: Delete also works into registers, i.e. ""sdiw" will delete
@@ -97,7 +97,7 @@ NOTE: All calls to system are OS dependent, e.g. on Windows use
       "system('date /t')"   or  ":r!date /t"
 
 I have forgotten the exact number of seconds in a day, is it 84600?
-Today's date is: 
+---> Today's date is: 
 
 NOTE: the same can be achieved with ":pu=""system('date')"
       or, with fewer keystrokes ":r!date"
@@ -123,7 +123,7 @@ NOTE: You should notice that old full-line deletions move down the list
 
   5. Now (p)aste the following registers in order; c, 7, 4, 8, 2. i.e. ""7p"
 
-0. This
+---> 0. This
 9. wobble
 8. secret
 7. is
@@ -155,7 +155,7 @@ REFERENCE: Numbered Registers
      - ""+p" - Paste from system clipboard
      - ""*" is primary selection on X11 (middle-click), ""+" is clipboard
 
-Try: "+yy then paste into another application with Ctrl-V or Cmd+V
+---> Try: "+yy then paste into another application with Ctrl-V or Cmd+V
 
   2. Blackhole register "_" discards text:
      - ""_daw" - Delete word without saving to any register
@@ -166,7 +166,7 @@ Try: "+yy then paste into another application with Ctrl-V or Cmd+V
      - ""_dap" - Delete paragraph without saving
      - Combine with counts: "3"_dw"
 
-Practice: "_diw on any word to delete it without affecting yank history
+---> Practice: "_diw on any word to delete it without affecting yank history
 
   3. Combine with visual selections:
      - Select text with V then ""+y"
@@ -215,7 +215,7 @@ NOTE: exact position on line is NOT important!
 NOTE: practice this operation multiple times to become fluent "ma$%"ad'a"
 
 ~~~ cmd
-AAA
+---> AAA
 function itGotRealBigRealFast() {
   if ( somethingIsTrue ) {
     doIt()

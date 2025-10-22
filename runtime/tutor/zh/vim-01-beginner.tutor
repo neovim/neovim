@@ -256,7 +256,7 @@ NOTE: 在普通模式下，不带操作符、只按下移动键，将会像预�
 
  5. 用不同的数字重复第 2 和第 3 步。
 
-This is just a line with words you can move around in.
+---> This is just a line with words you can move around in.
 
  6. 继续学习第 2.5 课。
 
@@ -481,7 +481,7 @@ NOTE: 你可能会在屏幕右下角看到光标位置。这是因为设置了 '
  5. 要回到你之前的位置，按 "<C-o>"。（按住 "<Ctrl>" 键的同时按字母 "o"）。
     重复按可以回到更早的位置。"<C-i>" 则会前进。
 
-"errroor" is not the way to spell error; errroor is an error.
+---> "errroor" is not the way to spell error; errroor is an error.
 
 NOTE: 当搜索到达文件末尾时，它会从头开始继续搜索，除非 'wrapscan' 选项被关闭了。
 
@@ -499,7 +499,7 @@ NOTE: 当搜索到达文件末尾时，它会从头开始继续搜索，除非 '
 
  5. 将光标移动到另一个 (, ), [, ], {, } 上，看看 "%" 的效果。
 
-This ( is a test line with ('s, ['s, ] and {'s } in it. ))
+---> This ( is a test line with ('s, ['s, ] and {'s } in it. ))
 
 NOTE: 这在调试程序中不匹配的括号时非常有用！
 
@@ -699,12 +699,12 @@ NOTE: 你也可以读取一个外部命令的输出。例如：
 
  3. 现在输入一些文本，然后按 "<Esc>" 退出插入模式。完成后请删除你开启的行。
 
-After typing "o" the cursor is placed on the open line in Insert mode.
+---> After typing "o" the cursor is placed on the open line in Insert mode.
 
  4. 要在光标“上方”开启一个新行，只需输入大写 O，而不是小写 "o"。
     在下面这行上试试。完成后请删除你开启的行。
 
-Open up a line above this by typing O while the cursor is on this line.
+---> Open up a line above this by typing O while the cursor is on this line.
 
 # 第 6.2 课：追加命令（Append）
 
