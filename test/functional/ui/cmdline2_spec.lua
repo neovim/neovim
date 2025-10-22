@@ -97,4 +97,13 @@ describe('cmdline2', function()
       ^                                                     |
     ]])
   end)
+
+  it('highlights after deleting buffer', function()
+    feed(':%bw!<CR>:call foo()')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}{15:call} {25:foo}{16:()}^                                          |
+    ]])
+  end)
 end)
