@@ -46,6 +46,10 @@ end
 ---@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
 ---@return string[] # Array of lines
 function M._getlines(bufnr, start_lnum, end_lnum)
+  if not bufnr or bufnr < 0 then
+    return {}
+  end
+
   if start_lnum then
     return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum or start_lnum, false)
   end
@@ -59,6 +63,10 @@ end
 ---@param start_lnum integer The line number of the first line (inclusive, 1-based)
 ---@return string
 function M._getline(bufnr, start_lnum)
+  if not bufnr or bufnr < 0 then
+    return ''
+  end
+
   -- Return a single line
   return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
 end
