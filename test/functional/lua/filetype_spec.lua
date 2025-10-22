@@ -75,7 +75,6 @@ describe('vim.filetype', function()
     )
   end)
 
-
   it('works with filenames', function()
     eq(
       'nim',
