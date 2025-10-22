@@ -1,5 +1,6 @@
 -- Tests for (protocol-driven) ui2, intended to replace the legacy message grid UI.
 
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -105,5 +106,22 @@ describe('cmdline2', function()
       {1:~                                                    }|*12
       {16::}{15:call} {25:foo}{16:()}^                                          |
     ]])
+  end)
+
+  it('can change cmdline buffer during textlock', function()
+    exec([[
+      func Foo(a, b)
+        redrawstatus!
+      endfunc
+      set wildoptions=pum findfunc=Foo wildmode=noselect:lastused,full
+      au CmdlineChanged * call wildtrigger()
+    ]])
+    feed(':find ')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}{15:find} ^                                               |
+    ]])
+    t.eq(n.eval('v:errmsg'), "E1514: 'findfunc' did not return a List type")
   end)
 end)

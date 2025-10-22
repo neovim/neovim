@@ -744,6 +744,10 @@ void ui_call_event(char *name, bool fast, Array args)
   bool handled = false;
   UIEventCallback *event_cb;
 
+  // UI callbacks need to be allowed to change text.
+  int save_textlock = textlock;
+  textlock = 0;
+
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;
@@ -758,6 +762,7 @@ void ui_call_event(char *name, bool fast, Array args)
     }
     api_clear_error(&err);
   })
+  textlock = save_textlock;
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);
