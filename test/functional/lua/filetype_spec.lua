@@ -55,7 +55,7 @@ describe('vim.filetype', function()
     )
   end)
 
-  it('works with filenames that call _getlines() internally', function()
+  it('works with filenames that call _getlines() internally #36272', function()
     eq(
       'sh',
       exec_lua(function()
@@ -65,7 +65,7 @@ describe('vim.filetype', function()
     )
   end)
 
-  it('works with filenames that call _getline() internally', function()
+  it('works with filenames that call _getline() internally #36272', function()
     eq(
       'text',
       exec_lua(function()
