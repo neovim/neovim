@@ -24,6 +24,10 @@ This tutorial is interactive, and there are a few things you should know.
 - Or simply type K on any word to find its documentation!
 - You can close this help window with ":q <Enter>"
 
+When there is a ✗ sign at the left, you will be required to modify text.
+Once you have done the changes correctly, the ✗ sign at the left will change
+to ✓. I imagine you can already see how neat Neovim can be.
+
 Other times, you'll be prompted to run a command (I'll explain this later):
 
     ":help <Enter>"
