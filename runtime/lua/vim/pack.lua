@@ -588,14 +588,8 @@ end
 --- @async
 --- @param p vim.pack.Plug
 --- @param timestamp string
---- @param skip_same_sha boolean
-local function checkout(p, timestamp, skip_same_sha)
+local function checkout(p, timestamp)
   infer_states(p)
-  if skip_same_sha and p.info.sha_head == p.info.sha_target then
-    return
-  end
-
-  trigger_event(p, 'PackChangedPre', 'update')
 
   local msg = ('vim.pack: %s Stash before checkout'):format(timestamp)
   git_cmd({ 'stash', '--quiet', '--message', msg }, p.path)
@@ -603,8 +597,6 @@ local function checkout(p, timestamp, skip_same_sha)
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
 
   plugin_lock.plugins[p.spec.name].rev = p.info.sha_target
-
-  trigger_event(p, 'PackChanged', 'update')
 
   -- (Re)Generate help tags according to the current help files.
   -- Also use `pcall()` because `:helptags` errors if there is no 'doc/'
@@ -638,12 +630,8 @@ local function install_list(plug_list, confirm)
     -- Prefer revision from the lockfile instead of using `version`
     p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
 
-    -- Do not skip checkout even if HEAD and target have same commit hash to
-    -- have new repo in expected detached HEAD state and generated help files.
-    checkout(p, timestamp, false)
+    checkout(p, timestamp)
 
-    -- "Install" event is triggered after "update" event intentionally to have
-    -- it indicate "plugin is installed in its correct initial version"
     trigger_event(p, 'PackChanged', 'install')
   end
   run_list(plug_list, do_install, 'Installing plugins')
@@ -1037,9 +1025,11 @@ function M.update(names, opts)
     -- Compute change info: changelog if any, new tags if nothing to update
     infer_update_details(p)
 
-    -- Checkout immediately if not need to confirm
-    if opts.force then
-      checkout(p, timestamp, true)
+    -- Checkout immediately if no need to confirm
+    if opts.force and p.info.sha_head ~= p.info.sha_target then
+      trigger_event(p, 'PackChangedPre', 'update')
+      checkout(p, timestamp)
+      trigger_event(p, 'PackChanged', 'update')
     end
   end
   local progress_title = opts.force and (opts._offline and 'Applying updates' or 'Updating')
@@ -1070,7 +1060,9 @@ function M.update(names, opts)
     --- @async
     --- @param p vim.pack.Plug
     local function do_checkout(p)
-      checkout(p, timestamp2, true)
+      trigger_event(p, 'PackChangedPre', 'update')
+      checkout(p, timestamp2)
+      trigger_event(p, 'PackChanged', 'update')
     end
     run_list(plugs_to_checkout, do_checkout, 'Applying updates')
 
