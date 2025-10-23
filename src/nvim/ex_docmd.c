@@ -7986,7 +7986,7 @@ static void ex_terminal(exarg_T *eap)
     shell_free_argv(argv);
 
     snprintf(ex_cmd + len, sizeof(ex_cmd) - len,
-             " | call jobstart([%s], {'term':v:true})", shell_argv + 1);
+             " | call jobstart([%s], {'term':v:true,'_shell':v:true})", shell_argv + 1);
   }
 
   do_cmdline_cmd(ex_cmd);
