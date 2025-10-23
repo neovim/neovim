@@ -1323,9 +1323,10 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
             win->w_topline += amount;
           }
           win->w_topfill = 0;
-          // api: display new line if inserted right at topline
-          // TODO(bfredl): maybe always?
-        } else if (amount_after && win->w_topline > line2 + (by_api ? 1 : 0)) {
+        } else if (amount_after
+                   // api: display new line if inserted right at topline
+                   // TODO(bfredl): maybe always?
+                   && win->w_topline > line2 + (by_api && line2 < line1 ? 1 : 0)) {
           win->w_topline += amount_after;
           win->w_topfill = 0;
         }

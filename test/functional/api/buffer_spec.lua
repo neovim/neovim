@@ -469,6 +469,79 @@ describe('api/buf', function()
         ]],
         }
       end)
+
+      describe('when deleting', function()
+        before_each(function()
+          command('new | wincmd w | call cursor(8, 1) | setlocal modified')
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            www                 |
+            xxx                 |
+            yyy                 |
+            ^zzz                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+        end)
+
+        it('3 lines around topline', function()
+          api.nvim_buf_set_lines(0, 3, 6, true, {})
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            ccc                 |
+            yyy                 |
+            ^zzz                 |
+            {1:~                   }|
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+        end)
+
+        it('3 lines around the line just before topline', function()
+          api.nvim_buf_set_lines(0, 2, 5, true, {})
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            bbb                 |
+            xxx                 |
+            yyy                 |
+            ^zzz                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+        end)
+
+        describe('just before topline', function()
+          for count = 1, 4 do
+            it(('%d lines'):format(count), function()
+              api.nvim_buf_set_lines(0, 4 - count, 4, true, {})
+              screen:expect_unchanged()
+            end)
+            it(('%d lines and replacing with 2 lines'):format(count), function()
+              api.nvim_buf_set_lines(0, 4 - count, 4, true, { 'eee', 'fff' })
+              screen:expect_unchanged()
+            end)
+          end
+        end)
+
+        describe('far before topline', function()
+          for count = 1, 3 do
+            it(('%d lines'):format(count), function()
+              api.nvim_buf_set_lines(0, 0, count, true, {})
+              screen:expect_unchanged()
+            end)
+            it(('%d lines and replacing with 2 lines'):format(count), function()
+              api.nvim_buf_set_lines(0, 0, count, true, { 'eee', 'fff' })
+              screen:expect_unchanged()
+            end)
+          end
+        end)
+      end)
     end)
 
     it('handles clearing out non-current buffer #24911', function()
