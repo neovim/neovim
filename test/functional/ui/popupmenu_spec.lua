@@ -8735,7 +8735,7 @@ describe('builtin popupmenu', function()
       end)
     end
 
-    describe("'pumborder' #test", function()
+    describe("'pumborder'", function()
       before_each(function()
         screen:try_resize(30, 11)
         exec([[
