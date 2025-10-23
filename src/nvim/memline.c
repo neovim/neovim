@@ -2551,7 +2551,7 @@ int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
   FUNC_ATTR_NONNULL_ALL
 {
   ml_flush_line(buf, false);
-  return ml_delete_int(buf, lnum, message);
+  return ml_delete_int(buf, lnum, message ? ML_DEL_MESSAGE : 0);
 }
 
 /// Delete line `lnum` in the current buffer.

@@ -2132,11 +2132,11 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   if (scbk < term->sb_current) {
     size_t diff = term->sb_current - scbk;
     for (size_t i = 0; i < diff; i++) {
-      ml_delete(1);
+      ml_delete_buf(buf, 1, false);
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }
-    deleted_lines(1, (linenr_T)diff);
+    deleted_lines_buf(buf, 1, (linenr_T)diff);
   }
 
   // Resize the scrollback storage.
