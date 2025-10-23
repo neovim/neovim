@@ -158,6 +158,7 @@ struct terminal {
   // it actually points to entries that are no longer in sb_buffer (because the
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
+  size_t sb_deleted;                // Lines deleted from sb_buffer.
 
   char *title;     // VTermStringFragment buffer
   size_t title_len;    // number of rows pushed to sb_buffer
@@ -230,6 +231,7 @@ static void emit_termrequest(void **argv)
   StringBuilder *pending_send = argv[3];
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
+  size_t sb_deleted = (size_t)(intptr_t)argv[6];
 
   if (term->sb_pending > 0) {
     // Don't emit the event while there is pending scrollback because we need
@@ -237,14 +239,15 @@ static void emit_termrequest(void **argv)
     // the event onto the pending queue where it will be executed after the
     // terminal is refreshed and the pending scrollback is cleared.
     multiqueue_put(term->pending.events, emit_termrequest, term, sequence, (void *)sequence_length,
-                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col);
+                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col,
+                   (void *)(intptr_t)sb_deleted);
     return;
   }
 
   set_vim_var_string(VV_TERMREQUEST, sequence, (ptrdiff_t)sequence_length);
 
   MAXSIZE_TEMP_ARRAY(cursor, 2);
-  ADD_C(cursor, INTEGER_OBJ(row));
+  ADD_C(cursor, INTEGER_OBJ(row - (int64_t)(term->sb_deleted - sb_deleted)));
   ADD_C(cursor, INTEGER_OBJ(col));
 
   MAXSIZE_TEMP_DICT(data, 2);
@@ -278,7 +281,8 @@ static void schedule_termrequest(Terminal *term)
   multiqueue_put(main_loop.events, emit_termrequest, term,
                  xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
                  (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
-                 (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col);
+                 (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col,
+                 (void *)(intptr_t)term->sb_deleted);
 }
 
 static int parse_osc8(const char *str, int *attr)
@@ -1451,6 +1455,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
     } else {
       xfree(term->sb_buffer[term->sb_current - 1]);
     }
+    term->sb_deleted++;
 
     // Make room at the start by shifting to the right.
     memmove(term->sb_buffer + 1, term->sb_buffer,
