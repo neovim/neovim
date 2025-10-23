@@ -1028,7 +1028,8 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				- sequence: the received sequence
 				- cursor: (1,0)-indexed, buffer-relative
 				  position of the cursor when the sequence was
-				  received
+				  received (line number may be <= 0 if the
+				  position is no longer in the buffer)
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
