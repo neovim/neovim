@@ -2132,7 +2132,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   if (scbk < term->sb_current) {
     size_t diff = term->sb_current - scbk;
     for (size_t i = 0; i < diff; i++) {
-      ml_delete(1, false);
+      ml_delete(1);
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }

@@ -1981,7 +1981,7 @@ void del_lines(linenr_T nlines, bool undo)
       break;
     }
 
-    ml_delete(first, true);
+    ml_delete_flags(first, ML_DEL_MESSAGE);
     n++;
 
     // If we delete the last line in the file, stop

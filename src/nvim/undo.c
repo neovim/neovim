@@ -250,7 +250,7 @@ int u_save_cursor(void)
 }
 
 /// Save the lines between "top" and "bot" for both the "u" and "U" command.
-/// "top" may be 0 and bot may be curbuf->b_ml.ml_line_count + 1.
+/// "top" may be 0 and "bot" may be curbuf->b_ml.ml_line_count + 1.
 /// Careful: may trigger autocommands that reload the buffer.
 /// Returns FAIL when lines could not be saved, OK otherwise.
 int u_save(linenr_T top, linenr_T bot)
@@ -2252,6 +2252,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
 {
   char **newarray = NULL;
   linenr_T newlnum = MAXLNUM;
+  pos_T new_curpos = curwin->w_cursor;
   u_entry_T *nuep;
   u_entry_T *newlist = NULL;
   fmark_T namedm[NMARKS];
@@ -2296,14 +2297,16 @@ static void u_undoredo(bool undo, bool do_buf_event)
     linenr_T oldsize = bot - top - 1;        // number of lines before undo
     linenr_T newsize = uep->ue_size;         // number of lines after undo
 
+    // Decide about the cursor position, depending on what text changed.
+    // Don't set it yet, it may be invalid if lines are going to be added.
     if (top < newlnum) {
       // If the saved cursor is somewhere in this undo block, move it to
       // the remembered position.  Makes "gwap" put the cursor back
       // where it was.
       linenr_T lnum = curhead->uh_cursor.lnum;
       if (lnum >= top && lnum <= top + newsize + 1) {
-        curwin->w_cursor = curhead->uh_cursor;
-        newlnum = curwin->w_cursor.lnum - 1;
+        new_curpos = curhead->uh_cursor;
+        newlnum = new_curpos.lnum - 1;
       } else {
         // Use the first line that actually changed.  Avoids that
         // undoing auto-formatting puts the cursor in the previous
@@ -2316,17 +2319,17 @@ static void u_undoredo(bool undo, bool do_buf_event)
         }
         if (i == newsize && newlnum == MAXLNUM && uep->ue_next == NULL) {
           newlnum = top;
-          curwin->w_cursor.lnum = newlnum + 1;
+          new_curpos.lnum = newlnum + 1;
         } else if (i < newsize) {
           newlnum = top + (linenr_T)i;
-          curwin->w_cursor.lnum = newlnum + 1;
+          new_curpos.lnum = newlnum + 1;
         }
       }
     }
 
     bool empty_buffer = false;
 
-    // delete the lines between top and bot and save them in newarray
+    // Delete the lines between top and bot and save them in newarray.
     if (oldsize > 0) {
       newarray = xmalloc(sizeof(char *) * (size_t)oldsize);
       // delete backwards, it goes faster in most cases
@@ -2340,13 +2343,16 @@ static void u_undoredo(bool undo, bool do_buf_event)
         if (curbuf->b_ml.ml_line_count == 1) {
           empty_buffer = true;
         }
-        ml_delete(lnum, false);
+        ml_delete(lnum);  // ML_DEL_UNDO
       }
     } else {
       newarray = NULL;
     }
 
-    // insert the lines in u_array between top and bot
+    // make sure the cursor is on a valid line after the deletions
+    check_cursor_lnum(curwin);
+
+    // Insert the lines in u_array between top and bot.
     if (newsize) {
       int i;
       linenr_T lnum;
@@ -2356,7 +2362,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
         if (empty_buffer && lnum == 0) {
           ml_replace(1, uep->ue_array[i], true);
         } else {
-          ml_append(lnum, uep->ue_array[i], 0, false);
+          ml_append_flags(lnum, uep->ue_array[i], 0, 0);  // ML_APPEND_UNDO
         }
         xfree(uep->ue_array[i]);
       }
@@ -2374,12 +2380,14 @@ static void u_undoredo(bool undo, bool do_buf_event)
       }
     }
 
-    changed_lines(curbuf, top + 1, 0, bot, newsize - oldsize, do_buf_event);
-    // When text has been changed, possibly the start of the next line
-    // may have SpellCap that should be removed or it needs to be
-    // displayed.  Schedule the next line for redrawing just in case.
-    if (spell_check_window(curwin) && bot <= curbuf->b_ml.ml_line_count) {
-      redrawWinline(curwin, bot);
+    if (oldsize > 0 || newsize > 0) {
+      changed_lines(curbuf, top + 1, 0, bot, newsize - oldsize, do_buf_event);
+      // When text has been changed, possibly the start of the next line
+      // may have SpellCap that should be removed or it needs to be
+      // displayed.  Schedule the next line for redrawing just in case.
+      if (spell_check_window(curwin) && bot <= curbuf->b_ml.ml_line_count) {
+        redrawWinline(curwin, bot);
+      }
     }
 
     // Set the '[ mark.
@@ -2424,6 +2432,10 @@ static void u_undoredo(bool undo, bool do_buf_event)
     buf_updates_unload(curbuf, true);
   }
   // Finish adjusting extmarks
+
+  // Set the cursor to the desired position.  Check that the line is valid.
+  curwin->w_cursor = new_curpos;
+  check_cursor_lnum(curwin);
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
