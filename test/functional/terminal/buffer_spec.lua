@@ -555,6 +555,83 @@ describe(':terminal buffer', function()
         {5:-- TERMINAL --}                                    |
       ]])
       eq({ 22, 6 }, exec_lua('return _G.cursor'))
+
+      api.nvim_chan_send(term, '\nHello\027]133;D\027\\\nworld!\n')
+      screen:expect([[
+        >                                                 |*4
+        Hello                                             |
+        world!                                            |
+        Hello                                             |
+        world!                                            |
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 23, 5 }, exec_lua('return _G.cursor'))
+
+      api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(6))
+      screen:expect([[
+        world!                                            |
+        Hello                                             |
+        world!                                            |
+                                                          |*5
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 25, 5 }, exec_lua('return _G.cursor'))
+
+      api.nvim_set_option_value('scrollback', 10, {})
+      eq(19, api.nvim_buf_line_count(0))
+
+      api.nvim_chan_send(term, 'Hello\nworld!\027]133;D\027\\')
+      screen:expect([[
+        Hello                                             |
+        world!                                            |
+                                                          |*5
+        Hello                                             |
+        world!^                                            |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 19, 6 }, exec_lua('return _G.cursor'))
+
+      api.nvim_chan_send(term, '\nHello\027]133;D\027\\\nworld!\n')
+      screen:expect([[
+                                                          |*4
+        Hello                                             |
+        world!                                            |
+        Hello                                             |
+        world!                                            |
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 17, 5 }, exec_lua('return _G.cursor'))
+
+      api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(6))
+      screen:expect([[
+        world!                                            |
+        Hello                                             |
+        world!                                            |
+                                                          |*5
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 12, 5 }, exec_lua('return _G.cursor'))
+
+      api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(8))
+      screen:expect([[
+        world!                                            |
+                                                          |*7
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 10, 5 }, exec_lua('return _G.cursor'))
+
+      api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(20))
+      screen:expect([[
+                                                          |*8
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ -2, 5 }, exec_lua('return _G.cursor'))
     end)
 
     it('does not cause hang in vim.wait() #32753', function()
