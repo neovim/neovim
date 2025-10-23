@@ -29,6 +29,7 @@ local function on_remote_read(args)
       local lines = vim.split(content.body, '\n', { plain = true })
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
       vim.api.nvim_exec_autocmds('BufRead', { group = 'filetypedetect', buffer = bufnr })
+      vim.bo[bufnr].modified = false
 
       vim.fn.winrestview(view)
       vim.api.nvim_echo({ { 'Loaded ' .. url, 'Normal' } }, true, {})

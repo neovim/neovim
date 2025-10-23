@@ -54,6 +54,22 @@ describe('vim.net.request', function()
     assert(ft == 'lua', 'Expected filetype to be "lua", got: ' .. tostring(ft))
   end)
 
+  it('removes the modified flag from the buffer for remote content', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    local buffer_modified = exec_lua([[
+      vim.cmd('runtime! plugin/nvim/net.lua')
+      vim.cmd('runtime! filetype.lua')
+      vim.cmd('edit https://raw.githubusercontent.com/neovim/neovim/master/runtime/syntax/tutor.lua')
+      -- wait for buffer to have content
+      vim.wait(2000, function() return vim.fn.wordcount().bytes > 0 end)
+      vim.wait(2000, function() return vim.bo.modified == false end)
+      return vim.bo.modified
+    ]])
+
+    assert(not buffer_modified, 'Expected buffer to be unmodified for remote content')
+  end)
+
   it('calls on_response with error on 404 (async failure)', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
     local err = exec_lua([[
