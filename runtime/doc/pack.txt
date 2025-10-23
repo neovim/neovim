@@ -300,6 +300,7 @@ Available events to hook into ~
 • *PackChanged* - after plugin's state has changed.
 
 Each event populates the following |event-data| fields:
+• `active` - whether plugin was added via |vim.pack.add()| to current session.
 • `kind` - one of "install" (install on disk), "update" (update existing
   plugin), "delete" (delete from disk).
 • `spec` - plugin's specification with defaults made explicit.

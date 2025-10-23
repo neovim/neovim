@@ -233,10 +233,10 @@ end
 --- @param log table[]
 local function make_find_packchanged(log)
   --- @param suffix string
-  return function(suffix, kind, repo_name, version)
+  return function(suffix, kind, repo_name, version, active)
     local path = pack_get_plug_path(repo_name)
     local spec = { name = repo_name, src = repos_src[repo_name], version = version }
-    local data = { kind = kind, path = path, spec = spec }
+    local data = { active = active, kind = kind, path = path, spec = spec }
     local entry = { event = 'PackChanged' .. suffix, match = vim.fs.abspath(path), data = data }
 
     local res = 0
@@ -672,14 +672,14 @@ describe('vim.pack', function()
 
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
-      local installpre_basic = find_event('Pre', 'install', 'basic', 'feat-branch')
-      local installpre_defbranch = find_event('Pre', 'install', 'defbranch', nil)
-      local updatepre_basic = find_event('Pre', 'update', 'basic', 'feat-branch')
-      local updatepre_defbranch = find_event('Pre', 'update', 'defbranch', nil)
-      local update_basic = find_event('', 'update', 'basic', 'feat-branch')
-      local update_defbranch = find_event('', 'update', 'defbranch', nil)
-      local install_basic = find_event('', 'install', 'basic', 'feat-branch')
-      local install_defbranch = find_event('', 'install', 'defbranch', nil)
+      local installpre_basic = find_event('Pre', 'install', 'basic', 'feat-branch', false)
+      local installpre_defbranch = find_event('Pre', 'install', 'defbranch', nil, false)
+      local updatepre_basic = find_event('Pre', 'update', 'basic', 'feat-branch', false)
+      local updatepre_defbranch = find_event('Pre', 'update', 'defbranch', nil, false)
+      local update_basic = find_event('', 'update', 'basic', 'feat-branch', false)
+      local update_defbranch = find_event('', 'update', 'defbranch', nil, false)
+      local install_basic = find_event('', 'install', 'basic', 'feat-branch', false)
+      local install_defbranch = find_event('', 'install', 'defbranch', nil, false)
       eq(8, #log)
 
       -- NOTE: There is no guaranteed installation order among separate plugins (as it is async)
@@ -1541,8 +1541,8 @@ describe('vim.pack', function()
       n.exec('write')
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'update', 'fetch', nil))
-      eq(2, find_event('', 'update', 'fetch', nil))
+      eq(1, find_event('Pre', 'update', 'fetch', nil, true))
+      eq(2, find_event('', 'update', 'fetch', nil, true))
       eq(2, #log)
     end)
 
@@ -1756,10 +1756,10 @@ describe('vim.pack', function()
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch'))
-      eq(2, find_event('', 'delete', 'basic', 'feat-branch'))
-      eq(3, find_event('Pre', 'delete', 'plugindirs', nil))
-      eq(4, find_event('', 'delete', 'plugindirs', nil))
+      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch', true))
+      eq(2, find_event('', 'delete', 'basic', 'feat-branch', false))
+      eq(3, find_event('Pre', 'delete', 'plugindirs', nil, true))
+      eq(4, find_event('', 'delete', 'plugindirs', nil, false))
       eq(4, #log)
 
       -- Should update lockfile

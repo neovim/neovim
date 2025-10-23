@@ -97,6 +97,7 @@
 --- - [PackChanged]() - after plugin's state has changed.
 ---
 --- Each event populates the following |event-data| fields:
+--- - `active` - whether plugin was added via |vim.pack.add()| to current session.
 --- - `kind` - one of "install" (install on disk), "update" (update existing
 --- plugin), "delete" (delete from disk).
 --- - `spec` - plugin's specification with defaults made explicit.
@@ -408,11 +409,18 @@ local function plug_list_from_names(names)
   return plugs
 end
 
+--- Map from plugin path to its data.
+--- Use map and not array to avoid linear lookup during startup.
+--- @type table<string, { plug: vim.pack.Plug, id: integer }?>
+local active_plugins = {}
+local n_active_plugins = 0
+
 --- @param p vim.pack.Plug
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
 local function trigger_event(p, event_name, kind)
-  local data = { kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
+  local active = active_plugins[p.path] ~= nil
+  local data = { active = active, kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
   api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
@@ -685,12 +693,6 @@ local function infer_update_details(p)
   table.sort(newer_semver_tags, vim.version.gt)
   p.info.update_details = table.concat(newer_semver_tags, '\n')
 end
-
---- Map from plugin path to its data.
---- Use map and not array to avoid linear lookup during startup.
---- @type table<string, { plug: vim.pack.Plug, id: integer }?>
-local active_plugins = {}
-local n_active_plugins = 0
 
 --- @param plug vim.pack.Plug
 --- @param load boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
