@@ -91,16 +91,44 @@
 ---- Use |vim.pack.del()| with a list of plugin names to remove. Make sure their specs
 ---are not included in |vim.pack.add()| call in 'init.lua' or they will be reinstalled.
 ---
---- Available events to hook into ~
+---Available events to hook into ~
 ---
---- - [PackChangedPre]() - before trying to change plugin's state.
---- - [PackChanged]() - after plugin's state has changed.
+---- [PackChangedPre]() - before trying to change plugin's state.
+---- [PackChanged]() - after plugin's state has changed.
 ---
---- Each event populates the following |event-data| fields:
---- - `kind` - one of "install" (install on disk), "update" (update existing
---- plugin), "delete" (delete from disk).
---- - `spec` - plugin's specification with defaults made explicit.
---- - `path` - full path to plugin's directory.
+---Each event populates the following |event-data| fields:
+---- `active` - whether plugin was added via |vim.pack.add()| to current session.
+---- `kind` - one of "install" (install on disk; before loading),
+---  "update" (update already installed plugin; might be not loaded),
+---  "delete" (delete from disk).
+---- `spec` - plugin's specification with defaults made explicit.
+---- `path` - full path to plugin's directory.
+---
+--- These events can be used to execute plugin hooks. For example:
+---```lua
+---local hooks = function(ev)
+---   -- Use available |event-data|
+---   local name, kind = ev.data.spec.name, ev.data.kind
+---
+---   -- Run build script after plugin's code has changed
+---   if name == 'plug-1' and (kind == 'install' or kind == 'update') then
+---     vim.system({ 'make' }, { cwd = ev.data.path })
+---   end
+---
+---   -- If action relies on code from the plugin (like user command or
+---   -- Lua code), make sure to explicitly load it first
+---   if name == 'plug-2' and kind == 'update' then
+---     if not ev.data.active then
+---       vim.cmd.packadd('plug-2')
+---     end
+---     vim.cmd('PlugTwoUpdate')
+---     require('plug2').after_update()
+---   end
+---end
+---
+----- If hooks need to run on install, run this before `vim.pack.add()`
+---vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
+---```
 
 local api = vim.api
 local uv = vim.uv
@@ -408,11 +436,18 @@ local function plug_list_from_names(names)
   return plugs
 end
 
+--- Map from plugin path to its data.
+--- Use map and not array to avoid linear lookup during startup.
+--- @type table<string, { plug: vim.pack.Plug, id: integer }?>
+local active_plugins = {}
+local n_active_plugins = 0
+
 --- @param p vim.pack.Plug
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
 local function trigger_event(p, event_name, kind)
-  local data = { kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
+  local active = active_plugins[p.path] ~= nil
+  local data = { active = active, kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
   api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
@@ -580,14 +615,8 @@ end
 --- @async
 --- @param p vim.pack.Plug
 --- @param timestamp string
---- @param skip_same_sha boolean
-local function checkout(p, timestamp, skip_same_sha)
+local function checkout(p, timestamp)
   infer_states(p)
-  if skip_same_sha and p.info.sha_head == p.info.sha_target then
-    return
-  end
-
-  trigger_event(p, 'PackChangedPre', 'update')
 
   local msg = ('vim.pack: %s Stash before checkout'):format(timestamp)
   git_cmd({ 'stash', '--quiet', '--message', msg }, p.path)
@@ -595,8 +624,6 @@ local function checkout(p, timestamp, skip_same_sha)
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
 
   plugin_lock.plugins[p.spec.name].rev = p.info.sha_target
-
-  trigger_event(p, 'PackChanged', 'update')
 
   -- (Re)Generate help tags according to the current help files.
   -- Also use `pcall()` because `:helptags` errors if there is no 'doc/'
@@ -630,12 +657,8 @@ local function install_list(plug_list, confirm)
     -- Prefer revision from the lockfile instead of using `version`
     p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
 
-    -- Do not skip checkout even if HEAD and target have same commit hash to
-    -- have new repo in expected detached HEAD state and generated help files.
-    checkout(p, timestamp, false)
+    checkout(p, timestamp)
 
-    -- "Install" event is triggered after "update" event intentionally to have
-    -- it indicate "plugin is installed in its correct initial version"
     trigger_event(p, 'PackChanged', 'install')
   end
   run_list(plug_list, do_install, 'Installing plugins')
@@ -685,12 +708,6 @@ local function infer_update_details(p)
   table.sort(newer_semver_tags, vim.version.gt)
   p.info.update_details = table.concat(newer_semver_tags, '\n')
 end
-
---- Map from plugin path to its data.
---- Use map and not array to avoid linear lookup during startup.
---- @type table<string, { plug: vim.pack.Plug, id: integer }?>
-local active_plugins = {}
-local n_active_plugins = 0
 
 --- @param plug vim.pack.Plug
 --- @param load boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
@@ -1035,9 +1052,11 @@ function M.update(names, opts)
     -- Compute change info: changelog if any, new tags if nothing to update
     infer_update_details(p)
 
-    -- Checkout immediately if not need to confirm
-    if opts.force then
-      checkout(p, timestamp, true)
+    -- Checkout immediately if no need to confirm
+    if opts.force and p.info.sha_head ~= p.info.sha_target then
+      trigger_event(p, 'PackChangedPre', 'update')
+      checkout(p, timestamp)
+      trigger_event(p, 'PackChanged', 'update')
     end
   end
   local progress_title = opts.force and (opts._offline and 'Applying updates' or 'Updating')
@@ -1068,7 +1087,9 @@ function M.update(names, opts)
     --- @async
     --- @param p vim.pack.Plug
     local function do_checkout(p)
-      checkout(p, timestamp2, true)
+      trigger_event(p, 'PackChangedPre', 'update')
+      checkout(p, timestamp2)
+      trigger_event(p, 'PackChanged', 'update')
     end
     run_list(plugs_to_checkout, do_checkout, 'Applying updates')
 
