@@ -581,7 +581,13 @@ do
       if string.match(args.data.sequence, '^\027]133;A') then
         local lnum = args.data.cursor[1] ---@type integer
         if lnum >= 1 then
-          vim.api.nvim_buf_set_extmark(args.buf, nvim_terminal_prompt_ns, lnum - 1, 0, {})
+          vim.api.nvim_buf_set_extmark(
+            args.buf,
+            nvim_terminal_prompt_ns,
+            lnum - 1,
+            0,
+            { right_gravity = false }
+          )
         end
       end
     end,
