@@ -40,7 +40,7 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  }{1:NOTE}: You can also read the output of an external command. For example,        |
       {0:  }                                                                               |
-      {0:  }        ":r !dir"                                                                |
+      {0:  }        ":r !dir"                                                              |
       {0:  }                                                                               |
       {0:  }      reads the output of the ls command and puts it below the cursor.         |
       {0:  }                                                                               |
@@ -48,9 +48,9 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  } 1. :!command executes an external command.                                    |
       {0:  }                                                                               |
-      {0:  }     Some useful examples are:                                               |
+      {0:  }     Some useful examples are:                                                 |
       {0:  }     ":!dir"                   - shows a directory listing                     |
-      {0:  }     ":!del FILENAME"          - removes file FILENAME                           |
+      {0:  }     ":!del FILENAME"          - removes file FILENAME                         |
       {0:  }                                                                               |
       {0:  } 2. :w FILENAME              writes the current Neovim file to disk with       |
       {0:  }                             name FILENAME.                                    |
@@ -72,7 +72,7 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  }{1:NOTE}: You can also read the output of an external command. For example,        |
       {0:  }                                                                               |
-      {0:  }        ":r !ls"                                                                 |
+      {0:  }        ":r !ls"                                                               |
       {0:  }                                                                               |
       {0:  }      reads the output of the ls command and puts it below the cursor.         |
       {0:  }                                                                               |
@@ -80,9 +80,9 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  } 1. :!command executes an external command.                                    |
       {0:  }                                                                               |
-      {0:  }     Some useful examples are:                                               |
+      {0:  }     Some useful examples are:                                                 |
       {0:  }     ":!ls "                   - shows a directory listing                     |
-      {0:  }     ":!rm  FILENAME"          - removes file FILENAME                           |
+      {0:  }     ":!rm  FILENAME"          - removes file FILENAME                         |
       {0:  }                                                                               |
       {0:  } 2. :w FILENAME              writes the current Neovim file to disk with       |
       {0:  }                             name FILENAME.                                    |
@@ -146,7 +146,7 @@ describe(':Tutor', function()
     screen:expect([[
       {0:  }{3:^#}{5: Lesson 2.6: OPERATING ON LINES}                                               |
       {0:  }                                                                               |
-      {0:  }{1: Type "dd" to delete a whole line. }                                              |
+      {0:  }{1: Type "dd" to delete a whole line. }                                            |
       {0:  }                                                                               |
       {0:  }Due to the frequency of whole line deletion, the designers of Vi decided       |
       {0:  }it would be easier to simply type two d's to delete a line.                    |
@@ -157,7 +157,7 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  } 3. Now move to the fourth line.                                               |
       {0:  }                                                                               |
-      {0:  } 4. Type "2dd" to delete two lines.                                              |
+      {0:  } 4. Type "2dd" to delete two lines.                                            |
       {0:  }                                                                               |
       {7:✓ }{3:1)  Roses are red,                                                             }|
       {11:✗ }{3:2)  Mud is fun,                                                                }|
@@ -169,18 +169,18 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  }{3:#}{5: Lesson 2.7: THE UNDO COMMAND}                                                 |
       {0:  }                                                                               |
-      {0:  }{1: Press "u" to undo the last commands, "U" to fix a whole line. }                    |
+      {0:  }{1: Press "u" to undo the last commands, "U" to fix a whole line. }                |
       {0:  }                                                                               |
-      {0:  } 1. Move the cursor to the line below marked {10:✗} and place it on the first error.  |
+      {0:  } 1. Move the cursor to the line below marked {10:✗} and place it on the first error.|
       {0:  }                                                                               |
-      {0:  } 2. Type "x" to delete the first unwanted character.                             |
+      {0:  } 2. Type "x" to delete the first unwanted character.                           |
 ]])
 
     feed('<Cmd>310<CR>dd<Cmd>311<CR>2dd')
     screen:expect([[
       {0:  }{3:#}{5: Lesson 2.6: OPERATING ON LINES}                                               |
       {0:  }                                                                               |
-      {0:  }{1: Type "dd" to delete a whole line. }                                              |
+      {0:  }{1: Type "dd" to delete a whole line. }                                            |
       {0:  }                                                                               |
       {0:  }Due to the frequency of whole line deletion, the designers of Vi decided       |
       {0:  }it would be easier to simply type two d's to delete a line.                    |
@@ -191,7 +191,7 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  } 3. Now move to the fourth line.                                               |
       {0:  }                                                                               |
-      {0:  } 4. Type "2dd" to delete two lines.                                              |
+      {0:  } 4. Type "2dd" to delete two lines.                                            |
       {0:  }                                                                               |
       {7:✓ }{3:1)  Roses are red,                                                             }|
       {7:✓ }{3:3)  Violets are blue,                                                          }|
@@ -200,13 +200,13 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  }{3:#}{5: Lesson 2.7: THE UNDO COMMAND}                                                 |
       {0:  }                                                                               |
-      {0:  }{1: Press "u" to undo the last commands, "U" to fix a whole line. }                    |
+      {0:  }{1: Press "u" to undo the last commands, "U" to fix a whole line. }                |
       {0:  }                                                                               |
       {0:  } 1. Move the cursor to the line below marked {10:✗} and place it on the first error.|
       {0:  }                                                                               |
-      {0:  } 2. Type "x" to delete the first unwanted character.                             |
+      {0:  } 2. Type "x" to delete the first unwanted character.                           |
       {0:  }                                                                               |
-      {0:  } 3. Now type "u" to undo the last command executed.                              |
+      {0:  } 3. Now type "u" to undo the last command executed.                            |
       {0:  }                                                                               |
     ]])
   end)
@@ -217,7 +217,7 @@ describe(':Tutor', function()
     screen:expect([[
       {0:  }{3:^#}{5: Lesson 1.3: TEXT EDITING: DELETION}                                           |
       {0:  }                                                                               |
-      {0:  }{1: Press "x" to delete the character under the cursor. }                            |
+      {0:  }{1: Press "x" to delete the character under the cursor. }                          |
       {0:  }                                                                               |
       {0:  } 1. Move the cursor to the line below marked {10:✗}.                                |
       {0:  }                                                                               |
@@ -238,7 +238,7 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  }{3:#}{5: Lesson 1.4: TEXT EDITING: INSERTION}                                          |
       {0:  }                                                                               |
-      {0:  }{1: Press "i" to insert text. }                                                      |
+      {0:  }{1: Press "i" to insert text. }                                                    |
       {0:  }                                                                               |
       {0:  } 1. Move the cursor to the first line below marked {10:✗}.                          |
       {0:  }                                                                               |
@@ -255,7 +255,7 @@ describe(':Tutor', function()
     screen:expect([[
       {0:  }{3:#}{5: Lesson 1.3: TEXT EDITING: DELETION}                                           |
       {0:  }                                                                               |
-      {0:  }{1: Press "x" to delete the character under the cursor. }                            |
+      {0:  }{1: Press "x" to delete the character under the cursor. }                          |
       {0:  }                                                                               |
       {0:  } 1. Move the cursor to the line below marked {10:✗}.                                |
       {0:  }                                                                               |
@@ -276,7 +276,7 @@ describe(':Tutor', function()
       {0:  }                                                                               |
       {0:  }{3:#}{5: Lesson 1.4: TEXT EDITING: INSERTION}                                          |
       {0:  }                                                                               |
-      {0:  }{1: Press "i" to insert text. }                                                      |
+      {0:  }{1: Press "i" to insert text. }                                                    |
       {0:  }                                                                               |
       {0:  } 1. Move the cursor to the first line below marked {10:✗}.                          |
       {0:  }                                                                               |
