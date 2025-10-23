@@ -656,6 +656,28 @@ describe('statusline', function()
     ]])
     feed('<Esc>')
     screen:expect(s2)
+
+    -- Visual selection other end change #36280
+    exec([[
+      function! DebugVisualSelection()
+        return printf("v %s %s", col("v"), col("."))
+      endfunction
+      set statusline=%!DebugVisualSelection()
+    ]])
+    feed('iabc<Esc>v')
+    screen:expect([[
+      ab^c                                     |
+      {1:~                                       }|*5
+      {3:v 3 3                                   }|
+      {5:-- VISUAL --}                            |
+    ]])
+    feed('iw')
+    screen:expect([[
+      {17:ab}^c                                     |
+      {1:~                                       }|*5
+      {3:v 1 3                                   }|
+      {5:-- VISUAL --}                            |
+    ]])
   end)
 
   it('ruler is redrawn in cmdline with redrawstatus #22804', function()
