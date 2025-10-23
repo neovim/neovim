@@ -915,7 +915,10 @@ void show_cursor_info_later(bool force)
       || empty_line != curwin->w_stl_empty
       || reg_recording != curwin->w_stl_recording
       || state != curwin->w_stl_state
-      || (VIsual_active && VIsual_mode != curwin->w_stl_visual_mode)) {
+      || (VIsual_active && (VIsual_mode != curwin->w_stl_visual_mode
+                            || VIsual.lnum != curwin->w_stl_visual_pos.lnum
+                            || VIsual.col != curwin->w_stl_visual_pos.col
+                            || VIsual.coladd != curwin->w_stl_visual_pos.coladd))) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
     } else {
@@ -939,6 +942,7 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_state = state;
   if (VIsual_active) {
     curwin->w_stl_visual_mode = VIsual_mode;
+    curwin->w_stl_visual_pos = VIsual;
   }
 }
 

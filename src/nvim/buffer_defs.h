@@ -1248,6 +1248,7 @@ struct window_S {
   int w_stl_recording;               // reg_recording when last redrawn
   int w_stl_state;                   // get_real_state() when last redrawn
   int w_stl_visual_mode;             // VIsual_mode when last redrawn
+  pos_T w_stl_visual_pos;            // VIsual when last redrawn
 
   int w_alt_fnum;                   // alternate file (for # and CTRL-^)
 
