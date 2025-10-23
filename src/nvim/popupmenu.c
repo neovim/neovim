@@ -599,18 +599,14 @@ void pum_redraw(void)
       extra_space = true;
     }
   }
-  if (pum_scrollbar > 0) {
-    grid_width++;
-    if (pum_rl) {
-      col_off++;
-    }
-  }
-
   WinConfig fconfig = WIN_CONFIG_INIT;
   int border_width = pum_border_width();
+  int border_attr = 0;
+  schar_T border_char = 0;
+  schar_T fill_char = schar_from_ascii(' ');
+  bool has_border = border_width > 0;
   // setup popup menu border if 'pumborder' option is set
   if (border_width > 0) {
-    fconfig.border = true;
     Error err = ERROR_INIT;
     if (!parse_winborder(&fconfig, p_pumborder, &err)) {
       if (ERROR_SET(&err)) {
@@ -641,6 +637,17 @@ void pum_redraw(void)
       fconfig.border_attr[i] = attr;
     }
     api_clear_error(&err);
+    if (pum_scrollbar) {
+      border_char = schar_from_str(fconfig.border_chars[3]);
+      border_attr = fconfig.border_attr[3];
+    }
+  }
+
+  if (pum_scrollbar > 0 && !fconfig.border) {
+    grid_width++;
+    if (pum_rl) {
+      col_off++;
+    }
   }
   grid_assign_handle(&pum_grid);
 
@@ -889,13 +896,10 @@ void pum_redraw(void)
     }
 
     if (pum_scrollbar > 0) {
-      if (pum_rl) {
-        grid_line_puts(col_off - pum_width, " ", 1,
-                       i >= thumb_pos && i < thumb_pos + thumb_height ? attr_thumb : attr_scroll);
-      } else {
-        grid_line_puts(col_off + pum_width, " ", 1,
-                       i >= thumb_pos && i < thumb_pos + thumb_height ? attr_thumb : attr_scroll);
-      }
+      bool thumb = i >= thumb_pos && i < thumb_pos + thumb_height;
+      int scrollbar_col = col_off + (pum_rl ? -pum_width : pum_width);
+      grid_line_put_schar(scrollbar_col, (has_border && !thumb) ? border_char : fill_char,
+                          thumb ? attr_thumb : (has_border ? border_attr : attr_scroll));
     }
     grid_line_flush();
     row++;
@@ -954,7 +958,10 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
 static void pum_adjust_info_position(win_T *wp, int width)
 {
   int border_width = pum_border_width();
-  int col = pum_col + pum_width + pum_scrollbar + 1 + border_width;
+  int col = pum_col + pum_width + 1 + border_width;
+  if (border_width < 0) {
+    col += pum_scrollbar;
+  }
   // TODO(glepnir): support config align border by using completepopup
   // align menu
   int right_extra = Columns - col;

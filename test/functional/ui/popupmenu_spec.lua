@@ -1064,6 +1064,7 @@ describe('builtin popupmenu', function()
         [113] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
         [114] = { background = Screen.colors.Grey0, blend = 100 },
         [115] = { background = Screen.colors.Grey0, blend = 80 },
+        [116] = { blend = 100, background = Screen.colors.NvimLightGrey4 },
         -- popup non-selected item
         n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
@@ -8738,11 +8739,12 @@ describe('builtin popupmenu', function()
       before_each(function()
         screen:try_resize(30, 11)
         exec([[
+          let g:list = [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
           funct Omni_test(findstart, base)
             if a:findstart
               return col(".") - 1
             endif
-            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
+            return g:list
           endfunc
           hi link PmenuBorder FloatBorder
           set omnifunc=Omni_test
@@ -8992,9 +8994,9 @@ describe('builtin popupmenu', function()
         end
       end)
 
-      it('pum border on cmdline', function()
+      it("'pumborder' on cmdline and scrollbar rendering", function()
         command('set wildoptions=pum')
-        feed(':<TAB>')
+        feed(':t<TAB>')
         if multigrid then
           screen:expect({
             grid = [[
@@ -9005,18 +9007,18 @@ describe('builtin popupmenu', function()
                                             |
               {1:~                             }|*9
             ## grid 3
-              :!^                            |
+              :t^                            |
             ## grid 4
-              ╭─────────────────╮|
-              │{12: !              }{c: }│|
-              │{n: #              }{12: }│|
-              │{n: &              }{12: }│|
-              │{n: <              }{12: }│|
-              │{n: =              }{12: }│|
-              │{n: >              }{12: }│|
-              │{n: @              }{12: }│|
-              │{n: Next           }{12: }│|
-              ╰─────────────────╯|
+              ╭────────────────╮|
+              │{12: t              }{c: }|
+              │{n: tNext          }│|
+              │{n: tab            }│|
+              │{n: tabNext        }│|
+              │{n: tabclose       }│|
+              │{n: tabdo          }│|
+              │{n: tabedit        }│|
+              │{n: tabfind        }│|
+              ╰────────────────╯|
             ]],
             win_pos = {
               [2] = {
@@ -9053,17 +9055,50 @@ describe('builtin popupmenu', function()
           })
         else
           screen:expect([[
-            ╭─────────────────╮           |
-            │{12: !              }{c: }│{1:           }|
-            │{n: #              }{12: }│{1:           }|
-            │{n: &              }{12: }│{1:           }|
-            │{n: <              }{12: }│{1:           }|
-            │{n: =              }{12: }│{1:           }|
-            │{n: >              }{12: }│{1:           }|
-            │{n: @              }{12: }│{1:           }|
-            │{n: Next           }{12: }│{1:           }|
-            ╰─────────────────╯{1:           }|
-            :!^                            |
+            ╭────────────────╮            |
+            │{12: t              }{c: }{1:            }|
+            │{n: tNext          }│{1:            }|
+            │{n: tab            }│{1:            }|
+            │{n: tabNext        }│{1:            }|
+            │{n: tabclose       }│{1:            }|
+            │{n: tabdo          }│{1:            }|
+            │{n: tabedit        }│{1:            }|
+            │{n: tabfind        }│{1:            }|
+            ╰────────────────╯{1:            }|
+            :t^                            |
+          ]])
+        end
+
+        feed(('<C-N>'):rep(20))
+        if not multigrid then
+          screen:expect([[
+            ╭────────────────╮            |
+            │{n: tabs           }│{1:            }|
+            │{n: tag            }│{1:            }|
+            │{n: tags           }│{1:            }|
+            │{n: tcd            }{c: }{1:            }|
+            │{12: tchdir         }│{1:            }|
+            │{n: tcl            }│{1:            }|
+            │{n: tcldo          }│{1:            }|
+            │{n: tclfile        }│{1:            }|
+            ╰────────────────╯{1:            }|
+            :tchdir^                       |
+          ]])
+        end
+        feed(('<C-P>'):rep(20))
+        if not multigrid then
+          screen:expect([[
+            ╭────────────────╮            |
+            │{12: t              }{c: }{1:            }|
+            │{n: tNext          }│{1:            }|
+            │{n: tab            }│{1:            }|
+            │{n: tabNext        }│{1:            }|
+            │{n: tabclose       }│{1:            }|
+            │{n: tabdo          }│{1:            }|
+            │{n: tabedit        }│{1:            }|
+            │{n: tabfind        }│{1:            }|
+            ╰────────────────╯{1:            }|
+            :t^                            |
           ]])
         end
       end)
@@ -9084,9 +9119,9 @@ describe('builtin popupmenu', function()
             ## grid 3
               {5:-- }{6:match 1 of 3}               |
             ## grid 4
-              ╭────────────────╮|
-              │{12:one            }{c: }│|
-              ╰────────────────╯|
+              ╭───────────────╮|
+              │{12:one            }{c: }|
+              ╰───────────────╯|
             ]],
             win_pos = {
               [2] = {
@@ -9124,9 +9159,9 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             one^                           |
-            ╭────────────────╮{1:            }|
-            │{12:one            }{c: }│{1:            }|
-            ╰────────────────╯{1:            }|
+            ╭───────────────╮{1:             }|
+            │{12:one            }{c: }{1:             }|
+            ╰───────────────╯{1:             }|
             {1:~                             }|
             {3:[No Name] [+]                 }|
             {5:-- }{6:match 1 of 3}               |
@@ -9167,9 +9202,9 @@ describe('builtin popupmenu', function()
               {n:1info}|
             ## grid 5
               {12:one            }{114: }|
-              {n:two            }{115: }|
-              {n:three          }{115: }|
-              {114: }{115:               }|
+              {n:two            }{116: }|
+              {n:three          }{116: }|
+              {114: }{116:               }|
             ]],
             win_pos = {
               [2] = {
@@ -9225,9 +9260,9 @@ describe('builtin popupmenu', function()
           screen:expect([[
             one^                           |
             {12:one            }{114: }{n:1info}{1:         }|
-            {n:two            }{115: }{1:              }|
-            {n:three          }{115: }{1:              }|
-            {114: }{115:               }{1:              }|
+            {n:two            }{116: }{1:              }|
+            {n:three          }{116: }{1:              }|
+            {114: }{116:               }{1:              }|
             {1:~                             }|*5
             {5:-- }{6:match 1 of 3}               |
           ]])
