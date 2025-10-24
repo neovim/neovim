@@ -15,6 +15,7 @@ func Test_AAA_python3_setup()
     py37_exception_repr = re.compile(r'([^\(\),])(\)+)$')
     py39_type_error_pattern = re.compile(r'\w+\.([^(]+\(\) takes)')
     py310_type_error_pattern = re.compile(r'takes (\d+) positional argument but (\d+) were given')
+    py314_type_error_tuple_pattern = re.compile(r'must be (\d+)-item tuple')
 
     def emsg(ei):
       return ei[0].__name__ + ':' + repr(ei[1].args)
@@ -51,6 +52,8 @@ func Test_AAA_python3_setup()
                         # Python 3.9 reports errors like "vim.command() takes ..." instead of "command() takes ..."
                         msg = py39_type_error_pattern.sub(r'\1', msg)
                         msg = py310_type_error_pattern.sub(r'takes exactly \1 positional argument (\2 given)', msg)
+                        # Python 3.14 has specific error messages for Tuple's
+                        msg = py314_type_error_tuple_pattern.sub(r'must be \1-item sequence', msg)
                 elif sys.version_info >= (3, 5) and e.__class__ is ValueError and str(e) == 'embedded null byte':
                     msg = repr((TypeError, TypeError('expected bytes with no null')))
                 else:
