@@ -11,12 +11,14 @@ Frequently asked Questions                                        *faq*
 General Questions                                                 *faq-general*
 
 
-WHERE SHOULD I PUT MY CONFIG (VIMRC)? ~
+------------------------------------------------------------------------------
+WHERE SHOULD I PUT MY CONFIG (VIMRC)?
 
 See |config|; you can copy (or symlink) your existing vimrc. |nvim-from-vim|
 
 
-HOW STABLE IS THE DEVELOPMENT (PRE-RELEASE) VERSION? ~
+------------------------------------------------------------------------------
+HOW STABLE IS THE DEVELOPMENT (PRE-RELEASE) VERSION?
 
 The unstable (pre-release)
 https://github.com/neovim/neovim/releases/tag/nightly version of Nvim
@@ -29,14 +31,16 @@ Use the stable (release) https://github.com/neovim/neovim/releases/latest
 version for a more predictable experience.
 
 
-CAN I USE LUA-BASED VIM PLUGINS (E.G. NEOCOMPLETE)? ~
+------------------------------------------------------------------------------
+CAN I USE LUA-BASED VIM PLUGINS (E.G. NEOCOMPLETE)?
 
 No. Starting with Nvim 0.2 PR #4411
 https://github.com/neovim/neovim/pull/4411 Lua is built-in, but the legacy
 Vim `if_lua` interface is not supported.
 
 
-HOW CAN I USE "TRUE COLOR" IN THE TERMINAL? ~
+------------------------------------------------------------------------------
+HOW CAN I USE "TRUE COLOR" IN THE TERMINAL?
 
 Truecolor (24bit colors) are enabled by default if a supporting terminal is
 detected. If your terminal is not detected but you are sure it supports
@@ -45,7 +49,8 @@ truecolor, add this to your |init.vim|:
     set termguicolors
 <
 
-NVIM SHOWS WEIRD SYMBOLS (`�[2 q`) WHEN CHANGING MODES ~
+------------------------------------------------------------------------------
+NVIM SHOWS WEIRD SYMBOLS (`�[2 q`) WHEN CHANGING MODES
 
 This is a bug in your terminal emulator. It happens because Nvim sends
 cursor-shape termcodes by default, if the terminal appears to be
@@ -63,7 +68,8 @@ To workaround the issue, you can:
 See also |$TERM| for recommended values of `$TERM`.
 
 
-HOW TO CHANGE CURSOR SHAPE IN THE TERMINAL? ~
+------------------------------------------------------------------------------
+HOW TO CHANGE CURSOR SHAPE IN THE TERMINAL?
 
 - For Nvim 0.1.7 or older: see the note about `NVIM_TUI_ENABLE_CURSOR_SHAPE` in `man nvim`.
 - For Nvim 0.2 or newer: cursor styling is controlled by the 'guicursor' option.
@@ -83,7 +89,8 @@ HOW TO CHANGE CURSOR SHAPE IN THE TERMINAL? ~
   https://github.com/neovim/neovim/issues/2537
 
 
-HOW TO CHANGE CURSOR COLOR IN THE TERMINAL? ~
+------------------------------------------------------------------------------
+HOW TO CHANGE CURSOR COLOR IN THE TERMINAL?
 
 Cursor styling (shape, color, behavior) is controlled by 'guicursor', even in
 the terminal. Cursor color (as opposed to shape) only works if
@@ -98,7 +105,8 @@ which sets different colors in insert-mode and normal-mode:
     :set guicursor=n-v-c:block-Cursor/lCursor,i-ci-ve:ver25-Cursor2/lCursor2,r-cr:hor20,o:hor50
 <
 
-CURSOR STYLE ISN'T RESTORED AFTER EXITING OR SUSPENDING AND RESUMING NVIM ~
+------------------------------------------------------------------------------
+CURSOR STYLE ISN'T RESTORED AFTER EXITING OR SUSPENDING AND RESUMING NVIM
 
 Terminals do not provide a way to query the cursor style. Use autocommands to
 manage the cursor style:
@@ -110,14 +118,16 @@ manage the cursor style:
     au VimLeave,VimSuspend * set guicursor=a:block-blinkon0
 <
 
-CURSOR SHAPE DOESN'T CHANGE IN TMUX ~
+------------------------------------------------------------------------------
+CURSOR SHAPE DOESN'T CHANGE IN TMUX
 
 tmux decides that, not Nvim. See |tui-cursor-shape| for a fix.
 
 See #3165 https://github.com/neovim/neovim/pull/3165 for discussion.
 
 
-CURSOR FLICKER IN TMUX? ~
+------------------------------------------------------------------------------
+CURSOR FLICKER IN TMUX?
 
 If cursor `_` appears and disappears very quickly when opening nvim without a
 document under tmux, and you set |ctermbg| in `EndOfBuffer` and `Normal`, try
@@ -127,7 +137,8 @@ setting these to `NONE`:
     hi Normal ctermbg=NONE ctermfg=200 cterm=NONE
 <
 
-WHAT HAPPENED TO --remote AND FRIENDS? ~
+------------------------------------------------------------------------------
+WHAT HAPPENED TO --remote AND FRIENDS?
 
 |--remote| is partly supported. |clientserver|
 
@@ -138,7 +149,8 @@ https://github.com/mhinz/neovim-remote instead.
 Runtime issues                                                *faq-runtime*
 
 
-COPYING TO X11 PRIMARY SELECTION WITH THE MOUSE DOESN'T WORK ~
+------------------------------------------------------------------------------
+COPYING TO X11 PRIMARY SELECTION WITH THE MOUSE DOESN'T WORK
 
 `clipboard=autoselect` is not implemented yet
 https://github.com/neovim/neovim/issues/2325. You may find this workaround to
@@ -148,7 +160,8 @@ be useful:
     vnoremap <2-LeftRelease> "*ygv
 <
 
-MY CTRL-H MAPPING DOESN'T WORK ~
+------------------------------------------------------------------------------
+MY CTRL-H MAPPING DOESN'T WORK
 
 This was fixed in Nvim 0.2. If you are running Nvim 0.1.7 or older,
 adjust your terminal's "kbs" (key_backspace) terminfo entry:
@@ -160,7 +173,8 @@ adjust your terminal's "kbs" (key_backspace) terminfo entry:
 commands).
 
 
-<HOME> OR SOME OTHER "SPECIAL" KEY DOESN'T WORK ~
+------------------------------------------------------------------------------
+<HOME> OR SOME OTHER "SPECIAL" KEY DOESN'T WORK
 
 Make sure |$TERM| is set correctly.
 
@@ -169,7 +183,8 @@ Make sure |$TERM| is set correctly.
   Try `TERM=xterm-256color`.
 
 
-:! AND SYSTEM() DO WEIRD THINGS WITH INTERACTIVE PROCESSES ~
+------------------------------------------------------------------------------
+:! AND SYSTEM() DO WEIRD THINGS WITH INTERACTIVE PROCESSES
 
 Interactive commands are supported by |:terminal| in Nvim. But |:!| and
 |system()| do not support interactive commands, primarily because Nvim UIs use
@@ -181,7 +196,8 @@ See also #1496 https://github.com/neovim/neovim/issues/1496 and #8217
 https://github.com/neovim/neovim/issues/8217#issuecomment-402152307.
 
 
-PYTHON SUPPORT ISN'T WORKING ~
+------------------------------------------------------------------------------
+PYTHON SUPPORT ISN'T WORKING
 
 Run |:checkhealth| in Nvim for automatic diagnosis.
 
@@ -202,7 +218,8 @@ Other hints:
 - The python `neovim` module was renamed to `pynvim` (long ago).
 
 
-:CHECKHEALTH REPORTS E5009: INVALID $VIMRUNTIME ~
+------------------------------------------------------------------------------
+:CHECKHEALTH REPORTS E5009: INVALID $VIMRUNTIME
 
 This means |$VIMRUNTIME| or 'runtimepath' is broken.
 
@@ -210,7 +227,8 @@ This means |$VIMRUNTIME| or 'runtimepath' is broken.
 - The |$VIMRUNTIME| directory contents should be readable by the current user.
 - Verify that `:echo &runtimepath` contains the $VIMRUNTIME path.
 
-NEOVIM CAN'T FIND ITS RUNTIME ~
+------------------------------------------------------------------------------
+NEOVIM CAN'T FIND ITS RUNTIME
 
 This is the case if `:help nvim` shows `E149: Sorry, no help for nvim`.
 
@@ -223,7 +241,8 @@ Also make sure that you don't accidentally overwrite your runtimepath
 'runtimepath').
 
 
-NEOVIM IS SLOW ~
+------------------------------------------------------------------------------
+NEOVIM IS SLOW
 
 
 Use a fast terminal emulator:
@@ -244,7 +263,8 @@ If it reports `Build type: Debug` and you're building Nvim from source, see
 https://github.com/neovim/neovim/blob/master/BUILD.md.
 
 
-COLORS AREN'T DISPLAYED CORRECTLY ~
+------------------------------------------------------------------------------
+COLORS AREN'T DISPLAYED CORRECTLY
 
 Ensure that |$TERM| is set correctly.
 
@@ -268,7 +288,8 @@ For GNU `screen`, configure your `.screenrc`
 NOTE: Nvim ignores `t_Co` and other |t_xx| terminal codes.
 
 
-NEOVIM CAN'T READ UTF-8 CHARACTERS ~
+------------------------------------------------------------------------------
+NEOVIM CAN'T READ UTF-8 CHARACTERS
 
 Run the following from the command line:
 >bash
@@ -280,7 +301,8 @@ If there's no results, you might not be using a UTF-8 locale. See these issues:
 - https://github.com/neovim/neovim/issues/2386
 
 
-ESC IN TMUX OR GNU SCREEN IS DELAYED ~
+------------------------------------------------------------------------------
+ESC IN TMUX OR GNU SCREEN IS DELAYED
 
 This is a common problem
 https://www.google.com/?q=tmux%20vim%20escape%20delay in `tmux` / `screen`
@@ -311,7 +333,8 @@ Nvim 0.3 mimics the Vim behavior while still fully supporting ALT mappings. See
 |i_ALT|.
 
 
-ESC IN GNU SCREEN IS LOST WHEN MOUSE MODE IS ENABLED ~
+------------------------------------------------------------------------------
+ESC IN GNU SCREEN IS LOST WHEN MOUSE MODE IS ENABLED
 
 This happens because of a bug in screen https://savannah.gnu.org/bugs/?60196 :
 in mouse mode, screen assumes that `ESC` is part of a mouse sequence and will
@@ -321,7 +344,8 @@ this other than double-pressing escape, which causes a single escape to be
 passed through to Nvim.
 
 
-CALLING INPUTLIST(), ECHOMSG, ... IN FILETYPE PLUGINS AND AUTOCMD DOES NOT WORK ~
+------------------------------------------------------------------------------
+CALLING INPUTLIST(), ECHOMSG, ... IN FILETYPE PLUGINS AND AUTOCMD DOES NOT WORK
 
 - https://github.com/neovim/neovim/issues/10008
 - https://github.com/neovim/neovim/issues/10116
@@ -336,7 +360,8 @@ workaround, use `set shortmess-=F` or use `unsilent` as follows.
     autocmd BufNewFile * unsilent echomsg 'The autocmd has been fired.'
 <
 
-G:CLIPBOARD SETTINGS ARE NOT USED. ~
+------------------------------------------------------------------------------
+G:CLIPBOARD SETTINGS ARE NOT USED.
 
 If the clipboard provider is already loaded, you will need to reload it after
 configuration. Use the following configuration.
@@ -368,19 +393,22 @@ Or, if you want automatic reloading when assigning to |g:clipboard|, set
 Build issues                                                    *faq-build*
 
 
-GENERAL BUILD ISSUES ~
+------------------------------------------------------------------------------
+GENERAL BUILD ISSUES
 
 Run `make distclean && make` to rule out a stale build environment causing the
 failure.
 
 
-SETTINGS IN LOCAL.MK DON'T TAKE EFFECT ~
+------------------------------------------------------------------------------
+SETTINGS IN LOCAL.MK DON'T TAKE EFFECT
 
 CMake caches build settings, so you might need to run `rm -r build && make`
 after modifying `local.mk`.
 
 
-CMAKE ERRORS ~
+------------------------------------------------------------------------------
+CMAKE ERRORS
 
 `configure_file Problem configuring file`
 
@@ -389,7 +417,8 @@ root user, then later run an unprivileged `make`. To fix this, run
 `rm -rf build` and try again.
 
 
-GENERATING HELPTAGS FAILED ~
+------------------------------------------------------------------------------
+GENERATING HELPTAGS FAILED
 
 If re-installation fails with "Generating helptags failed", try removing the
 previously installed runtime directory (if `CMAKE_INSTALL_PREFIX` is not set
@@ -402,13 +431,15 @@ during building, the default is `/usr/local/share/nvim`):
 Design                                                         *faq-design*
 
 
-WHY NOT USE JSON FOR RPC? ~
+------------------------------------------------------------------------------
+WHY NOT USE JSON FOR RPC?
 
 - JSON cannot easily/efficiently handle binary data
 - JSON specification is ambiguous: https://seriot.ch/parsing_json.php
 
 
-WHY EMBED LUA INSTEAD OF X? ~
+------------------------------------------------------------------------------
+WHY EMBED LUA INSTEAD OF X?
 
 - Lua is a very small language, ideal for embedding. The biggest advantage of
   Python/Ruby/etc is their huge collection of libraries, but that isn't
@@ -435,7 +466,8 @@ See also:
 - Discussion Python embedding https://lobste.rs/s/pnuak4/mercurial_s_journey_reflections_on#c_zshdwy
 
 
-WHY LUA 5.1 INSTEAD OF LUA 5.3+? ~
+------------------------------------------------------------------------------
+WHY LUA 5.1 INSTEAD OF LUA 5.3+?
 
 Lua 5.1 is a different language than 5.3. The Lua org makes breaking changes
 with every new version, so even if we switched (not upgraded, but switched) to
@@ -447,12 +479,14 @@ Nvim itself already is a pretty good "stdlib" for Lua, and we will continue to
 grow and enhance it. Changing the rules of Lua gains nothing in this context.
 
 
-WILL NEOVIM TRANSLATE VIMSCRIPT TO LUA, INSTEAD OF EXECUTING VIMSCRIPT DIRECTLY? ~
+------------------------------------------------------------------------------
+WILL NEOVIM TRANSLATE VIMSCRIPT TO LUA, INSTEAD OF EXECUTING VIMSCRIPT DIRECTLY?
 
 We have no plans for transpiling Vimscript. It was explored in https://github.com/tjdevries/vim9jit
 
 
-ARE PLUGIN AUTHORS ENCOURAGED TO PORT THEIR PLUGINS FROM VIMSCRIPT TO LUA? DO YOU PLAN ON SUPPORTING VIMSCRIPT INDEFINITELY? (#1152) ~
+------------------------------------------------------------------------------
+ARE PLUGIN AUTHORS ENCOURAGED TO PORT THEIR PLUGINS FROM VIMSCRIPT TO LUA? DO YOU PLAN ON SUPPORTING VIMSCRIPT INDEFINITELY?
 
 We don't anticipate any reason to deprecate Vimscript, which is a valuable DSL
 https://en.wikipedia.org/wiki/Domain-specific_language for text-editing tasks.

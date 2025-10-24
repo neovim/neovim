@@ -87,6 +87,9 @@ g CTRL-G		Prints the current position of the cursor in five
 			If the buffer did have a name, that name becomes the
 			|alternate-file| name.  An unlisted buffer is created
 			to hold the old name.
+
+			See |nvim_buf_set_name()| to avoid filename escaping.
+
 							*:0file*
 :0f[ile][!]		Remove the name of the current buffer.  The optional !
 			avoids truncating the message, as with |:file|.

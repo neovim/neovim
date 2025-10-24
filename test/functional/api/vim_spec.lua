@@ -4616,7 +4616,7 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4,6MyCommand! test it', {}))
     end)
-    it('works for commands separated by bar', function()
+    it('sets nextcmd for bar-separated commands', function()
       eq({
         cmd = 'argadd',
         args = { 'a.txt' },
@@ -4654,6 +4654,12 @@ describe('API', function()
           vertical = false,
         },
       }, api.nvim_parse_cmd('argadd a.txt | argadd b.txt', {}))
+    end)
+    it('sets nextcmd after expr-arg commands #36029', function()
+      local result = api.nvim_parse_cmd('exe "ls"|edit foo', {})
+      eq({ '"ls"' }, result.args)
+      eq('execute', result.cmd)
+      eq('edit foo', result.nextcmd)
     end)
     it('parses :map commands with space in RHS', function()
       eq({
@@ -4848,12 +4854,6 @@ describe('API', function()
       eq(10, api.nvim_win_get_height(0))
       result = api.nvim_parse_cmd('copen 5', {})
       eq(5, result.count)
-    end)
-    it('parses nextcmd for commands #36029', function()
-      local result = api.nvim_parse_cmd('exe "ls"|edit foo', {})
-      eq({ '"ls"' }, result.args)
-      eq('execute', result.cmd)
-      eq('edit foo', result.nextcmd)
     end)
   end)
 

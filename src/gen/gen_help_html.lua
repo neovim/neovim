@@ -91,6 +91,7 @@ local new_layout = {
 local redirects = {
   ['api-ui-events'] = 'ui',
   ['credits'] = 'backers',
+  ['dev_tools'] = 'debug',
   ['plugins'] = 'editorconfig',
   ['terminal'] = 'nvim_terminal_emulator',
   ['tui'] = 'term',
