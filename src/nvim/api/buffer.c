@@ -429,7 +429,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     // changed range, and move any in the remainder of the buffer.
     linenr_T adjust = end > start ? MAXLNUM : 0;
     mark_adjust_buf(buf, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
-                    true, true, kExtmarkNOOP);
+                    true, kMarkAdjustApi, kExtmarkNOOP);
 
     extmark_splice(buf, (int)start - 1, 0, (int)(end - start), 0,
                    deleted_bytes, (int)new_len, 0, inserted_bytes,
@@ -662,7 +662,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     // Do not adjust any cursors. need to use column-aware logic (below)
     linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
     mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
-                    true, true, kExtmarkNOOP);
+                    true, kMarkAdjustApi, kExtmarkNOOP);
 
     extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
                    (int)(end_row - start_row), col_extent, old_byte,

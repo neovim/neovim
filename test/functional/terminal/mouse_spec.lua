@@ -227,6 +227,15 @@ describe(':terminal mouse', function()
       it('will forward mouse clicks to the program with the correct even if set nu', function()
         skip(is_os('win'))
         command('set number')
+        screen:expect([[
+          {121: 11 }line28                                        |
+          {121: 12 }line29                                        |
+          {121: 13 }line30                                        |
+          {121: 14 }mouse enabled                                 |
+          {121: 15 }rows: 6, cols: 46                             |
+          {121: 16 }^                                              |
+          {5:-- TERMINAL --}                                    |
+        ]])
         -- When the display area such as a number is clicked, it returns to the
         -- normal mode.
         feed('<LeftMouse><3,0>')
