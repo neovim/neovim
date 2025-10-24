@@ -11,6 +11,50 @@ This is for developing or debugging Nvim itself.
                                   Type |gO| to see the table of contents.
 
 ==============================================================================
+Quickstart guide to developing Nvim                           *dev-quickstart*
+
+You can start hacking on Nvim in less than 5 minutes:
+
+1. Ensure you have the build prerequisites from `BUILD.md`.
+2. Clone the source repo and "cd" into it: >
+        git clone https://github.com/neovim/neovim
+        cd neovim
+        # (Optional) Build and run Nvim:
+        make
+        ./build/bin/nvim
+3. Run a single test. We will start with "example_spec.lua", which is a real
+   test that shows how tests are written: >
+        make functionaltest TEST_FILE=test/functional/example_spec.lua
+4. Notice the `before_each` block in the test file. Because it calls
+   `clear()`, each `it()` test will start a new Nvim instance.
+5. Tests will do stuff in the Nvim instance and make assertions using `eq()`.
+   Tests that want to check the UI can also use `screen:expect()`.
+6. Now make a code change in Nvim itself, then you can see the effects. The
+   example test does `feed('iline1…')`, so let's make a change to the
+   insert-mode code, which lives in `src/nvim/edit.c`. In the
+   `insert_handle_key` function, just after the `normalchar` label, add this
+   code: >
+        s->c = 'x';
+7. Then run the "example_spec.lua" test again, and it should fail with
+   something like this: >
+        test/functional/example_spec.lua:31: Row 1 did not match.
+        Expected:
+          |*line1               |
+          |*line^2               |
+          |{0:~                   }|
+          |{0:~                   }|
+          |                    |
+        Actual:
+          |*xine1               |
+          |*xine^2               |
+          |{0:~                   }|
+          |{0:~                   }|
+          |                    |
+
+You now understand how to modify the codebase, write tests, and run tests. See
+|dev-arch| for details about the internal architecture.
+
+==============================================================================
 Logs                                                          *dev-tools-logs*
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
@@ -485,4 +529,4 @@ For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonF
 
 
 
-vim:tw=78:ts=8:et:ft=help:norl:
+ vim:tw=78:ts=8:sw=4:et:ft=help:norl:

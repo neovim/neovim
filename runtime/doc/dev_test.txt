@@ -1,0 +1,519 @@
+*dev_test*          Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Writing tests for Nvim                                              *dev-test*
+
+                                  Type |gO| to see the table of contents.
+
+==============================================================================
+Writing tests for Nvim
+
+Nvim has a powerful yet simple test framework. It's approximately 7x better
+than whatever you use at work.
+
+Each test starts a new Nvim process (10-30ms) which is discarded after the
+test finishes. You assert stuff using `t.eq()` and `screen:expect()` (which
+automatically waits as needed). That's pretty much it.
+
+TODO: Expose the test framework as a public interface, for use in 3P plugins:
+https://github.com/neovim/neovim/issues/34592
+
+==============================================================================
+Test framework
+
+Tests are broadly divided into unit tests (`test/unit/`), functional tests
+(`test/functional/`) and old tests (`test/old/testdir/`).
+
+- Unit testing is achieved by compiling the tests as a shared library which is
+  loaded and called by [LuaJit FFI](https://luajit.org/ext_ffi.html).
+- Functional tests are driven by RPC, so they do not require LuaJit (as
+  opposed to Lua). They are essentially "integration" tests, they test the
+  full system. But they are fast.
+
+You can learn the [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
+see also |lua-guide|. Use any existing test as a template to start writing new
+tests, or see |dev-quickstart|.
+
+Tests are run by the `/cmake/RunTests.cmake` script using `busted` (a Lua test-runner).
+For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+
+Depending on the presence of binaries (e.g., `xclip`) some tests will be
+skipped.
+
+==============================================================================
+Test Layout
+
+- `/test/benchmark` : benchmarks
+- `/test/functional` : functional tests
+- `/test/unit` : unit tests
+- `/test/old/testdir` : old tests (from Vim)
+- `/test/config` : contains `*.in` files which are transformed into `*.lua`
+  files using `configure_file` CMake command: this is for accessing CMake
+  variables in Lua tests.
+- `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
+  parser: normally used to make macros not accessible via this mechanism
+  accessible the other way.
+- `/test/*/preload.lua` : modules preloaded by busted `--helper` option
+- `/test/**/testutil.lua` : common utility functions in the context of the test
+  runner
+- `/test/**/testnvim.lua` : common utility functions in the context of the
+  test session (RPC channel to the Nvim child process created by clear() for each test)
+- `/test/*/**/*_spec.lua` : actual tests. Files that do not end with
+  `_spec.lua` are libraries like `/test/**/testutil.lua`, except that they have
+  some common topic.
+
+
+==============================================================================
+Running tests                                                   *dev-run-test*
+
+EXECUTING TESTS
+
+To run all tests (except "old" tests): >
+    make test
+
+To run only _unit_ tests: >
+    make unittest
+
+To run only _functional_ tests: >
+    make functionaltest
+
+
+LEGACY TESTS
+
+To run all legacy Vim tests: >
+    make oldtest
+
+To run a _single_ legacy test file you can use either: >
+    # Specify only the test file name, not the full path.
+    make oldtest TEST_FILE=test_syntax.vim
+or: >
+    make test/old/testdir/test_syntax.vim
+
+
+DEBUGGING TESTS
+
+- Each test gets a test id which looks like "T123". This also appears in the
+  log file. Child processes spawned from a test appear in the logs with the
+  _parent_ name followed by "/c". Example: >
+
+    DBG 2022-06-15T18:37:45.226 T57.58016.0   UI: flush
+    DBG 2022-06-15T18:37:45.226 T57.58016.0   inbuf_poll:442: blocking... events_enabled=0 events_pending=0
+    DBG 2022-06-15T18:37:45.227 T57.58016.0/c UI: stop
+    INF 2022-06-15T18:37:45.227 T57.58016.0/c os_exit:595: Nvim exit: 0
+    DBG 2022-06-15T18:37:45.229 T57.58016.0   read_cb:118: closing Stream (0x7fd5d700ea18): EOF (end of file)
+    INF 2022-06-15T18:37:45.229 T57.58016.0   on_proc_exit:400: exited: pid=58017 status=0 stoptime=0
+
+- You can set `$GDB` to [run functional tests under gdbserver](https://github.com/neovim/neovim/pull/1527): >sh
+    GDB=1 TEST_FILE=test/functional/api/buffer_spec.lua TEST_FILTER='nvim_buf_set_text works$' make functionaltest
+<
+  Read more about |dev-filter-test|.
+
+  Then, in another terminal: >sh
+    gdb -ex 'target remote localhost:7777' build/bin/nvim
+<
+  If `$VALGRIND` is also set it will pass `--vgdb=yes` to valgrind instead of
+  starting gdbserver directly.
+
+  See `nvim_argv` in `test/functional/testnvim.lua`.
+
+- Hanging tests can happen due to unexpected "press-enter" prompts. The
+  default screen width is 50 columns. Commands that try to print lines longer
+  than 50 columns in the command-line, e.g. `:edit very...long...path`, will
+  trigger the prompt. Try using a shorter path, or `:silent edit`.
+- If you can't figure out what is going on, try to visualize the screen. Put
+  this at the beginning of your test: >
+    local Screen = require('test.functional.ui.screen')
+    local screen = Screen.new()
+    screen:attach()
+<  Then put `screen:snapshot_util()` anywhere in your test. See the comments in
+  `test/functional/ui/screen.lua` for more info.
+
+DEBUGGING LUA TEST CODE
+
+Debugging Lua test code is a bit involved. Get your shopping list ready, you'll
+need to install and configure:
+
+1. [nvim-dap](https://github.com/mfussenegger/nvim-dap)
+2. [local-lua-debugger-vscode](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation#local-lua-debugger-vscode)
+3. [nlua](https://github.com/mfussenegger/nlua)
+4. [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind) (called `osv`)
+5. A `nbusted` command in `$PATH`. This command can be a copy of `busted` with
+   `exec '/usr/bin/lua5.1'"` replaced with `"exec '/usr/bin/nlua'"` (or the
+   path to your `nlua`)
+
+
+The setup roughly looks like this: >
+
+    ┌─────────────────────────┐
+    │ nvim used for debugging │◄────┐
+    └─────────────────────────┘     │
+               │                    │
+               ▼                    │
+      ┌─────────────────┐           │
+      │ local-lua-debug │           │
+      └─────────────────┘           │
+              │                     │
+              ▼                     │
+         ┌─────────┐                │
+         │ nbusted │                │
+         └─────────┘                │
+              │                     │
+              ▼                     │
+         ┌───────────┐              │
+         │ test-case │              │
+         └───────────┘              │
+              │                     │
+              ▼                     │
+      ┌────────────────────┐        │
+      │ nvim test-instance │        │
+      └────────────────────┘        │
+        │   ┌─────┐                 │
+        └──►│ osv │─────────────────┘
+            └─────┘
+
+
+With these installed you can use a configuration like this: >
+
+    local dap = require("dap")
+
+
+    local function free_port()
+      local tcp = vim.loop.new_tcp()
+      assert(tcp)
+      tcp:bind('127.0.0.1', 0)
+      local port = tcp:getsockname().port
+      tcp:shutdown()
+      tcp:close()
+      return port
+    end
+
+
+    local name = "nvim-test-case" -- arbitrary name
+    local config = {
+      name = name,
+
+      -- value of type must match the key used in `dap.adapters["local-lua"] = ...` from step 2)
+      type = "local-lua",
+
+      request = "launch",
+      cwd = "${workspaceFolder}",
+      program = {
+        command = "nbusted",
+      },
+      args = {
+        "--ignore-lua",
+        "--lazy",
+        "--helper=test/functional/preload.lua",
+        "--lpath=build/?.lua",
+        "--lpath=?.lua",
+
+        -- path to file to debug, could be replaced with a hardcoded string
+        function()
+          return vim.api.nvim_buf_get_name(0)
+        end,
+
+        -- You can filter to specific test-case by adding:
+        -- '--filter="' .. test_case_name .. '"',
+      },
+      env = {
+        OSV_PORT = free_port
+      }
+    }
+
+    -- Whenever the config is used it needs to launch a second debug session that attaches to `osv`
+    -- This makes it possible to step into `exec_lua` code blocks
+    setmetatable(config, {
+
+      __call = function(c)
+        ---@param session dap.Session
+        dap.listeners.after.event_initialized["nvim_debug"] = function(session)
+          if session.config.name ~= name then
+            return
+          end
+          dap.listeners.after.event_initialized["nvim_debug"] = nil
+          vim.defer_fn(function()
+            dap.run({
+              name = "attach-osv",
+              type = "nlua", -- value must match the `dap.adapters` definition key for osv
+              request = "attach",
+              port = session.config.env.OSV_PORT,
+            })
+          end, 500)
+        end
+
+        return c
+      end,
+    })
+
+
+You can either add this configuration to your `dap.configurations.lua` list as
+described in `:help dap-configuration` or create it dynamically in a
+user-command or function and call it directly via `dap.run(config)`. The latter
+is useful if you use treesitter to find the test case around a cursor location
+with a query like the following and set the `--filter` property to it. >query
+
+    (function_call
+      name: (identifier) @name (#any-of? @name "describe" "it")
+      arguments: (arguments
+        (string) @str
+      )
+    )
+
+Limitations:
+
+- You need to add the following boilerplate to each spec file where you want to
+  be able to stop at breakpoints within the test-case code: >
+    if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+      require("lldebugger").start()
+    end
+<  This is a [local-lua-debugger limitation](https://github.com/tomblind/local-lua-debugger-vscode?tab=readme-ov-file#busted)
+- You cannot step into code of files which get baked into the nvim binary like
+  the `shared.lua`.
+
+
+------------------------------------------------------------------------------
+Filtering tests                                              *dev-filter-test*
+
+FILTER BY NAME
+
+Tests can be filtered by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`. >
+
+    it('foo api',function()
+      ...
+    end)
+    it('bar api',function()
+      ...
+    end)
+
+To run only test with filter name: >
+    TEST_FILTER='foo.*api' make functionaltest
+
+To run all tests except ones matching a filter: >
+    TEST_FILTER_OUT='foo.*api' make functionaltest
+
+FILTER BY FILE
+
+To run a _specific_ unit test: >
+    TEST_FILE=test/unit/foo.lua make unittest
+
+or >
+    cmake -E env "TEST_FILE=test/unit/foo.lua" cmake --build build --target unittest
+
+To run a _specific_ functional test: >
+    TEST_FILE=test/functional/foo.lua make functionaltest
+
+or >
+    cmake -E env "TEST_FILE=test/functional/foo.lua" cmake --build build --target functionaltest
+
+To _repeat_ a test: >
+    BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
+
+or >
+    cmake -E env "TEST_FILE=test/functional/foo_spec.lua" cmake -E env BUSTED_ARGS="--repeat=100 --no-keep-going" cmake --build build --target functionaltest
+
+FILTER BY TAG
+
+Tests can be "tagged" by adding `#` before a token in the test description. >
+
+    it('#foo bar baz', function()
+      ...
+    end)
+    it('#foo another test', function()
+      ...
+    end)
+
+To run only the tagged tests: >
+    TEST_TAG=foo make functionaltest
+
+NOTE:
+
+- `TEST_FILE` is not a pattern string like `TEST_TAG` or `TEST_FILTER`. The
+  given value to `TEST_FILE` must be a path to an existing file.
+- Both `TEST_TAG` and `TEST_FILTER` filter tests by the string descriptions
+  found in `it()` and `describe()`.
+
+
+==============================================================================
+Writing tests                                                 *dev-write-test*
+
+GUIDELINES
+
+- Luajit needs to know about type and constant declarations used in function
+  prototypes. The
+  [testutil.lua](https://github.com/neovim/neovim/blob/master/test/unit/testutil.lua)
+  file automatically parses `types.h`, so types used in the tested functions
+  could be moved to it to avoid having to rewrite the declarations in the test
+  files.
+  - `#define` constants must be rewritten `const` or `enum` so they can be
+    "visible" to the tests.
+- Use `pending()` to skip tests
+  ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
+  Do not silently skip the test with `if-else`. If a functional test depends on
+  some external factor (e.g. the existence of `md5sum` on `$PATH`), _and_ you
+  can't mock or fake the dependency, then skip the test via `pending()` if the
+  external factor is missing. This ensures that the _total_ test-count
+  (success + fail + error + pending) is the same in all environments.
+    - Note: `pending()` is ignored if it is missing an argument, unless it is
+      [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
+      Provide empty function argument if the `pending()` call is outside `it()`
+      ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
+
+WHERE TESTS GO
+
+Tests in `/test/unit` and `/test/functional` are divided into groups by the
+semantic component they are testing.
+
+- Unit tests (`test/unit/`) should match 1-to-1 with the structure of
+  `src/nvim/`, because they are testing functions directly. E.g. unit-tests
+  for `src/nvim/undo.c` should live in `test/unit/undo_spec.lua`.
+- Functional tests (`test/functional/`) are higher-level (plugins, UI, user
+  input) than unit tests; they are organized by concept.
+    - Try to find an existing `test/functional/*/*_spec.lua` group that makes
+      sense, before creating a new one.
+
+
+------------------------------------------------------------------------------
+Fixing tests                                                    *dev-fix-test*
+
+FIXING HARNESS WARNINGS
+
+> Nvim session T123 took 2000 milliseconds to exit
+> This indicates a likely problem with the test even if it passed!
+
+This may indicate a leak, because Nvim waits on uv handles before exiting.
+Example: https://github.com/neovim/neovim/pull/35768
+
+
+FIXING LINT FAILURES
+
+`make lint` (and `make lintlua`) runs [LuaLS](https://github.com/LuaLS/lua-language-server/wiki/Annotations)
+on the test code.
+
+If a LuaLS/EmmyLS warning must be ignored, specify the warning code. Example: >lua
+
+    ---@diagnostic disable-next-line: unused-vararg
+
+https://github.com/LuaLS/lua-language-server/wiki/Annotations#diagnostic
+
+Ignore the smallest applicable scope (e.g. inside a function, not at the top of
+the file).
+
+
+==============================================================================
+Configuration                                                *dev-test-config*
+
+(TODO: clean this up, too many variables and some of them are not used anymore.)
+
+Test behaviour is affected by environment variables. Currently supported
+(Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined,
+treated as Integer; when defined, treated as String; when defined, treated as
+Number; !must be defined to function properly):
+
+- `BUSTED_ARGS` (F) (U): arguments forwarded to `busted`.
+
+- `CC` (U) (S): specifies which C compiler to use to preprocess files.
+  Currently only compilers with gcc-compatible arguments are supported.
+
+- `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be
+  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote
+  :7777` inside.
+
+- `GDBSERVER_PORT` (F) (I): overrides port used for `GDB`.
+
+- `LOG_DIR` (FU) (S!): specifies where to seek for valgrind and ASAN log files.
+
+- `VALGRIND` (F) (D): makes nvim instances to be run under `valgrind`. Log
+  files are named `valgrind-%p.log` in this case. Note that non-empty valgrind
+  log may fail tests. Valgrind arguments may be seen in
+  `/test/functional/testnvim.lua`. May be used in conjunction with `GDB`.
+
+- `VALGRIND_LOG` (F) (S): overrides valgrind log file name used for `VALGRIND`.
+
+- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner. Set to true by default.
+
+- `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
+
+- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
+  suite run is killed
+
+- `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
+
+- `NVIM_PRG` (F) (S): path to Nvim executable (default: `build/bin/nvim`).
+
+- `NVIM_TEST_MAIN_CDEFS` (U) (1): makes `ffi.cdef` run in main process. This
+  raises a possibility of bugs due to conflicts in header definitions, despite
+  the counters, but greatly speeds up unit tests by not requiring `ffi.cdef` to
+  do parsing of big strings with C definitions.
+
+- `NVIM_TEST_PRINT_I` (U) (1): makes `cimport` print preprocessed, but not yet
+  filtered through `formatc` headers. Used to debug `formatc`. Printing is done
+  with the line numbers.
+
+- `NVIM_TEST_PRINT_CDEF` (U) (1): makes `cimport` print final lines which will
+  be then passed to `ffi.cdef`. Used to debug errors `ffi.cdef` happens to
+  throw sometimes.
+
+- `NVIM_TEST_PRINT_SYSCALLS` (U) (1): makes it print to stderr when syscall
+  wrappers are called and what they returned. Used to debug code which makes
+  unit tests be executed in separate processes.
+
+- `NVIM_TEST_RUN_FAILING_TESTS` (U) (1): makes `itp` run tests which are known
+  to fail (marked by setting third argument to `true`).
+
+- `NVIM_TEST_CORE_*` (FU) (S): a set of environment variables which specify
+  where to search for core files. Are supposed to be defined all at once.
+
+- `NVIM_TEST_CORE_GLOB_DIRECTORY` (FU) (S): directory where core files are
+  located. May be `.`. This directory is then recursively searched for core
+  files. Note: this variable must be defined for any of the following to have
+  any effect.
+
+- `NVIM_TEST_CORE_GLOB_RE` (FU) (S): regular expression which must be matched
+  by core files. E.g. `/core[^/]*$`. May be absent, in which case any file is
+  considered to be matched.
+
+- `NVIM_TEST_CORE_EXC_RE` (FU) (S): regular expression which excludes certain
+  directories from searching for core files inside. E.g. use `^/%.deps$` to not
+  search inside `/.deps`. If absent, nothing is excluded.
+
+- `NVIM_TEST_CORE_DB_CMD` (FU) (S): command to get backtrace out of the
+  debugger. E.g. `gdb -n -batch -ex "thread apply all bt full"
+  "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"`. Defaults to the example command.
+  This debug command may use environment variables `_NVIM_TEST_APP` (path to
+  application which is being debugged: normally either nvim or luajit) and
+  `_NVIM_TEST_CORE` (core file to get backtrace from).
+
+- `NVIM_TEST_CORE_RANDOM_SKIP` (FU) (D): makes `check_cores` not check cores
+  after approximately 90% of the tests. Should be used when finding cores is
+  too hard for some reason. Normally (on OS X or when
+  `NVIM_TEST_CORE_GLOB_DIRECTORY` is defined and this variable is not) cores
+  are checked for after each test.
+
+- `NVIM_TEST_INTEG` (F) (D): enables integration tests that makes real network
+  calls. By default these tests are skipped. When set to `1`, tests requiring external
+  HTTP requests (e.g `vim.net.request()`) will be run.
+
+- `NVIM_TEST_RUN_TESTTEST` (U) (1): allows running
+  `test/unit/testtest_spec.lua` used to check how testing infrastructure works.
+
+- `NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level:
+  - `0` disables tracing (the fastest, but you get no data if tests crash and
+    there no core dump was generated),
+  - `1` leaves only C function calls and returns in the trace (faster than
+    recording everything),
+  - `2` records all function calls, returns and executed Lua source lines.
+
+- `NVIM_TEST_TRACE_ON_ERROR` (U) (1): makes unit tests yield trace on error in
+  addition to regular error message.
+
+- `NVIM_TEST_MAXTRACE` (U) (N): specifies maximum number of trace lines to
+  keep. Default is 1024.
+
+- `OSV_PORT`: (F): launches `osv` listening on the given port within nvim test
+  instances.
+
+
+ vim:tw=78:ts=8:sw=4:et:ft=help:norl:
