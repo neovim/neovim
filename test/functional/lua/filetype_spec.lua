@@ -55,6 +55,26 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('works with filenames that call _getlines() internally #36272', function()
+    eq(
+      'sh',
+      exec_lua(function()
+        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
+        return vim.filetype.match({ filename = 'main.sh' })
+      end)
+    )
+  end)
+
+  it('works with filenames that call _getline() internally #36272', function()
+    eq(
+      'text',
+      exec_lua(function()
+        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
+        return vim.filetype.match({ filename = 'main.txt' })
+      end)
+    )
+  end)
+
   it('works with filenames', function()
     eq(
       'nim',
