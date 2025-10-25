@@ -5412,6 +5412,8 @@ Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*
 QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
 		|hl-CursorLine| when the cursor is there.
+							*hl-ScrollbarThumb*
+ScrollbarThumb	Scrollbar thumb
 							*hl-Search*
 Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
