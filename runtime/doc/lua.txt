@@ -3946,26 +3946,57 @@ Lua module: vim.net                                                  *vim.net*
 vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
     Makes an HTTP GET request to the given URL (asynchronous).
 
-    This function operates in one mode:
-    • Asynchronous (non-blocking): Returns immediately and passes the response
-      object to the provided `on_response` handler on completion.
+    This function is asynchronous (non-blocking), returning immediately and
+    passing the response object to the optional `on_response` handler on
+    completion.
+
+    Examples: >lua
+        -- Write response body to file
+        vim.net.request('https://neovim.io/charter/', {
+          outpath = 'vision.html',
+        })
+
+        -- Process the response
+        vim.net.request(
+          'https://api.github.com/repos/neovim/neovim',
+          {},
+          function (err, res)
+            if err then return end
+            local stars = vim.json.decode(res.body).stargazers_count
+            vim.print(('Neovim currently has %d stars'):format(stars))
+          end
+        )
+
+        -- Write to both file and current buffer, but cancel it
+        local job = vim.net.request('https://neovim.io/charter/', {
+          outpath = 'vision.html',
+          outbuf = 0,
+        })
+        job:cancel()
+<
 
     Parameters: ~
       • {url}          (`string`) The URL for the request.
-      • {opts}         (`table?`) Optional parameters:
-                       • `verbose` (boolean|nil): Enables verbose output.
-                       • `retry` (integer|nil): Number of retries on transient
+      • {opts}         (`table?`) A table with the following fields:
+                       • {verbose}? (`boolean`) Enables verbose output.
+                       • {retry}? (`integer`) Number of retries on transient
                          failures (default: 3).
-                       • `outpath` (string|nil): File path to save the
-                         response body to. If set, the `body` value in the
-                         Response Object will be `true` instead of the
-                         response body.
-      • {on_response}  (`fun(err?: string, response?: { body: string|boolean })`)
+                       • {outpath}? (`string`) File path to save the response
+                         body to. If set, the `body` value in the Response
+                         Object will be `true` instead of the response body.
+                       • {outbuf}? (`integer`) Buffer to save the response
+                         body to. If set, the `body` value in the Response
+                         Object will be `true` instead of the response body.
+      • {on_response}  (`fun(err: string?, response: { body: string|boolean }?)?`)
                        Callback invoked on request completion. The `body`
                        field in the response object contains the raw response
-                       data (text or binary). Called with (err, nil) on
-                       failure, or (nil, { body = string|boolean }) on
+                       data (text or binary). Called with `(err, nil)` on
+                       failure, or `(nil, { body = string|boolean })` on
                        success.
+
+    Return: ~
+        (`{ cancel: fun() }`) Table with method to cancel, similar to
+        |vim.SystemObj|.
 
 
 ==============================================================================
