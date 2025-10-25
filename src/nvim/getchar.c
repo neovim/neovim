@@ -1043,7 +1043,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 int ins_char_typebuf(int c, int modifiers, bool on_key_ignore)
 {
   char buf[MB_MAXBYTES * 3 + 4];
-  unsigned len = special_to_buf(c, modifiers, true, buf);
+  unsigned len = special_to_buf(c, modifiers, true, buf, 0);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
@@ -1559,6 +1559,10 @@ static void add_byte_to_showcmd(uint8_t byte)
   int c = NUL;
 
   const uint8_t *ptr = state.buf;
+  if (ptr[0] == K_SPECIAL && ptr[1] == KS_SHIFTCHAR && ptr[2] != NUL) {
+    ptr += 2 + ptr[2];
+  }
+
   if (ptr[0] == K_SPECIAL && ptr[1] == KS_MODIFIER && ptr[2] != NUL) {
     modifiers = ptr[2];
     ptr += 3;
@@ -1611,6 +1615,8 @@ int vgetc(void)
     garbage_collect(false);
   }
 
+  active_shiftchar = 0;
+
   // If a character was put back with vungetc, it was already processed.
   // Return it directly.
   if (can_get_old_char()) {
@@ -1656,6 +1662,14 @@ int vgetc(void)
         allow_keys = save_allow_keys;
         if (c2 == KS_MODIFIER) {
           mod_mask = c;
+          continue;
+        }
+        if (c2 == KS_SHIFTCHAR) {
+          uint8_t buf_[MB_MAXBYTES + 1];
+          for (int i = 0; i < c; i++) {
+            buf_[i] = (uint8_t)vgetorpeek(true);
+          }
+          active_shiftchar = utf_ptr2char((char *)buf_);
           continue;
         }
         c = TO_SPECIAL(c2, c);
@@ -3166,6 +3180,12 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       int c2 = vgetorpeek(true);
       if (c1 == KS_MODIFIER) {
         cmod = c2;
+        continue;
+      }
+      if (c1 == KS_SHIFTCHAR) {
+        for (int i = 0; i < c2; i++) {
+          vgetorpeek(true);
+        }
         continue;
       }
       c1 = TO_SPECIAL(c1, c2);
