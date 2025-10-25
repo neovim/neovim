@@ -378,6 +378,7 @@ These existing features changed their behavior.
 • 'scrollback' maximum value increased from 100000 to 1000000
 • |matchfuzzy()| and |matchfuzzypos()| use an improved fuzzy matching algorithm
   (same as fzy).
+• |:helptags| generates the help tags file(s) using Treesitter.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
