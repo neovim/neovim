@@ -33,7 +33,7 @@ Tests are broadly divided into unit tests (`test/unit/`), functional tests
   opposed to Lua). They are essentially "integration" tests, they test the
   full system. But they are fast.
 
-You can learn the [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
+You can learn [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
 see also |lua-guide|. Use any existing test as a template to start writing new
 tests, or see |dev-quickstart|.
 

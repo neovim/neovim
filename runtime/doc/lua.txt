@@ -3433,6 +3433,18 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
         end, { expr = true })
         -- Map "[%%" to a <Plug> mapping:
         vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+
+        -- Use `getregionpos(getpos('v'))` to get the "current visual selection":
+        vim.keymap.set('x', 'M', function()
+          local region = vim.fn.getregionpos(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+            type = 'v',
+            exclusive = false,
+            eol = false,
+          })
+          local line1 = region[1][1][2]
+          local line2 = region[#region][1][2]
+          vim.print({ line1, line2 })
+        end)
 <
 
     Parameters: ~

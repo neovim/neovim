@@ -30,6 +30,18 @@ local keymap = {}
 --- end, { expr = true })
 --- -- Map "[%%" to a <Plug> mapping:
 --- vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+---
+--- -- Use `getregionpos(getpos('v'))` to get the "current visual selection":
+--- vim.keymap.set('x', 'M', function()
+---   local region = vim.fn.getregionpos(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+---     type = 'v',
+---     exclusive = false,
+---     eol = false,
+---   })
+---   local line1 = region[1][1][2]
+---   local line2 = region[#region][1][2]
+---   vim.print({ line1, line2 })
+--- end)
 --- ```
 ---
 ---@param mode string|string[] Mode "short-name" (see |nvim_set_keymap()|), or a list thereof.
