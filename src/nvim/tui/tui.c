@@ -126,7 +126,8 @@ struct TUIData {
     char *enable_focus_reporting;
     char *disable_focus_reporting;
     char *reset_scroll_region;
-    char *enter_altfont_mode;
+    char *set_underline_color;
+    char *resize_screen;
   } terminfo_ext;
   bool can_set_title;
   bool can_set_underline_color;
@@ -136,6 +137,7 @@ struct TUIData {
   int height;
   bool rgb;
   bool screen_or_tmux;
+  bool has_colon_rgb;
   int url;  ///< Index of URL currently being printed, if any
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
   Arena ti_arena;
@@ -530,7 +532,7 @@ static void terminfo_disable(TUIData *tui)
   // Destroy output stuff
   tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
   tui_mouse_off(tui);
-  terminfo_out(tui, kTerm_exit_attribute_mode);
+  out(tui, S_LEN("\x1b[m")); // exit_attribute_mode
   // Reset cursor to normal before exiting alternate screen.
   terminfo_out(tui, kTerm_cursor_normal);
   terminfo_out(tui, kTerm_keypad_local);
@@ -742,84 +744,48 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool strikethrough = attr & HL_STRIKETHROUGH;
   bool altfont = attr & HL_ALTFONT;
 
-  bool underline;
-  bool undercurl;
-  bool underdouble;
-  bool underdotted;
-  bool underdashed;
-  if (tui->ti.defs[kTerm_set_underline_style]) {
-    int ul = attr & HL_UNDERLINE_MASK;
-    underline = ul == HL_UNDERLINE;
-    undercurl = ul == HL_UNDERCURL;
-    underdouble = ul == HL_UNDERDOUBLE;
-    underdashed = ul == HL_UNDERDASHED;
-    underdotted = ul == HL_UNDERDOTTED;
-  } else {
-    underline = attr & HL_UNDERLINE_MASK;
-    undercurl = false;
-    underdouble = false;
-    underdotted = false;
-    underdashed = false;
+  int ul = attr & HL_UNDERLINE_MASK;
+  bool has_any_underline = ul != 0;
+  if (!tui->ti.defs[kTerm_set_underline_style]) {
+    ul = has_any_underline ? HL_UNDERLINE : 0;
   }
 
-  bool has_any_underline = undercurl || underline
-                           || underdouble || underdotted || underdashed;
+  // the magic 128 SAFE ZONE applies to everything in this function except for URL:s
+  // (out_printf will check it redundantly for colours but that's ok)
+  if (sizeof(tui->buf) - tui->bufpos < 128) {
+    flush_buf(tui);
+  }
 
-  if (tui->ti.defs[kTerm_set_attributes] != NULL) {
-    if (bold || reverse || underline || standout) {
-      TPVAR params[9] = { 0 };
-      params[0].num = standout;
-      params[1].num = underline;
-      params[2].num = reverse;
-      params[3].num = 0;   // blink
-      params[4].num = 0;   // dim
-      params[5].num = bold;
-      params[6].num = 0;   // blank
-      params[7].num = 0;   // protect
-      params[8].num = 0;   // alternate character set
-      terminfo_print(tui, kTerm_set_attributes, params);
-    } else if (!tui->default_attr) {
-      terminfo_out(tui, kTerm_exit_attribute_mode);
+  size_t base = tui->bufpos;
+#define PUTT_IF_S(cond, S) if (cond) { memcpy(&tui->buf[tui->bufpos], S, sizeof S - 1); \
+                                       tui->bufpos  += (sizeof S - 1); }
+#define PUTT_S(S) PUTT_IF_S(true, S)
+#define PUTT_CH(C) tui->buf[tui->bufpos++] = (C);
+    PUTT_S("\x1b[");
+    PUTT_IF_S(!tui->default_attr, "0;");
+    PUTT_IF_S(bold, "1;");
+    PUTT_IF_S(ul == HL_UNDERLINE, "4;");
+    PUTT_IF_S(standout || reverse, "7;");
+    PUTT_IF_S(italic, "3;");
+    PUTT_IF_S(altfont, "11;");
+    PUTT_IF_S(strikethrough, "11;");
+    if (tui->bufpos > base + 2) {
+      tui->buf[tui->bufpos-1] = 'm';
+    } else {
+      tui->bufpos = base;
     }
-  } else {
-    if (!tui->default_attr) {
-      terminfo_out(tui, kTerm_exit_attribute_mode);
+
+  if (tui->ti.defs[kTerm_set_underline_style] && ul > HL_UNDERLINE) {
+    int stil;
+    switch (ul) {
+      case HL_UNDERCURL: stil = 3; break;
+      case HL_UNDERDOUBLE: stil = 2; break;
+      case HL_UNDERDOTTED: stil = 4; break;
+      case HL_UNDERDASHED: stil = 5; break;
+      default: stil = 1;
     }
-    if (bold) {
-      terminfo_out(tui, kTerm_enter_bold_mode);
-    }
-    if (underline) {
-      terminfo_out(tui, kTerm_enter_underline_mode);
-    }
-    if (standout) {
-      terminfo_out(tui, kTerm_enter_standout_mode);
-    }
-    if (reverse) {
-      terminfo_out(tui, kTerm_enter_reverse_mode);
-    }
-  }
-  if (italic) {
-    terminfo_out(tui, kTerm_enter_italics_mode);
-  }
-  if (altfont) {
-    out_len(tui, tui->terminfo_ext.enter_altfont_mode);
-  }
-  if (strikethrough) {
-    terminfo_out(tui, kTerm_enter_strikethrough_mode);
-  }
-  if (tui->ti.defs[kTerm_set_underline_style]) {
-    if (undercurl) {
-      terminfo_print_num1(tui, kTerm_set_underline_style, 3);
-    }
-    if (underdouble) {
-      terminfo_print_num1(tui, kTerm_set_underline_style, 2);
-    }
-    if (underdotted) {
-      terminfo_print_num1(tui, kTerm_set_underline_style, 4);
-    }
-    if (underdashed) {
-      terminfo_print_num1(tui, kTerm_set_underline_style, 5);
-    }
+    // TODO: but terminfo says "\033[4\072%p1%dm" ????
+    out_printf(tui, 8, "\x1b[4:%dm", stil);
   }
 
   if (has_any_underline && tui->can_set_underline_color) {
@@ -837,17 +803,26 @@ static void update_attrs(TUIData *tui, int attr_id)
   if (tui->rgb && !(attr & HL_FG_INDEXED)) {
     fg = ((attrs.rgb_fg_color != -1)
           ? attrs.rgb_fg_color : tui->clear_attrs.rgb_fg_color);
+#define BYTES(ivar) (ivar >> 16) & 0xff, (ivar >> 8) & 0xff, ivar & 0xff
+
     if (fg != -1) {
-      terminfo_print_num3(tui, kTerm_set_rgb_foreground,
-                          (fg >> 16) & 0xff,  // red
-                          (fg >> 8) & 0xff,   // green
-                          fg & 0xff);         // blue
+      if (tui->has_colon_rgb) {
+          out_printf(tui, 32, "\x1b[38:2:%d:%d:%dm", BYTES(fg));
+      } else {
+          out_printf(tui, 32, "\x1b[38;2;%d;%d;%dm", BYTES(fg));
+      }
     }
   } else {
     fg = (attrs.cterm_fg_color
           ? attrs.cterm_fg_color - 1 : (tui->clear_attrs.cterm_fg_color - 1));
     if (fg != -1) {
-      terminfo_print_num1(tui, kTerm_set_a_foreground, fg);
+      if (fg < 8) {
+        PUTT_S("\x1b[3"); PUTT_CH((char)fg+'0'); PUTT_CH('m');
+      } else if (fg < 16)  {
+        PUTT_S("\x1b[9"); PUTT_CH((char)(fg-8)+'0'); PUTT_CH('m');
+      } else {
+        out_printf(tui, 16, "\x1b[38;5;%dm", fg);
+      }
     }
   }
 
@@ -855,16 +830,23 @@ static void update_attrs(TUIData *tui, int attr_id)
     bg = ((attrs.rgb_bg_color != -1)
           ? attrs.rgb_bg_color : tui->clear_attrs.rgb_bg_color);
     if (bg != -1) {
-      terminfo_print_num3(tui, kTerm_set_rgb_background,
-                          (bg >> 16) & 0xff,  // red
-                          (bg >> 8) & 0xff,   // green
-                          bg & 0xff);         // blue
+      if (tui->has_colon_rgb) {
+          out_printf(tui, 32, "\x1b[48:2:%d:%d:%dm", BYTES(bg));
+      } else {
+          out_printf(tui, 32, "\x1b[48;2;%d;%d;%dm", BYTES(bg));
+      }
     }
   } else {
     bg = (attrs.cterm_bg_color
           ? attrs.cterm_bg_color - 1 : (tui->clear_attrs.cterm_bg_color - 1));
     if (bg != -1) {
-      terminfo_print_num1(tui, kTerm_set_a_background, bg);
+      if (bg < 8) {
+        PUTT_S("\x1b[4"); PUTT_CH((char)bg+'0'); PUTT_CH('m');
+      } else if (bg < 16)  {
+        PUTT_S("\x1b[10"); PUTT_CH((char)(bg-8)+'0'); PUTT_CH('m');
+      } else {
+        out_printf(tui, 16, "\x1b[48;5;%dm", bg);
+      }
     }
   }
 
@@ -1130,7 +1112,7 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
   if (tui->set_default_colors) {
     update_attrs(tui, attr_id);
   } else {
-    terminfo_out(tui, kTerm_exit_attribute_mode);
+    out(tui, S_LEN("\x1b[m")); // exit_attribute_mode
   }
 
   // Background is set to the default color and the right edge matches the
@@ -2085,7 +2067,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
       terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b]0;");
       terminfo_set_if_empty(tui, kTerm_from_status_line, "\x07");
     }
-    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
 
     // 2025: This are not supported by all xterm-alikes, but it is only
     // used when kTermModeLeftAndRightMargins is detected
@@ -2097,7 +2078,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 #endif
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
-    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
     terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b]2");
     terminfo_set_if_empty(tui, kTerm_from_status_line, "\x07");
     // 2017-04 terminfo.src has older control sequences.
@@ -2110,7 +2090,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
   } else if (tmux) {
     terminfo_set_if_empty(tui, kTerm_to_status_line, "\x1b_");
     terminfo_set_if_empty(tui, kTerm_from_status_line, "\x1b\\");
-    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
   } else if (terminfo_is_term_family(term, "interix")) {
     // 2017-04 terminfo.src lacks this.
     terminfo_set_if_empty(tui, kTerm_carriage_return, "\x0d");
@@ -2125,40 +2104,15 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     // 2017-04 terminfo.src has older control sequences.
     terminfo_set_str(tui, kTerm_enter_ca_mode, "\x1b[?1049h");
     terminfo_set_str(tui, kTerm_exit_ca_mode, "\x1b[?1049l");
-    // 2017-04 terminfo.src lacks these.
-    terminfo_set_if_empty(tui, kTerm_enter_italics_mode, "\x1b[3m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
   }
-
-// At this time (2017-07-12) it seems like all terminals that support 256
-// color codes can use semicolons in the terminal code and be fine.
-// However, this is not correct according to the spec. So to reward those
-// terminals that also support colons, we output the code that way on these
-// specific ones.
-
-// using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-#define XTERM_SETAF_256_COLON \
-  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m"
-#define XTERM_SETAB_256_COLON \
-  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m"
-
-#define XTERM_SETAF_256 \
-  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
-#define XTERM_SETAB_256 \
-  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
-#define XTERM_SETAF_16 \
-  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
-#define XTERM_SETAB_16 \
-  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
 
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (tui->ti.max_colors < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
     if (true_xterm || iterm || iterm_pretending_xterm) {
       tui->ti.max_colors = 256;
-      terminfo_set_str(tui, kTerm_set_a_foreground, XTERM_SETAF_256_COLON);
-      terminfo_set_str(tui, kTerm_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsolev || xterm || gnome || rxvt || st || putty
                || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
@@ -2166,16 +2120,12 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
                || (colorterm && strstr(colorterm, "256"))
                || (term && strstr(term, "256"))) {
       tui->ti.max_colors = 256;
-      terminfo_set_str(tui, kTerm_set_a_foreground, XTERM_SETAF_256);
-      terminfo_set_str(tui, kTerm_set_a_background, XTERM_SETAB_256);
     }
   }
   // Terminals with 16-colour SGR support despite what terminfo says.
   if (tui->ti.max_colors < 16) {
     if (colorterm) {
       tui->ti.max_colors = 16;
-      terminfo_set_if_empty(tui, kTerm_set_a_foreground, XTERM_SETAF_16);
-      terminfo_set_if_empty(tui, kTerm_set_a_background, XTERM_SETAB_16);
     }
   }
 
@@ -2300,10 +2250,6 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     tui->terminfo_ext.reset_scroll_region = "\x1b[r";
   }
 
-  // It should be pretty safe to always enable this, as terminals will ignore
-  // unrecognised SGR numbers.
-  tui->terminfo_ext.enter_altfont_mode = "\x1b[11m";
-
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
   // them here when terminfo lacks them is an augmentation, not a fixup.
@@ -2316,26 +2262,11 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   // specific ones.
 
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_colon_rgb = !tmux && !screen
+  tui->has_colon_rgb = !tmux && !screen
                        && !vte_version  // VTE colon-support has a big memory leak. #7573
                        && (iterm || iterm_pretending_xterm  // per VT100Terminal.m
                            // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
                            || true_xterm);
-
-  if (tui->ti.defs[kTerm_set_rgb_foreground] == NULL) {
-    if (has_colon_rgb) {
-      tui->ti.defs[kTerm_set_rgb_foreground] = "\x1b[38:2:%p1%d:%p2%d:%p3%dm";
-    } else {
-      tui->ti.defs[kTerm_set_rgb_foreground] = "\x1b[38;2;%p1%d;%p2%d;%p3%dm";
-    }
-  }
-  if (tui->ti.defs[kTerm_set_rgb_background] == NULL) {
-    if (has_colon_rgb) {
-      tui->ti.defs[kTerm_set_rgb_background] = "\x1b[48:2:%p1%d:%p2%d:%p3%dm";
-    } else {
-      tui->ti.defs[kTerm_set_rgb_background] = "\x1b[48;2;%p1%d;%p2%d;%p3%dm";
-    }
-  }
 
   if (tui->ti.defs[kTerm_set_cursor_color] == NULL) {
     if (iterm || iterm_pretending_xterm) {
