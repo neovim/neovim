@@ -74,9 +74,6 @@ typedef enum {
   VAR_FLAVOUR_SHADA   = 4,  // all uppercase
 } var_flavour_T;
 
-/// Array mapping values from MessagePackType to corresponding list pointers
-extern const list_T *eval_msgpack_type_lists[NUM_MSGPACK_TYPES];
-
 // Struct passed to get_v_event() and restore_v_event().
 typedef struct {
   bool sve_did_save;

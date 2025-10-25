@@ -16,6 +16,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/eval_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
