@@ -252,6 +252,16 @@ describe('vim.fs', function()
 
       local parent, name = nvim_dir:match('^(.*/)([^/]+)$')
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
+
+      eq(
+        { test_build_dir .. '/bin' },
+        vim.fs.find({ glob = 'bi?' }, { path = nvim_dir, upward = true, type = 'directory' })
+      )
+
+      eq(
+        { test_build_dir .. '/bin' },
+        vim.fs.find({ glob = 'b*' }, { path = nvim_dir, upward = true, type = 'directory' })
+      )
     end)
 
     it('follows symlinks', function()
