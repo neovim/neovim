@@ -6,6 +6,7 @@
 " Last Change:	2022 Nov 06
 " 2025 Apr 15 by Vim project: rework Make flavor detection (#17089)
 " 2025 Oct 12 by Vim project: update makeDefine highlighting (#18403)
+" 2025 Oct 25 by Vim project: update makeTargetinDefine highlighting (#18570)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -65,6 +66,7 @@ syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:[^=]"me=e-2
 syn region makeTargetinDefine transparent matchgroup=makeTargetinDefine
 	\ start="^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}[^:=]"rs=e-1
 	\ end="[^\\]$"
+	\ keepend
 syn match makeTargetinDefine           "^[~A-Za-z0-9_./$(){}%*@-][A-Za-z0-9_./\t $(){}%*@-]*&\?::\=\s*$"
 	\ contains=makeIdent,makeSpecTarget,makeComment
 
