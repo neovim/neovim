@@ -5336,6 +5336,8 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   case kCallbackLua:
     rv = nlua_call_ref(callback->data.luaref, NULL, args, kRetNilBool, NULL, NULL);
     return LUARET_TRUTHY(rv);
+  case kCallbackC:
+    return callback->data.cfunc(argvars_in);
 
   case kCallbackNone:
     return false;
@@ -5369,6 +5371,7 @@ bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
     return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
     break;
 
+  case kCallbackC:
   case kCallbackLua:
     abort();
   }
