@@ -9,7 +9,7 @@
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
-#include "eval/vars.h.generated.h"
+/// Array mapping values from MessagePackType to corresponding list pointers
+extern const list_T *eval_msgpack_type_lists[NUM_MSGPACK_TYPES];
 
-#define SCRIPT_SV(id) (SCRIPT_ITEM(id)->sn_vars)
-#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+#include "eval/vars.h.generated.h"
