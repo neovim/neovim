@@ -2562,6 +2562,13 @@ describe('TUI', function()
       eq(true, child_exec_lua('return _G.result'))
     end)
   end)
+
+  it('nvim_ui_send works', function()
+    child_session:request('nvim_ui_send', '\027]2;TEST_TITLE\027\\')
+    retry(nil, nil, function()
+      eq('TEST_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    end)
+  end)
 end)
 
 describe('TUI', function()
@@ -3887,9 +3894,8 @@ describe('TUI client', function()
   it('connects to remote instance (with its own TUI)', function()
     local _, screen_server, screen_client = start_tui_and_remote_client()
 
-    -- XXX: should has("gui_running") be 1 when there is a remote TUI?
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
-    screen_client:expect({ any = 'GUI Running: 1' })
+    screen_client:expect({ any = 'GUI Running: 0' })
 
     -- grid smaller than containing terminal window is cleared properly
     feed_data(":call setline(1,['a'->repeat(&columns)]->repeat(&lines))\n")
@@ -3984,9 +3990,8 @@ describe('TUI client', function()
     ]])
     feed_data('\027')
 
-    -- XXX: should has("gui_running") be 1 when there is a remote TUI?
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
-    screen_client:expect({ any = 'GUI Running: 1' })
+    screen_client:expect({ any = 'GUI Running: 0' })
 
     -- Run :restart on the client.
     -- The client should start a new server while the original server should exit.
@@ -4046,6 +4051,14 @@ describe('TUI client', function()
     server:request('nvim_set_option_value', 'title', true, {})
     retry(nil, nil, function()
       eq('[No Name] + - Nvim', api.nvim_buf_get_var(0, 'term_title'))
+    end)
+  end)
+
+  it('nvim_ui_send works with remote client #36317', function()
+    local server, _, _ = start_headless_server_and_client()
+    server:request('nvim_ui_send', '\027]2;TEST_TITLE\027\\')
+    retry(nil, nil, function()
+      eq('TEST_TITLE', api.nvim_buf_get_var(0, 'term_title'))
     end)
   end)
 

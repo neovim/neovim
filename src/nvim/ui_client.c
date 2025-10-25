@@ -105,13 +105,11 @@ void ui_client_attach(int width, int height, char *term, bool rgb)
     PUT_C(opts, "term_name", CSTR_AS_OBJ(term));
   }
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
-  if (!ui_client_is_remote) {
-    PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
-    PUT_C(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
-    if (ui_client_forward_stdin) {
-      PUT_C(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
-      ui_client_forward_stdin = false;  // stdin shouldn't be forwarded again #22292
-    }
+  PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
+  PUT_C(opts, "stdout_tty", BOOLEAN_OBJ(stdout_isatty));
+  if (ui_client_forward_stdin) {
+    PUT_C(opts, "stdin_fd", INTEGER_OBJ(UI_CLIENT_STDIN_FD));
+    ui_client_forward_stdin = false;  // stdin shouldn't be forwarded again #22292
   }
   ADD_C(args, DICT_OBJ(opts));
 

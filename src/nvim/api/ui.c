@@ -169,6 +169,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
     return;
   }
   RemoteUI *ui = xcalloc(1, sizeof(RemoteUI));
+  ui->channel_id = channel_id;
   ui->width = (int)width;
   ui->height = (int)height;
   ui->pum_row = -1.0;
@@ -195,7 +196,6 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
     ui->ui_ext[kUICmdline] = true;
   }
 
-  ui->channel_id = channel_id;
   ui->cur_event = NULL;
   ui->hl_id = 0;
   ui->client_col = -1;
@@ -427,7 +427,9 @@ static void ui_set_option(RemoteUI *ui, bool init, String name, Object value, Er
     VALIDATE_T("stdin_tty", kObjectTypeBoolean, value.type, {
       return;
     });
-    stdin_isatty = value.data.boolean;
+    if (ui->channel_id == CHAN_STDIO) {
+      stdin_isatty = value.data.boolean;
+    }
     ui->stdin_tty = value.data.boolean;
     return;
   }
@@ -436,7 +438,9 @@ static void ui_set_option(RemoteUI *ui, bool init, String name, Object value, Er
     VALIDATE_T("stdout_tty", kObjectTypeBoolean, value.type, {
       return;
     });
-    stdout_isatty = value.data.boolean;
+    if (ui->channel_id == CHAN_STDIO) {
+      stdout_isatty = value.data.boolean;
+    }
     ui->stdout_tty = value.data.boolean;
     return;
   }
