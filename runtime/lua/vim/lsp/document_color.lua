@@ -263,7 +263,7 @@ function M._buf_refresh(bufnr, client_id)
   do
     ---@type lsp.DocumentColorParams
     local params = { textDocument = util.make_text_document_params(bufnr) }
-    client:request('textDocument/documentColor', params, on_document_color)
+    client:request('textDocument/documentColor', params, on_document_color, bufnr)
   end
 end
 
@@ -451,7 +451,7 @@ function M.color_presentation()
 
       util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
     end)
-  end)
+  end, bufnr)
 end
 
 return M
