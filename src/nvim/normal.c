@@ -3318,8 +3318,8 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
 {
   if (kp_help) {
     // in the help buffer
-    STRCPY(buf, "he! ");
-    *buflen = STRLEN_LITERAL("he! ");
+    STRCPY(buf, "help! FOO");
+    *buflen = STRLEN_LITERAL("help! FOO");
     return n;
   }
 
@@ -3483,7 +3483,11 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // Now grab the chars in the identifier
-  if (cmdchar == 'K' && !kp_help) {
+  if (cmdchar == 'K' && kp_help) {
+    // Do nothing. `nv_K_getcmd` set buf=":help! FOO" for this case.
+    STRCPY(buf, "help! FOO");
+    buflen = STRLEN_LITERAL("help! FOO");
+  } else if (cmdchar == 'K' && !kp_help) {
     ptr = xstrnsave(ptr, n);
     if (kp_ex) {
       // Escape the argument properly for an Ex command
@@ -3517,8 +3521,8 @@ static void nv_ident(cmdarg_T *cap)
     }
 
     p = buf + buflen;
+    // Escape various chars with a backslash "\".
     while (n-- > 0) {
-      // put a backslash before \ and some others
       if (vim_strchr(aux_ptr, (uint8_t)(*ptr)) != NULL) {
         *p++ = '\\';
       }

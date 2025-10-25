@@ -51,6 +51,7 @@
 #include "help.c.generated.h"
 
 /// ":help": open a read-only window on a help file
+/// ":help FOO": DWIM parse the best match at cursor
 void ex_help(exarg_T *eap)
 {
   char *arg;
@@ -99,9 +100,12 @@ void ex_help(exarg_T *eap)
   // When no argument given go to the index.
   if (*arg == NUL) {
     arg = "help.txt";
+  } else if (strequal(arg, "FOO")) {
+    arg = "XXXXXXX";
   }
 
   // Check if there is a match for the argument.
+  // TODO(justinmk): scrub `arg` here...
   int n = find_help_tags(arg, &num_matches, &matches, eap != NULL && eap->forceit);
 
   int i = 0;
