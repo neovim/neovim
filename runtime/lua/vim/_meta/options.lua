@@ -282,6 +282,8 @@ vim.go.bs = vim.go.backspace
 --- When the 'backupskip' pattern matches, a backup is not made anyway.
 --- When 'patchmode' is set, the backup may be renamed to become the
 --- oldest version of a file.
+--- When 'undosync' is on, the backup is overwritten by the modified
+--- buffer.
 ---
 --- @type boolean
 vim.o.backup = false
@@ -7687,6 +7689,22 @@ vim.o.undoreload = 10000
 vim.o.ur = vim.o.undoreload
 vim.go.undoreload = vim.o.undoreload
 vim.go.ur = vim.go.undoreload
+
+--- Vim will detect if an undo file is no longer synchronized with the
+--- file it was written for (with a hash of the file contents) and
+--- ignore it when the file was changed after the undo file was written,
+--- to prevent corruption. If 'undosync' and 'backup' are enabled, the
+--- backup file at 'backupdir' can be used to safely re-synchronize the
+--- undo file by creating a new entry representing the external change.
+---
+--- Every write operation will necessarily be called twice to keep the
+--- backup file in sync with the buffer.
+---
+--- @type boolean
+vim.o.undosync = false
+vim.o.uds = vim.o.undosync
+vim.go.undosync = vim.o.undosync
+vim.go.uds = vim.go.undosync
 
 --- After typing this many characters the swap file will be written to
 --- disk.  When zero, no swap file will be created at all (see chapter on

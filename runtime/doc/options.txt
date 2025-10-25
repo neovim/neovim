@@ -878,6 +878,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the 'backupskip' pattern matches, a backup is not made anyway.
 	When 'patchmode' is set, the backup may be renamed to become the
 	oldest version of a file.
+	When 'undosync' is on, the backup is overwritten by the modified
+	buffer.
 
 						*'backupcopy'* *'bkc'*
 'backupcopy' 'bkc'	string	(default "auto")
@@ -7063,6 +7065,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Note that this causes the whole buffer to be stored in memory.  Set
 	this option to a lower value if you run out of memory.
+
+				*'undosync'* *'uds'* *'noundosync'* *'nouds'*
+'undosync' 'uds'	boolean	(default off)
+			global
+	Vim will detect if an undo file is no longer synchronized with the
+	file it was written for (with a hash of the file contents) and
+	ignore it when the file was changed after the undo file was written,
+	to prevent corruption. If 'undosync' and 'backup' are enabled, the
+	backup file at 'backupdir' can be used to safely re-synchronize the
+	undo file by creating a new entry representing the external change.
+
+	Every write operation will necessarily be called twice to keep the
+	backup file in sync with the buffer.
 
 						*'updatecount'* *'uc'*
 'updatecount' 'uc'	number	(default 200)

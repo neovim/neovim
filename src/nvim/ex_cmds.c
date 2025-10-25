@@ -1961,6 +1961,13 @@ int do_write(exarg_T *eap)
     retval = buf_write(curbuf, ffname, fname, eap->line1, eap->line2,
                        eap, eap->append, eap->forceit, true, false);
 
+    // Default behavior of 'backup' is to copy the original file pre-write. For
+    // undo history retrieval, we want a copy of the modified buffer post-write.
+    if (retval == OK && (p_bk && p_uds)) {
+      buf_write(curbuf, ffname, fname, eap->line1, eap->line2,
+                eap, eap->append, eap->forceit, true, false);
+    }
+
     // After ":saveas fname" reset 'readonly'.
     if (eap->cmdidx == CMD_saveas) {
       if (retval == OK) {
