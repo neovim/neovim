@@ -9,6 +9,15 @@
 ---     vim.print('file exists')
 ---   end
 --- <
+---
+--- *vim.fs.read()*
+--- You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+---
+--- Example:
+---
+--- >lua
+---   vim.print(vim.fn.readblob('.git/config'))
+--- <
 
 local uv = vim.uv
 

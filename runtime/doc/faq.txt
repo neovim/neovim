@@ -120,7 +120,6 @@ manage the cursor style:
 
 Alternatively, consider setting the desired cursor shape in your shell (e.g.
 with PROMPT_COMMAND in bash).
-<
 
 ------------------------------------------------------------------------------
 CURSOR SHAPE DOESN'T CHANGE IN TMUX

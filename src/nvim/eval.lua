@@ -4410,33 +4410,30 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Get the position for String {expr}.
-      The accepted values for {expr} are:
-          .	    The cursor position.
-          $	    The last line in the current buffer.
+      Gets a position, where {expr} is one of:
+          .	    Cursor position.
+          $	    Last line in the current buffer.
           'x	    Position of mark x (if the mark is not set, 0 is
       	    returned for all values).
           w0	    First line visible in current window (one if the
       	    display isn't updated, e.g. in silent Ex mode).
           w$	    Last line visible in current window (this is one
       	    less than "w0" if no lines are visible).
-          v	    When not in Visual mode, returns the cursor
-      	    position.  In Visual mode, returns the other end
-      	    of the Visual area.  A good way to think about
-      	    this is that in Visual mode "v" and "." complement
-      	    each other.  While "." refers to the cursor
-      	    position, "v" refers to where |v_o| would move the
-      	    cursor.  As a result, you can use "v" and "."
-      	    together to work on all of a selection in
-      	    characterwise Visual mode.  If the cursor is at
-      	    the end of a characterwise Visual area, "v" refers
-      	    to the start of the same Visual area.  And if the
-      	    cursor is at the start of a characterwise Visual
-      	    area, "v" refers to the end of the same Visual
-      	    area.  "v" differs from |'<| and |'>| in that it's
-      	    updated right away.
-      Note that a mark in another file can be used.  The line number
-      then applies to another buffer.
+          v	    End of the current Visual selection (unlike |'<|
+      	    |'>| which give the previous, not current, Visual
+      	    selection), or the cursor position if not in Visual
+      	    mode.
+
+      	    To get the current selected region: >vim
+      	      let region = getregionpos(getpos('v'), getpos('.'))
+      <
+      	    Explanation: in Visual mode "v" and "." complement each
+      	    other.  While "." refers to the cursor position, "v"
+      	    refers to where |v_o| would move the cursor.  So you can
+      	    use "v" and "." together to get the selected region.
+
+      Note that if a mark in another file is used, the line number
+      applies to that buffer.
 
       The result is a |List| with four numbers:
           [bufnum, lnum, col, off]
@@ -4746,8 +4743,14 @@ M.funcs = {
       the offset of the character's first cell not included in the
       selection, otherwise all its cells are included.
 
-      Apart from the options supported by |getregion()|, {opts} also
-      supports the following:
+      To get the current visual selection: >vim
+        let region = getregionpos(getpos('v'), getpos('.'))
+      <
+      The {opts} Dict supports the following items:
+
+      	type		See |getregion()|.
+
+      	exclusive	See |getregion()|.
 
       	eol		If |TRUE|, indicate positions beyond
       			the end of a line with "col" values

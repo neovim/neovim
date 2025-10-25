@@ -93,6 +93,8 @@ TUI INSPECT
 Use the Ghostty https://ghostty.org/ inspector tool to observe and query the
 output and events from any terminal application such as Nvim.
 
+From the Ghostty inspector you can click the "Terminal IO" tab to get a trace.
+
 TERMINFO LOGGING
 
 At 'verbose' level 3, Nvim logs its internal terminfo state, so you can see
@@ -139,9 +141,10 @@ region is repainted internally. To also highlight excess internal redraws, use >
 
 TUI TRACE
 
-In the rare case that you want to collect a trace of terminal output, the
-ancient `script` command is still the "state of the art". The libvterm
-`vterm-dump` utility formats the result for human-readability.
+From the Ghostty inspector you can click the "Terminal IO" tab to get a trace.
+
+Alternatively, the ancient `script` command is the "state of the art". The
+libvterm `vterm-dump` utility formats the result for human-readability.
 
 Record a Nvim terminal session and format it with `vterm-dump`: >sh
 

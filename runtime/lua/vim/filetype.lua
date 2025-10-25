@@ -3101,14 +3101,12 @@ end
 ---
 ---@param args vim.filetype.match.args Table specifying which matching strategy to use.
 ---                 Accepted keys are:
----@return string|nil # If a match was found, the matched filetype.
----@return function|nil # A function that modifies buffer state when called (for example, to set some
----                     filetype specific buffer variables). The function accepts a buffer number as
----                     its only argument.
----@return boolean|nil # Return true if a match was found by falling back to a generic configuration
----                    file (i.e., ".conf"). If true, the filetype should be set with
----                    `:setf FALLBACK conf`, which enables a later |:setf| command to override the
----                    filetype. See `:help setf` for more information.
+---@return string|nil   # The matched filetype, if any.
+---@return function|nil # A function `fun(buf: integer)` that modifies buffer state when called (for
+---                     example, to set some filetype specific buffer variables).
+---@return boolean|nil  # true if a match was found by falling back to a generic filetype
+---                     (i.e., ".conf"), which indicates the filetype should be set with
+---                     `:setf FALLBACK conf`. See |:setfiletype|.
 function M.match(args)
   vim.validate('arg', args, 'table')
 

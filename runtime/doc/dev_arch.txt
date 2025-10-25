@@ -144,19 +144,17 @@ asynchronous events, which can include:
 Nvim implements this functionality by entering another event loop while
 waiting for characters, so instead of: >py
 
-  def state_enter(state_callback, data):
+  def state_enter(on_state, data):
     do
-      key = readkey()                 # read a key from the user
-    while state_callback(data, key)   # invoke the callback for the current state
-<
+      key = readkey()           # Read a key from the user
+    while on_state(data, key)   # Invoke callback for the current state
 
-The Nvim program loop is more like: >py
+the Nvim program loop is more like: >py
 
-  def state_enter(state_callback, data):
+  def state_enter(on_state, data):
     do
-      event = read_next_event()       # read an event from the operating system
-    while state_callback(data, event) # invoke the callback for the current state
-<
+      event = read_next_event() # Read an event from the OS
+    while on_state(data, event) # Invoke callback for current state
 
 where `event` is something the operating system delivers to us, including (but
 not limited to) user input. The `read_next_event()` part is internally
