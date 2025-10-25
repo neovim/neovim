@@ -69,10 +69,6 @@ function M.check_targets()
       -- Fire a FileType autocommand with window context to let the user reconfigure local options.
       -- First set 'eventignorewin' to avoid firing OptionSet and BufFilePost.
       api.nvim_win_call(M.wins[type], function()
-        local ft = name[type]:sub(1, 1):lower() .. name[type]:sub(2)
-        api.nvim_set_option_value('filetype', ft, { scope = 'local' })
-        local ignore = 'all' .. (type == 'pager' and ',-TextYankPost' or '')
-        api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
         api.nvim_set_option_value('wrap', true, { scope = 'local' })
         api.nvim_set_option_value('linebreak', false, { scope = 'local' })
         api.nvim_set_option_value('smoothscroll', true, { scope = 'local' })
@@ -86,6 +82,10 @@ function M.check_targets()
           hl = hl .. (type == 'cmd' and ',Search:MsgArea,CurSearch:MsgArea,IncSearch:MsgArea' or '')
           api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
         end
+        local ft = name[type]:sub(1, 1):lower() .. name[type]:sub(2)
+        api.nvim_set_option_value('filetype', ft, { scope = 'local' })
+        local ignore = 'all,-FileType' .. (type == 'pager' and ',-TextYankPost' or '')
+        api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
       end)
       api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(name[type]))
 
