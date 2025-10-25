@@ -72,7 +72,7 @@ local wanted_strings = {
 
 local wanted_strings_ext = {
   -- the following are our custom name for extensions, see "extmap"
-  { 'reset_cursor_style', 'se' },
+  { 'reset_cursor_style', 'Se' },
   { 'set_cursor_style', 'Ss' },
   -- terminfo describes strikethrough modes as rmxx/smxx with respect
   -- to the ECMA-48 strikeout/crossed-out attributes.
