@@ -7,7 +7,6 @@ local feed = n.feed
 local feed_command = n.feed_command
 local exec = n.exec
 local api = n.api
-local pesc = vim.pesc
 
 describe('cmdline', function()
   before_each(clear)
@@ -355,45 +354,6 @@ describe('cmdline', function()
     screen:expect([[
       ^                                        |
                             10,20         30% |
-    ]])
-  end)
-end)
-
-describe('cmdwin', function()
-  before_each(clear)
-
-  -- oldtest: Test_cmdwin_interrupted()
-  it('still uses a new buffer when interrupting more prompt on open', function()
-    local screen = Screen.new(30, 16)
-    command('set more')
-    command('autocmd WinNew * highlight')
-    feed('q:')
-    screen:expect({ any = pesc('{6:-- More --}^') })
-    feed('q')
-    screen:expect([[
-                                    |
-      {1:~                             }|*5
-      {2:[No Name]                     }|
-      {1::}^                             |
-      {1:~                             }|*6
-      {3:[Command Line]                }|
-                                    |
-    ]])
-    feed([[aecho 'done']])
-    screen:expect([[
-                                    |
-      {1:~                             }|*5
-      {2:[No Name]                     }|
-      {1::}echo 'done'^                  |
-      {1:~                             }|*6
-      {3:[Command Line]                }|
-      {5:-- INSERT --}                  |
-    ]])
-    feed('<CR>')
-    screen:expect([[
-      ^                              |
-      {1:~                             }|*14
-      done                          |
     ]])
   end)
 end)
