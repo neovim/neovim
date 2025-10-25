@@ -1,6 +1,7 @@
 vim.g.loaded_spellfile_plugin = true
 
---- Callback for SpellFileMissing: download missing .spl
+--- Downloads missing .spl file.
+---
 --- @param args { bufnr: integer, match: string }
 local function on_spellfile_missing(args)
   local spellfile = require('nvim.spellfile')

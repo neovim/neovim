@@ -1,37 +1,29 @@
 local M = {}
 
---- @class SpellfileConfig
+--- @class vim.spellfile.Config
 --- @field url string
 --- @field timeout_ms integer
 
----@class SpellInfo
+---@class vim.spellfile.Info
 ---@field files string[]
 ---@field key string
 ---@field lang string
 ---@field encoding string
 ---@field dir string
 
----@type SpellfileConfig
+---@type vim.spellfile.Config
 M.config = {
   url = 'https://ftp.nluug.nl/pub/vim/runtime/spell',
   timeout_ms = 15000,
 }
 
+--- TODO(justinmk): add on_done/on_err callbacks to download(), instead of exposing this?
 ---@type table<string, boolean>
 M._done = {}
 
 ---@return string[]
 local function rtp_list()
   return vim.opt.rtp:get()
-end
-
-function M.isDone(key)
-  return M._done[key]
-end
-
-function M.setup(opts)
-  M._done = {}
-  M.config = vim.tbl_extend('force', M.config, opts or {})
 end
 
 local function notify(msg, level)
@@ -45,37 +37,43 @@ local function normalize_lang(lang)
   return (l:match('^[^,%s]+') or l)
 end
 
+local function file_ok(path)
+  local s = vim.uv.fs_stat(path)
+  return s and s.type == 'file' and (s.size or 0) > 0
+end
+
+local function can_use_dir(dir)
+  return not not (vim.fn.isdirectory(dir) == 1 and vim.uv.fs_access(dir, 'W'))
+end
+
 local function writable_spell_dirs_from_rtp()
   local dirs = {}
   for _, dir in ipairs(rtp_list()) do
-    local spell = vim.fs.joinpath(vim.fn.fnamemodify(dir, ':p'), 'spell')
-    if vim.fn.isdirectory(spell) == 1 and vim.uv.fs_access(spell, 'W') then
+    local spell = vim.fs.joinpath(vim.fs.abspath(dir), 'spell')
+    if can_use_dir(spell) then
       table.insert(dirs, spell)
     end
   end
   return dirs
 end
 
-local function default_spell_dir()
-  return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'spell')
-end
-
 local function ensure_target_dir()
+  local dir = vim.fs.abspath(vim.fs.joinpath(vim.fn.stdpath('data'), 'site/spell'))
+  if vim.fn.isdirectory(dir) == 0 and pcall(vim.fn.mkdir, dir, 'p') then
+    notify('Created ' .. dir)
+  end
+  if can_use_dir(dir) then
+    return dir
+  end
+
+  -- Else, look for a spell/ dir in 'runtimepath'.
   local dirs = writable_spell_dirs_from_rtp()
   if #dirs > 0 then
     return dirs[1]
   end
-  local target = default_spell_dir()
-  if vim.fn.isdirectory(target) ~= 1 then
-    vim.fn.mkdir(target, 'p')
-    notify('Created ' .. target)
-  end
-  return target
-end
 
-local function file_ok(path)
-  local s = vim.uv.fs_stat(path)
-  return s and s.type == 'file' and (s.size or 0) > 0
+  dir = vim.fn.fnamemodify(dir, ':~')
+  error(('cannot find a writable spell/ dir in runtimepath, and %s is not usable'):format(dir))
 end
 
 local function reload_spell_silent()
@@ -86,9 +84,12 @@ local function reload_spell_silent()
   vim.cmd('echo ""')
 end
 
---- Blocking GET to file with timeout; treats status==0 as success if file exists.
+--- Fetch file via blocking HTTP GET and write to `outpath`.
+---
+--- Treats status==0 as success if file exists.
+---
 --- @return boolean ok, integer|nil status, string|nil err
-local function http_get_to_file_sync(url, outpath, timeout_ms)
+local function fetch_file_sync(url, outpath, timeout_ms)
   local done, err, res = false, nil, nil
   vim.net.request(url, { outpath = outpath }, function(e, r)
     err, res, done = e, r, true
@@ -99,43 +100,10 @@ local function http_get_to_file_sync(url, outpath, timeout_ms)
 
   local status = res and res.status or 0
   local ok = (not err) and ((status >= 200 and status < 300) or (status == 0 and file_ok(outpath)))
-  return ok, (status ~= 0 and status or nil), err
+  return not not ok, (status ~= 0 and status or nil), err
 end
 
----@return string[]
-function M.directory_choices()
-  local opts = {}
-  for _, dir in ipairs(rtp_list()) do
-    local spelldir = vim.fs.joinpath(vim.fn.fnamemodify(dir, ':p'), 'spell')
-    if vim.fn.isdirectory(spelldir) == 1 then
-      table.insert(opts, spelldir)
-    end
-  end
-  return opts
-end
-
-function M.choose_directory()
-  local dirs = writable_spell_dirs_from_rtp()
-  if #dirs == 0 then
-    return ensure_target_dir()
-  elseif #dirs == 1 then
-    return dirs[1]
-  end
-  local prompt ---@type string[]
-  prompt = {}
-  for i, d in
-    ipairs(dirs --[[@as string[] ]])
-  do
-    prompt[i] = string.format('%d: %s', i, d)
-  end
-  local choice = vim.fn.inputlist(prompt)
-  if choice < 1 or choice > #dirs then
-    return dirs[1]
-  end
-  return dirs[choice]
-end
-
-function M.parse(lang)
+local function parse(lang)
   local code = normalize_lang(lang)
   local enc = 'utf-8'
   local dir = ensure_target_dir()
@@ -160,8 +128,8 @@ function M.parse(lang)
   }
 end
 
----@param info SpellInfo
-function M.download(info)
+---@param info vim.spellfile.Info
+local function download(info)
   local dir = info.dir or ensure_target_dir()
   if not dir then
     notify('No (writable) spell directory found and could not create one.', vim.log.levels.ERROR)
@@ -178,7 +146,7 @@ function M.download(info)
   local url_utf8 = M.config.url .. '/' .. spl_utf8
   local out_utf8 = vim.fs.joinpath(dir, spl_utf8)
   notify('Downloading ' .. spl_utf8 .. ' …')
-  local ok, st, err = http_get_to_file_sync(url_utf8, out_utf8, M.config.timeout_ms)
+  local ok, st, err = fetch_file_sync(url_utf8, out_utf8, M.config.timeout_ms)
   if not ok then
     notify(
       ('Could not get %s (status %s): trying %s …'):format(
@@ -189,7 +157,7 @@ function M.download(info)
     )
     local url_ascii = M.config.url .. '/' .. spl_ascii
     local out_ascii = vim.fs.joinpath(dir, spl_ascii)
-    local ok2, st2, err2 = http_get_to_file_sync(url_ascii, out_ascii, M.config.timeout_ms)
+    local ok2, st2, err2 = fetch_file_sync(url_ascii, out_ascii, M.config.timeout_ms)
     if not ok2 then
       notify(
         ('No spell file available for %s (utf8:%s ascii:%s) — %s'):format(
@@ -217,7 +185,7 @@ function M.download(info)
     local url_sug = M.config.url .. '/' .. sug_name
     local out_sug = vim.fs.joinpath(dir, sug_name)
     notify('Downloading ' .. sug_name .. ' …')
-    local ok3, st3, err3 = http_get_to_file_sync(url_sug, out_sug, M.config.timeout_ms)
+    local ok3, st3, err3 = fetch_file_sync(url_sug, out_sug, M.config.timeout_ms)
     if ok3 then
       notify('Saved ' .. sug_name .. ' to ' .. out_sug)
     else
@@ -244,7 +212,7 @@ function M.download(info)
 end
 
 function M.load_file(lang)
-  local info = M.parse(lang)
+  local info = parse(lang)
   if #info.files == 0 then
     return
   end
@@ -260,19 +228,9 @@ function M.load_file(lang)
     return
   end
 
-  M.download(info)
-end
+  download(info)
 
-function M.exists(filename)
-  local stat = (vim.uv or vim.loop).fs_stat
-  for _, dir in ipairs(M.directory_choices()) do
-    local p = vim.fs.joinpath(dir, filename)
-    local s = stat(p)
-    if s and s.type == 'file' then
-      return true
-    end
-  end
-  return false
+  return info
 end
 
 return M
