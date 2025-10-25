@@ -284,7 +284,7 @@ function Completor:request(kind)
     }
     client:request('textDocument/inlineCompletion', params, function(...)
       self:handler(...)
-    end)
+    end, self.bufnr)
   end
 end
 
