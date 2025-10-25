@@ -1,5 +1,6 @@
 -- Tests for (protocol-driven) ui2, intended to replace the legacy message grid UI.
 
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -417,5 +418,24 @@ describe('messages2', function()
       {1:~                                                    }|*12
                                                            |
     ]])
+  end)
+
+  it('FileType is fired after default options are set', function()
+    n.exec([[
+      let g:set = {}
+      au FileType pager set nowrap
+      au OptionSet * let g:set[expand('<amatch>')] = g:set->get(expand('<amatch>'), 0) + 1
+      echom 'foo'->repeat(&columns)
+      messages
+    ]])
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:─────────────────────────────────────────────────────}|
+      ^foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofo|
+      {1:                                                     }|
+                                                           |
+    ]])
+    t.eq({ filetype = 4 }, n.eval('g:set')) -- still fires for 'filetype'
   end)
 end)
