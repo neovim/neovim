@@ -4651,6 +4651,7 @@ static int open_cmdwin(void)
 
   State = MODE_NORMAL;
   setmouse();
+  clear_showcmd();
 
   // Reset here so it can be set by a CmdwinEnter autocommand.
   cmdwin_result = 0;
