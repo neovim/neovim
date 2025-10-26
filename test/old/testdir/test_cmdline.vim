@@ -2676,6 +2676,74 @@ func Test_recalling_cmdline()
   cunmap <Plug>(save-cmdline)
 endfunc
 
+func Test_recalling_cmdline_with_mappings()
+  CheckFeature cmdline_hist
+
+  cnoremap <F2> <Cmd>let g:cmdline = getcmdline()<CR>
+  cnoremap <CR> <CR>
+  cnoremap <Up> <Up>
+  let save_a = ['a', getreg('a'), getregtype('a')]
+
+  call feedkeys(":echo 'foo'\<CR>", 'tx')
+  call assert_equal("echo 'foo'", @:)
+  call feedkeys(":echo 'bar'\<CR>", 'tx')
+  call assert_equal("echo 'bar'", @:)
+
+  call assert_equal("echo 'bar'", histget(':', -1))
+  call assert_equal("echo 'foo'", histget(':', -2))
+
+  " This command comes completely from a mapping.
+  nmap <F3> :echo 'baz'<F2><CR>
+  call feedkeys("\<F3>", 'tx')
+  call assert_equal('baz', Screenline(&lines)->trim())
+  call assert_equal("echo 'baz'", g:cmdline)
+  call assert_equal("echo 'bar'", @:)
+  call assert_equal("echo 'bar'", histget(':', -1))
+  call assert_equal("echo 'foo'", histget(':', -2))
+
+  if has('unix')
+    new
+    call setline(1, ['aaa'])
+    setlocal formatprg=cat
+    " Formatting with non-typed "gq" should not change cmdline history.
+    normal! gqgq
+    call assert_equal(":.!cat", Screenline(&lines)->trim())
+    call assert_equal("echo 'bar'", @:)
+    call assert_equal("echo 'bar'", histget(':', -1))
+    call assert_equal("echo 'foo'", histget(':', -2))
+    bwipe!
+  endif
+
+  " This case can still be considered a typed command.
+  call timer_start(1, {-> feedkeys("\<CR>", 't')})
+  call feedkeys(":\<Up>\<Up>", 'tx!')
+  call assert_equal('foo', Screenline(&lines)->trim())
+  call assert_equal("echo 'foo'", @:)
+  call assert_equal("echo 'foo'", histget(':', -1))
+  call assert_equal("echo 'bar'", histget(':', -2))
+
+  call feedkeys(":\<Up>\<F2>\<Esc>", 'tx')
+  call assert_equal("echo 'foo'", g:cmdline)
+  call assert_equal("echo 'foo'", @:)
+
+  " A command from an executed register is also ignored in the history.
+  call feedkeys(':let @a=":echo ''zzz''\<cr>"' .. "\<CR>", 'tx')
+  call feedkeys(":norm @a\<cr>", 'tx')
+  call assert_equal('zzz', Screenline(&lines)->trim())
+  call assert_equal('norm @a', @:)
+  call assert_equal('norm @a', histget(':', -1))
+  call assert_equal('let @a=":echo ''zzz''\<cr>"', histget(':', -2))
+  call assert_equal("echo 'foo'", histget(':', -3))
+  call assert_equal("echo 'bar'", histget(':', -4))
+
+  unlet g:cmdline
+  call call('setreg', save_a)
+  cunmap <F2>
+  cunmap <CR>
+  cunmap <Up>
+  nunmap <F3>
+endfunc
+
 func Test_cmd_map_cmdlineChanged()
   let g:log = []
   cnoremap <F1> l<Cmd><CR>s
