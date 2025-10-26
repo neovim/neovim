@@ -1288,7 +1288,7 @@ and ":put" commands and with CTRL-R.
 		"@:" to repeat the previous command-line command.
 		The command-line is only stored in this register when at least
 		one character of it was typed.  Thus it remains unchanged if
-		the command was completely from a mapping.
+		the command was executed completely from a mapping.
 
 							*quote_#* *quote#*
 6. Alternate file register "#
