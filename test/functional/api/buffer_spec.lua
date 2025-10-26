@@ -469,6 +469,84 @@ describe('api/buf', function()
         ]],
         }
       end)
+
+      describe('of current window when', function()
+        before_each(function()
+          command('new | wincmd w | setlocal modified')
+          feed('Gk')
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            www                 |
+            xxx                 |
+            ^yyy                 |
+            zzz                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+        end)
+
+        it('deleting 3 lines around topline', function()
+          api.nvim_buf_set_lines(0, 3, 6, true, {})
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            ccc                 |
+            ^yyy                 |
+            zzz                 |
+            {1:~                   }|
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+          eq(5, api.nvim_buf_line_count(0))
+        end)
+
+        it('deleting 3 lines around the line just before topline', function()
+          api.nvim_buf_set_lines(0, 2, 5, true, {})
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            bbb                 |
+            xxx                 |
+            ^yyy                 |
+            zzz                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+          eq(5, api.nvim_buf_line_count(0))
+        end)
+
+        for count = 1, 4 do
+          it(('deleting %d lines just before topline'):format(count), function()
+            api.nvim_buf_set_lines(0, 4 - count, 4, true, {})
+            screen:expect_unchanged()
+            eq(8 - count, api.nvim_buf_line_count(0))
+          end)
+
+          it(('replacing %d lines just before topline with 2 lines'):format(count), function()
+            api.nvim_buf_set_lines(0, 4 - count, 4, true, { 'eee', 'fff' })
+            screen:expect_unchanged()
+            eq(8 - count + 2, api.nvim_buf_line_count(0))
+          end)
+        end
+
+        for count = 1, 3 do
+          it(('deleting %d lines far before topline'):format(count), function()
+            api.nvim_buf_set_lines(0, 0, count, true, {})
+            screen:expect_unchanged()
+            eq(8 - count, api.nvim_buf_line_count(0))
+          end)
+
+          it(('replacing %d lines far before topline with 2 lines'):format(count), function()
+            api.nvim_buf_set_lines(0, 0, count, true, { 'eee', 'fff' })
+            screen:expect_unchanged()
+            eq(8 - count + 2, api.nvim_buf_line_count(0))
+          end)
+        end
+      end)
     end)
 
     it('handles clearing out non-current buffer #24911', function()
@@ -1864,6 +1942,161 @@ describe('api/buf', function()
                               |
         ]],
         }
+      end)
+
+      describe('of current window when', function()
+        before_each(function()
+          command('new | wincmd w | setlocal modified')
+          feed('Gk')
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            www                 |
+            xxx                 |
+            ^yyy                 |
+            zzz                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+        end)
+
+        it('deleting 3 lines around topline', function()
+          api.nvim_buf_set_text(0, 3, 0, 6, 0, {})
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            ccc                 |
+            ^yyy                 |
+            zzz                 |
+            {1:~                   }|
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+          eq(5, api.nvim_buf_line_count(0))
+        end)
+
+        it('deleting 3 lines around the line just before topline', function()
+          api.nvim_buf_set_text(0, 2, 0, 5, 0, {})
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            bbb                 |
+            xxx                 |
+            ^yyy                 |
+            zzz                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+          eq(5, api.nvim_buf_line_count(0))
+        end)
+
+        for count = 1, 4 do
+          it(('deleting %d lines just before topline'):format(count), function()
+            api.nvim_buf_set_text(0, 4 - count, 0, 4, 0, {})
+            screen:expect_unchanged()
+            eq(8 - count, api.nvim_buf_line_count(0))
+          end)
+
+          describe(('replacing %d lines just before topline with 2 lines'):format(count), function()
+            it('including final newline', function()
+              api.nvim_buf_set_text(0, 4 - count, 0, 4, 0, { 'eee', 'fff', '' })
+              screen:expect_unchanged()
+              eq(8 - count + 2, api.nvim_buf_line_count(0))
+            end)
+
+            it('excluding final newline', function()
+              api.nvim_buf_set_text(0, 4 - count, 0, 3, -1, { 'eee', 'fff' })
+              screen:expect_unchanged()
+              eq(8 - count + 2, api.nvim_buf_line_count(0))
+            end)
+          end)
+        end
+
+        for count = 1, 3 do
+          it(('deleting %d lines far before topline'):format(count), function()
+            api.nvim_buf_set_text(0, 0, 0, count, 0, {})
+            screen:expect_unchanged()
+            eq(8 - count, api.nvim_buf_line_count(0))
+          end)
+
+          describe(('replacing %d lines far before topline with 2 lines'):format(count), function()
+            it('including final newline', function()
+              api.nvim_buf_set_text(0, 0, 0, count, 0, { 'eee', 'fff', '' })
+              screen:expect_unchanged()
+              eq(8 - count + 2, api.nvim_buf_line_count(0))
+            end)
+
+            it('excluding final newline', function()
+              api.nvim_buf_set_text(0, 0, 0, count - 1, -1, { 'eee', 'fff' })
+              screen:expect_unchanged()
+              eq(8 - count + 2, api.nvim_buf_line_count(0))
+            end)
+          end)
+        end
+
+        describe('replacing topline', function()
+          describe('with 1 line', function()
+            local s1 = [[
+                                  |
+              {1:~                   }|*4
+              {2:[No Name]           }|
+              eee                 |
+              xxx                 |
+              ^yyy                 |
+              zzz                 |
+              {3:[No Name] [+]       }|
+                                  |
+            ]]
+            it('including final newline', function()
+              api.nvim_buf_set_text(0, 4, 0, 5, 0, { 'eee', '' })
+              screen:expect(s1)
+            end)
+            it('excluding final newline', function()
+              api.nvim_buf_set_text(0, 4, 0, 4, -1, { 'eee' })
+              screen:expect(s1)
+            end)
+          end)
+
+          describe('with 2 lines', function()
+            local s2 = [[
+                                  |
+              {1:~                   }|*4
+              {2:[No Name]           }|
+              eee                 |
+              fff                 |
+              xxx                 |
+              ^yyy                 |
+              {3:[No Name] [+]       }|
+                                  |
+            ]]
+            it('including final newline', function()
+              api.nvim_buf_set_text(0, 4, 0, 5, 0, { 'eee', 'fff', '' })
+              screen:expect(s2)
+            end)
+            it('excluding final newline', function()
+              api.nvim_buf_set_text(0, 4, 0, 4, -1, { 'eee', 'fff' })
+              screen:expect(s2)
+            end)
+          end)
+        end)
+
+        it('inserting at start of topline', function()
+          api.nvim_buf_set_text(0, 4, 0, 4, 0, { 'X', '' })
+          screen:expect([[
+                                |
+            {1:~                   }|*4
+            {2:[No Name]           }|
+            X                   |
+            www                 |
+            xxx                 |
+            ^yyy                 |
+            {3:[No Name] [+]       }|
+                                |
+          ]])
+        end)
       end)
     end)
   end)
