@@ -1004,6 +1004,13 @@ static int command_line_check(VimState *state)
                            // that occurs while typing a command should
                            // cause the command not to be executed.
 
+  if (stuff_empty() && typebuf.tb_len == 0) {
+    // There is no pending input from sources other than user input, so
+    // Vim is going to wait for the user to type a key.  Consider the
+    // command line typed even if next key will trigger a mapping.
+    s->some_key_typed = true;
+  }
+
   // Trigger SafeState if nothing is pending.
   may_trigger_safestate(s->xpc.xp_numfiles <= 0);
 

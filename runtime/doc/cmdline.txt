@@ -57,8 +57,8 @@ Notes:
 - When you enter a command-line that is exactly the same as an older one, the
   old one is removed (to avoid repeated commands moving older commands out of
   the history).
-- Only commands that are typed are remembered.  Ones that completely come from
-  mappings are not put in the history.
+- Only commands that are typed are remembered.  A command executed completely
+  from a mapping is not put in the history.
 - All searches are put in the search history, including the ones that come
   from commands like "*" and "#".  But for a mapping, only the last search is
   remembered (to avoid that long mappings trash the history).
