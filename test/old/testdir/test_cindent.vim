@@ -1101,6 +1101,11 @@ func Test_cindent_1()
   }
   }
 
+  void foo() {
+  float a[5],
+  b;
+  }
+
   /* end of AUTO */
   [CODE]
 
@@ -2076,6 +2081,11 @@ func Test_cindent_1()
   			baz();
   			break;
   	}
+  }
+
+  void foo() {
+  	float a[5],
+  		  b;
   }
 
   /* end of AUTO */
