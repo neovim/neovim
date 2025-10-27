@@ -159,7 +159,7 @@ REFERENCE: Numbered Registers
 
   2. Blackhole register "_" discards text:
      - ""_daw" - Delete word without saving to any register
-     - Useful when you don't want to overwrite your default """ register
+     - Useful when you don't want to overwrite your default `"` register
      - Note this is using the "a Word" text object, introduced in a previous
        lession
      - ""_dd"  - Delete line without saving
@@ -177,7 +177,7 @@ REFERENCE: Numbered Registers
      - Clipboard registers work across different Vim instances
      - Clipboard register is not always working
      - Blackhole prevents accidental register overwrites
-     - Default """ register is still available for normal yank/paste
+     - Default `"` register is still available for normal yank/paste
      - Named registers (a-z) remain private to each Vim session
 
   5. Clipboard troubleshooting:
