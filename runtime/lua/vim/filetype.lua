@@ -1172,6 +1172,7 @@ local extension = {
   spt = 'snobol4',
   sno = 'snobol4',
   sln = 'solution',
+  soy = 'soy',
   sparql = 'sparql',
   rq = 'sparql',
   spec = 'spec',
