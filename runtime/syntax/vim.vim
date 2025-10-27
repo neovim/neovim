@@ -232,7 +232,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=@vi
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimCommandModifier,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimCommandModifier,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,@vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -1017,7 +1017,13 @@ syn match	vimComFilter contained	"|!!\=[^"]\{-}\(|\|\ze\"\|$\)"      contains=vi
 " Complex Repeats: (:h complex-repeat) {{{2
 " ===============
 syn match	vimCmplxRepeat	'[^a-zA-Z_/\\()]q[0-9a-zA-Z"]\>'lc=1
-syn match	vimCmplxRepeat	'@[0-9a-z".=@:]\ze\($\|[^a-zA-Z]\>\)'
+
+" NOTE: :* as an alias for :@ is not supported, this is considered a :range,
+" see :help cpo-star
+syn match	vimAtArg	contained	+@\@1<=[0-9a-z".=*+:@]+
+syn match	vimAt	+@[0-9a-z".=*+:@]\ze\s*\%($\|[|"#]\)+	skipwhite nextgroup=vimCmdSep,vimComment,vim9Comment contains=vimAtArg
+" Vim9: avoid LHS assignment mismatching of :@["#]
+syn match	vimAt	+@\ze\s*\%($\||\|\s["#]\)+		skipwhite nextgroup=vimCmdSep,vimComment,vim9Comment
 
 " Set command and associated set-options (vimOptions) with comment {{{2
 syn match	vimSet		"\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skipwhite nextgroup=vimSetBang,vimCmdSep,vimComment,vimSetArgs
@@ -2306,6 +2312,8 @@ if !exists("skip_vim_syntax_inits")
 
  hi def link vimAbb	vimCommand
  hi def link vimAddress	vimMark
+ hi def link vimAt	vimCommand
+ hi def link vimAtArg	Special
  hi def link vimAugroupBang	vimBang
  hi def link vimAugroupError	vimError
  hi def link vimAugroupKey	vimCommand
