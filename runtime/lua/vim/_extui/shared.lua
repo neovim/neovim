@@ -65,13 +65,9 @@ function M.check_targets()
     end
 
     if setopt then
-      local name = { cmd = 'Cmd', dialog = 'Dialog', msg = 'Msg', pager = 'Pager' }
-      -- Fire a FileType autocommand with window context to let the user reconfigure local options.
-      -- First set 'eventignorewin' to avoid firing OptionSet and BufFilePost.
-      api.nvim_win_call(M.wins[type], function()
-        local ft = name[type]:sub(1, 1):lower() .. name[type]:sub(2)
-        api.nvim_set_option_value('filetype', ft, { scope = 'local' })
-        local ignore = 'all' .. (type == 'pager' and ',-TextYankPost' or '')
+      -- Set options without firing OptionSet and BufFilePost.
+      vim._with({ win = M.wins[type], noautocmd = true }, function()
+        local ignore = 'all,-FileType' .. (type == 'pager' and ',-TextYankPost' or '')
         api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
         api.nvim_set_option_value('wrap', true, { scope = 'local' })
         api.nvim_set_option_value('linebreak', false, { scope = 'local' })
@@ -87,7 +83,11 @@ function M.check_targets()
           api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
         end
       end)
-      api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(name[type]))
+      api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(type:sub(1, 1):upper() .. type:sub(2)))
+      -- Fire FileType with window context to let the user reconfigure local options.
+      vim._with({ win = M.wins[type] }, function()
+        api.nvim_set_option_value('filetype', type, { scope = 'local' })
+      end)
 
       if type == 'pager' then
         -- Close pager with `q`, same as `checkhealth`
