@@ -62,7 +62,7 @@ local new_layout = {
   ['lsp.txt'] = true,
   ['channel.txt'] = true,
   ['deprecated.txt'] = true,
-  ['develop.txt'] = true,
+  ['dev.txt'] = true,
   ['dev_style.txt'] = true,
   ['dev_theme.txt'] = true,
   ['dev_tools.txt'] = true,
@@ -79,6 +79,7 @@ local new_layout = {
   ['news-0.9.txt'] = true,
   ['news-0.10.txt'] = true,
   ['news-0.11.txt'] = true,
+  ['news-0.12.txt'] = true,
   ['nvim.txt'] = true,
   ['pack.txt'] = true,
   ['provider.txt'] = true,
@@ -1415,18 +1416,18 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
         .indent(
           0,
           [[
-        *%s*      Nvim
+          *%s*      Nvim
 
-        This document moved to: |%s|
+          Document moved to: |%s|
 
-        ==============================================================================
-        This document moved to: |%s|
+          ==============================================================================
+          Document moved
 
-        This document moved to: |%s|
+          Document moved to: |%s|
 
-        ==============================================================================
-         vim:tw=78:ts=8:ft=help:norl:
-      ]]
+          ==============================================================================
+           vim:tw=78:ts=8:ft=help:norl:
+          ]]
         )
         :format(redirect_from, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag)
       local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from))
