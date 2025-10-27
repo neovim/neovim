@@ -87,15 +87,15 @@ local new_layout = {
   ['vim_diff.txt'] = true,
 }
 
--- Map of new:old pages, to redirect renamed pages.
+-- Map of new-page:old-page, to redirect renamed pages.
 local redirects = {
-  ['api-ui-events'] = 'ui',
-  ['credits'] = 'backers',
-  ['dev'] = 'develop',
-  ['dev-tools'] = 'debug',
-  ['plugins'] = 'editorconfig',
-  ['terminal'] = 'nvim_terminal_emulator',
-  ['tui'] = 'term',
+  ['api-ui-events.txt'] = 'ui.txt',
+  ['credits.txt'] = 'backers.txt',
+  ['dev.txt'] = 'develop.txt',
+  ['dev_tools.txt'] = 'debug.txt',
+  ['plugins.txt'] = 'editorconfig.txt',
+  ['terminal.txt'] = 'nvim_terminal_emulator.txt',
+  ['tui.txt'] = 'term.txt',
 }
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
@@ -1297,10 +1297,11 @@ local function ok(cond, expected, actual, message)
         vim.inspect(actual)
       )
     )
-    return cond
   else
-    return assert(cond)
+    assert(cond)
   end
+
+  return true
 end
 local function eq(expected, actual, message)
   return ok(vim.deep_equal(expected, actual), expected, actual, message)
@@ -1407,29 +1408,27 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     )
 
     -- Generate redirect pages for renamed help files.
-    local helpfile_tag = (helpfile:gsub('%.txt$', ''))
-    local redirect_from = redirects[helpfile_tag]
+    local helpfile_tag = (helpfile:gsub('%.txt$', '')):gsub('_', '-') -- "dev_tools.txt" => "dev-tools"
+    local redirect_from = redirects[helpfile]
     if redirect_from then
-      local redirect_text = ([[
-*%s*      Nvim
+      local redirect_text = vim.text
+        .indent(
+          0,
+          [[
+        *%s*      Nvim
 
-This document moved to: |%s|
+        This document moved to: |%s|
 
-==============================================================================
-This document moved to: |%s|
+        ==============================================================================
+        This document moved to: |%s|
 
-This document moved to: |%s|
+        This document moved to: |%s|
 
-==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
-      ]]):format(
-        redirect_from,
-        helpfile_tag,
-        helpfile_tag,
-        helpfile_tag,
-        helpfile_tag,
-        helpfile_tag
-      )
+        ==============================================================================
+         vim:tw=78:ts=8:ft=help:norl:
+      ]]
+        )
+        :format(redirect_from, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag)
       local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from))
       local redirect_html, _ =
         gen_one(redirect_from, redirect_text, redirect_to, false, commit or '?', parser_path)
@@ -1453,8 +1452,9 @@ This document moved to: |%s|
 
   print(('\ngenerated %d html pages'):format(#helpfiles + redirects_count))
   print(('total errors: %d'):format(err_count))
+  -- Why aren't the netrw tags found in neovim/docs/ CI?
   print(('invalid tags: %s'):format(vim.inspect(invalid_links)))
-  assert(#(include or {}) > 0 or redirects_count == vim.tbl_count(redirects)) -- sanity check
+  eq(redirects_count, include and redirects_count or vim.tbl_count(redirects)) -- sanity check
   print(('redirects: %d'):format(redirects_count))
   print('\n')
 
