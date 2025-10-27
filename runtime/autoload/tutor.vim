@@ -185,7 +185,7 @@ function! tutor#TutorCmd(tutor_name)
     endif
 
     call tutor#SetupVim()
-    exe "edit ".l:to_open
+    exe "drop ".l:to_open
     call tutor#EnableInteractive(v:true)
     call tutor#ApplyTransform()
 endfunction
@@ -200,7 +200,7 @@ endfunction
 function! tutor#EnableInteractive(enable)
     let enable = a:enable
     if enable
-        setlocal buftype=nofile
+        setlocal buftype=nowrite
         setlocal concealcursor+=inv
         setlocal conceallevel=2
         lua require('nvim.tutor').apply_marks()
