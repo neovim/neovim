@@ -576,6 +576,10 @@ func Test_completefunc_info()
   new
   set completeopt=menuone
   set completefunc=CompleteTest
+    " Can be called outside of ins-completion
+  call feedkeys("i\<C-X>\<C-U>\<C-Y>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 0, 'mode': '', 'selected': -1, 'items': []}", getline(1))
+  %d
   call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
   call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   %d

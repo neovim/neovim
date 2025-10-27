@@ -3693,7 +3693,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     char *line = get_cursor_line_ptr();
     int len = compl_ins_end_col - curwin->w_cursor.col;
     ret = tv_dict_add_str_len(retdict, S_LEN("preinserted_text"),
-                              len > 0 ? line + curwin->w_cursor.col : "", len);
+                              len > 0 ? line + curwin->w_cursor.col : "", MAX(len, 0));
   }
 
   if (ret == OK && (what_flag & (CI_WHAT_ITEMS|CI_WHAT_SELECTED
