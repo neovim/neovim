@@ -447,6 +447,7 @@ foreach(hfile ${NVIM_HEADERS})
 endforeach()
 
 list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
+list(APPEND LINT_NVIM_SOURCES ${PROJECT_SOURCE_DIR}/src/tee/tee.c)
 
 # Log level (NVIM_LOG_DEBUG in log.h)
 if(CI_BUILD)
