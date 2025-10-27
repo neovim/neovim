@@ -5786,7 +5786,17 @@ static int get_filename_compl_info(char *line, int startcol, colnr_T curs_col)
     while (p > line && vim_isfilec(utf_ptr2char(p))) {
       MB_PTR_BACK(line, p);
     }
-    if (p == line && vim_isfilec(utf_ptr2char(p))) {
+    bool p_is_filec = false;
+#ifdef MSWIN
+    // check for drive letters on mswin
+    if (p > line && path_has_drive_letter(p - 1, line + startcol - (p - 1))) {
+      p -= p == line + 1 ? 1 : 2;
+      p_is_filec = true;
+    }
+#endif
+    p_is_filec = p_is_filec || vim_isfilec(utf_ptr2char(p));
+
+    if (p == line && p_is_filec) {
       startcol = 0;
     } else {
       startcol = (int)(p - line) + 1;

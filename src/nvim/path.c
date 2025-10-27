@@ -1715,13 +1715,13 @@ size_t simplify_filename(char *filename)
 /// Checks for a Windows drive letter ("C:/") at the start of the path.
 ///
 /// @see https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
-bool path_has_drive_letter(const char *p)
+bool path_has_drive_letter(const char *p, size_t path_len)
   FUNC_ATTR_NONNULL_ALL
 {
-  return strlen(p) >= 2
+  return path_len >= 2
          && ASCII_ISALPHA(p[0])
          && (p[1] == ':' || p[1] == '|')
-         && (strlen(p) == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
+         && (path_len == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
 }
 
 // Check if the ":/" of a URL is at the pointer, return URL_SLASH.
@@ -1758,7 +1758,7 @@ int path_with_url(const char *fname)
     return 0;
   }
 
-  if (path_has_drive_letter(fname)) {
+  if (path_has_drive_letter(fname, strlen(fname))) {
     return 0;
   }
 

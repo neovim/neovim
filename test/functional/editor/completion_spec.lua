@@ -30,6 +30,16 @@ describe('completion', function()
     }
   end)
 
+  it('ctrl-x_ctrl-f completes Windows drive letter', function()
+    if not t.is_os('win') then
+      return
+    end
+    feed('iblablaC:/W<C-x><C-f>')
+    screen:expect {
+      any = [[C:\Windows\]],
+    }
+  end)
+
   describe('v:completed_item', function()
     it('is empty dict until completion', function()
       eq({}, eval('v:completed_item'))
