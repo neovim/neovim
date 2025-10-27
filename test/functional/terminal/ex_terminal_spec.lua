@@ -153,6 +153,7 @@ describe(':terminal', function()
     feed('i')
     eq({ blocking = false, mode = 'i' }, api.nvim_get_mode())
     command('stopinsert | wincmd p')
+    feed('<Ignore>') -- Add input to separate two RPC requests
     eq({ blocking = false, mode = 'nt' }, api.nvim_get_mode())
   end)
 end)
