@@ -3643,13 +3643,14 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
 /// Get complete information
 static void get_complete_info(list_T *what_list, dict_T *retdict)
 {
-#define CI_WHAT_MODE            0x01
-#define CI_WHAT_PUM_VISIBLE     0x02
-#define CI_WHAT_ITEMS           0x04
-#define CI_WHAT_SELECTED        0x08
-#define CI_WHAT_COMPLETED       0x10
-#define CI_WHAT_MATCHES         0x20
-#define CI_WHAT_ALL             0xff
+#define CI_WHAT_MODE                0x01
+#define CI_WHAT_PUM_VISIBLE         0x02
+#define CI_WHAT_ITEMS               0x04
+#define CI_WHAT_SELECTED            0x08
+#define CI_WHAT_COMPLETED           0x10
+#define CI_WHAT_MATCHES             0x20
+#define CI_WHAT_PREINSERTED_TEXT    0x40
+#define CI_WHAT_ALL                 0xff
   int what_flag;
 
   if (what_list == NULL) {
@@ -3671,6 +3672,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         what_flag |= CI_WHAT_SELECTED;
       } else if (strcmp(what, "completed") == 0) {
         what_flag |= CI_WHAT_COMPLETED;
+      } else if (strcmp(what, "preinserted_text") == 0) {
+        what_flag |= CI_WHAT_PREINSERTED_TEXT;
       } else if (strcmp(what, "matches") == 0) {
         what_flag |= CI_WHAT_MATCHES;
       }
@@ -3684,6 +3687,13 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 
   if (ret == OK && (what_flag & CI_WHAT_PUM_VISIBLE)) {
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
+  }
+
+  if (ret == OK && (what_flag & CI_WHAT_PREINSERTED_TEXT)) {
+    char *line = get_cursor_line_ptr();
+    int len = compl_ins_end_col - curwin->w_cursor.col;
+    ret = tv_dict_add_str_len(retdict, S_LEN("preinserted_text"),
+                              len > 0 ? line + curwin->w_cursor.col : "", len);
   }
 
   if (ret == OK && (what_flag & (CI_WHAT_ITEMS|CI_WHAT_SELECTED
