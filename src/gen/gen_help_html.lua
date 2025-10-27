@@ -738,7 +738,7 @@ local function get_helpfiles(dir, include)
 end
 
 --- Populates the helptags map.
-local function get_helptags(help_dir)
+local function _get_helptags(help_dir)
   local m = {}
   -- Load a random help file to convince taglist() to do its job.
   vim.cmd(string.format('split %s/api.txt', help_dir))
@@ -749,6 +749,18 @@ local function get_helptags(help_dir)
     end
   end
   vim.cmd('q!')
+
+  return m
+end
+
+--- Populates the helptags map.
+local function get_helptags(help_dir)
+  local m = _get_helptags(help_dir)
+
+  --- XXX: Append tags from netrw, until we remove it...
+  local netrwtags = _get_helptags(vim.fs.normalize('$VIMRUNTIME/pack/dist/opt/netrw/doc/'))
+  m = vim.tbl_extend('keep', m, netrwtags)
+
   return m
 end
 
@@ -1481,9 +1493,6 @@ function M.validate(help_dir, include, parser_path)
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()
   tagmap = get_helptags(vim.fs.normalize(help_dir))
-  --- XXX: Append tags from netrw, until we remove it...
-  local netrwtags = get_helptags(vim.fs.normalize('$VIMRUNTIME/pack/dist/opt/netrw/doc/'))
-  tagmap = vim.tbl_extend('keep', tagmap, netrwtags)
   helpfiles = get_helpfiles(help_dir, include)
   parser_path = parser_path and vim.fs.normalize(parser_path) or nil
 
