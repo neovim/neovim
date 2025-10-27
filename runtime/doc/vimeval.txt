@@ -2068,8 +2068,9 @@ text...
 				   endif
 				END
 <			Results in: `["if ok", "  echo 'done'", "endif"]`
-			The marker must line up with "let" and the indentation
-			of the first line is removed from all the text lines.
+			The end marker must line up with "let" and the
+			indentation of the first line is removed from all the
+			text lines.
 			Specifically: all the leading indentation exactly
 			matching the leading indentation of the first
 			non-empty text line is stripped from the input lines.
@@ -2157,10 +2158,10 @@ text...
 :cons[t] {var-name} = {expr1}
 :cons[t] [{name1}, {name2}, ...] = {expr1}
 :cons[t] [{name}, ..., ; {lastname}] = {expr1}
-:cons[t] {var-name} =<< [trim] [eval] {marker}
+:cons[t] {var-name} =<< [trim] [eval] {endmarker}
 text...
 text...
-{marker}
+{endmarker}
 			Similar to |:let|, but additionally lock the variable
 			after setting the value.  This is the same as locking
 			the variable with |:lockvar| just after |:let|, thus: >

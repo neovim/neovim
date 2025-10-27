@@ -147,7 +147,7 @@ the filler characters.
 CTRL-W s						*CTRL-W_s*
 CTRL-W S						*CTRL-W_S*
 CTRL-W CTRL-S						*CTRL-W_CTRL-S*
-:[N]sp[lit] [++opt] [+cmd] [file]			*:sp* *:split*
+:[N]sp[lit] [++opt] [+cmd]				*:sp* *:split*
 		Split current window in two.  The result is two viewports on
 		the same file.
 
@@ -157,10 +157,6 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		'eadirection' isn't "hor", and one of them is higher than the
 		current or the new window).
 
-		If [file] is given it will be edited in the new window.  If it
-		is not loaded in any buffer, it will be read.  Else the new
-		window will use the already loaded buffer.
-
 		Note: CTRL-S does not work on all terminals and might block
 		further input, use CTRL-Q to get going again.
 		Also see |++opt| and |+cmd|.
@@ -168,6 +164,19 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		Be careful when splitting a window in an autocommand, it may
 		mess up the window layout if this happens while making other
 		window layout changes.
+
+:[N]sp[lit] [++opt] [+cmd] {file}			*:split_f*
+		Like |:split| but create a new window and start editing file
+		{file} in it.
+		This behaves almost like a ":split" first, and then an ":edit"
+		command, but the alternate file name in the original window is
+		set to {file}.
+		If [+cmd] is given, execute the command when the file has been
+		loaded |+cmd|.
+		Also see |++opt|.
+		Make new window N high (default is to use half the existing
+		height).  Reduces the current window height to create room
+		(and others, if the 'equalalways' option is set).
 
 CTRL-W CTRL-V						*CTRL-W_CTRL-V*
 CTRL-W v						*CTRL-W_v*
@@ -206,17 +215,7 @@ CTRL-W CTRL-N						*CTRL-W_CTRL-N*
 		command.
 
 :[N]new [++opt] [+cmd] {file}
-:[N]sp[lit] [++opt] [+cmd] {file}			*:split_f*
-		Create a new window and start editing file {file} in it.  This
-		behaves almost like a ":split" first, and then an ":edit"
-		command, but the alternate file name in the original window is
-		set to {file}.
-		If [+cmd] is given, execute the command when the file has been
-		loaded |+cmd|.
-		Also see |++opt|.
-		Make new window N high (default is to use half the existing
-		height).  Reduces the current window height to create room
-		(and others, if the 'equalalways' option is set).
+		Like |:split_f|, create a new window and start editing {file}.
 
 :[N]vne[w] [++opt] [+cmd] [file]			*:vne* *:vnew*
 		Like |:new|, but split vertically.  If 'equalalways' is set

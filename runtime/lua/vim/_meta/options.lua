@@ -3565,9 +3565,10 @@ vim.bo.includeexpr = vim.o.includeexpr
 vim.bo.inex = vim.bo.includeexpr
 
 --- While typing a search command, show where the pattern, as it was typed
---- so far, matches.  The matched string is highlighted.  If the pattern
---- is invalid or not found, nothing is shown.  The screen will be updated
---- often, this is only useful on fast terminals.
+--- so far, matches (ignoring {offset} and {address} modifiers).  The
+--- matched string is highlighted.  If the pattern is invalid or not
+--- found, nothing is shown.  The screen will be updated often, this is
+--- only useful on fast terminals.
 --- Note that the match will be shown, but the cursor will return to its
 --- original position when no match is found and when pressing <Esc>.  You
 --- still need to finish the search command with <Enter> to move the
