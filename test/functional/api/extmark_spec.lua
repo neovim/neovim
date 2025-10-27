@@ -18,6 +18,7 @@ local function expect(contents)
   return eq(contents, n.curbuf_contents())
 end
 
+---@param opts vim.api.keyset.set_extmark
 local function set_extmark(ns_id, id, line, col, opts)
   if opts == nil then
     opts = {}
@@ -28,6 +29,7 @@ local function set_extmark(ns_id, id, line, col, opts)
   return api.nvim_buf_set_extmark(0, ns_id, line, col, opts)
 end
 
+---@param opts vim.api.keyset.get_extmarks
 local function get_extmarks(ns_id, start, end_, opts)
   if opts == nil then
     opts = {}
@@ -1760,6 +1762,34 @@ describe('API/extmarks', function()
     eq({ { 3, 0, 0 } }, get_extmarks(-1, 0, -1, { type = 'sign' }))
     eq({ { 4, 0, 0 } }, get_extmarks(-1, 0, -1, { type = 'virt_text' }))
     eq({ { 5, 0, 0 } }, get_extmarks(-1, 0, -1, { type = 'virt_lines' }))
+  end)
+
+  it('conceal = "\\f" overrides conceal = " "', function()
+    screen = Screen.new(15, 10)
+    screen:set_default_attr_ids({
+      [1] = { foreground = Screen.colors.Blue1, bold = true },
+    })
+    command('set conceallevel=3 concealcursor=n')
+
+    -- First, conceal "12" with space (should hide them completely)
+    set_extmark(ns, marks[1], 0, 0, { conceal = ' ', end_col = 2 })
+    screen:expect([[
+      34^5            |
+      {1:~              }|*8
+                     |
+    ]])
+
+    -- Now override with \f to clear the conceal (should show "12" again)
+    set_extmark(ns, marks[2], 0, 0, { conceal = '\f', end_col = 2 })
+    local extmarks = get_extmarks(ns, { 0, 0 }, { 0, 2 }, { details = true })
+    eq(2, #extmarks)
+    eq(' ', extmarks[1][4].conceal)
+    eq('\f', extmarks[2][4].conceal)
+    screen:expect([[
+      1234^5          |
+      {1:~              }|*8
+                     |
+    ]])
   end)
 
   it('invalidated marks are deleted', function()
