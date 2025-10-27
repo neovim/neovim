@@ -1,6 +1,8 @@
 *usr_28.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	  by Bram Moolenaar
+
 
 				   Folding
 

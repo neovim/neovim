@@ -1,6 +1,8 @@
 *usr_44.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	  by Bram Moolenaar
+
 
 			 Your own syntax highlighted
 

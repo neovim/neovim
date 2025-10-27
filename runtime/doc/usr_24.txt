@@ -1,6 +1,8 @@
 *usr_24.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	  by Bram Moolenaar
+
 
 			     Inserting quickly
 

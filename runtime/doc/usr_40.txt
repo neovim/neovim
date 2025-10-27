@@ -1,6 +1,8 @@
 *usr_40.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	  by Bram Moolenaar
+
 
 			      Make new commands
 

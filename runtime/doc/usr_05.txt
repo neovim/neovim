@@ -1,6 +1,8 @@
 *usr_05.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	  by Bram Moolenaar
+
 
 			      Set your settings
 

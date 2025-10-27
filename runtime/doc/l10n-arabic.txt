@@ -1,7 +1,7 @@
 *l10n-arabic.txt*	Nvim
 
 
-		  VIM REFERENCE MANUAL	  by Nadim Shaikli
+		  VIM REFERENCE MANUAL    by Nadim Shaikli
 
 
 Arabic Language support (options & mappings) for Vim		*Arabic*

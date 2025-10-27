@@ -1,7 +1,7 @@
 *undo.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Undo and redo						*undo-redo*

@@ -1,6 +1,8 @@
 *usr_21.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	  by Bram Moolenaar
+
 
 			   Go away and come back
 
