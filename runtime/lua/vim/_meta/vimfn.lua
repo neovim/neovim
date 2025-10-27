@@ -1055,10 +1055,8 @@ function vim.fn.complete_check() end
 --- Returns a |Dictionary| with information about Insert mode
 --- completion.  See |ins-completion|.
 --- The items are:
----    mode    Current completion mode name string.
----     See |complete_info_mode| for the values.
----    pum_visible  |TRUE| if popup menu is visible.
----     See |pumvisible()|.
+---    completed  Return a dictionary containing the entries of
+---     the currently selected index item.
 ---    items  List of all completion candidates.  Each item
 ---     is a dictionary containing the entries "word",
 ---     "abbr", "menu", "kind", "info" and
@@ -1069,13 +1067,18 @@ function vim.fn.complete_check() end
 ---     and "items" are in "what", the returned list
 ---     will still be named "items", but each item
 ---     will have an additional "match" field.
+---    mode    Current completion mode name string.
+---     See |complete_info_mode| for the values.
+---    preinserted_text
+---     The actual text that is pre-inserted, see
+---     |preinserted()|.
+---    pum_visible  |TRUE| if popup menu is visible.
+---     See |pumvisible()|.
 ---    selected  Selected item index.  First index is zero.
 ---     Index is -1 if no item is selected (showing
 ---     typed text only, or the last completion after
 ---     no item is selected when using the <Up> or
 ---     <Down> keys)
----    completed  Return a dictionary containing the entries of
----     the currently selected index item.
 ---    preview_winid     Info floating preview window id.
 ---    preview_bufnr     Info floating preview buffer id.
 ---
