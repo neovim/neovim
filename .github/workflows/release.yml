@@ -67,14 +67,14 @@ jobs:
           ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nvim-appimage-${{ matrix.arch }}
           path: |
             build/bin/nvim-linux-${{ matrix.arch }}.appimage
             build/bin/nvim-linux-${{ matrix.arch }}.appimage.zsync
           retention-days: 1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nvim-linux-${{ matrix.arch }}
           path: |
@@ -124,7 +124,7 @@ jobs:
       - name: Package
         run: cpack --config build/CPackConfig.cmake
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nvim-macos-${{ matrix.arch }}
           path: build/nvim-macos-${{ matrix.arch }}.tar.gz
@@ -164,7 +164,7 @@ jobs:
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build build --target package
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nvim-win-${{ matrix.arch }}
           path: |
