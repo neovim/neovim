@@ -1971,6 +1971,43 @@ describe('LSP', function()
       }
     end)
 
+    it('should catch error while parsing invalid header', function()
+      local header = 'Content-Length: \r\n'
+      local called = false
+      exec_lua(function()
+        local server = assert(vim.uv.new_tcp())
+        server:bind('127.0.0.1', 0)
+        server:listen(1, function(e)
+          assert(not e, e)
+          local socket = assert(vim.uv.new_tcp())
+          server:accept(socket)
+          socket:write(header .. '\r\n', function()
+            socket:shutdown()
+            server:close()
+          end)
+        end)
+        local client = assert(vim.uv.new_tcp())
+        local on_read = require('vim.lsp.rpc').create_read_loop(function() end, function()
+          client:close()
+        end, function(err, code)
+          vim.rpcnotify(1, 'error', err, code)
+        end)
+        client:connect('127.0.0.1', server:getsockname().port, function()
+          client:read_start(on_read)
+        end)
+      end)
+      n.run(nil, function(method, args)
+        local err, code = unpack(args) --- @type string, number
+        eq('error', method)
+        eq(1, code)
+        matches(vim.pesc('Content-Length not found in header: ' .. header) .. '$', err)
+        called = true
+        stop()
+        return NIL
+      end, nil, 1000)
+      eq(true, called)
+    end)
+
     it('should not trim vim.NIL from the end of a list', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
