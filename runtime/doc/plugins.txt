@@ -6,7 +6,7 @@
                                        Type |gO| to see the table of contents.
 
 ==============================================================================
-Plugins and modules included with Nvim
+Plugins and modules included with Nvim                               *plugins*
 
 Nvim includes various Lua and Vim plugins or modules which may provide
 commands (such as :TOhtml) or modules that you can optionally require() or
