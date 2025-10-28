@@ -1236,7 +1236,8 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
     ONE_ADJUST(&(buf->b_last_change.mark.lnum));
 
     // last cursor position, if it was set
-    if (!equalpos(buf->b_last_cursor.mark, initpos)) {
+    if (!equalpos(buf->b_last_cursor.mark, initpos)
+        && (!by_term || buf->b_last_cursor.mark.lnum < buf->b_ml.ml_line_count)) {
       ONE_ADJUST(&(buf->b_last_cursor.mark.lnum));
     }
 
@@ -1348,7 +1349,9 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
   // adjust per-window "last cursor" positions
   for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
     WinInfo *wip = kv_A(buf->b_wininfo, i);
-    ONE_ADJUST_CURSOR(&(wip->wi_mark.mark));
+    if (!by_term || wip->wi_mark.mark.lnum < buf->b_ml.ml_line_count) {
+      ONE_ADJUST_CURSOR(&(wip->wi_mark.mark));
+    }
   }
 }
 

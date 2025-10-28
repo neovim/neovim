@@ -254,7 +254,7 @@ describe('autocmd TextChangedT,WinResized', function()
     screen:expect([[
       hello                    │ab^                      |
                                │                        |*4
-      {31:[Scratch] [-]             }{32:[Scratch] [-]           }|
+      {31:[Scratch]                 }{32:[Scratch]               }|
       {1:-- TERMINAL --}                                    |
     ]])
     eq(2, exec_lua('return _G.t_triggered'))
@@ -273,7 +273,7 @@ describe('autocmd TextChangedT,WinResized', function()
     screen:expect([[
       hello                    │a^bc                     |
                                │                        |*4
-      {31:[Scratch] [-]             }{32:[Scratch] [-]           }|
+      {31:[Scratch]                 }{32:[Scratch]               }|
                                                         |
     ]])
     eq(1, exec_lua('return _G.n_triggered')) -- Happened in Normal mode.
