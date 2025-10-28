@@ -473,8 +473,9 @@ TUI:
   - Note: If you want to detect when Nvim is running in a terminal, use
     `has('gui_running')` |has()| or see |nvim_list_uis()| for an example of
     how to inspect the UI channel.
-- "builtin_x" means one of the |builtin-terms| was chosen, because the expected
-  terminfo file was not found on the system.
+- Nvim might optionally be compiled with unibilium, in which case the terminfo
+  database will be used. Otherwise, or if the terminal was not found in
+  the database, a table of builtin terminal definitions will be used.
 - Nvim will use 256-colour capability on Linux virtual terminals.  Vim uses
   only 8 colours plus bright foreground on Linux VTs.
 - Vim combines what is in its |builtin-terms| with what it reads from terminfo,

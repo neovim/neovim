@@ -2177,7 +2177,7 @@ describe('TUI', function()
 
   it('in nvim_list_uis(), sets nvim_set_client_info()', function()
     -- $TERM in :terminal.
-    local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
+    local exp_term = is_os('bsd') and 'xterm' or 'xterm-256color'
     local ui_chan = 1
     local expected = {
       {
@@ -3447,14 +3447,14 @@ describe("TUI 'term' option", function()
   end
 
   it('gets builtin term if $TERM is invalid', function()
-    assert_term('foo', 'builtin_ansi')
+    assert_term('foo', 'ansi')
   end)
 
   it('gets system-provided term if $TERM is valid', function()
     if is_os('openbsd') then
       assert_term('xterm', 'xterm')
     elseif is_os('bsd') then -- BSD lacks terminfo, builtin is always used.
-      assert_term('xterm', 'builtin_xterm')
+      assert_term('xterm', 'xterm')
     elseif is_os('mac') then
       local status, _ = pcall(assert_term, 'xterm', 'xterm')
       if not status then
@@ -3467,9 +3467,9 @@ describe("TUI 'term' option", function()
 
   it('builtin terms', function()
     -- These non-standard terminfos are always builtin.
-    assert_term('win32con', 'builtin_win32con')
-    assert_term('conemu', 'builtin_conemu')
-    assert_term('vtpcon', 'builtin_vtpcon')
+    assert_term('win32con', 'win32con')
+    assert_term('conemu', 'conemu')
+    assert_term('vtpcon', 'vtpcon')
   end)
 end)
 

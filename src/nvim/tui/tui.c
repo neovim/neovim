@@ -86,6 +86,7 @@ struct TUIData {
   int row, col;
   int out_fd;
   int pending_resize_events;
+  bool terminfo_found_in_db;
   bool can_change_scroll_region;
   bool has_left_and_right_margin_mode;
   bool has_sync_mode;
@@ -382,15 +383,15 @@ static void terminfo_start(TUIData *tui)
 #endif
 
   // Set up terminfo.
-  bool found_in_db = false;
+  tui->terminfo_found_in_db = false;
   if (term) {
-    if (terminfo_from_unibilium(&tui->ti, term, &tui->ti_arena)) {
+    if (terminfo_from_database(&tui->ti, term, &tui->ti_arena)) {
       tui->term = arena_strdup(&tui->ti_arena, term);
-      found_in_db = true;
+      tui->terminfo_found_in_db = true;
     }
   }
 
-  if (!found_in_db) {
+  if (!tui->terminfo_found_in_db) {
     const TerminfoEntry *new = terminfo_from_builtin(term, &tui->term);
     // we will patch it below, so make a copy
     memcpy(&tui->ti, new, sizeof tui->ti);
@@ -1596,7 +1597,7 @@ static void show_verbose_terminfo(TUIData *tui)
   ADD_C(title, CSTR_AS_OBJ("Title"));
   ADD_C(chunks, ARRAY_OBJ(title));
   MAXSIZE_TEMP_ARRAY(info, 1);
-  String str = terminfo_info_msg(&tui->ti, tui->term);
+  String str = terminfo_info_msg(&tui->ti, tui->term, tui->terminfo_found_in_db);
   ADD_C(info, STRING_OBJ(str));
   ADD_C(chunks, ARRAY_OBJ(info));
   MAXSIZE_TEMP_ARRAY(end_fold, 2);

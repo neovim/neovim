@@ -153,7 +153,12 @@ BUILD
 • A Zig-based build system has been added as an alternative to CMake. It is
   currently limited in functionality, and CMake remains the recommended option
   for the time being.
+• Nvim can be built without Unibilium (terminfo implementation), in which case
+  the user's terminfo database won't be loaded and only internal definitions
+  for the most common terminals are used. >
 
+  make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+<
 DEFAULTS
 
 • 'diffopt' default value now includes "indent-heuristic" and "inline:char".
