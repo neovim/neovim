@@ -783,10 +783,7 @@ function lsp._set_defaults(client, bufnr)
   then
     vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
   end
-  if
-    client:supports_method(ms.textDocument_documentLink)
-    and is_empty_or_default(bufnr, 'includeexpr')
-  then
+  if client:supports_method('textDocument/documentLink') then
     vim.bo[bufnr].includeexpr = 'v:lua.vim.lsp.includeexpr()'
   end
   if

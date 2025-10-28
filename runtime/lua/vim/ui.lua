@@ -212,30 +212,26 @@ function M._get_urls()
   local row = cursor[1] - 1
   local col = cursor[2]
 
-  local document_link_clients =
-    vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentLink })
+  local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
+  local results = vim.lsp.buf_request_sync(bufnr, 'textDocument/documentLink', params)
 
-  if #document_link_clients ~= 0 then
-    local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
-
-    for _, client in ipairs(document_link_clients) do
+  for client_id, result in pairs(results) do
+    if result.err then
+      vim.lsp.log.error(result.err)
+    else
+      local client = assert(vim.lsp.get_client_by_id(client_id))
       local position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
+      local link = vim.iter(result.result):find(function(document_link)
+        return position_in_range(position, document_link.range)
+      end)
 
-      local response = client:request_sync(ms.textDocument_documentLink, params, 1000, bufnr)
-
-      if response then
-        local link = vim.iter(response.result):find(function(document_link)
-          return position_in_range(position, document_link.range)
-        end)
-
-        if link then
-          ---@type string
-          local target = link.target
-          if vim.startswith(target, 'file://') then
-            target = vim.uri_to_fname(target)
-          end
-          table.insert(urls, target)
+      if link then
+        ---@type string
+        local target = link.target
+        if vim.startswith(target, 'file://') then
+          target = vim.uri_to_fname(target)
         end
+        table.insert(urls, target)
       end
     end
   end

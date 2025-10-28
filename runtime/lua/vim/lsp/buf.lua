@@ -941,7 +941,7 @@ function M.document_link(opts)
   opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
   local params = { textDocument = util.make_text_document_params() }
 
-  lsp.buf_request_all(0, ms.textDocument_documentLink, params, function(results, ctx)
+  lsp.buf_request_all(0, 'textDocument/documentLink', params, function(results, ctx)
     local bufnr = assert(ctx.bufnr)
     if api.nvim_get_current_buf() ~= bufnr then
       -- Ignore result since buffer changed. This happens for slow language servers.
