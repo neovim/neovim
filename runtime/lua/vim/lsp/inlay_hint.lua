@@ -436,17 +436,84 @@ function M.enable(enable, filter)
   end
 end
 
---- For supported LSP servers, apply the `textEdit`s in the inlay hint to the buffer.
+--- @alias vim.lsp.inlay_hint.action.callback fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer
+
+--- @alias vim.lsp.inlay_hint.action.name
+---| 'textEdits' -- apply_text_edits
+---| 'tooltip' -- string (plain text or markdown): hover?
+---| 'command' -- 'workspace/executeCommand'
+---| 'location' -- jump to location?
+
+--- @alias vim.lsp.inlay_hint.action
+---| vim.lsp.inlay_hint.action.name
+---| vim.lsp.inlay_hint.action.callback
+
+--- @class vim.lsp.inlay_hint.action.context
+--- @inlinedoc
+--- @field bufnr integer
+--- @field client vim.lsp.Client
+
+---@type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
+local inlayhint_actions = {
+  textEdits = function(hints, ctx)
+    local valid_hints = vim
+      .iter(hints)
+      :filter(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          -- only keep those that have text edits.
+          return hint ~= nil and hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
+        end
+      )
+      :totable()
+    ---@type lsp.TextEdit[]
+    local text_edits = vim
+      .iter(valid_hints)
+      :map(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          return hint.textEdits
+        end
+      )
+      :flatten(1)
+      :totable()
+    if #text_edits > 0 then
+      vim.schedule(function()
+        util.apply_text_edits(text_edits, ctx.bufnr, ctx.client.offset_encoding)
+      end)
+    end
+    return #valid_hints
+  end,
+}
+
+--- For supported LSP servers, apply one of the following actions provided by inlayhints in the
+--- selected range.
 ---
---- - In |Normal-mode|, this function inserts inlay hints that are adjacent to the cursor.
---- - In |Visual-mode|, this function inserts inlay hints that are in the visually selected range.
+--- - In |Normal-mode|, the action applies to inlay hints that are adjacent to the cursor.
+--- - In |Visual-mode|, the action applies to inlay hints that are in the visually selected range.
 ---
 --- Example usage:
 --- ```lua
---- vim.keymap.set('n', 'gI', vim.lsp.inlay_hint.apply_text_edits, { desc = 'Apply inlay hint edits' })
+--- vim.keymap.set(
+---   'n',
+---   'gI',
+---   function()
+---     vim.lsp.inlay_hint.apply_action("textEdits")
+---   end,
+---   { desc = 'Apply inlay hint edits' }
+--- )
 --- ```
 ---
-function M.apply_text_edits()
+--- @param action vim.lsp.inlay_hint.action
+---
+--- Possible actions: `"textEdits"`, `"tooltip"`, `"location"`, `"command"` and a custom callback:
+--- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlayhints in the range and some context, perform some actions and returns the number of hints on which the actions were taken.
+function M.apply_action(action)
+  local action_callback = action
+  if type(action) == 'string' then
+    action_callback = inlayhint_actions[action]
+    ---@cast action_callback -vim.lsp.inlay_hint.action.name
+  end
   local bufnr = api.nvim_get_current_buf()
   local winid = fn.bufwinid(bufnr)
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
@@ -479,37 +546,6 @@ function M.apply_text_edits()
       range['end'][1] = range['end'][1] + 1
       range['end'][2] = 0
     end
-  end
-
-  --- returns the number of edits applied.
-  ---@param client vim.lsp.Client
-  ---@param hints lsp.InlayHint
-  ---@return integer
-  local function apply_edits(client, hints)
-    ---@type lsp.TextEdit[]
-    local text_edits = vim
-      .iter(hints)
-      :filter(
-        ---@param hint lsp.InlayHint
-        function(hint)
-          -- only keep those that have text edits.
-          return hint ~= nil and hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
-        end
-      )
-      :map(
-        ---@param hint lsp.InlayHint
-        function(hint)
-          return hint.textEdits
-        end
-      )
-      :flatten(1)
-      :totable()
-    if #text_edits > 0 then
-      vim.schedule(function()
-        util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
-      end)
-    end
-    return #text_edits
   end
 
   ---@param idx? integer
@@ -563,7 +599,7 @@ function M.apply_text_edits()
             :totable()
           if #hints > 0 then
             if not support_resolve then
-              if apply_edits(client, hints) == 0 then
+              if action_callback(hints, { bufnr = bufnr, client = client }) == 0 then
                 -- no edits applied. proceed with the iteration.
                 return do_insert(next(clients, idx))
               else
@@ -577,33 +613,20 @@ function M.apply_text_edits()
             local num_processed = 0
 
             for i, h in ipairs(hints) do
-              if h.textEdits == nil or #h.textEdits == 0 then
-                -- resolve if no textEdits
-                client:request('inlayHint/resolve', h, function(_, _result, _, _)
-                  if _result ~= nil then
-                    hints[i] = _result
-                  end
-                  num_processed = num_processed + 1
-
-                  if num_processed == #hints then
-                    if apply_edits(client, hints) == 0 then
-                      return do_insert(next(clients, idx))
-                    else
-                      return
-                    end
-                  end
-                end, bufnr)
-              else
+              client:request('inlayHint/resolve', h, function(_, _result, _, _)
+                if _result ~= nil then
+                  hints[i] = _result
+                end
                 num_processed = num_processed + 1
 
                 if num_processed == #hints then
-                  if apply_edits(client, hints) == 0 then
+                  if action_callback(hints, { bufnr = bufnr, client = client }) == 0 then
                     return do_insert(next(clients, idx))
                   else
                     return
                   end
                 end
-              end
+              end, bufnr)
             end
           else
             -- no hints in the given range.
