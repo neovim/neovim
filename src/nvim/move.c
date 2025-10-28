@@ -59,7 +59,7 @@ typedef struct {
 #include "move.c.generated.h"
 
 /// Get the number of screen lines skipped with "wp->w_skipcol".
-int adjust_plines_for_skipcol(win_T *wp)
+static int adjust_plines_for_skipcol(win_T *wp)
 {
   if (wp->w_skipcol == 0) {
     return 0;
@@ -77,8 +77,8 @@ int adjust_plines_for_skipcol(win_T *wp)
 /// Return how many lines "lnum" will take on the screen, taking into account
 /// whether it is the first line, whether w_skipcol is non-zero and limiting to
 /// the window height.
-static int plines_correct_topline(win_T *wp, linenr_T lnum, linenr_T *nextp, bool limit_winheight,
-                                  bool *foldedp)
+int plines_correct_topline(win_T *wp, linenr_T lnum, linenr_T *nextp, bool limit_winheight,
+                           bool *foldedp)
 {
   int n = plines_win_full(wp, lnum, nextp, foldedp, true, false);
   if (lnum == wp->w_topline) {

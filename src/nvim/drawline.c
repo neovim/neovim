@@ -2267,8 +2267,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             if (spell_hlf != HLF_COUNT
                 && (State & MODE_INSERT)
                 && wp->w_cursor.lnum == lnum
-                && wp->w_cursor.col >=
-                (colnr_T)(prev_ptr - line)
+                && wp->w_cursor.col >= (colnr_T)(prev_ptr - line)
                 && wp->w_cursor.col < (colnr_T)word_end) {
               spell_hlf = HLF_COUNT;
               spell_redraw_lnum = lnum;
