@@ -18,7 +18,7 @@
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
@@ -56,9 +56,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "change.c.generated.h"
-#endif
+#include "change.c.generated.h"
 
 /// If the file is readonly, give a warning message with the first change.
 /// Don't do this for autocommands.
@@ -94,7 +92,7 @@ void change_warning(buf_T *buf, int col)
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     msg_end();
-    if (msg_silent == 0 && !silent_mode && ui_active()) {
+    if (msg_silent == 0 && !silent_mode && ui_active() && !ui_has(kUIMessages)) {
       ui_flush();
       os_delay(1002, true);  // give the user time to think about it
     }
@@ -133,7 +131,7 @@ void changed(buf_T *buf)
       // Wait two seconds, to make sure the user reads this unexpected
       // message.  Since we could be anywhere, call wait_return() now,
       // and don't let the emsg() set msg_scroll.
-      if (need_wait_return && emsg_silent == 0 && !in_assert_fails) {
+      if (need_wait_return && emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
         ui_flush();
         os_delay(2002, true);
         wait_return(true);
@@ -461,12 +459,20 @@ void inserted_bytes(linenr_T lnum, colnr_T start_col, int old_col, int new_col)
   changed_bytes(lnum, start_col);
 }
 
+/// Appended "count" lines below line "lnum" in the given buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// Takes care of marking the buffer to be redrawn and sets the changed flag.
+void appended_lines_buf(buf_T *buf, linenr_T lnum, linenr_T count)
+{
+  changed_lines(buf, lnum + 1, 0, lnum + 1, count, true);
+}
+
 /// Appended "count" lines below line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
 void appended_lines(linenr_T lnum, linenr_T count)
 {
-  changed_lines(curbuf, lnum + 1, 0, lnum + 1, count, true);
+  appended_lines_buf(curbuf, lnum, count);
 }
 
 /// Like appended_lines(), but adjust marks first.
@@ -476,12 +482,20 @@ void appended_lines_mark(linenr_T lnum, int count)
   changed_lines(curbuf, lnum + 1, 0, lnum + 1, (linenr_T)count, true);
 }
 
+/// Deleted "count" lines at line "lnum" in the given buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// Takes care of marking the buffer to be redrawn and sets the changed flag.
+void deleted_lines_buf(buf_T *buf, linenr_T lnum, linenr_T count)
+{
+  changed_lines(buf, lnum, 0, lnum + count, -count, true);
+}
+
 /// Deleted "count" lines at line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
 void deleted_lines(linenr_T lnum, linenr_T count)
 {
-  changed_lines(curbuf, lnum, 0, lnum + count, -count, true);
+  deleted_lines_buf(curbuf, lnum, count);
 }
 
 /// Like deleted_lines(), but adjust marks first.
@@ -939,118 +953,6 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   inserted_bytes(lnum, col, count, 0);
 
   return OK;
-}
-
-/// Copy the indent from ptr to the current line (and fill to size).
-/// Leaves the cursor on the first non-blank in the line.
-///
-/// @return true if the line was changed.
-bool copy_indent(int size, char *src)
-{
-  char *p = NULL;
-  char *line = NULL;
-  int ind_len;
-  int line_len = 0;
-  int tab_pad;
-
-  // Round 1: compute the number of characters needed for the indent
-  // Round 2: copy the characters.
-  for (int round = 1; round <= 2; round++) {
-    int todo = size;
-    ind_len = 0;
-    int ind_done = 0;
-    int ind_col = 0;
-    char *s = src;
-
-    // Count/copy the usable portion of the source line.
-    while (todo > 0 && ascii_iswhite(*s)) {
-      if (*s == TAB) {
-        tab_pad = tabstop_padding(ind_done,
-                                  curbuf->b_p_ts,
-                                  curbuf->b_p_vts_array);
-
-        // Stop if this tab will overshoot the target.
-        if (todo < tab_pad) {
-          break;
-        }
-        todo -= tab_pad;
-        ind_done += tab_pad;
-        ind_col += tab_pad;
-      } else {
-        todo--;
-        ind_done++;
-        ind_col++;
-      }
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = *s;
-      }
-      s++;
-    }
-
-    // Fill to next tabstop with a tab, if possible.
-    tab_pad = tabstop_padding(ind_done, curbuf->b_p_ts, curbuf->b_p_vts_array);
-
-    if ((todo >= tab_pad) && !curbuf->b_p_et) {
-      todo -= tab_pad;
-      ind_len++;
-      ind_col += tab_pad;
-
-      if (p != NULL) {
-        *p++ = TAB;
-      }
-    }
-
-    // Add tabs required for indent.
-    if (!curbuf->b_p_et) {
-      while (true) {
-        tab_pad = tabstop_padding(ind_col,
-                                  curbuf->b_p_ts,
-                                  curbuf->b_p_vts_array);
-        if (todo < tab_pad) {
-          break;
-        }
-        todo -= tab_pad;
-        ind_len++;
-        ind_col += tab_pad;
-        if (p != NULL) {
-          *p++ = TAB;
-        }
-      }
-    }
-
-    // Count/add spaces required for indent.
-    while (todo > 0) {
-      todo--;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = ' ';
-      }
-    }
-
-    if (p == NULL) {
-      // Allocate memory for the result: the copied indent, new indent
-      // and the rest of the line.
-      line_len = get_cursor_line_len() + 1;
-      assert(ind_len + line_len >= 0);
-      size_t line_size;
-      STRICT_ADD(ind_len, line_len, &line_size, size_t);
-      line = xmalloc(line_size);
-      p = line;
-    }
-  }
-
-  // Append the original line
-  memmove(p, get_cursor_line_ptr(), (size_t)line_len);
-
-  // Replace the line
-  ml_replace(curwin->w_cursor.lnum, line, false);
-
-  // Put the cursor after the indent.
-  curwin->w_cursor.col = ind_len;
-  return true;
 }
 
 /// open_line: Add a new line below or above the current line.
@@ -1730,7 +1632,27 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   curbuf_splice_pending++;
   old_cursor = curwin->w_cursor;
+  int old_cmod_flags = cmdmod.cmod_flags;
+  char *prompt_moved = NULL;
   if (dir == BACKWARD) {
+    // In case of prompt buffer, when we are applying 'normal O' operation on line of prompt,
+    // we can't add a new line before the prompt. In this case, we move the prompt text one
+    // line below and create a new prompt line as current line.
+    if (bt_prompt(curbuf) && curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
+      char *prompt_line = ml_get(curwin->w_cursor.lnum);
+      char *prompt = prompt_text();
+      size_t prompt_len = strlen(prompt);
+
+      if (strncmp(prompt_line, prompt, prompt_len) == 0) {
+        STRMOVE(prompt_line, prompt_line + prompt_len);
+        // We are moving the lines but the b_prompt_start mark needs to stay in
+        // place so freezing marks before making the move.
+        cmdmod.cmod_flags = cmdmod.cmod_flags | CMOD_LOCKMARKS;
+        ml_replace(curwin->w_cursor.lnum, prompt_line, true);
+        prompt_moved = concat_str(prompt, p_extra);
+        p_extra = prompt_moved;
+      }
+    }
     curwin->w_cursor.lnum--;
   }
   if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
@@ -1920,6 +1842,8 @@ theend:
   xfree(saved_line);
   xfree(next_line);
   xfree(allocated);
+  xfree(prompt_moved);
+  cmdmod.cmod_flags = old_cmod_flags;
   return retval;
 }
 
@@ -1966,7 +1890,7 @@ void del_lines(linenr_T nlines, bool undo)
       break;
     }
 
-    ml_delete(first, true);
+    ml_delete_flags(first, ML_DEL_MESSAGE);
     n++;
 
     // If we delete the last line in the file, stop

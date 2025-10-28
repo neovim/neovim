@@ -129,7 +129,7 @@ func Test_Debugger()
   call RunDbgCmd(buf, 'step')
   call RunDbgCmd(buf, 'frame 2')
   call RunDbgCmd(buf, 'echo var3', [
-	\ 'Error detected while processing function Foo[2]..Bar[2]..Bazz:',
+	\ 'Error in function Foo[2]..Bar[2]..Bazz:',
 	\ 'line    4:',
 	\ 'E121: Undefined variable: var3'])
 
@@ -149,7 +149,7 @@ func Test_Debugger()
 
   " Undefined var2
   call RunDbgCmd(buf, 'echo var2', [
-	      \ 'Error detected while processing function Foo[2]..Bar:',
+	      \ 'Error in function Foo[2]..Bar:',
 	      \ 'line    3:',
 	      \ 'E121: Undefined variable: var2'])
 
@@ -268,7 +268,7 @@ func Test_Debugger()
 
   " Check for error cases
   call RunDbgCmd(buf, 'breakadd abcd', [
-	      \ 'Error detected while processing function Bazz:',
+	      \ 'Error in function Bazz:',
 	      \ 'line    5:',
 	      \ 'E475: Invalid argument: abcd'])
   call RunDbgCmd(buf, 'breakadd func', ['E475: Invalid argument: func'])

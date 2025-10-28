@@ -46,9 +46,7 @@
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/buffer.c.generated.h"
-#endif
+#include "api/buffer.c.generated.h"
 
 /// @brief <pre>help
 /// For more information on buffers, see |buffers|.
@@ -56,7 +54,7 @@
 /// Unloaded Buffers: ~
 ///
 /// Buffers may be unloaded by the |:bunload| command or the buffer's
-/// |'bufhidden'| option. When a buffer is unloaded its file contents are freed
+/// 'bufhidden' option. When a buffer is unloaded its file contents are freed
 /// from memory and vim cannot operate on the buffer lines until it is reloaded
 /// (usually by opening the buffer again in a new window). API methods such as
 /// |nvim_buf_get_lines()| and |nvim_buf_line_count()| will be affected.
@@ -87,7 +85,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
   return buf->b_ml.ml_line_count;
 }
 
-/// Activates buffer-update events on a channel, or as Lua callbacks.
+/// Activates |api-buffer-updates| events on a channel, or as Lua callbacks.
 ///
 /// Example (Lua): capture buffer updates in a global `events` variable
 /// (use "vim.print(events)" to see its contents):
@@ -431,7 +429,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     // changed range, and move any in the remainder of the buffer.
     linenr_T adjust = end > start ? MAXLNUM : 0;
     mark_adjust_buf(buf, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
-                    true, true, kExtmarkNOOP);
+                    true, kMarkAdjustApi, kExtmarkNOOP);
 
     extmark_splice(buf, (int)start - 1, 0, (int)(end - start), 0,
                    deleted_bytes, (int)new_len, 0, inserted_bytes,
@@ -663,8 +661,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     // changed range, and move any in the remainder of the buffer.
     // Do not adjust any cursors. need to use column-aware logic (below)
     linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
-    mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, adjust, (linenr_T)extra,
-                    true, true, kExtmarkNOOP);
+    mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
+                    true, kMarkAdjustApi, kExtmarkNOOP);
 
     extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
                    (int)(end_row - start_row), col_extent, old_byte,
@@ -856,7 +854,8 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer id.
-ArrayOf(Dict) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
+ArrayOf(DictAs(get_keymap)) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena,
+                                                Error *err)
   FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

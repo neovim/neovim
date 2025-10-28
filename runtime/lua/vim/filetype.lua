@@ -40,13 +40,16 @@ local function starsetf(ft, priority)
   }
 end
 
----@private
 --- Get a line range from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
 ---@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
 ---@return string[] # Array of lines
 function M._getlines(bufnr, start_lnum, end_lnum)
+  if not bufnr or bufnr < 0 then
+    return {}
+  end
+
   if start_lnum then
     return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum or start_lnum, false)
   end
@@ -55,17 +58,19 @@ function M._getlines(bufnr, start_lnum, end_lnum)
   return api.nvim_buf_get_lines(bufnr, 0, -1, false)
 end
 
----@private
 --- Get a single line from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer The line number of the first line (inclusive, 1-based)
 ---@return string
 function M._getline(bufnr, start_lnum)
+  if not bufnr or bufnr < 0 then
+    return ''
+  end
+
   -- Return a single line
   return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
 end
 
----@private
 --- Check whether a string matches any of the given Lua patterns.
 ---
 ---@param s string? The string to check
@@ -83,7 +88,6 @@ function M._findany(s, patterns)
   return false
 end
 
----@private
 --- Get the next non-whitespace line in the buffer.
 ---
 ---@param bufnr integer The buffer to get the line from
@@ -102,7 +106,6 @@ do
   --- @type table<string,vim.regex>
   local regex_cache = {}
 
-  ---@private
   --- Check whether the given string matches the Vim regex pattern.
   --- @param s string?
   --- @param pattern string
@@ -215,7 +218,7 @@ local extension = {
   art = 'art',
   asciidoc = 'asciidoc',
   adoc = 'asciidoc',
-  asa = function(path, bufnr)
+  asa = function(_path, _bufnr)
     if vim.g.filetype_asa then
       return vim.g.filetype_asa
     end
@@ -263,14 +266,17 @@ local extension = {
   bl = 'blank',
   blp = 'blueprint',
   bp = 'bp',
+  bs = 'brighterscript',
+  brs = 'brightscript',
   bsd = 'bsdl',
   bsdl = 'bsdl',
   bst = 'bst',
-  btm = function(path, bufnr)
+  btm = function(_path, _bufnr)
     return (vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0) and 'dosbatch'
       or 'btm'
   end,
   bzl = 'bzl',
+  bxl = 'bzl',
   bazel = 'bzl',
   BUILD = 'bzl',
   mdh = 'c',
@@ -281,6 +287,7 @@ local extension = {
   c3t = 'c3',
   cabal = 'cabal',
   cairo = 'cairo',
+  cj = 'cangjie',
   capnp = 'capnp',
   cdc = 'cdc',
   cdl = 'cdl',
@@ -319,7 +326,7 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   ctags = 'conf',
-  hook = function(path, bufnr)
+  hook = function(_path, bufnr)
     return M._getline(bufnr, 1) == '[Trigger]' and 'confini' or nil
   end,
   nmconnection = 'confini',
@@ -462,11 +469,13 @@ local extension = {
   fwt = 'fan',
   lib = 'faust',
   fnl = 'fennel',
+  fga = 'fga',
   m4gl = 'fgl',
   ['4gl'] = 'fgl',
   ['4gh'] = 'fgl',
   fir = 'firrtl',
   fish = 'fish',
+  flix = 'flix',
   focexec = 'focexec',
   fex = 'focexec',
   ft = 'forth',
@@ -559,6 +568,7 @@ local extension = {
   persistentmodels = 'haskellpersistent',
   ht = 'haste',
   htpp = 'hastepreproc',
+  hx = 'haxe',
   hcl = 'hcl',
   hb = 'hb',
   h = detect.header,
@@ -670,6 +680,7 @@ local extension = {
   kl = 'karel',
   KL = 'karel',
   kdl = 'kdl',
+  kerml = 'kerml',
   kv = 'kivy',
   kix = 'kix',
   kts = 'kotlin',
@@ -732,13 +743,10 @@ local extension = {
   luau = 'luau',
   lrc = 'lyrics',
   m = detect.m,
-  at = 'm4',
+  at = 'config',
   mc = detect.mc,
   quake = 'm3quake',
-  m4 = function(path, bufnr)
-    local pathl = path:lower()
-    return not (pathl:find('html%.m4$') or pathl:find('fvwm2rc')) and 'm4' or nil
-  end,
+  m4 = detect.m4,
   eml = 'mail',
   mk = detect.make,
   mak = detect.make,
@@ -872,6 +880,7 @@ local extension = {
   nsh = 'nsis',
   nt = 'ntriples',
   nu = 'nu',
+  nbt = 'numbat',
   obj = 'obj',
   objdump = 'objdump',
   cppobjdump = 'objdump',
@@ -948,6 +957,8 @@ local extension = {
   pike = 'pike',
   pmod = 'pike',
   rcp = 'pilrc',
+  pkl = 'pkl',
+  pcf = 'pkl',
   PL = detect.pl,
   pli = 'pli',
   pl1 = 'pli',
@@ -1009,6 +1020,7 @@ local extension = {
   qml = 'qml',
   qbs = 'qml',
   qmd = 'quarto',
+  bms = 'quickbms',
   R = detect.r,
   rkt = 'racket',
   rktd = 'racket',
@@ -1160,6 +1172,7 @@ local extension = {
   spt = 'snobol4',
   sno = 'snobol4',
   sln = 'solution',
+  soy = 'soy',
   sparql = 'sparql',
   rq = 'sparql',
   spec = 'spec',
@@ -1213,6 +1226,7 @@ local extension = {
   sys = detect.sys,
   Sys = detect.sys,
   SYS = detect.sys,
+  sysml = 'sysml',
   svh = 'systemverilog',
   sv = 'systemverilog',
   cmm = 'trace32',
@@ -1390,6 +1404,9 @@ local extension = {
   yaml = 'yaml',
   eyaml = 'yaml',
   mplstyle = 'yaml',
+  kyaml = 'yaml',
+  kyml = 'yaml',
+  grc = detect_line1('<%?xml', 'xml', 'yaml'),
   yang = 'yang',
   yuck = 'yuck',
   z8a = 'z8a',
@@ -1511,6 +1528,7 @@ local filename = {
   ['.trans'] = 'clojure',
   ['CMakeLists.txt'] = 'cmake',
   ['CMakeCache.txt'] = 'cmakecache',
+  ['CODEOWNERS'] = 'codeowners',
   ['.cling_history'] = 'cpp',
   ['.alias'] = detect.csh,
   ['.cshrc'] = detect.csh,
@@ -1597,6 +1615,8 @@ local filename = {
   mtab = 'fstab',
   ['.gdbinit'] = 'gdb',
   gdbinit = 'gdb',
+  ['.cuda-gdbinit'] = 'gdb',
+  ['cuda-gdbinit'] = 'gdb',
   ['.gdbearlyinit'] = 'gdb',
   gdbearlyinit = 'gdb',
   ['lltxxxxx.txt'] = 'gedcom',
@@ -1673,6 +1693,8 @@ local filename = {
   ['deno.lock'] = 'json',
   ['flake.lock'] = 'json',
   ['.swcrc'] = 'json',
+  ['composer.lock'] = 'json',
+  ['symfony.lock'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
   ['.hintrc'] = 'jsonc',
@@ -1692,6 +1714,7 @@ local filename = {
   Kconfig = 'kconfig',
   ['Kconfig.debug'] = 'kconfig',
   ['Config.in'] = 'kconfig',
+  ['kitty.conf'] = 'kitty',
   ['ldaprc'] = 'ldapconf',
   ['.ldaprc'] = 'ldapconf',
   ['ldap.conf'] = 'ldapconf',
@@ -1782,12 +1805,12 @@ local filename = {
   ['/etc/pinforc'] = 'pinfo',
   ['/.pinforc'] = 'pinfo',
   ['.povrayrc'] = 'povini',
-  printcap = function(path, bufnr)
+  printcap = function(_path, _bufnr)
     return 'ptcap', function(b)
       vim.b[b].ptcap_type = 'print'
     end
   end,
-  termcap = function(path, bufnr)
+  termcap = function(_path, _bufnr)
     return 'ptcap', function(b)
       vim.b[b].ptcap_type = 'term'
     end
@@ -1942,6 +1965,8 @@ local filename = {
   matplotlibrc = 'yaml',
   ['.condarc'] = 'yaml',
   condarc = 'yaml',
+  ['.mambarc'] = 'yaml',
+  mambarc = 'yaml',
   zathurarc = 'zathurarc',
   ['/etc/zprofile'] = 'zsh',
   ['.zlogin'] = 'zsh',
@@ -1965,6 +1990,7 @@ local detect_xkb = starsetf('xkb')
 local pattern = {
   -- BEGIN PATTERN
   ['/debian/'] = {
+    ['/debian/tests/control$'] = 'autopkgtest',
     ['/debian/changelog$'] = 'debchangelog',
     ['/debian/control$'] = 'debcontrol',
     ['/debian/copyright$'] = 'debcopyright',
@@ -2028,14 +2054,14 @@ local pattern = {
     ['/etc/modprobe%.'] = starsetf('modconf'),
     ['/etc/modules%.conf$'] = 'modconf',
     ['/etc/modules$'] = 'modconf',
-    ['/etc/modutils/'] = starsetf(function(path, bufnr)
+    ['/etc/modutils/'] = starsetf(function(path, _bufnr)
       if fn.executable(fn.expand(path)) ~= 1 then
         return 'modconf'
       end
     end),
     ['/etc/Muttrc%.d/'] = starsetf('muttrc'),
     ['/etc/nanorc$'] = 'nanorc',
-    ['/etc/nginx/'] = 'nginx',
+    ['/etc/nginx/'] = starsetf('nginx'),
     ['/etc/pam%.conf$'] = 'pamconf',
     ['/etc/pam%.d/'] = starsetf('pamconf'),
     ['/etc/passwd%-$'] = 'passwd',
@@ -2157,6 +2183,160 @@ local pattern = {
     ['/log/user%.notice$'] = 'messages',
     ['/log/user%.warn$'] = 'messages',
     ['/log/user$'] = 'messages',
+    ['/log/auth%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.crit%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.err%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.info%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.log%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.notice%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.warn%.[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/auth%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/cron%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/daemon%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/debug%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/kern%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/lpr%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/mail%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/messages%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/news/news%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/syslog%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.crit%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.err%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.info%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.log%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.notice%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%.warn%-[0-9]*$'] = starsetf('messages'),
+    ['/log/user%-[0-9]*$'] = starsetf('messages'),
   },
   ['/systemd/'] = {
     ['/%.config/systemd/user/%.#'] = 'systemd',
@@ -2213,18 +2393,21 @@ local pattern = {
     ['/gitolite%-admin/conf/'] = starsetf('gitolite'),
     ['/%.i3/config$'] = 'i3config',
     ['/i3/config$'] = 'i3config',
+    ['/waybar/config$'] = 'jsonc',
     ['/%.mplayer/config$'] = 'mplayerconf',
     ['/supertux2/config$'] = 'scheme',
     ['/neofetch/config%.conf$'] = 'sh',
     ['/%.ssh/config$'] = 'sshconfig',
     ['/%.sway/config$'] = 'swayconfig',
     ['/sway/config$'] = 'swayconfig',
+    ['/sway/config%.d/'] = 'swayconfig',
     ['/%.cargo/config$'] = 'toml',
     ['/%.bundle/config$'] = 'yaml',
     ['/%.kube/config$'] = 'yaml',
   },
   ['/%.'] = {
     ['/%.aws/credentials$'] = 'confini',
+    ['/%.aws/cli/alias$'] = 'confini',
     ['/%.gitconfig%.d/'] = starsetf('gitconfig'),
     ['/%.gnupg/gpg%.conf$'] = 'gpg',
     ['/%.gnupg/options$'] = 'gpg',
@@ -2233,6 +2416,7 @@ local pattern = {
     ['/%.pinforc$'] = 'pinfo',
     ['/%.cargo/credentials$'] = 'toml',
     ['/%.init/.*%.override$'] = 'upstart',
+    ['/%.kube/kuberc$'] = 'yaml',
   },
   ['calendar/'] = {
     ['/%.calendar/'] = starsetf('calendar'),
@@ -2280,12 +2464,15 @@ local pattern = {
     ['asterisk/.*%.conf'] = starsetf('asterisk'),
     ['asterisk.*/.*voicemail%.conf'] = starsetf('asteriskvm'),
     ['^dictd.*%.conf$'] = 'dictdconf',
+    ['/%.?gnuradio/.*%.conf$'] = 'confini',
+    ['/gnuradio/conf%.d/.*%.conf$'] = 'confini',
     ['/lxqt/.*%.conf$'] = 'dosini',
     ['/screengrab/.*%.conf$'] = 'dosini',
     ['/%.config/fd/ignore$'] = 'gitignore',
     ['^${GNUPGHOME}/gpg%.conf$'] = 'gpg',
     ['/boot/grub/grub%.conf$'] = 'grub',
     ['/hypr/.*%.conf$'] = 'hyprlang',
+    ['/kitty/.*%.conf$'] = 'kitty',
     ['^lilo%.conf'] = starsetf('lilo'),
     ['^named.*%.conf$'] = 'named',
     ['^rndc.*%.conf$'] = 'named',
@@ -2294,7 +2481,7 @@ local pattern = {
     ['/wireplumber/.*%.conf$'] = 'spajson',
     ['/%.ssh/.*%.conf$'] = 'sshconfig',
     ['^%.?tmux.*%.conf$'] = 'tmux',
-    ['^%.?tmux.*%.conf'] = { 'tmux', { priority = -1 } },
+    ['^%.?tmux.*%.conf'] = starsetf('tmux'),
     ['/containers/containers%.conf$'] = 'toml',
     ['/containers/containers%.conf%.d/.*%.conf$'] = 'toml',
     ['/containers/containers%.conf%.modules/.*%.conf$'] = 'toml',
@@ -2327,12 +2514,13 @@ local pattern = {
   },
   ['nginx'] = {
     ['/nginx/.*%.conf$'] = 'nginx',
-    ['/usr/local/nginx/conf/'] = 'nginx',
+    ['/usr/local/nginx/conf/'] = starsetf('nginx'),
     ['nginx%.conf$'] = 'nginx',
     ['^nginx.*%.conf$'] = 'nginx',
   },
   ['require'] = {
     ['%-requirements%.txt$'] = 'requirements',
+    ['^requirements%-.*%.txt$'] = 'requirements',
     ['^requirements/.*%.txt$'] = 'requirements',
     ['^requires/.*%.txt$'] = 'requirements',
   },
@@ -2341,7 +2529,7 @@ local pattern = {
     ['s6.*/finish$'] = 'execline',
     ['s6.*/run$'] = 'execline',
     ['s6.*/up$'] = 'execline',
-    ['^s6%-'] = 'execline',
+    ['^s6%-'] = starsetf('execline'),
   },
   ['utt'] = {
     ['^mutt%-.*%-%w+$'] = 'mail',
@@ -2432,19 +2620,19 @@ local pattern = {
     ['^crontab%.'] = starsetf('crontab'),
     ['^cvs%d+$'] = 'cvs',
     ['/DEBIAN/control$'] = 'debcontrol',
-    ['^php%.ini%-'] = 'dosini',
-    ['^php%-fpm%.conf'] = 'dosini',
-    ['^www%.conf'] = 'dosini',
+    ['^php%.ini%-'] = starsetf('dosini'),
+    ['^php%-fpm%.conf'] = starsetf('dosini'),
+    ['^www%.conf'] = starsetf('dosini'),
     ['^drac%.'] = starsetf('dracula'),
     ['/dtrace/.*%.d$'] = 'dtrace',
     ['esmtprc$'] = 'esmtprc',
-    ['/0%.orig/'] = detect.foam,
-    ['/0/'] = detect.foam,
+    ['/0%.orig/'] = starsetf(detect.foam),
+    ['/0/'] = starsetf(detect.foam),
     ['/constant/g$'] = detect.foam,
-    ['Transport%.'] = detect.foam,
-    ['^[a-zA-Z0-9].*Dict%.'] = detect.foam,
+    ['Transport%.'] = starsetf(detect.foam),
+    ['^[a-zA-Z0-9].*Dict%.'] = starsetf(detect.foam),
     ['^[a-zA-Z0-9].*Dict$'] = detect.foam,
-    ['^[a-zA-Z].*Properties%.'] = detect.foam,
+    ['^[a-zA-Z].*Properties%.'] = starsetf(detect.foam),
     ['^[a-zA-Z].*Properties$'] = detect.foam,
     ['/tmp/lltmp'] = starsetf('gedcom'),
     ['^gkrellmrc_.$'] = 'gkrellmrc',
@@ -2478,7 +2666,6 @@ local pattern = {
       end
     end,
     ['^hg%-editor%-.*%.txt$'] = 'hgcommit',
-    ['%.html%.m4$'] = 'htmlm4',
     ['^JAM.*%.'] = starsetf('jam'),
     ['^Prl.*%.'] = starsetf('jam'),
     ['^${HOME}/.*/Code/User/.*%.json$'] = 'jsonc',
@@ -2505,17 +2692,20 @@ local pattern = {
     ['/octave/history$'] = 'octave',
     ['%.opam%.locked$'] = 'opam',
     ['%.opam%.template$'] = 'opam',
-    ['^pacman%.log'] = starsetf(function(path, bufnr)
+    ['^pacman%.log'] = starsetf(function(path, _bufnr)
       return vim.uv.fs_stat(path) and 'pacmanlog' or nil
     end),
-    ['printcap'] = starsetf(function(path, bufnr)
+    ['^pkl%-lsp://'] = 'pkl',
+    ['printcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('print')
     end),
     ['/queries/.*%.scm$'] = 'query', -- treesitter queries (Neovim only)
     [',v$'] = 'rcs',
     ['^svn%-commit.*%.tmp$'] = 'svn',
     ['%.swift%.gyb$'] = 'swiftgyb',
-    ['termcap'] = starsetf(function(path, bufnr)
+    ['^vivado.*%.jou$'] = 'tcl',
+    ['^vivado.*%.log$'] = 'tcl',
+    ['termcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('term')
     end),
     ['%.t%.html$'] = 'tilde',
@@ -2635,7 +2825,7 @@ end
 --- Filetype mappings can be added either by extension or by filename (either
 --- the "tail" or the full file path). The full file path is checked first,
 --- followed by the file name. If a match is not found using the filename, then
---- the filename is matched against the list of |lua-patterns| (sorted by priority)
+--- the filename is matched against the list of |lua-pattern|s (sorted by priority)
 --- until a match is found. Lastly, if pattern matching does not find a
 --- filetype, then the file extension is used.
 ---
@@ -2925,49 +3115,54 @@ function M.match(args)
     name = api.nvim_buf_get_name(bufnr)
   end
 
-  --- @type string?, fun(b: integer)?
-  local ft, on_detect
-
   if name then
     name = normalize_path(name)
 
-    -- First check for the simple case where the full path exists as a key
     local path = abspath(name)
-    ft, on_detect = dispatch(filename[path], path, bufnr)
-    if ft then
-      return ft, on_detect
+    do -- First check for the simple case where the full path exists as a key
+      local ft, on_detect = dispatch(filename[path], path, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
-    -- Next check against just the file name
     local tail = fn.fnamemodify(name, ':t')
-    ft, on_detect = dispatch(filename[tail], path, bufnr)
-    if ft then
-      return ft, on_detect
+
+    do -- Next check against just the file name
+      local ft, on_detect = dispatch(filename[tail], path, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
     -- Next, check the file path against available patterns with non-negative priority
     -- Cache match results of all parent patterns to improve performance
     local parent_matches = {}
-    ft, on_detect =
-      match_pattern_sorted(name, path, tail, pattern_sorted_pos, parent_matches, bufnr)
-    if ft then
-      return ft, on_detect
+    do
+      local ft, on_detect =
+        match_pattern_sorted(name, path, tail, pattern_sorted_pos, parent_matches, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
     -- Next, check file extension
     -- Don't use fnamemodify() with :e modifier here,
     -- as that's empty when there is only an extension.
-    local ext = name:match('%.([^.]-)$') or ''
-    ft, on_detect = dispatch(extension[ext], path, bufnr)
-    if ft then
-      return ft, on_detect
+    do
+      local ext = name:match('%.([^.]-)$') or ''
+      local ft, on_detect = dispatch(extension[ext], path, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
-    -- Next, check patterns with negative priority
-    ft, on_detect =
-      match_pattern_sorted(name, path, tail, pattern_sorted_neg, parent_matches, bufnr)
-    if ft then
-      return ft, on_detect
+    do -- Next, check patterns with negative priority
+      local ft, on_detect =
+        match_pattern_sorted(name, path, tail, pattern_sorted_neg, parent_matches, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
   end
 
@@ -2989,8 +3184,7 @@ function M.match(args)
       -- If name is nil, catch any errors from the contents filetype detection function.
       -- If the function tries to use the filename that is nil then it will fail,
       -- but this enables checks which do not need a filename to still work.
-      local ok
-      ok, ft, on_detect = pcall(
+      local ok, ft, on_detect = pcall(
         require('vim.filetype.detect').match_contents,
         contents,
         name,

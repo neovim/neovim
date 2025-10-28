@@ -15,9 +15,7 @@
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/typval.h.inline.generated.h"
-#endif
+#include "eval/typval.h.inline.generated.h"
 
 // In a hashtab item "hi_key" points to "di_key" in a dictitem.
 // This avoids adding a pointer to the hashtab item.
@@ -448,6 +446,4 @@ EXTERN const size_t kTVCstring INIT( = TV_CSTRING);
 EXTERN const size_t kTVTranslate INIT( = TV_TRANSLATE);
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/typval.h.generated.h"
-#endif
+#include "eval/typval.h.generated.h"

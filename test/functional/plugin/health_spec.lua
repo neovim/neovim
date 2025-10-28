@@ -67,8 +67,19 @@ describe(':checkhealth', function()
     assert_alive()
   end)
 
-  it('vim.g.health', function()
+  it('cmdline completion works with multiple args #35054', function()
     clear()
+    n.feed(':checkhealth vim.ls<Tab>')
+    eq('checkhealth vim.lsp', fn.getcmdline())
+    n.feed(' vim.prov<Tab>')
+    eq('checkhealth vim.lsp vim.provider', fn.getcmdline())
+  end)
+
+  it('vim.g.health', function()
+    clear {
+      args_rm = { '-u' },
+      args = { '--clean', '+set runtimepath+=test/functional/fixtures' },
+    }
     command("let g:health = {'style':'float'}")
     command('checkhealth lsp')
     eq(
@@ -77,6 +88,23 @@ describe(':checkhealth', function()
       return vim.api.nvim_win_get_config(0).relative
     ]])
     )
+
+    -- gO should not close the :checkhealth floating window. #34784
+    command('checkhealth full_render')
+    local win = api.nvim_get_current_win()
+    api.nvim_win_set_cursor(win, { 5, 1 })
+    n.feed('gO')
+    eq(true, api.nvim_win_is_valid(win))
+    eq('qf', api.nvim_get_option_value('filetype', { buf = 0 }))
+  end)
+
+  it("vim.provider works with a misconfigured 'shell'", function()
+    clear()
+    command([[set shell=echo\ WRONG!!!]])
+    command('let g:loaded_perl_provider = 0')
+    command('let g:loaded_python3_provider = 0')
+    command('checkhealth vim.provider')
+    eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
   end)
 end)
 
@@ -103,6 +131,33 @@ describe('vim.health', function()
       report 2 ~
       - stuff is stable
       - ❌ ERROR why no hardcopy
+        - ADVICE:
+          - :help |:hardcopy|
+          - :help |:TOhtml|
+      ]])
+    end)
+
+    it('user FileType handler can modify report', function()
+      -- Define a FileType autocmd that removes emoji chars.
+      source [[
+        autocmd FileType checkhealth :set modifiable | silent! %s/\v( ?[^\x00-\x7F])//g
+        checkhealth full_render
+      ]]
+      n.expect([[
+
+      ==============================================================================
+      test_plug.full_render:                                              1  1
+
+      report 1 ~
+      - OK life is fine
+      - WARNING no what installed
+        - ADVICE:
+          - pip what
+          - make what
+
+      report 2 ~
+      - stuff is stable
+      - ERROR why no hardcopy
         - ADVICE:
           - :help |:hardcopy|
           - :help |:TOhtml|
@@ -242,17 +297,6 @@ describe('vim.health', function()
       - ✅ OK healthy ok
       ]])
     end)
-  end)
-end)
-
-describe(':checkhealth vim.provider', function()
-  it("works correctly with a wrongly configured 'shell'", function()
-    clear()
-    command([[set shell=echo\ WRONG!!!]])
-    command('let g:loaded_perl_provider = 0')
-    command('let g:loaded_python3_provider = 0')
-    command('checkhealth vim.provider')
-    eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
   end)
 end)
 

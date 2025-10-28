@@ -73,11 +73,16 @@ Or use `:execute`: >
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
 expanded when the Event is recognized, and the {cmd} is executed.  The only
-exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
+exception is that "<sfile>" (unlike "<script>") is expanded when the autocmd
+is defined.  Example:
 >
 	:au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 
 Here Vim expands <sfile> to the name of the file containing this line.
+However, <sfile> works differently in a function, in which case it's better to
+use `:execute` with <script> to achieve the same purpose:
+>
+	:exe $'au BufNewFile,BufRead *.html so {expand("<script>:h")}/html.vim'
 
 `:autocmd` adds to the list of autocommands regardless of whether they are
 already present.  When your .vimrc file is sourced twice, the autocommands
@@ -174,7 +179,7 @@ or <buffer=N>.  See |autocmd-buflocal|.
 
 							*:autocmd-verbose*
 When 'verbose' is non-zero, listing an autocommand will also display where it
-was last defined. Example: >
+was last defined.  Example: >
 
     :verbose autocmd BufEnter
     FileExplorer  BufEnter
@@ -257,7 +262,7 @@ BufLeave			Before leaving to another buffer.  Also when
 				Not used for ":qa" or ":q" when exiting Vim.
 							*BufModifiedSet*
 BufModifiedSet			After the `'modified'` value of a buffer has
-				been changed.
+				been changed. Special-case of |OptionSet|.
 							*BufNew*
 BufNew				After creating a new buffer (except during
 				startup, see |VimEnter|) or renaming an
@@ -301,6 +306,7 @@ BufUnload			Before unloading a buffer, when the text in
 				going to exit.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>", "<abuf>". |<buffer=abuf>|
+								*E1546*
 				Do not switch buffers or windows!
 				Not triggered when exiting and v:dying is 2 or
 				more.
@@ -344,7 +350,8 @@ BufWriteCmd			Before writing the whole buffer to a file.
 				The buffer contents should not be changed.
 				When the command resets 'modified' the undo
 				information is adjusted to mark older undo
-				states as 'modified', like |:write| does.
+				states as 'modified', like |:write| does.  Use
+				the |'[| and |']| marks for the range of lines.
 				|Cmd-event|
 							*BufWritePost*
 BufWritePost			After writing the whole buffer to a file
@@ -393,6 +400,8 @@ CmdlineLeave			Before leaving the command-line (including
 				non-interactive use of ":" in a mapping: use
 				|<Cmd>| instead to avoid this).
 				<afile> expands to the |cmdline-char|.
+				Sets the |v:char| to the key that exited the
+				command-line (e.g. <CR>, <CTRL-C>, <Esc>).
 				Sets these |v:event| keys:
 				    abort (mutable)
 				    cmdlevel
@@ -410,6 +419,7 @@ CmdlineLeavePre			Just before leaving the command line, and
 				not when using |<Cmd>|.  Also triggered when
 				abandoning the command line by typing CTRL-C
 				or <Esc>.  <afile> is set to |cmdline-char|.
+				Sets |v:char| as with |CmdlineLeave|.
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for
@@ -429,7 +439,7 @@ ColorScheme			After loading a color scheme. |:colorscheme|
 				Not triggered if the color scheme is not
 				found.
 				The pattern is matched against the
-				colorscheme name. <afile> can be used for the
+				colorscheme name.  <afile> can be used for the
 				name of the actual file where this option was
 				set, and <amatch> for the new colorscheme
 				name.
@@ -487,27 +497,16 @@ CompleteDone			After Insert mode completion is done.  Either
 						- "accept": completion was
 						  accepted by |complete_CTRL-Y|.
 						- "cancel": completion was
-						  stopped by |complete_CTRL-E.
+						  stopped by |complete_CTRL-E|.
 						- "discard": completion was
 						  abandoned for other reason.
 
 							*CursorHold*
-CursorHold			When the user doesn't press a key for the time
-				specified with 'updatetime'.  Not triggered
-				until the user has pressed a key (i.e. doesn't
-				fire every 'updatetime' ms if you leave Vim to
-				make some coffee. :)  See |CursorHold-example|
-				for previewing tags.
-				This event is only triggered in Normal mode.
-				It is not triggered when waiting for a command
-				argument to be typed, or a movement after an
-				operator.
-				While recording the CursorHold event is not
-				triggered. |q|
-							*<CursorHold>*
-				Internally the autocommand is triggered by the
-				<CursorHold> key. In an expression mapping
-				|getchar()| may see this character.
+CursorHold			When there is no user input for 'updatetime'
+				duration, in Normal-mode. Not triggered while
+				waiting for a command argument or movement
+				after an operator, nor while |recording|
+				a macro. See |CursorHold-example|.
 
 				Note: Interactive commands cannot be used for
 				this event.  There is no hit-enter prompt,
@@ -658,14 +657,14 @@ FileType			When the 'filetype' option has been set.  The
 FileWriteCmd			Before writing to a file, when not writing the
 				whole buffer.  Should do the writing to the
 				file.  Should not change the buffer.  Use the
-				'[ and '] marks for the range of lines.
+				|'[| and |']| marks for the range of lines.
 				|Cmd-event|
 							*FileWritePost*
 FileWritePost			After writing to a file, when not writing the
 				whole buffer.
 							*FileWritePre*
 FileWritePre			Before writing to a file, when not writing the
-				whole buffer.  Use the '[ and '] marks for the
+				whole buffer.  Use the |'[| and |']| marks for the
 				range of lines.
 							*FilterReadPost*
 FilterReadPost			After reading a file from a filter command.
@@ -773,13 +772,13 @@ MenuPopup			Just before showing the popup menu (under the
 					c	Command line
 					tl	Terminal
 							*ModeChanged*
-ModeChanged			After changing the mode. The pattern is
+ModeChanged			After changing the mode.  The pattern is
 				matched against `'old_mode:new_mode'`, for
-				example match against `*:c` to simulate
+				example match against `*:c*` to simulate
 				|CmdlineEnter|.
 				The following values of |v:event| are set:
-					old_mode The mode before it changed.
-					new_mode The new mode as also returned
+				   old_mode	The mode before it changed.
+				   new_mode	The new mode as also returned
 						by |mode()| called with a
 						non-zero argument.
 				When ModeChanged is triggered, old_mode will
@@ -792,6 +791,31 @@ ModeChanged			After changing the mode. The pattern is
 		:au ModeChanged [vV\x16]*:* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
+Progress						*Progress*
+				After a progress message is created or updated via
+				`nvim_echo`. The pattern is matched against
+				title of the message. The |event-data| contains:
+					id: id of the message
+					text: text of the message
+					title: title of the progress message
+					status: status of the progress message
+					percent: how much progress has been
+						 made for this progress item
+				Usage example:
+>
+		vim.api.nvim_create_autocmd('Progress', {
+		  pattern={"term"},
+		  callback = function(ev)
+		    print(string.format('event fired: %s', vim.inspect(ev)))
+		  end
+		})
+		local id = vim.api.nvim_echo({{'searching...'}}, true,
+				{kind='progress', status='running', percent=10, title="term"})
+		vim.api.nvim_echo({{'searching'}}, true,
+				{id = id, kind='progress', status='running', percent=50, title="term"})
+		vim.api.nvim_echo({{'done'}}, true,
+				{id = id, kind='progress', status='success', percent=100, title="term"})
+
 <							*OptionSet*
 OptionSet			After setting an option (except during
 				|startup|).  The |autocmd-pattern| is matched
@@ -810,7 +834,7 @@ OptionSet			After setting an option (except during
 
 				|v:option_oldlocal| is only set when |:set|
 				or |:setlocal| or a |modeline| was used to set
-				the option. Similarly |v:option_oldglobal| is
+				the option.  Similarly |v:option_oldglobal| is
 				only set when |:set| or |:setglobal| was used.
 
 				This does not set |<abuf>|, you could use
@@ -818,7 +842,7 @@ OptionSet			After setting an option (except during
 
 				Note that when setting a |global-local| option
 				with |:set|, then |v:option_old| is the old
-				global value. However, for all options that
+				global value.  However, for all options that
 				are not global-local it is the old local
 				value.
 
@@ -828,9 +852,13 @@ OptionSet			After setting an option (except during
 				exist yet.
 
 				Note: Do not reset the same option during this
-				autocommand, that may break plugins. You can
+				autocommand, that may break plugins.  You can
 				always use |:noautocmd| to prevent triggering
 				OptionSet.
+
+				Note: Not triggered by the 'modified' option;
+				the |BufModifiedSet| event may be used to
+				handle that.
 
 				Non-recursive: |:set| in the autocommand does
 				not trigger OptionSet again.
@@ -857,7 +885,7 @@ QuickFixCmdPre			Before a quickfix command is run (|:make|,
 							*QuickFixCmdPost*
 QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 				command is run, before jumping to the first
-				location. For |:cfile| and |:lfile| commands
+				location.  For |:cfile| and |:lfile| commands
 				it is run after the error file is read and
 				before moving to the first error.
 				See |QuickFixCmdPost-example|.
@@ -1038,13 +1066,14 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				- sequence: the received sequence
 				- cursor: (1,0)-indexed, buffer-relative
 				  position of the cursor when the sequence was
-				  received
+				  received (line number may be <= 0 if the
+				  position is no longer in the buffer)
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
 
 							*TermResponse*
-TermResponse			When Nvim receives an OSC or DCS response from
+TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
 				the host terminal. Sets |v:termresponse|. The
 				|event-data| is a table with the following fields:
 
@@ -1068,7 +1097,7 @@ TermResponse			When Nvim receives an OSC or DCS response from
 				    local r, g, b = resp:match("\027%]4;1;rgb:(%w+)/(%w+)/(%w+)")
 				  end,
 				})
-				io.stdout:write("\027]4;1;?\027\\")
+				vim.api.nvim_ui_send("\027]4;1;?\027\\")
 <
 							*TextChanged*
 TextChanged			After a change was made to the text in the
@@ -1313,8 +1342,9 @@ The pattern is interpreted like mostly used in file names:
 	[^ch]   match any character but 'c' and 'h'
 
 Note that for all systems the '/' character is used for path separator (even
-Windows). This was done because the backslash is difficult to use in a pattern
-and to make the autocommands portable across different systems.
+for MS-Windows).  This was done because the backslash is difficult to use in a
+pattern and to make the autocommands portable across different systems.  To
+only match a '/' on all platforms (e.g. in a non-file pattern), use "\/".
 
 It is possible to use |pattern| items, but they may not work as expected,
 because of the translation done for the above.
@@ -1478,8 +1508,8 @@ option will not cause any commands to be executed.
 							*<nomodeline>*
 			After applying the autocommands the modelines are
 			processed, so that their settings overrule the
-			settings from autocommands when editing a file. This
-			is skipped if <nomodeline> is specified. You probably
+			settings from autocommands when editing a file.  This
+			is skipped if <nomodeline> is specified.  You probably
 			want to use <nomodeline> for events not used when
 			loading a buffer, such as |User|.
 			Modelines are also skipped when no matching
@@ -1491,7 +1521,7 @@ option will not cause any commands to be executed.
 			loaded buffer.  The current buffer is done last.
 
 			Note that [fname] is used to select the autocommands,
-			not the buffers to which they are applied. Example: >
+			not the buffers to which they are applied.  Example: >
 				augroup mine
 				  autocmd!
 				  autocmd FileType * echo expand('<amatch>')

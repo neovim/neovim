@@ -162,7 +162,9 @@ describe('server', function()
   end)
 
   it('serverlist() returns the list of servers', function()
-    clear()
+    -- Set XDG_RUNTIME_DIR to a temp dir in this session to properly test serverlist({peer = true}). See #35492
+    local tmp_dir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+    local current_server = clear({ env = { XDG_RUNTIME_DIR = tmp_dir } })
     -- There should already be at least one server.
     local _n = eval('len(serverlist())')
 
@@ -186,6 +188,35 @@ describe('server', function()
     end
     -- After serverstop() the servers should NOT be in the list.
     eq(_n, eval('len(serverlist())'))
+
+    -- serverlist({peer=true}) returns servers from other Nvim sessions.
+    if t.is_os('win') then
+      return
+    end
+
+    local old_servs_num = #fn.serverlist({ peer = true })
+    local peer_temp = n.new_pipename()
+    local peer_name = peer_temp:match('[^/]*$')
+
+    local tmp_dir2 = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+    local peer_addr = ('%s/%s'):format(tmp_dir2, peer_name)
+    -- Set XDG_RUNTIME_DIR to a temp dir in this session to properly test serverlist({peer = true}). See #35492
+    local client = n.new_session(true, {
+      args = { '--clean', '--listen', peer_addr, '--embed' },
+      env = { XDG_RUNTIME_DIR = tmp_dir2 },
+      merge = false,
+    })
+    n.set_session(client)
+    eq(peer_addr, fn.serverlist()[1])
+
+    n.set_session(current_server)
+
+    new_servs = fn.serverlist({ peer = true })
+    local servers_without_peer = fn.serverlist()
+    eq(true, vim.list_contains(new_servs, peer_addr))
+    eq(true, #servers_without_peer < #new_servs)
+    eq(true, old_servs_num < #new_servs)
+    client:close()
   end)
 end)
 

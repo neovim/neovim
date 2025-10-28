@@ -423,6 +423,87 @@ describe('highlight', function()
     ]])
   end)
 
+  it('blockwise Visual highlight with virtualedit=block #34235', function()
+    local screen = Screen.new(45, 5)
+    command('set virtualedit=block')
+    insert('foobar\nfoo')
+    feed('0<C-V>k$')
+    screen:expect([[
+      {17:foobar}^                                       |
+      {17:foo    }                                      |
+      {1:~                                            }|*2
+      {5:-- VISUAL BLOCK --}                           |
+    ]])
+    feed('10l')
+    screen:expect([[
+      {17:foobar          }^                             |
+      {17:foo              }                            |
+      {1:~                                            }|*2
+      {5:-- VISUAL BLOCK --}                           |
+    ]])
+  end)
+
+  it("is updated with H/L and 'scrolloff' #36059", function()
+    local screen = Screen.new(40, 10)
+    exec([[
+      call setline(1, map(range(1, 100), "'line ' .. v:val"))
+      set scrolloff=2 nostartofline
+      call cursor(50, 1)
+    ]])
+    feed('z<CR>V')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      ^l{17:ine 50}                                 |
+      line 51                                 |
+      line 52                                 |
+      line 53                                 |
+      line 54                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+    feed('L')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      {17:line 50}                                 |
+      {17:line 51}                                 |
+      {17:line 52}                                 |
+      {17:line 53}                                 |
+      ^l{17:ine 54}                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+    feed('<Esc>V')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      line 50                                 |
+      line 51                                 |
+      line 52                                 |
+      line 53                                 |
+      ^l{17:ine 54}                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+    feed('H')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      ^l{17:ine 50}                                 |
+      {17:line 51}                                 |
+      {17:line 52}                                 |
+      {17:line 53}                                 |
+      {17:line 54}                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+  end)
+
   it('cterm=standout gui=standout', function()
     local screen = Screen.new(20, 5)
     screen:add_extra_attr_ids {
@@ -1045,25 +1126,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       {101:  }{100:>>>}aaaaaaaaaaaa   |
                           |
     ]])
-
-    command('inoremap <F2> <Cmd>call cursor(1, 1)<CR>')
-    feed('A')
-    screen:expect([[
-      {103:0 }øøøøøøøøøøøøøøøøøø|
-      {101:  }{100:>>>}{102:øøøøøøøøøøøø^   }|
-      {101:1 }aaaaaaaaaaaaaaaaaa|
-      {101:  }{100:>>>}aaaaaaaaaaaa   |
-      {5:-- INSERT --}        |
-    ]])
-
-    feed('<F2>')
-    screen:expect([[
-      {103:0 }{102:^øøøøøøøøøøøøøøøøøø}|
-      {101:  }{100:>>>}øøøøøøøøøøøø   |
-      {101:1 }aaaaaaaaaaaaaaaaaa|
-      {101:  }{100:>>>}aaaaaaaaaaaa   |
-      {5:-- INSERT --}        |
-    ]])
   end)
 
   -- oldtest: Test_cursorline_screenline_resize()
@@ -1101,6 +1163,47 @@ describe('CursorLine and CursorLineNr highlights', function()
       {3:[No Name] [+]                                  }{2:[No Name]                   }|
                                                                                  |
     ]])
+  end)
+
+  -- oldtest: Test_cursorline_screenline_update()
+  it("'cursorlineopt' screenline is updated on various movements", function()
+    local screen = Screen.new(75, 8)
+    exec([[
+      func TestRetab()
+        let w = winwidth(0)
+        call cursor([1, w + 1, 0, w + 1])
+        call line('w0')
+        retab 8
+      endfunc
+
+      call setline(1, repeat('xyz ', 30))
+      set cursorline cursorlineopt=screenline tabstop=8
+      inoremap <F2> <Cmd>call cursor(1, 1)<CR>
+      inoremap <F3> <Cmd>call TestRetab()<CR>
+    ]])
+
+    feed('A')
+    screen:expect([[
+      xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz|
+      {21: xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz ^                              }|
+      {1:~                                                                          }|*5
+      {5:-- INSERT --}                                                               |
+    ]])
+    feed('<F2>')
+    screen:expect([[
+      {21:^xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz}|
+       xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz                               |
+      {1:~                                                                          }|*5
+      {5:-- INSERT --}                                                               |
+    ]])
+    feed('<F3>')
+    screen:expect([[
+      xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz|
+      {21:^ xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz                               }|
+      {1:~                                                                          }|*5
+      {5:-- INSERT --}                                                               |
+    ]])
+    feed('<Esc>')
   end)
 
   -- oldtest: Test_cursorline_after_yank()
@@ -1200,7 +1303,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     command('windo diffthis')
     screen:expect([[
       {7:  }{9:line 1 some text       }│{7:  }{9:^line 1 some text      }|
-      {7:  }{4:line 2 mo}{27:Re text!}{4:      }│{7:  }{4:line 2 mo}{27:re text}{4:      }|
+      {7:  }{4:line 2 mo}{27:R}{4:e text}{27:!}{4:      }│{7:  }{4:line 2 mo}{27:r}{4:e text      }|
       {7:  }{22:extra line!            }│{7:  }{23:----------------------}|
       {7:  }extra line!            │{7:  }extra line!           |*2
       {7:  }last line ...          │{7:  }last line ...         |
@@ -1212,7 +1315,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     feed('jjjjj')
     screen:expect([[
       {7:  }line 1 some text       │{7:  }line 1 some text      |
-      {7:  }{4:line 2 mo}{27:Re text!}{4:      }│{7:  }{4:line 2 mo}{27:re text}{4:      }|
+      {7:  }{4:line 2 mo}{27:R}{4:e text}{27:!}{4:      }│{7:  }{4:line 2 mo}{27:r}{4:e text      }|
       {7:  }{22:extra line!            }│{7:  }{23:----------------------}|
       {7:  }extra line!            │{7:  }extra line!           |*2
       {7:  }last line ...          │{7:  }last line ...         |
@@ -1228,7 +1331,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     feed('kkkk')
     screen:expect([[
       {7:  }line 1 some text       │{7:  }line 1 some text      |
-      {7:  }{100:line 2 mo}{101:Re text!}{100:      }│{7:  }{100:^line 2 mo}{101:re text}{100:      }|
+      {7:  }{100:line 2 mo}{101:R}{100:e text}{101:!}{100:      }│{7:  }{100:^line 2 mo}{101:r}{100:e text      }|
       {7:  }{22:extra line!            }│{7:  }{23:----------------------}|
       {7:  }extra line!            │{7:  }extra line!           |*2
       {7:  }last line ...          │{7:  }last line ...         |

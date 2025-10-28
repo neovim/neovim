@@ -4,6 +4,8 @@
 vim-tutor-mode provides a system to follow and create interactive tutorials
 for vim and third party plugins. It replaces the venerable `vimtutor` system.
 
+Original Author: Felipe Morales <https://github.com/fmoralesc>
+
 ==============================================================================
 1. Usage                                                      *vim-tutor-usage*
 
@@ -39,12 +41,5 @@ to be detected by the :Tutor command.
 It is recommended to use a less formal style when writing tutorials than in
 regular documentation (unless the content requires it).
 
-============================================================================
-3. Contributing
-
-Development of the plugin is done over at github [1].  Feel free to report
-issues and make suggestions.
-
-[1]: https://github.com/fmoralesc/vim-tutor-mode
-
-" vim: set ft=help :
+=============================================================================
+  vim:tw=78:ts=8:noet:ft=help:norl:

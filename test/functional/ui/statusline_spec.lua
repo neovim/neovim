@@ -504,6 +504,20 @@ describe('global statusline', function()
       {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
+
+    -- Shouldn't gain a hsep if the global statusline is turned off.
+    command('set laststatus=2')
+    eq('Vim(wincmd):E36: Not enough room', pcall_err(command, 'wincmd L'))
+    command('mode')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {2:[No Name]                                 0,0-1          All}|
+      ^                                                            |
+      {1:~                                                           }|*6
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
   end)
 end)
 
@@ -642,6 +656,28 @@ describe('statusline', function()
     ]])
     feed('<Esc>')
     screen:expect(s2)
+
+    -- Visual selection other end change #36280
+    exec([[
+      function! DebugVisualSelection()
+        return printf("v %s %s", col("v"), col("."))
+      endfunction
+      set statusline=%!DebugVisualSelection()
+    ]])
+    feed('iabc<Esc>v')
+    screen:expect([[
+      ab^c                                     |
+      {1:~                                       }|*5
+      {3:v 3 3                                   }|
+      {5:-- VISUAL --}                            |
+    ]])
+    feed('iw')
+    screen:expect([[
+      {17:ab}^c                                     |
+      {1:~                                       }|*5
+      {3:v 1 3                                   }|
+      {5:-- VISUAL --}                            |
+    ]])
   end)
 
   it('ruler is redrawn in cmdline with redrawstatus #22804', function()
@@ -785,13 +821,47 @@ describe('default statusline', function()
     exec_lua("vim.o.statusline = 'asdf'")
     eq('asdf', eval('&statusline'))
 
-    local default_statusline =
-      "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+    local default_statusline = table.concat({
+      '%<',
+      '%f %h%w%m%r ',
+      '%=',
+      "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
+      "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
+      "%{% &busy > 0 ? '◐ ' : '' %}",
+      "%(%{luaeval('(package.loaded[''vim.diagnostic''] and vim.diagnostic.status()) or '''' ')} %)",
+      "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+    })
 
     exec_lua("vim.o.statusline = ''")
 
     eq(default_statusline, eval('&statusline'))
 
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+  end)
+
+  it('shows busy status when buffer is set to be busy', function()
+    exec_lua("vim.o.statusline = ''")
+
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+    exec_lua('vim.o.busy = 1')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                               ◐ 0,0-1          All}|
+                                                                  |
+    ]])
+
+    exec_lua('vim.o.busy = 0')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13

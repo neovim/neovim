@@ -1,6 +1,8 @@
 " Author: Stephen Sugden <stephen@stephensugden.com>
 " Last Modified: 2023-09-11
-" Last Change:   2025 Mar 31 by Vim project (rename s:RustfmtConfigOptions())
+" Last Change:
+" 2025 Oct 27 by Vim project don't use rustfmt as 'formatprg' by default
+"
 "
 " Adapted from https://github.com/fatih/vim-go
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
@@ -22,6 +24,12 @@ if !exists("g:rustfmt_fail_silently")
 endif
 
 function! rustfmt#DetectVersion()
+    let s:rustfmt_version = "0"
+    let s:rustfmt_help = ""
+    let s:rustfmt_unstable_features = ""
+    if !get(g:, 'rustfmt_detect_version', 0)
+        return s:rustfmt_version
+    endif
     " Save rustfmt '--help' for feature inspection
     silent let s:rustfmt_help = system(g:rustfmt_command . " --help")
     let s:rustfmt_unstable_features = s:rustfmt_help =~# "--unstable-features"
@@ -30,9 +38,7 @@ function! rustfmt#DetectVersion()
     silent let l:rustfmt_version_full = system(g:rustfmt_command . " --version")
     let l:rustfmt_version_list = matchlist(l:rustfmt_version_full,
         \    '\vrustfmt ([0-9]+[.][0-9]+[.][0-9]+)')
-    if len(l:rustfmt_version_list) < 3
-        let s:rustfmt_version = "0"
-    else
+    if len(l:rustfmt_version_list) >= 3
         let s:rustfmt_version = l:rustfmt_version_list[1]
     endif
     return s:rustfmt_version
@@ -62,7 +68,7 @@ function! s:RustfmtWriteMode()
     endif
 endfunction
 
-function! rustfmt#RustfmtConfigOptions()
+function! s:RustfmtConfigOptions()
     let l:rustfmt_toml = findfile('rustfmt.toml', expand('%:p:h') . ';')
     if l:rustfmt_toml !=# ''
         return '--config-path '.shellescape(fnamemodify(l:rustfmt_toml, ":p"))
@@ -74,7 +80,7 @@ function! rustfmt#RustfmtConfigOptions()
     endif
 
     " Default to edition 2018 in case no rustfmt.toml was found.
-    return '--edition 2018'
+    return default
 endfunction
 
 function! s:RustfmtCommandRange(filename, line1, line2)
@@ -85,7 +91,7 @@ function! s:RustfmtCommandRange(filename, line1, line2)
 
     let l:arg = {"file": shellescape(a:filename), "range": [a:line1, a:line2]}
     let l:write_mode = s:RustfmtWriteMode()
-    let l:rustfmt_config = rustfmt#RustfmtConfigOptions()
+    let l:rustfmt_config = s:RustfmtConfigOptions()
 
     " FIXME: When --file-lines gets to be stable, add version range checking
     " accordingly.
@@ -100,7 +106,7 @@ endfunction
 
 function! s:RustfmtCommand()
     let write_mode = g:rustfmt_emit_files ? '--emit=stdout' : '--write-mode=display'
-    let config = rustfmt#RustfmtConfigOptions()
+    let config = s:RustfmtConfigOptions()
     return join([g:rustfmt_command, write_mode, config, g:rustfmt_options])
 endfunction
 

@@ -33,9 +33,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "winfloat.c.generated.h"
-#endif
+#include "winfloat.c.generated.h"
 
 /// Create a new float.
 ///
@@ -194,7 +192,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     int row = mouse_row;
     int col = mouse_col;
     int grid = mouse_grid;
-    win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+    win_T *mouse_win = mouse_find_win_inner(&grid, &row, &col);
     if (mouse_win != NULL) {
       fconfig.relative = kFloatRelativeWindow;
       fconfig.row += row;
@@ -243,12 +241,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     if (parent) {
       row += parent->w_winrow;
       col += parent->w_wincol;
-      ScreenGrid *grid = &parent->w_grid;
-      int row_off = 0;
-      int col_off = 0;
-      grid_adjust(&grid, &row_off, &col_off);
-      row += row_off;
-      col += col_off;
+      grid_adjust(&parent->w_grid, &row, &col);
       if (wp->w_config.bufpos.lnum >= 0) {
         pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
                       wp->w_config.bufpos.col, 0 };
@@ -290,7 +283,8 @@ void win_float_remove(bool bang, int count)
     qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
   }
   for (size_t i = 0; i < float_win_arr.size; i++) {
-    if (win_close(float_win_arr.items[i], false, false) == FAIL) {
+    win_T *wp = float_win_arr.items[i];
+    if (win_valid(wp) && win_close(wp, false, false) == FAIL) {
       break;
     }
     if (!bang) {
@@ -367,13 +361,15 @@ win_T *win_float_find_preview(void)
 win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  win_T *wp = prevwin;
   if (tp == NULL) {
-    return (win_valid(prevwin) && prevwin != win) ? prevwin : firstwin;
+    return (win_valid(wp) && wp != win && wp->w_config.focusable
+            && !wp->w_config.hide) ? wp : firstwin;
   }
 
   assert(tp != curtab);
-  return (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) ? tp->tp_prevwin
-                                                                          : tp->tp_firstwin;
+  wp = tabpage_win_valid(tp, tp->tp_prevwin) ? tp->tp_prevwin : tp->tp_firstwin;
+  return (wp->w_config.focusable && !wp->w_config.hide) ? wp : tp->tp_firstwin;
 }
 
 /// Inline helper function for handling errors and cleanup in win_float_create.

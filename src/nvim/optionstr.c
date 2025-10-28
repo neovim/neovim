@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -12,6 +13,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -28,6 +30,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -41,23 +44,25 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/shada.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
+#include "nvim/tag.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "optionstr.c.generated.h"
-#endif
+#include "optionstr.c.generated.h"
 
-static const char e_unclosed_expression_sequence[]
-  = N_("E540: Unclosed expression sequence");
+static const char e_illegal_character_after_chr[]
+  = N_("E535: Illegal character after <%c>");
 static const char e_comma_required[]
   = N_("E536: Comma required");
+static const char e_unclosed_expression_sequence[]
+  = N_("E540: Unclosed expression sequence");
 static const char e_unbalanced_groups[]
   = N_("E542: Unbalanced groups");
 static const char e_backupext_and_patchmode_are_equal[]
@@ -85,6 +90,7 @@ void didset_string_options(void)
   check_str_opt(kOptBackupcopy, NULL);
   check_str_opt(kOptBelloff, NULL);
   check_str_opt(kOptCompletefuzzycollect, NULL);
+  check_str_opt(kOptIsexpand, NULL);
   check_str_opt(kOptCompleteopt, NULL);
   check_str_opt(kOptSessionoptions, NULL);
   check_str_opt(kOptViewoptions, NULL);
@@ -108,6 +114,15 @@ char *illegal_char(char *errbuf, size_t errbuflen, int c)
   }
   vim_snprintf(errbuf, errbuflen, _("E539: Illegal character <%s>"),
                transchar(c));
+  return errbuf;
+}
+
+static char *illegal_char_after_chr(char *errbuf, size_t errbuflen, int c)
+{
+  if (errbuf == NULL) {
+    return "";
+  }
+  vim_snprintf(errbuf, errbuflen, _(e_illegal_character_after_chr), c);
   return errbuf;
 }
 
@@ -153,6 +168,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_cfu);
   check_string_option(&buf->b_p_ofu);
   check_string_option(&buf->b_p_keymap);
+  check_string_option(&buf->b_p_gefm);
   check_string_option(&buf->b_p_gp);
   check_string_option(&buf->b_p_mp);
   check_string_option(&buf->b_p_efm);
@@ -163,6 +179,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tfu);
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
+  check_string_option(&buf->b_p_dia);
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_tsrfu);
   check_string_option(&buf->b_p_lw);
@@ -690,6 +707,14 @@ const char *did_set_buftype(optset_T *args)
       || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
     return e_invarg;
   }
+  // buftype=prompt:
+  if (buf->b_p_bt[0] == 'p') {
+    // Set default value for 'comments'
+    set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
+    // set the prompt start position to lastline.
+    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
+    RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+  }
   if (win->w_status_height || global_stl_height()) {
     win->w_redr_status = true;
     redraw_later(win, UPD_VALID);
@@ -834,41 +859,70 @@ const char *did_set_commentstring(optset_T *args)
   return NULL;
 }
 
-/// The 'complete' option is changed.
+/// Check if value for 'complete' is valid when 'complete' option is changed.
 const char *did_set_complete(optset_T *args)
 {
   char **varp = (char **)args->os_varp;
+  char buffer[LSIZE];
+  uint8_t char_before = NUL;
 
-  // check if it is a valid value for 'complete' -- Acevedo
-  for (char *s = *varp; *s;) {
-    while (*s == ',' || *s == ' ') {
-      s++;
-    }
-    if (!*s) {
-      break;
-    }
-    if (vim_strchr(".wbuksid]tUf", (uint8_t)(*s)) == NULL) {
-      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*s));
-    }
-    if (*++s != NUL && *s != ',' && *s != ' ') {
-      if (s[-1] == 'k' || s[-1] == 's') {
-        // skip optional filename after 'k' and 's'
-        while (*s && *s != ',' && *s != ' ') {
-          if (*s == '\\' && s[1] != NUL) {
-            s++;
-          }
-          s++;
-        }
+  for (char *p = *varp; *p;) {
+    memset(buffer, 0, LSIZE);
+    char *buf_ptr = buffer;
+    int escape = 0;
+
+    // Extract substring while handling escaped commas
+    while (*p && (*p != ',' || escape) && buf_ptr < (buffer + LSIZE - 1)) {
+      if (*p == '\\' && *(p + 1) == ',') {
+        escape = 1;  // Mark escape mode
+        p++;         // Skip '\'
       } else {
-        if (args->os_errbuf != NULL) {
-          vim_snprintf(args->os_errbuf, args->os_errbuflen,
-                       _("E535: Illegal character after <%c>"),
-                       *--s);
-          return args->os_errbuf;
+        escape = 0;
+        *buf_ptr++ = *p;
+      }
+      p++;
+    }
+    *buf_ptr = NUL;
+
+    if (vim_strchr(".wbuksid]tUfFo", (uint8_t)(*buffer)) == NULL) {
+      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*buffer));
+    }
+
+    if (vim_strchr("ksF", (uint8_t)(*buffer)) == NULL && *(buffer + 1) != NUL
+        && *(buffer + 1) != '^') {
+      char_before = (uint8_t)(*buffer);
+    } else {
+      char *t;
+      // Test for a number after '^'
+      if ((t = vim_strchr(buffer, '^')) != NULL) {
+        *t++ = NUL;
+        if (!*t) {
+          char_before = '^';
+        } else {
+          for (; *t; t++) {
+            if (!ascii_isdigit(*t)) {
+              char_before = '^';
+              break;
+            }
+          }
         }
-        return "";
       }
     }
+    if (char_before != NUL) {
+      if (args->os_errbuf != NULL) {
+        return illegal_char_after_chr(args->os_errbuf, args->os_errbuflen,
+                                      char_before);
+      }
+      return NULL;
+    }
+    // Skip comma and spaces
+    while (*p == ',' || *p == ' ') {
+      p++;
+    }
+  }
+
+  if (set_cpt_callbacks(args) != OK) {
+    return illegal_char_after_chr(args->os_errbuf, args->os_errbuflen, 'F');
   }
   return NULL;
 }
@@ -933,10 +987,6 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
     buf->b_cot_flags = 0;
   }
 
-  if (opt_strings_flags(cot, opt_cot_values, NULL, true) != OK) {
-    return e_invarg;
-  }
-
   if (opt_strings_flags(cot, opt_cot_values, flags, true) != OK) {
     return e_invarg;
   }
@@ -991,6 +1041,16 @@ const char *did_set_cursorlineopt(optset_T *args)
 
   // This could be changed to use opt_strings_flags() instead.
   if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
+    return e_invarg;
+  }
+
+  return NULL;
+}
+
+/// The 'diffanchors' option is changed.
+const char *did_set_diffanchors(optset_T *args)
+{
+  if (diffanchors_changed(args->os_flags & OPT_LOCAL) == FAIL) {
     return e_invarg;
   }
 
@@ -1108,12 +1168,20 @@ static bool expand_eiw = false;
 
 static char *get_eventignore_name(expand_T *xp, int idx)
 {
+  bool subtract = *xp->xp_pattern == '-';
   // 'eventignore(win)' allows special keyword "all" in addition to
   // all event names.
-  if (idx == 0) {
+  if (!subtract && idx == 0) {
     return "all";
   }
-  return get_event_name_no_group(xp, idx - 1, expand_eiw);
+
+  char *name = get_event_name_no_group(xp, idx - 1 + subtract, expand_eiw);
+  if (name == NULL) {
+    return NULL;
+  }
+
+  snprintf(IObuff, IOSIZE, "%s%s", subtract ? "-" : "", name);
+  return IObuff;
 }
 
 int expand_set_eventignore(optexpand_T *args, int *numMatches, char ***matches)
@@ -1314,6 +1382,44 @@ const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return did_set_str_generic(args);
+}
+
+/// The 'isexpand' option is changed.
+const char *did_set_isexpand(optset_T *args)
+{
+  char *ise = p_ise;
+  char *p;
+  bool last_was_comma = false;
+
+  if (args->os_flags & OPT_LOCAL) {
+    ise = curbuf->b_p_ise;
+  }
+
+  for (p = ise; *p != NUL;) {
+    if (*p == '\\' && p[1] == ',') {
+      p += 2;
+      last_was_comma = false;
+      continue;
+    }
+
+    if (*p == ',') {
+      if (last_was_comma) {
+        return e_invarg;
+      }
+      last_was_comma = true;
+      p++;
+      continue;
+    }
+
+    last_was_comma = false;
+    MB_PTR_ADV(p);
+  }
+
+  if (last_was_comma) {
+    return e_invarg;
+  }
+
+  return NULL;
 }
 
 /// The 'iskeyword' option is changed.
@@ -2015,6 +2121,35 @@ const char *did_set_winbar(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
+static bool parse_border_opt(char *border_opt)
+{
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  Error err = ERROR_INIT;
+  bool result = true;
+  if (!parse_winborder(&fconfig, border_opt, &err)) {
+    result = false;
+  }
+  api_clear_error(&err);
+  return result;
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (!parse_border_opt(p_winborder)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
+const char *did_set_pumborder(optset_T *args)
+{
+  if (!parse_border_opt(p_pumborder)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
 /// The 'winhighlight' option is changed.
 const char *did_set_winhighlight(optset_T *args)
 {
@@ -2124,26 +2259,27 @@ struct chars_tab {
 
 static fcs_chars_T fcs_chars;
 static const struct chars_tab fcs_tab[] = {
-  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼", "+"),
-  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼",  "+"),
+  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.foldinner,  "foldinner", NULL, NULL),
+  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<",  NULL),
 };
 
 static lcs_chars_T lcs_chars;

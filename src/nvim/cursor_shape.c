@@ -18,9 +18,7 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cursor_shape.c.generated.h"
-#endif
+#include "cursor_shape.c.generated.h"
 
 static const char e_digit_expected[] = N_("E548: Digit expected");
 

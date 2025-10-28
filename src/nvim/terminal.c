@@ -58,6 +58,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -73,6 +74,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -111,11 +113,19 @@ typedef struct {
   bool got_bsl;         ///< if the last input was <C-\>
   bool got_bsl_o;       ///< if left terminal mode with <c-\><c-o>
   bool cursor_visible;  ///< cursor's current visibility; ensures matched busy_start/stop UI events
+
+  // These fields remember the prior values of window options before entering terminal mode.
+  // Valid only when save_curwin_handle != 0.
+  handle_T save_curwin_handle;
+  bool save_w_p_cul;
+  char *save_w_p_culopt;
+  uint8_t save_w_p_culopt_flags;
+  int save_w_p_cuc;
+  OptInt save_w_p_so;
+  OptInt save_w_p_siso;
 } TerminalState;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.c.generated.h"
-#endif
+#include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.
@@ -149,10 +159,12 @@ struct terminal {
   // it actually points to entries that are no longer in sb_buffer (because the
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
+  size_t sb_deleted;                // Lines deleted from sb_buffer.
+  size_t sb_deleted_last;           // Value of sb_deleted on last refresh_scrollback()
 
   char *title;     // VTermStringFragment buffer
-  size_t title_len;    // number of rows pushed to sb_buffer
-  size_t title_size;   // sb_buffer size
+  size_t title_len;
+  size_t title_size;
 
   // buf_T instance that acts as a "drawing surface" for libvterm
   // we can't store a direct reference to the buffer because the
@@ -221,6 +233,7 @@ static void emit_termrequest(void **argv)
   StringBuilder *pending_send = argv[3];
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
+  size_t sb_deleted = (size_t)(intptr_t)argv[6];
 
   if (term->sb_pending > 0) {
     // Don't emit the event while there is pending scrollback because we need
@@ -228,14 +241,15 @@ static void emit_termrequest(void **argv)
     // the event onto the pending queue where it will be executed after the
     // terminal is refreshed and the pending scrollback is cleared.
     multiqueue_put(term->pending.events, emit_termrequest, term, sequence, (void *)sequence_length,
-                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col);
+                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col,
+                   (void *)(intptr_t)sb_deleted);
     return;
   }
 
   set_vim_var_string(VV_TERMREQUEST, sequence, (ptrdiff_t)sequence_length);
 
   MAXSIZE_TEMP_ARRAY(cursor, 2);
-  ADD_C(cursor, INTEGER_OBJ(row));
+  ADD_C(cursor, INTEGER_OBJ(row - (int64_t)(term->sb_deleted - sb_deleted)));
   ADD_C(cursor, INTEGER_OBJ(col));
 
   MAXSIZE_TEMP_DICT(data, 2);
@@ -260,57 +274,46 @@ static void emit_termrequest(void **argv)
   xfree(pending_send);
 }
 
-static void schedule_termrequest(Terminal *term, char *sequence, size_t sequence_length)
+static void schedule_termrequest(Terminal *term)
 {
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
 
   int line = row_to_linenr(term, term->cursor.row);
-  multiqueue_put(main_loop.events, emit_termrequest, term, sequence, (void *)sequence_length,
-                 term->pending.send, (void *)(intptr_t)line,
-                 (void *)(intptr_t)term->cursor.col);
+  multiqueue_put(main_loop.events, emit_termrequest, term,
+                 xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
+                 (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
+                 (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col,
+                 (void *)(intptr_t)term->sb_deleted);
 }
 
-static int parse_osc8(VTermStringFragment frag, int *attr)
+static int parse_osc8(const char *str, int *attr)
   FUNC_ATTR_NONNULL_ALL
 {
   // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
   // Skip the ID, we don't use it (for now)
   size_t i = 0;
-  for (; i < frag.len; i++) {
-    if (frag.str[i] == ';') {
+  for (; str[i] != NUL; i++) {
+    if (str[i] == ';') {
       break;
     }
+  }
+
+  if (str[i] != ';') {
+    // Invalid OSC sequence
+    return 0;
   }
 
   // Move past the semicolon
   i++;
 
-  if (i >= frag.len) {
-    // Invalid OSC sequence
-    return 0;
-  }
-
-  // Find the terminator
-  const size_t start = i;
-  for (; i < frag.len; i++) {
-    if (frag.str[i] == '\a' || frag.str[i] == '\x1b') {
-      break;
-    }
-  }
-
-  const size_t len = i - start;
-  if (len == 0) {
+  if (str[i] == NUL) {
     // Empty OSC 8, no URL
     *attr = 0;
     return 1;
   }
 
-  char *url = xmemdupz(&frag.str[start], len + 1);
-  url[len] = 0;
-  *attr = hl_add_url(0, url);
-  xfree(url);
-
+  *attr = hl_add_url(0, str + i);
   return 1;
 }
 
@@ -323,16 +326,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
     return 0;
   }
 
-  if (command == 8) {
-    int attr = 0;
-    if (parse_osc8(frag, &attr)) {
-      VTermState *state = vterm_obtain_state(term->vt);
-      VTermValue value = { .number = attr };
-      vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
-    }
-  }
-
-  if (!has_event(EVENT_TERMREQUEST)) {
+  if (command != 8 && !has_event(EVENT_TERMREQUEST)) {
     return 1;
   }
 
@@ -342,8 +336,19 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    if (has_event(EVENT_TERMREQUEST)) {
+      schedule_termrequest(term);
+    }
+    if (command == 8) {
+      kv_push(term->termrequest_buffer, NUL);
+      const size_t off = STRLEN_LITERAL("\x1b]8;");
+      int attr = 0;
+      if (parse_osc8(term->termrequest_buffer.items + off, &attr)) {
+        VTermState *state = vterm_obtain_state(term->vt);
+        VTermValue value = { .number = attr };
+        vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+      }
+    }
   }
   return 1;
 }
@@ -365,8 +370,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    schedule_termrequest(term);
   }
   return 1;
 }
@@ -388,8 +392,7 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    schedule_termrequest(term);
   }
   return 1;
 }
@@ -602,14 +605,14 @@ void terminal_close(Terminal **termpp, int status)
     // If this was called by close_buffer() (status is -1), or if exiting, we
     // must inform the buffer the terminal no longer exists so that
     // close_buffer() won't call this again.
-    // If inside Terminal mode K_EVENT handling, setting buf_handle to 0 also
+    // If inside Terminal mode event handling, setting buf_handle to 0 also
     // informs terminal_enter() to call the close callback before returning.
     term->buf_handle = 0;
     if (buf) {
       buf->terminal = NULL;
     }
     if (!term->refcount) {
-      // Not inside Terminal mode K_EVENT handling.
+      // Not inside Terminal mode event handling.
       // We should not wait for the user to press a key.
       term->destroy = true;
       term->opts.close_cb(term->opts.data);
@@ -659,9 +662,9 @@ void terminal_check_size(Terminal *term)
     }
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
       const uint16_t win_width =
-        (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
+        (uint16_t)(MAX(0, wp->w_view_width - win_col_off(wp)));
       width = MAX(width, win_width);
-      height = (uint16_t)MAX(height, wp->w_height_inner);
+      height = (uint16_t)MAX(height, wp->w_view_height);
     }
   }
 
@@ -675,6 +678,75 @@ void terminal_check_size(Terminal *term)
   vterm_screen_flush_damage(term->vts);
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
+}
+
+static void set_terminal_winopts(TerminalState *const s)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(s->save_curwin_handle == 0);
+
+  // Disable these options in terminal-mode. They are nonsense because cursor is
+  // placed at end of buffer to "follow" output. #11072
+  s->save_curwin_handle = curwin->handle;
+  s->save_w_p_cul = curwin->w_p_cul;
+  s->save_w_p_culopt = NULL;
+  s->save_w_p_culopt_flags = curwin->w_p_culopt_flags;
+  s->save_w_p_cuc = curwin->w_p_cuc;
+  s->save_w_p_so = curwin->w_p_so;
+  s->save_w_p_siso = curwin->w_p_siso;
+
+  if (curwin->w_p_cul && curwin->w_p_culopt_flags & kOptCuloptFlagNumber) {
+    if (!strequal(curwin->w_p_culopt, "number")) {
+      s->save_w_p_culopt = curwin->w_p_culopt;
+      curwin->w_p_culopt = xstrdup("number");
+    }
+    curwin->w_p_culopt_flags = kOptCuloptFlagNumber;
+  } else {
+    curwin->w_p_cul = false;
+  }
+  curwin->w_p_cuc = false;
+  curwin->w_p_so = 0;
+  curwin->w_p_siso = 0;
+
+  if (curwin->w_p_cuc != s->save_w_p_cuc) {
+    redraw_later(curwin, UPD_SOME_VALID);
+  } else if (curwin->w_p_cul != s->save_w_p_cul
+             || (curwin->w_p_cul && curwin->w_p_culopt_flags != s->save_w_p_culopt_flags)) {
+    redraw_later(curwin, UPD_VALID);
+  }
+}
+
+static void unset_terminal_winopts(TerminalState *const s)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(s->save_curwin_handle != 0);
+
+  win_T *const wp = handle_get_window(s->save_curwin_handle);
+  if (!wp) {
+    free_string_option(s->save_w_p_culopt);
+    s->save_curwin_handle = 0;
+    return;
+  }
+
+  if (win_valid(wp)) {  // No need to redraw if window not in curtab.
+    if (s->save_w_p_cuc != wp->w_p_cuc) {
+      redraw_later(wp, UPD_SOME_VALID);
+    } else if (s->save_w_p_cul != wp->w_p_cul
+               || (s->save_w_p_cul && s->save_w_p_culopt_flags != wp->w_p_culopt_flags)) {
+      redraw_later(wp, UPD_VALID);
+    }
+  }
+
+  wp->w_p_cul = s->save_w_p_cul;
+  if (s->save_w_p_culopt) {
+    free_string_option(wp->w_p_culopt);
+    wp->w_p_culopt = s->save_w_p_culopt;
+  }
+  wp->w_p_culopt_flags = s->save_w_p_culopt_flags;
+  wp->w_p_cuc = s->save_w_p_cuc;
+  wp->w_p_so = s->save_w_p_so;
+  wp->w_p_siso = s->save_w_p_siso;
+  s->save_curwin_handle = 0;
 }
 
 /// Implements MODE_TERMINAL state. :help Terminal-mode
@@ -698,42 +770,20 @@ bool terminal_enter(void)
   mapped_ctrl_c |= MODE_TERMINAL;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
 
-  // Disable these options in terminal-mode. They are nonsense because cursor is
-  // placed at end of buffer to "follow" output. #11072
-  handle_T save_curwin = curwin->handle;
-  bool save_w_p_cul = curwin->w_p_cul;
-  char *save_w_p_culopt = NULL;
-  uint8_t save_w_p_culopt_flags = curwin->w_p_culopt_flags;
-  int save_w_p_cuc = curwin->w_p_cuc;
-  OptInt save_w_p_so = curwin->w_p_so;
-  OptInt save_w_p_siso = curwin->w_p_siso;
-  if (curwin->w_p_cul && curwin->w_p_culopt_flags & kOptCuloptFlagNumber) {
-    if (strcmp(curwin->w_p_culopt, "number") != 0) {
-      save_w_p_culopt = curwin->w_p_culopt;
-      curwin->w_p_culopt = xstrdup("number");
-    }
-    curwin->w_p_culopt_flags = kOptCuloptFlagNumber;
-  } else {
-    curwin->w_p_cul = false;
-  }
-  if (curwin->w_p_cuc) {
-    redraw_later(curwin, UPD_SOME_VALID);
-  }
-  curwin->w_p_cuc = false;
-  curwin->w_p_so = 0;
-  curwin->w_p_siso = 0;
+  set_terminal_winopts(s);
 
   s->term->pending.cursor = true;  // Update the cursor shape table
   adjust_topline(s->term, buf, 0);  // scroll to end
   showmode();
-  curwin->w_redr_status = true;  // For mode() in statusline. #8323
-  redraw_custom_title_later();
   ui_cursor_shape();
-  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
-  may_trigger_modechanged();
 
   // Tell the terminal it has focus
   terminal_focus(s->term, true);
+  // Don't fire TextChangedT from changes in Normal mode.
+  curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
+
+  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
+  may_trigger_modechanged();
 
   s->state.execute = terminal_execute;
   s->state.check = terminal_check;
@@ -749,27 +799,15 @@ bool terminal_enter(void)
     ui_busy_stop();
   }
 
-  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
-
   // Restore the terminal cursor to what is set in 'guicursor'
   (void)parse_shape_opt(SHAPE_CURSOR);
 
-  if (save_curwin == curwin->handle) {  // Else: window was closed.
-    curwin->w_p_cul = save_w_p_cul;
-    if (save_w_p_culopt) {
-      free_string_option(curwin->w_p_culopt);
-      curwin->w_p_culopt = save_w_p_culopt;
-    }
-    curwin->w_p_culopt_flags = save_w_p_culopt_flags;
-    curwin->w_p_cuc = save_w_p_cuc;
-    curwin->w_p_so = save_w_p_so;
-    curwin->w_p_siso = save_w_p_siso;
-  } else if (save_w_p_culopt) {
-    free_string_option(save_w_p_culopt);
-  }
+  unset_terminal_winopts(s);
 
   // Tell the terminal it lost focus
   terminal_focus(s->term, false);
+  // Don't fire TextChanged from changes in terminal mode.
+  curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
 
   if (curbuf->terminal == s->term && !s->close) {
     terminal_check_cursor();
@@ -780,12 +818,19 @@ bool terminal_enter(void)
     unshowmode(true);
   }
   ui_cursor_shape();
+
+  // If we're to close the terminal, don't let TermLeave autocommands free it first!
   if (s->close) {
-    bool wipe = s->term->buf_handle != 0;
+    s->term->refcount++;
+  }
+  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
+  if (s->close) {
+    s->term->refcount--;
+    const handle_T buf_handle = s->term->buf_handle;  // Callback may free s->term.
     s->term->destroy = true;
     s->term->opts.close_cb(s->term->opts.data);
-    if (wipe) {
-      do_cmdline_cmd("bwipeout!");
+    if (buf_handle != 0) {
+      do_buffer(DOBUF_WIPE, DOBUF_FIRST, FORWARD, buf_handle, true);
     }
   }
 
@@ -795,51 +840,88 @@ bool terminal_enter(void)
 static void terminal_check_cursor(void)
 {
   Terminal *term = curbuf->terminal;
-  curwin->w_wrow = term->cursor.row;
-  curwin->w_wcol = term->cursor.col + win_col_off(curwin);
   curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
                               row_to_linenr(term, term->cursor.row));
+  const linenr_T topline = MAX(curbuf->b_ml.ml_line_count - curwin->w_view_height + 1, 1);
+  // Don't update topline if unchanged to avoid unnecessary redraws.
+  if (topline != curwin->w_topline) {
+    set_topline(curwin, topline);
+  }
   // Nudge cursor when returning to normal-mode.
   int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
   coladvance(curwin, MAX(0, term->cursor.col + off));
 }
 
-// Function executed before each iteration of terminal mode.
-// Return:
-//   1 if the iteration should continue normally
-//   0 if the main loop must exit
+static bool terminal_check_focus(TerminalState *const s)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (curbuf->terminal == NULL) {
+    return false;
+  }
+
+  if (s->save_curwin_handle != curwin->handle) {
+    // Terminal window changed, update window options.
+    unset_terminal_winopts(s);
+    set_terminal_winopts(s);
+  }
+  if (s->term != curbuf->terminal) {
+    // Active terminal buffer changed, flush terminal's cursor state to the UI.
+    terminal_focus(s->term, false);
+
+    s->term = curbuf->terminal;
+    s->term->pending.cursor = true;
+    invalidate_terminal(s->term, -1, -1);
+    terminal_focus(s->term, true);
+  }
+  return true;
+}
+
+/// Function executed before each iteration of terminal mode.
+///
+/// @return:
+///           1 if the iteration should continue normally
+///           0 if the main loop must exit
 static int terminal_check(VimState *state)
 {
   TerminalState *const s = (TerminalState *)state;
 
-  if (stop_insert_mode) {
+  if (stop_insert_mode || !terminal_check_focus(s)) {
     return 0;
   }
 
-  assert(s->term == curbuf->terminal);
+  // Validate topline and cursor position for autocommands. Especially important for WinScrolled.
   terminal_check_cursor();
   validate_cursor(curwin);
 
-  if (must_redraw) {
-    update_screen();
-
-    // Make sure an invoked autocmd doesn't delete the buffer (and the
-    // terminal) under our fingers.
-    curbuf->b_locked++;
-
-    // save and restore curwin and curbuf, in case the autocmd changes them
-    aco_save_T aco;
-    aucmd_prepbuf(&aco, curbuf);
+  // Don't let autocommands free the terminal from under our fingers.
+  s->term->refcount++;
+  if (has_event(EVENT_TEXTCHANGEDT)
+      && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)) {
     apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
-    aucmd_restbuf(&aco);
-
-    curbuf->b_locked--;
+    curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
+  }
+  may_trigger_win_scrolled_resized();
+  s->term->refcount--;
+  if (s->term->buf_handle == 0) {
+    s->close = true;
+    return 0;
   }
 
-  may_trigger_win_scrolled_resized();
+  // Autocommands above may have changed focus, scrolled, or moved the cursor.
+  if (!terminal_check_focus(s)) {
+    return 0;
+  }
+  terminal_check_cursor();
+  validate_cursor(curwin);
 
-  if (need_maketitle) {  // Update title in terminal-mode. #7248
-    maketitle();
+  show_cursor_info_later(false);
+  if (must_redraw) {
+    update_screen();
+  } else {
+    redraw_statuslines();
+    if (clear_cmdline || redraw_cmdline || redraw_mode) {
+      showmode();  // clear cmdline and show mode
+    }
   }
 
   setcursor();
@@ -941,15 +1023,6 @@ static int terminal_execute(VimState *state, int key)
     terminal_send_key(s->term, key);
   }
 
-  if (curbuf->terminal == NULL) {
-    return 0;
-  }
-  if (s->term != curbuf->terminal) {
-    // Active terminal buffer changed, flush terminal's cursor state to the UI
-    s->term = curbuf->terminal;
-    s->term->pending.cursor = true;
-    invalidate_terminal(s->term, -1, -1);
-  }
   return 1;
 }
 
@@ -1384,6 +1457,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
     } else {
       xfree(term->sb_buffer[term->sb_current - 1]);
     }
+    term->sb_deleted++;
 
     // Make room at the start by shifting to the right.
     memmove(term->sb_buffer + 1, term->sb_buffer,
@@ -1838,7 +1912,7 @@ static bool send_mouse_event(Terminal *term, int c)
   int row = mouse_row;
   int col = mouse_col;
   int grid = mouse_grid;
-  win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+  win_T *mouse_win = mouse_find_win_inner(&grid, &row, &col);
   if (mouse_win == NULL) {
     goto end;
   }
@@ -2029,14 +2103,9 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  // Some refresh_ functions assume the terminal buffer is current. Don't call refresh_cursor here,
-  // as we don't want a terminal that was possibly made temporarily current influencing the cursor.
-  aco_save_T aco;
-  aucmd_prepbuf(&aco, buf);
   refresh_size(term, buf);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
-  aucmd_restbuf(&aco);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
@@ -2149,11 +2218,13 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   if (scbk < term->sb_current) {
     size_t diff = term->sb_current - scbk;
     for (size_t i = 0; i < diff; i++) {
-      ml_delete(1, false);
+      ml_delete_buf(buf, 1, false);
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }
-    deleted_lines(1, (linenr_T)diff);
+    mark_adjust_buf(buf, 1, (linenr_T)diff, MAXLNUM, -(linenr_T)diff, true,
+                    kMarkAdjustTerm, kExtmarkUndo);
+    deleted_lines_buf(buf, 1, (linenr_T)diff);
   }
 
   // Resize the scrollback storage.
@@ -2168,7 +2239,11 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
-  assert(buf == curbuf);  // TODO(seandewar): remove this condition
+  linenr_T deleted = (linenr_T)(term->sb_deleted - term->sb_deleted_last);
+  deleted = MIN(deleted, buf->b_ml.ml_line_count);
+  mark_adjust_buf(buf, 1, deleted, MAXLNUM, -deleted, true, kMarkAdjustTerm, kExtmarkUndo);
+  term->sb_deleted_last = term->sb_deleted;
+
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
@@ -2177,8 +2252,8 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   int row_offset = term->sb_pending;
   while (term->sb_pending > 0 && buf->b_ml.ml_line_count < height) {
     fetch_row(term, term->sb_pending - row_offset - 1, width);
-    ml_append(0, term->textbuf, 0, false);
-    appended_lines(0, 1);
+    ml_append_buf(buf, 0, term->textbuf, 0, false);
+    appended_lines_buf(buf, 0, 1);
     term->sb_pending--;
   }
 
@@ -2190,21 +2265,21 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     // section of the buffer
     if (((int)buf->b_ml.ml_line_count - height) >= (int)term->sb_size) {
       // scrollback full, delete lines at the top
-      ml_delete(1, false);
-      deleted_lines(1, 1);
+      ml_delete_buf(buf, 1, false);
+      deleted_lines_buf(buf, 1, 1);
     }
     fetch_row(term, -term->sb_pending - row_offset, width);
     int buf_index = (int)buf->b_ml.ml_line_count - height;
-    ml_append(buf_index, term->textbuf, 0, false);
-    appended_lines(buf_index, 1);
+    ml_append_buf(buf, buf_index, term->textbuf, 0, false);
+    appended_lines_buf(buf, buf_index, 1);
     term->sb_pending--;
   }
 
   // Remove extra lines at the bottom
   int max_line_count = (int)term->sb_current + height;
   while (buf->b_ml.ml_line_count > max_line_count) {
-    ml_delete(buf->b_ml.ml_line_count, false);
-    deleted_lines(buf->b_ml.ml_line_count, 1);
+    ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
+    deleted_lines_buf(buf, buf->b_ml.ml_line_count, 1);
   }
 
   adjust_scrollback(term, buf);
@@ -2214,7 +2289,6 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
 // focused) of a invalidated terminal
 static void refresh_screen(Terminal *term, buf_T *buf)
 {
-  assert(buf == curbuf);  // TODO(bfredl): remove this condition
   int changed = 0;
   int added = 0;
   int height;
@@ -2235,10 +2309,10 @@ static void refresh_screen(Terminal *term, buf_T *buf)
     fetch_row(term, r, width);
 
     if (linenr <= buf->b_ml.ml_line_count) {
-      ml_replace(linenr, term->textbuf, true);
+      ml_replace_buf(buf, linenr, term->textbuf, true, false);
       changed++;
     } else {
-      ml_append(linenr - 1, term->textbuf, 0, false);
+      ml_append_buf(buf, linenr - 1, term->textbuf, 0, false);
       added++;
     }
   }
@@ -2254,13 +2328,19 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
+      if (wp == curwin && is_focused(term)) {
+        // Move window cursor to terminal cursor's position and "follow" output.
+        terminal_check_cursor();
+        continue;
+      }
+
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
 
-      if (following || (wp == curwin && is_focused(term))) {
+      if (following) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
-        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));
+        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_view_height + 1, 1));
       } else {
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
@@ -2292,7 +2372,7 @@ static char *get_config_string(char *key)
   Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), NULL, &err);
   api_clear_error(&err);
   if (obj.type == kObjectTypeNil) {
-    obj = dict_get_value(&globvardict, cstr_as_string(key), NULL, &err);
+    obj = dict_get_value(get_globvar_dict(), cstr_as_string(key), NULL, &err);
     api_clear_error(&err);
   }
   if (obj.type == kObjectTypeString) {

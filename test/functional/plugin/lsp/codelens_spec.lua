@@ -9,7 +9,6 @@ describe('vim.lsp.codelens', function()
     n.clear()
     exec_lua('require("vim.lsp")')
   end)
-  after_each(n.clear)
 
   it('on_codelens_stores_and_displays_lenses', function()
     local fake_uri = 'file:///fake/uri'

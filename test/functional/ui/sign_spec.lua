@@ -359,6 +359,7 @@ describe('Signs', function()
       ]])
     end)
 
+    -- oldtest: Test_sign_number_without_signtext()
     it('ignores signs with no icon and text when calculating the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       exec([[
@@ -687,5 +688,54 @@ describe('Signs', function()
     api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 1, 0, { sign_text = 's' })
     api.nvim_buf_set_lines(0, 0, -1, false, {})
     n.assert_alive()
+  end)
+
+  it("with line that doesn't fit in window", function()
+    screen:try_resize(40, 9)
+    api.nvim_set_option_value('foldcolumn', '1', {})
+    api.nvim_set_option_value('number', true, {})
+    api.nvim_set_option_value('signcolumn', 'yes:2', {})
+    api.nvim_set_hl(0, 'FoldColumn', { link = 'StatusLine' })
+    api.nvim_buf_set_lines(
+      0,
+      0,
+      -1,
+      false,
+      { ('a'):rep(90), ('b'):rep(90), ('c'):rep(90), ('d'):rep(90), ('e'):rep(90) }
+    )
+    screen:expect([[
+      {3: }{7:    }{8:  1 }^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {3: }{7:    }{8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {3: }{7:    }{8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaa   |
+      {3: }{7:    }{8:  2 }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {3: }{7:    }{8:    }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {3: }{7:    }{8:    }bbbbbbbbbbbbbbbbbbbbbbbbbbbb   |
+      {3: }{7:    }{8:  3 }ccccccccccccccccccccccccccccccc|
+      {3: }{7:    }{8:    }cccccccccccccccccccccccccccc{1:@@@}|
+                                              |
+    ]])
+    api.nvim_set_option_value('display', 'truncate', {})
+    screen:expect([[
+      {3: }{7:    }{8:  1 }^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {3: }{7:    }{8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {3: }{7:    }{8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaa   |
+      {3: }{7:    }{8:  2 }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {3: }{7:    }{8:    }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {3: }{7:    }{8:    }bbbbbbbbbbbbbbbbbbbbbbbbbbbb   |
+      {3: }{7:    }{8:  3 }ccccccccccccccccccccccccccccccc|
+      {1:@@@                                     }|
+                                              |
+    ]])
+    api.nvim_set_option_value('display', '', {})
+    screen:expect([[
+      {3: }{7:    }{8:  1 }^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {3: }{7:    }{8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {3: }{7:    }{8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaa   |
+      {3: }{7:    }{8:  2 }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {3: }{7:    }{8:    }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      {3: }{7:    }{8:    }bbbbbbbbbbbbbbbbbbbbbbbbbbbb   |
+      {3: }{7:    }{8:    }{1:@                              }|*2
+                                              |
+    ]])
   end)
 end)

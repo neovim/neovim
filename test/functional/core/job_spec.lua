@@ -97,6 +97,28 @@ describe('jobs', function()
     command("call jobstart(['cat', '-'], { 'term': v:false })")
   end)
 
+  it('jobstart(term=true) accepts width/height (#33904)', function()
+    local buf = api.nvim_create_buf(false, true)
+    exec_lua(function()
+      vim.api.nvim_buf_call(buf, function()
+        vim.fn.jobstart({
+          vim.v.progpath,
+          '--clean',
+          '--headless',
+          '+lua print(vim.uv.new_tty(1, false):get_winsize())',
+        }, {
+          term = true,
+          width = 11,
+          height = 12,
+          env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
+        })
+      end)
+    end)
+    retry(nil, nil, function()
+      eq({ '11 12' }, api.nvim_buf_get_lines(buf, 0, 1, false))
+    end)
+  end)
+
   it('must specify env option as a dict', function()
     command('let g:job_opts.env = v:true')
     local _, err = pcall(function()
@@ -961,16 +983,14 @@ describe('jobs', function()
       ]],
         timeout = 100,
       }
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                                           |
         {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
-      ]],
-      }
+      ]])
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
     end)
@@ -993,16 +1013,14 @@ describe('jobs', function()
         endfunc
       ]])
       feed_command('call PrintAndPoll()')
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                                           |
         {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
-      ]],
-      }
+      ]])
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
       eq(0, busy)
@@ -1260,9 +1278,9 @@ describe('jobs', function()
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
-      {1:[No Name]                       0,0-1          All}|
+      {2:[No Name]                       0,0-1          All}|
                                                         |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     feed(':q<CR>')
@@ -1273,7 +1291,7 @@ describe('jobs', function()
                                                           |
         [Process exited 0]^                                |
                                                           |*4
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
   end)

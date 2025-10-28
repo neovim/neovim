@@ -29,7 +29,7 @@ use "CTRL-V 003" to insert a CTRL-C.  Note: When CTRL-V is mapped you can
 often use CTRL-Q instead |i_CTRL-Q|.
 
 If you are working in a special language mode when inserting text, see the
-'langmap' option, |'langmap'|, on how to avoid switching this mode on and off
+'langmap' option, 'langmap', on how to avoid switching this mode on and off
 all the time.
 
 char		action	~
@@ -69,10 +69,11 @@ CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		By default, sets a new undo point before deleting.
 		|default-mappings|
 						*i_CTRL-U*
-CTRL-U		Delete all entered characters before the cursor in the current
-		line.  If there are no newly entered characters and
-		'backspace' is not empty, delete all characters before the
-		cursor in the current line.
+CTRL-U		Delete all characters that were entered after starting Insert
+		mode and before the cursor in the current line.
+		If there are no newly entered characters and 'backspace' is
+		not empty, delete all characters before the cursor in the
+		current line.
 		If C-indenting is enabled the indent will be adjusted if the
 		line becomes blank.
 		See |i_backspacing| about joining lines.
@@ -101,13 +102,15 @@ CTRL-N		Find next keyword (see |i_CTRL-N|).
 CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
 CTRL-R {register}				*i_CTRL-R*
-		Insert the contents of a register.  Between typing CTRL-R and
+		Insert the contents of a register. Between typing CTRL-R and
 		the second character, '"' will be displayed to indicate that
-		you are expected to enter the name of a register.
-		The text is inserted as if you typed it, but mappings and
+		you are expected to enter the name of a register. When used
+		with named or clipboard registers (A-Z,a-z,0-9,+) text is
+		inserted literally like pasting with "p". For other registers,
+		the text is inserted as if you typed it, but mappings and
 		abbreviations are not used.  If you have options like
 		'textwidth', 'formatoptions', or 'autoindent' set, this will
-		influence what will be inserted.  This is different from what
+		influence what will be inserted. This is different from what
 		happens with the "p" command and pasting with the mouse.
 		Special registers:
 			'"'	the unnamed register, containing the text of
@@ -121,7 +124,7 @@ CTRL-R {register}				*i_CTRL-R*
 			'.'	the last inserted text
 							*i_CTRL-R_-*
 			'-'	the last small (less than a line) delete
-				register. This is repeatable using |.| since
+				register.  This is repeatable using |.| since
 				it remembers the register to put instead of
 				the literal text to insert.
 							*i_CTRL-R_=*
@@ -131,6 +134,8 @@ CTRL-R {register}				*i_CTRL-R*
 				special keys.  E.g., you can use this to move
 				the cursor up:
 					CTRL-R ="\<Up>"
+				you can use this to insert a register as
+				typed with CTRL-R =@reg.
 				Use CTRL-R CTRL-R to insert text literally.
 				When the result is a |List| the items are used
 				as lines.  They can have line breaks inside
@@ -158,12 +163,12 @@ CTRL-R CTRL-R {register}			*i_CTRL-R_CTRL-R*
 CTRL-R CTRL-O {register}			*i_CTRL-R_CTRL-O*
 		Insert the contents of a register literally and don't
 		auto-indent.  Does the same as pasting with the mouse
-		|<MiddleMouse>|. When the register is linewise this will
+		|<MiddleMouse>|.  When the register is linewise this will
 		insert the text above the current line, like with `P`.
 		The '.' register (last inserted text) is still inserted as
 		typed.
 		After this command, the '.' register contains the command
-		typed and not the text. I.e., the literals "^R^O" and not the
+		typed and not the text.  I.e., the literals "^R^O" and not the
 		text from the register.
 		Does not replace characters in |Replace-mode|!
 
@@ -173,7 +178,7 @@ CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		The '.' register (last inserted text) is still inserted as
 		typed.
 		After this command, the '.' register contains the command
-		typed and not the text. I.e., the literals "^R^P" and not the
+		typed and not the text.  I.e., the literals "^R^P" and not the
 		text from the register.
 		Does not replace characters in |Replace-mode|!
 
@@ -269,15 +274,14 @@ The effect of the <BS>, CTRL-W, and CTRL-U depend on the 'backspace' option
 
 item	    action ~
 indent	    allow backspacing over autoindent
-eol	    allow backspacing over end-of-line (join lines)
-start	    allow backspacing over the start position of insert; CTRL-W and
-	    CTRL-U stop once at the start position
+eol	    allow backspacing over line breaks (join lines)
+start	    allow backspacing over the start of insert; CTRL-W and CTRL-U stop
+	    once at the start of insert.
+nostop	    like start, except CTRL-W and CTRL-U do not stop at the start of
+	    insert.
 
 When 'backspace' is empty, Vi compatible backspacing is used.  You cannot
 backspace over autoindent, before column 1 or before where insert started.
-
-For backwards compatibility the values "0", "1", "2" and "3" are also allowed,
-see |'backspace'|.
 
 If the 'backspace' option does contain "eol" and the cursor is in column 1
 when one of the three keys is used, the current line is joined with the
@@ -510,7 +514,7 @@ paragraph, no matter where the cursor currently is.  Or you can use Visual
 mode: hit "v", move to the end of the block, and type "gq".  See also |gq|.
 
 ==============================================================================
-4. 'expandtab', 'smarttab' and 'softtabstop' options	*ins-expandtab*
+4. 'expandtab', 'softtabstop' and 'smarttab' options	*ins-expandtab*
 
 If the 'expandtab' option is on, spaces will be used to fill the amount of
 whitespace of the tab.  If you want to enter a real <Tab>, type CTRL-V first
@@ -520,13 +524,6 @@ character is replaced with several spaces.  The result of this is that the
 number of characters in the line increases.  Backspacing will delete one
 space at a time.  The original character will be put back for only one space
 that you backspace over (the last one).
-
-							*ins-smarttab*
-When the 'smarttab' option is on, a <Tab> inserts 'shiftwidth' positions at
-the beginning of a line and 'tabstop' positions in other places.  This means
-that often spaces instead of a <Tab> character are inserted.  When 'smarttab'
-is off, a <Tab> always inserts 'tabstop' positions, and 'shiftwidth' is only
-used for ">>" and the like.
 
 							*ins-softtabstop*
 When the 'softtabstop' option is non-zero, a <Tab> inserts 'softtabstop'
@@ -541,6 +538,13 @@ inserted character is a space, then it will only delete the character before
 the cursor.  Otherwise you cannot always delete a single character before the
 cursor.  You will have to delete 'softtabstop' characters first, and then type
 extra spaces to get where you want to be.
+
+							*ins-smarttab*
+When the 'smarttab' option is on, the <Tab> key indents by 'shiftwidth' if the
+cursor is in leading whitespace.  The <BS> key has the opposite effect.  This
+behaves as if 'softtabstop' were set to the value of 'shiftwidth'.  This
+option allows the user to set 'softtabstop' to a value other than 'shiftwidth'
+and still use the <Tab> key for indentation.
 
 ==============================================================================
 5. Replace mode				*Replace* *Replace-mode* *mode-replace*
@@ -599,7 +603,7 @@ In 'list' mode, Virtual Replace mode acts as if it was not in 'list' mode,
 unless "L" is in 'cpoptions'.
 
 Note that the only situations for which characters beyond the cursor should
-appear to move are in List mode |'list'|, and occasionally when 'wrap' is set
+appear to move are in List mode 'list', and occasionally when 'wrap' is set
 (and the line changes length to become shorter or wider than the width of the
 screen).  In other cases spaces may be inserted to avoid following characters
 to move.
@@ -628,7 +632,8 @@ Completion can be done for:
 10. User defined completion				|i_CTRL-X_CTRL-U|
 11. omni completion					|i_CTRL-X_CTRL-O|
 12. Spelling suggestions				|i_CTRL-X_s|
-13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
+13. completions from 'complete'				|i_CTRL-N| |i_CTRL-P|
+14. contents from registers				|i_CTRL-X_CTRL-R|
 
 Additionally, |i_CTRL-X_CTRL-Z| stops completion without changing the text.
 
@@ -637,6 +642,10 @@ sub-mode of Insert and Replace modes.  You enter CTRL-X mode by typing CTRL-X
 and one of the CTRL-X commands.  You exit CTRL-X mode by typing a key that is
 not a valid CTRL-X mode command.  Valid keys are the CTRL-X command itself,
 CTRL-N (next), and CTRL-P (previous).
+
+By default, the possible completions are showed in a menu and the first
+completion is inserted into the text.  This can be adjusted with
+'completeopt'.
 
 To get the current completion information, |complete_info()| can be used.
 Also see the 'infercase' option if you want to adjust the case of the match.
@@ -862,7 +871,7 @@ Completing keywords with 'thesaurusfunc'		*compl-thesaurusfunc*
 
 If the 'thesaurusfunc' option is set, then the user specified function is
 invoked to get the list of completion matches and the 'thesaurus' option is
-not used. See |complete-functions| for an explanation of how the function is
+not used.  See |complete-functions| for an explanation of how the function is
 invoked and what it should return.
 
 Here is an example that uses the "aiksaurus" command (provided by Magnus
@@ -999,6 +1008,25 @@ CTRL-X CTRL-V		Guess what kind of item is in front of the cursor and
 			completion, for example: >
 				:imap <Tab> <C-X><C-V>
 
+Completing contents from registers			*compl-register-words*
+							*i_CTRL-X_CTRL-R*
+CTRL-X CTRL-R		Guess what kind of item is in front of the cursor from
+			all registers and find the first match for it.
+			Further use of CTRL-R (without CTRL-X) will insert the
+			register content, see |i_CTRL-R|.
+			'ignorecase' applies to the matching.
+
+	CTRL-N		Search forwards for next match.  This match replaces
+			the previous one.
+
+	CTRL-P		Search backwards for previous match.  This match
+			replaces the previous one.
+
+	CTRL-X CTRL-R	Further use of CTRL-X CTRL-R will copy the line
+			following the previous expansion in other contexts
+			unless a double CTRL-X is used (e.g. this switches
+			from completing register words to register contents).
+
 User defined completion					*compl-function*
 
 Completion is done by a function that can be defined by the user with the
@@ -1059,25 +1087,23 @@ CTRL-X s		Locate the word in front of the cursor and find the
 			previous one.
 
 
-Completing keywords from different sources		*compl-generic*
+Completing from different sources			*compl-generic*
 
 							*i_CTRL-N*
-CTRL-N			Find next match for words that start with the
-			keyword in front of the cursor, looking in places
-			specified with the 'complete' option.  The found
-			keyword is inserted in front of the cursor.
+CTRL-N			Find the next match for a word ending at the cursor,
+			using the sources specified in the 'complete' option.
+			All sources complete from keywords, except functions,
+			which may complete from non-keyword.  The matched
+			text is inserted before the cursor.
 
 							*i_CTRL-P*
-CTRL-P			Find previous match for words that start with the
-			keyword in front of the cursor, looking in places
-			specified with the 'complete' option.  The found
-			keyword is inserted in front of the cursor.
+CTRL-P			Same as CTRL-N, but find the previous match.
 
-	CTRL-N		Search forward for next matching keyword.  This
-			keyword replaces the previous matching keyword.
+	CTRL-N		Search forward through the matches and insert the
+			next one.
 
-	CTRL-P		Search backwards for next matching keyword.  This
-			keyword replaces the previous matching keyword.
+	CTRL-P		Search backward through the matches and insert the
+			previous one.
 
 	CTRL-X CTRL-N or
 	CTRL-X CTRL-P	Further use of CTRL-X CTRL-N or CTRL-X CTRL-P will
@@ -1091,26 +1117,44 @@ Stop completion						*compl-stop*
 CTRL-X CTRL-Z		Stop completion without changing the text.
 
 
-AUTO-COMPLETION						*compl-autocomplete*
+AUTOCOMPLETION						*ins-autocompletion*
 
-To get LSP-driven auto-completion, see |lsp-completion|. To get basic
-auto-completion without installing plugins or LSP, try this: >lua
+Vim can display a completion menu as you type, similar to using |i_CTRL-N|,
+but triggered automatically.  See 'autocomplete'.  The menu items are
+collected from the sources listed in the 'complete' option, in order.
 
-  local triggers = {'.'}
-  vim.api.nvim_create_autocmd('InsertCharPre', {
-    buffer = vim.api.nvim_get_current_buf(),
-    callback = function()
-      if vim.fn.pumvisible() == 1 or vim.fn.state('m') == 'm' then
-        return
-      end
-      local char = vim.v.char
-      if vim.list_contains(triggers, char) then
-        local key = vim.keycode('<C-x><C-n>')
-        vim.api.nvim_feedkeys(key, 'm', false)
-      end
-    end
-  })
+A decaying timeout keeps Vim responsive.  Sources earlier in the 'complete'
+list get more time (higher priority), but all sources receive at least a small
+time slice.
+
+This mode is fully compatible with other completion modes.  You can invoke
+any of them at any time by typing |CTRL-X|, which temporarily suspends
+autocompletion.  To use |i_CTRL-N| or |i_CTRL-X_CTRL-N| specifically, press
+|CTRL-E| first to dismiss the popup menu (see |complete_CTRL-E|).
+
+						*ins-autocompletion-example*
+Example setup ~
+A typical configuration for automatic completion with a popup menu: >
+	set autocomplete
+	set complete=.^5,w^5,b^5,u^5
+	set completeopt=popup
+
+	inoremap <silent><expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+	inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 <
+This enables automatic completion with suggestions from the current buffer,
+other windows, and listed buffers, displayed in a popup menu.  Each source is
+limited to 5 candidates.  <Tab> and <S-Tab> move through the items when the
+menu is visible.  Optionally, add "preinsert" to 'completeopt' to insert the
+longest common prefix automatically.  You can also add other completion
+sources to 'complete' as needed.
+
+See also 'autocomplete', 'autocompletedelay' and 'autocompletetimeout'.
+
+For command-line autocompletion, see |cmdline-autocompletion|.
+
+To get LSP-driven auto-completion, see |lsp-completion|.
+
 
 FUNCTIONS FOR FINDING COMPLETIONS			*complete-functions*
 
@@ -1163,6 +1207,9 @@ For example, the function can contain this: >
 	let matches = ... list of words ...
 	return {'words': matches, 'refresh': 'always'}
 <
+If looking for matches is time-consuming, |complete_check()| may be used to
+maintain responsiveness.
+
 						*complete-items*
 Each list item can either be a string or a Dictionary.  When it is a string it
 is used as the completion.  When it is a Dictionary it can contain these
@@ -1179,7 +1226,7 @@ items:
 			items to be equal; when omitted zero is used, thus
 			items that only differ in case are added
 	equal		when non-zero, always treat this item to be equal when
-			comparing. Which means, "equal=1" disables filtering
+			comparing.  Which means, "equal=1" disables filtering
 			of this item.
 	dup		when non-zero this match will be added even when an
 			item with the same word is already present.
@@ -1195,7 +1242,7 @@ items:
 			properties (with higher priority) like strikethrough
 			to the completion items abbreviation
 	kind_hlgroup	an additional highlight group specifically for setting
-			the highlight attributes of the completion kind. When
+			the highlight attributes of the completion kind.  When
 			this field is present, it will override the
 			|hl-PmenuKind| highlight group, allowing for the
 			customization of ctermfg and guifg properties for the
@@ -1297,6 +1344,7 @@ use all space available.
 The 'pumwidth' option can be used to set a minimum width.  The default is 15
 characters.
 
+							*compl-states*
 There are three states:
 1. A complete match has been inserted, e.g., after using CTRL-N or CTRL-P.
 2. A cursor key has been used to select another match.  The match was not
@@ -1322,6 +1370,8 @@ In the first state these keys have a special meaning:
 <BS> and CTRL-H   Delete one character, find the matches for the word before
 		  the cursor.  This reduces the list of matches, often to one
 		  entry, and switches to the second state.
+		  When 'autocomplete' is active, clears the selected item in
+		  the menu.
 Any non-special character:
 		  Stop completion without changing the match and insert the
 		  typed character.
@@ -1329,13 +1379,16 @@ Any non-special character:
 In the second and third state these keys have a special meaning:
 <BS> and CTRL-H   Delete one character, find the matches for the shorter word
 		  before the cursor.  This may find more matches.
+		  When 'autocomplete' is active, clears the selected item in
+		  the menu.
 CTRL-L		  Add one character from the current match, may reduce the
 		  number of matches.
 any printable, non-white character:
 		  Add this character and reduce the number of matches.
 
 In all three states these can be used:
-CTRL-Y		  Yes: Accept the currently selected match and stop completion.
+CTRL-Y		  Yes: Accept the currently selected match and stop
+		  completion.
 CTRL-E		  End completion, go back to what was there before selecting a
 		  match (what was typed or longest common string).
 <PageUp>	  Select a match several entries back, but don't insert it.
@@ -1431,7 +1484,7 @@ XHTML							*ft-xhtml-omni*
 
 CTRL-X CTRL-O provides completion of various elements of (X)HTML files.  It is
 designed to support writing of XHTML 1.0 Strict files but will also work for
-other versions of HTML. Features:
+other versions of HTML.  Features:
 
 - after "<" complete tag name depending on context (no div suggestion inside
   of an a tag); '/>' indicates empty tags
@@ -1449,7 +1502,7 @@ other versions of HTML. Features:
 
 Note: When used first time completion menu will be shown with little delay
 - this is time needed for loading of data file.
-Note: Completion may fail in badly formatted documents. In such case try to
+Note: Completion may fail in badly formatted documents.  In such case try to
 run |:make| command to detect formatting problems.
 
 
@@ -1463,7 +1516,7 @@ When doing completion outside of any other tag you will have possibility to
 choose DOCTYPE and the appropriate data file will be loaded and used for all
 next completions.
 
-More about format of data file in |xml-omni-datafile|. Some of the data files
+More about format of data file in |xml-omni-datafile|.  Some of the data files
 may be found on the Vim website (|www|).
 
 Note that b:html_omni_flavor may point to a file with any XML data.  This
@@ -1492,8 +1545,8 @@ of external files).
 DOM compatibility
 
 At the moment (beginning of 2006) there are two main browsers - MS Internet
-Explorer and Mozilla Firefox. These two applications are covering over 90% of
-market. Theoretically standards are created by W3C organisation
+Explorer and Mozilla Firefox.  These two applications are covering over 90% of
+market.  Theoretically standards are created by W3C organisation
 (https://www.w3.org/) but they are not always followed/implemented.
 >
 		IE	FF	W3C  Omni completion ~
@@ -1503,9 +1556,9 @@ market. Theoretically standards are created by W3C organisation
 		-	+	-    -		     ~
 <
 Regardless from state of implementation in browsers but if element is defined
-in standards, completion plugin will place element in suggestion list. When
+in standards, completion plugin will place element in suggestion list.  When
 both major engines implemented element, even if this is not in standards it
-will be suggested. All other elements are not placed in suggestion list.
+will be suggested.  All other elements are not placed in suggestion list.
 
 
 LUA                                                     *ft-lua-omni*
@@ -1516,19 +1569,20 @@ Lua |ftplugin| sets 'omnifunc' to |vim.lua_omnifunc()|.
 PHP							*ft-php-omni*
 
 Completion of PHP code requires a tags file for completion of data from
-external files and for class aware completion. You should use Universal/
-Exuberant ctags version 5.5.4 or newer. You can find it here:
+external files and for class aware completion.  You should use Universal/
+Exuberant ctags version 5.5.4 or newer.  You can find it here:
 
 	Universal Ctags: https://ctags.io
 
 Script completes:
 
 - after $ variables name
-  - if variable was declared as object add "->", if tags file is available show
-    name of class
+  - if variable was declared as object add "->", if tags file is available
+    show name of class
   - after "->" complete only function and variable names specific for given
-    class. To find class location and contents tags file is required. Because
-    PHP isn't strongly typed language user can use @var tag to declare class: >
+    class.  To find class location and contents tags file is required.
+    Because PHP isn't strongly typed language user can use @var tag to declare
+    class: >
 
 	/* @var $myVar myClass */
 	$myVar->
@@ -1546,11 +1600,11 @@ Script completes:
 
 
 Note: when doing completion first time Vim will load all necessary data into
-memory. It may take several seconds. After next use of completion delay
+memory.  It may take several seconds.  After next use of completion delay
 should not be noticeable.
 
-Script detects if cursor is inside <?php ?> tags. If it is outside it will
-automatically switch to HTML/CSS/JavaScript completion. Note: contrary to
+Script detects if cursor is inside <?php ?> tags.  If it is outside it will
+automatically switch to HTML/CSS/JavaScript completion.  Note: contrary to
 original HTML files completion of tags (and only tags) isn't context aware.
 
 
@@ -1577,11 +1631,11 @@ The completions provided by CTRL-X CTRL-O are sensitive to the context:
 
 Notes:
  - Vim will load/evaluate code in order to provide completions.  This may
-   cause some code execution, which may be a concern. This is no longer
+   cause some code execution, which may be a concern.  This is no longer
    enabled by default, to enable this feature add >
      let g:rubycomplete_buffer_loading = 1
 <- In context 1 above, Vim can parse the entire buffer to add a list of
-   classes to the completion results. This feature is turned off by default,
+   classes to the completion results.  This feature is turned off by default,
    to enable it add >
      let g:rubycomplete_classes_in_global = 1
 <  to your vimrc
@@ -1589,7 +1643,7 @@ Notes:
  - In context 3 above, Vim will attempt to determine the methods supported by
    the object.
  - Vim can detect and load the Rails environment for files within a rails
-   project. The feature is disabled by default, to enable it add >
+   project.  The feature is disabled by default, to enable it add >
      let g:rubycomplete_rails = 1
 <  to your vimrc
 
@@ -1626,11 +1680,11 @@ a look at the PHP filetype to see how this works.
 If you edit a file called, index.php, run the following command: >
     syntax list
 
-The first thing you will notice is that there are many different syntax groups.
-The PHP language can include elements from different languages like HTML,
-JavaScript and many more.  The syntax plugin will only include syntax groups
-that begin with the filetype, "php", in this case.  For example these syntax
-groups are included by default with the PHP: phpEnvVar, phpIntVar,
+The first thing you will notice is that there are many different syntax
+groups.  The PHP language can include elements from different languages like
+HTML, JavaScript and many more.  The syntax plugin will only include syntax
+groups that begin with the filetype, "php", in this case.  For example these
+syntax groups are included by default with the PHP: phpEnvVar, phpIntVar,
 phpFunctions.
 
 If you wish non-filetype syntax items to also be included, you can use a
@@ -1749,7 +1803,7 @@ be used in commands.  It should be a unique name which will not create
 conflicts.  For example, the name xhtml10s.vim means it is the data file for
 XHTML 1.0 Strict.
 
-Each file contains a variable with a name like g:xmldata_xhtml10s . It is
+Each file contains a variable with a name like g:xmldata_xhtml10s .  It is
 a compound from two parts:
 
 1. "g:xmldata_"  general prefix, constant for all data files
@@ -1924,7 +1978,7 @@ These commands are used to start inserting text.  You can end insert mode with
 <Esc>.  See |mode-ins-repl| for the other special characters in Insert mode.
 The effect of [count] takes place after Insert mode is exited.
 
-The following commands insert text, but stay in normal mode:
+The following |default-mappings| insert text, but stay in normal mode:
 
 							*]<Space>*
 ]<Space>		Insert an empty line below the cursor without leaving
@@ -1966,7 +2020,7 @@ These two commands will keep on asking for lines, until you type a line
 containing only a ".".  Watch out for lines starting with a backslash, see
 |line-continuation|.
 
-Text typed after a "|" command separator is used first. So the following
+Text typed after a "|" command separator is used first.  So the following
 command in ex mode: >
 	:a|one
 	two

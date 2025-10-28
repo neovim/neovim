@@ -53,7 +53,7 @@ local tests_windows_paths = {
   'c:\\users\\foo\\bar\\..\\',
 }
 
-before_each(clear)
+setup(clear)
 
 describe('vim.fs', function()
   describe('parents()', function()
@@ -245,8 +245,8 @@ describe('vim.fs', function()
   describe('find()', function()
     it('works', function()
       eq(
-        { test_build_dir .. '/build' },
-        vim.fs.find('build', { path = nvim_dir, upward = true, type = 'directory' })
+        { test_build_dir .. '/bin' },
+        vim.fs.find('bin', { path = nvim_dir, upward = true, type = 'directory' })
       )
       eq({ nvim_prog }, vim.fs.find(nvim_prog_basename, { path = test_build_dir, type = 'file' }))
 
@@ -255,7 +255,7 @@ describe('vim.fs', function()
     end)
 
     it('follows symlinks', function()
-      local build_dir = test_source_path .. '/build' ---@type string
+      local build_dir = test_build_dir ---@type string
       local symlink = test_source_path .. '/build_link' ---@type string
       vim.uv.fs_symlink(build_dir, symlink, { junction = true, dir = true })
 
@@ -263,8 +263,11 @@ describe('vim.fs', function()
         vim.uv.fs_unlink(symlink)
       end)
 
+      local cases = { nvim_prog, symlink .. '/bin/' .. nvim_prog_basename }
+      table.sort(cases)
+
       eq(
-        { nvim_prog, symlink .. '/bin/' .. nvim_prog_basename },
+        cases,
         vim.fs.find(nvim_prog_basename, {
           path = test_source_path,
           type = 'file',
@@ -273,6 +276,9 @@ describe('vim.fs', function()
         })
       )
 
+      if t.is_zig_build() then
+        return pending('broken with build.zig')
+      end
       eq(
         { nvim_prog },
         vim.fs.find(nvim_prog_basename, {
@@ -285,6 +291,9 @@ describe('vim.fs', function()
     end)
 
     it('follow=true handles symlink loop', function()
+      if t.is_zig_build() then
+        return pending('broken/slow with build.zig')
+      end
       local cwd = test_source_path ---@type string
       local symlink = test_source_path .. '/loop_link' ---@type string
       vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
@@ -304,9 +313,9 @@ describe('vim.fs', function()
     it('accepts predicate as names', function()
       local opts = { path = nvim_dir, upward = true, type = 'directory' }
       eq(
-        { test_build_dir .. '/build' },
+        { test_build_dir .. '/bin' },
         vim.fs.find(function(x)
-          return x == 'build'
+          return x == 'bin'
         end, opts)
       )
       eq(
@@ -345,6 +354,10 @@ describe('vim.fs', function()
       command('edit test/functional/fixtures/tty-test.c')
     end)
 
+    after_each(function()
+      command('bwipe!')
+    end)
+
     it('works with a single marker', function()
       eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
@@ -354,6 +367,36 @@ describe('vim.fs', function()
       eq(
         vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
         exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', 'CMakePresets.json'})]], bufnr)
+      )
+    end)
+
+    it('nested markers have equal priority', function()
+      local bufnr = api.nvim_get_current_buf()
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional'),
+        exec_lua(
+          [[return vim.fs.root(..., { 'example_spec.lua', {'CMakeLists.txt', 'CMakePresets.json'}, '.luarc.json'})]],
+          bufnr
+        )
+      )
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua(
+          [[return vim.fs.root(..., { {'CMakeLists.txt', 'CMakePresets.json'}, 'example_spec.lua', '.luarc.json'})]],
+          bufnr
+        )
+      )
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua(
+          [[return vim.fs.root(..., {
+            function(name, _)
+              return name:match('%.txt$')
+            end,
+            'example_spec.lua',
+            '.luarc.json' })]],
+          bufnr
+        )
       )
     end)
 
@@ -427,8 +470,9 @@ describe('vim.fs', function()
       eq(
         xdg_config_home .. '/nvim',
         exec_lua(function()
-          vim.env.XDG_CONFIG_HOME = xdg_config_home
-          return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+          return vim._with({ env = { XDG_CONFIG_HOME = xdg_config_home } }, function()
+            return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+          end)
         end)
       )
     end)

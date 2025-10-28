@@ -23,9 +23,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "input.c.generated.h"  // IWYU pragma: export
-#endif
+#include "input.c.generated.h"  // IWYU pragma: export
 
 /// Ask for a reply from the user, a 'y' or a 'n', with prompt "str" (which
 /// should have been translated already).
@@ -41,8 +39,6 @@ int ask_yesno(const char *const str)
   const int save_State = State;
 
   no_wait_return++;
-  State = MODE_CONFIRM;  // Mouse behaves like with :confirm.
-  setmouse();  // Disable mouse in xterm.
   snprintf(IObuff, IOSIZE, _("%s (y/n)?"), str);
   char *prompt = xstrdup(IObuff);
 
@@ -82,6 +78,7 @@ int get_keystroke(MultiQueue *events)
   int n;
   int save_mapped_ctrl_c = mapped_ctrl_c;
 
+  mod_mask = 0;
   mapped_ctrl_c = 0;        // mappings are not used here
   while (true) {
     // flush output before waiting
@@ -145,7 +142,7 @@ int get_keystroke(MultiQueue *events)
   xfree(buf);
 
   mapped_ctrl_c = save_mapped_ctrl_c;
-  return n;
+  return merge_modifiers(n, &mod_mask);
 }
 
 /// Ask the user for input through a cmdline prompt.

@@ -4036,12 +4036,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: POZOR"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Nalezen odkládací soubor se jménem \""
+msgid "Found a swap file by the name \""
+msgstr "Nalezen odkládací soubor se jménem \""
 
 #: ../memline.c:3226
 msgid "While opening file \""

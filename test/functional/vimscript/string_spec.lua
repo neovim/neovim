@@ -13,7 +13,7 @@ local NIL = vim.NIL
 local source = n.source
 
 describe('string() function', function()
-  before_each(clear)
+  setup(clear)
 
   describe('used to represent floating-point values', function()
     it('dumps NaN values', function()
@@ -103,7 +103,7 @@ describe('string() function', function()
   end)
 
   describe('used to represent funcrefs', function()
-    before_each(function()
+    setup(function()
       source([[
         function Test1()
         endfunction

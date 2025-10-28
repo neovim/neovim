@@ -6,7 +6,7 @@
 ---
 --- >lua
 ---   if vim.uv.fs_stat(file) then
----     vim.print("file exists")
+---     vim.print('file exists')
 ---   end
 --- <
 
@@ -19,21 +19,21 @@ local sysname = uv.os_uname().sysname:lower()
 local iswin = not not (sysname:find('windows') or sysname:find('mingw'))
 local os_sep = iswin and '\\' or '/'
 
---- Iterate over all the parents of the given path.
+--- Iterate over all the parents of the given path (not expanded/resolved, the caller must do that).
 ---
 --- Example:
 ---
 --- ```lua
 --- local root_dir
 --- for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
----   if vim.fn.isdirectory(dir .. "/.git") == 1 then
+---   if vim.fn.isdirectory(dir .. '/.git') == 1 then
 ---     root_dir = dir
 ---     break
 ---   end
 --- end
 ---
 --- if root_dir then
----   print("Found git repository at", root_dir)
+---   print('Found git repository at', root_dir)
 --- end
 --- ```
 ---
@@ -55,7 +55,7 @@ function M.parents(start)
     start
 end
 
---- Return the parent directory of the given path
+--- Gets the parent directory of the given path (not expanded/resolved, the caller must do that).
 ---
 ---@since 10
 ---@generic T : string|nil
@@ -124,6 +124,23 @@ function M.joinpath(...)
   return (path:gsub('//+', '/'))
 end
 
+--- @class vim.fs.dir.Opts
+--- @inlinedoc
+---
+--- How deep the traverse.
+--- (default: `1`)
+--- @field depth? integer
+---
+--- Predicate to control traversal.
+--- Return false to stop searching the current directory.
+--- Only useful when depth > 1
+--- Return an iterator over the items located in {path}
+--- @field skip? (fun(dir_name: string): boolean)
+---
+--- Follow symbolic links.
+--- (default: `false`)
+--- @field follow? boolean
+
 ---@alias Iterator fun(): string?, string?
 
 --- Return an iterator over the items located in {path}
@@ -131,13 +148,7 @@ end
 ---@since 10
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
---- @param opts table|nil Optional keyword arguments:
----             - depth: integer|nil How deep the traverse (default 1)
----             - skip: (fun(dir_name: string): boolean)|nil Predicate
----               to control traversal. Return false to stop searching the current directory.
----               Only useful when depth > 1
----             - follow: boolean|nil Follow symbolic links. (default: false)
----
+---@param opts? vim.fs.dir.Opts Optional keyword arguments:
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
@@ -179,9 +190,9 @@ function M.dir(path, opts)
         if
           opts.depth
           and level < opts.depth
-          and (t == 'directory' or (t == 'link' and opts.follow and (vim.uv.fs_stat(
-            M.joinpath(path, f)
-          ) or {}).type == 'directory'))
+          and (t == 'directory' or (t == 'link' and opts.follow and (
+            uv.fs_stat(M.joinpath(path, f)) or {}
+          ).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
           dirs[#dirs + 1] = { f, level + 1 }
@@ -234,16 +245,17 @@ end
 --- Examples:
 ---
 --- ```lua
---- -- list all test directories under the runtime directory
---- local test_dirs = vim.fs.find(
----   {'test', 'tst', 'testdir'},
----   {limit = math.huge, type = 'directory', path = './runtime/'}
+--- -- List all test directories under the runtime directory.
+--- local dirs = vim.fs.find(
+---   { 'test', 'tst', 'testdir' },
+---   { limit = math.huge, type = 'directory', path = './runtime/' }
 --- )
 ---
---- -- get all files ending with .cpp or .hpp inside lib/
---- local cpp_hpp = vim.fs.find(function(name, path)
+--- -- Get all "lib/*.cpp" and "lib/*.hpp" files, using Lua patterns.
+--- -- Or use `vim.glob.to_lpeg(…):match(…)` for glob/wildcard matching.
+--- local files = vim.fs.find(function(name, path)
 ---   return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
---- end, {limit = math.huge, type = 'file'})
+--- end, { limit = math.huge, type = 'file' })
 --- ```
 ---
 ---@since 10
@@ -255,7 +267,7 @@ end
 ---
 ---             The function should return `true` if the given item is considered a match.
 ---
----@param opts vim.fs.find.Opts Optional keyword arguments:
+---@param opts? vim.fs.find.Opts Optional keyword arguments:
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
@@ -357,7 +369,7 @@ function M.find(names, opts)
 
         if
           type_ == 'directory'
-          or (type_ == 'link' and opts.follow and (vim.uv.fs_stat(f) or {}).type == 'directory')
+          or (type_ == 'link' and opts.follow and (uv.fs_stat(f) or {}).type == 'directory')
         then
           dirs[#dirs + 1] = f
         end
@@ -374,7 +386,7 @@ end
 --- If the buffer is unnamed (has no backing file) or has a non-empty 'buftype' then the search
 --- begins from Nvim's |current-directory|.
 ---
---- Example:
+--- Examples:
 ---
 --- ```lua
 --- -- Find the root of a Python project, starting from file 'main.py'
@@ -387,14 +399,21 @@ end
 --- vim.fs.root(0, function(name, path)
 ---   return name:match('%.csproj$') ~= nil
 --- end)
+---
+--- -- Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
+--- -- not found, find the first ancestor containing ".git":
+--- vim.fs.root(0, { { 'stylua.toml', '.luarc.json' }, '.git' })
 --- ```
 ---
 --- @since 12
 --- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
 ---               relative to the |current-directory|) to begin the search from.
---- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
----               of markers, to search for. If a function, the function is called for each
----               evaluated item and should return true if {name} and {path} are a match.
+--- @param marker (string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean
+---               Filename, function, or list thereof, that decides how to find the root. To
+---               indicate "equal priority", specify items in a nested list `{ { 'a.txt', 'b.lua' }, … }`.
+---               A function item must return true if `name` and `path` are a match. Each item
+---               (which may itself be a nested list) is evaluated in-order against all ancestors,
+---               until a match is found.
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---                   found.
 function M.root(source, marker)
@@ -414,16 +433,19 @@ function M.root(source, marker)
     error('invalid type for argument "source": expected string or buffer number')
   end
 
-  local paths = M.find(marker, {
-    upward = true,
-    path = vim.fn.fnamemodify(path, ':p:h'),
-  })
+  local markers = type(marker) == 'table' and marker or { marker }
+  for _, mark in ipairs(markers) do
+    local paths = M.find(mark, {
+      upward = true,
+      path = vim.fn.fnamemodify(path, ':p:h'),
+    })
 
-  if #paths == 0 then
-    return nil
+    if #paths ~= 0 then
+      return vim.fs.dirname(paths[1])
+    end
   end
 
-  return vim.fs.dirname(paths[1])
+  return nil
 end
 
 --- Split a Windows path into a prefix and a body, such that the body can be processed like a POSIX

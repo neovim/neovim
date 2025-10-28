@@ -162,7 +162,6 @@ ifneq ($(wildcard build),)
 	$(CMAKE) --build build --target clean
 endif
 	$(MAKE) -C test/old/testdir clean
-	$(MAKE) -C runtime/indent clean
 
 distclean:
 	$(call rmdir, $(DEPS_BUILD_DIR))
@@ -182,3 +181,9 @@ appimage-%:
 	bash scripts/genappimage.sh $*
 
 .PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+
+.PHONY: emmylua-check
+emmylua-check:
+	-emmylua_check runtime/lua \
+		--config .luarc.json \
+		--config .emmyrc.json

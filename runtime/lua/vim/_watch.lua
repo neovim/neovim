@@ -102,6 +102,7 @@ function M.watch(path, opts, callback)
       -- This is mostly a placeholder until we have `nvim_log` API.
       vim.notify_once(('watch.watch: %s'):format(start_err), vim.log.levels.INFO)
     end
+    handle:close()
     -- TODO(justinmk): log important errors once we have `nvim_log` API.
     return function() end
   end

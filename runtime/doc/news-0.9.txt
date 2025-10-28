@@ -71,18 +71,16 @@ The following new APIs or features were added.
   the contents >lua
     vim.treesitter.start()
 <
-  Note: Highlighted code examples are only available in the Nvim manual, not
-  in help files taken from Vim. The treesitter `vimdoc` parser is also work in
-  progress and not guaranteed to correctly highlight every help file in the
-  wild.
+  • Note: Highlighted code examples are only available in the Nvim manual, not
+    in help files taken from Vim. The treesitter `vimdoc` parser is also work
+    in progress and not guaranteed to correctly highlight every help file in
+    the wild.
 
 • Added support for semantic token highlighting to the LSP client. This
   functionality is enabled by default when a client that supports this feature
   is attached to a buffer. Opt-out can be performed by deleting the
   `semanticTokensProvider` from the LSP client's {server_capabilities} in the
-  `LspAttach` callback.
-
-  See |lsp-semantic-highlight| for more information.
+  `LspAttach` callback. See |lsp-semantic-highlight| for more information.
 
 • |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items
   at a given buffer position. Currently this includes treesitter captures,
@@ -102,12 +100,9 @@ The following new APIs or features were added.
   trusted and, if so, returns the file's contents.  Used by 'exrc'
 
 • EditorConfig support is now builtin. This is enabled by default and happens
-  automatically. To disable it, users should add >lua
-
+  automatically. To disable it, add the following to your |config|: >lua
     vim.g.editorconfig = false
 <
-  (or the Vimscript equivalent) to their |config| file.
-
 • A new environment variable named NVIM_APPNAME enables configuring the
   directories where Nvim should find its configuration and state files. See
   `:help $NVIM_APPNAME` .
@@ -140,7 +135,7 @@ The following new APIs or features were added.
 
 • 'diffopt' now includes a `linematch` option to enable a second-stage diff on
   individual hunks to provide much more accurate diffs. This option is also
-  available to |vim.diff()|
+  available to |vim.text.diff()|
 
   See https://github.com/neovim/neovim/pull/14537.
 
@@ -186,7 +181,7 @@ The following new APIs or features were added.
   Additionally |TSNode:range()| now takes an optional {include_bytes} argument.
 
 • Treesitter injection queries now use the format described at
-  https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection .
+  https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection .
   Support for the previous format will be removed in a future release.
 
 • Added |nvim_get_hl()| for getting highlight group definitions in a format

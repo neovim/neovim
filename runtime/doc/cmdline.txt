@@ -57,8 +57,8 @@ Notes:
 - When you enter a command-line that is exactly the same as an older one, the
   old one is removed (to avoid repeated commands moving older commands out of
   the history).
-- Only commands that are typed are remembered.  Ones that completely come from
-  mappings are not put in the history.
+- Only commands that are typed are remembered.  A command executed completely
+  from a mapping is not put in the history.
 - All searches are put in the search history, including the ones that come
   from commands like "*" and "#".  But for a mapping, only the last search is
   remembered (to avoid that long mappings trash the history).
@@ -142,19 +142,23 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		typing CTRL-R and the second character '"' will be displayed
 		to indicate that you are expected to enter the name of a
 		register.
-		The text is inserted as if you typed it, but mappings and
-		abbreviations are not used.  Command-line completion through
-		'wildchar' is not triggered though.  And characters that end
-		the command line are inserted literally (<Esc>, <CR>, <NL>,
-		<C-C>).  A <BS> or CTRL-W could still end the command line
-		though, and remaining characters will then be interpreted in
-		another mode, which might not be what you intended.
+		When used with named or clipboard registers (A-Z,a-z,0-9,+)
+		text is inserted literally like pasting with "p". For other
+		registers, the text is inserted as if you typed it, but
+		mappings and abbreviations are not used. Command-line
+		completion through 'wildchar' is not triggered though.  And
+		characters that end the command line are inserted literally
+		(<Esc>, <CR>, <NL>, <C-C>).  A <BS> or CTRL-W could still end
+		the command line though, and remaining characters will then be
+		interpreted in another mode, which might not be what you
+		intended.
 		Special registers:
 			'"'	the unnamed register, containing the text of
 				the last delete or yank
 			'%'	the current file name
 			'#'	the alternate file name
-			"*"	the clipboard contents (X11: primary selection)
+			"*"	the clipboard contents (X11: primary
+				selection)
 			'+'	the clipboard contents
 			'/'	the last search pattern
 			':'	the last command-line
@@ -176,7 +180,9 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				sure the expression evaluates to an empty
 				string.  E.g.: >
 					<C-R><C-R>=setcmdpos(2)[-1]<CR>
-<		See |registers| about registers.
+<				You can use this to insert a register as
+				typed with CTRL-R =@reg.
+		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
@@ -379,6 +385,9 @@ word before the cursor.  This is available for:
 The number of help item matches is limited (currently to 300) to avoid a long
 delay when there are very many matches.
 
+For automatic completion as you type (without pressing a key like <Tab>),
+see |cmdline-autocompletion|.
+
 These are the commands that can be used:
 
 							*c_CTRL-D*
@@ -388,7 +397,7 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.
-					*c_CTRL-I* *c_wildchar* *c_<Tab>*
+				*c_CTRL-I* *c_wildchar* *c_<Tab>* */_<Tab>*
 'wildchar' option
 		A match is done on the pattern in front of the cursor.  The
 		match (if there are several, the first match) is inserted
@@ -398,13 +407,18 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		again and there were multiple matches, the next
 		match is inserted.  After the last match, the first is used
 		again (wrap around).
+
+		In search context use <CTRL-V><Tab> or "\t" to search for a
+		literal <Tab> instead of triggering completion.
+
 		The behavior can be changed with the 'wildmode' option.
 							*c_<S-Tab>*
 <S-Tab>		Like 'wildchar' or <Tab>, but begin with the last match and
 		then go to the previous match.
 							*c_CTRL-N*
 CTRL-N		After using 'wildchar' which got multiple matches, go to next
-		match.  Otherwise recall more recent command-line from history.
+		match.  Otherwise recall more recent command-line from
+		history.
 							*c_CTRL-P*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
@@ -430,7 +444,7 @@ CTRL-G		When 'incsearch' is set, entering a search pattern for "/" or
 		"?" and the current match is displayed then CTRL-G will move
 		to the next match (does not take |search-offset| into account)
 		Use CTRL-T to move to the previous match.  Hint: on a regular
-		keyboard T is above G.
+		keyboard G is below T.
 	                                            *c_CTRL-T* */_CTRL-T*
 CTRL-T		When 'incsearch' is set, entering a search pattern for "/" or
 		"?" and the current match is displayed then CTRL-T will move
@@ -564,7 +578,6 @@ that see the '"' as part of their argument:
     :menu (and the like)
     :mkspell
     :normal
-    :ownsyntax
     :popup
     :registers
     :return
@@ -673,9 +686,9 @@ See also |`=|.
 
 							*:_!*
 The '!' (bang) character after an Ex command makes the command behave in a
-different way.  The '!' should be placed immediately after the command, without
-any blanks in between.  If you insert blanks the '!' will be seen as an
-argument for the command, which has a different meaning.  For example:
+different way.  The '!' should be placed immediately after the command,
+without any blanks in between.  If you insert blanks the '!' will be seen as
+an argument for the command, which has a different meaning.  For example:
 	:w! name	write the current buffer to file "name", overwriting
 			any existing file
 	:w !name	send the current buffer as standard input to command
@@ -690,7 +703,7 @@ Some Ex commands accept a line range in front of them.  This is noted as
 
 The basics are explained in section |10.3| of the user manual.
 
-						*:,* *:;*
+								*:,* *:;*
 When separated with ';' the cursor position will be set to that line
 before interpreting the next line specifier.  This doesn't happen for ','.
 Examples: >
@@ -700,36 +713,86 @@ Examples: >
 <	from line 5 till match with "that line" after line 5.
 
 The default line specifier for most commands is the cursor position, but the
-commands ":write" and ":global" have the whole file (1,$) as default.
+commands ":write" and ":global" have the whole buffer (1,$) as default.
 
-If more line specifiers are given than required for the command, the first
-one(s) will be ignored.
-
+If more line specifiers are given than required for the command, when comma
+separated, the leftmost one(s) will be ignored, e.g., the -2,+ in this: >
+	:-2,+,-2,. print
+<When semicolon separated, the leftmost specifier to the penultimate one are
+summed, e.g., -4 + 3 - 1 = -2, in this: >
+	:-4;+3;-1;+2 print
+<
 Line numbers may be specified with:		*:range* *{address}*
 	{number}	an absolute line number  *E1247*
-	.		the current line			  *:.*
-	$		the last line in the file		  *:$*
-	%		equal to 1,$ (the entire file)		  *:%*
-	't		position of mark t (lowercase)		  *:'*
-	'T		position of mark T (uppercase); when the mark is in
-			another file it cannot be used in a range
-	/{pattern}[/]	the next line where {pattern} matches	  *:/*
+	.		the current line			   *:.*
+	$		the last line of the buffer		   *:$*
+	%		equal to 1,$ (the entire buffer)	   *:%*
+	*		equal to '<,'> (the lines of the last
+			selected Visual area; see |:star| below)
+	'x		the line of the position of mark x	   *:'x*
+			(where x is any {a-z} mark)
+	'X		the line of the position of mark X	   *:'X*
+			(where X is any {A-Z0-9} mark, though
+			when X is in another buffer it cannot
+			be used in a range)
+	'[		the first line of the most recent	   *:'[*
+			change or yank
+	']		the last line of the most recent	   *:']*
+			change or yank
+	'<		the first line of the most recently	   *:'<*
+			selected Visual area
+	'>		the last line of the most recently	   *:'>*
+			selected Visual area
+	''		the line of the position before the	   *:''*
+			latest jump, or where the last "m'"/"m`"
+			command was given (though '' is 1 if it
+			isn't in the current buffer)
+	'"		the line of the cursor position when	   *:'quote*
+			last exiting the buffer
+	'^		the line of the cursor position the	   *:'^*
+			last time Insert mode was stopped
+	'.		the line of the cursor position when the   *:'.*
+			buffer was last changed
+	'(		the line of the first character of the	   *:'(*
+			current sentence
+	')		the line of the first character after	   *:')*
+			the end of the current sentence
+	'{		the first empty line before the		   *:'{*
+			paragraph containing the cursor
+	'}		the first empty line after the		   *:'}*
+			paragraph containing the cursor
+	/{pattern}[/]	the next line where {pattern} matches	   *:/*
 				also see |:range-pattern| below
-	?{pattern}[?]	the previous line where {pattern} matches *:?*
+	?{pattern}[?]	the previous line where {pattern} matches  *:?*
 				also see |:range-pattern| below
-	\/		the next line where the previously used search
-			pattern matches
-	\?		the previous line where the previously used search
-			pattern matches
-	\&		the next line where the previously used substitute
-			pattern matches
+	\/		the next line where the most recent
+			search pattern matches
+	\?		the previous line where the most recent
+			search pattern matches
+	\&		the next line where the most recent
+			substitute pattern matches
+
+	Note: "next line" and "previous line" do not include matches appearing
+	in the current line.
 
 						*:range-offset*
-Each may be followed (several times) by '+' or '-' and an optional number.
-This number is added or subtracted from the preceding line number.  If the
-number is omitted, 1 is used.  If there is nothing before the '+' or '-' then
-the current line is used.
-						*:range-closed-fold*
+Each line specifier may be followed by one or more '+' or '-' and an optional
+number.  That value is added or subtracted from the preceding line number.
+So, for example, 'x+2 is two lines after the line containing mark x.  If the
+number is omitted, +1 is used for each '+' and -1 for each '-' so, e.g., 'x++
+and 'x+2 are synonymous.  If there is nothing before the '+' or '-', for the
+first line number in [range] the current line is used as the relative
+starting point.  So, -,. means, "the line before the current line to the
+current line".  The value of the second line number in [range] depends on
+whether a comma or semicolon separates the line numbers (see |:,| and |:;|).
+Examples: If the cursor is within the line below this one, any of these
+commands will print the tag line ":range-offset" and the line, "Each...": >
+	:-11;+1 print
+	:-----------,-10 print
+	:?Each line?-;+ print
+	:'{+,'{+2 print
+	:'{+1;')-1 print
+<						*:range-closed-fold*
 When a line number after the comma is in a closed fold it is adjusted to the
 last line of the fold, thus the whole fold is included.
 
@@ -862,7 +925,7 @@ to insert special things while typing you can use the CTRL-R command.  For
 example, "%" stands for the current file name, while CTRL-R % inserts the
 current file name right away.  See |c_CTRL-R|.
 
-Note:  If you want to avoid the effects of special characters in a Vim script
+Note: If you want to avoid the effects of special characters in a Vim script
 you may want to use |fnameescape()|.  Also see |`=|.
 
 
@@ -937,14 +1000,6 @@ Note: these are typed literally, they are not special keys!
 		   events).
 		   When the match is with a file name, it is expanded to the
 		   full path.
-							*:<sfile>* *<sfile>*
-	<sfile>    When executing a `:source` command, is replaced with the
-		   file name of the sourced file.  *E498*
-		   When executing a function, is replaced with the call stack,
-		   as with <stack> (this is for backwards compatibility, using
-		   <stack> or <script> is preferred).
-		   Note that filename-modifiers are useless when <sfile> is
-		   not used inside a script.
 							*:<stack>* *<stack>*
 	<stack>	   is replaced with the call stack, using
 		   "function {function-name}[{lnum}]" for a function line
@@ -952,7 +1007,7 @@ Note: these are typed literally, they are not special keys!
 		   ".." in between items.  E.g.:
 		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
 		   If there is no call stack you get error *E489* .
-							*:<script>* *<script>*
+							*:<script>* *<script>* *E498*
 	<script>   When executing a `:source` command, is replaced with the file
 		   name of the sourced file.  When executing a function, is
 		   replaced with the file name of the script where it is
@@ -971,8 +1026,10 @@ Note: these are typed literally, they are not special keys!
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
-The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<sfile>",
-"<afile>" or "<abuf>".  They are also used with the |fnamemodify()| function.
+The file name modifiers can be used after "%", "#", "#n", "<cfile>",
+"<script>", "<afile>" or "<abuf>".  They are also used with the |fnamemodify()|
+function.
+
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
 		changes "~/" (and "~user/" for Unix) to the path for the home
@@ -1023,9 +1080,9 @@ These modifiers can be given, in this order:
 		Substitute all occurrences of "pat" with "sub".  Otherwise
 		this works like ":s".
 	:S	Escape special characters for use with a shell command (see
-		|shellescape()|). Must be the last one. Examples: >
+		|shellescape()|).  Must be the last one.  Examples: >
 		    :!dir <cfile>:S
-		    :call system('chmod +w -- ' . expand('%:S'))
+		    :call system('chmod +w -- ' .. expand('%:S'))
 
 Examples, when the file name is "src/version.c", current dir
 "/home/mool/vim": >
@@ -1104,9 +1161,9 @@ special meaning.  Therefore "\file\foo" is a valid file name, you don't have
 to type the backslash twice.
 
 An exception is the '$' sign.  It is a valid character in a file name.  But
-to avoid a file name like "$home" to be interpreted as an environment variable,
-it needs to be preceded by a backslash.  Therefore you need to use "/\$home"
-for the file "$home" in the root directory.  A few examples:
+to avoid a file name like "$home" to be interpreted as an environment
+variable, it needs to be preceded by a backslash.  Therefore you need to use
+"/\$home" for the file "$home" in the root directory.  A few examples:
 
 	FILE NAME	INTERPRETED AS	~
 	$home		expanded to value of environment var $home
@@ -1242,8 +1299,10 @@ Example: >
 	:au CmdwinLeave :  let &cpt = b:cpt_save
 This sets 'complete' to use completion in the current window for |i_CTRL-N|.
 Another example: >
-	:au CmdwinEnter [/?]  startinsert
+	:au CmdwinEnter [/\?]  startinsert
 This will make Vim start in Insert mode in the command-line window.
+Note: The "?" needs to be escaped, as this is a |file-pattern|.  See also
+|cmdline-autocompletion|.
 
 					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:
@@ -1254,5 +1313,86 @@ The character used for the pattern indicates the type of command-line:
 	=	expression for "= |expr-register|
 	@	string for |input()|
 	`-`	text for |:insert| or |:append|
+
+==============================================================================
+8. Command-line autocompletion			 *cmdline-autocompletion*
+
+Autocompletion makes the command-line more efficient and easier to navigate by
+automatically showing a popup menu of suggestions as you type, whether
+searching (/ or ?) or entering commands (:).
+
+A basic setup is: >
+	autocmd CmdlineChanged [:\/\?] call wildtrigger()
+	set wildmode=noselect:lastused,full
+	set wildoptions=pum
+
+With this configuration, suggestions appear immediately, and you can
+move through them with <Tab> or the arrow keys.
+
+To retain normal command-line history navigation with <Up>/<Down>: >
+	cnoremap <expr> <Up>   wildmenumode() ? "\<C-E>\<Up>"   : "\<Up>"
+	cnoremap <expr> <Down> wildmenumode() ? "\<C-E>\<Down>" : "\<Down>"
+
+Options can also be applied only for specific command-lines.  For
+example, to use a shorter popup menu height only during search: >
+	autocmd CmdlineEnter [\/\?] set pumheight=8
+	autocmd CmdlineLeave [\/\?] set pumheight&
+
+EXTRAS					*fuzzy-file-picker* *live-grep*
+
+Command-line autocompletion can also be extended for advanced uses.
+For example, you can turn the native |:find| command into a fuzzy, interactive
+file picker: >
+
+	set findfunc=Find
+	func Find(arg, _)
+	  if empty(s:filescache)
+	    let s:filescache = globpath('.', '**', 1, 1)
+	    call filter(s:filescache, '!isdirectory(v:val)')
+	    call map(s:filescache, "fnamemodify(v:val, ':.')")
+	  endif
+	  return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)
+	endfunc
+	let s:filescache = []
+	autocmd CmdlineEnter : let s:filescache = []
+
+The `:Grep` command searches for lines matching a pattern and updates the
+results dynamically as you type (triggered after two characters; note: needs
+the `CmdlineLeavePre` autocmd from the next section): >
+
+	command! -nargs=+ -complete=customlist,<SID>Grep
+		\ Grep call <SID>VisitFile()
+
+	func s:Grep(arglead, cmdline, cursorpos)
+	  if match(&grepprg, '\$\*') == -1 | let &grepprg ..= ' $*' | endif
+	  let cmd = substitute(&grepprg, '\$\*', shellescape(escape(a:arglead, '\')), '')
+	  return len(a:arglead) > 1 ? systemlist(cmd) : []
+	endfunc
+
+	func s:VisitFile()
+	  let item = getqflist(#{lines: [s:selected]}).items[0]
+	  let pos  = '[0,\ item.lnum,\ item.col,\ 0]'
+	  exe $':b +call\ setpos(".",\ {pos}) {item.bufnr}'
+	  call setbufvar(item.bufnr, '&buflisted', 1)
+	endfunc
+
+Automatically select the first item in the completion list when leaving the
+command-line, and for `:Grep`, add the typed pattern to the command-line
+history: >
+
+	autocmd CmdlineLeavePre :
+	      \ if get(cmdcomplete_info(), 'matches', []) != [] |
+	      \   let s:info = cmdcomplete_info() |
+	      \   if getcmdline() =~ '^\s*fin\%[d]\s' && s:info.selected == -1 |
+	      \     call setcmdline($'find {s:info.matches[0]}') |
+	      \   endif |
+	      \   if getcmdline() =~ '^\s*Grep\s' |
+	      \     let s:selected = s:info.selected != -1
+	      \         ? s:info.matches[s:info.selected] : s:info.matches[0] |
+	      \     call setcmdline(s:info.cmdline_orig) |
+	      \   endif |
+	      \ endif
+
+For autocompletion in insert mode, see |ins-autocompletion|.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

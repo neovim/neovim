@@ -54,7 +54,7 @@ M.create_server_definition = function()
     local server = {}
     server.messages = {}
 
-    function server.cmd(dispatchers)
+    function server.cmd(dispatchers, _config)
       local closing = false
       local handlers = opts.handlers or {}
       local srv = {}
@@ -199,31 +199,34 @@ function M.test_rpc_server(config)
   })
   --- @type integer, integer
   local code, signal
+  local busy = 0
+  local exited = false
   local function on_request(method, args)
-    if method == 'setup' then
-      if config.on_setup then
-        config.on_setup()
-      end
-      return NIL
+    busy = busy + 1
+    if method == 'setup' and config.on_setup then
+      config.on_setup()
     end
-    if method == 'init' then
-      if config.on_init then
-        config.on_init(client, unpack(args))
-      end
-      return NIL
+    if method == 'init' and config.on_init then
+      config.on_init(client, unpack(args))
     end
-    if method == 'handler' then
-      if config.on_handler then
-        config.on_handler(unpack(args))
-      end
+    if method == 'handler' and config.on_handler then
+      config.on_handler(unpack(args))
+    end
+    busy = busy - 1
+    if busy == 0 and exited then
+      stop()
     end
     return NIL
   end
   local function on_notify(method, args)
     if method == 'exit' then
       code, signal = unpack(args)
-      return stop()
+      exited = true
+      if busy == 0 then
+        stop()
+      end
     end
+    return NIL
   end
   --  TODO specify timeout?
   --  run(on_request, on_notify, nil, 1000)

@@ -47,7 +47,7 @@ local wshada_tmp, _, fname_tmp = get_shada_rw('Xtest-functional-plugin-shada.sha
 
 describe('autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
-  before_each(function()
+  setup(function()
     reset()
     nvim_command([[
     function ModifyVal(val)
@@ -2636,8 +2636,7 @@ describe('plugin/shada.vim', function()
     wshada('\004\000\009\147\000\196\002ab\196\001a')
     wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
 
-    local bufread_commands =
-      api.nvim_get_autocmds({ group = 'ShaDaCommands', event = 'BufReadCmd' })
+    local bufread_commands = api.nvim_get_autocmds({ group = 'nvim.shada', event = 'BufReadCmd' })
     eq(2, #bufread_commands--[[, vim.inspect(bufread_commands) ]])
 
     -- Need to set nohidden so that the buffer containing 'fname' is not unloaded
@@ -2665,7 +2664,12 @@ describe('plugin/shada.vim', function()
     }, nvim_eval('getline(1, "$")'))
     eq(false, api.nvim_get_option_value('modified', {}))
     eq('shada', api.nvim_get_option_value('filetype', {}))
-    eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('edit ++enc=latin1 ' .. fname)
+      end)
+    )
     neq({
       'History entry with timestamp ' .. epoch .. ':',
       '  @ Description_  Value',
@@ -2708,7 +2712,12 @@ describe('plugin/shada.vim', function()
     eq(true, api.nvim_get_option_value('modified', {}))
     neq('shada', api.nvim_get_option_value('filetype', {}))
     api.nvim_set_option_value('modified', false, {})
-    eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('$read ++enc=latin1 ' .. fname)
+      end)
+    )
     eq({
       '',
       'History entry with timestamp ' .. epoch .. ':',
@@ -2745,7 +2754,12 @@ describe('plugin/shada.vim', function()
     nvim_command('w ' .. fname .. '.tst')
     nvim_command('w ' .. fname)
     nvim_command('w ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('w! ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('w! ++enc=latin1 ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2806,7 +2820,12 @@ describe('plugin/shada.vim', function()
     nvim_command('1,3w ' .. fname .. '.tst')
     nvim_command('1,3w ' .. fname)
     nvim_command('1,3w ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('1,3w! ++enc=latin1 ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2856,7 +2875,12 @@ describe('plugin/shada.vim', function()
     nvim_command('w >> ' .. fname .. '.tst')
     nvim_command('w >> ' .. fname)
     nvim_command('w >> ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 >> ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('1,3w! ++enc=latin1 >> ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -3166,9 +3190,9 @@ describe('syntax/shada.vim', function()
       return { { 'ShaDaEntryHeader', 'ShaDaEntryTimestamp' }, s }
     end
     local synepoch = {
-      year = htsnum(os.date('%Y', 0)),
-      month = htsnum(os.date('%m', 0)),
-      day = htsnum(os.date('%d', 0)),
+      year = htsnum(os.date('!%Y', 0)),
+      month = htsnum(os.date('!%m', 0)),
+      day = htsnum(os.date('!%d', 0)),
       hour = htsnum(os.date('!%H', 0)),
       minute = htsnum(os.date('!%M', 0)),
       second = htsnum(os.date('!%S', 0)),

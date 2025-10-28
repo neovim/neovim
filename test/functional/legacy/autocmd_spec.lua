@@ -11,6 +11,30 @@ local eq = t.eq
 
 before_each(clear)
 
+local function expected_empty()
+  eq({}, api.nvim_get_vvar('errors'))
+end
+
+-- oldtest: Test_get_Visual_selection_in_curbuf_autocmd()
+it('autocmd can get Visual selection when using setbufvar() on curbuf', function()
+  n.exec([[
+    new
+    autocmd OptionSet list let b:text = getregion(getpos('.'), getpos('v'))
+    call setline(1, 'foo bar baz')
+
+    normal! gg0fbvtb
+    setlocal list
+    call assert_equal(['bar '], b:text)
+    exe "normal! \<Esc>"
+
+    normal! v0
+    call setbufvar('%', '&list', v:false)
+    call assert_equal(['foo bar '], b:text)
+    exe "normal! \<Esc>"
+  ]])
+  expected_empty()
+end)
+
 -- oldtest: Test_autocmd_invalidates_undo_on_textchanged()
 it('no E440 in quickfix window when autocommand invalidates undo', function()
   write_file(
@@ -90,4 +114,14 @@ it('WinScrolled and WinResized events can be ignored in a window', function()
   screen:expect({ any = ':set eventignorewin=.*' })
   feed(':echo win_getid() g:afile g:resized g:scrolled<CR>')
   screen:expect({ any = '1000 1001 1 1.*' })
+end)
+
+-- oldtest: Test_CmdlineLeavePre_cabbr()
+it(':cabbr does not cause a spurious CmdlineLeavePre', function()
+  command('let g:a = 0')
+  command('cabbr v v')
+  command('command! -nargs=* Foo echo')
+  command('au! CmdlineLeavePre * let g:a += 1')
+  feed(':Foo v<CR>')
+  eq(1, api.nvim_get_var('a'))
 end)

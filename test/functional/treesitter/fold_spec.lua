@@ -14,8 +14,6 @@ local poke_eventloop = n.poke_eventloop
 before_each(clear)
 
 describe('treesitter foldexpr', function()
-  clear()
-
   before_each(function()
     -- open folds to avoid deleting entire folded region
     exec_lua([[vim.opt.foldlevel = 9]])
@@ -617,44 +615,15 @@ t3]])
     command('windo diffthis')
     feed('do')
 
-    screen:expect {
-      grid = [[
-      {1:+ }{2:+--  9 lines: void ui_refresh(void)·······················}|
-      {1:  }  for (size_t i = 0; i < ui_count; i++) {                 |
-      {1:  }    UI *ui = uis[i];                                      |
-      {1:  }    width = MIN(ui->width, width);                        |
-      {1:  }    height = MIN(ui->height, height);                     |
-      {1:  }    foo = BAR(ui->bazaar, bazaar);                        |
-      {1:  }    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {  |
-      {1:  }      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);     |
-      {1:  }    }                                                     |
-      {1:  }  }                                                       |
-      {1:  }}                                                         |
-      {3:~                                                           }|*6
-      {4:[No Name] [+]                                               }|
-      {1:+ }{2:+--  9 lines: void ui_refresh(void)·······················}|
-      {1:  }  for (size_t i = 0; i < ui_count; i++) {                 |
-      {1:  }    UI *ui = uis[i];                                      |
-      {1:  }    width = MIN(ui->width, width);                        |
-      {1:  }    height = MIN(ui->height, height);                     |
-      {1:  }    foo = BAR(ui->bazaar, bazaar);                        |
-      {1:  }    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {  |
-      {1:  }      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);     |
-      {1:  }    ^}                                                     |
-      {1:  }  }                                                       |
-      {1:  }}                                                         |
-      {3:~                                                           }|*5
-      {5:[No Name] [+]                                               }|
+    screen:expect([[
+      {7:+ }{13:+-- 19 lines: void ui_refresh(void)·······················}|
+      {1:~                                                           }|*16
+      {2:[No Name] [+]                                               }|
+      {7:+ }{13:^+-- 19 lines: void ui_refresh(void)·······················}|
+      {1:~                                                           }|*15
+      {3:[No Name] [+]                                               }|
                                                                   |
-    ]],
-      attr_ids = {
-        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.Blue4 },
-        [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Blue4 },
-        [3] = { foreground = Screen.colors.Blue, bold = true },
-        [4] = { reverse = true },
-        [5] = { reverse = true, bold = true },
-      },
-    }
+    ]])
   end)
 
   it('does not extend closed fold with `o`/`O`', function()
@@ -718,6 +687,12 @@ t3]])
   end)
 
   it("doesn't open folds that are not touched", function()
+    -- test is known to be flaky
+    -- https://github.com/neovim/neovim/issues/33910
+    if t.skip_fragile(pending) then
+      return
+    end
+
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
       [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
@@ -751,13 +726,15 @@ t2]])
     ]],
     }
 
-    feed('<Esc>u')
     -- TODO(tomtomjhj): `u` spuriously opens the fold (#26499).
-    feed('zMggzo')
+    feed('<Esc>uzMggzo')
 
     feed('dd')
     poke_eventloop()
 
+    if t.skip_fragile(pending, t.is_ci('cirrus')) then
+      return
+    end
     screen:expect {
       grid = [[
       {1:-}^t1                                     |
@@ -852,5 +829,17 @@ t2]])
 
     command('set ft=c')
     eq(foldlevels, get_fold_levels())
+  end)
+
+  it('no error when deleting lines at end of buffer with fml=0', function()
+    local screen = Screen.new(40, 2)
+    insert('hello')
+    parse('markdown')
+    command('set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldminlines=0')
+    feed('o<Esc>dd')
+    screen:expect([[
+      ^hello                                   |
+                                              |
+    ]])
   end)
 end)

@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2023 Nov 02
+" Last Change: 2025 Jul 08
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -1688,14 +1688,21 @@ func s:CreateBreakpoint(id, subid, enabled)
       let hiName = "debugBreakpoint"
     endif
     let label = ''
-    if exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign')
-      let label = g:termdebug_config['sign']
-    elseif exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign_decimal')
-      let label = printf('%02d', a:id)
-      if a:id > 99
-        let label = '9+'
+    if exists('g:termdebug_config')
+      if has_key(g:termdebug_config, 'signs')
+        let label = get(g:termdebug_config.signs, a:id - 1, '')
       endif
-    else
+      if label == '' && has_key(g:termdebug_config, 'sign')
+        let label = g:termdebug_config['sign']
+      endif
+      if label == '' && has_key(g:termdebug_config, 'sign_decimal')
+        let label = printf('%02d', a:id)
+        if a:id > 99
+          let label = '9+'
+        endif
+      endif
+    endif
+    if label == ''
       let label = printf('%02X', a:id)
       if a:id > 255
         let label = 'F+'

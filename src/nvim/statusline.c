@@ -66,7 +66,6 @@ typedef enum {
 /// If inversion is possible we use it. Else '=' characters are used.
 void win_redr_status(win_T *wp)
 {
-  int attr;
   bool is_stl_global = global_stl_height() > 0;
   static bool busy = false;
 
@@ -92,16 +91,17 @@ void win_redr_status(win_T *wp)
     redraw_custom_statusline(wp);
   }
 
+  hlf_T group = HLF_C;
   // May need to draw the character below the vertical separator.
   if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
     schar_T fillchar;
     if (stl_connected(wp)) {
-      fillchar = fillchar_status(&attr, wp);
+      fillchar = fillchar_status(&group, wp);
     } else {
-      attr = win_hl_attr(wp, HLF_C);
       fillchar = wp->w_p_fcs_chars.vert;
     }
-    grid_line_start(&default_grid, W_ENDROW(wp));
+    int attr = win_hl_attr(wp, (int)group);
+    grid_line_start(&default_gridview, W_ENDROW(wp));
     grid_line_put_schar(W_ENDCOL(wp), fillchar, attr);
     grid_line_flush();
   }
@@ -208,15 +208,17 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
   }
 }
 
-/// Redraw the status line, window bar or ruler of window "wp".
-/// When "wp" is NULL redraw the tab pages line from 'tabline'.
-static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
+/// Redraw the status line, window bar, ruler or tabline.
+/// @param wp  target window, NULL for 'tabline'
+/// @param draw_winbar  redraw 'winbar'
+/// @param draw_ruler  redraw 'rulerformat'
+/// @param ui_event  emit UI-event instead of drawing
+static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool ui_event)
 {
   static bool entered = false;
-  int attr;
-  int row;
   int col = 0;
-  int maxwidth;
+  int attr, row, maxwidth;
+  hlf_T group;
   schar_T fillchar;
   char buf[MAXPATHL];
   char transbuf[MAXPATHL];
@@ -243,7 +245,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     stl = p_tal;
     row = 0;
     fillchar = schar_from_ascii(' ');
-    attr = HL_ATTR(HLF_TPF);
+    group = HLF_TPF;
+    attr = HL_ATTR(group);
     maxwidth = Columns;
     opt_idx = kOptTabline;
   } else if (draw_winbar) {
@@ -252,22 +255,22 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     opt_scope = ((*wp->w_p_wbr != NUL) ? OPT_LOCAL : 0);
     row = -1;  // row zero is first row of text
     col = 0;
-    grid = &wp->w_grid;
-    grid_adjust(&grid, &row, &col);
+    grid = grid_adjust(&wp->w_grid, &row, &col);
 
     if (row < 0) {
       goto theend;
     }
 
     fillchar = wp->w_p_fcs_chars.wbr;
-    attr = (wp == curwin) ? win_hl_attr(wp, HLF_WBR) : win_hl_attr(wp, HLF_WBRNC);
-    maxwidth = wp->w_width_inner;
+    group = (wp == curwin) ? HLF_WBR : HLF_WBRNC;
+    attr = win_hl_attr(wp, (int)group);
+    maxwidth = wp->w_view_width;
     stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
                                                    &wp->w_winbar_click_defs_size);
   } else {
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-    fillchar = fillchar_status(&attr, wp);
+    fillchar = fillchar_status(&group, wp);
     const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
     maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
     stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
@@ -294,11 +297,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       col = MAX(ru_col - (Columns - maxwidth), (maxwidth + 1) / 2);
       maxwidth -= col;
       if (!in_status_line) {
-        grid = &msg_grid_adj;
         row = Rows - 1;
+        grid = grid_adjust(&msg_grid_adj, &row, &col);
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = schar_from_ascii(' ');
-        attr = HL_ATTR(HLF_MSG);
+        group = HLF_MSG;
       }
     } else {
       opt_idx = kOptStatusline;
@@ -306,6 +309,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
+    attr = win_hl_attr(wp, (int)group);
     if (in_status_line && !is_stl_global) {
       col += wp->w_wincol;
     }
@@ -333,41 +337,62 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   int len = (int)strlen(buf);
   int start_col = col;
 
-  // Draw each snippet with the specified highlighting.
-  if (!draw_ruler) {
-    grid_line_start(grid, row);
+  if (!ui_event) {
+    // Draw each snippet with the specified highlighting.
+    screengrid_line_start(grid, row, 0);
   }
 
-  int curattr = attr;
   char *p = buf;
-  for (int n = 0; hltab[n].start != NULL; n++) {
-    int textlen = (int)(hltab[n].start - p);
-    // Make all characters printable.
-    size_t tsize = transstr_buf(p, textlen, transbuf, sizeof transbuf, true);
-    col += grid_line_puts(col, transbuf, (int)tsize, curattr);
-    p = hltab[n].start;
-
-    if (hltab[n].userhl == 0) {
-      curattr = attr;
-    } else if (hltab[n].userhl < 0) {
-      curattr = hl_combine_attr(attr, syn_id2attr(-hltab[n].userhl));
-    } else if (wp != NULL && wp != curwin && wp->w_status_height != 0) {
-      curattr = highlight_stlnc[hltab[n].userhl - 1];
+  int curattr = attr;
+  int curgroup = (int)group;
+  Array content = ARRAY_DICT_INIT;
+  for (stl_hlrec_t *sp = hltab;; sp++) {
+    int textlen = (int)(sp->start ? sp->start - p : buf + len - p);
+    // Make all characters printable. Use an empty string instead of p, if p is beyond buf + len.
+    size_t tsize = transstr_buf(p >= buf + len ? "" : p, textlen, transbuf, sizeof transbuf, true);
+    if (!ui_event) {
+      col += grid_line_puts(col, transbuf, (int)tsize, curattr);
     } else {
-      curattr = highlight_user[hltab[n].userhl - 1];
+      Array chunk = ARRAY_DICT_INIT;
+      ADD(chunk, INTEGER_OBJ(curattr));
+      ADD(chunk, STRING_OBJ(cbuf_as_string(xmemdupz(transbuf, tsize), tsize)));
+      ADD(chunk, INTEGER_OBJ(curgroup));
+      ADD(content, ARRAY_OBJ(chunk));
+    }
+    p = sp->start;
+
+    if (p == NULL) {
+      break;
+    } else if (sp->userhl == 0) {
+      curattr = attr;
+      curgroup = (int)group;
+    } else if (sp->userhl < 0) {
+      curattr = syn_id2attr(-sp->userhl);
+      curgroup = -sp->userhl;
+    } else {
+      int *userhl = (wp != NULL && wp != curwin && wp->w_status_height != 0)
+                    ? highlight_stlnc : highlight_user;
+      char userbuf[5] = "User";
+      userbuf[4] = (char)sp->userhl + '0';
+      curattr = userhl[sp->userhl - 1];
+      curgroup = syn_name2id_len(userbuf, 5);
+    }
+    if (curattr != attr) {
+      curattr = hl_combine_attr(attr, curattr);
     }
   }
-  // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  size_t tsize = transstr_buf(p >= buf + len ? "" : p, -1, transbuf, sizeof transbuf, true);
-  col += grid_line_puts(col, transbuf, (int)tsize, curattr);
+
+  if (ui_event) {
+    ui_call_msg_ruler(content);
+    api_free_array(content);
+    goto theend;
+  }
+
   int maxcol = start_col + maxwidth;
 
   // fill up with "fillchar"
   grid_line_fill(col, maxcol, fillchar, curattr);
-
-  if (!draw_ruler) {
-    grid_line_flush();
-  }
+  grid_line_flush();
 
   // Fill the tab_page_click_defs, w_status_click_defs or w_winbar_click_defs array for clicking
   // in the tab page line, status line or window bar
@@ -395,23 +420,33 @@ void win_redr_winbar(win_T *wp)
   if (wp->w_winbar_height == 0 || !redrawing()) {
     // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    win_redr_custom(wp, true, false);
+    win_redr_custom(wp, true, false, false);
   }
   entered = false;
 }
 
-/// must be called after a grid_line_start() at the intended row
-void win_redr_ruler(win_T *wp)
+void redraw_ruler(void)
 {
-  bool is_stl_global = global_stl_height() > 0;
+  static int did_ruler_col = -1;
   static bool did_show_ext_ruler = false;
+  win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
+  bool is_stl_global = global_stl_height() > 0;
 
-  // If 'ruler' off, don't do anything
-  if (!p_ru) {
+  // Check if ruler should be drawn, clear if it was drawn before.
+  if (!p_ru || wp->w_status_height > 0 || is_stl_global || (p_ch == 0 && !ui_has(kUIMessages))) {
+    if (did_ruler_col > 0 && ui_has(kUIMessages)) {
+      ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
+      did_show_ext_ruler = false;
+    } else if (did_ruler_col > 0) {
+      msg_col = did_ruler_col;
+      msg_row = Rows - 1;
+      msg_clr_eos();
+    }
+    did_ruler_col = -1;
     return;
   }
 
-  // Check if cursor.lnum is valid, since win_redr_ruler() may be called
+  // Check if cursor.lnum is valid, since redraw_ruler() may be called
   // after deleting lines, before cursor.lnum is corrected.
   if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
     return;
@@ -419,44 +454,21 @@ void win_redr_ruler(win_T *wp)
 
   // Don't draw the ruler while doing insert-completion, it might overwrite
   // the (long) mode message.
-  win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
-  if (wp == ruler_win && ruler_win->w_status_height == 0 && !is_stl_global) {
-    if (edit_submode != NULL) {
-      return;
-    }
-  }
-
-  if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
-    win_redr_custom(wp, false, true);
+  if (wp->w_status_height == 0 && !is_stl_global && edit_submode != NULL) {
     return;
   }
 
-  // Check if not in Insert mode and the line is empty (will show "0-1").
-  int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
-
-  int width;
-  schar_T fillchar;
-  int attr;
-  int off;
-  bool part_of_status = false;
-
-  if (wp->w_status_height) {
-    fillchar = fillchar_status(&attr, wp);
-    off = wp->w_wincol;
-    width = wp->w_width;
-    part_of_status = true;
-  } else if (is_stl_global) {
-    fillchar = fillchar_status(&attr, wp);
-    off = 0;
-    width = Columns;
-    part_of_status = true;
-  } else {
-    fillchar = schar_from_ascii(' ');
-    attr = HL_ATTR(HLF_MSG);
-    width = Columns;
-    off = 0;
+  bool part_of_status = wp->w_status_height || is_stl_global;
+  if (*p_ruf && (p_ch > 0 || (ui_has(kUIMessages) && !part_of_status))) {
+    win_redr_custom(wp, false, true, ui_has(kUIMessages));
+    return;
   }
+
+  hlf_T group = HLF_MSG;
+  int off = wp->w_status_height ? wp->w_wincol : 0;
+  int width = wp->w_status_height ? wp->w_width : Columns;
+  schar_T fillchar = part_of_status ? fillchar_status(&group, wp) : schar_from_ascii(' ');
+  int attr = win_hl_attr(wp, (int)group);
 
   // In list mode virtcol needs to be recomputed
   colnr_T virtcol = wp->w_virtcol;
@@ -465,6 +477,10 @@ void win_redr_ruler(win_T *wp)
     getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
     wp->w_p_list = true;
   }
+
+  // Check if not in Insert mode and the line is empty (will show "0-1").
+  int empty_line = (State & MODE_INSERT) == 0
+                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
 
 #define RULER_BUF_LEN 70
   char buffer[RULER_BUF_LEN];
@@ -514,6 +530,7 @@ void win_redr_ruler(win_T *wp)
     ADD_C(content, ARRAY_OBJ(chunk));
     ui_call_msg_ruler(content);
     did_show_ext_ruler = true;
+    did_ruler_col = 1;
   } else {
     if (did_show_ext_ruler) {
       ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
@@ -529,19 +546,22 @@ void win_redr_ruler(win_T *wp)
       }
     }
 
-    int w = grid_line_puts(off + this_ru_col, buffer, -1, attr);
-    grid_line_fill(off + this_ru_col + w, off + width, fillchar, attr);
+    grid_line_start(&msg_grid_adj, Rows - 1);
+    did_ruler_col = off + this_ru_col;
+    int w = grid_line_puts(did_ruler_col, buffer, -1, attr);
+    grid_line_fill(did_ruler_col + w, off + width, fillchar, attr);
+    grid_line_flush();
   }
 }
 
 /// Get the character to use in a status line.  Get its attributes in "*attr".
-schar_T fillchar_status(int *attr, win_T *wp)
+schar_T fillchar_status(hlf_T *group, win_T *wp)
 {
   if (wp == curwin) {
-    *attr = win_hl_attr(wp, HLF_S);
+    *group = HLF_S;
     return wp->w_p_fcs_chars.stl;
   } else {
-    *attr = win_hl_attr(wp, HLF_SNC);
+    *group = HLF_SNC;
     return wp->w_p_fcs_chars.stlnc;
   }
 }
@@ -559,7 +579,7 @@ void redraw_custom_statusline(win_T *wp)
   }
   entered = true;
 
-  win_redr_custom(wp, false, false);
+  win_redr_custom(wp, false, false, false);
   entered = false;
 }
 
@@ -637,13 +657,13 @@ void draw_tabline(void)
 
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {
-    win_redr_custom(NULL, false, false);
+    win_redr_custom(NULL, false, false, false);
   } else {
     int tabcount = 0;
     int col = 0;
     win_T *cwp;
     int wincount;
-    grid_line_start(&default_grid, 0);
+    grid_line_start(&default_gridview, 0);
     FOR_ALL_TABS(tp) {
       tabcount++;
     }

@@ -1,30 +1,32 @@
 " Vim syntax file
 " Language:     Debian version information
 " Maintainer:   Debian Vim Maintainers
-" Last Change:  2025 Mar 29
+" Last Change:  2025 Oct 26
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/shared/debversions.vim
 
 let s:cpo = &cpo
 set cpo-=C
 
+" Version names that are upcoming or released and still within the standard support window
 let g:debSharedSupportedVersions = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental', 'sid', 'rc-buggy',
-      \ 'bullseye', 'bookworm', 'trixie', 'forky', 'duke',
+      \ 'bookworm', 'trixie', 'forky', 'duke',
       \
-      \ 'focal', 'jammy', 'noble', 'oracular', 'plucky',
+      \ 'jammy', 'noble', 'plucky', 'questing', 'resolute',
       \ 'devel'
       \ ]
+" Historic version names, no longer under standard support
 let g:debSharedUnsupportedVersions = [
       \ 'buzz', 'rex', 'bo', 'hamm', 'slink', 'potato',
       \ 'woody', 'sarge', 'etch', 'lenny', 'squeeze', 'wheezy',
-      \ 'jessie', 'stretch', 'buster',
+      \ 'jessie', 'stretch', 'buster', 'bullseye',
       \
       \ 'warty', 'hoary', 'breezy', 'dapper', 'edgy', 'feisty',
       \ 'gutsy', 'hardy', 'intrepid', 'jaunty', 'karmic', 'lucid',
       \ 'maverick', 'natty', 'oneiric', 'precise', 'quantal', 'raring', 'saucy',
       \ 'trusty', 'utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty',
-      \ 'artful', 'bionic', 'cosmic', 'disco', 'eoan', 'groovy',
-      \ 'hirsute', 'impish', 'kinetic', 'lunar', 'mantic',
+      \ 'artful', 'bionic', 'cosmic', 'disco', 'eoan', 'focal', 'groovy',
+      \ 'hirsute', 'impish', 'kinetic', 'lunar', 'mantic', 'oracular',
       \ ]
 
 let &cpo=s:cpo

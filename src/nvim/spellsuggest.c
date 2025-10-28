@@ -15,9 +15,9 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -240,9 +240,7 @@ enum {
 
 static int spell_suggest_timeout = 5000;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spellsuggest.c.generated.h"
-#endif
+#include "spellsuggest.c.generated.h"
 
 /// Returns true when the sequence of flags in "compflags" plus "flag" can
 /// possibly form a valid compounded word.  This also checks the COMPOUNDRULE

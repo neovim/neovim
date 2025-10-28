@@ -144,6 +144,11 @@ local constants = {
     TypeParameter = 26,
   },
 
+  -- Extra annotations that tweak the rendering of a symbol.
+  SymbolTag = {
+    Deprecated = 1,
+  },
+
   -- Represents reasons why a text document is saved.
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
@@ -162,14 +167,13 @@ local constants = {
     MethodNotFound = -32601,
     InvalidParams = -32602,
     InternalError = -32603,
-    serverErrorStart = -32099,
-    serverErrorEnd = -32000,
     ServerNotInitialized = -32002,
     UnknownErrorCode = -32001,
     -- Defined by the protocol.
     RequestCancelled = -32800,
     ContentModified = -32801,
     ServerCancelled = -32802,
+    RequestFailed = -32803,
   },
 
   -- Describes the content type that a client supports in various
@@ -308,6 +312,14 @@ local constants = {
     -- also be triggered when file content changes.
     Automatic = 2,
   },
+  InlineCompletionTriggerKind = {
+    -- Completion was triggered explicitly by a user gesture.
+    -- Return multiple completion items to enable cycling through them.
+    Invoked = 1,
+    -- Completion was triggered automatically while editing.
+    -- It is sufficient to return a single completion item in this case.
+    Automatic = 2,
+  },
 }
 
 --- Protocol for the Microsoft Language Server Protocol (mslsp)
@@ -329,6 +341,7 @@ end
 --- capabilities.
 --- @return lsp.ClientCapabilities
 function protocol.make_client_capabilities()
+  ---@type lsp.ClientCapabilities
   return {
     general = {
       positionEncodings = {
@@ -340,6 +353,12 @@ function protocol.make_client_capabilities()
     textDocument = {
       diagnostic = {
         dynamicRegistration = false,
+        tagSupport = {
+          valueSet = get_value_set(constants.DiagnosticTag),
+        },
+        dataSupport = true,
+        relatedInformation = true,
+        relatedDocumentSupport = true,
       },
       inlayHint = {
         dynamicRegistration = true,
@@ -399,8 +418,7 @@ function protocol.make_client_capabilities()
         },
 
         overlappingTokenSupport = true,
-        -- TODO(jdrouhard): Add support for this
-        multilineTokenSupport = false,
+        multilineTokenSupport = true,
         serverCancelSupport = false,
         augmentsSyntaxTokens = true,
       },
@@ -426,6 +444,8 @@ function protocol.make_client_capabilities()
         resolveSupport = {
           properties = { 'edit', 'command' },
         },
+        disabledSupport = true,
+        honorsChangeAnnotations = true,
       },
       codeLens = {
         dynamicRegistration = false,
@@ -436,6 +456,9 @@ function protocol.make_client_capabilities()
       foldingRange = {
         dynamicRegistration = false,
         lineFoldingOnly = true,
+        foldingRangeKind = {
+          valueSet = { 'comment', 'imports', 'region' },
+        },
         foldingRange = {
           collapsedText = true,
         },
@@ -488,6 +511,9 @@ function protocol.make_client_capabilities()
       implementation = {
         linkSupport = true,
       },
+      inlineCompletion = {
+        dynamicRegistration = false,
+      },
       typeDefinition = {
         linkSupport = true,
       },
@@ -499,6 +525,7 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false,
         signatureInformation = {
           activeParameterSupport = true,
+          noActiveParameterSupport = true,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
           parameterInformation = {
             labelOffsetSupport = true,
@@ -517,10 +544,14 @@ function protocol.make_client_capabilities()
           valueSet = get_value_set(constants.SymbolKind),
         },
         hierarchicalDocumentSymbolSupport = true,
+        tagSupport = {
+          valueSet = get_value_set(constants.SymbolTag),
+        },
       },
       rename = {
         dynamicRegistration = true,
         prepareSupport = true,
+        honorsChangeAnnotations = true,
       },
       publishDiagnostics = {
         relatedInformation = true,
@@ -537,6 +568,15 @@ function protocol.make_client_capabilities()
         tooltipSupport = false,
       },
       colorProvider = {
+        dynamicRegistration = true,
+      },
+      selectionRange = {
+        dynamicRegistration = false,
+      },
+      linkedEditingRange = {
+        dynamicRegistration = false,
+      },
+      onTypeFormatting = {
         dynamicRegistration = false,
       },
     },
@@ -555,6 +595,8 @@ function protocol.make_client_capabilities()
       applyEdit = true,
       workspaceEdit = {
         resourceOperations = { 'rename', 'create', 'delete' },
+        normalizesLineEndings = true,
+        changeAnnotationSupport = { groupsOnLabel = true },
       },
       semanticTokens = {
         refreshSupport = true,
@@ -568,6 +610,9 @@ function protocol.make_client_capabilities()
       },
       inlayHint = {
         refreshSupport = true,
+      },
+      diagnostics = {
+        refreshSupport = false,
       },
     },
     experimental = nil,
@@ -628,6 +673,7 @@ function protocol.resolve_capabilities(server_capabilities)
 end
 
 -- Generated by gen_lsp.lua, keep at end of file.
+--- LSP Request (direction: clientToServer)
 --- @alias vim.lsp.protocol.Method.ClientToServer.Request
 --- | 'callHierarchy/incomingCalls',
 --- | 'callHierarchy/outgoingCalls',
@@ -684,7 +730,10 @@ end
 --- | 'workspace/willDeleteFiles',
 --- | 'workspace/willRenameFiles',
 
+--- LSP Notification (direction: clientToServer)
 --- @alias vim.lsp.protocol.Method.ClientToServer.Notification
+--- | '$/cancelRequest',
+--- | '$/progress',
 --- | '$/setTrace',
 --- | 'exit',
 --- | 'initialized',
@@ -705,10 +754,12 @@ end
 --- | 'workspace/didDeleteFiles',
 --- | 'workspace/didRenameFiles',
 
+--- LSP Message (direction: clientToServer).
 --- @alias vim.lsp.protocol.Method.ClientToServer
 --- | vim.lsp.protocol.Method.ClientToServer.Request
 --- | vim.lsp.protocol.Method.ClientToServer.Notification
 
+--- LSP Request (direction: serverToClient)
 --- @alias vim.lsp.protocol.Method.ServerToClient.Request
 --- | 'client/registerCapability',
 --- | 'client/unregisterCapability',
@@ -726,13 +777,17 @@ end
 --- | 'workspace/textDocumentContent/refresh',
 --- | 'workspace/workspaceFolders',
 
+--- LSP Notification (direction: serverToClient)
 --- @alias vim.lsp.protocol.Method.ServerToClient.Notification
+--- | '$/cancelRequest',
 --- | '$/logTrace',
+--- | '$/progress',
 --- | 'telemetry/event',
 --- | 'textDocument/publishDiagnostics',
 --- | 'window/logMessage',
 --- | 'window/showMessage',
 
+--- LSP Message (direction: serverToClient).
 --- @alias vim.lsp.protocol.Method.ServerToClient
 --- | vim.lsp.protocol.Method.ServerToClient.Request
 --- | vim.lsp.protocol.Method.ServerToClient.Notification
@@ -742,6 +797,7 @@ end
 --- | vim.lsp.protocol.Method.ServerToClient
 
 -- Generated by gen_lsp.lua, keep at end of file.
+--- @deprecated Use `vim.lsp.protocol.Method` instead.
 --- @enum vim.lsp.protocol.Methods
 --- @see https://microsoft.github.io/language-server-protocol/specification/#metaModel
 --- LSP method names.
@@ -1098,8 +1154,87 @@ protocol.Methods = {
 
 -- stylua: ignore start
 -- Generated by gen_lsp.lua, keep at end of file.
+--- Maps method names to the required client capability
+protocol._request_name_to_client_capability = {
+  ['codeAction/resolve'] = { 'textDocument', 'codeAction', 'resolveSupport' },
+  ['codeLens/resolve'] = { 'textDocument', 'codeLens', 'resolveSupport' },
+  ['completionItem/resolve'] = { 'textDocument', 'completion', 'completionItem', 'resolveSupport' },
+  ['documentLink/resolve'] = { 'textDocument', 'documentLink' },
+  ['inlayHint/resolve'] = { 'textDocument', 'inlayHint', 'resolveSupport' },
+  ['textDocument/codeAction'] = { 'textDocument', 'codeAction' },
+  ['textDocument/codeLens'] = { 'textDocument', 'codeLens' },
+  ['textDocument/colorPresentation'] = { 'textDocument', 'colorProvider' },
+  ['textDocument/completion'] = { 'textDocument', 'completion' },
+  ['textDocument/declaration'] = { 'textDocument', 'declaration' },
+  ['textDocument/definition'] = { 'textDocument', 'definition' },
+  ['textDocument/diagnostic'] = { 'textDocument', 'diagnostic' },
+  ['textDocument/didChange'] = { 'textDocument', 'synchronization' },
+  ['textDocument/didClose'] = { 'textDocument', 'synchronization' },
+  ['textDocument/didOpen'] = { 'textDocument', 'synchronization' },
+  ['textDocument/didSave'] = { 'textDocument', 'synchronization', 'didSave' },
+  ['textDocument/documentColor'] = { 'textDocument', 'colorProvider' },
+  ['textDocument/documentHighlight'] = { 'textDocument', 'documentHighlight' },
+  ['textDocument/documentLink'] = { 'textDocument', 'documentLink' },
+  ['textDocument/documentSymbol'] = { 'textDocument', 'documentSymbol' },
+  ['textDocument/foldingRange'] = { 'textDocument', 'foldingRange' },
+  ['textDocument/formatting'] = { 'textDocument', 'formatting' },
+  ['textDocument/hover'] = { 'textDocument', 'hover' },
+  ['textDocument/implementation'] = { 'textDocument', 'implementation' },
+  ['textDocument/inlayHint'] = { 'textDocument', 'inlayHint' },
+  ['textDocument/inlineCompletion'] = { 'textDocument', 'inlineCompletion' },
+  ['textDocument/inlineValue'] = { 'textDocument', 'inlineValue' },
+  ['textDocument/linkedEditingRange'] = { 'textDocument', 'linkedEditingRange' },
+  ['textDocument/moniker'] = { 'textDocument', 'moniker' },
+  ['textDocument/onTypeFormatting'] = { 'textDocument', 'onTypeFormatting' },
+  ['textDocument/prepareCallHierarchy'] = { 'textDocument', 'callHierarchy' },
+  ['textDocument/prepareRename'] = { 'textDocument', 'rename', 'prepareSupport' },
+  ['textDocument/prepareTypeHierarchy'] = { 'textDocument', 'typeHierarchy' },
+  ['textDocument/publishDiagnostics'] = { 'textDocument', 'publishDiagnostics' },
+  ['textDocument/rangeFormatting'] = { 'textDocument', 'rangeFormatting' },
+  ['textDocument/rangesFormatting'] = { 'textDocument', 'rangeFormatting', 'rangesSupport' },
+  ['textDocument/references'] = { 'textDocument', 'references' },
+  ['textDocument/rename'] = { 'textDocument', 'rename' },
+  ['textDocument/selectionRange'] = { 'textDocument', 'selectionRange' },
+  ['textDocument/semanticTokens/full'] = { 'textDocument', 'semanticTokens' },
+  ['textDocument/semanticTokens/full/delta'] = { 'textDocument', 'semanticTokens', 'requests', 'full', 'delta' },
+  ['textDocument/semanticTokens/range'] = { 'textDocument', 'semanticTokens', 'requests', 'range' },
+  ['textDocument/signatureHelp'] = { 'textDocument', 'signatureHelp' },
+  ['textDocument/typeDefinition'] = { 'textDocument', 'typeDefinition' },
+  ['textDocument/willSave'] = { 'textDocument', 'synchronization', 'willSave' },
+  ['textDocument/willSaveWaitUntil'] = { 'textDocument', 'synchronization', 'willSaveWaitUntil' },
+  ['window/showDocument'] = { 'window', 'showDocument', 'support' },
+  ['window/showMessage'] = { 'window', 'showMessage' },
+  ['window/showMessageRequest'] = { 'window', 'showMessage' },
+  ['window/workDoneProgress/create'] = { 'window', 'workDoneProgress' },
+  ['workspaceSymbol/resolve'] = { 'workspace', 'symbol', 'resolveSupport' },
+  ['workspace/applyEdit'] = { 'workspace', 'applyEdit' },
+  ['workspace/codeLens/refresh'] = { 'workspace', 'codeLens' },
+  ['workspace/configuration'] = { 'workspace', 'configuration' },
+  ['workspace/diagnostic'] = { 'workspace', 'diagnostics' },
+  ['workspace/diagnostic/refresh'] = { 'workspace', 'diagnostics', 'refreshSupport' },
+  ['workspace/didChangeConfiguration'] = { 'workspace', 'didChangeConfiguration' },
+  ['workspace/didChangeWatchedFiles'] = { 'workspace', 'didChangeWatchedFiles' },
+  ['workspace/didCreateFiles'] = { 'workspace', 'fileOperations', 'didCreate' },
+  ['workspace/didDeleteFiles'] = { 'workspace', 'fileOperations', 'didDelete' },
+  ['workspace/didRenameFiles'] = { 'workspace', 'fileOperations', 'didRename' },
+  ['workspace/executeCommand'] = { 'workspace', 'executeCommand' },
+  ['workspace/foldingRange/refresh'] = { 'workspace', 'foldingRange', 'refreshSupport' },
+  ['workspace/inlayHint/refresh'] = { 'workspace', 'inlayHint', 'refreshSupport' },
+  ['workspace/inlineValue/refresh'] = { 'workspace', 'inlineValue', 'refreshSupport' },
+  ['workspace/semanticTokens/refresh'] = { 'workspace', 'semanticTokens', 'refreshSupport' },
+  ['workspace/symbol'] = { 'workspace', 'symbol' },
+  ['workspace/textDocumentContent'] = { 'workspace', 'textDocumentContent' },
+  ['workspace/willCreateFiles'] = { 'workspace', 'fileOperations', 'willCreate' },
+  ['workspace/willDeleteFiles'] = { 'workspace', 'fileOperations', 'willDelete' },
+  ['workspace/willRenameFiles'] = { 'workspace', 'fileOperations', 'willRename' },
+  ['workspace/workspaceFolders'] = { 'workspace', 'workspaceFolders' },
+}
+-- stylua: ignore end
+
+-- stylua: ignore start
+-- Generated by gen_lsp.lua, keep at end of file.
 --- Maps method names to the required server capability
-protocol._request_name_to_capability = {
+protocol._request_name_to_server_capability = {
   ['codeAction/resolve'] = { 'codeActionProvider', 'resolveProvider' },
   ['codeLens/resolve'] = { 'codeLensProvider', 'resolveProvider' },
   ['completionItem/resolve'] = { 'completionProvider', 'resolveProvider' },
@@ -1107,6 +1242,7 @@ protocol._request_name_to_capability = {
   ['inlayHint/resolve'] = { 'inlayHintProvider', 'resolveProvider' },
   ['textDocument/codeAction'] = { 'codeActionProvider' },
   ['textDocument/codeLens'] = { 'codeLensProvider' },
+  ['textDocument/colorPresentation'] = { 'colorProvider' },
   ['textDocument/completion'] = { 'completionProvider' },
   ['textDocument/declaration'] = { 'declarationProvider' },
   ['textDocument/definition'] = { 'definitionProvider' },

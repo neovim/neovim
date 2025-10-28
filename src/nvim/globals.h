@@ -178,10 +178,6 @@ EXTERN long emsg_assert_fails_lnum INIT( = 0);
 EXTERN char *emsg_assert_fails_context INIT( = NULL);
 
 EXTERN bool did_endif INIT( = false);        // just had ":endif"
-EXTERN dict_T vimvardict;                   // Dict with v: variables
-EXTERN dict_T globvardict;                  // Dict with g: variables
-/// g: value
-#define globvarht globvardict.dv_hashtab
 EXTERN int did_emsg;                        // incremented by emsg() when a
                                             // message is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
@@ -421,18 +417,20 @@ EXTERN int sc_col;              // column for shown command
 
 // First NO_SCREEN, then NO_BUFFERS, then 0 when startup finished.
 EXTERN int starting INIT( = NO_SCREEN);
-// true when planning to exit. Might keep running if there is a changed buffer.
+// Planning to exit. Might keep running if there is a changed buffer.
 EXTERN bool exiting INIT( = false);
-// internal value of v:dying
+// Planning to restart.
+EXTERN bool restarting INIT( = false);
+// Internal value of v:dying
 EXTERN int v_dying INIT( = 0);
-// is stdin a terminal?
+// Is stdin a terminal?
 EXTERN bool stdin_isatty INIT( = true);
-// is stdout a terminal?
+// Is stdout a terminal?
 EXTERN bool stdout_isatty INIT( = true);
-// is stderr a terminal?
+// Is stderr a terminal?
 EXTERN bool stderr_isatty INIT( = true);
 
-/// filedesc set by embedder for reading first buffer like `cmd | nvim -`
+/// Filedesc set by embedder for reading first buffer like `cmd | nvim -`.
 EXTERN int stdin_fd INIT( = -1);
 
 // true when doing full-screen output, otherwise only writing some messages.
@@ -726,7 +724,6 @@ EXTERN int wild_menu_showing INIT( = 0);
 enum {
   WM_SHOWN = 1,     ///< wildmenu showing
   WM_SCROLLED = 2,  ///< wildmenu showing with scroll
-  WM_LIST = 3,      ///< cmdline CTRL-D
 };
 
 // When a window has a local directory, the absolute path of the global
@@ -746,6 +743,7 @@ EXTERN int cmdwin_level INIT( = 0);   ///< cmdline recursion level
 EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< buffer of cmdline window or NULL
 EXTERN win_T *cmdwin_win INIT( = NULL);  ///< window of cmdline window or NULL
 EXTERN win_T *cmdwin_old_curwin INIT( = NULL);  ///< curwin before opening cmdline window or NULL
+EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));
 

@@ -14,7 +14,8 @@ M.vars = {
     desc = [=[
       Argument for evaluating 'formatexpr' and used for the typed
       character when using <expr> in an abbreviation |:map-<expr>|.
-      It is also used by the |InsertCharPre| and |InsertEnter| events.
+      It is also used by the |InsertCharPre|, |InsertEnter|,
+      |CmdlineLeave| and |CmdlineLeavePre| events.
     ]=],
   },
   charconvert_from = {
@@ -238,7 +239,7 @@ M.vars = {
       |json_encode()|.  This value is converted to "v:false" when used
       as a String (e.g. in |expr5| with string concatenation
       operator) and to zero when used as a Number (e.g. in |expr5|
-      or |expr7| when used with numeric operators). Read-only.
+      or |expr7| when used with numeric operators).  Read-only.
     ]=],
   },
   exiting = {
@@ -368,7 +369,7 @@ M.vars = {
     type = 'integer',
     desc = [=[
       Variable that indicates whether search highlighting is on.
-      Setting it makes sense only if 'hlsearch' is enabled. Setting
+      Setting it makes sense only if 'hlsearch' is enabled.  Setting
       this variable to zero acts like the |:nohlsearch| command,
       setting it to one acts like >vim
         let &hlsearch = &hlsearch
@@ -490,7 +491,7 @@ M.vars = {
       See |json_encode()|.  This value is converted to "v:null" when
       used as a String (e.g. in |expr5| with string concatenation
       operator) and to zero when used as a Number (e.g. in |expr5|
-      or |expr7| when used with numeric operators). Read-only.
+      or |expr7| when used with numeric operators).  Read-only.
       In some places `v:null` can be used for a List, Dict, etc.
       that is not set.  That is slightly different than an empty
       List, Dict, etc.
@@ -545,7 +546,7 @@ M.vars = {
   option_command = {
     type = 'string',
     desc = [=[
-      Command used to set the option. Valid while executing an
+      Command used to set the option.  Valid while executing an
       |OptionSet| autocommand.
         value        option was set via ~
         "setlocal"   |:setlocal| or `:let l:xxx`
@@ -556,35 +557,35 @@ M.vars = {
   },
   option_new = {
     desc = [=[
-      New value of the option. Valid while executing an |OptionSet|
+      New value of the option.  Valid while executing an |OptionSet|
       autocommand.
     ]=],
   },
   option_old = {
     desc = [=[
-      Old value of the option. Valid while executing an |OptionSet|
-      autocommand. Depending on the command used for setting and the
-      kind of option this is either the local old value or the
+      Old value of the option.  Valid while executing an |OptionSet|
+      autocommand.  Depending on the command used for setting and
+      the kind of option this is either the local old value or the
       global old value.
     ]=],
   },
   option_oldglobal = {
     desc = [=[
-      Old global value of the option. Valid while executing an
+      Old global value of the option.  Valid while executing an
       |OptionSet| autocommand.
     ]=],
   },
   option_oldlocal = {
     desc = [=[
-      Old local value of the option. Valid while executing an
+      Old local value of the option.  Valid while executing an
       |OptionSet| autocommand.
     ]=],
   },
   option_type = {
     type = 'string',
     desc = [=[
-      Scope of the set command. Valid while executing an
-      |OptionSet| autocommand. Can be either "global" or "local"
+      Scope of the set command.  Valid while executing an
+      |OptionSet| autocommand.  Can be either "global" or "local"
     ]=],
   },
   prevcount = {
@@ -857,7 +858,7 @@ M.vars = {
       |json_encode()|.  This value is converted to "v:true" when used
       as a String (e.g. in |expr5| with string concatenation
       operator) and to one when used as a Number (e.g. in |expr5| or
-      |expr7| when used with numeric operators). Read-only.
+      |expr7| when used with numeric operators).  Read-only.
     ]=],
   },
   val = {
@@ -876,6 +877,21 @@ M.vars = {
       Use |has()| to check the Nvim (not Vim) version: >vim
         :if has("nvim-0.2.1")
       <
+    ]=],
+  },
+  versionlong = {
+    type = 'integer',
+    desc = [=[
+      Like v:version, but also including the patchlevel in the last
+      four digits.  Version 8.1 with patch 123 has value 8010123.
+      This can be used like this: >
+        if v:versionlong >= 8010123
+      <
+      However, if there are gaps in the list of patches included
+      this will not work well.  This can happen if a recent patch
+      was included into an older version, e.g. for a security fix.
+      Use the has() function to make sure the patch is actually
+      included.
     ]=],
   },
   vim_did_enter = {

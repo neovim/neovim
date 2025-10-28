@@ -187,9 +187,29 @@ func Test_edit_long_file_name()
 
   let longName = 'x'->repeat(min([&columns, 255]))
   call writefile([], longName, 'D')
-  let buf = RunVimInTerminal('-N -u NONE ' .. longName, #{rows: 8})
+  let buf = RunVimInTerminal('-N -u NONE --cmd ":set noshowcmd noruler" ' .. longName, #{rows: 8})
 
   call VerifyScreenDump(buf, 'Test_long_file_name_1', {})
+
+  call term_sendkeys(buf, ":set showcmd\<cr>:e!\<cr>")
+  call VerifyScreenDump(buf, 'Test_long_file_name_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  set ruler&vim
+endfunc
+
+func Test_edit_long_file_name_with_ruler()
+  CheckScreendump
+
+  let longName = 'x'->repeat(min([&columns, 255]))
+  call writefile([], longName, 'D')
+  let buf = RunVimInTerminal('-N -u NONE --cmd ":set noshowcmd" ' .. longName, #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_long_file_name_3', {})
+
+  call term_sendkeys(buf, ":set showcmd\<cr>:e!\<cr>")
+  call VerifyScreenDump(buf, 'Test_long_file_name_4', {})
 
   " clean up
   call StopVimInTerminal(buf)
@@ -320,6 +340,68 @@ func Test_fold_fillchars()
         \ '  one   ',
         \ '] +--  3',
         \ '  five  '
+        \ ]
+  call assert_equal(expected, lines)
+
+  set fdc=1 foldmethod=indent foldlevel=10
+  call setline(1, ['one', '	two', '	two', '		three', '		three', 'four'])
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '[        two          ',
+        \ '-        two          ',
+        \ '[                three',
+        \ '2                three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  " check setting foldinner
+  set fillchars+=foldinner:\ 
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '[        two          ',
+        \ '-        two          ',
+        \ '[                three',
+        \ '                 three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  " check Unicode chars
+  set fillchars=foldopen:▼,foldclose:▶,fold:⋯,foldsep:‖,foldinner:⋮
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '▼        two          ',
+        \ '‖        two          ',
+        \ '▼                three',
+        \ '⋮                three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  set fillchars-=foldinner:⋮
+  let lines = ScreenLines([1, 6], 22)
+  let expected = [
+        \ ' one                  ',
+        \ '▼        two          ',
+        \ '‖        two          ',
+        \ '▼                three',
+        \ '2                three',
+        \ ' four                 ',
+        \ ]
+  call assert_equal(expected, lines)
+
+  normal! 5ggzc
+  let lines = ScreenLines([1, 5], 24)
+  let expected = [
+        \ ' one                    ',
+        \ '▼        two            ',
+        \ '‖        two            ',
+        \ '▶+---  2 lines: three⋯⋯⋯',
+        \ ' four                   ',
         \ ]
   call assert_equal(expected, lines)
 

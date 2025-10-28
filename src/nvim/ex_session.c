@@ -21,6 +21,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -49,9 +50,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_session.c.generated.h"
-#endif
+#include "ex_session.c.generated.h"
 
 /// Whether ":lcd" or ":tcd" was produced for a session.
 static int did_lcd;
@@ -323,7 +322,8 @@ static int ses_put_fname(FILE *fd, char *name, unsigned *flagp)
 /// @param add_edit  add ":edit" command to view
 /// @param flagp  vop_flags or ssop_flags
 /// @param current_arg_idx  current argument index of the window, use -1 if unknown
-static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int current_arg_idx)
+static int put_view(FILE *fd, win_T *wp, tabpage_T *tp, bool add_edit, unsigned *flagp,
+                    int current_arg_idx)
 {
   int f;
   bool did_next = false;
@@ -339,6 +339,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     if (ses_arglist(fd, "arglocal", &wp->w_alist->al_ga,
                     flagp == &vop_flags
                     || !(*flagp & kOptSsopFlagCurdir)
+                    || tp->tp_localdir != NULL
                     || wp->w_localdir != NULL, flagp) == FAIL) {
       return FAIL;
     }
@@ -468,7 +469,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   if (do_cursor) {
     // Restore the cursor line in the file and relatively in the
     // window.  Don't use "G", it changes the jumplist.
-    if (wp->w_height_inner <= 0) {
+    if (wp->w_view_height <= 0) {
       if (fprintf(fd, "let s:l = %" PRIdLINENR "\n", wp->w_cursor.lnum) < 0) {
         return FAIL;
       }
@@ -477,8 +478,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
                        " * winheight(0) + %d) / %d)\n",
                        wp->w_cursor.lnum,
                        wp->w_cursor.lnum - wp->w_topline,
-                       (wp->w_height_inner / 2),
-                       wp->w_height_inner) < 0) {
+                       (wp->w_view_height / 2),
+                       wp->w_view_height) < 0) {
       return FAIL;
     }
     if (fprintf(fd,
@@ -532,7 +533,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 
 static int store_session_globals(FILE *fd)
 {
-  TV_DICT_ITER(&globvardict, this_var, {
+  TV_DICT_ITER(get_globvar_dict(), this_var, {
     if ((this_var->di_tv.v_type == VAR_NUMBER
          || this_var->di_tv.v_type == VAR_STRING)
         && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
@@ -638,17 +639,13 @@ static int makeopens(FILE *fd, char *dirnow)
     return FAIL;
   }
 
-  // save 'shortmess' if not storing options
+  // Save 'shortmess' if not storing options.
   if ((ssop_flags & kOptSsopFlagOptions) == 0) {
     PUTLINE_FAIL("let s:shortmess_save = &shortmess");
   }
 
-  // set 'shortmess' for the following.  Add the 'A' flag if it was there
-  PUTLINE_FAIL("if &shortmess =~ 'A'");
-  PUTLINE_FAIL("  set shortmess=aoOA");
-  PUTLINE_FAIL("else");
-  PUTLINE_FAIL("  set shortmess=aoO");
-  PUTLINE_FAIL("endif");
+  // Set 'shortmess' for the following.
+  PUTLINE_FAIL("set shortmess+=aoO");
 
   // Now save the current files, current buffer first.
   // Put all buffers into the buffer list.
@@ -713,6 +710,7 @@ static int makeopens(FILE *fd, char *dirnow)
 
   // Assume "tabpages" is in 'sessionoptions'.  If not then we only do
   // "curtab" and bail out of the loop.
+  bool restore_height_width = false;
   FOR_ALL_TABS(tp) {
     bool need_tabnext = false;
     int cnr = 1;
@@ -813,6 +811,7 @@ static int makeopens(FILE *fd, char *dirnow)
                   "set winwidth=1\n") < 0) {
         return FAIL;
       }
+      restore_height_width = true;
     }
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
@@ -835,7 +834,7 @@ static int makeopens(FILE *fd, char *dirnow)
       if (!ses_do_win(wp)) {
         continue;
       }
-      if (put_view(fd, wp, wp != edited_win, &ssop_flags, cur_arg_idx)
+      if (put_view(fd, wp, tp, wp != edited_win, &ssop_flags, cur_arg_idx)
           == FAIL) {
         return FAIL;
       }
@@ -903,7 +902,7 @@ static int makeopens(FILE *fd, char *dirnow)
     PUTLINE_FAIL("let &shortmess = s:shortmess_save");
   }
 
-  if (tab_firstwin != NULL && tab_firstwin->w_next != NULL) {
+  if (restore_height_width) {
     // Restore 'winminheight' and 'winminwidth'.
     PUTLINE_FAIL("let &winminheight = s:save_winminheight");
     PUTLINE_FAIL("let &winminwidth = s:save_winminwidth");
@@ -1053,7 +1052,7 @@ void ex_mkrc(exarg_T *eap)
         }
         xfree(dirnow);
       } else {
-        failed |= (put_view(fd, curwin, !using_vdir, flagp, -1) == FAIL);
+        failed |= (put_view(fd, curwin, curtab, !using_vdir, flagp, -1) == FAIL);
       }
       if (fprintf(fd,
                   "%s",

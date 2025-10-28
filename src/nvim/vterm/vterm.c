@@ -10,9 +10,7 @@
 #include "nvim/vterm/vterm.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/vterm.c.generated.h"
-#endif
+#include "vterm/vterm.c.generated.h"
 
 // *****************
 // * API functions *

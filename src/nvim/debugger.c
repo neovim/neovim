@@ -61,9 +61,7 @@ struct debuggy {
   int dbg_level;                ///< stored nested level for expr
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "debugger.c.generated.h"
-#endif
+#include "debugger.c.generated.h"
 
 /// Debug mode. Repeatedly get Ex commands, until told to continue normal
 /// execution.

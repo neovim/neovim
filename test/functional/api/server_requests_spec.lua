@@ -222,7 +222,7 @@ describe('server -> client', function()
 
     it('returns an error if the request failed', function()
       eq(
-        "Vim:Error invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist",
+        "Vim:Invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist",
         pcall_err(eval, "rpcrequest(vim, 'does-not-exist')")
       )
     end)

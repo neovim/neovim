@@ -21,21 +21,28 @@ API
 
 DIAGNOSTICS
 
-• todo
+• "float" in |vim.diagnostic.JumpOpts|.		Use "on_jump" instead.
+• "float" in |vim.diagnostic.Opts.Jump|.	Use "on_jump" instead.
 
 HIGHLIGHTS
 
-• todo
+• *:ownsyntax* *w:current_syntax*	Use 'winhighlight' instead.
 
 LSP
 
 • *vim.lsp.client_is_stopped()*		Use |vim.lsp.get_client_by_id()| instead.
 • *vim.lsp.util.stylize_markdown()*	Use |vim.treesitter.start()| with
 					`vim.wo.conceallevel = 2`.
+• *vim.lsp.log.should_log()*		Use |vim.lsp.log.set_format_func()| instead
+					and return `nil` to omit entries from the logfile.
+• *vim.lsp.semantic_tokens.start()*	Use `vim.lsp.semantic_tokens.enable(true)` instead
+• *vim.lsp.semantic_tokens.stop()*	Use `vim.lsp.semantic_tokens.enable(false)` instead
+• *vim.lsp.set_log_level()*		Use `vim.lsp.log.set_level()` instead
+• *vim.lsp.get_log_path()*		Use `vim.lsp.log.get_filename()` instead
 
 LUA
 
-• todo
+• *vim.diff()*				Renamed to |vim.text.diff()|
 
 VIMSCRIPT
 
@@ -95,7 +102,7 @@ LUA
 • vim.validate(opts: table) Use form 1. See |vim.validate()|.
 
 VIMSCRIPT
-• *termopen()* Use |jobstart() with `{term: v:true}`.
+• *termopen()* Use |jobstart()| with `{term: v:true}`.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
@@ -248,7 +255,6 @@ For each of the functions below, use the corresponding function in
 • *vim.lsp.diagnostic.goto_next()*
 • *vim.lsp.diagnostic.goto_prev()*
 • *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
-• *vim.lsp.diagnostic.reset()*
 • *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
 • *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
 • *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
@@ -327,13 +333,12 @@ UI EXTENSIONS
 • *term_background*	Unused. The terminal background color is now detected
 			by the Nvim core directly instead of the TUI.
 
-VARIABLES
+VIMSCRIPT
+• *<sfile>*		Use |<script>| or |<stack>| instead.
 • *b:terminal_job_pid*	Use `jobpid(&channel)` instead.
 • *b:terminal_job_id*	Use `&channel` instead. To access in non-current buffer:
 			• Lua: `vim.bo[bufnr].channel`
 			• Vimscript: `getbufvar(bufnr, '&channel')`
-
-VIMSCRIPT
 • *buffer_exists()*	Obsolete name for |bufexists()|.
 • *buffer_name()*	Obsolete name for |bufname()|.
 • *buffer_number()*	Obsolete name for |bufnr()|.

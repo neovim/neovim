@@ -1,5 +1,6 @@
 local uv = vim.uv
 local t = require('test.testutil')
+local busted = require('busted')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
@@ -17,7 +18,9 @@ local sleep = uv.sleep
 --- Functions executing in the current nvim session/process being tested.
 local M = {}
 
-local runtime_set = 'set runtimepath^=./build/lib/nvim/'
+local lib_path = t.is_zig_build() and './zig-out/lib' or './build/lib/nvim/'
+M.runtime_set = 'set runtimepath^=' .. lib_path
+
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 M.nvim_set = (
@@ -34,7 +37,7 @@ M.nvim_argv = {
   'NONE',
   -- XXX: find treesitter parsers.
   '--cmd',
-  runtime_set,
+  M.runtime_set,
   '--cmd',
   M.nvim_set,
   -- Remove default user commands and mappings.
@@ -127,6 +130,7 @@ end
 --- @return any
 function M.request(method, ...)
   assert(session, 'no Nvim session')
+  assert(not session.eof_err, 'sending request after EOF from Nvim')
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
@@ -324,10 +328,10 @@ end
 function M.expect_exit(fn_or_timeout, ...)
   local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    t.matches(eof_err_msg, t.pcall_err(fn_or_timeout, ...))
+    t.matches(vim.pesc(eof_err_msg), t.pcall_err(fn_or_timeout, ...))
   else
     t.matches(
-      eof_err_msg,
+      vim.pesc(eof_err_msg),
       t.pcall_err(function(timeout, fn, ...)
         fn(...)
         assert(session)
@@ -425,7 +429,7 @@ local function remove_args(args, args_rm)
       last = ''
     elseif vim.tbl_contains(args_rm, arg) then
       last = arg
-    elseif arg == runtime_set and vim.tbl_contains(args_rm, 'runtimepath') then
+    elseif arg == M.runtime_set and vim.tbl_contains(args_rm, 'runtimepath') then
       table.remove(new_args) -- Remove the preceding "--cmd".
       last = ''
     else
@@ -435,24 +439,12 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
-function M.check_close()
+function M.check_close(noblock)
   if not session then
     return
   end
-  local start_time = uv.now()
-  session:close()
-  uv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
-  local end_time = uv.now()
-  local delta = end_time - start_time
-  if delta > 500 then
-    print(
-      'nvim took '
-        .. delta
-        .. ' milliseconds to exit after last test\n'
-        .. 'This indicates a likely problem with the test even if it passed!\n'
-    )
-    io.stdout:flush()
-  end
+
+  session:close(nil, noblock)
   session = nil
 end
 
@@ -489,6 +481,8 @@ function M.clear(...)
   return M.get_session()
 end
 
+local n_processes = 0
+
 --- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
 ---
 --- Does not replace the current global session, unlike `clear()`.
@@ -498,15 +492,54 @@ end
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
 function M.new_session(keep, ...)
-  if not keep then
-    M.check_close()
+  local test_id = _G._nvim_test_id
+  if not keep and session ~= nil then
+    -- Don't block for the previous session's exit if it's from a different test.
+    session:close(nil, session.data and session.data.test_id ~= test_id)
+    session = nil
   end
 
   local argv, env, io_extra = M._new_argv(...)
 
-  local proc = ProcStream.spawn(argv, env, io_extra)
-  return Session.new(proc)
+  local proc = ProcStream.spawn(argv, env, io_extra, function(closed)
+    n_processes = n_processes - 1
+    local delta = 0
+    if closed then
+      uv.update_time() -- Update cached value of uv.now() (libuv: uv_now()).
+      delta = uv.now() - closed
+    end
+    if delta > 500 then
+      print(
+        ('Nvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
+          .. 'This indicates a likely problem with the test even if it passed!\n'
+      )
+      io.stdout:flush()
+    end
+  end)
+  n_processes = n_processes + 1
+
+  local new_session = Session.new(proc)
+  -- Make it possible to check whether two sessions are from the same test.
+  new_session.data = { test_id = test_id }
+  return new_session
 end
+
+busted.subscribe({ 'suite', 'end' }, function()
+  M.check_close(true)
+  local timed_out = false
+  local timer = assert(vim.uv.new_timer())
+  timer:start(10000, 0, function()
+    timed_out = true
+  end)
+  while n_processes > 0 and not timed_out do
+    uv.run('once')
+  end
+  timer:close()
+  if timed_out then
+    print(('warning: %d dangling Nvim processes'):format(n_processes))
+    io.stdout:flush()
+  end
+end)
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
 ---
@@ -697,7 +730,9 @@ end
 --- @param method string
 --- @param ... any
 function M.nvim_async(method, ...)
-  assert(session):notify(method, ...)
+  assert(session, 'no Nvim session')
+  assert(not session.eof_err, 'sending notification after EOF from Nvim')
+  session:notify(method, ...)
 end
 
 --- Executes a Vimscript function via RPC.
@@ -982,7 +1017,9 @@ end
 --- @param path string
 --- @return boolean?
 function M.mkdir_p(path)
-  return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
+  return os.execute(
+    (is_os('win') and 'mkdir ' .. string.gsub(path, '/', '\\') or 'mkdir -p ' .. path)
+  )
 end
 
 local testid = (function()
@@ -1010,6 +1047,11 @@ return function()
 
   if after_each then
     after_each(function()
+      if not vim.endswith(_G._nvim_test_id, 'x') then
+        -- Use a different test ID for skipped tests as well as Nvim instances spawned
+        -- between this after_each() and the next before_each() (e.g. in setup()).
+        _G._nvim_test_id = _G._nvim_test_id .. 'x'
+      end
       check_logs()
       check_cores('build/bin/nvim')
       if session then
@@ -1022,5 +1064,6 @@ return function()
       end
     end)
   end
+
   return M
 end

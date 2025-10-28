@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(ZIG_BUILD)
 # define Boolean CFBoolean  // Avoid conflict with API's Boolean
 # define FileInfo CSFileInfo  // Avoid conflict with API's Fileinfo
 # include <CoreServices/CoreServices.h>
@@ -16,7 +16,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
@@ -32,9 +32,7 @@
 #include "nvim/profile.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/lang.c.generated.h"
-#endif
+#include "os/lang.c.generated.h"
 
 static char *get_locale_val(int what)
 {
@@ -340,7 +338,7 @@ char *get_locales(expand_T *xp, int idx)
 
 void lang_init(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(ZIG_BUILD)
   if (!os_env_exists("LANG", true)) {
     char buf[50] = { 0 };
 

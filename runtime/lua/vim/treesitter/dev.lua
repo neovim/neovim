@@ -15,7 +15,7 @@ local TSTreeView = {}
 ---@class (private) vim.treesitter.dev.TSTreeViewOpts
 ---@field anon boolean If true, display anonymous nodes.
 ---@field lang boolean If true, display the language alongside each node.
----@field indent number Number of spaces to indent nested lines.
+---@field indent integer Number of spaces to indent nested lines.
 
 ---@class (private) vim.treesitter.dev.Node
 ---@field node TSNode Treesitter node
@@ -160,12 +160,12 @@ end
 ---@param b integer
 ---@param opts nil|{ indent?: integer }
 local function set_dev_options(w, b, opts)
-  vim.wo[w].scrolloff = 5
-  vim.wo[w].wrap = false
-  vim.wo[w].foldmethod = 'expr'
-  vim.wo[w].foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- explicitly set foldexpr
-  vim.wo[w].foldenable = false -- Don't fold on first open InspectTree
-  vim.wo[w].foldlevel = 99
+  vim.wo[w][0].scrolloff = 5
+  vim.wo[w][0].wrap = false
+  vim.wo[w][0].foldmethod = 'expr'
+  vim.wo[w][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- explicitly set foldexpr
+  vim.wo[w][0].foldenable = false -- Don't fold on first open InspectTree
+  vim.wo[w][0].foldlevel = 99
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
@@ -290,7 +290,7 @@ end
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
 ---@param i integer Node number to get
----@return vim.treesitter.dev.Node
+---@return vim.treesitter.dev.Node?
 ---@package
 function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
@@ -329,8 +329,7 @@ end
 --- source buffer as its only argument and should return a string.
 --- @field title (string|fun(bufnr:integer):string|nil)
 
---- @private
----
+--- @nodoc
 --- @param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
   vim.validate('opts', opts, 'table', true)
@@ -344,7 +343,7 @@ function M.inspect_tree(opts)
   local win = api.nvim_get_current_win()
   local treeview, err = TSTreeView:new(buf, opts.lang)
   if err and err:match('no parser for lang') then
-    vim.api.nvim_echo({ { err, 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { err, 'WarningMsg' } }, true, {})
     return
   elseif not treeview then
     error(err)
@@ -401,7 +400,7 @@ function M.inspect_tree(opts)
 
       -- update source window if original was closed
       if not api.nvim_win_is_valid(win) then
-        win = vim.fn.win_findbuf(buf)[1]
+        win = assert(vim.fn.win_findbuf(buf)[1])
       end
 
       api.nvim_set_current_win(win)
@@ -451,6 +450,8 @@ function M.inspect_tree(opts)
     end,
   })
 
+  api.nvim_buf_set_keymap(b, 'n', 'q', '<Cmd>wincmd c<CR>', { desc = 'Close language tree window' })
+
   local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
 
   api.nvim_create_autocmd('CursorMoved', {
@@ -473,7 +474,7 @@ function M.inspect_tree(opts)
 
       -- update source window if original was closed
       if not api.nvim_win_is_valid(win) then
-        win = vim.fn.win_findbuf(buf)[1]
+        win = assert(vim.fn.win_findbuf(buf)[1])
       end
 
       local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
@@ -564,7 +565,8 @@ local edit_ns = api.nvim_create_namespace('nvim.treesitter.dev_edit')
 local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
-  local parser = assert(vim.treesitter.get_parser(base_buf, lang, { error = false }))
+  local root_lang = vim.treesitter.language.get_lang(vim.bo[base_buf].filetype)
+  local parser = assert(vim.treesitter.get_parser(base_buf, root_lang, { error = false }))
   api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
@@ -580,24 +582,33 @@ local function update_editor_highlights(query_win, base_win, lang)
   end
   -- Remove the '@' from the cursor word
   cursor_word = cursor_word:sub(2)
-  local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
-  for id, node in query:iter_captures(parser:trees()[1]:root(), base_buf, topline - 1, botline) do
-    local capture_name = query.captures[id]
-    if capture_name == cursor_word then
-      local lnum, col, end_lnum, end_col = node:range()
-      api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
-        end_row = end_lnum,
-        end_col = end_col,
-        hl_group = 'Visual',
-        virt_text = {
-          { capture_name, 'Title' },
-        },
-      })
+  -- Parse buffer including injected languages.
+  parser:parse(true)
+  -- Query on the trees of the language requested to highlight captures.
+  parser:for_each_tree(function(tree, ltree)
+    if ltree:lang() ~= lang then
+      return
     end
-  end
+    local root = tree:root()
+    local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
+    for id, node in query:iter_captures(root, base_buf, topline - 1, botline) do
+      local capture_name = query.captures[id]
+      if capture_name == cursor_word then
+        local lnum, col, end_lnum, end_col = node:range()
+        api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
+          end_row = end_lnum,
+          end_col = end_col,
+          hl_group = 'Visual',
+          virt_text = {
+            { capture_name, 'Title' },
+          },
+        })
+      end
+    end
+  end)
 end
 
---- @private
+--- @nodoc
 --- @param lang? string language to open the query editor for.
 --- @return boolean? `true` on success, `nil` on failure
 --- @return string? error message, if applicable
@@ -616,7 +627,7 @@ function M.edit_query(lang)
   local base_buf = base_win and api.nvim_win_get_buf(base_win)
   local inspect_win = base_buf and vim.b[base_buf].dev_inspect
   if base_win and base_buf and api.nvim_win_is_valid(inspect_win) then
-    vim.api.nvim_set_current_win(inspect_win)
+    api.nvim_set_current_win(inspect_win)
     buf = base_buf
     win = base_win
     cmd = 'new'

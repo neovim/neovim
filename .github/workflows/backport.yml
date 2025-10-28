@@ -11,7 +11,7 @@ jobs:
     if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -29,7 +29,7 @@ jobs:
 
       - name: Create failed backport label
         if: ${{ steps.backport.outputs.was_successful == 'false' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.addLabels({

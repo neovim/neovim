@@ -385,6 +385,9 @@ describe('API', function()
       )
       eq({ output = '' }, api.nvim_exec2('echo', { output = true }))
       eq({ output = 'foo 42' }, api.nvim_exec2('echo "foo" 42', { output = true }))
+      -- Returns output in cmdline mode #35321
+      feed(':')
+      eq({ output = 'foo 42' }, api.nvim_exec2('echo "foo" 42', { output = true }))
     end)
 
     it('displays messages when opts.output=false', function()
@@ -768,26 +771,13 @@ describe('API', function()
     end)
 
     it('reports errors', function()
-      eq(
-        [[Error loading lua: [string "<nvim>"]:0: '=' expected near '+']],
-        pcall_err(api.nvim_exec_lua, 'a+*b', {})
-      )
-
-      eq(
-        [[Error loading lua: [string "<nvim>"]:0: unexpected symbol near '1']],
-        pcall_err(api.nvim_exec_lua, '1+2', {})
-      )
-
-      eq(
-        [[Error loading lua: [string "<nvim>"]:0: unexpected symbol]],
-        pcall_err(api.nvim_exec_lua, 'aa=bb\0', {})
-      )
-
+      eq([['=' expected near '+']], pcall_err(api.nvim_exec_lua, 'a+*b', {}))
+      eq([[unexpected symbol near '1']], pcall_err(api.nvim_exec_lua, '1+2', {}))
+      eq([[unexpected symbol]], pcall_err(api.nvim_exec_lua, 'aa=bb\0', {}))
       eq(
         [[attempt to call global 'bork' (a nil value)]],
         pcall_err(api.nvim_exec_lua, 'bork()', {})
       )
-
       eq('did\nthe\nfail', pcall_err(api.nvim_exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
@@ -1586,6 +1576,17 @@ describe('API', function()
       eq("Invalid 'type': 'bx'", pcall_err(api.nvim_put, { 'xxx', 'yyy' }, 'bx', false, true))
       eq("Invalid 'type': 'b3x'", pcall_err(api.nvim_put, { 'xxx', 'yyy' }, 'b3x', false, true))
     end)
+
+    it('computes block width correctly when not specified #35034', function()
+      api.nvim_put({ 'line 1', 'line 2', 'line 3' }, 'l', false, false)
+      -- block width should be 4
+      api.nvim_put({ 'あい', 'xxx', 'xx' }, 'b', false, false)
+      expect([[
+        あいline 1
+        xxx line 2
+        xx  line 3
+        ]])
+    end)
   end)
 
   describe('nvim_strwidth', function()
@@ -2170,6 +2171,11 @@ describe('API', function()
       feed('<F2>')
       eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
     end)
+
+    it('returns "c" during number prompt', function()
+      feed('ifoo<Esc>z=')
+      eq({ mode = 'c', blocking = false }, api.nvim_get_mode())
+    end)
   end)
 
   describe('RPC (K_EVENT)', function()
@@ -2716,7 +2722,7 @@ describe('API', function()
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
 
       eq(
-        "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
+        "Vim:Invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)')
       )
       eq(info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
@@ -3773,6 +3779,8 @@ describe('API', function()
         },
         [102] = { background = Screen.colors.LightMagenta, reverse = true },
         [103] = { background = Screen.colors.LightMagenta, bold = true, reverse = true },
+        [104] = { fg_indexed = true, foreground = tonumber('0xe00000') },
+        [105] = { fg_indexed = true, foreground = tonumber('0xe0e000') },
       }
     end)
 
@@ -3886,6 +3894,24 @@ describe('API', function()
       ]],
       }
       eq('ba\024blaherrejösses!', exec_lua [[ return stream ]])
+    end)
+
+    it('parses text from the current buffer', function()
+      local b = api.nvim_create_buf(true, true)
+      api.nvim_buf_set_lines(b, 0, -1, true, { '\027[31mHello\000\027[0m', '\027[33mworld\027[0m' })
+      api.nvim_set_current_buf(b)
+      screen:expect([[
+        {18:^^[}[31mHello{18:^@^[}[0m                                                                                  |
+        {18:^[}[33mworld{18:^[}[0m                                                                                    |
+        {1:~                                                                                                   }|*32
+                                                                                                            |
+      ]])
+      api.nvim_open_term(b, {})
+      screen:expect([[
+        {104:^Hello}                                                                                               |
+        {105:world}                                                                                               |
+                                                                                                            |*33
+      ]])
     end)
   end)
 
@@ -4590,7 +4616,7 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4,6MyCommand! test it', {}))
     end)
-    it('works for commands separated by bar', function()
+    it('sets nextcmd for bar-separated commands', function()
       eq({
         cmd = 'argadd',
         args = { 'a.txt' },
@@ -4628,6 +4654,51 @@ describe('API', function()
           vertical = false,
         },
       }, api.nvim_parse_cmd('argadd a.txt | argadd b.txt', {}))
+    end)
+    it('sets nextcmd after expr-arg commands #36029', function()
+      local result = api.nvim_parse_cmd('exe "ls"|edit foo', {})
+      eq({ '"ls"' }, result.args)
+      eq('execute', result.cmd)
+      eq('edit foo', result.nextcmd)
+    end)
+    it('parses :map commands with space in RHS', function()
+      eq({
+        addr = 'none',
+        args = { 'a', 'b  c' },
+        bang = false,
+        cmd = 'map',
+        magic = {
+          bar = true,
+          file = false,
+        },
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            force = false,
+            pattern = '',
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+      }, api.nvim_parse_cmd('map a b  c', {}))
     end)
     it('works for nargs=1', function()
       command('command -nargs=1 MyCommand echo <q-args>')
@@ -4670,24 +4741,21 @@ describe('API', function()
       }, api.nvim_parse_cmd('MyCommand test it', {}))
     end)
     it('validates command', function()
-      eq('Error while parsing command line', pcall_err(api.nvim_parse_cmd, '', {}))
-      eq('Error while parsing command line', pcall_err(api.nvim_parse_cmd, '" foo', {}))
+      eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '', {}))
+      eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '" foo', {}))
       eq(
-        'Error while parsing command line: E492: Not an editor command: Fubar',
+        'Parsing command-line: E492: Not an editor command: Fubar',
         pcall_err(api.nvim_parse_cmd, 'Fubar', {})
       )
       command('command! Fubar echo foo')
+      eq('Parsing command-line: E477: No ! allowed', pcall_err(api.nvim_parse_cmd, 'Fubar!', {}))
       eq(
-        'Error while parsing command line: E477: No ! allowed',
-        pcall_err(api.nvim_parse_cmd, 'Fubar!', {})
-      )
-      eq(
-        'Error while parsing command line: E481: No range allowed',
+        'Parsing command-line: E481: No range allowed',
         pcall_err(api.nvim_parse_cmd, '4,6Fubar', {})
       )
       command('command! Foobar echo foo')
       eq(
-        'Error while parsing command line: E464: Ambiguous use of user-defined command',
+        'Parsing command-line: E464: Ambiguous use of user-defined command',
         pcall_err(api.nvim_parse_cmd, 'F', {})
       )
     end)
@@ -4705,7 +4773,7 @@ describe('API', function()
         Entering Ex mode.  Type "visual" to go to Normal mode.      |
         :1^                                                          |
       ]])
-      eq('Error while parsing command line', pcall_err(api.nvim_parse_cmd, '', {}))
+      eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '', {}))
       feed('<CR>')
       screen:expect([[
         foo                                                         |
@@ -4774,10 +4842,18 @@ describe('API', function()
     end)
     it('no side-effects (error messages) in pcall() #20339', function()
       eq(
-        { false, 'Error while parsing command line: E16: Invalid range' },
+        { false, 'Parsing command-line: E16: Invalid range' },
         exec_lua([=[return {pcall(vim.api.nvim_parse_cmd, "'<,'>n", {})}]=])
       )
       eq('', eval('v:errmsg'))
+    end)
+    it('does not include count field when no count provided for builtin commands', function()
+      local result = api.nvim_parse_cmd('copen', {})
+      eq(nil, result.count)
+      api.nvim_cmd(result, {})
+      eq(10, api.nvim_win_get_height(0))
+      result = api.nvim_parse_cmd('copen 5', {})
+      eq(5, result.count)
     end)
   end)
 
@@ -4854,7 +4930,7 @@ describe('API', function()
       -- #20681
       eq('Invalid command: "win_getid"', pcall_err(api.nvim_cmd, { cmd = 'win_getid' }, {}))
       eq('Invalid command: "echo "hi""', pcall_err(api.nvim_cmd, { cmd = 'echo "hi"' }, {}))
-      eq('Invalid command: "win_getid"', pcall_err(exec_lua, [[return vim.cmd.win_getid{}]]))
+      matches('Invalid command: "win_getid"$', pcall_err(exec_lua, [[return vim.cmd.win_getid{}]]))
 
       -- Lua call allows empty {} for dict item.
       eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, magic = {} }]]))
@@ -4862,21 +4938,24 @@ describe('API', function()
       eq('', api.nvim_cmd({ cmd = 'set', args = {}, magic = {} }, {}))
 
       -- Lua call does not allow non-empty list-like {} for dict item.
-      eq(
-        "Invalid 'magic': Expected Dict-like Lua table",
+      matches(
+        "Invalid 'magic': Expected Dict%-like Lua table$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { 'a' } }]])
       )
-      eq(
-        "Invalid key: 'bogus'",
+      matches(
+        "Invalid key: 'bogus'$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { bogus = true } }]])
       )
-      eq(
-        "Invalid key: 'bogus'",
+      matches(
+        "Invalid key: 'bogus'$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, mods = { bogus = true } }]])
       )
     end)
 
     it('captures output', function()
+      eq('foo', api.nvim_cmd({ cmd = 'echo', args = { '"foo"' } }, { output = true }))
+      -- Returns output in cmdline mode #35321
+      feed(':')
       eq('foo', api.nvim_cmd({ cmd = 'echo', args = { '"foo"' } }, { output = true }))
     end)
 
@@ -5229,6 +5308,220 @@ describe('API', function()
       assert_alive()
       eq(false, exec_lua('return _G.success'))
     end)
+
+    it('handles +flags correctly', function()
+      -- Write a file for testing +flags
+      t.write_file('testfile', 'Line 1\nLine 2\nLine 3', false, false)
+
+      -- Test + command (go to the last line)
+      local result = exec_lua([[
+        local parsed = vim.api.nvim_parse_cmd('edit + testfile', {})
+        vim.cmd(parsed)
+        return { vim.fn.line('.'), parsed.args, parsed.cmd }
+      ]])
+      eq({ 3, { '+ testfile' }, 'edit' }, result)
+
+      -- Test +{num} command (go to line number)
+      result = exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit +1 testfile', {}))
+        return vim.fn.line('.')
+      ]])
+      eq(1, result)
+
+      -- Test +/{pattern} command (go to line with pattern)
+      result = exec_lua([[
+        local parsed = vim.api.nvim_parse_cmd('edit +/Line\\ 2 testfile', {})
+        vim.cmd(parsed)
+        return {vim.fn.line('.'), parsed.args}
+      ]])
+      eq({ 2, { '+/Line\\ 2 testfile' } }, result)
+
+      -- Test +{command} command (execute a command after opening the file)
+      result = exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit +set\\ nomodifiable testfile', {}))
+        return vim.bo.modifiable
+      ]])
+      eq(false, result)
+
+      -- Test ++ flags structure in parsed command
+      result = exec_lua([[
+        local parsed = vim.api.nvim_parse_cmd('botright edit + testfile', {})
+        vim.cmd(parsed)
+        return { vim.fn.line('.'), parsed.cmd, parsed.args, parsed.mods.split }
+      ]])
+      eq({ 3, 'edit', { '+ testfile' }, 'botright' }, result)
+
+      -- Clean up
+      os.remove('testfile')
+    end)
+
+    it('handles various ++ flags correctly', function()
+      -- Test ++ff flag
+      local result = exec_lua [[
+        local parsed = vim.api.nvim_parse_cmd('edit ++ff=mac test_ff_mac.txt', {})
+        vim.cmd(parsed)
+        return parsed.args
+      ]]
+      eq({ '++ff=mac test_ff_mac.txt' }, result)
+      eq('mac', api.nvim_get_option_value('fileformat', {}))
+      eq('test_ff_mac.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++fileformat=unix test_ff_unix.txt', {}))
+      ]]
+      eq('unix', api.nvim_get_option_value('fileformat', {}))
+      eq('test_ff_unix.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      -- Test ++enc flag
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++enc=utf-32 test_enc.txt', {}))
+      ]]
+      eq('ucs-4', api.nvim_get_option_value('fileencoding', {}))
+      eq('test_enc.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      -- Test ++bin and ++nobin flags
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++bin test_bin.txt', {}))
+      ]]
+      eq(true, api.nvim_get_option_value('binary', {}))
+      eq('test_bin.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++nobin test_nobin.txt', {}))
+      ]]
+      eq(false, api.nvim_get_option_value('binary', {}))
+      eq('test_nobin.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      -- Test multiple flags together
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++ff=mac ++enc=utf-32 ++bin test_multi.txt', {}))
+      ]]
+      eq(true, api.nvim_get_option_value('binary', {}))
+      eq('mac', api.nvim_get_option_value('fileformat', {}))
+      eq('ucs-4', api.nvim_get_option_value('fileencoding', {}))
+      eq('test_multi.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+    end)
+
+    it('handles invalid and incorrect ++ flags gracefully', function()
+      -- Test invalid ++ff flag
+      local result = exec_lua [[
+        local cmd = vim.api.nvim_parse_cmd('edit ++ff=invalid test_invalid_ff.txt', {})
+        local _, err = pcall(vim.cmd, cmd)
+        return err
+      ]]
+      matches("Invalid argument : '%+%+ff=invalid'$", result)
+
+      -- Test incorrect ++ syntax
+      result = exec_lua [[
+        local cmd = vim.api.nvim_parse_cmd('edit ++unknown=test_unknown.txt', {})
+        local _, err = pcall(vim.cmd, cmd)
+        return err
+      ]]
+      matches("Invalid argument : '%+%+unknown=test_unknown.txt'$", result)
+
+      -- Test invalid ++bin flag
+      result = exec_lua [[
+        local cmd = vim.api.nvim_parse_cmd('edit ++binabc test_invalid_bin.txt', {})
+        local _, err = pcall(vim.cmd, cmd)
+        return err
+      ]]
+      matches("Invalid argument : '%+%+binabc test_invalid_bin.txt'$", result)
+    end)
+
+    it('handles ++p for creating parent directory', function()
+      exec_lua [[
+        vim.cmd('edit flags_dir/test_create.txt')
+        vim.cmd(vim.api.nvim_parse_cmd('write! ++p', {}))
+      ]]
+      eq(true, fn.isdirectory('flags_dir') == 1)
+      fn.delete('flags_dir', 'rf')
+    end)
+
+    it('tests editing files with bad utf8 sequences', function()
+      -- Write a file with bad utf8 sequences
+      local file = io.open('Xfile', 'wb')
+      file:write('[\255][\192][\226\137\240][\194\194]')
+      file:close()
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 Xfile', {}))
+      ]])
+      eq('[?][?][???][??]', api.nvim_get_current_line())
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 ++bad=_ Xfile', {}))
+      ]])
+      eq('[_][_][___][__]', api.nvim_get_current_line())
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 ++bad=drop Xfile', {}))
+      ]])
+      eq('[][][][]', api.nvim_get_current_line())
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 ++bad=keep Xfile', {}))
+      ]])
+      eq('[\255][\192][\226\137\240][\194\194]', api.nvim_get_current_line())
+
+      local result = exec_lua([[
+        local _, err = pcall(vim.cmd, vim.api.nvim_parse_cmd('edit ++enc=utf8 ++bad=foo Xfile', {}))
+        return err
+      ]])
+      matches("Invalid argument : '%+%+bad=foo'$", result)
+      -- Clean up
+      os.remove('Xfile')
+    end)
+    it('interprets numeric args as count for count-only commands', function()
+      api.nvim_cmd({ cmd = 'copen', args = { 8 } }, {})
+      local height1 = api.nvim_win_get_height(0)
+      command('cclose')
+      api.nvim_cmd({ cmd = 'copen', count = 8 }, {})
+      local height2 = api.nvim_win_get_height(0)
+      command('cclose')
+      eq(height1, height2)
+
+      exec_lua 'vim.cmd.copen(5)'
+      height2 = api.nvim_win_get_height(0)
+      command('cclose')
+      eq(5, height2)
+
+      -- should reject both count and numeric arg
+      eq(
+        "Cannot specify both 'count' and numeric argument",
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { 5 }, count = 10 }, {})
+      )
+    end)
+    it('handles string numeric arguments correctly', function()
+      -- Valid string numbers should work
+      api.nvim_cmd({ cmd = 'copen', args = { '6' } }, {})
+      eq(6, api.nvim_win_get_height(0))
+      command('cclose')
+      -- Invalid strings should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { 'abc' } }, {})
+      )
+      -- Partial numbers should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { '8abc' } }, {})
+      )
+      -- Empty string should be rejected
+      eq(
+        'Invalid command arg: expected non-whitespace',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { '' } }, {})
+      )
+      -- Negative string numbers should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { '-5' } }, {})
+      )
+      -- Leading/trailing spaces should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { ' 5 ' } }, {})
+      )
+    end)
   end)
 
   it('nvim__redraw', function()
@@ -5506,5 +5799,33 @@ describe('API', function()
     eq(expected_lines, actual_lines)
 
     n.assert_alive()
+  end)
+
+  it('nvim__redraw updates topline', function()
+    local screen = Screen.new(40, 8)
+    fn.setline(1, fn.range(100))
+    feed(':call getchar()<CR>')
+    fn.cursor(50, 1)
+    screen:expect([[
+      0                                       |
+      1                                       |
+      2                                       |
+      3                                       |
+      4                                       |
+      5                                       |
+      6                                       |
+      ^:call getchar()                         |
+    ]])
+    api.nvim__redraw({ flush = true })
+    screen:expect([[
+      46                                      |
+      47                                      |
+      48                                      |
+      49                                      |
+      50                                      |
+      51                                      |
+      52                                      |
+      ^:call getchar()                         |
+    ]])
   end)
 end)

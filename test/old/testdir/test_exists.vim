@@ -105,6 +105,13 @@ func Test_exists()
   " Internal command with a count
   call assert_equal(0, exists(':3buffer'))
 
+  " Valid internal command (full match)
+  call assert_equal(2, exists(':k'))
+  " Non-existing internal command (':k' with arg 'e')
+  call assert_equal(0, exists(':ke'))
+  " Valid internal command (partial match)
+  call assert_equal(1, exists(':kee'))
+
   " User defined command (full match)
   command! MyCmd :echo 'My command'
   call assert_equal(2, exists(':MyCmd'))

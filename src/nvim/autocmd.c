@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "klib/kvec.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -63,10 +60,8 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "auevents_name_map.generated.h"
-# include "autocmd.c.generated.h"
-#endif
+#include "auevents_name_map.generated.h"
+#include "autocmd.c.generated.h"
 
 static const char e_autocommand_nesting_too_deep[]
   = N_("E218: Autocommand nesting too deep");
@@ -661,15 +656,22 @@ const char *event_nr2name(event_T event)
 bool event_ignored(event_T event, char *ei)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  bool ignored = false;
   while (*ei != NUL) {
+    bool unignore = *ei == '-';
+    ei += unignore;
     if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
-      return true;
+      ignored = ei == p_ei || event_names[event].event <= 0;
+      ei += 3 + (ei[3] == ',');
     } else if (event_name2nr(ei, &ei) == event) {
-      return true;
+      if (unignore) {
+        return false;
+      }
+      ignored = true;
     }
   }
 
-  return false;
+  return ignored;
 }
 
 /// Return OK when the contents of 'eventignore' or 'eventignorewin' is valid,
@@ -680,11 +682,9 @@ int check_ei(char *ei)
 
   while (*ei) {
     if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
-      ei += 3;
-      if (*ei == ',') {
-        ei++;
-      }
+      ei += 3 + (ei[3] == ',');
     } else {
+      ei += (*ei == '-');
       event_T event = event_name2nr(ei, &ei);
       if (event == NUM_EVENTS || (win && event_names[event].event > 0)) {
         return FAIL;
@@ -1268,9 +1268,10 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 {
   win_T *win;
   bool need_append = true;  // Append `aucmd_win` to the window list.
+  const bool same_buffer = buf == curbuf;
 
   // Find a window that is for the new buffer
-  if (buf == curbuf) {  // be quick when buf is curbuf
+  if (same_buffer) {  // be quick when buf is curbuf
     win = curwin;
   } else {
     win = NULL;
@@ -1360,9 +1361,11 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   aco->new_curwin_handle = curwin->handle;
   set_bufref(&aco->new_curbuf, curbuf);
 
-  // disable the Visual area, the position may be invalid in another buffer
   aco->save_VIsual_active = VIsual_active;
-  VIsual_active = false;
+  if (!same_buffer) {
+    // disable the Visual area, position may be invalid in another buffer
+    VIsual_active = false;
+  }
 }
 
 /// Cleanup after executing autocommands for a (hidden) buffer.
@@ -1558,7 +1561,7 @@ bool has_event(event_T event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Return true when there is a CursorHold/CursorHoldI autocommand defined for
 /// the current mode.
-bool has_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+static bool has_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return has_event((get_real_state() == MODE_NORMAL_BUSY ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI));
 }
@@ -1635,11 +1638,12 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   // into "buf" are ignoring the event.
   if (buf == curbuf && event_names[event].event <= 0) {
     win_ignore = event_ignored(event, curwin->w_p_eiw);
-  } else if (buf != NULL && event_names[event].event <= 0) {
-    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
-      WinInfo *wip = kv_A(buf->b_wininfo, i);
-      if (wip->wi_win != NULL && wip->wi_win->w_buffer == buf) {
-        win_ignore = event_ignored(event, wip->wi_win->w_p_eiw);
+  } else if (buf != NULL && event_names[event].event <= 0 && buf->b_nwindows > 0) {
+    win_ignore = true;
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf && !event_ignored(event, wp->w_p_eiw)) {
+        win_ignore = false;
+        break;
       }
     }
   }
@@ -2502,12 +2506,6 @@ char *aucmd_handler_to_string(AutoCmd *ac)
     return xstrdup(ac->handler_cmd);
   }
   return callback_to_string(&ac->handler_fn, NULL);
-}
-
-bool au_event_is_empty(event_T event)
-  FUNC_ATTR_PURE
-{
-  return kv_size(autocmds[(int)event]) == 0;
 }
 
 // Arg Parsing Functions

@@ -4001,12 +4001,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ATTENZIONE"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Trovato uno swap file di nome \""
+msgid "Found a swap file by the name \""
+msgstr "Trovato uno swap file di nome \""
 
 #: ../memline.c:3226
 msgid "While opening file \""

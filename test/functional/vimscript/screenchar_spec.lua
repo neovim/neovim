@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local clear, eq, neq = n.clear, t.eq, t.neq
 local command, api, fn = n.command, n.api, n.fn
@@ -30,42 +31,84 @@ local setup_floating_windows = function()
 end
 
 describe('screenchar() and family respect floating windows', function()
-  before_each(function()
-    clear()
-    -- These commands result into visible text `aabc`.
-    -- `aab` - from floating windows, `c` - from text in regular window.
-    api.nvim_buf_set_lines(0, 0, -1, true, { 'cccc' })
-    setup_floating_windows()
+  local function with_ext_multigrid(multigrid)
+    setup(function()
+      clear()
+      Screen.new(40, 7, { ext_multigrid = multigrid })
+      -- These commands result into visible text `aabc`.
+      -- `aab` - from floating windows, `c` - from text in regular window.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'cccc' })
+      setup_floating_windows()
+    end)
+
+    it('screenattr()', function()
+      local attr_1 = fn.screenattr(1, 1)
+      local attr_2 = fn.screenattr(1, 2)
+      local attr_3 = fn.screenattr(1, 3)
+      local attr_4 = fn.screenattr(1, 4)
+      eq(attr_1, attr_2)
+      eq(attr_1, attr_3)
+      neq(attr_1, attr_4)
+    end)
+
+    it('screenchar()', function()
+      eq(97, fn.screenchar(1, 1))
+      eq(97, fn.screenchar(1, 2))
+      eq(98, fn.screenchar(1, 3))
+      eq(99, fn.screenchar(1, 4))
+    end)
+
+    it('screenchars()', function()
+      eq({ 97 }, fn.screenchars(1, 1))
+      eq({ 97 }, fn.screenchars(1, 2))
+      eq({ 98 }, fn.screenchars(1, 3))
+      eq({ 99 }, fn.screenchars(1, 4))
+    end)
+
+    it('screenstring()', function()
+      eq('a', fn.screenstring(1, 1))
+      eq('a', fn.screenstring(1, 2))
+      eq('b', fn.screenstring(1, 3))
+      eq('c', fn.screenstring(1, 4))
+    end)
+  end
+
+  describe('with ext_multigrid', function()
+    with_ext_multigrid(true)
   end)
 
-  it('screenattr()', function()
-    local attr_1 = fn.screenattr(1, 1)
-    local attr_2 = fn.screenattr(1, 2)
-    local attr_3 = fn.screenattr(1, 3)
-    local attr_4 = fn.screenattr(1, 4)
-    eq(attr_1, attr_2)
-    eq(attr_1, attr_3)
-    neq(attr_1, attr_4)
+  describe('without ext_multigrid', function()
+    with_ext_multigrid(false)
   end)
 
-  it('screenchar()', function()
-    eq(97, fn.screenchar(1, 1))
-    eq(97, fn.screenchar(1, 2))
-    eq(98, fn.screenchar(1, 3))
-    eq(99, fn.screenchar(1, 4))
-  end)
+  describe('hidden windows', function()
+    before_each(function()
+      clear()
+      Screen.new(40, 7, {})
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'aaa' })
+    end)
 
-  it('screenchars()', function()
-    eq({ 97 }, fn.screenchars(1, 1))
-    eq({ 97 }, fn.screenchars(1, 2))
-    eq({ 98 }, fn.screenchars(1, 3))
-    eq({ 99 }, fn.screenchars(1, 4))
-  end)
+    local assert_screen_funcs = function()
+      eq('a', fn.screenstring(1, 1))
+      eq(97, fn.screenchar(1, 1))
+      eq({ 97 }, fn.screenchars(1, 1))
+      eq(fn.screenattr(2, 1), fn.screenattr(1, 1))
+    end
 
-  it('screenstring()', function()
-    eq('a', fn.screenstring(1, 1))
-    eq('a', fn.screenstring(1, 2))
-    eq('b', fn.screenstring(1, 3))
-    eq('c', fn.screenstring(1, 4))
+    it('manual', function()
+      local bufnr = api.nvim_create_buf(false, true)
+      api.nvim_buf_set_lines(bufnr, 0, -1, true, { 'bb' })
+      local win_opts = { relative = 'editor', row = 0, col = 0, height = 1, width = 2, hide = true }
+      api.nvim_open_win(bufnr, false, win_opts)
+
+      assert_screen_funcs()
+    end)
+
+    it('from ui2', function()
+      n.exec_lua('require("vim._extui").enable({ enable = true })')
+      command('echo "foo"')
+
+      assert_screen_funcs()
+    end)
   end)
 end)

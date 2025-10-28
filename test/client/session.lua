@@ -13,7 +13,7 @@ local RpcStream = require('test.client.rpc_stream')
 --- @field private _prepare uv.uv_prepare_t
 --- @field private _timer uv.uv_timer_t
 --- @field private _is_running boolean true during `Session:run()` scope.
---- @field exec_lua_setup boolean
+--- @field data table Arbitrary user data.
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then
@@ -172,14 +172,14 @@ function Session:stop()
   uv.stop()
 end
 
-function Session:close(signal)
+function Session:close(signal, noblock)
   if not self._timer:is_closing() then
     self._timer:close()
   end
   if not self._prepare:is_closing() then
     self._prepare:close()
   end
-  self._rpc_stream:close(signal)
+  self._rpc_stream:close(signal, noblock)
   self.closed = true
 end
 

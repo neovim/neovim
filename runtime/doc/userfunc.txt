@@ -58,7 +58,7 @@ functions.
 <
 							*:function-verbose*
 When 'verbose' is non-zero, listing a function will also display where it was
-last defined. Example: >
+last defined.  Example: >
 
     :verbose function SetFileTypeSH
 	function SetFileTypeSH(name)
@@ -345,7 +345,7 @@ This function can then be called with: >
 <		Here GetDict() gets the range but method() does not.
 
 								*E132*
-The recursiveness of user functions is restricted with the |'maxfuncdepth'|
+The recursiveness of user functions is restricted with the 'maxfuncdepth'
 option.
 
 It is also possible to use `:eval`.  It does not support a range, but does
@@ -360,8 +360,8 @@ is used as a method: >
 ==============================================================================
 
 3. Cleaning up in a function ~
-							*:defer*
-:defer {func}({args})	Call {func} when the current function is done.
+							*:defe* *:defer*
+:defe[r] {func}({args})	Call {func} when the current function is done.
 			{args} are evaluated here.
 
 Quite often a command in a function has a global effect, which must be undone
@@ -407,8 +407,8 @@ Now `:messages` shows:
 	number 0
 
 Any return value of the deferred function is discarded.  The function cannot
-be followed by anything, such as "->func" or ".member".  Currently `:defer
-GetArg()->TheFunc()` does not work, it may work in a later version.
+be followed by anything, such as "->func" or ".member".  Currently
+`:defer GetArg()->TheFunc()` does not work, it may work in a later version.
 
 Errors are reported but do not cause aborting execution of deferred functions
 or altering execution outside of deferred functions.

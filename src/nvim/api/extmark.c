@@ -32,9 +32,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/extmark.c.generated.h"
-#endif
+#include "api/extmark.c.generated.h"
 
 void api_extmark_free_all_mem(void)
 {
@@ -75,7 +73,7 @@ Integer nvim_create_namespace(String name)
 /// Gets existing, non-anonymous |namespace|s.
 ///
 /// @return dict that maps from names to namespace ids.
-Dict nvim_get_namespaces(Arena *arena)
+DictOf(Integer) nvim_get_namespaces(Arena *arena)
   FUNC_API_SINCE(5)
 {
   Dict retval = arena_dict(arena, map_size(&namespace_ids));
@@ -199,11 +197,16 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 ///          - details: Whether to include the details dict
 ///          - hl_name: Whether to include highlight group name instead of id, true if omitted
 /// @param[out] err   Error details, if any
-/// @return 0-indexed (row, col) tuple or empty list () if extmark id was
-/// absent
-ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dict(get_extmark) *opts,
-                                            Arena *arena, Error *err)
+/// @return 0-indexed (row, col, details?) tuple or empty list () if extmark id was absent.  The
+/// optional `details` dictionary contains the same keys as `opts` in |nvim_buf_set_extmark()|,
+/// except for `id`, `conceal_lines` and `ephemeral`. It also contains the following keys:
+///
+/// - ns_id: |namespace| id
+/// - invalid: boolean that indicates whether the mark is hidden because the entirety of
+/// text span range is deleted. See also the key `invalidate` in |nvim_buf_set_extmark()|.
+Tuple(Integer, Integer, *DictAs(extmark_details))
+nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_extmark) * opts,
+                           Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -286,9 +289,12 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
-/// @return List of `[extmark_id, row, col]` tuples in "traversal order".
-Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end,
-                            Dict(get_extmarks) *opts, Arena *arena, Error *err)
+/// @return List of `[extmark_id, row, col, details?]` tuples in "traversal order". For the
+/// `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
+ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
+                                                        Object end,
+                                                        Dict(get_extmarks) *opts, Arena *arena,
+                                                        Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -407,7 +413,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                          EOL of a line, continue the highlight for the rest
 ///                          of the screen line (just like for diff and
 ///                          cursorline highlight).
-///               - virt_text : virtual text to link to this mark.
+///               - virt_text : [](virtual-text) to link to this mark.
 ///                   A list of `[text, highlight]` tuples, each representing a
 ///                   text chunk with specified highlight. `highlight` element
 ///                   can either be a single highlight group, or an array of
@@ -830,6 +836,15 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       col2 = c;
     }
 
+    DecorPriority subpriority = 0;
+    if (HAS_KEY(opts, set_extmark, _subpriority)) {
+      VALIDATE_RANGE((opts->_subpriority >= 0 && opts->_subpriority <= UINT16_MAX),
+                     "_subpriority", {
+        goto error;
+      });
+      subpriority = (DecorPriority)opts->_subpriority;
+    }
+
     if (kv_size(virt_text.data.virt_text)) {
       decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true);
     }
@@ -839,7 +854,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
       sh.url = url;
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id,
+                         subpriority);
     }
   } else {
     if (opts->ephemeral) {
@@ -1004,7 +1020,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Note: this function should not be called often. Rather, the callbacks
 /// themselves can be used to throttle unneeded callbacks. the `on_start`
 /// callback can return `false` to disable the provider until the next redraw.
-/// Similarly, return `false` in `on_win` will skip the `on_line` calls
+/// Similarly, return `false` in `on_win` will skip the `on_line` and `on_range` calls
 /// for that window (but any extmarks set in `on_win` will still be used).
 /// A plugin managing multiple sources of decoration should ideally only set
 /// one provider, and merge the sources internally. You can use multiple `ns_id`
@@ -1016,7 +1032,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 /// for the moment.
 ///
-/// Note: It is not allowed to remove or update extmarks in `on_line` callbacks.
+/// Note: It is not allowed to remove or update extmarks in `on_line` or `on_range` callbacks.
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
@@ -1033,11 +1049,25 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///                 ["win", winid, bufnr, toprow, botrow]
 ///               ```
-///             - on_line: called for each buffer line being redrawn.
-///                 (The interaction with fold lines is subject to change)
+///             - on_line: (deprecated, use on_range instead)
 ///               ```
 ///                 ["line", winid, bufnr, row]
 ///               ```
+///             - on_range: called for each buffer range being redrawn.
+///               Range is end-exclusive and may span multiple lines. Range
+///               bounds point to the first byte of a character. An end position
+///               of the form (lnum, 0), including (number of lines, 0), is valid
+///               and indicates that EOL of the preceding line is included.
+///               ```
+///                 ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
+///               ```
+///
+///               In addition to returning a boolean, it is also allowed to
+///               return a `skip_row, skip_col` pair of integers. This implies
+///               that this function does not need to be called until a range
+///               which continues beyond the skipped position. A single integer
+///               return value `skip_row` is short for `skip_row, 0`
+///
 ///             - on_end: called at the end of a redraw cycle
 ///               ```
 ///                 ["end", tick]
@@ -1061,6 +1091,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "on_buf", &opts->on_buf, &p->redraw_buf },
     { "on_win", &opts->on_win, &p->redraw_win },
     { "on_line", &opts->on_line, &p->redraw_line },
+    { "on_range", &opts->on_range, &p->redraw_range },
     { "on_end", &opts->on_end, &p->redraw_end },
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },

@@ -6135,12 +6135,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: LYSTRING"
 
 #: ../memline.c:3175
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Hittade en växlingsfil med namnet \""
+msgid "Found a swap file by the name \""
+msgstr "Hittade en växlingsfil med namnet \""
 
 #: ../memline.c:3179
 msgid "While opening file \""

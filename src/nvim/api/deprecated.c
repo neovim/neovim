@@ -16,6 +16,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
@@ -31,9 +32,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/deprecated.c.generated.h"
-#endif
+#include "api/deprecated.c.generated.h"
 
 /// @deprecated Use nvim_exec2() instead.
 /// @see nvim_exec2
@@ -62,7 +61,7 @@ Object nvim_execute_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return nlua_exec(code, args, kRetObject, arena, err);
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
 }
 
 /// Gets the buffer number
@@ -580,7 +579,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Arena *arena, Error *err)
 Object vim_set_var(String name, Object value, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  return dict_set_var(&globvardict, name, value, false, true, arena, err);
+  return dict_set_var(get_globvar_dict(), name, value, false, true, arena, err);
 }
 
 /// @deprecated
@@ -588,7 +587,7 @@ Object vim_set_var(String name, Object value, Arena *arena, Error *err)
 Object vim_del_var(String name, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(1)
 {
-  return dict_set_var(&globvardict, name, NIL, true, true, arena, err);
+  return dict_set_var(get_globvar_dict(), name, NIL, true, true, arena, err);
 }
 
 static int64_t convert_index(int64_t index)
@@ -603,7 +602,7 @@ static int64_t convert_index(int64_t index)
 /// @param          name Option name
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dict nvim_get_option_info(String name, Arena *arena, Error *err)
+DictAs(get_option_info) nvim_get_option_info(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {

@@ -264,7 +264,7 @@ D. If your filetype can only be detected by inspecting the contents of the
       item of the 'runtimepath' option.  Example for Unix: >
 	:!mkdir -p ~/.config/nvim
 <
-   2. Create a vim script file for doing this.  Example: >
+   2. Create a Vim script file for doing this.  Example: >
 	if did_filetype()	" filetype already set..
 	  finish		" ..don't do these checks
 	endif
@@ -489,12 +489,13 @@ g:changelog_new_date_format
 				%%	insert a single '%' character
 				%d	insert the date from above
 				%u	insert the user from above
-				%p	insert result of b:changelog_entry_prefix
+				%p	insert result of
+					b:changelog_entry_prefix
 				%c	where to position cursor when done
-			The default is "%d  %u\n\n\t* %p%c\n\n", which produces
-			something like (| is where cursor will be, unless at
-			the start of the line where it denotes the beginning
-			of the line) >
+			The default is "%d  %u\n\n\t* %p%c\n\n", which
+			produces something like (| is where cursor will be,
+			unless at the start of the line where it denotes the
+			beginning of the line) >
 				|2003-01-14  Full Name  <user@host>
 				|
 				|        * prefix|
@@ -503,7 +504,8 @@ g:changelog_new_entry_format
 			The format used when creating a new entry.
 			The following table describes special tokens in the
 			string:
-				%p	insert result of b:changelog_entry_prefix
+				%p	insert result of
+					b:changelog_entry_prefix
 				%c	where to position cursor when done
 			The default is "\t*%c", which produces something
 			similar to >
@@ -563,8 +565,9 @@ Options:
 'expandtab'	is switched on to avoid tabs as required by the Fortran
 		standards unless the user has set fortran_have_tabs in vimrc.
 'textwidth'	is set to 80 for fixed source format whereas it is set to 132
-		for free source format. Setting the fortran_extended_line_length
-		variable increases the width to 132 for fixed source format.
+		for free source format.  Setting the
+		fortran_extended_line_length variable increases the width to
+		132 for fixed source format.
 'formatoptions' is set to break code and comment lines and to preserve long
 		lines.  You can format comments with |gq|.
 For further discussion of fortran_have_tabs and the method used for the
@@ -661,6 +664,32 @@ HARE							*ft-hare*
 Since the text for this plugin is rather long it has been put in a separate
 file: |ft_hare.txt|.
 
+HTML							*ft-html-plugin*
+
+Tag folding poses a few difficulties.  Many elements, e.g. `blockquote`, are
+always delimited by start and end tags; end tags for some elements, e.g. `p`,
+can be omitted in certain contexts; void elements, e.g. `hr`, have no end tag.
+Although the rules for supporting omissible end tags are ad-hoc and involved
+[0], they apply to elements in scope.  Assuming syntactical wellformedness, an
+end tag can be associated with its nearest matching start tag discoverable in
+scope [1] and towards the beginning of a file, whereas all unbalanced tags and
+inlined tags can be disregarded.  Having syntax highlighting in effect, tag
+folding using the |fold-expr| method can be enabled with: >
+	let g:html_expr_folding = 1
+<
+By default, tag folding will be redone from scratch after each occurrence of
+a |TextChanged| or an |InsertLeave| event.  Such frequency may not be desired,
+especially for large files, and this recomputation can be disabled with: >
+	let g:html_expr_folding_without_recomputation = 1
+        doautocmd FileType
+<
+To force another recomputation, do: >
+	unlet! b:foldsmap
+	normal zx
+<
+[0] https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
+[1] https://en.wikipedia.org/wiki/Dangling_else
+
 IDRIS2							*ft-idris2-plugin*
 
 By default the following options are set: >
@@ -696,7 +725,7 @@ Otherwise, for the defined variable "g:ftplugin_java_source_path", the local
 value of the 'path' option will be further modified by prefixing the value of
 the variable, e.g.: >
 	let g:ftplugin_java_source_path = $JDK_SRC_PATH
-	let &l:path = g:ftplugin_java_source_path . ',' . &l:path
+	let &l:path = g:ftplugin_java_source_path .. ',' .. &l:path
 <
 and the "gf" command can be used on a fully-qualified type to look for a file
 in the "path" and to try to load it.
@@ -797,8 +826,8 @@ Variables:
                           For example in C one usually wants section 3 or 2: >
                                :let b:man_default_sections = '3,2'
 *g:man_hardwrap*            Hard-wrap to $MANWIDTH or window width if $MANWIDTH is
-                          empty. Enabled by default. Set |FALSE| to enable soft
-                          wrapping.
+                          empty or larger than the window width. Enabled by
+                          default. Set |FALSE| to enable soft wrapping.
 
 To use Nvim as a manpager: >bash
     export MANPAGER='nvim +Man!'
@@ -886,27 +915,27 @@ QF QUICKFIX					    *qf.vim* *ft-qf-plugin*
 The "qf" filetype is used for the quickfix window, see |quickfix-window|.
 
 The quickfix filetype plugin includes configuration for displaying the command
-that produced the quickfix list in the |status-line|. To disable this setting,
+that produced the quickfix list in the |status-line|.  To disable this setting,
 configure as follows: >
 	:let g:qf_disable_statusline = 1
 
 
 R MARKDOWN						*ft-rmd-plugin*
 
-By default ftplugin/html.vim is not sourced. If you want it sourced, add to
+By default ftplugin/html.vim is not sourced.  If you want it sourced, add to
 your |vimrc|: >
 	let rmd_include_html = 1
 
 The 'formatexpr' option is set dynamically with different values for R code
-and for Markdown code. If you prefer that 'formatexpr' is not set, add to your
-|vimrc|: >
+and for Markdown code.  If you prefer that 'formatexpr' is not set, add to
+your |vimrc|: >
 	let rmd_dynamic_comments = 0
 
 
 R RESTRUCTURED TEXT					*ft-rrst-plugin*
 
 The 'formatexpr' option is set dynamically with different values for R code
-and for ReStructured text. If you prefer that 'formatexpr' is not set, add to
+and for ReStructured text.  If you prefer that 'formatexpr' is not set, add to
 your |vimrc|: >
 	let rrst_dynamic_comments = 0
 
@@ -923,7 +952,7 @@ To enable this behavior, set the following variable in your vimrc: >
 RNOWEB							*ft-rnoweb-plugin*
 
 The 'formatexpr' option is set dynamically with different values for R code
-and for LaTeX code. If you prefer that 'formatexpr' is not set, add to your
+and for LaTeX code.  If you prefer that 'formatexpr' is not set, add to your
 |vimrc|: >
 	let rnw_dynamic_comments = 0
 
@@ -1150,8 +1179,8 @@ To disable this behavior, set |g:zig_recommended_style| to 0: >
 	let g:zig_recommended_style = 0
 <
 							*g:zig_std_dir*
-The path to the Zig standard library. The Zig |ftplugin| reads |g:zig_std_dir|
-and appends it to the 'path' for Zig files. Where the Zig standard library
+The path to the Zig standard library.  The Zig |ftplugin| reads |g:zig_std_dir|
+and appends it to the 'path' for Zig files.  Where the Zig standard library
 is located is system and installation method dependent.
 
 One can automatically set |g:zig_std_dir| using `zig env`: >

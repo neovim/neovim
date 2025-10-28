@@ -1,12 +1,11 @@
 local lsp = vim.lsp
 local api = vim.api
 local util = lsp.util
-local ms = lsp.protocol.Methods
 
 ---@param name string
 ---@param range lsp.Range
 ---@param uri string
----@param position_encoding string
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return {name: string, filename: string, cmd: string, kind?: string}
 local function mk_tag_item(name, range, uri, position_encoding)
   local bufnr = vim.uri_to_bufnr(uri)
@@ -23,47 +22,41 @@ end
 ---@return table[]
 local function query_definition(pattern)
   local bufnr = api.nvim_get_current_buf()
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_definition })
-  if not next(clients) then
-    return {}
-  end
   local win = api.nvim_get_current_win()
   local results = {}
 
   --- @param range lsp.Range
   --- @param uri string
-  --- @param position_encoding string
+  ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
   local add = function(range, uri, position_encoding)
     table.insert(results, mk_tag_item(pattern, range, uri, position_encoding))
   end
 
-  local remaining = #clients
-  for _, client in ipairs(clients) do
-    ---@param result nil|lsp.Location|lsp.Location[]|lsp.LocationLink[]
-    local function on_response(_, result)
-      if result then
-        local encoding = client.offset_encoding
-        -- single Location
-        if result.range then
-          add(result.range, result.uri, encoding)
-        else
-          for _, location in ipairs(result) do
-            if location.range then -- Location
-              add(location.range, location.uri, encoding)
-            else -- LocationLink
-              add(location.targetSelectionRange, location.targetUri, encoding)
-            end
+  local request_results, _ = lsp.buf_request_sync(bufnr, 'textDocument/definition', function(client)
+    return util.make_position_params(win, client.offset_encoding)
+  end)
+
+  for client_id, res in pairs(request_results or {}) do
+    local client = assert(lsp.get_client_by_id(client_id))
+    local result = res.result ---@type lsp.Location|lsp.Location[]|lsp.LocationLink[]|nil
+
+    if result then
+      local encoding = client.offset_encoding
+      -- single Location
+      if result.range then
+        add(result.range, result.uri, encoding)
+      else
+        for _, location in ipairs(result) do
+          if location.range then -- Location
+            add(location.range, location.uri, encoding)
+          else -- LocationLink
+            add(location.targetSelectionRange, location.targetUri, encoding)
           end
         end
       end
-      remaining = remaining - 1
     end
-    local params = util.make_position_params(win, client.offset_encoding)
-    client:request(ms.textDocument_definition, params, on_response, bufnr)
   end
-  vim.wait(1000, function()
-    return remaining == 0
-  end)
+
   return results
 end
 
@@ -71,7 +64,7 @@ end
 ---@return table[]
 local function query_workspace_symbols(pattern)
   local results_by_client, err =
-    lsp.buf_request_sync(0, ms.workspace_symbol, { query = pattern }, 1000)
+    lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
   if err then
     return {}
   end

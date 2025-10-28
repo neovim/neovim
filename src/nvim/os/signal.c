@@ -9,7 +9,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/signal.h"
 #include "nvim/ex_cmds2.h"
@@ -23,6 +23,10 @@
 # include "nvim/memline.h"
 #endif
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 static SignalWatcher spipe, shup, squit, sterm, susr1, swinch, ststp;
 #ifdef SIGPWR
 static SignalWatcher spwr;
@@ -30,9 +34,7 @@ static SignalWatcher spwr;
 
 static bool rejecting_deadly;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/signal.c.generated.h"
-#endif
+#include "os/signal.c.generated.h"
 
 void signal_init(void)
 {
@@ -219,11 +221,14 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     }
     break;
 #endif
+  case SIGHUP:
+#ifdef MSWIN
+    os_clear_hwnd();
+#endif
   case SIGTERM:
 #ifdef SIGQUIT
   case SIGQUIT:
 #endif
-  case SIGHUP:
     if (!rejecting_deadly) {
       deadly_signal(signum);
     }

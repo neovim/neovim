@@ -1,6 +1,8 @@
 #pragma once
 
-#include "auto/config.h"
+#ifndef NVIM_NLUA0
+# include "auto/config.h"
+#endif
 
 // EXTERN is only defined in main.c. That's where global variables are
 // actually defined and initialized.

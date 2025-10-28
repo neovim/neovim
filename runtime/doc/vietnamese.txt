@@ -22,11 +22,11 @@ or use one of the Vietnamese keymaps included in the Vim distribution, like
 below >
     :set keymap=vietnamese-telex_utf-8
 <
-See |'keymap'| for more information.
+See 'keymap' for more information.
 
 In the latter case, you can type Vietnamese even if you do not have a
 Vietnamese input method engine (IME) or you want Vim to be independent from a
-system-wide keyboard settings (when |'imdisable'| is set). You can also |:map|
+system-wide keyboard settings (when 'imdisable' is set). You can also |:map|
 a key to switch between keyboards.
 
 Vim comes with the following Vietnamese keymaps:
@@ -69,5 +69,4 @@ name of the Vietnamese locale.  For example, >
 Note that the name of the Vietnamese locale may vary depending on your system.
 See |mbyte-first| for details.
 
-===============================================================================
-vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

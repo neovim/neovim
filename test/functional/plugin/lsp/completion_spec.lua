@@ -618,24 +618,53 @@ describe('vim.lsp.completion: item conversion', function()
             },
           },
         },
+        {
+          label = 'insert_replace_edit',
+          kind = 9,
+          textEdit = {
+            newText = 'foobar',
+            insert = {
+              start = { line = 0, character = 7 },
+              ['end'] = { line = 0, character = 11 },
+            },
+            replace = {
+              start = { line = 0, character = 0 },
+              ['end'] = { line = 0, character = 0 },
+            },
+          },
+        },
       },
     }
     local expected = {
-      abbr = ' this_thread',
-      dup = 1,
-      empty = 1,
-      icase = 1,
-      info = '',
-      kind = 'Module',
-      menu = '',
-      abbr_hlgroup = '',
-      word = 'this_thread',
+      {
+        abbr = ' this_thread',
+        dup = 1,
+        empty = 1,
+        icase = 1,
+        info = '',
+        kind = 'Module',
+        menu = '',
+        abbr_hlgroup = '',
+        word = 'this_thread',
+      },
+      {
+        abbr = 'insert_replace_edit',
+        dup = 1,
+        empty = 1,
+        icase = 1,
+        info = '',
+        kind = 'Module',
+        menu = '',
+        abbr_hlgroup = '',
+        word = 'foobar',
+      },
     }
     local result = complete('  std::this|', completion_list)
     eq(7, result.server_start_boundary)
-    local item = result.items[1]
-    item.user_data = nil
-    eq(expected, item)
+    for _, item in ipairs(result.items) do
+      item.user_data = nil
+    end
+    eq(expected, result.items)
   end)
 
   it('should search from start boundary to cursor position', function()
@@ -781,7 +810,7 @@ end)
 
 --- @param name string
 --- @param completion_result lsp.CompletionList
---- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem}
+--- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer}
 --- @return integer
 local function create_server(name, completion_result, opts)
   opts = opts or {}
@@ -795,7 +824,14 @@ local function create_server(name, completion_result, opts)
       },
       handlers = {
         ['textDocument/completion'] = function(_, _, callback)
-          callback(nil, completion_result)
+          if opts.delay then
+            -- simulate delay in completion request, needed for some of these tests
+            vim.defer_fn(function()
+              callback(nil, completion_result)
+            end, opts.delay)
+          else
+            callback(nil, completion_result)
+          end
         end,
         ['completionItem/resolve'] = function(_, _, callback)
           callback(nil, opts.resolve_result)
@@ -833,8 +869,6 @@ describe('vim.lsp.completion: protocol', function()
       end
     end)
   end)
-
-  after_each(clear)
 
   local function assert_matches(fn)
     retry(nil, nil, function()
@@ -1005,6 +1039,34 @@ describe('vim.lsp.completion: protocol', function()
     assert_matches(function(matches)
       eq(1, #matches)
       eq('hallo', matches[1].word)
+    end)
+  end)
+
+  it('treats 2-triggers-at-once as "last char wins"', function()
+    local results1 = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'first',
+        },
+      },
+    }
+    create_server('dummy1', results1, { trigger_chars = { '-' } })
+    local results2 = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'second',
+        },
+      },
+    }
+    create_server('dummy2', results2, { trigger_chars = { '>' } })
+
+    feed('i->')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq('second', matches[1].word)
     end)
   end)
 
@@ -1205,8 +1267,6 @@ describe('vim.lsp.completion: integration', function()
     end)
   end)
 
-  after_each(clear)
-
   it('puts cursor at the end of completed word', function()
     local completion_list = {
       isIncomplete = false,
@@ -1280,7 +1340,7 @@ describe('vim.lsp.completion: integration', function()
     end)
     feed('<C-n><C-y>')
     eq(
-      { true, { 'if true then', '\t', 'end' } },
+      { false, { 'if true then', '\t', 'end' } },
       exec_lua(function()
         return {
           vim.snippet.active({ direction = 1 }),
@@ -1288,5 +1348,51 @@ describe('vim.lsp.completion: integration', function()
         }
       end)
     )
+  end)
+end)
+
+describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
+  before_each(function()
+    clear()
+    exec_lua(create_server_definition)
+    exec_lua(function()
+      -- enable buffer and omnifunc autocompletion
+      -- omnifunc will be the lsp omnifunc
+      vim.o.complete = '.,o'
+      vim.o.autocomplete = true
+    end)
+
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        { label = 'hello' },
+        { label = 'hallo' },
+      },
+    }
+    create_server('dummy', completion_list, { delay = 50 })
+  end)
+
+  local function assert_matches(expected)
+    retry(nil, nil, function()
+      local matches = vim.tbl_map(function(m)
+        return m.word
+      end, exec_lua('return vim.fn.complete_info({ "items" })').items)
+      eq(expected, matches)
+    end)
+  end
+
+  it('merges with other completions', function()
+    feed('ihillo<cr><esc>ih')
+    assert_matches({ 'hillo', 'hallo', 'hello' })
+  end)
+
+  it('fuzzy matches without duplication', function()
+    -- wait for one completion request to start and then request another before
+    -- the first one finishes, then wait for both to finish
+    feed('ihillo<cr>h')
+    vim.uv.sleep(1)
+    feed('e')
+
+    assert_matches({ 'hello' })
   end)
 end)

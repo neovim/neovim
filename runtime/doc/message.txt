@@ -118,7 +118,7 @@ path leading to the file.
   Cannot switch buffer. 'winfixbuf' is enabled
 
 If a window has 'winfixbuf' enabled, you cannot change that window's current
-buffer. You need to set 'nowinfixbuf' before continuing. You may use [!] to
+buffer.  You need to set 'nowinfixbuf' before continuing.  You may use [!] to
 force the window to switch buffers, if your command supports it.
 
 							*E72*  >
@@ -540,7 +540,7 @@ attempting a symlink attack (could happen when editing a file in /tmp or when
 
 Vim (and Vi) expect tags files to be sorted in ASCII order.  Binary searching
 can then be used, which is a lot faster than a linear search.  If your tags
-files are not properly sorted, reset the |'tagbsearch'| option.
+files are not properly sorted, reset the 'tagbsearch' option.
 This message is only given when Vim detects a problem when searching for a
 tag.  Sometimes this message is not given, even though the tags file is not
 properly sorted.
@@ -810,26 +810,27 @@ This message is given when the screen is filled with messages.  It is only
 given when the 'more' option is on.  It is highlighted with the |hl-MoreMsg|
 group.
 
-Type					effect ~
-     <CR> or <NL> or j or <Down>	one more line
-     d					down a page (half a screen)
-     <Space> or f or <PageDown>		down a screen
-     G					down all the way, until the hit-enter
-					prompt
+Type						effect ~
+     <CR> or <NL> or j or <Down>		one more line
+     d						down a page (half a screen)
+     <Space> or f or <PageDown> or CTRL-F	down a screen
+     G						down all the way, until the
+						hit-enter prompt
 
-     <BS> or k or <Up>			one line back
-     u					up a page (half a screen)
-     b or <PageUp>			back a screen
-     g					back to the start
+     <BS> or k or <Up>				one line back
+     u						up a page (half a screen)
+     b or <PageUp> or CTRL-B			back a screen
+     g						back to the start
 
-     q, <Esc> or CTRL-C			stop the listing
-     :					stop the listing and enter a
-					     command-line
-    <C-Y>				yank (copy) a modeless selection to
-					the clipboard ("* and "+ registers)
-    {menu-entry}			what the menu is defined to in
-					Cmdline-mode.
-    <LeftMouse>				next page*
+     q, <Esc> or CTRL-C				stop the listing
+     :						stop the listing and enter a
+						command-line
+    <C-Y>					yank (copy) a modeless
+						selection to the clipboard
+						("* and "+ registers)
+    {menu-entry}				what the menu is defined to
+						in Cmdline-mode.
+    <LeftMouse>					next page*
 
 Any other key causes the meaning of the keys to be displayed.
 
@@ -844,5 +845,37 @@ and typeahead is ignored.
 The |g<| command can be used to see the last page of previous command output.
 This is especially useful if you accidentally typed <Space> at the hit-enter
 prompt.
+
+==============================================================================
+4. PROGRESS MESSAGE                                    *progress-message*
+
+Plugins and core Nvim features can emit "progress" |ui-messages| to report the
+state of long-running tasks.
+
+Create or update a progress-message by calling |nvim_echo()| with
+`kind='progress'`. Each message has a unique message-id, returned by
+`nvim_echo`. You can specify the id when calling `nvim_echo` to update an
+existing progress-message.
+
+Events: ~
+    • msg_show |ui-messages| event is fired for ext-ui upon creation/update of a
+    progress-message
+    • Updating or creating a progress message also triggers the |Progress| autocommand.
+
+Example: >lua
+    local progress = {
+      kind = 'progress',
+      status = 'running',
+      percent = 10,
+      title = 'term',
+    }
+    progress.id = vim.api.nvim_echo({ { 'searching...' } }, true, progress)
+    progress.percent = 50
+    vim.api.nvim_echo({ { 'searching' } }, true, progress)
+    progress.status = 'success'
+    progress.percent = 100
+    vim.api.nvim_echo({ { 'done' } }, true, progress)
+<
+See also: |nvim_echo()| |ui-messages| |Progress|
 
  vim:tw=78:ts=8:noet:ft=help:norl:

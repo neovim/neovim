@@ -6,6 +6,7 @@
 " Contributors:      Riley Bruins <ribru17@gmail.com> ('commentstring'),
 "                    @Konfekt
 "                    @tpope (s:Help())
+" 2025 Aug 16 by Vim Project set com depending on Vim9 or legacy script
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -102,13 +103,13 @@ setlocal keywordprg=:VimKeywordPrg
 " Comments starts with # in Vim9 script.  We have to guess which one to use.
 if "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
   setlocal commentstring=#\ %s
+  " Set 'comments' to format dashed lists in comments, for Vim9 script.
+  setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#\\\ ,:#
 else
   setlocal commentstring=\"%s
+  " Set 'comments' to format dashed lists in comments, for legacy Vim script.
+  setlocal com=sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"\\\ ,:\"
 endif
-
-" Set 'comments' to format dashed lists in comments, both in Vim9 and legacy
-" script.
-setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#\\\ ,:#,sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"\\\ ,:\"
 
 
 " Format comments to be up to 78 characters long

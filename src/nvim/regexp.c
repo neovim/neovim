@@ -645,9 +645,7 @@ typedef struct {
 static regengine_T bt_regengine;
 static regengine_T nfa_regengine;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "regexp.c.generated.h"
-#endif
+#include "regexp.c.generated.h"
 
 // Return true if compiled regular expression "prog" can match a line break.
 int re_multiline(const regprog_T *prog)
@@ -1584,6 +1582,7 @@ static void reg_nextline(void)
 // Returns RA_FAIL, RA_NOMATCH or RA_MATCH.
 // If "bytelen" is not NULL, it is set to the byte length of the match in the
 // last line.
+// Optional: ignore case if rex.reg_ic is set.
 static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T end_lnum,
                               colnr_T end_col, int *bytelen)
 {
@@ -1621,7 +1620,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       len = reg_getline_len(clnum) - ccol;
     }
 
-    if (cstrncmp(p + ccol, (char *)rex.input, &len) != 0) {
+    if ((!rex.reg_ic && cstrncmp(p + ccol, (char *)rex.input, &len) != 0)
+        || (rex.reg_ic && mb_strnicmp(p + ccol, (char *)rex.input, (size_t)len) != 0)) {
       return RA_NOMATCH;  // doesn't match
     }
     if (bytelen != NULL) {
@@ -1729,7 +1729,8 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
     *c3 = d.c;
   } else {
     *c1 = c;
-    *c2 = *c3 = 0;
+    *c2 = 0;
+    *c3 = 0;
   }
 }
 
@@ -4369,7 +4370,8 @@ static uint8_t *regatom(int *flagp)
     if (one_exactly) {
       EMSG_ONE_RET_NULL;
     }
-    IEMSG_RET_NULL(_(e_internal));       // Supposed to be caught earlier.
+    // Supposed to be caught earlier.
+    IEMSG_RET_NULL(_(e_internal_error_in_regexp));
   // NOTREACHED
 
   case Magic('='):
@@ -15049,7 +15051,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         int subidx;
         int bytelen;
 
-        if (t->state->c <= NFA_BACKREF9) {
+        if (t->state->c >= NFA_BACKREF1 && t->state->c <= NFA_BACKREF9) {
           subidx = t->state->c - NFA_BACKREF1 + 1;
           result = match_backref(&t->subs.norm, subidx, &bytelen);
         } else {

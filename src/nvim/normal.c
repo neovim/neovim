@@ -31,6 +31,7 @@
 #include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
@@ -69,6 +70,7 @@
 #include "nvim/plines.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/register.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/spell_defs.h"
@@ -112,9 +114,7 @@ typedef struct {
 
 static int VIsual_mode_orig = NUL;              // saved Visual mode
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "normal.c.generated.h"
-#endif
+#include "normal.c.generated.h"
 
 static const char e_changelist_is_empty[] = N_("E664: Changelist is empty");
 static const char e_cmdline_window_already_open[]
@@ -544,6 +544,7 @@ static void normal_prepare(NormalState *s)
   }
   may_trigger_modechanged();
 
+  s->set_prevcount = false;
   // When not finishing an operator and no register name typed, reset the count.
   if (!finish_op && !s->oa.regname) {
     s->ca.opcount = 0;
@@ -700,10 +701,12 @@ static void normal_redraw_mode_message(NormalState *s)
   setcursor();
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
-  if (msg_scroll || emsg_on_display) {
+  if (!ui_has(kUIMessages) && (msg_scroll || emsg_on_display)) {
     os_delay(1003, true);            // wait at least one second
   }
-  os_delay(3003, false);             // wait up to three seconds
+  if (ui_has(kUIMessages)) {
+    os_delay(3003, false);           // wait up to three seconds
+  }
   State = save_State;
 
   msg_scroll = false;
@@ -962,6 +965,8 @@ static bool normal_get_command_count(NormalState *s)
 
 static void normal_finish_command(NormalState *s)
 {
+  bool did_visual_op = false;
+
   if (s->command_finished) {
     goto normal_end;
   }
@@ -984,6 +989,10 @@ static void normal_finish_command(NormalState *s)
   // If an operation is pending, handle it.  But not for K_IGNORE or
   // K_MOUSEMOVE.
   if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_MOUSEMOVE) {
+    did_visual_op = VIsual_active && s->oa.op_type != OP_NOP
+                    // For OP_COLON, do_pending_operator() stuffs ':' into
+                    // the read buffer, which isn't executed immediately.
+                    && s->oa.op_type != OP_COLON;
     do_pending_operator(&s->ca, s->old_col, false);
   }
 
@@ -998,7 +1007,7 @@ normal_end:
 
   msg_nowait = false;
 
-  if (finish_op) {
+  if (finish_op || did_visual_op) {
     set_reg_var(get_default_register_name());
   }
 
@@ -1375,9 +1384,8 @@ static void normal_redraw(NormalState *s)
 
   curbuf->b_last_used = time(NULL);
 
-  // Display message after redraw. If an external message is still visible,
-  // it contains the kept message already.
-  if (keep_msg != NULL && !msg_ext_is_visible()) {
+  // Display message after redraw.
+  if (keep_msg != NULL) {
     char *const p = xstrdup(keep_msg);
 
     // msg_start() will set keep_msg to NULL, make a copy
@@ -2503,14 +2511,14 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 
   col_off1 = win_col_off(curwin);
   col_off2 = col_off1 - win_col_off2(curwin);
-  width1 = curwin->w_width_inner - col_off1;
-  width2 = curwin->w_width_inner - col_off2;
+  width1 = curwin->w_view_width - col_off1;
+  width2 = curwin->w_view_width - col_off2;
 
   if (width2 == 0) {
     width2 = 1;  // Avoid divide by zero.
   }
 
-  if (curwin->w_width_inner != 0) {
+  if (curwin->w_view_width != 0) {
     int n;
     // Instead of sticking at the last character of the buffer line we
     // try to stick in the last column of the screen.
@@ -2843,7 +2851,7 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zH" - scroll screen right half-page
   case 'H':
-    cap->count1 *= curwin->w_width_inner / 2;
+    cap->count1 *= curwin->w_view_width / 2;
     FALLTHROUGH;
 
   // "zh" - scroll screen to the right
@@ -2857,7 +2865,7 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zL" - scroll window left half-page
   case 'L':
-    cap->count1 *= curwin->w_width_inner / 2;
+    cap->count1 *= curwin->w_view_width / 2;
     FALLTHROUGH;
 
   // "zl" - scroll window to the left if not wrapping
@@ -2896,7 +2904,7 @@ static void nv_zet(cmdarg_T *cap)
       } else {
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       }
-      int n = curwin->w_width_inner - win_col_off(curwin);
+      int n = curwin->w_view_width - win_col_off(curwin);
       if (col + siso < n) {
         col = 0;
       } else {
@@ -3498,7 +3506,7 @@ static void nv_ident(cmdarg_T *cap)
     } else if (cmdchar == '#') {
       aux_ptr = (magic_isset() ? "/?.*~[^$\\" : "/?^$\\");
     } else if (tag_cmd) {
-      if (curbuf->b_help) {
+      if (strcmp(curbuf->b_p_ft, "help") == 0) {
         // ":help" handles unescaped argument
         aux_ptr = "";
       } else {
@@ -3637,7 +3645,7 @@ static void nv_scroll(cmdarg_T *cap)
       // Don't count filler lines above the window.
       used -= win_get_fill(curwin, curwin->w_topline) - curwin->w_topfill;
       validate_botline(curwin);  // make sure w_empty_rows is valid
-      int half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
+      int half = (curwin->w_view_height - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half the number of filler lines to be "below this
         // line" and half to be "above the next line".
@@ -3653,7 +3661,7 @@ static void nv_scroll(cmdarg_T *cap)
           n = lnum - curwin->w_topline;
         }
       }
-      if (n > 0 && used > curwin->w_height_inner) {
+      if (n > 0 && used > curwin->w_view_height) {
         n--;
       }
     } else {  // (cap->cmdchar == 'H')
@@ -3851,7 +3859,7 @@ static void nv_down(cmdarg_T *cap)
     } else if (bt_prompt(curbuf) && cap->cmdchar == CAR
                && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
       // In a prompt buffer a <CR> in the last line invokes the callback.
-      invoke_prompt_callback();
+      prompt_invoke_callback();
       if (restart_edit == 0) {
         restart_edit = 'a';
       }
@@ -4236,7 +4244,7 @@ static void nv_brackets(cmdarg_T *cap)
                             ? curwin->w_cursor.lnum + 1
                             : 1),
                            MAXLNUM,
-                           false);
+                           false, false);
       xfree(ptr);
       curwin->w_set_curswant = true;
     }
@@ -4456,10 +4464,6 @@ static void nv_kundo(cmdarg_T *cap)
     return;
   }
 
-  if (bt_prompt(curbuf)) {
-    clearopbeep(cap->oap);
-    return;
-  }
   u_undo(cap->count1);
   curwin->w_set_curswant = true;
 }
@@ -5155,10 +5159,6 @@ static void nv_suspend(cmdarg_T *cap)
 ///       exchange previous and current Visual area.
 static void nv_gv_cmd(cmdarg_T *cap)
 {
-  if (checkclearop(cap->oap)) {
-    return;
-  }
-
   if (curbuf->b_visual.vi_start.lnum == 0
       || curbuf->b_visual.vi_start.lnum > curbuf->b_ml.ml_line_count
       || curbuf->b_visual.vi_end.lnum == 0) {
@@ -5222,8 +5222,8 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
-    int width1 = curwin->w_width_inner - win_col_off(curwin);
+  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
+    int width1 = curwin->w_view_width - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
 
     validate_virtcol(curwin);
@@ -5235,7 +5235,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     // When ending up below 'smoothscroll' marker, move just beyond it so
     // that skipcol is not adjusted later.
     if (curwin->w_skipcol > 0 && curwin->w_cursor.lnum == curwin->w_topline) {
-      int overlap = sms_marker_overlap(curwin, curwin->w_width_inner - width2);
+      int overlap = sms_marker_overlap(curwin, curwin->w_view_width - width2);
       if (overlap > 0 && i == curwin->w_skipcol) {
         i += overlap;
       }
@@ -5247,7 +5247,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
   // 'relativenumber' is on and lines are wrapping the middle can be more
   // to the left.
   if (cap->nchar == 'm') {
-    i += (curwin->w_width_inner - win_col_off(curwin)
+    i += (curwin->w_view_width - win_col_off(curwin)
           + ((curwin->w_p_wrap && i > 0) ? win_col_off2(curwin) : 0)) / 2;
   }
   coladvance(curwin, (colnr_T)i);
@@ -5303,10 +5303,10 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
-  if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
+  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
     curwin->w_curswant = MAXCOL;              // so we stay at the end
     if (cap->count1 == 1) {
-      int width1 = curwin->w_width_inner - col_off;
+      int width1 = curwin->w_view_width - col_off;
       int width2 = width1 + win_col_off2(curwin);
 
       validate_virtcol(curwin);
@@ -5334,7 +5334,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       // if it fails, let the cursor still move to the last char
       cursor_down(cap->count1 - 1, false);
     }
-    i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
+    i = curwin->w_leftcol + curwin->w_view_width - col_off - 1;
     coladvance(curwin, (colnr_T)i);
 
     // if the character doesn't fit move one back
@@ -5342,7 +5342,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       colnr_T vcol;
 
       getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
-      if (vcol >= curwin->w_leftcol + curwin->w_width_inner - col_off) {
+      if (vcol >= curwin->w_leftcol + curwin->w_view_width - col_off) {
         curwin->w_cursor.col--;
       }
     }
@@ -6483,8 +6483,15 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   }
 
   if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
-    clearopbeep(cap->oap);
-    return;
+    if (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
+      curwin->w_cursor.col = (int)strlen(prompt_text());
+      // Since we've shifted the cursor to the first editable char. We want to
+      // paste before that.
+      cap->cmdchar = 'P';
+    } else {
+      clearopbeep(cap->oap);
+      return;
+    }
   }
 
   if (fix_indent) {
@@ -6591,7 +6598,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   // When all lines were selected and deleted do_put() leaves an empty
   // line that needs to be deleted now.
   if (empty && *ml_get(curbuf->b_ml.ml_line_count) == NUL) {
-    ml_delete(curbuf->b_ml.ml_line_count, true);
+    ml_delete_flags(curbuf->b_ml.ml_line_count, ML_DEL_MESSAGE);
     deleted_lines(curbuf->b_ml.ml_line_count + 1, 1);
 
     // If the cursor was in that line, move it to the end of the last
@@ -6615,7 +6622,7 @@ static void nv_open(cmdarg_T *cap)
   } else if (VIsual_active) {
     // switch start and end of visual/
     v_swap_corners(cap->cmdchar);
-  } else if (bt_prompt(curbuf)) {
+  } else if (bt_prompt(curbuf) && curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
     clearopbeep(cap->oap);
   } else {
     n_opencmd(cap);

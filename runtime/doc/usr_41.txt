@@ -31,7 +31,7 @@ script.  There are a lot of them, thus this is a long chapter.
 Table of contents: |usr_toc.txt|
 
 ==============================================================================
-*41.1*	Introduction				*vim-script-intro* *script*
+*41.1*	Introduction				*vimscript-intro*
 
 Your first experience with Vim scripts is the vimrc file.  Vim reads it when
 it starts up and executes the commands.  You can set options to values you
@@ -588,7 +588,7 @@ after the substitute() call.
 FUNCTIONS						*function-list*
 
 There are many functions.  We will mention them here, grouped by what they are
-used for.  You can find an alphabetical list here: |builtin-function-details|.
+used for.  You can find an alphabetical list here: |vimscript-functions|.
 Use CTRL-] on the function name to jump to detailed help on it.
 
 String manipulation:					*string-functions*
@@ -598,7 +598,7 @@ String manipulation:					*string-functions*
 	str2list()		get list of numbers from a string
 	str2nr()		convert a string to a Number
 	str2float()		convert a string to a Float
-	printf()		format a string according to % items
+	printf()		format a string according to "%" items
 	escape()		escape characters in a string with a '\'
 	shellescape()		escape a string for use with a shell command
 	fnameescape()		escape a file name for use with a Vim command
@@ -650,6 +650,7 @@ String manipulation:					*string-functions*
 	win_execute()		like execute() but in a specified window
 	trim()			trim characters from a string
 	gettext()		lookup message translation
+	items()			get List of String index-character pairs
 
 List manipulation:					*list-functions*
 	get()			get an item without error for wrong index
@@ -676,9 +677,8 @@ List manipulation:					*list-functions*
 	range()			return a List with a sequence of numbers
 	string()		String representation of a List
 	call()			call a function with List as arguments
-	index()			index of a value in a List or Blob
-	indexof()		index in a List or Blob where an expression
-				evaluates to true
+	index()			index of a value in a List
+	indexof()		index in a List where an expression is true
 	max()			maximum value in a List
 	min()			minimum value in a List
 	count()			count number of times a value appears in a List
@@ -738,6 +738,8 @@ Blob manipulation:					*blob-functions*
 	blob2list()		get a list of numbers from a blob
 	list2blob()		get a blob from a list of numbers
 	reverse()		reverse the order of numbers in a blob
+	index()			index of a value in a Blob
+	indexof()		index in a Blob where an expression is true
 
 Other computation:					*bitwise-function*
 	and()			bitwise AND
@@ -920,6 +922,8 @@ Command line:					*command-line-functions*
 	getcmdtype()		return the current command-line type
 	getcmdwintype()		return the current command-line window type
 	getcompletion()		list of command-line completion matches
+	getcompletiontype()	get the type of the command-line completion
+				for specified string
 	fullcommand()		get full command name
 	cmdcomplete_info()	get command-line completion information
 
@@ -934,6 +938,9 @@ Insert mode completion:				*completion-functions*
 	complete_add()		add to found matches
 	complete_check()	check if completion should be aborted
 	complete_info()		get current completion information
+	complete_match()	get insert completion start match col and
+				trigger text
+	preinserted()		check if text is inserted after cursor
 	pumvisible()		check if the popup menu is displayed
 	pum_getpos()		position and size of popup menu if visible
 
@@ -1032,6 +1039,7 @@ Mappings and Menus:			    *mapping-functions*
 	mapset()		restore a mapping
 	menu_info()		get information about a menu item
 	wildmenumode()		check if the wildmode is active
+	wildtrigger()		start wildcard expansion
 
 Signs:						*sign-functions*
 	sign_define()		define or update a sign
@@ -2554,7 +2562,7 @@ The following example shows how it's done: >
 		map <F19> :call BufNetWrite('something')<CR>
 
 		let s:did_load = 1
-		exe 'au FuncUndefined BufNet* source ' .. expand('<sfile>')
+		exe 'au FuncUndefined BufNet* source ' .. expand('<script>')
 		finish
 	endif
 
@@ -2590,7 +2598,7 @@ startup.  This is the sequence of events that happens:
    event.  Since the pattern "BufNet*" matches the invoked function, the
    command "source fname" will be executed.  "fname" will be equal to the name
    of the script, no matter where it is located, because it comes from
-   expanding "<sfile>" (see |expand()|).
+   expanding "<script>" (see |expand()|).
 
 4. The script is sourced again, the "s:did_load" variable exists and the
    functions are defined.

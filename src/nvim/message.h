@@ -31,11 +31,15 @@ enum {
 extern MessageHistoryEntry *msg_hist_last;
 
 EXTERN bool msg_ext_need_clear INIT( = false);
-// Set to true to force grouping a set of message chunks into a single `cmdline_show` event.
+/// Set to true to force grouping a set of message chunks into a single `cmdline_show` event.
 EXTERN bool msg_ext_skip_flush INIT( = false);
+/// Set to true when message should be appended to previous message line.
+EXTERN bool msg_ext_append INIT( = false);
+/// Set to true when previous message should be overwritten.
+EXTERN bool msg_ext_overwrite INIT( = false);
 
-/// allocated grid for messages. Used when display+=msgsep is set, or
-/// ext_multigrid is active. See also the description at msg_scroll_flush()
+/// allocated grid for messages. Used unless ext_messages is active.
+/// See also the description at msg_scroll_flush()
 EXTERN ScreenGrid msg_grid INIT( = SCREEN_GRID_INIT);
 EXTERN int msg_grid_pos INIT( = 0);
 
@@ -45,7 +49,7 @@ EXTERN int msg_grid_pos INIT( = 0);
 /// for legacy (display-=msgsep) message scroll behavior.
 /// TODO(bfredl): refactor "internal" message logic, msg_row etc
 /// to use the correct positions already.
-EXTERN ScreenGrid msg_grid_adj INIT( = SCREEN_GRID_INIT);
+EXTERN GridView msg_grid_adj INIT( = { 0 });
 
 /// value of msg_scrolled at latest msg_scroll_flush.
 EXTERN int msg_scrolled_at_flush INIT( = 0);
@@ -54,9 +58,7 @@ EXTERN int msg_grid_scroll_discount INIT( = 0);
 
 EXTERN int msg_listdo_overwrite INIT( = 0);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "message.h.generated.h"
-#endif
+#include "message.h.generated.h"
 
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.

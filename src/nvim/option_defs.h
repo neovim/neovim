@@ -7,9 +7,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/regexp_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "options_enum.generated.h"
-#endif
+#include "options_enum.generated.h"
 
 /// Option flags.
 typedef enum {

@@ -15,9 +15,7 @@
 #include "nvim/strings.h"
 #include "nvim/ui_client.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/unpacker.c.generated.h"
-#endif
+#include "msgpack_rpc/unpacker.c.generated.h"
 
 Object unpack(const char *data, size_t size, Arena *arena, Error *err)
 {

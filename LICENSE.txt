@@ -289,3 +289,8 @@ IV)  It is not allowed to remove this license from the distribution of the Vim
      license for previous Vim releases instead of the license that they came
      with, at your option.
 
+====
+
+In addition, different license conditions may apply to some runtime files
+included with Vim; these will be specified in the header of each respective
+file.

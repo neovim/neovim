@@ -115,8 +115,8 @@ gN			Like |gn| but searches backward, like with `N`.
 			active it is stopped.  Only when 'mouse' option
 			contains 'n' or 'a'.  If the position is within 'so'
 			lines from the last line on the screen the text is
-			scrolled up.  If the position is within 'so' lines from
-			the first line on the screen the text is scrolled
+			scrolled up.  If the position is within 'so' lines
+			from the first line on the screen the text is scrolled
 			down.
 
 							*<RightMouse>*
@@ -337,10 +337,10 @@ all lines.
 
 								*v_b_<*
 Visual-block Shift						*v_b_>*
-The block is shifted by 'shiftwidth'.  The RHS of the block is irrelevant.  The
-LHS of the block determines the point from which to apply a right shift, and
-padding includes TABs optimally according to 'ts' and 'et'.  The LHS of the
-block determines the point up to which to shift left.
+The block is shifted by 'shiftwidth'.  The RHS of the block is irrelevant.
+The LHS of the block determines the point from which to apply a right shift,
+and padding includes TABs optimally according to 'ts' and 'et'.  The LHS of
+the block determines the point up to which to shift left.
 See |v_b_>_example|.
 See |v_b_<_example|.
 
@@ -391,7 +391,7 @@ want only part of the line to be replaced you will have to make a mapping for
 it.  In a future release ":" may work on partial lines.
 
 Here is an example, to replace the selected text with the output of "date": >
-	:vmap _a <Esc>`>a<CR><Esc>`<i<CR><Esc>!!date<CR>kJJ
+	:vmap _a <Esc>`>a<CR><Esc>`<i<CR><Esc>!!date<CR>kgJgJ
 
 (In the <> notation |<>|, when typing it you should type it literally; you
 need to remove the 'B' flag from 'cpoptions')

@@ -24,6 +24,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds.h"
@@ -160,9 +161,7 @@ enum {
   KEYLEN_PART_MAP = -2,  ///< keylen value for incomplete mapping
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.c.generated.h"
-#endif
+#include "getchar.c.generated.h"
 
 static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
 static const char e_cmd_mapping_must_end_with_cr[]
@@ -1282,7 +1281,7 @@ void may_sync_undo(void)
 }
 
 /// Make "typebuf" empty and allocate new buffers.
-void alloc_typebuf(void)
+static void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
@@ -1298,7 +1297,7 @@ void alloc_typebuf(void)
 }
 
 /// Free the buffers of "typebuf".
-void free_typebuf(void)
+static void free_typebuf(void)
 {
   if (typebuf.tb_buf == typebuf_init) {
     internal_error("Free typebuf 1");
@@ -1866,6 +1865,9 @@ int vpeekc_any(void)
 /// @return  true if a character is available, false otherwise.
 bool char_avail(void)
 {
+  if (test_disable_char_avail) {
+    return false;
+  }
   no_mapping++;
   int retval = vpeekc();
   no_mapping--;
@@ -2012,7 +2014,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
         int winnr = 1;
         // Find the window at the mouse coordinates and compute the
         // text position.
-        win_T *const win = mouse_find_win(&grid, &row, &col);
+        win_T *const win = mouse_find_win_inner(&grid, &row, &col);
         if (win == NULL) {
           return;
         }
@@ -2197,7 +2199,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       && !(p_paste && (State & (MODE_INSERT | MODE_CMDLINE)))
       && !(State == MODE_HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
       && State != MODE_ASKMORE
-      && State != MODE_CONFIRM
       && !at_ins_compl_key()) {
     int mlen;
     int nolmaplen;
@@ -2675,7 +2676,7 @@ static int vgetorpeek(bool advance)
 
           if (result == map_result_get) {
             // get a character: 2. from the typeahead buffer
-            c = typebuf.tb_buf[typebuf.tb_off] & 255;
+            c = typebuf.tb_buf[typebuf.tb_off];
             if (advance) {  // remove chars from tb_buf
               cmd_silent = (typebuf.tb_silent > 0);
               if (typebuf.tb_maplen > 0) {
@@ -2749,8 +2750,8 @@ static int vgetorpeek(bool advance)
                 }
 
                 curwin->w_wrow = curwin->w_cline_row
-                                 + curwin->w_wcol / curwin->w_width_inner;
-                curwin->w_wcol %= curwin->w_width_inner;
+                                 + curwin->w_wcol / curwin->w_view_width;
+                curwin->w_wcol %= curwin->w_view_width;
                 curwin->w_wcol += win_col_off(curwin);
                 col = 0;  // no correction needed
               } else {
@@ -2759,7 +2760,7 @@ static int vgetorpeek(bool advance)
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
               curwin->w_wrow--;
-              curwin->w_wcol = curwin->w_width_inner - 1;
+              curwin->w_wcol = curwin->w_view_width - 1;
               col = curwin->w_cursor.col - 1;
             }
             if (col > 0 && curwin->w_wcol > 0) {

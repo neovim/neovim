@@ -58,7 +58,7 @@ the two counts are multiplied.  For example: "2d3w" deletes six words.
 						*operator-doubled*
 When doubling the operator it operates on a line.  When using a count, before
 or after the first character, that many lines are operated upon.  Thus `3dd`
-deletes three lines. A count before and after the first character is
+deletes three lines.  A count before and after the first character is
 multiplied, thus `2y3y` yanks six lines.
 						*operator-resulting-pos*
 After applying the operator the cursor is mostly left at the start of the text
@@ -291,11 +291,11 @@ T{char}			Till after [count]'th occurrence of {char} to the
 			{char} can be entered like with the |f| command.
 
 							*;*
-;			Repeat latest f, t, F or T [count] times. See |cpo-;|
+;			Repeat latest f, t, F or T [count] times.  See |cpo-;|
 
 							*,*
 ,			Repeat latest f, t, F or T in opposite direction
-			[count] times. See also |cpo-;|
+			[count] times.  See also |cpo-;|
 
 ==============================================================================
 3. Up-down motions					*up-down-motions*
@@ -859,9 +859,9 @@ buffer list.  If you remove the file from the buffer list, all its marks are
 lost.  If you delete a line that contains a mark, that mark is erased.
 
 Lowercase marks can be used in combination with operators.  For example: "d't"
-deletes the lines from the cursor position to mark 't'.  Hint: Use mark 't' for
-Top, 'b' for Bottom, etc..  Lowercase marks are restored when using undo and
-redo.
+deletes the lines from the cursor position to mark 't'.  Hint: Use mark 't'
+for Top, 'b' for Bottom, etc..  Lowercase marks are restored when using undo
+and redo.
 
 Uppercase marks 'A to 'Z include the file name.  You can use them to jump from
 file to file.  You can only use an uppercase mark with an operator if the mark
@@ -878,12 +878,12 @@ Numbered mark should be stored.  See |shada-file-marks|.
 
 
 							*'[* *`[*
-'[  `[			To the first character of the previously changed
-			or yanked text.
+'[  `[			To the first character of the previously changed,
+			or yanked text.  Also set when writing the buffer.
 
 							*']* *`]*
 ']  `]			To the last character of the previously changed or
-			yanked text.
+			yanked text.  Also set when writing the buffer.
 
 After executing an operator the Cursor is put at the beginning of the text
 that was operated upon.  After a put command ("p" or "P") the cursor is
@@ -941,6 +941,11 @@ was made yet in the current file.
 			command changed.  For example when inserting a word,
 			the position will be on the last character.
 			To jump to older changes use |g;|.
+
+							*':* *`:*
+':			In a prompt buffer, the start of the current prompt.
+			Text from this line until end of buffer will be
+			submitted when the user submits the prompt.
 
 							*'(* *`(*
 '(  `(			To the start of the current sentence, like the |(|
@@ -1143,9 +1148,9 @@ stored in the ShaDa file and restored when starting Vim.
 							*jumplist-stack*
 When 'jumpoptions' option includes "stack", the jumplist behaves like the tag
 stack.  When jumping to a new location from the middle of the jumplist, the
-locations after the current position will be discarded. With this option set
-you can move through a tree of jump locations. When going back up a branch and
-then down another branch, CTRL-O still takes you further up the tree.
+locations after the current position will be discarded.  With this option set
+you can move through a tree of jump locations.  When going back up a branch
+and then down another branch, CTRL-O still takes you further up the tree.
 
 Given a jumplist like the following in which CTRL-O has been used to move back
 three times to location X: >
@@ -1247,7 +1252,7 @@ remembered.
 
 							*%*
 %			Find the next item in this line after or under the
-			cursor and jump to its match. |inclusive| motion.
+			cursor and jump to its match.  |inclusive| motion.
 			Items can be:
 			([{}])		parenthesis or (curly/square) brackets
 					(this can be changed with the
@@ -1321,15 +1326,15 @@ bring you back to the switch statement.
 			similar structured language).  When not after the
 			start of a method, jump to the start or end of the
 			class.  When no '{' is found before the cursor this is
-			an error. |exclusive| motion.
+			an error.  |exclusive| motion.
 						*[M*
 [M			Go to [count] previous end of a method (for Java or
 			similar structured language).  When not after the
 			end of a method, jump to the start or end of the
 			class.  When no '}' is found before the cursor this is
-			an error. |exclusive| motion.
+			an error.  |exclusive| motion.
 
-The above two commands assume that the file contains a class with methods.
+The above four commands assume that the file contains a class with methods.
 The class definition is surrounded in '{' and '}'.  Each method in the class
 is also surrounded with '{' and '}'.  This applies to the Java language.  The
 file looks like this: >
@@ -1362,7 +1367,8 @@ Using "3[m" will jump to the start of the class.
 
 These two commands work in C programs that contain #if/#else/#endif
 constructs.  It brings you to the start or end of the #if/#else/#endif where
-the current line is included.  You can then use "%" to go to the matching line.
+the current line is included.  You can then use "%" to go to the matching
+line.
 
 						*[star* *[/*
 [*  or  [/		Go to [count] previous start of a C comment "/*".

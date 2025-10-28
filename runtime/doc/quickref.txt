@@ -625,6 +625,9 @@ Short explanation of each option:		*option-list*
 'arabic'	  'arab'    for Arabic as a default second language
 'arabicshape'	  'arshape' do shaping for Arabic characters
 'autochdir'	  'acd'     change directory to the file in the current window
+'autocomplete'	  'ac'      enable automatic completion in insert mode
+'autocompletedelay' 'acl'   delay in msec before menu appears after typing
+'autocompletetimeout' 'act' initial decay timeout for autocompletion algorithm
 'autoindent'	  'ai'	    take indent for new line from previous line
 'autoread'	  'ar'	    autom. read file when changed outside of Vim
 'autowrite'	  'aw'	    automatically write file if changed
@@ -668,6 +671,7 @@ Short explanation of each option:		*option-list*
 'completefunc'	  'cfu'     function to be used for Insert mode completion
 'completeopt'	  'cot'     options for Insert mode completion
 'completeslash'	  'csl'	    like 'shellslash' for completion
+'completetimeout' 'cto'     initial decay timeout for CTRL-N and CTRL-P
 'concealcursor'	  'cocu'    whether concealable text is hidden in cursor line
 'conceallevel'	  'cole'    whether concealable text is shown or hidden
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files
@@ -682,6 +686,7 @@ Short explanation of each option:		*option-list*
 'delcombine'	  'deco'    delete combining characters on their own
 'dictionary'	  'dict'    list of file names used for keyword completion
 'diff'			    use diff mode for the current window
+'diffanchors'	  'dia'     list of {address} to force anchoring of a diff
 'diffexpr'	  'dex'     expression used to obtain a diff file
 'diffopt'	  'dip'     options for using diff mode
 'digraph'	  'dg'	    enable the entering of digraphs in Insert mode
@@ -869,9 +874,9 @@ Short explanation of each option:		*option-list*
 'signcolumn'	  'scl'	    when and how to display the sign column
 'smartcase'	  'scs'     no ignore case when pattern has uppercase
 'smartindent'	  'si'	    smart autoindenting for C programs
-'smarttab'	  'sta'     use 'shiftwidth' when inserting <Tab>
+'smarttab'	  'sta'     <Tab> in leading whitespace indents by 'shiftwidth'
 'smoothscroll'	  'sms'     scroll by screen lines when 'wrap' is set
-'softtabstop'	  'sts'     number of spaces that <Tab> uses while editing
+'softtabstop'	  'sts'     number of columns between two soft tab stops
 'spell'			    enable spell checking
 'spellcapcheck'   'spc'     pattern to locate end of a sentence
 'spellfile'	  'spf'     files where |zg| and |zw| store words
@@ -893,7 +898,7 @@ Short explanation of each option:		*option-list*
 'tabclose'	  'tcl'     which tab page to focus when closing a tab
 'tabline'	  'tal'     custom format for the console tab pages line
 'tabpagemax'	  'tpm'     maximum number of tab pages for |-p| and "tab all"
-'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
+'tabstop'	  'ts'	    number of columns between two tab stops
 'tagbsearch'	  'tbs'     use binary searching in tags files
 'tagcase'	  'tc'      how to handle case when searching in tags files
 'tagfunc'	  'tfu'	    function to get list of tag matches
@@ -923,8 +928,8 @@ Short explanation of each option:		*option-list*
 'undoreload'	  'ur'	    max nr of lines to save for undo on a buffer reload
 'updatecount'	  'uc'	    after this many characters flush swap file
 'updatetime'	  'ut'	    after this many milliseconds flush swap file
-'varsofttabstop'  'vsts'    a list of number of spaces when typing <Tab>
-'vartabstop'	  'vts'	    a list of number of spaces for <Tab>s
+'varsofttabstop'  'vsts'    a list of number of columns between soft tab stops
+'vartabstop'	  'vts'	    a list of number of columns between tab stops
 'verbose'	  'vbs'     give informative messages
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview
@@ -1112,10 +1117,10 @@ Context-sensitive completion on the command-line:
 			   expected) (see |WORD|)
 |:<cfile>|  <cfile>	file name under the cursor (only where a file name is
 			   expected)
-|:<sfile>|  <sfile>	file name of a ":source"d file, within that file (only
+|:<script>| <script>	file name of a ":source"d file, within that file (only
 			   where a file name is expected)
 
-		After "%", "#", "<cfile>", "<sfile>" or "<afile>"
+		After "%", "#", "<cfile>", "<script>" or "<afile>"
 		|::p|	    :p		full path
 		|::h|	    :h		head (file name removed)
 		|::t|	    :t		tail (file name only)
@@ -1382,7 +1387,7 @@ Context-sensitive completion on the command-line:
 ------------------------------------------------------------------------------
 *Q_fo*		Folding
 
-|'foldmethod'|	set foldmethod=manual	manual folding
+'foldmethod'	set foldmethod=manual	manual folding
 		set foldmethod=indent	folding by indent
 		set foldmethod=expr	folding by 'foldexpr'
 		set foldmethod=syntax	folding by syntax regions

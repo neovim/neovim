@@ -7,7 +7,6 @@ local feed = n.feed
 local feed_command = n.feed_command
 local exec = n.exec
 local api = n.api
-local pesc = vim.pesc
 
 describe('cmdline', function()
   before_each(clear)
@@ -357,43 +356,303 @@ describe('cmdline', function()
                             10,20         30% |
     ]])
   end)
-end)
 
-describe('cmdwin', function()
-  before_each(clear)
+  -- oldtest: Test_search_wildmenu_screendump()
+  it('wildmenu for search completion', function()
+    local screen = Screen.new(60, 10)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
+    })
+    exec([[
+      set wildmenu wildcharm=<f5> wildoptions-=pum
+      call setline(1, ['the', 'these', 'the', 'foobar', 'thethe', 'thethere'])
+    ]])
 
-  -- oldtest: Test_cmdwin_interrupted()
-  it('still uses a new buffer when interrupting more prompt on open', function()
-    local screen = Screen.new(30, 16)
-    command('set more')
-    command('autocmd WinNew * highlight')
-    feed('q:')
-    screen:expect({ any = pesc('{6:-- More --}^') })
-    feed('q')
+    -- Pattern has newline at EOF
+    feed('gg2j/e\\n<f5>')
     screen:expect([[
-                                    |
-      {1:~                             }|*5
-      {2:[No Name]                     }|
-      {1::}^                             |
-      {1:~                             }|*6
-      {3:[Command Line]                }|
-                                    |
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {100:e\nfoobar}{3:  e\nthethere  e\nthese  e\nthe                    }|
+      /e\nfoobar^                                                  |
     ]])
-    feed([[aecho 'done']])
+
+    -- longest:full
+    feed('<esc>')
+    command('set wim=longest,full')
+    feed('gg/t<f5>')
     screen:expect([[
-                                    |
-      {1:~                             }|*5
-      {2:[No Name]                     }|
-      {1::}echo 'done'^                  |
-      {1:~                             }|*6
-      {3:[Command Line]                }|
-      {5:-- INSERT --}                  |
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*3
+      /the^                                                        |
     ]])
-    feed('<CR>')
+
+    -- list:full
+    feed('<esc>')
+    command('set wim=list,full')
+    feed('gg/t<f5>')
     screen:expect([[
-      ^                              |
-      {1:~                             }|*14
-      done                          |
+      {10:t}he                                                         |
+      {10:t}hese                                                       |
+      {10:t}he                                                         |
+      foobar                                                      |
+      {10:t}he{10:t}he                                                      |
+      {10:t}he{10:t}here                                                    |
+      {3:                                                            }|
+      /t                                                          |
+      these     the       thethe    thethere  there               |
+      /t^                                                          |
+    ]])
+
+    -- noselect:full
+    feed('<esc>')
+    command('set wim=noselect,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {3:these  the  thethe  thethere  there                         }|
+      /t^                                                          |
+    ]])
+
+    -- Multiline
+    feed('<esc>gg/t.*\\n.*\\n.<tab>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {3:t.*\n.*\n.oobar  t.*\n.*\n.hethe  t.*\n.*\n.he              }|
+      /t.*\n.*\n.^                                                 |
+    ]])
+
+    -- 'incsearch' is redrawn after accepting completion
+    feed('<esc>')
+    command('set wim=full')
+    command('set incsearch hlsearch')
+    feed('/th')
+    screen:expect([[
+      {10:th}e                                                         |
+      {2:th}ese                                                       |
+      {10:th}e                                                         |
+      foobar                                                      |
+      {10:th}e{10:th}e                                                      |
+      {10:th}e{10:th}ere                                                    |
+      {1:~                                                           }|*3
+      /th^                                                         |
+    ]])
+    feed('<f5>')
+    screen:expect([[
+      {10:th}e                                                         |
+      {2:th}ese                                                       |
+      {10:th}e                                                         |
+      foobar                                                      |
+      {10:th}e{10:th}e                                                      |
+      {10:th}e{10:th}ere                                                    |
+      {1:~                                                           }|*2
+      {100:these}{3:  the  thethe  thethere  there                         }|
+      /these^                                                      |
+    ]])
+    feed('<c-n><c-y>')
+    screen:expect([[
+      {10:the}                                                         |
+      {2:the}se                                                       |
+      {10:the}                                                         |
+      foobar                                                      |
+      {10:thethe}                                                      |
+      {10:thethe}re                                                    |
+      {1:~                                                           }|*3
+      /the^                                                        |
+    ]])
+
+    -- 'incsearch' highlight is restored after dismissing popup (Ctrl_E)
+    feed('<esc>')
+    command('set wop=pum is nohls')
+    feed('gg/th<tab><c-e>')
+    screen:expect([[
+      the                                                         |
+      {2:th}ese                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*3
+      /th^                                                         |
+    ]])
+
+    feed('<esc>')
+  end)
+
+  -- oldtest: Test_search_wildmenu_iminsert()
+  it('search wildmenu pum with iminsert=1', function()
+    local screen = Screen.new(65, 12)
+    exec([[
+      set wop=pum imi=1
+      setlocal iskeyword=!-~,192-255
+      call setline(1, [
+            \ "global toggle global-local global/local glyphs toggles English",
+            \ "accordingly. toggled accordingly single-byte",
+            \ ])
+      call cursor(2, 42)
+    ]])
+    feed('/gl<Tab>')
+    screen:expect([[
+      {12: global         }obal-local global/local glyphs toggles English   |
+      {4: gle            }gled accordingly single-byte                     |
+      {4: global-local   }{1:                                                 }|
+      {4: global/local   }{1:                                                 }|
+      {4: glyphs         }{1:                                                 }|
+      {4: gles           }{1:                                                 }|
+      {4: glish          }{1:                                                 }|
+      {4: gly.           }{1:                                                 }|
+      {4: gled           }{1:                                                 }|
+      {4: gly            }{1:                                                 }|
+      {4: gle-byte       }{1:                                                 }|
+      /global^                                                          |
+    ]])
+  end)
+
+  -- oldtest: Test_wildtrigger_update_screen()
+  it('pum by wildtrigger() avoids flicker', function()
+    local screen = Screen.new(40, 10)
+    exec([[
+      command! -nargs=* -complete=customlist,TestFn TestCmd echo
+      func TestFn(cmdarg, b, c)
+        if a:cmdarg == 'ax'
+          return []
+        else
+          return map(range(1, 5), 'printf("abc%d", v:val)')
+        endif
+      endfunc
+      set wildmode=noselect,full
+      set wildoptions=pum
+      set wildmenu
+      cnoremap <F8> <C-R>=wildtrigger()[-1]<CR>
+    ]])
+
+    feed(':TestCmd a<F8>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*3
+      {1:~       }{4: abc1           }{1:                }|
+      {1:~       }{4: abc2           }{1:                }|
+      {1:~       }{4: abc3           }{1:                }|
+      {1:~       }{4: abc4           }{1:                }|
+      {1:~       }{4: abc5           }{1:                }|
+      :TestCmd a^                              |
+    ]])
+
+    -- Typing a character when pum is open does not close the pum window
+    -- This is needed to prevent pum window from flickering during
+    -- ':h cmdline-autocompletion'.
+    feed('x')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*3
+      {1:~       }{4: abc1           }{1:                }|
+      {1:~       }{4: abc2           }{1:                }|
+      {1:~       }{4: abc3           }{1:                }|
+      {1:~       }{4: abc4           }{1:                }|
+      {1:~       }{4: abc5           }{1:                }|
+      :TestCmd ax^                             |
+    ]])
+
+    -- pum window is closed when no completion candidates are available
+    feed('<F8>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*8
+      :TestCmd ax^                             |
+    ]])
+
+    feed('<esc>')
+  end)
+
+  -- oldtest: Test_long_line_noselect()
+  it("long line is shown properly with noselect in 'wildmode'", function()
+    local screen = Screen.new(60, 8)
+    exec([[
+      set wildmenu wildoptions=pum wildmode=noselect,full
+      command -nargs=1 -complete=custom,Entries DoubleEntry echo
+      func Entries(a, b, c)
+        return 'loooooooooooooooong quite loooooooooooong, really loooooooooooong, probably too looooooooooooooooooooooooooong entry'
+      endfunc
+    ]])
+
+    feed(':DoubleEntry <Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {1:~           }{4: loooooooooooooooong quite loooooooooooong, rea>}|
+      :DoubleEntry ^                                               |
+    ]])
+
+    feed('<C-N>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*3
+      {3:                                                            }|
+      :DoubleEntry loooooooooooooooong quite loooooooooooong, real|
+      ly loooooooo{12: loooooooooooooooong quite loooooooooooong, rea>}|
+      ong entry^                                                   |
+    ]])
+
+    feed('<C-N>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*3
+      {3:            }{4: loooooooooooooooong quite loooooooooooong, rea>}|
+      :DoubleEntry ^                                               |
+                                                                  |*2
+    ]])
+
+    feed('<Esc>')
+  end)
+
+  -- oldtest: Test_update_screen_after_wildtrigger()
+  it('pum is dismissed after wildtrigger() and whitespace', function()
+    local screen = Screen.new(40, 10)
+    exec([[
+      set wildmode=noselect:lastused,full wildmenu wildoptions=pum
+      autocmd CmdlineChanged : if getcmdcompltype() != 'shellcmd' | call wildtrigger() | endif
+    ]])
+
+    feed(':term')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*7
+      {4: terminal       }{1:                        }|
+      :term^                                   |
+    ]])
+    feed(' ')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*8
+      :term ^                                  |
+    ]])
+    feed('foo')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*8
+      :term foo^                               |
     ]])
   end)
 end)

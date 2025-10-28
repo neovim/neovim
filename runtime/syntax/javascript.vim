@@ -11,6 +11,8 @@
 " 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
 " 		2018 Apr 14: adjusted javaScriptRegexpString (LongJohnCoder)
 " 		2024 Aug 14: fix a few stylistic issues (#15480)
+" 		2025 Aug 07: as is a reserved keyword (#17912)
+" 		2025 Sep 24: using is a reserved keyword (Devin Weaver)
 
 " tuning parameters:
 " unlet javaScript_fold
@@ -65,9 +67,9 @@ syn keyword javaScriptLabel		case default
 syn keyword javaScriptException		try catch finally throw
 syn keyword javaScriptMessage		alert confirm prompt status
 syn keyword javaScriptGlobal		self window top parent
-syn keyword javaScriptMember		document event location 
+syn keyword javaScriptMember		document event location
 syn keyword javaScriptDeprecated	escape unescape
-syn keyword javaScriptReserved		abstract boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var volatile async
+syn keyword javaScriptReserved		abstract as boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var volatile async using
 syn keyword javaScriptModifier  static
 
 syn cluster  javaScriptEmbededExpr	contains=javaScriptBoolean,javaScriptNull,javaScriptIdentifier,javaScriptStringD,javaScriptStringS,javaScriptStringT
@@ -126,7 +128,7 @@ hi def link javaScriptException		Exception
 hi def link javaScriptMessage		Keyword
 hi def link javaScriptGlobal		Keyword
 hi def link javaScriptMember		Keyword
-hi def link javaScriptDeprecated		Exception 
+hi def link javaScriptDeprecated		Exception
 hi def link javaScriptReserved		Keyword
 hi def link javaScriptModifier		StorageClass
 hi def link javaScriptDebug		Debug

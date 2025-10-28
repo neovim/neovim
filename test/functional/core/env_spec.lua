@@ -3,25 +3,22 @@ local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 local clear = n.clear
-local exec_capture = n.exec_capture
 local command = n.command
 
-describe('vim.uv', function()
+describe('env', function()
   before_each(function()
     clear()
   end)
 
-  -- Subsequential env var assignment consistency
-  -- see: issue 32550
-  it('vim.uv.os_setenv(), vim.uv.os_unsetenv() consistency', function()
-    eq('', exec_capture('echo $FOO'))
+  it('vim.uv.os_setenv(), vim.uv.os_unsetenv() consistency #32550', function()
+    eq('', n.eval('$FOO'))
     command('lua vim.uv.os_setenv("FOO", "bar")')
-    eq('bar', exec_capture('echo $FOO'))
+    eq('bar', n.eval('$FOO'))
     command('lua vim.uv.os_setenv("FOO", "fizz")')
-    eq('fizz', exec_capture('echo $FOO'))
+    eq('fizz', n.eval('$FOO'))
     command('lua vim.uv.os_unsetenv("FOO")')
-    eq('', exec_capture('echo $FOO'))
+    eq('', n.eval('$FOO'))
     command('lua vim.uv.os_setenv("FOO", "buzz")')
-    eq('buzz', exec_capture('echo $FOO'))
+    eq('buzz', n.eval('$FOO'))
   end)
 end)

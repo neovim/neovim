@@ -14,9 +14,7 @@
 #include "nvim/message.h"           // for semsg
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/deprecated.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "eval/deprecated.c.generated.h"  // IWYU pragma: keep
 
 /// "rpcstart()" function (DEPRECATED)
 void f_rpcstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)

@@ -216,8 +216,9 @@ func Test_popup_complete()
   call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
   call assert_equal(["March", "M", "March"], getline(1,4))
   %d
-endfunc
 
+  set completeopt&
+endfunc
 
 func Test_popup_completion_insertmode()
   new
@@ -1004,7 +1005,6 @@ func Test_popup_complete_backwards_ctrl_p()
 endfunc
 
 func Test_complete_o_tab()
-  CheckFunction test_override
   let s:o_char_pressed = 0
 
   fun! s:act_on_text_changed()
@@ -1022,12 +1022,12 @@ func Test_complete_o_tab()
   call setline(1,  ['hoard', 'hoax', 'hoarse', ''])
   let l:expected = ['hoard', 'hoax', 'hoarse', 'hoax', 'hoax']
   call cursor(4,1)
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   call feedkeys("Ahoa\<tab>\<tab>\<c-y>\<esc>", 'tx')
   call feedkeys("oho\<tab>\<tab>\<c-y>\<esc>", 'tx')
   call assert_equal(l:expected, getline(1,'$'))
 
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bwipe!
   set completeopt&
   delfunc s:act_on_text_changed
@@ -1082,6 +1082,7 @@ func Test_popup_complete_info_01()
   setlocal thesaurus=Xdummy.txt
   setlocal omnifunc=syntaxcomplete#Complete
   setlocal completefunc=syntaxcomplete#Complete
+  setlocal completeopt+=noinsert
   setlocal spell
   for [keys, mode_name] in [
         \ ["", ''],
@@ -1151,6 +1152,7 @@ func Test_popup_complete_info_02()
     \     {'word': 'Apr', 'menu': 'April', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
     \     {'word': 'May', 'menu': 'May', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}
     \   ],
+    \   'preinserted_text': '',
     \   'selected': 0,
     \ }
 
@@ -1158,7 +1160,7 @@ func Test_popup_complete_info_02()
   call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
   call assert_equal(d, g:compl_info)
 
-  let g:compl_what = ['mode', 'pum_visible', 'selected']
+  let g:compl_what = ['mode', 'pum_visible', 'preinserted_text', 'selected']
   call remove(d, 'items')
   call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
   call assert_equal(d, g:compl_info)
@@ -1166,6 +1168,7 @@ func Test_popup_complete_info_02()
   let g:compl_what = ['mode']
   call remove(d, 'selected')
   call remove(d, 'pum_visible')
+  call remove(d, 'preinserted_text')
   call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
   call assert_equal(d, g:compl_info)
   bwipe!
@@ -1179,6 +1182,7 @@ func Test_popup_complete_info_no_pum()
         \   'mode': '',
         \   'pum_visible': 0,
         \   'items': [],
+        \   'preinserted_text': '',
         \   'selected': -1,
         \  }
   call assert_equal( d, complete_info() )
@@ -2036,6 +2040,7 @@ func Test_pum_maxwidth_multibyte()
   CheckScreendump
 
   let lines =<< trim END
+    hi StrikeFake ctermfg=9
     let g:change = 0
     func Omni_test(findstart, base)
       if a:findstart
@@ -2060,8 +2065,14 @@ func Test_pum_maxwidth_multibyte()
           \ #{word: "bar", menu: "fooMenu", kind: "一二三四"},
           \ #{word: "一二三四五", kind: "multi"},
           \ ]
-      else
         return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+      elseif g:change == 3
+        return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+      else
+        return [
+          \ #{word: "一二三四五六七八九十", abbr_hlgroup: "StrikeFake"},
+          \ #{word: "123456789_123456789_123456789_", abbr_hlgroup: "StrikeFake"},
+          \ ]
       endif
     endfunc
     set omnifunc=Omni_test
@@ -2174,6 +2185,12 @@ func Test_pum_maxwidth_multibyte()
     call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
   endif
 
+  call term_sendkeys(buf, ":let g:change=4\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_23', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
   call StopVimInTerminal(buf)
 endfunc
 
@@ -2208,5 +2225,83 @@ func Test_pum_clear_when_switch_tab_or_win()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_position_when_wrap()
+  CheckScreendump
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return ['foo', 'bar', 'foobar']
+    endfunc
+    set omnifunc=Omni_test
+    set wrap
+    set cot+=noinsert
+  END
+  call writefile(lines, 'Xtest', 'D')
+  let buf = RunVimInTerminal('-S Xtest', #{rows: 15, cols: 25})
+
+  let long_text = repeat('abcde ', 20)
+  call term_sendkeys(buf, "i" .. long_text)
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "5|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line1', {})
+  call term_sendkeys(buf, "\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "30|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line2', {})
+  call term_sendkeys(buf, "\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "55|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line3', {})
+  call term_sendkeys(buf, "\<C-E>\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "85|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line4', {})
+  call term_sendkeys(buf, "\<C-E>\<ESC>")
+  call TermWait(buf, 100)
+
+  call term_sendkeys(buf, "108|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line5', {})
+  call term_sendkeys(buf, "\<C-E>\<ESC>")
+  call TermWait(buf, 100)
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test that Vim does not crash when completion inside cmdwin opens a 'info'
+" preview window.
+func Test_popup_complete_cmdwin_preview()
+  func! CompleteWithPreview(findstart, base)
+    if a:findstart
+      return getline('.')->strpart(0, col('.') - 1)
+    endif
+    return [#{word: 'echo', info: 'bar'}, #{word: 'echomsg', info: 'baz'}]
+  endfunc
+  set omnifunc=CompleteWithPreview
+  call feedkeys("q:if\<C-X>\<C-O>\<C-N>\<ESC>\<CR>", 'tx!')
+  set omnifunc&
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

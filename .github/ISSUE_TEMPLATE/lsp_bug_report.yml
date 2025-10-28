@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://neovim.io/doc/user/faq.html). Usage questions or "Why isn't X language server/feature working?" belong on [stackoverflow](https://vi.stackexchange.com/) and will be closed.
+        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue%20is%3Aopen%20type%3ABug) and check the [FAQ](https://neovim.io/doc/user/faq.html). Usage questions or "Why isn't X language server/feature working?" belong on [stackoverflow](https://vi.stackexchange.com/) and will be closed.
 
   - type: textarea
     attributes:

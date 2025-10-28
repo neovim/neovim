@@ -7,9 +7,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "auevents_enum.generated.h"
-#endif
+#include "auevents_enum.generated.h"
 
 /// Struct to save values in before executing autocommands for a buffer that is
 /// not the current buffer.

@@ -49,7 +49,10 @@ local hrtime = vim.uv.hrtime
 local default_parse_timeout_ns = 3 * 1000000
 
 ---@type Range2
-local entire_document_range = { 0, math.huge }
+local entire_document_range = {
+  0,
+  math.huge --[[@as integer]],
+}
 
 ---@alias TSCallbackName
 ---| 'changedtree'
@@ -96,7 +99,8 @@ local TSCallbackNames = {
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
 ---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
----@field private _source (integer|string) Buffer or string to parse
+---@field private _source integer Buffer to parse
+---@field private _has_scratch_buf boolean Whether _source is a |scratch-buffer| for string parsing.
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid_regions table<integer,true> Set of valid region IDs.
@@ -131,11 +135,26 @@ function LanguageTree.new(source, lang, opts)
     source = vim.api.nvim_get_current_buf()
   end
 
+  local has_scratch_buf = false
+
+  if type(source) == 'string' then
+    local new_source = vim.api.nvim_create_buf(false, true)
+    if new_source == 0 then
+      error('Unable to create buffer for string parser')
+    end
+    vim.bo[new_source].fixeol = false
+    vim.bo[new_source].eol = false
+    vim.api.nvim_buf_set_lines(new_source, 0, -1, false, vim.split(source, '\n', { plain = true }))
+    source = new_source
+    has_scratch_buf = true
+  end
+
   local injections = opts.injections or {}
 
   --- @class vim.treesitter.LanguageTree
   local self = {
     _source = source,
+    _has_scratch_buf = has_scratch_buf,
     _lang = lang,
     _children = {},
     _trees = {},
@@ -171,8 +190,7 @@ end
 
 --- @private
 function LanguageTree:_set_logger()
-  local source = self:source()
-  source = type(source) == 'string' and 'text' or tostring(source)
+  local source = tostring(self:source())
 
   local lang = self:lang()
 
@@ -362,8 +380,8 @@ function LanguageTree:children()
   return self._children
 end
 
---- Returns the source content of the language tree (bufnr or string).
---- @return integer|string
+--- Returns the source bufnr of the language tree.
+--- @return integer
 function LanguageTree:source()
   return self._source
 end
@@ -512,9 +530,8 @@ function LanguageTree:_async_parse(range, on_parse)
   end
 
   local source = self._source
-  local is_buffer_parser = type(source) == 'number'
-  local buf = is_buffer_parser and vim.b[source] or nil
-  local ct = is_buffer_parser and buf.changedtick or nil
+  local buf = vim.b[source]
+  local ct = buf.changedtick
   local total_parse_time = 0
   local redrawtime = vim.o.redrawtime * 1000000
 
@@ -524,19 +541,15 @@ function LanguageTree:_async_parse(range, on_parse)
   local parse = coroutine.wrap(self._parse)
 
   local function step()
-    if is_buffer_parser then
-      if
-        not vim.api.nvim_buf_is_valid(source --[[@as number]])
-      then
-        return nil
-      end
+    if not vim.api.nvim_buf_is_valid(source) then
+      return nil
+    end
 
-      -- If buffer was changed in the middle of parsing, reset parse state
-      if buf.changedtick ~= ct then
-        ct = buf.changedtick
-        total_parse_time = 0
-        parse = coroutine.wrap(self._parse)
-      end
+    -- If buffer was changed in the middle of parsing, reset parse state
+    if buf.changedtick ~= ct then
+      ct = buf.changedtick
+      total_parse_time = 0
+      parse = coroutine.wrap(self._parse)
     end
 
     thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ns or nil
@@ -722,6 +735,10 @@ end
 --- `remove_child` must be called on the parent to remove it.
 function LanguageTree:destroy()
   -- Cleanup here
+  if self._has_scratch_buf then
+    self._has_scratch_buf = false
+    vim.api.nvim_buf_delete(self._source, {})
+  end
   for _, child in pairs(self._children) do
     child:destroy()
   end
@@ -839,7 +856,7 @@ function LanguageTree:included_regions()
 end
 
 ---@param node TSNode
----@param source string|integer
+---@param source integer
 ---@param metadata vim.treesitter.query.TSMetadata
 ---@param include_children boolean
 ---@return Range6[]
@@ -897,7 +914,7 @@ local function clip_regions(region1, region2)
     end
 
     -- Advance the range that ends earlier
-    if Range.cmp_pos.le(r1[3], r1[4], r2[3], r2[4]) then
+    if Range.cmp_pos.le(r1[4], r1[5], r2[4], r2[5]) then
       i = i + 1
     else
       j = j + 1
@@ -985,7 +1002,7 @@ end
 
 ---@private
 --- Extract injections according to:
---- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
+--- https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection
 ---@param match table<integer,TSNode[]>
 ---@param metadata vim.treesitter.query.TSMetadata
 ---@return string?, boolean, Range6[]
@@ -1010,7 +1027,9 @@ function LanguageTree:_get_injection(match, metadata)
         local ft = vim.filetype.match({ filename = text })
         lang = ft and resolve_lang(ft)
       elseif name == 'injection.content' then
-        ranges = get_node_ranges(node, self._source, metadata[id], include_children)
+        for _, range in ipairs(get_node_ranges(node, self._source, metadata[id], include_children)) do
+          ranges[#ranges + 1] = range
+        end
       end
     end
   end
@@ -1102,8 +1121,8 @@ function LanguageTree:_edit(
   end_row_new,
   end_col_new
 )
-  for _, tree in pairs(self._trees) do
-    tree:edit(
+  for i, tree in pairs(self._trees) do
+    self._trees[i] = tree:edit(
       start_byte,
       end_byte_old,
       end_byte_new,
@@ -1164,7 +1183,6 @@ function LanguageTree:_edit(
   end
 end
 
----@nodoc
 ---@param bufnr integer
 ---@param changed_tick integer
 ---@param start_row integer
@@ -1236,12 +1254,10 @@ function LanguageTree:_on_bytes(
   )
 end
 
----@nodoc
 function LanguageTree:_on_reload()
   self:invalidate(true)
 end
 
----@nodoc
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)
@@ -1290,12 +1306,13 @@ end
 local function tree_contains(tree, range)
   local tree_ranges = tree:included_ranges(false)
 
-  return Range.contains({
-    tree_ranges[1][1],
-    tree_ranges[1][2],
-    tree_ranges[#tree_ranges][3],
-    tree_ranges[#tree_ranges][4],
-  }, range)
+  for _, tree_range in ipairs(tree_ranges) do
+    if Range.contains(tree_range, range) then
+      return true
+    end
+  end
+
+  return false
 end
 
 --- Determines whether {range} is contained in the |LanguageTree|.

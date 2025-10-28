@@ -184,7 +184,6 @@ describe('vim.lsp.util', function()
     end
 
     before_each(function()
-      n.clear()
       local _ = Screen.new(80, 80)
       feed('79i<CR><Esc>') -- fill screen with empty lines
     end)
@@ -267,12 +266,19 @@ describe('vim.lsp.util', function()
 
         eq(56, opts.height)
       end)
+
+      it('title with winborder option #35179', function()
+        local opts = exec_lua(function()
+          vim.o.winborder = 'single'
+          return vim.lsp.util.make_floating_popup_options(100, 100, { title = 'Title' })
+        end)
+        eq('Title', opts.title)
+      end)
     end)
   end)
 
   describe('open_floating_preview', function()
     before_each(function()
-      n.clear()
       Screen.new(10, 10)
       feed('9i<CR><Esc>G4k')
     end)

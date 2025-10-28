@@ -53,9 +53,7 @@ static const char e_digraph_argument_must_be_one_character_str[]
 static const char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
   = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "digraph.c.generated.h"
-#endif
+#include "digraph.c.generated.h"
 // digraphs added by the user
 static garray_T user_digraphs = { 0, 0, (int)sizeof(digr_T), 10, NULL };
 
@@ -1054,8 +1052,8 @@ static digr_T digraphdefault[] =
   { 'T', 'R', 0x2315 },
   { 'I', 'u', 0x2320 },
   { 'I', 'l', 0x2321 },
-  { '<', '/', 0x2329 },
-  { '/', '>', 0x232a },
+  { '<', '[', 0x27e8 },
+  { ']', '>', 0x27e9 },
 #define DG_START_OTHER2 0x2423
   { 'V', 's', 0x2423 },
   { '1', 'h', 0x2440 },
@@ -1202,6 +1200,8 @@ static digr_T digraphdefault[] =
   { '*', '_', 0x3005 },
   { ';', '_', 0x3006 },
   { '0', '_', 0x3007 },
+  { '<', '/', 0x3008 },
+  { '/', '>', 0x3009 },
   { '<', '+', 0x300a },
   { '>', '+', 0x300b },
   { '<', '\'', 0x300c },
@@ -1791,7 +1791,7 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
   }
 }
 
-struct dg_header_entry {
+static struct dg_header_entry {
   int dg_start;
   const char *dg_header;
 } header_table[] = {

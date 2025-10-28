@@ -2611,8 +2611,14 @@ func Test_normal33_g_cmd2()
   exe "norm! G0\<c-v>4k4ly"
   exe "norm! gvood"
   call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'fgh', 'fgh', 'fgh', 'fgh', 'fgh'], getline(1,'$'))
-  " gv cannot be used in operator pending mode
-  call assert_beeps('normal! cgv')
+  " gv works in operator pending mode
+  call assert_nobeep('normal! cgvxyza')
+  call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'xyza', 'xyza', 'xyza', 'xyza', 'xyza'], getline(1,'$'))
+  exe "norm! ^\<c-v>Gydgv..cgvbc"
+  call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'bc', 'bc', 'bc', 'bc', 'bc'], getline(1,'$'))
+  exe "norm! v^GragggUgv"
+  call assert_equal(['', 'abfgh', 'abfgh', 'abfgh', 'bA', 'AA', 'AA', 'AA', 'Ac'], getline(1,'$'))
+
   " gv should beep without a previously selected visual area
   new
   call assert_beeps('normal! gv')
@@ -4352,6 +4358,32 @@ func Test_scroll_longline_scrolloff()
   call assert_equal(7, line('w0'))
 
   set scrolloff&
+  bwipe!
+endfunc
+
+" Benchmark test for Ctrl-F with 'nosmoothscroll'
+func Test_scroll_longline_benchmark()
+  call setline(1, ['foo'->repeat(20000)] + [''])
+  let start = reltime()
+  exe "normal! \<C-F>"
+  call assert_inrange(0, 0.1, reltimefloat(reltime(start)))
+  bwipe!
+endfunc
+
+" Test Ctrl-B with 'nosmoothscroll' not stuck with line exactly window width.
+func Test_scroll_longline_winwidth()
+  10new
+  call setline(1, ['']->repeat(20) + ['A'->repeat(20 * winwidth(0))] + ['']->repeat(20))
+  exe "normal! G3\<C-B>"
+  call assert_equal(22, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(21, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(11, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(3, line('w0'))
+  exe "normal! \<C-B>"
+  call assert_equal(1, line('w0'))
   bwipe!
 endfunc
 

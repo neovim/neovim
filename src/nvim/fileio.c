@@ -29,6 +29,7 @@
 #include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
@@ -58,6 +59,7 @@
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
@@ -91,9 +93,7 @@
 # define UV_FS_COPYFILE_FICLONE 0
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fileio.c.generated.h"
-#endif
+#include "fileio.c.generated.h"
 
 static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer name");
 
@@ -733,7 +733,7 @@ retry:
     }
     // Delete the previously read lines.
     while (lnum > from) {
-      ml_delete(lnum--, false);
+      ml_delete(lnum--);
     }
     file_rewind = false;
     if (set_options) {
@@ -1660,7 +1660,7 @@ failed:
   if (!recoverymode) {
     // need to delete the last line, which comes from the empty buffer
     if (newfile && wasempty && !(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-      ml_delete(curbuf->b_ml.ml_line_count, false);
+      ml_delete(curbuf->b_ml.ml_line_count);
       linecnt--;
     }
     curbuf->deleted_bytes = 0;
@@ -2046,20 +2046,6 @@ static char *readfile_charconvert(char *fname, char *fenc, int *fdp)
   }
 
   return tmpname;
-}
-
-/// Read marks for the current buffer from the ShaDa file, when we support
-/// buffer marks and the buffer has a name.
-static void check_marks_read(void)
-{
-  if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
-      && curbuf->b_ffname != NULL) {
-    shada_read_marks();
-  }
-
-  // Always set b_marks_read; needed when 'shada' is changed to include
-  // the ' parameter after opening a buffer.
-  curbuf->b_marks_read = true;
 }
 
 /// Set the name of the current buffer.  Use when the buffer doesn't have a
@@ -2836,7 +2822,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   if (retval != FAIL) {
     curbuf = frombuf;
     for (linenr_T lnum = curbuf->b_ml.ml_line_count; lnum > 0; lnum--) {
-      if (ml_delete(lnum, false) == FAIL) {
+      if (ml_delete(lnum) == FAIL) {
         // Oops!  We could try putting back the saved lines, but that
         // might fail again...
         retval = FAIL;
@@ -3041,7 +3027,7 @@ int buf_check_timestamp(buf_T *buf)
         }
         msg_clr_eos();
         msg_end();
-        if (emsg_silent == 0 && !in_assert_fails) {
+        if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
           ui_flush();
           // give the user some time to think about it
           os_delay(1004, true);
@@ -3152,7 +3138,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
         // Put the text back from the save buffer.  First
         // delete any lines that readfile() added.
         while (!buf_is_empty(curbuf)) {
-          if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
+          if (ml_delete(buf->b_ml.ml_line_count) == FAIL) {
             break;
           }
         }
@@ -3275,7 +3261,7 @@ static void vim_mktempdir(void)
   mode_t umask_save = umask(0077);
   for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); i++) {
     // Expand environment variables, leave room for "/tmp/nvim.<user>/XXXXXX/999999999".
-    expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
+    size_t tmplen = expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
     if (!os_isdir(tmp)) {
       if (strequal("$TMPDIR", temp_dirs[i])) {
         if (!os_env_exists("TMPDIR", true)) {
@@ -3288,9 +3274,13 @@ static void vim_mktempdir(void)
     }
 
     // "/tmp/" exists, now try to create "/tmp/nvim.<user>/".
-    add_pathsep(tmp);
-    xstrlcat(tmp, "nvim.", sizeof(tmp));
-    xstrlcat(tmp, user, sizeof(tmp));
+    if (!after_pathsep(tmp, tmp + tmplen)) {
+      tmplen += (size_t)vim_snprintf(tmp + tmplen, sizeof(tmp) - tmplen, PATHSEPSTR);
+      assert(tmplen < sizeof(tmp));
+    }
+    tmplen += (size_t)vim_snprintf(tmp + tmplen, sizeof(tmp) - tmplen,
+                                   "nvim.%s", user);
+    assert(tmplen < sizeof(tmp));
     os_mkdir(tmp, 0700);  // Always create, to avoid a race.
     bool owned = os_file_owned(tmp);
     bool isdir = os_isdir(tmp);
@@ -3301,7 +3291,10 @@ static void vim_mktempdir(void)
     bool valid = isdir && owned;  // TODO(justinmk): Windows ACL?
 #endif
     if (valid) {
-      add_pathsep(tmp);
+      if (!after_pathsep(tmp, tmp + tmplen)) {
+        tmplen += (size_t)vim_snprintf(tmp + tmplen, sizeof(tmp) - tmplen, PATHSEPSTR);
+        assert(tmplen < sizeof(tmp));
+      }
     } else {
       if (!owned) {
         ELOG("tempdir root not owned by current user (%s): %s", user, tmp);
@@ -3315,11 +3308,15 @@ static void vim_mktempdir(void)
 #endif
       // If our "root" tempdir is invalid or fails, proceed without "<user>/".
       // Else user1 could break user2 by creating "/tmp/nvim.user2/".
-      tmp[strlen(tmp) - strlen(user)] = NUL;
+      tmplen -= strlen(user);
+      tmp[tmplen] = NUL;
     }
 
     // Now try to create "/tmp/nvim.<user>/XXXXXX".
-    xstrlcat(tmp, "XXXXXX", sizeof(tmp));  // mkdtemp "template", will be replaced with random alphanumeric chars.
+    // "XXXXXX" is mkdtemp "template", will be replaced with random alphanumeric chars.
+    tmplen += (size_t)vim_snprintf(tmp + tmplen, sizeof(tmp) - tmplen, "XXXXXX");
+    assert(tmplen < sizeof(tmp));
+    (void)tmplen;
     int r = os_mkdtemp(tmp, path);
     if (r != 0) {
       WLOG("tempdir create failed: %s: %s", os_strerror(r), tmp);

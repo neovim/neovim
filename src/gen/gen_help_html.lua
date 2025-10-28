@@ -62,39 +62,47 @@ local new_layout = {
   ['lsp.txt'] = true,
   ['channel.txt'] = true,
   ['deprecated.txt'] = true,
-  ['develop.txt'] = true,
+  ['dev.txt'] = true,
+  ['dev_arch.txt'] = true,
   ['dev_style.txt'] = true,
+  ['dev_test.txt'] = true,
   ['dev_theme.txt'] = true,
   ['dev_tools.txt'] = true,
   ['dev_vimpatch.txt'] = true,
-  ['editorconfig.txt'] = true,
   ['faq.txt'] = true,
   ['gui.txt'] = true,
   ['intro.txt'] = true,
   ['lua.txt'] = true,
   ['lua-guide.txt'] = true,
+  ['lua-plugin.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
   ['news-0.9.txt'] = true,
   ['news-0.10.txt'] = true,
   ['news-0.11.txt'] = true,
+  ['news-0.12.txt'] = true,
   ['nvim.txt'] = true,
+  ['pack.txt'] = true,
   ['provider.txt'] = true,
   ['tui.txt'] = true,
   ['ui.txt'] = true,
   ['vim_diff.txt'] = true,
 }
 
--- Map of new:old pages, to redirect renamed pages.
+-- Map of new-page:old-page, to redirect renamed pages.
 local redirects = {
-  ['credits'] = 'backers',
-  ['tui'] = 'term',
-  ['terminal'] = 'nvim_terminal_emulator',
+  ['api-ui-events.txt'] = 'ui.txt',
+  ['credits.txt'] = 'backers.txt',
+  ['dev.txt'] = 'develop.txt',
+  ['dev_tools.txt'] = 'debug.txt',
+  ['plugins.txt'] = 'editorconfig.txt',
+  ['terminal.txt'] = 'nvim_terminal_emulator.txt',
+  ['tui.txt'] = 'term.txt',
 }
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
 local exclude_invalid = {
-  ["'string'"] = 'eval.txt',
+  ["'string'"] = 'vimeval.txt',
   Query = 'treesitter.txt',
   matchit = 'vim_diff.txt',
   ['set!'] = 'treesitter.txt',
@@ -606,8 +614,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return string.format('<div class="help-li" style="%s">%s</div>', margin, text)
   elseif node_name == 'taglink' or node_name == 'optionlink' then
     local helppage, tagname, ignored = validate_link(root, opt.buf, opt.fname)
-    if ignored then
-      return text
+    if ignored or not helppage then
+      return html_esc(node_text(root))
     end
     local s = ('%s<a href="%s#%s">%s</a>'):format(
       ws(),
@@ -629,7 +637,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return s
   elseif node_name == 'argument' then
-    return ('%s<code>{%s}</code>'):format(ws(), text)
+    return ('%s<code>%s</code>'):format(ws(), trim(node_text(root)))
   elseif node_name == 'codeblock' then
     return text
   elseif node_name == 'language' then
@@ -732,7 +740,7 @@ local function get_helpfiles(dir, include)
 end
 
 --- Populates the helptags map.
-local function get_helptags(help_dir)
+local function _get_helptags(help_dir)
   local m = {}
   -- Load a random help file to convince taglist() to do its job.
   vim.cmd(string.format('split %s/api.txt', help_dir))
@@ -743,6 +751,18 @@ local function get_helptags(help_dir)
     end
   end
   vim.cmd('q!')
+
+  return m
+end
+
+--- Populates the helptags map.
+local function get_helptags(help_dir)
+  local m = _get_helptags(help_dir)
+
+  --- XXX: Append tags from netrw, until we remove it...
+  local netrwtags = _get_helptags(vim.fs.normalize('$VIMRUNTIME/pack/dist/opt/netrw/doc/'))
+  m = vim.tbl_extend('keep', m, netrwtags)
+
   return m
 end
 
@@ -1023,6 +1043,76 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
   return html, stats
 end
 
+--- Generates an HTML page that does a client-side redirect to the tag given by the "?tag=…"
+--- querystring parameter. The page gets tags from the "helptags.json" file.
+local function gen_helptag_html(fname)
+  local html = [[
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <title>Redirecting…</title>
+      <script type="module">
+        async function do_redirect() {
+          const errorDiv = document.getElementById('error-message');
+          try {
+            const params = new URLSearchParams(window.location.search)
+            const tag = params.get('tag')
+            if (!tag) {
+              throw new Error('No tag parameter')
+            }
+
+            // helptags.json lives next to helptag.html
+            const res = await fetch('./helptags.json')
+            if (!res.ok) {
+              throw new Error('helptags.json not found')
+            }
+
+            const tagmap = await res.json()
+            if (!tagmap[tag]) {
+              throw new Error('helptag not found: "' + tag + '"')
+            }
+
+            window.location.href = tagmap[tag]
+          } catch (err) {
+            console.error(err)
+            if (errorDiv) {
+              errorDiv.textContent = err.message
+            }
+            // Optionally, redirect to index after showing error
+            // setTimeout(() => window.location.href = './index.html', 3000)
+          }
+        }
+
+        do_redirect()
+      </script>
+    </head>
+    <body>
+      <p>Redirecting…</p>
+      <div id="error-message" style="margin-top:1em; font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;"></div>
+    </body>
+    </html>
+  ]]
+  tofile(fname, html)
+end
+
+--- Generates a JSON map of tags to URL-encoded `filename#anchor` locations.
+---
+---@param fname string
+local function gen_helptags_json(fname)
+  assert(tagmap, '`tagmap` not generated yet')
+  local t = {} ---@type table<string, string>
+  for tag, f in pairs(tagmap) do
+    -- "foo.txt"
+    local helpfile = vim.fs.basename(f)
+    -- "foo.html"
+    local htmlpage = assert(get_helppage(helpfile))
+    -- "foo.html#tag"
+    t[tag] = ('%s#%s'):format(htmlpage, url_encode(tag))
+  end
+  tofile(fname, vim.json.encode(t, { indent = '  ', sort_keys = true }))
+end
+
 local function gen_css(fname)
   local css = [[
     :root {
@@ -1209,10 +1299,11 @@ local function ok(cond, expected, actual, message)
         vim.inspect(actual)
       )
     )
-    return cond
   else
-    return assert(cond)
+    assert(cond)
   end
+
+  return true
 end
 local function eq(expected, actual, message)
   return ok(vim.deep_equal(expected, actual), expected, actual, message)
@@ -1299,6 +1390,8 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   print(('output dir: %s\n\n'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
   gen_css(('%s/help.css'):format(to_dir))
+  gen_helptags_json(('%s/helptags.json'):format(to_dir))
+  gen_helptag_html(('%s/helptag.html'):format(to_dir))
 
   for _, f in ipairs(helpfiles) do
     -- "foo.txt"
@@ -1317,33 +1410,34 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     )
 
     -- Generate redirect pages for renamed help files.
-    local helpfile_tag = (helpfile:gsub('%.txt$', ''))
-    local redirect_from = redirects[helpfile_tag]
+    local helpfile_tag = (helpfile:gsub('%.txt$', '')):gsub('_', '-') -- "dev_tools.txt" => "dev-tools"
+    local redirect_from = redirects[helpfile]
     if redirect_from then
-      local redirect_text = ([[
-*%s*      Nvim
+      local redirect_text = vim.text
+        .indent(
+          0,
+          [[
+          *%s*      Nvim
 
-This document moved to: |%s|
+          Document moved to: |%s|
 
-==============================================================================
-This document moved to: |%s|
+          ==============================================================================
+          Document moved
 
-This document moved to: |%s|
+          Document moved to: |%s|
 
-==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
-      ]]):format(
-        redirect_from,
-        helpfile_tag,
-        helpfile_tag,
-        helpfile_tag,
-        helpfile_tag,
-        helpfile_tag
-      )
+          ==============================================================================
+           vim:tw=78:ts=8:ft=help:norl:
+          ]]
+        )
+        :format(redirect_from, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag)
       local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from))
       local redirect_html, _ =
         gen_one(redirect_from, redirect_text, redirect_to, false, commit or '?', parser_path)
-      assert(redirect_html:find(helpfile_tag))
+      assert(
+        redirect_html:find(vim.pesc(helpfile_tag)),
+        ('not found in redirect html: %s'):format(helpfile_tag)
+      )
       tofile(redirect_to, redirect_html)
 
       print(
@@ -1360,8 +1454,9 @@ This document moved to: |%s|
 
   print(('\ngenerated %d html pages'):format(#helpfiles + redirects_count))
   print(('total errors: %d'):format(err_count))
+  -- Why aren't the netrw tags found in neovim/docs/ CI?
   print(('invalid tags: %s'):format(vim.inspect(invalid_links)))
-  assert(#(include or {}) > 0 or redirects_count == vim.tbl_count(redirects)) -- sanity check
+  eq(redirects_count, include and redirects_count or vim.tbl_count(redirects)) -- sanity check
   print(('redirects: %d'):format(redirects_count))
   print('\n')
 
@@ -1400,9 +1495,6 @@ function M.validate(help_dir, include, parser_path)
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()
   tagmap = get_helptags(vim.fs.normalize(help_dir))
-  --- XXX: Append tags from netrw, until we remove it...
-  local netrwtags = get_helptags(vim.fs.normalize('$VIMRUNTIME/pack/dist/opt/netrw/doc/'))
-  tagmap = vim.tbl_extend('keep', tagmap, netrwtags)
   helpfiles = get_helpfiles(help_dir, include)
   parser_path = parser_path and vim.fs.normalize(parser_path) or nil
 

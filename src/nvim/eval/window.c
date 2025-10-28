@@ -32,13 +32,18 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/window.c.generated.h"
-#endif
+#include "eval/window.c.generated.h"
 
 static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char e_cannot_resize_window_in_another_tab_page[]
   = N_("E1308: Cannot resize a window in another tab page");
+
+bool win_has_winnr(win_T *wp, tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (wp == (tp == curtab ? curwin : tp->tp_curwin))
+         || (!wp->w_config.hide && wp->w_config.focusable);
+}
 
 static int win_getid(typval_T *argvars)
 {
@@ -51,10 +56,11 @@ static int win_getid(typval_T *argvars)
     return 0;
   }
 
+  tabpage_T *tp = NULL;
   if (argvars[1].v_type == VAR_UNKNOWN) {
+    tp = curtab;
     wp = firstwin;
   } else {
-    tabpage_T *tp = NULL;
     int tabnr = (int)tv_get_number(&argvars[1]);
     FOR_ALL_TABS(tp2) {
       if (--tabnr == 0) {
@@ -72,7 +78,7 @@ static int win_getid(typval_T *argvars)
     }
   }
   for (; wp != NULL; wp = wp->w_next) {
-    if (--winnr == 0) {
+    if ((winnr -= win_has_winnr(wp, tp)) == 0) {
       return wp->handle;
     }
   }
@@ -120,9 +126,9 @@ static int win_id2win(typval_T *argvars)
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->handle == id) {
-      return nr;
+      return (win_has_winnr(wp, curtab) ? nr : 0);
     }
-    nr++;
+    nr += win_has_winnr(wp, curtab);
   }
   return 0;
 }
@@ -174,6 +180,7 @@ win_T *find_win_by_nr(typval_T *vp, tabpage_T *tp)
 
 /// Find a window: When using a Window ID in any tab page, when using a number
 /// in the current tab page.
+/// Returns NULL when not found.
 win_T *find_win_by_nr_or_id(typval_T *vp)
 {
   int nr = (int)tv_get_number_chk(vp, NULL);
@@ -292,20 +299,24 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
       semsg(_(e_invexpr2), arg);
       nr = 0;
     }
+  } else if (!win_has_winnr(twin, tp)) {
+    nr = 0;
   }
 
   if (nr <= 0) {
     return 0;
   }
 
-  for (win_T *wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
-       wp != twin; wp = wp->w_next) {
-    if (wp == NULL) {
-      // didn't find it in this tabpage
-      nr = 0;
+  nr = 0;
+  win_T *wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
+  for (; wp != NULL; wp = wp->w_next) {
+    nr += win_has_winnr(wp, tp);
+    if (wp == twin) {
       break;
     }
-    nr++;
+  }
+  if (wp == NULL) {
+    nr = 0;  // didn't find it in this tabpage
   }
   return nr;
 }
@@ -321,13 +332,13 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("tabnr"), tpnr);
   tv_dict_add_nr(dict, S_LEN("winnr"), winnr);
   tv_dict_add_nr(dict, S_LEN("winid"), wp->handle);
-  tv_dict_add_nr(dict, S_LEN("height"), wp->w_height_inner);
+  tv_dict_add_nr(dict, S_LEN("height"), wp->w_view_height);
   tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
   tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
   tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
   tv_dict_add_nr(dict, S_LEN("leftcol"), wp->w_leftcol);
   tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
-  tv_dict_add_nr(dict, S_LEN("width"), wp->w_width_inner);
+  tv_dict_add_nr(dict, S_LEN("width"), wp->w_view_width);
   tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);
   tv_dict_add_nr(dict, S_LEN("wincol"), wp->w_wincol + 1);
   tv_dict_add_nr(dict, S_LEN("textoff"), win_col_off(wp));
@@ -415,11 +426,11 @@ void f_getwininfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tabnr++;
     int16_t winnr = 0;
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-      winnr++;
+      winnr += win_has_winnr(wp, tp);
       if (wparg != NULL && wp != wparg) {
         continue;
       }
-      dict_T *const d = get_win_info(wp, tabnr, winnr);
+      dict_T *const d = get_win_info(wp, tabnr, win_has_winnr(wp, tp) ? winnr : 0);
       tv_list_append_dict(rettv->vval.v_list, d);
       if (wparg != NULL) {
         // found information about a specific window
@@ -786,7 +797,7 @@ void f_winheight(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (wp == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = wp->w_height_inner;
+    rettv->vval.v_number = wp->w_view_height;
   }
 }
 
@@ -834,6 +845,9 @@ void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   for (int i = 0; i < 2; i++) {
     int winnr = 1;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (!win_has_winnr(wp, curtab)) {
+        continue;
+      }
       snprintf(buf, sizeof(buf), "%dresize %d|", winnr,
                wp->w_height);
       ga_concat(&ga, buf);
@@ -923,7 +937,7 @@ void f_winwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (wp == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = wp->w_width_inner;
+    rettv->vval.v_number = wp->w_view_width;
   }
 }
 

@@ -220,7 +220,7 @@ func Test_undo_del_chars()
   call BackOne('3-456')
   call BackOne('23-456')
   call BackOne('123-456')
-  call assert_fails("BackOne('123-456')")
+  call assert_fails("BackOne('123-456')", "E492: Not an editor command: BackOne('123-456')")
 
   :" Delete three other characters and go back in time with g-
   call feedkeys('$x', 'xt')
@@ -236,7 +236,7 @@ func Test_undo_del_chars()
   call BackOne('3-456')
   call BackOne('23-456')
   call BackOne('123-456')
-  call assert_fails("BackOne('123-456')")
+  call assert_fails("BackOne('123-456')", "E492: Not an editor command: BackOne('123-456')")
   normal 10g+
   call assert_equal('123-', getline(1))
 

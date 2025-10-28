@@ -70,6 +70,16 @@ Functions that take a severity as an optional parameter (e.g.
     This form allows users to filter for specific severities
 
 ==============================================================================
+DEFAULTS                                              *diagnostic-defaults*
+
+These diagnostic keymaps are created unconditionally when Nvim starts:
+- `]d` jumps to the next diagnostic in the buffer. |]d-default|
+- `[d` jumps to the previous diagnostic in the buffer. |[d-default|
+- `]D` jumps to the last diagnostic in the buffer. |]D-default|
+- `[D` jumps to the first diagnostic in the buffer. |[D-default|
+- `<C-w>d` shows diagnostic at cursor in a floating window. |CTRL-W_d-default|
+
+==============================================================================
 HANDLERS                                                *diagnostic-handlers*
 
 Diagnostics are shown to the user with |vim.diagnostic.show()|. The display of
@@ -180,6 +190,28 @@ the `virtual_lines` handler with the following keymap: >lua
     end, { desc = 'Toggle diagnostic virtual_lines' })
 <
 
+                                            *diagnostic-on-jump-example*
+You can use the `on_jump` option from |vim.diagnostic.jump()| to show the
+diagnostic that was jumped to using a specific handler. For example, the
+following uses the `virtual_lines` handler when jumping to a diagnostic: >lua
+
+  local virt_lines_ns = vim.api.nvim_create_namespace 'on_diagnostic_jump'
+
+  --- @param diagnostic? vim.Diagnostic
+  --- @param bufnr integer
+  local function on_jump(diagnostic, bufnr)
+      if not diagnostic then return end
+
+      vim.diagnostic.show(
+          virt_lines_ns,
+          bufnr,
+          { diagnostic },
+          { virtual_lines = { current_line = true }, virtual_text = false }
+      )
+  end
+
+  vim.diagnostic.config({ jump = { on_jump = on_jump } })
+<
                                           *diagnostic-loclist-example*
 Whenever the |location-list| is opened, the following `show` handler will show
 the most recent diagnostics: >lua
@@ -268,6 +300,26 @@ DiagnosticVirtualTextHint
                                                 *hl-DiagnosticVirtualTextOk*
 DiagnosticVirtualTextOk
     Used for "Ok" diagnostic virtual text.
+
+                                            *hl-DiagnosticVirtualLinesError*
+DiagnosticVirtualLinesError
+    Used for "Error" diagnostic virtual lines.
+
+                                            *hl-DiagnosticVirtualLinesWarn*
+DiagnosticVirtualLinesWarn
+    Used for "Warn" diagnostic virtual lines.
+
+                                            *hl-DiagnosticVirtualLinesInfo*
+DiagnosticVirtualLinesInfo
+    Used for "Info" diagnostic virtual lines.
+
+                                            *hl-DiagnosticVirtualLinesHint*
+DiagnosticVirtualLinesHint
+    Used for "Hint" diagnostic virtual lines.
+
+                                                *hl-DiagnosticVirtualLinesOk*
+DiagnosticVirtualLinesOk
+    Used for "Ok" diagnostic virtual lines.
 
                                                 *hl-DiagnosticUnderlineError*
 DiagnosticUnderlineError
@@ -388,27 +440,43 @@ Example: >lua
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
 *vim.Diagnostic*
+    Extends: |vim.Diagnostic.Set|
+
                                                         *diagnostic-structure*
 
     Diagnostics use the same indexing as the rest of the Nvim API (i.e.
     0-based rows and columns). |api-indexing|
 
     Fields: ~
-      • {bufnr}?      (`integer`) Buffer number
-      • {lnum}        (`integer`) The starting line of the diagnostic
-                      (0-indexed)
-      • {end_lnum}?   (`integer`) The final line of the diagnostic (0-indexed)
+      • {bufnr}       (`integer`) Buffer number
+      • {end_lnum}    (`integer`) The final line of the diagnostic (0-indexed)
       • {col}         (`integer`) The starting column of the diagnostic
                       (0-indexed)
-      • {end_col}?    (`integer`) The final column of the diagnostic
+      • {end_col}     (`integer`) The final column of the diagnostic
                       (0-indexed)
-      • {severity}?   (`vim.diagnostic.Severity`) The severity of the
+      • {severity}    (`vim.diagnostic.Severity`) The severity of the
                       diagnostic |vim.diagnostic.severity|
+      • {namespace}?  (`integer`)
+
+*vim.Diagnostic.Set*
+    Diagnostics use the same indexing as the rest of the Nvim API (i.e.
+    0-based rows and columns). |api-indexing|
+
+    Fields: ~
+      • {lnum}        (`integer`) The starting line of the diagnostic
+                      (0-indexed)
+      • {col}?        (`integer`, default: `0`) The starting column of the
+                      diagnostic (0-indexed)
+      • {end_lnum}?   (`integer`, default: `lnum`) The final line of the
+                      diagnostic (0-indexed)
+      • {end_col}?    (`integer`, default: `col`) The final column of the
+                      diagnostic (0-indexed)
+      • {severity}?   (`vim.diagnostic.Severity`, default: `vim.diagnostic.severity.ERROR`)
+                      The severity of the diagnostic |vim.diagnostic.severity|
       • {message}     (`string`) The diagnostic text
       • {source}?     (`string`) The source of the diagnostic
       • {code}?       (`string|integer`) The diagnostic code
       • {user_data}?  (`any`) arbitrary data plugins can add
-      • {namespace}?  (`integer`)
 
 *vim.diagnostic.GetOpts*
     A table with the following keys:
@@ -420,6 +488,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                       specified line number.
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See
                       |diagnostic-severity|.
+      • {enabled}?    (`boolean`, default: `nil`) Limit diagnostics to only
+                      enabled or disabled. If nil, enablement is ignored. See
+                      |vim.diagnostic.enable()|
 
 *vim.diagnostic.JumpOpts*
     Extends: |vim.diagnostic.GetOpts|
@@ -445,13 +516,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                        file or not. Similar to 'wrapscan'.
       • {severity}?    (`vim.diagnostic.SeverityFilter`) See
                        |diagnostic-severity|.
-      • {float}?       (`boolean|vim.diagnostic.Opts.Float`, default: `false`)
-                       If `true`, call |vim.diagnostic.open_float()| after
-                       moving. If a table, pass the table as the {opts}
-                       parameter to |vim.diagnostic.open_float()|. Unless
-                       overridden, the float will show diagnostics at the new
-                       cursor position (as if "cursor" were passed to the
-                       "scope" option).
+      • {on_jump}?     (`fun(diagnostic:vim.Diagnostic?, bufnr:integer)`)
+                       Optional callback invoked with the diagnostic that was
+                       jumped to.
       • {winid}?       (`integer`, default: `0`) Window ID
 
 *vim.diagnostic.NS*
@@ -505,7 +572,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Fields: ~
       • {bufnr}?          (`integer`, default: current buffer) Buffer number
                           to show diagnostics from.
-      • {namespace}?      (`integer`) Limit diagnostics to the given namespace
+      • {namespace}?      (`integer|integer[]`) Limit diagnostics to the given
+                          namespace(s).
       • {scope}?          (`'line'|'buffer'|'cursor'|'c'|'l'|'b'`, default:
                           `line`) Show diagnostics from the whole buffer
                           (`buffer"`, the current cursor line (`line`), or the
@@ -558,13 +626,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           diagnostic instead of prepending it. Overrides the
                           setting from |vim.diagnostic.config()|.
       • {focus_id}?       (`string`)
-      • {border}?         (`string`) see |nvim_open_win()|.
+      • {border}?         (`string|string[]`) see |nvim_open_win()|.
 
 *vim.diagnostic.Opts.Jump*
 
     Fields: ~
-      • {float}?     (`boolean|vim.diagnostic.Opts.Float`, default: false)
-                     Default value of the {float} parameter of
+      • {on_jump}?   (`fun(diagnostic:vim.Diagnostic?, bufnr:integer)`)
+                     Default value of the {on_jump} parameter of
                      |vim.diagnostic.jump()|.
       • {wrap}?      (`boolean`, default: true) Default value of the {wrap}
                      parameter of |vim.diagnostic.jump()|.
@@ -624,8 +692,12 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}?           (`vim.diagnostic.SeverityFilter`) Only show
                               virtual text for diagnostics matching the given
                               severity |diagnostic-severity|
-      • {current_line}?       (`boolean`) Only show diagnostics for the
-                              current line. (default `false`)
+      • {current_line}?       (`boolean`) Show or hide diagnostics based on
+                              the current cursor line. If `true`, only
+                              diagnostics on the current cursor line are
+                              shown. If `false`, all diagnostics are shown
+                              except on the current cursor line. If `nil`, all
+                              diagnostics are shown. (default `nil`)
       • {source}?             (`boolean|"if_many"`) Include the diagnostic
                               source in virtual text. Use `'if_many'` to only
                               show sources if there is more than one
@@ -884,7 +956,7 @@ set({namespace}, {bufnr}, {diagnostics}, {opts})        *vim.diagnostic.set()*
     Parameters: ~
       • {namespace}    (`integer`) The diagnostic namespace
       • {bufnr}        (`integer`) Buffer number
-      • {diagnostics}  (`vim.Diagnostic[]`) See |vim.Diagnostic|.
+      • {diagnostics}  (`vim.Diagnostic.Set[]`) See |vim.Diagnostic.Set|.
       • {opts}         (`vim.diagnostic.Opts?`) Display options to pass to
                        |vim.diagnostic.show()|. See |vim.diagnostic.Opts|.
 
@@ -893,8 +965,8 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
 
     Parameters: ~
       • {opts}  (`table?`) Configuration table with the following keys:
-                • {namespace}? (`integer`) Only add diagnostics from the given
-                  namespace.
+                • {namespace}? (`integer[]|integer`) Only add diagnostics from
+                  the given namespace(s).
                 • {winnr}? (`integer`, default: `0`) Window number to set
                   location list for.
                 • {open}? (`boolean`, default: `true`) Open the location list
@@ -903,14 +975,19 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
                   "Diagnostics".
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
+                • {format}? (`fun(diagnostic:vim.Diagnostic): string?`) A
+                  function that takes a diagnostic as input and returns a
+                  string or nil. If the return value is nil, the diagnostic is
+                  not displayed in the location list. Else the output text is
+                  used to display the diagnostic.
 
 setqflist({opts})                                 *vim.diagnostic.setqflist()*
     Add all diagnostics to the quickfix list.
 
     Parameters: ~
       • {opts}  (`table?`) Configuration table with the following keys:
-                • {namespace}? (`integer`) Only add diagnostics from the given
-                  namespace.
+                • {namespace}? (`integer[]|integer`) Only add diagnostics from
+                  the given namespace(s).
                 • {open}? (`boolean`, default: `true`) Open quickfix list
                   after setting.
                 • {title}? (`string`) Title of quickfix list. Defaults to
@@ -918,6 +995,11 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                   title, it's updated. If not, a new quickfix list is created.
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
+                • {format}? (`fun(diagnostic:vim.Diagnostic): string?`) A
+                  function that takes a diagnostic as input and returns a
+                  string or nil. If the return value is nil, the diagnostic is
+                  not displayed in the quickfix list. Else the output text is
+                  used to display the diagnostic.
 
                                                        *vim.diagnostic.show()*
 show({namespace}, {bufnr}, {diagnostics}, {opts})
@@ -936,6 +1018,23 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
                        {namespace} or {bufnr} is nil. See |vim.Diagnostic|.
       • {opts}         (`vim.diagnostic.Opts?`) Display options. See
                        |vim.diagnostic.Opts|.
+
+status({bufnr})                                      *vim.diagnostic.status()*
+    Returns formatted string with diagnostics for the current buffer. The
+    severities with 0 diagnostics are left out. Example `E:2 W:3 I:4 H:5`
+
+    To customise appearance, set diagnostic signs text with >lua
+        vim.diagnostic.config({
+          signs = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
+        })
+<
+
+    Parameters: ~
+      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Defaults
+                 to 0 for the current buffer
+
+    Return: ~
+        (`string`)
 
 toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
     Convert a list of diagnostics to a list of quickfix items that can be

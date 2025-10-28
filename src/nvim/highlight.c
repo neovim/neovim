@@ -32,9 +32,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight.c.generated.h"
-#endif
+#include "highlight.c.generated.h"
 
 static bool hlstate_active = false;
 
@@ -327,16 +325,16 @@ int hl_get_ui_attr(int ns_id, int idx, int final_id, bool optional)
 
 /// Apply 'winblend' to highlight attributes.
 ///
-/// @param wp    The window to get 'winblend' value from.
+/// @param winbl The 'winblend' value.
 /// @param attr  The original attribute code.
 ///
 /// @return      The attribute code with 'winblend' applied.
-int hl_apply_winblend(win_T *wp, int attr)
+int hl_apply_winblend(int winbl, int attr)
 {
   HlEntry entry = attr_entry(attr);
   // if blend= attribute is not set, 'winblend' value overrides it.
-  if (entry.attr.hl_blend == -1 && wp->w_p_winbl > 0) {
-    entry.attr.hl_blend = (int)wp->w_p_winbl;
+  if (entry.attr.hl_blend == -1 && winbl > 0) {
+    entry.attr.hl_blend = winbl;
     attr = get_attr_entry(entry);
   }
   return attr;
@@ -381,7 +379,7 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp->w_floating) {
-    wp->w_hl_attr_normal = hl_apply_winblend(wp, wp->w_hl_attr_normal);
+    wp->w_hl_attr_normal = hl_apply_winblend((int)wp->w_p_winbl, wp->w_hl_attr_normal);
   }
 
   wp->w_config.shadow = false;
@@ -392,7 +390,7 @@ void update_window_hl(win_T *wp, bool invalid)
         attr = hl_get_ui_attr(ns_id, HLF_BORDER,
                               wp->w_config.border_hl_ids[i], false);
       }
-      attr = hl_apply_winblend(wp, attr);
+      attr = hl_apply_winblend((int)wp->w_p_winbl, attr);
       if (syn_attr2entry(attr).hl_blend > 0) {
         wp->w_config.shadow = true;
       }
@@ -413,7 +411,7 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp->w_floating) {
-    wp->w_hl_attr_normalnc = hl_apply_winblend(wp, wp->w_hl_attr_normalnc);
+    wp->w_hl_attr_normalnc = hl_apply_winblend((int)wp->w_p_winbl, wp->w_hl_attr_normalnc);
   }
 }
 
@@ -666,9 +664,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
 ///
 /// If colors are unset, use builtin default colors. Never returns -1
 /// Cterm colors are unchanged.
-static HlAttrs get_colors_force(int attr)
+static HlAttrs get_colors_force(HlAttrs attrs)
 {
-  HlAttrs attrs = syn_attr2entry(attr);
   if (attrs.rgb_bg_color == -1) {
     attrs.rgb_bg_color = normal_bg;
   }
@@ -699,11 +696,13 @@ static HlAttrs get_colors_force(int attr)
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  // Cannot blend uninitialized cells, use front_attr for uninitialized background cells.
   if (front_attr < 0 || back_attr < 0) {
-    return -1;
+    return front_attr;
   }
 
-  HlAttrs fattrs = get_colors_force(front_attr);
+  HlAttrs fattrs_raw = syn_attr2entry(front_attr);
+  HlAttrs fattrs = get_colors_force(fattrs_raw);
   int ratio = fattrs.hl_blend;
   if (ratio <= 0) {
     *through = false;
@@ -719,16 +718,16 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     return id;
   }
 
-  HlAttrs battrs = get_colors_force(back_attr);
+  HlAttrs battrs_raw = syn_attr2entry(back_attr);
+  HlAttrs battrs = get_colors_force(battrs_raw);
   HlAttrs cattrs;
 
   if (*through) {
     cattrs = battrs;
-    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
-                                    fattrs.rgb_bg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
-                                      fattrs.rgb_bg_color);
+    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color, fattrs.rgb_bg_color);
+    // Only apply special colors when the foreground attribute has an underline or undercurl.
+    if (fattrs_raw.rgb_ae_attr & (HL_UNDERLINE | HL_UNDERCURL)) {
+      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color, fattrs.rgb_bg_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
@@ -739,25 +738,28 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   } else {
     cattrs = fattrs;
-    if (ratio >= 50) {
-      cattrs.rgb_ae_attr = hl_combine_ae(battrs.rgb_ae_attr, cattrs.rgb_ae_attr);
-    }
-    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
-                                    fattrs.rgb_fg_color);
+    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color, fattrs.rgb_fg_color);
     if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
-                                      fattrs.rgb_sp_color);
+      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color, fattrs.rgb_sp_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
 
     cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
   }
-  cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
-                                  fattrs.rgb_bg_color);
 
+  // Check if we should preserve background transparency
+  // Special case for blend=100: preserve back layer background exactly (including bg=NONE)
+  if (ratio == 100 && battrs_raw.rgb_bg_color == -1) {
+    // For 100% blend with transparent background, preserve the transparency
+    cattrs.rgb_bg_color = -1;
+  } else {
+    // Use the raw attributes (before forcing colors) to check original transparency
+    cattrs.rgb_bg_color = (battrs_raw.rgb_bg_color == -1) && (fattrs_raw.rgb_bg_color == -1)
+                          ? -1
+                          : rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
+  }
   cattrs.hl_blend = -1;  // blend property was consumed
-
   HlKind kind = *through ? kHlBlendThrough : kHlBlend;
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
                                  .id1 = back_attr, .id2 = front_attr });

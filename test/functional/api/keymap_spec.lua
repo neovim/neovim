@@ -316,7 +316,11 @@ describe('nvim_get_keymap', function()
     }
     local function cpomap(lhs, rhs, mode)
       local ret = shallowcopy(cpo_table)
+      local lhsraw = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<*')))
+      local lhsrawalt = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<')))
       ret.lhs = lhs
+      ret.lhsraw = lhsraw
+      ret.lhsrawalt = lhsrawalt ~= lhsraw and lhsrawalt or nil
       ret.rhs = rhs
       ret.mode = mode
       ret.mode_bits = mode_bits_map[mode]
@@ -339,16 +343,6 @@ describe('nvim_get_keymap', function()
     command('onoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
     command('onoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
-    -- wrapper around get_keymap() that drops "lhsraw" and "lhsrawalt" which are hard to check
-    local function get_keymap_noraw(...)
-      local ret = api.nvim_get_keymap(...)
-      for _, item in ipairs(ret) do
-        item.lhsraw = nil
-        item.lhsrawalt = nil
-      end
-      return ret
-    end
-
     for _, cmd in ipairs({
       'set cpo-=B',
       'set cpo+=B',
@@ -357,19 +351,19 @@ describe('nvim_get_keymap', function()
       eq({
         cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
         cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n'),
-      }, get_keymap_noraw('n'))
+      }, api.nvim_get_keymap('n'))
       eq({
         cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
         cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'x'),
-      }, get_keymap_noraw('x'))
+      }, api.nvim_get_keymap('x'))
       eq({
         cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
         cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's'),
-      }, get_keymap_noraw('s'))
+      }, api.nvim_get_keymap('s'))
       eq({
         cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
         cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 'o'),
-      }, get_keymap_noraw('o'))
+      }, api.nvim_get_keymap('o'))
     end
   end)
 

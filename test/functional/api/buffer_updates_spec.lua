@@ -57,7 +57,6 @@ local function editoriginal(activate, lines)
     lines = origlines
   end
   -- load up the file with the correct contents
-  clear()
   return open(activate, lines)
 end
 
@@ -507,8 +506,6 @@ describe('API: buffer events:', function()
   end)
 
   it('can notify several channels at once', function()
-    clear()
-
     -- create several new sessions, in addition to our main API
     local sessions = {}
     local pipe = n.new_pipename()
@@ -781,8 +778,6 @@ describe('API: buffer events:', function()
   end)
 
   it('detaches if the buffer is unloaded/deleted/wiped', function()
-    -- start with a blank nvim
-    clear()
     -- need to make a new window with a buffer because :bunload doesn't let you
     -- unload the last buffer
     for _, cmd in ipairs({ 'bunload', 'bdelete', 'bwipeout' }) do
@@ -798,20 +793,17 @@ describe('API: buffer events:', function()
   end)
 
   it('does not send the buffer content if not requested', function()
-    clear()
     local b, tick = editoriginal(false)
     ok(api.nvim_buf_attach(b, false, {}))
     expectn('nvim_buf_changedtick_event', { b, tick })
   end)
 
   it('returns a proper error on nonempty options dict', function()
-    clear()
     local b = editoriginal(false)
     eq("Invalid key: 'builtin'", pcall_err(api.nvim_buf_attach, b, false, { builtin = 'asfd' }))
   end)
 
   it('nvim_buf_attach returns response after delay #8634', function()
-    clear()
     sleep(250)
     -- response
     eq(true, n.request('nvim_buf_attach', 0, false, {}))
@@ -824,6 +816,20 @@ describe('API: buffer events:', function()
         [2] = 2,
       },
     }, next_msg())
+  end)
+
+  it('when updating quickfix list #34610', function()
+    command('copen')
+
+    local b = api.nvim_get_current_buf()
+    ok(api.nvim_buf_attach(b, true, {}))
+    expectn('nvim_buf_lines_event', { b, 2, 0, -1, { '' }, false })
+
+    command("cexpr ['Xa', 'Xb']")
+    expectn('nvim_buf_lines_event', { b, 3, 0, 1, { '|| Xa', '|| Xb' }, false })
+
+    command("caddexpr ['Xc']")
+    expectn('nvim_buf_lines_event', { b, 4, 2, 2, { '|| Xc' }, false })
   end)
 end)
 

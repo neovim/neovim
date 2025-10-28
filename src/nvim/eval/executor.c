@@ -13,12 +13,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/executor.c.generated.h"
-#endif
-
-char *e_list_index_out_of_range_nr
-  = N_("E684: List index out of range: %" PRId64);
+#include "eval/executor.c.generated.h"
 
 /// Handle "blob1 += blob2".
 /// Returns OK or FAIL.

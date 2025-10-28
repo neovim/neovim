@@ -69,9 +69,7 @@ typedef enum {
   kDict2ListItems,   ///< List dictionary contents: [keys, values].
 } DictListType;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/typval.c.generated.h"
-#endif
+#include "eval/typval.c.generated.h"
 
 static const char e_variable_nested_too_deep_for_unlock[]
   = N_("E743: Variable nested too deep for (un)lock");
@@ -190,7 +188,7 @@ void tv_list_watch_remove(list_T *const l, listwatch_T *const lwrem)
 ///
 /// @param[out]  l  List from which item is removed.
 /// @param[in]  item  List item being removed.
-void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
+static void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
   for (listwatch_T *lw = l->lv_watch; lw != NULL; lw = lw->lw_next) {
@@ -2263,29 +2261,25 @@ int tv_dict_get_tv(dict_T *d, const char *const key, typval_T *rettv)
   return OK;
 }
 
-/// Get a number item from a dictionary
-///
-/// Returns 0 if the entry does not exist.
+/// Gets a number item from a dictionary.
 ///
 /// @param[in]  d  Dictionary to get item from.
 /// @param[in]  key  Key to find in dictionary.
 ///
-/// @return Dictionary item.
+/// @return Number value, or 0 if the item does not exist.
 varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return tv_dict_get_number_def(d, key, 0);
 }
 
-/// Get a number item from a dictionary.
-///
-/// Returns "def" if the entry doesn't exist.
+/// Gets a number item from a dictionary, or a given default value.
 ///
 /// @param[in]  d  Dictionary to get item from.
 /// @param[in]  key  Key to find in dictionary.
 /// @param[in]  def  Default value.
 ///
-/// @return Dictionary item.
+/// @return Number value, or `def` value if the item does not exist.
 varnumber_T tv_dict_get_number_def(const dict_T *const d, const char *const key, const int def)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2433,7 +2427,7 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
 /// If the name is wrong give an error message and return true.
 int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
 {
-  return (d == &globvardict || &d->dv_hashtab == get_funccal_local_ht())
+  return (d == get_globvar_dict() || &d->dv_hashtab == get_funccal_local_ht())
          && tv_is_func(*tv)
          && var_wrong_func_name(name, true);
 }
@@ -3347,7 +3341,7 @@ void tv_dict_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 ///
 /// @param[out]  ret_tv  Structure where blob is saved.
 blob_T *tv_blob_alloc_ret(typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   blob_T *const b = tv_blob_alloc();
   tv_blob_set_ret(ret_tv, b);

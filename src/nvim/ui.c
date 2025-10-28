@@ -48,9 +48,7 @@ typedef struct {
   bool ext_widgets[kUIGlobalCount];
 } UIEventCallback;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui.c.generated.h"
-#endif
+#include "ui.c.generated.h"
 
 #define MAX_UI_COUNT 16
 
@@ -118,9 +116,7 @@ static void ui_log(const char *funname)
     } \
   } while (0)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events_call.generated.h"
-#endif
+#include "ui_events_call.generated.h"
 
 void ui_init(void)
 {
@@ -544,7 +540,7 @@ void ui_flush(void)
 
   cmdline_ui_flush();
 
-  if (State != MODE_CMDLINE && curwin->w_floating && curwin->w_config.hide) {
+  if (!(State & MODE_CMDLINE) && curwin->w_floating && curwin->w_config.hide) {
     if (!was_busy) {
       ui_call_busy_start();
       was_busy = true;
@@ -561,8 +557,11 @@ void ui_flush(void)
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
-    // The cursor move might change the composition order, so flush again to update the windows that
-    // changed
+    // The cursor move might change the composition order,
+    // so flush again to update the windows that changed
+    // TODO(bfredl): refactor the flow of information so that win_ui_flush()
+    // only is called once. (as order state is exposed, it should be owned
+    // by nvim core, not the compositor)
     win_ui_flush(false);
   }
   if (pending_mode_info_update) {
@@ -610,8 +609,8 @@ void ui_check_mouse(void)
     checkfor = MOUSE_INSERT;
   } else if (State & MODE_CMDLINE) {
     checkfor = MOUSE_COMMAND;
-  } else if (State == MODE_CONFIRM || State == MODE_EXTERNCMD) {
-    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
+  } else if (State == MODE_EXTERNCMD) {
+    checkfor = ' ';  // don't use mouse for ":!cmd"
   }
 
   // mouse should be active if at least one of the following is true:
@@ -721,8 +720,8 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
 
   if (wp->w_floating) {
     if (width != wp->w_width || height != wp->w_height) {
-      wp->w_config.width = width;
-      wp->w_config.height = height;
+      wp->w_config.width = MAX(width, 1);
+      wp->w_config.height = MAX(height, 1);
       win_config_float(wp, wp->w_config);
     }
   } else {
@@ -745,20 +744,15 @@ void ui_call_event(char *name, bool fast, Array args)
   bool handled = false;
   UIEventCallback *event_cb;
 
-  // Return prompt is still a non-fast event, other prompt messages are
-  // followed by a "cmdline_show" event.
-  if (strcmp(name, "msg_show") == 0) {
-    fast = !strequal(args.items[0].data.string.data, "return_prompt");
-  }
+  // UI callbacks need to be allowed to change text.
+  int save_textlock = textlock;
+  textlock = 0;
 
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;
     Object res = nlua_call_ref_ctx(fast, event_cb->cb, name, args, kRetNilBool, NULL, &err);
     ui_event_ns_id = 0;
-    // TODO(bfredl/luukvbaal): should this be documented or reconsidered?
-    // Why does truthy return from Lua callback mean remote UI should not receive
-    // the event.
     if (LUARET_TRUTHY(res)) {
       handled = true;
     }
@@ -768,6 +762,7 @@ void ui_call_event(char *name, bool fast, Array args)
     }
     api_clear_error(&err);
   })
+  textlock = save_textlock;
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);

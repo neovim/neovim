@@ -26,6 +26,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -99,9 +100,7 @@ typedef struct {
 typedef kvec_t(SearchPathItem) RuntimeSearchPath;
 typedef kvec_t(char *) CharVec;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "runtime.c.generated.h"
-#endif
+#include "runtime.c.generated.h"
 
 garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
 garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
@@ -1351,41 +1350,46 @@ static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext,
 {
   // TODO(bfredl): this is bullshit, expandpath should not reinvent path logic.
   for (int i = 0; dirnames[i] != NULL; i++) {
-    const size_t buf_len = strlen(dirnames[i]) + pat_len + 31;
-    char *const buf = xmalloc(buf_len);
-    char *const tail = buf + 15;
-    const size_t tail_buflen = buf_len - 15;
+    const size_t buf_len = strlen(dirnames[i]) + pat_len + 64;
+    char *buf = xmalloc(buf_len);
     int glob_flags = 0;
     bool expand_dirs = false;
-
-    if (*dirnames[i] == NUL) {  // empty dir used for :runtime
-      snprintf(tail, tail_buflen, "%s*.{vim,lua}", pat);
-    } else {
-      snprintf(tail, tail_buflen, "%s/%s*.{vim,lua}", dirnames[i], pat);
-    }
+    // Build base pattern
+    snprintf(buf, buf_len, "%s%s%s%s", *dirnames[i] ? dirnames[i] : "", *dirnames[i] ? "/" : "",
+             pat, "*.{vim,lua}");
 
 expand:
     if ((flags & DIP_NORTP) == 0) {
-      globpath(p_rtp, tail, gap, glob_flags, expand_dirs);
+      globpath(p_rtp, buf, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_START) {
-      memcpy(tail - 15, "pack/*/start/*/", 15);  // NOLINT
-      globpath(p_pp, tail - 15, gap, glob_flags, expand_dirs);
-      memcpy(tail - 8, "start/*/", 8);  // NOLINT
-      globpath(p_pp, tail - 8, gap, glob_flags, expand_dirs);
+      // pack/*/start/*/ patterns
+      snprintf(buf, buf_len, "pack/*/start/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
+
+      // start/*/ patterns
+      snprintf(buf, buf_len, "start/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_OPT) {
-      memcpy(tail - 13, "pack/*/opt/*/", 13);  // NOLINT
-      globpath(p_pp, tail - 13, gap, glob_flags, expand_dirs);
-      memcpy(tail - 6, "opt/*/", 6);  // NOLINT
-      globpath(p_pp, tail - 6, gap, glob_flags, expand_dirs);
+      // pack/*/opt/*/ patterns
+      snprintf(buf, buf_len, "pack/*/opt/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
+
+      // opt/*/ patterns
+      snprintf(buf, buf_len, "opt/*/%s%s%s%s", *dirnames[i] ? dirnames[i] : "",  // NOLINT
+               *dirnames[i] ? "/" : "", pat, expand_dirs ? "*" : "*.{vim,lua}");
+      globpath(p_pp, buf, gap, glob_flags, expand_dirs);
     }
 
+    // Second round for directories
     if (*dirnames[i] == NUL && !expand_dirs) {
-      // expand dir names in another round
-      snprintf(tail, tail_buflen, "%s*", pat);
+      snprintf(buf, buf_len, "%s*", pat);
       glob_flags = WILD_ADD_SLASH;
       expand_dirs = true;
       goto expand;
@@ -1989,14 +1993,19 @@ static char *do_source_buffer_init(source_cookie_T *sp, const exarg_T *eap, bool
     return NULL;
   }
 
-  if (ex_lua) {
-    // Use ":{range}lua buffer=<num>" as the script name
-    snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+  char *fname;
+  if (curbuf->b_ffname != NULL) {
+    fname = xstrdup(curbuf->b_ffname);
   } else {
-    // Use ":source buffer=<num>" as the script name
-    snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+    if (ex_lua) {
+      // Use ":{range}lua buffer=<num>" as the script name
+      snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+    } else {
+      // Use ":source buffer=<num>" as the script name
+      snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+    }
+    fname = xstrdup(IObuff);
   }
-  char *fname = xstrdup(IObuff);
 
   ga_init(&sp->buflines, sizeof(char *), 100);
   // Copy the lines from the buffer into a grow array

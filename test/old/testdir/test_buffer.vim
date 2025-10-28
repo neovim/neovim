@@ -169,6 +169,17 @@ func Test_bnext_bprev_help()
   b XHelp1
   blast   | call assert_equal(b4, bufnr())
 
+  " Cycling through help buffers works even if they aren't listed.
+  b XHelp1
+  setlocal nobuflisted
+  bnext | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  setlocal nobuflisted
+  bprev | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+
   %bwipe!
 endfunc
 
@@ -561,6 +572,68 @@ func Test_buflist_alloc_failure()
   " test for quickfix command loading a buffer
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
   call assert_fails('cexpr "XallocFail6:10:Line10"', 'E342:')
+endfunc
+
+func Test_closed_buffer_still_in_window()
+  %bw!
+
+  let s:w = win_getid()
+  new
+  let s:b = bufnr()
+  setl bufhidden=wipe
+
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufUnload * ++once call assert_fails(
+          \ 'call win_execute(s:w, "' .. s:b .. 'b")', 'E1546:')
+  augroup END
+  quit!
+  " Previously resulted in s:b being curbuf while unloaded (no memfile).
+  call assert_equal(1, bufloaded(bufnr()))
+  call assert_equal(0, bufexists(s:b))
+
+  let s:w = win_getid()
+  split
+  new
+  let s:b = bufnr()
+
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufWipeout * ++once call win_gotoid(s:w)
+          \| call assert_fails(s:b .. 'b', 'E1546:') | wincmd p
+  augroup END
+  bw! " Close only this buffer first; used to be a heap UAF.
+
+  unlet! s:w s:b
+  autocmd! ViewClosedBuffer
+  %bw!
+endfunc
+
+" Cursor position should be restored when switching to a buffer previously
+" viewed in a window, regardless of whether it's visible in another one.
+func Test_switch_to_previously_viewed_buffer()
+  set nostartofline
+  new Xviewbuf
+  call setline(1, range(1, 200))
+  let oldwin = win_getid()
+  vsplit
+
+  call cursor(100, 3)
+  edit Xotherbuf
+  buffer Xviewbuf
+  call assert_equal([0, 100, 3, 0], getpos('.'))
+
+  exe win_id2win(oldwin) .. 'close'
+  setlocal bufhidden=hide
+
+  call cursor(200, 3)
+  edit Xotherbuf
+  buffer Xviewbuf
+  call assert_equal([0, 200, 3, 0], getpos('.'))
+
+  bwipe! Xotherbuf
+  bwipe! Xviewbuf
+  set startofline&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

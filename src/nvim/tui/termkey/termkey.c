@@ -21,9 +21,7 @@
 # include <io.h>
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/termkey.c.generated.h"
-#endif
+#include "tui/termkey/termkey.c.generated.h"
 
 #ifdef _MSC_VER
 # define strcaseeq(a, b) (_stricmp(a, b) == 0)
@@ -182,6 +180,9 @@ static void print_key(TermKey *tk, TermKeyKey *key)
   case TERMKEY_TYPE_OSC:
     fprintf(stderr, "Operating System Control");
     break;
+  case TERMKEY_TYPE_APC:
+    fprintf(stderr, "Application Program Command");
+    break;
   case TERMKEY_TYPE_UNKNOWN_CSI:
     fprintf(stderr, "unknown CSI\n");
     break;
@@ -231,7 +232,8 @@ TermKeyResult termkey_interpret_string(TermKey *tk, const TermKeyKey *key, const
   }
 
   if (key->type != TERMKEY_TYPE_DCS
-      && key->type != TERMKEY_TYPE_OSC) {
+      && key->type != TERMKEY_TYPE_OSC
+      && key->type != TERMKEY_TYPE_APC) {
     return TERMKEY_RES_NONE;
   }
 
@@ -719,7 +721,7 @@ static void emit_codepoint(TermKey *tk, int codepoint, TermKeyKey *key)
     key->type = TERMKEY_TYPE_KEYSYM;
     key->code.sym = TERMKEY_SYM_SPACE;
     key->modifiers = TERMKEY_KEYMOD_CTRL;
-  } else if (codepoint < 0x20) {
+  } else if (codepoint < 0x20 && !(tk->flags & TERMKEY_FLAG_KEEPC0)) {
     // C0 range
     key->code.codepoint = 0;
     key->modifiers = 0;
@@ -750,7 +752,7 @@ static void emit_codepoint(TermKey *tk, int codepoint, TermKeyKey *key)
     key->type = TERMKEY_TYPE_KEYSYM;
     key->code.sym = TERMKEY_SYM_DEL;
     key->modifiers = 0;
-  } else if (codepoint >= 0x20 && codepoint < 0x80) {
+  } else if (codepoint > 0 && codepoint < 0x80) {
     // ASCII lowbyte range
     key->type = TERMKEY_TYPE_UNICODE;
     key->code.codepoint = codepoint;
@@ -1269,6 +1271,9 @@ size_t termkey_strfkey(TermKey *tk, char *buffer, size_t len, TermKeyKey *key, T
     break;
   case TERMKEY_TYPE_OSC:
     l = (size_t)snprintf(buffer + pos, len - pos, "OSC");
+    break;
+  case TERMKEY_TYPE_APC:
+    l = (size_t)snprintf(buffer + pos, len - pos, "APC");
     break;
   case TERMKEY_TYPE_UNKNOWN_CSI:
     l = (size_t)snprintf(buffer + pos, len - pos, "CSI %c", key->code.number & 0xff);

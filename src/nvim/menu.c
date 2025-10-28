@@ -14,9 +14,9 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
@@ -46,9 +46,7 @@
 
 #define MENUDEPTH   10          // maximum depth of menus
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "menu.c.generated.h"
-#endif
+#include "menu.c.generated.h"
 
 /// The character for each menu mode
 static char *menu_mode_chars[] = { "n", "v", "s", "o", "i", "c", "tl", "t" };
@@ -708,9 +706,12 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 /// @return false if could not find path_name
 bool menu_get(char *const path_name, int modes, list_T *list)
 {
-  vimmenu_T *menu = find_menu(*get_root_menu(path_name), path_name, modes);
-  if (!menu) {
-    return false;
+  vimmenu_T *menu = *get_root_menu(path_name);
+  if (*path_name != NUL) {
+    menu = find_menu(menu, path_name, modes);
+    if (!menu) {
+      return false;
+    }
   }
   for (; menu != NULL; menu = menu->next) {
     dict_T *d = menu_get_recursive(menu, modes);
@@ -726,13 +727,15 @@ bool menu_get(char *const path_name, int modes, list_T *list)
   return true;
 }
 
-/// Find menu matching `name` and `modes`.
+/// Find menu matching `name` and `modes`. Does not handle empty `name`.
 ///
 /// @param menu top menu to start looking from
 /// @param name path towards the menu
-/// @return menu if \p name is null, found menu or NULL
+/// @return found menu or NULL
 static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
 {
+  assert(*name);
+
   while (*name) {
     // find the end of one dot-separated name and put a NUL at the dot
     char *p = menu_name_skip(name);
@@ -759,31 +762,29 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
     }
     // Found a match, search the sub-menu.
     name = p;
+    assert(*name);
     menu = menu->children;
   }
-  return menu;
+
+  abort();
 }
 
 /// Show the mapping associated with a menu item or hierarchy in a sub-menu.
 static int show_menus(char *const path_name, int modes)
 {
-  vimmenu_T *menu = *get_root_menu(path_name);
-  if (menu != NULL) {
+  vimmenu_T *menu = NULL;
+  if (*path_name != NUL) {
     // First, find the (sub)menu with the given name
-    menu = find_menu(menu, path_name, modes);
+    menu = find_menu(*get_root_menu(path_name), path_name, modes);
     if (menu == NULL) {
       return FAIL;
     }
   }
-  // When there are no menus at all, the title still needs to be shown.
 
-  // Now we have found the matching menu, and we list the mappings
-  // Highlight title
+  // Now we have found the matching menu, and we list the mappings.
   msg_puts_title(_("\n--- Menus ---"));
+  show_menus_recursive(menu, modes, 0);
 
-  if (menu != NULL) {
-    show_menus_recursive(menu->parent, modes, 0);
-  }
   return OK;
 }
 
@@ -1087,7 +1088,7 @@ char *get_menu_names(expand_T *xp, int idx)
 ///
 /// @param name may be modified.
 /// @return start of the next element
-char *menu_name_skip(char *const name)
+static char *menu_name_skip(char *const name)
 {
   char *p;
 

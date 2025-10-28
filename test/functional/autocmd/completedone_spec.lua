@@ -13,7 +13,6 @@ describe('CompleteDone', function()
 
   describe('sets v:event.reason', function()
     before_each(function()
-      clear()
       command('autocmd CompleteDone * let g:donereason = v:event.reason')
       feed('i')
       call('complete', call('col', '.'), { 'foo', 'bar' })

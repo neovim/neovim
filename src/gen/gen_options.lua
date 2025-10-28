@@ -1,5 +1,7 @@
+local options_input_file = arg[5]
+
 --- @module 'nvim.options'
-local options = require('nvim.options')
+local options = loadfile(options_input_file)()
 local options_meta = options.options
 local cstr = options.cstr
 local valid_scopes = options.valid_scopes

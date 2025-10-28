@@ -27,9 +27,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cursor.c.generated.h"
-#endif
+#include "cursor.c.generated.h"
 
 /// @return  the screen position of the cursor.
 int getviscol(void)
@@ -64,8 +62,7 @@ int coladvance_force(colnr_T wcol)
     curwin->w_valid &= ~VALID_VIRTCOL;
   } else {
     // Virtcol is valid
-    curwin->w_valid |= VALID_VIRTCOL;
-    curwin->w_virtcol = wcol;
+    set_valid_virtcol(curwin, wcol);
   }
   return rc;
 }
@@ -85,8 +82,7 @@ int coladvance(win_T *wp, colnr_T wcol)
     wp->w_valid &= ~VALID_VIRTCOL;
   } else if (*(ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) + wp->w_cursor.col) != TAB) {
     // Virtcol is valid when not on a TAB
-    wp->w_valid |= VALID_VIRTCOL;
-    wp->w_virtcol = wcol;
+    set_valid_virtcol(curwin, wcol);
   }
   return rc;
 }
@@ -122,12 +118,12 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
       }
     }
   } else {
-    int width = wp->w_width_inner - win_col_off(wp);
+    int width = wp->w_view_width - win_col_off(wp);
     int csize = 0;
 
     if (finetune
         && wp->w_p_wrap
-        && wp->w_width_inner != 0
+        && wp->w_view_width != 0
         && wcol >= (colnr_T)width
         && width > 0) {
       csize = linetabsize_eol(wp, pos->lnum);
@@ -233,7 +229,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
       int b = (int)wcol - (int)col;
 
       // The difference between wcol and col is used to set coladd.
-      if (b > 0 && b < (MAXCOL - 2 * wp->w_width_inner)) {
+      if (b > 0 && b < (MAXCOL - 2 * wp->w_view_width)) {
         pos->coladd = b;
       }
 
@@ -437,7 +433,7 @@ bool set_leftcol(colnr_T leftcol)
   changed_cline_bef_curs(curwin);
   // TODO(hinidu): I think it should be colnr_T or int, but p_siso is long.
   // Perhaps we can change p_siso to int.
-  int64_t lastcol = curwin->w_leftcol + curwin->w_width_inner - win_col_off(curwin) - 1;
+  int64_t lastcol = curwin->w_leftcol + curwin->w_view_width - win_col_off(curwin) - 1;
   validate_virtcol(curwin);
 
   bool retval = false;
@@ -478,6 +474,19 @@ bool set_leftcol(colnr_T leftcol)
 int gchar_cursor(void)
 {
   return utf_ptr2char(get_cursor_pos_ptr());
+}
+
+/// Return the character immediately before the cursor.
+int char_before_cursor(void)
+{
+  if (curwin->w_cursor.col == 0) {
+    return -1;
+  }
+
+  char *line = get_cursor_line_ptr();
+  char *p = line + curwin->w_cursor.col;
+  int prev_len = utf_head_off(line, p - 1) + 1;
+  return utf_ptr2char(p - prev_len);
 }
 
 /// Write a character at the current cursor position.

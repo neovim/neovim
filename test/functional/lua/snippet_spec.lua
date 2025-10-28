@@ -33,7 +33,6 @@ describe('vim.snippet', function()
       set_snippet_jump(-1, '<S-Tab>')
     end)
   end)
-  after_each(clear)
 
   --- @param snippet string[]
   --- @param expected string[]
@@ -116,6 +115,20 @@ describe('vim.snippet', function()
     test_expand_success({ 'print($UNKNOWN)' }, { 'print(UNKNOWN)' })
   end)
 
+  it('highlights active tabstop with SnippetTabstopActive', function()
+    local function get_extmark_details(col, end_col)
+      return api.nvim_buf_get_extmarks(0, -1, { 0, col }, { 0, end_col }, { details = true })[1][4]
+    end
+
+    test_expand_success({ 'local ${1:name} = ${2:value}' }, { 'local name = value' })
+    eq('SnippetTabstopActive', get_extmark_details(6, 10).hl_group)
+    eq('SnippetTabstop', get_extmark_details(13, 18).hl_group)
+    feed('<Tab>')
+    poke_eventloop()
+    eq('SnippetTabstop', get_extmark_details(6, 10).hl_group)
+    eq('SnippetTabstopActive', get_extmark_details(13, 18).hl_group)
+  end)
+
   it('does not jump outside snippet range', function()
     test_expand_success({ 'function $1($2)', '  $0', 'end' }, { 'function ()', '  ', 'end' })
     eq(false, exec_lua('return vim.snippet.active({ direction = -1 })'))
@@ -161,6 +174,48 @@ describe('vim.snippet', function()
     feed('<Tab><Tab>') -- Jump to $0
     feed('// Inside') -- Insert text
     eq({ 'class Foo() {', '  // Inside', '}' }, buf_lines(0))
+  end)
+
+  it('handles directly adjacent tabstops (ascending order)', function()
+    test_expand_success({ '${1:one}${2:-two}${3:-three}' }, { 'one-two-three' })
+    feed('1')
+    feed('<Tab>')
+    poke_eventloop()
+    feed('2')
+    feed('<Tab>')
+    poke_eventloop()
+    feed('3')
+    feed('<Tab>')
+    poke_eventloop()
+    eq({ '123' }, buf_lines(0))
+  end)
+
+  it('handles directly adjacent tabstops (descending order)', function()
+    test_expand_success({ '${3:three}${2:-two}${1:-one}' }, { 'three-two-one' })
+    feed('1')
+    feed('<Tab>')
+    poke_eventloop()
+    feed('2')
+    feed('<Tab>')
+    poke_eventloop()
+    feed('3')
+    feed('<Tab>')
+    poke_eventloop()
+    eq({ '321' }, buf_lines(0))
+  end)
+
+  it('handles directly adjacent tabstops (mixed order)', function()
+    test_expand_success({ '${3:three}${1:-one}${2:-two}' }, { 'three-one-two' })
+    feed('1')
+    feed('<Tab>')
+    poke_eventloop()
+    feed('2')
+    feed('<Tab>')
+    poke_eventloop()
+    feed('3')
+    feed('<Tab>')
+    poke_eventloop()
+    eq({ '312' }, buf_lines(0))
   end)
 
   it('handles multiline placeholders', function()
@@ -214,6 +269,20 @@ describe('vim.snippet', function()
     eq(false, exec_lua('return vim.snippet.active()'))
   end)
 
+  it('stop session when jumping to $0', function()
+    test_expand_success({ 'local ${1:name} = ${2:value}$0' }, { 'local name = value' })
+    -- Jump to $2
+    feed('<Tab>')
+    poke_eventloop()
+    -- Jump to $0 (stop snippet)
+    feed('<Tab>')
+    poke_eventloop()
+    -- Insert literal \t
+    feed('<Tab>')
+    poke_eventloop()
+    eq({ 'local name = value\t' }, buf_lines(0))
+  end)
+
   it('inserts choice', function()
     test_expand_success({ 'console.${1|assert,log,error|}()' }, { 'console.()' })
     wait_for_pum()
@@ -240,6 +309,23 @@ describe('vim.snippet', function()
     eq({ 'public function foo() {', '\t', '}' }, buf_lines(0))
   end)
 
+  it('does not change the chosen text when jumping back to a choice tabstop', function()
+    test_expand_success(
+      { '${1|public,protected,private|} function ${2:name}() {', '\t$0', '}' },
+      { ' function name() {', '\t', '}' }
+    )
+    wait_for_pum()
+    feed('<C-n><C-y><Tab>')
+    poke_eventloop()
+    feed('<S-Tab>')
+    poke_eventloop()
+    wait_for_pum()
+    feed('<Tab>')
+    poke_eventloop()
+    feed('foo')
+    eq({ 'protected function foo() {', '\t', '}' }, buf_lines(0))
+  end)
+
   it('jumps through adjacent tabstops', function()
     test_expand_success(
       { 'for i=1,${1:to}${2:,step} do\n\t$3\nend' },
@@ -249,7 +335,11 @@ describe('vim.snippet', function()
     feed('<Tab>')
     poke_eventloop()
     feed(',2')
-    eq({ 'for i=1,10,2 do', '\t', 'end' }, buf_lines(0))
+    -- Make sure changes on previous tabstops does not change following ones
+    feed('<S-Tab>')
+    poke_eventloop()
+    feed('20')
+    eq({ 'for i=1,20,2 do', '\t', 'end' }, buf_lines(0))
   end)
 
   it('updates snippet state when built-in completion menu is visible', function()

@@ -110,6 +110,7 @@ typedef enum {
   HLF_PSX,        ///< popup menu selected item "menu" (extra text)
   HLF_PSB,        ///< popup menu scrollbar
   HLF_PST,        ///< popup menu scrollbar thumb
+  HLF_PBR,        ///< popup menu border
   HLF_TP,         ///< tabpage line
   HLF_TPS,        ///< tabpage line selected
   HLF_TPF,        ///< tabpage line filler
@@ -130,6 +131,10 @@ typedef enum {
   HLF_BFOOTER,    ///< Float Border Footer
   HLF_TS,         ///< status line for terminal window
   HLF_TSNC,       ///< status line for non-current terminal window
+  HLF_SE,         ///< stderr messages (from shell)
+  HLF_SO,         ///< stdout messages (from shell)
+  HLF_OK,         ///< OK message
+  HLF_PRE,        ///< "preinsert" in 'completeopt'
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 

@@ -5,6 +5,7 @@ local tt = require('test.functional.testterm')
 
 local clear, eq = n.clear, t.eq
 local feed, testprg = n.feed, n.testprg
+local fn = n.fn
 local eval = n.eval
 local command = n.command
 local poke_eventloop = n.poke_eventloop
@@ -25,6 +26,18 @@ describe(':terminal scrollback', function()
     screen = tt.setup_screen(nil, nil, 30)
   end)
 
+  local function feed_new_lines_and_wait(count)
+    local lines = {}
+    for i = 1, count do
+      table.insert(lines, 'new_line' .. tostring(i))
+    end
+    table.insert(lines, '')
+    feed_data(lines)
+    retry(nil, 1000, function()
+      eq({ 'new_line' .. tostring(count), '' }, api.nvim_buf_get_lines(0, -3, -1, true))
+    end)
+  end
+
   describe('when the limit is exceeded', function()
     before_each(function()
       local lines = {}
@@ -40,7 +53,7 @@ describe(':terminal scrollback', function()
         line29                        |
         line30                        |
         ^                              |
-        {3:-- TERMINAL --}                |
+        {5:-- TERMINAL --}                |
       ]])
     end)
 
@@ -56,6 +69,108 @@ describe(':terminal scrollback', function()
                                       |
       ]])
     end)
+
+    describe('and cursor on non-last row in screen', function()
+      before_each(function()
+        feed([[<C-\><C-N>M$]])
+        fn.setpos("'m", { 0, 13, 4, 0 })
+        local ns = api.nvim_create_namespace('test')
+        api.nvim_buf_set_extmark(0, ns, 12, 0, { end_col = 6, hl_group = 'ErrorMsg' })
+        screen:expect([[
+          line26                        |
+          line27                        |
+          {101:line2^8}                        |
+          line29                        |
+          line30                        |
+                                        |*2
+        ]])
+      end)
+
+      it("when outputting fewer than 'scrollback' lines", function()
+        feed_new_lines_and_wait(6)
+        screen:expect([[
+          line26                        |
+          line27                        |
+          {101:line2^8}                        |
+          line29                        |
+          line30                        |
+          new_line1                     |
+                                        |
+        ]])
+        eq({ 0, 7, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 7, 6, 0 }, fn.getpos('.'))
+      end)
+
+      it("when outputting more than 'scrollback' lines", function()
+        feed_new_lines_and_wait(11)
+        screen:expect([[
+          line27                        |
+          {101:line2^8}                        |
+          line29                        |
+          line30                        |
+          new_line1                     |
+          new_line2                     |
+                                        |
+        ]])
+        eq({ 0, 2, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 2, 6, 0 }, fn.getpos('.'))
+      end)
+
+      it('when outputting more lines than whole buffer', function()
+        feed_new_lines_and_wait(20)
+        screen:expect([[
+          ^new_line6                     |
+          new_line7                     |
+          new_line8                     |
+          new_line9                     |
+          new_line10                    |
+          new_line11                    |
+                                        |
+        ]])
+        eq({ 0, 0, 0, 0 }, fn.getpos("'m"))
+        eq({ 0, 1, 1, 0 }, fn.getpos('.'))
+      end)
+    end)
+
+    describe('and cursor on scrollback row #12651', function()
+      before_each(function()
+        feed([[<C-\><C-N>Hk$]])
+        fn.setpos("'m", { 0, 10, 4, 0 })
+        local ns = api.nvim_create_namespace('test')
+        api.nvim_buf_set_extmark(0, ns, 9, 0, { end_col = 6, hl_group = 'ErrorMsg' })
+        screen:expect([[
+          {101:line2^5}                        |
+          line26                        |
+          line27                        |
+          line28                        |
+          line29                        |
+          line30                        |
+                                        |
+        ]])
+      end)
+
+      it("when outputting fewer than 'scrollback' lines", function()
+        feed_new_lines_and_wait(6)
+        screen:expect_unchanged()
+        eq({ 0, 4, 4, 0 }, fn.getpos("'m"))
+        eq({ 0, 4, 6, 0 }, fn.getpos('.'))
+      end)
+
+      it("when outputting more than 'scrollback' lines", function()
+        feed_new_lines_and_wait(11)
+        screen:expect([[
+          ^line27                        |
+          line28                        |
+          line29                        |
+          line30                        |
+          new_line1                     |
+          new_line2                     |
+                                        |
+        ]])
+        eq({ 0, 0, 0, 0 }, fn.getpos("'m"))
+        eq({ 0, 1, 1, 0 }, fn.getpos('.'))
+      end)
+    end)
   end)
 
   describe('with cursor at last row', function()
@@ -68,8 +183,45 @@ describe(':terminal scrollback', function()
         line3                         |
         line4                         |
         ^                              |
-        {3:-- TERMINAL --}                |
+        {5:-- TERMINAL --}                |
       ]])
+      fn.setpos("'m", { 0, 3, 4, 0 })
+      local ns = api.nvim_create_namespace('test')
+      api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 5, hl_group = 'ErrorMsg' })
+      screen:expect([[
+        tty ready                     |
+        line1                         |
+        {101:line2}                         |
+        line3                         |
+        line4                         |
+        ^                              |
+        {5:-- TERMINAL --}                |
+      ]])
+    end)
+
+    it("when outputting more than 'scrollback' lines in Normal mode", function()
+      feed([[<C-\><C-N>]])
+      feed_new_lines_and_wait(11)
+      screen:expect([[
+        new_line7                     |
+        new_line8                     |
+        new_line9                     |
+        new_line10                    |
+        new_line11                    |
+        ^                              |
+                                      |
+      ]])
+      feed('gg')
+      screen:expect([[
+        ^line1                         |
+        {101:line2}                         |
+        line3                         |
+        line4                         |
+        new_line1                     |
+        new_line2                     |
+                                      |
+      ]])
+      eq({ 0, 2, 4, 0 }, fn.getpos("'m"))
     end)
 
     describe('and 1 line is printed', function()
@@ -80,40 +232,42 @@ describe(':terminal scrollback', function()
       it('will hide the top line', function()
         screen:expect([[
           line1                         |
-          line2                         |
+          {101:line2}                         |
           line3                         |
           line4                         |
           line5                         |
           ^                              |
-          {3:-- TERMINAL --}                |
+          {5:-- TERMINAL --}                |
         ]])
         eq(7, api.nvim_buf_line_count(0))
+        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
       end)
 
       describe('and then 3 more lines are printed', function()
         before_each(function()
-          feed_data({ 'line6', 'line7', 'line8' })
+          feed_data({ 'line6', 'line7', 'line8', '' })
         end)
 
         it('will hide the top 4 lines', function()
           screen:expect([[
-            line3                         |
             line4                         |
             line5                         |
             line6                         |
             line7                         |
-            line8^                         |
-            {3:-- TERMINAL --}                |
+            line8                         |
+            ^                              |
+            {5:-- TERMINAL --}                |
           ]])
+          eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
 
           feed('<c-\\><c-n>6k')
           screen:expect([[
-            ^line2                         |
-            line3                         |
+            ^line3                         |
             line4                         |
             line5                         |
             line6                         |
             line7                         |
+            line8                         |
                                           |
           ]])
 
@@ -121,7 +275,7 @@ describe(':terminal scrollback', function()
           screen:expect([[
             ^tty ready                     |
             line1                         |
-            line2                         |
+            {101:line2}                         |
             line3                         |
             line4                         |
             line5                         |
@@ -130,12 +284,12 @@ describe(':terminal scrollback', function()
 
           feed('G')
           screen:expect([[
-            line3                         |
             line4                         |
             line5                         |
             line6                         |
             line7                         |
-            ^line8                         |
+            line8                         |
+            ^                              |
                                           |
           ]])
         end)
@@ -147,13 +301,14 @@ describe(':terminal scrollback', function()
         feed([[<C-\><C-N>]])
         screen:try_resize(screen._width - 2, screen._height - 1)
         screen:expect([[
-          line2                       |
+          {101:line2}                       |
           line3                       |
           line4                       |
           rows: 5, cols: 28           |
           ^                            |
                                       |
         ]])
+        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
       end
 
       it('will hide top line', will_hide_top_line)
@@ -172,11 +327,19 @@ describe(':terminal scrollback', function()
                                       |
           ]])
           eq(8, api.nvim_buf_line_count(0))
-          feed([[3k]])
+          eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
+          feed('3k')
           screen:expect([[
             ^line4                     |
             rows: 5, cols: 28         |
             rows: 3, cols: 26         |
+                                      |
+          ]])
+          feed('gg')
+          screen:expect([[
+            ^tty ready                 |
+            line1                     |
+            {101:line2}                     |
                                       |
           ]])
         end)
@@ -203,7 +366,7 @@ describe(':terminal scrollback', function()
           rows: 4, cols: 30             |
           ^                              |
                                         |
-          {3:-- TERMINAL --}                |
+          {5:-- TERMINAL --}                |
         ]])
         eq(4, api.nvim_buf_line_count(0))
       end
@@ -221,7 +384,7 @@ describe(':terminal scrollback', function()
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
             ^                              |
-            {3:-- TERMINAL --}                |
+            {5:-- TERMINAL --}                |
           ]])
           eq(4, api.nvim_buf_line_count(0))
           feed('<c-\\><c-n>gg')
@@ -236,7 +399,7 @@ describe(':terminal scrollback', function()
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
             ^                              |
-            {3:-- TERMINAL --}                |
+            {5:-- TERMINAL --}                |
           ]])
         end)
       end)
@@ -253,14 +416,26 @@ describe(':terminal scrollback', function()
         line3                         |
         line4                         |
         ^                              |
-        {3:-- TERMINAL --}                |
+        {5:-- TERMINAL --}                |
+      ]])
+      fn.setpos("'m", { 0, 3, 4, 0 })
+      local ns = api.nvim_create_namespace('test')
+      api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 5, hl_group = 'ErrorMsg' })
+      screen:expect([[
+        tty ready                     |
+        line1                         |
+        {101:line2}                         |
+        line3                         |
+        line4                         |
+        ^                              |
+        {5:-- TERMINAL --}                |
       ]])
       screen:try_resize(screen._width, screen._height - 3)
       screen:expect([[
         line4                         |
         rows: 3, cols: 30             |
         ^                              |
-        {3:-- TERMINAL --}                |
+        {5:-- TERMINAL --}                |
       ]])
       eq(7, api.nvim_buf_line_count(0))
     end)
@@ -279,8 +454,9 @@ describe(':terminal scrollback', function()
           rows: 3, cols: 30             |
           rows: 4, cols: 30             |
           ^                              |
-          {3:-- TERMINAL --}                |
+          {5:-- TERMINAL --}                |
         ]])
+        eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
       end
 
       it('will pop 1 line and then push it back', pop_then_push)
@@ -294,21 +470,22 @@ describe(':terminal scrollback', function()
 
         local function pop3_then_push1()
           screen:expect([[
-            line2                         |
+            {101:line2}                         |
             line3                         |
             line4                         |
             rows: 3, cols: 30             |
             rows: 4, cols: 30             |
             rows: 7, cols: 30             |
             ^                              |
-            {3:-- TERMINAL --}                |
+            {5:-- TERMINAL --}                |
           ]])
           eq(9, api.nvim_buf_line_count(0))
+          eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
           feed('<c-\\><c-n>gg')
           screen:expect([[
             ^tty ready                     |
             line1                         |
-            line2                         |
+            {101:line2}                         |
             line3                         |
             line4                         |
             rows: 3, cols: 30             |
@@ -330,7 +507,7 @@ describe(':terminal scrollback', function()
             screen:expect([[
               tty ready                     |
               line1                         |
-              line2                         |
+              {101:line2}                         |
               line3                         |
               line4                         |
               rows: 3, cols: 30             |
@@ -339,11 +516,12 @@ describe(':terminal scrollback', function()
               rows: 11, cols: 30            |
               ^                              |
                                             |
-              {3:-- TERMINAL --}                |
+              {5:-- TERMINAL --}                |
             ]])
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height
             eq(11, api.nvim_buf_line_count(0))
+            eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
           end)
         end)
       end)
@@ -355,6 +533,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
   it('will push extra lines to scrollback', function()
     clear()
     local screen = Screen.new(30, 7, { rgb = false })
+    screen:add_extra_attr_ids({ [100] = { foreground = 12 } })
     command(
       ("call jobstart(['%s', '10'], {'term':v:true}) | startinsert"):format(testprg('tty-test'))
     )
@@ -369,14 +548,11 @@ describe(':terminal prints more lines than the screen height and exits', functio
     ]])
     feed('<cr>')
     -- closes the buffer correctly after pressing a key
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                              |
-      {1:~                             }|*5
+      {100:~                             }|*5
                                     |
-    ]],
-      attr_ids = { [1] = { foreground = 12 } },
-    }
+    ]])
   end)
 end)
 
@@ -449,29 +625,25 @@ describe("'scrollback' option", function()
 
     feed_data(('%s REP 41 line%s'):format(testprg('shell-test'), is_os('win') and '\r' or '\n'))
     if is_os('win') then
-      screen:expect {
-        grid = [[
+      screen:expect([[
         37: line                      |
         38: line                      |
         39: line                      |
         40: line                      |
                                       |
         $^                             |
-        {3:-- TERMINAL --}                |
-      ]],
-      }
+        {5:-- TERMINAL --}                |
+      ]])
     else
-      screen:expect {
-        grid = [[
+      screen:expect([[
         36: line                      |
         37: line                      |
         38: line                      |
         39: line                      |
         40: line                      |
         {MATCH:.*}|
-        {3:-- TERMINAL --}                |
-      ]],
-      }
+        {5:-- TERMINAL --}                |
+      ]])
     end
     expect_lines(58)
 
@@ -490,22 +662,36 @@ describe("'scrollback' option", function()
     table.insert(lines, '')
     feed_data(lines)
     screen:expect([[
-        line26                        |
-        line27                        |
-        line28                        |
-        line29                        |
-        line30                        |
-        ^                              |
-        {3:-- TERMINAL --}                |
-      ]])
+      line26                        |
+      line27                        |
+      line28                        |
+      line29                        |
+      line30                        |
+      ^                              |
+      {5:-- TERMINAL --}                |
+    ]])
+    local ns = api.nvim_create_namespace('test')
     local term_height = 6 -- Actual terminal screen height, not the scrollback
     -- Initial
     local scrollback = api.nvim_get_option_value('scrollback', {})
-    eq(scrollback + term_height, eval('line("$")'))
+    eq(scrollback + term_height, fn.line('$'))
+    n.fn.setpos("'m", { 0, scrollback + 1, 4, 0 })
+    api.nvim_buf_set_extmark(0, ns, scrollback, 0, { end_col = 6, hl_group = 'ErrorMsg' })
+    screen:expect([[
+      {101:line26}                        |
+      line27                        |
+      line28                        |
+      line29                        |
+      line30                        |
+      ^                              |
+      {5:-- TERMINAL --}                |
+    ]])
     -- Reduction
     scrollback = scrollback - 2
     api.nvim_set_option_value('scrollback', scrollback, {})
-    eq(scrollback + term_height, eval('line("$")'))
+    eq(scrollback + term_height, fn.line('$'))
+    screen:expect_unchanged()
+    eq({ 0, scrollback + 1, 4, 0 }, n.fn.getpos("'m"))
   end)
 
   it('defaults to 10000 in :terminal buffers', function()
@@ -517,8 +703,8 @@ describe("'scrollback' option", function()
   it('error if set to invalid value', function()
     eq('Vim(set):E474: Invalid argument: scrollback=-2', pcall_err(command, 'set scrollback=-2'))
     eq(
-      'Vim(set):E474: Invalid argument: scrollback=100001',
-      pcall_err(command, 'set scrollback=100001')
+      'Vim(set):E474: Invalid argument: scrollback=1000001',
+      pcall_err(command, 'set scrollback=1000001')
     )
   end)
 
@@ -538,14 +724,14 @@ describe("'scrollback' option", function()
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
     command('setlocal scrollback=-1')
     retry(nil, nil, function() -- Fixup happens on refresh, not immediately.
-      eq(100000, api.nvim_get_option_value('scrollback', {}))
+      eq(1000000, api.nvim_get_option_value('scrollback', {}))
     end)
 
     -- _Local_ scrollback=-1 during TermOpen forces the maximum. #9605
     command('setglobal scrollback=-1')
     command('autocmd TermOpen * setlocal scrollback=-1')
     command('terminal')
-    eq(100000, api.nvim_get_option_value('scrollback', {}))
+    eq(1000000, api.nvim_get_option_value('scrollback', {}))
   end)
 
   it(':setlocal in a normal buffer', function()
@@ -581,11 +767,6 @@ describe('pending scrollback line handling', function()
   before_each(function()
     clear()
     screen = Screen.new(30, 7)
-    screen:set_default_attr_ids {
-      [1] = { foreground = Screen.colors.Brown },
-      [2] = { reverse = true },
-      [3] = { bold = true },
-    }
   end)
 
   it("does not crash after setting 'number' #14891", function()
@@ -598,22 +779,22 @@ describe('pending scrollback line handling', function()
       api.nvim_win_set_buf(0, buf)
     ]]
     screen:expect [[
-      {1:  1 }^a                         |
-      {1:  2 }a                         |
-      {1:  3 }a                         |
-      {1:  4 }a                         |
-      {1:  5 }a                         |
-      {1:  6 }a                         |
+      {8:  1 }^a                         |
+      {8:  2 }a                         |
+      {8:  3 }a                         |
+      {8:  4 }a                         |
+      {8:  5 }a                         |
+      {8:  6 }a                         |
                                     |
     ]]
     feed('G')
     screen:expect [[
-      {1:  7 }a                         |
-      {1:  8 }a                         |
-      {1:  9 }a                         |
-      {1: 10 }a                         |
-      {1: 11 }a                         |
-      {1: 12 }^a                         |
+      {8:  7 }a                         |
+      {8:  8 }a                         |
+      {8:  9 }a                         |
+      {8: 10 }a                         |
+      {8: 11 }a                         |
+      {8: 12 }^a                         |
                                     |
     ]]
     assert_alive()
@@ -637,7 +818,7 @@ describe('pending scrollback line handling', function()
       hi                            |*4
                                     |
       [Process exited 0]^            |
-      {3:-- TERMINAL --}                |
+      {5:-- TERMINAL --}                |
     ]]
     assert_alive()
   end)

@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local feed = n.feed
+local fn = n.call
 local source = n.source
 local clear = n.clear
 local command = n.command
@@ -11,6 +12,7 @@ local poke_eventloop = n.poke_eventloop
 local api = n.api
 local eq = t.eq
 local neq = t.neq
+local exec_lua = n.exec_lua
 
 describe('prompt buffer', function()
   local screen
@@ -31,7 +33,7 @@ describe('prompt buffer', function()
           close
         else
           " Add the output above the current prompt.
-          call append(line("$") - 1, 'Command: "' . a:text . '"')
+          call append(line("$") - 1, split('Command: "' . a:text . '"', '\n'))
           " Reset &modified to allow the buffer to be closed.
           set nomodified
           call timer_start(20, {id -> TimerFunc(a:text)})
@@ -40,7 +42,7 @@ describe('prompt buffer', function()
 
       func TimerFunc(text)
         " Add the output above the current prompt.
-        call append(line("$") - 1, 'Result: "' . a:text .'"')
+        call append(line("$") - 1, split('Result: "' . a:text .'"', '\n'))
         " Reset &modified to allow the buffer to be closed.
         set nomodified
       endfunc
@@ -128,6 +130,10 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    -- :edit doesn't apply on prompt buffer
+    eq('Vim(edit):cannot :edit a prompt buffer', t.pcall_err(api.nvim_command, 'edit'))
+
     feed('<C-U>exit\n')
     screen:expect([[
       ^other buffer             |
@@ -244,5 +250,486 @@ describe('prompt buffer', function()
       Enter
       Leave
       Close]])
+  end)
+
+  it('can insert multiline text', function()
+    source_script()
+    local buf = api.nvim_get_current_buf()
+
+    feed('line 1<s-cr>line 2<s-cr>line 3')
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      line 3^                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    -- prompt_getinput works with multiline input
+    eq('line 1\nline 2\nline 3', fn('prompt_getinput', buf))
+
+    feed('<cr>')
+    -- submitting multiline text works
+    screen:expect([[
+      Result: "line 1          |
+      line 2                   |
+      line 3"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    eq('', fn('prompt_getinput', buf))
+
+    -- % prompt is not repeated with formatoptions+=r
+    source([[
+      bwipeout!
+      set formatoptions+=r
+      set buftype=prompt
+      call prompt_setprompt(bufnr(), "% ")
+    ]])
+    feed('iline1<s-cr>line2')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line2^                    |
+      {1:~                        }|*6
+      {5:-- INSERT --}             |
+    ]])
+
+    -- ensure cursor gets adjusted to end of user-text to prompt when insert mode
+    -- is entered from readonly region of prompt buffer
+    local prompt_pos = api.nvim_buf_get_mark(0, ':')
+    feed('<esc>')
+    -- works before prompt
+    api.nvim_win_set_cursor(0, { prompt_pos[1] - 1, 0 })
+    screen:expect([[
+      ^other buffer             |
+      % line1                  |
+      line2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+    feed('a')
+    feed('<esc>')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line^2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+    -- works on prompt
+    api.nvim_win_set_cursor(0, { prompt_pos[1], 0 })
+    screen:expect([[
+      other buffer             |
+      ^% line1                  |
+      line2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+    feed('a')
+    feed('<esc>')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line^2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+  end)
+
+  it('can put (p) multiline text', function()
+    source_script()
+    local buf = api.nvim_get_current_buf()
+
+    fn('setreg', 'a', 'line 1\nline 2\nline 3')
+    feed('<esc>"ap')
+    screen:expect([[
+      cmd: ^line 1              |
+      line 2                   |
+      line 3                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    -- prompt_getinput works with pasted input
+    eq('line 1\nline 2\nline 3', fn('prompt_getinput', buf))
+
+    feed('i<cr>')
+    screen:expect([[
+      Result: "line 1          |
+      line 2                   |
+      line 3"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
+  it('can put multiline text with nvim_paste', function()
+    source_script()
+    api.nvim_paste('line 1\nline 2\nline 3', false, -1)
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      line 3^                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
+  it('can undo current prompt', function()
+    source_script()
+    local buf = api.nvim_get_current_buf()
+
+    -- text editing allowed in current prompt
+    feed('tests-initial<esc>')
+    feed('bimiddle-<esc>')
+    screen:expect([[
+      cmd: tests-middle^-initial|
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    feed('Fdx')
+    screen:expect([[
+      cmd: tests-mid^le-initial |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    -- can undo edits until prompt has been submitted
+    feed('u')
+    screen:expect([[
+      cmd: tests-mid^dle-initial|
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 change; {MATCH:.*} |
+    ]])
+
+    -- undo is reflected in prompt_getinput
+    eq('tests-middle-initial', fn('prompt_getinput', buf))
+
+    feed('u')
+    screen:expect([[
+      cmd: tests-^initial       |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 change; {MATCH:.*} |
+    ]])
+
+    feed('i<cr><esc>')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      Result: "tests-initial"  |
+      cmd:^                     |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    -- after submit undo does nothing
+    feed('u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      cmd:^                     |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 line {MATCH:.*} |
+    ]])
+  end)
+
+  it('o/O can create new lines', function()
+    source_script()
+    local buf = api.nvim_get_current_buf()
+
+    feed('line 1<s-cr>line 2<s-cr>line 3')
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      line 3^                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>koafter')
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      after^                    |
+      line 3                   |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    -- newline created with o is reflected in prompt_getinput
+    eq('line 1\nline 2\nafter\nline 3', fn('prompt_getinput', buf))
+
+    feed('<esc>kObefore')
+
+    screen:expect([[
+      cmd: line 1              |
+      before^                   |
+      line 2                   |
+      after                    |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    -- newline created with O is reflected in prompt_getinput
+    eq('line 1\nbefore\nline 2\nafter\nline 3', fn('prompt_getinput', buf))
+
+    feed('<cr>')
+    screen:expect([[
+      line 2                   |
+      after                    |
+      line 3"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('line 4<s-cr>line 5')
+
+    feed('<esc>k0oafter prompt')
+    screen:expect([[
+      after                    |
+      line 3"                  |
+      cmd: line 4              |
+      after prompt^             |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>k0Oat prompt')
+    screen:expect([[
+      after                    |
+      line 3"                  |
+      cmd: at prompt^           |
+      line 4                   |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<cr>')
+    screen:expect([[
+      line 4                   |
+      after prompt             |
+      line 5"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
+  it('deleting prompt adds it back on insert', function()
+    source_script()
+    feed('asdf')
+    screen:expect([[
+      cmd: asdf^                |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>ddi')
+    screen:expect([[
+      cmd: ^                    |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('asdf')
+    screen:expect([[
+      cmd: asdf^                |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>cc')
+    screen:expect([[
+      cmd: ^                    |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
+  it("sets the ': mark", function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setcallback(buf, function(str)
+        local last_line = vim.api.nvim_buf_line_count(buf)
+        vim.api.nvim_buf_set_lines(buf, last_line - 1, last_line - 1, true, vim.split(str, '\n'))
+      end)
+    end)
+
+    feed('asdf')
+    eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
+    feed('<cr>')
+    eq({ 3, 1 }, api.nvim_buf_get_mark(0, ':'))
+    -- Multiline prompt.
+    feed('<s-cr>line1<s-cr>line2<s-cr>line3<cr>')
+    eq({ 11, 1 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- ': mark is only available in prompt buffer.
+    api.nvim_set_option_value('buftype', '', { buf = 0 })
+    eq("Invalid mark name: ':'", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
+
+    -- mark can be moved
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    local last_line = api.nvim_buf_line_count(0)
+    eq({ last_line, 1 }, api.nvim_buf_get_mark(0, ':'))
+    eq(true, api.nvim_buf_set_mark(0, ':', 1, 1, {}))
+    eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
+  end)
+
+  describe('prompt_getinput', function()
+    it('returns current prompts text', function()
+      command('new')
+      local bufnr = fn('bufnr')
+      api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+      eq('', fn('prompt_getinput', bufnr))
+      feed('iasdf')
+      eq('asdf', fn('prompt_getinput', bufnr))
+      feed('<esc>dd')
+      eq('', fn('prompt_getinput', bufnr))
+      feed('iasdf2')
+      eq('asdf2', fn('prompt_getinput', bufnr))
+
+      -- returns empty string when called from non prompt buffer
+      api.nvim_set_option_value('buftype', '', { buf = 0 })
+      eq('', fn('prompt_getinput', bufnr))
+    end)
+  end)
+
+  it('programmatic (non-user) edits', function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+
+    -- with nvim_buf_set_lines
+    exec_lua([[
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setcallback(buf, function(text)
+        vim.api.nvim_buf_set_lines(buf, -2, -2, true, vim.split(text, '\n'))
+      end)
+    ]])
+    feed('iset_lines<cr>')
+    feed('set_lines2<cr>')
+    screen:expect([[
+      % set_lines              |
+      set_lines                |
+      % set_lines2             |
+      set_lines2               |
+      % ^                       |
+      {1:~                        }|*4
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('set_lines3(multi-1)<s-cr>set_lines3(multi-2)<cr>')
+    screen:expect([[
+      % set_lines              |
+      set_lines                |
+      % set_lines2             |
+      set_lines2               |
+      % set_lines3(multi-1)    |
+      set_lines3(multi-2)      |
+      set_lines3(multi-1)      |
+      set_lines3(multi-2)      |
+      % ^                       |
+      {5:-- INSERT --}             |
+    ]])
+    -- with nvim_buf_set_text
+    source('bwipeout!')
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    exec_lua([[
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setcallback(buf, function(text)
+        local lines = vim.split(text, '\n')
+        if lines[#lines] ~= '' then
+          table.insert(lines, '')
+        end
+        vim.api.nvim_buf_set_text(buf, -1, 0, -1, 0, lines)
+      end)
+    ]])
+    feed('set_text<cr>')
+    feed('set_text2<cr>')
+    screen:expect([[
+      % set_text               |
+      set_text                 |
+      % set_text2              |
+      set_text2                |
+      % ^                       |
+      {1:~                        }|*4
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('set_text3(multi-1)<s-cr>set_text3(multi-2)<cr>')
+    screen:expect([[
+      % set_text               |
+      set_text                 |
+      % set_text2              |
+      set_text2                |
+      % set_text3(multi-1)     |
+      set_text3(multi-2)       |
+      set_text3(multi-1)       |
+      set_text3(multi-2)       |
+      % ^                       |
+      {5:-- INSERT --}             |
+    ]])
   end)
 end)

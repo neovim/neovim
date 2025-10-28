@@ -1,5 +1,5 @@
 -- To run this test:
---    TEST_FILE=test/functional/example_spec.lua make functionaltest
+--    make functionaltest TEST_FILE=test/functional/example_spec.lua
 
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()

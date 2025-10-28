@@ -6,9 +6,7 @@
 #include "nvim/vterm/vterm.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/parser.c.generated.h"
-#endif
+#include "vterm/parser.c.generated.h"
 
 #undef DEBUG_PARSER
 
@@ -122,7 +120,7 @@ static void string_fragment(VTerm *vt, const char *str, size_t len, bool final)
   case CSI_INTERMED:
   case OSC_COMMAND:
   case DCS_COMMAND:
-    break;
+    return;
   }
 
   vt->parser.string_initial = false;

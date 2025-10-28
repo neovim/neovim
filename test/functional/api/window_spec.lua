@@ -730,6 +730,32 @@ describe('API/win', function()
       eq(prevwin, api.nvim_tabpage_get_win(tab))
       assert_alive()
     end)
+
+    it('closing a float does not enter unfocusable or hidden prevwin', function()
+      local firstwin = api.nvim_get_current_win()
+      local wins = {} ---@type integer[]
+      for _ = 1, 4 do
+        wins[#wins + 1] = api.nvim_open_win(0, true, {
+          relative = 'editor',
+          row = 10,
+          col = 10,
+          width = 50,
+          height = 10,
+        })
+      end
+      api.nvim_win_set_config(wins[3], { hide = true })
+      api.nvim_win_close(0, false)
+      eq(firstwin, api.nvim_get_current_win())
+      api.nvim_set_current_win(wins[2])
+      api.nvim_set_current_win(wins[3])
+      api.nvim_win_set_config(wins[2], { focusable = false })
+      api.nvim_win_close(0, false)
+      eq(firstwin, api.nvim_get_current_win())
+      api.nvim_set_current_win(wins[1])
+      api.nvim_set_current_win(wins[2])
+      api.nvim_win_close(0, false)
+      eq(wins[1], api.nvim_get_current_win())
+    end)
   end)
 
   describe('hide', function()
@@ -1992,14 +2018,46 @@ describe('API/win', function()
         pcall_err(api.nvim_win_close, w, true)
       )
 
-      -- OK when using window to different buffer than `win`s.
+      -- OK when using a buffer that isn't closing.
       w = api.nvim_get_current_win()
       command(
-        'only | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left", win: '
+        'only | autocmd BufHidden * ++once call nvim_open_win(bufnr("#"), 0, #{split: "left", win: '
           .. w
           .. '})'
       )
       command('new | quit')
+
+      -- Apply to opening floats too, as that can similarly create new views into a closing buffer.
+      -- For example, the following would open a float into an unloaded buffer:
+      exec([[
+        only
+        new
+        let g:buf = bufnr()
+        autocmd BufUnload * ++once let g:win = nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
+        setlocal bufhidden=unload
+      ]])
+      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      eq(false, eval('nvim_buf_is_loaded(g:buf)'))
+      eq(0, eval('win_findbuf(g:buf)->len()'))
+
+      -- Only checking b_locked_split for the target buffer is insufficient, as naughty autocommands
+      -- can cause win_set_buf to remain in a closing curbuf:
+      exec([[
+        only
+        new
+        let g:buf = bufnr()
+        autocmd BufWipeout * ++once ++nested let g:buf2 = nvim_create_buf(1, 0)
+              \| execute 'autocmd BufLeave * ++once call nvim_buf_delete(g:buf2, #{force: 1})'
+              \| setlocal bufhidden=
+              \| call nvim_open_win(g:buf2, 1, #{relative: 'editor', width: 5, height: 5, col: 5, row: 5})
+        setlocal bufhidden=wipe
+      ]])
+      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      eq(false, eval('nvim_buf_is_loaded(g:buf)'))
+      eq(0, eval('win_findbuf(g:buf)->len()'))
+      -- BufLeave shouldn't run here (buf2 isn't deleted and remains hidden)
+      eq(true, eval('nvim_buf_is_loaded(g:buf2)'))
+      eq(0, eval('win_findbuf(g:buf2)->len()'))
     end)
 
     it('restores last known cursor position if BufWinEnter did not move it', function()
@@ -2127,6 +2185,105 @@ describe('API/win', function()
         })
       )
     end)
+
+    it('no crash when closing the only non-float in other tabpage #31236', function()
+      local tp = api.nvim_get_current_tabpage()
+      local split_win = api.nvim_get_current_win()
+      local float_win = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+      )
+      command('tabnew')
+
+      api.nvim_win_close(split_win, false)
+      eq(false, api.nvim_win_is_valid(split_win))
+      eq(false, api.nvim_win_is_valid(float_win))
+      eq(false, api.nvim_tabpage_is_valid(tp))
+
+      tp = api.nvim_get_current_tabpage()
+      split_win = api.nvim_get_current_win()
+      local float_buf = api.nvim_create_buf(true, false)
+      float_win = api.nvim_open_win(
+        float_buf,
+        false,
+        { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+      )
+      -- Set these options to prevent the float from being automatically closed.
+      api.nvim_set_option_value('modified', true, { buf = float_buf })
+      api.nvim_set_option_value('bufhidden', 'wipe', { buf = float_buf })
+      command('tabnew')
+
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(api.nvim_win_close, split_win, false)
+      )
+      eq(true, api.nvim_win_is_valid(split_win))
+      eq(true, api.nvim_win_is_valid(float_win))
+      eq(true, api.nvim_tabpage_is_valid(tp))
+
+      api.nvim_set_current_win(float_win)
+      api.nvim_win_close(split_win, true) -- Force it this time.
+      eq(false, api.nvim_win_is_valid(split_win))
+      eq(false, api.nvim_win_is_valid(float_win))
+      eq(false, api.nvim_tabpage_is_valid(tp))
+
+      -- Ensure opening a float after the initial check (like in WinClosed) doesn't crash...
+      exec([[
+        tabnew
+        let g:tp = nvim_get_current_tabpage()
+        let g:win = win_getid()
+        tabprevious
+        autocmd! WinClosed * ++once call nvim_open_win(0, 0, #{win: g:win, relative: 'win', width: 5, height: 5, row: 5, col: 5})
+      ]])
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(command, 'call nvim_win_close(g:win, 0)')
+      )
+      eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
+
+      exec([[
+        tabnew
+        let g:tp = nvim_get_current_tabpage()
+        let g:win = win_getid()
+        let g:buf = bufnr()
+        tabprevious
+        let s:buf2 = nvim_create_buf(0, 0)
+        call setbufvar(s:buf2, '&modified', 1)
+        call setbufvar(s:buf2, '&bufhidden', 'wipe')
+        autocmd! WinClosed * ++once call nvim_open_win(s:buf2, 0, #{win: g:win, relative: 'win', width: 5, height: 5, row: 5, col: 5})
+      ]])
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(command, 'call nvim_buf_delete(g:buf, #{force: 1})')
+      )
+      eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
+    end)
+
+    it('respects requested size for large splits', function()
+      command('vsplit')
+      local win = api.nvim_open_win(0, false, { win = -1, split = 'right', width = 38 })
+      eq(38, api.nvim_win_get_width(win))
+
+      -- No zero-sized windows (e.g: from skipping forced equalization in win_split_ins) if
+      -- requesting a chonky window; that could lead to crashes!
+      api.nvim_open_win(0, false, { win = -1, split = 'right', width = 9999 })
+      eq({ 1, 1, 1, 74 }, eval("range(1, winnr('$'))->map({_, nr -> winwidth(nr)})"))
+
+      command('split')
+      win = api.nvim_open_win(0, false, { win = 0, split = 'below', height = 10 })
+      eq(10, api.nvim_win_get_height(win))
+
+      -- Still defaults to half-sized when no size was specified.
+      command('only')
+      eq(80, api.nvim_win_get_width(0))
+      api.nvim_open_win(0, true, { split = 'right' })
+      eq(40, api.nvim_win_get_width(0))
+
+      eq(22, api.nvim_win_get_height(0))
+      api.nvim_open_win(0, true, { split = 'below' })
+      eq(11, api.nvim_win_get_height(0))
+    end)
   end)
 
   describe('set_config', function()
@@ -2177,11 +2334,42 @@ describe('API/win', function()
       eq('editor', api.nvim_win_get_config(win).relative)
     end)
 
-    it('throws error when attempting to move the last window', function()
+    it('throws error when attempting to move the last non-floating window', function()
       local err = pcall_err(api.nvim_win_set_config, 0, {
         vertical = false,
       })
-      eq('Cannot move last window', err)
+      eq('Cannot move last non-floating window', err)
+
+      local win1 = api.nvim_get_current_win()
+      command('tabnew')
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
+      api.nvim_open_win(0, false, { relative = 'editor', width = 5, height = 5, row = 1, col = 1 })
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
+
+      -- If it's no longer the last non-float, still an error if autocommands make it the last
+      -- non-float again before it's moved.
+      command('vsplit')
+      exec_lua(function()
+        vim.api.nvim_create_autocmd('WinEnter', {
+          once = true,
+          callback = function()
+            vim.api.nvim_win_set_config(
+              0,
+              { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+            )
+          end,
+        })
+      end)
+      eq(
+        'Cannot move last non-floating window',
+        pcall_err(api.nvim_win_set_config, 0, { win = win1, split = 'left' })
+      )
     end)
 
     it('passing retval of get_config results in no-op', function()
@@ -3192,6 +3380,59 @@ describe('API/win', function()
         assert_alive()
         eq({ { 'OLD_FOOTER' } }, api.nvim_win_get_config(win).footer)
       end)
+    end)
+
+    it('cannot split from a float', function()
+      local win = api.nvim_get_current_win()
+      local float_win = api.nvim_open_win(0, true, {
+        relative = 'editor',
+        width = 10,
+        height = 10,
+        row = 10,
+        col = 10,
+      })
+      eq(
+        'Cannot split a floating window',
+        pcall_err(api.nvim_win_set_config, win, { win = float_win, split = 'right' })
+      )
+      eq(
+        'Cannot split a floating window',
+        pcall_err(api.nvim_win_set_config, win, { win = 0, split = 'right' })
+      )
+    end)
+
+    it('cannot move autocmd window between tabpages', function()
+      local win_type, split_ok, err = exec_lua(function()
+        local other_tp_win = vim.api.nvim_get_current_win()
+        vim.cmd.tabnew()
+
+        local win_type, split_ok, err
+        vim.api.nvim_buf_call(vim.api.nvim_create_buf(true, true), function()
+          win_type = vim.fn.win_gettype()
+          split_ok, err =
+            pcall(vim.api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
+        end)
+        return win_type, split_ok, err
+      end)
+      eq('autocmd', win_type)
+      eq({ false, 'Cannot move autocmd window to another tabpage' }, { split_ok, err })
+    end)
+
+    it('cannot move cmdwin between tabpages', function()
+      local other_tp_win = api.nvim_get_current_win()
+      command('tabnew')
+      local old_curwin = api.nvim_get_current_win()
+      feed('q:')
+      eq('command', fn.win_gettype())
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(api.nvim_win_set_config, 0, { win = other_tp_win, split = 'right' })
+      )
+      -- Shouldn't move the old curwin from before we entered the cmdwin either.
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(api.nvim_win_set_config, old_curwin, { win = other_tp_win, split = 'right' })
+      )
     end)
   end)
 end)

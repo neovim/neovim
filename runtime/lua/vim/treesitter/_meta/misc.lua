@@ -5,7 +5,7 @@ error('Cannot require a meta file')
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
 ---@class TSParser: userdata
----@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: boolean, timeout_ns: integer?): TSTree?, (Range4|Range6)[]
+---@field parse fun(self: TSParser, tree: TSTree?, source: integer, include_bytes: boolean, timeout_ns: integer?): TSTree?, (Range4|Range6)[]
 ---@field reset fun(self: TSParser)
 ---@field included_ranges fun(self: TSParser, include_bytes: boolean?): integer[]
 ---@field set_included_ranges fun(self: TSParser, ranges: (Range6|TSNode)[])
@@ -16,11 +16,14 @@ error('Cannot require a meta file')
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
 ---
+---@class TSLangMetadata
+---@field major_version integer
+---@field minor_version integer
+---@field patch_version integer
+---
 ---@class TSLangInfo
 ---@field abi_version integer
----@field major_version? integer
----@field minor_version? integer
----@field patch_version? integer
+---@field metadata? TSLangMetadata  -- ABI 15 only
 ---@field state_count integer
 ---@field fields string[]
 ---@field symbols table<string,boolean>
@@ -77,8 +80,6 @@ function TSQueryCursor:next_match() end
 
 --- @param node TSNode
 --- @param query TSQuery
---- @param start integer?
---- @param stop integer?
---- @param opts? { max_start_depth?: integer, match_limit?: integer}
+--- @param opts? { start_row: integer, start_col: integer, end_row: integer, end_col: integer, max_start_depth?: integer, match_limit?: integer }
 --- @return TSQueryCursor
-function vim._create_ts_querycursor(node, query, start, stop, opts) end
+function vim._create_ts_querycursor(node, query, opts) end

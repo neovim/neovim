@@ -4,8 +4,13 @@ local iswin = vim.fn.has('win32') == 1
 local M = {}
 
 local function cmd_ok(cmd)
-  local out = vim.fn.system(cmd)
-  return vim.v.shell_error == 0, out
+  local result = vim.system(cmd, { text = true }):wait()
+  return result.code == 0, result.stdout
+end
+
+local function cli_version(cmd)
+  local ok, out = cmd_ok(cmd)
+  return ok, vim.version.parse(out, { strict = false })
 end
 
 -- Attempts to construct a shell command from an args list.
@@ -127,14 +132,14 @@ local function clipboard()
     os.getenv('TMUX')
     and vim.fn.executable('tmux') == 1
     and vim.fn.executable('pbpaste') == 1
-    and not cmd_ok('pbpaste')
+    and not cmd_ok({ 'pbpaste' })
   then
-    local tmux_version = string.match(vim.fn.system('tmux -V'), '%d+%.%d+')
+    local _, tmux_version = cli_version({ 'tmux', '-V' })
     local advice = {
       'Install tmux 2.6+.  https://superuser.com/q/231130',
       'or use tmux with reattach-to-user-namespace.  https://superuser.com/a/413233',
     }
-    health.error('pbcopy does not work with tmux version: ' .. tmux_version, advice)
+    health.error('pbcopy does not work with tmux version: ' .. tostring(tmux_version), advice)
   end
 
   local clipboard_tool = vim.fn['provider#clipboard#Executable']() ---@type string
@@ -178,9 +183,8 @@ local function node()
     return
   end
 
-  -- local node_v = vim.fn.split(system({'node', '-v'}), "\n")[1] or ''
-  local ok, node_v = cmd_ok({ 'node', '-v' })
-  health.info('Node.js: ' .. node_v)
+  local ok, node_v = cli_version({ 'node', '-v' })
+  health.info('Node.js: ' .. tostring(node_v))
   if not ok or vim.version.lt(node_v, '6.0.0') then
     health.warn('Nvim node.js host does not support Node ' .. node_v)
     -- Skip further checks, they are nonsense if nodejs is too old.
@@ -213,13 +217,14 @@ local function node()
   end
 
   local latest_npm_cmd = (
-    iswin and 'cmd /c ' .. manager .. ' info neovim --json' or manager .. ' info neovim --json'
+    iswin and { 'cmd', '/c', manager, 'info', 'neovim', '--json' }
+    or { manager, 'info', 'neovim', '--json' }
   )
   local latest_npm
-  ok, latest_npm = cmd_ok(vim.split(latest_npm_cmd, ' '))
+  ok, latest_npm = cmd_ok(latest_npm_cmd)
   if not ok or latest_npm:find('^%s$') then
     health.error(
-      'Failed to run: ' .. latest_npm_cmd,
+      'Failed to run: ' .. shellify(latest_npm_cmd),
       { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
     )
     return
@@ -237,8 +242,8 @@ local function node()
   ok, current_npm = cmd_ok(current_npm_cmd)
   if not ok then
     health.error(
-      'Failed to run: ' .. table.concat(current_npm_cmd, ' '),
-      { 'Report this issue with the output of: ', table.concat(current_npm_cmd, ' ') }
+      'Failed to run: ' .. shellify(current_npm_cmd),
+      { 'Report this issue with the output of: ', shellify(current_npm_cmd) }
     )
     return
   end
@@ -298,7 +303,7 @@ local function perl()
   ok, latest_cpan = cmd_ok(latest_cpan_cmd)
   if not ok or latest_cpan:find('^%s*$') then
     health.error(
-      'Failed to run: ' .. table.concat(latest_cpan_cmd, ' '),
+      'Failed to run: ' .. shellify(latest_cpan_cmd),
       { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
     )
     return
@@ -329,8 +334,8 @@ local function perl()
   ok, current_cpan = cmd_ok(current_cpan_cmd)
   if not ok then
     health.error(
-      'Failed to run: ' .. table.concat(current_cpan_cmd, ' '),
-      { 'Report this issue with the output of: ', table.concat(current_cpan_cmd, ' ') }
+      'Failed to run: ' .. shellify(current_cpan_cmd),
+      { 'Report this issue with the output of: ', shellify(current_cpan_cmd) }
     )
     return
   end
@@ -359,8 +364,14 @@ end
 
 -- Resolves Python executable path by invoking and checking `sys.executable`.
 local function python_exepath(invocation)
+  if invocation == '' or invocation == nil then
+    return nil
+  end
   local p = vim.system({ invocation, '-c', 'import sys; sys.stdout.write(sys.executable)' }):wait()
-  assert(p.code == 0, p.stderr)
+  if p.code ~= 0 then
+    health.warn(p.stderr)
+    return nil
+  end
   return vim.fs.normalize(vim.trim(p.stdout))
 end
 
@@ -426,12 +437,15 @@ end
 --- @param url string
 local function download(url)
   local has_curl = vim.fn.executable('curl') == 1
-  if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
-    local out, rc = system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
-    if rc ~= 0 then
-      return 'curl error with ' .. url .. ': ' .. rc
-    else
-      return out
+  if has_curl then
+    local ok, out = cmd_ok({ 'curl', '-V' })
+    if ok and out:find('Protocols:.*https') then
+      local content, rc = system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
+      if rc ~= 0 then
+        return 'curl error with ' .. url .. ': ' .. rc
+      else
+        return content
+      end
     end
   elseif vim.fn.executable('python') == 1 then
     local script = ([[
@@ -724,10 +738,9 @@ local function python()
       local message = 'Detected pip upgrade failure: Python executable can import "pynvim" but not "neovim": '
         .. pynvim_exe
       local advice = {
-        'Use that Python version to reinstall "pynvim" and optionally "neovim".',
+        'Use that Python version to uninstall any "pynvim" or "neovim", e.g.:',
         pynvim_exe .. ' -m pip uninstall pynvim neovim',
-        pynvim_exe .. ' -m pip install pynvim',
-        pynvim_exe .. ' -m pip install neovim  # only if needed by third-party software',
+        'Then see :help provider-python for "pynvim" installation steps.',
       }
       health.error(message, advice)
     end
@@ -753,7 +766,7 @@ local function python()
     if is_bad_response(current) then
       health.error(
         'pynvim is not installed.\nError: ' .. current,
-        'Run in shell: ' .. python_exe .. ' -m pip install pynvim'
+        'See :help provider-python for "pynvim" installation steps.'
       )
     end
 
@@ -783,35 +796,42 @@ local function python()
   --- @param v string
   venv_bins = vim.tbl_filter(function(v)
     -- XXX: Remove irrelevant executables found in bin/.
-    return not v:match('python.*%-config')
+    return not v:match('python.*%-config') and not v:match('python%-argcomplete')
   end, venv_bins)
   if vim.tbl_count(venv_bins) > 0 then
     for _, venv_bin in pairs(venv_bins) do
       venv_bin = vim.fs.normalize(venv_bin)
       local py_bin_basename = vim.fs.basename(venv_bin)
       local nvim_py_bin = python_exepath(vim.fn.exepath(py_bin_basename))
-      local subshell_py_bin = python_exepath(py_bin_basename)
-      if venv_bin ~= nvim_py_bin then
-        errors[#errors + 1] = '$PATH yields this '
-          .. py_bin_basename
-          .. ' executable: '
-          .. nvim_py_bin
-        local hint = '$PATH ambiguities arise if the virtualenv is not '
-          .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
-          .. 'check that invoking Python from the command line launches the correct one, '
-          .. 'then relaunch Nvim.'
-        hints[hint] = true
-      end
-      if venv_bin ~= subshell_py_bin then
-        errors[#errors + 1] = '$PATH in subshells yields this '
-          .. py_bin_basename
-          .. ' executable: '
-          .. subshell_py_bin
-        local hint = '$PATH ambiguities in subshells typically are '
-          .. 'caused by your shell config overriding the $PATH previously set by the '
-          .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
-          .. 'https://vi.stackexchange.com/a/34996'
-        hints[hint] = true
+      if nvim_py_bin then
+        local subshell_py_bin = python_exepath(py_bin_basename)
+        local bintable = {
+          ['nvim'] = {
+            ['path'] = nvim_py_bin,
+            ['hint'] = '$PATH ambiguities arise if the virtualenv is not '
+              .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
+              .. 'check that invoking Python from the command line launches the correct one, '
+              .. 'then relaunch Nvim.',
+          },
+          ['subshell'] = {
+            ['path'] = subshell_py_bin,
+            ['hint'] = '$PATH ambiguities in subshells typically are '
+              .. 'caused by your shell config overriding the $PATH previously set by the '
+              .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
+              .. 'https://vi.stackexchange.com/a/34996',
+          },
+        }
+        for bintype, bin in pairs(bintable) do
+          if vim.fn.resolve(venv_bin) ~= vim.fn.resolve(bin['path']) then
+            local type_of_path = bintype == 'subshell' and '$PATH' or '$PATH in subshell'
+            errors[#errors + 1] = type_of_path
+              .. ' yields this '
+              .. py_bin_basename
+              .. ' executable: '
+              .. bin['path']
+            hints[bin['hint']] = true
+          end
+        end
       end
     end
   else
@@ -842,6 +862,7 @@ local function python()
       msgs[#msgs + 1] = msg
       msgs[#msgs + 1] = conj
       msgs[#msgs + 1] = err
+      msgs[#msgs + 1] = '\n'
       conj = '\nAnd '
     end
     msgs[#msgs + 1] = '\nSo invoking Python may lead to unexpected results.'
@@ -872,7 +893,8 @@ local function ruby()
     )
     return
   end
-  health.info('Ruby: ' .. system({ 'ruby', '-v' }))
+  local _, ruby_v = cli_version({ 'ruby', '-v' })
+  health.info('Ruby: ' .. tostring(ruby_v))
 
   local host, _ = vim.provider.ruby.detect()
   if (not host) or host:find('^%s*$') then
@@ -887,11 +909,14 @@ local function ruby()
   end
   health.info('Host: ' .. host)
 
-  local latest_gem_cmd = (iswin and 'cmd /c gem list -ra "^^neovim$"' or 'gem list -ra ^neovim$')
-  local ok, latest_gem = cmd_ok(vim.split(latest_gem_cmd, ' '))
+  local latest_gem_cmd = (
+    iswin and { 'cmd', '/c', 'gem', 'list', '-ra', '"^^neovim$"' }
+    or { 'gem', 'list', '-ra', '^neovim$' }
+  )
+  local ok, latest_gem = cmd_ok(latest_gem_cmd)
   if not ok or latest_gem:find('^%s*$') then
     health.error(
-      'Failed to run: ' .. latest_gem_cmd,
+      'Failed to run: ' .. shellify(latest_gem_cmd),
       { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
     )
     return
@@ -904,8 +929,8 @@ local function ruby()
   ok, current_gem = cmd_ok(current_gem_cmd)
   if not ok then
     health.error(
-      'Failed to run: ' .. table.concat(current_gem_cmd, ' '),
-      { 'Report this issue with the output of: ', table.concat(current_gem_cmd, ' ') }
+      'Failed to run: ' .. shellify(current_gem_cmd),
+      { 'Report this issue with the output of: ', shellify(current_gem_cmd) }
     )
     return
   end

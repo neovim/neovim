@@ -71,17 +71,13 @@ end
 --- @return string[] static
 --- @return string[] non_static
 --- @return boolean any_static
-local function gen_declarations(fname, text)
+local function gen_declarations(text)
   local non_static = {} --- @type string[]
   local static = {} --- @type string[]
 
-  local neededfile = fname:match('[^/]+$')
-  local curfile = nil
   local any_static = false
   for _, node in ipairs(grammar:match(text)) do
-    if node[1] == 'preproc' then
-      curfile = node.content:match('^%a* %d+ "[^"]-/?([^"/]+)"') or curfile
-    elseif node[1] == 'proto' and curfile == neededfile then
+    if node[1] == 'proto' then
       local node_text = text:sub(node.pos, node.endpos - 1)
       local declaration = process_decl(node_text)
 
@@ -102,31 +98,27 @@ end
 local usage = [[
 Usage:
 
-    gen_declarations.lua definitions.c static.h non-static.h definitions.i
+    gen_declarations.lua definitions.c static.h non-static.h
 
 Generates declarations for a C file definitions.c, putting declarations for
 static functions into static.h and declarations for non-static functions into
-non-static.h. File `definitions.i' should contain an already preprocessed
-version of definitions.c and it is the only one which is actually parsed,
-definitions.c is needed only to determine functions from which file out of all
-functions found in definitions.i are needed and to generate an IWYU comment.
+non-static.h. Also generate an IWYU comment.
 ]]
 
 local function main()
   local fname = arg[1]
   local static_fname = arg[2]
   local non_static_fname = arg[3]
-  local preproc_fname = arg[4]
-  local static_basename = arg[5]
+  local static_basename = arg[4]
 
-  if fname == '--help' or #arg < 5 then
+  if fname == '--help' or #arg < 4 then
     print(usage)
     os.exit()
   end
 
-  local text = assert(read_file(preproc_fname))
+  local text = assert(read_file(fname))
 
-  local static_decls, non_static_decls, any_static = gen_declarations(fname, text)
+  local static_decls, non_static_decls, any_static = gen_declarations(text)
 
   local static = {} --- @type string[]
   if fname:find('.*/src/nvim/.*%.h$') then

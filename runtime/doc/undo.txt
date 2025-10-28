@@ -157,7 +157,7 @@ This is explained in the user manual: |usr_32.txt|.
 			    MM/DD HH:MM:SS       idem, with month and day
 			    YYYY/MM/DD HH:MM:SS  idem, with year
 			The "saved" column specifies, if this change was
-			written to disk and which file write it was. This can
+			written to disk and which file write it was.  This can
 			be used with the |:later| and |:earlier| commands.
 			For more details use the |undotree()| function.
 
@@ -257,7 +257,7 @@ for, you can use a BufWritePre autocommand: >
 	au BufWritePre /tmp/* setlocal noundofile
 
 Vim saves undo trees in a separate undo file, one for each edited file, using
-a simple scheme that maps filesystem paths directly to undo files. Vim will
+a simple scheme that maps filesystem paths directly to undo files.  Vim will
 detect if an undo file is no longer synchronized with the file it was written
 for (with a hash of the file contents) and ignore it when the file was changed
 after the undo file was written, to prevent corruption.  An undo file is also
@@ -270,21 +270,22 @@ they are saved to the dedicated directory in the application data folder.
 
 You can also save and restore undo histories by using ":wundo" and ":rundo"
 respectively:
-							*:wundo* *:rundo*
-:wundo[!] {file}
+							*:wu* *:wundo*
+:wu[ndo][!] {file}
 		Write undo history to {file}.
 		When {file} exists and it does not look like an undo file
 		(the magic number at the start of the file is wrong), then
 		this fails, unless the ! was added.
 		If it exists and does look like an undo file it is
-		overwritten. If there is no undo-history, nothing will be
+		overwritten.  If there is no undo-history, nothing will be
 		written.
 		Implementation detail: Overwriting happens by first deleting
 		the existing file and then creating a new file with the same
-		name. So it is not possible to overwrite an existing undofile
+		name.  So it is not possible to overwrite an existing undofile
 		in a write-protected directory.
 
-:rundo {file}	Read undo history from {file}.
+							*:rund* *:rundo*
+:rund[o] {file}	Read undo history from {file}.
 
 You can use these in autocommands to explicitly specify the name of the
 history file.  E.g.: >
@@ -369,11 +370,12 @@ information you can use these commands: >
 
 Note use of `&l:undolevels` to explicitly read the local value of 'undolevels'
 and the use of `:setlocal` to change only the local option (which takes
-precedence over the corresponding global option value).  Saving the option value
-via the use of `&undolevels` is unpredictable; it reads either the local value
-(if one has been set) or the global value (otherwise).  Also, if a local value
-has been set, changing the option via `:set undolevels` will change both the
-global and local values, requiring extra work to save and restore both values.
+precedence over the corresponding global option value).  Saving the option
+value via the use of `&undolevels` is unpredictable; it reads either the local
+value (if one has been set) or the global value (otherwise).  Also, if a local
+value has been set, changing the option via `:set undolevels` will change both
+the global and local values, requiring extra work to save and restore both
+values.
 
 Marks for the buffer ('a to 'z) are also saved and restored, together with the
 text.

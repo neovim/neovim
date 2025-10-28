@@ -17,7 +17,11 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_TERM] = "TermCursor",
   [HLF_AT] = "NonText",
   [HLF_D] = "Directory",
+  [HLF_OK] = "OkMsg",
+  [HLF_W] = "WarningMsg",
   [HLF_E] = "ErrorMsg",
+  [HLF_SE] = "StderrMsg",
+  [HLF_SO] = "StdoutMsg",
   [HLF_I] = "IncSearch",
   [HLF_L] = "Search",
   [HLF_LC] = "CurSearch",
@@ -37,7 +41,6 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_V] = "Visual",
   [HLF_VNC] = "VisualNC",
   [HLF_VSP] = "VertSplit",
-  [HLF_W] = "WarningMsg",
   [HLF_WM] = "WildMenu",
   [HLF_FL] = "Folded",
   [HLF_FC] = "FoldColumn",
@@ -82,6 +85,8 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_BFOOTER] = "FloatFooter",
   [HLF_TS] = "StatusLineTerm",
   [HLF_TSNC] = "StatusLineTermNC",
+  [HLF_PRE] = "PreInsert",
+  [HLF_PBR] = "PmenuBorder",
 });
 
 EXTERN int highlight_attr[HLF_COUNT];     // Highl. attr for each context.
@@ -104,9 +109,7 @@ EXTERN int *hl_attr_active INIT( = highlight_attr);
 // Enums need a typecast to be used as array index.
 #define HL_ATTR(n)      hl_attr_active[(int)(n)]
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight.h.generated.h"
-#endif
+#include "highlight.h.generated.h"
 
 static inline int win_hl_attr(win_T *wp, int hlf)
 {

@@ -12,6 +12,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -41,9 +42,7 @@ typedef enum {
   ASSERT_OTHER,
 } assert_type_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "testing.c.generated.h"
-#endif
+#include "testing.c.generated.h"
 
 static const char e_assert_fails_second_arg[]
   = N_(

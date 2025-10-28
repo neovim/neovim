@@ -17,6 +17,8 @@ TUI and GUI (assuming the UI supports the given feature). See |TUI| for notes
 specific to the terminal UI. Help tags with the "gui-" prefix refer to UI
 features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
 
+                                      Type |gO| to see the table of contents.
+
 ==============================================================================
 Third-party GUIs                                *third-party-guis* *vscode*
 
@@ -33,8 +35,6 @@ a Nvim GUI.
 - Neovim-Qt (Qt5) https://github.com/equalsraf/neovim-qt
 - VimR (macOS) https://github.com/qvacua/vimr
 - Others https://github.com/neovim/neovim/wiki/Related-projects#gui
-
-                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Starting the GUI                                *gui-config* *gui-start*
@@ -64,7 +64,50 @@ Stop or detach the current UI
                 the channel to be closed, it may be (incorrectly) reported as
                 an error.
 
-                Note: Not supported on Windows, currently.
+                Note: Not supported on Windows yet.
+
+------------------------------------------------------------------------------
+Restart Nvim
+
+                                                *:restart*
+:restart [+cmd] [command]
+                Restarts Nvim.
+
+                1. Stops Nvim using `:qall!` (or |+cmd|, if given).
+                2. Starts a new Nvim server using the same |v:argv|,
+                   optionally running [command] at startup. |-c|
+                3. Attaches the current UI to the new Nvim server. Other UIs
+                   (if any) will not reattach on restart (this may change in
+                   the future).
+
+                Use with `:confirm` to prompt if changes have been made.
+
+                Example: stop with `:qall!`, then restart: >
+                    :restart +qall!
+<                Example: restart and restore the current session: >
+                    :mksession! Session.vim | restart source Session.vim
+<                Example: restart and update plugins: >
+                    :restart +qall! lua vim.pack.update()
+<
+                Note: Only works if the UI and server are on the same system.
+                Note: If the UI hasn't implemented the "restart" UI event,
+                this command is equivalent to `:qall!`.
+
+------------------------------------------------------------------------------
+Connect UI to a different server
+
+                                                *:connect*
+
+:connect {address}
+                Detaches the UI from the server it is currently attached to
+                and attaches it to the server at {address} instead.
+
+                Note: If the current UI hasn't implemented the "connect" UI
+                event, this command is equivalent to |:detach|.
+
+:connect! {address}
+                Same as |:connect| but it also stops the detached server if
+                no other UI is currently attached to it.
 
 ------------------------------------------------------------------------------
 GUI commands
@@ -256,7 +299,7 @@ Note the use of ":noremap" instead of "map" to avoid a recursive mapping.
 Map the X1 and X2 buttons to go forwards and backwards in the jump list, see
 |CTRL-O| and |CTRL-I|.
 
-                                                *mouse-swap-buttons*
+                                       *mouse-swap-buttons* *pi_swapmouse*
 To swap the meaning of the left and right mouse buttons: >vim
         :noremap        <LeftMouse>     <RightMouse>
         :noremap        <LeftDrag>      <RightDrag>
@@ -272,6 +315,10 @@ To swap the meaning of the left and right mouse buttons: >vim
         :noremap!       <RightMouse>    <LeftMouse>
         :noremap!       <RightDrag>     <LeftDrag>
         :noremap!       <RightRelease>  <LeftRelease>
+<
+
+The `swapmouse` plugin does exactly this. Use |pack-add| to load it: >vim
+    :packadd! swapmouse
 <
 
 ==============================================================================
@@ -431,8 +478,8 @@ the mouse button down on this will pop up a menu containing the item
 which when selected, performs the operation.
 
 To create a menu for terminal mode, use |:tlmenu| instead of |:tmenu| unlike
-key mapping (|:tmap|). This is because |:tmenu| is already used for defining
-tooltips for menus. See |terminal-input|.
+key mapping (|:tmap|).  This is because |:tmenu| is already used for defining
+tooltips for menus.  See |terminal-input|.
 
 Special characters in a menu name:
 
@@ -681,9 +728,12 @@ when the right mouse button is pressed, if 'mousemodel' is set to popup or
 popup_setpos.
 
 The default "PopUp" menu is: >vim
-    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
     amenu     PopUp.Open\ in\ web\ browser  gx
     anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
+    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
+    anoremenu PopUp.Show\ Diagnostics       <Cmd>lua vim.diagnostic.open_float()<CR>
+    anoremenu PopUp.Show\ All\ Diagnostics  <Cmd>lua vim.diagnostic.setqflist()<CR>
+    anoremenu PopUp.Configure\ Diagnostics  <Cmd>help vim.diagnostic.config()<CR>
     anoremenu PopUp.-1-                     <Nop>
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
@@ -835,8 +885,8 @@ The tip is defined like this: >
 And delete it with: >
         :tunmenu MyMenu.Hello
 
-Tooltips are currently only supported for the X11 and Win32 GUI.  However, they
-should appear for the other gui platforms in the not too distant future.
+Tooltips are currently only supported for the X11 and Win32 GUI.  However,
+they should appear for the other gui platforms in the not too distant future.
 
 The ":tmenu" command works just like other menu commands, it uses the same
 arguments.  ":tunmenu" deletes an existing menu tip, in the same way as the

@@ -1,12 +1,17 @@
 local api = vim.api
 local bit = require('bit')
-local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
+local Range = require('vim.treesitter._range')
 local uv = vim.uv
+
+local Capability = require('vim.lsp._capability')
+
+local M = {}
 
 --- @class (private) STTokenRange
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
+--- @field end_line integer end line number 0-based
 --- @field end_col integer end column 0-based
 --- @field type string token type as string
 --- @field modifiers table<string,boolean> token modifiers as a set. E.g., { static = true, readonly = true }
@@ -28,46 +33,21 @@ local uv = vim.uv
 --- @field active_request STActiveRequest
 --- @field current_result STCurrentResult
 
----@class (private) STHighlighter
+---@class (private) STHighlighter : vim.lsp.Capability
 ---@field active table<integer, STHighlighter>
 ---@field bufnr integer
 ---@field augroup integer augroup for buffer events
 ---@field debounce integer milliseconds to debounce requests for new tokens
 ---@field timer table uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
-local STHighlighter = { active = {} }
-
---- Do a binary search of the tokens in the half-open range [lo, hi).
----
---- Return the index i in range such that tokens[j].line < line for all j < i, and
---- tokens[j].line >= line for all j >= i, or return hi if no such index is found.
-local function lower_bound(tokens, line, lo, hi)
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if tokens[mid].line < line then
-      lo = mid + 1
-    else
-      hi = mid
-    end
-  end
-  return lo
-end
-
---- Do a binary search of the tokens in the half-open range [lo, hi).
----
---- Return the index i in range such that tokens[j].line <= line for all j < i, and
---- tokens[j].line > line for all j >= i, or return hi if no such index is found.
-local function upper_bound(tokens, line, lo, hi)
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if line < tokens[mid].line then
-      hi = mid
-    else
-      lo = mid + 1
-    end
-  end
-  return lo
-end
+local STHighlighter = {
+  name = 'semantic_tokens',
+  method = 'textDocument/semanticTokens/full',
+  active = {},
+}
+STHighlighter.__index = STHighlighter
+setmetatable(STHighlighter, Capability)
+Capability.all[STHighlighter.name] = STHighlighter
 
 --- Extracts modifier strings from the encoded number in the token array
 ---
@@ -90,6 +70,7 @@ end
 
 --- Converts a raw token list to a list of highlight ranges used by the on_win callback
 ---
+---@async
 ---@param data integer[]
 ---@param bufnr integer
 ---@param client vim.lsp.Client
@@ -101,6 +82,8 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local token_modifiers = legend.tokenModifiers
   local encoding = client.offset_encoding
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  -- For all encodings, \r\n takes up two code points, and \n (or \r) takes up one.
+  local eol_offset = vim.bo.fileformat[bufnr] == 'dos' and 2 or 1
   local ranges = {} ---@type STTokenRange[]
 
   local start = uv.hrtime()
@@ -140,11 +123,25 @@ local function tokens_to_ranges(data, bufnr, client, request)
     if token_type then
       local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
       local end_char = start_char + data[i + 2] --- @type integer LuaLS bug
-      local buf_line = lines and lines[line + 1] or ''
+      local buf_line = lines[line + 1] or ''
+      local end_line = line ---@type integer
       local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
+
+      ---@type integer LuaLS bug, type must be marked explicitly here
+      local new_end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
+      -- While end_char goes past the given line, extend the token range to the next line
+      while new_end_char > 0 do
+        end_char = new_end_char
+        end_line = end_line + 1
+        buf_line = lines[end_line + 1] or ''
+        new_end_char = new_end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
+      end
+
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
+
       ranges[#ranges + 1] = {
         line = line,
+        end_line = end_line,
         start_col = start_col,
         end_col = end_col,
         type = token_type,
@@ -162,14 +159,9 @@ end
 ---@private
 ---@param bufnr integer
 ---@return STHighlighter
-function STHighlighter.new(bufnr)
-  local self = setmetatable({}, { __index = STHighlighter })
-
-  self.bufnr = bufnr
-  self.augroup = api.nvim_create_augroup('nvim.lsp.semantic_tokens:' .. bufnr, { clear = true })
-  self.client_state = {}
-
-  STHighlighter.active[bufnr] = self
+function STHighlighter:new(bufnr)
+  self.debounce = 200
+  self = Capability.new(self, bufnr)
 
   api.nvim_buf_attach(bufnr, false, {
     on_lines = function(_, buf)
@@ -196,32 +188,11 @@ function STHighlighter.new(bufnr)
     end,
   })
 
-  api.nvim_create_autocmd('LspDetach', {
-    buffer = self.bufnr,
-    group = self.augroup,
-    callback = function(args)
-      self:detach(args.data.client_id)
-      if vim.tbl_isempty(self.client_state) then
-        self:destroy()
-      end
-    end,
-  })
-
   return self
 end
 
 ---@package
-function STHighlighter:destroy()
-  for client_id, _ in pairs(self.client_state) do
-    self:detach(client_id)
-  end
-
-  api.nvim_del_augroup_by_id(self.augroup)
-  STHighlighter.active[self.bufnr] = nil
-end
-
----@package
-function STHighlighter:attach(client_id)
+function STHighlighter:on_attach(client_id)
   local state = self.client_state[client_id]
   if not state then
     state = {
@@ -231,10 +202,11 @@ function STHighlighter:attach(client_id)
     }
     self.client_state[client_id] = state
   end
+  self:send_request()
 end
 
 ---@package
-function STHighlighter:detach(client_id)
+function STHighlighter:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
     --TODO: delete namespace if/when that becomes possible
@@ -282,12 +254,13 @@ function STHighlighter:send_request()
       local hasEditProvider = type(spec) == 'table' and spec.delta
 
       local params = { textDocument = util.make_text_document_params(self.bufnr) }
-      local method = ms.textDocument_semanticTokens_full
+      local method = 'textDocument/semanticTokens/full'
 
       if hasEditProvider and current_result.result_id then
         method = method .. '/delta'
         params.previousResultId = current_result.result_id
       end
+      ---@cast method vim.lsp.protocol.Method.ClientToServer.Request
       ---@param response? lsp.SemanticTokens|lsp.SemanticTokensDelta
       local success, request_id = client:request(method, params, function(err, response, ctx)
         -- look client up again using ctx.client_id instead of using a captured
@@ -326,6 +299,7 @@ end
 --- Finally, a redraw command is issued to force nvim to redraw the screen to
 --- pick up changed highlight tokens.
 ---
+---@async
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@private
 function STHighlighter:process_response(response, client, version)
@@ -394,8 +368,9 @@ end
 --- @param hl_group string
 --- @param priority integer
 local function set_mark(bufnr, ns, token, hl_group, priority)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, token.line, token.start_col, {
+  api.nvim_buf_set_extmark(bufnr, ns, token.line, token.start_col, {
     hl_group = hl_group,
+    end_line = token.end_line,
     end_col = token.end_col,
     priority = priority,
     strict = false,
@@ -484,14 +459,24 @@ function STHighlighter:on_win(topline, botline)
 
       local ft = vim.bo[self.bufnr].filetype
       local highlights = assert(current_result.highlights)
-      local first = lower_bound(highlights, topline, 1, #highlights + 1)
-      local last = upper_bound(highlights, botline, first, #highlights + 1) - 1
+      local first = vim.list.bisect(highlights, { end_line = topline }, {
+        key = function(highlight)
+          return highlight.end_line
+        end,
+      })
+      local last = vim.list.bisect(highlights, { line = botline }, {
+        lo = first,
+        bound = 'upper',
+        key = function(highlight)
+          return highlight.line
+        end,
+      }) - 1
 
       --- @type boolean?, integer?
       local is_folded, foldend
 
       for i = first, last do
-        local token = highlights[i]
+        local token = assert(highlights[i])
 
         is_folded, foldend = check_fold(token.line + 1, foldend)
 
@@ -584,7 +569,22 @@ function STHighlighter:reset_timer()
   end
 end
 
-local M = {}
+---@param bufnr (integer) Buffer number, or `0` for current buffer
+---@param client_id (integer) The ID of the |vim.lsp.Client|
+---@param debounce? (integer) (default: 200): Debounce token requests
+---        to the server by the given number in milliseconds
+function M._start(bufnr, client_id, debounce)
+  local highlighter = STHighlighter.active[bufnr]
+
+  if not highlighter then
+    highlighter = STHighlighter:new(bufnr)
+    highlighter.debounce = debounce or 200
+  else
+    highlighter.debounce = debounce or highlighter.debounce
+  end
+
+  highlighter:on_attach(client_id)
+end
 
 --- Start the semantic token highlighting engine for the given buffer with the
 --- given client. The client must already be attached to the buffer.
@@ -599,12 +599,14 @@ local M = {}
 --- client.server_capabilities.semanticTokensProvider = nil
 --- ```
 ---
+---@deprecated
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 ---@param opts? (table) Optional keyword arguments
 ---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
+  vim.deprecate('vim.lsp.semantic_tokens.start', 'vim.lsp.semantic_tokens.enable(true)', '0.13.0')
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
@@ -635,17 +637,7 @@ function M.start(bufnr, client_id, opts)
     return
   end
 
-  local highlighter = STHighlighter.active[bufnr]
-
-  if not highlighter then
-    highlighter = STHighlighter.new(bufnr)
-    highlighter.debounce = opts.debounce or 200
-  else
-    highlighter.debounce = math.max(highlighter.debounce, opts.debounce or 200)
-  end
-
-  highlighter:attach(client_id)
-  highlighter:send_request()
+  M._start(bufnr, client_id, opts.debounce)
 end
 
 --- Stop the semantic token highlighting engine for the given buffer with the
@@ -655,9 +647,11 @@ end
 --- of `start()`, so you should only need this function to manually disengage the semantic
 --- token engine without fully detaching the LSP client from the buffer.
 ---
+---@deprecated
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 function M.stop(bufnr, client_id)
+  vim.deprecate('vim.lsp.semantic_tokens.stop', 'vim.lsp.semantic_tokens.enable(false)', '0.13.0')
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
@@ -668,11 +662,31 @@ function M.stop(bufnr, client_id)
     return
   end
 
-  highlighter:detach(client_id)
+  highlighter:on_detach(client_id)
 
   if vim.tbl_isempty(highlighter.client_state) then
     highlighter:destroy()
   end
+end
+
+--- Query whether semantic tokens is enabled in the {filter}ed scope
+---@param filter? vim.lsp.capability.enable.Filter
+function M.is_enabled(filter)
+  return vim.lsp._capability.is_enabled('semantic_tokens', filter)
+end
+
+--- Enables or disables semantic tokens for the {filter}ed scope.
+---
+--- To "toggle", pass the inverse of `is_enabled()`:
+---
+--- ```lua
+--- vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled())
+--- ```
+---
+---@param enable? boolean true/nil to enable, false to disable
+---@param filter? vim.lsp.capability.enable.Filter
+function M.enable(enable, filter)
+  vim.lsp._capability.enable('semantic_tokens', enable, filter)
 end
 
 --- @nodoc
@@ -690,6 +704,7 @@ end
 ---        the following fields:
 ---        - line (integer) line number, 0-based
 ---        - start_col (integer) start column, 0-based
+---        - end_line (integer) end line number, 0-based
 ---        - end_col (integer) end column, 0-based
 ---        - type (string) token type as string, e.g. "variable"
 ---        - modifiers (table) token modifiers as a set. E.g., { static = true, readonly = true }
@@ -707,11 +722,17 @@ function M.get_at_pos(bufnr, row, col)
     row, col = cursor[1] - 1, cursor[2]
   end
 
+  local position = { row, col, row, col }
+
   local tokens = {} --- @type STTokenRangeInspect[]
   for client_id, client in pairs(highlighter.client_state) do
     local highlights = client.current_result.highlights
     if highlights then
-      local idx = lower_bound(highlights, row, 1, #highlights + 1)
+      local idx = vim.list.bisect(highlights, { end_line = row }, {
+        key = function(highlight)
+          return highlight.end_line
+        end,
+      })
       for i = idx, #highlights do
         local token = highlights[i]
         --- @cast token STTokenRangeInspect
@@ -720,7 +741,9 @@ function M.get_at_pos(bufnr, row, col)
           break
         end
 
-        if token.start_col <= col and token.end_col > col then
+        if
+          Range.contains({ token.line, token.start_col, token.end_line, token.end_col }, position)
+        then
           token.client_id = client_id
           tokens[#tokens + 1] = token
         end
@@ -733,7 +756,7 @@ end
 --- Force a refresh of all semantic tokens
 ---
 --- Only has an effect if the buffer is currently active for semantic token
---- highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
+--- highlighting (|vim.lsp.semantic_tokens.enable()| has been called for it)
 ---
 ---@param bufnr (integer|nil) filter by buffer. All buffers if nil, current
 ---       buffer if 0
@@ -827,5 +850,8 @@ api.nvim_set_decoration_provider(namespace, {
 ---
 ---@private
 M.__STHighlighter = STHighlighter
+
+-- Semantic tokens is enabled by default
+vim.lsp._capability.enable('semantic_tokens', true)
 
 return M
