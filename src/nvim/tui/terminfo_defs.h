@@ -451,7 +451,7 @@ static const TerminfoEntry st_256colour_terminfo = {
     [kTerm_set_attributes] = "%?%p9%t\033(0%e\033(B%;\033[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p7%t;8%;m",
     [kTerm_set_lr_margin] = NULL,
     [kTerm_to_status_line] = "\033]0;",
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[2 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = "\033[9m",
     [kTerm_set_rgb_foreground] = NULL,
@@ -508,7 +508,7 @@ static const TerminfoEntry tmux_256colour_terminfo = {
     [kTerm_set_attributes] = "\033[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p7%t;8%;m%?%p9%t^N%e\017%;",
     [kTerm_set_lr_margin] = NULL,
     [kTerm_to_status_line] = "\033]0;",
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[2 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = "\033[9m",
     [kTerm_set_rgb_foreground] = NULL,
@@ -565,7 +565,7 @@ static const TerminfoEntry vte_256colour_terminfo = {
     [kTerm_set_attributes] = "\033[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p5%t;2%;%?%p7%t;8%;%?%p1%p3%|%t;7%;m%?%p9%t^N%e\017%;",
     [kTerm_set_lr_margin] = NULL,
     [kTerm_to_status_line] = NULL,
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[1 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = "\033[9m",
     [kTerm_set_rgb_foreground] = NULL,
@@ -622,7 +622,7 @@ static const TerminfoEntry xterm_256colour_terminfo = {
     [kTerm_set_attributes] = "%?%p9%t\033(0%e\033(B%;\033[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m",
     [kTerm_set_lr_margin] = "\033[?69h\033[%i%p1%d;%p2%ds",
     [kTerm_to_status_line] = NULL,
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[2 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = "\033[9m",
     [kTerm_set_rgb_foreground] = NULL,
@@ -736,7 +736,7 @@ static const TerminfoEntry win32con_terminfo = {
     [kTerm_set_attributes] = "\033[0%?%p1%t;7%;%?%p3%t;7%;%?%p6%t;1%;m",
     [kTerm_set_lr_margin] = NULL,
     [kTerm_to_status_line] = NULL,
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[0 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = NULL,
     [kTerm_set_rgb_foreground] = NULL,
@@ -793,7 +793,7 @@ static const TerminfoEntry conemu_terminfo = {
     [kTerm_set_attributes] = "\033[0%?%p1%p3%|%t;7%;%?%p2%t;4%;%?%p6%t;1%;m",
     [kTerm_set_lr_margin] = NULL,
     [kTerm_to_status_line] = NULL,
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[2 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = NULL,
     [kTerm_set_rgb_foreground] = NULL,
@@ -850,7 +850,7 @@ static const TerminfoEntry vtpcon_terminfo = {
     [kTerm_set_attributes] = "\033[0%?%p1%p3%|%t;7%;%?%p2%t;4%;%?%p6%t;1%;m",
     [kTerm_set_lr_margin] = NULL,
     [kTerm_to_status_line] = "\033]0;",
-    [kTerm_reset_cursor_style] = NULL,
+    [kTerm_reset_cursor_style] = "\033[2 q",
     [kTerm_set_cursor_style] = "\033[%p1%d q",
     [kTerm_enter_strikethrough_mode] = NULL,
     [kTerm_set_rgb_foreground] = NULL,
@@ -903,7 +903,7 @@ static const TerminfoEntry vtpcon_terminfo = {
 // end of list
 
 #define XLIST_TERMINFO_EXT \
-  X(reset_cursor_style, se) \
+  X(reset_cursor_style, Se) \
   X(set_cursor_style, Ss) \
   X(enter_strikethrough_mode, smxx) \
   X(set_rgb_foreground, setrgbf) \

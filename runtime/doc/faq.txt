@@ -108,7 +108,8 @@ which sets different colors in insert-mode and normal-mode:
 ------------------------------------------------------------------------------
 CURSOR STYLE ISN'T RESTORED AFTER EXITING OR SUSPENDING AND RESUMING NVIM
 
-Terminals do not provide a way to query the cursor style. Use autocommands to
+Nvim uses the "Se" terminfo capability to reset the cursor style on exit. If
+your terminal's terminfo does not define this capability, use autocommands to
 manage the cursor style:
 >vim
     au VimEnter,VimResume * set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
@@ -116,6 +117,9 @@ manage the cursor style:
       \,sm:block-blinkwait175-blinkoff150-blinkon175
 
     au VimLeave,VimSuspend * set guicursor=a:block-blinkon0
+
+Alternatively, consider setting the desired cursor shape in your shell (e.g.
+with PROMPT_COMMAND in bash).
 <
 
 ------------------------------------------------------------------------------
