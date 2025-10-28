@@ -1748,10 +1748,8 @@ static void win_update(win_T *wp)
           // Correct the first entry for filler lines at the top
           // when it won't get updated below.
           if (win_may_fill(wp) && bot_start > 0) {
-            int n = plines_win_nofill(wp, wp->w_topline, false) + wp->w_topfill
-                    - adjust_plines_for_skipcol(wp);
-            n = MIN(n, wp->w_view_height);
-            wp->w_lines[0].wl_size = (uint16_t)n;
+            wp->w_lines[0].wl_size
+              = (uint16_t)plines_correct_topline(wp, wp->w_topline, NULL, true, NULL);
           }
         }
       }
@@ -2083,9 +2081,8 @@ static void win_update(win_T *wp)
           // rows, and may insert/delete lines
           int j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            int n = (l == wp->w_topline ? -adjust_plines_for_skipcol(wp) : 0);
-            n += plines_win_full(wp, l, &l, NULL, true, false);
-            new_rows += MIN(n, wp->w_view_height);
+            int n = plines_correct_topline(wp, l, &l, true, NULL);
+            new_rows += n;
             j += n > 0;  // don't count concealed lines
             if (new_rows > wp->w_view_height - row - 2) {
               // it's getting too much, must redraw the rest
