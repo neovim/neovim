@@ -261,14 +261,14 @@ local function check_tmux()
     local ok, out = system(cmd)
     local val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
     if not ok then
-      health.error('command failed: ' .. cmd .. '\n' .. out)
+      health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
       return 'error'
     elseif val == '' then
       cmd = { 'tmux', 'show-option', '-qvgs', option } -- try session scope
       ok, out = system(cmd)
       val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
       if not ok then
-        health.error('command failed: ' .. cmd .. '\n' .. out)
+        health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
         return 'error'
       end
     end
@@ -316,7 +316,7 @@ local function check_tmux()
   end
 
   if not ok then
-    health.error('command failed: ' .. cmd .. '\n' .. out)
+    health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
   elseif tmux_default_term ~= vim.env.TERM then
     health.info('default-terminal: ' .. tmux_default_term)
     health.error(
@@ -372,7 +372,7 @@ local function check_terminal()
         == ''
     )
   then
-    health.error('command failed: ' .. cmd .. '\n' .. out)
+    health.error(('command failed: %s\n%s'):format(vim.inspect(cmd), out))
   else
     health.info(
       vim.fn.printf(
