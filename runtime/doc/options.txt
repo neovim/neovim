@@ -713,7 +713,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- Disable the use of 'keymap' (without changing its value).
 	Note that 'arabicshape' and 'delcombine' are not reset (it is a global
 	option).
-	Also see |arabic.txt|.
+	Also see |l10n-arabic.txt|.
 
 		*'arabicshape'* *'arshape'* *'noarabicshape'* *'noarshape'*
 'arabicshape' 'arshape'	boolean	(default on)
@@ -729,7 +729,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When disabled the display shows each character's true stand-alone
 	form.
 	Arabic is a complex language which requires other settings, for
-	further details see |arabic.txt|.
+	further details see |l10n-arabic.txt|.
 
 			*'autochdir'* *'acd'* *'noautochdir'* *'noacd'*
 'autochdir' 'acd'	boolean	(default off)
@@ -6805,7 +6805,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'arabic' is set and the value of 'arabicshape' will be ignored.
 	Note that setting 'termbidi' has the immediate effect that
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
-	For further details see |arabic.txt|.
+	For further details see |l10n-arabic.txt|.
 
 		*'termguicolors'* *'tgc'* *'notermguicolors'* *'notgc'*
 'termguicolors' 'tgc'	boolean	(default off)

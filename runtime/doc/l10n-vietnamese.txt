@@ -1,4 +1,4 @@
-*vietnamese.txt*   Nvim
+*l10n-vietnamese.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Phạm Bình An

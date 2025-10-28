@@ -71,7 +71,7 @@ vim.go.ambw = vim.go.ambiwidth
 --- - Disable the use of 'keymap' (without changing its value).
 --- Note that 'arabicshape' and 'delcombine' are not reset (it is a global
 --- option).
---- Also see `arabic.txt`.
+--- Also see `l10n-arabic.txt`.
 ---
 --- @type boolean
 vim.o.arabic = false
@@ -90,7 +90,7 @@ vim.wo.arab = vim.wo.arabic
 --- When disabled the display shows each character's true stand-alone
 --- form.
 --- Arabic is a complex language which requires other settings, for
---- further details see `arabic.txt`.
+--- further details see `l10n-arabic.txt`.
 ---
 --- @type boolean
 vim.o.arabicshape = true
@@ -7357,7 +7357,7 @@ vim.go.tgst = vim.go.tagstack
 --- 'arabic' is set and the value of 'arabicshape' will be ignored.
 --- Note that setting 'termbidi' has the immediate effect that
 --- 'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
---- For further details see `arabic.txt`.
+--- For further details see `l10n-arabic.txt`.
 ---
 --- @type boolean
 vim.o.termbidi = false

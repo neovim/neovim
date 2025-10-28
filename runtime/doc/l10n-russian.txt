@@ -1,4 +1,4 @@
-*russian.txt*   Nvim
+*l10n-russian.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Vassily Ragosin

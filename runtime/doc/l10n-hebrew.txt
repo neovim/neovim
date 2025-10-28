@@ -1,4 +1,4 @@
-*hebrew.txt*    Nvim
+*l10n-hebrew.txt*    Nvim
 
 
 	   VIM REFERENCE MANUAL    by Ron Aaron (and Avner Lottem)
