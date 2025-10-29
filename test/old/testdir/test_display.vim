@@ -491,4 +491,65 @@ func Test_display_cursor_long_line()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_change_wrapped_line_cpo_dollar()
+  CheckScreendump
+
+  let lines =<< trim END
+    set cpoptions+=$ laststatus=0
+    call setline(1, ['foo', 'bar',
+          \ repeat('x', 25) .. '!!()!!' .. repeat('y', 25),
+          \ 'FOO', 'BAR'])
+    inoremap <F2> <Cmd>call setline(1, repeat('z', 30))<CR>
+    inoremap <F3> <Cmd>call setline(1, 'foo')<CR>
+    vsplit
+    call cursor(3, 1)
+  END
+  call writefile(lines, 'Xwrapped_cpo_dollar', 'D')
+  let buf = RunVimInTerminal('-S Xwrapped_cpo_dollar', #{rows: 10, cols: 45})
+
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_01', {})
+  call term_sendkeys(buf, 'ct!')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_02', {})
+  call term_sendkeys(buf, "\<F2>")
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_03', {})
+  call term_sendkeys(buf, "\<F3>")
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_02', {})
+  call term_sendkeys(buf, 'y')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_04', {})
+  call term_sendkeys(buf, 'y')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_05', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_06', {})
+
+  call term_sendkeys(buf, ":silent undo | echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_01', {})
+  call term_sendkeys(buf, ":source samples/matchparen.vim\<CR>")
+  call term_sendkeys(buf, 'ct(')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_07', {})
+  call term_sendkeys(buf, 'y')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_08', {})
+  call term_sendkeys(buf, 'y')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_09', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_10', {})
+
+  call term_sendkeys(buf, ":silent undo | echo\<CR>")
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_01', {})
+  call term_sendkeys(buf, "f(azz\<CR>zz\<Esc>k0")
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_11', {})
+  call term_sendkeys(buf, 'ct(')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_12', {})
+  call term_sendkeys(buf, 'y')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_13', {})
+  call term_sendkeys(buf, 'y')
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_14', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_change_wrapped_line_cpo_dollar_15', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

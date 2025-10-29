@@ -209,4 +209,213 @@ describe('display', function()
                                                                                  |
     ]])
   end)
+
+  -- oldtest: Test_change_wrapped_line_cpo_dollar()
+  it('changing wrapped line with cpo+=$', function()
+    local screen = Screen.new(45, 10)
+    exec([[
+      set cpoptions+=$ laststatus=0
+      call setline(1, ['foo', 'bar',
+            \ repeat('x', 25) .. '!!()!!' .. repeat('y', 25),
+            \ 'FOO', 'BAR'])
+      inoremap <F2> <Cmd>call setline(1, repeat('z', 30))<CR>
+      inoremap <F3> <Cmd>call setline(1, 'foo')<CR>
+      vsplit
+      call cursor(3, 1)
+    ]])
+
+    local s1 = [[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      ^xxxxxxxxxxxxxxxxxxxxxx│xxxxxxxxxxxxxxxxxxxxxx|
+      xxx!!()!!yyyyyyyyyyyyy│xxx!!()!!yyyyyyyyyyyyy|
+      yyyyyyyyyyyy          │yyyyyyyyyyyy          |
+      FOO                   │FOO                   |
+      BAR                   │BAR                   |
+      {1:~                     }│{1:~                     }|*2
+                                                   |
+    ]]
+    screen:expect(s1)
+    feed('ct!')
+    local s2 = [[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      ^xxxxxxxxxxxxxxxxxxxxxx│!!()!!yyyyyyyyyyyyyyyy|
+      xx$!!()!!yyyyyyyyyyyyy│yyyyyyyyy             |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|*2
+      {5:-- INSERT --}                                 |
+    ]]
+    screen:expect(s2)
+    feed('<F2>')
+    screen:expect([[
+      zzzzzzzzzzzzzzzzzzzzzz│zzzzzzzzzzzzzzzzzzzzzz|
+      zzzzzzzz              │zzzzzzzz              |
+      bar                   │bar                   |
+      ^xxxxxxxxxxxxxxxxxxxxxx│!!()!!yyyyyyyyyyyyyyyy|
+      xx$!!()!!yyyyyyyyyyyyy│yyyyyyyyy             |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('<F3>')
+    screen:expect(s2)
+    feed('y')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      y^xxxxxxxxxxxxxxxxxxxxx│y!!()!!yyyyyyyyyyyyyyy|
+      xx$!!()!!yyyyyyyyyyyyy│yyyyyyyyyy            |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|*2
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('y')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      yy^xxxxxxxxxxxxxxxxxxxx│yy!!()!!yyyyyyyyyyyyyy|
+      xx$!!()!!yyyyyyyyyyyyy│yyyyyyyyyyy           |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|*2
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      y^y!!()!!yyyyyyyyyyyyyy│yy!!()!!yyyyyyyyyyyyyy|
+      yyyyyyyyyyy           │yyyyyyyyyyy           |
+      FOO                   │FOO                   |
+      BAR                   │BAR                   |
+      {1:~                     }│{1:~                     }|*3
+                                                   |
+    ]])
+
+    command('silent undo')
+    screen:expect(s1)
+    command('source test/old/testdir/samples/matchparen.vim')
+    feed('ct(')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      ^xxxxxxxxxxxxxxxxxxxxxx│()!!yyyyyyyyyyyyyyyyyy|
+      xxx!$()!!yyyyyyyyyyyyy│yyyyyyy               |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|*2
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('y')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      y^xxxxxxxxxxxxxxxxxxxxx│y()!!yyyyyyyyyyyyyyyyy|
+      xxx!$()!!yyyyyyyyyyyyy│yyyyyyyy              |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|*2
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('y')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      yy^xxxxxxxxxxxxxxxxxxxx│yy()!!yyyyyyyyyyyyyyyy|
+      xxx!$()!!yyyyyyyyyyyyy│yyyyyyyyy             |
+      yyyyyyyyyyyy          │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|*2
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      y^y()!!yyyyyyyyyyyyyyyy│yy()!!yyyyyyyyyyyyyyyy|
+      yyyyyyyyy             │yyyyyyyyy             |
+      FOO                   │FOO                   |
+      BAR                   │BAR                   |
+      {1:~                     }│{1:~                     }|*3
+                                                   |
+    ]])
+
+    command('silent undo')
+    screen:expect(s1)
+    feed('f(azz<CR>zz<Esc>k0')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      ^xxxxxxxxxxxxxxxxxxxxxx│xxxxxxxxxxxxxxxxxxxxxx|
+      xxx!!(zz              │xxx!!(zz              |
+      zz)!!yyyyyyyyyyyyyyyyy│zz)!!yyyyyyyyyyyyyyyyy|
+      yyyyyyyy              │yyyyyyyy              |
+      FOO                   │FOO                   |
+      BAR                   │BAR                   |
+      {1:~                     }│{1:~                     }|
+                                                   |
+    ]])
+    feed('ct(')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      ^xxxxxxxxxxxxxxxxxxxxxx│(zz                   |
+      xxx!$(zz              │zz)!!yyyyyyyyyyyyyyyyy|
+      zz)!!yyyyyyyyyyyyyyyyy│yyyyyyyy              |
+      yyyyyyyy              │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('y')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      y^xxxxxxxxxxxxxxxxxxxxx│y(zz                  |
+      xxx!$(zz              │zz)!!yyyyyyyyyyyyyyyyy|
+      zz)!!yyyyyyyyyyyyyyyyy│yyyyyyyy              |
+      yyyyyyyy              │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('y')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      yy^xxxxxxxxxxxxxxxxxxxx│yy(zz                 |
+      xxx!$(zz              │zz)!!yyyyyyyyyyyyyyyyy|
+      zz)!!yyyyyyyyyyyyyyyyy│yyyyyyyy              |
+      yyyyyyyy              │FOO                   |
+      FOO                   │BAR                   |
+      BAR                   │{1:~                     }|
+      {1:~                     }│{1:~                     }|
+      {5:-- INSERT --}                                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      foo                   │foo                   |
+      bar                   │bar                   |
+      y^y(zz                 │yy(zz                 |
+      zz)!!yyyyyyyyyyyyyyyyy│zz)!!yyyyyyyyyyyyyyyyy|
+      yyyyyyyy              │yyyyyyyy              |
+      FOO                   │FOO                   |
+      BAR                   │BAR                   |
+      {1:~                     }│{1:~                     }|*2
+                                                   |
+    ]])
+  end)
 end)

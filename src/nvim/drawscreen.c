@@ -2159,12 +2159,11 @@ static void win_update(win_T *wp)
       // When at start of changed lines: May scroll following lines
       // up or down to minimize redrawing.
       // Don't do this when the change continues until the end.
-      // Don't scroll when dollar_vcol >= 0, keep the "$".
       // Don't scroll when redrawing the top, scrolled already above.
       if (lnum == mod_top
           && mod_bot != MAXLNUM
-          && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)
           && row >= top_end) {
+        int old_cline_height = 0;
         int old_rows = 0;
         linenr_T l;
         int i;
@@ -2178,6 +2177,9 @@ static void win_update(win_T *wp)
           if (wp->w_lines[i].wl_valid
               && wp->w_lines[i].wl_lnum == mod_bot) {
             break;
+          }
+          if (wp->w_lines[i].wl_lnum == wp->w_cursor.lnum) {
+            old_cline_height = wp->w_lines[i].wl_size;
           }
           old_rows += wp->w_lines[i].wl_size;
           if (wp->w_lines[i].wl_valid
@@ -2205,10 +2207,17 @@ static void win_update(win_T *wp)
           // rows, and may insert/delete lines
           int j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            int n = (l == wp->w_topline ? -adjust_plines_for_skipcol(wp) : 0);
-            n += plines_win_full(wp, l, &l, NULL, true, false);
-            new_rows += MIN(n, wp->w_height_inner);
-            j += n > 0;  // don't count concealed lines
+            if (dollar_vcol >= 0 && wp == curwin
+                && old_cline_height > 0 && l == wp->w_cursor.lnum) {
+              // When dollar_vcol >= 0, cursor line isn't fully
+              // redrawn, and its height remains unchanged.
+              new_rows += old_cline_height;
+              j++;
+            } else {
+              int n = plines_correct_topline(wp, l, &l, true, NULL);
+              new_rows += n;
+              j += n > 0;  // don't count concealed lines
+            }
             if (new_rows > wp->w_grid.rows - row - 2) {
               // it's getting too much, must redraw the rest
               new_rows = 9999;
@@ -2343,15 +2352,17 @@ static void win_update(win_T *wp)
       wp->w_lines[idx].wl_lnum = lnum;
       wp->w_lines[idx].wl_valid = true;
 
+      bool is_curline = wp == curwin && lnum == wp->w_cursor.lnum;
+
       if (row > wp->w_grid.rows) {         // past end of grid
         // we may need the size of that too long line later on
-        if (dollar_vcol == -1) {
+        if (dollar_vcol == -1 || !is_curline) {
           wp->w_lines[idx].wl_size = (uint16_t)plines_win(wp, lnum, true);
         }
         idx++;
         break;
       }
-      if (dollar_vcol == -1) {
+      if (dollar_vcol == -1 || !is_curline) {
         wp->w_lines[idx].wl_size = (uint16_t)(row - srow);
       }
       lnum = wp->w_lines[idx++].wl_lastlnum + 1;
@@ -2467,7 +2478,7 @@ redr_statuscol:
           goto redr_statuscol;
         }
       }
-    } else if (dollar_vcol == -1) {
+    } else if (dollar_vcol == -1 || wp != curwin) {
       wp->w_botline = lnum;
     }
 
@@ -2509,7 +2520,7 @@ redr_statuscol:
                         kv_A(win_extmark_arr, n).win_row, kv_A(win_extmark_arr, n).win_col);
   }
 
-  if (dollar_vcol == -1) {
+  if (dollar_vcol == -1 || wp != curwin) {
     // There is a trick with w_botline.  If we invalidate it on each
     // change that might modify it, this will cause a lot of expensive
     // calls to plines_win() in update_topline() each time.  Therefore the
