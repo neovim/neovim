@@ -1,8 +1,8 @@
 LIBUV_URL https://github.com/libuv/libuv/archive/v1.51.0.tar.gz
 LIBUV_SHA256 27e55cf7083913bfb6826ca78cde9de7647cded648d35f24163f2d31bb9f51cd
 
-LUAJIT_URL https://github.com/luajit/luajit/archive/864e78d66cb21335823c7782fa21beae8e7914b0.tar.gz
-LUAJIT_SHA256 dd873123d81adad407f4d8598a902958fade53c6e1b0db44f67c82cf04c1bfc3
+LUAJIT_URL https://github.com/luajit/luajit/archive/8518c0b40b1734901de888a0a363450c0709d3f8.tar.gz
+LUAJIT_SHA256 2dd2e805aa6172e9470e0739f88bc844933331e9be65eb7b1e52d5548fc41425
 
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
