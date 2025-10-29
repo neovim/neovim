@@ -1,30 +1,21 @@
 -- Generates C code to bridge API <=> Lua.
---
--- Example (manual) invocation:
---
---    make
---    cp build/nvim_version.lua src/nvim/
---    cd src/nvim
---    nvim -l generators/gen_api_dispatch.lua "../../build/src/nvim/auto/api/private/dispatch_wrappers.generated.h" "../../build/src/nvim/auto/api/private/api_metadata.generated.h" "../../build/funcs_metadata.mpack" "../../build/src/nvim/auto/lua_api_c_bindings.generated.h" "../../build/src/nvim/auto/keysets_defs.generated.h" "../../build/ui_metadata.mpack" "../../build/cmake.config/auto/versiondef_git.h" "./api/autocmd.h" "./api/buffer.h" "./api/command.h" "./api/deprecated.h" "./api/extmark.h" "./api/keysets_defs.h" "./api/options.h" "./api/tabpage.h" "./api/ui.h" "./api/vim.h" "./api/vimscript.h" "./api/win_config.h" "./api/window.h" "../../build/include/api/autocmd.h.generated.h" "../../build/include/api/buffer.h.generated.h" "../../build/include/api/command.h.generated.h" "../../build/include/api/deprecated.h.generated.h" "../../build/include/api/extmark.h.generated.h" "../../build/include/api/options.h.generated.h" "../../build/include/api/tabpage.h.generated.h" "../../build/include/api/ui.h.generated.h" "../../build/include/api/vim.h.generated.h" "../../build/include/api/vimscript.h.generated.h" "../../build/include/api/win_config.h.generated.h" "../../build/include/api/window.h.generated.h"
 
+-- to obtain how the script is invoked, look in build/build.ninja and grep for
+-- "gen_api_dispatch.lua"
 local hashy = require 'gen.hashy'
 local c_grammar = require('gen.c_grammar')
 
 -- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
 local dispatch_outputf = arg[1]
--- output h file with packed metadata (api_metadata.generated.h)
-local api_metadata_outputf = arg[2]
--- output metadata mpack file, for use by other build scripts (funcs_metadata.mpack)
-local mpack_outputf = arg[3]
+-- output file with exported functions metadata
+local exported_funcs_metadata_outputf = arg[2]
+-- output mpack file with raw metadata, for use by gen_eval.lua (funcs_metadata.mpack)
+local eval_funcs_metadata_outputf = arg[3]
 local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
 local keysets_outputf = arg[5] -- keysets_defs.generated.h
-local ui_metadata_inputf = arg[6] -- ui events metadata
-local git_version_inputf = arg[7] -- git version header
-local nvim_version_inputf = arg[8] -- nvim version
-local dump_bin_array_inputf = arg[9]
-local dispatch_deprecated_inputf = arg[10]
-local pre_args = 10
-assert(#arg >= pre_args)
+local dispatch_deprecated_inputf = arg[6]
+local pre_args = 6
+assert(#arg >= 6)
 
 local function real_type(type, exported)
   local ptype = c_grammar.typed_container:match(type)
@@ -165,8 +156,6 @@ local function add_keyset(val)
   }
 end
 
-local ui_options_text = nil
-
 -- read each input file, parse and append to the api metadata
 for i = pre_args + 1, #arg do
   local full_path = arg[i]
@@ -190,11 +179,8 @@ for i = pre_args + 1, #arg do
     end
   end
 
-  ui_options_text = ui_options_text or text:match('ui_ext_names%[][^{]+{([^}]+)}')
   input:close()
 end
-
---- @cast ui_options_text string
 
 --- @generic T: table
 --- @param orig T
@@ -303,77 +289,11 @@ for _, f in ipairs(functions) do
   end
 end
 
-local ui_options = { 'rgb' }
-for x in ui_options_text:gmatch('"([a-z][a-z_]+)"') do
-  table.insert(ui_options, x)
-end
+local metadata_output = assert(io.open(exported_funcs_metadata_outputf, 'wb'))
+metadata_output:write(vim.mpack.encode(exported_functions))
+metadata_output:close()
 
 --- @type integer[]
-local version = loadfile(nvim_version_inputf)()
-local git_version = io.open(git_version_inputf):read '*a'
-local version_build = git_version:match('#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
-
-local pieces = {} --- @type string[]
-
--- Naively using mpack.encode({foo=x, bar=y}) will make the build
--- "non-reproducible". Emit maps directly as FIXDICT(2) "foo" x "bar" y instead
-local function fixdict(num)
-  if num > 15 then
-    error 'implement more dict codes'
-  end
-  pieces[#pieces + 1] = string.char(128 + num)
-end
-
-local function put(item, item2)
-  table.insert(pieces, vim.mpack.encode(item))
-  if item2 ~= nil then
-    table.insert(pieces, vim.mpack.encode(item2))
-  end
-end
-
-fixdict(6)
-
-put('version')
-fixdict(1 + #version)
-for _, item in ipairs(version) do
-  -- NB: all items are mandatory. But any error will be less confusing
-  -- with placeholder vim.NIL (than invalid mpack data)
-  local val = item[2] == nil and vim.NIL or item[2]
-  put(item[1], val)
-end
-put('build', version_build)
-
-put('functions', exported_functions)
-put('ui_events')
-table.insert(pieces, io.open(ui_metadata_inputf, 'rb'):read('*all'))
-put('ui_options', ui_options)
-
-put('error_types')
-fixdict(2)
-put('Exception', { id = 0 })
-put('Validation', { id = 1 })
-
-put('types')
-local types =
-  { { 'Buffer', 'nvim_buf_' }, { 'Window', 'nvim_win_' }, { 'Tabpage', 'nvim_tabpage_' } }
-fixdict(#types)
-for i, item in ipairs(types) do
-  put(item[1])
-  fixdict(2)
-  put('id', i - 1)
-  put('prefix', item[2])
-end
-
-local packed = table.concat(pieces)
---- @type fun(api_metadata: file*, name: string, packed: string)
-local dump_bin_array = loadfile(dump_bin_array_inputf)()
-
--- serialize the API metadata using msgpack and embed into the resulting
--- binary for easy querying by clients
-local api_metadata_output = assert(io.open(api_metadata_outputf, 'wb'))
-dump_bin_array(api_metadata_output, 'packed_api_metadata', packed)
-api_metadata_output:close()
-
 -- start building the dispatch wrapper output
 local output = assert(io.open(dispatch_outputf, 'wb'))
 
@@ -757,7 +677,7 @@ output:close()
 
 --- @cast functions {[integer]: gen_api_dispatch.Function, keysets: gen_api_dispatch.Keyset[]}
 functions.keysets = keysets
-local mpack_output = assert(io.open(mpack_outputf, 'wb'))
+local mpack_output = assert(io.open(eval_funcs_metadata_outputf, 'wb'))
 mpack_output:write(vim.mpack.encode(functions))
 mpack_output:close()
 

@@ -100,32 +100,40 @@ pub fn nvim_gen_sources(
         break :ui_step ui_metadata;
     };
 
-    const funcs_metadata = api_step: {
+    const eval_funcs_metadata, const exported_funcs_metadata = dispatch_step: {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_api_dispatch.lua"));
         _ = try gen_header_with_header(b, gen_step, "api/private/dispatch_wrappers.generated.h", nlua0, gen_headers);
-        _ = gen_header(b, gen_step, "api/private/api_metadata.generated.h", gen_headers);
-        const funcs_metadata = gen_step.addOutputFileArg("funcs_metadata.mpack");
+        const exported_funcs_metadata = gen_step.addOutputFileArg("exported_funcs_metadata.mpack");
+        const eval_funcs_metadata = gen_step.addOutputFileArg("eval_funcs_metadata.mpack");
         _ = gen_header(b, gen_step, "lua_api_c_bindings.generated.h", gen_headers);
         _ = gen_header(b, gen_step, "keysets_defs.generated.h", gen_headers);
-        gen_step.addFileArg(ui_metadata);
-        gen_step.addFileArg(versiondef_git);
-        gen_step.addFileArg(version_lua);
-        gen_step.addFileArg(b.path("src/gen/dump_bin_array.lua"));
         gen_step.addFileArg(b.path("src/nvim/api/dispatch_deprecated.lua"));
         // now follows all .h files with exported functions
         for (api_headers.items) |h| {
             gen_step.addFileArg(h);
         }
 
-        break :api_step funcs_metadata;
+        break :dispatch_step .{ eval_funcs_metadata, exported_funcs_metadata };
     };
+
+    {
+        const gen_step = b.addRunArtifact(nlua0);
+        gen_step.addFileArg(b.path("src/gen/gen_api_metadata.lua"));
+        gen_step.addFileArg(exported_funcs_metadata);
+        gen_step.addFileArg(ui_metadata);
+        gen_step.addFileArg(b.path("src/nvim/api/ui.h"));
+        gen_step.addFileArg(versiondef_git);
+        gen_step.addFileArg(version_lua);
+        gen_step.addFileArg(b.path("src/gen/dump_bin_array.lua"));
+        _ = gen_header(b, gen_step, "api/private/api_metadata.generated.h", gen_headers);
+    }
 
     const funcs_data = eval_step: {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_eval.lua"));
         _ = gen_header(b, gen_step, "funcs.generated.h", gen_headers);
-        gen_step.addFileArg(funcs_metadata);
+        gen_step.addFileArg(eval_funcs_metadata);
         const funcs_data = gen_step.addOutputFileArg("funcs_data.mpack");
         gen_step.addFileArg(b.path("src/nvim/eval.lua"));
         break :eval_step funcs_data;

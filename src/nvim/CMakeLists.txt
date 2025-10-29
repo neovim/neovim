@@ -285,7 +285,8 @@ endif()
 # Variables
 #-------------------------------------------------------------------------------
 
-set(FUNCS_METADATA ${PROJECT_BINARY_DIR}/funcs_metadata.mpack)
+set(EVAL_FUNCS_METADATA ${PROJECT_BINARY_DIR}/eval_funcs_metadata.mpack)
+set(EXPORTED_FUNCS_METADATA ${PROJECT_BINARY_DIR}/exported_funcs_metadata.mpack)
 set(UI_METADATA ${PROJECT_BINARY_DIR}/ui_metadata.mpack)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
@@ -298,6 +299,7 @@ set(NVIM_RUNTIME_DIR ${PROJECT_SOURCE_DIR}/runtime)
 # GENERATOR_DIR
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
+set(API_METADATA_GENERATOR ${GENERATOR_DIR}/gen_api_metadata.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(EVENTS_GENERATOR ${GENERATOR_DIR}/gen_events.lua)
 set(EX_CMDS_GENERATOR ${GENERATOR_DIR}/gen_ex_cmds.lua)
@@ -564,16 +566,13 @@ set(NVIM_VERSION_LUA ${PROJECT_BINARY_DIR}/nvim_version.lua)
 configure_file(${GENERATOR_DIR}/nvim_version.lua.in ${NVIM_VERSION_LUA})
 
 add_custom_command(
-  OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_API_METADATA}
-  ${FUNCS_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
+  OUTPUT ${GENERATED_API_DISPATCH} ${EXPORTED_FUNCS_METADATA}
+  ${EVAL_FUNCS_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
          COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
                          ${GENERATED_API_DISPATCH}
-                         ${GENERATED_API_METADATA} ${FUNCS_METADATA}
+                         ${EXPORTED_FUNCS_METADATA} ${EVAL_FUNCS_METADATA}
                          ${LUA_API_C_BINDINGS}
                          ${GENERATED_KEYSETS_DEFS}
-                         ${UI_METADATA}
-                         ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
-                         ${GENERATOR_DIR}/dump_bin_array.lua
                          ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
                          ${API_HEADERS}
 
@@ -584,11 +583,27 @@ add_custom_command(
     ${API_DISPATCH_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
     ${GENERATOR_HASHY}
+    ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+)
+
+add_custom_command(
+  OUTPUT ${GENERATED_API_METADATA}
+        COMMAND ${LUA_GEN} ${API_METADATA_GENERATOR}
+                        ${EXPORTED_FUNCS_METADATA}
+                         ${UI_METADATA}
+                         ${CMAKE_CURRENT_LIST_DIR}/api/ui.h
+                         ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
+                         ${GENERATOR_DIR}/dump_bin_array.lua
+                         ${GENERATED_API_METADATA}
+
+  DEPENDS
+    ${LUA_GEN_DEPS}
+    ${API_METADATA_GENERATOR}
     ${GENERATOR_DIR}/dump_bin_array.lua
     ${UI_METADATA}
+    ${EXPORTED_FUNCS_METADATA}
     ${NVIM_VERSION_LUA}
     ${NVIM_VERSION_GIT_H}
-    ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
 )
 
 add_custom_command(
@@ -654,8 +669,8 @@ add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
 )
 
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
-  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
-  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${FUNCS_METADATA}
+  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${EVAL_FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
+  DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${EVAL_FUNCS_METADATA}
 )
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
@@ -690,6 +705,7 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_OPTIONS}"
   "${GENERATED_OPTIONS_MAP}"
   "${VIM_MODULE_FILE}"
+  "${GENERATED_API_METADATA}"
   "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.h"
 )
 
@@ -960,10 +976,10 @@ add_target(doc-vim
   )
 
 add_target(doc-eval
-  COMMAND ${NVIM_LUA} ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua ${FUNCS_METADATA} ${PROJECT_BINARY_DIR}/runtime/doc/tags
+  COMMAND ${NVIM_LUA} ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua ${EVAL_FUNCS_METADATA} ${PROJECT_BINARY_DIR}/runtime/doc/tags
   DEPENDS
     nvim
-    ${FUNCS_METADATA}
+    ${EVAL_FUNCS_METADATA}
     ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
