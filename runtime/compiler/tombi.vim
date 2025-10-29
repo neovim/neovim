@@ -24,7 +24,7 @@ if !exists('s:tombi_nocolor')
 
   function s:VersionGE(ver, req) abort
     " Compare semantic versions a.b.c ≥ x.y.z
-    let l:pa = map(split(a:ver), '\.'), 'str2nr(v:val)')
+    let l:pa = map(split(a:ver, '\.'), 'str2nr(v:val)')
     let l:pb = map(split(a:req, '\.'), 'str2nr(v:val)')
     while len(l:pa) < 3 | call add(l:pa, 0) | endwhile
     while len(l:pb) < 3 | call add(l:pb, 0) | endwhile
