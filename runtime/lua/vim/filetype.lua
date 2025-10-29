@@ -928,6 +928,7 @@ local extension = {
   textproto = 'pbtxt',
   textpb = 'pbtxt',
   pbtxt = 'pbtxt',
+  aconfig = 'pbtxt',
   g = 'pccts',
   pcmk = 'pcmk',
   pdf = 'pdf',
