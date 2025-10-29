@@ -44,7 +44,7 @@ if s:tombi_nocolor
     if &shell =~# '\v<%(cmd|cmd)>'
       CompilerSet makeprg=set\ NO_COLOR=1\ &&\ tombi\ lint
     elseif &shell =~# '\v<%(powershell|pwsh)>'
-      CompilerSet makeprg=$env:NO_COLOR="1";\ tombi\ lint
+      CompilerSet makeprg=$env:NO_COLOR=\"1\";\ tombi\ lint
     else
       echoerr "tombi compiler: Unsupported shell for Windows"
     endif
