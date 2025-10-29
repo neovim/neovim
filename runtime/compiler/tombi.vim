@@ -1,7 +1,7 @@
 " Vim compiler file
 " Language:    TOML
 " Maintainer:  Konfekt
-" Last Change: 2025 Oct 28
+" Last Change: 2025 Oct 29
 
 if exists("current_compiler") | finish | endif
 let current_compiler = "tombi"
