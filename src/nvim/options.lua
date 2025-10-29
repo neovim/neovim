@@ -178,7 +178,7 @@ local options = {
         - Disable the use of 'keymap' (without changing its value).
         Note that 'arabicshape' and 'delcombine' are not reset (it is a global
         option).
-        Also see |arabic.txt|.
+        Also see |l10n-arabic.txt|.
       ]=],
       full_name = 'arabic',
       redraw = { 'curswant' },
@@ -201,7 +201,7 @@ local options = {
         When disabled the display shows each character's true stand-alone
         form.
         Arabic is a complex language which requires other settings, for
-        further details see |arabic.txt|.
+        further details see |l10n-arabic.txt|.
       ]=],
       full_name = 'arabicshape',
       redraw = { 'all_windows', 'ui_option' },
@@ -9499,7 +9499,7 @@ local options = {
         'arabic' is set and the value of 'arabicshape' will be ignored.
         Note that setting 'termbidi' has the immediate effect that
         'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
-        For further details see |arabic.txt|.
+        For further details see |l10n-arabic.txt|.
       ]=],
       full_name = 'termbidi',
       scope = { 'global' },
