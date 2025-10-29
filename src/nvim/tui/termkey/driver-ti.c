@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unibilium.h>
 #include <uv.h>
 
+#include "nvim/charset.h"
 #include "nvim/memory.h"
+#include "nvim/tui/terminfo.h"
 #include "nvim/tui/termkey/driver-ti.h"
 #include "nvim/tui/termkey/termkey-internal.h"
 #include "nvim/tui/termkey/termkey_defs.h"
@@ -25,76 +26,57 @@
 #define MAX_FUNCNAME 9
 
 static struct {
+  TerminfoKey ti_key;
   const char *funcname;
   TermKeyType type;
   TermKeySym sym;
   int mods;
 } funcs[] = {
   // THIS LIST MUST REMAIN SORTED!
-  { "backspace", TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_BACKSPACE, 0 },
-  { "begin",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_BEGIN,     0 },
-  { "beg",       TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_BEGIN,     0 },
-  { "btab",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_TAB,       TERMKEY_KEYMOD_SHIFT },
-  { "cancel",    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_CANCEL,    0 },
-  { "clear",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_CLEAR,     0 },
-  { "close",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_CLOSE,     0 },
-  { "command",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_COMMAND,   0 },
-  { "copy",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_COPY,      0 },
-  { "dc",        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_DELETE,    0 },
-  { "down",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_DOWN,      0 },
-  { "end",       TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_END,       0 },
-  { "enter",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_ENTER,     0 },
-  { "exit",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_EXIT,      0 },
-  { "find",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_FIND,      0 },
-  { "help",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_HELP,      0 },
-  { "home",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_HOME,      0 },
-  { "ic",        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_INSERT,    0 },
-  { "left",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_LEFT,      0 },
-  { "mark",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MARK,      0 },
-  { "message",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MESSAGE,   0 },
-  { "move",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MOVE,      0 },
-  { "next",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEDOWN,  0 },  // Not quite, but it's the best we can do
-  { "npage",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEDOWN,  0 },
-  { "open",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_OPEN,      0 },
-  { "options",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_OPTIONS,   0 },
-  { "ppage",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEUP,    0 },
-  { "previous",  TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEUP,    0 },  // Not quite, but it's the best we can do
-  { "print",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PRINT,     0 },
-  { "redo",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REDO,      0 },
-  { "reference", TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REFERENCE, 0 },
-  { "refresh",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REFRESH,   0 },
-  { "replace",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REPLACE,   0 },
-  { "restart",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RESTART,   0 },
-  { "resume",    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RESUME,    0 },
-  { "right",     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RIGHT,     0 },
-  { "save",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SAVE,      0 },
-  { "select",    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SELECT,    0 },
-  { "suspend",   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SUSPEND,   0 },
-  { "undo",      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UNDO,      0 },
-  { "up",        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UP,        0 },
-  { NULL,        0,                   0,                     0 },
+  // nvim note: entries commented out without further note are not recognized by nvim.
+#define KDEF(x) kTermKey_##x, #x
+  { KDEF(backspace), TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_BACKSPACE, 0 },
+  { KDEF(beg),       TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_BEGIN,     0 },
+  { KDEF(btab),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_TAB,       TERMKEY_KEYMOD_SHIFT },
+  // { KDEF(cancel),    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_CANCEL,    0 },
+  { KDEF(clear),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_CLEAR,     0 },
+  // { KDEF(close),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_CLOSE,     0 },
+  // { KDEF(command),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_COMMAND,   0 },
+  // { KDEF(copy),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_COPY,      0 },
+  { KDEF(dc),        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_DELETE,    0 },
+  // { KDEF(down),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_DOWN,      0 },  // redundant, driver-csi
+  { KDEF(end),       TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_END,       0 },
+  // { KDEF(enter),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_ENTER,     0 },
+  // { KDEF(exit),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_EXIT,      0 },
+  { KDEF(find),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_FIND,      0 },
+  // { KDEF(help),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_HELP,      0 },
+  { KDEF(home),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_HOME,      0 },
+  { KDEF(ic),        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_INSERT,    0 },
+  // { KDEF(left),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_LEFT,      0 }, // redundant: driver-csi
+  // { KDEF(mark),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MARK,      0 },
+  // { KDEF(message),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MESSAGE,   0 },
+  // { KDEF(move),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_MOVE,      0 },
+  // { KDEF(next),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEDOWN,  0 },  // use "npage" right below
+  { KDEF(npage),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEDOWN,  0 },
+  // { KDEF(open),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_OPEN,      0 },
+  // { KDEF(options),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_OPTIONS,   0 },
+  { KDEF(ppage),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEUP,    0 },
+  // { KDEF(previous),  TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PAGEUP,    0 },  // use "ppage" right above
+  // { KDEF(print),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_PRINT,     0 },
+  // { KDEF(redo),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REDO,      0 },
+  // { KDEF(reference), TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REFERENCE, 0 },
+  // { KDEF(refresh),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REFRESH,   0 },
+  // { KDEF(replace),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_REPLACE,   0 },
+  // { KDEF(restart),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RESTART,   0 },
+  // { KDEF(resume),    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RESUME,    0 },
+  // { KDEF(right),     TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_RIGHT,     0 }, // redundant, driver-csi
+  // { KDEF(save),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SAVE,      0 },
+  { KDEF(select),    TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SELECT,    0 },
+  { KDEF(suspend),   TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_SUSPEND,   0 },
+  { KDEF(undo),      TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UNDO,      0 },
+  // { KDEF(up),        TERMKEY_TYPE_KEYSYM, TERMKEY_SYM_UP,        0 }, // redundant, driver-ci
+  { 0, NULL,         0,                   0,                     0 },
 };
-
-static enum unibi_string unibi_lookup_str(const char *name)
-{
-  for (enum unibi_string ret = unibi_string_begin_ + 1; ret < unibi_string_end_; ret++) {
-    if (streq(unibi_name_str(ret), name)) {
-      return ret;
-    }
-  }
-
-  return (enum unibi_string)-1;
-}
-
-static const char *unibi_get_str_by_name(const unibi_term *ut, const char *name)
-{
-  enum unibi_string idx = unibi_lookup_str(name);
-  if (idx == (enum unibi_string)-1) {
-    return NULL;
-  }
-
-  return unibi_get_str(ut, idx);
-}
 
 // To be efficient at lookups, we store the byte sequence => keyinfo mapping
 // in a trie. This avoids a slow linear search through a flat list of
@@ -226,12 +208,18 @@ static struct trie_node *compress_trie(struct trie_node *n)
   return n;
 }
 
-static bool try_load_terminfo_key(TermKeyTI *ti, const char *name, struct keyinfo *info)
+static bool try_load_terminfo_key(TermKeyTI *ti, bool fn_nr, int key, bool shift, const char *name,
+                                  struct keyinfo *info)
 {
   const char *value = NULL;
 
-  if (ti->unibi) {
-    value = unibi_get_str_by_name(ti->unibi, name);
+  if (ti->ti) {
+    if (!fn_nr) {
+      value = ti->ti->keys[key][shift ? 1 : 0];
+    } else {
+      assert(!shift);
+      value = ti->ti->f_keys[key];
+    }
   }
 
   if (ti->tk->ti_getstr_hook) {
@@ -253,8 +241,6 @@ static int load_terminfo(TermKeyTI *ti)
 {
   int i;
 
-  unibi_term *unibi = ti->unibi;
-
   ti->root = new_node_arr(0, 0xff);
   if (!ti->root) {
     return 0;
@@ -265,7 +251,7 @@ static int load_terminfo(TermKeyTI *ti)
     char name[MAX_FUNCNAME + 5 + 1];
 
     sprintf(name, "key_%s", funcs[i].funcname);  // NOLINT(runtime/printf)
-    if (!try_load_terminfo_key(ti, name, &(struct keyinfo){
+    if (!try_load_terminfo_key(ti, false, (int)funcs[i].ti_key, false, name, &(struct keyinfo){
       .type = funcs[i].type,
       .sym = funcs[i].sym,
       .modifier_mask = funcs[i].mods,
@@ -276,7 +262,7 @@ static int load_terminfo(TermKeyTI *ti)
 
     // Maybe it has a shifted version
     sprintf(name, "key_s%s", funcs[i].funcname);  // NOLINT(runtime/printf)
-    try_load_terminfo_key(ti, name, &(struct keyinfo){
+    try_load_terminfo_key(ti, false, (int)funcs[i].ti_key, true, name, &(struct keyinfo){
       .type = funcs[i].type,
       .sym = funcs[i].sym,
       .modifier_mask = funcs[i].mods | TERMKEY_KEYMOD_SHIFT,
@@ -285,10 +271,10 @@ static int load_terminfo(TermKeyTI *ti)
   }
 
   // Now the F<digit> keys
-  for (i = 1; i < 255; i++) {
+  for (i = 1; i <= kTerminfoFuncKeyMax; i++) {
     char name[9];
     sprintf(name, "key_f%d", i);  // NOLINT(runtime/printf)
-    if (!try_load_terminfo_key(ti, name, &(struct keyinfo){
+    if (!try_load_terminfo_key(ti, true, (i - 1), false, name, &(struct keyinfo){
       .type = TERMKEY_TYPE_FUNCTION,
       .sym = i,
       .modifier_mask = 0,
@@ -299,11 +285,12 @@ static int load_terminfo(TermKeyTI *ti)
   }
 
   // Finally mouse mode
-  {
+  // This is overriden in nvim: we only want driver-csi mouse support
+  if (false) {
     const char *value = NULL;
 
-    if (ti->unibi) {
-      value = unibi_get_str_by_name(ti->unibi, "key_mouse");
+    if (ti->ti) {
+      // value = ti->ti->keys[kTermKey_mouse][0];
     }
 
     if (ti->tk->ti_getstr_hook) {
@@ -321,8 +308,8 @@ static int load_terminfo(TermKeyTI *ti)
   // Take copies of these terminfo strings, in case we build multiple termkey
   // instances for multiple different termtypes, and it's different by the
   // time we want to use it
-  const char *keypad_xmit = unibi
-                            ? unibi_get_str(unibi, unibi_keypad_xmit)
+  const char *keypad_xmit = ti->ti
+                            ? ti->ti->defs[kTerm_keypad_xmit]
                             : NULL;
 
   if (keypad_xmit) {
@@ -331,8 +318,8 @@ static int load_terminfo(TermKeyTI *ti)
     ti->start_string = NULL;
   }
 
-  const char *keypad_local = unibi
-                             ? unibi_get_str(unibi, unibi_keypad_local)
+  const char *keypad_local = ti->ti
+                             ? ti->ti->defs[kTerm_keypad_local]
                              : NULL;
 
   if (keypad_local) {
@@ -341,18 +328,12 @@ static int load_terminfo(TermKeyTI *ti)
     ti->stop_string = NULL;
   }
 
-  if (unibi) {
-    unibi_destroy(unibi);
-  }
-
-  ti->unibi = NULL;
-
   ti->root = compress_trie(ti->root);
 
   return 1;
 }
 
-void *new_driver_ti(TermKey *tk, const char *term)
+void *new_driver_ti(TermKey *tk, TerminfoEntry *term)
 {
   TermKeyTI *ti = xmalloc(sizeof *ti);
 
@@ -361,13 +342,9 @@ void *new_driver_ti(TermKey *tk, const char *term)
   ti->start_string = NULL;
   ti->stop_string = NULL;
 
-  ti->unibi = unibi_from_term(term);
-  int saved_errno = errno;
-  if (!ti->unibi && saved_errno != ENOENT) {
-    xfree(ti);
-    return NULL;
-  }
-  // ti->unibi may be NULL if errno == ENOENT. That means the terminal wasn't
+  ti->ti = term;
+
+  // ti->ti may be NULL because reasons. That means the terminal wasn't
   // known. Lets keep going because if we get getstr hook that might invent
   // new strings for us
 
@@ -470,10 +447,6 @@ void free_driver_ti(void *info)
 
   if (ti->stop_string) {
     xfree(ti->stop_string);
-  }
-
-  if (ti->unibi) {
-    unibi_destroy(ti->unibi);
   }
 
   xfree(ti);

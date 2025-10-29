@@ -357,7 +357,7 @@ static TermKey *termkey_alloc(void)
   return tk;
 }
 
-static int termkey_init(TermKey *tk, const char *term)
+static int termkey_init(TermKey *tk, TerminfoEntry *term)
 {
   tk->buffer = xmalloc(tk->buffsize);
   tk->keynames = xmalloc(sizeof(tk->keynames[0]) * (size_t)tk->nkeynames);
@@ -433,7 +433,7 @@ abort_free_keynames:
   return 0;
 }
 
-TermKey *termkey_new_abstract(const char *term, int flags)
+TermKey *termkey_new_abstract(TerminfoEntry *term, int flags)
 {
   TermKey *tk = termkey_alloc();
   if (!tk) {

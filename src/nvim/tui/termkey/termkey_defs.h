@@ -6,6 +6,7 @@
 #include <uv.h>
 
 #include "nvim/event/defs.h"
+#include "nvim/tui/terminfo_defs.h"
 #include "nvim/tui/tui_defs.h"
 #include "nvim/types_defs.h"
 
@@ -201,7 +202,7 @@ typedef enum {
 typedef struct {
   TermKey *tk;
 
-  unibi_term *unibi;  // only valid until first 'start' call
+  TerminfoEntry *ti;  // not used after first 'start' call
 
   struct trie_node *root;
 
