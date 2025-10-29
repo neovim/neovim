@@ -210,6 +210,25 @@ describe('vim.filetype', function()
     )
     rmdir('Xfiletype')
   end)
+
+  it('fallback to conf if any of the first five lines start with a #', function()
+    eq(
+      { 'conf', true },
+      exec_lua(function()
+        local bufnr = vim.api.nvim_create_buf(true, false)
+        local lines = {
+          '# foo',
+        }
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+        -- Needs to be set so detect.conf() doesn't fail
+        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
+
+        local ft, _, fallback = vim.filetype.match({ buf = bufnr })
+        return { ft, fallback }
+      end)
+    )
+  end)
 end)
 
 describe('filetype.lua', function()
