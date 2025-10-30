@@ -152,7 +152,7 @@ void proc_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 
 void proc_close_streams(Proc *proc) FUNC_ATTR_NONNULL_ALL
 {
-  wstream_may_close(&proc->in);
+  stream_may_close(&proc->in);
   rstream_may_close(&proc->out);
   rstream_may_close(&proc->err);
 }
