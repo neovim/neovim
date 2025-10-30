@@ -125,6 +125,7 @@ static PMap(int) kitty_key_map = MAP_INIT;
 
 void tinput_init(TermInput *input, Loop *loop, TerminfoEntry *ti)
 {
+  assert(input->loop == NULL);
   input->loop = loop;
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
@@ -163,6 +164,7 @@ void tinput_destroy(TermInput *input)
   uv_close((uv_handle_t *)&input->bg_query_timer, NULL);
   rstream_may_close(&input->read_stream);
   termkey_destroy(input->tk);
+  input->loop = NULL;
 }
 
 void tinput_start(TermInput *input)

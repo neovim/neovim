@@ -53,6 +53,48 @@ describe('TUI', function()
     end
     screen:expect({ any = vim.pesc('[Process exited 1]'), unchanged = true })
   end)
+
+  it('suspending does not crash or hang', function()
+    clear()
+    local screen = tt.setup_child_nvim({ '--clean', '--cmd', 'set notermguicolors' })
+    local s0 = [[
+      ^                                                  |
+      ~                                                 |*3
+      {2:[No Name]                       0,0-1          All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(s0)
+    feed_data(':')
+    local s1 = [[
+                                                        |
+      ~                                                 |*3
+      {2:[No Name]                       0,0-1          All}|
+      :^                                                 |
+      {5:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(s1)
+    feed_data('suspend\r')
+    if is_os('win') then -- no-op on Windows
+      screen:expect([[
+        ^                                                  |
+        ~                                                 |*3
+        {2:[No Name]                       0,0-1          All}|
+        :suspend                                          |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    else -- resuming works on other platforms
+      screen:expect([[
+        ^                                                  |
+                                                          |*5
+        {5:-- TERMINAL --}                                    |
+      ]])
+      exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+      screen:expect(s0)
+    end
+    feed_data(':')
+    screen:expect(s1)
+  end)
 end)
 
 describe('TUI :detach', function()
