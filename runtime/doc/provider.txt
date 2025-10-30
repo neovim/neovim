@@ -193,7 +193,7 @@ registers. Nvim supports these clipboard tools, in order of priority:
 - "putclip"   : putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
 - "clip"      : clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
 - "termux"    : termux (via termux-clipboard-set, termux-clipboard-get)
-- "tmux"      : tmux (if $TMUX is set)
+- "tmux"      : tmux (if a tmux server is running, regardless of whether Nvim runs inside of it)
 - "osc52"     : |clipboard-osc52| (if supported by your terminal)
 
 								 *g:clipboard*
