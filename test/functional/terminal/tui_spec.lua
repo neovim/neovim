@@ -43,8 +43,13 @@ describe('TUI', function()
     local addr_in_use = api.nvim_get_vvar('servername')
     local screen = tt.setup_child_nvim(
       { '--listen', addr_in_use, '-u', 'NONE', '-i', 'NONE' },
-      { extra_rows = 10, cols = 60 }
+      { extra_rows = 10, cols = 60, env = { NVIM_LOG_FILE = testlog } }
     )
+    finally(function()
+      os.remove(testlog)
+    end)
+
+    screen:expect({ any = vim.pesc('[Process exited 1]') })
     -- When the address is very long, the error message may be only partly visible.
     if #addr_in_use <= 600 then
       screen:expect({
@@ -53,9 +58,15 @@ describe('TUI', function()
             is_os('win') and 'nvim.exe' or 'nvim'
           )
         ),
+        unchanged = true,
       })
     end
-    screen:expect({ any = vim.pesc('[Process exited 1]'), unchanged = true })
+
+    assert_log(
+      vim.pesc('Failed to start server: address already in use: ' .. addr_in_use),
+      testlog,
+      100
+    )
   end)
 
   it('suspending does not crash or hang', function()
