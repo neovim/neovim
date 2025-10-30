@@ -273,6 +273,7 @@ LUA
 • Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
 • |vim.json.encode()| has an `indent` option for pretty-formatting.
 • |vim.json.encode()| has an `sort_keys` option.
+• |vim.keymap.set()| has a `force` option.
 
 OPTIONS
 
