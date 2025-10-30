@@ -804,7 +804,7 @@ size_t vim_snprintf_safelen(char *str, size_t str_m, const char *fmt, ...)
   int str_l;
 
   va_start(ap, fmt);
-  str_l = vim_vsnprintf(str, str_m, fmt, ap);
+  str_l = vim_vsnprintf_typval(str, str_m, fmt, ap, NULL);
   va_end(ap);
 
   if (str_l < 0) {
