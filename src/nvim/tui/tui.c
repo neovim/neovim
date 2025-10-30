@@ -596,7 +596,9 @@ static void tui_terminal_start(TUIData *tui)
 {
   tui->print_attr_id = -1;
   terminfo_start(tui);
-  tinput_init(&tui->input, &main_loop, &tui->ti);
+  if (tui->input.loop == NULL) {
+    tinput_init(&tui->input, &main_loop, &tui->ti);
+  }
   tui_guess_size(tui);
   tinput_start(&tui->input);
 }
