@@ -368,6 +368,7 @@ static void terminfo_start(TUIData *tui)
   tui->input.tui_data = tui;
 
   tui->ti_arena = (Arena)ARENA_EMPTY;
+  assert(tui->term == NULL);
 
   char *term = os_getenv("TERM");
 #ifdef MSWIN
@@ -384,9 +385,7 @@ static void terminfo_start(TUIData *tui)
   bool found_in_db = false;
   if (term) {
     if (terminfo_from_unibilium(&tui->ti, term, &tui->ti_arena)) {
-      if (!tui->term) {
-        tui->term = arena_strdup(&tui->ti_arena, term);
-      }
+      tui->term = arena_strdup(&tui->ti_arena, term);
       found_in_db = true;
     }
   }
@@ -590,6 +589,9 @@ static void terminfo_stop(TUIData *tui)
     abort();
   }
   arena_mem_free(arena_finish(&tui->ti_arena));
+  // Avoid using freed memory.
+  memset(&tui->ti, 0, sizeof(tui->ti));
+  tui->term = NULL;
 }
 
 static void tui_terminal_start(TUIData *tui)
