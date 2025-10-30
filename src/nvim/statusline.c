@@ -1418,11 +1418,18 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           && strchr(str, '%') != NULL
           && evaldepth < MAX_STL_EVAL_DEPTH) {
         size_t parsed_usefmt = (size_t)(block_start - usefmt);
-        size_t new_fmt_len = parsed_usefmt + strlen(str) + strlen(fmt_p) + 3;
+        size_t str_length = strlen(str);
+        size_t fmt_length = strlen(fmt_p);
+        size_t new_fmt_len = parsed_usefmt + str_length + fmt_length + 3;
         char *new_fmt = xmalloc(new_fmt_len * sizeof(char));
+        char *new_fmt_p = new_fmt;
 
-        vim_snprintf(new_fmt, new_fmt_len, "%.*s%s%s%s",
-                     (int)parsed_usefmt, usefmt, str, "%}", fmt_p);
+        new_fmt_p = (char *)memcpy(new_fmt_p, usefmt, parsed_usefmt) + parsed_usefmt;
+        new_fmt_p = (char *)memcpy(new_fmt_p, str, str_length) + str_length;
+        new_fmt_p = (char *)memcpy(new_fmt_p, "%}", 2) + 2;
+        new_fmt_p = (char *)memcpy(new_fmt_p, fmt_p, fmt_length) + fmt_length;
+        *new_fmt_p = 0;
+        new_fmt_p = NULL;
 
         if (usefmt != fmt) {
           xfree(usefmt);
