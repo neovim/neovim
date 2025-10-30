@@ -155,7 +155,7 @@ static void write_cb(uv_write_t *req, int status)
 
   if (data->stream->closed && data->stream->pending_reqs == 0) {
     // Last pending write; free the stream.
-    stream_close_handle(data->stream, false);
+    stream_close_handle(data->stream);
   }
 
   xfree(data);
@@ -171,9 +171,4 @@ void wstream_release_wbuffer(WBuffer *buffer)
 
     xfree(buffer);
   }
-}
-
-void wstream_may_close(Stream *stream)
-{
-  stream_may_close(stream, false);
 }
