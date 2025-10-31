@@ -282,6 +282,19 @@ describe('--embed UI', function()
       end,
     }
   end)
+
+  it('closing stdio with another remote UI does not leak memory #36392', function()
+    t.skip(t.is_os('win')) -- n.connect() hangs on Windows
+    clear({ args_rm = { '--headless' } })
+    Screen.new()
+    eq(1, #api.nvim_list_uis())
+    local server = api.nvim_get_vvar('servername')
+    local other_session = n.connect(server)
+    Screen.new(nil, nil, nil, other_session)
+    eq(2, #api.nvim_list_uis())
+    check_close()
+    other_session:close()
+  end)
 end)
 
 describe('--embed --listen UI', function()
