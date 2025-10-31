@@ -72,7 +72,7 @@ else()
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUAJIT_INCLUDE_DIR})
   target_link_libraries(main_lib INTERFACE ${LUAJIT_LIBRARY})
   target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUAJIT_INCLUDE_DIR})
-  if(WIN32)
+  if(WIN32 OR CYGWIN)
     target_link_libraries(nlua0 PUBLIC ${LUAJIT_LIBRARY})
   endif()
 endif()
@@ -814,6 +814,16 @@ if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
     TARGET nvim_runtime_deps
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${DEPS_PREFIX}/lib/nvim/parser ${BINARY_LIB_DIR}/parser)
+endif()
+
+if(CYGWIN)
+  if(NOT PREFER_LUA)
+    add_custom_command(
+      TARGET nvim_runtime_deps
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_PREFIX}/bin/cyglua51.dll ${PROJECT_BINARY_DIR}/bin)
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/bin/cyglua51.dll DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif()
 
 install(DIRECTORY ${BINARY_LIB_DIR}
