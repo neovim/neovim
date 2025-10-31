@@ -65,6 +65,17 @@ local function apply_text_edits(edits, encoding)
   end)
 end
 
+--- @param notification_cb fun(method: 'body' | 'error', args: any)
+local function verify_single_notification(notification_cb)
+  local called = false
+  n.run(nil, function(method, args)
+    notification_cb(method, args)
+    stop()
+    called = true
+  end, nil, 1000)
+  eq(true, called)
+end
+
 -- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
 if skip(is_os('win')) then
   return
@@ -1921,65 +1932,58 @@ describe('LSP', function()
   end)
 
   describe('parsing tests', function()
-    it('should handle invalid content-length correctly', function()
-      local expected_handlers = {
-        { NIL, {}, { method = 'shutdown', client_id = 1 } },
-        { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'start', client_id = 1 } },
-      }
-      local client --- @type vim.lsp.Client
-      test_rpc_server {
-        test_name = 'invalid_header',
-        on_setup = function() end,
-        on_init = function(_client)
-          client = _client
-          client:stop(true)
-        end,
-        on_exit = function(code, signal)
-          eq(0, code, 'exit code')
-          eq(0, signal, 'exit signal')
-        end,
-        on_handler = function(err, result, ctx)
-          eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
-        end,
-      }
+    local body = '{"jsonrpc":"2.0","id": 1,"method":"demo"}'
+
+    before_each(function()
+      exec_lua(create_tcp_echo_server)
     end)
 
     it('should catch error while parsing invalid header', function()
-      local header = 'Content-Length: \r\n'
-      local called = false
+      -- No whitespace is allowed between the header field-name and colon.
+      -- See https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.4
+      local field = 'Content-Length : 10 \r\n'
       exec_lua(function()
-        local server = assert(vim.uv.new_tcp())
-        server:bind('127.0.0.1', 0)
-        server:listen(1, function(e)
-          assert(not e, e)
-          local socket = assert(vim.uv.new_tcp())
-          server:accept(socket)
-          socket:write(header .. '\r\n', function()
-            socket:shutdown()
-            server:close()
-          end)
-        end)
-        local client = assert(vim.uv.new_tcp())
-        local on_read = require('vim.lsp.rpc').create_read_loop(function() end, function()
-          client:close()
-        end, function(err, code)
-          vim.rpcnotify(1, 'error', err, code)
-        end)
-        client:connect('127.0.0.1', server:getsockname().port, function()
-          client:read_start(on_read)
-        end)
+        _G._send_msg_to_server(field .. '\r\n')
       end)
-      n.run(nil, function(method, args)
-        local err, code = unpack(args) --- @type string, number
+      verify_single_notification(function(method, args) ---@param args [string, number]
         eq('error', method)
-        eq(1, code)
-        matches(vim.pesc('Content-Length not found in header: ' .. header) .. '$', err)
-        called = true
-        stop()
-        return NIL
-      end, nil, 1000)
-      eq(true, called)
+        eq(1, args[2])
+        matches(vim.pesc('Content-Length not found in header: ' .. field) .. '$', args[1])
+      end)
+    end)
+
+    it('value of Content-Length shoud be number', function()
+      local value = '123 foo'
+      exec_lua(function()
+        _G._send_msg_to_server('Content-Length: ' .. value .. '\r\n\r\n')
+      end)
+      verify_single_notification(function(method, args) ---@param args [string, number]
+        eq('error', method)
+        eq(1, args[2])
+        matches('value of Content%-Length is not number: ' .. value .. '$', args[1])
+      end)
+    end)
+
+    it('field name is case-insensitive', function()
+      exec_lua(function()
+        _G._send_msg_to_server('CONTENT-Length: ' .. #body .. ' \r\n\r\n' .. body)
+      end)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq(body, args[1])
+      end)
+    end)
+
+    it("ignore some lines ending with LF that don't contain content-length", function()
+      exec_lua(function()
+        _G._send_msg_to_server(
+          'foo \n bar\nWARN: no common words.\nContent-Length: ' .. #body .. ' \r\n\r\n' .. body
+        )
+      end)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq(body, args[1])
+      end)
     end)
 
     it('should not trim vim.NIL from the end of a list', function()
@@ -5681,37 +5685,27 @@ describe('LSP', function()
   describe('cmd', function()
     it('connects to lsp server via rpc.connect using ip address', function()
       exec_lua(create_tcp_echo_server)
-      local result = exec_lua(function()
-        local server, port, last_message = _G._create_tcp_server('127.0.0.1')
+      exec_lua(function()
+        local port = _G._create_tcp_server('127.0.0.1')
         vim.lsp.start({ name = 'dummy', cmd = vim.lsp.rpc.connect('127.0.0.1', port) })
-        vim.wait(1000, function()
-          return last_message() ~= nil
-        end)
-        local init = last_message()
-        assert(init, 'server must receive `initialize` request')
-        server:close()
-        server:shutdown()
-        return vim.json.decode(init)
       end)
-      eq('initialize', result.method)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq('initialize', vim.json.decode(args[1]).method)
+      end)
     end)
 
     it('connects to lsp server via rpc.connect using hostname', function()
       skip(is_os('bsd'), 'issue with host resolution in ci')
       exec_lua(create_tcp_echo_server)
-      local result = exec_lua(function()
-        local server, port, last_message = _G._create_tcp_server('::1')
+      exec_lua(function()
+        local port = _G._create_tcp_server('::1')
         vim.lsp.start({ name = 'dummy', cmd = vim.lsp.rpc.connect('localhost', port) })
-        vim.wait(1000, function()
-          return last_message() ~= nil
-        end)
-        local init = last_message()
-        assert(init, 'server must receive `initialize` request')
-        server:close()
-        server:shutdown()
-        return vim.json.decode(init)
       end)
-      eq('initialize', result.method)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq('initialize', vim.json.decode(args[1]).method)
+      end)
     end)
 
     it('can connect to lsp server via pipe or domain_socket', function()

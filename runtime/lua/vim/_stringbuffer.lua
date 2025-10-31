@@ -77,9 +77,10 @@ function StrBuffer:set(str)
   return self:reset():put(str)
 end
 
---- @param n integer
+--- @param n? integer
 --- @return string
 function StrBuffer:get(n)
+  n = n or self.len
   local r = self:_peak(n)
   self:skip(n)
   return r

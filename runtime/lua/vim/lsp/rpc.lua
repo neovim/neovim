@@ -1,6 +1,7 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local lsp_transport = require('vim.lsp._transport')
+local strbuffer = require('vim._stringbuffer')
 local validate, schedule_wrap = vim.validate, vim.schedule_wrap
 
 --- Embeds the given string into a table and correctly computes `Content-Length`.
@@ -16,19 +17,59 @@ local function format_message_with_content_length(message)
   })
 end
 
---- Extract content-length from the header
+--- Extract content-length from the header.
 ---
+--- The structure of header fields conforms to the [HTTP semantic](https://tools.ietf.org/html/rfc7230#section-3.2).
+--- i.e., `header-field = field-name : OWS field-value OWS`,
+--- OWS means optional whitespace (Space/Horizontal Tab).
+---
+--- we ignore lines ending with `\n` that don't contain `content-length`, since some servers
+--- write log to stdout and there's no way to avoid it.
+--- See https://github.com/neovim/neovim/pull/35743#pullrequestreview-3379705828
 --- @param header string The header to parse
 --- @return integer
 local function get_content_length(header)
-  for line in header:gmatch('(.-)\r\n') do
-    if line == '' then
-      break
+  local state = 'name'
+  local i, len = 1, #header
+  local j, name = 1, 'content-length'
+  local buf = strbuffer.new()
+  local digit = true
+  while i <= len do
+    local c = header:byte(i)
+    if state == 'name' then
+      if c >= 65 and c <= 90 then -- lower case
+        c = c + 32
+      end
+      if (c == 32 or c == 9) and j == 1 then -- luacheck: ignore 542
+        -- skip OWS for compatibility only
+      elseif c == name:byte(j) then
+        j = j + 1
+      elseif c == 58 and j == 15 then
+        state = 'colon'
+      else
+        state = 'invalid'
+      end
+    elseif state == 'colon' then
+      if c ~= 32 and c ~= 9 then -- skip OWS normally
+        state = 'value'
+        i = i - 1
+      end
+    elseif state == 'value' then
+      if c == 13 and header:byte(i + 1) == 10 then -- must end with \r\n
+        local value = buf:get()
+        return assert(digit and tonumber(value), 'value of Content-Length is not number: ' .. value)
+      else
+        buf:put(string.char(c))
+      end
+      if c < 48 and c ~= 32 and c ~= 9 or c > 57 then
+        digit = false
+      end
+    elseif state == 'invalid' then
+      if c == 10 then -- reset for next line
+        state, j = 'name', 1
+      end
     end
-    local key, value = line:match('^%s*(%S+)%s*:%s*(%d+)%s*$')
-    if key and key:lower() == 'content-length' then
-      return assert(tonumber(value))
-    end
+    i = i + 1
   end
   error('Content-Length not found in header: ' .. header)
 end
@@ -148,8 +189,6 @@ local default_dispatchers = {
     log.error('client_error:', M.client_errors[code], err)
   end,
 }
-
-local strbuffer = require('vim._stringbuffer')
 
 --- @async
 local function request_parser_loop()
