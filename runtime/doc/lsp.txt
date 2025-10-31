@@ -2040,6 +2040,8 @@ enable({enable}, {client_id}, {bufnr}, {opts})
                        `triggerCharacters`.
                      • {convert}? (`fun(item: lsp.CompletionItem): table`)
                        Transforms an LSP CompletionItem to |complete-items|.
+                     • {cmp}? (`fun(a: table, b: table): boolean`) Comparator
+                       for sorting merged completion items from all servers.
 
 get({opts})                                         *vim.lsp.completion.get()*
     Triggers LSP completion once in the current buffer, if LSP completion is
