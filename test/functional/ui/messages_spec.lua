@@ -10,7 +10,6 @@ local command = n.command
 local set_method_error = n.set_method_error
 local api = n.api
 local async_meths = n.async_meths
-local test_build_dir = t.paths.test_build_dir
 local nvim_prog = n.nvim_prog
 local testprg = n.testprg
 local exec = n.exec
@@ -2364,7 +2363,8 @@ describe('ui/msg_puts_printf', function()
     skip(not t.translations_enabled(), 'Nvim not built with ENABLE_TRANSLATIONS')
     local screen
     local cmd = ''
-    local locale_dir = test_build_dir .. '/share/locale/ja/LC_MESSAGES'
+    local build_dir = t.paths.test_build_dir
+    local locale_dir = build_dir .. '/share/locale/ja/LC_MESSAGES'
 
     clear({ env = { LANG = 'ja_JP.UTF-8' } })
     screen = Screen.new(25, 5)
@@ -2383,10 +2383,11 @@ describe('ui/msg_puts_printf', function()
       end
     end
 
-    os.execute('cmake -E make_directory ' .. locale_dir)
-    os.execute(
-      'cmake -E copy ' .. test_build_dir .. '/src/nvim/po/ja.mo ' .. locale_dir .. '/nvim.mo'
-    )
+    fn.mkdir(locale_dir, 'p')
+    fn.filecopy(build_dir .. '/src/nvim/po/ja.mo', locale_dir .. '/nvim.mo')
+    finally(function()
+      n.rmdir(build_dir .. '/share')
+    end)
 
     cmd = cmd .. '"' .. nvim_prog .. '" -u NONE -i NONE -Es -V1'
     command([[call jobstart(']] .. cmd .. [[',{'term':v:true})]])
@@ -2397,8 +2398,6 @@ describe('ui/msg_puts_printf', function()
       :                        |
                                |
     ]])
-
-    os.execute('cmake -E remove_directory ' .. test_build_dir .. '/share')
   end)
 end)
 

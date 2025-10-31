@@ -3478,9 +3478,11 @@ int get_rel_pos(win_T *wp, char *buf, int buflen)
                                      "%s", _("Top"));
   }
 
+  int perc = calc_percentage(above, above + below);
+  char tmp[8];
   // localized percentage value
-  return (int)vim_snprintf_safelen(buf, (size_t)buflen,
-                                   _("%2d%%"), calc_percentage(above, above + below));
+  vim_snprintf(tmp, sizeof(tmp), _("%d%%"), perc);
+  return (int)vim_snprintf_safelen(buf, (size_t)buflen, _("%3s"), tmp);
 }
 
 /// Append (2 of 8) to "buf[]", if editing more than one file.
