@@ -4215,11 +4215,12 @@ function s:NetrwChgPerm(islocal,curdir)
     call inputsave()
     let newperm= input("Enter new permission: ")
     call inputrestore()
-    let chgperm= substitute(g:netrw_chgperm,'\<FILENAME\>',netrw#os#Escape(expand("<cfile>")),'')
+    let fullpath = fnamemodify(netrw#fs#PathJoin(a:curdir, expand("<cfile>")), ':p')
+    let chgperm= substitute(g:netrw_chgperm,'\<FILENAME\>',netrw#os#Escape(fullpath),'')
     let chgperm= substitute(chgperm,'\<PERM\>',netrw#os#Escape(newperm),'')
     call system(chgperm)
     if v:shell_error != 0
-        NetrwKeepj call netrw#ErrorMsg(1,"changing permission on file<".expand("<cfile>")."> seems to have failed",75)
+        NetrwKeepj call netrw#ErrorMsg(1,"changing permission on file<".fullpath."> seems to have failed",75)
     endif
     if a:islocal
         NetrwKeepj call s:NetrwRefresh(a:islocal,s:NetrwBrowseChgDir(a:islocal,'./',0))
