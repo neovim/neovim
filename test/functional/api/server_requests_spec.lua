@@ -313,7 +313,10 @@ describe('server -> client', function()
 
       set_session(server)
       eq(serverpid, fn.getpid())
-      eq('bye!', api.nvim_get_current_line())
+      -- wait for the notification to be processed
+      t.retry(nil, 1000, function()
+        eq('bye!', api.nvim_get_current_line())
+      end)
 
       server:close()
       client:close()
