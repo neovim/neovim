@@ -255,7 +255,7 @@ function! provider#clipboard#Executable() abort
     return s:set_clip()
   elseif executable('termux-clipboard-set')
     return s:set_termux()
-  elseif executable('tmux') && (!empty($TMUX) || 0 == jobwait([jobstart(['tmux', 'list-buffers'])], 2000)[0])
+  elseif !empty($TMUX) && executable('tmux')
     return s:set_tmux()
   elseif get(get(g:, 'termfeatures', {}), 'osc52') && &clipboard ==# ''
     " Don't use OSC 52 when 'clipboard' is set. It can be slow and cause a lot

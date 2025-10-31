@@ -297,6 +297,7 @@ OPTIONS
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
 • 'pumborder' adds a border to the popup menu.
+• |g:clipboard| autodetection only selects tmux when running inside tmux
 
 PERFORMANCE
 
