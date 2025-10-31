@@ -195,6 +195,17 @@ describe('nvim_get_commands', function()
       api.nvim_get_commands({ builtin = false })
     )
   end)
+
+  it('works with Lua functions', function()
+    exec_lua [[
+      vim.api.nvim_create_user_command('CommandWithLuaCallback', function(opts)
+        return 3
+      end, {})
+
+      local cb = vim.api.nvim_get_commands({})["CommandWithLuaCallback"]["callback"]
+      assert(cb() == 3)
+    ]]
+  end)
 end)
 
 describe('nvim_create_user_command', function()

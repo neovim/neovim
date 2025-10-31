@@ -1777,7 +1777,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
   Dict rv = arena_dict(arena, (size_t)gap->ga_len);
   for (int i = 0; i < gap->ga_len; i++) {
     char arg[2] = { 0, 0 };
-    Dict d = arena_dict(arena, 14);
+    Dict d = arena_dict(arena, 15);
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
     PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
@@ -1788,6 +1788,10 @@ Dict commands_array(buf_T *buf, Arena *arena)
     PUT_C(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_REGSTR)));
     PUT_C(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
     PUT_C(d, "preview", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_PREVIEW)));
+
+    if (cmd->uc_luaref != LUA_NOREF) {
+      PUT_C(d, "callback", LUAREF_OBJ(api_new_luaref(cmd->uc_luaref)));
+    }
 
     switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
     case 0:
