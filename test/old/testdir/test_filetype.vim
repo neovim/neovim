@@ -115,7 +115,7 @@ func s:GetFilenameChecks() abort
     \ 'apachestyle': ['/etc/proftpd/file.config,/etc/proftpd/conf.file/file', '/etc/proftpd/conf.file/file', '/etc/proftpd/file.conf', '/etc/proftpd/file.conf-file',
     \                 'any/etc/proftpd/conf.file/file', 'any/etc/proftpd/file.conf', 'any/etc/proftpd/file.conf-file', 'proftpd.conf', 'proftpd.conf-file'],
     \ 'apkbuild': ['APKBUILD'],
-    \ 'applescript': ['file.scpt'],
+    \ 'applescript': ['file.scpt', 'file.applescript'],
     \ 'aptconf': ['apt.conf', '/.aptitude/config', 'any/.aptitude/config'],
     \ 'arch': ['.arch-inventory', '=tagging-method'],
     \ 'arduino': ['file.ino', 'file.pde'],

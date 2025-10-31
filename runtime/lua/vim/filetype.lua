@@ -212,6 +212,7 @@ local extension = {
   aml = 'aml',
   run = 'ampl',
   g4 = 'antlr4',
+  applescript = 'applescript',
   scpt = 'applescript',
   ino = 'arduino',
   pde = 'arduino',
