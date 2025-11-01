@@ -1,6 +1,7 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local api = vim.api
+local fn = vim.fn
 local M = {}
 
 ---@class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints
@@ -433,6 +434,214 @@ function M.enable(enable, filter)
       _enable(filter.bufnr)
     end
   end
+end
+
+--- @alias vim.lsp.inlay_hint.action.callback fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer
+
+--- @alias vim.lsp.inlay_hint.action.name
+---| 'textEdits' -- apply_text_edits
+---| 'tooltip' -- string (plain text or markdown): hover?
+---| 'command' -- 'workspace/executeCommand'
+---| 'location' -- jump to location?
+
+--- @alias vim.lsp.inlay_hint.action
+---| vim.lsp.inlay_hint.action.name
+---| vim.lsp.inlay_hint.action.callback
+
+--- @class vim.lsp.inlay_hint.action.context
+--- @inlinedoc
+--- @field bufnr integer
+--- @field client vim.lsp.Client
+
+---@type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
+local inlayhint_actions = {
+  textEdits = function(hints, ctx)
+    local valid_hints = vim
+      .iter(hints)
+      :filter(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          -- only keep those that have text edits.
+          return hint ~= nil and hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
+        end
+      )
+      :totable()
+    ---@type lsp.TextEdit[]
+    local text_edits = vim
+      .iter(valid_hints)
+      :map(
+        ---@param hint lsp.InlayHint
+        function(hint)
+          return hint.textEdits
+        end
+      )
+      :flatten(1)
+      :totable()
+    if #text_edits > 0 then
+      vim.schedule(function()
+        util.apply_text_edits(text_edits, ctx.bufnr, ctx.client.offset_encoding)
+      end)
+    end
+    return #valid_hints
+  end,
+}
+
+--- For supported LSP servers, apply one of the following actions provided by inlayhints in the
+--- selected range.
+---
+--- - In |Normal-mode|, the action applies to inlay hints that are adjacent to the cursor.
+--- - In |Visual-mode|, the action applies to inlay hints that are in the visually selected range.
+---
+--- Example usage:
+--- ```lua
+--- vim.keymap.set(
+---   'n',
+---   'gI',
+---   function()
+---     vim.lsp.inlay_hint.apply_action("textEdits")
+---   end,
+---   { desc = 'Apply inlay hint edits' }
+--- )
+--- ```
+---
+--- @param action vim.lsp.inlay_hint.action
+---
+--- Possible actions: `"textEdits"`, `"tooltip"`, `"location"`, `"command"` and a custom callback:
+--- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlayhints in the range and some context, perform some actions and returns the number of hints on which the actions were taken.
+function M.apply_action(action)
+  local action_callback = action
+  if type(action) == 'string' then
+    action_callback = inlayhint_actions[action]
+    ---@cast action_callback -vim.lsp.inlay_hint.action.name
+  end
+  local bufnr = api.nvim_get_current_buf()
+  local winid = fn.bufwinid(bufnr)
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
+
+  local mode = fn.mode()
+
+  -- mark position, (1, 0) indexed, end-inclusive
+  ---@type {start: [integer, integer], end: [integer, integer]}
+  local range = {}
+
+  if mode == 'n' then
+    local cursor = api.nvim_win_get_cursor(winid)
+    range.start = cursor
+    range['end'] = cursor
+  else
+    local start_pos = fn.getpos('v')
+    local end_pos = fn.getpos('.')
+    if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
+      ---@type [integer, integer, integer, integer]
+      start_pos, end_pos = end_pos, start_pos
+    end
+
+    range = {
+      start = { start_pos[2], start_pos[3] - 1 },
+      ['end'] = { end_pos[2], end_pos[3] - 2 },
+    }
+
+    if mode == 'V' or mode == 'Vs' then
+      range.start[2] = 0
+      range['end'][1] = range['end'][1] + 1
+      range['end'][2] = 0
+    end
+  end
+
+  ---@param idx? integer
+  ---@param client vim.lsp.Client
+  local function do_insert(idx, client)
+    if idx == nil then
+      return
+    end
+
+    local params =
+      util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+    local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
+
+    client:request(
+      'textDocument/inlayHint',
+      params,
+      ---@param result lsp.InlayHint[]?
+      function(_, result, _, _)
+        if result ~= nil then
+          ---@type lsp.InlayHint[]
+          local hints = vim
+            .iter(result)
+            :filter(
+              ---@param hint lsp.InlayHint
+              function(hint)
+                local hint_pos = hint.position
+                if
+                  hint_pos.line < params.range.start.line
+                  or hint_pos.line > params.range['end'].line
+                then
+                  -- outside of line range
+                  return false
+                end
+
+                if hint_pos.line == params.range.start.line then
+                  -- pos is in the same line as range.start
+                  if hint_pos.line == params.range['end'].line then
+                    -- range.start in the same line as range.end
+                    return params.range.start.character <= hint_pos.character
+                      and hint_pos.character <= params.range['end'].character
+                  end
+                  return hint_pos.character >= params.range.start.character
+                end
+
+                if hint_pos.line == params.range['end'].line then
+                  return hint_pos.character <= params.range['end'].character
+                end
+                return true
+              end
+            )
+            :totable()
+          if #hints > 0 then
+            if not support_resolve then
+              if action_callback(hints, { bufnr = bufnr, client = client }) == 0 then
+                -- no edits applied. proceed with the iteration.
+                return do_insert(next(clients, idx))
+              else
+                -- we're done with the edits.
+                return
+              end
+            end
+
+            -- keep track of the number of resolved edits
+            ---@type integer
+            local num_processed = 0
+
+            for i, h in ipairs(hints) do
+              client:request('inlayHint/resolve', h, function(_, _result, _, _)
+                if _result ~= nil then
+                  hints[i] = _result
+                end
+                num_processed = num_processed + 1
+
+                if num_processed == #hints then
+                  if action_callback(hints, { bufnr = bufnr, client = client }) == 0 then
+                    return do_insert(next(clients, idx))
+                  else
+                    return
+                  end
+                end
+              end, bufnr)
+            end
+          else
+            -- no hints in the given range.
+            return do_insert(next(clients, idx))
+          end
+        else
+          -- result is nil. Proceed to next client.
+          return do_insert(next(clients, idx))
+        end
+      end,
+      bufnr
+    )
+  end
+
+  do_insert(next(clients))
 end
 
 return M
