@@ -52,6 +52,9 @@ These changes may require adaptations in your config or plugins.
 API
 
 • Decoration provider has `on_range()` callback.
+• nvim_get_commands()'s dictionaries' `complete` member is now a Lua function,
+  if that is how the command was created. `preview_callback` and `callback`
+  have also been added, if they were specified in `nvim_create_user_command()`
 
 BUILD
 
