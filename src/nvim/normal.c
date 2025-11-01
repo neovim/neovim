@@ -5353,7 +5353,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
   if (flag) {
     do {
       i = gchar_cursor();
-    } while (ascii_iswhite(i) && oneleft() == OK);
+    } while (ascii_iswhite_or_nul(i) && oneleft() == OK);
     curwin->w_valid &= ~VALID_WCOL;
   }
 }
