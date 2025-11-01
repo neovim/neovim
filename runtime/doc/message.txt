@@ -610,6 +610,22 @@ Set the 'autoread' option if you want to do this automatically.
 This message is not given when 'buftype' is not empty.
 Also see the |FileChangedShell| autocommand.
 
+You will be given a dialog with the following options:
+
+"OK":		Dismiss the warning and continue editing.  No changes are
+		loaded, the buffer remains as it is.
+
+"Load File":	Reload the file from disk, replacing the current buffer
+		contents.  Any changes you made in Vim that haven't been saved
+		will be lost.
+
+"Load File and Options":
+		Reload the file from disk and, in addition, apply relevant
+		file settings, such as indentation, syntax highlighting, text
+		width, and other filetype-specific options.  This ensures the
+		buffer matches the file's intended configuration according to
+		your current settings and autocommands.
+
 There is one situation where you get this message even though there is nothing
 wrong: If you save a file in Windows on the day the daylight saving time
 starts.  It can be fixed in one of these ways:
