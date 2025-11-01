@@ -27,7 +27,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
 else()
   set(AMD64_ABI "")
 endif()
-set(BUILDCMD_UNIX ${MAKE_PRG} -j CFLAGS=-fPIC
+set(BUILDCMD_UNIX ${MAKE_PRG} amalg -j CFLAGS=-fPIC
                               CFLAGS+=-DLUA_USE_APICHECK
                               CFLAGS+=-funwind-tables
                               ${NO_STACK_CHECK}
