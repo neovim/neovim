@@ -144,10 +144,12 @@ void stream_close_handle(Stream *stream)
 static void close_cb(uv_handle_t *handle)
 {
   Stream *stream = handle->data;
-  if (stream->close_cb) {
+  // Need to check if handle->data is NULL here as this callback may be called between
+  // the handle's initialization and stream_init() (e.g. in socket_connect()).
+  if (stream && stream->close_cb) {
     stream->close_cb(stream, stream->close_cb_data);
   }
-  if (stream->internal_close_cb) {
+  if (stream && stream->internal_close_cb) {
     stream->internal_close_cb(stream, stream->internal_data);
   }
 }

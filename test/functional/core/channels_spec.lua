@@ -465,6 +465,22 @@ describe('channels', function()
       eq(true, exec_lua('return _G.result'))
     end)
   end)
+
+  describe('sockconnect() reports error when connection fails', function()
+    it('in "pipe" mode', function()
+      eq(
+        'Vim:connection failed: connection refused',
+        pcall_err(fn.sockconnect, 'pipe', n.new_pipename())
+      )
+    end)
+
+    it('in "tcp" mode', function()
+      eq(
+        'Vim:connection failed: connection refused',
+        pcall_err(fn.sockconnect, 'pipe', '127.0.0.1:0')
+      )
+    end)
+  end)
 end)
 
 describe('loopback', function()
