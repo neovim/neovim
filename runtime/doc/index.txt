@@ -790,7 +790,8 @@ tag		char	      note action in Normal mode	~
 |g@|		g@{motion}	   call 'operatorfunc'
 |g~|		g~{motion}	2  swap case for Nmove text
 |g<Down>|	g<Down>		1  same as "gj"
-|g<End>|	g<End>		1  same as "g$"
+|g<End>|	g<End>		1  same as "g$" but go to the rightmost
+				   non-blank character instead
 |g<Home>|	g<Home>		1  same as "g0"
 |g<LeftMouse>|	g<LeftMouse>	   same as <C-LeftMouse>
 		g<MiddleMouse>	   same as <C-MiddleMouse>
