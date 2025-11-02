@@ -2193,7 +2193,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {MATCH: +}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
                                                                                       |
                                Help poor children in Uganda!                          |
-                       type  :help iccf{18:<Enter>}       for information                  |
+                       type  :help Kuwasha{18:<Enter>}    for information                  |
                                                                                       |*2
       {3:                                                                                }|
                                                                                       |
@@ -2242,7 +2242,7 @@ describe('ui/ext_messages', function()
       {1:~{MATCH: +}}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
       {1:~                        }Help poor children in Uganda!{1:                          }|
-      {1:~                }type  :help iccf{18:<Enter>}       for information {1:                 }|
+      {1:~                }type  :help Kuwasha{18:<Enter>}    for information {1:                 }|
       {1:~                                                                               }|*5
     ]]
     local showmode = { { '-- INSERT --', 5, 11 } }
@@ -2278,7 +2278,7 @@ describe('ui/ext_messages', function()
       {1:~{MATCH: +}}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
       {1:~                        }Help poor children in Uganda!{1:                          }|
-      {1:~                }type  :help iccf{18:<Enter>}       for information {1:                 }|
+      {1:~                }type  :help Kuwasha{18:<Enter>}    for information {1:                 }|
       {1:~                                                                               }|*5
     ]],
       showmode = showmode,
@@ -2315,7 +2315,7 @@ describe('ui/ext_messages', function()
       {MATCH: +}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
                                                                                       |
                                Help poor children in Uganda!                          |
-                       type  :help iccf{18:<Enter>}       for information                  |
+                       type  :help Kuwasha{18:<Enter>}    for information                  |
                                                                                       |*5
     ]],
       cmdline = { { abort = false } },
@@ -2473,7 +2473,7 @@ it('ui/ext_multigrid supports intro screen', function()
       {1:~{MATCH: +}}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
       {1:~                                                                               }|
       {1:~                        }Help poor children in Uganda!{1:                          }|
-      {1:~                }type  :help iccf{18:<Enter>}       for information {1:                 }|
+      {1:~                }type  :help Kuwasha{18:<Enter>}    for information {1:                 }|
       {1:~                                                                               }|*4
     ## grid 3
                                                                                       |
