@@ -260,6 +260,12 @@ LSP
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 • The filter option of |vim.lsp.buf.code_action()| now receives the client ID as an argument.
+• Support for `textDocument/documentLink`: |lsp-buf|
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentLink
+  - `vim.lsp.buf.documentLink()` lists all links in the document
+  - `vim.lsp.includeexpr()` allows |gf| and related commands to jump to filepath
+   provided by `textDocument/documentLink` under cursor.
+  - `gx` will also respect `textDocument/documentLink` if available
 
 LUA
 

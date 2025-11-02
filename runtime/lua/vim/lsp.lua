@@ -783,6 +783,9 @@ function lsp._set_defaults(client, bufnr)
   then
     vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
   end
+  if client:supports_method('textDocument/documentLink') then
+    vim.bo[bufnr].includeexpr = 'v:lua.vim.lsp.includeexpr()'
+  end
   if
     client:supports_method('textDocument/rangeFormatting')
     and is_empty_or_default(bufnr, 'formatprg')
@@ -1422,6 +1425,16 @@ end
 ---@return table[] tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
+end
+
+--- Provides an interface between the built-in client and 'includeexpr'.
+---
+--- When |gf| and related commands fails with the default first try,
+--- this will invoke the "textDocument/documentLink" LSP method to find
+--- the link under the cursor, falls back to `cfile`
+---
+function lsp.includeexpr()
+  return vim.ui._get_urls()[1]
 end
 
 --- Provides an interface between the built-in client and a `foldexpr` function.

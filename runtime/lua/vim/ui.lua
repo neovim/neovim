@@ -1,4 +1,5 @@
 local M = {}
+local ms = vim.lsp.protocol.Methods
 
 ---@class vim.ui.select.Opts
 ---@inlinedoc
@@ -191,6 +192,16 @@ function M.open(path, opt)
   return vim.system(cmd, job_opt), nil
 end
 
+--- Checks if a lsp.Position is inside a lsp.Range.
+---@param position lsp.Position
+---@param range lsp.Range
+---@return boolean
+local function position_in_range(position, range)
+  return (position.line > range.start.line and position.line < range['end'].line)
+    or (position.line == range.start.line and position.character >= range.start.character)
+    or (position.line == range['end'].line and position.character <= range['end'].character)
+end
+
 --- Returns all URLs at cursor, if any.
 --- @return string[]
 function M._get_urls()
@@ -200,6 +211,31 @@ function M._get_urls()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
   local col = cursor[2]
+
+  local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
+  local results = vim.lsp.buf_request_sync(bufnr, 'textDocument/documentLink', params)
+
+  for client_id, result in pairs(results) do
+    if result.err then
+      vim.lsp.log.error(result.err)
+    else
+      local client = assert(vim.lsp.get_client_by_id(client_id))
+      local position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
+      local link = vim.iter(result.result):find(function(document_link)
+        return position_in_range(position, document_link.range)
+      end)
+
+      if link then
+        ---@type string
+        local target = link.target
+        if vim.startswith(target, 'file://') then
+          target = vim.uri_to_fname(target)
+        end
+        table.insert(urls, target)
+      end
+    end
+  end
+
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
     details = true,
     type = 'highlight',
