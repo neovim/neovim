@@ -2391,7 +2391,11 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     tui_enable_extended_underline(tui);
   }
 
-  if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
+  if (kitty || (vte_version != 0 && vte_version < 5400)) {
+    // Never use modifyOtherKeys in kitty if kitty keyboard protocol query fails.
+    // Also don't emit the sequence to enable modifyOtherKeys in old VTE versions.
+    tui->input.key_encoding = kKeyEncodingLegacy;
+  } else {
     // Fallback to Xterm's modifyOtherKeys if terminal does not support the
     // Kitty keyboard protocol. We don't actually enable the key encoding here
     // though: it won't be enabled until the terminal responds to our query for

@@ -129,7 +129,6 @@ void tinput_init(TermInput *input, Loop *loop, TerminfoEntry *ti)
   input->loop = loop;
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
-  input->key_encoding = kKeyEncodingLegacy;
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
 
