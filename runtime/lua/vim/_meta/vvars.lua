@@ -793,6 +793,12 @@ vim.v.versionlong = ...
 --- @type integer
 vim.v.vim_did_enter = ...
 
+--- 0 during initialization, 1 after sourcing `vimrc` and just
+--- before `load-plugins`.
+--- Read-only.
+--- @type integer
+vim.v.vim_did_init = ...
+
 --- Virtual line number for the 'statuscolumn' expression.
 --- Negative when drawing the status column for virtual lines, zero
 --- when drawing an actual buffer line, and positive when drawing

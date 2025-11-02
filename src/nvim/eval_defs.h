@@ -123,6 +123,7 @@ typedef enum {
   VV_EXITING,
   VV_MAXCOL,
   VV_STACKTRACE,
+  VV_VIM_DID_INIT,
   // Nvim
   VV_STDERR,
   VV_MSGPACK_TYPES,

@@ -203,6 +203,7 @@ static struct vimvar {
   VV(VV_EXITING,          "exiting",          VAR_NUMBER, VV_RO),
   VV(VV_MAXCOL,           "maxcol",           VAR_NUMBER, VV_RO),
   VV(VV_STACKTRACE,       "stacktrace",       VAR_LIST, VV_RO),
+  VV(VV_VIM_DID_INIT,     "vim_did_init",     VAR_NUMBER, VV_RO),
   // Neovim
   VV(VV_STDERR,           "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_MSGPACK_TYPES,    "msgpack_types",    VAR_DICT, VV_RO),

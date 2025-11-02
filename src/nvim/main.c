@@ -466,6 +466,8 @@ int main(int argc, char **argv)
     syn_maybe_enable();
   }
 
+  set_vim_var_nr(VV_VIM_DID_INIT, 1);
+
   // Read all the plugin files.
   load_plugins();
 
