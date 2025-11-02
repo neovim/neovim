@@ -865,8 +865,20 @@ end
 --- you request to stop a client which has previously been requested to
 --- shutdown, it will automatically escalate and force shutdown.
 ---
---- @param force? boolean
+--- If `force` is a number, it will be treated as the time in milliseconds to
+--- wait before forcing the shutdown.
+---
+--- Note: Forcing shutdown while a server is busy writing out project or index
+--- files can lead to file corruption.
+---
+--- @param force? boolean|integer
 function Client:stop(force)
+  if type(force) == 'number' then
+    vim.defer_fn(function()
+      self:stop(true)
+    end, force)
+  end
+
   local rpc = self.rpc
   if rpc.is_closing() then
     return
@@ -886,7 +898,7 @@ function Client:stop(force)
     if err == nil then
       rpc.notify('exit')
     else
-      -- If there was an error in the shutdown request, then term to be safe.
+      -- If there was an error in the shutdown request, then terminate to be safe.
       rpc.terminate()
       self._graceful_shutdown_failed = true
     end
