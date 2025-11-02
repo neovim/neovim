@@ -34,6 +34,7 @@ usage() {
   echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
   echo "    -m {vim-revision}  List previous (older) missing Vim patches."
   echo "    -M                 List all merged patch-numbers (at current v:version)."
+  echo "    -n                 List possible N/A Vim patches."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.1.xxx) or a Git hash."
   echo "    -P {vim-revision}  Download, generate and apply a Vim patch."
@@ -886,7 +887,36 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlLmMVp:P:g:r:s" opt; do
+_check_patch() {
+  set -eu
+  patch=$1
+  cd "$VIM_SOURCE_DIR_DEFAULT"
+  TMP_FILE="tmp_filelist_$patch"
+  # shellcheck disable=SC2126
+  VERSION_LNUM="$(git show -U0 --format="" "$patch" -- src/version.c |
+    grep '^+[^+]' |
+    grep -Pz '(?s)\+\s+[0-9]+,\n\+\/\*\*\/' |
+    wc -l)" || true
+  # shellcheck disable=SC2086
+  git diff-tree --no-commit-id --name-only -r "$patch" | grep -v $GREP_NA_ARGS > "$TMP_FILE"
+  if test "$(wc -l < "$TMP_FILE")" -le 1 && test "$VERSION_LNUM" = 2; then
+    # shellcheck disable=SC2001
+    vimpatch="$(echo "$patch" | sed 's/^v\([^.]\+\)$/\1/')"
+    echo "vim-patch:$vimpatch"
+  fi
+  rm -f "$TMP_FILE"
+}
+
+list_na_patches() {
+  GREP_NA_ARGS="$(sed 's/^\(.*\)/-e \1/' "$NVIM_SOURCE_DIR"/scripts/vim_na_regexp.txt)"
+
+  export GREP_NA_ARGS VIM_SOURCE_DIR_DEFAULT
+  export -f _check_patch
+
+  list_missing_vimpatches 0 | xargs -n 1 -I {} bash -c '_check_patch {}'
+}
+
+while getopts "hlLmnMVp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -909,6 +939,10 @@ while getopts "hlLmMVp:P:g:r:s" opt; do
     m)
       shift  # remove opt
       list_missing_previous_vimpatches_for_patch "$@"
+      exit 0
+      ;;
+    n)
+      list_na_patches
       exit 0
       ;;
     p)
