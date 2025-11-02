@@ -1278,7 +1278,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:notify()|.
       • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
                                 See |Client:cancel_request()|.
-      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean?)`)
+      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean|integer?)`)
                                 See |Client:stop()|.
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
@@ -1531,8 +1531,14 @@ Client:stop({force})                                           *Client:stop()*
     you request to stop a client which has previously been requested to
     shutdown, it will automatically escalate and force shutdown.
 
+    If `force` is a number, it will be treated as the time in milliseconds to
+    wait before forcing the shutdown.
+
+    Note: Forcing shutdown while a server is busy writing out project or index
+    files can lead to file corruption.
+
     Parameters: ~
-      • {force}  (`boolean?`)
+      • {force}  (`boolean|integer?`)
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Checks if a client supports a given method. Always returns true for
