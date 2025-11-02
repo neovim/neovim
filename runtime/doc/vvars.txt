@@ -746,6 +746,12 @@ v:vim_did_enter
 		0 during startup, 1 just before |VimEnter|.
 		Read-only.
 
+				*v:vim_did_init* *vim_did_init-variable*
+v:vim_did_init
+		0 during initialization, 1 after sourcing |vimrc| and just
+		before |load-plugins|.
+		Read-only.
+
 					*v:virtnum* *virtnum-variable*
 v:virtnum
 		Virtual line number for the 'statuscolumn' expression.

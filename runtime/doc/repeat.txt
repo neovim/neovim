@@ -301,6 +301,12 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			each directory is inserted before others), after
 			loading the ftdetect scripts.
 
+			To programmatically decide if `!` is needed during
+			startup, check |v:vim_did_init|: use `!` if 0 (to not
+			duplicate |load-plugins| step), no `!` otherwise (to
+			force load plugin files as otherwise they won't be
+			loaded automatically).
+
 						*:packl* *:packloadall*
 :packl[oadall][!]	Load all packages in the "start" directory under each
 			entry in 'packpath'.

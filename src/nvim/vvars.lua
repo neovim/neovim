@@ -901,6 +901,14 @@ M.vars = {
       Read-only.
     ]=],
   },
+  vim_did_init = {
+    type = 'integer',
+    desc = [=[
+      0 during initialization, 1 after sourcing |vimrc| and just
+      before |load-plugins|.
+      Read-only.
+    ]=],
+  },
   virtnum = {
     type = 'integer',
     desc = [=[
