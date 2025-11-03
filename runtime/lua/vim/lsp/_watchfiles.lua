@@ -2,7 +2,6 @@ local bit = require('bit')
 local glob = vim.glob
 local watch = vim._watch
 local protocol = require('vim.lsp.protocol')
-local ms = protocol.Methods
 local lpeg = vim.lpeg
 
 local M = {}
@@ -116,7 +115,7 @@ function M.register(reg, client_id)
               local params = {
                 changes = change_queues[client_id],
               }
-              client:notify(ms.workspace_didChangeWatchedFiles, params)
+              client:notify('workspace/didChangeWatchedFiles', params)
               queue_timers[client_id] = nil
               change_queues[client_id] = nil
               change_cache[client_id] = nil

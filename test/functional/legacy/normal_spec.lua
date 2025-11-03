@@ -131,4 +131,33 @@ describe('normal', function()
     feed('jg^k')
     eq(3, fn.virtcol('.'))
   end)
+
+  -- oldtest: Test_pos_percentage_in_turkish_locale()
+  it('viewport position percentage in Turkish locale', function()
+    t.skip(not t.translations_enabled(), 'Nvim not built with ENABLE_TRANSLATIONS')
+    t.skip(not pcall(exec, 'lang tr_TR.UTF-8'), 'Turkish locale not available')
+
+    local build_dir = t.paths.test_build_dir
+    local locale_dir = build_dir .. '/share/locale/tr/LC_MESSAGES'
+
+    fn.mkdir(locale_dir, 'p')
+    fn.filecopy(build_dir .. '/src/nvim/po/tr.mo', locale_dir .. '/nvim.mo')
+    finally(function()
+      n.rmdir(build_dir .. '/share')
+    end)
+
+    clear({ env = { LANG = 'tr_TR.UTF-8' } })
+    screen = Screen.new(75, 5)
+    exec('set ruler')
+    exec('lang tr_TR.UTF-8')
+    exec('put =range(1,40)')
+    exec('5')
+    screen:expect([[
+      3                                                                          |
+      ^4                                                                          |
+      5                                                                          |
+      6                                                                          |
+      40 more lines                                            5,1            %8 |
+    ]])
+  end)
 end)

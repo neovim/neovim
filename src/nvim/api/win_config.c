@@ -260,9 +260,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       }
     }
     int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
+    int size = (flags & WSP_VERT) ? fconfig.width : fconfig.height;
 
     TRY_WRAP(err, {
-      int size = (flags & WSP_VERT) ? fconfig.width : fconfig.height;
       if (parent == NULL || parent == curwin) {
         wp = win_split_ins(size, flags, NULL, 0, NULL);
       } else {
@@ -277,6 +277,15 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     });
     if (wp) {
       wp->w_config = fconfig;
+      if (size > 0) {
+        // Without room for the requested size, window sizes may have been equalized instead.
+        // If the size differs from what was requested, try to set it again now.
+        if ((flags & WSP_VERT) && wp->w_width != size) {
+          win_setwidth_win(size, wp);
+        } else if (!(flags & WSP_VERT) && wp->w_height != size) {
+          win_setheight_win(size, wp);
+        }
+      }
     }
   } else {
     if (!check_split_disallowed_err(curwin, err)) {
@@ -952,7 +961,7 @@ static bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextTyp
   return true;
 }
 
-static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
+void parse_border_style(Object style, WinConfig *fconfig, Error *err)
 {
   struct {
     const char *name;
@@ -1070,16 +1079,16 @@ static void generate_api_error(win_T *wp, const char *attribute, Error *err)
 }
 
 /// Parses a border style name or custom (comma-separated) style.
-bool parse_winborder(WinConfig *fconfig, Error *err)
+bool parse_winborder(WinConfig *fconfig, char *border_opt, Error *err)
 {
   if (!fconfig) {
     return false;
   }
   Object style = OBJECT_INIT;
 
-  if (strchr(p_winborder, ',')) {
+  if (strchr(border_opt, ',')) {
     Array border_chars = ARRAY_DICT_INIT;
-    char *p = p_winborder;
+    char *p = border_opt;
     char part[MAX_SCHAR_SIZE] = { 0 };
     int count = 0;
 
@@ -1107,7 +1116,7 @@ bool parse_winborder(WinConfig *fconfig, Error *err)
 
     style = ARRAY_OBJ(border_chars);
   } else {
-    style = CSTR_TO_OBJ(p_winborder);
+    style = CSTR_TO_OBJ(border_opt);
   }
 
   parse_border_style(style, fconfig, err);
@@ -1355,7 +1364,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       }
     }
   } else if (*p_winborder != NUL && (wp == NULL || !wp->w_floating)
-             && !parse_winborder(fconfig, err)) {
+             && !parse_winborder(fconfig, p_winborder, err)) {
     goto fail;
   }
 

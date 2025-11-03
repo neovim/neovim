@@ -299,7 +299,7 @@ Note the use of ":noremap" instead of "map" to avoid a recursive mapping.
 Map the X1 and X2 buttons to go forwards and backwards in the jump list, see
 |CTRL-O| and |CTRL-I|.
 
-                                                *mouse-swap-buttons*
+                                       *mouse-swap-buttons* *pi_swapmouse*
 To swap the meaning of the left and right mouse buttons: >vim
         :noremap        <LeftMouse>     <RightMouse>
         :noremap        <LeftDrag>      <RightDrag>
@@ -315,6 +315,10 @@ To swap the meaning of the left and right mouse buttons: >vim
         :noremap!       <RightMouse>    <LeftMouse>
         :noremap!       <RightDrag>     <LeftDrag>
         :noremap!       <RightRelease>  <LeftRelease>
+<
+
+The `swapmouse` plugin does exactly this. Use |pack-add| to load it: >vim
+    :packadd! swapmouse
 <
 
 ==============================================================================
@@ -474,8 +478,8 @@ the mouse button down on this will pop up a menu containing the item
 which when selected, performs the operation.
 
 To create a menu for terminal mode, use |:tlmenu| instead of |:tmenu| unlike
-key mapping (|:tmap|). This is because |:tmenu| is already used for defining
-tooltips for menus. See |terminal-input|.
+key mapping (|:tmap|).  This is because |:tmenu| is already used for defining
+tooltips for menus.  See |terminal-input|.
 
 Special characters in a menu name:
 
@@ -724,9 +728,12 @@ when the right mouse button is pressed, if 'mousemodel' is set to popup or
 popup_setpos.
 
 The default "PopUp" menu is: >vim
-    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
     amenu     PopUp.Open\ in\ web\ browser  gx
     anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
+    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
+    anoremenu PopUp.Show\ Diagnostics       <Cmd>lua vim.diagnostic.open_float()<CR>
+    anoremenu PopUp.Show\ All\ Diagnostics  <Cmd>lua vim.diagnostic.setqflist()<CR>
+    anoremenu PopUp.Configure\ Diagnostics  <Cmd>help vim.diagnostic.config()<CR>
     anoremenu PopUp.-1-                     <Nop>
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
@@ -878,8 +885,8 @@ The tip is defined like this: >
 And delete it with: >
         :tunmenu MyMenu.Hello
 
-Tooltips are currently only supported for the X11 and Win32 GUI.  However, they
-should appear for the other gui platforms in the not too distant future.
+Tooltips are currently only supported for the X11 and Win32 GUI.  However,
+they should appear for the other gui platforms in the not too distant future.
 
 The ":tmenu" command works just like other menu commands, it uses the same
 arguments.  ":tunmenu" deletes an existing menu tip, in the same way as the

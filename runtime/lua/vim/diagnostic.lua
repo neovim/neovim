@@ -186,7 +186,7 @@ end
 ---
 --- @field focus_id? string
 ---
---- @field border? string see |nvim_open_win()|.
+--- @field border? string|string[] see |nvim_open_win()|.
 
 --- @class vim.diagnostic.Opts.Underline
 ---
@@ -1266,11 +1266,12 @@ end
 ---
 ---@param bufnr integer Buffer number
 ---@param fn fun()
+---@return integer?
 local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    api.nvim_create_autocmd('BufRead', {
+    return api.nvim_create_autocmd('BufRead', {
       buffer = bufnr,
       once = true,
       callback = function()
@@ -1625,6 +1626,32 @@ function M.goto_next(opts)
   goto_diagnostic(M.get_next(opts), opts)
 end
 
+---@param autocmd_key string
+---@param ns vim.diagnostic.NS
+local function cleanup_show_autocmd(autocmd_key, ns)
+  if ns.user_data[autocmd_key] then
+    api.nvim_del_autocmd(ns.user_data[autocmd_key])
+
+    ---@type integer?
+    ns.user_data[autocmd_key] = nil
+  end
+end
+
+---@param autocmd_key string
+---@param ns vim.diagnostic.NS
+---@param bufnr integer
+---@param fn fun()
+local function show_once_loaded(autocmd_key, ns, bufnr, fn)
+  cleanup_show_autocmd(autocmd_key, ns)
+
+  ---@type integer?
+  ns.user_data[autocmd_key] = once_buf_loaded(bufnr, function()
+    ---@type integer?
+    ns.user_data[autocmd_key] = nil
+    fn()
+  end)
+end
+
 M.handlers.signs = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate('namespace', namespace, 'number')
@@ -1636,51 +1663,50 @@ M.handlers.signs = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    if not api.nvim_buf_is_loaded(bufnr) then
-      return
-    end
-
-    -- 10 is the default sign priority when none is explicitly specified
-    local priority = opts.signs and opts.signs.priority or 10
-    local get_priority = severity_to_extmark_priority(priority, opts)
-
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.sign_ns then
-      ns.user_data.sign_ns =
-        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.signs', ns.name))
-    end
+    show_once_loaded('sign_show_autocmd', ns, bufnr, function()
+      -- 10 is the default sign priority when none is explicitly specified
+      local priority = opts.signs and opts.signs.priority or 10
+      local get_priority = severity_to_extmark_priority(priority, opts)
 
-    local text = {} ---@type table<vim.diagnostic.Severity|string, string>
-    for k in pairs(M.severity) do
-      if opts.signs.text and opts.signs.text[k] then
-        text[k] = opts.signs.text[k]
-      elseif type(k) == 'string' and not text[k] then
-        text[k] = k:sub(1, 1):upper()
+      if not ns.user_data.sign_ns then
+        ns.user_data.sign_ns =
+          api.nvim_create_namespace(string.format('nvim.%s.diagnostic.signs', ns.name))
       end
-    end
 
-    local numhl = opts.signs.numhl or {}
-    local linehl = opts.signs.linehl or {}
-
-    local line_count = api.nvim_buf_line_count(bufnr)
-
-    for _, diagnostic in ipairs(diagnostics) do
-      if diagnostic.lnum <= line_count then
-        api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic.lnum, 0, {
-          sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]] or 'U',
-          sign_hl_group = sign_highlight_map[diagnostic.severity],
-          number_hl_group = numhl[diagnostic.severity],
-          line_hl_group = linehl[diagnostic.severity],
-          priority = get_priority(diagnostic.severity),
-        })
+      local text = {} ---@type table<vim.diagnostic.Severity|string, string>
+      for k in pairs(M.severity) do
+        if opts.signs.text and opts.signs.text[k] then
+          text[k] = opts.signs.text[k]
+        elseif type(k) == 'string' and not text[k] then
+          text[k] = k:sub(1, 1):upper()
+        end
       end
-    end
+
+      local numhl = opts.signs.numhl or {}
+      local linehl = opts.signs.linehl or {}
+
+      local line_count = api.nvim_buf_line_count(bufnr)
+
+      for _, diagnostic in ipairs(diagnostics) do
+        if diagnostic.lnum <= line_count then
+          api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic.lnum, 0, {
+            sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]] or 'U',
+            sign_hl_group = sign_highlight_map[diagnostic.severity],
+            number_hl_group = numhl[diagnostic.severity],
+            line_hl_group = linehl[diagnostic.severity],
+            priority = get_priority(diagnostic.severity),
+          })
+        end
+      end
+    end)
   end,
 
   --- @param namespace integer
   --- @param bufnr integer
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('sign_show_autocmd', ns)
     if ns.user_data.sign_ns and api.nvim_buf_is_valid(bufnr) then
       api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
     end
@@ -1697,48 +1723,47 @@ M.handlers.underline = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    if not api.nvim_buf_is_loaded(bufnr) then
-      return
-    end
-
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.underline_ns then
-      ns.user_data.underline_ns =
-        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.underline', ns.name))
-    end
-
-    local underline_ns = ns.user_data.underline_ns
-    local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
-
-    for _, diagnostic in ipairs(diagnostics) do
-      local higroup = underline_highlight_map[diagnostic.severity]
-
-      if diagnostic._tags then
-        -- TODO(lewis6991): we should be able to stack these.
-        if diagnostic._tags.unnecessary then
-          higroup = 'DiagnosticUnnecessary'
-        end
-        if diagnostic._tags.deprecated then
-          higroup = 'DiagnosticDeprecated'
-        end
+    show_once_loaded('underline_show_autocmd', ns, bufnr, function()
+      if not ns.user_data.underline_ns then
+        ns.user_data.underline_ns =
+          api.nvim_create_namespace(string.format('nvim.%s.diagnostic.underline', ns.name))
       end
 
-      local lines =
-        api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
+      local underline_ns = ns.user_data.underline_ns
+      local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
 
-      vim.hl.range(
-        bufnr,
-        underline_ns,
-        higroup,
-        { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
-        { diagnostic.end_lnum, diagnostic.end_col },
-        { priority = get_priority(diagnostic.severity) }
-      )
-    end
-    save_extmarks(underline_ns, bufnr)
+      for _, diagnostic in ipairs(diagnostics) do
+        local higroup = underline_highlight_map[diagnostic.severity]
+
+        if diagnostic._tags then
+          -- TODO(lewis6991): we should be able to stack these.
+          if diagnostic._tags.unnecessary then
+            higroup = 'DiagnosticUnnecessary'
+          end
+          if diagnostic._tags.deprecated then
+            higroup = 'DiagnosticDeprecated'
+          end
+        end
+
+        local lines =
+          api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
+
+        vim.hl.range(
+          bufnr,
+          underline_ns,
+          higroup,
+          { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
+          { diagnostic.end_lnum, diagnostic.end_col },
+          { priority = get_priority(diagnostic.severity) }
+        )
+      end
+      save_extmarks(underline_ns, bufnr)
+    end)
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('underline_show_autocmd', ns)
     if ns.user_data.underline_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.underline_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
@@ -1795,54 +1820,58 @@ M.handlers.virtual_text = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    if not api.nvim_buf_is_loaded(bufnr) then
-      return
-    end
-
-    if opts.virtual_text then
-      if opts.virtual_text.format then
-        diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
-      end
-      if
-        opts.virtual_text.source
-        and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
-      then
-        diagnostics = prefix_source(diagnostics)
-      end
-    end
-
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.virt_text_ns then
-      ns.user_data.virt_text_ns =
-        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_text', ns.name))
-    end
-    if not ns.user_data.virt_text_augroup then
-      ns.user_data.virt_text_augroup = api.nvim_create_augroup(
-        string.format('nvim.%s.diagnostic.virt_text', ns.name),
-        { clear = true }
-      )
-    end
+    show_once_loaded('virtual_text_show_autocmd', ns, bufnr, function()
+      if opts.virtual_text then
+        if opts.virtual_text.format then
+          diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
+        end
+        if
+          opts.virtual_text.source
+          and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
+        then
+          diagnostics = prefix_source(diagnostics)
+        end
+      end
 
-    api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+      if not ns.user_data.virt_text_ns then
+        ns.user_data.virt_text_ns =
+          api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_text', ns.name))
+      end
+      if not ns.user_data.virt_text_augroup then
+        ns.user_data.virt_text_augroup = api.nvim_create_augroup(
+          string.format('nvim.%s.diagnostic.virt_text', ns.name),
+          { clear = true }
+        )
+      end
 
-    local line_diagnostics = diagnostic_lines(diagnostics, true)
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
 
-    if opts.virtual_text.current_line ~= nil then
-      api.nvim_create_autocmd('CursorMoved', {
-        buffer = bufnr,
-        group = ns.user_data.virt_text_augroup,
-        callback = function()
-          render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
-        end,
-      })
-    end
+      local line_diagnostics = diagnostic_lines(diagnostics, true)
 
-    render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
+      if opts.virtual_text.current_line ~= nil then
+        api.nvim_create_autocmd('CursorMoved', {
+          buffer = bufnr,
+          group = ns.user_data.virt_text_augroup,
+          callback = function()
+            render_virtual_text(
+              ns.user_data.virt_text_ns,
+              bufnr,
+              line_diagnostics,
+              opts.virtual_text
+            )
+          end,
+        })
+      end
 
-    save_extmarks(ns.user_data.virt_text_ns, bufnr)
+      render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
+
+      save_extmarks(ns.user_data.virt_text_ns, bufnr)
+    end)
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('virtual_text_show_autocmd', ns)
     if ns.user_data.virt_text_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
@@ -2054,56 +2083,55 @@ M.handlers.virtual_lines = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    if not api.nvim_buf_is_loaded(bufnr) then
-      return
-    end
-
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.virt_lines_ns then
-      ns.user_data.virt_lines_ns =
-        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
-    end
-    if not ns.user_data.virt_lines_augroup then
-      ns.user_data.virt_lines_augroup = api.nvim_create_augroup(
-        string.format('nvim.%s.diagnostic.virt_lines', ns.name),
-        { clear = true }
-      )
-    end
+    show_once_loaded('virtual_lines_show_autocmd', ns, bufnr, function()
+      if not ns.user_data.virt_lines_ns then
+        ns.user_data.virt_lines_ns =
+          api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
+      end
+      if not ns.user_data.virt_lines_augroup then
+        ns.user_data.virt_lines_augroup = api.nvim_create_augroup(
+          string.format('nvim.%s.diagnostic.virt_lines', ns.name),
+          { clear = true }
+        )
+      end
 
-    api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
 
-    diagnostics =
-      reformat_diagnostics(opts.virtual_lines.format or format_virtual_lines, diagnostics)
+      diagnostics =
+        reformat_diagnostics(opts.virtual_lines.format or format_virtual_lines, diagnostics)
 
-    if opts.virtual_lines.current_line == true then
-      -- Create a mapping from line -> diagnostics so that we can quickly get the
-      -- diagnostics we need when the cursor line doesn't change.
-      local line_diagnostics = diagnostic_lines(diagnostics, true)
-      api.nvim_create_autocmd('CursorMoved', {
-        buffer = bufnr,
-        group = ns.user_data.virt_lines_augroup,
-        callback = function()
-          render_virtual_lines(
-            ns.user_data.virt_lines_ns,
-            bufnr,
-            diagnostics_at_cursor(line_diagnostics)
-          )
-        end,
-      })
-      -- Also show diagnostics for the current line before the first CursorMoved event.
-      render_virtual_lines(
-        ns.user_data.virt_lines_ns,
-        bufnr,
-        diagnostics_at_cursor(line_diagnostics)
-      )
-    else
-      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
-    end
+      if opts.virtual_lines.current_line == true then
+        -- Create a mapping from line -> diagnostics so that we can quickly get the
+        -- diagnostics we need when the cursor line doesn't change.
+        local line_diagnostics = diagnostic_lines(diagnostics, true)
+        api.nvim_create_autocmd('CursorMoved', {
+          buffer = bufnr,
+          group = ns.user_data.virt_lines_augroup,
+          callback = function()
+            render_virtual_lines(
+              ns.user_data.virt_lines_ns,
+              bufnr,
+              diagnostics_at_cursor(line_diagnostics)
+            )
+          end,
+        })
+        -- Also show diagnostics for the current line before the first CursorMoved event.
+        render_virtual_lines(
+          ns.user_data.virt_lines_ns,
+          bufnr,
+          diagnostics_at_cursor(line_diagnostics)
+        )
+      else
+        render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
+      end
 
-    save_extmarks(ns.user_data.virt_lines_ns, bufnr)
+      save_extmarks(ns.user_data.virt_lines_ns, bufnr)
+    end)
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
+    cleanup_show_autocmd('virtual_lines_show_autocmd', ns)
     if ns.user_data.virt_lines_ns then
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_lines_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then

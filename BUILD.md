@@ -288,6 +288,18 @@ cmake --build build
     - Using `ninja` is strongly recommended.
 4. If treesitter parsers are not bundled, they need to be available in a `parser/` runtime directory (e.g. `/usr/share/nvim/runtime/parser/`).
 
+### How to build without unibilium
+
+Unibilium is the only dependency which is licensed under LGPLv3 (there are no
+GPLv3-only dependencies). This library is used for loading the terminfo database at
+runtime, and can be disabled if the internal definitions for common terminals
+are good enough. To avoid this dependency, build with support for loading
+custom terminfo at runtime, use
+
+```sh
+make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+```
+
 ### How to build static binary (on Linux)
 
 1. Use a linux distribution which uses musl C. We will use Alpine Linux but any distro with musl should work. (glibc does not support static linking)

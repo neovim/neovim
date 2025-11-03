@@ -394,6 +394,10 @@ func Test_conceal_mouse_click()
   syn match Concealed "this" conceal
   hi link Concealed Search
 
+  " Nvim: need to redraw before processing every key, because mouse clicks set
+  " w_redr_type, which prevent using vcols[].
+  lua _G.NS = vim.on_key(function() vim.cmd.redraw() end)
+
   " Test with both 'nocursorline' and 'cursorline', as they use two different
   " code paths to set virtual columns for the cells to clear.
   for cul in [v:false, v:true]
@@ -549,6 +553,8 @@ func Test_conceal_mouse_click()
     endfor
     setlocal number& signcolumn&
   endfor
+
+  lua vim.on_key(nil, _G.NS); _G.NS = nil
 
   call CloseWindow()
   set mouse&

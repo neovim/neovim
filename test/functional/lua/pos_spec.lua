@@ -9,7 +9,6 @@ local insert = n.insert
 
 describe('vim.pos', function()
   before_each(clear)
-  after_each(clear)
 
   it('creates a position with or without optional fields', function()
     local pos = exec_lua(function()

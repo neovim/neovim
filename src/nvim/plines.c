@@ -456,8 +456,8 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
 
   // Check for inline virtual text after the end of the line.
   if (len == MAXCOL && csarg->virt_row >= 0 && *ci.ptr == NUL) {
-    (void)charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
-    vcol += csarg->cur_text_width_left + csarg->cur_text_width_right;
+    int head = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).head;
+    vcol += csarg->cur_text_width_left + csarg->cur_text_width_right + head;
     vcol_arg = vcol > MAXCOL ? MAXCOL : (int)vcol;
   }
 
@@ -930,8 +930,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, int max)
   return MIN(max, count);
 }
 
-/// Return number of window lines a physical line range will occupy.
-/// Only considers real and filler lines.
+/// Return total number of physical and filler lines in a physical line range.
+/// Doesn't treat a fold as a single line or consider a wrapped line multiple lines,
+/// unlike plines_m_win() or win_text_height().
 ///
 /// Mainly used for calculating scrolling offsets.
 int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
@@ -940,7 +941,7 @@ int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
 
   if (diffopt_filler()) {
     for (int lnum = first; lnum <= last; lnum++) {
-      // Note: this also considers folds.
+      // Note: this also considers folds (no filler lines inside folds).
       int n = diff_check_fill(wp, lnum);
       count += MAX(n, 0);
     }

@@ -96,7 +96,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
   stream->events = NULL;
 }
 
-void stream_may_close(Stream *stream, bool rstream)
+void stream_may_close(Stream *stream)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (stream->closed) {
@@ -104,10 +104,6 @@ void stream_may_close(Stream *stream, bool rstream)
   }
   DLOG("closing Stream: %p", (void *)stream);
   stream->closed = true;
-  // TODO(justinmk): stream->close_cb is never actually invoked. Either remove it, or see if it can
-  // be used somewhere...
-  stream->close_cb = NULL;
-  stream->close_cb_data = NULL;
 
 #ifdef MSWIN
   if (UV_TTY == uv_guess_handle(stream->fd)) {
@@ -117,11 +113,11 @@ void stream_may_close(Stream *stream, bool rstream)
 #endif
 
   if (!stream->pending_reqs) {
-    stream_close_handle(stream, rstream);
+    stream_close_handle(stream);
   }  // Else: rstream.c:read_event() or wstream.c:write_cb() will call stream_close_handle().
 }
 
-void stream_close_handle(Stream *stream, bool rstream)
+void stream_close_handle(Stream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_handle_t *handle = NULL;
@@ -139,22 +135,15 @@ void stream_close_handle(Stream *stream, bool rstream)
   assert(handle != NULL);
 
   if (!uv_is_closing(handle)) {
-    uv_close(handle, rstream ? rstream_close_cb : close_cb);
+    uv_close(handle, close_cb);
   }
-}
-
-static void rstream_close_cb(uv_handle_t *handle)
-{
-  RStream *stream = handle->data;
-  if (stream && stream->buffer) {
-    free_block(stream->buffer);
-  }
-  close_cb(handle);
 }
 
 static void close_cb(uv_handle_t *handle)
 {
   Stream *stream = handle->data;
+  // Need to check if handle->data is NULL here as this callback may be called between
+  // the handle's initialization and stream_init() (e.g. in socket_connect()).
   if (stream && stream->close_cb) {
     stream->close_cb(stream, stream->close_cb_data);
   }

@@ -873,7 +873,7 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
 
     Parameters: ~
       • {time}       (`integer`) Number of milliseconds to wait
-      • {callback}   (`fun(): boolean?`) Optional callback. Waits until
+      • {callback}   (`fun(): boolean, ...?`) Optional callback. Waits until
                      {callback} returns true
       • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
                      between polls
@@ -1710,7 +1710,7 @@ vim.is_callable({f})                                       *vim.is_callable()*
     Returns true if object `f` can be called as a function.
 
     Parameters: ~
-      • {f}  (`any`) Any object
+      • {f}  (`any?`) Any object
 
     Return: ~
         (`boolean`) `true` if `f` is callable, else `false`
@@ -1727,7 +1727,7 @@ vim.isarray({t})                                               *vim.isarray()*
     |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (`table?`)
+      • {t}  (`any?`)
 
     Return: ~
         (`boolean`) `true` if array-like table, else `false`.
@@ -2162,6 +2162,7 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
           -- ...
         end
 <
+
     2. `vim.validate(spec)` (deprecated) where `spec` is of type
        `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
        Validates a argument specification. Specs are evaluated in alphanumeric
@@ -2366,7 +2367,9 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 
     The filetype can be detected using one of three methods:
     1. Using an existing buffer
+
     2. Using only a file name
+
     3. Using only file contents
 
     Of these, option 1 provides the most accurate result as it uses both the
@@ -2411,6 +2414,11 @@ vim.filetype.match({args})                              *vim.filetype.match()*
         (`function?`) A function that modifies buffer state when called (for
         example, to set some filetype specific buffer variables). The function
         accepts a buffer number as its only argument.
+        (`boolean?`) Return true if a match was found by falling back to a
+        generic configuration file (i.e., ".conf"). If true, the filetype
+        should be set with `:setf FALLBACK conf`, which enables a later
+        |:setf| command to override the filetype. See `:help setf` for more
+        information.
 
 
 ==============================================================================
@@ -3356,12 +3364,10 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
 
     Parameters: ~
       • {str}   (`string`) Stringified JSON data.
-      • {opts}  (`table<string,any>?`) Options table with keys:
-                • luanil: (table) Table with keys:
-                  • object: (boolean) When true, converts `null` in JSON
-                    objects to Lua `nil` instead of |vim.NIL|.
-                  • array: (boolean) When true, converts `null` in JSON arrays
-                    to Lua `nil` instead of |vim.NIL|.
+      • {opts}  (`table?`) A table with the following fields:
+                • {luanil}? (`{ object?: boolean, array?: boolean }`, default:
+                  `nil`) Convert `null` in JSON objects and/or arrays to Lua
+                  `nil` instead of |vim.NIL|.
 
     Return: ~
         (`any`)
@@ -3369,14 +3375,14 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
 vim.json.encode({obj}, {opts})                             *vim.json.encode()*
     Encodes (or "packs") a Lua object to stringified JSON.
 
-    Example: use the `indent` flag to implement a basic 'formatexpr' for JSON,
-    so you can use |gq| with a motion to format JSON in a buffer. (The motion
-    must operate on a valid JSON object.) >lua
+    Example: Implement a basic 'formatexpr' for JSON, so |gq| with a motion
+    formats JSON in a buffer. (The motion must operate on a valid JSON
+    object.) >lua
         function _G.fmt_json()
           local indent = vim.bo.expandtab and (' '):rep(vim.o.shiftwidth) or '\t'
           local lines = vim.api.nvim_buf_get_lines(0, vim.v.lnum - 1, vim.v.lnum + vim.v.count - 1, true)
           local o = vim.json.decode(table.concat(lines, '\n'))
-          local stringified = vim.json.encode(o, { indent = indent })
+          local stringified = vim.json.encode(o, { indent = indent, sort_keys = true })
           lines = vim.split(stringified, '\n')
           vim.api.nvim_buf_set_lines(0, vim.v.lnum - 1, vim.v.count, true, lines)
         end
@@ -3385,14 +3391,14 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
 
     Parameters: ~
       • {obj}   (`any`)
-      • {opts}  (`table<string,any>?`) Options table with keys:
-                • escape_slash: (boolean) (default false) Escape slash
+      • {opts}  (`table?`) A table with the following fields:
+                • {escape_slash}? (`boolean`, default: `false`) Escape slash
                   characters "/" in string values.
-                • indent: (string) (default "") String used for indentation at
-                  each nesting level. If non-empty enables newlines and a
-                  space after colons.
-                • sort_keys: (boolean) (default false) Sort object keys in
-                  alphabetical order.
+                • {indent}? (`string`, default: `""`) If non-empty, the
+                  returned JSON is formatted with newlines and whitespace,
+                  where `indent` defines the whitespace at each nesting level.
+                • {sort_keys}? (`boolean`, default: `false`) Sort object keys
+                  in alphabetical order.
 
     Return: ~
         (`string`)
@@ -4509,11 +4515,12 @@ SystemObj:kill({signal})                                    *SystemObj:kill()*
 
     Example: >lua
         local obj = vim.system({'sleep', '10'})
-        obj:kill('TERM') -- sends SIGTERM to the process
+        obj:kill('sigterm') -- sends SIGTERM to the process
 <
 
     Parameters: ~
-      • {signal}  (`integer|string`) Signal to send to the process.
+      • {signal}  (`integer|string`) Signal to send to the process. See
+                  |luv-constants|.
 
 SystemObj:wait({timeout})                                   *SystemObj:wait()*
     Waits for the process to complete or until the specified timeout elapses.

@@ -19,7 +19,7 @@ if exists('s:did_load')
   set listchars=eol:$
   set maxsearchcount=99
   set mousemodel=extend
-  set nohidden nosmarttab noautoindent noautoread noruler noshowcmd
+  set nohidden nosmarttab noautoindent noautoread
   set nohlsearch noincsearch
   set nrformats=bin,octal,hex
   set sessionoptions+=options

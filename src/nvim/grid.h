@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"

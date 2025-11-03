@@ -25,6 +25,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -422,16 +423,16 @@ bool cmdline_pum_active(void)
 }
 
 /// Remove the cmdline completion popup menu (if present), free the list of items.
-void cmdline_pum_remove(void)
+void cmdline_pum_remove(bool defer_redraw)
 {
-  pum_undisplay(true);
+  pum_undisplay(!defer_redraw);
   XFREE_CLEAR(compl_match_array);
   compl_match_arraysize = 0;
 }
 
 void cmdline_pum_cleanup(CmdlineInfo *cclp)
 {
-  cmdline_pum_remove();
+  cmdline_pum_remove(false);
   wildmenu_cleanup(cclp);
 }
 
@@ -637,7 +638,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 
   int row = cmdline_row - 1;
   if (row >= 0) {
-    if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
+    if (wild_menu_showing == 0) {
       if (msg_scrolled > 0) {
         // Put the wildmenu just above the command line.  If there is
         // no room, scroll the screen one line up.
@@ -936,7 +937,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 
     // The entries from xp_files may be used in the PUM, remove it.
     if (compl_match_array != NULL) {
-      cmdline_pum_remove();
+      cmdline_pum_remove(false);
     }
   }
   xp->xp_selected = (options & WILD_NOSELECT) ? -1 : 0;
@@ -3796,13 +3797,10 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
     redrawcmd();
     save_p_ls = -1;
     wild_menu_showing = 0;
-    // don't redraw statusline if WM_LIST is showing
-  } else if (wild_menu_showing != WM_LIST) {
+  } else {
     win_redraw_last_status(topframe);
     wild_menu_showing = 0;  // must be before redraw_statuslines #8385
     redraw_statuslines();
-  } else {
-    wild_menu_showing = 0;
   }
   KeyTyped = skt;
   if (cclp->input_fn) {

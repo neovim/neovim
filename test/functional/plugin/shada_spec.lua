@@ -47,7 +47,7 @@ local wshada_tmp, _, fname_tmp = get_shada_rw('Xtest-functional-plugin-shada.sha
 
 describe('autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
-  before_each(function()
+  setup(function()
     reset()
     nvim_command([[
     function ModifyVal(val)
@@ -3190,9 +3190,9 @@ describe('syntax/shada.vim', function()
       return { { 'ShaDaEntryHeader', 'ShaDaEntryTimestamp' }, s }
     end
     local synepoch = {
-      year = htsnum(os.date('%Y', 0)),
-      month = htsnum(os.date('%m', 0)),
-      day = htsnum(os.date('%d', 0)),
+      year = htsnum(os.date('!%Y', 0)),
+      month = htsnum(os.date('!%m', 0)),
+      day = htsnum(os.date('!%d', 0)),
       hour = htsnum(os.date('!%H', 0)),
       minute = htsnum(os.date('!%M', 0)),
       second = htsnum(os.date('!%S', 0)),

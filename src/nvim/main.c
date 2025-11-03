@@ -43,6 +43,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/proc.h"
@@ -92,6 +93,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/shada.h"
@@ -463,6 +465,8 @@ int main(int argc, char **argv)
     // disable syntax highlighting with `:syntax off` if they wish.
     syn_maybe_enable();
   }
+
+  set_vim_var_nr(VV_VIM_DID_INIT, 1);
 
   // Read all the plugin files.
   load_plugins();
@@ -2141,7 +2145,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
       // Do nothing.
     } else {
       if (do_source(parmp->use_vimrc, false, DOSO_NONE, NULL) != OK) {
-        semsg(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
+        semsg(_(e_cannot_read_from_str_2), parmp->use_vimrc);
       }
     }
   } else if (!silent_mode) {

@@ -21,7 +21,7 @@
 #include "nvim/diff.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/fold.h"
 #include "nvim/fold_defs.h"
 #include "nvim/globals.h"
@@ -152,6 +152,21 @@ void drawline_free_all_mem(void)
   xfree(extra_buf);
 }
 #endif
+
+/// Get the 'listchars' "extends" characters to use for "wp", or NUL if it
+/// shouldn't be used.
+static schar_T get_lcs_ext(win_T *wp)
+{
+  if (wp->w_p_wrap) {
+    // Line never continues beyond the right of the screen with 'wrap'.
+    return NUL;
+  }
+  if (wp->w_p_wrap_flags & kOptFlagInsecure) {
+    // If 'nowrap' was set from a modeline, forcibly use '>'.
+    return schar_from_ascii('>');
+  }
+  return wp->w_p_list ? wp->w_p_lcs_chars.ext : NUL;
+}
 
 /// Advance wlv->color_cols if not NULL
 static void advance_color_col(winlinevars_T *wlv, int vcol)
@@ -502,6 +517,8 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
       symbol = wp->w_p_fcs_chars.foldopen;
     } else if (first_level == 1) {
       symbol = wp->w_p_fcs_chars.foldsep;
+    } else if (wp->w_p_fcs_chars.foldinner != NUL) {
+      symbol = wp->w_p_fcs_chars.foldinner;
     } else if (first_level + i <= 9) {
       symbol = schar_from_ascii('0' + first_level + i);
     } else {
@@ -1477,10 +1494,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     csarg.max_head_vcol = start_vcol;
     int vcol = wlv.vcol;
     StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
-    while (vcol < start_vcol && *ci.ptr != NUL) {
+    while (vcol < start_vcol) {
       cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg);
       vcol += cs.width;
       prev_ptr = ci.ptr;
+      if (*prev_ptr == NUL) {
+        break;
+      }
       ci = utfc_next(ci);
       if (wp->w_p_list) {
         in_multispace = *prev_ptr == ' ' && (*ci.ptr == ' '
@@ -2247,8 +2267,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             if (spell_hlf != HLF_COUNT
                 && (State & MODE_INSERT)
                 && wp->w_cursor.lnum == lnum
-                && wp->w_cursor.col >=
-                (colnr_T)(prev_ptr - line)
+                && wp->w_cursor.col >= (colnr_T)(prev_ptr - line)
                 && wp->w_cursor.col < (colnr_T)word_end) {
               spell_hlf = HLF_COUNT;
               spell_redraw_lnum = lnum;
@@ -2862,12 +2881,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       break;
     }
 
-    // Show "extends" character from 'listchars' if beyond the line end and
-    // 'list' is set.
-    // Don't show this with 'wrap' as the line can't be scrolled horizontally.
-    if (wp->w_p_lcs_chars.ext != NUL
-        && wp->w_p_list
-        && !wp->w_p_wrap
+    // Show "extends" character from 'listchars' if beyond the line end.
+    const schar_T lcs_ext = get_lcs_ext(wp);
+    if (lcs_ext != NUL
         && wlv.filler_todo <= 0
         && wlv.col == view_width - 1
         && !has_foldtext) {
@@ -2879,7 +2895,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           || (lcs_eol > 0 && lcs_eol_todo)
           || (wlv.n_extra > 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))
           || (may_have_inline_virt && has_more_inline_virt(&wlv, ptr - line))) {
-        mb_schar = wp->w_p_lcs_chars.ext;
+        mb_schar = lcs_ext;
         wlv.char_attr = win_hl_attr(wp, HLF_AT);
         mb_c = schar_get_first_codepoint(mb_schar);
       }

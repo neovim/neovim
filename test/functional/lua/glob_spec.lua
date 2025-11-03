@@ -1,16 +1,10 @@
 local t = require('test.testutil')
-local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 
 describe('glob', function()
-  before_each(n.clear)
-  after_each(n.clear)
-
   local match = function(pattern, str)
-    return n.exec_lua(function()
-      return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
-    end)
+    return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
   end
 
   describe('glob matching', function()

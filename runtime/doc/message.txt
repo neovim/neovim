@@ -118,7 +118,7 @@ path leading to the file.
   Cannot switch buffer. 'winfixbuf' is enabled
 
 If a window has 'winfixbuf' enabled, you cannot change that window's current
-buffer. You need to set 'nowinfixbuf' before continuing. You may use [!] to
+buffer.  You need to set 'nowinfixbuf' before continuing.  You may use [!] to
 force the window to switch buffers, if your command supports it.
 
 							*E72*  >
@@ -610,6 +610,22 @@ Set the 'autoread' option if you want to do this automatically.
 This message is not given when 'buftype' is not empty.
 Also see the |FileChangedShell| autocommand.
 
+You will be given a dialog with the following options:
+
+"OK":		Dismiss the warning and continue editing.  No changes are
+		loaded, the buffer remains as it is.
+
+"Load File":	Reload the file from disk, replacing the current buffer
+		contents.  Any changes you made in Vim that haven't been saved
+		will be lost.
+
+"Load File and Options":
+		Reload the file from disk and, in addition, apply relevant
+		file settings, such as indentation, syntax highlighting, text
+		width, and other filetype-specific options.  This ensures the
+		buffer matches the file's intended configuration according to
+		your current settings and autocommands.
+
 There is one situation where you get this message even though there is nothing
 wrong: If you save a file in Windows on the day the daylight saving time
 starts.  It can be fixed in one of these ways:
@@ -810,26 +826,27 @@ This message is given when the screen is filled with messages.  It is only
 given when the 'more' option is on.  It is highlighted with the |hl-MoreMsg|
 group.
 
-Type					effect ~
-     <CR> or <NL> or j or <Down>	one more line
-     d					down a page (half a screen)
-     <Space> or f or <PageDown>		down a screen
-     G					down all the way, until the hit-enter
-					prompt
+Type						effect ~
+     <CR> or <NL> or j or <Down>		one more line
+     d						down a page (half a screen)
+     <Space> or f or <PageDown> or CTRL-F	down a screen
+     G						down all the way, until the
+						hit-enter prompt
 
-     <BS> or k or <Up>			one line back
-     u					up a page (half a screen)
-     b or <PageUp>			back a screen
-     g					back to the start
+     <BS> or k or <Up>				one line back
+     u						up a page (half a screen)
+     b or <PageUp> or CTRL-B			back a screen
+     g						back to the start
 
-     q, <Esc> or CTRL-C			stop the listing
-     :					stop the listing and enter a
-					     command-line
-    <C-Y>				yank (copy) a modeless selection to
-					the clipboard ("* and "+ registers)
-    {menu-entry}			what the menu is defined to in
-					Cmdline-mode.
-    <LeftMouse>				next page*
+     q, <Esc> or CTRL-C				stop the listing
+     :						stop the listing and enter a
+						command-line
+    <C-Y>					yank (copy) a modeless
+						selection to the clipboard
+						("* and "+ registers)
+    {menu-entry}				what the menu is defined to
+						in Cmdline-mode.
+    <LeftMouse>					next page*
 
 Any other key causes the meaning of the keys to be displayed.
 

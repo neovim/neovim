@@ -15,9 +15,6 @@
 
 #include "eval/executor.c.generated.h"
 
-char *e_list_index_out_of_range_nr
-  = N_("E684: List index out of range: %" PRId64);
-
 /// Handle "blob1 += blob2".
 /// Returns OK or FAIL.
 static int tv_op_blob(typval_T *tv1, const typval_T *tv2, const char *op)

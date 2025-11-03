@@ -30,7 +30,7 @@ Follow these steps to get LSP features:
 
 2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
-     vim.lsp.config['luals'] = {
+     vim.lsp.config['lua_ls'] = {
        -- Command and arguments to start the server.
        cmd = { 'lua-language-server' },
        -- Filetypes to automatically attach to.
@@ -52,7 +52,7 @@ Follow these steps to get LSP features:
 
 3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
-     vim.lsp.enable('luals')
+     vim.lsp.enable('lua_ls')
 <
 4. Open a code file matching one of the `filetypes` specified in the config.
    Note: Depending on the LSP server, you may need to ensure your project has
@@ -74,12 +74,12 @@ the options are empty or were set by the builtin runtime (ftplugin) files. The
 options are not restored when the LSP client is stopped or detached.
 
 GLOBAL DEFAULTS
-                                *grr* *gra* *grn* *gri* *grt* *i_CTRL-S* *an* *in*
+                                *gra* *gri* *grn* *grr* *grt* *i_CTRL-S* *v_an* *v_in*
 These GLOBAL keymaps are created unconditionally when Nvim starts:
-- "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
 - "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
-- "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
 - "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
+- "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
+- "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
 - "grt" is mapped in Normal mode to |vim.lsp.buf.type_definition()|
 - "gO" is mapped in Normal mode to |vim.lsp.buf.document_symbol()|
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
@@ -115,7 +115,7 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
         -- Unmap K
         vim.keymap.del('n', 'K', { buffer = args.buf })
         -- Disable document colors
-        vim.lsp.buf.document_color.enable(false, args.buf)
+        vim.lsp.document_color.enable(false, args.buf)
       end,
     })
 <
@@ -157,8 +157,8 @@ EXAMPLE: DEFINE A CONFIG AS A FILE ~
 
                                                         *lsp-config-merge*
 When an LSP client starts, it resolves its configuration by merging the
-following sources (merge semantics defined by |vim.tbl_deep_extend()|), in
-order of increasing priority:
+following sources (merge semantics defined by |vim.tbl_deep_extend()| with
+"force" behavior), in order of increasing priority:
 
 1. Configuration defined for the `'*'` name.
 2. Configuration from the result of merging all tables returned by
@@ -769,9 +769,22 @@ Lua module: vim.lsp                                                 *lsp-core*
                          See `cmd` in |vim.lsp.ClientConfig|. See also
                          `reuse_client` to dynamically decide (per-buffer)
                          when `cmd` should be re-invoked.
-      • {filetypes}?     (`string[]`) Filetypes the client will attach to, if
-                         activated by `vim.lsp.enable()`. If not provided, the
-                         client will attach to all filetypes.
+      • {filetypes}?     (`string[]`) Filetypes the client will attach to, or
+                         `nil` for ALL filetypes. To match files by name,
+                         pattern, or contents, you can define a custom
+                         filetype using |vim.filetype.add()|: >lua
+                             vim.filetype.add({
+                               filename = {
+                                 ['my_filename'] = 'my_filetype1',
+                               },
+                               pattern = {
+                                 ['.*/etc/my_file_pattern/.*'] = 'my_filetype2',
+                               },
+                             })
+                             vim.lsp.config('…', {
+                               filetypes = { 'my_filetype1', 'my_filetype2' },
+                             }
+<
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                          Predicate which decides if a client should be
                          re-used. Used on all running clients. The default
@@ -793,23 +806,21 @@ Lua module: vim.lsp                                                 *lsp-core*
                          defined. The list order decides priority. To indicate
                          "equal priority", specify names in a nested list
                          `{ { 'a.txt', 'b.lua' }, ... }`.
-
-                         For each item, Nvim will search upwards (from the
-                         buffer file) for that marker, or list of markers;
-                         search stops at the first directory containing that
-                         marker, and the directory is used as the root dir
-                         (workspace folder).
-
-                         Example: Find the first ancestor directory containing
-                         file or directory "stylua.toml"; if not found, find
-                         the first ancestor containing ".git": >lua
-                               root_markers = { 'stylua.toml', '.git' }
+                         • For each item, Nvim will search upwards (from the
+                           buffer file) for that marker, or list of markers;
+                           search stops at the first directory containing that
+                           marker, and the directory is used as the root dir
+                           (workspace folder).
+                         • Example: Find the first ancestor directory
+                           containing file or directory "stylua.toml"; if not
+                           found, find the first ancestor containing ".git": >
+                           root_markers = { 'stylua.toml', '.git' }
 <
-
-                         Example: Find the first ancestor directory containing
-                         EITHER "stylua.toml" or ".luarc.json"; if not found,
-                         find the first ancestor containing ".git": >lua
-                               root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
+                         • Example: Find the first ancestor directory
+                           containing EITHER "stylua.toml" or ".luarc.json";
+                           if not found, find the first ancestor containing
+                           ".git": >
+                           root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 <
 
 
@@ -986,8 +997,8 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       filetypes = { 'c', 'cpp' },
     }
 <
-    • Get the resolved configuration for "luals": >lua
-      local cfg = vim.lsp.config.luals
+    • Get the resolved configuration for "lua_ls": >lua
+      local cfg = vim.lsp.config.lua_ls
 <
 
     Attributes: ~
@@ -1003,7 +1014,7 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
     Examples: >lua
         vim.lsp.enable('clangd')
-        vim.lsp.enable({'luals', 'pyright'})
+        vim.lsp.enable({'lua_ls', 'pyright'})
 <
 
     Example: *lsp-restart* Passing `false` stops and detaches the client(s).
@@ -1354,8 +1365,10 @@ code_action({opts})                                *vim.lsp.buf.code_action()*
                     values like `refactor` or `quickfix`.
                   • {triggerKind}? (`integer`) The reason why code actions
                     were requested.
-                • {filter}? (`fun(x: lsp.CodeAction|lsp.Command):boolean`)
-                  Predicate taking an `CodeAction` and returning a boolean.
+                • {filter}?
+                  (`fun(x: lsp.CodeAction|lsp.Command, client_id: integer):boolean`)
+                  Predicate taking a code action or command and the provider's
+                  ID. If it returns false, the action is filtered out.
                 • {apply}? (`boolean`) When set to `true`, and there is just
                   one remaining action (after filtering), the action is
                   applied without user query.
@@ -1654,7 +1667,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:notify()|.
       • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
                                 See |Client:cancel_request()|.
-      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean?)`)
+      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean|integer?)`)
                                 See |Client:stop()|.
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
@@ -1676,12 +1689,12 @@ Lua module: vim.lsp.client                                        *lsp-client*
 
     Fields: ~
       • {before_init}?         (`fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)`)
-                               Callback invoked before the LSP "initialize"
-                               phase, where `params` contains the parameters
-                               being sent to the server and `config` is the
-                               config that was passed to |vim.lsp.start()|.
-                               You can use this to modify parameters before
-                               they are sent.
+                               Callback which can modify parameters before
+                               they are sent to the server. Invoked before LSP
+                               "initialize" phase (after `cmd` is invoked),
+                               where `params` is the parameters being sent to
+                               the server and `config` is the config passed to
+                               |vim.lsp.start()|.
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
                                |vim.lsp.protocol.make_client_capabilities()|,
@@ -1902,8 +1915,14 @@ Client:stop({force})                                           *Client:stop()*
     you request to stop a client which has previously been requested to
     shutdown, it will automatically escalate and force shutdown.
 
+    If `force` is a number, it will be treated as the time in milliseconds to
+    wait before forcing the shutdown.
+
+    Note: Forcing shutdown while a server is busy writing out project or index
+    files can lead to file corruption.
+
     Parameters: ~
-      • {force}  (`boolean?`)
+      • {force}  (`boolean|integer?`)
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Checks if a client supports a given method. Always returns true for
@@ -2242,6 +2261,7 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
 1. Install Copilot: >sh
     npm install --global @github/copilot-language-server
 <
+
 2. Define a config, (or copy `lsp/copilot.lua` from
    https://github.com/neovim/nvim-lspconfig): >lua
     vim.lsp.config('copilot', {
@@ -2249,14 +2269,18 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
      root_markers = { '.git' },
    })
 <
+
 3. Activate the config: >lua
     vim.lsp.enable('copilot')
 <
+
 4. Sign in to Copilot, or use the `:LspCopilotSignIn` command from
    https://github.com/neovim/nvim-lspconfig
+
 5. Enable inline completion: >lua
     vim.lsp.inline_completion.enable()
 <
+
 6. Set a keymap for `vim.lsp.inline_completion.get()` and invoke the keymap.
 
 
@@ -3028,12 +3052,6 @@ make_client_capabilities()
 
     Return: ~
         (`lsp.ClientCapabilities`)
-
-Methods                                             *vim.lsp.protocol.Methods*
-    LSP method names.
-
-    See also: ~
-      • https://microsoft.github.io/language-server-protocol/specification/#metaModel
 
                                      *vim.lsp.protocol.resolve_capabilities()*
 resolve_capabilities({server_capabilities})

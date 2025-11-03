@@ -43,7 +43,7 @@ Dictionary	An associative, unordered array: Each entry has a key and a
 			{"blue": "#0000ff", "red": "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
 
-Blob		Binary Large Object. Stores any sequence of bytes.  See |Blob|
+Blob		Binary Large Object.  Stores any sequence of bytes.  See |Blob|
 		for details.
 		Example: 0zFF00ED015DAF
 		0z is an empty Blob.
@@ -738,7 +738,7 @@ Blob modification ~
 To change a specific byte of a blob use |:let| this way: >
 	:let blob[4] = 0x44
 
-When the index is just one beyond the end of the Blob, it is appended. Any
+When the index is just one beyond the end of the Blob, it is appended.  Any
 higher index is an error.
 
 To change a sequence of bytes the [:] notation can be used: >
@@ -1238,7 +1238,7 @@ Examples: >
 							*slice*
 If expr8 is a |List| this results in a new |List| with the items indicated by
 the indexes expr1a and expr1b.  This works like with a String, as explained
-just above. Also see |sublist| below.  Examples: >
+just above.  Also see |sublist| below.  Examples: >
 	:let l = mylist[:3]		" first four items
 	:let l = mylist[4:4]		" List with one item
 	:let l = mylist[:]		" shallow copy of a List
@@ -1416,8 +1416,8 @@ A string constant accepts these special characters:
 	Don't use <Char-xxxx> to get a UTF-8 character, use \uxxxx as
 	mentioned above.
 \<*xxx>	Like \<xxx> but prepends a modifier instead of including it in the
-	character.  E.g. "\<C-w>" is one character 0x17 while "\<*C-w>" is four
-	bytes: 3 for the CTRL modifier and then character "W".
+	character.  E.g. "\<C-w>" is one character 0x17 while "\<*C-w>" is
+	four bytes: 3 for the CTRL modifier and then character "W".
 
 Note that "\xff" is stored as the byte 255, which may be invalid in some
 encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
@@ -1921,6 +1921,7 @@ This does NOT work: >
 			Set environment variable {env-name} to the result of
 			the expression {expr1}.  The type is always String.
 :let ${env-name} .= {expr1}
+:let ${env-name} ..= {expr1}
 			Append {expr1} to the environment variable {env-name}.
 			If the environment variable didn't exist yet this
 			works like "=".
@@ -1940,6 +1941,7 @@ This does NOT work: >
 			that would match everywhere.
 
 :let @{reg-name} .= {expr1}
+:let @{reg-name} ..= {expr1}
 			Append {expr1} to register {reg-name}.  If the
 			register was empty it's like setting it to {expr1}.
 
@@ -1954,6 +1956,7 @@ This does NOT work: >
 				:let &path = &path .. ',/usr/local/include'
 
 :let &{option-name} .= {expr1}
+:let &{option-name} ..= {expr1}
 			For a string option: Append {expr1} to the value.
 			Does not insert a comma like |:set+=|.
 
@@ -1963,16 +1966,18 @@ This does NOT work: >
 			{expr1}.
 
 :let &l:{option-name} = {expr1}
-:let &l:{option-name} .= {expr1}
 :let &l:{option-name} += {expr1}
 :let &l:{option-name} -= {expr1}
+:let &l:{option-name} .= {expr1}
+:let &l:{option-name} ..= {expr1}
 			Like above, but only set the local value of an option
 			(if there is one).  Works like |:setlocal|.
 
 :let &g:{option-name} = {expr1}
-:let &g:{option-name} .= {expr1}
 :let &g:{option-name} += {expr1}
 :let &g:{option-name} -= {expr1}
+:let &g:{option-name} .= {expr1}
+:let &g:{option-name} ..= {expr1}
 			Like above, but only set the global value of an option
 			(if there is one).  Works like |:setglobal|.
 
@@ -1995,11 +2000,15 @@ This does NOT work: >
 				:echo x
 <			The result is [0, 2].
 
-:let [{name1}, {name2}, ...] .= {expr1}
 :let [{name1}, {name2}, ...] += {expr1}
 :let [{name1}, {name2}, ...] -= {expr1}
-			Like above, but append/add/subtract the value for each
-			|List| item.
+`:let [{name1}, {name2}, ...] *= {expr1}`
+:let [{name1}, {name2}, ...] /= {expr1}
+:let [{name1}, {name2}, ...] %= {expr1}
+:let [{name1}, {name2}, ...] .= {expr1}
+:let [{name1}, {name2}, ...] ..= {expr1}
+			Like above, but add, subtract, multiply, divide,
+			modulo, or append the value for each |List| item.
 
 :let [{name}, ..., ; {lastname}] = {expr1}				*E452*
 			Like |:let-unpack| above, but the |List| may have more
@@ -2009,10 +2018,11 @@ This does NOT work: >
 			Example: >
 				:let [a, b; rest] = ["aval", "bval", 3, 4]
 <
-:let [{name}, ..., ; {lastname}] .= {expr1}
 :let [{name}, ..., ; {lastname}] += {expr1}
 :let [{name}, ..., ; {lastname}] -= {expr1}
-			Like above, but append/add/subtract the value for each
+:let [{name}, ..., ; {lastname}] .= {expr1}
+:let [{name}, ..., ; {lastname}] ..= {expr1}
+			Like above, but add/subtract/append the value for each
 			|List| item.
 
 						*:let=<<* *:let-heredoc*
@@ -2039,7 +2049,8 @@ text...
 				END
 <			There can be multiple Vim expressions in a single line
 			but an expression cannot span multiple lines.  If any
-			expression evaluation fails, then the assignment fails.
+			expression evaluation fails, then the assignment
+			fails.
 
 			{endmarker} must not contain white space.
 			{endmarker} cannot start with a lower case character.
@@ -2057,8 +2068,9 @@ text...
 				   endif
 				END
 <			Results in: `["if ok", "  echo 'done'", "endif"]`
-			The marker must line up with "let" and the indentation
-			of the first line is removed from all the text lines.
+			The end marker must line up with "let" and the
+			indentation of the first line is removed from all the
+			text lines.
 			Specifically: all the leading indentation exactly
 			matching the leading indentation of the first
 			non-empty text line is stripped from the input lines.
@@ -2146,10 +2158,10 @@ text...
 :cons[t] {var-name} = {expr1}
 :cons[t] [{name1}, {name2}, ...] = {expr1}
 :cons[t] [{name}, ..., ; {lastname}] = {expr1}
-:cons[t] {var-name} =<< [trim] [eval] {marker}
+:cons[t] {var-name} =<< [trim] [eval] {endmarker}
 text...
 text...
-{marker}
+{endmarker}
 			Similar to |:let|, but additionally lock the variable
 			after setting the value.  This is the same as locking
 			the variable with |:lockvar| just after |:let|, thus: >

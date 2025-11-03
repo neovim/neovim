@@ -22,9 +22,7 @@ endfunc
 " 2. packages
 " 3. plugins in after directories
 func Test_after_comes_later()
-  if !has('packages')
-    return
-  endif
+  CheckFeature packages
   let before =<< trim [CODE]
     set nocp viminfo+=nviminfo
     set guioptions+=M
@@ -46,14 +44,14 @@ func Test_after_comes_later()
     quit
   [CODE]
 
-  call mkdir('Xhere/plugin', 'p')
+  call mkdir('Xhere/plugin', 'pR')
   call writefile(['let g:sequence .= "here "'], 'Xhere/plugin/here.vim')
-  call mkdir('Xanother/plugin', 'p')
+  call mkdir('Xanother/plugin', 'pR')
   call writefile(['let g:sequence .= "another "'], 'Xanother/plugin/another.vim')
   call mkdir('Xhere/pack/foo/start/foobar/plugin', 'p')
   call writefile(['let g:sequence .= "pack "'], 'Xhere/pack/foo/start/foobar/plugin/foo.vim')
 
-  call mkdir('Xdir/after/plugin', 'p')
+  call mkdir('Xdir/after/plugin', 'pR')
   call writefile(['let g:sequence .= "after "'], 'Xdir/after/plugin/later.vim')
 
   if RunVim(before, after, '')
@@ -75,15 +73,40 @@ func Test_after_comes_later()
 
   call delete('Xtestout')
   call delete('Xsequence')
-  call delete('Xhere', 'rf')
-  call delete('Xanother', 'rf')
-  call delete('Xdir', 'rf')
+endfunc
+
+func Test_vim_did_init()
+  let before =<< trim [CODE]
+    set nocp viminfo+=nviminfo
+    set guioptions+=M
+    set loadplugins
+    set rtp=Xhere
+    set nomore
+  [CODE]
+
+  let after =<< trim [CODE]
+    redir! > Xtestout
+    echo g:var_vimrc
+    echo g:var_plugin
+    redir END
+    quit
+  [CODE]
+
+  call writefile(['let g:var_vimrc=v:vim_did_init'], 'Xvimrc', 'D')
+  call mkdir('Xhere/plugin', 'pR')
+  call writefile(['let g:var_plugin=v:vim_did_init'], 'Xhere/plugin/here.vim')
+
+  if RunVim(before, after, '-u Xvimrc')
+    let lines = readfile('Xtestout')
+    call assert_equal('0', lines[1])
+    call assert_equal('1', lines[2])
+  endif
+
+  call delete('Xtestout')
 endfunc
 
 func Test_pack_in_rtp_when_plugins_run()
-  if !has('packages')
-    return
-  endif
+  CheckFeature packages
   let before =<< trim [CODE]
     set nocp viminfo+=nviminfo
     set guioptions+=M

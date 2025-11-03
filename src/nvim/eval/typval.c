@@ -2427,7 +2427,7 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
 /// If the name is wrong give an error message and return true.
 int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
 {
-  return (d == &globvardict || &d->dv_hashtab == get_funccal_local_ht())
+  return (d == get_globvar_dict() || &d->dv_hashtab == get_funccal_local_ht())
          && tv_is_func(*tv)
          && var_wrong_func_name(name, true);
 }
@@ -3341,7 +3341,7 @@ void tv_dict_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 ///
 /// @param[out]  ret_tv  Structure where blob is saved.
 blob_T *tv_blob_alloc_ret(typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   blob_T *const b = tv_blob_alloc();
   tv_blob_set_ret(ret_tv, b);

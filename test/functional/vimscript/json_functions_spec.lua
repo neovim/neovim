@@ -13,8 +13,8 @@ local NIL = vim.NIL
 local source = n.source
 
 describe('json_decode() function', function()
-  local restart = function(...)
-    clear(...)
+  setup(function()
+    clear()
     source([[
       language C
       function Eq(exp, act)
@@ -57,8 +57,7 @@ describe('json_decode() function', function()
         endif
       endfunction
     ]])
-  end
-  before_each(restart)
+  end)
 
   local speq = function(expected, actual_expr)
     eq(1, fn.EvalEq(expected, actual_expr))
@@ -627,7 +626,7 @@ describe('json_decode() function', function()
 end)
 
 describe('json_encode() function', function()
-  before_each(function()
+  setup(function()
     clear()
     command('language C')
   end)

@@ -597,7 +597,7 @@ EXECUTING AUTOCOMMANDS
 It is possible to trigger an autocommand by pretending an event has occurred.
 This is useful to have one autocommand trigger another one.  Example: >
 
-	:autocmd BufReadPost *.new  execute "doautocmd BufReadPost " . expand("<afile>:r")
+	:autocmd BufReadPost *.new  execute "doautocmd BufReadPost " .. expand("<afile>:r")
 
 This defines an autocommand that is triggered when a new file has been edited.
 The file name must end in ".new".  The ":execute" command uses expression

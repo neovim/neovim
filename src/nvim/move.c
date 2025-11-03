@@ -59,7 +59,7 @@ typedef struct {
 #include "move.c.generated.h"
 
 /// Get the number of screen lines skipped with "wp->w_skipcol".
-int adjust_plines_for_skipcol(win_T *wp)
+static int adjust_plines_for_skipcol(win_T *wp)
 {
   if (wp->w_skipcol == 0) {
     return 0;
@@ -77,8 +77,8 @@ int adjust_plines_for_skipcol(win_T *wp)
 /// Return how many lines "lnum" will take on the screen, taking into account
 /// whether it is the first line, whether w_skipcol is non-zero and limiting to
 /// the window height.
-static int plines_correct_topline(win_T *wp, linenr_T lnum, linenr_T *nextp, bool limit_winheight,
-                                  bool *foldedp)
+int plines_correct_topline(win_T *wp, linenr_T lnum, linenr_T *nextp, bool limit_winheight,
+                           bool *foldedp)
 {
   int n = plines_win_full(wp, lnum, nextp, foldedp, true, false);
   if (lnum == wp->w_topline) {
@@ -177,6 +177,15 @@ static void redraw_for_cursorcolumn(win_T *wp)
   if (VIsual_active && wp->w_buffer == curbuf) {
     redraw_buf_later(curbuf, UPD_INVERTED);
   }
+}
+
+/// Set wp->w_virtcol to a value ("vcol") that is already valid.
+/// Handles redrawing if wp->w_virtcol was previously invalid.
+void set_valid_virtcol(win_T *wp, colnr_T vcol)
+{
+  wp->w_virtcol = vcol;
+  redraw_for_cursorcolumn(wp);
+  wp->w_valid |= VALID_VIRTCOL;
 }
 
 /// Calculates how much the 'listchars' "precedes" or 'smoothscroll' "<<<"
@@ -322,10 +331,10 @@ void update_topline(win_T *wp)
         // scrolled).
         n = 0;
         for (linenr_T lnum = wp->w_cursor.lnum; lnum < wp->w_topline + *so_ptr; lnum++) {
-          n += !decor_conceal_line(wp, lnum, false);
           // stop at end of file or when we know we are far off
           assert(wp->w_buffer != 0);
-          if (lnum >= wp->w_buffer->b_ml.ml_line_count || n >= halfheight) {
+          if (lnum >= wp->w_buffer->b_ml.ml_line_count
+              || (n += !decor_conceal_line(wp, lnum, false)) >= halfheight) {
             break;
           }
           hasFolding(wp, lnum, NULL, &lnum);
@@ -395,23 +404,23 @@ void update_topline(win_T *wp)
         }
       }
       if (check_botline) {
-        int line_count = 0;
+        int n = 0;
         if (win_lines_concealed(wp)) {
           // Count the number of logical lines between the cursor and
           // botline - p_so (approximation of how much will be
           // scrolled).
           for (linenr_T lnum = wp->w_cursor.lnum; lnum >= wp->w_botline - *so_ptr; lnum--) {
-            line_count += !decor_conceal_line(wp, lnum - 1, false);
             // stop at end of file or when we know we are far off
-            if (lnum <= 0 || line_count > wp->w_view_height + 1) {
+            if (lnum <= 0
+                || (n += !decor_conceal_line(wp, lnum - 1, false)) > wp->w_view_height + 1) {
               break;
             }
             hasFolding(wp, lnum, &lnum, NULL);
           }
         } else {
-          line_count = wp->w_cursor.lnum - wp->w_botline + 1 + (int)(*so_ptr);
+          n = wp->w_cursor.lnum - wp->w_botline + 1 + (int)(*so_ptr);
         }
-        if (line_count <= wp->w_view_height + 1) {
+        if (n <= wp->w_view_height + 1) {
           scroll_cursor_bot(wp, scrolljump_value(wp), false);
         } else {
           scroll_cursor_halfway(wp, false, false);
@@ -504,7 +513,7 @@ void check_cursor_moved(win_T *wp)
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
 
     // Concealed line visibility toggled.
-    if (wp->w_p_cole >= 2 && !conceal_cursor_line(wp)
+    if (wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 2 && !conceal_cursor_line(wp)
         && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
             || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true))) {
       changed_window_setting(wp);

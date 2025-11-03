@@ -112,7 +112,7 @@ jobs:
             { runner: ubuntu-24.04, os: ubuntu, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: release, cc: gcc, flags: -D CMAKE_BUILD_TYPE=Release -D ENABLE_TRANSLATIONS=ON },
             { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: clang, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
-            { runner: macos-13, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: macos-15-intel, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: macos-15, os: macos, flavor: arm, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: ubuntu-24.04, os: ubuntu, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
           ]
@@ -213,7 +213,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
-          version: 0.15.1
+          version: 0.15.2
       - run: sudo apt-get install -y inotify-tools
 
       # This is a workaround for "zig fetch" being unable to decompress lua-dev-deps.tar.gz
@@ -239,7 +239,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
-          version: 0.15.1
+          version: 0.15.2
 
       - run: curl -L https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz | zcat > lua-dev-deps.tar
       - run: zig fetch lua-dev-deps.tar
@@ -256,7 +256,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
-          version: 0.15.1
+          version: 0.15.2
 
       - run: curl -L https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz -O
       - run: 7z x lua-dev-deps.tar.gz

@@ -97,5 +97,5 @@ echo "
 Next steps:
     - Run tests/CI (version_spec.lua)!
     - Push the tag:
-        git push v${__VERSION}
+        git push origin tag v${__VERSION}
     - Update website: index.html"

@@ -274,7 +274,7 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
   local uri = vim.uri_from_bufnr(bufnr)
   for _, client in pairs(state.clients) do
     if not client:is_stopped() and vim.lsp.buf_is_attached(bufnr, client.id) then
-      client:notify(protocol.Methods.textDocument_didChange, {
+      client:notify('textDocument/didChange', {
         textDocument = {
           uri = uri,
           version = util.buf_versions[bufnr],

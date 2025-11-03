@@ -6,17 +6,29 @@
 
 			*uganda* *Uganda* *copying* *copyright* *license*
 SUMMARY
-								*iccf* *ICCF*
+							*Kuwasha*
 Vim is Charityware.  You can use and copy it as much as you like, but you are
 encouraged to make a donation for needy children in Uganda.  Please see |kcc|
-below or visit the ICCF web site, available at these URLs:
+below or visit the Kuwasha web site, available at the following URL:
 
-	https://iccf-holland.org/
-	https://www.vim.org/iccf/
-	https://www.iccf.nl/
+	https://www.kuwasha.net
 
 You can also sponsor the development of Vim.  Vim sponsors can vote for
 features.  See |sponsor|.  The money goes to Uganda anyway.
+
+							*iccf* *ICCF*
+ICCF Holland and Kuwasha ~
+
+|Bram| Moolenaar's charity, ICCF Holland, has long supported the education of
+children in Uganda through the Kibaale Children's Centre.  Following Bram's
+passing in 2023, ICCF Holland transfered all activities to its sister charity
+Kuwasha in Canada and dissolved at the end of 2025.
+
+Donations from Vim users are still welcome and will continue to go directly to
+Uganda.  To continue supporting this cause, please send contributions to
+Kuwasha.
+
+License ~
 
 The Open Publication License applies to the Vim documentation, see
 |manual-copyright|.
@@ -171,84 +183,43 @@ medical help.  Since 2020 a maternity ward was added and 24/7 service is
 available.  When needed, transport to a hospital is offered.  Immunization
 programs are carried out and help is provided when an epidemic is breaking out
 (measles and cholera have been a problem).
-							*donate*
-Summer 1994 to summer 1995 I spent a whole year at the centre, working as a
-volunteer.  I have helped to expand the centre and worked in the area of water
-and sanitation.  I learned that the help that the KCC provides really helps.
-When I came back to Holland, I wanted to continue supporting KCC.  To do this
-I'm raising funds and organizing the sponsorship program.  Please consider one
-of these possibilities:
 
-1.  Sponsor a child in primary school: 17 euro a month (or more).
-2.  Sponsor a child in secondary school: 25 euro a month (or more).
-3.  Sponsor the clinic: Any amount a month or quarter
-4.  A one-time donation
+Summer 1994 to summer 1995 Bram spent a whole year at the centre, working as a
+volunteer.  Bram helped to expand the centre and worked in the area of water
+and sanitation.  Bram learned that the help that the KCC provides really
+helps. When Bram came back to Holland, he wanted to continue supporting KCC.
+To do this he has been raising funds and organizing the sponsorship program.
 
-Compared with other organizations that do child sponsorship the amounts are
-very low.  This is because the money goes directly to the centre.  Less than
-5% is used for administration.  This is possible because this is a small
-organization that works with volunteers.  If you would like to sponsor a
-child, you should have the intention to do this for at least one year.
-
-How do you know that the money will be spent right?  First of all you have my
-personal guarantee as the author of Vim.  I trust the people that are working
-at the centre, I know them personally.  Furthermore, the centre has been
+How do you know that the money will be spent right?  First of all you have the
+personal guarantee of Bram as the author of Vim, who knew the people working
+at the centre personally.  Furthermore, the centre has been
 co-sponsored and inspected by World Vision, Save the Children Fund and is now
-under the supervision of Pacific Academy Outreach Society.  The centre is
-visited about once a year to check the progress (at our own cost).  I have
-visited the centre myself many times, starting in 1993.  The visit reports are
-on the ICCF web site.
+under the supervision of Pacific Academy Outreach Society.  Bram has
+visited the centre many times, starting in 1993.  The visit reports are
+have been shared on the ICCF web site (may no longer be available).
 
-If you have any further questions, send e-mail: <Bram@vim.org>.
+If you have any further questions, send an e-mail: info@kuwasha.net.
 
 The address of the centre is:
 			Kibaale Children's Centre
 			p.o. box 1658
 			Masaka, Uganda, East Africa
 
-Sending money:						*iccf-donations*
+							*donate*
+Sending money:
 
-Check the ICCF web site for the latest information!  See |iccf| for the URL.
+Check the Kuwasha web site for the latest information!
 
-
-USA:		The methods mentioned below can be used.
-		If you must send a check send it to our Canadian partner:
-		https://www.kuwasha.net/
-
-Canada:		Contact Kuwasha in Surrey, Canada.  They take care of the
-		Canadian sponsors for the children in Kibaale.  Kuwasha
-		forwards 100% of the money to the project in Uganda.  You can
-		send them a one time donation directly.
 		Look on their site for information about sponsorship:
 		https://www.kuwasha.net/
 		If you make a donation to Kuwasha you will receive a tax
 		receipt which can be submitted with your tax return.
-
-Holland:	Transfer to the account of "Stichting ICCF Holland" in
-		Amersfoort.  This will allow for tax deduction if you live in
-		Holland.  ING bank, IBAN: NL95 INGB 0004 5487 74
-
-Germany:	It is possible to make donations that allow for a tax return.
-		Check the ICCF web site for the latest information:
-			https://iccf-holland.org/germany.html
-
-Europe:		Use a bank transfer if possible.  See "Others" below for the
-		swift code and IBAN number.
-		Any other method should work.  Ask for information about
-		sponsorship.
 
 Credit Card:	You can use PayPal to send money with a Credit card.  This is
 		the most widely used Internet based payment system.  It's
 		really simple to use.  Use this link to find more info:
 		    https://www.paypal.com/en_US/mrb/pal=XAC62PML3GF8Q
 		The e-mail address for sending the money to is:
-		    Bram@iccf-holland.org
-
-Others:		Transfer to this account if possible:
-		    ING bank:	IBAN: NL95 INGB 0004 5487 74
-				Swift code: INGBNL2A
-		    under the name "stichting ICCF Holland", Amersfoort
-		Checks are not accepted.
-
+		    info@kuwasha.net
 
  vim:tw=78:ts=8:noet:ft=help:norl:

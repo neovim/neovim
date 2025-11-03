@@ -1,6 +1,5 @@
 local api = vim.api
 local bit = require('bit')
-local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
 local Range = require('vim.treesitter._range')
 local uv = vim.uv
@@ -43,7 +42,7 @@ local M = {}
 ---@field client_state table<integer, STClientState>
 local STHighlighter = {
   name = 'semantic_tokens',
-  method = ms.textDocument_semanticTokens_full,
+  method = 'textDocument/semanticTokens/full',
   active = {},
 }
 STHighlighter.__index = STHighlighter
@@ -255,12 +254,13 @@ function STHighlighter:send_request()
       local hasEditProvider = type(spec) == 'table' and spec.delta
 
       local params = { textDocument = util.make_text_document_params(self.bufnr) }
-      local method = ms.textDocument_semanticTokens_full
+      local method = 'textDocument/semanticTokens/full'
 
       if hasEditProvider and current_result.result_id then
         method = method .. '/delta'
         params.previousResultId = current_result.result_id
       end
+      ---@cast method vim.lsp.protocol.Method.ClientToServer.Request
       ---@param response? lsp.SemanticTokens|lsp.SemanticTokensDelta
       local success, request_id = client:request(method, params, function(err, response, ctx)
         -- look client up again using ctx.client_id instead of using a captured

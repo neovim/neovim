@@ -1468,10 +1468,10 @@ LanguageTree:register_cbs({cbs}, {recursive})
                      callbacks.
 
 LanguageTree:source()                                  *LanguageTree:source()*
-    Returns the source content of the language tree (bufnr or string).
+    Returns the source bufnr of the language tree.
 
     Return: ~
-        (`integer|string`)
+        (`integer`)
 
                                                *LanguageTree:tree_for_range()*
 LanguageTree:tree_for_range({range}, {opts})
@@ -1706,8 +1706,11 @@ Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
 
     The iterator returns four values:
     1. the numeric id identifying the capture
+
     2. the captured node
+
     3. metadata from any directives processing the match
+
     4. the match itself
 
     Example: how to get captures by name: >lua

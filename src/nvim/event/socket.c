@@ -190,8 +190,9 @@ static void connect_cb(uv_connect_t *req, int status)
 {
   int *ret_status = req->data;
   *ret_status = status;
-  if (status != 0) {
-    uv_close((uv_handle_t *)req->handle, NULL);
+  uv_handle_t *handle = (uv_handle_t *)req->handle;
+  if (status != 0 && !uv_is_closing(handle)) {
+    uv_close(handle, NULL);
   }
 }
 
@@ -245,11 +246,23 @@ tcp_retry:
   if (status == 0) {
     stream_init(NULL, &stream->s, -1, uv_stream);
     success = true;
-  } else if (is_tcp && addrinfo->ai_next) {
-    addrinfo = addrinfo->ai_next;
-    goto tcp_retry;
   } else {
-    *error = _("connection refused");
+    if (!uv_is_closing((uv_handle_t *)uv_stream)) {
+      uv_close((uv_handle_t *)uv_stream, NULL);
+      if (status == 1) {
+        // The uv_close() above will make libuv call connect_cb() with UV_ECANCELED.
+        // Make sure connect_cb() has been called here, as if it's called after this
+        // function ends it will cause a stack-use-after-scope.
+        LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, status != 1);
+      }
+    }
+
+    if (is_tcp && addrinfo->ai_next) {
+      addrinfo = addrinfo->ai_next;
+      goto tcp_retry;
+    } else {
+      *error = _("connection refused");
+    }
   }
 
 cleanup:

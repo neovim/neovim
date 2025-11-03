@@ -80,7 +80,6 @@ EVENTS
   message UI that mimics the legacy message grid. Benefit: reduced UI event
   traffic and more flexibility for UIs.
   The `msg_history_show` event has an additional "prev_cmd" argument.
-• A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
 
 HIGHLIGHTS
 
@@ -88,12 +87,11 @@ HIGHLIGHTS
 
 LSP
 
-• `root_markers` in |vim.lsp.Config| can now be ordered by priority.
+• JSON "null" values in LSP messages are represented as |vim.NIL| instead of `nil`.
+  Missing fields (as opposed to JSON "null") are still represented as `nil`.
 • The function set with |vim.lsp.log.set_format_func()| is now given all
   arguments corresponding to a log entry instead of the individual arguments.
-• `vim.lsp.semantic_tokens.start/stop` now renamed to
-  `vim.lsp.semantic_tokens.enable`
-• Missing fields in LSP messages are now represented using |vim.NIL| instead of nil.
+• Renamed `vim.lsp.semantic_tokens` `start()/stop()` to `enable()`.
 • |vim.lsp.util.convert_signature_help_to_markdown_lines()| activeParameter
   handling updated:
     • Values < 0 are now treated as `nil` instead of 0.
@@ -103,7 +101,6 @@ LSP
 LUA
 
 • Renamed `vim.diff` to `vim.text.diff`.
-• |vim.net.request()| adds a minimal HTTP GET API using curl.
 
 OPTIONS
 
@@ -111,7 +108,7 @@ OPTIONS
 
 PLUGINS
 
-• todo
+• Removed "shellmenu" plugin, an old menu-based quasi-snippet plugin for shell scripts.
 
 TREESITTER
 
@@ -120,7 +117,6 @@ TREESITTER
   `metadata[capture_id].offset`. The offset will be applied in
   |vim.treesitter.get_range()|, which should be preferred over reading
   metadata directly for retrieving node ranges.
-• |Query:iter_captures()| supports specifying starting and ending columns.
 
 TUI
 
@@ -157,7 +153,12 @@ BUILD
 • A Zig-based build system has been added as an alternative to CMake. It is
   currently limited in functionality, and CMake remains the recommended option
   for the time being.
+• Nvim can be built without Unibilium (terminfo implementation), in which case
+  the user's terminfo database won't be loaded and only internal definitions
+  for the most common terminals are used. >
 
+  make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+<
 DEFAULTS
 
 • 'diffopt' default value now includes "indent-heuristic" and "inline:char".
@@ -196,9 +197,14 @@ EDITOR
   "(v)iew" then run `:trust`.
 • |gx| in help buffers opens the online documentation for the tag under the
   cursor.
+• |:Undotree| for visually navigating the |undo-tree|
+• |:wall| permits a |++p| option for creating parent directories when writing
+  changed buffers.
+• The |:DiffTool| command compares directories (and files).
 
 EVENTS
 
+• A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
 • |CmdlineLeave| sets |v:char| to the character that stops the Cmdline mode.
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` parameter for |ui-messages| `msg_show` event.
@@ -211,11 +217,12 @@ HIGHLIGHTS
 • |hl-DiffTextAdd| highlights added text within a changed line.
 • |hl-OkMsg| |hl-StderrMsg| |hl-StdoutMsg|
 • |hl-SnippetTabstopActive| highlights the currently active tabstop.
+• |hl-PmenuBorder| |hl-PmenuShadow| |hl-PmenuShadowThrough| see 'pumborder'.
 
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
-• You can control priority of |vim.lsp.Config| `root_markers`.
+• You can control the priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 • Support for `textDocument/colorPresentation |lsp-document_color|
@@ -252,9 +259,13 @@ LSP
   See |lsp-inline_completion| for quickstart instructions.
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
+• The filter option of |vim.lsp.buf.code_action()| now receives the client ID as an argument.
+• |Client:stop()| now accepts a numerical `force` argument to be interpreted as the time to wait
+  before forcing the shutdown.
 
 LUA
 
+• |vim.net.request()| can fetch files via HTTP GET requests.
 • |vim.wait()| returns the callback results.
 • Lua type annotations for `vim.uv`.
 • |vim.hl.range()| now allows multiple timed highlights.
@@ -285,12 +296,14 @@ OPTIONS
 • 'completeopt' flag "nearest" sorts completion results by distance to cursor.
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'fillchars' has new flag "foldinner".
 • 'grepformat' is now a |global-local| option.
 • 'maxsearchcount' sets maximum value for |searchcount()| and defaults to 999.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
+• 'pumborder' adds a border to the popup menu.
 
 PERFORMANCE
 
@@ -322,11 +335,14 @@ TERMINAL
 
 TREESITTER
 
+• |Query:iter_captures()| supports specifying starting and ending columns.
 • |:EditQuery| command gained tab-completion, works with injected languages.
 
 TUI
 
 • |TermResponse| now supports DA1 and APC query responses.
+• Native progress bars are displayed for |Progress| events using the OSC 9;4
+  sequence.
 
 UI
 
@@ -351,12 +367,15 @@ VIMSCRIPT
 • |getcompletiontype()| gets command-line completion type for any string.
 • |prompt_getinput()| gets current user-input in prompt-buffer.
 • |wildtrigger()| triggers command-line expansion.
+• |v:vim_did_init| is set after sourcing |init.vim| but before |load-plugins|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• 'pumblend' does not apply special attributes (bold, underline) from the
+  background layer to the foreground layer.
 • |gv| works in operator pending mode and does not abort.
 • 'smartcase' applies to completion filtering.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of

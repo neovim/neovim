@@ -66,9 +66,9 @@ path.
 
 Nvim will also load ftdetect files, if there are any.
 
-Note that the files under "pack/foo/opt" are not loaded automatically, only the
-ones under "pack/foo/start".  See |pack-add| below for how the "opt" directory
-is used.
+Note that the files under "pack/foo/opt" are not loaded automatically, only
+the ones under "pack/foo/start".  See |pack-add| below for how the "opt"
+directory is used.
 
 Loading packages automatically will not happen if loading plugins is disabled,
 see |load-plugins|.
@@ -145,8 +145,8 @@ This assumes you write one or more plugins that you distribute as a package.
 
 If you have two unrelated plugins you would use two packages, so that Vim
 users can choose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the preferred ones with
-`:packadd`.
+package with optional plugins, and tell the user to add the preferred ones
+with `:packadd`.
 
 Decide how you want to distribute the package.  You can create an archive or
 you could use a repository.  An archive can be used by more users, but is a
@@ -190,7 +190,7 @@ the command after changing the plugin help: >
 
 Dependencies between plugins ~
                                                         *packload-two-steps*
-Suppose you have two plugins that depend on the same functionality. You can
+Suppose you have two plugins that depend on the same functionality.  You can
 put the common functionality in an autoload directory, so that it will be
 found automatically.  Your package would have these files:
 
@@ -220,6 +220,13 @@ directory are managed exclusively by `vim.pack`.
 Uses Git to manage plugins and requires present `git` executable of at least
 version 2.36. Target plugins should be Git repositories with versions as named
 tags following semver convention `v<major>.<minor>.<patch>`.
+
+The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
+located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
+is used to persistently track data about plugins. For a more robust config
+treat lockfile like its part: put under version control, etc. In this case
+initial install prefers revision from the lockfile instead of inferring from
+`version`. Should not be edited by hand or deleted.
 
 Example workflows ~
 
@@ -254,17 +261,20 @@ Basic install and management:
     plugin1 = require('plugin1')
 <
 • Restart Nvim (for example, with |:restart|). Plugins that were not yet
-  installed will be available on disk in target state after `add()` call.
+  installed will be available on disk after `add()` call. Their revision is
+  taken from |vim.pack-lockfile| (if present) or inferred from the `version`.
 • To update all plugins with new changes:
   • Execute |vim.pack.update()|. This will download updates from source and
     show confirmation buffer in a separate tabpage.
   • Review changes. To confirm all updates execute |:write|. To discard
     updates execute |:quit|.
+  • (Optionally) |:restart| to start using code from updated plugins.
 
 Switch plugin's version:
 • Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
   named 'plugin1' has changed to `vim.version.range('*')`.
-• |:restart|. The plugin's actual state on disk is not yet changed.
+• |:restart|. The plugin's actual state on disk is not yet changed. Only
+  plugin's `version` in |vim.pack-lockfile| is updated.
 • Execute `vim.pack.update({ 'plugin1' })`.
 • Review changes and either confirm or discard them. If discarded, revert any
   changes in 'init.lua' as well or you will be prompted again next time you
@@ -272,7 +282,7 @@ Switch plugin's version:
 
 Freeze plugin from being updated:
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
-  it with `:=vim.pack.get({ 'plug-name' })[1].rev` (looks like `abc12345`).
+  it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
 • |:restart|.
 
 Unfreeze plugin to start receiving updates:
@@ -290,10 +300,37 @@ Available events to hook into ~
 • *PackChanged* - after plugin's state has changed.
 
 Each event populates the following |event-data| fields:
-• `kind` - one of "install" (install on disk), "update" (update existing
-  plugin), "delete" (delete from disk).
+• `active` - whether plugin was added via |vim.pack.add()| to current session.
+• `kind` - one of "install" (install on disk; before loading), "update"
+  (update already installed plugin; might be not loaded), "delete" (delete
+  from disk).
 • `spec` - plugin's specification with defaults made explicit.
 • `path` - full path to plugin's directory.
+
+These events can be used to execute plugin hooks. For example: >lua
+    local hooks = function(ev)
+      -- Use available |event-data|
+      local name, kind = ev.data.spec.name, ev.data.kind
+
+      -- Run build script after plugin's code has changed
+      if name == 'plug-1' and (kind == 'install' or kind == 'update') then
+        vim.system({ 'make' }, { cwd = ev.data.path })
+      end
+
+      -- If action relies on code from the plugin (like user command or
+      -- Lua code), make sure to explicitly load it first
+      if name == 'plug-2' and kind == 'update' then
+        if not ev.data.active then
+          vim.cmd.packadd('plug-2')
+        end
+        vim.cmd('PlugTwoUpdate')
+        require('plug2').after_update()
+      end
+    end
+
+    -- If hooks need to run on install, run this before `vim.pack.add()`
+    vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
+<
 
 
 *vim.pack.Spec*
@@ -371,7 +408,7 @@ get({names}, {opts})                                          *vim.pack.get()*
         • {branches}? (`string[]`) Available Git branches (first is default).
           Missing if `info=false`.
         • {path} (`string`) Plugin's path on disk.
-        • {rev}? (`string`) Current Git revision. Missing if `info=false`.
+        • {rev} (`string`) Current Git revision.
         • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
           `name`.
         • {tags}? (`string[]`) Available Git tags. Missing if `info=false`.
@@ -383,14 +420,18 @@ update({names}, {opts})                                    *vim.pack.update()*
     • Depending on `force`:
       • If `false`, show confirmation buffer. It lists data about all set to
         update plugins. Pending changes starting with `>` will be applied
-        while the ones starting with `<` will be reverted. It has special
-        in-process LSP server attached to provide more interactive features.
-        Currently supported methods:
+        while the ones starting with `<` will be reverted. It has dedicated
+        buffer-local mappings:
+        • |]]| and |[[| to navigate through plugin sections.
+        Some features are provided via LSP:
         • 'textDocument/documentSymbol' (`gO` via |lsp-defaults| or
           |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
         • 'textDocument/hover' (`K` via |lsp-defaults| or
           |vim.lsp.buf.hover()|) - show more information at cursor. Like
           details of particular pending change or newer tag.
+        • 'textDocument/codeAction' (`gra` via |lsp-defaults| or
+          |vim.lsp.buf.code_action()|) - show code actions available for
+          "plugin at cursor". Like "delete", "update", or "skip updating".
         Execute |:write| to confirm update, execute |:quit| to discard the
         update.
       • If `true`, make updates right away.
@@ -402,8 +443,7 @@ update({names}, {opts})                                    *vim.pack.update()*
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names to update. Must be managed
                  by |vim.pack|, not necessarily already added to current
-                 session. Default: names of all plugins added to current
-                 session via |vim.pack.add()|.
+                 session. Default: names of all plugins managed by |vim.pack|.
       • {opts}   (`table?`) A table with the following fields:
                  • {force}? (`boolean`) Whether to skip confirmation and make
                    updates immediately. Default `false`.

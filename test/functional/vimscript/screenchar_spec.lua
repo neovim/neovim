@@ -32,7 +32,7 @@ end
 
 describe('screenchar() and family respect floating windows', function()
   local function with_ext_multigrid(multigrid)
-    before_each(function()
+    setup(function()
       clear()
       Screen.new(40, 7, { ext_multigrid = multigrid })
       -- These commands result into visible text `aabc`.

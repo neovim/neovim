@@ -49,11 +49,11 @@ To see what version of perl you have: >
 							*:perldo*
 :[range]perldo {cmd}	Execute perl command {cmd} for each line in the[range],
 			with $_ being set to the test of each line in turn,
-			without a trailing <EOL>. In addition to $_, $line and
-			$linenr is also set to the line content and line number
-			respectively. Setting $_ will change the text, but note
-			that it is not possible to add or delete lines using
-			this command.
+			without a trailing <EOL>.  In addition to $_, $line
+			and $linenr is also set to the line content and line
+			number respectively.  Setting $_ will change the text,
+			but note that it is not possible to add or delete
+			lines using this command.
 			The default for [range] is the whole file: "1,$".
 
 Examples:

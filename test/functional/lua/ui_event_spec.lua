@@ -333,11 +333,11 @@ describe('vim.ui_attach', function()
       2                                       |
       3                                       |
       4  :call bufadd^(                        |
-      5       {12: bufadd(         }{100: }              |
-      6        bufexists(      {100: }              |
-      7        buffer_exists(  {12: }              |
-      8        buffer_name(    {12: }              |
-      9        buffer_number(  {12: }              |
+      5       {12: bufadd(        }{100: }               |
+      6        bufexists(     {100: }               |
+      7        buffer_exists( {12: }               |
+      8        buffer_name(   {12: }               |
+      9        buffer_number( {12: }               |
                                               |
     ]])
     exec_lua([[
@@ -355,39 +355,39 @@ describe('vim.ui_attach', function()
       2                                       |
       3                                       |
       4                                       |
-      5       {12: bufadd(         }{100: }              |
-      6        bufexists(      {100: }              |
-      7        buffer_exists(  {12: }              |
-      8        buffer_name(    {12: }              |
-      9        buffer_number(  {12: }              |
+      5       {12: bufadd(        }{100: }               |
+      6        bufexists(     {100: }               |
+      7        buffer_exists( {12: }               |
+      8        buffer_name(   {12: }               |
+      9        buffer_number( {12: }               |
       :call bufadd^(                           |
     ]])
     feed('<tab>')
     screen:expect([[
-      1     bufadd(         {100: }                 |
-      2    {12: bufexists(      }{100: }                 |
-      3     buffer_exists(  {100: }                 |
-      4     buffer_name(    {100: }                 |
-      5     buffer_number(  {100: }                 |
-      6     buflisted(      {100: }                 |
-      7     bufload(        {12: }                 |
-      8     bufloaded(      {12: }                 |
-      9     bufname(        {12: }                 |
+      1     bufadd(        {100: }                  |
+      2    {12: bufexists(     }{100: }                  |
+      3     buffer_exists( {100: }                  |
+      4     buffer_name(   {100: }                  |
+      5     buffer_number( {100: }                  |
+      6     buflisted(     {100: }                  |
+      7     bufload(       {12: }                  |
+      8     bufloaded(     {12: }                  |
+      9     bufname(       {12: }                  |
       :call bufexists^(                        |
     ]])
     -- Test different offset (e.g. for custom prompt)
     exec_lua('vim.api.nvim_win_set_config(_G.win, { _cmdline_offset = 9 })')
     feed('<Esc>:call buf<Tab>')
     screen:expect([[
-      1             {12: bufadd(         }{100: }        |
-      2              bufexists(      {100: }        |
-      3              buffer_exists(  {100: }        |
-      4              buffer_name(    {100: }        |
-      5              buffer_number(  {100: }        |
-      6              buflisted(      {100: }        |
-      7              bufload(        {12: }        |
-      8              bufloaded(      {12: }        |
-      9              bufname(        {12: }        |
+      1             {12: bufadd(        }{100: }         |
+      2              bufexists(     {100: }         |
+      3              buffer_exists( {100: }         |
+      4              buffer_name(   {100: }         |
+      5              buffer_number( {100: }         |
+      6              buflisted(     {100: }         |
+      7              bufload(       {12: }         |
+      8              bufloaded(     {12: }         |
+      9              bufname(       {12: }         |
       Excommand:call bufadd^(                  |
     ]])
     -- No crash after _cmdline_offset window is closed #35584.

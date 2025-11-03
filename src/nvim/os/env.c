@@ -15,6 +15,8 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval.h"
+#include "nvim/eval/fs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"

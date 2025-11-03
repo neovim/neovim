@@ -58,6 +58,7 @@ end)
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
+      n.clear()
       eq(
         redir_msg,
         pcall_err(function()
@@ -66,15 +67,12 @@ describe(':cquit', function()
       )
       poke_eventloop()
       assert_alive()
+      n.check_close()
     else
       local p = n.spawn_wait('--cmd', cmdline)
       eq(exit_code, p.status)
     end
   end
-
-  before_each(function()
-    n.clear()
-  end)
 
   it('exits with non-zero after :cquit', function()
     test_cq('cquit', 1, nil)

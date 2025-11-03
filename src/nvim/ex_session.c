@@ -21,6 +21,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -532,7 +533,7 @@ static int put_view(FILE *fd, win_T *wp, tabpage_T *tp, bool add_edit, unsigned 
 
 static int store_session_globals(FILE *fd)
 {
-  TV_DICT_ITER(&globvardict, this_var, {
+  TV_DICT_ITER(get_globvar_dict(), this_var, {
     if ((this_var->di_tv.v_type == VAR_NUMBER
          || this_var->di_tv.v_type == VAR_STRING)
         && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
@@ -709,6 +710,7 @@ static int makeopens(FILE *fd, char *dirnow)
 
   // Assume "tabpages" is in 'sessionoptions'.  If not then we only do
   // "curtab" and bail out of the loop.
+  bool restore_height_width = false;
   FOR_ALL_TABS(tp) {
     bool need_tabnext = false;
     int cnr = 1;
@@ -809,6 +811,7 @@ static int makeopens(FILE *fd, char *dirnow)
                   "set winwidth=1\n") < 0) {
         return FAIL;
       }
+      restore_height_width = true;
     }
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
@@ -899,7 +902,7 @@ static int makeopens(FILE *fd, char *dirnow)
     PUTLINE_FAIL("let &shortmess = s:shortmess_save");
   }
 
-  if (tab_firstwin != NULL && tab_firstwin->w_next != NULL) {
+  if (restore_height_width) {
     // Restore 'winminheight' and 'winminwidth'.
     PUTLINE_FAIL("let &winminheight = s:save_winminheight");
     PUTLINE_FAIL("let &winminwidth = s:save_winminwidth");

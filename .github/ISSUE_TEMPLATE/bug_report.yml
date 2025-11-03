@@ -9,7 +9,7 @@ body:
         *Before reporting:*
         - Confirm the problem is reproducible on [**master**](https://github.com/neovim/neovim/releases/nightly) or [**latest stable**](https://github.com/neovim/neovim/releases/stable) release
         - Run `make distclean` when encountering build issues
-        - Search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug,bug-crash) (including [closed](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aclosed+label%3Abug%2Cbug-crash))
+        - Search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue%20is%3Aopen%20type%3ABug) (including [closed](https://github.com/neovim/neovim/issues?q=is%3Aissue%20is%3Aclosed%20type%3ABug))
         - Read the [FAQ](https://neovim.io/doc/user/faq.html) and ["Reporting Problems" in CONTRIBUTING.md](https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#reporting-problems).
 
         Usage or "How to" questions belong on [stackoverflow](https://vi.stackexchange.com/) and will be closed.

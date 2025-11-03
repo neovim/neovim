@@ -115,8 +115,10 @@ do
   end, { buffer = true })
 end
 
-do
-  local ns = vim.api.nvim_create_namespace('nvim.help.urls')
+local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
+local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+
+if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
   local base = 'https://neovim.io/doc/user/helptag.html?tag='
   local query = vim.treesitter.query.parse(
     'vimdoc',
@@ -135,7 +137,7 @@ do
         for _, node in ipairs(nodes) do
           local start_line, start_col, end_line, end_col = node:range()
           local tag = vim.treesitter.get_node_text(node, 0)
-          vim.api.nvim_buf_set_extmark(0, ns, start_line, start_col, {
+          vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
             end_line = end_line,
             end_col = end_col,
             url = base .. vim.uri_encode(tag),
@@ -149,4 +151,5 @@ end
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
   .. '\n sil! exe "nunmap <buffer> gO" | sil! exe "nunmap <buffer> g=="'
   .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
+  .. ('\n call v:lua.vim.api.nvim_buf_clear_namespace(0, %d, 0, -1)'):format(url_ns)
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'

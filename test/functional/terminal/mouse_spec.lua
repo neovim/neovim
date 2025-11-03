@@ -99,7 +99,7 @@ describe(':terminal mouse', function()
 
     describe('with mouse events enabled by the program', function()
       before_each(function()
-        tt.enable_mouse()
+        tt.enable_mouse() -- FIXME: this doesn't work on Windows?
         tt.feed_data('mouse enabled\n')
         screen:expect([[
           line27                                            |
@@ -227,6 +227,15 @@ describe(':terminal mouse', function()
       it('will forward mouse clicks to the program with the correct even if set nu', function()
         skip(is_os('win'))
         command('set number')
+        screen:expect([[
+          {121: 11 }line28                                        |
+          {121: 12 }line29                                        |
+          {121: 13 }line30                                        |
+          {121: 14 }mouse enabled                                 |
+          {121: 15 }rows: 6, cols: 46                             |
+          {121: 16 }^                                              |
+          {5:-- TERMINAL --}                                    |
+        ]])
         -- When the display area such as a number is clicked, it returns to the
         -- normal mode.
         feed('<LeftMouse><3,0>')
@@ -380,6 +389,87 @@ describe(':terminal mouse', function()
           ^                                                  |
                                                             |
         ]])
+      end)
+
+      it('mouse forwarding works with resized grid', function()
+        skip(is_os('win'))
+
+        screen:detach()
+        local Screen = require('test.functional.ui.screen')
+        screen = Screen.new(50, 7, { ext_multigrid = true })
+        screen:expect([[
+        ## grid 1
+          [2:--------------------------------------------------]|*6
+          [3:--------------------------------------------------]|
+        ## grid 2
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+          ^                                                  |
+        ## grid 3
+          {5:-- TERMINAL --}                                    |
+        ]])
+
+        screen:try_resize_grid(2, 58, 11)
+        screen:expect({ any = vim.pesc('rows: 11, cols: 58') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 0, 0)
+        screen:expect({ any = vim.pesc('"!!^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 0, 0)
+        screen:expect({ any = vim.pesc('#!!^') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 10, 0)
+        screen:expect({ any = vim.pesc('"!+^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 10, 0)
+        screen:expect({ any = vim.pesc('#!+^') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 0, 57)
+        screen:expect({ any = vim.pesc('"Z!^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 0, 57)
+        screen:expect({ any = vim.pesc('#Z!^') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 10, 57)
+        screen:expect({ any = vim.pesc('"Z+^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 10, 57)
+        screen:expect({ any = vim.pesc('#Z+^') })
+
+        command('setlocal winbar=WINBAR')
+        screen:expect({ any = vim.pesc(('{5:WINBAR%s}'):format((' '):rep(52))) })
+        eq('t', api.nvim_get_mode().mode)
+
+        api.nvim_input_mouse('right', 'press', '', 2, 0, 0)
+        eq('nt', api.nvim_get_mode().mode)
+        api.nvim_input_mouse('right', 'release', '', 2, 0, 0)
+        feed('i')
+        eq('t', api.nvim_get_mode().mode)
+
+        api.nvim_input_mouse('right', 'press', '', 2, 0, 57)
+        eq('nt', api.nvim_get_mode().mode)
+        api.nvim_input_mouse('right', 'release', '', 2, 0, 57)
+        feed('i')
+        eq('t', api.nvim_get_mode().mode)
+
+        api.nvim_input_mouse('right', 'press', '', 2, 1, 0)
+        screen:expect({ any = vim.pesc('"!!^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 1, 0)
+        screen:expect({ any = vim.pesc('#!!^') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 10, 0)
+        screen:expect({ any = vim.pesc('"!*^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 10, 0)
+        screen:expect({ any = vim.pesc('#!*^') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 1, 57)
+        screen:expect({ any = vim.pesc('"Z!^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 1, 57)
+        screen:expect({ any = vim.pesc('#Z!^') })
+
+        api.nvim_input_mouse('right', 'press', '', 2, 10, 57)
+        screen:expect({ any = vim.pesc('"Z*^') })
+        api.nvim_input_mouse('right', 'release', '', 2, 10, 57)
+        screen:expect({ any = vim.pesc('#Z*^') })
       end)
     end)
 

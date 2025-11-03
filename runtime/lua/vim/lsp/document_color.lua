@@ -4,7 +4,6 @@
 local api = vim.api
 local lsp = vim.lsp
 local util = lsp.util
-local ms = lsp.protocol.Methods
 local Range = vim.treesitter._range
 
 local document_color_ns = api.nvim_create_namespace('nvim.lsp.document_color')
@@ -223,7 +222,7 @@ local function buf_enable(bufnr)
       local method = args.data.method --- @type string
 
       if
-        (method == ms.textDocument_didChange or method == ms.textDocument_didOpen)
+        (method == 'textDocument/didChange' or method == 'textDocument/didOpen')
         and assert(bufstates[args.buf]).enabled
       then
         M._buf_refresh(args.buf, args.data.client_id)
@@ -236,7 +235,7 @@ local function buf_enable(bufnr)
     group = document_color_augroup,
     desc = 'Disable document_color if all supporting clients detach',
     callback = function(args)
-      local clients = lsp.get_clients({ bufnr = args.buf, method = ms.textDocument_documentColor })
+      local clients = lsp.get_clients({ bufnr = args.buf, method = 'textDocument/documentColor' })
 
       if
         not vim.iter(clients):any(function(c)
@@ -259,12 +258,12 @@ function M._buf_refresh(bufnr, client_id)
     ipairs(lsp.get_clients({
       bufnr = bufnr,
       id = client_id,
-      method = ms.textDocument_documentColor,
+      method = 'textDocument/documentColor',
     }))
   do
     ---@type lsp.DocumentColorParams
     local params = { textDocument = util.make_text_document_params(bufnr) }
-    client:request(ms.textDocument_documentColor, params, on_document_color)
+    client:request('textDocument/documentColor', params, on_document_color, bufnr)
   end
 end
 
@@ -416,7 +415,7 @@ function M.color_presentation()
   }
 
   --- @param result lsp.ColorPresentation[]
-  client:request(ms.textDocument_colorPresentation, params, function(err, result, ctx)
+  client:request('textDocument/colorPresentation', params, function(err, result, ctx)
     if err then
       lsp.log.error('color_presentation', err)
       return
@@ -452,7 +451,7 @@ function M.color_presentation()
 
       util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
     end)
-  end)
+  end, bufnr)
 end
 
 return M

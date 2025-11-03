@@ -58,6 +58,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -73,6 +74,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -157,10 +159,12 @@ struct terminal {
   // it actually points to entries that are no longer in sb_buffer (because the
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
+  size_t sb_deleted;                // Lines deleted from sb_buffer.
+  size_t sb_deleted_last;           // Value of sb_deleted on last refresh_scrollback()
 
   char *title;     // VTermStringFragment buffer
-  size_t title_len;    // number of rows pushed to sb_buffer
-  size_t title_size;   // sb_buffer size
+  size_t title_len;
+  size_t title_size;
 
   // buf_T instance that acts as a "drawing surface" for libvterm
   // we can't store a direct reference to the buffer because the
@@ -229,6 +233,7 @@ static void emit_termrequest(void **argv)
   StringBuilder *pending_send = argv[3];
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
+  size_t sb_deleted = (size_t)(intptr_t)argv[6];
 
   if (term->sb_pending > 0) {
     // Don't emit the event while there is pending scrollback because we need
@@ -236,14 +241,15 @@ static void emit_termrequest(void **argv)
     // the event onto the pending queue where it will be executed after the
     // terminal is refreshed and the pending scrollback is cleared.
     multiqueue_put(term->pending.events, emit_termrequest, term, sequence, (void *)sequence_length,
-                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col);
+                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col,
+                   (void *)(intptr_t)sb_deleted);
     return;
   }
 
   set_vim_var_string(VV_TERMREQUEST, sequence, (ptrdiff_t)sequence_length);
 
   MAXSIZE_TEMP_ARRAY(cursor, 2);
-  ADD_C(cursor, INTEGER_OBJ(row));
+  ADD_C(cursor, INTEGER_OBJ(row - (int64_t)(term->sb_deleted - sb_deleted)));
   ADD_C(cursor, INTEGER_OBJ(col));
 
   MAXSIZE_TEMP_DICT(data, 2);
@@ -268,30 +274,32 @@ static void emit_termrequest(void **argv)
   xfree(pending_send);
 }
 
-static void schedule_termrequest(Terminal *term, char *sequence, size_t sequence_length)
+static void schedule_termrequest(Terminal *term)
 {
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
 
   int line = row_to_linenr(term, term->cursor.row);
-  multiqueue_put(main_loop.events, emit_termrequest, term, sequence, (void *)sequence_length,
-                 term->pending.send, (void *)(intptr_t)line,
-                 (void *)(intptr_t)term->cursor.col);
+  multiqueue_put(main_loop.events, emit_termrequest, term,
+                 xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
+                 (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
+                 (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col,
+                 (void *)(intptr_t)term->sb_deleted);
 }
 
-static int parse_osc8(VTermStringFragment frag, int *attr)
+static int parse_osc8(const char *str, int *attr)
   FUNC_ATTR_NONNULL_ALL
 {
   // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
   // Skip the ID, we don't use it (for now)
   size_t i = 0;
-  for (; i < frag.len; i++) {
-    if (frag.str[i] == ';') {
+  for (; str[i] != NUL; i++) {
+    if (str[i] == ';') {
       break;
     }
   }
 
-  if (frag.str[i] != ';') {
+  if (str[i] != ';') {
     // Invalid OSC sequence
     return 0;
   }
@@ -299,17 +307,13 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
   // Move past the semicolon
   i++;
 
-  if (i >= frag.len) {
+  if (str[i] == NUL) {
     // Empty OSC 8, no URL
     *attr = 0;
     return 1;
   }
 
-  char *url = xmemdupz(&frag.str[i], frag.len - i + 1);
-  url[frag.len - i] = 0;
-  *attr = hl_add_url(0, url);
-  xfree(url);
-
+  *attr = hl_add_url(0, str + i);
   return 1;
 }
 
@@ -322,16 +326,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
     return 0;
   }
 
-  if (command == 8) {
-    int attr = 0;
-    if (parse_osc8(frag, &attr)) {
-      VTermState *state = vterm_obtain_state(term->vt);
-      VTermValue value = { .number = attr };
-      vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
-    }
-  }
-
-  if (!has_event(EVENT_TERMREQUEST)) {
+  if (command != 8 && !has_event(EVENT_TERMREQUEST)) {
     return 1;
   }
 
@@ -341,8 +336,19 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    if (has_event(EVENT_TERMREQUEST)) {
+      schedule_termrequest(term);
+    }
+    if (command == 8) {
+      kv_push(term->termrequest_buffer, NUL);
+      const size_t off = STRLEN_LITERAL("\x1b]8;");
+      int attr = 0;
+      if (parse_osc8(term->termrequest_buffer.items + off, &attr)) {
+        VTermState *state = vterm_obtain_state(term->vt);
+        VTermValue value = { .number = attr };
+        vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+      }
+    }
   }
   return 1;
 }
@@ -364,8 +370,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    schedule_termrequest(term);
   }
   return 1;
 }
@@ -387,8 +392,7 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
+    schedule_termrequest(term);
   }
   return 1;
 }
@@ -769,7 +773,7 @@ bool terminal_enter(void)
   set_terminal_winopts(s);
 
   s->term->pending.cursor = true;  // Update the cursor shape table
-  adjust_topline(s->term, buf, 0);  // scroll to end
+  adjust_topline_cursor(s->term, buf, 0);  // scroll to end
   showmode();
   ui_cursor_shape();
 
@@ -1461,6 +1465,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
     } else {
       xfree(term->sb_buffer[term->sb_current - 1]);
     }
+    term->sb_deleted++;
 
     // Make room at the start by shifting to the right.
     memmove(term->sb_buffer + 1, term->sb_buffer,
@@ -2111,7 +2116,7 @@ static void refresh_terminal(Terminal *term)
   refresh_screen(term, buf);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
-  adjust_topline(term, buf, ml_added);
+  adjust_topline_cursor(term, buf, ml_added);
 
   // Copy pending events back to the main event queue
   multiqueue_move_events(main_loop.events, term->pending.events);
@@ -2221,11 +2226,13 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   if (scbk < term->sb_current) {
     size_t diff = term->sb_current - scbk;
     for (size_t i = 0; i < diff; i++) {
-      ml_delete(1);
+      ml_delete_buf(buf, 1, false);
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }
-    deleted_lines(1, (linenr_T)diff);
+    mark_adjust_buf(buf, 1, (linenr_T)diff, MAXLNUM, -(linenr_T)diff, true,
+                    kMarkAdjustTerm, kExtmarkUndo);
+    deleted_lines_buf(buf, 1, (linenr_T)diff);
   }
 
   // Resize the scrollback storage.
@@ -2240,6 +2247,11 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
+  linenr_T deleted = (linenr_T)(term->sb_deleted - term->sb_deleted_last);
+  deleted = MIN(deleted, buf->b_ml.ml_line_count);
+  mark_adjust_buf(buf, 1, deleted, MAXLNUM, -deleted, true, kMarkAdjustTerm, kExtmarkUndo);
+  term->sb_deleted_last = term->sb_deleted;
+
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
@@ -2320,8 +2332,10 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   term->invalid_end = -1;
 }
 
-static void adjust_topline(Terminal *term, buf_T *buf, int added)
+static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)
 {
+  linenr_T ml_end = buf->b_ml.ml_line_count;
+
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       if (wp == curwin && is_focused(term)) {
@@ -2330,9 +2344,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
         continue;
       }
 
-      linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
-
       if (following) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
@@ -2342,6 +2354,17 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
       }
       mb_check_adjust_col(wp);
+    }
+  }
+
+  if (ml_end == buf->b_last_cursor.mark.lnum + added) {
+    buf->b_last_cursor.mark.lnum = ml_end;
+  }
+
+  for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+    WinInfo *wip = kv_A(buf->b_wininfo, i);
+    if (ml_end == wip->wi_mark.mark.lnum + added) {
+      wip->wi_mark.mark.lnum = ml_end;
     }
   }
 }
@@ -2368,7 +2391,7 @@ static char *get_config_string(char *key)
   Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), NULL, &err);
   api_clear_error(&err);
   if (obj.type == kObjectTypeNil) {
-    obj = dict_get_value(&globvardict, cstr_as_string(key), NULL, &err);
+    obj = dict_get_value(get_globvar_dict(), cstr_as_string(key), NULL, &err);
     api_clear_error(&err);
   }
   if (obj.type == kObjectTypeString) {

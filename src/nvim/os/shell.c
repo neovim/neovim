@@ -12,8 +12,8 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
@@ -795,15 +795,20 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   // read the names from the file into memory
   FILE *fd = os_fopen(tempname, READBIN);
 
-  if (fd == NULL) {
-    semsg(_(e_notopen), tempname);
+  // Not being able to seek means we can't read the file.
+  long len_l;
+  if (fd == NULL
+      || fseek(fd, 0L, SEEK_END) == -1
+      || (len_l = ftell(fd)) == -1         // get size of temp file
+      || fseek(fd, 0L, SEEK_SET) == -1) {  // back to the start
+    semsg(_(e_cannot_read_from_str_2), tempname);
+    if (fd != NULL) {
+      fclose(fd);
+    }
     goto done;
   }
 
-  fseek(fd, 0, SEEK_END);
-  size_t len = (size_t)ftell(fd);  // get size of temp file
-  fseek(fd, 0, SEEK_SET);
-
+  size_t len = (size_t)len_l;
   buffer = xmalloc(len + 1);
   size_t i = fread(buffer, 1, len, fd);
   fclose(fd);
@@ -1305,7 +1310,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
     msg_schedule_semsg(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
   }
-  stream_may_close(stream, false);
+  stream_may_close(stream);
 }
 
 /// Applies 'shellxescape' (p_sxe) and 'shellxquote' (p_sxq) to a command.

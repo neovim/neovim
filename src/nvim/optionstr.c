@@ -13,6 +13,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -984,10 +985,6 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
   } else if (!(args->os_flags & OPT_GLOBAL)) {
     // When using :set, clear the local flags.
     buf->b_cot_flags = 0;
-  }
-
-  if (opt_strings_flags(cot, opt_cot_values, NULL, true) != OK) {
-    return e_invarg;
   }
 
   if (opt_strings_flags(cot, opt_cot_values, flags, true) != OK) {
@@ -2124,16 +2121,32 @@ const char *did_set_winbar(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
-/// The 'winborder' option is changed.
-const char *did_set_winborder(optset_T *args)
+static bool parse_border_opt(char *border_opt)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
   Error err = ERROR_INIT;
-  if (!parse_winborder(&fconfig, &err)) {
-    api_clear_error(&err);
-    return e_invarg;
+  bool result = true;
+  if (!parse_winborder(&fconfig, border_opt, &err)) {
+    result = false;
   }
   api_clear_error(&err);
+  return result;
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (!parse_border_opt(p_winborder)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
+const char *did_set_pumborder(optset_T *args)
+{
+  if (!parse_border_opt(p_pumborder)) {
+    return e_invarg;
+  }
   return NULL;
 }
 
@@ -2246,26 +2259,27 @@ struct chars_tab {
 
 static fcs_chars_T fcs_chars;
 static const struct chars_tab fcs_tab[] = {
-  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼", "+"),
-  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·", "-"),
-  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│", "|"),
-  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">", NULL),
-  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼",  "+"),
+  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·",  "-"),
+  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│",  "|"),
+  CHARSTAB_ENTRY(&fcs_chars.foldinner,  "foldinner", NULL, NULL),
+  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<",  NULL),
 };
 
 static lcs_chars_T lcs_chars;

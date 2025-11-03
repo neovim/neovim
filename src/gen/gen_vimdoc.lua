@@ -413,12 +413,16 @@ local config = {
   plugins = {
     filename = 'plugins.txt',
     section_order = {
+      'difftool.lua',
       'editorconfig.lua',
       'tohtml.lua',
+      'undotree.lua',
     },
     files = {
       'runtime/lua/editorconfig.lua',
       'runtime/lua/tohtml.lua',
+      'runtime/pack/dist/opt/nvim.undotree/lua/undotree.lua',
+      'runtime/pack/dist/opt/nvim.difftool/lua/difftool.lua',
     },
     fn_xform = function(fun)
       if fun.module == 'editorconfig' then
@@ -465,7 +469,6 @@ end
 --- @param generics? table<string,string>
 --- @param default? string
 local function render_type(ty, generics, default)
-  -- TODO(lewis6991): Document LSP protocol types
   ty = ty:gsub('vim%.lsp%.protocol%.Method.[%w.]+', 'string')
 
   if generics then

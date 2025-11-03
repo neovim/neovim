@@ -6,8 +6,8 @@
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#6889b2d90ee6ae96810a9f04ec7c62d9aa91d088",
-            .hash = "zlua-0.1.0-hGRpCxctBQDEQgDArJ0Kc4RDIsD-Hw3pw9pPPw_kGmmY",
+            .url = "git+https://github.com/natecraddock/ziglua#a4d08d97795c312e63a0f09d456f7c6d280610b4",
+            .hash = "zlua-0.1.0-hGRpC5c9BQAfU5bkkFfLV9B4a7Prw8N7JPIFAZBbRCkq",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
@@ -22,15 +22,15 @@
             .hash = "N-V-__8AADi-AwDnVoXwDCQvv2wcYOmN0bJLqZ44J3lwoQY2",
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter#e659dddad1f371b390ccca1cee6232ae172963d1",
-            .hash = "tree_sitter-0.26.0-Tw2sRwrJCwDrfb_78FsK0w0PWdgQQowLwBg4fZRq8TuM",
+            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.10#f26bd44a43e8985fe7d784e87056f996c8a576c9",
+            .hash = "tree_sitter-0.26.0-Tw2sR-yCCwDF7elNfoXlZ8r2xfhEM2RMuXR9rSbPQr9b",
         },
         .libuv = .{
             .url = "git+https://github.com/allyourcodebase/libuv#a2dfd385bd2a00d6d290fda85a40a55a9d6cffc5",
             .hash = "libuv-1.51.0-htqqv6liAADxBLIBCZT-qUh_3nRRwtNYsOFQOUmrd_sx",
         },
         .utf8proc = .{ .path = "./deps/utf8proc/" },
-        .unibilium = .{ .path = "./deps/unibilium/" },
+        .unibilium = .{ .path = "./deps/unibilium/", .lazy = true },
         .libiconv = .{
             .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
             .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",

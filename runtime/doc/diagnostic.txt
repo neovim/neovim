@@ -626,7 +626,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           diagnostic instead of prepending it. Overrides the
                           setting from |vim.diagnostic.config()|.
       • {focus_id}?       (`string`)
-      • {border}?         (`string`) see |nvim_open_win()|.
+      • {border}?         (`string|string[]`) see |nvim_open_win()|.
 
 *vim.diagnostic.Opts.Jump*
 

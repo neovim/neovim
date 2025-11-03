@@ -1355,6 +1355,22 @@ describe('lua stdlib', function()
     )
   end)
 
+  it('vim.call fails in fast context', function()
+    local screen = Screen.new(120, 10)
+    exec_lua([[
+      local timer = vim.uv.new_timer()
+      timer:start(0, 0, function()
+        timer:close()
+        vim.call('sin', 0.0)
+      end)
+    ]])
+    screen:expect({
+      any = pesc('E5560: Vimscript function "sin" must not be called in a fast event context'),
+    })
+    feed('<CR>')
+    assert_alive()
+  end)
+
   it('vim.fn errors when calling API function', function()
     matches(
       'Tried to call API function with vim.fn: use vim.api.nvim_get_current_line instead',

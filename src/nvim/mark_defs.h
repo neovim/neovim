@@ -39,6 +39,13 @@ typedef enum {
   kMarkAllNoResolve,  ///< Return all types of marks but don't resolve fnum (global marks).
 } MarkGet;
 
+/// Options when adjusting marks
+typedef enum {
+  kMarkAdjustNormal,  ///< Normal mode commands, etc.
+  kMarkAdjustApi,     ///< Changing lines from the API
+  kMarkAdjustTerm,    ///< Terminal scrollback
+} MarkAdjustMode;
+
 /// Number of possible numbered global marks
 #define EXTRA_MARKS     ('9' - '0' + 1)
 

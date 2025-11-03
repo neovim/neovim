@@ -74,6 +74,7 @@ defsfile:write(string.format(
 #include "nvim/os/lang.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/sign.h"
 #include "nvim/spell.h"

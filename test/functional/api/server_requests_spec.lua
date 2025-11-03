@@ -305,6 +305,19 @@ describe('server -> client', function()
       eq(clientpid, fn.getpid())
       eq('howdy!', api.nvim_get_current_line())
 
+      -- sending notification and then closing channel immediately still works
+      n.exec_lua(function()
+        vim.rpcnotify(id, 'nvim_set_current_line', 'bye!')
+        vim.fn.chanclose(id)
+      end)
+
+      set_session(server)
+      eq(serverpid, fn.getpid())
+      -- wait for the notification to be processed
+      t.retry(nil, 1000, function()
+        eq('bye!', api.nvim_get_current_line())
+      end)
+
       server:close()
       client:close()
     end

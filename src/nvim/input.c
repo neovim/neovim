@@ -78,6 +78,7 @@ int get_keystroke(MultiQueue *events)
   int n;
   int save_mapped_ctrl_c = mapped_ctrl_c;
 
+  mod_mask = 0;
   mapped_ctrl_c = 0;        // mappings are not used here
   while (true) {
     // flush output before waiting
@@ -141,7 +142,7 @@ int get_keystroke(MultiQueue *events)
   xfree(buf);
 
   mapped_ctrl_c = save_mapped_ctrl_c;
-  return n;
+  return merge_modifiers(n, &mod_mask);
 }
 
 /// Ask the user for input through a cmdline prompt.

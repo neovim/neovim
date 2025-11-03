@@ -9,8 +9,6 @@ local exec_lua = n.exec_lua
 before_each(clear)
 
 describe('treesitter utils', function()
-  before_each(clear)
-
   it('can find an ancestor', function()
     insert([[
       int main() {

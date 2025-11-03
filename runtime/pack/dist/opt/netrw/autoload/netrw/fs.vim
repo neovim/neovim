@@ -2,18 +2,18 @@
 " THESE FUNCTIONS DON'T COMMIT TO ANY BACKWARDS COMPATIBILITY. SO CHANGES AND
 " BREAKAGES IF USED OUTSIDE OF NETRW.VIM ARE EXPECTED.
 
-let s:slash = !exists('+shellslash') || &shellslash ? '/' : '\'
 
 " netrw#fs#PathJoin: Appends a new part to a path taking different systems into consideration {{{
 
 function! netrw#fs#PathJoin(...)
+    const slash = !exists('+shellslash') || &shellslash ? '/' : '\'
     let path = ""
 
     for arg in a:000
         if empty(path)
             let path = arg
         else
-            let path .= s:slash . arg
+            let path .= slash . arg
         endif
     endfor
 
@@ -73,22 +73,14 @@ endfunction
 " netrw#fs#AbsPath: returns the full path to a directory and/or file {{{
 
 function! netrw#fs#AbsPath(path)
-    let path = a:path->substitute(s:slash . '$', '', 'e')
+    let path = a:path->substitute('[\/]$', '', 'e')
 
     " Nothing to do
     if isabsolutepath(path)
         return path
     endif
 
-    return path->fnamemodify(':p')->substitute(s:slash . '$', '', 'e')
-endfunction
-
-" }}}
-" netrw#fs#Dirname: {{{
-
-function netrw#fs#Dirname(path)
-    " Keep a slash as directory recognition pattern
-    return netrw#fs#AbsPath(a:path) . s:slash
+    return path->fnamemodify(':p')->substitute('[\/]$', '', 'e')
 endfunction
 
 " }}}

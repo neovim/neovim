@@ -6,15 +6,265 @@
 
 Tools and techniques for developing Nvim                        *dev-tools*
 
-The following advice is helpful when working on or debugging issues with Nvim
-itself.
-
-TODO: merge |debug.txt| into here.
+This is for developing or debugging Nvim itself.
 
                                   Type |gO| to see the table of contents.
 
 ==============================================================================
-Backtraces                                            *dev-tools-backtrace*
+Quickstart guide to developing Nvim                           *dev-quickstart*
+
+You can start hacking on Nvim in less than 5 minutes:
+
+1. Ensure you have the build prerequisites from `BUILD.md`.
+2. Clone the source repo and "cd" into it: >
+        git clone https://github.com/neovim/neovim
+        cd neovim
+        # (Optional) Build and run Nvim:
+        make
+        ./build/bin/nvim
+3. Run a single test. We will start with "example_spec.lua", which is a real
+   test that shows how tests are written: >
+        make functionaltest TEST_FILE=test/functional/example_spec.lua
+4. Notice the `before_each` block in the test file. Because it calls
+   `clear()`, each `it()` test will start a new Nvim instance.
+5. Tests will do stuff in the Nvim instance and make assertions using `eq()`.
+   Tests that want to check the UI can also use `screen:expect()`.
+6. Now make a code change in Nvim itself, then you can see the effects. The
+   example test does `feed('iline1…')`, so let's make a change to the
+   insert-mode code, which lives in `src/nvim/edit.c`. In the
+   `insert_handle_key` function, just after the `normalchar` label, add this
+   code: >
+        s->c = 'x';
+7. Then run the "example_spec.lua" test again, and it should fail with
+   something like this: >
+        test/functional/example_spec.lua:31: Row 1 did not match.
+        Expected:
+          |*line1               |
+          |*line^2               |
+          |{0:~                   }|
+          |{0:~                   }|
+          |                    |
+        Actual:
+          |*xine1               |
+          |*xine^2               |
+          |{0:~                   }|
+          |{0:~                   }|
+          |                    |
+
+You now understand how to modify the codebase, write tests, and run tests. See
+|dev-arch| for details about the internal architecture.
+
+==============================================================================
+Logs                                                          *dev-tools-logs*
+
+Low-level log messages sink to `$NVIM_LOG_FILE`.
+
+UI events are logged at DEBUG level. >
+
+    rm -rf build/
+    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG"
+
+Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
+alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
+`-no-pie` ([ref](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=860394#15)): >
+
+    rm -rf build/
+    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG -DCMAKE_C_FLAGS=-no-pie"
+
+Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
+filter the log, e.g. at DEBUG level you might want to exclude UI messages: >
+
+    tail -F ~/.local/state/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
+
+
+==============================================================================
+Reproducible build
+
+To make a reproducible build of Nvim, set cmake variable `LUA_GEN_PRG` to
+a LuaJIT binary built with `LUAJIT_SECURITY_PRN=0`. See commit
+cb757f2663e6950e655c6306d713338dfa66b18d.
+
+
+==============================================================================
+Debug TUI                                                      *dev-tools-tui*
+
+TUI INSPECT
+
+Use the Ghostty https://ghostty.org/ inspector tool to observe and query the
+output and events from any terminal application such as Nvim.
+
+TERMINFO LOGGING
+
+At 'verbose' level 3, Nvim logs its internal terminfo state, so you can see
+exactly what terminfo values it is using on the current system. >
+
+    nvim -V3log
+
+TUI DEBUGGING WITH GDB LLDB
+
+Launching the Nvim TUI involves two processes, one for main editor state and one
+for rendering the TUI. Both of these processes use the nvim binary, so somewhat
+confusingly setting a breakpoint in either will generally succeed but may not be
+hit depending on which process the breakpoints were set in.
+
+To debug the main process, you can debug the nvim binary with the `--headless`
+flag which does not launch the TUI and will allow you to set breakpoints in code
+not related to TUI rendering like so: >
+
+    lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
+
+While in lldb, enter `run`. You can then attach to the headless process in a
+new terminal window to interact with the editor like so: >
+
+    ./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
+
+Conversely for debugging TUI rendering, you can start a headless process and
+debug the remote-ui process multiple times without losing editor state.
+
+For details on using nvim-dap and automatically debugging the child (main)
+process, see [here](https://zignar.net/2023/02/17/debugging-neovim-with-neovim-and-nvim-dap/)
+
+TUI REDRAW
+
+For debugging Nvim TUI redraw behavior it is sometimes useful to slow down its
+redraws. Set the 'writedelay' and 'redrawdebug' options to see where and when
+the UI is painted. >
+
+    :set writedelay=50 rdb=compositor
+
+Note: Nvim uses an internal screenbuffer to only send minimal updates even if a large
+region is repainted internally. To also highlight excess internal redraws, use >
+
+    :set writedelay=50 rdb=compositor,nodelta
+
+TUI TRACE
+
+In the rare case that you want to collect a trace of terminal output, the
+ancient `script` command is still the "state of the art". The libvterm
+`vterm-dump` utility formats the result for human-readability.
+
+Record a Nvim terminal session and format it with `vterm-dump`: >sh
+
+    script foo
+    ./build/bin/nvim -u NONE
+    # Exit the script session with CTRL-d
+
+    # Use `vterm-dump` utility to format the result.
+    ./.deps/usr/bin/vterm-dump foo > bar
+
+Then you can compare `bar` with another session, to debug TUI behavior.
+
+TERMINAL REFERENCE
+
+- `man terminfo`
+- https://github.com/vim/vim/blob/0124320c97b0fbbb44613f42fc1c34fee6181fc8/src/libvterm/doc/seqs.txt
+- https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
+==============================================================================
+Debug Performance                                             *dev-tools-perf*
+
+PROFILING (EASY)
+
+For debugging performance bottlenecks in any code, there is a simple (and very
+effective) approach:
+
+1. Run the slow code in a loop.
+2. Break execution ~5 times and save the stacktrace.
+3. The cause of the bottleneck will (almost always) appear in most of the stacktraces.
+
+
+PROFILING (FANCY)
+
+For more advanced profiling, consider `perf` + `flamegraph`.
+
+
+USDT PROFILING (POWERFUL)
+
+Or you can use USDT probes via `NVIM_PROBE` ([#12036](https://github.com/neovim/neovim/pull/12036)).
+
+> USDT is basically a way to define stable probe points in userland binaries.
+> The benefit of bcc is the ability to define logic to go along with the probe
+> points.
+
+Tools:
+- bpftrace provides an awk-like language to the kernel bytecode, BPF.
+- BCC provides a subset of C. Provides more complex logic than bpftrace, but takes a bit more effort.
+
+Example using bpftrace to track slow vim functions, and print out any files
+that were opened during the trace. At the end, it prints a histogram of
+function timing: >
+
+    #!/usr/bin/env bpftrace
+
+    BEGIN {
+      @depth = -1;
+    }
+
+    tracepoint:sched:sched_process_fork /@pidmap[args->parent_pid]/ {
+      @pidmap[args->child_pid] = 1;
+    }
+
+    tracepoint:sched:sched_process_exit /@pidmap[args->pid]/ {
+      delete(@pidmap[args->pid]);
+    }
+
+    usdt:build/bin/nvim:neovim:eval__call_func__entry {
+        @pidmap[pid] = 1;
+        @depth++;
+        @funcentry[@depth] = nsecs;
+    }
+
+    usdt:build/bin/nvim:neovim:eval__call_func__return {
+        $func = str(arg0);
+        $msecs = (nsecs - @funcentry[@depth]) / 1000000;
+
+        @time_histo = hist($msecs);
+
+        if ($msecs >= 1000) {
+          printf("%u ms for %s\n", $msecs, $func);
+          print(@files);
+        }
+
+        clear(@files);
+        delete(@funcentry[@depth]);
+        @depth--;
+    }
+
+    tracepoint:syscalls:sys_enter_open,
+    tracepoint:syscalls:sys_enter_openat {
+      if (@pidmap[pid] == 1 && @depth >= 0) {
+        @files[str(args->filename)] = count();
+      }
+    }
+
+    END {
+      clear(@depth);
+    }
+
+    $ sudo bpftrace funcslower.bt
+    1527 ms for Slower
+    @files[/usr/lib/libstdc++.so.6]: 2
+    @files[/etc/fish/config.fish]: 2
+    <snip>
+
+    ^C
+    @time_histo:
+    [0]                71430 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+    [1]                  346 |                                                    |
+    [2, 4)               208 |                                                    |
+    [4, 8)                91 |                                                    |
+    [8, 16)               22 |                                                    |
+    [16, 32)              85 |                                                    |
+    [32, 64)               7 |                                                    |
+    [64, 128)              0 |                                                    |
+    [128, 256)             0 |                                                    |
+    [256, 512)             6 |                                                    |
+    [512, 1K)              1 |                                                    |
+    [1K, 2K)               5 |                                                    |
+<
+
+==============================================================================
+Backtraces                                               *dev-tools-backtrace*
 
 LINUX
 
@@ -82,6 +332,53 @@ Apple's documentation archive has some other useful information
 https://developer.apple.com/library/archive/technotes/tn2124/_index.html#//apple_ref/doc/uid/DTS10003391-CH1-SECCOREDUMPS,
 but note that some of the things on this page are out of date (such as enabling
 core dumps with `/etc/launchd.conf`).
+
+
+WINDOWS
+
+If the Windows version of Nvim crashes in a reproducible manner, you can take
+some steps to provide a useful bug report.
+
+You must obtain the debugger symbols (PDB) file for the Nvim executable: nvim.pdb.
+The PDB should be available from the same place that you obtained the
+executable (TODO: not currently provided by Nvim CI releases).  Be sure to use
+the PDB that matches the EXE (same build).
+
+If you built the executable yourself with the Microsoft Visual C++ compiler,
+then the PDB was built with the EXE.
+
+If you have Visual Studio, use that instead of the VC Toolkit and WinDbg.
+
+For other compilers, always use the corresponding debugger: gdb or lldb.
+
+Debugging Nvim crashes with Visual Studio 2005 ~
+
+First launch nvim.exe and then launch Visual Studio.  (If you don't have
+Visual Studio, get it from https://visualstudio.microsoft.com/downloads/).
+
+On the Tools menu, click Attach to Process.  Choose the Nvim process.
+
+In Nvim, reproduce the crash.  A dialog will appear in Visual Studio, telling
+you about the unhandled exception in the Nvim process.  Click Break to break
+into the process.
+
+Visual Studio will pop up another dialog, telling you that no symbols are
+loaded and that the source code cannot be displayed.  Click OK.
+
+Several windows will open.  Right-click in the Call Stack window.  Choose Load
+Symbols.  The Find Symbols dialog will open, looking for (g)vim.pdb.  Navigate
+to the directory where you have the PDB file and click Open.
+
+At this point, you should have a full call stack with vim function names and
+line numbers.  Double-click one of the lines and the Find Source dialog will
+navigate to the directory where the Nvim source is (if you have it.)
+
+If you don't know how to debug this any further, follow the instructions
+at ":help bug-report".  Paste the call stack into the bug report.
+
+From Visual Studio you can also try saving a minidump via the Debug menu and
+send it with the bug report.  A minidump is a small file (<100KB), which
+contains information about the state of your process.
 
 ==============================================================================
 Gdb                                                          *dev-tools-gdb*
@@ -194,5 +491,42 @@ example:
     (gdb) target remote localhost:6666
     (gdb) br main
 <
+==============================================================================
+Debugging crashes or memory leaks                             *dev-tools-asan*
 
-vim:tw=78:ts=8:et:ft=help:norl:
+BUILD WITH ASAN
+
+Building Nvim with Clang sanitizers (Address Sanitizer: ASan, Undefined
+Behavior Sanitizer: UBSan, Memory Sanitizer: MSan, Thread Sanitizer: TSan) is
+a good way to catch undefined behavior, leaks and other errors as soon as they
+happen.  It's significantly faster than Valgrind.
+
+Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`: >
+
+    clang --version
+
+Build Nvim with sanitizer instrumentation (choose one): >
+
+    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_ASAN_UBSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_MSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_TSAN=ON"
+
+Create a directory to store logs: >
+
+    mkdir -p "$HOME/logs"
+
+Configure the sanitizer(s) via these environment variables: >
+
+    # Change to detect_leaks=1 to detect memory leaks (slower, noisier).
+    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
+    # Show backtraces in the logs.
+    export MSAN_OPTIONS="log_path=${HOME}/logs/msan"
+    export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
+
+Logs will be written to `${HOME}/logs/*san.PID` then.
+
+For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
+
+
+
+ vim:tw=78:ts=8:sw=4:et:ft=help:norl:

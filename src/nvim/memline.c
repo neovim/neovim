@@ -56,8 +56,8 @@
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
@@ -1403,8 +1403,8 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
           StringBuilder msg = KV_INITIAL_VALUE;
           kv_resize(msg, IOSIZE);
           swapfile_info(files[i], &msg);
-          bool need_clear;
-          msg_multiline(cstr_as_string(msg.items), 0, false, false, &need_clear);
+          bool need_clear = false;
+          msg_multiline(cbuf_as_string(msg.items, msg.size), 0, false, false, &need_clear);
           kv_destroy(msg);
         }
       } else {
@@ -2581,7 +2581,7 @@ int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
   FUNC_ATTR_NONNULL_ALL
 {
   ml_flush_line(buf, false);
-  return ml_delete_int(buf, lnum, message);
+  return ml_delete_int(buf, lnum, message ? ML_DEL_MESSAGE : 0);
 }
 
 /// Delete line `lnum` in the current buffer.
@@ -3569,8 +3569,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               // pretend screen didn't scroll, need redraw anyway
               msg_reset_scroll();
             } else {
-              bool need_clear;
-              msg_multiline(cstr_as_string(msg.items), 0, false, false, &need_clear);
+              bool need_clear = false;
+              msg_multiline(cbuf_as_string(msg.items, msg.size), 0, false, false, &need_clear);
             }
             no_wait_return--;
             kv_destroy(msg);

@@ -20,6 +20,8 @@ patches, suggestions and giving feedback about what is good and bad in Vim.
 
 Vim would never have become what it is now, without the help of these people!
 
+        |Bram| Moolenaar	Creator and benevolent dictator until his
+                                passing (3 August 2023)
         Ron Aaron               Win32 GUI changes
         Mohsin Ahmed            encryption
         Zoltan Arpadffy         work on VMS port
@@ -53,7 +55,8 @@ Vim would never have become what it is now, without the help of these people!
         Felix von Leitner       Previous maintainer of Vim Mailing Lists
         David Leonard           Port of Python extensions to Unix
         Avner Lottem            Edit in right-to-left windows
-        Flemming Madsen         X11 client-server, various features and patches
+        Flemming Madsen         X11 client-server, various features and
+                                patches
         Tony Mechelynck         answers many user questions
         Paul Moore              Python interface extensions, many patches
         Katsuhito Nagano        Work on multibyte versions
@@ -86,7 +89,16 @@ Vim would never have become what it is now, without the help of these people!
         Ken Takata              fixes and features
         Kazunobu Kuriyama       GTK 3
         Christian Brabandt      many fixes, features, user support, etc.
-        Yegappan Lakshmanan     many quickfix features
+        Yegappan Lakshmanan     many quickfix features, Vim9 script
+                                improvements
+        Doug Kearns             Runtime file maintainer
+        Foxe Chen               Wayland support, new features
+        glepnir                 completion feature
+        Girish Palya            autocompletion (ins/cmdline), omnifunc
+                                composing, search/subst completion, and more.
+        Hirohito Higashi        lots of patches and fixes
+        Yee Cheng Chin          MacVim maintainer and diff improvements
+        zeertzjq                many fixes and improvements
 
 I wish to thank all the people that sent me bug reports and suggestions.  The
 list is too long to mention them all here.  Vim would not be the same without

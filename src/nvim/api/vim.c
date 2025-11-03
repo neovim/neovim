@@ -31,9 +31,9 @@
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
@@ -65,7 +65,6 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
-#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -75,6 +74,7 @@
 #include "nvim/os/proc.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/sign_defs.h"
 #include "nvim/state.h"
@@ -691,13 +691,13 @@ void nvim_del_current_line(Arena *arena, Error *err)
 Object nvim_get_var(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+  dictitem_T *di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
     bool found = script_autoload(name.data, name.size, false) && !aborting();
     VALIDATE(found, "Key not found: %s", name.data, {
       return (Object)OBJECT_INIT;
     });
-    di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+    di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   }
   VALIDATE((di != NULL), "Key not found: %s", name.data, {
     return (Object)OBJECT_INIT;
@@ -713,7 +713,7 @@ Object nvim_get_var(String name, Arena *arena, Error *err)
 void nvim_set_var(String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, value, false, false, NULL, err);
+  dict_set_var(get_globvar_dict(), name, value, false, false, NULL, err);
 }
 
 /// Removes a global (g:) variable.
@@ -723,7 +723,7 @@ void nvim_set_var(String name, Object value, Error *err)
 void nvim_del_var(String name, Error *err)
   FUNC_API_SINCE(1)
 {
-  dict_set_var(&globvardict, name, NIL, true, false, NULL, err);
+  dict_set_var(get_globvar_dict(), name, NIL, true, false, NULL, err);
 }
 
 /// Gets a v: variable.
@@ -734,7 +734,7 @@ void nvim_del_var(String name, Error *err)
 Object nvim_get_vvar(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return dict_get_value(&vimvardict, name, arena, err);
+  return dict_get_value(get_vimvar_dict(), name, arena, err);
 }
 
 /// Sets a v: variable, if it is not readonly.
@@ -745,7 +745,7 @@ Object nvim_get_vvar(String name, Arena *arena, Error *err)
 void nvim_set_vvar(String name, Object value, Error *err)
   FUNC_API_SINCE(6)
 {
-  dict_set_var(&vimvardict, name, value, false, false, NULL, err);
+  dict_set_var(get_vimvar_dict(), name, value, false, false, NULL, err);
 }
 
 /// Prints a message given by a list of `[text, hl_group]` "chunks".
@@ -770,11 +770,9 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///            - success: The progress item completed successfully
 ///            - running: The progress is ongoing
 ///            - failed: The progress item failed
-///            - cancel: The progressing process should be canceled.
-///                      note: Cancel needs to be handled by progress
-///                      initiator by listening for the `Progress` event
-///          - percent: How much progress is done on the progress
-///            message
+///            - cancel: The progressing process should be canceled. NOTE: Cancel must be handled by
+///              progress initiator by listening for the `Progress` event
+///          - percent: How much progress is done on the progress message
 ///          - data: dictionary containing additional information
 /// @return Message id.
 ///         - -1 means nvim_echo didn't show a message
@@ -927,7 +925,7 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window (and tabpage, implicitly).
+/// Navigates to the given window (and tabpage, implicitly).
 ///
 /// @param window |window-ID| to focus
 /// @param[out] err Error details, if any
@@ -2202,7 +2200,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
         grpname = syn_id2name(-sp->userhl);
       } else {
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
-        grpname = arena_memdupz(arena, user_group, strlen(user_group));
+        grpname = arena_strdup(arena, user_group);
       }
 
       const char *combine = sp->item == STL_SIGNCOL ? syn_id2name(scl_hl_id)

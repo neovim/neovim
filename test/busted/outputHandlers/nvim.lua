@@ -140,10 +140,8 @@ return function(options)
   local getFileLine = function(element)
     local fileline = ''
     if element.trace or element.trace.short_src then
-      fileline = colors.cyan(element.trace.short_src)
-        .. ' @ '
-        .. colors.cyan(element.trace.currentline)
-        .. ': '
+      local fname = vim.fs.normalize(element.trace.short_src)
+      fileline = colors.cyan(fname) .. ' @ ' .. colors.cyan(element.trace.currentline) .. ': '
     end
     return fileline
   end

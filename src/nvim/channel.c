@@ -24,6 +24,7 @@
 #include "nvim/event/proc.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
+#include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/garray.h"
@@ -41,7 +42,6 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
-#include "nvim/path.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 
@@ -132,7 +132,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
   case kChannelStreamProc:
     proc = &chan->stream.proc;
     if (part == kChannelPartStdin || close_main) {
-      wstream_may_close(&proc->in);
+      stream_may_close(&proc->in);
     }
     if (part == kChannelPartStdout || close_main) {
       rstream_may_close(&proc->out);
@@ -151,7 +151,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       rstream_may_close(&chan->stream.stdio.in);
     }
     if (part == kChannelPartStdout || close_main) {
-      wstream_may_close(&chan->stream.stdio.out);
+      stream_may_close(&chan->stream.stdio.out);
     }
     if (part == kChannelPartStderr) {
       *error = e_invstream;
@@ -461,10 +461,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
   Channel *channel;
 
   if (!tcp && rpc) {
-    char *path = fix_fname(address);
-    bool loopback = server_owns_pipe_address(path);
-    xfree(path);
-    if (loopback) {
+    if (server_owns_pipe_address(address)) {
       // Create a loopback channel. This avoids deadlock if nvim connects to
       // its own named pipe.
       channel = channel_alloc(kChannelStreamInternal);

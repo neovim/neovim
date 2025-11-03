@@ -25,6 +25,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_session.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"

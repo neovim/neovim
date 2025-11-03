@@ -38,7 +38,7 @@ below.
 			{name} can be a regexp pattern, see |tag-regexp|.
 			When there are several matching tags for {name}, jump
 			to the [count] one.  When [count] is omitted the
-			first one is jumped to. See |tag-matchlist| for
+			first one is jumped to.  See |tag-matchlist| for
 			jumping to other matching tags.
 
 g<LeftMouse>						*g<LeftMouse>*
@@ -48,7 +48,7 @@ CTRL-]			Jump to the definition of the keyword under the
 			keyword under or after cursor.
 			When there are several matching tags for {name}, jump
 			to the [count] one.  When no [count] is given the
-			first one is jumped to. See |tag-matchlist| for
+			first one is jumped to.  See |tag-matchlist| for
 			jumping to other matching tags.
 
 							*v_CTRL-]*
@@ -97,7 +97,7 @@ The ignore-case matches are found when:
 
 Note that using ignore-case tag searching disables binary searching in the
 tags file, which causes a slowdown.  This can be avoided by fold-case sorting
-the tag file. See the 'tagbsearch' option for an explanation.
+the tag file.  See the 'tagbsearch' option for an explanation.
 
 ==============================================================================
 2. Tag stack				*tag-stack* *tagstack* *E425*
@@ -176,7 +176,7 @@ commands explained above the tag stack will look like this:
    1  1 main		1  harddisk2:text/vim/test
    2  1 FuncB	       59  harddisk2:text/vim/src/main.c
 
-The |gettagstack()| function returns the tag stack of a specified window. The
+The |gettagstack()| function returns the tag stack of a specified window.  The
 |settagstack()| function modifies the tag stack of a window.
 
 							*tagstack-examples*
@@ -314,7 +314,7 @@ g CTRL-]		Like CTRL-], but use ":tjump" instead of ":tag".
 			not given, the last tag name from the tag stack is
 			used.  The search pattern to locate the tag line is
 			prefixed with "\V" to escape all the special
-			characters (very nomagic). The location list showing
+			characters (very nomagic).  The location list showing
 			the matching tags is independent of the tag stack.
 			See |tag-!| for [!].
 
@@ -452,7 +452,7 @@ current file  changed	!   option	option	      action	~
   This works because the tag is put on the stack anyway.  If you want to lose
   the changes you can use the ":tag!" command.
 - If the tag is in another file and the window includes 'winfixbuf', the
-  command will fail. If the tag is in the same file then it may succeed.
+  command will fail.  If the tag is in the same file then it may succeed.
 
 							*tag-security*
 Note that Vim forbids some commands, for security reasons.  This works like
@@ -466,8 +466,8 @@ would otherwise go unnoticed.  Example: >
 	:$d|/tag-function-name/
 
 In Vi the ":tag" command sets the last search pattern when the tag is searched
-for.  In Vim this is not done, the previous search pattern is still remembered,
-unless the 't' flag is present in 'cpoptions'.
+for.  In Vim this is not done, the previous search pattern is still
+remembered, unless the 't' flag is present in 'cpoptions'.
 
 							*tags-option*
 The 'tags' option is a list of file names.  Each of these files is searched
@@ -537,7 +537,7 @@ Some programs that generate tags files:
 ctags			As found on most Unix systems.  Only supports C.  Only
 			does the basic work.
 universal ctags		A maintained version of ctags based on exuberant
-			ctags. See https://ctags.io.
+			ctags.  See https://ctags.io.
 							*Exuberant_ctags*
 exuberant ctags		Works for C, C++, Java, Fortran, Eiffel and others.
 			See https://ctags.sourceforge.net. No new version
@@ -584,7 +584,7 @@ ctags).
 {term}		;" The two characters semicolon and double quote.  This is
 		interpreted by Vi as the start of a comment, which makes the
 		following be ignored.  This is for backwards compatibility
-		with Vi, it ignores the following fields. Example: >
+		with Vi, it ignores the following fields.  Example: >
 			APP	file	/^static int APP;$/;"	v
 <		When {tagaddress} is not a line number or search pattern, then
 		{term} must be `|;"`.  Here the bar ends the command (excluding
@@ -942,7 +942,8 @@ The function should return a List of Dict entries.  Each Dict must at least
 include the following entries and each value must be a string:
 	name		Name of the tag.
 	filename	Name of the file where the tag is defined.  It is
-			either relative to the current directory or a full path.
+			either relative to the current directory or a full
+			path.
 	cmd		Ex command used to locate the tag in the file.  This
 			can be either an Ex search pattern or a line number.
 Note that the format is similar to that of |taglist()|, which makes it possible

@@ -73,7 +73,7 @@ use of "-" and "_".
 			This sets $LC_TIME.
 			With the "collate" argument the language used for the
 			collation order is set.  This affects sorting of
-			characters. This sets $LC_COLLATE.
+			characters.  This sets $LC_COLLATE.
 			Without an argument all are set, and additionally
 			$LANG is set.
 			The LC_NUMERIC value will always be set to "C" so

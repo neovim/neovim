@@ -5,6 +5,8 @@
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
 " Last Change:	2022 Nov 06
 " 2025 Apr 15 by Vim project: rework Make flavor detection (#17089)
+" 2025 Oct 12 by Vim project: update makeDefine highlighting (#18403)
+" 2025 Oct 25 by Vim project: update makeTargetinDefine highlighting (#18570)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -23,7 +25,7 @@ syn match makeNextLine	"\\\n\s*"
 
 " catch unmatched define/endef keywords.  endef only matches it is by itself on a line, possibly followed by a commend
 syn region makeDefine start="^\s*define\s" end="^\s*endef\s*\(#.*\)\?$"
-	\ contains=makeStatement,makeIdent,makePreCondit,makeDefine
+	\ contains=makeStatement,makeIdent,makePreCondit,makeDefine,makeComment,makeTargetinDefine
 
 if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
   " Microsoft Makefile specials
@@ -33,20 +35,26 @@ if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
   syn case match
 endif
 
-" identifiers
-if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
-  syn region makeIdent	start="\$(" end=")" contains=makeStatement,makeIdent
-  syn region makeIdent	start="\${" end="}" contains=makeStatement,makeIdent
-else
-  syn region makeIdent	start="\$(" skip="\\)\|\\\\" end=")" contains=makeStatement,makeIdent
-  syn region makeIdent	start="\${" skip="\\}\|\\\\" end="}" contains=makeStatement,makeIdent
-endif
+" identifiers; treat $$X like $X inside makeDefine
 syn match makeIdent	"\$\$\w*"
+syn match makeIdent	"\$\$\$\$\w*" containedin=makeDefine
 syn match makeIdent	"\$[^({]"
+syn match makeIdent	"\$\$[^({]" containedin=makeDefine
 syn match makeIdent	"^ *[^:#= \t]*\s*[:+?!*]="me=e-2
 syn match makeIdent	"^ *[^:#= \t]*\s*::="me=e-3
 syn match makeIdent	"^ *[^:#= \t]*\s*="me=e-1
 syn match makeIdent	"%"
+if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
+  syn region makeIdent	start="\$(" end=")" contains=makeStatement,makeIdent
+  syn region makeIdent	start="\${" end="}" contains=makeStatement,makeIdent
+  syn region makeIdent	start="\$\$(" end=")" containedin=makeDefine contains=makeStatement,makeIdent
+  syn region makeIdent	start="\$\${" end="}" containedin=makeDefine contains=makeStatement,makeIdent
+else
+  syn region makeIdent	start="\$(" skip="\\)\|\\\\" end=")" contains=makeStatement,makeIdent
+  syn region makeIdent	start="\${" skip="\\}\|\\\\" end="}" contains=makeStatement,makeIdent
+  syn region makeIdent	start="\$\$(" skip="\\)\|\\\\" end=")" containedin=makeDefine contains=makeStatement,makeIdent
+  syn region makeIdent	start="\$\${" skip="\\}\|\\\\" end="}" containedin=makeDefine contains=makeStatement,makeIdent
+endif
 
 " Makefile.in variables
 syn match makeConfig "@[A-Za-z0-9_]\+@"
@@ -54,6 +62,13 @@ syn match makeConfig "@[A-Za-z0-9_]\+@"
 " make targets
 syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:$"me=e-1
 syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:[^=]"me=e-2
+
+syn region makeTargetinDefine transparent matchgroup=makeTargetinDefine
+	\ start="^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}[^:=]"rs=e-1
+	\ end="[^\\]$"
+	\ keepend
+syn match makeTargetinDefine           "^[~A-Za-z0-9_./$(){}%*@-][A-Za-z0-9_./\t $(){}%*@-]*&\?::\=\s*$"
+	\ contains=makeIdent,makeSpecTarget,makeComment
 
 syn region makeTarget transparent matchgroup=makeTarget
 	\ start="^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}[^:=]"rs=e-1
@@ -155,6 +170,7 @@ hi def link makeCommands	Number
 endif
 hi def link makeImplicit	Function
 hi def link makeTarget		Function
+hi def link makeTargetinDefine		Function
 hi def link makeInclude		Include
 hi def link makePreCondit	PreCondit
 hi def link makeStatement	Statement

@@ -228,7 +228,7 @@ The following new features were added.
     mappings are applied.
 
 • LSP:
-  • LSP method names are available in |vim.lsp.protocol.Methods|.
+  • LSP method names are available in `vim.lsp.protocol.Methods`.
   • Implemented LSP inlay hints: |lsp-inlay_hint|
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_inlayHint
   • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|

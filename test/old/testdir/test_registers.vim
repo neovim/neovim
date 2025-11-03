@@ -170,6 +170,7 @@ func Test_register_one()
 endfunc
 
 func Test_recording_status_in_ex_line()
+  set noruler
   norm qx
   redraw!
   call assert_equal('recording @x', Screenline(&lines))
@@ -180,6 +181,17 @@ func Test_recording_status_in_ex_line()
   norm q
   redraw!
   call assert_equal('', Screenline(&lines))
+  set ruler
+  norm qx
+  redraw!
+  call assert_match('recording @x\s*0,0-1\s*All', Screenline(&lines))
+  set shortmess=q
+  redraw!
+  call assert_match('\s*0,0-1\s*All', Screenline(&lines)) " Nvim: shm+=q fully hides
+  set shortmess&
+  norm q
+  redraw!
+  call assert_match('\s*0,0-1\s*All', Screenline(&lines))
 endfunc
 
 " Check that replaying a typed sequence does not use an Esc and following
@@ -659,32 +671,70 @@ func Test_v_register()
     exec 'normal! "' .. v:register .. 'P'
   endfunc
   nnoremap <buffer> <plug>(test) :<c-u>call s:Put()<cr>
+  xnoremap <buffer> <plug>(test) :<c-u>call s:Put()<cr>
   nmap <buffer> S <plug>(test)
+  xmap <buffer> S <plug>(test)
 
   let @z = "testz\n"
   let @" = "test@\n"
 
   let s:register = ''
   call feedkeys('"_ddS', 'mx')
-  call assert_equal('test@', getline('.'))  " fails before 8.2.0929
   call assert_equal('"', s:register)        " fails before 8.2.0929
+  call assert_equal('test@', getline('.'))  " fails before 8.2.0929
+
+  let s:register = ''
+  call feedkeys('V"_dS', 'mx')
+  call assert_equal('"', s:register)
+  call assert_equal('test@', getline('.'))
 
   let s:register = ''
   call feedkeys('"zS', 'mx')
   call assert_equal('z', s:register)
+  call assert_equal('testz', getline('.'))
 
   let s:register = ''
   call feedkeys('"zSS', 'mx')
   call assert_equal('"', s:register)
+  call assert_equal('test@', getline('.'))
+
+  let s:register = ''
+  call feedkeys("\"z\<Ignore>S", 'mx')
+  call assert_equal('z', s:register)
+  call assert_equal('testz', getline('.'))
 
   let s:register = ''
   call feedkeys('"_S', 'mx')
   call assert_equal('_', s:register)
 
   let s:register = ''
+  call feedkeys('V"zS', 'mx')
+  call assert_equal('z', s:register)
+  call assert_equal('testz', getline('.'))
+
+  let s:register = ''
+  call feedkeys('V"zSS', 'mx')
+  call assert_equal('"', s:register)
+  call assert_equal('test@', getline('.'))
+
+  let s:register = ''
+  call feedkeys("V\"z\<Ignore>S", 'mx')
+  call assert_equal('z', s:register)
+  call assert_equal('testz', getline('.'))
+
+  let s:register = ''
+  call feedkeys('V"_S', 'mx')
+  call assert_equal('_', s:register)
+
+  let s:register = ''
   normal "_ddS
   call assert_equal('"', s:register)        " fails before 8.2.0929
   call assert_equal('test@', getline('.'))  " fails before 8.2.0929
+
+  let s:register = ''
+  normal V"_dS
+  call assert_equal('"', s:register)
+  call assert_equal('test@', getline('.'))
 
   let s:register = ''
   execute 'normal "z:call' "s:Put()\n"

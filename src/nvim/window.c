@@ -462,7 +462,7 @@ newwindow:
   // cursor to last accessed (previous) window
   case 'p':
   case Ctrl_P:
-    if (!win_valid(prevwin)) {
+    if (!win_valid(prevwin) || prevwin->w_config.hide || !prevwin->w_config.focusable) {
       beep_flush();
     } else {
       win_goto(prevwin);
@@ -1440,7 +1440,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     }
     if (toplevel) {
       if (flags & WSP_BOT) {
-        frame_add_vsep(curfrp);
+        frame_set_vsep(curfrp, true);
       }
       // Set width of neighbor frame
       frame_new_width(curfrp, curfrp->fr_width
@@ -2631,9 +2631,11 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // page and then close the window and the tab page.  This avoids that
   // curwin and curtab are invalid while we are freeing memory, they may
   // be used in GUI events.
-  // Don't trigger autocommands yet, they may use wrong values, so do
+  // Don't trigger *Enter autocommands yet, they may use wrong values, so do
   // that below.
-  goto_tabpage_tp(alt_tabpage(), false, true);
+  // Do trigger *Leave autocommands, unless win->w_buffer is NULL, in which
+  // case they have already been triggered.
+  goto_tabpage_tp(alt_tabpage(), false, win->w_buffer != NULL);
 
   // Safety check: Autocommands may have switched back to the old tab page
   // or closed the window when jumping to the other tab page.
@@ -2925,6 +2927,14 @@ int win_close(win_T *win, bool free_buf, bool force)
       // careful: after this wp and win may be invalid!
       apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
     }
+  }
+
+  if (ONE_WINDOW && curwin->w_locked && curbuf->b_locked_split
+      && first_tabpage->tp_next != NULL) {
+    // The new curwin is the last window in the current tab page, and it is
+    // already being closed.  Trigger TabLeave now, as after its buffer is
+    // removed it's no longer safe to do that.
+    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf);
   }
 
   split_disallowed--;
@@ -3220,6 +3230,12 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
   int row = topleft->w_winrow;
   int col = topleft->w_wincol;
 
+  // If this is a rightmost window, remove vertical separators to the left.
+  if (win->w_vsep_width == 0 && frp_close->fr_parent->fr_layout == FR_ROW
+      && frp_close->fr_prev != NULL) {
+    frame_set_vsep(frp_close->fr_prev, false);
+  }
+
   // Remove this frame from the list of frames.
   frame_remove(frp_close);
 
@@ -3412,7 +3428,7 @@ void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
 
   // Vertical separators to the left may have been lost.  Restore them.
   if (wp->w_vsep_width == 0 && frp->fr_parent->fr_layout == FR_ROW && frp->fr_prev != NULL) {
-    frame_add_vsep(frp->fr_prev);
+    frame_set_vsep(frp->fr_prev, true);
   }
 
   // Statuslines or horizontal separators above may have been lost.  Restore them.
@@ -3858,23 +3874,26 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
   topfrp->fr_width = width;
 }
 
-/// Add the vertical separator to windows at the right side of "frp".
+/// Add or remove the vertical separator of windows to the right side of "frp".
 /// Note: Does not check if there is room!
-static void frame_add_vsep(const frame_T *frp)
+static void frame_set_vsep(const frame_T *frp, bool add)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (frp->fr_layout == FR_LEAF) {
     win_T *wp = frp->fr_win;
-    if (wp->w_vsep_width == 0) {
+    if (add && wp->w_vsep_width == 0) {
       if (wp->w_width > 0) {            // don't make it negative
-        wp->w_width--;
+        win_new_width(wp, wp->w_width - 1);
       }
       wp->w_vsep_width = 1;
+    } else if (!add && wp->w_vsep_width == 1) {
+      win_new_width(wp, wp->w_width + 1);
+      wp->w_vsep_width = 0;
     }
   } else if (frp->fr_layout == FR_COL) {
     // Handle all the frames in the column.
     FOR_ALL_FRAMES(frp, frp->fr_child) {
-      frame_add_vsep(frp);
+      frame_set_vsep(frp, add);
     }
   } else {
     assert(frp->fr_layout == FR_ROW);
@@ -3883,7 +3902,7 @@ static void frame_add_vsep(const frame_T *frp)
     while (frp->fr_next != NULL) {
       frp = frp->fr_next;
     }
-    frame_add_vsep(frp);
+    frame_set_vsep(frp, add);
   }
 }
 
@@ -6479,7 +6498,7 @@ void set_fraction(win_T *wp)
 /// calculate the new scroll position.
 /// TODO(vim): Ensure this also works with wrapped lines.
 /// Requires a not fully visible cursor line to be allowed at the bottom of
-/// a window("zb"), probably only when 'smoothscroll' is also set.
+/// a window ("zb"), probably only when 'smoothscroll' is also set.
 void win_fix_scroll(bool resize)
 {
   if (*p_spk == 'c') {
@@ -6707,7 +6726,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
 
   if (height != prev_height) {
     if (height > 0 && valid_cursor) {
-      if (wp == curwin && *p_spk == 'c') {
+      if (wp == curwin && (*p_spk == 'c' || wp->w_floating)) {
         // w_wrow needs to be valid. When setting 'laststatus' this may
         // call win_new_height() recursively.
         validate_cursor(curwin);
@@ -6724,7 +6743,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
-    if (valid_cursor && !exiting && *p_spk == 'c') {
+    if (valid_cursor && !exiting && (*p_spk == 'c' || wp->w_floating)) {
       wp->w_skipcol = 0;
       scroll_to_fraction(wp, prev_height);
     }
@@ -6737,7 +6756,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     if (valid_cursor) {
       changed_line_abv_curs_win(wp);
       invalidate_botline(wp);
-      if (wp == curwin && *p_spk == 'c') {
+      if (wp == curwin && (*p_spk == 'c' || wp->w_floating)) {
         curs_columns(wp, true);  // validate w_wrow
       }
     }

@@ -58,7 +58,7 @@ Each buffer has a unique number and the number will not change within a Vim
 session.  The |bufnr()| and |bufname()| functions can be used to convert
 between a buffer name and the buffer number.  There is one exception: if a new
 empty buffer is created and it is not modified, the buffer will be re-used
-when loading another file into that buffer. This also means the buffer number
+when loading another file into that buffer.  This also means the buffer number
 will not change.
 
 The main Vim window can hold several split windows.  There are also tab pages
@@ -79,7 +79,7 @@ properties such as "hide" and "fixed" which also affect behavior.
 
 					*window-ID* *winid* *windowid*
 Each window has a unique identifier called the window ID.  This identifier
-will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
+will not change within a Vim session.  The |win_getid()| and |win_id2tabwin()|
 functions can be used to convert between the window/tab number and the
 identifier.  There is also the window number, which may change whenever
 windows are opened or closed, see |winnr()|.
@@ -135,9 +135,9 @@ windows.
 
 							*filler-lines*
 The lines after the last buffer line in a window are called filler lines.  By
-default, these lines start with a tilde (~) character. The "eob" item in the
-'fillchars' option can be used to change this character. By default, these
-characters are highlighted as NonText (|hl-NonText|). The EndOfBuffer
+default, these lines start with a tilde (~) character.  The "eob" item in the
+'fillchars' option can be used to change this character.  By default, these
+characters are highlighted as NonText (|hl-NonText|).  The EndOfBuffer
 highlight group (|hl-EndOfBuffer|) can be used to change the highlighting of
 the filler characters.
 
@@ -147,7 +147,7 @@ the filler characters.
 CTRL-W s						*CTRL-W_s*
 CTRL-W S						*CTRL-W_S*
 CTRL-W CTRL-S						*CTRL-W_CTRL-S*
-:[N]sp[lit] [++opt] [+cmd] [file]			*:sp* *:split*
+:[N]sp[lit] [++opt] [+cmd]				*:sp* *:split*
 		Split current window in two.  The result is two viewports on
 		the same file.
 
@@ -157,10 +157,6 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		'eadirection' isn't "hor", and one of them is higher than the
 		current or the new window).
 
-		If [file] is given it will be edited in the new window.  If it
-		is not loaded in any buffer, it will be read.  Else the new
-		window will use the already loaded buffer.
-
 		Note: CTRL-S does not work on all terminals and might block
 		further input, use CTRL-Q to get going again.
 		Also see |++opt| and |+cmd|.
@@ -168,6 +164,19 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		Be careful when splitting a window in an autocommand, it may
 		mess up the window layout if this happens while making other
 		window layout changes.
+
+:[N]sp[lit] [++opt] [+cmd] {file}			*:split_f*
+		Like |:split| but create a new window and start editing file
+		{file} in it.
+		This behaves almost like a ":split" first, and then an ":edit"
+		command, but the alternate file name in the original window is
+		set to {file}.
+		If [+cmd] is given, execute the command when the file has been
+		loaded |+cmd|.
+		Also see |++opt|.
+		Make new window N high (default is to use half the existing
+		height).  Reduces the current window height to create room
+		(and others, if the 'equalalways' option is set).
 
 CTRL-W CTRL-V						*CTRL-W_CTRL-V*
 CTRL-W v						*CTRL-W_v*
@@ -206,17 +215,7 @@ CTRL-W CTRL-N						*CTRL-W_CTRL-N*
 		command.
 
 :[N]new [++opt] [+cmd] {file}
-:[N]sp[lit] [++opt] [+cmd] {file}			*:split_f*
-		Create a new window and start editing file {file} in it.  This
-		behaves almost like a ":split" first, and then an ":edit"
-		command, but the alternate file name in the original window is
-		set to {file}.
-		If [+cmd] is given, execute the command when the file has been
-		loaded |+cmd|.
-		Also see |++opt|.
-		Make new window N high (default is to use half the existing
-		height).  Reduces the current window height to create room
-		(and others, if the 'equalalways' option is set).
+		Like |:split_f|, create a new window and start editing {file}.
 
 :[N]vne[w] [++opt] [+cmd] [file]			*:vne* *:vnew*
 		Like |:new|, but split vertically.  If 'equalalways' is set
@@ -905,7 +904,7 @@ CTRL-W CTRL-F	Split current window in two.  Edit file name under cursor.
 
 CTRL-W F						*CTRL-W_F*
 		Split current window in two.  Edit file name under cursor and
-		jump to the line number following the file name. See |gF| for
+		jump to the line number following the file name.  See |gF| for
 		details on how the line number is obtained.
 
 CTRL-W gf						*CTRL-W_gf*
@@ -1181,22 +1180,24 @@ list of buffers. |unlisted-buffer|
 		Actually, the buffer isn't completely deleted, it is removed
 		from the buffer list |unlisted-buffer| and option values,
 		variables and mappings/abbreviations for the buffer are
-		cleared. Examples: >
-                    :.,$-bdelete   "delete buffers from the current one to
-                                   " last but one
-                    :%bdelete      " delete all buffers
+		cleared.  Examples: >
+		    :.,$-bdelete    " delete buffers from the current one to
+				    " last but one
+		    :%bdelete	    " delete all buffers
 <
-:bdelete[!] {bufname}						*E93* *E94*
+
+:bd[elete][!] {bufname}						*E93* *E94*
 		Like ":bdelete[!] [N]", but buffer given by name, see
 		|{bufname}|.
 
-:bdelete[!] N1 N2 ...
+:bd[elete][!] N1 N2 ...
 		Do ":bdelete[!]" for buffer N1, N2, etc.  The arguments can be
 		buffer numbers or buffer names (but not buffer names that are
 		a number).  Insert a backslash before a space in a buffer
 		name.
 
-:N,Mbdelete[!]	Do ":bdelete[!]" for all buffers in the range N to M
+:N,Mbd[elete][!]
+		Do ":bdelete[!]" for all buffers in the range N to M
 		|inclusive|.
 
 :[N]bw[ipeout][!]			*:bw* *:bwipe* *:bwipeout* *E517*
@@ -1207,11 +1208,12 @@ list of buffers. |unlisted-buffer|
 		related to the buffer is lost.  All marks in this buffer
 		become invalid, option settings are lost, the jumplist and
 		tagstack data will be purged, etc.  Don't use this
-		unless you know what you are doing. Examples: >
+		unless you know what you are doing.  Examples: >
 		    :.+,$bwipeout   " wipe out all buffers after the current
 				    " one
 		    :%bwipeout	    " wipe out all buffers
 <
+
 :[N]bun[load][!]				*:bun* *:bunload* *E515*
 :bun[load][!] [N]
 		Unload buffer [N] (default: current buffer).  The memory
@@ -1224,14 +1226,15 @@ list of buffers. |unlisted-buffer|
 		This is the most recent entry in the jump list that points
 		into a loaded buffer.
 
-:bunload[!] {bufname}
+:bun[load][!] {bufname}
 		Like ":bunload[!] [N]", but buffer given by name.
 		Also see |{bufname}|.
 
-:N,Mbunload[!]	Do ":bunload[!]" for all buffers in the range N to M
+:N,Mbun[load][!]
+		Do ":bunload[!]" for all buffers in the range N to M
 		|inclusive|.
 
-:bunload[!] N1 N2 ...
+:bun[load][!] N1 N2 ...
 		Do ":bunload[!]" for buffer N1, N2, etc.  The arguments can be
 		buffer numbers or buffer names (but not buffer names that are
 		a number).  Insert a backslash before a space in a buffer
@@ -1401,7 +1404,7 @@ help		Contains a help file.  Will only be created with the |:help|
 		and can't be changed.  The 'buflisted' option will be reset
 		for a help buffer.
 
-terminal	A terminal window buffer, see |terminal|. The contents cannot
+terminal	A terminal window buffer, see |terminal|.  The contents cannot
 		be read or changed until the job ends.
 
 directory	Displays directory contents.  Can be used by a file explorer

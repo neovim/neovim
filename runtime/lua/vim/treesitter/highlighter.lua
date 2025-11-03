@@ -443,17 +443,22 @@ local function on_range_impl(
           local url = get_url(match, buf, capture, metadata)
 
           if hl and not on_conceal and (not on_spell or spell ~= nil) then
-            api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-              end_line = end_row,
-              end_col = end_col,
-              hl_group = hl,
-              ephemeral = true,
-              priority = priority,
-              conceal = conceal,
-              spell = spell,
-              url = url,
-              _subpriority = subtree_counter,
-            })
+            -- Workaround for #35814: ensure the range is within buffer bounds,
+            -- allowing the last line if end_col is 0.
+            -- TODO(skewb1k): investigate a proper concurrency-safe handling of extmarks.
+            if (end_row + (end_col > 0 and 1 or 0)) <= api.nvim_buf_line_count(buf) then
+              api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
+                end_row = end_row,
+                end_col = end_col,
+                hl_group = hl,
+                ephemeral = true,
+                priority = priority,
+                conceal = conceal,
+                spell = spell,
+                url = url,
+                _subpriority = subtree_counter,
+              })
+            end
           end
 
           if

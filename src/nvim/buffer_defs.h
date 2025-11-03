@@ -211,6 +211,18 @@ typedef struct {
   OptInt wo_winbl;
 #define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
 
+  // A few options have local flags for kOptFlagInsecure.
+  uint32_t wo_wrap_flags;               // flags for 'wrap'
+#define w_p_wrap_flags w_onebuf_opt.wo_wrap_flags
+  uint32_t wo_stl_flags;                // flags for 'statusline'
+#define w_p_stl_flags w_onebuf_opt.wo_stl_flags
+  uint32_t wo_wbr_flags;                // flags for 'winbar'
+#define w_p_wbr_flags w_onebuf_opt.wo_wbr_flags
+  uint32_t wo_fde_flags;                // flags for 'foldexpr'
+#define w_p_fde_flags w_onebuf_opt.wo_fde_flags
+  uint32_t wo_fdt_flags;                // flags for 'foldtext'
+#define w_p_fdt_flags w_onebuf_opt.wo_fdt_flags
+
   sctx_T wo_script_ctx[kWinOptCount];  // SCTXs for window-local options
 #define w_p_script_ctx w_onebuf_opt.wo_script_ctx
 } winopt_T;
@@ -514,6 +526,7 @@ struct file_buffer {
 
   sctx_T b_p_script_ctx[kBufOptCount];  // SCTXs for buffer-local options
 
+  int b_p_ac;                   ///< 'autocomplete'
   int b_p_ai;                   ///< 'autoindent'
   int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode
   char *b_p_bkc;                ///< 'backupco
@@ -1064,6 +1077,7 @@ typedef struct {
   schar_T foldopen;    ///< when fold is open
   schar_T foldclosed;  ///< when fold is closed
   schar_T foldsep;     ///< continuous fold marker
+  schar_T foldinner;
   schar_T diff;
   schar_T msgsep;
   schar_T eob;
@@ -1281,6 +1295,7 @@ struct window_S {
   int w_stl_recording;               // reg_recording when last redrawn
   int w_stl_state;                   // get_real_state() when last redrawn
   int w_stl_visual_mode;             // VIsual_mode when last redrawn
+  pos_T w_stl_visual_pos;            // VIsual when last redrawn
 
   int w_alt_fnum;                   // alternate file (for # and CTRL-^)
 
@@ -1301,11 +1316,6 @@ struct window_S {
   // transform a pointer to a "onebuf" option into a "allbuf" option
 #define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
-  // A few options have local flags for kOptFlagInsecure.
-  uint32_t w_p_stl_flags;           // flags for 'statusline'
-  uint32_t w_p_wbr_flags;           // flags for 'winbar'
-  uint32_t w_p_fde_flags;           // flags for 'foldexpr'
-  uint32_t w_p_fdt_flags;           // flags for 'foldtext'
   int *w_p_cc_cols;                 // array of columns to highlight or NULL
   uint8_t w_p_culopt_flags;         // flags for cursorline highlighting
 

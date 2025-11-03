@@ -46,6 +46,8 @@ pub fn build(b: *std.Build) !void {
     // without cross_compiling we like to reuse libluv etc at the same optimize level
     const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
 
+    const use_unibilium = b.option(bool, "unibilium", "use unibilium") orelse true;
+
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
 
@@ -92,7 +94,7 @@ pub fn build(b: *std.Build) !void {
     } else libluv;
 
     const utf8proc = b.dependency("utf8proc", .{ .target = target, .optimize = optimize });
-    const unibilium = b.dependency("unibilium", .{ .target = target, .optimize = optimize });
+    const unibilium = if (use_unibilium) b.lazyDependency("unibilium", .{ .target = target, .optimize = optimize }) else null;
     // TODO(bfredl): fix upstream bugs with UBSAN
     const treesitter = b.dependency("treesitter", .{ .target = target, .optimize = .ReleaseFast });
 
@@ -250,7 +252,7 @@ pub fn build(b: *std.Build) !void {
         libuv.getEmittedIncludeTree(),
         libluv.getEmittedIncludeTree(),
         utf8proc.artifact("utf8proc").getEmittedIncludeTree(),
-        unibilium.artifact("unibilium").getEmittedIncludeTree(),
+        if (unibilium) |u| u.artifact("unibilium").getEmittedIncludeTree() else b.path("UNUSED_PATH/"), // :p
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
         if (iconv) |dep| dep.artifact("iconv").getEmittedIncludeTree() else b.path("UNUSED_PATH/"),
     };
@@ -279,7 +281,7 @@ pub fn build(b: *std.Build) !void {
     nvim_exe.linkLibrary(libluv);
     if (iconv) |dep| nvim_exe.linkLibrary(dep.artifact("iconv"));
     nvim_exe.linkLibrary(utf8proc.artifact("utf8proc"));
-    nvim_exe.linkLibrary(unibilium.artifact("unibilium"));
+    if (unibilium) |u| nvim_exe.linkLibrary(u.artifact("unibilium"));
     nvim_exe.linkLibrary(treesitter.artifact("tree-sitter"));
     if (is_windows) {
         nvim_exe.linkSystemLibrary("netapi32");
@@ -317,6 +319,7 @@ pub fn build(b: *std.Build) !void {
         if (is_windows) "-DMSWIN" else "",
         if (is_windows) "-DWIN32_LEAN_AND_MEAN" else "",
         if (is_windows) "-DUTF8PROC_STATIC" else "",
+        if (use_unibilium) "-DHAVE_UNIBILIUM" else "",
     };
     nvim_exe.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
 

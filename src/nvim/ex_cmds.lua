@@ -3187,7 +3187,7 @@ M.cmds = {
   },
   {
     command = 'wall',
-    flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK),
+    flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK, ARGOPT),
     addr_type = 'ADDR_NONE',
     func = 'do_wqall',
   },

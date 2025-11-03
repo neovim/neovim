@@ -26,6 +26,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -1992,14 +1993,19 @@ static char *do_source_buffer_init(source_cookie_T *sp, const exarg_T *eap, bool
     return NULL;
   }
 
-  if (ex_lua) {
-    // Use ":{range}lua buffer=<num>" as the script name
-    snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+  char *fname;
+  if (curbuf->b_ffname != NULL) {
+    fname = xstrdup(curbuf->b_ffname);
   } else {
-    // Use ":source buffer=<num>" as the script name
-    snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+    if (ex_lua) {
+      // Use ":{range}lua buffer=<num>" as the script name
+      snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+    } else {
+      // Use ":source buffer=<num>" as the script name
+      snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+    }
+    fname = xstrdup(IObuff);
   }
-  char *fname = xstrdup(IObuff);
 
   ga_init(&sp->buflines, sizeof(char *), 100);
   // Copy the lines from the buffer into a grow array

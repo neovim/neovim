@@ -75,7 +75,7 @@
 #include "nvim/digraph.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/fold_defs.h"
@@ -111,6 +111,7 @@
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/syntax_defs.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -657,7 +658,8 @@ int update_screen(void)
     win_grid_alloc(wp);
 
     if (wp->w_redr_border || wp->w_redr_type >= UPD_NOT_VALID) {
-      win_redr_border(wp);
+      grid_draw_border(&wp->w_grid_alloc, &wp->w_config, wp->w_border_adj, (int)wp->w_p_winbl,
+                       wp->w_ns_hl_attr);
     }
 
     if (wp->w_redr_type != 0) {
@@ -743,112 +745,6 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_redr_bordertext(win_T *wp, VirtText vt, int col, BorderTextType bt)
-{
-  for (size_t i = 0; i < kv_size(vt);) {
-    int attr = -1;
-    char *text = next_virt_text_chunk(vt, &i, &attr);
-    if (text == NULL) {
-      break;
-    }
-    if (attr == -1) {  // No highlight specified.
-      attr = wp->w_ns_hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
-    }
-    attr = hl_apply_winblend(wp, attr);
-    col += grid_line_puts(col, text, -1, attr);
-  }
-}
-
-int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
-{
-  switch (align) {
-  case kAlignLeft:
-    return 1;
-  case kAlignCenter:
-    return MAX((total_col - text_width) / 2 + 1, 1);
-  case kAlignRight:
-    return MAX(total_col - text_width + 1, 1);
-  }
-  UNREACHABLE;
-}
-
-static void win_redr_border(win_T *wp)
-{
-  wp->w_redr_border = false;
-  if (!(wp->w_floating && wp->w_config.border)) {
-    return;
-  }
-
-  ScreenGrid *grid = &wp->w_grid_alloc;
-
-  schar_T chars[8];
-  for (int i = 0; i < 8; i++) {
-    chars[i] = schar_from_str(wp->w_config.border_chars[i]);
-  }
-  int *attrs = wp->w_config.border_attr;
-
-  int *adj = wp->w_border_adj;
-  int irow = wp->w_view_height + wp->w_winbar_height;
-  int icol = wp->w_view_width;
-
-  if (adj[0]) {
-    screengrid_line_start(grid, 0, 0);
-    if (adj[3]) {
-      grid_line_put_schar(0, chars[0], attrs[0]);
-    }
-
-    for (int i = 0; i < icol; i++) {
-      grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
-    }
-
-    if (wp->w_config.title) {
-      int title_col = win_get_bordertext_col(icol, wp->w_config.title_width,
-                                             wp->w_config.title_pos);
-      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col, kBorderTextTitle);
-    }
-    if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
-    }
-    grid_line_flush();
-  }
-
-  for (int i = 0; i < irow; i++) {
-    if (adj[3]) {
-      screengrid_line_start(grid, i + adj[0], 0);
-      grid_line_put_schar(0, chars[7], attrs[7]);
-      grid_line_flush();
-    }
-    if (adj[1]) {
-      int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
-      screengrid_line_start(grid, i + adj[0], 0);
-      grid_line_put_schar(icol + adj[3], chars[ic], attrs[ic]);
-      grid_line_flush();
-    }
-  }
-
-  if (adj[2]) {
-    screengrid_line_start(grid, irow + adj[0], 0);
-    if (adj[3]) {
-      grid_line_put_schar(0, chars[6], attrs[6]);
-    }
-
-    for (int i = 0; i < icol; i++) {
-      int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
-      grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
-    }
-
-    if (wp->w_config.footer) {
-      int footer_col = win_get_bordertext_col(icol, wp->w_config.footer_width,
-                                              wp->w_config.footer_pos);
-      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col, kBorderTextFooter);
-    }
-    if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
-    }
-    grid_line_flush();
-  }
-}
-
 /// Set cursor to its position in the current window.
 void setcursor(void)
 {
@@ -914,7 +810,10 @@ void show_cursor_info_later(bool force)
       || empty_line != curwin->w_stl_empty
       || reg_recording != curwin->w_stl_recording
       || state != curwin->w_stl_state
-      || (VIsual_active && VIsual_mode != curwin->w_stl_visual_mode)) {
+      || (VIsual_active && (VIsual_mode != curwin->w_stl_visual_mode
+                            || VIsual.lnum != curwin->w_stl_visual_pos.lnum
+                            || VIsual.col != curwin->w_stl_visual_pos.col
+                            || VIsual.coladd != curwin->w_stl_visual_pos.coladd))) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
     } else {
@@ -938,6 +837,7 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_state = state;
   if (VIsual_active) {
     curwin->w_stl_visual_mode = VIsual_mode;
+    curwin->w_stl_visual_pos = VIsual;
   }
 }
 
@@ -1848,10 +1748,8 @@ static void win_update(win_T *wp)
           // Correct the first entry for filler lines at the top
           // when it won't get updated below.
           if (win_may_fill(wp) && bot_start > 0) {
-            int n = plines_win_nofill(wp, wp->w_topline, false) + wp->w_topfill
-                    - adjust_plines_for_skipcol(wp);
-            n = MIN(n, wp->w_view_height);
-            wp->w_lines[0].wl_size = (uint16_t)n;
+            wp->w_lines[0].wl_size
+              = (uint16_t)plines_correct_topline(wp, wp->w_topline, NULL, true, NULL);
           }
         }
       }
@@ -2137,12 +2035,11 @@ static void win_update(win_T *wp)
       // When at start of changed lines: May scroll following lines
       // up or down to minimize redrawing.
       // Don't do this when the change continues until the end.
-      // Don't scroll when dollar_vcol >= 0, keep the "$".
       // Don't scroll when redrawing the top, scrolled already above.
       if (lnum == mod_top
           && mod_bot != MAXLNUM
-          && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)
           && row >= top_end) {
+        int old_cline_height = 0;
         int old_rows = 0;
         linenr_T l;
         int i;
@@ -2156,6 +2053,9 @@ static void win_update(win_T *wp)
           if (wp->w_lines[i].wl_valid
               && wp->w_lines[i].wl_lnum == mod_bot) {
             break;
+          }
+          if (wp->w_lines[i].wl_lnum == wp->w_cursor.lnum) {
+            old_cline_height = wp->w_lines[i].wl_size;
           }
           old_rows += wp->w_lines[i].wl_size;
           if (wp->w_lines[i].wl_valid
@@ -2183,10 +2083,17 @@ static void win_update(win_T *wp)
           // rows, and may insert/delete lines
           int j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            int n = (l == wp->w_topline ? -adjust_plines_for_skipcol(wp) : 0);
-            n += plines_win_full(wp, l, &l, NULL, true, false);
-            new_rows += MIN(n, wp->w_view_height);
-            j += n > 0;  // don't count concealed lines
+            if (dollar_vcol >= 0 && wp == curwin
+                && old_cline_height > 0 && l == wp->w_cursor.lnum) {
+              // When dollar_vcol >= 0, cursor line isn't fully
+              // redrawn, and its height remains unchanged.
+              new_rows += old_cline_height;
+              j++;
+            } else {
+              int n = plines_correct_topline(wp, l, &l, true, NULL);
+              new_rows += n;
+              j += n > 0;  // don't count concealed lines
+            }
             if (new_rows > wp->w_view_height - row - 2) {
               // it's getting too much, must redraw the rest
               new_rows = 9999;
@@ -2321,15 +2228,17 @@ static void win_update(win_T *wp)
       wp->w_lines[idx].wl_lnum = lnum;
       wp->w_lines[idx].wl_valid = true;
 
+      bool is_curline = wp == curwin && lnum == wp->w_cursor.lnum;
+
       if (row > wp->w_view_height) {         // past end of grid
         // we may need the size of that too long line later on
-        if (dollar_vcol == -1) {
+        if (dollar_vcol == -1 || !is_curline) {
           wp->w_lines[idx].wl_size = (uint16_t)plines_win(wp, lnum, true);
         }
         idx++;
         break;
       }
-      if (dollar_vcol == -1) {
+      if (dollar_vcol == -1 || !is_curline) {
         wp->w_lines[idx].wl_size = (uint16_t)(row - srow);
       }
       lnum = wp->w_lines[idx++].wl_lastlnum + 1;
@@ -2446,7 +2355,7 @@ redr_statuscol:
           goto redr_statuscol;
         }
       }
-    } else if (dollar_vcol == -1) {
+    } else if (dollar_vcol == -1 || wp != curwin) {
       wp->w_botline = lnum;
     }
 
@@ -2488,7 +2397,7 @@ redr_statuscol:
                         kv_A(win_extmark_arr, n).win_row, kv_A(win_extmark_arr, n).win_col);
   }
 
-  if (dollar_vcol == -1) {
+  if (dollar_vcol == -1 || wp != curwin) {
     // There is a trick with w_botline.  If we invalidate it on each
     // change that might modify it, this will cause a lot of expensive
     // calls to plines_win() in update_topline() each time.  Therefore the

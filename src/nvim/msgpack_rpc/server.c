@@ -6,7 +6,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/channel.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/socket.h"
 #include "nvim/garray.h"
@@ -19,6 +19,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/stdpaths_defs.h"
+#include "nvim/path.h"
 #include "nvim/types_defs.h"
 
 #define MAX_CONNECTIONS 32
@@ -134,16 +135,21 @@ char *server_address_new(const char *name)
   return xstrdup(fmt);
 }
 
-/// Check if this instance owns a pipe address.
-/// The argument must already be resolved to an absolute path!
-bool server_owns_pipe_address(const char *path)
+/// Check if this instance owns a pipe address (loopback).
+bool server_owns_pipe_address(const char *address)
 {
+  bool result = false;
+  char *path = fix_fname(address);
   for (int i = 0; i < watchers.ga_len; i++) {
-    if (!strcmp(path, ((SocketWatcher **)watchers.ga_data)[i]->addr)) {
-      return true;
+    char *addr = fix_fname(((SocketWatcher **)watchers.ga_data)[i]->addr);
+    result = strequal(path, addr);
+    xfree(addr);
+    if (result) {
+      break;
     }
   }
-  return false;
+  xfree(path);
+  return result;
 }
 
 /// Starts listening for RPC calls.

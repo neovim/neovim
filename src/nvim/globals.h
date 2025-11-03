@@ -178,10 +178,6 @@ EXTERN long emsg_assert_fails_lnum INIT( = 0);
 EXTERN char *emsg_assert_fails_context INIT( = NULL);
 
 EXTERN bool did_endif INIT( = false);        // just had ":endif"
-EXTERN dict_T vimvardict;                   // Dict with v: variables
-EXTERN dict_T globvardict;                  // Dict with g: variables
-/// g: value
-#define globvarht globvardict.dv_hashtab
 EXTERN int did_emsg;                        // incremented by emsg() when a
                                             // message is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
@@ -728,7 +724,6 @@ EXTERN int wild_menu_showing INIT( = 0);
 enum {
   WM_SHOWN = 1,     ///< wildmenu showing
   WM_SCROLLED = 2,  ///< wildmenu showing with scroll
-  WM_LIST = 3,      ///< cmdline CTRL-D
 };
 
 // When a window has a local directory, the absolute path of the global

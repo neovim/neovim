@@ -424,6 +424,36 @@ describe("'wildmenu'", function()
     ]])
   end)
 
+  it("<C-D> doesn't make statuslines disappear with 'nowildmenu' #36053", function()
+    screen:try_resize(60, 10)
+    command('set laststatus=2 nowildmenu')
+    feed(':sign <C-D>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {3:                                                            }|
+      :sign                                                       |
+      define    jump      list      place     undefine  unplace   |
+      :sign ^                                                      |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*7
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]])
+    command('mode')
+    screen:expect_unchanged()
+    feed('ifoobar<Esc>')
+    screen:expect([[
+      fooba^r                                                      |
+      {1:~                                                           }|*7
+      {3:[No Name] [+]                                               }|
+                                                                  |
+    ]])
+  end)
+
   it('works with c_CTRL_Z standard mapping', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Yellow1, foreground = Screen.colors.Black },

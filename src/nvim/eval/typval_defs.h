@@ -53,7 +53,7 @@ typedef struct dictvar_S dict_T;
 typedef struct partial_S partial_T;
 typedef struct blobvar_S blob_T;
 
-typedef struct ufunc ufunc_T;
+typedef struct ufunc_S ufunc_T;
 
 typedef enum {
   kCallbackNone = 0,
@@ -321,7 +321,7 @@ struct funccall_S {
 };
 
 /// Structure to hold info for a user function.
-struct ufunc {
+struct ufunc_S {
   int uf_varargs;       ///< variable nr of arguments
   int uf_flags;
   int uf_calls;         ///< nr of active calls

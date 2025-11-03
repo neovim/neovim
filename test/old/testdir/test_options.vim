@@ -2903,4 +2903,16 @@ func Test_set_missing_options()
   set w9600=23
 endfunc
 
+func Test_showcmd()
+  throw 'Skipped: Nvim does not support support Vi-compatible mode'
+  " in no-cp mode, 'showcmd' is enabled
+  let _cp=&cp
+  call assert_equal(1, &showcmd)
+  set cp
+  call assert_equal(0, &showcmd)
+  set nocp
+  call assert_equal(1, &showcmd)
+  let &cp = _cp
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

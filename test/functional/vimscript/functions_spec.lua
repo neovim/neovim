@@ -16,6 +16,5 @@ local is_os = t.is_os
 before_each(clear)
 
 it('windowsversion()', function()
-  clear()
   matches(is_os('win') and '^%d+%.%d+$' or '^$', eval('windowsversion()'))
 end)

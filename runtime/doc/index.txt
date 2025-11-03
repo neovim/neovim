@@ -19,7 +19,7 @@ For a list of Vim variables see |vim-variable|.
 ==============================================================================
 1. Insert mode						*insert-index*
 
-tag		char		action in Insert mode	~
+Tag		Char		Insert-mode action	~
 ------------------------------------------------------------------------------ ~
 |i_CTRL-@|	CTRL-@		insert previously inserted text and stop
 				insert
@@ -182,7 +182,7 @@ SECTION	 a section that possibly starts with '}' instead of '{'
 
 note: 1 = cursor movement command; 2 = can be undone/redone
 
-tag		char	      note action in Normal mode	~
+Tag		Char	      Note Normal-mode action	~
 ------------------------------------------------------------------------------ ~
 		CTRL-@		   not used
 |CTRL-A|	CTRL-A		2  add N to number at/after cursor
@@ -471,7 +471,7 @@ tag		char	      note action in Normal mode	~
 
 These can be used after an operator or in Visual mode to select an object.
 
-tag		command		   action in op-pending and Visual mode	~
+Tag		Command		   Op-pending and Visual-mode action	~
 ------------------------------------------------------------------------------ ~
 |v_aquote|	a"		   double quoted string
 |v_a'|		a'		   single quoted string
@@ -513,7 +513,7 @@ tag		command		   action in op-pending and Visual mode	~
 ==============================================================================
 2.2 Window commands						*CTRL-W*
 
-tag		command		   action in Normal mode	~
+Tag		Command		   Normal-mode action	~
 ------------------------------------------------------------------------------ ~
 |CTRL-W_CTRL-B|	CTRL-W CTRL-B	   same as "CTRL-W b"
 |CTRL-W_CTRL-C|	CTRL-W CTRL-C	   no-op
@@ -611,7 +611,7 @@ tag		command		   action in Normal mode	~
 ==============================================================================
 2.3 Square bracket commands					*[* *]*
 
-tag		char	      note action in Normal mode	~
+Tag		Char	      Note Normal-mode action	~
 ------------------------------------------------------------------------------ ~
 |[_CTRL-D|	[ CTRL-D	   jump to first #define found in current and
 				   included files matching the word under the
@@ -701,7 +701,7 @@ tag		char	      note action in Normal mode	~
 ==============================================================================
 2.4 Commands starting with 'g'						*g*
 
-tag		char	      note action in Normal mode	~
+Tag		Char	      Note Normal-mode action	~
 ------------------------------------------------------------------------------ ~
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
 				   position
@@ -791,7 +791,8 @@ tag		char	      note action in Normal mode	~
 |g@|		g@{motion}	   call 'operatorfunc'
 |g~|		g~{motion}	2  swap case for Nmove text
 |g<Down>|	g<Down>		1  same as "gj"
-|g<End>|	g<End>		1  same as "g$"
+|g<End>|	g<End>		1  same as "g$" but go to the rightmost
+				   non-blank character instead
 |g<Home>|	g<Home>		1  same as "g0"
 |g<LeftMouse>|	g<LeftMouse>	   same as <C-LeftMouse>
 		g<MiddleMouse>	   same as <C-MiddleMouse>
@@ -802,7 +803,7 @@ tag		char	      note action in Normal mode	~
 ==============================================================================
 2.5 Commands starting with 'z'						*z*
 
-tag		char	      note action in Normal mode	~
+Tag		Char	      Note Normal-mode action	~
 ------------------------------------------------------------------------------ ~
 |z<CR>|		z<CR>		   redraw, cursor line to top of window,
 				   cursor on first non-blank
@@ -876,7 +877,7 @@ tag		char	      note action in Normal mode	~
 
 These can be used after an operator, but before a {motion} has been entered.
 
-tag		char		action in Operator-pending mode	~
+Tag		Char		Operator-pending-mode action	~
 ------------------------------------------------------------------------------ ~
 |o_v|		v		force operator to work charwise
 |o_V|		V		force operator to work linewise
@@ -888,7 +889,7 @@ tag		char		action in Operator-pending mode	~
 Most commands in Visual mode are the same as in Normal mode.  The ones listed
 here are those that are different.
 
-tag		command	      note action in Visual mode	~
+Tag		Command	      Note Visual-mode action	~
 ------------------------------------------------------------------------------ ~
 |v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   stop Visual mode
 |v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   go to Normal mode
@@ -1007,7 +1008,7 @@ Normal characters are inserted at the current cursor position.
 "Completion" below refers to context-sensitive completion.  It will complete
 file names, tags, commands etc. as appropriate.
 
-tag		command		action in Command-line editing mode	~
+Tag		Command		Command-line editing-mode action	~
 ------------------------------------------------------------------------------ ~
 		CTRL-@		not used
 |c_CTRL-A|	CTRL-A		do completion on the pattern in front of the
@@ -1131,7 +1132,7 @@ This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].
 The commands are sorted on the non-optional part of their name.
 
-tag		command		action ~
+Tag		Command		Action ~
 ------------------------------------------------------------------------------ ~
 |:|		:		nothing
 |:range|	:{range}	go to last line in {range}

@@ -4,6 +4,9 @@ Contributing to Neovim
 Getting started
 ---------------
 
+If you are new to the codebase, read [:help dev-quickstart](https://neovim.io/doc/user/dev_tools.html#dev-quickstart)
+to see how to run tests and start hacking on the codebase.
+
 If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
@@ -11,9 +14,9 @@ low-risk/isolated tasks:
 - Fix bugs found by [Coverity](#coverity).
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
-    - Vimscript and documentation files are (mostly) maintained by [Vim], not Nvim.
+    - *Vimscript* files are (mostly) maintained by [Vim], not Nvim.
+    - *Lua* files are maintained by *Nvim*.
     - Nvim's [filetype detection](https://github.com/neovim/neovim/blob/master/runtime/lua/vim/filetype.lua) behavior matches Vim, so changes to filetype detection should be submitted to [Vim] first.
-    - Lua files are maintained by Nvim.
 
 Reporting problems
 ------------------
@@ -33,9 +36,10 @@ Reporting problems
 Developer guidelines
 --------------------
 
-- Read [:help dev](https://neovim.io/doc/user/develop.html#dev) and [:help dev-doc][dev-doc-guide] if you are working on Nvim core.
-- Read [:help dev-ui](https://neovim.io/doc/user/develop.html#dev-ui) if you are developing a UI.
-- Read [:help dev-api-client](https://neovim.io/doc/user/develop.html#dev-api-client) if you are developing an API client.
+- Read [:help dev-quickstart](https://neovim.io/doc/user/dev_tools.html#dev-quickstart) to see how to run tests and start hacking on the codebase.
+- Read [:help dev](https://neovim.io/doc/user/dev.html#dev) and [:help dev-doc][dev-doc-guide] if you are working on Nvim core.
+- Read [:help dev-ui](https://neovim.io/doc/user/dev.html#dev-ui) if you are developing a UI.
+- Read [:help dev-api-client](https://neovim.io/doc/user/dev.html#dev-api-client) if you are developing an API client.
 - Install `ninja` for faster builds of Nvim.
   ```bash
   sudo apt-get install ninja-build
@@ -353,8 +357,8 @@ as context, use the `-W` argument as well.
 [Merge a Vim patch]: https://neovim.io/doc/user/dev_vimpatch.html
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [conventional_commits]: https://www.conventionalcommits.org
-[dev-doc-guide]: https://neovim.io/doc/user/develop.html#dev-doc
-[dev-lua-doc]: https://neovim.io/doc/user/develop.html#dev-lua-doc
+[dev-doc-guide]: https://neovim.io/doc/user/dev.html#dev-doc
+[dev-lua-doc]: https://neovim.io/doc/user/dev.html#dev-lua-doc
 [LuaLS]: https://luals.github.io/wiki/annotations/
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/

@@ -98,10 +98,10 @@ end
 --- Example:
 --- ```lua
 --- local obj = vim.system({'sleep', '10'})
---- obj:kill('TERM') -- sends SIGTERM to the process
+--- obj:kill('sigterm') -- sends SIGTERM to the process
 --- ```
 ---
---- @param signal integer|string Signal to send to the process.
+--- @param signal integer|string Signal to send to the process. See |luv-constants|.
 function SystemObj:kill(signal)
   self._state.handle:kill(signal)
 end

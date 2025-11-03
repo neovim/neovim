@@ -97,6 +97,28 @@ describe('jobs', function()
     command("call jobstart(['cat', '-'], { 'term': v:false })")
   end)
 
+  it('jobstart(term=true) accepts width/height (#33904)', function()
+    local buf = api.nvim_create_buf(false, true)
+    exec_lua(function()
+      vim.api.nvim_buf_call(buf, function()
+        vim.fn.jobstart({
+          vim.v.progpath,
+          '--clean',
+          '--headless',
+          '+lua print(vim.uv.new_tty(1, false):get_winsize())',
+        }, {
+          term = true,
+          width = 11,
+          height = 12,
+          env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
+        })
+      end)
+    end)
+    retry(nil, nil, function()
+      eq({ '11 12' }, api.nvim_buf_get_lines(buf, 0, 1, false))
+    end)
+  end)
+
   it('must specify env option as a dict', function()
     command('let g:job_opts.env = v:true')
     local _, err = pcall(function()

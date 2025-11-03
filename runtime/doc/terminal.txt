@@ -336,7 +336,7 @@ You should now have three windows:
 Put focus on the gdb window and type: >
 	break ex_help
 	run
-Vim will start running in the program window. Put focus there and type: >vim
+Vim will start running in the program window.  Put focus there and type: >vim
 	:help gui
 Gdb will run into the ex_help breakpoint.  The source window now shows the
 ex_cmds.c file.  A red "1 " marker will appear in the signcolumn where the
@@ -458,7 +458,7 @@ Other commands ~
  *:Asm*	     jump to the window with the disassembly, create it if there
 	     isn't one
  *:Var*	     jump to the window with the local and argument variables,
-	     create it if there isn't one. This window updates whenever the
+	     create it if there isn't one.  This window updates whenever the
 	     program is stopped
 
 Events ~
@@ -658,10 +658,10 @@ If there is no g:termdebug_config you can use: >vim
 Change default signs ~
 							*termdebug_signs*
 Termdebug uses the hex number of the breakpoint ID in the signcolumn to
-represent breakpoints. If it is greater than "0xFF", then it will be displayed
-as "F+", due to we really only have two screen cells for the sign.
-You may also use decimal breakpoint signs instead, in which case IDs greater
-than 99 will be displayed as "9+".
+represent breakpoints.  If it is greater than "0xFF", then it will be
+displayed as "F+", because there are only two screen cells available for the
+sign.  You may also use decimal breakpoint signs instead, in which case IDs
+greater than 99 will be displayed as "9+".
 
 If you want to customize the breakpoint signs to show `>>` in the signcolumn: >vim
 	let g:termdebug_config['sign'] = '>>'

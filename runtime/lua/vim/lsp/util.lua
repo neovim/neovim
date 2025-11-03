@@ -128,7 +128,7 @@ end
 ---@param new_lines string[] list of strings to replace the original
 ---@return string[] The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
-  vim.deprecate('vim.lsp.util.set_lines()', 'nil', '0.12')
+  vim.deprecate('vim.lsp.util.set_lines()', nil, '0.12')
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
   -- If it extends past the end, truncate it to the end. This is because the
@@ -1760,6 +1760,7 @@ function M.open_floating_preview(contents, syntax, opts)
 
   vim.wo[floating_winnr].foldenable = false -- Disable folding.
   vim.wo[floating_winnr].wrap = opts.wrap -- Soft wrapping.
+  vim.wo[floating_winnr].linebreak = true -- Break lines a bit nicer
   vim.wo[floating_winnr].breakindent = true -- Slightly better list presentation.
   vim.wo[floating_winnr].smoothscroll = true -- Scroll by screen-line instead of buffer-line.
 
@@ -2007,7 +2008,7 @@ end
 ---@param lines string[] list of lines
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
-  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
+  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', nil, '0.12')
   local language_id = assert(lines[1]):match('^```(.*)')
   if language_id then
     local has_inner_code_fence = false

@@ -74,10 +74,8 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
 - 'path' defaults to ".,,". The C ftplugin adds "/usr/include" if it exists.
-- 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
 - 'shortmess' includes "CF", excludes "S"
-- 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
 - 'spellfile' defaults to `stdpath("data").."/site/spell/"`
@@ -150,27 +148,24 @@ you never want any default mappings, call |:mapclear| early in your config.
 - * |v_star-default|
 - gc |gc-default| |v_gc-default| |o_gc-default|
 - gcc |gcc-default|
-- gr prefix |gr-default|
-  - |grn|
-  - |grr|
-  - |gra|
-  - |gri|
-  - |grt|
-  - |gO|
-- <C-S> |i_CTRL-S|
+- |gO|
 - ]d |]d-default|
 - [d |[d-default|
 - [D |[D-default|
 - ]D |]D-default|
 - <C-W>d |CTRL-W_d-default|
-- |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q|
-- |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L|
-- |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
-- |[a|, |]a|, |[A|, |]A|
-- |[b|, |]b|, |[B|, |]B|
-- |[<Space>|, |]<Space>|
-- Nvim LSP client defaults |lsp-defaults|
+- |[q| |]q| |[Q| |]Q| |[CTRL-Q| |]CTRL-Q|
+- |[l| |]l| |[L| |]L| |[CTRL-L| |]CTRL-L|
+- |[t| |]t| |[T| |]T| |[CTRL-T| |]CTRL-T|
+- |[a| |]a| |[A| |]A|
+- |[b| |]b| |[B| |]B|
+- |[<Space>| |]<Space>|
+- LSP defaults |lsp-defaults|
   - K |K-lsp-default|
+  - |v_an| |v_in|
+  - gr prefix |gr-default|
+    - |gra| |gri| |grn| |grr| |grt|
+  - <C-S> |i_CTRL-S|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
@@ -205,16 +200,20 @@ nvim.terminal:
     - |[[| and |]]| to navigate between shell prompts
 
 nvim.cmdwin:
-- CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
+- |CmdwinEnter|: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
 nvim.swapfile:
-- SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
+- |SwapExists|: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
 
 nvim.exrc:
-- VimEnter: Extend 'exrc' to also search for project-local configuration files
+- |VimEnter|: Extend 'exrc' to also search for project-local configuration files
   in all parent directories.
+
+nvim.progress:
+- |Progress|: Display native progress bars in the TUI using the OSC 9;4 escape
+  sequence.
 
 ==============================================================================
 New Features                                                   *nvim-features*
@@ -313,6 +312,7 @@ Commands:
 - |:trust|
 - User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
+- |:update| command writes new file buffers even when unmodified.
 
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
@@ -473,8 +473,9 @@ TUI:
   - Note: If you want to detect when Nvim is running in a terminal, use
     `has('gui_running')` |has()| or see |nvim_list_uis()| for an example of
     how to inspect the UI channel.
-- "builtin_x" means one of the |builtin-terms| was chosen, because the expected
-  terminfo file was not found on the system.
+- Nvim might optionally be compiled with unibilium, in which case the terminfo
+  database will be used. Otherwise, or if the terminal was not found in
+  the database, a table of builtin terminal definitions will be used.
 - Nvim will use 256-colour capability on Linux virtual terminals.  Vim uses
   only 8 colours plus bright foreground on Linux VTs.
 - Vim combines what is in its |builtin-terms| with what it reads from terminfo,
@@ -868,9 +869,10 @@ Plugins:
 - logiPat
 - rrhelper
 - *vimball*
+- shellmenu
 - macmap.vim
 - tools/check_colors.vim
-- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+- macros/{justify,matchit,swapmous}.vim: use `packadd! justify` etc.
   directly
 - HelpToc: Use |gO| instead.
 

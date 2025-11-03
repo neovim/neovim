@@ -2,6 +2,7 @@
 -- Busted started doing this to help provide more isolation.  See issue #62
 -- for more information about this.
 local t = require('test.testutil')
+require('test.functional.testnvim')()
 require('test.functional.ui.screen')
 
 local has_ffi, ffi = pcall(require, 'ffi')

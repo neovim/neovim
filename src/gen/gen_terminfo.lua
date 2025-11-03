@@ -1,0 +1,275 @@
+-- usage: nvim -ll src/gen/gen_terminfo.lua
+--
+-- This script does:
+--
+--   1. Download Dickey's terminfo.src
+--   2. Compile temporary terminfo database from terminfo.src
+--   3. Use database to generate src/nvim/tui/terminfo_defs.h
+
+local url = 'https://invisible-island.net/datafiles/current/terminfo.src.gz'
+local target_gen = 'src/nvim/tui/terminfo_builtin.h'
+local target_enum = 'src/nvim/tui/terminfo_enum_defs.h'
+
+local entries = {
+  { 'ansi', 'ansi_terminfo' },
+  { 'interix', 'interix_8colour_terminfo' },
+  { 'iterm2', 'iterm_256colour_terminfo' },
+  { 'linux', 'linux_16colour_terminfo' },
+  { 'putty-256color', 'putty_256colour_terminfo' },
+  { 'rxvt-256color', 'rxvt_256colour_terminfo' },
+  { 'screen-256color', 'screen_256colour_terminfo' },
+  { 'st-256color', 'st_256colour_terminfo' },
+  { 'tmux-256color', 'tmux_256colour_terminfo' },
+  { 'vte-256color', 'vte_256colour_terminfo' },
+  { 'xterm-256color', 'xterm_256colour_terminfo' },
+  { 'cygwin', 'cygwin_terminfo' },
+  { 'win32con', 'win32con_terminfo' },
+  { 'conemu', 'conemu_terminfo' },
+  { 'vtpcon', 'vtpcon_terminfo' },
+}
+
+local wanted_numbers = { 'max_colors', 'lines', 'columns' }
+local wanted_strings = {
+  'carriage_return',
+  'change_scroll_region',
+  'clear_screen',
+  'clr_eol',
+  'clr_eos',
+  'cursor_address',
+  'cursor_down',
+  'cursor_invisible',
+  'cursor_left',
+  'cursor_home',
+  'cursor_normal',
+  'cursor_up',
+  'cursor_right',
+  'delete_line',
+  'enter_bold_mode',
+  'enter_ca_mode',
+  'enter_italics_mode',
+  'enter_reverse_mode',
+  'enter_standout_mode',
+  'enter_underline_mode',
+  'erase_chars',
+  'exit_attribute_mode',
+  'exit_ca_mode',
+  'from_status_line',
+  'insert_line',
+  'keypad_local',
+  'keypad_xmit',
+  'parm_delete_line',
+  'parm_down_cursor',
+  'parm_insert_line',
+  'parm_left_cursor',
+  'parm_right_cursor',
+  'parm_up_cursor',
+  'set_a_background',
+  'set_a_foreground',
+  'set_attributes',
+  'set_lr_margin',
+  'to_status_line',
+}
+
+local wanted_strings_ext = {
+  -- the following are our custom name for extensions, see "extmap"
+  { 'reset_cursor_style', 'Se' },
+  { 'set_cursor_style', 'Ss' },
+  -- terminfo describes strikethrough modes as rmxx/smxx with respect
+  -- to the ECMA-48 strikeout/crossed-out attributes.
+  { 'enter_strikethrough_mode', 'smxx' },
+  { 'set_rgb_foreground', 'setrgbf' },
+  { 'set_rgb_background', 'setrgbb' },
+  { 'set_cursor_color', 'Cs' },
+  { 'reset_cursor_color', 'Cr' },
+  { 'set_underline_style', 'Smulx' },
+}
+
+-- Note: these are only consumed by driver-ti via it's table of "funcs" keys.
+-- Second value is whether there is a "shift" variant in terminfo.
+local wanted_termkeys = {
+  { 'backspace', false },
+  { 'beg', true }, -- sometimes known as: "begin"
+  { 'btab', false },
+  { 'clear', false },
+  { 'dc', true },
+  { 'end', true },
+  { 'find', true },
+  { 'home', true },
+  { 'ic', true },
+  { 'npage', false },
+  { 'ppage', false },
+  { 'select', false },
+  { 'suspend', true },
+  { 'undo', true },
+}
+
+local db = '/tmp/nvim_terminfo'
+if vim.uv.fs_stat(db) == nil then
+  local function sys(cmd)
+    print(cmd)
+    os.execute(cmd)
+  end
+  sys('curl -O ' .. url)
+  sys('gunzip -f terminfo.src.gz')
+  sys('cat terminfo.src scripts/windows.ti | tic -x -o "' .. db .. '" -')
+  sys('rm -f terminfo.src')
+else
+  print('using cached terminfo in ' .. db)
+end
+
+local function enumify(str)
+  return 'kTerm_' .. str
+end
+local function quote(str)
+  if str == nil then
+    return 'NULL'
+  end
+  -- remungle the strings to look like C strings
+  str = string.gsub(str, '\\E', '\\033')
+  str = string.gsub(str, '%^G', '\\a')
+  str = string.gsub(str, '%^H', '\\b')
+  str = string.gsub(str, '%^O', '\\017') -- o dod
+  -- str = string.gsub(str, "\\", "\\\\")
+  str = string.gsub(str, '"', '\\"')
+  return '"' .. str .. '"'
+end
+
+local dbg = function() end
+-- dbg = print
+
+local f_enum = io.open(target_enum, 'wb')
+f_enum:write('// genenerated by src/gen/gen_terminfo.lua\n\n')
+f_enum:write('#pragma once\n\n')
+f_enum:write('typedef enum {\n')
+for _, name in ipairs(wanted_strings) do
+  f_enum:write('  ' .. enumify(name) .. ',\n')
+end
+f_enum:write('#define kTermExtOffset ' .. enumify(wanted_strings_ext[1][1]) .. '\n')
+for _, item in ipairs(wanted_strings_ext) do
+  f_enum:write('  ' .. enumify(item[1]) .. ',\n')
+end
+f_enum:write('  kTermCount,  // sentinel\n')
+f_enum:write('} TerminfoDef;\n\n')
+
+f_enum:write([[
+// TODO(bfredl): physical F-keys beyond F12 are uncommon. But terminfo
+// likes to represent chords with shift and/or ctrl and F keys as high
+// F-key numbers. The same chords can also be recognized by driver-csi.c
+// but will then be encoded as chords. We might actually prefer that but it is
+// potentially breaking change.
+]])
+local func_key_max = 63
+f_enum:write('#define kTerminfoFuncKeyMax ' .. func_key_max .. '\n')
+f_enum:write('typedef enum {\n')
+for _, item in ipairs(wanted_termkeys) do
+  f_enum:write('  kTermKey_' .. item[1] .. ',\n')
+end
+f_enum:write('  kTermKeyCount,\n')
+f_enum:write('} TerminfoKey;\n')
+f_enum:close()
+
+local f_defs = io.open(target_gen, 'wb')
+
+f_defs:write('// uncrustify:off\n\n')
+
+local version = io.popen('infocmp -V'):read '*a'
+f_defs:write('// Generated by src/gen/gen_terminfo.lua and ' .. version .. '\n')
+
+f_defs:write('#pragma once\n\n')
+f_defs:write('#include "nvim/tui/terminfo_defs.h"\n')
+
+for _, entry in ipairs(entries) do
+  local term, target = unpack(entry)
+  local fil = io.popen('infocmp -L -x -1 -A ' .. db .. ' ' .. term):read '*a'
+  local lines = vim.split(fil, '\n')
+  local prepat = '^%s*([%w_]+)'
+  local boolpat = prepat .. ','
+  local numpat = prepat .. '#([^,]+),'
+  local strpat = prepat .. '=([^,]+),'
+  local bools, nums, strs = {}, {}, {}
+  for i, line in ipairs(lines) do
+    local boolmatch = string.match(line, boolpat)
+    local nummatch, numval = string.match(line, numpat)
+    local strmatch, strval = string.match(line, strpat)
+    if boolmatch then
+      dbg('boolean: ' .. boolmatch)
+      bools[boolmatch] = true
+    elseif nummatch then
+      dbg('number: ' .. nummatch .. ' is ' .. numval)
+      nums[nummatch] = numval
+    elseif strmatch then
+      dbg('string: ' .. strmatch .. ' is ' .. strval)
+      strs[strmatch] = strval
+    else
+      dbg('UNKNOWN:', i, line)
+    end
+  end
+
+  f_defs:write('\nstatic const TerminfoEntry ' .. target .. ' = {\n')
+  f_defs:write('  .bce = ' .. tostring(bools.back_color_erase or false) .. ',\n')
+  local has_Tc_or_RGB = (bools.Tc or bools.RGB) or false
+  f_defs:write('  .has_Tc_or_RGB = ' .. tostring(has_Tc_or_RGB or false) .. ',\n')
+  f_defs:write('  .Su = ' .. tostring(bools.Su or false) .. ',\n')
+
+  for _, name in ipairs(wanted_numbers) do
+    f_defs:write('  .' .. name .. ' = ' .. (nums[name] or '-1') .. ',\n')
+  end
+  f_defs:write('  .defs = {\n')
+  for _, name in ipairs(wanted_strings) do
+    f_defs:write('    [' .. enumify(name) .. '] = ' .. quote(strs[name]) .. ',\n')
+  end
+  for _, item in ipairs(wanted_strings_ext) do
+    f_defs:write('    [' .. enumify(item[1]) .. '] = ' .. quote(strs[item[2]]) .. ',\n')
+  end
+  f_defs:write('  },\n')
+  f_defs:write('  .keys = {\n')
+  for _, item in ipairs(wanted_termkeys) do
+    local name = item[1]
+    f_defs:write(
+      '    [kTermKey_'
+        .. name
+        .. '] = {'
+        .. quote(strs['key_' .. name])
+        .. ', '
+        .. quote(strs['key_s' .. name])
+        .. '},\n'
+    )
+  end
+  f_defs:write('  },\n')
+  f_defs:write('  .f_keys = {\n')
+  if strs['key_f1'] == nil then
+    f_defs:write('    NULL,\n') -- compiler get sad if list is empty
+  else
+    f_defs:write('    // note: offset by one, f_keys[0] is F1 and so on\n')
+  end
+  for i = 1, func_key_max do
+    if strs['key_f' .. i] ~= nil then
+      f_defs:write('    [' .. i - 1 .. '] = ' .. quote(strs['key_f' .. i]) .. ',\n')
+    end
+  end
+  f_defs:write('  },\n')
+
+  f_defs:write('};\n')
+end
+
+f_defs:write('\n#define XLIST_TERMINFO_BUILTIN \\\n')
+for _, name in ipairs(wanted_strings) do
+  f_defs:write('  X(' .. name .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
+f_defs:write('#define XLIST_TERMINFO_EXT \\\n')
+for _, item in ipairs(wanted_strings_ext) do
+  f_defs:write('  X(' .. item[1] .. ', ' .. item[2] .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
+f_defs:write('#define XYLIST_TERMINFO_KEYS \\\n')
+for _, item in ipairs(wanted_termkeys) do
+  f_defs:write('  ' .. (item[2] and 'Y' or 'X') .. '(' .. item[1] .. ') \\\n')
+end
+f_defs:write('// end of list\n\n')
+f_defs:write('#define XLIST_TERMINFO_FKEYS \\\n')
+for i = 1, func_key_max do
+  f_defs:write('  X(f' .. i .. ') \\\n')
+end
+f_defs:write('// end of list\n')
+f_defs:close()

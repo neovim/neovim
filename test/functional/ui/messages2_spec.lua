@@ -1,5 +1,6 @@
 -- Tests for (protocol-driven) ui2, intended to replace the legacy message grid UI.
 
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -15,6 +16,17 @@ describe('messages2', function()
     })
     exec_lua(function()
       require('vim._extui').enable({})
+    end)
+  end)
+  after_each(function()
+    -- Since vim._extui lasts until Nvim exits, there may be unfinished timers.
+    -- Close unfinished timers to avoid 2s delay on exit with ASAN or TSAN.
+    exec_lua(function()
+      vim.uv.walk(function(handle)
+        if not handle:is_closing() then
+          handle:close()
+        end
+      end)
     end)
   end)
 
@@ -333,7 +345,23 @@ describe('messages2', function()
       99                                                                     |
       Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
     ]])
-    feed('g')
+    -- No scrolling beyond end of buffer #36114
+    feed('f')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*3
+      {3:───────────────────────────────────────────────────────────────────────}|
+      93 [+93]                                                               |
+      94                                                                     |
+      95                                                                     |
+      96                                                                     |
+      97                                                                     |
+      98                                                                     |
+      99                                                                     |
+      Type number and <Enter> or click with the mouse (q or empty cancels): f|
+      ^                                                                       |
+    ]])
+    feed('<Backspace>g')
     screen:expect(top)
   end)
 
@@ -390,5 +418,24 @@ describe('messages2', function()
       {1:~                                                    }|*12
                                                            |
     ]])
+  end)
+
+  it('FileType is fired after default options are set', function()
+    n.exec([[
+      let g:set = {}
+      au FileType pager set nowrap
+      au OptionSet * let g:set[expand('<amatch>')] = g:set->get(expand('<amatch>'), 0) + 1
+      echom 'foo'->repeat(&columns)
+      messages
+    ]])
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:─────────────────────────────────────────────────────}|
+      ^foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofo|
+      {1:                                                     }|
+                                                           |
+    ]])
+    t.eq({ filetype = 4 }, n.eval('g:set')) -- still fires for 'filetype'
   end)
 end)

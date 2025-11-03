@@ -443,6 +443,67 @@ describe('highlight', function()
     ]])
   end)
 
+  it("is updated with H/L and 'scrolloff' #36059", function()
+    local screen = Screen.new(40, 10)
+    exec([[
+      call setline(1, map(range(1, 100), "'line ' .. v:val"))
+      set scrolloff=2 nostartofline
+      call cursor(50, 1)
+    ]])
+    feed('z<CR>V')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      ^l{17:ine 50}                                 |
+      line 51                                 |
+      line 52                                 |
+      line 53                                 |
+      line 54                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+    feed('L')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      {17:line 50}                                 |
+      {17:line 51}                                 |
+      {17:line 52}                                 |
+      {17:line 53}                                 |
+      ^l{17:ine 54}                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+    feed('<Esc>V')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      line 50                                 |
+      line 51                                 |
+      line 52                                 |
+      line 53                                 |
+      ^l{17:ine 54}                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+    feed('H')
+    screen:expect([[
+      line 48                                 |
+      line 49                                 |
+      ^l{17:ine 50}                                 |
+      {17:line 51}                                 |
+      {17:line 52}                                 |
+      {17:line 53}                                 |
+      {17:line 54}                                 |
+      line 55                                 |
+      line 56                                 |
+      {5:-- VISUAL LINE --}                       |
+    ]])
+  end)
+
   it('cterm=standout gui=standout', function()
     local screen = Screen.new(20, 5)
     screen:add_extra_attr_ids {
@@ -1065,25 +1126,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       {101:  }{100:>>>}aaaaaaaaaaaa   |
                           |
     ]])
-
-    command('inoremap <F2> <Cmd>call cursor(1, 1)<CR>')
-    feed('A')
-    screen:expect([[
-      {103:0 }øøøøøøøøøøøøøøøøøø|
-      {101:  }{100:>>>}{102:øøøøøøøøøøøø^   }|
-      {101:1 }aaaaaaaaaaaaaaaaaa|
-      {101:  }{100:>>>}aaaaaaaaaaaa   |
-      {5:-- INSERT --}        |
-    ]])
-
-    feed('<F2>')
-    screen:expect([[
-      {103:0 }{102:^øøøøøøøøøøøøøøøøøø}|
-      {101:  }{100:>>>}øøøøøøøøøøøø   |
-      {101:1 }aaaaaaaaaaaaaaaaaa|
-      {101:  }{100:>>>}aaaaaaaaaaaa   |
-      {5:-- INSERT --}        |
-    ]])
   end)
 
   -- oldtest: Test_cursorline_screenline_resize()
@@ -1121,6 +1163,47 @@ describe('CursorLine and CursorLineNr highlights', function()
       {3:[No Name] [+]                                  }{2:[No Name]                   }|
                                                                                  |
     ]])
+  end)
+
+  -- oldtest: Test_cursorline_screenline_update()
+  it("'cursorlineopt' screenline is updated on various movements", function()
+    local screen = Screen.new(75, 8)
+    exec([[
+      func TestRetab()
+        let w = winwidth(0)
+        call cursor([1, w + 1, 0, w + 1])
+        call line('w0')
+        retab 8
+      endfunc
+
+      call setline(1, repeat('xyz ', 30))
+      set cursorline cursorlineopt=screenline tabstop=8
+      inoremap <F2> <Cmd>call cursor(1, 1)<CR>
+      inoremap <F3> <Cmd>call TestRetab()<CR>
+    ]])
+
+    feed('A')
+    screen:expect([[
+      xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz|
+      {21: xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz ^                              }|
+      {1:~                                                                          }|*5
+      {5:-- INSERT --}                                                               |
+    ]])
+    feed('<F2>')
+    screen:expect([[
+      {21:^xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz}|
+       xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz                               |
+      {1:~                                                                          }|*5
+      {5:-- INSERT --}                                                               |
+    ]])
+    feed('<F3>')
+    screen:expect([[
+      xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz|
+      {21:^ xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz                               }|
+      {1:~                                                                          }|*5
+      {5:-- INSERT --}                                                               |
+    ]])
+    feed('<Esc>')
   end)
 
   -- oldtest: Test_cursorline_after_yank()

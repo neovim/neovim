@@ -79,7 +79,8 @@ Multiple windows and buffers.				|windows.txt|
 	is called a hidden buffer.  Many commands and options have been added
 	for this facility.
 	Vim can also use multiple tab pages, each with one or more windows.  A
-	line with tab labels can be used to quickly switch between these pages.
+	line with tab labels can be used to quickly switch between these
+	pages.
 	|tab-page|
 
 Syntax highlighting.					|:syntax|

@@ -25,6 +25,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
@@ -65,6 +66,7 @@
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/register.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
@@ -86,6 +88,7 @@ typedef struct {
   int mincol;
   int cmdchar;
   int cmdchar_todo;                  // cmdchar to handle once in init_prompt
+  bool ins_just_started;
   int startln;
   int count;
   int c;
@@ -142,12 +145,33 @@ static linenr_T o_lnum = 0;
 
 static kvec_t(char) replace_stack = KV_INITIAL_VALUE;
 
+#define TRIGGER_AUTOCOMPLETE() \
+  do { \
+    redraw_later(curwin, UPD_VALID); \
+    update_screen();  /* Show char deletion immediately */ \
+    ui_flush(); \
+    ins_compl_enable_autocomplete(); \
+    insert_do_complete(s); \
+    break; \
+  } while (0)
+
+#define MAY_TRIGGER_AUTOCOMPLETE(c) \
+  do { \
+    if (ins_compl_has_autocomplete() && !char_avail() && curwin->w_cursor.col > 0) { \
+      (c) = char_before_cursor(); \
+      if (vim_isprintc(c)) { \
+        TRIGGER_AUTOCOMPLETE(); \
+      } \
+    } \
+  } while (0)
+
 static void insert_enter(InsertState *s)
 {
   s->did_backspace = true;
   s->old_topfill = -1;
   s->replaceState = MODE_REPLACE;
   s->cmdchar_todo = s->cmdchar;
+  s->ins_just_started = true;
   // Remember whether editing was restarted after CTRL-O
   did_restart_edit = restart_edit;
   // sleep before redrawing, needed for "CTRL-O :" that results in an
@@ -530,6 +554,22 @@ static int insert_check(VimState *state)
     dont_sync_undo = kFalse;
   }
 
+  // Trigger autocomplete when entering Insert mode, either directly
+  // or via change commands like 'ciw', 'cw', etc., before the first
+  // character is typed.
+  if (s->ins_just_started) {
+    s->ins_just_started = false;
+    if (ins_compl_has_autocomplete() && !char_avail() && curwin->w_cursor.col > 0) {
+      s->c = char_before_cursor();
+      if (vim_isprintc(s->c)) {
+        ins_compl_enable_autocomplete();
+        ins_compl_init_get_longest();
+        insert_do_complete(s);
+        return 1;
+      }
+    }
+  }
+
   return 1;
 }
 
@@ -605,10 +645,12 @@ static int insert_execute(VimState *state, int key)
                && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
           && stop_arrow() == OK) {
         ins_compl_delete(false);
-        if (ins_compl_has_preinsert() && ins_compl_has_autocomplete()) {
-          (void)ins_compl_insert(false, true);
+        if (ins_compl_preinsert_longest() && !ins_compl_is_match_selected()) {
+          ins_compl_insert(false, true);
+          ins_compl_init_get_longest();
+          return 1;
         } else {
-          (void)ins_compl_insert(false, false);
+          ins_compl_insert(false, false);
         }
       } else if (ascii_iswhite_nl_or_nul(s->c) && ins_compl_preinsert_effect()) {
         // Delete preinserted text when typing special chars
@@ -852,16 +894,8 @@ static int insert_handle_key(InsertState *s)
   case Ctrl_H:
     s->did_backspace = ins_bs(s->c, BACKSPACE_CHAR, &s->inserted_space);
     auto_format(false, true);
-    if (s->did_backspace && p_ac && !char_avail() && curwin->w_cursor.col > 0) {
-      s->c = char_before_cursor();
-      if (vim_isprintc(s->c)) {
-        redraw_later(curwin, UPD_VALID);
-        update_screen();  // Show char deletion immediately
-        ui_flush();
-        ins_compl_enable_autocomplete();
-        insert_do_complete(s);  // Trigger autocompletion
-        return 1;
-      }
+    if (s->did_backspace) {
+      MAY_TRIGGER_AUTOCOMPLETE(s->c);
     }
     break;
 
@@ -877,6 +911,9 @@ static int insert_handle_key(InsertState *s)
     }
     s->did_backspace = ins_bs(s->c, BACKSPACE_WORD, &s->inserted_space);
     auto_format(false, true);
+    if (s->did_backspace) {
+      MAY_TRIGGER_AUTOCOMPLETE(s->c);
+    }
     break;
 
   case Ctrl_U:        // delete all inserted text in current line
@@ -887,6 +924,9 @@ static int insert_handle_key(InsertState *s)
       s->did_backspace = ins_bs(s->c, BACKSPACE_LINE, &s->inserted_space);
       auto_format(false, true);
       s->inserted_space = false;
+      if (s->did_backspace) {
+        MAY_TRIGGER_AUTOCOMPLETE(s->c);
+      }
     }
     break;
 
@@ -1246,12 +1286,8 @@ normalchar:
     // closed fold.
     foldOpenCursor();
     // Trigger autocompletion
-    if (p_ac && !char_avail() && vim_isprintc(s->c)) {
-      redraw_later(curwin, UPD_VALID);
-      update_screen();  // Show character immediately
-      ui_flush();
-      ins_compl_enable_autocomplete();
-      insert_do_complete(s);
+    if (ins_compl_has_autocomplete() && !char_avail() && vim_isprintc(s->c)) {
+      TRIGGER_AUTOCOMPLETE();
     }
 
     break;
@@ -2453,10 +2489,10 @@ void cursor_up_inner(win_T *wp, linenr_T n, bool skip_conceal)
     while (n--) {
       // move up one line
       lnum--;
-      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       if (lnum <= 1) {
         break;
       }
+      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       // If we entered a fold, move to the beginning, unless in
       // Insert mode or when 'foldopen' contains "all": it will open
       // in a moment.
@@ -2510,10 +2546,10 @@ void cursor_down_inner(win_T *wp, int n, bool skip_conceal)
       } else {
         lnum++;
       }
-      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       if (lnum >= line_count) {
         break;
       }
+      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
     }
     lnum = MIN(lnum, line_count);
   } else {

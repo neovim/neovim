@@ -71,7 +71,7 @@ vim.go.ambw = vim.go.ambiwidth
 --- - Disable the use of 'keymap' (without changing its value).
 --- Note that 'arabicshape' and 'delcombine' are not reset (it is a global
 --- option).
---- Also see `arabic.txt`.
+--- Also see `l10n-arabic.txt`.
 ---
 --- @type boolean
 vim.o.arabic = false
@@ -90,7 +90,7 @@ vim.wo.arab = vim.wo.arabic
 --- When disabled the display shows each character's true stand-alone
 --- form.
 --- Arabic is a complex language which requires other settings, for
---- further details see `arabic.txt`.
+--- further details see `l10n-arabic.txt`.
 ---
 --- @type boolean
 vim.o.arabicshape = true
@@ -117,6 +117,8 @@ vim.go.acd = vim.go.autochdir
 --- @type boolean
 vim.o.autocomplete = false
 vim.o.ac = vim.o.autocomplete
+vim.bo.autocomplete = vim.o.autocomplete
+vim.bo.ac = vim.bo.autocomplete
 vim.go.autocomplete = vim.o.autocomplete
 vim.go.ac = vim.go.autocomplete
 
@@ -568,8 +570,8 @@ vim.go.breakat = vim.o.breakat
 vim.go.brk = vim.go.breakat
 
 --- Every wrapped line will continue visually indented (same amount of
---- space as the beginning of that line), thus preserving horizontal blocks
---- of text.
+--- space as the beginning of that line), thus preserving horizontal
+--- blocks of text.
 ---
 --- @type boolean
 vim.o.breakindent = false
@@ -1071,12 +1073,12 @@ vim.bo.cms = vim.bo.commentstring
 --- ]	tag completion
 --- t	same as "]"
 --- f	scan the buffer names (as opposed to buffer contents)
---- F{func}	call the function {func}.  Multiple "F" flags may be specified.
---- 	Refer to `complete-functions` for details on how the function
---- 	is invoked and what it should return.  The value can be the
---- 	name of a function or a `Funcref`.  For `Funcref` values,
---- 	spaces must be escaped with a backslash ('\'), and commas with
---- 	double backslashes ('\\') (see `option-backslash`).
+--- F{func}	call the function {func}.  Multiple "F" flags may be
+--- 	specified.  Refer to `complete-functions` for details on how
+--- 	the function is invoked and what it should return.  The value
+--- 	can be the name of a function or a `Funcref`.  For `Funcref`
+--- 	values, spaces must be escaped with a backslash ('\'), and
+--- 	commas with double backslashes ('\\') (see `option-backslash`).
 --- 	Unlike other sources, functions can provide completions
 --- 	starting from a non-keyword character before the cursor, and
 --- 	their start position for replacing text may differ from other
@@ -1181,11 +1183,21 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    to gather more alternatives for your candidate list,
 --- 	    see 'completefuzzycollect'.
 ---
----    longest  Only insert the longest common text of the matches.  If
---- 	    the menu is displayed you can use CTRL-L to add more
---- 	    characters.  Whether case is ignored depends on the kind
---- 	    of completion.  For buffer text the 'ignorecase' option is
---- 	    used.
+---    longest
+--- 	    When 'autocomplete' is not active, only the longest common
+--- 	    prefix of the matches is inserted.  If the popup menu is
+--- 	    displayed, you can use CTRL-L to add more characters.
+--- 	    Whether case is ignored depends on the type of completion.
+--- 	    For buffer text the 'ignorecase' option applies.
+---
+--- 	    When 'autocomplete' is active and no completion item is
+--- 	    selected, the longest common prefix of the matches is
+--- 	    inserted after the cursor.  The prefix is taken either
+--- 	    from all displayed items or only from items in the current
+--- 	    buffer.  The inserted text is highlighted with
+--- 	    `hl-PreInsert`, and the cursor position does not change
+--- 	    (similar to `"preinsert"`).  Press CTRL-Y to accept.
+--- 	    See also `preinserted()`.
 ---
 ---    menu	    Use a popup menu to show the possible completions.  The
 --- 	    menu is only shown when there is more than one match and
@@ -1207,7 +1219,9 @@ vim.go.cia = vim.go.completeitemalign
 ---
 ---    noselect Same as "noinsert", except that no menu item is
 --- 	    pre-selected.  If both "noinsert" and "noselect" are
---- 	    present, "noselect" has precedence.
+--- 	    present, "noselect" takes precedence.  This is enabled
+--- 	    automatically when 'autocomplete' is on, unless
+--- 	    "preinsert" is also enabled.
 ---
 ---    nosort   Disable sorting of completion candidates based on fuzzy
 --- 	    scores when "fuzzy" is enabled.  Candidates will appear
@@ -1218,22 +1232,21 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    with "menu" or "menuone".  Overrides "preview".
 ---
 ---    preinsert
---- 	    When 'autocomplete' is not active, inserts the part of the
---- 	    first candidate word beyond the current completion leader,
---- 	    highlighted with `hl-PreInsert`.  The cursor doesn't move.
---- 	    Requires "fuzzy" unset and "menuone" in 'completeopt'.
----
---- 	    When 'autocomplete' is active, inserts the longest common
---- 	    prefix of matches (from all shown items or from the
---- 	    current buffer items).  This occurs only when no menu item
---- 	    is selected.  Press CTRL-Y to accept.
+--- 	    Inserts the text of the first completion candidate beyond
+--- 	    the current leader, highlighted with `hl-PreInsert`.
+--- 	    The cursor does not move.
+--- 	    Requires "fuzzy" to be unset, and either "menuone" in
+--- 	    'completeopt' or 'autocomplete' enabled.  When
+--- 	    'autocomplete' is enabled, this does not work if
+--- 	    'ignorecase' is set without 'infercase'.
+--- 	    See also `preinserted()`.
 ---
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in
 --- 	    combination with "menu" or "menuone".
 ---
---- Only "fuzzy", "popup", "preinsert" and "preview" have an effect when
---- 'autocomplete' is enabled.
+--- Only "fuzzy", "longest", "popup", "preinsert" and "preview" have an
+--- effect when 'autocomplete' is enabled.
 ---
 --- This option does not apply to `cmdline-completion`.  See 'wildoptions'
 --- for that.
@@ -1252,7 +1265,8 @@ vim.go.cot = vim.go.completeopt
 ---   completion in insert mode.  This is useful when editing HTML tag, or
 ---   Makefile with 'noshellslash' on MS-Windows.
 --- - When this option is set to "backslash", backslash is used.  This is
----   useful when editing a batch file with 'shellslash' set on MS-Windows.
+---   useful when editing a batch file with 'shellslash' set on
+---   MS-Windows.
 --- - When this option is empty, same character is used as for
 ---   'shellslash'.
 --- For Insert mode completion the buffer-local value is used.  For
@@ -2411,7 +2425,7 @@ vim.bo.fenc = vim.bo.fileencoding
 --- illegal byte sequence.
 --- WRONG VALUES:			WHAT'S WRONG:
 --- 	latin1,utf-8		"latin1" will always be used
---- 	utf-8,ucs-bom,latin1	BOM won't be recognized in an utf-8
+--- 	utf-8,ucs-bom,latin1	BOM won't be recognized in a utf-8
 --- 				file
 --- 	cp1250,latin1		"cp1250" will always be used
 --- If 'fileencodings' is empty, 'fileencoding' is not modified.
@@ -2499,7 +2513,13 @@ vim.o.ffs = vim.o.fileformats
 vim.go.fileformats = vim.o.fileformats
 vim.go.ffs = vim.go.fileformats
 
---- When set case is ignored when using file names and directories.
+--- When set, case is ignored when using file and directory names.
+---
+--- This option is on by default on systems where the filesystem is
+--- traditionally case-insensitive (for example MS-Windows and macOS).
+--- However, Vim cannot determine at runtime whether a particular
+--- filesystem is case-sensitive or case-insensitive.
+---
 --- See 'wildignorecase' for only ignoring case when doing completion.
 ---
 --- @type boolean
@@ -2559,7 +2579,10 @@ vim.bo.ft = vim.bo.filetype
 ---   fold		'·' or '-'	filling 'foldtext'
 ---   foldopen	'-'		mark the beginning of a fold
 ---   foldclose	'+'		show a closed fold
----   foldsep	'│' or '|'      open fold middle marker
+---   foldsep	'│' or '|'	open fold middle marker
+---   foldinner	none		character to show instead of the
+--- 				numeric foldlevel when it would be
+--- 				repeated in a narrow 'foldcolumn'
 ---   diff		'-'		deleted lines of the 'diff' option
 ---   msgsep	' '		message separator 'display'
 ---   eob		'~'		empty lines at the end of a buffer
@@ -2604,6 +2627,7 @@ vim.bo.ft = vim.bo.filetype
 ---   foldclose	FoldColumn		`hl-FoldColumn`
 ---   foldsep	FoldColumn		`hl-FoldColumn`
 ---   diff		DiffDelete		`hl-DiffDelete`
+---   msgsep	MsgSeparator		`hl-MsgSeparator`
 ---   eob		EndOfBuffer		`hl-EndOfBuffer`
 ---   lastline	NonText			`hl-NonText`
 ---   trunc		one of the many Popup menu highlighting groups like
@@ -2936,7 +2960,6 @@ vim.wo.fdt = vim.wo.foldtext
 --- modeline, see `sandbox-option`.  That stops the option from working,
 --- since changing the buffer text is not allowed.
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
---- NOTE: This option is set to "" when 'compatible' is set.
 ---
 --- @type string
 vim.o.formatexpr = ""
@@ -3977,9 +4000,9 @@ vim.o.lm = vim.o.langmenu
 vim.go.langmenu = vim.o.langmenu
 vim.go.lm = vim.go.langmenu
 
---- When off, setting 'langmap' does not apply to characters resulting from
---- a mapping.  If setting 'langmap' disables some of your mappings, make
---- sure this option is off.
+--- When off, setting 'langmap' does not apply to characters resulting
+--- from a mapping.  If setting 'langmap' disables some of your mappings,
+--- make sure this option is off.
 ---
 --- @type boolean
 vim.o.langremap = false
@@ -4006,8 +4029,8 @@ vim.go.ls = vim.go.laststatus
 --- executing macros, registers and other commands that have not been
 --- typed.  Also, updating the window title is postponed.  To force an
 --- update use `:redraw`.
---- This may occasionally cause display errors.  It is only meant to be set
---- temporarily when performing an operation where redrawing may cause
+--- This may occasionally cause display errors.  It is only meant to be
+--- set temporarily when performing an operation where redrawing may cause
 --- flickering or cause a slowdown.
 ---
 --- @type boolean
@@ -5105,6 +5128,14 @@ vim.o.pumblend = 0
 vim.o.pb = vim.o.pumblend
 vim.go.pumblend = vim.o.pumblend
 vim.go.pb = vim.go.pumblend
+
+--- Defines the default border style of popupmenu windows. See 'winborder' for
+--- valid values. `hl-PmenuBorder` is used for highlighting the border, and when
+--- style is "shadow" the `hl-PmenuShadow` and `hl-PmenuShadowThrough` groups are used.
+---
+--- @type string
+vim.o.pumborder = ""
+vim.go.pumborder = vim.o.pumborder
 
 --- Maximum number of items to show in the popup menu
 --- (`ins-completion-menu`). Zero means "use available screen space".
@@ -6402,9 +6433,6 @@ vim.wo.sms = vim.wo.smoothscroll
 --- 'shiftwidth'.  If you plan to use 'sts' and 'shiftwidth' with
 --- different values, you might consider setting 'smarttab'.
 ---
---- 'softtabstop' is temporarily set to 0 when 'paste' is on and reset
---- when it is turned off.  It is also reset when 'compatible' is set.
----
 --- The 'L' flag in 'cpoptions' alters tab behavior when 'list' is
 --- enabled.  See also `ins-expandtab` ans user manual section `30.5` for
 --- in-depth explanations.
@@ -7329,7 +7357,7 @@ vim.go.tgst = vim.go.tagstack
 --- 'arabic' is set and the value of 'arabicshape' will be ignored.
 --- Note that setting 'termbidi' has the immediate effect that
 --- 'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
---- For further details see `arabic.txt`.
+--- For further details see `l10n-arabic.txt`.
 ---
 --- @type boolean
 vim.o.termbidi = false
@@ -8400,6 +8428,11 @@ vim.go.wiw = vim.go.winwidth
 --- See 'sidescroll', 'listchars' and `wrap-off`.
 --- This option can't be set from a `modeline` when the 'diff' option is
 --- on.
+--- If 'nowrap' was set from a `modeline` or in the `sandbox`, '>' is used
+--- as the `lcs-extends` character regardless of the value of the 'list'
+--- and 'listchars' options.  This is to prevent malicious code outside
+--- the viewport from going unnoticed.  Use `:setlocal nowrap` manually
+--- afterwards to disable this behavior.
 ---
 --- @type boolean
 vim.o.wrap = true

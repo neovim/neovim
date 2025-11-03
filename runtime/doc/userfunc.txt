@@ -58,7 +58,7 @@ functions.
 <
 							*:function-verbose*
 When 'verbose' is non-zero, listing a function will also display where it was
-last defined. Example: >
+last defined.  Example: >
 
     :verbose function SetFileTypeSH
 	function SetFileTypeSH(name)
@@ -179,9 +179,9 @@ See |:verbose-cmd| for more information.
 			With the ! there is no error if the function does not
 			exist.
 							*:retu* *:return* *E133*
-:retu[rn] [expr]	Return from a function.  When "[expr]" is given, it is
+:retu[rn] [expr]	Return from a function.  When [expr] is given, it is
 			evaluated and returned as the result of the function.
-			If "[expr]" is not given, the number 0 is returned.
+			If [expr] is not given, the number 0 is returned.
 			When a function ends without an explicit ":return",
 			the number 0 is returned.
 			Note that there is no check for unreachable lines,

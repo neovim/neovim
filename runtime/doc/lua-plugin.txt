@@ -217,6 +217,11 @@ Consider making use of 'filetype' for any functionality that is specific to
 a filetype, by putting the initialization logic in a `ftplugin/{filetype}.lua`
 script.
 
+For buffers owned by your plugin (often used to show a custom UI or view),
+typically your plugin will set a custom 'filetype'. In that case, it's useful
+to set the 'filetype' "as late as possible", so that users can override
+buffer-local settings after your plugin has (re)initialized the buffer.
+
 FILETYPE EXAMPLE
 
 A plugin tailored to Rust development might have initialization in
@@ -240,6 +245,10 @@ A plugin tailored to Rust development might have initialization in
 ==============================================================================
 Configuration                                              *lua-plugin-config*
 
+To allow users to override buffer-local configuration for filetypes owned by
+your plugin, publish a |FileType| event, "as late as possible".
+|lua-plugin-filetype|
+
 Once you have merged the default configuration with the user's config, you
 should validate configs.
 
@@ -249,6 +258,32 @@ Validations could include:
 - Unknown fields in the user config (e.g. due to typos).
   This can be tricky to implement, and may be better suited for a |health|
   check, to reduce overhead.
+
+==============================================================================
+UI                                                           *lua-plugin-ui*
+
+Some plugins have their own "UI" which they present in a buffer that the
+plugin "owns". In that buffer typically you will want to provide custom
+actions.
+
+Besides creating |<Plug>| mappings, you may want to consider providing actions
+by defining an in-process LSP server. Offering actions as code-actions
+|vim.lsp.buf.code_action()| means the user can see all available actions using
+the default |gra| mapping to view the code-actions menu. They can even define
+mappings to a specific action by invoking `vim.lsp.buf.code_action()` with the
+`filter` + `apply` parameters: >lua
+
+    vim.lsp.buf.code_action({
+        apply = true,
+        filter = function(a)
+            return a.title == 'Do something'
+        end,
+    })
+<
+
+Example: See `runtime/lua/vim/pack/_lsp.lua` for how vim.pack defines an
+in-process LSP server to provide interactive features in its `nvim-pack://`
+buffer.
 
 ==============================================================================
 Troubleshooting                                   *lua-plugin-troubleshooting*

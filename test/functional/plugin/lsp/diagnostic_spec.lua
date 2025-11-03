@@ -115,10 +115,6 @@ describe('vim.lsp.diagnostic', function()
     end)
   end)
 
-  after_each(function()
-    clear()
-  end)
-
   describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
     it('correctly handles UTF-16 offsets', function()
       local line = 'All 💼 and no 🎉 makes Jack a dull 👦'
@@ -215,7 +211,7 @@ describe('vim.lsp.diagnostic', function()
             diagnosticProvider = {},
           },
           handlers = {
-            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function(_, params)
+            ['textDocument/diagnostic'] = function(_, params)
               _G.params = params
               _G.requests = _G.requests + 1
             end,
@@ -425,7 +421,7 @@ describe('vim.lsp.diagnostic', function()
             data = {},
             message = '',
           }, {}, {
-            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            method = 'textDocument/diagnostic',
             client_id = client_id,
             bufnr = diagnostic_bufnr,
           })
@@ -442,7 +438,7 @@ describe('vim.lsp.diagnostic', function()
             data = { retriggerRequest = true },
             message = '',
           }, {}, {
-            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            method = 'textDocument/diagnostic',
             client_id = client_id,
             bufnr = diagnostic_bufnr,
           })
@@ -459,7 +455,7 @@ describe('vim.lsp.diagnostic', function()
             data = { retriggerRequest = false },
             message = '',
           }, {}, {
-            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            method = 'textDocument/diagnostic',
             client_id = client_id,
             bufnr = diagnostic_bufnr,
           })
@@ -481,7 +477,7 @@ describe('vim.lsp.diagnostic', function()
               _G.make_error('Pull Diagnostic', 4, 4, 4, 4),
             },
           }, {
-            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            method = 'textDocument/diagnostic',
             params = {
               textDocument = { uri = fake_uri },
             },
@@ -491,7 +487,7 @@ describe('vim.lsp.diagnostic', function()
           vim.api.nvim_exec_autocmds('LspNotify', {
             buffer = diagnostic_bufnr,
             data = {
-              method = vim.lsp.protocol.Methods.textDocument_didChange,
+              method = 'textDocument/didChange',
               client_id = client_id,
             },
           })
@@ -507,7 +503,7 @@ describe('vim.lsp.diagnostic', function()
             kind = 'unchanged',
             resultId = 'squidward',
           }, {
-            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            method = 'textDocument/diagnostic',
             params = {
               textDocument = { uri = fake_uri },
             },
@@ -517,7 +513,7 @@ describe('vim.lsp.diagnostic', function()
           vim.api.nvim_exec_autocmds('LspNotify', {
             buffer = diagnostic_bufnr,
             data = {
-              method = vim.lsp.protocol.Methods.textDocument_didChange,
+              method = 'textDocument/didChange',
               client_id = client_id,
             },
           })
@@ -564,7 +560,7 @@ describe('vim.lsp.diagnostic', function()
         vim.api.nvim_exec_autocmds('LspNotify', {
           buffer = second_buf,
           data = {
-            method = vim.lsp.protocol.Methods.textDocument_didChange,
+            method = 'textDocument/didChange',
             client_id = client_id,
           },
         })

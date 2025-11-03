@@ -33,13 +33,13 @@ compiler (see |errorformat| below).
 
 					*quickfix-stack* *quickfix-ID*
 Each quickfix list has a unique identifier called the quickfix ID and this
-number will not change within a Vim session. The |getqflist()| function can be
-used to get the identifier assigned to a list. There is also a quickfix list
+number will not change within a Vim session.  The |getqflist()| function can be
+used to get the identifier assigned to a list.  There is also a quickfix list
 number which may change whenever more than 'chistory' lists are added to a
 quickfix stack.
 
 						*location-list* *E776*
-A location list is a window-local quickfix list. You get one after commands
+A location list is a window-local quickfix list.  You get one after commands
 like `:lvimgrep`, `:lgrep`, `:lhelpgrep`, `:lmake`, etc., which create a
 location list instead of a quickfix list as the corresponding `:vimgrep`,
 `:grep`, `:helpgrep`, `:make` do.
@@ -55,7 +55,7 @@ the location list is destroyed.
 						*quickfix-changedtick*
 Every quickfix and location list has a read-only changedtick variable that
 tracks the total number of changes made to the list.  Every time the quickfix
-list is modified, this count is incremented. This can be used to perform an
+list is modified, this count is incremented.  This can be used to perform an
 action only when the list has changed.  The |getqflist()| and |getloclist()|
 functions can be used to query the current value of changedtick.  You cannot
 change the changedtick variable.
@@ -75,9 +75,9 @@ processing a quickfix or location list command, it will be aborted.
 							*:cc*
 :cc[!] [nr]		Display error [nr].  If [nr] is omitted, the same
 :[nr]cc[!]		error is displayed again.  Without [!] this doesn't
-			work when jumping to another buffer, the current buffer
-			has been changed, there is the only window for the
-			buffer and both 'hidden' and 'autowrite' are off.
+			work when jumping to another buffer, the current
+			buffer has been changed, there is the only window for
+			the buffer and both 'hidden' and 'autowrite' are off.
 			When jumping to another buffer with [!] any changes to
 			the current buffer are lost, unless 'hidden' is set or
 			there is another window for this buffer.
@@ -131,10 +131,10 @@ processing a quickfix or location list command, it will be aborted.
 			used.  If there are no errors, then an error message
 			is displayed.  Assumes that the entries in a quickfix
 			list are sorted by their buffer number and line
-			number. If there are multiple errors on the same line,
-			then only the first entry is used.  If [count] exceeds
-			the number of entries above the current line, then the
-			first error in the file is selected.
+			number.  If there are multiple errors on the same
+			line, then only the first entry is used.  If [count]
+			exceeds the number of entries above the current line,
+			then the first error in the file is selected.
 
 							*:lab* *:labove*
 :[count]lab[ove]	Same as ":cabove", except the location list for the
@@ -300,7 +300,7 @@ processing a quickfix or location list command, it will be aborted.
 
 							*:caddf* *:caddfile*
 :caddf[ile] [errorfile]	Read the error file and add the errors from the
-			errorfile to the current quickfix list. If a quickfix
+			errorfile to the current quickfix list.  If a quickfix
 			list is not present, then a new list is created.
 			If the encoding of the error file differs from the
 			'encoding' option, you can use the 'makeencoding'
@@ -341,7 +341,7 @@ processing a quickfix or location list command, it will be aborted.
 			Read the error list from the current buffer and add
 			the errors to the current quickfix list.  If a
 			quickfix list is not present, then a new list is
-			created. Otherwise, same as ":cbuffer".
+			created.  Otherwise, same as ":cbuffer".
 
 							*:laddb* *:laddbuffer*
 :[range]laddb[uffer] [bufnr]
@@ -378,9 +378,9 @@ processing a quickfix or location list command, it will be aborted.
 
 							*:cadde* *:caddexpr*
 :cadde[xpr] {expr}	Evaluate {expr} and add the resulting lines to the
-			current quickfix list. If a quickfix list is not
-			present, then a new list is created. The current
-			cursor position will not be changed. See |:cexpr| for
+			current quickfix list.  If a quickfix list is not
+			present, then a new list is created.  The current
+			cursor position will not be changed.  See |:cexpr| for
 			more information.
 			Example: >
     :g/mypattern/caddexpr expand("%") .. ":" .. line(".") ..  ":" .. getline(".")
@@ -392,11 +392,12 @@ processing a quickfix or location list command, it will be aborted.
 							*:cl* *:clist*
 :cl[ist] [from] [, [to]]
 			List all errors that are valid |quickfix-valid|.
-			If numbers [from] and/or [to] are given, the respective
-			range of errors is listed.  A negative number counts
-			from the last error backwards, -1 being the last error.
+			If numbers [from] and/or [to] are given, the
+			respective range of errors is listed.  A negative
+			number counts from the last error backwards, -1 being
+			the last error.
 			The |:filter| command can be used to display only the
-			quickfix entries matching a supplied pattern. The
+			quickfix entries matching a supplied pattern.  The
 			pattern is matched against the filename, module name,
 			pattern and text of the entry.
 
@@ -432,7 +433,7 @@ the error location may not be correct.  If you quit Vim and start again the
 marks are lost and the error locations may not be correct anymore.
 
 Two autocommands are available for running commands before and after a
-quickfix command (':make', ':grep' and so on) is executed. See
+quickfix command (':make', ':grep' and so on) is executed.  See
 |QuickFixCmdPre| and |QuickFixCmdPost| for details.
 
 						*QuickFixCmdPost-example*
@@ -451,11 +452,11 @@ use this code: >
 Another option is using 'makeencoding'.
 
 							*quickfix-title*
-Every quickfix and location list has a title. By default the title is set to
-the command that created the list. The |getqflist()| and |getloclist()|
+Every quickfix and location list has a title.  By default the title is set to
+the command that created the list.  The |getqflist()| and |getloclist()|
 functions can be used to get the title of a quickfix and a location list
-respectively. The |setqflist()| and |setloclist()| functions can be used to
-modify the title of a quickfix and location list respectively. Examples: >
+respectively.  The |setqflist()| and |setloclist()| functions can be used to
+modify the title of a quickfix and location list respectively.  Examples: >
 	call setqflist([], 'a', {'title' : 'Cmd output'})
 	echo getqflist({'title' : 1})
 	call setloclist(3, [], 'a', {'title' : 'Cmd output'})
@@ -464,32 +465,32 @@ modify the title of a quickfix and location list respectively. Examples: >
 							*quickfix-index*
 When you jump to a quickfix/location list entry using any of the quickfix
 commands (e.g. |:cc|, |:cnext|, |:cprev|, etc.), that entry becomes the
-currently selected entry. The index of the currently selected entry in a
+currently selected entry.  The index of the currently selected entry in a
 quickfix/location list can be obtained using the getqflist()/getloclist()
-functions. Examples: >
+functions.  Examples: >
 	echo getqflist({'idx' : 0}).idx
 	echo getqflist({'id' : qfid, 'idx' : 0}).idx
 	echo getloclist(2, {'idx' : 0}).idx
 <
 For a new quickfix list, the first entry is selected and the index is 1.  Any
 entry in any quickfix/location list can be set as the currently selected entry
-using the setqflist() function. Examples: >
+using the setqflist() function.  Examples: >
 	call setqflist([], 'a', {'idx' : 12})
 	call setqflist([], 'a', {'id' : qfid, 'idx' : 7})
 	call setloclist(1, [], 'a', {'idx' : 7})
 <
 							*quickfix-size*
 You can get the number of entries (size) in a quickfix and a location list
-using the |getqflist()| and |getloclist()| functions respectively. Examples: >
+using the |getqflist()| and |getloclist()| functions respectively.  Examples: >
 	echo getqflist({'size' : 1})
 	echo getloclist(5, {'size' : 1})
 <
 							*quickfix-context*
 Any Vim type can be associated as a context with a quickfix or location list.
 The |setqflist()| and the |setloclist()| functions can be used to associate a
-context with a quickfix and a location list respectively. The |getqflist()|
+context with a quickfix and a location list respectively.  The |getqflist()|
 and the |getloclist()| functions can be used to retrieve the context of a
-quickfix and a location list respectively. This is useful for a Vim plugin
+quickfix and a location list respectively.  This is useful for a Vim plugin
 dealing with multiple quickfix/location lists.
 Examples: >
 
@@ -503,11 +504,11 @@ Examples: >
 <
 							*quickfix-parse*
 You can parse a list of lines using 'errorformat' without creating or
-modifying a quickfix list using the |getqflist()| function. Examples: >
+modifying a quickfix list using the |getqflist()| function.  Examples: >
 	echo getqflist({'lines' : ["F1:10:Line10", "F2:20:Line20"]})
 	echo getqflist({'lines' : systemlist('grep -Hn quickfix *')})
 This returns a dictionary where the "items" key contains the list of quickfix
-entries parsed from lines. The following shows how to use a custom
+entries parsed from lines.  The following shows how to use a custom
 'errorformat' to parse the lines without modifying the 'errorformat' option: >
 	echo getqflist({'efm' : '%f#%l#%m', 'lines' : ['F1#10#Line']})
 <
@@ -540,8 +541,8 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 			Also see |:bufdo|, |:tabdo|, |:argdo|, |:windo|,
 			|:ldo|, |:cfdo| and |:lfdo|.
 
-							*:cfdo*
-:cfdo[!] {cmd}		Execute {cmd} in each file in the quickfix list.
+							*:cfd* *:cfdo*
+:cfd[o][!] {cmd}	Execute {cmd} in each file in the quickfix list.
 			It works like doing this: >
 				:cfirst
 				:{cmd}
@@ -550,7 +551,7 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				etc.
 <			Otherwise it works the same as `:cdo`.
 
-							*:ldo*
+							*:ld* *:ldo*
 :ld[o][!] {cmd}		Execute {cmd} in each valid entry in the location list
 			for the current window.
 			It works like doing this: >
@@ -562,8 +563,8 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 <			Only valid entries in the location list are used.
 			Otherwise it works the same as `:cdo`.
 
-							*:lfdo*
-:lfdo[!] {cmd}		Execute {cmd} in each file in the location list for
+							*:lfd* *:lfdo*
+:lfd[o][!] {cmd}	Execute {cmd} in each file in the location list for
 			the current window.
 			It works like doing this: >
 				:lfirst
@@ -586,11 +587,11 @@ Then you can use the following commands to filter a quickfix/location list: >
     :Lfilter[!] /{pat}/
 
 The |:Cfilter| command creates a new quickfix list from the entries matching
-{pat} in the current quickfix list. {pat} is a Vim |regular-expression|
-pattern. Both the file name and the text of the entries are matched against
-{pat}. If the optional ! is supplied, then the entries not matching {pat} are
-used. The pattern can be optionally enclosed using one of the following
-characters: ', ", /. If the pattern is empty, then the last used search
+{pat} in the current quickfix list.  {pat} is a Vim |regular-expression|
+pattern.  Both the file name and the text of the entries are matched against
+{pat}.  If the optional ! is supplied, then the entries not matching {pat} are
+used.  The pattern can be optionally enclosed using one of the following
+characters: ', ", /.  If the pattern is empty, then the last used search
 pattern is used.
 
 The |:Lfilter| command does the same as |:Cfilter| but operates on the current
@@ -619,19 +620,19 @@ can go back to the unfiltered list using the |:colder|/|:lolder| command.
 			'buftype' equal to "quickfix".  Don't change this!
 			The window will have the w:quickfix_title variable set
 			which will indicate the command that produced the
-			quickfix list. This can be used to compose a custom
+			quickfix list.  This can be used to compose a custom
 			status line if the value of 'statusline' is adjusted
-			properly. Whenever this buffer is modified by a
+			properly.  Whenever this buffer is modified by a
 			quickfix command or function, the |b:changedtick|
 			variable is incremented.  You can get the number of
 			this buffer using the getqflist() and getloclist()
-			functions by passing the "qfbufnr" item. For a
+			functions by passing the "qfbufnr" item.  For a
 			location list, this buffer is wiped out when the
 			location list is removed.
 
 							*:lop* *:lopen*
 :lop[en] [height]	Open a window to show the location list for the
-			current window. Works only when the location list for
+			current window.  Works only when the location list for
 			the current window is present.  You can have more than
 			one location window opened at a time.  Otherwise, it
 			acts the same as ":copen".
@@ -738,7 +739,7 @@ The location list window displays the entries in a location list.  When you
 open a location list window, it is created below the current window and
 displays the location list for the current window.  The location list window
 is similar to the quickfix window, except that you can have more than one
-location list window open at a time. When you use a location list command in
+location list window open at a time.  When you use a location list command in
 this window, the displayed location list is used.
 
 When you select a file from the location list window, the following steps are
@@ -767,7 +768,7 @@ present).  Examples: >
 <
 							*getqflist-examples*
 The |getqflist()| and |getloclist()| functions can be used to get the various
-attributes of a quickfix and location list respectively. Some examples for
+attributes of a quickfix and location list respectively.  Some examples for
 using these functions are below:
 >
     " get the title of the current quickfix list
@@ -833,7 +834,7 @@ using these functions are below:
 <
 							*setqflist-examples*
 The |setqflist()| and |setloclist()| functions can be used to set the various
-attributes of a quickfix and location list respectively. Some examples for
+attributes of a quickfix and location list respectively.  Some examples for
 using these functions are below:
 >
     " create an empty quickfix list with a title and a context
@@ -917,7 +918,7 @@ existing error lists as the current one.
 			  error list 3 of 3; 15 errors   :grep ex_help *.c
 <
 			When [count] is given, then the count'th quickfix
-			list is made the current list. Example: >
+			list is made the current list.  Example: >
 				" Make the 4th quickfix list current
 				:4chistory
 <
@@ -934,7 +935,7 @@ lists, use ":cnewer 99" first.
 
 To get the number of lists in the quickfix and location list stack, you can
 use the |getqflist()| and |getloclist()| functions respectively with the list
-number set to the special value '$'. Examples: >
+number set to the special value '$'.  Examples: >
 	echo getqflist({'nr' : '$'}).nr
 	echo getloclist(3, {'nr' : '$'}).nr
 To get the number of the current list in the stack: >
@@ -1090,7 +1091,7 @@ commands can be combined to create a NewGrep command: >
 			     buffer are abandoned.
 
 			'f'  When the 'f' flag is specified, fuzzy string
-			     matching is used to find matching lines. In this
+			     matching is used to find matching lines.  In this
 			     case, {pattern} is treated as a literal string
 			     instead of a regular expression.  See
 			     |fuzzy-matching| for more information about fuzzy
@@ -1205,8 +1206,8 @@ arguments to :grep are passed straight to the "grep" program, so you can use
 whatever options your "grep" supports.
 
 By default, :grep invokes grep with the -n option (show file and line
-numbers).  You can change this with the 'grepprg' option.  You will need to set
-'grepprg' if:
+numbers).  You can change this with the 'grepprg' option.  You will need to
+set 'grepprg' if:
 
 a)	You are using a program that isn't called "grep"
 b)	You have to call grep with a full path
@@ -1304,7 +1305,7 @@ Use the |compiler-make| plugin to undo the effect of a compiler plugin.
 
 CPPCHECK			*quickfix-cppcheck* *compiler-cppcheck*
 
-Use g/b:`c_cppcheck_params` to set cppcheck parameters. The global
+Use g/b:`c_cppcheck_params` to set cppcheck parameters.  The global
 settings by default include
 
 - `--verbose`: Enables verbose output.
@@ -1319,10 +1320,10 @@ For C++ files (`filetype == 'cpp'`), the `--language=c++` option is added to
 ensure Cppcheck treats the file as C++.
 
 If compile_commands.json is present in the current directory, it is added as a
-`--project` parameter to the command line. Otherwise, by default the
-directories in &path are passed as include directories. These can be set by
-g/b:`c_cppcheck_includes` as a list of `-I` flags. Tim Pope's vim-apathy
-plug-in [0] can expand &path. To also append the folders in a git repo use >
+`--project` parameter to the command line.  Otherwise, by default the
+directories in &path are passed as include directories.  These can be set by
+g/b:`c_cppcheck_includes` as a list of `-I` flags.  Tim Pope's vim-apathy
+plug-in [0] can expand &path.  To also append the folders in a git repo use >
 
   let &l:path = join(systemlist('git ls-tree -d --name-only -r HEAD'), ',')
 
@@ -1330,12 +1331,13 @@ plug-in [0] can expand &path. To also append the folders in a git repo use >
 
 DOTNET							*compiler-dotnet*
 
-The .NET CLI compiler outputs both errors and warnings by default. The output
+The .NET CLI compiler outputs both errors and warnings by default.  The output
 may be limited to include only errors, by setting the g:dotnet_errors_only
 variable to |v:true|.
 
-The associated project name is included in each error and warning. To suppress
-the project name, set the g:dotnet_show_project_file variable to |v:false|.
+The associated project name is included in each error and warning.  To
+suppress the project name, set the g:dotnet_show_project_file variable to
+|v:false|.
 
 Example: limit output to only display errors, and suppress the project name: >
 	let dotnet_errors_only = v:true
@@ -1440,7 +1442,7 @@ declares an only parameter of type string and puts to use a command equivalent
 of |:make|, and assigning its |Funcref| to the selected key.  For example:
 >vim
 	function! GenericPostCompilerCommand(arguments) abort
-		execute 'make ' . a:arguments
+		execute 'make ' .. a:arguments
 	endfunction
 
 	let g:spotbugs_properties = {
@@ -1471,7 +1473,7 @@ that will arrange for "PostCompilerActionExecutor" to be invoked; and then run
 	function! GenericPreCompilerCommand(arguments) abort
 		if !exists('g:spotbugs_compilation_done')
 			doautocmd java_spotbugs_post User
-			execute 'make ' . a:arguments
+			execute 'make ' .. a:arguments
 			" only run doautocmd when :make was synchronous
 			" see note below
 			doautocmd java_spotbugs_post ShellCmdPost " XXX: (a)
@@ -1484,7 +1486,7 @@ that will arrange for "PostCompilerActionExecutor" to be invoked; and then run
 	function! GenericPreCompilerTestCommand(arguments) abort
 		if !exists('g:spotbugs_test_compilation_done')
 			doautocmd java_spotbugs_post User
-			execute 'make ' . a:arguments
+			execute 'make ' .. a:arguments
 			" only run doautocmd when :make was synchronous
 			" see note below
 			doautocmd java_spotbugs_post ShellCmdPost " XXX: (b)
@@ -1598,9 +1600,9 @@ manpage) as input and expects that the output file type extension is passed to
 make, say :make html or :make pdf.
 
 Additional arguments can be passed to groff by setting them in
-`b:groff_compiler_args` or `g:groff_compiler_args`. The `language` argument
+`b:groff_compiler_args` or `g:groff_compiler_args`.  The `language` argument
 passed to groff is set using 'spelllang'; it can be overridden by setting
-`b:groff_compiler_lang`. The default encoding is `UTF-8` and can be changed
+`b:groff_compiler_lang`.  The default encoding is `UTF-8` and can be changed
 by setting `b:groff_compiler_encoding` or `g:groff_compiler_encoding`.
 
 PANDOC					*quickfix-pandoc* *compiler-pandoc*
@@ -1687,8 +1689,8 @@ Included in the distribution compiler for TeX ($VIMRUNTIME/compiler/tex.vim)
 uses make command if possible.  If the compiler finds a file named "Makefile"
 or "makefile" in the current directory, it supposes that you want to process
 your `*TeX` files with make, and the makefile does the right work.  In this case
-compiler sets 'errorformat' for `*TeX` output and leaves 'makeprg' untouched.  If
-neither "Makefile" nor "makefile" is found, the compiler will not use make.
+compiler sets 'errorformat' for `*TeX` output and leaves 'makeprg' untouched.
+If neither "Makefile" nor "makefile" is found, the compiler will not use make.
 You can force the compiler to ignore makefiles by defining
 b:tex_ignore_makefile or g:tex_ignore_makefile variable (they are checked for
 existence only).
@@ -1719,6 +1721,16 @@ shells and OSes and also does not allow to use other available TeX options,
 if any.  If your TeX doesn't support "-interaction=nonstopmode", please
 report it with different means to express \nonstopmode from the command line.
 
+TOMBI					*quickfix-toml* *compiler-tombi*
+
+The tombi compiler plugin does not compile.
+
+It runs "tombi lint" and parses diagnostics into the quickfix list.
+
+Color codes are stripped from the linter output to keep |errorformat|
+parsing reliable.  This may require a working "sed" for old versions of the
+tombi linter.
+
 TSC COMPILER						*compiler-tsc*
 
 The executable and compiler options can be added to 'makeprg' by setting the
@@ -1728,13 +1740,13 @@ b/g:tsc_makeprg variable.  For example: >
 
 TYPST COMPILER						*compiler-typst*
 
-Vim includes a compiler plugin for Typst files. This compiler is enabled
+Vim includes a compiler plugin for Typst files.  This compiler is enabled
 automatically in Typst buffers by the Typst filetype plugin |ft-typst-plugin|.
 Run |:make| to compile the current Typst file.
 
 							*g:typst_cmd*
-By default Vim will use "typst" as the command to run the Typst compiler. This
-can be changed by setting the |g:typst_cmd| variable: >
+By default Vim will use "typst" as the command to run the Typst compiler.
+This can be changed by setting the |g:typst_cmd| variable: >
 	let g:typst_cmd = "/path/to/other/command"
 
 =============================================================================
@@ -1821,11 +1833,11 @@ or >
 to indicate the column of the error.  This is to be used in a multi-line error
 message.  See |errorformat-javac| for a  useful example.
 
-The "%s" conversion specifies the text to search for, to locate the error line.
-The text is used as a literal string.  The anchors "^" and "$" are added to
-the text to locate the error line exactly matching the search text and the
-text is prefixed with the "\V" atom to make it "very nomagic".  The "%s"
-conversion can be used to locate lines without a line number in the error
+The "%s" conversion specifies the text to search for, to locate the error
+line.  The text is used as a literal string.  The anchors "^" and "$" are
+added to the text to locate the error line exactly matching the search text
+and the text is prefixed with the "\V" atom to make it "very nomagic".  The
+"%s" conversion can be used to locate lines without a line number in the error
 output.  Like the output of the "grep" shell command.
 When the pattern is present the line number will not be used.
 
@@ -2017,7 +2029,8 @@ be escaped), meta symbols have to be written with leading '%':
 	%~		The single '~' character.
 When using character classes in expressions (see |/\i| for an overview),
 terms containing the "\+" quantifier can be written in the scanf() "%*"
-notation.  Example: "%\\d%\\+" ("\d\+", "any number") is equivalent to "%*\\d".
+notation.  Example: "%\\d%\\+" ("\d\+", "any number") is equivalent to
+"%*\\d".
 Important note: The \(...\) grouping of sub-matches can not be used in format
 specifications because it is reserved for internal conversions.
 
@@ -2223,7 +2236,7 @@ You need to put the following in "vim-javac-filter" somewhere in your path
 In English, that sed script:
 - Changes single tabs to single spaces and
 - Moves the line with the filename, line number, error message to just after
-  the pointer line. That way, the unused error text between doesn't break
+  the pointer line.  That way, the unused error text between doesn't break
   vim's notion of a "multi-line message" and also doesn't force us to include
   it as a "continuation of a multi-line message."
 
@@ -2347,40 +2360,40 @@ The values displayed in each line correspond to the "bufnr", "lnum", "col" and
 For some quickfix/location lists, the displayed text needs to be customized.
 For example, if only the filename is present for a quickfix entry, then the
 two "|" field separator characters after the filename are not needed.  Another
-use case is to customize the path displayed for a filename. By default, the
+use case is to customize the path displayed for a filename.  By default, the
 complete path (which may be too long) is displayed for files which are not
-under the current directory tree. The file path may need to be simplified to a
-common parent directory.
+under the current directory tree.  The file path may need to be simplified to
+a common parent directory.
 
 The displayed text can be customized by setting the 'quickfixtextfunc' option
 to a Vim function.  This function will be called with a dict argument and
 should return a List of strings to be displayed in the quickfix or location
-list window. The dict argument will have the following fields:
+list window.  The dict argument will have the following fields:
 
     quickfix	set to 1 when called for a quickfix list and 0 when called for
 		a location list.
     winid	for a location list, set to the id of the window with the
-		location list. For a quickfix list, set to 0. Can be used in
+		location list.  For a quickfix list, set to 0.  Can be used in
 		getloclist() to get the location list entry.
     id		quickfix or location list identifier
     start_idx	index of the first entry for which text should be returned
     end_idx	index of the last entry for which text should be returned
 
 The function should return a single line of text to display in the quickfix
-window for each entry from start_idx to end_idx. The function can obtain
+window for each entry from start_idx to end_idx.  The function can obtain
 information about the entries using the |getqflist()| function and specifying
-the quickfix list identifier "id". For a location list, getloclist() function
-can be used with the "winid" argument. If an empty list is returned, then the
-default format is used to display all the entries. If an item in the returned
+the quickfix list identifier "id".  For a location list, getloclist() function
+can be used with the "winid" argument.  If an empty list is returned, then the
+default format is used to display all the entries.  If an item in the returned
 list is an empty string, then the default format is used to display the
 corresponding entry.
 
 If a quickfix or location list specific customization is needed, then the
 'quickfixtextfunc' attribute of the list can be set using the |setqflist()| or
-|setloclist()| function. This overrides the global 'quickfixtextfunc' option.
+|setloclist()| function.  This overrides the global 'quickfixtextfunc' option.
 
 The example below displays the list of old files (|v:oldfiles|) in a quickfix
-window. As there is no line, column number and error text information
+window.  As there is no line, column number and error text information
 associated with each entry, the 'quickfixtextfunc' function returns only the
 filename.
 Example: >

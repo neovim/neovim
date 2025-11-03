@@ -543,8 +543,6 @@ static int nlua_wait(lua_State *lstate)
     lua_pushinteger(lstate, -1);
     return 2;
   }
-
-  abort();
 }
 
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
@@ -1181,7 +1179,10 @@ int nlua_call(lua_State *lstate)
   size_t name_len;
   const char *name = luaL_checklstring(lstate, 1, &name_len);
   if (!nlua_is_deferred_safe() && !viml_func_is_fast(name)) {
-    return luaL_error(lstate, e_fast_api_disabled, "Vimscript function");
+    size_t length = MIN(strlen(name), 100) + sizeof("Vimscript function \"\"");
+    vim_snprintf(IObuff, length, "Vimscript function \"%s\"", name);
+    int ret = luaL_error(lstate, e_fast_api_disabled, IObuff);
+    return ret;
   }
 
   int nargs = lua_gettop(lstate) - 1;

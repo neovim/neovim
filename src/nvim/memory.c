@@ -813,10 +813,17 @@ char *arena_allocz(Arena *arena, size_t size)
 }
 
 char *arena_memdupz(Arena *arena, const char *buf, size_t size)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   char *mem = arena_allocz(arena, size);
   memcpy(mem, buf, size);
   return mem;
+}
+
+char *arena_strdup(Arena *arena, const char *str)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  return arena_memdupz(arena, str, strlen(str));
 }
 
 #if defined(EXITFREE)
@@ -833,11 +840,11 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 # include "nvim/grid.h"
 # include "nvim/mark.h"
 # include "nvim/msgpack_rpc/channel.h"
-# include "nvim/ops.h"
 # include "nvim/option.h"
 # include "nvim/os/os.h"
 # include "nvim/quickfix.h"
 # include "nvim/regexp.h"
+# include "nvim/register.h"
 # include "nvim/search.h"
 # include "nvim/spell.h"
 # include "nvim/tag.h"

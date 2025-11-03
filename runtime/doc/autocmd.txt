@@ -179,7 +179,7 @@ or <buffer=N>.  See |autocmd-buflocal|.
 
 							*:autocmd-verbose*
 When 'verbose' is non-zero, listing an autocommand will also display where it
-was last defined. Example: >
+was last defined.  Example: >
 
     :verbose autocmd BufEnter
     FileExplorer  BufEnter
@@ -439,7 +439,7 @@ ColorScheme			After loading a color scheme. |:colorscheme|
 				Not triggered if the color scheme is not
 				found.
 				The pattern is matched against the
-				colorscheme name. <afile> can be used for the
+				colorscheme name.  <afile> can be used for the
 				name of the actual file where this option was
 				set, and <amatch> for the new colorscheme
 				name.
@@ -772,13 +772,13 @@ MenuPopup			Just before showing the popup menu (under the
 					c	Command line
 					tl	Terminal
 							*ModeChanged*
-ModeChanged			After changing the mode. The pattern is
+ModeChanged			After changing the mode.  The pattern is
 				matched against `'old_mode:new_mode'`, for
-				example match against `*:c` to simulate
+				example match against `*:c*` to simulate
 				|CmdlineEnter|.
 				The following values of |v:event| are set:
-					old_mode The mode before it changed.
-					new_mode The new mode as also returned
+				   old_mode	The mode before it changed.
+				   new_mode	The new mode as also returned
 						by |mode()| called with a
 						non-zero argument.
 				When ModeChanged is triggered, old_mode will
@@ -834,7 +834,7 @@ OptionSet			After setting an option (except during
 
 				|v:option_oldlocal| is only set when |:set|
 				or |:setlocal| or a |modeline| was used to set
-				the option. Similarly |v:option_oldglobal| is
+				the option.  Similarly |v:option_oldglobal| is
 				only set when |:set| or |:setglobal| was used.
 
 				This does not set |<abuf>|, you could use
@@ -842,7 +842,7 @@ OptionSet			After setting an option (except during
 
 				Note that when setting a |global-local| option
 				with |:set|, then |v:option_old| is the old
-				global value. However, for all options that
+				global value.  However, for all options that
 				are not global-local it is the old local
 				value.
 
@@ -852,7 +852,7 @@ OptionSet			After setting an option (except during
 				exist yet.
 
 				Note: Do not reset the same option during this
-				autocommand, that may break plugins. You can
+				autocommand, that may break plugins.  You can
 				always use |:noautocmd| to prevent triggering
 				OptionSet.
 
@@ -885,7 +885,7 @@ QuickFixCmdPre			Before a quickfix command is run (|:make|,
 							*QuickFixCmdPost*
 QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 				command is run, before jumping to the first
-				location. For |:cfile| and |:lfile| commands
+				location.  For |:cfile| and |:lfile| commands
 				it is run after the error file is read and
 				before moving to the first error.
 				See |QuickFixCmdPost-example|.
@@ -1066,7 +1066,8 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				- sequence: the received sequence
 				- cursor: (1,0)-indexed, buffer-relative
 				  position of the cursor when the sequence was
-				  received
+				  received (line number may be <= 0 if the
+				  position is no longer in the buffer)
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
@@ -1507,8 +1508,8 @@ option will not cause any commands to be executed.
 							*<nomodeline>*
 			After applying the autocommands the modelines are
 			processed, so that their settings overrule the
-			settings from autocommands when editing a file. This
-			is skipped if <nomodeline> is specified. You probably
+			settings from autocommands when editing a file.  This
+			is skipped if <nomodeline> is specified.  You probably
 			want to use <nomodeline> for events not used when
 			loading a buffer, such as |User|.
 			Modelines are also skipped when no matching
@@ -1520,7 +1521,7 @@ option will not cause any commands to be executed.
 			loaded buffer.  The current buffer is done last.
 
 			Note that [fname] is used to select the autocommands,
-			not the buffers to which they are applied. Example: >
+			not the buffers to which they are applied.  Example: >
 				augroup mine
 				  autocmd!
 				  autocmd FileType * echo expand('<amatch>')

@@ -559,7 +559,7 @@ static int cin_isdefault(const char *s)
          && s[1] != ':';
 }
 
-/// Recognize a scope declaration label set in 'cinscopedecls'.
+/// Recognize a scope declaration label from the 'cinscopedecls' option.
 static bool cin_isscopedecl(const char *p)
 {
   const char *s = cin_skipcomment(p);
@@ -3179,9 +3179,8 @@ int get_c_indent(void)
                 amount = cur_amount;
 
                 n = (int)strlen(l);
-                if (terminated == ','
-                    && (*skipwhite(l) == ']'
-                        || (n >= 2 && l[n - 2] == ']'))) {
+                if (curbuf->b_ind_js && terminated == ','
+                    && (*skipwhite(l) == ']' || (n >= 2 && l[n - 2] == ']'))) {
                   break;
                 }
 

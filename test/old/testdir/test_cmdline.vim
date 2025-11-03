@@ -1174,11 +1174,13 @@ endfunc
 
 func Test_cmdline_complete_expression()
   let g:SomeVar = 'blah'
-  for cmd in ['exe', 'echo', 'echon', 'echomsg']
+  for cmd in ['exe', 'echo', 'echon', 'echomsg', 'echoerr',
+        "\ 'echoconsole', 'echowindow']
+        \ ]
     call feedkeys(":" .. cmd .. " SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_match('"' .. cmd .. ' SomeVar', @:)
+    call assert_match('"' .. cmd .. ' SomeVar', @:, cmd)
     call feedkeys(":" .. cmd .. " foo SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
-    call assert_match('"' .. cmd .. ' foo SomeVar', @:)
+    call assert_match('"' .. cmd .. ' foo SomeVar', @:, cmd)
   endfor
   unlet g:SomeVar
 endfunc
@@ -2672,6 +2674,74 @@ func Test_recalling_cmdline()
 
   unlet g:cmdlines
   cunmap <Plug>(save-cmdline)
+endfunc
+
+func Test_recalling_cmdline_with_mappings()
+  CheckFeature cmdline_hist
+
+  cnoremap <F2> <Cmd>let g:cmdline = getcmdline()<CR>
+  cnoremap <CR> <CR>
+  cnoremap <Up> <Up>
+  let save_a = ['a', getreg('a'), getregtype('a')]
+
+  call feedkeys(":echo 'foo'\<CR>", 'tx')
+  call assert_equal("echo 'foo'", @:)
+  call feedkeys(":echo 'bar'\<CR>", 'tx')
+  call assert_equal("echo 'bar'", @:)
+
+  call assert_equal("echo 'bar'", histget(':', -1))
+  call assert_equal("echo 'foo'", histget(':', -2))
+
+  " This command comes completely from a mapping.
+  nmap <F3> :echo 'baz'<F2><CR>
+  call feedkeys("\<F3>", 'tx')
+  call assert_equal('baz', Screenline(&lines)->trim())
+  call assert_equal("echo 'baz'", g:cmdline)
+  call assert_equal("echo 'bar'", @:)
+  call assert_equal("echo 'bar'", histget(':', -1))
+  call assert_equal("echo 'foo'", histget(':', -2))
+
+  if has('unix')
+    new
+    call setline(1, ['aaa'])
+    setlocal formatprg=cat
+    " Formatting with non-typed "gq" should not change cmdline history.
+    normal! gqgq
+    call assert_equal(":.!cat", Screenline(&lines)->trim())
+    call assert_equal("echo 'bar'", @:)
+    call assert_equal("echo 'bar'", histget(':', -1))
+    call assert_equal("echo 'foo'", histget(':', -2))
+    bwipe!
+  endif
+
+  " This case can still be considered a typed command.
+  call timer_start(1, {-> feedkeys("\<CR>", 't')})
+  call feedkeys(":\<Up>\<Up>", 'tx!')
+  call assert_equal('foo', Screenline(&lines)->trim())
+  call assert_equal("echo 'foo'", @:)
+  call assert_equal("echo 'foo'", histget(':', -1))
+  call assert_equal("echo 'bar'", histget(':', -2))
+
+  call feedkeys(":\<Up>\<F2>\<Esc>", 'tx')
+  call assert_equal("echo 'foo'", g:cmdline)
+  call assert_equal("echo 'foo'", @:)
+
+  " A command from an executed register is also ignored in the history.
+  call feedkeys(':let @a=":echo ''zzz''\<cr>"' .. "\<CR>", 'tx')
+  call feedkeys(":norm @a\<cr>", 'tx')
+  call assert_equal('zzz', Screenline(&lines)->trim())
+  call assert_equal('norm @a', @:)
+  call assert_equal('norm @a', histget(':', -1))
+  call assert_equal('let @a=":echo ''zzz''\<cr>"', histget(':', -2))
+  call assert_equal("echo 'foo'", histget(':', -3))
+  call assert_equal("echo 'bar'", histget(':', -4))
+
+  unlet g:cmdline
+  call call('setreg', save_a)
+  cunmap <F2>
+  cunmap <CR>
+  cunmap <Up>
+  nunmap <F3>
 endfunc
 
 func Test_cmd_map_cmdlineChanged()
@@ -4939,6 +5009,43 @@ func Test_cmdline_changed()
   call Ntest_override("char_avail", 0)
 endfunc
 
+func Test_wildtrigger_update_screen()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    command! -nargs=* -complete=customlist,TestFn TestCmd echo
+    func TestFn(cmdarg, b, c)
+      if a:cmdarg == 'ax'
+        return []
+      else
+        return map(range(1, 5), 'printf("abc%d", v:val)')
+      endif
+    endfunc
+    set wildmode=noselect,full
+    set wildoptions=pum
+    set wildmenu
+    cnoremap <F8> <C-R>=wildtrigger()[-1]<CR>
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildtrigger', 'D')
+  let buf = RunVimInTerminal('-S XTest_wildtrigger', {'rows': 10})
+
+  call term_sendkeys(buf, ":TestCmd a\<F8>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_1', {})
+
+  " Typing a character when pum is open does not close the pum window
+  " This is needed to prevent pum window from flickering during
+  " ':h cmdline-autocompletion'.
+  call term_sendkeys(buf, "x")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_2', {})
+
+  " pum window is closed when no completion candidates are available
+  call term_sendkeys(buf, "\<F8>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_3', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " Issue #18035: long lines should not get listed twice in the menu when
 " 'wildmode' contains 'noselect'
 func Test_long_line_noselect()
@@ -5014,6 +5121,25 @@ func Test_skip_wildtrigger_hist_navigation()
   augroup TestSkipWildtrigger | autocmd! | augroup END
   cunmap <Up>
   cunmap <Down>
+endfunc
+
+" Issue 18298: wildmenu should be dismissed after wildtrigger and whitespace
+func Test_update_screen_after_wildtrigger()
+  CheckScreendump
+  let lines =<< trim [SCRIPT]
+    call test_override("char_avail", 1)
+    set wildmode=noselect:lastused,full wildmenu wildoptions=pum
+    autocmd CmdlineChanged : if getcmdcompltype() != 'shellcmd' | call wildtrigger() | endif
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildtrigger', 'D')
+  let buf = RunVimInTerminal('-S XTest_wildtrigger', {'rows': 10})
+
+  call term_sendkeys(buf, ":term foo")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_update_screen_wildtrigger_1', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
