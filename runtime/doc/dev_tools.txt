@@ -21,7 +21,7 @@ You can start hacking on Nvim in less than 5 minutes:
         cd neovim
         # (Optional) Build and run Nvim:
         make
-        ./build/bin/nvim
+        VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
 3. Run a single test. We will start with "example_spec.lua", which is a real
    test that shows how tests are written: >
         make functionaltest TEST_FILE=test/functional/example_spec.lua
