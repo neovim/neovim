@@ -239,6 +239,7 @@ void screenclear(void)
   mode_displayed = false;
 
   redraw_all_later(UPD_NOT_VALID);
+  cmdline_was_last_drawn = false;
   redraw_cmdline = true;
   redraw_tabline = true;
   redraw_popupmenu = true;

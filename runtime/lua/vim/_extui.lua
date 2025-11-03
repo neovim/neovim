@@ -126,7 +126,9 @@ function M.enable(opts)
 
   api.nvim_create_autocmd({ 'VimResized', 'TabEnter' }, {
     group = ext.augroup,
-    callback = ext.msg.set_pos,
+    callback = function()
+      ext.msg.set_pos()
+    end,
     desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
   })
 
