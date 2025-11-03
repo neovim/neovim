@@ -344,7 +344,9 @@ function Completor:accept(item)
         lines
       )
       local pos = item.range.start:to_cursor()
-      api.nvim_win_set_cursor(vim.fn.bufwinid(self.bufnr), {
+      local win = api.nvim_get_current_win()
+      win = api.nvim_win_get_buf(win) == self.bufnr and win or vim.fn.bufwinid(self.bufnr)
+      api.nvim_win_set_cursor(win, {
         pos[1] + #lines - 1,
         (#lines == 1 and pos[2] or 0) + #lines[#lines],
       })
