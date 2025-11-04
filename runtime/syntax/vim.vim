@@ -1918,10 +1918,10 @@ VimFoldl syn region vimLuaHeredoc	contained
 
 " [-- mzscheme --] {{{3
 if s:interfaces =~# 'm'
-  let s:iskKeep = &isk
+  let s:iskKeep = &l:isk
   syn include @vimMzSchemeScript syntax/scheme.vim
   unlet b:current_syntax
-  let &isk = s:iskKeep
+  let &l:isk = s:iskKeep
 endif
 
 syn keyword	vimMzScheme	mz[scheme]	skipwhite nextgroup=vimMzSchemeHeredoc,vimMzSchemeStatement
