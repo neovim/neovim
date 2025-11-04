@@ -1112,16 +1112,6 @@ formatexpr({opts})                                      *vim.lsp.formatexpr()*
                 • {timeout_ms} (`integer`, default: 500ms) The timeout period
                   for the formatting request..
 
-                                          *vim.lsp.get_buffers_by_client_id()*
-get_buffers_by_client_id({client_id})
-    Returns list of buffers attached to client_id.
-
-    Parameters: ~
-      • {client_id}  (`integer`) client id
-
-    Return: ~
-        (`integer[]`) buffers list of buffer ids
-
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
     Gets a client by id, or nil if the id is invalid or the client was
     stopped. The returned client may not yet be fully initialized.
