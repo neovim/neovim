@@ -8,64 +8,45 @@ local query = ts.query.parse('vimdoc', '(tag (word) @tagname)')
 
 ---Read file in libuv callback-style
 ---@param path string
----@param callback fun(string?, string?): string?, string?
-local function read_file_uv(path, callback)
-  vim.uv.fs_open(path, 'r', 438, function(err_open, fd)
-    if err_open then
-      return callback(nil, err_open)
-    end
-
-    vim.uv.fs_fstat(fd, function(err_stat, stat)
-      if err_stat then
-        vim.uv.fs_close(fd)
-        return callback(nil, err_stat)
-      end
-
-      vim.uv.fs_read(fd, stat.size, 0, function(err_read, data)
-        vim.uv.fs_close(fd)
-        if err_read then
-          return callback(nil, err_read)
-        end
-        callback(data, nil)
-      end)
-    end)
+---@param cb fun(string?, string?): string?, string?
+local function uv_read(path, cb)
+  local fd = assert(vim.uv.fs_open(path, 'r', 438))
+  local stat = assert(vim.uv.fs_fstat(fd))
+  vim.uv.fs_read(fd, stat.size, 0, function(err, data)
+    vim.uv.fs_close(fd)
+    cb(data, err)
   end)
 end
 
 --- Extract all tag definitions from a help file.
 --- @async
---- @param filename string Help file with tags.
+--- @param path string Help file with tags.
 --- @return Tag[] # List of tags. Empty if file is not readable.
-local function extract_file_tags(filename)
+local function extract_file_tags(path)
   local tags = {}
-  local source, err = async.await(2, read_file_uv, filename)
-  if err or source == nil then
-    async.await(vim.schedule)
-    vim.notify(('E153: Unable to open %s for reading'):format(filename), vim.log.levels.ERROR)
-    return tags
-  end
-  local fn = vim.fs.basename(filename)
+  local source = assert(async.await(2, uv_read, path))
 
-  async.await(vim.schedule_wrap(function(done)
-    local parser = ts.get_string_parser(source, 'vimdoc')
-    parser:parse(false, function(err2, tree)
-      if not err2 then
-        local root = tree[1]:root()
-        for _, match in query:iter_matches(root, source) do
-          for id, node in pairs(match) do
-            if query.captures[id] == 'tagname' then
-              local tagname = ts.get_node_text(node[1], source)
-              local escaped = tagname:gsub('[\\/]', '\\%0')
-              local searchcmd = '/*' .. escaped .. '*'
-              table.insert(tags, { tagname, fn, searchcmd })
-            end
-          end
-        end
+  -- FIX(yochem): creates many scratch buffers, which is slow. Destroying
+  -- the parser deletes the buffers, but ideally after #36306 this uses a
+  -- faster string parser.
+  async.await(vim.schedule)
+  local parser = ts.get_string_parser(source, 'vimdoc')
+  local _, tree = async.await(3, parser.parse, parser, false)
+  parser:destroy()
+  assert(tree)
+
+  local filename = vim.fs.basename(path)
+  local root = tree[1]:root()
+  for _, match in query:iter_matches(root, source) do
+    for id, node in pairs(match) do
+      if query.captures[id] == 'tagname' then
+        local tagname = ts.get_node_text(node[1], source)
+        local escaped = tagname:gsub('[\\/]', '\\%0')
+        local searchcmd = '/*' .. escaped .. '*'
+        table.insert(tags, { tagname, filename, searchcmd })
       end
-      parser:destroy()
-      done()
-    end)
-  end))
+    end
+  end
 
   return tags
 end
@@ -97,6 +78,7 @@ end
 --- @param outpath string path to write the 'tags' file to.
 --- @param include_helptags_tag boolean true if the 'help-tags' tag should be included
 local function create_tags_from_files(helpfiles, outpath, include_helptags_tag)
+  local time = vim.uv.hrtime()
   local tasks = {}
   for i, file in ipairs(helpfiles) do
     tasks[i] = async.run(extract_file_tags, file)
@@ -114,6 +96,7 @@ local function create_tags_from_files(helpfiles, outpath, include_helptags_tag)
     table.insert(tags, { 'help-tags', 'tags', '1' })
   end
 
+  -- sort alphabetically on tag name
   table.sort(tags, function(a, b)
     return a[1] < b[1]
   end)
@@ -128,7 +111,8 @@ local function create_tags_from_files(helpfiles, outpath, include_helptags_tag)
   end
   f:close()
 
-  print(('Helptags written to %s'):format(outpath))
+  time = vim.uv.hrtime() - time
+  print(('Helptags written to %s in %f s'):format(outpath, time / 1e9))
 end
 
 --- Create a "tags" file for all help files in the given directory.
@@ -189,11 +173,7 @@ function M.generate(dir, include_helptags, wait)
     end
   end
   if wait then
-    async
-      .run(function()
-        async.join(tasks)
-      end)
-      :wait()
+    async.run(async.join, tasks):wait()
   end
 end
 
