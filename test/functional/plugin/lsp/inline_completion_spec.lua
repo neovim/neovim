@@ -271,16 +271,11 @@ describe('vim.lsp.inline_completion', function()
           return b;
         }]]),
         range = {
-          end_ = {
-            buf = 1,
-            col = 20,
-            row = 0,
-          },
-          start = {
-            buf = 1,
-            col = 0,
-            row = 0,
-          },
+          0,
+          0,
+          0,
+          20,
+          1,
         },
       }, result)
     end)
