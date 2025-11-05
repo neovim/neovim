@@ -129,7 +129,7 @@ describe('vim.lsp.diagnostic', function()
         }, { client_id = client_id })
 
         local diags = vim.diagnostic.get(diagnostic_bufnr)
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
         return diags
       end)
@@ -361,7 +361,7 @@ describe('vim.lsp.diagnostic', function()
       )
 
       exec_lua(function()
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
       end)
 
       eq(
@@ -400,7 +400,9 @@ describe('vim.lsp.diagnostic', function()
       )
 
       exec_lua(function()
-        vim.lsp.stop_client(client_id2)
+        if client_id2 ~= nil then
+          vim.lsp.get_client_by_id(client_id2):stop()
+        end
       end)
 
       eq(

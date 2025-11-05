@@ -41,6 +41,7 @@ LSP
 • *vim.lsp.get_log_path()*		Use `vim.lsp.log.get_filename()` instead
 • *vim.lsp.get_buffers_by_client_id*	Use `vim.lsp.get_client_by_id(id).attached_buffers`
 					instead
+• *vim.lsp.stop_client()*		Use |Client:stop()| instead
 
 LUA
 
