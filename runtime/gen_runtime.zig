@@ -34,5 +34,23 @@ pub fn nvim_gen_runtime(
         gen_step.has_side_effects = true; // workaround: missing detection of input changes
     }
 
+    // Generate deprecated functions checker
+    {
+        const gen_step = b.addRunArtifact(nlua0);
+        gen_step.addFileArg(b.path("src/gen/gen_deprecate.lua"));
+        const output_path = b.pathJoin(&.{
+            b.build_root.path.?,
+            "runtime",
+            "lua",
+            "vim",
+            "_core",
+            "deprecated.lua"
+        });
+        gen_step.addArg(output_path);
+        gen_step.addFileArg(b.path("runtime/doc/deprecated.txt"));
+        gen_step.has_side_effects = true;
+        gen_runtime.step.dependOn(&gen_step.step);
+    }
+
     return gen_runtime;
 }
