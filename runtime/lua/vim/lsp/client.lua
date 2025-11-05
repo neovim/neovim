@@ -888,7 +888,7 @@ function Client:stop(force)
 
   lsp._watchfiles.cancel(self.id)
 
-  if force or not self.initialized or self._graceful_shutdown_failed then
+  if force == true or not self.initialized or self._graceful_shutdown_failed then
     rpc.terminate()
     return
   end
