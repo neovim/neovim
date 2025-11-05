@@ -550,7 +550,8 @@ end
 ---
 --- @param name string|string[] Name(s) of client(s) to enable.
 --- @param enable? boolean `true|nil` to enable, `false` to disable (actively stops and detaches
---- clients as needed)
+--- clients as needed, and force stops them if necessary after `client.flags.exit_timeout`
+--- milliseconds, with a default time of 200 milliseconds)
 function lsp.enable(name, enable)
   validate('name', name, { 'string', 'table' })
 
@@ -587,7 +588,8 @@ function lsp.enable(name, enable)
   else
     for _, nm in ipairs(names) do
       for _, client in ipairs(lsp.get_clients({ name = nm })) do
-        client:stop()
+        local force_timeout = client.flags.exit_timeout or 200
+        client:stop(force_timeout)
       end
     end
   end
