@@ -1048,7 +1048,9 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
     Parameters: ~
       • {name}    (`string|string[]`) Name(s) of client(s) to enable.
       • {enable}  (`boolean?`) `true|nil` to enable, `false` to disable
-                  (actively stops and detaches clients as needed)
+                  (actively stops and detaches clients as needed, and force
+                  stops them if necessary after `client.flags.exit_timeout`
+                  milliseconds, with a default time of 3000 milliseconds)
 
 foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
     Close all {kind} of folds in the the window with {winid}.
