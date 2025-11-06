@@ -3,6 +3,38 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
+---@class CodelensDisplay
+local lens_display = {
+  hl_mode = 'combine', ---@type "replace"|"combine"|"blend"
+  virt_lines = false, ---@type boolean
+  virt_text = true, ---@type boolean
+}
+
+---@return CodelensDisplay
+function M.get_display()
+  return vim.deepcopy(lens_display)
+end
+
+---@param opts CodelensDisplay
+function M.set_display(opts)
+  vim.validate('opts', opts, 'table', true)
+
+  if type(opts.virt_text) == 'boolean' then
+    lens_display.virt_text = opts.virt_text
+  end
+
+  if type(opts.virt_lines) == 'boolean' then
+    lens_display.virt_lines = opts.virt_lines
+  end
+
+  if
+    type(opts.hl_mode) == 'string'
+    and vim.tbl_contains({ 'replace', 'combine', 'blend' }, opts.hl_mode)
+  then
+    lens_display.hl_mode = opts.hl_mode
+  end
+end
+
 --- bufnr → true|nil
 --- to throttle refreshes to at most one at a time
 local active_refreshes = {} --- @type table<integer,true>
@@ -176,10 +208,25 @@ local function display_line_lenses(bufnr, ns, line, lenses)
 
   api.nvim_buf_clear_namespace(bufnr, ns, line, line + 1)
   if #chunks > 0 then
-    api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
-      virt_text = chunks,
-      hl_mode = 'combine',
-    })
+    if lens_display.virt_text then
+      api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
+        virt_text = chunks,
+        hl_mode = lens_display.hl_mode,
+      })
+    end
+
+    if lens_display.virt_lines then
+      local indent = vim.fn.indent(line + 1)
+      if indent > 0 then
+        table.insert(chunks, 1, { string.rep(' ', indent), '' })
+      end
+
+      api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
+        virt_lines = { chunks },
+        virt_lines_above = true,
+        hl_mode = lens_display.hl_mode,
+      })
+    end
   end
 end
 
