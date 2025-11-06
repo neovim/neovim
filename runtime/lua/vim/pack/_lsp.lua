@@ -20,7 +20,7 @@ function methods.shutdown(_, callback)
 end
 
 local get_confirm_bufnr = function(uri)
-  return tonumber(uri:match('^nvim%-pack://(%d+)/confirm%-update$'))
+  return tonumber(uri:match('^nvim://pack%-confirm#(%d+)$'))
 end
 
 local group_header_pattern = '^# (%S+)'

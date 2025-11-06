@@ -923,7 +923,7 @@ end
 local function show_confirm_buf(lines, on_finish)
   -- Show buffer in a separate tabpage
   local bufnr = api.nvim_create_buf(true, true)
-  api.nvim_buf_set_name(bufnr, 'nvim-pack://' .. bufnr .. '/confirm-update')
+  api.nvim_buf_set_name(bufnr, 'nvim://pack-confirm#' .. bufnr)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.cmd.sbuffer({ bufnr, mods = { tab = vim.fn.tabpagenr() } })
   local tab_id = api.nvim_get_current_tabpage()
