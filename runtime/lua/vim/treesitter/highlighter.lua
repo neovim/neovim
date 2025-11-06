@@ -570,6 +570,7 @@ function TSHighlighter._on_win(_, win, buf, topline, botline)
       -- trees upon parsing a different region.
       state.iter = nil
       state.next_row = 0
+      state.next_col = 0
     end)
   end
   local hl_states = self._highlight_states[win] or {}
