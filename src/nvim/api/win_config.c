@@ -195,7 +195,8 @@
 ///     Value can be one of "left", "center", or "right".
 ///     Default is `"left"`.
 ///   - noautocmd: If true then all autocommands are blocked for the duration of
-///     the call.
+///     the call. Once set at window creation, this option cannot be modified
+///     later through |nvim_win_set_config()|.
 ///   - fixed: If true when anchor is NW or SW, the float window
 ///            would be kept fixed even if the window would be truncated.
 ///   - hide: If true the floating window will be hidden and the cursor will be invisible when
@@ -1380,8 +1381,9 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, noautocmd)) {
-    if (wp) {
-      api_set_error(err, kErrorTypeValidation, "'noautocmd' cannot be used with existing windows");
+    if (wp && config->noautocmd != fconfig->noautocmd) {
+      api_set_error(err, kErrorTypeValidation,
+                    "'noautocmd' cannot be changed with existing windows");
       goto fail;
     }
     fconfig->noautocmd = config->noautocmd;
