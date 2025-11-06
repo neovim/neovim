@@ -273,7 +273,7 @@ Basic install and management:
 Switch plugin's version:
 • Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
   named 'plugin1' has changed to `vim.version.range('*')`.
-• |:restart|. The plugin's actual state on disk is not yet changed. Only
+• |:restart|. The plugin's actual revision on disk is not yet changed. Only
   plugin's `version` in |vim.pack-lockfile| is updated.
 • Execute `vim.pack.update({ 'plugin1' })`.
 • Review changes and either confirm or discard them. If discarded, revert any
@@ -356,7 +356,7 @@ add({specs}, {opts})                                          *vim.pack.add()*
       |vim.pack-directory|:
       • If exists, do nothing in this step.
       • If doesn't exist, install it by downloading from `src` into `name`
-        subdirectory (via `git clone`) and update state to match `version`
+        subdirectory (via `git clone`) and update revision to follow `version`
         (via `git checkout`).
     • For each plugin execute |:packadd| (or customizable `load` function)
       making it reachable by Nvim.
@@ -365,7 +365,7 @@ add({specs}, {opts})                                          *vim.pack.add()*
     • Installation is done in parallel, but waits for all to finish before
       continuing next code execution.
     • If plugin is already present on disk, there are no checks about its
-      present state. The specified `version` can be not the one actually
+      current revision. The specified `version` can be not the one actually
       present on disk. Execute |vim.pack.update()| to synchronize.
     • Adding plugin second and more times during single session does nothing:
       only the data from the first adding is registered.
@@ -416,7 +416,7 @@ get({names}, {opts})                                          *vim.pack.get()*
 update({names}, {opts})                                    *vim.pack.update()*
     Update plugins
     • Download new changes from source.
-    • Infer update info (current/target state, changelog, etc.).
+    • Infer update info (current/target revisions, changelog, etc.).
     • Depending on `force`:
       • If `false`, show confirmation buffer. It lists data about all set to
         update plugins. Pending changes starting with `>` will be applied

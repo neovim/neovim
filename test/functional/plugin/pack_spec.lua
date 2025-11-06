@@ -1055,10 +1055,10 @@ describe('vim.pack', function()
           '{101:# Update ───────────────────────────────────────────────────────────────────────}     |',
           '                                                                                     |',
           '{101:## fetch}                                                                             |',
-          'Path:         {103:FETCH_PATH}                                                             |',
-          'Source:       {103:FETCH_SRC}                                                              |',
-          ('State before: {103:%s}                               |'):format(hashes.fetch_head),
-          ('State after:  {103:%s} {102:(main)}                        |'):format(hashes.fetch_new),
+          'Path:            {103:FETCH_PATH}                                                          |',
+          'Source:          {103:FETCH_SRC}                                                           |',
+          ('Revision before: {103:%s}                            |'):format(hashes.fetch_head),
+          ('Revision after:  {103:%s} {102:(main)}                     |'):format(hashes.fetch_new),
           '                                                                                     |',
           'Pending updates:                                                                     |',
           ('{19:< %s │ Commit from `main` to be removed}                                         |'):format(
@@ -1074,9 +1074,9 @@ describe('vim.pack', function()
           '{102:# Same ─────────────────────────────────────────────────────────────────────────}     |',
           '                                                                                     |',
           '{102:## semver}                                                                            |',
-          'Path:   {103:SEMVER_PATH}                                                                  |',
-          'Source: {103:SEMVER_SRC}                                                                   |',
-          ('State:  {103:%s} {102:(v0.3.0)}                            |'):format(
+          'Path:     {103:SEMVER_PATH}                                                                |',
+          'Source:   {103:SEMVER_SRC}                                                                 |',
+          ('Revision: {103:%s} {102:(v0.3.0)}                          |'):format(
             hashes.semver_head
           ),
           '                                                                                     |',
@@ -1119,10 +1119,10 @@ describe('vim.pack', function()
           # Update ───────────────────────────────────────────────────────────────────────
 
           ## fetch
-          Path:         %s
-          Source:       %s
-          State before: %s
-          State after:  %s (main)
+          Path:            %s
+          Source:          %s
+          Revision before: %s
+          Revision after:  %s (main)
 
           Pending updates:
           < %s │ Commit from `main` to be removed
@@ -1470,10 +1470,10 @@ describe('vim.pack', function()
         # Update ───────────────────────────────────────────────────────────────────────
 
         ## fetch
-        Path:         %s
-        Source:       %s
-        State before: %s
-        State after:  %s (main)
+        Path:            %s
+        Source:          %s
+        Revision before: %s
+        Revision after:  %s (main)
 
         Pending updates:
         < %s │ Commit from `main` to be removed
