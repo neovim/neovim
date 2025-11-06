@@ -432,6 +432,13 @@ describe('vim.fs', function()
       command('file lua://')
       eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
+
+    it('returns an absolute path for an invalid filename', function()
+      command('new')
+      command('set buftype=nofile')
+      command('file lua://')
+      eq(test_source_path, exec_lua([[return vim.fs.root('file://asd', 'CMakePresets.json')]]))
+    end)
   end)
 
   describe('joinpath()', function()
