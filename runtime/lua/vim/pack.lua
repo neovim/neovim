@@ -193,7 +193,7 @@ end
 local function git_get_hash(ref, cwd)
   -- Using `rev-list -1` shows a commit of reference, while `rev-parse` shows
   -- hash of reference. Those are different for annotated tags.
-  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', ref }, cwd)
+  return git_cmd({ 'rev-list', '-1', ref }, cwd)
 end
 
 --- @async
