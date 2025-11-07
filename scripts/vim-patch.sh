@@ -899,9 +899,11 @@ _check_patch() {
   # shellcheck disable=SC2086
   FILE_LNUM="$(diff <(git diff-tree --no-commit-id --name-only -r "$patch" | grep -v $GREP_NA_ARGS) "$NA_FILELIST" | grep -c '^<')"
   if test "$FILE_LNUM" -le 1 && test "$VERSION_LNUM" = 2; then
-    # shellcheck disable=SC2001
-    vimpatch="$(echo "$patch" | sed 's/^v\([^.]\+\)$/\1/')"
-    echo "vim-patch:$vimpatch"
+    if (echo "$patch" | grep -q '^v[0-9]'); then
+      echo "vim-patch:$(git log -1 --pretty=format:%s "$patch" | sed 's/^patch //')"
+    else
+      echo "vim-patch:$(git log -1 --oneline "$patch")"
+    fi
   fi
 }
 
