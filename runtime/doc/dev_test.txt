@@ -1,4 +1,4 @@
-*dev_test*          Nvim
+*dev_test.txt*          Nvim
 
 
                             NVIM REFERENCE MANUAL
