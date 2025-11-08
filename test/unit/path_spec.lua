@@ -742,4 +742,55 @@ describe('path.c', function()
       eq(0, path_with_url([[C:/xyz/foo/b5]]))
     end)
   end)
+
+  describe('same_directory', function()
+    local cwd = uv.cwd()
+
+    if cwd == nil then
+      eq(FAIL, OK);
+      return
+    end
+
+    local dir = 'ut_directory/'
+    local f1 = 'f1.o'
+    local f2 = 'f2.o'
+
+    before_each(function()
+      mkdir(dir)
+      uv.chdir(dir)
+      io.open(f1, 'w'):close()
+      io.open(f2, 'w'):close()
+      uv.chdir(cwd)
+    end)
+
+    after_each(function()
+      uv.chdir(dir)
+      os.remove(f1)
+      os.remove(f2)
+      uv.chdir(cwd)
+      uv.fs_rmdir(dir)
+    end)
+
+    local function same_directory(s1, s2)
+      s1 = to_cstr(s1)
+      s2 = to_cstr(s2)
+      return cimp.same_directory(s1, s2)
+    end
+
+    itp('returns true when passed the same absolute path', function()
+      eq(true, (same_directory('/a/directory/file1.o', '/a/directory/file1.o')))
+    end)
+
+    itp('returns true when passed two files in same directory', function()
+      eq(true, (same_directory('/a/directory/file1.o', '/a/directory/file2.o')))
+    end)
+
+    itp('returns true when passed same directory', function()
+      eq(true, (same_directory('/a/directory/', '/a/directory/')))
+    end)
+
+    itp('returns true when passed two files in same directory, relative and absolute', function()
+      eq(true, (same_directory('./' .. dir .. f1 ,uv.cwd() .. '/' .. dir .. f2)))
+    end)
+  end)
 end)
