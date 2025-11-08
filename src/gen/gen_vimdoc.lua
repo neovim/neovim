@@ -415,6 +415,7 @@ local config = {
     section_order = {
       'difftool.lua',
       'editorconfig.lua',
+      'spellfile.lua',
       'tohtml.lua',
       'undotree.lua',
     },
@@ -423,6 +424,7 @@ local config = {
       'runtime/lua/tohtml.lua',
       'runtime/pack/dist/opt/nvim.undotree/lua/undotree.lua',
       'runtime/pack/dist/opt/nvim.difftool/lua/difftool.lua',
+      'runtime/lua/nvim/spellfile.lua',
     },
     fn_xform = function(fun)
       if fun.module == 'editorconfig' then
@@ -430,11 +432,17 @@ local config = {
         fun.table = true
         fun.name = vim.split(fun.name, '.', { plain = true })[2] or fun.name
       end
+      if vim.startswith(fun.module, 'nvim.') then
+        fun.module = fun.module:sub(#'nvim.' + 1)
+      end
     end,
     section_fmt = function(name)
       return 'Builtin plugin: ' .. name:lower()
     end,
     helptag_fmt = function(name)
+      if name:lower() == 'spellfile' then
+        name = 'spellfile.lua'
+      end
       return name:lower()
     end,
   },

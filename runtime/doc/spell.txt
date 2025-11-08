@@ -313,10 +313,6 @@ Only the first file is loaded, the one that is first in 'runtimepath'.  If
 this succeeds then additionally files with the name LL.EEE.add.spl are loaded.
 All the ones that are found are used.
 
-If no spell file is found the |SpellFileMissing| autocommand event is
-triggered.  This may trigger the |spellfile.vim| plugin to offer you
-downloading the spell file.
-
 Additionally, the files related to the names in 'spellfile' are loaded.  These
 are the files that |zg| and |zw| add good and wrong words to.
 
@@ -640,48 +636,11 @@ Comment lines with the name of the .spl file are used as a header above the
 words that were generated from that .spl file.
 
 
-SPELL FILE MISSING		*spell-SpellFileMissing* *spellfile.vim*
+SPELL FILE MISSING				    *spell-SpellFileMissing*
 
-If the spell file for the language you are using is not available, you will
-get an error message.  But if the "spellfile.vim" plugin is active it will
-offer you to download the spell file.  Just follow the instructions, it will
-ask you where to write the file (there must be a writable directory in
-'runtimepath' for this).
+If a spell file is missing, the user is asked whether to download it. See
+|spellfile.lua|.
 
-The plugin has a default place where to look for spell files, on the Vim ftp
-server.  The protocol used is TLS (`https://`) for security.  If you want to
-use another location or another protocol, set the g:spellfile_URL variable to
-the directory that holds the spell files.  You can use `http://` or `ftp://`,
-but you are taking a security risk then.  The |netrw| plugin is used for
-getting the file, look there for the specific syntax of the URL.  Example: >
-	let g:spellfile_URL = 'https://ftp.nluug.nl/vim/runtime/spell'
-You may need to escape special characters.
-
-The plugin will only ask about downloading a language once.  If you want to
-try again anyway restart Vim, or set g:spellfile_URL to another value (e.g.,
-prepend a space).
-
-To avoid using the "spellfile.vim" plugin do this in your vimrc file: >
-
-	let loaded_spellfile_plugin = 1
-
-Instead of using the plugin you can define a |SpellFileMissing| autocommand to
-handle the missing file yourself.  You can use it like this: >
-
-	:au SpellFileMissing * call Download_spell_file(expand('<amatch>'))
-
-Thus the <amatch> item contains the name of the language.  Another important
-value is 'encoding', since every encoding has its own spell file.  With two
-exceptions:
-- For ISO-8859-15 (latin9) the name "latin1" is used (the encodings only
-  differ in characters not used in dictionary words).
-- The name "ascii" may also be used for some languages where the words use
-  only ASCII letters for most of the words.
-
-The default "spellfile.vim" plugin uses this autocommand, if you define your
-autocommand afterwards you may want to use ":au! SpellFileMissing" to overrule
-it.  If you define your autocommand before the plugin is loaded it will notice
-this and not do anything.
 							*E797*
 Note that the SpellFileMissing autocommand must not change or destroy the
 buffer the user was editing.

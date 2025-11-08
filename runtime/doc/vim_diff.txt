@@ -97,6 +97,8 @@ Defaults                                            *defaults* *nvim-defaults*
 - |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >vim
     :let loaded_matchit = 1
+- |spellfile.lua| plugin is enabled, spellfiles are installed by default if
+  missing.
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
@@ -741,6 +743,7 @@ Editor:
 - *cscope* support was removed in favour of plugin-based solutions such as:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 - *popup-window* : Use |floating-windows| instead.
+- *spellfile.vim* : Replaced by |spellfile.lua|.
 - *textprop* : Use |extmarks| instead.
 
 Eval:

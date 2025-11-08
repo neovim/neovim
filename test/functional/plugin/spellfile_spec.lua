@@ -42,7 +42,7 @@ describe('nvim.spellfile', function()
       local requests = 0
       vim.net.request = function(...) requests = requests + 1 end
 
-      s.load_file('en_gb')
+      s.get('en_gb')
 
       return { prompted = prompted, requests = requests }
     ]],
@@ -88,7 +88,7 @@ describe('nvim.spellfile', function()
           end
         end
 
-        s.load_file('en_gb')
+        s.get('en_gb')
 
         local spl = vim.fs.joinpath(data_root, 'site/spell/en_gb.utf-8.spl')
         local sug = vim.fs.joinpath(data_root, 'site/spell/en_gb.utf-8.sug')
@@ -136,7 +136,7 @@ describe('nvim.spellfile', function()
 
       vim.net.request = function(_, _, cb) cb(nil, { status = 404 }) end
 
-      local info = s.load_file('zz')
+      local info = s.get('zz')
       local done = s._done[info.key] == true
 
       return { warns = warns, done = done, did_reload = did_reload }
