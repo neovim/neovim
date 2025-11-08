@@ -1250,6 +1250,255 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('on_bytes sees modified buffer after substitute', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello' })
+
+      local buffer_lines = exec_lua(function()
+        local lines
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function()
+            lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+          end,
+        })
+        vim.cmd('s/llo/y/')
+        return lines
+      end)
+
+      -- Make sure on_bytes is called after the buffer is modified.
+      eq({ 'Hey' }, buffer_lines)
+    end)
+
+    it('on_bytes called multiple times for multiple substitutions on same line', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello Hello' })
+
+      local call_count, args = exec_lua(function()
+        local count = 0
+        local args = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(
+            _,
+            _,
+            _,
+            start_row,
+            start_col,
+            start_byte,
+            old_row,
+            old_col,
+            old_byte,
+            new_row,
+            new_col,
+            new_byte
+          )
+            count = count + 1
+            table.insert(args, {
+              start_row = start_row,
+              start_col = start_col,
+              start_byte = start_byte,
+              old_row = old_row,
+              old_col = old_col,
+              old_byte = old_byte,
+              new_row = new_row,
+              new_col = new_col,
+              new_byte = new_byte,
+              buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true),
+            })
+          end,
+        })
+        vim.cmd('s/llo/y/g')
+        return count, args
+      end)
+
+      -- Should be called twice, once for each match.
+      eq(2, call_count)
+
+      -- First match: "llo" at column 2 -> "y".
+      eq({
+        start_row = 0,
+        start_col = 2,
+        start_byte = 2,
+        old_row = 0,
+        old_col = 3,
+        old_byte = 3,
+        new_row = 0,
+        new_col = 1,
+        new_byte = 1,
+        buffer_lines = { 'Hey Hey' },
+      }, args[1])
+
+      -- Second match: "llo" at column 8 (in original) -> column 6 (after first substitution).
+      eq({
+        start_row = 0,
+        start_col = 6, -- Adjusted position after first substitution.
+        start_byte = 6,
+        old_row = 0,
+        old_col = 3,
+        old_byte = 3,
+        new_row = 0,
+        new_col = 1,
+        new_byte = 1,
+        buffer_lines = { 'Hey Hey' },
+      }, args[2])
+    end)
+
+    it('on_bytes called correctly for multi-line substitutions', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'baz qux' })
+
+      local call_count, args = exec_lua(function()
+        local count = 0
+        local args = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(
+            _,
+            _,
+            _,
+            start_row,
+            start_col,
+            start_byte,
+            old_row,
+            old_col,
+            old_byte,
+            new_row,
+            new_col,
+            new_byte
+          )
+            count = count + 1
+            table.insert(args, {
+              start_row = start_row,
+              start_col = start_col,
+              start_byte = start_byte,
+              old_row = old_row,
+              old_col = old_col,
+              old_byte = old_byte,
+              new_row = new_row,
+              new_col = new_col,
+              new_byte = new_byte,
+              buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true),
+            })
+          end,
+        })
+        vim.cmd('s/bar/X\\rY/')
+        return count, args
+      end)
+
+      -- Should be called once for the substitution.
+      eq(1, call_count)
+
+      eq({
+        start_row = 0,
+        start_col = 4,
+        start_byte = 4,
+        old_row = 0,
+        old_col = 3,
+        old_byte = 3,
+        new_row = 1,
+        new_col = 1,
+        new_byte = 3,
+        buffer_lines = { 'foo X', 'Y', 'baz qux' },
+      }, args[1])
+    end)
+
+    it('on_bytes called multiple times for global substitution creating multiple lines', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar baz' })
+
+      local call_count, args = exec_lua(function()
+        local count = 0
+        local args = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(
+            _,
+            _,
+            _,
+            start_row,
+            start_col,
+            start_byte,
+            old_row,
+            old_col,
+            old_byte,
+            new_row,
+            new_col,
+            new_byte
+          )
+            count = count + 1
+            table.insert(args, {
+              start_row = start_row,
+              start_col = start_col,
+              start_byte = start_byte,
+              old_row = old_row,
+              old_col = old_col,
+              old_byte = old_byte,
+              new_row = new_row,
+              new_col = new_col,
+              new_byte = new_byte,
+              buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true),
+            })
+          end,
+        })
+        -- Global substitution with newlines in replacement.
+        vim.cmd([[s/ /\r/g]])
+        return count, args
+      end)
+
+      -- Should be called once per space replacement.
+      eq(2, call_count)
+
+      eq({
+        start_row = 0,
+        start_col = 3,
+        start_byte = 3,
+        old_row = 0,
+        old_col = 1,
+        old_byte = 1,
+        new_row = 1,
+        new_col = 0,
+        new_byte = 1,
+        buffer_lines = { 'foo', 'bar', 'baz' },
+      }, args[1])
+
+      eq({
+        start_row = 1,
+        start_col = 3,
+        start_byte = 7,
+        old_row = 0,
+        old_col = 1,
+        old_byte = 1,
+        new_row = 1,
+        new_col = 0,
+        new_byte = 1,
+        buffer_lines = { 'foo', 'bar', 'baz' },
+      }, args[2])
+    end)
+
+    it(
+      'no buffer update event is emitted while editing substitute command, only after confirmation',
+      function()
+        api.nvim_buf_set_lines(0, 0, -1, true, { 'Hello world', 'Hello Neovim' })
+
+        exec_lua(function()
+          _G.num_buffer_updates = 0
+          vim.api.nvim_buf_attach(0, false, {
+            on_bytes = function()
+              _G.num_buffer_updates = _G.num_buffer_updates + 1
+            end,
+          })
+        end)
+
+        -- Start typing the substitute command - no events should be emitted yet.
+        feed(':%s/Hello/Hi')
+        eq(0, exec_lua('return _G.num_buffer_updates'))
+
+        -- Continue editing the command - still no events.
+        feed('<BS><BS>Hey')
+        eq(0, exec_lua('return _G.num_buffer_updates'))
+
+        -- After confirming the substitution, two events should be emitted (one per line).
+        feed('<CR>')
+        eq(2, exec_lua('return _G.num_buffer_updates'))
+
+        -- Verify the buffer was actually modified.
+        eq({ 'Hey world', 'Hey Neovim' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      end
+    )
+
     it('flushes delbytes on join', function()
       local check_events = setup_eventcheck(verify, { 'AAA', 'BBB', 'CCC' })
 
