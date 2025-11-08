@@ -1905,7 +1905,7 @@ int vim_chdirfile(char *fname, CdCause cause)
     NameBuff[0] = NUL;
   }
 
-  if (pathcmp(dir, NameBuff, -1) == 0) {
+  if (path_full_compare(dir, NameBuff, false, false) == kEqualFiles) {
     // nothing to do
     return OK;
   }

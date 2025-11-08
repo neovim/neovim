@@ -5115,7 +5115,7 @@ void win_fix_current_dir(void)
         globaldir = xstrdup(cwd);
       }
     }
-    bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
+    bool dir_differs = path_full_compare(new_dir, cwd, false, false) != kEqualFiles;
     if (!p_acd && dir_differs) {
       do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
                             kCdCauseWindow, true);
@@ -5131,7 +5131,7 @@ void win_fix_current_dir(void)
   } else if (globaldir != NULL) {
     // Window doesn't have a local directory and we are not in the global
     // directory: Change to the global directory.
-    bool dir_differs = pathcmp(globaldir, cwd, -1) != 0;
+    bool dir_differs = path_full_compare(globaldir, cwd, false, false) != kEqualFiles;
     if (!p_acd && dir_differs) {
       do_autocmd_dirchanged(globaldir, kCdScopeGlobal, kCdCauseWindow, true);
     }

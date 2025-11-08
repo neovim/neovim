@@ -6177,7 +6177,7 @@ bool changedir_func(char *new_dir, CdScope scope)
     new_dir = NameBuff;
   }
 
-  bool dir_differs = pdir == NULL || pathcmp(pdir, new_dir, -1) != 0;
+  bool dir_differs = pdir == NULL || path_full_compare(pdir, new_dir, false, false) != kEqualFiles;
   if (dir_differs) {
     do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true);
     if (vim_chdir(new_dir) != 0) {
