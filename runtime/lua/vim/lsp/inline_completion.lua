@@ -121,7 +121,7 @@ function Completor:handler(err, result, ctx)
     log.error('inlinecompletion', err)
     return
   end
-  if not result then
+  if not result or not vim.startswith(api.nvim_get_mode().mode, 'i') then
     return
   end
 
