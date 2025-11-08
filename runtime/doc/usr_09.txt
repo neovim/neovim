@@ -126,7 +126,8 @@ select text in a standard manner.  The X Window system also has a standard
 system for using the mouse.  Unfortunately, these two standards are not the
 same. Fortunately, you can customize Vim.
 
-The following commands makes the mouse work more like a Microsoft Windows mouse: >
+The following commands makes the mouse work more like a Microsoft Windows
+mouse: >
 
 	set selection=exclusive
 	set selectmode=mouse,key

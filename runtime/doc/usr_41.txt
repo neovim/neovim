@@ -611,7 +611,8 @@ String manipulation:					*string-functions*
 	charclass()		class of a character
 	match()			position where a pattern matches in a string
 	matchbufline()		all the matches of a pattern in a buffer
-	matchend()		position where a pattern match ends in a string
+	matchend()		position where a pattern match ends in a
+				string
 	matchfuzzy()		fuzzy matches a string in a list of strings
 	matchfuzzypos()		fuzzy matches a string in a list of strings
 	matchstr()		match of a pattern in a string
@@ -681,10 +682,12 @@ List manipulation:					*list-functions*
 	indexof()		index in a List where an expression is true
 	max()			maximum value in a List
 	min()			minimum value in a List
-	count()			count number of times a value appears in a List
+	count()			count number of times a value appears in a
+				List
 	repeat()		repeat a List multiple times
 	flatten()		flatten a List
 	flattennew()		flatten a copy of a List
+	items()			get List of List index-value pairs
 
 Dictionary manipulation:				*dict-functions*
 	get()			get an entry without an error for a wrong key
@@ -1052,11 +1055,11 @@ Signs:						*sign-functions*
 	sign_unplace()		unplace a sign
 	sign_unplacelist()	unplace a list of signs
 
-
 Testing:				    *test-functions*
 	assert_equal()		assert that two expressions values are equal
 	assert_equalfile()	assert that two file contents are equal
-	assert_notequal()	assert that two expressions values are not equal
+	assert_notequal()	assert that two expressions values are not
+				equal
 	assert_inrange()	assert that an expression is inside a range
 	assert_match()		assert that a pattern matches the value
 	assert_notmatch()	assert that a pattern does not match the value

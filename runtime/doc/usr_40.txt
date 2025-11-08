@@ -383,8 +383,8 @@ Some of the other options and keywords are as follows:
 	-count={number}		The command can take a count whose default is
 				{number}.  The resulting count can be used
 				through the <count> keyword.
-	-bang			You can use a !.  If present, using <bang> will
-				result in a !.
+	-bang			You can use a !.  If present, using <bang>
+				will result in a !.
 	-register		You can specify a register.  (The default is
 				the unnamed register.)
 				The register specification is available as
@@ -561,9 +561,9 @@ for the cprograms group: >
 
 GROUPS
 
-The {group} item, used when defining an autocommand, groups related autocommands
-together.  This can be used to delete all the autocommands in a certain group,
-for example.
+The {group} item, used when defining an autocommand, groups related
+autocommands together.  This can be used to delete all the autocommands in a
+certain group, for example.
    When defining several autocommands for a certain group, use the ":augroup"
 command.  For example, let's define autocommands for C programs: >
 
