@@ -337,6 +337,7 @@ TREESITTER
 
 • |Query:iter_captures()| supports specifying starting and ending columns.
 • |:EditQuery| command gained tab-completion, works with injected languages.
+• |LanguageTree:parse()| now accepts a list of ranges.
 
 TUI
 
