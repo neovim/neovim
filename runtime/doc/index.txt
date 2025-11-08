@@ -152,7 +152,7 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_CTRL-Y|	CTRL-X CTRL-Y	scroll down
 |i_CTRL-X_CTRL-U|	CTRL-X CTRL-U	complete with 'completefunc'
 |i_CTRL-X_CTRL-V|	CTRL-X CTRL-V	complete like in : command line
-|i_CTRL-X_CTRL-Z|	CTRL-X CTRL-Z	stop completion, keeping the text as-is
+|i_CTRL-X_CTRL-Z|	CTRL-X CTRL-Z	stop completion, text is unchanged
 |i_CTRL-X_CTRL-]|	CTRL-X CTRL-]	complete tags
 |i_CTRL-X_s|		CTRL-X s	spelling suggestions
 
