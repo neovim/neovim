@@ -10128,7 +10128,7 @@ function vim.fn.synIDattr(synID, what, mode) end
 --- @return integer
 function vim.fn.synIDtrans(synID) end
 
---- The result is a |List| with currently three items:
+--- The result is a |List| with three items:
 --- 1. The first item in the list is 0 if the character at the
 ---    position {lnum} and {col} is not part of a concealable
 ---    region, 1 if it is.  {lnum} is used like with |getline()|.
