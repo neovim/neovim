@@ -304,7 +304,7 @@ syn match	vimDebuggreedy	"\<0\=debugg\%[reedy]\>" contains=vimCount
 
 " Defer {{{2
 " =====
-syn match	vimDefer	"\<defer\=\>"	skipwhite nextgroup=@vimFunc
+syn match	vimDefer	"\<defer\=\>"	skipwhite nextgroup=@vimFunc,vim9LambdaParams
 
 " Exception Handling {{{2
 syn keyword	vimThrow	th[row]	skipwhite nextgroup=@vimExprList
