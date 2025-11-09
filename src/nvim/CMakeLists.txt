@@ -31,7 +31,7 @@ target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 find_package(Iconv REQUIRED)
 find_package(Libuv 1.28.0 REQUIRED)
 find_package(Lpeg REQUIRED)
-find_package(Treesitter 0.25.0 REQUIRED)
+find_package(Treesitter 0.26.0 REQUIRED)
 find_package(UTF8proc REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
