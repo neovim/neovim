@@ -986,7 +986,7 @@ static int insert_handle_key(InsertState *s)
     goto check_pum;
 
   case K_LUA:
-    map_execute_lua(false);
+    map_execute_lua(false, false);
 
 check_pum:
     // nvim_select_popupmenu_item() can be called from the handling of

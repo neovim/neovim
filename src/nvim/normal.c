@@ -3191,7 +3191,7 @@ static void nv_colon(cmdarg_T *cap)
   }
 
   if (is_lua) {
-    cmd_result = map_execute_lua(true);
+    cmd_result = map_execute_lua(true, false);
   } else {
     // get a command line and execute it
     cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
