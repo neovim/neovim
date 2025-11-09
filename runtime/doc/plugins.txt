@@ -39,7 +39,7 @@ Help-link		Loaded	Short description ~
 |pi_zip.txt|		Yes	Zip archive explorer
 |spellfile.lua|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
-|undotree|		No	Interactive textual undotree
+|undotree-plugin|	No	Interactive textual undotree
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
@@ -248,10 +248,10 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
 
 
 ==============================================================================
-Builtin plugin: undotree                                            *undotree*
+Builtin plugin: undotree                                     *undotree-plugin*
 
 open({opts})                                                 *undotree.open()*
-    Open a window that displays a textual representation of the undotree.
+    Open a window that displays a textual representation of the |undo-tree|.
 
     While in the window, moving the cursor changes the undo.
 

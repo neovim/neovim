@@ -440,10 +440,13 @@ local config = {
       return 'Builtin plugin: ' .. name:lower()
     end,
     helptag_fmt = function(name)
-      if name:lower() == 'spellfile' then
+      name = name:lower()
+      if name == 'spellfile' then
         name = 'spellfile.lua'
+      elseif name == 'undotree' then
+        name = 'undotree-plugin'
       end
-      return name:lower()
+      return name
     end,
   },
 }
