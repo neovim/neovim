@@ -826,7 +826,7 @@ char *arena_strdup(Arena *arena, const char *str)
   return arena_memdupz(arena, str, strlen(str));
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 
 # include "nvim/autocmd.h"
 # include "nvim/buffer.h"

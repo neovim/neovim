@@ -3182,7 +3182,7 @@ static void ml_lineadd(buf_T *buf, int count)
   }
 }
 
-#if defined(HAVE_READLINK)
+#ifdef HAVE_READLINK
 
 /// Resolve a symlink in the last component of a file name.
 /// Note that f_resolve() does it for every part of the path, we don't do that

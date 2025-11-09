@@ -1884,7 +1884,7 @@ static void decr_quickfix_busy(void)
 #endif
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void check_quickfix_busy(void)
 {
   if (quickfix_busy != 0) {
@@ -7628,7 +7628,7 @@ void ex_helpgrep(exarg_T *eap)
   }
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_quickfix(void)
 {
   qf_free_all(NULL);

@@ -124,7 +124,7 @@ void alist_new(void)
   alist_init(curwin->w_alist);
 }
 
-#if !defined(UNIX)
+#ifndef UNIX
 
 /// Expand the file names in the global argument list.
 /// If "fnum_list" is not NULL, use "fnum_list[fnum_len]" as a list of buffer
@@ -228,7 +228,7 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   curwin->w_locked = false;
 }
 
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
 
 /// Adjust slashes in file names.  Called after 'shellslash' was set.
 void alist_slash_adjust(void)

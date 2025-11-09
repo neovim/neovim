@@ -1088,7 +1088,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
 static char *prevcmd = NULL;        // the previous command
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_prev_shellcmd(void)
 {
   xfree(prevcmd);
@@ -1513,7 +1513,7 @@ void do_shell(char *cmd, int flags)
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, false, curbuf);
 }
 
-#if !defined(UNIX)
+#ifndef UNIX
 static char *find_pipe(const char *cmd)
 {
   bool inquote = false;
@@ -1543,7 +1543,7 @@ static char *find_pipe(const char *cmd)
 char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
 {
   bool is_fish_shell =
-#if defined(UNIX)
+#ifdef UNIX
     strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
@@ -1587,7 +1587,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
       xstrlcpy(buf, cmd, len);
     }
   } else {
-#if defined(UNIX)
+#ifdef UNIX
     // Put delimiters around the command (for concatenated commands) when
     // redirecting input and/or output.
     if (itmp != NULL || otmp != NULL) {
@@ -4745,7 +4745,7 @@ void global_exe(char *cmd)
   }
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_old_sub(void)
 {
   sub_set_replacement((SubReplacementString) { NULL, 0, NULL });

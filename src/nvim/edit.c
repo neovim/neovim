@@ -2337,7 +2337,7 @@ void set_last_insert(int c)
   last_insert_skip = 0;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_last_insert(void)
 {
   API_CLEAR_STRING(last_insert);

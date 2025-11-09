@@ -6442,7 +6442,7 @@ static unsigned quote_meta(char *dest, char *src, int len)
   return m;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_insexpand_stuff(void)
 {
   API_CLEAR_STRING(compl_orig_text);

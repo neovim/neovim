@@ -6059,7 +6059,7 @@ static void ex_read(exarg_T *eap)
 
 static char *prev_dir = NULL;
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_cd_dir(void)
 {
   XFREE_CLEAR(prev_dir);

@@ -244,7 +244,7 @@ const char *did_set_tagfunc(optset_T *args)
   return NULL;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_tagfunc_option(void)
 {
   callback_free(&tfu_cb);
@@ -2450,7 +2450,7 @@ static bool found_tagfile_cb(int num_fnames, char **fnames, bool all, void *cook
   return num_fnames > 0;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);

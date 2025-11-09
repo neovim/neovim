@@ -343,7 +343,7 @@ void evalvars_init(void)
   set_reg_var(0);  // default for v:register is not 0 but '"'
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void evalvars_clear(void)
 {
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
