@@ -14,6 +14,7 @@ local eq = t.eq
 local pcall_err = t.pcall_err
 local exec_lua = n.exec_lua
 local exec = n.exec
+local poke_eventloop = n.poke_eventloop
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -9342,6 +9343,39 @@ describe('builtin popupmenu', function()
             :!^                            |
           ]])
         end
+      end)
+      it("no crash when 'pumborder' set #36337", function()
+        command('set autocomplete pumborder=rounded complete=o cot=popup,menuone,noinsert')
+        command('set columns=50 lines=20')
+        exec_lua(function()
+          local list1 = {
+            { abbr = 'array: ', info = '', kind = 'Field', word = 'array: ' },
+            { abbr = 'arrays: ', info = '', kind = 'Field', word = 'arrays: ' },
+          }
+          local list2 = {
+            { abbr = 'match ', info = '', kind = 'Keyword', word = 'match ' },
+            { abbr = 'throw ', info = '', kind = 'Keyword', word = 'throw ' },
+            { abbr = 'array: ', info = '', kind = 'Field', word = 'array: ' },
+            { abbr = 'arrays: ', info = '', kind = 'Field', word = 'arrays: ' },
+          }
+          _G.fake_omni = function(_, _)
+            local line = vim.api.nvim_get_current_line()
+            if line:find('%s%)$') then
+              vim.schedule(function()
+                vim.fn.complete(25, list1)
+                vim.fn.complete(25, list2)
+              end)
+            end
+            return -2
+          end
+          vim.opt.omnifunc = 'v:lua.fake_omni'
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, { '<?php', 'array_intersect_key($x)' })
+          vim.cmd.normal('G$')
+        end)
+        feed('i, ')
+        poke_eventloop()
+        assert_alive()
+        eq({ 4, 1 }, { #fn.complete_info({ 'items' }).items, fn.pumvisible() })
       end)
     end)
   end

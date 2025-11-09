@@ -660,7 +660,8 @@ void pum_redraw(void)
   pum_invalid = false;
   must_redraw_pum = false;
 
-  if (!pum_grid.chars || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
+  if (!pum_grid.chars || pum_grid.rows != pum_height + border_width
+      || pum_grid.cols != grid_width + border_width) {
     grid_alloc(&pum_grid, pum_height + border_width, grid_width + border_width,
                !invalid_grid, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.cols, pum_grid.rows);
