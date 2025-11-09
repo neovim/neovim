@@ -888,7 +888,6 @@ review_pr() {
 }
 
 _check_patch() {
-  set -eu
   patch=$1
   cd "$VIM_SOURCE_DIR_DEFAULT"
   # shellcheck disable=SC2126
@@ -897,24 +896,24 @@ _check_patch() {
     grep -Pz '(?s)\+\s+[0-9]+,\n\+\/\*\*\/' |
     wc -l)" || true
   # shellcheck disable=SC2086
-  FILE_LNUM="$(diff <(git diff-tree --no-commit-id --name-only -r "$patch" | grep -v $GREP_NA_ARGS) "$NA_FILELIST" | grep -c '^<')"
-  if test "$FILE_LNUM" -le 1 && test "$VERSION_LNUM" = 2; then
+  FILE_LNUM="$(diff <(git diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" | grep -c '^<')" || true
+  if test "$FILE_LNUM" -eq 0 || test "$FILE_LNUM" -eq 1 -a "$VERSION_LNUM" -eq 2; then
     if (echo "$patch" | grep -q '^v[0-9]'); then
       echo "vim-patch:$(git log -1 --pretty=format:%s "$patch" | sed 's/^patch //')"
     else
       echo "vim-patch:$(git log -1 --oneline "$patch")"
     fi
   fi
+  cd "$NVIM_SOURCE_DIR"
 }
 
 list_na_patches() {
-  GREP_NA_ARGS="$(sed 's/^\(.*\)/-e \1/' "$NVIM_SOURCE_DIR"/scripts/vim_na_regexp.txt)"
+  NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
   NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
 
-  export GREP_NA_ARGS VIM_SOURCE_DIR_DEFAULT NA_FILELIST
-  export -f _check_patch
-
-  list_missing_vimpatches 0 | xargs -n 1 -I {} bash -c '_check_patch {}'
+  list_missing_vimpatches 0 | while read -r patch; do
+    _check_patch "$patch"
+  done
 }
 
 while getopts "hlLmnMVp:P:g:r:s" opt; do
