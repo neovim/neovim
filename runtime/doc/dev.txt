@@ -365,6 +365,9 @@ Where possible, these patterns apply to _both_ Lua and the API:
     filter(function() … end, …, opts)
     -- ❌ NO:
     filter(…, function() … end, opts)
+- Expose a `config(opts)` function if the module accepts user configuration.
+  If `opts` is omitted (or `nil`) it returns the current configuration.
+  - Example: See |vim.diagnostic.config()|.
 - "Enable" ("toggle") interface and behavior:
   - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control the
     the "global" enablement of a feature.
