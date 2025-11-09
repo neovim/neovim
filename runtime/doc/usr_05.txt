@@ -145,8 +145,8 @@ This only works in a Vim script file, not when typing commands at the
 command line.
 
 >
-	command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis
-		  \ | wincmd p | diffthis
+	command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_
+		  \ | diffthis | wincmd p | diffthis
 
 This adds the ":DiffOrig" command.  Use this in a modified buffer to see the
 differences with the file it was loaded from.  See |diff| and |:DiffOrig|.
@@ -290,7 +290,8 @@ when you use Vim.  There are only two steps for adding a global plugin:
 GETTING A GLOBAL PLUGIN
 
 Where can you find plugins?
-- Some are always loaded, you can see them in the directory $VIMRUNTIME/plugin.
+- Some are always loaded, you can see them in the directory
+  $VIMRUNTIME/plugin.
 - Some come with Vim.  You can find them in the directory $VIMRUNTIME/scripts
   and its sub-directories and under $VIM/vimfiles/pack/dist/opt/.
 - Download from the net.  There is a large collection on https://www.vim.org.

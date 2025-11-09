@@ -28,15 +28,15 @@ Vim has a plugin that makes it possible to edit a directory.  Try this: >
 
 Through the magic of autocommands and Vim scripts, the window will be filled
 with the contents of the directory.  It looks like this (slightly cleaned up
-so that it fits within 80 chars): >
+so that it fits within 78 chars): >
 
-  " ===========================================================================
-  " Netrw Directory Listing                                        (netrw v180)
+  " ==========================================================================
+  " Netrw Directory Listing                                       (netrw v180)
   "   /path/to/vim/runtime/doc
   "   Sorted by      name
   "   Sort sequence: [\/]$,*,\(\.bak\|\~\|\.o\|\.h\|\.info\|\.swp\)[*@]\=$
   "   Quick Help: <F1>:help -:go up dir D:delete R:rename s:sort-by x:special
-  " ===========================================================================
+  " ==========================================================================
   ../
   ./
   check/

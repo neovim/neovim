@@ -294,8 +294,8 @@ five lines before the last line in the file.
 
 USING MARKS
 
-Instead of figuring out the line numbers of certain positions, remembering them
-and typing them in a range, you can use marks.
+Instead of figuring out the line numbers of certain positions, remembering
+them and typing them in a range, you can use marks.
    Place the marks as mentioned in chapter 3.  For example, use "mt" to mark
 the top of an area and "mb" to mark the bottom.  Then you can use this range
 to specify the lines between the marks (including the lines with the marks): >
@@ -734,9 +734,10 @@ of the program replaces these lines.
 	line 44			      line 55
 	last line		      last line
 
-The "!!" command filters the current line through a filter.  In Unix the "date"
-command prints the current time and date.  "!!date<Enter>" replaces the current
-line with the output of "date".  This is useful to add a timestamp to a file.
+The "!!" command filters the current line through a filter.  In Unix the
+"date" command prints the current time and date.  "!!date<Enter>" replaces the
+current line with the output of "date".  This is useful to add a timestamp to
+a file.
 
 Note: There is a difference between "!cmd" (e.g. using it without any file
 range) and "{range}!cmd".  While the former will simply execute the external

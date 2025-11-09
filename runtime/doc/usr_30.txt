@@ -35,9 +35,9 @@ you give) and captures the results: >
 
 If errors were generated, they are captured and the editor positions you where
 the first error occurred.
-   Take a look at an example ":make" session.  (Typical :make sessions generate
-far more errors and fewer stupid ones.)  After typing ":make" the screen looks
-like this:
+   Take a look at an example ":make" session.  (Typical :make sessions
+generate far more errors and fewer stupid ones.)  After typing ":make" the
+screen looks like this:
 
 	:!make | &tee /tmp/vim215953.err ~
 	gcc -g -Wall -o prog main.c sub.c ~
