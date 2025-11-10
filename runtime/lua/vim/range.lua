@@ -99,6 +99,13 @@ function Range.__eq(r1, r2)
   return r1.start == r2.start and r1.end_ == r2.end_
 end
 
+--- Checks whether the given range is empty; i.e., start >= end.
+---
+---@return boolean `true` if the given range is empty
+function Range:is_empty()
+  return self.start >= self.end_
+end
+
 --- Checks whether {outer} range contains {inner} range.
 ---
 ---@param outer vim.Range

@@ -248,7 +248,7 @@ function Completor:show(hint)
   api.nvim_buf_set_extmark(self.bufnr, namespace, row, col, {
     virt_text = virt_text,
     virt_lines = virt_lines,
-    virt_text_pos = current.range and 'overlay' or 'inline',
+    virt_text_pos = (current.range and not current.range:is_empty() and 'overlay') or 'inline',
     hl_mode = 'combine',
   })
 end

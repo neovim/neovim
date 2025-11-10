@@ -4136,6 +4136,7 @@ Provides operations to compare, calculate, and convert ranges represented by
     Fields: ~
       • {start}      (`vim.Pos`) Start position.
       • {end_}       (`vim.Pos`) End position, exclusive.
+      • {is_empty}   (`fun(self: vim.Range): boolean`) See |Range:is_empty()|.
       • {has}        (`fun(outer: vim.Range, inner: vim.Range): boolean`) See
                      |Range:has()|.
       • {intersect}  (`fun(r1: vim.Range, r2: vim.Range): vim.Range?`) See
@@ -4166,6 +4167,12 @@ Range:intersect({r1}, {r2})                                *Range:intersect()*
     Return: ~
         (`vim.Range?`) range that is present inside both `r1` and `r2`. `nil`
         if such range does not exist. See |vim.Range|.
+
+Range:is_empty()                                            *Range:is_empty()*
+    Checks whether the given range is empty; i.e., start >= end.
+
+    Return: ~
+        (`boolean`) `true` if the given range is empty
 
 Range:lsp({buf}, {range}, {position_encoding})                   *Range:lsp()*
     Creates a new |vim.Range| from `lsp.Range`.
