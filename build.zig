@@ -235,13 +235,48 @@ pub fn build(b: *std.Build) !void {
         \\char *default_lib_dir = "/usr/local/lib/nvim";
     , .{}));
 
-    // TODO(bfredl): include git version when available
-    const medium = b.fmt("v{}.{}.{}{s}+zig", .{ version.major, version.minor, version.patch, version.prerelease });
+    const opt_version_string = b.option([]const u8, "version-string", "Override Neovim version string. Default is to find out with git.");
+    const version_medium = if (opt_version_string) |version_string| version_string else v: {
+        var code: u8 = undefined;
+        const version_string = b.fmt("v{d}.{d}.{d}", .{ version.major, version.minor, version.patch });
+        const git_describe_untrimmed = b.runAllowFail(&[_][]const u8{
+            "git",
+            "-C", b.build_root.path orelse ".", // affects the --git-dir argument
+            "--git-dir", ".git", // affected by the -C argument
+            "describe", "--dirty", "--match", "v*.*.*", //
+        }, &code, .Ignore) catch {
+            break :v version_string;
+        };
+        const git_describe = std.mem.trim(u8, git_describe_untrimmed, " \n\r");
+
+        const num_parts = std.mem.count(u8, git_describe, "-") + 1;
+        if (num_parts < 3) {
+            break :v version_string; // achtung: unrecognized format
+        }
+
+        var it = std.mem.splitScalar(u8, git_describe, '-');
+        const tagged_ancestor = it.first();
+        _ = tagged_ancestor;
+        const commit_height = it.next().?;
+        const commit_id = it.next().?;
+        const maybe_dirty = it.next();
+
+        // Check that the commit hash is prefixed with a 'g' (a Git convention).
+        if (commit_id.len < 1 or commit_id[0] != 'g') {
+            std.debug.print("Unexpected `git describe` output: {s}\n", .{git_describe});
+            break :v version_string;
+        }
+
+        const dirty_tag = if (maybe_dirty) |dirty| b.fmt("-{s}", .{dirty}) else "";
+
+        break :v b.fmt("{s}-dev-{s}+{s}{s}", .{ version_string, commit_height, commit_id, dirty_tag });
+    };
+
     const versiondef_git = gen_config.add("auto/versiondef_git.h", b.fmt(
         \\#define NVIM_VERSION_MEDIUM "{s}"
-        \\#define NVIM_VERSION_BUILD "???"
+        \\#define NVIM_VERSION_BUILD "zig"
         \\
-    , .{medium}));
+    , .{version_medium}));
 
     // TODO(zig): using getEmittedIncludeTree() is ugly af. we want unittests
     // to reuse the std.build.Module include_path thing
