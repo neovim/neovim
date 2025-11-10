@@ -1,7 +1,7 @@
 *cmdline.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 				*Cmdline-mode* *Command-line-mode* *Cmdline*

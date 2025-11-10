@@ -1,7 +1,7 @@
 *provider.txt*		Nvim
 
 
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
 Providers					*provider*

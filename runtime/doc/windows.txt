@@ -1,7 +1,7 @@
 *windows.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Editing with multiple windows and buffers.		*windows* *buffers*

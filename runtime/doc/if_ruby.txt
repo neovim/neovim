@@ -1,7 +1,7 @@
 *if_ruby.txt*          Nvim
 
 
-		  VIM REFERENCE MANUAL    by Shugo Maeda
+		  VIM REFERENCE MANUAL	  by Shugo Maeda
 
 The Ruby Interface to Vim				*if_ruby* *ruby* *Ruby*
 

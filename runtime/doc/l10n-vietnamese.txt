@@ -1,7 +1,7 @@
 *l10n-vietnamese.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Phạm Bình An
+		  VIM REFERENCE MANUAL	  by Phạm Bình An
 
                                       Type |gO| to see the table of contents.
 

@@ -1,6 +1,8 @@
 *usr_43.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			       Using filetypes
 

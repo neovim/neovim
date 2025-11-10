@@ -1,7 +1,7 @@
 *autocmd.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Automatic commands					*autocmd* *autocommand*

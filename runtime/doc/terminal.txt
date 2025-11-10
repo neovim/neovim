@@ -1,7 +1,7 @@
 *terminal.txt*   Nvim
 
 
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
 Terminal emulator				*terminal* *terminal-emulator*

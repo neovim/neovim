@@ -1,7 +1,7 @@
 *quickfix.txt*  Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 This subject is introduced in section |30.1| of the user manual.

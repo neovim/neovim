@@ -1,7 +1,7 @@
 *insert.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 						*Insert* *Insert-mode*
