@@ -1,7 +1,7 @@
 *usr_41.txt*	Nvim
 
 
-		     VIM USER MANUAL	  by Bram Moolenaar
+		     VIM USER MANUAL	by Bram Moolenaar
 
 
 			      Write a Vim script

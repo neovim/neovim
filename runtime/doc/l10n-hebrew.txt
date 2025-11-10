@@ -1,7 +1,7 @@
 *l10n-hebrew.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Ron Aaron and Avner Lottem
+		  VIM REFERENCE MANUAL	  by Ron Aaron and Avner Lottem
 
 
 Hebrew Language support (options & mapping) for Vim		*hebrew*

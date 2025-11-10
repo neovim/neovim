@@ -1,7 +1,7 @@
 *vimeval.txt*	Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Expression evaluation	*vimscript* *expression* *expr* *E15* *eval* *eval.txt*

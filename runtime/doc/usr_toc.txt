@@ -1,7 +1,7 @@
 *usr_toc.txt*	Nvim
 
 
-		     VIM USER MANUAL	  by Bram Moolenaar
+		     VIM USER MANUAL	by Bram Moolenaar
 
 
 			      Table Of Contents		*user-manual* *usr*

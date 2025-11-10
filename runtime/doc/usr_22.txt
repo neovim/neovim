@@ -1,7 +1,7 @@
 *usr_22.txt*	Nvim
 
 
-		     VIM USER MANUAL	  by Bram Moolenaar
+		     VIM USER MANUAL	by Bram Moolenaar
 
 
 			   Finding the file to edit

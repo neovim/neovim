@@ -1,7 +1,7 @@
 *usr_03.txt*	Nvim
 
 
-		     VIM USER MANUAL	  by Bram Moolenaar
+		     VIM USER MANUAL	by Bram Moolenaar
 
 
 			     Moving around

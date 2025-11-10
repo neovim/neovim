@@ -1,7 +1,7 @@
 *vi_diff.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Differences between Vim and Vi				*vi-differences*

@@ -1,7 +1,7 @@
 *index.txt*     Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 								*index*
 This file contains a list of all commands for each mode, with a tag and a

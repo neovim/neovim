@@ -1,7 +1,7 @@
 *change.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 This file describes commands that delete or change text.  In this context,

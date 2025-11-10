@@ -1,7 +1,7 @@
 *tagsrch.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Tags and special searches				*tags-and-searches*

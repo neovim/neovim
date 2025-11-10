@@ -1,7 +1,7 @@
 *l10n-russian.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Vassily Ragosin
+		  VIM REFERENCE MANUAL	  by Vassily Ragosin
 
 
 Russian language localization and support in Vim	   *russian* *Russian*

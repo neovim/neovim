@@ -1,7 +1,7 @@
 *usr_25.txt*	Nvim
 
 
-		     VIM USER MANUAL	  by Bram Moolenaar
+		     VIM USER MANUAL	by Bram Moolenaar
 
 
 			     Editing formatted text

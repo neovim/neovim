@@ -1,7 +1,7 @@
 *message.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 This file contains an alphabetical list of messages and error messages that
