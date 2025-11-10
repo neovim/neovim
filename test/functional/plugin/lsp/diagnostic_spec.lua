@@ -373,9 +373,8 @@ describe('vim.lsp.diagnostic', function()
     end)
 
     it('keeps diagnostics when one client detaches and others still are attached', function()
-      local client_id2
       exec_lua(function()
-        client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server.cmd })
+        _G.client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server.cmd })
 
         vim.lsp.diagnostic.on_diagnostic(nil, {
           kind = 'full',
@@ -400,9 +399,7 @@ describe('vim.lsp.diagnostic', function()
       )
 
       exec_lua(function()
-        if client_id2 ~= nil then
-          vim.lsp.get_client_by_id(client_id2):stop()
-        end
+        vim.lsp.get_client_by_id(_G.client_id2):stop()
       end)
 
       eq(
