@@ -3039,6 +3039,33 @@ describe('vim.keymap', function()
     eq(0, exec_lua [[return GlobalCount]])
   end)
 
+  it('can not overwrite a mapping', function()
+    eq(
+      0,
+      exec_lua [[
+      GlobalCount = 0
+      vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount + 1 end)
+      vim.keymap.set('n', 'qwer', function() GlobalCount = GlobalCount + 10 end, { buffer = 0 })
+      return GlobalCount
+    ]]
+    )
+
+    feed('asdf\n')
+    feed('qwer\n')
+
+    eq(11, exec_lua [[return GlobalCount]])
+
+    exec_lua [[
+      vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount - 1 end, { force = false })
+      vim.keymap.set('n', 'qwer', function() GlobalCount = GlobalCount - 10 end, { buffer = 0, force = false })
+    ]]
+
+    feed('asdf\n')
+    feed('qwer\n')
+
+    eq(22, exec_lua [[return GlobalCount]])
+  end)
+
   it('unmap', function()
     eq(
       0,

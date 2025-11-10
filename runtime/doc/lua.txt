@@ -3455,6 +3455,8 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
                   `0` or `true` for current buffer.
                 • {remap}? (`boolean`, default: `false`) Make the mapping
                   recursive. Inverse of {noremap}.
+                • {force}? (`boolean`, default: `true`) Override already
+                  present mapping if `true`, preserve it if `false`.
 
     See also: ~
       • |nvim_set_keymap()|
