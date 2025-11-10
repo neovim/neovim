@@ -1033,9 +1033,15 @@ end
 
 --- Returns list of buffers attached to client_id.
 ---
+---@deprecated
 ---@param client_id integer client id
 ---@return integer[] buffers list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
+  vim.deprecate(
+    'vim.lsp.get_buffers_by_client_id()',
+    'vim.lsp.get_client_by_id(id).attached_buffers',
+    '0.13'
+  )
   local client = lsp.get_client_by_id(client_id)
   return client and vim.tbl_keys(client.attached_buffers) or {}
 end

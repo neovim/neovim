@@ -133,7 +133,8 @@ function M.enable(name, enable, filter)
     for _, it_bufnr in
       ipairs(
         bufnr and { it_client.attached_buffers[bufnr] and bufnr }
-          or vim.lsp.get_buffers_by_client_id(it_client.id)
+          or vim.tbl_keys(it_client.attached_buffers)
+          or {}
       )
     do
       if enable ~= M.is_enabled(name, { bufnr = it_bufnr, client_id = it_client.id }) then
