@@ -4915,7 +4915,7 @@ static void ex_restart(exarg_T *eap)
   if (eap->do_ecmd_cmd) {
     quit_cmd = eap->do_ecmd_cmd;
   } else if (confirm) {
-    quit_cmd = "confirm qall";
+    quit_cmd = "qall";
   } else {
     quit_cmd = "qall!";
   }
