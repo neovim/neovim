@@ -232,7 +232,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=@vi
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimCommandModifier,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimCommandModifier,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,vimDoCommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,@vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -305,6 +305,16 @@ syn match	vimDebuggreedy	"\<0\=debugg\%[reedy]\>" contains=vimCount
 " Defer {{{2
 " =====
 syn match	vimDefer	"\<defer\=\>"	skipwhite nextgroup=@vimFunc,vim9LambdaParams
+
+" *Do commands {{{2
+" ============
+syn match	vimDoCommandBang	contained	"\a\@1<=!"	skipwhite nextgroup=@vimCmdList
+
+syn keyword	vimDoCommand	argdo bufd[o]		skipwhite nextgroup=vimDoCommandBang,@vimCmdList
+syn keyword	vimDoCommand	tabd[o] wind[o]		skipwhite nextgroup=@vimCmdList
+syn keyword	vimDoCommand	cdo cfd[o]		skipwhite nextgroup=vimDoCommandBang,@vimCmdList
+syn keyword	vimDoCommand	ld[o] lfd[o]		skipwhite nextgroup=vimDoCommandBang,@vimCmdList
+syn keyword	vimDoCommand	foldd[oopen] folddoc[losed]	skipwhite nextgroup=@vimCmdList
 
 " Exception Handling {{{2
 syn keyword	vimThrow	th[row]	skipwhite nextgroup=@vimExprList
@@ -2373,6 +2383,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimDelfunctionBang	vimBang
  hi def link vimDoautocmd	vimCommand
  hi def link vimDoautocmdMod	Special
+ hi def link vimDoCommand	vimCommand
+ hi def link vimDoCommandBang	vimBang
  hi def link vimEcho	vimCommand
  hi def link vimEchohlNone	vimGroup
  hi def link vimEchohl	vimCommand
