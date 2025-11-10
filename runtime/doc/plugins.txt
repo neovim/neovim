@@ -16,7 +16,7 @@ loaded by default while others are not loaded until requested by |:packadd|.
 
 ==============================================================================
 Standard plugins ~
-						*standard-plugin-list*
+                                                        *standard-plugin-list*
 Help-link		Loaded	Short description ~
 |difftool|		No	Compares two directories or files side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
@@ -37,7 +37,7 @@ Help-link		Loaded	Short description ~
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
 |pi_zip.txt|		Yes	Zip archive explorer
-|spellfile.vim|		Yes	Install spellfile if missing
+|spellfile.lua|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
 |undotree|		No	Interactive textual undotree
 
@@ -164,6 +164,54 @@ tab_width                                             *editorconfig.tab_width*
 trim_trailing_whitespace               *editorconfig.trim_trailing_whitespace*
     When `"true"`, trailing whitespace is automatically removed when the
     buffer is written.
+
+
+==============================================================================
+Builtin plugin: spellfile                                      *spellfile.lua*
+
+Asks the user to download missing spellfiles. The spellfile is written to
+`stdpath('data') .. 'site/spell'` or the first writable directory in the
+'runtimepath'.
+
+The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
+
+
+*nvim.spellfile.Opts*
+    A table with the following fields:
+
+    Fields: ~
+      • {url}         (`string`) The base URL from where the spellfiles are
+                      downloaded. Uses `g:spellfile_URL` if it's set,
+                      otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
+      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
+                      which the |vim.net.request()| times out.
+
+
+config({opts})                                            *spellfile.config()*
+    Configure spellfile download options. For example: >lua
+        require('nvim.spellfile').config({ url = '...' })
+<
+
+    Parameters: ~
+      • {opts}  (`nvim.spellfile.Opts?`) When omitted or `nil`, retrieve the
+                current configuration. Otherwise, a configuration table.
+
+    Return: ~
+        (`nvim.spellfile.Opts?`) Current config if {opts} is omitted.
+
+get({lang})                                                  *spellfile.get()*
+    Download spellfiles for language {lang} if available.
+
+    Parameters: ~
+      • {lang}  (`string`) Language code.
+
+    Return: ~
+        (`table?`) A table with the following fields:
+        • {files} (`string[]`)
+        • {key} (`string`)
+        • {lang} (`string`)
+        • {encoding} (`string`)
+        • {dir} (`string`)
 
 
 ==============================================================================
