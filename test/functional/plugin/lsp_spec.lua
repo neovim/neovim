@@ -77,7 +77,7 @@ describe('LSP', function()
 
   after_each(function()
     stop()
-    exec_lua('lsp.stop_client(lsp.get_clients(), true)')
+    exec_lua('vim.iter(lsp.get_clients()):each(function(client) client:stop(true) end)')
     api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 
@@ -116,7 +116,7 @@ describe('LSP', function()
       end)
     end)
 
-    it('start_client(), stop_client()', function()
+    it('start_client(), Client:stop()', function()
       retry(nil, 4000, function()
         eq(
           1,
@@ -179,34 +179,8 @@ describe('LSP', function()
       )
 
       exec_lua(function()
-        vim.lsp.stop_client({ _G.TEST_CLIENT2, _G.TEST_CLIENT3 })
-      end)
-      retry(nil, 4000, function()
-        eq(
-          0,
-          exec_lua(function()
-            return #vim.lsp.get_clients()
-          end)
-        )
-      end)
-    end)
-
-    it('stop_client() also works on client objects', function()
-      exec_lua(function()
-        _G.TEST_CLIENT2 = _G.test__start_client()
-        _G.TEST_CLIENT3 = _G.test__start_client()
-      end)
-      retry(nil, 4000, function()
-        eq(
-          3,
-          exec_lua(function()
-            return #vim.lsp.get_clients()
-          end)
-        )
-      end)
-      -- Stop all clients.
-      exec_lua(function()
-        vim.lsp.stop_client(vim.lsp.get_clients())
+        vim.lsp.get_client_by_id(_G.TEST_CLIENT2):stop()
+        vim.lsp.get_client_by_id(_G.TEST_CLIENT3):stop()
       end)
       retry(nil, 4000, function()
         eq(
@@ -844,7 +818,7 @@ describe('LSP', function()
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
         local buf = vim.api.nvim_get_current_buf()
         vim.api.nvim_exec_autocmds('BufWritePre', { buffer = buf, modeline = false })
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
       eq(4, #messages)
@@ -880,7 +854,7 @@ describe('LSP', function()
         local buf = vim.api.nvim_get_current_buf()
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
         vim.api.nvim_exec_autocmds('BufWritePre', { buffer = buf, modeline = false })
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return {
           messages = server.messages,
           lines = vim.api.nvim_buf_get_lines(buf, 0, -1, true),
@@ -1320,7 +1294,7 @@ describe('LSP', function()
         assert(ok)
 
         local has_pending = client.requests[request_id] ~= nil
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
 
         return has_pending
       end)
@@ -3574,7 +3548,7 @@ describe('LSP', function()
           method = 'window/showDocument',
         }
         vim.lsp.handlers['window/showDocument'](nil, result, ctx)
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return {
           cursor = vim.api.nvim_win_get_cursor(0),
         }
@@ -4820,7 +4794,7 @@ describe('LSP', function()
         }))
 
         vim.lsp.buf.code_action({ apply = true })
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
       eq('codeAction/resolve', result[4].method)
@@ -4864,7 +4838,7 @@ describe('LSP', function()
         }))
 
         vim.lsp.buf.code_action({ apply = true })
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
       eq('codeAction/resolve', result[4].method)
@@ -4923,7 +4897,7 @@ describe('LSP', function()
         end
 
         vim.lsp.buf.code_action({ apply = true })
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
       eq(
@@ -5386,7 +5360,7 @@ describe('LSP', function()
         vim.cmd.normal('v')
         vim.api.nvim_win_set_cursor(0, { 2, 3 })
         vim.lsp.buf.format({ bufnr = bufnr, false })
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
       eq('textDocument/rangeFormatting', result[3].method)
@@ -5423,7 +5397,7 @@ describe('LSP', function()
         vim.api.nvim_win_set_cursor(0, { 1, 2 })
         vim.lsp.buf.format({ bufnr = bufnr, false })
 
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         return server.messages
       end)
       local expected_methods = {
@@ -5558,7 +5532,7 @@ describe('LSP', function()
       n.feed(':=vim.lsp.buf.definition({ reuse_win = true })<CR>')
       eq(result.win, api.nvim_get_current_win())
       exec_lua(function()
-        vim.lsp.stop_client(result.client_id)
+        vim.lsp.get_client_by_id(result.client_id):stop()
       end)
     end)
     it('merges results from multiple servers', function()
@@ -5597,8 +5571,8 @@ describe('LSP', function()
             response = r
           end,
         })
-        vim.lsp.stop_client(client_id1)
-        vim.lsp.stop_client(client_id2)
+        vim.lsp.get_client_by_id(client_id1):stop()
+        vim.lsp.get_client_by_id(client_id2):stop()
         return response
       end)
       eq(2, #result.items)
@@ -5662,7 +5636,7 @@ describe('LSP', function()
 
     after_each(function()
       exec_lua(function()
-        vim.lsp.stop_client(_G.client_id)
+        vim.lsp.get_client_by_id(_G.client_id):stop()
       end)
     end)
 
@@ -6071,7 +6045,7 @@ describe('LSP', function()
 
             wait_for_message()
 
-            vim.lsp.stop_client(client_id)
+            vim.lsp.get_client_by_id(client_id):stop()
 
             return server.messages
           end)
@@ -6518,7 +6492,7 @@ describe('LSP', function()
             },
           }, { client_id = client_id })
 
-          vim.lsp.stop_client(client_id, true)
+          vim.lsp.get_client_by_id(client_id):stop(true)
           return _G.watching
         end)
       end

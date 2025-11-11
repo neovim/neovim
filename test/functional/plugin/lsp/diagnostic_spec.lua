@@ -129,7 +129,7 @@ describe('vim.lsp.diagnostic', function()
         }, { client_id = client_id })
 
         local diags = vim.diagnostic.get(diagnostic_bufnr)
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
         vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
         return diags
       end)
@@ -361,7 +361,7 @@ describe('vim.lsp.diagnostic', function()
       )
 
       exec_lua(function()
-        vim.lsp.stop_client(client_id)
+        vim.lsp.get_client_by_id(client_id):stop()
       end)
 
       eq(
@@ -373,9 +373,8 @@ describe('vim.lsp.diagnostic', function()
     end)
 
     it('keeps diagnostics when one client detaches and others still are attached', function()
-      local client_id2
       exec_lua(function()
-        client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server.cmd })
+        _G.client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server.cmd })
 
         vim.lsp.diagnostic.on_diagnostic(nil, {
           kind = 'full',
@@ -400,7 +399,7 @@ describe('vim.lsp.diagnostic', function()
       )
 
       exec_lua(function()
-        vim.lsp.stop_client(client_id2)
+        vim.lsp.get_client_by_id(_G.client_id2):stop()
       end)
 
       eq(

@@ -1058,9 +1058,13 @@ end
 --- By default asks the server to shutdown, unless stop was requested
 --- already for this client, then force-shutdown is attempted.
 ---
+---@deprecated
 ---@param client_id integer|integer[]|vim.lsp.Client[] id, list of id's, or list of |vim.lsp.Client| objects
----@param force? boolean shutdown forcefully
+---@param force? boolean|integer Whether to shutdown forcefully.
+--- If `force` is a number, it will be treated as the time in milliseconds to
+--- wait before forcing the shutdown.
 function lsp.stop_client(client_id, force)
+  vim.deprecate('vim.lsp.stop_client()', 'vim.lsp.Client:stop()', '0.13')
   --- @type integer[]|vim.lsp.Client[]
   local ids = type(client_id) == 'table' and client_id or { client_id }
   for _, id in ipairs(ids) do
