@@ -198,9 +198,9 @@ CTRL-W CTRL-N						*CTRL-W_CTRL-N*
 :[N]new [++opt] [+cmd]					*:new*
 		Create a new window and start editing an empty file in it.
 		Make new window N high (default is to use half the existing
-		height).  Reduces the current window height to create room (and
-		others, if the 'equalalways' option is set and 'eadirection'
-		isn't "hor").
+		height).  Reduces the current window height to create room
+		(and others, if the 'equalalways' option is set and
+		'eadirection' isn't "hor").
 		Also see |++opt| and |+cmd|.
 		If 'fileformats' is not empty, the first format given will be
 		used for the new buffer.  If 'fileformats' is empty, the
@@ -507,8 +507,8 @@ CTRL-W R	Rotate windows upwards/leftwards.  The second window becomes
 		current window is in.
 
 CTRL-W x					*CTRL-W_x* *CTRL-W_CTRL-X*
-CTRL-W CTRL-X	Without count: Exchange current window with next one.  If there
-		is no next window, exchange with previous window.
+CTRL-W CTRL-X	Without count: Exchange current window with next one.  If
+		there is no next window, exchange with previous window.
 		With count: Exchange current window with Nth window (first
 		window is 1).  The cursor is put in the other window.
 		When vertical and horizontal window splits are mixed, the
@@ -657,9 +657,9 @@ The information provided by |WinScrolled| is a dictionary for each window that
 has changes, using the window ID as the key, and a total count of the changes
 with the key "all".  Example value for |v:event|: >
 	{
-	   all: {width: 0, height: 2, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
+	   all:  {width: 0, height:  2, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
 	   1003: {width: 0, height: -1, leftcol: 0, skipcol: 0, topline: 0, topfill: 0},
-	   1006: {width: 0, height: 1, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
+	   1006: {width: 0, height:  1, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
 	}
 
 Note that the "all" entry has the absolute values of the individual windows
@@ -970,13 +970,13 @@ CTRL-W CTRL-Z					*CTRL-W_CTRL-Z* *:pc* *:pclose*
 
 CTRL-W }						*CTRL-W_}*
 		Use identifier under cursor as a tag and perform a :ptag on
-		it.  Make the new Preview window (if required) N high.  If N is
-		not given, 'previewheight' is used.
+		it.  Make the new Preview window (if required) N high.  If N
+		is not given, 'previewheight' is used.
 
 CTRL-W g }						*CTRL-W_g}*
 		Use identifier under cursor as a tag and perform a :ptjump on
-		it.  Make the new Preview window (if required) N high.  If N is
-		not given, 'previewheight' is used.
+		it.  Make the new Preview window (if required) N high.  If N
+		is not given, 'previewheight' is used.
 
 							*:pb* *:pbuffer*
 :[N]pb[uffer][!] [+cmd] [N]
@@ -1287,8 +1287,8 @@ list of buffers. |unlisted-buffer|
 		buffer (if there is one).  Similarly, if you are in a normal
 		(non-help) buffer, this takes you to the next normal buffer.
 		This is so that if you have invoked help, it doesn't get in
-		the way when you're browsing code/text buffers.  The next three
-		commands also work like this.
+		the way when you're browsing code/text buffers.  The next
+		three commands also work like this.
 
 								*]b*
 ]b		Mapped to |:bnext|. |default-mappings|
