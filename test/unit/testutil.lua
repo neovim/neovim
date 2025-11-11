@@ -1,4 +1,17 @@
 local ffi = require('ffi')
+
+if ffi.os == 'OSX' then
+  local has_ipc_info_object_type_t = pcall(function()
+    return ffi.typeof('ipc_info_object_type_t')
+  end)
+  if not has_ipc_info_object_type_t then
+    -- mach_port_space_info() prototypes reference ipc_info_object_type_t, but
+    -- recent macOS SDK preprocess output stops emitting the typedef. Provide a
+    -- guarded fallback matching the SDK definition (natural_t/unsigned int).
+    ffi.cdef('typedef unsigned int ipc_info_object_type_t;')
+  end
+end
+
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
