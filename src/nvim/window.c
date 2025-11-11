@@ -4542,6 +4542,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   prevwin = next_prevwin;
 
   last_status(false);  // status line may appear or disappear
+  win_float_update_statusline();
   win_comp_pos();      // recompute w_winrow for all windows
   diff_need_scrollbind = true;
 
@@ -6775,7 +6776,9 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     terminal_check_size(wp->w_buffer->terminal);
   }
 
-  wp->w_height_outer = (wp->w_view_height + win_border_height(wp) + wp->w_winbar_height);
+  int float_stl_height = wp->w_floating && wp->w_status_height ? STATUS_HEIGHT : 0;
+  wp->w_height_outer = (wp->w_view_height + win_border_height(wp) + wp->w_winbar_height +
+                        float_stl_height);
   wp->w_width_outer = (wp->w_view_width + win_border_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
@@ -6895,13 +6898,13 @@ void last_status(bool morewin)
 }
 
 // Remove status line from window, replacing it with a horizontal separator if needed.
-static void win_remove_status_line(win_T *wp, bool add_hsep)
+void win_remove_status_line(win_T *wp, bool add_hsep)
 {
   wp->w_status_height = 0;
   if (add_hsep) {
     wp->w_hsep_height = 1;
   } else {
-    win_new_height(wp, wp->w_height + STATUS_HEIGHT);
+    win_new_height(wp, (wp->w_floating ? wp->w_view_height : wp->w_height) + STATUS_HEIGHT);
   }
   comp_col();
 

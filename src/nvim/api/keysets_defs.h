@@ -116,29 +116,29 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__win_config_;
-  Float row;
-  Float col;
-  Integer width;
-  Integer height;
-  Enum("NW", "NE", "SW", "SE") anchor;
-  Enum("cursor", "editor", "laststatus", "mouse", "tabline", "win") relative;
-  Enum("left", "right", "above", "below") split;
-  Window win;
-  ArrayOf(Integer) bufpos;
   Boolean external;
+  Boolean fixed;
   Boolean focusable;
-  Boolean mouse;
-  Boolean vertical;
-  Integer zindex;
-  Union(ArrayOf(String), Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
-  Object title;
-  Enum("center", "left", "right") title_pos;
   Object footer;
   Enum("center", "left", "right") footer_pos;
+  Boolean hide;
+  Integer height;
+  Boolean mouse;
+  Enum("cursor", "editor", "laststatus", "mouse", "tabline", "win") relative;
+  Float row;
   Enum("minimal") style;
   Boolean noautocmd;
-  Boolean fixed;
-  Boolean hide;
+  Boolean vertical;
+  Window win;
+  Integer width;
+  Integer zindex;
+  Enum("NW", "NE", "SW", "SE") anchor;
+  Union(ArrayOf(String), Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
+  ArrayOf(Integer) bufpos;
+  Float col;
+  Enum("left", "right", "above", "below") split;
+  Object title;
+  Enum("center", "left", "right") title_pos;
   Integer _cmdline_offset;
 } Dict(win_config);
 
