@@ -899,7 +899,7 @@ is_na_patch() {
   test "$FILE_LNUM" -gt 1 && return 1
   if test "$FILE_LNUM" -eq 1; then
     local VERSION_LNUM
-    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" log -1 --numstat --format= "$patch"  -- src/version.c  | grep -c '^2\s\+0')
+    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" log -1 --numstat --format= "$patch" -- src/version.c  | grep -c '^2\s\+0')
     test "$VERSION_LNUM" -ne 1 && return 1
     local VERSION_VNUM
     VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" log -1 -U1 --format="" "$patch" -- src/version.c |
