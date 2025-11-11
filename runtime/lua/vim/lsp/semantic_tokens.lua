@@ -822,7 +822,7 @@ function M._refresh(err, _, ctx)
     return vim.NIL
   end
 
-  for bufnr in ipairs(vim.lsp.get_client_by_id(ctx.client_id).attached_buffers or {}) do
+  for bufnr in pairs(vim.lsp.get_client_by_id(ctx.client_id).attached_buffers or {}) do
     local highlighter = STHighlighter.active[bufnr]
     if highlighter and highlighter.client_state[ctx.client_id] then
       highlighter:mark_dirty(ctx.client_id)
