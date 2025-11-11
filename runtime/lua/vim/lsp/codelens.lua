@@ -3,19 +3,37 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
----@class CodelensDisplay
+--- Display options for lenses
+--- @class vim.lsp.codelens.display.Opts
+--- See |nvim_buf_set_extmark()|.
+--- (default: "combine")
+--- @field hl_mode "replace"|"combine"|"blend"
+--- Use virtual lines for lenses.
+--- (default: false)
+--- @field virt_lines boolean
+--- Use virtual text for lenses.
+--- (default: true)
+--- @field virt_text boolean
+
+---@type vim.lsp.codelens.display.Opts
 local lens_display = {
-  hl_mode = 'combine', ---@type "replace"|"combine"|"blend"
-  virt_lines = false, ---@type boolean
-  virt_text = true, ---@type boolean
+  hl_mode = 'combine',
+  virt_lines = false,
+  virt_text = true,
 }
 
----@return CodelensDisplay
+---Get current display options for lenses
+---
+---@return vim.lsp.codelens.display.Opts
 function M.get_display()
   return vim.deepcopy(lens_display)
 end
 
----@param opts CodelensDisplay
+---Set display options for lenses
+---
+---@param opts vim.lsp.codelens.display.Opts If a setting is omitted, nil, or
+---invalid, the default will be used
+---@return nil
 function M.set_display(opts)
   vim.validate('opts', opts, 'table', true)
 
@@ -230,7 +248,7 @@ local function display_line_lenses(bufnr, ns, line, lenses)
   end
 end
 
---- Display the lenses using virtual text
+--- Display the lenses using virtual text and/or virtual lines
 ---
 ---@param lenses? lsp.CodeLens[] lenses to display
 ---@param bufnr integer
