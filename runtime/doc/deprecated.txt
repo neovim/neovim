@@ -39,7 +39,7 @@ LSP
 • *vim.lsp.semantic_tokens.stop()*	Use `vim.lsp.semantic_tokens.enable(false)` instead
 • *vim.lsp.set_log_level()*		Use `vim.lsp.log.set_level()` instead
 • *vim.lsp.get_log_path()*		Use `vim.lsp.log.get_filename()` instead
-• *vim.lsp.get_buffers_by_client_id*	Use `vim.lsp.get_client_by_id(id).attached_buffers`
+• *vim.lsp.get_buffers_by_client_id()*	Use `vim.lsp.get_client_by_id(id).attached_buffers`
 					instead
 • *vim.lsp.stop_client()*		Use |Client:stop()| instead
 
