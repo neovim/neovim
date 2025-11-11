@@ -34,6 +34,7 @@ usage() {
   echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
   echo "    -m {vim-revision}  List previous (older) missing Vim patches."
   echo "    -M                 List all merged patch-numbers (at current v:version)."
+  echo "    -n                 List possible N/A Vim patches."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.1.xxx) or a Git hash."
   echo "    -P {vim-revision}  Download, generate and apply a Vim patch."
@@ -886,7 +887,41 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlLmMVp:P:g:r:s" opt; do
+is_na_patch() {
+  local patch=$1
+  local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
+  local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
+
+  local FILE_LNUM
+  # shellcheck disable=SC2086
+  FILE_LNUM="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
+    grep -c '^<')" || FILE_LNUM=0
+  test "$FILE_LNUM" -gt 1 && return 1
+  if test "$FILE_LNUM" -eq 1; then
+    local VERSION_LNUM
+    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" log -1 --numstat --format= "$patch" -- src/version.c  | grep -c '^2\s\+0')
+    test "$VERSION_LNUM" -ne 1 && return 1
+    local VERSION_VNUM
+    VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" log -1 -U1 --format="" "$patch" -- src/version.c |
+      grep -Pzc '[ +]\/\*\*\/\n\+\s+[0-9]+,\n[ +]\/\*\*\/\n')" || true
+    test "$VERSION_VNUM" -ne 1 && return 1
+  fi
+  return 0
+}
+
+list_na_patches() {
+  list_missing_vimpatches 0 | while read -r patch; do
+    if is_na_patch "$patch"; then
+      if (echo "$patch" | grep -q '^v[0-9]'); then
+        echo "vim-patch:$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty=format:%s "$patch" | sed 's/^patch //')"
+      else
+        echo "vim-patch:$(git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
+      fi
+    fi
+  done
+}
+
+while getopts "hlLmnMVp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -909,6 +944,10 @@ while getopts "hlLmMVp:P:g:r:s" opt; do
     m)
       shift  # remove opt
       list_missing_previous_vimpatches_for_patch "$@"
+      exit 0
+      ;;
+    n)
+      list_na_patches
       exit 0
       ;;
     p)
