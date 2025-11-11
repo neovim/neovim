@@ -2,9 +2,9 @@
 " Language:     SML
 " Filenames:    *.sml *.sig
 " Maintainer:   Markus Mottl <markus.mottl@gmail.com>
-" Previous Maintainer: Fabrizio Zeno Cornelli
-"				<zeno@filibusta.crema.unimi.it> (invalid)
-" Last Change:  2022 Apr 01
+" Previous Maintainer: Fabrizio Zeno Cornelli <zeno@filibusta.crema.unimi.it> (invalid)
+" Last Change:  2025 Nov 07 - Update Number Regex
+"               2022 Apr 01
 "               2015 Aug 31 - Fixed opening of modules (Ramana Kumar)
 "               2006 Oct 23 - Fixed character highlighting bug (MM)
 
@@ -152,9 +152,11 @@ syn match    smlKeyChar      ";"
 syn match    smlKeyChar      "\*"
 syn match    smlKeyChar      "="
 
-syn match    smlNumber        "\<-\=\d\+\>"
-syn match    smlNumber        "\<-\=0[x|X]\x\+\>"
-syn match    smlReal          "\<-\=\d\+\.\d*\([eE][-+]\=\d\+\)\=[fl]\=\>"
+syn match    smlNumber        "\~\=\<\d\+\>"
+syn match    smlNumber        "\~\=\<0x\x\+\>"
+syn match    smlWord          "\<0w\d\+\>"
+syn match    smlWord          "\<0wx\x\+\>"
+syn match    smlReal          "\~\=\<\d\+\.\d\+\%([eE]\~\=\d\+\)\=\>"
 
 " Synchronization
 syn sync minlines=20
@@ -208,6 +210,7 @@ hi def link smlOperator     Keyword
 hi def link smlBoolean      Boolean
 hi def link smlCharacter    Character
 hi def link smlNumber       Number
+hi def link smlWord         Number
 hi def link smlReal         Float
 hi def link smlString       String
 hi def link smlType         Type
