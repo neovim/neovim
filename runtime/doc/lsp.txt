@@ -1914,6 +1914,17 @@ Client:supports_method({method}, {bufnr})           *Client:supports_method()*
 ==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
+*vim.lsp.codelens.display.Opts*
+    Display options for lenses
+
+    Fields: ~
+      • {hl_mode}     (`"replace"|"combine"|"blend"`, default: "combine") See
+                      |nvim_buf_set_extmark()|.
+      • {virt_lines}  (`boolean`, default: false) Use virtual lines for
+                      lenses.
+      • {virt_text}   (`boolean`, default: true) Use virtual text for lenses.
+
+
 clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
     Clear the lenses
 
@@ -1923,7 +1934,7 @@ clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
                      current buffer
 
 display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
-    Display the lenses using virtual text
+    Display the lenses using virtual text and/or virtual lines
 
     Parameters: ~
       • {lenses}     (`lsp.CodeLens[]?`) lenses to display
@@ -1939,6 +1950,12 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
 
     Return: ~
         (`lsp.CodeLens[]`)
+
+get_display()                                 *vim.lsp.codelens.get_display()*
+    Get current display options for lenses
+
+    Return: ~
+        (`vim.lsp.codelens.display.Opts`) See |vim.lsp.codelens.display.Opts|.
 
 on_codelens({err}, {result}, {ctx})           *vim.lsp.codelens.on_codelens()*
     |lsp-handler| for the method `textDocument/codeLens`
@@ -1972,6 +1989,14 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
       • {lenses}     (`lsp.CodeLens[]?`) lenses to store
       • {bufnr}      (`integer`)
       • {client_id}  (`integer`)
+
+set_display({opts})                           *vim.lsp.codelens.set_display()*
+    Set display options for lenses
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.codelens.display.Opts`) If a setting is omitted,
+                nil, or invalid, the default will be used. See
+                |vim.lsp.codelens.display.Opts|.
 
 
 ==============================================================================
