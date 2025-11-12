@@ -230,10 +230,10 @@ pub fn build(b: *std.Build) !void {
 
     _ = gen_config.addCopyFile(sysconfig_step.getOutput(), "auto/config.h"); // run_preprocessor() workaronnd
     _ = gen_config.add("auto/pathdef.h", b.fmt(
-        \\char *default_vim_dir = "/usr/local/share/nvim";
+        \\char *default_vim_dir = "{s}/share/nvim";
         \\char *default_vimruntime_dir = "";
-        \\char *default_lib_dir = "/usr/local/lib/nvim";
-    , .{}));
+        \\char *default_lib_dir = "{s}/nvim";
+    , .{ b.install_path, b.lib_dir })); // b.lib_dir is typically b.install_path + "/lib" but may be overridden
 
     const opt_version_string = b.option([]const u8, "version-string", "Override Neovim version string. Default is to find out with git.");
     const version_medium = if (opt_version_string) |version_string| version_string else v: {
@@ -380,18 +380,38 @@ pub fn build(b: *std.Build) !void {
     nvim_exe_step.dependOn(&nvim_exe_install.step);
 
     const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, funcs_data);
-    const runtime_install = b.addInstallDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "runtime/" });
-
-    const nvim = b.step("nvim", "build the editor");
-
-    nvim.dependOn(&nvim_exe_install.step);
-    nvim.dependOn(&runtime_install.step);
 
     const lua_dev_deps = b.dependency("lua_dev_deps", .{});
 
     const test_deps = b.step("test_deps", "test prerequisites");
     test_deps.dependOn(&nvim_exe_install.step);
-    test_deps.dependOn(&runtime_install.step);
+    // running tests doesn't require copying the static runtime, only the generated stuff
+    const test_runtime_install = b.addInstallDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "runtime/" });
+    test_deps.dependOn(&test_runtime_install.step);
+
+    const nvim_dev = b.step("nvim_dev", "build the editor for development");
+    b.default_step = nvim_dev;
+
+    nvim_dev.dependOn(&nvim_exe_install.step);
+    nvim_dev.dependOn(&test_runtime_install.step);
+
+    // run from dev environment
+    const run_cmd = b.addRunArtifact(nvim_exe);
+    run_cmd.setEnvironmentVariable("VIMRUNTIME", try b.build_root.join(b.graph.arena, &.{"runtime"}));
+    run_cmd.setEnvironmentVariable("NVIM_ZIG_INSTALL_DIR", b.getInstallPath(.prefix, "runtime"));
+    run_cmd.step.dependOn(nvim_dev);
+    run_cmd.addArgs(&.{ "--cmd", "let &rtp = &rtp.','.$NVIM_ZIG_INSTALL_DIR" });
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+    const run_step = b.step("run_dev", "run the editor (for development)");
+    run_step.dependOn(&run_cmd.step);
+
+    // installation
+    const install = b.getInstallStep();
+    install.dependOn(&nvim_exe_install.step);
+    b.installDirectory(.{ .source_dir = b.path("runtime/"), .install_dir = .prefix, .install_subdir = "share/nvim/runtime/" });
+    b.installDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "share/nvim/runtime/" });
 
     test_deps.dependOn(test_fixture(b, "shell-test", null, target, optimize, &flags));
     test_deps.dependOn(test_fixture(b, "tty-test", libuv, target, optimize, &flags));
