@@ -133,7 +133,8 @@ option has been set to a different value.  For example: >
 Above we only discussed one line of undo/redo.  But it is also possible to
 branch off.  This happens when you undo a few changes and then make a new
 change.  The undone changes become a branch.  You can go to that branch with
-the following commands.
+the following commands.  The undo-tree of a file can be visualized and
+interactively applied using |undotree-plugin|.
 
 This is explained in the user manual: |usr_32.txt|.
 
