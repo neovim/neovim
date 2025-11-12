@@ -1116,6 +1116,11 @@ list of buffers. |unlisted-buffer|
 		thus you can always go to a specific buffer with ":buffer N"
 		or "N CTRL-^", where N is the buffer number.
 
+		For the file name these special values are used:
+			"[Prompt]"	|prompt-buffer|
+			"[Scratch]"	'buftype' is "nofile"
+			"[No Name]"	no file name specified
+
 		Indicators (chars in the same column are mutually exclusive):
 		u	an unlisted buffer (only displayed when [!] is used)
 			   |unlisted-buffer|
