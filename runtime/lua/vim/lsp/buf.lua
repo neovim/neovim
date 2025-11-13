@@ -243,8 +243,9 @@ local function get_locations(method, opts)
 
       vim.bo[b].buflisted = true
       local w = win
-      if opts.reuse_win then
-        w = vim.fn.win_findbuf(b)[1] or w
+      if opts.reuse_win and api.nvim_win_get_buf(w) ~= b then
+        w = vim.fn.bufwinid(b)
+        w = w >= 0 and w or vim.fn.win_findbuf(b)[1] or win
         if w ~= win then
           api.nvim_set_current_win(w)
         end
