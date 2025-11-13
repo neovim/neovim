@@ -152,6 +152,26 @@ local async = require('vim._async')
 
 local M = {}
 
+--- @class (private) vim.pack.LockData
+--- @field rev string Latest recorded revision.
+--- @field src string Plugin source.
+--- @field version? string|vim.VersionRange Plugin `version`, as supplied in `spec`.
+
+--- @class (private) vim.pack.Lock
+--- @field plugins table<string, vim.pack.LockData> Map from plugin name to its lock data.
+
+--- @type vim.pack.Lock
+local plugin_lock
+
+--- @return string
+local function get_plug_dir()
+  return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
+end
+
+local function lock_get_path()
+  return vim.fs.joinpath(vim.fn.stdpath('config'), 'nvim-pack-lock.json')
+end
+
 -- Git ------------------------------------------------------------------------
 
 --- @async
@@ -249,70 +269,6 @@ end
 local function git_get_tags(cwd)
   local tags = git_cmd({ 'tag', '--list', '--sort=-v:refname' }, cwd)
   return tags == '' and {} or vim.split(tags, '\n')
-end
-
--- Lockfile -------------------------------------------------------------------
-
---- @return string
-local function get_plug_dir()
-  return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
-end
-
---- @class (private) vim.pack.LockData
---- @field rev string Latest recorded revision.
---- @field src string Plugin source.
---- @field version? string|vim.VersionRange Plugin `version`, as supplied in `spec`.
-
---- @class (private) vim.pack.Lock
---- @field plugins table<string, vim.pack.LockData> Map from plugin name to its lock data.
-
---- @type vim.pack.Lock
-local plugin_lock
-
-local function lock_get_path()
-  return vim.fs.joinpath(vim.fn.stdpath('config'), 'nvim-pack-lock.json')
-end
-
-local function lock_read()
-  if plugin_lock then
-    return
-  end
-  local fd = uv.fs_open(lock_get_path(), 'r', 438)
-  if not fd then
-    plugin_lock = { plugins = {} }
-    return
-  end
-  local stat = assert(uv.fs_fstat(fd))
-  local data = assert(uv.fs_read(fd, stat.size, 0))
-  assert(uv.fs_close(fd))
-  plugin_lock = vim.json.decode(data) --- @type vim.pack.Lock
-
-  -- Deserialize `version`
-  for _, l_data in pairs(plugin_lock.plugins) do
-    local version = l_data.version
-    if type(version) == 'string' then
-      l_data.version = version:match("^'(.+)'$") or vim.version.range(version)
-    end
-  end
-end
-
-local function lock_write()
-  -- Serialize `version`
-  local lock = vim.deepcopy(plugin_lock)
-  for _, l_data in pairs(lock.plugins) do
-    local version = l_data.version
-    if version then
-      l_data.version = type(version) == 'string' and ("'%s'"):format(version) or tostring(version)
-    end
-  end
-
-  local path = lock_get_path()
-  vim.fn.mkdir(vim.fs.dirname(path), 'p')
-  local fd = assert(uv.fs_open(path, 'w', 438))
-
-  local data = vim.json.encode(lock, { indent = '  ', sort_keys = true })
-  assert(uv.fs_write(fd, data))
-  assert(uv.fs_close(fd))
 end
 
 -- Plugin operations ----------------------------------------------------------
@@ -782,6 +738,48 @@ local function pack_add(plug, load)
     vim.tbl_map(function(path)
       vim.cmd.source({ path, magic = { file = false } })
     end, after_paths)
+  end
+end
+
+local function lock_write()
+  -- Serialize `version`
+  local lock = vim.deepcopy(plugin_lock)
+  for _, l_data in pairs(lock.plugins) do
+    local version = l_data.version
+    if version then
+      l_data.version = type(version) == 'string' and ("'%s'"):format(version) or tostring(version)
+    end
+  end
+
+  local path = lock_get_path()
+  vim.fn.mkdir(vim.fs.dirname(path), 'p')
+  local fd = assert(uv.fs_open(path, 'w', 438))
+
+  local data = vim.json.encode(lock, { indent = '  ', sort_keys = true })
+  assert(uv.fs_write(fd, data))
+  assert(uv.fs_close(fd))
+end
+
+local function lock_read()
+  if plugin_lock then
+    return
+  end
+  local fd = uv.fs_open(lock_get_path(), 'r', 438)
+  if not fd then
+    plugin_lock = { plugins = {} }
+    return
+  end
+  local stat = assert(uv.fs_fstat(fd))
+  local data = assert(uv.fs_read(fd, stat.size, 0))
+  assert(uv.fs_close(fd))
+  plugin_lock = vim.json.decode(data) --- @type vim.pack.Lock
+
+  -- Deserialize `version`
+  for _, l_data in pairs(plugin_lock.plugins) do
+    local version = l_data.version
+    if type(version) == 'string' then
+      l_data.version = version:match("^'(.+)'$") or vim.version.range(version)
+    end
   end
 end
 
