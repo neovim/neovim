@@ -1520,7 +1520,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 /// ":unlet[!] var1 ... " command.
 void ex_unlet(exarg_T *eap)
 {
-  ex_unletlock(eap, eap->arg, 0, do_unlet_var);
+  ex_unletlock(eap, eap->arg, 0, eap->forceit ? GLV_QUIET : 0, do_unlet_var);
 }
 
 /// ":lockvar" and ":unlockvar" commands
@@ -1536,7 +1536,7 @@ void ex_lockvar(exarg_T *eap)
     arg = skipwhite(arg);
   }
 
-  ex_unletlock(eap, arg, deep, do_lock_var);
+  ex_unletlock(eap, arg, deep, 0, do_lock_var);
 }
 
 /// Common parsing logic for :unlet, :lockvar and :unlockvar.
@@ -1548,7 +1548,8 @@ void ex_lockvar(exarg_T *eap)
 /// @param[in]  deep  Levels to (un)lock for :(un)lockvar, -1 to (un)lock
 ///                   everything.
 /// @param[in]  callback  Appropriate handler for the command.
-static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_callback callback)
+static void ex_unletlock(exarg_T *eap, char *argstart, int deep, int glv_flags,
+                         ex_unletlock_callback callback)
   FUNC_ATTR_NONNULL_ALL
 {
   char *arg = argstart;
@@ -1573,7 +1574,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
     } else {
       // Parse the name and find the end.
       name_end = get_lval(arg, NULL, &lv, true, eap->skip || error,
-                          0, FNE_CHECK_START);
+                          glv_flags, FNE_CHECK_START);
       if (lv.ll_name == NULL) {
         error = true;  // error, but continue parsing.
       }
