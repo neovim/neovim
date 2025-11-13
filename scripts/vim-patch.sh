@@ -911,10 +911,12 @@ is_na_patch() {
 list_na_patches() {
   list_missing_vimpatches 0 | while read -r patch; do
     if is_na_patch "$patch"; then
-      if (echo "$patch" | grep -q '^v[0-9]'); then
-        echo "vim-patch:$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty=format:%s "$patch" | sed 's/^patch //')"
+      GIT_MSG="$(git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
+      if (echo "$patch" | grep -q '^v[0-9]\.[0-9]\.[0-9]') && (echo "${GIT_MSG}" | grep -q ' patch [0-9]\.'); then
+        # shellcheck disable=SC2001
+        echo "vim-patch:$(echo "${GIT_MSG}" | sed 's/^[0-9a-zA-Z]\+ patch //')"
       else
-        echo "vim-patch:$(git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
+        echo "vim-patch:${GIT_MSG}"
       fi
     fi
   done
