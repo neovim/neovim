@@ -379,7 +379,7 @@ add({specs}, {opts})                                          *vim.pack.add()*
                    Load `plugin/` files and `ftdetect/` scripts. If `false`,
                    works like `:packadd!`. If function, called with plugin
                    data and is fully responsible for loading plugin. Default
-                   `false` during startup and `true` afterwards.
+                   `false` during |init.lua| sourcing and `true` afterwards.
                  • {confirm}? (`boolean`) Whether to ask user to confirm
                    initial install. Default `true`.
 

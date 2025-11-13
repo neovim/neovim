@@ -743,8 +743,9 @@ local function pack_add(plug, load)
   -- NOTE: The `:packadd` specifically seems to not handle spaces in dir name
   vim.cmd.packadd({ vim.fn.escape(plug.spec.name, ' '), bang = not load, magic = { file = false } })
 
-  -- Execute 'after/' scripts if not during startup (when they will be sourced
-  -- automatically), as `:packadd` only sources plain 'plugin/' files.
+  -- The `:packadd` only sources plain 'plugin/' files. Execute 'after/' scripts
+  -- if not during startup (when they will be sourced later, even if
+  -- `vim.pack.add` is inside user's 'plugin/')
   -- See https://github.com/vim/vim/issues/15584
   -- Deliberately do so after executing all currently known 'plugin/' files.
   if vim.v.vim_did_enter == 1 and load then
@@ -760,7 +761,7 @@ end
 --- @inlinedoc
 --- Load `plugin/` files and `ftdetect/` scripts. If `false`, works like `:packadd!`.
 --- If function, called with plugin data and is fully responsible for loading plugin.
---- Default `false` during startup and `true` afterwards.
+--- Default `false` during |init.lua| sourcing and `true` afterwards.
 --- @field load? boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
 ---
 --- @field confirm? boolean Whether to ask user to confirm initial install. Default `true`.
@@ -788,7 +789,7 @@ end
 --- @param opts? vim.pack.keyset.add
 function M.add(specs, opts)
   vim.validate('specs', specs, vim.islist, false, 'list')
-  opts = vim.tbl_extend('force', { load = vim.v.vim_did_enter == 1, confirm = true }, opts or {})
+  opts = vim.tbl_extend('force', { load = vim.v.vim_did_init == 1, confirm = true }, opts or {})
   vim.validate('opts', opts, 'table')
 
   local plug_dir = get_plug_dir()
