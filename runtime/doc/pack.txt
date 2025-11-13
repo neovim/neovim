@@ -280,6 +280,10 @@ Switch plugin's version:
   changes in 'init.lua' as well or you will be prompted again next time you
   run |vim.pack.update()|.
 
+Switch plugin's source:
+• Update 'init.lua' for plugin to have desired `src`.
+• |:restart|. This will cleanly reinstall plugin from the new source.
+
 Freeze plugin from being updated:
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
   it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
@@ -354,10 +358,12 @@ add({specs}, {opts})                                          *vim.pack.add()*
     Add plugin to current session
     • For each specification check that plugin exists on disk in
       |vim.pack-directory|:
-      • If exists, do nothing in this step.
+      • If exists, check if its `src` is the same as input. If not - delete
+        immediately to clean install from the new source. Otherwise do
+        nothing.
       • If doesn't exist, install it by downloading from `src` into `name`
-        subdirectory (via `git clone`) and update revision to follow `version`
-        (via `git checkout`).
+        subdirectory (via partial blobless `git clone`) and update revision to
+        match `version` (via `git checkout`).
     • For each plugin execute |:packadd| (or customizable `load` function)
       making it reachable by Nvim.
 

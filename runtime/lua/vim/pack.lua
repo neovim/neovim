@@ -77,6 +77,10 @@
 ---any changes in 'init.lua' as well or you will be prompted again next time
 ---you run |vim.pack.update()|.
 ---
+---Switch plugin's source:
+---- Update 'init.lua' for plugin to have desired `src`.
+---- |:restart|. This will cleanly reinstall plugin from the new source.
+---
 ---Freeze plugin from being updated:
 ---- Update 'init.lua' for plugin to have `version` set to current revision.
 ---Get it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
@@ -769,9 +773,11 @@ end
 --- Add plugin to current session
 ---
 --- - For each specification check that plugin exists on disk in |vim.pack-directory|:
----     - If exists, do nothing in this step.
+---     - If exists, check if its `src` is the same as input. If not - delete
+---       immediately to clean install from the new source. Otherwise do nothing.
 ---     - If doesn't exist, install it by downloading from `src` into `name`
----       subdirectory (via `git clone`) and update revision to follow `version` (via `git checkout`).
+---       subdirectory (via partial blobless `git clone`) and update revision
+---       to match `version` (via `git checkout`).
 --- - For each plugin execute |:packadd| (or customizable `load` function) making
 ---   it reachable by Nvim.
 ---
@@ -804,13 +810,19 @@ function M.add(specs, opts)
   local plugs_to_install = {} --- @type vim.pack.Plug[]
   local needs_lock_write = false
   for _, p in ipairs(plugs) do
-    -- TODO(echasnovski): check that lock's `src` is the same as in spec.
-    -- If not - cleanly reclone (delete directory and mark as not installed).
+    -- Allow to cleanly change `src` of an already installed plugin
+    if p.info.installed and plugin_lock.plugins[p.spec.name].src ~= p.spec.src then
+      M.del({ p.spec.name })
+      p.info.installed = false
+    end
+
+    -- Detect `version` change
     local p_lock = plugin_lock.plugins[p.spec.name] or {}
     needs_lock_write = needs_lock_write or p_lock.version ~= p.spec.version
     p_lock.version = p.spec.version
     plugin_lock.plugins[p.spec.name] = p_lock
 
+    -- Register for install
     if not p.info.installed then
       plugs_to_install[#plugs_to_install + 1] = p
       needs_lock_write = true

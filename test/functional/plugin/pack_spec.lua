@@ -611,6 +611,46 @@ describe('vim.pack', function()
       eq({ { '.git', 'directory' } }, entries)
     end)
 
+    it('allows changing `src` of installed plugin', function()
+      local basic_src = repos_src.basic
+      local defbranch_src = repos_src.defbranch
+      exec_lua(function()
+        vim.pack.add({ basic_src })
+      end)
+      eq('basic main', exec_lua('return require("basic")'))
+
+      n.clear()
+      watch_events({ 'PackChangedPre', 'PackChanged' })
+      exec_lua(function()
+        vim.pack.add({ { src = defbranch_src, name = 'basic' } })
+      end)
+      eq('defbranch dev', exec_lua('return require("defbranch")'))
+
+      -- Should first properly delete and then cleanly install
+      local log_simple = vim.tbl_map(function(x) --- @param x table
+        return { x.event, x.data.kind, x.data.spec }
+      end, exec_lua('return _G.event_log'))
+
+      local ref_log_simple = {
+        { 'PackChangedPre', 'delete', { name = 'basic', src = basic_src } },
+        { 'PackChanged', 'delete', { name = 'basic', src = basic_src } },
+        { 'PackChangedPre', 'install', { name = 'basic', src = defbranch_src } },
+        { 'PackChanged', 'install', { name = 'basic', src = defbranch_src } },
+      }
+      eq(ref_log_simple, log_simple)
+
+      local ref_messages = table.concat({
+        "vim.pack: Removed plugin 'basic'",
+        'vim.pack: Installing plugins (0/1)',
+        'vim.pack: 100% Installing plugins (1/1)',
+      }, '\n')
+      eq(ref_messages, n.exec_capture('messages'))
+
+      local defbranch_rev = git_get_hash('dev', 'defbranch')
+      local ref_lock_tbl = { plugins = { basic = { rev = defbranch_rev, src = defbranch_src } } }
+      eq(ref_lock_tbl, get_lock_tbl())
+    end)
+
     it('can install from the Internet', function()
       t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
       exec_lua(function()
