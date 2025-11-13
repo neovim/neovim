@@ -58,12 +58,14 @@ II) It is allowed to distribute a modified (or extended) version of Vim,
 	  maintainer will do with your changes and under what license they
 	  will be distributed is negotiable.  If there has been no negotiation
 	  then this license, or a later version, also applies to your changes.
-	  The current maintainers are listed here: https://github.com/orgs/vim/people.
-	  If this changes it will be announced in appropriate places (most likely
-	  vim.sf.net, www.vim.org and/or comp.editors).  When it is completely
-	  impossible to contact the maintainer, the obligation to send him
-	  your changes ceases.  Once the maintainer has confirmed that he has
-	  received your changes they will not have to be sent again.
+	  The current maintainers are listed here:
+	      https://github.com/orgs/vim/people
+	  If this changes it will be announced in appropriate places (most
+	  likely vim.sf.net, www.vim.org and/or comp.editors).  When it is
+	  completely impossible to contact the maintainer, the obligation to
+	  send him your changes ceases.  Once the maintainer has confirmed
+	  that he has received your changes they will not have to be sent
+	  again.
        b) If you have received a modified Vim that was distributed as
 	  mentioned under a) you are allowed to further distribute it
 	  unmodified, as mentioned at I).  If you make additional changes the
@@ -211,7 +213,7 @@ Sending money:
 Check the Kuwasha web site for the latest information!
 
 		Look on their site for information about sponsorship:
-		https://www.kuwasha.net/
+		    https://www.kuwasha.net/
 		If you make a donation to Kuwasha you will receive a tax
 		receipt which can be submitted with your tax return.
 
