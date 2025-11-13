@@ -20,7 +20,7 @@ function methods.shutdown(_, callback)
 end
 
 local get_confirm_bufnr = function(uri)
-  return tonumber(uri:match('^nvim%-pack://(%d+)/confirm%-update$'))
+  return tonumber(uri:match('^nvim://pack%-confirm#(%d+)$'))
 end
 
 local group_header_pattern = '^# (%S+)'
@@ -194,7 +194,7 @@ methods['textDocument/hover'] = function(params, callback)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local lnum = params.position.line + 1
-  local commit = lines[lnum]:match('^[<>] (%x+) │') or lines[lnum]:match('^State.*:%s+(%x+)')
+  local commit = lines[lnum]:match('^[<>] (%x+) │') or lines[lnum]:match('^Revision.*:%s+(%x+)')
   local tag = lines[lnum]:match('^• (.+)$')
   if commit == nil and tag == nil then
     return

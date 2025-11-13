@@ -103,6 +103,10 @@ local function git_add_commit(msg, repo_name)
 end
 
 local function git_get_hash(rev, repo_name)
+  return git_cmd({ 'rev-list', '-1', rev }, repo_name)
+end
+
+local function git_get_short_hash(rev, repo_name)
   return git_cmd({ 'rev-list', '-1', '--abbrev-commit', rev }, repo_name)
 end
 
@@ -906,8 +910,9 @@ describe('vim.pack', function()
   describe('update()', function()
     -- Lua source code for the tested plugin named "fetch"
     local fetch_lua_file = vim.fs.joinpath(pack_get_plug_path('fetch'), 'lua', 'fetch.lua')
-    -- Table with hashes used to test confirmation buffer and log content
+    -- Tables with hashes used to test confirmation buffer and log content
     local hashes --- @type table<string,string>
+    local short_hashes --- @type table<string,string>
 
     before_each(function()
       -- Create a dedicated clean repo for which "push changes" will be mocked
@@ -920,6 +925,7 @@ describe('vim.pack', function()
       git_add_commit('Commit from `main` to be removed', 'fetch')
 
       hashes = { fetch_head = git_get_hash('HEAD', 'fetch') }
+      short_hashes = { fetch_head = git_get_short_hash('HEAD', 'fetch') }
 
       -- Install initial versions of tested plugins
       exec_lua(function()
@@ -981,7 +987,7 @@ describe('vim.pack', function()
         local confirm_bufnr = api.nvim_get_current_buf()
         local confirm_winnr = api.nvim_get_current_win()
         local confirm_tabpage = api.nvim_get_current_tabpage()
-        eq(api.nvim_buf_get_name(0), 'nvim-pack://' .. confirm_bufnr .. '/confirm-update')
+        eq(api.nvim_buf_get_name(0), 'nvim://pack-confirm#' .. confirm_bufnr)
 
         -- Adjust lines for a more robust screenshot testing
         local fetch_src = repos_src.fetch
@@ -1027,13 +1033,14 @@ describe('vim.pack', function()
         screen = Screen.new(85, 35)
 
         hashes.fetch_new = git_get_hash('main', 'fetch')
-        hashes.fetch_new_prev = git_get_hash('main~', 'fetch')
+        short_hashes.fetch_new = git_get_short_hash('main', 'fetch')
+        short_hashes.fetch_new_prev = git_get_short_hash('main~', 'fetch')
         hashes.semver_head = git_get_hash('v0.3.0', 'semver')
 
-        local tab_name = 'n' .. (t.is_os('win') and ':' or '') .. '//2/confirm-update'
+        local tab_name = 'n' .. (t.is_os('win') and ':' or '') .. '//pack-confirm#2'
 
         local screen_lines = {
-          ('{24: [No Name] }{5: %s }{2:%s                                                   }{24:X}|'):format(
+          ('{24: [No Name] }{5: %s }{2:%s                                                     }{24:X}|'):format(
             tab_name,
             t.is_os('win') and '' or ' '
           ),
@@ -1048,32 +1055,28 @@ describe('vim.pack', function()
           '{101:# Update ───────────────────────────────────────────────────────────────────────}     |',
           '                                                                                     |',
           '{101:## fetch}                                                                             |',
-          'Path:         {103:FETCH_PATH}                                                             |',
-          'Source:       {103:FETCH_SRC}                                                              |',
-          ('State before: {103:%s}                                                                |'):format(
-            hashes.fetch_head
-          ),
-          ('State after:  {103:%s} {102:(main)}                                                         |'):format(
-            hashes.fetch_new
-          ),
+          'Path:            {103:FETCH_PATH}                                                          |',
+          'Source:          {103:FETCH_SRC}                                                           |',
+          ('Revision before: {103:%s}                            |'):format(hashes.fetch_head),
+          ('Revision after:  {103:%s} {102:(main)}                     |'):format(hashes.fetch_new),
           '                                                                                     |',
           'Pending updates:                                                                     |',
           ('{19:< %s │ Commit from `main` to be removed}                                         |'):format(
-            hashes.fetch_head
+            short_hashes.fetch_head
           ),
           ('{104:> %s │ Commit to be added 2}                                                     |'):format(
-            hashes.fetch_new
+            short_hashes.fetch_new
           ),
           ('{104:> %s │ Commit to be added 1 (tag: dev-tag)}                                      |'):format(
-            hashes.fetch_new_prev
+            short_hashes.fetch_new_prev
           ),
           '                                                                                     |',
           '{102:# Same ─────────────────────────────────────────────────────────────────────────}     |',
           '                                                                                     |',
           '{102:## semver}                                                                            |',
-          'Path:   {103:SEMVER_PATH}                                                                  |',
-          'Source: {103:SEMVER_SRC}                                                                   |',
-          ('State:  {103:%s} {102:(v0.3.0)}                                                             |'):format(
+          'Path:     {103:SEMVER_PATH}                                                                |',
+          'Source:   {103:SEMVER_SRC}                                                                 |',
+          ('Revision: {103:%s} {102:(v0.3.0)}                          |'):format(
             hashes.semver_head
           ),
           '                                                                                     |',
@@ -1116,10 +1119,10 @@ describe('vim.pack', function()
           # Update ───────────────────────────────────────────────────────────────────────
 
           ## fetch
-          Path:         %s
-          Source:       %s
-          State before: %s
-          State after:  %s (main)
+          Path:            %s
+          Source:          %s
+          Revision before: %s
+          Revision after:  %s (main)
 
           Pending updates:
           < %s │ Commit from `main` to be removed
@@ -1129,9 +1132,9 @@ describe('vim.pack', function()
           fetch_src,
           hashes.fetch_head,
           hashes.fetch_new,
-          hashes.fetch_head,
-          hashes.fetch_new,
-          hashes.fetch_new_prev
+          short_hashes.fetch_head,
+          short_hashes.fetch_new,
+          short_hashes.fetch_new_prev
         )
         eq(vim.text.indent(0, ref_log_lines), vim.trim(log_rest))
       end)
@@ -1456,7 +1459,8 @@ describe('vim.pack', function()
 
       -- Write to log file
       hashes.fetch_new = git_get_hash('main', 'fetch')
-      hashes.fetch_new_prev = git_get_hash('main~', 'fetch')
+      short_hashes.fetch_new = git_get_short_hash('main', 'fetch')
+      short_hashes.fetch_new_prev = git_get_short_hash('main~', 'fetch')
 
       local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
       local log_text = fn.readblob(log_path)
@@ -1466,10 +1470,10 @@ describe('vim.pack', function()
         # Update ───────────────────────────────────────────────────────────────────────
 
         ## fetch
-        Path:         %s
-        Source:       %s
-        State before: %s
-        State after:  %s (main)
+        Path:            %s
+        Source:          %s
+        Revision before: %s
+        Revision after:  %s (main)
 
         Pending updates:
         < %s │ Commit from `main` to be removed
@@ -1479,9 +1483,9 @@ describe('vim.pack', function()
         fetch_src,
         hashes.fetch_head,
         hashes.fetch_new,
-        hashes.fetch_head,
-        hashes.fetch_new,
-        hashes.fetch_new_prev
+        short_hashes.fetch_head,
+        short_hashes.fetch_new,
+        short_hashes.fetch_new_prev
       )
       eq(vim.text.indent(0, ref_log_lines), vim.trim(log_rest))
 

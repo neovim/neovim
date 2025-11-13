@@ -70,7 +70,7 @@
 ---Switch plugin's version:
 ---- Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
 ---named 'plugin1' has changed to `vim.version.range('*')`.
----- |:restart|. The plugin's actual state on disk is not yet changed.
+---- |:restart|. The plugin's actual revision on disk is not yet changed.
 ---  Only plugin's `version` in |vim.pack-lockfile| is updated.
 ---- Execute `vim.pack.update({ 'plugin1' })`.
 ---- Review changes and either confirm or discard them. If discarded, revert
@@ -193,7 +193,7 @@ end
 local function git_get_hash(ref, cwd)
   -- Using `rev-list -1` shows a commit of reference, while `rev-parse` shows
   -- hash of reference. Those are different for annotated tags.
-  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', ref }, cwd)
+  return git_cmd({ 'rev-list', '-1', ref }, cwd)
 end
 
 --- @async
@@ -602,7 +602,7 @@ end
 
 --- @async
 --- @param p vim.pack.Plug
-local function infer_states(p)
+local function infer_revisions(p)
   p.info.sha_head = p.info.sha_head or git_get_hash('HEAD', p.path)
 
   resolve_version(p)
@@ -616,7 +616,7 @@ end
 --- @param p vim.pack.Plug
 --- @param timestamp string
 local function checkout(p, timestamp)
-  infer_states(p)
+  infer_revisions(p)
 
   local msg = ('vim.pack: %s Stash before checkout'):format(timestamp)
   git_cmd({ 'stash', '--quiet', '--message', msg }, p.path)
@@ -668,7 +668,7 @@ end
 --- @param p vim.pack.Plug
 local function infer_update_details(p)
   p.info.update_details = ''
-  infer_states(p)
+  infer_revisions(p)
   local sha_head = assert(p.info.sha_head)
   local sha_target = assert(p.info.sha_target)
 
@@ -756,14 +756,14 @@ end
 --- - For each specification check that plugin exists on disk in |vim.pack-directory|:
 ---     - If exists, do nothing in this step.
 ---     - If doesn't exist, install it by downloading from `src` into `name`
----       subdirectory (via `git clone`) and update state to match `version` (via `git checkout`).
+---       subdirectory (via `git clone`) and update revision to follow `version` (via `git checkout`).
 --- - For each plugin execute |:packadd| (or customizable `load` function) making
 ---   it reachable by Nvim.
 ---
 --- Notes:
 --- - Installation is done in parallel, but waits for all to finish before
 ---   continuing next code execution.
---- - If plugin is already present on disk, there are no checks about its present state.
+--- - If plugin is already present on disk, there are no checks about its current revision.
 ---   The specified `version` can be not the one actually present on disk.
 ---   Execute |vim.pack.update()| to synchronize.
 --- - Adding plugin second and more times during single session does nothing:
@@ -850,9 +850,9 @@ local function compute_feedback_lines_single(p)
 
   if p.info.sha_head == p.info.sha_target then
     parts[#parts + 1] = table.concat({
-      'Path:   ' .. p.path,
-      'Source: ' .. p.spec.src,
-      'State:  ' .. p.info.sha_target .. version_suffix,
+      'Path:     ' .. p.path,
+      'Source:   ' .. p.spec.src,
+      'Revision: ' .. p.info.sha_target .. version_suffix,
     }, '\n')
 
     if p.info.update_details ~= '' then
@@ -861,10 +861,10 @@ local function compute_feedback_lines_single(p)
     end
   else
     parts[#parts + 1] = table.concat({
-      'Path:         ' .. p.path,
-      'Source:       ' .. p.spec.src,
-      'State before: ' .. p.info.sha_head,
-      'State after:  ' .. p.info.sha_target .. version_suffix,
+      'Path:            ' .. p.path,
+      'Source:          ' .. p.spec.src,
+      'Revision before: ' .. p.info.sha_head,
+      'Revision after:  ' .. p.info.sha_target .. version_suffix,
       '',
       'Pending updates:',
       p.info.update_details,
@@ -923,7 +923,7 @@ end
 local function show_confirm_buf(lines, on_finish)
   -- Show buffer in a separate tabpage
   local bufnr = api.nvim_create_buf(true, true)
-  api.nvim_buf_set_name(bufnr, 'nvim-pack://' .. bufnr .. '/confirm-update')
+  api.nvim_buf_set_name(bufnr, 'nvim://pack-confirm#' .. bufnr)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.cmd.sbuffer({ bufnr, mods = { tab = vim.fn.tabpagenr() } })
   local tab_id = api.nvim_get_current_tabpage()
@@ -996,7 +996,7 @@ end
 --- Update plugins
 ---
 --- - Download new changes from source.
---- - Infer update info (current/target state, changelog, etc.).
+--- - Infer update info (current/target revisions, changelog, etc.).
 --- - Depending on `force`:
 ---     - If `false`, show confirmation buffer. It lists data about all set to
 ---       update plugins. Pending changes starting with `>` will be applied while
