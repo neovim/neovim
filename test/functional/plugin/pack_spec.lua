@@ -387,18 +387,22 @@ describe('vim.pack', function()
     end)
 
     it('asks for installation confirmation', function()
-      -- Do not confirm installation to see what happens
+      -- Do not confirm installation to see what happens (should not error)
       mock_confirm(2)
 
-      local err = pcall_err(exec_lua, function()
-        vim.pack.add({ repos_src.basic })
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic, { src = repos_src.defbranch, name = 'other-name' } })
       end)
-
-      matches('`basic`:\nInstallation was not confirmed', err)
       eq(false, exec_lua('return pcall(require, "basic")'))
+      eq(false, exec_lua('return pcall(require, "defbranch")'))
 
-      local confirm_msg = 'These plugins will be installed:\n\n' .. repos_src.basic .. '\n'
-      local ref_log = { { confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question' } }
+      local confirm_msg_lines = ([[
+        These plugins will be installed:
+
+        basic      from %s
+        other-name from %s]]):format(repos_src.basic, repos_src.defbranch)
+      local confirm_msg = vim.trim(vim.text.indent(0, confirm_msg_lines))
+      local ref_log = { { confirm_msg .. '\n', 'Proceed? &Yes\n&No\n&Always', 1, 'Question' } }
       eq(ref_log, exec_lua('return _G.confirm_log'))
     end)
 

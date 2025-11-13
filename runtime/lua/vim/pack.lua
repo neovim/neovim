@@ -545,16 +545,24 @@ local function confirm_install(plug_list)
     return true
   end
 
-  local src = {} --- @type string[]
-  for _, p in ipairs(plug_list) do
-    src[#src + 1] = p.spec.src
+  -- Gather pretty aligned list of plugins to install
+  local name_width, name_max_width = {}, 0 --- @type integer[], integer
+  for i, p in ipairs(plug_list) do
+    name_width[i] = api.nvim_strwidth(p.spec.name)
+    name_max_width = math.max(name_max_width, name_width[i])
   end
-  local src_text = table.concat(src, '\n')
-  local confirm_msg = ('These plugins will be installed:\n\n%s\n'):format(src_text)
-  local res = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question')
-  confirm_all = res == 3
+  local lines = {} --- @type string[]
+  for i, p in ipairs(plug_list) do
+    local pad = (' '):rep(name_max_width - name_width[i] + 1)
+    lines[i] = ('%s%sfrom %s'):format(p.spec.name, pad, p.spec.src)
+  end
+
+  local text = table.concat(lines, '\n')
+  local confirm_msg = ('These plugins will be installed:\n\n%s\n'):format(text)
+  local choice = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No\n&Always', 1, 'Question')
+  confirm_all = choice == 3
   vim.cmd.redraw()
-  return res ~= 2
+  return choice ~= 2
 end
 
 --- @param tags string[]
@@ -662,14 +670,6 @@ end
 
 --- @param plug_list vim.pack.Plug[]
 local function install_list(plug_list, confirm)
-  -- Get user confirmation to install plugins
-  if confirm and not confirm_install(plug_list) then
-    for _, p in ipairs(plug_list) do
-      p.info.err = 'Installation was not confirmed'
-    end
-    return
-  end
-
   local timestamp = get_timestamp()
   --- @async
   --- @param p vim.pack.Plug
@@ -688,7 +688,18 @@ local function install_list(plug_list, confirm)
 
     trigger_event(p, 'PackChanged', 'install')
   end
-  run_list(plug_list, do_install, 'Installing plugins')
+
+  -- Install possibly after user confirmation
+  if not confirm or confirm_install(plug_list) then
+    run_list(plug_list, do_install, 'Installing plugins')
+  end
+
+  -- Ensure that not installed plugins are absent in lockfile
+  for _, p in ipairs(plug_list) do
+    if not p.info.installed then
+      plugin_lock.plugins[p.spec.name] = nil
+    end
+  end
 end
 
 --- @async
@@ -845,11 +856,6 @@ function M.add(specs, opts)
   if #plugs_to_install > 0 then
     git_ensure_exec()
     install_list(plugs_to_install, opts.confirm)
-    for _, p in ipairs(plugs_to_install) do
-      if not p.info.installed then
-        plugin_lock.plugins[p.spec.name] = nil
-      end
-    end
   end
 
   if needs_lock_write then
