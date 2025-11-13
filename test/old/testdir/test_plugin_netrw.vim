@@ -104,7 +104,7 @@ func Test_netrw_parse_ssh_config_entries()
 endfunction
 
 "username containing special-chars"
-func Test_netrw_parse_special_char_user ()
+func Test_netrw_parse_special_char_user()
   call s:setup()
   let result = TestNetrwCaptureRemotePath('scp://user-01@localhost:2222/test.txt')
   call assert_equal(result.method, 'scp')
@@ -113,4 +113,20 @@ func Test_netrw_parse_special_char_user ()
   call assert_equal(result.port, '2222')
   call assert_equal(result.path, 'test.txt')
   call s:cleanup()
+endfunction
+
+func Test_netrw_wipe_empty_buffer_fastpath()
+  let g:netrw_fastbrowse=0
+  packadd netrw
+  call setline(1, 'foobar')
+  let  bufnr = bufnr('%')
+  tabnew
+  Explore
+  call search('README.txt', 'W')
+  exe ":norm \<cr>"
+  call assert_equal(4, bufnr('$'))
+  call assert_true(bufexists(bufnr))
+  bw
+
+  unlet! netrw_fastbrowse
 endfunction
