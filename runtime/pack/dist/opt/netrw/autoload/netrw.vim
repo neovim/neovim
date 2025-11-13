@@ -13,6 +13,7 @@
 " 2025 Oct 26 by Vim Project fix parsing of remote user names #18611
 " 2025 Oct 27 by Vim Project align comment after #18611
 " 2025 Nov 01 by Vim Project fix NetrwChgPerm #18674
+" 2025 Nov 13 by Vim Project don't wipe unnamed buffers #18740
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -8319,7 +8320,7 @@ function netrw#LocalBrowseCheck(dirname)
         let ibuf    = 1
         let buflast = bufnr("$")
         while ibuf <= buflast
-            if bufwinnr(ibuf) == -1 && isdirectory(s:NetrwFile(bufname(ibuf)))
+            if bufwinnr(ibuf) == -1 && !empty(bufname(ibuf)) && isdirectory(s:NetrwFile(bufname(ibuf)))
                 exe "sil! keepj keepalt ".ibuf."bw!"
             endif
             let ibuf= ibuf + 1
