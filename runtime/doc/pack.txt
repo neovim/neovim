@@ -294,6 +294,18 @@ Unfreeze plugin to start receiving updates:
   want it to be updated.
 • |:restart|.
 
+Revert plugin after an update:
+• Locate plugin's revision at working state. For example:
+  • If there is a previous version of |vim.pack-lockfile| (like from version
+    control history), use it to get plugin's `rev` field.
+  • If there is a log file ("nvim-pack.log" at "log" |stdpath()|), open it and
+    navigate to latest updates (at the bottom). Locate lines about plugin
+    update details and use revision from "State before".
+• Freeze plugin to target revision (set `version` and |:restart|).
+• Run `vim.pack.update({ 'plugin-name' }, { force = true })` to make plugin
+  state on disk follow target revision. |:restart|.
+• When ready to deal with updating plugin, unfreeze it.
+
 Remove plugins from disk:
 • Use |vim.pack.del()| with a list of plugin names to remove. Make sure their
   specs are not included in |vim.pack.add()| call in 'init.lua' or they will
