@@ -575,10 +575,9 @@ describe('vim.pack', function()
 
       local pluginerr_hash = git_get_hash('main', 'pluginerr')
       local ref_lockfile = {
-        -- Should be no entry for `repo_not_exist`
+        -- Should be no entry for `repo_not_exist` and `basic` as they did not
+        -- fully install
         plugins = {
-          -- No `rev` because there was no relevant checkout
-          basic = { src = repos_src.basic, version = "'not-exist'" },
           -- Error during sourcing 'plugin/' should not affect lockfile
           pluginerr = { rev = pluginerr_hash, src = repos_src.pluginerr, version = "'main'" },
         },
@@ -605,14 +604,12 @@ describe('vim.pack', function()
       eq(false, vim.tbl_contains(rtp, after_dir))
     end)
 
-    it('does not checkout on bad `version`', function()
+    it('does not install on bad `version`', function()
       local err = pcall_err(exec_lua, function()
         vim.pack.add({ { src = repos_src.basic, version = 'not-exist' } })
       end)
       matches('`not%-exist` is not a branch/tag/commit', err)
-      local plug_path = pack_get_plug_path('basic')
-      local entries = vim.iter(vim.fs.dir(plug_path)):totable()
-      eq({ { '.git', 'directory' } }, entries)
+      eq(false, pack_exists('basic'))
     end)
 
     it('allows changing `src` of installed plugin', function()
