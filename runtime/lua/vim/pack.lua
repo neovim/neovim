@@ -18,8 +18,11 @@
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 ---is used to persistently track data about plugins.
 ---For a more robust config treat lockfile like its part: put under version control, etc.
----In this case initial install prefers revision from the lockfile instead of
----inferring from `version`. Should not be edited by hand or deleted.
+---In this case all plugins from the lockfile will be installed at once and
+---at lockfile's revision (instead of inferring from `version`).
+---Should not be edited by hand. Corrupted data for installed plugins is repaired
+---(including after deleting whole file), but `version` fields will be missing
+---for not yet added plugins.
 ---
 ---Example workflows ~
 ---
@@ -357,7 +360,7 @@ end
 local function new_plug(spec, plug_dir)
   local spec_resolved = normalize_spec(spec)
   local path = vim.fs.joinpath(plug_dir or get_plug_dir(), spec_resolved.name)
-  local info = { err = '', installed = uv.fs_stat(path) ~= nil }
+  local info = { err = '', installed = plugin_lock.plugins[spec_resolved.name] ~= nil }
   return { spec = spec_resolved, path = path, info = info }
 end
 
@@ -652,7 +655,7 @@ local function install_list(plug_list, confirm)
 
   -- Ensure that not fully installed plugins are absent on disk and in lockfile
   for _, p in ipairs(plug_list) do
-    if not p.info.installed then
+    if not (p.info.installed and uv.fs_stat(p.path) ~= nil) then
       plugin_lock.plugins[p.spec.name] = nil
       vim.fs.rm(p.path, { recursive = true, force = true })
     end
@@ -760,27 +763,112 @@ local function lock_write()
   assert(uv.fs_close(fd))
 end
 
-local function lock_read()
+--- @param names string[]
+local function lock_repair(names, plug_dir)
+  --- @async
+  local function f()
+    for _, name in ipairs(names) do
+      local path = vim.fs.joinpath(plug_dir, name)
+      -- Try reusing existing table to preserve maybe present `version`
+      local data = plugin_lock.plugins[name] or {}
+      data.rev = git_get_hash('HEAD', path)
+      data.src = git_cmd({ 'remote', 'get-url', 'origin' }, path)
+      plugin_lock.plugins[name] = data
+    end
+  end
+  async.run(f):wait()
+end
+
+--- Sync lockfile data and installed plugins:
+--- - Install plugins that have proper lockfile data but are not on disk.
+--- - Repair corrupted lock data for installed plugins.
+--- - Remove unrepairable corrupted lock data and plugins.
+local function lock_sync(confirm)
+  if type(plugin_lock.plugins) ~= 'table' then
+    plugin_lock.plugins = {}
+  end
+
+  -- Compute installed plugins
+  -- NOTE: The directory traversal is done on every startup, but it is very fast.
+  -- Also, single `vim.fs.dir()` scales better than on demand `uv.fs_stat()` checks.
+  local plug_dir = get_plug_dir()
+  local installed = {} --- @type table<string,string>
+  for name, fs_type in vim.fs.dir(plug_dir) do
+    installed[name] = fs_type
+    plugin_lock.plugins[name] = plugin_lock.plugins[name] or {}
+  end
+
+  -- Traverse once optimizing for "regular startup" (no repair, no install)
+  local to_install = {} --- @type vim.pack.Plug[]
+  local to_repair = {} --- @type string[]
+  local to_remove = {} --- @type string[]
+  for name, data in pairs(plugin_lock.plugins) do
+    if type(data) ~= 'table' then
+      data = {} ---@diagnostic disable-line: missing-fields
+      plugin_lock.plugins[name] = data
+    end
+
+    -- Deserialize `version`
+    local version = data.version
+    if type(version) == 'string' then
+      data.version = version:match("^'(.+)'$") or vim.version.range(version)
+    end
+
+    -- Synchronize
+    local is_bad_lock = type(data.rev) ~= 'string' or type(data.src) ~= 'string'
+    local is_bad_plugin = installed[name] and installed[name] ~= 'directory'
+    if is_bad_lock or is_bad_plugin then
+      local t = installed[name] == 'directory' and to_repair or to_remove
+      t[#t + 1] = name
+    elseif not installed[name] then
+      local spec = { src = data.src, name = name, version = data.version }
+      to_install[#to_install + 1] = new_plug(spec, plug_dir)
+    end
+  end
+
+  -- Perform actions if needed
+  if #to_install > 0 then
+    table.sort(to_install, function(a, b)
+      return a.spec.name < b.spec.name
+    end)
+    install_list(to_install, confirm)
+    lock_write()
+  end
+
+  if #to_repair > 0 then
+    lock_repair(to_repair, plug_dir)
+    table.sort(to_repair)
+    notify('Repaired corrupted lock data for plugins: ' .. table.concat(to_repair, ', '), 'WARN')
+    lock_write()
+  end
+
+  if #to_remove > 0 then
+    for _, name in ipairs(to_remove) do
+      plugin_lock.plugins[name] = nil
+      vim.fs.rm(vim.fs.joinpath(plug_dir, name), { recursive = true, force = true })
+    end
+    table.sort(to_remove)
+    notify('Removed corrupted lock data for plugins: ' .. table.concat(to_remove, ', '), 'WARN')
+    lock_write()
+  end
+end
+
+local function lock_read(confirm)
   if plugin_lock then
     return
   end
-  local fd = uv.fs_open(lock_get_path(), 'r', 438)
-  if not fd then
-    plugin_lock = { plugins = {} }
-    return
-  end
-  local stat = assert(uv.fs_fstat(fd))
-  local data = assert(uv.fs_read(fd, stat.size, 0))
-  assert(uv.fs_close(fd))
-  plugin_lock = vim.json.decode(data) --- @type vim.pack.Lock
 
-  -- Deserialize `version`
-  for _, l_data in pairs(plugin_lock.plugins) do
-    local version = l_data.version
-    if type(version) == 'string' then
-      l_data.version = version:match("^'(.+)'$") or vim.version.range(version)
-    end
+  local fd = uv.fs_open(lock_get_path(), 'r', 438)
+  if fd then
+    local stat = assert(uv.fs_fstat(fd))
+    local data = assert(uv.fs_read(fd, stat.size, 0))
+    assert(uv.fs_close(fd))
+    plugin_lock = vim.json.decode(data)
+  else
+    plugin_lock = { plugins = {} }
   end
+
+  lock_sync(vim.F.if_nil(confirm, true))
 end
 
 --- @class vim.pack.keyset.add
@@ -821,6 +909,8 @@ function M.add(specs, opts)
   opts = vim.tbl_extend('force', { load = vim.v.vim_did_init == 1, confirm = true }, opts or {})
   vim.validate('opts', opts, 'table')
 
+  lock_read(opts.confirm)
+
   local plug_dir = get_plug_dir()
   local plugs = {} --- @type vim.pack.Plug[]
   for i = 1, #specs do
@@ -829,7 +919,6 @@ function M.add(specs, opts)
   plugs = normalize_plugs(plugs)
 
   -- Pre-process
-  lock_read()
   local plugs_to_install = {} --- @type vim.pack.Plug[]
   local needs_lock_write = false
   for _, p in ipairs(plugs) do
