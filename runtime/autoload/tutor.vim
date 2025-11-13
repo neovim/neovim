@@ -185,7 +185,7 @@ function! tutor#TutorCmd(tutor_name)
     endif
 
     call tutor#SetupVim()
-    exe "drop ".l:to_open
+    exe "drop ".fnameescape(l:to_open)
     call tutor#EnableInteractive(v:true)
     call tutor#ApplyTransform()
 endfunction
