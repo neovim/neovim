@@ -3,49 +3,65 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
---- Display options for lenses
---- @class vim.lsp.codelens.display.Opts
---- See |nvim_buf_set_extmark()|. If displaying virtual lines, and virt_lines_above is not
---- specified, default to true (default: { hl_mode = "combine" })
---- @field extmark_params vim.api.keyset.set_extmark
---- Use virtual lines for lenses.
---- (default: false)
---- @field virt_lines boolean
+--- Configuration for lenses
+--- - `false`: Disable the option
+--- - `true`: Enable the option, with default settings
+--- - `function`: Function with signature (buf, ns, line, chunks) to override the defaults
+---   - buf: Buffer number of the lens
+---   - ns: Extmark namespace id for the LSP client's lenses
+---   - line: The zero-indexed line number the lens will be displayed on
+---   - chunks: The lenses converted to a list of `[text, hl_group]` pairs
+--- @class vim.lsp.codelens.Config
 --- Use virtual text for lenses.
 --- (default: true)
---- @field virt_text boolean
+--- @field virt_text? boolean|fun( buf: integer, ns: integer, line: integer, chunks: [string, integer|string?][])
+--- Use virtual lines for lenses.
+--- (default: false)
+--- @field virt_lines? boolean|fun( buf: integer, ns: integer, line: integer, chunks: [string, integer|string?][])
 
----@type vim.lsp.codelens.display.Opts
-local lens_display = {
-  extmark_params = { hl_mode = 'combine' },
-  virt_lines = false,
+---@type vim.lsp.codelens.Config
+local global_config = {
   virt_text = true,
+  virt_lines = false,
 }
 
----Gets current display options for lenses
+--- Configure lenses globally. If a value is nil, it will not be changed.
 ---
----@return vim.lsp.codelens.display.Opts
-function M.get_display()
-  return vim.deepcopy(lens_display)
-end
-
----Sets display options for lenses
+--- Example:
+--- ```lua
+--- vim.lsp.codelens.config({
+---   virt_text = false,
+---   virt_lines = function(buf, ns, line, chunks)
+---     local indent = vim.fn.indent(line + 1)
+---     if indent > 0 then table.insert(chunks, 1, {
+---       string.rep(" ", indent), ""
+---     }) end
 ---
----@param opts vim.lsp.codelens.display.Opts If a value is nil or invalid, it will not be changed
----@return nil
-function M.set_display(opts)
-  vim.validate('opts', opts, 'table', true)
-
-  if type(opts.extmark_params) == 'table' then
-    lens_display.extmark_params = opts.extmark_params
+---     api.nvim_buf_set_extmark(buf, ns, line, 0, {
+---       virt_lines = { chunks },
+---       virt_lines_above = true,
+---       hl_mode = 'replace', -- Change from default of 'combine'
+---     })
+---   end,
+--- })
+--- ```
+--- @param opts? vim.lsp.codelens.Config See |vim.lsp.codelens.Config|.
+--- @return vim.lsp.codelens.Config? : Current config if {opts} is omitted
+function M.config(opts)
+  if type(opts) == 'nil' then
+    return vim.deepcopy(global_config, true)
+  else
+    vim.validate('opts', opts, 'table')
   end
 
-  if type(opts.virt_lines) == 'boolean' then
-    lens_display.virt_lines = opts.virt_lines
+  if type(opts.virt_lines) ~= 'nil' then
+    vim.validate('opts.virt_lines', opts.virt_lines, { 'boolean', 'function' })
+    global_config.virt_lines = opts.virt_lines
   end
 
-  if type(opts.virt_text) == 'boolean' then
-    lens_display.virt_text = opts.virt_text
+  if type(opts.virt_text) ~= 'nil' then
+    vim.validate('opts.virt_text', opts.virt_text, { 'boolean', 'function' })
+    global_config.virt_text = opts.virt_text
   end
 end
 
@@ -189,73 +205,52 @@ local function group_lenses_by_start_line(lenses)
   return lenses_by_lnum
 end
 
----@param bufnr integer
+---@param buf integer
 ---@param ns integer
 ---@param line integer
 ---@param lenses lsp.CodeLens[] Lenses that start at `line`
-local function display_line_lenses(bufnr, ns, line, lenses)
-  local chunks = {} ---@type string[]
-  local num_lenses = #lenses ---@type integer
+---@return nil
+local function display_line_lenses(buf, ns, line, lenses)
+  local chunks = {} ---@type string[][]
   table.sort(lenses, function(a, b)
     return a.range.start.character < b.range.start.character
   end)
 
-  local has_unresolved = false ---@type boolean
   for i, lens in ipairs(lenses) do
     if lens.command then
-      local text = lens.command.title:gsub('%s+', ' ') ---@type string
-      table.insert(chunks, { text, 'LspCodeLens' })
-      if i < num_lenses then
-        table.insert(chunks, { ' | ', 'LspCodeLensSeparator' })
+      chunks[#chunks + 1] = { lens.command.title:gsub('%s+', ' '), 'LspCodeLens' }
+      if i < #lenses then
+        chunks[#chunks + 1] = { ' | ', 'LspCodeLensSeparator' }
       end
     else
-      has_unresolved = true
+      -- If some lenses are unresolved, don't update the line's virtual text. Due to this, user
+      -- may see outdated lenses or not see already resolved lenses. However, showing outdated
+      -- lenses for short period of time is better than spamming user with virtual text updates.
+      return
     end
   end
 
-  -- If some lenses are not resolved yet, don't update the line's virtual text. Due to this, user
-  -- may see outdated lenses or not see already resolved lenses. However, showing outdated lenses
-  -- for short period of time is better than spamming user with virtual text updates.
-  if has_unresolved then
-    return
-  end
-
-  api.nvim_buf_clear_namespace(bufnr, ns, line, line + 1)
+  api.nvim_buf_clear_namespace(buf, ns, line, line + 1)
   if #chunks > 0 then
-    local params = lens_display.extmark_params ---@type vim.api.keyset.set_extmark
-
-    if lens_display.virt_text then
-      ---@type vim.api.keyset.set_extmark
-      local text_params = vim.tbl_deep_extend('force', { virt_text = chunks }, params)
-      api.nvim_buf_set_extmark(bufnr, ns, line, 0, text_params)
-      ---@type boolean, integer
-      local ok, err = pcall(api.nvim_buf_set_extmark, bufnr, ns, line, 0, text_params)
-      if not ok then
-        ---@type string
-        local msg = 'Cannot set extmark for codelens virtual text: ' .. (err or 'Unknown error')
-        vim.notify_once(msg, vim.log.levels.ERROR, {})
-      end
+    if type(global_config.virt_text) == 'function' then
+      global_config.virt_text(buf, ns, line, chunks)
+    elseif type(global_config.virt_text) == 'boolean' and global_config.virt_text then
+      api.nvim_buf_set_extmark(buf, ns, line, 0, { virt_text = chunks, hl_mode = 'combine' })
     end
 
-    if lens_display.virt_lines then
+    if type(global_config.virt_lines) == 'function' then
+      global_config.virt_lines(buf, ns, line, chunks)
+    elseif type(global_config.virt_lines) == 'boolean' and global_config.virt_lines then
       local indent = vim.fn.indent(line + 1) ---@type integer
       if indent > 0 then
         table.insert(chunks, 1, { string.rep(' ', indent), '' })
       end
 
-      ---@type vim.api.keyset.set_extmark
-      local lines_params = vim.tbl_deep_extend('force', { virt_lines = { chunks } }, params)
-      if type(lines_params.virt_lines_above) ~= 'boolean' then
-        lines_params.virt_lines_above = true
-      end
-
-      ---@type boolean, integer
-      local ok, err = pcall(api.nvim_buf_set_extmark, bufnr, ns, line, 0, lines_params)
-      if not ok then
-        ---@type string
-        local msg = 'Cannot set extmark for codelens virtual lines: ' .. (err or 'Unknown error')
-        vim.notify_once(msg, vim.log.levels.ERROR, {})
-      end
+      api.nvim_buf_set_extmark(buf, ns, line, 0, {
+        virt_lines = { chunks },
+        virt_lines_above = true,
+        hl_mode = 'combine',
+      })
     end
   end
 end
