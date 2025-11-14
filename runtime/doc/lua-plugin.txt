@@ -283,7 +283,7 @@ mappings to a specific action by invoking `vim.lsp.buf.code_action()` with the
 
 Example: See `runtime/lua/vim/pack/_lsp.lua` for how vim.pack defines an
 in-process LSP server to provide interactive features in its
-`nvim://pack-confirm` buffer.
+`nvim-pack://confirm` buffer.
 
 ==============================================================================
 Troubleshooting                                   *lua-plugin-troubleshooting*

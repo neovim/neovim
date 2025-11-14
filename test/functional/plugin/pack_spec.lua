@@ -1220,7 +1220,7 @@ describe('vim.pack', function()
         local confirm_bufnr = api.nvim_get_current_buf()
         local confirm_winnr = api.nvim_get_current_win()
         local confirm_tabpage = api.nvim_get_current_tabpage()
-        eq(api.nvim_buf_get_name(0), 'nvim://pack-confirm#' .. confirm_bufnr)
+        eq(api.nvim_buf_get_name(0), 'nvim-pack://confirm#' .. confirm_bufnr)
 
         -- Adjust lines for a more robust screenshot testing
         local fetch_src = repos_src.fetch
@@ -1270,10 +1270,10 @@ describe('vim.pack', function()
         short_hashes.fetch_new_prev = git_get_short_hash('main~', 'fetch')
         hashes.semver_head = git_get_hash('v0.3.0', 'semver')
 
-        local tab_name = 'n' .. (t.is_os('win') and ':' or '') .. '//pack-confirm#2'
+        local tab_name = 'n' .. (t.is_os('win') and ':' or '') .. '//confirm#2'
 
         local screen_lines = {
-          ('{24: [No Name] }{5: %s }{2:%s                                                     }{24:X}|'):format(
+          ('{24: [No Name] }{5: %s }{2:%s                                                          }{24:X}|'):format(
             tab_name,
             t.is_os('win') and '' or ' '
           ),
