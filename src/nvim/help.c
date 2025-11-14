@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
@@ -838,7 +839,6 @@ void ex_helptags(exarg_T *eap)
   ADD_C(args, BOOLEAN_OBJ(add_help_tags));
 
   Error err = ERROR_INIT;
-  NLUA_EXEC_STATIC("require('vim._helptags').generate(...)", args,
-                    kRetNilBool, NULL, &err);
-
+  NLUA_EXEC_STATIC("require('vim._core.help').gen_tags(...)", args,
+                   kRetNilBool, NULL, &err);
 }

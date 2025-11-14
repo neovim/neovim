@@ -22,7 +22,7 @@ end
 --- @async
 --- @param path string Help file with tags.
 --- @return Tag[] # List of tags. Empty if file is not readable.
-local function extract_file_tags(path)
+local function extract_tags(path)
   local tags = {}
   local source = assert(async.await(2, uv_read, path))
 
@@ -54,7 +54,7 @@ end
 --- Report duplicate tags. Assumes the tags are alphabetically sorted.
 --- @param tags Tag[]
 --- @return boolean # true if there are duplicate tags
-local function duplicate_tags(tags)
+local function find_duplicate_tags(tags)
   local found = false
   for i = 1, #tags - 1 do
     local curtag, curfn, _ = unpack(tags[i])
@@ -77,11 +77,10 @@ end
 --- @param helpfiles string[] list of helpfiles
 --- @param outpath string path to write the 'tags' file to.
 --- @param include_helptags_tag boolean true if the 'help-tags' tag should be included
-local function create_tags_from_files(helpfiles, outpath, include_helptags_tag)
-  local time = vim.uv.hrtime()
+local function gen_tagsfile(helpfiles, outpath, include_helptags_tag)
   local tasks = {}
   for i, file in ipairs(helpfiles) do
-    tasks[i] = async.run(extract_file_tags, file)
+    tasks[i] = async.run(extract_tags, file)
   end
 
   ---@type { [1]: string?, [2]: Tag[]}[]
@@ -101,7 +100,7 @@ local function create_tags_from_files(helpfiles, outpath, include_helptags_tag)
     return a[1] < b[1]
   end)
 
-  if vim.tbl_isempty(tags) or duplicate_tags(tags) then
+  if vim.tbl_isempty(tags) or find_duplicate_tags(tags) then
     return
   end
 
@@ -111,8 +110,7 @@ local function create_tags_from_files(helpfiles, outpath, include_helptags_tag)
   end
   f:close()
 
-  time = vim.uv.hrtime() - time
-  print(('Helptags written to %s in %f s'):format(outpath, time / 1e9))
+  print(('Helptags written to %s'):format(outpath))
 end
 
 --- Create a "tags" file for all help files in the given directory.
@@ -122,10 +120,11 @@ end
 --- runtimepath.
 ---
 --- Function is asynchronous. To run synchronously, set `wait` to true.
---- @param dir string Directory to generate help tag file for.
+--- @param dir string Path to directory with help files. If `nil`, use every
+--- 'doc' directory in the runtimepath.
 --- @param include_helptags? boolean (default: false) Whether to include the "help-tags" tag.
 --- @param wait? boolean (default: false) Run synchronously.
-function M.generate(dir, include_helptags, wait)
+function M.gen_tags(dir, include_helptags, wait)
   vim.validate('dir', dir, 'string')
   vim.validate('include_helptags_tag', include_helptags, 'boolean', true)
   vim.validate('wait', wait, 'boolean', true)
@@ -134,9 +133,7 @@ function M.generate(dir, include_helptags, wait)
   if dir == 'ALL' then
     dirs = vim.api.nvim_get_runtime_file('doc', true)
   end
-
   local vimruntime = vim.fs.normalize(vim.env.VIMRUNTIME)
-
   local tasks = {}
   for _, directory in ipairs(dirs) do
     -- always include the help-tags tag for the $VIMRUNTIME
@@ -147,7 +144,7 @@ function M.generate(dir, include_helptags, wait)
     end, { path = directory, type = 'file', limit = math.huge })
 
     local outpath = vim.fs.joinpath(directory, 'tags')
-    local t1 = async.run(create_tags_from_files, files, outpath, include_helptags)
+    local t1 = async.run(gen_tagsfile, files, outpath, include_helptags)
     table.insert(tasks, t1)
 
     -- handle translated help files per language
@@ -168,7 +165,7 @@ function M.generate(dir, include_helptags, wait)
 
     for lang, langfiles in pairs(per_lang) do
       local tagsfile = vim.fs.joinpath(directory, 'tags-' .. lang)
-      local t2 = async.run(create_tags_from_files, langfiles, tagsfile, include_helptags)
+      local t2 = async.run(gen_tagsfile, langfiles, tagsfile, include_helptags)
       table.insert(tasks, t2)
     end
   end
