@@ -445,12 +445,18 @@ func Test_buffer_scheme()
   set noshellslash
   %bwipe!
   let bufnames = [
-    \ #{id: 'ssb0', name: 'test://xyz/foo/ssb0'    , match: 1},
-    \ #{id: 'ssb1', name: 'test+abc://xyz/foo/ssb1', match: 0},
-    \ #{id: 'ssb2', name: 'test_abc://xyz/foo/ssb2', match: 0},
-    \ #{id: 'ssb3', name: 'test-abc://xyz/foo/ssb3', match: 1},
-    \ #{id: 'ssb4', name: '-test://xyz/foo/ssb4'   , match: 0},
-    \ #{id: 'ssb5', name: 'test-://xyz/foo/ssb5'   , match: 0},
+    \ #{id: 'ssb0' , name: 'test://xyz/foo/ssb0'    , match: 1},
+    \ #{id: 'ssb1' , name: 'test1234://xyz/foo/ssb1', match: 1},
+    \ #{id: 'ssb2' , name: 'test+abc://xyz/foo/ssb2', match: 1},
+    \ #{id: 'ssb3' , name: 'test-abc://xyz/foo/ssb3', match: 1},
+    \ #{id: 'ssb4' , name: 'test.abc://xyz/foo/ssb4', match: 1},
+    \ #{id: 'ssb5' , name: 'test_abc://xyz/foo/ssb5', match: 0},
+    \ #{id: 'ssb6' , name: '+test://xyz/foo/ssb6'   , match: 0},
+    \ #{id: 'ssb7' , name: 'test+://xyz/foo/ssb7'   , match: 0},
+    \ #{id: 'ssb8' , name: '-test://xyz/foo/ssb8'   , match: 0},
+    \ #{id: 'ssb9' , name: 'test-://xyz/foo/ssb9'   , match: 0},
+    \ #{id: 'ssb10', name: '.test://xyz/foo/ssb10'  , match: 0},
+    \ #{id: 'ssb11', name: 'test.://xyz/foo/ssb11'  , match: 0},
     \]
   for buf in bufnames
     new `=buf.name`
