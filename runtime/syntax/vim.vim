@@ -571,9 +571,10 @@ syn match	vimParamType	contained	":\s"	skipwhite skipnl nextgroup=@vimType conta
 syn match	vimTypeSep	contained	":\%(\s\|\n\)\@=" skipwhite nextgroup=@vimType
 syn keyword	vimType	contained	blob bool channel float job number string void
 syn keyword	vimTypeAny	contained	any
-syn region	vimTypeObject	contained
-      \ matchgroup=vimType
-      \ start="\<object<"
+syn match	vimTypeObject	contained	"\<object<\@="	nextgroup=vimTypeObjectArgs
+syn region	vimTypeObjectArgs	contained
+      \ matchgroup=vimTypeObjectBracket
+      \ start="<"
       \ end=">"
       \ contains=vimTypeAny,vimTypeObject,vimUserType
       \ oneline
@@ -1135,9 +1136,10 @@ syn region	vim9VariableList	contained	start="\[" end="]" contains=@vimContinue,@
 syn match	vim9VariableTypeSep	contained	"\S\@1<=:\%(\s\|\n\)\@="		skipwhite nextgroup=@vim9VariableType
 syn keyword	vim9VariableType		contained	blob bool channel float job number string void	skipwhite nextgroup=vimLetHeredoc
 syn keyword	vim9VariableTypeAny	contained	any			skipwhite nextgroup=vimLetHeredoc
-syn region	vim9VariableTypeObject	contained
-      \ matchgroup=vimType
-      \ start="\<object<"
+syn match	vim9VariableTypeObject	contained	"\<object<\@="			          nextgroup=vim9VariableTypeObjectArgs
+syn region	vim9VariableTypeObjectArgs
+      \ matchgroup=vim9VariableTypeObjectBracket
+      \ start="<"
       \ end=">"
       \ contains=vimTypeAny,vimTypeObject,vimUserType
       \ oneline
@@ -2611,6 +2613,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimType	Type
  hi def link vimTypeAny	vimType
  hi def link vimTypeObject	vimType
+ hi def link vimTypeObjectBracket	vimTypeObject
  hi def link vimUniq	vimCommand
  hi def link vimUniqBang	vimBang
  hi def link vimUniqOptions	Special
@@ -2704,6 +2707,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vim9VariableType	vimType
  hi def link vim9VariableTypeAny	vimTypeAny
  hi def link vim9VariableTypeObject	vimTypeObject
+ hi def link vim9VariableTypeObjectBracket	vimTypeObjectBracket
  hi def link vim9Var	vimCommand
  hi def link vim9Vim9ScriptArg	Special
  hi def link vim9Vim9Script	vimCommand
