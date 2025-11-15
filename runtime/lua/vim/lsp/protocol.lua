@@ -478,6 +478,7 @@ function protocol.make_client_capabilities()
           preselectSupport = false,
           deprecatedSupport = true,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
+          insertReplaceSupport = true,
           resolveSupport = {
             properties = {
               'additionalTextEdits',
