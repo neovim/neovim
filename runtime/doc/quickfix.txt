@@ -1303,6 +1303,17 @@ For writing a compiler plugin, see |write-compiler-plugin|.
 
 Use the |compiler-make| plugin to undo the effect of a compiler plugin.
 
+BIOME				      *compiler-biome* *quickfix-biome*
+
+Biome check lints JavaScript, TypeScript, JSX, TSX, JSON, JSONC, HTML, Vue,
+Svelte, Astro, CSS, GraphQL and GritQL files.
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:biome_makeprg_params variable.  For example (global default is ""): >
+
+  let b:biome_makeprg_params = "--diagnostic-level=error --staged"
+
+
 CPPCHECK			*quickfix-cppcheck* *compiler-cppcheck*
 
 Use g/b:`c_cppcheck_params` to set cppcheck parameters.  The global
