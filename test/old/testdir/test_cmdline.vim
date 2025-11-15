@@ -5142,4 +5142,9 @@ func Test_update_screen_after_wildtrigger()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_breaklist_args_fails()
+  call assert_match('No breakpoints defined', execute(':breaklist'))
+  call assert_fails(':breaklist extra', 'E488:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
