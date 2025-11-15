@@ -1749,10 +1749,6 @@ int path_with_url(const char *fname)
 {
   const char *p;
 
-  // We accept alphabetic characters and a dash in scheme part.
-  // RFC 3986 allows for more, but it increases the risk of matching
-  // non-URL text.
-
   // first character must be alpha
   if (!ASCII_ISALPHA(*fname)) {
     return 0;
@@ -1762,11 +1758,11 @@ int path_with_url(const char *fname)
     return 0;
   }
 
-  // check body: alpha or dash
-  for (p = fname + 1; (ASCII_ISALPHA(*p) || (*p == '-')); p++) {}
+  // check body: (alpha, digit, '+', '-', '.') following RFC3986
+  for (p = fname + 1; (ASCII_ISALNUM(*p) || (*p == '+') || (*p == '-') || (*p == '.')); p++) {}
 
-  // check last char is not a dash
-  if (p[-1] == '-') {
+  // check last char is not '+', '-', or '.'
+  if ((p[-1] == '+') || (p[-1] == '-') || (p[-1] == '.')) {
     return 0;
   }
 
