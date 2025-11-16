@@ -417,21 +417,11 @@ local function check_external_tools()
     health.warn('ripgrep not available')
   end
 
-  -- `vim.pack` requires `git` executable with version at least 2.36
+  -- `vim.pack` prefers git 2.36 but tries to work with 2.x.
   if vim.fn.executable('git') == 1 then
     local git = vim.fn.exepath('git')
-    local out = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
-    local version = vim.version.parse(out)
-    if version < vim.version.parse('2.36') then
-      local msg = string.format(
-        'git is available (%s), but needs at least version 2.36 (not %s) to work with `vim.pack`',
-        git,
-        tostring(version)
-      )
-      health.warn(msg)
-    else
-      health.ok(('%s (%s)'):format(vim.trim(out), git))
-    end
+    local version = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
+    health.ok(('%s (%s)'):format(vim.trim(version), git))
   else
     health.warn('git not available (required by `vim.pack`)')
   end

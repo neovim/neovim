@@ -217,9 +217,9 @@ or setting |$XDG_DATA_HOME| during startup. Plugin's subdirectory name matches
 plugin's name in specification. It is assumed that all plugins in the
 directory are managed exclusively by `vim.pack`.
 
-Uses Git to manage plugins and requires present `git` executable of at least
-version 2.36. Target plugins should be Git repositories with versions as named
-tags following semver convention `v<major>.<minor>.<patch>`.
+Uses Git to manage plugins and requires present `git` executable. Target
+plugins should be Git repositories with versions as named tags following
+semver convention `v<major>.<minor>.<patch>`.
 
 The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
 located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
