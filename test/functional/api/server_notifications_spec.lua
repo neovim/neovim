@@ -77,7 +77,7 @@ describe('notify', function()
     end)
   end)
 
-  it('cancels stale events on channel close', function()
+  it('cancels stale events on channel close #13537', function()
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
     eq(
