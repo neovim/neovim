@@ -777,7 +777,7 @@ void validate_cursor_col(win_T *wp)
 int win_col_off(win_T *wp)
 {
   return ((wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc != NUL)
-          ? (number_width(wp) + (*wp->w_p_stc == NUL)) : 0)
+          ? number_width_with_space(wp) : 0)
          + ((wp != cmdwin_win) ? 0 : 1)
          + win_fdccol_count(wp) + (wp->w_scwidth * SIGN_WIDTH);
 }
@@ -789,7 +789,7 @@ int win_col_off2(win_T *wp)
 {
   if ((wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc != NUL)
       && vim_strchr(p_cpo, CPO_NUMCOL) != NULL) {
-    return number_width(wp) + (*wp->w_p_stc == NUL);
+    return number_width_with_space(wp);
   }
   return 0;
 }

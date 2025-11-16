@@ -2199,6 +2199,24 @@ static const char *did_set_number_relativenumber(optset_T *args)
   return NULL;
 }
 
+/// Process the new 'numberspace' option value.
+static const char *did_set_numberspace(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  // Validate range: 0-10
+  if (win->w_p_nus < 0) {
+    win->w_p_nus = 0;
+    return e_positive;
+  }
+  if (win->w_p_nus > 10) {
+    win->w_p_nus = 10;
+    return e_invarg;
+  }
+  win->w_nrwidth_line_count = 0;  // trigger a redraw
+
+  return NULL;
+}
+
 /// Process the new 'numberwidth' option value.
 static const char *did_set_numberwidth(optset_T *args)
 {
@@ -4820,6 +4838,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_winbl);
   case kOptStatuscolumn:
     return &(win->w_p_stc);
+  case kOptNumberspace:
+    return &(win->w_p_nus);
   default:
     iemsg(_("E356: get_varp ERROR"));
   }
