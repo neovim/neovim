@@ -227,6 +227,34 @@ do
       vim.lsp.buf.selection_range(-vim.v.count1)
     end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
 
+    vim.keymap.set('o', 'an', function()
+      local done = false
+      vim.lsp.buf.selection_range(-vim.v.count1, function()
+        done = true
+      end)
+      local timeout_ms = 1000
+      local did_finish = vim.wait(timeout_ms, function()
+        return done
+      end)
+      if not did_finish then
+        vim.lsp.log.error('Timeout error when executing operator function for selection_range')
+      end
+    end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1, on_response)' })
+
+    vim.keymap.set('o', 'in', function()
+      local done = false
+      vim.lsp.buf.selection_range(-vim.v.count1, function()
+        done = true
+      end)
+      local timeout_ms = 1000
+      local did_finish = vim.wait(timeout_ms, function()
+        return done
+      end)
+      if not did_finish then
+        vim.lsp.log.error('Timeout error when executing operator function for selection_range')
+      end
+    end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1, on_response)' })
+
     vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
     end, { desc = 'vim.lsp.buf.document_symbol()' })
