@@ -611,6 +611,46 @@ describe('vim.pack', function()
       eq({ { '.git', 'directory' } }, entries)
     end)
 
+    it('allows changing `src` of installed plugin', function()
+      local basic_src = repos_src.basic
+      local defbranch_src = repos_src.defbranch
+      exec_lua(function()
+        vim.pack.add({ basic_src })
+      end)
+      eq('basic main', exec_lua('return require("basic")'))
+
+      n.clear()
+      watch_events({ 'PackChangedPre', 'PackChanged' })
+      exec_lua(function()
+        vim.pack.add({ { src = defbranch_src, name = 'basic' } })
+      end)
+      eq('defbranch dev', exec_lua('return require("defbranch")'))
+
+      -- Should first properly delete and then cleanly install
+      local log_simple = vim.tbl_map(function(x) --- @param x table
+        return { x.event, x.data.kind, x.data.spec }
+      end, exec_lua('return _G.event_log'))
+
+      local ref_log_simple = {
+        { 'PackChangedPre', 'delete', { name = 'basic', src = basic_src } },
+        { 'PackChanged', 'delete', { name = 'basic', src = basic_src } },
+        { 'PackChangedPre', 'install', { name = 'basic', src = defbranch_src } },
+        { 'PackChanged', 'install', { name = 'basic', src = defbranch_src } },
+      }
+      eq(ref_log_simple, log_simple)
+
+      local ref_messages = table.concat({
+        "vim.pack: Removed plugin 'basic'",
+        'vim.pack: Installing plugins (0/1)',
+        'vim.pack: 100% Installing plugins (1/1)',
+      }, '\n')
+      eq(ref_messages, n.exec_capture('messages'))
+
+      local defbranch_rev = git_get_hash('dev', 'defbranch')
+      local ref_lock_tbl = { plugins = { basic = { rev = defbranch_rev, src = defbranch_src } } }
+      eq(ref_lock_tbl, get_lock_tbl())
+    end)
+
     it('can install from the Internet', function()
       t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
       exec_lua(function()
@@ -620,41 +660,55 @@ describe('vim.pack', function()
     end)
 
     describe('startup', function()
-      local init_lua = ''
+      local config_dir, pack_add_cmd = '', ''
+
       before_each(function()
-        init_lua = vim.fs.joinpath(fn.stdpath('config'), 'init.lua')
-        fn.mkdir(vim.fs.dirname(init_lua), 'p')
+        config_dir = fn.stdpath('config')
+        fn.mkdir(vim.fs.joinpath(config_dir, 'plugin'), 'p')
+
+        pack_add_cmd = ('vim.pack.add({ %s })'):format(vim.inspect(repos_src.plugindirs))
       end)
+
       after_each(function()
-        pcall(vim.fs.rm, init_lua, { force = true })
+        vim.fs.rm(config_dir, { recursive = true, force = true })
       end)
 
-      it('works in init.lua', function()
-        local pack_add_cmd = ('vim.pack.add({ %s })'):format(vim.inspect(repos_src.plugindirs))
-        fn.writefile({ pack_add_cmd, '_G.done = true' }, init_lua)
+      local function assert_loaded()
+        eq('plugindirs main', exec_lua('return require("plugindirs")'))
 
-        local function assert_loaded()
-          eq('plugindirs main', exec_lua('return require("plugindirs")'))
+        -- Should source 'plugin/' and 'after/plugin/' exactly once
+        eq({ true, true }, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
+        eq({ 'p', 'a' }, n.exec_lua('return _G.DL'))
+      end
 
-          -- Should source 'plugin/' and 'after/plugin/' exactly once
-          eq({ true, true }, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
-          eq({ 'p', 'a' }, n.exec_lua('return _G.DL'))
-        end
-
+      local function assert_works()
         -- Should auto-install but wait before executing code after it
         n.clear({ args_rm = { '-u' } })
         n.exec_lua('vim.wait(500, function() return _G.done end, 50)')
         assert_loaded()
 
-        -- Should only `:packadd!` already installed plugin
+        -- Should only `:packadd!`/`:packadd` already installed plugin
         n.clear({ args_rm = { '-u' } })
         assert_loaded()
+      end
+
+      it('works in init.lua', function()
+        local init_lua = vim.fs.joinpath(config_dir, 'init.lua')
+        fn.writefile({ pack_add_cmd, '_G.done = true' }, init_lua)
+        assert_works()
 
         -- Should not load plugins if `--noplugin`, only adjust 'runtimepath'
         n.clear({ args = { '--noplugin' }, args_rm = { '-u' } })
         eq('plugindirs main', exec_lua('return require("plugindirs")'))
         eq({}, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
         eq(vim.NIL, n.exec_lua('return _G.DL'))
+      end)
+
+      it('works in plugin/', function()
+        local plugin_file = vim.fs.joinpath(config_dir, 'plugin', 'mine.lua')
+        fn.writefile({ pack_add_cmd, '_G.done = true' }, plugin_file)
+        -- Should source plugin's 'plugin/' files without explicit `load=true`
+        assert_works()
       end)
     end)
 
