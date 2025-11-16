@@ -378,6 +378,14 @@ describe('TUI :restart', function()
     tt.feed_data('C\013')
     screen:expect({ any = vim.pesc('[No Name]') })
 
+    -- Check :restart respects 'confirm' option.
+    tt.feed_data(':set confirm\013')
+    tt.feed_data(':restart\013')
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    tt.feed_data('C\013')
+    screen:expect({ any = vim.pesc('[No Name]') })
+    tt.feed_data(':set noconfirm\013')
+
     -- Check ":confirm restart <cmd>" on a modified buffer.
     tt.feed_data(':confirm restart echo "Hello"\013')
     screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
