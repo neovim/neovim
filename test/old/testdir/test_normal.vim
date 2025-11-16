@@ -1941,7 +1941,7 @@ func Test_normal25_tag()
 
   " Testing for CTRL-] g CTRL-] g]
   " CTRL-W g] CTRL-W CTRL-] CTRL-W g CTRL-]
-  h
+  help helphelp
   " Test for CTRL-]
   call search('\<x\>$')
   exe "norm! \<c-]>"

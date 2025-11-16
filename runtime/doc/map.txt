@@ -326,9 +326,8 @@ be seen as a special key.
 
 						*<Cmd>* *:map-cmd*
 The <Cmd> pseudokey begins a "command mapping", which executes the command
-directly without changing modes.  Where you might use ":...<CR>" in the
-{rhs} of a mapping, you can instead use "<Cmd>...<CR>".
-Example: >
+directly without changing modes.  Where you might use ":…<CR>" in the {rhs} of
+a mapping, you can instead use "<Cmd>…<CR>". Example: >
 	noremap x <Cmd>echo mode(1)<CR>
 <
 This is more flexible than `:<C-U>` in Visual and Operator-pending mode, or
@@ -348,7 +347,7 @@ Note:
   |CmdlineEnter| and |CmdlineLeave| events. This helps performance.
 - For the same reason, |keycodes| like <C-R><C-W> are interpreted as plain,
   unmapped keys.
-- The command is not echo'ed, no need for <silent>.
+- The command is not echo'd, no need for <silent>.
 - The {rhs} is not subject to abbreviations nor to other mappings, even if the
   mapping is recursive.
 - In Visual mode you can use `line('v')` and `col('v')` to get one end of the
@@ -357,7 +356,7 @@ Note:
 							*E1255* *E1136*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
 {rhs} of the mapping definition.  |Command-line| mode is never entered.  To use
-a literal <CR> in the {rhs}, use |<lt>|.
+a literal "<" in the {rhs}, use |<lt>|.
 
 
 1.3 MAPPING AND MODES					*:map-modes*

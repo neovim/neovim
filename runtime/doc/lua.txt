@@ -2410,15 +2410,13 @@ vim.filetype.match({args})                              *vim.filetype.match()*
                   Mutually exclusive with {buf}.
 
     Return (multiple): ~
-        (`string?`) If a match was found, the matched filetype.
-        (`function?`) A function that modifies buffer state when called (for
-        example, to set some filetype specific buffer variables). The function
-        accepts a buffer number as its only argument.
-        (`boolean?`) Return true if a match was found by falling back to a
-        generic configuration file (i.e., ".conf"). If true, the filetype
-        should be set with `:setf FALLBACK conf`, which enables a later
-        |:setf| command to override the filetype. See `:help setf` for more
-        information.
+        (`string?`) The matched filetype, if any.
+        (`function?`) A function `fun(buf: integer)` that modifies buffer
+        state when called (for example, to set some filetype specific buffer
+        variables).
+        (`boolean?`) true if a match was found by falling back to a generic
+        filetype (i.e., ".conf"), which indicates the filetype should be set
+        with `:setf FALLBACK conf`. See |:setfiletype|.
 
 
 ==============================================================================
@@ -2432,6 +2430,13 @@ Example: >lua
   if vim.uv.fs_stat(file) then
     vim.print('file exists')
   end
+<
+
+                                                               *vim.fs.read()*
+You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+
+Example: >lua
+  vim.print(vim.fn.readblob('.git/config'))
 <
 
 
@@ -3438,6 +3443,18 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
         end, { expr = true })
         -- Map "[%%" to a <Plug> mapping:
         vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+
+        -- Use `getregionpos(getpos('v'))` to get the "current visual selection":
+        vim.keymap.set('x', 'M', function()
+          local region = vim.fn.getregionpos(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+            type = 'v',
+            exclusive = false,
+            eol = false,
+          })
+          local line1 = region[1][1][2]
+          local line2 = region[#region][1][2]
+          vim.print({ line1, line2 })
+        end)
 <
 
     Parameters: ~

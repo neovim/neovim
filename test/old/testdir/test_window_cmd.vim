@@ -599,11 +599,12 @@ func Test_window_jump_tag()
 
   help
   /Kuwasha
-  call assert_match('^|Kuwasha|',  getline('.'))
+  call assert_match('^- |Kuwasha|',  getline('.'))
   call assert_equal(2, winnr('$'))
+  norm! fK
   2wincmd }
   call assert_equal(3, winnr('$'))
-  call assert_match('^|Kuwasha|',  getline('.'))
+  call assert_match('^- |Kuwasha|',  getline('.'))
   wincmd k
   call assert_match('\*Kuwasha\*',  getline('.'))
   call assert_equal(2, winheight(0))
@@ -612,6 +613,7 @@ func Test_window_jump_tag()
   set previewheight=4
   help
   /bugs
+  norm! fb
   wincmd }
   wincmd k
   call assert_match('\*bugs\*',  getline('.'))

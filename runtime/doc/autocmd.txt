@@ -382,9 +382,10 @@ CmdUndefined			When a user command is used but it isn't
 				always define the user command and have it
 				invoke an autoloaded function.  See |autoload|.
 							*CmdlineChanged*
-CmdlineChanged			After a change was made to the text inside
-				command line.  Be careful not to mess up the
-				command line, it may cause Vim to lock up.
+CmdlineChanged			After EVERY change inside command line. Also
+				triggered during mappings! Use |<Cmd>| instead
+				of ":" in mappings, to avoid that.
+
 				<afile> expands to the |cmdline-char|.
 							*CmdlineEnter*
 CmdlineEnter			After entering the command-line (including

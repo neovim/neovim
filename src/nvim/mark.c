@@ -1153,7 +1153,7 @@ void ex_changes(exarg_T *eap)
     } \
   }
 
-// don't delete the line, just put at first deleted line
+// "NO DELete": don't delete the line, just put at first deleted line.
 #define ONE_ADJUST_NODEL(add) \
   { \
     lp = add; \
