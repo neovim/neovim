@@ -120,21 +120,33 @@ local function cache_filename(name)
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
 
+local writing = {} --- @type table<string,function>
+
 --- Saves the cache entry for a given module or file
 --- @param cname string cache filename
 --- @param hash vim.loader.CacheHash
 --- @param chunk function
 local function write_cachefile(cname, hash, chunk)
-  local f = assert(uv.fs_open(cname, 'w', 438))
-  local header = {
-    VERSION,
-    hash.size,
-    hash.mtime.sec,
-    hash.mtime.nsec,
-  }
-  uv.fs_write(f, table.concat(header, ',') .. '\0')
-  uv.fs_write(f, string.dump(chunk))
-  uv.fs_close(f)
+  if writing[cname] then
+    return
+  end
+
+  writing[cname] = chunk
+  uv.fs_open(cname, 'w', 438, function(err, f)
+    if err then
+      error(err)
+    end
+    local header = {
+      VERSION,
+      hash.size,
+      hash.mtime.sec,
+      hash.mtime.nsec,
+    }
+    uv.fs_write(f, table.concat(header, ',') .. '\0')
+    uv.fs_write(f, string.dump(chunk))
+    uv.fs_close(f)
+    writing[cname] = nil
+  end)
 end
 
 --- @param path string
@@ -253,6 +265,10 @@ local function loadfile_cached(filename, mode, env)
         return chunk, err
       end
     end
+  end
+
+  if writing[cname] then
+    return writing[cname]
   end
 
   local chunk, err = _loadfile(modpath, mode, env)
