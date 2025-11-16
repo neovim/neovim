@@ -2500,7 +2500,7 @@ void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int end
 
       // draw the number column
       if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
-        int width = number_width(wp) + 1;
+        int width = number_width_with_space(wp);
         n = grid_line_fill(n, MIN(view_width, n + width),
                            schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
       }
@@ -2577,6 +2577,17 @@ int number_width(win_T *wp)
 
   wp->w_nrwidth_width = n;
   return n;
+}
+
+/// Get the total width of the number column including the spacing after the number.
+/// This is number_width() plus the number of spaces defined by 'numberspace'.
+int number_width_with_space(win_T *wp)
+{
+  // For statuscolumn, only add space if statuscolumn is not set
+  if (*wp->w_p_stc != NUL) {
+    return number_width(wp);
+  }
+  return number_width(wp) + (int)wp->w_p_nus;
 }
 
 /// Redraw a window later, with wp->w_redr_type >= type.

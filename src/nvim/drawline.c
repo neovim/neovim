@@ -547,7 +547,7 @@ static void draw_sign(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx)
   int scl_attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
 
   if (sattr.text[0] && wlv->row == wlv->startrow + wlv->filler_lines && wlv->filler_todo <= 0) {
-    int fill = nrcol ? number_width(wp) + 1 : SIGN_WIDTH;
+    int fill = nrcol ? number_width_with_space(wp) : SIGN_WIDTH;
     int attr = wlv->sign_cul_attr ? wlv->sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
     attr = hl_combine_attr(scl_attr, attr);
     draw_col_fill(wlv, schar_from_ascii(' '), fill, attr);
@@ -565,6 +565,7 @@ static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size
 {
   linenr_T num;
   char *fmt = "%*" PRIdLINENR " ";
+  int spaces = (int)wp->w_p_nus;
 
   if (wp->w_p_nu && !wp->w_p_rnu) {
     // 'number' + 'norelativenumber'
@@ -579,7 +580,11 @@ static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size
     }
   }
 
+  // Format the number with proper alignment, then add configured spacing
   snprintf(buf, buf_len, fmt, number_width(wp), num);
+  char num_str[32];
+  snprintf(num_str, sizeof(num_str), fmt, number_width(wp), num);
+  snprintf(buf, buf_len, "%s%*s", num_str, spaces, "");
 }
 
 /// Return true if CursorLineNr highlight is to be used for the number column.
@@ -655,7 +660,7 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv)
       draw_sign(true, wp, wlv, 0);
     } else {
       // Draw the line number (empty space after wrapping).
-      int width = number_width(wp) + 1;
+      int width = number_width_with_space(wp);
       int attr = get_line_number_attr(wp, wlv);
       if (wlv->row == wlv->startrow + wlv->filler_lines
           && (wp->w_skipcol == 0 || wlv->row > 0 || (wp->w_p_nu && wp->w_p_rnu))) {

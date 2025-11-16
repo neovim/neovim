@@ -136,6 +136,8 @@ typedef struct {
 #define w_p_nu w_onebuf_opt.wo_nu       // 'number'
   int wo_rnu;
 #define w_p_rnu w_onebuf_opt.wo_rnu     // 'relativenumber'
+  OptInt wo_nus;
+#define w_p_nus w_onebuf_opt.wo_nus     // 'numberspace'
   char *wo_ve;
 #define w_p_ve w_onebuf_opt.wo_ve       // 'virtualedit'
   unsigned wo_ve_flags;
