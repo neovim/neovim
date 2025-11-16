@@ -83,7 +83,7 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "grt" is mapped to |vim.lsp.buf.type_definition()|
 - "gO" is mapped to |vim.lsp.buf.document_symbol()|
 - CTRL-S (Insert mode) is mapped to |vim.lsp.buf.signature_help()|
-- "an" and "in" (Visual mode) are mapped to outer and inner incremental
+- "an" and "in" (Visual and Operator-pending mode) are mapped to outer and inner incremental
   selections, respectively, using |vim.lsp.buf.selection_range()|
 
 BUFFER-LOCAL DEFAULTS
@@ -1512,13 +1512,16 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
 
-selection_range({direction})                   *vim.lsp.buf.selection_range()*
+                                               *vim.lsp.buf.selection_range()*
+selection_range({direction}, {timeout_ms})
     Perform an incremental selection at the cursor position based on ranges
     given by the LSP. The `direction` parameter specifies the number of times
     to expand the selection. Negative values will shrink the selection.
 
     Parameters: ~
-      • {direction}  (`integer`)
+      • {direction}   (`integer`)
+      • {timeout_ms}  (`integer?`) (default: `1000`) Maximum time
+                      (milliseconds) to wait for a result.
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a

@@ -227,6 +227,14 @@ do
       vim.lsp.buf.selection_range(-vim.v.count1)
     end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
 
+    vim.keymap.set('o', 'an', function()
+      vim.lsp.buf.selection_range(vim.v.count1, 1000)
+    end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1, timeout_ms)' })
+
+    vim.keymap.set('o', 'in', function()
+      vim.lsp.buf.selection_range(-vim.v.count1, 1000)
+    end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1, timeout_ms)' })
+
     vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
     end, { desc = 'vim.lsp.buf.document_symbol()' })

@@ -1408,8 +1408,10 @@ end
 --- will shrink the selection.
 ---
 --- @param direction integer
-function M.selection_range(direction)
+--- @param timeout_ms integer? (default: `1000`) Maximum time (milliseconds) to wait for a result.
+function M.selection_range(direction, timeout_ms)
   validate('direction', direction, 'number')
+  validate('timeout_ms', timeout_ms, 'number', true)
 
   if selection_ranges then
     local new_index = selection_ranges.index + direction
@@ -1434,63 +1436,61 @@ function M.selection_range(direction)
     positions = { position_params.position },
   }
 
-  lsp.buf_request(
-    0,
-    method,
-    params,
-    ---@param response lsp.SelectionRange[]?
-    function(err, response)
-      if err then
-        lsp.log.error(err.code, err.message)
-        return
-      end
-      if not response then
-        return
-      end
-      -- We only requested one range, thus we get the first and only response here.
-      response = response[1]
-      local ranges = {} ---@type lsp.Range[]
-      local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+  timeout_ms = timeout_ms or 1000
+  local result, err = lsp.buf_request_sync(0, method, params, timeout_ms)
+  if err then
+    lsp.log.error('selectionRange request failed: ' .. err)
+    return
+  end
+  if not result or not result[client.id] or not result[client.id].result then
+    return
+  end
+  if result[client.id].error then
+    lsp.log.error(result[client.id].error.code, result[client.id].error.message)
+  end
 
-      -- Populate the list of ranges from the given request.
-      while response do
-        local range = response.range
-        if not is_empty(range) then
-          local start_line = range.start.line
-          local end_line = range['end'].line
-          range.start.character = vim.str_byteindex(
-            lines[start_line + 1] or '',
-            client.offset_encoding,
-            range.start.character,
-            false
-          )
-          range['end'].character = vim.str_byteindex(
-            lines[end_line + 1] or '',
-            client.offset_encoding,
-            range['end'].character,
-            false
-          )
-          ranges[#ranges + 1] = range
-        end
-        response = response.parent
-      end
+  -- We only requested one range, thus we get the first and only reponse here.
+  local response = assert(result[client.id].result[1]) ---@type lsp.SelectionRange
+  local ranges = {} ---@type lsp.Range[]
+  local lines = api.nvim_buf_get_lines(0, 0, -1, false)
 
-      -- Clear selection ranges when leaving visual mode.
-      api.nvim_create_autocmd('ModeChanged', {
-        once = true,
-        pattern = 'v*:*',
-        callback = function()
-          selection_ranges = nil
-        end,
-      })
-
-      if #ranges > 0 then
-        local index = math.min(#ranges, math.max(1, direction))
-        selection_ranges = { index = index, ranges = ranges }
-        select_range(ranges[index])
-      end
+  -- Populate the list of ranges from the given request.
+  while response do
+    local range = response.range
+    if not is_empty(range) then
+      local start_line = range.start.line
+      local end_line = range['end'].line
+      range.start.character = vim.str_byteindex(
+        lines[start_line + 1] or '',
+        client.offset_encoding,
+        range.start.character,
+        false
+      )
+      range['end'].character = vim.str_byteindex(
+        lines[end_line + 1] or '',
+        client.offset_encoding,
+        range['end'].character,
+        false
+      )
+      ranges[#ranges + 1] = range
     end
-  )
+    response = response.parent
+  end
+
+  -- Clear selection ranges when leaving visual mode.
+  api.nvim_create_autocmd('ModeChanged', {
+    once = true,
+    pattern = 'v*:*',
+    callback = function()
+      selection_ranges = nil
+    end,
+  })
+
+  if #ranges > 0 then
+    local index = math.min(#ranges, math.max(1, direction))
+    selection_ranges = { index = index, ranges = ranges }
+    select_range(ranges[index])
+  end
 end
 
 return M
