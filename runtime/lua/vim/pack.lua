@@ -10,9 +10,9 @@
 ---Plugin's subdirectory name matches plugin's name in specification.
 ---It is assumed that all plugins in the directory are managed exclusively by `vim.pack`.
 ---
----Uses Git to manage plugins and requires present `git` executable of at
----least version 2.36. Target plugins should be Git repositories with versions
----as named tags following semver convention `v<major>.<minor>.<patch>`.
+---Uses Git to manage plugins and requires present `git` executable.
+---Target plugins should be Git repositories with versions as named tags
+---following semver convention `v<major>.<minor>.<patch>`.
 ---
 ---The latest state of all managed plugins is stored inside a [vim.pack-lockfile]()
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
@@ -162,8 +162,12 @@ local function git_cmd(cmd, cwd)
   return (stdout:gsub('\n+$', ''))
 end
 
+local git_version = vim.version.parse('1')
+
 local function git_ensure_exec()
-  if vim.fn.executable('git') == 0 then
+  local sys_res = vim.system({ 'git', 'version' }):wait()
+  git_version = vim.version.parse(sys_res.stdout)
+  if sys_res.stderr ~= '' then
     error('No `git` executable')
   end
 end
@@ -172,14 +176,17 @@ end
 --- @param url string
 --- @param path string
 local function git_clone(url, path)
-  local cmd = { 'clone', '--quiet', '--origin', 'origin', '--no-checkout' }
+  local cmd = { 'clone', '--quiet', '--no-checkout', '--recurse-submodules' }
 
   if vim.startswith(url, 'file://') then
     cmd[#cmd + 1] = '--no-hardlinks'
   else
-    -- NOTE: '--also-filter-submodules' requires Git>=2.36
-    local filter_args = { '--filter=blob:none', '--recurse-submodules', '--also-filter-submodules' }
-    vim.list_extend(cmd, filter_args)
+    if git_version >= vim.version.parse('2.36') then
+      cmd[#cmd + 1] = '--filter=blob:none'
+      cmd[#cmd + 1] = '--also-filter-submodules'
+    elseif git_version >= vim.version.parse('2.27') then
+      cmd[#cmd + 1] = '--filter=blob:none'
+    end
   end
 
   vim.list_extend(cmd, { '--origin', 'origin', url, path })
@@ -618,8 +625,12 @@ end
 local function checkout(p, timestamp)
   infer_revisions(p)
 
-  local msg = ('vim.pack: %s Stash before checkout'):format(timestamp)
-  git_cmd({ 'stash', '--quiet', '--message', msg }, p.path)
+  local stash_cmd = { 'stash', '--quiet' }
+  if git_version > vim.version.parse('2.13') then
+    stash_cmd[#stash_cmd + 1] = '--message'
+    stash_cmd[#stash_cmd + 1] = ('vim.pack: %s Stash before checkout'):format(timestamp)
+  end
+  git_cmd(stash_cmd, p.path)
 
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
 
@@ -693,7 +704,10 @@ local function infer_update_details(p)
     return
   end
 
-  local older_tags = git_cmd({ 'tag', '--list', '--no-contains', sha_head }, p.path)
+  local older_tags = ''
+  if git_version >= vim.version.parse('2.13') then
+    older_tags = git_cmd({ 'tag', '--list', '--no-contains', sha_head }, p.path)
+  end
   local cur_tags = git_cmd({ 'tag', '--list', '--points-at', sha_head }, p.path)
   local past_tags = vim.split(older_tags, '\n')
   vim.list_extend(past_tags, vim.split(cur_tags, '\n'))
