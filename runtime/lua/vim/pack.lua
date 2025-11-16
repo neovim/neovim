@@ -181,11 +181,11 @@ end
 local git_version = vim.version.parse('1')
 
 local function git_ensure_exec()
-  local sys_res = vim.system({ 'git', 'version' }):wait()
-  git_version = vim.version.parse(sys_res.stdout)
-  if sys_res.stderr ~= '' then
+  local ok, sys = pcall(vim.system, { 'git', 'version' })
+  if not ok then
     error('No `git` executable')
   end
+  git_version = vim.version.parse(sys:wait().stdout)
 end
 
 --- @async
