@@ -1769,7 +1769,7 @@ function M.open_floating_preview(contents, syntax, opts)
 
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
-    vim.wo[floating_winnr].concealcursor = 'n'
+    vim.wo[floating_winnr].concealcursor = ''
     vim.bo[floating_bufnr].filetype = 'markdown'
     vim.treesitter.start(floating_bufnr)
     if not opts.height then
