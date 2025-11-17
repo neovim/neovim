@@ -580,8 +580,7 @@ static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size
     }
   }
 
-  // Format the number with proper alignment, then add configured spacing
-  snprintf(buf, buf_len, fmt, number_width(wp), num);
+  // Format the number, then add spacing
   char num_str[32];
   snprintf(num_str, sizeof(num_str), fmt, number_width(wp), num);
   snprintf(buf, buf_len, "%s%*s", num_str, spaces, "");

@@ -6393,7 +6393,7 @@ local options = {
         This option is only relevant when the 'number' or 'relativenumber'
         option is set.
 
-        The default value is 1, which maintains the traditional single space
+        The default value is 1, which just keeps the original single space
         between line numbers and text. Increase this value to add more
         breathing room between the line numbers and your code.
 
