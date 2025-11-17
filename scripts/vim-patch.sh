@@ -33,7 +33,7 @@ usage() {
   echo "    -l [git-log opts]  List missing Vim patches."
   echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
   echo "    -m {vim-revision}  List previous (older) missing Vim patches."
-  echo "    -M                 List all merged patch-numbers (at current v:version)."
+  echo "    -M                 List all merged patch-numbers (since current v:version) in ascending order."
   echo "    -n                 List possible N/A Vim patches."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.1.xxx) or a Git hash."
@@ -570,13 +570,23 @@ list_vimpatch_tokens() {
     | sed -nEe 's/^(vim-patch:([0-9]+\.[^ ]+|[0-9a-z]{7,7})).*/\1/p'
 }
 
-# Prints all patch-numbers (for the current v:version) for which there is
-# a "vim-patch:xxx" token in the Nvim git log.
+# Prints all merged patches (since current v:version) in ascending order.
+#
+# Search "vim-patch:xxx" tokens in the Nvim git log.
+# Ignore tokens older than current v:version.
+# Left-pad the patch number of "vim-patch:xxx" for stable sort + dedupe.
+# Filter reverted Vim tokens.
 list_vimpatch_numbers() {
-  # Transform "vim-patch:X.Y.ZZZZ" to "ZZZZ".
-  list_vimpatch_tokens | while read -r vimpatch_token; do
-    echo "$vimpatch_token" | grep -F '8.1.' | sed -Ee 's/.*vim-patch:8\.1\.([0-9a-z]+).*/\1/'
-  done
+  local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
+    git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+    grep -oE "^[* ]*vim-patch:${patch_pat}" |
+    sed -nEe 's/^[* ]*vim-patch:('"${patch_pat}"').*$/\1/p' |
+    awk '{split($0, a, "."); printf "%d.%d.%04d\n", a[1], a[2], a[3]}' |
+    sort |
+    uniq ) |
+    grep -e '^> ' |
+    sed -e 's/^> //'
 }
 
 declare -A tokens
