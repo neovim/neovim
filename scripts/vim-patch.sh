@@ -209,7 +209,7 @@ preprocess_patch() {
 
   # Remove unwanted Vim doc files.
   local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|testing\.txt\|todo\.txt\|vim9\.txt\|tags\|test_urls\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"

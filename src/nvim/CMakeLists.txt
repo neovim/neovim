@@ -999,3 +999,9 @@ add_target(lintdoc
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
+
+add_target(lintdocurls
+  COMMAND ${NVIM_LUA} scripts/lintdoc.lua true
+  DEPENDS ${DOCFILES}
+  CUSTOM_COMMAND_ARGS USES_TERMINAL)
+add_dependencies(lintdocurls nvim)

@@ -1,0 +1,39 @@
+name: lintdoc-urls
+on:
+  schedule:
+    - cron: '22 22 * * 5'
+  workflow_dispatch:
+
+jobs:
+  check-unreachable-urls:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up git config
+        run: |
+          git config --global user.name 'marvim'
+          git config --global user.email 'marvim@users.noreply.github.com'
+
+      - uses: ./.github/actions/setup
+
+      - name: Check for unreachable URLs
+        id: unreachable-urls
+        env:
+          run_url: https://github.com/neovim/neovim/actions/runs/${{ github.run_id }}
+        run: |
+          OUT_FILE=$(mktemp)
+          make lintdocurls 2>&1 | sed -n '/invalid URLs/,/^}/p' > $OUT_FILE
+          if [ -n $OUT_FILE -a -s $OUT_FILE ]; then
+            # wrap output in a code block
+            sed -i '1i```' -e '$a```' $OUT_FILE
+            echo "Automatically generated on $(date) from $run_url" >> $OUT_FILE
+            gh issue reopen 36597
+            gh issue edit 36597 --body-file $OUT_FILE
+          fi
