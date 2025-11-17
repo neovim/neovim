@@ -37,7 +37,6 @@ from perfect (in either direction).
 """
 
 
-import codecs
 import copy
 import getopt
 import os
@@ -2257,8 +2256,8 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
             if _cpplint_state.stdin_filename is not None:
                 filename = _cpplint_state.stdin_filename
         else:
-            lines = codecs.open(
-                filename, 'r', 'utf8', 'replace').read().split('\n')
+            lines = open(
+                filename, 'r', encoding='utf-8', errors='replace', newline=None).read().split('\n')
 
         # Remove trailing '\r'.
         for linenum in range(len(lines)):
