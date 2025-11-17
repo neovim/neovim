@@ -755,10 +755,6 @@ function tests.basic_check_buffer_open_and_change_incremental_editing()
   }
 end
 
-function tests.invalid_header()
-  io.stdout:write('Content-length: \r\n')
-end
-
 function tests.decode_nil()
   skeleton {
     on_init = function(_)
