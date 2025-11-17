@@ -88,10 +88,8 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
   }
 }
 
-/// @return whether a provider placed any marks in the callback.
-bool decor_providers_invoke_conceal_line(win_T *wp, int row)
+void decor_providers_invoke_conceal_line(win_T *wp, int row)
 {
-  size_t keys = wp->w_buffer->b_marktree->n_keys;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
     if (p->state != kDecorProviderDisabled && p->conceal_line != LUA_NOREF) {
@@ -102,7 +100,6 @@ bool decor_providers_invoke_conceal_line(win_T *wp, int row)
       decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, true, NULL);
     }
   }
-  return wp->w_buffer->b_marktree->n_keys > keys;
 }
 
 /// For each provider invoke the 'start' callback

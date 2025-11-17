@@ -1762,11 +1762,9 @@ describe('builtin popupmenu', function()
           endfunc
           funct TsHl()
             let comp_info = complete_info(['selected'])
-            if get(comp_info, 'preview_bufnr', 0) > 0
-              call v:lua.vim.treesitter.start(comp_info['preview_bufnr'], 'markdown')
-            endif
             if comp_info['selected'] == 0
-              call nvim__complete_set(comp_info['selected'], {"info": "```lua\nfunction test()\n  print('foo')\nend\n```"})
+              let result = nvim__complete_set(comp_info['selected'], {"info": "```lua\nfunction test()\n  print('foo')\nend\n```"})
+              call v:lua.vim.treesitter.start(result.bufnr, 'markdown')
             endif
           endfunc
           augroup Group

@@ -483,72 +483,6 @@ end]]
     eq(true, result)
   end)
 
-  it('can set simple ranges', function()
-    insert(test_text)
-
-    local res = exec_lua(function()
-      _G.parser = vim.treesitter.get_parser(0, 'c')
-      return { _G.parser:parse()[1]:root():range() }
-    end)
-
-    eq({ 0, 0, 19, 0 }, res)
-
-    -- The following sets the included ranges for the current parser
-    -- As stated here, this only includes the function (thus the whole buffer, without the last line)
-    local res2 = exec_lua(function()
-      local root = _G.parser:parse()[1]:root()
-      _G.parser:set_included_regions({ { root:child(0) } })
-      _G.parser:invalidate()
-      return { _G.parser:parse(true)[1]:root():range() }
-    end)
-
-    eq({ 0, 0, 18, 1 }, res2)
-
-    eq({ { { 0, 0, 0, 18, 1, 512 } } }, exec_lua [[ return parser:included_regions() ]])
-
-    local range_tbl = exec_lua(function()
-      _G.parser:set_included_regions { { { 0, 0, 17, 1 } } }
-      _G.parser:parse()
-      return _G.parser:included_regions()
-    end)
-
-    eq({ { { 0, 0, 0, 17, 1, 508 } } }, range_tbl)
-  end)
-
-  it('can set complex ranges', function()
-    insert(test_text)
-
-    local res = exec_lua(function()
-      local parser = vim.treesitter.get_parser(0, 'c')
-      local query = vim.treesitter.query.parse('c', '(declaration) @decl')
-
-      local nodes = {}
-      for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-        table.insert(nodes, node)
-      end
-
-      parser:set_included_regions({ nodes })
-
-      local root = parser:parse(true)[1]:root()
-
-      local res = {}
-      for i = 0, (root:named_child_count() - 1) do
-        table.insert(res, { root:named_child(i):range() })
-      end
-      return res
-    end)
-
-    eq({
-      { 2, 2, 2, 40 },
-      { 3, 2, 3, 32 },
-      { 4, 7, 4, 25 },
-      { 8, 2, 8, 33 },
-      { 9, 7, 9, 20 },
-      { 10, 4, 10, 20 },
-      { 14, 9, 14, 27 },
-    }, res)
-  end)
-
   it('can create string parsers', function()
     local ret = exec_lua(function()
       local parser = vim.treesitter.get_string_parser('int foo = 42;', 'c')
@@ -768,7 +702,7 @@ int x = INT_MAX;
         local expected_regions = {
           children = {}, -- nothing is parsed
           regions = {
-            {}, -- root tree's regions is the entire buffer
+            { { 0, 0, 4294967295, 4294967295 } }, -- root tree's regions is the entire buffer
           },
         }
         eq(expected_regions, exec_lua('return all_regions(_G.parser)'))
@@ -792,7 +726,7 @@ int x = INT_MAX;
             },
           },
           regions = {
-            {},
+            { { 0, 0, 4294967295, 4294967295 } },
           },
         }
         eq(expected_regions, exec_lua('return all_regions(_G.parser)'))
@@ -823,7 +757,7 @@ int x = INT_MAX;
             },
           },
           regions = {
-            {},
+            { { 0, 0, 4294967295, 4294967295 } },
           },
         }
         eq(expected_regions, exec_lua('return all_regions(_G.parser)'))
@@ -914,7 +848,7 @@ int x = INT_MAX;
 
         eq('table', exec_lua('return type(parser:children().c)'))
         eq({
-          { {} }, -- root tree
+          { { { 0, 0, 0, 4294967295, 4294967295, 4294967295 } } }, -- root tree
           {
             {
               { 3, 15, 163, 3, 16, 164 }, -- VALUE 123
@@ -1433,12 +1367,6 @@ print()
       exec_lua('vim.treesitter.get_parser():parse(true)')
       eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(true)'))
       eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
-    end)
-
-    it('is valid within a range on parsed tree after parsing it', function()
-      exec_lua('vim.treesitter.get_parser():parse({5, 7})')
-      eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(true)'))
-      eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(nil, {5, 7})'))
     end)
 
     describe('when adding content with injections', function()
