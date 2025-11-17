@@ -2023,6 +2023,35 @@ describe('vim.diagnostic', function()
       eq('DiagnosticUnderlineInfo', underline_hl)
     end)
 
+    it(
+      'shows deprecated and unnecessary highlights in addition to severity-based highlights',
+      function()
+        ---@type string[]
+        local result = exec_lua(function()
+          local diagnostic = _G.make_error('Some error', 0, 0, 0, 0, 'source x')
+          diagnostic._tags = {
+            deprecated = true,
+            unnecessary = true,
+          }
+
+          local diagnostics = { diagnostic }
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
+
+          local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
+          local hl_groups = vim.tbl_map(function(extmark)
+            return extmark[4].hl_group
+          end, extmarks)
+          return hl_groups
+        end)
+
+        eq({
+          'DiagnosticDeprecated',
+          'DiagnosticUnnecessary',
+          'DiagnosticUnderlineError',
+        }, result)
+      end
+    )
+
     it('can show diagnostic sources in virtual text', function()
       local result = exec_lua(function()
         local diagnostics = {
