@@ -4936,12 +4936,14 @@ static int ins_compl_get_exp(pos_T *ini)
   }
   may_trigger_modechanged();
 
-  if (is_nearest_active() && !ins_compl_has_preinsert()) {
-    sort_compl_match_list(cp_compare_nearest);
-  }
+  if (match_count > 0) {
+    if (is_nearest_active() && !ins_compl_has_preinsert()) {
+      sort_compl_match_list(cp_compare_nearest);
+    }
 
-  if ((get_cot_flags() & kOptCotFlagFuzzy) && ins_compl_leader_len() > 0) {
-    ins_compl_fuzzy_sort();
+    if ((get_cot_flags() & kOptCotFlagFuzzy) && ins_compl_leader_len() > 0) {
+      ins_compl_fuzzy_sort();
+    }
   }
 
   return match_count;

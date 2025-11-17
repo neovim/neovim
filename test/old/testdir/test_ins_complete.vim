@@ -3816,6 +3816,22 @@ func Test_complete_fuzzy_collect()
   set completeopt& cfc& cpt&
 endfunc
 
+" Issue #18752
+func Test_complete_fuzzy_collect_multiwin()
+  new
+  set completefuzzycollect=keyword,files,whole_line
+  set completeopt=fuzzy
+
+  vnew
+  call setline(1, ["completeness,", "compatibility", "Composite", "Omnipotent"])
+  wincmd p
+  call feedkeys("Somp\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('Omnipotent', getline('.'))
+
+  bw!
+  set completeopt& cfc&
+endfunc
+
 func Test_cfc_with_longest()
   new
   set completefuzzycollect=keyword,files,whole_line
