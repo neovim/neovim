@@ -421,23 +421,31 @@ describe('vim.fs', function()
       )
     end)
 
-    it('uses cwd for unnamed buffers', function()
+    it('returns CWD (absolute path) for unnamed buffers', function()
+      assert(n.fn.isabsolutepath(test_source_path) == 1)
       command('new')
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      eq(
+        t.fix_slashes(test_source_path),
+        t.fix_slashes(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      )
     end)
 
-    it("uses cwd for buffers with non-empty 'buftype'", function()
+    it("returns CWD (absolute path) for buffers with non-empty 'buftype'", function()
+      assert(n.fn.isabsolutepath(test_source_path) == 1)
       command('new')
       command('set buftype=nofile')
       command('file lua://')
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      eq(
+        t.fix_slashes(test_source_path),
+        t.fix_slashes(exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
+      )
     end)
 
-    it('returns an absolute path for an invalid filename', function()
+    it('returns CWD (absolute path) if no match is found', function()
       assert(n.fn.isabsolutepath(test_source_path) == 1)
       eq(
         t.fix_slashes(test_source_path),
-        t.fix_slashes(exec_lua([[return vim.fs.root('file://asd', 'CMakePresets.json')]]))
+        t.fix_slashes(exec_lua([[return vim.fs.root('file://bogus', 'CMakePresets.json')]]))
       )
     end)
   end)
@@ -621,7 +629,9 @@ describe('vim.fs', function()
     local cwd = assert(t.fix_slashes(assert(vim.uv.cwd())))
     local home = t.fix_slashes(assert(vim.uv.os_homedir()))
 
-    it('works', function()
+    it('expands relative paths', function()
+      assert(n.fn.isabsolutepath(cwd) == 1)
+      eq(cwd, vim.fs.abspath('.'))
       eq(cwd .. '/foo', vim.fs.abspath('foo'))
       eq(cwd .. '/././foo', vim.fs.abspath('././foo'))
       eq(cwd .. '/.././../foo', vim.fs.abspath('.././../foo'))
