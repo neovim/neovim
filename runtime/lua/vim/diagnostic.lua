@@ -1734,29 +1734,30 @@ M.handlers.underline = {
       local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
 
       for _, diagnostic in ipairs(diagnostics) do
-        local higroup = underline_highlight_map[diagnostic.severity]
+        local higroups = { underline_highlight_map[diagnostic.severity] }
 
         if diagnostic._tags then
-          -- TODO(lewis6991): we should be able to stack these.
           if diagnostic._tags.unnecessary then
-            higroup = 'DiagnosticUnnecessary'
+            table.insert(higroups, 'DiagnosticUnnecessary')
           end
           if diagnostic._tags.deprecated then
-            higroup = 'DiagnosticDeprecated'
+            table.insert(higroups, 'DiagnosticDeprecated')
           end
         end
 
         local lines =
           api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
 
-        vim.hl.range(
-          bufnr,
-          underline_ns,
-          higroup,
-          { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
-          { diagnostic.end_lnum, diagnostic.end_col },
-          { priority = get_priority(diagnostic.severity) }
-        )
+        for _, higroup in ipairs(higroups) do
+          vim.hl.range(
+            bufnr,
+            underline_ns,
+            higroup,
+            { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
+            { diagnostic.end_lnum, diagnostic.end_col },
+            { priority = get_priority(diagnostic.severity) }
+          )
+        end
       end
       save_extmarks(underline_ns, bufnr)
     end)
