@@ -4881,6 +4881,30 @@ vim.o.nu = vim.o.number
 vim.wo.number = vim.o.number
 vim.wo.nu = vim.wo.number
 
+--- Number of additional spaces to add after the line number before the
+--- text begins. This option is only relevant when the 'number' or
+--- 'relativenumber' option is set.
+---
+--- The default value is 0, which keeps the original single space between
+--- line numbers and text. Increase this value to add more breathing room
+--- between the line numbers and your code.
+---
+--- The minimum value is 0 (no space added), and the maximum value is 10.
+---
+--- Example with different 'numberspace' values:
+--- ```
+---   numberspace=0    numberspace=2    numberspace=4
+---   1 text           1   text         1     text
+---   2 text           2   text         2     text
+--- ```
+---
+---
+--- @type integer
+vim.o.numberspace = 0
+vim.o.nus = vim.o.numberspace
+vim.wo.numberspace = vim.o.numberspace
+vim.wo.nus = vim.wo.numberspace
+
 --- Minimal number of columns to use for the line number.  Only relevant
 --- when the 'number' or 'relativenumber' option is set or printing lines
 --- with a line number.  Since one space is always between the number and

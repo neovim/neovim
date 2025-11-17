@@ -6387,21 +6387,21 @@ local options = {
     {
       abbreviation = 'nus',
       cb = 'did_set_numberspace',
-      defaults = 1,
+      defaults = 0,
       desc = [=[
-        Number of spaces to add after the line number before the text begins.
-        This option is only relevant when the 'number' or 'relativenumber'
-        option is set.
+        Number of additional spaces to add after the line number before the
+        text begins. This option is only relevant when the 'number' or
+        'relativenumber' option is set.
 
-        The default value is 1, which just keeps the original single space
-        between line numbers and text. Increase this value to add more
-        breathing room between the line numbers and your code.
+        The default value is 0, which keeps the original single space between
+        line numbers and text. Increase this value to add more breathing room
+        between the line numbers and your code.
 
-        The minimum value is 0 (no space), and the maximum value is 10.
+        The minimum value is 0 (no space added), and the maximum value is 10.
 
         Example with different 'numberspace' values:
         >
-          numberspace=1    numberspace=3    numberspace=5
+          numberspace=0    numberspace=2    numberspace=4
           1 text           1   text         1     text
           2 text           2   text         2     text
         <
@@ -6409,7 +6409,7 @@ local options = {
       full_name = 'numberspace',
       redraw = { 'current_window' },
       scope = { 'win' },
-      short_desc = N_('number of spaces after the line number'),
+      short_desc = N_('additional spaces after the line number'),
       type = 'number',
     },
     {

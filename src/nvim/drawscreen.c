@@ -2580,14 +2580,14 @@ int number_width(win_T *wp)
 }
 
 /// Get the total width of the number column including the spacing after the number.
-/// This is number_width() plus the number of spaces defined by 'numberspace'.
+/// This is number_width() plus 1 (for the format string space) plus additional numberspace.
 int number_width_with_space(win_T *wp)
 {
   // For statuscolumn, only add space if statuscolumn is not set
   if (*wp->w_p_stc != NUL) {
     return number_width(wp);
   }
-  return number_width(wp) + (int)wp->w_p_nus;
+  return number_width(wp) + 1 + (int)wp->w_p_nus;
 }
 
 /// Redraw a window later, with wp->w_redr_type >= type.
