@@ -446,7 +446,7 @@ function M.root(source, marker)
   for _, mark in ipairs(markers) do
     local paths = M.find(mark, {
       upward = true,
-      path = vim.fn.fnamemodify(path, ':p:h'),
+      path = M.abspath(path),
     })
 
     if #paths ~= 0 then
@@ -756,6 +756,8 @@ end
 --- @param path string Path
 --- @return string Absolute path
 function M.abspath(path)
+  -- TODO(justinmk): mark f_fnamemodify as API_FAST and use it, ":p:h" should be safe...
+
   vim.validate('path', path, 'string')
 
   -- Expand ~ to user's home directory
@@ -782,7 +784,10 @@ function M.abspath(path)
   -- Convert cwd path separator to `/`
   cwd = cwd:gsub(os_sep, '/')
 
-  -- Prefix is not needed for expanding relative paths, as `cwd` already contains it.
+  if path == '.' then
+    return cwd
+  end
+  -- Prefix is not needed for expanding relative paths, `cwd` already contains it.
   return M.joinpath(cwd, path)
 end
 
