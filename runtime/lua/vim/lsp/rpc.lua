@@ -17,14 +17,13 @@ local function format_message_with_content_length(message)
   })
 end
 
---- Extract content-length from the header.
+--- Extract `content-length` from the header.
 ---
---- The structure of header fields conforms to the [HTTP semantic](https://tools.ietf.org/html/rfc7230#section-3.2).
---- i.e., `header-field = field-name : OWS field-value OWS`,
---- OWS means optional whitespace (Space/Horizontal Tab).
+--- The structure of header fields conforms to [HTTP semantics](https://tools.ietf.org/html/rfc7230#section-3.2),
+--- i.e., `header-field = field-name : OWS field-value OWS`. OWS means optional whitespace (space/horizontal tabs).
 ---
---- we ignore lines ending with `\n` that don't contain `content-length`, since some servers
---- write log to stdout and there's no way to avoid it.
+--- We ignore lines ending with `\n` that don't contain `content-length`, since some servers
+--- write log to standard output and there's no way to avoid it.
 --- See https://github.com/neovim/neovim/pull/35743#pullrequestreview-3379705828
 --- @param header string The header to parse
 --- @return integer

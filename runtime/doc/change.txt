@@ -232,9 +232,8 @@ white space after a word, they only change up to the end of the word.  This is
 because Vim interprets "cw" as change-word, and a word does not include the
 following white space.
 
-If you prefer "cw" to include the space after a word, use this mapping: >
-	:map cw dwi
-Or use "caw" (see |aw|).
+If you prefer "cw" to include the space after a word, see |cpo-_| to change
+the behavior.  Alternatively, use "caw" (see |aw|).
 
 							*:c* *:ch* *:change*
 :{range}c[hange][!]	Replace lines of text with some different text.

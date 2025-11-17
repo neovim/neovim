@@ -182,8 +182,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- Else the first notification will be `nvim_buf_changedtick_event`.
 --- Not for Lua callbacks.
 --- @param opts vim.api.keyset.buf_attach Optional parameters.
---- - on_lines: Lua callback invoked on change.
----   Return a truthy value (not `false` or `nil`) to detach. Args:
+--- - on_lines: Called on linewise changes. Not called on buffer reload (`:checktime`,
+---   `:edit`, …), see `on_reload:`. Return a [lua-truthy] value to detach. Args:
 ---   - the string "lines"
 ---   - buffer id
 ---   - b:changedtick
@@ -193,10 +193,9 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---   - byte count of previous contents
 ---   - deleted_codepoints (if `utf_sizes` is true)
 ---   - deleted_codeunits (if `utf_sizes` is true)
---- - on_bytes: Lua callback invoked on change.
----   This callback receives more granular information about the
----   change compared to on_lines.
----   Return a truthy value (not `false` or `nil`) to detach. Args:
+--- - on_bytes: Called on granular changes (compared to on_lines). Not called on buffer
+---   reload (`:checktime`, `:edit`, …), see `on_reload:`. Return a [lua-truthy] value
+---   to detach. Args:
 ---   - the string "bytes"
 ---   - buffer id
 ---   - b:changedtick
@@ -212,16 +211,15 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---   - new end column of the changed text
 ---     (if new end row = 0, offset from start column)
 ---   - new end byte length of the changed text
---- - on_changedtick: Lua callback invoked on changedtick
----   increment without text change. Args:
+--- - on_changedtick: Called on [changetick] increment without text change. Args:
 ---   - the string "changedtick"
 ---   - buffer id
 ---   - b:changedtick
---- - on_detach: Lua callback invoked on detach. Args:
+--- - on_detach: Called on detach. Args:
 ---   - the string "detach"
 ---   - buffer id
---- - on_reload: Lua callback invoked on reload. The entire buffer
----              content should be considered changed. Args:
+--- - on_reload: Called on whole-buffer load (`:checktime`, `:edit`, …). Clients should
+---   typically re-fetch the entire buffer contents. Args:
 ---   - the string "reload"
 ---   - buffer id
 --- - utf_sizes: include UTF-32 and UTF-16 size of the replaced
@@ -229,7 +227,7 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- - preview: also attach to command preview (i.e. 'inccommand')
 ---   events.
 --- @return boolean # False if attach failed (invalid parameter, or buffer isn't loaded);
---- otherwise True. TODO: LUA_API_NO_EVAL
+--- otherwise True.
 function vim.api.nvim_buf_attach(buffer, send_buffer, opts) end
 
 --- Call a function with buffer as temporary current buffer.

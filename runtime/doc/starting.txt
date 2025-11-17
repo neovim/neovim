@@ -1377,7 +1377,7 @@ paths.
 
 						*base-directories* *xdg*
 The "base" (root) directories conform to the XDG Base Directory Specification.
-https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+https://specifications.freedesktop.org/basedir/latest/
 The $XDG_CONFIG_HOME, $XDG_DATA_HOME, $XDG_RUNTIME_DIR, $XDG_STATE_HOME,
 $XDG_CACHE_HOME, $XDG_CONFIG_DIRS and $XDG_DATA_DIRS environment variables
 are used if defined, else default values (listed below) are used.
