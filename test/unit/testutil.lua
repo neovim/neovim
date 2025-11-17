@@ -1,17 +1,4 @@
 local ffi = require('ffi')
-
-if ffi.os == 'OSX' then
-  local has_ipc_info_object_type_t = pcall(function()
-    return ffi.typeof('ipc_info_object_type_t')
-  end)
-  if not has_ipc_info_object_type_t then
-    -- mach_port_space_info() prototypes reference ipc_info_object_type_t, but
-    -- recent macOS SDK preprocess output stops emitting the typedef. Provide a
-    -- guarded fallback matching the SDK definition (natural_t/unsigned int).
-    ffi.cdef('typedef unsigned int ipc_info_object_type_t;')
-  end
-end
-
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
@@ -176,6 +163,8 @@ local function filter_complex_blocks(body)
         -- used by macOS headers
         or string.find(line, 'typedef enum : ')
         or string.find(line, 'mach_vm_range_recipe')
+        or string.find(line, 'ipc_info_object_type_t')
+        or string.find(line, '__Reply__mach_port_kobject_t')
       )
     then
       -- Remove GCC's extension keyword which is just used to disable warnings.
