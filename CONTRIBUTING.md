@@ -372,6 +372,6 @@ as context, use the `-W` argument as well.
 [nvim-lspconfig/clangd]: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 [pr-draft]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
-[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
+[run-tests]: https://github.com/neovim/neovim/blob/master/runtime/doc/dev_test.txt
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [wiki-faq]: https://neovim.io/doc/user/faq.html

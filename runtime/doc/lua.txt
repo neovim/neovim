@@ -184,6 +184,10 @@ Examples: >lua
     -- ba
     print(string.match("foo.bar", "%.bar"))
     -- .bar
+<
+                                                                  *lua-truthy*
+Only `false` and `nil` evaluate to "false" in Lua. All other values are "true".
+
 
 ==============================================================================
 IMPORTING LUA MODULES                                        *lua-module-load*
