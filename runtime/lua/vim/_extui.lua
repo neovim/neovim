@@ -42,11 +42,14 @@ local function ui_callback(event, ...)
   local handler = ext.msg[event] or ext.cmd[event]
   ext.check_targets()
   handler(...)
-  api.nvim__redraw({
-    flush = handler ~= ext.cmd.cmdline_hide or nil,
-    cursor = handler == ext.cmd[event] and true or nil,
-    win = handler == ext.cmd[event] and ext.wins.cmd or nil,
-  })
+  -- Cmdline mode and non-empty showcmd requires an immediate redraw.
+  if ext.cmd[event] or event == 'msg_showcmd' and select(1, ...)[1] then
+    api.nvim__redraw({
+      flush = handler ~= ext.cmd.cmdline_hide or nil,
+      cursor = handler == ext.cmd[event] and true or nil,
+      win = handler == ext.cmd[event] and ext.wins.cmd or nil,
+    })
+  end
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 
