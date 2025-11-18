@@ -163,6 +163,8 @@ local function filter_complex_blocks(body)
         -- used by macOS headers
         or string.find(line, 'typedef enum : ')
         or string.find(line, 'mach_vm_range_recipe')
+        or string.find(line, 'ipc_info_object_type_t')
+        or string.find(line, '__Reply__mach_port_kobject_t')
       )
     then
       -- Remove GCC's extension keyword which is just used to disable warnings.
