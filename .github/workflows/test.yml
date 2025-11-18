@@ -70,7 +70,7 @@ jobs:
         run: cmake --build build --target lintsh
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clint.py
+        name: clint.lua
         run: cmake --build build --target lintc-clint
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'

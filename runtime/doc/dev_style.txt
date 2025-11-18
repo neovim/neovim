@@ -119,9 +119,9 @@ Nvim-Specific Magic
 
 clint ~
 
-Use `clint.py` to detect style errors.
+Use `clint.lua` to detect style errors.
 
-`src/clint.py` is a Python script that reads a source file and identifies
+`src/clint.lua` is a Lua script that reads a source file and identifies
 style errors. It is not perfect, and has both false positives and false
 negatives, but it is still a valuable tool. False positives can be ignored by
 putting `// NOLINT` at the end of the line.
@@ -129,7 +129,7 @@ putting `// NOLINT` at the end of the line.
 uncrustify ~
 
 src/uncrustify.cfg is the authority for expected code formatting, for cases
-not covered by clint.py.  We remove checks in clint.py if they are covered by
+not covered by clint.lua.  We remove checks in clint.lua if they are covered by
 uncrustify rules.
 
 ==============================================================================
