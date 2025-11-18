@@ -242,6 +242,16 @@ end
 ---@param item lsp.CompletionItem
 ---@return string
 local function get_doc(item)
+  if
+    vim.o.completeopt:find('popup')
+    and item.insertTextFormat == protocol.InsertTextFormat.Snippet
+    and #(item.documentation or '') == 0
+    and vim.bo.filetype ~= ''
+    and (item.textEdit or (item.insertText and item.insertText ~= ''))
+  then
+    local text = parse_snippet(item.insertText or item.textEdit.newText)
+    return ('```%s\n%s\n```'):format(vim.bo.filetype, text)
+  end
   local doc = item.documentation
   if not doc then
     return ''
