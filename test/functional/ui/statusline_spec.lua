@@ -802,6 +802,28 @@ describe('statusline', function()
                                               |
     ]])
   end)
+
+  it('truncation inside nested nvim_eval_statusline does not crash #36616', function()
+    exec_lua(function()
+      function _G.statusline_truncating()
+        local win = vim.api.nvim_get_current_win()
+        local res = vim.api.nvim_eval_statusline('%f', { winid = win, maxwidth = 5 })
+        return res.str
+      end
+      vim.o.laststatus = 2
+      vim.o.statusline = '%#Special#B:%{%v:lua.statusline_truncating()%}'
+    end)
+    local truncated = exec_lua(function()
+      return vim.api.nvim_eval_statusline('%f', { maxwidth = 5 }).str
+    end)
+    local rendered = exec_lua(function()
+      return vim.api.nvim_eval_statusline(
+        vim.o.statusline,
+        { winid = vim.api.nvim_get_current_win() }
+      ).str
+    end)
+    eq('B:' .. truncated, rendered)
+  end)
 end)
 
 describe('default statusline', function()

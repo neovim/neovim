@@ -1902,7 +1902,7 @@ stcsign:
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
-    int item_idx = 0;
+    int item_idx = evalstart;
     char *trunc_p;
 
     // If there are no items, truncate from beginning
@@ -1912,8 +1912,7 @@ stcsign:
       // Otherwise, look for the truncation item
     } else {
       // Default to truncating at the first item
-      trunc_p = stl_items[0].start;
-      item_idx = 0;
+      trunc_p = stl_items[item_idx].start;
 
       for (int i = evalstart; i < itemcnt + evalstart; i++) {
         if (stl_items[i].type == Trunc) {
