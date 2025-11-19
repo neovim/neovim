@@ -109,7 +109,7 @@ end
 --- @field signs vim.diagnostic.Opts.Signs
 --- @field severity_sort {reverse?:boolean}
 
---- @class vim.diagnostic.Opts.Float
+--- @class vim.diagnostic.Opts.Float : vim.lsp.util.open_floating_preview.Opts
 ---
 --- Buffer number to show diagnostics from.
 --- (default: current buffer)
@@ -118,7 +118,7 @@ end
 --- Limit diagnostics to the given namespace
 --- @field namespace? integer
 ---
---- Show diagnostics from the whole buffer (`buffer"`, the current cursor line
+--- Show diagnostics from the whole buffer (`buffer`), the current cursor line
 --- (`line`), or the current cursor position (`cursor`). Shorthand versions
 --- are also accepted (`c` for `cursor`, `l` for `line`, `b` for `buffer`).
 --- (default: `line`)
@@ -173,10 +173,6 @@ end
 --- prepending it.
 --- Overrides the setting from |vim.diagnostic.config()|.
 --- @field suffix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)
----
---- @field focus_id? string
----
---- @field border? string see |nvim_open_win()|.
 
 --- @class vim.diagnostic.Opts.Underline
 ---
