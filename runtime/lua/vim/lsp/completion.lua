@@ -190,8 +190,16 @@ local function get_completion_word(item, prefix, match)
       return item.label
     end
   elseif item.textEdit then
-    local word = item.textEdit.newText
-    return word:match('^(%S*)') or word
+    local text = item.textEdit.newText
+    local word = text:match('^(%S*)') or text
+    -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit
+    -- indicates that an empty newText here is used for deletion, but in the context of completion
+    -- that is most likely unintentional.
+    if word ~= '' then
+      return word
+    else
+      return item.label
+    end
   elseif item.insertText and item.insertText ~= '' then
     return item.insertText
   end

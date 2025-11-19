@@ -212,6 +212,37 @@ describe('vim.lsp.completion: item conversion', function()
       })
     end)
 
+    it('uses label if newText is empty', function()
+      local items = {
+        {
+          filterText = 'mo',
+          insertTextFormat = 1,
+          kind = 10,
+          label = 'module',
+          sortText = 'module',
+          textEdit = {
+            newText = '',
+            range = {
+              start = {
+                character = 0,
+                line = 0,
+              },
+              ['end'] = {
+                character = 0,
+                line = 0,
+              },
+            },
+          },
+        },
+      }
+      assert_completion_matches('mo', items, {
+        {
+          abbr = 'module',
+          word = 'module',
+        },
+      })
+    end)
+
     it('uses filterText as word if label/newText would not match', function()
       local items = {
         {
