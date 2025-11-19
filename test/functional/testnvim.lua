@@ -681,8 +681,7 @@ end
 
 --- Sets Nvim shell to powershell.
 ---
---- @param fake (boolean) If true, a fake will be used if powershell is not
----             found on the system.
+--- @param fake boolean? Use a fake if powershell is not found on the system.
 --- @returns true if powershell was found on the system, else false.
 function M.set_shell_powershell(fake)
   local found = M.has_powershell()

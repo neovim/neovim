@@ -157,10 +157,13 @@ BUILD
   for the time being.
 • Nvim can be built without Unibilium (terminfo implementation), in which case
   the user's terminfo database won't be loaded and only internal definitions
-  for the most common terminals are used. >
+  for the most common terminals are used: >
 
   make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS"-DUSE_BUNDLED_UNIBILIUM=0"
 <
+• On Windows, `tee.exe` is installed with `nvim.exe` by default so that
+  commands like :make, :grep work out of the box.
+
 DEFAULTS
 
 • 'diffopt' default value now includes "indent-heuristic" and "inline:char".

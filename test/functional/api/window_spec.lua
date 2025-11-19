@@ -3118,6 +3118,7 @@ describe('API/win', function()
       eq(t2_alt_win, api.nvim_tabpage_get_win(t2))
       eq(t1, api.nvim_win_get_tabpage(t2_cur_win))
     end)
+
     it('set_config cannot change "noautocmd" #36409', function()
       local cfg = { relative = 'editor', row = 1, col = 1, height = 2, width = 2, noautocmd = true }
       local win = api.nvim_open_win(0, false, cfg)

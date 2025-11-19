@@ -1023,16 +1023,13 @@ function vim.api.nvim_create_namespace(name) end
 --- - mods: (string) Command modifiers, if any [<mods>]
 --- - smods: (table) Command modifiers in a structured format. Has the same
 --- structure as the "mods" key of `nvim_parse_cmd()`.
---- @param opts vim.api.keyset.user_command Optional `command-attributes`.
---- - Set boolean attributes such as `:command-bang` or `:command-bar` to true (but
----   not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
---- - "complete" `:command-complete` also accepts a Lua function which works like
----   `:command-completion-customlist`.
---- - Other parameters:
----   - desc: (string) Used for listing the command when a Lua function is used for
----                    {command}.
----   - force: (boolean, default true) Override any previous definition.
----   - preview: (function) Preview callback for 'inccommand' `:command-preview`
+--- @param opts vim.api.keyset.user_command Optional flags
+--- - `desc` (string) Command description.
+--- - `force` (boolean, default true) Override any previous definition.
+--- - `complete` `:command-complete` command or function like `:command-completion-customlist`.
+--- - `preview` (function) Preview handler for 'inccommand' `:command-preview`
+--- - Set boolean `command-attributes` such as `:command-bang` or `:command-bar` to
+---   true (but not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
 function vim.api.nvim_create_user_command(name, command, opts) end
 
 --- Delete an autocommand group by id.
@@ -1861,9 +1858,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - footer_pos: Footer position. Must be set with `footer` option.
 ---   Value can be one of "left", "center", or "right".
 ---   Default is `"left"`.
---- - noautocmd: If true then all autocommands are blocked for the duration of
----   the call. Once set at window creation, this option cannot be modified
----   later through `nvim_win_set_config()`.
+--- - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
+---   `nvim_win_set_config()`.
 --- - fixed: If true when anchor is NW or SW, the float window
 ---          would be kept fixed even if the window would be truncated.
 --- - hide: If true the floating window will be hidden and the cursor will be invisible when

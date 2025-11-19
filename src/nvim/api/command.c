@@ -960,16 +960,13 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - mods: (string) Command modifiers, if any [<mods>]
 ///                 - smods: (table) Command modifiers in a structured format. Has the same
 ///                 structure as the "mods" key of |nvim_parse_cmd()|.
-/// @param  opts    Optional |command-attributes|.
-///                 - Set boolean attributes such as |:command-bang| or |:command-bar| to true (but
-///                   not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
-///                 - "complete" |:command-complete| also accepts a Lua function which works like
-///                   |:command-completion-customlist|.
-///                 - Other parameters:
-///                   - desc: (string) Used for listing the command when a Lua function is used for
-///                                    {command}.
-///                   - force: (boolean, default true) Override any previous definition.
-///                   - preview: (function) Preview callback for 'inccommand' |:command-preview|
+/// @param  opts    Optional flags
+///                 - `desc` (string) Command description.
+///                 - `force` (boolean, default true) Override any previous definition.
+///                 - `complete` |:command-complete| command or function like |:command-completion-customlist|.
+///                 - `preview` (function) Preview handler for 'inccommand' |:command-preview|
+///                 - Set boolean |command-attributes| such as |:command-bang| or |:command-bar| to
+///                   true (but not |:command-buffer|, use |nvim_buf_create_user_command()| instead).
 /// @param[out] err Error details, if any.
 void nvim_create_user_command(uint64_t channel_id,
                               String name,
