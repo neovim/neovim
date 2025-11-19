@@ -163,9 +163,14 @@ following sources (merge semantics defined by |vim.tbl_deep_extend()| with
 "force" behavior), in order of increasing priority:
 
 1. Configuration defined for the `'*'` name.
-2. Configuration from the result of merging all tables returned by
-   `lsp/<config>.lua` files in 'runtimepath' for the config named `<config>`.
-3. Configurations defined anywhere else.
+2. The merged configuration of all `lsp/<config>.lua` files in 'runtimepath'
+   for the config named `<config>`.
+3. The merged configuration of all `after/lsp/<config>.lua` files in
+   'runtimepath'.
+   - This behavior of the "after/" directory is a standard Vim feature
+     |after-directory| which allows you to override `lsp/*.lua` configs
+     provided by plugins (such as nvim-lspconfig).
+4. Configurations defined anywhere else.
 
 Example: given the following configs... >lua
 
