@@ -64,6 +64,7 @@
 #include "nvim/regexp.h"
 #include "nvim/register.h"
 #include "nvim/runtime.h"
+   msg_puts_attr(str, attr);
 #include "nvim/runtime_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -173,6 +174,9 @@ static void ui_ext_msg_set_pos(int row, bool scrolled)
                       (int)msg_grid.comp_index);
   msg_grid.pending_comp_index_update = false;
 }
+
+
+
 
 void msg_grid_set_pos(int row, bool scrolled)
 {
@@ -346,8 +350,9 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
 /// @param msg_data Progress-message data
-MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
-                  MessageData *msg_data, bool *needs_msg_clear)
+
+MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history,
+                  bool err, MessageData *msg_data, bool *needs_msg_clear)
 {
   no_wait_return++;
   msg_start();
@@ -355,13 +360,15 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   bool need_clear = false;
   bool hl_msg_updated = false;
   msg_ext_history = history;
+
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
+
   is_multihl = true;
   msg_ext_skip_flush = true;
 
-  // provide a new id if not given
+  // Provide a new ID if needed
   if (id.type == kObjectTypeNil) {
     id = INTEGER_OBJ(msg_id_next++);
   } else if (id.type == kObjectTypeInteger) {
@@ -372,23 +379,31 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   msg_ext_id = id;
 
-  // progress message are special displayed as "title: percent% msg"
+  // Handle progress messages
   if (strequal(kind, "progress") && msg_data) {
-    HlMessage formated_message = format_progress_message(hl_msg, msg_data);
-    if (formated_message.items != hl_msg.items) {
+    HlMessage formatted = format_progress_message(hl_msg, msg_data);
+    if (formatted.items != hl_msg.items) {
       *needs_msg_clear = true;
       hl_msg_updated = true;
-      hl_msg = formated_message;
+      hl_msg = formatted;
     }
   }
 
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
+
+    // Strip highlight for E485
+    if (chunk.text.size >= 25
+        && STRNCMP(chunk.text.data, "E485: Pattern not found:", 25) == 0) {
+      chunk.hl_id = 0;  // Remove highlight entirely
+    }
+
     if (err) {
       emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
     } else {
       msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
+
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
 
@@ -399,13 +414,20 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_ext_skip_flush = false;
   is_multihl = false;
   no_wait_return--;
+
   msg_end();
 
   if (hl_msg_updated && !(history && kv_size(hl_msg))) {
     hl_msg_free(hl_msg);
   }
+
   return id;
 }
+
+
+
+
+
 
 /// @param keep set keep_msg if it doesn't scroll
 bool msg_keep(const char *s, int hl_id, bool keep, bool multiline)
