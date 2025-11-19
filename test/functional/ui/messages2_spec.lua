@@ -438,4 +438,23 @@ describe('messages2', function()
     ]])
     t.eq({ filetype = 4 }, n.eval('g:set')) -- still fires for 'filetype'
   end)
+
+  it('Search highlights only apply to pager', function()
+    command('set cmdheight=0 | echo "foo"')
+    feed('/foo')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*11
+      {1:~                                                 }{4:foo}|
+      /foo^                                                 |
+    ]])
+    feed('<Esc>g<lt>/foo')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      {10:foo}                                                  |
+      /foo^                                                 |
+    ]])
+  end)
 end)
