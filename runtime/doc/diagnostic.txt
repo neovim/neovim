@@ -531,6 +531,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              |vim.diagnostic.Opts.Jump|.
 
 *vim.diagnostic.Opts.Float*
+    Extends: |vim.lsp.util.open_floating_preview.Opts|
+
 
     Fields: ~
       • {bufnr}?          (`integer`, default: current buffer) Buffer number
@@ -538,7 +540,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {namespace}?      (`integer`) Limit diagnostics to the given namespace
       • {scope}?          (`'line'|'buffer'|'cursor'|'c'|'l'|'b'`, default:
                           `line`) Show diagnostics from the whole buffer
-                          (`buffer"`, the current cursor line (`line`), or the
+                          (`buffer`), the current cursor line (`line`), or the
                           current cursor position (`cursor`). Shorthand
                           versions are also accepted (`c` for `cursor`, `l`
                           for `line`, `b` for `buffer`).
@@ -587,8 +589,6 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           Same as {prefix}, but appends the text to the
                           diagnostic instead of prepending it. Overrides the
                           setting from |vim.diagnostic.config()|.
-      • {focus_id}?       (`string`)
-      • {border}?         (`string`) see |nvim_open_win()|.
 
 *vim.diagnostic.Opts.Jump*
 
