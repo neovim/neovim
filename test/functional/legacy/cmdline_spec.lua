@@ -549,7 +549,7 @@ describe('cmdline', function()
     ]])
 
     feed(':TestCmd a<F8>')
-    screen:expect([[
+    local s1 = [[
                                               |
       {1:~                                       }|*3
       {1:~       }{4: abc1           }{1:                }|
@@ -558,13 +558,14 @@ describe('cmdline', function()
       {1:~       }{4: abc4           }{1:                }|
       {1:~       }{4: abc5           }{1:                }|
       :TestCmd a^                              |
-    ]])
+    ]]
+    screen:expect(s1)
 
     -- Typing a character when pum is open does not close the pum window
     -- This is needed to prevent pum window from flickering during
     -- ':h cmdline-autocompletion'.
     feed('x')
-    screen:expect([[
+    local s2 = [[
                                               |
       {1:~                                       }|*3
       {1:~       }{4: abc1           }{1:                }|
@@ -573,9 +574,10 @@ describe('cmdline', function()
       {1:~       }{4: abc4           }{1:                }|
       {1:~       }{4: abc5           }{1:                }|
       :TestCmd ax^                             |
-    ]])
+    ]]
+    screen:expect(s2)
 
-    -- pum window is closed when no completion candidates are available
+    -- pum is closed when no completion candidates are available
     feed('<F8>')
     screen:expect([[
                                               |
@@ -583,7 +585,19 @@ describe('cmdline', function()
       :TestCmd ax^                             |
     ]])
 
-    feed('<esc>')
+    feed('<BS><F8>')
+    screen:expect(s1)
+
+    feed('x')
+    screen:expect(s2)
+
+    -- pum is closed when leaving cmdline mode
+    feed('<Esc>')
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*8
+                                              |
+    ]])
   end)
 
   -- oldtest: Test_long_line_noselect()
