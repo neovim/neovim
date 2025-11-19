@@ -149,10 +149,6 @@ describe('vim.lsp.completion: item conversion', function()
         abbr = 'foo',
         word = 'foo',
       },
-      {
-        abbr = 'bar',
-        word = 'bar',
-      },
     }
     result = vim.tbl_map(function(x)
       return {
@@ -618,21 +614,6 @@ describe('vim.lsp.completion: item conversion', function()
             },
           },
         },
-        {
-          label = 'insert_replace_edit',
-          kind = 9,
-          textEdit = {
-            newText = 'foobar',
-            insert = {
-              start = { line = 0, character = 7 },
-              ['end'] = { line = 0, character = 11 },
-            },
-            replace = {
-              start = { line = 0, character = 0 },
-              ['end'] = { line = 0, character = 0 },
-            },
-          },
-        },
       },
     }
     local expected = {
@@ -646,17 +627,6 @@ describe('vim.lsp.completion: item conversion', function()
         menu = '',
         abbr_hlgroup = '',
         word = 'this_thread',
-      },
-      {
-        abbr = 'insert_replace_edit',
-        dup = 1,
-        empty = 1,
-        icase = 1,
-        info = '',
-        kind = 'Module',
-        menu = '',
-        abbr_hlgroup = '',
-        word = 'foobar',
       },
     }
     local result = complete('  std::this|', completion_list)
@@ -806,6 +776,53 @@ describe('vim.lsp.completion: item conversion', function()
       eq('hello', text)
     end
   )
+
+  it('uses the start boundary from an insertReplace response', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          data = { cacheId = 1 },
+          kind = 2,
+          label = 'foobar',
+          sortText = '11',
+          textEdit = {
+            insert = {
+              start = { character = 4, line = 4 },
+              ['end'] = { character = 8, line = 4 },
+            },
+            newText = 'foobar',
+            replace = {
+              start = { character = 4, line = 4 },
+              ['end'] = { character = 8, line = 4 },
+            },
+          },
+        },
+        {
+          data = { cacheId = 2 },
+          kind = 2,
+          label = 'bazqux',
+          sortText = '11',
+          textEdit = {
+            insert = {
+              start = { character = 4, line = 4 },
+              ['end'] = { character = 5, line = 4 },
+            },
+            newText = 'bazqux',
+            replace = {
+              start = { character = 4, line = 4 },
+              ['end'] = { character = 5, line = 4 },
+            },
+          },
+        },
+      },
+    }
+
+    local result = complete('foo.f|', completion_list)
+    eq(1, #result.items)
+    local text = result.items[1].user_data.nvim.lsp.completion_item.textEdit.newText
+    eq('foobar', text)
+  end)
 end)
 
 --- @param name string

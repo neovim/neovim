@@ -301,7 +301,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
         return match_item_by_value(item.filterText, prefix)
       end
 
-      if item.textEdit then
+      if item.textEdit and not item.textEdit.newText then
         -- server took care of filtering
         return true
       end
@@ -370,11 +370,18 @@ end
 local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
   for _, item in pairs(items) do
-    if item.textEdit and item.textEdit.range and item.textEdit.range.start.line == lnum then
-      if min_start_char and min_start_char ~= item.textEdit.range.start.character then
-        return nil
+    if item.textEdit then
+      if item.textEdit.range and item.textEdit.range.start.line == lnum then
+        if min_start_char and min_start_char ~= item.textEdit.range.start.character then
+          return nil
+        end
+        min_start_char = item.textEdit.range.start.character
+      elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
+        if min_start_char and min_start_char ~= item.textEdit.insert.start.character then
+          return nil
+        end
+        min_start_char = item.textEdit.insert.start.character
       end
-      min_start_char = item.textEdit.range.start.character
     end
   end
   if min_start_char then
