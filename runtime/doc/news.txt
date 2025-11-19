@@ -323,6 +323,7 @@ OPTIONS
 • 'winborder' sets the default border for |floating-windows|.
 • 'winborder' "bold" style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
+• |g:clipboard| autodetection only selects tmux when running inside tmux
 
 PERFORMANCE
 
