@@ -144,6 +144,8 @@ LSP
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
   and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
 • Support for nested snippets.
+• LSP completion now supports `CompletionItem.preselect`. Requires
+  'completeopt' to include "preselect".
 
 LUA
 

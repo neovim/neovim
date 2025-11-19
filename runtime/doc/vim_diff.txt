@@ -396,6 +396,8 @@ Options:
 - 'ambiwidth'   cannot be set to empty.
 - 'autoread'    works in the terminal (if it supports "focus" events)
 - 'background'  cannot be set to empty.
+- 'completeopt' flag "preselect" selects first completion item that has the
+                "preselect" attribute set.
 - 'cpoptions'   flags: |cpo-_|
 - 'eadirection' cannot be set to empty.
 - 'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The

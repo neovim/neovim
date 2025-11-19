@@ -474,7 +474,7 @@ function protocol.make_client_capabilities()
         completionItem = {
           snippetSupport = true,
           commitCharactersSupport = false,
-          preselectSupport = false,
+          preselectSupport = true,
           deprecatedSupport = true,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
           insertReplaceSupport = true,

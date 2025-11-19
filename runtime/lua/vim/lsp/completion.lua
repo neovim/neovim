@@ -441,6 +441,7 @@ function M._lsp_to_complete_items(
         empty = 1,
         abbr_hlgroup = hl_group,
         kind_hlgroup = kind_hlgroup,
+        preselect = item.preselect,
         user_data = {
           nvim = {
             lsp = {
