@@ -1862,7 +1862,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---   Value can be one of "left", "center", or "right".
 ---   Default is `"left"`.
 --- - noautocmd: If true then all autocommands are blocked for the duration of
----   the call.
+---   the call. Once set at window creation, this option cannot be modified
+---   later through `nvim_win_set_config()`.
 --- - fixed: If true when anchor is NW or SW, the float window
 ---          would be kept fixed even if the window would be truncated.
 --- - hide: If true the floating window will be hidden and the cursor will be invisible when
