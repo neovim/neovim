@@ -1248,6 +1248,10 @@ items:
 			customization of ctermfg and guifg properties for the
 			completion kind
 	match		See "matches" in |complete_info()|.
+	preselect	when non-zero this item is selected by default in the
+			popup menu. Only effective when 'completeopt' contains
+			"preselect". If multiple items have "preselect" set,
+			the first one is used.
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and

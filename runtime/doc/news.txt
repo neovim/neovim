@@ -330,6 +330,8 @@ LSP
 • Support for `workspace/codeLens/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
 • |gx| opens `textDocument/documentLink` items found at cursor.
+• LSP completion now supports `CompletionItem.preselect`. Requires
+  'completeopt' to include "preselect".
 
 LUA
 
@@ -364,6 +366,8 @@ OPTIONS
   • "o"         complete using 'omnifunc'
 • 'complete' allows limiting matches for sources using "{flag}^<limit>".
 • 'completeopt' flag "nearest" sorts completion results by distance to cursor.
+• 'completeopt' flag "preselect" selects the completion item that has the
+  "preselect" attribute set. Takes precedence over "noselect".
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'diffopt' with `inline:word` now automatically merges adjacent diff blocks

@@ -266,6 +266,77 @@ describe('completion', function()
       feed('i<C-r>=TestComplete()<CR><ESC>')
       eq(0, eval('&l:modified'))
     end)
+    describe('"preselect"', function()
+      it('selects the item with preselect attribute', function()
+        source([[
+          function! TestComplete() abort
+            call complete(1, [
+              \ {'word': 'aaa'},
+              \ {'word': 'bbb'},
+              \ {'word': 'ccc', 'preselect': v:true},
+              \ {'word': 'ddd'},
+              \ ])
+            return ''
+          endfunction
+        ]])
+        command('set completeopt+=menuone,preselect')
+        feed('i<C-r>=TestComplete()<CR>')
+        screen:expect([[
+          ccc^                                                         |
+          {4:aaa            }{1:                                             }|
+          {4:bbb            }{1:                                             }|
+          {12:ccc            }{1:                                             }|
+          {4:ddd            }{1:                                             }|
+          {1:~                                                           }|*2
+          {5:-- INSERT --}                                                |
+        ]])
+      end)
+      it('preselect scrolls pum when preselect item is far down', function()
+        source([[
+          function! TestComplete() abort
+            let items = []
+            for i in range(20)
+              call add(items, {'word': 'item' .. i})
+            endfor
+            let items[15].preselect = v:true
+            call complete(1, items)
+            return ''
+          endfunction
+        ]])
+        command('set completeopt+=menuone,preselect pumheight=5')
+        feed('i<C-r>=TestComplete()<CR>')
+        screen:expect([[
+          item15^                                                      |
+          {4:item13         }{12: }{1:                                            }|
+          {4:item14         }{12: }{1:                                            }|
+          {12:item15          }{1:                                            }|
+          {4:item16         }{101: }{1:                                            }|
+          {4:item17         }{12: }{1:                                            }|
+          {1:~                                                           }|
+          {5:-- INSERT --}                                                |
+        ]])
+      end)
+      it('preselect overrides noselect', function()
+        source([[
+          function! TestComplete() abort
+            call complete(1, [
+              \ {'word': 'aaa'},
+              \ {'word': 'bbb', 'preselect': v:true},
+              \ ])
+            return ''
+          endfunction
+        ]])
+        command('set completeopt+=menuone,noselect,preselect')
+        feed('i<C-r>=TestComplete()<CR>')
+        screen:expect([[
+          ^                                                            |
+          {4:aaa            }{1:                                             }|
+          {12:bbb            }{1:                                             }|
+          {1:~                                                           }|*4
+          {5:-- INSERT --}                                                |
+        ]])
+      end)
+    end)
   end)
 
   describe('completeopt+=noinsert does not add blank undo items', function()

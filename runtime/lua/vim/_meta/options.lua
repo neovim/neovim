@@ -1219,8 +1219,12 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    completion in the preview window.  Only works in
 --- 	    combination with "menu" or "menuone".
 ---
---- Only "fuzzy", "longest", "popup", "preinsert" and "preview" have an
---- effect when 'autocomplete' is enabled.
+---     preselect   Select the completion item that has the "preselect"
+--- 	    attribute set. If both "noselect" and "preselect" are present,
+--- 	    "preselect" takes precedence.
+---
+--- Only "fuzzy", "longest", "popup", "preinsert", "preselect" and
+--- "preview" have an effect when 'autocomplete' is enabled.
 ---
 --- This option does not apply to `cmdline-completion`.  See 'wildoptions'
 --- for that.

@@ -173,6 +173,7 @@ struct compl_S {
                                  ///< cp_flags has CP_FREE_FNAME
   int cp_flags;                  ///< CP_ values
   int cp_number;                 ///< sequence number
+  bool cp_preselect;             ///< preselect item
   int cp_score;                  ///< fuzzy match score or proximity score
   bool cp_in_match_array;        ///< collected by compl_match_array
   int cp_user_abbr_hlattr;       ///< highlight attribute for abbr
@@ -223,6 +224,7 @@ static compl_T *compl_first_match = NULL;
 static compl_T *compl_curr_match = NULL;
 static compl_T *compl_shown_match = NULL;
 static compl_T *compl_old_match = NULL;
+static compl_T *compl_preselect_match = NULL;
 
 /// list used to store the compl_T which have the max score
 static compl_T **compl_best_matches = NULL;
@@ -847,7 +849,8 @@ int ins_compl_add_infercase(char *str_arg, int len, bool icase, char *fname, Dir
     flags |= CP_ICASE;
   }
 
-  int res = ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false, NULL, score);
+  int res = ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false, NULL, score,
+                          false);
   xfree(tofree);
   return res;
 }
@@ -916,7 +919,8 @@ bool ins_compl_preinsert_longest(void)
 ///         returned in case of error.
 static int ins_compl_add(char *const str, int len, char *const fname, char *const *const cptext,
                          const bool cptext_allocated, typval_T *user_data, const Direction cdir,
-                         int flags_arg, const bool adup, const int *user_hl, const int score)
+                         int flags_arg, const bool adup, const int *user_hl, const int score,
+                         bool preselect)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   compl_T *match;
@@ -966,6 +970,10 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   match = xcalloc(1, sizeof(compl_T));
   match->cp_number = flags & CP_ORIGINAL_TEXT ? 0 : -1;
   match->cp_str = cbuf_to_string(str, (size_t)len);
+  match->cp_preselect = preselect;
+  if (preselect && compl_preselect_match == NULL) {
+    compl_preselect_match = match;
+  }
 
   // match-fname is:
   // - compl_curr_match->cp_fname if it is a string equal to fname.
@@ -1214,7 +1222,7 @@ static void ins_compl_add_matches(int num_matches, char **matches, int icase)
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
     add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
                           CP_FAST | (icase ? CP_ICASE : 0), false, NULL,
-                          FUZZY_SCORE_NONE);
+                          FUZZY_SCORE_NONE, false);
     if (add_r == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
@@ -1626,6 +1634,11 @@ static int ins_compl_build_pum(void)
             cur = i;
             shown_match_ok = true;
           }
+        }
+        if (comp == compl_preselect_match) {
+          cur = i;
+          compl_shown_match = comp;
+          shown_match_ok = true;
         }
         i++;
       }
@@ -2074,6 +2087,7 @@ static void ins_compl_free(void)
   } while (compl_curr_match != NULL && !is_first_match(compl_curr_match));
   compl_first_match = compl_curr_match = NULL;
   compl_shown_match = NULL;
+  compl_preselect_match = NULL;
   compl_old_match = NULL;
 }
 
@@ -3283,6 +3297,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   bool dup = false;
   bool empty = false;
   int flags = fast ? CP_FAST : 0;
+  bool preselect = false;
   char *(cptext[CPT_COUNT]);
   char *user_abbr_hlname = NULL;
   char *user_kind_hlname = NULL;
@@ -3310,6 +3325,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     }
     dup = (bool)tv_dict_get_number(tv->vval.v_dict, "dup");
     empty = (bool)tv_dict_get_number(tv->vval.v_dict, "empty");
+    preselect = (bool)tv_dict_get_number(tv->vval.v_dict, "preselect");
     if (tv_dict_get_string(tv->vval.v_dict, "equal", false) != NULL
         && tv_dict_get_number(tv->vval.v_dict, "equal")) {
       flags |= CP_EQUAL;
@@ -3324,7 +3340,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     return FAIL;
   }
   int status = ins_compl_add((char *)word, -1, NULL, cptext, true,
-                             &user_data, dir, flags, dup, user_hl, FUZZY_SCORE_NONE);
+                             &user_data, dir, flags, dup, user_hl, FUZZY_SCORE_NONE, preselect);
   if (status != OK) {
     tv_clear(&user_data);
   }
@@ -3420,7 +3436,7 @@ static void set_completion(colnr_T startcol, list_T *list)
   }
   if (ins_compl_add(compl_orig_text.data, (int)compl_orig_text.size,
                     NULL, NULL, false, NULL, 0,
-                    flags | CP_FAST, false, NULL, FUZZY_SCORE_NONE) != OK) {
+                    flags | CP_FAST, false, NULL, FUZZY_SCORE_NONE, false) != OK) {
     return;
   }
 
@@ -3436,7 +3452,10 @@ static void set_completion(colnr_T startcol, list_T *list)
 
   compl_curr_match = compl_first_match;
   bool no_select = compl_no_select || compl_longest;
-  if (compl_no_insert || no_select) {
+  if ((get_cot_flags() & kOptCotFlagPreselect) && compl_preselect_match && !no_select) {
+    compl_curr_match = compl_preselect_match->cp_prev;
+    ins_complete(Ctrl_N, false);
+  } else if (compl_no_insert || no_select) {
     ins_complete(K_DOWN, false);
     if (no_select) {
       ins_complete(K_UP, false);
@@ -4117,7 +4136,7 @@ static void get_next_filename_completion(void)
         int current_score = compl_fuzzy_scores[fuzzy_indices_data[i]];
         if (ins_compl_add(match, -1, NULL, NULL, false, NULL, dir,
                           CP_FAST | ((p_fic || p_wic) ? CP_ICASE : 0),
-                          false, NULL, current_score) == OK) {
+                          false, NULL, current_score, false) == OK) {
           dir = FORWARD;
         }
 
@@ -4581,7 +4600,7 @@ static void get_next_bufname_token(void)
       char *tail = path_tail(b->b_sfname);
       if (strncmp(tail, compl_orig_text.data, compl_orig_text.size) == 0) {
         ins_compl_add(tail, (int)strlen(tail), NULL, NULL, false, NULL, 0,
-                      p_ic ? CP_ICASE : 0, false, NULL, FUZZY_SCORE_NONE);
+                      p_ic ? CP_ICASE : 0, false, NULL, FUZZY_SCORE_NONE, false);
       }
     }
   }
@@ -6097,7 +6116,7 @@ static int ins_compl_start(void)
   }
   if (ins_compl_add(compl_orig_text.data, (int)compl_orig_text.size,
                     NULL, NULL, false, NULL, 0,
-                    flags, false, NULL, FUZZY_SCORE_NONE) != OK) {
+                    flags, false, NULL, FUZZY_SCORE_NONE, false) != OK) {
     API_CLEAR_STRING(compl_pattern);
     API_CLEAR_STRING(compl_orig_text);
     kv_destroy(compl_orig_extmarks);
