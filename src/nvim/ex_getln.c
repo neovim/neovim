@@ -933,6 +933,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   // sure to still clean up to avoid memory corruption.
   if (cmdline_pum_active()) {
     cmdline_pum_remove(false);
+  } else {
+    // A previous cmdline_pum_remove() may have deferred redraw.
+    pum_check_clear();
   }
   wildmenu_cleanup(&ccline);
   s->did_wild_list = false;
