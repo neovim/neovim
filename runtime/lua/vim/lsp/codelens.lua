@@ -32,15 +32,18 @@ local global_config = {
 --- vim.lsp.codelens.config({
 ---   virt_text = false,
 ---   virt_lines = function(buf, ns, line, chunks)
----     local indent = vim.fn.indent(line + 1)
+---     local indent = vim.api.nvim_buf_call(buf, function()
+---       return vim.fn.indent(line + 1)
+---     end)
+---
 ---     if indent > 0 then table.insert(chunks, 1, {
 ---       string.rep(" ", indent), ""
 ---     }) end
 ---
----     api.nvim_buf_set_extmark(buf, ns, line, 0, {
+---     vim.api.nvim_buf_set_extmark(buf, ns, line, 0, {
 ---       virt_lines = { chunks },
 ---       virt_lines_above = true,
----       hl_mode = 'replace', -- Change from default of 'combine'
+---       hl_mode = 'replace', -- Default: 'combine'
 ---     })
 ---   end,
 --- })
@@ -211,7 +214,7 @@ end
 ---@param lenses lsp.CodeLens[] Lenses that start at `line`
 ---@return nil
 local function display_line_lenses(buf, ns, line, lenses)
-  local chunks = {} ---@type string[][]
+  local chunks = {} ---@type [string, integer|string?][]
   table.sort(lenses, function(a, b)
     return a.range.start.character < b.range.start.character
   end)
@@ -241,7 +244,10 @@ local function display_line_lenses(buf, ns, line, lenses)
     if type(global_config.virt_lines) == 'function' then
       global_config.virt_lines(buf, ns, line, chunks)
     elseif type(global_config.virt_lines) == 'boolean' and global_config.virt_lines then
-      local indent = vim.fn.indent(line + 1) ---@type integer
+      local indent = api.nvim_buf_call(buf, function()
+        return vim.fn.indent(line + 1)
+      end) ---@type integer
+
       if indent > 0 then
         table.insert(chunks, 1, { string.rep(' ', indent), '' })
       end
