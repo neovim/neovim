@@ -810,7 +810,7 @@ end)
 
 --- @param name string
 --- @param completion_result lsp.CompletionList
---- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer}
+--- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer, cmp?: string}
 --- @return integer
 local function create_server(name, completion_result, opts)
   opts = opts or {}
@@ -841,6 +841,10 @@ local function create_server(name, completion_result, opts)
 
     local bufnr = vim.api.nvim_get_current_buf()
     vim.api.nvim_win_set_buf(0, bufnr)
+    local cmp_fn
+    if opts.cmp then
+      cmp_fn = assert(loadstring(opts.cmp))
+    end
     return vim.lsp.start({
       name = name,
       cmd = server.cmd,
@@ -850,6 +854,7 @@ local function create_server(name, completion_result, opts)
           convert = function(item)
             return { abbr = item.label:gsub('%b()', '') }
           end,
+          cmp = cmp_fn,
         })
       end,
     })
@@ -1187,6 +1192,29 @@ describe('vim.lsp.completion: protocol', function()
     trigger_at_pos({ 1, 1 })
     assert_matches(function(matches)
       eq('foo', matches[1].abbr)
+    end)
+  end)
+
+  it('enable(…,{cmp=fn}) custom sort order', function()
+    create_server('dummy', {
+      isIncomplete = false,
+      items = {
+        { label = 'zzz', sortText = 'a' },
+        { label = 'aaa', sortText = 'z' },
+        { label = 'mmm', sortText = 'm' },
+      },
+    }, {
+      cmp = string.dump(function(a, b)
+        return a.abbr < b.abbr
+      end),
+    })
+    feed('i')
+    trigger_at_pos({ 1, 0 })
+    assert_matches(function(matches)
+      eq(3, #matches)
+      eq('aaa', matches[1].abbr)
+      eq('mmm', matches[2].abbr)
+      eq('zzz', matches[3].abbr)
     end)
   end)
 
