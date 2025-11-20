@@ -2808,7 +2808,7 @@ bool conceal_cursor_line(const win_T *wp)
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+  return wp->w_p_cul || (wp == curwin && wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
 /// Update w_cursorline, taking care to set it to the to the start of a closed fold.

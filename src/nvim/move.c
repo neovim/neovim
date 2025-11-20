@@ -157,7 +157,7 @@ static void redraw_for_cursorcolumn(win_T *wp)
 {
   // If the cursor moves horizontally when 'concealcursor' is active, then the
   // current line needs to be redrawn to calculate the correct cursor position.
-  if (wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
+  if (wp == curwin && wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
     redrawWinline(wp, wp->w_cursor.lnum);
   }
 
@@ -513,7 +513,8 @@ void check_cursor_moved(win_T *wp)
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
 
     // Concealed line visibility toggled.
-    if (wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 2 && !conceal_cursor_line(wp)
+    if (wp == curwin && wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 2
+        && !conceal_cursor_line(wp)
         && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
             || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true))) {
       changed_window_setting(wp);
