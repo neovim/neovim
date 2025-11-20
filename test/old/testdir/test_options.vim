@@ -108,9 +108,9 @@ func Test_options_command()
 
   " Check if the option-window is opened horizontally.
   wincmd j
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   wincmd k
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
@@ -118,9 +118,9 @@ func Test_options_command()
   vert options
   " Check if the option-window is opened vertically.
   wincmd l
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   wincmd h
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
@@ -141,16 +141,16 @@ func Test_options_command()
   tab options
   " Check if the option-window is opened in a tab.
   normal gT
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   normal gt
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
   " Open the options window browse
   if has('browse')
     browse set
-    call assert_equal('option-window', bufname(''))
+    call assert_equal('nvim-optwin://optwin', bufname(''))
     close
   endif
 endfunc

@@ -2,7 +2,7 @@
 
 // Some defines from the old feature.h
 #define SESSION_FILE "Session.vim"
-#define SYS_OPTWIN_FILE "$VIMRUNTIME/optwin.vim"
+#define SYS_OPTWIN_FILE "$VIMRUNTIME/scripts/optwin.lua"
 #define RUNTIME_DIRNAME "runtime"
 
 enum {
