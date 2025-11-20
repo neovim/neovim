@@ -91,7 +91,7 @@ int main(void)
 }
 " HAVE_BITSCANFORWARD64)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+if(CMAKE_SYSTEM_NAME STREQUAL "SunOS" OR CMAKE_SYSTEM_NAME STREQUAL "Haiku")
   check_c_source_compiles("
 #include <termios.h>
 int
