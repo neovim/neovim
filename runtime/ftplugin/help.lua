@@ -67,10 +67,8 @@ vim.keymap.set('n', '[[', function()
 end, { buffer = 0, silent = false, desc = 'Jump to previous section' })
 
 local parser = assert(vim.treesitter.get_parser(0, 'vimdoc', { error = false }))
-local root = parser:parse()[1]:root()
 
--- Add "runnables" for Lua/Vimscript code examples.
-do
+local function runnables()
   ---@type table<integer, { lang: string, code: string }>
   local code_blocks = {}
   local query = vim.treesitter.query.parse(
@@ -85,6 +83,7 @@ do
   ]]
   )
 
+  local root = parser:parse()[1]:root()
   for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
     for id, nodes in pairs(match) do
       local name = query.captures[id]
@@ -115,37 +114,53 @@ do
   end, { buffer = true })
 end
 
-local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
-local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+-- Retry once if the buffer has changed during the iteration of the code
+-- blocks. See #36574.
+if not pcall(runnables) then
+  runnables()
+end
 
-if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
-  local base = 'https://neovim.io/doc/user/helptag.html?tag='
-  local query = vim.treesitter.query.parse(
-    'vimdoc',
-    [[
+local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
+local function urls()
+  local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+
+  if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
+    local base = 'https://neovim.io/doc/user/helptag.html?tag='
+    local query = vim.treesitter.query.parse(
+      'vimdoc',
+      [[
     ((optionlink) @helplink)
     (taglink
       text: (_) @helplink)
     (tag
       text: (_) @helplink)
-  ]]
-  )
+    ]]
+    )
 
-  for _, match, _ in query:iter_matches(root, 0, 0, -1) do
-    for id, nodes in pairs(match) do
-      if query.captures[id] == 'helplink' then
-        for _, node in ipairs(nodes) do
-          local start_line, start_col, end_line, end_col = node:range()
-          local tag = vim.treesitter.get_node_text(node, 0)
-          vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
-            end_line = end_line,
-            end_col = end_col,
-            url = base .. vim.uri_encode(tag),
-          })
+    vim.api.nvim_buf_clear_namespace(0, url_ns, 0, -1)
+    local root = parser:parse()[1]:root()
+    for _, match, _ in query:iter_matches(root, 0, 0, -1) do
+      for id, nodes in pairs(match) do
+        if query.captures[id] == 'helplink' then
+          for _, node in ipairs(nodes) do
+            local start_line, start_col, end_line, end_col = node:range()
+            local tag = vim.treesitter.get_node_text(node, 0)
+            vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
+              end_line = end_line,
+              end_col = end_col,
+              url = base .. vim.uri_encode(tag),
+            })
+          end
         end
       end
     end
   end
+end
+
+-- Retry once if the buffer has changed during the iteration of the code
+-- blocks. See #36574.
+if not pcall(urls) then
+  urls()
 end
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
