@@ -5038,11 +5038,20 @@ func Test_wildtrigger_update_screen()
   call term_sendkeys(buf, "x")
   call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_2', {})
 
-  " pum window is closed when no completion candidates are available
+  " pum is closed when no completion candidates are available
   call term_sendkeys(buf, "\<F8>")
   call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_3', {})
 
-  call term_sendkeys(buf, "\<esc>")
+  call term_sendkeys(buf, "\<BS>\<F8>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_1', {})
+
+  call term_sendkeys(buf, "x")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_2', {})
+
+  " pum is closed when leaving cmdline mode
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_4', {})
+
   call StopVimInTerminal(buf)
 endfunc
 
