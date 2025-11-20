@@ -334,7 +334,7 @@ static void close_cb(Stream *stream, void *data)
   argv[0].vval.v_number = (varnumber_T)(((Channel *)data)->id);
 
   typval_T rettv = TV_INITIAL_VALUE;
-  callback_call(&stream->on_close, 1, argv, &rettv);
+  callback_call(&((Channel *)data)->on_close, 1, argv, &rettv);
   tv_clear(&rettv);
 
   channel_decref(data);
