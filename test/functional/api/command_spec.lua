@@ -25,7 +25,6 @@ describe('nvim_get_commands', function()
     definition = 'echo "Hello World"',
     name = 'Hello',
     nargs = '1',
-    preview = false,
     range = NIL,
     register = false,
     keepscript = false,
@@ -41,7 +40,6 @@ describe('nvim_get_commands', function()
     definition = 'pwd',
     name = 'Pwd',
     nargs = '?',
-    preview = false,
     range = NIL,
     register = false,
     keepscript = false,
@@ -96,7 +94,6 @@ describe('nvim_get_commands', function()
       definition = 'pwd <args>',
       name = 'TestCmd',
       nargs = '1',
-      preview = false,
       range = '10',
       register = false,
       keepscript = false,
@@ -112,7 +109,6 @@ describe('nvim_get_commands', function()
       definition = '!finger <args>',
       name = 'Finger',
       nargs = '+',
-      preview = false,
       range = NIL,
       register = false,
       keepscript = false,
@@ -128,7 +124,6 @@ describe('nvim_get_commands', function()
       definition = 'call \128\253R2_foo(<q-args>)',
       name = 'Cmd2',
       nargs = '*',
-      preview = false,
       range = NIL,
       register = false,
       keepscript = false,
@@ -144,7 +139,6 @@ describe('nvim_get_commands', function()
       definition = 'call \128\253R3_ohyeah()',
       name = 'Cmd3',
       nargs = '0',
-      preview = false,
       range = NIL,
       register = false,
       keepscript = false,
@@ -160,7 +154,6 @@ describe('nvim_get_commands', function()
       definition = 'call \128\253R4_just_great()',
       name = 'Cmd4',
       nargs = '0',
-      preview = false,
       range = NIL,
       register = true,
       keepscript = false,
@@ -196,14 +189,20 @@ describe('nvim_get_commands', function()
     )
   end)
 
-  it('works with Lua functions', function()
+  it('gets callbacks defined as Lua functions', function()
     exec_lua [[
       vim.api.nvim_create_user_command('CommandWithLuaCallback', function(opts)
         return 3
-      end, {})
+      end, {
+        nargs = 1,
+        preview = function() return 4 end,
+        complete = function() return 5 end,
+      })
 
-      local cb = vim.api.nvim_get_commands({})["CommandWithLuaCallback"]["callback"]
-      assert(cb() == 3)
+      local cmd = vim.api.nvim_get_commands({})["CommandWithLuaCallback"]
+      assert(cmd["callback"]() == 3)
+      assert(cmd["preview"]() == 4)
+      assert(cmd["complete"]() == 5)
     ]]
   end)
 end)

@@ -1787,10 +1787,9 @@ Dict commands_array(buf_T *buf, Arena *arena)
     PUT_C(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
     PUT_C(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_REGSTR)));
     PUT_C(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
-    PUT_C(d, "preview", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_PREVIEW)));
 
     if (cmd->uc_preview_luaref != LUA_NOREF) {
-      PUT_C(d, "preview_callback", LUAREF_OBJ(api_new_luaref(cmd->uc_preview_luaref)));
+      PUT_C(d, "preview", LUAREF_OBJ(api_new_luaref(cmd->uc_preview_luaref)));
     }
 
     if (cmd->uc_luaref != LUA_NOREF) {
