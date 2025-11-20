@@ -64,8 +64,8 @@ describe('channels', function()
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
 
-    command("call chanclose(g:id)")
-    eq(id, eval("g:close"))
+    command('call chanclose(g:id)')
+    eq(id, eval('g:close'))
   end)
 
   it('dont crash due to garbage in rpc #23781', function()
