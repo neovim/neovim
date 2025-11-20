@@ -177,6 +177,11 @@ API
 • Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
   by |vim.lsp.enable()|.
 
+BUILD
+
+• On Windows, `tee.exe` is installed with `nvim.exe` by default so that
+  commands like :make, :grep work out of the box.
+
 DEFAULTS
 
 • Highlighting:
