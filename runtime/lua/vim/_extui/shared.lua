@@ -80,12 +80,12 @@ function M.check_targets()
         api.nvim_set_option_value('modifiable', true, { scope = 'local' })
         api.nvim_set_option_value('bufhidden', 'hide', { scope = 'local' })
         api.nvim_set_option_value('buftype', 'nofile', { scope = 'local' })
-        if type ~= 'msg' then
-          -- Use MsgArea and hide search highlighting in the cmdline window.
-          local hl = 'Normal:MsgArea'
-          hl = hl .. (type == 'cmd' and ',Search:MsgArea,CurSearch:MsgArea,IncSearch:MsgArea' or '')
-          api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
-        end
+        -- Use MsgArea except in the msg window. Hide Search highlighting except in the pager.
+        local hide = type == 'msg' and 'NormalFloat' or 'MsgArea'
+        hide = ('Search:%s,CurSearch:%s,IncSearch:%s'):format(hide, hide, hide)
+        local hl = type == 'msg' and '' or 'Normal:MsgArea' .. (type ~= 'pager' and ',' or '')
+        hl = hl .. (type ~= 'pager' and hide or '')
+        api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
       end)
       api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(type:sub(1, 1):upper() .. type:sub(2)))
       -- Fire FileType with window context to let the user reconfigure local options.
