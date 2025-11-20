@@ -2041,28 +2041,110 @@ stack traceback:
     end)
 
     it('can discard input', function()
-      -- discard every other normal 'x' command
+      -- discard the first key produced by every other 'x' key typed
       exec_lua [[
         n_key = 0
 
         vim.on_key(function(buf, typed_buf)
           if typed_buf == 'x' then
             n_key = n_key + 1
+            return (n_key % 2 == 0) and '' or nil
           end
-          return (n_key % 2 == 0) and "" or nil
         end)
       ]]
 
       api.nvim_buf_set_lines(0, 0, -1, true, { '54321' })
 
-      feed('x')
+      feed('x') -- 'x' not discarded
       expect('4321')
-      feed('x')
+      feed('x') -- 'x' discarded
       expect('4321')
-      feed('x')
+      feed('x') -- 'x' not discarded
       expect('321')
-      feed('x')
+      feed('x') -- 'x' discarded
       expect('321')
+
+      api.nvim_buf_set_lines(0, 0, -1, true, { '54321' })
+
+      -- only the first key from the mapping is discarded
+      command('nnoremap x $x')
+      feed('0x') -- '$' not discarded
+      expect('5432')
+      feed('0x') -- '$' discarded
+      expect('432')
+      feed('0x') -- '$' not discarded
+      expect('43')
+      feed('0x') -- '$' discarded
+      expect('3')
+
+      feed('i')
+      -- when discarding <Cmd>, the following command is also discarded.
+      command([[inoremap x <Cmd>call append('$', 'foo')<CR>]])
+      feed('x') -- not discarded
+      expect('3\nfoo')
+      feed('x') -- discarded
+      expect('3\nfoo')
+      feed('x') -- not discarded
+      expect('3\nfoo\nfoo')
+      feed('x') -- discarded
+      expect('3\nfoo\nfoo')
+
+      -- K_LUA is handled similarly to <Cmd>
+      exec_lua([[vim.keymap.set('i', 'x', function() vim.fn.append('$', 'bar') end)]])
+      feed('x') -- not discarded
+      expect('3\nfoo\nfoo\nbar')
+      feed('x') -- discarded
+      expect('3\nfoo\nfoo\nbar')
+      feed('x') -- not discarded
+      expect('3\nfoo\nfoo\nbar\nbar')
+      feed('x') -- discarded
+      expect('3\nfoo\nfoo\nbar\nbar')
+    end)
+
+    it('behaves consistently with <Cmd>, K_LUA, nvim_paste', function()
+      exec_lua([[
+        vim.keymap.set('i', '<F2>', "<Cmd>call append('$', 'FOO')<CR>")
+        vim.keymap.set('i', '<F3>', function() vim.fn.append('$', 'BAR') end)
+      ]])
+
+      feed('qrafoo<F2><F3>')
+      api.nvim_paste('bar', false, -1)
+      feed('<Esc>q')
+      expect('foobar\nFOO\nBAR')
+
+      exec_lua([[
+        keys = {}
+        typed = {}
+
+        vim.on_key(function(buf, typed_buf)
+          table.insert(keys, buf)
+          table.insert(typed, typed_buf)
+        end)
+      ]])
+
+      feed('@r')
+      local keys = exec_lua('return keys')
+      eq('@r', exec_lua([[return table.concat(typed, '')]]))
+      expect('foobarfoobar\nFOO\nBAR\nFOO\nBAR')
+
+      -- Add a new callback that discards most special keys as well as 'f'.
+      -- The old callback is still active.
+      exec_lua([[
+        vim.on_key(function(buf, _)
+          if not buf:find('^[@rao\27]$') then
+            return ''
+          end
+        end)
+
+        keys = {}
+        typed = {}
+      ]])
+
+      feed('@r')
+      eq(keys, exec_lua('return keys'))
+      eq('@r', exec_lua([[return table.concat(typed, '')]]))
+      -- The "bar" paste is discarded as a whole.
+      expect('foobarfoobaroo\nFOO\nBAR\nFOO\nBAR')
     end)
 
     it('callback invalid return', function()

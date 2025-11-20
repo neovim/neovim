@@ -1296,7 +1296,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (s->c == K_COMMAND) {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     } else {
-      map_execute_lua(false);
+      map_execute_lua(false, false);
     }
     // If the window changed incremental search state is not valid.
     if (s->is_state.winid != curwin->handle) {
