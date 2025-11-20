@@ -23,6 +23,76 @@
 
 #include "event/socket.c.generated.h"
 
+/// Helper callback for closing handles during cleanup
+static void close_walk_cb(uv_handle_t *handle, void *arg)
+{
+  if (!uv_is_closing(handle)) {
+    uv_close(handle, NULL);
+  }
+}
+
+/// Test if a socket/pipe is actually being listened to.
+///
+/// @param addr Socket address to test
+/// @param is_tcp Whether this is a TCP socket
+/// @return true if connection succeeds (socket is alive), false otherwise
+static bool socket_test_connection(const char *addr, bool is_tcp)
+{
+  uv_loop_t test_loop;
+  if (uv_loop_init(&test_loop) != 0) {
+    return false;
+  }
+
+  bool is_alive = false;
+  int status = 1;  // 1 = pending, 0 = success, <0 = error
+  uv_connect_t req;
+  req.data = &status;
+
+  if (is_tcp) {
+    uv_tcp_t tcp;
+    uv_tcp_init(&test_loop, &tcp);
+
+    char *addr_copy = xstrdup(addr);
+    char *host_end = strrchr(addr_copy, ':');
+    if (!host_end) {
+      xfree(addr_copy);
+      uv_loop_close(&test_loop);
+      return false;
+    }
+    *host_end = NUL;
+
+    struct addrinfo hints = { .ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM };
+    struct addrinfo *ai = NULL;
+    if (getaddrinfo(addr_copy, host_end + 1, &hints, &ai) == 0 && ai) {
+      uv_tcp_connect(&req, &tcp, ai->ai_addr, connect_cb);
+      freeaddrinfo(ai);
+    }
+    xfree(addr_copy);
+  } else {
+    uv_pipe_t pipe;
+    uv_pipe_init(&test_loop, &pipe, 0);
+    uv_pipe_connect(&req, &pipe, addr, connect_cb);
+  }
+
+  // Run loop with short timeout (500ms) to test connection
+  uint64_t start = uv_now(&test_loop);
+  while (status == 1 && (uv_now(&test_loop) - start) < 500) {
+    uv_run(&test_loop, UV_RUN_NOWAIT);
+    if (status == 1) {
+      uv_sleep(10);  // Small sleep to avoid busy-waiting
+    }
+  }
+
+  is_alive = (status == 0);
+
+  // Clean up
+  uv_walk(&test_loop, close_walk_cb, NULL);
+  uv_run(&test_loop, UV_RUN_DEFAULT);
+  uv_loop_close(&test_loop);
+
+  return is_alive;
+}
+
 int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -80,50 +150,77 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   FUNC_ATTR_NONNULL_ALL
 {
-  watcher->cb = cb;
+  watcher-\u003ecb = cb;
   int result = UV_EINVAL;
+  bool is_tcp = (watcher-\u003estream-\u003etype == UV_TCP);
 
-  if (watcher->stream->type == UV_TCP) {
-    struct addrinfo *ai = watcher->uv.tcp.addrinfo;
+  if (is_tcp) {
+    struct addrinfo *ai = watcher-\u003euv.tcp.addrinfo;
 
-    for (; ai; ai = ai->ai_next) {
-      result = uv_tcp_bind(&watcher->uv.tcp.handle, ai->ai_addr, 0);
+    for (; ai; ai = ai-\u003eai_next) {
+      result = uv_tcp_bind(\u0026watcher-\u003euv.tcp.handle, ai-\u003eai_addr, 0);
       if (result != 0) {
         continue;
       }
-      result = uv_listen(watcher->stream, backlog, connection_cb);
+      result = uv_listen(watcher-\u003estream, backlog, connection_cb);
       if (result == 0) {
         struct sockaddr_storage sas;
 
         // When the endpoint in socket_watcher_init() didn't specify a port
         // number, a free random port number will be assigned. sin_port will
         // contain 0 in this case, unless uv_tcp_getsockname() is used first.
-        uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
-                           &(int){ sizeof(sas) });
-        uint16_t port = (sas.ss_family == AF_INET) ? ((struct sockaddr_in *)(&sas))->sin_port
-                                                   : ((struct sockaddr_in6 *)(&sas))->sin6_port;
-        // v:servername uses the string from watcher->addr
-        size_t len = strlen(watcher->addr);
-        snprintf(watcher->addr + len, sizeof(watcher->addr) - len, ":%" PRIu16,
+        uv_tcp_getsockname(\u0026watcher-\u003euv.tcp.handle, (struct sockaddr *)\u0026sas,
+                           \u0026(int){ sizeof(sas) });
+        uint16_t port = (sas.ss_family == AF_INET) ? ((struct sockaddr_in *)(\u0026sas))-\u003esin_port
+                                                   : ((struct sockaddr_in6 *)(\u0026sas))-\u003esin6_port;
+        // v:servername uses the string from watcher-\u003eaddr
+        size_t len = strlen(watcher-\u003eaddr);
+        snprintf(watcher-\u003eaddr + len, sizeof(watcher-\u003eaddr) - len, \":%\" PRIu16,
                  ntohs(port));
         break;
       }
     }
-    uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
+    uv_freeaddrinfo(watcher-\u003euv.tcp.addrinfo);
   } else {
-    result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+    // Unix socket / named pipe
+    result = uv_pipe_bind(\u0026watcher-\u003euv.pipe.handle, watcher-\u003eaddr);
+
+    // If bind failed, check if it's due to an existing socket file
+    if (result != 0 \u0026\u0026 os_path_exists(watcher-\u003eaddr)) {
+      // Test if the existing socket is actually being listened to
+      bool is_alive = socket_test_connection(watcher-\u003eaddr, false);
+
+      if (is_alive) {
+        // Socket is in use by another Nvim instance
+        ILOG(\"Socket already in use by another Nvim instance: %s\", watcher-\u003eaddr);
+        return result;  // Return the original error
+      } else {
+        // Socket file exists but no one is listening - it's stale
+        ILOG(\"Removing stale socket: %s\", watcher-\u003eaddr);
+
+        // Remove the stale socket file
+        if (os_remove(watcher-\u003eaddr) != 0) {
+          WLOG(\"Failed to remove stale socket: %s\", watcher-\u003eaddr);
+          return result;
+        }
+
+        // Retry binding after removing stale socket
+        result = uv_pipe_bind(\u0026watcher-\u003euv.pipe.handle, watcher-\u003eaddr);
+      }
+    }
+
     if (result == 0) {
-      result = uv_listen(watcher->stream, backlog, connection_cb);
+      result = uv_listen(watcher-\u003estream, backlog, connection_cb);
     }
   }
 
-  assert(result <= 0);  // libuv should return negative error code or zero.
-  if (result < 0) {
+  assert(result \u003c= 0);  // libuv should return negative error code or zero.
+  if (result \u003c 0) {
     if (result == UV_EACCES) {
       // Libuv converts ENOENT to EACCES for Windows compatibility, but if
       // the parent directory does not exist, ENOENT would be more accurate.
-      *path_tail(watcher->addr) = NUL;
-      if (!os_path_exists(watcher->addr)) {
+      *path_tail(watcher-\u003eaddr) = NUL;
+      if (!os_path_exists(watcher-\u003eaddr)) {
         result = UV_ENOENT;
       }
     }
@@ -132,6 +229,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
 
   return 0;
 }
+
 
 int socket_watcher_accept(SocketWatcher *watcher, RStream *stream)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
