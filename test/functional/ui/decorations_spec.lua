@@ -5872,6 +5872,17 @@ describe('decorations: inline virtual text', function()
                                                         |
     ]])
   end)
+
+  it("virtcol('$') is correct with inline virt text at EOL", function()
+    insert(('1234567890\n'):rep(6))
+    for _, v in ipairs({ { 2, 'a' }, { 3, 'ab' }, { 4, 'abc' }, { 5, 'abcd' }, { 6, 'αβγ口' } }) do
+      local ln, tx = unpack(v)
+      local co = fn.col({ ln, '$' })
+      eq(11, fn.virtcol({ ln, '$' }))
+      api.nvim_buf_set_extmark(0, ns, ln - 1, co - 1, { virt_text = { { tx } }, virt_text_pos = 'inline' })
+      eq(11 + fn.strwidth(tx), fn.virtcol({ ln, '$' }))
+    end
+  end)
 end)
 
 describe('decorations: virtual lines', function()
