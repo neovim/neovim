@@ -232,7 +232,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=@vi
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimCd,vimCommandModifier,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,vimDoCommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimPrompt,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimBreakadd,vimBreakdel,vimBreaklist,vimCall,vimCatch,vimCd,vimCommandModifier,vimConst,vimDoautocmd,vimDebug,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,vimDoCommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimPrompt,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,@vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -293,6 +293,27 @@ syn match   vimBehave	"\<be\%[have]\>"	nextgroup=vimBehaveBang,vimBehaveModel,vi
 syn match   vimBehaveBang	contained	"\a\@1<=!" nextgroup=vimBehaveModel skipwhite
 syn keyword vimBehaveModel	contained	mswin	xterm
 
+" Break* commands {{{2
+" ===============
+syn keyword	vimBreakaddFunc	contained	func	skipwhite nextgroup=vimBreakpointFunctionLine,vimBreakpointFunction
+syn keyword	vimBreakaddFile	contained	file	skipwhite nextgroup=vimBreakpointFileLine,vimBreakpointFilename
+syn keyword	vimBreakaddHere	contained	here	skipwhite nextgroup=vimComment,vim9Comment,vimSep
+syn keyword	vimBreakaddExpr	contained	expr	skipwhite nextgroup=@vimExprList
+
+syn match	vimBreakpointGlob		contained	"*"	skipwhite nextgroup=vimComment,vim9Comment,vimSep
+syn match	vimBreakpointNumber	contained	"\<\d\+\>"	skipwhite nextgroup=vimComment,vim9Comment,vimSep
+
+syn cluster vimBreakpointArg contains=vimBreakaddFunc,vimBreakaddFile,vimBreakaddHere,vimBreakaddExpr
+
+syn match	vimBreakpointFunction	contained	"\<\%(\*\|\w\)\+\>"	skipwhite nextgroup=vimComment,vim9Comment,vimSep
+syn match	vimBreakpointFilename	contained	"\<\%(\*\|\f\)\+\>"	skipwhite nextgroup=vimComment,vim9Comment,vimSep
+syn match	vimBreakpointFunctionLine	contained	"\<\d\+\>"		skipwhite nextgroup=vimBreakpointFunction
+syn match	vimBreakpointFileLine	contained	"\<\d\+\>"		skipwhite nextgroup=vimBreakpointFilename
+
+syn keyword	vimBreakadd	breaka[dd]	skipwhite nextgroup=@vimBreakpointArg
+syn keyword	vimBreakdel	breakd[el]	skipwhite nextgroup=@vimBreakpointArg,vimBreakpointNumber,vimBreakpointGlob
+syn keyword	vimBreaklist	breakl[ist]	skipwhite nextgroup=vimComment,vim9Comment,vimSep
+
 " Call {{{2
 " ====
 syn match vimCall	"\<call\=\>"	skipwhite nextgroup=vimVar,@vimFunc
@@ -311,6 +332,10 @@ syn region	vimCdArg	contained
       \ oneline
 
 syn match	vimCdBang	contained	"\a\@1<=!"	skipwhite nextgroup=vimCdArg,vimComment,vim9Comment,vimCmdSep
+
+" Debug {{{2
+" =====
+syn keyword	vimDebug	deb[ug]	skipwhite nextgroup=@vimCmdList
 
 " Debuggreedy {{{2
 " ===========
@@ -2384,6 +2409,14 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimBehaveModel	vimBehave
  hi def link vimBehave	vimCommand
  hi def link vimBracket	Delimiter
+ hi def link vimBreakaddFunc	Special
+ hi def link vimBreakaddFile	Special
+ hi def link vimBreakaddHere	Special
+ hi def link vimBreakaddExpr	Special
+ hi def link vimBreakpointGlob	Special
+ hi def link vimBreakadd	vimCommand
+ hi def link vimBreakdel	vimCommand
+ hi def link vimBreaklist	vimCommand
  hi def link vimCall	vimCommand
  hi def link vimCatch	vimCommand
  hi def link vimCd	vimCommand
@@ -2403,6 +2436,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimContinueString	vimString
  hi def link vimCount	Number
  hi def link vimCtrlChar	SpecialChar
+ hi def link vimDebug	vimCommand
  hi def link vimDebuggreedy	vimCommand
  hi def link vimDef	vimCommand
  hi def link vimDefBang	vimBang
