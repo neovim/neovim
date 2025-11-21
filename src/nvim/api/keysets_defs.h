@@ -239,7 +239,8 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__clear_autocmds_;
-  Buffer buffer;
+  Buffer buffer;  // deprecated - use buf
+  Buffer buf;
   Union(String, ArrayOf(String)) event;
   Union(Integer, String) group;
   Union(String, ArrayOf(String)) pattern;
@@ -247,6 +248,7 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__create_autocmd_;
+  Buffer buf;  // deprecated - use buf
   Buffer buffer;
   Union(String, LuaRefOf((DictAs(create_autocmd__callback_args) args), *Boolean)) callback;
   String command;
@@ -259,7 +261,8 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__exec_autocmds_;
-  Buffer buffer;
+  Buffer buffer;  // deprecated - use buf
+  Buffer buf;
   Union(Integer, String) group;
   Boolean modeline;
   Union(String, ArrayOf(String)) pattern;
@@ -271,7 +274,8 @@ typedef struct {
   Union(String, ArrayOf(String)) event;
   Union(Integer, String) group;
   Union(String, ArrayOf(String)) pattern;
-  Union(Integer, ArrayOf(Integer)) buffer;
+  Union(Integer, ArrayOf(Integer)) buffer;  // deprecated - use buf
+  Union(Integer, ArrayOf(Integer)) buf;
   Integer id;
 } Dict(get_autocmds);
 
