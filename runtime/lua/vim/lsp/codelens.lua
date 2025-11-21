@@ -3,6 +3,71 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
+--- Configuration for lenses
+--- - `false`: Disable the option
+--- - `true`: Enable the option, with default settings
+--- - `function`: Function with signature (buf, ns, line, chunks) to override the defaults
+---   - buf: Buffer number of the lens
+---   - ns: Extmark namespace id for the LSP client's lenses
+---   - line: The zero-indexed line number the lens will be displayed on
+---   - chunks: The lenses converted to a list of `[text, hl_group]` pairs
+--- @class vim.lsp.codelens.Config
+--- Use virtual text for lenses.
+--- (default: true)
+--- @field virt_text? boolean|fun( buf: integer, ns: integer, line: integer, chunks: [string, integer|string?][])
+--- Use virtual lines for lenses.
+--- (default: false)
+--- @field virt_lines? boolean|fun( buf: integer, ns: integer, line: integer, chunks: [string, integer|string?][])
+
+---@type vim.lsp.codelens.Config
+local global_config = {
+  virt_text = true,
+  virt_lines = false,
+}
+
+--- Configure lenses globally. If a value is nil, it will not be changed.
+---
+--- Example:
+--- ```lua
+--- vim.lsp.codelens.config({
+---   virt_text = false,
+---   virt_lines = function(buf, ns, line, chunks)
+---     local indent = vim.api.nvim_buf_call(buf, function()
+---       return vim.fn.indent(line + 1)
+---     end)
+---
+---     if indent > 0 then table.insert(chunks, 1, {
+---       string.rep(" ", indent), ""
+---     }) end
+---
+---     vim.api.nvim_buf_set_extmark(buf, ns, line, 0, {
+---       virt_lines = { chunks },
+---       virt_lines_above = true,
+---       hl_mode = 'replace', -- Default: 'combine'
+---     })
+---   end,
+--- })
+--- ```
+--- @param opts? vim.lsp.codelens.Config See |vim.lsp.codelens.Config|.
+--- @return vim.lsp.codelens.Config? : Current config if {opts} is omitted
+function M.config(opts)
+  if type(opts) == 'nil' then
+    return vim.deepcopy(global_config, true)
+  else
+    vim.validate('opts', opts, 'table')
+  end
+
+  if type(opts.virt_lines) ~= 'nil' then
+    vim.validate('opts.virt_lines', opts.virt_lines, { 'boolean', 'function' })
+    global_config.virt_lines = opts.virt_lines
+  end
+
+  if type(opts.virt_text) ~= 'nil' then
+    vim.validate('opts.virt_text', opts.virt_text, { 'boolean', 'function' })
+    global_config.virt_text = opts.virt_text
+  end
+end
+
 --- bufnr → true|nil
 --- to throttle refreshes to at most one at a time
 local active_refreshes = {} --- @type table<integer,true>
@@ -143,47 +208,60 @@ local function group_lenses_by_start_line(lenses)
   return lenses_by_lnum
 end
 
----@param bufnr integer
+---@param buf integer
 ---@param ns integer
 ---@param line integer
 ---@param lenses lsp.CodeLens[] Lenses that start at `line`
-local function display_line_lenses(bufnr, ns, line, lenses)
-  local chunks = {}
-  local num_lenses = #lenses
+---@return nil
+local function display_line_lenses(buf, ns, line, lenses)
+  local chunks = {} ---@type [string, integer|string?][]
   table.sort(lenses, function(a, b)
     return a.range.start.character < b.range.start.character
   end)
 
-  local has_unresolved = false
   for i, lens in ipairs(lenses) do
     if lens.command then
-      local text = lens.command.title:gsub('%s+', ' ')
-      table.insert(chunks, { text, 'LspCodeLens' })
-      if i < num_lenses then
-        table.insert(chunks, { ' | ', 'LspCodeLensSeparator' })
+      chunks[#chunks + 1] = { lens.command.title:gsub('%s+', ' '), 'LspCodeLens' }
+      if i < #lenses then
+        chunks[#chunks + 1] = { ' | ', 'LspCodeLensSeparator' }
       end
     else
-      has_unresolved = true
+      -- If some lenses are unresolved, don't update the line's virtual text. Due to this, user
+      -- may see outdated lenses or not see already resolved lenses. However, showing outdated
+      -- lenses for short period of time is better than spamming user with virtual text updates.
+      return
     end
   end
 
-  -- If some lenses are not resolved yet, don't update the line's virtual text. Due to this, user
-  -- may see outdated lenses or not see already resolved lenses. However, showing outdated lenses
-  -- for short period of time is better than spamming user with virtual text updates.
-  if has_unresolved then
-    return
-  end
-
-  api.nvim_buf_clear_namespace(bufnr, ns, line, line + 1)
+  api.nvim_buf_clear_namespace(buf, ns, line, line + 1)
   if #chunks > 0 then
-    api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
-      virt_text = chunks,
-      hl_mode = 'combine',
-    })
+    if type(global_config.virt_text) == 'function' then
+      global_config.virt_text(buf, ns, line, chunks)
+    elseif global_config.virt_text then
+      api.nvim_buf_set_extmark(buf, ns, line, 0, { virt_text = chunks, hl_mode = 'combine' })
+    end
+
+    if type(global_config.virt_lines) == 'function' then
+      global_config.virt_lines(buf, ns, line, chunks)
+    elseif global_config.virt_lines then
+      local indent = api.nvim_buf_call(buf, function()
+        return vim.fn.indent(line + 1)
+      end) ---@type integer
+
+      if indent > 0 then
+        table.insert(chunks, 1, { string.rep(' ', indent), '' })
+      end
+
+      api.nvim_buf_set_extmark(buf, ns, line, 0, {
+        virt_lines = { chunks },
+        virt_lines_above = true,
+        hl_mode = 'combine',
+      })
+    end
   end
 end
 
---- Display the lenses using virtual text
+--- Display the lenses using virtual text and/or virtual lines
 ---
 ---@param lenses? lsp.CodeLens[] lenses to display
 ---@param bufnr integer
