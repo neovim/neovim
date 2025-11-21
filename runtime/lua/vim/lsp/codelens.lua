@@ -237,13 +237,13 @@ local function display_line_lenses(buf, ns, line, lenses)
   if #chunks > 0 then
     if type(global_config.virt_text) == 'function' then
       global_config.virt_text(buf, ns, line, chunks)
-    elseif type(global_config.virt_text) == 'boolean' and global_config.virt_text then
+    elseif global_config.virt_text then
       api.nvim_buf_set_extmark(buf, ns, line, 0, { virt_text = chunks, hl_mode = 'combine' })
     end
 
     if type(global_config.virt_lines) == 'function' then
       global_config.virt_lines(buf, ns, line, chunks)
-    elseif type(global_config.virt_lines) == 'boolean' and global_config.virt_lines then
+    elseif global_config.virt_lines then
       local indent = api.nvim_buf_call(buf, function()
         return vim.fn.indent(line + 1)
       end) ---@type integer
