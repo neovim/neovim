@@ -1146,4 +1146,11 @@ func Test_insert_small_delete_linewise()
   bwipe!
 endfunc
 
+func Test_writing_readonly_regs()
+  call assert_fails('let @. = "foo"', 'E354:')
+  call assert_fails('let @% = "foo"', 'E354:')
+  call assert_fails('let @: = "foo"', 'E354:')
+  call assert_fails('let @~ = "foo"', 'E354:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

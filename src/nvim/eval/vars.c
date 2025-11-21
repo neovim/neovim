@@ -915,9 +915,6 @@ void ex_let(exarg_T *eap)
   if (argend == NULL) {
     return;
   }
-  if (argend > arg && argend[-1] == '.') {  // For var.='str'.
-    argend--;
-  }
   expr = skipwhite(argend);
   bool concat = strncmp(expr, "..=", 3) == 0;
   bool has_assign = *expr == '=' || (vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL
