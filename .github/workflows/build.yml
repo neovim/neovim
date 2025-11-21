@@ -29,7 +29,7 @@ jobs:
       CMAKE_URL: 'https://cmake.org/files/v3.16/cmake-3.16.0-Linux-x86_64.sh'
       CMAKE_VERSION: '3.16.0'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
 
       - name: Install minimum required version of cmake
@@ -58,7 +58,7 @@ jobs:
     name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
 
       - name: Build bundled dependencies

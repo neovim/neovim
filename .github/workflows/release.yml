@@ -55,7 +55,7 @@ jobs:
     outputs:
       version: ${{ steps.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -143,7 +143,7 @@ jobs:
             archive_name: nvim-win-arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -183,7 +183,7 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/download-artifact@v6
 

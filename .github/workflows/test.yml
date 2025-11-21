@@ -33,7 +33,7 @@ jobs:
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
 
       - name: Install stylua
@@ -87,7 +87,7 @@ jobs:
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
       - name: Build third-party deps
         run: |
@@ -132,7 +132,7 @@ jobs:
       CC: ${{ matrix.build.cc }}
       NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
         with:
           install_flags: "--test"
@@ -210,7 +210,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (linux)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.15.2
@@ -230,7 +230,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (macos 15)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.15.2
@@ -244,7 +244,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (windows)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.15.2
@@ -264,7 +264,7 @@ jobs:
     env:
       CC: gcc
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
 
       - name: Install dependencies

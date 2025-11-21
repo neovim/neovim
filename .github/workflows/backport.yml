@@ -11,7 +11,7 @@ jobs:
     if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/create-github-app-token@v2
         id: app-token
