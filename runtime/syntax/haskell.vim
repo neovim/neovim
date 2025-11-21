@@ -2,6 +2,7 @@
 " Language:		Haskell
 " Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
 " Last Change:		2024 Mar 28 by Enrico Maria De Angelis <enricomaria.dean6elis@gmail.com>
+"			2025 Nov 20 by Vim Project: Allow spaces in backticks #18776
 " Original Author:	John Williams <jrw@pobox.com>
 "
 " Thanks to Ryan Crumley for suggestions and John Meacham for
@@ -46,8 +47,8 @@ syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)*\<[a-z][a-zA-Z0-9_']*\>" contains=@
 " others are variables (e.g. functions).
 syn match hsVarSym "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[-!#$%&\*\+/<=>\?@\\^|~.][-!#$%&\*\+/<=>\?@\\^|~:.]*"
 syn match hsConSym "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=:[-!#$%&\*\+./<=>\?@\\^|~:]*"
-syn match hsVarSym "`\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[a-z][a-zA-Z0-9_']*`"
-syn match hsConSym "`\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[A-Z][a-zA-Z0-9_']*`"
+syn match hsVarSym "` *\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[a-z][a-zA-Z0-9_']* *`"
+syn match hsConSym "` *\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[A-Z][a-zA-Z0-9_']* *`"
 
 " (Non-qualified) identifiers which start with # are labels
 syn match hsLabel "#[a-z][a-zA-Z0-9_']*\>"
