@@ -298,6 +298,8 @@ end
 ---
 --- While in the window, moving the cursor changes the undo.
 ---
+--- Closes the window if it is already open
+---
 --- Load the plugin with this command:
 --- ```
 ---         packadd nvim.undotree
@@ -306,6 +308,7 @@ end
 --- Can also be shown with `:Undotree`. [:Undotree]()
 ---
 --- @param opts vim.undotree.opts?
+--- @return boolean? Returns true if the window was already open, nil otherwise
 function M.open(opts)
   -- The following lines of code was copied from
   -- `vim.treesitter.dev.inspect_tree` and then modified to fit
