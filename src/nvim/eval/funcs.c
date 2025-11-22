@@ -3448,6 +3448,14 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
   return env;
 }
 
+static bool set_shell_error(typval_T *argvars_in)
+  FUNC_ATTR_NONNULL_ALL
+{
+  varnumber_T exit_code = tv_get_number(&argvars_in[1]);
+  set_vim_var_nr(VV_SHELL_ERROR, exit_code);
+  return true;
+}
+
 /// "jobstart()" function
 void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -3480,6 +3488,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool term = false;
   bool clear_env = false;
   bool overlapped = false;
+  bool _shell = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
   CallbackReader on_stdout = CALLBACK_READER_INIT;
   CallbackReader on_stderr = CALLBACK_READER_INIT;
@@ -3495,6 +3504,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     pty = term || tv_dict_get_number(job_opts, "pty") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
+    _shell = tv_dict_get_number(job_opts, "_shell") != 0;
 
     char *s = tv_dict_get_string(job_opts, "stdin", false);
     if (s) {
@@ -3577,6 +3587,10 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     stdin_mode = kChannelStdinPipe;
     width = width ? width : (uint16_t)MAX(0, curwin->w_view_width - win_col_off(curwin));
     height = height ? height : (uint16_t)curwin->w_view_height;
+    if (_shell) {
+      on_exit.type = kCallbackC;
+      on_exit.data.cfunc = set_shell_error;
+    }
   }
 
   if (pty) {
