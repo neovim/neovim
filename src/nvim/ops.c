@@ -3116,7 +3116,7 @@ const char *did_set_operatorfunc(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_operatorfunc_option(void)
 {
   callback_free(&opfunc_cb);

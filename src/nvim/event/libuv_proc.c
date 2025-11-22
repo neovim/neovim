@@ -120,7 +120,7 @@ static void close_cb(uv_handle_t *handle)
 static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 {
   Proc *proc = handle->data;
-#if defined(MSWIN)
+#ifdef MSWIN
   // Use stored/expected signal.
   term_signal = proc->exit_signal;
 #endif

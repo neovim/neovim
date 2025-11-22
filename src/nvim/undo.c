@@ -158,7 +158,7 @@ static bool undo_undoes = false;
 
 static int lastmark = 0;
 
-#if defined(U_DEBUG)
+#ifdef U_DEBUG
 // Check the undo structures for being valid.  Print a warning when something
 // looks wrong.
 static int seen_b_u_curhead;

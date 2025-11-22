@@ -55,6 +55,7 @@ Checks: >
   -misc-misplaced-const,
   -misc-no-recursion,
   -performance-no-int-to-ptr,
+  -portability-avoid-pragma-once,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-magic-numbers,

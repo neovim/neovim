@@ -17,7 +17,7 @@ if [[ $OS == Linux ]]; then
 
   if [[ $CC == clang ]]; then
     DEFAULT_CLANG_VERSION=$(echo |  clang -dM -E - | grep __clang_major | awk '{print $3}')
-    CLANG_VERSION=19
+    CLANG_VERSION=21
     if ((DEFAULT_CLANG_VERSION >= CLANG_VERSION)); then
       echo "Default clang version is $DEFAULT_CLANG_VERSION, which is equal or larger than wanted version $CLANG_VERSION. Aborting!"
       exit 1
@@ -26,8 +26,11 @@ if [[ $OS == Linux ]]; then
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
     sudo ./llvm.sh $CLANG_VERSION
+    sudo apt-get install -y clang-tidy-$CLANG_VERSION
     sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
     sudo update-alternatives --set clang /usr/bin/clang-$CLANG_VERSION
+    sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$CLANG_VERSION 100
+    sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-$CLANG_VERSION
   fi
 
   if [[ -n $TEST ]]; then

@@ -222,7 +222,7 @@ size_t os_get_fullenv_size(void)
 
   FreeEnvironmentStringsW(envstrings);
 #else
-# if defined(HAVE__NSGETENVIRON)
+# ifdef HAVE__NSGETENVIRON
   char **environ = *_NSGetEnviron();
 # else
   extern char **environ;
@@ -280,7 +280,7 @@ void os_copy_fullenv(char **env, size_t env_size)
 
   FreeEnvironmentStringsW(envstrings);
 #else
-# if defined(HAVE__NSGETENVIRON)
+# ifdef HAVE__NSGETENVIRON
   char **environ = *_NSGetEnviron();
 # else
   extern char **environ;
@@ -339,7 +339,7 @@ char *os_getenvname_at_index(size_t index)
   FreeEnvironmentStringsW(envstrings);
   return name;
 #else
-# if defined(HAVE__NSGETENVIRON)
+# ifdef HAVE__NSGETENVIRON
   char **environ = *_NSGetEnviron();
 # else
   extern char **environ;
@@ -552,7 +552,7 @@ static char *os_uv_homedir(void)
   return NULL;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 
 void free_homedir(void)
 {
@@ -665,7 +665,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
           }
         }
 
-#if defined(UNIX)
+#ifdef UNIX
         // Verify that we have found the end of a Unix ${VAR} style variable
         if (src[1] == '{' && *tail != '}') {
           var = NULL;
@@ -677,7 +677,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         *var = NUL;
         var = vim_getenv(dst);
         mustfree = true;
-#if defined(UNIX)
+#ifdef UNIX
       }
 #endif
       } else if (src[1] == NUL  // home directory
@@ -686,7 +686,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         var = homedir;
         tail = src + 1;
       } else {  // user directory
-#if defined(UNIX)
+#ifdef UNIX
         // Copy ~user to dst[], so we can put a NUL after it.
         tail = src;
         var = dst;
@@ -754,7 +754,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
           // if var[] ends in a path separator and tail[] starts
           // with it, skip a character
           if (after_pathsep(dst, dst + c)
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
               && dst[c - 1] != ':'
 #endif
               && vim_ispathsep(*tail)) {

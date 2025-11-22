@@ -1128,7 +1128,7 @@ static char *get_view_file(char c)
       *s++ = '=';
     } else if (vim_ispathsep(*p)) {
       *s++ = '=';
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
       *s++ = (*p == ':') ? '-' : '+';
 #else
       *s++ = '+';

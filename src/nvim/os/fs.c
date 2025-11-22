@@ -20,7 +20,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 
-#if defined(HAVE_ACL)
+#ifdef HAVE_ACL
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
 # endif

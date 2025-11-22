@@ -135,7 +135,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     "[[ ${BASH_VERSINFO[0]} -ge 4 ]] && shopt -s globstar; ";
 
   bool is_fish_shell =
-#if defined(UNIX)
+#ifdef UNIX
     strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;

@@ -568,7 +568,7 @@ void do_augroup(char *arg, bool del_group)
   }
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_all_autocmds(void)
 {
   FOR_ALL_AUEVENTS(event) {

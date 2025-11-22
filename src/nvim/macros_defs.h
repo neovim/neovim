@@ -125,14 +125,14 @@
 
 // Type of uv_buf_t.len is platform-dependent.
 // Related: https://github.com/libuv/libuv/pull/1236
-#if defined(MSWIN)
+#ifdef MSWIN
 # define UV_BUF_LEN(x)  (ULONG)(x)
 #else
 # define UV_BUF_LEN(x)  (x)
 #endif
 
 // Type of read()/write() `count` param is platform-dependent.
-#if defined(MSWIN)
+#ifdef MSWIN
 # define IO_COUNT(x)  (unsigned)(x)
 #else
 # define IO_COUNT(x)  (x)

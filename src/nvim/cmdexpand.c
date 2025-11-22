@@ -186,7 +186,7 @@ static void wildescape(expand_T *xp, const char *str, int numfiles, char **files
         p = vim_strsave_escaped(files[i], pat);
         xfree(files[i]);
         files[i] = p;
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
         p = vim_strsave_escaped(files[i], " ");
         xfree(files[i]);
         files[i] = p;
@@ -3531,7 +3531,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   size_t filelen = strlen(file);
 
-#if defined(MSWIN)
+#ifdef MSWIN
   // Using the platform's path separator (\) makes vim incorrectly
   // treat it as an escape character, use '/' instead.
 # define TMP_PATHSEPSTR "/"

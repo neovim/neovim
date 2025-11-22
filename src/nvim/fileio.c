@@ -275,7 +275,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   if (sfname == NULL) {
     sfname = fname;
   }
-#if defined(UNIX)
+#ifdef UNIX
   fname = sfname;
 #endif
 
@@ -3215,7 +3215,7 @@ void write_lnum_adjust(linenr_T offset)
   }
 }
 
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
 /// Convert all backslashes in fname to forward slashes in-place,
 /// unless when it looks like a URL.
 void forward_slash(char *fname)
@@ -3800,7 +3800,7 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
   return reg_pat;
 }
 
-#if defined(EINTR)
+#ifdef EINTR
 
 /// Version of read() that retries when interrupted by EINTR (possibly
 /// by a SIGWINCH).

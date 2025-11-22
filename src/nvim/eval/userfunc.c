@@ -1446,7 +1446,7 @@ void set_current_funccal(funccall_T *fc)
   current_funccal = fc;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_all_functions(void)
 {
   hashitem_T *hi;

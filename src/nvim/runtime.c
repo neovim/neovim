@@ -1683,7 +1683,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     size_t appname_len = strlen(appname);
     assert(appname_len < (IOSIZE - sizeof("-data")));
     xmemcpyz(IObuff, appname, appname_len);
-#if defined(MSWIN)
+#ifdef MSWIN
     if (type == kXDGDataHome || type == kXDGStateHome) {
       xstrlcat(IObuff, "-data", IOSIZE);
       appname_len += 5;
@@ -1754,7 +1754,7 @@ char *runtimepath_default(bool clean_arg)
   if (data_home != NULL) {
     data_len = strlen(data_home);
     size_t nvim_data_size = appname_len;
-#if defined(MSWIN)
+#ifdef MSWIN
     nvim_data_size += sizeof("-data") - 1;  // -1: NULL byte should be ignored
 #endif
     if (data_len != 0) {
@@ -2432,7 +2432,7 @@ void ex_scriptnames(exarg_T *eap)
   }
 }
 
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
 /// Fix slashes in the list of script names for 'shellslash'.
 void scriptnames_slash_adjust(void)
 {
@@ -2493,7 +2493,7 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
   }
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_scriptnames(void)
 {
   profile_reset();

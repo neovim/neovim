@@ -3158,7 +3158,7 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
   return wp;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void win_free_all(void)
 {
   // avoid an error for switching tabpage with the cmdline window open

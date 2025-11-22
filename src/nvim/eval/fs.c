@@ -82,7 +82,7 @@ repeat:
 
     // Expand "~/path" for all systems and "~user/path" for Unix
     if ((*fnamep)[0] == '~'
-#if !defined(UNIX)
+#ifndef UNIX
         && ((*fnamep)[1] == '/'
 # ifdef BACKSLASH_IN_FILENAME
             || (*fnamep)[1] == '\\'

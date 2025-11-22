@@ -79,7 +79,7 @@ int xctz(uint64_t x)
 unsigned xpopcount(uint64_t x)
 {
   // Use compiler builtin if possible.
-#if defined(__NetBSD__)
+#ifdef __NetBSD__
   return popcount64(x);
 #elif defined(__clang__) || defined(__GNUC__)
   return (unsigned)__builtin_popcountll(x);

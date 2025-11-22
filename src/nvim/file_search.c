@@ -1386,7 +1386,7 @@ char *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel
                                   file_to_find, search_ctx);
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_findfile(void)
 {
   API_CLEAR_STRING(ff_expand_buffer);
@@ -1474,7 +1474,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   if (vim_isAbsName(*file_to_find)
       // "..", "../path", "." and "./path": don't use the path_option
       || rel_to_curdir
-#if defined(MSWIN)
+#ifdef MSWIN
       // handle "\tmp" as absolute path
       || vim_ispathsep((*file_to_find)[0])
       // handle "c:name" as absolute path

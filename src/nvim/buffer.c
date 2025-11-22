@@ -655,7 +655,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   // When closing the current buffer stop Visual mode before freeing
   // anything.
   if (is_curbuf && VIsual_active
-#if defined(EXITFREE)
+#ifdef EXITFREE
       && !entered_free_all_mem
 #endif
       ) {
@@ -1699,7 +1699,7 @@ static void enter_buffer(buf_T *buf)
 {
   // when closing the current buffer stop Visual mode
   if (VIsual_active
-#if defined(EXITFREE)
+#ifdef EXITFREE
       && !entered_free_all_mem
 #endif
       ) {
@@ -3118,7 +3118,7 @@ int buflist_add(char *fname, int flags)
   return 0;
 }
 
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
 /// Adjust slashes in file names.  Called after 'shellslash' was set.
 void buflist_slash_adjust(void)
 {
@@ -3439,7 +3439,7 @@ void resettitle(void)
   ui_call_set_title(cstr_as_string(lasttitle));
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_titles(void)
 {
   xfree(lasttitle);

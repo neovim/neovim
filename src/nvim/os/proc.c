@@ -15,7 +15,7 @@
 # include <tlhelp32.h>
 #endif
 
-#if defined(__FreeBSD__)
+#ifdef __FreeBSD__
 # include <string.h>
 # include <sys/types.h>
 # include <sys/user.h>
@@ -31,7 +31,7 @@
 # include "nvim/macros_defs.h"
 #endif
 
-#if defined(__linux__)
+#ifdef __linux__
 # include <stdio.h>
 #endif
 

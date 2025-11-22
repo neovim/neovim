@@ -2705,7 +2705,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "find_in_path",
     "float",
     "folding",
-#if defined(UNIX)
+#ifdef UNIX
     "fork",
 #endif
     "gettext",
@@ -2751,7 +2751,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "statusline",
     "spell",
     "syntax",
-#if !defined(UNIX)
+#ifndef UNIX
     "system",
 #endif
     "tablineat",

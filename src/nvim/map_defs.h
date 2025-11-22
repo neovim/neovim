@@ -9,7 +9,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/types_defs.h"
 
-#if defined(__NetBSD__)
+#ifdef __NetBSD__
 # undef uint64_t
 # define uint64_t uint64_t
 #endif

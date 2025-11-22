@@ -289,7 +289,7 @@ static inline void free_spat(SearchPattern *const spat)
   xfree(spat->additional_data);
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_search_patterns(void)
 {
   for (size_t i = 0; i < ARRAY_SIZE(spats); i++) {

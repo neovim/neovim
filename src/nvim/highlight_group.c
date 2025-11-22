@@ -1537,7 +1537,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_highlight(void)
 {
   ga_clear(&highlight_ga);
