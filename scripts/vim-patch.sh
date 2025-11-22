@@ -573,10 +573,16 @@ list_vimpatch_tokens() {
 # Prints all patch-numbers (for the current v:version) for which there is
 # a "vim-patch:xxx" token in the Nvim git log.
 list_vimpatch_numbers() {
-  # Transform "vim-patch:X.Y.ZZZZ" to "ZZZZ".
-  list_vimpatch_tokens | while read -r vimpatch_token; do
-    echo "$vimpatch_token" | grep -F '8.1.' | sed -Ee 's/.*vim-patch:8\.1\.([0-9a-z]+).*/\1/'
-  done
+  local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
+    git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+    grep -oE "^[* ]*vim-patch:${patch_pat}" |
+    sed -nEe 's/^[* ]*vim-patch:('"${patch_pat}"').*$/\1/p' |
+    awk '{split($0, a, "."); printf "%d.%d.%04d\n", a[1], a[2], a[3]}' |
+    sort |
+    uniq ) |
+    grep -e '^> ' |
+    sed -e 's/^> //'
 }
 
 declare -A tokens

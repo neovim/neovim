@@ -281,8 +281,9 @@ void evalvars_init(void)
       hash_add(&compat_hashtab, p->vv_di.di_key);
     }
   }
-  set_vim_var_nr(VV_VERSION, VIM_VERSION_100);
-  set_vim_var_nr(VV_VERSIONLONG, VIM_VERSION_100 * 10000 + highest_patch());
+  const int vim_version = min_vim_version();
+  set_vim_var_nr(VV_VERSION, vim_version);
+  set_vim_var_nr(VV_VERSIONLONG, vim_version * 10000 + highest_patch());
 
   dict_T *const msgpack_types_dict = tv_dict_alloc();
   for (size_t i = 0; i < ARRAY_SIZE(msgpack_type_names); i++) {
