@@ -40,6 +40,7 @@ struct Channel {
   CallbackReader on_data;
   CallbackReader on_stderr;
   Callback on_exit;
+  Callback on_close;
   int exit_status;  ///< Process exit-code (if the channel wraps a process).
 
   bool callback_busy;
