@@ -1847,6 +1847,9 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
   case kCdScopeTabpage:
     snprintf(buf, sizeof(buf), "tabpage");
     break;
+  case kCdScopeBuffer:
+    snprintf(buf, sizeof(buf), "buffer");
+    break;
   case kCdScopeWindow:
     snprintf(buf, sizeof(buf), "window");
     break;
@@ -1874,6 +1877,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
   switch (cause) {
   case kCdCauseManual:
   case kCdCauseWindow:
+  case kCdCauseBuffer:
     break;
   case kCdCauseAuto:
     snprintf(buf, sizeof(buf), "auto");

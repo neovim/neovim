@@ -1381,10 +1381,11 @@ exist, the next-higher scope in the hierarchy applies.
 
 							*:tc* *:tcd*
 :tc[d][!] {path}	Like |:cd|, but only set the directory for the current
-			tab.  The current window will also use this directory.
-			The current directory is not changed for windows in
-			other tabs and for windows in the current tab that
-			have their own window-local directory.
+			tab.  The current buffer and window will also use this
+			directory. The current directory is not changed for
+			windows in other tabs and for windows in the current
+			tab that have their own window-local directory, or for
+			buffers that have their own buffer-local directory.
 
 							*:tcd-*
 :tc[d][!] -		Change to the previous current directory (before the
@@ -1393,10 +1394,15 @@ exist, the next-higher scope in the hierarchy applies.
 							*:tch* *:tchdir*
 :tch[dir][!]		Same as |:tcd|.
 
+							*:bc* *:bcd*
+:bc[d][!] {path}	Like |:bcd|, but only set the current directory for the
+			current buffer.  The current directory for other
+			windows or buffers or tabs is not changed.
+
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows or tabs is not changed.
+			windows, tabs, or buffers is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
