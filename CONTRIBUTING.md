@@ -55,6 +55,7 @@ Developer guidelines
 Pull requests (PRs)
 ---------------------
 
+- Fork the repository first.
 - To avoid duplicate work, create a draft pull request.
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
