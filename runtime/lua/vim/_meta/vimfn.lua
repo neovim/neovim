@@ -8320,9 +8320,9 @@ function vim.fn.setline(lnum, text) end
 --- for the list of supported keys in {what}.
 ---
 --- @param nr integer
---- @param list any
+--- @param list vim.quickfix.entry[]
 --- @param action? string
---- @param what? table
+--- @param what? vim.fn.setqflist.what
 --- @return any
 function vim.fn.setloclist(nr, list, action, what) end
 
