@@ -76,12 +76,21 @@ endif
 DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED ?=
 
+ifdef BUNDLED_CMAKE_FLAG
+  $(error BUNDLED_CMAKE_FLAG was removed. Use DEPS_CMAKE_FLAGS instead)
+endif
+
+ifdef BUNDLED_LUA_CMAKE_FLAG
+  $(error BUNDLED_LUA_CMAKE_FLAG was removed. Use DEPS_CMAKE_FLAGS instead)
+endif
+
+# If USE_BUNDLED is non-empty, prepend the flag to DEPS_CMAKE_FLAGS
 ifneq (,$(USE_BUNDLED))
-  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
+  DEPS_CMAKE_FLAGS := -DUSE_BUNDLED=$(USE_BUNDLED) $(DEPS_CMAKE_FLAGS)
 endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
-  BUNDLED_LUA_CMAKE_FLAG := -DUSE_BUNDLED_LUA=ON
+  DEPS_CMAKE_FLAGS := -DUSE_BUNDLED_LUA=ON $(DEPS_CMAKE_FLAGS)
   $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || $(RM) build/.ran-*)
 endif
 
@@ -112,7 +121,7 @@ ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	$(MKDIR) $@
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
+	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(DEPS_CMAKE_FLAGS)
 endif
 build/.ran-deps-cmake::
 	$(MKDIR) build

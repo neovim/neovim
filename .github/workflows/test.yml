@@ -176,7 +176,7 @@ jobs:
       - name: Install
         run: |
           cmake --install build
-          "$INSTALL_PREFIX/bin/nvim" --version
+          "$INSTALL_PREFIX/bin/nvim" -V1 --version
           if ! "$INSTALL_PREFIX/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
             echo "Running ':help' in the installed nvim failed."
             echo "Maybe the helptags have not been generated properly."

@@ -55,7 +55,7 @@ jobs:
         run: make install
 
   use-existing-src:
-    name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
+    name: Test offline build (USE_EXISTING_SRC_DIR=ON builds with no network access)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
