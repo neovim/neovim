@@ -300,6 +300,8 @@ custom terminfo at runtime, use
 make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_UNIBILIUM=0"
 ```
 
+To confirm at runtime that unibilium was not included, check `has('terminfo') == 1`.
+
 ### How to build static binary (on Linux)
 
 1. Use a linux distribution which uses musl C. We will use Alpine Linux but any distro with musl should work. (glibc does not support static linking)
