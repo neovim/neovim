@@ -2042,6 +2042,9 @@ enable({enable}, {client_id}, {bufnr}, {opts})
                        Transforms an LSP CompletionItem to |complete-items|.
                      • {cmp}? (`fun(a: table, b: table): boolean`) Comparator
                        for sorting merged completion items from all servers.
+                     • {preselect}? (`boolean`) (default: false) If true,
+                       enables LSP preselect, where the completion item is
+                       automatically selected by default.
 
 get({opts})                                         *vim.lsp.completion.get()*
     Triggers LSP completion once in the current buffer, if LSP completion is
