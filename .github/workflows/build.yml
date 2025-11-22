@@ -22,7 +22,7 @@ env:
 
 jobs:
   old-cmake:
-    name: Test oldest supported cmake
+    name: Minimum cmake
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -55,7 +55,7 @@ jobs:
         run: make install
 
   use-existing-src:
-    name: Test offline build (USE_EXISTING_SRC_DIR=ON builds with no network access)
+    name: Offline build (USE_EXISTING_SRC_DIR=ON with no network access)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -64,6 +64,7 @@ jobs:
       - name: Build bundled dependencies
         run: make deps
 
+      # Hint: this is equivalent to the files commmited in: https://github.com/neovim/deps/tree/master/src
       - name: Clean bundled dependencies à la neovim/deps
         run: |
           rm -rf ./build
