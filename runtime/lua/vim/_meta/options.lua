@@ -459,7 +459,7 @@ vim.go.bex = vim.go.backupext
 --- the newly created file).  Also see 'backupcopy' and `crontab`.
 ---
 --- @type string
-vim.o.backupskip = "$XDG_STATE_HOME/*"
+vim.o.backupskip = "/tmp/*"
 vim.o.bsk = vim.o.backupskip
 vim.go.backupskip = vim.o.backupskip
 vim.go.bsk = vim.go.backupskip
