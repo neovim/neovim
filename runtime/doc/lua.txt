@@ -4849,6 +4849,17 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     See also: ~
       • |vim.system()|
 
+vim.ui.progress_status({opts})                      *vim.ui.progress_status()*
+    Function to format the list of running progress messages for statusline
+
+    Parameters: ~
+      • {opts}  (`table?`) Options
+                • {fmt}? (`fun(running: ProgressMessage[]):string`) custom
+                  formater for progress messages
+
+    Return: ~
+        (`string`) Statusline component text
+
 vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     Prompts the user to pick from a list of items, allowing arbitrary
     (potentially asynchronous) work until `on_choice`.
