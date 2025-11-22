@@ -952,37 +952,6 @@ do
     end
   end
 
-  vim.api.nvim_create_autocmd('VimEnter', {
-    group = vim.api.nvim_create_augroup('nvim.exrc', {}),
-    desc = 'Find exrc files in parent directories',
-    callback = function()
-      if not vim.o.exrc then
-        return
-      end
-      local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
-        type = 'file',
-        upward = true,
-        limit = math.huge,
-        -- exrc in cwd already handled from C, thus start in parent directory.
-        path = vim.fs.dirname((vim.uv.cwd())),
-      })
-      for _, file in ipairs(files) do
-        local trusted = vim.secure.read(file) --[[@as string|nil]]
-        if trusted then
-          if vim.endswith(file, '.lua') then
-            assert(loadstring(trusted, '@' .. file))()
-          else
-            vim.api.nvim_exec2(trusted, {})
-          end
-        end
-        -- If the user unset 'exrc' in the current exrc then stop searching
-        if not vim.o.exrc then
-          return
-        end
-      end
-    end,
-  })
-
   if tty then
     -- Show progress bars in supporting terminals
     vim.api.nvim_create_autocmd('Progress', {
