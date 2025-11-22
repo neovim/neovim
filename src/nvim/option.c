@@ -111,6 +111,7 @@
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef BACKSLASH_IN_FILENAME
 # include "nvim/arglist.h"
@@ -2116,6 +2117,7 @@ static const char *did_set_laststatus(optset_T *args)
 
   status_redraw_curbuf();
   last_status(false);  // (re)set last window status line.
+  win_float_update_statusline();
   return NULL;
 }
 
