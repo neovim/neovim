@@ -1405,17 +1405,22 @@ end
 
 --- Perform an incremental selection at the cursor position based on ranges given by the LSP. The
 --- `direction` parameter specifies the number of times to expand the selection. Negative values
---- will shrink the selection.
+--- will shrink the selection. `on_response` is called after the request is completed.
 ---
 --- @param direction integer
-function M.selection_range(direction)
+--- @param on_response? fun(errors: table<integer, lsp.ResponseError>)
+function M.selection_range(direction, on_response)
   validate('direction', direction, 'number')
+  validate('callback', on_response, 'function', true)
 
   if selection_ranges then
     local new_index = selection_ranges.index + direction
     selection_ranges.index = math.min(#selection_ranges.ranges, math.max(1, new_index))
 
     select_range(selection_ranges.ranges[selection_ranges.index])
+    if on_response then
+      on_response({})
+    end
     return
   end
 
@@ -1423,6 +1428,9 @@ function M.selection_range(direction)
   local client = lsp.get_clients({ method = method, bufnr = 0 })[1]
   if not client then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
+    if on_response then
+      on_response({})
+    end
     return
   end
 
@@ -1439,12 +1447,17 @@ function M.selection_range(direction)
     method,
     params,
     ---@param response lsp.SelectionRange[]?
-    function(err, response)
+    function(err, response, ctx)
+      local errors = {} --- @type table<integer, lsp.ResponseError>
       if err then
+        errors[ctx.client_id] = err
         lsp.log.error(err.code, err.message)
         return
       end
       if not response then
+        if on_response then
+          on_response(errors)
+        end
         return
       end
       -- We only requested one range, thus we get the first and only response here.
@@ -1488,6 +1501,9 @@ function M.selection_range(direction)
         local index = math.min(#ranges, math.max(1, direction))
         selection_ranges = { index = index, ranges = ranges }
         select_range(ranges[index])
+      end
+      if on_response then
+        on_response(errors)
       end
     end
   )

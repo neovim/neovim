@@ -119,4 +119,25 @@ describe('vim.lsp.selection_range', function()
       {5:-- VISUAL --}                                      |
     ]])
   end)
+
+  it('invokes callback (operator mode)', function()
+    --- @type boolean, table<integer, lsp.ResponseError>
+    local success, errors = exec_lua(function()
+      local done = false
+      local callback_err = nil
+      vim.api.nvim_win_set_cursor(0, { 3, 0 })
+      vim.lsp.buf.selection_range(1, function(errs)
+        callback_err = errs
+        done = true
+      end)
+
+      local ok = vim.wait(1000, function()
+        return done
+      end)
+
+      return ok, callback_err
+    end)
+    assert(success, 'callback was not invoked in time')
+    assert(vim.tbl_isempty(errors))
+  end)
 end)
