@@ -159,7 +159,7 @@ BUILD
   the user's terminfo database won't be loaded and only internal definitions
   for the most common terminals are used. >
 
-  make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+  make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS"-DUSE_BUNDLED_UNIBILIUM=0"
 <
 DEFAULTS
 

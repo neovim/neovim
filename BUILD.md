@@ -297,7 +297,7 @@ are good enough. To avoid this dependency, build with support for loading
 custom terminfo at runtime, use
 
 ```sh
-make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_UNIBILIUM=0"
 ```
 
 ### How to build static binary (on Linux)
@@ -341,7 +341,7 @@ cmake --build build
   ```
 - Example of using a package with some dependencies:
   ```
-  make BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBUV=ON"
+  make DEPS_CMAKE_FLAGS="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBUV=ON"
   ```
 
 ## Build prerequisites

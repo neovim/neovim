@@ -77,6 +77,8 @@ DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED ?=
 
 ifneq (,$(USE_BUNDLED))
+  # Note: BUNDLED_CMAKE_FLAG is only supported for back-compat. Don't
+  # mention it in docs. It is redundant with DEPS_CMAKE_FLAGS.
   BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
 endif
 
