@@ -255,6 +255,8 @@ open({opts})                                                 *undotree.open()*
 
     While in the window, moving the cursor changes the undo.
 
+    Closes the window if it is already open
+
     Load the plugin with this command: >
                 packadd nvim.undotree
 <
@@ -274,6 +276,10 @@ open({opts})                                                 *undotree.open()*
                   the window. If a function, it accepts the buffer number of
                   the source buffer as its only argument and should return a
                   string.
+
+    Return: ~
+        (`boolean?`) Returns true if the window was already open, nil
+        otherwise
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
