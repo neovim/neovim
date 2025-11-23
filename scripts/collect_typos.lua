@@ -49,7 +49,46 @@ local function run_die(cmd, err_msg, stdin)
   return assert(_run(cmd, true, err_msg, stdin))
 end
 
-do
+--- MIME-decode if python3 is available, else returns the input unchanged.
+local function mime_decode(encoded)
+  local has_python = vim.system({ 'python3', '--version' }, { text = true }):wait()
+  if has_python.code ~= 0 then
+    return encoded
+  end
+
+  local pycode = string.format(
+    vim.text.indent(
+      0,
+      [[
+      import sys
+      from email.header import decode_header
+      inp = %q
+      parts = []
+      for txt, cs in decode_header(inp):
+          if isinstance(txt, bytes):
+              try:
+                  parts.append(txt.decode(cs or "utf-8", errors="replace"))
+              except Exception:
+                  parts.append(txt.decode("utf-8", errors="replace"))
+          else:
+              parts.append(txt)
+      sys.stdout.write("".join(parts))
+      ]]
+    ),
+    encoded
+  )
+
+  local result = vim.system({ 'python3', '-c', pycode }, { text = true }):wait()
+
+  if result.code ~= 0 or not result.stdout then
+    return encoded
+  end
+
+  -- Trim trailing newline Python prints only if program prints it
+  return vim.trim(result.stdout)
+end
+
+local function main()
   local pr_list = vim.json.decode(
     run_die(
       { 'gh', 'pr', 'list', '--label', 'typo', '--json', 'number' },
@@ -75,13 +114,13 @@ do
     if run({ 'git', 'apply', '--index', '-' }, patch_file) then
       table.insert(close_pr_lines, ('Close #%d'):format(pr_number))
       for author in patch_file:gmatch('\nFrom: (.- <.->)\n') do
-        local co_author_line = ('Co-authored-by: %s'):format(author)
+        local co_author_line = ('Co-authored-by: %s'):format(mime_decode(author))
         if not vim.list_contains(co_author_lines, co_author_line) then
           table.insert(co_author_lines, co_author_line)
         end
       end
       for author in patch_file:gmatch('\nCo%-authored%-by: (.- <.->)\n') do
-        local co_author_line = ('Co-authored-by: %s'):format(author)
+        local co_author_line = ('Co-authored-by: %s'):format(mime_decode(author))
         if not vim.list_contains(co_author_lines, co_author_line) then
           table.insert(co_author_lines, co_author_line)
         end
@@ -91,9 +130,11 @@ do
     end
   end
 
-  local msg = ('docs: small fixes\n\n%s\n\n%s\n'):format(
+  local msg = ('docs: misc\n\n%s\n\n%s\n'):format(
     table.concat(close_pr_lines, '\n'),
     table.concat(co_author_lines, '\n')
   )
   print(run_die({ 'git', 'commit', '--file', '-' }, 'Failed to create commit', msg))
 end
+
+main()
