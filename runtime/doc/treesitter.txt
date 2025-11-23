@@ -996,9 +996,9 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
 
     Return (multiple): ~
         (`integer`) start_row
-        (`integer`) start_col
+        (`integer`) start_col (byte offset)
         (`integer`) end_row
-        (`integer`) end_col
+        (`integer`) end_col (byte offset)
 
                                               *vim.treesitter.get_node_text()*
 get_node_text({node}, {source}, {opts})

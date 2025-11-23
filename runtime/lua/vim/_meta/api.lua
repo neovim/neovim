@@ -1023,16 +1023,13 @@ function vim.api.nvim_create_namespace(name) end
 --- - mods: (string) Command modifiers, if any [<mods>]
 --- - smods: (table) Command modifiers in a structured format. Has the same
 --- structure as the "mods" key of `nvim_parse_cmd()`.
---- @param opts vim.api.keyset.user_command Optional `command-attributes`.
---- - Set boolean attributes such as `:command-bang` or `:command-bar` to true (but
----   not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
---- - "complete" `:command-complete` also accepts a Lua function which works like
----   `:command-completion-customlist`.
---- - Other parameters:
----   - desc: (string) Used for listing the command when a Lua function is used for
----                    {command}.
----   - force: (boolean, default true) Override any previous definition.
----   - preview: (function) Preview callback for 'inccommand' `:command-preview`
+--- @param opts vim.api.keyset.user_command Optional flags
+--- - `desc` (string) Command description.
+--- - `force` (boolean, default true) Override any previous definition.
+--- - `complete` `:command-complete` command or function like `:command-completion-customlist`.
+--- - `preview` (function) Preview handler for 'inccommand' `:command-preview`
+--- - Set boolean `command-attributes` such as `:command-bang` or `:command-bar` to
+---   true (but not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
 function vim.api.nvim_create_user_command(name, command, opts) end
 
 --- Delete an autocommand group by id.
@@ -1738,27 +1735,24 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- could let floats hover outside of the main window like a tooltip, but
 --- this should not be used to specify arbitrary WM screen positions.
 ---
---- Example (Lua): window-relative float
+--- Example: window-relative float
 ---
 --- ```lua
 --- vim.api.nvim_open_win(0, false,
 ---   {relative='win', row=3, col=3, width=12, height=3})
 --- ```
 ---
---- Example (Lua): buffer-relative float (travels as buffer is scrolled)
+--- Example: buffer-relative float (travels as buffer is scrolled)
 ---
 --- ```lua
 --- vim.api.nvim_open_win(0, false,
 ---   {relative='win', width=12, height=3, bufpos={100,10}})
 --- ```
 ---
---- Example (Lua): vertical split left of the current window
+--- Example: vertical split left of the current window
 ---
 --- ```lua
---- vim.api.nvim_open_win(0, false, {
----   split = 'left',
----   win = 0
---- })
+--- vim.api.nvim_open_win(0, false, { split = 'left', win = 0, })
 --- ```
 ---
 --- @param buffer integer Buffer to display, or 0 for current buffer
@@ -1861,9 +1855,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - footer_pos: Footer position. Must be set with `footer` option.
 ---   Value can be one of "left", "center", or "right".
 ---   Default is `"left"`.
---- - noautocmd: If true then all autocommands are blocked for the duration of
----   the call. Once set at window creation, this option cannot be modified
----   later through `nvim_win_set_config()`.
+--- - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
+---   `nvim_win_set_config()`.
 --- - fixed: If true when anchor is NW or SW, the float window
 ---          would be kept fixed even if the window would be truncated.
 --- - hide: If true the floating window will be hidden and the cursor will be invisible when
@@ -2413,11 +2406,10 @@ function vim.api.nvim_win_del_var(window, name) end
 --- @return integer # Buffer id
 function vim.api.nvim_win_get_buf(window) end
 
---- Gets window configuration.
+--- Gets window configuration in the form of a dict which can be passed as the `config` parameter of
+--- `nvim_open_win()`.
 ---
---- The returned value may be given to `nvim_open_win()`.
----
---- `relative` is empty for normal windows.
+--- For non-floating windows, `relative` is empty.
 ---
 --- @param window integer `window-ID`, or 0 for current window
 --- @return vim.api.keyset.win_config_ret # Map defining the window configuration, see |nvim_open_win()|
@@ -2498,17 +2490,22 @@ function vim.api.nvim_win_is_valid(window) end
 --- @param buffer integer Buffer id
 function vim.api.nvim_win_set_buf(window, buffer) end
 
---- Configures window layout. Cannot be used to move the last window in a
---- tabpage to a different one.
+--- Reconfigures the layout of a window.
 ---
---- When reconfiguring a window, absent option keys will not be changed.
---- `row`/`col` and `relative` must be reconfigured together.
+--- - Absent (`nil`) keys will not be changed.
+--- - `row` / `col` / `relative` must be reconfigured together.
+--- - Cannot be used to move the last window in a tabpage to a different one.
+---
+--- Example: to convert a floating window to a "normal" split window, specify the `win` field:
+---
+--- ```lua
+--- vim.api.nvim_win_set_config(0, { split = 'above', win = vim.fn.win_getid(1), })
+--- ```
 ---
 ---
 --- @see vim.api.nvim_open_win
 --- @param window integer `window-ID`, or 0 for current window
---- @param config vim.api.keyset.win_config Map defining the window configuration,
---- see `nvim_open_win()`
+--- @param config vim.api.keyset.win_config Map defining the window configuration, see [nvim_open_win()]
 function vim.api.nvim_win_set_config(window, config) end
 
 --- Sets the (1,0)-indexed cursor position in the window. `api-indexing`
