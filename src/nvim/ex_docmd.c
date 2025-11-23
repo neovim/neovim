@@ -1553,11 +1553,13 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
     .cookie = NULL,
   };
 
-  // Parse command modifiers
-  if (parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false) == FAIL) {
+  char *orig_cmd = eap->cmd;
+  // If parse command modifiers failed but modifiers were passed, continue
+  int result = parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false);
+  after_modifier = eap->cmd;
+  if (result == FAIL && after_modifier == orig_cmd) {
     goto end;
   }
-  after_modifier = eap->cmd;
 
   // We need the command name to know what kind of range it uses.
   char *p = find_excmd_after_range(eap);
@@ -1574,10 +1576,28 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
 
   // Skip colon and whitespace
   eap->cmd = skip_colon_white(eap->cmd, true);
-  // Fail if command is a comment or if command doesn't exist
-  if (*eap->cmd == NUL || *eap->cmd == '"') {
+  // Fail if command is a comment
+  if (*eap->cmd == '"') {
     goto end;
   }
+  // Fail only if: empty command AND no range AND no modifier
+  if (*eap->cmd == NUL && eap->addr_count == 0 && after_modifier == *cmdline) {
+    goto end;
+  }
+
+  // Allow range-only (:1) or modifier-only (:aboveleft) commands.
+  if (*eap->cmd == NUL && eap->cmdidx == CMD_SIZE) {
+    eap->arg = eap->cmd;
+    if (eap->addr_count > 0) {
+      eap->argt = EX_RANGE;
+    } else {
+      eap->argt = 0;
+      eap->addr_type = ADDR_NONE;
+    }
+    retval = true;
+    goto end;
+  }
+
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
     xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
@@ -1823,6 +1843,10 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   }
 
   correct_range(eap);
+  if (eap->cmdidx == CMD_SIZE && eap->addr_count > 0) {
+    errormsg = ex_range_without_command(eap);
+    goto end;
+  }
 
   if (((eap->argt & EX_WHOLEFOLD) || eap->addr_count >= 2) && !global_busy
       && eap->addr_type == ADDR_LINES) {
@@ -2517,9 +2541,13 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     // typing ":cmdmod cmd" in Visual mode works without having to move the
     // range to after the modifiers. The command will be "'<,'>cmdmod cmd",
     // parse "cmdmod cmd" and then put back "'<,'>" before "cmd" below.
-    eap->cmd += 5;
-    cmd_start = eap->cmd;
-    has_visual_range = true;
+    // Only skip '<,'>' if there's a command after it
+    const char *p = skipwhite(eap->cmd + 5);
+    if (*p != NUL && *p != '|') {
+      eap->cmd += 5;
+      cmd_start = eap->cmd;
+      has_visual_range = true;
+    }
   }
 
   // Repeat until no more command modifiers are found.
