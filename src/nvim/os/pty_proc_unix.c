@@ -46,12 +46,17 @@
 # include "os/pty_proc_unix.c.generated.h"
 #endif
 
-#if defined(__sun) && !defined(HAVE_FORKPTY)
+#if !defined(HAVE_FORKPTY) && !defined(__APPLE__)
 
 // this header defines STR, just as nvim.h, but it is defined as ('S'<<8),
 // to avoid #undef STR, #undef STR, #define STR ('S'<<8) just delay the
 // inclusion of the header even though it gets include out of order.
-# include <sys/stropts.h>
+
+# if !defined(__HAIKU__)
+#  include <sys/stropts.h>
+# else
+#  define I_PUSH 0  // XXX: find the actual value
+# endif
 
 static int openpty(int *amaster, int *aslave, char *name, struct termios *termp,
                    struct winsize *winp)
@@ -343,9 +348,11 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_cc[VSTART] = 0x1f & 'Q';
   termios->c_cc[VSTOP] = 0x1f & 'S';
   termios->c_cc[VSUSP] = 0x1f & 'Z';
+#if !defined(__HAIKU__)
   termios->c_cc[VREPRINT] = 0x1f & 'R';
   termios->c_cc[VWERASE] = 0x1f & 'W';
   termios->c_cc[VLNEXT] = 0x1f & 'V';
+#endif
   termios->c_cc[VMIN] = 1;
   termios->c_cc[VTIME] = 0;
 }
