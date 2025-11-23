@@ -36,7 +36,7 @@ describe('channels', function()
     source(init)
   end)
 
-  pending('can connect to socket', function()
+  it('can connect to socket', function()
     local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
