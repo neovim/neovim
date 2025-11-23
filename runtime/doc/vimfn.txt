@@ -8970,9 +8970,9 @@ setloclist({nr}, {list} [, {action} [, {what}]])                  *setloclist()*
 
                 Parameters: ~
                   • {nr} (`integer`)
-                  • {list} (`any`)
+                  • {list} (`vim.quickfix.entry[]`)
                   • {action} (`string?`)
-                  • {what} (`table?`)
+                  • {what} (`vim.fn.setqflist.what?`)
 
                 Return: ~
                   (`any`)

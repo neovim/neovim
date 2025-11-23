@@ -9900,7 +9900,12 @@ M.funcs = {
 
     ]=],
     name = 'setloclist',
-    params = { { 'nr', 'integer' }, { 'list', 'any' }, { 'action', 'string' }, { 'what', 'table' } },
+    params = {
+      { 'nr', 'integer' },
+      { 'list', 'vim.quickfix.entry[]' },
+      { 'action', 'string' },
+      { 'what', 'vim.fn.setqflist.what' },
+    },
     signature = 'setloclist({nr}, {list} [, {action} [, {what}]])',
   },
   setmatches = {

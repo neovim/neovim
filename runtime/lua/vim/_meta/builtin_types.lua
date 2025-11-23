@@ -152,7 +152,7 @@
 --- a function or a funcref or a lambda. Refer
 --- to |quickfix-window-function| for an explanation
 --- of how to write the function and an example.
---- @field quickfixtextfunc? function
+--- @field quickfixtextfunc? string|function
 ---
 --- quickfix list title text. See |quickfix-title|
 --- @field title? string
