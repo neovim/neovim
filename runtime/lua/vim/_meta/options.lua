@@ -753,6 +753,7 @@ vim.go.cdh = vim.go.cdhome
 --- ```vim
 ---   let &cdpath = ',' .. substitute(substitute($CDPATH, '[, ]', '\\\0', 'g'), ':', ',', 'g')
 --- ```
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 --- (parts of 'cdpath' can be passed to the shell to expand file names).
@@ -1752,6 +1753,7 @@ vim.go.deco = vim.go.delcombine
 --- To include a comma in a file name precede it with a backslash.  Spaces
 --- after a comma are ignored, otherwise spaces are included in the file
 --- name.  See `option-backslash` about using backslashes.
+--- Environment variables are expanded `:set_env`.
 --- This has nothing to do with the `Dictionary` variable type.
 --- Where to find a list of words?
 --- - BSD/macOS include the "/usr/share/dict/words" file.
@@ -4547,7 +4549,7 @@ vim.go.mopt = vim.go.messagesopt
 --- ```
 --- If you have less than 512 Mbyte `:mkspell` may fail for some
 --- languages, no matter what you set 'mkspellmem' to.
----
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -4931,6 +4933,7 @@ vim.go.opfunc = vim.go.operatorfunc
 
 --- Directories used to find packages.
 --- See `packages` and `packages-runtimepath`.
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -5489,6 +5492,9 @@ vim.go.ruf = vim.go.rulerformat
 --- to find files which add to distributed runtime files.
 ---
 --- With `--clean` the home directory entries are not included.
+--- Environment variables are expanded `:set_env`.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.runtimepath = "..."
@@ -5832,6 +5838,7 @@ vim.go.sd = vim.go.shada
 --- When equal to "NONE" no shada file will be read or written.
 --- This option can be set with the `-i` command line flag.  The `--clean`
 --- command line flag sets it to "NONE".
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -6487,6 +6494,7 @@ vim.bo.spc = vim.bo.spellcapcheck
 --- name if you want to.  However, it will then only be used when
 --- 'spellfile' is set to it, for entries in 'spelllang' only files
 --- without region name will be found.
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -6623,7 +6631,7 @@ vim.bo.spo = vim.bo.spelloptions
 --- ```vim
 --- 	set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
 --- ```
----
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -7438,8 +7446,9 @@ vim.bo.tw = vim.bo.textwidth
 --- name.  See `option-backslash` about using backslashes.  The use of
 --- `:set+=` and `:set-=` is preferred when adding or removing directories
 --- from the list.  This avoids problems when a future version uses
---- another default.  Backticks cannot be used in this option for security
---- reasons.
+--- another default.
+--- Environment variables are expanded `:set_env`.
+--- Backticks cannot be used in this option for security reasons.
 ---
 --- @type string
 vim.o.thesaurus = ""
@@ -7610,6 +7619,7 @@ vim.go.ttm = vim.go.ttimeoutlen
 --- undo file that exists is used.  When it cannot be read an error is
 --- given, no further entry is used.
 --- See `undo-persistence`.
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -7803,6 +7813,7 @@ vim.go.vbs = vim.go.verbose
 --- Setting 'verbosefile' to a new value is like making it empty first.
 --- The difference with `:redir` is that verbose messages are not
 --- displayed when 'verbosefile' is set.
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -7813,6 +7824,7 @@ vim.go.verbosefile = vim.o.verbosefile
 vim.go.vfile = vim.go.verbosefile
 
 --- Name of the directory where to store files for `:mkview`.
+--- Environment variables are expanded `:set_env`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
