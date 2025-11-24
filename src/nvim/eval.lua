@@ -2957,12 +2957,13 @@ M.funcs = {
     desc = [=[
       Escape {string} for use as file name command argument.  All
       characters that have a special meaning, such as `'%'` and `'|'`
-      are escaped with a backslash.
-      For most systems the characters escaped are
-      " \t\n*?[{`$\\%#'\"|!<".  For systems where a backslash
-      appears in a filename, it depends on the value of 'isfname'.
-      A leading '+' and '>' is also escaped (special after |:edit|
-      and |:write|).  And a "-" by itself (special after |:cd|).
+      are escaped with a backslash. For most systems the characters
+      escaped are: >
+      	\t\n *?[{`$\\%#'\"|!<
+      <For systems where a backslash appears in a filename, it
+      depends on the value of 'isfname'. A leading '+' and '>' is
+      also escaped (special after |:edit| and |:write|).  And a "-"
+      by itself (special after |:cd|).
       Returns an empty string on error.
       Example: >vim
       	let fname = '+some str%nge|name'
