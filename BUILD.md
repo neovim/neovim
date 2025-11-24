@@ -459,6 +459,13 @@ Similarly to develop on Neovim: `nix run github:nix-community/neovim-nightly-ove
 To use a specific version of Neovim, you can pass `--override-input neovim-src .` to use your current directory,
 or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f8f4e754e70cbe1624f030fb61bded41bc2`.
 
+### Haiku
+
+Some deps can be pulled from haiku repos, the rest need "bundled" deps:
+
+    cmake -DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_UNIBILIUM=OFF -DUSE_BUNDLED_LUAJIT=OFF -B .deps ./cmake.deps
+    make -C .deps
+
 ### FreeBSD
 
 ```

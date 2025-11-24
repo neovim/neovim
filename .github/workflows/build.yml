@@ -21,8 +21,8 @@ env:
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
 
 jobs:
+  # Test the minimum supported cmake.
   old-cmake:
-    name: Minimum cmake
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -54,8 +54,8 @@ jobs:
       - name: Install
         run: make install
 
+  # Offline build (USE_EXISTING_SRC_DIR=ON with no network access)
   use-existing-src:
-    name: Offline build (USE_EXISTING_SRC_DIR=ON with no network access)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
