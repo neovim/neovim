@@ -111,12 +111,12 @@ REFERENCE: [Expression Register](quote=)
 
   1. Move the cursor to the line below marked ✓
 
-  2. yank the zeroth line, then inspect registers with `:reg`{vim} `<ENTER>`{normal}
+  2. Yank the line starting with "0.", then inspect registers with `:reg`{vim} `<ENTER>`{normal}
 
-  3. delete line 0. with `"cdd`{normal}, then inspect registers
+  3. Delete line 0 with `"cdd`{normal}, then inspect registers
      (Where do you expect line 0 to be?)
 
-  4. continue deleting each successive line, inspecting `:reg`{vim} as you go
+  4. Continue deleting each successive line, inspecting `:reg`{vim} as you go
 
 NOTE: You should notice that old full-line deletions move down the list
       as new full-line deletions are added
