@@ -1080,7 +1080,8 @@ local options = {
         a modified version of the following command in your vimrc file to
         override it: >vim
           let &cdpath = ',' .. substitute(substitute($CDPATH, '[, ]', '\\\0', 'g'), ':', ',', 'g')
-        <	This option cannot be set from a |modeline| or in the |sandbox|, for
+        <	Environment variables are expanded |:set_env|.
+        This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
         (parts of 'cdpath' can be passed to the shell to expand file names).
       ]=],
@@ -2300,6 +2301,7 @@ local options = {
         To include a comma in a file name precede it with a backslash.  Spaces
         after a comma are ignored, otherwise spaces are included in the file
         name.  See |option-backslash| about using backslashes.
+        Environment variables are expanded |:set_env|.
         This has nothing to do with the |Dictionary| variable type.
         Where to find a list of words?
         - BSD/macOS include the "/usr/share/dict/words" file.
@@ -5892,7 +5894,7 @@ local options = {
         	set mkspellmem=900000,3000,800
         <	If you have less than 512 Mbyte |:mkspell| may fail for some
         languages, no matter what you set 'mkspellmem' to.
-
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
@@ -6480,6 +6482,7 @@ local options = {
       desc = [=[
         Directories used to find packages.
         See |packages| and |packages-runtimepath|.
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
@@ -7209,6 +7212,9 @@ local options = {
         to find files which add to distributed runtime files.
 
         With |--clean| the home directory entries are not included.
+        Environment variables are expanded |:set_env|.
+        This option cannot be set from a |modeline| or in the |sandbox|, for
+        security reasons.
       ]=],
       expand = 'nodefault',
       full_name = 'runtimepath',
@@ -7660,6 +7666,7 @@ local options = {
         When equal to "NONE" no shada file will be read or written.
         This option can be set with the |-i| command line flag.  The |--clean|
         command line flag sets it to "NONE".
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
@@ -8501,6 +8508,7 @@ local options = {
         name if you want to.  However, it will then only be used when
         'spellfile' is set to it, for entries in 'spelllang' only files
         without region name will be found.
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
@@ -8661,7 +8669,7 @@ local options = {
         Only one of "best", "double" or "fast" may be used.  The others may
         appear several times in any order.  Example: >vim
         	set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
-        <
+        <	Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
@@ -9627,8 +9635,9 @@ local options = {
         name.  See |option-backslash| about using backslashes.  The use of
         |:set+=| and |:set-=| is preferred when adding or removing directories
         from the list.  This avoids problems when a future version uses
-        another default.  Backticks cannot be used in this option for security
-        reasons.
+        another default.
+        Environment variables are expanded |:set_env|.
+        Backticks cannot be used in this option for security reasons.
       ]=],
       expand = true,
       full_name = 'thesaurus',
@@ -9860,6 +9869,7 @@ local options = {
         undo file that exists is used.  When it cannot be read an error is
         given, no further entry is used.
         See |undo-persistence|.
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
 
@@ -10090,6 +10100,7 @@ local options = {
         Setting 'verbosefile' to a new value is like making it empty first.
         The difference with |:redir| is that verbose messages are not
         displayed when 'verbosefile' is set.
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
@@ -10106,6 +10117,7 @@ local options = {
       defaults = '',
       desc = [=[
         Name of the directory where to store files for |:mkview|.
+        Environment variables are expanded |:set_env|.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
