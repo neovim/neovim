@@ -418,8 +418,7 @@ Number; !must be defined to function properly):
   Currently only compilers with gcc-compatible arguments are supported.
 
 - `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be
-  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote
-  :7777` inside.
+  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote :7777` inside.
 
 - `GDBSERVER_PORT` (F) (I): overrides port used for `GDB`.
 
