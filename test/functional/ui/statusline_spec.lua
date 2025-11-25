@@ -847,6 +847,7 @@ describe('default statusline', function()
       '%<',
       '%f %h%w%m%r ',
       '%=',
+      "%{% luaeval('(package.loaded[''vim.ui''] and vim.ui.progress_status()) or '''' ')%}",
       "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
       "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
       "%{% &busy > 0 ? '◐ ' : '' %}",
@@ -890,5 +891,59 @@ describe('default statusline', function()
       {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
+  end)
+
+  it('shows and updates progress status', function()
+    local function get_progress()
+      return exec_lua(function()
+        local stl_str = vim.ui.progress_status()
+        return vim.api.nvim_eval_statusline(stl_str, {}).str
+      end)
+    end
+
+    eq('', get_progress())
+    ---@type integer|string
+    local id1 = api.nvim_echo(
+      { { 'searching...' } },
+      true,
+      { kind = 'progress', title = 'test', status = 'running', percent = 10 }
+    )
+    eq('test: 10% ', get_progress())
+    api.nvim_echo(
+      { { 'searching' } },
+      true,
+      { id = id1, kind = 'progress', percent = 50, status = 'running', title = 'terminal(ripgrep)' }
+    )
+    eq('terminal(ripgrep): 50% ', get_progress())
+    api.nvim_echo(
+      { { 'searching...' } },
+      true,
+      { kind = 'progress', title = 'second-item', status = 'running', percent = 20 }
+    )
+    eq('Progress: 2 items 35% ', get_progress())
+    api.nvim_echo({ { 'searching' } }, true, {
+      id = id1,
+      kind = 'progress',
+      percent = 100,
+      status = 'success',
+      title = 'terminal(ripgrep)',
+    })
+    eq('second-item: 20% ', get_progress())
+
+    -- works with custom formater
+    eq(
+      '20/100',
+      exec_lua(function()
+        return vim.ui.progress_status({
+          fmt = function(items)
+            local tot = 0
+            for _, item in ipairs(items) do
+              tot = tot + item.percent
+            end
+            return tostring(math.floor(tot / #items)) .. '/100'
+          end,
+        })
+      end)
+    )
   end)
 end)
