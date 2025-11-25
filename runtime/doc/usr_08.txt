@@ -443,7 +443,7 @@ To go the other way use: >
 
 	[c
 
-Prepended a count to jump further away.
+Prepend a count to jump further away.
 
 
 REMOVING CHANGES
