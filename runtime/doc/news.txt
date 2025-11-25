@@ -325,7 +325,7 @@ PLUGINS
 
 • Customize :checkhealth by handling a `FileType checkhealth` event.
   |health-usage|
-
+• `:checkhealth vim.health` checks plugin "hygiene".
 • Simplify Python provider setup to a single step: `uv tool install pynvim`
   Nvim will detect the plugin's location without user configuration, even if
   unrelated Python virtual environments are activated.
