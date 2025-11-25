@@ -219,21 +219,13 @@ do
       vim.lsp.buf.type_definition()
     end, { desc = 'vim.lsp.buf.type_definition()' })
 
-    vim.keymap.set('x', 'an', function()
+    vim.keymap.set({ 'x', 'o' }, 'an', function()
       vim.lsp.buf.selection_range(vim.v.count1)
     end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1)' })
 
-    vim.keymap.set('x', 'in', function()
+    vim.keymap.set({ 'x', 'o' }, 'in', function()
       vim.lsp.buf.selection_range(-vim.v.count1)
     end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
-
-    vim.keymap.set('o', 'an', function()
-      vim.lsp.buf.selection_range(vim.v.count1, 1000)
-    end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1, timeout_ms)' })
-
-    vim.keymap.set('o', 'in', function()
-      vim.lsp.buf.selection_range(-vim.v.count1, 1000)
-    end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1, timeout_ms)' })
 
     vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
