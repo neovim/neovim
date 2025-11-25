@@ -2508,7 +2508,10 @@ function M.open_float(opts, ...)
     end
 
     ---@type lsp.DiagnosticRelatedInformation[]
-    local related_info = vim.tbl_get(diagnostic, 'user_data', 'lsp', 'relatedInformation') or {}
+    local related_info = vim.tbl_get(diagnostic, 'user_data', 'lsp', 'relatedInformation')
+    if related_info == vim.NIL then
+      related_info = {}
+    end
 
     -- Below the diagnostic, show its LSP related information (if any) in the form of file name and
     -- range, plus description.
