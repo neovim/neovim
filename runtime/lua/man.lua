@@ -427,7 +427,8 @@ local function get_page(path, silent)
   if localfile_arg == nil then
     local mpath = get_path('man')
     -- Check for -l support.
-    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true) or '') ~= ''
+    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true, { MANPAGER = 'cat' }) or '')
+      ~= ''
   end
 
   local cmd = localfile_arg and { 'man', '-l', path } or { 'man', path }
