@@ -7582,3 +7582,89 @@ win_T *lastwin_nofloating(void)
   }
   return res;
 }
+
+/// Create a new tabpage without switching to it.
+/// @param after Position in tabpage list (0 = after current, 1 = first)
+/// @param[out] err Error details, if any
+/// @return Handle of the created tabpage, or NULL on failure
+tabpage_T *win_new_tabpage_noenter(int after, Error *err)
+{
+  tabpage_T *old_curtab = curtab;
+
+  if (cmdwin_type != 0) {
+    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+    return NULL;
+  }
+
+  tabpage_T *newtp = alloc_tabpage();
+  if (newtp == NULL) {
+    api_set_error(err, kErrorTypeException, "Failed to allocate new tabpage");
+    return NULL;
+  }
+
+  // Remember the current windows in this Tab page.
+  if (leave_tabpage(curbuf, true) == FAIL) {
+    xfree(newtp);
+    api_set_error(err, kErrorTypeException, "Failed to leave current tabpage");
+    return NULL;
+  }
+
+  // Copy localdir from current tabpage
+  newtp->tp_localdir = old_curtab->tp_localdir ? xstrdup(old_curtab->tp_localdir) : NULL;
+
+  // Switch to new tabpage to set it up
+  curtab = newtp;
+
+  // Create the initial window in the new tabpage
+  if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {
+    // Insert the new tabpage in the correct position
+    if (after == 1) {
+      // New tab page becomes the first one
+      newtp->tp_next = first_tabpage;
+      first_tabpage = newtp;
+    } else {
+      tabpage_T *tp = old_curtab;
+      if (after > 0) {
+        // Put new tab page before tab page "after"
+        int n = 2;
+        for (tp = first_tabpage; tp->tp_next != NULL && n < after; tp = tp->tp_next) {
+          n++;
+        }
+      }
+      newtp->tp_next = tp->tp_next;
+      tp->tp_next = newtp;
+    }
+
+    // Set up the tabpage structure properly
+    newtp->tp_firstwin = newtp->tp_lastwin = newtp->tp_curwin = curwin;
+    win_init_size();
+    firstwin->w_winrow = tabline_height();
+    firstwin->w_prev_winrow = firstwin->w_winrow;
+    win_comp_scroll(curwin);
+    newtp->tp_topframe = topframe;
+    last_status(false);
+
+    if (curbuf->terminal) {
+      terminal_check_size(curbuf->terminal);
+    }
+
+    redraw_all_later(UPD_NOT_VALID);
+    tabpage_check_windows(old_curtab);
+    lastused_tabpage = old_curtab;
+
+    // Fire autocmds for new window and tabpage
+    entering_window(curwin);
+    apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_TABNEW, NULL, NULL, false, curbuf);
+
+    // Now switch back to the original tabpage
+    enter_tabpage(old_curtab, curbuf, true, true);
+
+    return newtp;
+  }
+
+  // Failed, get back the previous Tab page
+  enter_tabpage(old_curtab, curbuf, true, true);
+  api_set_error(err, kErrorTypeException, "Failed to create window in new tabpage");
+  return NULL;
+}

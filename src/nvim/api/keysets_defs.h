@@ -19,7 +19,8 @@ typedef struct {
            *Boolean) on_win;
   LuaRefOf(("line" _, Integer winid, Integer bufnr, Integer row), *Boolean) on_line;
   LuaRefOf(("range" _, Integer winid, Integer bufnr, Integer start_row, Integer start_col,
-            Integer end_row, Integer end_col), *Boolean) on_range;
+            Integer end_row, Integer end_col),
+           *Boolean) on_range;
   LuaRefOf(("end" _, Integer tick)) on_end;
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;
@@ -141,6 +142,12 @@ typedef struct {
   Boolean hide;
   Integer _cmdline_offset;
 } Dict(win_config);
+
+typedef struct {
+  OptionalKeys is_set__tabpage_config_;
+  Boolean enter;
+  Integer after;
+} Dict(tabpage_config);
 
 typedef struct {
   Boolean is_lua;
@@ -353,27 +360,14 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__buf_attach_;
-  LuaRefOf(("lines" _,
-            Integer bufnr,
-            Integer changedtick,
-            Integer first,
-            Integer last_old,
-            Integer last_new,
-            Integer byte_count,
-            Integer *deleted_codepoints,
-            Integer *deleted_codeunits), *Boolean) on_lines;
-  LuaRefOf(("bytes" _,
-            Integer bufnr,
-            Integer changedtick,
-            Integer start_row,
-            Integer start_col,
-            Integer start_byte,
-            Integer old_end_row,
-            Integer old_end_col,
-            Integer old_end_byte,
-            Integer new_end_row,
-            Integer new_end_col,
-            Integer new_end_byte), *Boolean) on_bytes;
+  LuaRefOf(("lines" _, Integer bufnr, Integer changedtick, Integer first, Integer last_old,
+            Integer last_new, Integer byte_count, Integer *deleted_codepoints,
+            Integer *deleted_codeunits),
+           *Boolean) on_lines;
+  LuaRefOf(("bytes" _, Integer bufnr, Integer changedtick, Integer start_row, Integer start_col,
+            Integer start_byte, Integer old_end_row, Integer old_end_col, Integer old_end_byte,
+            Integer new_end_row, Integer new_end_col, Integer new_end_byte),
+           *Boolean) on_bytes;
   LuaRefOf(("changedtick" _, Integer bufnr, Integer changedtick)) on_changedtick;
   LuaRefOf(("detach" _, Integer bufnr)) on_detach;
   LuaRefOf(("reload" _, Integer bufnr)) on_reload;
@@ -400,8 +394,7 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__xdl_diff_;
-  LuaRefOf((Integer start_a, Integer count_a, Integer start_b, Integer count_b),
-           *Integer) on_hunk;
+  LuaRefOf((Integer start_a, Integer count_a, Integer start_b, Integer count_b), *Integer) on_hunk;
   String result_type;
   String algorithm;
   Integer ctxlen;
