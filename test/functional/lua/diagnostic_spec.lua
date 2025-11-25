@@ -4052,7 +4052,10 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('E:1 W:2 I:3 H:4', result)
+      eq(
+        '%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:2 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
+        result
+      )
 
       exec_lua('vim.cmd.enew()')
 
@@ -4084,7 +4087,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('⨯:1 ⚠︎:1', result)
+      eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
     end)
   end)
 

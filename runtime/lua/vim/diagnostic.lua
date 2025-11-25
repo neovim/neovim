@@ -2879,6 +2879,13 @@ function M.fromqflist(list)
   return diagnostics
 end
 
+local hl_map = {
+  [M.severity.ERROR] = 'DiagnosticSignError',
+  [M.severity.WARN] = 'DiagnosticSignWarn',
+  [M.severity.INFO] = 'DiagnosticSignInfo',
+  [M.severity.HINT] = 'DiagnosticSignHint',
+}
+
 --- Returns formatted string with diagnostics for the current buffer.
 --- The severities with 0 diagnostics are left out.
 --- Example `E:2 W:3 I:4 H:5`
@@ -2902,9 +2909,13 @@ function M.status(bufnr)
   local result_str = vim
     .iter(pairs(counts))
     :map(function(severity, count)
-      return ('%s:%s'):format(signs[severity], count)
+      return ('%%#%s#%s:%s'):format(hl_map[severity], signs[severity], count)
     end)
     :join(' ')
+
+  if result_str:len() > 0 then
+    result_str = result_str .. '%##'
+  end
 
   return result_str
 end
