@@ -3422,15 +3422,16 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     Remove an existing mapping. Examples: >lua
         vim.keymap.del('n', 'lhs')
 
-        vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+        vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
 <
 
     Parameters: ~
       • {modes}  (`string|string[]`)
       • {lhs}    (`string`)
       • {opts}   (`table?`) A table with the following fields:
-                 • {buffer}? (`integer|boolean`) Remove a mapping from the
-                   given buffer. When `0` or `true`, use the current buffer.
+                 • {buf}? (`integer|boolean`) Remove a mapping from the given
+                   buffer. When `0` or `true`, use the current buffer.
+                 • {buffer}? (`integer|boolean`) Deprecated: use `buf`
 
     See also: ~
       • |vim.keymap.set()|
@@ -3442,7 +3443,7 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
         -- Map "x" to a Lua function:
         vim.keymap.set('n', 'x', function() print('real lua function') end)
         -- Map "<leader>x" to multiple modes for the current buffer:
-        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
+        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = true })
         -- Map <Tab> to an expression (|:map-<expr>|):
         vim.keymap.set('i', '<Tab>', function()
           return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
@@ -3474,8 +3475,9 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
                 • {replace_keycodes} defaults to `true` if "expr" is `true`.
 
                 Also accepts:
-                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
-                  `0` or `true` for current buffer.
+                • {buf}? (`integer|boolean`) Creates buffer-local mapping, `0`
+                  or `true` for current buffer.
+                • {buffer}? (`integer|boolean`) Deprecated: use `buf`
                 • {remap}? (`boolean`, default: `false`) Make the mapping
                   recursive. Inverse of {noremap}.
 
