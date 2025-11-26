@@ -607,5 +607,19 @@ describe('vim.lsp.diagnostic', function()
       eq('related bad!', related_diagnostics[1].message)
       eq('spongebob', relatedPreviousResultId)
     end)
+
+    it('refreshes diagnostics on request', function()
+      eq(
+        1,
+        exec_lua(function()
+          vim.lsp.diagnostic.on_refresh(nil, nil, {
+            method = 'workspace/diagnostic/refresh',
+            client_id = client_id,
+          })
+
+          return _G.requests
+        end)
+      )
+    end)
   end)
 end)
