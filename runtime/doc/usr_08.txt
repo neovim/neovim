@@ -443,7 +443,8 @@ To go the other way use: >
 
 	[c
 
-Prepended a count to jump further away.
+Prepend a count to jump further away. Thus "4]c" jumps to the fourth next
+change, and "3[c" jumps to the third previous change.
 
 
 REMOVING CHANGES
