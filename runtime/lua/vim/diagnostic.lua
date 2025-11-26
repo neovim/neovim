@@ -94,6 +94,9 @@ end
 --- Options for floating windows. See |vim.diagnostic.Opts.Float|.
 --- @field float? boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float
 ---
+--- Options for the statusline component.
+--- @field status? vim.diagnostic.Opts.Status
+---
 --- Update diagnostics in Insert mode
 --- (if `false`, diagnostics are updated on |InsertLeave|)
 --- (default: `false`)
@@ -183,6 +186,11 @@ end
 --- prepending it.
 --- Overrides the setting from |vim.diagnostic.config()|.
 --- @field suffix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)
+
+--- @class vim.diagnostic.Opts.Status
+---
+--- A table mapping |diagnostic-severity| to the text to use for each severity section.
+--- @field text? table<vim.diagnostic.Severity,string>
 
 --- @class vim.diagnostic.Opts.Underline
 ---
@@ -2887,10 +2895,10 @@ local hl_map = {
 --- The severities with 0 diagnostics are left out.
 --- Example `E:2 W:3 I:4 H:5`
 ---
---- To customise appearance, set diagnostic signs text with
+--- To customise appearance, set diagnostic text for each severity with
 --- ```lua
 --- vim.diagnostic.config({
----   signs = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
+---   status = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
 --- })
 --- ```
 ---@param bufnr? integer Buffer number to get diagnostics from.
@@ -2901,7 +2909,7 @@ function M.status(bufnr)
   vim.validate('bufnr', bufnr, 'number', true)
   bufnr = bufnr or 0
   local counts = M.count(bufnr)
-  local user_signs = vim.tbl_get(M.config() --[[@as vim.diagnostic.Opts]], 'signs', 'text') or {}
+  local user_signs = vim.tbl_get(M.config() --[[@as vim.diagnostic.Opts]], 'status', 'text') or {}
   local signs = vim.tbl_extend('keep', user_signs, { 'E', 'W', 'I', 'H' })
   local result_str = vim
     .iter(pairs(counts))
