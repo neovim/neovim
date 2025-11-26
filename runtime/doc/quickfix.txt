@@ -2295,7 +2295,7 @@ remove the comment lines.  For the '\' notation at the start of some lines see
 	\%E!\ %m,
 <		Start of multi-line warning messages; the first two also
 		include the line number.  Meaning of some regular expressions:
-		  - "%.%#"  (".*")   matches a (possibly empty) string
+		  - "%.%#"  (`.*`)   matches a (possibly empty) string
 		  - "%*\\d" ("\d\+") matches a number >
 	\%+WLaTeX\ %.%#Warning:\ %.%#line\ %l%.%#,
 	\%+W%.%#\ at\ lines\ %l--%*\\d,

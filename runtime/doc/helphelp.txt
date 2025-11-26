@@ -481,15 +481,12 @@ aligned on a line.
 When referring to an existing help tag and to create a hot-link, place the
 name between two bars ("|") eg. |help-writing|.
 
-When referring to a Vim command and to create a hot-link, place the
-name between two backticks, eg. inside `:filetype`.  You will see this is
-highlighted as a command, like a code block (see below).
-
 When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'
 
-When referring to any other technical term, such as a filename or function
-parameter, surround it in backticks, eg. `~/.path/to/init.vim`.
+When referring to any other technical term or symbol, such as a filename or
+function parameter, surround it in backticks, eg. `~/.path/to/init.vim`. This
+renders it as "inline" code (as opposed to a "codeblock" |help-codeblock|).
 
 
 HIGHLIGHTING

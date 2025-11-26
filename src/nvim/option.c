@@ -1047,6 +1047,7 @@ static const char *find_tty_option_end(const char *arg)
     p++;
   }
   if (p[0] == 't' && p[1] == '_' && p[2] && p[3]) {
+    // "t_xx" ("t_Co") option.
     p += 4;
   } else if (delimit) {
     // Search for delimiting >.

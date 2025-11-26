@@ -42,7 +42,7 @@ There are many resources to learn Vi, Vim, and Nvim.  We recommend:
 - "Practical Vim" by Drew Neil. Acclaimed for its focus on quickly learning
   common editing tasks with Vim.
 - "Modern Vim" by Drew Neil. Explores new features in Nvim and Vim 8.
-- https://vimcasts.org/publications/
+- http://vimcasts.org
 - "Vim - Vi Improved" by Steve Oualline. This was the first book dedicated to
   Vim.  Parts of it were included in the Vim user manual. |frombook|  ISBN:
   0735710015
