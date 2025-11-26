@@ -671,9 +671,37 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.Status*
 
     Fields: ~
-      • {text}?  (`table<vim.diagnostic.Severity,string>`) A table mapping
-                 |diagnostic-severity| to the text to use for each severity
-                 section.
+      • {format}?  (`table<vim.diagnostic.Severity,string>|(fun(counts:table<vim.diagnostic.Severity,integer>): string)`)
+                   Either:
+                   • a table mapping |diagnostic-severity| to the text to use
+                     for each existing severity section.
+                   • a function that accepts a mapping of
+                     |diagnostic-severity| to the number of diagnostics of the
+                     corresponding severity (only those severity levels that
+                     have at least 1 diagnostic) and returns a 'statusline'
+                     component. In this case highlights must be applied by the
+                     user in the `format` function. Example: >lua
+                     local signs = {
+                     [vim.diagnostic.severity.ERROR] = "A",
+                     -- ...
+                   }
+                   local hl_map = {
+                     [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+                     -- ...
+                   }
+                   vim.diagnostic.config({
+                     status = {
+                       format = function(counts)
+                         local items = {}
+                         for level, _ in ipairs(vim.diagnostic.severity) do
+                           local count = counts[level] or 0
+                           table.insert(items, ("%%#%s#%s %s"):format(hl_map[level], signs[level], count))
+                         end
+                         return table.concat(items, " ")
+                       end
+                     }
+                   })
+<
 
 *vim.diagnostic.Opts.Underline*
 
@@ -1033,11 +1061,7 @@ status({bufnr})                                      *vim.diagnostic.status()*
     Returns formatted string with diagnostics for the current buffer. The
     severities with 0 diagnostics are left out. Example `E:2 W:3 I:4 H:5`
 
-    To customise appearance, set diagnostic text for each severity with >lua
-        vim.diagnostic.config({
-          status = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
-        })
-<
+    To customise appearance, see |vim.diagnostic.Opts.Status|.
 
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Defaults
