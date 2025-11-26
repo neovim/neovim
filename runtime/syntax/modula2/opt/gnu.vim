@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:    Modula-2 (PIM)
-" Maintainer:  B.Kowarsch <trijezdci@moc.liamg>
-" Last Change: 2016 August 22
+" Language:    Modula-2 (GNU)
+" Maintainer:  Wilken Gottwalt <wilken.gottwalt@posteo.net> (based on B.Kowarschs ISO syntax)
+" Last Change: 2025 November 26
 
 " ----------------------------------------------------
 " THIS FILE IS LICENSED UNDER THE VIM LICENSE
@@ -10,16 +10,15 @@
 
 " Remarks:
 " Vim Syntax files are available for the following Modula-2 dialects:
-" * for the PIM dialect : m2pim.vim (this file)
+" * for the PIM dialect : m2pim.vim
 " * for the ISO dialect : m2iso.vim
 " * for the R10 dialect : m2r10.vim
-" * for the GNU dialect : m2gnu.vim
+" * for the GNU dialect : m2gnu.vim (this file)
 
 " -----------------------------------------------------------------------------
-" This syntax description follows the 3rd and 4th editions of N.Wirth's Book
-" Programming in Modula-2 (aka PIM) plus the following language extensions:
-" * non-leading, non-trailing, non-consecutive lowlines _ in identifiers
-" * widely supported non-standard types BYTE, LONGCARD and LONGBITSET
+" This syntax description follows ISO standard IS-10514 (aka ISO Modula-2 part 1)
+" with the addition of the following language extensions:
+" * GCC extensions
 " * non-nesting code disabling tags ?< and >? at the start of a line
 " -----------------------------------------------------------------------------
 
@@ -28,33 +27,32 @@
 " Vim's filetype script recognises Modula-2 dialect tags within the first 200
 " lines of Modula-2 .def and .mod input files.  The script sets filetype and
 " dialect automatically when a valid dialect tag is found in the input file.
-" The dialect tag for the PIM dialect is (*!m2pim*).  It is recommended to put
+" The dialect tag for the GNU dialect is (*!m2gnu*).  It is recommended to put
 " the tag immediately after the module header in the Modula-2 input file.
 "
 " Example:
-"  DEFINITION MODULE Foolib; (*!m2pim*)
+"  DEFINITION MODULE Foolib; (*!m2gnu*)
 "
 " Variable g:modula2_default_dialect sets the default Modula-2 dialect when the
 " dialect cannot be determined from the contents of the Modula-2 input file:
-" if defined and set to 'm2pim', the default dialect is PIM.
+" if defined and set to 'm2gnu', the default dialect is GNU.
 "
-" Variable g:modula2_pim_allow_lowline controls support for lowline in identifiers:
+" Variable g:modula2_gnu_allow_lowline controls support for lowline in identifiers:
 " if defined and set to a non-zero value, they are recognised, otherwise not
 "
-" Variable g:modula2_pim_disallow_octals controls the rendering of octal literals:
+" Variable g:modula2_gnu_disallow_octals controls the rendering of octal literals:
 " if defined and set to a non-zero value, they are rendered as errors.
 "
-" Variable g:modula2_pim_disallow_synonyms controls the rendering of & and ~:
+" Variable g:modula2_gnu_disallow_synonyms controls the rendering of @, & and ~:
 " if defined and set to a non-zero value, they are rendered as errors.
 "
 " Variables may be defined in Vim startup file .vimrc
 "
 " Examples:
-"  let g:modula2_default_dialect = 'm2pim'
-"  let g:modula2_pim_allow_lowline = 1
-"  let g:modula2_pim_disallow_octals = 1
-"  let g:modula2_pim_disallow_synonyms = 1
-
+"  let g:modula2_default_dialect = 'm2gnu'
+"  let g:modula2_gnu_allow_lowline = 1
+"  let g:modula2_gnu_disallow_octals = 1
+"  let g:modula2_gnu_disallow_synonyms = 1
 
 if exists("b:current_syntax")
   finish
@@ -63,54 +61,55 @@ endif
 " Modula-2 is case sensitive
 syn case match
 
-
 " -----------------------------------------------------------------------------
 " Reserved Words
 " -----------------------------------------------------------------------------
-syn keyword modula2Resword AND ARRAY BEGIN BY CASE CONST DEFINITION DIV DO ELSE
-syn keyword modula2Resword ELSIF EXIT EXPORT FOR FROM IF IMPLEMENTATION IMPORT
-syn keyword modula2Resword IN LOOP MOD NOT OF OR POINTER QUALIFIED RECORD REPEAT
-syn keyword modula2Resword RETURN SET THEN TO TYPE UNTIL VAR WHILE WITH
-
+syn keyword modula2Resword AND ARRAY BEGIN BY CASE CONST COROUTINE DEFINITION DIV DO
+syn keyword modula2Resword ELSE ELSIF EXCEPT EXIT EXPORT FINALLY FOR FORWARD FROM IF
+syn keyword modula2Resword IMPLEMENTATION IMPORT IN LOOP MOD NOT OF OR PACKEDSET
+syn keyword modula2Resword POINTER QUALIFIED RECORD REPEAT REM RETRY RETURN SET
+syn keyword modula2Resword THEN TO TYPE UNTIL UNQUALIFIED VAR WHILE WITH
 
 " -----------------------------------------------------------------------------
 " Builtin Constant Identifiers
 " -----------------------------------------------------------------------------
 syn keyword modula2ConstIdent FALSE NIL TRUE
 
-
 " -----------------------------------------------------------------------------
 " Builtin Type Identifiers
 " -----------------------------------------------------------------------------
-syn keyword modula2TypeIdent BITSET BOOLEAN CHAR PROC
-syn keyword modula2TypeIdent CARDINAL INTEGER LONGINT REAL LONGREAL
+syn keyword modula2TypeIdent BITSET BOOLEAN CHAR PROC SHORTCARD CARDINAL LONGCARD
+syn keyword modula2TypeIdent SHORTINT INTEGER LONGINT SHORTREAL REAL LONGREAL
+syn keyword modula2TypeIdent SHORTCOMPLEX COMPLEX LONGCOMPLEX PROTECTION
 
+" -----------------------------------------------------------------------------
+" Fixed Size SYSTEM Type Identifiers Matching C Types
+" -----------------------------------------------------------------------------
+syn keyword modula2TypeIdent INTEGER8 INTEGER16 INTEGER32 INTEGER64
+syn keyword modula2TypeIdent CARDINAL8 CARDINAL16 CARDINAL32 CARDINAL64
+syn keyword modula2TypeIdent BITSET8 BITSET16 BITSET32
+syn keyword modula2TypeIdent WORD16 WORD32 WORD64
+syn keyword modula2TypeIdent REAL32 REAL64 REAL96 REAL128
+syn keyword modula2TypeIdent COMPLEX32 COMPLEX64 COMPLEX96 COMPLEX128
 
 " -----------------------------------------------------------------------------
 " Builtin Procedure and Function Identifiers
 " -----------------------------------------------------------------------------
 syn keyword modula2ProcIdent CAP DEC EXCL HALT INC INCL
-syn keyword modula2FuncIdent ABS CHR FLOAT HIGH MAX MIN ODD ORD SIZE TRUNC VAL
-
+syn keyword modula2FuncIdent ABS CHR CMPLX FLOAT HIGH IM INT LENGTH LFLOAT MAX MIN
+syn keyword modula2FuncIdent ODD ORD RE SIZE TRUNC VAL
 
 " -----------------------------------------------------------------------------
 " Wirthian Macro Identifiers
 " -----------------------------------------------------------------------------
-syn keyword modula2MacroIdent NEW DISPOSE
-
+syn keyword modula2MacroIdent ALLOCATE DEALLOCATE NEW DISPOSE
 
 " -----------------------------------------------------------------------------
 " Unsafe Facilities via Pseudo-Module SYSTEM
 " -----------------------------------------------------------------------------
-syn keyword modula2UnsafeIdent ADDRESS PROCESS WORD
-syn keyword modula2UnsafeIdent ADR TSIZE NEWPROCESS TRANSFER SYSTEM
-
-
-" -----------------------------------------------------------------------------
-" Non-Portable Language Extensions
-" -----------------------------------------------------------------------------
-syn keyword modula2NonPortableIdent BYTE LONGCARD LONGBITSET
-
+syn keyword modula2UnsafeIdent ADDRESS BYTE CSIZE_T CSSIZE_T LOC WORD
+syn keyword modula2UnsafeIdent ADR CAST TSIZE
+syn keyword modula2UnsafeIdent MAKEADR ADDADR SUBADR DIFADR ROTATE SHIFT
 
 " -----------------------------------------------------------------------------
 " User Defined Identifiers
@@ -118,13 +117,11 @@ syn keyword modula2NonPortableIdent BYTE LONGCARD LONGBITSET
 syn match modula2Ident "[a-zA-Z][a-zA-Z0-9]*\(_\)\@!"
 syn match modula2LowLineIdent "[a-zA-Z][a-zA-Z0-9]*\(_[a-zA-Z0-9]\+\)\+"
 
-
 " -----------------------------------------------------------------------------
 " String Literals
 " -----------------------------------------------------------------------------
 syn region modula2String start=/"/ end=/"/ oneline
 syn region modula2String start=/'/ end=/'/ oneline
-
 
 " -----------------------------------------------------------------------------
 " Numeric Literals
@@ -134,29 +131,26 @@ syn match modula2Num
 syn match modula2Num "[0-9A-F]\+H"
 syn match modula2Octal "[0-7]\+[BC]"
 
-
 " -----------------------------------------------------------------------------
 " Punctuation
 " -----------------------------------------------------------------------------
 syn match modula2Punctuation
   \ "\.\|[,:;]\|\*\|[/+-]\|\#\|[=<>]\|\^\|\[\|\]\|(\(\*\)\@!\|[){}]"
-syn match modula2Synonym "[&~]"
-
+syn match modula2Synonym "[@&~]"
 
 " -----------------------------------------------------------------------------
 " Pragmas
 " -----------------------------------------------------------------------------
-syn region modula2Pragma start="(\*\$" end="\*)"
-syn match modula2DialectTag "(\*!m2pim\(+[a-z0-9]\+\)\?\*)"
+syn region modula2Pragma start="<\*" end="\*>"
+syn match modula2DialectTag "(\*!m2gnu\(+[a-z0-9]\+\)\?\*)"
 
 " -----------------------------------------------------------------------------
 " Block Comments
 " -----------------------------------------------------------------------------
-syn region modula2Comment start="(\*\(\$\|!m2pim\(+[a-z0-9]\+\)\?\*)\)\@!" end="\*)"
+syn region modula2Comment start="(\*\(!m2gnu\(+[a-z0-9]\+\)\?\*)\)\@!" end="\*)"
   \ contains = modula2Comment, modula2CommentKey, modula2TechDebtMarker
 syn match modula2CommentKey "[Aa]uthor[s]\?\|[Cc]opyright\|[Ll]icense\|[Ss]ynopsis"
 syn match modula2CommentKey "\([Pp]re\|[Pp]ost\|[Ee]rror\)\-condition[s]\?:"
-
 
 " -----------------------------------------------------------------------------
 " Technical Debt Markers
@@ -168,7 +162,6 @@ syn match modula2TechDebtMarker "TODO[:]\?" contained
 " Disabled Code Sections
 " -----------------------------------------------------------------------------
 syn region modula2DisabledCode start="^?<" end="^>?"
-
 
 " -----------------------------------------------------------------------------
 " Headers
@@ -209,14 +202,13 @@ syn keyword modula2ReswordModule contained MODULE
 syn keyword modula2ReswordProcedure contained PROCEDURE
 syn keyword modula2ReswordEnd contained END
 
-
 " -----------------------------------------------------------------------------
 " Illegal Symbols
 " -----------------------------------------------------------------------------
 " !!! this section must be last !!!
 
-" any '`' '!' '@ ''$' '%' or '\'
-syn match modula2IllegalChar "[`!@$%\\]"
+" any '`' '!' '$' '%' or '\'
+syn match modula2IllegalChar "[`!$%\\]"
 
 " any solitary sequence of '_'
 syn match modula2IllegalChar "\<_\+\>"
@@ -236,7 +228,6 @@ syn match modula2IllegalIdent
 
 " any identifiers with trailing occurrences of '_'
 syn match modula2IllegalIdent "[a-zA-Z][a-zA-Z0-9]*\(_\+[a-zA-Z0-9]\+\)*_\+\>"
-
 
 " -----------------------------------------------------------------------------
 " Define Rendering Styles
@@ -281,15 +272,15 @@ highlight default link modula2ModuleTail Normal
 highlight default link modula2ProcedureHeader Normal
 highlight default link modula2ProcedureTail Normal
 
-" lowline identifiers are rendered as errors if g:modula2_pim_allow_lowline is unset
-if exists("g:modula2_pim_allow_lowline")
-  if g:modula2_pim_allow_lowline != 0
+" lowline identifiers are rendered as errors if g:modula2_gnu_allow_lowline is unset
+if exists("g:modula2_gnu_allow_lowline")
+  if g:modula2_gnu_allow_lowline != 0
     highlight default link modula2ProcedureLowlineIdent modula2HeaderIdentStyle
   else
     highlight default link modula2ProcedureLowlineIdent Error
   endif
 else
-  highlight default link modula2ProcedureLowlineIdent Error
+  highlight default link modula2ProcedureLowlineIdent modula2HeaderIdentStyle
 endif
 
 " reserved words
@@ -312,24 +303,24 @@ highlight default link modula2NonPortableIdent modula2NonPortableIdentStyle
 " user defined identifiers
 highlight default link modula2Ident modula2UserDefIdentStyle
 
-" lowline identifiers are rendered as errors if g:modula2_pim_allow_lowline is unset
-if exists("g:modula2_pim_allow_lowline")
-  if g:modula2_pim_allow_lowline != 0
+" lowline identifiers are rendered as errors if g:modula2_gnu_allow_lowline is unset
+if exists("g:modula2_gnu_allow_lowline")
+  if g:modula2_gnu_allow_lowline != 0
     highlight default link modula2LowLineIdent modula2UserDefIdentStyle
   else
     highlight default link modula2LowLineIdent Error
   endif
 else
-  highlight default link modula2LowLineIdent Error
+  highlight default link modula2LowLineIdent modula2UserDefIdentStyle
 endif
 
 " literals
 highlight default link modula2String modula2StringLiteralStyle
 highlight default link modula2Num modula2NumericLiteralStyle
 
-" octal literals are rendered as errors if g:modula2_pim_disallow_octals is set
-if exists("g:modula2_pim_disallow_octals")
-  if g:modula2_pim_disallow_octals != 0
+" octal literals are rendered as errors if g:modula2_gnu_disallow_octals is set
+if exists("g:modula2_gnu_disallow_octals")
+  if g:modula2_gnu_disallow_octals != 0
     highlight default link modula2Octal Error
   else
     highlight default link modula2Octal modula2NumericLiteralStyle
@@ -341,9 +332,9 @@ endif
 " punctuation
 highlight default link modula2Punctuation modula2PunctuationStyle
 
-" synonyms & and ~ are rendered as errors if g:modula2_pim_disallow_synonyms is set
-if exists("g:modula2_pim_disallow_synonyms")
-  if g:modula2_pim_disallow_synonyms != 0
+" synonyms & and ~ are rendered as errors if g:modula2_gnu_disallow_synonyms is set
+if exists("g:modula2_gnu_disallow_synonyms")
+  if g:modula2_gnu_disallow_synonyms != 0
     highlight default link modula2Synonym Error
   else
     highlight default link modula2Synonym modula2PunctuationStyle
@@ -370,9 +361,8 @@ highlight default link modula2DisabledCode modula2DisabledCodeStyle
 highlight default link modula2IllegalChar Error
 highlight default link modula2IllegalIdent Error
 
-
 let b:current_syntax = "modula2"
 
-" vim: ts=4
+" vim: ts=2
 
 " END OF FILE

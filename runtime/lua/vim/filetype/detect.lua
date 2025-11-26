@@ -490,7 +490,7 @@ local function modula2(bufnr)
       matched_dialect = line:match('%(%*!m2(%w+)%*%)')
     end
     if matched_dialect then
-      if vim.tbl_contains({ 'iso', 'pim', 'r10' }, matched_dialect) then
+      if vim.tbl_contains({ 'gnu', 'iso', 'pim', 'r10' }, matched_dialect) then
         dialect = matched_dialect
       end
       if vim.tbl_contains({ 'gm2' }, matched_extension) then

@@ -13,6 +13,7 @@
 " * for the PIM dialect : m2pim.vim
 " * for the ISO dialect : m2iso.vim (this file)
 " * for the R10 dialect : m2r10.vim
+" * for the GNU dialect : m2gnu.vim
 
 " -----------------------------------------------------------------------------
 " This syntax description follows ISO standard IS-10514 (aka ISO Modula-2)
