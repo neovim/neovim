@@ -282,6 +282,8 @@ LSP
 • |vim.lsp.ClientConfig| has an `exit_timeout` field to control the timeout of
   client force stopping. Defaults to `false`.
 • |Client:stop()| now uses the `Client.exit_timeout` field to control the default of `force`.
+• Support for `workspace/diagnostic/refresh`:
+  https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 
 LUA
 

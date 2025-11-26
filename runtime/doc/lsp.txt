@@ -360,6 +360,7 @@ They are also listed below.
 - `'workspace/applyEdit'`
 - `'workspace/configuration'`
 - `'workspace/executeCommand'`
+- `'workspace/diagnostic/refresh'`
 - `'workspace/inlayHint/refresh'`
 - `'workspace/semanticTokens/refresh'`
 - `'workspace/symbol'`

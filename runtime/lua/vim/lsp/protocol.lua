@@ -609,7 +609,7 @@ function protocol.make_client_capabilities()
         refreshSupport = true,
       },
       diagnostics = {
-        refreshSupport = false,
+        refreshSupport = true,
       },
     },
     experimental = nil,
