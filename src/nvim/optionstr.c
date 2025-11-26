@@ -54,6 +54,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "optionstr.c.generated.h"
 
@@ -1898,14 +1899,20 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
   }
   const char *errmsg = NULL;
   char *s = *varp;
+  bool is_stl = args->os_idx == kOptStatusline;
 
   // reset statusline to default when setting global option and empty string is being set
-  if (args->os_idx == kOptStatusline
+  if (is_stl
       && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
       && s[0] == NUL) {
     xfree(*varp);
     *varp = xstrdup(get_option_default(args->os_idx, args->os_flags).data.string.data);
     s = *varp;
+  }
+
+  // handle floating window statusline changes
+  if (is_stl && win && win->w_floating) {
+    win_config_float(win, win->w_config);
   }
 
   if (rulerformat && *s == '%') {

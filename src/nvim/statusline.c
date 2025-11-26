@@ -76,9 +76,14 @@ void win_redr_status(win_T *wp)
       || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
     return;
   }
+  wp->w_redr_status = false;
+
+  if (wp->w_floating && is_stl_global) {
+    return;
+  }
+
   busy = true;
 
-  wp->w_redr_status = false;
   if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
     // no status line, either global statusline is enabled or the window is a last window
     redraw_cmdline = true;
@@ -229,7 +234,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
   StlClickRecord *tabtab;
   bool is_stl_global = global_stl_height() > 0;
 
-  ScreenGrid *grid = &default_grid;
+  ScreenGrid *grid = wp && wp->w_floating ? &wp->w_grid_alloc : &default_grid;
 
   // There is a tiny chance that this gets called recursively: When
   // redrawing a status line triggers redrawing the ruler or tabline.
@@ -269,10 +274,16 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
                                                    &wp->w_winbar_click_defs_size);
   } else {
-    row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-    fillchar = fillchar_status(&group, wp);
     const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
-    maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
+    if (wp->w_floating && !draw_ruler) {
+      row = wp->w_winrow_off + wp->w_view_height;
+      col = wp->w_wincol_off;
+      maxwidth = wp->w_view_width;
+    } else {
+      row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
+      maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
+    }
+    fillchar = fillchar_status(&group, wp);
     stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
@@ -310,7 +321,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     }
 
     attr = win_hl_attr(wp, (int)group);
-    if (in_status_line && !is_stl_global) {
+    if (!wp->w_floating && in_status_line && !is_stl_global) {
       col += wp->w_wincol;
     }
   }
