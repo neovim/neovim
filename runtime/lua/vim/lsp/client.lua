@@ -616,6 +616,7 @@ local static_registration_capabilities = {
   ['textDocument/moniker'] = 'monikerProvider',
   ['textDocument/selectionRange'] = 'selectionRangeProvider',
   ['textDocument/semanticTokens/full'] = 'semanticTokensProvider',
+  ['textDocument/semanticTokens/range'] = 'semanticTokensProvider',
   ['textDocument/typeDefinition'] = 'typeDefinitionProvider',
   ['textDocument/prepareTypeHierarchy'] = 'typeHierarchyProvider',
 }

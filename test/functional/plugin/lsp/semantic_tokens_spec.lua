@@ -74,6 +74,11 @@ describe('semantic token highlighting', function()
       "resultId": 1
     }]]
 
+    local range_response = [[{
+      "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 ],
+      "resultId": "1"
+    }]]
+
     local edit_response = [[{
       "edits": [ {"data": [ 2, 8, 1, 3, 8193, 1, 7, 11, 19, 8192, 1, 4, 3, 15, 8448, 0, 5, 4, 0, 8448, 0, 8, 1, 3, 8192 ], "deleteCount": 25, "start": 5 } ],
       "resultId":"2"
@@ -86,6 +91,7 @@ describe('semantic token highlighting', function()
           capabilities = {
             semanticTokensProvider = {
               full = { delta = true },
+              range = false,
               legend = vim.fn.json_decode(legend),
             },
           },
@@ -175,6 +181,145 @@ describe('semantic token highlighting', function()
                                                 |
       ]],
       }
+    end)
+
+    it('does not call full when only range is supported', function()
+      insert(text)
+      exec_lua(function()
+        _G.server_range_only = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              range = true,
+              full = false,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(range_response))
+            end,
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+          },
+        })
+      end, legend, range_response)
+      exec_lua(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.lsp.start({ name = 'dummy', cmd = _G.server_range_only.cmd })
+      end)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef __cplusplus                      |
+            std::cout << x << "\n";             |
+        #else                                   |
+            printf("%d\n", x);                  |
+        #endif                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+
+      local messages = exec_lua('return server_range_only.messages')
+      local called_range = false
+      local called_full = false
+      for _, m in ipairs(messages) do
+        if m.method == 'textDocument/semanticTokens/range' then
+          called_range = true
+        end
+        if m.method == 'textDocument/semanticTokens/full' then
+          called_full = true
+        end
+      end
+      eq(true, called_range)
+      eq(false, called_full)
+    end)
+
+    it('does not call range when only full is supported', function()
+      exec_lua(create_server_definition)
+      insert(text)
+      exec_lua(function()
+        _G.server_full = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              full = { delta = false },
+              range = false,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(range_response))
+            end,
+          },
+        })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server_full.cmd })
+      end, legend, response, range_response)
+
+      local messages = exec_lua('return server_full.messages')
+      local called_full = false
+      local called_range = false
+      for _, m in ipairs(messages) do
+        if m.method == 'textDocument/semanticTokens/full' then
+          called_full = true
+        end
+        if m.method == 'textDocument/semanticTokens/range' then
+          called_range = true
+        end
+      end
+      eq(true, called_full)
+      eq(false, called_range)
+    end)
+
+    it('prefers range when both are supported', function()
+      exec_lua(create_server_definition)
+      insert(text)
+      exec_lua(function()
+        _G.server_full = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              full = { delta = true },
+              range = true,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(range_response))
+            end,
+          },
+        })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server_full.cmd })
+      end, legend, response, range_response)
+
+      local messages = exec_lua('return server_full.messages')
+      local called_full = false
+      local called_range = false
+      for _, m in ipairs(messages) do
+        if m.method == 'textDocument/semanticTokens/full' then
+          called_full = true
+        end
+        if m.method == 'textDocument/semanticTokens/range' then
+          called_range = true
+        end
+      end
+      eq(false, called_full)
+      eq(true, called_range)
     end)
 
     it('use LspTokenUpdate and highlight_token', function()
