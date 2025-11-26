@@ -127,10 +127,7 @@ You can change the contents of the status line with the 'statusline' option.
 This option can be local to the window, so that you can have a different
 status line in each window.
 
-Note: for |floating-windows| only show a statusline when 'laststatus' is 1 or 2
-and window-local 'statusline' is explicitly set with `:setlocal statusline` to
-a nonempty value. Setting it to empty will clear the 'statusline' of the
-floating window.
+Note: |floating-windows| 'statusline' is not affected by 'laststatus'.
 
 Normally, inversion is used to display the status line.  This can be changed
 with the |hl-StatusLine| highlight group.  If no highlighting is used for the
