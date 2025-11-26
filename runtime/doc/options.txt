@@ -5260,6 +5260,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: Lines that are not visible and kept in scrollback are not
 	reflown when the terminal buffer is resized horizontally.
 
+			*'scrollbar'* *'sbar'* *'noscrollbar'* *'nosbar'*
+'scrollbar' 'sbar'	boolean	(default off)
+			local to window
+	Enable scrollbar support for windows. When the buffer content exceeds
+	the window height, a scrollbar will be displayed. For floating windows
+	with a right border, the scrollbar is rendered on the border. Highlight
+	groups use |hl-Scrollbar| and |hl-ScrollbarThumb|.
+
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean	(default off)
 			local to window

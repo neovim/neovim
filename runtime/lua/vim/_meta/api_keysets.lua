@@ -464,6 +464,7 @@ error('Cannot require a meta file')
 --- @field fixed? boolean
 --- @field hide? boolean
 --- @field _cmdline_offset? integer
+--- @field scrollbar? boolean
 
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer

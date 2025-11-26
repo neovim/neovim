@@ -328,6 +328,46 @@ static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
   return jump_flags;
 }
 
+/// Handle scrollbar click or drag by calculating the target file position
+/// based on mouse position and scrolling to that location.
+static void mouse_handle_scrollbar(win_T *wp)
+{
+  int height = wp->w_view_height;
+  linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
+  linenr_T end_lnum = line_count;
+  int64_t end_vcol = -1;
+  int total_lines = (int)win_text_height(wp, 1, -1, &end_lnum, &end_vcol, NULL, INT64_MAX);
+
+  if (total_lines > height) {
+    int thumb_size = MAX(1, (height * height) / total_lines);
+    int scrollable_area = height - thumb_size;
+    int click_row = mouse_row - (wp->w_winrow + wp->w_border_adj[0]);
+    click_row = MAX(0, MIN(click_row, scrollable_area));
+    int target_screen_offset = (click_row * (total_lines - height)) / scrollable_area;
+    linenr_T target_topline = 1;
+    int accumulated = 0;
+
+    while (target_topline < line_count && accumulated < target_screen_offset) {
+      linenr_T fold_end = target_topline;
+      if (hasFolding(wp, target_topline, NULL, &fold_end)) {
+        accumulated += 1;
+        target_topline = fold_end + 1;
+      } else {
+        accumulated += plines_win(wp, target_topline, false);
+        target_topline++;
+      }
+    }
+
+    target_topline = MAX(1, MIN(target_topline, line_count));
+    linenr_T current_topline = wp->w_topline;
+    if (target_topline > current_topline) {
+      scroll_redraw(true, target_topline - current_topline);
+    } else if (target_topline < current_topline) {
+      scroll_redraw(false, current_topline - target_topline);
+    }
+  }
+}
+
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
@@ -658,14 +698,21 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
   bool in_global_statusline = in_status_line && global_stl_height() > 0;
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
+  bool in_scrollbar = (jump_flags & MOUSE_SCROLLBAR);
 
-  if ((in_winbar || in_status_line || in_statuscol) && is_click) {
+  if (((in_winbar || in_status_line || in_statuscol) && is_click)
+      || (in_scrollbar && (is_click || is_drag))) {
     // Handle click event on window bar, status line or status column
     int click_grid = mouse_grid;
     int click_row = mouse_row;
     int click_col = mouse_col;
     win_T *wp = mouse_find_win_inner(&click_grid, &click_row, &click_col);
     if (wp == NULL) {
+      return false;
+    }
+
+    if (in_scrollbar) {
+      mouse_handle_scrollbar(wp);
       return false;
     }
 
@@ -1205,6 +1252,7 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
   static int prev_row = -1;
   static int prev_col = -1;
   static int did_drag = false;          // drag was noticed
+  static bool on_scrollbar = false;
 
   int count;
   bool first;
@@ -1280,6 +1328,12 @@ retnomove:
                      ? col >= wp->w_view_width - win_col_off(wp)
                      : col < win_col_off(wp));
 
+  on_scrollbar = wp->w_has_scrollbar && mouse_row >= wp->w_winrow + wp->w_border_adj[0]
+                 && mouse_row < wp->w_winrow + wp->w_border_adj[0] + wp->w_view_height
+                 && mouse_col == (wp->w_border_adj[1]
+                                  ? wp->w_wincol + wp->w_border_adj[3] + wp->w_view_width
+                                  : wp->w_wincol + wp->w_view_width);
+
   // The rightmost character of the status line might be a vertical
   // separator character if there is no connecting window to the right.
   if (on_status_line && on_sep_line) {
@@ -1303,6 +1357,10 @@ retnomove:
   if (!keep_focus) {
     if (on_winbar) {
       return IN_OTHER_WIN | MOUSE_WINBAR;
+    }
+
+    if (on_scrollbar) {
+      return MOUSE_SCROLLBAR;
     }
 
     if (on_statuscol) {
@@ -1412,6 +1470,8 @@ retnomove:
   } else if (on_statuscol && which_button == MOUSE_RIGHT) {
     // After a click on the status column don't start Visual mode.
     return IN_OTHER_WIN | MOUSE_STATUSCOL;
+  } else if (on_scrollbar && which_button == MOUSE_LEFT) {
+    return MOUSE_SCROLLBAR;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode

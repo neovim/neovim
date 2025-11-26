@@ -5530,6 +5530,17 @@ vim.o.scbk = vim.o.scrollback
 vim.bo.scrollback = vim.o.scrollback
 vim.bo.scbk = vim.bo.scrollback
 
+--- Enable scrollbar support for windows. When the buffer content exceeds
+--- the window height, a scrollbar will be displayed. For floating windows
+--- with a right border, the scrollbar is rendered on the border. Highlight
+--- groups use `hl-Scrollbar` and `hl-ScrollbarThumb`.
+---
+--- @type boolean
+vim.o.scrollbar = false
+vim.o.sbar = vim.o.scrollbar
+vim.wo.scrollbar = vim.o.scrollbar
+vim.wo.sbar = vim.wo.scrollbar
+
 --- See also `scroll-binding`.  When this option is set, scrolling the
 --- current window also scrolls other scrollbind windows (windows that
 --- also have this option set).  This option is useful for viewing the

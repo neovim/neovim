@@ -19,6 +19,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval/window.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
@@ -201,6 +202,8 @@
 ///   - split: Split direction: "left", "right", "above", "below".
 ///   - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the |cmdline-completion|
 ///     popupmenu to this window, with an offset in screen cell width.
+///   - scrollbar: If true then display scrollbar on the right border when text does not fit.
+///     |hl-Scrollbar| and |hl-ScrollbarThumb| highlight is used.
 ///
 /// @param[out] err Error details, if any
 ///
@@ -1399,6 +1402,10 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, _cmdline_offset)) {
     fconfig->_cmdline_offset = (int)config->_cmdline_offset;
+  }
+
+  if (HAS_KEY_X(config, scrollbar)) {
+    fconfig->scrollbar = config->scrollbar;
   }
 
   return true;
