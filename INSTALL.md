@@ -52,7 +52,7 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 
 ### Pre-built archives
 
-0. If you are missing `VCRUNTIME140.dll`, install the [Visual Studio 2015 C++ redistributable](https://support.microsoft.com/en-us/kb/2977003) (choose x86_64 or x86 depending on your system).
+0. If you are missing `VCRUNTIME170.dll`, install the [Visual Studio C++ redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) (choose x86_64 or x86 depending on your system).
 1. Choose a package (**nvim-winXX.zip**) from the [releases page](https://github.com/neovim/neovim/releases).
 2. Unzip the package. Any location is fine, administrator privileges are _not_ required.
     - `$VIMRUNTIME` will be set to that location automatically.

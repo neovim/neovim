@@ -1047,7 +1047,10 @@ TabClosed			After closing a tab page. <afile> expands to
 				the tab page number.
 							*TermOpen*
 TermOpen			When a |terminal| job is starting.  Can be
-				used to configure the terminal buffer.
+				used to configure the terminal buffer. To get
+				the terminal process details: >lua
+				    vim.print(vim.api.nvim_get_chan_info(vim.bo.channel))
+<
 							*TermEnter*
 TermEnter			After entering |Terminal-mode|.
 				After TermOpen.
@@ -1160,11 +1163,11 @@ VimEnter			After doing all the startup stuff, including
 				Just before this event is triggered the
 				|v:vim_did_enter| variable is set, so that you
 				can do: >
-				   if v:vim_did_enter
-				     call s:init()
-				   else
-				     au VimEnter * call s:init()
-				   endif
+				    if v:vim_did_enter
+				      call s:init()
+				    else
+				      au VimEnter * call s:init()
+				    endif
 <							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like

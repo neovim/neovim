@@ -159,6 +159,39 @@ describe('nvim_get_commands', function()
       keepscript = false,
       script_id = 4,
     }
+    local previewCmd = {
+      addr = NIL,
+      bang = false,
+      bar = false,
+      complete = 'customlist',
+      complete_arg = 's:cpt',
+      count = NIL,
+      definition = '',
+      name = 'PreviewCmd',
+      nargs = '1',
+      range = NIL,
+      register = false,
+      keepscript = false,
+      script_id = 5,
+    }
+    local previewLuaCmd = {
+      addr = NIL,
+      bang = false,
+      bar = false,
+      callback = NIL, -- RPC serializes Lua callback as NIL.
+      complete = NIL, -- RPC serializes Lua callback as NIL.
+      preview = NIL, -- RPC serializes Lua callback as NIL.
+      complete_arg = NIL,
+      count = NIL,
+      definition = '',
+      name = 'PreviewLuaCmd',
+      nargs = '1',
+      range = NIL,
+      register = false,
+      keepscript = false,
+      script_id = -8, -- Lua
+    }
+
     source([[
       let s:foo = 1
       command -complete=custom,ListUsers -nargs=+ Finger !finger <args>
@@ -186,12 +219,12 @@ describe('nvim_get_commands', function()
       function! s:cpt() abort
         return 1
       endfunction
-      command -nargs=1 -complete=customlist,s:cpt CmdWithPreview
+      command -nargs=1 -complete=customlist,s:cpt PreviewCmd
     ]])
     source([[
       lua << EOF
       vim.api.nvim_create_user_command(
-        'CmdWithPreviewLua',
+        'PreviewLuaCmd',
         function() end,
         {
           nargs = 1,
@@ -203,18 +236,15 @@ describe('nvim_get_commands', function()
     ]])
     -- TODO(justinmk): Order is stable but undefined. Sort before return?
     local commands = api.nvim_get_commands({ builtin = false })
-    local cmd_with_preview = commands.CmdWithPreview
-    commands.CmdWithPreview = nil
-    local cmd_with_preview_lua = commands.CmdWithPreviewLua
-    commands.CmdWithPreviewLua = nil
-    eq({ Cmd2 = cmd2, Cmd3 = cmd3, Cmd4 = cmd4, Finger = cmd1, TestCmd = cmd0 }, commands)
-
-    eq(cmd_with_preview.complete, 'customlist')
-    eq(cmd_with_preview.preview, nil)
-
-    -- user data (NIL), because these are passed through RPC:
-    eq(cmd_with_preview_lua.complete, NIL)
-    eq(cmd_with_preview_lua.preview, NIL)
+    eq({
+      Cmd2 = cmd2,
+      Cmd3 = cmd3,
+      Cmd4 = cmd4,
+      Finger = cmd1,
+      TestCmd = cmd0,
+      PreviewCmd = previewCmd,
+      PreviewLuaCmd = previewLuaCmd,
+    }, commands)
   end)
 
   it('gets callbacks defined as Lua functions', function()
