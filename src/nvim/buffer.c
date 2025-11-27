@@ -778,7 +778,6 @@ void buf_clear(void)
 ///              BFA_WIPE          buffer is going to be wiped out
 ///              BFA_KEEP_UNDO     do not free undo information
 ///              BFA_IGNORE_ABORT  don't abort even when aborting() returns true
-///              BFA_KEEP_DIR      do not free buffer-local directory
 void buf_freeall(buf_T *buf, int flags)
 {
   bool is_curbuf = (buf == curbuf);
@@ -864,12 +863,8 @@ void buf_freeall(buf_T *buf, int flags)
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
 
-  // buflist_new() might reuse this buf, so it might ask us to keep the
-  // buffer-local directory
-  if ((flags & BFA_KEEP_DIR) == 0) {
-    XFREE_CLEAR(buf->b_localdir);
-    XFREE_CLEAR(buf->b_prevdir);
-  }
+  XFREE_CLEAR(buf->b_localdir);
+  XFREE_CLEAR(buf->b_prevdir);
 }
 
 /// Free a buffer structure and the things it contains related to the buffer
@@ -1937,7 +1932,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     // change curbuf!  If that happens, allocate a new buffer anyway.
     // We also ask it to not free the buffer-local directory so we can reuse
     // it.
-    buf_freeall(buf, BFA_WIPE | BFA_DEL | BFA_KEEP_DIR);
+    buf_freeall(buf, BFA_WIPE | BFA_DEL);
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
       return NULL;
@@ -2062,6 +2057,8 @@ bool curbuf_reusable(void)
   return (curbuf != NULL
           && curbuf->b_ffname == NULL
           && curbuf->b_nwindows <= 1
+          && curbuf->b_localdir == NULL
+          && curbuf->b_prevdir == NULL
           && (curbuf->b_ml.ml_mfp == NULL || buf_is_empty(curbuf))
           && !bt_quickfix(curbuf)
           && !curbufIsChanged());

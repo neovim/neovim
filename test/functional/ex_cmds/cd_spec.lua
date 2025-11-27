@@ -398,6 +398,17 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
       command(':enew')
       eq(globalDir .. pathsep .. directories.buffer, cwd())
     end)
+
+    it('makes :enew use the buffer-local directory in a split', function()
+      local globalDir = directories.start
+      command(cmd .. ' ' .. directories.buffer)
+
+      command(':vsplit')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+
+      command(':enew')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+    end)
   end)
 end
 

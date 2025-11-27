@@ -68,7 +68,6 @@ enum bfa_values {
   BFA_WIPE         = 2,   ///< buffer is going to be wiped out
   BFA_KEEP_UNDO    = 4,   ///< do not free undo information
   BFA_IGNORE_ABORT = 8,   ///< do not abort for aborting()
-  BFA_KEEP_DIR     = 16,  ///< do not free buffer-local directory
 };
 
 EXTERN char *msg_loclist INIT( = N_("[Location List]"));
