@@ -205,14 +205,11 @@ static int parse_isopt(const char *var, buf_T *buf, bool only_check)
     }
 
     if (c2 == -1) {  // not a range
-      // A single '@' (not "@-@"):
-      // Decide on letters being ID/printable/keyword chars with
-      // standard function isalpha(). This takes care of locale for
-      // single-byte characters).
+      // Single "@" (not "@-@"): alpha characters [a-zA-Z].
       if (c == '@') {
         do_isalpha = true;
         c = 1;
-        c2 = 255;
+        c2 = 255;  // Constrained by the mb_islower/mb_isupper condition below.
       } else {
         c2 = c;
       }
