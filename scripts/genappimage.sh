@@ -77,7 +77,7 @@ chmod 755 AppRun
 cd "$APP_BUILD_DIR" || exit # Get out of AppImage directory.
 
 # We want to be consistent, so always use arm64 over aarch64
-if [[ "$ARCH" == 'aarch64' ]]; then
+if [[ "$ARCH_OUTPUT" == 'aarch64' ]]; then
   ARCH_OUTPUT="arm64"
   export ARCH_OUTPUT
 fi
