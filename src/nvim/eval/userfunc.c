@@ -1022,6 +1022,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   // prepare the funccall_T structure
   funccall_T *fc = create_funccal(fp, rettv);
   fc->fc_level = ex_nesting_level;
+
+  // Init l: variables.
+  init_var_dict(&fc->fc_l_vars, &fc->fc_l_vars_var, VAR_DEF_SCOPE);
+
   // Check if this function has a breakpoint.
   fc->fc_breakpoint = dbg_find_breakpoint(false, fp->uf_name, 0);
   fc->fc_dbg_tick = debug_tick;
@@ -1035,9 +1039,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   // Note about using fc->fc_fixvar[]: This is an array of FIXVAR_CNT variables
   // with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free
   // each argument variable and saves a lot of time.
-  //
-  // Init l: variables.
-  init_var_dict(&fc->fc_l_vars, &fc->fc_l_vars_var, VAR_DEF_SCOPE);
+
   if (selfdict != NULL) {
     // Set l:self to "selfdict".  Use "name" to avoid a warning from
     // some compiler that checks the destination size.
