@@ -909,7 +909,7 @@ describe("'statusline' in floatwin", function()
     })
   end)
 
-  it('controlled by ":setlocal statusline" and "style"', function()
+  it('controlled by ":setlocal statusline" and "style" and "laststatus"', function()
     local buf = api.nvim_create_buf(false, false)
     api.nvim_buf_set_lines(buf, 0, -1, false, { '1', '2', '3', '4' })
     local cfg = {
@@ -994,6 +994,76 @@ describe("'statusline' in floatwin", function()
       {1:~}└──────────┘{1:                 }|
       {1:~                             }|*11
       {3:[No Name]                     }|
+                                    |
+    ]])
+    -- clear statusline when laststatus is 3
+    command('tabclose | set laststatus=2')
+    screen:expect([[
+                                    |
+      {1:~}┌──────────┐{1:                 }|
+      {1:~}│{4:^1         }│{1:                 }|
+      {1:~}│{4:2         }│{1:                 }|
+      {1:~}│{4:3         }│{1:                 }|
+      {1:~}│{4:4         }│{1:                 }|
+      {1:~}│{3:<Name] [+]}│{1:                 }|
+      {1:~}└──────────┘{1:                 }|
+      {1:~                             }|*10
+      {2:[No Name]                     }|
+                                    |
+    ]])
+    command('set laststatus=0')
+    screen:expect([[
+                                    |
+      {1:~}┌──────────┐{1:                 }|
+      {1:~}│{4:^1         }│{1:                 }|
+      {1:~}│{4:2         }│{1:                 }|
+      {1:~}│{4:3         }│{1:                 }|
+      {1:~}│{4:4         }│{1:                 }|
+      {1:~}└──────────┘{1:                 }|
+      {1:~                             }|*12
+                                    |
+    ]])
+
+    command('set laststatus=3')
+    screen:expect([[
+                                    |
+      {1:~}┌──────────┐{1:                 }|
+      {1:~}│{4:^1         }│{1:                 }|
+      {1:~}│{4:2         }│{1:                 }|
+      {1:~}│{4:3         }│{1:                 }|
+      {1:~}│{4:4         }│{1:                 }|
+      {1:~}└──────────┘{1:                 }|
+      {1:~                             }|*11
+      {3:[No Name] [+]                 }|
+                                    |
+    ]])
+    api.nvim_buf_set_name(buf, 'stl_test')
+    screen:expect([[
+                                    |
+      {1:~}┌──────────┐{1:                 }|
+      {1:~}│{4:^1         }│{1:                 }|
+      {1:~}│{4:2         }│{1:                 }|
+      {1:~}│{4:3         }│{1:                 }|
+      {1:~}│{4:4         }│{1:                 }|
+      {1:~}└──────────┘{1:                 }|
+      {1:~                             }|*11
+      {3:stl_test [+]                  }|
+                                    |
+    ]])
+  end)
+
+  it("clears inherited window-local 'statusline' on creation", function()
+    command('set laststatus=2')
+    api.nvim_set_option_value('statusline', 'global', {})
+    local curwin = api.nvim_get_current_win()
+    api.nvim_set_option_value('statusline', 'split-local', { win = curwin })
+    api.nvim_open_win(0, true, { relative = 'editor', row = 1, col = 1, height = 2, width = 4 })
+    screen:expect([[
+                                    |
+      {1:~}{4:^    }{1:                         }|
+      {1:~}{11:~   }{1:                         }|
+      {1:~                             }|*15
+      {2:split-local                   }|
                                     |
     ]])
   end)

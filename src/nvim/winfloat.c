@@ -70,6 +70,10 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       }
       wp->w_p_wbr = empty_string_option;
     }
+    if (wp->w_p_stl && wp->w_p_stl != empty_string_option) {
+      free_string_option(wp->w_p_stl);
+      wp->w_p_stl = empty_string_option;
+    }
   } else {
     assert(!last);
     assert(!wp->w_floating);
@@ -104,7 +108,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     win_append(lastwin_nofloating(), wp, NULL);
   }
   wp->w_floating = true;
-  wp->w_status_height = *wp->w_p_stl != NUL ? STATUS_HEIGHT : 0;
+  wp->w_status_height = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2) ? STATUS_HEIGHT : 0;
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
   wp->w_vsep_width = 0;
@@ -164,13 +168,13 @@ void win_set_minimal_style(win_T *wp)
   // statuscolumn: cleared
   if (wp->w_p_stc != NULL && *wp->w_p_stc != NUL) {
     free_string_option(wp->w_p_stc);
-    wp->w_p_stc = xstrdup("");
+    wp->w_p_stc = empty_string_option;
   }
 
   // statusline: cleared (for floating windows)
   if (wp->w_floating && wp->w_p_stl != NULL && *wp->w_p_stl != NUL) {
     free_string_option(wp->w_p_stl);
-    wp->w_p_stl = xstrdup("");
+    wp->w_p_stl = empty_string_option;
     if (wp->w_status_height > 0) {
       win_config_float(wp, wp->w_config);
     }
@@ -190,7 +194,7 @@ int win_border_width(win_T *wp)
 void win_config_float(win_T *wp, WinConfig fconfig)
 {
   // Process statusline changes before applying new height from config
-  bool show_stl = *wp->w_p_stl != NUL;
+  bool show_stl = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2);
   if (wp->w_status_height && !show_stl) {
     win_remove_status_line(wp, false);
   } else if (wp->w_status_height == 0 && show_stl) {
@@ -329,7 +333,7 @@ void win_float_update_statusline(void)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     bool has_status = wp->w_status_height > 0;
-    bool should_show = *wp->w_p_stl != NUL;
+    bool should_show = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2);
     if (should_show != has_status) {
       win_config_float(wp, wp->w_config);
     }

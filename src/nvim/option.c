@@ -2117,6 +2117,7 @@ static const char *did_set_laststatus(optset_T *args)
 
   status_redraw_curbuf();
   last_status(false);  // (re)set last window status line.
+  win_float_update_statusline();
   return NULL;
 }
 
