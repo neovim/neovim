@@ -61,8 +61,8 @@
             .hash = "N-V-__8AAI4YCgD7OqxCEAmz2RqT_ohl6eA4F0fGMtLIe7nb",
         },
         .treesitter_query = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.7.0#60e253d3c9d6b1131a0f75c85e4bdcc9a48d5b42",
-            .hash = "N-V-__8AAGNUBAAvnkA99VqpVeC-dHymIp78MhFEixP8w7Tj",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.8.0#a225e21d81201be77da58de614e2b7851735677a",
+            .hash = "N-V-__8AAMR5AwAzZ5_8S2p2COTEf5usBeeT4ORzh-lBGkWy",
         },
     },
     .paths = .{
