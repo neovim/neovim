@@ -76,14 +76,8 @@ void win_redr_status(win_T *wp)
       || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
     return;
   }
-  wp->w_redr_status = false;
-
-  if (wp->w_floating && is_stl_global) {
-    return;
-  }
-
   busy = true;
-
+  wp->w_redr_status = false;
   if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
     // no status line, either global statusline is enabled or the window is a last window
     redraw_cmdline = true;
@@ -91,7 +85,8 @@ void win_redr_status(win_T *wp)
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
-  } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
+  } else if (*wp->w_p_stl != NUL
+             || (*p_stl != NUL && (!wp->w_floating || (is_stl_global && wp == curwin)))) {
     // redraw custom status line
     redraw_custom_statusline(wp);
   }
@@ -234,7 +229,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
   StlClickRecord *tabtab;
   bool is_stl_global = global_stl_height() > 0;
 
-  ScreenGrid *grid = wp && wp->w_floating ? &wp->w_grid_alloc : &default_grid;
+  ScreenGrid *grid = wp && wp->w_floating && !is_stl_global ? &wp->w_grid_alloc : &default_grid;
 
   // There is a tiny chance that this gets called recursively: When
   // redrawing a status line triggers redrawing the ruler or tabline.
@@ -275,7 +270,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
                                                    &wp->w_winbar_click_defs_size);
   } else {
     const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
-    if (wp->w_floating && !draw_ruler) {
+    if (wp->w_floating && !is_stl_global && !draw_ruler) {
       row = wp->w_winrow_off + wp->w_view_height;
       col = wp->w_wincol_off;
       maxwidth = wp->w_view_width;
