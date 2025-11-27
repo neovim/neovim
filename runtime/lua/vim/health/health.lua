@@ -532,6 +532,63 @@ local function detect_terminal()
   return 'unknown'
 end
 
+---@param nvim_version string
+local function check_stable_version(nvim_version)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', '--tags', 'https://github.com/neovim/neovim' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local stable_sha = result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
+    or result.stdout:match('(%x+)%s+refs/tags/stable\n')
+  if not stable_sha then
+    return
+  end
+  local latest_version = result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}')
+  if not latest_version then
+    return
+  end
+  local current_version = nvim_version:match('v?(%d+%.%d+%.%d+)')
+  if not current_version then
+    return
+  end
+  local current = vim.version.parse(current_version)
+  local latest = vim.version.parse(latest_version)
+  if current and latest and vim.version.lt(current, latest) then
+    vim.health.warn(('Nvim %s is available (current: %s)'):format(latest_version, current_version))
+  else
+    vim.health.ok(('Up to date (%s)'):format(current_version))
+  end
+end
+
+---@param commit string
+local function check_head_hash(commit)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local upstream = result.stdout:match('^(%x+)')
+  if not upstream then
+    return
+  end
+  if not vim.startswith(upstream, commit) then
+    vim.health.warn(
+      ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
+    )
+  else
+    vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
+  end
+end
+
 local function check_sysinfo()
   vim.health.start('System Info')
 
@@ -540,34 +597,12 @@ local function check_sysinfo()
   local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
   local commit --[[@type string]] = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
 
-  if vim.trim(commit) ~= '' then
-    local has_git = vim.fn.executable('git') == 1
-    local has_curl = vim.fn.executable('curl') == 1
-    local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' }
-      or has_curl and {
-        'curl',
-        '-s',
-        'https://api.github.com/repos/neovim/neovim/commits/master',
-        '-H',
-        'Accept: application/vnd.github.sha',
-      }
-      or nil
-
-    if cmd then
-      local result = vim.system(cmd, { text = true }):wait()
-      if result.code == 0 then
-        local upstream = assert(result.stdout:match('^(%x+)') or result.stdout)
-        if not upstream:find(commit) then
-          vim.health.warn(
-            ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
-          )
-        else
-          vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
-        end
-      end
-    else
-      vim.health.warn('Cannot check for updates: git or curl not found')
-    end
+  if vim.fn.executable('git') ~= 1 then
+    vim.health.warn('Cannot check for updates: git not found')
+  elseif vim.trim(commit) ~= '' then
+    check_head_hash(commit)
+  else
+    check_stable_version(nvim_version)
   end
 
   local os_info = vim.uv.os_uname()
