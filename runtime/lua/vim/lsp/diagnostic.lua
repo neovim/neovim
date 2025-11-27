@@ -396,12 +396,8 @@ function M.on_refresh(err, _, ctx)
     return vim.NIL
   end
   for bufnr in pairs(vim.lsp.get_client_by_id(ctx.client_id).attached_buffers or {}) do
-    for _, winid in ipairs(api.nvim_list_wins()) do
-      if api.nvim_win_get_buf(winid) == bufnr then
-        if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
-          refresh(bufnr)
-        end
-      end
+    if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
+      refresh(bufnr)
     end
   end
 
