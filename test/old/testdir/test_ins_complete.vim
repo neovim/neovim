@@ -1426,6 +1426,23 @@ func Test_complete_wholeline()
   bw!
 endfunc
 
+" Test for using CTRL-X CTRL-S to complete spell suggestions
+func Test_complete_spell()
+  new
+  setlocal spell
+  " without fuzzy
+  call setline(1, 'The rigth thing')
+  exe "normal! A\<C-X>\<C-S>"
+  call assert_equal('The right thing', getline(1))
+  %d
+  " with fuzzy
+  setlocal completeopt+=fuzzy
+  call setline(1, 'The rigth thing')
+  exe "normal! A\<C-X>\<C-S>"
+  call assert_equal('The right thing', getline(1))
+  bw!
+endfunc
+
 " Test insert completion with 'cindent' (adjust the indent)
 func Test_complete_with_cindent()
   new
