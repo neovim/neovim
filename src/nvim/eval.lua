@@ -5353,7 +5353,7 @@ M.funcs = {
       Examples of buffer usage: >vim
         haslocaldir(-1, -1, 0) " Current buf has a local directory?
         haslocaldir(-1, -1, 3) " Buf #3 has a local directory?
-      >Throw error if the arguments are invalid.
+      <Throw error if the arguments are invalid.
       |E5000| |E5001| |E5002| |E5006| |E5007|
 
     ]=],
