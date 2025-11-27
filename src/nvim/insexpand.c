@@ -4936,7 +4936,7 @@ static int ins_compl_get_exp(pos_T *ini)
   }
   may_trigger_modechanged();
 
-  if (match_count > 0) {
+  if (match_count > 0 && !ctrl_x_mode_spell()) {
     if (is_nearest_active() && !ins_compl_has_preinsert()) {
       sort_compl_match_list(cp_compare_nearest);
     }

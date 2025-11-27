@@ -25,7 +25,6 @@ describe('nvim_get_commands', function()
     definition = 'echo "Hello World"',
     name = 'Hello',
     nargs = '1',
-    preview = false,
     range = NIL,
     register = false,
     keepscript = false,
@@ -41,7 +40,6 @@ describe('nvim_get_commands', function()
     definition = 'pwd',
     name = 'Pwd',
     nargs = '?',
-    preview = false,
     range = NIL,
     register = false,
     keepscript = false,
@@ -96,7 +94,6 @@ describe('nvim_get_commands', function()
       definition = 'pwd <args>',
       name = 'TestCmd',
       nargs = '1',
-      preview = false,
       range = '10',
       register = false,
       keepscript = false,
@@ -112,7 +109,6 @@ describe('nvim_get_commands', function()
       definition = '!finger <args>',
       name = 'Finger',
       nargs = '+',
-      preview = false,
       range = NIL,
       register = false,
       keepscript = false,
@@ -128,7 +124,6 @@ describe('nvim_get_commands', function()
       definition = 'call \128\253R2_foo(<q-args>)',
       name = 'Cmd2',
       nargs = '*',
-      preview = false,
       range = NIL,
       register = false,
       keepscript = false,
@@ -144,7 +139,6 @@ describe('nvim_get_commands', function()
       definition = 'call \128\253R3_ohyeah()',
       name = 'Cmd3',
       nargs = '0',
-      preview = false,
       range = NIL,
       register = false,
       keepscript = false,
@@ -160,7 +154,6 @@ describe('nvim_get_commands', function()
       definition = 'call \128\253R4_just_great()',
       name = 'Cmd4',
       nargs = '0',
-      preview = false,
       range = NIL,
       register = true,
       keepscript = false,
@@ -189,11 +182,56 @@ describe('nvim_get_commands', function()
       endfunction
       command -register Cmd4 call <SID>just_great()
     ]])
+    source([[
+      function! s:cpt() abort
+        return 1
+      endfunction
+      command -nargs=1 -complete=customlist,s:cpt CmdWithPreview
+    ]])
+    source([[
+      lua << EOF
+      vim.api.nvim_create_user_command(
+        'CmdWithPreviewLua',
+        function() end,
+        {
+          nargs = 1,
+          complete = function() return 3 end,
+          preview = function() return 4 end,
+        }
+      )
+      EOF
+    ]])
     -- TODO(justinmk): Order is stable but undefined. Sort before return?
-    eq(
-      { Cmd2 = cmd2, Cmd3 = cmd3, Cmd4 = cmd4, Finger = cmd1, TestCmd = cmd0 },
-      api.nvim_get_commands({ builtin = false })
-    )
+    local commands = api.nvim_get_commands({ builtin = false })
+    local cmd_with_preview = commands.CmdWithPreview
+    commands.CmdWithPreview = nil
+    local cmd_with_preview_lua = commands.CmdWithPreviewLua
+    commands.CmdWithPreviewLua = nil
+    eq({ Cmd2 = cmd2, Cmd3 = cmd3, Cmd4 = cmd4, Finger = cmd1, TestCmd = cmd0 }, commands)
+
+    eq(cmd_with_preview.complete, 'customlist')
+    eq(cmd_with_preview.preview, nil)
+
+    -- user data (NIL), because these are passed through RPC:
+    eq(cmd_with_preview_lua.complete, NIL)
+    eq(cmd_with_preview_lua.preview, NIL)
+  end)
+
+  it('gets callbacks defined as Lua functions', function()
+    exec_lua [[
+      vim.api.nvim_create_user_command('CommandWithLuaCallback', function(opts)
+        return 3
+      end, {
+        nargs = 1,
+        preview = function() return 4 end,
+        complete = function() return 5 end,
+      })
+
+      local cmd = vim.api.nvim_get_commands({})["CommandWithLuaCallback"]
+      assert(cmd["callback"]() == 3)
+      assert(cmd["preview"]() == 4)
+      assert(cmd["complete"]() == 5)
+    ]]
   end)
 end)
 

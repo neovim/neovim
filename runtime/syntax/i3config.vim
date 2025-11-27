@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language: i3 config file
-" Original Author: Josef Litos (JosefLitos/i3config.vim)
+" Original Author: Josef Litos (litoj/i3config.vim)
 " Maintainer: Quentin Hibon (github user hiqua)
-" Version: 1.2.4
-" Last Change: 2024-05-24
+" Version: 1.2.5
+" Last Change: 2025-11-24
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -151,7 +151,9 @@ syn keyword i3ConfigKeyword mouse_warping contained skipwhite nextgroup=i3Config
 
 " 4.26 Popups while fullscreen
 syn keyword i3ConfigPopupFullscreenOpts smart ignore leave_fullscreen contained
-syn keyword i3ConfigKeyword popup_during_fullscreen contained skipwhite nextgroup=i3ConfigPopupFullscreenOpts
+syn keyword i3ConfigPopupFullscreenOptsExtra all contained
+syn cluster i3ConfigPopupFullscreenOpts contains=i3ConfigPopupFullscreenOpts,i3ConfigPopupFullscreenOptsExtra
+syn keyword i3ConfigKeyword popup_during_fullscreen contained skipwhite nextgroup=@i3ConfigPopupFullscreenOpts
 
 " 4.27 Focus wrapping
 syn keyword i3ConfigFocusWrappingOpts force workspace contained
@@ -311,6 +313,7 @@ hi def link i3ConfigClientOpts                      i3ConfigOption
 hi def link i3ConfigFocusFollowsMouseOpts           i3ConfigOption
 hi def link i3ConfigMouseWarpingOpts                i3ConfigOption
 hi def link i3ConfigPopupFullscreenOpts             i3ConfigOption
+hi def link i3ConfigPopupFullscreenOptsExtra        i3ConfigPopupFullscreenOpts
 hi def link i3ConfigFocusWrappingOpts               i3ConfigOption
 hi def link i3ConfigTimeUnit                        i3ConfigNumber
 hi def link i3ConfigFocusOnActivationOpts           i3ConfigOption
