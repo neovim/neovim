@@ -439,10 +439,10 @@ end
 --- @alias vim.lsp.inlay_hint.action.callback fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer
 
 --- @alias vim.lsp.inlay_hint.action.name
----| 'textEdits' -- apply_text_edits
----| 'tooltip' -- string (plain text or markdown): hover?
----| 'command' -- 'workspace/executeCommand'
----| 'location' -- jump to location?
+---| 'textEdits' -- insert texts into the buffer
+---| 'command' -- See 'workspace/executeCommand'
+---| 'location' -- Jump to the location (usually the definition of the identifier or type)
+---| 'tooltip' -- show a hover-like window, containing availabletooltips, commands and locations
 
 --- @alias vim.lsp.inlay_hint.action
 ---| vim.lsp.inlay_hint.action.name
@@ -452,6 +452,112 @@ end
 --- @inlinedoc
 --- @field bufnr integer
 --- @field client vim.lsp.Client
+
+---@class (private) vim.lsp.inlay_hint.action.LocationItem
+---@field hint_name string
+---@field hint_position lsp.Position
+---@field label_name string
+---@field location lsp.Location
+
+---@class (private) vim.lsp.inlay_hint.action.hint_label
+---@field hint lsp.InlayHint
+---@field labal lsp.InlayHintLabelPart
+
+local action_helpers = {
+  ---@param hint lsp.InlayHint
+  ---@param with_padding boolean?
+  ---@return string
+  get_label_text = function(hint, with_padding)
+    ---@type string?
+    local label
+    if type(hint.label) == 'string' then
+      label = tostring(hint.label)
+    elseif vim.islist(hint.label) then
+      label = vim
+        .iter(hint.label)
+        :map(
+          ---@param part lsp.InlayHintLabelPart
+          function(part)
+            return part.value
+          end
+        )
+        :join('')
+    end
+
+    assert(label ~= nil, 'Failed to extract the label value from the inlay hint')
+
+    if with_padding then
+      if hint.paddingLeft then
+        label = ' ' .. label
+      end
+      if hint.paddingRight then
+        label = label .. ' '
+      end
+    end
+
+    return label
+  end,
+
+  ---@generic T
+  ---@param items T[] Arbitrary items
+  ---@param opts vim.ui.select.Opts Additional options
+  ---@param on_choice fun(item: T|nil, idx: integer|nil)
+  do_or_select = function(items, opts, on_choice)
+    if #items == 0 then
+      return error('Empty items!')
+    end
+    if #items == 1 then
+      return on_choice(items[1], 1)
+    end
+    return vim.ui.select(items, opts, on_choice)
+  end,
+
+  ---@param path string
+  ---@param base string?
+  ---@return string
+  cleanup_path = function(path, base)
+    path = vim.fs.abspath(path)
+    base = base or vim.env.HOME
+    return vim.fs.relpath(base, path, {}) or path
+  end,
+}
+
+---Return a non-empty list of lsp locations, or `nil` if not found.
+---@param hint lsp.InlayHint
+---@param needed_fields ("location"|"command"|"tooltip")[]?
+---@return vim.lsp.inlay_hint.action.hint_label[]?
+action_helpers.get_hint_labels = function(hint, needed_fields)
+  vim.validate('needed_fields', needed_fields, function(val)
+    return vim.islist(val)
+      and vim.iter(needed_fields):any(function(field)
+        return vim.list_contains({ 'location', 'command', 'tooltip' }, field)
+      end)
+  end, false)
+  ---@type vim.lsp.inlay_hint.action.hint_label[]
+  local hint_labels = {}
+
+  if type(hint.label) == 'table' and #hint.label > 0 then
+    vim.iter(hint.label):each(
+      ---@param label lsp.InlayHintLabelPart
+      function(label)
+        if
+          vim.iter(needed_fields):any(function(field_name)
+            return label[field_name] ~= nil
+          end)
+        then
+          hint_labels[#hint_labels + 1] = {
+            hint = hint,
+            labal = label,
+          }
+        end
+      end
+    )
+  end
+
+  if #hint_labels > 0 then
+    return hint_labels
+  end
+end
 
 ---@type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
 local inlayhint_actions = {
@@ -484,6 +590,163 @@ local inlayhint_actions = {
     end
     return #valid_hints
   end,
+  location = function(hints, ctx)
+    local count = 0
+
+    ---@type vim.lsp.inlay_hint.action.hint_label[]
+    local hint_labels = {}
+
+    vim.iter(hints):each(
+      ---@param item lsp.InlayHint
+      function(item)
+        if type(item.label) == 'table' and #item.label > 0 then
+          local labels_from_this = action_helpers.get_hint_labels(item, { 'location' })
+          if labels_from_this then
+            count = count + 1
+            vim.list_extend(hint_labels, labels_from_this)
+          end
+        end
+      end
+    )
+
+    if vim.tbl_isempty(hint_labels) then
+      return 0
+    end
+
+    action_helpers.do_or_select(
+      vim
+        .iter(hint_labels)
+        :map(
+          ---@param loc vim.lsp.inlay_hint.action.hint_label
+          function(loc)
+            local hint = loc.hint
+            local label = loc.labal
+            return string.format(
+              '%s\t%s:%d',
+              label.value,
+              action_helpers.cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
+              label.location.range.start.line
+            )
+          end
+        )
+        :totable(),
+      { prompt = 'Location to jump to' },
+      function(_, idx)
+        if idx then
+          util.show_document(
+            hint_labels[idx].labal.location,
+            ctx.client.offset_encoding,
+            { reuse_win = true, focus = true }
+          )
+        end
+      end
+    )
+
+    return count
+  end,
+
+  tooltip = function(hints, ctx)
+    if #hints ~= 1 then
+      vim.schedule(function()
+        vim.notify(
+          'vim.lsp.inlay_hint.apply_action("tooltip") only supports showing tooltips for a single inlay hint.',
+          vim.log.levels.WARN
+        )
+      end)
+    end
+
+    local hint = hints[1]
+    local hint_labels = action_helpers.get_hint_labels(hint, { 'location', 'command' })
+
+    local lines = { string.format('# `%s`', action_helpers.get_label_text(hint, false)), '' }
+
+    if hint.tooltip then
+      util.convert_input_to_markdown_lines(hint.tooltip, lines)
+    end
+
+    if hint_labels then
+      vim.iter(hint_labels):each(
+        ---@param hint_label vim.lsp.inlay_hint.action.hint_label
+        function(hint_label)
+          local label = hint_label.labal
+          lines[#lines + 1] = ''
+          lines[#lines + 1] = string.format('## `%s`', label.value)
+          lines[#lines + 1] = ''
+          if label.tooltip then
+            util.convert_input_to_markdown_lines(label.tooltip, lines)
+          end
+          if label.location then
+            lines[#lines + 1] = string.format(
+              '_Location_: `%s`:%d',
+              action_helpers.cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
+              label.location.range.start.line
+            )
+          end
+          if label.command then
+            local command_line = string.format('_Command_: %s', label.command.title)
+            if label.command.tooltip then
+              command_line = command_line .. string.format(' (%s)', label.command.tooltip)
+            end
+            lines[#lines + 1] = command_line
+          end
+        end
+      )
+    end
+
+    if #lines == 2 then
+      -- no tooltip/command/location has been found. Skip this hint.
+      return 0
+    end
+
+    util.open_floating_preview(lines, 'markdown')
+    return 1
+  end,
+
+  command = function(hints, ctx)
+    if #hints ~= 1 then
+      vim.schedule(function()
+        vim.notify(
+          'vim.lsp.inlay_hint.apply_action("command") only supports showing commands for a single inlay hint.',
+          vim.log.levels.WARN
+        )
+      end)
+    end
+    if #hints == 0 then
+      return 0
+    end
+    local hint_labels = action_helpers.get_hint_labels(hints[1], { 'command' })
+    if hint_labels == nil or #hint_labels == 0 then
+      -- no commands in this hint
+      return 0
+    end
+
+    action_helpers.do_or_select(
+      vim
+        .iter(hint_labels)
+        :map(
+          ---@param item vim.lsp.inlay_hint.action.hint_label
+          function(item)
+            local label = item.labal
+            local entry_line = string.format('%s: %s', label.value, label.command.title)
+            if label.tooltip then
+              entry_line = entry_line .. string.format(' (%s)', label.tooltip)
+            end
+            return entry_line
+          end
+        )
+        :totable(),
+      { prompt = 'Command to execute' },
+      function(_, idx)
+        ctx.client:request(
+          'workspace/executeCommand',
+          hint_labels[idx].labal.command,
+          nil,
+          ctx.bufnr
+        )
+      end
+    )
+    return 1
+  end,
 }
 
 --- For supported LSP servers, apply one of the following actions provided by inlayhints in the
@@ -506,13 +769,16 @@ local inlayhint_actions = {
 ---
 --- @param action vim.lsp.inlay_hint.action
 ---
---- Possible actions: `"textEdits"`, `"tooltip"`, `"location"`, `"command"` and a custom callback:
+--- Possible actions: `"textEdits"`, `"tooltip"`, `"location"`, `"command"` or a custom callback:
 --- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlayhints in the range and some context, perform some actions and returns the number of hints on which the actions were taken.
 function M.apply_action(action)
   local action_callback = action
   if type(action) == 'string' then
     action_callback = inlayhint_actions[action]
     ---@cast action_callback -vim.lsp.inlay_hint.action.name
+  end
+  if type(action_callback) ~= 'function' then
+    return error('Unsupported_action: ' .. action)
   end
   local bufnr = api.nvim_get_current_buf()
   local winid = fn.bufwinid(bufnr)
