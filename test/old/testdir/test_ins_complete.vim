@@ -386,8 +386,8 @@ func Test_CompleteDone_vevent_keys()
   call assert_equal('foo_test', g:complete_word)
   call assert_equal('files', g:complete_type)
 
-  call writefile(['hello help'], 'test_case.txt', 'D')
-  set dictionary=test_case.txt
+  call writefile(['hello help'], 'Xtest_case.txt', 'D')
+  set dictionary=Xtest_case.txt
   call feedkeys("ggdGSh\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
   call assert_equal('hello', g:complete_word)
   call assert_equal('dictionary', g:complete_type)
@@ -3660,6 +3660,7 @@ func Test_complete_opt_fuzzy()
   call feedkeys("i\<C-R>=CompAnother()\<CR>\<C-P>\<C-P>", 'tx')
   call assert_equal("for", g:abbr)
 
+  %d
   set cot=menu,fuzzy
   call feedkeys("Sblue\<CR>bar\<CR>b\<C-X>\<C-P>\<C-Y>\<ESC>", 'tx')
   call assert_equal('blue', getline('.'))
@@ -3692,7 +3693,7 @@ func Test_complete_opt_fuzzy()
   " Issue 18488: sort after collection when "fuzzy" (unless "nosort")
   %d
   set completeopt&
-  set completeopt+=fuzzy,noselect completefuzzycollect=keyword
+  set completeopt+=fuzzy,noselect
   func! PrintMenuWords()
     let info = complete_info(["items"])
     call map(info.items, {_, v -> v.word})
@@ -3705,7 +3706,7 @@ func Test_complete_opt_fuzzy()
   " clean up
   set omnifunc=
   bw!
-  set complete& completeopt& completefuzzycollect&
+  set complete& completeopt&
   autocmd! AAAAA_Group
   augroup! AAAAA_Group
   delfunc OnPumChange
@@ -3720,7 +3721,7 @@ endfunc
 func Test_complete_fuzzy_collect()
   new
   redraw  " need this to prevent NULL dereference in Nvim
-  set completefuzzycollect=keyword,files,whole_line
+  set completeopt+=fuzzy
   call setline(1, ['hello help hero h'])
   " Use "!" flag of feedkeys() so that ex_normal_busy is not set and
   " ins_compl_check_keys() is not skipped.
@@ -3798,7 +3799,7 @@ func Test_complete_fuzzy_collect()
   call assert_equal('no one can save me but you', getline('.'))
 
   " issue #15526
-  set completeopt=menuone,menu,noselect
+  set completeopt=menuone,menu,noselect,fuzzy
   call setline(1, ['Text', 'ToText', ''])
   call cursor(3, 1)
   call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
@@ -3811,8 +3812,8 @@ func Test_complete_fuzzy_collect()
   call assert_equal('completefuzzycollect', getline(line('.') - 1))
 
   " keywords in 'dictonary'
-  call writefile(['hello', 'think'], 'test_dict.txt', 'D')
-  set dict=test_dict.txt
+  call writefile(['hello', 'think'], 'Xtest_dict.txt', 'D')
+  set dict=Xtest_dict.txt
   call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<CR>\<Esc>0", 'tx!')
   call assert_equal('hello', getline(line('.') - 1))
   call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
@@ -3827,16 +3828,26 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-Y>\<Esc>0", 'tx!')
   call assert_equal('fuzzycollect', getline('.'))
 
+  " when 'fuzzy' is not set, and 'infercase' and 'ignorecase' are set, then
+  " uppercase completes from lowercase words in dictonary
+  set completeopt&
+  set infercase ignorecase
+  call writefile(['hello'], 'Xtest_case.txt', 'D')
+  set dictionary=Xtest_case.txt
+  call feedkeys("ggdGSH\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('Hello', getline('.'))
+  call feedkeys("ggdGSHE\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('HELLO', getline('.'))
+
   bw!
   bw!
   set dict&
-  set completeopt& cfc& cpt&
+  set completeopt& cpt& ignorecase& infercase&
 endfunc
 
 " Issue #18752
 func Test_complete_fuzzy_collect_multiwin()
   new
-  set completefuzzycollect=keyword,files,whole_line
   set completeopt=fuzzy
 
   vnew
@@ -3846,12 +3857,11 @@ func Test_complete_fuzzy_collect_multiwin()
   call assert_equal('Omnipotent', getline('.'))
 
   bw!
-  set completeopt& cfc&
+  set completeopt&
 endfunc
 
 func Test_cfc_with_longest()
   new
-  set completefuzzycollect=keyword,files,whole_line
   set completeopt=menu,menuone,longest,fuzzy
 
   " keyword
@@ -3935,7 +3945,6 @@ func Test_cfc_with_longest()
 
   bw!
   set completeopt&
-  set completefuzzycollect&
 endfunc
 
 func Test_completefuzzycollect_with_completeslash()
@@ -3945,7 +3954,7 @@ func Test_completefuzzycollect_with_completeslash()
   let orig_shellslash = &shellslash
   set cpt&
   new
-  set completefuzzycollect=files
+  set completeopt+=fuzzy
   set noshellslash
 
   " Test with completeslash unset
@@ -3967,7 +3976,6 @@ func Test_completefuzzycollect_with_completeslash()
   " Reset and clean up
   let &shellslash = orig_shellslash
   set completeslash=
-  set completefuzzycollect&
   %bw!
 endfunc
 

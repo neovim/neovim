@@ -242,7 +242,6 @@ local options_list = {
     { 'autocompletedelay', N_ 'delay in msec before menu appears after typing' },
     { 'completeopt', N_ 'whether to use a popup menu for Insert mode completion' },
     { 'completeitemalign', N_ 'popup menu item align order' },
-    { 'completefuzzycollect', N_ 'use fuzzy collection for specific completion modes' },
     { 'pumheight', N_ 'maximum height of the popup menu' },
     { 'pumwidth', N_ 'minimum width of the popup menu' },
     { 'pummaxwidth', N_ 'maximum width of the popup menu' },

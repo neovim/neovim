@@ -7963,11 +7963,10 @@ describe('builtin popupmenu', function()
       end)
 
       -- oldtest: Test_pum_completefuzzycollect()
-      it('completefuzzycollect', function()
+      it('fuzzy completion', function()
         exec([[
           set pumwidth=13
-          set completefuzzycollect=keyword,files
-          set completeopt=menu,menuone
+          set completeopt=menu,menuone,fuzzy
         ]])
 
         feed('S hello helio hero h<C-X><C-P>')
