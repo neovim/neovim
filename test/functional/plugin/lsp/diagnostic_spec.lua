@@ -608,7 +608,7 @@ describe('vim.lsp.diagnostic', function()
       eq('spongebob', relatedPreviousResultId)
     end)
 
-    it('refreshes diagnostics on request', function()
+    it('refreshes diagnostics on server-to-client request', function()
       eq(
         1,
         exec_lua(function()
