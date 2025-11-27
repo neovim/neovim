@@ -533,13 +533,13 @@ local function check_sysinfo()
   local version_for_report = nvim_version
   if commit_hash then
     version_for_report = nvim_version:gsub('%+g' .. commit_hash, ' neovim/neovim@' .. commit_hash)
-    local has_git = vim.fn.executable('git') == 0
+    local has_git = vim.fn.executable('git') == 1
     local has_curl = vim.fn.executable('curl') == 1
-    local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'nightly' }
+    local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' }
       or has_curl and {
         'curl',
         '-s',
-        'https://api.github.com/repos/neovim/neovim/commits/nightly',
+        'https://api.github.com/repos/neovim/neovim/commits/master',
         '-H',
         'Accept: application/vnd.github.sha',
       }
@@ -633,6 +633,7 @@ local function check_sysinfo()
       '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
     vim.api.nvim_create_autocmd('BufDelete', {
       buffer = buf,
+      once = true,
       command = 'lua _G.nvim_health_bugreport_open = nil',
     })
   end)
