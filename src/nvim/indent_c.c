@@ -3760,7 +3760,7 @@ static int find_match(int lookfor, linenr_T ourscope)
 /// Check that "cinkeys" contains the key "keytyped",
 /// when == '*': Only if key is preceded with '*' (indent before insert)
 /// when == '!': Only if key is preceded with '!' (don't insert)
-/// when == ' ': Only if key is not preceded with '*' or '!' (indent afterwards)
+/// when == ' ': Only if key is not preceded with '*' (indent afterwards)
 ///
 /// "keytyped" can have a few special values:
 /// KEY_OPEN_FORW :
@@ -3797,7 +3797,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     case '!':
       try_match = (*look == '!'); break;
     default:
-      try_match = (*look != '*') && (*look != '!'); break;
+      try_match = (*look != '*'); break;
     }
     if (*look == '*' || *look == '!') {
       look++;

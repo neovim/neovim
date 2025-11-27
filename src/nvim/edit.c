@@ -396,31 +396,6 @@ static int insert_check(VimState *state)
 {
   InsertState *s = (InsertState *)state;
 
-  // If typed something may trigger CursorHoldI again.
-  if (s->c != K_EVENT
-      // but not in CTRL-X mode, a script can't restore the state
-      && ctrl_x_mode_normal()) {
-    did_cursorhold = false;
-  }
-
-  // Check if we need to cancel completion mode because the window
-  // or tab page was changed
-  if (ins_compl_active() && !ins_compl_win_active(curwin)) {
-    ins_compl_cancel();
-  }
-
-  // If the cursor was moved we didn't just insert a space
-  if (arrow_used) {
-    s->inserted_space = false;
-  }
-
-  if (can_cindent
-      && cindent_on()
-      && ctrl_x_mode_normal()
-      && !ins_compl_active()) {
-    insert_do_cindent(s);
-  }
-
   if (!revins_legal) {
     revins_scol = -1;     // reset on illegal motions
   } else {
@@ -565,6 +540,7 @@ static int insert_check(VimState *state)
         ins_compl_enable_autocomplete();
         ins_compl_init_get_longest();
         insert_do_complete(s);
+        insert_handle_key_post(s);
         return 1;
       }
     }
@@ -648,7 +624,7 @@ static int insert_execute(VimState *state, int key)
         if (ins_compl_preinsert_longest() && !ins_compl_is_match_selected()) {
           ins_compl_insert(false, true);
           ins_compl_init_get_longest();
-          return 1;
+          return 1;  // continue
         } else {
           ins_compl_insert(false, false);
         }
@@ -697,6 +673,7 @@ static int insert_execute(VimState *state, int key)
 
   if ((s->c == Ctrl_V || s->c == Ctrl_Q) && ctrl_x_mode_cmdline()) {
     insert_do_complete(s);
+    insert_handle_key_post(s);
     return 1;
   }
 
@@ -715,7 +692,6 @@ static int insert_execute(VimState *state, int key)
       do_c_expr_indent();
       return 1;  // continue
     }
-
     // A key name preceded by a star means that indenting has to be
     // done before inserting the key.
     if (can_cindent && in_cinkeys(s->c, '*', s->line_is_white)
@@ -1285,6 +1261,7 @@ normalchar:
     break;
   }       // end of switch (s->c)
 
+  insert_handle_key_post(s);
   return 1;  // continue
 }
 
@@ -1308,6 +1285,31 @@ static void insert_do_cindent(InsertState *s)
       // re-indent the current line
       do_c_expr_indent();
     }
+  }
+}
+
+static void insert_handle_key_post(InsertState *s)
+{
+  // If typed something may trigger CursorHoldI again.
+  if (s->c != K_EVENT
+      // but not in CTRL-X mode, a script can't restore the state
+      && ctrl_x_mode_normal()) {
+    did_cursorhold = false;
+  }
+
+  // Check if we need to cancel completion mode because the window
+  // or tab page was changed
+  if (ins_compl_active() && !ins_compl_win_active(curwin)) {
+    ins_compl_cancel();
+  }
+
+  // If the cursor was moved we didn't just insert a space
+  if (arrow_used) {
+    s->inserted_space = false;
+  }
+
+  if (can_cindent && cindent_on() && ctrl_x_mode_normal()) {
+    insert_do_cindent(s);
   }
 }
 
