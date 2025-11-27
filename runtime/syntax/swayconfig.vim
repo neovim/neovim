@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language: sway config file
-" Original Author: Josef Litos (JosefLitos/i3config.vim)
+" Original Author: Josef Litos (litoj/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 1.2.4
-" Last Change: 2024 Oct 17
+" Version: 1.2.6
+" Last Change: 2025 Nov 24
 " 2025 Sep 23 by Vim Project update swayconfig syntax #18293
 
 " References:
@@ -21,6 +21,9 @@ endif
 syn cluster i3ConfigCommand contains=i3ConfigCommand,i3ConfigAction,i3ConfigActionKeyword,@i3ConfigValue,i3ConfigColor,i3ConfigKeyword
 
 runtime! syntax/i3config.vim
+
+" In sway, popup_during_fullscreen does not have options like all option.
+syn cluster i3ConfigPopupFullscreenOpts remove=i3ConfigPopupFullscreenOptsExtra
 
 " Sway extensions to i3
 syn keyword i3ConfigActionKeyword opacity urgent shortcuts_inhibitor splitv splith splitt contained contained skipwhite nextgroup=i3ConfigOption
