@@ -2139,7 +2139,7 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
-apply_action({action})                     *vim.lsp.inlay_hint.apply_action()*
+apply_action({action}, {opts})             *vim.lsp.inlay_hint.apply_action()*
     For supported LSP servers, apply one of the following actions provided by
     inlayhints in the selected range.
     • In |Normal-mode|, the action applies to inlay hints that are adjacent to
@@ -2162,11 +2162,13 @@ apply_action({action})                     *vim.lsp.inlay_hint.apply_action()*
       • {action}  (`vim.lsp.inlay_hint.action`)
 
                   Possible actions: `"textEdits"`, `"tooltip"`, `"location"`,
-                  `"command"` and a custom callback:
+                  `"command"` or a custom callback:
                   `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`,
                   which accepts the resolved inlayhints in the range and some
                   context, perform some actions and returns the number of
                   hints on which the actions were taken.
+      • {opts}    (`table?`) A table with the following fields:
+                  • {range}? (`vim.Range`)
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for the {filter}ed scope.
