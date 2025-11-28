@@ -406,7 +406,6 @@ local options_list = {
     header = N_ 'language specific',
     { 'isfname', N_ 'specifies the characters in a file name' },
     { 'isident', N_ 'specifies the characters in an identifier' },
-    { 'isexpand', N_ 'defines trigger strings for complete_match()' },
     { 'iskeyword', N_ 'specifies the characters in a keyword' },
     { 'isprint', N_ 'specifies printable characters' },
     { 'quoteescape', N_ 'specifies escape characters in a string' },
