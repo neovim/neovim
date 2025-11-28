@@ -196,6 +196,22 @@ describe('channels', function()
     end
   end
 
+  -- Helper to accumulate PTY stdout data until expected string is received.
+  -- PTY reads are non-atomic and may deliver data in chunks.
+  local function expect_stdout(id, expected)
+    local accumulated = ''
+    while #accumulated < #expected do
+      local msg = next_msg()
+      eq('notification', msg[1])
+      eq('stdout', msg[2])
+      eq(id, msg[3][1])
+      for _, chunk in ipairs(msg[3][2]) do
+        accumulated = accumulated .. chunk
+      end
+    end
+    eq(expected, accumulated)
+  end
+
   it('can use stdio channel with pty', function()
     skip(is_os('win'))
     source([[
@@ -229,7 +245,7 @@ describe('channels', function()
     expect_twoline(id, 'stdout', 'Blobs!\r', "[1, ['Blobs!', ''], 'stdin']")
 
     command("call chansend(id, 'neovan')")
-    eq({ 'notification', 'stdout', { id, { 'neovan' } } }, next_msg())
+    expect_stdout(id, 'neovan')
     command("call chansend(id, '\127\127im\n')")
     expect_twoline(id, 'stdout', '\b \b\b \bim\r', "[1, ['neovim', ''], 'stdin']")
 
