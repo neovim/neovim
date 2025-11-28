@@ -4467,8 +4467,6 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_inc);
     case kOptCompleteopt:
       return &(buf->b_p_cot);
-    case kOptIsexpand:
-      return &(buf->b_p_ise);
     case kOptDictionary:
       return &(buf->b_p_dict);
     case kOptDiffanchors:
@@ -4558,8 +4556,6 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_inc != NUL ? &(buf->b_p_inc) : p->var;
   case kOptCompleteopt:
     return *buf->b_p_cot != NUL ? &(buf->b_p_cot) : p->var;
-  case kOptIsexpand:
-    return *buf->b_p_ise != NUL ? &(buf->b_p_ise) : p->var;
   case kOptDictionary:
     return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : p->var;
   case kOptDiffanchors:
@@ -5267,7 +5263,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_dict = empty_string_option;
       buf->b_p_dia = empty_string_option;
       buf->b_p_tsr = empty_string_option;
-      buf->b_p_ise = empty_string_option;
       buf->b_p_tsrfu = empty_string_option;
       buf->b_p_qe = xstrdup(p_qe);
       COPY_OPT_SCTX(buf, kBufOptQuoteescape);

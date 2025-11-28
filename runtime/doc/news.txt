@@ -33,7 +33,7 @@ LSP
 
 OPTIONS
 
-• `'completefuzzycollect'` has been removed.
+• `'completefuzzycollect'` and `'isexpand'` have been removed.
 
 TREESITTER
 
@@ -43,6 +43,9 @@ UI
 
 • `progress` attribute removed form |ui-messages| msg_show event
 
+VIMSCRIPT
+
+• `complete_match()` has been removed.
 
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*

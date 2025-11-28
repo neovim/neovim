@@ -3739,23 +3739,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	and there is a letter before it, the completed part is made uppercase.
 	With 'noinfercase' the match is used as-is.
 
-						*'isexpand'* *'ise'*
-'isexpand' 'ise'	string	(default "")
-			global or local to buffer |global-local|
-	Defines characters and patterns for completion in insert mode.  Used
-	by the |complete_match()| function to determine the starting position
-	for completion.  This is a comma-separated list of triggers.  Each
-	trigger can be:
-	- A single character like "." or "/"
-	- A sequence of characters like "->", "/*", or "/**"
-
-	Note: Use "\\," to add a literal comma as trigger character, see
-	|option-backslash|.
-
-	Examples: >vim
-	    set isexpand=.,->,/*,\\,
-<
-
 						*'isfname'* *'isf'*
 'isfname' 'isf'		string	(default for Windows:
                              "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],@-@,!,~,="
