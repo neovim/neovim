@@ -3703,6 +3703,15 @@ func Test_complete_opt_fuzzy()
   call feedkeys("Gof\<C-N>\<C-R>=PrintMenuWords()\<CR>\<Esc>0", 'tx')
   call assert_equal('f{''items'': [''func1'', ''func2'', ''xfunc'']}', getline('.'))
 
+  " Issue #18802: Reset selected item after fuzzy sort
+  %d
+  call setline(1, ['aa', 'aaa', 'aaaa'])
+  set completeopt=menuone,noinsert,fuzzy
+  call feedkeys("Goa\<C-N>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('aa', getline('.'))
+  call feedkeys("Goa\<C-P>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('aaaa', getline('.'))
+
   " clean up
   set omnifunc=
   bw!

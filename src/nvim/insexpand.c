@@ -2247,16 +2247,17 @@ static void ins_compl_fuzzy_sort(void)
 {
   unsigned cur_cot_flags = get_cot_flags();
 
-  // set the fuzzy score in cp_score
+  // Set the fuzzy score in cp_score and sort
   set_fuzzy_score();
-  // Sort the matches linked list based on fuzzy score
   if (!(cur_cot_flags & kOptCotFlagNosort)) {
     sort_compl_match_list(cp_compare_fuzzy);
-    if ((cur_cot_flags & (kOptCotFlagNoinsert|kOptCotFlagNoselect)) == kOptCotFlagNoinsert
-        && compl_first_match) {
-      compl_shown_match = compl_first_match;
-      if (compl_shows_dir_forward() && !compl_autocomplete) {
-        compl_shown_match = compl_first_match->cp_next;
+    // Reset the shown item since sorting reorders items
+    if ((cur_cot_flags & (kOptCotFlagNoinsert|kOptCotFlagNoselect)) == kOptCotFlagNoinsert) {
+      bool none_selected = compl_shown_match == (compl_shows_dir_forward()
+                                                 ? compl_first_match : compl_first_match->cp_prev);
+      if (!none_selected) {
+        compl_shown_match = (!compl_autocomplete && compl_shows_dir_forward())
+                            ? compl_first_match->cp_next : compl_first_match;
       }
     }
   }
