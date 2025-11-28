@@ -120,13 +120,14 @@ error('Cannot require a meta file')
 --- @field bar boolean
 --- @field register boolean
 --- @field keepscript boolean
---- @field preview boolean
+--- @field preview? function
 --- @field nargs string
---- @field complete? string
+--- @field complete? string|function
 --- @field complete_arg? string
 --- @field count? string
 --- @field range? string
 --- @field addr? string
+--- @field callback? function
 
 --- @class vim.api.keyset.hl_info.base
 --- @field reverse? true
