@@ -4,19 +4,19 @@ local api = vim.api
 local fn = vim.fn
 local M = {}
 
----@class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints
----@field enabled boolean Whether inlay hints are enabled for this scope
----@type vim.lsp.inlay_hint.globalstate
+--- @class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints
+--- @field enabled boolean Whether inlay hints are enabled for this scope
+--- @type vim.lsp.inlay_hint.globalstate
 local globalstate = {
   enabled = false,
 }
 
----@class (private) vim.lsp.inlay_hint.bufstate: vim.lsp.inlay_hint.globalstate Buffer local state for inlay hints
----@field version? integer
----@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
----@field applied table<integer, integer> Last version of hints applied to this line
+--- @class (private) vim.lsp.inlay_hint.bufstate: vim.lsp.inlay_hint.globalstate Buffer local state for inlay hints
+--- @field version? integer
+--- @field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
+--- @field applied table<integer, integer> Last version of hints applied to this line
 
----@type table<integer, vim.lsp.inlay_hint.bufstate>
+--- @type table<integer, vim.lsp.inlay_hint.bufstate>
 local bufstates = vim.defaulttable(function(_)
   return setmetatable({ applied = {} }, {
     __index = globalstate,
@@ -35,9 +35,9 @@ local augroup = api.nvim_create_augroup('nvim.lsp.inlayhint', {})
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
----@param result lsp.InlayHint[]?
----@param ctx lsp.HandlerContext
----@private
+--- @param result lsp.InlayHint[]?
+--- @param ctx lsp.HandlerContext
+--- @private
 function M.on_inlayhint(err, result, ctx)
   if err then
     log.error('inlayhint', err)
@@ -89,8 +89,8 @@ function M.on_inlayhint(err, result, ctx)
 end
 
 --- Refresh inlay hints, only if we have attached clients that support it
----@param bufnr (integer) Buffer handle, or 0 for current
----@param client_id? (integer) Client ID, or nil for all
+--- @param bufnr (integer) Buffer handle, or 0 for current
+--- @param client_id? (integer) Client ID, or nil for all
 local function refresh(bufnr, client_id)
   for _, client in
     ipairs(vim.lsp.get_clients({
@@ -112,8 +112,8 @@ local function refresh(bufnr, client_id)
 end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
----@param ctx lsp.HandlerContext
----@private
+--- @param ctx lsp.HandlerContext
+--- @private
 function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL
@@ -231,7 +231,7 @@ function M.get(filter)
 end
 
 --- Clear inlay hints
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function clear(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   local bufstate = bufstates[bufnr]
@@ -247,7 +247,7 @@ local function clear(bufnr)
 end
 
 --- Disable inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function _disable(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   clear(bufnr)
@@ -256,7 +256,7 @@ local function _disable(bufnr)
 end
 
 --- Enable inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function _enable(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   bufstates[bufnr] = nil
@@ -266,7 +266,7 @@ end
 
 api.nvim_create_autocmd('LspNotify', {
   callback = function(args)
-    ---@type integer
+    --- @type integer
     local bufnr = args.buf
 
     if
@@ -283,7 +283,7 @@ api.nvim_create_autocmd('LspNotify', {
 })
 api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
-    ---@type integer
+    --- @type integer
     local bufnr = args.buf
 
     api.nvim_buf_attach(bufnr, false, {
@@ -304,7 +304,7 @@ api.nvim_create_autocmd('LspAttach', {
 })
 api.nvim_create_autocmd('LspDetach', {
   callback = function(args)
-    ---@type integer
+    --- @type integer
     local bufnr = args.buf
     local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
 
@@ -318,7 +318,7 @@ api.nvim_create_autocmd('LspDetach', {
 })
 api.nvim_set_decoration_provider(namespace, {
   on_win = function(_, _, bufnr, topline, botline)
-    ---@type vim.lsp.inlay_hint.bufstate
+    --- @type vim.lsp.inlay_hint.bufstate
     local bufstate = rawget(bufstates, bufnr)
     if not bufstate then
       return
@@ -453,22 +453,22 @@ end
 --- @field bufnr integer
 --- @field client vim.lsp.Client
 
----@class (private) vim.lsp.inlay_hint.action.LocationItem
----@field hint_name string
----@field hint_position lsp.Position
----@field label_name string
----@field location lsp.Location
+--- @class (private) vim.lsp.inlay_hint.action.LocationItem
+--- @field hint_name string
+--- @field hint_position lsp.Position
+--- @field label_name string
+--- @field location lsp.Location
 
----@class (private) vim.lsp.inlay_hint.action.hint_label
----@field hint lsp.InlayHint
----@field labal lsp.InlayHintLabelPart
+--- @class (private) vim.lsp.inlay_hint.action.hint_label
+--- @field hint lsp.InlayHint
+--- @field labal lsp.InlayHintLabelPart
 
 local action_helpers = {
-  ---@param hint lsp.InlayHint
-  ---@param with_padding boolean?
-  ---@return string
+  --- @param hint lsp.InlayHint
+  --- @param with_padding boolean?
+  --- @return string
   get_label_text = function(hint, with_padding)
-    ---@type string?
+    --- @type string?
     local label
     if type(hint.label) == 'string' then
       label = tostring(hint.label)
@@ -476,7 +476,7 @@ local action_helpers = {
       label = vim
         .iter(hint.label)
         :map(
-          ---@param part lsp.InlayHintLabelPart
+          --- @param part lsp.InlayHintLabelPart
           function(part)
             return part.value
           end
@@ -498,10 +498,10 @@ local action_helpers = {
     return label
   end,
 
-  ---@generic T
-  ---@param items T[] Arbitrary items
-  ---@param opts vim.ui.select.Opts Additional options
-  ---@param on_choice fun(item: T|nil, idx: integer|nil)
+  --- @generic T
+  --- @param items T[] Arbitrary items
+  --- @param opts vim.ui.select.Opts Additional options
+  --- @param on_choice fun(item: T|nil, idx: integer|nil)
   do_or_select = function(items, opts, on_choice)
     if #items == 0 then
       return error('Empty items!')
@@ -512,20 +512,60 @@ local action_helpers = {
     return vim.ui.select(items, opts, on_choice)
   end,
 
-  ---@param path string
-  ---@param base string?
-  ---@return string
+  --- @param path string
+  --- @param base string?
+  --- @return string
   cleanup_path = function(path, base)
     path = vim.fs.abspath(path)
     base = base or vim.env.HOME
     return vim.fs.relpath(base, path, {}) or path
   end,
+
+  --- @return vim.Range
+  make_range = function()
+    local bufnr = api.nvim_get_current_buf()
+    local winid = fn.bufwinid(bufnr)
+    local mode = fn.mode()
+
+    -- mark position, (1, 0) indexed, end-inclusive
+    --- @type {start: vim.Pos, end: vim.Pos}
+    local range = {}
+
+    if mode == 'n' then
+      local cursor = api.nvim_win_get_cursor(winid)
+      range.start = vim.pos.cursor(cursor)
+      range['end'] = vim.pos.cursor(cursor)
+      range['end'].col = range['end'].col + 1
+    else
+      local start_pos = fn.getpos('v')
+      local end_pos = fn.getpos('.')
+      if
+        start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3])
+      then
+        --- @type [integer, integer, integer, integer]
+        start_pos, end_pos = end_pos, start_pos
+      end
+
+      range = {
+        start = vim.pos.cursor({ start_pos[2], start_pos[3] - 1 }),
+        ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] - 2 }),
+      }
+
+      if mode == 'V' or mode == 'Vs' then
+        range.start.col = 0
+        range['end'].row = range['end'].row + 1
+        range['end'].col = 0
+      end
+    end
+
+    return vim.range(range.start, range['end'])
+  end,
 }
 
 ---Return a non-empty list of lsp locations, or `nil` if not found.
----@param hint lsp.InlayHint
----@param needed_fields ("location"|"command"|"tooltip")[]?
----@return vim.lsp.inlay_hint.action.hint_label[]?
+--- @param hint lsp.InlayHint
+--- @param needed_fields ("location"|"command"|"tooltip")[]?
+--- @return vim.lsp.inlay_hint.action.hint_label[]?
 action_helpers.get_hint_labels = function(hint, needed_fields)
   vim.validate('needed_fields', needed_fields, function(val)
     return vim.islist(val)
@@ -533,12 +573,12 @@ action_helpers.get_hint_labels = function(hint, needed_fields)
         return vim.list_contains({ 'location', 'command', 'tooltip' }, field)
       end)
   end, false)
-  ---@type vim.lsp.inlay_hint.action.hint_label[]
+  --- @type vim.lsp.inlay_hint.action.hint_label[]
   local hint_labels = {}
 
   if type(hint.label) == 'table' and #hint.label > 0 then
     vim.iter(hint.label):each(
-      ---@param label lsp.InlayHintLabelPart
+      --- @param label lsp.InlayHintLabelPart
       function(label)
         if
           vim.iter(needed_fields):any(function(field_name)
@@ -559,24 +599,24 @@ action_helpers.get_hint_labels = function(hint, needed_fields)
   end
 end
 
----@type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
+--- @type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
 local inlayhint_actions = {
   textEdits = function(hints, ctx)
     local valid_hints = vim
       .iter(hints)
       :filter(
-        ---@param hint lsp.InlayHint
+        --- @param hint lsp.InlayHint
         function(hint)
           -- only keep those that have text edits.
           return hint ~= nil and hint.textEdits ~= nil and not vim.tbl_isempty(hint.textEdits)
         end
       )
       :totable()
-    ---@type lsp.TextEdit[]
+    --- @type lsp.TextEdit[]
     local text_edits = vim
       .iter(valid_hints)
       :map(
-        ---@param hint lsp.InlayHint
+        --- @param hint lsp.InlayHint
         function(hint)
           return hint.textEdits
         end
@@ -593,11 +633,11 @@ local inlayhint_actions = {
   location = function(hints, ctx)
     local count = 0
 
-    ---@type vim.lsp.inlay_hint.action.hint_label[]
+    --- @type vim.lsp.inlay_hint.action.hint_label[]
     local hint_labels = {}
 
     vim.iter(hints):each(
-      ---@param item lsp.InlayHint
+      --- @param item lsp.InlayHint
       function(item)
         if type(item.label) == 'table' and #item.label > 0 then
           local labels_from_this = action_helpers.get_hint_labels(item, { 'location' })
@@ -617,7 +657,7 @@ local inlayhint_actions = {
       vim
         .iter(hint_labels)
         :map(
-          ---@param loc vim.lsp.inlay_hint.action.hint_label
+          --- @param loc vim.lsp.inlay_hint.action.hint_label
           function(loc)
             local hint = loc.hint
             local label = loc.labal
@@ -666,7 +706,7 @@ local inlayhint_actions = {
 
     if hint_labels then
       vim.iter(hint_labels):each(
-        ---@param hint_label vim.lsp.inlay_hint.action.hint_label
+        --- @param hint_label vim.lsp.inlay_hint.action.hint_label
         function(hint_label)
           local label = hint_label.labal
           lines[#lines + 1] = ''
@@ -724,7 +764,7 @@ local inlayhint_actions = {
       vim
         .iter(hint_labels)
         :map(
-          ---@param item vim.lsp.inlay_hint.action.hint_label
+          --- @param item vim.lsp.inlay_hint.action.hint_label
           function(item)
             local label = item.labal
             local entry_line = string.format('%s: %s', label.value, label.command.title)
@@ -749,6 +789,10 @@ local inlayhint_actions = {
   end,
 }
 
+--- @class vim.lsp.inlay_hint.action.Opts
+--- @inlinedoc
+--- @field range? vim.Range
+
 --- For supported LSP servers, apply one of the following actions provided by inlayhints in the
 --- selected range.
 ---
@@ -768,98 +812,60 @@ local inlayhint_actions = {
 --- ```
 ---
 --- @param action vim.lsp.inlay_hint.action
----
---- Possible actions: `"textEdits"`, `"tooltip"`, `"location"`, `"command"` or a custom callback:
---- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlayhints in the range and some context, perform some actions and returns the number of hints on which the actions were taken.
-function M.apply_action(action)
+--- Possible actions:
+--- - `"textEdits"`
+--- - `"tooltip"`
+--- - `"location"`
+--- - `"command"`
+--- - a custom callback:
+--- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlayhints in the given range and some context, perform some actions and returns the number of hints on which the actions were taken.
+--- @param opts? vim.lsp.inlay_hint.action.Opts
+function M.apply_action(action, opts)
   local action_callback = action
   if type(action) == 'string' then
     action_callback = inlayhint_actions[action]
-    ---@cast action_callback -vim.lsp.inlay_hint.action.name
+    --- @cast action_callback -vim.lsp.inlay_hint.action.name
   end
   if type(action_callback) ~= 'function' then
-    return error('Unsupported_action: ' .. action)
+    return error('Unsupported action: ' .. action)
   end
+
+  opts = opts or {}
+
   local bufnr = api.nvim_get_current_buf()
-  local winid = fn.bufwinid(bufnr)
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
 
-  local mode = fn.mode()
+  local range = opts.range or action_helpers.make_range()
 
-  -- mark position, (1, 0) indexed, end-inclusive
-  ---@type {start: [integer, integer], end: [integer, integer]}
-  local range = {}
-
-  if mode == 'n' then
-    local cursor = api.nvim_win_get_cursor(winid)
-    range.start = cursor
-    range['end'] = cursor
-  else
-    local start_pos = fn.getpos('v')
-    local end_pos = fn.getpos('.')
-    if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
-      ---@type [integer, integer, integer, integer]
-      start_pos, end_pos = end_pos, start_pos
-    end
-
-    range = {
-      start = { start_pos[2], start_pos[3] - 1 },
-      ['end'] = { end_pos[2], end_pos[3] - 2 },
-    }
-
-    if mode == 'V' or mode == 'Vs' then
-      range.start[2] = 0
-      range['end'][1] = range['end'][1] + 1
-      range['end'][2] = 0
-    end
-  end
-
-  ---@param idx? integer
-  ---@param client vim.lsp.Client
+  --- @param idx? integer
+  --- @param client vim.lsp.Client
   local function do_insert(idx, client)
     if idx == nil then
       return
     end
 
-    local params =
-      util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+    local params = util.make_given_range_params(
+      range.start:to_cursor(),
+      range.end_:to_cursor(),
+      bufnr,
+      client.offset_encoding
+    )
     local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
 
     client:request(
       'textDocument/inlayHint',
       params,
-      ---@param result lsp.InlayHint[]?
+      --- @param result lsp.InlayHint[]?
       function(_, result, _, _)
         if result ~= nil then
-          ---@type lsp.InlayHint[]
+          --- @type lsp.InlayHint[]
           local hints = vim
             .iter(result)
             :filter(
-              ---@param hint lsp.InlayHint
+              --- @param hint lsp.InlayHint
               function(hint)
-                local hint_pos = hint.position
-                if
-                  hint_pos.line < params.range.start.line
-                  or hint_pos.line > params.range['end'].line
-                then
-                  -- outside of line range
-                  return false
-                end
-
-                if hint_pos.line == params.range.start.line then
-                  -- pos is in the same line as range.start
-                  if hint_pos.line == params.range['end'].line then
-                    -- range.start in the same line as range.end
-                    return params.range.start.character <= hint_pos.character
-                      and hint_pos.character <= params.range['end'].character
-                  end
-                  return hint_pos.character >= params.range.start.character
-                end
-
-                if hint_pos.line == params.range['end'].line then
-                  return hint_pos.character <= params.range['end'].character
-                end
-                return true
+                local hint_pos = vim.pos.lsp(bufnr, hint.position, client.offset_encoding)
+                return hint_pos <= range.end_ and hint_pos >= range.start
               end
             )
             :totable()
@@ -875,7 +881,7 @@ function M.apply_action(action)
             end
 
             -- keep track of the number of resolved edits
-            ---@type integer
+            --- @type integer
             local num_processed = 0
 
             for i, h in ipairs(hints) do
