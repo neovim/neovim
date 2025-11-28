@@ -1133,31 +1133,6 @@ vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
 vim.bo.cfu = vim.bo.completefunc
 
---- A comma-separated list of strings to enable fuzzy collection for
---- specific `ins-completion` modes, affecting how matches are gathered
---- during completion.  For specified modes, fuzzy matching is used to
---- find completion candidates instead of the standard prefix-based
---- matching.  This option can contain the following values:
----
---- keyword		keywords in the current file	`i_CTRL-X_CTRL-N`
---- 		keywords with flags ".", "w",	`i_CTRL-N` `i_CTRL-P`
---- 		"b", "u", "U" and "k{dict}" in 'complete'
---- 		keywords in 'dictionary'	`i_CTRL-X_CTRL-K`
----
---- files		file names			`i_CTRL-X_CTRL-F`
----
---- whole_line	whole lines			`i_CTRL-X_CTRL-L`
----
---- When using the 'completeopt' "longest" option value, fuzzy collection
---- can identify the longest common string among the best fuzzy matches
---- and insert it automatically.
----
---- @type string
-vim.o.completefuzzycollect = ""
-vim.o.cfc = vim.o.completefuzzycollect
-vim.go.completefuzzycollect = vim.o.completefuzzycollect
-vim.go.cfc = vim.go.completefuzzycollect
-
 --- A comma-separated list of strings that controls the alignment and
 --- display order of items in the popup menu during Insert mode
 --- completion.  The supported values are "abbr", "kind", and "menu".
@@ -1177,12 +1152,7 @@ vim.go.cia = vim.go.completeitemalign
 ---    fuzzy    Enable `fuzzy-matching` for completion candidates.  This
 --- 	    allows for more flexible and intuitive matching, where
 --- 	    characters can be skipped and matches can be found even
---- 	    if the exact sequence is not typed.  Note: This option
---- 	    does not affect the collection of candidate list, it only
---- 	    controls how completion candidates are reduced from the
---- 	    list of alternatives.  If you want to use `fuzzy-matching`
---- 	    to gather more alternatives for your candidate list,
---- 	    see 'completefuzzycollect'.
+--- 	    if the exact sequence is not typed.
 ---
 ---    longest
 --- 	    When 'autocomplete' is not active, only the longest common
