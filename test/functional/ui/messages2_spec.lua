@@ -439,6 +439,33 @@ describe('messages2', function()
     t.eq({ filetype = 4 }, n.eval('g:set')) -- still fires for 'filetype'
   end)
 
+  it('echon with carriage return shows prompt #36490', function()
+    -- Plugin like vim-easyalign uses echon "\r" followed by echon "text" to show prompts.
+    -- These should all appear on the same line in the cmdline.
+    command([[echon "\r" | echon "Hello" | echon " " | echon "World"]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      Hello World                                          |
+    ]])
+    -- Multiple echon calls with highlighting should work too
+    exec_lua(function()
+      vim.cmd('echon "\\r"')
+      vim.cmd('echohl Function')
+      vim.cmd('echon ":Prompt"')
+      vim.cmd('echohl None')
+      vim.cmd('echon " "')
+      vim.cmd('echohl Comment')
+      vim.cmd('echon "(x)"')
+      vim.cmd('echohl None')
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {25::Prompt} {18:(x)}                                          |
+    ]])
+  end)
+
   it('Search highlights only apply to pager', function()
     screen:add_extra_attr_ids({
       [100] = { background = Screen.colors.Blue1, foreground = Screen.colors.Red },

@@ -49,6 +49,9 @@ local function ui_callback(event, ...)
       cursor = handler == ext.cmd[event] and true or nil,
       win = handler == ext.cmd[event] and ext.wins.cmd or nil,
     })
+  elseif event == 'msg_show' then
+    -- Redraw after msg_show to ensure echon prompts are visible immediately.
+    api.nvim__redraw({ flush = true, win = ext.wins.cmd })
   end
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
@@ -85,6 +88,12 @@ function M.enable(opts)
   vim.ui_attach(ext.ns, { ext_messages = true, set_cmdheight = false }, function(event, ...)
     if not (ext.msg[event] or ext.cmd[event]) then
       return
+    end
+    -- Mark cmdline hide pending immediately, before any scheduling.
+    -- This allows msg_show to know the cmdline is closing even if
+    -- cmdline_hide hasn't been processed yet due to fast event scheduling.
+    if event == 'cmdline_hide' then
+      ext.cmd.hide_pending = true
     end
     if vim.in_fast_event() then
       scheduled_ui_callback(event, ...)

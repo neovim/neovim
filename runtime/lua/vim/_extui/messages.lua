@@ -228,6 +228,7 @@ end
 ---@param append boolean
 function M.show_msg(tar, content, replace_last, append)
   local msg, restart, cr, dupe, count = '', false, false, 0, 0
+  local is_echon = append -- Track if this is an echon continuation.
   append = append and col > 0
 
   if M[tar] then -- tar == 'cmd'|'msg'
@@ -241,7 +242,8 @@ function M.show_msg(tar, content, replace_last, append)
 
     cr = M[tar].count > 0 and msg:sub(1, 1) == '\r'
     restart = M[tar].count > 0 and (replace_last or dupe > 0)
-    count = M[tar].count + ((restart or msg == '\n') and 0 or 1)
+    -- Don't increment count for echon continuations (they are part of the same message).
+    count = M[tar].count + ((restart or msg == '\n' or (is_echon and M[tar].count > 0)) and 0 or 1)
 
     -- Ensure cmdline is clear when writing the first message.
     if tar == 'cmd' and not will_full and dupe == 0 and M.cmd.count == 0 and ext.cmd.srow == 0 then
@@ -344,8 +346,9 @@ function M.show_msg(tar, content, replace_last, append)
     set_virttext('msg')
   end
 
-  -- Reset message state the next event loop iteration.
-  if start_row == 0 or ext.cmd.srow > 0 then
+  -- Reset message state the next event loop iteration, but not for echon
+  -- continuations (is_echon) which may have more messages coming.
+  if (start_row == 0 or ext.cmd.srow > 0) and not is_echon then
     vim.schedule(function()
       col, M.cmd.count = 0, 0
     end)
@@ -388,7 +391,12 @@ function M.msg_show(kind, content, replace_last, _, append)
     -- Set the entered search command in the cmdline (if available).
     local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.target
     if tar == 'cmd' then
-      if ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.srow == 0) then
+      -- Block messages when cmdheight == 0, or when cmdline is active (level > 0)
+      -- and not in block mode. Allow messages if cmdline_hide is pending (received
+      -- but not yet processed due to fast event scheduling).
+      if
+        ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.srow == 0 and not ext.cmd.hide_pending)
+      then
         return -- Do not overwrite an active cmdline unless in block mode.
       end
       -- Store the time when an important message was emitted in order to not overwrite
@@ -419,7 +427,9 @@ end
 ---
 ---@param content MsgContent
 function M.msg_showmode(content)
-  M.virt.last[M.virt.idx.mode] = ext.cmd.level > 0 and {} or content
+  -- Suppress mode indicator when cmdline is active (level > 0) OR when there's
+  -- active echon content (count > 0) that shouldn't be overwritten.
+  M.virt.last[M.virt.idx.mode] = (ext.cmd.level > 0 or M.cmd.count > 0) and {} or content
   M.virt.last[M.virt.idx.search] = {}
   set_virttext('last')
 end
