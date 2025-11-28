@@ -1,4 +1,12 @@
--- usage: nvim -ll src/gen/gen_terminfo.lua
+-- USAGE:
+--
+--    # Optional: Delete cache to get latest terminfo from internet.
+--    rm -rf /tmp/nvim_terminfo/
+--
+--    # Optional: Ensure the latest ncurses+tic is in your PATH.
+--    export PATH="/opt/homebrew/Cellar/ncurses/6.5/bin/":"$PATH"
+--
+--    nvim -ll src/gen/gen_terminfo.lua
 --
 -- This script does:
 --
@@ -111,8 +119,8 @@ if vim.uv.fs_stat(db) == nil then
   end
   sys('curl -O ' .. url)
   sys('gunzip -f terminfo.src.gz')
-  sys('cat terminfo.src | tic -x -o "' .. db .. '" -')
-  sys('cat scripts/windows.ti | tic -x -o "' .. db .. '" -')
+  sys(('cat terminfo.src | tic -x -o "%s" -'):format(db))
+  sys(('cat scripts/windows.ti | tic -x -o "%s" -'):format(db))
   sys('rm -f terminfo.src')
 else
   print('using cached terminfo in ' .. db)
@@ -138,7 +146,7 @@ end
 local dbg = function() end
 -- dbg = print
 
-local f_enum = io.open(target_enum, 'wb')
+local f_enum = assert(io.open(target_enum, 'wb'))
 f_enum:write('// genenerated by src/gen/gen_terminfo.lua\n\n')
 f_enum:write('#pragma once\n\n')
 f_enum:write('typedef enum {\n')
@@ -169,7 +177,7 @@ f_enum:write('  kTermKeyCount,\n')
 f_enum:write('} TerminfoKey;\n')
 f_enum:close()
 
-local f_defs = io.open(target_gen, 'wb')
+local f_defs = assert(io.open(target_gen, 'wb'))
 
 f_defs:write('// uncrustify:off\n\n')
 
