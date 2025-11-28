@@ -311,6 +311,7 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
         || (!strequal(arg, "--embed") && !strequal(arg, "--headless") && !skipping_minc)) {
       ADD_C(argv, CSTR_AS_OBJ(arg));
     }
+    skipping_minc = false;
   });
   ADD_C(args, ARRAY_OBJ(argv));
 
