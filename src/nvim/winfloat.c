@@ -108,14 +108,13 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     win_append(lastwin_nofloating(), wp, NULL);
   }
   wp->w_floating = true;
-  wp->w_status_height = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2) ? STATUS_HEIGHT : 0;
+  wp->w_status_height = wp->w_p_stl && *wp->w_p_stl != NUL
+                        && (p_ls == 1 || p_ls == 2) ? STATUS_HEIGHT : 0;
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
-  win_set_inner_size(wp, true);
-  wp->w_pos_changed = true;
   redraw_later(wp, UPD_VALID);
   return wp;
 }
