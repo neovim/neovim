@@ -527,7 +527,7 @@ local action_helpers = {
     local winid = fn.bufwinid(bufnr)
     local mode = fn.mode()
 
-    -- mark position, (1, 0) indexed, end-inclusive
+    -- mark position, (1, 0) indexed, end-exclusive
     --- @type {start: vim.Pos, end: vim.Pos}
     local range = {}
 
@@ -535,7 +535,7 @@ local action_helpers = {
       local cursor = api.nvim_win_get_cursor(winid)
       range.start = vim.pos.cursor(cursor)
       range['end'] = vim.pos.cursor(cursor)
-      range['end'].col = range['end'].col + 1
+      range['end'].col = range['end'].col + 2
     else
       local start_pos = fn.getpos('v')
       local end_pos = fn.getpos('.')
@@ -548,7 +548,7 @@ local action_helpers = {
 
       range = {
         start = vim.pos.cursor({ start_pos[2], start_pos[3] - 1 }),
-        ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] - 2 }),
+        ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] - 1 }),
       }
 
       if mode == 'V' or mode == 'Vs' then
