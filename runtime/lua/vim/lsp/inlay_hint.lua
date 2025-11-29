@@ -802,7 +802,7 @@ local inlayhint_actions = {
 --- Example usage:
 --- ```lua
 --- vim.keymap.set(
----   'n',
+---   { 'n', 'v' },
 ---   'gI',
 ---   function()
 ---     vim.lsp.inlay_hint.apply_action('textEdits')
