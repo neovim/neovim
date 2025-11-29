@@ -659,7 +659,6 @@ local inlayhint_actions = {
         :map(
           --- @param loc vim.lsp.inlay_hint.action.hint_label
           function(loc)
-            local hint = loc.hint
             local label = loc.label
             return string.format(
               '%s\t%s:%d',
