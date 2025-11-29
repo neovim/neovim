@@ -223,6 +223,7 @@ EVENTS
 • New `msg_id` parameter for |ui-messages| `msg_show` event.
 • 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
 • Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
+• New events for replaying macros: |MacroEnter| and |MacroLeave|.
 
 HIGHLIGHTS
 

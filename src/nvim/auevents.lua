@@ -81,6 +81,8 @@ return {
     LspProgress = false, -- after a LSP progress update
     LspRequest = false, -- after an LSP request is started, canceled, or completed
     LspTokenUpdate = false, -- after a visible LSP token is updated
+    MacroEnter = true, -- when starting to replay a macro
+    MacroLeave = true, -- just before a macro stops replaying
     MenuPopup = false, -- just before popup menu is displayed
     ModeChanged = false, -- after changing the mode
     OptionSet = false, -- after setting any option
@@ -161,6 +163,8 @@ return {
     LspProgress = true,
     LspRequest = true,
     LspTokenUpdate = true,
+    MacroEnter = true,
+    MacroLeave = true,
     PackChangedPre = true,
     PackChanged = true,
     Progress = true,

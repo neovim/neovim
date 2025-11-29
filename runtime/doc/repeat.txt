@@ -128,6 +128,8 @@ q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			mapping.  This matters, for example, for undo, which
 			only syncs when commands were typed.
 
+			See also |RecordingEnter| and |RecordingLeave|.
+
 q			Stops recording.
 			Implementation note: The 'q' that stops recording is
 			not stored in the register, unless it was the result
@@ -144,6 +146,7 @@ q			Stops recording.
 			For "@=" you are prompted to enter an expression.  The
 			result of the expression is then executed.
 			See also |@:|.
+			See also |MacroEnter| and |MacroLeave|.
 
 							*@@* *E748*
 @@			Repeat the previous @{0-9a-z":*} [count] times.

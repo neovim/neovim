@@ -327,6 +327,8 @@ Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
 - |BufModifiedSet|
 - |Progress|
+- |MacroEnter|
+- |MacroLeave|
 - |RecordingEnter|
 - |RecordingLeave|
 - |SearchWrapped|
