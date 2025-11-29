@@ -1209,6 +1209,7 @@ local extension = {
   ass = 'ssa',
   st = 'st',
   ipd = 'starlark',
+  sky = 'starlark',
   star = 'starlark',
   starlark = 'starlark',
   imata = 'stata',
