@@ -306,4 +306,68 @@ describe('startup --listen', function()
     clear({ args = { '--listen', 'test-name' } })
     matches([[[/\\]test%-name[^/\\]*]], api.nvim_get_vvar('servername'))
   end)
+
+  it('removes stale socket file and starts successfully #36581', function()
+    if is_os('win') then
+      return -- Unix sockets only.
+    end
+    local addr = './Xtest-stale-socket'
+    os.remove(addr)
+
+    -- Create a stale socket by spawning nc (netcat) to listen, then killing it.
+    -- nc -lU creates a Unix socket and listens; SIGKILL leaves the socket file.
+    local handle = vim.uv.spawn('nc', {
+      args = { '-lU', addr },
+    }, function() end)
+    if not handle then
+      -- nc not available, skip test.
+      return
+    end
+    -- Wait for socket to be created.
+    for _ = 1, 50 do
+      if vim.uv.fs_stat(addr) then
+        break
+      end
+      vim.uv.sleep(10)
+    end
+    -- Kill nc to leave stale socket.
+    handle:kill('sigkill')
+    handle:close()
+    vim.uv.run('nowait')
+
+    -- Verify socket file still exists.
+    if vim.uv.fs_stat(addr) == nil then
+      return -- Socket was cleaned up, skip.
+    end
+
+    -- Now start nvim on the same socket - should succeed by removing stale socket.
+    clear { args = { '--listen', addr }, env = { NVIM_LOG_FILE = testlog } }
+    eq(addr, api.nvim_get_vvar('servername'))
+    t.assert_log('Removing stale socket', testlog, 100)
+    os.remove(addr)
+  end)
+
+  it('does not remove active socket #36581', function()
+    if is_os('win') then
+      return -- Unix sockets only.
+    end
+    local addr = './Xtest-active-socket'
+    -- Start first Nvim instance listening on the socket.
+    clear { args = { '--listen', addr }, env = { NVIM_LOG_FILE = testlog } }
+    eq(addr, api.nvim_get_vvar('servername'))
+
+    -- Second instance should fail with "address already in use".
+    local r = n.exec_lua(function(prog, addr_, testlog_)
+      return vim
+        .system({ prog, '--headless', '+qall!', '--listen', addr_ }, {
+          text = true,
+          env = { NVIM_LOG_FILE = testlog_ },
+        })
+        :wait()
+    end, n.nvim_prog, addr, testlog) --[[@as vim.SystemCompleted]]
+
+    eq(1, r.code)
+    matches('address already in use', r.stderr .. r.stdout)
+    os.remove(addr)
+  end)
 end)

@@ -112,6 +112,38 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
     result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+    if (result == UV_EADDRINUSE) {
+      // Socket file exists. Try connecting to see if it's actually in use.
+      uv_pipe_t probe;
+      uv_pipe_init(watcher->uv.pipe.handle.loop, &probe, 0);
+      uv_connect_t req;
+      int connect_status = 1;  // 1 = pending
+      req.data = &connect_status;
+      uv_pipe_connect(&req, &probe, watcher->addr, probe_connect_cb);
+      LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, 1000, connect_status != 1);
+
+      // Close the probe handle and wait for close to complete.
+      bool closed = false;
+      probe.data = &closed;
+      uv_close((uv_handle_t *)&probe, probe_close_cb);
+      LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, 1000, closed);
+
+      if (connect_status != 0) {
+        // Connection failed: socket is stale. Remove it and retry.
+        WLOG("Removing stale socket: %s", watcher->addr);
+        os_remove(watcher->addr);
+        // Close the failed-to-bind handle before reinitializing.
+        uv_loop_t *loop = watcher->uv.pipe.handle.loop;
+        closed = false;
+        watcher->uv.pipe.handle.data = &closed;
+        uv_close((uv_handle_t *)&watcher->uv.pipe.handle, probe_close_cb);
+        LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, 1000, closed);
+        uv_pipe_init(loop, &watcher->uv.pipe.handle, 0);
+        watcher->uv.pipe.handle.data = watcher;
+        result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+      }
+      // If connect succeeded, socket is in use: keep UV_EADDRINUSE.
+    }
     if (result == 0) {
       result = uv_listen(watcher->stream, backlog, connection_cb);
     }
@@ -194,6 +226,19 @@ static void connect_cb(uv_connect_t *req, int status)
   if (status != 0 && !uv_is_closing(handle)) {
     uv_close(handle, NULL);
   }
+}
+
+static void probe_close_cb(uv_handle_t *handle)
+{
+  bool *closed = handle->data;
+  *closed = true;
+}
+
+static void probe_connect_cb(uv_connect_t *req, int status)
+{
+  int *ret_status = req->data;
+  *ret_status = status;
+  // Don't close here - caller will close with probe_close_cb
 }
 
 bool socket_connect(Loop *loop, RStream *stream, bool is_tcp, const char *address, int timeout,
