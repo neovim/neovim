@@ -436,8 +436,6 @@ function M.enable(enable, filter)
   end
 end
 
---- @alias vim.lsp.inlay_hint.action.callback fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer
-
 --- @alias vim.lsp.inlay_hint.action.name
 ---| 'textEdits' -- insert texts into the buffer
 ---| 'command' -- See 'workspace/executeCommand'
@@ -452,6 +450,17 @@ end
 --- @inlinedoc
 --- @field bufnr integer
 --- @field client vim.lsp.Client
+
+--- @class vim.lsp.inlay_hint.action.on_finish.context
+--- @inlinedoc
+--- @field client? vim.lsp.Client The LSP client used to trigger the action if the action was successfully triggered.
+--- If the action opened or jumped to a new buffer, this will be the buffer number.
+--- Otherwise it'll be the original buffer.
+--- @field bufnr integer
+
+--- @alias vim.lsp.inlay_hint.action.on_finish.callback fun(ctx: vim.lsp.inlay_hint.action.on_finish.context)
+
+--- @alias vim.lsp.inlay_hint.action.callback fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
 
 --- @class (private) vim.lsp.inlay_hint.action.LocationItem
 --- @field hint_name string
@@ -601,7 +610,7 @@ end
 
 --- @type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
 local inlayhint_actions = {
-  textEdits = function(hints, ctx)
+  textEdits = function(hints, ctx, on_finish)
     local valid_hints = vim
       .iter(hints)
       :filter(
@@ -626,11 +635,14 @@ local inlayhint_actions = {
     if #text_edits > 0 then
       vim.schedule(function()
         util.apply_text_edits(text_edits, ctx.bufnr, ctx.client.offset_encoding)
+        if type(on_finish) == 'function' then
+          on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+        end
       end)
     end
     return #valid_hints
   end,
-  location = function(hints, ctx)
+  location = function(hints, ctx, on_finish)
     local count = 0
 
     --- @type vim.lsp.inlay_hint.action.hint_label[]
@@ -650,6 +662,9 @@ local inlayhint_actions = {
     )
 
     if vim.tbl_isempty(hint_labels) then
+      if type(on_finish) == 'function' then
+        on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+      end
       return 0
     end
 
@@ -677,6 +692,10 @@ local inlayhint_actions = {
             ctx.client.offset_encoding,
             { reuse_win = true, focus = true }
           )
+
+          if type(on_finish) == 'function' then
+            on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+          end
         end
       end
     )
@@ -684,7 +703,7 @@ local inlayhint_actions = {
     return count
   end,
 
-  tooltip = function(hints, ctx)
+  tooltip = function(hints, ctx, on_finish)
     if #hints ~= 1 then
       vim.schedule(function()
         vim.notify(
@@ -734,14 +753,22 @@ local inlayhint_actions = {
 
     if #lines == 2 then
       -- no tooltip/command/location has been found. Skip this hint.
+
+      if type(on_finish) == 'function' then
+        on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+      end
       return 0
     end
 
-    util.open_floating_preview(lines, 'markdown')
+    local buf, _ = util.open_floating_preview(lines, 'markdown')
+
+    if type(on_finish) == 'function' then
+      on_finish({ bufnr = buf, client = ctx.client })
+    end
     return 1
   end,
 
-  command = function(hints, ctx)
+  command = function(hints, ctx, on_finish)
     if #hints ~= 1 then
       vim.schedule(function()
         vim.notify(
@@ -751,6 +778,9 @@ local inlayhint_actions = {
       end)
     end
     if #hints == 0 then
+      if type(on_finish) == 'function' then
+        on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+      end
       return 0
     end
     local hint_labels = action_helpers.get_hint_labels(hints[1], { 'command' })
@@ -776,12 +806,14 @@ local inlayhint_actions = {
         :totable(),
       { prompt = 'Command to execute' },
       function(_, idx)
-        ctx.client:request(
-          'workspace/executeCommand',
-          hint_labels[idx].label.command,
-          nil,
-          ctx.bufnr
-        )
+        ctx.client:request('workspace/executeCommand', hint_labels[idx].label.command, function(...)
+          local default_handler = ctx.client.handlers['workspace/executeCommand']
+            or vim.lsp.handlers['workspace/executeCommand']
+          if default_handler then
+            default_handler(...)
+          end
+          on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+        end, ctx.bufnr)
       end
     )
     return 1
@@ -818,7 +850,8 @@ local inlayhint_actions = {
 --- - a custom callback:
 --- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlay hints in the given range and some context, perform some actions and returns the number of hints on which the actions were taken.
 --- @param opts? vim.lsp.inlay_hint.action.Opts
-function M.apply_action(action, opts)
+--- @param callback? vim.lsp.inlay_hint.action.on_finish.callback This will be invoked when the action is finished.
+function M.apply_action(action, opts, callback)
   local action_callback = action
   if type(action) == 'string' then
     action_callback = inlayhint_actions[action]
@@ -839,6 +872,10 @@ function M.apply_action(action, opts)
   --- @param client vim.lsp.Client
   local function do_insert(idx, client)
     if idx == nil then
+      -- terminate the iteration
+      if type(callback) == 'function' then
+        callback({ bufnr = api.nvim_get_current_buf() })
+      end
       return
     end
 
@@ -870,7 +907,7 @@ function M.apply_action(action, opts)
             :totable()
           if #hints > 0 then
             if not support_resolve then
-              if action_callback(hints, { bufnr = bufnr, client = client }) == 0 then
+              if action_callback(hints, { bufnr = bufnr, client = client }, callback) == 0 then
                 -- no edits applied. proceed with the iteration.
                 return do_insert(next(clients, idx))
               else
@@ -891,7 +928,7 @@ function M.apply_action(action, opts)
                 num_processed = num_processed + 1
 
                 if num_processed == #hints then
-                  if action_callback(hints, { bufnr = bufnr, client = client }) == 0 then
+                  if action_callback(hints, { bufnr = bufnr, client = client }, callback) == 0 then
                     return do_insert(next(clients, idx))
                   else
                     return
