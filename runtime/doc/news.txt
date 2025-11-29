@@ -275,6 +275,8 @@ LSP
 • |Client:stop()| now accepts a numerical `force` argument to be interpreted as the time to wait
   before forcing the shutdown.
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
+• |vim.lsp.codelens.config()| Can be used to to display lenses as virtual
+  lines, virtual text, and/or function callbacks
 
 LUA
 

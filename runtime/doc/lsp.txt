@@ -1922,6 +1922,24 @@ Client:supports_method({method}, {bufnr})           *Client:supports_method()*
 ==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
+*vim.lsp.codelens.Config*
+    Configuration for lenses
+    • `false`: Disable the option
+    • `true`: Enable the option, with default settings
+    • `function`: Function with signature (buf, ns, line, chunks) to override
+      the defaults
+      • buf: Buffer number of the lens
+      • ns: Extmark namespace id for the LSP client's lenses
+      • line: The zero-indexed line number the lens will be displayed on
+      • chunks: The lenses converted to a list of `[text, hl_group]` pairs
+
+    Fields: ~
+      • {virt_text}?   (`boolean|fun( buf: integer, ns: integer, line: integer, chunks: [string, integer|string?][])`, default: true)
+                       Use virtual text for lenses.
+      • {virt_lines}?  (`boolean|fun( buf: integer, ns: integer, line: integer, chunks: [string, integer|string?][])`, default: false)
+                       Use virtual lines for lenses.
+
+
 clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
     Clear the lenses
 
@@ -1930,8 +1948,39 @@ clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
       • {bufnr}      (`integer?`) filter by buffer. All buffers if nil, 0 for
                      current buffer
 
+config({opts})                                     *vim.lsp.codelens.config()*
+    Configure lenses globally. If a value is nil, it will not be changed.
+
+    Example: >lua
+        vim.lsp.codelens.config({
+          virt_text = false,
+          virt_lines = function(buf, ns, line, chunks)
+            local indent = vim.api.nvim_buf_call(buf, function()
+              return vim.fn.indent(line + 1)
+            end)
+
+            if indent > 0 then table.insert(chunks, 1, {
+              string.rep(" ", indent), ""
+            }) end
+
+            vim.api.nvim_buf_set_extmark(buf, ns, line, 0, {
+              virt_lines = { chunks },
+              virt_lines_above = true,
+              hl_mode = 'replace', -- Default: 'combine'
+            })
+          end,
+        })
+<
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.codelens.Config?`) See |vim.lsp.codelens.Config|.
+
+    Return: ~
+        (`vim.lsp.codelens.Config?`) Current config if {opts} is omitted. See
+        |vim.lsp.codelens.Config|.
+
 display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
-    Display the lenses using virtual text
+    Display the lenses using virtual text and/or virtual lines
 
     Parameters: ~
       • {lenses}     (`lsp.CodeLens[]?`) lenses to display
