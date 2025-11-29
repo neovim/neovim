@@ -2813,7 +2813,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                  && (minor < VIM_VERSION_MINOR
                      || (minor == VIM_VERSION_MINOR
                          && has_vim_patch(atoi(name + 10))))));
-      } else {
+      } else if (ascii_isdigit(name[5])) {
         n = has_vim_patch(atoi(name + 5));
       }
     } else if (STRNICMP(name, "nvim-", 5) == 0) {
