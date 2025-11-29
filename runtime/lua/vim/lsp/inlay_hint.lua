@@ -791,13 +791,12 @@ local inlayhint_actions = {
 
 --- @class vim.lsp.inlay_hint.action.Opts
 --- @inlinedoc
+--- Use this option to specify the range from which the inlay hints should be requested.
+--- When not specified, it'll default to use the cursor position in |Normal-mode| or the selected range in |Visual-mode|.
 --- @field range? vim.Range
 
 --- Apply one of the following actions provided by inlay hints in the
 --- selected range.
----
---- - In |Normal-mode|, the action applies to inlay hints that are adjacent to the cursor.
---- - In |Visual-mode|, the action applies to inlay hints that are in the visually selected range.
 ---
 --- Example usage:
 --- ```lua

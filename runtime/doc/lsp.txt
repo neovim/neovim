@@ -2142,10 +2142,6 @@ Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 apply_action({action}, {opts})             *vim.lsp.inlay_hint.apply_action()*
     Apply one of the following actions provided by inlay hints in the selected
     range.
-    • In |Normal-mode|, the action applies to inlay hints that are adjacent to
-      the cursor.
-    • In |Visual-mode|, the action applies to inlay hints that are in the
-      visually selected range.
 
     Example usage: >lua
         vim.keymap.set(
@@ -2170,7 +2166,10 @@ apply_action({action}, {opts})             *vim.lsp.inlay_hint.apply_action()*
                     and some context, perform some actions and returns the
                     number of hints on which the actions were taken.
       • {opts}    (`table?`) A table with the following fields:
-                  • {range}? (`vim.Range`)
+                  • {range}? (`vim.Range`) Use this option to specify the
+                    range from which the inlay hints should be requested. When
+                    not specified, it'll default to use the cursor position in
+                    |Normal-mode| or the selected range in |Visual-mode|.
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for the {filter}ed scope.
