@@ -220,8 +220,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       [104] = { foreground = Screen.colors.NvimLightCyan },
       [105] = { foreground = Screen.colors.NvimDarkGrey4 },
       [106] = {
-        foreground = Screen.colors.NvimDarkGrey3,
-        background = Screen.colors.NvimLightGrey3,
+        foreground = Screen.colors.NvimLightGrey2,
+        background = Screen.colors.NvimDarkGrey4,
       },
       [107] = { foreground = Screen.colors.NvimLightGrey2, bold = true },
       [108] = { foreground = Screen.colors.NvimLightBlue },
