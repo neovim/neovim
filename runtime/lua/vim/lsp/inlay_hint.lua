@@ -461,7 +461,7 @@ end
 
 --- @class (private) vim.lsp.inlay_hint.action.hint_label
 --- @field hint lsp.InlayHint
---- @field labal lsp.InlayHintLabelPart
+--- @field label lsp.InlayHintLabelPart
 
 local action_helpers = {
   --- @param hint lsp.InlayHint
@@ -587,7 +587,7 @@ action_helpers.get_hint_labels = function(hint, needed_fields)
         then
           hint_labels[#hint_labels + 1] = {
             hint = hint,
-            labal = label,
+            label = label,
           }
         end
       end
@@ -660,7 +660,7 @@ local inlayhint_actions = {
           --- @param loc vim.lsp.inlay_hint.action.hint_label
           function(loc)
             local hint = loc.hint
-            local label = loc.labal
+            local label = loc.label
             return string.format(
               '%s\t%s:%d',
               label.value,
@@ -674,7 +674,7 @@ local inlayhint_actions = {
       function(_, idx)
         if idx then
           util.show_document(
-            hint_labels[idx].labal.location,
+            hint_labels[idx].label.location,
             ctx.client.offset_encoding,
             { reuse_win = true, focus = true }
           )
@@ -708,7 +708,7 @@ local inlayhint_actions = {
       vim.iter(hint_labels):each(
         --- @param hint_label vim.lsp.inlay_hint.action.hint_label
         function(hint_label)
-          local label = hint_label.labal
+          local label = hint_label.label
           lines[#lines + 1] = ''
           lines[#lines + 1] = string.format('## `%s`', label.value)
           lines[#lines + 1] = ''
@@ -766,7 +766,7 @@ local inlayhint_actions = {
         :map(
           --- @param item vim.lsp.inlay_hint.action.hint_label
           function(item)
-            local label = item.labal
+            local label = item.label
             local entry_line = string.format('%s: %s', label.value, label.command.title)
             if label.tooltip then
               entry_line = entry_line .. string.format(' (%s)', label.tooltip)
@@ -779,7 +779,7 @@ local inlayhint_actions = {
       function(_, idx)
         ctx.client:request(
           'workspace/executeCommand',
-          hint_labels[idx].labal.command,
+          hint_labels[idx].label.command,
           nil,
           ctx.bufnr
         )
