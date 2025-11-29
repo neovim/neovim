@@ -548,7 +548,7 @@ local action_helpers = {
 
       range = {
         start = vim.pos.cursor({ start_pos[2], start_pos[3] - 1 }),
-        ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] - 1 }),
+        ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] }),
       }
 
       if mode == 'V' or mode == 'Vs' then
@@ -864,8 +864,9 @@ function M.apply_action(action, opts)
             :filter(
               --- @param hint lsp.InlayHint
               function(hint)
+                -- TODO: use `vim.Range.has_pos` when available. See https://github.com/neovim/neovim/pull/36397
                 local hint_pos = vim.pos.lsp(bufnr, hint.position, client.offset_encoding)
-                return hint_pos <= range.end_ and hint_pos >= range.start
+                return hint_pos < range.end_ and hint_pos >= range.start
               end
             )
             :totable()
