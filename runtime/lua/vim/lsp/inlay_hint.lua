@@ -778,7 +778,7 @@ local inlayhint_actions = {
 --- @inlinedoc
 --- @field range? vim.Range
 
---- For supported LSP servers, apply one of the following actions provided by inlayhints in the
+--- Apply one of the following actions provided by inlay hints in the
 --- selected range.
 ---
 --- - In |Normal-mode|, the action applies to inlay hints that are adjacent to the cursor.
@@ -790,7 +790,7 @@ local inlayhint_actions = {
 ---   'n',
 ---   'gI',
 ---   function()
----     vim.lsp.inlay_hint.apply_action("textEdits")
+---     vim.lsp.inlay_hint.apply_action('textEdits')
 ---   end,
 ---   { desc = 'Apply inlay hint edits' }
 --- )
@@ -803,7 +803,7 @@ local inlayhint_actions = {
 --- - `"location"`
 --- - `"command"`
 --- - a custom callback:
---- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlayhints in the given range and some context, perform some actions and returns the number of hints on which the actions were taken.
+--- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlay hints in the given range and some context, perform some actions and returns the number of hints on which the actions were taken.
 --- @param opts? vim.lsp.inlay_hint.action.Opts
 function M.apply_action(action, opts)
   local action_callback = action
