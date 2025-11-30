@@ -2413,7 +2413,7 @@ text...
 		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
 					*:cat* *:catch* *E603* *E604* *E605*
-:cat[ch] /{pattern}/	The following commands until the next `:catch`,
+:cat[ch] [/{pattern}/]	The following commands until the next `:catch`,
 			`:finally`, or `:endtry` that belongs to the same
 			`:try` as the `:catch` are executed when an exception
 			matching {pattern} is being thrown and has not yet
