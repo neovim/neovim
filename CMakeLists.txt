@@ -289,6 +289,7 @@ add_dependencies(nvim nvim_bin nvim_runtime_deps nvim_runtime)
 
 add_subdirectory(src/nvim)
 add_subdirectory(src/tee)
+add_subdirectory(src/xxd)
 add_subdirectory(cmake.config)
 add_subdirectory(runtime)
 add_subdirectory(test)
