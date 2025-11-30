@@ -2543,10 +2543,13 @@ bool has_vim_patch(int n)
   // Perform a binary search.
   int l = 0;
   int h = (int)(ARRAY_SIZE(included_patches)) - 1;
-  while (l < h) {
+  while (true) {
     const int m = (l + h) / 2;
     if (included_patches[m] == n) {
       return true;
+    }
+    if (l == h) {
+      break;
     }
     if (included_patches[m] < n) {
       h = m;
