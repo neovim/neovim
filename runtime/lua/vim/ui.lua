@@ -155,7 +155,7 @@ end
 ---@see |vim.system()|
 function M.open(path, opt)
   vim.validate('path', path, 'string')
-  local is_uri = path:match('%w+:')
+  local is_uri = path:match('%w%w+:')
   if not is_uri then
     path = vim.fs.normalize(path)
   end
@@ -169,7 +169,11 @@ function M.open(path, opt)
   elseif vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
   elseif vim.fn.has('win32') == 1 then
-    cmd = { 'cmd.exe', '/c', 'start', '', path }
+    if is_uri then
+      cmd = { 'cmd', '/c', 'start', '', path }
+    else
+      cmd = { 'cmd', '/c', 'start', 'explorer.exe', path }
+    end
   elseif vim.fn.executable('xdg-open') == 1 then
     cmd = { 'xdg-open', path }
     job_opt.stdout = false
