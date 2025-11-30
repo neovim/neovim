@@ -73,25 +73,23 @@ Restart Nvim
 :restart [+cmd] [command]
                 Restarts Nvim.
 
-                1. Stops Nvim using `:qall!` (or |+cmd|, if given).
+                1. Stops Nvim using `:qall` (or |+cmd|, if given).
                 2. Starts a new Nvim server using the same |v:argv|,
                    optionally running [command] at startup. |-c|
                 3. Attaches the current UI to the new Nvim server. Other UIs
                    (if any) will not reattach on restart (this may change in
                    the future).
 
-                Use with `:confirm` to prompt if changes have been made.
-
-                Example: stop with `:qall!`, then restart: >
+                Example: discard changes and stop with `:qall!`, then restart: >
                     :restart +qall!
 <                Example: restart and restore the current session: >
                     :mksession! Session.vim | restart source Session.vim
 <                Example: restart and update plugins: >
-                    :restart +qall! lua vim.pack.update()
+                    :restart lua vim.pack.update()
 <
                 Note: Only works if the UI and server are on the same system.
                 Note: If the UI hasn't implemented the "restart" UI event,
-                this command is equivalent to `:qall!`.
+                this command is equivalent to `:qall` (or |+cmd|, if given).
 
 ------------------------------------------------------------------------------
 Connect UI to a different server

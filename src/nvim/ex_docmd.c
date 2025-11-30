@@ -4906,23 +4906,19 @@ static void ex_restart(exarg_T *eap)
     set_vim_var_list(VV_ARGV, argv_cpy);
   }
 
-  bool confirm = (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM));
-  if (confirm && check_changed_any(false, false)) {
-    return;
-  }
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  char *quit_cmd_copy = NULL;
 
-  char *quit_cmd;
-  if (eap->do_ecmd_cmd) {
-    quit_cmd = eap->do_ecmd_cmd;
-  } else if (confirm) {
-    quit_cmd = "qall";
-  } else {
-    quit_cmd = "qall!";
+  // Prepend "confirm " to cmd if :confirm is used
+  if (cmdmod.cmod_flags & CMOD_CONFIRM) {
+    quit_cmd_copy = concat_str("confirm ", quit_cmd);
+    quit_cmd = quit_cmd_copy;
   }
 
   Error err = ERROR_INIT;
   restarting = true;
   nvim_command(cstr_as_string(quit_cmd), &err);
+  xfree(quit_cmd_copy);
   if (ERROR_SET(&err)) {
     emsg(err.msg);  // Could not exit
     api_clear_error(&err);
