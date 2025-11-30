@@ -151,11 +151,7 @@ function M.open(path, opt)
   elseif vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
   elseif vim.fn.has('win32') == 1 then
-    if vim.fn.executable('rundll32') == 1 then
-      cmd = { 'rundll32', 'url.dll,FileProtocolHandler', path }
-    else
-      return nil, 'vim.ui.open: rundll32 not found'
-    end
+    cmd = { 'cmd.exe', '/c', 'start', '', path }
   elseif vim.fn.executable('xdg-open') == 1 then
     cmd = { 'xdg-open', path }
     job_opt.stdout = false
