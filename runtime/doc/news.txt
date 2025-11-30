@@ -277,6 +277,8 @@ LSP
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
 • |vim.lsp.enable()| when `enable == false` now force stops the client after
   3000 milliseconds when it takes too long to shutdown after being disabled.
+• Push diagnostics (|vim.lsp.diagnostic.on_publish_diagnostics()|) now respect
+  the `version` property in the notification params.
 
 LUA
 
