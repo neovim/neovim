@@ -3937,18 +3937,22 @@ static void restore_option_context(void *const ctx, OptScope scope)
 
 /// Get option value for buffer / window.
 ///
+/// @param       name       Option name.
 /// @param       opt_idx    Option index in options[] table.
-/// @param[out]  flagsp     Set to the option flags (see OptFlags) (if not NULL).
-/// @param[in]   scope      Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
-/// @param[out]  hidden     Whether option is hidden.
+/// @param[in]   opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param       scope      Option scope. See OptScope in option.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  Option value. Must be freed by caller.
-OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scope, void *const from,
-                            Error *err)
+OptVal get_option_value_for(const char *name, OptIndex opt_idx, int opt_flags, const OptScope scope,
+                            void *const from, Error *err)
 {
+  // Handle TTY options (e.g., 'term') which are not in the regular option table.
+  if (is_tty_option(name)) {
+    return get_tty_option(name);
+  }
+
   switchwin_T switchwin;
   aco_save_T aco;
   void *ctx = scope == kOptScopeWin ? (void *)&switchwin
