@@ -450,7 +450,10 @@ foreach(hfile ${NVIM_HEADERS})
 endforeach()
 
 list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
-list(APPEND LINT_NVIM_SOURCES ${PROJECT_SOURCE_DIR}/src/tee/tee.c)
+list(APPEND LINT_NVIM_SOURCES
+  ${PROJECT_SOURCE_DIR}/src/tee/tee.c
+  ${PROJECT_SOURCE_DIR}/src/xxd/xxd.c
+)
 
 # Log level (NVIM_LOG_DEBUG in log.h)
 if(CI_BUILD)
@@ -850,7 +853,7 @@ target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
 find_program(CLANG_TIDY_PRG clang-tidy)
 mark_as_advanced(CLANG_TIDY_PRG)
-set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h)
+set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h xxd/xxd.c)
 if(WIN32)
   list(APPEND EXCLUDE_CLANG_TIDY
     os/pty_proc_unix.h
@@ -912,7 +915,8 @@ add_glob_target(
   FLAGS --output=${LINT_OUTPUT_FORMAT}
   FILES ${LINT_NVIM_SOURCES}
   EXCLUDE
-    tui/terminfo_defs.h)
+    tui/terminfo_defs.h
+    xxd/xxd.c)
 
 set(UNCRUSTIFY_PRG ${DEPS_BIN_DIR}/uncrustify)
 set(UNCRUSTIFY_CONFIG ${PROJECT_SOURCE_DIR}/src/uncrustify.cfg)
