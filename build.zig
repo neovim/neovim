@@ -365,6 +365,18 @@ pub fn build(b: *std.Build) !void {
     test_deps.dependOn(test_fixture(b, "printenv-test", null, target, optimize, &flags));
     test_deps.dependOn(test_fixture(b, "streams-test", libuv, target, optimize, &flags));
 
+    // xxd - hex dump utility (vendored from Vim)
+    const xxd_exe = b.addExecutable(.{
+        .name = "xxd",
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    xxd_exe.addCSourceFile(.{ .file = b.path("src/xxd/xxd.c") });
+    xxd_exe.linkLibC();
+    test_deps.dependOn(&b.addInstallArtifact(xxd_exe, .{}).step);
+
     const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize });
     test_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize));
     const parser_markdown = b.dependency("treesitter_markdown", .{ .target = target, .optimize = optimize });
