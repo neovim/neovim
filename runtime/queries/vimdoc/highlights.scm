@@ -62,7 +62,8 @@
 ((url) @string.special.url
   (#set! @string.special.url url @string.special.url))
 
-(modeline) @keyword.directive
+((modeline) @keyword.directive
+  (#set! conceal_lines ""))
 
 ((note) @comment.note
   (#any-of? @comment.note "Note:" "NOTE:" "Notes:"))
