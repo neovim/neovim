@@ -828,17 +828,21 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
       typval_T *const tv = eval_expr_no_emsg(bp);
       if (tv != NULL) {
         if (bp->dbg_val == NULL) {
+          xfree(debug_oldval);
           debug_oldval = typval_tostring(NULL, true);
           bp->dbg_val = tv;
+          xfree(debug_newval);
           debug_newval = typval_tostring(bp->dbg_val, true);
           line = true;
         } else {
           if (typval_compare(tv, bp->dbg_val, EXPR_IS, false) == OK
               && tv->vval.v_number == false) {
             line = true;
+            xfree(debug_oldval);
             debug_oldval = typval_tostring(bp->dbg_val, true);
             // Need to evaluate again, typval_compare() overwrites "tv".
             typval_T *const v = eval_expr_no_emsg(bp);
+            xfree(debug_newval);
             debug_newval = typval_tostring(v, true);
             tv_free(bp->dbg_val);
             bp->dbg_val = v;
@@ -846,7 +850,9 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
           tv_free(tv);
         }
       } else if (bp->dbg_val != NULL) {
+        xfree(debug_oldval);
         debug_oldval = typval_tostring(bp->dbg_val, true);
+        xfree(debug_newval);
         debug_newval = typval_tostring(NULL, true);
         tv_free(bp->dbg_val);
         bp->dbg_val = NULL;

@@ -364,35 +364,74 @@ func Test_Debugger_breakadd()
 endfunc
 
 " Test for expression breakpoint set using ":breakadd expr <expr>"
+" FIXME: This doesn't seem to work as documented. The breakpoint is not
+" triggered until the next function call.
 func Test_Debugger_breakadd_expr()
   CheckRunVimInTerminal
   CheckCWD
 
   let lines =<< trim END
+    func Foo()
+      eval 1
+      eval 2
+    endfunc
+
     let g:Xtest_var += 1
+    call Foo()
+    let g:Xtest_var += 1
+    call Foo()
   END
-  call writefile(lines, 'XdebugBreakExpr.vim', 'D')
+  call writefile(lines, 'XbreakExpr.vim', 'D')
 
   " Start Vim in a terminal
-  let buf = RunVimInTerminal('XdebugBreakExpr.vim', {})
+  let buf = RunVimInTerminal('XbreakExpr.vim', {})
   call s:RunDbgCmd(buf, ':let g:Xtest_var = 10')
   call s:RunDbgCmd(buf, ':breakadd expr g:Xtest_var')
-  call s:RunDbgCmd(buf, ':source %')
   let expected =<< trim eval END
     Oldval = "10"
     Newval = "11"
-    {fnamemodify('XdebugBreakExpr.vim', ':p')}
-    line 1: let g:Xtest_var += 1
+    {fnamemodify('XbreakExpr.vim', ':p')}[7]..function Foo
+    line 1: eval 1
   END
   call s:RunDbgCmd(buf, ':source %', expected)
-  call s:RunDbgCmd(buf, 'cont')
   let expected =<< trim eval END
     Oldval = "11"
     Newval = "12"
-    {fnamemodify('XdebugBreakExpr.vim', ':p')}
-    line 1: let g:Xtest_var += 1
+    {fnamemodify('XbreakExpr.vim', ':p')}[9]..function Foo
+    line 1: eval 1
+  END
+  call s:RunDbgCmd(buf, 'cont', expected)
+  call s:RunDbgCmd(buf, 'cont')
+
+  " Check the behavior without the g: prefix.
+  " FIXME: The Oldval and Newval don't look right here.
+  call s:RunDbgCmd(buf, ':breakdel *')
+  call s:RunDbgCmd(buf, ':breakadd expr Xtest_var')
+  let expected =<< trim eval END
+    Oldval = "13"
+    Newval = "(does not exist)"
+    {fnamemodify('XbreakExpr.vim', ':p')}[7]..function Foo
+    line 1: eval 1
   END
   call s:RunDbgCmd(buf, ':source %', expected)
+  let expected =<< trim eval END
+    {fnamemodify('XbreakExpr.vim', ':p')}[7]..function Foo
+    line 2: eval 2
+  END
+  call s:RunDbgCmd(buf, 'cont', expected)
+  let expected =<< trim eval END
+    Oldval = "14"
+    Newval = "(does not exist)"
+    {fnamemodify('XbreakExpr.vim', ':p')}[9]..function Foo
+    line 1: eval 1
+  END
+  call s:RunDbgCmd(buf, 'cont', expected)
+  let expected =<< trim eval END
+    {fnamemodify('XbreakExpr.vim', ':p')}[9]..function Foo
+    line 2: eval 2
+  END
+  call s:RunDbgCmd(buf, 'cont', expected)
+  call s:RunDbgCmd(buf, 'cont')
 
   call StopVimInTerminal(buf)
 endfunc
