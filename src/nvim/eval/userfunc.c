@@ -3943,7 +3943,7 @@ dictitem_T *get_funccal_args_var(void)
   if (current_funccal == NULL) {
     return NULL;
   }
-  return (dictitem_T *)&current_funccal->fc_l_avars_var;
+  return (dictitem_T *)&get_funccal()->fc_l_avars_var;
 }
 
 /// List function variables, if there is a function.
