@@ -62,6 +62,7 @@ func Test_matchfuzzy()
   let l = getbufinfo()->map({_, v -> fnamemodify(v.name, ':t')})->matchfuzzy('ndl')
   call assert_equal(1, len(l))
   call assert_match('needle', l[0])
+  %bw!
 
   " Test for fuzzy matching dicts
   let l = [{'id' : 5, 'val' : 'crayon'}, {'id' : 6, 'val' : 'camera'}]
