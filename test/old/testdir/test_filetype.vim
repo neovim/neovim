@@ -275,7 +275,7 @@ func s:GetFilenameChecks() abort
     \ 'elsa': ['file.lc'],
     \ 'elvish': ['file.elv'],
     \ 'epuppet': ['file.epp'],
-    \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
+    \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws', 'file.app.src', 'rebar.config'],
     \ 'eruby': ['file.erb', 'file.rhtml'],
     \ 'esdl': ['file.esdl'],
     \ 'esmtprc': ['anyesmtprc', 'esmtprc', 'some-esmtprc'],
