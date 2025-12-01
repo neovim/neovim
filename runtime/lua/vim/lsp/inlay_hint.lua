@@ -662,9 +662,6 @@ local inlayhint_actions = {
     )
 
     if vim.tbl_isempty(hint_labels) then
-      if type(on_finish) == 'function' then
-        on_finish({ bufnr = ctx.bufnr, client = ctx.client })
-      end
       return 0
     end
 
@@ -753,10 +750,6 @@ local inlayhint_actions = {
 
     if #lines == 2 then
       -- no tooltip/command/location has been found. Skip this hint.
-
-      if type(on_finish) == 'function' then
-        on_finish({ bufnr = ctx.bufnr, client = ctx.client })
-      end
       return 0
     end
 
@@ -778,9 +771,6 @@ local inlayhint_actions = {
       end)
     end
     if #hints == 0 then
-      if type(on_finish) == 'function' then
-        on_finish({ bufnr = ctx.bufnr, client = ctx.client })
-      end
       return 0
     end
     local hint_labels = action_helpers.get_hint_labels(hints[1], { 'command' })
@@ -816,6 +806,9 @@ local inlayhint_actions = {
         end, ctx.bufnr)
       end
     )
+    if type(on_finish) == 'function' then
+      on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+    end
     return 1
   end,
 }
@@ -865,15 +858,33 @@ function M.apply_action(action, opts, callback)
 
   local bufnr = api.nvim_get_current_buf()
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
-
+  if #clients == 0 then
+    if type(callback) == 'function' then
+      callback({ bufnr = bufnr })
+    end
+    return
+  end
   local range = opts.range or action_helpers.make_range()
+
+  local on_finish_cb_called = false
+  if type(callback) == 'function' then
+    local original_callback = callback
+
+    callback = function(...)
+      assert(not on_finish_cb_called)
+      if not on_finish_cb_called then
+        on_finish_cb_called = true
+        return original_callback(...)
+      end
+    end
+  end
 
   --- @param idx? integer
   --- @param client vim.lsp.Client
   local function do_insert(idx, client)
     if idx == nil then
       -- terminate the iteration
-      if type(callback) == 'function' then
+      if type(callback) == 'function' and not on_finish_cb_called then
         callback({ bufnr = api.nvim_get_current_buf() })
       end
       return
@@ -887,62 +898,74 @@ function M.apply_action(action, opts, callback)
     )
     local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
 
+    local action_ctx = { bufnr = bufnr, client = client }
     client:request(
       'textDocument/inlayHint',
       params,
       --- @param result lsp.InlayHint[]?
       function(_, result, _, _)
-        if result ~= nil then
-          --- @type lsp.InlayHint[]
-          local hints = vim
-            .iter(result)
-            :filter(
-              --- @param hint lsp.InlayHint
-              function(hint)
-                -- TODO: use `vim.Range.has_pos` when available. See https://github.com/neovim/neovim/pull/36397
-                local hint_pos = vim.pos.lsp(bufnr, hint.position, client.offset_encoding)
-                return hint_pos < range.end_ and hint_pos >= range.start
-              end
-            )
-            :totable()
-          if #hints > 0 then
-            if not support_resolve then
-              if action_callback(hints, { bufnr = bufnr, client = client }, callback) == 0 then
-                -- no edits applied. proceed with the iteration.
+        if result == nil then
+          -- result is nil. Proceed to next client.
+          return do_insert(next(clients, idx))
+        end
+
+        --- @type lsp.InlayHint[]
+        local hints = vim
+          .iter(result)
+          :filter(
+            --- @param hint lsp.InlayHint
+            function(hint)
+              local hint_pos = vim.pos.lsp(bufnr, hint.position, client.offset_encoding)
+              return hint_pos < range.end_ and hint_pos >= range.start
+            end
+          )
+          :totable()
+
+        if #hints == 0 then
+          -- no hints in the given range.
+          return do_insert(next(clients, idx))
+        end
+
+        if not support_resolve then
+          -- no need to resolve because the client doesn't support it.
+
+          if action_callback(hints, action_ctx, callback) == 0 then
+            -- no actions invoked. proceed with the client.
+            return do_insert(next(clients, idx))
+          else
+            -- we're done with the actions.
+            if type(callback) == 'function' and not on_finish_cb_called then
+              callback(action_ctx)
+            end
+            return
+          end
+        end
+
+        --- NOTE: make async `inlayHint/resolve` requests in parallel
+
+        -- use `num_processed` to keep track of the number of resolved hints.
+        -- When this equals `#hints`, it means we're ready to invoke the actions.
+        --- @type integer
+        local num_processed = 0
+
+        for i, h in ipairs(hints) do
+          client:request('inlayHint/resolve', h, function(_, _result, _, _)
+            if _result ~= nil then
+              hints[i] = _result
+            end
+            num_processed = num_processed + 1
+
+            if num_processed == #hints then
+              if action_callback(hints, action_ctx, callback) == 0 then
                 return do_insert(next(clients, idx))
               else
-                -- we're done with the edits.
+                if type(callback) == 'function' and not on_finish_cb_called then
+                  callback(action_ctx)
+                end
                 return
               end
             end
-
-            -- keep track of the number of resolved edits
-            --- @type integer
-            local num_processed = 0
-
-            for i, h in ipairs(hints) do
-              client:request('inlayHint/resolve', h, function(_, _result, _, _)
-                if _result ~= nil then
-                  hints[i] = _result
-                end
-                num_processed = num_processed + 1
-
-                if num_processed == #hints then
-                  if action_callback(hints, { bufnr = bufnr, client = client }, callback) == 0 then
-                    return do_insert(next(clients, idx))
-                  else
-                    return
-                  end
-                end
-              end, bufnr)
-            end
-          else
-            -- no hints in the given range.
-            return do_insert(next(clients, idx))
-          end
-        else
-          -- result is nil. Proceed to next client.
-          return do_insert(next(clients, idx))
+          end, bufnr)
         end
       end,
       bufnr
