@@ -3906,41 +3906,57 @@ funccall_T *get_funccal(void)
   return funccal;
 }
 
+/// @return  dict used for local variables in the current funccal or
+///          NULL if there is no current funccal.
+dict_T *get_funccal_local_dict(void)
+{
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
+    return NULL;
+  }
+  return &get_funccal()->fc_l_vars;
+}
+
 /// @return  hashtable used for local variables in the current funccal or
 ///          NULL if there is no current funccal.
 hashtab_T *get_funccal_local_ht(void)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->fc_l_vars.dv_hashtab;
+  dict_T *d = get_funccal_local_dict();
+  return d != NULL ? &d->dv_hashtab : NULL;
 }
 
 /// @return   the l: scope variable or
 ///           NULL if there is no current funccal.
 dictitem_T *get_funccal_local_var(void)
 {
-  if (current_funccal == NULL) {
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
     return NULL;
   }
   return (dictitem_T *)&get_funccal()->fc_l_vars_var;
+}
+
+/// @return  the dict used for argument in the current funccal or
+///          NULL if there is no current funccal.
+dict_T *get_funccal_args_dict(void)
+{
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
+    return NULL;
+  }
+  return &get_funccal()->fc_l_avars;
 }
 
 /// @return  the hashtable used for argument in the current funccal or
 ///          NULL if there is no current funccal.
 hashtab_T *get_funccal_args_ht(void)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->fc_l_avars.dv_hashtab;
+  dict_T *d = get_funccal_args_dict();
+  return d != NULL ? &d->dv_hashtab : NULL;
 }
 
 /// @return  the a: scope variable or
 ///          NULL if there is no current funccal.
 dictitem_T *get_funccal_args_var(void)
 {
-  if (current_funccal == NULL) {
+  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
     return NULL;
   }
   return (dictitem_T *)&get_funccal()->fc_l_avars_var;
@@ -3949,7 +3965,7 @@ dictitem_T *get_funccal_args_var(void)
 /// List function variables, if there is a function.
 void list_func_vars(int *first)
 {
-  if (current_funccal != NULL) {
+  if (current_funccal != NULL && current_funccal->fc_l_vars.dv_refcount > 0) {
     list_hashtable_vars(&current_funccal->fc_l_vars.dv_hashtab, "l:", false,
                         first);
   }
