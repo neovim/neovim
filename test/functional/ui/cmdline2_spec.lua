@@ -23,7 +23,7 @@ describe('cmdline2', function()
     exec('tabnew | tabprev')
     feed(':set ch=0')
     screen:expect([[
-      {5: }{100:2}{5: [No Name] }{24: [No Name] }{2:                            }{24:X}|
+      {5: [No Name] }{24: [No Name] }{2:                              }{24:X}|
                                                            |
       {1:~                                                    }|*11
       {16::}{15:set} {16:ch}{15:=}0^                                            |
@@ -31,14 +31,14 @@ describe('cmdline2', function()
     feed('<CR>')
     exec('tabnext')
     screen:expect([[
-      {24: [No Name] }{5: }{100:2}{5: [No Name] }{2:                            }{24:X}|
+      {24: [No Name] }{5: [No Name] }{2:                              }{24:X}|
       ^                                                     |
       {1:~                                                    }|*11
       {16::}{15:set} {16:ch}{15:=}0                                            |
     ]])
     exec('tabnext')
     screen:expect([[
-      {5: }{100:2}{5: [No Name] }{24: [No Name] }{2:                            }{24:X}|
+      {5: [No Name] }{24: [No Name] }{2:                              }{24:X}|
       ^                                                     |
       {1:~                                                    }|*12
     ]])
