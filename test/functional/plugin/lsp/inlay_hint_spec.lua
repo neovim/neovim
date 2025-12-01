@@ -359,156 +359,181 @@ int main() {
   end)
 end)
 
-describe('vim.lsp.inlay_hint.apply_text_edits', function()
-  local original_lines = { 'def f(m, n):', '    return m, n', '', '', 'f(1, 2)' }
-
-  local after_inserted = {
-    'from typing import Any',
-    '',
-    '',
-    'def f(m, n) -> tuple[Any, Any]:',
-    '    return m, n',
-    '',
-    '',
-    'f(1, 2)',
+describe('vim.lsp.inlay_hint.apply_action', function()
+  ---@type table<string, {lines: string[], name: string, filetype: string, bufnr: integer?, is_main: boolean?}>
+  local mocked_files = {
+    main = {
+      lines = {
+        'use dummy::MyStruct;',
+        '',
+        'fn process_my_struct(data: MyStruct) {',
+        '  println!("Received MyStruct with value: {}", data.value);',
+        '}',
+        '',
+        'fn main() {',
+        '  let my_instance = MyStruct::new(42);',
+        '  process_my_struct(my_instance);',
+        '}',
+      },
+      name = 'src/main.rs',
+      filetype = 'rust',
+      bufnr = nil,
+      is_main = true,
+    },
+    lib = {
+      lines = {
+        'pub struct MyStruct {',
+        '  pub value: i32,',
+        '}',
+        '',
+        'impl MyStruct {',
+        '  pub fn new(value: i32) -> Self {',
+        '    MyStruct { value }',
+        '  }',
+        '}',
+      },
+      name = 'src/lib.rs',
+      filetype = 'rust',
+      bufnr = nil,
+    },
   }
 
-  ---@type lsp.TextEdit[][]
-  local textEdits = {
-    -- for simulating resolved text edits.
-    [1] = {
-      {
-        newText = ' -> tuple[Any, Any]',
-        range = {
-          ['end'] = {
-            character = 11,
-            line = 0,
+  ---@type lsp.InlayHint[]
+  local resolved_response = {
+    {
+      kind = 1,
+      label = {
+        {
+          value = ': ',
+        },
+        {
+          location = {
+            range = {
+              ['end'] = {
+                character = 19,
+                line = 0,
+              },
+              start = {
+                character = 11,
+                line = 0,
+              },
+            },
+            uri = string.format('file://%s', vim.fs.abspath(mocked_files.lib.name)),
           },
-          start = {
-            character = 11,
-            line = 0,
+          value = 'MyStruct',
+        },
+      },
+      paddingLeft = false,
+      paddingRight = false,
+      position = {
+        character = 19,
+        line = 7,
+      },
+      textEdits = {
+        {
+          newText = ': MyStruct',
+          range = {
+            ['end'] = {
+              character = 19,
+              line = 7,
+            },
+            start = {
+              character = 19,
+              line = 7,
+            },
           },
         },
       },
-      {
-        newText = 'from typing import Any\n\n\n',
-        range = {
-          ['end'] = {
-            character = 0,
-            line = 0,
+      data = { id = 1 },
+    },
+    {
+      kind = 2,
+      label = {
+        {
+          location = {
+            range = {
+              ['end'] = {
+                character = 25,
+                line = 2,
+              },
+              start = {
+                character = 21,
+                line = 2,
+              },
+            },
+            uri = string.format('file://%s', vim.fs.abspath(mocked_files.main.name)),
           },
-          start = {
-            character = 0,
-            line = 0,
-          },
+          value = 'data:',
         },
       },
+      paddingLeft = false,
+      paddingRight = true,
+      position = {
+        character = 22,
+        line = 8,
+      },
+      data = { id = 2 },
     },
   }
 
   -- this is taken from basedpyright
   ---@type lsp.InlayHint[]
-  local response = {
+  local orig_response = {
     {
       kind = 1,
-      label = '-> tuple[Any, Any]',
-      paddingLeft = true,
-      position = {
-        character = 11,
-        line = 0,
+      label = {
+        {
+          value = ': ',
+        },
+        {
+          value = 'MyStruct',
+        },
       },
-      -- text edit of this inlay hint should be added by `inlayHint/resolve`
+      paddingLeft = false,
+      paddingRight = false,
+      position = {
+        character = 19,
+        line = 7,
+      },
+      data = { id = 1 },
     },
     {
       kind = 2,
-      label = 'm=',
-      paddingLeft = false,
-      position = {
-        character = 2,
-        line = 4,
-      },
-      textEdits = {
+      label = {
         {
-          newText = 'm=',
-          range = {
-            ['end'] = {
-              character = 2,
-              line = 4,
-            },
-            start = {
-              character = 2,
-              line = 4,
-            },
-          },
+          value = 'data:',
         },
       },
-    },
-    {
-      kind = 2,
-      label = 'n=',
       paddingLeft = false,
+      paddingRight = true,
       position = {
-        character = 5,
-        line = 4,
+        character = 22,
+        line = 8,
       },
-      textEdits = {
-        {
-          newText = 'n=',
-          range = {
-            ['end'] = {
-              character = 5,
-              line = 4,
-            },
-            start = {
-              character = 5,
-              line = 4,
-            },
-          },
-        },
-      },
+      data = { id = 2 },
     },
   }
 
-  --- @type integer
-  local bufnr
-
-  local wait_time = 10
+  local wait_time = 1000000
   before_each(function()
     clear_notrace()
 
-    bufnr = n.api.nvim_get_current_buf()
     exec_lua(create_server_definition)
-    exec_lua(function()
-      _G.server = _G._create_server({
-        capabilities = {
-          inlayHintProvider = { resolveProvider = true },
-        },
-        handlers = {
-          ['textDocument/inlayHint'] = function(_, _, callback)
-            callback(nil, response)
-          end,
-          ---@param res lsp.InlayHint
-          ['inlayHint/resolve'] = function(_, res, callback)
-            if res.textEdits == nil then
-              for k, v in pairs(response) do
-                if vim.deep_equal(res, v) then
-                  res.textEdits = textEdits[k]
-                  break
-                end
-              end
-            end
 
-            callback(nil, res)
-          end,
-        },
-      })
-
-      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    mocked_files = exec_lua(function()
+      for _, item in pairs(mocked_files) do
+        local full_path = vim.fs.abspath(item.name)
+        item.bufnr = vim.api.nvim_create_buf(true, false)
+        vim.api.nvim_buf_set_name(item.bufnr, full_path)
+        vim.api.nvim_buf_set_lines(item.bufnr, 0, -1, false, item.lines)
+        vim.api.nvim_cmd({ cmd = 'edit', args = { full_path }, bang = true }, {})
+        vim.api.nvim_win_set_cursor(vim.fn.bufwinid(item.bufnr), { 8, 18 })
+      end
+      return mocked_files
     end)
 
     exec_lua(function()
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, original_lines)
-      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      vim.lsp.inlay_hint.enable(true)
     end)
   end)
 
@@ -516,40 +541,103 @@ describe('vim.lsp.inlay_hint.apply_text_edits', function()
     api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 
-  it('should insert edits in normal mode', function()
-    local new_lines = exec_lua(function()
-      vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 10 })
-      vim.lsp.inlay_hint.apply_action('textEdits')
-      vim.wait(wait_time) -- since the edits are `vim.schedule`ed
-      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  it('should fetch hint in normal mode', function()
+    exec_lua(function()
+      _G.server = _G._create_server({
+        capabilities = {
+          inlayHintProvider = { resolveProvider = true },
+        },
+        handlers = {
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            return callback(nil, { orig_response[1] })
+          end,
+          ---@param params lsp.InlayHint
+          ['inlayHint/resolve'] = function(_, params, callback)
+            if params.data and params.data.id then
+              callback(nil, resolved_response[params.data.id])
+            else
+              callback(nil, params)
+            end
+          end,
+        },
+      })
+
+      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
     end)
 
-    eq(after_inserted, new_lines)
-  end)
+    local done = false
 
-  it("shouldn't insert edits in normal mode when cursor's away", function()
-    local new_lines = exec_lua(function()
-      vim.api.nvim_win_set_cursor(vim.fn.bufwinid(bufnr), { 1, 1 })
-      vim.lsp.inlay_hint.apply_action('textEdits')
-      vim.wait(wait_time) -- since the edits are `vim.schedule`ed
-      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local hint_count = exec_lua(function()
+      local hint_count ---@type integer?
+      vim.api.nvim_cmd({ cmd = 'buf', args = { tostring(mocked_files.main.bufnr) } }, {})
+      vim.api.nvim_win_set_cursor(vim.fn.bufwinid(mocked_files.main.bufnr), { 8, 18 })
+      vim.lsp.inlay_hint.apply_action(function(hints, ctx, cb)
+        hint_count = #hints
+        if #hints > 0 then
+          cb({ bufnr = ctx.bufnr, client = ctx.client })
+        end
+        return hint_count
+      end, {}, function()
+        done = true
+      end)
+      vim.wait(wait_time, function()
+        return done
+      end)
+
+      assert(done)
+      return hint_count
     end)
 
-    eq(original_lines, new_lines)
+    eq(1, hint_count)
   end)
 
-  it('should insert edits in visual mode', function()
-    local new_lines = exec_lua(function()
-      vim.api.nvim_buf_set_mark(bufnr, '<', 1, 10, {})
-      vim.api.nvim_buf_set_mark(bufnr, '>', 1, 11, {})
+  it('should fetch hints in visual mode', function()
+    exec_lua(function()
+      _G.server = _G._create_server({
+        capabilities = {
+          inlayHintProvider = { resolveProvider = true },
+        },
+        handlers = {
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            return callback(nil, orig_response)
+          end,
+          ---@param params lsp.InlayHint
+          ['inlayHint/resolve'] = function(_, params, callback)
+            if params.data and params.data.id then
+              callback(nil, resolved_response[params.data.id])
+            else
+              callback(nil, params)
+            end
+          end,
+        },
+      })
+
+      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end)
+    local fetched_hints = exec_lua(function()
+      vim.api.nvim_buf_set_mark(mocked_files.main.bufnr, '<', 8, 0, {})
+      vim.api.nvim_buf_set_mark(mocked_files.main.bufnr, '>', 10, 1, {})
       vim.cmd('normal gv')
+      local hints ---@type lsp.InlayHint[]?
+      local done = false
+      vim.lsp.inlay_hint.apply_action(function(_hints, ctx, cb)
+        hints = _hints
+        if #hints > 0 then
+          cb({ bufnr = ctx.bufnr, client = ctx.client })
+        end
+        return #_hints
+      end, {}, function()
+        done = true
+      end)
 
-      vim.lsp.inlay_hint.apply_action('textEdits')
-
-      vim.wait(wait_time)
-      return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+      vim.wait(wait_time, function()
+        return done
+      end)
+      assert(done)
+      return hints
     end)
-    eq(after_inserted, new_lines)
+
+    eq(2, #fetched_hints)
   end)
 end)
 
