@@ -25,12 +25,6 @@ local all_clients = {}
 --- No debounce occurs if `nil`.
 --- (default: `150`)
 --- @field debounce_text_changes integer
----
---- Milliseconds to wait for server to exit cleanly after sending the
---- "shutdown" request before sending kill -15. If set to false, nvim exits
---- immediately after sending the "shutdown" request to the server.
---- (default: `false`)
---- @field exit_timeout integer|false
 
 --- @class vim.lsp.ClientConfig
 ---
@@ -74,6 +68,12 @@ local all_clients = {}
 --- behind orphaned server processes.
 --- (default: `true`)
 --- @field detached? boolean
+---
+--- Milliseconds to wait for server to exit cleanly after sending the "shutdown" request before
+--- sending kill -15. If set to false, waits indefinitely. If set to true, nvim will kill the
+--- server immediately.
+--- (default: `3000`)
+--- @field exit_timeout? integer|boolean
 ---
 --- A table with flags for the client. The current (experimental) flags are:
 --- @field flags? vim.lsp.Client.Flags
@@ -156,6 +156,12 @@ local all_clients = {}
 ---
 --- Capabilities provided at runtime (after startup).
 --- @field dynamic_capabilities lsp.DynamicCapabilities
+---
+--- Milliseconds to wait for server to exit cleanly after sending the "shutdown" request before
+--- sending kill -15. If set to false, waits indefinitely. If set to true, nvim will kill the
+--- server immediately.
+--- (default: `3000`)
+--- @field exit_timeout integer|boolean
 ---
 --- A table with flags for the client. The current (experimental) flags are:
 --- @field flags vim.lsp.Client.Flags
@@ -314,6 +320,7 @@ local function validate_config(config)
   validate('cmd_cwd', config.cmd_cwd, optional_validator(is_dir), 'directory')
   validate('cmd_env', config.cmd_env, 'table', true)
   validate('detached', config.detached, 'boolean', true)
+  validate('exit_timeout', config.exit_timeout, { 'number', 'boolean' }, true)
   validate('name', config.name, 'string', true)
   validate('on_error', config.on_error, 'function', true)
   validate('on_exit', config.on_exit, { 'function', 'table' }, true)
@@ -388,6 +395,7 @@ function Client.create(config)
     commands = config.commands or {},
     settings = config.settings or {},
     flags = config.flags or {},
+    exit_timeout = config.exit_timeout == nil and 3000 or config.exit_timeout --[[@as integer|boolean]],
     get_language_id = config.get_language_id or default_get_language_id,
     capabilities = config.capabilities,
     workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),

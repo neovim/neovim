@@ -550,8 +550,7 @@ end
 ---
 --- @param name string|string[] Name(s) of client(s) to enable.
 --- @param enable? boolean `true|nil` to enable, `false` to disable (actively stops and detaches
---- clients as needed, and force stops them if necessary after `client.flags.exit_timeout`
---- milliseconds, with a default time of 3000 milliseconds)
+--- clients as needed, and force stops them if necessary after `client.exit_timeout` milliseconds)
 function lsp.enable(name, enable)
   validate('name', name, { 'string', 'table' })
 
@@ -588,9 +587,7 @@ function lsp.enable(name, enable)
   else
     for _, nm in ipairs(names) do
       for _, client in ipairs(lsp.get_clients({ name = nm })) do
-        local t = client.flags.exit_timeout
-        local force_timeout = t and tonumber(t) or (t ~= false and 3000 or nil)
-        client:stop(force_timeout)
+        client:stop(client.exit_timeout)
       end
     end
   end
@@ -1147,7 +1144,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     log.info('exit_handler', active_clients)
 
     for _, client in pairs(active_clients) do
-      client:stop(client.flags.exit_timeout)
+      client:stop(client.exit_timeout)
     end
   end,
 })
