@@ -80,7 +80,7 @@ end
 ---@param data integer[]
 ---@param bufnr integer
 ---@param client vim.lsp.Client
----@param request STActiveRequest
+---@param request STActiveRequest | nil
 ---@return STTokenRange[]
 local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
@@ -108,7 +108,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
         vim.schedule(function()
           coroutine.resume(co, util.buf_versions[bufnr])
         end)
-        if request.version ~= coroutine.yield() then
+        if not request or request.version ~= coroutine.yield() then
           -- request became stale since the last time the coroutine ran.
           -- abandon it by yielding without a way to resume
           coroutine.yield()
