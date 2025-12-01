@@ -437,6 +437,7 @@ func s:GetFilenameChecks() abort
     \ 'ldif': ['file.ldif'],
     \ 'lean': ['file.lean'],
     \ 'ledger': ['file.ldg', 'file.ledger', 'file.journal'],
+    \ 'leex': ['file.xrl'],
     \ 'leo': ['file.leo'],
     \ 'less': ['file.less'],
     \ 'lex': ['file.lex', 'file.l', 'file.lxx', 'file.l++'],
