@@ -2178,6 +2178,27 @@ stack traceback:
       expect('21')
       eq('', eval('v:errmsg'))
     end)
+
+    it('disable mapping', function()
+      exec_lua [[
+        keys_mapped = {}
+        keys_unmapped = {}
+        vim.keymap.set('', 'll', '0')
+        local ns_id
+
+        local function testit(map_flag, result)
+          ns_id = vim.on_key(function(buf, typed_buf)
+            table.insert(result, buf)
+          end, ns_id, {mapping = map_flag})
+          vim.fn.feedkeys('llll', 't')
+          vim.fn.feedkeys('', 'x')
+        end
+        testit(true, keys_mapped)
+        testit(false, keys_unmapped)
+      ]]
+      eq('00', exec_lua [[return table.concat(keys_mapped, '')]])
+      eq('llll', exec_lua [[return table.concat(keys_unmapped, '')]])
+    end)
   end)
 
   describe('vim.wait', function()
