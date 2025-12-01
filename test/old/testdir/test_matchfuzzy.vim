@@ -311,7 +311,9 @@ func Test_matchfuzzy_initialized()
 
   let buf = RunVimInTerminal('-u NONE -X -Z', {})
   call term_sendkeys(buf, ":source XTest_matchfuzzy\n")
-  call TermWait(buf, 2000)
+  " Use term_wait directly rather than the TermWait wrapper; otherwise,
+  " retries become very slow.
+  call term_wait(buf, 2000)
 
   let job = term_getjob(buf)
   if job_status(job) == "run"
