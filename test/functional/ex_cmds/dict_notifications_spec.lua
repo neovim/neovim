@@ -428,6 +428,11 @@ describe('Vimscript dictionary notifications', function()
     command([[call dictwatcherdel(b:, 'changedtick', 'OnTickChanged')]])
     insert('t')
     assert_alive()
+
+    command([[call dictwatcheradd(b:, 'changedtick', {-> execute('bwipe!')})]])
+    insert('t')
+    eq('E937: Attempt to delete a buffer that is in use: [No Name]', api.nvim_get_vvar('errmsg'))
+    assert_alive()
   end)
 
   it('does not cause use-after-free when unletting from callback', function()
