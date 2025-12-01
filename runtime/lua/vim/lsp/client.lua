@@ -871,20 +871,29 @@ function Client:cancel_request(id)
   return self.rpc.notify('$/cancelRequest', { id = id })
 end
 
---- Stops a client, optionally with force.
+--- Stops a client, optionally with force after a timeout.
 ---
---- By default, it will just request the server to shutdown without force. If
+--- By default, it will request the server to shutdown, then force a shutdown
+--- if the server has not exited after `self.exit_timeout` milliseconds. If
 --- you request to stop a client which has previously been requested to
---- shutdown, it will automatically escalate and force shutdown.
----
---- If `force` is a number, it will be treated as the time in milliseconds to
---- wait before forcing the shutdown.
+--- shutdown, it will automatically escalate and force shutdown immediately,
+--- regardless of the value of `force` (or `self.exit_timeout` if `nil`).
 ---
 --- Note: Forcing shutdown while a server is busy writing out project or index
 --- files can lead to file corruption.
 ---
---- @param force? boolean|integer
+--- @param force? integer|boolean Time in milliseconds to wait before forcing
+---                               a shutdown. If false, only request the
+---                               server to shutdown, but don't force it. If
+---                               true, force a shutdown immediately.
+---                               (default: `self.exit_timeout`)
 function Client:stop(force)
+  validate('force', force, { 'number', 'boolean' }, true)
+
+  if force == nil then
+    force = self.exit_timeout
+  end
+
   local rpc = self.rpc
   if rpc.is_closing() then
     return

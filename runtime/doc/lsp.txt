@@ -1653,7 +1653,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:notify()|.
       • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
                                 See |Client:cancel_request()|.
-      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean|integer?)`)
+      • {stop}                  (`fun(self: vim.lsp.Client, force: integer|boolean?)`)
                                 See |Client:stop()|.
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
@@ -1895,20 +1895,22 @@ Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
       • |vim.lsp.buf_request_sync()|
 
 Client:stop({force})                                           *Client:stop()*
-    Stops a client, optionally with force.
+    Stops a client, optionally with force after a timeout.
 
-    By default, it will just request the server to shutdown without force. If
+    By default, it will request the server to shutdown, then force a shutdown
+    if the server has not exited after `self.exit_timeout` milliseconds. If
     you request to stop a client which has previously been requested to
-    shutdown, it will automatically escalate and force shutdown.
-
-    If `force` is a number, it will be treated as the time in milliseconds to
-    wait before forcing the shutdown.
+    shutdown, it will automatically escalate and force shutdown immediately,
+    regardless of the value of `force` (or `self.exit_timeout` if `nil`).
 
     Note: Forcing shutdown while a server is busy writing out project or index
     files can lead to file corruption.
 
     Parameters: ~
-      • {force}  (`boolean|integer?`)
+      • {force}  (`integer|boolean?`, default: `self.exit_timeout`) Time in
+                 milliseconds to wait before forcing a shutdown. If false,
+                 only request the server to shutdown, but don't force it. If
+                 true, force a shutdown immediately.
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Checks if a client supports a given method. Always returns true for

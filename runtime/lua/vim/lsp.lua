@@ -587,7 +587,7 @@ function lsp.enable(name, enable)
   else
     for _, nm in ipairs(names) do
       for _, client in ipairs(lsp.get_clients({ name = nm })) do
-        client:stop(client.exit_timeout)
+        client:stop()
       end
     end
   end
@@ -1144,7 +1144,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     log.info('exit_handler', active_clients)
 
     for _, client in pairs(active_clients) do
-      client:stop(client.exit_timeout)
+      client:stop()
     end
   end,
 })
