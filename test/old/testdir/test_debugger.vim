@@ -953,7 +953,6 @@ func Test_Backtrace_DefFunction()
   call RunDbgCmd(buf, 'step', ['line 1: vim9script'])
   call RunDbgCmd(buf, 'step', ['line 3: def DoAThing(): number'])
   call RunDbgCmd(buf, 'step', ['line 9: export def File2Function()'])
-  call RunDbgCmd(buf, 'step', ['line 9: def File2Function()'])
   call RunDbgCmd(buf, 'step', ['line 13: defcompile'])
   call RunDbgCmd(buf, 'step', ['line 14: File2Function()'])
   call RunDbgCmd(buf, 'backtrace', [
