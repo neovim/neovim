@@ -3,10 +3,10 @@
 " Maintainer: Andis Sprinkis <andis@sprinkis.com>
 " Former Maintainer: Cameron Wright
 " URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 7 Sep 2025
+" Last Change: 26 Oct 2025
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 38
+" lf version: 39
 
 if exists("b:current_syntax") | finish | endif
 
@@ -63,6 +63,7 @@ syn keyword lfOptions
   \ cmd-menu-accept
   \ cmd-menu-complete
   \ cmd-menu-complete-back
+  \ cmd-menu-discard
   \ cmd-right
   \ cmd-transpose
   \ cmd-transpose-word
@@ -148,6 +149,7 @@ syn keyword lfOptions
   \ paste
   \ period
   \ pre-cd
+  \ preload
   \ preserve
   \ preview
   \ previewer
@@ -162,6 +164,7 @@ syn keyword lfOptions
   \ rename
   \ reverse
   \ roundbox
+  \ rulerfile
   \ rulerfmt
   \ scroll-down
   \ scroll-up
