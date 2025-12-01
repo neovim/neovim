@@ -524,3 +524,50 @@ describe('Vimscript dictionary notifications', function()
     eq({ 'W1', 'W2', 'W2', 'W1' }, eval('g:calls'))
   end)
 end)
+describe('tabpagebuflist() with dict watcher during buffer close/wipe', function()
+  before_each(function()
+    clear()
+  end)
+
+  it(
+    'does not segfault when called from dict watcher on b:changedtick (bufhidden=unload)',
+    function()
+      command([[
+    new
+    set bufhidden=unload
+    call dictwatcheradd(b:, 'changedtick', {-> tabpagebuflist()})
+    close
+    ]])
+
+      assert_alive()
+    end
+  )
+
+  it('does not segfault when wiping buffer with dict watcher', function()
+    command([[
+    new
+    call setline(1, 'test')
+    call dictwatcheradd(b:, 'changedtick', {-> tabpagebuflist()})
+    bwipeout!
+    ]])
+
+    assert_alive()
+  end)
+
+  it('does not segfault with multiple windows in the tabpage', function()
+    command([[
+    " create two windows in the current tab
+    edit foo
+    vnew
+    call setline(1, 'bar')
+
+    " attach watcher to the current buffer in the split
+    call dictwatcheradd(b:, 'changedtick', {-> tabpagebuflist()})
+
+    " close the split window (triggers close_buffer on this buffer)
+    close
+    ]])
+
+    assert_alive()
+  end)
+end)
