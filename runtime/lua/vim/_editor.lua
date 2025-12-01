@@ -110,21 +110,80 @@ function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
-  local cmd = { 'pgrep', '-P', ppid }
-  local r = vim.system(cmd):wait()
-  if r.code == 1 and vim.trim(r.stdout) == '' then
-    return {} -- Process not found.
-  elseif r.code ~= 0 then
-    error('command failed: ' .. vim.fn.string(cmd))
-  end
-  local children = {}
-  for s in r.stdout:gmatch('%S+') do
-    local i = tonumber(s)
-    if i ~= nil then
-      table.insert(children, i)
+  local function fallback_children()
+    local cmd = { 'pgrep', '-P', ppid }
+    local r = vim.system(cmd):wait()
+    if r.code == 1 and vim.trim(r.stdout) == '' then
+      return {} -- Process not found.
+    elseif r.code ~= 0 then
+      error('command failed: ' .. vim.fn.string(cmd))
     end
+    local fallback = {}
+    for s in r.stdout:gmatch('%S+') do
+      local i = tonumber(s)
+      if i ~= nil then
+        table.insert(fallback, i)
+      end
+    end
+    return fallback
   end
-  return children
+  -- Linux: Use procfs directly so children spawned by any thread are detected.
+  if vim.fn.has('linux') == 1 then
+    local proc_dir = string.format('/proc/%d', ppid)
+    if vim.loop.fs_stat(proc_dir) == nil then
+      return {} -- Process not found.
+    end
+
+    local children = {}
+    ---@type table<integer, true>
+    local seen = {}
+    local had_error = false
+    local task_dir = proc_dir .. '/task'
+    local glob_pattern = string.format('%s/*/children', task_dir)
+    local ok, children_files = pcall(vim.fn.glob, glob_pattern, false, true)
+
+    if not ok or type(children_files) ~= 'table' then
+      had_error = true
+    else
+      ---@cast children_files string[]
+      for _, children_file in ipairs(children_files) do
+        local ok_read, lines = pcall(vim.fn.readfile, children_file, 'b')
+        if ok_read and type(lines) == 'table' then
+          for _, line in ipairs(lines) do
+            for child_pid in line:gmatch('%d+') do
+              local pid = tonumber(child_pid)
+              if pid and not seen[pid] then
+                ---@cast pid integer
+                seen[pid] = true
+                table.insert(children, pid)
+              end
+            end
+          end
+        else
+          had_error = true
+        end
+      end
+    end
+
+    ---@type integer[]
+    local fallback = fallback_children()
+    if had_error and next(children) == nil then
+      children = {}
+    end
+    for _, pid in ipairs(fallback) do
+      ---@cast pid integer
+      if not seen[pid] then
+        seen[pid] = true
+        table.insert(children, pid)
+      end
+    end
+
+    return children
+  end
+
+  ---@type integer[]
+  local fallback = fallback_children()
+  return fallback
 end
 
 --- @nodoc
