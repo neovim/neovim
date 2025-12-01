@@ -176,6 +176,8 @@ API
   actually trusted.
 • Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
   by |vim.lsp.enable()|.
+• Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
+  execute code while nvim is blocking for input.
 
 BUILD
 

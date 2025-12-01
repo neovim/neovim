@@ -517,6 +517,30 @@ Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
   return nlua_exec(code, NULL, args, kRetObject, arena, err);
 }
 
+/// EXPERIMENTAL: this API may change or be removed in the future.
+///
+/// Like |nvim_exec_lua()|, but can be called during |api-fast| contexts.
+///
+/// Execute Lua code. Parameters (if any) are available as `...` inside the
+/// chunk. The chunk can return a value.
+///
+/// Only statements are executed. To evaluate an expression, prefix it
+/// with `return`: return my_function(...)
+///
+/// @param code       Lua code to execute
+/// @param args       Arguments to the code
+/// @param[out] err   Details of an error encountered while parsing
+///                   or executing the Lua code.
+///
+/// @return           Return value of Lua code if present or NIL.
+Object nvim__exec_lua_fast(String code, Array args, Arena *arena, Error *err)
+  FUNC_API_SINCE(13)
+  FUNC_API_REMOTE_ONLY
+  FUNC_API_FAST
+{
+  return nvim_exec_lua(code, args, arena, err);
+}
+
 /// Calculates the number of display cells occupied by `text`.
 /// Control characters including [<Tab>] count as one cell.
 ///
