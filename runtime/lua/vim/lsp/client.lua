@@ -1,5 +1,6 @@
 local uv = vim.uv
 local api = vim.api
+local diagnostic = vim.diagnostic
 local lsp = vim.lsp
 local log = lsp.log
 local changetracking = lsp._changetracking
@@ -896,6 +897,11 @@ function Client:stop(force)
   self._is_stopping = true
 
   lsp._watchfiles.cancel(self.id)
+
+  for _, is_push in ipairs({ true, false }) do
+    local diagnostic_ns = lsp.diagnostic.get_namespace(self.id, is_push)
+    diagnostic.reset(diagnostic_ns)
+  end
 
   if force == true or not self.initialized or self._graceful_shutdown_failed then
     rpc.terminate()
