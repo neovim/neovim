@@ -66,9 +66,10 @@ int main(int argc, char **argv)
         }
       }
     } else if (strcmp(argv[1], "EXE") == 0) {
-      fprintf(stderr, "ready $ ");
       if (argc >= 3) {
-        fprintf(stderr, "%s\n", argv[2]);
+        fprintf(stderr, "ready $ %s\n", argv[2]);
+      } else {
+        fprintf(stderr, "ready $ ");
       }
     } else if (strcmp(argv[1], "REP") == 0) {
       if (argc != 4) {
