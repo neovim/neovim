@@ -531,34 +531,50 @@ local function check_sysinfo()
   local nvim_version = version_output:match('NVIM v[^\n]+') or 'unknown'
   local commit_hash = nvim_version:match('%+g?(%x+)')
   local version_for_report = nvim_version
-  if commit_hash then
-    version_for_report = nvim_version:gsub('%+g' .. commit_hash, ' neovim/neovim@' .. commit_hash)
+  if nvim_version:match('%-dev') == nil then
+    local current_version = nvim_version:match('v(%d+%.%d+%.%d+)')
     local has_git = vim.fn.executable('git') == 1
     local has_curl = vim.fn.executable('curl') == 1
-    local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' }
-      or has_curl and {
-        'curl',
-        '-s',
-        'https://api.github.com/repos/neovim/neovim/commits/master',
-        '-H',
-        'Accept: application/vnd.github.sha',
-      }
-      or nil
-
-    if cmd then
-      local result = vim.system(cmd, { text = true }):wait()
+    local latest_version = nil --- @type string?
+    if has_git then
+      local result = vim
+        .system({
+          'git',
+          'ls-remote',
+          '--tags',
+          'https://github.com/neovim/neovim',
+        }, { text = true })
+        :wait()
       if result.code == 0 then
-        local sha = has_git and result.stdout:match('^(%x+)') or result.stdout
-        local latest_commit = sha and sha:sub(1, 10)
-        if latest_commit and commit_hash ~= latest_commit then
-          vim.health.warn(
-            string.format('Build is outdated. Local: %s, Latest: %s', commit_hash, latest_commit)
-          )
+        local stable_sha = result.stdout:match('(%x+)%s+refs/tags/stable\n')
+        if stable_sha then
+          latest_version = result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}')
         end
       end
-    else
-      vim.health.warn('Cannot check for updates: git or curl not found')
+    elseif has_curl then
+      local result = vim
+        .system({
+          'curl',
+          '-s',
+          'https://api.github.com/repos/neovim/neovim/releases/latest',
+        }, { text = true })
+        :wait()
+      if result.code == 0 then
+        ---@type boolean, table<string, string>
+        local ok, data = pcall(vim.json.decode, result.stdout)
+        if ok and data.tag_name then
+          latest_version = data.tag_name:match('v?(%d+%.%d+%.%d+)')
+        end
+      end
     end
+    if latest_version and latest_version ~= current_version then
+      vim.health.warn(
+        string.format('Neovim %s is available (current: %s)', latest_version, current_version)
+      )
+    end
+  end
+  if commit_hash then
+    version_for_report = nvim_version:gsub('%+g' .. commit_hash, ' neovim/neovim@' .. commit_hash)
   end
 
   local os_info = vim.uv.os_uname()
