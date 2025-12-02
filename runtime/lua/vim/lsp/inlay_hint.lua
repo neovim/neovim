@@ -539,7 +539,6 @@ local action_helpers = {
         --- @type [integer, integer, integer, integer]
         start_pos, end_pos = end_pos, start_pos
       end
-
       range = {
         start = vim.pos.cursor({ start_pos[2], start_pos[3] - 1 }),
         ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] }),
@@ -842,7 +841,7 @@ function M.apply_action(action, opts, callback)
   opts = opts or {}
 
   local bufnr = api.nvim_get_current_buf()
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' }) ---@type vim.lsp.Client
   if #clients == 0 then
     if type(callback) == 'function' then
       callback({ bufnr = bufnr })
@@ -850,7 +849,6 @@ function M.apply_action(action, opts, callback)
     return
   end
   local range = opts.range or action_helpers.make_range()
-
   local on_finish_cb_called = false
   if type(callback) == 'function' then
     local original_callback = callback
@@ -875,6 +873,7 @@ function M.apply_action(action, opts, callback)
       return
     end
 
+    ---@type lsp.TextDocumentPositionParams
     local params = util.make_given_range_params(
       range.start:to_cursor(),
       range.end_:to_cursor(),
@@ -913,7 +912,6 @@ function M.apply_action(action, opts, callback)
 
         if not support_resolve then
           -- no need to resolve because the client doesn't support it.
-
           if action_callback(hints, action_ctx, callback) == 0 then
             -- no actions invoked. proceed with the client.
             return do_insert(next(clients, idx))
@@ -936,7 +934,7 @@ function M.apply_action(action, opts, callback)
         for i, h in ipairs(hints) do
           client:request('inlayHint/resolve', h, function(_, _result, _, _)
             if _result ~= nil then
-              hints[i] = _result
+              hints[i] = vim.tbl_deep_extend('force', hints[i], _result)
             end
             num_processed = num_processed + 1
 
