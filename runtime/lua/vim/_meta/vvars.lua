@@ -117,7 +117,7 @@ vim.v.dying = ...
 --- @type integer
 vim.v.echospace = ...
 
---- Last given error message.
+--- Last error message that occurred (not neccessarily displayed).
 --- Modifiable (can be set).
 --- Example:
 ---
