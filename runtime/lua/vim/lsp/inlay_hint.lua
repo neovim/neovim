@@ -818,6 +818,9 @@ local inlayhint_actions = {
 --- Use this option to specify the range from which the inlay hints should be requested.
 --- When not specified, it'll default to use the cursor position in |Normal-mode| or the selected range in |Visual-mode|.
 --- @field range? vim.Range
+--- The clients used to check the actions.
+--- When not specified, it'll default to iterate through all clients that support `textDocument/inlayHint`.
+--- @field clients? vim.lsp.Client[]
 
 --- Apply one of the following actions provided by inlay hints in the
 --- selected range.
@@ -857,7 +860,8 @@ function M.apply_action(action, opts, callback)
   opts = opts or {}
 
   local bufnr = api.nvim_get_current_buf()
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' }) ---@type vim.lsp.Client
+  local clients = opts.clients
+    or vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
   if #clients == 0 then
     if type(callback) == 'function' then
       callback({ bufnr = bufnr })
