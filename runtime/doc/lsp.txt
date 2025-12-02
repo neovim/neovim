@@ -2174,7 +2174,9 @@ apply_action({action}, {opts}, {callback})
                       • `on_finish`:
                         `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})`
                         see the `callback` parameter of
-                        |vim.lsp.inlay_hint.apply_action|.
+                        |vim.lsp.inlay_hint.apply_action|. When implementing a
+                        custom handler, the `on_finish` callback should be
+                        called when the handler is returning a non-zero value.
                       This custom handler should also return the number of
                       items in `hints` that contributed to the action. For
                       example, the `location` handler should return `1` on a
@@ -2190,8 +2192,10 @@ apply_action({action}, {opts}, {callback})
                       • in |Visual-mode|, it requests for hints inside the
                         selected range.
                     • {clients}? (`vim.lsp.Client[]`) The clients used to
-                      check the actions. When not specified, it'll default to
-                      iterate through all clients that support
+                      check the actions. The clients will be checked one by
+                      one to see whether they provide inlay hints that are
+                      needed by the action. When not specified, it'll default
+                      to iterate through all clients that support
                       `textDocument/inlayHint` and are attached to the current
                       buffer.
       • {callback}  (`fun(ctx: {bufnr: integer, client?: vim.lsp.Client})?`) A
