@@ -879,11 +879,11 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       end)
       eq(
         'let my_instance: MyStruct = MyStruct::new(42);',
-        vim.trim(n.api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false)[8])
+        vim.trim(api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false)[8])
       )
       eq(
         'let _MyInstance: MyStruct = MyStruct::new(43);',
-        vim.trim(n.api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false)[9])
+        vim.trim(api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false)[9])
       )
     end)
 
@@ -904,7 +904,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         end)
         assert(done)
       end)
-      eq(mocked_files.main.lines, n.api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false))
+      eq(mocked_files.main.lines, api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false))
     end)
   end)
 
@@ -926,7 +926,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         end)
         assert(done)
       end)
-      eq(mocked_files.lib.bufnr, n.api.nvim_get_current_buf())
+      eq(mocked_files.lib.bufnr, api.nvim_get_current_buf())
     end)
 
     it('should NOT jump when location is not provided', function()
@@ -946,7 +946,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         end)
         assert(done)
       end)
-      eq(mocked_files.main.bufnr, n.api.nvim_get_current_buf())
+      eq(mocked_files.main.bufnr, api.nvim_get_current_buf())
     end)
   end)
 
@@ -983,7 +983,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         assert(done)
         return on_finish_ctx.bufnr, vim.fn.winbufnr(on_finish_ctx.bufnr)
       end)
-      local tooltip_lines = n.api.nvim_buf_get_lines(tooltip_buf, 0, -1, false)
+      local tooltip_lines = api.nvim_buf_get_lines(tooltip_buf, 0, -1, false)
 
       neq(mocked_files.main.bufnr, tooltip_buf)
       neq(curr_winid, tooltip_win)
@@ -994,7 +994,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
     it('should NOT show tooltip when not available', function()
       assert(curr_winid)
       local done = false
-      local buf_count = #n.api.nvim_list_bufs()
+      local buf_count = #api.nvim_list_bufs()
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
         vim.lsp.inlay_hint.apply_action(
@@ -1009,7 +1009,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         end)
         assert(done)
       end)
-      eq(buf_count, #n.api.nvim_list_bufs())
+      eq(buf_count, #api.nvim_list_bufs())
     end)
   end)
 
