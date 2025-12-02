@@ -716,3 +716,15 @@ describe('autocmd', function()
     ]]
   end)
 end)
+describe('autocmd VimEnter', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('does not fail on assert row >= 0', function()
+    command('autocmd VimEnter * set lines=10')
+    eq('Vim(echoerr):1', pcall_err(command, 'echoerr 1'))
+  end)
+
+  assert_alive()
+end)

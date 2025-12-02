@@ -2574,6 +2574,23 @@ void msg_scroll_up(bool may_throttle, bool zerocmd)
 /// redraw_later code paths.
 void msg_scroll_flush(void)
 {
+  // During a screen resize, the message layout and scroll bookkeeping may not
+  // match the current Rows/Columns yet. VimResized autocmds can call :redraw
+  // or the screen*() functions, which end up here while geometry is in flux.
+  //
+  // In that case we must not try to scroll using stale layout data, or we risk
+  // asserts like:
+  //   row >= 0
+  //   0 <= row && row < grid->rows
+  //
+  // Just sync counters and bail; once the resize completes,
+  // update_screen()/msg_grid_set_pos() will recompute the layout.
+  if (resizing_screen) {
+    msg_scrolled_at_flush = msg_scrolled;
+    msg_grid_scroll_discount = 0;
+    return;
+  }
+
   if (msg_grid.throttled) {
     msg_grid.throttled = false;
     int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
