@@ -642,7 +642,7 @@ local inlayhint_actions = {
     if #text_edits > 0 then
       vim.schedule(function()
         util.apply_text_edits(text_edits, ctx.bufnr, ctx.client.offset_encoding)
-        if type(on_finish) == 'function' then
+        if on_finish then
           on_finish({ bufnr = ctx.bufnr, client = ctx.client })
         end
       end)
@@ -697,7 +697,7 @@ local inlayhint_actions = {
             { reuse_win = true, focus = true }
           )
 
-          if type(on_finish) == 'function' then
+          if on_finish then
             on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
           end
         end
@@ -768,7 +768,7 @@ local inlayhint_actions = {
     ---@type integer, integer
     local buf, _ = util.open_floating_preview(lines, 'markdown')
 
-    if type(on_finish) == 'function' then
+    if on_finish then
       on_finish({ bufnr = buf, client = ctx.client })
     end
     return 1
@@ -811,7 +811,7 @@ local inlayhint_actions = {
       function(_, idx)
         if idx == nil then
           -- `vim.ui.select` was cancelled
-          if type(on_finish) == 'function' then
+          if on_finish then
             on_finish({ bufnr = ctx.bufnr, client = ctx.client })
           end
           return
@@ -822,7 +822,7 @@ local inlayhint_actions = {
           if default_handler then
             default_handler(...)
           end
-          if type(on_finish) == 'function' then
+          if on_finish then
             on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
           end
         end, ctx.bufnr)
@@ -840,7 +840,8 @@ local inlayhint_actions = {
 ---   - in |Normal-mode|, it requests for hints on either side of the cursor.
 ---   - in |Visual-mode|, it requests for hints inside the selected range.
 --- @field range? vim.Range
---- The clients used to check the actions.
+--- The clients used to check the actions. The clients will be checked one by one to see whether
+--- they provide inlay hints that are needed by the action.
 --- When not specified, it'll default to iterate through all clients that support `textDocument/inlayHint` and are attached to the current buffer.
 --- @field clients? vim.lsp.Client[]
 
@@ -869,6 +870,7 @@ local inlayhint_actions = {
 ---   - `hints`: `lsp.InlayHint[]` a list of inlay hints in the requested range.
 ---   - `ctx`: `{bufnr: integer, client: vim.lsp.Client}` the buffer number on which the action is taken, and the LSP client that provides `hints`.
 ---   - `on_finish`: `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})` see the `callback` parameter of |vim.lsp.inlay_hint.apply_action|.
+---     When implementing a custom handler, the `on_finish` callback should be called when the handler is returning a non-zero value.
 ---
 ---   This custom handler should also return the number of items in `hints` that contributed to the action. For example, the `location` handler should return `1` on a successful jump because the target location is from 1 inlay hint object, regardless of the number of hints in `hints`.
 --- @param opts? vim.lsp.inlay_hint.action.Opts
@@ -891,9 +893,6 @@ function M.apply_action(action, opts, callback)
     action_handler = inlayhint_actions[action]
     --- @cast action_handler -vim.lsp.inlay_hint.action.name
   end
-  if type(action_handler) ~= 'function' then
-    return error('Unsupported action: ' .. action)
-  end
 
   opts = opts or {}
 
@@ -901,7 +900,8 @@ function M.apply_action(action, opts, callback)
   local clients = opts.clients
     or vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
   if #clients == 0 then
-    if type(callback) == 'function' then
+    -- no supported clients.
+    if callback then
       callback({ bufnr = bufnr })
     end
     return
@@ -909,7 +909,7 @@ function M.apply_action(action, opts, callback)
 
   local range = opts.range or action_helpers.make_range()
   local on_finish_cb_called = false
-  if type(callback) == 'function' then
+  if callback then
     local original_callback = callback
     -- decorate the `on_finish` callback to make sure it only called once.
     callback = function(...) ---@type vim.lsp.inlay_hint.action.on_finish.callback
@@ -922,9 +922,9 @@ function M.apply_action(action, opts, callback)
   --- @param idx? integer
   --- @param client vim.lsp.Client
   local function do_action(idx, client)
-    if idx == nil then
+    if idx == nil or on_finish_cb_called then
       -- all clients have been consumed. Terminate the iteration.
-      if type(callback) == 'function' and not on_finish_cb_called then
+      if callback and not on_finish_cb_called then
         callback({ bufnr = api.nvim_get_current_buf() })
       end
       return
@@ -977,7 +977,7 @@ function M.apply_action(action, opts, callback)
             return do_action(next(clients, idx))
           else
             -- actions were taken. we're done with the actions.
-            if type(callback) == 'function' and not on_finish_cb_called then
+            if callback and not on_finish_cb_called then
               callback(action_ctx)
             end
             return
@@ -1003,7 +1003,7 @@ function M.apply_action(action, opts, callback)
               if action_handler(hints, action_ctx, callback) == 0 then
                 return do_action(next(clients, idx))
               else
-                if type(callback) == 'function' and not on_finish_cb_called then
+                if callback and not on_finish_cb_called then
                   callback(action_ctx)
                 end
                 return
