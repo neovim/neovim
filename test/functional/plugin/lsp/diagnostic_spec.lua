@@ -661,7 +661,7 @@ describe('vim.lsp.diagnostic', function()
       eq(1, #diags)
       eq(1, diags[1].severity)
 
-      local requests, diags = exec_lua(function()
+      local requests, refreshed_diags = exec_lua(function()
         vim.lsp.diagnostic.on_refresh(nil, nil, {
           method = 'workspace/diagnostic/refresh',
           client_id = client_id,
@@ -670,8 +670,8 @@ describe('vim.lsp.diagnostic', function()
         return _G.requests, vim.diagnostic.get(diagnostic_bufnr)
       end)
       eq(1, requests)
-      eq(1, #diags)
-      eq(2, diags[1].severity)
+      eq(1, #refreshed_diags)
+      eq(2, refreshed_diags[1].severity)
     end)
 
     it('refreshes workspace diagnostics', function()
@@ -703,10 +703,12 @@ describe('vim.lsp.diagnostic', function()
         client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
       end)
 
-      local diags = exec_lua(function()
-        return vim.diagnostic.get()
-      end)
-      eq(0, #diags)
+      eq(
+        0,
+        exec_lua(function()
+          return #vim.diagnostic.get()
+        end)
+      )
 
       local requests, diags = exec_lua(function()
         vim.lsp.diagnostic.on_refresh(nil, nil, {

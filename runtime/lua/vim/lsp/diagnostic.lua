@@ -396,11 +396,14 @@ function M.on_refresh(err, _, ctx)
     return vim.NIL
   end
   local client = vim.lsp.get_client_by_id(ctx.client_id)
+  if client == nil then
+    return vim.NIL
+  end
   if
     client.server_capabilities.diagnosticProvider
     and client.server_capabilities.diagnosticProvider.workspaceDiagnostics
   then
-    M._workspace_diagnostics(ctx)
+    M._workspace_diagnostics({ client_id = ctx.client_id })
   else
     for bufnr in pairs(client.attached_buffers or {}) do
       if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
