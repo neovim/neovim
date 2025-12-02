@@ -10,7 +10,7 @@ local function system(cmd)
   return result.code == 0, vim.trim(('%s\n%s'):format(result.stdout, result.stderr))
 end
 
-local suggest_faq = 'https://github.com/neovim/neovim/blob/master/BUILD.md#building'
+local suggest_faq = 'https://neovim.io/doc/build/#building'
 
 local function check_runtime()
   health.start('Runtime')
@@ -355,7 +355,7 @@ local function check_terminal()
     return
   end
 
-  health.start('terminal')
+  health.start('Terminal')
   local cmd = { 'infocmp', '-L' }
   local ok, out = system(cmd)
   local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
@@ -526,13 +526,12 @@ end
 local function check_sysinfo()
   vim.health.start('System Info')
 
-  -- Use :version because vim.version().build returns "Homebrew" for brew installs.
-  local version_output = vim.api.nvim_exec2('version', { output = true }).output
-  local nvim_version = version_output:match('NVIM v[^\n]+') or 'unknown'
-  local commit_hash = nvim_version:match('%+g?(%x+)')
-  local version_for_report = nvim_version
-  if commit_hash then
-    version_for_report = nvim_version:gsub('%+g' .. commit_hash, ' neovim/neovim@' .. commit_hash)
+  -- Use :version because `vim.version().build` returns "Homebrew" for brew installs.
+  local version_out = vim.api.nvim_exec2('version', { output = true }).output
+  local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
+  local commit --[[@type string]] = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
+
+  if vim.trim(commit) ~= '' then
     local has_git = vim.fn.executable('git') == 1
     local has_curl = vim.fn.executable('curl') == 1
     local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' }
@@ -548,12 +547,13 @@ local function check_sysinfo()
     if cmd then
       local result = vim.system(cmd, { text = true }):wait()
       if result.code == 0 then
-        local sha = has_git and result.stdout:match('^(%x+)') or result.stdout
-        local latest_commit = sha and sha:sub(1, 10)
-        if latest_commit and commit_hash ~= latest_commit then
+        local upstream = assert(result.stdout:match('^(%x+)') or result.stdout)
+        if not upstream:find(commit) then
           vim.health.warn(
-            string.format('Build is outdated. Local: %s, Latest: %s', commit_hash, latest_commit)
+            ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
           )
+        else
+          vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
         end
       end
     else
@@ -566,7 +566,7 @@ local function check_sysinfo()
   local terminal = detect_terminal()
   local term_env = vim.env.TERM or 'unknown'
 
-  vim.health.info('Nvim version: ' .. nvim_version)
+  vim.health.info(('Nvim version: `%s` %s'):format(nvim_version, commit))
   vim.health.info('Operating system: ' .. os_string)
   vim.health.info('Terminal: ' .. terminal)
   vim.health.info('$TERM: ' .. term_env)
@@ -575,43 +575,28 @@ local function check_sysinfo()
     0,
     string.format(
       [[
-    ## Problem:
+    ## Problem
 
+    ## Steps to reproduce
 
-
-    ## Steps to reproduce:
     ```
     nvim --clean
     ```
 
-    ## Expected behavior:
+    ## Expected behavior
 
+    ## System info
 
-
-    ## Nvim version (nvim -v):
-
-    %s
-
-    ## Vim (not Nvim) behaves the same?
-
-
-
-    ## Operating system/version:
-
-    %s
-
-    ## Terminal name/version:
-
-    %s
-
-    ## $TERM environment variable:
-
-    %s
-
-    ## Installation:
+    - Nvim version (nvim -v): `%s` neovim/neovim@%s
+    - Vim (not Nvim) behaves the same?: ?
+    - Operating system/version: %s
+    - Terminal name/version: %s
+    - $TERM environment variable: `%s`
+    - Installation: ?
 
 ]],
-      version_for_report,
+      nvim_version,
+      commit,
       os_string,
       terminal,
       term_env
