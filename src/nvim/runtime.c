@@ -2268,8 +2268,26 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
+  // Check if treesitter detects this range as Lua (for injections like vimdoc codeblocks)
+  bool ts_lua = false;
+  if (fname == NULL && eap != NULL && !ex_lua
+      && !strequal(curbuf->b_p_ft, "lua")
+      && !(curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
+    char lua_check[128];
+    snprintf(lua_check, sizeof(lua_check),
+             "return vim._source_is_lua(%d, %" PRIdLINENR ", %" PRIdLINENR ")",
+             (int)curbuf->handle, eap->line1, eap->line2);
+    Error err = ERROR_INIT;
+    Object result = nlua_exec(cstr_as_string(lua_check), NULL,
+                              (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
+    if (!ERROR_SET(&err) && LUARET_TRUTHY(result)) {
+      ts_lua = true;
+    }
+    api_clear_error(&err);
+  }
+
   if (fname == NULL
-      && (ex_lua || strequal(curbuf->b_p_ft, "lua")
+      && (ex_lua || ts_lua || strequal(curbuf->b_p_ft, "lua")
           || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua")))) {
     // Source lines from the current buffer as lua
     nlua_exec_ga(&cookie.buflines, fname_exp);

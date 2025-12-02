@@ -296,6 +296,46 @@ describe(':source', function()
     eq(nil, result:find('E484'))
     os.remove(test_file)
   end)
+
+  describe('treesitter Lua codeblock detection', function()
+    it('sources Lua codeblock in vimdoc file', function()
+      insert([[
+        *test.txt*  Test help file
+
+        Example: >lua
+          vim.g.test_vimdoc_lua = 42
+        <]])
+      feed('dd') -- remove trailing empty line from insert
+      command('setlocal filetype=help')
+      -- Select the Lua code line (line 4) and source it
+      feed('4GV')
+      feed_command(':source')
+      eq(42, eval('g:test_vimdoc_lua'))
+    end)
+
+    it('sources Vimscript when not in a Lua codeblock', function()
+      insert([[
+        *test.txt*  Test help file
+
+        Example: >vim
+          let g:test_vimdoc_vim = 99
+        <]])
+      feed('dd')
+      command('setlocal filetype=help')
+      -- Select the Vimscript code line (line 4) and source it
+      feed('4GV')
+      feed_command(':source')
+      eq(99, eval('g:test_vimdoc_vim'))
+    end)
+
+    it('falls back to Vimscript when no treesitter parser', function()
+      insert([[let g:test_no_ts = 123]])
+      -- Don't set a filetype with treesitter support
+      command('setlocal filetype=')
+      command('source')
+      eq(123, eval('g:test_no_ts'))
+    end)
+  end)
 end)
 
 it('$HOME is not shortened in filepath in v:stacktrace from sourced file', function()
