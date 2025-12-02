@@ -537,7 +537,7 @@ local action_helpers = {
       result = vim.fs.relpath(base, path)
     end
     if result == nil then
-      result = vim.fn.fnamemodify(path, ':p:~')
+      result = fn.fnamemodify(path, ':p:~')
     end
     return result
   end,
