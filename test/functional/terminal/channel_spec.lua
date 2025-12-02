@@ -92,7 +92,9 @@ describe('terminal channel is closed and later released if', function()
     poke_eventloop()
     feed('<Ignore>') -- add input to separate two RPC requests
     -- channel has been released after another main loop iteration
-    eq(chans - 1, eval('len(nvim_list_chans())'))
+    t.retry(20, nil, function()
+      eq(chans - 1, eval('len(nvim_list_chans())'))
+    end)
   end)
 
   -- This indirectly covers #16264
