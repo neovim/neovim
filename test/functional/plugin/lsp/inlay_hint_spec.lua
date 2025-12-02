@@ -470,6 +470,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         '',
         'fn main() {',
         '    let my_instance = MyStruct::new(42);',
+        '    let _MyInstance = MyStruct::new(43);',
         '    process_my_struct(my_instance);',
         '}',
       },
@@ -548,6 +549,54 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       data = { id = 1 },
     },
     {
+      kind = 1,
+      label = {
+        {
+          value = ': ',
+        },
+        {
+          location = {
+            range = {
+              ['end'] = {
+                character = 19,
+                line = 0,
+              },
+              start = {
+                character = 11,
+                line = 0,
+              },
+            },
+            uri = mocked_files.lib.uri,
+          },
+          tooltip = 'string tooltip',
+          value = 'MyStruct',
+        },
+      },
+      tooltip = { kind = 'plaintext', value = 'plaintext markup tooltip' },
+      paddingLeft = false,
+      paddingRight = false,
+      position = {
+        character = 19,
+        line = 8,
+      },
+      textEdits = {
+        {
+          newText = ': MyStruct',
+          range = {
+            ['end'] = {
+              character = 19,
+              line = 8,
+            },
+            start = {
+              character = 19,
+              line = 8,
+            },
+          },
+        },
+      },
+      data = { id = 2 },
+    },
+    {
       kind = 2,
       label = {
         {
@@ -558,9 +607,9 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       paddingRight = true,
       position = {
         character = 22,
-        line = 8,
+        line = 9,
       },
-      data = { id = 2 },
+      data = { id = 3 },
     },
   }
 
@@ -586,6 +635,54 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       data = { id = 1 },
     },
     {
+      kind = 1,
+      label = {
+        {
+          value = ': ',
+        },
+        {
+          location = {
+            range = {
+              ['end'] = {
+                character = 19,
+                line = 0,
+              },
+              start = {
+                character = 11,
+                line = 0,
+              },
+            },
+            uri = mocked_files.lib.uri,
+          },
+          tooltip = 'string tooltip',
+          value = 'MyStruct',
+        },
+      },
+      tooltip = { kind = 'plaintext', value = 'plaintext markup tooltip' },
+      paddingLeft = false,
+      paddingRight = false,
+      position = {
+        character = 19,
+        line = 8,
+      },
+      textEdits = {
+        {
+          newText = ': MyStruct',
+          range = {
+            ['end'] = {
+              character = 19,
+              line = 8,
+            },
+            start = {
+              character = 19,
+              line = 8,
+            },
+          },
+        },
+      },
+      data = { id = 2 },
+    },
+    {
       kind = 2,
       label = {
         {
@@ -596,9 +693,9 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       paddingRight = true,
       position = {
         character = 22,
-        line = 8,
+        line = 9,
       },
-      data = { id = 2 },
+      data = { id = 3 },
     },
   }
 
@@ -741,7 +838,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         local bufnr = mocked_files.main.bufnr
         vim.lsp.inlay_hint.apply_action(
           'textEdits',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
+          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(8, 20, { buf = bufnr })) },
           function(_)
             done = true
           end
@@ -755,6 +852,10 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         'let my_instance: MyStruct = MyStruct::new(42);',
         vim.trim(n.api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false)[8])
       )
+      eq(
+        'let _MyInstance: MyStruct = MyStruct::new(43);',
+        vim.trim(n.api.nvim_buf_get_lines(mocked_files.main.bufnr, 0, -1, false)[9])
+      )
     end)
 
     it("should not insert when there's no textEdits", function()
@@ -764,7 +865,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         local bufnr = mocked_files.main.bufnr
         vim.lsp.inlay_hint.apply_action(
           'textEdits',
-          { range = vim.range(vim.pos(8, 21, { buf = bufnr }), vim.pos(8, 24, { buf = bufnr })) },
+          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
             done = true
           end
@@ -806,7 +907,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         local bufnr = mocked_files.main.bufnr
         vim.lsp.inlay_hint.apply_action(
           'location',
-          { range = vim.range(vim.pos(8, 21, { buf = bufnr }), vim.pos(8, 24, { buf = bufnr })) },
+          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
             done = true
           end
@@ -821,10 +922,21 @@ describe('vim.lsp.inlay_hint.apply_action', function()
   end)
 
   describe('tooltip', function()
+    local ref_tooltip = {
+      '# `: MyStruct`',
+      '',
+      'plaintext markup tooltip',
+      '',
+      '## `MyStruct`',
+      '',
+      'string tooltip',
+      '_Location_: `/src/lib.rs`:0',
+    }
     it('should show tooltip when available', function()
       assert(curr_winid)
       local done = false
-      local tooltip_buf = exec_lua(function()
+      ---@type integer, integer
+      local tooltip_buf, tooltip_win = exec_lua(function()
         local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
         vim.lsp.inlay_hint.apply_action(
@@ -839,23 +951,14 @@ describe('vim.lsp.inlay_hint.apply_action', function()
           return done
         end)
         assert(done)
-        return on_finish_ctx.bufnr
+        return on_finish_ctx.bufnr, vim.fn.winbufnr(on_finish_ctx.bufnr)
       end)
       local tooltip_lines = n.api.nvim_buf_get_lines(tooltip_buf, 0, -1, false)
 
-      -- tooltip should be in a new buffer
       neq(mocked_files.main.bufnr, tooltip_buf)
+      neq(curr_winid, tooltip_win)
 
-      eq({
-        '# `: MyStruct`',
-        '',
-        'plaintext markup tooltip',
-        '',
-        '## `MyStruct`',
-        '',
-        'string tooltip',
-        '_Location_: `/src/lib.rs`:0',
-      }, tooltip_lines)
+      eq(ref_tooltip, tooltip_lines)
     end)
 
     it('should NOT show tooltip when not available', function()
@@ -866,7 +969,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         local bufnr = mocked_files.main.bufnr
         vim.lsp.inlay_hint.apply_action(
           'tooltip',
-          { range = vim.range(vim.pos(8, 21, { buf = bufnr }), vim.pos(8, 24, { buf = bufnr })) },
+          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
             done = true
           end
