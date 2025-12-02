@@ -2141,8 +2141,7 @@ Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
                                            *vim.lsp.inlay_hint.apply_action()*
 apply_action({action}, {opts}, {callback})
-    Apply one of the following actions provided by inlay hints in the selected
-    range.
+    Apply some actions provided by inlay hints in the selected range.
 
     Example usage: >lua
         vim.keymap.set(
@@ -2151,29 +2150,59 @@ apply_action({action}, {opts}, {callback})
           function()
             vim.lsp.inlay_hint.apply_action('textEdits')
           end,
-          { desc = 'Apply inlay hint edits' }
+          { desc = 'Apply inlay hint textEdits' }
         )
 <
 
     Parameters: ~
       • {action}    (`vim.lsp.inlay_hint.action`) Possible actions:
-                    • `"textEdits"`
-                    • `"tooltip"`
-                    • `"location"`
-                    • `"command"`
-                    • a custom handler:
-                      `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`,
-                      which accepts the resolved inlay hints in the given
-                      range and some context, perform some actions and returns
-                      the number of hints on which the actions were taken.
+                    • `"textEdits"`: insert `textEdits` that comes with the
+                      inlay hints.
+                    • `"location"`: jump to one of the locations associated
+                      with the inlay hints.
+                    • `"command"`: execute one of the `lsp.Command`s that
+                      comes with the inlay hint.
+                    • `"tooltip"`: show a hover-like window that contains the
+                      `tooltip`, available `command`s and `location`s that
+                      comes with the inlay hint.
+                    • a custom handler with 3 parameters:
+                      • `hints`: `lsp.InlayHint[]` a list of inlay hints in
+                        the requested range.
+                      • `ctx`: `{bufnr: integer, client: vim.lsp.Client}` the
+                        buffer number on which the action is taken, and the
+                        LSP client that provides `hints`.
+                      • `on_finish`:
+                        `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})`
+                        see the `callback` parameter of
+                        |vim.lsp.inlay_hint.apply_action|.
+                      This custom handler should also return the number of
+                      items in `hints` that contributed to the action. For
+                      example, the `location` handler should return `1` on a
+                      successful jump because the target location is from 1
+                      inlay hint object, regardless of the number of hints in
+                      `hints`.
       • {opts}      (`table?`) A table with the following fields:
                     • {range}? (`vim.Range`) Use this option to specify the
                       range from which the inlay hints should be requested.
-                      When not specified, it'll default to use the cursor
-                      position in |Normal-mode| or the selected range in
-                      |Visual-mode|.
-      • {callback}  (`vim.lsp.inlay_hint.action.on_finish.callback?`) This
-                    will be invoked when the action is finished.
+                      When not specified:
+                      • in |Normal-mode|, it requests for hints on either side
+                        of the cursor.
+                      • in |Visual-mode|, it requests for hints inside the
+                        selected range.
+                    • {clients}? (`vim.lsp.Client[]`) The clients used to
+                      check the actions. When not specified, it'll default to
+                      iterate through all clients that support
+                      `textDocument/inlayHint` and are attached to the current
+                      buffer.
+      • {callback}  (`fun(ctx: {bufnr: integer, client?: vim.lsp.Client})?`) A
+                    callback function that will be triggered exactly once
+                    (asynchronously) at the end of the action. It accepts a
+                    table with the following keys as the parameter:
+                    • `bufnr`: the buffer number that is focused on. If
+                      there's any jump-to-location or pop-up, this'll points
+                      you to the new buffer.
+                    • `client?`: the `vim.lsp.Client` used to invoke the
+                      action. `nil` when the action failed to be invoked.
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for the {filter}ed scope.
