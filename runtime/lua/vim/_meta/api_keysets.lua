@@ -269,6 +269,10 @@ error('Cannot require a meta file')
 --- @field buffer? integer|integer[]
 --- @field id? integer
 
+--- @class vim.api.keyset.get_chan
+--- @field id? integer
+--- @field buf? integer
+
 --- @class vim.api.keyset.get_commands
 --- @field builtin? boolean
 

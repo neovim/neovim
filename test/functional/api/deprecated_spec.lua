@@ -29,4 +29,33 @@ describe('deprecated', function()
       ]])
     end)
   end)
+
+  describe('nvim_list_chans, nvim_get_chan_info', function()
+    local testinfo = {
+      stream = 'stdio',
+      id = 1,
+      mode = 'rpc',
+      client = {},
+    }
+    local stderr = {
+      stream = 'stderr',
+      id = 2,
+      mode = 'bytes',
+    }
+
+    it('nvim_get_chan_info returns {} for invalid channel', function()
+      t.eq({}, n.api.nvim_get_chan_info(-1))
+      t.eq({}, n.api.nvim_get_chan_info(10))
+    end)
+
+    it('nvim_list_chans returns all channels', function()
+      t.eq({ [1] = testinfo, [2] = stderr }, n.api.nvim_list_chans())
+    end)
+
+    it('nvim_get_chan_info returns channel info', function()
+      t.eq(testinfo, n.api.nvim_get_chan_info(0)) -- 0 = current channel
+      t.eq(testinfo, n.api.nvim_get_chan_info(1))
+      t.eq(stderr, n.api.nvim_get_chan_info(2))
+    end)
+  end)
 end)

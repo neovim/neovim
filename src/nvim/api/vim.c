@@ -1599,7 +1599,7 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 }
 
 /// Self-identifies the client, and sets optional flags on the channel. Defines the `client` object
-/// returned by |nvim_get_chan_info()|.
+/// returned by |nvim_chan_get()|.
 ///
 /// Clients should call this just after connecting, to provide hints for debugging and
 /// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
@@ -1609,7 +1609,7 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// first identifies the channel, then a plugin using that library later identifies itself.
 ///
 /// @param channel_id
-/// @param name Client short-name. Sets the `client.name` field of |nvim_get_chan_info()|.
+/// @param name Client short-name. Sets the `client.name` field of |nvim_chan_get()|.
 /// @param version  Dict describing the version, with these
 ///     (optional) keys:
 ///     - "major" major version (defaults to 0 if not set, for no release yet)
@@ -1681,12 +1681,16 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
   rpc_set_client_info(channel_id, copy_dict(info, NULL));
 }
 
-/// Gets information about a channel.
+/// Gets channel information.
 ///
-/// See |nvim_list_uis()| for an example of how to get channel info.
+/// Returns information about one or more channels depending on the filter options.
 ///
-/// @param chan channel_id, or 0 for current channel
-/// @returns Channel info dict with these keys:
+/// @param opts Optional parameters:
+///          - id: (integer) Channel id. If specified, returns info only for that channel.
+///          - buf: (integer) Buffer handle. Only return channels associated with this
+///            terminal buffer.
+///
+/// @returns Array of channel info dictionaries, each with these keys:
 ///    - "id"       Channel id.
 ///    - "argv"     (optional) Job arguments list.
 ///    - "stream"   Stream underlying the channel.
@@ -1704,29 +1708,33 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 ///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
 ///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
 ///                 by |nvim_set_client_info()|.
-///
-Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
-  FUNC_API_SINCE(4)
+ArrayOf(Dict) nvim_chan_get(uint64_t channel_id, Dict(get_chan) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(14)
 {
-  if (chan < 0) {
-    return (Dict)ARRAY_DICT_INIT;
+  Buffer filter_buf = 0;
+  Integer filter_id = 0;
+
+  if (HAS_KEY(opts, get_chan, id)) {
+    filter_id = opts->id;
+    if (filter_id < 0) {
+      api_set_error(err, kErrorTypeValidation, "Invalid channel id: %" PRId64, filter_id);
+      return (Array)ARRAY_DICT_INIT;
+    }
+    // id=0 means "current channel", resolve to calling channel's id
+    if (filter_id == 0 && !is_internal_call(channel_id)) {
+      assert(channel_id <= INT64_MAX);
+      filter_id = (Integer)channel_id;
+    }
   }
 
-  if (chan == 0 && !is_internal_call(channel_id)) {
-    assert(channel_id <= INT64_MAX);
-    chan = (Integer)channel_id;
+  if (HAS_KEY(opts, get_chan, buf)) {
+    filter_buf = opts->buf;
+    if (filter_buf != 0 && !find_buffer_by_handle(filter_buf, err)) {
+      return (Array)ARRAY_DICT_INIT;
+    }
   }
-  return channel_info((uint64_t)chan, arena);
-}
 
-/// Get information about all open channels.
-///
-/// @returns Array of Dictionaries, each describing a channel with
-///          the format specified at |nvim_get_chan_info()|.
-ArrayOf(Dict) nvim_list_chans(Arena *arena)
-  FUNC_API_SINCE(4)
-{
-  return channel_all_info(arena);
+  return channel_all_info(filter_id, filter_buf, arena);
 }
 
 // Functions used for testing purposes

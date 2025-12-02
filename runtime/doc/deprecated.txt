@@ -17,7 +17,8 @@ DEPRECATED IN 0.12					*deprecated-0.12*
 
 API
 
-• todo
+• nvim_get_chan_info()		Use |nvim_chan_get()| instead.
+• nvim_list_chans()		Use |nvim_chan_get()| instead.
 
 DIAGNOSTICS
 

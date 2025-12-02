@@ -143,6 +143,8 @@ The following new features were added.
 
 API
 
+• |nvim_chan_get()| unifies and replaces `nvim_list_chans()` and
+  `nvim_get_chan_info()`, with support for filtering by buffer.
 • |api-contract| allows existing functions to change return-type from `void => non-void`.
 • |nvim_win_text_height()| can limit the lines checked when a certain
   `max_height` is reached, and returns the `end_row` and `end_vcol` for which
