@@ -168,7 +168,7 @@ function! s:set_tmux() abort
   else
     let s:copy['+'] = ['tmux', 'load-buffer', '-']
   endif
-  let s:paste['+'] = ['tmux', 'save-buffer', '-']
+  let s:paste['+'] = ['sh', '-c', 'tmux refresh-client -l && sleep 0.05 && tmux save-buffer -']
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
   return 'tmux'
