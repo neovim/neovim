@@ -72,7 +72,7 @@ local all_clients = {}
 --- Milliseconds to wait for server to exit cleanly after sending the "shutdown" request before
 --- sending kill -15. If set to false, waits indefinitely. If set to true, nvim will kill the
 --- server immediately.
---- (default: `3000`)
+--- (default: `false`)
 --- @field exit_timeout? integer|boolean
 ---
 --- A table with flags for the client. The current (experimental) flags are:
@@ -160,7 +160,7 @@ local all_clients = {}
 --- Milliseconds to wait for server to exit cleanly after sending the "shutdown" request before
 --- sending kill -15. If set to false, waits indefinitely. If set to true, nvim will kill the
 --- server immediately.
---- (default: `3000`)
+--- (default: `false`)
 --- @field exit_timeout integer|boolean
 ---
 --- A table with flags for the client. The current (experimental) flags are:
@@ -398,7 +398,7 @@ function Client.create(config)
     commands = config.commands or {},
     settings = config.settings or {},
     flags = config.flags or {},
-    exit_timeout = config.exit_timeout == nil and 3000 or config.exit_timeout --[[@as integer|boolean]],
+    exit_timeout = config.exit_timeout or false,
     get_language_id = config.get_language_id or default_get_language_id,
     capabilities = config.capabilities,
     workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),
