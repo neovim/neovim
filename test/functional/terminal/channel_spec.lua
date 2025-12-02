@@ -146,7 +146,7 @@ describe('no crash when TermOpen autocommand', function()
     screen = Screen.new(60, 4)
   end)
 
-  it('processes job exit event when using jobstart(…,{term=true})', function()
+  it('processes job exit event on jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * call input('')]])
     async_meths.nvim_command('terminal foobar')
     screen:expect([[
