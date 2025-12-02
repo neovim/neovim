@@ -391,6 +391,8 @@ VIMSCRIPT
 • |wildtrigger()| triggers command-line expansion.
 • |v:vim_did_init| is set after sourcing |init.vim| but before |load-plugins|.
 
+• |sockconnect()| supports "on_close" callback.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

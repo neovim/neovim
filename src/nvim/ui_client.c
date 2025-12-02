@@ -299,7 +299,7 @@ static void channel_connect_event(void **argv)
   const char *err = "";
   bool is_tcp = !!strrchr(server_addr, ':');
   CallbackReader on_data = CALLBACK_READER_INIT;
-  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err);
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, CALLBACK_NONE, 50, &err);
 
   if (!strequal(err, "")) {
     ELOG("Cannot connect to server %s: %s", server_addr, err);

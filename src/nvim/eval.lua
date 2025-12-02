@@ -11062,7 +11062,8 @@ M.funcs = {
       socket.
 
       {opts} is an optional dictionary with these keys:
-        |on_data| : callback invoked when data was read from socket
+        |on_data| : callback invoked when data was read from socket.
+        on_close : callback invoked when socket is closed.
         data_buffered : read socket data in |channel-buffered| mode.
         rpc     : If set, |msgpack-rpc| will be used to communicate
       	    over the socket.
