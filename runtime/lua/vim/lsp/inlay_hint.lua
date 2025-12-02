@@ -440,7 +440,7 @@ end
 ---| 'textEdits' -- insert texts into the buffer
 ---| 'command' -- See 'workspace/executeCommand'
 ---| 'location' -- Jump to the location (usually the definition of the identifier or type)
----| 'tooltip' -- show a hover-like window, containing availabletooltips, commands and locations
+---| 'tooltip' -- show a hover-like window, containing available tooltips, commands and locations
 
 --- @alias vim.lsp.inlay_hint.action
 ---| vim.lsp.inlay_hint.action.name
@@ -926,6 +926,10 @@ function M.apply_action(action, opts, callback)
     end
   end
 
+  --- iterate through `clients` and requests for inlay hints.
+  --- If a client provides no inlay hint (`nil` or `{}`) for the given range, or the provided hints don't contain
+  --- the attributes needed for the the action, proceed to the next client. Otherwise, the action is
+  --- successful. Terminate the iteration.
   --- @param idx? integer
   --- @param client vim.lsp.Client
   local function do_action(idx, client)
