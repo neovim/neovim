@@ -394,6 +394,7 @@ function M.inspect_tree(opts)
   api.nvim_buf_clear_namespace(buf, treeview.ns, 0, -1)
   api.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
     desc = 'Jump to the node under the cursor in the source buffer',
+    nowait = true,
     callback = function()
       local row = api.nvim_win_get_cursor(w)[1]
       local lnum, col = treeview:get(row).node:start()
@@ -409,6 +410,7 @@ function M.inspect_tree(opts)
   })
   api.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
+    nowait = true,
     callback = function()
       local row, col = unpack(api.nvim_win_get_cursor(w)) ---@type integer, integer
       local curnode = treeview:get(row)
@@ -435,6 +437,7 @@ function M.inspect_tree(opts)
   })
   api.nvim_buf_set_keymap(b, 'n', 'I', '', {
     desc = 'Toggle language display',
+    nowait = true,
     callback = function()
       treeview.opts.lang = not treeview.opts.lang
       treeview:draw(b)
@@ -442,6 +445,7 @@ function M.inspect_tree(opts)
   })
   api.nvim_buf_set_keymap(b, 'n', 'o', '', {
     desc = 'Toggle query editor',
+    nowait = true,
     callback = function()
       local edit_w = vim.b[buf].dev_edit
       if not edit_w or not close_win(edit_w) then
@@ -449,8 +453,10 @@ function M.inspect_tree(opts)
       end
     end,
   })
-
-  api.nvim_buf_set_keymap(b, 'n', 'q', '<Cmd>wincmd c<CR>', { desc = 'Close language tree window' })
+  api.nvim_buf_set_keymap(b, 'n', 'q', '<Cmd>wincmd c<CR>', {
+    desc = 'Close language tree window',
+    nowait = true,
+  })
 
   local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
 
