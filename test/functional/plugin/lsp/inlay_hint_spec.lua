@@ -777,7 +777,6 @@ describe('vim.lsp.inlay_hint.apply_action', function()
     assert(curr_winid)
     local hint_count = exec_lua(function()
       local hint_count ---@type integer?
-      -- vim.api.nvim_cmd({ cmd = 'buf', args = { tostring(mocked_files.main.bufnr) } }, {})
       vim.api.nvim_win_set_cursor(curr_winid, { 8, 18 })
       vim.lsp.inlay_hint.apply_action(function(hints, ctx, cb)
         hint_count = #hints
@@ -827,6 +826,30 @@ describe('vim.lsp.inlay_hint.apply_action', function()
     eq(2, fetched_hint_count)
   end)
 
+  it('should exit when no clients', function()
+    local done = false
+    assert(curr_winid)
+    ---@type table
+    local ctx = exec_lua(function()
+      vim.api.nvim_win_set_cursor(curr_winid, { 8, 18 })
+      local on_finish_ctx ---@type table?
+      vim.lsp.inlay_hint.apply_action(function()
+        return 0
+      end, { clients = {} }, function(ctx)
+        on_finish_ctx = ctx
+        done = true
+      end)
+      vim.wait(wait_time, function()
+        return done
+      end)
+
+      assert(done)
+      return on_finish_ctx or { client = true } -- `on_finish_ctx` should be set to the actual ctx, and `client` should be `nil`
+    end)
+
+    eq(nil, ctx.client)
+  end)
+
   describe('textEdits', function()
     it('should insert textEdits', function()
       assert(curr_winid)
@@ -855,7 +878,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       )
     end)
 
-    it("should not insert when there's no textEdits", function()
+    it("should NOT insert when there's no textEdits", function()
       assert(curr_winid)
       local done = false
       exec_lua(function()
