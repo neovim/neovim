@@ -458,6 +458,7 @@ end
 --- Otherwise it'll be the original buffer.
 --- @field bufnr integer
 
+--- This should be called __exactly__ once in the action handler.
 --- @alias vim.lsp.inlay_hint.action.on_finish.callback fun(ctx: vim.lsp.inlay_hint.action.on_finish.context)
 
 --- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
@@ -796,19 +797,25 @@ local inlayhint_actions = {
         :totable(),
       { prompt = 'Command to execute' },
       function(_, idx)
+        if idx == nil then
+          if type(on_finish) == 'function' then
+            on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+          end
+          return
+        end
         ctx.client:request('workspace/executeCommand', hint_labels[idx].label.command, function(...)
           local default_handler = ctx.client.handlers['workspace/executeCommand']
             or vim.lsp.handlers['workspace/executeCommand']
           if default_handler then
             default_handler(...)
           end
-          on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+          if type(on_finish) == 'function' then
+            on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+          end
         end, ctx.bufnr)
       end
     )
-    if type(on_finish) == 'function' then
-      on_finish({ bufnr = ctx.bufnr, client = ctx.client })
-    end
+
     return 1
   end,
 }
@@ -872,13 +879,11 @@ function M.apply_action(action, opts, callback)
   local on_finish_cb_called = false
   if type(callback) == 'function' then
     local original_callback = callback
-
+    -- decorate the `on_finish` callback to make sure it only called once.
     callback = function(...)
-      assert(not on_finish_cb_called)
-      if not on_finish_cb_called then
-        on_finish_cb_called = true
-        return original_callback(...)
-      end
+      assert(not on_finish_cb_called, 'The callback should only be called once.')
+      on_finish_cb_called = true
+      return original_callback(...)
     end
   end
 

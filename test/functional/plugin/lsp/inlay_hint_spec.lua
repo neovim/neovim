@@ -517,6 +517,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
             },
             uri = mocked_files.lib.uri,
           },
+          command = { title = 'Dummy command', command = 'dummy_command' },
           tooltip = 'string tooltip',
           value = 'MyStruct',
         },
@@ -719,11 +720,16 @@ describe('vim.lsp.inlay_hint.apply_action', function()
     end)
 
     exec_lua(function()
+      _G.command_called = {}
       _G.server = _G._create_server({
         capabilities = {
           inlayHintProvider = { resolveProvider = true },
         },
         handlers = {
+          ['workspace/executeCommand'] = function(_, param, callback)
+            table.insert(_G.command_called, param)
+            callback(nil, {})
+          end,
           ---@param param lsp.InlayHintParams
           ['textDocument/inlayHint'] = function(_, param, callback)
             local buf = vim.uri_to_bufnr(param.textDocument.uri)
@@ -951,6 +957,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       '',
       'string tooltip',
       '_Location_: `/src/lib.rs`:0',
+      '_Command_: Dummy command',
     }
     it('should show tooltip when available', function()
       assert(curr_winid)
@@ -1000,6 +1007,50 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         assert(done)
       end)
       eq(buf_count, #n.api.nvim_list_bufs())
+    end)
+  end)
+
+  describe('command', function()
+    it('execute command when available', function()
+      assert(curr_winid)
+      local done = false
+      local command_called = exec_lua(function()
+        local bufnr = mocked_files.main.bufnr
+        vim.lsp.inlay_hint.apply_action(
+          'command',
+          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
+          function(_)
+            done = true
+          end
+        )
+        vim.wait(wait_time, function()
+          return done
+        end)
+        assert(done)
+        return _G.command_called
+      end)
+      eq(1, #command_called)
+    end)
+
+    it('should NOT execute command when not available', function()
+      assert(curr_winid)
+      local done = false
+      local command_called = exec_lua(function()
+        local bufnr = mocked_files.main.bufnr
+        vim.lsp.inlay_hint.apply_action(
+          'command',
+          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
+          function(_)
+            done = true
+          end
+        )
+        vim.wait(wait_time, function()
+          return done
+        end)
+        assert(done)
+        return _G.command_called
+      end)
+      eq(0, #command_called)
     end)
   end)
 end)
