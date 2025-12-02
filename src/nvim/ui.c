@@ -538,8 +538,6 @@ void ui_flush(void)
 
   static bool was_busy = false;
 
-  cmdline_ui_flush();
-
   if (!(State & MODE_CMDLINE) && curwin->w_floating && curwin->w_config.hide) {
     if (!was_busy) {
       ui_call_busy_start();
@@ -551,7 +549,11 @@ void ui_flush(void)
   }
 
   win_ui_flush(false);
-  msg_ext_ui_flush();
+  // Avoid flushing callbacks expected to change text during textlock.
+  if (textlock == 0) {
+    cmdline_ui_flush();
+    msg_ext_ui_flush();
+  }
   msg_scroll_flush();
 
   if (pending_cursor_update) {
@@ -744,10 +746,6 @@ void ui_call_event(char *name, bool fast, Array args)
   bool handled = false;
   UIEventCallback *event_cb;
 
-  // UI callbacks need to be allowed to change text.
-  int save_textlock = textlock;
-  textlock = 0;
-
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;
@@ -762,7 +760,6 @@ void ui_call_event(char *name, bool fast, Array args)
     }
     api_clear_error(&err);
   })
-  textlock = save_textlock;
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);
