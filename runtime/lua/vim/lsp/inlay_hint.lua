@@ -880,7 +880,7 @@ function M.apply_action(action, opts, callback)
 
   --- @param idx? integer
   --- @param client vim.lsp.Client
-  local function do_insert(idx, client)
+  local function do_action(idx, client)
     if idx == nil then
       -- terminate the iteration
       if type(callback) == 'function' and not on_finish_cb_called then
@@ -906,7 +906,7 @@ function M.apply_action(action, opts, callback)
       function(_, result, _, _)
         if result == nil then
           -- result is nil. Proceed to next client.
-          return do_insert(next(clients, idx))
+          return do_action(next(clients, idx))
         end
 
         --- @type lsp.InlayHint[]
@@ -923,14 +923,14 @@ function M.apply_action(action, opts, callback)
 
         if #hints == 0 then
           -- no hints in the given range.
-          return do_insert(next(clients, idx))
+          return do_action(next(clients, idx))
         end
 
         if not support_resolve then
           -- no need to resolve because the client doesn't support it.
           if action_handler(hints, action_ctx, callback) == 0 then
             -- no actions invoked. proceed with the client.
-            return do_insert(next(clients, idx))
+            return do_action(next(clients, idx))
           else
             -- we're done with the actions.
             if type(callback) == 'function' and not on_finish_cb_called then
@@ -956,7 +956,7 @@ function M.apply_action(action, opts, callback)
 
             if num_processed == #hints then
               if action_handler(hints, action_ctx, callback) == 0 then
-                return do_insert(next(clients, idx))
+                return do_action(next(clients, idx))
               else
                 if type(callback) == 'function' and not on_finish_cb_called then
                   callback(action_ctx)
@@ -971,7 +971,7 @@ function M.apply_action(action, opts, callback)
     )
   end
 
-  do_insert(next(clients))
+  do_action(next(clients))
 end
 
 return M
