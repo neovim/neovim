@@ -444,7 +444,7 @@ end
 
 --- @alias vim.lsp.inlay_hint.action
 ---| vim.lsp.inlay_hint.action.name
----| vim.lsp.inlay_hint.action.callback
+---| vim.lsp.inlay_hint.action.handler
 
 --- @class vim.lsp.inlay_hint.action.context
 --- @inlinedoc
@@ -460,7 +460,7 @@ end
 
 --- @alias vim.lsp.inlay_hint.action.on_finish.callback fun(ctx: vim.lsp.inlay_hint.action.on_finish.context)
 
---- @alias vim.lsp.inlay_hint.action.callback fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
+--- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
 
 --- @class (private) vim.lsp.inlay_hint.action.LocationItem
 --- @field hint_name string
@@ -482,6 +482,7 @@ local action_helpers = {
     if type(hint.label) == 'string' then
       label = tostring(hint.label)
     elseif vim.islist(hint.label) then
+      ---@type string
       label = vim
         .iter(hint.label)
         :map(
@@ -607,7 +608,7 @@ action_helpers.get_hint_labels = function(hint, needed_fields)
   end
 end
 
---- @type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.callback>
+--- @type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.handler>
 local inlayhint_actions = {
   textEdits = function(hints, ctx, on_finish)
     local valid_hints = vim
@@ -839,17 +840,17 @@ local inlayhint_actions = {
 --- - `"tooltip"`
 --- - `"location"`
 --- - `"command"`
---- - a custom callback:
+--- - a custom handler:
 --- `fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context):integer`, which accepts the resolved inlay hints in the given range and some context, perform some actions and returns the number of hints on which the actions were taken.
 --- @param opts? vim.lsp.inlay_hint.action.Opts
 --- @param callback? vim.lsp.inlay_hint.action.on_finish.callback This will be invoked when the action is finished.
 function M.apply_action(action, opts, callback)
-  local action_callback = action
+  local action_handler = action
   if type(action) == 'string' then
-    action_callback = inlayhint_actions[action]
-    --- @cast action_callback -vim.lsp.inlay_hint.action.name
+    action_handler = inlayhint_actions[action]
+    --- @cast action_handler -vim.lsp.inlay_hint.action.name
   end
-  if type(action_callback) ~= 'function' then
+  if type(action_handler) ~= 'function' then
     return error('Unsupported action: ' .. action)
   end
 
@@ -927,7 +928,7 @@ function M.apply_action(action, opts, callback)
 
         if not support_resolve then
           -- no need to resolve because the client doesn't support it.
-          if action_callback(hints, action_ctx, callback) == 0 then
+          if action_handler(hints, action_ctx, callback) == 0 then
             -- no actions invoked. proceed with the client.
             return do_insert(next(clients, idx))
           else
@@ -954,7 +955,7 @@ function M.apply_action(action, opts, callback)
             num_processed = num_processed + 1
 
             if num_processed == #hints then
-              if action_callback(hints, action_ctx, callback) == 0 then
+              if action_handler(hints, action_ctx, callback) == 0 then
                 return do_insert(next(clients, idx))
               else
                 if type(callback) == 'function' and not on_finish_cb_called then
