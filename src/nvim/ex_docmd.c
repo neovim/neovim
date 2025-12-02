@@ -5613,7 +5613,7 @@ static void ex_tabs(exarg_T *eap)
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (got_int) {
         break;
-      } else if (!wp->w_config.focusable) {
+      } else if (!wp->w_config.focusable || wp->w_config.hide) {
         continue;
       }
 
