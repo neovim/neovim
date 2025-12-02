@@ -9428,6 +9428,16 @@ local options = {
       varname = 'p_tgst',
     },
     {
+      defaults = 'nvim',
+      deny_in_modelines = true,
+      full_name = 'term',
+      immutable = true,
+      no_mkrc = true,
+      scope = { 'global' },
+      short_desc = N_('terminal type'),
+      type = 'string',
+    },
+    {
       abbreviation = 'tbidi',
       defaults = false,
       desc = [=[

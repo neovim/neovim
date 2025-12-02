@@ -2055,10 +2055,10 @@ describe('API', function()
     end)
 
     it('tty options #31860', function()
-      -- 'term' is a special option not in the regular option table (read-only)
+      -- 'term' is an immutable option
       eq('string', type(api.nvim_get_option_value('term', {})))
-      -- Setting 'term' should fail
-      eq("Unknown option 'term'", pcall_err(api.nvim_set_option_value, 'term', 'foo', {}))
+      -- Setting 'term' should fail (immutable option)
+      matches('E519:', pcall_err(api.nvim_set_option_value, 'term', 'foo', {}))
     end)
   end)
 

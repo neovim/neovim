@@ -1033,9 +1033,8 @@ static int validate_opt_idx(win_T *win, OptIndex opt_idx, int opt_flags, uint32_
 /// option name.
 static const char *find_tty_option_end(const char *arg)
 {
-  if (strequal(arg, "term")) {
-    return arg + sizeof("term") - 1;
-  } else if (strequal(arg, "ttytype")) {
+  // Note: 'term' is now a proper option (kOptTerm), only 'ttytype' is handled here.
+  if (strequal(arg, "ttytype")) {
     return arg + sizeof("ttytype") - 1;
   }
 
@@ -3020,6 +3019,7 @@ OptVal get_tty_option(const char *name)
 {
   char *value = NULL;
 
+  // Note: 'term' is now a proper option (kOptTerm), handled via normal option system.
   if (strequal(name, "t_Co")) {
     if (t_colors <= 1) {
       value = xstrdup("");
@@ -3027,8 +3027,6 @@ OptVal get_tty_option(const char *name)
       value = xmalloc(NUMBUFLEN);
       snprintf(value, NUMBUFLEN, "%d", t_colors);
     }
-  } else if (strequal(name, "term")) {
-    value = p_term ? xstrdup(p_term) : xstrdup("nvim");
   } else if (strequal(name, "ttytype")) {
     value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
   } else if (is_tty_option(name)) {
@@ -3041,6 +3039,7 @@ OptVal get_tty_option(const char *name)
 
 bool set_tty_option(const char *name, char *value)
 {
+  // Note: 'term' is a proper option (kOptTerm) but can be set internally by the TUI.
   if (strequal(name, "term")) {
     if (p_term) {
       xfree(p_term);
@@ -3156,6 +3155,11 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
   // changed.
   if ((int *)varp == &curbuf->b_changed) {
     return BOOLEAN_OPTVAL(curbufIsChanged());
+  }
+
+  // Special case: 'term' uses p_term (set by TUI) if available, otherwise the default.
+  if (opt_idx == kOptTerm && p_term != NULL) {
+    return STRING_OPTVAL(cstr_as_string(p_term));
   }
 
   OptValType type = option_get_type(opt_idx);
