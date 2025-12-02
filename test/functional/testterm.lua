@@ -200,9 +200,8 @@ function M.setup_child_nvim(args, opts)
   local argv = { nvim_prog, unpack(args or {}) }
 
   local env = opts.env or {}
-  if not env.VIMRUNTIME then
-    env.VIMRUNTIME = os.getenv('VIMRUNTIME')
-  end
+  env.VIMRUNTIME = env.VIMRUNTIME or os.getenv('VIMRUNTIME')
+  env.NVIM_TEST = env.NVIM_TEST or os.getenv('NVIM_TEST')
 
   return M.setup_screen(opts.extra_rows, argv, opts.cols, env)
 end

@@ -610,21 +610,22 @@ function M._new_argv(...)
         assert(type(v) == 'string')
         env_opt[k] = v
       end
+      -- Set these from the environment unless the caller defined them.
       for _, k in ipairs({
-        'HOME',
         'ASAN_OPTIONS',
-        'TSAN_OPTIONS',
-        'MSAN_OPTIONS',
+        'GCOV_ERROR_FILE',
+        'HOME',
         'LD_LIBRARY_PATH',
-        'PATH',
+        'MSAN_OPTIONS',
+        'NVIM_TEST',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
-        'GCOV_ERROR_FILE',
-        'XDG_DATA_DIRS',
+        'PATH',
         'TMPDIR',
+        'TSAN_OPTIONS',
         'VIMRUNTIME',
+        'XDG_DATA_DIRS',
       }) do
-        -- Set these from the environment unless the caller defined them.
         if not env_opt[k] then
           env_opt[k] = os.getenv(k)
         end

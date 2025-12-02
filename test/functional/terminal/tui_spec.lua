@@ -3159,8 +3159,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 end)
 
--- These tests require `tt` because --headless/--embed
--- does not initialize the TUI.
+-- These tests require `tt` because --headless/--embed does not initialize the TUI.
 describe("TUI 't_Co' (terminal colors)", function()
   local screen
 
@@ -3439,8 +3438,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   end)
 end)
 
--- These tests require `tt` because --headless/--embed
--- does not initialize the TUI.
+-- These tests require `tt` because --headless/--embed does not initialize the TUI.
 describe("TUI 'term' option", function()
   local screen
 
@@ -3491,8 +3489,7 @@ describe("TUI 'term' option", function()
   end)
 end)
 
--- These tests require `tt` because --headless/--embed
--- does not initialize the TUI.
+-- These tests require `tt` because --headless/--embed does not initialize the TUI.
 describe('TUI', function()
   local screen
 

@@ -1,3 +1,4 @@
+set(ENV{NVIM_TEST} "1")
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
 set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
