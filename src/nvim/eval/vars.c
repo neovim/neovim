@@ -2483,7 +2483,6 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
 static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char **varname,
                                    dict_T **d)
 {
-  funccall_T *funccal = get_funccal();
   *d = NULL;
 
   if (name_len == 0) {
@@ -2503,11 +2502,12 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
       return &compat_hashtab;
     }
 
-    if (funccal == NULL) {  // global variable
-      *d = get_globvar_dict();
-    } else {  // l: variable
-      *d = &funccal->fc_l_vars;
+    *d = get_funccal_local_dict();
+    if (*d != NULL) {  // local variable
+      goto end;
     }
+
+    *d = get_globvar_dict();  // global variable
     goto end;
   }
 
@@ -2529,10 +2529,10 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
     *d = curtab->tp_vars;
   } else if (*name == 'v') {  // v: variable
     *d = get_vimvar_dict();
-  } else if (*name == 'a' && funccal != NULL) {  // function argument
-    *d = &funccal->fc_l_avars;
-  } else if (*name == 'l' && funccal != NULL) {  // local variable
-    *d = &funccal->fc_l_vars;
+  } else if (*name == 'a') {  // a: function argument
+    *d = get_funccal_args_dict();
+  } else if (*name == 'l') {  // l: local variable
+    *d = get_funccal_local_dict();
   } else if (*name == 's'  // script variable
              && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_STR
                  || current_sctx.sc_sid == SID_LUA)
