@@ -530,9 +530,16 @@ local action_helpers = {
   --- @param base string?
   --- @return string
   cleanup_path = function(path, base)
-    path = vim.fs.abspath(path)
-    base = base or vim.env.HOME
-    return vim.fs.relpath(base, path, {}) or path
+    ---@type string?
+    local result = nil
+    if base then
+      -- relative to `base`
+      result = vim.fs.relpath(base, path)
+    end
+    if result == nil then
+      result = vim.fn.fnamemodify(path, ':p:~')
+    end
+    return result
   end,
 
   --- build the range from normal or visual mode based on cursor position.
