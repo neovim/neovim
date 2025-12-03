@@ -561,7 +561,7 @@ func Test_execute_register()
   new
   call feedkeys("@=\<BS>ax\<CR>y", 'xt')
   call assert_equal(['x', 'y'], getline(1, '$'))
-  close!
+  bw!
 
   " cannot execute a register in operator pending mode
   call assert_beeps('normal! c@r')

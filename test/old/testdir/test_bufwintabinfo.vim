@@ -112,6 +112,7 @@ func Test_getbufwintabinfo()
   call assert_true(winlist[2].quickfix)
   call assert_false(winlist[2].loclist)
   wincmd t | only
+  %bw!
 endfunc
 
 function Test_get_wininfo_leftcol()
