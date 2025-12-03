@@ -12,9 +12,10 @@ local globalstate = {
 }
 
 ---@class (private) vim.lsp.inlay_hint.bufstate: vim.lsp.inlay_hint.globalstate Buffer local state for inlay hints
----@field version? integer
+---@field version? integer Latest document version for which client hints are kept
 ---@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
----@field applied table<integer, integer> Last version of hints applied to this line
+---@field applied table<integer, table<integer, integer>> lnum -> (client_id -> version)
+--- Last version of hints applied to a line for each client
 ---@type table<integer, vim.lsp.inlay_hint.bufstate>
 local bufstates = vim.defaulttable(function(_)
   return setmetatable({ applied = {} }, {
@@ -31,6 +32,30 @@ end)
 
 local namespace = api.nvim_create_namespace('nvim.lsp.inlayhint')
 local augroup = api.nvim_create_augroup('nvim.lsp.inlayhint', {})
+
+--- Converts character positions to correct byte indices for each hint
+--- Groups hints by line number
+---@param client vim.lsp.Client
+---@param bufnr integer
+---@param hints lsp.InlayHint[]
+---@return table<integer, lsp.InlayHint[]>
+local function extract_lnum_hints(client, bufnr, hints)
+  local lnum_hints = vim.defaulttable()
+  if #hints == 0 then
+    return lnum_hints
+  end
+
+  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  for _, hint in ipairs(hints) do
+    local lnum = hint.position.line
+    local line = lines and lines[lnum + 1] or ''
+    hint.position.character =
+      vim.str_byteindex(line, client.offset_encoding, hint.position.character, false)
+    table.insert(lnum_hints[lnum], hint)
+  end
+
+  return lnum_hints
+end
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
@@ -52,36 +77,44 @@ function M.on_inlayhint(err, result, ctx)
     return
   end
   local client_id = ctx.client_id
-  local bufstate = bufstates[bufnr]
-  if not (bufstate.client_hints and bufstate.version) then
-    bufstate.client_hints = vim.defaulttable()
-    bufstate.version = ctx.version
-  end
-  local client_hints = bufstate.client_hints
   local client = assert(vim.lsp.get_client_by_id(client_id))
-
-  local new_lnum_hints = vim.defaulttable()
-  local num_unprocessed = #result
-  if num_unprocessed == 0 then
-    client_hints[client_id] = {}
+  local bufstate = bufstates[bufnr]
+  if not bufstate.client_hints then
+    bufstate.client_hints = {}
+  end
+  if not bufstate.version then
     bufstate.version = ctx.version
-    api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
-    return
+  elseif bufstate.version < ctx.version then
+    bufstate.version = ctx.version
+    -- remove outdated client hints
+    bufstate.client_hints = {}
   end
 
-  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-  for _, hint in ipairs(result) do
-    local lnum = hint.position.line
-    local line = lines and lines[lnum + 1] or ''
-    hint.position.character =
-      vim.str_byteindex(line, client.offset_encoding, hint.position.character, false)
-    table.insert(new_lnum_hints[lnum], hint)
-  end
-
-  client_hints[client_id] = new_lnum_hints
-  bufstate.version = ctx.version
+  bufstate.client_hints[client_id] = extract_lnum_hints(client, bufnr, result)
   api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+
+  -- local new_lnum_hints = vim.defaulttable()
+  -- local num_unprocessed = #result
+  -- if num_unprocessed == 0 then
+  --   client_hints[client_id] = {}
+  --   bufstate.version = ctx.version
+  --   api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+  --   return
+  -- end
+
+  -- local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+  -- for _, hint in ipairs(result) do
+  --   local lnum = hint.position.line
+  --   local line = lines and lines[lnum + 1] or ''
+  --   hint.position.character =
+  --     vim.str_byteindex(line, client.offset_encoding, hint.position.character, false)
+  --   table.insert(new_lnum_hints[lnum], hint)
+  -- end
+
+  -- client_hints[client_id] = new_lnum_hints
+  -- bufstate.version = ctx.version
+  -- api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
 end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
@@ -212,7 +245,7 @@ local function clear(bufnr)
   local client_ids = vim.tbl_keys(client_lens) --- @type integer[]
   for _, iter_client_id in ipairs(client_ids) do
     if bufstate then
-      bufstate.client_hints[iter_client_id] = {}
+      bufstate.client_hints[iter_client_id] = nil
     end
   end
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
@@ -245,6 +278,26 @@ local function _enable(bufnr)
   bufstates[bufnr] = nil
   bufstates[bufnr].enabled = true
   _refresh(bufnr)
+end
+
+--- Check if applied hints are up to date
+---@param client_hints table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
+---@param client_hints_applied table<integer, integer> client_id -> version
+---@param curr_version integer
+local function is_applied_up_to_date(client_hints, client_hints_applied, curr_version)
+  -- check for line hints from previous version
+  for client_id, _ in pairs(client_hints) do
+    if client_hints_applied[client_id] ~= curr_version then
+      return false
+    end
+  end
+  -- check for line hints from clients that are no longer available
+  for client_id, _ in pairs(client_hints_applied) do
+    if not client_hints[client_id] then
+      return false
+    end
+  end
+  return true
 end
 
 api.nvim_create_autocmd('LspNotify', {
@@ -314,15 +367,20 @@ api.nvim_set_decoration_provider(namespace, {
     if not bufstate.client_hints then
       return
     end
+
     local client_hints = assert(bufstate.client_hints)
 
     for lnum = topline, botline do
-      if bufstate.applied[lnum] ~= bufstate.version then
+      local should_redraw =
+        not is_applied_up_to_date(client_hints, bufstate.applied[lnum] or {}, bufstate.version)
+
+      if should_redraw then
         api.nvim_buf_clear_namespace(bufnr, namespace, lnum, lnum + 1)
 
+        -- create virtual texts from hints
         local hint_virtual_texts = {} --- @type table<integer, [string, string?][]>
-        for _, lnum_hints in pairs(client_hints) do
-          local hints = lnum_hints[lnum] or {}
+        for _, line_hints in pairs(client_hints) do
+          local hints = line_hints[lnum] or {}
           for _, hint in pairs(hints) do
             local text = ''
             local label = hint.label
@@ -353,7 +411,12 @@ api.nvim_set_decoration_provider(namespace, {
           })
         end
 
-        bufstate.applied[lnum] = bufstate.version
+        -- update set of currently applied line hint versions for each client
+        local client_hints_applied = {} ---@type table<integer, integer>
+        for client_id, _ in pairs(client_hints) do
+          client_hints_applied[client_id] = bufstate.version
+        end
+        bufstate.applied[lnum] = client_hints_applied
       end
     end
   end,
