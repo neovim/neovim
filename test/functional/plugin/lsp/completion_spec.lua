@@ -1301,6 +1301,24 @@ describe('vim.lsp.completion: protocol', function()
       eq({ triggerKind = 2, triggerCharacter = 'h' }, exec_lua('return _G.params.context'))
     end)
   end)
+  it('preselect completion item', function()
+    create_server('dummy', {
+      isIncomplete = false,
+      items = {
+        { label = 'aaa' },
+        { label = 'zzz', preselect = true },
+        { label = 'mmm' },
+      },
+    })
+    feed('i')
+    trigger_at_pos({ 1, 0 })
+    assert_matches(function(matches)
+      eq(3, #matches)
+      eq('zzz', matches[1].abbr)
+      eq('aaa', matches[2].abbr)
+      eq('mmm', matches[3].abbr)
+    end)
+  end)
 end)
 
 describe('vim.lsp.completion: integration', function()

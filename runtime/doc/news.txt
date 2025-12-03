@@ -283,6 +283,7 @@ LSP
   the `version` property in the notification params.
 • |vim.lsp.ClientConfig| has an `exit_timeout` field to control the timeout of
   client force stopping. Defaults to 3000 milliseconds.
+• Add preselect field to opts of |vim.lsp.completion.enable()| for completion preselect.
 
 LUA
 
