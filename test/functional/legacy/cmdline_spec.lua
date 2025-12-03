@@ -579,11 +579,12 @@ describe('cmdline', function()
 
     -- pum is closed when no completion candidates are available
     feed('<F8>')
-    screen:expect([[
+    local s3 = [[
                                               |
       {1:~                                       }|*8
       :TestCmd ax^                             |
-    ]])
+    ]]
+    screen:expect(s3)
 
     feed('<BS><F8>')
     screen:expect(s1)
@@ -598,6 +599,16 @@ describe('cmdline', function()
       {1:~                                       }|*8
                                               |
     ]])
+
+    feed(':TestCmd a<F8>')
+    screen:expect(s1)
+    command('redraw')
+    screen:expect_unchanged()
+    feed('x')
+    screen:expect(s2)
+    -- outdated pum is closed by :redraw #36808
+    command('redraw')
+    screen:expect(s3)
   end)
 
   -- oldtest: Test_long_line_noselect()

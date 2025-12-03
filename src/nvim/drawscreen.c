@@ -684,6 +684,8 @@ int update_screen(void)
   if (pum_drawn() && must_redraw_pum) {
     win_check_ns_hl(curwin);
     pum_redraw();
+  } else if (State & MODE_CMDLINE) {
+    pum_check_clear();
   }
 
   win_check_ns_hl(NULL);
