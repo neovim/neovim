@@ -104,4 +104,39 @@ describe('has()', function()
     fn.has('python3') -- use a call whose implementation shells out
     eq(73, fn.eval('v:shell_error'))
   end)
+
+  it('"patch[0-9]\\+"', function()
+    eq(1, fn.has('patch0'))
+    eq(1, fn.has('patch1'))
+  end)
+
+  it('"patch-x.y.z"', function()
+    -- versions older than current v:version always succeed
+    -- unless minor version has 2+ digits
+    eq(1, fn.has('patch-7.4.0'))
+    eq(0, fn.has('patch-7.40.0'))
+    eq(1, fn.has('patch-8.0.0'))
+    eq(0, fn.has('patch-8.00.0'))
+
+    eq(1, fn.has('patch-8.1.0'))
+    eq(1, fn.has('patch-8.1.1'))
+    eq(1, fn.has('patch-8.1.0001'))
+    eq(1, fn.has('patch-8.1.1939'))
+    eq(1, fn.has('patch-8.1.2424'))
+
+    eq(0, fn.has('patch-8.2.0'))
+    eq(1, fn.has('patch-8.2.1'))
+    eq(1, fn.has('patch-8.2.2999'))
+    eq(1, fn.has('patch-8.2.5171'))
+
+    eq(0, fn.has('patch-9.0.0'))
+    eq(1, fn.has('patch-9.0.1'))
+    eq(1, fn.has('patch-9.0.998'))
+    eq(1, fn.has('patch-9.0.2190'))
+
+    eq(0, fn.has('patch-9.1.0'))
+    eq(1, fn.has('patch-9.1.1'))
+    eq(1, fn.has('patch-9.1.690'))
+    eq(1, fn.has('patch-9.1.1934'))
+  end)
 end)

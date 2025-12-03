@@ -2812,14 +2812,10 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           int minor = atoi(end + 1);
 
           // Expect "patch-9.9.01234".
-          n = (major < VIM_VERSION_MAJOR
-               || (major == VIM_VERSION_MAJOR
-                   && (minor < VIM_VERSION_MINOR
-                       || (minor == VIM_VERSION_MINOR
-                           && has_vim_patch(atoi(end + 3))))));
+          n = has_vim_patch(atoi(end + 3), major * 100 + minor);
         }
       } else if (ascii_isdigit(name[5])) {
-        n = has_vim_patch(atoi(name + 5));
+        n = has_vim_patch(atoi(name + 5), 0);
       }
     } else if (STRNICMP(name, "nvim-", 5) == 0) {
       // Expect "nvim-x.y.z"
