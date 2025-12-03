@@ -619,22 +619,15 @@ describe('vim.lsp.diagnostic', function()
             diagnosticProvider = {},
           },
           handlers = {
-            ['textDocument/diagnostic'] = function(_, params)
+            ['textDocument/diagnostic'] = function(_, _, callback)
               _G.params = params
               _G.requests = _G.requests + 1
-              vim.lsp.diagnostic.on_diagnostic(nil, {
+              callback(nil, {
                 kind = 'full',
                 items = {
                   _G.make_warning('Pull Diagnostic', 4, 4, 4, 4),
                 },
-              }, {
-                params = {
-                  textDocument = { uri = fake_uri },
-                },
-                uri = fake_uri,
-                client_id = client_id,
-                bufnr = diagnostic_bufnr,
-              }, {})
+              })
             end,
           },
         })
