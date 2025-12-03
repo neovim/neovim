@@ -941,7 +941,7 @@ local inlayhint_actions = {
 --- - a custom handler with 3 parameters:
 ---   - `hints`: `lsp.InlayHint[]` a list of inlay hints in the requested range.
 ---   - `ctx`: `{bufnr: integer, client: vim.lsp.Client}` the buffer number on which the action is taken, and the LSP client that provides `hints`.
----   - `on_finish`: `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})` see the `callback` parameter of |vim.lsp.inlay_hint.apply_action|.
+---   - `on_finish`: `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})` see the `callback` parameter of `vim.lsp.inlay_hint.apply_action`.
 ---     When implementing a custom handler, the `on_finish` callback should be called when the handler is returning a non-zero value.
 ---
 ---   This custom handler should also return the number of items in `hints` that contributed to the action. For example, the `location` handler should return `1` on a successful jump because the target location is from 1 inlay hint object, regardless of the number of hints in `hints`.
