@@ -620,7 +620,6 @@ describe('vim.lsp.diagnostic', function()
           },
           handlers = {
             ['textDocument/diagnostic'] = function(_, _, callback)
-              _G.params = params
               _G.requests = _G.requests + 1
               callback(nil, {
                 kind = 'full',
