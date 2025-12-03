@@ -440,6 +440,7 @@ end
 ---| 'textEdits' -- insert texts into the buffer
 ---| 'command' -- See 'workspace/executeCommand'
 ---| 'location' -- Jump to the location (usually the definition of the identifier or type)
+---| 'hover' -- show a hover window of the symbols shown in the inlay hint
 ---| 'tooltip' -- show a hover-like window, containing available tooltips, commands and locations
 
 --- @alias vim.lsp.inlay_hint.action
@@ -714,6 +715,68 @@ local inlayhint_actions = {
     return count
   end,
 
+  hover = function(hints, ctx, on_finish)
+    if #hints ~= 1 then
+      vim.schedule(function()
+        vim.notify(
+          'vim.lsp.inlay_hint.apply_action("tooltip") only supports showing tooltips for a single inlay hint.',
+          vim.log.levels.WARN
+        )
+      end)
+    end
+    local hint = hints[1]
+    local hint_labels = action_helpers.get_hint_labels(hint, { 'location' })
+    if hint_labels == nil then
+      return 0
+    end
+
+    ---@type string[]
+    local lines = {}
+
+    --- Go though the labels to build the content of the hover
+    ---@param idx integer?
+    ---@param item vim.lsp.inlay_hint.action.hint_label?
+    local function get_hover(idx, item)
+      if idx == nil or item == nil then
+        -- all locations have been processed
+        -- open the hover window
+        if #lines == 0 then
+          lines = { 'Empty' }
+        end
+        local float_buf, _ = util.open_floating_preview(lines, 'markdown')
+        if on_finish then
+          on_finish({ client = ctx.client, bufnr = float_buf })
+        end
+        return
+      end
+      ---@type lsp.HoverParams
+      local hover_param = {
+        textDocument = { uri = item.label.location.uri },
+        position = item.label.location.range.start,
+      }
+      ctx.client:request(
+        'textDocument/hover',
+        hover_param,
+        ---@param result lsp.Hover?
+        function(_, result, _, _)
+          if result then
+            if #lines > 0 then
+              -- blank line between label parts
+              lines[#lines + 1] = ''
+            end
+            lines[#lines + 1] = string.format('# `%s`', item.label.value)
+            vim.list_extend(lines, util.convert_input_to_markdown_lines(result.contents))
+          end
+          get_hover(next(hint_labels, idx))
+        end,
+        ctx.bufnr
+      )
+    end
+
+    get_hover(next(hint_labels))
+    return 1
+  end,
+
   tooltip = function(hints, ctx, on_finish)
     if #hints ~= 1 then
       vim.schedule(function()
@@ -871,6 +934,8 @@ local inlayhint_actions = {
 --- - `"textEdits"`: insert `textEdits` that comes with the inlay hints.
 --- - `"location"`: jump to one of the locations associated with the inlay hints.
 --- - `"command"`: execute one of the `lsp.Command`s that comes with the inlay hint.
+--- - `"hover"`: if there are some locations associated with the inlay hint, show the hover
+---   information of the identifiers at those locations.
 --- - `"tooltip"`: show a hover-like window that contains the `tooltip`, available `command`s and
 ---   `location`s that comes with the inlay hint.
 --- - a custom handler with 3 parameters:
