@@ -754,6 +754,35 @@ describe('vim.lsp.inlay_hint.apply_action', function()
               callback(nil, params)
             end
           end,
+          ---@param params lsp.HoverParams
+          ['textDocument/hover'] = function(_, params, callback)
+            local pos = params.position
+            if
+              params.textDocument.uri == mocked_files.lib.uri
+              and pos.line == 0
+              and pos.character >= 11
+              and pos.character < 19
+            then
+              callback(nil, {
+                contents = {
+                  kind = 'markdown',
+                  value = '\n```rust\ndummy\n```\n\n```rust\npub struct MyStruct {\n    pub value: i32,\n}\n```\n\n---\n\nsize = 4, align = 0x4',
+                },
+                range = {
+                  ['end'] = {
+                    character = 19,
+                    line = 0,
+                  },
+                  start = {
+                    character = 11,
+                    line = 0,
+                  },
+                },
+              })
+            else
+              callback()
+            end
+          end,
         },
       })
 
@@ -996,6 +1025,74 @@ describe('vim.lsp.inlay_hint.apply_action', function()
         local bufnr = mocked_files.main.bufnr
         vim.lsp.inlay_hint.apply_action(
           'tooltip',
+          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
+          function(_)
+            done = true
+          end
+        )
+        vim.wait(wait_time, function()
+          return done
+        end)
+        assert(done)
+      end)
+      eq(buf_count, #api.nvim_list_bufs())
+    end)
+  end)
+
+  describe('hover', function()
+    local ref_hover = {
+      '# `MyStruct`',
+      '```rust',
+      'dummy',
+      '```',
+      '',
+      '```rust',
+      'pub struct MyStruct {',
+      '    pub value: i32,',
+      '}',
+      '```',
+      '',
+      '---',
+      '',
+      'size = 4, align = 0x4',
+    }
+    it('should show hover when available', function()
+      assert(curr_winid)
+      local done = false
+      ---@type integer, integer
+      local hover_buf, hover_win = exec_lua(function()
+        local bufnr = mocked_files.main.bufnr
+        local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
+        vim.lsp.inlay_hint.apply_action(
+          'hover',
+          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
+          function(ctx)
+            on_finish_ctx = ctx
+            done = true
+          end
+        )
+        vim.wait(wait_time, function()
+          return done
+        end)
+        assert(done)
+        return on_finish_ctx.bufnr, vim.fn.winbufnr(on_finish_ctx.bufnr)
+      end)
+      local hover_lines = api.nvim_buf_get_lines(hover_buf, 0, -1, false)
+
+      neq(mocked_files.main.bufnr, hover_buf)
+      neq(curr_winid, hover_win)
+
+      eq(ref_hover, hover_lines)
+    end)
+
+    it('should NOT show hover when not available', function()
+      assert(curr_winid)
+      local done = false
+      local buf_count = #api.nvim_list_bufs()
+      exec_lua(function()
+        local bufnr = mocked_files.main.bufnr
+        vim.lsp.inlay_hint.apply_action(
+          'hover',
           { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
             done = true

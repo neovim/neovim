@@ -2162,6 +2162,9 @@ apply_action({action}, {opts}, {callback})
                       with the inlay hints.
                     • `"command"`: execute one of the `lsp.Command`s that
                       comes with the inlay hint.
+                    • `"hover"`: if there are some locations associated with
+                      the inlay hint, show the hover information of the
+                      identifiers at those locations.
                     • `"tooltip"`: show a hover-like window that contains the
                       `tooltip`, available `command`s and `location`s that
                       comes with the inlay hint.
