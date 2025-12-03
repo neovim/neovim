@@ -1814,9 +1814,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
       PUT_C(d, "complete", LUAREF_OBJ(api_new_luaref(cmd->uc_compl_luaref)));
     } else {
       char *cmd_compl = get_command_complete(cmd->uc_compl);
-
-      PUT_C(d, "complete", (cmd_compl == NULL
-                            ? NIL : CSTR_AS_OBJ(cmd_compl)));
+      PUT_C(d, "complete", (cmd_compl == NULL ? NIL : CSTR_AS_OBJ(cmd_compl)));
     }
     PUT_C(d, "complete_arg", cmd->uc_compl_arg == NULL
           ? NIL : CSTR_AS_OBJ(cmd->uc_compl_arg));
