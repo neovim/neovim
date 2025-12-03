@@ -1593,7 +1593,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 |vim.lsp.ClientConfig|.
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
                                 provided at runtime (after startup).
-      • {exit_timeout}          (`integer|boolean`, default: `3000`)
+      • {exit_timeout}          (`integer|boolean`, default: `false`)
                                 Milliseconds to wait for server to exit
                                 cleanly after sending the "shutdown" request
                                 before sending kill -15. If set to false,
@@ -1720,7 +1720,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                process on exit, but if Nvim fails to exit
                                cleanly this could leave behind orphaned server
                                processes.
-      • {exit_timeout}?        (`integer|boolean`, default: `3000`)
+      • {exit_timeout}?        (`integer|boolean`, default: `false`)
                                Milliseconds to wait for server to exit cleanly
                                after sending the "shutdown" request before
                                sending kill -15. If set to false, waits

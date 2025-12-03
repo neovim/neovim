@@ -277,12 +277,10 @@ LSP
 • |Client:stop()| now accepts a numerical `force` argument to be interpreted as the time to wait
   before forcing the shutdown.
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
-• |vim.lsp.enable()| when `enable == false` now force stops the client when it
-  takes too long to shutdown after being disabled.
 • Push diagnostics (|vim.lsp.diagnostic.on_publish_diagnostics()|) now respect
   the `version` property in the notification params.
 • |vim.lsp.ClientConfig| has an `exit_timeout` field to control the timeout of
-  client force stopping. Defaults to 3000 milliseconds.
+  client force stopping. Defaults to `false`.
 
 LUA
 
