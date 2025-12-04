@@ -3,6 +3,7 @@
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
 " Last Change:	2025 Sep 08
 " 2025 Sep 25 by Vim Project: fix wrong type highlighting #18394
+" 2025 Dec 03 by Vim Project: highlight t-strings #18679
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -168,27 +169,29 @@ syn region  pythonRawString matchgroup=pythonTripleQuotes
 
 " Formatted string literals (f-strings)
 " https://docs.python.org/3/reference/lexical_analysis.html#f-strings
+" Template string literals (t-strings)
+" https://docs.python.org/3/reference/lexical_analysis.html#template-string-literals
 syn region  pythonFString
       \ matchgroup=pythonQuotes
-      \ start=+\cF\z(['"]\)+
+      \ start=+\c[FT]\z(['"]\)+
       \ end="\z1"
       \ skip="\\\\\|\\\z1"
       \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,@Spell
 syn region  pythonFString
       \ matchgroup=pythonTripleQuotes
-      \ start=+\cF\z('''\|"""\)+
+      \ start=+\c[FT]\z('''\|"""\)+
       \ end="\z1"
       \ keepend
       \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawFString
       \ matchgroup=pythonQuotes
-      \ start=+\c\%(FR\|RF\)\z(['"]\)+
+      \ start=+\c\%([FT]R\|R[FT]\)\z(['"]\)+
       \ end="\z1"
       \ skip="\\\\\|\\\z1"
       \ contains=pythonFStringField,pythonFStringSkip,@Spell
 syn region  pythonRawFString
       \ matchgroup=pythonTripleQuotes
-      \ start=+\c\%(FR\|RF\)\z('''\|"""\)+
+      \ start=+\c\%([FT]R\|R[FT]\)\z('''\|"""\)+
       \ end="\z1"
       \ keepend
       \ contains=pythonFStringField,pythonFStringSkip,pythonSpaceError,pythonDoctest,@Spell
