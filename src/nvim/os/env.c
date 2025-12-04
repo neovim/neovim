@@ -1291,3 +1291,19 @@ void vim_setenv_ext(const char *name, const char *val)
     didset_vimruntime = false;
   }
 }
+
+#ifdef MSWIN
+/// Restore a previous environment variable value, or unset it if NULL.
+/// "must_free" indicates whether "old_value" was allocated.
+void restore_env_var(const char *name, char *old_value, bool must_free)
+{
+  if (old_value != NULL) {
+    os_setenv(name, old_value, true);
+    if (must_free) {
+      xfree(old_value);
+    }
+    return;
+  }
+  os_unsetenv(name);
+}
+#endif
