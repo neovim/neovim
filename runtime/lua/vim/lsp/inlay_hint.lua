@@ -701,6 +701,9 @@ local inlayhint_actions = {
   end,
 
   hover = function(hints, ctx, on_finish)
+    if #hints == 0 then
+      return 0
+    end
     if #hints ~= 1 then
       vim.schedule(function()
         vim.notify(
@@ -709,7 +712,7 @@ local inlayhint_actions = {
         )
       end)
     end
-    local hint = hints[1]
+    local hint = assert(hints[1])
     local hint_labels = action_helpers.get_hint_labels(hint, { 'location' })
     if hint_labels == nil then
       return 0
@@ -734,10 +737,13 @@ local inlayhint_actions = {
         end
         return
       end
+
+      -- `get_hint_labels` makes sure `item.label` has location attribute
+      local label_loc = assert(item.label.location)
       ---@type lsp.HoverParams
       local hover_param = {
-        textDocument = { uri = item.label.location.uri },
-        position = item.label.location.range.start,
+        textDocument = { uri = label_loc.uri },
+        position = label_loc.range.start,
       }
       ctx.client:request(
         'textDocument/hover',
@@ -766,6 +772,9 @@ local inlayhint_actions = {
   end,
 
   tooltip = function(hints, ctx, on_finish)
+    if #hints == 0 then
+      return 0
+    end
     if #hints ~= 1 then
       vim.schedule(function()
         vim.notify(
@@ -775,7 +784,7 @@ local inlayhint_actions = {
       end)
     end
 
-    local hint = hints[1]
+    local hint = assert(hints[1])
     local hint_labels = action_helpers.get_hint_labels(hint, { 'location', 'command' })
 
     -- the level 1 heading is the full hint object
@@ -844,7 +853,7 @@ local inlayhint_actions = {
     if #hints == 0 then
       return 0
     end
-    local hint_labels = action_helpers.get_hint_labels(hints[1], { 'command' })
+    local hint_labels = action_helpers.get_hint_labels(assert(hints[1]), { 'command' })
     if hint_labels == nil or #hint_labels == 0 then
       -- no commands in this hint
       return 0
@@ -857,7 +866,7 @@ local inlayhint_actions = {
           --- @param item vim.lsp.inlay_hint.action.hint_label
           function(item)
             local label = item.label
-            local entry_line = string.format('%s: %s', label.value, label.command.title)
+            local entry_line = string.format('%s: %s', label.value, assert(label.command).title)
             if label.tooltip then
               entry_line = entry_line .. string.format(' (%s)', label.tooltip)
             end
@@ -972,7 +981,8 @@ function M.apply_action(action, opts, callback)
   if callback then
     local original_callback = callback
     -- decorate the `on_finish` callback to make sure it only called once.
-    callback = function(...) ---@type vim.lsp.inlay_hint.action.on_finish.callback
+    ---@type vim.lsp.inlay_hint.action.on_finish.callback
+    callback = function(...)
       assert(not on_finish_cb_called, 'The callback should only be called once.')
       on_finish_cb_called = true
       return original_callback(...)
@@ -989,7 +999,7 @@ function M.apply_action(action, opts, callback)
     0,
     0,
     api.nvim_buf_line_count(bufnr) - 1,
-    string.len(api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]),
+    string.len(api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or ''),
     { buf = bufnr }
   )
 
@@ -998,9 +1008,9 @@ function M.apply_action(action, opts, callback)
   --- the attributes needed for the the action, proceed to the next client. Otherwise, the action is
   --- successful. Terminate the iteration.
   --- @param idx? integer
-  --- @param client vim.lsp.Client
+  --- @param client? vim.lsp.Client
   local function do_action(idx, client)
-    if idx == nil or on_finish_cb_called then
+    if idx == nil or client == nil or on_finish_cb_called then
       -- all clients have been consumed. Terminate the iteration.
       if callback and not on_finish_cb_called then
         callback({ bufnr = api.nvim_get_current_buf() })
@@ -1008,7 +1018,7 @@ function M.apply_action(action, opts, callback)
       return
     end
 
-    ---@type lsp.TextDocumentPositionParams
+    ---@type lsp.InlayHintParams
     local params = util.make_given_range_params(
       requested_range.start:to_cursor(),
       requested_range.end_:to_cursor(),
@@ -1071,7 +1081,7 @@ function M.apply_action(action, opts, callback)
 
         for i, h in ipairs(hints) do
           client:request('inlayHint/resolve', h, function(_, _result, _, _)
-            if _result ~= nil then
+            if _result ~= nil and hints[i] then
               hints[i] = vim.tbl_deep_extend('force', hints[i], _result)
             end
             num_processed = num_processed + 1
