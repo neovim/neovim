@@ -760,12 +760,15 @@ local inlayhint_actions = {
         ---@param result lsp.Hover?
         function(_, result, _, _)
           if result then
-            if #lines > 0 then
-              -- blank line between label parts
-              lines[#lines + 1] = ''
+            local md_lines = util.convert_input_to_markdown_lines(result.contents)
+            if #md_lines > 0 then
+              if #lines > 0 then
+                -- blank line between label parts
+                lines[#lines + 1] = ''
+              end
+              lines[#lines + 1] = string.format('# `%s`', item.label.value)
+              vim.list_extend(lines, md_lines)
             end
-            lines[#lines + 1] = string.format('# `%s`', item.label.value)
-            vim.list_extend(lines, util.convert_input_to_markdown_lines(result.contents))
           end
           get_hover(next(hint_labels, idx))
         end,
