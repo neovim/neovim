@@ -321,7 +321,7 @@ Consider:
 - Using SemVer https://semver.org/ tags and releases to properly communicate
   bug fixes, new features, and breaking changes.
 - Automating versioning and releases in CI.
-- Publishing to luarocks https://luarocks.org, especially if your plugin
+- Publishing to luarocks https://luarocks.org , especially if your plugin
   has dependencies or components that need to be built; or if it could be a
   dependency for another plugin.
 
