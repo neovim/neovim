@@ -201,4 +201,26 @@ func Test_getwininfo_au()
   bwipe!
 endfunc
 
+func Test_getwininfo_status_height()
+  set laststatus=0
+  vsplit
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(0, info.status_height)
+
+  set laststatus=2
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(1, info.status_height)
+
+  set laststatus=1
+  only
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(0, info.status_height)
+  vsplit
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(1, info.status_height)
+
+  set laststatus&vim
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

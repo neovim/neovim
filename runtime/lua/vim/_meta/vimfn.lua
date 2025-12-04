@@ -4012,8 +4012,12 @@ function vim.fn.gettext(text) end
 ---       'wrap' is off
 ---   loclist    1 if showing a location list
 ---   quickfix  1 if quickfix or location list window
----   terminal  1 if a terminal window
+---   status_height  status lines height (0 or 1)
 ---   tabnr    tab page number
+---   terminal  1 if a terminal window
+---   textoff    number of columns occupied by any
+---       'foldcolumn', 'signcolumn' and line
+---       number in front of the text
 ---   topline    first displayed buffer line
 ---   variables  a reference to the dictionary with
 ---       window-local variables
@@ -4022,9 +4026,6 @@ function vim.fn.gettext(text) end
 ---       otherwise
 ---   wincol    leftmost screen column of the window;
 ---       "col" from |win_screenpos()|
----   textoff    number of columns occupied by any
----       'foldcolumn', 'signcolumn' and line
----       number in front of the text
 ---   winid    |window-ID|
 ---   winnr    window number
 ---   winrow    topmost screen line of the window;
