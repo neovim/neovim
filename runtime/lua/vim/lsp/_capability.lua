@@ -21,7 +21,7 @@ local all_capabilities = {}
 ---@field name vim.lsp.capability.Name
 ---
 --- Static field records the method this capability requires.
----@field method vim.lsp.protocol.Method.ClientToServer
+---@field method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration
 ---
 --- Static field for retrieving the instance associated with a specific `bufnr`.
 ---
