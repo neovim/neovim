@@ -991,6 +991,20 @@ function M.apply_action(action, opts, callback)
     end
   end
 
+  --- some LSPs don't properly handle the position param, so we request for all hints,
+  --- and then use the filtering to keep the hints we need.
+  --- This is a workaround, and may be removed in the future if it's solved in the upstream.
+  ---
+  --- Language servers known to have this bug:
+  --- - rust-analyzer
+  local requested_range = vim.range(
+    0,
+    0,
+    api.nvim_buf_line_count(bufnr) - 1,
+    string.len(api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]),
+    { buf = bufnr }
+  )
+
   --- iterate through `clients` and requests for inlay hints.
   --- If a client provides no inlay hint (`nil` or `{}`) for the given range, or the provided hints don't contain
   --- the attributes needed for the the action, proceed to the next client. Otherwise, the action is
@@ -1008,8 +1022,8 @@ function M.apply_action(action, opts, callback)
 
     ---@type lsp.TextDocumentPositionParams
     local params = util.make_given_range_params(
-      range.start:to_cursor(),
-      range.end_:to_cursor(),
+      requested_range.start:to_cursor(),
+      requested_range.end_:to_cursor(),
       bufnr,
       client.offset_encoding
     )
