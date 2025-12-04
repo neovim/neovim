@@ -2351,6 +2351,49 @@ func Test_tf_file()
   filetype off
 endfunc
 
+func Test_tf_file_v2()
+  filetype on
+
+  let lines =<< trim END
+    ;# Connect to a MUD server
+    /server mud.example.com 4000
+    ;set verbose on
+    /def greet = /echo Hello, $[name()]
+    /def hp = /send score
+    ;alias n = north
+    ;alias s = south
+    ;set autolog on
+    /def prompt = /echo -p Prompt: %{*}
+  END
+
+  call writefile(lines, "Xfile.tf", "D")
+  split Xfile.tf
+  call assert_equal('tf', &filetype)
+  bw!
+  let lines =<< trim END
+		# This is a comment at the top of the file
+
+		terraform {
+			required_version = ">= 1.0"
+		}
+
+		provider "aws" {
+			region = "us-east-1"
+		}
+
+		resource "aws_s3_bucket" "demo" {
+			bucket = "example-bucket"
+		}
+  END
+  call writefile(lines, "Xfile.tf", "D")
+  split Xfile.tf
+  call assert_equal('terraform', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
+
 func Test_ts_file()
   filetype on
 
