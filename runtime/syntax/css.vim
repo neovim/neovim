@@ -367,7 +367,7 @@ syn match cssTransitionAttr contained "\<step\(-start\|-end\)\=\>"
 syn match cssUIProp contained "\<box-sizing\>"
 syn match cssUIAttr contained "\<\(content\|padding\|border\)\(-box\)\=\>"
 
-syn keyword cssUIProp contained cursor
+syn keyword cssUIProp contained cursor touch-action
 syn match cssUIAttr contained "\<\(\([ns]\=[ew]\=\)\|col\|row\|nesw\|nwse\)-resize\>"
 syn keyword cssUIAttr contained crosshair help move pointer alias copy
 syn keyword cssUIAttr contained progress wait text cell move
