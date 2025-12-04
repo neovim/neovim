@@ -33,6 +33,7 @@
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
@@ -857,6 +858,15 @@ int os_system(char **argv, const char *input, size_t len, char **output,
 static int do_os_system(char **argv, const char *input, size_t len, char **output, size_t *nread,
                         bool silent, bool forward_output)
 {
+  int exitcode = -1;
+
+#ifdef MSWIN
+  // do not execute anything from the current directory by setting the
+  // environemnt variable $NoDefaultCurrentDirectoryInExePath
+  char *oldval = os_getenv("NoDefaultCurrentDirectoryInExePath");
+  os_setenv("NoDefaultCurrentDirectoryInExePath", "1", true);
+#endif
+
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
   bool has_input = (input != NULL && len > 0);
@@ -894,8 +904,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
       msg_outtrans(prog, 0, false);
       msg_putchar('\n');
     }
-    multiqueue_free(events);
-    return -1;
+    goto end;
   }
 
   // Note: unlike process events, stream events are not queued, as we want to
@@ -917,7 +926,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     if (!wstream_write(&proc->in, input_buffer)) {
       // couldn't write, stop the process and tell the user about it
       proc_stop(proc);
-      return -1;
+      goto end;
     }
     // close the input stream after everything is written
     wstream_set_write_cb(&proc->in, shell_write_cb, NULL);
@@ -933,7 +942,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     msg_no_more = true;
     lines_left = -1;
   }
-  int exitcode = proc_wait(proc, -1, NULL);
+  exitcode = proc_wait(proc, -1, NULL);
   if (!got_int && out_data_decide_throttle(0)) {
     // Last chunk of output was skipped; display it now.
     out_data_ring(NULL, SIZE_MAX);
@@ -965,7 +974,13 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   }
 
   assert(multiqueue_empty(events));
+end:
   multiqueue_free(events);
+
+#ifdef MSWIN
+  // Restore original value of NoDefaultCurrentDirectoryInExePath
+  restore_env_var("NoDefaultCurrentDirectoryInExePath", oldval, true);
+#endif
 
   return exitcode;
 }

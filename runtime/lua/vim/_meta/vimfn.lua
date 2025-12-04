@@ -1652,7 +1652,8 @@ function vim.fn.eventhandler() end
 ---       *NoDefaultCurrentDirectoryInExePath*
 --- On MS-Windows an executable in Vim's current working directory
 --- is also normally found, but this can be disabled by setting
---- the $NoDefaultCurrentDirectoryInExePath environment variable.
+--- the `$NoDefaultCurrentDirectoryInExePath` environment variable.
+--- This is always done for |:!| commands, for security reasons.
 ---
 --- The result is a Number:
 ---   1  exists
