@@ -355,7 +355,8 @@ static bool is_executable_in_path(const char *name, char **abspath)
 
 #ifdef MSWIN
   char *path = NULL;
-  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath", false)) {
+  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath", false)
+      && strstr(path_tail(p_sh), "cmd.exe") != NULL) {
     // Prepend ".;" to $PATH.
     size_t pathlen = strlen(path_env);
     path = xmallocz(pathlen + 2);
