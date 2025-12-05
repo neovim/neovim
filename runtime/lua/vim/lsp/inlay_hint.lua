@@ -1080,9 +1080,6 @@ function M.apply_action(action, opts, callback)
             return do_action(next(clients, idx))
           else
             -- actions were taken. we're done with the actions.
-            if callback and not on_finish_cb_called then
-              callback(action_ctx)
-            end
             return
           end
         end
@@ -1106,9 +1103,7 @@ function M.apply_action(action, opts, callback)
               if action_handler(hints, action_ctx, callback) == 0 then
                 return do_action(next(clients, idx))
               else
-                if callback and not on_finish_cb_called then
-                  callback(action_ctx)
-                end
+                -- actions were taken. we're done with the actions.
                 return
               end
             end
