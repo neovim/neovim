@@ -587,7 +587,7 @@ function lsp.enable(name, enable)
   else
     for _, nm in ipairs(names) do
       for _, client in ipairs(lsp.get_clients({ name = nm })) do
-        client:stop()
+        client:stop(client.exit_timeout)
       end
     end
   end
