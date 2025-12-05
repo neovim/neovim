@@ -1144,7 +1144,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     log.info('exit_handler', active_clients)
 
     for _, client in pairs(active_clients) do
-      client:stop()
+      client:stop(client.exit_timeout)
     end
   end,
 })
