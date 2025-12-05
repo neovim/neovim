@@ -1085,6 +1085,37 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       eq(ref_hover, hover_lines)
     end)
 
+    it('should deduplicate same locations', function()
+      -- this test whether `action_helpers.add_new_label` is correctly avoiding
+      -- duplicated locations.
+      assert(curr_winid)
+      local done = false
+      ---@type integer, integer
+      local hover_buf, hover_win = exec_lua(function()
+        local bufnr = mocked_files.main.bufnr
+        local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
+        vim.lsp.inlay_hint.apply_action(
+          'hover',
+          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(8, 20, { buf = bufnr })) },
+          function(ctx)
+            on_finish_ctx = ctx
+            done = true
+          end
+        )
+        vim.wait(wait_time, function()
+          return done
+        end)
+        assert(done)
+        return on_finish_ctx.bufnr, vim.fn.winbufnr(on_finish_ctx.bufnr)
+      end)
+      local hover_lines = api.nvim_buf_get_lines(hover_buf, 0, -1, false)
+
+      neq(mocked_files.main.bufnr, hover_buf)
+      neq(curr_winid, hover_win)
+
+      eq(ref_hover, hover_lines)
+    end)
+
     it('should NOT show hover when not available', function()
       assert(curr_winid)
       local done = false
