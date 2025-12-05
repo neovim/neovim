@@ -582,6 +582,34 @@ local action_helpers = {
 
     return vim.range(range.start, range['end'])
   end,
+
+  --- Append `new_label` to `labels` if there's no duplicates.
+  ---@param labels vim.lsp.inlay_hint.action.hint_label[]
+  ---@param new_label vim.lsp.inlay_hint.action.hint_label
+  ---@param by_attribute ('location'|'command'|'tooltip')[]|nil When provided, only check for these attributes (and `value`) for equality
+  add_new_label = function(labels, new_label, by_attribute)
+    if
+      vim.iter(labels):any(
+        ---@param existing_label vim.lsp.inlay_hint.action.hint_label
+        function(existing_label)
+          -- check for duplications with existing hint_labels
+          if by_attribute then
+            -- check for concerned attributes
+            return vim.iter(by_attribute):all(function(attr)
+              return existing_label.label.value == new_label.label.value
+                and vim.deep_equal(existing_label.label[attr], new_label.label[attr])
+            end)
+          else
+            -- check the entire label
+            return vim.deep_equal(existing_label.label, new_label.label)
+          end
+        end
+      )
+    then
+      return
+    end
+    table.insert(labels, new_label)
+  end,
 }
 
 ---Return a non-empty list of lsp locations, or `nil` if not found.
@@ -607,10 +635,7 @@ action_helpers.get_hint_labels = function(hint, needed_fields)
             return label[field_name] ~= nil
           end)
         then
-          hint_labels[#hint_labels + 1] = {
-            hint = hint,
-            label = label,
-          }
+          action_helpers.add_new_label(hint_labels, { hint = hint, label = label }, needed_fields)
         end
       end
     )
