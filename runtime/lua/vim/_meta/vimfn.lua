@@ -1647,6 +1647,7 @@ function vim.fn.eventhandler() end
 --- then the name is also tried without adding an extension.
 --- On MS-Windows it only checks if the file exists and is not a
 --- directory, not if it's really executable.
+---
 --- On MS-Windows an executable in the same directory as the Vim
 --- executable is always found (it's added to $PATH at |startup|).
 ---       *NoDefaultCurrentDirectoryInExePath*
