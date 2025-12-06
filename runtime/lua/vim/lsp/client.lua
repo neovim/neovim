@@ -612,41 +612,22 @@ function Client:initialize()
   end)
 end
 
--- Server capabilities for methods that support static registration.
-local static_registration_capabilities = {
-  ['textDocument/prepareCallHierarchy'] = 'callHierarchyProvider',
-  ['textDocument/documentColor'] = 'colorProvider',
-  ['textDocument/declaration'] = 'declarationProvider',
-  ['textDocument/diagnostic'] = 'diagnosticProvider',
-  ['textDocument/foldingRange'] = 'foldingRangeProvider',
-  ['textDocument/implementation'] = 'implementationProvider',
-  ['textDocument/inlayHint'] = 'inlayHintProvider',
-  ['textDocument/inlineCompletion'] = 'inlineCompletionProvider',
-  ['textDocument/inlineValue'] = 'inlineValueProvider',
-  ['textDocument/linkedEditingRange'] = 'linkedEditingRangeProvider',
-  ['textDocument/moniker'] = 'monikerProvider',
-  ['textDocument/selectionRange'] = 'selectionRangeProvider',
-  ['textDocument/semanticTokens/full'] = 'semanticTokensProvider',
-  ['textDocument/semanticTokens/range'] = 'semanticTokensProvider',
-  ['textDocument/typeDefinition'] = 'typeDefinitionProvider',
-  ['textDocument/prepareTypeHierarchy'] = 'typeHierarchyProvider',
-}
-
 --- @private
 function Client:_process_static_registrations()
   local static_registrations = {} ---@type lsp.Registration[]
 
-  for method, capability in pairs(static_registration_capabilities) do
+  for method, capability in pairs(lsp.protocol._request_name_to_server_capability) do
     if
-      vim.tbl_get(self.server_capabilities, capability, 'id')
+      vim.tbl_get(self.server_capabilities, unpack(capability), 'id')
       --- @cast method vim.lsp.protocol.Method
       and self:_supports_registration(method)
     then
+      local cap = vim.tbl_get(self.server_capabilities, unpack(capability))
       static_registrations[#static_registrations + 1] = {
-        id = self.server_capabilities[capability].id,
+        id = cap.id,
         method = method,
         registerOptions = {
-          documentSelector = self.server_capabilities[capability].documentSelector, ---@type lsp.DocumentSelector|lsp.null
+          documentSelector = cap.documentSelector, ---@type lsp.DocumentSelector|lsp.null
         },
       }
     end
@@ -928,7 +909,7 @@ function Client:stop(force)
 end
 
 --- Get options for a method that is registered dynamically.
---- @param method vim.lsp.protocol.Method
+--- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_supports_registration(method)
   local capability_path = lsp.protocol._request_name_to_client_capability[method] or {}
   local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
@@ -1002,7 +983,7 @@ function Client:_get_language_id(bufnr)
   return self.get_language_id(bufnr, vim.bo[bufnr].filetype)
 end
 
---- @param method vim.lsp.protocol.Method
+--- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 --- @param bufnr? integer
 --- @return lsp.Registration?
 function Client:_get_registration(method, bufnr)
@@ -1171,7 +1152,7 @@ end
 --- Always returns true for unknown off-spec methods.
 ---
 --- Note: Some language server capabilities can be file specific.
---- @param method vim.lsp.protocol.Method.ClientToServer
+--- @param method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration
 --- @param bufnr? integer
 function Client:supports_method(method, bufnr)
   -- Deprecated form

@@ -47,8 +47,7 @@ local FULL = 'FULL'
 ---@field client_state table<integer, STClientState>
 local STHighlighter = {
   name = 'semantic_tokens',
-  -- TODO: how to handle this (tris203)
-  method = 'textDocument/semanticTokens/full',
+  method = 'textDocument/semanticTokens',
   active = {},
 }
 STHighlighter.__index = STHighlighter
