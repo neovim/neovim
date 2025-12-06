@@ -57,8 +57,8 @@
             .hash = "N-V-__8AAMArVAB4uo2wg2XRs8HBviQ4Pq366cC_iRolX4Vc",
         },
         .treesitter_vimdoc = .{
-            .url = "git+https://github.com/neovim/tree-sitter-vimdoc?ref=v4.0.0#9f6191a98702edc1084245abd5523279d4b681fb",
-            .hash = "N-V-__8AAI4YCgD7OqxCEAmz2RqT_ohl6eA4F0fGMtLIe7nb",
+            .url = "git+https://github.com/neovim/tree-sitter-vimdoc?ref=v4.0.1#dc21a225b5c65a15ec24d3f8fd3e57b910c5eb70",
+            .hash = "N-V-__8AAKePCgA9tOwBp3kVw71ydU8UN3Udi8CNSasGM30L",
         },
         .treesitter_query = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.8.0#a225e21d81201be77da58de614e2b7851735677a",
