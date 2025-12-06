@@ -1,6 +1,23 @@
 local M = {}
 
 M.vars = {
+  argf = {
+    type = 'string[]',
+    desc = [=[
+      The list of file arguments passed on the command line at startup.
+
+      Each filename is expanded to an absolute path, so that v:argf
+      remains valid even if the current working directory changes later.
+
+      Unlike |v:argv|, this does not include option arguments
+      such as `-u`, `--cmd`, or `+cmd`. Unlike |argv()|, it is not
+      affected by later |:args|, |:argadd|, or plugin modifications.
+      It also handles the `--` separator correctly, including only
+      files specified after it.
+
+      This is a read-only snapshot of the original startup file arguments.
+    ]=],
+  },
   argv = {
     type = 'string[]',
     desc = [=[
