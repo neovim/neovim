@@ -4855,6 +4855,66 @@ describe('API', function()
       result = api.nvim_parse_cmd('copen 5', {})
       eq(5, result.count)
     end)
+    it('parses range-only command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+      ]]
+      api.nvim_win_set_cursor(0, { 4, 4 })
+      local res = api.nvim_parse_cmd('1', {})
+      eq({
+        addr = 'line',
+        args = {},
+        bang = false,
+        cmd = '',
+        magic = {
+          bar = false,
+          file = false,
+        },
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            force = false,
+            pattern = '',
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+        nargs = '0',
+        nextcmd = '',
+        range = { 1 },
+      }, res)
+      api.nvim_cmd(res, {})
+      eq(1, api.nvim_win_get_cursor(0)[1])
+      feed('VG:')
+      n.poke_eventloop()
+      res = api.nvim_parse_cmd("'<,'>", {})
+      eq({ 1, 5 }, res.range)
+    end)
+    it('parses modifier-only command', function()
+      local res = api.nvim_parse_cmd('aboveleft', {})
+      eq('', res.cmd)
+      eq('aboveleft', res.mods.split)
+      eq('none', res.addr)
+    end)
   end)
 
   describe('nvim_cmd', function()
@@ -5085,6 +5145,9 @@ describe('API', function()
       -- error from the next command typed is not suppressed #21420
       feed(':call<CR><CR>')
       eq('E471: Argument required', api.nvim_cmd({ cmd = 'messages' }, { output = true }))
+
+      -- modifier only
+      eq('', api.nvim_cmd(api.nvim_parse_cmd('noautocmd', {}), {}))
     end)
 
     it('works with magic.file', function()
