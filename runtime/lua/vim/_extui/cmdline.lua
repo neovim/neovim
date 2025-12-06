@@ -8,6 +8,7 @@ local M = {
   srow = 0, -- Buffer row at which the current cmdline starts; > 0 in block mode.
   erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
   level = -1, -- Current cmdline level; 0 when inactive, -1 one loop iteration after closing.
+  hide_pending = false, -- Whether cmdline_hide event received but not yet processed.
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -62,7 +63,7 @@ end
 ---@param level integer
 ---@param hl_id integer
 function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
-  M.level, M.indent, M.prompt = level, indent, M.prompt or #prompt > 0
+  M.level, M.indent, M.prompt, M.hide_pending = level, indent, M.prompt or #prompt > 0, false
   if M.highlighter == nil or M.highlighter.bufnr ~= ext.bufs.cmd then
     local parser = assert(vim.treesitter.get_parser(ext.bufs.cmd, 'vim', {}))
     M.highlighter = vim.treesitter.highlighter.new(parser)
@@ -149,7 +150,7 @@ function M.cmdline_hide(level, abort)
   end)
   clear(M.prompt)
 
-  M.prompt, M.level, curpos[1], curpos[2] = false, 0, 0, 0
+  M.prompt, M.level, M.hide_pending, curpos[1], curpos[2] = false, 0, false, 0, 0
   win_config(ext.wins.cmd, true, ext.cmdheight)
 end
 
