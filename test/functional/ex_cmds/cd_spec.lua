@@ -17,8 +17,11 @@ local mkdir = t.mkdir
 local directories = {
   tab = 'Xtest-functional-ex_cmds-cd_spec.tab', -- Tab
   window = 'Xtest-functional-ex_cmds-cd_spec.window', -- Window
+  buffer = 'Xtest-functional-ex_cmds-cd_spec.buffer', -- Buffer
   global = 'Xtest-functional-ex_cmds-cd_spec.global', -- New global
 }
+
+local tmpfile = 'Xtest-functional-ex_cmds-cd_spec-tmpfile'
 
 -- Shorthand writing to get the current working directory
 local cwd = function(...)
@@ -27,6 +30,9 @@ end -- effective working dir
 local wcwd = function()
   return cwd(0)
 end -- window dir
+local bcwd = function()
+  return cwd(-1, -1, 0)
+end -- buffer dir
 local tcwd = function()
   return cwd(-1, 0)
 end -- tab dir
@@ -38,6 +44,9 @@ end -- effective working dir
 local wlwd = function()
   return lwd(0)
 end -- window dir
+local blwd = function()
+  return lwd(-1, -1, 0)
+end -- buffer dir
 local tlwd = function()
   return lwd(-1, 0)
 end -- tab dir
@@ -133,6 +142,27 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         eq(globalDir .. pathsep .. directories.tab, cwd(-1, localtab))
         eq(1, lwd(-1, localtab))
       end)
+
+      it('for buffer', function()
+        local globalDir = directories.start
+        -- Create two buffers
+        command('e ' .. tmpfile .. '1')
+        command('e ' .. directories.buffer .. pathsep .. tmpfile .. '2')
+
+        -- Initially matches globalDir
+        eq(globalDir, cwd())
+        eq(0, lwd())
+
+        -- Change buffer-local directory to subdirectory
+        command('bcd ' .. directories.buffer)
+        eq(globalDir .. pathsep .. directories.buffer, cwd())
+        eq(1, blwd())
+
+        -- Verify Other buffer is unchanged
+        command('b# ')
+        eq(globalDir, cwd())
+        eq(0, blwd())
+      end)
     end)
 
     describe('getcwd(-1, -1)', function()
@@ -151,6 +181,16 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         command('silent l' .. cmd .. ' ' .. directories.window)
         eq(directories.start, cwd(-1, -1))
         eq(0, lwd(-1, -1))
+      end)
+
+      it('works with buffer-local pwd', function()
+        command('silent b' .. cmd .. ' ' .. directories.buffer)
+        eq(directories.start, cwd(-1, -1))
+        eq(0, lwd(-1, -1))
+
+        -- Must behave the same if bufnr is -1
+        eq(directories.start, cwd(-1, -1, -1))
+        eq(0, lwd(-1, -1, -1))
       end)
     end)
 
@@ -238,6 +278,137 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
       eq(0, tlwd())
       eq(globalDir .. pathsep .. directories.window, wcwd())
     end)
+
+    it('works when mixing tab-local and buffer-local directories', function()
+      local globalDir = directories.start
+
+      -- Create two buffers for testing. One in each tab
+      command('e ' .. tmpfile .. '1')
+      command('tabnew')
+      command('e ' .. tmpfile .. '2')
+
+      -- Verify that buffer 2 has the same working directory
+      eq(globalDir, cwd())
+      eq(globalDir, tcwd()) -- Has no tab-local directory
+      eq(0, tlwd())
+      eq(globalDir, bcwd()) -- Has no buffer-local directory
+      eq(0, blwd())
+
+      -- Change tab-local working directory and verify it is different
+      command('silent t' .. cmd .. ' ' .. directories.tab)
+      eq(globalDir .. pathsep .. directories.tab, cwd())
+      eq(cwd(), tcwd()) -- Working directory matches tab directory
+      eq(1, tlwd())
+      eq(cwd(), bcwd()) -- Still no buffer-directory
+      eq(0, blwd())
+
+      -- Change buffer 2's buffer-local directory
+      command('silent b' .. cmd .. ' ..' .. pathsep .. directories.buffer)
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+      eq(globalDir .. pathsep .. directories.tab, tcwd())
+      eq(cwd(), bcwd()) -- Has no buffer-directory
+      eq(1, blwd())
+
+      -- Verify the first tab has no local-directory
+      command('tabfirst')
+      eq(0, tlwd())
+
+      -- Verify buffer 2 has buffer-local directory even in first tab
+      command('b ' .. tmpfile .. '2') -- Switch to buffer 2
+      eq(globalDir .. pathsep .. directories.buffer, bcwd())
+      eq(0, tlwd()) -- Still no tab-local directory
+
+      -- Verify buffer 1 did not have its directory changed
+      command('b#') -- Switch to buffer 1
+      eq(globalDir, cwd())
+      eq(0, blwd()) -- No window-buffer directory
+    end)
+    it('works when mixing window local and buffer local directories', function()
+      local globalDir = directories.start
+      -- Create a new window first and verify that is has the same working directory
+      command('new')
+      eq(globalDir, cwd())
+      eq(globalDir, wcwd()) -- Has no window-local directory
+      eq(0, tlwd())
+      eq(globalDir, bcwd()) -- Has no buffer-local directory
+      eq(0, blwd())
+
+      -- Create a buffer in current window
+      command('e ' .. tmpfile)
+
+      -- Change buffer-local working directory and verify it is different
+      command('silent b' .. cmd .. ' ' .. directories.buffer)
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+      eq(cwd(), bcwd()) -- Working directory matches buffer directory
+      eq(1, blwd())
+      eq(cwd(), wcwd()) -- Still no window-directory
+      eq(0, wlwd())
+
+      -- Change window-local directory to test `:lcd`
+      command('silent l' .. cmd .. ' ../' .. directories.window)
+      eq(globalDir .. pathsep .. directories.window, cwd())
+      eq(globalDir .. pathsep .. directories.buffer, bcwd())
+      eq(1, blwd())
+
+      -- Verify buffer has buffer-local directory in original window
+      command('wincmd w')
+      command('b ' .. tmpfile)
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+
+      -- Verify going to second window uses window-local directory
+      command('wincmd w')
+      eq(globalDir .. pathsep .. directories.window, cwd())
+    end)
+  end)
+end
+
+for _, cmd in ipairs { 'bcd', 'bchdir' } do
+  describe(':' .. cmd, function()
+    before_each(function()
+      clear()
+      for _, d in pairs(directories) do
+        mkdir(d)
+      end
+      directories.start = cwd()
+    end)
+
+    after_each(function()
+      for _, d in pairs(directories) do
+        vim.uv.fs_rmdir(d)
+      end
+    end)
+
+    it('works after deleting the only buffer', function()
+      command(cmd .. ' ' .. directories.buffer)
+      command('bd') -- delete buffer
+    end)
+
+    it('makes :new use the buffer-local directory', function()
+      local globalDir = directories.start
+      command(cmd .. ' ' .. directories.buffer)
+
+      command(':new')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+      command('wincmd x') -- close :new window
+
+      command(':vnew')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+      command('wincmd x') -- close :vnew window
+
+      command(':enew')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+    end)
+
+    it('makes :enew use the buffer-local directory in a split', function()
+      local globalDir = directories.start
+      command(cmd .. ' ' .. directories.buffer)
+
+      command(':vsplit')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+
+      command(':enew')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+    end)
   end)
 end
 
@@ -271,14 +442,23 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
       eq(err474, exc_exec('call ' .. cmd .. '(-2)'))
     end)
     local err5001 = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
+    local err5006 = 'Vim(call):E5006: Window and tab scope must be -1 when using buffer scope'
+    local err5007 = 'Vim(call):E5007: Cannot find buffer number.'
     it('fails on -1 if previous arg is >=0', function()
       eq(err5001, exc_exec('call ' .. cmd .. '(0, -1)'))
+    end)
+    it('fails when 1st and 2nd args != -1 when 3rd arg > -1', function()
+      eq(err5006, t.pcall_err(command, 'call ' .. cmd .. '(0, 0, 0)'))
+      eq(err5006, t.pcall_err(command, 'call ' .. cmd .. '(1, 2, 3)'))
+    end)
+    it('fails when passing a bufnr that does not exit', function()
+      eq(err5007, t.pcall_err(command, 'call ' .. cmd .. '(-1, -1, 99999)'))
     end)
 
     -- Test wrong number of arguments
     local err118 = 'Vim(call):E118: Too many arguments for function: ' .. cmd
     it('fails to parse more than one argument', function()
-      eq(err118, exc_exec('call ' .. cmd .. '(0, 0, 0)'))
+      eq(err118, exc_exec('call ' .. cmd .. '(0, 0, 0, 0)'))
     end)
   end)
 end

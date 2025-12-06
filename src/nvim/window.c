@@ -5046,7 +5046,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
     win_fix_cursor(get_real_state() & (MODE_NORMAL|MODE_CMDLINE|MODE_TERMINAL));
   }
 
-  win_fix_current_dir();
+  fix_current_dir(true);
 
   entering_window(curwin);
   // Careful: autocommands may close the window and make "wp" invalid
@@ -5098,18 +5098,41 @@ static void win_enter_ext(win_T *const wp, const int flags)
   do_autochdir();
 }
 
-/// Used after making another window the current one: change directory if needed.
-void win_fix_current_dir(void)
+/// Used after making another window or buffer the current one: change directory if needed.
+void fix_current_dir(bool caused_by_win)
 {
-  // New directory is either the local directory of the window, tab or NULL.
-  char *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->tp_localdir;
+  CdCause cause;
+  if (caused_by_win) {
+    cause = kCdCauseWindow;
+  } else {
+    cause = kCdCauseBuffer;
+  }
+
+  // New directory is either the local directory of the window, buffer, tab or NULL.
+  char *new_dir;
+  CdScope scope;
+
+  if (curwin->w_localdir) {
+    new_dir = curwin->w_localdir;
+    scope = kCdScopeWindow;
+  } else if (curbuf->b_localdir) {
+    new_dir = curbuf->b_localdir;
+    scope = kCdScopeBuffer;
+  } else if (curtab->tp_localdir) {
+    new_dir = curtab->tp_localdir;
+    scope = kCdScopeTabpage;
+  } else {
+    new_dir = NULL;
+    scope = kCdScopeGlobal;
+  }
+
   char cwd[MAXPATHL];
   if (os_dirname(cwd, MAXPATHL) != OK) {
     cwd[0] = NUL;
   }
 
   if (new_dir) {
-    // Window/tab has a local directory: Save current directory as global
+    // Window/buffer/tab has a local directory: Save current directory as global
     // (unless that was done already) and change to the local directory.
     if (globaldir == NULL) {
       if (cwd[0] != NUL) {
@@ -5118,27 +5141,25 @@ void win_fix_current_dir(void)
     }
     bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
     if (!p_acd && dir_differs) {
-      do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
-                            kCdCauseWindow, true);
+      do_autocmd_dirchanged(new_dir, scope, cause, true);
     }
     if (os_chdir(new_dir) == 0) {
       if (!p_acd && dir_differs) {
-        do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
-                              kCdCauseWindow, false);
+        do_autocmd_dirchanged(new_dir, scope, cause, false);
       }
     }
     last_chdir_reason = NULL;
     shorten_fnames(true);
   } else if (globaldir != NULL) {
-    // Window doesn't have a local directory and we are not in the global
+    // Window nor buffer have a local directory and we are not in the global
     // directory: Change to the global directory.
     bool dir_differs = pathcmp(globaldir, cwd, -1) != 0;
     if (!p_acd && dir_differs) {
-      do_autocmd_dirchanged(globaldir, kCdScopeGlobal, kCdCauseWindow, true);
+      do_autocmd_dirchanged(globaldir, kCdScopeGlobal, cause, true);
     }
     if (os_chdir(globaldir) == 0) {
       if (!p_acd && dir_differs) {
-        do_autocmd_dirchanged(globaldir, kCdScopeGlobal, kCdCauseWindow, false);
+        do_autocmd_dirchanged(globaldir, kCdScopeGlobal, cause, false);
       }
     }
     XFREE_CLEAR(globaldir);

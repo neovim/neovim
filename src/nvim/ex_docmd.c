@@ -6082,6 +6082,9 @@ static char *get_prevdir(CdScope scope)
   case kCdScopeTabpage:
     return curtab->tp_prevdir;
     break;
+  case kCdScopeBuffer:
+    return curbuf->b_prevdir;
+    break;
   case kCdScopeWindow:
     return curwin->w_prevdir;
     break;
@@ -6101,6 +6104,10 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   // Overwrite the tab-local CWD for :cd, :tcd.
   if (scope >= kCdScopeTabpage) {
     XFREE_CLEAR(curtab->tp_localdir);
+  }
+
+  if (scope >= kCdScopeBuffer) {
+    XFREE_CLEAR(curbuf->b_localdir);
   }
 
   if (scope < kCdScopeGlobal) {
@@ -6123,6 +6130,9 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   case kCdScopeTabpage:
     curtab->tp_localdir = xstrdup(cwd);
     break;
+  case kCdScopeBuffer:
+    curbuf->b_localdir = xstrdup(cwd);
+    break;
   case kCdScopeWindow:
     curwin->w_localdir = xstrdup(cwd);
     break;
@@ -6138,9 +6148,9 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 }
 
-/// Change directory function used by :cd/:tcd/:lcd Ex commands and the chdir() function.
+/// Change directory function used by :cd/:tcd/:bcd/:lcd Ex commands and the chdir() function.
 /// @param new_dir  The directory to change to.
-/// @param scope    Scope of the function call (global, tab or window).
+/// @param scope    Scope of the function call (global, tab, buffer or window).
 /// @return true if the directory is successfully changed.
 bool changedir_func(char *new_dir, CdScope scope)
 {
@@ -6191,6 +6201,9 @@ bool changedir_func(char *new_dir, CdScope scope)
   case kCdScopeWindow:
     pp = &curwin->w_prevdir;
     break;
+  case kCdScopeBuffer:
+    pp = &curbuf->b_prevdir;
+    break;
   default:
     pp = &prev_dir;
   }
@@ -6202,7 +6215,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   return true;
 }
 
-/// ":cd", ":tcd", ":lcd", ":chdir", "tchdir" and ":lchdir".
+/// ":cd", ":tcd", ":bcd", ":lcd", ":chdir", "tchdir", ":bchdir", and ":lchdir".
 void ex_cd(exarg_T *eap)
 {
   char *new_dir = eap->arg;
@@ -6217,6 +6230,10 @@ void ex_cd(exarg_T *eap)
   case CMD_tcd:
   case CMD_tchdir:
     scope = kCdScopeTabpage;
+    break;
+  case CMD_bcd:
+  case CMD_bchdir:
+    scope = kCdScopeBuffer;
     break;
   case CMD_lcd:
   case CMD_lchdir:
@@ -6246,6 +6263,8 @@ static void ex_pwd(exarg_T *eap)
         context = last_chdir_reason;
       } else if (curwin->w_localdir != NULL) {
         context = "window";
+      } else if (curbuf->b_localdir != NULL) {
+        context = "buffer";
       } else if (curtab->tp_localdir != NULL) {
         context = "tabpage";
       }

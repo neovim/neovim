@@ -79,6 +79,8 @@ EDITOR
   formatting. To get the old behavior you can use `<C-R>=@x`.
 - Buffer name URI scheme parsing more closely follows RFC3986, so for example
   "svn+ssh:", "ed2k:", and "iris.xpc:" are recognized as URI schemes.
+- New |:bcd| command for setting a buffer-local directory. |getcwd()| and
+  |haslocaldir()| have been updated to take {bufnr} as a third argument.
 
 EVENTS
 
