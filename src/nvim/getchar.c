@@ -15,6 +15,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -2540,6 +2541,7 @@ void check_end_reg_executing(bool advance)
 {
   if (reg_executing != 0 && (typebuf.tb_maplen == 0 || pending_end_reg_executing)) {
     if (advance) {
+      apply_autocmds(EVENT_MACROLEAVE, NULL, NULL, false, curbuf);
       reg_executing = 0;
       pending_end_reg_executing = false;
     } else {
