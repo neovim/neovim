@@ -435,6 +435,12 @@ typedef struct {
 } Dict(ns_opts);
 
 typedef struct {
+  OptionalKeys is_set__get_chan_;
+  Integer id;
+  Buffer buf;
+} Dict(get_chan);
+
+typedef struct {
   OptionalKeys is_set___shada_search_pat_;
   Boolean magic DictKey(sm);
   Boolean smartcase DictKey(sc);
