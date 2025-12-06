@@ -148,6 +148,7 @@ func s:GetFilenameChecks() abort
     \ 'blank': ['file.bl'],
     \ 'blueprint': ['file.blp'],
     \ 'bp': ['Android.bp'],
+    \ 'bpftrace': ['file.bt'],
     \ 'brighterscript': ['file.bs'],
     \ 'brightscript': ['file.brs'],
     \ 'bsdl': ['file.bsd', 'file.bsdl'],

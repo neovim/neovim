@@ -267,6 +267,7 @@ local extension = {
   bl = 'blank',
   blp = 'blueprint',
   bp = 'bp',
+  bt = 'bpftrace',
   bs = 'brighterscript',
   brs = 'brightscript',
   bsd = 'bsdl',
