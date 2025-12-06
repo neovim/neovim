@@ -284,6 +284,7 @@ LSP
 • |Client:stop()| now uses the `Client.exit_timeout` field to control the default of `force`.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
+- Support for dynamic registration for `textDocument/diagnostic`
 
 LUA
 

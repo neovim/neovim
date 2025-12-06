@@ -498,6 +498,42 @@ describe('vim.lsp.diagnostic', function()
       )
     end)
 
+    it('supports dynamic registration', function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G.server2 = _G._create_server({
+          diagnosticProvider = {
+            documentSelector = vim.NIL,
+          },
+          handlers = {
+            ['textDocument/diagnostic'] = function(_, _, callback)
+              callback(nil, {
+                kind = 'full',
+                items = {
+                  _G.make_error('Dynamic Diagnostic', 4, 4, 4, 4),
+                },
+              })
+            end,
+          },
+        })
+
+        local client_id2 = assert(vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd }))
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            { id = 'diagnostic', method = 'textDocument/diagnostic' },
+          },
+        }, { client_id = client_id2, method = 'client/registerCapability' })
+      end)
+
+      eq(
+        1,
+        exec_lua(function()
+          return #vim.diagnostic.get(diagnostic_bufnr)
+        end)
+      )
+    end)
+
     it('requests with the `previousResultId`', function()
       -- Full reports
       eq(
