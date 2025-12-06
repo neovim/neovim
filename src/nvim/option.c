@@ -570,7 +570,7 @@ static const char *find_dup_item(const char *origval, const char *newval, const 
   return NULL;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 /// Free all options.
 void free_all_options(void)
 {
@@ -5549,7 +5549,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
           s--;
         }
         if ((*p == ' ' && ((xp->xp_backslash & XP_BS_THREE) && (p - s) < 3))
-#if defined(BACKSLASH_IN_FILENAME)
+#ifdef BACKSLASH_IN_FILENAME
             || (*p == ',' && (flags & kOptFlagComma) && (p - s) < 1)
 #else
             || (*p == ',' && (flags & kOptFlagComma) && (p - s) < 2)

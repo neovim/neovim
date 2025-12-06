@@ -55,22 +55,22 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
                                  const bool expandenv)
   FUNC_ATTR_NONNULL_ALL
 {
-  char exp1[MAXPATHL];
+  char expand1[MAXPATHL];
   char full1[MAXPATHL];
   char full2[MAXPATHL];
   FileID file_id_1, file_id_2;
 
   if (expandenv) {
-    expand_env(s1, exp1, MAXPATHL);
+    expand_env(s1, expand1, MAXPATHL);
   } else {
-    xstrlcpy(exp1, s1, MAXPATHL);
+    xstrlcpy(expand1, s1, MAXPATHL);
   }
-  bool id_ok_1 = os_fileid(exp1, &file_id_1);
+  bool id_ok_1 = os_fileid(expand1, &file_id_1);
   bool id_ok_2 = os_fileid(s2, &file_id_2);
   if (!id_ok_1 && !id_ok_2) {
     // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
-      vim_FullName(exp1, full1, MAXPATHL, false);
+      vim_FullName(expand1, full1, MAXPATHL, false);
       vim_FullName(s2, full2, MAXPATHL, false);
       if (path_fnamecmp(full1, full2) == 0) {
         return kEqualFileNames;
@@ -520,7 +520,7 @@ bool path_has_wildcard(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   for (; *p; MB_PTR_ADV(p)) {
-#if defined(UNIX)
+#ifdef UNIX
     if (p[0] == '\\' && p[1] != NUL) {
       p++;
       continue;
@@ -552,7 +552,7 @@ bool path_has_exp_wildcard(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   for (; *p != NUL; MB_PTR_ADV(p)) {
-#if defined(UNIX)
+#ifdef UNIX
     if (p[0] == '\\' && p[1] != NUL) {
       p++;
       continue;
@@ -687,7 +687,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 
   // compile the regexp into a program
   regmatch_T regmatch;
-#if defined(UNIX)
+#ifdef UNIX
   // Ignore case if given 'wildignorecase', else respect 'fileignorecase'.
   regmatch.rm_ic = (flags & EW_ICASE) || p_fic;
 #else

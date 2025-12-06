@@ -207,7 +207,7 @@ char *get_xdg_home(const XDGVarType idx)
 
   if (dir) {
     xmemcpyz(IObuff, appname, appname_len);
-#if defined(MSWIN)
+#ifdef MSWIN
     if (idx == kXDGDataHome || idx == kXDGStateHome) {
       xstrlcat(IObuff, "-data", IOSIZE);
     }

@@ -2526,7 +2526,7 @@ static void flush_buf(TUIData *tui)
 static const char *tui_get_stty_erase(int fd)
 {
   static char stty_erase[2] = { 0 };
-#if defined(HAVE_TERMIOS_H)
+#ifdef HAVE_TERMIOS_H
   struct termios t;
   if (tcgetattr(fd, &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];

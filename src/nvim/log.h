@@ -8,7 +8,7 @@
 
 // USDT probes. Example invocation:
 //     NVIM_PROBE(nvim_foo_bar, 1, string.data);
-#if defined(HAVE_SYS_SDT_H)
+#ifdef HAVE_SYS_SDT_H
 # include <sys/sdt.h>  // IWYU pragma: keep
 
 # define NVIM_PROBE(name, n, ...) STAP_PROBE##n(neovim, name, __VA_ARGS__)

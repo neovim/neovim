@@ -205,7 +205,7 @@ void eval_init(void)
   func_init();
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void eval_clear(void)
 {
   evalvars_clear();

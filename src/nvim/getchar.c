@@ -1445,7 +1445,7 @@ static void closescript(void)
   curscript--;
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void close_all_scripts(void)
 {
   while (curscript >= 0) {

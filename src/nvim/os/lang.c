@@ -55,7 +55,7 @@ char *get_mess_lang(void)
 {
   char *p;
 
-#if defined(LC_MESSAGES)
+#ifdef LC_MESSAGES
   p = get_locale_val(LC_MESSAGES);
 #else
   // This is necessary for Win32, where LC_MESSAGES is not defined and $LANG
@@ -288,7 +288,7 @@ static void init_locales(void)
 #endif
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void free_locales(void)
 {
   if (locales == NULL) {

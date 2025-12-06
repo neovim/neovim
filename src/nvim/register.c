@@ -941,7 +941,7 @@ void shift_delete_registers(bool y_append)
   y_regs[1].y_array = NULL;  // set register "1 to empty
 }
 
-#if defined(EXITFREE)
+#ifdef EXITFREE
 void clear_registers(void)
 {
   for (int i = 0; i < NUM_REGISTERS; i++) {
