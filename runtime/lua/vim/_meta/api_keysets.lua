@@ -160,6 +160,7 @@ error('Cannot require a meta file')
 --- |'LspProgress'
 --- |'LspRequest'
 --- |'LspTokenUpdate'
+--- |'MarkSet'
 --- |'MenuPopup'
 --- |'ModeChanged'
 --- |'OptionSet'
