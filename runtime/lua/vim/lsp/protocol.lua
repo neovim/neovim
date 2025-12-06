@@ -352,7 +352,7 @@ function protocol.make_client_capabilities()
     },
     textDocument = {
       diagnostic = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
         tagSupport = {
           valueSet = get_value_set(constants.DiagnosticTag),
         },
