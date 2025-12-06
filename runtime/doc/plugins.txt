@@ -185,6 +185,8 @@ The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
                       otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
       • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
                       which the |vim.net.request()| times out.
+      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
+                      confirm download.
 
 
 config({opts})                                            *spellfile.config()*

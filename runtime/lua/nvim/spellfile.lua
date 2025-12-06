@@ -25,11 +25,16 @@ local M = {}
 --- Number of milliseconds after which the [vim.net.request()] times out.
 --- (default: 15000)
 --- @field timeout_ms integer
+---
+--- Whether to ask user to confirm download.
+--- (default: `true`)
+--- @field confirm boolean
 
 --- @type nvim.spellfile.Opts
 local config = {
   url = vim.g.spellfile_URL or 'https://ftp.nluug.nl/pub/vim/runtime/spell',
   timeout_ms = 15000,
+  confirm = true,
 }
 
 --- Configure spellfile download options. For example:
@@ -270,18 +275,22 @@ function M.get(lang)
     return
   end
 
-  local prompt = ('No spell file found for %s (%s). Download? [y/N] '):format(
-    info.lang,
-    info.encoding
-  )
-  vim.ui.input({ prompt = prompt }, function(input)
-    -- properly clear the message window
-    vim.api.nvim_echo({ { ' ' } }, false, { kind = 'empty' })
-    if not input or input:lower() ~= 'y' then
-      return
-    end
+  if config.confirm then
+    local prompt = ('No spell file found for %s (%s). Download? [y/N] '):format(
+      info.lang,
+      info.encoding
+    )
+    vim.ui.input({ prompt = prompt }, function(input)
+      -- properly clear the message window
+      vim.api.nvim_echo({ { ' ' } }, false, { kind = 'empty' })
+      if not input or input:lower() ~= 'y' then
+        return
+      end
+      download(info)
+    end)
+  else
     download(info)
-  end)
+  end
 
   return info
 end
