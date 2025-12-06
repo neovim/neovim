@@ -66,6 +66,9 @@
 /// Used for menu in a tab pages line.
 #define KS_TABMENU              239
 
+///      K_SPECIAL   KS_SHIFTHAR len
+#define KS_SHIFTCHAR            238
+
 /// Filler used after KS_SPECIAL and others
 #define KE_FILLER               ('X')
 
