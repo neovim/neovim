@@ -1032,9 +1032,8 @@ static int validate_opt_idx(win_T *win, OptIndex opt_idx, int opt_flags, uint32_
 /// option name.
 static const char *find_tty_option_end(const char *arg)
 {
-  if (strequal(arg, "term")) {
-    return arg + sizeof("term") - 1;
-  } else if (strequal(arg, "ttytype")) {
+  // Note: 'term' is now a proper option (kOptTerm), only 'ttytype' is handled here.
+  if (strequal(arg, "ttytype")) {
     return arg + sizeof("ttytype") - 1;
   }
 
@@ -3023,6 +3022,7 @@ OptVal get_tty_option(const char *name)
 {
   char *value = NULL;
 
+  // Note: 'term' is now a proper option (kOptTerm), handled via normal option system.
   if (strequal(name, "t_Co")) {
     if (t_colors <= 1) {
       value = xstrdup("");
@@ -3030,8 +3030,6 @@ OptVal get_tty_option(const char *name)
       value = xmalloc(NUMBUFLEN);
       snprintf(value, NUMBUFLEN, "%d", t_colors);
     }
-  } else if (strequal(name, "term")) {
-    value = p_term ? xstrdup(p_term) : xstrdup("nvim");
   } else if (strequal(name, "ttytype")) {
     value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
   } else if (is_tty_option(name)) {
@@ -3044,6 +3042,7 @@ OptVal get_tty_option(const char *name)
 
 bool set_tty_option(const char *name, char *value)
 {
+  // Note: 'term' is a proper option (kOptTerm) but can be set internally by the TUI.
   if (strequal(name, "term")) {
     if (p_term) {
       xfree(p_term);
@@ -3159,6 +3158,11 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
   // changed.
   if ((int *)varp == &curbuf->b_changed) {
     return BOOLEAN_OPTVAL(curbufIsChanged());
+  }
+
+  // Special case: 'term' uses p_term (set by TUI) if available, otherwise the default.
+  if (opt_idx == kOptTerm && p_term != NULL) {
+    return STRING_OPTVAL(cstr_as_string(p_term));
   }
 
   OptValType type = option_get_type(opt_idx);
@@ -3939,18 +3943,22 @@ static void restore_option_context(void *const ctx, OptScope scope)
 
 /// Get option value for buffer / window.
 ///
+/// @param       name       Option name.
 /// @param       opt_idx    Option index in options[] table.
-/// @param[out]  flagsp     Set to the option flags (see OptFlags) (if not NULL).
-/// @param[in]   scope      Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
-/// @param[out]  hidden     Whether option is hidden.
+/// @param[in]   opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param       scope      Option scope. See OptScope in option.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  Option value. Must be freed by caller.
-OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scope, void *const from,
-                            Error *err)
+OptVal get_option_value_for(const char *name, OptIndex opt_idx, int opt_flags, const OptScope scope,
+                            void *const from, Error *err)
 {
+  // Handle TTY options (e.g., 'term') which are not in the regular option table.
+  if (is_tty_option(name)) {
+    return get_tty_option(name);
+  }
+
   switchwin_T switchwin;
   aco_save_T aco;
   void *ctx = scope == kOptScopeWin ? (void *)&switchwin
