@@ -1974,7 +1974,7 @@ Boolean nvim_del_mark(String name, Error *err)
              "mark name (must be file/uppercase)", name.data, {
     return res;
   });
-  res = set_mark(NULL, name, 0, 0, err);
+  res = set_mark(NULL, NULL, name, 0, 0, err);
   return res;
 }
 
