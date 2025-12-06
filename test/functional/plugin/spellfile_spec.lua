@@ -2,6 +2,7 @@ local n = require('test.functional.testnvim')()
 local t = require('test.testutil')
 
 local eq = t.eq
+local neq = t.neq
 local exec_lua = n.exec_lua
 
 describe('nvim.spellfile', function()
@@ -40,7 +41,10 @@ describe('nvim.spellfile', function()
       vim.fn.input = function() prompted = true; return 'n' end
 
       local requests = 0
-      vim.net.request = function(...) requests = requests + 1 end
+      vim.net.request = function(_, _, cb)
+        requests = requests + 1
+        cb()
+      end
 
       s.get('en_gb')
 
@@ -147,5 +151,36 @@ describe('nvim.spellfile', function()
     eq(1, out.warns)
     eq(true, out.done)
     eq(false, out.did_reload)
+  end)
+
+  it('no confirmation when using confirm = false', function()
+    local out = exec_lua(
+      [[
+      local rtp_dir = ...
+      local s = require('nvim.spellfile')
+
+      vim.fn.input = function(...)
+        error('prompt was triggered')
+        return 'n'
+      end
+
+      local requests = 0
+      vim.net.request = function(_, _, cb)
+        requests = requests + 1
+        cb()
+      end
+
+      s.config({ confirm = false })
+      s.get('en_gb')
+
+      -- Reset value
+      s.config({ confirm = true })
+
+      return { requests = requests }
+    ]],
+      rtp_dir
+    )
+
+    neq(0, out.requests)
   end)
 end)
