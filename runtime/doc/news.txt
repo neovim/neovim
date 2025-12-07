@@ -289,7 +289,8 @@ LSP
   the `version` property in the notification params.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
-- Support for dynamic registration for `textDocument/diagnostic`
+- Support dynamic registration for `textDocument/diagnostic` and
+  `textDocument/didSave`
 
 LUA
 
