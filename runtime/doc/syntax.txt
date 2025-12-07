@@ -4406,7 +4406,7 @@ highlighting, and "bbb" where ccBar is used. >
    fff	       bbb	fff	 bbb
 
 Note the use of ".\{-}" to skip as little as possible until the next Bar.
-when ".*" would be used, the "asdf" in between "Bar" and "Foo" would be
+when `.*` would be used, the "asdf" in between "Bar" and "Foo" would be
 highlighted according to the "ccFoobar" group, because the ccFooBar match
 would include the first "Foo" and the last "Bar" in the line (see |pattern|).
 
@@ -4438,7 +4438,7 @@ Example: >
   :syn match ifstart "\<if.*"	  nextgroup=ifline skipwhite skipempty
   :syn match ifline  "[^ \t].*" nextgroup=ifline skipwhite skipempty contained
   :syn match ifline  "endif"	contained
-Note that the "[^ \t].*" match matches all non-white text.  Thus it would also
+Note that the `[^ \t].*` match matches all non-white text.  Thus it would also
 match "endif".	Therefore the "endif" match is put last, so that it takes
 precedence.
 Note that this example doesn't work for nested "if"s.  You need to add

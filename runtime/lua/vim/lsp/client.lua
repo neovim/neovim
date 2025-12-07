@@ -75,7 +75,7 @@ local all_clients = {}
 --- (default: `false`)
 --- @field exit_timeout? integer|boolean
 ---
---- A table with flags for the client. The current (experimental) flags are:
+--- Experimental client flags:
 --- @field flags? vim.lsp.Client.Flags
 ---
 --- Language ID as string. Defaults to the buffer filetype.
@@ -163,7 +163,7 @@ local all_clients = {}
 --- (default: `false`)
 --- @field exit_timeout integer|boolean
 ---
---- A table with flags for the client. The current (experimental) flags are:
+--- Experimental client flags:
 --- @field flags vim.lsp.Client.Flags
 ---
 --- See [vim.lsp.ClientConfig].

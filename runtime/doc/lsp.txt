@@ -1017,8 +1017,11 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
 
 enable({name}, {enable})                                    *vim.lsp.enable()*
-    Auto-starts LSP when a buffer is opened, based on the |lsp-config|
-    `filetypes`, `root_markers`, and `root_dir` fields.
+    Auto-activates LSP in each buffer based on the |lsp-config| `filetypes`,
+    `root_markers`, and `root_dir`.
+
+    To disable, pass `enable=false`: Stops related clients and servers
+    (force-stops servers after a timeout, unless `exit_timeout=false`).
 
     Examples: >lua
         vim.lsp.enable('clangd')
@@ -1048,10 +1051,11 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
     Parameters: ~
       • {name}    (`string|string[]`) Name(s) of client(s) to enable.
-      • {enable}  (`boolean?`) `true|nil` to enable, `false` to disable
-                  (actively stops and detaches clients as needed, and force
-                  stops them if necessary after `client.exit_timeout`
-                  milliseconds)
+      • {enable}  (`boolean?`) If `true|nil`, enables auto-activation of the
+                  given LSP config on current and future buffers. If `false`,
+                  disables auto-activation and stops related LSP clients and
+                  servers (force-stops servers after `exit_timeout`
+                  milliseconds).
 
 foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
     Close all {kind} of folds in the the window with {winid}.
@@ -1600,8 +1604,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 before sending kill -15. If set to false,
                                 waits indefinitely. If set to true, nvim will
                                 kill the server immediately.
-      • {flags}                 (`table`) A table with flags for the client.
-                                The current (experimental) flags are:
+      • {flags}                 (`table`) Experimental client flags:
                                 • {allow_incremental_sync}? (`boolean`,
                                   default: `true`) Allow using incremental
                                   sync for buffer edits
@@ -1727,8 +1730,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                sending kill -15. If set to false, waits
                                indefinitely. If set to true, nvim will kill
                                the server immediately.
-      • {flags}?               (`table`) A table with flags for the client.
-                               The current (experimental) flags are:
+      • {flags}?               (`table`) Experimental client flags:
                                • {allow_incremental_sync}? (`boolean`,
                                  default: `true`) Allow using incremental sync
                                  for buffer edits

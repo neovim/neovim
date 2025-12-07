@@ -317,7 +317,7 @@ This matches "axb" in "axbxb".  If this pattern would be used: >
 
 	/a.*b
 
-It would try to match as many characters as possible with ".*", thus it
+It would try to match as many characters as possible with `.*`, thus it
 matches "axbxb" as a whole.
 
 ==============================================================================

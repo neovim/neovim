@@ -620,7 +620,7 @@ overview.
 	"^" it matches the star character.
 
 	Be aware that repeating "\_." can match a lot of text and take a long
-	time.  For example, "\_.*END" matches all text from the current
+	time.  For example, `\_.*END` matches all text from the current
 	position to the last occurrence of "END" in the file.  Since the "*"
 	will match as many as possible, this first skips over all lines until
 	the end of the file and then tries matching "END", backing up one
@@ -704,8 +704,8 @@ overview.
 	if \(\(then\)\@!.\)*$	"if " not followed by "then"
 
 	Using "\@!" is tricky, because there are many places where a pattern
-	does not match.  "a.*p\@!" will match from an "a" to the end of the
-	line, because ".*" can match all characters in the line and the "p"
+	does not match.  `a.*p\@!` will match from an "a" to the end of the
+	line, because `.*` can match all characters in the line and the "p"
 	doesn't match at the end of the line.  "a.\{-}p\@!" will match any
 	"a", "ap", "app", etc. that isn't followed by a "p", because the "."
 	can match a "p" and "p\@!" doesn't match after that.
@@ -719,7 +719,7 @@ overview.
 	Useful example: to find "foo" in a line that does not contain "bar": >
 		/^\%(.*bar\)\@!.*\zsfoo
 <	This pattern first checks that there is not a single position in the
-	line where "bar" matches.  If ".*bar" matches somewhere the \@! will
+	line where "bar" matches.  If `.*bar` matches somewhere the \@! will
 	reject the pattern.  When there is no match any "foo" will be found.
 	The "\zs" is to have the match start just before "foo".
 
@@ -772,13 +772,13 @@ overview.
 	before what follows.  |/zero-width|
 	Like "(?<!pattern)" in Perl, but Vim allows non-fixed-width patterns.
 	The match with the preceding atom is made to end just before the match
-	with what follows, thus an atom that ends in ".*" will work.
+	with what follows, thus an atom that ends in `.*` will work.
 	Warning: This can be slow (because many positions need to be checked
 	for a match).  Use a limit if you can, see below.
-	Example			matches ~
+	Example			matches >
 	\(foo\)\@<!bar		any "bar" that's not in "foobar"
 	\(\/\/.*\)\@<!in	"in" which is not after "//"
-
+<
 \@123<!
 	Like "\@<!" but only look back 123 bytes.  This avoids trying lots of
 	matches that are known to fail and make executing the pattern very
@@ -843,7 +843,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 
 							*/\_.*
 \_.	Matches any single character or end-of-line.
-	Careful: "\_.*" matches all text to the end of the buffer!
+	Careful: `\_.*` matches all text to the end of the buffer!
 
 							*/\<*
 \<	Matches the beginning of a word: The next char is the first char of a
@@ -1020,7 +1020,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	this will also highlight column 17: >
 		/.*\%17v
 <	Column 17 is highlighted by 'hlsearch' because there is another match
-	where ".*" matches zero characters.
+	where `.*` matches zero characters.
 
 
 Character classes:

@@ -54,6 +54,12 @@ local spell_ignore_files = {
   ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
   ['news-0.10.txt'] = { 'tree-sitter' },
 }
+--- Punctuation that indicates a word is part of a path, module name, etc.
+--- Example: ".lua" is likely part of a filename, thus we don't want to enforce its spelling.
+local spell_punc = {
+  ['.'] = true,
+  ['/'] = true,
+}
 local language = nil
 
 local M = {}
@@ -118,15 +124,14 @@ local exclude_invalid_urls = {
   ['http://.'] = 'usr_23.txt',
   ['http://aspell.net/man-html/Affix-Compression.html'] = 'spell.txt',
   ['http://aspell.net/man-html/Phonetic-Code.html'] = 'spell.txt',
-  ['http://canna.sourceforge.jp/'] = 'mbyte.txt',
-  ['http://gnuada.sourceforge.net'] = 'ft_ada.txt',
   ['http://lua-users.org/wiki/StringLibraryTutorial'] = 'lua.txt',
   ['http://michael.toren.net/code/'] = 'pi_tar.txt',
+  ['http://oldblog.antirez.com/post/redis-and-scripting.html'] = 'faq.txt',
   ['http://papp.plan9.de'] = 'syntax.txt',
+  ['http://vimcasts.org'] = 'intro.txt',
   ['http://wiki.services.openoffice.org/wiki/Dictionaries'] = 'spell.txt',
   ['http://www.adapower.com'] = 'ft_ada.txt',
   ['http://www.jclark.com/'] = 'quickfix.txt',
-  ['http://oldblog.antirez.com/post/redis-and-scripting.html'] = 'faq.txt',
 }
 
 -- Deprecated, brain-damaged files that I don't care about.
@@ -189,7 +194,8 @@ end
 
 --- Removes common punctuation from URLs.
 ---
---- TODO: fix this in the parser instead... https://github.com/neovim/tree-sitter-vimdoc
+--- NOTE: this is currently a no-op, since known issues were fixed in the parser:
+--- https://github.com/neovim/tree-sitter-vimdoc/pull/157
 ---
 --- @param url string
 --- @return string, string (fixed_url, removed_chars) where `removed_chars` is in the order found in the input.
@@ -197,12 +203,12 @@ local function fix_url(url)
   local removed_chars = ''
   local fixed_url = url
   -- Remove up to one of each char from end of the URL, in this order.
-  for _, c in ipairs({ '.', ')' }) do
-    if fixed_url:sub(-1) == c then
-      removed_chars = c .. removed_chars
-      fixed_url = fixed_url:sub(1, -2)
-    end
-  end
+  -- for _, c in ipairs({ '.', ')', ',' }) do
+  --   if fixed_url:sub(-1) == c then
+  --     removed_chars = c .. removed_chars
+  --     fixed_url = fixed_url:sub(1, -2)
+  --   end
+  -- end
   return fixed_url, removed_chars
 end
 
@@ -374,6 +380,22 @@ local function first(node, name)
   return nil
 end
 
+--- Gets the kind and node text of the previous and next siblings of node `n`.
+--- @param n any node
+local function get_prev_next(n)
+  -- Previous sibling kind (string).
+  local prev = n:prev_sibling()
+      and (n:prev_sibling().named and n:prev_sibling():named())
+      and n:prev_sibling():type()
+    or nil
+  -- Next sibling kind (string).
+  local next_ = n:next_sibling()
+      and (n:next_sibling().named and n:next_sibling():named())
+      and n:next_sibling():type()
+    or nil
+  return prev, next_
+end
+
 local function validate_link(node, bufnr, fname)
   local helppage, tagname = get_tagname(node:child(1), bufnr)
   local ignored = false
@@ -416,14 +438,19 @@ end
 ---@param stats table
 local function visit_validate(root, level, lang_tree, opt, stats)
   level = level or 0
+
+  local function node_text(node)
+    return vim.treesitter.get_node_text(node or root, opt.buf)
+  end
+
+  local text = trim(node_text())
   local node_name = (root.named and root:named()) and root:type() or nil
   -- Parent kind (string).
   local parent = root:parent() and root:parent():type() or nil
   local toplevel = level < 1
-  local function node_text(node)
-    return vim.treesitter.get_node_text(node or root, opt.buf)
-  end
-  local text = trim(node_text())
+  -- local prev, next_ = get_prev_next(root)
+  local prev_text = root:prev_sibling() and node_text(root:prev_sibling()) or nil
+  local next_text = root:next_sibling() and node_text(root:next_sibling()) or nil
 
   if root:child_count() > 0 then
     for node, _ in root:iter_children() do
@@ -455,6 +482,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
           (spell_ignore_files[fname_basename] or {}) --[[ @as string[] ]],
           text_nopunct
         )
+        or (spell_punc[next_text] or spell_punc[prev_text])
       )
       if not should_ignore then
         invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
@@ -498,19 +526,12 @@ end
 local function visit_node(root, level, lang_tree, headings, opt, stats)
   level = level or 0
 
-  local node_name = (root.named and root:named()) and root:type() or nil
-  -- Previous sibling kind (string).
-  local prev = root:prev_sibling()
-      and (root:prev_sibling().named and root:prev_sibling():named())
-      and root:prev_sibling():type()
-    or nil
-  -- Next sibling kind (string).
-  local next_ = root:next_sibling()
-      and (root:next_sibling().named and root:next_sibling():named())
-      and root:next_sibling():type()
-    or nil
-  -- Parent kind (string).
-  local parent = root:parent() and root:parent():type() or nil
+  local function node_text(node, ws_)
+    node = node or root
+    ws_ = (ws_ == nil or ws_ == true) and getws(node, opt.buf) or ''
+    return string.format('%s%s', ws_, vim.treesitter.get_node_text(node, opt.buf))
+  end
+
   -- Gets leading whitespace of `node`.
   local function ws(node)
     node = node or root
@@ -522,11 +543,11 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return ws_
   end
-  local function node_text(node, ws_)
-    node = node or root
-    ws_ = (ws_ == nil or ws_ == true) and getws(node, opt.buf) or ''
-    return string.format('%s%s', ws_, vim.treesitter.get_node_text(node, opt.buf))
-  end
+
+  local node_name = (root.named and root:named()) and root:type() or nil
+  local prev, next_ = get_prev_next(root)
+  -- Parent kind (string).
+  local parent = root:parent() and root:parent():type() or nil
 
   local text = ''
   local trimmed ---@type string
@@ -1397,7 +1418,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   vim.validate('commit', commit, 'string', true)
   vim.validate('parser_path', parser_path, function(f)
     return vim.fn.filereadable(vim.fs.normalize(f)) == 1
-  end, true, 'valid vimdoc.{so,dll} filepath')
+  end, true, 'valid vimdoc.{so,dll,dylib} filepath')
 
   local err_count = 0
   local redirects_count = 0
@@ -1510,7 +1531,7 @@ function M.validate(help_dir, include, parser_path, request_urls)
   vim.validate('include', include, 'table', true)
   vim.validate('parser_path', parser_path, function(f)
     return vim.fn.filereadable(vim.fs.normalize(f)) == 1
-  end, true, 'valid vimdoc.{so,dll} filepath')
+  end, true, 'valid vimdoc.{so,dll,dylib} filepath')
   local err_count = 0 ---@type integer
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()

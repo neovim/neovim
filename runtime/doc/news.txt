@@ -55,9 +55,8 @@ These changes may require adaptations in your config or plugins.
 API
 
 • Decoration provider has `on_range()` callback.
-• nvim_get_commands()'s dictionaries' `complete` member is now a Lua function,
-  if that is how the command was created. `preview` and `callback`
-  have also been added, if they were specified in `nvim_create_user_command()`
+• |nvim_get_commands()| returns `complete` as a Lua function, if it was
+  defined as such.
 
 BUILD
 
@@ -74,10 +73,10 @@ DIAGNOSTICS
 
 EDITOR
 
-- |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
+• |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
   pasting instead of like user input. Improves performance, avoids broken
   formatting. To get the old behavior you can use `<C-R>=@x`.
-- Buffer name URI scheme parsing more closely follows RFC3986, so for example
+• Buffer name URI scheme parsing more closely follows RFC3986, so for example
   "svn+ssh:", "ed2k:", and "iris.xpc:" are recognized as URI schemes.
 
 EVENTS
@@ -154,6 +153,8 @@ API
   escape sequences to the terminal when Nvim is running in the |TUI|.
 • |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
 • |nvim_echo()| can create |Progress| messages
+• |nvim_get_commands()| returns `preview` and `callback` as Lua functions if
+  they were so specified in `nvim_create_user_command()`.
 • |nvim_open_win()| floating windows can show a 'statusline'. Plugins can use
   `style='minimal'` or `:setlocal statusline=` to hide the statusline.
 • Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
@@ -274,14 +275,16 @@ LSP
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 • The filter option of |vim.lsp.buf.code_action()| now receives the client ID as an argument.
-• |Client:stop()| now accepts a numerical `force` argument to be interpreted
-  as the time to wait before forcing the shutdown.
+• |Client:stop()| and |vim.lsp.enable()| accept `force` as an integer, which is
+  treated as the time to wait before before "stop" escalates to "force-stop".
+• |vim.lsp.ClientConfig| `exit_timeout` decides the time waited before "stop"
+  escalates to "force-stop" for |vim.lsp.enable()|, |Client:stop()|, and
+  during Nvim shutdown.
+  • `exit_timeout` graduated from "experimental" `flags.exit_timeout`
+    to a top-level field. Defaults to `false`.
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
 • Push diagnostics (|vim.lsp.diagnostic.on_publish_diagnostics()|) now respect
   the `version` property in the notification params.
-• |vim.lsp.ClientConfig| has an `exit_timeout` field to control the timeout of
-  client force stopping. Defaults to `false`.
-• |Client:stop()| now uses the `Client.exit_timeout` field to control the default of `force`.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 - Support for dynamic registration for `textDocument/diagnostic`
@@ -335,7 +338,9 @@ PERFORMANCE
   support for nested braces and follows LSP 3.17 specification with
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
-- |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
+• |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
+• LSP `textDocument/semanticTokens/range` is supported which requests tokens
+  for the viewport (visible screen) only.
 
 PLUGINS
 

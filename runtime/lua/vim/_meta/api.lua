@@ -1721,8 +1721,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- If -1 is provided, a top-level split will be created. `vertical` and `split` are
 --- only valid for normal windows, and are used to control split direction. For `vertical`,
 --- the exact direction is determined by 'splitright' and 'splitbelow'.
---- Split windows cannot have `bufpos`/`row`/`col`/`border`/`title`/`footer`
---- properties.
+--- Split windows cannot have `bufpos`, `row`, `col`, `border`, `title`, `footer` properties.
 ---
 --- With relative=editor (row=0,col=0) refers to the top-left corner of the
 --- screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
@@ -1735,23 +1734,19 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- could let floats hover outside of the main window like a tooltip, but
 --- this should not be used to specify arbitrary WM screen positions.
 ---
---- Example: window-relative float
+--- Examples:
 ---
 --- ```lua
+--- -- Window-relative float with 'statusline' enabled:
+--- local w1 = vim.api.nvim_open_win(0, false,
+---   {relative='win', row=3, col=3, width=40, height=4})
+--- vim.wo[w1].statusline = vim.o.statusline
+---
+--- -- Buffer-relative float (travels as buffer is scrolled):
 --- vim.api.nvim_open_win(0, false,
----   {relative='win', row=3, col=3, width=12, height=3})
---- ```
+---   {relative='win', width=40, height=4, bufpos={100,10}})
 ---
---- Example: buffer-relative float (travels as buffer is scrolled)
----
---- ```lua
---- vim.api.nvim_open_win(0, false,
----   {relative='win', width=12, height=3, bufpos={100,10}})
---- ```
----
---- Example: vertical split left of the current window
----
---- ```lua
+--- -- Vertical split left of the current window:
 --- vim.api.nvim_open_win(0, false, { split = 'left', win = 0, })
 --- ```
 ---
@@ -1957,7 +1952,7 @@ function vim.api.nvim_parse_cmd(str, opts) end
 ---   - "error": Dict with error, present only if parser saw some
 ---            error. Contains the following keys:
 ---     - "message": String, error message in printf format, translated.
----                  Must contain exactly one "%.*s".
+---                  Must contain exactly one `%.*s`.
 ---     - "arg": String, error message argument.
 ---   - "len": Amount of bytes successfully parsed. With flags equal to ""
 ---            that should be equal to the length of expr string.
