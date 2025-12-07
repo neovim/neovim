@@ -1367,6 +1367,12 @@ static void draw_sep_connectors_win(win_T *wp)
 /// bot: from bot_start to last row (when scrolled up)
 static void win_update(win_T *wp)
 {
+  // Return early when the windows would overflow the shrunk terminal window
+  // avoiding invalid drawing an assert failure
+  if (wp->w_grid.target == &default_grid && wp->w_wincol >= Columns) {
+    return;
+  }
+
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
   int mid_start = 999;          // first row of the mid area that needs
