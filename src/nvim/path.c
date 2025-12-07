@@ -55,22 +55,22 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
                                  const bool expandenv)
   FUNC_ATTR_NONNULL_ALL
 {
-  char exp1[MAXPATHL];
+  char expanded1[MAXPATHL];
   char full1[MAXPATHL];
   char full2[MAXPATHL];
   FileID file_id_1, file_id_2;
 
   if (expandenv) {
-    expand_env(s1, exp1, MAXPATHL);
+    expand_env(s1, expanded1, MAXPATHL);
   } else {
-    xstrlcpy(exp1, s1, MAXPATHL);
+    xstrlcpy(expanded1, s1, MAXPATHL);
   }
-  bool id_ok_1 = os_fileid(exp1, &file_id_1);
+  bool id_ok_1 = os_fileid(expanded1, &file_id_1);
   bool id_ok_2 = os_fileid(s2, &file_id_2);
   if (!id_ok_1 && !id_ok_2) {
     // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
-      vim_FullName(exp1, full1, MAXPATHL, false);
+      vim_FullName(expanded1, full1, MAXPATHL, false);
       vim_FullName(s2, full2, MAXPATHL, false);
       if (path_fnamecmp(full1, full2) == 0) {
         return kEqualFileNames;
