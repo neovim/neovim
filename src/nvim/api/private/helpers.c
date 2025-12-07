@@ -1000,9 +1000,10 @@ void api_luarefs_free_dict(Dict value)
 /// @param line       Line number
 /// @param col        Column/row number
 /// @return true if the mark was set, else false
-bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
+bool set_mark(buf_T *buf, win_T *win, String name, Integer line, Integer col, Error *err)
 {
   buf = buf == NULL ? curbuf : buf;
+  win = win == NULL ? curwin : win;
   // If line == 0 the marks is being deleted
   bool res = false;
   bool deleting = false;
@@ -1021,7 +1022,7 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
   }
   assert(INT32_MIN <= line && line <= INT32_MAX);
   pos_T pos = { (linenr_T)line, (int)col, 0 };
-  res = setmark_pos(*name.data, &pos, buf->handle, NULL);
+  res = setmark_pos(*name.data, &pos, buf->handle, NULL, win);
   if (!res) {
     if (deleting) {
       api_set_error(err, kErrorTypeException,

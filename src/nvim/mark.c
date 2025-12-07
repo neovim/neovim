@@ -62,7 +62,7 @@
 int setmark(int c)
 {
   fmarkv_T view = mark_view_make(curwin->w_topline, curwin->w_cursor);
-  return setmark_pos(c, &curwin->w_cursor, curbuf->b_fnum, &view);
+  return setmark_pos(c, &curwin->w_cursor, curbuf->b_fnum, &view, curwin);
 }
 
 /// Free fmark_T item
@@ -87,10 +87,15 @@ void clear_fmark(fmark_T *const fm, const Timestamp timestamp)
   fm->timestamp = timestamp;
 }
 
-// Set named mark "c" to position "pos".
-// When "c" is upper case use file "fnum".
-// Returns OK on success, FAIL if bad name given.
-int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
+/// Set named mark "c" to position "pos".
+/// When "c" is upper case use file "fnum".
+/// @param c The mark name (character)
+/// @param pos The position to set the mark to
+/// @param fnum The file number (used for uppercase marks)
+/// @param view_pt Pointer to the view information (can be NULL)
+/// @param win Window associated with the mark (only used for context marks)
+/// @return OK on success, FAIL if bad name given.
+int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt, win_T *win)
 {
   int i;
   fmarkv_T view = view_pt != NULL ? *view_pt : (fmarkv_T)INIT_FMARKV;
@@ -101,12 +106,12 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
   }
 
   if (c == '\'' || c == '`') {
-    if (pos == &curwin->w_cursor) {
-      setpcmark();
+    if (pos == &win->w_cursor) {
+      set_previous_context_mark(win, *pos);
       // keep it even when the cursor doesn't move
-      curwin->w_prev_pcmark = curwin->w_pcmark;
+      win->w_prev_pcmark = win->w_pcmark;
     } else {
-      curwin->w_pcmark = *pos;
+      win->w_pcmark = *pos;
     }
     return OK;
   }
@@ -218,9 +223,7 @@ void mark_forget_file(win_T *wp, int fnum)
   }
 }
 
-// Set the previous context mark to the current position and add it to the
-// jump list.
-void setpcmark(void)
+void set_previous_context_mark(win_T *win, pos_T pos)
 {
   xfmark_T *fm;
 
@@ -229,35 +232,42 @@ void setpcmark(void)
     return;
   }
 
-  curwin->w_prev_pcmark = curwin->w_pcmark;
-  curwin->w_pcmark = curwin->w_cursor;
+  win->w_prev_pcmark = win->w_pcmark;
+  win->w_pcmark = pos;
 
-  if (curwin->w_pcmark.lnum == 0) {
-    curwin->w_pcmark.lnum = 1;
+  if (win->w_pcmark.lnum == 0) {
+    win->w_pcmark.lnum = 1;
   }
 
   if (jop_flags & kOptJopFlagStack) {
     // jumpoptions=stack: if we're somewhere in the middle of the jumplist
     // discard everything after the current index.
-    if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
+    if (win->w_jumplistidx < win->w_jumplistlen - 1) {
       // Discard the rest of the jumplist by cutting the length down to
       // contain nothing beyond the current index.
-      curwin->w_jumplistlen = curwin->w_jumplistidx + 1;
+      win->w_jumplistlen = win->w_jumplistidx + 1;
     }
   }
 
   // If jumplist is full: remove oldest entry
-  if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
-    curwin->w_jumplistlen = JUMPLISTSIZE;
-    free_xfmark(curwin->w_jumplist[0]);
-    memmove(&curwin->w_jumplist[0], &curwin->w_jumplist[1],
-            (JUMPLISTSIZE - 1) * sizeof(curwin->w_jumplist[0]));
+  if (++win->w_jumplistlen > JUMPLISTSIZE) {
+    win->w_jumplistlen = JUMPLISTSIZE;
+    free_xfmark(win->w_jumplist[0]);
+    memmove(&win->w_jumplist[0], &win->w_jumplist[1],
+            (JUMPLISTSIZE - 1) * sizeof(win->w_jumplist[0]));
   }
-  curwin->w_jumplistidx = curwin->w_jumplistlen;
-  fm = &curwin->w_jumplist[curwin->w_jumplistlen - 1];
+  win->w_jumplistidx = win->w_jumplistlen;
+  fm = &win->w_jumplist[win->w_jumplistlen - 1];
 
-  fmarkv_T view = mark_view_make(curwin->w_topline, curwin->w_pcmark);
-  SET_XFMARK(fm, curwin->w_pcmark, curbuf->b_fnum, view, NULL);
+  fmarkv_T view = mark_view_make(win->w_topline, win->w_pcmark);
+  SET_XFMARK(fm, win->w_pcmark, curbuf->b_fnum, view, NULL);
+}
+
+// Set the previous context mark to the current position and add it to the
+// jump list.
+void setpcmark(void)
+{
+  set_previous_context_mark(curwin, curwin->w_cursor);
 }
 
 // To change context, call setpcmark(), then move the current position to

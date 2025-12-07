@@ -6392,7 +6392,7 @@ static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
     rettv->vval.v_number = 0;
   } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL) {
     // set mark
-    if (setmark_pos((uint8_t)name[1], &pos, fnum, NULL) == OK) {
+    if (setmark_pos((uint8_t)name[1], &pos, fnum, NULL, curwin) == OK) {
       rettv->vval.v_number = 0;
     }
   } else {

@@ -1086,7 +1086,7 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
   // mark.lnum is 0 when the mark is not valid in the buffer, or is not set.
   if (fm->mark.lnum != 0 && fm->fnum == buf->handle) {
     // since the mark belongs to the buffer delete it.
-    res = set_mark(buf, name, 0, 0, err);
+    res = set_mark(buf, curwin, name, 0, 0, err);
   }
 
   return res;
@@ -1107,7 +1107,7 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
 /// @return true if the mark was set, else false.
 /// @see |nvim_buf_del_mark()|
 /// @see |nvim_buf_get_mark()|
-Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dict(empty) *opts,
+Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dict(buf_set_mark) *opts,
                           Error *err)
   FUNC_API_SINCE(8)
 {
@@ -1122,7 +1122,12 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
     return res;
   });
 
-  res = set_mark(buf, name, line, col, err);
+  win_T *win = curwin;
+  if (HAS_KEY(opts, buf_set_mark, win)) {
+    win = find_window_by_handle(opts->win, err);
+  }
+
+  res = set_mark(buf, win, name, line, col, err);
 
   return res;
 }

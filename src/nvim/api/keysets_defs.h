@@ -388,6 +388,11 @@ typedef struct {
 } Dict(buf_delete);
 
 typedef struct {
+  OptionalKeys is_set__buf_set_mark_;
+  Window win;
+} Dict(buf_set_mark);
+
+typedef struct {
   OptionalKeys is_set__open_term_;
   LuaRefOf(("input" _, Integer term, Integer bufnr, any data)) on_input;
   Boolean force_crlf;
