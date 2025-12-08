@@ -285,8 +285,6 @@ LSP
   • `exit_timeout` graduated from "experimental" `flags.exit_timeout`
     to a top-level field. Defaults to `false`.
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
-• Push diagnostics (|vim.lsp.diagnostic.on_publish_diagnostics()|) now respect
-  the `version` property in the notification params.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 - Support for dynamic registration for `textDocument/diagnostic`

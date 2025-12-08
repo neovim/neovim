@@ -222,8 +222,7 @@ end
 --- @param client_id? integer
 --- @param diagnostics lsp.Diagnostic[]
 --- @param is_pull boolean
---- @param version integer?
-local function handle_diagnostics(uri, client_id, diagnostics, is_pull, version)
+local function handle_diagnostics(uri, client_id, diagnostics, is_pull)
   local fname = vim.uri_to_fname(uri)
 
   if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
@@ -232,10 +231,6 @@ local function handle_diagnostics(uri, client_id, diagnostics, is_pull, version)
 
   local bufnr = vim.fn.bufadd(fname)
   if not bufnr then
-    return
-  end
-
-  if version and util.buf_versions[bufnr] ~= version then
     return
   end
 
@@ -254,7 +249,7 @@ end
 ---@param params lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 function M.on_publish_diagnostics(_, params, ctx)
-  handle_diagnostics(params.uri, ctx.client_id, params.diagnostics, false, params.version)
+  handle_diagnostics(params.uri, ctx.client_id, params.diagnostics, false)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"

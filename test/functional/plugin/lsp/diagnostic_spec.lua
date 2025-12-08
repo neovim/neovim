@@ -148,40 +148,6 @@ describe('vim.lsp.diagnostic', function()
       )
     end)
 
-    it('ignores outdated diagnostics', function()
-      local result = exec_lua(function()
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-          uri = fake_uri,
-          version = vim.lsp.util.buf_versions[diagnostic_bufnr] - 1,
-          diagnostics = {
-            _G.make_error('Error', 0, 0, 1, 0),
-          },
-        }, { client_id = client_id })
-
-        local diags = vim.diagnostic.get(diagnostic_bufnr)
-        return diags
-      end)
-
-      -- Ignored: outdated version.
-      eq(0, #result)
-
-      result = exec_lua(function()
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-          uri = fake_uri,
-          version = vim.lsp.util.buf_versions[diagnostic_bufnr],
-          diagnostics = {
-            _G.make_error('Error', 0, 0, 1, 0),
-          },
-        }, { client_id = client_id })
-
-        local diags = vim.diagnostic.get(diagnostic_bufnr)
-        return diags
-      end)
-
-      -- Applied: up-to-date version.
-      eq(1, #result)
-    end)
-
     it('does not create buffer on empty diagnostics', function()
       -- No buffer is created without diagnostics
       eq(
