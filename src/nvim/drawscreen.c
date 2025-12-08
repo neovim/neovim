@@ -1376,6 +1376,7 @@ static void win_update(win_T *wp)
   int bot_start = 999;          // first row of the bot area that needs
                                 // updating.  999 when no bot area updating
   bool scrolled_down = false;   // true when scrolled down when w_topline got smaller a bit
+  bool scrolled_for_mod = false;  // true after scrolling for changed lines
   bool top_to_mod = false;      // redraw above mod_top
 
   int bot_scroll_start = 999;   // first line that needs to be redrawn due to
@@ -2038,10 +2039,13 @@ static void win_update(win_T *wp)
       // When at start of changed lines: May scroll following lines
       // up or down to minimize redrawing.
       // Don't do this when the change continues until the end.
-      // Don't scroll when redrawing the top, scrolled already above.
-      if (lnum == mod_top
-          && mod_bot != MAXLNUM
+      // Don't scroll the top area which was already scrolled above,
+      // but do scroll for changed lines below the top area.
+      if (!scrolled_for_mod && mod_bot != MAXLNUM
+          && lnum >= mod_top && lnum < MAX(mod_bot, mod_top + 1)
           && row >= top_end) {
+        scrolled_for_mod = true;
+
         int old_cline_height = 0;
         int old_rows = 0;
         linenr_T l;
