@@ -15,20 +15,20 @@ endfunc
 func Test_ptjump()
   CheckFeature quickfix
 
-  set tags=Xtags
+  set tags=Xpttags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
-        \ "one\tXfile\t1",
-        \ "three\tXfile\t3",
-        \ "two\tXfile\t2"],
-        \ 'Xtags')
-  call writefile(['one', 'two', 'three'], 'Xfile')
+        \ "one\tXptfile\t1",
+        \ "three\tXptfile\t3",
+        \ "two\tXptfile\t2"],
+        \ 'Xpttags', 'D')
+  call writefile(['one', 'two', 'three'], 'Xptfile', 'D')
 
   %bw!
   ptjump two
   call assert_equal(2, winnr())
   wincmd p
   call assert_equal(1, &previewwindow)
-  call assert_equal('Xfile', expand("%:p:t"))
+  call assert_equal('Xptfile', expand("%:p:t"))
   call assert_equal(2, line('.'))
   call assert_equal(2, winnr('$'))
   call assert_equal(1, winnr())
@@ -38,7 +38,7 @@ func Test_ptjump()
   call assert_equal(2, winnr())
   wincmd p
   call assert_equal(1, &previewwindow)
-  call assert_equal('Xfile', expand("%:p:t"))
+  call assert_equal('Xptfile', expand("%:p:t"))
   call assert_equal(3, line('.'))
   call assert_equal(2, winnr('$'))
   call assert_equal(1, winnr())
@@ -48,8 +48,6 @@ func Test_ptjump()
   call assert_equal(5, winheight(0))
   close
 
-  call delete('Xtags')
-  call delete('Xfile')
   set tags&
 endfunc
 
@@ -60,25 +58,24 @@ func Test_cancel_ptjump()
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
         \ "word\tfile1\tcmd1",
         \ "word\tfile2\tcmd2"],
-        \ 'Xtags')
+        \ 'Xtags', 'D')
 
   only!
   call feedkeys(":ptjump word\<CR>\<CR>", "xt")
   help
   call assert_equal(2, winnr('$'))
 
-  call delete('Xtags')
   set tags&
   quit
 endfunc
 
 func Test_static_tagjump()
-  set tags=Xtags
+  set tags=Xtjtags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
-        \ "one\tXfile1\t/^one/;\"\tf\tfile:\tsignature:(void)",
-        \ "word\tXfile2\tcmd2"],
-        \ 'Xtags')
-  new Xfile1
+        \ "one\tXtjfile1\t/^one/;\"\tf\tfile:\tsignature:(void)",
+        \ "word\tXtjfile2\tcmd2"],
+        \ 'Xtjtags', 'D')
+  new Xtjfile1
   call setline(1, ['empty', 'one()', 'empty'])
   write
   tag one
@@ -86,19 +83,18 @@ func Test_static_tagjump()
 
   bwipe!
   set tags&
-  call delete('Xtags')
-  call delete('Xfile1')
+  call delete('Xtjfile1')
 endfunc
 
 func Test_duplicate_tagjump()
-  set tags=Xtags
+  set tags=Xdttags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
-        \ "thesame\tXfile1\t1;\"\td\tfile:",
-        \ "thesame\tXfile1\t2;\"\td\tfile:",
-        \ "thesame\tXfile1\t3;\"\td\tfile:",
+        \ "thesame\tXdtfile1\t1;\"\td\tfile:",
+        \ "thesame\tXdtfile1\t2;\"\td\tfile:",
+        \ "thesame\tXdtfile1\t3;\"\td\tfile:",
         \ ],
-        \ 'Xtags')
-  new Xfile1
+        \ 'Xdttags', 'D')
+  new Xdtfile1
   call setline(1, ['thesame one', 'thesame two', 'thesame three'])
   write
   tag thesame
@@ -110,19 +106,18 @@ func Test_duplicate_tagjump()
 
   bwipe!
   set tags&
-  call delete('Xtags')
-  call delete('Xfile1')
+  call delete('Xdtfile1')
 endfunc
 
 func Test_tagjump_switchbuf()
   CheckFeature quickfix
 
-  set tags=Xtags
+  set tags=Xswtags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
-        \ "second\tXfile1\t2",
-        \ "third\tXfile1\t3",],
-        \ 'Xtags')
-  call writefile(['first', 'second', 'third'], 'Xfile1')
+        \ "second\tXsbfile1\t2",
+        \ "third\tXsbfile1\t3",],
+        \ 'Xswtags', 'D')
+  call writefile(['first', 'second', 'third'], 'Xsbfile1', 'D')
 
   enew | only
   set switchbuf=
@@ -150,11 +145,32 @@ func Test_tagjump_switchbuf()
   1tabnext | stag third
   call assert_equal(2, tabpagenr('$'))
   call assert_equal(3, line('.'))
+  tabonly
+
+  " use a vertically split window
+  enew | only
+  set switchbuf=vsplit
+  stag third
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, winnr())
+  call assert_equal(3, line('.'))
+  call assert_equal(['row', [['leaf', win_getid(1)], ['leaf', win_getid(2)]]], winlayout())
+
+  " jump to a tag in a new tabpage
+  enew | only
+  set switchbuf=newtab
+  stag second
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(2, tabpagenr())
+  call assert_equal(2, line('.'))
+  0tab stag third
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal(1, tabpagenr())
+  call assert_equal(3, line('.'))
 
   tabclose!
+  tabclose!
   enew | only
-  call delete('Xfile1')
-  call delete('Xtags')
   set tags&
   set switchbuf&vim
 endfunc

@@ -871,13 +871,15 @@ the buffer.  The result is that all buffers will use the 'encoding' encoding
 							*:sta* *:stag*
 :sta[g][!] [tagname]
 		Does ":tag[!] [tagname]" and splits the window for the found
-		tag.  See also |:tag|.
+		tag.  Refer to 'switchbuf' to jump to a tag in a vertically
+		split window or a new tab page.  See also |:tag|.
 
 CTRL-W ]					*CTRL-W_]* *CTRL-W_CTRL-]*
 CTRL-W CTRL-]	Split current window in two.  Use identifier under cursor as a
 		tag and jump to it in the new upper window.
 		In Visual mode uses the Visually selected text as a tag.
-		Make new window N high.
+		Make new window N high.  Refer to 'switchbuf' to jump to a tag
+		in a vertically split window or a new tab page.
 
 							*CTRL-W_g]*
 CTRL-W g ]	Split current window in two.  Use identifier under cursor as a
