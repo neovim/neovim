@@ -2698,7 +2698,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     case 't':
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
-          int tabnr = (int)get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
+          linenr_T tabnr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
                                        false, 1, errormsg);
           if (eap->cmd == NULL) {
             return false;
@@ -2711,7 +2711,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
               *errormsg = _(e_invrange);
               return false;
             }
-            cmod->cmod_tab = tabnr + 1;
+            cmod->cmod_tab = (int)tabnr + 1;
           }
         }
         eap->cmd = p;
@@ -3670,8 +3670,8 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         n = 1;
       } else {
         // "number", "+number" or "-number"
-        n = getdigits_int32(&cmd, false, MAXLNUM);
-        if (n == MAXLNUM) {
+        n = (linenr_T)getdigits_int64(&cmd, false, MAXLNUM);
+        if (n < 0 || n >= MAXLNUM) {
           *errormsg = _(e_line_number_out_of_range);
           cmd = NULL;
           goto error;
@@ -3694,7 +3694,7 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         if (i == '-') {
           lnum -= n;
         } else {
-          if (lnum >= 0 && n >= INT32_MAX - lnum) {
+          if (lnum >= 0 && n >= MAXLNUM - lnum) {
             *errormsg = _(e_line_number_out_of_range);
             cmd = NULL;
             goto error;

@@ -248,9 +248,11 @@ typedef struct {
   bool valid;
 } qffields_T;
 
+#define MAX_MATCHES 0x7fffffff
+
 /// :vimgrep command arguments
 typedef struct {
-  int tomatch;          ///< maximum number of matches to find
+  int32_t tomatch;     ///< maximum number of matches to find
   char *spat;          ///< search pattern
   int flags;             ///< search modifier
   char **fnames;       ///< list of files to search
@@ -3690,7 +3692,7 @@ bool qf_mark_adjust(buf_T *buf, win_T *wp, linenr_T line1, linenr_T line2, linen
         if (qfp->qf_fnum == buf->b_fnum) {
           found_one = true;
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
-            if (amount == MAXLNUM) {
+            if (amount >= MAX_MATCHES) {
               qfp->qf_cleared = true;
             } else {
               qfp->qf_lnum += amount;
@@ -5483,7 +5485,8 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid, char *titl
 /// Search for a pattern in all the lines in a buffer and add the matching lines
 /// to a quickfix list.
 static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *spat,
-                               regmmatch_T *regmatch, int *tomatch, int duplicate_name, int flags)
+                               regmmatch_T *regmatch, int32_t *tomatch, int duplicate_name,
+                               int flags)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5, 6)
 {
   bool found_match = false;
@@ -5630,7 +5633,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
 
   args->regmatch.regprog = NULL;
   args->qf_title = xstrdup(qf_cmdtitle(*eap->cmdlinep));
-  args->tomatch = eap->addr_count > 0 ? eap->line2 : MAXLNUM;
+  args->tomatch = eap->addr_count > 0 ? eap->line2 : MAX_MATCHES;
 
   // Get the search pattern: either white-separated or enclosed in //
   char *p = skip_vimgrep_pat(eap->arg, &args->spat, &args->flags);

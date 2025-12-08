@@ -4131,7 +4131,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 /// @return  FAIL if the line does not contain diff info.
 static int parse_diff_ed(char *line, diffhunk_T *hunk)
 {
-  int l1, l2;
+  linenr_T l1, l2;
 
   // The line must be one of three formats:
   // change: {first}[,{last}]c{first}[,{last}]
@@ -4141,7 +4141,7 @@ static int parse_diff_ed(char *line, diffhunk_T *hunk)
   linenr_T f1 = getdigits_int32(&p, true, 0);
   if (*p == ',') {
     p++;
-    l1 = getdigits_int(&p, true, 0);
+    l1 = getdigits_int32(&p, true, 0);
   } else {
     l1 = f1;
   }
@@ -4149,10 +4149,10 @@ static int parse_diff_ed(char *line, diffhunk_T *hunk)
     return FAIL;        // invalid diff format
   }
   int difftype = (uint8_t)(*p++);
-  int f2 = getdigits_int(&p, true, 0);
+  linenr_T f2 = getdigits_int32(&p, true, 0);
   if (*p == ',') {
     p++;
-    l2 = getdigits_int(&p, true, 0);
+    l2 = getdigits_int32(&p, true, 0);
   } else {
     l2 = f2;
   }
@@ -4168,10 +4168,10 @@ static int parse_diff_ed(char *line, diffhunk_T *hunk)
     hunk->count_orig = l1 - f1 + 1;
   }
   if (difftype == 'd') {
-    hunk->lnum_new = (linenr_T)f2 + 1;
+    hunk->lnum_new = f2 + 1;
     hunk->count_new = 0;
   } else {
-    hunk->lnum_new = (linenr_T)f2;
+    hunk->lnum_new = f2;
     hunk->count_new = l2 - f2 + 1;
   }
   return OK;
