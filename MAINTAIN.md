@@ -246,8 +246,8 @@ Multiple Vim versions are tracked in `version.c`, so that `has('patch-x.y.z')`
 works even if `v:version` is "behind". Whenever we "complete" merging all
 patches from a Vim `v:version`, the steps to bump `v:version` are:
 
-1. Remove the fully-merged version from `version.c:Versions`.
-2. Adjust the regexp in `vim-patch.sh`. For example to remove 8.1:
+1. Remove the fully-merged version from `vim-patch.sh` by adjusting the regexp.
+   For example, to remove version "8.1":
    ```diff
    diff --git a/scripts/vim-patch.sh b/scripts/vim-patch.sh
    index d64f6b6..1d3dcdf 100755
@@ -263,7 +263,7 @@ patches from a Vim `v:version`, the steps to bump `v:version` are:
         git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
         grep -oE "^[* ]*vim-patch:${patch_pat}" |
    ```
-3. Run `nvim -l scripts/vimpatch.lua` to regenerate `version.c`. Or wait for the
+2. Run `nvim -l scripts/vimpatch.lua` to regenerate `version.c`. Or wait for the
    `vim_patches.yml` CI job to do it.
 
 

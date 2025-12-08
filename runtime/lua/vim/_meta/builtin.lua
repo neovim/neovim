@@ -94,11 +94,12 @@ function vim.empty_dict() end
 --- @param ...? any
 function vim.rpcnotify(channel, method, ...) end
 
---- Sends a request to {channel} to invoke {method} via |RPC| and blocks until
---- a response is received.
+--- Invokes |RPC| `method` on `channel` and blocks until a response is received.
 ---
---- Note: NIL values as part of the return value is represented as |vim.NIL|
---- special value
+--- Note: Msgpack NIL values in the response are represented as |vim.NIL|.
+---
+--- Example: see [nvim_exec_lua()]
+---
 --- @param channel integer
 --- @param method string
 --- @param ...? any

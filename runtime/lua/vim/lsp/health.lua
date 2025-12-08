@@ -249,7 +249,9 @@ local function check_enabled_configs()
             ipairs(v --[[@as string[] ]])
           do
             if not vim.list_contains(valid_filetypes, filetype) then
-              report_warn(("Unknown filetype '%s'."):format(filetype))
+              report_warn(
+                ("Unknown filetype '%s' (Hint: filename extension != filetype)."):format(filetype)
+              )
             end
           end
         end

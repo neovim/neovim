@@ -1668,7 +1668,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     = !has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0;
   int virt_line_index = -1;
   int virt_line_flags = 0;
-  // Repeat for the whole displayed line.
+
+  // Repeat for each cell in the displayed line.
   while (true) {
     int has_match_conc = 0;  ///< match wants to conceal
     int decor_conceal = 0;

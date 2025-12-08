@@ -717,6 +717,7 @@ end
 --- vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
 --- vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
 --- ```
+---@see |unpack()|
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
