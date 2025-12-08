@@ -1193,7 +1193,7 @@ local function check_language(filename, clean_lines, linenum, error)
 
   -- Check for MAYBE
   if maybe_regex:match_str(line) then
-    error(filename, linenum, 'readability/bool', 4, 'Use kNONE from TriState instead of MAYBE.')
+    error(filename, linenum, 'readability/bool', 4, 'Use kNone from TriState instead of MAYBE.')
   end
 
   -- Detect preincrement/predecrement at start of line

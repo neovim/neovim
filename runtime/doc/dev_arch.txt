@@ -13,6 +13,7 @@ an overview in a comment at the top of its file.
 The purpose of this document is to give:
 
 1. an overview of how it all fits together
+
 2. how-to guides for common tasks such as:
     - (TODO) deprecating public functions
     - (TODO) adding a new public (API) function or (UI) event
