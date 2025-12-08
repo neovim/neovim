@@ -928,12 +928,13 @@ else()
 endif()
 add_glob_target(
   TARGET lintc-clint
-  COMMAND ${PROJECT_SOURCE_DIR}/src/clint.py
-  FLAGS --output=${LINT_OUTPUT_FORMAT}
+  COMMAND $<TARGET_FILE:nvim_bin>
+  FLAGS --clean -l ${PROJECT_SOURCE_DIR}/src/clint.lua --output=${LINT_OUTPUT_FORMAT}
   FILES ${LINT_NVIM_SOURCES}
   EXCLUDE
     tui/terminfo_defs.h
     xxd/xxd.c)
+add_dependencies(lintc-clint nvim_bin)
 
 set(UNCRUSTIFY_PRG ${DEPS_BIN_DIR}/uncrustify)
 set(UNCRUSTIFY_CONFIG ${PROJECT_SOURCE_DIR}/src/uncrustify.cfg)
