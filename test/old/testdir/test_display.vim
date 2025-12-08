@@ -268,6 +268,38 @@ func Test_display_scroll_update_visual()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_display_scroll_setline()
+  CheckScreendump
+
+  let lines =<< trim END
+    setlocal scrolloff=5 signcolumn=yes
+    call setline(1, range(1, 100))
+    call sign_define('foo', #{text: '>'})
+    call sign_place(1, 'bar', 'foo', bufnr(), #{lnum: 73})
+    call sign_place(2, 'bar', 'foo', bufnr(), #{lnum: 74})
+    call sign_place(3, 'bar', 'foo', bufnr(), #{lnum: 75})
+    normal! G
+    autocmd CursorMoved * if line('.') == 79
+                      \ |   call sign_unplace('bar', #{id: 2})
+                      \ |   call setline(80, repeat('foo', 15))
+                      \ | endif
+  END
+  call writefile(lines, 'XscrollSetline.vim', 'D')
+
+  let buf = RunVimInTerminal('-S XscrollSetline.vim', #{rows: 15, cols: 20})
+  call VerifyScreenDump(buf, 'Test_display_scroll_setline_1', {})
+  call term_sendkeys(buf, '19k')
+  call VerifyScreenDump(buf, 'Test_display_scroll_setline_2', {})
+  call term_sendkeys(buf, 'k')
+  call VerifyScreenDump(buf, 'Test_display_scroll_setline_3', {})
+  call term_sendkeys(buf, 'k')
+  call VerifyScreenDump(buf, 'Test_display_scroll_setline_4', {})
+  call term_sendkeys(buf, 'k')
+  call VerifyScreenDump(buf, 'Test_display_scroll_setline_5', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test for 'eob' (EndOfBuffer) item in 'fillchars'
 func Test_eob_fillchars()
   " default value
