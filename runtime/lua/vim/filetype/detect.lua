@@ -30,6 +30,38 @@ local matchregex = vim.filetype._matchregex
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
+-- Erlang Application Resource Files (*.app.src is matched by extension)
+-- See: https://erlang.org/doc/system/applications
+--- @type vim.filetype.mapfn
+function M.app(path, bufnr)
+  if vim.g.filetype_app then
+    return vim.g.filetype_app
+  end
+  for lnum, line in ipairs(getlines(bufnr, 1, 100)) do
+    -- skip Erlang comments, might be something else
+    if not findany(line, { '^%s*%%', '^%s*$' }) then
+      if line:find('^%s*{') then
+        local name = fn.fnamemodify(path, ':t:r:r')
+        local lines = vim
+          .iter(getlines(bufnr, lnum, lnum + 9))
+          :filter(function(v)
+            return not v:find('^%s*%%')
+          end)
+          :join(' ')
+        if
+          findany(lines, {
+            [[^%s*{%s*application%s*,%s*']] .. name .. [['%s*,]],
+            [[^%s*{%s*application%s*,%s*]] .. name .. [[%s*,]],
+          })
+        then
+          return 'erlang'
+        end
+      end
+      return
+    end
+  end
+end
+
 -- This function checks for the kind of assembly that is wanted by the user, or
 -- can be detected from the beginning of the file.
 --- @type vim.filetype.mapfn

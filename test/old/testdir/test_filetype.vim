@@ -3204,4 +3204,34 @@ func Test_m4_format()
   filetype off
 endfunc
 
+" Erlang Application Resource File
+func Test_app_file()
+  filetype on
+
+  call writefile(['% line comment', '{application, xfile1,'], 'xfile1.app', 'D')
+  split xfile1.app
+  call assert_equal('erlang', &filetype)
+  bwipe!
+
+  call writefile(['% line comment', "{application, 'Xfile2',"], 'Xfile2.app', 'D')
+  split Xfile2.app
+  call assert_equal('erlang', &filetype)
+  bwipe!
+
+  call writefile([' % line comment',
+        \ ' ',
+        \ ' % line comment',
+        \ ' { ',
+        \ ' % line comment ',
+        \ ' application , ',
+        \ ' % line comment ',
+        \ ' xfile3 , '],
+        \ 'xfile3.app', 'D')
+  split xfile3.app
+  call assert_equal('erlang', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
