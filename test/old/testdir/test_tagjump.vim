@@ -163,7 +163,12 @@ func Test_tagjump_switchbuf()
   call assert_equal(2, tabpagenr('$'))
   call assert_equal(2, tabpagenr())
   call assert_equal(2, line('.'))
+  0tab stag third
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal(1, tabpagenr())
+  call assert_equal(3, line('.'))
 
+  tabclose!
   tabclose!
   enew | only
   set tags&

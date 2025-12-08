@@ -2869,7 +2869,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       cmdmod.cmod_split |= WSP_VERT;
     }
 
-    if (swb_flags & kOptSwbFlagNewtab) {
+    if ((swb_flags & kOptSwbFlagNewtab) && cmdmod.cmod_tab == 0) {
       // If 'switchbuf' contains 'newtab', then use a new tabpage
       cmdmod.cmod_tab = tabpage_index(curtab) + 1;
     }
