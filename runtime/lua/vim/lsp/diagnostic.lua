@@ -539,7 +539,7 @@ function M._workspace_diagnostics(opts)
   for _, client in ipairs(clients) do
     --- @type lsp.WorkspaceDiagnosticParams
     local params = {
-      identifier = vim.tbl_get(client, 'server_capabilities, diagnosticProvider', 'identifier'),
+      identifier = vim.tbl_get(client, 'server_capabilities', 'diagnosticProvider', 'identifier'),
       previousResultIds = previous_result_ids(client.id),
     }
 
