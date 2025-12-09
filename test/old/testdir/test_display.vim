@@ -275,13 +275,19 @@ func Test_display_scroll_setline()
     setlocal scrolloff=5 signcolumn=yes
     call setline(1, range(1, 100))
     call sign_define('foo', #{text: '>'})
-    call sign_place(1, 'bar', 'foo', bufnr(), #{lnum: 73})
-    call sign_place(2, 'bar', 'foo', bufnr(), #{lnum: 74})
-    call sign_place(3, 'bar', 'foo', bufnr(), #{lnum: 75})
+    call sign_place(1, 'bar', 'foo', bufnr(), #{lnum: 71})
+    call sign_place(2, 'bar', 'foo', bufnr(), #{lnum: 72})
+    call sign_place(3, 'bar', 'foo', bufnr(), #{lnum: 73})
+    call sign_place(4, 'bar', 'foo', bufnr(), #{lnum: 74})
+    call sign_place(5, 'bar', 'foo', bufnr(), #{lnum: 75})
     normal! G
     autocmd CursorMoved * if line('.') == 79
-                      \ |   call sign_unplace('bar', #{id: 2})
+                      \ |   call sign_unplace('bar', #{id: 4})
                       \ |   call setline(80, repeat('foo', 15))
+                      \ | elseif line('.') == 78
+                      \ |   call setline(72, repeat('bar', 10))
+                      \ | elseif line('.') == 77
+                      \ |   call sign_unplace('bar', #{id: 2})
                       \ | endif
   END
   call writefile(lines, 'XscrollSetline.vim', 'D')
@@ -296,6 +302,27 @@ func Test_display_scroll_setline()
   call VerifyScreenDump(buf, 'Test_display_scroll_setline_4', {})
   call term_sendkeys(buf, 'k')
   call VerifyScreenDump(buf, 'Test_display_scroll_setline_5', {})
+  call term_sendkeys(buf, 'k')
+  call VerifyScreenDump(buf, 'Test_display_scroll_setline_6', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_display_hit_enter_setline()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, range(1, 100))
+  END
+  call writefile(lines, 'XhitEnterSetline.vim', 'D')
+
+  let buf = RunVimInTerminal('-S XhitEnterSetline.vim', #{rows: 8, cols: 40})
+  call VerifyScreenDump(buf, 'Test_display_hit_enter_setline_1', {})
+  call term_sendkeys(buf, ':echo "abc\ndef\nghi"')
+  call term_sendkeys(buf, "\<CR>")
+  call VerifyScreenDump(buf, 'Test_display_hit_enter_setline_2', {})
+  call term_sendkeys(buf, ":call setline(2, repeat('foo', 35))\<CR>")
+  call VerifyScreenDump(buf, 'Test_display_hit_enter_setline_3', {})
 
   call StopVimInTerminal(buf)
 endfunc

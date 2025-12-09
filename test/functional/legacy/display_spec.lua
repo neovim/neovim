@@ -48,13 +48,19 @@ describe('display', function()
       setlocal scrolloff=5 signcolumn=yes
       call setline(1, range(1, 100))
       call sign_define('foo', #{text: '>'})
-      call sign_place(1, 'bar', 'foo', bufnr(), #{lnum: 73})
-      call sign_place(2, 'bar', 'foo', bufnr(), #{lnum: 74})
-      call sign_place(3, 'bar', 'foo', bufnr(), #{lnum: 75})
+      call sign_place(1, 'bar', 'foo', bufnr(), #{lnum: 71})
+      call sign_place(2, 'bar', 'foo', bufnr(), #{lnum: 72})
+      call sign_place(3, 'bar', 'foo', bufnr(), #{lnum: 73})
+      call sign_place(4, 'bar', 'foo', bufnr(), #{lnum: 74})
+      call sign_place(5, 'bar', 'foo', bufnr(), #{lnum: 75})
       normal! G
       autocmd CursorMoved * if line('.') == 79
-                        \ |   call sign_unplace('bar', #{id: 2})
+                        \ |   call sign_unplace('bar', #{id: 4})
                         \ |   call setline(80, repeat('foo', 15))
+                        \ | elseif line('.') == 78
+                        \ |   call setline(72, repeat('bar', 10))
+                        \ | elseif line('.') == 77
+                        \ |   call sign_unplace('bar', #{id: 2})
                         \ | endif
     ]])
     screen:expect([[
@@ -143,6 +149,63 @@ describe('display', function()
       {7:  }83                |
       {7:  }84                |
                           |
+    ]])
+    feed('k')
+    screen:expect([[
+      {7:  }barbarbarbarbarbar|
+      {7:  }barbarbarbar      |
+      {7:> }73                |
+      {7:  }74                |
+      {7:> }75                |
+      {7:  }76                |
+      {7:  }^77                |
+      {7:  }78                |
+      {7:  }79                |
+      {7:  }foofoofoofoofoofoo|*2
+      {7:  }foofoofoo         |
+      {7:  }81                |
+      {7:  }82                |
+                          |
+    ]])
+  end)
+
+  -- oldtest: Test_display_hit_enter_setline()
+  it('using setline() at hit-enter prompt', function()
+    local screen = Screen.new(40, 8)
+    exec([[
+      call setline(1, range(1, 100))
+    ]])
+    screen:expect([[
+      ^1                                       |
+      2                                       |
+      3                                       |
+      4                                       |
+      5                                       |
+      6                                       |
+      7                                       |
+                                              |
+    ]])
+    feed([[:echo "abc\ndef\nghi"<CR>]])
+    screen:expect([[
+      1                                       |
+      2                                       |
+      3                                       |
+      {3:                                        }|
+      abc                                     |
+      def                                     |
+      ghi                                     |
+      {6:Press ENTER or type command to continue}^ |
+    ]])
+    feed([[:call setline(2, repeat('foo', 35))<CR>]])
+    screen:expect([[
+      ^1                                       |
+      foofoofoofoofoofoofoofoofoofoofoofoofoof|
+      oofoofoofoofoofoofoofoofoofoofoofoofoofo|
+      ofoofoofoofoofoofoofoofoo               |
+      3                                       |
+      4                                       |
+      5                                       |
+                                              |
     ]])
   end)
 
