@@ -6623,7 +6623,7 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, dict_T *d, bool first_entry, b
 
   // If the 'valid' field is present it overrules the detected value.
   if (tv_dict_find(d, "valid", -1) != NULL) {
-    valid = tv_dict_get_number(d, "valid");
+    valid = tv_dict_get_bool(d, "valid", false);
   }
 
   const int status = qf_add_entry(qfl,
