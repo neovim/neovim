@@ -2862,9 +2862,10 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
 /// @return  true when messages should be printed to stdout/stderr:
 ///          - "batch mode" ("silent mode", -es/-Es/-l)
 ///          - no UI and not embedded
+///          - no ext_messages
 int msg_use_printf(void)
 {
-  return !embedded_mode && !ui_active();
+  return !embedded_mode && !ui_active() && !ui_has(kUIMessages);
 }
 
 /// Print a message when there is no valid screen.
