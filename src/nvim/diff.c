@@ -103,6 +103,10 @@ static int linematch_lines = 40;
 
 #define LBUFLEN 50               // length of line in diff file
 
+// Max file size xdiff is eqipped to deal with. The value (1GB - 1MB) comes
+// from Git's implementation.
+#define MAX_XDIFF_SIZE (1024L * 1024 * 1023)
+
 // kTrue when "diff -a" works, kFalse when it doesn't work,
 // kNone when not checked yet
 static TriState diff_a_works = kNone;
@@ -1221,10 +1225,15 @@ static int diff_file_internal(diffio_T *diffio)
   emit_cfg.ctxlen = 0;  // don't need any diff_context here
   emit_cb.priv = &diffio->dio_diff;
   emit_cfg.hunk_func = xdiff_out;
+  if (diffio->dio_orig.din_mmfile.size > MAX_XDIFF_SIZE
+      || diffio->dio_new.din_mmfile.size > MAX_XDIFF_SIZE) {
+    emsg(_(e_problem_creating_internal_diff));
+    return FAIL;
+  }
   if (xdl_diff(&diffio->dio_orig.din_mmfile,
                &diffio->dio_new.din_mmfile,
                &param, &emit_cfg, &emit_cb) < 0) {
-    emsg(_("E960: Problem creating the internal diff"));
+    emsg(_(e_problem_creating_internal_diff));
     return FAIL;
   }
   return OK;
