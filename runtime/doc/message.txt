@@ -800,6 +800,8 @@ and the screen is about to be redrawn:
    like pressing <Space>.  This makes it impossible to select text though.
 -> For the GUI clicking the left mouse button in the last line works like
    pressing <Space>.
+-> |q| won't start recording into a register (rationale: it is often used as
+   "quit" prompt key by users)
 
 If you accidentally hit <Enter> or <Space> and you want to see the displayed
 text then use |g<|.  This only works when 'more' is set.
