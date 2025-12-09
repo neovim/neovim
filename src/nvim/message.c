@@ -1485,7 +1485,7 @@ void wait_return(int redraw)
       if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
           || c == K_X1MOUSE || c == K_X2MOUSE) {
         jump_to_mouse(MOUSE_SETPOS, NULL, 0);
-      } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C) {
+      } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C && c != 'q') {
         // Put the character back in the typeahead buffer.  Don't use the
         // stuff buffer, because lmaps wouldn't work.
         ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);

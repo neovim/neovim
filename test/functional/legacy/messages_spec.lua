@@ -451,6 +451,51 @@ describe('messages', function()
       ]])
     end)
 
+    -- oldtest: Test_message_more_recording()
+    it("hitting 'q' at hit-enter prompt does not start recording", function()
+      screen = Screen.new(60, 6)
+      command('call setline(1, range(1, 100))')
+      feed(':%p\n')
+      screen:expect([[
+        1                                                           |
+        2                                                           |
+        3                                                           |
+        4                                                           |
+        5                                                           |
+        {6:-- More --}^                                                  |
+      ]])
+      feed('G')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+        100                                                         |
+        {6:Press ENTER or type command to continue}^                     |
+      ]])
+
+      -- Hitting 'q' at the end of the more prompt should not start recording
+      feed('q')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        99                                                          |
+        ^100                                                         |
+                                                                    |
+      ]])
+      -- Hitting 'k' now should move the cursor up instead of recording keys
+      feed('k')
+      screen:expect([[
+        96                                                          |
+        97                                                          |
+        98                                                          |
+        ^99                                                          |
+        100                                                         |
+                                                                    |
+      ]])
+    end)
+
     -- oldtest: Test_echo_verbose_system()
     it('verbose message before echo command', function()
       screen = Screen.new(60, 10)

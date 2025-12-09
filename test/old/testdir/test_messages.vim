@@ -349,8 +349,28 @@ func Test_message_more()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_message_more_recording()
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":call setline(1, range(1, 100))\n")
+  call term_sendkeys(buf, ":%p\n")
+  call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
+  call term_sendkeys(buf, 'G')
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
+
+  " Hitting 'q' at the end of the more prompt should not start recording
+  call term_sendkeys(buf, 'q')
+  call WaitForAssert({-> assert_equal(5, term_getcursor(buf)[0])})
+  " Hitting 'k' now should move the cursor up instead of recording keys
+  call term_sendkeys(buf, 'k')
+  call WaitForAssert({-> assert_equal(4, term_getcursor(buf)[0])})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test more-prompt scrollback
 func Test_message_more_scrollback()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
