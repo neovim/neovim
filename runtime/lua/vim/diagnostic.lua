@@ -2552,8 +2552,44 @@ function M.open_float(opts, ...)
     opts.focus_id = scope
   end
 
+  local original_win = api.nvim_get_current_win()
+  
   --- @diagnostic disable-next-line: param-type-mismatch
   local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, 'plaintext', opts)
+
+  -- Create a unique augroup for this float window
+  local group_name = 'DiagnosticFloat_' .. winnr
+  local au_group = api.nvim_create_augroup(group_name, { clear = true })
+
+  -- Some plugins (like Netrw) replace the buffer in the current window in a way that
+  -- suppresses standard window events or reuses buffers. However, they almost always
+  -- set the 'filetype' option (e.g. to 'netrw'). We watch for this change.
+  api.nvim_create_autocmd('OptionSet', {
+    pattern = 'filetype',
+    group = au_group,
+    callback = function()
+      -- Only close if the filetype changed in the window where the float was spawned
+      if api.nvim_get_current_win() == original_win then
+        vim.schedule(function()
+          if api.nvim_win_is_valid(winnr) then
+            pcall(api.nvim_win_close, winnr, true)
+          end
+        end)
+        pcall(api.nvim_del_augroup_by_id, au_group)
+      end
+    end,
+    desc = 'vim.diagnostic: close float when filetype changes (Netrw fix)',
+  })
+
+  -- Cleanup: If the user closes the float manually (e.g. with 'q'), remove listeners.
+  api.nvim_create_autocmd('WinClosed', {
+    pattern = tostring(winnr),
+    group = au_group,
+    callback = function()
+      pcall(api.nvim_del_augroup_by_id, au_group)
+    end
+  })
+
   vim.bo[float_bufnr].path = vim.bo[bufnr].path
 
   -- TODO: Handle this generally (like vim.ui.open()), rather than overriding gf.
