@@ -60,8 +60,8 @@ g:rust_conceal_pub ~
                                                      *g:rust_recommended_style*
 g:rust_recommended_style ~
         Set this option to enable vim indentation and textwidth settings to
-        conform to style conventions of the rust standard library (i.e. use 4
-        spaces for indents and sets 'textwidth' to 99). This option is enabled
+        conform to style conventions of the Rust style guide (i.e. use 4
+        spaces for indents and set 'textwidth' to 100). This option is enabled
 	by default. To disable it: >vim
 	    let g:rust_recommended_style = 0
 <
