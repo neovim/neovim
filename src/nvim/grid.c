@@ -1091,6 +1091,7 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
   if (over_flow > 0) {
     grid_line_puts(1, "<", -1,  hl_apply_winblend(winbl, default_attr));
     col += 1;
+    over_flow += 1;
   }
 
   for (size_t i = 0; i < kv_size(vt);) {
@@ -1170,7 +1171,7 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
     if (config->title) {
       int title_col = get_bordertext_col(icol, config->title_width, config->title_pos);
       grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr, kBorderTextTitle,
-                           config->title_width - icol + 1);
+                           config->title_width - icol);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -1206,7 +1207,7 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
     if (config->footer) {
       int footer_col = get_bordertext_col(icol, config->footer_width, config->footer_pos);
       grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter,
-                           config->footer_width - icol + 1);
+                           config->footer_width - icol);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
