@@ -2059,6 +2059,7 @@ describe('float window', function()
         border = 'double',
         title = 'abcdefghijklmnopqrstuvwxyz',
         title_pos = 'center',
+        footer = 'abcdefghi', -- exactly fits window width #36872
       }
       local win = api.nvim_open_win(buf, false, config)
       if multigrid then
@@ -2076,7 +2077,7 @@ describe('float window', function()
           {5:╔}{11:<stuvwxyz}{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
-          {5:╚═════════╝}|
+          {5:╚}{11:abcdefghi}{5:╝}|
         ]],
           float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
@@ -2092,7 +2093,7 @@ describe('float window', function()
           {0:~    }{5:╔}{11:<stuvwxyz}{5:╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
-          {0:~    }{5:╚═════════╝}{0:                        }|
+          {0:~    }{5:╚}{11:abcdefghi}{5:╝}{0:                        }|
                                                   |
         ]],
         }
