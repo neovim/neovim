@@ -2451,7 +2451,8 @@ stack traceback:
         exec_lua([[
           function _G.Wait()
             vim.rpcnotify(vim.g.channel, 'ready')
-            local _, interrupted = vim.wait(4000)
+            -- handles math.huge #36854
+            local _, interrupted = vim.wait(math.huge)
             vim.rpcnotify(vim.g.channel, 'wait', interrupted)
           end
         ]])
@@ -2465,7 +2466,7 @@ stack traceback:
         exec_lua([[
           function _G.Wait()
             vim.rpcnotify(vim.g.channel, 'ready')
-            local _, interrupted = vim.wait(4000, function() end)
+            local _, interrupted = vim.wait(math.huge, function() end)
             vim.rpcnotify(vim.g.channel, 'wait', interrupted)
           end
         ]])
