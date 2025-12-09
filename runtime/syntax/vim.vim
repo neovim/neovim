@@ -232,7 +232,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=@vi
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimBreakadd,vimBreakdel,vimBreaklist,vimCall,vimCatch,vimCd,vimCommandModifier,vimConst,vimDoautocmd,vimDebug,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,vimDoCommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimHistory,vimImport,vimLanguage,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimPrompt,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAt,vimAutocmd,vimAugroup,vimBehave,vimBreakadd,vimBreakdel,vimBreaklist,vimCall,vimCatch,vimCd,vimCommandModifier,vimConst,vimDoautocmd,vimDebug,vimDebuggreedy,vimDef,vimDefFold,vimDefer,vimDelcommand,vimDelFunction,vimDoCommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimEval,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFiletype,vimFor,vimFunction,vimFunctionFold,vimGrep,vimGrepAdd,vimGlobal,vimHelp,vimHelpgrep,vimHighlight,vimHistory,vimImport,vimLanguage,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimPrompt,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimSyntime,vimSynColor,vimSynLink,vimTerminal,vimThrow,vimUniq,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimWincmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,@vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -1446,11 +1446,23 @@ syn region	vimMakeArgs	contained
 syn match	vimMakeBarEscape	contained	"\\|"
 syn match	vimMakeBang	contained	"\a\@1<=!"		skipwhite nextgroup=vimMakeArgs,vimCmdSep
 
+" Help*: {{{2
+" =====
+syn match	vimHelp	"\<h\%[elp]\>"	skipwhite nextgroup=vimHelpBang,vimHelpArg,vimHelpNextCommand
+" TODO: match wildcards, ignoring exceptions?
+syn region	vimHelpArg	contained
+      \ start="\S"
+      \ matchgroup=Special
+      \ end="\%(@\a\a\)\=\ze\s*\%($\|\%x0d\|\%x00\||\s*\S\)"
+      \ oneline
+syn match	vimHelpBang		contained	"\a\@1<=!"	skipwhite nextgroup=vimHelpArg,vimHelpNextCommand
+syn match	vimHelpNextCommand	contained	"\ze|\s*\S"	skipwhite nextgroup=vimCmdSep
+
 syn match	vimHelpgrep		"\<l\=helpg\%[rep]\>"	skipwhite nextgroup=vimHelpgrepBang,vimHelpgrepPattern
 syn region	vimHelpgrepPattern	contained
       \ start="\S"
       \ matchgroup=Special
-      \ end="@\w\w\>"
+      \ end="@\a\a\>"
       \ end="$"
       \ contains=@vimSubstList
       \ oneline
@@ -2511,6 +2523,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimGroupRem	vimSynOption
  hi def link vimGroupSpecial	Special
  hi def link vimGroup	Type
+ hi def link vimHelp	vimCommand
+ hi def link vimHelpBang	vimBang
  hi def link vimHelpgrep	vimCommand
  hi def link vimHiAttrib	PreProc
  hi def link vimHiBang	vimBang
