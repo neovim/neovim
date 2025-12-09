@@ -165,6 +165,8 @@ EXTERN const char e_cant_find_file_str_in_path[] INIT(= N_("E345: Can't find fil
 EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No more directory \"%s\" found in cdpath"));
 EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
 
+EXTERN const char e_problem_creating_internal_diff[] INIT(= N_("E960: Problem creating the internal diff"));
+
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 EXTERN const char e_cannot_change_arglist_recursively[] INIT(= N_("E1156: Cannot change the argument list recursively"));
 

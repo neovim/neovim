@@ -2460,9 +2460,10 @@ local options = {
         	internal	Use the internal diff library.  This is
         			ignored when 'diffexpr' is set.  *E960*
         			When running out of memory when writing a
-        			buffer this item will be ignored for diffs
-        			involving that buffer.  Set the 'verbose'
-        			option to see when this happens.
+        			buffer or the diff is larger than 1 GB this
+        			item will be ignored for diffs involving that
+        			buffer.  Set the 'verbose' option to see when
+        			this happens.
 
         	iwhite		Ignore changes in amount of white space.  Adds
         			the "-b" flag to the "diff" command if
