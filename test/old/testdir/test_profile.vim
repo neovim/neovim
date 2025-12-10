@@ -598,6 +598,7 @@ func Test_profile_typed_func()
 endfunc
 
 func Test_vim9_profiling()
+  throw 'Skipped: Vim9 script is N/A'
   " only tests that compiling and calling functions doesn't crash
   let lines =<< trim END
       vim9script
@@ -606,11 +607,16 @@ func Test_vim9_profiling()
       enddef
       def Crash()
       enddef
-      prof start /tmp/profile.log
+      prof start Xprofile_crash.log
       prof func Func
       Func()
   END
+  call writefile(lines, 'Xprofile_crash.vim')
+  call system(GetVimCommandClean() . ' -es -c "so Xprofile_crash.vim" -c q')
+  call assert_equal(0, v:shell_error)
   call CheckScriptSuccess(lines)
+  call delete('Xprofile_crash.vim')
+  call delete('Xprofile_crash.log')
 endfunc
 
 
