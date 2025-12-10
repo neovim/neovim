@@ -2008,9 +2008,9 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     return
   end
 
-  local function next_extra_attr_id(attr_state)
+  local function next_extra_attr_id(attr_state_local)
     local next_id = 100
-    while attr_state.ids[next_id] do
+    while attr_state_local.ids[next_id] do
       next_id = next_id + 1
     end
     return next_id
