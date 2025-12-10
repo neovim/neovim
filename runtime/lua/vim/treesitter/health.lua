@@ -40,29 +40,73 @@ function M.check()
     end
   end)
 
+  -- Show quarantined parsers first
+  local quarantined = ts.language.get_quarantined()
+  if vim.tbl_count(quarantined) > 0 then
+    health.start('Quarantined parsers (previously crashed)')
+    for lang, err_msg in pairs(quarantined) do
+      health.error(string.format('Parser: %s - %s', lang, err_msg))
+    end
+  end
+
+  -- Test all parsers
+  health.start('Parser health check')
   for i, parser in ipairs(sorted_parsers) do
+    -- Skip if this is a duplicate parser (lower priority in runtime path)
+    if i > 1 and sorted_parsers[i - 1].name == parser.name then
+      health.ok(string.format('Parser: %-20s (not loaded), path: %s', parser.name, parser.path))
+      goto continue
+    end
+
+    -- Try to load the parser
     local is_loadable, err_or_nil = pcall(ts.language.add, parser.name)
 
     if not is_loadable then
+      -- Failed to load - check if it's quarantined
+      if ts.language.is_quarantined(parser.name) then
+        health.error(
+          string.format(
+            'Parser "%s" is quarantined (crashed during load), path: %s',
+            parser.name,
+            parser.path
+          )
+        )
+      else
+        health.error(
+          string.format(
+            'Parser "%s" failed to load (path: %s): %s',
+            parser.name,
+            parser.path,
+            err_or_nil or '?'
+          )
+        )
+      end
+      goto continue
+    end
+
+    -- Parser loaded successfully - now test it
+    ---@diagnostic disable-next-line: no-unknown
+    local test_ok, test_err = vim._ts_test_parser(parser.name)
+
+    if not test_ok then
       health.error(
         string.format(
-          'Parser "%s" failed to load (path: %s): %s',
+          'Parser "%s" crashed during test (path: %s): %s\nRecommendation: Run :TSUninstall %s and :TSInstall %s to rebuild',
           parser.name,
           parser.path,
-          err_or_nil or '?'
+          test_err or 'unknown error',
+          parser.name,
+          parser.name
         )
       )
-    elseif i > 1 and sorted_parsers[i - 1].name == parser.name then
-      -- Sorted by runtime path order (load order), thus, if the previous parser has the same name,
-      -- the current parser will not be loaded and `ts.language.inspect(parser.name)` with have
-      -- incorrect information.
-      health.ok(string.format('Parser: %-20s (not loaded), path: %s', parser.name, parser.path))
     else
       local lang = ts.language.inspect(parser.name)
       health.ok(
         string.format('Parser: %-25s ABI: %d, path: %s', parser.name, lang.abi_version, parser.path)
       )
     end
+
+    ::continue::
   end
 end
 

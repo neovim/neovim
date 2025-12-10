@@ -8,6 +8,11 @@ local ft_to_lang = {
   checkhealth = 'vimdoc',
 }
 
+--- Session-based quarantine for parsers that have crashed
+--- Maps lang name to error message
+---@type table<string,string>
+local quarantined_parsers = {}
+
 --- Returns the filetypes for which a parser named {lang} is used.
 ---
 --- The list includes {lang} itself plus all filetypes registered via
@@ -66,6 +71,21 @@ function M.require_language(lang, path, silent, symbol_name)
   return M.add(lang, opts)
 end
 
+--- Checks if a parser is quarantined (has previously crashed)
+---
+---@param lang string Name of parser
+---@return boolean True if parser is quarantined
+function M.is_quarantined(lang)
+  return quarantined_parsers[lang] ~= nil
+end
+
+--- Returns the list of quarantined parsers
+---
+---@return table<string,string> Map of lang names to error messages
+function M.get_quarantined()
+  return vim.deepcopy(quarantined_parsers)
+end
+
 --- Load wasm or native parser (wrapper)
 --- todo(clason): move to C
 ---
@@ -116,6 +136,11 @@ function M.add(lang, opts)
   -- parser names are assumed to be lowercase (consistent behavior on case-insensitive file systems)
   lang = lang:lower()
 
+  -- Check if parser is quarantined
+  if quarantined_parsers[lang] then
+    return nil, quarantined_parsers[lang]
+  end
+
   if vim._ts_has_language(lang) then
     return true
   end
@@ -134,7 +159,17 @@ function M.add(lang, opts)
     path = paths[1]
   end
 
-  local res = loadparser(path, lang, symbol_name)
+  -- Try to load parser with error handling
+  local ok, res = pcall(loadparser, path, lang, symbol_name)
+  if not ok then
+    -- Parser crashed - quarantine it with the error from the C layer
+    -- The C layer already provides a detailed error message with instructions
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    quarantined_parsers[lang] = res
+    ---@diagnostic disable-next-line: return-type-mismatch
+    return nil, res
+  end
+
   return res,
     res == nil and string.format('Cannot load parser %s for language "%s"', path, lang) or nil
 end

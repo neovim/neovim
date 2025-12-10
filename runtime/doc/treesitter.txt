@@ -1216,6 +1216,12 @@ get_lang({filetype})                      *vim.treesitter.language.get_lang()*
     Return: ~
         (`string?`)
 
+get_quarantined()                  *vim.treesitter.language.get_quarantined()*
+    Returns the list of quarantined parsers
+
+    Return: ~
+        (`table<string,string>`) Map of lang names to error messages
+
 inspect({lang})                            *vim.treesitter.language.inspect()*
     Inspects the provided language.
 
@@ -1235,6 +1241,15 @@ inspect({lang})                            *vim.treesitter.language.inspect()*
 
     Return: ~
         (`TSLangInfo`)
+
+is_quarantined({lang})              *vim.treesitter.language.is_quarantined()*
+    Checks if a parser is quarantined (has previously crashed)
+
+    Parameters: ~
+      • {lang}  (`string`) Name of parser
+
+    Return: ~
+        (`boolean`) True if parser is quarantined
 
 register({lang}, {filetype})              *vim.treesitter.language.register()*
     Register a parser named {lang} to be used for {filetype}(s).
