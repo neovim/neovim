@@ -2319,7 +2319,7 @@ stack traceback:
         true,
         exec_lua [[
         local start_time = vim.uv.hrtime()
-        vim.wait(50, nil) -- select('#', ...) == 1
+        vim.wait(50.1, nil) -- select('#', ...) == 1
         return vim.uv.hrtime() - start_time > 25000
       ]]
       )
