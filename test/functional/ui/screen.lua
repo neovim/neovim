@@ -2085,6 +2085,16 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
   end
 end
 
+function Screen:_equal_attr_def(a, b)
+  if self._rgb_cterm then
+    return self:_equal_attrs(a[1], b[1]) and self:_equal_attrs(a[2], b[2])
+  elseif self._options.rgb then
+    return self:_equal_attrs(a, b[1])
+  else
+    return self:_equal_attrs(a, b[2])
+  end
+end
+
 function Screen:_equal_attrs(a, b)
   return a.bold == b.bold
     and a.standout == b.standout
