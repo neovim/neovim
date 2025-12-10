@@ -5501,12 +5501,25 @@ vim.go.sdf = vim.go.shadafile
 --- To use PowerShell:
 ---
 --- ```vim
---- 	let &shell = executable('pwsh') ? 'pwsh' : 'powershell'
---- 	let &shellcmdflag = '-NoLogo -NonInteractive -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';$PSStyle.OutputRendering=''plaintext'';Remove-Alias -Force -ErrorAction SilentlyContinue tee;'
---- 	let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
---- 	let &shellpipe  = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
---- 	set shellquote= shellxquote=
+---    set noshelltemp
+---    let &shell = 'powershell'
+---    let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command '
+---    let &shellcmdflag .= '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
+---    let &shellcmdflag .= '$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';'
+---    let &shellpipe  = '> %s 2>&1'
+---    set shellquote= shellxquote=
 --- ```
+---
+--- 						*shell-pwsh*
+--- To use pwsh, use the above settings with `let &shell = 'pwsh'`, and
+--- add:
+---
+--- ```vim
+---    let &shellcmdflag .= '$PSStyle.OutputRendering = ''PlainText'';'
+---    " Workaround (may not be needed in future version of pwsh):
+---    let $__SuppressAnsiEscapeSequences = 1
+--- ```
+---
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
