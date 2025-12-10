@@ -442,15 +442,9 @@ static int nlua_wait(lua_State *lstate)
   if (timeout_number < 0) {
     return luaL_error(lstate, "timeout must be >= 0");
   }
-  int64_t timeout;
-  if (isinf(timeout_number) || timeout_number > (double)INT64_MAX) {
-    timeout = INT64_MAX;
-  } else {
-    if (isnan(timeout_number) || timeout_number != trunc(timeout_number)) {
-      return luaL_error(lstate, "timeout has no integer representation");
-    }
-    timeout = (int64_t)timeout_number;
-  }
+  int64_t timeout = (isnan(timeout_number) || timeout_number > (double)INT64_MAX)
+                    ? INT64_MAX
+                    : (int64_t)timeout_number;
 
   int lua_top = lua_gettop(lstate);
 
