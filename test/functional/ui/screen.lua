@@ -1821,7 +1821,14 @@ function Screen:_print_snapshot()
         self._default_attr_ids = attr_state.ids
       end
     end
-    local fn_name = modify_attrs and 'add_extra_attr_ids' or 'set_default_attr_ids'
+    local fn_name
+    for id,_ in pairs(attr_state.ids) do
+      if type(id) == 'number' and id < 100 then
+        fn_name = 'set_default_attr_ids'
+        break
+      end
+    end
+    fn_name = fn_name or (modify_attrs and 'add_extra_attr_ids' or 'set_default_attr_ids')
     attrstr = ('screen:' .. fn_name .. '({\n' .. table.concat(attrstrs, '\n') .. '\n})\n\n')
   end
 
