@@ -137,6 +137,11 @@ describe('tabpage', function()
     eq(1, fn.nvim_tabpage_get_number(0))
   end)
 
+  it('0 means current tabpage for gettabvar()', function()
+    command('let t:tabvar = 42')
+    eq(42, fn.gettabvar(0, 'tabvar'))
+  end)
+
   it(':tabs does not overflow IObuff with long path with comma #20850', function()
     api.nvim_buf_set_name(0, ('x'):rep(1024) .. ',' .. ('x'):rep(1024))
     command('tabs')
