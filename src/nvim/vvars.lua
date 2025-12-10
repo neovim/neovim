@@ -135,7 +135,7 @@ M.vars = {
   errmsg = {
     type = 'string',
     desc = [=[
-      Last error message that occurred (not neccessarily displayed).
+      Last error message that occurred (not necessarily displayed).
       Modifiable (can be set).
       Example: >vim
         let v:errmsg = ""
