@@ -2008,17 +2008,43 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     return
   end
 
+  local function next_extra_attr_id(attr_state)
+    local next_id = 100
+    while attr_state.ids[next_id] do
+      next_id = next_id + 1
+    end
+    return next_id
+  end
+
   if self._options.ext_linegrid then
     local id = attr_state.id_to_index[hl_id]
-    if id == '' then -- sentinel for empty it
+    if id == false or id == '' then -- sentinel for empty id
       return nil
     elseif id ~= nil then
       return id
     end
     if attr_state.mutable then
-      id = self:_insert_hl_id(attr_state, hl_id)
+      local real_attrs = attrs
+      if
+        (not real_attrs or vim.deep_equal(real_attrs, {}))
+        and hl_id
+        and self._attr_table[hl_id]
+      then
+        local kind = self._options.rgb and 1 or 2
+        real_attrs = self._attr_table[hl_id][kind]
+      end
+      if not real_attrs or vim.deep_equal(real_attrs, {}) then
+        return nil
+      end
+      for existing_id, existing_attrs in pairs(attr_state.ids) do
+        if self:_equal_attrs(existing_attrs, real_attrs) then
+          return existing_id
+        end
+      end
+      local new_id = next_extra_attr_id(attr_state)
+      attr_state.ids[new_id] = real_attrs
       attr_state.modified = true
-      return id
+      return new_id
     end
     local kind = self._options.rgb and 1 or 2
     return 'UNEXPECTED ' .. self:_pprint_attrs(self._attr_table[hl_id][kind])
@@ -2030,24 +2056,32 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     for id, a in pairs(attr_state.ids) do
       if self:_equal_attrs(a, attrs) then
         return id
-      end
+       end
     end
     if attr_state.mutable then
-      table.insert(attr_state.ids, attrs)
+      local real_attrs = attrs
+      if
+        (not real_attrs or vim.deep_equal(real_attrs, {}))
+        and hl_id
+        and self._attr_table[hl_id]
+      then
+        local kind = self._options.rgb and 1 or 2
+        real_attrs = self._attr_table[hl_id][kind]
+      end
+      if not real_attrs or vim.deep_equal(real_attrs, {}) then
+        return nil
+      end
+      for existing_id, existing_attrs in pairs(attr_state.ids) do
+        if self:_equal_attrs(existing_attrs, real_attrs) then
+          return existing_id
+        end
+      end
+      local new_id = next_extra_attr_id(attr_state)
+      attr_state.ids[new_id] = real_attrs
       attr_state.modified = true
-      return #attr_state.ids
+      return new_id
     end
     return 'UNEXPECTED ' .. self:_pprint_attrs(attrs)
-  end
-end
-
-function Screen:_equal_attr_def(a, b)
-  if self._rgb_cterm then
-    return self:_equal_attrs(a[1], b[1]) and self:_equal_attrs(a[2], b[2])
-  elseif self._options.rgb then
-    return self:_equal_attrs(a, b[1])
-  else
-    return self:_equal_attrs(a, b[2])
   end
 end
 
