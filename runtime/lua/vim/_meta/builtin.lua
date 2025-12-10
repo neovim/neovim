@@ -195,8 +195,8 @@ function vim.schedule(fn) end
 --- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
 --- vim.wait(1000, function() return vim.g.foo end, 500)
 ---
---- -- Wait up to 100 ms or until `vim.g.foo` is true, and get the callback results.
---- local ok, rv1, rv2, rv3 = vim.wait(100, function()
+--- -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+--- local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
 ---   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
 --- end)
 ---
@@ -208,7 +208,8 @@ function vim.schedule(fn) end
 --- end
 --- ```
 ---
---- @param time integer Number of milliseconds to wait
+--- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
+--- part is truncated.
 --- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
 --- @param interval? integer (Approximate) number of milliseconds to wait between polls
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
