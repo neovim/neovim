@@ -2147,8 +2147,9 @@ void msg_add_lines(int insert_space, linenr_T lnum, off_T nchars)
     *p++ = ' ';
   }
   if (shortmess(SHM_LINES)) {
-    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)), "%" PRId64 "L, %" PRId64 "B",
-                 (int64_t)lnum, (int64_t)nchars);
+    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)),
+                 // l10n: L as in line, B as in byte
+                 _("%" PRId64 "L, %" PRId64 "B"), (int64_t)lnum, (int64_t)nchars);
   } else {
     vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)),
                  NGETTEXT("%" PRId64 " line, ", "%" PRId64 " lines, ", lnum),
