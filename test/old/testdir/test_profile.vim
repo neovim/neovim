@@ -614,7 +614,7 @@ func Test_vim9_profiling()
   call writefile(lines, 'Xprofile_crash.vim')
   call system(GetVimCommandClean() . ' -es -c "so Xprofile_crash.vim" -c q')
   call assert_equal(0, v:shell_error)
-  call CheckScriptSuccess(lines)
+  call assert_true(readfile('Xprofile_crash.log')->len() > 10)
   call delete('Xprofile_crash.vim')
   call delete('Xprofile_crash.log')
 endfunc
