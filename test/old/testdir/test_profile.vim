@@ -5,6 +5,7 @@ CheckFeature profile
 
 source shared.vim
 source screendump.vim
+source vim9.vim
 
 func Test_profile_func()
   let lines =<< trim [CODE]
@@ -595,3 +596,22 @@ func Test_profile_typed_func()
   call delete('XprofileTypedFunc')
   call delete('XtestProfile')
 endfunc
+
+func Test_vim9_profiling()
+  " only tests that compiling and calling functions doesn't crash
+  let lines =<< trim END
+      vim9script
+      def Func()
+        Crash()
+      enddef
+      def Crash()
+      enddef
+      prof start /tmp/profile.log
+      prof func Func
+      Func()
+  END
+  call CheckScriptSuccess(lines)
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab
