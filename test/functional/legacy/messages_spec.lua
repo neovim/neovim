@@ -1,3 +1,4 @@
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -6,6 +7,7 @@ local command = n.command
 local exec = n.exec
 local feed = n.feed
 local api = n.api
+local fn = n.fn
 local nvim_dir = n.nvim_dir
 local assert_alive = n.assert_alive
 
@@ -834,6 +836,54 @@ describe('messages', function()
       ^                                             |
       {1:~                                            }|*4
                                                    |
+    ]])
+  end)
+
+  -- oldtest: Test_long_formatprg_no_hit_enter()
+  it("long 'formatprg' doesn't cause hit-enter prompt or wrong cursor pos", function()
+    t.skip(fn.executable('sed') == 0, 'missing "sed" command')
+
+    screen = Screen.new(75, 10)
+    exec([[
+      setlocal scrolloff=0
+      call setline(1, range(1, 40))
+      let &l:formatprg = $'sed{repeat(' ', &columns)}p'
+      normal 20Gmz
+      normal 10Gzt
+    ]])
+    screen:expect([[
+      ^10                                                                         |
+      11                                                                         |
+      12                                                                         |
+      13                                                                         |
+      14                                                                         |
+      15                                                                         |
+      16                                                                         |
+      17                                                                         |
+      18                                                                         |
+                                                                                 |
+    ]])
+    feed('gq2j')
+    screen:expect([[
+      10                                                                         |*2
+      11                                                                         |*2
+      12                                                                         |
+      ^12                                                                         |
+      13                                                                         |
+      14                                                                         |
+      15                                                                         |
+                                                                                 |
+    ]])
+    feed(':messages<CR>')
+    screen:expect([[
+      10                                                                         |*2
+      11                                                                         |*2
+      12                                                                         |
+      ^12                                                                         |
+      13                                                                         |
+      14                                                                         |
+      15                                                                         |
+      3 lines filtered                                                           |
     ]])
   end)
 end)
