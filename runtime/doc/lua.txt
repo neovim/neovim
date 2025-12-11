@@ -1713,6 +1713,17 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
       • https://www.lua.org/pil/20.2.html
       • http://lua-users.org/wiki/StringLibraryTutorial
 
+vim.if_nil({val}, {fallback})                                   *vim.if_nil()*
+    Nil-coalescing with a fallback
+
+    Parameters: ~
+      • {val}       (`T?`)
+      • {fallback}  (`U`) Returns `val` if not `nil`, otherwise returns
+                    `fallback`
+
+    Return: ~
+        (`T|U`)
+
 vim.is_callable({f})                                       *vim.is_callable()*
     Returns true if object `f` can be called as a function.
 

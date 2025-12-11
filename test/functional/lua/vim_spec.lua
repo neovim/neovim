@@ -825,6 +825,13 @@ describe('lua stdlib', function()
     )
   end)
 
+  it('vim.if_nil', function()
+    eq('val', exec_lua([[return vim.if_nil('val', 'fallback')]]))
+    eq('fallback', exec_lua([[return vim.if_nil(nil, 'fallback')]]))
+    eq(false, exec_lua([[return vim.if_nil(false, 'fallback')]]))
+    eq(NIL, exec_lua([[return vim.if_nil(nil, nil)]]))
+  end)
+
   it('vim.pesc', function()
     eq('foo%-bar', exec_lua([[return vim.pesc('foo-bar')]]))
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))

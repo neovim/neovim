@@ -64,6 +64,20 @@ function vim.deepcopy(orig, noref)
   return deepcopy(orig, not noref and {} or nil)
 end
 
+--- Nil-coalescing with a fallback
+---
+--- @generic T, U
+--- @param val T | nil
+--- @param fallback U
+--- Returns `val` if not `nil`, otherwise returns `fallback`
+--- @return T | U
+function vim.if_nil(val, fallback)
+  if val == nil then
+    return fallback
+  end
+  return val
+end
+
 --- @class vim.gsplit.Opts
 --- @inlinedoc
 ---
