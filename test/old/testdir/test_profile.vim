@@ -8,22 +8,27 @@ source screendump.vim
 source vim9.vim
 
 func Test_profile_func()
+  call RunProfileFunc('func', 'let', 'let')
+  " call RunProfileFunc('def', 'var', '')
+endfunc
+
+func RunProfileFunc(command, declare, assign)
   let lines =<< trim [CODE]
     profile start Xprofile_func.log
     profile func Foo*
-    func! Foo1()
-    endfunc
-    func! Foo2()
-      let l:count = 100
-      while l:count > 0
-        let l:count = l:count - 1
+    XXX Foo1()
+    endXXX
+    XXX Foo2()
+      DDD counter = 100
+      while counter > 0
+        AAA counter = counter - 1
       endwhile
       sleep 1m
-    endfunc
-    func! Foo3()
-    endfunc
-    func! Bar()
-    endfunc
+    endXXX
+    XXX Foo3()
+    endXXX
+    XXX Bar()
+    endXXX
     call Foo1()
     call Foo1()
     profile pause
@@ -37,6 +42,10 @@ func Test_profile_func()
     endif
     delfunc Foo3
   [CODE]
+
+  call map(lines, {k, v -> substitute(v, 'XXX', a:command, '') })
+  call map(lines, {k, v -> substitute(v, 'DDD', a:declare, '') })
+  call map(lines, {k, v -> substitute(v, 'AAA', a:assign, '') })
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(GetVimCommand()
@@ -71,10 +80,10 @@ func Test_profile_func()
   call assert_match('^ Self time:\s\+\d\+\.\d\+$',                 lines[12])
   call assert_equal('',                                            lines[13])
   call assert_equal('count  total (s)   self (s)',                 lines[14])
-  call assert_match('^\s*1\s\+.*\slet l:count = 100$',             lines[15])
-  call assert_match('^\s*101\s\+.*\swhile l:count > 0$',           lines[16])
-  call assert_match('^\s*100\s\+.*\s  let l:count = l:count - 1$', lines[17])
-  call assert_match('^\s*101\s\+.*\sendwhile$',                    lines[18])
+  call assert_match('^\s*1\s\+.*\s\(let\|var\) counter = 100$',    lines[15])
+  call assert_match('^\s*101\s\+.*\swhile counter > 0$',           lines[16])
+  call assert_match('^\s*100\s\+.*\s  \(let\)\= counter = counter - 1$', lines[17])
+  call assert_match('^\s*10[01]\s\+.*\sendwhile$',                 lines[18])
   call assert_match('^\s*1\s\+.\+sleep 1m$',                       lines[19])
   call assert_equal('',                                            lines[20])
   call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[21])
