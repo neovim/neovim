@@ -6833,24 +6833,24 @@ function vim.fn.prevnonblank(lnum) end
 --- <
 ---           *E1502*
 --- You can re-use a [field-width] (or [precision]) argument: >vim
----     echo printf("%1$d at width %2$d is: %01$*2$d", 1, 2)
+---     echo printf("%1$d at width %2$d is: %1$0*2$d", 1, 2)
 ---     " 1 at width 2 is: 01
 --- <
 --- However, you can't use it as a different type: >vim
----     echo printf("%1$d at width %2$ld is: %01$*2$d", 1, 2)
+---     echo printf("%1$d at width %2$ld is: %1$0*2$d", 1, 2)
 ---     " E1502: Positional argument 2 used as field width reused as
 ---     " different type: long int/int
 --- <
 ---           *E1503*
 --- When a positional argument is used, but not the correct number
 --- or arguments is given, an error is raised: >vim
----     echo printf("%1$d at width %2$d is: %01$*2$.*3$d", 1, 2)
+---     echo printf("%1$d at width %2$d is: %1$0*2$.*3$d", 1, 2)
 ---     " E1503: Positional argument 3 out of bounds: %1$d at width
----     " %2$d is: %01$*2$.*3$d
+---     " %2$d is: %1$0*2$.*3$d
 --- <
 --- Only the first error is reported: >vim
----     echo printf("%01$*2$.*3$d %4$d", 1, 2)
----     " E1503: Positional argument 3 out of bounds: %01$*2$.*3$d
+---     echo printf("%1$0*2$.*3$d %4$d", 1, 2)
+---     " E1503: Positional argument 3 out of bounds: %1$0*2$.*3$d
 ---     " %4$d
 --- <
 ---           *E1504*
