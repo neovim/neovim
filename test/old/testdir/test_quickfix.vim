@@ -670,6 +670,150 @@ func Test_browse()
   call Xtest_browse('l')
 endfunc
 
+" Test for memory allocation failures
+func Xnomem_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call test_alloc_fail(GetAllocId('qf_dirname_start'), 0, 0)
+  call assert_fails('Xvimgrep vim runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_dirname_now'), 0, 0)
+  call assert_fails('Xvimgrep vim runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_namebuf'), 0, 0)
+  call assert_fails('Xfile runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_errmsg'), 0, 0)
+  call assert_fails('Xfile runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_pattern'), 0, 0)
+  call assert_fails('Xfile runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_efm_fmtstr'), 0, 0)
+  set efm=%f
+  call assert_fails('Xexpr ["Xfile1"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_efm_fmtpart'), 0, 0)
+  set efm=%f:%l:%m,%f-%l-%m
+  call assert_fails('Xaddexpr ["Xfile2", "Xfile3"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_title'), 0, 0)
+  call assert_fails('Xexpr ""', 'E342:')
+  call assert_equal('', g:Xgetlist({'all': 1}).title)
+
+  call test_alloc_fail(GetAllocId('qf_mef_name'), 0, 0)
+  set makeef=Xtmp##.err
+  call assert_fails('Xgrep needle haystack', 'E342:')
+  set makeef&
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  call assert_fails('Xexpr "Xfile1:10:Line10"', 'E342:')
+
+  if a:cchar == 'l'
+    for id in ['qf_qfline', 'qf_qfinfo']
+      lgetexpr ["Xfile1:10:L10", "Xfile2:20:L20"]
+      call test_alloc_fail(GetAllocId(id), 0, 0)
+      call assert_fails('new', 'E342:')
+      call assert_equal(2, winnr('$'))
+      call assert_equal([], getloclist(0))
+      %bw!
+    endfor
+  endif
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  try
+    call assert_fails('Xvimgrep vim runtest.vim', 'E342:')
+  catch /^Vim:Interrupt$/
+  endtry
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  try
+    call assert_fails('Xvimgrep /vim/f runtest.vim', 'E342:')
+  catch /^Vim:Interrupt$/
+  endtry
+
+  let l = getqflist({"lines": ["Xfile1:10:L10"]})
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  call assert_fails('call g:Xsetlist(l.items)', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_qfline'), 0, 0)
+  try
+    call assert_fails('Xhelpgrep quickfix', 'E342:')
+  catch /^Vim:Interrupt$/
+  endtry
+
+  call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+  call assert_fails('let l = g:Xgetlist({"lines": ["Xfile1:10:L10"]})', 'E342:')
+  call assert_equal(#{items: []}, l)
+
+  if a:cchar == 'l'
+    call setqflist([], 'f')
+    call setloclist(0, [], 'f')
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lhelpgrep quickfix', 'E342:')
+    call assert_equal([], getloclist(0))
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lvimgrep vim runtest.vim', 'E342:')
+
+    let l = getqflist({"lines": ["Xfile1:10:L10"]})
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('call setloclist(0, l.items)', 'E342:')
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lbuffer', 'E342:')
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lexpr ["Xfile1:10:L10", "Xfile2:20:L20"]', 'E342:')
+
+    call test_alloc_fail(GetAllocId('qf_qfinfo'), 0, 0)
+    call assert_fails('lfile runtest.vim', 'E342:')
+  endif
+
+  call test_alloc_fail(GetAllocId('qf_dirstack'), 0, 0)
+  set efm=%DEntering\ dir\ %f,%f:%l:%m
+  call assert_fails('Xexpr ["Entering dir abc", "abc.txt:1:Hello world"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_dirstack'), 0, 0)
+  set efm=%+P[%f],(%l)%m
+  call assert_fails('Xexpr ["[runtest.vim]", "(1)Hello"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_multiline_pfx'), 0, 0)
+  set efm=%EError,%Cline\ %l,%Z%m
+  call assert_fails('Xexpr ["Error", "line 1", "msg"]', 'E342:')
+  set efm&
+
+  call test_alloc_fail(GetAllocId('qf_makecmd'), 0, 0)
+  call assert_fails('Xgrep vim runtest.vim', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xexpr repeat("a", 8192)', 'E342:')
+
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xexpr [repeat("a", 8192)]', 'E342:')
+
+  new
+  call setline(1, repeat('a', 8192))
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xbuffer', 'E342:')
+  %bw!
+
+  call writefile([repeat('a', 8192)], 'Xtest')
+  call test_alloc_fail(GetAllocId('qf_linebuf'), 0, 0)
+  call assert_fails('Xfile Xtest', 'E342:')
+  call delete('Xtest')
+endfunc
+
+func Test_nomem()
+  throw 'Skipped: Nvim does not support test_alloc_fail()'
+  call Xnomem_tests('c')
+  call Xnomem_tests('l')
+endfunc
+
 func s:test_xhelpgrep(cchar)
   call s:setup_commands(a:cchar)
   Xhelpgrep quickfix

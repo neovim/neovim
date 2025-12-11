@@ -735,7 +735,7 @@ static int qf_get_next_str_line(qfstate_T *state)
   return QF_OK;
 }
 
-/// Get the next string from state->p_Li.
+/// Get the next string from the List item state->p_li.
 static int qf_get_next_list_line(qfstate_T *state)
 {
   listitem_T *p_li = state->p_li;
@@ -1249,7 +1249,8 @@ static void qf_store_title(qf_list_T *qfl, const char *title)
 /// that created the quickfix list with the ":" prefix.
 /// Create a quickfix list title string by prepending ":" to a user command.
 /// Returns a pointer to a static buffer with the title.
-static char *qf_cmdtitle(char *cmd)
+static char *qf_cmdtitle(const char *cmd)
+  FUNC_ATTR_NONNULL_ALL
 {
   static char qftitle_str[IOSIZE];
 
@@ -6623,7 +6624,7 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, dict_T *d, bool first_entry, b
 
   // If the 'valid' field is present it overrules the detected value.
   if (tv_dict_find(d, "valid", -1) != NULL) {
-    valid = tv_dict_get_number(d, "valid");
+    valid = tv_dict_get_bool(d, "valid", false);
   }
 
   const int status = qf_add_entry(qfl,
@@ -7344,30 +7345,27 @@ static char *cexpr_get_auname(cmdidx_T cmdidx)
   }
 }
 
-/// ":cexpr {expr}", ":cgetexpr {expr}", ":caddexpr {expr}" command.
-/// ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
-void ex_cexpr(exarg_T *eap)
+static int trigger_cexpr_autocmd(int cmdidx)
 {
-  char *au_name = cexpr_get_auname(eap->cmdidx);
+  char *au_name = cexpr_get_auname(cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
                                         curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
-      return;
+      return FAIL;
     }
   }
+  return OK;
+}
 
+int cexpr_core(const exarg_T *eap, typval_T *tv)
+  FUNC_ATTR_NONNULL_ALL
+{
   win_T *wp = NULL;
   qf_info_T *qi = qf_cmd_get_or_alloc_stack(eap, &wp);
 
-  // Evaluate the expression.  When the result is a string or a list we can
-  // use it to fill the errorlist.
-  typval_T *tv = eval_expr(eap->arg, eap);
-  if (tv == NULL) {
-    return;
-  }
-
   if ((tv->v_type == VAR_STRING && tv->vval.v_string != NULL)
       || tv->v_type == VAR_LIST) {
+    char *au_name = cexpr_get_auname(eap->cmdidx);
     incr_quickfix_busy();
     int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, tv, p_efm,
                           (eap->cmdidx != CMD_caddexpr
@@ -7376,7 +7374,7 @@ void ex_cexpr(exarg_T *eap)
                           qf_cmdtitle(*eap->cmdlinep), NULL);
     if (qf_stack_empty(qi)) {
       decr_quickfix_busy();
-      goto cleanup;
+      return FAIL;
     }
     if (res >= 0) {
       qf_list_changed(qf_get_curlist(qi));
@@ -7396,10 +7394,30 @@ void ex_cexpr(exarg_T *eap)
       qf_jump_first(qi, save_qfid, eap->forceit);
     }
     decr_quickfix_busy();
+    return OK;
   } else {
     emsg(_("E777: String or List expected"));
   }
-cleanup:
+  return FAIL;
+}
+
+/// ":cexpr {expr}", ":cgetexpr {expr}", ":caddexpr {expr}" command.
+/// ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
+/// Also: ":caddexpr", ":cgetexpr", "laddexpr" and "laddexpr".
+void ex_cexpr(exarg_T *eap)
+{
+  if (trigger_cexpr_autocmd(eap->cmdidx) == FAIL) {
+    return;
+  }
+
+  // Evaluate the expression.  When the result is a string or a list we can
+  // use it to fill the errorlist.
+  typval_T *tv = eval_expr(eap->arg, eap);
+  if (tv == NULL) {
+    return;
+  }
+
+  (void)cexpr_core(eap, tv);
   tv_free(tv);
 }
 
