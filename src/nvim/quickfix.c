@@ -735,7 +735,7 @@ static int qf_get_next_str_line(qfstate_T *state)
   return QF_OK;
 }
 
-/// Get the next string from state->p_Li.
+/// Get the next string from the List item state->p_li.
 static int qf_get_next_list_line(qfstate_T *state)
 {
   listitem_T *p_li = state->p_li;
