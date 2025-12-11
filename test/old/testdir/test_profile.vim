@@ -93,11 +93,11 @@ func Test_profile_func()
 endfunc
 
 func Test_profile_func_with_ifelse()
-  call Run_profile_func_with_ifelse('func', 'let', 'let')
-  " call Run_profile_func_with_ifelse('def', 'var', '')
+  call Run_profile_func_with_ifelse('func', 'let')
+  " call Run_profile_func_with_ifelse('def', 'var')
 endfunc
 
-func Run_profile_func_with_ifelse(command, declare, assign)
+func Run_profile_func_with_ifelse(command, declare)
   let lines =<< trim [CODE]
     XXX Foo1()
       if 1
@@ -133,7 +133,6 @@ func Run_profile_func_with_ifelse(command, declare, assign)
 
   call map(lines, {k, v -> substitute(v, 'XXX', a:command, '') })
   call map(lines, {k, v -> substitute(v, 'DDD', a:declare, '') })
-  call map(lines, {k, v -> substitute(v, 'AAA', a:assign, '') })
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(GetVimCommand()
@@ -212,41 +211,55 @@ func Run_profile_func_with_ifelse(command, declare, assign)
 endfunc
 
 func Test_profile_func_with_trycatch()
+  call Run_profile_func_with_trycatch('func', 'let')
+  " call Run_profile_func_with_trycatch('def', 'var')
+endfunc
+
+func Run_profile_func_with_trycatch(command, declare)
   let lines =<< trim [CODE]
-    func! Foo1()
+    XXX Foo1()
       try
-        let x = 0
+        DDD x = 0
       catch
-        let x = 1
+        DDD x = 1
       finally
-        let x = 2
+        DDD x = 2
       endtry
-    endfunc
-    func! Foo2()
+    endXXX
+    XXX Foo2()
       try
         throw 0
       catch
-        let x = 1
+        DDD x = 1
       finally
-        let x = 2
+        DDD x = 2
       endtry
-    endfunc
-    func! Foo3()
+    endXXX
+    XXX Foo3()
       try
         throw 0
       catch
         throw 1
       finally
-        let x = 2
+        DDD x = 2
       endtry
-    endfunc
+    endXXX
     call Foo1()
     call Foo2()
+    let rethrown = 0
     try
       call Foo3()
     catch
+      let rethrown = 1
     endtry
+    if rethrown != 1
+      " call Foo1 again so that the test fails
+      call Foo1()
+    endif
   [CODE]
+
+  call map(lines, {k, v -> substitute(v, 'XXX', a:command, '') })
+  call map(lines, {k, v -> substitute(v, 'DDD', a:declare, '') })
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(GetVimCommand()
@@ -272,11 +285,11 @@ func Test_profile_func_with_trycatch()
   call assert_equal('',                                            lines[5])
   call assert_equal('count  total (s)   self (s)',                 lines[6])
   call assert_match('^\s*1\s\+.*\stry$',                           lines[7])
-  call assert_match('^\s*1\s\+.*\s  let x = 0$',                   lines[8])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 0$',          lines[8])
   call assert_match(        '^\s\+catch$',                         lines[9])
-  call assert_match(          '^\s\+let x = 1$',                   lines[10])
+  call assert_match(          '^\s\+\(let\|var\) x = 1$',          lines[10])
   call assert_match('^\s*1\s\+.*\sfinally$',                       lines[11])
-  call assert_match('^\s*1\s\+.*\s  let x = 2$',                   lines[12])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 2$',          lines[12])
   call assert_match('^\s*1\s\+.*\sendtry$',                        lines[13])
   call assert_equal('',                                            lines[14])
   call assert_equal('FUNCTION  Foo2()',                            lines[15])
@@ -288,9 +301,9 @@ func Test_profile_func_with_trycatch()
   call assert_match('^\s*1\s\+.*\stry$',                           lines[22])
   call assert_match('^\s*1\s\+.*\s  throw 0$',                     lines[23])
   call assert_match('^\s*1\s\+.*\scatch$',                         lines[24])
-  call assert_match('^\s*1\s\+.*\s  let x = 1$',                   lines[25])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 1$',          lines[25])
   call assert_match('^\s*1\s\+.*\sfinally$',                       lines[26])
-  call assert_match('^\s*1\s\+.*\s  let x = 2$',                   lines[27])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 2$',          lines[27])
   call assert_match('^\s*1\s\+.*\sendtry$',                        lines[28])
   call assert_equal('',                                            lines[29])
   call assert_equal('FUNCTION  Foo3()',                            lines[30])
@@ -304,7 +317,7 @@ func Test_profile_func_with_trycatch()
   call assert_match('^\s*1\s\+.*\scatch$',                         lines[39])
   call assert_match('^\s*1\s\+.*\s  throw 1$',                     lines[40])
   call assert_match('^\s*1\s\+.*\sfinally$',                       lines[41])
-  call assert_match('^\s*1\s\+.*\s  let x = 2$',                   lines[42])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 2$',          lines[42])
   call assert_match(        '^\s\+endtry$',                        lines[43])
   call assert_equal('',                                            lines[44])
   call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[45])
