@@ -93,38 +93,47 @@ func Test_profile_func()
 endfunc
 
 func Test_profile_func_with_ifelse()
+  call Run_profile_func_with_ifelse('func', 'let', 'let')
+  " call Run_profile_func_with_ifelse('def', 'var', '')
+endfunc
+
+func Run_profile_func_with_ifelse(command, declare, assign)
   let lines =<< trim [CODE]
-    func! Foo1()
+    XXX Foo1()
       if 1
-        let x = 0
+        DDD x = 0
       elseif 1
-        let x = 1
+        DDD x = 1
       else
-        let x = 2
+        DDD x = 2
       endif
-    endfunc
-    func! Foo2()
+    endXXX
+    XXX Foo2()
       if 0
-        let x = 0
+        DDD x = 0
       elseif 1
-        let x = 1
+        DDD x = 1
       else
-        let x = 2
+        DDD x = 2
       endif
-    endfunc
-    func! Foo3()
+    endXXX
+    XXX Foo3()
       if 0
-        let x = 0
+        DDD x = 0
       elseif 0
-        let x = 1
+        DDD x = 1
       else
-        let x = 2
+        DDD x = 2
       endif
-    endfunc
+    endXXX
     call Foo1()
     call Foo2()
     call Foo3()
   [CODE]
+
+  call map(lines, {k, v -> substitute(v, 'XXX', a:command, '') })
+  call map(lines, {k, v -> substitute(v, 'DDD', a:declare, '') })
+  call map(lines, {k, v -> substitute(v, 'AAA', a:assign, '') })
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(GetVimCommand()
@@ -150,11 +159,11 @@ func Test_profile_func_with_ifelse()
   call assert_equal('',                                            lines[5])
   call assert_equal('count  total (s)   self (s)',                 lines[6])
   call assert_match('^\s*1\s\+.*\sif 1$',                          lines[7])
-  call assert_match('^\s*1\s\+.*\s  let x = 0$',                   lines[8])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 0$',          lines[8])
   call assert_match(        '^\s\+elseif 1$',                      lines[9])
-  call assert_match(          '^\s\+let x = 1$',                   lines[10])
+  call assert_match(          '^\s\+\(let\|var\) x = 1$',          lines[10])
   call assert_match(        '^\s\+else$',                          lines[11])
-  call assert_match(          '^\s\+let x = 2$',                   lines[12])
+  call assert_match(          '^\s\+\(let\|var\) x = 2$',          lines[12])
   call assert_match('^\s*1\s\+.*\sendif$',                         lines[13])
   call assert_equal('',                                            lines[14])
   call assert_equal('FUNCTION  Foo2()',                            lines[15])
@@ -164,11 +173,11 @@ func Test_profile_func_with_ifelse()
   call assert_equal('',                                            lines[20])
   call assert_equal('count  total (s)   self (s)',                 lines[21])
   call assert_match('^\s*1\s\+.*\sif 0$',                          lines[22])
-  call assert_match(          '^\s\+let x = 0$',                   lines[23])
+  call assert_match(          '^\s\+\(let\|var\) x = 0$',          lines[23])
   call assert_match('^\s*1\s\+.*\selseif 1$',                      lines[24])
-  call assert_match('^\s*1\s\+.*\s  let x = 1$',                   lines[25])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 1$',          lines[25])
   call assert_match(        '^\s\+else$',                          lines[26])
-  call assert_match(          '^\s\+let x = 2$',                   lines[27])
+  call assert_match(          '^\s\+\(let\|var\) x = 2$',          lines[27])
   call assert_match('^\s*1\s\+.*\sendif$',                         lines[28])
   call assert_equal('',                                            lines[29])
   call assert_equal('FUNCTION  Foo3()',                            lines[30])
@@ -178,11 +187,11 @@ func Test_profile_func_with_ifelse()
   call assert_equal('',                                            lines[35])
   call assert_equal('count  total (s)   self (s)',                 lines[36])
   call assert_match('^\s*1\s\+.*\sif 0$',                          lines[37])
-  call assert_match(          '^\s\+let x = 0$',                   lines[38])
+  call assert_match(          '^\s\+\(let\|var\) x = 0$',          lines[38])
   call assert_match('^\s*1\s\+.*\selseif 0$',                      lines[39])
-  call assert_match(          '^\s\+let x = 1$',                   lines[40])
+  call assert_match(          '^\s\+\(let\|var\) x = 1$',          lines[40])
   call assert_match('^\s*1\s\+.*\selse$',                          lines[41])
-  call assert_match('^\s*1\s\+.*\s  let x = 2$',                   lines[42])
+  call assert_match('^\s*1\s\+.*\s  \(let\|var\) x = 2$',          lines[42])
   call assert_match('^\s*1\s\+.*\sendif$',                         lines[43])
   call assert_equal('',                                            lines[44])
   call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[45])
