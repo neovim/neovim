@@ -2139,8 +2139,7 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
-                                           *vim.lsp.inlay_hint.apply_action()*
-apply_action({action}, {opts}, {callback})
+action({action}, {opts}, {callback})             *vim.lsp.inlay_hint.action()*
     Apply some actions provided by inlay hints in the selected range.
 
     Example usage: >lua
@@ -2148,7 +2147,7 @@ apply_action({action}, {opts}, {callback})
           { 'n', 'v' },
           'gI',
           function()
-            vim.lsp.inlay_hint.apply_action('textEdits')
+            vim.lsp.inlay_hint.action('textEdits')
           end,
           { desc = 'Apply inlay hint textEdits' }
         )
@@ -2194,13 +2193,6 @@ apply_action({action}, {opts}, {callback})
                         of the cursor.
                       • in |Visual-mode|, it requests for hints inside the
                         selected range.
-                    • {clients}? (`vim.lsp.Client[]`) The clients used to
-                      check the actions. The clients will be checked one by
-                      one to see whether they provide inlay hints that are
-                      needed by the action. When not specified, it'll default
-                      to iterate through all clients that support
-                      `textDocument/inlayHint` and are attached to the current
-                      buffer.
       • {callback}  (`fun(ctx: {bufnr: integer, client?: vim.lsp.Client})?`) A
                     callback function that will be triggered exactly once
                     (asynchronously) at the end of the action. It accepts a

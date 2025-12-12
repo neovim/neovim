@@ -300,7 +300,7 @@ LSP
   |hl-LspReferenceTarget| highlight group.
 • |:lsp| for interactively enabling, disabling, restarting, and stopping lsp
   clients.
-• |vim.lsp.inlay_hint.apply_action()| to apply actions from certain fields of |lsp-inlay_hint|.
+• |vim.lsp.inlay_hint.action()| to apply actions from certain fields of |lsp-inlay_hint|.
 
 LUA
 

@@ -436,34 +436,6 @@ function M.enable(enable, filter)
   end
 end
 
---- @alias vim.lsp.inlay_hint.action.name
----| 'textEdits' -- insert texts into the buffer
----| 'command' -- See 'workspace/executeCommand'
----| 'location' -- Jump to the location (usually the definition of the identifier or type)
----| 'hover' -- show a hover window of the symbols shown in the inlay hint
----| 'tooltip' -- show a hover-like window, containing available tooltips, commands and locations
-
---- @alias vim.lsp.inlay_hint.action
----| vim.lsp.inlay_hint.action.name
----| vim.lsp.inlay_hint.action.handler
-
---- @class vim.lsp.inlay_hint.action.context
---- @inlinedoc
---- @field bufnr integer
---- @field client vim.lsp.Client
-
---- @class vim.lsp.inlay_hint.action.on_finish.context
---- @inlinedoc
---- @field client? vim.lsp.Client The LSP client used to trigger the action if the action was successfully triggered.
---- If the action opened or jumped to a new buffer, this will be the buffer number.
---- Otherwise it'll be the original buffer.
---- @field bufnr integer
-
---- This should be called __exactly__ once in the action handler.
---- @alias vim.lsp.inlay_hint.action.on_finish.callback fun(ctx: vim.lsp.inlay_hint.action.on_finish.context)
-
---- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
-
 --- @class (private) vim.lsp.inlay_hint.action.LocationItem
 --- @field hint_name string
 --- @field hint_position lsp.Position
@@ -579,7 +551,8 @@ local action_helpers = {
         range['end'].col = 0
       end
     end
-
+    range.start.buf = bufnr
+    range['end'].buf = bufnr
     return vim.range(range.start, range['end'])
   end,
 
@@ -940,6 +913,34 @@ local inlayhint_actions = {
   end,
 }
 
+--- @alias vim.lsp.inlay_hint.action.name
+---| 'textEdits' -- insert texts into the buffer
+---| 'command' -- See 'workspace/executeCommand'
+---| 'location' -- Jump to the location (usually the definition of the identifier or type)
+---| 'hover' -- show a hover window of the symbols shown in the inlay hint
+---| 'tooltip' -- show a hover-like window, containing available tooltips, commands and locations
+
+--- @alias vim.lsp.inlay_hint.action
+---| vim.lsp.inlay_hint.action.name
+---| vim.lsp.inlay_hint.action.handler
+
+--- @class vim.lsp.inlay_hint.action.context
+--- @inlinedoc
+--- @field bufnr integer
+--- @field client vim.lsp.Client
+
+--- @class vim.lsp.inlay_hint.action.on_finish.context
+--- @inlinedoc
+--- @field client? vim.lsp.Client The LSP client used to trigger the action if the action was successfully triggered.
+--- If the action opened or jumped to a new buffer, this will be the buffer number.
+--- Otherwise it'll be the original buffer.
+--- @field bufnr integer
+
+--- This should be called __exactly__ once in the action handler.
+--- @alias vim.lsp.inlay_hint.action.on_finish.callback fun(ctx: vim.lsp.inlay_hint.action.on_finish.context)
+
+--- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
+
 --- @class vim.lsp.inlay_hint.action.Opts
 --- @inlinedoc
 --- Use this option to specify the range from which the inlay hints should be requested.
@@ -947,10 +948,6 @@ local inlayhint_actions = {
 ---   - in |Normal-mode|, it requests for hints on either side of the cursor.
 ---   - in |Visual-mode|, it requests for hints inside the selected range.
 --- @field range? vim.Range
---- The clients used to check the actions. The clients will be checked one by one to see whether
---- they provide inlay hints that are needed by the action.
---- When not specified, it'll default to iterate through all clients that support `textDocument/inlayHint` and are attached to the current buffer.
---- @field clients? vim.lsp.Client[]
 
 --- Apply some actions provided by inlay hints in the selected range.
 ---
@@ -960,7 +957,7 @@ local inlayhint_actions = {
 ---   { 'n', 'v' },
 ---   'gI',
 ---   function()
----     vim.lsp.inlay_hint.apply_action('textEdits')
+---     vim.lsp.inlay_hint.action('textEdits')
 ---   end,
 ---   { desc = 'Apply inlay hint textEdits' }
 --- )
@@ -990,7 +987,7 @@ local inlayhint_actions = {
 ---   this'll points you to the new buffer.
 --- - `client?`: the `vim.lsp.Client` used to invoke the action. `nil` when the action failed
 ---   to be invoked.
-function M.apply_action(action, opts, callback)
+function M.action(action, opts, callback)
   vim.validate('action', action, function(val)
     return type(val) == 'function' or type(inlayhint_actions[val]) == 'function'
   end, false)
@@ -1006,16 +1003,6 @@ function M.apply_action(action, opts, callback)
   opts = opts or {}
 
   local bufnr = api.nvim_get_current_buf()
-  local clients = opts.clients
-    or vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
-  if #clients == 0 then
-    -- no supported clients.
-    if callback then
-      callback({ bufnr = bufnr })
-    end
-    return
-  end
-
   local range = opts.range or action_helpers.make_range()
   local on_finish_cb_called = false
   if callback then
@@ -1029,19 +1016,36 @@ function M.apply_action(action, opts, callback)
     end
   end
 
-  --- some LSPs don't properly handle the position param, so we request for all hints,
-  --- and then use the filtering to keep the hints we need.
-  --- This is a workaround, and may be removed in the future if it's solved in the upstream.
-  ---
-  --- Language servers known to have this bug:
-  --- - rust-analyzer
-  local requested_range = vim.range(
-    0,
-    0,
-    api.nvim_buf_line_count(bufnr) - 1,
-    string.len(api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or ''),
-    { buf = bufnr }
-  )
+  --- group inlay hints by clients.
+  ---@type table<integer, lsp.InlayHint[]>
+  local hints_by_clients = vim.defaulttable(function(_)
+    return {}
+  end)
+  vim
+    .iter(M.get({
+      range = {
+        -- in `M.on_inlayhint`,
+        -- the inlay hints are stored by byte indices, not lsp positions (utf-*),
+        -- so we can't use `vim.range.to_lsp`
+        start = { line = range.start.row, character = range.start.col },
+        ['end'] = { line = range.end_.row, character = range.end_.col },
+      },
+      bufnr = bufnr,
+    }))
+    :each(
+      ---@param item vim.lsp.inlay_hint.get.ret
+      function(item)
+        table.insert(hints_by_clients[item.client_id], item.inlay_hint)
+      end
+    )
+
+  ---@type vim.lsp.Client[]
+  local clients = vim
+    .iter(vim.tbl_keys(hints_by_clients))
+    :map(function(cli_id)
+      return vim.lsp.get_client_by_id(cli_id)
+    end)
+    :totable()
 
   --- iterate through `clients` and requests for inlay hints.
   --- If a client provides no inlay hint (`nil` or `{}`) for the given range, or the provided hints don't contain
@@ -1058,85 +1062,52 @@ function M.apply_action(action, opts, callback)
       return
     end
 
-    ---@type lsp.InlayHintParams
-    local params = util.make_given_range_params(
-      requested_range.start:to_cursor(),
-      requested_range.end_:to_cursor(),
-      bufnr,
-      client.offset_encoding
-    )
+    local hints = hints_by_clients[client.id]
+
+    if #hints == 0 then
+      -- no hints in the given range.
+      return do_action(next(clients, idx))
+    end
+
     local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
     local action_ctx = { bufnr = bufnr, client = client }
 
-    client:request(
-      'textDocument/inlayHint',
-      params,
-      --- @param result lsp.InlayHint[]?
-      function(_, result, _, _)
-        if result == nil then
-          -- result is nil. Proceed to next client.
-          return do_action(next(clients, idx))
+    if not support_resolve then
+      -- no need to resolve because the client doesn't support it.
+      if action_handler(hints, action_ctx, callback) == 0 then
+        -- no actions invoked. proceed with the client.
+        return do_action(next(clients, idx))
+      else
+        -- actions were taken. we're done with the actions.
+        return
+      end
+    end
+
+    --- NOTE: make async `inlayHint/resolve` requests in parallel
+
+    -- use `num_processed` to keep track of the number of resolved hints.
+    -- When this equals `#hints`, it means we're ready to invoke the actions.
+    --- @type integer
+    local num_processed = 0
+
+    for i, h in ipairs(hints) do
+      client:request('inlayHint/resolve', h, function(_, _result, _, _)
+        if _result ~= nil and hints[i] then
+          hints[i] = vim.tbl_deep_extend('force', hints[i], _result)
         end
+        num_processed = num_processed + 1
 
-        -- filter the hints by positions in case some servers don't strictly return
-        -- hints for the requested range
-        --- @type lsp.InlayHint[]
-        local hints = vim
-          .iter(result)
-          :filter(
-            --- @param hint lsp.InlayHint
-            function(hint)
-              -- TODO: use `vim.Range.has_pos` when https://github.com/neovim/neovim/pull/36397 is merged.
-              local hint_pos = vim.pos.lsp(bufnr, hint.position, client.offset_encoding)
-              return hint_pos < range.end_ and hint_pos >= range.start
-            end
-          )
-          :totable()
-
-        if #hints == 0 then
-          -- no hints in the given range.
-          return do_action(next(clients, idx))
-        end
-
-        if not support_resolve then
-          -- no need to resolve because the client doesn't support it.
+        if num_processed == #hints then
+          -- all hints have been resolved. we're now ready to invoke the action.
           if action_handler(hints, action_ctx, callback) == 0 then
-            -- no actions invoked. proceed with the client.
             return do_action(next(clients, idx))
           else
             -- actions were taken. we're done with the actions.
             return
           end
         end
-
-        --- NOTE: make async `inlayHint/resolve` requests in parallel
-
-        -- use `num_processed` to keep track of the number of resolved hints.
-        -- When this equals `#hints`, it means we're ready to invoke the actions.
-        --- @type integer
-        local num_processed = 0
-
-        for i, h in ipairs(hints) do
-          client:request('inlayHint/resolve', h, function(_, _result, _, _)
-            if _result ~= nil and hints[i] then
-              hints[i] = vim.tbl_deep_extend('force', hints[i], _result)
-            end
-            num_processed = num_processed + 1
-
-            if num_processed == #hints then
-              -- all hints have been resolved. we're now ready to invoke the action.
-              if action_handler(hints, action_ctx, callback) == 0 then
-                return do_action(next(clients, idx))
-              else
-                -- actions were taken. we're done with the actions.
-                return
-              end
-            end
-          end, bufnr)
-        end
-      end,
-      bufnr
-    )
+      end, bufnr)
+    end
   end
 
   do_action(next(clients))
