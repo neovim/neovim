@@ -190,6 +190,9 @@ local function get_completion_word(item, prefix, match)
       return item.label
     end
   elseif item.textEdit then
+    if item.textEdit.range and item.filterText then
+      return item.filterText
+    end
     local word = item.textEdit.newText
     return word:match('^(%S*)') or word
   elseif item.insertText and item.insertText ~= '' then
@@ -278,15 +281,17 @@ end
 --- |complete-items|.
 ---
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
---- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
+--- @param word_boundary integer
 --- @return table[]
+--- @return integer?
 --- @see complete-items
-function M._lsp_to_complete_items(result, prefix, client_id)
+function M._lsp_to_complete_items(result, client_id, word_boundary)
   local items = get_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
+  local prefix = Context.line_text:sub(word_boundary + 1, Context.cursor[2])
 
   ---@type fun(item: lsp.CompletionItem):boolean
   local matches
@@ -310,46 +315,97 @@ function M._lsp_to_complete_items(result, prefix, client_id)
     end
   end
 
-  local candidates = {}
   local bufnr = api.nvim_get_current_buf()
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
-  local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
-  for _, item in ipairs(items) do
-    if matches(item) then
-      local word = get_completion_word(item, prefix, match_item_by_value)
-      local hl_group = ''
-      if
-        item.deprecated
-        or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
-      then
-        hl_group = 'DiagnosticDeprecated'
-      end
-      local completion_item = {
-        word = word,
-        abbr = item.label,
-        kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
-        menu = item.detail or '',
-        info = get_doc(item),
-        icase = 1,
-        dup = 1,
-        empty = 1,
-        abbr_hlgroup = hl_group,
-        user_data = {
-          nvim = {
-            lsp = {
-              completion_item = item,
-              client_id = client_id,
-            },
+  local make_candidate = function(item)
+    local word = get_completion_word(item, prefix, match_item_by_value)
+    local hl_group = ''
+    if
+      item.deprecated
+      or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
+    then
+      hl_group = 'DiagnosticDeprecated'
+    end
+    --- @type table<string, any>
+    local candidate = {
+      word = word,
+      abbr = item.label,
+      kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
+      menu = item.detail or '',
+      info = get_doc(item),
+      icase = 1,
+      dup = 1,
+      empty = 1,
+      abbr_hlgroup = hl_group,
+      user_data = {
+        nvim = {
+          lsp = {
+            completion_item = item,
+            client_id = client_id,
           },
         },
-      }
-      if user_convert then
-        completion_item = vim.tbl_extend('keep', user_convert(item), completion_item)
+      },
+    }
+    if user_convert then
+      candidate = vim.tbl_extend('keep', user_convert(item), candidate)
+    end
+    return candidate
+  end
+
+  local candidates = {}
+  local min_start_char = nil
+  local boundary_consistent = true
+  local encoding = nil
+  local cursor_row = Context.cursor[1] - 1 -- Line of lsp range is 0-based
+  for _, item in ipairs(items) do
+    -- Completion Item with text edits: in this mode the server tells the client
+    -- that it actually knows what it is doing. If a completion item with a
+    -- text edit at the current cursor position no word guessing takes place
+    -- and no automatic filtering (like with an insertText) should happen.
+    if item.textEdit then
+      table.insert(candidates, make_candidate(item))
+    -- Completion item provides an insertText / label without a text edit: in
+    -- the model the client should filter against what the user has already
+    -- typed using the word boundary rules of the language (e.g. resolving the
+    -- word under the cursor position). The reason for this mode is that it makes
+    -- it extremely easy for a server to implement a basic completion list and
+    -- get it filtered on the client.
+    elseif (item.insertText or item.label) and not item.textEdit then
+      if not encoding then
+        local client = lsp.get_clients({ id = client_id })[1]
+        encoding = client and client.offset_encoding or 'utf-16'
       end
-      table.insert(candidates, completion_item)
+      if boundary_consistent and item.textEdit then
+        local start_char = nil
+        if item.textEdit.range and item.textEdit.range.start.line == cursor_row then
+          start_char = item.textEdit.range.start.character
+        elseif item.textEdit.insert and item.textEdit.insert.start.line == cursor_row then
+          start_char = item.textEdit.insert.start.character
+        end
+
+        if start_char then
+          if min_start_char == nil then
+            min_start_char = start_char
+          elseif min_start_char ~= start_char then
+            boundary_consistent = false
+          end
+        end
+      end
     end
   end
-  if not user_cmp then
+
+  local server_start_boundary = nil
+  if boundary_consistent and min_start_char and encoding then
+    server_start_boundary = vim.str_byteindex(Context.line_text, encoding, min_start_char, false)
+    prefix = Context.line_text:sub(server_start_boundary + 1, Context.cursor[2])
+    for _, item in ipairs(items) do
+      if matches(item) then
+        table.insert(candidates, make_candidate(item))
+      end
+    end
+  end
+
+  if not vim.tbl_get(buf_handles, bufnr, 'cmp') then
     ---@diagnostic disable-next-line: no-unknown
     table.sort(candidates, function(a, b)
       ---@type lsp.CompletionItem
@@ -359,84 +415,30 @@ function M._lsp_to_complete_items(result, prefix, client_id)
       return (itema.sortText or itema.label) < (itemb.sortText or itemb.label)
     end)
   end
-  return candidates
+  return candidates, server_start_boundary
 end
 
---- @param lnum integer 0-indexed
---- @param line string
---- @param items lsp.CompletionItem[]
---- @param encoding 'utf-8'|'utf-16'|'utf-32'
---- @return integer?
-local function adjust_start_col(lnum, line, items, encoding)
-  local min_start_char = nil
-  for _, item in pairs(items) do
-    if item.textEdit then
-      if item.textEdit.range and item.textEdit.range.start.line == lnum then
-        if min_start_char and min_start_char ~= item.textEdit.range.start.character then
-          return nil
-        end
-        min_start_char = item.textEdit.range.start.character
-      elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
-        if min_start_char and min_start_char ~= item.textEdit.insert.start.character then
-          return nil
-        end
-        min_start_char = item.textEdit.insert.start.character
-      end
-    end
-  end
-  if min_start_char then
-    return vim.str_byteindex(line, encoding, min_start_char, false)
-  else
-    return nil
-  end
-end
-
---- @param line string line content
---- @param lnum integer 0-indexed line number
---- @param cursor_col integer
---- @param client_id integer client ID
---- @param client_start_boundary integer 0-indexed word boundary
---- @param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
---- @param result vim.lsp.CompletionResult
---- @param encoding 'utf-8'|'utf-16'|'utf-32'
---- @return table[] matches
---- @return integer? server_start_boundary
-function M._convert_results(
-  line,
-  lnum,
-  cursor_col,
-  client_id,
-  client_start_boundary,
-  server_start_boundary,
-  result,
-  encoding
-)
-  -- Completion response items may be relative to a position different than `client_start_boundary`.
-  -- Concrete example, with lua-language-server:
-  --
-  -- require('plenary.asy|
-  --         ▲       ▲   ▲
-  --         │       │   └── cursor_pos:                     20
-  --         │       └────── client_start_boundary:          17
-  --         └────────────── textEdit.range.start.character: 9
-  --                                 .newText = 'plenary.async'
-  --                  ^^^
-  --                  prefix (We'd remove everything not starting with `asy`,
-  --                  so we'd eliminate the `plenary.async` result
-  --
-  -- `adjust_start_col` is used to prefer the language server boundary.
-  --
-  local candidates = get_items(result)
-  local curstartbyte = adjust_start_col(lnum, line, candidates, encoding)
-  if server_start_boundary == nil then
-    server_start_boundary = curstartbyte
-  elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
-    server_start_boundary = client_start_boundary
-  end
-  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
-  local matches = M._lsp_to_complete_items(result, prefix, client_id)
-  return matches, server_start_boundary
-end
+-- --- @param client_id integer client ID
+-- --- @param client_start_boundary integer 0-indexed word boundary
+-- --- @param result vim.lsp.CompletionResult
+-- --- @return table[] matches
+-- --- @return integer? server_start_boundary
+-- function M._convert_results(client_id, result)
+--   -- Completion response items may be relative to a position different than `client_start_boundary`.
+--   -- Concrete example, with lua-language-server:
+--   --
+--   -- require('plenary.asy|
+--   --         ▲       ▲   ▲
+--   --         │       │   └── cursor_pos:                     20
+--   --         │       └────── client_start_boundary:          17
+--   --         └────────────── textEdit.range.start.character: 9
+--   --                                 .newText = 'plenary.async'
+--   --                  ^^^
+--   --                  prefix (We'd remove everything not starting with `asy`,
+--   --                  so we'd eliminate the `plenary.async` result
+--   --
+--   return M._lsp_to_complete_items(result, client_id)
+-- end
 
 -- NOTE: The reason we don't use `lsp.buf_request_all` here is because we want to filter the clients
 -- that received the request based on the trigger characters.
@@ -491,7 +493,7 @@ local function trigger(bufnr, clients, ctx)
   end
 
   local win = api.nvim_get_current_win()
-  local cursor_row = api.nvim_win_get_cursor(win)[1]
+  Context.cursor = api.nvim_win_get_cursor(win)
   local start_time = vim.uv.hrtime() --[[@as integer]]
   Context.last_request_time = start_time
 
@@ -502,15 +504,15 @@ local function trigger(bufnr, clients, ctx)
     Context.pending_requests = {}
     Context.isIncomplete = false
 
-    local new_cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(win)) --- @type integer, integer
-    local row_changed = new_cursor_row ~= cursor_row
+    local new_cursor_lnum, cursor_col = unpack(api.nvim_win_get_cursor(win)) --- @type integer, integer
+    local row_changed = new_cursor_lnum ~= Context.cursor[1]
     local mode = api.nvim_get_mode().mode
     if row_changed or not (mode == 'i' or mode == 'ic') then
       return
     end
 
-    local line = api.nvim_get_current_line()
-    local line_to_cursor = line:sub(1, cursor_col)
+    Context.line_text = api.nvim_get_current_line()
+    local line_to_cursor = Context.line_text:sub(1, cursor_col)
     local word_boundary = vim.fn.match(line_to_cursor, '\\k*$')
 
     local matches = {}
@@ -530,18 +532,9 @@ local function trigger(bufnr, clients, ctx)
       local result = response.result
       if result then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
-        local encoding = client and client.offset_encoding or 'utf-16'
         local client_matches
-        client_matches, server_start_boundary = M._convert_results(
-          line,
-          cursor_row - 1,
-          cursor_col,
-          client_id,
-          word_boundary,
-          nil,
-          result,
-          encoding
-        )
+        client_matches, server_start_boundary =
+          M._lsp_to_complete_items(result, client_id, word_boundary)
 
         vim.list_extend(matches, client_matches)
       end
@@ -560,13 +553,16 @@ local function trigger(bufnr, clients, ctx)
     end, prev_matches)
 
     matches = vim.list_extend(prev_matches, matches)
+    if #matches == 0 then
+      return
+    end
     local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
     if user_cmp then
       table.sort(matches, user_cmp)
     end
 
     local start_col = (server_start_boundary or word_boundary) + 1
-    Context.cursor = { cursor_row, start_col }
+    Context.cursor[2] = start_col
     vim.fn.complete(start_col, matches)
   end)
 
@@ -657,7 +653,7 @@ local function on_complete_done()
   local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
 
   local function clear_word()
-    if not expand_snippet then
+    if not expand_snippet and not completion_item.textEdit then
       return nil
     end
 
@@ -687,6 +683,17 @@ local function on_complete_done()
     clear_word()
     lsp.util.apply_text_edits(completion_item.additionalTextEdits, bufnr, position_encoding)
     apply_snippet_and_command()
+  elseif
+    completion_item.textEdit
+    and completion_item.insertTextFormat ~= lsp.protocol.InsertTextFormat.Snippet
+  then
+    clear_word()
+    lsp.util.apply_text_edits({ completion_item.textEdit }, bufnr, position_encoding)
+    local range = vim.tbl_get(completion_item, 'textEdit', 'range')
+    if range then
+      local newText = completion_item.textEdit.newText
+      api.nvim_win_set_cursor(0, { Context.cursor[1], range.start.character + #newText })
+    end
   elseif resolve_provider and type(completion_item) == 'table' then
     local changedtick = vim.b[bufnr].changedtick
 
