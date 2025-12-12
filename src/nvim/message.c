@@ -106,10 +106,14 @@ static int msg_hist_max = 500;  // The default max value is 500
 #define MESSAGES_OPT_HIT_ENTER "hit-enter"
 #define MESSAGES_OPT_WAIT "wait:"
 #define MESSAGES_OPT_HISTORY "history:"
+#define MESSAGES_OPT_PROGRESS "progress:"
 
-// The default is "hit-enter,history:500"
-static int msg_flags = kOptMoptFlagHitEnter | kOptMoptFlagHistory;
+#define PROGRESS_TARGET_CMD          0x01
+
+// The default is "hit-enter,history:500,progress:c"
+static int msg_flags = kOptMoptFlagHitEnter | kOptMoptFlagHistory | kOptMoptFlagProgress;
 static int msg_wait = 0;
+static int progress_msg_target = PROGRESS_TARGET_CMD;
 
 static FILE *verbose_fd = NULL;
 static bool verbose_did_open = false;
@@ -349,6 +353,22 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
                   MessageData *msg_data, bool *needs_msg_clear)
 {
+  // provide a new id if not given
+  if (id.type == kObjectTypeNil) {
+    id = INTEGER_OBJ(msg_id_next++);
+  } else if (id.type == kObjectTypeInteger) {
+    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
+    if (msg_id_next < id.data.integer) {
+      msg_id_next = id.data.integer + 1;
+    }
+  }
+
+  // don't display progress message in cmd when target doesn't have cmd
+  if (strequal(kind, "progress") && (progress_msg_target & PROGRESS_TARGET_CMD) == 0) {
+    *needs_msg_clear = true;
+    return id;
+  }
+
   no_wait_return++;
   msg_start();
   msg_clr_eos();
@@ -360,16 +380,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
-
-  // provide a new id if not given
-  if (id.type == kObjectTypeNil) {
-    id = INTEGER_OBJ(msg_id_next++);
-  } else if (id.type == kObjectTypeInteger) {
-    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
-    if (msg_id_next < id.data.integer) {
-      msg_id_next = id.data.integer + 1;
-    }
-  }
   msg_ext_id = id;
 
   // progress message are special displayed as "title: percent% msg"
@@ -1219,6 +1229,7 @@ int messagesopt_changed(void)
   int messages_flags_new = 0;
   int messages_wait_new = 0;
   int messages_history_new = 0;
+  int progress_target_flag = 0;
 
   char *p = p_mopt;
   while (*p != NUL) {
@@ -1235,6 +1246,16 @@ int messagesopt_changed(void)
       p += STRLEN_LITERAL(MESSAGES_OPT_HISTORY);
       messages_history_new = getdigits_int(&p, false, INT_MAX);
       messages_flags_new |= kOptMoptFlagHistory;
+    } else if (strnequal(p, S_LEN(MESSAGES_OPT_PROGRESS))) {
+      progress_target_flag = 0;
+      p += STRLEN_LITERAL(MESSAGES_OPT_HISTORY);
+      messages_flags_new |= kOptMoptFlagProgress;
+      while (*p != NUL && *p != ',') {
+        if (*p == 'c') {
+          progress_target_flag |= PROGRESS_TARGET_CMD;
+        }
+        p++;
+      }
     }
 
     if (*p != ',' && *p != NUL) {
@@ -1269,6 +1290,7 @@ int messagesopt_changed(void)
 
   msg_flags = messages_flags_new;
   msg_wait = messages_wait_new;
+  progress_msg_target = progress_target_flag;
 
   msg_hist_max = messages_history_new;
   msg_hist_clear(msg_hist_max);
