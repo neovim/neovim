@@ -50,12 +50,9 @@ local complete_args = {
 
 local function ex_lsp_enable(servers)
   -- Default to enabling all servers matching the filetype of the current buffer.
-  -- This assumes that they've been explicitly configured through `vim.lsp.config`,
-  -- otherwise they won't be present in the private `vim.lsp.config._configs` table.
   if #servers == 0 then
     local filetype = vim.bo.filetype
-    ---@diagnostic disable-next-line: invisible
-    for name, _ in pairs(vim.lsp.config._configs) do
+    for _, name in ipairs(get_config_names()) do
       local filetypes = vim.lsp.config[name].filetypes
       if filetypes and vim.tbl_contains(filetypes, filetype) then
         table.insert(servers, name)
