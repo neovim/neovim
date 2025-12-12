@@ -912,7 +912,8 @@ end
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_supports_registration(method)
   local capability_path = lsp.protocol._request_name_to_client_capability[method] or {}
-  local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
+  -- dynamicRegistration is at the second level, even in deeply nested capabilities
+  local capability = vim.tbl_get(self.capabilities, capability_path[1], capability_path[2])
   return type(capability) == 'table' and capability.dynamicRegistration
 end
 
@@ -1161,11 +1162,7 @@ function Client:supports_method(method, bufnr)
     bufnr = bufnr.bufnr
   end
   local required_capability = lsp.protocol._request_name_to_server_capability[method]
-  -- if we don't know about the method, assume that the client supports it.
-  if not required_capability then
-    return true
-  end
-  if vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
+  if required_capability and vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
     return true
   end
 
@@ -1179,6 +1176,11 @@ function Client:supports_method(method, bufnr)
     if self:_supports_registration(method) then
       return self:_get_registration(method, bufnr) ~= nil
     end
+  end
+  -- if we don't know about the method, assume that the client supports it.
+  -- This needs to be at the end, so that dynamic_capabilities are checked first
+  if not required_capability then
+    return true
   end
   return false
 end
