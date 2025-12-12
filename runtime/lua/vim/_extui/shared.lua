@@ -81,14 +81,28 @@ function M.check_targets()
         api.nvim_set_option_value('bufhidden', 'hide', { scope = 'local' })
         api.nvim_set_option_value('buftype', 'nofile', { scope = 'local' })
         -- Use MsgArea except in the msg window. Hide Search highlighting except in the pager.
-        local search_hide = 'Search:,CurSearch:,IncSearch:'
-        local hl = 'Normal:MsgArea,' .. search_hide
-        if type == 'pager' then
-          hl = 'Normal:MsgArea'
-        elseif type == 'msg' then
-          hl = search_hide
+        ---@type table<string, table<string, vim.api.keyset.highlight>>
+        local highlights = {
+          cmd = { Search = {}, CurSearch = {}, IncSearch = {}, Normal = { link = 'MsgArea' } },
+          dialog = { Search = {}, CurSearch = {}, IncSearch = {}, Normal = { link = 'MsgArea' } },
+          msg = { Search = {}, CurSearch = {}, IncSearch = {} },
+          pager = { Normal = { link = 'MsgArea' } },
+        }
+
+        local ns = api.nvim_create_namespace(('nvim._extui.%s_hl'):format(type))
+        api.nvim_win_set_hl_ns(M.wins[type], ns)
+        for group, hldef in pairs(highlights[type]) do
+          api.nvim_set_hl(ns, group, hldef)
+          -- When these groups are used as a message highlight, we still want
+          -- to show the global highlight definition: add a group with the global attributes.
+          local hl_id = api.nvim_get_hl_id_by_name(group)
+          if not M.msg.global_hl[hl_id] then
+            local global_group = '_extui.global_ns.' .. group
+            local global_def = api.nvim_get_hl(0, { name = group, link = false })
+            api.nvim_set_hl(0, global_group, global_def--[[@as vim.api.keyset.highlight]])
+            M.msg.global_hl[hl_id] = global_group
+          end
         end
-        api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
       end)
       api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(type:sub(1, 1):upper() .. type:sub(2)))
       -- Fire FileType with window context to let the user reconfigure local options.
