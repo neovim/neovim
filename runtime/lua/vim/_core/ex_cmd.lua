@@ -32,9 +32,19 @@ local function get_config_names()
   return vim.list.unique(config_names)
 end
 
+--- @return string[]
+local function get_enabled_config_names()
+  return vim
+    .iter(get_config_names())
+    :filter(function(name)
+      return vim.lsp.is_enabled(name)
+    end)
+    :totable()
+end
+
 local complete_args = {
   enable = get_config_names,
-  disable = get_client_names,
+  disable = get_enabled_config_names,
   restart = get_client_names,
 }
 
