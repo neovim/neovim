@@ -232,6 +232,7 @@ func Test_bwipe_during_save()
   set charconvert=execute('%bw!')
   call assert_fails('write ++enc=lmao boom', 'E937:')
 
+  set charconvert&
   %bwipe
 endfunc
 
