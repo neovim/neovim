@@ -124,18 +124,18 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
 
 COMMANDS                                                    *:lsp*
 
+:lsp enable {names}                                       *:lsp-enable*
+    Enables the given language servers. If no names are given, all configured
+    clients with |vim.lsp.config()| with filetype matching the current buffer
+    are enabled. See |vim.lsp.enable()|.
+
+:lsp disable {names}                                      *:lsp-disable*
+    Disables (and stops) the given language servers. If no names are given,
+    all servers on the current buffer are disabled. See |vim.lsp.enable()|.
+
 :lsp restart {names}                                      *:lsp-restart*
     Restarts the given language servers. If no names are given, all active
     servers are restarted.
-
-:lsp start {names}                                        *:lsp-start*
-    Starts the given language servers. If no names are given, all configured
-    with |vim.lsp.config()| with filetype matching the current buffer are
-    started.
-
-:lsp stop {names}                                         *:lsp-stop*
-    Stops and disables the given language servers. If no names are given, all
-    servers on the current buffer are stopped.
 
 ==============================================================================
 CONFIG                                                  *lsp-config*

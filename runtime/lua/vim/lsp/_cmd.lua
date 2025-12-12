@@ -33,12 +33,12 @@ local function get_config_names()
 end
 
 local complete_args = {
-  start = get_config_names,
-  stop = get_client_names,
+  enable = get_config_names,
+  disable = get_client_names,
   restart = get_client_names,
 }
 
-local function ex_lsp_start(servers)
+local function ex_lsp_enable(servers)
   -- Default to enabling all servers matching the filetype of the current buffer.
   -- This assumes that they've been explicitly configured through `vim.lsp.config`,
   -- otherwise they won't be present in the private `vim.lsp.config._configs` table.
@@ -57,7 +57,7 @@ local function ex_lsp_start(servers)
 end
 
 ---@param clients string[]
-local function ex_lsp_stop(clients)
+local function ex_lsp_disable(clients)
   -- Default to disabling all servers on current buffer
   if #clients == 0 then
     clients = get_client_names { bufnr = vim.api.nvim_get_current_buf() }
@@ -98,9 +98,9 @@ local function ex_lsp_restart(clients)
 end
 
 local actions = {
-  start = ex_lsp_start,
+  enable = ex_lsp_enable,
+  disable = ex_lsp_disable,
   restart = ex_lsp_restart,
-  stop = ex_lsp_stop,
 }
 
 local available_subcmds = vim.tbl_keys(actions)
