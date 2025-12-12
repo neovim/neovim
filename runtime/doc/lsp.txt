@@ -133,7 +133,7 @@ COMMANDS                                                    *:lsp*
 :lsp disable {name}?                                      *:lsp-disable*
     Disables (and stops) the given lsp clients. If no names are given,
     all clients attached to the current buffer are disabled. Use
-    |vim.lsp.enable()| for non-interactive use.
+    |vim.lsp.enable()| with `enable=false` for non-interactive use.
 
 :lsp restart {client}?                                    *:lsp-restart*
     Restarts the given lsp clients. If no client names are given, all active
