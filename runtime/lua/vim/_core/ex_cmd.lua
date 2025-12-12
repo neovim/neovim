@@ -1,5 +1,6 @@
 local api = vim.api
 local lsp = vim.lsp
+local ERROR = vim.log.levels.ERROR
 
 local M = {}
 
@@ -69,6 +70,19 @@ local complete_args = {
   stop = get_client_names,
 }
 
+--- @param names string[]
+--- @param enable? boolean
+local function checked_enable(names, enable)
+  for _, name in ipairs(names) do
+    if name:find('*') == nil and lsp.config[name] ~= nil then
+      lsp.enable(name, enable)
+    else
+      vim.notify(("No client config named '%s'"):format(name), ERROR)
+    end
+  end
+end
+
+--- @param config_names string[]
 local function ex_lsp_enable(config_names)
   -- Default to enabling all clients matching the filetype of the current buffer.
   if #config_names == 0 then
@@ -81,7 +95,7 @@ local function ex_lsp_enable(config_names)
     end
   end
 
-  lsp.enable(config_names)
+  checked_enable(config_names)
 end
 
 --- @param config_names string[]
@@ -91,15 +105,10 @@ local function ex_lsp_disable(config_names)
     config_names = get_client_names { bufnr = api.nvim_get_current_buf() }
   end
 
-  for _, name in ipairs(config_names) do
-    if lsp.config[name] == nil then
-      vim.notify(("Invalid server name '%s'"):format(name))
-    else
-      lsp.enable(name, false)
-    end
-  end
+  checked_enable(config_names, false)
 end
 
+--- @param client_names string[]
 --- @return vim.lsp.Client[]
 local function get_clients_from_names(client_names)
   -- Default to stopping all active clients attached to the current buffer.
@@ -109,7 +118,11 @@ local function get_clients_from_names(client_names)
     return vim
       .iter(client_names)
       :map(function(name)
-        return lsp.get_clients { name = name }
+        local clients = lsp.get_clients { name = name }
+        if #clients == 0 then
+          vim.notify(("No active clients named '%s'"):format(name), ERROR)
+        end
+        return clients
       end)
       :flatten()
       :totable()
@@ -176,7 +189,7 @@ M.lsp = function(args)
   end
   local subcmd = fargs[1]
   if not vim.list_contains(available_subcmds, subcmd) then
-    vim.notify(("Invalid subcommand '%s'"):format(subcmd), vim.log.levels.ERROR)
+    vim.notify(("Invalid subcommand '%s'"):format(subcmd), ERROR)
     return
   end
 
