@@ -314,9 +314,9 @@ M.funcs = {
       always matters.
       Example: >vim
       	call assert_equal('foo', 'bar', 'baz')
-      <Will add the following to |v:errors|:
-      	test.vim line 12: baz: Expected 'foo' but got 'bar' ~
-
+      <Will add the following to |v:errors|: >
+      	test.vim line 12: baz: Expected 'foo' but got 'bar'
+      <
     ]=],
     name = 'assert_equal',
     params = { { 'expected', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
@@ -470,9 +470,9 @@ M.funcs = {
 
       Example: >vim
       	call assert_match('^f.*o$', 'foobar')
-      <Will result in a string to be added to |v:errors|:
-      	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
-
+      <Will result in a string to be added to |v:errors|: >
+      	test.vim line 12: Pattern '^f.*o$' does not match 'foobar'
+      <
     ]=],
     name = 'assert_match',
     params = { { 'pattern', 'string' }, { 'actual', 'string' }, { 'msg', 'string' } },
@@ -8180,54 +8180,54 @@ M.funcs = {
       					*E1500*
       You cannot mix positional and non-positional arguments: >vim
           echo printf("%s%1$s", "One", "Two")
-      <    E1500: Cannot mix positional and non-positional arguments:
-          %s%1$s
-
+          " E1500: Cannot mix positional and non-positional arguments:
+          " %s%1$s
+      <
       					*E1501*
       You cannot skip a positional argument in a format string: >vim
           echo printf("%3$s%1$s", "One", "Two", "Three")
-      <    E1501: format argument 2 unused in $-style format:
-          %3$s%1$s
-
+          " E1501: format argument 2 unused in $-style format:
+          " %3$s%1$s
+      <
       					*E1502*
       You can re-use a [field-width] (or [precision]) argument: >vim
-          echo printf("%1$d at width %2$d is: %01$*2$d", 1, 2)
-      <    1 at width 2 is: 01
-
+          echo printf("%1$d at width %2$d is: %1$0*2$d", 1, 2)
+          " 1 at width 2 is: 01
+      <
       However, you can't use it as a different type: >vim
-          echo printf("%1$d at width %2$ld is: %01$*2$d", 1, 2)
-      <    E1502: Positional argument 2 used as field width reused as
-          different type: long int/int
-
+          echo printf("%1$d at width %2$ld is: %1$0*2$d", 1, 2)
+          " E1502: Positional argument 2 used as field width reused as
+          " different type: long int/int
+      <
       					*E1503*
       When a positional argument is used, but not the correct number
       or arguments is given, an error is raised: >vim
-          echo printf("%1$d at width %2$d is: %01$*2$.*3$d", 1, 2)
-      <    E1503: Positional argument 3 out of bounds: %1$d at width
-          %2$d is: %01$*2$.*3$d
-
+          echo printf("%1$d at width %2$d is: %1$0*2$.*3$d", 1, 2)
+          " E1503: Positional argument 3 out of bounds: %1$d at width
+          " %2$d is: %1$0*2$.*3$d
+      <
       Only the first error is reported: >vim
-          echo printf("%01$*2$.*3$d %4$d", 1, 2)
-      <    E1503: Positional argument 3 out of bounds: %01$*2$.*3$d
-          %4$d
-
+          echo printf("%1$0*2$.*3$d %4$d", 1, 2)
+          " E1503: Positional argument 3 out of bounds: %1$0*2$.*3$d
+          " %4$d
+      <
       					*E1504*
       A positional argument can be used more than once: >vim
           echo printf("%1$s %2$s %1$s", "One", "Two")
-      <    One Two One
-
+          " One Two One
+      <
       However, you can't use a different type the second time: >vim
           echo printf("%1$s %2$s %1$d", "One", "Two")
-      <    E1504: Positional argument 1 type used inconsistently:
-          int/string
-
+          " E1504: Positional argument 1 type used inconsistently:
+          " int/string
+      <
       					*E1505*
       Various other errors that lead to a format string being
       wrongly formatted lead to: >vim
           echo printf("%1$d at width %2$d is: %01$*2$.3$d", 1, 2)
-      <    E1505: Invalid format specifier: %1$d at width %2$d is:
-          %01$*2$.3$d
-
+          " E1505: Invalid format specifier: %1$d at width %2$d is:
+          " %01$*2$.3$d
+      <
       					*E1507*
       This internal error indicates that the logic to parse a
       positional format argument ran into a problem that couldn't be
