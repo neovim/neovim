@@ -1652,13 +1652,14 @@ function vim.fn.eventhandler() end
 ---
 --- On MS-Windows an executable in the same directory as the Vim
 --- executable is always found (it's added to $PATH at |startup|).
----       *NoDefaultCurrentDirectoryInExePath*
+---       *$NoDefaultCurrentDirectoryInExePath*
 --- On MS-Windows when using cmd.exe as 'shell' an executable in
 --- Vim's current working directory is also normally found, which
 --- can be disabled by setting the
 --- `$NoDefaultCurrentDirectoryInExePath` environment variable.
---- This is always done when executing external commands using
---- e.g. |:!|, |:make|, |system()| for security reasons.
+--- This variable is always set by Vim when executing external
+--- commands (e.g., via |:!|, |:make|, or |system()|) for security
+--- reasons.
 ---
 --- The result is a Number:
 ---   1  exists
