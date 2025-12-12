@@ -2826,4 +2826,17 @@ func Test_visual_pos_buffer_heap_overflow()
   bw! Xa Xb
 endfunc
 
+" Test visual block pos update after block insert and gv
+func Test_visual_block_pos_update()
+  new
+  set virtualedit=block
+  call setline(1, ['aacccc', 'bb'])
+  exe "norm! e\<C-v>jAa\<Esc>gv"
+  call assert_equal([[0, 1, 6, 0], [0 , 2, 6, 0]], [getpos("v"), getpos(".")])
+  normal! kj
+  call assert_equal([[0, 1, 6, 0], [0 , 2, 6, 0]], [getpos("v"), getpos(".")])
+  set virtualedit=
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -692,6 +692,10 @@ static void block_insert(oparg_T *oap, const char *s, size_t slen, bool b_insert
       // the insert in the first line.
       curbuf->b_op_end.lnum = oap->end.lnum;
       curbuf->b_op_end.col = offset;
+      if (curbuf->b_visual.vi_end.coladd) {
+        curbuf->b_visual.vi_end.col += curbuf->b_visual.vi_end.coladd;
+        curbuf->b_visual.vi_end.coladd = 0;
+      }
     }
   }   // for all lnum
 
