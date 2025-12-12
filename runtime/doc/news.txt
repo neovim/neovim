@@ -79,8 +79,8 @@ EDITOR
 • Buffer name URI scheme parsing more closely follows RFC3986, so for example
   "svn+ssh:", "ed2k:", and "iris.xpc:" are recognized as URI schemes.
 • On Windows, Nvim no longer searches the current directory for executables
-  for running external commands; use a relative or absolute path if you want
-  the previous behavior |NoDefaultCurrentDirectoryInExePath|.
+  for running external commands; prefix a relative or absolute path if you
+  want the old behavior |$NoDefaultCurrentDirectoryInExePath|.
 
 EVENTS
 
