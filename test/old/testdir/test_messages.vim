@@ -681,4 +681,29 @@ func Test_messagesopt_wait()
   call StopVimInTerminal(buf)
 endfunc
 
+" Check that using a long 'formatprg' doesn't cause a hit-enter prompt or
+" wrong cursor position.
+func Test_long_formatprg_no_hit_enter()
+  CheckScreendump
+  CheckExecutable sed
+
+  let lines =<< trim END
+    setlocal scrolloff=0
+    call setline(1, range(1, 40))
+    let &l:formatprg = $'sed{repeat(' ', &columns)}p'
+    normal 20Gmz
+    normal 10Gzt
+  END
+  call writefile(lines, 'XtestLongFormatprg', 'D')
+  let buf = RunVimInTerminal('-S XtestLongFormatprg', #{rows: 10})
+  call VerifyScreenDump(buf, 'Test_long_formatprg_no_hit_enter_1', {})
+  call term_sendkeys(buf, 'gq2j')
+  call VerifyScreenDump(buf, 'Test_long_formatprg_no_hit_enter_2', {})
+  call term_sendkeys(buf, ":messages\<CR>")
+  call VerifyScreenDump(buf, 'Test_long_formatprg_no_hit_enter_3', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

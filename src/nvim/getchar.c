@@ -426,7 +426,7 @@ bool stuff_empty(void)
 }
 
 /// @return  true if readbuf1 is empty.  There may still be redo characters in
-///          redbuf2.
+///          readbuf2.
 bool readbuf1_empty(void)
   FUNC_ATTR_PURE
 {
