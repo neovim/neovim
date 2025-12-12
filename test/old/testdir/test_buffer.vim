@@ -228,6 +228,14 @@ func Test_buffer_error()
   %bwipe
 endfunc
 
+func Test_bwipe_during_save()
+  set charconvert=execute('%bw!')
+  call assert_fails('write ++enc=lmao boom', 'E937:')
+
+  set charconvert&
+  %bwipe
+endfunc
+
 " Test for the status messages displayed when unloading, deleting or wiping
 " out buffers
 func Test_buffer_statusmsg()
