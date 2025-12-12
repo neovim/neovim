@@ -11,7 +11,7 @@ local function get_client_names(filter)
       return client.name
     end)
     :filter(function(name)
-      return vim.lsp.config[name] ~= nil
+      return lsp.config[name] ~= nil
     end)
     :totable()
 end
@@ -28,7 +28,7 @@ local function get_config_names()
     :totable()
 
   --- @diagnostic disable-next-line
-  vim.list_extend(config_names, vim.tbl_keys(vim.lsp.config._configs))
+  vim.list_extend(config_names, vim.tbl_keys(lsp.config._configs))
 
   return vim
     .iter(vim.list.unique(config_names))
@@ -45,7 +45,7 @@ local function get_enabled_config_names()
     .iter(get_config_names())
     --- @param name string
     :filter(function(name)
-      return vim.lsp.is_enabled(name)
+      return lsp.is_enabled(name)
     end)
     :totable()
 end
@@ -62,14 +62,14 @@ local function ex_lsp_enable(config_names)
   if #config_names == 0 then
     local filetype = vim.bo.filetype
     for _, name in ipairs(get_config_names()) do
-      local filetypes = vim.lsp.config[name].filetypes
+      local filetypes = lsp.config[name].filetypes
       if filetypes and vim.tbl_contains(filetypes, filetype) then
         table.insert(config_names, name)
       end
     end
   end
 
-  vim.lsp.enable(config_names)
+  lsp.enable(config_names)
 end
 
 --- @param config_names string[]
@@ -80,10 +80,10 @@ local function ex_lsp_disable(config_names)
   end
 
   for _, name in ipairs(config_names) do
-    if vim.lsp.config[name] == nil then
+    if lsp.config[name] == nil then
       vim.notify(("Invalid server name '%s'"):format(name))
     else
-      vim.lsp.enable(name, false)
+      lsp.enable(name, false)
     end
   end
 end
@@ -96,10 +96,10 @@ local function ex_lsp_restart(client_names)
   end
 
   for _, name in ipairs(client_names) do
-    if vim.lsp.config[name] == nil then
+    if lsp.config[name] == nil then
       vim.notify(("Invalid server name '%s'"):format(name))
     else
-      vim.lsp.enable(name, false)
+      lsp.enable(name, false)
     end
   end
 
@@ -107,7 +107,7 @@ local function ex_lsp_restart(client_names)
   timer:start(500, 0, function()
     for _, name in ipairs(client_names) do
       vim.schedule_wrap(function(x)
-        vim.lsp.enable(x)
+        lsp.enable(x)
       end)(name)
     end
   end)
