@@ -107,7 +107,7 @@ local available_subcmds = vim.tbl_keys(actions)
 
 --- Use for `:lsp {subcmd} {clients}` command
 ---@param args string
-M._ex_lsp = function(args)
+M.lsp = function(args)
   local fargs = vim.api.nvim_parse_cmd('lsp ' .. args, {}).args
   if not fargs then
     return
@@ -126,7 +126,7 @@ end
 --- Completion logic for `:lsp` command
 --- @param line string content of the current command line
 --- @return string[] list of completions
-function M._ex_lsp_complete(line)
+function M.lsp_complete(line)
   local splited = vim.split(line, '%s+')
   if #splited == 2 then
     return available_subcmds

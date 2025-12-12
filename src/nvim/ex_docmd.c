@@ -8007,7 +8007,7 @@ static void ex_lsp(exarg_T *eap)
 
   ADD_C(args, CSTR_AS_OBJ(eap->arg));
 
-  NLUA_EXEC_STATIC("require'vim.lsp._cmd'._ex_lsp(...)", args, kRetNilBool, NULL, &err);
+  NLUA_EXEC_STATIC("require'vim._core.ex_cmd'.lsp(...)", args, kRetNilBool, NULL, &err);
   api_clear_error(&err);
 }
 
