@@ -139,6 +139,11 @@ COMMANDS                                                    *:lsp*
     Restarts the given lsp clients. If no client names are given, all active
     clients are restarted.
 
+:lsp stop {client}?                                       *:lsp-stop*
+    Stops the given lsp clients. If no client names are given, all active
+    clients attached to the current buffer are stopped. Use |Client:stop()|
+    for non-interactive use.
+
 ==============================================================================
 CONFIG                                                  *lsp-config*
 

@@ -47,6 +47,7 @@ local complete_args = {
   enable = get_config_names,
   disable = get_enabled_config_names,
   restart = get_client_names,
+  stop = get_client_names,
 }
 
 local function ex_lsp_enable(config_names)
@@ -105,10 +106,33 @@ local function ex_lsp_restart(client_names)
   end)
 end
 
+--- @param client_names string[]
+local function ex_lsp_stop(client_names)
+  --- @type vim.lsp.Client[]
+  local clients
+  -- Default to stopping all active clients attached to the current buffer.
+  if #client_names == 0 then
+    clients = lsp.get_clients { bufnr = vim.api.nvim_get_current_buf() }
+  else
+    clients = vim
+      .iter(client_names)
+      :map(function(name)
+        return lsp.get_clients { name = name }
+      end)
+      :flatten()
+      :totable()
+  end
+
+  for _, client in ipairs(clients) do
+    client:stop(client.exit_timeout)
+  end
+end
+
 local actions = {
   enable = ex_lsp_enable,
   disable = ex_lsp_disable,
   restart = ex_lsp_restart,
+  stop = ex_lsp_stop,
 }
 
 local available_subcmds = vim.tbl_keys(actions)
