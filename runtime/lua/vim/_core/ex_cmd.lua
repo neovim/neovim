@@ -16,18 +16,18 @@ local function get_client_names(filter)
     :totable()
 end
 
----@return string[]
+--- @return string[]
 local function get_config_names()
   local config_names = vim
     .iter(vim.api.nvim_get_runtime_file('lsp/*.lua', true))
-    ---@param path string
+    --- @param path string
     :map(function(path)
       local file_name = path:match('[^/]*.lua$')
       return file_name:sub(0, #file_name - 4)
     end)
     :totable()
 
-  ---@diagnostic disable-next-line: invisible
+  --- @diagnostic disable-next-line
   vim.list_extend(config_names, vim.tbl_keys(vim.lsp.config._configs))
   return vim.list.unique(config_names)
 end
@@ -36,6 +36,7 @@ end
 local function get_enabled_config_names()
   return vim
     .iter(get_config_names())
+    --- @param name string
     :filter(function(name)
       return vim.lsp.is_enabled(name)
     end)
@@ -48,29 +49,29 @@ local complete_args = {
   restart = get_client_names,
 }
 
-local function ex_lsp_enable(servers)
-  -- Default to enabling all servers matching the filetype of the current buffer.
-  if #servers == 0 then
+local function ex_lsp_enable(config_names)
+  -- Default to enabling all clients matching the filetype of the current buffer.
+  if #config_names == 0 then
     local filetype = vim.bo.filetype
     for _, name in ipairs(get_config_names()) do
       local filetypes = vim.lsp.config[name].filetypes
       if filetypes and vim.tbl_contains(filetypes, filetype) then
-        table.insert(servers, name)
+        table.insert(config_names, name)
       end
     end
   end
 
-  vim.lsp.enable(servers)
+  vim.lsp.enable(config_names)
 end
 
----@param clients string[]
-local function ex_lsp_disable(clients)
-  -- Default to disabling all servers on current buffer
-  if #clients == 0 then
-    clients = get_client_names { bufnr = vim.api.nvim_get_current_buf() }
+--- @param config_names string[]
+local function ex_lsp_disable(config_names)
+  -- Default to disabling all clients attached to the current buffer.
+  if #config_names == 0 then
+    config_names = get_client_names { bufnr = vim.api.nvim_get_current_buf() }
   end
 
-  for _, name in ipairs(clients) do
+  for _, name in ipairs(config_names) do
     if vim.lsp.config[name] == nil then
       vim.notify(("Invalid server name '%s'"):format(name))
     else
@@ -79,14 +80,14 @@ local function ex_lsp_disable(clients)
   end
 end
 
----@param clients string[]
-local function ex_lsp_restart(clients)
-  -- Default to restarting all active servers
-  if #clients == 0 then
-    clients = get_client_names()
+--- @param client_names string[]
+local function ex_lsp_restart(client_names)
+  -- Default to restarting all active clients.
+  if #client_names == 0 then
+    client_names = get_client_names()
   end
 
-  for _, name in ipairs(clients) do
+  for _, name in ipairs(client_names) do
     if vim.lsp.config[name] == nil then
       vim.notify(("Invalid server name '%s'"):format(name))
     else
@@ -96,7 +97,7 @@ local function ex_lsp_restart(clients)
 
   local timer = assert(vim.uv.new_timer())
   timer:start(500, 0, function()
-    for _, name in ipairs(clients) do
+    for _, name in ipairs(client_names) do
       vim.schedule_wrap(function(x)
         vim.lsp.enable(x)
       end)(name)
@@ -112,8 +113,8 @@ local actions = {
 
 local available_subcmds = vim.tbl_keys(actions)
 
---- Use for `:lsp {subcmd} {clients}` command
----@param args string
+--- Use for `:lsp {subcmd} {name}?` command
+--- @param args string
 M.lsp = function(args)
   local fargs = vim.api.nvim_parse_cmd('lsp ' .. args, {}).args
   if not fargs then
@@ -139,7 +140,7 @@ function M.lsp_complete(line)
     return available_subcmds
   else
     local subcmd = splited[2]
-    ---@param n string
+    --- @param n string
     return vim.tbl_map(function(n)
       return vim.fn.escape(n, [[" |]])
     end, complete_args[subcmd]())
