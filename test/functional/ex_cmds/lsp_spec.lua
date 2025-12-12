@@ -18,10 +18,11 @@ describe(':lsp', function()
         filetypes = { 'lua' },
         cmd = server.cmd,
       })
+      vim.cmd('set ft=lua')
     end)
   end)
 
-  it('enable', function()
+  it('enable with arguments', function()
     local is_enabled = exec_lua(function()
       vim.cmd('lsp enable dummy')
       return vim.lsp.is_enabled('dummy')
@@ -29,7 +30,15 @@ describe(':lsp', function()
     eq(true, is_enabled)
   end)
 
-  it('disable', function()
+  it('enable without arguments', function()
+    local is_enabled = exec_lua(function()
+      vim.cmd('lsp enable')
+      return vim.lsp.is_enabled('dummy')
+    end)
+    eq(true, is_enabled)
+  end)
+
+  it('disable with arguments', function()
     local is_enabled = exec_lua(function()
       vim.lsp.enable('dummy')
       vim.cmd('lsp disable dummy')
@@ -38,9 +47,17 @@ describe(':lsp', function()
     eq(false, is_enabled)
   end)
 
-  it('restart', function()
+  it('disable without arguments', function()
+    local is_enabled = exec_lua(function()
+      vim.lsp.enable('dummy')
+      vim.cmd('lsp disable')
+      return vim.lsp.is_enabled('dummy')
+    end)
+    eq(false, is_enabled)
+  end)
+
+  it('restart with arguments', function()
     local ids_differ = exec_lua(function()
-      vim.cmd('set ft=lua')
       vim.lsp.enable('dummy')
       local old_id = vim.lsp.get_clients()[1].id
 
@@ -54,11 +71,37 @@ describe(':lsp', function()
     eq(true, ids_differ)
   end)
 
-  it('stop', function()
+  it('restart without arguments', function()
+    local ids_differ = exec_lua(function()
+      vim.lsp.enable('dummy')
+      local old_id = vim.lsp.get_clients()[1].id
+
+      vim.cmd('lsp restart')
+      vim.wait(1000, function()
+        return old_id ~= vim.lsp.get_clients()[1].id
+      end)
+      local new_id = vim.lsp.get_clients()[1].id
+      return old_id ~= new_id
+    end)
+    eq(true, ids_differ)
+  end)
+
+  it('stop with arguments', function()
     local running_clients = exec_lua(function()
-      vim.cmd('set ft=lua')
       vim.lsp.enable('dummy')
       vim.cmd('lsp stop dummy')
+      vim.wait(1000, function()
+        return #vim.lsp.get_clients() == 0
+      end)
+      return #vim.lsp.get_clients()
+    end)
+    eq(0, running_clients)
+  end)
+
+  it('stop without arguments', function()
+    local running_clients = exec_lua(function()
+      vim.lsp.enable('dummy')
+      vim.cmd('lsp stop')
       vim.wait(1000, function()
         return #vim.lsp.get_clients() == 0
       end)
