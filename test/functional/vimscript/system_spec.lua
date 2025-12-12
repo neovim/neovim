@@ -196,10 +196,10 @@ describe('system()', function()
       n.set_shell_powershell()
       eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
       -- Sanity test w/ default encoding
-      -- * on Windows, expected to default to Western European enc
+      -- * on Windows, UTF-8 still works.
       -- * on Linux, expected to default to UTF8
       command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
-      eq(is_os('win') and '??\n' or 'ああ\n', eval([[system('Write-Output "ああ"')]]))
+      eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
     end)
 
     it('`echo` and waits for its return', function()
@@ -548,10 +548,10 @@ describe('systemlist()', function()
     n.set_shell_powershell()
     eq({ is_os('win') and 'あ\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
     -- Sanity test w/ default encoding
-    -- * on Windows, expected to default to Western European enc
+    -- * on Windows, UTF-8 still works.
     -- * on Linux, expected to default to UTF8
     command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
-    eq({ is_os('win') and '?\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
+    eq({ is_os('win') and 'あ\r' or 'あ' }, eval([[systemlist('Write-Output あ')]]))
   end)
 end)
 
