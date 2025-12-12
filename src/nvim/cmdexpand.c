@@ -2875,7 +2875,7 @@ static char *get_lsp_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 
     ADD_C(args, CSTR_AS_OBJ(xp->xp_line));
     // Build the current command line as a Lua string argument
-    Object res = NLUA_EXEC_STATIC("return require'vim.lsp._cmd'._ex_lsp_complete(...)", args,
+    Object res = NLUA_EXEC_STATIC("return require'vim._core.ex_cmd.lsp'.lsp_complete(...)", args,
                                   kRetObject, NULL,
                                   &err);
     api_clear_error(&err);
@@ -2933,7 +2933,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_SCRIPTNAMES, get_scriptnames_arg, true, false },
     { EXPAND_RETAB, get_retab_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
-    [32] = { EXPAND_LSP, get_lsp_arg, true, false },
+    { EXPAND_LSP, get_lsp_arg, true, false },
   };
   int ret = FAIL;
 

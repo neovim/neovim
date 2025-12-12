@@ -116,21 +116,28 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
       end,
     })
 <
-
+==============================================================================
 COMMANDS                                                    *:lsp*
 
-:lsp restart {names}                                      *:lsp-restart*
-    Restarts the given language servers. If no names are given, all active
-    servers are restarted.
+:lsp enable {name}?                                       *:lsp-enable*
+    Enables the given lsp clients. If no names are given, all clients
+    configured with |vim.lsp.config()| with a filetype matching the current
+    buffer's filetype are enabled. Use |vim.lsp.enable()| for non-interactive
+    use.
 
-:lsp start {names}                                        *:lsp-start*
-    Starts the given language servers. If no names are given, all configured
-    with |vim.lsp.config()| with filetype matching the current buffer are
-    started.
+:lsp disable {name}?                                      *:lsp-disable*
+    Disables (and stops) the given lsp clients. If no names are given,
+    all clients attached to the current buffer are disabled. Use
+    |vim.lsp.enable()| with `enable=false` for non-interactive use.
 
-:lsp stop {names}                                         *:lsp-stop*
-    Stops and disables the given language servers. If no names are given, all
-    servers on the current buffer are stopped.
+:lsp restart {client}?                                    *:lsp-restart*
+    Restarts the given lsp clients. If no client names are given, all active
+    clients attached to the current buffer are restarted.
+
+:lsp stop {client}?                                       *:lsp-stop*
+    Stops the given lsp clients. If no client names are given, all active
+    clients attached to the current buffer are stopped. Use |Client:stop()|
+    for non-interactive use.
 
 ==============================================================================
 CONFIG                                                  *lsp-config*

@@ -1672,7 +1672,7 @@ M.cmds = {
   },
   {
     command = 'lsp',
-    flags = bit.bor(NEEDARG, EXTRA, TRLBAR),
+    flags = bit.bor(NEEDARG, EXTRA),
     addr_type = 'ADDR_NONE',
     func = 'ex_lsp',
   },
