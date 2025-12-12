@@ -454,7 +454,7 @@ test text
   end)
 end)
 
-describe('vim.lsp.inlay_hint.apply_action', function()
+describe('vim.lsp.inlay_hint.action', function()
   ---@type table<string, {lines: string[], name: string, filetype: string, bufnr: integer?, uri: string}>
   local mocked_files = {
     main = {
@@ -794,6 +794,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       if client_id then
         vim.lsp.buf_attach_client(mocked_files.main.bufnr, client_id)
         vim.lsp.buf_attach_client(mocked_files.lib.bufnr, client_id)
+        vim.lsp.inlay_hint.enable(true, { bufnr = mocked_files.main.bufnr })
       end
     end)
 
@@ -813,7 +814,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
     local hint_count = exec_lua(function()
       local hint_count ---@type integer?
       vim.api.nvim_win_set_cursor(curr_winid, { 8, 18 })
-      vim.lsp.inlay_hint.apply_action(function(hints, ctx, cb)
+      vim.lsp.inlay_hint.action(function(hints, ctx, cb)
         hint_count = #hints
         if #hints > 0 then
           cb({ bufnr = ctx.bufnr, client = ctx.client })
@@ -842,7 +843,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       vim.api.nvim_win_set_cursor(curr_winid, { 9, 30 })
 
       local hint_count ---@type integer?
-      vim.lsp.inlay_hint.apply_action(function(_hints, ctx, cb)
+      vim.lsp.inlay_hint.action(function(_hints, ctx, cb)
         hint_count = #_hints
         if #_hints > 0 then
           cb({ bufnr = ctx.bufnr, client = ctx.client })
@@ -868,7 +869,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
     local ctx = exec_lua(function()
       vim.api.nvim_win_set_cursor(curr_winid, { 8, 18 })
       local on_finish_ctx ---@type table?
-      vim.lsp.inlay_hint.apply_action(function()
+      vim.lsp.inlay_hint.action(function()
         return 0
       end, { clients = {} }, function(ctx)
         on_finish_ctx = ctx
@@ -891,7 +892,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local done = false
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'textEdits',
           { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(8, 20, { buf = bufnr })) },
           function(_)
@@ -918,7 +919,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local done = false
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'textEdits',
           { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
@@ -940,7 +941,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local done = false
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'location',
           { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
           function(_)
@@ -960,7 +961,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local done = false
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'location',
           { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
@@ -995,7 +996,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local tooltip_buf, tooltip_win = exec_lua(function()
         local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'tooltip',
           { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
           function(ctx)
@@ -1023,7 +1024,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local buf_count = #api.nvim_list_bufs()
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'tooltip',
           { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
@@ -1063,7 +1064,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local hover_buf, hover_win = exec_lua(function()
         local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'hover',
           { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
           function(ctx)
@@ -1094,7 +1095,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local hover_buf, hover_win = exec_lua(function()
         local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'hover',
           { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(8, 20, { buf = bufnr })) },
           function(ctx)
@@ -1122,7 +1123,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local buf_count = #api.nvim_list_bufs()
       exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'hover',
           { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
@@ -1144,7 +1145,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local done = false
       local command_called = exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'command',
           { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
           function(_)
@@ -1165,7 +1166,7 @@ describe('vim.lsp.inlay_hint.apply_action', function()
       local done = false
       local command_called = exec_lua(function()
         local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.apply_action(
+        vim.lsp.inlay_hint.action(
           'command',
           { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
           function(_)
