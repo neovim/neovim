@@ -39,21 +39,29 @@ describe(':lsp', function()
   end)
 
   it('restart', function()
-    local is_enabled = exec_lua(function()
+    local ids_differ = exec_lua(function()
+      vim.cmd('set ft=lua')
       vim.lsp.enable('dummy')
+      local old_id = vim.lsp.get_clients()[1].id
+
       vim.cmd('lsp restart dummy')
       vim.wait(1000, function()
-        return vim.lsp.is_enabled('dummy')
-      end, 100)
-      return vim.lsp.is_enabled('dummy')
+        return old_id ~= vim.lsp.get_clients()[1].id
+      end)
+      local new_id = vim.lsp.get_clients()[1].id
+      return old_id ~= new_id
     end)
-    eq(true, is_enabled)
+    eq(true, ids_differ)
   end)
 
   it('stop', function()
     local running_clients = exec_lua(function()
+      vim.cmd('set ft=lua')
       vim.lsp.enable('dummy')
       vim.cmd('lsp stop dummy')
+      vim.wait(1000, function()
+        return #vim.lsp.get_clients() == 0
+      end)
       return #vim.lsp.get_clients()
     end)
     eq(0, running_clients)

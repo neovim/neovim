@@ -1,3 +1,4 @@
+local api = vim.api
 local lsp = vim.lsp
 
 local M = {}
@@ -19,7 +20,7 @@ end
 --- @return string[]
 local function get_config_names()
   local config_names = vim
-    .iter(vim.api.nvim_get_runtime_file('lsp/*.lua', true))
+    .iter(api.nvim_get_runtime_file('lsp/*.lua', true))
     --- @param path string
     :map(function(path)
       local file_name = path:match('[^/]*.lua$')
@@ -76,7 +77,7 @@ end
 local function ex_lsp_disable(config_names)
   -- Default to disabling all clients attached to the current buffer.
   if #config_names == 0 then
-    config_names = get_client_names { bufnr = vim.api.nvim_get_current_buf() }
+    config_names = get_client_names { bufnr = api.nvim_get_current_buf() }
   end
 
   for _, name in ipairs(config_names) do
@@ -88,40 +89,13 @@ local function ex_lsp_disable(config_names)
   end
 end
 
---- @param client_names string[]
-local function ex_lsp_restart(client_names)
-  -- Default to restarting all active clients.
-  if #client_names == 0 then
-    client_names = get_client_names()
-  end
-
-  for _, name in ipairs(client_names) do
-    if lsp.config[name] == nil then
-      vim.notify(("Invalid server name '%s'"):format(name))
-    else
-      lsp.enable(name, false)
-    end
-  end
-
-  local timer = assert(vim.uv.new_timer())
-  timer:start(500, 0, function()
-    for _, name in ipairs(client_names) do
-      vim.schedule_wrap(function(x)
-        lsp.enable(x)
-      end)(name)
-    end
-  end)
-end
-
---- @param client_names string[]
-local function ex_lsp_stop(client_names)
-  --- @type vim.lsp.Client[]
-  local clients
+--- @return vim.lsp.Client[]
+local function get_clients_from_names(client_names)
   -- Default to stopping all active clients attached to the current buffer.
   if #client_names == 0 then
-    clients = lsp.get_clients { bufnr = vim.api.nvim_get_current_buf() }
+    return lsp.get_clients { bufnr = api.nvim_get_current_buf() }
   else
-    clients = vim
+    return vim
       .iter(client_names)
       :map(function(name)
         return lsp.get_clients { name = name }
@@ -129,6 +103,44 @@ local function ex_lsp_stop(client_names)
       :flatten()
       :totable()
   end
+end
+
+local restart_group = api.nvim_create_augroup('nvim.lsp-restart', {})
+
+--- @param client_names string[]
+local function ex_lsp_restart(client_names)
+  local clients = get_clients_from_names(client_names)
+
+  for _, client in ipairs(clients) do
+    --- @type integer[]
+    local attached_buffers = vim.tbl_keys(client.attached_buffers)
+
+    -- Reattach new client once the old one exits
+    api.nvim_create_autocmd('LspDetach', {
+      group = restart_group,
+      callback = function(info)
+        if info.data.client_id ~= client.id then
+          return
+        end
+
+        local new_client_id = lsp.start(client.config, { attach = false })
+        if new_client_id then
+          for _, buffer in ipairs(attached_buffers) do
+            lsp.buf_attach_client(buffer, new_client_id)
+          end
+        end
+
+        return true -- Delete autocmd
+      end,
+    })
+
+    client:stop(client.exit_timeout)
+  end
+end
+
+--- @param client_names string[]
+local function ex_lsp_stop(client_names)
+  local clients = get_clients_from_names(client_names)
 
   for _, client in ipairs(clients) do
     client:stop(client.exit_timeout)
@@ -147,7 +159,7 @@ local available_subcmds = vim.tbl_keys(actions)
 --- Use for `:lsp {subcmd} {name}?` command
 --- @param args string
 M.lsp = function(args)
-  local fargs = vim.api.nvim_parse_cmd('lsp ' .. args, {}).args
+  local fargs = api.nvim_parse_cmd('lsp ' .. args, {}).args
   if not fargs then
     return
   end

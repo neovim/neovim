@@ -137,7 +137,7 @@ COMMANDS                                                    *:lsp*
 
 :lsp restart {client}?                                    *:lsp-restart*
     Restarts the given lsp clients. If no client names are given, all active
-    clients are restarted.
+    clients attached to the current buffer are restarted.
 
 :lsp stop {client}?                                       *:lsp-stop*
     Stops the given lsp clients. If no client names are given, all active
