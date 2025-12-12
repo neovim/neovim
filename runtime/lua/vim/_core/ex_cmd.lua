@@ -29,7 +29,14 @@ local function get_config_names()
 
   --- @diagnostic disable-next-line
   vim.list_extend(config_names, vim.tbl_keys(vim.lsp.config._configs))
-  return vim.list.unique(config_names)
+
+  return vim
+    .iter(vim.list.unique(config_names))
+    --- @param name string
+    :filter(function(name)
+      return name ~= '*'
+    end)
+    :totable()
 end
 
 --- @return string[]
