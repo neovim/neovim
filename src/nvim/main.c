@@ -1132,6 +1132,13 @@ static void command_line_scan(mparm_T *parmp)
           // Do nothing: file args are always literal. #7679
         } else if (STRNICMP(argv[0] + argv_idx, "remote", 6) == 0) {
           parmp->remote = parmp->argc - argc;
+        } else if (STRNICMP(argv[0] + argv_idx, "server-name", 11) == 0) {
+          // it has to be checked before "server";
+          if (headless_mode == false) {
+            headless_mode = true;  // Do not generate ui
+          }
+          want_argument = true;
+          argv_idx += 11;
         } else if (STRNICMP(argv[0] + argv_idx, "server", 6) == 0) {
           want_argument = true;
           argv_idx += 6;
@@ -1366,6 +1373,8 @@ static void command_line_scan(mparm_T *parmp)
           } else if (strequal(argv[-1], "--listen")) {
             // "--listen {address}"
             parmp->listen_addr = argv[0];
+          } else if (strequal(argv[-1], "--server-name")) {
+            parmp->server_addr = argv[0];
           } else if (strequal(argv[-1], "--server")) {
             // "--server {address}"
             parmp->server_addr = argv[0];

@@ -14,6 +14,7 @@ local neq = t.neq
 local set_session = n.set_session
 local tmpname = t.tmpname
 local write_file = t.write_file
+local server_name = nil
 
 describe('Remote', function()
   local fname, other_fname
@@ -49,32 +50,60 @@ describe('Remote', function()
       local client_starter = n.new_session(true)
       set_session(client_starter)
       -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-      eq(
-        { 0 },
-        exec_lua(
-          [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
-        stdout_buffered = true,
-        stderr_buffered = true,
-        on_stdout = function(_, data, _)
-          _G.Remote_stdout = table.concat(data, '\n')
-        end,
-        on_stderr = function(_, data, _)
-          _G.Remote_stderr = table.concat(data, '\n')
-        end,
-      }) })]],
-          nvim_prog,
-          '--clean',
-          '--headless',
-          '--server',
-          addr,
-          ...
+      if server_name == nil then
+        eq(
+          { 0 },
+          exec_lua(
+            [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stdout = function(_, data, _)
+            _G.Remote_stdout = table.concat(data, '\n')
+          end,
+          on_stderr = function(_, data, _)
+            _G.Remote_stderr = table.concat(data, '\n')
+          end,
+        }) })]],
+            nvim_prog,
+            '--clean',
+            '--headless',
+            '--server',
+            addr,
+            ...
+          )
         )
-      )
+      else
+        eq(
+          { 0 },
+          exec_lua(
+            [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stdout = function(_, data, _)
+            _G.Remote_stdout = table.concat(data, '\n')
+          end,
+          on_stderr = function(_, data, _)
+            _G.Remote_stderr = table.concat(data, '\n')
+          end,
+        }) })]],
+            nvim_prog,
+            '--clean',
+            '--server-name',
+            addr,
+            ...
+          )
+        )
+      end
+
       local res = exec_lua([[return { _G.Remote_stdout, _G.Remote_stderr }]])
       client_starter:close()
       set_session(server)
       return res
     end
+
+    it('evaluates remote-expr using --server-name', function()
+      eq({ '2', '' }, run_remote('--remote-expr', '1+1'))
+    end)
 
     it('edit a single file', function()
       eq({ '', '' }, run_remote('--remote', fname))
