@@ -479,6 +479,11 @@ static bool can_unload_buffer(buf_T *buf)
       }
     }
   }
+  // Don't unload the buffer while it's still being saved
+  if (can_unload && buf->b_saving) {
+    can_unload = false;
+  }
+
   if (!can_unload) {
     char *fname = buf->b_fname != NULL ? buf->b_fname : buf->b_ffname;
     semsg(_(e_attempt_to_delete_buffer_that_is_in_use_str),
