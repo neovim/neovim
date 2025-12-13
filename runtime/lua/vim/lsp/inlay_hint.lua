@@ -530,7 +530,7 @@ local action_helpers = {
       local cursor = api.nvim_win_get_cursor(winid)
       range.start = vim.pos.cursor(cursor)
       range['end'] = vim.pos.cursor(cursor)
-      range['end'].col = range['end'].col + 2
+      range['end'].col = range['end'].col + 1
     else
       local start_pos = fn.getpos('v')
       local end_pos = fn.getpos('.')
