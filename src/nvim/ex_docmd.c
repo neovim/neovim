@@ -2511,7 +2511,9 @@ static char *ex_range_without_command(exarg_T *eap)
 /// @return  FAIL when the command is not to be executed.
 int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod, bool skip_only)
 {
+  char *orig_cmd = eap->cmd;
   char *cmd_start = NULL;
+  bool did_plus_cmd = false;
   bool has_visual_range = false;
   CLEAR_POINTER(cmod);
 
@@ -2537,6 +2539,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
         && getline_equal(eap->ea_getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       eap->cmd = exmode_plus;
+      did_plus_cmd = true;
       if (!skip_only) {
         ex_pressedreturn = true;
       }
@@ -2767,12 +2770,26 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       // Since the modifiers have been parsed put the colon on top of the
       // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
       // Put eap->cmd after the colon.
-      memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
-      eap->cmd -= 5;
-      memmove(eap->cmd - 1, ":'<,'>", 6);
+      if (did_plus_cmd) {
+        size_t len = strlen(cmd_start);
+
+        // Special case: empty command may have been changed to "+":
+        //  "'<,'>mod" -> "mod'<,'>+
+        memmove(orig_cmd, cmd_start, len);
+        strcpy(orig_cmd + len, "'<,'>+");
+      } else {
+        memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
+        eap->cmd -= 5;
+        memmove(eap->cmd - 1, ":'<,'>", 6);
+      }
     } else {
-      // no modifiers, move the pointer back
-      eap->cmd -= 5;
+      // No modifiers, move the pointer back.
+      // Special case: empty command may have been changed to "+".
+      if (did_plus_cmd) {
+        eap->cmd = "'<,'>+";
+      } else {
+        eap->cmd = orig_cmd;
+      }
     }
   }
 
