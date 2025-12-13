@@ -1066,9 +1066,9 @@ function M.action(action, opts, callback)
       return
     end
 
-    local hints = hints_by_clients[client.id]
+    local _hints = hints_by_clients[client.id]
 
-    if #hints == 0 then
+    if #_hints == 0 then
       -- no hints in the given range.
       return do_action(next(clients, idx))
     end
@@ -1078,7 +1078,7 @@ function M.action(action, opts, callback)
 
     if not support_resolve then
       -- no need to resolve because the client doesn't support it.
-      if action_handler(hints, action_ctx, callback) == 0 then
+      if action_handler(_hints, action_ctx, callback) == 0 then
         -- no actions invoked. proceed with the client.
         return do_action(next(clients, idx))
       else
@@ -1094,16 +1094,16 @@ function M.action(action, opts, callback)
     --- @type integer
     local num_processed = 0
 
-    for i, h in ipairs(hints) do
+    for i, h in ipairs(_hints) do
       client:request('inlayHint/resolve', h, function(_, _result, _, _)
-        if _result ~= nil and hints[i] then
-          hints[i] = vim.tbl_deep_extend('force', hints[i], _result)
+        if _result ~= nil and _hints[i] then
+          _hints[i] = vim.tbl_deep_extend('force', _hints[i], _result)
         end
         num_processed = num_processed + 1
 
-        if num_processed == #hints then
+        if num_processed == #_hints then
           -- all hints have been resolved. we're now ready to invoke the action.
-          if action_handler(hints, action_ctx, callback) == 0 then
+          if action_handler(_hints, action_ctx, callback) == 0 then
             return do_action(next(clients, idx))
           else
             -- actions were taken. we're done with the actions.
