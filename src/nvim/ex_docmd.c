@@ -2513,14 +2513,16 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
 {
   char *orig_cmd = eap->cmd;
   char *cmd_start = NULL;
-  bool did_plus_cmd = false;
+  bool use_plus_cmd = false;
   bool has_visual_range = false;
   CLEAR_POINTER(cmod);
 
   if (strncmp(eap->cmd, "'<,'>", 5) == 0) {
     // The automatically inserted Visual area range is skipped, so that
     // typing ":cmdmod cmd" in Visual mode works without having to move the
-    // range to after the modififiers.
+    // range to after the modififiers. The command will be
+    // "'<,'>cmdmod cmd", parse "cmdmod cmd" and then put back "'<,'>"
+    // before "cmd" below.
     eap->cmd += 5;
     cmd_start = eap->cmd;
     has_visual_range = true;
@@ -2534,15 +2536,16 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       eap->cmd++;
     }
 
-    // in ex mode, an empty line works like :+
+    // in ex mode, an empty command (after modifiers) works like :+
     if (*eap->cmd == NUL && exmode_active
         && getline_equal(eap->ea_getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       eap->cmd = exmode_plus;
-      did_plus_cmd = true;
+      use_plus_cmd = true;
       if (!skip_only) {
         ex_pressedreturn = true;
       }
+      break;  // no modifiers following
     }
 
     // ignore comment and empty lines
@@ -2770,11 +2773,11 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       // Since the modifiers have been parsed put the colon on top of the
       // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
       // Put eap->cmd after the colon.
-      if (did_plus_cmd) {
+      if (use_plus_cmd) {
         size_t len = strlen(cmd_start);
 
-        // Special case: empty command may have been changed to "+":
-        //  "'<,'>mod" -> "mod'<,'>+
+        // Special case: empty command uses "+":
+        //  "'<,'>mods" -> "mods'<,'>+
         memmove(orig_cmd, cmd_start, len);
         strcpy(orig_cmd + len, "'<,'>+");
       } else {
@@ -2784,13 +2787,15 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       }
     } else {
       // No modifiers, move the pointer back.
-      // Special case: empty command may have been changed to "+".
-      if (did_plus_cmd) {
+      // Special case: change empty command to "+".
+      if (use_plus_cmd) {
         eap->cmd = "'<,'>+";
       } else {
         eap->cmd = orig_cmd;
       }
     }
+  } else if (use_plus_cmd) {
+    eap->cmd = exmode_plus;
   }
 
   return OK;
