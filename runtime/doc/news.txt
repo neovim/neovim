@@ -215,6 +215,8 @@ EDITOR
   "(v)iew" then run `:trust`.
 • |gx| in help buffers opens the online documentation for the tag under the
   cursor.
+• |:source| with a range in non-Lua files (e.g., vimdoc) now detects Lua
+  codeblocks via treesitter and executes them as Lua instead of Vimscript.
 • |:Undotree| for visually navigating the |undo-tree|
 • |:wall| permits a |++p| option for creating parent directories when writing
   changed buffers.
