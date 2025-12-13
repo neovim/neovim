@@ -943,11 +943,11 @@ local inlayhint_actions = {
 
 --- @class vim.lsp.inlay_hint.action.Opts
 --- @inlinedoc
---- Use this option to specify the range from which the inlay hints should be requested.
+--- Inlay hints (returned by `vim.lsp.inlay_hint.get()`) to take actions on.
 --- When not specified:
----   - in |Normal-mode|, it requests for hints on either side of the cursor.
----   - in |Visual-mode|, it requests for hints inside the selected range.
---- @field range? vim.Range
+---   - in |Normal-mode|, it uses hints on either side of the cursor.
+---   - in |Visual-mode|, it uses hints inside the selected range.
+--- @field hints? vim.lsp.inlay_hint.get.ret[]
 
 --- Apply some actions provided by inlay hints in the selected range.
 ---
@@ -1003,7 +1003,7 @@ function M.action(action, opts, callback)
   opts = opts or {}
 
   local bufnr = api.nvim_get_current_buf()
-  local range = opts.range or action_helpers.make_range()
+
   local on_finish_cb_called = false
   if callback then
     local original_callback = callback
@@ -1016,13 +1016,10 @@ function M.action(action, opts, callback)
     end
   end
 
-  --- group inlay hints by clients.
-  ---@type table<integer, lsp.InlayHint[]>
-  local hints_by_clients = vim.defaulttable(function(_)
-    return {}
-  end)
-  vim
-    .iter(M.get({
+  local hints = opts.hints
+  if hints == nil then
+    local range = action_helpers.make_range()
+    hints = M.get({
       range = {
         -- in `M.on_inlayhint`,
         -- the inlay hints are stored by byte indices, not lsp positions (utf-*),
@@ -1031,13 +1028,20 @@ function M.action(action, opts, callback)
         ['end'] = { line = range.end_.row, character = range.end_.col },
       },
       bufnr = bufnr,
-    }))
-    :each(
-      ---@param item vim.lsp.inlay_hint.get.ret
-      function(item)
-        table.insert(hints_by_clients[item.client_id], item.inlay_hint)
-      end
-    )
+    })
+  end
+  --- group inlay hints by clients.
+  ---@type table<integer, lsp.InlayHint[]>
+  local hints_by_clients = vim.defaulttable(function(_)
+    return {}
+  end)
+
+  vim.iter(hints):each(
+    ---@param item vim.lsp.inlay_hint.get.ret
+    function(item)
+      table.insert(hints_by_clients[item.client_id], item.inlay_hint)
+    end
+  )
 
   ---@type vim.lsp.Client[]
   local clients = vim
