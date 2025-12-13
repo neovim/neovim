@@ -497,18 +497,29 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
   return cstr_as_string(ptr);
 }
 
-/// Execute Lua code. Parameters (if any) are available as `...` inside the
-/// chunk. The chunk can return a value.
+/// Executes Lua code. Arguments are available as `...` inside the chunk. The chunk can return
+/// a value.
 ///
-/// Only statements are executed. To evaluate an expression, prefix it
-/// with `return`: return my_function(...)
+/// Only statements are executed. To evaluate an expression, prefix it with "return": `return
+/// my_function(...)`
 ///
-/// @param code       Lua code to execute
-/// @param args       Arguments to the code
-/// @param[out] err   Details of an error encountered while parsing
-///                   or executing the Lua code.
+/// Example:
+/// ```lua
+/// local peer = vim.fn.jobstart({ vim.v.progpath, '--clean', '--embed' }, { rpc=true })
+/// vim.print(vim.rpcrequest(peer, 'nvim_exec_lua', [[
+///       local a, b = ...
+///       return ('result: %s'):format(a + b)
+///     ]],
+///     { 1, 3 }
+///   )
+/// )
+/// ```
 ///
-/// @return           Return value of Lua code if present or NIL.
+/// @param code       Lua code to execute.
+/// @param args       Arguments to the Lua code.
+/// @param[out] err   Lua error raised while parsing or executing the Lua code.
+///
+/// @return           Value returned by the Lua code (if any), or NIL.
 Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_REMOTE_ONLY

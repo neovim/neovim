@@ -1084,14 +1084,15 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   }
 }
 
+/// @param overflow Number of cells to skip.
 static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_attr,
-                                 BorderTextType bt, int over_flow)
+                                 BorderTextType bt, int overflow)
 {
   int default_attr = hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
-  if (over_flow > 0) {
+  if (overflow > 0) {
     grid_line_puts(1, "<", -1,  hl_apply_winblend(winbl, default_attr));
     col += 1;
-    over_flow += 1;
+    overflow += 1;
   }
 
   for (size_t i = 0; i < kv_size(vt);) {
@@ -1104,18 +1105,17 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
       attr = default_attr;
     }
     // Skip characters from the beginning when title overflows available width.
-    // over_flow contains the number of cells to skip.
-    if (over_flow > 0) {
+    if (overflow > 0) {
       int cells = (int)mb_string2cells(text);
       // Skip entire chunk if overflow is larger than chunk width.
-      if (over_flow >= cells) {
-        over_flow -= cells;
+      if (overflow >= cells) {
+        overflow -= cells;
         continue;
       }
       // Skip partial characters within the chunk.
       char *p = text;
-      while (*p && over_flow > 0) {
-        over_flow -= utf_ptr2cells(p);
+      while (*p && overflow > 0) {
+        overflow -= utf_ptr2cells(p);
         p += utfc_ptr2len(p);
       }
       text = p;

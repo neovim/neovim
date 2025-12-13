@@ -3947,7 +3947,7 @@ package.path                                                      *package.path*
         files `./foo.lua`, `./foo.lc`, and `/usr/local/foo/init.lua`, in that
         order.
 
-package.preload                                              *package.preload()*
+package.preload                                              *package.preload*
         A table to store loaders for specific modules (see |require()|).
 
 package.seeall({module})                                      *package.seeall()*
