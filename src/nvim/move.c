@@ -259,6 +259,7 @@ void update_topline(win_T *wp)
   // If there is no valid screen and when the window height is zero just use
   // the cursor line.
   if (!default_grid.chars || wp->w_view_height == 0) {
+    check_cursor_lnum(wp);
     wp->w_topline = wp->w_cursor.lnum;
     wp->w_botline = wp->w_topline;
     wp->w_viewport_invalid = true;
