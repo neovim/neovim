@@ -211,10 +211,14 @@ function STHighlighter:cancel_all_requests(client)
   local state = self.client_state[client.id]
 
   for idx, request in pairs(state.active_requests) do
-    if request.request_id then
-      client:cancel_request(request.request_id)
-      state.active_requests[idx] = nil
+    local rid = request.request_id
+    if rid then
+      local r = client.requests[rid]
+      if r and r.type == 'pending' then
+        client:cancel_request(rid)
+      end
     end
+    state.active_requests[idx] = nil
   end
 end
 
