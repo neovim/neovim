@@ -109,4 +109,42 @@ describe(':lsp', function()
     end)
     eq(0, running_clients)
   end)
+
+  it('subcommand completion', function()
+    local completions = exec_lua(function()
+      return vim.fn.getcompletion('lsp ', 'cmdline')
+    end)
+    eq({ 'disable', 'enable', 'restart', 'stop' }, completions)
+  end)
+
+  it('argument completion', function()
+    local completions = exec_lua(function()
+      return vim.fn.getcompletion('lsp enable ', 'cmdline')
+    end)
+    eq({ 'dummy' }, completions)
+  end)
+
+  it('argument completion with spaces', function()
+    local cmd_length = exec_lua(function()
+      local server = _G._create_server()
+      vim.lsp.config('client name with space', {
+        cmd = server.cmd,
+      })
+      local completion = vim.fn.getcompletion('lsp enable cl ', 'cmdline')[1]
+      return #vim.api.nvim_parse_cmd('lsp enable ' .. completion, {}).args
+    end)
+    eq(2, cmd_length)
+  end)
+
+  it('argument completion with special characters', function()
+    local cmd_length = exec_lua(function()
+      local server = _G._create_server()
+      vim.lsp.config('client"name|with\tsymbols', {
+        cmd = server.cmd,
+      })
+      local completion = vim.fn.getcompletion('lsp enable cl ', 'cmdline')[1]
+      return #vim.api.nvim_parse_cmd('lsp enable ' .. completion, {}).args
+    end)
+    eq(2, cmd_length)
+  end)
 end)

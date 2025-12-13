@@ -207,10 +207,13 @@ function M.lsp_complete(line)
     return available_subcmds
   else
     local subcmd = splited[2]
-    --- @param n string
-    return vim.tbl_map(function(n)
-      return vim.fn.escape(n, [[" |]])
-    end, complete_args[subcmd]())
+    return vim
+      .iter(complete_args[subcmd]())
+      --- @param n string
+      :map(function(n)
+        return vim.fn.escape(n, '" |\t')
+      end)
+      :totable()
   end
 end
 
