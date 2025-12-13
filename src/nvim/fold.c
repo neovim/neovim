@@ -322,7 +322,7 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
 /// @return  true if 'foldmethod' is "manual"
 bool foldmethodIsManual(win_T *wp)
 {
-  return wp->w_p_fdm[3] == 'u';
+  return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[3] == 'u');
 }
 
 // foldmethodIsIndent() {{{2
@@ -336,14 +336,14 @@ bool foldmethodIsIndent(win_T *wp)
 /// @return  true if 'foldmethod' is "expr"
 bool foldmethodIsExpr(win_T *wp)
 {
-  return wp->w_p_fdm[1] == 'x';
+  return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[1] == 'x');
 }
 
 // foldmethodIsMarker() {{{2
 /// @return  true if 'foldmethod' is "marker"
 bool foldmethodIsMarker(win_T *wp)
 {
-  return wp->w_p_fdm[2] == 'r';
+  return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[2] == 'r');
 }
 
 // foldmethodIsSyntax() {{{2
