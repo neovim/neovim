@@ -2186,13 +2186,13 @@ action({action}, {opts}, {callback})             *vim.lsp.inlay_hint.action()*
                       inlay hint object, regardless of the number of hints in
                       `hints`.
       • {opts}      (`table?`) A table with the following fields:
-                    • {range}? (`vim.Range`) Use this option to specify the
-                      range from which the inlay hints should be requested.
-                      When not specified:
-                      • in |Normal-mode|, it requests for hints on either side
-                        of the cursor.
-                      • in |Visual-mode|, it requests for hints inside the
-                        selected range.
+                    • {hints}? (`vim.lsp.inlay_hint.get.ret[]`) Inlay hints
+                      (returned by `vim.lsp.inlay_hint.get()`) to take actions
+                      on. When not specified:
+                      • in |Normal-mode|, it uses hints on either side of the
+                        cursor.
+                      • in |Visual-mode|, it uses hints inside the selected
+                        range.
       • {callback}  (`fun(ctx: {bufnr: integer, client?: vim.lsp.Client})?`) A
                     callback function that will be triggered exactly once
                     (asynchronously) at the end of the action. It accepts a
