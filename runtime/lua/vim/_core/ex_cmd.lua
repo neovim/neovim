@@ -87,7 +87,7 @@ local function ex_lsp_enable(config_names)
   -- Default to enabling all clients matching the filetype of the current buffer.
   if #config_names == 0 then
     local filetype = vim.bo.filetype
-    for _, name in ipairs(get_disabled_config_names()) do
+    for _, name in ipairs(get_config_names()) do
       local filetypes = lsp.config[name].filetypes
       if filetypes and vim.tbl_contains(filetypes, filetype) then
         table.insert(config_names, name)
