@@ -186,7 +186,7 @@ function STHighlighter:new(bufnr)
   })
 
   api.nvim_create_autocmd({ 'BufWinEnter', 'InsertLeave' }, {
-    buffer = self.bufnr,
+    buf = self.bufnr,
     group = self.augroup,
     callback = function()
       self:send_request()
@@ -582,7 +582,7 @@ function STHighlighter:on_win(topline, botline)
           token.marked = true
 
           api.nvim_exec_autocmds('LspTokenUpdate', {
-            buffer = self.bufnr,
+            buf = self.bufnr,
             modeline = false,
             data = {
               token = token,
