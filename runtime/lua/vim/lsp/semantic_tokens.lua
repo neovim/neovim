@@ -272,7 +272,7 @@ function STHighlighter:send_request(range)
 
       local new_version = current_result.version ~= version and full_request_version ~= version
 
-      if new_version or range then
+      if new_version or (range and client:supports_method('textDocument/semanticTokens/range')) then
         -- Cancel stale in-flight request
         if new_version then
           self:cancel_all_requests(client)
@@ -318,7 +318,13 @@ function STHighlighter:send_request(range)
             return
           end
 
-          coroutine.wrap(STHighlighter.process_response)(highlighter, response, client, version)
+          coroutine.wrap(STHighlighter.process_response)(
+            highlighter,
+            response,
+            client,
+            version,
+            range
+          )
         end, self.bufnr)
 
         if success then
