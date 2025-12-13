@@ -9,7 +9,8 @@ local keymap = {}
 --- @inlinedoc
 ---
 --- Creates buffer-local mapping, `0` or `true` for current buffer.
---- @field buffer? integer|boolean
+--- @field buf? integer|boolean
+--- @field buffer? integer|boolean Deprecated: use `buf`
 ---
 --- Make the mapping recursive. Inverse of {noremap}.
 --- (Default: `false`)
@@ -23,7 +24,7 @@ local keymap = {}
 --- -- Map "x" to a Lua function:
 --- vim.keymap.set('n', 'x', function() print('real lua function') end)
 --- -- Map "<leader>x" to multiple modes for the current buffer:
---- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
+--- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buf = true })
 --- -- Map <Tab> to an expression (|:map-<expr>|):
 --- vim.keymap.set('i', '<Tab>', function()
 ---   return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
@@ -82,14 +83,24 @@ function keymap.set(mode, lhs, rhs, opts)
     rhs = ''
   end
 
+  -- Handle buf/buffer option
+  -- TODO(deprecate): emit warning for opts.buffer in 0.15, remove in 0.16
+  if opts.buf and opts.buffer then
+    error('cannot use both "buf" and "buffer" options')
+  end
   if opts.buffer then
-    local bufnr = opts.buffer == true and 0 or opts.buffer --[[@as integer]]
-    opts.buffer = nil ---@type integer?
+    opts.buf = opts.buffer
+  end
+  opts.buffer = nil ---@diagnostic disable-line: inject-field
+
+  if opts.buf then
+    local bufnr = opts.buf == true and 0 or opts.buf --[[@as integer]]
+    opts.buf = nil ---@type integer?
     for _, m in ipairs(mode) do
       vim.api.nvim_buf_set_keymap(bufnr, m, lhs, rhs, opts)
     end
   else
-    opts.buffer = nil
+    opts.buf = nil
     for _, m in ipairs(mode) do
       vim.api.nvim_set_keymap(m, lhs, rhs, opts)
     end
@@ -101,7 +112,8 @@ end
 ---
 --- Remove a mapping from the given buffer.
 --- When `0` or `true`, use the current buffer.
---- @field buffer? integer|boolean
+--- @field buf? integer|boolean
+--- @field buffer? integer|boolean Deprecated: use `buf`
 
 --- Remove an existing mapping.
 --- Examples:
@@ -109,7 +121,7 @@ end
 --- ```lua
 --- vim.keymap.del('n', 'lhs')
 ---
---- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+--- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
 --- ```
 ---
 ---@param modes string|string[]
@@ -125,18 +137,27 @@ function keymap.del(modes, lhs, opts)
   modes = type(modes) == 'string' and { modes } or modes
   --- @cast modes string[]
 
-  local buffer = false ---@type false|integer
-  if opts.buffer ~= nil then
-    buffer = opts.buffer == true and 0 or opts.buffer --[[@as integer]]
+  -- Handle buf/buffer option
+  -- TODO(deprecate): emit warning for opts.buffer in 0.15, remove in 0.16
+  if opts.buf and opts.buffer then
+    error('cannot use both "buf" and "buffer" options')
+  end
+  if opts.buffer then
+    opts.buf = opts.buffer
   end
 
-  if buffer == false then
+  local bufnr = false ---@type false|integer
+  if opts.buf ~= nil then
+    bufnr = opts.buf == true and 0 or opts.buf --[[@as integer]]
+  end
+
+  if bufnr == false then
     for _, mode in ipairs(modes) do
       vim.api.nvim_del_keymap(mode, lhs)
     end
   else
     for _, mode in ipairs(modes) do
-      vim.api.nvim_buf_del_keymap(buffer, mode, lhs)
+      vim.api.nvim_buf_del_keymap(bufnr, mode, lhs)
     end
   end
 end
