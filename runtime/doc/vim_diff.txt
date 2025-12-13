@@ -307,6 +307,7 @@ Commands:
 - |:EditQuery|
 - |:Inspect|
 - |:InspectTree|
+- |:lsp|
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
 - |:restart|
