@@ -699,6 +699,7 @@ describe('vim.lsp.inlay_hint.action', function()
 
   local curr_winid ---@type integer?
   local offset_encoding = 'utf-8'
+  local client_id ---@type integer?
 
   -- set a large wait time so that the async operations have time to complete
   -- in practice, the `vim.wait` calls should use a callback to make the wait stop early.
@@ -786,7 +787,7 @@ describe('vim.lsp.inlay_hint.action', function()
         },
       })
 
-      local client_id =
+      client_id =
         vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd, offset_encoding = offset_encoding })
       vim.wait(wait_time, function()
         return vim.lsp.get_client_by_id(assert(client_id)).initialized
@@ -862,7 +863,7 @@ describe('vim.lsp.inlay_hint.action', function()
     eq(2, fetched_hint_count)
   end)
 
-  it('should exit when no clients', function()
+  it('should exit when providing no hints', function()
     local done = false
     assert(curr_winid)
     ---@type table
@@ -871,7 +872,7 @@ describe('vim.lsp.inlay_hint.action', function()
       local on_finish_ctx ---@type table?
       vim.lsp.inlay_hint.action(function()
         return 0
-      end, { clients = {} }, function(ctx)
+      end, { hints = {} }, function(ctx)
         on_finish_ctx = ctx
         done = true
       end)
@@ -891,14 +892,13 @@ describe('vim.lsp.inlay_hint.action', function()
       assert(curr_winid)
       local done = false
       exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'textEdits',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(8, 20, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('textEdits', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 7, character = 18 }, ['end'] = { line = 8, character = 20 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -918,14 +918,13 @@ describe('vim.lsp.inlay_hint.action', function()
       assert(curr_winid)
       local done = false
       exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'textEdits',
-          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('textEdits', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 9, character = 21 }, ['end'] = { line = 9, character = 24 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -940,14 +939,13 @@ describe('vim.lsp.inlay_hint.action', function()
       assert(curr_winid)
       local done = false
       exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'location',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('location', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 7, character = 18 }, ['end'] = { line = 7, character = 20 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -960,14 +958,13 @@ describe('vim.lsp.inlay_hint.action', function()
       assert(curr_winid)
       local done = false
       exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'location',
-          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('location', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 9, character = 21 }, ['end'] = { line = 9, character = 24 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -994,16 +991,15 @@ describe('vim.lsp.inlay_hint.action', function()
       local done = false
       ---@type integer, integer
       local tooltip_buf, tooltip_win = exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
-        vim.lsp.inlay_hint.action(
-          'tooltip',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
-          function(ctx)
-            on_finish_ctx = ctx
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('tooltip', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 7, character = 18 }, ['end'] = { line = 7, character = 20 } },
+          }),
+        }, function(ctx)
+          on_finish_ctx = ctx
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -1023,14 +1019,13 @@ describe('vim.lsp.inlay_hint.action', function()
       local done = false
       local buf_count = #api.nvim_list_bufs()
       exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'tooltip',
-          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('tooltip', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 9, character = 21 }, ['end'] = { line = 9, character = 24 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -1062,16 +1057,15 @@ describe('vim.lsp.inlay_hint.action', function()
       local done = false
       ---@type integer, integer
       local hover_buf, hover_win = exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
-        vim.lsp.inlay_hint.action(
-          'hover',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
-          function(ctx)
-            on_finish_ctx = ctx
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('hover', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 7, character = 18 }, ['end'] = { line = 7, character = 20 } },
+          }),
+        }, function(ctx)
+          on_finish_ctx = ctx
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -1093,16 +1087,15 @@ describe('vim.lsp.inlay_hint.action', function()
       local done = false
       ---@type integer, integer
       local hover_buf, hover_win = exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
         local on_finish_ctx = {} ---@type vim.lsp.inlay_hint.action.on_finish.context|{}
-        vim.lsp.inlay_hint.action(
-          'hover',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(8, 20, { buf = bufnr })) },
-          function(ctx)
-            on_finish_ctx = ctx
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('hover', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 7, character = 18 }, ['end'] = { line = 8, character = 20 } },
+          }),
+        }, function(ctx)
+          on_finish_ctx = ctx
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -1122,14 +1115,13 @@ describe('vim.lsp.inlay_hint.action', function()
       local done = false
       local buf_count = #api.nvim_list_bufs()
       exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'hover',
-          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('hover', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 9, character = 21 }, ['end'] = { line = 9, character = 24 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -1144,14 +1136,13 @@ describe('vim.lsp.inlay_hint.action', function()
       assert(curr_winid)
       local done = false
       local command_called = exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'command',
-          { range = vim.range(vim.pos(7, 18, { buf = bufnr }), vim.pos(7, 20, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('command', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 7, character = 18 }, ['end'] = { line = 7, character = 20 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
@@ -1165,14 +1156,13 @@ describe('vim.lsp.inlay_hint.action', function()
       assert(curr_winid)
       local done = false
       local command_called = exec_lua(function()
-        local bufnr = mocked_files.main.bufnr
-        vim.lsp.inlay_hint.action(
-          'command',
-          { range = vim.range(vim.pos(9, 21, { buf = bufnr }), vim.pos(9, 24, { buf = bufnr })) },
-          function(_)
-            done = true
-          end
-        )
+        vim.lsp.inlay_hint.action('command', {
+          hints = vim.lsp.inlay_hint.get({
+            range = { start = { line = 9, character = 21 }, ['end'] = { line = 9, character = 24 } },
+          }),
+        }, function(_)
+          done = true
+        end)
         vim.wait(wait_time, function()
           return done
         end)
