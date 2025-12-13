@@ -14,6 +14,7 @@
 #include "nvim/api/private/validate.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/channel.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/eval/vars.h"
@@ -1004,4 +1005,55 @@ Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error
   ADD_C(args, DICT_OBJ(opts));
 
   return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
+}
+
+/// @deprecated Use nvim_chan_get() instead.
+/// @see nvim_chan_get
+///
+/// Gets information about a channel.
+///
+/// @param chan channel_id, or 0 for current channel
+/// @returns Channel info dict with these keys:
+///    - "id"       Channel id.
+///    - "argv"     (optional) Job arguments list.
+///    - "stream"   Stream underlying the channel.
+///         - "stdio"      stdin and stdout of this Nvim instance
+///         - "stderr"     stderr of this Nvim instance
+///         - "socket"     TCP/IP socket or named pipe
+///         - "job"        Job with communication over its stdio.
+///    -  "mode"    How data received on the channel is interpreted.
+///         - "bytes"      Send and receive raw bytes.
+///         - "terminal"   |terminal| instance interprets ASCII sequences.
+///         - "rpc"        |RPC| communication on the channel is active.
+///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this is a device path like
+///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
+///                 for conpty on Windows).
+///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
+///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+///                 by |nvim_set_client_info()|.
+Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
+  FUNC_API_SINCE(4) FUNC_API_DEPRECATED_SINCE(14)
+{
+  if (chan < 0) {
+    return (Dict)ARRAY_DICT_INIT;
+  }
+
+  if (chan == 0 && !is_internal_call(channel_id)) {
+    assert(channel_id <= INT64_MAX);
+    chan = (Integer)channel_id;
+  }
+  return channel_info((uint64_t)chan, arena);
+}
+
+/// @deprecated Use nvim_chan_get() instead.
+/// @see nvim_chan_get
+///
+/// Get information about all open channels.
+///
+/// @returns Array of Dictionaries, each describing a channel with
+///          the format specified at |nvim_chan_get()|.
+ArrayOf(Dict) nvim_list_chans(Arena *arena)
+  FUNC_API_SINCE(4) FUNC_API_DEPRECATED_SINCE(14)
+{
+  return channel_all_info(0, 0, arena);
 }

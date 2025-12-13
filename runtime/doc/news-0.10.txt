@@ -144,7 +144,7 @@ NEW FEATURES
 The following new features were added.
 
 • API:
-  • Passing 0 to |nvim_get_chan_info()| gets info about the current channel.
+  • |nvim_chan_get()| with `id=0` gets info about the current channel.
   • |nvim_buf_set_extmark()| supports inline virtual text.
   • |nvim_win_text_height()| computes the number of screen lines occupied
     by a range of text in a given window.

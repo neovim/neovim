@@ -817,6 +817,34 @@ function vim.api.nvim_call_dict_function(dict, fn, args) end
 --- @return any # Result of the function call
 function vim.api.nvim_call_function(fn, args) end
 
+--- Gets channel information.
+---
+--- Returns information about one or more channels depending on the filter options.
+---
+--- @param opts vim.api.keyset.get_chan Optional parameters:
+--- - id: (integer) Channel id. If specified, returns info only for that channel.
+--- - buf: (integer) Buffer handle. Only return channels associated with this
+---   terminal buffer.
+--- @return table<string,any>[] # Array of channel info dictionaries, each with these keys:
+--- - "id"       Channel id.
+--- - "argv"     (optional) Job arguments list.
+--- - "stream"   Stream underlying the channel.
+---      - "stdio"      stdin and stdout of this Nvim instance
+---      - "stderr"     stderr of this Nvim instance
+---      - "socket"     TCP/IP socket or named pipe
+---      - "job"        Job with communication over its stdio.
+--- -  "mode"    How data received on the channel is interpreted.
+---      - "bytes"      Send and receive raw bytes.
+---      - "terminal"   |terminal| instance interprets ASCII sequences.
+---      - "rpc"        |RPC| communication on the channel is active.
+--- -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this is a device path like
+---              "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
+---              for conpty on Windows).
+--- -  "buffer"  (optional) Buffer connected to |terminal| instance.
+--- -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+---              by |nvim_set_client_info()|.
+function vim.api.nvim_chan_get(opts) end
+
 --- Sends raw data to channel `chan`. `channel-bytes`
 --- - For a job, it writes it to the stdin of the process.
 --- - For the stdio channel `channel-stdio`, it writes to Nvim's stdout.
@@ -1286,30 +1314,10 @@ function vim.api.nvim_get_all_options_info() end
 ---   If the autocommand is buffer local |autocmd-buffer-local|:
 function vim.api.nvim_get_autocmds(opts) end
 
---- Gets information about a channel.
----
---- See `nvim_list_uis()` for an example of how to get channel info.
----
---- @param chan integer channel_id, or 0 for current channel
---- @return table<string,any> # Channel info dict with these keys:
---- - "id"       Channel id.
---- - "argv"     (optional) Job arguments list.
---- - "stream"   Stream underlying the channel.
----      - "stdio"      stdin and stdout of this Nvim instance
----      - "stderr"     stderr of this Nvim instance
----      - "socket"     TCP/IP socket or named pipe
----      - "job"        Job with communication over its stdio.
---- -  "mode"    How data received on the channel is interpreted.
----      - "bytes"      Send and receive raw bytes.
----      - "terminal"   |terminal| instance interprets ASCII sequences.
----      - "rpc"        |RPC| communication on the channel is active.
---- -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this is a device path like
----              "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
----              for conpty on Windows).
---- -  "buffer"  (optional) Buffer connected to |terminal| instance.
---- -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
----              by |nvim_set_client_info()|.
----
+--- @deprecated
+--- @see vim.api.nvim_chan_get
+--- @param chan integer
+--- @return table<string,any>
 function vim.api.nvim_get_chan_info(chan) end
 
 --- Returns the 24-bit RGB value of a `nvim_get_color_map()` color name or
@@ -1613,10 +1621,9 @@ function vim.api.nvim_input_mouse(button, action, modifier, grid, row, col) end
 --- @return integer[] # List of buffer ids
 function vim.api.nvim_list_bufs() end
 
---- Get information about all open channels.
----
---- @return table<string,any>[] # Array of Dictionaries, each describing a channel with
---- the format specified at |nvim_get_chan_info()|.
+--- @deprecated
+--- @see vim.api.nvim_chan_get
+--- @return table<string,any>[]
 function vim.api.nvim_list_chans() end
 
 --- Gets the paths contained in `runtime-search-path`.
