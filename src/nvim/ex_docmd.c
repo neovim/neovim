@@ -2511,7 +2511,7 @@ static char *ex_range_without_command(exarg_T *eap)
 /// @return  FAIL when the command is not to be executed.
 int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod, bool skip_only)
 {
-  char *cmd_start;
+  char *cmd_start = NULL;
   bool has_visual_range = false;
   CLEAR_POINTER(cmod);
 
