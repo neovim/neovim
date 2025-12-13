@@ -168,10 +168,13 @@ end
 --- @param client vim.lsp.Client
 --- @param bufnr integer
 --- @param name string
---- @return string
+--- @return string | nil
 function M._get_and_set_name(client, bufnr, name)
   local state = state_by_group[get_group(client)] or {}
   local buf_state = (state.buffers or {})[bufnr]
+  if not buf_state then
+    return nil
+  end
   local old_name = buf_state.name
   buf_state.name = name
   return old_name

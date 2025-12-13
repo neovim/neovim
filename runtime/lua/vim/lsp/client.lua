@@ -940,6 +940,8 @@ function Client:_register(registrations)
     local method = reg.method
     if method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.register(reg, self.id)
+    elseif method == 'textDocument/didSave' then
+      lsp._register(reg, self.id)
     elseif not self:_supports_registration(method) then
       unsupported[#unsupported + 1] = method
     end
@@ -963,6 +965,9 @@ function Client:_unregister_dynamic(unregistrations)
       if reg.id == unreg.id then
         table.remove(sreg, i)
         break
+      end
+      if reg.method == 'textDocument/didSave' then
+        vim.api.nvim_del_augroup_by_name(('nvim.lsp.dynamicDidSave_%d_%s'):format(self.id, reg.id))
       end
     end
   end

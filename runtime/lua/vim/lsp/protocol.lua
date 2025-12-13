@@ -422,7 +422,7 @@ function protocol.make_client_capabilities()
         augmentsSyntaxTokens = true,
       },
       synchronization = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
 
         willSave = true,
         willSaveWaitUntil = true,

@@ -822,13 +822,40 @@ function lsp.start_client(config)
   return create_and_init_client(config)
 end
 
+--- Registers the textDocument/didSave capability dynamically.
+---
+---@param reg lsp.Registration LSP Registration object.
+---@param client_id integer Client ID.
+function lsp._register(reg, client_id)
+  assert(lsp.get_client_by_id(client_id), 'Client must be running')
+  local group = api.nvim_create_augroup(
+    ('nvim.lsp.dynamicDidSave_%d_%s'):format(client_id, reg.id),
+    { clear = true }
+  )
+  local register_options = reg.registerOptions --[[@as lsp.TextDocumentSaveRegistrationOptions]]
+  ---@type table<string, {pattern: vim.lpeg.Pattern, kind: lsp.WatchKind}[]> by base_dir
+  for _, s in ipairs(register_options.documentSelector) do
+    vim.api.nvim_create_autocmd('BufWritePost', {
+      group = group,
+      pattern = s.pattern,
+      callback = function(args)
+        lsp._text_document_did_save_handler(args.buf, client_id)
+      end,
+    })
+  end
+end
+
+--- @nodoc
 ---Buffer lifecycle handler for textDocument/didSave
 --- @param bufnr integer
-local function text_document_did_save_handler(bufnr)
+--- @param clientid? integer
+function lsp._text_document_did_save_handler(bufnr, clientid)
   bufnr = vim._resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(lsp._buf_get_full_text)
-  for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
+  local clients = clientid and lsp.get_clients({ id = clientid })
+    or lsp.get_clients({ bufnr = bufnr })
+  for _, client in ipairs(clients) do
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
     if old_name and name ~= old_name then
@@ -908,7 +935,7 @@ local function buf_attach(bufnr)
     buffer = bufnr,
     desc = 'vim.lsp: textDocument/didSave handler',
     callback = function(ctx)
-      text_document_did_save_handler(ctx.buf)
+      lsp._text_document_did_save_handler(ctx.buf)
     end,
   })
   -- First time, so attach and set up stuff.
