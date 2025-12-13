@@ -2511,7 +2511,18 @@ static char *ex_range_without_command(exarg_T *eap)
 /// @return  FAIL when the command is not to be executed.
 int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod, bool skip_only)
 {
+  char *cmd_start;
+  bool has_visual_range = false;
   CLEAR_POINTER(cmod);
+
+  if (strncmp(eap->cmd, "'<,'>", 5) == 0) {
+    // The automatically inserted Visual area range is skipped, so that
+    // typing ":cmdmod cmd" in Visual mode works without having to move the
+    // range to after the modififiers.
+    eap->cmd += 5;
+    cmd_start = eap->cmd;
+    has_visual_range = true;
+  }
 
   // Repeat until no more command modifiers are found.
   while (true) {
@@ -2748,6 +2759,16 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       continue;
     }
     break;
+  }
+
+  if (has_visual_range && eap->cmd > cmd_start) {
+    // Move the '<,'> range to after the modifiers and insert a colon.
+    // Since the modifiers have been parsed put the colon on top of the
+    // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
+    // Put eap->cmd after the colon.
+    memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
+    eap->cmd -= 5;
+    memmove(eap->cmd - 1, ":'<,'>", 6);
   }
 
   return OK;
