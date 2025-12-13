@@ -24,9 +24,6 @@ end
 
 local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 
---- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
---- @field silent? boolean
-
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. The window will be dismissed on cursor move.
 --- Calling the function twice will jump into the floating window
@@ -44,7 +41,8 @@ local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 ---   end,
 --- })
 --- ```
---- @param config? vim.lsp.buf.hover.Opts
+--- @param config? vim.lsp.util.open_floating_preview.Opts
+--- @return boolean, string|nil # `true` if hover was successfully show, `false` and an error message otherwise.
 function M.hover(config)
   validate('config', config, 'table', true)
 
@@ -97,14 +95,11 @@ function M.hover(config)
     end
 
     if vim.tbl_isempty(results1) then
-      if config.silent ~= true then
-        if empty_response then
-          vim.notify('Empty hover response', vim.log.levels.INFO)
-        else
-          vim.notify('No information available', vim.log.levels.INFO)
-        end
+      if empty_response then
+        return false, 'Empty hover response'
+      else
+        return false, 'No information available'
       end
-      return
     end
 
     local contents = {} --- @type string[]
@@ -168,6 +163,8 @@ function M.hover(config)
       end,
     })
   end)
+
+  return true
 end
 
 local function request_with_opts(name, params, opts)
