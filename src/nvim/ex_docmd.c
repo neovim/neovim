@@ -2761,14 +2761,19 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     break;
   }
 
-  if (has_visual_range && eap->cmd > cmd_start) {
-    // Move the '<,'> range to after the modifiers and insert a colon.
-    // Since the modifiers have been parsed put the colon on top of the
-    // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
-    // Put eap->cmd after the colon.
-    memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
-    eap->cmd -= 5;
-    memmove(eap->cmd - 1, ":'<,'>", 6);
+  if (has_visual_range) {
+    if (eap->cmd > cmd_start) {
+      // Move the '<,'> range to after the modifiers and insert a colon.
+      // Since the modifiers have been parsed put the colon on top of the
+      // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
+      // Put eap->cmd after the colon.
+      memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
+      eap->cmd -= 5;
+      memmove(eap->cmd - 1, ":'<,'>", 6);
+    } else {
+      // no modifiers, move the pointer back
+      eap->cmd -= 5;
+    }
   }
 
   return OK;
