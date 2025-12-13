@@ -2777,9 +2777,11 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
         size_t len = strlen(cmd_start);
 
         // Special case: empty command uses "+":
-        //  "'<,'>mods" -> "mods'<,'>+
+        //  "'<,'>mods" -> "mods *+
+        //  Use "*" instead of "'<,'>" to avoid the command getting
+        //  longer, in case is was allocated.
         memmove(orig_cmd, cmd_start, len);
-        strcpy(orig_cmd + len, "'<,'>+");
+        xmemcpyz(orig_cmd + len, S_LEN(" *+"));
       } else {
         memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
         eap->cmd -= 5;

@@ -2561,6 +2561,14 @@ func Test_cmdwin_insert_mode_close()
   call assert_equal(1, winnr('$'))
 endfunc
 
+func Test_cmdwin_ex_mode_with_modifier()
+  " this was accessing memory after allocated text in Ex mode
+  new
+  call setline(1, ['some', 'text', 'lines'])
+  silent! call feedkeys("gQnormal vq:atopleft\<C-V>\<CR>\<CR>", 'xt')
+  bwipe!
+endfunc
+
 " test that ";" works to find a match at the start of the first line
 func Test_zero_line_search()
   new
