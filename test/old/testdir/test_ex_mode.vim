@@ -260,6 +260,7 @@ func Test_ex_mode_errors()
 endfunc
 
 func Test_ex_mode_with_global()
+  CheckNotGui
   CheckFeature timers
 
   " This will get stuck in Normal mode after the failed "J", use a timer to
