@@ -954,7 +954,9 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       if (!shortmess(SHM_SEARCH)
           && shortmess(SHM_SEARCHCOUNT)
           && (options & SEARCH_MSG)) {
+        msg_hist_off = true;
         give_warning(_(dir == BACKWARD ? top_bot_msg : bot_top_msg), true);
+        msg_hist_off = false;
       }
       if (extra_arg != NULL) {
         extra_arg->sa_wrapped = true;
