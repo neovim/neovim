@@ -3778,8 +3778,7 @@ int func_has_abort(void *cookie)
 /// Changes "rettv" in-place.
 void make_partial(dict_T *const selfdict, typval_T *const rettv)
 {
-  char *tofree = NULL;
-  ufunc_T *fp;
+  ufunc_T *fp = NULL;
   char fname_buf[FLEN_FIXED + 1];
   int error;
 
@@ -3789,14 +3788,19 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
     char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                   ? rettv->vval.v_string
                   : rettv->vval.v_partial->pt_name;
-    // Translate "s:func" to the stored function name.
-    fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
-    fp = find_func(fname);
-    xfree(tofree);
+    if (fname != NULL) {
+      char *tofree = NULL;
+
+      // Translate "s:func" to the stored function name.
+      fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
+      fp = find_func(fname);
+      xfree(tofree);
+    }
   }
 
   // Turn "dict.Func" into a partial for "Func" with "dict".
-  if (fp != NULL && (fp->uf_flags & FC_DICT)) {
+  if ((fp != NULL && (fp->uf_flags & FC_DICT))
+      || (rettv->v_type == VAR_FUNC && rettv->vval.v_string == NULL)) {
     partial_T *pt = (partial_T *)xcalloc(1, sizeof(partial_T));
     pt->pt_refcount = 1;
     pt->pt_dict = selfdict;
