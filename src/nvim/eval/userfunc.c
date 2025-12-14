@@ -3782,13 +3782,22 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
   char fname_buf[FLEN_FIXED + 1];
   int error;
 
-  if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
+  if (rettv->v_type == VAR_PARTIAL
+      && rettv->vval.v_partial != NULL
+      && rettv->vval.v_partial->pt_func != NULL) {
     fp = rettv->vval.v_partial->pt_func;
   } else {
     char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                   ? rettv->vval.v_string
+                  : rettv->vval.v_partial == NULL
+                  ? NULL
                   : rettv->vval.v_partial->pt_name;
-    if (fname != NULL) {
+    if (fname == NULL) {
+      // There is no point binding a dict to a NULL function, just create
+      // a function reference.
+      rettv->v_type = VAR_FUNC;
+      rettv->vval.v_string = NULL;
+    } else {
       char *tofree = NULL;
 
       // Translate "s:func" to the stored function name.
@@ -3799,8 +3808,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
   }
 
   // Turn "dict.Func" into a partial for "Func" with "dict".
-  if ((fp != NULL && (fp->uf_flags & FC_DICT))
-      || (rettv->v_type == VAR_FUNC && rettv->vval.v_string == NULL)) {
+  if (fp != NULL && (fp->uf_flags & FC_DICT)) {
     partial_T *pt = (partial_T *)xcalloc(1, sizeof(partial_T));
     pt->pt_refcount = 1;
     pt->pt_dict = selfdict;
