@@ -111,6 +111,11 @@ bool decor_providers_invoke_conceal_line(win_T *wp, int row)
 /// @param[out] err       Provider err
 void decor_providers_start(void)
 {
+  if (kv_size(decor_providers) > 0) {
+    FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+      validate_botline(win);
+    }
+  }
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
     if (p->state != kDecorProviderDisabled && p->redraw_start != LUA_NOREF) {
@@ -138,9 +143,6 @@ void decor_providers_invoke_win(win_T *wp)
   assert(decor_state.current_end == 0
          && decor_state.future_begin == (int)kv_size(decor_state.ranges_i));
 
-  if (kv_size(decor_providers) > 0) {
-    validate_botline(wp);
-  }
   linenr_T botline = MIN(wp->w_botline, wp->w_buffer->b_ml.ml_line_count);
 
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
