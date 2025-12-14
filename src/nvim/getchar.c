@@ -3015,7 +3015,7 @@ static int vgetorpeek(bool advance)
 ///  Return -1 when end of input script reached.
 ///
 /// @param wait_time  milliseconds
-int inchar(uint8_t *buf, int maxlen, long wait_time)
+static int inchar(uint8_t *buf, int maxlen, long wait_time)
 {
   int len = 0;  // Init for GCC.
   int retesc = false;  // Return ESC with gotint.
