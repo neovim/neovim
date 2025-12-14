@@ -3778,21 +3778,33 @@ int func_has_abort(void *cookie)
 /// Changes "rettv" in-place.
 void make_partial(dict_T *const selfdict, typval_T *const rettv)
 {
-  char *tofree = NULL;
-  ufunc_T *fp;
+  ufunc_T *fp = NULL;
   char fname_buf[FLEN_FIXED + 1];
   int error;
 
-  if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
+  if (rettv->v_type == VAR_PARTIAL
+      && rettv->vval.v_partial != NULL
+      && rettv->vval.v_partial->pt_func != NULL) {
     fp = rettv->vval.v_partial->pt_func;
   } else {
     char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                   ? rettv->vval.v_string
+                  : rettv->vval.v_partial == NULL
+                  ? NULL
                   : rettv->vval.v_partial->pt_name;
-    // Translate "s:func" to the stored function name.
-    fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
-    fp = find_func(fname);
-    xfree(tofree);
+    if (fname == NULL) {
+      // There is no point binding a dict to a NULL function, just create
+      // a function reference.
+      rettv->v_type = VAR_FUNC;
+      rettv->vval.v_string = NULL;
+    } else {
+      char *tofree = NULL;
+
+      // Translate "s:func" to the stored function name.
+      fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
+      fp = find_func(fname);
+      xfree(tofree);
+    }
   }
 
   // Turn "dict.Func" into a partial for "Func" with "dict".
