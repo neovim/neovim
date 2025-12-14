@@ -357,7 +357,7 @@ describe('vim.lsp.util', function()
     screen:expect([[
       ^                                                     |
       ┌─────────┐{1:                                          }|
-      │{101:local foo}│{1:                                          }|
+      │{100:local}{101: }{102:foo}│{1:                                          }|
       └─────────┘{1:                                          }|
       {1:~                                                    }|*9
                                                            |
@@ -384,7 +384,7 @@ describe('vim.lsp.util', function()
     screen:expect([[
       ^                                                     |
       ┌─────────┐{1:                                          }|
-      │{101:local foo}│{1:                                          }|
+      │{100:local}{101: }{102:foo}│{1:                                          }|
       └─────────┘{1:                                          }|
       {1:~                                                    }|*9
                                                            |
