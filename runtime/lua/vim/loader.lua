@@ -79,15 +79,7 @@ local function fs_stat_cached(path)
 end
 
 local function normalize(path)
-  path = fs.normalize(path, { expand_env = false, _fast = true })
-
-  if is_appimage then
-    -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
-    -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
-    path = path:match('(/usr/.*)') or path
-  end
-
-  return path
+  return fs.normalize(path, { expand_env = false, _fast = true })
 end
 
 local rtp_cached = {} --- @type string[]
@@ -125,6 +117,12 @@ end
 --- @param name string can be a module name, or a file name
 --- @return string file_name
 local function cache_filename(name)
+  if is_appimage then
+    -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
+    -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
+    name = name:match('(/usr/.*)') or name
+  end
+
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
