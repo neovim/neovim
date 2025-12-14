@@ -1052,8 +1052,11 @@ char *msg_may_trunc(bool force, char *s)
     return s;
   }
 
+  // If something unexpected happened "room" may be negative, check for that
+  // just in case.
   int room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
-  if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
+  if (room > 0
+      && (force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (int)strlen(s) - room > 0) {
     int size = vim_strsize(s);
 
