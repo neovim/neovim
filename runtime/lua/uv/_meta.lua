@@ -1381,7 +1381,8 @@ function uv.disable_stdio_inheritance() end
 --- @field stdio table<integer, integer|uv.uv_stream_t?>?
 ---
 --- Set environment variables for the new process.
---- @field env table<string, string>?
+--- Each entry should be a string in the form of `NAME=VALUE`.
+--- @field env string[]?
 ---
 --- Set the current working directory for the sub-process.
 --- @field cwd string?
@@ -3546,12 +3547,13 @@ function uv.fs_copyfile(path, new_path, flags) end
 --- `uv.fs_readdir()`. The `entries` parameter defines the maximum number of entries
 --- that should be returned by each call to `uv.fs_readdir()`.
 --- @param path string
+--- @param callback nil (async if provided, sync if `nil`)
 --- @param entries integer?
 --- @return uv.luv_dir_t? dir
 --- @return string? err
 --- @return uv.error_name? err_name
 --- @overload fun(path: string, callback: fun(err: string?, dir: uv.luv_dir_t?), entries: integer?): uv.uv_fs_t
-function uv.fs_opendir(path, entries) end
+function uv.fs_opendir(path, callback, entries) end
 
 --- Iterates over the directory stream `luv_dir_t` returned by a successful
 --- `uv.fs_opendir()` call. A table of data tables is returned where the number
@@ -4203,7 +4205,7 @@ function uv.setgid(id) end
 --- relative to an arbitrary time in the past. It is not related to the time of day
 --- and therefore not subject to clock drift. The primary use is for measuring
 --- time between intervals.
---- @return number
+--- @return integer
 function uv.hrtime() end
 
 --- Obtain the current system time from a high-resolution real-time or monotonic
@@ -4366,13 +4368,22 @@ function uv.os_tmpdir() end
 
 --- @class uv.os_get_passwd.passwd
 --- @field username string
---- @field uid integer
---- @field gid integer
---- @field shell string
+---
+--- (nil on Windows)
+--- @field uid integer?
+---
+--- (nil on Windows)
+--- @field gid integer?
+---
+--- (nil on Windows)
+--- @field shell string?
 --- @field homedir string
 
---- Returns password file information.
---- @return uv.os_get_passwd.passwd passwd
+--- Gets a subset of the password file entry for the current effective uid (not the
+--- real uid). On Windows, `uid`, `gid`, and `shell` are set to `nil`.
+--- @return uv.os_get_passwd.passwd? passwd
+--- @return string? err
+--- @return uv.error_name? err_name
 function uv.os_get_passwd() end
 
 --- Returns the current process ID.
