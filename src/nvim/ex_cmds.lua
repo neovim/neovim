@@ -1106,8 +1106,8 @@ M.cmds = {
   },
   {
     command = 'helpclose',
-    flags = bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    flags = TRLBAR,
+    addr_type = 'ADDR_NONE',
     func = 'ex_helpclose',
   },
   {
