@@ -848,6 +848,7 @@ local extension = {
   ninja = 'ninja',
   nix = 'nix',
   norg = 'norg',
+  nq = 'nq',
   nqc = 'nqc',
   ['0'] = detect.nroff,
   ['1'] = detect.nroff,
