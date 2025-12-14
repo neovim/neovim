@@ -513,34 +513,50 @@ static int parser_parse(lua_State *L)
     old_tree = ud ? ud->tree : NULL;
   }
 
-  if (lua_type(L, 3) != LUA_TNUMBER) {
-    return luaL_argerror(L, 3, "expected buffer handle");
-  }
-
-  handle_T bufnr = (handle_T)lua_tointeger(L, 3);
-  buf_T *buf = handle_get_buffer(bufnr);
-
-  if (!buf) {
-#define BUFSIZE 256
-    char ebuf[BUFSIZE] = { 0 };
-    vim_snprintf(ebuf, BUFSIZE, "invalid buffer handle: %d", bufnr);
-    return luaL_argerror(L, 3, ebuf);
-#undef BUFSIZE
-  }
-
-  TSInput input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8, NULL };
   TSTree *new_tree = NULL;
+  size_t len;
+  const char *str;
+  handle_T bufnr;
+  buf_T *buf;
+  TSInput input;
 
-  if (!lua_isnil(L, 5)) {
-    uint64_t timeout_ns = (uint64_t)lua_tointeger(L, 5);
-    TSLuaParserCallbackPayload payload =
-      (TSLuaParserCallbackPayload){ .parse_start_time = os_hrtime(),
-                                    .timeout_threshold_ns = timeout_ns };
-    TSParseOptions parse_options = { .payload = &payload,
-                                     .progress_callback = on_parser_progress };
-    new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
-  } else {
-    new_tree = ts_parser_parse(p, old_tree, input);
+  // This switch is necessary because of the behavior of lua_isstring, that
+  // consider numbers as strings...
+  switch (lua_type(L, 3)) {
+  case LUA_TSTRING:
+    str = lua_tolstring(L, 3, &len);
+    new_tree = ts_parser_parse_string(p, old_tree, str, (uint32_t)len);
+    break;
+
+  case LUA_TNUMBER:
+    bufnr = (handle_T)lua_tointeger(L, 3);
+    buf = handle_get_buffer(bufnr);
+
+    if (!buf) {
+#define BUFSIZE 256
+      char ebuf[BUFSIZE] = { 0 };
+      vim_snprintf(ebuf, BUFSIZE, "invalid buffer handle: %d", bufnr);
+      return luaL_argerror(L, 3, ebuf);
+#undef BUFSIZE
+    }
+
+    input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8, NULL };
+    if (!lua_isnil(L, 5)) {
+      uint64_t timeout_ns = (uint64_t)lua_tointeger(L, 5);
+      TSLuaParserCallbackPayload payload =
+        (TSLuaParserCallbackPayload){ .parse_start_time = os_hrtime(),
+                                      .timeout_threshold_ns = timeout_ns };
+      TSParseOptions parse_options = { .payload = &payload,
+                                       .progress_callback = on_parser_progress };
+      new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
+    } else {
+      new_tree = ts_parser_parse(p, old_tree, input);
+    }
+
+    break;
+
+  default:
+    return luaL_argerror(L, 3, "expected either string or buffer handle");
   }
 
   bool include_bytes = (lua_gettop(L) >= 4) && lua_toboolean(L, 4);
