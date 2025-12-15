@@ -175,7 +175,8 @@ local function check_performance()
   -- check for slow shell invocation
   local slow_cmd_time = 1.5e9
   local start_time = vim.uv.hrtime()
-  system({ 'echo' })
+  -- Vimscript's sytem() is used to actually invoke a shell
+  vim.fn.system('echo')
   local elapsed_time = vim.uv.hrtime() - start_time
   if elapsed_time > slow_cmd_time then
     health.warn(
