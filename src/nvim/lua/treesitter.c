@@ -7,6 +7,12 @@
 #include <lauxlib.h>
 #include <limits.h>
 #include <lua.h>
+#ifndef MSWIN
+# include <setjmp.h>
+# include <signal.h>
+#else
+# include <windows.h>
+#endif
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -68,6 +74,139 @@ static PMap(cstr_t) langs = MAP_INIT;
 static wasm_engine_t *wasmengine;
 static TSWasmStore *ts_wasmstore;
 #endif
+
+// Platform-specific crash protection for corrupted parser binaries
+// Unix uses POSIX signals (sigaction, sigsetjmp/siglongjmp)
+// Windows uses Structured Exception Handling (SEH with __try/__except)
+
+#ifndef MSWIN
+// ============= Unix/POSIX Implementation =============
+
+static sigjmp_buf parser_crash_jmp_buf;
+static volatile sig_atomic_t parser_crashed = 0;
+static volatile int parser_crash_signal = 0;
+
+/// Signal handler for parser crashes (SIGSEGV, SIGBUS, SIGILL)
+static void parser_crash_handler(int sig)
+  FUNC_ATTR_NORETURN
+{
+  parser_crashed = 1;
+  parser_crash_signal = sig;
+  siglongjmp(parser_crash_jmp_buf, sig);
+}
+
+/// Install signal handlers to catch parser crashes
+static bool install_crash_handlers(void)
+{
+  struct sigaction new_action;
+  memset(&new_action, 0, sizeof(new_action));
+  new_action.sa_handler = parser_crash_handler;
+  sigemptyset(&new_action.sa_mask);
+  new_action.sa_flags = 0;
+
+  if (sigaction(SIGSEGV, &new_action, NULL) != 0) {
+    return false;
+  }
+  if (sigaction(SIGBUS, &new_action, NULL) != 0) {
+    return false;
+  }
+  if (sigaction(SIGILL, &new_action, NULL) != 0) {
+    return false;
+  }
+
+  parser_crashed = 0;
+  parser_crash_signal = 0;
+  return true;
+}
+
+/// Reset signal handlers to default
+static void restore_crash_handlers(void)
+{
+  signal(SIGSEGV, SIG_DFL);
+  signal(SIGBUS, SIG_DFL);
+  signal(SIGILL, SIG_DFL);
+}
+
+/// Get a string describing the crash signal
+static const char *crash_signal_name(int sig)
+{
+  switch (sig) {
+  case SIGSEGV:
+    return "SIGSEGV (segmentation fault)";
+  case SIGBUS:
+    return "SIGBUS (bus error)";
+  case SIGILL:
+    return "SIGILL (illegal instruction)";
+  default:
+    return "unknown signal";
+  }
+}
+
+// Macros for cross-platform crash protection
+# define INSTALL_CRASH_HANDLERS() install_crash_handlers()
+# define RESTORE_CRASH_HANDLERS() restore_crash_handlers()
+# define CHECK_IF_CRASHED() (parser_crashed)
+# define GET_CRASH_MESSAGE() crash_signal_name(parser_crash_signal)
+
+#else
+// ============= Windows Implementation (SEH) =============
+
+static volatile int parser_crashed = 0;
+static volatile DWORD parser_crash_code = 0;
+
+/// Windows exception filter for parser crashes
+static LONG WINAPI parser_exception_filter(EXCEPTION_POINTERS *ExceptionInfo)
+{
+  DWORD code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+
+  // Only handle specific exceptions we care about
+  if (code == EXCEPTION_ACCESS_VIOLATION
+      || code == EXCEPTION_ILLEGAL_INSTRUCTION
+      || code == EXCEPTION_IN_PAGE_ERROR) {
+    parser_crashed = 1;
+    parser_crash_code = code;
+    return EXCEPTION_EXECUTE_HANDLER;
+  }
+
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+/// Initialize crash protection (Windows doesn't need signal handler installation)
+static bool install_crash_handlers(void)
+{
+  parser_crashed = 0;
+  parser_crash_code = 0;
+  return true;
+}
+
+/// Reset crash protection (no-op on Windows)
+static void restore_crash_handlers(void)
+{
+  // No cleanup needed on Windows
+}
+
+/// Get a string describing the Windows exception
+static const char *crash_signal_name(int code)
+{
+  switch ((DWORD)code) {
+  case EXCEPTION_ACCESS_VIOLATION:
+    return "EXCEPTION_ACCESS_VIOLATION (access violation)";
+  case EXCEPTION_ILLEGAL_INSTRUCTION:
+    return "EXCEPTION_ILLEGAL_INSTRUCTION (illegal instruction)";
+  case EXCEPTION_IN_PAGE_ERROR:
+    return "EXCEPTION_IN_PAGE_ERROR (page error)";
+  default:
+    return "unknown exception";
+  }
+}
+
+// Macros for cross-platform crash protection
+# define INSTALL_CRASH_HANDLERS() install_crash_handlers()
+# define RESTORE_CRASH_HANDLERS() restore_crash_handlers()
+# define CHECK_IF_CRASHED() (parser_crashed)
+# define GET_CRASH_MESSAGE() crash_signal_name((int)parser_crash_code)
+
+#endif  // MSWIN
 
 // TSLanguage
 
@@ -151,7 +290,41 @@ static const TSLanguage *load_language_from_object(lua_State *L, const char *pat
     luaL_error(L, "Failed to load parser: uv_dlsym: %s", IObuff);
   }
 
-  TSLanguage *lang = lang_parser();
+  // Call parser initialization function with crash protection
+  // Corrupted parsers may crash when calling their initialization function
+  TSLanguage *lang = NULL;
+
+  if (!INSTALL_CRASH_HANDLERS()) {
+    uv_dlclose(&lib);
+    luaL_error(L, "Failed to install crash handlers for parser %s", path);
+  }
+
+#ifndef MSWIN
+  // Unix: use sigsetjmp/siglongjmp
+  if (sigsetjmp(parser_crash_jmp_buf, 1) == 0) {
+    lang = lang_parser();
+  } else {
+    lang = NULL;
+  }
+#else
+  // Windows: use __try/__except
+  __try {
+    lang = lang_parser();
+  }
+  __except (parser_exception_filter(GetExceptionInformation())) {
+    lang = NULL;
+  }
+#endif
+
+  RESTORE_CRASH_HANDLERS();
+
+  if (CHECK_IF_CRASHED()) {
+    uv_dlclose(&lib);
+    luaL_error(L,
+               "Parser for language '%s' crashed during initialization: %s.\n"
+               "The parser binary may be corrupted. Try rebuilding with :TSUninstall %s followed by :TSInstall %s",
+               lang_name, GET_CRASH_MESSAGE(), lang_name, lang_name);
+  }
 
   if (lang == NULL) {
     uv_dlclose(&lib);
@@ -531,16 +704,57 @@ static int parser_parse(lua_State *L)
   TSInput input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8, NULL };
   TSTree *new_tree = NULL;
 
-  if (!lua_isnil(L, 5)) {
-    uint64_t timeout_ns = (uint64_t)lua_tointeger(L, 5);
-    TSLuaParserCallbackPayload payload =
-      (TSLuaParserCallbackPayload){ .parse_start_time = os_hrtime(),
-                                    .timeout_threshold_ns = timeout_ns };
-    TSParseOptions parse_options = { .payload = &payload,
-                                     .progress_callback = on_parser_progress };
-    new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
+  // Parse with crash protection - corrupted parsers may crash during parsing
+  if (!INSTALL_CRASH_HANDLERS()) {
+    return luaL_error(L, "Failed to install crash handlers for parsing");
+  }
+
+#ifndef MSWIN
+  // Unix: use sigsetjmp/siglongjmp
+  if (sigsetjmp(parser_crash_jmp_buf, 1) == 0) {
+    if (!lua_isnil(L, 5)) {
+      uint64_t timeout_ns = (uint64_t)lua_tointeger(L, 5);
+      TSLuaParserCallbackPayload payload =
+        (TSLuaParserCallbackPayload){ .parse_start_time = os_hrtime(),
+                                      .timeout_threshold_ns = timeout_ns };
+      TSParseOptions parse_options = { .payload = &payload,
+                                       .progress_callback = on_parser_progress };
+      new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
+    } else {
+      new_tree = ts_parser_parse(p, old_tree, input);
+    }
   } else {
-    new_tree = ts_parser_parse(p, old_tree, input);
+    new_tree = NULL;
+  }
+#else
+  // Windows: use __try/__except
+  __try {
+    if (!lua_isnil(L, 5)) {
+      uint64_t timeout_ns = (uint64_t)lua_tointeger(L, 5);
+      TSLuaParserCallbackPayload payload =
+        (TSLuaParserCallbackPayload){ .parse_start_time = os_hrtime(),
+                                      .timeout_threshold_ns = timeout_ns };
+      TSParseOptions parse_options = { .payload = &payload,
+                                       .progress_callback = on_parser_progress };
+      new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
+    } else {
+      new_tree = ts_parser_parse(p, old_tree, input);
+    }
+  }
+  __except (parser_exception_filter(GetExceptionInformation())) {
+    new_tree = NULL;
+  }
+#endif
+
+  RESTORE_CRASH_HANDLERS();
+
+  if (CHECK_IF_CRASHED()) {
+    const TSLanguage *lang = ts_parser_language(p);
+    const char *lang_name = lang ? ts_language_symbol_name(lang, 0) : "unknown";
+    return luaL_error(L,
+                      "Parser crashed during parsing: %s.\n"
+                      "The parser for '%s' may be corrupted. Try rebuilding with :TSUninstall %s followed by :TSInstall %s",
+                      GET_CRASH_MESSAGE(), lang_name, lang_name, lang_name);
   }
 
   bool include_bytes = (lua_gettop(L) >= 4) && lua_toboolean(L, 4);
@@ -573,6 +787,117 @@ static int parser_reset(lua_State *L)
   TSParser *p = parser_check(L, 1);
   ts_parser_reset(p);
   return 0;
+}
+
+// Simple string input callback for testing parsers
+typedef struct {
+  const char *str;
+  size_t len;
+} TestStringPayload;
+
+static const char *test_input_cb(void *payload, uint32_t byte_index, TSPoint position,
+                                 uint32_t *bytes_read)
+{
+  TestStringPayload *test_payload = (TestStringPayload *)payload;
+
+  if (byte_index >= test_payload->len) {
+    *bytes_read = 0;
+    return "";
+  }
+
+  *bytes_read = (uint32_t)(test_payload->len - byte_index);
+  return test_payload->str + byte_index;
+}
+
+/// Test a parser by attempting to parse a simple string.
+/// Returns (true, nil) if successful, or (false, error_message) if it crashed.
+/// Usage: vim._ts_test_parser(lang_name)
+static int tslua_test_parser(lua_State *L)
+{
+  const char *lang_name = luaL_checkstring(L, 1);
+
+  // Look up the language from the map
+  TSLanguage *lang = pmap_get(cstr_t)(&langs, lang_name);
+
+  if (!lang) {
+    lua_pushboolean(L, false);
+    lua_pushfstring(L, "Language '%s' not found", lang_name);
+    return 2;
+  }
+
+  // Create a parser
+  TSParser *parser = ts_parser_new();
+  if (parser == NULL) {
+    lua_pushboolean(L, false);
+    lua_pushstring(L, "Failed to create parser");
+    return 2;
+  }
+
+#ifdef HAVE_WASMTIME
+  if (ts_language_is_wasm(lang)) {
+    assert(wasmengine != NULL);
+    ts_parser_set_wasm_store(parser, ts_wasmstore);
+  }
+#endif
+
+  if (!ts_parser_set_language(parser, lang)) {
+    ts_parser_delete(parser);
+    lua_pushboolean(L, false);
+    lua_pushfstring(L, "Failed to set language: %s", lang_name);
+    return 2;
+  }
+
+  // Try to parse a simple test string with crash protection
+  const char *test_string = "test";
+  TestStringPayload test_payload = { test_string, strlen(test_string) };
+  TSInput input = {
+    .payload = &test_payload,
+    .read = test_input_cb,
+    .encoding = TSInputEncodingUTF8,
+  };
+
+  TSTree *tree = NULL;
+
+  if (!INSTALL_CRASH_HANDLERS()) {
+    ts_parser_delete(parser);
+    lua_pushboolean(L, false);
+    lua_pushstring(L, "Failed to install crash handlers");
+    return 2;
+  }
+
+#ifndef MSWIN
+  // Unix: use sigsetjmp/siglongjmp
+  if (sigsetjmp(parser_crash_jmp_buf, 1) == 0) {
+    tree = ts_parser_parse(parser, NULL, input);
+  } else {
+    tree = NULL;
+  }
+#else
+  // Windows: use __try/__except
+  __try {
+    tree = ts_parser_parse(parser, NULL, input);
+  }
+  __except (parser_exception_filter(GetExceptionInformation())) {
+    tree = NULL;
+  }
+#endif
+
+  RESTORE_CRASH_HANDLERS();
+
+  if (tree != NULL) {
+    ts_tree_delete(tree);
+  }
+  ts_parser_delete(parser);
+
+  if (CHECK_IF_CRASHED()) {
+    lua_pushboolean(L, false);
+    lua_pushfstring(L, "Parser crashed: %s", GET_CRASH_MESSAGE());
+    return 2;
+  }
+
+  lua_pushboolean(L, true);
+  lua_pushnil(L);
+  return 2;
 }
 
 static void range_err(lua_State *L)
@@ -1815,4 +2140,7 @@ void nlua_treesitter_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, tslua_get_minimum_language_version);
   lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
+
+  lua_pushcfunction(lstate, tslua_test_parser);
+  lua_setfield(lstate, -2, "_ts_test_parser");
 }
