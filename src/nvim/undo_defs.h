@@ -17,13 +17,20 @@ typedef struct {
   colnr_T vi_curswant;  ///< MAXCOL from w_curswant
 } visualinfo_T;
 
+// One line saved for undo.  After the NUL terminated text there might be text
+// properties, thus ul_len can be larger than STRLEN(ul_line) + 1.
+typedef struct {
+  char *ul_line;   // text of the line
+  colnr_T ul_len;  // length of the line including NUL
+} undoline_T;
+
 typedef struct u_entry u_entry_T;
 struct u_entry {
   u_entry_T *ue_next;  ///< pointer to next entry in list
   linenr_T ue_top;     ///< number of line above undo block
   linenr_T ue_bot;     ///< number of line below undo block
   linenr_T ue_lcount;  ///< linecount when u_save called
-  char **ue_array;     ///< array of lines in undo block
+  undoline_T *ue_array;  ///< array of lines in undo block
   linenr_T ue_size;    ///< number of lines in ue_array
 #ifdef U_DEBUG
   int ue_magic;        ///< magic number to check allocation
