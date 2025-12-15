@@ -672,6 +672,29 @@ describe('startup', function()
     )
   end)
 
+  it('-es does not exit early with closed stdin', function()
+    write_file('Xinput.txt', 'line1\nline2\nline3\nline4\n')
+    write_file('Xoutput.txt', 'OUT\n')
+    finally(function()
+      os.remove('Xinput.txt')
+      os.remove('Xoutput.txt')
+    end)
+    -- Use system() without input so that stdin is closed.
+    fn.system({
+      nvim_prog,
+      '--clean',
+      '-es',
+      '-c',
+      -- 'showcmd' leads to a char_avail() call just after the 'Q' (no more input).
+      [[set showcmd | exe "g/^/vi|Vgg:w>>Xoutput.txt\rgQ"]],
+      'Xinput.txt',
+    })
+    eq(
+      'OUT\nline1\nline1\nline2\nline1\nline2\nline3\nline1\nline2\nline3\nline4\n',
+      read_file('Xoutput.txt')
+    )
+  end)
+
   it('ENTER dismisses early message #7967', function()
     local screen
     screen = Screen.new(60, 6)

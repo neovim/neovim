@@ -172,7 +172,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     return push_event_key(buf, maxlen);
   }
 
-  if (result == kNone) {
+  if (result == kNone && ms != 0) {
     read_error_exit();
   }
 
