@@ -809,7 +809,7 @@ function M.show_toc()
 
   local lnum = 2
   local last_line = fn.line('$') - 1
-  while lnum ~= 0 and lnum < last_line do
+  while lnum > 0 and lnum < last_line do
     local text = fn.getline(lnum)
     if text:match('^%s+[-+]%S') or text:match('^   %S') or text:match('^%S') then
       toc[#toc + 1] = {
