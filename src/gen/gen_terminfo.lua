@@ -20,6 +20,7 @@ local target_enum = 'src/nvim/tui/terminfo_enum_defs.h'
 
 local entries = {
   { 'ansi', 'ansi_terminfo' },
+  { 'ghostty', 'ghostty_terminfo' }, -- Note: ncurses defs do not exactly match what ghostty ships.
   { 'interix', 'interix_8colour_terminfo' },
   { 'iterm2', 'iterm_256colour_terminfo' },
   { 'linux', 'linux_16colour_terminfo' },

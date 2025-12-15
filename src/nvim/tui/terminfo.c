@@ -70,7 +70,10 @@ bool terminfo_is_bsd_console(const char *term)
 /// @return [allocated] terminfo structure
 const TerminfoEntry *terminfo_from_builtin(const char *term, char **termname)
 {
-  if (terminfo_is_term_family(term, "xterm")) {
+  if (strequal(term, "ghostty") || strequal(term, "xterm-ghostty")) {
+    *termname = "ghostty";
+    return &ghostty_terminfo;
+  } else if (terminfo_is_term_family(term, "xterm")) {
     *termname = "xterm";
     return &xterm_256colour_terminfo;
   } else if (terminfo_is_term_family(term, "screen")) {
