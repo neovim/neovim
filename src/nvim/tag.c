@@ -737,7 +737,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
           msg(IObuff, ic ? HLF_W : 0);
           msg_scroll = true;  // Don't overwrite this message.
         } else {
-          give_warning(IObuff, ic);
+          give_warning(IObuff, ic, true);
         }
         if (ic && !msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
           ui_flush();

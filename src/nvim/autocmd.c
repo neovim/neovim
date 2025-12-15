@@ -456,7 +456,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
       for (size_t i = 0; i < kv_size(*acs); i++) {
         AutoPat *const ap = kv_A(*acs, i).pat;
         if (ap != NULL && ap->group == group) {
-          give_warning(_("W19: Deleting augroup that is still in use"), true);
+          give_warning(_("W19: Deleting augroup that is still in use"), true, true);
           map_put(String, int)(&map_augroup_name_to_id, cstr_as_string(name), AUGROUP_DELETED);
           augroup_map_del(ap->group, NULL);
           return;

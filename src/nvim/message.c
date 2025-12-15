@@ -3526,13 +3526,16 @@ int verbose_open(void)
 
 /// Give a warning message (for searching).
 /// Use 'w' highlighting and may repeat the message after redrawing
-void give_warning(const char *message, bool hl)
+void give_warning(const char *message, bool hl, bool hist)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   // Don't do this for ":silent".
   if (msg_silent != 0) {
     return;
   }
+
+  bool save_msg_hist_off = msg_hist_off;
+  msg_hist_off = !hist;
 
   // Don't want a hit-enter prompt here.
   no_wait_return++;
@@ -3557,6 +3560,7 @@ void give_warning(const char *message, bool hl)
   msg_col = 0;
 
   no_wait_return--;
+  msg_hist_off = save_msg_hist_off;
 }
 
 /// Shows a warning, with optional highlighting.
@@ -3575,7 +3579,7 @@ void swmsg(bool hl, const char *const fmt, ...)
   vim_vsnprintf(IObuff, IOSIZE, fmt, args);
   va_end(args);
 
-  give_warning(IObuff, hl);
+  give_warning(IObuff, hl, true);
 }
 
 /// Advance msg cursor to column "col".

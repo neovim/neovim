@@ -954,7 +954,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       if (!shortmess(SHM_SEARCH)
           && shortmess(SHM_SEARCHCOUNT)
           && (options & SEARCH_MSG)) {
-        give_warning(_(dir == BACKWARD ? top_bot_msg : bot_top_msg), true);
+        give_warning(_(dir == BACKWARD ? top_bot_msg : bot_top_msg), true, false);
       }
       if (extra_arg != NULL) {
         extra_arg->sa_wrapped = true;
@@ -1482,7 +1482,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
       if (p_ws) {
         pos->lnum = buf->b_ml.ml_line_count;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(top_bot_msg), true);
+          give_warning(_(top_bot_msg), true, false);
         }
       } else {
         pos->lnum = 1;
@@ -1492,7 +1492,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
       if (p_ws) {
         pos->lnum = 1;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(bot_top_msg), true);
+          give_warning(_(bot_top_msg), true, false);
         }
       } else {
         pos->lnum = 1;
@@ -2674,11 +2674,9 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
   }
 
   // keep the message even after redraw, but don't put in history
-  msg_hist_off = true;
   msg_ext_overwrite = true;
   msg_ext_set_kind("search_count");
-  give_warning(msgbuf, false);
-  msg_hist_off = false;
+  give_warning(msgbuf, false, false);
 }
 
 // Add the search count information to "stat".
