@@ -2,7 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear, feed_command = n.clear, n.feed_command
+local clear = n.clear
 local feed, next_msg, eq = n.feed, n.next_msg, t.eq
 local command = n.command
 local expect = n.expect
@@ -22,7 +22,7 @@ describe('mappings', function()
       .. " :call rpcnotify(1, 'mapped', '"
       .. send:gsub('<', '<lt>')
       .. "')<cr>"
-    feed_command(cmd)
+    command(cmd)
   end
 
   local check_mapping = function(mapping, expected)
@@ -287,7 +287,7 @@ end)
 it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2.0839', function()
   local screen = Screen.new(60, 8)
   command([[nnoremap <C-6> <Cmd>echo 'hit ctrl-6'<CR>]])
-  feed_command('ls')
+  feed(':ls<CR>')
   screen:expect([[
                                                                 |
     {1:~                                                           }|*3
@@ -333,7 +333,7 @@ describe('input non-printable chars', function()
     local screen = Screen.new(60, 8)
     command('set shortmess-=F')
 
-    feed_command('e Xtest-overwrite')
+    command('e Xtest-overwrite')
     screen:expect([[
       ^foobar                                                      |
       {1:~                                                           }|*6
@@ -343,7 +343,7 @@ describe('input non-printable chars', function()
     -- Wait for some time so that the timestamp changes.
     vim.uv.sleep(10)
     write_file('Xtest-overwrite', [[smurf]])
-    feed_command('w')
+    feed(':w<CR>')
     screen:expect([[
       foobar                                                      |
       {1:~                                                           }|*3
