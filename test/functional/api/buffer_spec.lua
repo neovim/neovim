@@ -9,9 +9,7 @@ local describe_lua_and_rpc = n.describe_lua_and_rpc(describe)
 local api = n.api
 local fn = n.fn
 local request = n.request
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
-local feed_command = n.feed_command
 local insert = n.insert
 local NIL = vim.NIL
 local command = n.command
@@ -44,7 +42,7 @@ describe('api/buf', function()
 
     it("doesn't crash just after set undolevels=1 #24894", function()
       local buf = api.nvim_create_buf(false, true)
-      api.nvim_buf_set_option(buf, 'undolevels', -1)
+      api.nvim_set_option_value('undolevels', -1, { buf = buf })
       api.nvim_buf_set_lines(buf, 0, 1, false, {})
 
       assert_alive()
@@ -178,7 +176,7 @@ describe('api/buf', function()
 
     it('line_count has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
-      local bufnr = api.nvim_buf_get_number(0)
+      local bufnr = api.nvim_get_current_buf()
       -- replace the buffer contents with these three lines
       api.nvim_buf_set_lines(bufnr, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       -- check the line count is correct
@@ -192,7 +190,7 @@ describe('api/buf', function()
 
     it('get_lines has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
-      local bufnr = api.nvim_buf_get_number(0)
+      local bufnr = api.nvim_get_current_buf()
       -- replace the buffer contents with these three lines
       api.nvim_buf_set_lines(bufnr, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
       -- confirm that getting lines works
@@ -793,7 +791,7 @@ describe('api/buf', function()
     end)
 
     it('set_lines on alternate buffer does not access invalid line (E315)', function()
-      feed_command('set hidden')
+      command('set hidden')
       insert('Initial file')
       command('enew')
       insert([[
@@ -804,9 +802,8 @@ describe('api/buf', function()
       The
       Other
       Buffer]])
-      feed_command('$')
-      local retval = exc_exec("call nvim_buf_set_lines(1, 0, 1, v:false, ['test'])")
-      eq(0, retval)
+      command('$')
+      eq(true, pcall(api.nvim_buf_set_lines, 0, 0, 1, false, { 'test' }))
     end)
 
     it("set_lines of invisible buffer doesn't move cursor in current window", function()
@@ -2297,7 +2294,7 @@ describe('api/buf', function()
   describe('nvim_buf_is_loaded', function()
     it('works', function()
       -- record our buffer number for when we unload it
-      local bufnr = api.nvim_buf_get_number(0)
+      local bufnr = api.nvim_get_current_buf()
       -- api should report that the buffer is loaded
       ok(api.nvim_buf_is_loaded(bufnr))
       -- hide the current buffer by switching to a new empty buffer
