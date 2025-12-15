@@ -1471,10 +1471,10 @@ LanguageTree:register_cbs({cbs}, {recursive})
                      callbacks.
 
 LanguageTree:source()                                  *LanguageTree:source()*
-    Returns the source bufnr of the language tree.
+    Returns the source content of the language tree (bufnr or string).
 
     Return: ~
-        (`integer`)
+        (`integer|string`)
 
                                                *LanguageTree:tree_for_range()*
 LanguageTree:tree_for_range({range}, {opts})
