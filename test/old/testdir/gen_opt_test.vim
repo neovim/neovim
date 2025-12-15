@@ -527,7 +527,7 @@ catch
   " Append errors to test.log
   let error = $'Error: {v:exception} in {v:throwpoint}'
   echo error
-  split test.log
+  split gen_opt_test.log
   call append('$', error)
   write
 endtry
