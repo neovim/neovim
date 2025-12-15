@@ -260,18 +260,20 @@ end
 ---@param value string
 ---@param prefix string
 ---@return boolean
+---@return integer?
 local function match_item_by_value(value, prefix)
   if prefix == '' then
-    return true
+    return true, nil
   end
   if vim.o.completeopt:find('fuzzy') ~= nil then
-    return next(vim.fn.matchfuzzy({ value }, prefix)) ~= nil
+    local score = vim.fn.matchfuzzypos({ value }, prefix)[3] ---@type table
+    return #score > 0, score[1]
   end
 
   if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
-    return vim.startswith(value:lower(), prefix:lower())
+    return vim.startswith(value:lower(), prefix:lower()), nil
   end
-  return vim.startswith(value, prefix)
+  return vim.startswith(value, prefix), nil
 end
 
 --- Turns the result of a `textDocument/completion` request into vim-compatible
@@ -315,7 +317,8 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
   for _, item in ipairs(items) do
-    if matches(item) then
+    local match, score = matches(item)
+    if match then
       local word = get_completion_word(item, prefix, match_item_by_value)
       local hl_group = ''
       if
@@ -342,6 +345,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
             },
           },
         },
+        _fuzzy_score = score,
       }
       if user_convert then
         completion_item = vim.tbl_extend('keep', user_convert(item), completion_item)
@@ -349,15 +353,33 @@ function M._lsp_to_complete_items(result, prefix, client_id)
       table.insert(candidates, completion_item)
     end
   end
+
   if not user_cmp then
-    ---@diagnostic disable-next-line: no-unknown
-    table.sort(candidates, function(a, b)
+    local compare_by_sortText_and_label = function(a, b)
       ---@type lsp.CompletionItem
       local itema = a.user_data.nvim.lsp.completion_item
       ---@type lsp.CompletionItem
       local itemb = b.user_data.nvim.lsp.completion_item
       return (itema.sortText or itema.label) < (itemb.sortText or itemb.label)
-    end)
+    end
+
+    local use_fuzzy_sort = vim.o.completeopt:find('fuzzy') ~= nil
+      and vim.o.completeopt:find('nosort') == nil
+      and not result.isIncomplete
+      and #prefix > 0
+
+    local compare_fn = use_fuzzy_sort
+        and function(a, b)
+          local score_a = a._fuzzy_score or 0
+          local score_b = b._fuzzy_score or 0
+          if score_a ~= score_b then
+            return score_a > score_b
+          end
+          return compare_by_sortText_and_label(a, b)
+        end
+      or compare_by_sortText_and_label
+
+    table.sort(candidates, compare_fn)
   end
   return candidates
 end
