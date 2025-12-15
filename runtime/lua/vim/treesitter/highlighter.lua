@@ -561,7 +561,10 @@ function TSHighlighter._on_start()
       if not buf_ranges[buf] then
         buf_ranges[buf] = {}
       end
-      local topline, botline = vim.fn.line('w0', win) - 1, vim.fn.line('w$', win)
+      local topline = vim.fn.line('w0', win) - 1
+      -- +1 because w$ is the last completely displayed line (w_botline - 1), which may be -1 of the
+      -- last line that is at least partially visible.
+      local botline = vim.fn.line('w$', win) + 1
       table.insert(buf_ranges[buf], { topline, botline })
     end
   end
