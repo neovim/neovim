@@ -423,27 +423,36 @@ describe('jumpoptions=view', function()
     ]])
   end)
 
-  it('restores the view across files with <C-^>', function()
+  it('restores the view across files with <C-^>/:bprevious/:bnext', function()
     local screen = Screen.new(5, 5)
     command('args ' .. file1 .. ' ' .. file2)
     feed('12Gzt')
-    command('next')
-    feed('G')
-    screen:expect([[
-    27 line     |
-    28 line     |
-    29 line     |
-    ^30 line     |
-                |
-    ]])
-    feed('<C-^>')
-    screen:expect([[
+    local s1 = [[
     ^12 line     |
     13 line     |
     14 line     |
     15 line     |
                 |
-    ]])
+    ]]
+    screen:expect(s1)
+    command('next')
+    feed('G')
+    local s2 = [[
+    27 line     |
+    28 line     |
+    29 line     |
+    ^30 line     |
+                |
+    ]]
+    screen:expect(s2)
+    feed('<C-^>')
+    screen:expect(s1)
+    feed('<C-^>')
+    screen:expect(s2)
+    command('bprevious')
+    screen:expect(s1)
+    command('bnext')
+    screen:expect(s2)
   end)
 
   it("falls back to standard behavior when view can't be recovered", function()
