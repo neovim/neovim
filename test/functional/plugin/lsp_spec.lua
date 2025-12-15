@@ -5841,6 +5841,11 @@ describe('LSP', function()
                 dynamicRegistration = true,
               },
             },
+            workspace = {
+              didChangeWatchedFiles = {
+                dynamicRegistration = true,
+              },
+            },
           },
         }))
 
@@ -5902,15 +5907,91 @@ describe('LSP', function()
         check('textDocument/rangeFormatting', tmpfile)
         check('textDocument/completion')
 
+        check('workspace/didChangeWatchedFiles')
+        check('workspace/didChangeWatchedFiles', tmpfile)
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didChangeWatched',
+              method = 'workspace/didChangeWatchedFiles',
+              registerOptions = {
+                watchers = {
+                  {
+                    globPattern = 'something',
+                    kind = 4,
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+
+        check('workspace/didChangeWatchedFiles')
+        check('workspace/didChangeWatchedFiles', tmpfile)
+
         return result
       end)
 
-      eq(5, #result)
+      eq(9, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
       eq({ method = 'textDocument/rangeFormatting', supported = true, fname = tmpfile }, result[4])
       eq({ method = 'textDocument/completion', supported = false }, result[5])
+      eq({ method = 'workspace/didChangeWatchedFiles', supported = false }, result[6])
+      eq(
+        { method = 'workspace/didChangeWatchedFiles', supported = false, fname = tmpfile },
+        result[7]
+      )
+      eq({ method = 'workspace/didChangeWatchedFiles', supported = true }, result[8])
+      eq(
+        { method = 'workspace/didChangeWatchedFiles', supported = true, fname = tmpfile },
+        result[9]
+      )
+    end)
+
+    it('identifies client dynamic registration capability', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local client_id = assert(vim.lsp.start({
+          name = 'dynamic-test',
+          cmd = server.cmd,
+          capabilities = {
+            textDocument = {
+              formatting = {
+                dynamicRegistration = true,
+              },
+              synchronization = {
+                dynamicRegistration = true,
+              },
+            },
+          },
+        }))
+
+        local result = {}
+        local function check(method)
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          result[#result + 1] = {
+            method = method,
+            supports_reg = client:_supports_registration(method),
+          }
+        end
+
+        check('textDocument/formatting')
+        check('textDocument/didSave')
+        check('textDocument/didOpen')
+        check('textDocument/codeLens')
+
+        return result
+      end)
+
+      eq(4, #result)
+      eq({ method = 'textDocument/formatting', supports_reg = true }, result[1])
+      eq({ method = 'textDocument/didSave', supports_reg = true }, result[2])
+      eq({ method = 'textDocument/didOpen', supports_reg = true }, result[3])
+      eq({ method = 'textDocument/codeLens', supports_reg = false }, result[4])
     end)
 
     it('supports static registration', function()
