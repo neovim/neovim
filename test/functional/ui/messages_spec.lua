@@ -117,7 +117,6 @@ describe('ui/ext_messages', function()
         { content = { { '/i ' } }, kind = 'search_cmd' },
         {
           content = { { 'search hit BOTTOM, continuing at TOP', 19, 'WarningMsg' } },
-          history = true,
           kind = 'wmsg',
         },
       },

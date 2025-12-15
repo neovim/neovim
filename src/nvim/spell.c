@@ -1486,7 +1486,7 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
         lnum = wp->w_buffer->b_ml.ml_line_count;
         wrapped = true;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(top_bot_msg), true);
+          give_warning(_(top_bot_msg), true, false);
         }
       }
       capcol = -1;
@@ -1501,7 +1501,7 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
         lnum = 1;
         wrapped = true;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(bot_top_msg), true);
+          give_warning(_(bot_top_msg), true, false);
         }
       }
 
