@@ -500,7 +500,7 @@ struct file_buffer {
   int b_u_save_nr_cur;         // file write nr after which we are now
 
   // variables for "U" command in undo.c
-  char *b_u_line_ptr;           // saved line for "U" command
+  undoline_T b_u_line_ptr;      // saved line for "U" command
   linenr_T b_u_line_lnum;       // line number of line in u_line
   colnr_T b_u_line_colnr;       // optional column number
 
