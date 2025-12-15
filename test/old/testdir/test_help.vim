@@ -74,6 +74,13 @@ func Test_help_errors()
   bwipe!
 endfunc
 
+func Test_helpclose_errors()
+  call assert_fails('42helpclose', 'E481:')
+  call assert_fails('helpclose 42', 'E488:')
+  call assert_fails('helpclose foo', 'E488:')
+  call assert_fails('helpclose!', 'E477:')
+endfunc
+
 func Test_help_expr()
   help expr-!~?
   call assert_equal('vimeval.txt', expand('%:t'))
