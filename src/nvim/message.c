@@ -3531,6 +3531,7 @@ void give_warning(const char *message, bool hl, bool hist)
     return;
   }
 
+  bool save_msg_hist_off = msg_hist_off;
   msg_hist_off = !hist;
 
   // Don't want a hit-enter prompt here.
@@ -3556,7 +3557,7 @@ void give_warning(const char *message, bool hl, bool hist)
   msg_col = 0;
 
   no_wait_return--;
-  msg_hist_off = false;
+  msg_hist_off = save_msg_hist_off;
 }
 
 /// Shows a warning, with optional highlighting.
