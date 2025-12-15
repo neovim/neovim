@@ -40,7 +40,7 @@ requires a namespace.
 
                                 *vim.diagnostic.severity* *diagnostic-severity*
 The "severity" key in a diagnostic is one of the values defined in
-`vim.diagnostic.severity`:
+`vim.diagnostic.severity`: >
 
     vim.diagnostic.severity.ERROR
     vim.diagnostic.severity.WARN
@@ -54,20 +54,17 @@ Functions that take a severity as an optional parameter (e.g.
 
     vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
 
-2. A table with a "min" or "max" key (or both): >lua
+2. A table with a "min" or "max" key (or both). This form allows users to
+   specify a range of severities: >lua
 
     vim.diagnostic.get(0, { severity = { min = vim.diagnostic.severity.WARN } })
-<
-    This form allows users to specify a range of severities.
-
-3. A list-like table: >lua
+3. A list-like table. This form allows filtering for specific severities: >lua
 
     vim.diagnostic.get(0, { severity = {
         vim.diagnostic.severity.WARN,
         vim.diagnostic.severity.INFO,
     } })
 <
-    This form allows users to filter for specific severities
 
 ==============================================================================
 DEFAULTS                                              *diagnostic-defaults*

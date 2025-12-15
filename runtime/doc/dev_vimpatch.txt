@@ -22,19 +22,13 @@ See |dev-vimpatch-quickstart| to get started immediately.
 ==============================================================================
 QUICKSTART                                        *dev-vimpatch-quickstart*
 
-1. Pull the Nvim source:
->bash
-    git clone https://github.com/neovim/neovim.git
-<
+1. Pull the Nvim source: >bash
+     git clone https://github.com/neovim/neovim.git
 2. Run `./scripts/vim-patch.sh -l` to see the list of missing Vim patches.
-
 3. Choose a patch from the list (usually the oldest one), e.g. `8.0.0123`.
-
    - Check for open vim-patch PRs
      https://github.com/neovim/neovim/pulls?q=is%3Apr+is%3Aopen+label%3Avim-patch.
-
 4. Run `./scripts/vim-patch.sh -p 8.0.0123`
-
 5. Follow the instructions given by the script.
 
 NOTES ~

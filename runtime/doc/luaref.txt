@@ -2541,10 +2541,10 @@ lua_toboolean                                                  *lua_toboolean()*
 <
         Converts the Lua value at the given acceptable index to a C boolean
         value (0 or 1). Like all tests in Lua, `lua_toboolean` returns 1 for
-        any Lua value different from `false` and `nil`; otherwise it returns
-        0. It also returns 0 when called with a non-valid index. (If you want
-           to accept only actual boolean values, use `lua_isboolean`
-           |lua_isboolean()| to test the value's type.)
+        any Lua value different from `false` and `nil`; otherwise it returns 0.
+        It also returns 0 when called with a non-valid index. (If you want to
+        accept only actual boolean values, use `lua_isboolean`
+        |lua_isboolean()| to test the value's type.)
 
 lua_tocfunction                                              *lua_tocfunction()*
 >c

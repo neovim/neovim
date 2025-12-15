@@ -204,18 +204,17 @@ About the `functions` map:
 External programs (clients) can use the metadata to discover the API, using
 any of these approaches:
 
-  1. Connect to a running Nvim instance and call |nvim_get_api_info()| via
-     msgpack-RPC. This is best for clients written in dynamic languages which
-     can define functions at runtime.
-
-  2. Start Nvim with |--api-info|. Useful for statically-compiled clients.
-     Example (requires Python "pyyaml" and "msgpack-python" modules): >
+1. Connect to a running Nvim instance and call |nvim_get_api_info()| via
+   msgpack-RPC. This is best for clients written in dynamic languages which
+   can define functions at runtime.
+2. Use the |--api-info| startup arg. Useful for statically-compiled clients.
+   Example (requires Python "pyyaml" and "msgpack-python" modules): >
      nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
-<
-  3. Use the |api_info()| Vimscript function. >vim
+3. Use the |api_info()| function. >vim
      :lua vim.print(vim.fn.api_info())
-<     Example using |filter()| to exclude non-deprecated API functions: >vim
+     " Example using filter() to exclude non-deprecated API functions:
      :new|put =map(filter(api_info().functions, '!has_key(v:val,''deprecated_since'')'), 'v:val.name')
+<
 
 ==============================================================================
 API contract                                                     *api-contract*

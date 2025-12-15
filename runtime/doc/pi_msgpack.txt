@@ -12,34 +12,16 @@ merchantability.  No guarantees of suitability for any purpose.  By using this
 plugin, you agree that in no event will the copyright holder be liable for any
 damages resulting from the use of this software. Use at your own risk!
 
-==============================================================================
-1. Contents				*msgpack.vim-contents*
-
-	1. Contents..............................: |msgpack.vim-contents|
-	2. Msgpack.vim introduction..............: |msgpack.vim-intro|
-	3. Msgpack.vim manual....................: |msgpack.vim-manual|
-	   Function arguments....................: |msgpack.vim-arguments|
-	   msgpack#is_int function...............: |msgpack#is_int()|
-	   msgpack#is_uint function..............: |msgpack#is_uint()|
-	   msgpack#strftime function.............: |msgpack#strftime()|
-	   msgpack#strptime function.............: |msgpack#strptime()|
-	   msgpack#int_dict_to_str function......: |msgpack#int_dict_to_str()|
-	   msgpack#special_type function.........: |msgpack#special_type()|
-	   msgpack#type function.................: |msgpack#type()|
-	   msgpack#deepcopy function.............: |msgpack#deepcopy()|
-	   msgpack#string function...............: |msgpack#string()|
-	   msgpack#eval function.................: |msgpack#eval()|
-	   msgpack#equal function................: |msgpack#equal()|
-
+                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-2. Msgpack.vim introduction			*msgpack.vim-intro*
+Msgpack.vim introduction			*msgpack.vim-intro*
 
 This plugin contains utility functions to be used in conjunction with
 |msgpackdump()| and |msgpackparse()| functions.
 
 ==============================================================================
-3. Msgpack.vim manual				*msgpack.vim-manual*
+Msgpack.vim manual				*msgpack.vim-manual*
 
 FUNCTION ARGUMENTS				*msgpack.vim-arguments*
 
