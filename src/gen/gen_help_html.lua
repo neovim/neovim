@@ -813,15 +813,14 @@ end
 ---
 --- @param fname string :help file to parse
 --- @param text string? :help file contents
---- @param parser_path string? path to non-default vimdoc.so
 --- @return vim.treesitter.LanguageTree, integer (lang_tree, bufnr)
-local function parse_buf(fname, text, parser_path)
+local function parse_buf(fname, text)
   local buf ---@type integer
+
   if text then
     vim.cmd('split new') -- Text contents.
     vim.api.nvim_put(vim.split(text, '\n'), '', false, false)
     vim.cmd('setfiletype help')
-    -- vim.treesitter.language.add('vimdoc')
     buf = vim.api.nvim_get_current_buf()
   elseif type(fname) == 'string' then
     vim.cmd('split ' .. vim.fn.fnameescape(fname)) -- Filename.
@@ -831,9 +830,6 @@ local function parse_buf(fname, text, parser_path)
     ---@diagnostic disable-next-line: no-unknown
     buf = fname
     vim.cmd('sbuffer ' .. tostring(fname)) -- Buffer number.
-  end
-  if parser_path then
-    vim.treesitter.language.add('vimdoc', { path = parser_path })
   end
   local lang_tree = assert(vim.treesitter.get_parser(buf, nil, { error = false }))
   lang_tree:parse()
@@ -845,14 +841,13 @@ end
 ---  - recursively counts parse errors ("ERROR" nodes)
 ---
 --- @param fname string help file to validate
---- @param parser_path string? path to non-default vimdoc.so
 --- @param request_urls boolean? whether to make requests to the URLs
 --- @return { invalid_links: number, parse_errors: string[] }
-local function validate_one(fname, parser_path, request_urls)
+local function validate_one(fname, request_urls)
   local stats = {
     parse_errors = {},
   }
-  local lang_tree, buf = parse_buf(fname, nil, parser_path)
+  local lang_tree, buf = parse_buf(fname, nil)
   for _, tree in ipairs(lang_tree:trees()) do
     visit_validate(tree:root(), 0, tree, {
       buf = buf,
@@ -871,17 +866,16 @@ end
 --- @param text string|nil Source :help file contents, or nil to read `fname`.
 --- @param to_fname string Destination .html file
 --- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
---- @param parser_path string? path to non-default vimdoc.so
 ---
 --- @return string html
 --- @return table stats
-local function gen_one(fname, text, to_fname, old, commit, parser_path)
+local function gen_one(fname, text, to_fname, old, commit)
   local stats = {
     noise_lines = {},
     parse_errors = {},
     first_tags = {}, -- Track the first few tags in doc.
   }
-  local lang_tree, buf = parse_buf(fname, text, parser_path)
+  local lang_tree, buf = parse_buf(fname, text)
   ---@type nvim.gen_help_html.heading[]
   local headings = {} -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
   local title = to_titlecase(basename_noext(fname))
@@ -1407,6 +1401,8 @@ end
 --- @param help_dir string Source directory containing the :help files. Must run `make helptags` first.
 --- @param to_dir string Target directory where the .html files will be written.
 --- @param include string[]|nil Process only these filenames. Example: {'api.txt', 'autocmd.txt', 'channel.txt'}
+--- @param commit string?
+--- @param parser_path string? path to non-default vimdoc.so/dylib/dll
 ---
 --- @return nvim.gen_help_html.gen_result result
 function M.gen(help_dir, to_dir, include, commit, parser_path)
@@ -1423,10 +1419,18 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   local err_count = 0
   local redirects_count = 0
   ensure_runtimepath()
+
+  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
+  if parser_path then
+    -- XXX: Delete the installed .so files first, else this won't work :(
+    --    /usr/local/lib/nvim/parser/vimdoc.so
+    --    ./build/lib/nvim/parser/vimdoc.so
+    vim.treesitter.language.add('vimdoc', { path = parser_path })
+  end
+
   tagmap = get_helptags(vim.fs.normalize(help_dir))
   helpfiles = get_helpfiles(help_dir, include)
   to_dir = vim.fs.normalize(to_dir)
-  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
 
   print(('output dir: %s\n\n'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
@@ -1439,8 +1443,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     local helpfile = vim.fs.basename(f)
     -- "to/dir/foo.html"
     local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile))
-    local html, stats =
-      gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?', parser_path)
+    local html, stats = gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?')
     tofile(to_fname, html)
     print(
       ('generated (%-2s errors): %-15s => %s'):format(
@@ -1474,7 +1477,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
         :format(redirect_from, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag)
       local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from))
       local redirect_html, _ =
-        gen_one(redirect_from, redirect_text, redirect_to, false, commit or '?', parser_path)
+        gen_one(redirect_from, redirect_text, redirect_to, false, commit or '?')
       assert(
         redirect_html:find(vim.pesc(helpfile_tag)),
         ('not found in redirect html: %s'):format(helpfile_tag)
@@ -1535,13 +1538,21 @@ function M.validate(help_dir, include, parser_path, request_urls)
   local err_count = 0 ---@type integer
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()
+
+  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
+  if parser_path then
+    -- XXX: Delete the installed .so files first, else this won't work :(
+    --    /usr/local/lib/nvim/parser/vimdoc.so
+    --    ./build/lib/nvim/parser/vimdoc.so
+    vim.treesitter.language.add('vimdoc', { path = parser_path })
+  end
+
   tagmap = get_helptags(vim.fs.normalize(help_dir))
   helpfiles = get_helpfiles(help_dir, include)
-  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
 
   for _, f in ipairs(helpfiles) do
     local helpfile = vim.fs.basename(f)
-    local rv = validate_one(f, parser_path, request_urls)
+    local rv = validate_one(f, request_urls)
     print(('validated (%-4s errors): %s'):format(#rv.parse_errors, helpfile))
     if #rv.parse_errors > 0 then
       files_to_errors[helpfile] = rv.parse_errors
