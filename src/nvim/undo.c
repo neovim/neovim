@@ -652,8 +652,7 @@ void u_compute_hash(buf_T *buf, uint8_t *hash)
   context_sha256_T ctx;
   sha256_start(&ctx);
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    char *p = ml_get_buf(buf, lnum);
-    sha256_update(&ctx, (uint8_t *)p, strlen(p) + 1);
+    sha256_update(&ctx, (uint8_t *)ml_get_buf(buf, lnum), (size_t)ml_get_buf_len(buf, lnum) + 1);
   }
   sha256_finish(&ctx, hash);
 }
@@ -687,6 +686,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
   }
 #endif
 
+  const size_t ffname_len = strlen(ffname);
   char dir_name[MAXPATHL + 1];
   char *munged_name = NULL;
   char *undo_file_name = NULL;
@@ -699,11 +699,10 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
     if (dir_len == 1 && dir_name[0] == '.') {
       // Use same directory as the ffname,
       // "dir/name" -> "dir/.name.un~"
-      const size_t ffname_len = strlen(ffname);
       undo_file_name = xmalloc(ffname_len + 6);
       memmove(undo_file_name, ffname, ffname_len + 1);
       char *const tail = path_tail(undo_file_name);
-      const size_t tail_len = strlen(tail);
+      const size_t tail_len = ffname_len - (size_t)(tail - undo_file_name);
       memmove(tail + 1, tail, tail_len + 1);
       *tail = '.';
       memmove(tail + tail_len + 1, ".un~", sizeof(".un~"));
@@ -731,7 +730,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       }
       if (has_directory) {
         if (munged_name == NULL) {
-          munged_name = xstrdup(ffname);
+          munged_name = xmemdupz(ffname, ffname_len);
           for (char *c = munged_name; *c != NUL; MB_PTR_ADV(c)) {
             if (vim_ispathsep(*c)) {
               *c = '%';
@@ -802,8 +801,7 @@ static bool serialize_header(bufinfo_T *bi, uint8_t *hash)
 
   // Write buffer-specific data.
   undo_write_bytes(bi, (uintmax_t)buf->b_ml.ml_line_count, 4);
-  size_t len = buf->b_u_line_ptr.ul_line == NULL
-               ? 0 : strlen(buf->b_u_line_ptr.ul_line);
+  size_t len = (size_t)buf->b_u_line_ptr.ul_textlen;
   undo_write_bytes(bi, len, 4);
   if (len > 0 && !undo_write(bi, (uint8_t *)buf->b_u_line_ptr.ul_line, len)) {
     return false;
@@ -1067,7 +1065,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
   for (size_t i = 0; i < (size_t)uep->ue_size; i++) {
     // Text is written without the text properties, since we cannot restore
     // the text property types.
-    size_t len = strlen(uep->ue_array[i].ul_line);
+    size_t len = (size_t)uep->ue_array[i].ul_textlen;
     if (!undo_write_bytes(bi, len, 4)) {
       return false;
     }
@@ -1115,7 +1113,7 @@ static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_n
       return uep;
     }
     array[i].ul_line = line;
-    array[i].ul_len = line_len + 1;
+    array[i].ul_textlen = line_len;
   }
   return uep;
 }
@@ -1469,7 +1467,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
 
   if (str_len > 0) {
     line_ptr.ul_line = undo_read_string(&bi, (size_t)str_len);
-    line_ptr.ul_len = str_len + 1;
+    line_ptr.ul_textlen = str_len;
   }
   linenr_T line_lnum = (linenr_T)undo_read_4c(&bi);
   colnr_T line_colnr = (colnr_T)undo_read_4c(&bi);
@@ -2320,8 +2318,8 @@ static void u_undoredo(bool undo, bool do_buf_event)
         for (i = 0; i < newsize && i < oldsize; i++) {
           char *p = ml_get(top + 1 + i);
 
-          if (curbuf->b_ml.ml_line_len != uep->ue_array[i].ul_len
-              || memcmp(uep->ue_array[i].ul_line, p, (size_t)curbuf->b_ml.ml_line_len) != 0) {
+          if (curbuf->b_ml.ml_line_textlen != (uep->ue_array[i].ul_textlen + 1)
+              || memcmp(uep->ue_array[i].ul_line, p, (size_t)curbuf->b_ml.ml_line_textlen) != 0) {
             break;
           }
         }
@@ -2368,10 +2366,10 @@ static void u_undoredo(bool undo, bool do_buf_event)
         // If the file is empty, there is an empty line 1 that we
         // should get rid of, by replacing it with the new line.
         if (empty_buffer && lnum == 0) {
-          ml_replace_len((linenr_T)1, uep->ue_array[i].ul_line, (size_t)uep->ue_array[i].ul_len - 1,
+          ml_replace_len((linenr_T)1, uep->ue_array[i].ul_line, (size_t)uep->ue_array[i].ul_textlen,
                          true);
         } else {
-          ml_append_flags(lnum, uep->ue_array[i].ul_line, uep->ue_array[i].ul_len, 0);  // ML_APPEND_UNDO
+          ml_append_flags(lnum, uep->ue_array[i].ul_line, uep->ue_array[i].ul_textlen + 1, 0);  // ML_APPEND_UNDO
         }
         xfree(uep->ue_array[i].ul_line);
       }
@@ -2683,15 +2681,19 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      vim_snprintf(IObuff, IOSIZE, "%6d %7d  ", uhp->uh_seq, changes);
-      undo_fmt_time(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff), uhp->uh_time);
+      size_t len = (size_t)vim_snprintf(IObuff, IOSIZE, "%6d %7d  ", uhp->uh_seq, changes);
+      undo_fmt_time(IObuff + len, IOSIZE - len, uhp->uh_time);
+
+      // we have to call STRLEN() here because add_time() does not report
+      // the number of characters added.
+      len += strlen(IObuff + len);
       if (uhp->uh_save_nr > 0) {
-        while (strlen(IObuff) < 33) {
-          xstrlcat(IObuff, " ", IOSIZE);
-        }
-        vim_snprintf_add(IObuff, IOSIZE, "  %3d", uhp->uh_save_nr);
+        int n = (len >= 33) ? 0 : 33 - (int)len;
+
+        len += (size_t)vim_snprintf(IObuff + len, IOSIZE - len, "%*.*s  %3d", n, n, " ",
+                                    uhp->uh_save_nr);
       }
-      GA_APPEND(char *, &ga, xstrdup(IObuff));
+      GA_APPEND(char *, &ga, xmemdupz(IObuff, len));
     }
 
     uhp->uh_walk = mark;
@@ -2792,9 +2794,9 @@ void u_find_first_changed(void)
        && lnum <= uep->ue_size; lnum++) {
     char *p = ml_get_buf(curbuf, lnum);
 
-    if (uep->ue_array[lnum - 1].ul_len != curbuf->b_ml.ml_line_len
+    if (uep->ue_array[lnum - 1].ul_textlen + 1 != curbuf->b_ml.ml_line_textlen
         || memcmp(p, uep->ue_array[lnum - 1].ul_line,
-                  (size_t)uep->ue_array[lnum - 1].ul_len) != 0) {
+                  (size_t)uep->ue_array[lnum - 1].ul_textlen + 1) != 0) {
       clearpos(&(uhp->uh_cursor));
       uhp->uh_cursor.lnum = lnum;
       return;
@@ -2990,7 +2992,7 @@ void u_clearall(buf_T *buf)
   buf->b_u_synced = true;
   buf->b_u_numhead = 0;
   buf->b_u_line_ptr.ul_line = NULL;
-  buf->b_u_line_ptr.ul_len = 0;
+  buf->b_u_line_ptr.ul_textlen = 0;
   buf->b_u_line_lnum = 0;
 }
 
@@ -3044,7 +3046,7 @@ void u_clearline(buf_T *buf)
   }
 
   XFREE_CLEAR(buf->b_u_line_ptr.ul_line);
-  buf->b_u_line_ptr.ul_len = 0;
+  buf->b_u_line_ptr.ul_textlen = 0;
   buf->b_u_line_lnum = 0;
 }
 
@@ -3069,9 +3071,9 @@ void u_undoline(void)
   undoline_T oldp;
   u_save_line(&oldp, curbuf->b_u_line_lnum);
   ml_replace_len(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr.ul_line,
-                 (size_t)curbuf->b_u_line_ptr.ul_len - 1, true);
-  extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, oldp.ul_len - 1,
-                      curbuf->b_u_line_ptr.ul_len - 1, kExtmarkUndo);
+                 (size_t)curbuf->b_u_line_ptr.ul_textlen, true);
+  extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, oldp.ul_textlen,
+                      curbuf->b_u_line_ptr.ul_textlen, kExtmarkUndo);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   curbuf->b_u_line_ptr = oldp;
 
@@ -3102,12 +3104,11 @@ static void u_save_line_buf(buf_T *buf, undoline_T *ul, linenr_T lnum)
 {
   char *line = ml_get_buf(buf, lnum);
 
-  if (buf->b_ml.ml_line_len == 0) {
-    ul->ul_len = 1;
+  ul->ul_textlen = ml_get_len(lnum);
+  if (buf->b_ml.ml_line_textlen == 0) {
     ul->ul_line = xstrdup("");
   } else {
-    ul->ul_len = buf->b_ml.ml_line_len;
-    ul->ul_line = xmemdup(line, (size_t)ul->ul_len);
+    ul->ul_line = xmemdupz(line, (size_t)ul->ul_textlen);
   }
 }
 
