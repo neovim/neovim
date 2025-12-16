@@ -9795,6 +9795,25 @@ local options = {
       immutable = true,
     },
     {
+      abbreviation = 'tgf',
+      full_name = 'tuigraphemefix',
+      type = 'boolean',
+      redraw = { 'ui_option' },
+      scope = { 'global' },
+      short_desc = N_('proper grapheme drawing on legacy terminal'),
+      defaults = false,
+      desc = [=[
+        Enable TUI workaround for terminals that uses legacy grapheme-cluster,
+        if the user know that the terminal has this issue, they can use
+        :set tuigraphemefix (:set tgf), to enable the mode.
+        :set notuigraphemefix (:set notgf), to toggle the flag back to false,
+        and restore the normal Neovmi settings.
+        Users can toggle this option in the configuration file by using
+        vim.opt.tgf = true
+      ]=],
+      varname = 'p_tgf',
+    },
+    {
       abbreviation = 'udir',
       defaults = '',
       deny_duplicates = true,

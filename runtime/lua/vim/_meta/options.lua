@@ -7565,6 +7565,20 @@ vim.o.ttm = vim.o.ttimeoutlen
 vim.go.ttimeoutlen = vim.o.ttimeoutlen
 vim.go.ttm = vim.go.ttimeoutlen
 
+--- Enable TUI workaround for terminals that uses legacy grapheme-cluster,
+--- if the user know that the terminal has this issue, they can use
+--- :set tuigraphemefix (:set tgf), to enable the mode.
+--- :set notuigraphemefix (:set notgf), to toggle the flag back to false,
+--- and restore the normal Neovmi settings.
+--- Users can toggle this option in the configuration file by using
+--- vim.opt.tgf = true
+---
+--- @type boolean
+vim.o.tuigraphemefix = false
+vim.o.tgf = vim.o.tuigraphemefix
+vim.go.tuigraphemefix = vim.o.tuigraphemefix
+vim.go.tgf = vim.go.tuigraphemefix
+
 --- List of directory names for undo files, separated with commas.
 --- See 'backupdir' for details of the format.
 --- "." means using the directory of the file.  The undo file name for

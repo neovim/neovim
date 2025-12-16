@@ -28,6 +28,7 @@ describe('UI receives option updates', function()
       termsync = true,
       ttimeout = true,
       ttimeoutlen = 50,
+      tuigraphemefix = false,
       verbose = 0,
       ext_cmdline = false,
       ext_popupmenu = false,

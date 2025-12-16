@@ -30,6 +30,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
@@ -106,6 +107,7 @@ struct TUIData {
   bool cursor_has_color;
   bool is_starting;
   bool resize_events_enabled;
+  bool grapheme_fix_enabled;
 
   // Terminal modes that Nvim enabled that it must disable on exit
   struct {
@@ -373,6 +375,7 @@ static void terminfo_start(TUIData *tui)
   tui->showing_mode = SHAPE_IDX_N;
   tui->terminfo_ext.enable_focus_reporting = NULL;
   tui->terminfo_ext.disable_focus_reporting = NULL;
+  tui->grapheme_fix_enabled = p_tgf;
 
   tui->out_fd = STDOUT_FILENO;
   tui->out_isatty = os_isatty(tui->out_fd);
@@ -1115,6 +1118,27 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
   schar_get(buf, cell->data);
   int c = utf_ptr2char(buf);
   bool is_ambiwidth = utf_ambiguous_width(buf);
+
+  // Detect multi-codepoint grapheme clusters,
+  // needed when using legacy terminal
+  if (!is_ambiwidth && tui->grapheme_fix_enabled && tui->term != NULL) {
+    if (STRNICMP(tui->term, "st", 2) == 0
+        || strstr(tui->term, "tmux")
+        || strstr(tui->term, "ansi")
+        || strstr(tui->term, "rxvt")
+        || strstr(tui->term, "xterm")
+        || strstr(tui->term, "vt100")
+        || strstr(tui->term, "vt102")
+        || strstr(tui->term, "dtterm")
+        || strstr(tui->term, "nsterm")
+        || strstr(tui->term, "wezterm")
+        || strstr(tui->term, "alacritty")) {
+      if ((schar_len(cell->data) > (size_t)utf_char2len(c))) {
+        is_ambiwidth = true;
+      }
+    }
+  }
+
   if (is_doublewidth && (is_ambiwidth || utf_char2cells(c) == 1)) {
     // If the server used setcellwidths() to treat a single-width char as double-width,
     // it needs to be treated like an ambiguous-width char.
@@ -1745,6 +1769,8 @@ void tui_option_set(TUIData *tui, String name, Object value)
       ADD_C(args, BOOLEAN_OBJ(value.data.boolean));
       rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
     }
+  } else if (strequal(name.data, "tuigraphemefix")) {
+    tui->grapheme_fix_enabled = value.data.boolean;
   } else if (strequal(name.data, "ttimeout")) {
     tui->input.ttimeout = value.data.boolean;
   } else if (strequal(name.data, "ttimeoutlen")) {

@@ -6968,6 +6968,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
 	been typed.
 
+		*'tuigraphemefix'* *'tgf'* *'notuigraphemefix'* *'notgf'*
+'tuigraphemefix' 'tgf'	boolean	(default off)
+			global
+	Enable TUI workaround for terminals that uses legacy grapheme-cluster,
+	if the user know that the terminal has this issue, they can use
+	:set tuigraphemefix (:set tgf), to enable the mode.
+	:set notuigraphemefix (:set notgf), to toggle the flag back to false,
+	and restore the normal Neovmi settings.
+	Users can toggle this option in the configuration file by using
+	vim.opt.tgf = true
+
 					*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
 			global

@@ -588,6 +588,7 @@ EXTERN int p_wa;                ///< 'writeany'
 EXTERN int p_wb;                ///< 'writebackup'
 EXTERN OptInt p_wd;             ///< 'writedelay'
 EXTERN int p_cdh;               ///< 'cdhome'
+EXTERN int p_tgf INIT( = false);   ///< 'tuigraphemefix'
 
 // Value for b_p_ul indicating the global value must be used.
 #define NO_LOCAL_UNDOLEVEL (-123456)
