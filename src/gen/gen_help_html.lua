@@ -124,8 +124,6 @@ local exclude_invalid = {
 
 -- False-positive "invalid URLs".
 local exclude_invalid_urls = {
-  ['http://'] = 'usr_23.txt',
-  ['http://.'] = 'usr_23.txt',
   ['http://aspell.net/man-html/Affix-Compression.html'] = 'spell.txt',
   ['http://aspell.net/man-html/Phonetic-Code.html'] = 'spell.txt',
   ['http://lua-users.org/wiki/StringLibraryTutorial'] = 'lua.txt',
@@ -136,6 +134,8 @@ local exclude_invalid_urls = {
   ['http://wiki.services.openoffice.org/wiki/Dictionaries'] = 'spell.txt',
   ['http://www.adapower.com'] = 'ft_ada.txt',
   ['http://www.jclark.com/'] = 'quickfix.txt',
+  ['https://cacm.acm.org/research/a-look-at-the-design-of-lua/'] = 'faq.txt', -- blocks GHA?
+  ['https://linux.die.net/man/2/poll'] = 'luvref.txt', -- blocks GHA?
 }
 
 -- Deprecated, brain-damaged files that I don't care about.
