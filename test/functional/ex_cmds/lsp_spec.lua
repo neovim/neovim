@@ -22,6 +22,18 @@ describe(':lsp', function()
     end)
   end)
 
+  it('fails if runtime is missing/broken', function()
+    clear {
+      args_rm = { '-u' },
+      args = { '-u', 'NONE' },
+      env = { VIMRUNTIME = 'non-existent' },
+    }
+    eq(
+      [[Vim(lsp):Lua: [string "<nvim>"]:0: module 'vim._core.ex_cmd.lsp' not found:]],
+      vim.split(t.pcall_err(n.command, 'lsp enable dummy'), '\n')[1]
+    )
+  end)
+
   for _, test_with_arguments in ipairs({ true, false }) do
     local test_message_suffix, lsp_command_suffix
     if test_with_arguments then
@@ -113,17 +125,5 @@ describe(':lsp', function()
       return #vim.api.nvim_parse_cmd('lsp enable ' .. completion, {}).args
     end)
     eq(2, cmd_length)
-  end)
-
-  it('fail with no runtime without crashing', function()
-    clear {
-      args_rm = { '-u' },
-      args = { '-u', 'NONE' },
-      env = { VIMRUNTIME = 'non-existent' },
-    }
-    eq(
-      [[Vim(lsp):Lua: [string "<nvim>"]:0: module 'vim._core.ex_cmd.lsp' not found:]],
-      vim.split(t.pcall_err(n.command, 'lsp enable dummy'), '\n')[1]
-    )
   end)
 end)

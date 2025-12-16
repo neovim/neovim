@@ -241,6 +241,7 @@ HIGHLIGHTS
 
 LSP
 
+• |:lsp| can be used to interactively manage LSP clients.
 • |vim.lsp.ClientConfig| gained `workspace_required`.
 • You can control the priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
@@ -280,19 +281,17 @@ LSP
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 • The filter option of |vim.lsp.buf.code_action()| now receives the client ID as an argument.
-• |Client:stop()| and |vim.lsp.enable()| accept `force` as an integer, which is
-  treated as the time to wait before before "stop" escalates to "force-stop".
 • |vim.lsp.ClientConfig| `exit_timeout` decides the time waited before "stop"
   escalates to "force-stop" for |vim.lsp.enable()|, |Client:stop()|, and
   during Nvim shutdown.
   • `exit_timeout` graduated from "experimental" `flags.exit_timeout`
     to a top-level field. Defaults to `false`.
+• |Client:stop()| accepts `force` as an integer, which is treated as the time
+  to wait before before stop escalates to force-stop.
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
-- Support for dynamic registration for `textDocument/diagnostic`
-• |:lsp| for interactively enabling, disabling, restarting, and stopping lsp
-  clients.
+• Support for dynamic registration for `textDocument/diagnostic`
 
 LUA
 

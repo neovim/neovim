@@ -117,25 +117,21 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
     })
 <
 ==============================================================================
-COMMANDS                                                    *:lsp*
+COMMANDS                                                 *:lsp* *lsp-commands*
 
-:lsp enable {name}?                                       *:lsp-enable*
-    Enables the given lsp clients. If no names are given, all clients
-    configured with |vim.lsp.config()| with a filetype matching the current
-    buffer's filetype are enabled. Use |vim.lsp.enable()| for non-interactive
-    use.
+:lsp enable [config_name]                                 *:lsp-enable*
+    Activates LSP for current and future buffers. See |vim.lsp.enable()|.
 
-:lsp disable {name}?                                      *:lsp-disable*
-    Disables (and stops) the given lsp clients. If no names are given,
-    all clients attached to the current buffer are disabled. Use
-    |vim.lsp.enable()| with `enable=false` for non-interactive use.
+:lsp disable [config_name]                                *:lsp-disable*
+    Disables (and stops) LSP for current and future buffers. See
+    |vim.lsp.enable()|.
 
-:lsp restart {client}?                                    *:lsp-restart*
-    Restarts the given lsp clients. If no client names are given, all active
+:lsp restart [client_name]                                *:lsp-restart*
+    Restarts LSP clients and servers. If no client names are given, all active
     clients attached to the current buffer are restarted.
 
-:lsp stop {client}?                                       *:lsp-stop*
-    Stops the given lsp clients. If no client names are given, all active
+:lsp stop [client_name]                                   *:lsp-stop*
+    Stops LSP clients and servers. If no client names are given, all active
     clients attached to the current buffer are stopped. Use |Client:stop()|
     for non-interactive use.
 
