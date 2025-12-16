@@ -406,7 +406,7 @@ end
 ---
 --- -- Find the parent directory containing any file with a .csproj extension
 --- vim.fs.root(0, function(name, path)
----   return name:match('%.csproj$') ~= nil
+---   return vim.fs.suffix(name) == '.csproj'
 --- end)
 ---
 --- -- Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
@@ -822,6 +822,38 @@ function M.relpath(base, target, opts)
   base = prefix .. base .. (base ~= '/' and '/' or '')
 
   return vim.startswith(target, base) and target:sub(#base + 1) or nil
+end
+
+--- Return the file's last suffix, if any.
+---
+--- Leading `.` characters in the filename are ignored. The returned extension
+--- includes the period.
+---
+--- Example:
+---
+--- ```lua
+--- vim.fs.suffix('archive.tar.gz') -- '.gz'
+--- vim.fs.suffix('~/.git') -- ''
+--- vim.fs.suffix('plugin/myplug.lua') -- '.lua'
+--- ```
+---
+---@since 14
+---@generic T : string|nil
+---@param file T Path
+---@param opts table? Reserved for future use
+---@return T Suffix of {file}
+function M.suffix(file, opts)
+  vim.validate('file', file, 'string', true)
+  vim.validate('opts', opts, 'table', true)
+
+  local name = M.basename(file) --[[@as string?]]
+  if name == nil then
+    return nil
+  end
+
+  name = name:gsub('^%.*', '')
+
+  return name:match('(%.[^.]*)$') or ''
 end
 
 return M

@@ -2952,6 +2952,9 @@ M.funcs = {
       Note: Environment variables don't work in {fname}, use
       |expand()| first then.
 
+      Note: Prefer |vim.fs.basename()|, |vim.fs.dirname()|
+      and |vim.fs.suffix()| in Lua.
+
     ]=],
     fast = true,
     name = 'fnamemodify',
