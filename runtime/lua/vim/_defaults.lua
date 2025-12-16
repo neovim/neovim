@@ -219,14 +219,6 @@ do
       vim.lsp.buf.type_definition()
     end, { desc = 'vim.lsp.buf.type_definition()' })
 
-    vim.keymap.set({ 'x', 'o' }, 'an', function()
-      vim.lsp.buf.selection_range(vim.v.count1)
-    end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1)' })
-
-    vim.keymap.set({ 'x', 'o' }, 'in', function()
-      vim.lsp.buf.selection_range(-vim.v.count1)
-    end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
-
     vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
     end, { desc = 'vim.lsp.buf.document_symbol()' })
@@ -449,6 +441,41 @@ do
       vim.go.operatorfunc = "v:lua.require'vim._buf'.space_below"
       return 'g@l'
     end, { expr = true, desc = 'Add empty line below cursor' })
+  end
+
+  --- incremental treesitter selection mappings (+ lsp fallback)
+  do
+    vim.keymap.set({ 'x', 'o' }, '[n', function()
+      for _ = 1, vim.v.count1 do
+        require 'vim._treeselect'.select_prev()
+      end
+    end, { desc = 'Select previous treesitter node' })
+
+    vim.keymap.set({ 'x', 'o' }, ']n', function()
+      for _ = 1, vim.v.count1 do
+        require 'vim._treeselect'.select_next()
+      end
+    end, { desc = 'Select next treesitter node' })
+
+    vim.keymap.set({ 'x', 'o' }, 'an', function()
+      if vim.treesitter.get_parser(nil, nil, { error = false }) then
+        for _ = 1, vim.v.count1 do
+          require 'vim._treeselect'.select_parent()
+        end
+      else
+        vim.lsp.buf.selection_range(vim.v.count1)
+      end
+    end, { desc = 'Select parent treesitter node or outer incremental lsp selections' })
+
+    vim.keymap.set({ 'x', 'o' }, 'in', function()
+      if vim.treesitter.get_parser(nil, nil, { error = false }) then
+        for _ = 1, vim.v.count1 do
+          require 'vim._treeselect'.select_child()
+        end
+      else
+        vim.lsp.buf.selection_range(-vim.v.count1)
+      end
+    end, { desc = 'Select child treesitter node or inner incremental lsp selections' })
   end
 end
 
