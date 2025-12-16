@@ -2323,9 +2323,6 @@ function vim.fn.fnameescape(string) end
 --- Note: Environment variables don't work in {fname}, use
 --- |expand()| first then.
 ---
---- Note: Prefer |vim.fs.basename()|, |vim.fs.dirname()|
---- and |vim.fs.suffix()| in Lua.
----
 --- @param fname string
 --- @param mods string
 --- @return string

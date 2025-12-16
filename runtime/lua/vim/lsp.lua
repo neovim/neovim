@@ -542,7 +542,7 @@ end
 --- ```lua
 --- vim.lsp.config('lua_ls', {
 ---   root_dir = function(bufnr, on_dir)
----     if vim.fs.suffix(vim.fn.bufname(bufnr)) ~= '.txt' then
+---     if vim.fs.suffix(vim.fn.bufname(bufnr)) ~= 'txt' then
 ---       on_dir(vim.fn.getcwd())
 ---     end
 ---   end

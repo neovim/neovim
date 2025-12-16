@@ -311,7 +311,7 @@ function M.error(msg, ...)
 end
 
 local path2name = function(path)
-  if vim.fs.suffix(path) == '.lua' then
+  if vim.fs.suffix(path) == 'lua' then
     -- Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
 
     -- Get full path, make sure all slashes are '/'
