@@ -195,7 +195,6 @@ char *estack_sfile(estack_arg_T which)
   for (int idx = 0; idx < exestack.ga_len; idx++) {
     entry = ((estack_T *)exestack.ga_data) + idx;
     if (entry->es_name != NULL) {
-      size_t len = strlen(entry->es_name) + 15;
       char *type_name = "";
       if (entry->es_type != last_type) {
         switch (entry->es_type) {
@@ -208,26 +207,26 @@ char *estack_sfile(estack_arg_T which)
         }
         last_type = entry->es_type;
       }
-      len += strlen(type_name);
-      ga_grow(&ga, (int)len);
       linenr_T lnum = idx == exestack.ga_len - 1
                       ? which == ESTACK_STACK ? SOURCING_LNUM : 0
                       : entry->es_lnum;
-      char *dots = idx == exestack.ga_len - 1 ? "" : "..";
-      if (lnum == 0) {
-        // For the bottom entry of <sfile>: do not add the line number,
-        // it is used in <slnum>.  Also leave it out when the number is
-        // not set.
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
-                     type_name, entry->es_name, dots);
-      } else {
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]%s",
-                     type_name, entry->es_name, lnum, dots);
+      size_t len = strlen(entry->es_name) + strlen(type_name) + 26;
+      ga_grow(&ga, (int)len);
+      ga_concat(&ga, type_name);
+      ga_concat(&ga, entry->es_name);
+      // For the bottom entry of <sfile>: do not add the line number, it is used in
+      // <slnum>.  Also leave it out when the number is not set.
+      if (lnum != 0) {
+        ga.ga_len += vim_snprintf((char *)ga.ga_data + ga.ga_len, 23,
+                                  "[%" PRIdLINENR "]", lnum);
       }
-      ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
+      if (idx != exestack.ga_len - 1) {
+        ga_concat(&ga, "..");
+      }
     }
   }
 
+  ga_append(&ga, '\0');
   return (char *)ga.ga_data;
 }
 
