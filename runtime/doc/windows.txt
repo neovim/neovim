@@ -682,30 +682,32 @@ positions are stored and used to decide whether there was a change.
 7. Argument and buffer list commands			*buffer-list*
 
       args list		       buffer list	   meaning ~
-1. :[N]argument [N]	11. :[N]buffer [N]	to arg/buf N
-2. :[N]next [file ..]	12. :[N]bnext [N]	to Nth next arg/buf
-3. :[N]Next [N]		13. :[N]bNext [N]	to Nth previous arg/buf
-4. :[N]previous	[N]	14. :[N]bprevious [N]	to Nth previous arg/buf
-5. :rewind / :first	15. :brewind / :bfirst	to first arg/buf
-6. :last		16. :blast		to last arg/buf
-7. :all			17. :ball		edit all args/buffers
-			18. :unhide		edit all loaded buffers
-			19. :[N]bmod [N]	to Nth modified buf
-
+>
+ 1. :[N]argument [N]	11. :[N]buffer [N]	to arg/buf N
+ 2. :[N]next [file ..]	12. :[N]bnext [N]	to Nth next arg/buf
+ 3. :[N]Next [N]	13. :[N]bNext [N]	to Nth previous arg/buf
+ 4. :[N]previous [N]	14. :[N]bprevious [N]	to Nth previous arg/buf
+ 5. :rewind / :first	15. :brewind / :bfirst	to first arg/buf
+ 6. :last		16. :blast		to last arg/buf
+ 7. :all		17. :ball		edit all args/buffers
+ 			18. :unhide		edit all loaded buffers
+ 			19. :[N]bmod [N]	to Nth modified buf
+<
   split & args list	  split & buffer list	   meaning ~
-21. :[N]sargument [N]   31. :[N]sbuffer [N]	split + to arg/buf N
-22. :[N]snext [file ..] 32. :[N]sbnext [N]      split + to Nth next arg/buf
-23. :[N]sNext [N]       33. :[N]sbNext [N]      split + to Nth previous arg/buf
-24. :[N]sprevious [N]   34. :[N]sbprevious [N]  split + to Nth previous arg/buf
-25. :srewind / :sfirst	35. :sbrewind / :sbfirst split + to first arg/buf
-26. :slast		36. :sblast		split + to last arg/buf
-27. :sall		37. :sball		edit all args/buffers
-			38. :sunhide		edit all loaded buffers
-			39. :[N]sbmod [N]	split + to Nth modified buf
+>
+ 21. :[N]sargument [N]   31. :[N]sbuffer [N]	split + to arg/buf N
+ 22. :[N]snext [file ..] 32. :[N]sbnext [N]      split + to Nth next arg/buf
+ 23. :[N]sNext [N]       33. :[N]sbNext [N]      split + to Nth previous arg/buf
+ 24. :[N]sprevious [N]   34. :[N]sbprevious [N]  split + to Nth previous arg/buf
+ 25. :srewind / :sfirst	 35. :sbrewind / :sbfirst split + to first arg/buf
+ 26. :slast		 36. :sblast		split + to last arg/buf
+ 27. :sall		 37. :sball		edit all args/buffers
+ 			 38. :sunhide		edit all loaded buffers
+ 			 39. :[N]sbmod [N]	split + to Nth modified buf
 
-40. :args		list of arguments
-41. :buffers		list of buffers
-
+ 40. :args		list of arguments
+ 41. :buffers		list of buffers
+<
 The meaning of [N] depends on the command:
  [N] is the number of buffers to go forward/backward on 2/12/22/32,
      3/13/23/33, and 4/14/24/34

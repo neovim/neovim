@@ -15,17 +15,13 @@ Channels are Nvim's way of communicating with external processes.
 
 There are several ways to open a channel:
 
-  1. Through stdin/stdout when `nvim` is started with `--headless` and a startup
-     script or `--cmd` command opens the stdio channel using |stdioopen()|.
-
-  2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
-
-  3. Through the PTY master end opened with `jobstart(…, {'pty': v:true})`.
-
-  4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
-
-  5. By another process connecting to a socket listened to by Nvim. This only
-     supports RPC channels, see |rpc-connecting|.
+1. Through stdin/stdout when `nvim` is started with `--headless` and a startup
+   script or `--cmd` command opens the stdio channel using |stdioopen()|.
+2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
+3. Through the PTY master end opened with `jobstart(…, {'pty': v:true})`.
+4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
+5. By another process connecting to a socket listened to by Nvim. This only
+   supports RPC channels, see |rpc-connecting|.
 
 Channels support multiple modes or protocols. In the most basic
 mode of operation, raw bytes are read and written to the channel.

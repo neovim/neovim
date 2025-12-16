@@ -204,18 +204,17 @@ About the `functions` map:
 External programs (clients) can use the metadata to discover the API, using
 any of these approaches:
 
-  1. Connect to a running Nvim instance and call |nvim_get_api_info()| via
-     msgpack-RPC. This is best for clients written in dynamic languages which
-     can define functions at runtime.
-
-  2. Start Nvim with |--api-info|. Useful for statically-compiled clients.
-     Example (requires Python "pyyaml" and "msgpack-python" modules): >
+1. Connect to a running Nvim instance and call |nvim_get_api_info()| via
+   msgpack-RPC. This is best for clients written in dynamic languages which
+   can define functions at runtime.
+2. Use the |--api-info| startup arg. Useful for statically-compiled clients.
+   Example (requires Python "pyyaml" and "msgpack-python" modules): >
      nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
-<
-  3. Use the |api_info()| Vimscript function. >vim
+3. Use the |api_info()| function. >vim
      :lua vim.print(vim.fn.api_info())
-<     Example using |filter()| to exclude non-deprecated API functions: >vim
+     " Example using filter() to exclude non-deprecated API functions:
      :new|put =map(filter(api_info().functions, '!has_key(v:val,''deprecated_since'')'), 'v:val.name')
+<
 
 ==============================================================================
 API contract                                                     *api-contract*
@@ -282,9 +281,9 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
         part of your request to ensure that no other changes have been made.
 
         {firstline} integer line number of the first line that was replaced.
-        Zero-indexed: if line 1 was replaced then {firstline} will be 0, not
-        1. {firstline} is always less than or equal to the number of lines
-        that were in the buffer before the lines were replaced.
+        Zero-indexed: if line 1 was replaced then {firstline} will be zero,
+        not one. {firstline} is always less than or equal to the number of
+        lines that were in the buffer before the lines were replaced.
 
         {lastline} integer line number of the first line that was not replaced
         (i.e. the range {firstline}, {lastline} is end-exclusive).
@@ -745,22 +744,33 @@ nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
             priority last).
 
 nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
-    Execute Lua code. Parameters (if any) are available as `...` inside the
-    chunk. The chunk can return a value.
+    Executes Lua code. Arguments are available as `...` inside the chunk. The
+    chunk can return a value.
 
     Only statements are executed. To evaluate an expression, prefix it with
-    `return`: return my_function(...)
+    "return": `return my_function(...)`
+
+    Example: >lua
+        local peer = vim.fn.jobstart({ vim.v.progpath, '--clean', '--embed' }, { rpc=true })
+        vim.print(vim.rpcrequest(peer, 'nvim_exec_lua', [[
+              local a, b = ...
+              return ('result: %s'):format(a + b)
+            ]],
+            { 1, 3 }
+          )
+        )
+<
 
     Attributes: ~
         |RPC| only
         Since: 0.5.0
 
     Parameters: ~
-      • {code}  (`string`) Lua code to execute
-      • {args}  (`any[]`) Arguments to the code
+      • {code}  (`string`) Lua code to execute.
+      • {args}  (`any[]`) Arguments to the Lua code.
 
     Return: ~
-        (`any`) Return value of Lua code if present or NIL.
+        (`any`) Value returned by the Lua code (if any), or NIL.
 
 nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
     Sends input-keys to Nvim, subject to various quirks controlled by `mode`

@@ -481,7 +481,7 @@ break.
 
 This will match at a line that ends in "one" and the next line starts with
 "two".  To match "one two" as well, you need to match a space or a line
-break.  The item to use for it is "\_s": >
+break.  The item to use for it is `\_s`: >
 
 	/one\_stwo
 
@@ -501,10 +501,10 @@ Many other items can be made to match a line break by prepending "\_".  For
 example: "\_." matches any character or a line break.
 
 	Note:
-	"\_.*" matches everything until the end of the file.  Be careful with
+	`\_.*` matches everything until the end of the file.  Be careful with
 	this, it can make a search command very slow.
 
-Another example is "\_[]", a character range that includes a line break: >
+Another example is `\_[]`, a character range that includes a line break: >
 
 	/"\_[^"]*"
 

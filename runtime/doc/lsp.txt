@@ -27,7 +27,6 @@ Follow these steps to get LSP features:
 1. Install language servers using your package manager or by following the
    upstream installation instructions. You can find language servers here:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
-
 2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
      vim.lsp.config['lua_ls'] = {
@@ -49,18 +48,14 @@ Follow these steps to get LSP features:
          }
        }
      }
-
 3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
      vim.lsp.enable('lua_ls')
-<
 4. Open a code file matching one of the `filetypes` specified in the config.
    Note: Depending on the LSP server, you may need to ensure your project has
    a |lsp-root_markers| file so the workspace can be recognized.
-
 5. Check that LSP is active ("attached") for the buffer: >vim
-    :checkhealth vim.lsp
-<
+     :checkhealth vim.lsp
 6. (Optional) Configure keymaps and autocommands to use LSP features.
    |lsp-attach|
 

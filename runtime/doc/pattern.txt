@@ -345,10 +345,10 @@ For starters, read chapter 27 of the user manual |usr_27.txt|.
 						*/branch* */\&*
 2. A branch is one or more concats, separated by "\&".  It matches the last
    concat, but only if all the preceding concats also match at the same
-   position.  Examples:
+   position.  Examples: >
 	"foobeep\&..." matches "foo" in "foobeep".
 	".*Peter\&.*Bob" matches in a line containing both "Peter" and "Bob"
-
+<
    branch ::=	    concat
 		or  concat \& concat
 		or  concat \& concat \& concat
@@ -609,13 +609,13 @@ overview.
 							*/star* */\star*
 *	(use \* when 'magic' is not set)
 	Matches 0 or more of the preceding atom, as many as possible.
-	Example  'nomagic'	matches ~
+	Example  'nomagic'	matches >
 	a*	   a\*		"", "a", "aa", "aaa", etc.
 	.*	   \.\*		anything, also an empty string, no end-of-line
 	\_.*	   \_.\*	everything up to the end of the buffer
 	\_.*END	   \_.\*END	everything up to and including the last "END"
 				in the buffer
-
+<
 	Exception: When "*" is used at the start of the pattern or just after
 	"^" it matches the star character.
 
