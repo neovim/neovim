@@ -2520,9 +2520,8 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
   if (strncmp(eap->cmd, "'<,'>", 5) == 0) {
     // The automatically inserted Visual area range is skipped, so that
     // typing ":cmdmod cmd" in Visual mode works without having to move the
-    // range to after the modififiers. The command will be
-    // "'<,'>cmdmod cmd", parse "cmdmod cmd" and then put back "'<,'>"
-    // before "cmd" below.
+    // range to after the modifiers. The command will be "'<,'>cmdmod cmd",
+    // parse "cmdmod cmd" and then put back "'<,'>" before "cmd" below.
     eap->cmd += 5;
     cmd_start = eap->cmd;
     has_visual_range = true;
