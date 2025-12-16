@@ -174,11 +174,12 @@ local function node()
       vim.fn.executable('npm') == 0
       and vim.fn.executable('yarn') == 0
       and vim.fn.executable('pnpm') == 0
+      and vim.fn.executable('bun') == 0
     )
   then
     health.warn(
-      '`node` and `npm` (or `yarn`, `pnpm`) must be in $PATH.',
-      'Install Node.js and verify that `node` and `npm` (or `yarn`, `pnpm`) commands work.'
+      '`node` and `npm` (or `yarn`, `pnpm`, `bun`) must be in $PATH.',
+      'Install Node.js and verify that `node` and `npm` (or `yarn`, `pnpm`, `bun`) commands work.'
     )
     return
   end
@@ -199,10 +200,11 @@ local function node()
   local node_detect_table = vim.fn['provider#node#Detect']() ---@type string[]
   local host = node_detect_table[1]
   if host:find('^%s*$') then
-    health.warn('Missing "neovim" npm (or yarn, pnpm) package.', {
+    health.warn('Missing "neovim" npm (or yarn, pnpm, bun) package.', {
       'Run in shell: npm install -g neovim',
       'Run in shell (if you use yarn): yarn global add neovim',
       'Run in shell (if you use pnpm): pnpm install -g neovim',
+      'Run in shell (if you use bun): bun install -g neovim',
       'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim',
     })
     return
@@ -214,6 +216,8 @@ local function node()
     manager = 'yarn'
   elseif vim.fn.executable('pnpm') == 1 then
     manager = 'pnpm'
+  elseif vim.fn.executable('bun') == 1 then
+    manager = 'bun'
   end
 
   local latest_npm_cmd = (
@@ -258,9 +262,10 @@ local function node()
       'Run in shell: npm install -g neovim',
       'Run in shell (if you use yarn): yarn global add neovim',
       'Run in shell (if you use pnpm): pnpm install -g neovim',
+      'Run in shell (if you use bun): bun install -g neovim',
     })
   else
-    health.ok('Latest "neovim" npm/yarn/pnpm package is installed: ' .. current_npm)
+    health.ok('Latest "neovim" npm/yarn/pnpm/bun package is installed: ' .. current_npm)
   end
 end
 
