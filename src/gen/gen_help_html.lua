@@ -130,8 +130,8 @@ local exclude_invalid_urls = {
   ['http://wiki.services.openoffice.org/wiki/Dictionaries'] = 'spell.txt',
   ['http://www.adapower.com'] = 'ft_ada.txt',
   ['http://www.jclark.com/'] = 'quickfix.txt',
-  ['https://cacm.acm.org/research/a-look-at-the-design-of-lua/'] = 'faq.txt', -- blocks curl
-  ['https://linux.die.net/man/2/poll'] = 'luvref.txt', -- blocks curl
+  ['https://cacm.acm.org/research/a-look-at-the-design-of-lua/'] = 'faq.txt', -- blocks GHA?
+  ['https://linux.die.net/man/2/poll'] = 'luvref.txt', -- blocks GHA?
 }
 
 -- Deprecated, brain-damaged files that I don't care about.
