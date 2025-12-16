@@ -2436,7 +2436,7 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
     Client RPC object
 
     Fields: ~
-      • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
+      • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
                       See |vim.lsp.rpc.request()|
       • {notify}      (`fun(method: string, params: any): boolean`) See
                       |vim.lsp.rpc.notify()|

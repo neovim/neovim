@@ -322,6 +322,182 @@ describe('semantic token highlighting', function()
       eq(true, called_range)
     end)
 
+    it('range requests preserve highlights outside updated range', function()
+      screen:try_resize(40, 6)
+      insert(text)
+      feed('gg')
+
+      local small_range_response = [[{
+        "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 ]
+      }]]
+
+      local client_id, bufnr = exec_lua(function(l, resp)
+        _G.response = resp
+        _G.server2 = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              range = true,
+              legend = vim.fn.json_decode(l),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(_G.response))
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd }))
+        vim.schedule(function()
+          vim.lsp.semantic_tokens._start(bufnr, client_id, 10)
+        end)
+        return client_id, bufnr
+      end, legend, small_range_response)
+
+      screen:expect {
+        grid = [[
+        ^#include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+                                                |
+      ]],
+      }
+
+      eq(
+        2,
+        exec_lua(function()
+          return #vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+        end)
+      )
+
+      small_range_response = [[{
+        "data": [ 7, 0, 5, 20, 0, 1, 0, 22, 20, 0, 1, 0, 6, 20, 0 ]
+      }]]
+
+      exec_lua(function(resp)
+        _G.response = resp
+      end, small_range_response)
+
+      feed('G')
+
+      screen:expect {
+        grid = [[
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+                                                |
+      ]],
+      }
+
+      eq(
+        5,
+        exec_lua(function()
+          return #vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+        end)
+      )
+
+      small_range_response = [[{
+        "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025, 1, 7, 11, 19, 8192 ]
+      }]]
+
+      exec_lua(function(resp)
+        _G.response = resp
+      end, small_range_response)
+      feed('ggLj0')
+
+      screen:expect {
+        grid = [[
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        ^#ifdef {5:__cplusplus}                      |
+                                                |
+      ]],
+      }
+
+      eq(
+        6,
+        exec_lua(function()
+          return #vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+        end)
+      )
+
+      eq(
+        {
+          {
+            line = 2,
+            end_line = 2,
+            start_col = 4,
+            end_col = 8,
+            marked = true,
+            modifiers = {
+              declaration = true,
+              globalScope = true,
+            },
+            type = 'function',
+          },
+          {
+            line = 4,
+            end_line = 4,
+            start_col = 8,
+            end_col = 9,
+            marked = true,
+            modifiers = {
+              declaration = true,
+              functionScope = true,
+            },
+            type = 'variable',
+          },
+          {
+            line = 5,
+            end_line = 5,
+            start_col = 7,
+            end_col = 18,
+            marked = true,
+            modifiers = {
+              globalScope = true,
+            },
+            type = 'macro',
+          },
+          {
+            line = 7,
+            end_line = 7,
+            start_col = 0,
+            end_col = 5,
+            marked = true,
+            modifiers = {},
+            type = 'comment',
+          },
+          {
+            line = 8,
+            end_line = 8,
+            start_col = 0,
+            end_col = 22,
+            marked = true,
+            modifiers = {},
+            type = 'comment',
+          },
+          {
+            line = 9,
+            end_line = 9,
+            start_col = 0,
+            end_col = 6,
+            marked = true,
+            modifiers = {},
+            type = 'comment',
+          },
+        },
+        exec_lua(function()
+          return vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+        end)
+      )
+    end)
+
     it('use LspTokenUpdate and highlight_token', function()
       insert(text)
       exec_lua(function()

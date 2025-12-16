@@ -77,8 +77,9 @@ end
 ---@param bufnr integer
 ---@param client vim.lsp.Client
 ---@param request STActiveRequest
+---@param ranges STTokenRange[]
 ---@return STTokenRange[]
-local function tokens_to_ranges(data, bufnr, client, request)
+local function tokens_to_ranges(data, bufnr, client, request, ranges)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
@@ -86,7 +87,9 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   -- For all encodings, \r\n takes up two code points, and \n (or \r) takes up one.
   local eol_offset = vim.bo.fileformat[bufnr] == 'dos' and 2 or 1
-  local ranges = {} ---@type STTokenRange[]
+  local version = request.version
+  local request_id = request.request_id
+  local last_insert_idx = 1
 
   local start = uv.hrtime()
   local ms_to_ns = 1e6
@@ -102,14 +105,18 @@ local function tokens_to_ranges(data, bufnr, client, request)
 
       if elapsed_ns > yield_interval_ns then
         vim.schedule(function()
-          coroutine.resume(co, util.buf_versions[bufnr])
+          -- Ensure the request hasn't become stale since the last time the coroutine ran.
+          -- If it's stale, we don't resume the coroutine so it'll be garbage collected.
+          if
+            version == util.buf_versions[bufnr]
+            and request_id == request.request_id
+            and api.nvim_buf_is_valid(bufnr)
+          then
+            coroutine.resume(co)
+          end
         end)
-        if request.version ~= coroutine.yield() then
-          -- request became stale since the last time the coroutine ran.
-          -- abandon it by yielding without a way to resume
-          coroutine.yield()
-        end
 
+        coroutine.yield()
         start = uv.hrtime()
       end
     end
@@ -141,7 +148,8 @@ local function tokens_to_ranges(data, bufnr, client, request)
 
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
 
-      ranges[#ranges + 1] = {
+      ---@type STTokenRange
+      local range = {
         line = line,
         end_line = end_line,
         start_col = start_col,
@@ -150,6 +158,47 @@ local function tokens_to_ranges(data, bufnr, client, request)
         modifiers = modifiers,
         marked = false,
       }
+
+      if last_insert_idx <= #ranges then
+        local needs_insert = true
+        local idx = vim.list.bisect(ranges, { line = range.line }, {
+          lo = last_insert_idx,
+          key = function(highlight)
+            return highlight.line
+          end,
+        })
+        while idx <= #ranges do
+          local token = ranges[idx]
+
+          if
+            token.line > range.line
+            or (token.line == range.line and token.start_col > range.start_col)
+          then
+            break
+          end
+
+          if
+            range.line == token.line
+            and range.start_col == token.start_col
+            and range.end_line == token.end_line
+            and range.end_col == token.end_col
+            and range.type == token.type
+          then
+            needs_insert = false
+            break
+          end
+
+          idx = idx + 1
+        end
+
+        last_insert_idx = idx
+        if needs_insert then
+          table.insert(ranges, last_insert_idx, range)
+        end
+      else
+        last_insert_idx = #ranges + 1
+        ranges[last_insert_idx] = range
+      end
     end
   end
 
@@ -207,7 +256,8 @@ function STHighlighter:cancel_active_request(client_id)
   if state.active_request.request_id then
     local client = assert(vim.lsp.get_client_by_id(client_id))
     client:cancel_request(state.active_request.request_id)
-    state.active_request = {}
+    state.active_request.request_id = nil
+    state.active_request.version = nil
   end
 end
 
@@ -274,8 +324,8 @@ function STHighlighter:send_request()
         -- cancel stale in-flight request
         if active_request.request_id then
           client:cancel_request(active_request.request_id)
-          active_request = {}
-          state.active_request = active_request
+          active_request.request_id = nil
+          active_request.version = nil
         end
 
         ---@type lsp.SemanticTokensParams|lsp.SemanticTokensRangeParams|lsp.SemanticTokensDeltaParams
@@ -301,11 +351,18 @@ function STHighlighter:send_request()
           end
 
           if err or not response then
-            highlighter.client_state[client.id].active_request = {}
+            active_request.request_id = nil
+            active_request.version = nil
             return
           end
 
-          coroutine.wrap(STHighlighter.process_response)(highlighter, response, client, version)
+          coroutine.wrap(STHighlighter.process_response)(
+            highlighter,
+            response,
+            client,
+            ctx.request_id,
+            version
+          )
         end, self.bufnr)
 
         if success then
@@ -359,16 +416,17 @@ end
 ---@async
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@param client vim.lsp.Client
+---@param request_id integer
 ---@param version integer
 ---@private
-function STHighlighter:process_response(response, client, version)
+function STHighlighter:process_response(response, client, request_id, version)
   local state = self.client_state[client.id]
   if not state then
     return
   end
 
   -- ignore stale responses
-  if state.active_request.version and version ~= state.active_request.version then
+  if state.active_request.request_id and request_id ~= state.active_request.request_id then
     return
   end
 
@@ -400,25 +458,32 @@ function STHighlighter:process_response(response, client, version)
     tokens = response.data
   end
 
+  local current_result = state.current_result
+  local version_changed = version ~= current_result.version
+  local highlights = {} --- @type STTokenRange[]
+  if current_result.highlights and not version_changed then
+    highlights = assert(current_result.highlights)
+  end
+
   -- convert token list to highlight ranges
   -- this could yield and run over multiple event loop iterations
-  local highlights = tokens_to_ranges(tokens, self.bufnr, client, state.active_request)
+  highlights = tokens_to_ranges(tokens, self.bufnr, client, state.active_request, highlights)
 
   -- reset active request
-  state.active_request = {}
+  state.active_request.request_id = nil
+  state.active_request.version = nil
 
   -- update the state with the new results
-  local current_result = state.current_result
   current_result.version = version
   current_result.result_id = response.resultId
   current_result.tokens = tokens
   current_result.highlights = highlights
-  current_result.namespace_cleared = false
-
-  -- redraw all windows displaying buffer (if still valid)
-  if api.nvim_buf_is_valid(self.bufnr) then
-    api.nvim__redraw({ buf = self.bufnr, valid = true })
+  if version_changed then
+    current_result.namespace_cleared = false
   end
+
+  -- redraw all windows displaying buffer
+  api.nvim__redraw({ buf = self.bufnr, valid = true })
 end
 
 --- @param bufnr integer
