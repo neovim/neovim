@@ -21,7 +21,8 @@ typedef struct {
 // properties, thus ul_len can be larger than STRLEN(ul_line) + 1.
 typedef struct {
   char *ul_line;   // text of the line
-  colnr_T ul_len;  // length of the line including NUL
+  // colnr_T ul_len;  // length of the line including NUL
+  colnr_T ul_textlen;  // length of the line excluding NUL
 } undoline_T;
 
 typedef struct u_entry u_entry_T;

@@ -149,7 +149,7 @@ func Test_undotree_bufnr()
   " Drop created windows
   set ul&
   new
-  only!
+  bw!
 endfunc
 
 func Test_global_local_undolevels()
@@ -194,6 +194,7 @@ func Test_global_local_undolevels()
   " Drop created windows
   set ul&
   new
+  bw! one two
   only!
 endfunc
 
@@ -255,7 +256,7 @@ func Test_undo_del_chars()
   later 1h
   call assert_equal('123-abc', getline(1))
 
-  close!
+  bw!
 endfunc
 
 func Test_undolist()
@@ -276,7 +277,16 @@ func Test_undolist()
   call feedkeys('achange3\<Esc>', 'xt')
   let a = execute('undolist')
   call assert_match("^\nnumber changes  when  *saved\n *2  *2  *.*\n *3  *2 .*$", a)
-  close!
+
+  " 3 save number
+  if has("persistent_undo")
+    setl undofile
+    w Xundolist.txt
+    defer delete('Xundolist.txt')
+    let lastline = execute('undolist')->split("\n")[-1]
+    call assert_match("ago        1", lastline)
+  endif
+  bw!
 endfunc
 
 func Test_U_command()
@@ -288,7 +298,7 @@ func Test_U_command()
   call assert_equal('', getline(1))
   norm! U
   call assert_equal('change1change2', getline(1))
-  close!
+  bw!
 endfunc
 
 func Test_undojoin()
@@ -395,7 +405,7 @@ func Test_insert_expr()
   call feedkeys("u", 'x')
   call assert_equal(['a', 'b', 'c', '12', 'd'], getline(2, '$'))
 
-  close!
+  bw!
 endfunc
 
 func Test_undofile_earlier()
