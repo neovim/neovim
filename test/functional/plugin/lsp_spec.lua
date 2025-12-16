@@ -6600,6 +6600,91 @@ describe('LSP', function()
     end)
   end)
 
+  describe('dynamic registration for didSave', function()
+    it('registers and unregisters didSave notifications', function()
+      exec_lua(create_server_definition)
+      local notify_patterns = exec_lua(function()
+        local server = _G._create_server()
+        _G.didSaveMessages = server.messages
+        _G.didSaveClientId = vim.lsp.start({
+          name = 'didSave-test',
+          cmd = server.cmd,
+        })
+
+        _G.didSaveAuGroup = ('nvim.lsp.dynamicDidSave_%d_%s'):format(_G.didSaveClientId, 'didSave')
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didSave',
+              method = 'textDocument/didSave',
+              registerOptions = {
+                includeText = false,
+                documentSelector = {
+                  {
+                    pattern = '**/some.file',
+                  },
+                  {
+                    pattern = '**/some.other',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = _G.didSaveClientId, method = 'textDocument/didSave' })
+
+        local autocmds = vim.api.nvim_get_autocmds({ group = _G.didSaveAuGroup })
+        local pats = {}
+        for _, a in ipairs(autocmds) do
+          table.insert(pats, a.pattern)
+        end
+        return pats
+      end)
+
+      eq(2, #notify_patterns)
+      local found_file = false
+      local found_other = false
+      for _, p in ipairs(notify_patterns) do
+        if p == '**/some.file' then
+          found_file = true
+        end
+        if p == '**/some.other' then
+          found_other = true
+        end
+      end
+      eq(true, found_file)
+      eq(true, found_other)
+
+      local didSaveParams = exec_lua(function()
+        local buffer = vim.uri_to_bufnr('file:///some.file')
+        vim.api.nvim_exec_autocmds('BufWritePost', { buffer = buffer })
+        return _G.didSaveMessages
+      end)
+
+      eq({
+        method = 'textDocument/didSave',
+        params = {
+          textDocument = {
+            uri = 'file:///some.file',
+          },
+        },
+      }, didSaveParams[3])
+
+      local after_unreg_err = pcall_err(exec_lua, function()
+        vim.lsp.handlers['client/unregisterCapability'](nil, {
+          unregisterations = {
+            {
+              id = 'didSave-test-0',
+              method = 'textDocument/didSave',
+            },
+          },
+        }, { client_id = _G.didSaveClientId })
+        vim.api.nvim_get_autocmds({ group = _G.didSaveAuGroup })
+      end)
+      matches("Invalid 'group': 'nvim.lsp.dynamicDidSave_1_didSave'$", after_unreg_err)
+    end)
+  end)
+
   describe('vim.lsp.config() and vim.lsp.enable()', function()
     it('merges settings from "*"', function()
       eq(
