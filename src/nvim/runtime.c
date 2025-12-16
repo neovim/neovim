@@ -229,7 +229,10 @@ char *estack_sfile(estack_arg_T which)
     }
   }
 
-  ga_append(&ga, NUL);
+  // Only NUL-terminate when not returning NULL.
+  if (ga.ga_data != NULL) {
+    ga_append(&ga, NUL);
+  }
   return (char *)ga.ga_data;
 }
 
