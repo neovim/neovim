@@ -117,6 +117,29 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
     })
 <
 ==============================================================================
+COMMANDS                                                    *:lsp*
+
+:lsp enable {name}?                                       *:lsp-enable*
+    Enables the given lsp clients. If no names are given, all clients
+    configured with |vim.lsp.config()| with a filetype matching the current
+    buffer's filetype are enabled. Use |vim.lsp.enable()| for non-interactive
+    use.
+
+:lsp disable {name}?                                      *:lsp-disable*
+    Disables (and stops) the given lsp clients. If no names are given,
+    all clients attached to the current buffer are disabled. Use
+    |vim.lsp.enable()| with `enable=false` for non-interactive use.
+
+:lsp restart {client}?                                    *:lsp-restart*
+    Restarts the given lsp clients. If no client names are given, all active
+    clients attached to the current buffer are restarted.
+
+:lsp stop {client}?                                       *:lsp-stop*
+    Stops the given lsp clients. If no client names are given, all active
+    clients attached to the current buffer are stopped. Use |Client:stop()|
+    for non-interactive use.
+
+==============================================================================
 CONFIG                                                  *lsp-config*
 
 You can configure LSP behavior statically via vim.lsp.config(), and
@@ -1021,12 +1044,6 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
     Examples: >lua
         vim.lsp.enable('clangd')
         vim.lsp.enable({'lua_ls', 'pyright'})
-<
-
-    Example: *lsp-restart* Passing `false` stops and detaches the client(s).
-    Thus you can "restart" LSP by disabling and re-enabling a given config: >lua
-        vim.lsp.enable('clangd', false)
-        vim.lsp.enable('clangd', true)
 <
 
     Example: To dynamically decide whether LSP is activated, define a
