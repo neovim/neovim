@@ -228,20 +228,18 @@ static Callback tfu_cb;          // 'tagfunc' callback function
 const char *did_set_tagfunc(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
+  int retval;
 
-  callback_free(&tfu_cb);
-  callback_free(&buf->b_tfu_cb);
-
-  if (*buf->b_p_tfu == NUL) {
-    return NULL;
+  if (args->os_flags & OPT_LOCAL) {
+    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_tfu_cb);
+  } else {
+    retval = option_set_callback_func(args->os_newval.string.data, &tfu_cb);
+    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
+      set_buflocal_tfu_callback(buf);
+    }
   }
 
-  if (option_set_callback_func(buf->b_p_tfu, &tfu_cb) == FAIL) {
-    return e_invarg;
-  }
-
-  callback_copy(&buf->b_tfu_cb, &tfu_cb);
-  return NULL;
+  return retval == FAIL ? e_invarg : NULL;
 }
 
 #if defined(EXITFREE)
