@@ -2291,6 +2291,31 @@ describe('API/win', function()
       api.nvim_open_win(0, true, { split = 'below' })
       eq(11, api.nvim_win_get_height(0))
     end)
+
+    it('no leak when win_set_buf fails and window is closed immediately', function()
+      -- Following used to leak.
+      command('autocmd BufEnter * ++once quit! | throw 1337')
+      eq(
+        'Window was closed immediately',
+        pcall_err(
+          api.nvim_open_win,
+          api.nvim_create_buf(true, true),
+          true,
+          { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+        )
+      )
+      -- If the window wasn't closed, still set errors from win_set_buf.
+      command('autocmd BufEnter * ++once throw 1337')
+      eq(
+        'BufEnter Autocommands for "*": 1337',
+        pcall_err(
+          api.nvim_open_win,
+          api.nvim_create_buf(true, true),
+          true,
+          { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+        )
+      )
+    end)
   end)
 
   describe('set_config', function()
