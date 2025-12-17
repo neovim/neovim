@@ -2929,11 +2929,18 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 const char *did_set_completefunc(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  if (option_set_callback_func(buf->b_p_cfu, &cfu_cb) == FAIL) {
-    return e_invarg;
+  int retval;
+
+  if (args->os_flags & OPT_LOCAL) {
+    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_cfu_cb);
+  } else {
+    retval = option_set_callback_func(args->os_newval.string.data, &cfu_cb);
+    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
+      set_buflocal_cfu_callback(buf);
+    }
   }
-  set_buflocal_cfu_callback(buf);
-  return NULL;
+
+  return retval == FAIL ? e_invarg : NULL;
 }
 
 /// Copy the global 'completefunc' callback function to the buffer-local
@@ -2950,11 +2957,18 @@ void set_buflocal_cfu_callback(buf_T *buf)
 const char *did_set_omnifunc(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
-    return e_invarg;
+  int retval;
+
+  if (args->os_flags & OPT_LOCAL) {
+    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_ofu_cb);
+  } else {
+    retval = option_set_callback_func(args->os_newval.string.data, &ofu_cb);
+    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
+      set_buflocal_ofu_callback(buf);
+    }
   }
-  set_buflocal_ofu_callback(buf);
-  return NULL;
+
+  return retval == FAIL ? e_invarg : NULL;
 }
 
 /// Copy the global 'omnifunc' callback function to the buffer-local 'omnifunc'

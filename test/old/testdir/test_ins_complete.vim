@@ -2535,6 +2535,35 @@ func Test_completefunc_callback()
     call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
     call assert_equal([[1, ''], [0, 'five']], g:CompleteFunc2Args)
     bw!
+
+    #" :setlocal and :setglobal
+    set completefunc&
+    setlocal completefunc=function('g:CompleteFunc1',\ [22])
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:CompleteFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:CompleteFunc1Args)
+    bw!
+    setglobal completefunc=function('g:CompleteFunc1',\ [23])
+    call setline(1, 'sun')
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:CompleteFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+    call assert_equal([[23, 1, ''], [23, 0, 'sun']], g:CompleteFunc1Args)
+    setlocal completefunc&
+    call setline(1, 'sun')
+    LET g:CompleteFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:CompleteFunc1Args)
+    :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -2809,6 +2838,35 @@ func Test_omnifunc_callback()
     call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
     call assert_equal([[1, ''], [0, 'nine']], g:OmniFunc2Args)
     bw!
+
+    #" :setlocal and :setglobal
+    set omnifunc&
+    setlocal omnifunc=function('g:OmniFunc1',\ [22])
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:OmniFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:OmniFunc1Args)
+    bw!
+    setglobal omnifunc=function('g:OmniFunc1',\ [23])
+    call setline(1, 'sun')
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[22, 1, ''], [22, 0, 'sun']], g:OmniFunc1Args)
+    new
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
+    call assert_equal([[23, 1, ''], [23, 0, 'sun']], g:OmniFunc1Args)
+    setlocal omnifunc&
+    call setline(1, 'sun')
+    LET g:OmniFunc1Args = []
+    call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E764:')
+    call assert_equal([], g:OmniFunc1Args)
+    :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
 
