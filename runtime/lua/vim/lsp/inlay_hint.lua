@@ -436,12 +436,6 @@ function M.enable(enable, filter)
   end
 end
 
---- @class (private) vim.lsp.inlay_hint.action.LocationItem
---- @field hint_name string
---- @field hint_position lsp.Position
---- @field label_name string
---- @field location lsp.Location
-
 --- @class (private) vim.lsp.inlay_hint.action.hint_label
 --- @field hint lsp.InlayHint
 --- @field label lsp.InlayHintLabelPart
