@@ -343,6 +343,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     }
   }
   if (!tp) {
+    api_clear_error(err);  // may have been set by win_set_buf
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
     goto cleanup;
   }
