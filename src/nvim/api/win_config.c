@@ -280,8 +280,12 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       }
     }
   } else {
-    if (!check_split_disallowed_err(curwin, err)) {
-      goto cleanup;  // error already set
+    // Unlike check_split_disallowed_err, ignore `split_disallowed`, as opening a float shouldn't
+    // mess with the frame structure. Still check `b_locked_split` to avoid opening more windows
+    // into a closing buffer, though.
+    if (curwin->w_buffer->b_locked_split) {  // Can't instead check `buf` in case win_set_buf fails!
+      api_set_error(err, kErrorTypeException, "E1159: Cannot open a float when closing the buffer");
+      goto cleanup;
     }
     wp = win_new_float(NULL, false, fconfig, err);
   }
