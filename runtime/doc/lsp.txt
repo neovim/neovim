@@ -340,50 +340,6 @@ current buffer.
 Requests and notifications defined by the LSP specification are referred to as
 "LSP methods". These are handled by Lua |lsp-handler| functions.
 
-The |vim.lsp.handlers| global table defines default handlers (only for
-server-to-client requests/notifications, not client-to-server). Note: depends
-on server support; they won't run if your server doesn't support them.
-
-You can list them with: >vim
-
-    :lua vim.print(vim.tbl_keys(vim.lsp.handlers))
-<
-They are also listed below.
-
-- `'callHierarchy/incomingCalls'`
-- `'callHierarchy/outgoingCalls'`
-- `'client/registerCapability'`
-- `'client/unregisterCapability'`
-- `'signature_help'`
-- `'textDocument/codeLens'`
-- `'textDocument/completion'`
-- `'textDocument/diagnostic'`
-- `'textDocument/documentHighlight'`
-- `'textDocument/documentSymbol'`
-- `'textDocument/formatting'`
-- `'textDocument/hover'`
-- `'textDocument/inlayHint'`
-- `'textDocument/inlineCompletion'`
-- `'textDocument/publishDiagnostics'`
-- `'textDocument/rangeFormatting'`
-- `'textDocument/rename'`
-- `'textDocument/signatureHelp'`
-- `'typeHierarchy/subtypes'`
-- `'typeHierarchy/supertypes'`
-- `'window/logMessage'`
-- `'window/showDocument'`
-- `'window/showMessage'`
-- `'window/showMessageRequest'`
-- `'window/workDoneProgress/create'`
-- `'workspace/applyEdit'`
-- `'workspace/configuration'`
-- `'workspace/executeCommand'`
-- `'workspace/diagnostic/refresh'`
-- `'workspace/inlayHint/refresh'`
-- `'workspace/semanticTokens/refresh'`
-- `'workspace/symbol'`
-- `'workspace/workspaceFolders'`
-
                                                                  *lsp-handler*
 LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
 to the server. (Notifications, as opposed to requests, are fire-and-forget:
