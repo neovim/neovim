@@ -1349,6 +1349,15 @@ write_error:
   fclose(fp);
   if (!write_ok) {
     semsg(_(e_write_error_in_undo_file_str), file_name);
+  } else {
+    const uint64_t MB = 1024 * 1024;
+    FileInfo file_info;
+    if (!buf->b_u_warned_large
+        && os_fileinfo(file_name, &file_info)
+        && file_info.stat.st_size > 10 * MB) {
+      give_warning(_("Undo file size is very large, consider flushing it"), true, true);
+      buf->b_u_warned_large = true;
+    }
   }
 
   if (buf->b_ffname != NULL) {
@@ -2971,6 +2980,7 @@ void u_clearall(buf_T *buf)
 {
   buf->b_u_newhead = buf->b_u_oldhead = buf->b_u_curhead = NULL;
   buf->b_u_synced = true;
+  buf->b_u_warned_large = false;
   buf->b_u_numhead = 0;
   buf->b_u_line_ptr = NULL;
   buf->b_u_line_lnum = 0;

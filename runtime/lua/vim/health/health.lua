@@ -625,11 +625,48 @@ local function check_sysinfo()
   end)
 end
 
+local function check_undo()
+  health.start('Undo')
+
+  if vim.o.undodir == '' then
+    health.warn('"undodir" is not set')
+    return
+  end
+
+  local undodir = vim.fs.normalize(vim.o.undodir)
+  if vim.fn.isdirectory(undodir) == 0 then
+    health.warn('"undodir" directory does not exist: ' .. undodir)
+    return
+  end
+
+  local MB = 1024 * 1024
+  local threshold = 10 * MB
+  local large_u_files = {}
+
+  for name, type in vim.fs.dir(undodir) do
+    if type == 'file' then
+      local path = vim.fs.joinpath(undodir, name)
+      local size = vim.fn.getfsize(path)
+      if size > threshold then
+        table.insert(large_u_files, string.format('  %s (%.1f MB)', path, size / MB))
+      end
+    end
+  end
+
+  if #large_u_files > 0 then
+    local msg = 'Found undo files larger than 10MB:\n' .. table.concat(large_u_files, '\n')
+    health.warn(msg, { 'These files might cause slow startup or high memory usage.' })
+  else
+    health.ok('Undo files are within size limits')
+  end
+end
+
 function M.check()
   check_sysinfo()
   check_config()
   check_runtime()
   check_performance()
+  check_undo()
   check_rplugin_manifest()
   check_terminal()
   check_tmux()
