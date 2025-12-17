@@ -492,7 +492,7 @@ function M._profile(opts)
 
   if opts and opts.loaders then
     for l, loader in pairs(loaders) do
-      local loc = debug.getinfo(loader, 'Sn').source:sub(2)
+      local loc = debug.getinfo(loader, 'Sn').source:gsub('^@', '')
       loaders[l] = track('loader ' .. l .. ': ' .. loc, loader)
     end
   end
