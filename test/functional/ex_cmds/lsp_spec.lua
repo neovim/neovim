@@ -126,4 +126,17 @@ describe(':lsp', function()
       vim.split(t.pcall_err(n.command, 'lsp enable dummy'), '\n')[1]
     )
   end)
+
+  it('disable argument completion shows only attached clients', function()
+    local completions = exec_lua(function()
+      local server2 = _G._create_server()
+      vim.lsp.config('another_dummy', {
+        filetypes = { 'python' },
+        cmd = server2.cmd,
+      })
+      vim.lsp.enable({ 'dummy', 'another_dummy' })
+      return vim.fn.getcompletion('lsp disable ', 'cmdline')
+    end)
+    eq({ 'dummy' }, completions)
+  end)
 end)

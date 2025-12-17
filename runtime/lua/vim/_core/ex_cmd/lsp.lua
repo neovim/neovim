@@ -45,13 +45,24 @@ local function filtered_config_names(filter)
   end
 end
 
+--- @return string[]
+local function get_attached_config_names()
+  return vim
+    .iter(lsp.get_clients { bufnr = api.nvim_get_current_buf() })
+    :filter(function(client)
+      return lsp.config[client.name] ~= nil
+    end)
+    :map(function(client)
+      return client.name
+    end)
+    :totable()
+end
+
 local complete_args = {
   enable = filtered_config_names(function(name)
     return not lsp.is_enabled(name)
   end),
-  disable = filtered_config_names(function(name)
-    return lsp.is_enabled(name)
-  end),
+  disable = get_attached_config_names,
   restart = get_client_names,
   stop = get_client_names,
 }
@@ -88,15 +99,7 @@ end
 local function ex_lsp_disable(config_names)
   -- Default to disabling all clients attached to the current buffer.
   if #config_names == 0 then
-    config_names = vim
-      .iter(lsp.get_clients { bufnr = api.nvim_get_current_buf() })
-      :map(function(client)
-        return client.name
-      end)
-      :filter(function(name)
-        return lsp.config[name] ~= nil
-      end)
-      :totable()
+    config_names = get_attached_config_names()
   end
 
   checked_enable(config_names, false)
