@@ -298,8 +298,6 @@ LSP
 • Support for dynamic registration for `textDocument/diagnostic`
 • |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
   |hl-LspReferenceTarget| highlight group.
-• |:lsp| for interactively enabling, disabling, restarting, and stopping lsp
-  clients.
 • |vim.lsp.inlay_hint.action()| to apply actions from certain fields of |lsp-inlay_hint|.
 
 LUA

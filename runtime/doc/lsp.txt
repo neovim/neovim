@@ -2176,7 +2176,7 @@ action({action}, {opts}, {callback})             *vim.lsp.inlay_hint.action()*
                       • `on_finish`:
                         `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})`
                         see the `callback` parameter of
-                        `vim.lsp.inlay_hint.apply_action`. When implementing a
+                        `vim.lsp.inlay_hint.action`. When implementing a
                         custom handler, the `on_finish` callback should be
                         called when the handler is returning a non-zero value.
                       This custom handler should also return the number of
