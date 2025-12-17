@@ -3719,6 +3719,11 @@ func Test_builtin_check()
   unlet bar
 endfunc
 
+func Test_funcref_to_string()
+  let Fn = funcref('g:Test_funcref_to_string')
+  call assert_equal("function('g:Test_funcref_to_string')", string(Fn))
+endfunc
+
 " Test for isabsolutepath()
 func Test_isabsolutepath()
   call assert_false(isabsolutepath(''))

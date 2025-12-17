@@ -351,8 +351,16 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     break;
   case VAR_PARTIAL: {
     partial_T *const pt = tv->vval.v_partial;
-    (void)pt;
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));
+    char *const fname = pt == NULL ? NULL : partial_name(pt);
+    char *ffname = NULL;
+    if (fname != NULL && pt->pt_name == NULL && isupper(fname[0])) {
+      size_t len = strlen(fname) + 3;
+      ffname = xmalloc(len);
+      snprintf(ffname, len, "g:%s", fname);
+    }
+    (void)fname;
+    (void)ffname;
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, ffname != NULL ? ffname : fname);
     kvi_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvPartial,
         .tv = tv,
@@ -364,6 +372,9 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
           },
         },
     }));
+    if (ffname != NULL) {
+      xfree(ffname);
+    }
     break;
   }
   case VAR_LIST: {
