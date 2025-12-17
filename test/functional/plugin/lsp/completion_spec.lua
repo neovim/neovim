@@ -1394,6 +1394,64 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
   end)
+  it('sorts items when fuzzy is enabled and prefix not empty #33610', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          kind = 21,
+          label = '-row-end-1',
+          sortText = '0327',
+          textEdit = {
+            newText = '-row-end-1',
+            range = {
+              ['end'] = {
+                character = 1,
+                line = 0,
+              },
+              start = {
+                character = 0,
+                line = 0,
+              },
+            },
+          },
+        },
+        {
+          kind = 21,
+          label = 'w-1/2',
+          sortText = '3052',
+          textEdit = {
+            newText = 'w-1/2',
+            range = {
+              ['end'] = {
+                character = 1,
+                line = 0,
+              },
+              start = {
+                character = 0,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,fuzzy'
+    end)
+    create_server('dummy', completion_list, { trigger_chars = { '-' } })
+    feed('Sw-')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-y>')
+    eq('w-1/2', n.api.nvim_get_current_line())
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
