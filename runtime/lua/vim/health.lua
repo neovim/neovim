@@ -384,11 +384,7 @@ function M._check(mods, plugin_names)
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
   local bufnr ---@type integer
-  if
-    vim.g.health
-    and type(vim.g.health) == 'table'
-    and vim.tbl_get(vim.g.health, 'style') == 'float'
-  then
+  if vim.tbl_get(vim.g, 'health', 'style') == 'float' then
     local available_lines = vim.o.lines - 12
     local max_height = math.min(math.floor(vim.o.lines * 0.8), available_lines)
     local max_width = 80
@@ -485,7 +481,10 @@ function M._check(mods, plugin_names)
 
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()
-    if vim.fn.maparg('q', 'n', false, false) == '' then
+    if
+      vim.tbl_get(vim.g, 'health', 'style') == 'float'
+      or vim.fn.maparg('q', 'n', false, false) == ''
+    then
       vim.keymap.set('n', 'q', function()
         if not pcall(vim.cmd.close) then
           vim.cmd.bdelete()
