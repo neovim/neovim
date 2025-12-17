@@ -2000,6 +2000,13 @@ describe('API/win', function()
     it('checks if splitting disallowed', function()
       command('split | autocmd WinEnter * ++once call nvim_open_win(0, 0, #{split: "right"})')
       matches("E242: Can't split a window while closing another$", pcall_err(command, 'quit'))
+      -- E242 is not needed for floats.
+      exec([[
+        split
+        autocmd WinEnter * ++once let g:win = nvim_open_win(0, 0, #{relative: "editor", row: 0, col: 0, width: 5, height: 5})
+        quit
+      ]])
+      eq('editor', eval('nvim_win_get_config(g:win).relative'))
 
       command('only | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left"})')
       matches(
@@ -2033,10 +2040,10 @@ describe('API/win', function()
         only
         new
         let g:buf = bufnr()
-        autocmd BufUnload * ++once let g:win = nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
+        autocmd BufUnload * ++once call nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
         setlocal bufhidden=unload
       ]])
-      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      matches('E1159: Cannot open a float when closing the buffer$', pcall_err(command, 'quit'))
       eq(false, eval('nvim_buf_is_loaded(g:buf)'))
       eq(0, eval('win_findbuf(g:buf)->len()'))
 
@@ -2052,7 +2059,7 @@ describe('API/win', function()
               \| call nvim_open_win(g:buf2, 1, #{relative: 'editor', width: 5, height: 5, col: 5, row: 5})
         setlocal bufhidden=wipe
       ]])
-      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      matches('E1159: Cannot open a float when closing the buffer$', pcall_err(command, 'quit'))
       eq(false, eval('nvim_buf_is_loaded(g:buf)'))
       eq(0, eval('win_findbuf(g:buf)->len()'))
       -- BufLeave shouldn't run here (buf2 isn't deleted and remains hidden)
