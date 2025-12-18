@@ -1252,7 +1252,7 @@ local function traceback()
     if not info then
       break
     end
-    local msg = ('  %s:%s'):format(info.source:sub(2), info.currentline)
+    local msg = ('  %s:%s'):format(info.source:gsub('^@', ''), info.currentline)
     table.insert(backtrace, msg)
     level = level + 1
   end

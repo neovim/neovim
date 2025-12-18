@@ -236,7 +236,7 @@ Note:
 
                                                          *lua-script-location*
 To get its own location, Lua scripts/modules can use |debug.getinfo()|: >
-    debug.getinfo(1, 'S').source:sub(2)
+    debug.getinfo(1, 'S').source:gsub('^@', '')
 <
 
 ==============================================================================

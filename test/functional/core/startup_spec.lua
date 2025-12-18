@@ -1243,7 +1243,7 @@ describe('user config init', function()
           string.format(
             [[
           vim.g.exrc_file = "%s"
-          vim.g.exrc_path = debug.getinfo(1, 'S').source:sub(2)
+          vim.g.exrc_path = debug.getinfo(1, 'S').source:gsub('^@', '')
           vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
         ]],
             exrc_path
