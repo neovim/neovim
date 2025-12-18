@@ -277,16 +277,17 @@ func Test_tagfunc_callback()
     call assert_equal([], g:TagFunc1Args)
     bw!
     setglobal tagfunc=function('g:TagFunc1',\ [23])
+    LET g:TagFunc1Args = []
     call assert_fails("tag a22", 'E433:')
     call assert_equal([22, 'a22', '', {}], g:TagFunc1Args)
-    new
-    LET g:TagFunc1Args = []
-    call assert_fails("tag a23", 'E433:')
-    call assert_equal([23, 'a23', '', {}], g:TagFunc1Args)
     setlocal tagfunc&
     LET g:TagFunc1Args = []
     call assert_fails("tag a23", 'E433:')
     call assert_equal([], g:TagFunc1Args)
+    new
+    LET g:TagFunc1Args = []
+    call assert_fails("tag a23", 'E433:')
+    call assert_equal([23, 'a23', '', {}], g:TagFunc1Args)
     :%bw!
   END
   call CheckLegacyAndVim9Success(lines)
