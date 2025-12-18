@@ -343,6 +343,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 
   clearpos(&saved_fmark.mark);          // shutup gcc 4.0
   saved_fmark.fnum = 0;
+  saved_fmark.view = (fmarkv_T)INIT_FMARKV;
 
   // Don't add a tag to the tagstack if 'tagstack' has been reset.
   assert(tag != NULL);
@@ -446,6 +447,9 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = true;
+        if (jop_flags & kOptJopFlagView) {
+          mark_view_restore(&saved_fmark);
+        }
         check_cursor(curwin);
         if ((fdo_flags & kOptFdoFlagTag) && old_KeyTyped) {
           foldOpenCursor();
@@ -530,6 +534,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
       if (save_pos) {
         tagstack[tagstackidx].fmark.mark = curwin->w_cursor;
         tagstack[tagstackidx].fmark.fnum = curbuf->b_fnum;
+        tagstack[tagstackidx].fmark.view = mark_view_make(curwin->w_topline, curwin->w_cursor);
       }
 
       // Curwin will change in the call to jumpto_tag() if ":stag" was
@@ -3426,6 +3431,7 @@ static void tagstack_push_item(win_T *wp, char *tagname, int cur_fnum, int cur_m
   tagstack[idx].cur_match = MAX(tagstack[idx].cur_match, 0);
   tagstack[idx].fmark.mark = mark;
   tagstack[idx].fmark.fnum = fnum;
+  tagstack[idx].fmark.view = (fmarkv_T)INIT_FMARKV;
   tagstack[idx].user_data = user_data;
 }
 

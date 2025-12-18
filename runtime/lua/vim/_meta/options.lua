@@ -3795,8 +3795,9 @@ vim.go.js = vim.go.joinspaces
 --- 		jumping to a location.  `jumplist-stack`
 ---
 ---   view          When moving through the jumplist, `changelist`,
---- 		`alternate-file` or using `mark-motions` try to
---- 		restore the `mark-view` in which the action occurred.
+--- 		`alternate-file`, using `mark-motions` or when popping
+--- 		the `tagstack` try to restore the `mark-view` in which
+--- 		the action occurred.
 ---
 ---   clean         Remove unloaded buffers from the jumplist.
 --- 		EXPERIMENTAL: this flag may change in the future.
