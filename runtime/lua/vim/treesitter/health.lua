@@ -102,7 +102,7 @@ function M.check()
 
       for _, query in ipairs(queries) do
         local dir = vim.fn.fnamemodify(query.path, ':h')
-        health.ok(string.format('%-15s %s: %s', lang, query.type, dir))
+        health.ok(string.format('%-15s %-15s %s', lang, query.type, dir))
       end
     end
   end
