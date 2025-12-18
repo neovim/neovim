@@ -10,7 +10,7 @@ cursor to it and hit CTRL-], or ctrl-click with mouse. Try it here: |bars|.)
 About Nvim						*reference_toc* *Q_ct*
 
 - |news|		News since the previous release
-- |nvim|		Getting start with Nvim
+- |nvim|		Getting started with Nvim
 - |tutor|		30-minute interactive course for beginners
 - |vim-differences|	Nvim compared to Vim
 - |faq|			Frequently Asked Questions
