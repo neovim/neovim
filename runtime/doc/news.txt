@@ -212,6 +212,8 @@ DIAGNOSTICS
   diagnostics
 • |vim.diagnostic.fromqflist()| now accepts an `opts` table with
   `merge_lines` to merge multi-line compiler messages.
+• |vim.diagnostic.Opts.VirtualText| `prefix` function can now return
+  `(text, hl_group)` to customize the prefix highlight group.
 
 EDITOR
 
