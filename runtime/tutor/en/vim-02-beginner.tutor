@@ -42,7 +42,7 @@ Test cases: {curly}, [square], <angle>, and "quoted" items.
 
   4. Advanced combinations:
      - `ciwnew<ESC>`{normal} - Change current word to "new"
-     - `ciw"<CTRL>-"<ESC>`{normal} - (Note: This is Ctrl-Minus): wrap current word in quotes
+     - `ciw"<CTRL-R>-"<ESC>`{normal} - Wrap current word in quotes
      - `gUit`{normal}        - Uppercase inner HTML tag content
      - `va"p`{normal}        - Select quoted text and paste over it
 
@@ -62,11 +62,11 @@ Final exercise: (Modify "this" text) by [applying {various} operations]<
   3. Navigate forward to the word 'cookie' (`fk`{normal} or `2fc`{normal}
      or `$2b`{normal} or `/co`{normal} `<ENTER>`{normal}) and type `"byiw`{normal}
 
-  4. Navigate to any point on the word 'Vince' and type `ciw<CTRL-r>a<ESC>`{normal}
+  4. Navigate to any point on the word 'Vince' and type `ciw<CTRL-R>a<ESC>`{normal}
 
 **MNEMONIC**: *(c)hange (i)nner (w)ord with <contents of (r)egister> named (a)*
 
-  5. Navigate to any point on the word 'cake' and type `ciw<CTRL-r>b<ESC>`{normal}
+  5. Navigate to any point on the word 'cake' and type `ciw<CTRL-R>b<ESC>`{normal}
 
 a) Edward will henceforth be in charge of the cookie rations
 b) In this capacity, Vince will have sole cake discretionary powers
@@ -88,10 +88,10 @@ REFERENCE: [Registers](registers)
 
   2. Navigate to any point on the supplied number
 
-  3. Type `ciw<CTRL-r>=`{normal}60\*60\*24 `<ENTER>`{normal}
+  3. Type `ciw<CTRL-R>=`{normal}60\*60\*24 `<ENTER>`{normal}
 
   4. On the next line, enter insert mode and add today's date with 
-     `<CTRL-r>=`{normal}`system('date')`{vim} `<ENTER>`{normal}
+     `<CTRL-R>=`{normal}`system('date')`{vim} `<ENTER>`{normal}
 
 NOTE: All calls to system are OS dependent, e.g. on Windows use 
       `system('date /t')`{vim}   or  `:r!date /t`{vim}
@@ -194,7 +194,7 @@ Practice: "_diw on any word to delete it without affecting yank history
 NOTE: a common conundrum when coding is moving around large chunks of code.
       The following technique helps avoid number line calculations associated
       with operations like `"a147d`{normal} or `:945,1091d a`{vim} or even worse
-      using `i<CTRL-r>=`{normal}1091-945 `<ENTER>`{normal} first
+      using `i<CTRL-R>=`{normal}1091-945 `<ENTER>`{normal} first
 
   1. Move the cursor to the line below marked ✓
 
@@ -257,9 +257,9 @@ REFERENCE: [Marks](marks)
   5. Insert text directly from registers in insert mode: `<CTRL-R>a`{normal}
 
   6. Insert the results of simple arithmetic operations:
-     `<CTRL-r>=`{normal}60\*60`<ENTER>`{normal} in insert mode
+     `<CTRL-R>=`{normal}60\*60`<ENTER>`{normal} in insert mode
   7. Insert the results of system calls:
-     `<CTRL-r>=`{normal}`system('ls -1')`{vim}`<ENTER>`{normal} in insert mode
+     `<CTRL-R>=`{normal}`system('ls -1')`{vim}`<ENTER>`{normal} in insert mode
 
   8. Inspect registers with `:reg`{vim}
   9. Learn the final destination of whole line deletions: `dd`{normal} in
