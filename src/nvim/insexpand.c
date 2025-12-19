@@ -552,10 +552,7 @@ bool check_compl_option(bool dict_opt)
     if (emsg_silent == 0 && !in_assert_fails) {
       vim_beep(kOptBoFlagComplete);
       setcursor();
-      if (!ui_has(kUIMessages)) {
-        ui_flush();
-        msg_delay(2004, false);
-      }
+      msg_delay(2004, false);
     }
     return false;
   }

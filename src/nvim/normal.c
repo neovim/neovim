@@ -701,7 +701,7 @@ static void normal_redraw_mode_message(NormalState *s)
   setcursor();
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
-  if (!ui_has(kUIMessages) && (msg_scroll || emsg_on_display)) {
+  if (msg_scroll || emsg_on_display) {
     msg_delay(1003, true);            // wait at least one second
   }
   if (ui_has(kUIMessages)) {

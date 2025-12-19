@@ -3923,17 +3923,22 @@ int vim_dialog_yesnoallcancel(int type, char *title, char *message, int dflt)
   return VIM_CANCEL;
 }
 
-/// Force the user to see a message by pausing for `ms` milliseconds.
+/// Only for legacy UI (`!ui_has(kUIMessages)`): Pause to display a message for `ms` milliseconds.
 ///
 /// TODO(justinmk): Most of these cases may not be needed after "ui2"...
 void msg_delay(uint64_t ms, bool ignoreinput)
 {
+  if (ui_has(kUIMessages)) {
+    return;
+  }
+
   if (nvim_testing) {
     // XXX: Skip non-functional (UI only) delay in tests/CI.
     ms = 100;
   }
 
   DLOG("%" PRIu64 " ms%s", ms, nvim_testing ? " (skipped by NVIM_TEST)" : "");
+  ui_flush();
   os_delay(ms, ignoreinput);
 }
 
@@ -3944,7 +3949,6 @@ void msg_check_for_delay(bool check_msg_scroll)
 {
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
       && !did_wait_return && emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-    ui_flush();
     msg_delay(1006, true);
     emsg_on_display = false;
     if (check_msg_scroll) {

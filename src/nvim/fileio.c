@@ -3028,12 +3028,8 @@ int buf_check_timestamp(buf_T *buf)
         msg_clr_eos();
         msg_end();
         if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-          ui_flush();
-          // give the user some time to think about it
-          msg_delay(1004, true);
-
-          // don't redraw and erase the message
-          redraw_cmdline = false;
+          msg_delay(1004, true);  // give the user some time to think about it
+          redraw_cmdline = false;  // don't redraw and erase the message
         }
       }
       already_warned = true;

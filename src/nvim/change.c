@@ -92,8 +92,7 @@ void change_warning(buf_T *buf, int col)
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     msg_end();
-    if (msg_silent == 0 && !silent_mode && ui_active() && !ui_has(kUIMessages)) {
-      ui_flush();
+    if (msg_silent == 0 && !silent_mode && ui_active()) {
       msg_delay(1002, true);  // give the user time to think about it
     }
     buf->b_did_warn = true;
@@ -132,7 +131,6 @@ void changed(buf_T *buf)
       // message.  Since we could be anywhere, call wait_return() now,
       // and don't let the emsg() set msg_scroll.
       if (need_wait_return && emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-        ui_flush();
         msg_delay(2002, true);
         wait_return(true);
         msg_scroll = save_msg_scroll;

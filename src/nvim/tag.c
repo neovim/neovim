@@ -742,8 +742,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         } else {
           give_warning(IObuff, ic, true);
         }
-        if (ic && !msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
-          ui_flush();
+        if (ic && !msg_scrolled && msg_silent == 0) {
           msg_delay(1007, true);
         }
       }
@@ -2981,8 +2980,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
           // is set and match found while ignoring case.
           if (found == 2 || !save_p_ic) {
             msg(_("E435: Couldn't find tag, just guessing!"), 0);
-            if (!msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
-              ui_flush();
+            if (!msg_scrolled && msg_silent == 0) {
               msg_delay(1010, true);
             }
           }
