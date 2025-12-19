@@ -453,7 +453,7 @@ static bool typval_conv_special = false;
     lua_pushlstring(lstate, blob_ != NULL ? blob_->bv_ga.ga_data : "", (size_t)(len)); \
   } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   do { \
     ufunc_T *fp = find_func(fun); \
     if (fp != NULL && fp->uf_flags & FC_LUAREF) { \
