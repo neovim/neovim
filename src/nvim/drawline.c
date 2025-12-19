@@ -313,9 +313,9 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
 
             /// The Virtual Text of the decor item we're looking ahead to
             DecorVirtText *lookaheadVt = NULL;
-            if (item->kind == kDecorKindVirtText) {
-              assert(item->data.vt);
-              lookaheadVt = item->data.vt;
+            if (lookaheadItem->kind == kDecorKindVirtText) {
+              assert(lookaheadItem->data.vt);
+              lookaheadVt = lookaheadItem->data.vt;
             }
 
             if (decor_virt_pos_kind(lookaheadItem) == kVPosEndOfLineRightAlign) {

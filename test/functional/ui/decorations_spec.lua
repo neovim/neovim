@@ -631,6 +631,38 @@ describe('decorations providers', function()
     }
   end)
 
+  it('eol_right_align: second text much longer than first', function()
+    insert('short')
+    setup_provider [[
+      local test_ns = api.nvim_create_namespace "test_length_diff"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'AA', 'Comment'}};
+            virt_text_pos = 'eol_right_align';
+            priority = 100;
+            ephemeral = true;
+          })
+
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'BBBBBBBBBBBBBBBBBBBB', 'ErrorMsg'}};
+            virt_text_pos = 'eol_right_align';
+            priority = 200;
+            ephemeral = true;
+          })
+        end
+      end
+    ]]
+
+    screen:expect([[
+      shor^t            {4:AA} {2:BBBBBBBBBBBBBBBBBBBB}|
+      {1:~                                       }|*6
+                                              |
+    ]])
+  end)
+
   it('virtual text works with wrapped lines', function()
     insert(mulholland)
     feed('ggJj3JjJ')
