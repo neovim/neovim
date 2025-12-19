@@ -1992,7 +1992,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
       emsg(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
         ui_flush();
-        os_delay(3001, true);  // make sure it is noticed
+        msg_delay(3001, true);  // make sure it is noticed
       }
       top_file_num = 1;
     }

@@ -215,18 +215,14 @@ static void tui_set_term_mode(TUIData *tui, TermMode mode, bool set)
 void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   FUNC_ATTR_NONNULL_ALL
 {
-  static TriState is_test = kNone;
-  if (is_test == kNone) {
-    // XXX: Skip some logs which are noisy in CI. #33599
-    is_test = os_env_exists("NVIM_TEST", false);
-  }
   bool is_set = false;
   switch (state) {
   case kTermModeNotRecognized:
   case kTermModePermanentlyReset:
     // TODO(bfredl): This is really ILOG but we want it in all builds.
     // add to show_verbose_terminfo() without being too racy ????
-    if (is_test == kFalse) {
+    if (!nvim_testing) {
+      // Very noisy in CI, don't log during tests. #33599
       WLOG("TUI: terminal mode %d unavailable, state %d", mode, state);
     }
     // If the mode is not recognized, or if the terminal emulator does not allow it to be changed,
@@ -238,7 +234,8 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     FALLTHROUGH;
   case kTermModeReset:
     // The terminal supports changing the given mode
-    if (is_test == kFalse) {
+    if (!nvim_testing) {
+      // Very noisy in CI, don't log during tests. #33599
       WLOG("TUI: terminal mode %d detected, state %d", mode, state);
     }
     switch (mode) {

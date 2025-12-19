@@ -53,8 +53,7 @@ describe('startup', function()
 
   it('prevents remote UI infinite loop', function()
     clear()
-    local screen
-    screen = Screen.new(84, 3)
+    local screen = Screen.new(84, 3)
     fn.jobstart(
       { nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' },
       { term = true }
@@ -84,8 +83,7 @@ describe('startup', function()
 
   it('-D does not hang #12647', function()
     clear()
-    local screen
-    screen = Screen.new(60, 7)
+    local screen = Screen.new(60, 7)
     -- not the same colors on windows for some reason
     screen._default_attr_ids = nil
     local id = fn.jobstart({
@@ -1414,16 +1412,18 @@ describe('user config init', function()
       write_file(
         table.concat({ xconfig, 'nvim', 'init.vim' }, pathsep),
         [[
-      let g:vim_rc = 1
-      ]]
+          let g:vim_rc = 1
+        ]]
       )
     end)
 
     it('loads default lua config, but shows an error', function()
       clear { args_rm = { '-u' }, env = xenv }
-      feed('<cr><c-c>') -- Dismiss "Conflicting config …" message.
       eq(1, eval('g:lua_rc'))
-      matches('^E5422: Conflicting configs', exec_capture('messages'))
+      t.matches(
+        'E5422: Conflicting configs: "Xhome.Xconfig.nvim.init.lua" "Xhome.Xconfig.nvim.init.vim"',
+        eval('v:errmsg')
+      )
     end)
   end)
 end)

@@ -2393,6 +2393,7 @@ static void highlight_list_two(int cnt, int id)
   msg_puts_hl(&("N \bI \b!  \b"[cnt / 11]), id, false);
   msg_clr_eos();
   ui_flush();
+  // TODO(justinmk): is this delay needed? ":hi" seems to work without it.
   os_delay(cnt == 99 ? 40 : (uint64_t)cnt * 50, false);
 }
 

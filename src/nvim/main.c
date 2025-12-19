@@ -154,6 +154,7 @@ static const char *err_extra_cmd =
 void event_init(void)
 {
   loop_init(&main_loop, NULL);
+  env_init();
   resize_events = multiqueue_new_child(main_loop.events);
 
   autocmd_init();

@@ -702,9 +702,10 @@ static void normal_redraw_mode_message(NormalState *s)
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
   if (!ui_has(kUIMessages) && (msg_scroll || emsg_on_display)) {
-    os_delay(1003, true);            // wait at least one second
+    msg_delay(1003, true);            // wait at least one second
   }
   if (ui_has(kUIMessages)) {
+    // TODO(justinmk): wtf is this delay for? From before 2014.
     os_delay(3003, false);           // wait up to three seconds
   }
   State = save_State;

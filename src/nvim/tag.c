@@ -744,7 +744,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         if (ic && !msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
           ui_flush();
-          os_delay(1007, true);
+          msg_delay(1007, true);
         }
       }
 
@@ -2983,7 +2983,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
             msg(_("E435: Couldn't find tag, just guessing!"), 0);
             if (!msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
               ui_flush();
-              os_delay(1010, true);
+              msg_delay(1010, true);
             }
           }
           retval = OK;

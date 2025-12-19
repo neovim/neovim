@@ -554,7 +554,7 @@ bool check_compl_option(bool dict_opt)
       setcursor();
       if (!ui_has(kUIMessages)) {
         ui_flush();
-        os_delay(2004, false);
+        msg_delay(2004, false);
       }
     }
     return false;
