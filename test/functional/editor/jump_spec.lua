@@ -505,4 +505,98 @@ describe('jumpoptions=view', function()
                   |
     ]])
   end)
+
+  describe('tagstack popping', function()
+    local tags_file = 'Xtestfile-functional-editor-jumps-tags'
+    before_each(function()
+      write_file(
+        tags_file,
+        '!_TAG_FILE_ENCODING\tutf-8\t//\n'
+          .. ('10\t%s\t2\n'):format(file1)
+          .. ('30\t%s\t20\n'):format(file2),
+        false,
+        false
+      )
+      command('set tags=' .. tags_file)
+    end)
+    after_each(function()
+      os.remove(tags_file)
+    end)
+
+    it('restores the view', function()
+      local screen = Screen.new(5, 6)
+      command('set laststatus=2 | set statusline=%f | edit ' .. file1)
+      feed('10Gzb<C-]>30Gzt<C-]>')
+      screen:expect([[
+        19 line     |
+        ^20 line     |
+        21 line     |
+        22 line     |
+        {3:<tor-jumps-2}|
+                    |
+      ]])
+      feed('<C-T>')
+      screen:expect([[
+        ^30 line     |
+        {1:~           }|*3
+        {3:<ditor-jumps}|
+                    |
+      ]])
+      feed('<C-T>')
+      screen:expect([[
+        7 line      |
+        8 line      |
+        9 line      |
+        ^10 line     |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+
+      local tagstack = '  # TO tag         FROM line  in file/text\n'
+        .. '> 1  1 10                 10  \n'
+        .. '  2  1 30                 30  '
+      eq(tagstack, exec_capture('tags'))
+      -- Un-pop via `:tag`; like `:tag 10` it should go to L2. (restoring cursor/view doesn't apply)
+      -- However, after a `:pop`, it should restore the view from after the single `<C-E>` below.
+      feed('<C-E>')
+      command('tag')
+      screen:expect([[
+        1 line      |
+        ^2 line      |
+        3 line      |
+        4 line      |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+      command('pop')
+      screen:expect([[
+        8 line      |
+        9 line      |
+        ^10 line     |
+        11 line     |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+      eq(tagstack, exec_capture('tags'))
+
+      -- No view information associated with tags set via settagstack().
+      -- (specifically, replacing tag "10" shouldn't continue to use it's now unrelated view)
+      fn.settagstack(fn.win_getid(), {
+        items = { { from = { fn.bufnr(), 11, 1, 0, 1 }, tagname = 'settagstack!!!' } },
+      }, 'r')
+      tagstack = '  # TO tag         FROM line  in file/text\n'
+        .. '  1  1 settagstack!!!     11  \n'
+        .. '>'
+      eq(tagstack, exec_capture('tags'))
+      feed('G<C-T>')
+      screen:expect([[
+        10 line     |
+        ^11 line     |
+        12 line     |
+        13 line     |
+        {3:<ditor-jumps}|
+                    |
+      ]])
+    end)
+  end)
 end)
