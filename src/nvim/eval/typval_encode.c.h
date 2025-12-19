@@ -354,7 +354,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     partial_T *const pt = tv->vval.v_partial;
     char *const fun = pt == NULL ? NULL : partial_name(pt);
     // When using uf_name prepend "g:" for a global function.
-    const char *const prefix = fun != NULL && pt->pt_name == NULL
+    const char *const prefix = fun != NULL && pt != NULL && pt->pt_name == NULL
                                && ASCII_ISUPPER(fun[0]) ? "g:" : "";
     (void)prefix;
     TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix);
