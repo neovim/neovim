@@ -1319,7 +1319,7 @@ the current buffer.
 *vim.lsp.LocationOpts.OnList*
 
     Fields: ~
-      • {items}     (`table[]`) Structured like |setqflist-what|
+      • {items}     (`vim.quickfix.entry[]`) See |setqflist-what|
       • {title}?    (`string`) Title for the list.
       • {context}?  (`{ bufnr: integer, method: string }`) Subset of `ctx`
                     from |lsp-handler|.
