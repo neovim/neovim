@@ -353,7 +353,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     partial_T *const pt = tv->vval.v_partial;
     char *const fname = pt == NULL ? NULL : partial_name(pt);
     char *ffname = NULL;
-    if (fname != NULL && pt->pt_name == NULL && isupper(fname[0])) {
+    if (fname != NULL && pt->pt_name == NULL && ASCII_ISUPPER(fname[0])) {
       size_t len = strlen(fname) + 3;
       ffname = xmalloc(len);
       snprintf(ffname, len, "g:%s", fname);
