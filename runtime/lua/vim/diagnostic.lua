@@ -221,8 +221,10 @@ end
 --- Prepend diagnostic message with prefix. If a `function`, {i} is the index
 --- of the diagnostic being evaluated, and {total} is the total number of
 --- diagnostics for the line. This can be used to render diagnostic symbols
---- or error codes.
---- @field prefix? string|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string)
+--- or error codes. The function can return two values: the prefix text and
+--- an optional highlight group name. If highlight group is not provided,
+--- the default diagnostic severity highlight is used.
+--- @field prefix? string|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string?)
 ---
 --- Append diagnostic message with suffix.
 --- This can be used to render an LSP diagnostic error code.
@@ -2170,13 +2172,15 @@ function M._get_virt_text_chunks(line_diags, opts)
 
   for i = 1, #line_diags do
     local resolved_prefix = prefix
+    local prefix_hl = virtual_text_highlight_map[line_diags[i].severity]
+
     if type(prefix) == 'function' then
-      resolved_prefix = prefix(line_diags[i], i, #line_diags) or ''
+      local prefix_text, prefix_hl_group = prefix(line_diags[i], i, #line_diags)
+      resolved_prefix = prefix_text or ''
+      prefix_hl = prefix_hl_group or prefix_hl
     end
-    table.insert(
-      virt_texts,
-      { resolved_prefix, virtual_text_highlight_map[line_diags[i].severity] }
-    )
+
+    table.insert(virt_texts, { resolved_prefix, prefix_hl })
   end
   local last = line_diags[#line_diags]
 
