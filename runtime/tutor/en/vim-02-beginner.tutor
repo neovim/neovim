@@ -42,7 +42,7 @@ Test cases: {curly}, [square], <angle>, and "quoted" items.
 
   4. Advanced combinations:
      - `ciwnew<ESC>`{normal} - Change current word to "new"
-     - `yss"<ESC>`{normal}   - Wrap entire line in quotes (vim-surround plugin style)
+     - `ciw"<CTRL>-"<ESC>`{normal} - (Note: This is Ctrl-Minus): wrap current word in quotes
      - `gUit`{normal}        - Uppercase inner HTML tag content
      - `va"p`{normal}        - Select quoted text and paste over it
 
@@ -276,6 +276,7 @@ REFERENCE: [Marks](marks)
      - `"+`{normal}/`"*`{normal} - System clipboard (OS dependent)
      - `"_`{normal}    - Blackhole (discard deleted/yanked text)
      - `"=`{normal}    - Expression register
+     - `"-`{normal}    - Small delete register
 
 
 # CONCLUSION
