@@ -821,9 +821,10 @@ struct diffline_S {
   int lineoff;
 };
 
-#define SNAP_HELP_IDX   0
-#define SNAP_AUCMD_IDX 1
-#define SNAP_COUNT     2
+#define SNAP_HELP_IDX       0
+#define SNAP_AUCMD_IDX      1
+#define SNAP_QUICKFIX_IDX   2
+#define SNAP_COUNT          3
 
 /// Tab pages point to the top frame of each tab page.
 /// Note: Most values are NOT valid for the current tab page!  Use "curwin",

@@ -10,16 +10,17 @@
 
 /// arguments for win_split()
 enum {
-  WSP_ROOM    = 0x01,   ///< require enough room
-  WSP_VERT    = 0x02,   ///< split/equalize vertically
-  WSP_HOR     = 0x04,   ///< equalize horizontally
-  WSP_TOP     = 0x08,   ///< window at top-left of shell
-  WSP_BOT     = 0x10,   ///< window at bottom-right of shell
-  WSP_HELP    = 0x20,   ///< creating the help window
-  WSP_BELOW   = 0x40,   ///< put new window below/right
-  WSP_ABOVE   = 0x80,   ///< put new window above/left
-  WSP_NEWLOC  = 0x100,  ///< don't copy location list
-  WSP_NOENTER = 0x200,  ///< don't enter the new window
+  WSP_ROOM     = 0x01,   ///< require enough room
+  WSP_VERT     = 0x02,   ///< split/equalize vertically
+  WSP_HOR      = 0x04,   ///< equalize horizontally
+  WSP_TOP      = 0x08,   ///< window at top-left of shell
+  WSP_BOT      = 0x10,   ///< window at bottom-right of shell
+  WSP_HELP     = 0x20,   ///< creating the help window
+  WSP_BELOW    = 0x40,   ///< put new window below/right
+  WSP_ABOVE    = 0x80,   ///< put new window above/left
+  WSP_NEWLOC   = 0x100,  ///< don't copy location list
+  WSP_NOENTER  = 0x200,  ///< don't enter the new window
+  WSP_QUICKFIX = 0x400,  ///< creating the quickfix window
 };
 
 enum {
