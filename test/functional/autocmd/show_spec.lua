@@ -188,6 +188,18 @@ describe(':autocmd', function()
           B         echo "B3"]]),
       fn.execute('autocmd test_3 * B')
     )
+    eq(
+      dedent([[
+
+      --- Autocommands ---]]),
+      fn.execute('autocmd * ,')
+    )
+    eq(
+      dedent([[
+
+      --- Autocommands ---]]),
+      fn.execute('autocmd * ,,,')
+    )
   end)
 
   it('should skip consecutive patterns', function()
