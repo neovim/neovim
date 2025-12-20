@@ -154,6 +154,7 @@ static void au_show_for_all_events(int group, const char *pat)
 }
 
 static void au_show_for_event(int group, event_T event, const char *pat)
+  FUNC_ATTR_NONNULL_ALL
 {
   AutoCmdVec *const acs = &autocmds[(int)event];
   // Return early if there are no autocmds for this event
@@ -161,10 +162,23 @@ static void au_show_for_event(int group, event_T event, const char *pat)
     return;
   }
 
-  char buflocal_pat[BUFLOCAL_PAT_LEN];  // for "<buffer=X>"
-  int patlen;
+  // Empty pattern shows all autocommands for this event
+  int patlen = 0;
   if (*pat != NUL) {
     patlen = (int)aucmd_pattern_length(pat);
+    if (patlen == 0) {  // Don't show if it contains only commas
+      return;
+    }
+  }
+
+  char buflocal_pat[BUFLOCAL_PAT_LEN];  // for "<buffer=X>"
+  int last_group = AUGROUP_ERROR;
+  const char *last_group_name = NULL;
+
+  // Loop through all the specified patterns.
+  do {
+    AutoPat *last_ap = NULL;
+    const char *endpat = pat + patlen;
 
     // detect special <buffer[=X]> buffer-local patterns
     if (aupat_is_buflocal(pat, patlen)) {
@@ -173,21 +187,6 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       pat = buflocal_pat;
       patlen = (int)strlen(buflocal_pat);
     }
-
-    if (patlen == 0) {
-      return;
-    }
-    assert(*pat != NUL);
-  } else {
-    pat = NULL;
-    patlen = 0;
-  }
-
-  // Loop through all the specified patterns.
-  while (true) {
-    AutoPat *last_ap = NULL;
-    int last_group = AUGROUP_ERROR;
-    const char *last_group_name = NULL;
 
     for (size_t i = 0; i < kv_size(*acs); i++) {
       AutoCmd *const ac = &kv_A(*acs, i);
@@ -204,7 +203,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       // For <buffer[=X]>, this condition works because we normalize
       // all buffer-local patterns.
       if ((group != AUGROUP_ALL && ac->pat->group != group)
-          || (pat != NULL
+          || (patlen
               && (ac->pat->patlen != patlen || strncmp(pat, ac->pat->pat, (size_t)patlen) != 0))) {
         continue;
       }
@@ -289,17 +288,9 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       }
     }
 
-    // If a pattern is provided, find next pattern. Otherwise exit after single iteration.
-    if (pat != NULL) {
-      pat = aucmd_next_pattern(pat, (size_t)patlen);
-      patlen = (int)aucmd_pattern_length(pat);
-      if (patlen == 0) {
-        break;
-      }
-    } else {
-      break;
-    }
-  }
+    pat = aucmd_next_pattern(endpat, 0);
+    patlen = (int)aucmd_pattern_length(pat);
+  } while (patlen);
 }
 
 // Delete autocommand.
@@ -931,6 +922,8 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
   // Loop through all the specified patterns.
   int patlen = (int)aucmd_pattern_length(pat);
   while (patlen) {
+    const char *endpat = pat + patlen;
+
     // detect special <buffer[=X]> buffer-local patterns
     bool is_buflocal = aupat_is_buflocal(pat, patlen);
     if (is_buflocal) {
@@ -973,7 +966,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
       autocmd_register(0, event, pat, patlen, group, once, nested, NULL, cmd, &handler_fn);
     }
 
-    pat = aucmd_next_pattern(pat, (size_t)patlen);
+    pat = aucmd_next_pattern(endpat, 0);
     patlen = (int)aucmd_pattern_length(pat);
   }
 
