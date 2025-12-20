@@ -694,7 +694,7 @@ CTRL-Z			Suspend Nvim, like ":stop".
 			Works in Normal and in Visual mode.  In Insert and
 			Command-line mode, the CTRL-Z is inserted as a normal
 			character.  In Visual mode Nvim goes back to Normal
-			mode.
+			mode before suspending.
 
 :sus[pend][!]	or			*:sus* *:suspend* *:st* *:stop*
 :st[op][!]		Suspend Nvim using OS "job control"; it will continue
