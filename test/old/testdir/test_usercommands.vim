@@ -352,7 +352,7 @@ func Test_CmdCompletion()
   call assert_equal('"com -nargs=* + 0 1 ?', @:)
 
   call feedkeys(":com -addr=\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"com -addr=arguments buffers lines loaded_buffers other quickfix tabs windows', @:)
+  call assert_equal('"com -addr=arguments buffers chars lines loaded_buffers other quickfix tabs windows', @:)
 
   call feedkeys(":com -complete=co\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"com -complete=color command compiler', @:)

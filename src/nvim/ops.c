@@ -972,8 +972,8 @@ int op_delete(oparg_T *oap)
         }
       }
 
-      del_bytes((colnr_T)n, !virtual_op,
-                oap->op_type == OP_DELETE && !oap->is_VIsual);
+      del_bytes_pos(oap->start.lnum, oap->start.col, (colnr_T)n, !virtual_op,
+                    oap->op_type == OP_DELETE && !oap->is_VIsual);
     } else {
       // delete characters between lines
       pos_T curpos;
@@ -985,26 +985,27 @@ int op_delete(oparg_T *oap)
       }
 
       curbuf_splice_pending++;
-      pos_T startpos = curwin->w_cursor;  // start position for delete
-      bcount_t deleted_bytes = get_region_bytecount(curbuf, startpos.lnum, oap->end.lnum,
-                                                    startpos.col,
+      curpos = curwin->w_cursor;  // remember curwin->w_cursor
+      curwin->w_cursor = oap->start;  // set the cursor where the deletion starts
+      bcount_t deleted_bytes = get_region_bytecount(curbuf,
+                                                    oap->start.lnum,
+                                                    oap->end.lnum,
+                                                    oap->start.col,
                                                     oap->end.col) + oap->inclusive;
       truncate_line(true);        // delete from cursor to end of line
-
-      curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
 
       del_lines(oap->line_count - 2, false);
 
       // delete from start of line until op_end
       int n = (oap->end.col + 1 - !oap->inclusive);
-      curwin->w_cursor.col = 0;
-      del_bytes((colnr_T)n, !virtual_op,
-                oap->op_type == OP_DELETE && !oap->is_VIsual);
+      curwin->w_cursor.col = 0;  // TODO(616b2f): if this makes sense
+      del_bytes_pos(curwin->w_cursor.lnum, curwin->w_cursor.col, (colnr_T)n, !virtual_op,
+                    oap->op_type == OP_DELETE && !oap->is_VIsual);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       do_join(2, false, false, false, false);
       curbuf_splice_pending--;
-      extmark_splice(curbuf, (int)startpos.lnum - 1, startpos.col,
+      extmark_splice(curbuf, (int)oap->start.lnum - 1, oap->start.col,
                      (int)oap->line_count - 1, n, deleted_bytes,
                      0, 0, 0, kExtmarkUndo);
     }
