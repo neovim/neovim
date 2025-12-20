@@ -3571,6 +3571,42 @@ describe('extmark decorations', function()
       ]],
     })
   end)
+
+  it('line("w$", win) considers conceal_lines', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'line 1', 'line 2', 'line 3' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { conceal_lines = '' }) -- conceal line 1
+
+    local win = exec_lua(function()
+      local provider_ns = vim.api.nvim_create_namespace('test_f_line')
+      _G.line_w_dollar = {}
+      vim.api.nvim_set_decoration_provider(provider_ns, {
+        on_start = function()
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            table.insert(_G.line_w_dollar, { win, vim.fn.line('w$', win) })
+          end
+        end,
+      })
+
+      local win = vim.api.nvim_open_win(0, false, {
+        relative = 'editor',
+        width = 20,
+        height = 1,
+        row = 0,
+        col = 0,
+        border = 'single',
+      })
+      vim.api.nvim_set_option_value('conceallevel', 2, { scope = 'local', win = win })
+
+      return win
+    end)
+
+    local line_w_dollar = exec_lua('return _G.line_w_dollar')
+    for _, win_line in ipairs(line_w_dollar) do
+      if win_line[1] == win then
+        eq(2, win_line[2])
+      end
+    end
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
