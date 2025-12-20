@@ -9,4 +9,4 @@ vim.api.nvim_create_user_command('TOhtml', function(args)
   vim.fn.writefile(html, outfile)
   vim.cmd.split(outfile)
   vim.bo.filetype = 'html'
-end, { bar = true, nargs = '?', range = '%' })
+end, { bar = true, nargs = '?', range = '%', complete = 'file' })
