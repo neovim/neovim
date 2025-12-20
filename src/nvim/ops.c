@@ -2649,14 +2649,16 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (c == '-') {
       length--;
     }
-    while (todel-- > 0) {
+
+    pos_T save_pos = curwin->w_cursor;
+    for (int i = 0; i < todel; i++) {
       if (c < 0x100 && isalpha(c)) {
         hexupper = isupper(c);
       }
-      // del_char() will mark line needing displaying
-      del_char(false);
+      inc_cursor();
       c = gchar_cursor();
     }
+    curwin->w_cursor = save_pos;
 
     // Prepare the leading characters in buf1[].
     // When there are many leading zeros it could be very long.
@@ -2715,12 +2717,32 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
     *ptr = NUL;
     int buf1len = (int)(ptr - buf1);
-
     STRCPY(buf1 + buf1len, buf2);
     buf1len += buf2len;
 
+    // Insert just after the first character to be removed, so that any
+    // text properties will be adjusted.  Then delete the old number
+    // afterwards.
+    save_pos = curwin->w_cursor;
+    if (todel > 0) {
+      inc_cursor();
+    }
     ins_str(buf1, (size_t)buf1len);  // insert the new number
     xfree(buf1);
+
+    // del_char() will also mark line needing displaying
+    if (todel > 0) {
+      int bytes_after = (int)strlen(get_cursor_line_ptr()) - curwin->w_cursor.col;
+
+      // Delete the one character before the insert.
+      curwin->w_cursor = save_pos;
+      (void)del_char(false);
+      curwin->w_cursor.col = (int)strlen(get_cursor_line_ptr()) - bytes_after;
+      todel--;
+    }
+    while (todel-- > 0) {
+      (void)del_char(false);
+    }
 
     endpos = curwin->w_cursor;
     if (curwin->w_cursor.col) {
