@@ -6633,8 +6633,12 @@ char *prompt_get_input(buf_T *buf)
 
   char *text = ml_get_buf(buf, lnum_start);
   char *prompt = prompt_text();
-  if (strlen(text) >= strlen(prompt)) {
-    text += strlen(prompt);
+  // For multi-line prompts, only skip the last line's length
+  const char *last_nl = strrchr(prompt, '\n');
+  size_t prompt_last_len = (last_nl == NULL) ? strlen(prompt) : strlen(last_nl + 1);
+  
+  if (strlen(text) >= prompt_last_len) {
+    text += prompt_last_len;
   }
 
   char *full_text = xstrdup(text);
