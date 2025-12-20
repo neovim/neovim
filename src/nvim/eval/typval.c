@@ -3436,7 +3436,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv, char *const fun)
   }
   return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   do { \
     if (_nothing_conv_func_start(tv, fun) != NOTDONE) { \
       return OK; \

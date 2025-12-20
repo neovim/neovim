@@ -295,7 +295,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
     const char *const buf_ = (buf); \
-    if ((buf) == NULL) { \
+    if (buf_ == NULL) { \
       ga_concat(gap, "''"); \
     } else { \
       const size_t len_ = (len); \
@@ -370,15 +370,21 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     } \
   } while (0)
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   do { \
     const char *const fun_ = (fun); \
     if (fun_ == NULL) { \
       internal_error("string(): NULL function name"); \
       ga_concat(gap, "function(NULL"); \
     } else { \
+      const char *const prefix_ = (prefix); \
       ga_concat(gap, "function("); \
+      const int name_off = gap->ga_len; \
+      ga_concat(gap, prefix_); \
       TYPVAL_ENCODE_CONV_STRING(tv, fun_, strlen(fun_)); \
+      /* <prefix>'<fun>' -> '<prefix><fun>'. */ \
+      ((char *)gap->ga_data)[name_off] = '\''; \
+      memcpy((char *)gap->ga_data + name_off + 1, prefix_, strlen(prefix_)); \
     } \
   } while (0)
 
@@ -748,7 +754,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
   } while (0)
 
 #undef TYPVAL_ENCODE_CONV_FUNC_START
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   return conv_error(_("E474: Error while dumping %s, %s: " \
                       "attempt to dump function reference"), \
                     mpstack, objname)
@@ -932,7 +938,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
   mpack_float8(&packer->ptr, (double)(flt))
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   return conv_error(_("E5004: Error while dumping %s, %s: " \
                       "attempt to dump function reference"), \
                     mpstack, objname)
