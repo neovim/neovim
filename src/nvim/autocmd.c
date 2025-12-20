@@ -165,7 +165,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
   // Empty pattern shows all autocommands for this event
   int patlen = 0;
   if (*pat != NUL) {
-    patlen = (int)aucmd_pattern_length(pat);
+    patlen = (int)aucmd_span_pattern(pat, &pat);
     if (patlen == 0) {  // Don't show if it contains only commas
       return;
     }
@@ -288,8 +288,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       }
     }
 
-    pat = aucmd_next_pattern(endpat, 0);
-    patlen = (int)aucmd_pattern_length(pat);
+    patlen = (int)aucmd_span_pattern(endpat, &pat);
   } while (patlen);
 }
 
@@ -920,7 +919,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
   }
 
   // Loop through all the specified patterns.
-  int patlen = (int)aucmd_pattern_length(pat);
+  int patlen = (int)aucmd_span_pattern(pat, &pat);
   while (patlen) {
     const char *endpat = pat + patlen;
 
@@ -966,8 +965,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
       autocmd_register(0, event, pat, patlen, group, once, nested, NULL, cmd, &handler_fn);
     }
 
-    pat = aucmd_next_pattern(endpat, 0);
-    patlen = (int)aucmd_pattern_length(pat);
+    patlen = (int)aucmd_span_pattern(endpat, &pat);
   }
 
   au_cleanup();  // may really delete removed patterns/commands now
@@ -1105,46 +1103,28 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
   return OK;
 }
 
-size_t aucmd_pattern_length(const char *pat)
-  FUNC_ATTR_PURE
+size_t aucmd_span_pattern(const char *pat, const char **start)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (*pat == NUL) {
-    return 0;
+  // Skip leading commas.
+  while (*pat == ',') {
+    pat++;
   }
 
-  const char *endpat;
-
-  for (; *pat; pat = endpat + 1) {
-    // Find end of the pattern.
-    // Watch out for a comma in braces, like "*.\{obj,o\}".
-    endpat = pat;
-    // ignore single comma
-    if (*endpat == ',') {
-      continue;
+  // Find end of the pattern.
+  // Watch out for a comma in braces, like "*.\{obj,o\}".
+  const char *p = pat;
+  int brace_level = 0;
+  for (; *p && (*p != ',' || brace_level || (p > pat && p[-1] == '\\')); p++) {
+    if (*p == '{') {
+      brace_level++;
+    } else if (*p == '}') {
+      brace_level--;
     }
-    int brace_level = 0;
-    for (; *endpat && (*endpat != ',' || brace_level || endpat[-1] == '\\'); endpat++) {
-      if (*endpat == '{') {
-        brace_level++;
-      } else if (*endpat == '}') {
-        brace_level--;
-      }
-    }
-
-    return (size_t)(endpat - pat);
   }
 
-  return strlen(pat);
-}
-
-const char *aucmd_next_pattern(const char *pat, size_t patlen)
-  FUNC_ATTR_PURE
-{
-  pat = pat + patlen;
-  if (*pat == ',') {
-    pat = pat + 1;
-  }
-  return pat;
+  *start = pat;
+  return (size_t)(p - pat);
 }
 
 /// Implementation of ":doautocmd [group] event [fname]".
