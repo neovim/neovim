@@ -717,16 +717,24 @@ ufunc_T *find_func(const char *name)
   return NULL;
 }
 
+/// @return  true if "ufunc" is a global function.
+static bool func_is_global(const ufunc_T *ufunc)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  return (uint8_t)ufunc->uf_name[0] != K_SPECIAL;
+}
+
 /// Copy the function name of "fp" to buffer "buf".
 /// "buf" must be able to hold the function name plus three bytes.
 /// Takes care of script-local function names.
-static int cat_func_name(char *buf, size_t bufsize, ufunc_T *fp)
+static int cat_func_name(char *buf, size_t bufsize, const ufunc_T *fp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int len = -1;
   size_t uflen = fp->uf_namelen;
   assert(uflen > 0);
 
-  if ((uint8_t)fp->uf_name[0] == K_SPECIAL && uflen > 3) {
+  if (!func_is_global(fp) && uflen > 3) {
     len = snprintf(buf, bufsize, "<SNR>%s", fp->uf_name + 3);
   } else {
     len = snprintf(buf, bufsize, "%s", fp->uf_name);
