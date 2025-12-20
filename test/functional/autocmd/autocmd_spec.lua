@@ -712,4 +712,73 @@ describe('autocmd', function()
     ]]
     eq('flarb', fn.bufname())
   end)
+
+  it('does not ignore comma-separated patterns after a buffer-local pattern', function()
+    exec [[
+      edit baz  " reuses buffer 1
+      edit bazinga
+      edit bar
+      edit boop
+      edit foo
+      edit floob
+
+      let g:events1 = []
+      autocmd BufEnter <buffer>,<buffer=1>,boop,bar let g:events1 += [expand('<afile>')]
+      let g:events2 = []
+      augroup flobby
+        autocmd BufEnter <buffer=2>,foo let g:events2 += [expand('<afile>')]
+        autocmd BufEnter foo,<buffer=3> let g:events2 += ['flobby ' .. expand('<afile>')]
+      augroup END
+    ]]
+    eq(
+      dedent([=[
+
+      --- Autocommands ---
+      BufEnter
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]
+          <buffer=1>
+                    let g:events1 += [expand('<afile>')]
+          boop      let g:events1 += [expand('<afile>')]
+          bar       let g:events1 += [expand('<afile>')]
+      flobby  BufEnter
+          <buffer=2>
+                    let g:events2 += [expand('<afile>')]
+          foo       let g:events2 += [expand('<afile>')]
+                    let g:events2 += ['flobby ' .. expand('<afile>')]
+          <buffer=3>
+                    let g:events2 += ['flobby ' .. expand('<afile>')]]=]),
+      fn.execute('autocmd BufEnter')
+    )
+    command('bufdo "')
+    eq({ 'baz', 'bar', 'boop', 'floob' }, eval('g:events1'))
+    eq({ 'bazinga', 'flobby bar', 'foo', 'flobby foo' }, eval('g:events2'))
+
+    -- Also make sure it doesn't repeat the group/event name or pattern for each printed event.
+    -- Do however repeat the pattern if the user specified it multiple times to be printed.
+    -- These conditions aim to make the output consistent with Vim.
+    eq(
+      dedent([=[
+
+      --- Autocommands ---
+      BufEnter
+          <buffer=1>
+                    let g:events1 += [expand('<afile>')]
+          bar       let g:events1 += [expand('<afile>')]
+          bar       let g:events1 += [expand('<afile>')]
+      flobby  BufEnter
+          foo       let g:events2 += [expand('<afile>')]
+                    let g:events2 += ['flobby ' .. expand('<afile>')]
+          foo       let g:events2 += [expand('<afile>')]
+                    let g:events2 += ['flobby ' .. expand('<afile>')]
+      BufEnter
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]
+          <buffer=6>
+                    let g:events1 += [expand('<afile>')]]=]),
+      fn.execute('autocmd BufEnter <buffer=1>,bar,bar,foo,foo,<buffer>,<buffer=6>,<buffer>')
+    )
+  end)
 end)
