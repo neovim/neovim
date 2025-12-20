@@ -64,6 +64,48 @@ function M.check()
       )
     end
   end
+
+  health.start('Treesitter queries')
+  local query_files = vim.api.nvim_get_runtime_file('queries/**/*.scm', true)
+
+  ---@class QueryEntry
+  ---@field lang string
+  ---@field type string
+  ---@field path string
+  ---@field index integer
+  local queries_by_lang = {} ---@type table<string, QueryEntry[]>
+
+  for i, query_file in ipairs(query_files) do
+    local lang, query_type = query_file:match('queries/([^/]+)/([^/]+)%.scm$')
+    if lang and query_type then
+      if not queries_by_lang[lang] then
+        queries_by_lang[lang] = {}
+      end
+      table.insert(queries_by_lang[lang], {
+        lang = lang,
+        type = query_type,
+        path = query_file,
+        index = i,
+      })
+    end
+  end
+
+  if not vim.tbl_isempty(queries_by_lang) then
+    for lang, queries in vim.spairs(queries_by_lang) do
+      table.sort(queries, function(a, b)
+        if a.type == b.type then
+          return a.index < b.index
+        else
+          return a.type < b.type
+        end
+      end)
+
+      for _, query in ipairs(queries) do
+        local dir = vim.fn.fnamemodify(query.path, ':h')
+        health.ok(string.format('%-15s %-15s %s', lang, query.type, dir))
+      end
+    end
+  end
 end
 
 return M
