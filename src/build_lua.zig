@@ -7,8 +7,8 @@ pub fn build_nlua0(
     optimize: std.builtin.OptimizeMode,
     use_luajit: bool,
     ziglua: *std.Build.Dependency,
-    lpeg: *std.Build.Dependency,
-    libluv: *std.Build.Step.Compile,
+    lpeg: ?*std.Build.Dependency,
+    libluv: ?*std.Build.Step.Compile,
 ) *std.Build.Step.Compile {
     const options = b.addOptions();
     options.addOption(bool, "use_luajit", use_luajit);
@@ -19,6 +19,7 @@ pub fn build_nlua0(
             .root_source_file = b.path("src/nlua0.zig"),
             .target = target,
             .optimize = optimize,
+            .link_libc = true,
         }),
     });
     const nlua0_mod = nlua0_exe.root_module;
@@ -28,6 +29,7 @@ pub fn build_nlua0(
             .root_source_file = b.path("src/nlua0.zig"),
             .target = target,
             .optimize = optimize,
+            .link_libc = true,
         }),
     });
 
@@ -39,8 +41,17 @@ pub fn build_nlua0(
         mod.addImport("ziglua", ziglua.module("zlua"));
         mod.addImport("embedded_data", embedded_data);
         // addImport already links by itself. but we need headers as well..
-        mod.linkLibrary(ziglua.artifact("lua"));
-        mod.linkLibrary(libluv);
+        if (b.systemIntegrationOption("lua", .{})) {
+            const system_lua_lib = if (use_luajit) "luajit" else "lua5.1";
+            mod.linkSystemLibrary(system_lua_lib, .{});
+        } else {
+            mod.linkLibrary(ziglua.artifact("lua"));
+        }
+        if (libluv) |luv| {
+            mod.linkLibrary(luv);
+        } else {
+            mod.linkSystemLibrary("luv", .{});
+        }
 
         mod.addOptions("options", options);
 
@@ -68,14 +79,16 @@ pub fn build_nlua0(
     return nlua0_exe;
 }
 
-pub fn add_lua_modules(mod: *std.Build.Module, lpeg: *std.Build.Dependency, use_luajit: bool, is_nlua0: bool) void {
+pub fn add_lua_modules(mod: *std.Build.Module, lpeg_dep: ?*std.Build.Dependency, use_luajit: bool, is_nlua0: bool) void {
     const flags = [_][]const u8{
         // Standard version used in Lua Makefile
         "-std=gnu99",
         if (is_nlua0) "-DNVIM_NLUA0" else "",
     };
 
-    mod.addIncludePath(lpeg.path(""));
+    if (lpeg_dep) |lpeg| {
+        mod.addIncludePath(lpeg.path(""));
+    }
     mod.addCSourceFiles(.{
         .files = &.{
             "src/mpack/lmpack.c",
@@ -86,18 +99,24 @@ pub fn add_lua_modules(mod: *std.Build.Module, lpeg: *std.Build.Dependency, use_
         },
         .flags = &flags,
     });
-    mod.addCSourceFiles(.{
-        .root = .{ .dependency = .{ .dependency = lpeg, .sub_path = "" } },
-        .files = &.{
-            "lpcap.c",
-            "lpcode.c",
-            "lpcset.c",
-            "lpprint.c",
-            "lptree.c",
-            "lpvm.c",
-        },
-        .flags = &flags,
-    });
+    if (lpeg_dep) |lpeg| {
+        mod.addCSourceFiles(.{
+            .root = .{ .dependency = .{ .dependency = lpeg, .sub_path = "" } },
+            .files = &.{
+                "lpcap.c",
+                "lpcode.c",
+                "lpcset.c",
+                "lpprint.c",
+                "lptree.c",
+                "lpvm.c",
+            },
+            .flags = &flags,
+        });
+    } else {
+        // TODO(chinmay): don't hardcode this
+        mod.addLibraryPath(.{ .cwd_relative = "/usr/lib/lua/5.1" });
+        mod.addObjectFile(.{ .cwd_relative = "/usr/lib/lua/5.1/lpeg.so" });
+    }
 
     if (!use_luajit) {
         mod.addCSourceFiles(.{
@@ -113,11 +132,12 @@ pub fn build_libluv(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-    lua: *std.Build.Step.Compile,
+    lua: ?*std.Build.Step.Compile,
     libuv: *std.Build.Step.Compile,
+    use_luajit: bool,
 ) !*std.Build.Step.Compile {
-    const upstream = b.dependency("luv", .{});
-    const compat53 = b.dependency("lua_compat53", .{});
+    const upstream = b.lazyDependency("luv", .{});
+    const compat53 = b.lazyDependency("lua_compat53", .{});
     const lib = b.addLibrary(.{
         .name = "luv",
         .linkage = .static,
@@ -127,21 +147,27 @@ pub fn build_libluv(
         }),
     });
 
-    lib.linkLibrary(lua);
+    if (lua) |lua_lib| {
+        lib.root_module.linkLibrary(lua_lib);
+    } else {
+        const system_lua_lib = if (use_luajit) "luajit" else "lua5.1";
+        lib.root_module.linkSystemLibrary(system_lua_lib, .{});
+    }
     lib.linkLibrary(libuv);
 
-    lib.addIncludePath(upstream.path("src"));
-    lib.addIncludePath(compat53.path("c-api"));
-
-    lib.installHeader(upstream.path("src/luv.h"), "luv/luv.h");
-
-    lib.addCSourceFiles(.{ .root = upstream.path("src/"), .files = &.{
-        "luv.c",
-    } });
-
-    lib.addCSourceFiles(.{ .root = compat53.path("c-api"), .files = &.{
-        "compat-5.3.c",
-    } });
+    if (upstream) |dep| {
+        lib.addIncludePath(dep.path("src"));
+        lib.installHeader(dep.path("src/luv.h"), "luv/luv.h");
+        lib.addCSourceFiles(.{ .root = dep.path("src/"), .files = &.{
+            "luv.c",
+        } });
+    }
+    if (compat53) |dep| {
+        lib.addIncludePath(dep.path("c-api"));
+        lib.addCSourceFiles(.{ .root = dep.path("c-api"), .files = &.{
+            "compat-5.3.c",
+        } });
+    }
 
     return lib;
 }
