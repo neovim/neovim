@@ -418,9 +418,9 @@ preceded with a backslash to match literally.  For example "." matches any
 character while "\." matches a dot.
 
 If a character is taken literally or not depends on the 'magic' option and the
-items in the pattern mentioned next.  The 'magic' option should always be set,
-but it can be switched off for Vi compatibility.  We mention the effect of
-'nomagic' here for completeness, but we recommend against using that.
+items in the pattern mentioned next.  The 'magic' option should always be set.
+We mention the effect of 'nomagic' here for completeness, but we recommend
+against using that.
 							*/\m* */\M*
 Use of "\m" makes the pattern after it be interpreted as if 'magic' is set,
 ignoring the actual value of the 'magic' option.

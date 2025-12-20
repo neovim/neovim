@@ -304,13 +304,20 @@ OPTIONS
 • *cpo-<* *:menu-<special>* *:menu-special* *:map-<special>* *:map-special*
   `<>` notation is always enabled.
 • *'fe'*		'fenc'+'enc' before Vim 6.0; no longer used.
+• *'gdefault'*		boolean	(default off) Enables the :substitute "/g"
+			flag by default. See |complex-change|.
+				command	 'gdefault' on	'gdefault' off	~
+				:s///	  subst. all	  subst. one
+				:s///g	  subst. one	  subst. all
+				:s///gg	  subst. all	  subst. one
+			WARNING: Setting this breaks plugins, because "/g"
+			will have the opposite effect. |:s_g|
 • *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
 • *'langnoremap'*	Deprecated alias to 'nolangremap'.
-• 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
-• *'vi'*
-• 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
-• *'viminfo'*		Deprecated alias to 'shada' option.
-• *'viminfofile'*	Deprecated alias to 'shadafile' option.
+• *'magic'* *'nomagic'*	boolean	(default on) Changes the special characters in
+			search |pattern|s.
+			WARNING: Disabling this breaks plugins, because most
+			patterns assume it's on. See also |/\M|.
 • *'paste'* *'nopaste'*	Just Paste It.™  The 'paste' option is obsolete:
 			|paste| is handled automatically when you paste text
 			using your terminal's or GUI's paste feature
@@ -326,6 +333,11 @@ OPTIONS
 			    • 'cindent'
 			    • 'indentexpr'
 			    • 'lisp'
+• 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
+• *'vi'*
+• 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
+• *'viminfo'*		Deprecated alias to 'shada' option.
+• *'viminfofile'*	Deprecated alias to 'shadafile' option.
 
 UI EXTENSIONS
 • *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
