@@ -800,4 +800,51 @@ describe('autocmd', function()
       fn.execute('autocmd BufEnter <buffer=1>,bar,bar,foo,foo,<buffer>,<buffer=6>,<buffer>')
     )
   end)
+
+  it('parses empty comma-delimited patterns correctly', function()
+    exec [[
+      autocmd User , "
+      autocmd User ,, "
+      autocmd User ,,according,to,,all,known,,,laws,, "
+    ]]
+    api.nvim_create_autocmd('User', { pattern = ',,of,,,aviation,,,,there,,', command = '' })
+    api.nvim_create_autocmd('User', {
+      pattern = { ',,,,is,,no', ',,way,,,', 'a,,bee{,should be, able to,},fly' },
+      command = '',
+    })
+    eq(
+      {
+        'according',
+        'to',
+        'all',
+        'known',
+        'laws',
+        'of',
+        'aviation',
+        'there',
+        'is',
+        'no',
+        'way',
+        'a',
+        'bee{,should be, able to,}',
+        'fly',
+      },
+      exec_lua(function()
+        return vim.tbl_map(function(v)
+          return v.pattern
+        end, vim.api.nvim_get_autocmds({ event = 'User' }))
+      end)
+    )
+    eq(
+      dedent([[
+
+      --- Autocommands ---
+      User
+          there
+          is
+          a
+          fly]]),
+      fn.execute('autocmd User ,,,there,is,,a,fly,,')
+    )
+  end)
 end)
