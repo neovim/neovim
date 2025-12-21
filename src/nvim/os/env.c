@@ -57,6 +57,11 @@
 
 #include "os/env.c.generated.h"
 
+void env_init(void)
+{
+  nvim_testing = os_env_exists("NVIM_TEST", false);
+}
+
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
 /// @see os_env_exists
