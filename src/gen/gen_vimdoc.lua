@@ -189,6 +189,7 @@ local config = {
     files = {
       'runtime/lua/vim/_core/editor.lua',
       'runtime/lua/vim/_core/options.lua',
+      'runtime/lua/vim/_core/shared.lua',
       'runtime/lua/vim/_core/system.lua',
       'runtime/lua/vim/_extui.lua',
       'runtime/lua/vim/_inspector.lua',
@@ -211,7 +212,6 @@ local config = {
       'runtime/lua/vim/pos.lua',
       'runtime/lua/vim/range.lua',
       'runtime/lua/vim/secure.lua',
-      'runtime/lua/vim/shared.lua',
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/ui.lua',
@@ -219,7 +219,7 @@ local config = {
       'runtime/lua/vim/version.lua',
     },
     fn_xform = function(fun)
-      if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._core.editor' }) then
+      if contains(fun.module, { 'vim.uri', 'vim._core.shared', 'vim._core.editor' }) then
         fun.module = 'vim'
       end
 

@@ -50,7 +50,7 @@ if vim.api then
 end
 
 -- builtin functions which always should be available
-require('vim.shared')
+require('vim._core.shared')
 
 vim._submodules = {
   inspect = true,

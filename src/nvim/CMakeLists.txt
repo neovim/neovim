@@ -349,7 +349,6 @@ set(LUA_INIT_PACKAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_init_packages.l
 set(LUA_INSPECT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/inspect.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
 set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
-set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
 set(LUA_TEXT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/text.lua)
 
 # Find all Lua modules in the _core/ directory.
@@ -641,7 +640,6 @@ add_custom_command(
       ${LUA_F_MODULE_SOURCE} "vim.F"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
       ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
-      ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
       ${LUA_TEXT_MODULE_SOURCE} "vim.text"
       ${LUA_CORE_COMMAND_ARGS}
   DEPENDS
@@ -653,7 +651,6 @@ add_custom_command(
     ${LUA_F_MODULE_SOURCE}
     ${LUA_KEYMAP_MODULE_SOURCE}
     ${LUA_LOADER_MODULE_SOURCE}
-    ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_TEXT_MODULE_SOURCE}
     ${LUA_CORE_MODULE_SOURCES}
   VERBATIM
