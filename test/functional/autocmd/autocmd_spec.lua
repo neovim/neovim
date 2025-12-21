@@ -715,4 +715,20 @@ describe('autocmd', function()
       vim.cmd "tabnew"
     ]]
   end)
+
+  it('no use-after-free from win_enter autocommands in win_move_after', function()
+    exec [[
+      split foo
+      split bar
+      lcd ..
+      wincmd b
+    ]]
+    eq(fn.winnr('$'), fn.winnr())
+    -- Using DirChanged as Enter/Leave autocmds are blocked by :ball here.
+    exec [[
+      autocmd DirChanged * ++once split flarb | only!
+      ball
+    ]]
+    eq('flarb', fn.bufname())
+  end)
 end)
