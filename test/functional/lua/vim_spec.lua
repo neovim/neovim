@@ -3042,7 +3042,7 @@ describe('vim.keymap', function()
 
   it('validates', function()
     matches(
-      'mode: expected string|table, got number',
+      'modes: expected string|table, got number',
       pcall_err(exec_lua, [[vim.keymap.set(42, 'x', print)]])
     )
 

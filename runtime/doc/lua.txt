@@ -3440,7 +3440,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     See also: ~
       • |vim.keymap.set()|
 
-vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
+vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
     Defines a |mapping| of |keycodes| to a function or keycodes.
 
     Examples: >lua
@@ -3469,20 +3469,20 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 <
 
     Parameters: ~
-      • {mode}  (`string|string[]`) Mode "short-name" (see
-                |nvim_set_keymap()|), or a list thereof.
-      • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
-      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
-                can be a Lua function.
-      • {opts}  (`table?`) Table of |:map-arguments|. Same as
-                |nvim_set_keymap()| {opts}, except:
-                • {replace_keycodes} defaults to `true` if "expr" is `true`.
+      • {modes}  (`string|string[]`) Mode "short-name" (see
+                 |nvim_set_keymap()|), or a list thereof.
+      • {lhs}    (`string`) Left-hand side |{lhs}| of the mapping.
+      • {rhs}    (`string|function`) Right-hand side |{rhs}| of the mapping,
+                 can be a Lua function.
+      • {opts}   (`table?`) Table of |:map-arguments|. Same as
+                 |nvim_set_keymap()| {opts}, except:
+                 • {replace_keycodes} defaults to `true` if "expr" is `true`.
 
-                Also accepts:
-                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
-                  `0` or `true` for current buffer.
-                • {remap}? (`boolean`, default: `false`) Make the mapping
-                  recursive. Inverse of {noremap}.
+                 Also accepts:
+                 • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
+                   `0` or `true` for current buffer.
+                 • {remap}? (`boolean`, default: `false`) Make the mapping
+                   recursive. Inverse of {noremap}.
 
     See also: ~
       • |nvim_set_keymap()|
