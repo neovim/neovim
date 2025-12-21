@@ -286,10 +286,10 @@ To see the capabilities for a given server, try this in a LSP-enabled buffer: >v
 FAQ                                                     *lsp-faq*
 
 - Q: How to force-reload LSP?
-- A: Stop all clients, then reload the buffer. >vim
-     :lua vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end)
+- A: Use `:lsp restart`. You can also stop all clients, then reload the buffer: >vim
+     :lsp stop
      :edit
-
+<
 - Q: Why isn't completion working?
 - A: In the buffer where you want to use LSP, check that 'omnifunc' is set to
      "v:lua.vim.lsp.omnifunc": `:verbose set omnifunc?`

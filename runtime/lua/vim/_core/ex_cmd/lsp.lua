@@ -3,6 +3,11 @@ local lsp = vim.lsp
 
 local M = {}
 
+--- @param msg string
+local function echo_err(msg)
+  api.nvim_echo({ { msg } }, true, { err = true })
+end
+
 --- @return string[]
 local function get_client_names()
   local client_names = vim
@@ -63,7 +68,7 @@ local function checked_enable(names, enable)
     if name:find('*') == nil and lsp.config[name] ~= nil then
       lsp.enable(name, enable)
     else
-      vim.notify(("No client config named '%s'"):format(name), vim.log.levels.ERROR)
+      echo_err(("No client config named '%s'"):format(name))
     end
   end
 end
@@ -75,9 +80,17 @@ local function ex_lsp_enable(config_names)
     local filetype = vim.bo.filetype
     for _, name in ipairs(get_config_names()) do
       local filetypes = lsp.config[name].filetypes
-      if filetypes and vim.tbl_contains(filetypes, filetype) then
+      if filetypes == nil or vim.list_contains(filetypes, filetype) then
         table.insert(config_names, name)
       end
+    end
+    if #config_names == 0 then
+      if filetype == '' then
+        echo_err('Current buffer has no filetype')
+      else
+        echo_err(("No configs for filetype '%s'"):format(filetype))
+      end
+      return
     end
   end
 
@@ -97,6 +110,10 @@ local function ex_lsp_disable(config_names)
         return lsp.config[name] ~= nil
       end)
       :totable()
+    if #config_names == 0 then
+      echo_err('No configs with clients attached to current buffer')
+      return
+    end
   end
 
   checked_enable(config_names, false)
@@ -107,14 +124,18 @@ end
 local function get_clients_from_names(client_names)
   -- Default to stopping all active clients attached to the current buffer.
   if #client_names == 0 then
-    return lsp.get_clients { bufnr = api.nvim_get_current_buf() }
+    local clients = lsp.get_clients { bufnr = api.nvim_get_current_buf() }
+    if #clients == 0 then
+      echo_err('No clients attached to current buffer')
+    end
+    return clients
   else
     return vim
       .iter(client_names)
       :map(function(name)
         local clients = lsp.get_clients { name = name }
         if #clients == 0 then
-          vim.notify(("No active clients named '%s'"):format(name), vim.log.levels.ERROR)
+          echo_err(("No active clients named '%s'"):format(name))
         end
         return clients
       end)
@@ -181,7 +202,7 @@ M.ex_lsp = function(args)
   end
   local subcmd = fargs[1]
   if not vim.list_contains(available_subcmds, subcmd) then
-    vim.notify(("Invalid subcommand '%s'"):format(subcmd), vim.log.levels.ERROR)
+    echo_err(("Invalid subcommand '%s'"):format(subcmd))
     return
   end
 
