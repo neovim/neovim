@@ -290,9 +290,12 @@ LSP
 • Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
-- Support for dynamic registration for `textDocument/diagnostic`
+• Support for dynamic registration for `textDocument/diagnostic`
 • |:lsp| for interactively enabling, disabling, restarting, and stopping lsp
-  clients.
+clients.
+• Codelens appearance can now be customized. See the
+  |vim.lsp.codelens.display.Opts| parameter in |vim.lsp.codelens.refresh()| and
+  |vim.lsp.codelens.display()|.
 
 LUA
 

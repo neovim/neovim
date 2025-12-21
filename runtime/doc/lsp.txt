@@ -1941,6 +1941,46 @@ Client:supports_method({method}, {bufnr})           *Client:supports_method()*
 ==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
+*vim.lsp.codelens.display.Opts*
+
+    Fields: ~
+      • {virt_lines}?  (`boolean`) Display the lenses as virtual lines instead
+                       of virtual text
+      • {on_display}?  (`fun(buf: integer, ns: integer, lnum: integer, chunks: [string, integer|string?][])`)
+                       Lens handler replacing the default handler. Will be
+                       called even if the amount of chunks to display is zero.
+                       Takes the following args:
+                       • buf: Buffer number of the lens
+                       • ns: Extmark namespace id for the LSP client's lenses.
+                         NOTE: Previous extmarks must be cleared manually
+                       • lnum: The zero-indexed line number the lenses will be
+                         displayed on
+                       • chunks: The lenses converted to a list of
+                         `[text, hl_group]` pairs
+
+                       Example: >lua
+                           vim.api.nvim_buf_clear_namespace(buf, ns, lnum, lnum + 1)
+                           if #chunks == 0 then
+                             return
+                           end
+
+                           local indent = vim.api.nvim_buf_call(buf, function()
+                             return vim.fn.indent(lnum + 1)
+                           end)
+
+                           if indent > 0 then
+                             local indent_str = string.rep(' ', indent)
+                             table.insert(chunks, 1, { indent_str, '' })
+                           end
+
+                           vim.api.nvim_buf_set_extmark(buf, ns, lnum, 0, {
+                             virt_lines = { chunks },
+                             virt_lines_above = true,
+                             hl_mode = 'replace', -- Default: 'combine'
+                           })
+<
+
+
 clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
     Clear the lenses
 
@@ -1949,13 +1989,16 @@ clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
       • {bufnr}      (`integer?`) filter by buffer. All buffers if nil, 0 for
                      current buffer
 
-display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
+                                                  *vim.lsp.codelens.display()*
+display({lenses}, {bufnr}, {client_id}, {opts})
     Display the lenses using virtual text
 
     Parameters: ~
       • {lenses}     (`lsp.CodeLens[]?`) lenses to display
       • {bufnr}      (`integer`)
       • {client_id}  (`integer`)
+      • {opts}       (`vim.lsp.codelens.display.Opts?`) See
+                     |vim.lsp.codelens.display.Opts|.
 
 get({bufnr})                                          *vim.lsp.codelens.get()*
     Return all lenses for the given buffer
@@ -1967,13 +2010,15 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
     Return: ~
         (`lsp.CodeLens[]`)
 
-on_codelens({err}, {result}, {ctx})           *vim.lsp.codelens.on_codelens()*
+                                              *vim.lsp.codelens.on_codelens()*
+on_codelens({err}, {result}, {ctx}, {opts})
     |lsp-handler| for the method `textDocument/codeLens`
 
     Parameters: ~
       • {err}     (`lsp.ResponseError?`)
       • {result}  (`lsp.CodeLens[]`)
       • {ctx}     (`lsp.HandlerContext`)
+      • {opts}    (`{ display: vim.lsp.codelens.display.Opts }?`)
 
 refresh({opts})                                   *vim.lsp.codelens.refresh()*
     Refresh the lenses.
@@ -1988,6 +2033,8 @@ refresh({opts})                                   *vim.lsp.codelens.refresh()*
       • {opts}  (`table?`) Optional fields
                 • {bufnr} (`integer?`) filter by buffer. All buffers if nil, 0
                   for current buffer
+                • {display} (`vim.lsp.codelens.display.Opts?`) See
+                  |vim.lsp.codelens.display.Opts|
 
 run()                                                 *vim.lsp.codelens.run()*
     Run the code lens available in the current line.

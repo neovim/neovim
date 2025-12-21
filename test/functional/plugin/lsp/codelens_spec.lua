@@ -14,7 +14,7 @@ describe('vim.lsp.codelens', function()
     local fake_uri = 'file:///fake/uri'
     local bufnr = exec_lua(function()
       local bufnr = vim.uri_to_bufnr(fake_uri)
-      local lines = { 'So', 'many', 'lines' }
+      local lines = { '    So', 'many', 'lines' }
       vim.fn.bufload(bufnr)
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
       return bufnr
@@ -61,6 +61,24 @@ describe('vim.lsp.codelens', function()
     end)
 
     eq({ [1] = { 'Lens1', 'LspCodeLens' } }, virtual_text_chunks)
+
+    exec_lua(function()
+      vim.lsp.codelens.display(stored_lenses, bufnr, 1, { virt_lines = true })
+    end)
+
+    ---@type [string, integer|string?][]
+    local virtual_line_chunks = exec_lua(function()
+      local ns = vim.lsp.codelens.__namespaces[1] ---@type integer
+      ---@type vim.api.keyset.get_extmark_item[]
+      local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {})
+
+      local ext_id = extmarks[1][1] ---@type integer
+      ---@type [integer, integer, vim.api.keyset.extmark_details?]
+      local extmark = vim.api.nvim_buf_get_extmark_by_id(bufnr, ns, ext_id, { details = true })
+      return extmark[3].virt_lines
+    end)
+
+    eq({ { [1] = { '    ', '' }, [2] = { 'Lens1', 'LspCodeLens' } } }, virtual_line_chunks)
   end)
 
   it('can clear all lens', function()
