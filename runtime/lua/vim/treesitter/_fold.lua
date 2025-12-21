@@ -381,6 +381,8 @@ local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, 
   end
 end
 
+local registered_cbs = {} ---@type table<integer, boolean>
+
 ---@param lnum integer|nil
 ---@return string
 function M.foldexpr(lnum)
@@ -404,19 +406,36 @@ function M.foldexpr(lnum)
 
     compute_folds_levels(bufnr, foldinfos[bufnr])
 
-    parser:register_cbs({
-      on_changedtree = function(tree_changes)
-        on_changedtree(bufnr, tree_changes)
-      end,
+    if not registered_cbs[bufnr] then
+      parser:register_cbs({
+        on_changedtree = function(tree_changes)
+          on_changedtree(bufnr, tree_changes)
+        end,
 
-      on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)
-        on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
-      end,
+        on_bytes = function(
+          _,
+          _,
+          start_row,
+          start_col,
+          _,
+          old_row,
+          old_col,
+          _,
+          new_row,
+          new_col,
+          _
+        )
+          on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
+        end,
 
-      on_detach = function()
-        foldinfos[bufnr] = nil
-      end,
-    })
+        on_detach = function()
+          foldinfos[bufnr] = nil
+          registered_cbs[bufnr] = nil
+        end,
+      })
+
+      registered_cbs[bufnr] = true
+    end
   end
 
   return foldinfos[bufnr].levels[lnum] or '0'
