@@ -455,8 +455,9 @@ static bool typval_conv_special = false;
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   do { \
-    ufunc_T *fp = find_func(fun); \
-    if (fp != NULL && fp->uf_flags & FC_LUAREF) { \
+    const char *const fun_ = (fun); \
+    ufunc_T *fp; \
+    if (fun_ != NULL && (fp = find_func(fun_)) != NULL && fp->uf_flags & FC_LUAREF) { \
       nlua_pushref(lstate, fp->uf_luaref); \
     } else { \
       TYPVAL_ENCODE_CONV_NIL(tv); \
