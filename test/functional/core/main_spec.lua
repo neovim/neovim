@@ -224,6 +224,7 @@ describe('vim._core', function()
       'vim._core.exrc',
       'vim._core.options',
       'vim._core.server',
+      'vim._core.shared',
       'vim._core.stringbuffer',
       'vim._core.system',
       'vim._core.util',
@@ -233,7 +234,6 @@ describe('vim._core', function()
       'vim.inspect',
       'vim.keymap',
       'vim.loader',
-      'vim.shared',
       'vim.text',
     }
     if n.exec_lua [[return not not _G.jit]] then
