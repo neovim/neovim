@@ -2934,7 +2934,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         int win_normal_bg = normal_bg;
         int win_normal_cterm_bg = cterm_normal_bg_color;
 
-        // Get window-local Normal background (respects winhighlight)
+        // Get window-local Normal background (respects 'winhighlight' option).
         if (bg_attr != 0) {
           HlAttrs norm_ae = syn_attr2entry(bg_attr);
           win_normal_bg = norm_ae.rgb_bg_color;

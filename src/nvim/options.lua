@@ -1473,7 +1473,7 @@ local options = {
       defaults = false,
       full_name = 'compatible',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -2640,7 +2640,7 @@ local options = {
       defaults = false,
       full_name = 'edcompatible',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -3826,24 +3826,9 @@ local options = {
     {
       abbreviation = 'gd',
       defaults = false,
-      desc = [=[
-        When on, the ":substitute" flag 'g' is default on.  This means that
-        all matches in a line are substituted instead of one.  When a 'g' flag
-        is given to a ":substitute" command, this will toggle the substitution
-        of all or one match.  See |complex-change|.
-
-        	command		'gdefault' on	'gdefault' off	~
-        	:s///		  subst. all	  subst. one
-        	:s///g		  subst. one	  subst. all
-        	:s///gg		  subst. all	  subst. one
-
-        NOTE: Setting this option may break plugins that rely on the default
-        behavior of the 'g' flag.  This will also make the 'g' flag have the
-        opposite effect of that documented in |:s_g|.
-      ]=],
       full_name = 'gdefault',
       scope = { 'global' },
-      short_desc = N_('the ":substitute" flag \'g\' is default on'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       varname = 'p_gd',
     },
@@ -4388,7 +4373,7 @@ local options = {
       defaults = false,
       full_name = 'hkmap',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -4397,7 +4382,7 @@ local options = {
       defaults = false,
       full_name = 'hkmapp',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -4796,7 +4781,7 @@ local options = {
       defaults = false,
       full_name = 'insertmode',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -5187,7 +5172,7 @@ local options = {
       ]=],
       full_name = 'langremap',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       varname = 'p_lrm',
     },
@@ -5527,18 +5512,9 @@ local options = {
     },
     {
       defaults = true,
-      desc = [=[
-        Changes the special characters that can be used in search patterns.
-        See |pattern|.
-        WARNING: Switching this option off most likely breaks plugins!  That
-        is because many patterns assume it's on and will fail when it's off.
-        Only switch it off when working with old Vi scripts.  In any other
-        situation write patterns that work when 'magic' is on.  Include "\M"
-        when you want to |/\M|.
-      ]=],
       full_name = 'magic',
       scope = { 'global' },
-      short_desc = N_('special characters in search patterns'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       varname = 'p_magic',
     },
@@ -6450,7 +6426,7 @@ local options = {
       full_name = 'paste',
       pri_mkrc = true,
       scope = { 'global' },
-      short_desc = N_('pasting text'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       varname = 'p_paste',
     },
@@ -6459,7 +6435,7 @@ local options = {
       defaults = '',
       full_name = 'pastetoggle',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'string',
       immutable = true,
     },
@@ -6927,7 +6903,7 @@ local options = {
       defaults = true,
       full_name = 'remap',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -7324,7 +7300,7 @@ local options = {
       full_name = 'secure',
       scope = { 'global' },
       secure = true,
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       varname = 'p_secure',
     },
@@ -9540,7 +9516,7 @@ local options = {
       defaults = false,
       full_name = 'terse',
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },
@@ -9791,7 +9767,7 @@ local options = {
       full_name = 'ttyfast',
       no_mkrc = true,
       scope = { 'global' },
-      short_desc = N_('No description'),
+      short_desc = N_('Deprecated'),
       type = 'boolean',
       immutable = true,
     },

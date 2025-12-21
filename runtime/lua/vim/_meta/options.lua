@@ -3011,26 +3011,6 @@ vim.o.fs = vim.o.fsync
 vim.go.fsync = vim.o.fsync
 vim.go.fs = vim.go.fsync
 
---- When on, the ":substitute" flag 'g' is default on.  This means that
---- all matches in a line are substituted instead of one.  When a 'g' flag
---- is given to a ":substitute" command, this will toggle the substitution
---- of all or one match.  See `complex-change`.
----
---- 	command		'gdefault' on	'gdefault' off	~
---- 	:s///		  subst. all	  subst. one
---- 	:s///g		  subst. one	  subst. all
---- 	:s///gg		  subst. all	  subst. one
----
---- NOTE: Setting this option may break plugins that rely on the default
---- behavior of the 'g' flag.  This will also make the 'g' flag have the
---- opposite effect of that documented in `:s_g`.
----
---- @type boolean
-vim.o.gdefault = false
-vim.o.gd = vim.o.gdefault
-vim.go.gdefault = vim.o.gdefault
-vim.go.gd = vim.go.gdefault
-
 --- Format to recognize for the ":grep" command output.
 --- This is a scanf-like string that uses the same format as the
 --- 'errorformat' option: see `errorformat`.
@@ -4247,18 +4227,6 @@ vim.o.loadplugins = true
 vim.o.lpl = vim.o.loadplugins
 vim.go.loadplugins = vim.o.loadplugins
 vim.go.lpl = vim.go.loadplugins
-
---- Changes the special characters that can be used in search patterns.
---- See `pattern`.
---- WARNING: Switching this option off most likely breaks plugins!  That
---- is because many patterns assume it's on and will fail when it's off.
---- Only switch it off when working with old Vi scripts.  In any other
---- situation write patterns that work when 'magic' is on.  Include "\M"
---- when you want to `/\M`.
----
---- @type boolean
-vim.o.magic = true
-vim.go.magic = vim.o.magic
 
 --- Name of the errorfile for the `:make` command (see `:make_makeprg`)
 --- and the `:grep` command.
