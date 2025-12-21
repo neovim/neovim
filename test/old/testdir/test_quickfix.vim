@@ -6980,4 +6980,15 @@ func Test_vimgrep_dummy_buffer_keep()
   %bw!
 endfunc
 
+func Test_quickfix_restore_current_win()
+  let curwin = win_getid()
+  vsplit Xb
+  wincmd p
+  botright copen
+  cclose
+
+  call assert_equal(curwin, win_getid())
+  bw! Xb
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

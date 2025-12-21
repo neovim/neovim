@@ -1057,6 +1057,12 @@ int win_split(int size, int flags)
     clear_snapshot(curtab, SNAP_HELP_IDX);
   }
 
+  if (flags & WSP_QUICKFIX) {
+    make_snapshot(SNAP_QUICKFIX_IDX);
+  } else {
+    clear_snapshot(curtab, SNAP_QUICKFIX_IDX);
+  }
+
   return win_split_ins(size, flags, NULL, 0, NULL) == NULL ? FAIL : OK;
 }
 
@@ -2747,6 +2753,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   }
 
   bool help_window = false;
+  bool quickfix_window = false;
 
   // When closing the help window, try restoring a snapshot after closing
   // the window.  Otherwise clear the snapshot, it's now invalid.
@@ -2754,6 +2761,12 @@ int win_close(win_T *win, bool free_buf, bool force)
     help_window = true;
   } else {
     clear_snapshot(curtab, SNAP_HELP_IDX);
+  }
+
+  if (bt_quickfix(win->w_buffer)) {
+    quickfix_window = true;
+  } else {
+    clear_snapshot(curtab, SNAP_QUICKFIX_IDX);
   }
 
   win_T *wp;
@@ -2861,10 +2874,10 @@ int win_close(win_T *win, bool free_buf, bool force)
   int dir;
   wp = win_free_mem(win, &dir, NULL);
 
-  if (help_window) {
+  if (help_window || quickfix_window) {
     // Closing the help window moves the cursor back to the current window
     // of the snapshot.
-    win_T *prev_win = get_snapshot_curwin(SNAP_HELP_IDX);
+    win_T *prev_win = get_snapshot_curwin(help_window ? SNAP_HELP_IDX : SNAP_QUICKFIX_IDX);
     if (win_valid(prev_win)) {
       wp = prev_win;
     }
@@ -2939,10 +2952,10 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   split_disallowed--;
 
-  // After closing the help window, try restoring the window layout from
-  // before it was opened.
-  if (help_window) {
-    restore_snapshot(SNAP_HELP_IDX, close_curwin);
+  // After closing the help or quickfix window, try restoring the window
+  // layout from before it was opened.
+  if (help_window || quickfix_window) {
+    restore_snapshot(help_window ? SNAP_HELP_IDX : SNAP_QUICKFIX_IDX, close_curwin);
   }
 
   // If the window had 'diff' set and now there is only one window left in
