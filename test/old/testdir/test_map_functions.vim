@@ -116,6 +116,19 @@ func Test_maparg()
   unlet d
 endfunc
 
+" def Test_vim9_maparg()
+"   nmap { w
+"   var one: string = maparg('{')
+"   assert_equal('w', one)
+"   var two: string = maparg('{', 'n')
+"   assert_equal('w', two)
+"   var three: string = maparg('{', 'n', 0)
+"   assert_equal('w', three)
+"   var four: dict<any> = maparg('{', 'n', 0, 1)
+"   assert_equal(['{', 'w', 'n'], [four.lhs, four.rhs, four.mode])
+"   nunmap {
+" enddef
+
 func Test_mapcheck()
   call assert_equal('', mapcheck('a'))
   call assert_equal('', mapcheck('abc'))
