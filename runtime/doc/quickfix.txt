@@ -1652,6 +1652,15 @@ b/g:mypy_makeprg_params variable.  For example: >
 
 The global default is "--strict --ignore-missing-imports".
 
+TY TYPE CHECKER					*compiler-ty*
+
+Commonly used compiler options and executable can be set by the
+b/g:ty_makeprg variable.  For example: >
+
+	let b:ty_makeprg = "uv run ty"
+
+The global default is "ty --no-progress --color=never".
+
 RUFF LINTER						*compiler-ruff*
 
 Commonly used compiler options can be added to 'makeprg' by setting the
