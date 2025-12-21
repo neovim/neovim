@@ -1307,6 +1307,11 @@ func Test_cmdline_complete_various()
   call feedkeys(":topleft new\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"topleft new", @:)
 
+  " call feedkeys(":disas \<S-Tab>\<C-B>\"\<CR>", 'xt')
+  " call assert_match('"disas <SNR>\d\+_', @:)
+  " call feedkeys(":disas debug \<S-Tab>\<C-B>\"\<CR>", 'xt')
+  " call assert_match('"disas debug <SNR>\d\+_', @:)
+
   " completion for the :match command
   call feedkeys(":match Search /pat/\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"match Search /pat/\<C-A>", @:)
