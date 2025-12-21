@@ -2071,10 +2071,10 @@ void win_move_after(win_T *win1, win_T *win2)
     win_comp_pos();  // recompute w_winrow for all windows
     redraw_later(curwin, UPD_NOT_VALID);
   }
-  win_enter(win1, false);
-
   win1->w_pos_changed = true;
   win2->w_pos_changed = true;
+
+  win_enter(win1, false);
 }
 
 /// Compute maximum number of windows that can fit within "height" in frame "fr".
