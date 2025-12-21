@@ -596,6 +596,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_
   return ret;
 }
 
+// fixed buffer length for fname_trans_sid()
 #define FLEN_FIXED 40
 
 /// Check whether function name starts with <SID> or s:
