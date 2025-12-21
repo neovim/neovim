@@ -1316,9 +1316,11 @@ func Test_cmdline_complete_various()
   " call assert_equal("\"disas debug Test_cmdline_complete_various", @:)
   " call feedkeys(":disas profile Test_cmdline_complete_var\<C-A>\<C-B>\"\<CR>", 'xt')
   " call assert_equal("\"disas profile Test_cmdline_complete_various", @:)
+  " call feedkeys(":disas Test_cmdline_complete_var\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"disas Test_cmdline_complete_various", @:)
 
   " call feedkeys(":disas s:WeirdF\<C-A>\<C-B>\"\<CR>", 'xt')
-  " call assert_match('"disas <SNR>\d\+_WeirdFunc()', @:)
+  " call assert_match('"disas <SNR>\d\+_WeirdFunc', @:)
 
   " call feedkeys(":disas \<S-Tab>\<C-B>\"\<CR>", 'xt')
   " call assert_match('"disas <SNR>\d\+_', @:)
