@@ -845,6 +845,20 @@ do
               local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
               local bg = luminance < 0.5 and 'dark' or 'light'
               vim.api.nvim_set_option_value('background', bg, {})
+
+              -- Ensure OptionSet still triggers when we set the background during startup
+              if vim.v.vim_did_enter == 0 then
+                vim.api.nvim_create_autocmd('VimEnter', {
+                  group = group,
+                  once = true,
+                  nested = true,
+                  callback = function()
+                    vim.api.nvim_exec_autocmds("OptionSet", {
+                      pattern = "background",
+                    })
+                  end,
+                })
+              end
             end
           end
         end,
