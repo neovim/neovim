@@ -3191,9 +3191,9 @@ endfunc
 func Test_m4_format()
   filetype on
 
-  call mkdir('Xm4', 'D')
+  call mkdir('Xm4', 'R')
   cd Xm4
-  call writefile([''], 'alocal.m4', 'D')
+  call writefile([''], 'alocal.m4')
   split alocal.m4
   call assert_equal('m4', &filetype)
   bwipe!
