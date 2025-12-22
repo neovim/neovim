@@ -2552,10 +2552,11 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
       }
 
       if (!is_heredoc) {
-        // Check for ":let v =<< [trim] EOF"
-        //       and ":let [a, b] =<< [trim] EOF"
+        // Check for ":cmd v =<< [trim] EOF"
+        //       and ":cmd [a, b] =<< [trim] EOF"
+        // Where "cmd" can be "let" or "const".
         arg = p;
-        if (checkforcmd(&arg, "let", 2)) {
+        if (checkforcmd(&arg, "let", 2) || checkforcmd(&p, "const", 5)) {
           int var_count = 0;
           int semicolon = 0;
           arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
