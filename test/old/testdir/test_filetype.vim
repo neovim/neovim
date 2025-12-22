@@ -380,6 +380,7 @@ func s:GetFilenameChecks() abort
     \ 'http': ['file.http'],
     \ 'hurl': ['file.hurl'],
     \ 'hy': ['file.hy', '.hy-history'],
+    \ 'hylo': ['file.hylo'],
     \ 'hyprlang': ['hyprlock.conf', 'hyprland.conf', 'hypridle.conf', 'hyprpaper.conf', '/hypr/foo.conf'],
     \ 'i3config': ['/home/user/.i3/config', '/home/user/.config/i3/config', '/etc/i3/config', '/etc/xdg/i3/config'],
     \ 'ibasic': ['file.iba', 'file.ibi'],
