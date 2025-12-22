@@ -718,33 +718,27 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     return;
   }
 
-  switchwin_T switchwin;
-  bool winchanged = false;
+  win_T *wp = curwin;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     // use the window specified in the second argument
     tabpage_T *tp;
-    win_T *wp = win_id2wp_tp((int)tv_get_number(&argvars[1]), &tp);
+    wp = win_id2wp_tp((int)tv_get_number(&argvars[1]), &tp);
     if (wp == NULL || tp == NULL) {
       return;
     }
-
-    if (switch_win_noblock(&switchwin, wp, tp, true) != OK) {
-      return;
-    }
-
-    check_cursor(curwin);
-    winchanged = true;
+    check_cursor(wp);
   }
 
+  buf_T *bp = wp->w_buffer;
   colnr_T col = 0;
-  int fnum = curbuf->b_fnum;
-  pos_T *fp = var2fpos(&argvars[0], false, &fnum, charcol);
-  if (fp != NULL && fnum == curbuf->b_fnum) {
+  int fnum = bp->b_fnum;
+  pos_T *fp = var2fpos(&argvars[0], false, &fnum, charcol, wp);
+  if (fp != NULL && fnum == bp->b_fnum) {
     if (fp->col == MAXCOL) {
       // '> can be MAXCOL, get the length of the line then
-      if (fp->lnum <= curbuf->b_ml.ml_line_count) {
-        col = ml_get_len(fp->lnum) + 1;
+      if (fp->lnum <= bp->b_ml.ml_line_count) {
+        col = ml_get_buf_len(bp, fp->lnum) + 1;
       } else {
         col = MAXCOL;
       }
@@ -752,11 +746,11 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       col = fp->col + 1;
       // col(".") when the cursor is on the NUL at the end of the line
       // because of "coladd" can be seen as an extra column.
-      if (virtual_active(curwin) && fp == &curwin->w_cursor) {
-        char *p = get_cursor_pos_ptr();
-        if (curwin->w_cursor.coladd >=
-            (colnr_T)win_chartabsize(curwin, p,
-                                     curwin->w_virtcol - curwin->w_cursor.coladd)) {
+      if (virtual_active(wp) && fp == &wp->w_cursor) {
+        char *p = ml_get_buf(bp, wp->w_cursor.lnum) + wp->w_cursor.col;
+        if (wp->w_cursor.coladd >=
+            (colnr_T)win_chartabsize(wp, p,
+                                     wp->w_virtcol - wp->w_cursor.coladd)) {
           int l;
           if (*p != NUL && p[(l = utfc_ptr2len(p))] == NUL) {
             col += l;
@@ -766,10 +760,6 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     }
   }
   rettv->vval.v_number = col;
-
-  if (winchanged) {
-    restore_win_noblock(&switchwin, true);
-  }
 }
 
 /// "charcol()" function
@@ -2460,7 +2450,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos, bool
       fp = &pos;
     }
   } else {
-    fp = var2fpos(&argvars[0], true, &fnum, charcol);
+    fp = var2fpos(&argvars[0], true, &fnum, charcol, curwin);
   }
 
   list_T *const l = tv_list_alloc_ret(rettv, 4 + getcurpos);
@@ -4435,22 +4425,18 @@ static void f_line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tabpage_T *tp;
     win_T *wp = win_id2wp_tp(id, &tp);
     if (wp != NULL && tp != NULL) {
-      switchwin_T switchwin;
-      if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
-        // With 'splitkeep' != cursor and in diff mode, prevent that the
-        // window scrolls and keep the topline.
-        if (*p_spk != 'c' || (curwin->w_p_diff && switchwin.sw_curwin->w_p_diff)) {
-          skip_update_topline = true;
-        }
-        check_cursor(curwin);
-        fp = var2fpos(&argvars[0], true, &fnum, false);
+      // With 'splitkeep' != cursor and in diff mode, prevent that the
+      // window scrolls and keep the topline.
+      if (*p_spk != 'c' || (wp->w_p_diff && curwin->w_p_diff)) {
+        skip_update_topline = true;
       }
+      check_cursor(wp);
+      fp = var2fpos(&argvars[0], true, &fnum, false, wp);
       skip_update_topline = false;
-      restore_win_noblock(&switchwin, true);
     }
   } else {
     // use current window
-    fp = var2fpos(&argvars[0], true, &fnum, false);
+    fp = var2fpos(&argvars[0], true, &fnum, false, curwin);
   }
 
   if (fp != NULL) {
@@ -8245,39 +8231,33 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   colnr_T vcol_start = 0;
   colnr_T vcol_end = 0;
-  switchwin_T switchwin;
-  bool winchanged = false;
+  win_T *wp = curwin;
 
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
     // use the window specified in the third argument
     tabpage_T *tp;
-    win_T *wp = win_id2wp_tp((int)tv_get_number(&argvars[2]), &tp);
+    wp = win_id2wp_tp((int)tv_get_number(&argvars[2]), &tp);
     if (wp == NULL || tp == NULL) {
       goto theend;
     }
-
-    if (switch_win_noblock(&switchwin, wp, tp, true) != OK) {
-      goto theend;
-    }
-
-    check_cursor(curwin);
-    winchanged = true;
+    check_cursor(wp);
   }
 
-  int fnum = curbuf->b_fnum;
-  pos_T *fp = var2fpos(&argvars[0], false, &fnum, false);
-  if (fp != NULL && fp->lnum <= curbuf->b_ml.ml_line_count
-      && fnum == curbuf->b_fnum) {
+  buf_T *bp = wp->w_buffer;
+  int fnum = bp->b_fnum;
+  pos_T *fp = var2fpos(&argvars[0], false, &fnum, false, wp);
+  if (fp != NULL && fp->lnum <= bp->b_ml.ml_line_count
+      && fnum == bp->b_fnum) {
     // Limit the column to a valid value, getvvcol() doesn't check.
     if (fp->col < 0) {
       fp->col = 0;
     } else {
-      const colnr_T len = ml_get_len(fp->lnum);
+      const colnr_T len = ml_get_buf_len(bp, fp->lnum);
       if (fp->col > len) {
         fp->col = len;
       }
     }
-    getvvcol(curwin, fp, &vcol_start, NULL, &vcol_end);
+    getvvcol(wp, fp, &vcol_start, NULL, &vcol_end);
     vcol_start++;
     vcol_end++;
   }
@@ -8289,10 +8269,6 @@ theend:
     tv_list_append_number(rettv->vval.v_list, vcol_end);
   } else {
     rettv->vval.v_number = vcol_end;
-  }
-
-  if (winchanged) {
-    restore_win_noblock(&switchwin, true);
   }
 }
 

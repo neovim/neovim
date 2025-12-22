@@ -6431,13 +6431,16 @@ int buf_charidx_to_byteidx(buf_T *buf, linenr_T lnum, int charidx)
 /// @param[in]  dollar_lnum  True when "$" is last line.
 /// @param[out]  ret_fnum  Set to fnum for marks.
 /// @param[in]  charcol  True to return character column.
+/// @param[in]  wp  Window for which to get the position.
 ///
 /// @return Pointer to position or NULL in case of error (e.g. invalid type).
 pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret_fnum,
-                const bool charcol)
+                const bool charcol, win_T *wp)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static pos_T pos;
+
+  buf_T *bp = wp->w_buffer;
 
   // Argument can be [lnum, col, coladd].
   if (tv->v_type == VAR_LIST) {
@@ -6450,7 +6453,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
 
     // Get the line number.
     pos.lnum = (linenr_T)tv_list_find_nr(l, 0, &error);
-    if (error || pos.lnum <= 0 || pos.lnum > curbuf->b_ml.ml_line_count) {
+    if (error || pos.lnum <= 0 || pos.lnum > bp->b_ml.ml_line_count) {
       // Invalid line number.
       return NULL;
     }
@@ -6462,9 +6465,9 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     }
     int len;
     if (charcol) {
-      len = mb_charlen(ml_get(pos.lnum));
+      len = mb_charlen(ml_get_buf(bp, pos.lnum));
     } else {
-      len = ml_get_len(pos.lnum);
+      len = ml_get_buf_len(bp, pos.lnum);
     }
 
     // We accept "$" for the column number: last column.
@@ -6499,18 +6502,18 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   pos.lnum = 0;
   if (name[0] == '.') {
     // cursor
-    pos = curwin->w_cursor;
+    pos = wp->w_cursor;
   } else if (name[0] == 'v' && name[1] == NUL) {
     // Visual start
-    if (VIsual_active) {
+    if (VIsual_active && wp == curwin) {
       pos = VIsual;
     } else {
-      pos = curwin->w_cursor;
+      pos = wp->w_cursor;
     }
   } else if (name[0] == '\'') {
     // mark
     int mname = (uint8_t)name[1];
-    const fmark_T *const fm = mark_get(curbuf, curwin, NULL, kMarkAll, mname);
+    const fmark_T *const fm = mark_get(bp, wp, NULL, kMarkAll, mname);
     if (fm == NULL || fm->mark.lnum <= 0) {
       return NULL;
     }
@@ -6520,7 +6523,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   }
   if (pos.lnum != 0) {
     if (charcol) {
-      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col);
+      pos.col = buf_byteidx_to_charidx(bp, pos.lnum, pos.col);
     }
     return &pos;
   }
@@ -6530,31 +6533,31 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   if (name[0] == 'w' && dollar_lnum) {
     // the "w_valid" flags are not reset when moving the cursor, but they
     // do matter for update_topline() and validate_botline().
-    check_cursor_moved(curwin);
+    check_cursor_moved(wp);
 
     pos.col = 0;
     if (name[1] == '0') {               // "w0": first visible line
-      update_topline(curwin);
+      update_topline(wp);
       // In silent Ex mode topline is zero, but that's not a valid line
       // number; use one instead.
-      pos.lnum = curwin->w_topline > 0 ? curwin->w_topline : 1;
+      pos.lnum = wp->w_topline > 0 ? wp->w_topline : 1;
       return &pos;
     } else if (name[1] == '$') {      // "w$": last visible line
-      validate_botline(curwin);
+      validate_botline(wp);
       // In silent Ex mode botline is zero, return zero then.
-      pos.lnum = curwin->w_botline > 0 ? curwin->w_botline - 1 : 0;
+      pos.lnum = wp->w_botline > 0 ? wp->w_botline - 1 : 0;
       return &pos;
     }
   } else if (name[0] == '$') {        // last column or line
     if (dollar_lnum) {
-      pos.lnum = curbuf->b_ml.ml_line_count;
+      pos.lnum = bp->b_ml.ml_line_count;
       pos.col = 0;
     } else {
-      pos.lnum = curwin->w_cursor.lnum;
+      pos.lnum = wp->w_cursor.lnum;
       if (charcol) {
-        pos.col = (colnr_T)mb_charlen(get_cursor_line_ptr());
+        pos.col = (colnr_T)mb_charlen(ml_get_buf(bp, wp->w_cursor.lnum));
       } else {
-        pos.col = get_cursor_line_len();
+        pos.col = ml_get_buf_len(bp, wp->w_cursor.lnum);
       }
     }
     return &pos;

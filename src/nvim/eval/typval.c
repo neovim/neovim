@@ -4235,7 +4235,7 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   if (lnum <= 0 && did_emsg_before == did_emsg && tv->v_type != VAR_NUMBER) {
     int fnum;
     // No valid number, try using same function as line() does.
-    pos_T *const fp = var2fpos(tv, true, &fnum, false);
+    pos_T *const fp = var2fpos(tv, true, &fnum, false, curwin);
     if (fp != NULL) {
       lnum = fp->lnum;
     }
