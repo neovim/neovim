@@ -1865,7 +1865,7 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
   return line;
 }
 
-/// @param count              number of lines (minimal 2) to join at cursor position.
+/// @param count              number of lines (minimal 2) to join at the cursor position.
 /// @param save_undo          when true, save lines for undo first.
 /// @param use_formatoptions  set to false when e.g. processing backspace and comment
 ///                           leaders should not be removed.
