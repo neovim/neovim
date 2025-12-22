@@ -1089,6 +1089,7 @@ func s:GetScriptChecks() abort
       \          ['#!/path/regina']],
       \ 'janet':  [['#!/path/janet']],
       \ 'dart':   [['#!/path/dart']],
+      \ 'bpftrace':  [['#!/path/bpftrace']],
       \ 'vim':   [['#!/path/vim']],
       \ }
 endfunc
