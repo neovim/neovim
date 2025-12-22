@@ -853,8 +853,8 @@ do
                   once = true,
                   nested = true,
                   callback = function()
-                    vim.api.nvim_exec_autocmds("OptionSet", {
-                      pattern = "background",
+                    vim.api.nvim_exec_autocmds('OptionSet', {
+                      pattern = 'background',
                     })
                   end,
                 })
@@ -872,7 +872,9 @@ do
           local optinfo = vim.api.nvim_get_option_info2('background', {})
           local cmdline_sid = -3
           if optinfo.last_set_sid > 0 or optinfo.last_set_sid == cmdline_sid then
-            vim.api.nvim_del_autocmd(id)
+            pcall(function()
+              vim.api.nvim_del_autocmd(id)
+            end)
           end
         end,
       })
