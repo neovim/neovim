@@ -1046,11 +1046,20 @@ static void mb_adjust_opend(oparg_T *oap)
   }
 }
 
-/// Put character 'c' at position 'lp'
-static inline void pbyte(pos_T lp, int c)
+/// put byte 'c' at position 'lp', but
+/// verify, that the position to place
+/// is actually safe
+static void pbyte(pos_T lp, int c)
 {
   assert(c <= UCHAR_MAX);
-  *(ml_get_buf_mut(curbuf, lp.lnum) + lp.col) = (char)c;
+  char *p = ml_get_buf_mut(curbuf, lp.lnum);
+  colnr_T len = curbuf->b_ml.ml_line_len;
+
+  // safety check
+  if (lp.col >= len) {
+    lp.col = (len > 1 ? len - 2 : 0);
+  }
+  *(p + lp.col) = (char)c;
   if (!curbuf_splice_pending) {
     extmark_splice_cols(curbuf, (int)lp.lnum - 1, lp.col, 1, 1, kExtmarkUndo);
   }
