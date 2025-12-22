@@ -614,6 +614,7 @@ local extension = {
   module = detect.hw,
   pkg = detect.hw,
   hy = 'hy',
+  hylo = 'hylo',
   iba = 'ibasic',
   ibi = 'ibasic',
   icn = 'icon',
