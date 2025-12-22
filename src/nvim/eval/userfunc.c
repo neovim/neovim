@@ -596,6 +596,7 @@ int get_func_tv(const char *name, int len, typval_T *rettv, char **arg, evalarg_
   return ret;
 }
 
+// fixed buffer length for fname_trans_sid()
 #define FLEN_FIXED 40
 
 /// Check whether function name starts with <SID> or s:
@@ -717,16 +718,24 @@ ufunc_T *find_func(const char *name)
   return NULL;
 }
 
+/// @return  true if "ufunc" is a global function.
+static bool func_is_global(const ufunc_T *ufunc)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  return (uint8_t)ufunc->uf_name[0] != K_SPECIAL;
+}
+
 /// Copy the function name of "fp" to buffer "buf".
 /// "buf" must be able to hold the function name plus three bytes.
 /// Takes care of script-local function names.
-static int cat_func_name(char *buf, size_t bufsize, ufunc_T *fp)
+static int cat_func_name(char *buf, size_t bufsize, const ufunc_T *fp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int len = -1;
   size_t uflen = fp->uf_namelen;
   assert(uflen > 0);
 
-  if ((uint8_t)fp->uf_name[0] == K_SPECIAL && uflen > 3) {
+  if (!func_is_global(fp) && uflen > 3) {
     len = snprintf(buf, bufsize, "<SNR>%s", fp->uf_name + 3);
   } else {
     len = snprintf(buf, bufsize, "%s", fp->uf_name);
@@ -1362,14 +1371,16 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 }
 
 /// There are two kinds of function names:
-/// 1. ordinary names, function defined with :function
-/// 2. numbered functions and lambdas
+/// 1. ordinary names, function defined with :function;
+///    can start with "<SNR>123_" literally or with K_SPECIAL.
+/// 2. Numbered functions and lambdas: "<lambda>123"
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
 static bool func_name_refcount(const char *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  return isdigit((uint8_t)(*name)) || *name == '<';
+  return isdigit((uint8_t)(*name)) || (name[0] == '<' && name[1] == 'l');
 }
 
 /// Check the argument count for user function "fp".
