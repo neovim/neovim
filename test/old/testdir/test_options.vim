@@ -747,7 +747,7 @@ func Test_set_completion_string_values()
   call assert_equal([], getcompletion('set diffopt-=', 'cmdline'))
   " Test all possible values
   call assert_equal(['filler', 'anchor', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
-        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'inline:', 'linematch:'],
+        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'inline:', 'linematch:', 'mergeblocks'],
         \ getcompletion('set diffopt=', 'cmdline'))
   set diffopt&
 
