@@ -27,6 +27,8 @@ local is_ci = t.is_ci
 local is_os = t.is_os
 local new_pipename = n.new_pipename
 local set_session = n.set_session
+local mkdir_p = n.mkdir_p
+local rmdir = n.rmdir
 local write_file = t.write_file
 local eval = n.eval
 local assert_log = t.assert_log
@@ -2923,6 +2925,94 @@ describe('TUI', function()
     end)
   end
 
+  it('applies correct syntax highlighting on startup #36211', function()
+    write_file(
+      'nginx.conf',
+      [[
+        user www www;
+      ]]
+    )
+    write_file(
+      'init_colorscheme.lua',
+      [[
+        vim.cmd('colorscheme default')
+      ]]
+    )
+    finally(function()
+      os.remove('init_colorscheme.lua')
+      os.remove('nginx.conf')
+    end)
+
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '-u',
+      'init_colorscheme.lua',
+      'nginx.conf',
+    })
+    screen:set_option('rgb', true)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.NvimLightGrey2, foreground = Screen.colors.NvimDarkCyan },
+      [101] = {
+        background = Screen.colors.NvimLightGrey2,
+        foreground = Screen.colors.NvimDarkGray2,
+      },
+      [102] = {
+        background = Screen.colors.NvimLightGrey2,
+        foreground = Screen.colors.NvimLightGray4,
+      },
+      [103] = {
+        background = Screen.colors.NvimLightGray4,
+        foreground = Screen.colors.NvimDarkGray2,
+      },
+    })
+    screen:expect([[
+      {100:^user}{101: www www;                                     }|
+      {102:~                                                 }|*3
+      {103:nginx.conf                      1,1            All}|
+      {101:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('does not override user highlights #36416', function()
+    write_file(
+      'highlight_override_test.lua',
+      [[
+        vim.api.nvim_set_hl(0, 'NonText', { fg = 'Olive', bg = 'Maroon' })
+      ]]
+    )
+    finally(function()
+      os.remove('highlight_override_test.lua')
+    end)
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '-u',
+      'highlight_override_test.lua',
+    })
+    screen:set_option('rgb', true)
+    screen:add_extra_attr_ids({
+      [100] = {
+        background = Screen.colors.NvimLightGray2,
+        foreground = Screen.colors.NvimDarkGrey2,
+      },
+      [101] = {
+        foreground = Screen.colors.Olive,
+        background = Screen.colors.Maroon,
+      },
+      [102] = {
+        background = Screen.colors.NvimLightGrey4,
+        foreground = Screen.colors.NvimDarkGrey2,
+      },
+    })
+    screen:expect([[
+      {100:^                                                  }|
+      {101:~                                                 }|*3
+      {102:[No Name]                       0,0-1          All}|
+      {100:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('argv[0] can be overridden #23953', function()
     t.skip(is_os('win'), 'N/A for Windows')
     local screen = Screen.new(50, 7, { rgb = false })
@@ -4084,6 +4174,38 @@ describe('TUI bg color', function()
       {5:~}                                                 |*3
       {3:[No Name]                       0,0-1          All}|
       did OptionSet, yay!                               |
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('applies during startup before setting color schemes #32109', function()
+    local plug_dir = 'Test_Colorscheme'
+    local sep = n.get_pathsep()
+    local colorscheme_folder = plug_dir .. sep .. 'colors'
+    mkdir_p(colorscheme_folder)
+
+    local colorscheme_file = table.concat({ colorscheme_folder, 'custom_colorscheme.lua' }, sep)
+    write_file(
+      colorscheme_file,
+      [[
+        print('applying', vim.o.background, 'colors')
+      ]]
+    )
+    finally(function()
+      rmdir(plug_dir)
+    end)
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '--cmd',
+      'set rtp+=' .. plug_dir,
+      '--cmd',
+      'colorscheme custom_colorscheme',
+    })
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*3
+      [No Name]                       0,0-1          All|
+      applying light colors                             |
       {5:-- TERMINAL --}                                    |
     ]])
   end)
