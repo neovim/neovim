@@ -50,7 +50,7 @@ if vim.api then
 end
 
 -- builtin functions which always should be available
-require('vim.shared')
+require('vim._core.shared')
 
 vim._submodules = {
   inspect = true,
@@ -95,6 +95,6 @@ end
 
 -- only on main thread: functions for interacting with editor state
 if vim.api and not vim.is_thread() then
-  require('vim._editor')
-  require('vim._system')
+  require('vim._core.editor')
+  require('vim._core.system')
 end

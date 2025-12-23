@@ -2137,8 +2137,8 @@ void nlua_set_sctx(sctx_T *current)
   // Files where internal wrappers are defined so we can ignore them
   // like vim.o/opt etc are defined in _options.lua
   char *ignorelist[] = {
-    "vim/_editor.lua",
-    "vim/_options.lua",
+    "vim/_core/editor.lua",
+    "vim/_core/options.lua",
     "vim/keymap.lua",
   };
   int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
@@ -2404,14 +2404,14 @@ plain: {}
   return arena_printf(arena, "<Lua %d>", ref).data;
 }
 
-/// Execute the vim._defaults module to set up default mappings and autocommands
+/// Execute the vim._core.defaults module to set up default mappings and autocommands
 void nlua_init_defaults(void)
 {
   lua_State *const L = global_lstate;
   assert(L);
 
   lua_getglobal(L, "require");
-  lua_pushstring(L, "vim._defaults");
+  lua_pushstring(L, "vim._core.defaults");
   if (nlua_pcall(L, 1, 0)) {
     fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }

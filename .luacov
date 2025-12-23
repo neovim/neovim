@@ -15,7 +15,7 @@ return {
     '^[^/\\.]',
   },
   modules = {
-    ['vim'] = 'runtime/lua/vim/shared.lua'
+    ['vim'] = 'runtime/lua/vim/_core/shared.lua'
   },
 }
 
