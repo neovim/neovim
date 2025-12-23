@@ -34,6 +34,9 @@ LSP
 OPTIONS
 
 • `'completefuzzycollect'` and `'isexpand'` have been removed.
+• `'mergeblocks'` option for 'diffopt':  Merges adjacent diff blocks separated
+  by small gaps (whitespace or punctuation) to reduce visual fragmentation
+  in diff mode. See |'diffopt'| and |diff.txt|.
 
 TREESITTER
 

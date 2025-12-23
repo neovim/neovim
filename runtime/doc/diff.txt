@@ -232,6 +232,10 @@ The diffs are highlighted with these groups:
 				highlight the exact difference between the
 				two.  Will respect any 'diffopt' flag that
 				affects internal diff.
+				When `'mergeblocks'` is enabled in 'diffopt',
+				adjacent diff blocks separated by small gaps
+				(whitespace or punctuation) will be merged to
+				reduce visual fragmentation.   See |'diffopt'|.
 				Not used when `inline:` is set to "none".
 |hl-DiffTextAdd|  DiffTextAdd	Added text inside a Changed line.  Similar to
 				DiffText, but used when there is no
