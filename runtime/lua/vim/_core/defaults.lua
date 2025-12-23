@@ -814,8 +814,8 @@ do
       -- an OSC 11 response from the terminal emulator. If the user has set
       -- 'background' explicitly then we will delete this autocommand,
       -- effectively disabling automatic background setting.
-      local bg_response_received = false
-      local bg_detection_complete = false
+      local did_bg_response = false
+      local did_bg_detection = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
@@ -826,11 +826,8 @@ do
           -- DA1 response that should come after the OSC 11 response if the
           -- terminal supports it.
           if string.match(resp, '^\x1b%[%?.-c$') then
-            bg_detection_complete = true
-            if not bg_response_received then
-              return true
-            end
-            return false
+            did_bg_detection = true
+            return not did_bg_response
           end
 
           local r, g, b = parseosc11(resp)
@@ -840,7 +837,7 @@ do
             local bb = parsecolor(b)
 
             if rr and gg and bb then
-              bg_response_received = true
+              did_bg_response = true
 
               local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
               local bg = luminance < 0.5 and 'dark' or 'light'
@@ -870,11 +867,10 @@ do
         once = true,
         callback = function()
           local optinfo = vim.api.nvim_get_option_info2('background', {})
-          local cmdline_sid = -3
-          if optinfo.last_set_sid > 0 or optinfo.last_set_sid == cmdline_sid then
-            pcall(function()
-              vim.api.nvim_del_autocmd(id)
-            end)
+          local sid_lua = -8
+          -- If not did_bg_response, the autocommand is already deleted.
+          if did_bg_response and optinfo.was_set and optinfo.last_set_sid ~= sid_lua then
+            vim.api.nvim_del_autocmd(id)
           end
         end,
       })
@@ -886,7 +882,7 @@ do
       -- Wait until detection of OSC 11 capabilities is complete to
       -- ensure background is automatically set before user config.
       vim.wait(100, function()
-        return bg_detection_complete
+        return did_bg_detection
       end, 1)
     end
 
