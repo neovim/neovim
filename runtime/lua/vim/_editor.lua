@@ -410,6 +410,11 @@ vim.cmd = setmetatable({}, {
 --- @field [string] any
 --- @field [integer] vim.var_accessor
 
+--- @class (private) vim.g: { [string]: any }
+--- @class (private) vim.b: vim.var_accessor
+--- @class (private) vim.w: vim.var_accessor
+--- @class (private) vim.t: vim.var_accessor
+
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   --- @param scope string
@@ -430,11 +435,11 @@ do
     return setmetatable({}, mt)
   end
 
-  vim.g = make_dict_accessor('g', false)
+  vim.g = make_dict_accessor('g', false) --[[@as vim.g]]
   vim.v = make_dict_accessor('v', false) --[[@as vim.v]]
-  vim.b = make_dict_accessor('b')
-  vim.w = make_dict_accessor('w')
-  vim.t = make_dict_accessor('t')
+  vim.b = make_dict_accessor('b') --[[@as vim.b]]
+  vim.w = make_dict_accessor('w') --[[@as vim.w]]
+  vim.t = make_dict_accessor('t') --[[@as vim.t]]
 end
 
 --- @deprecated
