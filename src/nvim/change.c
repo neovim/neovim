@@ -937,14 +937,14 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, oldlen);
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
-    newp = xmalloc((size_t)newlen + 1);
+    newp = xmallocz((size_t)newlen);
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
   if (alloc_newp) {
     ml_replace(lnum, newp, false);
   } else {
-    curbuf->b_ml.ml_line_len -= count;
+    curbuf->b_ml.ml_line_textlen = newlen + 1;
   }
 
   // mark the buffer as changed and prepare for displaying
