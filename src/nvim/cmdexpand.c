@@ -3472,12 +3472,14 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
     *e = keep;
 
     if (match) {
+      char *p = xmemdupz(s, (size_t)(e - s));
+
       if (!fuzzy) {
-        GA_APPEND(char *, &ga, xmemdupz(s, (size_t)(e - s)));
+        GA_APPEND(char *, &ga, p);
       } else {
         GA_APPEND(fuzmatch_str_T, &ga, ((fuzmatch_str_T){
           .idx = ga.ga_len,
-          .str = xmemdupz(s, (size_t)(e - s)),
+          .str = p,
           .score = score,
         }));
       }
@@ -3521,8 +3523,9 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
         || TV_LIST_ITEM_TV(li)->vval.v_string == NULL) {
       continue;  // Skip non-string items and empty strings.
     }
+    char *p = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
 
-    GA_APPEND(char *, &ga, xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string));
+    GA_APPEND(char *, &ga, p);
   });
   tv_list_unref(retlist);
 
