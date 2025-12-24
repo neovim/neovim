@@ -1727,7 +1727,7 @@ failed:
         c = true;
       }
       if (ff_error == EOL_DOS) {
-        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("CR missing"));
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[CR missing]"));
         c = true;
       }
       if (split) {
