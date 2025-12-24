@@ -2281,8 +2281,10 @@ static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2
     }
   } else if (*region_type == kMTBlockWise) {
     colnr_T sc1, ec1, sc2, ec2;
+    const bool lbr_saved = reset_lbr();
     getvvcol(curwin, p1, &sc1, NULL, &ec1);
     getvvcol(curwin, p2, &sc2, NULL, &ec2);
+    restore_lbr(lbr_saved);
     oap->motion_type = kMTBlockWise;
     oap->inclusive = true;
     oap->op_type = OP_NOP;

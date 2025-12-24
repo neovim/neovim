@@ -2839,4 +2839,73 @@ func Test_visual_block_pos_update()
   bw!
 endfunc
 
+" Test that blockwise end position matches getpos('.')
+" when 'wrap' and 'linebreak' are set
+func Test_getregionpos_block_linebreak_matches_getpos()
+  CheckFeature linebreak
+
+  new
+  setlocal buftype=
+  setlocal bufhidden=wipe
+  setlocal noswapfile
+
+  setlocal wrap
+  setlocal linebreak
+  setlocal breakat=\ \t
+  setlocal nonumber norelativenumber
+  setlocal signcolumn=no
+  setlocal foldcolumn=0
+
+  call setline(1, '1111111111 2222222222 3333333333 4444444444 5555555555 6666666666 7777777777 8888888888')
+
+  " Force wrapping deterministically by shrinking the screen width.
+  let save_columns = &columns
+  let moved = 0
+  for c in [30, 20, 15, 10]
+    execute 'set columns=' .. c
+    redraw!
+    normal! gg0
+    let row0 = winline()
+    normal! gj
+    let row1 = winline()
+    if row1 > row0
+      let moved = 1
+      break
+    endif
+  endfor
+  call assert_true(moved)
+
+  " Move a bit right so we are not at column 1, then go back up one screen line.
+  normal! 5l
+  normal! gk
+  let row2 = winline()
+  call assert_equal(row0, row2)
+
+  " Start Visual block and move down one screen line to the previous position.
+  execute "normal! \<C-V>"
+  normal! gj
+  let row3 = winline()
+  call assert_equal(row1, row3)
+
+  let p1 = getpos('v')
+  let p2 = getpos('.')
+
+  " Sanity: block selection is within the same wrapped buffer line.
+  call assert_equal(1, p1[1])
+  call assert_equal(1, p2[1])
+
+  " For blockwise region, getregionpos() should not report an end position
+  " different from the {pos2} we passed in.
+  let segs = getregionpos(p1, p2, #{ type: "\<C-V>", exclusive: v:false })
+
+  call assert_equal(1, len(segs))
+  let endp = segs[0][1]
+
+  call assert_equal(p2[1], endp[1])  " lnum
+  call assert_equal(p2[2], endp[2])  " col
+  call assert_equal(p2[3], endp[3])  " off
+
+  let &columns = save_columns
+  bw!
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab
