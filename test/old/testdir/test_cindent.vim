@@ -1106,6 +1106,27 @@ func Test_cindent_1()
   b;
   }
 
+  void func() {
+  if (0)
+  do
+  if (0);
+  while (0);
+  else;
+  }
+
+  void func() {
+  if (0)
+  do
+  if (0)
+  do
+  if (0)
+  a();
+  while (0);
+  while (0);
+  else
+  a();
+  }
+
   /* end of AUTO */
   [CODE]
 
@@ -2086,6 +2107,27 @@ func Test_cindent_1()
   void foo() {
   	float a[5],
   		  b;
+  }
+
+  void func() {
+  	if (0)
+  		do
+  			if (0);
+  		while (0);
+  	else;
+  }
+
+  void func() {
+  	if (0)
+  		do
+  			if (0)
+  				do
+  					if (0)
+  						a();
+  				while (0);
+  		while (0);
+  	else
+  		a();
   }
 
   /* end of AUTO */
