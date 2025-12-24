@@ -2529,8 +2529,8 @@ function M.open_float(opts, ...)
         '%s%s:%s:%s%s',
         default_pre,
         file_name,
-        location.range.start.line,
-        location.range.start.character,
+        location.range.start.line + 1,
+        location.range.start.character + 1,
         info_suffix
       )
       highlights[#highlights + 1] = {
