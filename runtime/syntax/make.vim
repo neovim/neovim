@@ -7,6 +7,7 @@
 " 2025 Apr 15 by Vim project: rework Make flavor detection (#17089)
 " 2025 Oct 12 by Vim project: update makeDefine highlighting (#18403)
 " 2025 Oct 25 by Vim project: update makeTargetinDefine highlighting (#18570)
+" 2025 Dec 23 by Vim project: fix too greedy match (#18938)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -40,10 +41,6 @@ syn match makeIdent	"\$\$\w*"
 syn match makeIdent	"\$\$\$\$\w*" containedin=makeDefine
 syn match makeIdent	"\$[^({]"
 syn match makeIdent	"\$\$[^({]" containedin=makeDefine
-syn match makeIdent	"^ *[^:#= \t]*\s*[:+?!*]="me=e-2
-syn match makeIdent	"^ *[^:#= \t]*\s*::="me=e-3
-syn match makeIdent	"^ *[^:#= \t]*\s*="me=e-1
-syn match makeIdent	"%"
 if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
   syn region makeIdent	start="\$(" end=")" contains=makeStatement,makeIdent
   syn region makeIdent	start="\${" end="}" contains=makeStatement,makeIdent
@@ -55,6 +52,10 @@ else
   syn region makeIdent	start="\$\$(" skip="\\)\|\\\\" end=")" containedin=makeDefine contains=makeStatement,makeIdent
   syn region makeIdent	start="\$\${" skip="\\}\|\\\\" end="}" containedin=makeDefine contains=makeStatement,makeIdent
 endif
+syn match makeIdent	"^ *[^:#= \t]*\s*[:+?!*]="me=e-2
+syn match makeIdent	"^ *[^:#= \t]*\s*::="me=e-3
+syn match makeIdent	"^ *[^:#= \t]*\s*="me=e-1
+syn match makeIdent	"%"
 
 " Makefile.in variables
 syn match makeConfig "@[A-Za-z0-9_]\+@"
