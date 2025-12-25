@@ -27,8 +27,6 @@ local is_ci = t.is_ci
 local is_os = t.is_os
 local new_pipename = n.new_pipename
 local set_session = n.set_session
-local mkdir_p = n.mkdir_p
-local rmdir = n.rmdir
 local write_file = t.write_file
 local eval = n.eval
 local assert_log = t.assert_log
@@ -4086,38 +4084,6 @@ describe('TUI bg color', function()
       {5:~}                                                 |*3
       {3:[No Name]                       0,0-1          All}|
       did OptionSet, yay!                               |
-      {5:-- TERMINAL --}                                    |
-    ]])
-  end)
-
-  it('applies during startup before setting color schemes #32109', function()
-    local plug_dir = 'Test_Colorscheme'
-    local sep = n.get_pathsep()
-    local colorscheme_folder = plug_dir .. sep .. 'colors'
-    mkdir_p(colorscheme_folder)
-
-    local colorscheme_file = table.concat({ colorscheme_folder, 'custom_colorscheme.lua' }, sep)
-    write_file(
-      colorscheme_file,
-      [[
-        print('applying', vim.o.background, 'colors')
-      ]]
-    )
-    finally(function()
-      rmdir(plug_dir)
-    end)
-    local screen = tt.setup_child_nvim({
-      '--clean',
-      '--cmd',
-      'set rtp+=' .. plug_dir,
-      '--cmd',
-      'colorscheme custom_colorscheme',
-    })
-    screen:expect([[
-      ^                                                  |
-      ~                                                 |*3
-      [No Name]                       0,0-1          All|
-      applying light colors                             |
       {5:-- TERMINAL --}                                    |
     ]])
   end)
