@@ -908,6 +908,31 @@ function Client:stop(force)
   end)
 end
 
+--- Stops a client, then starts a new client with the same config and attached
+--- buffers.
+---
+--- @param force? integer|boolean See [Client:stop()] for details.
+---                               (default: `self.exit_timeout`)
+function Client:_restart(force)
+  validate('force', force, { 'number', 'boolean' }, true)
+
+  self._handle_restart = function()
+    --- @type integer[]
+    local attached_buffers = vim.tbl_keys(self.attached_buffers)
+
+    vim.schedule(function()
+      local new_client_id = lsp.start(self.config, { attach = false })
+      if new_client_id then
+        for _, buffer in ipairs(attached_buffers) do
+          lsp.buf_attach_client(buffer, new_client_id)
+        end
+      end
+    end)
+  end
+
+  self:stop(force)
+end
+
 --- Get options for a method that is registered dynamically.
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_supports_registration(method)
@@ -1315,6 +1340,11 @@ function Client:_on_exit(code, signal)
       end
     end
   end)
+
+  if self._handle_restart ~= nil then
+    self._handle_restart()
+    self._handle_restart = nil
+  end
 
   -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
   -- autocommands

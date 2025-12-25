@@ -62,18 +62,22 @@ describe(':lsp', function()
     end)
 
     it('restart' .. test_message_suffix, function()
-      local ids_differ = exec_lua(function()
+      --- @type boolean, integer?
+      local ids_differ, attached_buffer_count = exec_lua(function()
         vim.lsp.enable('dummy')
         local old_id = vim.lsp.get_clients()[1].id
 
         vim.cmd('lsp restart' .. lsp_command_suffix)
-        vim.wait(1000, function()
-          return old_id ~= vim.lsp.get_clients()[1].id
+        return vim.wait(1000, function()
+          local new_client = vim.lsp.get_clients()[1]
+          if new_client == nil then
+            return false
+          end
+          return old_id ~= new_client.id, #new_client.attached_buffers
         end)
-        local new_id = vim.lsp.get_clients()[1].id
-        return old_id ~= new_id
       end)
       eq(true, ids_differ)
+      eq(1, attached_buffer_count)
     end)
 
     it('stop' .. test_message_suffix, function()
