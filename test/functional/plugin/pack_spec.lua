@@ -790,46 +790,6 @@ describe('vim.pack', function()
       eq(false, pack_exists('basic'))
     end)
 
-    it('allows changing `src` of installed plugin', function()
-      local basic_src = repos_src.basic
-      local defbranch_src = repos_src.defbranch
-      exec_lua(function()
-        vim.pack.add({ basic_src })
-      end)
-      eq('basic main', exec_lua('return require("basic")'))
-
-      n.clear()
-      watch_events({ 'PackChangedPre', 'PackChanged' })
-      exec_lua(function()
-        vim.pack.add({ { src = defbranch_src, name = 'basic' } })
-      end)
-      eq('defbranch dev', exec_lua('return require("defbranch")'))
-
-      -- Should first properly delete and then cleanly install
-      local log_simple = vim.tbl_map(function(x) --- @param x table
-        return { x.event, x.data.kind, x.data.spec }
-      end, exec_lua('return _G.event_log'))
-
-      local ref_log_simple = {
-        { 'PackChangedPre', 'delete', { name = 'basic', src = basic_src } },
-        { 'PackChanged', 'delete', { name = 'basic', src = basic_src } },
-        { 'PackChangedPre', 'install', { name = 'basic', src = defbranch_src } },
-        { 'PackChanged', 'install', { name = 'basic', src = defbranch_src } },
-      }
-      eq(ref_log_simple, log_simple)
-
-      local ref_messages = table.concat({
-        "vim.pack: Removed plugin 'basic'",
-        'vim.pack: Installing plugins (0/1)',
-        'vim.pack: 100% Installing plugins (1/1)',
-      }, '\n')
-      eq(ref_messages, n.exec_capture('messages'))
-
-      local defbranch_rev = git_get_hash('dev', 'defbranch')
-      local ref_lock_tbl = { plugins = { basic = { rev = defbranch_rev, src = defbranch_src } } }
-      eq(ref_lock_tbl, get_lock_tbl())
-    end)
-
     it('can install from the Internet', function()
       t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
       exec_lua(function()
@@ -1142,7 +1102,7 @@ describe('vim.pack', function()
 
   describe('update()', function()
     -- Lua source code for the tested plugin named "fetch"
-    local fetch_lua_file = vim.fs.joinpath(pack_get_plug_path('fetch'), 'lua', 'fetch.lua')
+    local fetch_lua_file
     -- Tables with hashes used to test confirmation buffer and log content
     local hashes --- @type table<string,string>
     local short_hashes --- @type table<string,string>
@@ -1157,6 +1117,7 @@ describe('vim.pack', function()
       repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch main"')
       git_add_commit('Commit from `main` to be removed', 'fetch')
 
+      fetch_lua_file = vim.fs.joinpath(pack_get_plug_path('fetch'), 'lua', 'fetch.lua')
       hashes = { fetch_head = git_get_hash('HEAD', 'fetch') }
       short_hashes = { fetch_head = git_get_short_hash('HEAD', 'fetch') }
 
@@ -1724,6 +1685,52 @@ describe('vim.pack', function()
 
       -- Should update lockfile
       eq(hashes.fetch_new, get_lock_tbl().plugins.fetch.rev)
+    end)
+
+    it('can change `src` of installed plugin', function()
+      local basic_src = repos_src.basic
+      local defbranch_src = repos_src.defbranch
+      exec_lua(function()
+        vim.pack.add({ basic_src })
+      end)
+
+      local function assert_origin(ref)
+        -- Should be in sync both on disk and in lockfile
+        local opts = { cwd = pack_get_plug_path('basic') }
+        local real_origin = system_sync({ 'git', 'remote', 'get-url', 'origin' }, opts)
+        eq(ref, vim.trim(real_origin.stdout))
+
+        eq(ref, get_lock_tbl().plugins.basic.src)
+      end
+
+      n.clear()
+      watch_events({ 'PackChangedPre', 'PackChanged' })
+
+      assert_origin(basic_src)
+      exec_lua(function()
+        vim.pack.add({ { src = defbranch_src, name = 'basic' } })
+      end)
+      -- Should not yet (after `add()`) affect plugin source
+      assert_origin(basic_src)
+
+      -- Should update source immediately (to work if updates are discarded)
+      exec_lua(function()
+        vim.pack.update({ 'basic' })
+      end)
+      assert_origin(defbranch_src)
+
+      -- Should not revert source change even if update is discarded
+      n.exec('quit')
+      assert_origin(defbranch_src)
+      eq({}, exec_lua('return _G.event_log'))
+
+      -- Should work with forced update
+      n.clear()
+      exec_lua(function()
+        vim.pack.add({ basic_src })
+        vim.pack.update({ 'basic' }, { force = true })
+      end)
+      assert_origin(basic_src)
     end)
 
     it('shows progress report', function()

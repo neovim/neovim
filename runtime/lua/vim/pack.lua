@@ -70,19 +70,15 @@
 ---      To discard updates execute |:quit|.
 ---    - (Optionally) |:restart| to start using code from updated plugins.
 ---
----Switch plugin's version:
----- Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
----named 'plugin1' has changed to `vim.version.range('*')`.
----- |:restart|. The plugin's actual revision on disk is not yet changed.
----  Only plugin's `version` in |vim.pack-lockfile| is updated.
----- Execute `vim.pack.update({ 'plugin1' })`.
+---Switch plugin's version and/or source:
+---- Update 'init.lua' for plugin to have desired `version` and/or `src`.
+---  Let's say, the switch is for plugin named 'plugin1'.
+---- |:restart|. The plugin's state on disk (revision and/or tracked source)
+---  is not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
+---- Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated.
 ---- Review changes and either confirm or discard them. If discarded, revert
----any changes in 'init.lua' as well or you will be prompted again next time
----you run |vim.pack.update()|.
----
----Switch plugin's source:
----- Update 'init.lua' for plugin to have desired `src`.
----- |:restart|. This will cleanly reinstall plugin from the new source.
+---  `version` change in 'init.lua' as well or you will be prompted again next time
+---  you run |vim.pack.update()|.
 ---
 ---Freeze plugin from being updated:
 ---- Update 'init.lua' for plugin to have `version` set to current revision.
@@ -922,12 +918,6 @@ function M.add(specs, opts)
   local plugs_to_install = {} --- @type vim.pack.Plug[]
   local needs_lock_write = false
   for _, p in ipairs(plugs) do
-    -- Allow to cleanly change `src` of an already installed plugin
-    if p.info.installed and plugin_lock.plugins[p.spec.name].src ~= p.spec.src then
-      M.del({ p.spec.name })
-      p.info.installed = false
-    end
-
     -- Detect `version` change
     local p_lock = plugin_lock.plugins[p.spec.name] or {}
     needs_lock_write = needs_lock_write or p_lock.version ~= p.spec.version
@@ -1172,10 +1162,18 @@ function M.update(names, opts)
 
   -- Perform update
   local timestamp = get_timestamp()
+  local needs_lock_write = opts.force --- @type boolean
 
   --- @async
   --- @param p vim.pack.Plug
   local function do_update(p)
+    -- Ensure proper `origin` if needed
+    if plugin_lock.plugins[p.spec.name].src ~= p.spec.src then
+      git_cmd({ 'remote', 'set-url', 'origin', p.spec.src }, p.path)
+      plugin_lock.plugins[p.spec.name].src = p.spec.src
+      needs_lock_write = true
+    end
+
     -- Fetch
     if not opts._offline then
       -- Using '--tags --force' means conflicting tags will be synced with remote
@@ -1197,8 +1195,11 @@ function M.update(names, opts)
     or 'Downloading updates'
   run_list(plug_list, do_update, progress_title)
 
-  if opts.force then
+  if needs_lock_write then
     lock_write()
+  end
+
+  if opts.force then
     feedback_log(plug_list)
     return
   end

@@ -272,19 +272,15 @@ Basic install and management:
     updates execute |:quit|.
   • (Optionally) |:restart| to start using code from updated plugins.
 
-Switch plugin's version:
-• Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
-  named 'plugin1' has changed to `vim.version.range('*')`.
-• |:restart|. The plugin's actual revision on disk is not yet changed. Only
-  plugin's `version` in |vim.pack-lockfile| is updated.
-• Execute `vim.pack.update({ 'plugin1' })`.
-• Review changes and either confirm or discard them. If discarded, revert any
-  changes in 'init.lua' as well or you will be prompted again next time you
-  run |vim.pack.update()|.
-
-Switch plugin's source:
-• Update 'init.lua' for plugin to have desired `src`.
-• |:restart|. This will cleanly reinstall plugin from the new source.
+Switch plugin's version and/or source:
+• Update 'init.lua' for plugin to have desired `version` and/or `src`. Let's
+  say, the switch is for plugin named 'plugin1'.
+• |:restart|. The plugin's state on disk (revision and/or tracked source) is
+  not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
+• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated.
+• Review changes and either confirm or discard them. If discarded, revert
+  `version` change in 'init.lua' as well or you will be prompted again next
+  time you run |vim.pack.update()|.
 
 Freeze plugin from being updated:
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
