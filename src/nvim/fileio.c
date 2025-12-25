@@ -2146,7 +2146,8 @@ void msg_add_lines(int insert_space, linenr_T lnum, off_T nchars)
   size_t len = strlen(IObuff);
 
   if (shortmess(SHM_LINES)) {
-    snprintf(IObuff + len, IOSIZE - len, "%s%" PRId64 "L, %" PRId64 "B",
+    snprintf(IObuff + len, IOSIZE - len,
+             _("%s%" PRId64 "L, %" PRId64 "B"),  // l10n: L as in line, B as in byte
              insert_space ? " " : "", (int64_t)lnum, (int64_t)nchars);
   } else {
     len += (size_t)snprintf(IObuff + len, IOSIZE - len,
