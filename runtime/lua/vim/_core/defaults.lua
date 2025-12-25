@@ -868,7 +868,11 @@ do
         callback = function()
           local optinfo = vim.api.nvim_get_option_info2('background', {})
           local sid_lua = -8
-          if optinfo.was_set and optinfo.last_set_sid ~= sid_lua then
+          if
+            optinfo.was_set
+            and optinfo.last_set_sid ~= sid_lua
+            and next(vim.api.nvim_get_autocmds({ id = id })) ~= nil
+          then
             vim.api.nvim_del_autocmd(id)
           end
         end,
