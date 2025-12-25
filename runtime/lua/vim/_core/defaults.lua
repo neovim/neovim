@@ -816,7 +816,6 @@ do
       -- effectively disabling automatic background setting.
       local did_bg_response = false
       local did_bg_detection = false
-      local did_del_autocmd = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
@@ -828,8 +827,7 @@ do
           -- terminal supports it.
           if string.match(resp, '^\x1b%[%?.-c$') then
             did_bg_detection = true
-            did_del_autocmd = not did_bg_response
-            return did_del_autocmd
+            return not did_bg_response
           end
 
           local r, g, b = parseosc11(resp)
@@ -870,7 +868,7 @@ do
         callback = function()
           local optinfo = vim.api.nvim_get_option_info2('background', {})
           local sid_lua = -8
-          if not did_del_autocmd and optinfo.was_set and optinfo.last_set_sid ~= sid_lua then
+          if optinfo.was_set and optinfo.last_set_sid ~= sid_lua then
             vim.api.nvim_del_autocmd(id)
           end
         end,
