@@ -109,7 +109,7 @@ describe('vim.ui', function()
       eq(true, exec_lua('return (nil == result)'))
     end)
 
-    it('can return opts.cacelreturn when aborted with ESC with cancelreturn opt #18144', function()
+    it('can return opts.cancelreturn when aborted with ESC with cancelreturn opt #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
       feed(':lua vim.ui.input({ cancelreturn = "CANCEL" }, function(input) result = input end)<cr>')
       feed('Inputted Text<esc>')

@@ -621,6 +621,8 @@ local function check_sysinfo()
       [[
     ## Problem
 
+    Describe the problem (concisely).
+
     ## Steps to reproduce
 
     ```
