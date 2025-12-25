@@ -8060,7 +8060,7 @@ static void ex_lsp(exarg_T *eap)
 
   NLUA_EXEC_STATIC("require'vim._core.ex_cmd.lsp'.ex_lsp(...)", args, kRetNilBool, NULL, &err);
   if (ERROR_SET(&err)) {
-    emsg(err.msg);
+    emsg_multiline(err.msg, "lua_error", HLF_E, true);
   }
   api_clear_error(&err);
 }
