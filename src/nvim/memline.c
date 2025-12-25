@@ -1804,6 +1804,7 @@ theend:
 /// On failure an error message is given and IObuff is returned (to avoid
 /// having to check for error everywhere).
 char *ml_get(linenr_T lnum)
+  FUNC_ATTR_NONNULL_RET
 {
   return ml_get_buf_impl(curbuf, lnum, false);
 }
@@ -1813,6 +1814,7 @@ char *ml_get(linenr_T lnum)
 /// This is the same as ml_get(), but taking in the buffer
 /// as an argument.
 char *ml_get_buf(buf_T *buf, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   return ml_get_buf_impl(buf, lnum, false);
 }
@@ -1824,6 +1826,7 @@ char *ml_get_buf(buf_T *buf, linenr_T lnum)
 ///
 /// @return a pointer to a line in the buffer
 char *ml_get_buf_mut(buf_T *buf, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   return ml_get_buf_impl(buf, lnum, true);
 }
@@ -1850,11 +1853,14 @@ colnr_T ml_get_pos_len(pos_T *pos)
 /// @return  length (excluding the NUL) of the given line in the given buffer.
 colnr_T ml_get_buf_len(buf_T *buf, linenr_T lnum)
 {
-  if (*ml_get_buf(buf, lnum) == NUL) {
+  const char *line = ml_get_buf(buf, lnum);
+
+  if (*line == NUL) {
     return 0;
   }
 
-  return buf->b_ml.ml_line_len - 1;
+  assert(buf->b_ml.ml_line_textlen > 0);
+  return buf->b_ml.ml_line_textlen - 1;
 }
 
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
@@ -1872,13 +1878,13 @@ int gchar_pos(pos_T *pos)
 ///
 /// @return  a pointer to a line in a specific buffer
 static char *ml_get_buf_impl(buf_T *buf, linenr_T lnum, bool will_change)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   static int recursive = 0;
   static char questions[4];
 
   if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
-    buf->b_ml.ml_line_len = 1;
+    buf->b_ml.ml_line_textlen = 1;
     return "";
   }
 
@@ -1893,7 +1899,7 @@ static char *ml_get_buf_impl(buf_T *buf, linenr_T lnum, bool will_change)
     ml_flush_line(buf, false);
 errorret:
     STRCPY(questions, "???");
-    buf->b_ml.ml_line_len = 4;
+    buf->b_ml.ml_line_textlen = 4;
     buf->b_ml.ml_line_lnum = lnum;
     return questions;
   }
@@ -1933,7 +1939,7 @@ errorret:
     unsigned end = idx == 0 ? dp->db_txt_end : (dp->db_index[idx - 1] & DB_INDEX_MASK);
 
     buf->b_ml.ml_line_ptr = (char *)dp + start;
-    buf->b_ml.ml_line_len = (colnr_T)(end - start);
+    buf->b_ml.ml_line_textlen = (colnr_T)(end - start);
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~(ML_LINE_DIRTY | ML_ALLOCATED);
   }
@@ -1952,7 +1958,7 @@ errorret:
   if ((buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) == 0) {
     // make sure the text is in allocated memory
     buf->b_ml.ml_line_ptr = xmemdup(buf->b_ml.ml_line_ptr,
-                                    (size_t)buf->b_ml.ml_line_len);
+                                    (size_t)buf->b_ml.ml_line_textlen);
     buf->b_ml.ml_flags |= ML_ALLOCATED;
     if (will_change) {
       // can't make the change in the data block
@@ -2526,7 +2532,6 @@ int ml_replace_buf_len(buf_T *buf, linenr_T lnum, char *line_arg, size_t len_arg
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char *line = line_arg;
-  colnr_T len = (colnr_T)len_arg;
 
   if (line == NULL) {           // just checking...
     return FAIL;
@@ -2556,7 +2561,7 @@ int ml_replace_buf_len(buf_T *buf, linenr_T lnum, char *line_arg, size_t len_arg
   }
 
   buf->b_ml.ml_line_ptr = line;
-  buf->b_ml.ml_line_len = len + 1;
+  buf->b_ml.ml_line_textlen = (colnr_T)len_arg + 1;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
   if (noalloc) {
@@ -2875,7 +2880,7 @@ static void ml_flush_line(buf_T *buf, bool noalloc)
       } else {  // text of previous line follows
         old_len = (int)(dp->db_index[idx - 1] & DB_INDEX_MASK) - start;
       }
-      colnr_T new_len = buf->b_ml.ml_line_len;
+      colnr_T new_len = buf->b_ml.ml_line_textlen;
       int extra = new_len - old_len;            // negative if lines gets smaller
 
       // if new line fits in data block, replace directly
@@ -3833,7 +3838,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     // First line in empty buffer from ml_flush_line() -- reset
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
-    buf->b_ml.ml_chunksize[0].mlcs_totalsize = buf->b_ml.ml_line_len;
+    buf->b_ml.ml_chunksize[0].mlcs_totalsize = buf->b_ml.ml_line_textlen;
     return;
   }
 

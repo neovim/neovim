@@ -3386,11 +3386,17 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // again when auto-formatting.
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
-          char *ptr = ml_get_buf_mut(curbuf, curwin->w_cursor.lnum);
+          const char *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum);
           int len = get_cursor_line_len();
           if (len > 0 && ptr[len - 1] == ' ') {
-            ptr[len - 1] = NUL;
-            curbuf->b_ml.ml_line_len--;
+            char *newp = xmemdupz(ptr, (size_t)(len - 1));
+
+            if (curbuf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {
+              xfree(curbuf->b_ml.ml_line_ptr);
+            }
+            curbuf->b_ml.ml_line_ptr = newp;
+            curbuf->b_ml.ml_line_textlen--;
+            curbuf->b_ml.ml_flags |= ML_LINE_DIRTY;
           }
         }
 
@@ -4038,17 +4044,18 @@ static bool ins_tab(void)
       int i = cursor->col - fpos.col;
       if (i > 0) {
         if (!(State & VREPLACE_FLAG)) {
-          char *newp = xmalloc((size_t)(curbuf->b_ml.ml_line_len - i));
+          const colnr_T newp_len = curbuf->b_ml.ml_line_textlen - i;
+          char *newp = xmalloc((size_t)newp_len);
           ptrdiff_t col = ptr - curbuf->b_ml.ml_line_ptr;
           if (col > 0) {
             memmove(newp, ptr - col, (size_t)col);
           }
-          memmove(newp + col, ptr + i, (size_t)(curbuf->b_ml.ml_line_len - col - i));
+          memmove(newp + col, ptr + i, (size_t)(newp_len - col));
           if (curbuf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {
             xfree(curbuf->b_ml.ml_line_ptr);
           }
           curbuf->b_ml.ml_line_ptr = newp;
-          curbuf->b_ml.ml_line_len -= i;
+          curbuf->b_ml.ml_line_textlen = newp_len;
           curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
           inserted_bytes(fpos.lnum, change_col,
                          cursor->col - change_col, fpos.col - change_col);

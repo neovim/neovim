@@ -1053,7 +1053,7 @@ static void pbyte(pos_T lp, int c)
 {
   assert(c <= UCHAR_MAX);
   char *p = ml_get_buf_mut(curbuf, lp.lnum);
-  colnr_T len = curbuf->b_ml.ml_line_len;
+  colnr_T len = curbuf->b_ml.ml_line_textlen;
 
   // safety check
   if (lp.col >= len) {
