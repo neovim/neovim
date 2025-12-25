@@ -230,9 +230,9 @@ plugins from the lockfile will be installed at once and at lockfile's revision
 data for installed plugins is repaired (including after deleting whole file),
 but `version` fields will be missing for not yet added plugins.
 
-Example workflows ~
+                                                           *vim.pack-examples*
 
-Basic install and management:
+Basic install and management ~
 • Add |vim.pack.add()| call(s) to 'init.lua': >lua
 
     vim.pack.add({
@@ -272,7 +272,23 @@ Basic install and management:
     updates execute |:quit|.
   • (Optionally) |:restart| to start using code from updated plugins.
 
-Switch plugin's version and/or source:
+Use shorter source ~
+
+Create custom Lua helpers: >lua
+
+    local gh = function(x) return 'https://github.com/' .. x end
+    local cb = function(x) return 'https://codeberg.org/' .. x end
+    vim.pack.add({ gh('user/plugin1'), cb('user/plugin2') })
+<
+
+Another approach is to utilize Git's `insteadOf` configuration:
+• `git config --global url."https://github.com/".insteadOf "gh:"`
+• `git config --global url."https://codeberg.org/".insteadOf "cb:"`
+• In 'init.lua': `vim.pack.add({ 'gh:user/plugin1', 'cb:user/plugin2' })`.
+  These sources will be used verbatim in |vim.pack-lockfile|, so reusing the
+  config on different machine will require the same Git configuration.
+
+Switch plugin's version and/or source ~
 • Update 'init.lua' for plugin to have desired `version` and/or `src`. Let's
   say, the switch is for plugin named 'plugin1'.
 • |:restart|. The plugin's state on disk (revision and/or tracked source) is
@@ -282,17 +298,17 @@ Switch plugin's version and/or source:
   `version` change in 'init.lua' as well or you will be prompted again next
   time you run |vim.pack.update()|.
 
-Freeze plugin from being updated:
+Freeze plugin from being updated ~
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
   it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
 • |:restart|.
 
-Unfreeze plugin to start receiving updates:
+Unfreeze plugin to start receiving updates ~
 • Update 'init.lua' for plugin to have `version` set to whichever version you
   want it to be updated.
 • |:restart|.
 
-Revert plugin after an update:
+Revert plugin after an update ~
 • Locate plugin's revision at working state. For example:
   • If there is a previous version of |vim.pack-lockfile| (like from version
     control history), use it to get plugin's `rev` field.
@@ -304,12 +320,12 @@ Revert plugin after an update:
   state on disk follow target revision. |:restart|.
 • When ready to deal with updating plugin, unfreeze it.
 
-Remove plugins from disk:
+Remove plugins from disk ~
 • Use |vim.pack.del()| with a list of plugin names to remove. Make sure their
   specs are not included in |vim.pack.add()| call in 'init.lua' or they will
   be reinstalled.
 
-Available events to hook into ~
+                                                             *vim.pack-events*
 • *PackChangedPre* - before trying to change plugin's state.
 • *PackChanged* - after plugin's state has changed.
 
