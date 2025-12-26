@@ -288,12 +288,18 @@ Another approach is to utilize Git's `insteadOf` configuration:
   These sources will be used verbatim in |vim.pack-lockfile|, so reusing the
   config on different machine will require the same Git configuration.
 
+Explore installed plugins ~
+• `vim.pack.update(nil, { offline = true })`
+• Navigate between plugins with `[[` and `]]`. List them with `gO`
+  (|vim.lsp.buf.document_symbol()|).
+
 Switch plugin's version and/or source ~
 • Update 'init.lua' for plugin to have desired `version` and/or `src`. Let's
   say, the switch is for plugin named 'plugin1'.
 • |:restart|. The plugin's state on disk (revision and/or tracked source) is
   not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
-• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated.
+• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated. If
+  only switching version, use `{ offline = true }` option table.
 • Review changes and either confirm or discard them. If discarded, revert
   `version` change in 'init.lua' as well or you will be prompted again next
   time you run |vim.pack.update()|.
@@ -315,7 +321,8 @@ Revert plugin after an update ~
     locate the revisions before the latest update, and (carefully) adjust
     current lockfile to have those revisions.
 • |:restart|.
-• `vim.pack.update({ 'plugin' }, { target = 'lockfile' })`. Read and confirm.
+• `vim.pack.update({ 'plugin' }, { offline = true, target = 'lockfile' })`.
+  Read and confirm.
 
 Synchronize config across machines ~
 • On main machine:
@@ -491,6 +498,8 @@ update({names}, {opts})                                    *vim.pack.update()*
       • {opts}   (`table?`) A table with the following fields:
                  • {force}? (`boolean`) Whether to skip confirmation and make
                    updates immediately. Default `false`.
+                 • {offline}? (`boolean`) Whether to skip downloading new
+                   updates. Default: `false`.
                  • {target}? (`string`) How to compute a new plugin revision.
                    One of:
                    • "version" (default) - use latest revision matching

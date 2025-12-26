@@ -1765,6 +1765,28 @@ describe('vim.pack', function()
       assert_origin(basic_src)
     end)
 
+    it('can do offline update', function()
+      local defbranch_path = pack_get_plug_path('defbranch')
+      local defbranch_lua_file = vim.fs.joinpath(defbranch_path, 'lua', 'defbranch.lua')
+
+      n.exec_lua(function()
+        vim.pack.add({ { src = repos_src.defbranch, version = 'main' } })
+      end)
+
+      track_nvim_echo()
+
+      eq('return "defbranch dev"', fn.readblob(defbranch_lua_file))
+      n.exec_lua(function()
+        vim.pack.update({ 'defbranch' }, { offline = true })
+      end)
+
+      -- There should be no progress report about downloading updates
+      assert_progress_report('Computing updates', { 'defbranch' })
+
+      n.exec('write')
+      eq('return "defbranch main"', fn.readblob(defbranch_lua_file))
+    end)
+
     it('shows progress report', function()
       track_nvim_echo()
       exec_lua(function()
