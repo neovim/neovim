@@ -17,6 +17,7 @@
 --- @field deprecated? true
 --- @field returns? string|false
 --- @field returns_desc? string
+--- @field overloads? string[]
 --- @field generics? string[] Used to write `---@generic` annotations over a function.
 --- @field signature? string
 --- @field desc? string
@@ -11414,23 +11415,10 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'stdpath',
-    params = { { 'what', "'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'" } },
-    returns = 'string|string[]',
-    signature = 'stdpath({what})',
-  },
-  stdpath__1 = {
-    args = 1,
-    fast = true,
-    name = 'stdpath',
     params = { { 'what', "'cache'|'config'|'data'|'log'|'run'|'state'" } },
     returns = 'string',
-  },
-  stdpath__2 = {
-    args = 1,
-    fast = true,
-    name = 'stdpath',
-    params = { { 'what', "'config_dirs'|'data_dirs'" } },
-    returns = 'string[]',
+    overloads = { 'fun(what: "config_dirs"|"data_dirs"): string[]' },
+    signature = 'stdpath({what})',
   },
   str2float = {
     args = 1,

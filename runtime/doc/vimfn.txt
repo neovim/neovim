@@ -10386,11 +10386,13 @@ stdpath({what})                                                *stdpath()* *E610
 <
 
                 Parameters: ~
-                  • {what}
-                    (`'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'`)
+                  • {what} (`'cache'|'config'|'data'|'log'|'run'|'state'`)
+
+                Overloads: ~
+                  • `fun(what: "config_dirs"|"data_dirs"): string[]`
 
                 Return: ~
-                  (`string|string[]`)
+                  (`string`)
 
 str2float({string} [, {quoted}])                                   *str2float()*
 		Convert String {string} to a Float.  This mostly works the
