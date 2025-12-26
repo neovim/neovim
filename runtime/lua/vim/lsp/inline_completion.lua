@@ -438,10 +438,12 @@ end
 --- (default: 0)
 ---@field bufnr? integer
 ---
---- Accept handler, called with the accepted item.
---- If not provided, the default handler is used,
---- which applies changes to the buffer based on the completion item.
----@field on_accept? fun(item: vim.lsp.inline_completion.Item)
+--- A callback triggered when a completion item is accepted.
+--- You can use it to modify the completion item that is about to be accepted
+--- and return it to apply the changes,
+--- or return `nil` to prevent the changes from being applied to the buffer
+--- so you can implement custom behavior.
+---@field on_accept? fun(item: vim.lsp.inline_completion.Item): vim.lsp.inline_completion.Item?
 
 --- Accept the currently displayed completion candidate to the buffer.
 ---
@@ -474,8 +476,13 @@ function M.get(opts)
         return
       end
 
+      -- Note that we do not intend for `on_accept`
+      -- to take effect when there is no current item.
       if on_accept then
-        on_accept(item)
+        item = on_accept(item)
+        if item then
+          completor:accept(item)
+        end
       else
         completor:accept(item)
       end

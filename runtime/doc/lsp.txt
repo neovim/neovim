@@ -2327,10 +2327,13 @@ get({opts})                                  *vim.lsp.inline_completion.get()*
       • {opts}  (`table?`) A table with the following fields:
                 • {bufnr}? (`integer`, default: 0) Buffer handle, or 0 for
                   current.
-                • {on_accept}? (`fun(item: vim.lsp.inline_completion.Item)`)
-                  Accept handler, called with the accepted item. If not
-                  provided, the default handler is used, which applies changes
-                  to the buffer based on the completion item.
+                • {on_accept}?
+                  (`fun(item: vim.lsp.inline_completion.Item): vim.lsp.inline_completion.Item?`)
+                  A callback triggered when a completion item is accepted. You
+                  can use it to modify the completion item that is about to be
+                  accepted and return it to apply the changes, or return `nil`
+                  to prevent the changes from being applied to the buffer so
+                  you can implement custom behavior.
 
     Return: ~
         (`boolean`) `true` if a completion was applied, else `false`.
