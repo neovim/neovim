@@ -7,6 +7,8 @@
 --- This module provides encoding and decoding of Lua objects to and
 --- from msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
+vim.mpack = {}
+
 --- Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 --- @param str string
 --- @return any
