@@ -9342,6 +9342,16 @@ describe('builtin popupmenu', function()
             :!^                            |
           ]])
         end
+        feed('<ESC>:set pumheight=2<CR>Gi<C-X><C-O>')
+        if not multigrid then
+          screen:expect([[
+            one^                           |
+            {12:one            }{c: }{n:1info}{1:         }|
+            {n:two            }{12: }{1:              }|
+            {1:~                             }|*7
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
       end)
       it("no crash when 'pumborder' set #36337", function()
         command('set autocomplete pumborder=rounded complete=o cot=popup,menuone,noinsert')

@@ -959,10 +959,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
 static void pum_adjust_info_position(win_T *wp, int width)
 {
   int border_width = pum_border_width();
-  int col = pum_col + pum_width + 1 + border_width;
-  if (border_width < 0) {
-    col += pum_scrollbar;
-  }
+  int col = pum_col + pum_width + 1 + MAX(border_width, pum_scrollbar);
   // TODO(glepnir): support config align border by using completepopup
   // align menu
   int right_extra = Columns - col;
