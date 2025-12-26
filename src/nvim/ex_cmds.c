@@ -4182,7 +4182,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           if (nmatch == 1) {
             p1 = sub_firstline;
           } else {
-            p1 = ml_get(sub_firstlnum + (linenr_T)nmatch - 1);
+            linenr_T lastlnum = sub_firstlnum + (linenr_T)nmatch - 1;
+            p1 = ml_get(lastlnum);
             nmatch_tl += nmatch - 1;
           }
           int copy_len = regmatch.startpos[0].col - copycol;
