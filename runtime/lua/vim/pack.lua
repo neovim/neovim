@@ -113,16 +113,28 @@
 ---
 ---Revert plugin after an update ~
 ---
----- Locate plugin's revision at working state. For example:
----    - If there is a previous version of |vim.pack-lockfile| (like from version
----    control history), use it to get plugin's `rev` field.
----    - If there is a log file ("nvim-pack.log" at "log" |stdpath()|), open it
----      and navigate to latest updates (at the bottom). Locate lines about plugin
----      update details and use revision from "State before".
----- Freeze plugin to target revision (set `version` and |:restart|).
----- Run `vim.pack.update({ 'plugin-name' }, { force = true })` to make plugin
----  state on disk follow target revision. |:restart|.
----- When ready to deal with updating plugin, unfreeze it.
+---- Revert the |vim.pack-lockfile| to the state before the update:
+---    - If Git tracked: `git checkout HEAD -- nvim-pack-lock.json`
+---    - If not tracked: examine log file ("nvim-pack.log" at "log" |stdpath()|),
+---      locate the revisions before the latest update, and (carefully) adjust
+---      current lockfile to have those revisions.
+---- |:restart|.
+---- `vim.pack.update({ 'plugin' }, { target = 'lockfile' })`. Read and confirm.
+---
+---Synchronize config across machines ~
+---
+---- On main machine:
+---     - Add |vim.pack-lockfile| to VCS.
+---     - Push to the remote server.
+---- On secondary machine:
+---     - Pull from the server.
+---     - |:restart|. New plugins (not present locally, but present in the lockfile)
+---       are installed at proper revision.
+---     - `vim.pack.update(nil, { target = 'lockfile' })`. Read and confirm.
+---     - Manually delete outdated plugins (present locally, but were not present
+---       in the lockfile prior to restart) with `vim.pack.del( { 'plugin' })`.
+---       They can be located by examining the VCS difference of the lockfile
+---       (`git diff -- nvim-pack-lock.json` for Git).
 ---
 ---Remove plugins from disk ~
 ---
@@ -1139,6 +1151,12 @@ end
 --- @class vim.pack.keyset.update
 --- @inlinedoc
 --- @field force? boolean Whether to skip confirmation and make updates immediately. Default `false`.
+---
+--- How to compute a new plugin revision. One of:
+---     - "version" (default) - use latest revision matching `version` from plugin specification.
+---     - "lockfile" - use revision from the lockfile. Useful for reverting or performing controlled
+---       update.
+--- @field target? string
 
 --- Update plugins
 ---
@@ -1173,7 +1191,7 @@ end
 --- @param opts? vim.pack.keyset.update
 function M.update(names, opts)
   vim.validate('names', names, vim.islist, true, 'list')
-  opts = vim.tbl_extend('force', { force = false }, opts or {})
+  opts = vim.tbl_extend('force', { force = false, target = 'version' }, opts or {})
 
   local plug_list = plug_list_from_names(names)
   if #plug_list == 0 then
@@ -1190,8 +1208,9 @@ function M.update(names, opts)
   --- @async
   --- @param p vim.pack.Plug
   local function do_update(p)
+    local l_data = plugin_lock.plugins[p.spec.name]
     -- Ensure proper `origin` if needed
-    if plugin_lock.plugins[p.spec.name].src ~= p.spec.src then
+    if l_data.src ~= p.spec.src then
       git_cmd({ 'remote', 'set-url', 'origin', p.spec.src }, p.path)
       plugin_lock.plugins[p.spec.name].src = p.spec.src
       needs_lock_write = true
@@ -1205,6 +1224,10 @@ function M.update(names, opts)
     end
 
     -- Compute change info: changelog if any, new tags if nothing to update
+    if opts.target == 'lockfile' then
+      p.info.version_str = '*lockfile*'
+      p.info.sha_target = l_data.rev
+    end
     infer_update_details(p)
 
     -- Checkout immediately if no need to confirm

@@ -1687,6 +1687,38 @@ describe('vim.pack', function()
       eq(hashes.fetch_new, get_lock_tbl().plugins.fetch.rev)
     end)
 
+    it('can use lockfile revision as a target', function()
+      exec_lua(function()
+        vim.pack.add({ repos_src.fetch })
+      end)
+      eq('return "fetch main"', fn.readblob(fetch_lua_file))
+
+      -- Mock "update -> revert lockfile -> revert plugin"
+      local lock_path = get_lock_path()
+      local lockfile_before = fn.readblob(lock_path)
+      hashes.fetch_new = git_get_hash('main', 'fetch')
+
+      -- - Update
+      exec_lua('vim.pack.update({ "fetch" }, { force = true })')
+      eq('return "fetch new 2"', fn.readblob(fetch_lua_file))
+
+      -- - Revert lockfile
+      fn.writefile(vim.split(lockfile_before, '\n'), lock_path)
+      n.clear()
+
+      -- - Revert plugin
+      eq('return "fetch new 2"', fn.readblob(fetch_lua_file))
+      exec_lua('vim.pack.update({ "fetch" }, { target = "lockfile" })')
+      local confirm_lines = api.nvim_buf_get_lines(0, 0, -1, false)
+      n.exec('write')
+      eq('return "fetch main"', fn.readblob(fetch_lua_file))
+      eq(hashes.fetch_head, get_lock_tbl().plugins.fetch.rev)
+
+      -- - Should mention that new revision comes from *lockfile*
+      eq(confirm_lines[6], ('Revision before: %s'):format(hashes.fetch_new))
+      eq(confirm_lines[7], ('Revision after:  %s (*lockfile*)'):format(hashes.fetch_head))
+    end)
+
     it('can change `src` of installed plugin', function()
       local basic_src = repos_src.basic
       local defbranch_src = repos_src.defbranch
