@@ -491,7 +491,10 @@ void redraw_ruler(void)
 #define RULER_BUF_LEN 70
   char buffer[RULER_BUF_LEN];
 
-  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
+  // row number, column number is appended
+  // l10n: leave as-is unless a space after the comma is preferred
+  // l10n: do not add any row/column label, due to the limited space
+  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, _("%" PRId64 ","),
                                (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
                                ? 0
                                : (int64_t)wp->w_cursor.lnum);
