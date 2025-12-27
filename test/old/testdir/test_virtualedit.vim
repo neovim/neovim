@@ -732,7 +732,8 @@ func Test_virtualedit_set_cursor_pos_maxcol()
   bwipe!
 endfunc
 
-" Verify that getpos() remains consistent when the cursor is past EOL after toggling Visual mode with virtualedit=all.
+" Verify that getpos() remains consistent when the cursor is past EOL after
+" toggling Visual mode with virtualedit=all.
 func Test_virtualedit_getpos_stable_past_eol_after_visual()
   new
   set virtualedit=all
@@ -743,7 +744,7 @@ func Test_virtualedit_getpos_stable_past_eol_after_visual()
 
   normal! v
   redraw
-  normal! \<Esc>
+  exe "normal! \<Esc>"
 
   let p2 = getpos('.')
   call assert_equal(p1, p2, 'Position should not be re-encoded after leaving Visual mode')
