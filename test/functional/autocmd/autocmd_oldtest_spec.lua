@@ -87,6 +87,7 @@ describe('oldtests', function()
 
     fn.delete('Xout')
     fn.system(string.format('%s --clean -N -S %s', api.nvim_get_vvar('progpath'), fname))
+    print("\nTHONK:\n", io.open(testlog):read'*a', "\n[einda]\n")
     eq(1, fn.filereadable('Xout'))
 
     fn.delete('Xxx1')
