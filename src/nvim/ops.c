@@ -1793,6 +1793,7 @@ void adjust_cursor_eol(void)
   const bool adj_cursor = (curwin->w_cursor.col > 0
                            && gchar_cursor() == NUL
                            && (cur_ve_flags & kOptVeFlagOnemore) == 0
+                           && (cur_ve_flags & kOptVeFlagAll) == 0
                            && !(restart_edit || (State & MODE_INSERT)));
   if (!adj_cursor) {
     return;
