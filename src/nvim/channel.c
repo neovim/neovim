@@ -981,13 +981,37 @@ static int int64_t_cmp(const void *pa, const void *pb)
   return a == b ? 0 : a > b ? 1 : -1;
 }
 
-Array channel_all_info(Arena *arena)
+Array channel_all_info(Integer filter_id, Buffer filter_buf, Arena *arena)
 {
+  // If filter_id is set, return only that channel (if it matches filter_buf, if any)
+  if (filter_id != 0) {
+    Channel *chan = find_channel((uint64_t)filter_id);
+    if (!chan) {
+      return (Array)ARRAY_DICT_INIT;
+    }
+    // If filter_buf is also set, check it matches
+    if (filter_buf != 0) {
+      if (!chan->term || terminal_buf(chan->term) != filter_buf) {
+        return (Array)ARRAY_DICT_INIT;
+      }
+    }
+    Array ret = arena_array(arena, 1);
+    ADD_C(ret, DICT_OBJ(channel_info((uint64_t)filter_id, arena)));
+    return ret;
+  }
+
   // order the items in the array by channel number, for Determinism™
   kvec_t(int64_t) ids = KV_INITIAL_VALUE;
   kv_fixsize_arena(arena, ids, map_size(&channels));
   uint64_t id;
   map_foreach_key(&channels, id, {
+    // If filter_buf is set, only include channels with matching terminal buffer
+    if (filter_buf != 0) {
+      Channel *chan = find_channel(id);
+      if (!chan || !chan->term || terminal_buf(chan->term) != filter_buf) {
+        continue;
+      }
+    }
     kv_push(ids, (int64_t)id);
   });
   qsort(ids.items, ids.size, sizeof ids.items[0], int64_t_cmp);

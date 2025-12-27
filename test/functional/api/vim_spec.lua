@@ -2633,7 +2633,7 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_list_chans, nvim_get_chan_info', function()
+  describe('nvim_chan_get', function()
     before_each(function()
       command('autocmd ChanOpen * let g:opened_event = deepcopy(v:event)')
       command('autocmd ChanInfo * let g:info_event = deepcopy(v:event)')
@@ -2650,18 +2650,20 @@ describe('API', function()
       mode = 'bytes',
     }
 
-    it('returns {} for invalid channel', function()
-      eq({}, api.nvim_get_chan_info(-1))
-      -- more preallocated numbers might be added, try something high
-      eq({}, api.nvim_get_chan_info(10))
+    it('returns {} for invalid channel id', function()
+      eq({}, api.nvim_chan_get({ id = 10 }))
+    end)
+
+    it('returns error for negative channel id', function()
+      eq('Invalid channel id: -1', pcall_err(api.nvim_chan_get, { id = -1 }))
     end)
 
     it('stream=stdio channel', function()
-      eq({ [1] = testinfo, [2] = stderr }, api.nvim_list_chans())
-      -- 0 should return current channel
-      eq(testinfo, api.nvim_get_chan_info(0))
-      eq(testinfo, api.nvim_get_chan_info(1))
-      eq(stderr, api.nvim_get_chan_info(2))
+      eq({ [1] = testinfo, [2] = stderr }, api.nvim_chan_get({}))
+      -- id=0 should return current channel
+      eq({ testinfo }, api.nvim_chan_get({ id = 0 }))
+      eq({ testinfo }, api.nvim_chan_get({ id = 1 }))
+      eq({ stderr }, api.nvim_chan_get({ id = 2 }))
 
       api.nvim_set_client_info(
         'functionaltests',
@@ -2683,8 +2685,8 @@ describe('API', function()
         },
       }
       eq({ info = info }, api.nvim_get_var('info_event'))
-      eq({ [1] = info, [2] = stderr }, api.nvim_list_chans())
-      eq(info, api.nvim_get_chan_info(1))
+      eq({ [1] = info, [2] = stderr }, api.nvim_chan_get({}))
+      eq({ info }, api.nvim_chan_get({ id = 1 }))
     end)
 
     it('stream=job channel', function()
@@ -2698,8 +2700,8 @@ describe('API', function()
         client = {},
       }
       eq({ info = info }, api.nvim_get_var('opened_event'))
-      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
-      eq(info, api.nvim_get_chan_info(3))
+      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_chan_get({}))
+      eq({ info }, api.nvim_chan_get({ id = 3 }))
       eval(
         'rpcrequest(3, "nvim_set_client_info", "amazing-cat", {}, "remote",'
           .. '{"nvim_command":{"n_args":1}},' -- and so on
@@ -2719,13 +2721,13 @@ describe('API', function()
         },
       }
       eq({ info = info }, api.nvim_get_var('info_event'))
-      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
+      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_chan_get({}))
 
       eq(
         "Vim:Invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)')
       )
-      eq(info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
+      eq({ info }, eval('rpcrequest(3, "nvim_chan_get", {"id": 0})'))
     end)
 
     it('stream=job :terminal channel', function()
@@ -2748,8 +2750,8 @@ describe('API', function()
       end
       eq({ info = info }, event)
       info.buffer = 1
-      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
-      eq(info, api.nvim_get_chan_info(3))
+      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_chan_get({}))
+      eq({ info }, api.nvim_chan_get({ id = 3 }))
 
       -- :terminal with args + running process.
       command('enew')
@@ -2776,7 +2778,7 @@ describe('API', function()
         buffer = 2,
         pty = '?',
       }
-      local actual2 = eval('nvim_get_chan_info(&channel)')
+      local actual2 = api.nvim_chan_get({ id = eval('&channel') })[1]
       expected2.pty = actual2.pty
       eq(expected2, actual2)
 
@@ -2784,7 +2786,45 @@ describe('API', function()
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       expected2.pty = (is_os('win') and '?' or '') -- pty stream was closed.
-      eq(expected2, eval('nvim_get_chan_info(&channel)'))
+      eq(expected2, api.nvim_chan_get({ id = eval('&channel') })[1])
+    end)
+
+    it('buf filter #36678', function()
+      -- Create terminal in buffer 1
+      command(':terminal')
+      local term_buf = api.nvim_get_current_buf()
+      local term_chan = api.nvim_get_option_value('channel', { buf = term_buf })
+      eq(3, term_chan)
+
+      -- Without filter: returns all channels
+      local all_chans = api.nvim_chan_get({})
+      eq(true, #all_chans >= 3) -- at least stdio, stderr, terminal
+
+      -- With id filter: returns only that channel
+      local by_id = api.nvim_chan_get({ id = term_chan })
+      eq(1, #by_id)
+      eq(term_chan, by_id[1].id)
+      eq(term_buf, by_id[1].buffer)
+
+      -- With buf filter: returns only terminal channel for that buffer
+      local by_buf = api.nvim_chan_get({ buf = term_buf })
+      eq(1, #by_buf)
+      eq(term_chan, by_buf[1].id)
+      eq(term_buf, by_buf[1].buffer)
+
+      -- Non-terminal buffer returns empty array
+      command('enew')
+      local other_buf = api.nvim_get_current_buf()
+      eq({}, api.nvim_chan_get({ buf = other_buf }))
+
+      -- Invalid id returns empty array
+      eq({}, api.nvim_chan_get({ id = 9999 }))
+
+      -- Invalid buffer returns error
+      eq('Invalid buffer id: 9999', pcall_err(api.nvim_chan_get, { buf = 9999 }))
+
+      -- Negative id returns error
+      eq('Invalid channel id: -1', pcall_err(api.nvim_chan_get, { id = -1 }))
     end)
   end)
 

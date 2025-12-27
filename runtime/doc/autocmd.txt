@@ -362,13 +362,13 @@ ChanInfo			State of channel changed, for instance the
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
-				    info	as from |nvim_get_chan_info()|
+				    info	as from |nvim_chan_get()|
 							*ChanOpen*
 ChanOpen			Just after a channel was opened.
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
-				    info	as from |nvim_get_chan_info()|
+				    info	as from |nvim_chan_get()|
 							*CmdUndefined*
 CmdUndefined			When a user command is used but it isn't
 				defined.  Useful for defining a command only
