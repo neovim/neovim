@@ -626,9 +626,10 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
       "LUAC_PRG=${LUAC_PRG}"
       ${LUA_PRG} ${CHAR_BLOB_GENERATOR} -c ${VIM_MODULE_FILE}
-      # NB: vim._init_packages and vim.inspect must be be first and second ones
-      # respectively, otherwise --luamod-dev won't work properly.
+      # NB: vim._init_packages, _nvim_version and vim.inspect must be first in that order
+      # otherwise --luamod-dev won't work properly.
       ${LUA_INIT_PACKAGES_MODULE_SOURCE} "vim._init_packages"
+      ${NVIM_VERSION_LUA} "vim._nvim_version"
       ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
       ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
       ${LUA_SYSTEM_MODULE_SOURCE} "vim._system"
@@ -656,6 +657,7 @@ add_custom_command(
     ${LUA_OPTIONS_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_TEXT_MODULE_SOURCE}
+    ${NVIM_VERSION_LUA}
   VERBATIM
 )
 
