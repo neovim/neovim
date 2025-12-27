@@ -71,14 +71,9 @@
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_loaded_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return 0;
-  }
-
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
     return 0;
   }
 
@@ -254,14 +249,9 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_loaded_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return rv;
-  }
-
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
     return rv;
   }
 
@@ -315,15 +305,9 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_loaded_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return;
-  }
-
-  // Load buffer if necessary. #22670
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -480,14 +464,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     replacement = scratch;
   }
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_loaded_buffer_by_handle(buffer, err);
   if (!buf) {
-    return;
-  }
-
-  // Load buffer if necessary. #22670
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -792,14 +770,9 @@ end:
 Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
   FUNC_API_SINCE(5)
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_loaded_buffer_by_handle(buffer, err);
   if (!buf) {
     return 0;
-  }
-
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
-    return -1;
   }
 
   VALIDATE((index >= 0 && index <= buf->b_ml.ml_line_count), "%s", "Index out of bounds", {
@@ -1112,7 +1085,7 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
   FUNC_API_SINCE(8)
 {
   bool res = false;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_loaded_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return res;

@@ -184,8 +184,8 @@ describe('api/buf', function()
       -- force unload the buffer (this will discard changes)
       command('new')
       command('bunload! ' .. bufnr)
-      -- line count for an unloaded buffer should always be 0
-      eq(0, api.nvim_buf_line_count(bufnr))
+      -- For an unloaded buffer, it will first be loaded, then the line count of the buffer will be retrieved.
+      eq(1, api.nvim_buf_line_count(bufnr))
     end)
 
     it('get_lines has defined behaviour for unloaded buffers', function()
@@ -199,9 +199,9 @@ describe('api/buf', function()
       command('new')
       command('bunload! ' .. bufnr)
       -- attempting to get lines now always gives empty list
-      eq({}, api.nvim_buf_get_lines(bufnr, 1, 3, true))
-      -- it's impossible to get out-of-bounds errors for an unloaded buffer
-      eq({}, api.nvim_buf_get_lines(bufnr, 8888, 9999, true))
+      eq({}, api.nvim_buf_get_lines(bufnr, 1, 3, false))
+      -- get out-of-bounds errors for an unloaded buffer
+      eq('Index out of bounds', pcall_err(api.nvim_buf_get_lines, bufnr, 8888, 9999, true))
     end)
 
     describe('handles topline', function()
@@ -2168,8 +2168,8 @@ describe('api/buf', function()
       command('enew')
       eq(6, api.nvim_buf_get_offset(1, 1))
       command('bunload! 1')
-      eq(-1, api.nvim_buf_get_offset(1, 1))
-      eq(-1, api.nvim_buf_get_offset(1, 0))
+      eq(1, api.nvim_buf_get_offset(1, 1))
+      eq(0, api.nvim_buf_get_offset(1, 0))
     end)
 
     it('works in empty buffer', function()
