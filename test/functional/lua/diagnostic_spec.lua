@@ -4097,11 +4097,11 @@ describe('vim.diagnostic', function()
       )
     end)
 
-    it('uses text from diagnostic.config().status.text[severity]', function()
+    it('uses text from diagnostic.config().status.format[severity]', function()
       local result = exec_lua(function()
         vim.diagnostic.config({
           status = {
-            text = {
+            format = {
               [vim.diagnostic.severity.ERROR] = '⨯',
               [vim.diagnostic.severity.WARN] = '⚠︎',
             },
@@ -4117,6 +4117,45 @@ describe('vim.diagnostic', function()
       end)
 
       eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
+    end)
+
+    it('uses format function diagnostic.config().status.format', function()
+      local result = exec_lua(function()
+        local signs = {
+          [vim.diagnostic.severity.ERROR] = 'EE',
+          [vim.diagnostic.severity.WARN] = 'WW',
+          [vim.diagnostic.severity.INFO] = 'II',
+          [vim.diagnostic.severity.HINT] = 'HH',
+        }
+        local hl_map = {
+          [vim.diagnostic.severity.ERROR] = 'ERROR',
+          [vim.diagnostic.severity.WARN] = 'WARN',
+          [vim.diagnostic.severity.INFO] = 'INFO',
+          [vim.diagnostic.severity.HINT] = 'HINT',
+        }
+        vim.diagnostic.config({
+          status = {
+            format = function(counts)
+              local items = {}
+              for severity, sign in ipairs(signs) do
+                local count = counts[severity] or 0
+                local hl = hl_map[severity]
+                table.insert(items, ('%%#%s#%s %s'):format(hl, sign, count))
+              end
+              return table.concat(items, ' ')
+            end,
+          },
+        })
+
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+        })
+
+        return vim.diagnostic.status()
+      end)
+
+      eq('%#ERROR#EE 1 %#WARN#WW 1 %#INFO#II 0 %#HINT#HH 0%##', result)
     end)
   end)
 
