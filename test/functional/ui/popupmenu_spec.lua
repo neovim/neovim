@@ -2238,6 +2238,41 @@ describe('builtin popupmenu', function()
         feed('S<C-x><C-o><C-N>')
         eq(1, n.eval([[len(uniq(copy(g:bufnrs))) == 1]]))
       end)
+
+      it('handles tabs in info width calculation', function()
+        screen:try_resize(50, 11)
+        command([[
+          set cot+=menuone
+          let g:list = [#{word: 'class', info: "\tClassName() = default;"}]
+        ]])
+        feed('S<C-x><C-o>')
+        local info = fn.complete_info()
+        eq(30, api.nvim_win_get_width(info.preview_winid))
+        feed('<ESC>')
+        exec([[
+          setlocal tabstop=1
+          autocmd ModeChanged *:i ++once call complete(1, [#{word: 'a'}])
+                \| call nvim__complete_set(0, #{info: "\tfloob\tfloob"})
+        ]])
+        feed('i')
+        info = fn.complete_info()
+        eq(21, api.nvim_win_get_width(info.preview_winid))
+        if not multigrid then
+          screen:expect([[
+            a^s                                                |
+            {12:a              }{n:        floob   floob}{1:              }|
+            {1:~                                                 }|*8
+            {5:-- INSERT --}                                      |
+          ]])
+        end
+      end)
+
+      it('hide info window when insufficient space', function()
+        screen:try_resize(12, 11)
+        feed('S<C-x><C-o>')
+        local info = fn.complete_info()
+        eq(true, api.nvim_win_get_config(info.preview_winid).hide)
+      end)
     end)
 
     it('with vsplits', function()

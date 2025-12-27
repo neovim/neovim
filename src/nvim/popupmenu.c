@@ -910,15 +910,16 @@ void pum_redraw(void)
 /// Set the informational text in the preview buffer when the completion
 /// item does not include a dedicated preview or popup window.
 ///
-/// @param[in]  buf        Buffer where the text will be set.
+/// @param[in]  win        Window containing buffer where the text will be set.
 /// @param[in]  info       Informational text to display in the preview buffer.
 /// @param[in]  lnum       Where to start the text. Incremented for each added line.
 /// @param[out] max_width  Maximum width of the displayed text.
-static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *max_width)
+static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *max_width)
 {
   Error err = ERROR_INIT;
   Arena arena = ARENA_EMPTY;
   Array replacement = ARRAY_DICT_INIT;
+  buf_T *buf = win->w_buffer;
   buf->b_p_ma = true;
 
   // Iterate through the string line by line by temporarily replacing newlines with NUL
@@ -931,7 +932,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
       break;
     }
 
-    *max_width = MAX(*max_width, (int)mb_string2cells(curr));
+    *max_width = MAX(*max_width, win_linetabsize(win, 0, curr, MAXCOL));
     ADD(replacement, STRING_OBJ(cstr_to_string(curr)));
     (*lnum)++;
 
@@ -941,9 +942,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   }
 
   int original_textlock = textlock;
-  if (textlock > 0) {
-    textlock = 0;
-  }
+  textlock = 0;
   nvim_buf_set_lines(0, buf->handle, 0, -1, false, replacement, &arena, &err);
   textlock = original_textlock;
   if (ERROR_SET(&err)) {
@@ -956,7 +955,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
 }
 
 /// adjust floating info preview window position
-static void pum_adjust_info_position(win_T *wp, int width)
+static bool pum_adjust_info_position(win_T *wp, int width)
 {
   int border_width = pum_border_width();
   int col = pum_col + pum_width + 1 + MAX(border_width, pum_scrollbar);
@@ -964,6 +963,14 @@ static void pum_adjust_info_position(win_T *wp, int width)
   // align menu
   int right_extra = Columns - col;
   int left_extra = pum_col - 2;
+
+  int max_extra = MAX(right_extra, left_extra);
+  // Close info window if there's insufficient space
+  // TODO(glepnir): Replace the hardcoded value (10) with values from the 'completepopup' width/height options.
+  if (max_extra < 10) {
+    wp->w_config.hide = true;
+    return false;
+  }
 
   if (right_extra > width) {  // place in right
     wp->w_config.width = width;
@@ -973,7 +980,7 @@ static void pum_adjust_info_position(win_T *wp, int width)
     wp->w_config.col = pum_col - wp->w_config.width - 1;
   } else {  // either width is enough just use the biggest one.
     const bool place_in_right = right_extra > left_extra;
-    wp->w_config.width = place_in_right ? right_extra : left_extra;
+    wp->w_config.width = max_extra;
     wp->w_config.col = place_in_right ? col - 1 : pum_col - wp->w_config.width - 1;
   }
   // when pum_above is SW otherwise is NW
@@ -984,6 +991,7 @@ static void pum_adjust_info_position(win_T *wp, int width)
   wp->w_config.row = pum_above ? pum_row + wp->w_config.height : pum_row;
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
+  return true;
 }
 
 /// Used for nvim__complete_set
@@ -1010,12 +1018,14 @@ win_T *pum_set_info(int selected, char *info)
   }
   linenr_T lnum = 0;
   int max_info_width = 0;
-  pum_preview_set_text(wp->w_buffer, info, &lnum, &max_info_width);
+  pum_preview_set_text(wp, info, &lnum, &max_info_width);
   no_u_sync--;
   RedrawingDisabled--;
   redraw_later(wp, UPD_NOT_VALID);
 
-  pum_adjust_info_position(wp, max_info_width);
+  if (!pum_adjust_info_position(wp, max_info_width)) {
+    wp = NULL;
+  }
   unblock_autocmds();
   return wp;
 }
@@ -1167,7 +1177,7 @@ static bool pum_set_selected(int n, int repeat)
         if (res == OK) {
           linenr_T lnum = 0;
           int max_info_width = 0;
-          pum_preview_set_text(curbuf, pum_array[pum_selected].pum_info, &lnum, &max_info_width);
+          pum_preview_set_text(curwin, pum_array[pum_selected].pum_info, &lnum, &max_info_width);
           // Increase the height of the preview window to show the
           // text, but no more than 'previewheight' lines.
           if (repeat == 0 && !use_float) {
@@ -1191,7 +1201,9 @@ static bool pum_set_selected(int n, int repeat)
 
           if (use_float) {
             // adjust floating window by actually height and max info text width
-            pum_adjust_info_position(curwin, max_info_width);
+            if (!pum_adjust_info_position(curwin, max_info_width) && win_valid(curwin_save)) {
+              win_enter(curwin_save, false);
+            }
           }
 
           if ((curwin != curwin_save && win_valid(curwin_save))
