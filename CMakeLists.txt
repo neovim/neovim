@@ -143,6 +143,9 @@ if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=Release)
 endif()
 
+# TODO: set this conditionally in CI.
+add_definitions(-DABORT_ON_INTERNAL_ERROR)
+
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
