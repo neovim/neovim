@@ -450,6 +450,18 @@ do
       return 'g@l'
     end, { expr = true, desc = 'Add empty line below cursor' })
   end
+
+  --- Window navigation
+  do
+    vim.keymap.set({ 't', 'i' }, '<A-h>', '<C-\\><C-n><C-w>h', { desc = 'Move to left window' })
+    vim.keymap.set({ 't', 'i' }, '<A-j>', '<C-\\><C-n><C-w>j', { desc = 'Move to down window' })
+    vim.keymap.set({ 't', 'i' }, '<A-k>', '<C-\\><C-n><C-w>k', { desc = 'Move to up window' })
+    vim.keymap.set({ 't', 'i' }, '<A-l>', '<C-\\><C-n><C-w>l', { desc = 'Move to right window' })
+    vim.keymap.set({ 'n' }, '<A-h>', '<C-w>h', { desc = 'Move to left window' })
+    vim.keymap.set({ 'n' }, '<A-j>', '<C-w>j', { desc = 'Move to down window' })
+    vim.keymap.set({ 'n' }, '<A-k>', '<C-w>k', { desc = 'Move to up window' })
+    vim.keymap.set({ 'n' }, '<A-l>', '<C-w>l', { desc = 'Move to right window' })
+  end
 end
 
 --- Default menus
