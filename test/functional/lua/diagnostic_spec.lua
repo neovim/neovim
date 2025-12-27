@@ -608,6 +608,21 @@ describe('vim.diagnostic', function()
         vim.diagnostic.hide(_G.diagnostic_ns)
       end)
     end)
+
+    it('handles diagnostics without extmark_id', function()
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error message', 0, 0, 0, 5),
+        })
+
+        local diags = vim.diagnostic.get(_G.diagnostic_bufnr, { namespace = _G.diagnostic_ns })
+        diags[1]._extmark_id = nil
+
+        vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr, diags)
+      end)
+    end)
   end)
 
   describe('enable() and disable()', function()

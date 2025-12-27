@@ -655,6 +655,10 @@ local sign_highlight_map = make_highlight_map('Sign')
 --- @return integer end_col
 --- @return boolean valid
 local function get_logical_pos(diagnostic)
+  if not diagnostic._extmark_id then
+    return diagnostic.lnum, diagnostic.col, diagnostic.end_lnum, diagnostic.end_col, true
+  end
+
   local ns = M.get_namespace(diagnostic.namespace)
   local extmark = api.nvim_buf_get_extmark_by_id(
     diagnostic.bufnr,
