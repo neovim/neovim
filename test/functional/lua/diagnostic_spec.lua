@@ -3519,8 +3519,8 @@ describe('vim.diagnostic', function()
       eq(
         {
           '1. Some warning',
-          '   uri:1:0: Some extra info',
-          '   uri:2:3: Some more extra info',
+          '   uri:2:1: Some extra info',
+          '   uri:3:4: Some more extra info',
         },
         exec_lua(function()
           ---@type vim.Diagnostic
