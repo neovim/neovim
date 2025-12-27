@@ -337,7 +337,7 @@ static void tui_reset_key_encoding(TUIData *tui)
   }
 }
 
-/// Write the OSC 11 sequence to the terminal emulator to query the current
+/// Write the OSC 11 + DA1 sequence to the terminal emulator to query the current
 /// background color.
 ///
 /// The response will be handled by the TermResponse autocommand created in
@@ -345,7 +345,7 @@ static void tui_reset_key_encoding(TUIData *tui)
 void tui_query_bg_color(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
-  out(tui, S_LEN("\x1b]11;?\x07"));
+  out(tui, S_LEN("\x1b]11;?\x07\x1b[c"));
   flush_buf(tui);
 }
 

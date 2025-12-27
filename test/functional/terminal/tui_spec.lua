@@ -2690,10 +2690,11 @@ describe('TUI', function()
   for _, guicolors in ipairs({ 'notermguicolors', 'termguicolors' }) do
     it('has no black flicker when clearing regions during startup with ' .. guicolors, function()
       local screen = Screen.new(50, 10)
+      -- Colorscheme is automatically detected as light during startup, so fg should be dark
       screen:add_extra_attr_ids({
         [100] = {
-          foreground = Screen.colors.NvimLightGrey2,
-          background = Screen.colors.NvimDarkGrey2,
+          foreground = Screen.colors.NvimDarkGrey2,
+          background = Screen.colors.NvimLightGrey2,
         },
       })
       fn.jobstart({
