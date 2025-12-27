@@ -208,26 +208,26 @@ error('Cannot require a meta file')
 --- @field allows_duplicates boolean
 
 --- @class vim.api.keyset.cmd.mods
---- @field filter { force: boolean, pattern: string }
---- @field silent boolean
---- @field emsg_silent boolean
---- @field unsilent boolean
---- @field sandbox boolean
---- @field noautocmd boolean
---- @field tab integer
---- @field verbose integer
---- @field browse boolean
---- @field confirm boolean
---- @field hide boolean
---- @field keepalt boolean
---- @field keepjumps boolean
---- @field keepmarks boolean
---- @field keeppatterns boolean
---- @field lockmarks boolean
---- @field noswapfile boolean
---- @field vertical boolean
---- @field horizontal boolean
---- @field split ''|'botright'|'topleft'|'belowright'|'aboveleft'
+--- @field filter? { force: boolean, pattern: string }
+--- @field silent? boolean
+--- @field emsg_silent? boolean
+--- @field unsilent? boolean
+--- @field sandbox? boolean
+--- @field noautocmd? boolean
+--- @field tab? integer
+--- @field verbose? integer
+--- @field browse? boolean
+--- @field confirm? boolean
+--- @field hide? boolean
+--- @field keepalt? boolean
+--- @field keepjumps? boolean
+--- @field keepmarks? boolean
+--- @field keeppatterns? boolean
+--- @field lockmarks? boolean
+--- @field noswapfile? boolean
+--- @field vertical? boolean
+--- @field horizontal? boolean
+--- @field split? ''|'botright'|'topleft'|'belowright'|'aboveleft'
 
 --- @class vim.api.keyset.cmd.magic
 --- @field bar boolean
