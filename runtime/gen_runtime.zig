@@ -23,7 +23,7 @@ pub fn nvim_gen_runtime(
     }
 
     {
-        const install_doc_files = b.addInstallDirectory(.{ .source_dir = b.path("runtime/doc"), .install_dir = .prefix, .install_subdir = "runtime/doc" });
+        const install_doc_files = b.addInstallDirectory(.{ .source_dir = b.path("runtime/doc"), .install_dir = .prefix, .install_subdir = "share/nvim/runtime/doc" });
         gen_runtime.step.dependOn(&install_doc_files.step);
 
         const gen_step = b.addRunArtifact(nlua0);

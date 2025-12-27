@@ -7,6 +7,7 @@
         .utf8proc = .{
             .url = "git+https://github.com/juliastrings/utf8proc?ref=v2.11.2#90daf9f396cfec91668758eb9cc54bd5248a6b89",
             .hash = "N-V-__8AAJeuKAB2qHg7gyQ3UofhVFaJ3Zn4gUjO47OdbRIB",
+            .lazy = true,
         },
     },
 }
