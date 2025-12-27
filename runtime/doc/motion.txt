@@ -943,8 +943,8 @@ was made yet in the current file.
 			To jump to older changes use |g;|.
 
 							*':* *`:*
-':			In a prompt buffer, the start of the current prompt.
-			Text from this line until end of buffer will be
+':			In a prompt buffer, the start of the current user
+			input. Text from this mark until end of buffer will be
 			submitted when the user submits the prompt.
 
 							*'(* *`(*
