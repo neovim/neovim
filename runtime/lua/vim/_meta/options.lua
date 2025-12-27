@@ -1912,6 +1912,13 @@ vim.go.dex = vim.go.diffexpr
 --- 	vertical	Start diff mode with vertical splits (unless
 --- 			explicitly specified otherwise).
 ---
+--- 	mergeblocks	When using 'inline:word', merge adjacent diff
+--- 			blocks that are separated by small gaps (<=2
+--- 			bytes) of whitespace or punctuation to reduce
+--- 			visual fragmentation.  Off by default.
+--- 			Without mergeblocks:  [foo] [bar]    (fragmented)
+--- 			With mergeblocks:     [foo bar]      (merged)
+--- 			To enable:            :set diffopt+=mergeblocks
 --- Examples:
 ---
 --- ```vim
