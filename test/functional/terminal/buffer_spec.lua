@@ -7,7 +7,7 @@ local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
 local nvim_prog = n.nvim_prog
-local eval, feed_command, source = n.eval, n.feed_command, n.source
+local eval, source = n.eval, n.source
 local pcall_err = t.pcall_err
 local eq, neq = t.eq, t.neq
 local api = n.api
@@ -15,7 +15,6 @@ local retry = t.retry
 local testprg = n.testprg
 local write_file = t.write_file
 local command = n.command
-local exc_exec = n.exc_exec
 local matches = t.matches
 local exec_lua = n.exec_lua
 local sleep = vim.uv.sleep
@@ -95,7 +94,7 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = api.nvim_exec('swapname', true):gsub('\n', '')
+      local swapfile = fn.swapname(0)
       eq(nil, io.open(swapfile))
     end)
 
@@ -117,28 +116,28 @@ describe(':terminal buffer', function()
 
   it('sends data to the terminal when the "put" operator is used', function()
     feed('<c-\\><c-n>gg"ayj')
-    feed_command('let @a = "appended " . @a')
+    fn.setreg('a', 'appended ' .. fn.getreg('a'))
     feed('"ap"ap')
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |*2
                                                         |
                                                         |*2
-      :let @a = "appended " . @a                        |
+                                                        |
     ]])
     -- operator count is also taken into consideration
     feed('3"ap')
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |*5
-      :let @a = "appended " . @a                        |
+                                                        |
     ]])
   end)
 
   it('sends data to the terminal when the ":put" command is used', function()
     feed('<c-\\><c-n>gg"ayj')
-    feed_command('let @a = "appended " . @a')
-    feed_command('put a')
+    fn.setreg('a', 'appended ' .. fn.getreg('a'))
+    feed(':put a<CR>')
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |
@@ -147,7 +146,7 @@ describe(':terminal buffer', function()
       :put a                                            |
     ]])
     -- line argument is only used to move the cursor
-    feed_command('6put a')
+    feed(':6put a<CR>')
     screen:expect([[
       tty ready                                         |
       appended tty ready                                |*2
@@ -165,7 +164,7 @@ describe(':terminal buffer', function()
       {100:~                                                 }|*5
       :bd!                                              |
     ]])
-    feed_command('bnext')
+    feed(':bnext<CR>')
     screen:expect([[
       ^                                                  |
       {100:~                                                 }|*5
@@ -204,24 +203,24 @@ describe(':terminal buffer', function()
     ]])
 
     neq(tbuf, eval('bufnr("%")'))
-    feed_command('quit!') -- Should exit the new window, not the terminal.
+    command('quit!') -- Should exit the new window, not the terminal.
     eq(tbuf, eval('bufnr("%")'))
   end)
 
   describe('handles confirmations', function()
     it('with :confirm', function()
       feed('<c-\\><c-n>')
-      feed_command('confirm bdelete')
+      feed(':confirm bdelete<CR>')
       screen:expect { any = 'Close "term://' }
     end)
 
     it('with &confirm', function()
       feed('<c-\\><c-n>')
-      feed_command('bdelete')
+      feed(':bdelete<CR>')
       screen:expect { any = 'E89' }
       feed('<cr>')
       eq('terminal', eval('&buftype'))
-      feed_command('set confirm | bdelete')
+      feed(':set confirm | bdelete<CR>')
       screen:expect { any = 'Close "term://' }
       feed('y')
       neq('terminal', eval('&buftype'))
@@ -243,13 +242,13 @@ describe(':terminal buffer', function()
 
   it('requires bang (!) to close a running job #15402', function()
     skip(is_os('win'), 'Test freezes the CI and makes it time out')
-    eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+    eq('Vim(wqall):E948: Job still running', pcall_err(command, 'wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
         '^Vim%('
           .. cmd:gsub('%%', '')
           .. '%):E89: term://.*tty%-test.* will be killed %(add %! to override%)$',
-        exc_exec(cmd)
+        pcall_err(command, cmd)
       )
     end
     command('call jobstop(&channel)')
@@ -267,7 +266,7 @@ describe(':terminal buffer', function()
 
   it('does not segfault when pasting empty register #13955', function()
     feed('<c-\\><c-n>')
-    feed_command('put a') -- register a is empty
+    command('put a') -- register a is empty
     n.assert_alive()
   end)
 
@@ -666,19 +665,18 @@ describe(':terminal buffer', function()
     finally(function()
       os.remove(testfilename)
     end)
-    feed_command('edit ' .. testfilename)
+    feed(':edit ' .. testfilename .. '<CR>')
     -- Move cursor away from the beginning of the line
     feed('$')
     -- Let jobstart(…,{term=true}) modify the buffer
-    feed_command([[call jobstart("echo", {'term':v:true})]])
+    fn.jobstart('echo', { term = true })
     assert_alive()
-    feed_command('bdelete!')
+    command('bdelete!')
   end)
 
   it('no heap-buffer-overflow when sending long line with nowrap #11548', function()
-    feed_command('set nowrap')
-    feed_command('autocmd TermOpen * startinsert')
-    feed_command('call feedkeys("4000ai\\<esc>:terminal!\\<cr>")')
+    command('set nowrap | autocmd TermOpen * startinsert')
+    feed(':call feedkeys("4000ai\\<esc>:terminal!\\<cr>")<CR>')
     assert_alive()
   end)
 
@@ -839,18 +837,21 @@ describe('on_lines does not emit out-of-bounds line indexes when', function()
   end)
 
   it('creating a terminal buffer #16394', function()
-    feed_command('autocmd TermOpen * ++once call v:lua.register_callback(str2nr(expand("<abuf>")))')
-    feed_command('terminal')
+    command('autocmd TermOpen * ++once call v:lua.register_callback(str2nr(expand("<abuf>")))')
+    command('terminal')
     sleep(500)
     eq('', exec_lua([[return _G.cb_error]]))
   end)
 
   it('deleting a terminal buffer #16394', function()
-    feed_command('terminal')
+    command('terminal')
     sleep(500)
-    feed_command('lua _G.register_callback(0)')
-    feed_command('bdelete!')
-    eq('', exec_lua([[return _G.cb_error]]))
+    local cb_error = exec_lua([[
+      _G.register_callback(0)
+      vim.cmd('bdelete!')
+      return _G.cb_error
+    ]])
+    eq('', cb_error)
   end)
 end)
 
@@ -995,7 +996,7 @@ if is_os('win') then
 
     before_each(function()
       clear()
-      feed_command('set modifiable swapfile undolevels=20')
+      command('set modifiable swapfile undolevels=20')
       poke_eventloop()
       local cmd = { 'cmd.exe', '/K', 'PROMPT=$g$s' }
       screen = tt.setup_screen(nil, cmd)
@@ -1003,8 +1004,8 @@ if is_os('win') then
 
     it('"put" operator sends data normally', function()
       feed('<c-\\><c-n>G')
-      feed_command('let @a = ":: tty ready"')
-      feed_command('let @a = @a . "\\n:: appended " . @a . "\\n\\n"')
+      local s = ':: tty ready'
+      fn.setreg('a', s .. '\n:: appended ' .. s .. '\n\n')
       feed('"ap"ap')
       screen:expect([[
                                                         |
@@ -1013,7 +1014,7 @@ if is_os('win') then
       > :: tty ready                                    |
       > :: appended :: tty ready                        |
       ^>                                                 |
-      :let @a = @a . "\n:: appended " . @a . "\n\n"     |
+                                                        |
       ]])
       -- operator count is also taken into consideration
       feed('3"ap')
@@ -1024,15 +1025,15 @@ if is_os('win') then
       > :: tty ready                                    |
       > :: appended :: tty ready                        |
       ^>                                                 |
-      :let @a = @a . "\n:: appended " . @a . "\n\n"     |
+                                                        |
       ]])
     end)
 
     it('":put" command sends data normally', function()
       feed('<c-\\><c-n>G')
-      feed_command('let @a = ":: tty ready"')
-      feed_command('let @a = @a . "\\n:: appended " . @a . "\\n\\n"')
-      feed_command('put a')
+      local s = ':: tty ready'
+      fn.setreg('a', s .. '\n:: appended ' .. s .. '\n\n')
+      feed(':put a<CR>')
       screen:expect([[
                                                         |
       > :: tty ready                                    |
@@ -1043,7 +1044,7 @@ if is_os('win') then
       :put a                                            |
       ]])
       -- line argument is only used to move the cursor
-      feed_command('6put a')
+      feed(':6put a<CR>')
       screen:expect([[
                                                         |
       > :: tty ready                                    |
@@ -1070,7 +1071,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
     feed('q:')
     eq(
       'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(fn.termopen, 'bar')
+      pcall_err(fn.jobstart, 'bar', { term = true })
     )
   end)
 
@@ -1086,7 +1087,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
 
     local function test_term_colorterm(expected, opts)
       local screen = Screen.new(50, 4)
-      fn.termopen({
+      fn.jobstart({
         nvim_prog,
         '-u',
         'NONE',
@@ -1095,7 +1096,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         '--headless',
         '-c',
         'echo $COLORTERM | quit',
-      }, opts)
+      }, vim.tbl_extend('force', opts or {}, { term = true }))
       screen:expect(([[
         ^%s{MATCH:%%s+}|
         [Process exited 0]                                |
