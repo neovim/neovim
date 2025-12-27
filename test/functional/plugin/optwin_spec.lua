@@ -85,6 +85,7 @@ describe('optwin.lua', function()
 
       -- These options are read-only
       'channel',
+      'term',
     }
 
     command 'options'
