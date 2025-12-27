@@ -395,7 +395,7 @@ func Test_delete_break_tab()
   normal v3ld
   call assert_equal('    two', getline(1))
   set virtualedit&
-  close!
+  bw!
 endfunc
 
 " Test for using <BS>, <C-W> and <C-U> in virtual edit mode
@@ -413,7 +413,7 @@ func Test_ve_backspace()
   call assert_equal([0, 1, 1, 0], getpos('.'))
   set backspace&
   set virtualedit&
-  close!
+  bw!
 endfunc
 
 " Test for delete (x) on EOL character and after EOL
