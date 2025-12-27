@@ -326,7 +326,7 @@ OPTIONS
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'fillchars' has new flag "foldinner".
-• 'grepformat' is now a |global-local| option.
+• 'fsync' and 'grepformat' are now |global-local| options.
 • 'jumpoptions' flag "view" now applies when popping the |tagstack|.
 • 'maxsearchcount' sets maximum value for |searchcount()| and defaults to 999.
 • 'pummaxwidth' sets maximum width for the completion popup menu.

@@ -387,6 +387,7 @@ void set_init_1(bool clean_arg)
   curbuf->b_p_initialized = true;
   curbuf->b_p_ac = -1;
   curbuf->b_p_ar = -1;          // no local 'autoread' value
+  curbuf->b_p_fs = -1;          // no local 'fsync' value
   curbuf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   check_buf_options(curbuf);
   check_win_options(curwin);
@@ -3391,6 +3392,7 @@ static OptVal get_option_unset_value(OptIndex opt_idx)
     switch (opt_idx) {
     case kOptAutocomplete:
     case kOptAutoread:
+    case kOptFsync:
       return BOOLEAN_OPTVAL(kNone);
     case kOptScrolloff:
     case kOptSidescrolloff:
@@ -4434,6 +4436,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
     switch (opt_idx) {
     case kOptFormatprg:
       return &(buf->b_p_fp);
+    case kOptFsync:
+      return &(buf->b_p_fs);
     case kOptFindfunc:
       return &(buf->b_p_ffu);
     case kOptErrorformat:
@@ -4567,6 +4571,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
   case kOptFormatprg:
     return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
+  case kOptFsync:
+    return buf->b_p_fs >= 0 ? &(buf->b_p_fs) : p->var;
   case kOptFindfunc:
     return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
   case kOptErrorformat:
@@ -5241,6 +5247,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // are not copied, start using the global value
       buf->b_p_ac = -1;
       buf->b_p_ar = -1;
+      buf->b_p_fs = -1;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_string_option;
       buf->b_bkc_flags = 0;

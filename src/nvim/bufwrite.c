@@ -1226,7 +1226,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // the original file.
   // Don't do this if there is a backup file and we are exiting.
   if (reset_changed && !newfile && overwriting && !(exiting && backup != NULL)) {
-    ml_preserve(buf, false, !!p_fs);
+    ml_preserve(buf, false, !!(buf->b_p_fs >= 0 ? buf->b_p_fs : p_fs));
     if (got_int) {
       err = set_err(_(e_interr));
       goto restore_backup;
@@ -1575,9 +1575,9 @@ restore_backup:
     // (could be a pipe).
     // If the 'fsync' option is false, don't fsync().  Useful for laptops.
     int error;
-    if (p_fs && (error = os_fsync(fd)) != 0 && !device
+    if ((buf->b_p_fs >= 0 ? buf->b_p_fs : p_fs) && (error = os_fsync(fd)) != 0
         // fsync not supported on this storage.
-        && error != UV_ENOTSUP) {
+        && error != UV_ENOTSUP && !device) {
       err = set_err_arg(e_fsync, error);
       end = 0;
     }

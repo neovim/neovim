@@ -1340,7 +1340,8 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   }
 #endif
 
-  if (p_fs && fflush(fp) == 0 && os_fsync(fd) != 0) {
+  if ((buf->b_p_fs >= 0 ? buf->b_p_fs : p_fs) && fflush(fp) == 0
+      && os_fsync(fd) != 0) {
     write_ok = false;
   }
 

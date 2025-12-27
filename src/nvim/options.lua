@@ -3813,11 +3813,13 @@ local options = {
         - system signals low battery life
         - Nvim exits abnormally
 
+        This is a |global-local| option, so it can be set per buffer, for
+        example when writing to a slow filesystem.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
       full_name = 'fsync',
-      scope = { 'global' },
+      scope = { 'global', 'buf' },
       secure = true,
       short_desc = N_('whether to invoke fsync() after file write'),
       type = 'boolean',
