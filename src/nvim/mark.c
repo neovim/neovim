@@ -488,8 +488,18 @@ fmark_T *mark_get_local(buf_T *buf, win_T *win, int name)
     mark = mark_get_visual(buf, name);
     // previous context mark
   } else if (name == '\'' || name == '`') {
-    // TODO(muniter): w_pcmark should be stored as a mark, but causes a nasty bug.
-    mark = pos_to_mark(curbuf, NULL, win->w_pcmark);
+    win_T *target_win = (win && win->w_buffer == buf) ? win : NULL;
+    if (!target_win) {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
+        if (wp->w_buffer == buf) {
+          target_win = wp;
+          break;
+        }
+      }
+    }
+
+    mark = pos_to_mark(buf, NULL, target_win
+                       ? target_win->w_pcmark : (pos_T){ .lnum = 0, .col = 0 });
     // to position when leaving buffer
   } else if (name == '"') {
     mark = &(buf->b_last_cursor);
