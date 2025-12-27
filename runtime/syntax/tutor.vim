@@ -34,7 +34,7 @@ syn match tutorConcealedEscapes /\\[`*!\[\]():$-]\@=/ conceal
 syn region tutorEmphasis matchgroup=Delimiter start=/[\*]\@<!\*\*\@!/ end=/[\*]\@<!\*\*\@!/
 	    \ concealends contains=tutorInlineCommand,tutorInlineNormal
 syn region tutorBold matchgroup=Delimiter start=/\*\{2}/ end=/\*\{2}/
-	    \ concealends contains=tutorInlineCommand,tutorInlineNormal
+	    \ concealends contains=tutorInlineCommand,tutorInlineNormal,tutorInlineCodeDelim,tutorInlineCode
 
 syn keyword tutorMarks TODO NOTE IMPORTANT TIP ATTENTION EXERCISE
 syn keyword tutorMarks todo note tip attention exercise
@@ -45,10 +45,7 @@ syn region tutorCodeblock matchgroup=Delimiter start=/^\~\{3}.*$/ end=/^\~\{3}/
 syn region tutorShell matchgroup=Delimiter start=/^\~\{3} sh\s*$/ end=/^\~\{3}/ keepend contains=@TUTORSHELL concealends
 syn match tutorShellPrompt /\(^\s*\)\@<=[$#]/ contained containedin=tutorShell
 
-syn region tutorInlineCode matchgroup=Delimiter start=/\\\@<!`/ end=/\\\@<!\(`{\@!\|`\s\)/ concealends
-
 syn region tutorCommand matchgroup=Delimiter start=/^\~\{3} cmd\( :\)\?\s*$/ end=/^\~\{3}/ keepend contains=@VIM concealends
-syn region tutorInlineCommand matchgroup=Delimiter start=/\\\@<!`\(.*`{vim}\)\@=/ end=/\\\@<!`\({vim}\)\@=/ nextgroup=tutorInlineType contains=@VIM concealends keepend
 
 syn region tutorNormal matchgroup=Delimiter start=/^\~\{3} norm\(al\?\)\?\s*$/ end=/^\~\{3}/ contains=@VIMNORMAL concealends
 syn region tutorInlineNormal matchgroup=Delimiter start=/\\\@<!`\(\S*`{normal}\)\@=/ end=/\\\@<!`\({normal}\)\@=/ nextgroup=tutorInlineType contains=@VIMNORMAL concealends keepend
@@ -57,6 +54,10 @@ syn match tutorInlineType /{\(normal\|vim\)}/ contained conceal
 
 syn match tutorInlineOK /✓/
 syn match tutorInlineX /✗/
+
+" Conceal backtick with a space
+syn match tutorInlineCodeDelim /`/ conceal cchar=  containedin=tutorBold,tutorEmphasis
+syn region tutorInlineCode start="`" end="`" keepend contains=tutorInlineCodeDelim
 
 hi def tutorLink cterm=underline gui=underline ctermfg=lightblue guifg=#0088ff
 hi def link tutorLinkBands Delimiter
@@ -80,6 +81,7 @@ hi def tutorOK ctermfg=green guifg=#00ff88 cterm=bold gui=bold
 hi def tutorX ctermfg=red guifg=#ff2000  cterm=bold gui=bold
 hi def link tutorInlineOK tutorOK
 hi def link tutorInlineX tutorX
+hi def link tutorInlineCode String
 
 hi def link tutorShellPrompt Delimiter
 
