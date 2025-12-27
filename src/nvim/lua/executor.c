@@ -2056,6 +2056,30 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
   return name;
 }
 
+/// @return true to disable mapping
+bool nlua_execute_on_key_no_mapping(void)
+{
+  lua_State *const lstate = global_lstate;
+
+  // [ vim ]
+  lua_getglobal(lstate, "vim");
+
+  // [ vim, vim._on_key_no_mapping ]
+  lua_getfield(lstate, -1, "_on_key_no_mapping");
+  luaL_checktype(lstate, -1, LUA_TFUNCTION);
+
+  bool on_key_no_mapping = false;
+  // Ignore an error (error impossible?), mapping is enabled.
+  if (!lua_pcall(lstate, 0, 1, 0)) {
+    on_key_no_mapping = lua_toboolean(lstate, -1);
+  }
+
+  // [ vim, result ]
+  lua_pop(lstate, 2);
+
+  return on_key_no_mapping;
+}
+
 /// @return true to discard the key
 bool nlua_execute_on_key(int c, char *typed_buf)
 {

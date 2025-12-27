@@ -1632,9 +1632,12 @@ int vgetc(void)
     // if peeking records more
     last_recorded_len -= last_vgetc_recorded_len;
 
+    bool on_key_no_mapping = nlua_execute_on_key_no_mapping();
     while (true) {              // this is done twice if there are modifiers
       bool did_inc = false;
-      if (mod_mask) {           // no mapping after modifier has been read
+      // No mapping after modifier has been read
+      // or when on_key options have disabled mapping.
+      if (mod_mask || on_key_no_mapping) {
         no_mapping++;
         allow_keys++;
         did_inc = true;         // mod_mask may change value

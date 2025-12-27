@@ -591,6 +591,30 @@ do
 end
 
 local on_key_cbs = {} --- @type table<integer,[function, table]>
+local on_key_mapping_enabled = true --- @type boolean
+
+--- Used by "C"'s vgetc() to check if some on_key handler is disabling mapping.
+---
+--- @return boolean true to disable mapping
+function vim._on_key_no_mapping()
+  return not on_key_mapping_enabled
+end
+
+--- Check if mapping should be disabled.
+local function check_on_key_mapping_enabled()
+  local enabled = true
+  for _, v in pairs(on_key_cbs) do
+    local opts = v[2]
+    if not opts.mapping then
+      enabled = false
+      break
+    end
+  end
+  --if on_key_mapping_enabled ~= enabled then
+  --  vim.print(string.format("check_on_key_mapping_enabled switched to %s", enabled))
+  --end
+  on_key_mapping_enabled = enabled
+end
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.
@@ -615,6 +639,9 @@ local on_key_cbs = {} --- @type table<integer,[function, table]>
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
 ---                      new |nvim_create_namespace()| id.
 ---@param opts table? Optional parameters
+---              - {mapping}? (boolean, default true) When false, key mapping is
+---                disabled; use with caution. If all the keys are discarded,
+---                set this and mappings do not get in the way.
 ---
 ---@see |keytrans()|
 ---
@@ -629,12 +656,14 @@ function vim.on_key(fn, ns_id, opts)
   vim.validate('ns_id', ns_id, 'number', true)
   vim.validate('opts', opts, 'table', true)
   opts = opts or {}
+  opts.mapping = not (opts.mapping == false)
 
   if ns_id == nil or ns_id == 0 then
     ns_id = vim.api.nvim_create_namespace('')
   end
 
   on_key_cbs[ns_id] = fn and { fn, opts }
+  check_on_key_mapping_enabled()
   return ns_id
 end
 
