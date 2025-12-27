@@ -202,21 +202,9 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   }
 
 #elif defined(__linux__)
-  char proc_p[256] = { 0 };
-  // Collect processes whose parent matches `ppid`.
-  // Rationale: children are defined in thread with same ID of process.
-  snprintf(proc_p, sizeof(proc_p), "/proc/%d/task/%d/children", ppid, ppid);
-  FILE *fp = fopen(proc_p, "r");
-  if (fp == NULL) {
-    return 2;  // Process not found, or /proc/…/children not supported.
-  }
-  int match_pid;
-  while (fscanf(fp, "%d", &match_pid) > 0) {
-    temp = xrealloc(temp, (*proc_count + 1) * sizeof(*temp));
-    temp[*proc_count] = match_pid;
-    (*proc_count)++;
-  }
-  fclose(fp);
+  // Linux implementation moved to Lua
+  // The Lua code will handle reading from /proc/<pid>/task/<tid>/children
+  return 2;  // Signal to use Lua implementation
 #endif
 
   *proc_list = temp;
