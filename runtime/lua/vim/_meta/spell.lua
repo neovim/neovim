@@ -2,6 +2,8 @@
 
 -- luacheck: no unused args
 
+vim.spell = {}
+
 --- Check {str} for spelling errors. Similar to the Vimscript function
 --- [spellbadword()].
 ---

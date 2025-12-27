@@ -423,6 +423,12 @@ local function render_eval_meta(f, fun, write)
     write('--- @return ' .. (fun.returns or 'any') .. ret_desc)
   end
 
+  if fun.overloads then
+    for _, p in ipairs(fun.overloads) do
+      write('--- @overload ' .. p)
+    end
+  end
+
   write(render_fun_sig(funname, params))
 end
 
@@ -502,6 +508,15 @@ local function render_eval_doc(f, fun, write)
       local pname, ptype = param[1], param[2]
       local optional = (pname ~= '...' and i > req_args) and '?' or ''
       local s = fmt('- %-14s (`%s%s`)', fmt('{%s}', pname), ptype, optional)
+      write(util.md_to_vimdoc(s, 16, 18, TEXT_WIDTH))
+    end
+    write('')
+  end
+
+  if fun.overloads then
+    write(util.md_to_vimdoc('Overloads: ~', 16, 16, TEXT_WIDTH))
+    for _, p in ipairs(fun.overloads) do
+      local s = fmt('- `%s`', p)
       write(util.md_to_vimdoc(s, 16, 18, TEXT_WIDTH))
     end
     write('')

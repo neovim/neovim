@@ -9478,16 +9478,9 @@ function vim.fn.stdioopen(opts) end
 ---   echo stdpath("config")
 --- <
 ---
---- @param what 'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'
---- @return string|string[]
-function vim.fn.stdpath(what) end
-
 --- @param what 'cache'|'config'|'data'|'log'|'run'|'state'
 --- @return string
-function vim.fn.stdpath(what) end
-
---- @param what 'config_dirs'|'data_dirs'
---- @return string[]
+--- @overload fun(what: "config_dirs"|"data_dirs"): string[]
 function vim.fn.stdpath(what) end
 
 --- Convert String {string} to a Float.  This mostly works the
