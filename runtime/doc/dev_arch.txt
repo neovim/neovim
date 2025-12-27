@@ -38,7 +38,7 @@ Data structures
 - kvec or garray.c for dynamic lists / vectors (use StringBuilder for strings)
 
 Use `kvec.h` for most lists. When you absolutely need a linked list, use
-`lib/queue_defs.h` which defines an "intrusive" linked list.
+`src/nvim/lib/queue_defs.h` which defines an "intrusive" linked list.
 
 Buffer text is stored as a tree of line segments, defined in `src/nvim/memline.c`.
 The central idea is found in `ml_find_line`.
@@ -86,7 +86,7 @@ The source files most directly involved with UI events are:
 
 UI events are defined in `src/nvim/api/ui_events.in.h` , this file is not
 compiled directly, rather it parsed by
-`src/nvim/generators/gen_api_ui_events.lua` which autogenerates wrapper
+`src/gen/gen_api_ui_events.lua` which autogenerates wrapper
 functions used by the source files above. It also generates metadata
 accessible as `api_info().ui_events`.
 
