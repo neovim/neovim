@@ -479,6 +479,7 @@ local extension = {
   fir = 'firrtl',
   fish = 'fish',
   flix = 'flix',
+  ftl = 'fluent',
   focexec = 'focexec',
   fex = 'focexec',
   ft = 'forth',
