@@ -714,4 +714,10 @@ describe('vim.fs', function()
       end
     end)
   end)
+
+  describe('suffix()', function ()
+    it('works', function ()
+      -- See test/functional/vimscript/fnamemodify_spec.lua
+    end)
+  end)
 end)
