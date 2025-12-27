@@ -148,7 +148,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   // Check if this is a mapping command that needs special handling
   // like mapping commands need special argument parsing to preserve whitespace in RHS:
   // "map a b  c" => { args=["a", "b  c"], ... }
-  if (is_map_cmd(ea.cmdidx) && *ea.arg != NUL) {
+  if (ea.cmdidx != CMD_SIZE && is_map_cmd(ea.cmdidx) && *ea.arg != NUL) {
     // For mapping commands, split differently to preserve whitespace
     args = parse_map_cmd(ea.arg, arena);
   } else if (ea.argt & EX_NOSPC) {
@@ -181,7 +181,10 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     cmd = USER_CMD_GA(&curbuf->b_ucmds, ea.useridx);
   }
 
-  char *name = (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
+  // For range-only or modifier-only commands, cmd should be empty string
+  char *name = ea.cmdidx == CMD_SIZE
+               ? "" : (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
+
   PUT_KEY(result, cmd, cmd, cstr_as_string(name));
 
   if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
@@ -373,9 +376,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   VALIDATE_R(HAS_KEY(cmd, cmd, cmd), "cmd", {
     goto end;
   });
-  VALIDATE_EXP((cmd->cmd.data[0] != NUL), "cmd", "non-empty String", NULL, {
-    goto end;
-  });
+  if (cmd->cmd.data[0] == NUL) {
+    if (!(HAS_KEY(cmd, cmd, range) && cmd->range.size > 0) && !(HAS_KEY(cmd, cmd, mods))) {
+      api_set_error(err, kErrorTypeValidation, "Invalid 'cmd': expected non-empty String");
+      goto end;
+    }
+  }
 
   cmdname = arena_string(arena, cmd->cmd).data;
   ea.cmd = cmdname;
@@ -393,22 +399,40 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
   }
 
-  VALIDATE((p != NULL && ea.cmdidx != CMD_SIZE), "Command not found: %s", cmdname, {
+  bool range_only = ea.cmdidx == CMD_SIZE && cmd->cmd.data[0] == NUL
+                    && HAS_KEY(cmd, cmd, range) && cmd->range.size > 0;
+
+  // modifier only
+  if (ea.cmdidx == CMD_SIZE && cmd->cmd.data[0] == NUL
+      && (!HAS_KEY(cmd, cmd, range) || cmd->range.size == 0)
+      && HAS_KEY(cmd, cmd, mods)) {
     goto end;
-  });
-  VALIDATE(!is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
-    goto end;
-  });
-  const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
-                         ? get_user_command_name(ea.useridx, ea.cmdidx)
-                         : get_command_name(NULL, ea.cmdidx);
-  VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0, "Invalid command: \"%s\"", cmdname, {
+  }
+  // Allow CMD_SIZE only for range-only commands (empty cmd with range)
+  VALIDATE((p != NULL && ea.cmdidx != CMD_SIZE) || range_only,
+           "Command not found: %s", cmdname, {
     goto end;
   });
 
-  // Get the command flags so that we can know what type of arguments the command uses.
-  // Not required for a user command since `find_ex_command` already deals with it in that case.
-  if (!IS_USER_CMDIDX(ea.cmdidx)) {
+  VALIDATE(range_only || !is_cmd_ni(ea.cmdidx), "Command not implemented: %s", cmdname, {
+    goto end;
+  });
+
+  if (!range_only) {
+    const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
+                           ? get_user_command_name(ea.useridx, ea.cmdidx)
+                           : get_command_name(NULL, ea.cmdidx);
+    VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0,
+             "Invalid command: \"%s\"", cmdname, {
+      goto end;
+    });
+  }
+
+  if (range_only) {
+    ea.argt = EX_RANGE | EX_SBOXOK;
+  } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    // Get the command flags so that we can know what type of arguments the command uses.
+    // Not required for a user command since `find_ex_command` already deals with it in that case.
     ea.argt = get_cmd_argt(ea.cmdidx);
   }
 
@@ -510,9 +534,11 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     }
   }
 
-  // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
-  // since it only ever checks the first argument.
-  set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
+  if (!range_only) {
+    // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
+    // since it only ever checks the first argument.
+    set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
+  }
 
   if (HAS_KEY(cmd, cmd, range)) {
     VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data);
