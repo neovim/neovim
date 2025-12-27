@@ -6210,6 +6210,8 @@ bool changedir_func(char *new_dir, CdScope scope)
     new_dir = pdir;
   }
 
+  MUTATE_PATH_FOR_VIM(new_dir);
+
   if (os_dirname(NameBuff, MAXPATHL) == OK) {
     pdir = xstrdup(NameBuff);
   } else {
@@ -6288,9 +6290,6 @@ void ex_cd(exarg_T *eap)
 static void ex_pwd(exarg_T *eap)
 {
   if (os_dirname(NameBuff, MAXPATHL) == OK) {
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(NameBuff);
-#endif
     if (p_verbose > 0) {
       char *context = "global";
       if (last_chdir_reason != NULL) {

@@ -84,15 +84,19 @@ static const int kLibuvSuccess = 0;
 /// Changes the current directory to `path`.
 ///
 /// @return 0 on success, or negative error code.
-int os_chdir(const char *path)
-  FUNC_ATTR_NONNULL_ALL
+int os_chdir(const char *path) FUNC_ATTR_NONNULL_ALL
 {
   if (p_verbose >= 5) {
     verbose_enter();
     smsg(0, "chdir(%s)", path);
     verbose_leave();
   }
+
+  char *path_copy = xstrdup(path);
+  MUTATE_PATH_FOR_OS(path_copy);
   int err = uv_chdir(path);
+  xfree(path_copy);
+
   if (err == 0) {
     ui_call_chdir(cstr_as_string(path));
   }
@@ -104,27 +108,34 @@ int os_chdir(const char *path)
 /// @param buf Buffer to store the directory name.
 /// @param len Length of `buf`.
 /// @return `OK` for success, `FAIL` for failure.
-int os_dirname(char *buf, size_t len)
-  FUNC_ATTR_NONNULL_ALL
+int os_dirname(char *buf, size_t len) FUNC_ATTR_NONNULL_ALL
 {
   int error_number;
   if ((error_number = uv_cwd(buf, &len)) != kLibuvSuccess) {
     xstrlcpy(buf, uv_strerror(error_number), len);
     return FAIL;
   }
+
+  MUTATE_PATH_FOR_VIM(buf);
+
   return OK;
 }
 
 /// Check if the given path is a directory and not a symlink to a directory.
 /// @return `true` if `name` is a directory and NOT a symlink to a directory.
 ///         `false` if `name` is not a directory or if an error occurred.
-bool os_isrealdir(const char *name)
-  FUNC_ATTR_NONNULL_ALL
+bool os_isrealdir(const char *name) FUNC_ATTR_NONNULL_ALL
 {
+  char *name_copy = xstrdup(name);
+  MUTATE_PATH_FOR_OS(name_copy);
+
   uv_fs_t request;
-  if (uv_fs_lstat(NULL, &request, name, NULL) != kLibuvSuccess) {
+  if (uv_fs_lstat(NULL, &request, name_copy, NULL) != kLibuvSuccess) {
+    xfree(name_copy);
     return false;
   }
+  xfree(name_copy);
+
   if (S_ISLNK(request.statbuf.st_mode)) {
     return false;
   }
@@ -381,6 +392,10 @@ static bool is_executable_in_path(const char *name, char **abspath)
 
     // Combine the $PATH segment with `name`.
     xmemcpyz(buf, p, (size_t)(e - p));
+
+    // $PATHs in MSWIN uses backslashes - convert to slashes for VIM
+    MUTATE_PATH_FOR_VIM(buf);
+
     (void)append_path(buf, name, bufsize);
 
     if (is_executable_ext(buf, abspath)) {
@@ -748,12 +763,19 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
   if (!name) {
     return UV_EINVAL;
   }
+
+  char *os_name = xstrdup(name);
+  MUTATE_PATH_FOR_OS(os_name);
+  name = os_name;
+
   uv_fs_t request;
   int result = uv_fs_stat(NULL, &request, name, NULL);
   if (result == kLibuvSuccess) {
     *statbuf = request.statbuf;
   }
   uv_fs_req_cleanup(&request);
+
+  xfree(os_name);
   return result;
 }
 
@@ -1332,6 +1354,12 @@ bool os_fileid_equal_fileinfo(const FileID *file_id, const FileInfo *file_info)
 char *os_realpath(const char *name, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+#ifdef MSWIN
+  char *os_name = xstrdup(name);
+  MUTATE_PATH_FOR_OS(os_name);
+  name = os_name;
+#endif
+
   uv_fs_t request;
   int result = uv_fs_realpath(NULL, &request, name, NULL);
   if (result == kLibuvSuccess) {
@@ -1339,8 +1367,14 @@ char *os_realpath(const char *name, char *buf, size_t len)
       buf = xmalloc(len);
     }
     xstrlcpy(buf, request.ptr, len);
+    MUTATE_PATH_FOR_VIM(buf);
   }
   uv_fs_req_cleanup(&request);
+
+#ifdef MSWIN
+  xfree(os_name);
+#endif
+
   return result == kLibuvSuccess ? buf : NULL;
 }
 
