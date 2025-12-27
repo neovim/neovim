@@ -66,6 +66,7 @@ src/testdir/Make_amiga.mak
 src/testdir/Make_dos.mak
 src/testdir/samples/crypt_sodium_invalid.txt
 src/testdir/test_behave.vim
+src/testdir/test_codestyle.vim
 src/testdir/test_crypt.vim
 src/testdir/test_cscope.vim
 src/testdir/test_hardcopy.vim
