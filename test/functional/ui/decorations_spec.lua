@@ -2143,7 +2143,7 @@ describe('extmark decorations', function()
     command('set conceallevel=1')
     screen:expect_unchanged()
 
-    eq('conceal char has to be printable', pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_col = 0, end_row = 2, conceal = '\255' }))
+    eq('conceal char must be printable', pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_col = 0, end_row = 2, conceal = '\255' }))
   end)
 
   it('conceal with composed conceal char', function()

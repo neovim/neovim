@@ -677,7 +677,8 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---     character. Enable concealing similar to `:syn-conceal`.
 ---     When a character is supplied it is used as `:syn-cchar`.
 ---     "hl_group" is used as highlight for the cchar if provided,
----     otherwise it defaults to `hl-Conceal`.
+---     otherwise it defaults to `hl-Conceal`. To remove an
+---     existing conceal, use the form feed character "\f" (^L).
 --- - conceal_lines: string which should be empty. When
 ---     provided, lines in the range are not drawn at all
 ---     (according to 'conceallevel'); the next unconcealed line
