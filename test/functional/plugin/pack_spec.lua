@@ -1980,7 +1980,7 @@ describe('vim.pack', function()
 
       -- Should not include removed plugins immediately after they are removed,
       -- while still returning list without holes
-      exec_lua('vim.pack.del({ "defbranch" })')
+      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       local defbranch_data = make_defbranch_data(true, true)
       local basic_data = make_basic_data(true, true)
       eq({ { defbranch_data, basic_data }, { basic_data } }, exec_lua('return _G.get_log'))
@@ -2013,40 +2013,70 @@ describe('vim.pack', function()
   describe('del()', function()
     it('works', function()
       exec_lua(function()
-        vim.pack.add({ repos_src.plugindirs, { src = repos_src.basic, version = 'feat-branch' } })
+        local basic_spec = { src = repos_src.basic, version = 'feat-branch' }
+        vim.pack.add({ repos_src.plugindirs, repos_src.defbranch, basic_spec })
       end)
-      eq(true, pack_exists('basic'))
-      eq(true, pack_exists('plugindirs'))
 
-      local locked_plugins = vim.tbl_keys(get_lock_tbl().plugins)
-      table.sort(locked_plugins)
-      eq({ 'basic', 'plugindirs' }, locked_plugins)
+      local assert_on_disk = function(installed_map)
+        local installed = {}
+        for p_name, is_installed in pairs(installed_map) do
+          eq(is_installed, pack_exists(p_name))
+          if is_installed then
+            installed[#installed + 1] = p_name
+          end
+        end
 
+        table.sort(installed)
+        local locked = vim.tbl_keys(get_lock_tbl().plugins)
+        table.sort(locked)
+        eq(installed, locked)
+      end
+
+      assert_on_disk({ basic = true, defbranch = true, plugindirs = true })
+
+      -- By default should delete only non-active plugins, even if
+      -- there is active one among input plugin names
+      n.clear()
+      exec_lua(function()
+        vim.pack.add({ repos_src.defbranch })
+      end)
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
-      n.exec('messages clear')
-      exec_lua(function()
-        vim.pack.del({ 'basic', 'plugindirs' })
+      local err = pcall_err(exec_lua, function()
+        vim.pack.del({ 'basic', 'defbranch', 'plugindirs' })
       end)
-      eq(false, pack_exists('basic'))
-      eq(false, pack_exists('plugindirs'))
+      matches('Some plugins are active and were not deleted: defbranch', err)
 
-      eq(
-        "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'",
-        n.exec_capture('messages')
-      )
+      assert_on_disk({ basic = false, defbranch = true, plugindirs = false })
+
+      local msg = "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'"
+      eq(msg, n.exec_capture('messages'))
 
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch', true))
+      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch', false))
       eq(2, find_event('', 'delete', 'basic', 'feat-branch', false))
-      eq(3, find_event('Pre', 'delete', 'plugindirs', nil, true))
+      eq(3, find_event('Pre', 'delete', 'plugindirs', nil, false))
       eq(4, find_event('', 'delete', 'plugindirs', nil, false))
       eq(4, #log)
 
-      -- Should update lockfile
-      eq({ plugins = {} }, get_lock_tbl())
+      -- Should be possible to force delete active plugins
+      n.exec('messages clear')
+      exec_lua('_G.event_log = {}')
+      exec_lua(function()
+        vim.pack.del({ 'defbranch' }, { force = true })
+      end)
+
+      assert_on_disk({ basic = false, defbranch = false, plugindirs = false })
+
+      eq("vim.pack: Removed plugin 'defbranch'", n.exec_capture('messages'))
+
+      log = exec_lua('return _G.event_log')
+      find_event = make_find_packchanged(log)
+      eq(1, find_event('Pre', 'delete', 'defbranch', nil, true))
+      eq(2, find_event('', 'delete', 'defbranch', nil, false))
+      eq(2, #log)
     end)
 
     it('works without prior `add()`', function()

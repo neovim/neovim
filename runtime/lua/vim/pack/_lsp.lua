@@ -161,7 +161,7 @@ local commands = {
   end,
   skip_update_plugin = function(_) end,
   delete_plugin = function(plug_data)
-    vim.pack.del({ plug_data.name })
+    vim.pack.del({ plug_data.name }, { force = true })
   end,
 }
 
