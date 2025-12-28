@@ -2,7 +2,8 @@
 " Language:         Rust
 " Author:           Chris Morgan <me@chrismorgan.info>
 " Last Change:      2023-09-11
-" 2024 Jul 04 by Vim Project: use shiftwidth() instead of hard-coding shifted values (#15138)
+" 2024 Jul 04 by Vim Project: use shiftwidth() instead of hard-coding shifted values #15138
+" 2025 Dec 28 by Vim Project: clean up, handle opening empty line correctly #18974
 
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 " Note: upstream seems umaintained: https://github.com/rust-lang/rust.vim/issues/502
@@ -85,16 +86,6 @@ function! s:is_string_comment(lnum, col)
         return 0
     endif
 endfunction
-
-if exists('*shiftwidth')
-    function! s:shiftwidth()
-        return shiftwidth()
-    endfunc
-else
-    function! s:shiftwidth()
-        return &shiftwidth
-    endfunc
-endif
 
 function GetRustIndent(lnum)
     " Starting assumption: cindent (called at the end) will do it right
@@ -240,44 +231,10 @@ function GetRustIndent(lnum)
         return indent(prevlinenum)
     endif
 
-    if !has("patch-7.4.355")
-        " cindent before 7.4.355 doesn't do the module scope well at all; e.g.::
-        "
-        " static FOO : &'static [bool] = [
-        " true,
-        "	 false,
-        "	 false,
-        "	 true,
-        "	 ];
-        "
-        "	 uh oh, next statement is indented further!
-
-        " Note that this does *not* apply the line continuation pattern properly;
-        " that's too hard to do correctly for my liking at present, so I'll just
-        " start with these two main cases (square brackets and not returning to
-        " column zero)
-
-        call cursor(a:lnum, 1)
-        if searchpair('{\|(', '', '}\|)', 'nbW',
-                    \ 's:is_string_comment(line("."), col("."))') == 0
-            if searchpair('\[', '', '\]', 'nbW',
-                        \ 's:is_string_comment(line("."), col("."))') == 0
-                " Global scope, should be zero
-                return 0
-            else
-                " At the module scope, inside square brackets only
-                "if getline(a:lnum)[0] == ']' || search('\[', '', '\]', 'nW') == a:lnum
-                if line =~# "^\\s*]"
-                    " It's the closing line, dedent it
-                    return 0
-                else
-                    return shiftwidth()
-                endif
-            endif
-        endif
-    endif
-
     " Fall back on cindent, which does it mostly right
+    if empty(trim(line))
+        return cindent(prevlinenum)
+    endif
     return cindent(a:lnum)
 endfunction
 
