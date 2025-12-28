@@ -777,7 +777,7 @@ describe('lua stdlib', function()
           eq(true, not formatoptions.q)
         end)
 
-        it('works for array list type options', function()
+        it('works for comma list type options', function()
           local wildignore = exec_lua(function()
             vim.opt.wildignore = '*.c,*.o,__pycache__'
             return vim.opt.wildignore:get()
@@ -785,6 +785,13 @@ describe('lua stdlib', function()
 
           eq(3, #wildignore)
           eq('*.c', wildignore[1])
+        end)
+
+        it('works for array list type options', function()
+          eq_exec_lua({ eol = '~', space = '-' }, function()
+            vim.opt.listchars = { 'eol:~', 'space:-' }
+            return vim.opt.listchars:get()
+          end)
         end)
 
         it('works for options that are both commalist and flaglist', function()
