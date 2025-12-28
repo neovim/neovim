@@ -3192,7 +3192,7 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       emsg(_(e_cmd_mapping_must_end_with_cr_before_second_cmd));
       aborted = true;
     } else if (c1 == K_SNR) {
-      ga_concat(&line_ga, "<SNR>");
+      ga_concat_len(&line_ga, S_LEN("<SNR>"));
     } else {
       if (cmod != 0) {
         ga_append(&line_ga, K_SPECIAL);

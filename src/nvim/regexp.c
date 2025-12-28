@@ -11587,9 +11587,9 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
   // grow indent for state->out
   indent->ga_len -= 1;
   if (state->out1) {
-    ga_concat(indent, (uint8_t *)"| ");
+    ga_concat(indent, S_LEN("| "));
   } else {
-    ga_concat(indent, (uint8_t *)"  ");
+    ga_concat(indent, S_LEN("  "));
   }
   ga_append(indent, NUL);
 
@@ -11597,7 +11597,7 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
 
   // replace last part of indent for state->out1
   indent->ga_len -= 3;
-  ga_concat(indent, (uint8_t *)"  ");
+  ga_concat(indent, S_LEN("  "));
   ga_append(indent, NUL);
 
   nfa_print_state2(debugf, state->out1, indent);
