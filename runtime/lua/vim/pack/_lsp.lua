@@ -59,7 +59,7 @@ local get_plug_data_at_lnum = function(bufnr, lnum)
   if not (from <= lnum and lnum <= to) then
     return {}
   end
-  return { group = group, name = name, from = from, to = to }
+  return { group = group, name = name:gsub(' %(not active%)$', ''), from = from, to = to }
 end
 
 --- @alias vim.pack.lsp.Position { line: integer, character: integer }

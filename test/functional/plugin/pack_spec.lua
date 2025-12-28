@@ -1622,6 +1622,29 @@ describe('vim.pack', function()
         ref_fetch_lock.rev = git_get_hash('main', 'fetch')
         eq(ref_fetch_lock, get_lock_tbl().plugins.fetch)
       end)
+
+      it('hints about not active plugins', function()
+        exec_lua(function()
+          vim.pack.update()
+        end)
+
+        for _, l in ipairs(api.nvim_buf_get_lines(0, 0, -1, false)) do
+          if l:match('^## ') then
+            matches(' %(not active%)$', l)
+          end
+        end
+
+        -- Should also hint in `textDocument/documentSymbol` of in-process LSP,
+        -- yet still work for navigation
+        exec_lua('vim.lsp.buf.document_symbol()')
+        local loclist = fn.getloclist(0)
+        matches(' %(not active%)$', loclist[2].text)
+        matches(' %(not active%)$', loclist[4].text)
+        matches(' %(not active%)$', loclist[5].text)
+
+        n.exec('llast')
+        eq(21, api.nvim_win_get_cursor(0)[1])
+      end)
     end)
 
     it('works with not active plugins', function()

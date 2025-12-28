@@ -25,8 +25,10 @@ for i, l in ipairs(lines) do
     cur_header_hl_group = header_hl_groups[cur_group]
     hi_range(i, 0, l:len(), cur_header_hl_group)
   elseif l:find('^## (.+)$') ~= nil then
-    -- Header 2
+    -- Header 2 with possibly "(not active)" suffix
     hi_range(i, 0, l:len(), cur_header_hl_group)
+    local col = l:match('() %(not active%)$') or l:len()
+    hi_range(i, col, l:len(), 'DiagnosticError', priority + 1)
   elseif cur_info ~= nil then
     -- Plugin info
     local end_col = l:match('(). +%b()$') or l:len()

@@ -990,11 +990,12 @@ end
 --- @param p vim.pack.Plug
 --- @return string
 local function compute_feedback_lines_single(p)
+  local active_suffix = active_plugins[p.path] ~= nil and '' or ' (not active)'
   if p.info.err ~= '' then
-    return ('## %s\n\n %s'):format(p.spec.name, p.info.err:gsub('\n', '\n  '))
+    return ('## %s%s\n\n %s'):format(p.spec.name, active_suffix, p.info.err:gsub('\n', '\n  '))
   end
 
-  local parts = { '## ' .. p.spec.name .. '\n' }
+  local parts = { ('## %s%s\n'):format(p.spec.name, active_suffix) }
   local version_suffix = p.info.version_str == '' and '' or (' (%s)'):format(p.info.version_str)
 
   if p.info.sha_head == p.info.sha_target then
@@ -1127,7 +1128,7 @@ local function get_update_map(bufnr)
   for _, l in ipairs(lines) do
     local name = l:match('^## (.+)$')
     if name and is_in_update then
-      res[name] = true
+      res[name:gsub(' %(not active%)$', '')] = true
     end
 
     local group = l:match('^# (%S+)')
