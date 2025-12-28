@@ -231,4 +231,22 @@ func TearDown()
   call delete('Untitled')
 endfunc
 
+func Test_crash_bufwrite()
+  let lines =<< trim END
+    w! ++enc=ucs4 Xoutput
+    call writefile(['done'], 'Xbufwrite')
+  END
+  call writefile(lines, 'Xvimrc')
+  let opts = #{wait_for_ruler: 0, rows: 20}
+  let args = ' -u NONE -i NONE -b -S Xvimrc'
+  let buf = RunVimInTerminal(args .. ' samples/buffer-test.txt', opts)
+  call TermWait(buf, 1000)
+  call StopVimInTerminal(buf)
+  call WaitForAssert({-> assert_true(filereadable('Xbufwrite'))})
+  call assert_equal(['done'], readfile('Xbufwrite'))
+  call delete('Xbufwrite')
+  call delete('Xoutput')
+  call delete('Xvimrc')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
