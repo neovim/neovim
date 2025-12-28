@@ -1384,7 +1384,7 @@ describe('vim.pack', function()
         exec_lua(function()
           vim.pack.add({
             repos_src.fetch,
-            { src = repos_src.semver, version = 'v0.3.0' },
+            -- No `semver` to test with non-active plugins
             { src = repos_src.defbranch, version = 'does-not-exist' },
           })
           vim.pack.update()
@@ -1409,7 +1409,7 @@ describe('vim.pack', function()
           { lnum = 9, col = 1, end_lnum = 22, end_col = 1, text = '[Namespace] Update' },
           { lnum = 11, col = 1, end_lnum = 22, end_col = 1, text = '[Module] fetch' },
           { lnum = 22, col = 1, end_lnum = 32, end_col = 1, text = '[Namespace] Same' },
-          { lnum = 24, col = 1, end_lnum = 32, end_col = 1, text = '[Module] semver' },
+          { lnum = 24, col = 1, end_lnum = 32, end_col = 1, text = '[Module] semver (not active)' },
         }
         eq(ref_loclist, loclist)
 
@@ -1491,22 +1491,22 @@ describe('vim.pack', function()
         -- - Should not include "namespace" header as "plugin at cursor"
         assert_action({ 1, 1 }, {}, 0)
         assert_action({ 2, 0 }, {}, 0)
-        -- - Only deletion should be available on errored plugin
-        assert_action({ 3, 1 }, { 'Delete `defbranch`' }, 0)
-        assert_action({ 7, 0 }, { 'Delete `defbranch`' }, 0)
+        -- - No actions for `defbranch` since it is active and has no updates
+        assert_action({ 3, 1 }, {}, 0)
+        assert_action({ 7, 0 }, {}, 0)
         -- - Should not include separator blank line as "plugin at cursor"
         assert_action({ 8, 0 }, {}, 0)
         assert_action({ 9, 0 }, {}, 0)
         assert_action({ 10, 0 }, {}, 0)
-        -- - Should also suggest updating related actions if updates available
-        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`', 'Delete `fetch`' }
+        -- - Should suggest updating related actions if updates available
+        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`' }
         assert_action({ 11, 0 }, fetch_actions, 0)
         assert_action({ 14, 0 }, fetch_actions, 0)
         assert_action({ 20, 0 }, fetch_actions, 0)
         assert_action({ 21, 0 }, {}, 0)
         assert_action({ 22, 0 }, {}, 0)
         assert_action({ 23, 0 }, {}, 0)
-        -- - Only deletion should be available on plugins without update
+        -- - Only deletion should be available for not active plugins
         assert_action({ 24, 0 }, { 'Delete `semver`' }, 0)
         assert_action({ 28, 0 }, { 'Delete `semver`' }, 0)
         assert_action({ 32, 0 }, { 'Delete `semver`' }, 0)
@@ -1516,27 +1516,26 @@ describe('vim.pack', function()
           matches(pattern, api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1])
         end
 
-        -- - Delete. Should remove from disk and update lockfile.
-        assert_action({ 3, 0 }, { 'Delete `defbranch`' }, 1)
-        eq(false, pack_exists('defbranch'))
-        line_match(1, '^# Error')
-        line_match(2, '^$')
-        line_match(3, '^# Update')
+        -- - Delete not active plugin. Should remove from disk and update lockfile.
+        assert_action({ 24, 0 }, { 'Delete `semver`' }, 1)
+        eq(false, pack_exists('semver'))
+        line_match(22, '^# Same')
+        eq(22, api.nvim_buf_line_count(0))
 
-        ref_lockfile.plugins.defbranch = nil
+        ref_lockfile.plugins.semver = nil
         eq(ref_lockfile, get_lock_tbl())
 
         -- - Skip udating
-        assert_action({ 5, 0 }, fetch_actions, 2)
+        assert_action({ 11, 0 }, fetch_actions, 2)
         eq('return "fetch main"', fn.readblob(fetch_lua_file))
-        line_match(3, '^# Update')
-        line_match(4, '^$')
-        line_match(5, '^# Same')
+        line_match(9, '^# Update')
+        line_match(10, '^$')
+        line_match(11, '^# Same')
 
         -- - Update plugin. Should not re-fetch new data and update lockfile.
         n.exec('quit')
         n.exec_lua(function()
-          vim.pack.update({ 'fetch', 'semver' })
+          vim.pack.update({ 'fetch' })
         end)
         exec_lua('_G.echo_log = {}')
 
@@ -1549,8 +1548,7 @@ describe('vim.pack', function()
         eq('return "fetch new 2"', fn.readblob(fetch_lua_file))
         assert_progress_report('Applying updates', { 'fetch' })
         line_match(1, '^# Update')
-        line_match(2, '^$')
-        line_match(3, '^# Same')
+        eq(1, api.nvim_buf_line_count(0))
 
         eq(ref_lockfile, get_lock_tbl())
 

@@ -151,7 +151,9 @@ methods['textDocument/codeAction'] = function(params, callback)
       new_action('Skip updating', 'skip_update_plugin'),
     }, 0)
   end
-  vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+  if not vim.pack.get({ plug_data.name })[1].active then
+    vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+  end
   callback(nil, res)
 end
 
@@ -161,7 +163,7 @@ local commands = {
   end,
   skip_update_plugin = function(_) end,
   delete_plugin = function(plug_data)
-    vim.pack.del({ plug_data.name }, { force = true })
+    vim.pack.del({ plug_data.name })
   end,
 }
 

@@ -1161,8 +1161,9 @@ end
 ---           show more information at cursor. Like details of particular pending
 ---           change or newer tag.
 ---         - 'textDocument/codeAction' (`gra` via |lsp-defaults| or |vim.lsp.buf.code_action()|) -
----           show code actions available for "plugin at cursor". Like "delete", "update",
----           or "skip updating".
+---           show code actions available for "plugin at cursor".
+---           Like "delete" (if plugin is not active), "update" or "skip updating"
+---           (if there are pending updates).
 ---
 ---       Execute |:write| to confirm update, execute |:quit| to discard the update.
 ---     - If `true`, make updates right away.
