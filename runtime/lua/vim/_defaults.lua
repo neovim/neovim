@@ -567,7 +567,14 @@ do
           red, green, blue = 65535, 65535, 65535
         end
         local command = fg_request and 10 or 11
-        local data = string.format('\027]%d;rgb:%04x/%04x/%04x\007', command, red, green, blue)
+        local data = string.format(
+          '\027]%d;rgb:%04x/%04x/%04x%s',
+          command,
+          red,
+          green,
+          blue,
+          args.data.terminator
+        )
         vim.api.nvim_chan_send(channel, data)
       end
     end,

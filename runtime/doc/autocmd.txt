@@ -1081,6 +1081,7 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				fields:
 
 				- sequence: the received sequence
+				- terminator: the received sequence terminator
 				- cursor: (1,0)-indexed, buffer-relative
 				  position of the cursor when the sequence was
 				  received (line number may be <= 0 if the
