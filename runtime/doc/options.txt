@@ -3197,7 +3197,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fsync'* *'fs'* *'nofsync'* *'nofs'*
 'fsync' 'fs'		boolean	(default on)
-			global
+			global or local to buffer |global-local|
 	When on, the OS function fsync() will be called after saving a file
 	(|:write|, |writefile()|, …), |swap-file|, |undo-persistence| and |shada-file|.
 	This flushes the file to disk, ensuring that it is safely written.
@@ -3210,6 +3210,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- system signals low battery life
 	- Nvim exits abnormally
 
+	This is a |global-local| option, so it can be set per buffer, for
+	example when writing to a slow filesystem.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 

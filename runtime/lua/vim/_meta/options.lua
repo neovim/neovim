@@ -3002,12 +3002,16 @@ vim.go.fp = vim.go.formatprg
 --- - system signals low battery life
 --- - Nvim exits abnormally
 ---
+--- This is a `global-local` option, so it can be set per buffer, for
+--- example when writing to a slow filesystem.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
 --- @type boolean
 vim.o.fsync = true
 vim.o.fs = vim.o.fsync
+vim.bo.fsync = vim.o.fsync
+vim.bo.fs = vim.bo.fsync
 vim.go.fsync = vim.o.fsync
 vim.go.fs = vim.go.fsync
 

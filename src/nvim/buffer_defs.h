@@ -586,6 +586,7 @@ struct file_buffer {
   char *b_p_fp;                 ///< 'formatprg'
   char *b_p_fex;                ///< 'formatexpr'
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
+  int b_p_fs;                   ///< 'fsync'
   char *b_p_kp;                 ///< 'keywordprg'
   int b_p_lisp;                 ///< 'lisp'
   char *b_p_lop;                ///< 'lispoptions'

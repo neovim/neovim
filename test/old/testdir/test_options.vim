@@ -1662,27 +1662,36 @@ endfunc
 
 " Test for setting boolean global-local option value
 func Test_set_boolean_global_local_option()
-  setglobal autoread
-  setlocal noautoread
+  CheckUnix
+
+  setglobal autoread fsync
+  setlocal noautoread nofsync
   call assert_equal(1, &g:autoread)
   call assert_equal(0, &l:autoread)
   call assert_equal(0, &autoread)
+  call assert_equal(1, &g:fsync)
+  call assert_equal(0, &l:fsync)
+  call assert_equal(0, &fsync)
 
   " :setlocal {option}< set the effective value of {option} to its global value.
-  "set autoread<
-  setlocal autoread<
+  "set autoread< fsync<
+  setlocal autoread< fsync<
   call assert_equal(1, &l:autoread)
   call assert_equal(1, &autoread)
+  call assert_equal(1, &l:fsync)
+  call assert_equal(1, &fsync)
 
   " :set {option}< removes the local value, so that the global value will be used.
-  setglobal noautoread
-  setlocal autoread
-  "setlocal autoread<
-  set autoread<
+  setglobal noautoread nofsync
+  setlocal autoread fsync
+  "setlocal autoread< fsync<
+  set autoread< fsync<
   call assert_equal(-1, &l:autoread)
   call assert_equal(0, &autoread)
+  call assert_equal(-1, &l:fsync)
+  call assert_equal(0, &fsync)
 
-  set autoread&
+  set autoread& fsync&
 endfunc
 
 func Test_set_in_sandbox()
