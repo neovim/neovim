@@ -964,6 +964,7 @@ void handle_did_throw(void)
   assert(current_exception != NULL);
   char *p = NULL;
   msglist_T *messages = NULL;
+  ESTACK_CHECK_DECLARATION;
 
   // If the uncaught exception is a user exception, report it as an
   // error.  If it is an error exception, display the saved error
@@ -985,6 +986,7 @@ void handle_did_throw(void)
   }
 
   estack_push(ETYPE_EXCEPT, current_exception->throw_name, current_exception->throw_lnum);
+  ESTACK_CHECK_SETUP;
   current_exception->throw_name = NULL;
 
   discard_current_exception();              // uses IObuff if 'verbose'
@@ -1009,6 +1011,7 @@ void handle_did_throw(void)
     xfree(p);
   }
   xfree(SOURCING_NAME);
+  ESTACK_CHECK_NOW;
   estack_pop();
 }
 

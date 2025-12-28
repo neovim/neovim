@@ -608,6 +608,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
   slang_T *lp = NULL;
   int res;
   bool did_estack_push = false;
+  ESTACK_CHECK_DECLARATION;
 
   FILE *fd = os_fopen(fname, "r");
   if (fd == NULL) {
@@ -640,6 +641,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
 
   // Set sourcing_name, so that error messages mention the file name.
   estack_push(ETYPE_SPELL, fname, 0);
+  ESTACK_CHECK_SETUP;
   did_estack_push = true;
 
   // <HEADER>: <fileID>
@@ -838,6 +840,7 @@ endOK:
     fclose(fd);
   }
   if (did_estack_push) {
+    ESTACK_CHECK_NOW;
     estack_pop();
   }
 

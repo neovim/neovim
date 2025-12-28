@@ -1010,6 +1010,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   bool started_profiling = false;
   bool did_save_redo = false;
   save_redo_T save_redo;
+  ESTACK_CHECK_DECLARATION;
 
   // If depth of calling is getting too high, don't execute the function
   if (depth >= p_mfd) {
@@ -1181,6 +1182,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   }
 
   estack_push_ufunc(fp, 1);
+  ESTACK_CHECK_SETUP;
   if (p_verbose >= 12) {
     no_wait_return++;
     verbose_enter_scroll();
@@ -1332,6 +1334,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     no_wait_return--;
   }
 
+  ESTACK_CHECK_NOW;
   estack_pop();
   current_sctx = save_current_sctx;
   if (do_profiling_yes) {
