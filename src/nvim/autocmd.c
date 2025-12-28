@@ -1669,6 +1669,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   bool did_save_redobuff = false;
   save_redo_T save_redo;
   const bool save_KeyTyped = KeyTyped;
+  ESTACK_CHECK_DECLARATION;
 
   // Quickly return if there are no autocommands for this event or
   // autocommands are blocked.
@@ -1853,6 +1854,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   // name and lnum are filled in later
   estack_push(ETYPE_AUCMD, NULL, 0);
+  ESTACK_CHECK_SETUP;
 
   const sctx_T save_current_sctx = current_sctx;
 
@@ -1962,6 +1964,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   filechangeshell_busy = false;
   autocmd_nested = save_autocmd_nested;
   xfree(SOURCING_NAME);
+  ESTACK_CHECK_NOW;
   estack_pop();
   xfree(afile_orig);
   xfree(autocmd_fname);

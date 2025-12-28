@@ -3788,6 +3788,7 @@ static int chk_modeline(linenr_T lnum, int flags)
 {
   char *e;
   int retval = OK;
+  ESTACK_CHECK_DECLARATION;
 
   int prev = -1;
   char *s = ml_get(lnum);
@@ -3843,6 +3844,7 @@ static int chk_modeline(linenr_T lnum, int flags)
 
   // prepare for emsg()
   estack_push(ETYPE_MODELINE, "modelines", lnum);
+  ESTACK_CHECK_SETUP;
 
   bool end = false;
   while (end == false) {
@@ -3899,6 +3901,7 @@ static int chk_modeline(linenr_T lnum, int flags)
                                       // careful not to go off the end
   }
 
+  ESTACK_CHECK_NOW;
   estack_pop();
   xfree(linecopy);
 

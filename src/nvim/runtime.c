@@ -2092,6 +2092,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   scriptitem_T *si = NULL;
   proftime_T wait_start;
   bool trigger_source_post = false;
+  ESTACK_CHECK_DECLARATION;
 
   CLEAR_FIELD(cookie);
   char *fname_exp = NULL;
@@ -2255,6 +2256,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   // Keep the sourcing name/lnum, for recursive calls.
   estack_push(ETYPE_SCRIPT, si != NULL ? si->sn_name : fname_exp, 0);
+  ESTACK_CHECK_SETUP;
 
   if (l_do_profiling == PROF_YES && si != NULL) {
     bool forceit = false;
@@ -2316,6 +2318,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   if (got_int) {
     emsg(_(e_interr));
   }
+  ESTACK_CHECK_NOW;
   estack_pop();
   if (p_verbose > 1) {
     verbose_enter();
