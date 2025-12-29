@@ -812,13 +812,27 @@ do
       -- an OSC 11 response from the terminal emulator. If the user has set
       -- 'background' explicitly then we will delete this autocommand,
       -- effectively disabling automatic background setting.
-      local force = false
+      local did_bg_detection = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
         desc = "Update the value of 'background' automatically based on the terminal emulator's background color",
         callback = function(args)
           local resp = args.data.sequence ---@type string
+
+          -- DA1 response that should come after the OSC 11 response if the
+          -- terminal supports it.
+          if string.match(resp, '^\x1b%[%?.-c$') then
+            did_bg_detection = true
+            -- Don't delete the autocmd because the bg response may come
+            -- after the DA1 response if the terminal handles requests out
+            -- of sequence. This can occur, for instance, in a nested Nvim
+            -- instance since the bg request is handled by the TermRequest
+            -- autocmd. When this happens, the bg may be set later in the
+            -- startup sequence.
+            return false
+          end
+
           local r, g, b = parseosc11(resp)
           if r and g and b then
             local rr = parsecolor(r)
@@ -828,15 +842,20 @@ do
             if rr and gg and bb then
               local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
               local bg = luminance < 0.5 and 'dark' or 'light'
-              setoption('background', bg, force)
+              vim.api.nvim_set_option_value('background', bg, {})
 
-              -- On the first query response, don't force setting the option in
-              -- case the user has already set it manually. If they have, then
-              -- this autocommand will be deleted. If they haven't, then we do
-              -- want to force setting the option to override the value set by
-              -- this autocommand.
-              if not force then
-                force = true
+              -- Ensure OptionSet still triggers when we set the background during startup
+              if vim.v.vim_did_enter == 0 then
+                vim.api.nvim_create_autocmd('VimEnter', {
+                  group = group,
+                  once = true,
+                  nested = true,
+                  callback = function()
+                    vim.api.nvim_exec_autocmds('OptionSet', {
+                      pattern = 'background',
+                    })
+                  end,
+                })
               end
             end
           end
@@ -848,13 +867,27 @@ do
         nested = true,
         once = true,
         callback = function()
-          if vim.api.nvim_get_option_info2('background', {}).was_set then
+          local optinfo = vim.api.nvim_get_option_info2('background', {})
+          local sid_lua = -8
+          if
+            optinfo.was_set
+            and optinfo.last_set_sid ~= sid_lua
+            and next(vim.api.nvim_get_autocmds({ id = id })) ~= nil
+          then
             vim.api.nvim_del_autocmd(id)
           end
         end,
       })
 
-      vim.api.nvim_ui_send('\027]11;?\007')
+      -- Send OSC 11 query along with DA1 request to determine whether terminal
+      -- supports the query. #32109
+      vim.api.nvim_ui_send('\027]11;?\007\027[c')
+
+      -- Wait until detection of OSC 11 capabilities is complete to
+      -- ensure background is automatically set before user config.
+      vim.wait(100, function()
+        return did_bg_detection
+      end, 1)
     end
 
     --- If the TUI (term_has_truecolor) was able to determine that the host
