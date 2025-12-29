@@ -202,6 +202,7 @@ struct terminal {
   StringBuilder selection;  ///< Growable array containing full selection data
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
+  VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
 
   size_t refcount;                  // reference count
 };
@@ -234,6 +235,7 @@ static void emit_termrequest(void **argv)
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
   size_t sb_deleted = (size_t)(intptr_t)argv[6];
+  VTermTerminator terminator = (VTermTerminator)(intptr_t)argv[7];
 
   if (term->sb_pending > 0) {
     // Don't emit the event while there is pending scrollback because we need
@@ -242,7 +244,7 @@ static void emit_termrequest(void **argv)
     // terminal is refreshed and the pending scrollback is cleared.
     multiqueue_put(term->pending.events, emit_termrequest, term, sequence, (void *)sequence_length,
                    pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col,
-                   (void *)(intptr_t)sb_deleted);
+                   (void *)(intptr_t)sb_deleted, (void *)(intptr_t)terminator);
     return;
   }
 
@@ -252,10 +254,13 @@ static void emit_termrequest(void **argv)
   ADD_C(cursor, INTEGER_OBJ(row - (int64_t)(term->sb_deleted - sb_deleted)));
   ADD_C(cursor, INTEGER_OBJ(col));
 
-  MAXSIZE_TEMP_DICT(data, 2);
+  MAXSIZE_TEMP_DICT(data, 3);
   String termrequest = { .data = sequence, .size = sequence_length };
   PUT_C(data, "sequence", STRING_OBJ(termrequest));
   PUT_C(data, "cursor", ARRAY_OBJ(cursor));
+  PUT_C(data, "terminator",
+        terminator ==
+        VTERM_TERMINATOR_BEL ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
   apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL,
@@ -284,7 +289,8 @@ static void schedule_termrequest(Terminal *term)
                  xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
                  (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
                  (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col,
-                 (void *)(intptr_t)term->sb_deleted);
+                 (void *)(intptr_t)term->sb_deleted,
+                 (void *)(intptr_t)term->termrequest_terminator);
 }
 
 static int parse_osc8(const char *str, int *attr)
@@ -336,6 +342,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
+    term->termrequest_terminator = frag.terminator;
     if (has_event(EVENT_TERMREQUEST)) {
       schedule_termrequest(term);
     }
@@ -370,6 +377,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
+    term->termrequest_terminator = frag.terminator;
     schedule_termrequest(term);
   }
   return 1;
@@ -392,6 +400,7 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
+    term->termrequest_terminator = frag.terminator;
     schedule_termrequest(term);
   }
   return 1;
