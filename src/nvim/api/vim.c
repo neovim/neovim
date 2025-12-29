@@ -232,7 +232,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
 
 /// Set active namespace for highlights defined with |nvim_set_hl()| while redrawing.
 ///
-/// This function meant to be called while redrawing, primarily from
+/// This function is meant to be called while redrawing, primarily from
 /// |nvim_set_decoration_provider()| on_win and on_line callbacks, which
 /// are allowed to change the namespace during a redraw cycle.
 ///
