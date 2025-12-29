@@ -6,9 +6,13 @@ function(BuildLuajit)
     ${ARGN})
 
   get_externalproject_options(luajit ${DEPS_IGNORE_SHA})
+
+  set(LUAJIT_CONFIGURE_COMMAND
+    sed -e "s@#define[ \t]*LUA_IDSIZE[ \t]*60@#define LUA_IDSIZE 256@"
+        -i ${DEPS_BUILD_DIR}/src/luajit/src/luaconf.h)
   ExternalProject_Add(luajit
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
-    CONFIGURE_COMMAND "${_luajit_CONFIGURE_COMMAND}"
+    CONFIGURE_COMMAND "${LUAJIT_CONFIGURE_COMMAND}"
     BUILD_IN_SOURCE 1
     BUILD_COMMAND "${_luajit_BUILD_COMMAND}"
     INSTALL_COMMAND "${_luajit_INSTALL_COMMAND}"

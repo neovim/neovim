@@ -37,6 +37,7 @@ set(LUA_CONFIGURE_COMMAND
       -i ${DEPS_BUILD_DIR}/src/lua/src/Makefile &&
   sed -e "/#define LUA_USE_READLINE/d"
       -e "s@\\(#define LUA_ROOT[ 	]*\"\\)/usr/local@\\1${DEPS_INSTALL_DIR}@"
+      -e "s@#define[ \t]*LUA_IDSIZE[ \t]*60@#define LUA_IDSIZE 256@"
       -i ${DEPS_BUILD_DIR}/src/lua/src/luaconf.h)
 set(LUA_INSTALL_TOP_ARG "INSTALL_TOP=${DEPS_INSTALL_DIR}")
 
