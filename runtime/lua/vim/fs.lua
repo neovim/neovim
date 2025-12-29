@@ -450,8 +450,8 @@ function M.root(source, marker)
     })
 
     if #paths ~= 0 then
-      local dir = vim.fs.dirname(paths[1])
-      return dir and vim.fn.fnamemodify(dir, ':p:h') or nil
+      local dir = M.dirname(paths[1])
+      return dir and M.abspath(dir) or nil
     end
   end
 
