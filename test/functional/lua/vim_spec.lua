@@ -3009,7 +3009,7 @@ describe('lua: builtin modules', function()
       '+qa!',
     }):gsub('\r\n', '\n')
     eq(1, eval('v:shell_error'))
-    matches("'vim%.shared' not found", out)
+    matches("'vim%._core.shared' not found", out)
   end)
 end)
 

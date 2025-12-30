@@ -277,7 +277,7 @@ Docstring format:
 - Files declared as `@meta` are only used for typing and documentation (similar to "*.d.ts" typescript files).
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
-vim.paste in runtime/lua/vim/_editor.lua like this: >
+vim.paste in runtime/lua/vim/_core/editor.lua like this: >
 
     --- Paste handler, invoked by |nvim_paste()| when a conforming UI
     --- (such as the |TUI|) pastes text into the editor.

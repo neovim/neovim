@@ -270,8 +270,8 @@ Limitations:
       require("lldebugger").start()
     end
 <  This is a [local-lua-debugger limitation](https://github.com/tomblind/local-lua-debugger-vscode?tab=readme-ov-file#busted)
-- You cannot step into code of files which get baked into the nvim binary like
-  the `shared.lua`.
+- You cannot step into code of files which get baked into the nvim binary
+  (such as `_core/*.lua` and `inspect.lua`).
 
 
 ------------------------------------------------------------------------------

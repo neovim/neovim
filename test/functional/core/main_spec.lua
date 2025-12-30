@@ -202,3 +202,50 @@ describe('command-line option', function()
     end
   end
 end)
+
+describe('vim._core', function()
+  it('works with "-u NONE" and no VIMRUNTIME', function()
+    clear {
+      args_rm = { '-u' },
+      args = { '-u', 'NONE' },
+      env = { VIMRUNTIME = 'non-existent' },
+    }
+
+    -- `vim.hl` is NOT a builtin module.
+    t.matches("^module 'vim%.hl' not found:", t.pcall_err(n.exec_lua, [[require('vim.hl')]]))
+
+    -- All `vim._core.*` modules are builtin.
+    t.eq({ 'serverlist' }, n.exec_lua([[return vim.tbl_keys(require('vim._core.server'))]]))
+    local expected = {
+      'vim.F',
+      'vim._core.defaults',
+      'vim._core.editor',
+      'vim._core.ex_cmd',
+      'vim._core.exrc',
+      'vim._core.options',
+      'vim._core.server',
+      'vim._core.shared',
+      'vim._core.stringbuffer',
+      'vim._core.system',
+      'vim._core.util',
+      'vim._init_packages',
+      'vim.filetype',
+      'vim.fs',
+      'vim.inspect',
+      'vim.keymap',
+      'vim.loader',
+      'vim.text',
+    }
+    if n.exec_lua [[return not not _G.jit]] then
+      expected = vim.list_extend({
+        'ffi',
+        'jit.profile',
+        'jit.util',
+        'string.buffer',
+        'table.clear',
+        'table.new',
+      }, expected)
+    end
+    t.eq(expected, n.exec_lua([[local t = vim.tbl_keys(package.preload); table.sort(t); return t]]))
+  end)
+end)

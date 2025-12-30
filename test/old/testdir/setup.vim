@@ -73,7 +73,7 @@ aunmenu *
 tlunmenu *
 autocmd! nvim.popupmenu
 
-" Undo the 'grepprg' and 'grepformat' setting in _defaults.lua.
+" Undo the 'grepprg' and 'grepformat' setting in _core/defaults.lua.
 set grepprg& grepformat&
 
 " Prevent Nvim log from writing to stderr.

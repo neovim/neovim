@@ -2053,6 +2053,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
   end)
 
   it('no wait return before delayed exception error message', function()
+    screen:try_resize(70, 7)
     feed('ia<esc>:lua vim.cmd.quit()<CR>')
     screen:expect({
       any = {
