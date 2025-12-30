@@ -583,10 +583,13 @@ local function update_editor_highlights(query_win, base_win, lang)
   -- Remove the '@' from the cursor word
   cursor_word = cursor_word:sub(2)
   local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
-  for id, node in query:iter_captures(parser:trees()[1]:root(), base_buf, topline - 1, botline) do
+  for id, node, metadata in
+    query:iter_captures(parser:trees()[1]:root(), base_buf, topline - 1, botline)
+  do
     local capture_name = query.captures[id]
     if capture_name == cursor_word then
-      local lnum, col, end_lnum, end_col = node:range()
+      local lnum, col, end_lnum, end_col =
+        Range.unpack4(vim.treesitter.get_range(node, base_buf, metadata[id]))
       api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
         end_row = end_lnum,
         end_col = end_col,
