@@ -1384,7 +1384,7 @@ describe('vim.pack', function()
         exec_lua(function()
           vim.pack.add({
             repos_src.fetch,
-            { src = repos_src.semver, version = 'v0.3.0' },
+            -- No `semver` to test with non-active plugins
             { src = repos_src.defbranch, version = 'does-not-exist' },
           })
           vim.pack.update()
@@ -1409,7 +1409,7 @@ describe('vim.pack', function()
           { lnum = 9, col = 1, end_lnum = 22, end_col = 1, text = '[Namespace] Update' },
           { lnum = 11, col = 1, end_lnum = 22, end_col = 1, text = '[Module] fetch' },
           { lnum = 22, col = 1, end_lnum = 32, end_col = 1, text = '[Namespace] Same' },
-          { lnum = 24, col = 1, end_lnum = 32, end_col = 1, text = '[Module] semver' },
+          { lnum = 24, col = 1, end_lnum = 32, end_col = 1, text = '[Module] semver (not active)' },
         }
         eq(ref_loclist, loclist)
 
@@ -1491,22 +1491,22 @@ describe('vim.pack', function()
         -- - Should not include "namespace" header as "plugin at cursor"
         assert_action({ 1, 1 }, {}, 0)
         assert_action({ 2, 0 }, {}, 0)
-        -- - Only deletion should be available on errored plugin
-        assert_action({ 3, 1 }, { 'Delete `defbranch`' }, 0)
-        assert_action({ 7, 0 }, { 'Delete `defbranch`' }, 0)
+        -- - No actions for `defbranch` since it is active and has no updates
+        assert_action({ 3, 1 }, {}, 0)
+        assert_action({ 7, 0 }, {}, 0)
         -- - Should not include separator blank line as "plugin at cursor"
         assert_action({ 8, 0 }, {}, 0)
         assert_action({ 9, 0 }, {}, 0)
         assert_action({ 10, 0 }, {}, 0)
-        -- - Should also suggest updating related actions if updates available
-        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`', 'Delete `fetch`' }
+        -- - Should suggest updating related actions if updates available
+        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`' }
         assert_action({ 11, 0 }, fetch_actions, 0)
         assert_action({ 14, 0 }, fetch_actions, 0)
         assert_action({ 20, 0 }, fetch_actions, 0)
         assert_action({ 21, 0 }, {}, 0)
         assert_action({ 22, 0 }, {}, 0)
         assert_action({ 23, 0 }, {}, 0)
-        -- - Only deletion should be available on plugins without update
+        -- - Only deletion should be available for not active plugins
         assert_action({ 24, 0 }, { 'Delete `semver`' }, 0)
         assert_action({ 28, 0 }, { 'Delete `semver`' }, 0)
         assert_action({ 32, 0 }, { 'Delete `semver`' }, 0)
@@ -1516,27 +1516,26 @@ describe('vim.pack', function()
           matches(pattern, api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1])
         end
 
-        -- - Delete. Should remove from disk and update lockfile.
-        assert_action({ 3, 0 }, { 'Delete `defbranch`' }, 1)
-        eq(false, pack_exists('defbranch'))
-        line_match(1, '^# Error')
-        line_match(2, '^$')
-        line_match(3, '^# Update')
+        -- - Delete not active plugin. Should remove from disk and update lockfile.
+        assert_action({ 24, 0 }, { 'Delete `semver`' }, 1)
+        eq(false, pack_exists('semver'))
+        line_match(22, '^# Same')
+        eq(22, api.nvim_buf_line_count(0))
 
-        ref_lockfile.plugins.defbranch = nil
+        ref_lockfile.plugins.semver = nil
         eq(ref_lockfile, get_lock_tbl())
 
         -- - Skip udating
-        assert_action({ 5, 0 }, fetch_actions, 2)
+        assert_action({ 11, 0 }, fetch_actions, 2)
         eq('return "fetch main"', fn.readblob(fetch_lua_file))
-        line_match(3, '^# Update')
-        line_match(4, '^$')
-        line_match(5, '^# Same')
+        line_match(9, '^# Update')
+        line_match(10, '^$')
+        line_match(11, '^# Same')
 
         -- - Update plugin. Should not re-fetch new data and update lockfile.
         n.exec('quit')
         n.exec_lua(function()
-          vim.pack.update({ 'fetch', 'semver' })
+          vim.pack.update({ 'fetch' })
         end)
         exec_lua('_G.echo_log = {}')
 
@@ -1549,8 +1548,7 @@ describe('vim.pack', function()
         eq('return "fetch new 2"', fn.readblob(fetch_lua_file))
         assert_progress_report('Applying updates', { 'fetch' })
         line_match(1, '^# Update')
-        line_match(2, '^$')
-        line_match(3, '^# Same')
+        eq(1, api.nvim_buf_line_count(0))
 
         eq(ref_lockfile, get_lock_tbl())
 
@@ -1621,6 +1619,29 @@ describe('vim.pack', function()
 
         ref_fetch_lock.rev = git_get_hash('main', 'fetch')
         eq(ref_fetch_lock, get_lock_tbl().plugins.fetch)
+      end)
+
+      it('hints about not active plugins', function()
+        exec_lua(function()
+          vim.pack.update()
+        end)
+
+        for _, l in ipairs(api.nvim_buf_get_lines(0, 0, -1, false)) do
+          if l:match('^## ') then
+            matches(' %(not active%)$', l)
+          end
+        end
+
+        -- Should also hint in `textDocument/documentSymbol` of in-process LSP,
+        -- yet still work for navigation
+        exec_lua('vim.lsp.buf.document_symbol()')
+        local loclist = fn.getloclist(0)
+        matches(' %(not active%)$', loclist[2].text)
+        matches(' %(not active%)$', loclist[4].text)
+        matches(' %(not active%)$', loclist[5].text)
+
+        n.exec('llast')
+        eq(21, api.nvim_win_get_cursor(0)[1])
       end)
     end)
 
@@ -1980,7 +2001,7 @@ describe('vim.pack', function()
 
       -- Should not include removed plugins immediately after they are removed,
       -- while still returning list without holes
-      exec_lua('vim.pack.del({ "defbranch" })')
+      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       local defbranch_data = make_defbranch_data(true, true)
       local basic_data = make_basic_data(true, true)
       eq({ { defbranch_data, basic_data }, { basic_data } }, exec_lua('return _G.get_log'))
@@ -2013,40 +2034,70 @@ describe('vim.pack', function()
   describe('del()', function()
     it('works', function()
       exec_lua(function()
-        vim.pack.add({ repos_src.plugindirs, { src = repos_src.basic, version = 'feat-branch' } })
+        local basic_spec = { src = repos_src.basic, version = 'feat-branch' }
+        vim.pack.add({ repos_src.plugindirs, repos_src.defbranch, basic_spec })
       end)
-      eq(true, pack_exists('basic'))
-      eq(true, pack_exists('plugindirs'))
 
-      local locked_plugins = vim.tbl_keys(get_lock_tbl().plugins)
-      table.sort(locked_plugins)
-      eq({ 'basic', 'plugindirs' }, locked_plugins)
+      local assert_on_disk = function(installed_map)
+        local installed = {}
+        for p_name, is_installed in pairs(installed_map) do
+          eq(is_installed, pack_exists(p_name))
+          if is_installed then
+            installed[#installed + 1] = p_name
+          end
+        end
 
+        table.sort(installed)
+        local locked = vim.tbl_keys(get_lock_tbl().plugins)
+        table.sort(locked)
+        eq(installed, locked)
+      end
+
+      assert_on_disk({ basic = true, defbranch = true, plugindirs = true })
+
+      -- By default should delete only non-active plugins, even if
+      -- there is active one among input plugin names
+      n.clear()
+      exec_lua(function()
+        vim.pack.add({ repos_src.defbranch })
+      end)
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
-      n.exec('messages clear')
-      exec_lua(function()
-        vim.pack.del({ 'basic', 'plugindirs' })
+      local err = pcall_err(exec_lua, function()
+        vim.pack.del({ 'basic', 'defbranch', 'plugindirs' })
       end)
-      eq(false, pack_exists('basic'))
-      eq(false, pack_exists('plugindirs'))
+      matches('Some plugins are active and were not deleted: defbranch', err)
 
-      eq(
-        "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'",
-        n.exec_capture('messages')
-      )
+      assert_on_disk({ basic = false, defbranch = true, plugindirs = false })
+
+      local msg = "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'"
+      eq(msg, n.exec_capture('messages'))
 
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch', true))
+      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch', false))
       eq(2, find_event('', 'delete', 'basic', 'feat-branch', false))
-      eq(3, find_event('Pre', 'delete', 'plugindirs', nil, true))
+      eq(3, find_event('Pre', 'delete', 'plugindirs', nil, false))
       eq(4, find_event('', 'delete', 'plugindirs', nil, false))
       eq(4, #log)
 
-      -- Should update lockfile
-      eq({ plugins = {} }, get_lock_tbl())
+      -- Should be possible to force delete active plugins
+      n.exec('messages clear')
+      exec_lua('_G.event_log = {}')
+      exec_lua(function()
+        vim.pack.del({ 'defbranch' }, { force = true })
+      end)
+
+      assert_on_disk({ basic = false, defbranch = false, plugindirs = false })
+
+      eq("vim.pack: Removed plugin 'defbranch'", n.exec_capture('messages'))
+
+      log = exec_lua('return _G.event_log')
+      find_event = make_find_packchanged(log)
+      eq(1, find_event('Pre', 'delete', 'defbranch', nil, true))
+      eq(2, find_event('', 'delete', 'defbranch', nil, false))
+      eq(2, #log)
     end)
 
     it('works without prior `add()`', function()

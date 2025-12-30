@@ -126,8 +126,10 @@
 ---
 ---Remove plugins from disk ~
 ---
----- Use |vim.pack.del()| with a list of plugin names to remove. Make sure their specs
----are not included in |vim.pack.add()| call in 'init.lua' or they will be reinstalled.
+---- Remove plugin specs from |vim.pack.add()| calls in 'init.lua' or they will be
+---  reinstalled later.
+---- |:restart|.
+---- Use |vim.pack.del()| with a list of plugin names to remove.
 ---
 ---[vim.pack-events]()
 ---
@@ -988,11 +990,12 @@ end
 --- @param p vim.pack.Plug
 --- @return string
 local function compute_feedback_lines_single(p)
+  local active_suffix = active_plugins[p.path] ~= nil and '' or ' (not active)'
   if p.info.err ~= '' then
-    return ('## %s\n\n %s'):format(p.spec.name, p.info.err:gsub('\n', '\n  '))
+    return ('## %s%s\n\n %s'):format(p.spec.name, active_suffix, p.info.err:gsub('\n', '\n  '))
   end
 
-  local parts = { '## ' .. p.spec.name .. '\n' }
+  local parts = { ('## %s%s\n'):format(p.spec.name, active_suffix) }
   local version_suffix = p.info.version_str == '' and '' or (' (%s)'):format(p.info.version_str)
 
   if p.info.sha_head == p.info.sha_target then
@@ -1125,7 +1128,7 @@ local function get_update_map(bufnr)
   for _, l in ipairs(lines) do
     local name = l:match('^## (.+)$')
     if name and is_in_update then
-      res[name] = true
+      res[name:gsub(' %(not active%)$', '')] = true
     end
 
     local group = l:match('^# (%S+)')
@@ -1158,8 +1161,9 @@ end
 ---           show more information at cursor. Like details of particular pending
 ---           change or newer tag.
 ---         - 'textDocument/codeAction' (`gra` via |lsp-defaults| or |vim.lsp.buf.code_action()|) -
----           show code actions available for "plugin at cursor". Like "delete", "update",
----           or "skip updating".
+---           show code actions available for "plugin at cursor".
+---           Like "delete" (if plugin is not active), "update" or "skip updating"
+---           (if there are pending updates).
 ---
 ---       Execute |:write| to confirm update, execute |:quit| to discard the update.
 ---     - If `true`, make updates right away.
@@ -1256,12 +1260,18 @@ function M.update(names, opts)
   end)
 end
 
+--- @class vim.pack.keyset.del
+--- @inlinedoc
+--- @field force? boolean Whether to allow deleting an active plugin. Default `false`.
+
 --- Remove plugins from disk
 ---
 --- @param names string[] List of plugin names to remove from disk. Must be managed
 --- by |vim.pack|, not necessarily already added to current session.
-function M.del(names)
+--- @param opts? vim.pack.keyset.del
+function M.del(names, opts)
   vim.validate('names', names, vim.islist, false, 'list')
+  opts = vim.tbl_extend('force', { force = false }, opts or {})
 
   local plug_list = plug_list_from_names(names)
   if #plug_list == 0 then
@@ -1271,19 +1281,31 @@ function M.del(names)
 
   lock_read()
 
+  local fail_to_delete = {} --- @type string[]
   for _, p in ipairs(plug_list) do
-    trigger_event(p, 'PackChangedPre', 'delete')
+    if not active_plugins[p.path] or opts.force then
+      trigger_event(p, 'PackChangedPre', 'delete')
 
-    vim.fs.rm(p.path, { recursive = true, force = true })
-    active_plugins[p.path] = nil
-    notify(("Removed plugin '%s'"):format(p.spec.name), 'INFO')
+      vim.fs.rm(p.path, { recursive = true, force = true })
+      active_plugins[p.path] = nil
+      notify(("Removed plugin '%s'"):format(p.spec.name), 'INFO')
 
-    plugin_lock.plugins[p.spec.name] = nil
+      plugin_lock.plugins[p.spec.name] = nil
 
-    trigger_event(p, 'PackChanged', 'delete')
+      trigger_event(p, 'PackChanged', 'delete')
+    else
+      fail_to_delete[#fail_to_delete + 1] = p.spec.name
+    end
   end
 
   lock_write()
+
+  if #fail_to_delete > 0 then
+    local plugs = table.concat(fail_to_delete, ', ')
+    local msg = ('Some plugins are active and were not deleted: %s.'):format(plugs)
+      .. ' Remove them from init.lua, restart, and try again.'
+    error(msg)
+  end
 end
 
 --- @inlinedoc

@@ -59,7 +59,7 @@ local get_plug_data_at_lnum = function(bufnr, lnum)
   if not (from <= lnum and lnum <= to) then
     return {}
   end
-  return { group = group, name = name, from = from, to = to }
+  return { group = group, name = name:gsub(' %(not active%)$', ''), from = from, to = to }
 end
 
 --- @alias vim.pack.lsp.Position { line: integer, character: integer }
@@ -151,7 +151,9 @@ methods['textDocument/codeAction'] = function(params, callback)
       new_action('Skip updating', 'skip_update_plugin'),
     }, 0)
   end
-  vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+  if not vim.pack.get({ plug_data.name })[1].active then
+    vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+  end
   callback(nil, res)
 end
 
