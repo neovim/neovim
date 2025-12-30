@@ -2538,6 +2538,31 @@ describe('vim.diagnostic', function()
       end)
       eq('Error here!', result[1][3][1])
     end)
+
+    it('sorts by severity with stable tiebreaker #37137', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ severity_sort = true, virtual_lines = { current_line = true } })
+        local m = 100
+        local diagnostics = {
+          { end_col = m, lnum = 0, message = 'a', severity = 2 },
+          { end_col = m, lnum = 0, message = 'b', severity = 2 },
+          { end_col = m, lnum = 0, message = 'c', severity = 2 },
+          { end_col = m, lnum = 2, message = 'd', severity = 2 },
+          { end_col = m, lnum = 2, message = 'e', severity = 2 },
+          { end_col = m, lnum = 2, message = 'f', severity = 2 },
+        }
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics, {})
+        vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        local result = {}
+        for _, d in ipairs(extmarks[1][4].virt_lines) do
+          table.insert(result, d[3][1])
+        end
+        return result
+      end)
+      eq({ 'c', 'b', 'a' }, result)
+    end)
   end)
 
   describe('set()', function()
