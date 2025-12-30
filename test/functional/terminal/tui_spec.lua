@@ -428,6 +428,54 @@ describe('TUI :restart', function()
     restart_pid_check()
     gui_running_check()
   end)
+
+  it('filters stdin marker from v:argv on restart #34417', function()
+    t.skip(is_os('win'), 'stdin behavior differs on Windows')
+    clear()
+    local server_session
+    finally(function()
+      if server_session then
+        server_session:close()
+      end
+      n.check_close()
+    end)
+    local server_pipe = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--listen',
+      server_pipe,
+      '--cmd',
+      'set notermguicolors',
+      '-',
+    })
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*3
+      {2:[No Name] [RO]                  1,0-1          All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    server_session = n.connect(server_pipe)
+    local expr = 'index(v:argv, "-") >= 0 ? v:true : v:false'
+    local _, has_stdin = server_session:request('nvim_eval', expr)
+    eq(true, has_stdin)
+
+    tt.feed_data(':restart\013')
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*3
+      {2:[No Name]                       0,0-1          All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    server_session:close()
+    server_session = n.connect(server_pipe)
+    local _, has_stdin_after = server_session:request('nvim_eval', expr)
+    eq(false, has_stdin_after)
+  end)
 end)
 
 describe('TUI :connect', function()
