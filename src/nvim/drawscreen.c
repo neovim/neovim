@@ -363,7 +363,7 @@ void screen_resize(int width, int height)
     maketitle();
 
     changed_line_abv_curs();
-    invalidate_botline(curwin);
+    invalidate_botline_win(curwin);
 
     // We only redraw when it's needed:
     // - While at the more prompt or executing an external command, don't

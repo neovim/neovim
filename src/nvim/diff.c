@@ -2535,7 +2535,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   }
 
   // When w_topline changes need to recompute w_botline and cursor position
-  invalidate_botline(towin);
+  invalidate_botline_win(towin);
   changed_line_abv_curs_win(towin);
 
   check_topfill(towin, false);

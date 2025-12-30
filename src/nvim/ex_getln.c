@@ -4652,7 +4652,7 @@ static int open_cmdwin(void)
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
-  invalidate_botline(curwin);
+  invalidate_botline_win(curwin);
   ui_ext_cmdline_hide(false);
   redraw_later(curwin, UPD_SOME_VALID);
 

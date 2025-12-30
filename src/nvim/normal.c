@@ -2800,7 +2800,7 @@ static void nv_zet(cmdarg_T *cap)
   case '+':
     if (cap->count0 == 0) {
       // No count given: put cursor at the line below screen
-      validate_botline(curwin);               // make sure w_botline is valid
+      validate_botline_win(curwin);  // make sure w_botline is valid
       curwin->w_cursor.lnum = MIN(curwin->w_botline, curbuf->b_ml.ml_line_count);
     }
     FALLTHROUGH;
@@ -3622,7 +3622,7 @@ static void nv_scroll(cmdarg_T *cap)
   setpcmark();
 
   if (cap->cmdchar == 'L') {
-    validate_botline(curwin);          // make sure curwin->w_botline is valid
+    validate_botline_win(curwin);  // make sure curwin->w_botline is valid
     curwin->w_cursor.lnum = curwin->w_botline - 1;
     if (cap->count1 - 1 >= curwin->w_cursor.lnum) {
       curwin->w_cursor.lnum = 1;
@@ -3645,7 +3645,7 @@ static void nv_scroll(cmdarg_T *cap)
       int used = 0;
       // Don't count filler lines above the window.
       used -= win_get_fill(curwin, curwin->w_topline) - curwin->w_topfill;
-      validate_botline(curwin);  // make sure w_empty_rows is valid
+      validate_botline_win(curwin);  // make sure w_empty_rows is valid
       int half = (curwin->w_view_height - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half the number of filler lines to be "below this

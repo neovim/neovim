@@ -1279,7 +1279,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   curwin->w_cursor.lnum = line1;
   curwin->w_cursor.col = 0;
   changed_line_abv_curs();
-  invalidate_botline(curwin);
+  invalidate_botline_win(curwin);
 
   // When using temp files:
   // 1. * Form temp file names

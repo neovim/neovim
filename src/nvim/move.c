@@ -368,7 +368,7 @@ void update_topline(win_T *wp)
   // for every small change.
   if (check_botline) {
     if (!(wp->w_valid & VALID_BOTLINE_AP)) {
-      validate_botline(wp);
+      validate_botline_win(wp);
     }
 
     assert(wp->w_buffer != 0);
@@ -571,6 +571,9 @@ void set_topline(win_T *wp, linenr_T lnum)
   hasFolding(wp, lnum, &lnum, NULL);
   // Approximate the value of w_botline
   wp->w_botline += lnum - wp->w_topline;
+  if (wp->w_botline > wp->w_buffer->b_ml.ml_line_count + 1) {
+    wp->w_botline = wp->w_buffer->b_ml.ml_line_count + 1;
+  }
   wp->w_topline = lnum;
   wp->w_topline_was_set = true;
   if (lnum != prev_topline) {
@@ -608,16 +611,18 @@ void changed_line_abv_curs_win(win_T *wp)
                    |VALID_CHEIGHT|VALID_TOPLINE);
 }
 
-// Make sure the value of wp->w_botline is valid.
-void validate_botline(win_T *wp)
+/// Make sure the value of wp->w_botline is valid.
+void validate_botline_win(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!(wp->w_valid & VALID_BOTLINE)) {
     comp_botline(wp);
   }
 }
 
-// Mark wp->w_botline as invalid (because of some change in the buffer).
-void invalidate_botline(win_T *wp)
+/// Mark wp->w_botline as invalid (because of some change in the buffer).
+void invalidate_botline_win(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
   wp->w_valid &= ~(VALID_BOTLINE|VALID_BOTLINE_AP);
 }
@@ -1397,7 +1402,7 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
       }
     }
     wp->w_botline--;                // approximate w_botline
-    invalidate_botline(wp);
+    invalidate_botline_win(wp);
   }
 
   // Adjust for concealed lines above w_topline
@@ -1960,7 +1965,7 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
       }
     }
   } else {
-    validate_botline(wp);
+    validate_botline_win(wp);
   }
 
   // The lines of the cursor line itself are always used.
@@ -2276,7 +2281,7 @@ void cursor_correct(win_T *wp)
     int max_off = wp->w_view_height / 2;
     below_wanted = MIN(below_wanted, max_off);
   }
-  validate_botline(wp);
+  validate_botline_win(wp);
   if (wp->w_botline == wp->w_buffer->b_ml.ml_line_count + 1
       && mouse_dragging == 0) {
     below_wanted = 0;
@@ -2365,7 +2370,7 @@ static int get_scroll_overlap(Direction dir)
   lineoff_T loff;
   int min_height = curwin->w_view_height - 2;
 
-  validate_botline(curwin);
+  validate_botline_win(curwin);
   if ((dir == BACKWARD && curwin->w_topline == 1)
       || (dir == FORWARD && curwin->w_botline > curbuf->b_ml.ml_line_count)) {
     return min_height + 2;  // no overlap, still handle 'smoothscroll'
@@ -2516,7 +2521,7 @@ int pagescroll(Direction dir, int count, bool half)
 
     if (!nochange) {
       // Place cursor at top or bottom of window.
-      validate_botline(curwin);
+      validate_botline_win(curwin);
       linenr_T lnum = (dir == FORWARD ? curwin->w_topline : curwin->w_botline - 1);
       // In silent Ex mode the value of w_botline - 1 may be 0,
       // but cursor lnum needs to be at least 1.

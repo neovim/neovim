@@ -1269,7 +1269,7 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
     win->w_valid &= ~(VALID_BOTLINE_AP);
     update_topline(win);
   } else {
-    invalidate_botline(win);
+    invalidate_botline_win(win);
   }
 }
 
@@ -1343,7 +1343,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
 
   check_cursor_col(win);
   changed_cline_bef_curs(win);
-  invalidate_botline(win);
+  invalidate_botline_win(win);
 }
 
 /// Initialise a string array either:
