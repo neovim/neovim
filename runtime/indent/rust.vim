@@ -195,6 +195,22 @@ function GetRustIndent(lnum)
         endif
     endif
 
+    " Prevent cindent from becoming confused when pairing square brackets, as
+    " in
+    "
+    " let arr = [[u8; 4]; 2] = [
+    "     [0; 4],
+    "     [1, 3, 5, 9],
+    " ];
+    "     | ← indentation placed here
+    "
+    " for which it calculates too much indentation in the line following the
+    " close of the array.
+    if prevline =~# '^\s*\]' && l:last_prevline_character ==# ';'
+                \ && line !~# '^\s*}'
+        return indent(prevlinenum)
+    endif
+
     if l:last_prevline_character ==# ","
                 \ && s:get_line_trimmed(a:lnum) !~# '^\s*[\[\]{})]'
                 \ && prevline !~# '^\s*fn\s'
