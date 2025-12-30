@@ -1012,6 +1012,14 @@ window-scoped options. Note that this must NOT be confused with
 |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 global value of a |global-local| option, see |:setglobal|.
 
+Unlike |nvim_set_option_value()|, |vim.o|, |vim.go|, |vim.bo|
+and |vim.wo| can be assigned function values.
+
+Example: >lua
+    vim.bo.tagfunc = vim.lsp.tagfunc
+    vim.wo[1000].foldexpr = vim.treesitter.foldexpr
+<
+
 
                                                                *vim.opt_local*
                                                               *vim.opt_global*

@@ -1329,8 +1329,13 @@ end
 ---
 --- Currently only supports a single client. This can be set via
 --- `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` or (more typically) in `on_attach`
---- via `vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})'`.
+--- via:
 ---
+--- ```lua
+---   vim.bo[bufnr].formatexpr = function()
+---     return vim.lsp.formatexpr({ timeout_ms = 250 })
+---   end
+--- ```
 ---@param opts? vim.lsp.formatexpr.Opts
 function lsp.formatexpr(opts)
   opts = opts or {}
