@@ -7,6 +7,7 @@ local eq = t.eq
 local command = n.command
 
 describe('ui/cursor', function()
+  ---@type test.functional.ui.screen
   local screen
 
   before_each(function()
@@ -27,7 +28,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'n',
       },
       [2] = {
@@ -41,7 +42,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'v',
       },
       [3] = {
@@ -55,7 +56,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'i',
       },
       [4] = {
@@ -69,7 +70,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'r',
       },
       [5] = {
@@ -83,7 +84,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'c',
       },
       [6] = {
@@ -97,7 +98,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'ci',
       },
       [7] = {
@@ -111,7 +112,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'cr',
       },
       [8] = {
@@ -125,7 +126,7 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'o',
       },
       [9] = {
@@ -139,42 +140,42 @@ describe('ui/cursor', function()
         id_lm = 0,
         attr = {},
         attr_lm = {},
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 've',
       },
       [10] = {
         name = 'cmdline_hover',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'e',
       },
       [11] = {
         name = 'statusline_hover',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 's',
       },
       [12] = {
         name = 'statusline_drag',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'sd',
       },
       [13] = {
         name = 'vsep_hover',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'vs',
       },
       [14] = {
         name = 'vsep_drag',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'vd',
       },
       [15] = {
         name = 'more',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'm',
       },
       [16] = {
         name = 'more_lastline',
-        mouse_shape = 0,
+        mouse_shape = '',
         short_name = 'ml',
       },
       [17] = {
