@@ -159,7 +159,7 @@ end
 
 local commands = {
   update_plugin = function(plug_data)
-    vim.pack.update({ plug_data.name }, { force = true, _offline = true })
+    vim.pack.update({ plug_data.name }, { force = true, offline = true })
   end,
   skip_update_plugin = function(_) end,
   delete_plugin = function(plug_data)

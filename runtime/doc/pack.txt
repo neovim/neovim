@@ -288,12 +288,18 @@ Another approach is to utilize Git's `insteadOf` configuration:
   These sources will be used verbatim in |vim.pack-lockfile|, so reusing the
   config on different machine will require the same Git configuration.
 
+Explore installed plugins ~
+• `vim.pack.update(nil, { offline = true })`
+• Navigate between plugins with `[[` and `]]`. List them with `gO`
+  (|vim.lsp.buf.document_symbol()|).
+
 Switch plugin's version and/or source ~
 • Update 'init.lua' for plugin to have desired `version` and/or `src`. Let's
   say, the switch is for plugin named 'plugin1'.
 • |:restart|. The plugin's state on disk (revision and/or tracked source) is
   not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
-• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated.
+• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated. If
+  only switching version, use `{ offline = true }` option table.
 • Review changes and either confirm or discard them. If discarded, revert
   `version` change in 'init.lua' as well or you will be prompted again next
   time you run |vim.pack.update()|.
@@ -309,16 +315,28 @@ Unfreeze plugin to start receiving updates ~
 • |:restart|.
 
 Revert plugin after an update ~
-• Locate plugin's revision at working state. For example:
-  • If there is a previous version of |vim.pack-lockfile| (like from version
-    control history), use it to get plugin's `rev` field.
-  • If there is a log file ("nvim-pack.log" at "log" |stdpath()|), open it and
-    navigate to latest updates (at the bottom). Locate lines about plugin
-    update details and use revision from "State before".
-• Freeze plugin to target revision (set `version` and |:restart|).
-• Run `vim.pack.update({ 'plugin-name' }, { force = true })` to make plugin
-  state on disk follow target revision. |:restart|.
-• When ready to deal with updating plugin, unfreeze it.
+• Revert the |vim.pack-lockfile| to the state before the update:
+  • If Git tracked: `git checkout HEAD -- nvim-pack-lock.json`
+  • If not tracked: examine log file ("nvim-pack.log" at "log" |stdpath()|),
+    locate the revisions before the latest update, and (carefully) adjust
+    current lockfile to have those revisions.
+• |:restart|.
+• `vim.pack.update({ 'plugin' }, { offline = true, target = 'lockfile' })`.
+  Read and confirm.
+
+Synchronize config across machines ~
+• On main machine:
+  • Add |vim.pack-lockfile| to VCS.
+  • Push to the remote server.
+• On secondary machine:
+  • Pull from the server.
+  • |:restart|. New plugins (not present locally, but present in the lockfile)
+    are installed at proper revision.
+  • `vim.pack.update(nil, { target = 'lockfile' })`. Read and confirm.
+  • Manually delete outdated plugins (present locally, but were not present in
+    the lockfile prior to restart) with `vim.pack.del( { 'plugin' })`. They
+    can be located by examining the VCS difference of the lockfile
+    (`git diff -- nvim-pack-lock.json` for Git).
 
 Remove plugins from disk ~
 • Remove plugin specs from |vim.pack.add()| calls in 'init.lua' or they will
@@ -485,6 +503,14 @@ update({names}, {opts})                                    *vim.pack.update()*
       • {opts}   (`table?`) A table with the following fields:
                  • {force}? (`boolean`) Whether to skip confirmation and make
                    updates immediately. Default `false`.
+                 • {offline}? (`boolean`) Whether to skip downloading new
+                   updates. Default: `false`.
+                 • {target}? (`string`) How to compute a new plugin revision.
+                   One of:
+                   • "version" (default) - use latest revision matching
+                     `version` from plugin specification.
+                   • "lockfile" - use revision from the lockfile. Useful for
+                     reverting or performing controlled update.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
