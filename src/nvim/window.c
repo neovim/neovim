@@ -760,6 +760,14 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   switchwin_T switchwin;
   int win_result;
 
+  // win_set_buf temporarily makes `win` the curwin to set the buffer.
+  // If not entering `win`, block Enter and Leave events. (cringe)
+  const bool au_no_enter_leave = curwin != win;
+  if (au_no_enter_leave) {
+    autocmd_no_enter++;
+    autocmd_no_leave++;
+  }
+
   TRY_WRAP(err, {
     win_result = switch_win_noblock(&switchwin, win, tab, true);
     if (win_result != FAIL) {
@@ -785,6 +793,10 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   validate_cursor(curwin);
 
   restore_win_noblock(&switchwin, true);
+  if (au_no_enter_leave) {
+    autocmd_no_enter--;
+    autocmd_no_leave--;
+  }
   RedrawingDisabled--;
 }
 
