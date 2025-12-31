@@ -70,35 +70,19 @@
   ] @keyword.function)
 
 ; Operators
+(binary_expression
+  operator: _ @operator)
+
+(unary_expression
+  operator: _ @operator)
+
+"=" @operator
+
 [
   "and"
   "not"
   "or"
 ] @keyword.operator
-
-[
-  "+"
-  "-"
-  "*"
-  "/"
-  "%"
-  "^"
-  "#"
-  "=="
-  "~="
-  "<="
-  ">="
-  "<"
-  ">"
-  "="
-  "&"
-  "~"
-  "|"
-  "<<"
-  ">>"
-  "//"
-  ".."
-] @operator
 
 ; Punctuations
 [

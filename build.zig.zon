@@ -49,8 +49,8 @@
             .hash = "N-V-__8AABcZUwBZelO8MiLRwuLD1Wk34qHHbXtS4UW3Khys",
         },
         .treesitter_lua = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-lua?ref=v0.4.0#4569d1c361129e71a205b94a05e158bd71b1709f",
-            .hash = "N-V-__8AAEF5CABqSL9zqc03aQsT6Nni54ZCcL98pnuDL2D3",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-lua?ref=v0.4.1#816840c592ab973500ae9750763c707b447e7fef",
+            .hash = "N-V-__8AAHCmCAAf-5sa_C1N5Ts8B7V-vTKqUEMJZVnNkq_y",
         },
         .treesitter_vim = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-vim?ref=v0.7.0#3dd4747082d1b717b8978211c06ef7b6cd16125b",
