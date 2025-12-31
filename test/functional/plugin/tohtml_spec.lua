@@ -260,7 +260,7 @@ describe(':TOhtml', function()
     exec('set termguicolors')
     exec('syntax enable')
     exec('setf lua')
-    exec_lua('vim.treesitter.stop()')
+    exec_lua('vim.treesitter.stop()')  -- Ensure that legacy syntax (not just TS) is tested.
     run_tohtml_and_assert(screen)
   end)
 
