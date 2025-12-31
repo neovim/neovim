@@ -13,6 +13,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mouse.h"
 #include "nvim/option_vars.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -325,6 +326,14 @@ bool cursor_mode_uses_syn_id(int syn_id)
 int cursor_get_mode_idx(void)
   FUNC_ATTR_PURE
 {
+  pos_T m_pos = { 0 };
+  int mpos_flag = get_fpos_of_mouse(&m_pos);
+  if (mpos_flag & IN_STATUS_LINE) {
+    return SHAPE_IDX_STATUS;
+  }
+  if (mpos_flag & IN_SEP_LINE) {
+    return SHAPE_IDX_VSEP;
+  }
   if (State == MODE_SHOWMATCH) {
     return SHAPE_IDX_SM;
   } else if (State == MODE_TERMINAL) {
