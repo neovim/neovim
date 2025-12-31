@@ -177,9 +177,13 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
     changed_cline_bef_curs(wp);
   }
   if (wp->w_botline >= lnum) {
-    // Assume that botline doesn't change (inserted lines make
-    // other lines scroll down below botline).
-    approximate_botline_win(wp);
+    if (xtra < 0) {
+      invalidate_botline_win(wp);
+    } else {
+      // Assume that botline doesn't change (inserted lines make
+      // other lines scroll down below botline).
+      approximate_botline_win(wp);
+    }
   }
 
   // If lines have been inserted/deleted and the buffer has virt_lines, or
