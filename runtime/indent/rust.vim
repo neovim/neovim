@@ -4,6 +4,7 @@
 " Last Change:      2023-09-11
 " 2024 Jul 04 by Vim Project: use shiftwidth() instead of hard-coding shifted values #15138
 " 2025 Dec 29 by Vim Project: clean up
+" 2025 Dec 31 by Vim Project: correcly indent after nested array literal #19042
 
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 " Note: upstream seems umaintained: https://github.com/rust-lang/rust.vim/issues/502
@@ -193,6 +194,22 @@ function GetRustIndent(lnum)
         if l:scope_start != 0 && l:scope_start < a:lnum
             return indent(l:scope_start) + shiftwidth()
         endif
+    endif
+
+    " Prevent cindent from becoming confused when pairing square brackets, as
+    " in
+    "
+    " let arr = [[u8; 4]; 2] = [
+    "     [0; 4],
+    "     [1, 3, 5, 9],
+    " ];
+    "     | ← indentation placed here
+    "
+    " for which it calculates too much indentation in the line following the
+    " close of the array.
+    if prevline =~# '^\s*\]' && l:last_prevline_character ==# ';'
+                \ && line !~# '^\s*}'
+        return indent(prevlinenum)
     endif
 
     if l:last_prevline_character ==# ","
