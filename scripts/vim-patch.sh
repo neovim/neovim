@@ -52,6 +52,21 @@ usage() {
   echo "   $0 -l -- src/edit.c"
 }
 
+# _git_log <git_args> -- <git_log_args>
+_git_log() {
+  local -a git_args
+  local -a git_log_args
+  git_log_args=("$@")
+  for ((i = 0; i < ${#git_log_args[@]}; i++)); do
+    if test "${git_log_args[$i]}" = "--"; then
+      git_args=("${git_log_args[@]:0:$i}")
+      git_log_args=("${git_log_args[@]:$((i + 1))}")
+      break
+    fi
+  done
+  git -c log.showSignature=false "${git_args[@]}" log "${git_log_args[@]}"
+}
+
 msg_ok() {
   printf '\e[32m✔\e[0m %s\n' "$@"
 }
@@ -163,7 +178,7 @@ assign_commit_details() {
     local munge_commit_line=false
   fi
 
-  local get_vim_commit_cmd="git -C ${VIM_SOURCE_DIR} log -1 --format=%H ${vim_commit_ref} --"
+  local get_vim_commit_cmd="_git_log -C ${VIM_SOURCE_DIR} -- -1 --format=%H ${vim_commit_ref} --"
   vim_commit=$($get_vim_commit_cmd 2>&1) || {
     # Update Vim sources.
     get_vim_sources update
@@ -174,10 +189,10 @@ assign_commit_details() {
   }
 
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
-  vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
+  vim_message="$(_git_log -C "${VIM_SOURCE_DIR}" -- -1 --pretty='format:%B' "${vim_commit}" \
       | sed -Ee 's/([^A-Za-z0-9])(#[0-9]{1,})/\1vim\/vim\2/g')"
   local vim_coauthor0
-  vim_coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
+  vim_coauthor0="$(_git_log -C "${VIM_SOURCE_DIR}" -- -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
   # Extract co-authors from the commit message.
   vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-authored-by: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
   vim_coauthors="$(echo "${vim_coauthor0}"; echo "${vim_coauthors}")"
@@ -501,10 +516,10 @@ submit_pr() {
   local nvim_remote
   nvim_remote="$(find_git_remote)"
   local pr_body
-  pr_body="$(git log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${nvim_remote}"/master..HEAD)"
+  pr_body="$(_git_log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${nvim_remote}"/master..HEAD)"
   local patches
   # Extract just the "vim-patch:X.Y.ZZZZ" or "vim-patch:sha" portion of each log
-  patches=("$(git log --grep=vim-patch --reverse --format='%s' "${nvim_remote}"/master..HEAD | sed 's/: .*//')")
+  patches=("$(_git_log --grep=vim-patch --reverse --format='%s' "${nvim_remote}"/master..HEAD | sed 's/: .*//')")
   # shellcheck disable=SC2206
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
@@ -557,13 +572,13 @@ submit_pr() {
 
 # Gets all Vim commits since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse v8.1.0000..HEAD "$@"
+  cd "${VIM_SOURCE_DIR}" && _git_log --reverse v8.1.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
 list_vimpatch_tokens() {
   # Use sed…{7,7} to normalize (internal) Git hashes (for tokens caches).
-  git -C "${NVIM_SOURCE_DIR}" log -E --grep='vim-patch:[^ ,{]{7,}' \
+  _git_log -C "${NVIM_SOURCE_DIR}" -- -E --grep='vim-patch:[^ ,{]{7,}' \
     | grep -oE 'vim-patch:[^ ,{:]{7,}' \
     | sort \
     | uniq \
@@ -579,7 +594,7 @@ list_vimpatch_tokens() {
 list_vimpatch_numbers() {
   local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
   diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
-    git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+    _git_log -C "${NVIM_SOURCE_DIR}" -- --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
     grep -oE "^[* ]*vim-patch:${patch_pat}" |
     sed -nEe 's/^[* ]*vim-patch:('"${patch_pat}"').*$/\1/p' |
     awk '{split($0, a, "."); printf "%d.%d.%04d\n", a[1], a[2], a[3]}' |
@@ -708,7 +723,7 @@ show_vimpatches() {
   printf "Vim patches missing from Neovim:\n"
 
   local -A runtime_commits
-  for commit in $(git -C "${VIM_SOURCE_DIR}" log --format="%H %D" -- runtime | sed -Ee 's/,\? tag: / /g'); do
+  for commit in $(_git_log -C "${VIM_SOURCE_DIR}" -- --format="%H %D" -- runtime | sed -Ee 's/,\? tag: / /g'); do
     runtime_commits[$commit]=1
   done
 
@@ -917,7 +932,7 @@ is_na_patch() {
 list_na_patches() {
   list_missing_vimpatches 0 | while read -r patch; do
     if is_na_patch "$patch"; then
-      GIT_MSG="$(git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
+      GIT_MSG="$(_git_log -C "${VIM_SOURCE_DIR}" -- -1 --oneline "$patch")"
       if (echo "$patch" | grep -q '^v[0-9]\.[0-9]\.[0-9]') && (echo "${GIT_MSG}" | grep -q ' patch [0-9]\.'); then
         # shellcheck disable=SC2001
         echo "vim-patch:$(echo "${GIT_MSG}" | sed 's/^[0-9a-zA-Z]\+ patch //')"
