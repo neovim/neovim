@@ -225,7 +225,7 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
 /// Translate window coordinates to buffer position without any side effects.
 /// Returns IN_BUFFER and sets "mpos->col" to the column when in buffer text.
 /// The column is one for the first column.
-static int get_fpos_of_mouse(pos_T *mpos)
+int get_fpos_of_mouse(pos_T *mpos)
 {
   int grid = mouse_grid;
   int row = mouse_row;
@@ -403,6 +403,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     break;
   }
 
+  // Always update the mouse shape based on mouse move position and mouse state, due to short
+  // circuiting below.
+  setmouse();
   if (c == K_MOUSEMOVE) {
     // Mouse moved without a button pressed.
     return false;
@@ -651,6 +654,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   int old_active = VIsual_active;
   pos_T save_cursor = curwin->w_cursor;
   jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
+  // Update mouse shape (potentially again) after mouse jump as state may have changed.
+  setmouse();
 
   bool moved = (jump_flags & CURSOR_MOVED);
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
