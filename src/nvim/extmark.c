@@ -270,8 +270,11 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
       return array;
     }
 
-    MTPair pair;
-    while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+    while ((int64_t)kv_size(array) < amount) {
+      MTPair pair;
+      if (!marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+        break;
+      }
       push_mark(&array, ns_id, type_filter, pair);
     }
   } else {
