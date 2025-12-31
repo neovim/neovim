@@ -292,7 +292,7 @@ func s:GetFilenameChecks() abort
     \ 'falcon': ['file.fal'],
     \ 'fan': ['file.fan', 'file.fwt'],
     \ 'faust': ['file.dsp', 'file.lib'],
-    \ 'fennel': ['file.fnl', '.fennelrc', 'fennelrc', 'file.fnml'],
+    \ 'fennel': ['file.fnl', '.fennelrc', 'fennelrc', 'file.fnlm'],
     \ 'fetchmail': ['.fetchmailrc'],
     \ 'fga': ['file.fga'],
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
