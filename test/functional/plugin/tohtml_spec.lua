@@ -119,10 +119,10 @@ end
 ---@param screen test.functional.ui.screen
 ---@param func function?
 local function run_tohtml_and_assert(screen, func)
-  exec('norm! ggO-;')
-  screen:expect({ any = vim.pesc('-^;') })
+  exec('norm! ggO--;')
+  screen:expect({ any = vim.pesc('--^;') })
   exec('norm! :\rh')
-  screen:expect({ any = vim.pesc('^-;') })
+  screen:expect({ any = vim.pesc('-^-;') })
   local expected = screen:get_snapshot()
   do
     (func or exec)('TOhtml')
@@ -131,7 +131,7 @@ local function run_tohtml_and_assert(screen, func)
   html_syntax_match()
   html_to_extmarks()
   exec('norm! gg0f;')
-  screen:expect({ any = vim.pesc('-^;') })
+  screen:expect({ any = vim.pesc('--^;') })
   exec('norm! :\rh')
   screen:expect({ grid = expected.grid, attr_ids = expected.attr_ids })
 end
