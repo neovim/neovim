@@ -2536,7 +2536,9 @@ function vim.api.nvim_win_resize(win, width, height, opts) end
 --- Note: As a side-effect, this executes `BufEnter` and `BufLeave` autocommands.
 --- @param win integer `window-ID`, or 0 for current window
 --- @param buf integer Buffer id
-function vim.api.nvim_win_set_buf(win, buf) end
+--- @param opts vim.api.keyset.win_set_buf? Optional parameters.
+--- - noautocmd: Block all autocommands for the duration of the call. See `:noautocmd`.
+function vim.api.nvim_win_set_buf(win, buf, opts) end
 
 --- Reconfigures the layout and properties of a window.
 ---

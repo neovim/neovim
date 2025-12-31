@@ -4309,7 +4309,7 @@ nvim_win_resize({win}, {width}, {height}, {opts})          *nvim_win_resize()*
                     • "top" (default) or "bottom"
                     • "left" (default) or "right"
 
-nvim_win_set_buf({win}, {buf})                            *nvim_win_set_buf()*
+nvim_win_set_buf({win}, {buf}, {opts})                    *nvim_win_set_buf()*
     Sets the current buffer in a window.
 
     Note: As a side-effect, this executes |BufEnter| and |BufLeave|
@@ -4320,8 +4320,11 @@ nvim_win_set_buf({win}, {buf})                            *nvim_win_set_buf()*
         Since: 0.3.2
 
     Parameters: ~
-      • {win}  (`integer`) |window-ID|, or 0 for current window
-      • {buf}  (`integer`) Buffer id
+      • {win}   (`integer`) |window-ID|, or 0 for current window
+      • {buf}   (`integer`) Buffer id
+      • {opts}  (`vim.api.keyset.win_set_buf?`) Optional parameters.
+                • noautocmd: Block all autocommands for the duration of the
+                  call. See |:noautocmd|.
 
 nvim_win_set_cursor({win}, {pos})                      *nvim_win_set_cursor()*
     Sets the (1,0)-indexed cursor position (byte offset) in the window.

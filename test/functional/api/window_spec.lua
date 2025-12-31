@@ -4078,5 +4078,69 @@ describe('API/win', function()
       exec_lua('vim.api.nvim_win_call(..., function() vim.cmd.wincmd "J" end)', t2_move_win)
       eq({ 'col', { { 'leaf', t2_other_win }, { 'leaf', t2_move_win } } }, fn.winlayout(2))
     end)
+
+    it('nvim_win_set_buf does not trigger autocommands with noautocmd', function()
+      -- #20907
+      local num_buf_enter, num_buf_leave = exec_lua(function()
+        local num_buf_enter = 0
+        local num_buf_leave = 0
+
+        vim.api.nvim_create_autocmd('BufEnter', {
+          callback = function()
+            num_buf_enter = num_buf_enter + 1
+          end,
+        })
+        vim.api.nvim_create_autocmd('BufLeave', {
+          callback = function()
+            num_buf_leave = num_buf_leave + 1
+          end,
+        })
+
+        local new_win = vim.api.nvim_open_win(0, false, {
+          split = 'left',
+          win = 0,
+        })
+        local new_buf = vim.api.nvim_create_buf(false, true)
+
+        vim.api.nvim_win_set_buf(new_win, new_buf, { noautocmd = true })
+
+        return num_buf_enter, num_buf_leave
+      end)
+      eq(0, num_buf_enter)
+      eq(0, num_buf_leave)
+    end)
+    it('nvim_win_set_buf triggers autocommands for current window', function()
+      -- non-regression for #20907
+      local num_buf_enter, num_buf_leave = exec_lua(function()
+        local win = vim.api.nvim_open_win(0, false, {
+          split = 'left',
+          win = 0,
+        })
+
+        vim.api.nvim_set_current_win(win)
+
+        local num_buf_enter = 0
+        local num_buf_leave = 0
+
+        vim.api.nvim_create_autocmd('BufEnter', {
+          callback = function()
+            num_buf_enter = num_buf_enter + 1
+          end,
+        })
+        vim.api.nvim_create_autocmd('BufLeave', {
+          callback = function()
+            num_buf_leave = num_buf_leave + 1
+          end,
+        })
+
+        local new_buf = vim.api.nvim_create_buf(false, true)
+
+        vim.api.nvim_win_set_buf(win, new_buf)
+
+        return num_buf_enter, num_buf_leave
+      end)
+      eq(1, num_buf_enter)
+      eq(1, num_buf_leave)
+    end)
   end)
 end)

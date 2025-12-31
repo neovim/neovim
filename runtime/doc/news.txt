@@ -242,6 +242,8 @@ API
 • |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
   event context (e.g. |vim.uv| callbacks).
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
+• |nvim_win_set_buf()| accepts a new `opts` parameter; `opts.noautocmd` blocks
+  autocommands for the duration of the call.
 
 BUILD
 
