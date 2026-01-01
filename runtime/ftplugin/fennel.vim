@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:     Fennel
-" Maintainer:   Gregory Anders <greg[NOSPAM]@gpanders.com>
+" Maintainer:   Gregory Anders <greg[NOSPAM]@gpanders.com> (invalid)
 " Last Update:  2023 Jun 9
 "               2024 May 24 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 

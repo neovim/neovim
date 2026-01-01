@@ -1,6 +1,6 @@
 " Vim filetype plugin.
 " Language:     Hare
-" Maintainer:   Amelia Clarke <selene@perilune.dev>
+" Maintainer:   Amelia Clarke <selene@perilune.dev> (invalid)
 " Last Updated: 2024 Oct 04
 " Upstream:     https://git.sr.ht/~sircmpwn/hare.vim
 

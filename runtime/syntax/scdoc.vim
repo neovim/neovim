@@ -1,5 +1,5 @@
 " Syntax file for scdoc files
-" Maintainer: Gregory Anders <contact@gpanders.com>
+" Maintainer: Gregory Anders <contact@gpanders.com> (invalid)
 " Last Updated: 2022-05-09
 " Upstream: https://github.com/gpanders/vim-scdoc
 
