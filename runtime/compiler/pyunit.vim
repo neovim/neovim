@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:	Unit testing tool for Python
-" Maintainer:	Max Ischenko <mfi@ukr.net>
+" Maintainer:	Max Ischenko <mfi@ukr.net> (invalid)
 " Last Change: 2004 Mar 27
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

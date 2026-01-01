@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	WEB Changes
-" Maintainer:	Andreas Scherer <andreas.scherer@pobox.com>
+" Maintainer:	Andreas Scherer <andreas.scherer@pobox.com> (invalid)
 " Last Change:	April 25, 2001
 
 " Details of the change mechanism of the WEB and CWEB languages can be found

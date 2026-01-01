@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language: lf file manager configuration file (lfrc)
-" Maintainer: Andis Sprinkis <andis@sprinkis.com>
+" Maintainer: Andis Sprinkis <andis@sprinkis.com> (invalid)
 " URL: https://github.com/andis-sprinkis/lf-vim
 " Last Change: 6 Apr 2025
 

@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     splint/lclint (C source code checker)
-" Maintainer:   Ralf Wildenhues <Ralf.Wildenhues@gmx.de>
+" Maintainer:   Ralf Wildenhues <Ralf.Wildenhues@gmx.de> (invalid)
 " Splint Home:	http://www.splint.org/
 " Last Change:  2019 Jul 23
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)

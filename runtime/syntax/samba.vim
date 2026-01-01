@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	samba configuration files (smb.conf)
-" Maintainer:	Rafael Garcia-Suarez <rgarciasuarez@free.fr>
+" Maintainer:	Rafael Garcia-Suarez <rgarciasuarez@free.fr> (invalid)
 " URL:		http://rgarciasuarez.free.fr/vim/syntax/samba.vim
 " Last change:	2009 Aug 06
 "

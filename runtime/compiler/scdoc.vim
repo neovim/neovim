@@ -1,6 +1,6 @@
 " scdoc compiler for Vim
 " Compiler: scdoc
-" Maintainer: Gregory Anders <contact@gpanders.com>
+" Maintainer: Gregory Anders <contact@gpanders.com> (invalid)
 " Last Updated: 2019-10-24
 "               2024 Apr 05 by The Vim Project (removed :CompilerSet definition)
 " Upstream: https://github.com/gpanders/vim-scdoc

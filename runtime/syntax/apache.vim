@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Apache configuration (httpd.conf, srm.conf, access.conf, .htaccess)
-" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz> (invalid)
 " License: This file can be redistribued and/or modified under the same terms
 "		as Vim itself.
 " Last Change: 2024 Nov 24

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	PCCTS
-" Maintainer:	Scott Bigham <dsb@killerbunnies.org>
+" Maintainer:	Scott Bigham <dsb@killerbunnies.org> (invalid)
 " Last Change:	10 Aug 1999
 
 " quit when a syntax file was already loaded

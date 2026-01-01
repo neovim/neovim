@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Virata AConfig Configuration Script
-" Maintainer:	Manuel M.H. Stol	<mmh.stol@gmx.net>
+" Maintainer:	Manuel M.H. Stol	<mmh.stol@gmx.net> (invalid)
 " Last Change:	2003 May 11
 " Vim URL:	http://www.vim.org/lang.html
 " Virata URL:	http://www.globespanvirata.com/

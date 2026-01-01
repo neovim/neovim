@@ -1,6 +1,6 @@
 " VIM syntax file
 " Language:	groff
-" Maintainer:	John Marshall <jmarshall@hey.com>
+" Maintainer:	John Marshall <jmarshall@hey.com> (invalid)
 " Previous Maintainer:	Pedro Alejandro López-Valencia <palopezv@gmail.com>
 " Last Change:	2003-05-08-12:41:13 GMT-5.
 

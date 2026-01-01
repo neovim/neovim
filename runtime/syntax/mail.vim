@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		Mail file
 " Previous Maintainer:	Felix von Leitner <leitner@math.fu-berlin.de>
-" Maintainer:		GI <a@b.c>, where a='gi1242+vim', b='gmail', c='com'
+" Maintainer:		GI <a@b.c>, where a='gi1242+vim', b='gmail', c='com' (invalid)
 " Last Change:		Thu 25 Jan 2024 10:34:02 AM EST
 
 " Quit when a syntax file was already loaded

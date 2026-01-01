@@ -1,6 +1,6 @@
 " Created	: Wed 26 Apr 2006 01:20:53 AM CDT
 " Modified	: Fri 28 Apr 2006 03:24:01 AM CDT
-" Author	: Gautam Iyer <gi1242@users.sourceforge.net>
+" Author	: Gautam Iyer <gi1242@users.sourceforge.net> (invalid)
 " Description	: ftplugin for mrxvtrc
 
 if exists("b:did_ftplugin")

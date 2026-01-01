@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Angular HTML template
-" Maintainer: Dennis van den Berg <dennis@vdberg.dev>
+" Maintainer: Dennis van den Berg <dennis@vdberg.dev> (invalid)
 " Last Change: 2024 Aug 22
 
 " quit when a syntax file was already loaded

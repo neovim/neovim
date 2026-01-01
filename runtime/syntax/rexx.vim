@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Rexx
-" Maintainer:	Thomas Geulig <geulig@nentec.de>
+" Maintainer:	Thomas Geulig <geulig@nentec.de> (invalid)
 " Last Change:  2012 Sep 14, added support for new ooRexx 4.0 features
 " URL:		http://www.geulig.de/vim/rexx.vim
 " Special Thanks to Dan Sharp <dwsharp@hotmail.com> and Rony G. Flatscher

@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	m17n database
-" Maintainer:	David Mandelberg <david@mandelberg.org>
+" Maintainer:	David Mandelberg <david@mandelberg.org> (invalid)
 " Last Change:	2025 Feb 21
 
 if exists('b:did_ftplugin')

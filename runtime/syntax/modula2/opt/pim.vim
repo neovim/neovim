@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    Modula-2 (PIM)
-" Maintainer:  B.Kowarsch <trijezdci@moc.liamg>
+" Maintainer:  B.Kowarsch <trijezdci@moc.liamg> (invalid)
 " Last Change: 2016 August 22
 
 " ----------------------------------------------------

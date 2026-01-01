@@ -1,5 +1,5 @@
 " Language:     ampl (A Mathematical Programming Language)
-" Maintainer:   Krief David <david.krief@etu.enseeiht.fr> or <david_krief@hotmail.com>
+" Maintainer:   Krief David <david.krief@etu.enseeiht.fr> or <david_krief@hotmail.com> (invalid)
 " Last Change:  2003 May 11
 
 

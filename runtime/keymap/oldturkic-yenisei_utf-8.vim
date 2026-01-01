@@ -1,4 +1,4 @@
-" Maintainer:   Oliver Corff <oliver.corff@yemail.de>
+" Maintainer:   Oliver Corff <oliver.corff@yemail.de> (invalid)
 " Last Changed: 2018 Feb 12
 
 " All characters are given literally, conversion to another encoding (e.g.,

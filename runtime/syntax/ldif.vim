@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	LDAP LDIF
-" Maintainer:	Zak Johnson <zakj@nox.cx>
+" Maintainer:	Zak Johnson <zakj@nox.cx> (invalid)
 " Last Change:	2003-12-30
 
 " quit when a syntax file was already loaded

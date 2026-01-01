@@ -1,5 +1,5 @@
 " Vim Keymap file for greek
-" Maintainer: Grigorios Magklis <maglis@cs.rochester.edu>
+" Maintainer: Grigorios Magklis <maglis@cs.rochester.edu> (invalid)
 " Last Updated: Tue 10 Jul 2001 16:50:50
 "
 " This keyboard layout allows all Greek symbols to be typed,

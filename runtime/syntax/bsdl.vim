@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Boundary Scan Description Language (BSDL)
-" Maintainer:	Daniel Kho <daniel.kho@logik.haus>
+" Maintainer:	Daniel Kho <daniel.kho@logik.haus> (invalid)
 " Last Changed:	2020 Mar 19 by Daniel Kho
 
 " quit when a syntax file was already loaded

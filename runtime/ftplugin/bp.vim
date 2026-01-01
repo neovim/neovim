@@ -1,6 +1,6 @@
 " Blueprint build system filetype plugin file
 " Language: Blueprint
-" Maintainer: Bruno BELANYI <bruno.vim@belanyi.fr>
+" Maintainer: Bruno BELANYI <bruno.vim@belanyi.fr> (invalid)
 " Latest Revision: 2024-04-19
 
 if exists("b:did_ftplugin")

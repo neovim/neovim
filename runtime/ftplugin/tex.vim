@@ -1,6 +1,6 @@
 " LaTeX filetype plugin
 " Language:     LaTeX (ft=tex)
-" Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org>
+" Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org> (invalid)
 " Version:	1.4
 " Last Change:	Wed 19 Apr 2006
 "  URL:		http://www.vim.org/script.php?script_id=411

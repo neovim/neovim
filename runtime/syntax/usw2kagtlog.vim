@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:             Innovation Data Processing USW2KAgt.log file
-" Maintainer:           Rob Owens <rowens@fdrinnovation.com>
+" Maintainer:           Rob Owens <rowens@fdrinnovation.com> (invalid)
 " Latest Revision:      2014-04-01
 
 " Quit when a syntax file was already loaded

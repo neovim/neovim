@@ -2,7 +2,7 @@
 " Filename:     foxpro.vim
 " Version:      1.0
 " Language:     FoxPro for DOS/UNIX v2.6
-" Maintainer:   Bill W. Smith, Jr. <donal@brewich.com>
+" Maintainer:   Bill W. Smith, Jr. <donal@brewich.com> (invalid)
 " Last Change:  15 May 2006
 
 "     This file replaces the FoxPro for DOS v2.x syntax file 

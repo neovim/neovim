@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:           Clojure
-" Maintainer:         Alex Vear <alex@vear.uk>
+" Maintainer:         Alex Vear <alex@vear.uk> (invalid)
 " Former Maintainers: Sung Pae <self@sungpae.com>
 "                     Meikel Brandmeyer <mb@kotka.de>
 "                     Toralf Wittner <toralf.wittner@gmail.com>

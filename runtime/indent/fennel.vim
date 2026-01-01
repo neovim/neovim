@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:    Fennel
-" Maintainer:  Gregory Anders <greg[NOSPAM]@gpanders.com>
+" Maintainer:  Gregory Anders <greg[NOSPAM]@gpanders.com> (invalid)
 " Last Change: 2022 Apr 20
 
 " Only load this indent file when no other was loaded.

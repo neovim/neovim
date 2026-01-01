@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	initng .i files
-" Maintainer:	Elan Ruusamäe <glen@pld-linux.org>
+" Maintainer:	Elan Ruusamäe <glen@pld-linux.org> (invalid)
 " URL:		http://glen.alkohol.ee/pld/initng/
 " License:	GPL v2
 " Version:	0.13

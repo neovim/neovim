@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SVG (Scalable Vector Graphics)
-" Maintainer:	Vincent Berthoux <twinside@gmail.com>
+" Maintainer:	Vincent Berthoux <twinside@gmail.com> (invalid)
 " File Types:	.svg (used in Web and vector programs)
 "
 " Directly call the xml syntax, because SVG is an XML

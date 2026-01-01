@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	T2 / ROCK Linux .desc
-" Maintainer:	René Rebe <rene@exactcode.de>, Piotr Esden-Tempski <esden@rocklinux.org>
+" Maintainer:	René Rebe <rene@exactcode.de> (invalid), Piotr Esden-Tempski <esden@rocklinux.org> (invalid)
 " Last Change:	2006 Aug 14
 
 " quit when a syntax file was already loaded

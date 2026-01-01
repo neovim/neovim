@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:             dts/dtsi (device tree files)
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Latest Revision:      2024 Apr 12
 "                       2024 Jun 02 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 

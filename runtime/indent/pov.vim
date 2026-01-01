@@ -1,6 +1,6 @@
 " Vim indent file
 " Language: PoV-Ray Scene Description Language
-" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz> (invalid)
 " Last Change: 2017 Jun 13
 "              2022 April: b:undo_indent added by Doug Kearns
 " URI: http://trific.ath.cx/Ftp/vim/indent/pov.vim

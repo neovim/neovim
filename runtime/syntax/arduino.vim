@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    Arduino
-" Maintainer:  Johannes Hoff <johannes@johanneshoff.com>
+" Maintainer:  Johannes Hoff <johannes@johanneshoff.com> (invalid)
 " Last Change: 21 October 2021
 " License:     VIM license (:help license, replace vim by arduino.vim)
 

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	TealInfo source files (*.tli)
-" Maintainer:	Kurt W. Andrews <kandrews@fastrans.net>
+" Maintainer:	Kurt W. Andrews <kandrews@fastrans.net> (invalid)
 " Last Change:	2001 May 10
 " Version:      1.0
 

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Copyright by Jan-Oliver Wagner
 " Language:	avenue
-" Maintainer:	Jan-Oliver Wagner <Jan-Oliver.Wagner@intevation.de>
+" Maintainer:	Jan-Oliver Wagner <Jan-Oliver.Wagner@intevation.de> (invalid)
 " Last change:	2001 May 10
 
 " Avenue is the ArcView built-in language. ArcView is

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	UnrealScript
-" Maintainer:	Mark Ferrell <major@chaoticdreams.org>
+" Maintainer:	Mark Ferrell <major@chaoticdreams.org> (invalid)
 " URL:		ftp://ftp.chaoticdreams.org/pub/ut/vim/uc.vim
 " Credits:	Based on the java.vim syntax file by Claudio Fleiner
 " Last change:	2003 May 31

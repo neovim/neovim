@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Rebol
-" Maintainer:	Mike Williams <mrw@eandem.co.uk>
+" Maintainer:	Mike Williams <mrw@eandem.co.uk> (invalid)
 " Filenames:	*.r
 " Last Change:	27th June 2002
 " URL:		http://www.eandem.co.uk/mrw/vim

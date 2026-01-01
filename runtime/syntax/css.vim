@@ -6,7 +6,7 @@
 "               Yeti            (Add full CSS2, HTML4 support)
 "               Nikolai Weibull (Add CSS2 support)
 " URL:          https://github.com/vim-language-dept/css-syntax.vim
-" Maintainer:   Jay Sitter <jay@jaysitter.com>
+" Maintainer:   Jay Sitter <jay@jaysitter.com> (invalid)
 " Last Change:  2024 Mar 2
 " 2025 Nov 11: improve support for cssBoxProperties #18717
 

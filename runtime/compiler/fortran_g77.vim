@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     g77 (GNU Fortran)
-" Maintainer:   Ralf Wildenhues <Ralf.Wildenhues@gmx.de>
+" Maintainer:   Ralf Wildenhues <Ralf.Wildenhues@gmx.de> (invalid)
 " Last Change:  $Date: 2004/06/13 18:17:36 $
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 " $Revision: 1.1 $

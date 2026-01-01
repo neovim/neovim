@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SubStation Alpha
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:	*.ass,*.ssa
 " Last Change:	2024 Apr 28
 

@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:	HP aCC
-" Maintainer:	Matthias Ulrich <matthias-ulrich@web.de>
+" Maintainer:	Matthias Ulrich <matthias-ulrich@web.de> (invalid)
 " URL:          http://www.subhome.de/vim/hp_acc.vim
 " Last Change:	2012 Apr 30
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)

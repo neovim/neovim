@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	HTML/OS by Aestiva
-" Maintainer:	Jason Rust <jrust@westmont.edu>
+" Maintainer:	Jason Rust <jrust@westmont.edu> (invalid)
 " URL:		http://www.rustyparts.com/vim/syntax/htmlos.vim
 " Info:		http://www.rustyparts.com/scripts.php
 " Last Change:	2003 May 11

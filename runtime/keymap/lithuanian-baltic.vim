@@ -1,7 +1,7 @@
 " Vim Keymap file for lithuanian characters, phonetic layout 'Baltic'
 " Useful mainly with utf-8 but may work with other encodings
 
-" Maintainer:   Alex Jakushev <Alex.Jakushev@kemek.lt>
+" Maintainer:   Alex Jakushev <Alex.Jakushev@kemek.lt> (invalid)
 " Last Changed: 2002 Apr 12
 
 " All characters are given literally, conversion to another encoding (e.g.,

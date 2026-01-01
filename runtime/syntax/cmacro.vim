@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	C macro for C preprocessor
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Last Change:	2024 Dec 31
 " modified from syntax/c.vim
 

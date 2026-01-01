@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Cynlib(C++)
-" Maintainer:   Phil Derrick <phild@forteds.com>
+" Maintainer:   Phil Derrick <phild@forteds.com> (invalid)
 " Last change:  2001 Sep 02
 " URL http://www.derrickp.freeserve.co.uk/vim/syntax/cynlib.vim
 "

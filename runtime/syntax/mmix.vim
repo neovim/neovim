@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	MMIX
-" Maintainer:	Dirk Hüsken, <huesken@informatik.uni-tuebingen.de>
+" Maintainer:	Dirk Hüsken, <huesken@informatik.uni-tuebingen.de> (invalid)
 " Last Change:	2012 Jun 01
 " 		(Dominique Pelle added @Spell)
 " Filenames:	*.mms

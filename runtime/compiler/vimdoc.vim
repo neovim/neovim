@@ -1,6 +1,6 @@
 " Vim Compiler File
 " Language:             vimdoc
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Latest Revision:      2024-04-13
 " Last Change: 2025 Nov 16 by The Vim Project (set errorformat)
 "

@@ -2,7 +2,7 @@
 " (compatible with XFree86 'ru' keymap)
 " Useful mainly with utf-8 but may work with other encodings
 
-" Maintainer:   Artem Chuprina <ran@ran.pp.ru>
+" Maintainer:   Artem Chuprina <ran@ran.pp.ru> (invalid)
 " Last Changed: 2001 Jun 23
 
 " All characters are given literally, conversion to another encoding (e.g.,

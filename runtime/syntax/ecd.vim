@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	ecd (Embedix Component Description) files
-" Maintainer:	John Beppu <beppu@opensource.lineo.com>
+" Maintainer:	John Beppu <beppu@opensource.lineo.com> (invalid)
 " URL:		http://opensource.lineo.com/~beppu/prose/ecd_vim.html
 " Last Change:	2001 Sep 27
 

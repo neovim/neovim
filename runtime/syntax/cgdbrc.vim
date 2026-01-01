@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:             cgdbrc
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Documentation:        https://cgdb.github.io/docs/Configuring-CGDB.html
 " Latest Revision:      2024-04-09
 

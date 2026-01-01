@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Haskell supporting c2hs binding hooks
-" Maintainer:	Armin Sander <armin@mindwalker.org>
+" Maintainer:	Armin Sander <armin@mindwalker.org> (invalid)
 " Last Change:	2001 November 1
 "
 " 2001 November 1: Changed commands for sourcing haskell.vim

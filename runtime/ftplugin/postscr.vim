@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	PostScript
-" Maintainer:	Mike Williams <mrw@eandem.co.uk>
+" Maintainer:	Mike Williams <mrw@eandem.co.uk> (invalid)
 " Last Change:	24th April 2012
 "		2024 Jan 14 by Vim Project (browsefilter)
 "		2025 Jun 08 by Riley Bruins <ribru17@gmail.com> ('commentstring')

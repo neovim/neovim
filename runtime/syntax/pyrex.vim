@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Pyrex
-" Maintainer:	Marco Barisione <marco.bari@people.it>
+" Maintainer:	Marco Barisione <marco.bari@people.it> (invalid)
 " URL:		http://marcobari.altervista.org/pyrex_vim.html
 " Last Change:	2009 Nov 09
 

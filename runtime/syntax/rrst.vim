@@ -1,6 +1,6 @@
 " reStructured Text with R statements
 " Language: reST with R code chunks
-" Maintainer: Alex Zvoleff, azvoleff@mail.sdsu.edu
+" Maintainer: Alex Zvoleff, azvoleff@mail.sdsu.edu (invalid)
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
 " Last Change: Thu Apr 05, 2018  11:06PM
 "

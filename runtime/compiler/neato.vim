@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     ATT neato
-" Maintainer:	Marcos Macedo <bar4ka@bol.com.br>
+" Maintainer:	Marcos Macedo <bar4ka@bol.com.br> (invalid)
 " Last Change:	2024 March 21
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

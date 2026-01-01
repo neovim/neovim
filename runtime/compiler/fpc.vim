@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     FPC 2.1
-" Maintainer:   Jaroslaw Blasiok <jaro3000@o2.pl>
+" Maintainer:   Jaroslaw Blasiok <jaro3000@o2.pl> (invalid)
 " Last Change:  2005 October 07
 "               2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

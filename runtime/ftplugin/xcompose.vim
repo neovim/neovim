@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	XCompose
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org (invalid)
 " Last Change:	2023 Nov 09
 
 if exists('b:did_ftplugin')

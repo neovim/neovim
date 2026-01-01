@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	OpenCL
 " Last Change:	2024 Nov 19
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 
 if exists("b:current_syntax")
   finish

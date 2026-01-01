@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	S-Lang
-" Maintainer:	Jan Hlavacek <lahvak@math.ohio-state.edu>
+" Maintainer:	Jan Hlavacek <lahvak@math.ohio-state.edu> (invalid)
 " Last Change:	980216
 
 " quit when a syntax file was already loaded

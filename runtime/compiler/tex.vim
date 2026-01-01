@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     TeX
-" Maintainer:   Artem Chuprina <ran@ran.pp.ru>
+" Maintainer:   Artem Chuprina <ran@ran.pp.ru> (invalid)
 " Contributors: Enno Nagel
 " Last Change:  2024 Mar 29
 "		2024 Apr 03 by the Vim Project (removed :CompilerSet definition)

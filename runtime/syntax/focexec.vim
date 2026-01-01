@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Focus Executable
-" Maintainer:	Rob Brady <robb@datatone.com>
+" Maintainer:	Rob Brady <robb@datatone.com> (invalid)
 " Last Change:	$Date: 2004/06/13 15:38:04 $
 " URL:		http://www.datatone.com/~robb/vim/syntax/focexec.vim
 " $Revision: 1.1 $

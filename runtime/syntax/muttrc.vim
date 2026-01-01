@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Mutt setup files
 " Original:	Preben 'Peppe' Guldberg <peppe-vim@wielders.org>
-" Maintainer:	Luna Celeste <luna@unixpoet.dev>
+" Maintainer:	Luna Celeste <luna@unixpoet.dev> (invalid)
 " Last Change:	14 Aug 2023
 " 2025 May 19 re-include missing mutt Keywords #17344
 

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	TI Linker map
 " Document:	https://downloads.ti.com/docs/esd/SPRUI03A/Content/SPRUI03A_HTML/linker_description.html
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Last Change:	2024 Dec 25
 
 if exists("b:did_ftplugin")

@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	cobol
-" Maintainer: Ankit Jain <ajatkj@yahoo.co.in>
+" Maintainer: Ankit Jain <ajatkj@yahoo.co.in> (invalid)
 "     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 " $Id: cobol.vim,v 1.1 2007/05/05 18:08:19 vimboss Exp $
 " Last Update:	By Ankit Jain on 22.03.2019

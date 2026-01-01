@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SGML
-" Maintainer:	Johannes Zellner <johannes@zellner.org>
+" Maintainer:	Johannes Zellner <johannes@zellner.org> (invalid)
 " Last Change:	Tue, 27 Apr 2004 15:05:21 CEST
 " Filenames:	*.sgml,*.sgm
 " $Id: sgml.vim,v 1.1 2004/06/13 17:52:57 vimboss Exp $

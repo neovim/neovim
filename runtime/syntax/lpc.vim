@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	LPC
-" Maintainer:	Shizhu Pan <poet@mudbuilder.net>
+" Maintainer:	Shizhu Pan <poet@mudbuilder.net> (invalid)
 " URL:		http://poet.tomud.com/pub/lpc.vim.bz2
 " Last Change:	2016 Aug 31
 " Comments:	If you are using Vim 6.2 or later, see :h lpc.vim for

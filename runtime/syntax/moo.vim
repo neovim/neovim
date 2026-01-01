@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	MOO
-" Maintainer:	Timo Frenay <timo@frenay.net>
+" Maintainer:	Timo Frenay <timo@frenay.net> (invalid)
 " Last Change:	2020 Oct 19
 " Note:		Requires Vim 6.0 or above
 

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language: sway config file
 " Original Author: James Eapen <james.eapen@vai.org>
-" Maintainer: James Eapen <james.eapen@vai.org>
+" Maintainer: James Eapen <james.eapen@vai.org> (invalid)
 " Version: 0.1
 " Last Change: 2022 June 07
 

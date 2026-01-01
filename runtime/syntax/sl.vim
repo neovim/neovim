@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Renderman shader language
-" Maintainer:	Dan Piponi <dan@tanelorn.demon.co.uk>
+" Maintainer:	Dan Piponi <dan@tanelorn.demon.co.uk> (invalid)
 " Last Change:	2001 May 09
 
 " quit when a syntax file was already loaded

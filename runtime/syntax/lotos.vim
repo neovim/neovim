@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	LOTOS (Language Of Temporal Ordering Specifications, IS8807)
-" Maintainer:	Daniel Amyot <damyot@csi.uottawa.ca>
+" Maintainer:	Daniel Amyot <damyot@csi.uottawa.ca> (invalid)
 " Last Change:	Wed Aug 19 1998
 " URL:		http://lotos.csi.uottawa.ca/~damyot/vim/lotos.vim
 " This file is an adaptation of pascal.vim by Mario Eusebio

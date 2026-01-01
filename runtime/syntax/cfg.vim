@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Good old CFG files
-" Maintainer:	Igor N. Prischepoff (igor@tyumbit.ru, pri_igor@mail.ru)
+" Maintainer:	Igor N. Prischepoff (igor@tyumbit.ru, pri_igor@mail.ru (invalid))
 " Last Change:	2012 Aug 11
 " 2024 Nov 14 by Vim project:  // only denotes a comment when starting a line (#16051)
 

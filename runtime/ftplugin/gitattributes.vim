@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	git attributes
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Last Change:	2022 Sep 08
 
 if exists('b:did_ftplugin')

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	kimwitu++
-" Maintainer:	Michael Piefel <entwurf@piefel.de>
+" Maintainer:	Michael Piefel <entwurf@piefel.de> (invalid)
 " Last Change:	2 May 2001
 
 " quit when a syntax file was already loaded

@@ -1,6 +1,6 @@
 " Created	: Tue 09 May 2006 02:07:31 PM CDT
 " Modified	: Tue 09 May 2006 02:07:31 PM CDT
-" Author	: Gautam Iyer <gi1242@users.sourceforge.net>
+" Author	: Gautam Iyer <gi1242@users.sourceforge.net> (invalid)
 " Description	: ftplugin for fvwm config files
 
 if exists("b:did_ftplugin")

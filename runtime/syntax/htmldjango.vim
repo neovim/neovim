@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Django HTML template
-" Maintainer:	Dave Hodder <dmh@dmh.org.uk>
+" Maintainer:	Dave Hodder <dmh@dmh.org.uk> (invalid)
 " Last Change:	2014 Jul 13
 
 " quit when a syntax file was already loaded

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Valgrind Memory Debugger Output
-" Maintainer: Roger Luethi <rl@hellgate.ch>
+" Maintainer: Roger Luethi <rl@hellgate.ch> (invalid)
 " Program URL: http://devel-home.kde.org/~sewardj/
 " Last Change: 2019 Jul 24
 "

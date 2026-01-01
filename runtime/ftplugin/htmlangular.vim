@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language: Angular HTML Template
-" Maintainer: Dennis van den Berg <dennis@vdberg.dev>
+" Maintainer: Dennis van den Berg <dennis@vdberg.dev> (invalid)
 " Last Change: 2024 Jul 9
 
 " Only use this filetype plugin when no other was loaded.

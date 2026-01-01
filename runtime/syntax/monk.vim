@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Monk (See-Beyond Technologies)
-" Maintainer: Mike Litherland <litherm@ccf.org>
+" Maintainer: Mike Litherland <litherm@ccf.org> (invalid)
 " Last Change: 2012 Feb 03 by Thilo Six
 
 " This syntax file is good enough for my needs, but others

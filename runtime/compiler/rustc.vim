@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:         Rust Compiler
-" Maintainer:       Chris Morgan <me@chrismorgan.info>
+" Maintainer:       Chris Morgan <me@chrismorgan.info> (invalid)
 " Latest Revision:  2023-09-11
 " 2025 Nov 15 by Vim project: remove test for Vim patch 7.4.191
 " 2025 Dec 18 by Vim project: detect more errors #18957
