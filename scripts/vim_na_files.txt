@@ -64,7 +64,6 @@ src/po/vim.pot
 src/po/zh_CN.cp936.po
 src/po/zh_CN.po
 src/po/zh_TW.po
-src/term.c
 src/terminal.c
 src/termlib.c
 src/testdir/Make_amiga.mak
