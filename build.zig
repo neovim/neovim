@@ -141,10 +141,12 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     }) else null;
+
     // TODO(bfredl): fix upstream bugs with UBSAN
+    const optimize_ts = .ReleaseFast;
     const treesitter = if (system_integration_options.tree_sitter) null else b.lazyDependency("treesitter", .{
         .target = target,
-        .optimize = .ReleaseFast,
+        .optimize = optimize_ts,
     });
 
     const nlua0 = try build_lua.build_nlua0(
@@ -623,31 +625,31 @@ pub fn build(b: *std.Build) !void {
     xxd_exe.linkLibC();
     test_deps.dependOn(&b.addInstallArtifact(xxd_exe, .{}).step);
 
-    const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize });
-    test_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize, .install));
+    const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize_ts });
+    test_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize_ts, .install));
 
-    const parser_markdown = b.dependency("treesitter_markdown", .{ .target = target, .optimize = optimize });
-    test_deps.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize, .install));
-    test_deps.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize, .install));
+    const parser_markdown = b.dependency("treesitter_markdown", .{ .target = target, .optimize = optimize_ts });
+    test_deps.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize_ts, .install));
+    test_deps.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize_ts, .install));
 
-    const parser_vim = b.dependency("treesitter_vim", .{ .target = target, .optimize = optimize });
-    test_deps.dependOn(add_ts_parser(b, "vim", parser_vim.path("."), true, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "vim", parser_vim.path("."), true, target, optimize, .install));
+    const parser_vim = b.dependency("treesitter_vim", .{ .target = target, .optimize = optimize_ts });
+    test_deps.dependOn(add_ts_parser(b, "vim", parser_vim.path("."), true, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "vim", parser_vim.path("."), true, target, optimize_ts, .install));
 
-    const parser_vimdoc = b.dependency("treesitter_vimdoc", .{ .target = target, .optimize = optimize });
-    test_deps.dependOn(add_ts_parser(b, "vimdoc", parser_vimdoc.path("."), false, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "vimdoc", parser_vimdoc.path("."), false, target, optimize, .install));
+    const parser_vimdoc = b.dependency("treesitter_vimdoc", .{ .target = target, .optimize = optimize_ts });
+    test_deps.dependOn(add_ts_parser(b, "vimdoc", parser_vimdoc.path("."), false, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "vimdoc", parser_vimdoc.path("."), false, target, optimize_ts, .install));
 
-    const parser_lua = b.dependency("treesitter_lua", .{ .target = target, .optimize = optimize });
-    test_deps.dependOn(add_ts_parser(b, "lua", parser_lua.path("."), true, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "lua", parser_lua.path("."), true, target, optimize, .install));
+    const parser_lua = b.dependency("treesitter_lua", .{ .target = target, .optimize = optimize_ts });
+    test_deps.dependOn(add_ts_parser(b, "lua", parser_lua.path("."), true, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "lua", parser_lua.path("."), true, target, optimize_ts, .install));
 
-    const parser_query = b.dependency("treesitter_query", .{ .target = target, .optimize = optimize });
-    test_deps.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize, .test_));
-    install.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize, .install));
+    const parser_query = b.dependency("treesitter_query", .{ .target = target, .optimize = optimize_ts });
+    test_deps.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize_ts, .test_));
+    install.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize_ts, .install));
 
     var unit_headers: ?[]const LazyPath = null;
     if (support_unittests) {
