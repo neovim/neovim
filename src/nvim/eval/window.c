@@ -328,7 +328,7 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   dict_T *const dict = tv_dict_alloc();
 
   // make sure w_botline is valid
-  validate_botline(wp);
+  validate_botline_win(wp);
 
   tv_dict_add_nr(dict, S_LEN("tabnr"), tpnr);
   tv_dict_add_nr(dict, S_LEN("winnr"), winnr);

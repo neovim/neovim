@@ -5361,7 +5361,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
 
   if (name[0] == 'w' && dollar_lnum) {
     // the "w_valid" flags are not reset when moving the cursor, but they
-    // do matter for update_topline() and validate_botline().
+    // do matter for update_topline() and validate_botline_win().
     check_cursor_moved(wp);
 
     pos.col = 0;
@@ -5372,7 +5372,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
       pos.lnum = wp->w_topline > 0 ? wp->w_topline : 1;
       return &pos;
     } else if (name[1] == '$') {      // "w$": last visible line
-      validate_botline(wp);
+      validate_botline_win(wp);
       // In silent Ex mode botline is zero, return zero then.
       pos.lnum = wp->w_botline > 0 ? wp->w_botline - 1 : 0;
       return &pos;

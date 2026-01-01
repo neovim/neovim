@@ -6576,8 +6576,8 @@ void win_fix_scroll(bool resize)
         wp->w_valid &= ~VALID_CROW;
       }
 
-      invalidate_botline(wp);
-      validate_botline(wp);
+      invalidate_botline_win(wp);
+      validate_botline_win(wp);
     }
     wp->w_prev_height = wp->w_height;
     wp->w_prev_winrow = wp->w_winrow;
@@ -6634,7 +6634,7 @@ static void win_fix_cursor(bool normal)
     } else {         // Scroll instead when not in normal mode.
       wp->w_fraction = (nlnum == bot) ? FRACTION_MULT : 0;
       scroll_to_fraction(wp, wp->w_prev_height);
-      validate_botline(curwin);
+      validate_botline_win(curwin);
     }
   }
 }
@@ -6746,7 +6746,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   redraw_later(wp, UPD_SOME_VALID);
-  invalidate_botline(wp);
+  invalidate_botline_win(wp);
 }
 
 void win_set_inner_size(win_T *wp, bool valid_cursor)
@@ -6793,7 +6793,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     wp->w_lines_valid = 0;
     if (valid_cursor) {
       changed_line_abv_curs_win(wp);
-      invalidate_botline(wp);
+      invalidate_botline_win(wp);
       if (wp == curwin && (*p_spk == 'c' || wp->w_floating)) {
         curs_columns(wp, true);  // validate w_wrow
       }
