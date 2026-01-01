@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:      ART-IM and ART*Enterprise
-" Maintainer:    Dorai Sitaram <ds26@gte.com> (invalid)
+" Maintainer:    Dorai Sitaram <ds26@gte.com>
 " URL:		 http://www.ccs.neu.edu/~dorai/vimplugins/vimplugins.html
 " Last Change:   Apr 2, 2003
 "                2023 Aug 28 by Vim Project (undo_ftplugin)

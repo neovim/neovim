@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Active State's PerlScript (ASP)
-" Maintainer:	Aaron Hope <edh@brioforge.com> (invalid)
+" Maintainer:	Aaron Hope <edh@brioforge.com>
 " URL:		http://nim.dhs.org/~edh/aspperl.vim
 " Last Change:	2001 May 09
 

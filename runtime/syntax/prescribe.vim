@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Kyocera PreScribe2e
-" Maintainer:	Klaus Muth <klaus@hampft.de> (invalid)
+" Maintainer:	Klaus Muth <klaus@hampft.de>
 " URL:          http://www.hampft.de/vim/syntax/prescribe.vim
 " Last Change:	2005 Mar 04
 

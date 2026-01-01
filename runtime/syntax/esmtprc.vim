@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Esmtp setup file (based on esmtp 0.5.0)
-" Maintainer:	Kornel Kielczewski <kornel@gazeta.pl> (invalid)
+" Maintainer:	Kornel Kielczewski <kornel@gazeta.pl>
 " Last Change:	16 Feb 2005
 
 " quit when a syntax file was already loaded

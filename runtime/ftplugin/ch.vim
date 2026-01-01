@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:     Ch
-" Maintainer:   SoftIntegration, Inc. <info@softintegration.com> (invalid)
+" Maintainer:   SoftIntegration, Inc. <info@softintegration.com>
 " URL:		http://www.softintegration.com/download/vim/ftplugin/ch.vim
 " Last change:	2004 May 16
 "		Created based on cpp.vim

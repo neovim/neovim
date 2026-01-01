@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	GYP
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	*.gyp,*.gypi
 " Last Change:	2022 Sep 27
 

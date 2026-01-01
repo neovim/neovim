@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     MS IDL (Microsoft dialect of Interface Description Language)
-" Maintainer:   Vadim Zeitlin <vadim@wxwindows.org> (invalid)
+" Maintainer:   Vadim Zeitlin <vadim@wxwindows.org>
 " Last Change:  2012 Feb 12 by Thilo Six
 
 " quit when a syntax file was already loaded

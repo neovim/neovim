@@ -1,6 +1,6 @@
 " Vim ftplugin file
 " Language:	OpenWrt Unified Configuration Interface
-" Maintainer:	Colin Caine <complaints@cmcaine.co.uk> (invalid)
+" Maintainer:	Colin Caine <complaints@cmcaine.co.uk>
 " Upstream:	https://github.com/cmcaine/vim-uci
 " Last Change:	2024 Apr 17
 "

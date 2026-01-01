@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:        Jsonnet
-" Maintainer:      Cezary Drożak <cezary@drozak.net> (invalid)
+" Maintainer:      Cezary Drożak <cezary@drozak.net>
 " URL:             https://github.com/google/vim-jsonnet
 " Last Change:     2022-09-08
 

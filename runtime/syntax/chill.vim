@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	CHILL
-" Maintainer:	YoungSang Yoon <image@lgic.co.kr> (invalid)
+" Maintainer:	YoungSang Yoon <image@lgic.co.kr>
 " Last change:	2004 Jan 21
 "
 

@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	cobol
-" Maintainer: Ankit Jain <ajatkj@yahoo.co.in> (invalid)
+" Maintainer: Ankit Jain <ajatkj@yahoo.co.in>
 "     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 " Last Update:	By Ankit Jain (add gtk support) on 15.08.2020
 "		2024 Jan 14 by Vim Project (browsefilter)

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	X Pixmap
-" Maintainer:	Ronald Schild <rs@scutum.de> (invalid)
+" Maintainer:	Ronald Schild <rs@scutum.de>
 " Last Change:	2023 May 24
 " Version:	5.4n.2
 "               Jemma Nelson added termguicolors support

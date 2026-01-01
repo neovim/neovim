@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     mgp - MaGic Point
-" Maintainer:   Gerfried Fuchs <alfie@ist.org> (invalid)
+" Maintainer:   Gerfried Fuchs <alfie@ist.org>
 " Filenames:    *.mgp
 " Last Change:  25 Apr 2001
 " URL:		http://alfie.ist.org/vim/syntax/mgp.vim

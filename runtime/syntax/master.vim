@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Focus Master File
-" Maintainer:	Rob Brady <robb@datatone.com> (invalid)
+" Maintainer:	Rob Brady <robb@datatone.com>
 " Last Change:	$Date: 2004/06/13 15:54:03 $
 " URL: http://www.datatone.com/~robb/vim/syntax/master.vim
 " $Revision: 1.1 $

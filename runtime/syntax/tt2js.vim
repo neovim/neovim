@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:      TT2 embedded with Javascript
-" Maintainer:    Andy Lester <andy@petdance.com> (invalid)
+" Maintainer:    Andy Lester <andy@petdance.com>
 " Author:        Yates, Peter <pd.yates@gmail.com>
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues

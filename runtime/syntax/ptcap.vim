@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	printcap/termcap database
-" Maintainer:	Haakon Riiser <hakonrk@fys.uio.no> (invalid)
+" Maintainer:	Haakon Riiser <hakonrk@fys.uio.no>
 " URL:		http://folk.uio.no/hakonrk/vim/syntax/ptcap.vim
 " Last Change:	2001 May 15
 

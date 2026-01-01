@@ -1,7 +1,7 @@
 " Vim syntax file
 "
 " Language:	AutoIt v3 (http://www.autoitscript.com/autoit3/)
-" Maintainer:	Jared Breland <jbreland@legroom.net> (invalid)
+" Maintainer:	Jared Breland <jbreland@legroom.net>
 " Authored By:	Riccardo Casini <ric@libero.it>
 " Script URL:	http://www.vim.org/scripts/script.php?script_id=1239
 " ChangeLog:	Please visit the script URL for detailed change information

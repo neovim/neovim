@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	J
-" Maintainer:	David Bürgin <dbuergin@gluet.ch> (invalid)
+" Maintainer:	David Bürgin <dbuergin@gluet.ch>
 " URL:		https://gitlab.com/glts/vim-j
 " Last Change:	2015-01-11
 

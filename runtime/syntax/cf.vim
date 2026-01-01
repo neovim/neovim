@@ -4,7 +4,7 @@
 " Author:       Ernst M. van der Linden <ernst.vanderlinden@ernestoz.com>
 " License:      The MIT License (MIT)
 "
-" Maintainer:   Ernst M. van der Linden <ernst.vanderlinden@ernestoz.com> (invalid)
+" Maintainer:   Ernst M. van der Linden <ernst.vanderlinden@ernestoz.com>
 " URL:          https://github.com/ernstvanderlinden/vim-coldfusion
 " Last Change:  2017 Nov 28
 "

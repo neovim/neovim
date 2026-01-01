@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Mojo
-" Maintainer:	Mahmoud Abduljawad <me@mahmoudajawad.com> (invalid)
+" Maintainer:	Mahmoud Abduljawad <me@mahmoudajawad.com>
 " Last Change:	2023 Sep 09
 " Credits:	Mahmoud Abduljawad <me@mahmoudajawad.com>
 "         	Neil Schemenauer <nas@python.ca>

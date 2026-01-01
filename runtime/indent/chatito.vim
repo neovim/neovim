@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	Chatito
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Last Change:	2022 Sep 20
 
 if exists('b:did_indent')

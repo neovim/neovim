@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: FvwmM4 preprocessed Fvwm2 configuration files
-" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz> (invalid)
+" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2002-06-02
 " URI: http://physics.muni.cz/~yeti/download/syntax/fvwmm4.vim
 

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: strace output
-" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz> (invalid)
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2022 Jan 29
 
 " Setup

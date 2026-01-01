@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:      MS Windows URL shortcut file
-" Maintainer:    ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:    ObserverOfTime <chronobserver@disroot.org>
 " LastChange:    2023-06-04
 
 " Quit when a syntax file was already loaded.

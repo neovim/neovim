@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:             Zathurarc
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
 " Documentation:        https://pwmt.org/projects/zathura/documentation/
 " Upstream:             https://github.com/Freed-Wu/zathurarc.vim
 " Latest Revision:      2024-04-02

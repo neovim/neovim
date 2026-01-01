@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	git ignore
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	.gitignore, *.git/info/exclude
 " Last Change:	2022 Sep 10
 

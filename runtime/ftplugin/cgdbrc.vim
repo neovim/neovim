@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:             cgdbrc
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
 " Documentation:        https://cgdb.github.io/docs/Configuring-CGDB.html
 " Latest Revision:      2024-04-09
 "                       2024-05-23 by Riley Bruins <ribru17@gmail.com> ('commentstring')

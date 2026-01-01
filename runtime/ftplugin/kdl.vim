@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:         KDL
-" Author:           Aram Drevekenin <aram@poor.dev> (invalid)
+" Author:           Aram Drevekenin <aram@poor.dev>
 " Maintainer:       Yinzuo Jiang <jiangyinzuo@foxmail.com>
 " Last Change:      2024-06-10
 

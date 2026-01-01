@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:		bcc - Borland C
-" Maintainer:	Emile van Raaij (eraaij@xs4all.nl) (invalid)
+" Maintainer:	Emile van Raaij (eraaij@xs4all.nl)
 " Last Change:	2004 Mar 27
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

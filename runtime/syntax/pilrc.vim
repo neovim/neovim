@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	pilrc - a resource compiler for Palm OS development
-" Maintainer:	Brian Schau <brian@schau.com> (invalid)
+" Maintainer:	Brian Schau <brian@schau.com>
 " Last change:	2003 May 11
 " Available on:	http://www.schau.com/pilrcvim/pilrc.vim
 

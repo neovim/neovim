@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: NASTRAN input/DMAP
-" Maintainer: Tom Kowalski <trk@schaefferas.com> (invalid)
+" Maintainer: Tom Kowalski <trk@schaefferas.com>
 " Last change: April 27, 2001
 "  Thanks to the authors and maintainers of fortran.vim.
 "		Since DMAP shares some traits with fortran, this syntax file

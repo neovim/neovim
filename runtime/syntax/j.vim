@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	J
-" Maintainer:	David Bürgin <dbuergin@gluet.ch> (invalid)
+" Maintainer:	David Bürgin <dbuergin@gluet.ch>
 " URL:		https://gitlab.com/glts/vim-j
 " Last Change:	2019-11-12
 

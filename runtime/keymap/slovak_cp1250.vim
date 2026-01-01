@@ -1,4 +1,4 @@
-" Maintainer:	Peter Valach <pvalach@gmx.net> (invalid)
+" Maintainer:	Peter Valach <pvalach@gmx.net>
 " Last Changed: 2002 Feb 3
 " URL:		http://www.pv2c.sk/free/sk_vimkeymap/
 

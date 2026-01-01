@@ -1,7 +1,7 @@
 " Vim syntax file
 " This is a GENERATED FILE. Please always refer to source file at the URI below.
 " Language: XKB (X Keyboard Extension) components
-" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz> (invalid)
+" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2020 Oct 18
 " URL: http://trific.ath.cx/Ftp/vim/syntax/xkb.vim
 

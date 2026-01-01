@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:        Vim syntax file for SNMPv1 and SNMPv2 MIB and SMI files
-" Maintainer:      Martin Smat <msmat@post.cz> (invalid)
+" Maintainer:      Martin Smat <msmat@post.cz>
 " Original Author: David Pascoe <pascoedj@spamcop.net>
 " Written:     	   Wed Jan 28 14:37:23 GMT--8:00 1998
 " Last Changed:    Mon Mar 23 2010

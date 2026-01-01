@@ -1,6 +1,6 @@
 " Vim Keymap file for Serbian characters, classical variant, iso-8859-5 encoding
 "
-" Maintainer:   Aleksandar Veselinovic <aleksa@cs.cmu.edu> (invalid)
+" Maintainer:   Aleksandar Veselinovic <aleksa@cs.cmu.edu>
 " URL:		    http://www.cs.cmu.edu/~aleksa/personal/vim/keymap/serbian-iso-8859-5.vim
 " Last Changed: 2002 Mar 29
 

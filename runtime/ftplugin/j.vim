@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	J
-" Maintainer:	David Bürgin <dbuergin@gluet.ch> (invalid)
+" Maintainer:	David Bürgin <dbuergin@gluet.ch>
 " URL:		https://gitlab.com/glts/vim-j
 " Last Change:	2022-08-06
 "		2024 Jan 14 by Vim Project (browsefilter)

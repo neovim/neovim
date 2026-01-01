@@ -1,6 +1,6 @@
 " Vim completion script
 " Language:           Clojure
-" Maintainer:         Alex Vear <alex@vear.uk> (invalid)
+" Maintainer:         Alex Vear <alex@vear.uk>
 " Former Maintainers: Sung Pae <self@sungpae.com>
 " URL:                https://github.com/clojure-vim/clojure.vim
 " License:            Vim (see :h license)

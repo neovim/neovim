@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	CSP (Communication Sequential Processes, using FDR input syntax)
-" Maintainer:	Jan Bredereke <brederek@tzi.de> (invalid)
+" Maintainer:	Jan Bredereke <brederek@tzi.de>
 " Version:	0.6.0
 " Last change:	Mon Mar 25, 2002
 " URL:		http://www.tzi.de/~brederek/vim/

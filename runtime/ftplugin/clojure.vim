@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:           Clojure
-" Maintainer:         Alex Vear <alex@vear.uk> (invalid)
+" Maintainer:         Alex Vear <alex@vear.uk>
 " Former Maintainers: Sung Pae <self@sungpae.com>
 "                     Meikel Brandmeyer <mb@kotka.de>
 " URL:                https://github.com/clojure-vim/clojure.vim

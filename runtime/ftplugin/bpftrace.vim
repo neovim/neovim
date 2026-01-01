@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:     bpftrace
-" Maintainer:	Stanislaw Gruszka <stf_xl@wp.pl> (invalid)
+" Maintainer:	Stanislaw Gruszka <stf_xl@wp.pl>
 " Last Change:	2025 Dec 23
 
 if exists('b:did_ftplugin')

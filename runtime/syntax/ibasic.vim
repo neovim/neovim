@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	ibasic
-" Maintainer:	Mark Manning <markem@airmail.net> (invalid)
+" Maintainer:	Mark Manning <markem@airmail.net>
 " Originator:	Allan Kelly <Allan.Kelly@ed.ac.uk>
 " Created:	10/1/2006
 " Updated:	10/21/2006

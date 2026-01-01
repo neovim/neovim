@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Jess
-" Maintainer:	Paul Baleme <pbaleme@mail.com> (invalid)
+" Maintainer:	Paul Baleme <pbaleme@mail.com>
 " Last change:	September 14, 2000
 " Based on lisp.vim by : Dr. Charles E. Campbell, Jr.
 

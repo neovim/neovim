@@ -1,6 +1,6 @@
 " PostScript indent file
 " Language:	PostScript
-" Maintainer:	Mike Williams <mrw@eandem.co.uk> (invalid)
+" Maintainer:	Mike Williams <mrw@eandem.co.uk>
 " Last Change:	2022 Apr 06
 
 " Only load this indent file when no other was loaded.

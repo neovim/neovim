@@ -1,6 +1,6 @@
 " Vim Compiler File
 " Compiler:	ant
-" Maintainer:	Johannes Zellner <johannes@zellner.org> (invalid)
+" Maintainer:	Johannes Zellner <johannes@zellner.org>
 " Last Change:	Mi, 13 Apr 2005 22:50:07 CEST
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

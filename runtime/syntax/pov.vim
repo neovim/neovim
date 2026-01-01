@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: PoV-Ray(tm) 3.7 Scene Description Language
-" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz> (invalid)
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2011-04-23
 " 2025 Apr 21 by Vim Project (deprecate render and statistics #17177)
 

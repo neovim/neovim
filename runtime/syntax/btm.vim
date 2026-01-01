@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	4Dos batch file
-" Maintainer:	John Leo Spetz <jls11@po.cwru.edu> (invalid)
+" Maintainer:	John Leo Spetz <jls11@po.cwru.edu>
 " Last Change:	2001 May 09
 
 "//Issues to resolve:

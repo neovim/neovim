@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	SGML (SGML Declaration <!SGML ...>)
 " Last Change: jueves, 28 de diciembre de 2000, 13:51:44 CLST
-" Maintainer: "Daniel A. Molina W." <sickd@linux-chile.org> (invalid)
+" Maintainer: "Daniel A. Molina W." <sickd@linux-chile.org>
 " You can modify and maintain this file, in other case send comments
 " the maintainer email address.
 

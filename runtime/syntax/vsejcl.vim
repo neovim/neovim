@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    JCL job control language - DOS/VSE
-" Maintainer:  Davyd Ondrejko <david.ondrejko@safelite.com> (invalid)
+" Maintainer:  Davyd Ondrejko <david.ondrejko@safelite.com>
 " URL:
 " Last change: 2001 May 10
 

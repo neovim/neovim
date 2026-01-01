@@ -1,6 +1,6 @@
 " vim compiler file
 " Compiler:	cppcheck (C++ static checker)
-" Maintainer:   Vincent B. (twinside@free.fr) (invalid)
+" Maintainer:   Vincent B. (twinside@free.fr)
 " Last Change:  2025 Nov 06 by @Konfekt
 
 if exists("current_compiler") | finish | endif

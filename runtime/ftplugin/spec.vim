@@ -1,6 +1,6 @@
 " Plugin to update the %changelog section of RPM spec files
 " Filename: spec.vim
-" Maintainer: Igor Gnatenko i.gnatenko.brain@gmail.com (invalid)
+" Maintainer: Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer: Gustavo Niemeyer <niemeyer@conectiva.com> (until March 2014)
 " Last Change: 2015 Jun 01
 "  Update by Zdenek Dohnal, 2022 May 17

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SNNS pattern file
-" Maintainer:	Davide Alberani <alberanid@bigfoot.com> (invalid)
+" Maintainer:	Davide Alberani <alberanid@bigfoot.com>
 " Last Change:	2012 Feb 03 by Thilo Six
 " Version:	0.2
 " URL:		http://digilander.iol.it/alberanid/vim/syntax/snnspat.vim

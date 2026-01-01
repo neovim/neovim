@@ -1,5 +1,5 @@
 " Vim Keymap file for vietnamese through the usual viqr method
-" Maintainer: Samuel Thibault <samuel.thibault@ens-lyon.org> (invalid)
+" Maintainer: Samuel Thibault <samuel.thibault@ens-lyon.org>
 " Last Change: 2006 Jun 17
 
 scriptencoding utf-8

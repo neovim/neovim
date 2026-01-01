@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Squid config file
-" Maintainer:	Klaus Muth <klaus@hampft.de> (invalid)
+" Maintainer:	Klaus Muth <klaus@hampft.de>
 " Last Change:	2005 Jun 12
 " URL:		http://www.hampft.de/vim/syntax/squid.vim
 " ThanksTo:	Ilya Sher <iso8601@mail.ru>,

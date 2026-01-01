@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Smalltalk
-" Maintainer:	Arndt Hesse <hesse@self.de> (invalid)
+" Maintainer:	Arndt Hesse <hesse@self.de>
 " Last Change:	2012 Feb 12 by Thilo Six
 
 " quit when a syntax file was already loaded

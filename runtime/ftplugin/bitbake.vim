@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language: Bitbake
-" Maintainer: Gregory Anders <greg@gpanders.com> (invalid)
+" Maintainer: Gregory Anders <greg@gpanders.com>
 " Repository: https://github.com/openembedded/bitbake
 " Latest Revision: 2022-07-23
 "                  2024-05-23 by Riley Bruins <ribru17@gmail.com> ('commentstring')

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SPA JSON
-" Maintainer:	David Mandelberg <david@mandelberg.org> (invalid)
+" Maintainer:	David Mandelberg <david@mandelberg.org>
 " Last Change:	2025 Mar 22
 "
 " Based on parser code:

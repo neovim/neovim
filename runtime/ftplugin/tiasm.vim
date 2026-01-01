@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	TI linear assembly language
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
 " Last Change:	2025 Jan 08
 
 if exists("b:did_ftplugin") | finish | endif

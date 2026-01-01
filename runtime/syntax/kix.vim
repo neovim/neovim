@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	KixTart 95, Kix2001 Windows script language http://kixtart.org/
-" Maintainer:	Richard Howarth <rhowarth@sgb.co.uk> (invalid)
+" Maintainer:	Richard Howarth <rhowarth@sgb.co.uk>
 " Last Change:	2003 May 11
 " URL:		http://www.howsoft.demon.co.uk/
 

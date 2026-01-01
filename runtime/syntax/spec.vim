@@ -1,7 +1,7 @@
 " Filename:    spec.vim
 " Purpose:     Vim syntax file
 " Language:    SPEC: Build/install scripts for Linux RPM packages
-" Maintainer:  Igor Gnatenko i.gnatenko.brain@gmail.com (invalid)
+" Maintainer:  Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer:  Donovan Rebbechi elflord@panix.com (until March 2014)
 " Last Change: 2020 May 25
 "  2024 Sep 10 by Vim Project: add file triggers support, #15569

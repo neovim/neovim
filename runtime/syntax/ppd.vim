@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	PPD (PostScript printer description) file
-" Maintainer:	Bjoern Jacke <bjacke@suse.de> (invalid)
+" Maintainer:	Bjoern Jacke <bjacke@suse.de>
 " Last Change:	2001-10-06
 
 " quit when a syntax file was already loaded

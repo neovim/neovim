@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Mathematica
-" Maintainer:   steve layland <layland@wolfram.com> (invalid)
+" Maintainer:   steve layland <layland@wolfram.com>
 " Last Change:  2012 Feb 03 by Thilo Six
 "               2024 May 24 by Riley Bruins <ribru17@gmail.com> (remove 'commentstring')
 " Source:       http://members.wri.com/layland/vim/syntax/mma.vim

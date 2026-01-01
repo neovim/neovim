@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	jj description
-" Maintainer:	Gregory Anders <greg@gpanders.com> (invalid)
+" Maintainer:	Gregory Anders <greg@gpanders.com>
 " Last Change:	2024 May 8
 " 2025 Apr 17 by Vim Project (don't require space to start comments, #17130)
 

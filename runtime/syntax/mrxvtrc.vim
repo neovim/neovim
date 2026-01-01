@@ -1,7 +1,7 @@
 " Description	: Vim syntax file for mrxvtrc (for mrxvt-0.5.0 and up)
 " Created	: Wed 26 Apr 2006 01:20:53 AM CDT
 " Modified	: Thu 02 Feb 2012 08:37:45 PM EST
-" Maintainer	: GI <a@b.c>, where a='gi1242+vim', b='gmail', c='com' (invalid)
+" Maintainer	: GI <a@b.c>, where a='gi1242+vim', b='gmail', c='com'
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")

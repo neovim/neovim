@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	HTML with Cheetah tags
-" Maintainer:	Max Ischenko <mfi@ukr.net> (invalid)
+" Maintainer:	Max Ischenko <mfi@ukr.net>
 " Last Change: 2003-05-11
 
 " quit when a syntax file was already loaded

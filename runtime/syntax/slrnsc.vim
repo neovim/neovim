@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Slrn score file (based on slrn 0.9.8.0)
-" Maintainer:	Preben 'Peppe' Guldberg <peppe@wielders.org> (invalid)
+" Maintainer:	Preben 'Peppe' Guldberg <peppe@wielders.org>
 " Last Change:	8 Oct 2004
 
 " quit when a syntax file was already loaded

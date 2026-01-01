@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: PoV-Ray(tm) 3.7 configuration/initialization files
-" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz> (invalid)
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2011-04-24
 " Required Vim Version: 6.0
 

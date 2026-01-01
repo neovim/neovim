@@ -1,5 +1,5 @@
 " Language:     Verilog HDL
-" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw> (invalid)
+" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
 " Last Change:	2017 Aug 25 by Chih-Tsun Huang
 " 		2023 Aug 28 by Vim Project (undo_indent)
 " URL:		    http://www.cs.nthu.edu.tw/~cthuang/vim/indent/verilog.vim

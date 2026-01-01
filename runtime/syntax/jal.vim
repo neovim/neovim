@@ -2,7 +2,7 @@
 " Language:	JAL
 " Version: 0.1
 " Last Change:	2003 May 11
-" Maintainer:  Mark Gross <mark@thegnar.org> (invalid)
+" Maintainer:  Mark Gross <mark@thegnar.org>
 " This is a syntax definition for the JAL language.
 " It is based on the Source Forge compiler source code.
 " https://sourceforge.net/projects/jal/

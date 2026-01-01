@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	PyPA manifest
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Last Change:	2023 Aug 08
 
 if exists('b:did_ftplugin')

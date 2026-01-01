@@ -1,5 +1,5 @@
 " Esperanto keymap for utf-8
-" Maintainer:	A.J.Mechelynck	<antoine.mechelynck@skynet.be> (invalid)
+" Maintainer:	A.J.Mechelynck	<antoine.mechelynck@skynet.be>
 " Last Changed:	Sat 2003 Mar 15 05:23
 
 " This keymap adds the special consonants of Esperanto to an existing Latin

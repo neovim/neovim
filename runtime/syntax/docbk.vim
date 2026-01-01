@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	DocBook
-" Maintainer:	Devin Weaver <vim@tritarget.com> (invalid)
+" Maintainer:	Devin Weaver <vim@tritarget.com>
 " Last Updated By: Shlomi Fish
 " URL:		http://tritarget.com/pub/vim/syntax/docbk.vim
 " Last Change:	2012 Nov 28

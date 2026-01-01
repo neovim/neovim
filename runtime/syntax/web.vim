@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	WEB
-" Maintainer:	Andreas Scherer <andreas.scherer@pobox.com> (invalid)
+" Maintainer:	Andreas Scherer <andreas.scherer@pobox.com>
 " Last Change:	April 30, 2001
 
 " Details of the WEB language can be found in the article by Donald E. Knuth,

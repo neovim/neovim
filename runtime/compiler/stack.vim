@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:         Haskell Stack
-" Maintainer:       Daniel Campoverde <alx@sillybytes.net> (invalid)
+" Maintainer:       Daniel Campoverde <alx@sillybytes.net>
 " Latest Revision:  2018-08-27
 
 if exists("current_compiler")

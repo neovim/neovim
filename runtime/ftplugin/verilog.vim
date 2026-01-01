@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	Verilog HDL
-" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw> (invalid)
+" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
 " Last Change:	2017 Aug 25 by Chih-Tsun Huang
 "		2024 Jan 14 by Vim Project (browsefilter)
 "		2024 May 20 by Riley Bruins <ribru17@gmail.com> (commentstring)

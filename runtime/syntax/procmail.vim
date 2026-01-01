@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Procmail definition file
-" Maintainer:	Melchior FRANZ <mfranz@aon.at> (invalid)
+" Maintainer:	Melchior FRANZ <mfranz@aon.at>
 " Last Change:	2003 Aug 14
 " Author:	Sonia Heimann
 

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Spice circuit simulator input netlist
-" Maintainer:	Noam Halevy <Noam.Halevy@motorola.com> (invalid)
+" Maintainer:	Noam Halevy <Noam.Halevy.motorola.com>
 " Last Change:	2012 Jun 01
 " 		(Dominique Pelle added @Spell)
 "
