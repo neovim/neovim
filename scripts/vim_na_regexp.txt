@@ -45,6 +45,7 @@
 ^src/gui[_.]
 ^src/if_
 ^src/install
+^src/json[_.]
 ^src/libvterm/
 ^src/link\.
 ^src/msvc[-2]

@@ -54,7 +54,9 @@ runtime/tools/vim_vs_net.cmd
 runtime/tools/vimm
 runtime/tools/vimspell.sh
 runtime/tools/vimspell.txt
+src/channel.c
 src/hardcopy.c
+src/job.c
 src/mysign
 src/po/ko.po
 src/po/pl.po
@@ -62,8 +64,12 @@ src/po/vim.pot
 src/po/zh_CN.cp936.po
 src/po/zh_CN.po
 src/po/zh_TW.po
+src/term.c
+src/terminal.c
+src/termlib.c
 src/testdir/Make_amiga.mak
 src/testdir/Make_dos.mak
+src/testdir/keycode_check.vim
 src/testdir/samples/crypt_sodium_invalid.txt
 src/testdir/test_behave.vim
 src/testdir/test_codestyle.vim
