@@ -24,7 +24,9 @@ typedef enum {
   SHAPE_IDX_MOREL  = 15,      ///< Hit-return or More in last line
   SHAPE_IDX_SM     = 16,      ///< showing matching paren
   SHAPE_IDX_TERM   = 17,      ///< Terminal mode
-  SHAPE_IDX_COUNT  = 18,
+  SHAPE_IDX_HSEP   = 18,      ///< On horizontal separator line
+  SHAPE_IDX_HDRAG  = 19,      ///< On horizontal separator line
+  SHAPE_IDX_COUNT  = 20,
 } ModeShape;
 
 typedef enum {

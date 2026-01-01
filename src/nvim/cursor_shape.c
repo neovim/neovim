@@ -46,6 +46,8 @@ cursorentry_T shape_table[SHAPE_IDX_COUNT] = {
   { "more_lastline", 0, NULL, 0,   0,   0,   0, 0, 0, "ml", SHAPE_MOUSE },
   { "showmatch", 0, NULL, 0, 100, 100, 100, 0, 0, "sm", SHAPE_CURSOR },
   { "terminal", 0, NULL, 0, 0, 0, 0, 0, 0, "t", SHAPE_CURSOR },
+  { "hsep_hover", 0, NULL, 0,   0,   0,   0, 0, 0, "hs", SHAPE_MOUSE },
+  { "hsep_drag", 0, NULL, 0,   0,   0,   0, 0, 0, "hd", SHAPE_MOUSE },
 };
 
 /// Converts cursor_shapes into an Array of Dictionaries
@@ -348,8 +350,12 @@ int cursor_get_mode_idx(bool with_mouse)
   if (with_mouse && p_mousemev) {
     pos_T m_pos = { 0 };
     int mpos_flag = get_fpos_of_mouse(&m_pos);
+    // Should differentiate between dragging and hovering.
     if (mpos_flag & IN_STATUS_LINE) {
       return SHAPE_IDX_STATUS;
+    }
+    if (mpos_flag & IN_HSEP_LINE) {
+      return SHAPE_IDX_HSEP;
     }
     if (mpos_flag & IN_SEP_LINE) {
       return SHAPE_IDX_VSEP;

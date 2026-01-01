@@ -248,6 +248,10 @@ int get_fpos_of_mouse(pos_T *mpos)
 
   // winpos and height may change in win_enter()!
   if (winrow >= wp->w_view_height + wp->w_status_height) {  // Below window
+    // Check if in horizontal separator
+    if (winrow < wp->w_view_height + wp->w_status_height + wp->w_hsep_height) {
+      return IN_HSEP_LINE;
+    }
     if (mouse_grid <= 1 && mouse_row < Rows - p_ch
         && mouse_row >= Rows - p_ch - global_stl_height()) {  // In global status line
       return IN_STATUS_LINE;

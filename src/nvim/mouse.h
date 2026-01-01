@@ -12,6 +12,7 @@ enum {
   IN_BUFFER        = 1,
   IN_STATUS_LINE   = 2,       ///< on status or command line
   IN_SEP_LINE      = 4,       ///< on vertical separator line
+  IN_HSEP_LINE     = 0x10,    ///< on horizontal separator line
   IN_OTHER_WIN     = 8,       ///< in other window but can't go there
   CURSOR_MOVED     = 0x100,
   MOUSE_FOLD_CLOSE = 0x200,   ///< clicked on '-' in fold column
