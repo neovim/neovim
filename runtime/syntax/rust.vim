@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Rust
-" Maintainer:   Patrick Walton <pcwalton@mozilla.com>
+" Maintainer:   Patrick Walton <pcwalton@mozilla.com> (invalid)
 " Maintainer:   Ben Blum <bblum@cs.cmu.edu>
 " Maintainer:   Chris Morgan <me@chrismorgan.info>
 " Last Change:  2023-09-11
