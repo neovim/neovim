@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     EDIF (Electronic Design Interchange Format)
-" Maintainer:   Artem Zankovich <z_artem@hotbox.ru> (invalid)
+" Maintainer:   Artem Zankovich <z_artem@hotbox.ru>
 " Last Change:  Oct 14, 2002
 "
 " Supported standarts are:

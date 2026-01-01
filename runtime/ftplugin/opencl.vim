@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	OpenCL
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
 " Last Change:	2024 Nov 19
 
 if exists("b:did_ftplugin") | finish | endif

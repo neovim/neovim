@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     WML - Website MetaLanguage
-" Maintainer:   Gerfried Fuchs <alfie@ist.org> (invalid)
+" Maintainer:   Gerfried Fuchs <alfie@ist.org>
 " Filenames:    *.wml
 " Last Change:  07 Feb 2002
 " URL:		http://alfie.ist.org/software/vim/syntax/wml.vim

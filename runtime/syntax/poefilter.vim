@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	PoE item filter
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	*.filter
 " Last Change:	2023 Feb 10
 

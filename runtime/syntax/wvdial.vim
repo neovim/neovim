@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Configuration file for WvDial
-" Maintainer:   Prahlad Vaidyanathan <slime@vsnl.net> (invalid)
+" Maintainer:   Prahlad Vaidyanathan <slime@vsnl.net>
 " Last Update:  Mon, 15 Oct 2001 09:39:03 Indian Standard Time
 
 " Quit if syntax file is already loaded

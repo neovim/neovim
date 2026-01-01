@@ -1,6 +1,6 @@
 " plain TeX filetype plugin
 " Language:     plain TeX (ft=plaintex)
-" Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org> (invalid)
+" Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org>
 " Version:	1.1
 " Last Change:	Wed 19 Apr 2006
 

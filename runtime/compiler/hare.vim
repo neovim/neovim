@@ -1,6 +1,6 @@
 " Vim compiler file.
 " Compiler:    Hare
-" Maintainer:  Amelia Clarke <selene@perilune.dev> (invalid)
+" Maintainer:  Amelia Clarke <selene@perilune.dev>
 " Last Change: 2024-05-23
 " Upstream:    https://git.sr.ht/~sircmpwn/hare.vim
 

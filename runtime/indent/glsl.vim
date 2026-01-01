@@ -1,5 +1,5 @@
 " Language: OpenGL Shading Language
-" Maintainer: Gregory Anders <greg@gpanders.com> (invalid)
+" Maintainer: Gregory Anders <greg@gpanders.com>
 " Last Modified: 2024 Jul 21
 " Upstream: https://github.com/tikhomirov/vim-glsl
 

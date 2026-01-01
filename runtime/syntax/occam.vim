@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	occam
 " Copyright:	Fred Barnes <frmb2@kent.ac.uk>, Mario Schweigler <ms44@kent.ac.uk>
-" Maintainer:	Mario Schweigler <ms44@kent.ac.uk> (invalid)
+" Maintainer:	Mario Schweigler <ms44@kent.ac.uk>
 " Last Change:	24 May 2003
 
 " quit when a syntax file was already loaded

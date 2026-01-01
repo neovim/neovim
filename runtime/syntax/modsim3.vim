@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Modsim III, by compuware corporation (www.compuware.com)
-" Maintainer:	Philipp Jocham <flip@sbox.tu-graz.ac.at> (invalid)
+" Maintainer:	Philipp Jocham <flip@sbox.tu-graz.ac.at>
 " Extension:	*.mod
 " Last Change:	2001 May 10
 "

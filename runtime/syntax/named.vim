@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	BIND configuration file
-" Maintainer:	Nick Hibma <nick@van-laarhoven.org> (invalid)
+" Maintainer:	Nick Hibma <nick@van-laarhoven.org>
 " Last Change:	2019 Oct 08
 " Filenames:	named.conf, rndc.conf
 " Location:	http://www.van-laarhoven.org/vim/syntax/named.vim

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Motorola S-Record
-" Maintainer:	Markus Heidelberg <markus.heidelberg@web.de> (invalid)
+" Maintainer:	Markus Heidelberg <markus.heidelberg@web.de>
 " Last Change:	2015 Feb 24
 
 " Each record (line) is built as follows:

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Novell "NCF" Batch File
-" Maintainer:   Jonathan J. Miner <miner@doit.wisc.edu> (invalid)
+" Maintainer:   Jonathan J. Miner <miner@doit.wisc.edu>
 " Last Change:	Tue, 04 Sep 2001 16:20:33 CDT
 " $Id: ncf.vim,v 1.1 2004/06/13 16:31:58 vimboss Exp $
 

@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	PoE item filter
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Last Change:	2022 Oct 07
 
 if exists('b:did_ftplugin')

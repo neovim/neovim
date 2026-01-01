@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     trustees
-" Maintainer:   Nima Talebi <nima@it.net.au> (invalid)
+" Maintainer:   Nima Talebi <nima@it.net.au>
 " Last Change:  2022 Jun 14
 
 " quit when a syntax file was already loaded

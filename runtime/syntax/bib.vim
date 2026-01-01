@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	BibTeX (bibliographic database format for (La)TeX)
-" Maintainer:	Bernd Feige <Bernd.Feige@gmx.net> (invalid)
+" Maintainer:	Bernd Feige <Bernd.Feige@gmx.net>
 " Filenames:	*.bib
 " Last Change:	2017 Sep 29
 

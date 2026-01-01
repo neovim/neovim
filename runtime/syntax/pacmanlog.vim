@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: pacman.log
-" Maintainer: Ronan Pigott <ronan@rjp.ie> (invalid)
+" Maintainer: Ronan Pigott <ronan@rjp.ie>
 " Last Change: 2023 Dec 04
 " 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 

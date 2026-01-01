@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Informix 4GL
-" Maintainer:	Rafal M. Sulejman <rms@poczta.onet.pl> (invalid)
+" Maintainer:	Rafal M. Sulejman <rms@poczta.onet.pl>
 " Update:	26 Sep 2002
 " Changes:
 " - Dynamic 4GL/FourJs/4GL 7.30 pseudo comment directives (Julian Bridle)

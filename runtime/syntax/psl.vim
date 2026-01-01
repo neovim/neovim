@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Property Specification Language (PSL)
-" Maintainer:	Daniel Kho <daniel.kho@logik.haus> (invalid)
+" Maintainer:	Daniel Kho <daniel.kho@logik.haus>
 " Last Changed:	2021 Apr 17 by Daniel Kho
 
 " quit when a syntax file was already loaded

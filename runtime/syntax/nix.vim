@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:        Nix
-" Maintainer:      James Fleming <james@electronic-quill.net> (invalid)
+" Maintainer:      James Fleming <james@electronic-quill.net>
 "                  (Github username: equill)
 " Original Author: Daiderd Jordan <daiderd@gmail.com>
 " Acknowledgement: Based on vim-nix maintained by Daiderd Jordan <daiderd@gmail.com>

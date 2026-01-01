@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	abc music notation language
-" Maintainer:	James Allwright <J.R.Allwright@westminster.ac.uk> (invalid)
+" Maintainer:	James Allwright <J.R.Allwright@westminster.ac.uk>
 " URL:		http://perun.hscs.wmin.ac.uk/~jra/vim/syntax/abc.vim
 " Last Change:	27th April 2001
 

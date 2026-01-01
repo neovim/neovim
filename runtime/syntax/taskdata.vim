@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	task data
-" Maintainer:	John Florian <jflorian@doubledog.org> (invalid)
+" Maintainer:	John Florian <jflorian@doubledog.org>
 " Updated:	Wed Jul  8 19:46:20 EDT 2009
 
 

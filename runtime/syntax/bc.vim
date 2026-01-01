@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	bc - An arbitrary precision calculator language
-" Maintainer:	Vladimir Scholtz <vlado@gjh.sk> (invalid)
+" Maintainer:	Vladimir Scholtz <vlado@gjh.sk>
 " Last change:	2012 Jun 01
 " 		(Dominique Pelle added @Spell)
 " Available on:	www.gjh.sk/~vlado/bc.vim

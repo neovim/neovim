@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Vue.js Single File Component
-" Maintainer:	Ralph Giles <giles@thaumas.net> (invalid)
+" Maintainer:	Ralph Giles <giles@thaumas.net>
 " URL:		https://vuejs.org/v2/guide/single-file-components.html
 " Last Change:	2019 Jul 8
 

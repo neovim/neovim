@@ -1,6 +1,6 @@
 " Vim completion script
 " Language:	Java Script
-" Maintainer:	Jay Sitter (jay@jaysitter.com) (invalid)
+" Maintainer:	Jay Sitter (jay@jaysitter.com)
 " URL: https://github.com/jsit/javascriptcomplete.vim/
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " Last Change:	2020 Jul 30

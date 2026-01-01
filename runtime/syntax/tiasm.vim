@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	TI linear assembly language
 " Document:	https://downloads.ti.com/docs/esd/SPRUI03B/#SPRUI03B_HTML/assembler-description.html
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
 " Last Change:	2025 Jan 08
 
 if exists("b:current_syntax")

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	CUDA (NVIDIA Compute Unified Device Architecture)
-" Maintainer:	Timothy B. Terriberry <tterribe@users.sourceforge.net> (invalid)
+" Maintainer:	Timothy B. Terriberry <tterribe@users.sourceforge.net>
 " Last Change:	2024 Apr 04
 " Contributor:  jiangyinzuo
 

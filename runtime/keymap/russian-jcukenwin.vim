@@ -2,7 +2,7 @@
 " (slightly incompatible with XFree86 'ru' keymap - makes use of NUMERO SIGN)
 " Useful mainly with utf-8 but may work with other encodings
 
-" Maintainer:   Artem Chuprina <ran@ran.pp.ru> (invalid)
+" Maintainer:   Artem Chuprina <ran@ran.pp.ru>
 " Last Changed: 2001 Jun 23
 " 2025 Mar 17 by The Vim Project (added /, #16912)
 

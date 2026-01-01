@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Intel HEX
-" Maintainer:	Markus Heidelberg <markus.heidelberg@web.de> (invalid)
+" Maintainer:	Markus Heidelberg <markus.heidelberg@web.de>
 " Previous version:	Sams Ricahrd <sams@ping.at>
 " Last Change:	2015 Feb 24
 

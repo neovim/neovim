@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		OpenSCAD
-" Maintainer:	Niklas Adam <adam@oddodd.org> (invalid)
+" Maintainer:	Niklas Adam <adam@oddodd.org>
 " Last change:	2022-04-15
 "
 "

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	NQC - Not Quite C, for LEGO mindstorms
 "		NQC homepage: http://www.enteract.com/~dbaum/nqc/
-" Maintainer:	Stefan Scherer <stefan@enotes.de> (invalid)
+" Maintainer:	Stefan Scherer <stefan@enotes.de>
 " Last Change:	2001 May 10
 " URL:		http://www.enotes.de/twiki/pub/Home/LegoMindstorms/nqc.vim
 " Filenames:	.nqc

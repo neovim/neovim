@@ -1,6 +1,6 @@
 " Vim Compiler File
 " Language:             rime_deployer
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
 " URL:                  https://rime.im
 " Latest Revision:      2024-04-09
 " Last Change:          2025 Nov 16 by The Vim Project (set errorformat)

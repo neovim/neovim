@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:     Rust
-" Maintainer:   Patrick Walton <pcwalton@mozilla.com> (invalid)
-" Maintainer:   Ben Blum <bblum@cs.cmu.edu> (invalid)
-" Maintainer:   Chris Morgan <me@chrismorgan.info> (invalid)
+" Maintainer:   Patrick Walton <pcwalton@mozilla.com>
+" Maintainer:   Ben Blum <bblum@cs.cmu.edu>
+" Maintainer:   Chris Morgan <me@chrismorgan.info>
 " Last Change:  2023-09-11
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 

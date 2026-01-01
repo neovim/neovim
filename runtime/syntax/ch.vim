@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Ch
-" Maintainer:   SoftIntegration, Inc. <info@softintegration.com> (invalid)
+" Maintainer:   SoftIntegration, Inc. <info@softintegration.com>
 " URL:		http://www.softintegration.com/download/vim/syntax/ch.vim
 " Last change:	2004 Sep 01
 "		Created based on cpp.vim

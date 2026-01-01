@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     SNOBOL4
-" Maintainer:   Rafal Sulejman <rms@poczta.onet.pl> (invalid)
+" Maintainer:   Rafal Sulejman <rms@poczta.onet.pl>
 " Site: http://rms.republika.pl/vim/syntax/snobol4.vim
 " Last change:  : Thu, 25 Jan 2018 14:21:24 +0100
 " Changes: 

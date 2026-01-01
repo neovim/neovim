@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:          ReDIF
-" Maintainer:        Axel Castellane <axel.castellane@polytechnique.edu> (invalid)
+" Maintainer:        Axel Castellane <axel.castellane@polytechnique.edu>
 " Last Change:       2021 Jul 28
 " Original Author:   Axel Castellane
 " Source:            http://openlib.org/acmes/root/docu/redif_1.html

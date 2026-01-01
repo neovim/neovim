@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	hosts.deny, hosts.allow configuration files
-" Maintainer:	Thilo Six <T.Six@gmx.de> (invalid)
+" Maintainer:	Thilo Six <T.Six@gmx.de>
 " Last Change:	2011 May 01
 " Derived From: conf.vim
 " Credits:	Bram Moolenaar

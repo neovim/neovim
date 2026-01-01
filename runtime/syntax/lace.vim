@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		lace
-" Maintainer:	Jocelyn Fiat <utilities@eiffel.com> (invalid)
+" Maintainer:	Jocelyn Fiat <utilities@eiffel.com>
 " Last Change:	2001 May 09
 
 " Copyright Interactive Software Engineering, 1998

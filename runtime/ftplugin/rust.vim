@@ -1,6 +1,6 @@
 " Language:	Rust
 " Description:	Vim ftplugin for Rust
-" Maintainer:	Chris Morgan <me@chrismorgan.info> (invalid)
+" Maintainer:	Chris Morgan <me@chrismorgan.info>
 " Last Change:	2024 Mar 17
 "		2024 May 23 by Riley Bruins <ribru17@gmail.com ('commentstring')
 "		2025 Dec 09 update 'textwidth# to 100 #18892

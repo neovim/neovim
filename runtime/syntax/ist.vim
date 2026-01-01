@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Makeindex style file, *.ist
-" Maintainer:	Peter Meszaros <pmeszaros@effice.hu> (invalid)
+" Maintainer:	Peter Meszaros <pmeszaros@effice.hu>
 " Last Change:	2012 Jan 08 by Thilo Six
 
 " quit when a syntax file was already loaded

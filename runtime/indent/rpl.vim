@@ -2,7 +2,7 @@
 " Language:	RPL/2
 " Version:	0.2
 " Last Change:	2017 Jun 13
-" Maintainer:	BERTRAND Joël <rpl2@free.fr> (invalid)
+" Maintainer:	BERTRAND Joël <rpl2@free.fr>
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")

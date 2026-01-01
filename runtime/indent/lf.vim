@@ -1,6 +1,6 @@
 " Vim indent file
 " Language: lf file manager configuration file (lfrc)
-" Maintainer: Andis Sprinkis <andis@sprinkis.com> (invalid)
+" Maintainer: Andis Sprinkis <andis@sprinkis.com>
 " URL: https://github.com/andis-sprinkis/lf-vim
 " Last Change: 26 Oct 2025
 

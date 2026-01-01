@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	SPA JSON
-" Maintainer:	David Mandelberg <david@mandelberg.org> (invalid)
+" Maintainer:	David Mandelberg <david@mandelberg.org>
 " Last Change:	2025 Mar 22
 
 if exists('b:did_ftplugin')

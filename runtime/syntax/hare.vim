@@ -1,6 +1,6 @@
 " Vim syntax file.
 " Language:    Hare
-" Maintainer:  Amelia Clarke <selene@perilune.dev> (invalid)
+" Maintainer:  Amelia Clarke <selene@perilune.dev>
 " Last Change: 2024-05-10
 " Upstream:    https://git.sr.ht/~sircmpwn/hare.vim
 

@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	Ch
-" Maintainer:	SoftIntegration, Inc. <info@softintegration.com> (invalid)
+" Maintainer:	SoftIntegration, Inc. <info@softintegration.com>
 " URL:		http://www.softintegration.com/download/vim/indent/ch.vim
 " Last change:	2006 Apr 30
 " 		2023 Aug 28 by Vim Project (undo_indent)

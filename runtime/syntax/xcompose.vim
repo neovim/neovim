@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	XCompose
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	.XCompose, Compose
 " Last Change:	2023 Nov 09
 

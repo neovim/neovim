@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Software Distributor product specification file
 "		(POSIX 1387.2-1995).
-" Maintainer:	Rex Barzee <rex_barzee@hp.com> (invalid)
+" Maintainer:	Rex Barzee <rex_barzee@hp.com>
 " Last change:	25 Apr 2001
 
 " quit when a syntax file was already loaded

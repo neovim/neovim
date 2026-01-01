@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:         Rust
-" Author:           Chris Morgan <me@chrismorgan.info> (invalid)
+" Author:           Chris Morgan <me@chrismorgan.info>
 " Last Change:      2023-09-11
 " 2024 Jul 04 by Vim Project: use shiftwidth() instead of hard-coding shifted values #15138
 " 2025 Dec 29 by Vim Project: clean up

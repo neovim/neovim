@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    Modula-2 (ISO)
-" Maintainer:  B.Kowarsch <trijezdci@moc.liamg> (invalid)
+" Maintainer:  B.Kowarsch <trijezdci@moc.liamg>
 " Last Change: 2016 August 22
 
 " ----------------------------------------------------

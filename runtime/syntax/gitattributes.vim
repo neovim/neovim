@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	git attributes
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Filenames:	.gitattributes, *.git/info/attributes
 " Last Change:	2022 Sep 09
 

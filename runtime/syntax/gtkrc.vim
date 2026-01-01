@@ -1,7 +1,7 @@
 " Vim syntax file
 " This is a GENERATED FILE. Please always refer to source file at the URI below.
 " Language: Gtk+ theme files `gtkrc'
-" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz> (invalid)
+" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2002-10-31
 " URL: http://trific.ath.cx/Ftp/vim/syntax/gtkrc.vim
 

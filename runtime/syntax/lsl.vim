@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Linden Scripting Language
-" Maintainer:	Timo Frenay <timo@frenay.net> (invalid)
+" Maintainer:	Timo Frenay <timo@frenay.net>
 " Last Change:	2012 Apr 30
 
 " Quit when a syntax file was already loaded

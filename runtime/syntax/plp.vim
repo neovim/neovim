@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	PLP (Perl in HTML)
-" Maintainer:	Juerd <juerd@juerd.nl> (invalid)
+" Maintainer:	Juerd <juerd@juerd.nl>
 " Last Change:	2003 Apr 25
 " Cloned From:	aspperl.vim
 

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Makefile
-" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name> (invalid), <https://github.com/rohieb>
+" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>, <https://github.com/rohieb>
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
 " Last Change:	2022 Nov 06

@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	jj description
-" Maintainer:	Gregory Anders <greg@gpanders.com> (invalid)
+" Maintainer:	Gregory Anders <greg@gpanders.com>
 " Last Change:	2024 May 8
 
 if exists('b:did_ftplugin')

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Cyn++
-" Maintainer:   Phil Derrick <phild@forteds.com> (invalid)
+" Maintainer:   Phil Derrick <phild@forteds.com>
 " Last change:  2001 Sep 02
 "
 " Language Information

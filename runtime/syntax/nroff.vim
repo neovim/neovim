@@ -1,6 +1,6 @@
 " VIM syntax file
 " Language:	nroff/groff
-" Maintainer:	John Marshall <jmarshall@hey.com> (invalid)
+" Maintainer:	John Marshall <jmarshall@hey.com>
 " Previous Maintainer:	Pedro Alejandro López-Valencia <palopezv@gmail.com>
 " Previous Maintainer:	Jérôme Plût <Jerome.Plut@ens.fr>
 " Last Change:	2021 Mar 28

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	splint (C with lclint/splint Annotations)
-" Maintainer:	Ralf Wildenhues <Ralf.Wildenhues@gmx.de> (invalid)
+" Maintainer:	Ralf Wildenhues <Ralf.Wildenhues@gmx.de>
 " Splint Home:	http://www.splint.org/
 " Last Change:	$Date: 2004/06/13 20:08:47 $
 " $Revision: 1.1 $

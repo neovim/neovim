@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	Pyrex
-" Maintainer:	Marco Barisione <marco.bari@people.it> (invalid)
+" Maintainer:	Marco Barisione <marco.bari@people.it>
 " URL:		http://marcobari.altervista.org/pyrex_vim.html
 " Last Change:	2005 Jun 24
 

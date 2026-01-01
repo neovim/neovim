@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	JSP (Java Server Pages)
-" Maintainer:	Rafael Garcia-Suarez <rgarciasuarez@free.fr> (invalid)
+" Maintainer:	Rafael Garcia-Suarez <rgarciasuarez@free.fr>
 " URL:		http://rgarciasuarez.free.fr/vim/syntax/jsp.vim
 " Last change:	2004 Feb 02
 " Credits : Patch by Darren Greaves (recognizes <jsp:...> tags)

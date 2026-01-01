@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    Modula-2 (R10)
-" Maintainer:  B.Kowarsch <trijezdci@moc.liamg> (invalid)
+" Maintainer:  B.Kowarsch <trijezdci@moc.liamg>
 " Last Change: 2020 June 18 (moved repository from bb to github)
 
 " ----------------------------------------------------

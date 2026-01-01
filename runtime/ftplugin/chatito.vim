@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	Chatito
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
 " Last Change:	2022 Sep 19
 
 if exists('b:did_ftplugin')

@@ -1,6 +1,6 @@
 " Vim Compiler File
 " Compiler:	Modelsim Vcom
-" Maintainer:	Paul Baleme <pbaleme@mail.com> (invalid)
+" Maintainer:	Paul Baleme <pbaleme@mail.com>
 " Contributors: Enno Nagel
 " Last Change:	2024 Mar 29
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)

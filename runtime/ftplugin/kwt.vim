@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	Kimwitu++
-" Maintainer:	Michael Piefel <entwurf@piefel.de> (invalid)
+" Maintainer:	Michael Piefel <entwurf@piefel.de>
 " Last Change:	10 March 2012
 "		2024 Jan 14 by Vim Project (browsefilter)
 

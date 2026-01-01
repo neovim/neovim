@@ -1,6 +1,6 @@
 " Vim syntax file
 " Antlr:	ANTLR, Another Tool For Language Recognition <www.antlr.org>
-" Maintainer:	Mathieu Clabaut <mathieu.clabaut@free.fr> (invalid)
+" Maintainer:	Mathieu Clabaut <mathieu.clabaut@free.fr>
 " LastChange:	02 May 2001
 " Original:	Comes from JavaCC.vim
 

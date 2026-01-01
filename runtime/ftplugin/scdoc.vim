@@ -1,5 +1,5 @@
 " scdoc filetype plugin
-" Maintainer:	Gregory Anders <contact@gpanders.com> (invalid)
+" Maintainer:	Gregory Anders <contact@gpanders.com>
 " Last Updated:	2022 May 09
 "		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 " Upstream:	https://github.com/gpanders/vim-scdoc

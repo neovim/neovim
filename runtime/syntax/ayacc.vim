@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	AYacc
-" Maintainer:	Mathieu Clabaut <mathieu.clabaut@free.fr> (invalid)
+" Maintainer:	Mathieu Clabaut <mathieu.clabaut@free.fr>
 " LastChange:	2011 Dec 25
 " Original:	Yacc, maintained by Dr. Charles E. Campbell, Jr.
 " Comment:	     Replaced sourcing c.vim file by ada.vim and rename yacc*

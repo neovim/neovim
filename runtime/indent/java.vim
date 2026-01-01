@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Java
 " Previous Maintainer: Toby Allsopp <toby.allsopp@peace.com>
-" Current Maintainer: Hong Xu <hong@topbug.net> (invalid)
+" Current Maintainer: Hong Xu <hong@topbug.net>
 " Homepage: http://www.vim.org/scripts/script.php?script_id=3899
 "           https://github.com/xuhdev/indent-java.vim
 " Last Change:	2016 Mar 7

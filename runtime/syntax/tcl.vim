@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Tcl/Tk
-" Maintainer:	Taylor Venable <taylor@metasyntax.net> (invalid)
+" Maintainer:	Taylor Venable <taylor@metasyntax.net>
 " 		(previously Brett Cannon <brett@python.org>)
 " 		(previously Dean Copsey <copsey@cs.ucdavis.edu>)
 "		(previously Matt Neumann <mattneu@purpleturtle.com>)

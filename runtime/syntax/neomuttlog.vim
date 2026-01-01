@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:  NeoMutt log files
-" Maintainer:  Richard Russon <rich@flatcap.org> (invalid)
+" Maintainer:  Richard Russon <rich@flatcap.org>
 " Last Change:  2024 Oct 12
 
 " quit when a syntax file was already loaded

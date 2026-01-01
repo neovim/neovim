@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Matlab
-" Maintainer:	Alex Burka <vim@alexburka.com> (invalid)
+" Maintainer:	Alex Burka <vim@alexburka.com>
 " Credits:	Preben 'Peppe' Guldberg <peppe-vim@wielders.org>
 "		Maurizio Tranchero - maurizio(.)tranchero(@)gmail(.)com
 "		Original author: Mario Eusebio

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	mbsyncrc
-" Maintainer:	Pierrick Guillaume  <pguillaume@fymyte.com> (invalid)
+" Maintainer:	Pierrick Guillaume  <pguillaume@fymyte.com>
 " Last Change:	2025 Apr 13
 " 2025 Jun 04 by Vim project: match TLSType configuration variable
 "

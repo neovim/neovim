@@ -6,7 +6,7 @@
 " English versions of Windows, because those don't provide the AltGr keys.
 " The mapping was tested with Win2k and WinXP.
 
-" Maintainer: Eric Joanis <joanis@cs.toronto.edu> (invalid)
+" Maintainer: Eric Joanis <joanis@cs.toronto.edu>
 " Last Change: 2004 Jan 13
 
 " 2003 Dec 04

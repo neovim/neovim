@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     ChordPro 6 (https://www.chordpro.org)
-" Maintainer:   Niels Bo Andersen <niels@niboan.dk> (invalid)
+" Maintainer:   Niels Bo Andersen <niels@niboan.dk>
 " Last Change:  2022-04-15
 " 2024 Dec 31:  add "keys" as syntax keyword (via: https://groups.google.com/g/vim_dev/c/vP4epus0euM/m/mNoDY6hsCQAJ)
 

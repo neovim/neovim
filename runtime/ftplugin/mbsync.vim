@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:		mbsync configuration file
-" Maintainer:		Pierrick Guillaume <pguillaume@fymyte.com> (invalid)
+" Maintainer:		Pierrick Guillaume <pguillaume@fymyte.com>
 " Last Change:		2025 Apr 13
 
 if (exists('b:did_ftplugin'))

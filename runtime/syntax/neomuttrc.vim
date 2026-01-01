@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	NeoMutt setup files
-" Maintainer:	Richard Russon <rich@flatcap.org> (invalid)
+" Maintainer:	Richard Russon <rich@flatcap.org>
 " Previous Maintainer:	Guillaume Brogi <gui-gui@netcourrier.com>
 " Last Change:	2024 Oct 12
 " Original version based on syntax/muttrc.vim

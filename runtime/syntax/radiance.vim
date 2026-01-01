@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     Radiance Scene Description
-" Maintainer:   Georg Mischler <schorsch@schorsch.com> (invalid)
+" Maintainer:   Georg Mischler <schorsch@schorsch.com>
 " Last change:  26. April. 2001
 
 " Radiance is a lighting simulation software package written

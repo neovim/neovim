@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		SKILL for Diva
-" Maintainer:	Toby Schaffer <jtschaff@eos.ncsu.edu> (invalid)
+" Maintainer:	Toby Schaffer <jtschaff@eos.ncsu.edu>
 " Last Change:	2001 May 09
 " Comments:		SKILL is a Lisp-like programming language for use in EDA
 "				tools from Cadence Design Systems. It allows you to have

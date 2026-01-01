@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     COBOL
-" Maintainer: Ankit Jain <ajatkj@yahoo.co.in> (invalid)
+" Maintainer: Ankit Jain <ajatkj@yahoo.co.in>
 "     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 "     (formerly Davyd Ondrejko <vondraco@columbus.rr.com>)
 "     (formerly Sitaram Chamarty <sitaram@diac.com> and

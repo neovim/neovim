@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Java Properties resource file (*.properties[_*])
-" Maintainer:	Simon Baldwin <simonb@sco.com> (invalid)
+" Maintainer:	Simon Baldwin <simonb@sco.com>
 " Last change:	26th Mar 2000
 
 " =============================================================================
