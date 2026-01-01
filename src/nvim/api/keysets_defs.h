@@ -229,6 +229,12 @@ typedef struct {
 } Dict(get_ns);
 
 typedef struct {
+  OptionalKeys is_set__curswant_;
+  Window win;
+  Buffer buf;
+} Dict(curswant);
+
+typedef struct {
   OptionalKeys is_set__win_text_height_;
   Integer start_row;
   Integer end_row;
