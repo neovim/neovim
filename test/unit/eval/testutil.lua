@@ -413,7 +413,7 @@ local function alloc_len(len, get_ptr)
   if type(len) == 'string' or type(len) == 'table' then
     return #len
   elseif len == nil then
-    return eval.strlen(get_ptr())
+    return tonumber(eval.strlen(get_ptr()))
   else
     return len
   end
@@ -435,7 +435,7 @@ local alloc_logging_t = {
     end)
     return {
       func = 'malloc',
-      args = { ffi.offsetof('dictitem_T', 'di_key') + size + 1 },
+      args = { math.max(ffi.sizeof('dictitem_T'), ffi.offsetof('dictitem_T', 'di_key') + size + 1) },
       ret = void(di),
     }
   end,
