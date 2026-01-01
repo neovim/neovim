@@ -1,6 +1,6 @@
 " Vim completion script
 " Language:        Haskell
-" Maintainer:      Daniel Campoverde <alx@sillybytes.net>
+" Maintainer:      Daniel Campoverde <alx@sillybytes.net> (invalid)
 " URL:             https://github.com/alx741/haskellcomplete.vim
 " Last Change:     2019 May 14
 

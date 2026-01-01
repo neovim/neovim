@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:     AutoHotkey
-" Maintainer:   Peter Aronoff <peteraronoff@fastmail.com>
+" Maintainer:   Peter Aronoff <peteraronoff@fastmail.com> (invalid)
 " Last Changed: 2024 Jul 25
 
 if exists("b:did_ftplugin")

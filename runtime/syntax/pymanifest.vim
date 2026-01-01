@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	PyPA manifest
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:	MANIFEST.in
 " Last Change:	2023 Aug 12
 

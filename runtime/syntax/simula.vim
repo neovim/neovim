@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Simula
-" Maintainer:	Haakon Riiser <hakonrk@fys.uio.no>
+" Maintainer:	Haakon Riiser <hakonrk@fys.uio.no> (invalid)
 " URL:		http://folk.uio.no/hakonrk/vim/syntax/simula.vim
 " Last Change:	2001 May 15
 

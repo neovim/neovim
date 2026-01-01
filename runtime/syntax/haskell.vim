@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		Haskell
-" Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
+" Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org> (need to be subscribed to post)
 " Last Change:		2024 Mar 28 by Enrico Maria De Angelis <enricomaria.dean6elis@gmail.com>
 "			2025 Nov 20 by Vim Project: Allow spaces in backticks #18776
 " Original Author:	John Williams <jrw@pobox.com>

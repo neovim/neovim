@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	CWEB
-" Maintainer:	Andreas Scherer <andreas.scherer@pobox.com>
+" Maintainer:	Andreas Scherer <andreas.scherer@pobox.com> (invalid)
 " Last Change:	2011 Dec 25 by Thilo Six
 
 " Details of the CWEB language can be found in the article by Donald E. Knuth

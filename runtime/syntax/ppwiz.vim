@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     PPWizard (preprocessor by Dennis Bareis)
-" Maintainer:   Stefan Schwarzer <s.schwarzer@ndh.net>
+" Maintainer:   Stefan Schwarzer <s.schwarzer@ndh.net> (invalid)
 " URL:			http://www.ndh.net/home/sschwarzer/download/ppwiz.vim
 " Last Change:  2003 May 11
 " Filename:     ppwiz.vim

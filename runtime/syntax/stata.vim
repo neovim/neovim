@@ -1,6 +1,6 @@
 " stata.vim -- Vim syntax file for Stata do, ado, and class files.
 " Language:	Stata and/or Mata
-" Maintainer:	Jeff Pitblado <jpitblado@stata.com>
+" Maintainer:	Jeff Pitblado <jpitblado@stata.com> (invalid)
 " Last Change:	26apr2006
 " Version:	1.1.4
 

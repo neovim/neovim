@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    MuPAD source
-" Maintainer:  Dave Silvia <dsilvia@mchsi.com>
+" Maintainer:  Dave Silvia <dsilvia@mchsi.com> (invalid)
 " Filenames:   *.mu
 " Date:        6/30/2004
 

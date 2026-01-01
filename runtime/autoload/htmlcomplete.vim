@@ -1,6 +1,6 @@
 " Vim completion script
 " Language:	HTML and XHTML
-" Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
+" Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl ) (invalid)
 " Last Change:	2019 Sep 27
 
 " Distinguish between HTML versions.

@@ -1,6 +1,6 @@
 " smcl.vim -- Vim syntax file for smcl files.
 " Language:	SMCL -- Stata Markup and Control Language
-" Maintainer:	Jeff Pitblado <jpitblado@stata.com>
+" Maintainer:	Jeff Pitblado <jpitblado@stata.com> (invalid)
 " Last Change:	26apr2006
 " Version:	1.1.2
 

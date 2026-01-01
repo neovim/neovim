@@ -1,4 +1,4 @@
-" Maintainer:   Oliver Corff <oliver.corff@email.de>
+" Maintainer:   Oliver Corff <oliver.corff@email.de> (invalid)
 " Last Changed: 2018 Feb 12
 
 scriptencoding utf-8

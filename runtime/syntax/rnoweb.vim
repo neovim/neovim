@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    R noweb Files
-" Maintainer:  Johannes Ranke <jranke@uni-bremen.de>
+" Maintainer:  Johannes Ranke <jranke@uni-bremen.de> (invalid)
 " Last Change: Thu Apr 05, 2018  11:06PM
 " Version:     0.9.1
 " Remarks:     - This file is inspired by the proposal of 

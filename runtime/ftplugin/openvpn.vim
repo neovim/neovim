@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	OpenVPN
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Last Change:	2022 Oct 16
 " 		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 

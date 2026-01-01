@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:      TT2 (Perl Template Toolkit)
-" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com> (need to be subscribed to post)
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues

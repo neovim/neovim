@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: crontab
-" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
+" Maintainer: David Necas (Yeti) <yeti@physics.muni.cz> (invalid)
 " Original Maintainer: John Hoelzel johnh51@users.sourceforge.net
 " License: This file can be redistribued and/or modified under the same terms
 "   as Vim itself.

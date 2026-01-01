@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	AceDB model files
-" Maintainer:	Stewart Morris (Stewart.Morris@ed.ac.uk)
+" Maintainer:	Stewart Morris (Stewart.Morris@ed.ac.uk) (invalid)
 " Last change:	Thu Apr 26 10:38:01 BST 2001
 " URL:		http://www.ed.ac.uk/~swmorris/vim/acedb.vim
 

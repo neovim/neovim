@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:             Zathurarc
-" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Documentation:        https://pwmt.org/projects/zathura/documentation/
 " Upstream:             https://github.com/Freed-Wu/zathurarc.vim
 " Latest Revision:      2024-09-16

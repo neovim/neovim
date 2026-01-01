@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	TI Code Composer Studio General Extension Language
 " Document:	https://downloads.ti.com/ccs/esd/documents/users_guide/ccs_debug-gel.html
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 " Last Change:	2024 Dec 25
 
 if exists("b:did_ftplugin") | finish | endif

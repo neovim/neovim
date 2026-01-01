@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	X resources files like ~/.Xdefaults (xrdb)
-" Maintainer:	Johannes Zellner <johannes@zellner.org>
+" Maintainer:	Johannes Zellner <johannes@zellner.org> (invalid)
 "		Author and previous maintainer:
 "		Gautam H. Mudunuri <gmudunur@informatica.com>
 " Last Change:	Di, 09 Mai 2006 23:10:23 CEST

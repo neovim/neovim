@@ -1,6 +1,6 @@
 " filetype plugin for TeX and variants
 " Language:     TeX (ft=initex)
-" Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org>
+" Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org> (invalid)
 " Version:	1.0
 " Last Change:	Wed 19 Apr 2006
 " Last Change:	Thu 23 May 2024 by Riley Bruins <ribru17@gmail.com> ('commentstring')

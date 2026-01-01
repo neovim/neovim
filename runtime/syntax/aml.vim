@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	AML (ARC/INFO Arc Macro Language)
 " Written By:	Nikki Knuit <Nikki.Knuit@gems3.gov.bc.ca>
-" Maintainer:	Todd Glover <todd.glover@gems9.gov.bc.ca>
+" Maintainer:	Todd Glover <todd.glover@gems9.gov.bc.ca> (invalid)
 " Last Change:	2001 May 10
 
 " FUTURE CODING:  Bold application commands after &sys, &tty

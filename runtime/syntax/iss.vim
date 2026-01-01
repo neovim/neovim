@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:             Inno Setup File (iss file) and My InnoSetup extension
-" Maintainer:           Jason Mills (jmills@cs.mun.ca)
+" Maintainer:           Jason Mills (jmills@cs.mun.ca) (invalid)
 " Previous Maintainer:  Dominique Stéphan (dominique@mggen.com)
 " Last Change:          2023 Jan 26
 "

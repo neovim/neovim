@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SNNS network file
-" Maintainer:	Davide Alberani <alberanid@bigfoot.com>
+" Maintainer:	Davide Alberani <alberanid@bigfoot.com> (invalid)
 " Last Change:	28 Apr 2001
 " Version:	0.2
 " URL:		http://digilander.iol.it/alberanid/vim/syntax/snnsnet.vim

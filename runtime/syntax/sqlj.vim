@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	sqlj
-" Maintainer:	Andreas Fischbach <afisch@altavista.com>
+" Maintainer:	Andreas Fischbach <afisch@altavista.com> (invalid)
 "		This file is based on sql.vim && java.vim (thanx)
 "		with a handful of additional sql words and still
 "		a subset of whatever standard

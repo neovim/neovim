@@ -1,6 +1,6 @@
 " Vim completion script
 " Language:	XML
-" Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
+" Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl ) (invalid)
 " Last Change:	2013 Jun 29
 " Version: 1.9
 "

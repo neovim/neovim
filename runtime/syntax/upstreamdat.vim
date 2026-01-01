@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		Innovation Data Processing upstream.dat file
-" Maintainer:		Rob Owens <rowens@fdrinnovation.com>
+" Maintainer:		Rob Owens <rowens@fdrinnovation.com> (invalid)
 " Latest Revision:	2013-11-27
 
 " Quit when a syntax file was already loaded

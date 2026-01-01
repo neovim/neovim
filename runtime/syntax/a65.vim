@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	xa 6502 cross assembler
-" Maintainer:	Clemens Kirchgatterer <clemens@1541.org>
+" Maintainer:	Clemens Kirchgatterer <clemens@1541.org> (invalid)
 " Last Change:	2016 Aug 31
 
 " quit when a syntax file was already loaded

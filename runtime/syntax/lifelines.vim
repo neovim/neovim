@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	LifeLines (v 3.0.62) <http://lifelines.sourceforge.net>
-" Maintainer:	Patrick Texier <p.texier@orsennes.com>
+" Maintainer:	Patrick Texier <p.texier@orsennes.com> (invalid)
 " Location:	<http://patrick.texier.free.fr/vim/syntax/lifelines.vim>
 " Last Change:	2010 May 7
 

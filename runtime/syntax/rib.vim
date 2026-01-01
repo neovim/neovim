@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Renderman Interface Bytestream
-" Maintainer:	Andrew Bromage <ajb@spamcop.net>
+" Maintainer:	Andrew Bromage <ajb@spamcop.net> (invalid)
 " Last Change:	2003 May 11
 "
 

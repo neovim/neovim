@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: KDL
-" Maintainer: Aram Drevekenin <aram@poor.dev>
+" Maintainer: Aram Drevekenin <aram@poor.dev> (invalid)
 " Maintainer: Yinzuo Jiang <jiangyinzuo@foxmail.com>
 " Latest Revision: 2024-06-16
 

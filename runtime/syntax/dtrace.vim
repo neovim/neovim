@@ -4,7 +4,7 @@
 "           http://docs.sun.com/app/docs/doc/817-6223
 " Version: 1.5
 " Last Change: 2008/04/05
-" Maintainer: Nicolas Weber <nicolasweber@gmx.de>
+" Maintainer: Nicolas Weber <nicolasweber@gmx.de> (invalid)
 
 " dtrace lexer and parser are at
 " http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libdtrace/common/dt_lex.l

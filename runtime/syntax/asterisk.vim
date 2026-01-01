@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Asterisk config file
-" Maintainer: 	Jean Aunis <jean.aunis@yahoo.fr>
+" Maintainer: 	Jean Aunis <jean.aunis@yahoo.fr> (invalid)
 " Previous Maintainer:	brc007
 " Updated for 1.2 by Tilghman Lesher (Corydon76)
 " Last Change:	2015 Feb 27

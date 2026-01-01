@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SMITH
-" Maintainer:	Rafal M. Sulejman <rms@poczta.onet.pl>
+" Maintainer:	Rafal M. Sulejman <rms@poczta.onet.pl> (invalid)
 " Last Change:	21.07.2000
 
 " quit when a syntax file was already loaded

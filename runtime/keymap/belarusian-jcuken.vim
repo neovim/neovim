@@ -2,7 +2,7 @@
 " Useful mainly with UTF-8, but may work with other encodings.
 
 " Derived From: russian-jcuken.vim
-" Maintainer:   Aliaksei Nestserau <aliaksei@screencustoms.com>
+" Maintainer:   Aliaksei Nestserau <aliaksei@screencustoms.com> (invalid)
 " Last Changed: 2012 Jul 23
 
 " All characters are given literally, conversion to another encoding (e.g.,

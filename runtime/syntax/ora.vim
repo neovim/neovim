@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Oracle config files (.ora) (Oracle 8i, ver. 8.1.5)
-" Maintainer:	Sandor Kopanyi <sandor.kopanyi@mailbox.hu>
+" Maintainer:	Sandor Kopanyi <sandor.kopanyi@mailbox.hu> (invalid)
 " Url:		<->
 " Last Change:	2003 May 11
 

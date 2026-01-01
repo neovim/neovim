@@ -1,6 +1,6 @@
 " Vim syntax file for Fvwm-2.5.22
 " Language:		Fvwm{1,2} configuration file
-" Maintainer:		Gautam Iyer <gi1242@users.sourceforge.net>
+" Maintainer:		Gautam Iyer <gi1242@users.sourceforge.net> (invalid)
 " Previous Maintainer:	Haakon Riiser <hakonrk@fys.uio.no>
 " Last Change:		Sat 29 Sep 2007 11:08:34 AM PDT
 " 2025 Dec 14: Update fvwm2 keywords #18924

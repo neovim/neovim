@@ -1,5 +1,5 @@
 " Vim Keymap file for greek
-" Maintainer: Grigorios Magklis <maglis@cs.rochester.edu>
+" Maintainer: Grigorios Magklis <maglis@cs.rochester.edu> (invalid)
 " Patched for MS-Windows CP1253: Panagiotis Louridas <louridas@acm.org>
 " Last Updated: Fri 13 Feb 2004 13:01:33
 "

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Pine (email program) run commands
-" Maintainer:	David Pascoe <pascoedj@spamcop.net>
+" Maintainer:	David Pascoe <pascoedj@spamcop.net> (invalid)
 " Last Change:	Thu Feb 27 10:18:48 WST 2003, update for pine 4.53
 
 " quit when a syntax file was already loaded

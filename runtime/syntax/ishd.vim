@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	InstallShield Script
-" Maintainer:	Robert M. Cortopassi <cortopar@mindspring.com>
+" Maintainer:	Robert M. Cortopassi <cortopar@mindspring.com> (invalid)
 " Last Change:	2001 May 09
 
 " quit when a syntax file was already loaded

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Apache-Style configuration files (proftpd.conf/apache.conf/..)
-" Maintainer:	Ben RUBSON <ben.rubson@gmail.com>
+" Maintainer:	Ben RUBSON <ben.rubson@gmail.com> (invalid)
 " Former Maintainer:	Christian Hammers <ch@westend.com>
 " ChangeLog:
 "	2017-12-17,ch

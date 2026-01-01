@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     Intel C++ 7.1
-" Maintainer:   David Harrison <david_jr@users.sourceforge.net>
+" Maintainer:   David Harrison <david_jr@users.sourceforge.net> (invalid)
 " Last Change:  2012 Apr 30
 "		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 

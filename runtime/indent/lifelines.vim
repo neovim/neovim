@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	LifeLines
-" Maintainer:	Patrick Texier <p.texier@orsennes.com>
+" Maintainer:	Patrick Texier <p.texier@orsennes.com> (invalid)
 " Location:	<http://patrick.texier.free.fr/vim/indent/lifelines.vim>
 " Last Change:	2010 May 7
 

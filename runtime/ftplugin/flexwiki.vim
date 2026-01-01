@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:     FlexWiki, http://www.flexwiki.com/
-" Maintainer:   George V. Reilly  <george@reilly.org>
+" Maintainer:   George V. Reilly  <george@reilly.org> (invalid)
 " Home:         http://www.georgevreilly.com/vim/flexwiki/
 " Other Home:   http://www.vim.org/scripts/script.php?script_id=1529
 " Author:       George V. Reilly

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		SKILL
-" Maintainer:	Toby Schaffer <jtschaff@eos.ncsu.edu>
+" Maintainer:	Toby Schaffer <jtschaff@eos.ncsu.edu> (invalid)
 " Comments:		SKILL is a Lisp-like programming language for use in EDA
 "				tools from Cadence Design Systems. It allows you to have
 "				a programming environment within the Cadence environment

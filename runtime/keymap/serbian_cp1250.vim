@@ -1,6 +1,6 @@
 " Vim Keymap file for Serbian characters, classical variant, cp1250 encoding
 "
-" Maintainer:   Aleksandar Veselinovic <aleksa@cs.cmu.edu>
+" Maintainer:   Aleksandar Veselinovic <aleksa@cs.cmu.edu> (invalid)
 " URL:		    http://galeb.etf.bg.ac.yu/~alexa/vim/keymap/serbian-cp1250.vim
 " Last Changed: 2002 Mar 29
 

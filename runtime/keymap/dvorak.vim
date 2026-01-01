@@ -1,4 +1,4 @@
-" Maintainer:   Ashish SHUKLA <wahjava@members.fsf.org>
+" Maintainer:   Ashish SHUKLA <wahjava@members.fsf.org> (invalid)
 " Last Changed: 2009 Jul 04
 "
 " All characters are ASCII, conversion to another encoding (e.g., UTF-8)

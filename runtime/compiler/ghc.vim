@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:         GHC Haskell Compiler
-" Maintainer:       Daniel Campoverde <alx@sillybytes.net>
+" Maintainer:       Daniel Campoverde <alx@sillybytes.net> (invalid)
 " Latest Revision:  2016-11-29
 
 if exists("current_compiler")

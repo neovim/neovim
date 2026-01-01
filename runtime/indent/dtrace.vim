@@ -3,7 +3,7 @@
 "           http://docs.sun.com/app/docs/doc/817-6223
 " Last Change: 2008/03/20
 " Version: 1.2
-" Maintainer: Nicolas Weber <nicolasweber@gmx.de>
+" Maintainer: Nicolas Weber <nicolasweber@gmx.de> (invalid)
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")

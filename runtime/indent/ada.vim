@@ -3,7 +3,7 @@
 "     Language: Ada (2005)
 "	   $Id: ada.vim 887 2008-07-08 14:29:01Z krischik $
 "    Copyright: Copyright (C) 2006 Martin Krischik
-"   Maintainer: Martin Krischik <krischik@users.sourceforge.net>
+"   Maintainer: Martin Krischik <krischik@users.sourceforge.net> (invalid)
 "		Neil Bird <neil@fnxweb.com>
 "		Ned Okie <nokie@radford.edu>
 "      $Author: krischik $

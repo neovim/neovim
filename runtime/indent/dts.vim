@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:		Device Tree
-" Maintainer:		Roland Hieber, Pengutronix <rhi@pengutronix.de>
+" Maintainer:		Roland Hieber, Pengutronix <rhi@pengutronix.de> (invalid)
 "
 if exists("b:did_indent")
     finish

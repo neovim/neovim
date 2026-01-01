@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	generic ChangeLog file
 " Written By:	Gediminas Paulauskas <menesis@delfi.lt>
-" Maintainer:	Corinna Vinschen <vinschen@redhat.com>
+" Maintainer:	Corinna Vinschen <vinschen@redhat.com> (invalid)
 " Last Change:	June 1, 2003
 
 " quit when a syntax file was already loaded

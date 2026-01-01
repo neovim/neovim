@@ -1,5 +1,5 @@
 " Polish letters keymap for iso-8859-2
-" Maintainer:	HS6_06	<hs6_06@o2.pl>
+" Maintainer:	HS6_06	<hs6_06@o2.pl> (invalid)
 " Last Changed:	2005 Jan 12
 " Current version: 1.0.2
 " History: polish-slash.vim

@@ -1,6 +1,6 @@
 " Vim compiler file
 " Compiler:     Mono C# Compiler
-" Maintainer:   Jarek Sobiecki <harijari@go2.pl>
+" Maintainer:   Jarek Sobiecki <harijari@go2.pl> (invalid)
 " Contributors: Peter Collingbourne and Enno Nagel
 " Last Change:  2024 Mar 29
 "               2024 Apr 05 by The Vim Project (removed :CompilerSet definition)

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	purify log files
-" Maintainer:	Gautam H. Mudunuri <gmudunur@informatica.com>
+" Maintainer:	Gautam H. Mudunuri <gmudunur@informatica.com> (invalid)
 " Last Change:	2003 May 11
 
 " quit when a syntax file was already loaded

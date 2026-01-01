@@ -8,7 +8,7 @@
 "
 " Vim syntax file
 " Language: swift
-" Maintainer: Joe Groff <jgroff@apple.com>
+" Maintainer: Joe Groff <jgroff@apple.com> (invalid)
 " Last Change: 2018 Jan 21
 "
 " Vim maintainer: Emir SARI <bitigchi@me.com>

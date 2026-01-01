@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	(VAX) Macro Assembly
-" Maintainer:	Tom Uijldert <tom.uijldert [at] cmg.nl>
+" Maintainer:	Tom Uijldert <tom.uijldert [at] cmg.nl> (invalid)
 " Last change:	2004 May 16
 "
 " This is incomplete. Feel free to contribute...

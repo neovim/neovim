@@ -1,4 +1,4 @@
-" Maintainer:   Laszlo Zavaleta <zavaleta@smartchat.net.au>
+" Maintainer:   Laszlo Zavaleta <zavaleta@smartchat.net.au> (invalid)
 " Last Changed: 2003 Aug 08
 " it has all the accents and a few of the character alterations
 

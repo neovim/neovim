@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	LLVM IR
 " Last Change:	2024 Oct 22
-" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
+" Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu> (invalid)
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1

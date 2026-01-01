@@ -1,5 +1,5 @@
 " Vim Keymap file for Hanyu Pinyin tone marks through numbers.
-" Maintainer: Fredrik Roubert <fredrik@roubert.name>
+" Maintainer: Fredrik Roubert <fredrik@roubert.name> (invalid)
 " Last Changed: February 15, 2004
 
 " All characters are given literally.

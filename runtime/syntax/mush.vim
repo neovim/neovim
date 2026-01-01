@@ -1,5 +1,5 @@
 " MUSHcode syntax file
-" Maintainer: Rick Bird <nveid@nveid.com>
+" Maintainer: Rick Bird <nveid@nveid.com> (invalid)
 " Based on vim Syntax file by: Bek Oberin <gossamer@tertius.net.au>
 " Last Updated: Fri Nov 04 20:28:15 2005
 "

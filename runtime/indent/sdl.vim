@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:	SDL
-" Maintainer:	Michael Piefel <entwurf@piefel.de>
+" Maintainer:	Michael Piefel <entwurf@piefel.de> (invalid)
 " Last Change:	2021 Oct 03
 
 " Shamelessly stolen from the Vim-Script indent file

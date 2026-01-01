@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Lynx 2.7.1 style file
-" Maintainer:	Scott Bigham <dsb@killerbunnies.org>
+" Maintainer:	Scott Bigham <dsb@killerbunnies.org> (invalid)
 " Last Change:	2004 Oct 06
 
 " quit when a syntax file was already loaded

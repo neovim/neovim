@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	m17n database
-" Maintainer:	David Mandelberg <david@mandelberg.org>
+" Maintainer:	David Mandelberg <david@mandelberg.org> (invalid)
 " Last Change:	2025 Feb 21
 "
 " https://www.nongnu.org/m17n/manual-en/m17nDBFormat.html describes the

@@ -1,6 +1,6 @@
 "   Vim indent file
 "   Language:	    Objective-C
-"   Maintainer:	    Kazunobu Kuriyama <kazunobu.kuriyama@nifty.com>
+"   Maintainer:	    Kazunobu Kuriyama <kazunobu.kuriyama@nifty.com> (invalid)
 "   Last Change:    2022 Apr 06
 
 " Only load this indent file when no other was loaded.

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     WSML
-" Maintainer:   Thomas Haselwanter <thomas.haselwanter@deri.org>
+" Maintainer:   Thomas Haselwanter <thomas.haselwanter@deri.org> (invalid)
 " URL:		none
 " Last Change:  2006 Apr 30
 

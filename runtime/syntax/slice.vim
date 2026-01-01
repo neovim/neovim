@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Slice (ZeroC's Specification Language for Ice)
-" Maintainer:	Morel Bodin <slice06@nym.hush.com>
+" Maintainer:	Morel Bodin <slice06@nym.hush.com> (invalid)
 " Last Change:	2005 Dec 03
 
 " quit when a syntax file was already loaded

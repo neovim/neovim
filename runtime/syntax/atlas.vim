@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	ATLAS
-" Maintainer:	Inaki Saez <jisaez@sfe.indra.es>
+" Maintainer:	Inaki Saez <jisaez@sfe.indra.es> (invalid)
 " Last Change:	2001 May 09
 
 " quit when a syntax file was already loaded

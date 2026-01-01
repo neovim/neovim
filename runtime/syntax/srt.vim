@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SubRip
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:	*.srt
 " Last Change:	2022 Sep 12
 

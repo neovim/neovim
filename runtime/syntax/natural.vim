@@ -2,7 +2,7 @@
 "
 " Language:	NATURAL
 " Version:	2.1.0.5
-" Maintainer:	Marko von Oppen <marko@von-oppen.com>
+" Maintainer:	Marko von Oppen <marko@von-oppen.com> (invalid)
 " Last Changed:	2012-02-05 18:50:43
 " Support:	http://www.von-oppen.com/
 

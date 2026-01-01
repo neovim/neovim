@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	dts/dtsi (device tree files)
-" Maintainer:	Daniel Mack <vim@zonque.org>
+" Maintainer:	Daniel Mack <vim@zonque.org> (invalid)
 " Last Change:	2023 Apr 28
 
 if exists("b:current_syntax")

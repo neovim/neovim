@@ -1,7 +1,7 @@
 " Vim syntax file
 " This is a GENERATED FILE. Please always refer to source file at the URI below.
 " Language: Web2C TeX texmf.cnf configuration file
-" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
+" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz> (invalid)
 " Last Change: 2001-05-13
 " URL: http://physics.muni.cz/~yeti/download/syntax/texmf.vim
 

@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	Mathematica
-" Maintainer:	Ian Ford <ianf@wolfram.com>
+" Maintainer:	Ian Ford <ianf@wolfram.com> (invalid)
 " Last Change:	2019 Jan 22
 " 		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 

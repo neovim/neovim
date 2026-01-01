@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Chatito
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:	*.chatito
 " Last Change:	2022 Sep 19
 

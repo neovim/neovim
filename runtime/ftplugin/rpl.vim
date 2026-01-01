@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:     RPL/2
-" Maintainer:   Joël BERTRAND <rpl2@free.fr>
+" Maintainer:   Joël BERTRAND <rpl2@free.fr> (invalid)
 " Last Change:	2025 Jun 08
 " Version: 		0.1
 

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	FORM
 " Version: 2.0
-" Maintainer:	Michael M. Tung <michael.tung@uni-mainz.de>
+" Maintainer:	Michael M. Tung <michael.tung@uni-mainz.de> (invalid)
 " Last Change: <Thu Oct 23 13:11:21 CEST 2008>
 " Past Change: <October 2008 Thomas Reiter thomasr@nikhef.nl>
 " Past Change: <Wed, 2005/05/25 09:24:58 arwagner wptx44>

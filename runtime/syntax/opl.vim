@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	OPL
-" Maintainer:	Czo <Olivier.Sirol@lip6.fr>
+" Maintainer:	Czo <Olivier.Sirol@lip6.fr> (invalid)
 " Last Change:	2012 Feb 03 by Thilo Six
 " $Id: opl.vim,v 1.1 2004/06/13 17:34:11 vimboss Exp $
 

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	3D wavefront's obj file
-" Maintainer:	Vincent Berthoux <twinside@gmail.com>
+" Maintainer:	Vincent Berthoux <twinside@gmail.com> (invalid)
 " File Types:	.obj (used in 3D)
 " Last Change:  2010 May 18
 "

@@ -1,5 +1,5 @@
 " Language:    OCaml
-" Maintainer:  David Baelde        <firstname.name@ens-lyon.org>
+" Maintainer:  David Baelde        <firstname.name@ens-lyon.org> (invalid)
 "              Mike Leary          <leary@nwlink.com>
 "              Markus Mottl        <markus.mottl@gmail.com>
 "              Pierre Vittet       <pierre-vittet@pvittet.com>

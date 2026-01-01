@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	OpenVPN
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:	*.ovpn
 " Last Change:	2022 Oct 16
 

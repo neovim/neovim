@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:		VHDL [VHSIC (Very High Speed Integrated Circuit) Hardware Description Language]
-" Maintainer:		Daniel Kho <daniel.kho@logik.haus>
+" Maintainer:		Daniel Kho <daniel.kho@logik.haus> (invalid)
 " Previous Maintainer:	Czo <Olivier.Sirol@lip6.fr>
 " Credits:		Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
 " Last Changed:		2020 Apr 04 by Daniel Kho

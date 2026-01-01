@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:         KDL
-" Author:           Aram Drevekenin <aram@poor.dev>
+" Author:           Aram Drevekenin <aram@poor.dev> (invalid)
 " Maintainer:       Yinzuo Jiang <jiangyinzuo@foxmail.com>
 " Last Change:      2024-06-16
 

@@ -1,5 +1,5 @@
 " Language:	abnf
-" Maintainer:	A4-Tacks <wdsjxhno1001@163.com>
+" Maintainer:	A4-Tacks <wdsjxhno1001@163.com> (invalid)
 " Last Change:	2025-05-02
 " Upstream:	https://github.com/A4-Tacks/abnf.vim
 

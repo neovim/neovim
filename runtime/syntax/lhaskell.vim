@@ -2,7 +2,7 @@
 " Language:		Haskell with literate comments, Bird style,
 "			Markdown style, TeX style and plain text surrounding
 "			\begin{code} \end{code} blocks
-" Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
+" Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org> (need to be subscribed to post)
 " Original Author:	Arthur van Leeuwen <arthurvl@cs.uu.nl>
 " Last Change:		2020 Feb 25
 " Version:		1.05

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     LyRiCs
-" Maintainer:   ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:   ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:    *.lrc
 " Last Change:  2025 Jan 13
 

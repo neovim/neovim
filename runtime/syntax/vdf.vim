@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Valve Data Format
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Filenames:	*.vdf
 " Last Change:	2022 Sep 15
 

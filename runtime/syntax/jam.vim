@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	JAM
-" Maintainer:	Ralf Lemke (ralflemk@t-online.de)
+" Maintainer:	Ralf Lemke (ralflemk@t-online.de) (invalid)
 " Last change:	2012 Jan 08 by Thilo Six
 
 " quit when a syntax file was already loaded

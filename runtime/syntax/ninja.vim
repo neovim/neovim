@@ -3,7 +3,7 @@
 "           http://ninja-build.org/manual.html
 " Version: 1.5
 " Last Change: 2018/04/05
-" Maintainer: Nicolas Weber <nicolasweber@gmx.de>
+" Maintainer: Nicolas Weber <nicolasweber@gmx.de> (invalid)
 " Version 1.5 of this script is in the upstream vim repository and will be
 " included in the next vim release. If you change this, please send your change
 " upstream.

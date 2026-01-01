@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	    Objective C++
-" Maintainer:	    Kazunobu Kuriyama <kazunobu.kuriyama@nifty.com>
+" Maintainer:	    Kazunobu Kuriyama <kazunobu.kuriyama@nifty.com> (invalid)
 " Ex-Maintainer:    Anthony Hodsdon <ahodsdon@fastmail.fm>
 " Last Change:	    2007 Oct 29
 

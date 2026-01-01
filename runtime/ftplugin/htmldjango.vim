@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language:	Django HTML template
-" Maintainer:	Dave Hodder <dmh@dmh.org.uk>
+" Maintainer:	Dave Hodder <dmh@dmh.org.uk> (invalid)
 " Last Change:	2007 Jan 25
 
 " Only use this filetype plugin when no other was loaded.

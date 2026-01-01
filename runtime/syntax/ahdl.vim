@@ -1,6 +1,6 @@
 " Vim syn file
 " Language:	Altera AHDL
-" Maintainer:	John Cook <john.cook@kla-tencor.com>
+" Maintainer:	John Cook <john.cook@kla-tencor.com> (invalid)
 " Last Change:	2001 Apr 25
 
 " quit when a syntax file was already loaded

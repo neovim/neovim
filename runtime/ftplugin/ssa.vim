@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:	SubStation Alpha
-" Maintainer:	ObserverOfTime <chronobserver@disroot.org>
+" Maintainer:	ObserverOfTime <chronobserver@disroot.org> (invalid)
 " Last Change:	2022 Oct 10
 
 if exists('b:did_ftplugin')

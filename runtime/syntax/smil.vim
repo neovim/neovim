@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	SMIL (Synchronized Multimedia Integration Language)
-" Maintainer:	Herve Foucher <Herve.Foucher@helio.org>
+" Maintainer:	Herve Foucher <Herve.Foucher@helio.org> (invalid)
 " URL:		http://www.helio.org/vim/syntax/smil.vim
 " Last Change:	2012 Feb 03 by Thilo Six
 
