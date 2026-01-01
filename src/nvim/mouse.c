@@ -246,13 +246,6 @@ int get_fpos_of_mouse(pos_T *mpos)
   // compute the position in the buffer line from the posn on the screen
   bool below_buffer = mouse_comp_pos(wp, &row, &col, &mpos->lnum);
 
-  if (!below_buffer && *wp->w_p_stc != NUL
-      && (wp->w_p_rl
-          ? wincol >= wp->w_view_width - win_col_off(wp)
-          : wincol < win_col_off(wp))) {
-    return MOUSE_STATUSCOL;
-  }
-
   // winpos and height may change in win_enter()!
   if (winrow >= wp->w_view_height + wp->w_status_height) {  // Below window
     if (mouse_grid <= 1 && mouse_row < Rows - p_ch
@@ -262,6 +255,13 @@ int get_fpos_of_mouse(pos_T *mpos)
     return IN_UNKNOWN;
   } else if (winrow >= wp->w_view_height) {  // In window status line
     return IN_STATUS_LINE;
+  }
+
+  if (!below_buffer && *wp->w_p_stc != NUL
+      && (wp->w_p_rl
+          ? wincol >= wp->w_view_width - win_col_off(wp)
+          : wincol < win_col_off(wp))) {
+    return MOUSE_STATUSCOL;
   }
 
   if (winrow < 0 && winrow + wp->w_winbar_height >= 0) {  // In winbar
