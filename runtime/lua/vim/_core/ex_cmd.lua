@@ -122,7 +122,7 @@ end
 --- @param client_names string[]
 --- @return vim.lsp.Client[]
 local function get_clients_from_names(client_names)
-  -- Default to stopping all active clients attached to the current buffer.
+  -- Default to all active clients attached to the current buffer.
   if #client_names == 0 then
     local clients = lsp.get_clients { bufnr = api.nvim_get_current_buf() }
     if #clients == 0 then
@@ -149,29 +149,7 @@ local function ex_lsp_restart(client_names)
   local clients = get_clients_from_names(client_names)
 
   for _, client in ipairs(clients) do
-    --- @type integer[]
-    local attached_buffers = vim.tbl_keys(client.attached_buffers)
-
-    -- Reattach new client once the old one exits
-    api.nvim_create_autocmd('LspDetach', {
-      group = api.nvim_create_augroup('nvim.lsp.ex_restart_' .. client.id, {}),
-      callback = function(info)
-        if info.data.client_id ~= client.id then
-          return
-        end
-
-        local new_client_id = lsp.start(client.config, { attach = false })
-        if new_client_id then
-          for _, buffer in ipairs(attached_buffers) do
-            lsp.buf_attach_client(buffer, new_client_id)
-          end
-        end
-
-        return true -- Delete autocmd
-      end,
-    })
-
-    client:stop(client.exit_timeout)
+    client:_restart(client.exit_timeout)
   end
 end
 

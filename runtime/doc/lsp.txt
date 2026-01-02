@@ -123,7 +123,7 @@ COMMANDS                                                 *:lsp* *lsp-commands*
     Activates LSP for current and future buffers. See |vim.lsp.enable()|.
 
 :lsp disable [config_name]                                *:lsp-disable*
-    Disables (and stops) LSP for current and future buffers. See
+    Disables LSP (and stops if running) for current and future buffers. See
     |vim.lsp.enable()|.
 
 :lsp restart [client_name]                                *:lsp-restart*
