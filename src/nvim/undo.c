@@ -2298,15 +2298,17 @@ static void u_undoredo(bool undo, bool do_buf_event)
 
     // Decide about the cursor position, depending on what text changed.
     // Don't set it yet, it may be invalid if lines are going to be added.
-    if (top < newlnum) {
+    {
       // If the saved cursor is somewhere in this undo block, move it to
       // the remembered position.  Makes "gwap" put the cursor back
       // where it was.
       linenr_T lnum = curhead->uh_cursor.lnum;
       if (lnum >= top && lnum <= top + newsize + 1) {
         new_curpos = curhead->uh_cursor;
-        newlnum = new_curpos.lnum - 1;
-      } else {
+        // We don't want other entries to override saved cursor
+        // position.
+        newlnum = -1;
+      } else if (top < newlnum) {
         // Use the first line that actually changed.  Avoids that
         // undoing auto-formatting puts the cursor in the previous
         // line.
