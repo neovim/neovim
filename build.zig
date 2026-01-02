@@ -231,15 +231,15 @@ pub fn build(b: *std.Build) !void {
     _ = gen_config.addCopyFile(sysconfig_step.getOutput(), "auto/config.h"); // run_preprocessor() workaronnd
 
     // Escape install_path and lib_dir to include in C string literals (on Windows)
-    const escaped_install_path = try std.mem.replaceOwned(u8, b.allocator, b.install_path, "\\", "\\\\");
-    defer b.allocator.free(escaped_install_path);
-    const escaped_lib_dir = try std.mem.replaceOwned(u8, b.allocator, b.lib_dir, "\\", "\\\\"); // b.lib_dir is typically b.install_path + "/lib" but may be overridden
-    defer b.allocator.free(escaped_lib_dir);
+    const forward_slash_install_path = try std.mem.replaceOwned(u8, b.allocator, b.install_path, "\\", "/");
+    defer b.allocator.free(forward_slash_install_path);
+    const forward_slash_lib_dir = try std.mem.replaceOwned(u8, b.allocator, b.lib_dir, "\\", "/"); // b.lib_dir is typically b.install_path + "/lib" but may be overridden
+    defer b.allocator.free(forward_slash_lib_dir);
     _ = gen_config.add("auto/pathdef.h", b.fmt(
         \\char *default_vim_dir = "{s}/share/nvim";
         \\char *default_vimruntime_dir = "";
         \\char *default_lib_dir = "{s}/nvim";
-    , .{ escaped_install_path, escaped_lib_dir }));
+    , .{ forward_slash_install_path, forward_slash_lib_dir }));
 
     const opt_version_string = b.option([]const u8, "version-string", "Override Neovim version string. Default is to find out with git.");
     const version_medium = if (opt_version_string) |version_string| version_string else v: {
