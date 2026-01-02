@@ -1914,6 +1914,15 @@ vim.go.dex = vim.go.diffexpr
 --- 	vertical	Start diff mode with vertical splits (unless
 --- 			explicitly specified otherwise).
 ---
+---         wordgap:{n}     When highlighting inline differences with
+---                         'diffopt' set to "inline:word", consider words
+---                         to be different only if they are separated
+---                         by at least {n} changed characters.  This
+---                         helps avoid highlighting small changes
+---                         within words that are mostly the same.
+---                         The default setting is "wordgap:2".
+---                         The max setting is "wordgap:5".
+---
 --- Examples:
 ---
 --- ```vim

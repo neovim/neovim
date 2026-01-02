@@ -234,7 +234,7 @@ The diffs are highlighted with these groups:
 				affects internal diff.
 				When `inline:` set to "word", adjacent diff
 				blocks separated by small gaps (whitespace
-				or punctuation) will be merged to reduce 
+				or punctuation) will be merged to reduce
 				visual fragmentation.   See |'diffopt'|.
 |hl-DiffTextAdd|  DiffTextAdd	Added text inside a Changed line.  Similar to
 				DiffText, but used when there is no
