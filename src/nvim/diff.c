@@ -3170,15 +3170,28 @@ static void diff_refine_inline_word_highlight(diff_T *dp_orig, garray_T *linemap
 
       // Merge if the gap is small and contains only non-word characters
       if (has_content && only_non_word) {
-        // Check that the combined change size is reasonable
-        linenr_T total_change = 0;
+        // check if the combined change size is reasonable
+        long total_change_bytes = 0;
         for (int i = 0; i < DB_COUNT; i++) {
           if (curtab->tp_diffbuf[i] != NULL) {
-            total_change += dp->df_count[i] + dp->df_next->df_count[i];
+            // count bytes in the first block
+            for (int k = 0; k < dp->df_count[i]; k++) {
+              int idx = dp->df_lnum[i] + k - 1;
+              if (idx < linemap[i].ga_len) {
+                total_change_bytes += ((linemap_entry_T *)linemap[i].ga_data)[idx].num_bytes;
+              }
+            }
+            // count bytes in the next block
+            for (int k = 0; k < dp->df_next->df_count[i]; k++) {
+              int idx = dp->df_next->df_lnum[i] + k - 1;
+              if (idx < linemap[i].ga_len) {
+                total_change_bytes += ((linemap_entry_T *)linemap[i].ga_data)[idx].num_bytes;
+              }
+            }
           }
         }
 
-        if (total_change >= gap_size * 2) {
+        if (total_change_bytes >= gap_size * 2) {
           // Merge the blocks by extending the first block to include the next
           for (int i = 0; i < DB_COUNT; i++) {
             if (curtab->tp_diffbuf[i] != NULL) {
