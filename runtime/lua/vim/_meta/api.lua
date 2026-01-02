@@ -2484,8 +2484,9 @@ function vim.api.nvim_win_hide(window) end
 --- @return boolean # true if the window is valid, false otherwise
 function vim.api.nvim_win_is_valid(window) end
 
---- Sets the current buffer in a window, without side effects
+--- Sets the current buffer in a window.
 ---
+--- Note: As a side-effect, this executes `BufEnter` and `BufLeave` autocommands.
 --- @param window integer `window-ID`, or 0 for current window
 --- @param buffer integer Buffer id
 function vim.api.nvim_win_set_buf(window, buffer) end
