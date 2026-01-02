@@ -438,13 +438,13 @@ function Client.create(config)
       return self:_unregister_dynamic(unregistrations)
     end,
     get = function(_, method, opts)
-      return self:_get_registration(method, opts and opts.bufnr)
+      return self:_get_registrations(method, opts and opts.bufnr)
     end,
     supports_registration = function(_, method)
       return self:_supports_registration(method)
     end,
     supports = function(_, method, opts)
-      return self:_get_registration(method, opts and opts.bufnr) ~= nil
+      return self:_get_registrations(method, opts and opts.bufnr) ~= nil
     end,
   }
 
@@ -917,17 +917,24 @@ function Client:_supports_registration(method)
   return type(capability) == 'table' and capability.dynamicRegistration
 end
 
+--- Get provider for a method to be registered dyanamically.
+--- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
+function Client:_registration_provider(method)
+  local capability_path = lsp.protocol._request_name_to_server_capability[method]
+  return capability_path and capability_path[1] or method
+end
+
 --- @private
 --- @param registrations lsp.Registration[]
 function Client:_register_dynamic(registrations)
   -- remove duplicates
   self:_unregister_dynamic(registrations)
   for _, reg in ipairs(registrations) do
-    local method = reg.method
-    if not self.registrations[method] then
-      self.registrations[method] = {}
+    local provider = self:_registration_provider(reg.method)
+    if not self.registrations[provider] then
+      self.registrations[provider] = {}
     end
-    table.insert(self.registrations[method], reg)
+    table.insert(self.registrations[provider], reg)
   end
 end
 
@@ -958,7 +965,8 @@ end
 --- @param unregistrations lsp.Unregistration[]
 function Client:_unregister_dynamic(unregistrations)
   for _, unreg in ipairs(unregistrations) do
-    local sreg = self.registrations[unreg.method]
+    local provider = self:_registration_provider(unreg.method)
+    local sreg = self.registrations[provider]
     -- Unegister dynamic capability
     for i, reg in ipairs(sreg or {}) do
       if reg.id == unreg.id then
@@ -984,12 +992,13 @@ function Client:_get_language_id(bufnr)
   return self.get_language_id(bufnr, vim.bo[bufnr].filetype)
 end
 
---- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
+--- @param provider string
 --- @param bufnr? integer
---- @return lsp.Registration?
-function Client:_get_registration(method, bufnr)
+--- @return lsp.Registration[]?
+function Client:_get_registrations(provider, bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
-  for _, reg in ipairs(self.registrations[method] or {}) do
+  local matched_regs = {} --- @type lsp.Registration[]
+  for _, reg in ipairs(self.registrations[provider] or {}) do
     local regoptions = reg.registerOptions --[[@as {documentSelector:lsp.DocumentSelector|lsp.null}]]
     if
       not regoptions
@@ -997,22 +1006,24 @@ function Client:_get_registration(method, bufnr)
       or not regoptions.documentSelector
       or regoptions.documentSelector == vim.NIL
     then
-      return reg
-    end
-    local language = self:_get_language_id(bufnr)
-    local uri = vim.uri_from_bufnr(bufnr)
-    local fname = vim.uri_to_fname(uri)
-    for _, filter in ipairs(regoptions.documentSelector) do
-      local flang, fscheme, fpat = filter.language, filter.scheme, filter.pattern
-      if
-        not (flang and language ~= flang)
-        and not (fscheme and not vim.startswith(uri, fscheme .. ':'))
-        and not (type(fpat) == 'string' and not vim.glob.to_lpeg(fpat):match(fname))
-      then
-        return reg
+      matched_regs[#matched_regs + 1] = reg
+    else
+      local language = self:_get_language_id(bufnr)
+      local uri = vim.uri_from_bufnr(bufnr)
+      local fname = vim.uri_to_fname(uri)
+      for _, filter in ipairs(regoptions.documentSelector) do
+        local flang, fscheme, fpat = filter.language, filter.scheme, filter.pattern
+        if
+          not (flang and language ~= flang)
+          and not (fscheme and not vim.startswith(uri, fscheme .. ':'))
+          and not (type(fpat) == 'string' and not vim.glob.to_lpeg(fpat):match(fname))
+        then
+          matched_regs[#matched_regs + 1] = reg
+        end
       end
     end
   end
+  return #matched_regs > 0 and matched_regs or nil
 end
 
 --- Checks whether a client is stopped.
@@ -1166,17 +1177,24 @@ function Client:supports_method(method, bufnr)
     return true
   end
 
-  local rmethod = lsp._resolve_to_request[method]
-  if rmethod then
-    if self:_supports_registration(rmethod) then
-      local reg = self:_get_registration(rmethod, bufnr)
-      return vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider') or false
-    end
-  else
-    if self:_supports_registration(method) then
-      return self:_get_registration(method, bufnr) ~= nil
-    end
+  local provider = self:_registration_provider(method)
+  local regs = self:_get_registrations(provider, bufnr)
+  if lsp.protocol._request_name_allows_registration[method] and not regs then
+    return false
   end
+  if regs then
+    for _, reg in ipairs(regs or {}) do
+      if required_capability and #required_capability > 1 then
+        if vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
+          return self:_supports_registration(reg.method)
+        end
+      else
+        return self:_supports_registration(reg.method)
+      end
+    end
+    return false
+  end
+
   -- if we don't know about the method, assume that the client supports it.
   -- This needs to be at the end, so that dynamic_capabilities are checked first
   return required_capability == nil
