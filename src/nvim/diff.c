@@ -92,7 +92,6 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_INLINE_CHAR    0x8000  // inline highlight with character diff
 #define DIFF_INLINE_WORD    0x10000  // inline highlight with word diff
 #define DIFF_ANCHOR     0x20000  // use 'diffanchors' to anchor the diff
-#define DIFF_MERGE_BLOCKS  0x40000  // use 'mergeblocks' to get better highlight for words
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 #define ALL_INLINE (DIFF_INLINE_NONE | DIFF_INLINE_SIMPLE | DIFF_INLINE_CHAR | DIFF_INLINE_WORD)
 #define ALL_INLINE_DIFF (DIFF_INLINE_CHAR | DIFF_INLINE_WORD)
@@ -2670,9 +2669,6 @@ int diffopt_changed(void)
     } else if (strncmp(p, "anchor", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_ANCHOR;
-    } else if (strncmp(p, "mergeblocks", 11) == 0) {
-      p += 11;
-      diff_flags_new |= DIFF_MERGE_BLOCKS;
     } else if ((strncmp(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
       p += 8;
       diff_context_new = getdigits_int(&p, false, diff_context_new);
@@ -3418,9 +3414,7 @@ static void diff_find_change_inline_diff(diff_T *dp)
   diff_T *new_diff = curtab->tp_first_diff;
 
   if (diff_flags & DIFF_INLINE_WORD && file1_idx != -1) {
-    if (diff_flags & DIFF_MERGE_BLOCKS) {
-      diff_refine_inline_word_highlight(new_diff, linemap, file1_idx, dp->df_lnum[file1_idx]);
-    }
+    diff_refine_inline_word_highlight(new_diff, linemap, file1_idx, dp->df_lnum[file1_idx]);
   } else if (diff_flags & DIFF_INLINE_CHAR && file1_idx != -1) {
     diff_refine_inline_char_highlight(new_diff, linemap, file1_idx);
   }

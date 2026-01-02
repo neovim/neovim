@@ -2316,17 +2316,6 @@ it('diff mode inline highlighting', function()
 
   command('set diffopt=internal,filler diffopt+=inline:word')
   screen:expect([[
-  {7:  }{27:^abcdef}{4: }{27:ghi}{4: }{27:jk}{4: n }│{7:  }{27:aBcef}{4: }{27:gHi}{4: }{27:lm}{4: n  }|
-  {7:  }{22:x               }│{7:  }{23:----------------}|
-  {7:  }y               │{7:  }y               |
-  {7:  }{23:----------------}│{7:  }{22:z               }|
-  {1:~                 }│{1:~                 }|*14
-  {3:Xdifile1           }{2:Xdifile2          }|
-                                       |
-  ]])
-
-  command('set diffopt=internal,filler diffopt+=inline:word,mergeblocks')
-  screen:expect([[
   {7:  }{27:^abcdef ghi jk}{4: n }│{7:  }{27:aBcef gHi lm}{4: n  }|
   {7:  }{22:x               }│{7:  }{23:----------------}|
   {7:  }y               │{7:  }y               |
@@ -2506,15 +2495,8 @@ it('diff mode inline highlighting', function()
     '🚀⛵️一二三ひらがなΔέλτα Δelta foobar',
     '🚀🛸一二四ひらなδέλτα δelta foobar'
   )
-  command('set diffopt=internal,filler diffopt+=inline:word')
-  screen:expect([[
-  {7:  }{4:^🚀}{27:⛵️}{4:一二}{27:三}{4:ひら}{100:が}{4:な}{27:Δέλτα}{4: }{27:Δelta}{4: fooba}│{7:  }{4:🚀}{27:🛸}{4:一二}{27:四}{4:ひらな}{27:δέλτα}{4: }{27:δelta}{4: foobar }|
-  {1:~                                    }│{1:~                                    }|*17
-  {3:Xdifile1                              }{2:Xdifile2                             }|
-                                                                             |
-]])
 
-  command('set diffopt=internal,filler diffopt+=inline:word,mergeblocks')
+  command('set diffopt=internal,filler diffopt+=inline:word')
   screen:expect([[
   {7:  }{4:^🚀}{27:⛵️}{4:一二}{27:三}{4:ひら}{100:が}{4:な}{27:Δέλτα Δelta}{4: fooba}│{7:  }{4:🚀}{27:🛸}{4:一二}{27:四}{4:ひらな}{27:δέλτα δelta}{4: foobar }|
   {1:~                                    }│{1:~                                    }|*17
@@ -2590,20 +2572,8 @@ it('diff mode inline highlighting', function()
     {3:Xdifile1                 }{2:Xdifile2                }|
                                                      |
   ]])
-  command('set diffopt=internal,filler diffopt+=inline:word,iwhite')
-  screen:expect([[
-  {7:  }{4:^this   is             }│{7:  }{4:this is }{27:some}{4: }{27:test}{4:     }|
-  {7:  }{27:sometest}{4: }{27:text}{4: }{27:foo}{4:     }│{7:  }{27:texts}{4:                 }|
-  {7:  }{27:baz}{4: }{27:abc}{4: }{27:def}{4:           }│{7:  }{27:foo}{4: }{27:bar}{4: }{27:abX}{4: }{27:Yef}{4:       }|
-  {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
-  {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
-  {7:  }{22:additional line       }│{7:  }{23:----------------------}|
-  {1:~                       }│{1:~                       }|*12
-  {3:Xdifile1                 }{2:Xdifile2                }|
-                                                   |
-]])
 
-  command('set diffopt=internal,filler diffopt+=inline:word,iwhite,mergeblocks')
+  command('set diffopt=internal,filler diffopt+=inline:word,iwhite')
   screen:expect([[
   {7:  }{4:^this   is             }│{7:  }{4:this is }{27:some test}{4:     }|
   {7:  }{27:sometest text foo}{4:     }│{7:  }{27:texts}{4:                 }|
@@ -2628,18 +2598,6 @@ it('diff mode inline highlighting', function()
                                                      |
   ]])
   command('set diffopt=internal,filler diffopt+=inline:word,iwhiteeol')
-  screen:expect([[
-  {7:  }{4:^this }{100:  }{4:is             }│{7:  }{4:this is }{27:some}{4: }{27:test}{4:     }|
-  {7:  }{27:sometest}{4: }{27:text}{4: foo     }│{7:  }{27:texts}{4:                 }|
-  {7:  }{27:baz}{4: }{27:abc}{4: }{27:def}{4:           }│{7:  }{4:foo }{27:bar}{4: }{27:abX}{4: }{27:Yef}{4:       }|
-  {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
-  {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
-  {7:  }{22:additional line       }│{7:  }{23:----------------------}|
-  {1:~                       }│{1:~                       }|*12
-  {3:Xdifile1                 }{2:Xdifile2                }|
-                                                   |
-]])
-  command('set diffopt=internal,filler diffopt+=inline:word,iwhiteeol,mergeblocks')
   screen:expect([[
   {7:  }{4:^this }{100:  }{4:is             }│{7:  }{4:this is }{27:some test}{4:     }|
   {7:  }{27:sometest text}{4: foo     }│{7:  }{27:texts}{4:                 }|
@@ -2807,23 +2765,15 @@ it('diff mode inline highlighting with 3 buffers', function()
   -- earliest buffer's iskeyword during word diff.
   WriteDiffFiles3('This+is=a-setence', 'This+is=another-setence', 'That+is=a-setence')
   command('set iskeyword+=+ | 2wincmd w | set iskeyword+=- | 1wincmd w')
-  command('set diffopt=internal,filler diffopt+=inline:word')
-  local s4_no_merge = [[
-  {7:  }{27:^This+is}{4:=}{27:a}{4:-setence      }│{7:  }{27:This+is}{4:=}{27:another}{4:-setenc}│{7:  }{27:That+is}{4:=}{27:a}{4:-setence     }|
-  {1:~                        }│{1:~                       }│{1:~                       }|*17
-  {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
-                                                                             |
-]]
-  screen:expect(s4_no_merge)
 
-  command('set diffopt=internal,filler diffopt+=inline:word,mergeblocks')
-  local s4_with_merge = [[
+  command('set diffopt=internal,filler diffopt+=inline:word')
+  local s4 = [[
   {7:  }{27:^This+is=a}{4:-setence      }│{7:  }{27:This+is=another}{4:-setenc}│{7:  }{27:That+is=a}{4:-setence     }|
   {1:~                        }│{1:~                       }│{1:~                       }|*17
   {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
                                                                              |
 ]]
-  screen:expect(s4_with_merge)
+  screen:expect(s4)
   command('diffoff')
   screen:expect([[
     ^This+is=a-setence        │{7:  }{27:This}{4:+is=}{27:another-setenc}│{7:  }{27:That}{4:+is=}{27:a-setence}{4:     }|
@@ -2832,7 +2782,7 @@ it('diff mode inline highlighting with 3 buffers', function()
                                                                                |
   ]])
   command('diffthis')
-  screen:expect(s4_with_merge)
+  screen:expect(s4)
 
   -- Test multi-buffer char diff refinement, and that removing a buffer from
   -- diff will update the others properly.

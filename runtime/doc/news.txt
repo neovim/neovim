@@ -34,9 +34,6 @@ LSP
 OPTIONS
 
 • `'completefuzzycollect'` and `'isexpand'` have been removed.
-• `'mergeblocks'` option for 'diffopt':  Merges adjacent diff blocks separated
-  by small gaps (whitespace or punctuation) to reduce visual fragmentation
-  in diff mode. See |'diffopt'| and |diff.txt|.
 
 TREESITTER
 
@@ -344,6 +341,9 @@ OPTIONS
 • 'completeopt' flag "nearest" sorts completion results by distance to cursor.
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'diffopt' with 'inline:word' now automatically merges adjacent diff blocks
+  separated by small gaps (whitespace or punctuation), creating more readable
+  diffs similar to GitHub's display.  |'diffopt'|
 • 'fillchars' has new flag "foldinner".
 • 'fsync' and 'grepformat' are now |global-local| options.
 • 'jumpoptions' flag "view" now applies when popping the |tagstack|.
