@@ -1,5 +1,7 @@
+CONTRIBUTING.md
 Filelist
 LICENSE
+Makefile
 SECURITY.md
 configure
 runtime/bugreport.vim
@@ -54,8 +56,12 @@ runtime/tools/vim_vs_net.cmd
 runtime/tools/vimm
 runtime/tools/vimspell.sh
 runtime/tools/vimspell.txt
+src/README.md
+src/blowfish.c
 src/channel.c
+src/dlldata.c
 src/hardcopy.c
+src/iid_ole.c
 src/job.c
 src/mysign
 src/po/ko.po

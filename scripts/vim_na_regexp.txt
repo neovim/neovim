@@ -50,11 +50,12 @@
 ^src/link\.
 ^src/msvc[-2]
 ^src/msys[36]
-^src/ndebug
+^src/nbdebug
 ^src/os_amiga
 ^src/os_haiku
 ^src/os_qnx
 ^src/os_vms
+^src/os_w32
 ^src/osdef
 ^src/po/.*sjis
 ^src/proto
