@@ -876,6 +876,11 @@ static bool terminal_check_focus(TerminalState *const s)
   if (s->term != curbuf->terminal) {
     // Active terminal buffer changed, flush terminal's cursor state to the UI.
     terminal_focus(s->term, false);
+    if (s->close) {
+      s->term->destroy = true;
+      s->term->opts.close_cb(s->term->opts.data);
+      s->close = false;
+    }
 
     s->term = curbuf->terminal;
     s->term->pending.cursor = true;
@@ -893,6 +898,9 @@ static bool terminal_check_focus(TerminalState *const s)
 static int terminal_check(VimState *state)
 {
   TerminalState *const s = (TerminalState *)state;
+
+  // Shouldn't reach here when pressing a key to close the terminal buffer.
+  assert(!s->close || (s->term->buf_handle == 0 && s->term != curbuf->terminal));
 
   if (stop_insert_mode || !terminal_check_focus(s)) {
     return 0;
@@ -913,7 +921,6 @@ static int terminal_check(VimState *state)
   s->term->refcount--;
   if (s->term->buf_handle == 0) {
     s->close = true;
-    return 0;
   }
 
   // Autocommands above may have changed focus, scrolled, or moved the cursor.
@@ -986,7 +993,6 @@ static int terminal_execute(VimState *state, int key)
     s->term->refcount--;
     if (s->term->buf_handle == 0) {
       s->close = true;
-      return 0;
     }
     break;
 
