@@ -97,6 +97,8 @@ typedef enum {
   WEE_TRIGGER_LEAVE_AUTOCMDS = 0x10,
 } wee_flags_T;
 
+static const char e_cannot_close_last_window[]
+  = N_("E444: Cannot close last window");
 static const char e_cannot_split_window_when_closing_buffer[]
   = N_("E1159: Cannot split a window when closing the buffer");
 
@@ -2710,7 +2712,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   const bool had_diffmode = win->w_p_diff;
 
   if (last_window(win)) {
-    emsg(_("E444: Cannot close last window"));
+    emsg(_(e_cannot_close_last_window));
     return FAIL;
   }
 
@@ -2738,6 +2740,11 @@ int win_close(win_T *win, bool free_buf, bool force)
       }
       if (!win_valid_any_tab(win)) {
         return FAIL;  // window already closed by autocommands
+      }
+      // Autocommands may have closed all other tabpages; check again.
+      if (last_window(win)) {
+        emsg(_(e_cannot_close_last_window));
+        return FAIL;
       }
     } else {
       emsg(e_floatonly);
@@ -2769,7 +2776,6 @@ int win_close(win_T *win, bool free_buf, bool force)
     clear_snapshot(curtab, SNAP_QUICKFIX_IDX);
   }
 
-  win_T *wp;
   bool other_buffer = false;
 
   if (win == curwin) {
@@ -2777,7 +2783,8 @@ int win_close(win_T *win, bool free_buf, bool force)
 
     // Guess which window is going to be the new current window.
     // This may change because of the autocommands (sigh).
-    wp = win->w_floating ? win_float_find_altwin(win, NULL) : frame2win(win_altframe(win, NULL));
+    win_T *wp = win->w_floating ? win_float_find_altwin(win, NULL)
+                                : frame2win(win_altframe(win, NULL));
 
     // Be careful: If autocommands delete the window or cause this window
     // to be the last one left, return now.
@@ -2872,7 +2879,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   // Free the memory used for the window and get the window that received
   // the screen space.
   int dir;
-  wp = win_free_mem(win, &dir, NULL);
+  win_T *wp = win_free_mem(win, &dir, NULL);
 
   if (help_window || quickfix_window) {
     // Closing the help window moves the cursor back to the current window
