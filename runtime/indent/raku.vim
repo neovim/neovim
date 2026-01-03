@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:      Perl 6
-" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Maintainer:    vim-perl <vim-perl@googlegroups.com> (need to be subscribed to post)
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " Last Change:   2020 Apr 15
