@@ -160,6 +160,12 @@ func Test_menu_errors()
   unmenu Test
 endfunc
 
+func Test_unmenu_range_errors()
+  for prefix in ['', 'a', 'c', 'i', 'n', 's', 't', 'tl', 'v', 'x']
+    call assert_fails('42' .. prefix .. 'unmenu', 'E481:')
+  endfor
+endfunc
+
 " Test for menu item completion in command line
 func Test_menu_expand()
   " Create the menu items for test

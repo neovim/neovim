@@ -2917,8 +2917,8 @@ M.cmds = {
   },
   {
     command = 'tlunmenu',
-    flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
-    addr_type = 'ADDR_OTHER',
+    flags = bit.bor(EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
     func = 'ex_menu',
   },
   {
