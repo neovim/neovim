@@ -333,9 +333,9 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
         if (i_ > 0 && (i_ & 3) == 0) { \
           ga_append(gap, '.'); \
         } \
-        vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "%02X", \
-                     (int)tv_blob_get(blob_, i_)); \
-        ga_concat(gap, numbuf); \
+        size_t numbuflen = vim_snprintf_safelen(numbuf, ARRAY_SIZE(numbuf), "%02X", \
+                                                (int)tv_blob_get(blob_, i_)); \
+        ga_concat_len(gap, numbuf, numbuflen); \
       } \
     } \
   } while (0)
