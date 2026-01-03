@@ -3170,7 +3170,6 @@ static void diff_refine_inline_word_highlight(diff_T *dp_orig, garray_T *linemap
 
       // Merge if the gap is small and contains only non-word characters
       if (has_content && only_non_word) {
-        // check if the combined change size is reasonable
         long total_change_bytes = 0;
         for (int i = 0; i < DB_COUNT; i++) {
           if (curtab->tp_diffbuf[i] != NULL) {
