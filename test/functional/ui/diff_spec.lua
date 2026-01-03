@@ -2687,6 +2687,313 @@ it('diff mode inline highlighting', function()
   command('windo set nolist')
 end)
 
+describe('diff mode wordgap option', function()
+  local screen
+  before_each(function()
+    screen = Screen.new(63, 20)
+  end)
+
+  after_each(function()
+    os.remove('Xgap1')
+    os.remove('Xgap2')
+    os.remove('Xgap3')
+    os.remove('Xgap4')
+    os.remove('Xgap5')
+    os.remove('Xgap6')
+    os.remove('Xgap7')
+    os.remove('Xgap8')
+    os.remove('Xgap9')
+    os.remove('Xgap10')
+    os.remove('Xgap11')
+    os.remove('Xgap12')
+    os.remove('Xgap13')
+    os.remove('Xgap14')
+    os.remove('Xgap15')
+    os.remove('Xgap16')
+    os.remove('Xgap17')
+    os.remove('Xgap18')
+    os.remove('Xgap19')
+    os.remove('Xgap20')
+  end)
+
+  it('wordgap:0 disables merging', function()
+    write_file('Xgap1', 'a-b\nfoo  bar')
+    write_file('Xgap2', 'A-B\nFOO  BAR')
+
+    command('edit Xgap2')
+    command('diffthis')
+    command('vsplit Xgap1')
+    command('diffthis')
+    command('wincmd =')
+
+    command('set diffopt=internal,filler,inline:word,wordgap:0')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^a}{4:-}{27:b}{4:                          }│{7:  }{27:A}{4:-}{27:B}{4:                          }|
+        {7:  }{27:foo}{4:  }{27:bar}{4:                     }│{7:  }{27:FOO}{4:  }{27:BAR}{4:                     }|
+        {1:~                              }│{1:~                              }|*16
+        {3:Xgap1                           }{2:Xgap2                          }|
+                                                                       |
+      ]])
+  end)
+
+  it('wordgap:2 (default) merges gaps up to 2 bytes', function()
+    write_file('Xgap3', 'a-b\nfoo  bar\ntest   data')
+    write_file('Xgap4', 'A-B\nFOO  BAR\nTEST   DATA')
+
+    command('edit Xgap4')
+    command('diffthis')
+    command('vsplit Xgap3')
+    command('diffthis')
+    command('wincmd =')
+
+    command('set diffopt=internal,filler,inline:word,wordgap:2')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^a-b}{4:                          }│{7:  }{27:A-B}{4:                          }|
+        {7:  }{27:foo  bar}{4:                     }│{7:  }{27:FOO  BAR}{4:                     }|
+        {7:  }{27:test}{4:   }{27:data}{4:                  }│{7:  }{27:TEST}{4:   }{27:DATA}{4:                  }|
+        {1:~                              }│{1:~                              }|*15
+        {3:Xgap3                           }{2:Xgap4                          }|
+                                                                       |
+      ]])
+  end)
+
+  it('wordgap:5 merges larger gaps', function()
+    write_file('Xgap5', 'a-b\nfoo  bar\ntest   data')
+    write_file('Xgap6', 'A-B\nFOO  BAR\nTEST   DATA')
+
+    command('edit Xgap6')
+    command('diffthis')
+    command('vsplit Xgap5')
+    command('diffthis')
+    command('wincmd =')
+
+    command('set diffopt=internal,filler,inline:word,wordgap:5')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^a-b}{4:                          }│{7:  }{27:A-B}{4:                          }|
+        {7:  }{27:foo  bar}{4:                     }│{7:  }{27:FOO  BAR}{4:                     }|
+        {7:  }{27:test   data}{4:                  }│{7:  }{27:TEST   DATA}{4:                  }|
+        {1:~                              }│{1:~                              }|*15
+        {3:Xgap5                           }{2:Xgap6                          }|
+                                                                       |
+      ]])
+  end)
+
+  it('wordgap shows difference between gap thresholds', function()
+    write_file('Xgap7', 'one   two')
+    write_file('Xgap8', 'ONE   TWO')
+
+    command('edit Xgap8')
+    command('diffthis')
+    command('vsplit Xgap7')
+    command('diffthis')
+    command('wincmd =')
+
+    -- Gap of 3 spaces:  wordgap: 2 should NOT merge
+    command('set diffopt=internal,filler,inline:word,wordgap:2')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^one}{4:   }{27:two}{4:                    }│{7:  }{27:ONE}{4:   }{27:TWO}{4:                    }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap7                           }{2:Xgap8                          }|
+                                                                       |
+      ]])
+
+    -- Gap of 3 spaces: wordgap:5 should merge
+    command('set diffopt=internal,filler,inline:word,wordgap:5')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^one   two}{4:                    }│{7:  }{27:ONE   TWO}{4:                    }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap7                           }{2:Xgap8                          }|
+                                                                       |
+      ]])
+  end)
+
+  it('wordgap works with underscores in identifiers', function()
+    write_file('Xgap9', 'get_user_name\ncalc   result')
+    write_file('Xgap10', 'get_customer_id\nCALC   RESULT')
+
+    command('edit Xgap10')
+    command('diffthis')
+    command('vsplit Xgap9')
+    command('diffthis')
+    command('wincmd =')
+
+    -- wordgap:0 - fragmented ('_' is considered part of word)
+    command('set diffopt=internal,filler,inline:word,wordgap:0')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^get_user_name}{4:                }│{7:  }{27:get_customer_id}{4:              }|
+        {7:  }{27:calc}{4:   }{27:result}{4:                }│{7:  }{27:CALC}{4:   }{27:RESULT}{4:                }|
+        {1:~                              }│{1:~                              }|*16
+        {3:Xgap9                           }{2:Xgap10                         }|
+                                                                       |
+    ]])
+
+    -- wordgap:2 - does not merges 3 spaces (similar to wordgap:0)
+    command('set diffopt=internal,filler,inline:word,wordgap:2')
+    command('diffupdate')
+    screen:expect({ unchanged = true })
+
+    -- wordgap:5 - merges 3 spaces
+    command('set diffopt=internal,filler,inline:word,wordgap:5')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^get_user_name}{4:                }│{7:  }{27:get_customer_id}{4:              }|
+        {7:  }{27:calc   result}{4:                }│{7:  }{27:CALC   RESULT}{4:                }|
+        {1:~                              }│{1:~                              }|*16
+        {3:Xgap9                           }{2:Xgap10                         }|
+                                                                       |
+    ]])
+  end)
+
+  it('wordgap works with punctuation', function()
+    write_file('Xgap11', 'foo.  bar')
+    write_file('Xgap12', 'FOO. BAR')
+
+    command('edit Xgap12')
+    command('diffthis')
+    command('vsplit Xgap11')
+    command('diffthis')
+    command('wincmd =')
+
+    command('set diffopt=internal,filler,inline:word,wordgap:0')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^foo}{4:. }{27: bar}{4:                    }│{7:  }{27:FOO}{4:. }{27:BAR}{4:                     }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap11                          }{2:Xgap12                         }|
+                                                                       |
+    ]])
+
+    command('set diffopt=internal,filler,inline:word,wordgap:2')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^foo.  bar}{4:                    }│{7:  }{27:FOO. BAR}{4:                     }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap11                          }{2:Xgap12                         }|
+                                                                       |
+    ]])
+  end)
+
+  it('wordgap maximum value is 5', function()
+    write_file('Xgap13', 'abcde     fghij')
+    write_file('Xgap14', 'ABCDE     FGHIJ')
+
+    command('edit Xgap14')
+    command('diffthis')
+    command('vsplit Xgap13')
+    command('diffthis')
+    command('wincmd =')
+
+    -- Gap of exactly 5 spaces should merge with wordgap:5
+    command('set diffopt=internal,filler,inline:word,wordgap:5')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^abcde     fghij}{4:              }│{7:  }{27:ABCDE     FGHIJ}{4:              }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap13                          }{2:Xgap14                         }|
+                                                                       |
+    ]])
+  end)
+
+  it('wordgap respects iwhite option', function()
+    write_file('Xgap15', 'one  two\nfoo bar')
+    write_file('Xgap16', 'ONE  TWO\nFOO   BAR')
+
+    command('edit Xgap16')
+    command('diffthis')
+    command('vsplit Xgap15')
+    command('diffthis')
+    command('wincmd =')
+
+    command('set diffopt=internal,filler,inline:word,iwhite,wordgap:2')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^one  two}{4:                     }│{7:  }{27:ONE  TWO}{4:                     }|
+        {7:  }{27:foo}{4: }{27:bar}{4:                      }│{7:  }{27:FOO}{4:   }{27:BAR}{4:                    }|
+        {1:~                              }│{1:~                              }|*16
+        {3:Xgap15                          }{2:Xgap16                         }|
+                                                                       |
+    ]])
+  end)
+
+  it('wordgap works with multi-byte characters', function()
+    write_file('Xgap17', 'α β γ\nδ   ε')
+    write_file('Xgap18', 'Α Β Γ\nΔ   Ε')
+
+    command('edit Xgap18')
+    command('diffthis')
+    command('vsplit Xgap17')
+    command('diffthis')
+    command('wincmd =')
+
+    command('set diffopt=internal,filler,inline:word,wordgap:2')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^α β γ}{4:                        }│{7:  }{27:Α Β Γ}{4:                        }|
+        {7:  }{27:δ}{4:   }{27:ε}{4:                        }│{7:  }{27:Δ}{4:   }{27:Ε}{4:                        }|
+        {1:~                              }│{1:~                              }|*16
+        {3:Xgap17                          }{2:Xgap18                         }|
+                                                                       |
+    ]])
+
+    command('set diffopt=internal,filler,inline:word,wordgap:5')
+    command('diffupdate')
+    screen:expect([[
+      {7:  }{27:^α β γ}{4:                        }│{7:  }{27:Α Β Γ}{4:                        }|
+      {7:  }{27:δ   ε}{4:                        }│{7:  }{27:Δ   Ε}{4:                        }|
+      {1:~                              }│{1:~                              }|*16
+      {3:Xgap17                          }{2:Xgap18                         }|
+                                                                     |
+    ]])
+  end)
+
+  it('wordgap can be toggled dynamically', function()
+    write_file('Xgap19', 'foo   bar')
+    write_file('Xgap20', 'FOO   BAR')
+
+    command('edit Xgap20')
+    command('diffthis')
+    command('vsplit Xgap19')
+    command('diffthis')
+    command('wincmd =')
+
+    -- Start with wordgap:0 - fragmented
+    command('set diffopt=internal,filler,inline:word,wordgap:0')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^foo}{4:   }{27:bar}{4:                    }│{7:  }{27:FOO}{4:   }{27:BAR}{4:                    }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap19                          }{2:Xgap20                         }|
+                                                                       |
+    ]])
+
+    -- Change to wordgap:5 - merged
+    command('set diffopt=internal,filler,inline:word,wordgap:5')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^foo   bar}{4:                    }│{7:  }{27:FOO   BAR}{4:                    }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap19                          }{2:Xgap20                         }|
+                                                                       |
+    ]])
+
+    -- Back to wordgap:0 - fragmented again
+    command('set diffopt=internal,filler,inline:word,wordgap:0')
+    command('diffupdate')
+    screen:expect([[
+        {7:  }{27:^foo}{4:   }{27:bar}{4:                    }│{7:  }{27:FOO}{4:   }{27:BAR}{4:                    }|
+        {1:~                              }│{1:~                              }|*17
+        {3:Xgap19                          }{2:Xgap20                         }|
+                                                                       |
+    ]])
+  end)
+end)
+
 -- oldtest: Test_diff_inline_multibuffer()
 it('diff mode inline highlighting with 3 buffers', function()
   write_file('Xdifile1', '')
