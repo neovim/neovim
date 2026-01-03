@@ -26,7 +26,7 @@
 **覚え方**: *into register(") named (a) (y)ank (i)nner (w)ord* 
          *( レジスタに  aという名の ヤンク  内側    単語 )*
 
-  3. 単語 'cookie' に移動(`fk`{normal}, `2fc`{normal}, `$2b`{normal} や `/co`{normal} `<ENTER>`{normal})し、`"byiw`{normal} とタイプします。
+  3. 単語 'cookie' に移動(`fk`{normal}, `3fc`{normal}, `$2b`{normal} や `/co`{normal} `<ENTER>`{normal})し、`"byiw`{normal} とタイプします。
 
   4. 単語 'Vince' の上に移動した後、`ciw<CTRL-r>a<ESC>`{normal} とタイプします。
 
