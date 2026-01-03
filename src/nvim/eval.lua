@@ -4406,6 +4406,11 @@ M.funcs = {
       within the line.  To get the character position in the line,
       use |getcharpos()|.
 
+      The visual marks |'<| and |'>| refer to the beginning and end
+      of the visual selection relative to the buffer.  Note that
+      this differs from |setpos()|, where they are relative to the
+      cursor position.
+
       Note that for '< and '> Visual mode matters: when it is "V"
       (visual line mode) the column of '< is zero and the column of
       '> is a large number equal to |v:maxcol|.
@@ -10108,9 +10113,14 @@ M.funcs = {
       preferred column is not set.  When it is present and setting a
       mark position it is not used.
 
-      Note that for '< and '> changing the line number may result in
-      the marks to be effectively be swapped, so that '< is always
-      before '>.
+      Note that for |'<| and |'>| changing the line number may
+      result in the marks to be effectively swapped, so that |'<| is
+      always before |'>|.
+
+      The visual marks |'<| and |'>| refer to the beginning and end
+      of the visual selection relative to the cursor position.
+      Note that this differs from |getpos()|, where they are
+      relative to the buffer.
 
       Returns 0 when the position could be set, -1 otherwise.
       An error message is given if {expr} is invalid.
