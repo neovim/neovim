@@ -121,12 +121,12 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 
 void win_set_minimal_style(win_T *wp)
 {
-  wp->w_p_nu = false;
-  wp->w_p_rnu = false;
-  wp->w_p_cul = false;
-  wp->w_p_cuc = false;
-  wp->w_p_spell = false;
-  wp->w_p_list = false;
+  wp->w_p_nu = wp->w_allbuf_opt.wo_nu = false;
+  wp->w_p_rnu = wp->w_allbuf_opt.wo_rnu = false;
+  wp->w_p_cul = wp->w_allbuf_opt.wo_cul = false;
+  wp->w_p_cuc = wp->w_allbuf_opt.wo_cuc = false;
+  wp->w_p_spell = wp->w_allbuf_opt.wo_spell = false;
+  wp->w_p_list = wp->w_allbuf_opt.wo_list = false;
 
   // Hide EOB region: use " " fillchar and cleared highlighting
   if (wp->w_p_fcs_chars.eob != ' ') {
@@ -149,25 +149,33 @@ void win_set_minimal_style(win_T *wp)
   // signcolumn: use 'auto'
   if (wp->w_p_scl[0] != 'a' || strlen(wp->w_p_scl) >= 8) {
     free_string_option(wp->w_p_scl);
+    free_string_option(wp->w_allbuf_opt.wo_scl);
     wp->w_p_scl = xstrdup("auto");
+    wp->w_allbuf_opt.wo_scl = xstrdup("auto");
   }
 
   // foldcolumn: use '0'
   if (wp->w_p_fdc[0] != '0') {
     free_string_option(wp->w_p_fdc);
+    free_string_option(wp->w_allbuf_opt.wo_fdc);
     wp->w_p_fdc = xstrdup("0");
+    wp->w_allbuf_opt.wo_fdc = xstrdup("0");
   }
 
   // colorcolumn: cleared
   if (wp->w_p_cc != NULL && *wp->w_p_cc != NUL) {
     free_string_option(wp->w_p_cc);
+    free_string_option(wp->w_allbuf_opt.wo_cc);
     wp->w_p_cc = xstrdup("");
+    wp->w_allbuf_opt.wo_cc = xstrdup("");
   }
 
   // statuscolumn: cleared
   if (wp->w_p_stc != NULL && *wp->w_p_stc != NUL) {
     free_string_option(wp->w_p_stc);
+    free_string_option(wp->w_allbuf_opt.wo_stc);
     wp->w_p_stc = empty_string_option;
+    wp->w_allbuf_opt.wo_stc = empty_string_option;
   }
 
   // statusline: cleared (for floating windows)

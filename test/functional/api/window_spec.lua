@@ -3478,5 +3478,35 @@ describe('API/win', function()
         pcall_err(api.nvim_win_set_config, old_curwin, { win = other_tp_win, split = 'right' })
       )
     end)
+
+    it('minimal style persists through float-to-split and buffer change #37067', function()
+      -- Set all options globally
+      command('set number relativenumber cursorline cursorcolumn spell list')
+      command('set signcolumn=yes colorcolumn=80 statuscolumn=%l foldcolumn=2')
+
+      local buf1 = api.nvim_create_buf(false, true)
+      local win = api.nvim_open_win(buf1, true, {
+        relative = 'editor',
+        width = 10,
+        height = 10,
+        row = 5,
+        col = 5,
+        style = 'minimal',
+      })
+      -- Convert to split then change buffer
+      api.nvim_win_set_config(win, { split = 'below', win = -1 })
+      local buf2 = api.nvim_create_buf(false, true)
+      api.nvim_win_set_buf(win, buf2)
+      eq(false, api.nvim_get_option_value('number', { win = win }))
+      eq(false, api.nvim_get_option_value('relativenumber', { win = win }))
+      eq(false, api.nvim_get_option_value('cursorline', { win = win }))
+      eq(false, api.nvim_get_option_value('cursorcolumn', { win = win }))
+      eq(false, api.nvim_get_option_value('spell', { win = win }))
+      eq(false, api.nvim_get_option_value('list', { win = win }))
+      eq('0', api.nvim_get_option_value('foldcolumn', { win = win }))
+      eq('auto', api.nvim_get_option_value('signcolumn', { win = win }))
+      eq('', api.nvim_get_option_value('colorcolumn', { win = win }))
+      eq('', api.nvim_get_option_value('statuscolumn', { win = win }))
+    end)
   end)
 end)
