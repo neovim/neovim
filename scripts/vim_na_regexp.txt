@@ -58,6 +58,7 @@
 ^src/os_vms
 ^src/os_w32
 ^src/osdef
+^src/po/.*\.desktop
 ^src/po/.*sjis
 ^src/proto
 ^src/testdir/dumps/
