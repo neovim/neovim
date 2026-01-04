@@ -1,7 +1,7 @@
 --- @brief
 ---
----WORK IN PROGRESS built-in plugin manager! Early testing of existing features
----is appreciated, but expect breaking changes without notice.
+--- Install, update, and delete external plugins. WARNING: It is still considered
+--- experimental, yet should be stable enough for daily use.
 ---
 ---Manages plugins only in a dedicated [vim.pack-directory]() (see |packages|):
 ---`$XDG_DATA_HOME/nvim/site/pack/core/opt`. `$XDG_DATA_HOME/nvim/site` needs to
@@ -149,7 +149,14 @@
 ---- Remove plugin specs from |vim.pack.add()| calls in 'init.lua' or they will be
 ---  reinstalled later.
 ---- |:restart|.
----- Use |vim.pack.del()| with a list of plugin names to remove.
+---- Use |vim.pack.del()| with a list of plugin names to remove. Use |vim.pack.get()|
+---  to get all non-active plugins:
+---```lua
+---vim.iter(vim.pack.get())
+---  :filter(function(x) return not x.active end)
+---  :map(function(x) return x.spec.name end)
+---  :totable()
+---```
 ---
 ---[vim.pack-events]()
 ---
@@ -172,6 +179,7 @@
 ---
 ---   -- Run build script after plugin's code has changed
 ---   if name == 'plug-1' and (kind == 'install' or kind == 'update') then
+---     -- Append `:wait()` if you need synchronous execution
 ---     vim.system({ 'make' }, { cwd = ev.data.path })
 ---   end
 ---
