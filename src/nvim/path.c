@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef MSWIN
+# include <direct.h>
+#endif
 
 #include "auto/config.h"
 #include "nvim/ascii_defs.h"
@@ -376,6 +379,38 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
 
   const char *p1 = fname1;
   const char *p2 = fname2;
+
+# ifdef MSWIN
+  // To allow proper comparison of absolute paths:
+  //   - one with explicit drive letter C:\xxx
+  //   - another with implicit drive letter \xxx
+  // advance the pointer, of the explicit one, to skip the drive
+  for (int swap = 0, drive = NUL; swap < 2; swap++) {
+    // Handle absolute paths with implicit drive letter
+    c1 = utf_ptr2char(p1);
+    c2 = utf_ptr2char(p2);
+
+    if ((c1 == '/' || c1 == '\\') && ASCII_ISALPHA(c2)) {
+      drive = mb_toupper(c2) - 'A' + 1;
+
+      // Check for the colon
+      p2 += utfc_ptr2len(p2);
+      c2 = utf_ptr2char(p2);
+      if (c2 == ':' && drive == _getdrive()) {  // skip the drive for comparison
+        p2 += utfc_ptr2len(p2);
+        break;
+      } else {  // ignore
+        p2 -= utfc_ptr2len(p2);
+      }
+    }
+
+    // swap pointers
+    const char *tmp = p1;
+    p1 = p2;
+    p2 = tmp;
+  }
+# endif
+
   while (len > 0) {
     c1 = utf_ptr2char(p1);
     c2 = utf_ptr2char(p2);
@@ -1834,7 +1869,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 /// the root may have relative paths (like dir/../subdir) or symlinks
 /// embedded, or even extra separators (//).  This function addresses
 /// those possibilities, returning a resolved absolute path.
-/// For MS-Windows, this also expands names like "longna~1".
+/// For MS-Windows, this also provides drive letter for all absolute paths.
 ///
 /// @param fname is the filename to expand
 /// @return [allocated] Full path (NULL for failure).
@@ -1848,6 +1883,10 @@ char *fix_fname(const char *fname)
       || strstr(fname, "//") != NULL
 # ifdef BACKSLASH_IN_FILENAME
       || strstr(fname, "\\\\") != NULL
+# endif
+# ifdef MSWIN
+      || fname[0] == '/'
+      || fname[0] == '\\'
 # endif
       ) {
     return FullName_save(fname, false);
@@ -2328,7 +2367,11 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
   const char *end_of_path = fname;
 
   // expand it if forced or not an absolute path
-  if (force || !path_is_absolute(fname)) {
+  if (force || !path_is_absolute(fname)
+#ifdef MSWIN  // enforce drive letter on Windows paths
+      || fname[0] == '/' || fname[0] == '\\'
+#endif
+      ) {
     p = strrchr(fname, '/');
 #ifdef MSWIN
     if (p == NULL) {
@@ -2372,8 +2415,9 @@ bool path_is_absolute(const char *fname)
     return false;
   }
   // A name like "d:/foo" and "//server/share" is absolute
-  return ((isalpha((uint8_t)fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
-          || (vim_ispathsep_nocolon(fname[0]) && fname[0] == fname[1]));
+  // /foo and \foo are absolute too because Windows keeps a current drive.
+  return ((ASCII_ISALPHA(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
+          || vim_ispathsep_nocolon(fname[0]));
 #else
   // UNIX: This just checks if the file name starts with '/' or '~'.
   return *fname == '/' || *fname == '~';

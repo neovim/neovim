@@ -421,6 +421,8 @@ These existing features changed their behavior.
 • 'scrollback' maximum value increased from 100000 to 1000000
 • |matchfuzzy()| and |matchfuzzypos()| use an improved fuzzy matching algorithm
   (same as fzy).
+- Windows: Paths like "\Windows" and "/Windows" are now considered to be
+  absolute paths (to the current drive) and no longer relative.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
