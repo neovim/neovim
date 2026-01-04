@@ -343,7 +343,7 @@ end
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
-  --- @return vim.lsp.Config
+  --- @return vim.lsp.Config?
   __index = function(self, name)
     validate_config_name(name)
 
@@ -406,6 +406,63 @@ lsp.config = setmetatable({ _configs = {} }, {
     self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
   end,
 })
+
+--- @return string[]
+local function get_all_config_names()
+  local config_names = vim
+    .iter(api.nvim_get_runtime_file('lsp/*.lua', true))
+    --- @param path string
+    :map(function(path)
+      local file_name = path:match('[^/]*.lua$')
+      return file_name:sub(0, #file_name - 4)
+    end)
+    :totable()
+
+  vim.list_extend(config_names, vim.tbl_keys(lsp.config._configs))
+
+  return vim
+    .iter(vim.list.unique(config_names))
+    --- @param name string
+    :filter(function(name)
+      return name ~= '*'
+    end)
+    :totable()
+end
+
+--- Key-value pairs used to filter the returned config names.
+--- @class vim.lsp.get_config_names.Filter
+--- @inlinedoc
+---
+--- If true, only return enabled configs. If false, only return configs that
+--- aren't enabled.
+--- @field enabled? boolean
+
+--- Get LSP config names.
+---
+--- @param filter? vim.lsp.get_config_names.Filter
+--- @return string[]
+function lsp.get_config_names(filter)
+  validate('filter', filter, 'table', true)
+
+  filter = filter or {}
+
+  local config_names = {} --- @type string[]
+
+  local all_names --- @type string[]
+  if not filter.enabled then
+    all_names = get_all_config_names()
+  else
+    -- Shortcut filtering enabled configs by directly getting enabled configs
+    all_names = vim.tbl_keys(lsp._enabled_configs)
+  end
+
+  for _, name in ipairs(all_names) do
+    if filter.enabled ~= false or not lsp.is_enabled(name) then
+      config_names[#config_names + 1] = name
+    end
+  end
+  return config_names
+end
 
 local lsp_enable_autocmd_id --- @type integer?
 

@@ -7184,6 +7184,29 @@ describe('LSP', function()
       exec_lua([[vim.lsp.enable('foo', false)]])
       eq(false, exec_lua([[return vim.lsp.is_enabled('foo')]]))
     end)
+
+    it('vim.lsp.get_config_names()', function()
+      exec_lua(function()
+        vim.lsp.config('foo', {
+          cmd = { 'foo' },
+          root_markers = { '.foorc' },
+        })
+        vim.lsp.config('bar', {
+          cmd = { 'bar' },
+          root_markers = { '.barrc' },
+        })
+        vim.lsp.enable('foo')
+      end)
+
+      -- With no filter, return all configs
+      local config_names = exec_lua([[return vim.lsp.get_config_names()]])
+      table.sort(config_names)
+      eq({ 'bar', 'foo' }, config_names)
+
+      -- Confirm `enabled` works
+      eq({ 'foo' }, exec_lua([[return vim.lsp.get_config_names { enabled = true }]]))
+      eq({ 'bar' }, exec_lua([[return vim.lsp.get_config_names { enabled = false }]]))
+    end)
   end)
 
   describe('vim.lsp.buf.workspace_diagnostics()', function()

@@ -19,44 +19,17 @@ local function get_client_names()
   return vim.list.unique(client_names)
 end
 
---- @return string[]
-local function get_config_names()
-  local config_names = vim
-    .iter(api.nvim_get_runtime_file('lsp/*.lua', true))
-    --- @param path string
-    :map(function(path)
-      local file_name = path:match('[^/]*.lua$')
-      return file_name:sub(0, #file_name - 4)
-    end)
-    :totable()
-
-  --- @diagnostic disable-next-line
-  vim.list_extend(config_names, vim.tbl_keys(lsp.config._configs))
-
-  return vim
-    .iter(vim.list.unique(config_names))
-    --- @param name string
-    :filter(function(name)
-      return name ~= '*'
-    end)
-    :totable()
-end
-
---- @param filter fun(string):boolean
+--- @param filter vim.lsp.get_config_names.Filter
 --- @return fun():string[]
 local function filtered_config_names(filter)
   return function()
-    return vim.iter(get_config_names()):filter(filter):totable()
+    return lsp.get_config_names(filter)
   end
 end
 
 local complete_args = {
-  enable = filtered_config_names(function(name)
-    return not lsp.is_enabled(name)
-  end),
-  disable = filtered_config_names(function(name)
-    return lsp.is_enabled(name)
-  end),
+  enable = filtered_config_names { enabled = false },
+  disable = filtered_config_names { enabled = true },
   restart = get_client_names,
   stop = get_client_names,
 }
@@ -78,10 +51,13 @@ local function ex_lsp_enable(config_names)
   -- Default to enabling all clients matching the filetype of the current buffer.
   if #config_names == 0 then
     local filetype = vim.bo.filetype
-    for _, name in ipairs(get_config_names()) do
-      local filetypes = lsp.config[name].filetypes
-      if filetypes == nil or vim.list_contains(filetypes, filetype) then
-        table.insert(config_names, name)
+    for _, name in ipairs(lsp.get_config_names()) do
+      local config = lsp.config[name]
+      if config ~= nil then
+        local filetypes = config.filetypes
+        if filetypes == nil or vim.list_contains(filetypes, filetype) then
+          table.insert(config_names, config.name)
+        end
       end
     end
     if #config_names == 0 then
