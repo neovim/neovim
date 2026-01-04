@@ -226,7 +226,7 @@ func Test_cd_completion()
   set cdpath&
 
   if has('win32')
-    " Test windows absolute path completion
+    " Test Windows absolute path completion
     " Retrieve a suitable dir in the current drive
     let dir = readdir('/', 'isdirectory("/" .. v:val) && len(v:val) > 2')[-1]
     " Get partial path

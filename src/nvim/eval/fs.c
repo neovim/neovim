@@ -112,7 +112,7 @@ repeat:
 
     // FullName_save() is slow, don't use it when not needed.
     if (*p != NUL || !vim_isAbsName(*fnamep)
-#ifdef MSWIN  // enforce drive letter on windows paths
+#ifdef MSWIN  // enforce drive letter on Windows paths
         || **fnamep == '/' || **fnamep == '\\'
 #endif
         ) {

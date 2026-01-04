@@ -381,7 +381,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
   const char *p2 = fname2;
 
 # ifdef MSWIN
-  // To allow proper comparisson of absolute paths:
+  // To allow proper comparison of absolute paths:
   //   - one with explicit drive letter C:\xxx
   //   - another with implicit drive letter \xxx
   // advance the pointer, of the explicit one, to skip the drive
@@ -396,7 +396,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
       // Check for the colon
       p2 += utfc_ptr2len(p2);
       c2 = utf_ptr2char(p2);
-      if (c2 == ':' && drive == _getdrive()) {  // skip the drive for comparisson
+      if (c2 == ':' && drive == _getdrive()) {  // skip the drive for comparison
         p2 += utfc_ptr2len(p2);
         break;
       } else {  // ignore
@@ -2415,7 +2415,7 @@ bool path_is_absolute(const char *fname)
     return false;
   }
   // A name like "d:/foo" and "//server/share" is absolute
-  // /foo and \foo are absolute too because windows keeps a current drive.
+  // /foo and \foo are absolute too because Windows keeps a current drive.
   return ((ASCII_ISALPHA(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
           || vim_ispathsep_nocolon(fname[0]));
 #else
