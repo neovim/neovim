@@ -524,6 +524,11 @@ describe('float window', function()
       it('if called from non-floating window', function()
         api.nvim_set_current_win(old_win)
         eq('Vim:E444: Cannot close last window', pcall_err(api.nvim_win_close, old_win, false))
+        -- Start with many tab pages, but make autocommands from closing floats leave us with just
+        -- one (where we're now the last window).
+        command('tabnew | autocmd WinClosed * ++once tabonly')
+        api.nvim_open_win(0, false, float_opts)
+        eq('Vim:E444: Cannot close last window', pcall_err(api.nvim_win_close, 0, true))
       end)
       it('if called from floating window', function()
         eq('Vim:E444: Cannot close last window', pcall_err(api.nvim_win_close, old_win, false))
