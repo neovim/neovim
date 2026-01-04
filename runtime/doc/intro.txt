@@ -46,9 +46,7 @@ There are many resources to learn Vi, Vim, and Nvim.  We recommend:
 - "Vim - Vi Improved" by Steve Oualline. This was the first book dedicated to
   Vim.  Parts of it were included in the Vim user manual. |frombook|  ISBN:
   0735710015
-- For more information try one of these:
-  - https://iccf-holland.org/click5.html
-  - https://www.vim.org/iccf/click5.html
+- For more information see https://www.vim.org/iccf/click5.html
 - Vim FAQ: https://vimhelp.org/vim_faq.txt.html
 
                                                 *bugs* *bug-report* *feature-request*
