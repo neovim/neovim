@@ -664,6 +664,34 @@ describe(':terminal buffer', function()
                                                           |
       ]])
     end)
+
+    describe('no heap-use-after-free after', function()
+      local term
+
+      before_each(function()
+        term = exec_lua(function()
+          vim.api.nvim_create_autocmd('TermRequest', { callback = function() end })
+          return vim.api.nvim_open_term(0, {})
+        end)
+      end)
+
+      it('wiping buffer with pending TermRequest #37226', function()
+        exec_lua(function()
+          vim.api.nvim_chan_send(term, '\027]8;;https://example.com\027\\')
+          vim.api.nvim_buf_delete(0, { force = true })
+        end)
+        assert_alive()
+      end)
+
+      it('unloading buffer with pending TermRequest #37226', function()
+        api.nvim_create_buf(true, false) -- Create a buffer to switch to.
+        exec_lua(function()
+          vim.api.nvim_chan_send(term, '\027]8;;https://example.com\027\\')
+          vim.api.nvim_buf_delete(0, { force = true, unload = true })
+        end)
+        assert_alive()
+      end)
+    end)
   end)
 
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
