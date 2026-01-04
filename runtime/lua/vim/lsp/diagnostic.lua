@@ -193,14 +193,8 @@ function M.get_namespace(client_id, is_pull)
 
   local client = lsp.get_client_by_id(client_id)
   if is_pull then
-    local server_id =
-      vim.tbl_get((client or {}).server_capabilities or {}, 'diagnosticProvider', 'identifier')
-    local key = ('%d:%s'):format(client_id, server_id or 'nil')
-    local name = ('nvim.lsp.%s.%d.%s'):format(
-      client and client.name or 'unknown',
-      client_id,
-      server_id or 'nil'
-    )
+    local key = ('%d'):format(client_id)
+    local name = ('nvim.lsp.%s.%d'):format(client and client.name or 'unknown', client_id)
     local ns = client_pull_namespaces[key]
     if not ns then
       ns = api.nvim_create_namespace(name)
@@ -394,10 +388,7 @@ function M.on_refresh(err, _, ctx)
   if client == nil then
     return vim.NIL
   end
-  if
-    client.server_capabilities.diagnosticProvider
-    and client.server_capabilities.diagnosticProvider.workspaceDiagnostics
-  then
+  if client:supports_method('workspace/diagnostic') then
     M._workspace_diagnostics({ client_id = ctx.client_id })
   else
     for bufnr in pairs(client.attached_buffers or {}) do
@@ -532,13 +523,16 @@ function M._workspace_diagnostics(opts)
   end
 
   for _, client in ipairs(clients) do
-    --- @type lsp.WorkspaceDiagnosticParams
-    local params = {
-      identifier = vim.tbl_get(client, 'server_capabilities', 'diagnosticProvider', 'identifier'),
-      previousResultIds = previous_result_ids(client.id),
-    }
+    local identifiers = client:_provider_value_get('workspace/diagnostic', 'identifier')
+    for _, id in ipairs(identifiers) do
+      --- @type lsp.WorkspaceDiagnosticParams
+      local params = {
+        identifier = type(id) == 'string' and id or nil,
+        previousResultIds = previous_result_ids(client.id),
+      }
 
-    client:request('workspace/diagnostic', params, handler)
+      client:request('workspace/diagnostic', params, handler)
+    end
   end
 end
 

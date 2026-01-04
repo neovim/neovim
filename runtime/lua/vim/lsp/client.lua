@@ -615,19 +615,17 @@ end
 function Client:_process_static_registrations()
   local static_registrations = {} ---@type lsp.Registration[]
 
-  for method, capability in pairs(lsp.protocol._request_name_to_server_capability) do
+  for method in pairs(lsp.protocol._method_supports_static_registration) do
+    local capability = lsp.protocol._request_name_to_server_capability[method]
     if
-      vim.tbl_get(self.server_capabilities, unpack(capability), 'id')
-      --- @cast method vim.lsp.protocol.Method
+      vim.tbl_get(self.server_capabilities, capability[1], 'id')
       and self:_supports_registration(method)
     then
-      local cap = vim.tbl_get(self.server_capabilities, unpack(capability))
+      local cap = vim.tbl_get(self.server_capabilities, capability[1])
       static_registrations[#static_registrations + 1] = {
         id = cap.id,
         method = method,
-        registerOptions = {
-          documentSelector = cap.documentSelector, ---@type lsp.DocumentSelector|lsp.null
-        },
+        registerOptions = cap or {},
       }
     end
   end
@@ -936,9 +934,12 @@ end
 --- Get options for a method that is registered dynamically.
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_supports_registration(method)
-  local capability_path = lsp.protocol._request_name_to_client_capability[method] or {}
-  -- dynamicRegistration is at the second level, even in deeply nested capabilities
-  local capability = vim.tbl_get(self.capabilities, capability_path[1], capability_path[2])
+  if lsp.protocol._methods_with_no_registration_options[method] then
+    return true
+  end
+  local provider = self:_registration_provider(method)
+  local capability_path = lsp.protocol._provider_to_client_registration[provider]
+  local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
   return type(capability) == 'table' and capability.dynamicRegistration
 end
 
@@ -946,7 +947,7 @@ end
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_registration_provider(method)
   local capability_path = lsp.protocol._request_name_to_server_capability[method]
-  return capability_path and capability_path[1] or method
+  return capability_path and capability_path[1]
 end
 
 --- @private
@@ -1205,7 +1206,7 @@ function Client:supports_method(method, bufnr)
 
   local provider = self:_registration_provider(method)
   local regs = self:_get_registrations(provider, bufnr)
-  if lsp.protocol._request_name_allows_registration[method] and not regs then
+  if lsp.protocol._method_supports_dynamic_registration[method] and not regs then
     return false
   end
   if regs then
@@ -1213,6 +1214,9 @@ function Client:supports_method(method, bufnr)
       if required_capability and #required_capability > 1 then
         if vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
           return self:_supports_registration(reg.method)
+        end
+        if lsp.protocol._methods_with_no_registration_options[method] then
+          return true
         end
       else
         return self:_supports_registration(reg.method)
@@ -1224,6 +1228,40 @@ function Client:supports_method(method, bufnr)
   -- if we don't know about the method, assume that the client supports it.
   -- This needs to be at the end, so that dynamic_capabilities are checked first
   return required_capability == nil
+end
+
+--- Retrieves all capability values for a given LSP method, handling both static and dynamic registrations.
+--- This function abstracts over differences between capabilities declared in `server_capabilities`
+--- and those registered dynamically at runtime, returning all matching capability values.
+--- It also handles cases where the registration method differs from the calling method by abstracting to the Provider.
+--- For example, `workspace/diagnostic` uses capabilities registered under `textDocument/diagnostic`.
+--- This is useful for features like diagnostics and formatting, where servers may register multiple providers
+--- with different options (such as specific filetypes or document selectors).
+--- @param method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration LSP method name
+--- @param ... any Additional keys to index into the capability
+--- @return lsp.LSPAny[] # The capability value if it exists, empty table if not found
+function Client:_provider_value_get(method, ...)
+  local matched_regs = {} --- @type any[]
+  local provider = self:_registration_provider(method)
+  local dynamic_regs = self:_get_registrations(provider)
+  if not provider then
+    return matched_regs
+  elseif not dynamic_regs then
+    -- First check static capabilities
+    local static_reg = vim.tbl_get(self.server_capabilities, provider)
+    if static_reg then
+      matched_regs[1] = vim.tbl_get(static_reg, ...) or vim.NIL
+    end
+  else
+    local required_capability = lsp.protocol._request_name_to_server_capability[method]
+    for _, reg in ipairs(dynamic_regs) do
+      if vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
+        matched_regs[#matched_regs + 1] = vim.tbl_get(reg, 'registerOptions', ...) or vim.NIL
+      end
+    end
+  end
+
+  return matched_regs
 end
 
 --- @private
