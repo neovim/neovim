@@ -119,8 +119,8 @@ TYPES OF "NOT APPLICABLE" VIM PATCHES ~
   supported by Nvim.
     - NA files: `src/Make_*`, `src/testdir/Make__*`
 - `if_*.c` changes: `if_python.c` et. al. were removed.
-- `term.c` changes: the Nvim TUI uses `libtermkey` to read terminal sequences;
-  Vim's `term.c` was removed.
+- Most `term.c` changes: the Nvim TUI uses `libtermkey` to read terminal sequences;
+  Note: `replace_termcodes()` is applicable and moved to `src/nvim/keycodes.c`.
 - `job` patches: incompatible API and implementation
     - NA files: `src/channel_*`, `src/job_*`, `src/testdir/test_channel_*`,
       `src/testdir/test_job_*`

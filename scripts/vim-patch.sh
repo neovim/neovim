@@ -307,6 +307,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/keymap\.h/\1\/keycodes.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename term.c to keycodes.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/term\.c/\1\/keycodes.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename option.h to option_vars.h
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/option\.h/\1\/option_vars.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
