@@ -6,7 +6,9 @@ SECURITY.md
 configure
 runtime/bugreport.vim
 runtime/defaults.vim
+runtime/doc/debug.txt
 runtime/doc/debugger.txt
+runtime/doc/develop.txt
 runtime/doc/doctags.vim
 runtime/doc/farsi.txt
 runtime/doc/hangulin.txt
@@ -20,6 +22,7 @@ runtime/doc/os_390.txt
 runtime/doc/os_amiga.txt
 runtime/doc/os_beos.txt
 runtime/doc/os_dos.txt
+runtime/doc/os_haiku.txt
 runtime/doc/os_mac.txt
 runtime/doc/os_mint.txt
 runtime/doc/os_msdos.txt
@@ -28,8 +31,11 @@ runtime/doc/os_qnx.txt
 runtime/doc/os_risc.txt
 runtime/doc/os_unix.txt
 runtime/doc/os_vms.txt
+runtime/doc/pi_logipat.txt
+runtime/doc/quotes.txt
 runtime/doc/testing.txt
 runtime/doc/todo.txt
+runtime/doc/usr_52.txt
 runtime/doc/usr_90.txt
 runtime/doc/workshop.txt
 runtime/evim.vim
@@ -42,11 +48,14 @@ runtime/macros/swapmous.vim
 runtime/pack/dist/opt/editexisting/plugin/editexisting.vim
 runtime/pack/dist/opt/shellmenu/plugin/shellmenu.vim
 runtime/plugin/README.txt
+runtime/plugin/logiPat.vim
+runtime/plugin/manpager.vim
 runtime/plugin/rrhelper.vim
 runtime/syntax/syncolor.vim
 runtime/termcap
 runtime/tools/README.txt
 runtime/tools/ccfilter_README.txt
+runtime/tools/demoserver.py
 runtime/tools/efm_filter.txt
 runtime/tools/mve.txt
 runtime/tools/ref

@@ -19,6 +19,7 @@
 ^runtime/pack/dist/opt/dvorak/
 ^runtime/pack/dist/opt/editorconfig/
 ^runtime/print/
+^runtime/spell/.*\.latin1
 ^runtime/syntax/generator/
 ^runtime/syntax/testdir/
 ^runtime/tutor/it/
