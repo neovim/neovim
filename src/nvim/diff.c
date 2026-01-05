@@ -212,7 +212,7 @@ void diff_buf_add(buf_T *buf)
     }
   }
 
-  semsg(_("E96: Cannot diff more than %" PRId64 " buffers"), (int64_t)DB_COUNT);
+  semsg(_("E96: Cannot diff more than %d buffers"), DB_COUNT);
 }
 
 /// Remove all buffers to make diffs for.

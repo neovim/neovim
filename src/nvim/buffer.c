@@ -1357,9 +1357,8 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
           return FAIL;
         }
       } else {
-        semsg(_("E89: No write since last change for buffer %" PRId64
-                " (add ! to override)"),
-              (int64_t)buf->b_fnum);
+        semsg(_("E89: No write since last change for buffer %d (add ! to override)"),
+              buf->b_fnum);
         return FAIL;
       }
     }
@@ -2152,7 +2151,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     if ((options & GETF_ALT) && n == 0) {
       emsg(_(e_noalt));
     } else {
-      semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)n);
+      semsg(_(e_buffer_nr_not_found), n);
     }
     return FAIL;
   }
