@@ -425,6 +425,36 @@ describe(':terminal buffer', function()
     ]])
     eq('TermLeave bar false', exec_lua('return _G.last_event'))
   end)
+
+  it('no crash with race between buffer close and OSC 2', function()
+    skip(is_os('win'), 'tty-test cannot forward OSC 2 on Windows?')
+    exec_lua(function()
+      vim.api.nvim_chan_send(vim.bo.channel, '\027]2;SOME_TITLE\007')
+    end)
+    retry(nil, 4000, function()
+      eq('SOME_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    end)
+    screen:expect_unchanged()
+    --- @type string
+    local title_before_del = exec_lua(function()
+      vim.wait(10) -- Ensure there are no pending events.
+      vim.api.nvim_chan_send(vim.bo.channel, '\027]2;OTHER_TITLE\007')
+      vim.uv.run('once') -- Only process the pending write.
+      vim.uv.sleep(50) -- Block the event loop and wait for tty-test to forward OSC 2.
+      local term_title = vim.b.term_title
+      vim.api.nvim_buf_delete(0, { force = true })
+      vim.wait(10, nil, nil, true) -- Process fast events only.
+      return term_title
+    end)
+    -- Title isn't changed until the second vim.wait().
+    eq('SOME_TITLE', title_before_del)
+    screen:expect([[
+      ^                                                  |
+      {100:~                                                 }|*5
+                                                        |
+    ]])
+    assert_alive()
+  end)
 end)
 
 describe(':terminal buffer', function()
