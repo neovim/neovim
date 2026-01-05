@@ -2109,12 +2109,8 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
 static void refresh_terminal(Terminal *term)
 {
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  bool valid = true;
-  if (!buf || !(valid = buf_valid(buf))) {
+  if (!buf) {
     // Destroyed by `close_buffer`. Do not do anything else.
-    if (!valid) {
-      term->buf_handle = 0;
-    }
     return;
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
