@@ -20,13 +20,15 @@ describe('autocmd TermClose', function()
     clear()
     api.nvim_set_option_value('shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
+    command('autocmd! nvim.terminal TermClose')
   end)
 
   local function test_termclose_delete_own_buf()
     -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
     api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
-    command('autocmd TermClose * bdelete!')
     command('terminal')
+    local termbuf = api.nvim_get_current_buf()
+    command(('autocmd TermClose * bdelete! %d'):format(termbuf))
     matches(
       '^TermClose Autocommands for "%*": Vim%(bdelete%):E937: Attempt to delete a buffer that is in use: term://',
       pcall_err(command, 'bdelete!')
@@ -34,14 +36,36 @@ describe('autocmd TermClose', function()
     assert_alive()
   end
 
-  -- TODO: fixed after merging patches for `can_unload_buffer`?
-  pending('TermClose deleting its own buffer, altbuf = buffer 1 #10386', function()
+  it('TermClose deleting its own buffer, altbuf = buffer 1 #10386', function()
     test_termclose_delete_own_buf()
   end)
 
   it('TermClose deleting its own buffer, altbuf NOT buffer 1 #10386', function()
     command('edit foo1')
     test_termclose_delete_own_buf()
+  end)
+
+  it('TermClose deleting all other buffers', function()
+    local oldbuf = api.nvim_get_current_buf()
+    -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
+    api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
+    command(('autocmd TermClose * bdelete! %d'):format(oldbuf))
+    command('horizontal terminal')
+    neq(oldbuf, api.nvim_get_current_buf())
+    command('bdelete!')
+    feed('<C-G>') -- This shouldn't crash due to having a 0-line buffer.
+    assert_alive()
+  end)
+
+  it('TermClose switching back to terminal buffer', function()
+    local buf = api.nvim_get_current_buf()
+    api.nvim_open_term(buf, {})
+    command(('autocmd TermClose * buffer %d | new'):format(buf))
+    eq(
+      'TermClose Autocommands for "*": Vim(buffer):E1546: Cannot switch to a closing buffer',
+      pcall_err(command, 'bwipe!')
+    )
+    assert_alive()
   end)
 
   it('triggers when fast-exiting terminal job stops', function()
