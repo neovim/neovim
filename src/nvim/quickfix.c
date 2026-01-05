@@ -6431,7 +6431,7 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, dict_T *d, bool first_entry, b
   if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
     if (!did_bufnr_emsg) {
       did_bufnr_emsg = true;
-      semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)bufnum);
+      semsg(_("E92: Buffer %d not found"), bufnum);
     }
     valid = false;
     bufnum = 0;

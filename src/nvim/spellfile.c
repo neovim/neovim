@@ -5431,7 +5431,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
         break;
       }
       if (*spf == NUL) {
-        semsg(_("E765: 'spellfile' does not have %" PRId64 " entries"), (int64_t)idx);
+        semsg(_("E765: 'spellfile' does not have %d entries"), idx);
         xfree(fnamebuf);
         return;
       }

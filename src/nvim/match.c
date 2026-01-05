@@ -1058,7 +1058,7 @@ void f_matchadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
   if (id >= 1 && id <= 3) {
-    semsg(_("E798: ID is reserved for \":match\": %" PRId64), (int64_t)id);
+    semsg(_("E798: ID is reserved for \":match\": %d"), id);
     return;
   }
 
@@ -1109,7 +1109,7 @@ void f_matchaddpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // id == 3 is ok because matchaddpos() is supposed to substitute :3match
   if (id == 1 || id == 2) {
-    semsg(_("E798: ID is reserved for \"match\": %" PRId64), (int64_t)id);
+    semsg(_("E798: ID is reserved for \"match\": %d"), id);
     return;
   }
 

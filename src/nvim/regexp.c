@@ -10070,7 +10070,7 @@ static int nfa_regatom(void)
         rc_did_emsg = true;
         return FAIL;
       }
-      siemsg("INTERNAL: Unknown character class char: %" PRId64, (int64_t)c);
+      siemsg("INTERNAL: Unknown character class char: %d", c);
       return FAIL;
     }
     // When '.' is followed by a composing char ignore the dot, so that

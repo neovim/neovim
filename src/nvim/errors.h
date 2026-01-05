@@ -129,6 +129,7 @@ EXTERN const char e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
 EXTERN const char e_empty_buffer[] INIT(= N_("E749: Empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
+EXTERN const char e_buffer_nr_not_found[] INIT(= N_("E92: Buffer %d not found"));
 EXTERN const char e_unknown_function_str[] INIT(= N_("E117: Unknown function: %s"));
 EXTERN const char e_str_not_inside_function[] INIT(= N_("E193: %s not inside a function"));
 
