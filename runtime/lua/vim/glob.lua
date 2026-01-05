@@ -96,7 +96,7 @@ local function end_seg(t)
   if t.n > 0 then
     seg_grammar.s = t.s
     for i = 1, t.n do
-      local rname = t[i][1]
+      local rname = '_' .. t[i][1]
       if not seg_grammar[rname] then
         -- Optimize search when deterministic first character is available
         if t[i].F then
