@@ -636,10 +636,6 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     return true;
   }
 
-  if (buf->terminal) {
-    buf_close_terminal(buf);
-  }
-
   // Always remove the buffer when there is no file name.
   if (buf->b_ffname == NULL) {
     del_buf = true;
@@ -662,6 +658,15 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   }
 
   buf->b_nwindows = nwindows;
+
+  if (buf->terminal) {
+    buf_close_terminal(buf);
+    // Must check this before calling buf_freeall(), otherwise is_curbuf will be true
+    // in buf_freeall() but still false here, leading to a 0-line buffer.
+    if (buf == curbuf && !is_curbuf) {
+      return false;
+    }
+  }
 
   buf_freeall(buf, ((del_buf ? BFA_DEL : 0)
                     + (wipe_buf ? BFA_WIPE : 0)
