@@ -1419,6 +1419,26 @@ function M._test()
   eq('https://example.com', fixed_url)
   eq('', removed_chars)
 
+  -- Test numbered list items: verify explicit numbers are used (not CSS counters).
+  -- This test ensures numbered lists separated by blank lines render correctly.
+  -- See: https://github.com/neovim/neovim/issues/37220
+  local test_vimdoc = [[
+*test-numli.txt*  Test numbered list items
+
+1. First item
+
+2. Second item
+
+3. Third item
+]]
+  local html, _ = gen_one('test-numli.txt', test_vimdoc, 'test-numli.html', false, 'test', nil)
+  -- Verify numbered list items use explicit numbers via help-li-num-prefix spans
+  ok(html:find('help%-li%-num%-prefix">1%.</span>'), 'numbered list item 1')
+  ok(html:find('help%-li%-num%-prefix">2%.</span>'), 'numbered list item 2')
+  ok(html:find('help%-li%-num%-prefix">3%.</span>'), 'numbered list item 3')
+  -- Verify we're NOT using CSS counters (no ::before content)
+  ok(not html:find('counter%-increment'), 'no CSS counter-increment in output')
+
   print('all tests passed.\n')
 end
 
