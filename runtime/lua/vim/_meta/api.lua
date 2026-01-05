@@ -2197,7 +2197,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- Highlights from non-global namespaces are not active by default, use
 --- `nvim_set_hl_ns()` or `nvim_win_set_hl_ns()` to activate them.
 --- @param name string Highlight group name, e.g. "ErrorMsg"
---- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
+--- @param val vim.api.keyset.highlight|vim.api.keyset.get_hl_info Highlight definition map, accepts the following keys:
 --- - fg: color name or "#RRGGBB", see note.
 --- - bg: color name or "#RRGGBB", see note.
 --- - sp: color name or "#RRGGBB"

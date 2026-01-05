@@ -28,6 +28,15 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_win_get_config = 'vim.api.keyset.win_config_ret',
 }
 
+-- Parameter type overrides: { func_name = { param_name = type } }
+-- Used when a parameter should accept additional types beyond what's auto-generated.
+local LUA_API_PARAM_OVERRIDES = {
+  -- nvim_set_hl should accept the output of nvim_get_hl directly
+  nvim_set_hl = {
+    val = 'vim.api.keyset.highlight|vim.api.keyset.get_hl_info',
+  },
+}
+
 local LUA_META_HEADER = {
   '--- @meta _',
   '-- THIS FILE IS GENERATED',
@@ -290,8 +299,13 @@ local function render_api_meta(_f, fun, write)
 
   local param_names = {} --- @type string[]
   local params = process_params(fun.params)
+  local param_overrides = LUA_API_PARAM_OVERRIDES[fun.name]
   for _, p in ipairs(params) do
     local pname, ptype, pdesc = luaescape(p[1]), p[2], p[3]
+    -- Check for parameter type overrides
+    if param_overrides and param_overrides[p[1]] then
+      ptype = param_overrides[p[1]]
+    end
     param_names[#param_names + 1] = pname
     if pdesc then
       local s = '--- @param ' .. pname .. ' ' .. ptype .. ' '
