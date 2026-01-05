@@ -2601,10 +2601,9 @@ const char *did_set_langmap(optset_T *args)
         return args->os_errbuf;
       }
 
-      if (from >= 256) {
+      if (from >= 256 || to > UCHAR_MAX) {
         langmap_set_entry(from, to);
       } else {
-        assert(to <= UCHAR_MAX);
         langmap_mapchar[from & 255] = (uint8_t)to;
       }
 

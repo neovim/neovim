@@ -37,9 +37,14 @@ enum {
         && !KeyStuffed \
         && (c) >= 0) \
     { \
-      if ((c) < 256) \
-      c = langmap_mapchar[c]; \
-      else \
-      c = langmap_adjust_mb(c); \
+      if ((c) < 256) { \
+        if (langmap_mapchar[c] != (uint8_t)(c)) { \
+          c = langmap_mapchar[c]; \
+        } else { \
+          c = langmap_adjust_mb(c); \
+        } \
+      } else { \
+        c = langmap_adjust_mb(c); \
+      } \
     } \
   } while (0)
