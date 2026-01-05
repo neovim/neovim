@@ -257,7 +257,7 @@ void do_window(int nchar, int Prenum, int xchar)
       if (Prenum == 0) {
         emsg(_(e_noalt));
       } else {
-        semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)Prenum);
+        semsg(_(e_buffer_nr_not_found), (int64_t)Prenum);
       }
       break;
     }

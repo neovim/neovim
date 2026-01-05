@@ -590,7 +590,7 @@ static linenr_T sign_jump(int id, char *group, buf_T *buf)
   linenr_T lnum = buf_findsign(buf, id, group);
 
   if (lnum <= 0) {
-    semsg(_("E157: Invalid sign ID: %" PRId32), id);
+    semsg(_("E157: Invalid sign ID: %d"), id);
     return -1;
   }
 
