@@ -4730,8 +4730,8 @@ static int check_more(bool message, bool forceit)
         }
         return FAIL;
       }
-      semsg(NGETTEXT("E173: %" PRId64 " more file to edit",
-                     "E173: %" PRId64 " more files to edit", n), (int64_t)n);
+      semsg(NGETTEXT("E173: %d more file to edit",
+                     "E173: %d more files to edit", n), n);
       quitmore = 2;                 // next try to quit is allowed
     }
     return FAIL;
