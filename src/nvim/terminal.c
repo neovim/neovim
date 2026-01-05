@@ -1350,8 +1350,11 @@ static int term_movecursor(VTermPos new_pos, VTermPos old_pos, int visible, void
 }
 
 static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
-  FUNC_ATTR_NONNULL_ALL
 {
+  if (!buf) {
+    return;  // In case of receiving OSC 2 between buffer close and job exit.
+  }
+
   Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
                STATIC_CSTR_AS_STRING("term_title"),
@@ -1378,7 +1381,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     break;
 
   case VTERM_PROP_TITLE: {
-    buf_T *buf = handle_get_buffer(term->buf_handle);
+    buf_T *buf = handle_get_buffer(term->buf_handle);  // May be NULL
     VTermStringFragment frag = val->string;
 
     if (frag.initial && frag.final) {
