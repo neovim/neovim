@@ -1316,25 +1316,6 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   end
 end
 
---- Check if a range in a buffer is inside a Lua codeblock via treesitter injection.
---- Used by :source to detect Lua code in non-Lua files (e.g., vimdoc).
---- @param bufnr integer Buffer number
---- @param line1 integer Start line (1-indexed)
---- @param line2 integer End line (1-indexed)
---- @return boolean True if the range is in a Lua injection
-function vim._source_is_lua(bufnr, line1, line2)
-  local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
-  if not ok or not parser then
-    return false
-  end
-  -- Parse to ensure injections are processed
-  parser:parse(true)
-  -- Convert to 0-indexed range
-  local range = { line1 - 1, 0, line2 - 1, -1 }
-  local lang_tree = parser:language_for_range(range)
-  return lang_tree:lang() == 'lua'
-end
-
 require('vim._options')
 
 --- Remove at Nvim 1.0

@@ -2273,13 +2273,13 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   if (fname == NULL && eap != NULL && !ex_lua
       && !strequal(curbuf->b_p_ft, "lua")
       && !(curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
-    char lua_check[128];
-    snprintf(lua_check, sizeof(lua_check),
-             "return vim._source_is_lua(%d, %" PRIdLINENR ", %" PRIdLINENR ")",
-             (int)curbuf->handle, eap->line1, eap->line2);
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, INTEGER_OBJ(curbuf->handle));
+    ADD_C(args, INTEGER_OBJ(eap->line1));
+    ADD_C(args, INTEGER_OBJ(eap->line2));
     Error err = ERROR_INIT;
-    Object result = nlua_exec(cstr_as_string(lua_check), NULL,
-                              (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
+    Object result = NLUA_EXEC_STATIC("return require('vim._core.util').source_is_lua(...)",
+                                     args, kRetNilBool, NULL, &err);
     if (!ERROR_SET(&err) && LUARET_TRUTHY(result)) {
       ts_lua = true;
     }

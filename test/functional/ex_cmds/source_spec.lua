@@ -297,44 +297,33 @@ describe(':source', function()
     os.remove(test_file)
   end)
 
-  describe('treesitter Lua codeblock detection', function()
-    it('sources Lua codeblock in vimdoc file', function()
-      insert([[
-        *test.txt*  Test help file
+  it('sources Lua/Vimscript codeblocks based on treesitter injection', function()
+    insert([[
+      *test.txt*  Test help file
 
-        Example: >lua
-          vim.g.test_vimdoc_lua = 42
-        <]])
-      feed('dd') -- remove trailing empty line from insert
-      command('setlocal filetype=help')
-      -- Select the Lua code line (line 4) and source it
-      feed('4GV')
-      feed_command(':source')
-      eq(42, eval('g:test_vimdoc_lua'))
-    end)
+      Lua example: >lua
+        vim.g.test_lua = 42
+      <
 
-    it('sources Vimscript when not in a Lua codeblock', function()
-      insert([[
-        *test.txt*  Test help file
+      Vim example: >vim
+        let g:test_vim = 99
+      <]])
+    command('setlocal filetype=help')
 
-        Example: >vim
-          let g:test_vimdoc_vim = 99
-        <]])
-      feed('dd')
-      command('setlocal filetype=help')
-      -- Select the Vimscript code line (line 4) and source it
-      feed('4GV')
-      feed_command(':source')
-      eq(99, eval('g:test_vimdoc_vim'))
-    end)
+    -- Source Lua codeblock (line 4 contains the Lua code)
+    command(':4source')
+    eq(42, eval('g:test_lua'))
 
-    it('falls back to Vimscript when no treesitter parser', function()
-      insert([[let g:test_no_ts = 123]])
-      -- Don't set a filetype with treesitter support
-      command('setlocal filetype=')
-      command('source')
-      eq(123, eval('g:test_no_ts'))
-    end)
+    -- Source Vimscript codeblock (line 8 contains the Vim code)
+    command(':8source')
+    eq(99, eval('g:test_vim'))
+
+    -- Test fallback without treesitter
+    command('enew')
+    insert([[let g:test_no_ts = 123]])
+    command('setlocal filetype=')
+    command('source')
+    eq(123, eval('g:test_no_ts'))
   end)
 end)
 
