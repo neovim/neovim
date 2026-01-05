@@ -2650,7 +2650,9 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
 /// "action" can also be zero (do nothing).
 /// "abort_if_last" is passed to close_buffer(): abort closing if all other
 /// windows are closed.
-static void win_close_buffer(win_T *win, int action, bool abort_if_last)
+///
+/// @return  whether close_buffer() decremented b_nwindows
+static bool win_close_buffer(win_T *win, int action, bool abort_if_last)
   FUNC_ATTR_NONNULL_ALL
 {
   // Free independent synblock before the buffer is freed.
@@ -2665,12 +2667,13 @@ static void win_close_buffer(win_T *win, int action, bool abort_if_last)
     win->w_buffer->b_p_bl = false;
   }
 
+  bool retval = false;
   // Close the link to the buffer.
   if (win->w_buffer != NULL) {
     bufref_T bufref;
     set_bufref(&bufref, curbuf);
     win->w_locked = true;
-    close_buffer(win, win->w_buffer, action, abort_if_last, true);
+    retval = close_buffer(win, win->w_buffer, action, abort_if_last, true);
     if (win_valid_any_tab(win)) {
       win->w_locked = false;
     }
@@ -2680,6 +2683,27 @@ static void win_close_buffer(win_T *win, int action, bool abort_if_last)
     if (!bufref_valid(&bufref)) {
       curbuf = firstbuf;
     }
+  }
+
+  return retval;
+}
+
+/// When failing to close a window after already calling close_buffer() on it,
+/// call this to make the window have a buffer again.
+///
+/// @param bufref         reference to win->w_buffer before calling close_buffer()
+/// @param did_decrement  whether close_buffer() decremented b_nwindows
+static void win_unclose_buffer(win_T *win, bufref_T *bufref, bool did_decrement)
+{
+  if (win->w_buffer == NULL) {
+    // If the buffer was removed from the window we have to give it any buffer.
+    win->w_buffer = firstbuf;
+    firstbuf->b_nwindows++;
+    win_init_empty(win);
+  } else if (did_decrement && win->w_buffer == bufref->br_buf && bufref_valid(bufref)) {
+    // close_buffer() decremented the window count, but we're keeping the window.
+    // As the window is still viewing the buffer, increment the count.
+    win->w_buffer->b_nwindows++;
   }
 }
 
@@ -2804,7 +2828,10 @@ int win_close(win_T *win, bool free_buf, bool force)
     return OK;
   }
 
-  win_close_buffer(win, free_buf ? DOBUF_UNLOAD : 0, true);
+  bufref_T bufref;
+  set_bufref(&bufref, win->w_buffer);
+
+  bool did_decrement = win_close_buffer(win, free_buf ? DOBUF_UNLOAD : 0, true);
 
   if (win_valid(win) && win->w_buffer == NULL
       && !win->w_floating && last_window(win)) {
@@ -2825,8 +2852,17 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   // Autocommands may have closed the window already, or closed the only
   // other window or moved to another tab page.
-  if (!win_valid(win) || (!win->w_floating && last_window(win))
-      || close_last_window_tabpage(win, free_buf, prev_curtab)) {
+  if (!win_valid(win)) {
+    return FAIL;
+  }
+  if (one_window(win, NULL) && (first_tabpage->tp_next == NULL || lastwin->w_floating)) {
+    if (first_tabpage->tp_next != NULL) {
+      emsg(e_floatonly);
+    }
+    win_unclose_buffer(win, &bufref, did_decrement);
+    return FAIL;
+  }
+  if (close_last_window_tabpage(win, free_buf, prev_curtab)) {
     return FAIL;
   }
 
@@ -3105,16 +3141,7 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
 
 leave_open:
   if (win_valid_any_tab(win)) {
-    if (win->w_buffer == NULL) {
-      // If the buffer was removed from the window we have to give it any buffer.
-      win->w_buffer = firstbuf;
-      firstbuf->b_nwindows++;
-      win_init_empty(win);
-    } else if (did_decrement && win->w_buffer == bufref.br_buf && bufref_valid(&bufref)) {
-      // close_buffer decremented the window count, but we're keeping the window.
-      // As the window is still viewing the buffer, increment the count.
-      win->w_buffer->b_nwindows++;
-    }
+    win_unclose_buffer(win, &bufref, did_decrement);
   }
   return false;
 }
