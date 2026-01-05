@@ -816,7 +816,7 @@ describe('float window', function()
       assert_alive()
     end)
 
-    pending('does not crash if BufUnload makes it the only non-float in tabpage', function()
+    it('does not crash if BufUnload makes it the only non-float in tabpage', function()
       exec([[
         tabnew
         let g:buf = bufnr()
@@ -828,8 +828,58 @@ describe('float window', function()
               \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
         autocmd BufUnload * ++once exe g:buf .. 'bwipe!'
       ]])
-      command('close')
+      eq('Vim(close):E5601: Cannot close window, only floating window would remain', pcall_err(command, 'close'))
       assert_alive()
+    end)
+
+    describe('does not crash if WinClosed makes it the only non-float', function()
+      before_each(function()
+        exec([[
+          let g:buf = bufnr()
+          new
+          setlocal bufhidden=wipe
+          autocmd WinClosed * ++once exe g:buf .. 'bwipe!'
+        ]])
+      end)
+
+      local opts = { relative = 'editor', row = 5, col = 5, width = 5, height = 5 }
+      local floatwin
+
+      describe('and there is a float window with the same buffer', function()
+        before_each(function()
+          floatwin = api.nvim_open_win(0, false, opts)
+        end)
+
+        it('with multiple tabpages', function()
+          command('tabnew | tabprev')
+          eq('Vim(close):E5601: Cannot close window, only floating window would remain', pcall_err(command, 'close'))
+          api.nvim_win_close(floatwin, true)
+          assert_alive()
+        end)
+
+        it('with only one tabpage', function()
+          command('close')
+          api.nvim_win_close(floatwin, true)
+          assert_alive()
+        end)
+      end)
+
+      describe('and there is a float with a different buffer', function()
+        before_each(function()
+          floatwin = api.nvim_open_win(api.nvim_create_buf(true, false), false, opts)
+        end)
+
+        it('with multiple tabpages', function()
+          command('tabnew | tabprev')
+          eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+          assert_alive()
+        end)
+
+        it('with only one tabpage', function()
+          eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+          assert_alive()
+        end)
+      end)
     end)
 
     it('does not crash if WinClosed from floating window closes it', function()
