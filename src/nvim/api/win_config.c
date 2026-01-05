@@ -290,6 +290,13 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       }
     }
   } else {
+    // Unlike check_split_disallowed_err, ignore `split_disallowed`, as opening a float shouldn't
+    // mess with the frame structure. Still check `b_locked_split` to avoid opening more windows
+    // into a closing buffer, though.
+    if (curwin->w_buffer->b_locked_split) {  // Can't instead check `buf` in case win_set_buf fails!
+      api_set_error(err, kErrorTypeException, "E1159: Cannot open a float when closing the buffer");
+      goto cleanup;
+    }
     wp = win_new_float(NULL, false, fconfig, err);
   }
   if (!wp) {
@@ -336,6 +343,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     }
   }
   if (!tp) {
+    api_clear_error(err);  // may have been set by win_set_buf
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
     goto cleanup;
   }
@@ -489,7 +497,14 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     if (curwin_moving_tp) {
       if (was_split) {
         int dir;
-        win_goto(winframe_find_altwin(win, &dir, NULL, NULL));
+        win_T *altwin = winframe_find_altwin(win, &dir, NULL, NULL);
+        // Autocommands may still make this the last non-float after this check.
+        // That case will be caught later when trying to move the window.
+        if (!altwin) {
+          api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
+          return;
+        }
+        win_goto(altwin);
       } else {
         win_goto(win_float_find_altwin(win, NULL));
       }
@@ -522,7 +537,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         // FIXME(willothy): if the window is the last in the tabpage but there is another tabpage
         // and the target window is in that other tabpage, should we move the window to that
         // tabpage and close the previous one, or just error?
-        api_set_error(err, kErrorTypeException, "Cannot move last window");
+        api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
         goto restore_curwin;
       } else if (parent != NULL && parent->handle == win->handle) {
         int n_frames = 0;
