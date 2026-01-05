@@ -72,9 +72,9 @@ static mapblock_T *(maphash[MAX_MAPHASH]) = { 0 };
 // Returns a value between 0 and 255, index in maphash.
 // Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
 #define MAP_HASH(mode, \
-                 c1) (((mode) & \
-                       (MODE_NORMAL | MODE_VISUAL | MODE_SELECT | \
-                        MODE_OP_PENDING | MODE_TERMINAL)) ? (c1) : ((c1) ^ 0x80))
+                 c1) ((((mode) & \
+                        (MODE_NORMAL | MODE_VISUAL | MODE_SELECT | \
+                         MODE_OP_PENDING | MODE_TERMINAL)) ? (c1) : ((c1) ^ 0x80)) & 0xff)
 
 /// All possible |:map-arguments| usable in a |:map| command.
 ///
