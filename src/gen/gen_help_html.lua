@@ -29,9 +29,6 @@
 --   * visit_node() is the core function used by gen() to traverse the document tree and produce HTML.
 --   * visit_validate() is the core function used by validate().
 --   * Files in `new_layout` will be generated with a "flow" layout instead of preformatted/fixed-width layout.
---
--- TODO:
---   * Conjoin listitem "blocks" (blank-separated). Example: starting.txt
 
 local pending_urls = 0
 local tagmap = nil ---@type table<string, string>
@@ -637,10 +634,10 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return ''
   elseif node_name == 'line_li' then
     local prefix = first(root, 'prefix')
-    local numli = prefix and trim(node_text(prefix)):match('%d') -- Numbered listitem?
+    local prefix_text = prefix and trim(node_text(prefix)) or ''
+    local list_num = prefix_text:match('^(%d+)%.') -- Numbered listitem? Extract "1." -> "1"
     local sib = root:prev_sibling()
     local prev_li = sib and sib:type() == 'line_li'
-    local cssclass = numli and 'help-li-num' or 'help-li'
 
     if not prev_li then
       opt.indent = 1
@@ -659,7 +656,16 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     local margin = opt.indent == 1 and '' or ('margin-left: %drem;'):format((1.5 * opt.indent))
 
-    return string.format('<div class="%s" style="%s">%s</div>', cssclass, margin, text)
+    if list_num then
+      -- Use explicit number from source instead of CSS counter.
+      return string.format(
+        '<div class="help-li-num" style="%s"><span class="help-li-num-prefix">%s.</span>%s</div>',
+        margin,
+        list_num,
+        text
+      )
+    end
+    return string.format('<div class="help-li" style="%s">%s</div>', margin, text)
   elseif node_name == 'taglink' or node_name == 'optionlink' then
     local helppage, tagname, ignored = validate_link(root, opt.buf, opt.fname)
     if ignored or not helppage then
@@ -1232,22 +1238,21 @@ local function gen_css(fname)
     .help-li-num {
       display: list-item;
       list-style: none;
-      /* Sibling UNordered help-li items will increment the builtin counter :( */
-      /* list-style-type: decimal; */
       white-space: normal;
-      margin-left: 1.5rem; /* padding-left: 1rem; */
+      margin-left: 1.5rem;
       margin-top: .1em;
       margin-bottom: .1em;
     }
-    .help-li-num::before {
-      margin-left: -1em;
-      counter-increment: my-li-counter;
-      content: counter(my-li-counter) ". ";
+    .help-li-num-prefix {
+      display: inline-block;
+      min-width: 1.5em;
+      margin-left: -1.5em;
+      text-align: right;
+      padding-right: 0.25em;
     }
     .help-para {
       padding-top: 10px;
       padding-bottom: 10px;
-      counter-reset: my-li-counter; /* Manually manage listitem numbering. */
     }
 
     .old-help-para {
@@ -1259,7 +1264,6 @@ local function gen_css(fname)
       font-size: 16px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
       word-wrap: break-word;
-      counter-reset: my-li-counter; /* Manually manage listitem numbering. */
     }
     .old-help-para pre, .old-help-para pre:hover {
       /* Text following <pre> is already visually separated by the linebreak. */
