@@ -45,6 +45,18 @@ describe('autocmd TermClose', function()
     test_termclose_delete_own_buf()
   end)
 
+  it('TermClose deleting all other buffers', function()
+    local oldbuf = api.nvim_get_current_buf()
+    -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
+    api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
+    command(('autocmd TermClose * bdelete! %d'):format(oldbuf))
+    command('horizontal terminal')
+    neq(oldbuf, api.nvim_get_current_buf())
+    command('bdelete!')
+    feed('<C-G>') -- This shouldn't crash due to having a 0-line buffer.
+    assert_alive()
+  end)
+
   it('triggers when fast-exiting terminal job stops', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
