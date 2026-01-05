@@ -589,7 +589,7 @@ void terminal_close(Terminal **termpp, int status)
 
 #ifdef EXITFREE
   if (entered_free_all_mem) {
-    // If called from close_buffer() inside free_all_mem(), the main loop has
+    // If called from buf_close_terminal() inside free_all_mem(), the main loop has
     // already been freed, so it is not safe to call the close callback here.
     terminal_destroy(termpp);
     return;
@@ -599,7 +599,7 @@ void terminal_close(Terminal **termpp, int status)
   bool only_destroy = false;
 
   if (term->closed) {
-    // If called from close_buffer() after the process has already exited, we
+    // If called from buf_close_terminal() after the process has already exited, we
     // only need to call the close callback to clean up the terminal object.
     only_destroy = true;
   } else {
@@ -616,9 +616,9 @@ void terminal_close(Terminal **termpp, int status)
   buf_T *buf = handle_get_buffer(term->buf_handle);
 
   if (status == -1 || exiting) {
-    // If this was called by close_buffer() (status is -1), or if exiting, we
-    // must inform the buffer the terminal no longer exists so that
-    // close_buffer() won't call this again.
+    // If this was called by buf_close_terminal() (status is -1), or if exiting, we
+    // must inform the buffer the terminal no longer exists so that close_buffer()
+    // won't call buf_close_terminal() again.
     // If inside Terminal mode event handling, setting buf_handle to 0 also
     // informs terminal_enter() to call the close callback before returning.
     term->buf_handle = 0;
@@ -879,7 +879,7 @@ static bool terminal_check_focus(TerminalState *const s)
     set_terminal_winopts(s);
   }
   if (s->term != curbuf->terminal) {
-    // Active terminal buffer changed, flush terminal's cursor state to the UI.
+    // Active terminal changed, flush terminal's cursor state to the UI.
     terminal_focus(s->term, false);
     if (s->close) {
       s->term->destroy = true;

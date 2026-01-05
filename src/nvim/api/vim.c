@@ -1107,6 +1107,17 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     return 0;
   }
 
+  bool may_read_buffer = true;
+  if (buf->terminal) {
+    if (terminal_running(buf->terminal)) {
+      api_set_error(err, kErrorTypeException,
+                    "Terminal already connected to buffer %d", buf->handle);
+      return 0;
+    }
+    buf_close_terminal(buf);
+    may_read_buffer = false;
+  }
+
   LuaRef cb = LUA_NOREF;
   if (HAS_KEY(opts, open_term, on_input)) {
     cb = opts->on_input;
@@ -1130,7 +1141,9 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
 
   // Read existing buffer contents (if any)
   StringBuilder contents = KV_INITIAL_VALUE;
-  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+  if (may_read_buffer) {
+    read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+  }
 
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);

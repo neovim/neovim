@@ -125,6 +125,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -3564,6 +3565,14 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(_("jobstart(...,{term=true}) requires unmodified buffer"));
       shell_free_argv(argv);
       return;
+    }
+    if (curbuf->terminal) {
+      if (terminal_running(curbuf->terminal)) {
+        semsg(_("Terminal already connected to buffer %d"), curbuf->handle);
+        shell_free_argv(argv);
+        return;
+      }
+      buf_close_terminal(curbuf);
     }
     assert(!rpc);
     term_name = "xterm-256color";
