@@ -57,6 +57,17 @@ describe('autocmd TermClose', function()
     assert_alive()
   end)
 
+  it('TermClose switching back to terminal buffer', function()
+    local buf = api.nvim_get_current_buf()
+    api.nvim_open_term(buf, {})
+    command(('autocmd TermClose * buffer %d | new'):format(buf))
+    eq(
+      'TermClose Autocommands for "*": Vim(buffer):E1546: Cannot switch to a closing buffer',
+      pcall_err(command, 'bwipe!')
+    )
+    assert_alive()
+  end)
+
   it('triggers when fast-exiting terminal job stops', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')

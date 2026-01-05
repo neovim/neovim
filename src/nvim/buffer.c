@@ -672,7 +672,10 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   buf->b_nwindows = nwindows;
 
   if (buf->terminal) {
+    buf->b_locked_split++;
     buf_close_terminal(buf);
+    buf->b_locked_split--;
+
     // Must check this before calling buf_freeall(), otherwise is_curbuf will be true
     // in buf_freeall() but still false here, leading to a 0-line buffer.
     if (buf == curbuf && !is_curbuf) {
