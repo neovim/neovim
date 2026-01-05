@@ -1188,21 +1188,31 @@ static int empty_curbuf(bool close_others, int forceit, int action)
 
   bufref_T bufref;
   set_bufref(&bufref, buf);
-
   if (close_others) {
-    bool can_close_all_others = true;
-    if (curwin->w_floating) {
-      // Closing all other windows with this buffer may leave only floating windows.
-      can_close_all_others = false;
-      for (win_T *wp = firstwin; !wp->w_floating; wp = wp->w_next) {
-        if (wp->w_buffer != curbuf) {
-          // Found another non-floating window with a different (probably unlisted) buffer.
-          // Closing all other windows with this buffer is fine in this case.
+    bool can_close_all_others = false;
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp == curwin || wp->w_floating) {
+        continue;
+      }
+
+      if (wp->w_buffer != buf) {
+        // Found another non-floating window with a different buffer.
+        // If the current window is floating, any non-floating window is fine.
+        // If the current window is non-floating, the other window must be focusable.
+        // Closing all other windows with this buffer is acceptable in these cases.
+        if (curwin->w_floating || win_is_focusable(wp)) {
           can_close_all_others = true;
           break;
         }
       }
     }
+    // If we cannot keep the current window and it would leave no focusable windows, abort.
+    if (!can_close_all_others && !curwin->w_floating && last_focusable_window(curwin, NULL)) {
+      emsg(_("E444: Cannot close last focusable window"));
+      return FAIL;
+    }
+
+
     // If it is fine to close all other windows with this buffer, keep the current window and
     // close any other windows with this buffer, then make it empty.
     // Otherwise close_windows() will refuse to close the last non-floating window, so allow it

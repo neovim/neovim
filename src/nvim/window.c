@@ -199,6 +199,77 @@ win_T *swbuf_goto_win_with_buf(buf_T *buf)
 // resize the topframe to values higher than this minimum, but not lower.
 static OptInt min_set_ch = 1;
 
+/// Check if a window can receive focus.
+/// A window is unfocusable if:
+/// - It has hide flag set (floating windows only)
+/// - It has focusable flag set to false
+///
+/// @param wp  window to check
+/// @return    true if window can be focused
+bool win_is_focusable(const win_T *wp)
+{
+  if (wp->w_floating && wp->w_config.hide) {
+    return false;
+  }
+  return wp->w_config.focusable;
+}
+
+/// Check if closing 'win' would leave no focusable non-floating windows.
+/// Used to prevent closing the last focusable window.
+///
+/// @param win  window that might be closed
+/// @param tp   tabpage to check (NULL for current tabpage)
+/// @return     true if no other focusable windows would remain
+bool last_focusable_window(win_T *win, tabpage_T *tp)
+{
+  int focusable_count = 0;
+  win_T *first = tp ? tp->tp_firstwin : firstwin;
+
+  for (win_T *wp = first; wp != NULL; wp = wp->w_next) {
+    // Skip floating windows
+    if (wp->w_floating) {
+      continue;
+    }
+    // Skip the window being closed
+    if (wp == win) {
+      continue;
+    }
+    // Count focusable windows
+    if (win_is_focusable(wp)) {
+      focusable_count++;
+    }
+  }
+
+  return focusable_count == 0;
+}
+
+/// Find next focusable window starting from 'wp' (excluded).
+/// Searches in circular order.
+///
+/// @param wp       starting window (will be excluded from search)
+/// @param forward  search direction (true for forward, false for backward)
+/// @return         focusable window, or NULL if only 'wp' is focusable
+static win_T *win_next_focusable(win_T *wp, bool forward)
+{
+  win_T *start = forward ? wp->w_next : wp->w_prev;
+  if (start == NULL) {
+    start = forward ? firstwin : lastwin;
+  }
+
+  win_T *cur = start;
+  do {
+    if (win_is_focusable(cur)) {
+      return cur;
+    }
+    cur = forward ? cur->w_next : cur->w_prev;
+    if (cur == NULL) {
+      cur = forward ? firstwin : lastwin;
+    }
+  } while (cur != start && cur != wp);
+
+  return NULL;
+}
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -348,7 +419,7 @@ newwindow:
       if (Prenum) {  // go to specified window
         win_T *last_focusable = firstwin;
         for (wp = firstwin; --Prenum > 0;) {
-          if (!wp->w_floating || (!wp->w_config.hide && wp->w_config.focusable)) {
+          if (win_is_focusable(wp)) {
             last_focusable = wp;
           }
           if (wp->w_next == NULL) {
@@ -356,35 +427,21 @@ newwindow:
           }
           wp = wp->w_next;
         }
-        while (wp != NULL && wp->w_floating
-               && (wp->w_config.hide || !wp->w_config.focusable)) {
+        while (wp != NULL && !win_is_focusable(wp)) {
           wp = wp->w_next;
         }
         if (wp == NULL) {  // went past the last focusable window
           wp = last_focusable;
         }
       } else {
-        if (nchar == 'W') {  // go to previous window
-          wp = curwin->w_prev;
-          if (wp == NULL) {
-            wp = lastwin;  // wrap around
-          }
-          while (wp != NULL && wp->w_floating
-                 && (wp->w_config.hide || !wp->w_config.focusable)) {
-            wp = wp->w_prev;
-          }
-        } else {  // go to next window
-          wp = curwin->w_next;
-          while (wp != NULL && wp->w_floating
-                 && (wp->w_config.hide || !wp->w_config.focusable)) {
-            wp = wp->w_next;
-          }
-          if (wp == NULL) {
-            wp = firstwin;  // wrap around
-          }
-        }
+        wp = win_next_focusable(curwin, nchar != 'W');
       }
-      win_goto(wp);
+
+      if (wp) {
+        win_goto(wp);
+      } else {
+        beep_flush();
+      }
     }
     break;
 
@@ -450,7 +507,17 @@ newwindow:
   // cursor to top-left window
   case 't':
   case Ctrl_T:
-    win_goto(firstwin);
+    {
+      win_T *wp = firstwin;
+      while (wp != NULL && !win_is_focusable(wp)) {
+        wp = wp->w_next;
+      }
+      if (wp != NULL) {
+        win_goto(wp);
+      } else {
+        beep_flush();
+      }
+    }
     break;
 
   // cursor to bottom-right window
@@ -462,7 +529,7 @@ newwindow:
   // cursor to last accessed (previous) window
   case 'p':
   case Ctrl_P:
-    if (!win_valid(prevwin) || prevwin->w_config.hide || !prevwin->w_config.focusable) {
+    if (!win_valid(prevwin) || !win_is_focusable(prevwin)) {
       beep_flush();
     } else {
       win_goto(prevwin);
@@ -2714,6 +2781,11 @@ int win_close(win_T *win, bool free_buf, bool force)
     return FAIL;
   }
 
+  if (!win->w_floating && last_focusable_window(win, NULL)) {
+    emsg(_("E444: Cannot close last focusable window"));
+    return FAIL;
+  }
+
   if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
@@ -2778,6 +2850,14 @@ int win_close(win_T *win, bool free_buf, bool force)
     // Guess which window is going to be the new current window.
     // This may change because of the autocommands (sigh).
     wp = win->w_floating ? win_float_find_altwin(win, NULL) : frame2win(win_altframe(win, NULL));
+
+    if (!win_is_focusable(wp)) {
+      wp = win_next_focusable(wp, true);
+      if (wp == NULL) {
+        emsg(_("E444: No focusable window found"));
+        return FAIL;
+      }
+    }
 
     // Be careful: If autocommands delete the window or cause this window
     // to be the last one left, return now.
@@ -2902,8 +2982,7 @@ int win_close(win_T *win, bool free_buf, bool force)
         if (wp == curwin) {
           break;
         }
-        if (!wp->w_p_pvw && !bt_quickfix(wp->w_buffer)
-            && !(wp->w_floating && (wp->w_config.hide || !wp->w_config.focusable))) {
+        if (!wp->w_p_pvw && !bt_quickfix(wp->w_buffer) && win_is_focusable(wp)) {
           curwin = wp;
           break;
         }
@@ -4892,7 +4971,13 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, int count)
     }
   }
 end:
-  return foundfr != NULL ? foundfr->fr_win : NULL;
+  if (foundfr != NULL && foundfr->fr_win != NULL) {
+    if (!win_is_focusable(foundfr->fr_win)) {
+      return NULL;
+    }
+    return foundfr->fr_win;
+  }
+  return NULL;
 }
 
 /// Move to window above or below "count" times.
@@ -4968,7 +5053,13 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, int count)
     }
   }
 end:
-  return foundfr != NULL ? foundfr->fr_win : NULL;
+  if (foundfr != NULL && foundfr->fr_win != NULL) {
+    if (!win_is_focusable(foundfr->fr_win)) {
+      return NULL;
+    }
+    return foundfr->fr_win;
+  }
+  return NULL;
 }
 
 /// Move to left or right window.
@@ -7609,8 +7700,17 @@ void win_ui_flush(bool validate)
 win_T *lastwin_nofloating(void)
 {
   win_T *res = lastwin;
-  while (res->w_floating) {
+
+  while (res != NULL && (!win_is_focusable(res) || res->w_floating)) {
     res = res->w_prev;
   }
-  return res;
+
+  if (res == NULL) {
+    res = firstwin;
+    while (res != NULL && (!win_is_focusable(res) || res->w_floating)) {
+      res = res->w_next;
+    }
+  }
+
+  return res != NULL ? res : firstwin;
 }
