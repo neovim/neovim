@@ -84,6 +84,10 @@ local function query_workspace_symbols(pattern)
 end
 
 local function tagfunc(pattern, flags)
+  -- avoid definition/symbol queries for insert completion
+  if string.match(flags, 'i') then
+    return vim.NIL
+  end
   local matches = string.match(flags, 'c') and query_definition(pattern)
     or query_workspace_symbols(pattern)
   -- fall back to tags if no matches
