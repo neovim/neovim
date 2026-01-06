@@ -577,34 +577,89 @@ endfunc
 func Test_closed_buffer_still_in_window()
   %bw!
 
+  let s:fired = 0
   let s:w = win_getid()
   new
   let s:b = bufnr()
   setl bufhidden=wipe
-
   augroup ViewClosedBuffer
     autocmd!
-    autocmd BufUnload * ++once call assert_fails(
-          \ 'call win_execute(s:w, "' .. s:b .. 'b")', 'E1546:')
+    autocmd BufUnload * ++once let s:fired += 1 | call assert_fails(
+          \ 'call win_execute(s:w, "' .. s:b .. 'buffer")', 'E1546:')
   augroup END
   quit!
   " Previously resulted in s:b being curbuf while unloaded (no memfile).
+  call assert_equal(1, s:fired)
   call assert_equal(1, bufloaded(bufnr()))
   call assert_equal(0, bufexists(s:b))
+  %bw!
+
+  new flobby
+  let s:w = win_getid()
+  let s:b = bufnr()
+  setl bufhidden=wipe
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufUnload * ++once let s:fired += 1
+          \| wincmd p
+          \| call assert_notequal(s:w, win_getid())
+          \| call assert_notequal(s:b, bufnr())
+          \| execute s:b 'sbuffer'
+          \| call assert_equal(s:w, win_getid())
+          \| call assert_equal(s:b, bufnr())
+  augroup END
+  " Not a problem if 'switchbuf' switches to an existing window instead.
+  set switchbuf=useopen
+  quit!
+  call assert_equal(2, s:fired)
+  call assert_equal(0, bufexists(s:b))
+  set switchbuf&
+  %bw!
+
+  edit floob
+  let s:b = bufnr()
+  enew
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufWipeout * ++once let s:fired += 1
+          \| call assert_fails(s:b .. 'sbuffer | wincmd p', 'E1546:')
+          \| call assert_equal(1, winnr('$')) " :sbuffer shouldn't have split.
+  augroup END
+  " Used to be a heap UAF.
+  execute s:b 'bwipeout!'
+  call assert_equal(3, s:fired)
+  call assert_equal(0, bufexists(s:b))
+  %bw!
+
+  edit flarb
+  let s:b = bufnr()
+  enew
+  let b2 = bufnr()
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufWipeout * ++once let s:fired += 1
+          \| call assert_fails(s:b .. 'sbuffer', 'E1159:')
+  augroup END
+  " :sbuffer still should fail if curbuf is closing, even if it's not the target
+  " buffer (as switching buffers can fail after the split)
+  bwipeout!
+  call assert_equal(4, s:fired)
+  call assert_equal(0, bufexists(b2))
+  %bw!
 
   let s:w = win_getid()
   split
   new
   let s:b = bufnr()
-
   augroup ViewClosedBuffer
     autocmd!
-    autocmd BufWipeout * ++once call win_gotoid(s:w)
-          \| call assert_fails(s:b .. 'b', 'E1546:') | wincmd p
+    autocmd BufWipeout * ++once let s:fired += 1 | call win_gotoid(s:w)
+          \| call assert_fails(s:b .. 'buffer', 'E1546:') | wincmd p
   augroup END
   bw! " Close only this buffer first; used to be a heap UAF.
+  call assert_equal(5, s:fired)
 
-  unlet! s:w s:b
+  unlet! s:w s:b s:fired
   autocmd! ViewClosedBuffer
   %bw!
 endfunc
