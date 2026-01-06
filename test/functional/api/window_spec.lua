@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local clear, curbuf, curbuf_contents, curwin, eq, neq, matches, ok, feed, insert, eval =
   n.clear,
@@ -2349,6 +2350,51 @@ describe('API/win', function()
                     |*4
         {2:[No Name]   }|
                     |
+      ]])
+    end)
+
+    it('keep focus when creating split window with enter=false in init script', function()
+      local script_file = 'Xstartup.lua'
+      t.write_file(
+        script_file,
+        [[
+        vim.o.laststatus = 0
+        local enter = vim.g.test_enter
+        local win = vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), enter, {
+          split = 'left',
+          win = 0,
+        })
+      ]]
+      )
+      finally(function()
+        os.remove(script_file)
+      end)
+      local screen = tt.setup_child_nvim({
+        '--clean',
+        '--cmd',
+        'let g:test_enter = v:false',
+        '-u',
+        script_file,
+      })
+      screen:expect([[
+                                 │^                        |
+        ~                        │~                       |*4
+                                        0,0-1         All |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      screen:detach()
+      screen = tt.setup_child_nvim({
+        '--clean',
+        '--cmd',
+        'let g:test_enter = v:true',
+        '-u',
+        script_file,
+      })
+      screen:expect([[
+        ^                         │                        |
+        ~                        │~                       |*4
+                                        0,0-1         All |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
   end)
