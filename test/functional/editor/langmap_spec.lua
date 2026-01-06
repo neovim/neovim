@@ -212,11 +212,22 @@ describe("'langmap'", function()
   it('handles single-byte to multi-byte character mapping #37134', function()
     -- Setting langmap with single-byte "from" to multi-byte "to" should not crash
     command('set langmap=eё')
-    -- The mapping is stored but 'ё' is not a valid normal mode command,
+    -- Without a mapping, 'ё' is not a valid normal mode command,
     -- so pressing 'e' should do nothing (no crash, no error)
     feed('gg0e')
     -- Cursor should still be at start since 'ё' is not a valid command
     eq({ 0, 1, 1, 0 }, call('getpos', '.'))
+  end)
+
+  it('triggers mapping with multibyte LHS via langmap #37134', function()
+    -- Set up langmap: 'e' -> 'ё' (Cyrillic)
+    command('set langmap=eё')
+    -- Create a mapping for 'ё'
+    command('nmap ё ix<esc>')
+    -- Pressing 'e' should trigger the 'ё' mapping
+    feed('gg0e')
+    -- The mapping should have inserted 'x' before cursor
+    expect('xiii www')
   end)
 
   local function testrecording(command_string, expect_string, setup_function, expect_macro)

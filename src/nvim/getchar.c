@@ -2182,6 +2182,12 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   int local_State = get_real_state();
   bool is_plug_map = false;
 
+  // For langmap single-byte to multi-byte: store UTF-8 encoding of the result.
+  // This is used to properly match mappings with multibyte LHS.
+  char langmap_utf8[MB_MAXCHAR + 1] = { 0 };
+  int langmap_utf8_len = 0;
+  int tb_c1_hash = 0;  // First byte for hash lookup (may differ from tb_c1 with langmap)
+
   // If typeahead starts with <Plug> then remap, even for a "noremap" mapping.
   if (typebuf.tb_len >= 3
       && typebuf.tb_buf[typebuf.tb_off] == K_SPECIAL
@@ -2219,9 +2225,23 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
                              && get_real_state() != MODE_SELECT));
       nolmaplen = 0;
     }
+
+    // For langmap result that is multibyte, convert to UTF-8 for hash lookup.
+    // tb_c1 may now be a Unicode codepoint (e.g., 1105 for 'ё'), but mappings
+    // are hashed by their first UTF-8 byte (e.g., 0xD1 for 'ё').
+    // Don't convert K_SPECIAL - it's an internal special byte, not a Unicode codepoint.
+    tb_c1_hash = tb_c1;  // Value to use for hash lookup
+
+    if (tb_c1 > 255) {
+      // tb_c1 is a Unicode codepoint from langmap (> 255), convert to UTF-8
+      langmap_utf8_len = utf_char2bytes(tb_c1, langmap_utf8);
+      langmap_utf8[langmap_utf8_len] = NUL;
+      tb_c1_hash = (uint8_t)langmap_utf8[0];  // First UTF-8 byte for hash
+    }
+
     // First try buffer-local mappings.
-    mp = get_buf_maphash_list(local_State, tb_c1);
-    mp2 = get_maphash_list(local_State, tb_c1);
+    mp = get_buf_maphash_list(local_State, tb_c1_hash);
+    mp2 = get_maphash_list(local_State, tb_c1_hash);
     if (mp == NULL) {
       // There are no buffer-local mappings.
       mp = mp2;
@@ -2238,31 +2258,49 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       // Only consider an entry if the first character matches and it is
       // for the current state.
       // Skip ":lmap" mappings if keys were mapped.
-      if ((uint8_t)mp->m_keys[0] == tb_c1 && (mp->m_mode & local_State)
+      // Use tb_c1_hash (first UTF-8 byte) for comparison when langmap produced multibyte.
+      if ((uint8_t)mp->m_keys[0] == tb_c1_hash && (mp->m_mode & local_State)
           && ((mp->m_mode & MODE_LANGMAP) == 0 || typebuf.tb_maplen == 0)) {
         int nomap = nolmaplen;
         int modifiers = 0;
         // find the match length of this mapping
-        for (mlen = 1; mlen < typebuf.tb_len; mlen++) {
-          int c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
-          if (nomap > 0) {
-            if (nomap == 2 && c2 == KS_MODIFIER) {
-              modifiers = 1;
-            } else if (nomap == 1 && modifiers == 1) {
-              modifiers = c2;
-            }
-            nomap--;
+        // When langmap produced multibyte, we have:
+        // - langmap_utf8[0..langmap_utf8_len-1] for the first character
+        // - typebuf[1..] for subsequent characters
+        // The "effective length" is langmap_utf8_len + (typebuf.tb_len - 1)
+        int effective_len = (langmap_utf8_len > 0)
+                            ? langmap_utf8_len + (typebuf.tb_len - 1)
+                            : typebuf.tb_len;
+        for (mlen = 1; mlen < effective_len; mlen++) {
+          int c2;
+          if (langmap_utf8_len > 0 && mlen < langmap_utf8_len) {
+            // Within the langmap-expanded UTF-8 sequence
+            c2 = (uint8_t)langmap_utf8[mlen];
           } else {
-            if (c2 == K_SPECIAL) {
-              nomap = 2;
-            } else if (merge_modifiers(c2, &modifiers) == c2) {
-              // Only apply 'langmap' if merging modifiers into
-              // the key will not result in another character,
-              // so that 'langmap' behaves consistently in
-              // different terminals and GUIs.
-              LANGMAP_ADJUST(c2, true);
+            // From typebuf (with offset adjustment for langmap expansion)
+            int typebuf_idx = (langmap_utf8_len > 0)
+                              ? mlen - langmap_utf8_len + 1
+                              : mlen;
+            c2 = typebuf.tb_buf[typebuf.tb_off + typebuf_idx];
+            if (nomap > 0) {
+              if (nomap == 2 && c2 == KS_MODIFIER) {
+                modifiers = 1;
+              } else if (nomap == 1 && modifiers == 1) {
+                modifiers = c2;
+              }
+              nomap--;
+            } else {
+              if (c2 == K_SPECIAL) {
+                nomap = 2;
+              } else if (merge_modifiers(c2, &modifiers) == c2) {
+                // Only apply 'langmap' if merging modifiers into
+                // the key will not result in another character,
+                // so that 'langmap' behaves consistently in
+                // different terminals and GUIs.
+                LANGMAP_ADJUST(c2, true);
+              }
+              modifiers = 0;
             }
-            modifiers = 0;
           }
           if ((uint8_t)mp->m_keys[mlen] != c2) {
             break;
@@ -2275,15 +2313,16 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
         const char *p1 = mp->m_keys;
         const char *p2 = mb_unescape(&p1);
 
-        if (p2 != NULL && MB_BYTE2LEN(tb_c1) > utfc_ptr2len(p2)) {
+        // Use tb_c1_hash for MB_BYTE2LEN when langmap produced multibyte.
+        if (p2 != NULL && MB_BYTE2LEN(tb_c1_hash) > utfc_ptr2len(p2)) {
           mlen = 0;
         }
 
         // Check an entry whether it matches.
         // - Full match: mlen == keylen
-        // - Partly match: mlen == typebuf.tb_len
+        // - Partly match: mlen == effective_len (input exhausted before full match)
         keylen = mp->m_keylen;
-        if (mlen == keylen || (mlen == typebuf.tb_len && typebuf.tb_len < keylen)) {
+        if (mlen == keylen || (mlen == effective_len && effective_len < keylen)) {
           int n;
 
           // If only script-local mappings are allowed, check if the
@@ -2297,7 +2336,12 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
           }
 
           // If one of the typed keys cannot be remapped, skip the entry.
-          for (n = mlen; --n >= 0;) {
+          // When langmap expanded 1 byte to langmap_utf8_len bytes, we only
+          // have 1 noremap entry for all those bytes.
+          int actual_typebuf_bytes = (langmap_utf8_len > 0 && mlen > 0)
+                                     ? 1 + MAX(0, mlen - langmap_utf8_len)
+                                     : mlen;
+          for (n = actual_typebuf_bytes; --n >= 0;) {
             if (*s++ & (RM_NONE|RM_ABBR)) {
               break;
             }
@@ -2306,7 +2350,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
             continue;
           }
 
-          if (keylen > typebuf.tb_len) {
+          if (keylen > effective_len) {
             if (!*timedout && !(mp_match != NULL && mp_match->m_nowait)) {
               // break at a partly match
               keylen = KEYLEN_PART_MAP;
@@ -2381,19 +2425,26 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   }
 
   // complete match
-  if (keylen >= 0 && keylen <= typebuf.tb_len) {
+  // Calculate actual typebuf bytes consumed (may differ from keylen with langmap).
+  // When langmap expanded 1 byte to langmap_utf8_len bytes, the mapping's keylen
+  // includes those expanded bytes, but only 1 typebuf byte was actually typed.
+  int typebuf_consumed = keylen;
+  if (langmap_utf8_len > 0 && keylen >= langmap_utf8_len) {
+    typebuf_consumed = 1 + (keylen - langmap_utf8_len);
+  }
+  if (keylen >= 0 && typebuf_consumed <= typebuf.tb_len) {
     int i;
     char *map_str = NULL;
 
     // Write chars to script file(s).
     // Note: :lmap mappings are written *after* being applied. #5658
-    if (keylen > typebuf.tb_maplen && (mp->m_mode & MODE_LANGMAP) == 0) {
+    if (typebuf_consumed > typebuf.tb_maplen && (mp->m_mode & MODE_LANGMAP) == 0) {
       gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-               (size_t)(keylen - typebuf.tb_maplen));
+               (size_t)(typebuf_consumed - typebuf.tb_maplen));
     }
 
     cmd_silent = (typebuf.tb_silent > 0);
-    del_typebuf(keylen, 0);  // remove the mapped keys
+    del_typebuf(typebuf_consumed, 0);  // remove the matched keys from typebuf
 
     // Put the replacement string in front of mapstr.
     // The depth check catches ":map x y" and ":map y x".
