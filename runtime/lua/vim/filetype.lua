@@ -846,6 +846,7 @@ local extension = {
   NSS = 'natural',
   ncf = 'ncf',
   nginx = 'nginx',
+  ncl = 'nickle',
   nim = 'nim',
   nims = 'nim',
   nimble = 'nim',
