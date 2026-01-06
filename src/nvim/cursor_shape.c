@@ -326,7 +326,7 @@ bool cursor_mode_uses_syn_id(int syn_id)
 int cursor_get_mode_idx(bool with_mouse)
   FUNC_ATTR_PURE
 {
-  if (with_mouse) {
+  if (with_mouse && p_mousemev) {
     pos_T m_pos = { 0 };
     int mpos_flag = get_fpos_of_mouse(&m_pos);
     if (mpos_flag & IN_STATUS_LINE) {
