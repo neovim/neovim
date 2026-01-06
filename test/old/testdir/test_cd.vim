@@ -264,22 +264,28 @@ func Test_cd_completion()
     let drive = full[0]
     call chdir(saved_cwd)
 
+    " Spaces are escaped in command line completion. Next, in assert_match(),
+    " the backslash added by the first escape also needs to be escaped
+    " separately, so the escape is doubled.
+    let want_full = escape(escape(full, ' '), '\')
+    let want_dir = escape(escape(dir, ' '), '\')
+
     for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
       for sep in [ '/', '\']
 
         " Explicit drive letter
         call feedkeys(':' .. cmd .. ' ' .. drive .. ':' .. sep ..
                      \  partial .. "\<C-A>\<C-B>\"\<CR>", 'tx')
-        call assert_match(full, @:)
+        call assert_match(want_full, @:)
 
         " Implicit drive letter
         call feedkeys(':' .. cmd .. ' ' .. sep .. partial .. "\<C-A>\<C-B>\"\<CR>", 'tx')
-        call assert_match('/' .. dir .. '/', @:)
+        call assert_match('/' .. want_dir .. '/', @:)
 
         " UNC path
         call feedkeys(':' .. cmd .. ' ' .. sep .. sep .. $COMPUTERNAME .. sep ..
                      \ drive .. '$' .. sep .. partial .."\<C-A>\<C-B>\"\<CR>", 'tx')
-        call assert_match('//' .. $COMPUTERNAME .. '/' .. drive .. '$/' .. dir .. '/' , @:)
+        call assert_match('//' .. $COMPUTERNAME .. '/' .. drive .. '$/' .. want_dir .. '/' , @:)
 
       endfor
     endfor
