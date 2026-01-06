@@ -3530,7 +3530,7 @@ func Test_BufReadPre_changebuf()
   close!
 endfunc
 
-" Test for BufWipeouti autocmd changing the current buffer when reading a file
+" Test for BufWipeout autocmd changing the current buffer when reading a file
 " in an empty buffer with 'f' flag in 'cpo'
 func Test_BufDelete_changebuf()
   new
@@ -3813,6 +3813,29 @@ func Test_bufwipeout_changes_window()
 
   unlet g:window_id
   au! BufWipeout
+  %bwipe!
+endfunc
+
+func Test_autocmd_prevent_buf_wipe()
+  " Xa must be the first buffer so that win_close_othertab() puts it in
+  " another window, which causes wiping the buffer to fail.
+  %bwipe!
+
+  file Xa
+  call setline(1, 'foo')
+  setlocal bufhidden=wipe
+  tabnew Xb
+  setlocal bufhidden=wipe
+  autocmd BufUnload Xa ++once ++nested tabonly
+  autocmd BufWinLeave Xb ++once tabnext
+  tabfirst
+
+  edit! Xc
+  call assert_equal('Xc', bufname('%'))
+  tabnext
+  call assert_equal('Xa', bufname('%'))
+  call assert_equal("\n\"Xa\" --No lines in buffer--", execute('file'))
+
   %bwipe!
 endfunc
 
