@@ -101,7 +101,11 @@ function M.get_parser(bufnr, lang, opts)
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     if not api.nvim_buf_is_loaded(bufnr) then
-      error(('Buffer %s must be loaded to create parser'):format(bufnr))
+      local err_msg = string.format('Buffer %s must be loaded to create parser', bufnr)
+      if should_error then
+        error(err_msg)
+      end
+      return nil, err_msg
     end
     local parser = vim.F.npcall(M._create_parser, bufnr, lang, opts)
     if not parser then
