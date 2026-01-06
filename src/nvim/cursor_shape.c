@@ -323,16 +323,18 @@ bool cursor_mode_uses_syn_id(int syn_id)
 }
 
 /// Return the index into shape_table[] for the current mode.
-int cursor_get_mode_idx(void)
+int cursor_get_mode_idx(bool with_mouse)
   FUNC_ATTR_PURE
 {
-  pos_T m_pos = { 0 };
-  int mpos_flag = get_fpos_of_mouse(&m_pos);
-  if (mpos_flag & IN_STATUS_LINE) {
-    return SHAPE_IDX_STATUS;
-  }
-  if (mpos_flag & IN_SEP_LINE) {
-    return SHAPE_IDX_VSEP;
+  if (with_mouse) {
+    pos_T m_pos = { 0 };
+    int mpos_flag = get_fpos_of_mouse(&m_pos);
+    if (mpos_flag & IN_STATUS_LINE) {
+      return SHAPE_IDX_STATUS;
+    }
+    if (mpos_flag & IN_SEP_LINE) {
+      return SHAPE_IDX_VSEP;
+    }
   }
   if (State == MODE_SHOWMATCH) {
     return SHAPE_IDX_SM;
