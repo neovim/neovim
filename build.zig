@@ -61,9 +61,7 @@ pub fn build(b: *std.Build) !void {
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
 
-    const arch = t.cpu.arch;
-    const default_luajit = (is_linux and arch == .x86_64) or (is_darwin and arch == .aarch64);
-    const use_luajit = b.option(bool, "luajit", "use luajit") orelse default_luajit;
+    const use_luajit = b.option(bool, "luajit", "use luajit") orelse true;
     const lualib_name = if (use_luajit) "luajit" else "lua5.1";
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
