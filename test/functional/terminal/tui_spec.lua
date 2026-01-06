@@ -751,7 +751,7 @@ describe('TUI :restart', function()
 
     feed_data(':restart! echo "restarted"\r')
     screen:expect([[
-      ^                     │0000;<control>;Cc;0;BN;;;;;N|
+                           │^0000;<control>;Cc;0;BN;;;;;N|
       ~                    │0001;<control>;Cc;0;BN;;;;;N|
       ~                    │0002;<control>;Cc;0;BN;;;;;N|
       ~                    │0003;<control>;Cc;0;BN;;;;;N|
@@ -762,11 +762,11 @@ describe('TUI :restart', function()
 
     feed_data(':set sessionoptions-=winsize | restart!\r')
     screen:expect([[
-      ^                         │0000;<control>;Cc;0;BN;;|
-      ~                        │0001;<control>;Cc;0;BN;;|
-      ~                        │0002;<control>;Cc;0;BN;;|
-      ~                        │0003;<control>;Cc;0;BN;;|
-      ~                        │0004;<control>;Cc;0;BN;;|
+                              │^0000;<control>;Cc;0;BN;;;|
+      ~                       │0001;<control>;Cc;0;BN;;;|
+      ~                       │0002;<control>;Cc;0;BN;;;|
+      ~                       │0003;<control>;Cc;0;BN;;;|
+      ~                       │0004;<control>;Cc;0;BN;;;|
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
