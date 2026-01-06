@@ -429,6 +429,7 @@ func s:GetFilenameChecks() abort
     \ 'kitty': ['kitty.conf', '~/.config/kitty/colorscheme.conf'],
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
+    \ 'koka': ['file.kk'],
     \ 'kos': ['file.kos'],
     \ 'kotlin': ['file.kt', 'file.ktm', 'file.kts'],
     \ 'krl': ['file.sub', 'file.Sub', 'file.SUB'],

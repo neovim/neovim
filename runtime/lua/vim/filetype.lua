@@ -691,6 +691,7 @@ local extension = {
   kerml = 'kerml',
   kv = 'kivy',
   kix = 'kix',
+  kk = 'koka',
   kos = 'kos',
   kts = 'kotlin',
   kt = 'kotlin',
