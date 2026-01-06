@@ -292,7 +292,7 @@ end
 --- @field loclist? boolean
 
 --- @class vim.lsp.LocationOpts.OnList
---- @field items table[] Structured like |setqflist-what|
+--- @field items vim.quickfix.entry[] See |setqflist-what|
 --- @field title? string Title for the list.
 --- @field context? { bufnr: integer, method: string } Subset of `ctx` from |lsp-handler|.
 

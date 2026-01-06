@@ -22,7 +22,7 @@
 
 **助记**：*将 (i)nner (w)ord（内部单词）(y)ank（复制）到名为 (a) 的寄存器（"）中*
 
-  3. 向前导航到 'cookie' 单词（可以使用 `fk`{normal} 或 `2fc`{normal}
+  3. 向前导航到 'cookie' 单词（可以使用 `fk`{normal} 或 `3fc`{normal}
      或 `$2b`{normal} 或 `/co`{normal} `<Enter>`{normal}），然后输入 `"byiw`{normal}
 
   4. 导航到 'Vince' 单词的任意位置，然后输入 `ciw<CTRL-r>a<ESC>`{normal}

@@ -176,10 +176,7 @@ Strict "vimdoc" subset:
 - Use lists (like this!) prefixed with "-" or "•", for adjacent lines that you
   don't want to auto-wrap. Lists are always rendered with "flow" layout
   (soft-wrapped) instead of preformatted (hard-wrapped) layout common in
-  legacy :help docs.
-  - Limitation: currently the parser https://github.com/neovim/tree-sitter-vimdoc
-    does not understand numbered listitems, so use a bullet symbol (- or •)
-    before numbered items, e.g. "• 1." instead of "1.".
+  legacy :help docs. You can also use numbered lists, e.g. "1."
 - Separate blocks (paragraphs) of content by a blank line.
 - Do not use indentation in random places—that prevents the page from using
   "flow" layout. If you need a preformatted section, put it in

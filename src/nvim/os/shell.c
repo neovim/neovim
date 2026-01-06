@@ -862,7 +862,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
 
 #ifdef MSWIN
   // do not execute anything from the current directory by setting the
-  // environemnt variable $NoDefaultCurrentDirectoryInExePath
+  // environment variable $NoDefaultCurrentDirectoryInExePath
   char *oldval = os_getenv("NoDefaultCurrentDirectoryInExePath");
   os_setenv("NoDefaultCurrentDirectoryInExePath", "1", true);
 #endif

@@ -27,6 +27,7 @@ func Test_maparg()
         \ maparg('foo<C-V>', '', 0, 1))
   call assert_equal({'mode': 'v', 'mode_bits': 0x42, 'abbr': 0, 'buffer': 1,
         \ 'noremap': 1, 'script': 1, 'expr': 1, 'nowait': 0, 'silent': 1,
+        "\ Nvim-specific field "replace_keycodes"
         \ 'replace_keycodes': 0,
         \ 'lhs': 'bar', 'lhsraw': 'bar', 'rhs': 'isbar',
         \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 2},
