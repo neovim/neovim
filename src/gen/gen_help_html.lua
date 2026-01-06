@@ -843,7 +843,7 @@ local function parse_buf(fname, text)
     buf = fname
     vim.cmd('sbuffer ' .. tostring(fname)) -- Buffer number.
   end
-  local lang_tree = assert(vim.treesitter.get_parser(buf, nil, { error = false }))
+  local lang_tree = assert(vim.treesitter.get_parser(buf, nil))
   lang_tree:parse()
   return lang_tree, buf
 end

@@ -431,7 +431,8 @@ REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
-• todo
+• |vim.treesitter.get_parser()| instead of throwing an error
+  `get_parser()` now always returns nil when it fails to create a parser.
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
