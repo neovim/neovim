@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:	C++
-" Current Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
-" Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
+" Maintainer:		This runtime file is looking for a new maintainer.
+" Previous Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
+"			Ken Shan <ccshan@post.harvard.edu>
 " Last Change:	2024 May 04
 "   2024 May 04 by Vim Project (fix digit separator in octals and floats)
+"   2026 Jan 06 by Vim Project (announce adoption)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
