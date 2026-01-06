@@ -1061,6 +1061,7 @@ local extension = {
   MODX = 'rapid',
   MODx = 'rapid',
   rasi = 'rasi',
+  rasinc = 'rasi',
   rbs = 'rbs',
   rego = 'rego',
   rem = 'remind',
