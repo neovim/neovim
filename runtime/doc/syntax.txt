@@ -641,6 +641,7 @@ new-generation language oriented to full-scenario intelligence.
 All highlighting is enabled by default.  To disable highlighting for a
 specific group, set the corresponding variable to 0 in your |vimrc|.
 All options to disable highlighting are: >
+	:let g:cangjie_builtin_color = 0
 	:let g:cangjie_comment_color = 0
 	:let g:cangjie_identifier_color = 0
 	:let g:cangjie_keyword_color = 0
