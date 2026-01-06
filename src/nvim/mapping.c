@@ -2128,9 +2128,7 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   PUT_C(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
   PUT_C(dict, "buffer", INTEGER_OBJ(buffer_value));
   PUT_C(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
-  if (mp->m_replace_keycodes) {
-    PUT_C(dict, "replace_keycodes", INTEGER_OBJ(1));
-  }
+  PUT_C(dict, "replace_keycodes", INTEGER_OBJ(mp->m_replace_keycodes ? 1 : 0));
   PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
   PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));

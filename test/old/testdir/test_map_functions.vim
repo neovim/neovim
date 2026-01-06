@@ -19,12 +19,15 @@ func Test_maparg()
   call assert_equal("is<F4>foo", maparg('foo<C-V>')) " maparg() string result
   call assert_equal({'mode': ' ', 'mode_bits': 0x47, 'abbr': 0, 'buffer': 0,
         \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 0, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
         \ 'lhs': 'foo<C-V>', 'lhsraw': "foo\x80\xfc\x04V", 'rhs': 'is<F4>foo',
         \ 'lhsrawalt': "foo\x16",
         \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('foo<C-V>', '', 0, 1))
   call assert_equal({'mode': 'v', 'mode_bits': 0x42, 'abbr': 0, 'buffer': 1,
         \ 'noremap': 1, 'script': 1, 'expr': 1, 'nowait': 0, 'silent': 1,
+        \ 'replace_keycodes': 0,
         \ 'lhs': 'bar', 'lhsraw': 'bar', 'rhs': 'isbar',
         \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 2},
         \ 'bar'->maparg('', 0, 1))
@@ -35,6 +38,8 @@ func Test_maparg()
   map <buffer> <nowait> foo bar
   call assert_equal({'mode': ' ', 'mode_bits': 0x47, 'abbr': 0, 'buffer': 1,
         \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 1, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
         \ 'lhs': 'foo', 'lhsraw': 'foo', 'rhs': 'bar',
         \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('foo', '', 0, 1))
@@ -44,6 +49,8 @@ func Test_maparg()
   tmap baz foo
   call assert_equal({'mode': 't', 'mode_bits': 0x80, 'abbr': 0, 'buffer': 0,
         \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 0, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
         \ 'lhs': 'baz', 'lhsraw': 'baz', 'rhs': 'foo',
         \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('baz', 't', 0, 1))
@@ -53,6 +60,8 @@ func Test_maparg()
   iab A B
   call assert_equal({'mode': 'i', 'mode_bits': 0x10, 'abbr': 1, 'buffer': 0,
         \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 0, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
         \ 'lhs': 'A', 'lhsraw': 'A', 'rhs': 'B',
         \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('A', 'i', 1, 1))
