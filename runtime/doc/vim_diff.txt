@@ -692,7 +692,6 @@ These legacy Vim features are not yet implemented:
 - *'guioptions'* *'go'*
 - *'guitablabel'* *'gtl'*
 - *'guitabtooltip'* *'gtt'*
-- *'mouseshape'* *'mouses'*
 - *'previewpopup'*
 
 ==============================================================================

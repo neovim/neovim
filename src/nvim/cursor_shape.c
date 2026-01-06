@@ -102,30 +102,31 @@ Array mode_style_array(Arena *arena)
 /// @returns error message for an illegal option, NULL otherwise.
 const char *parse_shape_opt(int what)
 {
-  if (what == SHAPE_MOUSE) {
-    // Should replace with parsing mouseshape option.
-    clear_shape_table_for_mouse();
-    ui_mode_info_set();
-    return NULL;
-  }
   char *p = NULL;
   int idx = 0;                          // init for GCC
   int len;
   bool found_ve = false;                 // found "ve" flag
 
+  // Get the appropriate option string based on what we're parsing
+  char *option_str = (what == SHAPE_MOUSE) ? p_mouseshape : p_guicursor;
+
   // First round: check for errors; second round: do it for real.
   for (int round = 1; round <= 2; round++) {
-    if (round == 2 || *p_guicursor == NUL) {
+    if (round == 2 || *option_str == NUL) {
       // Set all entries to default (block, blinkon0, default color).
       // This is the default for anything that is not set.
-      clear_shape_table();
-      if (*p_guicursor == NUL) {
+      if (what == SHAPE_CURSOR) {
+        clear_shape_table_for_cursor();
+      } else {
+        clear_shape_table_for_mouse();
+      }
+      if (*option_str == NUL) {
         ui_mode_info_set();
         return NULL;
       }
     }
     // Repeat for all comma separated parts.
-    char *modep = p_guicursor;
+    char *modep = option_str;
     while (modep != NULL && *modep != NUL) {
       char *colonp = vim_strchr(modep, ':');
       char *commap = vim_strchr(modep, ',');
@@ -174,7 +175,23 @@ const char *parse_shape_opt(int what)
 
         // Parse the part after the colon
         for (p = colonp + 1; *p && *p != ',';) {
-          {
+          if (what == SHAPE_MOUSE) {
+            // Parse mouse shape name
+            char *endp = vim_strchr(p, ',');
+            if (endp == NULL) {
+              endp = p + strlen(p);  // last part
+            }
+            if (round == 2) {
+              // Store the mouse shape name
+              size_t shape_len = (size_t)(endp - p);
+              // Allocate and copy the shape name
+              // The TUI will convert Vim name to Kitty name when needed
+              xfree(shape_table[idx].mshape);
+              shape_table[idx].mshape = xmemdupz(p, shape_len);
+            }
+            p = endp;
+          } else {
+            // Parse cursor shape attributes (for guicursor)
             // First handle the ones with a number argument.
             int i = (uint8_t)(*p);
             len = 0;
@@ -245,7 +262,7 @@ const char *parse_shape_opt(int what)
               }
               p = endp;
             }
-          }           // if (what != SHAPE_MOUSE)
+          }
 
           if (*p == '-') {
             p++;
@@ -260,7 +277,8 @@ const char *parse_shape_opt(int what)
   }
 
   // If the 's' flag is not given, use the 'v' cursor for 's'
-  if (!found_ve) {
+  // Only applies to SHAPE_CURSOR (guicursor)
+  if (what == SHAPE_CURSOR && !found_ve) {
     {
       shape_table[SHAPE_IDX_VE].shape = shape_table[SHAPE_IDX_V].shape;
       shape_table[SHAPE_IDX_VE].percentage =
@@ -368,7 +386,7 @@ int cursor_get_mode_idx(bool with_mouse)
 }
 
 /// Clears all entries in shape_table to block, blinkon0, and default color.
-static void clear_shape_table(void)
+static void clear_shape_table_for_cursor(void)
 {
   for (int idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
     shape_table[idx].shape = SHAPE_BLOCK;

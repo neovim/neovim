@@ -1329,6 +1329,16 @@ const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+/// The 'mouseshape' option is changed.
+const char *did_set_mouseshape(optset_T *args FUNC_ATTR_UNUSED)
+{
+  const char *errmsg = parse_shape_opt(SHAPE_MOUSE);
+  if (errmsg != NULL) {
+    return errmsg;
+  }
+  return NULL;
+}
+
 /// The 'helpfile' option is changed.
 const char *did_set_helpfile(optset_T *args FUNC_ATTR_UNUSED)
 {

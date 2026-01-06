@@ -6128,11 +6128,7 @@ local options = {
     {
       abbreviation = 'mouses',
       deny_duplicates = true,
-      defaults = {
-        if_true = '',
-        doc = [["i:beam,r:beam,s:updown,sd:cross,
-            m:no,ml:up-arrow,v:rightup-arrow"]],
-      },
+      defaults = [[i-r:beam,s:updown,sd:udsizing,vs:leftright,vd:lrsizing,m:no,ml:up-arrow,v:rightup-arrow]],
       desc = [=[
         This option tells Vim what the mouse pointer should look like in
         different modes.  The option is a comma-separated list of parts, much
@@ -6199,7 +6195,8 @@ local options = {
       short_desc = N_('shape of the mouse pointer in different modes'),
       tags = { 'E547' },
       type = 'string',
-      immutable = true,
+      varname = 'p_mouseshape',
+      cb = 'did_set_mouseshape',
     },
     {
       abbreviation = 'mouset',
