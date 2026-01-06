@@ -609,7 +609,7 @@ void terminal_close(Terminal **termpp, int status)
 
   if (status == -1 || exiting) {
     // If this was called by buf_close_terminal() (status is -1), or if exiting, we
-    // must inform the buffer the terminal no longer exists so that close_buffer()
+    // must inform the buffer the terminal no longer exists so that buf_freeall()
     // won't call buf_close_terminal() again.
     // If inside Terminal mode event handling, setting buf_handle to 0 also
     // informs terminal_enter() to call the close callback before returning.
@@ -2110,7 +2110,7 @@ static void refresh_terminal(Terminal *term)
 {
   buf_T *buf = handle_get_buffer(term->buf_handle);
   if (!buf) {
-    // Destroyed by `close_buffer`. Do not do anything else.
+    // Destroyed by `buf_freeall()`. Do not do anything else.
     return;
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
