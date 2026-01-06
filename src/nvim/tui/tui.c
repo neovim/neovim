@@ -1286,6 +1286,8 @@ static cursorentry_T decode_cursor_entry(Dict args)
       r.blinkoff = (int)value.data.integer;
     } else if (strequal(key, "attr_id")) {
       r.id = (int)value.data.integer;
+    } else if (strequal(key, "used_for")) {
+      r.used_for = (char)value.data.integer;
     } else if (strequal(key, "mouse_shape")) {
       // Duplicate the mouse shape name from the mode_info dictionary.
       // The shape name will be converted to Kitty format when output via mshape_get_kitty_name().
@@ -1377,6 +1379,11 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
     const char *kitty_shape = mshape_get_kitty_name(c.mshape);
     out_printf(tui, 128, "\x1b]22;%s\x1b\\", kitty_shape);
     tui->current_mouse_shape = c.mshape;
+  }
+
+  // Skip cursor updates for mouse-only modes
+  if (!(c.used_for & SHAPE_CURSOR)) {
+    return;
   }
 
   if (c.id != 0 && c.id < (int)kv_size(tui->attrs) && tui->rgb) {
