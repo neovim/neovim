@@ -1311,6 +1311,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // make the contents of the new window the same as the current one
     win_init(wp, curwin, flags);
   } else if (wp->w_floating) {
+    // Save the style before clearing config so it can be re-applied later
+    WinStyle saved_style = wp->w_config.style;
     ui_comp_remove_grid(&wp->w_grid_alloc);
     if (ui_has(kUIMultigrid)) {
       wp->w_pos_changed = true;
@@ -1335,6 +1337,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // non-floating window doesn't store float config or have a border.
     merge_win_config(&wp->w_config, WIN_CONFIG_INIT);
     CLEAR_FIELD(wp->w_border_adj);
+    // Restore the style for later re-application
+    wp->w_config.style = saved_style;
   }
 
   // Going to reorganize frames now, make sure they're flat.
