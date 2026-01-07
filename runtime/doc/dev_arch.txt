@@ -71,7 +71,7 @@ Compatibility with Vim's `if_lua` is explicitly a non-goal.
 
                                                              *dev-lua-builtin*
 Lua modules that are necessary even if VIMRUNTIME is invalid (generally, data
-structures and essential utilties), must be compiled into the `nvim` binary.
+structures and essential utilities), must be compiled into the `nvim` binary.
 There are two ways to do that:
 - if they are private, put the code file in `runtime/lua/vim/_core/`
 - if they are public, choose a new filepath in `runtime/lua/vim/`

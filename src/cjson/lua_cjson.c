@@ -640,7 +640,7 @@ static void json_create_config(lua_State *l)
 
     /* Update characters that require further processing */
     cfg->ch2token['f'] = T_UNKNOWN;     /* false? */
-    cfg->ch2token['i'] = T_UNKNOWN;     /* inf, ininity? */
+    cfg->ch2token['i'] = T_UNKNOWN;     /* inf, infinity? */
     cfg->ch2token['I'] = T_UNKNOWN;
     cfg->ch2token['n'] = T_UNKNOWN;     /* null, nan? */
     cfg->ch2token['N'] = T_UNKNOWN;

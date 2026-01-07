@@ -1945,9 +1945,6 @@ i			Insert text before the cursor [count] times.
 							*I*
 I			Insert text before the first non-blank in the line
 			[count] times.
-			When the 'H' flag is present in 'cpoptions' and the
-			line only contains blanks, insert start just before
-			the last blank.
 			For using "I" in Visual block mode see |v_b_I|.
 
 							*gI*

@@ -363,7 +363,7 @@ describe('vim._with', function()
         exec_lua,
         [[
           _G.f = function()
-            error('This error should not interfer with execution', 0)
+            error('This error should not interfere with execution', 0)
           end
           -- Should produce error same as `_G.f()`
           vim._with({ emsg_silent = true }, function()

@@ -1449,7 +1449,7 @@ function M.selection_range(direction, timeout_ms)
     lsp.log.error(result[client.id].error.code, result[client.id].error.message)
   end
 
-  -- We only requested one range, thus we get the first and only reponse here.
+  -- We only requested one range, thus we get the first and only response here.
   local response = assert(result[client.id].result[1]) ---@type lsp.SelectionRange
   local ranges = {} ---@type lsp.Range[]
   local lines = api.nvim_buf_get_lines(0, 0, -1, false)
