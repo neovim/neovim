@@ -2970,7 +2970,7 @@ bool var_check_lock(const int flags, const char *name, size_t name_len)
     name_len = strlen(name);
   }
 
-  semsg(_("E1122: Variable is locked: %*s"), (int)name_len, name);
+  semsg(_("E1122: Variable is locked: %.*s"), (int)name_len, name);
 
   return true;
 }
