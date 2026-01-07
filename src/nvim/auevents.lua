@@ -81,6 +81,7 @@ return {
     LspProgress = false, -- after a LSP progress update
     LspRequest = false, -- after an LSP request is started, canceled, or completed
     LspTokenUpdate = false, -- after a visible LSP token is updated
+    MarkDeleted = false, -- after a mark is deleted
     MarkSet = false, -- after a mark is set
     MenuPopup = false, -- just before popup menu is displayed
     ModeChanged = false, -- after changing the mode
@@ -164,6 +165,7 @@ return {
     LspProgress = true,
     LspRequest = true,
     LspTokenUpdate = true,
+    MarkDeleted = true,
     PackChangedPre = true,
     PackChanged = true,
     Progress = true,
