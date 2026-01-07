@@ -350,15 +350,14 @@ int cursor_get_mode_idx(bool with_mouse)
   if (with_mouse && p_mousemev) {
     pos_T m_pos = { 0 };
     int mpos_flag = get_fpos_of_mouse(&m_pos);
-    // Should differentiate between dragging and hovering.
     if (mpos_flag & IN_STATUS_LINE) {
-      return SHAPE_IDX_STATUS;
+      return is_dragging() ? SHAPE_IDX_SDRAG : SHAPE_IDX_STATUS;
     }
     if (mpos_flag & IN_HSEP_LINE) {
-      return SHAPE_IDX_HSEP;
+      return is_dragging() ? SHAPE_IDX_HDRAG : SHAPE_IDX_HSEP;
     }
     if (mpos_flag & IN_SEP_LINE) {
-      return SHAPE_IDX_VSEP;
+      return is_dragging() ? SHAPE_IDX_VDRAG : SHAPE_IDX_VSEP;
     }
   }
   if (State == MODE_SHOWMATCH) {
