@@ -338,12 +338,12 @@ end
 
 --- @nodoc
 --- @class vim.lsp.config
---- @field [string] vim.lsp.Config
+--- @field [string] vim.lsp.Config?
 --- @field package _configs table<string,vim.lsp.Config>
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
-  --- @return vim.lsp.Config
+  --- @return vim.lsp.Config?
   __index = function(self, name)
     validate_config_name(name)
 
