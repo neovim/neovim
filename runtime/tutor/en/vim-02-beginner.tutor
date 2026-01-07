@@ -59,7 +59,7 @@ Final exercise: (Modify "this" text) by [applying {various} operations]<
 
 **MNEMONIC**: *into register(") named (a) (y)ank (i)nner (w)ord*
 
-  3. Navigate forward to the word 'cookie' (`fk`{normal} or `2fc`{normal}
+  3. Navigate forward to the word 'cookie' (`fk`{normal} or `3fc`{normal}
      or `$2b`{normal} or `/co`{normal} `<ENTER>`{normal}) and type `"byiw`{normal}
 
   4. Navigate to any point on the word 'Vince' and type `ciw<CTRL-R>a<ESC>`{normal}

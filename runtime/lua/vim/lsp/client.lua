@@ -22,9 +22,8 @@ local all_clients = {}
 --- @field allow_incremental_sync? boolean
 ---
 --- Debounce `didChange` notifications to the server by the given number in milliseconds.
---- No debounce occurs if `nil`.
 --- (default: `150`)
---- @field debounce_text_changes integer
+--- @field debounce_text_changes? integer
 
 --- @class vim.lsp.ClientConfig
 ---

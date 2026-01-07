@@ -21,7 +21,7 @@ ICCF Holland and Kuwasha ~
 
 |Bram| Moolenaar's charity, ICCF Holland, has long supported the education of
 children in Uganda through the Kibaale Children's Centre.  Following Bram's
-passing in 2023, ICCF Holland transfered all activities to its sister charity
+passing in 2023, ICCF Holland transferred all activities to its sister charity
 Kuwasha in Canada and dissolved at the end of 2025.
 
 Donations from Vim users are still welcome and will continue to go directly to
