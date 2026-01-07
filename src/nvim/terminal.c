@@ -378,7 +378,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
 
   if (frag.initial) {
     kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1bP%*s", (int)commandlen, command);
+    kv_printf(term->termrequest_buffer, "\x1bP%.*s", (int)commandlen, command);
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {

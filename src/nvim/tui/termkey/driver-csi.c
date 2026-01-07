@@ -867,7 +867,7 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   }
 
 #ifdef DEBUG
-  fprintf(stderr, "Found a control string: %*s",
+  fprintf(stderr, "Found a control string: %.*s",
           str_end - introlen, tk->buffer + tk->buffstart + introlen);
 #endif
 
