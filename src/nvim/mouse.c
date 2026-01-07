@@ -1172,6 +1172,11 @@ void reset_dragwin(void)
   dragwin = NULL;
 }
 
+bool is_dragging(void)
+{
+  return dragwin != NULL;
+}
+
 /// Move the cursor to the specified row and column on the screen.
 /// Change current window if necessary. Returns an integer with the
 /// CURSOR_MOVED bit set if the cursor has moved or unset otherwise.
