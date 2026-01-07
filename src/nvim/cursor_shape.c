@@ -405,3 +405,124 @@ static void clear_shape_table_for_mouse(void)
     shape_table[idx].mshape = NULL;
   }
 }
+
+/// Convert legacy Vim mouseshape names to their Kitty pointer shape name equivalents.
+///
+/// If no equivalent exists, the Vim name is stored but "default" is returned for terminal output.
+/// See https://github.com/mirror/libX11/blob/master/include/X11/cursorfont.h
+///
+/// @param vim_shape  mouseshape name from options
+/// @return  Kitty pointer shape name suitable for OSC 22 sequence
+const char *mshape_get_kitty_name(const char *vim_shape)
+{
+  if (vim_shape == NULL) {
+    return MSHAPE_DEFAULT;
+  }
+
+  // First check if it's already a valid Kitty shape name (pass through)
+  if (strequal(vim_shape, MSHAPE_ALIAS)) {
+    return MSHAPE_ALIAS;
+  } else if (strequal(vim_shape, MSHAPE_CELL)) {
+    return MSHAPE_CELL;
+  } else if (strequal(vim_shape, MSHAPE_COPY)) {
+    return MSHAPE_COPY;
+  } else if (strequal(vim_shape, MSHAPE_CROSSHAIR)) {
+    return MSHAPE_CROSSHAIR;
+  } else if (strequal(vim_shape, MSHAPE_DEFAULT)) {
+    return MSHAPE_DEFAULT;
+  } else if (strequal(vim_shape, MSHAPE_E_RESIZE)) {
+    return MSHAPE_E_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_EW_RESIZE)) {
+    return MSHAPE_EW_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_GRAB)) {
+    return MSHAPE_GRAB;
+  } else if (strequal(vim_shape, MSHAPE_GRABBING)) {
+    return MSHAPE_GRABBING;
+  } else if (strequal(vim_shape, MSHAPE_HELP)) {
+    return MSHAPE_HELP;
+  } else if (strequal(vim_shape, MSHAPE_MOVE)) {
+    return MSHAPE_MOVE;
+  } else if (strequal(vim_shape, MSHAPE_N_RESIZE)) {
+    return MSHAPE_N_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_NE_RESIZE)) {
+    return MSHAPE_NE_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_NESW_RESIZE)) {
+    return MSHAPE_NESW_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_NO_DROP)) {
+    return MSHAPE_NO_DROP;
+  } else if (strequal(vim_shape, MSHAPE_NOT_ALLOWED)) {
+    return MSHAPE_NOT_ALLOWED;
+  } else if (strequal(vim_shape, MSHAPE_NS_RESIZE)) {
+    return MSHAPE_NS_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_NW_RESIZE)) {
+    return MSHAPE_NW_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_NWSE_RESIZE)) {
+    return MSHAPE_NWSE_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_POINTER)) {
+    return MSHAPE_POINTER;
+  } else if (strequal(vim_shape, MSHAPE_PROGRESS)) {
+    return MSHAPE_PROGRESS;
+  } else if (strequal(vim_shape, MSHAPE_S_RESIZE)) {
+    return MSHAPE_S_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_SE_RESIZE)) {
+    return MSHAPE_SE_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_SW_RESIZE)) {
+    return MSHAPE_SW_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_TEXT)) {
+    return MSHAPE_TEXT;
+  } else if (strequal(vim_shape, MSHAPE_VERTICAL_TEXT)) {
+    return MSHAPE_VERTICAL_TEXT;
+  } else if (strequal(vim_shape, MSHAPE_W_RESIZE)) {
+    return MSHAPE_W_RESIZE;
+  } else if (strequal(vim_shape, MSHAPE_WAIT)) {
+    return MSHAPE_WAIT;
+  } else if (strequal(vim_shape, MSHAPE_ZOOM_IN)) {
+    return MSHAPE_ZOOM_IN;
+  } else if (strequal(vim_shape, MSHAPE_ZOOM_OUT)) {
+    return MSHAPE_ZOOM_OUT;
+  }
+
+  // Handle legacy Vim shape names
+  if (strequal(vim_shape, "arrow")) {
+    return MSHAPE_DEFAULT;
+  } else if (strequal(vim_shape, "beam")) {
+    return MSHAPE_TEXT;
+  } else if (strequal(vim_shape, "updown") || strequal(vim_shape, "udsizing")) {
+    return MSHAPE_NS_RESIZE;
+  } else if (strequal(vim_shape, "leftright") || strequal(vim_shape, "lrsizing")) {
+    return MSHAPE_EW_RESIZE;
+  } else if (strequal(vim_shape, "busy")) {
+    return MSHAPE_WAIT;
+  } else if (strequal(vim_shape, "no")) {
+    return MSHAPE_NOT_ALLOWED;
+  } else if (strequal(vim_shape, "hand1") || strequal(vim_shape, "hand2")) {
+    return MSHAPE_POINTER;
+  } else if (strequal(vim_shape, "question")) {
+    return MSHAPE_HELP;
+  } else if (strequal(vim_shape, "rightup-arrow")) {
+    return MSHAPE_NE_RESIZE;
+  } else if (strequal(vim_shape, "up-arrow")) {
+    return MSHAPE_N_RESIZE;
+  }
+
+  // Handle numeric X11 cursor codes
+  for (const char *p = vim_shape; *p; p++) {
+    if (!ascii_isdigit(*p)) {
+      // Not a number, return default
+      return MSHAPE_DEFAULT;
+    }
+  }
+  int number = atoi(vim_shape);
+
+  switch (number) {
+  case 32:   // cross-reverse
+  case 34:   // crosshair
+  case 130:  // tcross
+    return MSHAPE_CROSSHAIR;
+  case 58:   // hand1
+  case 60:   // hand2
+    return MSHAPE_POINTER;
+  default:
+    return MSHAPE_DEFAULT;
+  }
+}

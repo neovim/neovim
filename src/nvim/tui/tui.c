@@ -140,6 +140,7 @@ struct TUIData {
   bool screen_or_tmux;
   int url;  ///< Index of URL currently being printed, if any
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
+  const char *current_mouse_shape;  ///< Current mouse pointer shape
   Arena ti_arena;
 };
 
@@ -163,6 +164,7 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->stopped = false;
   tui->loop = &main_loop;
   tui->url = -1;
+  tui->current_mouse_shape = NULL;
 
   kv_init(tui->invalid_regions);
   kv_init(tui->urlbuf);
@@ -557,6 +559,11 @@ static void terminfo_disable(TUIData *tui)
   if (tui->cursor_has_color) {
     terminfo_out(tui, kTerm_reset_cursor_color);
   }
+  // Reset mouse pointer shape to default
+  if (tui->current_mouse_shape != NULL) {
+    out(tui, S_LEN("\x1b]22;default\x1b\\"));
+    tui->current_mouse_shape = NULL;
+  }
   // Disable bracketed paste
   tui_set_term_mode(tui, kTermModeBracketedPaste, false);
   // Disable focus reporting
@@ -691,6 +698,13 @@ void tui_free_all_mem(TUIData *tui)
     xfree((void *)url);
   });
   set_destroy(cstr_t, &urls);
+
+  // Free dynamically allocated mouse shape strings
+  for (size_t i = 0; i < SHAPE_IDX_COUNT; i++) {
+    if (tui->cursor_shapes[i].mshape != NULL) {
+      xfree(tui->cursor_shapes[i].mshape);
+    }
+  }
 
   kv_destroy(tui->attrs);
   kv_destroy(tui->urlbuf);
@@ -1272,6 +1286,11 @@ static cursorentry_T decode_cursor_entry(Dict args)
       r.blinkoff = (int)value.data.integer;
     } else if (strequal(key, "attr_id")) {
       r.id = (int)value.data.integer;
+    } else if (strequal(key, "mouse_shape")) {
+      // Duplicate the mouse shape name from the mode_info dictionary.
+      // The shape name will be converted to Kitty format when output via mshape_get_kitty_name().
+      // This handles both Vim mouseshape names (arrow, beam, busy, etc.) and direct Kitty names.
+      r.mshape = xstrdup(value.data.string.data);
     }
   }
   return r;
@@ -1285,6 +1304,14 @@ void tui_mode_info_set(TUIData *tui, bool guicursor_enabled, Array args)
   }
 
   assert(args.size);
+
+  // Free old mouse shape strings before overwriting them
+  for (size_t i = 0; i < SHAPE_IDX_COUNT; i++) {
+    if (tui->cursor_shapes[i].mshape != NULL) {
+      xfree(tui->cursor_shapes[i].mshape);
+      tui->cursor_shapes[i].mshape = NULL;
+    }
+  }
 
   // cursor style entries as defined by `shape_table`.
   for (size_t i = 0; i < args.size; i++) {
@@ -1341,6 +1368,16 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
     return;
   }
   cursorentry_T c = tui->cursor_shapes[mode];
+
+  // Set mouse pointer shape using Kitty OSC 22 protocol
+  if (c.mshape != NULL
+      && (tui->current_mouse_shape == NULL
+          || !strequal(c.mshape, tui->current_mouse_shape))) {
+    // Convert Vim mouseshape name to Kitty pointer shape name
+    const char *kitty_shape = mshape_get_kitty_name(c.mshape);
+    out_printf(tui, 128, "\x1b]22;%s\x1b\\", kitty_shape);
+    tui->current_mouse_shape = c.mshape;
+  }
 
   if (c.id != 0 && c.id < (int)kv_size(tui->attrs) && tui->rgb) {
     HlAttrs aep = kv_A(tui->attrs, c.id);

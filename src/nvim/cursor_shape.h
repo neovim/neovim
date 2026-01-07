@@ -33,8 +33,38 @@ typedef enum {
   SHAPE_VER       = 2,  ///< vertical bar cursor
 } CursorShape;
 
-#define MSHAPE_NUMBERED 1000    // offset for shapes identified by number
-#define MSHAPE_HIDE     1       // hide mouse pointer
+// Kitty mouse pointer shape names (OSC 22)
+// https://sw.kovidgoyal.net/kitty/pointer-shapes/
+#define MSHAPE_ALIAS          "alias"
+#define MSHAPE_CELL           "cell"
+#define MSHAPE_COPY           "copy"
+#define MSHAPE_CROSSHAIR      "crosshair"
+#define MSHAPE_DEFAULT        "default"
+#define MSHAPE_E_RESIZE       "e-resize"
+#define MSHAPE_EW_RESIZE      "ew-resize"
+#define MSHAPE_GRAB           "grab"
+#define MSHAPE_GRABBING       "grabbing"
+#define MSHAPE_HELP           "help"
+#define MSHAPE_MOVE           "move"
+#define MSHAPE_N_RESIZE       "n-resize"
+#define MSHAPE_NE_RESIZE      "ne-resize"
+#define MSHAPE_NESW_RESIZE    "nesw-resize"
+#define MSHAPE_NO_DROP        "no-drop"
+#define MSHAPE_NOT_ALLOWED    "not-allowed"
+#define MSHAPE_NS_RESIZE      "ns-resize"
+#define MSHAPE_NW_RESIZE      "nw-resize"
+#define MSHAPE_NWSE_RESIZE    "nwse-resize"
+#define MSHAPE_POINTER        "pointer"
+#define MSHAPE_PROGRESS       "progress"
+#define MSHAPE_S_RESIZE       "s-resize"
+#define MSHAPE_SE_RESIZE      "se-resize"
+#define MSHAPE_SW_RESIZE      "sw-resize"
+#define MSHAPE_TEXT           "text"
+#define MSHAPE_VERTICAL_TEXT  "vertical-text"
+#define MSHAPE_W_RESIZE       "w-resize"
+#define MSHAPE_WAIT           "wait"
+#define MSHAPE_ZOOM_IN        "zoom-in"
+#define MSHAPE_ZOOM_OUT       "zoom-out"
 
 #define SHAPE_MOUSE     1       // used for mouse pointer shape
 #define SHAPE_CURSOR    2       // used for text cursor shape
