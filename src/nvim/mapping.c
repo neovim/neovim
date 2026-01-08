@@ -2575,21 +2575,23 @@ const char *did_set_langmap(optset_T *args)
         p++;
       }
       int from = utf_ptr2char(p);
+      const char *const from_ptr = p;
       int to = NUL;
+      const char *to_ptr = "";
       if (p2 == NULL) {
         MB_PTR_ADV(p);
         if (p[0] != ',') {
           if (p[0] == '\\') {
             p++;
           }
-          to = utf_ptr2char(p);
+          to = utf_ptr2char(to_ptr = p);
         }
       } else {
         if (p2[0] != ',') {
           if (p2[0] == '\\') {
             p2++;
           }
-          to = utf_ptr2char(p2);
+          to = utf_ptr2char(to_ptr = p2);
         }
       }
       if (to == NUL) {
@@ -2602,7 +2604,10 @@ const char *did_set_langmap(optset_T *args)
       if (from >= 256) {
         langmap_set_entry(from, to);
       } else {
-        assert(to <= UCHAR_MAX);
+        if (to > UCHAR_MAX) {
+          swmsg(true, "'langmap': mapping from %.*s to %.*s will not work properly",
+                utf_ptr2len(from_ptr), from_ptr, utf_ptr2len(to_ptr), to_ptr);
+        }
         langmap_mapchar[from & 255] = (uint8_t)to;
       }
 
