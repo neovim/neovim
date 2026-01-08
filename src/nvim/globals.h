@@ -809,3 +809,5 @@ EXTERN bool skip_win_fix_cursor INIT( = false);
 EXTERN bool skip_win_fix_scroll INIT( = false);
 /// Skip update_topline() call while executing win_fix_scroll().
 EXTERN bool skip_update_topline INIT( = false);
+/// Lua script mode: "-l" commandline argument was given.
+EXTERN bool nlua_script_mode INIT( = false);

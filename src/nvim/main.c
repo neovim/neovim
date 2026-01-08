@@ -1385,6 +1385,7 @@ static void command_line_scan(mparm_T *parmp)
         case 'l':    // "-l" Lua script: args after "-l".
           headless_mode = true;
           silent_mode = true;
+          nlua_script_mode = true;
           p_verbose = 1;
           parmp->no_swap_file = true;
           parmp->use_vimrc = parmp->use_vimrc ? parmp->use_vimrc : "NONE";

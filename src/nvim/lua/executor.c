@@ -1037,6 +1037,13 @@ static int nlua_print(lua_State *const lstate)
   }
 #undef PRINT_ERROR
   ga_append(&msg_ga, NUL);
+  if (nlua_script_mode) {
+    fwrite(msg_ga.ga_data, 1, msg_ga.ga_len - 1, stdout);
+    fputc('\n', stdout);
+    fflush(stdout);
+    ga_clear(&msg_ga);
+    return 0;
+  }
 
   lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
   bool is_thread = lua_toboolean(lstate, -1);
