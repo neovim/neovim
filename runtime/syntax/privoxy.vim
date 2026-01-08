@@ -1,10 +1,9 @@
 " Vim syntax file
 " Language:	Privoxy actions file
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" URL:		http://gus.gscit.monash.edu.au/~djkea2/vim/syntax/privoxy.vim
-" Last Change:	2007 Mar 30
+" Last Change:	2026 Jan 07
 
-" Privoxy 3.0.6
+" Privoxy 4.1.0
 
 if exists("b:current_syntax")
   finish
@@ -13,59 +12,172 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal iskeyword=@,48-57,_,-
+syn region privoxyActionsBlock matchgroup=privoxyBraces start="^\s*\zs{" end="}"
+	\ contains=@privoxyActionPrefix,privoxyLineContinuation
 
-syn keyword privoxyTodo		 contained TODO FIXME XXX NOTE
+" Actions {{{
+let s:actions =<< trim END
+  add-header
+  block
+  change-x-forwarded-for
+  client-header-filter
+  client-body-filter
+  client-body-tagger
+  client-header-tagger
+  content-type-overwrite
+  crunch-client-header
+  crunch-if-none-match
+  crunch-incoming-cookies
+  crunch-outgoing-cookies
+  crunch-server-header
+  deanimate-gifs
+  delay-response
+  downgrade-http-version
+  external-filter
+  fast-redirects
+  filter
+  filter-client-headers
+  filter-server-headers
+  force-text-mode
+  forward-override
+  handle-as-empty-document
+  handle-as-image
+  hide-accept-language
+  hide-content-disposition
+  hide-forwarded-for-headers
+  hide-from-header
+  hide-if-modified-since
+  hide-referrer
+  hide-referer
+  hide-user-agent
+  https-inspection
+  ignore-certificate-errors
+  limit-connect
+  limit-cookie-lifetime
+  prevent-compression
+  prevent-keeping-cookies
+  overwrite-last-modified
+  redirect
+  server-header-filter
+  server-header-tagger
+  suppress-tag
+  session-cookies-only
+  set-image-blocker
+END
+
+for s:action in s:actions
+  exe 'syn match privoxyAction "\<' .. s:action .. '\>" contained nextgroup=privoxyParams'
+endfor
+unlet s:action s:actions
+
+syn region privoxyParams matchgroup=privoxyParamBraces start="{" end="}" contained
+
+syn match privoxyFilterAction "\<filter\>-\@!" contained nextgroup=privoxyFilterParams
+syn region privoxyFilterParams matchgroup=privoxyParamBraces start="{" end="}" contained contains=privoxyFilterArg
+
+syn cluster privoxyAction contains=privoxyAction,privoxyFilterAction
+" }}}
+
+" Filters {{{
+let s:filters =<< trim END
+      allow-autocompletion
+      all-popups
+      banners-by-link
+      banners-by-size
+      blogspot
+      bundeswehr
+      content-cookies
+      crude-parental
+      demoronizer
+      frameset-borders
+      fun
+      github
+      google
+      html-annoyances
+      ie-exploits
+      iframes
+      imdb
+      img-reorder
+      js-annoyances
+      js-events
+      jumping-windows
+      msn
+      no-ping
+      quicktime-kioskmode
+      refresh-tags
+      shockwave-flash
+      site-specifics
+      sourceforge
+      tiny-textforms
+      unsolicited-popups
+      webbugs
+      yahoo
+      x-httpd-php-to-html
+      html-to-xml
+      xml-to-html
+      less-download-windows
+      privoxy-control
+      hide-tor-exit-notation
+      no-brotli-accepted
+      privoxy-control
+      remove-first-byte
+      remove-test
+      overwrite-test-value
+END
+
+for s:filter in s:filters
+  exe 'syn match privoxyFilterArg "\<' .. s:filter .. '\>" contained"'
+endfor
+unlet s:filter s:filters
+" }}}
+
+syn match privoxyEnablePrefix  "\%(^\|\s\|{\)\@1<=+\l\@=" nextgroup=privoxy.*Action contained
+syn match privoxyDisablePrefix "\%(^\|\s\|{\)\@1<=-\l\@=" nextgroup=privoxy.*Action contained
+syn cluster privoxyActionPrefix contains=privoxyDisablePrefix,privoxyEnablePrefix
+
+syn match privoxySettingsHeader    "^\s*\zs{{settings\}}"    contains=privoxyBraces nextgroup=privoxySettingsSection skipnl skipwhite
+syn match privoxyDescriptionHeader "^\s*\zs{{description\}}" contains=privoxyBraces nextgroup=privoxyDescriptionSection skipnl
+syn match privoxyAliasHeader	   "^\s*\zs{{alias\}}"	     contains=privoxyBraces nextgroup=privoxyAliasSection skipnl
+
+syn region privoxySettingsSection    start="." end="^\s*\ze{" contained contains=privoxyComment,privoxySettingName
+syn region privoxyDescriptionSection start="." end="^\s*\ze{" contained
+syn region privoxyAliasSection	     start="." end="^\s*\ze{" contained contains=privoxyComment,privoxyAliasName
+
+syn match privoxySettingName "\<[a-z][a-z-]*" contained nextgroup=privoxySettingEqual
+syn match privoxySettingEqual "="	      contained nextgroup=privoxySettingValue
+syn match privoxySettingValue ".*"	      contained
+
+syn match privoxyAliasName "[+-]\<[a-z][a-z-]*"	contained nextgroup=privoxyAliasEqual skipwhite
+syn match privoxyAliasEqual "="			contained nextgroup=privoxyAliasValue skipwhite
+syn region privoxyAliasValue start="\S" skip="\\$" end="$" contained contains=@privoxyAction,@privoxyActionPrefix,privoxyLineContinuation
+
+syn match privoxyBraces		  "[{}]" contained
+syn match privoxyLineContinuation "\\$"  contained
+
+syn keyword privoxyTodo	   TODO FIXME XXX NOTE contained
 syn match   privoxyComment "#.*" contains=privoxyTodo,@Spell
 
-syn region privoxyActionLine matchgroup=privoxyActionLineDelimiter start="^\s*\zs{" end="}\ze\s*$"
-	\ contains=privoxyEnabledPrefix,privoxyDisabledPrefix
-
-syn match privoxyEnabledPrefix	"\%(^\|\s\|{\)\@<=+\l\@=" nextgroup=privoxyAction,privoxyFilterAction contained
-syn match privoxyDisabledPrefix "\%(^\|\s\|{\)\@<=-\l\@=" nextgroup=privoxyAction,privoxyFilterAction contained
-
-syn match privoxyAction "\%(add-header\|block\|content-type-overwrite\|crunch-client-header\|crunch-if-none-match\)\>" contained
-syn match privoxyAction "\%(crunch-incoming-cookies\|crunch-outgoing-cookies\|crunch-server-header\|deanimate-gifs\)\>" contained
-syn match privoxyAction "\%(downgrade-http-version\|fast-redirects\|filter-client-headers\|filter-server-headers\)\>" contained
-syn match privoxyAction "\%(filter\|force-text-mode\|handle-as-empty-document\|handle-as-image\)\>" contained
-syn match privoxyAction "\%(hide-accept-language\|hide-content-disposition\|hide-forwarded-for-headers\)\>" contained
-syn match privoxyAction "\%(hide-from-header\|hide-if-modified-since\|hide-referrer\|hide-user-agent\|inspect-jpegs\)\>" contained
-syn match privoxyAction "\%(kill-popups\|limit-connect\|overwrite-last-modified\|prevent-compression\|redirect\)\>" contained
-syn match privoxyAction "\%(send-vanilla-wafer\|send-wafer\|session-cookies-only\|set-image-blocker\)\>" contained
-syn match privoxyAction "\%(treat-forbidden-connects-like-blocks\)\>"
-
-syn match privoxyFilterAction "filter{[^}]*}" contained contains=privoxyFilterArg,privoxyActionBraces
-syn match privoxyActionBraces "[{}]" contained
-syn keyword privoxyFilterArg js-annoyances js-events html-annoyances content-cookies refresh-tags unsolicited-popups all-popups
-	\ img-reorder banners-by-size banners-by-link webbugs tiny-textforms jumping-windows frameset-borders demoronizer
-	\ shockwave-flash quicktime-kioskmode fun crude-parental ie-exploits site-specifics no-ping google yahoo msn blogspot
-	\ x-httpd-php-to-html html-to-xml xml-to-html hide-tor-exit-notation contained
-
-" Alternative spellings
-syn match privoxyAction "\%(kill-popup\|hide-referer\|prevent-keeping-cookies\)\>" contained
-
-" Pre-3.0 compatibility
-syn match privoxyAction "\%(no-cookie-read\|no-cookie-set\|prevent-reading-cookies\|prevent-setting-cookies\)\>" contained
-syn match privoxyAction "\%(downgrade\|hide-forwarded\|hide-from\|image\|image-blocker\|no-compression\)\>" contained
-syn match privoxyAction "\%(no-cookies-keep\|no-cookies-read\|no-cookies-set\|no-popups\|vanilla-wafer\|wafer\)\>" contained
-
-syn match privoxySetting "\<for-privoxy-version\>"
-
-syn match privoxyHeader "^\s*\zs{{\%(alias\|settings\)}}\ze\s*$"
-
 hi def link privoxyAction		Identifier
-hi def link privoxyFilterAction		Identifier
-hi def link privoxyActionLineDelimiter	Delimiter
-hi def link privoxyDisabledPrefix	SpecialChar
-hi def link privoxyEnabledPrefix	SpecialChar
-hi def link privoxyHeader		PreProc
-hi def link privoxySetting		Identifier
-hi def link privoxyFilterArg		Constant
-
+hi def link privoxyAliasEqual		Operator
+hi def link privoxyAliasHeader		Title
+hi def link privoxyBraces		Delimiter
 hi def link privoxyComment		Comment
+hi def link privoxyDescriptionHeader	Title
+hi def link privoxyDisablePrefix	Added
+hi def link privoxyEnablePrefix		Removed
+hi def link privoxyFilterAction		privoxyAction
+hi def link privoxyFilterArg		Constant
+hi def link privoxyLineContinuation	Special
+hi def link privoxyParamBraces		privoxyBraces
+hi def link privoxySettingEqual		Operator
+hi def link privoxySettingName		Keyword
+hi def link privoxySettingsHeader	Title
+hi def link privoxySettingValue		Constant
 hi def link privoxyTodo			Todo
 
 let b:current_syntax = "privoxy"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
+
+" vim: ts=8 fdm=marker
