@@ -1363,7 +1363,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
           return FAIL;
         }
       } else {
-        semsg(_("E89: No write since last change for buffer %d (add ! to override)"),
+        semsg(_(e_no_write_since_last_change_for_buffer_nr_add_bang_to_override),
               buf->b_fnum);
         return FAIL;
       }
@@ -1819,13 +1819,24 @@ void do_autochdir(void)
   }
 }
 
+void no_write_message_buf(buf_T *buf)
+{
+  if (buf->terminal
+      && channel_job_running((uint64_t)buf->b_p_channel)) {
+    emsg(_(e_job_still_running_add_bang_to_end_the_job));
+  } else {
+    semsg(_(e_no_write_since_last_change_for_buffer_nr_add_bang_to_override),
+          buf->b_fnum);
+  }
+}
+
 void no_write_message(void)
 {
   if (curbuf->terminal
       && channel_job_running((uint64_t)curbuf->b_p_channel)) {
-    emsg(_("E948: Job still running (add ! to end the job)"));
+    emsg(_(e_job_still_running_add_bang_to_end_the_job));
   } else {
-    emsg(_("E37: No write since last change (add ! to override)"));
+    emsg(_(e_no_write_since_last_change_add_bang_to_override));
   }
 }
 
@@ -1834,9 +1845,9 @@ void no_write_message_nobang(const buf_T *const buf)
 {
   if (buf->terminal
       && channel_job_running((uint64_t)buf->b_p_channel)) {
-    emsg(_("E948: Job still running"));
+    emsg(_(e_job_still_running));
   } else {
-    emsg(_("E37: No write since last change"));
+    emsg(_(e_no_write_since_last_change));
   }
 }
 

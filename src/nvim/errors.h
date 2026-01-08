@@ -131,9 +131,14 @@ EXTERN const char e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
 EXTERN const char e_empty_buffer[] INIT(= N_("E749: Empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
+EXTERN const char e_no_write_since_last_change[] INIT(= N_("E37: No write since last change"));
+EXTERN const char e_no_write_since_last_change_add_bang_to_override[] INIT(= N_("E37: No write since last change (add ! to override)"));
+EXTERN const char e_no_write_since_last_change_for_buffer_nr_add_bang_to_override[] INIT(= N_("E89: No write since last change for buffer %d (add ! to override)"));
 EXTERN const char e_buffer_nr_not_found[] INIT(= N_("E92: Buffer %d not found"));
 EXTERN const char e_unknown_function_str[] INIT(= N_("E117: Unknown function: %s"));
 EXTERN const char e_str_not_inside_function[] INIT(= N_("E193: %s not inside a function"));
+EXTERN const char e_job_still_running[] INIT(= N_("E948: Job still running"));
+EXTERN const char e_job_still_running_add_bang_to_end_the_job[] INIT(= N_("E948: Job still running (add ! to end the job)"));
 
 EXTERN const char e_invalpat[] INIT(= N_("E682: Invalid search pattern or delimiter"));
 EXTERN const char e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
