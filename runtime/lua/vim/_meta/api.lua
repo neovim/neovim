@@ -1387,7 +1387,7 @@ function vim.api.nvim_get_current_win() end
 --- - id: (integer) Get a highlight definition by id.
 --- - link: (boolean, default true) Show linked group name instead of effective definition `:hi-link`.
 --- - create: (boolean, default true) When highlight group doesn't exist create it.
---- @return vim.api.keyset.get_hl_info # Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
+--- @return vim.api.keyset.highlight # Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
 --- or only a single highlight definition map if requested by name or id.
 function vim.api.nvim_get_hl(ns_id, opts) end
 
