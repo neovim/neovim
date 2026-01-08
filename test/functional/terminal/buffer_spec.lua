@@ -243,7 +243,7 @@ describe(':terminal buffer', function()
 
   it('requires bang (!) to close a running job #15402', function()
     skip(is_os('win'), 'Test freezes the CI and makes it time out')
-    eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+    eq('Vim(wqall):E948: Job still running (add ! to end the job)', exc_exec('wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
         '^Vim%('
@@ -255,6 +255,10 @@ describe(':terminal buffer', function()
     command('call jobstop(&channel)')
     assert(0 >= eval('jobwait([&channel], 1000)[0]'))
     command('bdelete')
+  end)
+
+  it(':wqall! closes a running job', function()
+    n.expect_exit(command, 'wqall!')
   end)
 
   it('stops running jobs with :quit', function()
