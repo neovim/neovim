@@ -79,8 +79,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   });
 
   *opt_idxp = find_option(name);
-  if (*opt_idxp == kOptInvalid && !is_tty_option(name)) {
-    // unknown option ('term' is special-cased in get_option_value_for).
+  if (*opt_idxp == kOptInvalid) {
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
   } else if (*scope == kOptScopeBuf || *scope == kOptScopeWin) {
     // if 'buf' or 'win' is passed, make sure the option supports it
@@ -223,7 +222,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     from = ftbuf;
   }
 
-  OptVal value = get_option_value_for(name.data, opt_idx, opt_flags, scope, from, err);
+  OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
 
   if (ftbuf != NULL) {
     if (aco_used) {
@@ -274,7 +273,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     return;
   }
 
-  // TTY options (e.g., 'term') are read-only.
+  // Deprecated TTY options (t_Co, ttytype, etc.) are not supported via API.
   if (is_tty_option(name.data)) {
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name.data);
     return;

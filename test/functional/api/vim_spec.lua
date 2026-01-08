@@ -2059,6 +2059,9 @@ describe('API', function()
       eq('string', type(api.nvim_get_option_value('term', {})))
       -- Setting 'term' should fail (immutable option)
       matches('E519:', pcall_err(api.nvim_set_option_value, 'term', 'foo', {}))
+      -- Deprecated TTY options are not exposed via API
+      matches('Unknown option', pcall_err(api.nvim_get_option_value, 't_Co', {}))
+      matches('Unknown option', pcall_err(api.nvim_get_option_value, 'ttytype', {}))
     end)
   end)
 
