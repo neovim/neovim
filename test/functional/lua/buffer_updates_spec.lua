@@ -283,48 +283,6 @@ describe('lua buffer event callbacks: on_lines', function()
     eq(2, api.nvim_win_get_cursor(0)[1])
   end)
 
-  it('does not SEGFAULT when accessing window buffer info in on_detach #14998', function()
-    local code = function()
-      local buf = vim.api.nvim_create_buf(false, false)
-
-      vim.cmd 'split'
-      vim.api.nvim_win_set_buf(0, buf)
-
-      vim.api.nvim_buf_attach(buf, false, {
-        on_detach = function(_, buf0)
-          vim.fn.tabpagebuflist()
-          vim.fn.win_findbuf(buf0)
-        end,
-      })
-    end
-
-    exec_lua(code)
-    command('q!')
-    n.assert_alive()
-
-    exec_lua(code)
-    command('bd!')
-    n.assert_alive()
-  end)
-
-  it('no invalid lnum error for closed memline in on_detach #31251', function()
-    eq(vim.NIL, exec_lua('return _G.did_detach'))
-    exec_lua([[
-      vim.api.nvim_buf_set_lines(0, 0, -1, false, { '' })
-      local bufname = 'buf2'
-      local buf = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_name(buf, bufname)
-      vim.bo[buf].bufhidden = 'wipe'
-      vim.cmd('vertical diffsplit '..bufname)
-      vim.api.nvim_buf_attach(0, false, { on_detach = function()
-        vim.cmd("redraw")
-        _G.did_detach = true
-      end})
-      vim.cmd.bdelete()
-    ]])
-    eq(true, exec_lua('return _G.did_detach'))
-  end)
-
   it('#12718 lnume', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
     exec_lua(function()
@@ -1637,6 +1595,50 @@ describe('lua: nvim_buf_attach on_bytes', function()
 end)
 
 describe('nvim_buf_attach on_detach', function()
+  it('does not SEGFAULT when accessing window buffer info #14998', function()
+    local code = function()
+      local buf = vim.api.nvim_create_buf(false, false)
+
+      vim.cmd 'split'
+      vim.api.nvim_win_set_buf(0, buf)
+
+      vim.api.nvim_buf_attach(buf, false, {
+        on_detach = function(_, buf0)
+          vim.fn.tabpagebuflist()
+          vim.fn.win_findbuf(buf0)
+        end,
+      })
+    end
+
+    exec_lua(code)
+    command('q!')
+    n.assert_alive()
+
+    exec_lua(code)
+    command('bd!')
+    n.assert_alive()
+  end)
+
+  it('no invalid lnum error for closed memline #31251', function()
+    eq(vim.NIL, exec_lua('return _G.did_detach'))
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { '' })
+      local bufname = 'buf2'
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_name(buf, bufname)
+      vim.bo[buf].bufhidden = 'wipe'
+      vim.cmd('vertical diffsplit ' .. bufname)
+      vim.api.nvim_buf_attach(0, false, {
+        on_detach = function()
+          vim.cmd('redraw')
+          _G.did_detach = true
+        end,
+      })
+      vim.cmd.bdelete()
+    end)
+    eq(true, exec_lua('return _G.did_detach'))
+  end)
+
   it('called before buf_freeall autocommands', function()
     exec_lua(function()
       vim.api.nvim_create_autocmd({ 'BufUnload', 'BufDelete', 'BufWipeout' }, {
