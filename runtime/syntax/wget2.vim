@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	Wget2 configuration file (/etc/wget2rc ~/.wget2rc)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2023 Nov 05
+" Last Change:	2026 Jan 07
 
-" GNU Wget2 2.1.0 - multithreaded metalink/file/website downloader
+" GNU Wget2 2.2.1 - multithreaded metalink/file/website downloader
 
 if exists("b:current_syntax")
   finish
@@ -189,6 +189,7 @@ let s:commands =<< trim EOL
   save-headers
   secure-protocol
   server-response
+  show-progress
   signature-extensions
   span-hosts
   spider
@@ -223,7 +224,7 @@ EOL
 "}}}
 
 for cmd in s:commands
-  exe 'syn match wget2Command "\<' .. substitute(cmd, '-', '[-_]\\=', "g") .. '\>" nextgroup=wget2AssignmentOperator skipwhite contained'
+  exe 'syn match wget2Command "\<\%(no[-_]\)\=' .. substitute(cmd, '-', '[-_]\\=', "g") .. '\>" nextgroup=wget2AssignmentOperator skipwhite contained'
 endfor
 unlet s:commands
 
