@@ -437,9 +437,8 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     --- @type string
     local title_before_del = exec_lua(function()
-      vim.wait(10) -- Ensure there are no pending events.
+      vim.wait(10) -- Ensure there are no pending events so that a write isn't queued.
       vim.api.nvim_chan_send(vim.bo.channel, '\027]2;OTHER_TITLE\007')
-      vim.uv.run('once') -- Only process the pending write.
       vim.uv.sleep(50) -- Block the event loop and wait for tty-test to forward OSC 2.
       local term_title = vim.b.term_title
       vim.api.nvim_buf_delete(0, { force = true })
