@@ -191,6 +191,39 @@ describe(':terminal window', function()
                                                           |
       ]])
     end)
+
+    it('foldexpr is not evaluated #28688', function()
+      n.exec([[
+        let g:called_foldexpr = 0
+        func FoldExpr()
+          let g:called_foldexpr += 1
+        endfunc
+        setlocal foldmethod=expr foldexpr=FoldExpr()
+      ]])
+      feed_data('line5\n')
+      screen:expect([[
+        line1                                             |
+        line2                                             |
+        line3                                             |
+        line4                                             |
+        line5                                             |
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq(0, eval('g:called_foldexpr'))
+      feed([[<C-\><C-N>]])
+      feed_data('line6\n')
+      screen:expect([[
+        line2                                             |
+        line3                                             |
+        line4                                             |
+        line5                                             |
+        line6                                             |
+        ^                                                  |
+                                                          |
+      ]])
+      eq(0, eval('g:called_foldexpr'))
+    end)
   end)
 
   it('redrawn when restoring cursorline/column', function()
