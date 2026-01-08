@@ -234,6 +234,7 @@ pub fn build(b: *std.Build) !void {
         \\char *default_vim_dir = "{s}/share/nvim";
         \\char *default_vimruntime_dir = "";
         \\char *default_lib_dir = "{s}/nvim";
+        // b.lib_dir is typically b.install_path + "/lib" but may be overridden
     , .{ try replace_backslashes(b, b.install_path), try replace_backslashes(b, b.lib_dir) }));
 
     const opt_version_string = b.option([]const u8, "version-string", "Override Neovim version string. Default is to find out with git.");
