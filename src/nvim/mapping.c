@@ -2608,7 +2608,7 @@ const char *did_set_langmap(optset_T *args)
         langmap_set_entry(from, to);
       } else {
         if (to > UCHAR_MAX) {
-          swmsg(true, "'langmap': mapping from %.*s to %.*s will not work properly",
+          swmsg(true, "'langmap': Mapping from %.*s to %.*s will not work properly",
                 utf_ptr2len(from_ptr), from_ptr, utf_ptr2len(to_ptr), to_ptr);
         }
         langmap_mapchar[from & 255] = (uint8_t)to;
