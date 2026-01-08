@@ -296,6 +296,35 @@ describe(':source', function()
     eq(nil, result:find('E484'))
     os.remove(test_file)
   end)
+
+  it('sources Lua/Vimscript codeblocks based on treesitter injection', function()
+    insert([[
+      *test.txt*  Test help file
+
+      Lua example: >lua
+        vim.g.test_lua = 42
+      <
+
+      Vim example: >vim
+        let g:test_vim = 99
+      <]])
+    command('setlocal filetype=help')
+
+    -- Source Lua codeblock (line 4 contains the Lua code)
+    command(':4source')
+    eq(42, eval('g:test_lua'))
+
+    -- Source Vimscript codeblock (line 8 contains the Vim code)
+    command(':8source')
+    eq(99, eval('g:test_vim'))
+
+    -- Test fallback without treesitter
+    command('enew')
+    insert([[let g:test_no_ts = 123]])
+    command('setlocal filetype=')
+    command('source')
+    eq(123, eval('g:test_no_ts'))
+  end)
 end)
 
 it('$HOME is not shortened in filepath in v:stacktrace from sourced file', function()

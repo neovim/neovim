@@ -2275,8 +2275,26 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
+  // Check if treesitter detects this range as Lua (for injections like vimdoc codeblocks)
+  bool ts_lua = false;
+  if (fname == NULL && eap != NULL && !ex_lua
+      && !strequal(curbuf->b_p_ft, "lua")
+      && !(curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, INTEGER_OBJ(curbuf->handle));
+    ADD_C(args, INTEGER_OBJ(eap->line1));
+    ADD_C(args, INTEGER_OBJ(eap->line2));
+    Error err = ERROR_INIT;
+    Object result = NLUA_EXEC_STATIC("return require('vim._core.util').source_is_lua(...)",
+                                     args, kRetNilBool, NULL, &err);
+    if (!ERROR_SET(&err) && LUARET_TRUTHY(result)) {
+      ts_lua = true;
+    }
+    api_clear_error(&err);
+  }
+
   if (fname == NULL
-      && (ex_lua || strequal(curbuf->b_p_ft, "lua")
+      && (ex_lua || ts_lua || strequal(curbuf->b_p_ft, "lua")
           || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua")))) {
     // Source lines from the current buffer as lua
     nlua_exec_ga(&cookie.buflines, fname_exp);
