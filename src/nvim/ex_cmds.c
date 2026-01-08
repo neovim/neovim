@@ -1887,10 +1887,10 @@ void do_wqall(exarg_T *eap)
   }
 
   FOR_ALL_BUFFERS(buf) {
-    if (exiting
+    if (exiting && !eap->forceit
         && buf->terminal
         && channel_job_running((uint64_t)buf->b_p_channel)) {
-      no_write_message_nobang(buf);
+      no_write_message_buf(buf);
       error++;
     } else if (!bufIsChanged(buf) || bt_dontwrite(buf)) {
       continue;
