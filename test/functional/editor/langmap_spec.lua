@@ -269,8 +269,8 @@ describe("'langmap'", function()
   it('does not crash when mapping char < 256 to char >= 256', function()
     -- Note: this warning should be removed when the pending tests above are fixed.
     local wmsg = table.concat({
-      "'langmap': mapping from e to ε will not work properly",
-      "'langmap': mapping from ü to μ will not work properly",
+      "'langmap': Mapping from e to ε will not work properly",
+      "'langmap': Mapping from ü to μ will not work properly",
     }, '\n')
     -- ä ë ï ö ü ÿ < 256, β γ ε μ >= 256
     command('set langmap=iw,wi,äë,ëä,ïx,xï,βγ,γβ,eε,εe,üμ,μü,ÿy,yÿ')
