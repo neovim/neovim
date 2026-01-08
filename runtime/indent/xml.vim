@@ -88,7 +88,9 @@ endfun
 
 " [-- return the sum of indents of a:lnum --]
 fun! <SID>XmlIndentSum(line, style, add)
-    if <SID>IsXMLContinuation(a:line) && a:style == 0 && !<SID>IsXMLEmptyClosingTag(a:line)
+    if <SID>IsXMLContinuation(a:line) &&
+        \ a:style == 0 &&
+        \ !<SID>IsXMLEmptyClosingTag(a:line)
         " no complete tag, add one additional indent level
         " but only for the current line
         return a:add + shiftwidth()
@@ -157,6 +159,17 @@ fun! XmlIndentGet(lnum, use_syntax_check)
             " no extra indent, looks like a text continuation line
            return pind
         endif
+    elseif empty(syn_name_start) && syn_name_end =~? 'xmlTag'
+        " Special case: such a line, shouldn't be indented, just because it
+        " ends with a tag
+        " 'foobar <i>inline tags</i>'
+        if (match(curline, '<\([:a-zA-Z_]\+\)[^>]*>.*</\1>') > -1)
+            return pind
+        endif
+    endif
+
+    if curline =~ '^\s*</[a-zA-Z_]>'
+        return <SID>ReturnIndentForMatchingTag(curline)
     endif
 
     " Get indent from previous tag line
@@ -179,6 +192,21 @@ endfunc
 func! <SID>IsXMLEmptyClosingTag(line)
     " Checks whether the line ends with an empty closing tag such as <lb/>
     return a:line =~? '<[^>]*/>\s*$'
+endfunc
+
+func! <SID>ReturnIndentForMatchingTag(line)
+    " For a line with just a simple closing tag
+    " get the indent from a matching opening tag
+    if a:line =~? '^\s*</[a-z_]*>'
+        let _c = getcursorpos()
+        let pat = matchstr(a:line, '^\s*</\zs[a-z_]\+\ze>')
+        " position cursor before the opening tag
+        norm! 0
+        " get the indent from the matching opening tag
+        let match_line = searchpair('<' .. pat .. '>', '', '</' .. pat .. '>', 'bn')
+        call setpos('.', _c)
+        return indent(match_line)
+    endif
 endfunc
 
 " return indent for a commented line,
