@@ -745,7 +745,7 @@ static Object get_option_from(void *from, OptScope scope, String name, Error *er
   OptVal value = NIL_OPTVAL;
 
   if (option_has_scope(opt_idx, scope)) {
-    value = get_option_value_for(name.data, opt_idx,
+    value = get_option_value_for(opt_idx,
                                  scope == kOptScopeGlobal ? OPT_GLOBAL : OPT_LOCAL,
                                  scope, from, err);
     if (ERROR_SET(err)) {
