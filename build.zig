@@ -229,11 +229,13 @@ pub fn build(b: *std.Build) !void {
     });
 
     _ = gen_config.addCopyFile(sysconfig_step.getOutput(), "auto/config.h"); // run_preprocessor() workaronnd
+
     _ = gen_config.add("auto/pathdef.h", b.fmt(
         \\char *default_vim_dir = "{s}/share/nvim";
         \\char *default_vimruntime_dir = "";
         \\char *default_lib_dir = "{s}/nvim";
-    , .{ b.install_path, b.lib_dir })); // b.lib_dir is typically b.install_path + "/lib" but may be overridden
+        // b.lib_dir is typically b.install_path + "/lib" but may be overridden
+    , .{ try replace_backslashes(b, b.install_path), try replace_backslashes(b, b.lib_dir) }));
 
     const opt_version_string = b.option([]const u8, "version-string", "Override Neovim version string. Default is to find out with git.");
     const version_medium = if (opt_version_string) |version_string| version_string else v: {
@@ -517,7 +519,9 @@ pub fn lua_version_info(b: *std.Build) []u8 {
     , .{ v.major, v.minor, v.patch, v.prerelease.len > 0, v.api_level, v.api_level_compat, v.api_prerelease });
 }
 
-fn esc(b: *std.Build, input: []const u8) ![]const u8 {
+/// Replace all backslashes in `input` with with forward slashes when the target is Windows.
+/// Returned memory is stored in `b.graph.arena`.
+fn replace_backslashes(b: *std.Build, input: []const u8) ![]const u8 {
     return if (b.graph.host.result.os.tag == .windows)
         std.mem.replaceOwned(u8, b.graph.arena, input, "\\", "/")
     else
@@ -545,5 +549,5 @@ pub fn test_config(b: *std.Build) ![]u8 {
         \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M
-    , .{ .bin_dir = try esc(b, b.install_path), .src_path = try esc(b, src_path) });
+    , .{ .bin_dir = try replace_backslashes(b, b.install_path), .src_path = try replace_backslashes(b, src_path) });
 }
