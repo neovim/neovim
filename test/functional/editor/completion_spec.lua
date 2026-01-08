@@ -1739,4 +1739,25 @@ describe('completion', function()
       {5:-- INSERT --}                                                |
     ]])
   end)
+
+  -- oldtest: Test_fuzzy_filenames_compl_autocompl()
+  it('fuzzy file name does not crash with autocomplete', function()
+    feed('iset ac cot=fuzzy,longest<Esc>')
+    command('source')
+    feed('o')
+    poke_eventloop()
+    feed('.')
+    poke_eventloop()
+    feed('n')
+    poke_eventloop()
+    feed('a')
+    poke_eventloop()
+    feed('<C-X><C-F>') -- this used to cause segfault
+    screen:expect([[
+      set ac cot=fuzzy,longest                                    |
+      .na^                                                         |
+      {1:~                                                           }|*5
+      {5:-- File name completion (^F^N^P) }{9:Pattern not found}          |
+    ]])
+  end)
 end)
