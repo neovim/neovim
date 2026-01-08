@@ -900,6 +900,8 @@ static void set_info_event(void **argv)
   channel_decref(chan);
 }
 
+/// Unlike terminal_running(), this returns false immediately after stopping a job.
+/// However, this always returns false for nvim_open_term() terminals.
 bool channel_job_running(uint64_t id)
 {
   Channel *chan = find_channel(id);
