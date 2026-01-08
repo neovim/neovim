@@ -13,7 +13,9 @@
 #define CTRL_C 0x03
 
 uv_tty_t tty;
+#ifdef MSWIN
 uv_tty_t tty_out;
+#endif
 
 bool owns_tty(void);  // silence -Wmissing-prototypes
 bool owns_tty(void)
@@ -40,13 +42,16 @@ static void walk_cb(uv_handle_t *handle, void *arg)
   }
 }
 
-#ifndef MSWIN
 static void sig_handler(int signum)
 {
   switch (signum) {
   case SIGWINCH: {
     int width, height;
+#ifndef MSWIN
     uv_tty_get_winsize(&tty, &width, &height);
+#else
+    uv_tty_get_winsize(&tty_out, &width, &height);
+#endif
     fprintf(stderr, "rows: %d, cols: %d\n", height, width);
     return;
   }
@@ -57,14 +62,11 @@ static void sig_handler(int signum)
     return;
   }
 }
-#endif
 
 #ifdef MSWIN
-static void sigwinch_cb(uv_signal_t *handle, int signum)
+static void signal_cb(uv_signal_t *handle, int signum)
 {
-  int width, height;
-  uv_tty_get_winsize(&tty_out, &width, &height);
-  fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+  sig_handler(signum);
 }
 #endif
 
@@ -185,9 +187,12 @@ int main(int argc, char **argv)
   sigaction(SIGHUP, &sa, NULL);
   sigaction(SIGWINCH, &sa, NULL);
 #else
+  uv_signal_t sighup_watcher;
+  uv_signal_init(uv_default_loop(), &sighup_watcher);
+  uv_signal_start(&sighup_watcher, signal_cb, SIGHUP);
   uv_signal_t sigwinch_watcher;
   uv_signal_init(uv_default_loop(), &sigwinch_watcher);
-  uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
+  uv_signal_start(&sigwinch_watcher, signal_cb, SIGWINCH);
 #endif
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
