@@ -736,4 +736,150 @@ func Test_switch_to_previously_viewed_buffer()
   set startofline&
 endfunc
 
+func Test_bdelete_skip_closing_bufs()
+  set hidden
+  let s:fired = 0
+
+  edit foo
+  edit bar
+  let s:next_new_bufnr = bufnr('$') + 1
+  augroup SkipClosing
+    autocmd!
+    " Only window and other buffer is closing.
+    " No choice but to switch to a new, empty buffer.
+    autocmd BufDelete * ++once let s:fired += 1
+          \| call assert_equal(1, winnr('$'))
+          \| call assert_equal('bar', bufname())
+          \| bdelete
+          \| call assert_equal('', bufname())
+          \| call assert_equal(s:next_new_bufnr, bufnr())
+  augroup END
+  bdelete foo
+  call assert_equal(1, s:fired)
+  unlet! s:next_new_bufnr
+  %bw!
+
+  edit baz
+  edit bar
+  edit fleb
+  edit foo
+  augroup SkipClosing
+    autocmd!
+    " Only window, au_new_curbuf is NOT closing; should end up there.
+    autocmd BufDelete * ++once let s:fired += 1
+          \| call assert_equal(1, winnr('$'))
+          \| call assert_equal('foo', bufname())
+          \| bwipeout
+          \| call assert_equal('bar', bufname())
+  augroup END
+  buffer baz
+  buffer foo
+  augroup SkipClosing
+    autocmd BufLeave * ++once ++nested bdelete baz
+  augroup END
+  edit bar
+  call assert_equal(2, s:fired)
+  %bw!
+
+  edit baz
+  edit bar
+  edit fleb
+  edit foo
+  augroup SkipClosing
+    autocmd!
+    " Like above, but au_new_curbuf IS closing.
+    " Should use the most recent jumplist buffer instead.
+    autocmd BufDelete * ++once let s:fired += 1
+          \| call assert_equal(1, winnr('$'))
+          \| call assert_equal('foo', bufname())
+          \| bwipeout
+          \| call assert_equal('baz', bufname())
+  augroup END
+  buffer baz
+  buffer foo
+  augroup SkipClosing
+    autocmd BufLeave * ++once ++nested bdelete bar
+  augroup END
+  edit bar
+  call assert_equal(3, s:fired)
+  %bw!
+
+  edit foo
+  edit floob
+  edit baz
+  edit bar
+  augroup SkipClosing
+    autocmd!
+    " Only window, most recent buffer in jumplist is closing.
+    " Should switch to the next most-recent buffer in the jumplist instead.
+    autocmd BufDelete * ++once let s:fired += 1
+          \| call assert_equal(1, winnr('$'))
+          \| call assert_equal('bar', bufname())
+          \| bdelete
+          \| call assert_equal('floob', bufname())
+  augroup END
+  buffer baz
+  buffer floob
+  buffer foo
+  buffer bar
+  bdelete foo
+  call assert_equal(4, s:fired)
+  %bw!
+
+  edit foo
+  edit baz
+  edit bar
+  edit floob
+  edit bazinga
+  augroup SkipClosing
+    autocmd!
+    " Only window, most recent jumplist buffer is gone, next most-recent is
+    " closing.  Should switch to the 3rd most-recent jumplist buffer.
+    autocmd BufDelete * ++once let s:fired += 1
+          \| call assert_equal(1, winnr('$'))
+          \| call assert_equal('bar', bufname())
+          \| bwipeout
+          \| call assert_equal('baz', bufname())
+  augroup END
+  buffer bazinga
+  buffer baz
+  buffer floob
+  buffer foo
+  buffer bar
+  noautocmd bdelete foo
+  bdelete floob
+  call assert_equal(5, s:fired)
+  %bw!
+
+  edit foo
+  edit baz
+  edit floob
+  edit bazinga
+  edit bar
+  augroup SkipClosing
+    autocmd!
+    " Like above, but jumplist cleared, no next buffer in the buffer list and
+    " previous buffer is closing.  Should switch to the buffer before previous.
+    autocmd BufDelete * ++once let s:fired += 1
+          \| call assert_equal(1, winnr('$'))
+          \| call assert_equal('bar', bufname())
+          \| bunload
+          \| call assert_equal('floob', bufname())
+  augroup END
+  buffer bazinga
+  buffer baz
+  buffer floob
+  buffer foo
+  buffer bar
+  noautocmd bdelete foo
+  clearjumps
+  bdelete bazinga
+  call assert_equal(6, s:fired)
+
+  unlet! s:fired
+  autocmd! SkipClosing
+  set hidden&
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
