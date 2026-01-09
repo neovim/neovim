@@ -6194,6 +6194,11 @@ int ins_complete(int c, bool enable_pum)
   int save_w_leftcol = curwin->w_leftcol;
   int n = ins_compl_next(true, ins_compl_key2count(c), insert_match);
 
+  // Reset autocompletion timer expiry flag
+  if (compl_autocomplete) {
+    compl_time_slice_expired = false;
+  }
+
   if (n > 1) {          // all matches have been found
     compl_matches = n;
   }
