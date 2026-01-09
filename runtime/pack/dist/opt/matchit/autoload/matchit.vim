@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: May 20, 2024
+"  Last Change: Jan 06, 2025
 
 " Neovim does not support scriptversion
 if has("vimscript-4")
@@ -69,6 +69,26 @@ function matchit#Match_wrapper(word, forward, mode) range
     let startpos = [line("."), col(".")]
   endif
 
+  " Check for custom match function hook
+  if exists("b:match_function")
+    let MatchFunc = b:match_function
+    try
+      let result = call(MatchFunc, [a:forward])
+      if !empty(result)
+        call cursor(result)
+        return s:CleanUp(restore_options, a:mode, startpos)
+      endif
+    catch /.*/
+      if exists("b:match_debug")
+        echohl WarningMsg
+        echom 'matchit: b:match_function error: ' .. v:exception
+        echohl NONE
+      endif
+      return s:CleanUp(restore_options, a:mode, startpos)
+    endtry
+    " Empty result: fall through to regular matching
+  endif
+
   " First step:  if not already done, set the script variables
   "   s:do_BR   flag for whether there are backrefs
   "   s:pat     parsed version of b:match_words
@@ -91,7 +111,7 @@ function matchit#Match_wrapper(word, forward, mode) range
     let default = escape(&mps, '[$^.*~\\/?]') .. (strlen(&mps) ? "," : "") ..
       \ '\/\*:\*\/,#\s*if\%(n\=def\)\=:#\s*else\>:#\s*elif\%(n\=def\)\=\>:#\s*endif\>'
     " s:all = pattern with all the keywords
-    let match_words = match_words .. (strlen(match_words) ? "," : "") .. default
+    let match_words = s:Append(match_words, default)
     let s:last_words = match_words
     if match_words !~ s:notslash .. '\\\d'
       let s:do_BR = 0
@@ -101,8 +121,8 @@ function matchit#Match_wrapper(word, forward, mode) range
       let s:pat = s:ParseWords(match_words)
     endif
     let s:all = substitute(s:pat, s:notslash .. '\zs[,:]\+', '\\|', 'g')
-    " un-escape \, to ,
-    let s:all = substitute(s:all, '\\,', ',', 'g')
+    " un-escape \, and \: to , and :
+    let s:all = substitute(s:all, s:notslash .. '\zs\\\(:\|,\)', '\1', 'g')
     " Just in case there are too many '\(...)' groups inside the pattern, make
     " sure to use \%(...) groups, so that error E872 can be avoided
     let s:all = substitute(s:all, '\\(', '\\%(', 'g')
@@ -342,6 +362,18 @@ fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
   return ini .. ":" .. tailBR
 endfun
 
+" String append item2 to item and add ',' in between items
+fun! s:Append(item, item2)
+  if a:item == ''
+    return a:item2
+  endif
+  " there is already a trailing comma, don't add another one
+  if a:item[-1:] == ','
+    return a:item .. a:item2
+  endif
+  return a:item .. ',' .. a:item2
+endfun
+
 " Input a comma-separated list of groups with backrefs, such as
 "   a:groups = '\(foo\):end\1,\(bar\):end\1'
 " and return a comma-separated list of groups with backrefs replaced:
@@ -539,8 +571,8 @@ fun! s:Choose(patterns, string, comma, branch, prefix, suffix, ...)
   else
     let currpat = substitute(current, s:notslash .. a:branch, '\\|', 'g')
   endif
-  " un-escape \, to ,
-  let currpat = substitute(currpat, '\\,', ',', 'g')
+  " un-escape \, and \: to , and :
+  let currpat = substitute(currpat, s:notslash .. '\zs\\\(:\|,\)', '\1', 'g')
   while a:string !~ a:prefix .. currpat .. a:suffix
     let tail = strpart(tail, i)
     let i = matchend(tail, s:notslash .. a:comma)
@@ -553,6 +585,8 @@ fun! s:Choose(patterns, string, comma, branch, prefix, suffix, ...)
     else
       let currpat = substitute(current, s:notslash .. a:branch, '\\|', 'g')
     endif
+    " un-escape \, and \: to , and :
+    let currpat = substitute(currpat, s:notslash .. '\zs\\\(:\|,\)', '\1', 'g')
     if a:0
       let alttail = strpart(alttail, j)
       let j = matchend(alttail, s:notslash .. a:comma)
@@ -622,7 +656,7 @@ fun! matchit#MultiMatch(spflag, mode)
     let default = escape(&mps, '[$^.*~\\/?]') .. (strlen(&mps) ? "," : "") ..
       \ '\/\*:\*\/,#\s*if\%(n\=def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
     let s:last_mps = &mps
-    let match_words = match_words .. (strlen(match_words) ? "," : "") .. default
+    let match_words = s:Append(match_words, default)
     let s:last_words = match_words
     if match_words !~ s:notslash .. '\\\d'
       let s:do_BR = 0
