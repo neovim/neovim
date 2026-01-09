@@ -6092,6 +6092,7 @@ local options = {
       tags = { 'mouse-hover' },
       type = 'boolean',
       varname = 'p_mousemev',
+      cb = 'did_set_mousemev',
     },
     {
       cb = 'did_set_mousescroll',
