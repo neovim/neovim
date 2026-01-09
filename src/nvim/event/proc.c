@@ -46,6 +46,16 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
   // forwarding stderr contradicts with processing it internally
   assert(!(err && proc->fwd_err));
 
+#ifdef MSWIN
+  const bool out_use_poll = false;
+#else
+  // Using uv_pipe_t to read from PTY master may drop data if the PTY process exits
+  // immediately after output, as libuv treats a partial read after POLLHUP as EOF,
+  // which isn't true for PTY master on Linux. Therefore use uv_poll_t instead. #3030
+  // Ref: https://github.com/libuv/libuv/issues/4992
+  const bool out_use_poll = proc->type == kProcTypePty;
+#endif
+
   if (in) {
     uv_pipe_init(&proc->loop->uv, &proc->in.uv.pipe, 0);
   } else {
@@ -53,7 +63,9 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
   }
 
   if (out) {
-    uv_pipe_init(&proc->loop->uv, &proc->out.s.uv.pipe, 0);
+    if (!out_use_poll) {
+      uv_pipe_init(&proc->loop->uv, &proc->out.s.uv.pipe, 0);
+    }
   } else {
     proc->out.s.closed = true;
   }
@@ -83,7 +95,7 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
     if (in) {
       uv_close((uv_handle_t *)&proc->in.uv.pipe, NULL);
     }
-    if (out) {
+    if (out && !out_use_poll) {
       uv_close((uv_handle_t *)&proc->out.s.uv.pipe, NULL);
     }
     if (err) {
@@ -101,21 +113,29 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
   }
 
   if (in) {
-    stream_init(NULL, &proc->in, -1, (uv_stream_t *)&proc->in.uv.pipe);
+    stream_init(NULL, &proc->in, -1, false, (uv_stream_t *)&proc->in.uv.pipe);
     proc->in.internal_data = proc;
     proc->in.internal_close_cb = on_proc_stream_close;
     proc->refcount++;
   }
 
   if (out) {
-    stream_init(NULL, &proc->out.s, -1, (uv_stream_t *)&proc->out.s.uv.pipe);
+    if (out_use_poll) {
+#ifdef MSWIN
+      abort();
+#else
+      stream_init(proc->loop, &proc->out.s, ((PtyProc *)proc)->tty_fd, true, NULL);
+#endif
+    } else {
+      stream_init(NULL, &proc->out.s, -1, false, (uv_stream_t *)&proc->out.s.uv.pipe);
+    }
     proc->out.s.internal_data = proc;
     proc->out.s.internal_close_cb = on_proc_stream_close;
     proc->refcount++;
   }
 
   if (err) {
-    stream_init(NULL, &proc->err.s, -1, (uv_stream_t *)&proc->err.s.uv.pipe);
+    stream_init(NULL, &proc->err.s, -1, false, (uv_stream_t *)&proc->err.s.uv.pipe);
     proc->err.s.internal_data = proc;
     proc->err.s.internal_close_cb = on_proc_stream_close;
     proc->refcount++;

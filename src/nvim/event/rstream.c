@@ -13,19 +13,25 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"
 
+#ifndef MSWIN
+# include <errno.h>
+
+# include "nvim/fileio.h"
+#endif
+
 #include "event/rstream.c.generated.h"
 
 void rstream_init_fd(Loop *loop, RStream *stream, int fd)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(loop, &stream->s, fd, NULL);
+  stream_init(loop, &stream->s, fd, false, NULL);
   rstream_init(stream);
 }
 
 void rstream_init_stream(RStream *stream, uv_stream_t *uvstream)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(NULL, &stream->s, -1, uvstream);
+  stream_init(NULL, &stream->s, -1, false, uvstream);
   rstream_init(stream);
 }
 
@@ -45,6 +51,10 @@ void rstream_start_inner(RStream *stream)
 {
   if (stream->s.uvstream) {
     uv_read_start(stream->s.uvstream, alloc_cb, read_cb);
+#ifndef MSWIN
+  } else if (stream->s.use_poll) {
+    uv_poll_start(&stream->s.uv.poll, UV_READABLE, poll_cb);
+#endif
   } else {
     uv_idle_start(&stream->s.uv.idle, fread_idle_cb);
   }
@@ -72,6 +82,10 @@ void rstream_stop_inner(RStream *stream)
 {
   if (stream->s.uvstream) {
     uv_read_stop(stream->s.uvstream);
+#ifndef MSWIN
+  } else if (stream->s.use_poll) {
+    uv_poll_stop(&stream->s.uv.poll);
+#endif
   } else {
     uv_idle_stop(&stream->s.uv.idle);
   }
@@ -170,6 +184,46 @@ static void fread_idle_cb(uv_idle_t *handle)
   stream->s.fpos += req.result;
   invoke_read_cb(stream, false);
 }
+
+#ifndef MSWIN
+static void poll_cb(uv_poll_t *handle, int status, int events)
+{
+  RStream *stream = handle->data;
+
+  if (status < 0) {
+    ELOG("poll error on Stream (%p) with descriptor %d: %s (%s)", (void *)stream,
+         stream->s.fd, uv_err_name(status), os_strerror(status));
+    return;
+  }
+  if (!(events & UV_READABLE)) {
+    return;
+  }
+
+  ssize_t cnt = read_eintr(stream->s.fd, stream->write_pos, rstream_space(stream));
+
+  if (cnt < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      return;
+    }
+    DLOG("closing Stream (%p) with descriptor %d: %s", (void *)stream,
+         stream->s.fd, strerror(errno));
+  }
+
+  if (cnt <= 0) {
+    // Read error or EOF, either way stop the stream and invoke the callback
+    // with eof == true
+    uv_poll_stop(handle);
+    invoke_read_cb(stream, true);
+    return;
+  }
+
+  // at this point we're sure that cnt is positive, no error occurred
+  size_t nread = (size_t)cnt;
+  stream->num_bytes += nread;
+  stream->write_pos += cnt;
+  invoke_read_cb(stream, false);
+}
+#endif
 
 static void read_event(void **argv)
 {

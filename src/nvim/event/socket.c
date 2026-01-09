@@ -154,7 +154,7 @@ int socket_watcher_accept(SocketWatcher *watcher, RStream *stream)
     return result;
   }
 
-  stream_init(NULL, &stream->s, -1, client);
+  stream_init(NULL, &stream->s, -1, false, client);
   return 0;
 }
 
@@ -244,7 +244,7 @@ tcp_retry:
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
   if (status == 0) {
-    stream_init(NULL, &stream->s, -1, uv_stream);
+    stream_init(NULL, &stream->s, -1, false, uv_stream);
     success = true;
   } else {
     if (!uv_is_closing((uv_handle_t *)uv_stream)) {
