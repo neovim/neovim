@@ -6268,4 +6268,24 @@ func Test_longest_preinsert_accept()
   call Ntest_override("char_avail", 0)
 endfunc
 
+" Issue 19114
+func Test_fuzzy_filenames_compl_autocompl()
+  CheckScreendump
+  let dir = 'Xtempdir'
+  call mkdir(dir, 'pR')
+  call writefile([], dir .. '/.name')
+  call writefile([], dir .. '/name')
+  call writefile([], dir .. '/test.vim')
+
+  let buf = RunVimInTerminal('', {'rows': 10})
+  call term_sendkeys(buf, ':call test_override("char_avail", 1)')
+  call term_sendkeys(buf, "\<CR>")
+  call term_sendkeys(buf, "iset ac cot=fuzzy,longest\<ESC>")
+  call term_sendkeys(buf, ":source\<CR>")
+  call term_sendkeys(buf, "o.na\<C-X>\<C-F>")  " this used to cause segfault
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_fuzzy_filenames_compl_autocompl', {})
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
