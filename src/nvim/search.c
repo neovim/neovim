@@ -1356,9 +1356,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       *dircp = (char)search_delim;  // restore second '/' or '?' for normal_cmd()
     }
 
-    if (!shortmess(SHM_SEARCH)
-        && ((dirc == '/' && lt(pos, curwin->w_cursor))
-            || (dirc == '?' && lt(curwin->w_cursor, pos)))) {
+    if (!shortmess(SHM_SEARCH) && sia && sia->sa_wrapped) {
       show_top_bot_msg = true;
     }
 

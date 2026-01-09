@@ -332,13 +332,13 @@ func Test_search_stat_foldopen()
   call writefile(lines, 'Xsearchstat1', 'D')
 
   let buf = RunVimInTerminal('-S Xsearchstat1', #{rows: 10})
-  call VerifyScreenDump(buf, 'Test_searchstat_3', {})
+  call VerifyScreenDump(buf, 'Test_searchfoldopen_1', {})
 
   call term_sendkeys(buf, "n")
-  call VerifyScreenDump(buf, 'Test_searchstat_3', {})
+  call VerifyScreenDump(buf, 'Test_searchfoldopen_2', {})
 
   call term_sendkeys(buf, "n")
-  call VerifyScreenDump(buf, 'Test_searchstat_3', {})
+  call VerifyScreenDump(buf, 'Test_searchfoldopen_2', {})
 
   call StopVimInTerminal(buf)
 endfunc
