@@ -1063,9 +1063,10 @@ describe('builtin popupmenu', function()
         [111] = { background = Screen.colors.Plum1, foreground = Screen.colors.DarkBlue },
         [112] = { background = Screen.colors.Plum1, foreground = Screen.colors.DarkGreen },
         [113] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
-        [114] = { background = Screen.colors.Grey0, blend = 100 },
-        [115] = { background = Screen.colors.Grey0, blend = 80 },
-        [116] = { blend = 100, background = Screen.colors.NvimLightGrey4 },
+        [114] = { background = Screen.colors.Black, blend = 100 },
+        [115] = { background = Screen.colors.Black, blend = 80 },
+        [116] = { foreground = Screen.colors.Black },
+        [117] = { background = Screen.colors.Grey80, foreground = Screen.colors.Black },
         -- popup non-selected item
         n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
@@ -9221,7 +9222,8 @@ describe('builtin popupmenu', function()
       end)
       it("'pumborder' with shadow", function()
         command('set pumborder=shadow')
-        feed('S<C-x><C-o>')
+        insert('line1\nline2line2line2line2\nline3\nline4line4line4\nline5line5')
+        feed('ggO<C-x><C-o>')
         if multigrid then
           screen:expect({
             grid = [[
@@ -9230,16 +9232,21 @@ describe('builtin popupmenu', function()
               [3:------------------------------]|
             ## grid 2
               one^                           |
-              {1:~                             }|*9
+              line1                         |
+              line2line2line2line2          |
+              line3                         |
+              line4line4line4               |
+              line5line5                    |
+              {1:~                             }|*4
             ## grid 3
               {5:-- }{6:match 1 of 3}               |
             ## grid 4
               {n:1info}|
             ## grid 5
               {12:one            }{114: }|
-              {n:two            }{116: }|
-              {n:three          }{116: }|
-              {114: }{116:               }|
+              {n:two            }{115: }|
+              {n:three          }{115: }|
+              {114: }{115:               }|
             ]],
             win_pos = {
               [2] = {
@@ -9254,51 +9261,16 @@ describe('builtin popupmenu', function()
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
               [4] = { 1001, 'NW', 1, 1, 16, false, 50, 1, 1, 16 },
             },
-            win_viewport = {
-              [2] = {
-                win = 1000,
-                topline = 0,
-                botline = 2,
-                curline = 0,
-                curcol = 3,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-              [4] = {
-                win = 1001,
-                topline = 0,
-                botline = 1,
-                curline = 0,
-                curcol = 0,
-                linecount = 1,
-                sum_scroll_delta = 0,
-              },
-            },
-            win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
-            },
           })
         else
           screen:expect([[
             one^                           |
-            {12:one            }{114: }{n:1info}{1:         }|
-            {n:two            }{116: }{1:              }|
-            {n:three          }{116: }{1:              }|
-            {114: }{116:               }{1:              }|
-            {1:~                             }|*5
+            {12:one            }{116: }{n:1info}         |
+            {n:two            }{117:l}ine2          |
+            {n:three          }{117: }              |
+            {116:l}{117:ine4line4line4 }              |
+            line5line5                    |
+            {1:~                             }|*4
             {5:-- }{6:match 1 of 3}               |
           ]])
         end

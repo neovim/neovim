@@ -649,6 +649,7 @@ void pum_redraw(void)
       col_off++;
     }
   }
+  pum_grid.blending = p_pb > 0 || fconfig.shadow;
   grid_assign_handle(&pum_grid);
 
   pum_left_col = pum_col - col_off;

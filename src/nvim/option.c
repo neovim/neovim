@@ -2365,7 +2365,6 @@ static const char *did_set_previewwindow(optset_T *args)
 static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 {
   hl_invalidate_blends();
-  pum_grid.blending = (p_pb > 0);
   if (pum_drawn()) {
     pum_redraw();
   }
