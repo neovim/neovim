@@ -6288,4 +6288,25 @@ func Test_fuzzy_filenames_compl_autocompl()
   call StopVimInTerminal(buf)
 endfunc
 
+" Issue 19130
+func Test_helptags_autocomplete_timeout()
+  func! TestComplete(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    else
+      sleep 310m  " Exceed timeout
+      return ["foo"]
+    endif
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  set autocomplete completeopt=fuzzy complete=.,FTestComplete
+  call feedkeys("Goa\<Esc>0", 'tx!')
+  call feedkeys(":h\<CR>", 'tx')  " used to throw E149 exception
+  call Ntest_override("char_avail", 0)
+  set autocomplete& completeopt& complete&
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
