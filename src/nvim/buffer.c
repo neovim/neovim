@@ -2924,7 +2924,7 @@ void buflist_list(exarg_T *eap)
                              : (bufIsChanged(buf) ? '+' : ' ');
     int ro_char = !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' ');
     if (buf->terminal) {
-      ro_char = channel_job_running((uint64_t)buf->b_p_channel) ? 'R' : 'F';
+      ro_char = terminal_running(buf->terminal) ? 'R' : 'F';
     }
 
     msg_putchar('\n');
