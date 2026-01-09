@@ -2003,6 +2003,16 @@ describe('API', function()
       eq(api.nvim_list_wins()[2], api.nvim_get_current_win())
     end)
 
+    it('resets Visual mode when switching to different buffer #37072', function()
+      command('new | wincmd w')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a', 'b' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('<C-q>')
+      eq({ mode = '\022', blocking = false }, api.nvim_get_mode())
+      api.nvim_set_current_win(fn.win_getid(fn.winnr('#')))
+      eq(true, pcall(command, 'redraw'))
+    end)
+
     it('failure modes', function()
       n.command('split')
 

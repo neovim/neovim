@@ -65,6 +65,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -975,6 +976,9 @@ void nvim_set_current_win(Window window, Error *err)
   }
 
   TRY_WRAP(err, {
+    if (win->w_buffer != curbuf) {
+      reset_VIsual_and_resel();
+    }
     goto_tabpage_win(win_find_tabpage(win), win);
   });
 }
