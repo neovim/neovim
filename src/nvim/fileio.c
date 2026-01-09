@@ -3811,39 +3811,49 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
 
 #if defined(EINTR)
 
+// Type of buffer size argument of read() and write() is platform-dependent.
+# ifdef MSWIN
+#  define BUFSIZE(x) (unsigned)(x)
+# else
+#  define BUFSIZE(x) (x)
+# endif
+
 /// Version of read() that retries when interrupted by EINTR (possibly
 /// by a SIGWINCH).
-int read_eintr(int fd, void *buf, size_t bufsize)
+ssize_t read_eintr(int fd, void *buf, size_t bufsize)
 {
   ssize_t ret;
 
   while (true) {
-    ret = read(fd, buf, (unsigned)bufsize);
+    ret = read(fd, buf, BUFSIZE(bufsize));
     if (ret >= 0 || errno != EINTR) {
       break;
     }
   }
-  return (int)ret;
+  return ret;
 }
 
 /// Version of write() that retries when interrupted by EINTR (possibly
 /// by a SIGWINCH).
-int write_eintr(int fd, void *buf, size_t bufsize)
+ssize_t write_eintr(int fd, void *buf, size_t bufsize)
 {
-  int ret = 0;
+  ssize_t ret = 0;
 
   // Repeat the write() so long it didn't fail, other than being interrupted
   // by a signal.
-  while (ret < (int)bufsize) {
-    ssize_t wlen = write(fd, (char *)buf + ret, (unsigned)(bufsize - (size_t)ret));
+  while ((size_t)ret < bufsize) {
+    ssize_t wlen = write(fd, (char *)buf + ret, BUFSIZE(bufsize - (size_t)ret));
     if (wlen < 0) {
       if (errno != EINTR) {
         break;
       }
     } else {
-      ret += (int)wlen;
+      ret += wlen;
     }
   }
   return ret;
 }
+
+# undef BUFSIZE
+
 #endif
