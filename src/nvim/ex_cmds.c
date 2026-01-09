@@ -1889,6 +1889,8 @@ void do_wqall(exarg_T *eap)
   FOR_ALL_BUFFERS(buf) {
     if (exiting && !eap->forceit
         && buf->terminal
+        // TODO(zeertzjq): this always returns false for nvim_open_term() terminals.
+        // Use terminal_running() instead?
         && channel_job_running((uint64_t)buf->b_p_channel)) {
       no_write_message_buf(buf);
       error++;
