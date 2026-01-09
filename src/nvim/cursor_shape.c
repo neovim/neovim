@@ -58,9 +58,10 @@ Array mode_style_array(Arena *arena)
 
   for (int i = 0; i < SHAPE_IDX_COUNT; i++) {
     cursorentry_T *cur = &shape_table[i];
-    Dict dic = arena_dict(arena, 3 + ((cur->used_for & SHAPE_CURSOR) ? 9 : 0));
+    Dict dic = arena_dict(arena, 4 + ((cur->used_for & SHAPE_CURSOR) ? 9 : 0));
     PUT_C(dic, "name", CSTR_AS_OBJ(cur->full_name));
     PUT_C(dic, "short_name", CSTR_AS_OBJ(cur->name));
+    PUT_C(dic, "used_for", INTEGER_OBJ(cur->used_for));
     if (cur->used_for & SHAPE_MOUSE) {
       PUT_C(dic, "mouse_shape", CSTR_AS_OBJ(cur->mshape));
     }

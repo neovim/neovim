@@ -30,6 +30,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'n',
+        used_for = 3,
       },
       [2] = {
         blinkoff = 0,
@@ -44,6 +45,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'v',
+        used_for = 3,
       },
       [3] = {
         blinkoff = 0,
@@ -58,6 +60,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'i',
+        used_for = 3,
       },
       [4] = {
         blinkoff = 0,
@@ -72,6 +75,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'r',
+        used_for = 3,
       },
       [5] = {
         blinkoff = 0,
@@ -86,6 +90,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'c',
+        used_for = 3,
       },
       [6] = {
         blinkoff = 0,
@@ -100,6 +105,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'ci',
+        used_for = 3,
       },
       [7] = {
         blinkoff = 0,
@@ -114,6 +120,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'cr',
+        used_for = 3,
       },
       [8] = {
         blinkoff = 0,
@@ -128,6 +135,7 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 'o',
+        used_for = 3,
       },
       [9] = {
         blinkoff = 0,
@@ -142,41 +150,49 @@ describe('ui/cursor', function()
         attr_lm = {},
         mouse_shape = '',
         short_name = 've',
+        used_for = 3,
       },
       [10] = {
         name = 'cmdline_hover',
         mouse_shape = '',
         short_name = 'e',
+        used_for = 1,
       },
       [11] = {
         name = 'statusline_hover',
         mouse_shape = '',
         short_name = 's',
+        used_for = 1,
       },
       [12] = {
         name = 'statusline_drag',
         mouse_shape = '',
         short_name = 'sd',
+        used_for = 1,
       },
       [13] = {
         name = 'vsep_hover',
         mouse_shape = '',
         short_name = 'vs',
+        used_for = 1,
       },
       [14] = {
         name = 'vsep_drag',
         mouse_shape = '',
         short_name = 'vd',
+        used_for = 1,
       },
       [15] = {
         name = 'more',
         mouse_shape = '',
         short_name = 'm',
+        used_for = 1,
       },
       [16] = {
         name = 'more_lastline',
         mouse_shape = '',
         short_name = 'ml',
+        used_for = 1,
       },
       [17] = {
         blinkoff = 0,
@@ -190,6 +206,7 @@ describe('ui/cursor', function()
         attr = {},
         attr_lm = {},
         short_name = 'sm',
+        used_for = 2,
       },
       [18] = {
         blinkoff = 500,
@@ -203,6 +220,7 @@ describe('ui/cursor', function()
         attr = { reverse = true },
         attr_lm = { reverse = true },
         short_name = 't',
+        used_for = 2,
       },
     }
 
