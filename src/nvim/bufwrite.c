@@ -346,7 +346,7 @@ static int buf_write_bytes(struct bw_info *ip)
     // Only checking conversion, which is OK if we get here.
     return OK;
   }
-  int wlen = write_eintr(ip->bw_fd, buf, (size_t)len);
+  int wlen = (int)write_eintr(ip->bw_fd, buf, (size_t)len);
   return (wlen < len) ? FAIL : OK;
 }
 
