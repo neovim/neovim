@@ -783,7 +783,7 @@ static int makeopens(FILE *fd, char *dirnow)
     for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)) {
         nr++;
-      } else {
+      } else if (!wp->w_floating) {
         restore_size = false;
       }
       if (curwin == wp) {

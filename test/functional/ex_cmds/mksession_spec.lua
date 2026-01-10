@@ -232,6 +232,11 @@ describe(':mksession', function()
     local tmpfile = file_prefix .. '-tmpfile-float'
 
     command('edit ' .. tmpfile)
+    eq(80, fn.winwidth(1))
+    command('30vsplit')
+    eq(2, #api.nvim_list_wins())
+    eq(30, fn.winwidth(1))
+    eq(49, fn.winwidth(2))
     local buf = api.nvim_create_buf(false, true)
     local config = {
       relative = 'editor',
@@ -243,6 +248,7 @@ describe(':mksession', function()
       style = 'minimal',
     }
     api.nvim_open_win(buf, false, config)
+    eq(3, #api.nvim_list_wins())
     local cmdheight = api.nvim_get_option_value('cmdheight', {})
     command('mksession ' .. session_file)
 
@@ -252,9 +258,12 @@ describe(':mksession', function()
     command('source ' .. session_file)
 
     eq(tmpfile, fn.expand('%'))
-    -- Check that there is only a single window, which indicates the floating
+    -- Check that there are only two windows, which indicates the floating
     -- window was not restored.
-    eq(1, fn.winnr('$'))
+    -- Don't use winnr('$') as that doesn't count unfocusable floating windows.
+    eq(2, #api.nvim_list_wins())
+    eq(30, fn.winwidth(1))
+    eq(49, fn.winwidth(2))
     -- The command-line height should remain the same as it was.
     eq(cmdheight, api.nvim_get_option_value('cmdheight', {}))
 
