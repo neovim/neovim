@@ -452,7 +452,7 @@ local function check_external_tools()
       local lines = { string.format('curl %s (%s)', curl_version, curl_path) }
 
       for line in vim.gsplit(curl_out, '\n', { plain = true }) do
-        if line ~= '' and not line:match('^curl') then
+        if line ~= '' then
           table.insert(lines, line)
         end
       end
