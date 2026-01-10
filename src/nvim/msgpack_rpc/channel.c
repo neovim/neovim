@@ -161,7 +161,9 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned || rpc->closed);
   (void)kv_pop(rpc->call_stack);
 
-  if (rpc->closed) {
+  // !frame.returned implies rpc->closed.
+  // If frame.returned is true, its memory needs to be freed, so don't return here.
+  if (!frame.returned) {
     api_set_error(err, kErrorTypeException, "Invalid channel: %" PRIu64, id);
     channel_decref(channel);
     return NIL;
@@ -530,9 +532,13 @@ static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
 {
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
+    if (frame->returned) {
+      continue;  // Don't overwrite an already received result.
+    }
     frame->returned = true;
     frame->errored = true;
-    frame->result = CSTR_TO_OBJ(msg);
+    frame->result = CSTR_TO_ARENA_OBJ(&channel->rpc.unpacker->arena, msg);
+    frame->result_mem = arena_finish(&channel->rpc.unpacker->arena);
   }
 
   channel_close(channel->id, kChannelPartRpc, NULL);
