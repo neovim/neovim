@@ -1604,7 +1604,7 @@ func Test_complete_from_unloadedbuf()
   call writefile(['def'], "Xfile2")
   edit Xfile1
   edit Xfile2
-  new | bw
+  new | close
   enew
   bunload Xfile1 Xfile2
   set complete=u
@@ -1643,7 +1643,7 @@ func Test_complete_from_unlistedbuf()
   call writefile(['def'], "Xfile2")
   edit Xfile1
   edit Xfile2
-  new | bw
+  new | close
   bdel Xfile1 Xfile2
   set complete=U
   " complete from an unlisted buffer
