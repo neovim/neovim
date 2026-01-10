@@ -403,7 +403,7 @@ win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
   return (wp->w_config.focusable && !wp->w_config.hide) ? wp : tp->tp_firstwin;
 }
 
-/// Inline helper function for handling errors and cleanup in win_float_create.
+/// Inline helper function for handling errors and cleanup in win_float_create_preview.
 static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 {
   if (ERROR_SET(err)) {
@@ -424,7 +424,7 @@ static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 /// @param[in] bool create a new buffer for window.
 ///
 /// @return win_T
-win_T *win_float_create(bool enter, bool new_buf)
+win_T *win_float_create_preview(bool enter, bool new_buf)
 {
   WinConfig config = WIN_CONFIG_INIT;
   config.col = curwin->w_wcol;
@@ -464,6 +464,8 @@ win_T *win_float_create(bool enter, bool new_buf)
   unblock_autocmds();
   wp->w_p_diff = false;
   wp->w_float_is_info = true;
+  wp->w_p_wrap = true;  // 'wrap' is default on
+  wp->w_p_so = 0;       // 'scrolloff' zero
   if (enter) {
     win_enter(wp, false);
   }

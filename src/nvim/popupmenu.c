@@ -1010,7 +1010,7 @@ win_T *pum_set_info(int selected, char *info)
   no_u_sync++;
   win_T *wp = win_float_find_preview();
   if (wp == NULL) {
-    wp = win_float_create(false, true);
+    wp = win_float_create_preview(false, true);
     if (!wp) {
       return NULL;
     }
@@ -1138,7 +1138,7 @@ static bool pum_set_selected(int n, int repeat)
         if (wp) {
           win_enter(wp, false);
         } else {
-          wp = win_float_create(true, true);
+          wp = win_float_create_preview(true, true);
           if (wp) {
             resized = true;
           }

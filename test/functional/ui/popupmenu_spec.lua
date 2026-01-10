@@ -2274,6 +2274,18 @@ describe('builtin popupmenu', function()
         local info = fn.complete_info()
         eq(true, api.nvim_win_get_config(info.preview_winid).hide)
       end)
+
+      it('enables wrap to avoid info text truncation', function()
+        screen:try_resize(50, 11)
+        command([[
+          set nowrap
+          set cot+=menuone
+          let g:list = [#{word: 'class', info: repeat('+', 60)}]
+        ]])
+        feed('S<C-x><C-o>')
+        local info = fn.complete_info()
+        eq(2, api.nvim_win_get_config(info.preview_winid).height)
+      end)
     end)
 
     it('with vsplits', function()
