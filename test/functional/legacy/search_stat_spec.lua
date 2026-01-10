@@ -67,10 +67,17 @@ describe('search stat', function()
       {1:~                             }|*5
       /foo                   [1/2]  |
     ]])
+    feed('n')
+    screen:expect([[
+      if                            |
+      {13:^+--  2 lines: foo·············}|
+      endif                         |
+                                    |
+      {1:~                             }|*5
+      /foo                 W [1/2]  |
+    ]])
+    feed('n')
     -- Note: there is an intermediate state where the search stat disappears.
-    feed('n')
-    screen:expect_unchanged(true)
-    feed('n')
     screen:expect_unchanged(true)
   end)
 
@@ -163,7 +170,7 @@ describe('search stat', function()
       {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
-      /\<test\>                                            [1/1]  |
+      /\<test\>                                          W [1/1]  |
     ]])
 
     feed('N')
@@ -171,7 +178,7 @@ describe('search stat', function()
       {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
-      ?\<test\>                                            [1/1]  |
+      ?\<test\>                                          W [1/1]  |
     ]])
 
     command('set shm+=S')
@@ -205,7 +212,7 @@ describe('search stat', function()
        Mainmainmainmmmain{10:^mAin}       |
                                     |
       {1:~                             }|*7
-      /mAin                  [1/1]  |
+      /mAin                W [1/1]  |
     ]])
   end)
 end)
