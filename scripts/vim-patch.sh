@@ -179,10 +179,10 @@ assign_commit_details() {
   local vim_coauthor0
   vim_coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
   # Extract co-authors from the commit message.
-  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-authored-by: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
+  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-[Aa]uthored-[Bb]y: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
   vim_coauthors="$(echo "${vim_coauthor0}"; echo "${vim_coauthors}")"
   # Remove Co-authored-by and Signed-off-by lines from the commit message.
-  vim_message="$(echo "${vim_message}" | grep -Ev '^(Co-authored|Signed-off)-by: ')"
+  vim_message="$(echo "${vim_message}" | grep -Ev '^(Co-[Aa]uthored|Signed-[Oo]ff)-[Bb]y: ')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -Ee '1s/^patch /vim-patch:/')"
