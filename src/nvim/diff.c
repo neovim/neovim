@@ -103,7 +103,7 @@ static int linematch_lines = 40;
 
 #define LBUFLEN 50               // length of line in diff file
 
-// Max file size xdiff is eqipped to deal with. The value (1GB - 1MB) comes
+// Max file size xdiff is equipped to deal with. The value (1GB - 1MB) comes
 // from Git's implementation.
 #define MAX_XDIFF_SIZE (1024L * 1024 * 1023)
 

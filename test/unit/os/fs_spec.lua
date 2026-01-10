@@ -378,7 +378,7 @@ describe('fs.c', function()
     end
     -- For some reason if length of NUL-bytes-string is the same as `char[?]`
     -- size luajit crashes. Though it does not do so in this test suite, better
-    -- be cautios and allocate more elements then needed. I only did this to
+    -- be cautious and allocate more elements then needed. I only did this to
     -- strings.
     local function os_read(fd, size)
       local buf = nil

@@ -488,7 +488,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
           old_cols, old_rows, new_cols, new_rows, old_cursor.col, old_cursor.row);
 #endif
 
-  // Keep track of the final row that is knonw to be blank, so we know what spare space we have for
+  // Keep track of the final row that is known to be blank, so we know what spare space we have for
   // scrolling into
   int final_blank_row = new_rows;
 
