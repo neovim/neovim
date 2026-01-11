@@ -529,7 +529,7 @@ static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     if (frame->returned) {
-      continue;  // Don't overwrite an already received result.
+      continue;  // Don't overwrite an already received result. #24214
     }
     frame->returned = true;
     frame->errored = true;
