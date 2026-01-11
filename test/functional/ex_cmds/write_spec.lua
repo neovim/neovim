@@ -191,8 +191,10 @@ describe(':write', function()
     api.nvim_buf_set_lines(0, 0, 1, true, { 'line 1', 'line 2', 'aaabbb\xEB\x80' })
     command('set noendofline nofixendofline')
 
-    eq("Vim(write):E513: Write error, conversion failed in line 3 (make 'fenc' empty to override)",
-      pcall_err(command, 'write ++enc=latin1 ' .. fname))
+    eq(
+      "Vim(write):E513: Write error, conversion failed in line 3 (make 'fenc' empty to override)",
+      pcall_err(command, 'write ++enc=latin1 ' .. fname)
+    )
   end)
 
   it('converts to latin1 with an invalid sequence at buffer boundary', function()
@@ -209,43 +211,63 @@ describe(':write', function()
     eq('bbbbbbbbbb', tail)
   end)
 
-  it("converts to CP1251 with iconv", function()
-    api.nvim_buf_set_lines(0, 0, 1, true, { 'Привет, мир!', 'Это простой тест.' })
+  it('converts to CP1251 with iconv', function()
+    api.nvim_buf_set_lines(
+      0,
+      0,
+      1,
+      true,
+      { 'Привет, мир!', 'Это простой тест.' }
+    )
     command('write ++enc=cp1251 ' .. fname)
 
-    eq('\xcf\xf0\xe8\xe2\xe5\xf2, \xec\xe8\xf0!\n' ..
-      '\xdd\xf2\xee \xef\xf0\xee\xf1\xf2\xee\xe9 \xf2\xe5\xf1\xf2.\n',
-      read_file(fname))
+    eq(
+      '\xcf\xf0\xe8\xe2\xe5\xf2, \xec\xe8\xf0!\n'
+        .. '\xdd\xf2\xee \xef\xf0\xee\xf1\xf2\xee\xe9 \xf2\xe5\xf1\xf2.\n',
+      read_file(fname)
+    )
   end)
 
-  it("converts to GB18030 with iconv", function()
+  it('converts to GB18030 with iconv', function()
     api.nvim_buf_set_lines(0, 0, 1, true, { '你好，世界！', '这是一个测试。' })
     command('write ++enc=gb18030 ' .. fname)
 
-    eq('\xc4\xe3\xba\xc3\xa3\xac\xca\xc0\xbd\xe7\xa3\xa1\n' ..
-      '\xd5\xe2\xca\xc7\xd2\xbb\xb8\xf6\xb2\xe2\xca\xd4\xa1\xa3\n',
-      read_file(fname))
+    eq(
+      '\xc4\xe3\xba\xc3\xa3\xac\xca\xc0\xbd\xe7\xa3\xa1\n'
+        .. '\xd5\xe2\xca\xc7\xd2\xbb\xb8\xf6\xb2\xe2\xca\xd4\xa1\xa3\n',
+      read_file(fname)
+    )
   end)
 
-  it("converts to Shift_JIS with iconv", function()
-    api.nvim_buf_set_lines(0, 0, 1, true, { 'こんにちは、世界！', 'これはテストです。' })
+  it('converts to Shift_JIS with iconv', function()
+    api.nvim_buf_set_lines(
+      0,
+      0,
+      1,
+      true,
+      { 'こんにちは、世界！', 'これはテストです。' }
+    )
     command('write ++enc=sjis ' .. fname)
 
-    eq('\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81A\x90\xa2\x8aE\x81I\n' ..
-      '\x82\xb1\x82\xea\x82\xcd\x83e\x83X\x83g\x82\xc5\x82\xb7\x81B\n',
-      read_file(fname))
+    eq(
+      '\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81A\x90\xa2\x8aE\x81I\n'
+        .. '\x82\xb1\x82\xea\x82\xcd\x83e\x83X\x83g\x82\xc5\x82\xb7\x81B\n',
+      read_file(fname)
+    )
   end)
 
-  it("fails converting an illegal sequence with iconv", function()
+  it('fails converting an illegal sequence with iconv', function()
     api.nvim_buf_set_lines(0, 0, 1, true, { 'line 1', 'aaa\x80bbb' })
 
     -- iconv should fail with EILSEQ
-    eq("Vim(write):E513: Write error, conversion failed (make 'fenc' empty to override)",
-      pcall_err(command, 'write ++enc=cp1251 ' .. fname))
+    eq(
+      "Vim(write):E513: Write error, conversion failed (make 'fenc' empty to override)",
+      pcall_err(command, 'write ++enc=cp1251 ' .. fname)
+    )
   end)
 
   -- iconv fails with EINVAL but succeeds on subsequent call
-  it("handles a multi-byte sequence crossing the buffer boundary converting with iconv", function()
+  it('handles a multi-byte sequence crossing the buffer boundary converting with iconv', function()
     local content = string.rep('a', 1024 * 8 - 1) .. 'Дbbbbb'
     api.nvim_buf_set_lines(0, 0, 1, true, { content })
     command('write ++enc=cp1251 ' .. fname)
