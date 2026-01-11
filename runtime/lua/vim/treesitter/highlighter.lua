@@ -508,9 +508,10 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   -- Do not affect potentially populated highlight state. Here we just want a temporary
   -- empty state so the C code can detect whether the region should be spell checked.
   local highlight_states = self._highlight_states
+  local search_erow = math.max(erow, srow + 1)
   self:prepare_highlight_states(srow, erow)
 
-  on_range_impl(self, buf, srow, 0, erow, 0, true, false)
+  on_range_impl(self, buf, srow, 0, search_erow, 0, true, false)
   self._highlight_states = highlight_states
 end
 
