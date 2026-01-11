@@ -6991,4 +6991,27 @@ func Test_quickfix_restore_current_win()
   bw! Xb
 endfunc
 
+func Test_quickfixtextfunc_wipes_buffer()
+  let g:crash=""
+  new
+  fu QFexpr(dummy)
+    bw
+  endfu
+  try
+    set quickfixtextfunc=QFexpr
+    lad "['0:4:e']"
+    lw
+  catch /^Vim\%((\S\+)\)\=:E565:/
+    let g:crash='caught'
+  endtry
+  " close location list window
+  bw
+  delfunc QFexpr
+  set quickfixtextfunc=
+  call assert_equal('caught', g:crash)
+  unlet g:crash
+  " close the newly opened window
+  bw
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

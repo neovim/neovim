@@ -5115,6 +5115,9 @@ vim.go.pyx = vim.go.pyxversion
 --- `lambda` or a `Funcref`.  See `option-value-function` for more
 --- information.
 ---
+--- It is not allowed to change text or jump to another window while
+--- evaluating 'qftf' `textlock`.
+---
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
