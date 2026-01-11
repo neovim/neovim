@@ -362,7 +362,7 @@ describe('server -> client', function()
       connect_test(server, 'tcp', address)
     end)
 
-    it('does not crash on receiving UI events', function()
+    local function start_server_and_client()
       local server = n.new_session(false)
       set_session(server)
       local address = fn.serverlist()[1]
@@ -370,11 +370,53 @@ describe('server -> client', function()
       set_session(client)
 
       local id = fn.sockconnect('pipe', address, { rpc = true })
+
+      finally(function()
+        server:close()
+        client:close()
+      end)
+
+      return id
+    end
+
+    it('does not crash on receiving UI events', function()
+      local id = start_server_and_client()
       fn.rpcrequest(id, 'nvim_ui_attach', 80, 24, {})
       assert_alive()
+    end)
 
-      server:close()
-      client:close()
+    it('does not leak memory with channel closed before response', function()
+      local id = start_server_and_client()
+      eq(
+        ('ch %d was closed by the peer'):format(id),
+        pcall_err(n.exec_lua, function()
+          vim.rpcrequest(id, 'nvim_command', 'qall!')
+        end)
+      )
+      eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
+    end)
+
+    it('response works with channel closed just after response', function()
+      local id = start_server_and_client()
+      eq(
+        'RESPONSE',
+        n.exec_lua(function()
+          local prepare = vim.uv.new_prepare()
+          -- Block the event loop after writing the request but before polling for I/O
+          -- so that response and EOF arrive at the same uv_run() call.
+          prepare:start(function()
+            vim.uv.sleep(50)
+            prepare:close()
+          end)
+          return vim.rpcrequest(
+            id,
+            'nvim_exec_lua',
+            [[vim.schedule(function() vim.cmd('qall!') end); return 'RESPONSE']],
+            {}
+          )
+        end)
+      )
+      eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
     end)
 
     it('via stdio, with many small flushes does not crash #23781', function()
