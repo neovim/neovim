@@ -208,7 +208,7 @@ describe('startup', function()
       assert_l_out(('k'):rep(1234) .. '\n', nil, nil, '-', "print(('k'):rep(1234))")
     end)
 
-    it('does not add newline when unnecessary', function()
+    it('follows Lua print() newline behavior', function()
       assert_l_out('', nil, nil, '-', '')
       assert_l_out('foobar' .. string.rep('\n', 2), nil, nil, '-', [[print('foobar\n')]])
     end)
