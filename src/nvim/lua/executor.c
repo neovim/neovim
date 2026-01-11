@@ -774,9 +774,10 @@ static int nlua_ui_detach(lua_State *lstate)
 static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   // print
-  lua_pushcfunction(lstate, &nlua_print);
-  lua_setglobal(lstate, "print");
-
+  if (!in_script) {
+    lua_pushcfunction(lstate, &nlua_print);
+    lua_setglobal(lstate, "print");
+  }
   // debug.debug
   lua_getglobal(lstate, "debug");
   lua_pushcfunction(lstate, &nlua_debug);
@@ -861,6 +862,9 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 /// Initializes global Lua interpreter, or exits Nvim on failure.
 void nlua_init(char **argv, int argc, int lua_arg0)
 {
+  if (lua_arg0 > 0) {
+    in_script = true;
+  }
 #ifdef NLUA_TRACK_REFS
   if (os_env_exists("NVIM_LUA_NOTRACK", true)) {
     nlua_track_refs = true;

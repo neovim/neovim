@@ -133,7 +133,7 @@ describe('startup', function()
       vim.list_extend(args, nvim_args or {})
       vim.list_extend(args, { '-l', (script or 'test/functional/fixtures/startup.lua') })
       vim.list_extend(args, lua_args or {})
-      local out = fn.system(args, input):gsub('\r\n', '\n')
+      local out = fn.system(args, input):gsub('\r\n', '\n'):gsub('\t', ' ')
       if type(expected) == 'function' then
         return expected(out)
       else
@@ -164,7 +164,8 @@ describe('startup', function()
           nvim args: 7
           lua args: { "-arg1", "--exitcode", "73", "--arg2",
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         {},
         { '-arg1', '--exitcode', '73', '--arg2' }
       )
@@ -209,7 +210,7 @@ describe('startup', function()
 
     it('does not add newline when unnecessary', function()
       assert_l_out('', nil, nil, '-', '')
-      assert_l_out('foobar\n', nil, nil, '-', [[print('foobar\n')]])
+      assert_l_out('foobar' .. string.rep('\n', 2), nil, nil, '-', [[print('foobar\n')]])
     end)
 
     it('sets _G.arg', function()
