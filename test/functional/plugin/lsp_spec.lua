@@ -5680,6 +5680,14 @@ describe('LSP', function()
         },
       }, result)
     end)
+
+    it('with flags including i, returns NIL', function()
+      exec_lua(function()
+        local result = vim.lsp.tagfunc('foobar', 'cir')
+        assert(result == vim.NIL, 'should not issue LSP requests')
+        return {}
+      end)
+    end)
   end)
 
   describe('cmd', function()
