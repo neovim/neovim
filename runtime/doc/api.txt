@@ -62,19 +62,17 @@ Nvim instance:
     #!/usr/bin/env ruby
     # Requires msgpack-rpc: gem install msgpack-rpc
     #
-    # To run this script, execute it from a running Nvim instance (notice the
-    # trailing '&' which is required since Nvim won't process events while
-    # running a blocking command):
+    # To run this script, use Nvim's built-in terminal emulator:
     #
-    #   :!./hello.rb &
+    #   :term ./hello.rb
     #
-    # Or from another shell by setting NVIM_LISTEN_ADDRESS:
-    # $ NVIM_LISTEN_ADDRESS=[address] ./hello.rb
+    # Or from another shell by setting NVIM:
+    # $ NVIM=[address] ./hello.rb
 
     require 'msgpack/rpc'
     require 'msgpack/rpc/transport/unix'
 
-    nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM_LISTEN_ADDRESS'])
+    nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM'])
     result = nvim.call(:nvim_command, 'echo "hello world!"')
 <
 A better way is to use the Python REPL with the "pynvim" package, where API

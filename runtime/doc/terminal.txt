@@ -344,7 +344,7 @@ breakpoint was set.  The line where the debugger stopped is highlighted.  You
 can now step through the program.  You will see the highlighting move as the
 debugger executes a line of source code.
 
-Run ":Next" a few times until the for loop is highlighted.  Put the cursor on
+Run |:Over| a few times until the for loop is highlighted.  Put the cursor on
 the end of "eap->arg", then call ":Eval".  You will see this displayed:
 	"eap->arg": 0x555555e68855 "gui" ~
 This way you can inspect the value of local variables.  You can also focus the
