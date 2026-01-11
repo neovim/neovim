@@ -396,7 +396,7 @@ describe('server -> client', function()
       eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
     end)
 
-    it('response works with channel closed just after response', function()
+    it('response works with channel closed just after response #24214', function()
       local id = start_server_and_client()
       eq(
         'RESPONSE',

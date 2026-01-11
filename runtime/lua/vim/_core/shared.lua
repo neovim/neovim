@@ -1473,13 +1473,13 @@ local get_context_state = function(context)
 
       -- Do not override already set state and fall back to `vim.NIL` for
       -- state `nil` values (which still needs restoring later)
-      res[sc][name] = res[sc][name] or vim[sc][name] or vim.NIL
+      res[sc][name] = vim.F.if_nil(res[sc][name], vim[sc][name], vim.NIL)
 
       -- Always track global option value to properly restore later.
       -- This matters for at least `o` and `wo` (which might set either/both
       -- local and global option values).
-      if sc ~= 'env' then
-        res.go[name] = res.go[name] or vim.go[name]
+      if sc ~= 'env' and res.go[name] == nil then
+        res.go[name] = vim.go[name]
       end
     end
   end
