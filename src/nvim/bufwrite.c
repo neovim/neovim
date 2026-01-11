@@ -158,7 +158,7 @@ static bool ucs2bytes(unsigned c, char **pp, int flags)
   return error;
 }
 
-/// Convert a buffer encoding based on values in ip using iconv.
+/// Converts a buffer encoding based on values in ip using iconv.
 ///
 /// See buf_write_convert for parameters and return value details.
 static int buf_write_convert_with_iconv(struct bw_info *ip, char **bufp, int *lenp)
@@ -196,10 +196,10 @@ static int buf_write_convert_with_iconv(struct bw_info *ip, char **bufp, int *le
   *bufp = ip->bw_conv_buf;
   *lenp = (int)(to - ip->bw_conv_buf);
 
-  return len - fromlen;
+  return len - (int)fromlen;
 }
 
-/// Convert a buffer encoding based on values in ip.
+/// Converts a buffer encoding based on values in ip.
 ///
 /// @param ip buf_write_bytes context
 /// @param[in,out] bufp Pointer to the input buffer. On return, pointer to the output buffer.
@@ -299,7 +299,7 @@ static int buf_write_bytes(struct bw_info *ip)
   }
 
   if (remaining > 0) {
-    memmove(ip->bw_buf, ip->bw_buf + converted, remaining);
+    memmove(ip->bw_buf, ip->bw_buf + converted, (size_t)remaining);
   }
 
   return OK;
