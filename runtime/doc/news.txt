@@ -90,6 +90,7 @@ API
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
 • |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
   variables (|expand-env|).
+• |nvim_del_mark()| returns false, not true, for a mark that was not set.
 
 DIAGNOSTICS
 
@@ -244,6 +245,11 @@ API
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
 • |nvim_chan_set()| sets channel properties. With `detach=false`, any RPC
   channel can enable Nvim "self-exit on channel-close" behavior.
+• |nvim_get_mark()| and |nvim_del_mark()| are no longer limited to A-Z and
+  0-9 marks, and take a "buf" option. |nvim_get_mark()| also takes "win" and
+  returns the mark timestamp.
+• |nvim_set_mark()| sets a mark. With "type" it also sets the type of the
+  previous Visual selection.
 
 BUILD
 
@@ -341,7 +347,7 @@ EDITOR
 EVENTS
 
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
-  as |nvim_buf_del_mark()|
+  as |nvim_del_mark()|.
 • |ChanClose| is triggered after a channel is closed, before it is removed.
 • |CmdAtom| fires after each atomic user action (motion, mapping, operator,
   insert session, visual, Ex command, …).
