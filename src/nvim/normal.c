@@ -3879,6 +3879,7 @@ static void nv_down(cmdarg_T *cap)
 static void nv_gotofile(cmdarg_T *cap)
 {
   linenr_T lnum = -1;
+  char *tag = NULL;
 
   if (check_text_or_curbuf_locked(cap->oap)) {
     return;
@@ -3888,7 +3889,10 @@ static void nv_gotofile(cmdarg_T *cap)
     return;
   }
 
-  char *ptr = grab_file_name(cap->count1, &lnum);
+  char *ptr = grab_file_name(cap->count1, &lnum, &tag);
+  if (tag != NULL) {
+    semsg("UNIMPLEMENTED: go to tag (%s) in file name (nv_gotofile)", tag);
+  }
 
   if (ptr != NULL) {
     // do autowrite if necessary

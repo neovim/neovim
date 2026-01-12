@@ -7560,7 +7560,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_CFILE:            // file name under cursor
-      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1, NULL);
+      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1, NULL, NULL);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

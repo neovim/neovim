@@ -46,6 +46,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1589,8 +1590,11 @@ theend:
 
 /// Get the file name at the cursor.
 /// If Visual mode is active, use the selected text if it's in one line.
-/// Returns the name in allocated memory, NULL for failure.
-char *grab_file_name(int count, linenr_T *file_lnum)
+///
+/// @param file_lnum[out]  line number after file name (format: `<file_name>:<file_lnum>`)
+/// @param file_tag[out]  tag after file name (format: `<file_name>#<file_tag>`)
+/// @return  the name in allocated memory, NULL for failure.
+char *grab_file_name(int count, linenr_T *file_lnum, char **file_tag)
 {
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
   if (VIsual_active) {
@@ -1604,10 +1608,12 @@ char *grab_file_name(int count, linenr_T *file_lnum)
       char *p = ptr + len + 1;
 
       *file_lnum = getdigits_int32(&p, false, 0);
+    } else if (file_tag != NULL && ptr[len] == '#' && vim_iswordc((uint8_t)ptr[len + 1])) {
+      emsg("UNIMPLEMENTED: get tag after file name in visual mode (grab_file_name)");
     }
     return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   }
-  return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
+  return file_name_at_cursor(options | FNAME_HYP, count, file_lnum, file_tag);
 }
 
 /// Return the file name under or after the cursor.
@@ -1621,11 +1627,11 @@ char *grab_file_name(int count, linenr_T *file_lnum)
 /// FNAME_EXP        expand to path
 /// FNAME_HYP        check for hypertext link
 /// FNAME_INCL       apply "includeexpr"
-char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
+char *file_name_at_cursor(int options, int count, linenr_T *file_lnum, char **file_tag)
 {
   return file_name_in_line(get_cursor_line_ptr(),
                            curwin->w_cursor.col, options, count, curbuf->b_ffname,
-                           file_lnum);
+                           file_lnum, file_tag);
 }
 
 /// @param rel_fname  file we are searching relative to
@@ -1635,7 +1641,7 @@ char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
 ///
 /// Otherwise like file_name_at_cursor().
 char *file_name_in_line(char *line, int col, int options, int count, char *rel_fname,
-                        linenr_T *file_lnum)
+                        linenr_T *file_lnum, char **file_tag)
 {
   // search forward for what could be the start of a file name
   char *ptr = line + col;
@@ -1724,6 +1730,23 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
       if (isdigit((uint8_t)(*p))) {
         *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
       }
+    }
+  } else if (file_tag != NULL) {
+    char *p = ptr + len;
+    if (*p != NUL) {
+      if (*p == '#') {
+        p++; // skip the separator
+      }
+    }
+    p = skipwhite(p);
+    if (vim_iswordc((uint8_t)(*p))) {
+      size_t tag_len = 1; // We know the length is at least 1
+      while (vim_iswordc((uint8_t)(p[tag_len]))) {
+        tag_len++;
+      }
+      char *tag = (char *)xmalloc(tag_len + 1);
+      xstrlcpy(tag, p, tag_len);
+      *file_tag = tag;
     }
   }
 
