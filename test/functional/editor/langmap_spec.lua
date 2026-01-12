@@ -90,6 +90,15 @@ describe("'langmap'", function()
     expect('illllii hiwww')
   end)
 
+  it('does not apply langmap to text objects with a and i', function()
+    clear()
+    command('set langmap=w(')  -- 'w' maps to '('
+    insert('word(text)')
+
+    feed('0diw')
+    expect('(text)', eval('getline(1)'))
+  end)
+
   describe('exceptions', function()
     -- All "command characters" that 'langmap' does not apply to.
     -- These tests consist of those places where some subset of ASCII
