@@ -92,7 +92,7 @@ describe("'langmap'", function()
 
   it('does not apply langmap to text objects with a and i', function()
     clear()
-    command('set langmap=w(')  -- 'w' maps to '('
+    command('set langmap=w(') -- 'w' maps to '('
     insert('word(text)')
 
     feed('0diw')
