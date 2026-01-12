@@ -221,6 +221,34 @@ function repos_setup.semver()
   add_tag('v1.0.0')
 end
 
+function repos_setup.with_subs()
+  -- To-be-submodule repo
+  init_test_repo('sub')
+
+  repo_write_file('sub', 'sub.lua', 'return "sub init"')
+  git_add_commit('Initial commit for "sub"', 'sub')
+
+  -- With-submodules repo with submodule recorded at its initial commit
+  init_test_repo('with_subs')
+
+  repo_write_file('with_subs', 'lua/with_subs.lua', 'return "with_subs init"')
+  local sub_src = 'file://' .. repo_get_path('sub')
+  git_cmd({ '-c', 'protocol.file.allow=always', 'submodule', 'add', sub_src, 'sub' }, 'with_subs')
+  git_add_commit('Initial commit for "with_subs"', 'with_subs')
+  git_cmd({ 'tag', 'init-commit' }, 'with_subs')
+
+  -- Advance both submodule and with-submodules repos by one commit
+  repo_write_file('sub', 'sub.lua', 'return "sub main"')
+  git_add_commit('Second commit for "sub"', 'sub')
+
+  repo_write_file('with_subs', 'lua/with_subs.lua', 'return "with_subs main"')
+  git_cmd(
+    { '-c', 'protocol.file.allow=always', 'submodule', 'update', '--remote', 'sub' },
+    'with_subs'
+  )
+  git_add_commit('Second commit for "with_subs"', 'with_subs')
+end
+
 -- Utility --------------------------------------------------------------------
 
 local function watch_events(event)
@@ -315,6 +343,25 @@ local function mock_confirm(output_value)
     vim.fn.confirm = function(...)
       table.insert(_G.confirm_log, { ... })
       return output_value
+    end
+  end)
+end
+
+local function mock_git_file_transport()
+  -- HACK: mock `vim.system()` to have `git` commands be executed
+  -- with temporarily set 'protocol.file.allow=always' option.
+  -- Otherwise performing `git` operations with submodules from `vim.pack`
+  -- itself will fail with `fatal: transport 'file' not allowed`.
+  -- Directly adding `-c protocol.file.allow=always` to `git_cmd` in `vim.pack`
+  -- itself is too much and might be bad for security.
+  exec_lua(function()
+    local vim_system_orig = vim.system
+    vim.system = function(cmd, opts, on_exit)
+      if cmd[1] == 'git' then
+        table.insert(cmd, 2, '-c')
+        table.insert(cmd, 3, 'protocol.file.allow=always')
+      end
+      return vim_system_orig(cmd, opts, on_exit)
     end
   end)
 end
@@ -785,6 +832,16 @@ describe('vim.pack', function()
       eq(true, vim.tbl_contains(rtp, plug_path))
       -- No 'after/' directory in runtimepath because it is not present in plugin
       eq(false, vim.tbl_contains(rtp, after_dir))
+    end)
+
+    it('installs with submodules', function()
+      mock_git_file_transport()
+      exec_lua(function()
+        vim.pack.add({ repos_src.with_subs })
+      end)
+
+      local sub_lua_file = vim.fs.joinpath(pack_get_plug_path('with_subs'), 'sub', 'sub.lua')
+      eq('return "sub main"', fn.readblob(sub_lua_file))
     end)
 
     it('does not install on bad `version`', function()
@@ -1660,6 +1717,25 @@ describe('vim.pack', function()
       eq('return "fetch main"', fn.readblob(fetch_lua_file))
       n.exec('write')
       eq('return "fetch new 2"', fn.readblob(fetch_lua_file))
+    end)
+
+    it('works with submodules', function()
+      mock_git_file_transport()
+      exec_lua(function()
+        vim.pack.add({ { src = repos_src.with_subs, version = 'init-commit' } })
+      end)
+
+      local sub_lua_file = vim.fs.joinpath(pack_get_plug_path('with_subs'), 'sub', 'sub.lua')
+      eq('return "sub init"', fn.readblob(sub_lua_file))
+
+      n.clear()
+      mock_git_file_transport()
+      exec_lua(function()
+        vim.pack.add({ repos_src.with_subs })
+        vim.pack.update({ 'with_subs' })
+      end)
+      n.exec('write')
+      eq('return "sub main"', fn.readblob(sub_lua_file))
     end)
 
     it('can force update', function()
