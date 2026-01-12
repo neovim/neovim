@@ -654,15 +654,18 @@ end
 --- @async
 --- @param p vim.pack.Plug
 --- @param timestamp string
-local function checkout(p, timestamp)
+--- @param skip_stash? boolean
+local function checkout(p, timestamp, skip_stash)
   infer_revisions(p)
 
-  local stash_cmd = { 'stash', '--quiet' }
-  if git_version > vim.version.parse('2.13') then
-    stash_cmd[#stash_cmd + 1] = '--message'
-    stash_cmd[#stash_cmd + 1] = ('vim.pack: %s Stash before checkout'):format(timestamp)
+  if not skip_stash then
+    local stash_cmd = { 'stash', '--quiet' }
+    if git_version > vim.version.parse('2.13') then
+      stash_cmd[#stash_cmd + 1] = '--message'
+      stash_cmd[#stash_cmd + 1] = ('vim.pack: %s Stash before checkout'):format(timestamp)
+    end
+    git_cmd(stash_cmd, p.path)
   end
-  git_cmd(stash_cmd, p.path)
 
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
 
@@ -691,7 +694,7 @@ local function install_list(plug_list, confirm)
     -- Prefer revision from the lockfile instead of using `version`
     p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
 
-    checkout(p, timestamp)
+    checkout(p, timestamp, true)
     p.info.installed = true
 
     trigger_event(p, 'PackChanged', 'install')

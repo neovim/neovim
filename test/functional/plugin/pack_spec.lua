@@ -369,6 +369,11 @@ describe('vim.pack', function()
         vim.pack.add({ repos_src.basic })
       end)
       eq(exec_lua('return #_G.event_log'), 0)
+
+      -- Should not create redundant stash entry
+      local basic_path = pack_get_plug_path('basic')
+      local stash_list = system_sync({ 'git', 'stash', 'list' }, { cwd = basic_path }).stdout or ''
+      eq('', stash_list)
     end)
 
     it('passes `data` field through to `opts.load`', function()
