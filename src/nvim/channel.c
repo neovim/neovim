@@ -807,6 +807,10 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
   typval_T rettv = TV_INITIAL_VALUE;
   callback_call(cb, 3, argv, &rettv);
   tv_clear(&rettv);
+
+  if (reader) {
+    tv_list_unref(argv[1].vval.v_list);
+  }
 }
 
 /// Open terminal for channel

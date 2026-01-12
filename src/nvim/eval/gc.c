@@ -7,6 +7,6 @@
 #endif
 
 /// Head of list of all dictionaries
-dict_T *gc_first_dict = NULL;
+DLLEXPORT dict_T *gc_first_dict = NULL;
 /// Head of list of all lists
-list_T *gc_first_list = NULL;
+DLLEXPORT list_T *gc_first_list = NULL;

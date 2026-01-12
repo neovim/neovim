@@ -712,6 +712,50 @@ describe('jobs', function()
     )
   end)
 
+  it('lists passed to callbacks are freed if not stored #25891', function()
+    if not exec_lua('return pcall(require, "ffi")') then
+      pending('missing LuaJIT FFI')
+    end
+
+    source([[
+      let g:stdout = ''
+      func AppendStrOnEvent(id, data, event)
+        let g:stdout ..= join(a:data, "\n")
+      endfunc
+      let g:job_opts = {'on_stdout': function('AppendStrOnEvent')}
+    ]])
+    local job = eval([[jobstart(['cat', '-'], g:job_opts)]])
+
+    exec_lua(function()
+      local ffi = require('ffi')
+      ffi.cdef([[
+        typedef struct listvar_S list_T;
+        list_T *gc_first_list;
+        list_T *tv_list_alloc(ptrdiff_t len);
+        void tv_list_free(list_T *const l);
+      ]])
+      _G.L = ffi.C.tv_list_alloc(1)
+      _G.L_val = ffi.cast('uintptr_t', _G.L)
+      assert(ffi.cast('uintptr_t', ffi.C.gc_first_list) == _G.L_val)
+    end)
+
+    local str_all = ''
+    for _, str in ipairs({ 'LINE1\nLINE2\nLINE3\n', 'LINE4\n', 'LINE5\nLINE6\n' }) do
+      str_all = str_all .. str
+      api.nvim_chan_send(job, str)
+      retry(nil, 1000, function()
+        eq(str_all, api.nvim_get_var('stdout'))
+      end)
+    end
+
+    exec_lua(function()
+      local ffi = require('ffi')
+      assert(ffi.cast('uintptr_t', ffi.C.gc_first_list) == _G.L_val)
+      ffi.C.tv_list_free(_G.L)
+      assert(ffi.cast('uintptr_t', ffi.C.gc_first_list) ~= _G.L_val)
+    end)
+  end)
+
   it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
     local function get_child_env(envname, env)
       return exec_lua(
