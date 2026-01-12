@@ -255,5 +255,45 @@ func Test_helptag_navigation()
   bw
 endfunc
 
+func Test_help_command_termination()
+  " :help {arg}
+  call execute('help |')
+  call assert_match('*bar\*', getline('.'))
+
+  " :help {arg}
+  call execute('help ||')
+  call assert_match('*expr-barbar\*', getline('.'))
+
+  " :help | <whitespace> <empty-command>
+  call execute('help | ')
+  call assert_match('*help.txt\*', getline('.'))
+
+  " :help {arg} | <whitespace> <empty-command>
+  call execute('help || ')
+  call assert_match('*bar\*', getline('.'))
+
+  " :help {arg}
+  call assert_fails('help |||', 'E149:')
+  " :help {arg} | <whitespace> <empty-command>
+  call execute('help ||| ')
+  call assert_match('*expr-barbar\*', getline('.'))
+
+  " :help {invalid-arg}
+  call assert_fails('help ||||', 'E149:')
+  " :help {invalid-arg} | <whitespace> <empty-command>
+  "   (aborted command sequence)
+  call assert_fails('help |||| ', 'E149:')
+
+  call assert_equal("nextcmd",
+        \ execute("help |     echo 'nextcmd'")->split("\n")[-1])
+  call assert_equal("nextcmd",
+        \ execute("help ||    echo 'nextcmd'")->split("\n")[-1])
+  call assert_equal("nextcmd",
+        \ execute("help \<NL> echo 'nextcmd'")->split("\n")[-1])
+  call assert_equal("nextcmd",
+        \ execute("help \<CR> echo 'nextcmd'")->split("\n")[-1])
+
+  helpclose
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
