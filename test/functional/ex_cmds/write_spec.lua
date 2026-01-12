@@ -212,13 +212,11 @@ describe(':write', function()
   end)
 
   it('converts to CP1251 with iconv', function()
-    api.nvim_buf_set_lines(
-      0,
-      0,
-      1,
-      true,
-      { 'Привет, мир!', 'Это простой тест.' }
-    )
+    api.nvim_buf_set_lines(0, 0, 1, true, {
+      '\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82, \xd0\xbc\xd0\xb8\xd1\x80!',
+      '\xd0\xad\xd1\x82\xd0\xbe \xd0\xbf\xd1\x80\xd0\xbe\xd1\x81\xd1\x82\xd0\xbe\xd0\xb9'
+        .. ' \xd1\x82\xd0\xb5\xd1\x81\xd1\x82.',
+    })
     command('write ++enc=cp1251 ' .. fname)
 
     eq(
@@ -229,7 +227,10 @@ describe(':write', function()
   end)
 
   it('converts to GB18030 with iconv', function()
-    api.nvim_buf_set_lines(0, 0, 1, true, { '你好，世界！', '这是一个测试。' })
+    api.nvim_buf_set_lines(0, 0, 1, true, {
+      '\xe4\xbd\xa0\xe5\xa5\xbd\xef\xbc\x8c\xe4\xb8\x96\xe7\x95\x8c\xef\xbc\x81',
+      '\xe8\xbf\x99\xe6\x98\xaf\xe4\xb8\x80\xe4\xb8\xaa\xe6\xb5\x8b\xe8\xaf\x95\xe3\x80\x82',
+    })
     command('write ++enc=gb18030 ' .. fname)
 
     eq(
@@ -240,13 +241,12 @@ describe(':write', function()
   end)
 
   it('converts to Shift_JIS with iconv', function()
-    api.nvim_buf_set_lines(
-      0,
-      0,
-      1,
-      true,
-      { 'こんにちは、世界！', 'これはテストです。' }
-    )
+    api.nvim_buf_set_lines(0, 0, 1, true, {
+      '\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3\x80'
+        .. '\x81\xe4\xb8\x96\xe7\x95\x8c\xef\xbc\x81',
+      '\xe3\x81\x93\xe3\x82\x8c\xe3\x81\xaf\xe3\x83\x86\xe3\x82\xb9\xe3\x83'
+        .. '\x88\xe3\x81\xa7\xe3\x81\x99\xe3\x80\x82',
+    })
     command('write ++enc=sjis ' .. fname)
 
     eq(
@@ -268,7 +268,7 @@ describe(':write', function()
 
   -- iconv fails with EINVAL but succeeds on subsequent call
   it('handles a multi-byte sequence crossing the buffer boundary converting with iconv', function()
-    local content = string.rep('a', 1024 * 8 - 1) .. 'Дbbbbb'
+    local content = string.rep('a', 1024 * 8 - 1) .. '\xd0\x94bbbbb'
     api.nvim_buf_set_lines(0, 0, 1, true, { content })
     command('write ++enc=cp1251 ' .. fname)
 
