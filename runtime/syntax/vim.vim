@@ -740,7 +740,7 @@ if s:vim9script
   " FIXME: don't match as dictionary keys, remove when operators are not
   "        shared between Vim9 and legacy script
   syn match	vim9This		contained	"\.\@1<!\<this\>:\@!"
-  " super must be folowed by '.'
+  " super must be followed by '.'
   syn match	vim9Super		contained	"\.\@1<!\<super\.\@="
 
   VimFoldc syn region	vim9ClassBody	start="\<class\>" matchgroup=vimCommand end="\<endclass\>" contains=@vim9ClassBodyList transparent
