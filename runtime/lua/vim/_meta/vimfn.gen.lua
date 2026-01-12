@@ -3654,7 +3654,7 @@ function vim.fn.getmousepos() end
 --- @return integer
 function vim.fn.getpid() end
 
---- Lua: Prefer |nvim_win_get_cursor()| for "." or |nvim_buf_get_mark()| for marks; return shape, `off`, and special-position semantics differ.
+--- Lua: Prefer |nvim_win_get_cursor()| for "." or |nvim_get_mark()| for marks; return shape, `off`, and special-position semantics differ.
 ---
 --- Gets a position, where {expr} is one of:
 ---     .      Cursor position.
@@ -8467,7 +8467,7 @@ function vim.fn.setbufvar(buf, varname, val) end
 --- @return any
 function vim.fn.setcellwidths(list) end
 
---- Lua: Prefer |nvim_win_set_cursor()| or |nvim_buf_set_mark()| with |vim.str_byteindex()|; special positions, `off`, and `curswant` differ.
+--- Lua: Prefer |nvim_win_set_cursor()| or |nvim_set_mark()| with |vim.str_byteindex()|; special positions, `off`, and `curswant` differ.
 ---
 --- Same as |setpos()| but uses the specified column number as the
 --- character index instead of the byte index in the line.
@@ -8665,7 +8665,7 @@ function vim.fn.setloclist(nr, list, action, what) end
 --- @return any
 function vim.fn.setmatches(list, win) end
 
---- Lua: Prefer |nvim_win_set_cursor()| for "." or |nvim_buf_set_mark()| for marks; special positions, `off`, and `curswant` differ.
+--- Lua: Prefer |nvim_win_set_cursor()| for "." or |nvim_set_mark()| for marks; special positions, `off`, and `curswant` differ.
 ---
 --- Set the position for String {expr}.  Possible values:
 ---   .  the cursor
