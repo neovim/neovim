@@ -108,7 +108,7 @@ function M.asm_syntax(_, bufnr)
       return 'masm'
     elseif
       line:find('Texas Instruments Incorporated')
-      -- tiasm uses `* commment`, but detection is unreliable if '/*' is seen
+      -- tiasm uses `* comment`, but detection is unreliable if '/*' is seen
       or (line:find('^%*') and not is_slash_star_encountered)
     then
       return 'tiasm'

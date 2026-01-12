@@ -11,7 +11,7 @@ upstream for distribution with Vim.
 
 # License
 
-To see License informations see the LICENSE.txt file included in this
+To see License information see the LICENSE.txt file included in this
 repository.
 
 # Credits
