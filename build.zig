@@ -623,25 +623,31 @@ pub fn build(b: *std.Build) !void {
     xxd_exe.linkLibC();
     test_deps.dependOn(&b.addInstallArtifact(xxd_exe, .{}).step);
 
-    if (b.lazyDependency("treesitter_c", .{ .target = target, .optimize = optimize })) |parser| {
-        test_deps.dependOn(add_ts_parser(b, "c", parser.path("."), false, target, optimize));
-    }
-    if (b.lazyDependency("treesitter_markdown", .{ .target = target, .optimize = optimize })) |parser| {
-        test_deps.dependOn(add_ts_parser(b, "markdown", parser.path("tree-sitter-markdown/"), true, target, optimize));
-        test_deps.dependOn(add_ts_parser(b, "markdown_inline", parser.path("tree-sitter-markdown-inline/"), true, target, optimize));
-    }
-    if (b.lazyDependency("treesitter_vim", .{ .target = target, .optimize = optimize })) |parser| {
-        test_deps.dependOn(add_ts_parser(b, "vim", parser.path("."), true, target, optimize));
-    }
-    if (b.lazyDependency("treesitter_vimdoc", .{ .target = target, .optimize = optimize })) |parser| {
-        test_deps.dependOn(add_ts_parser(b, "vimdoc", parser.path("."), false, target, optimize));
-    }
-    if (b.lazyDependency("treesitter_lua", .{ .target = target, .optimize = optimize })) |parser| {
-        test_deps.dependOn(add_ts_parser(b, "lua", parser.path("."), true, target, optimize));
-    }
-    if (b.lazyDependency("treesitter_query", .{ .target = target, .optimize = optimize })) |parser| {
-        test_deps.dependOn(add_ts_parser(b, "query", parser.path("."), false, target, optimize));
-    }
+    const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize });
+    test_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize, .install));
+
+    const parser_markdown = b.dependency("treesitter_markdown", .{ .target = target, .optimize = optimize });
+    test_deps.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize, .install));
+    test_deps.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize, .install));
+
+    const parser_vim = b.dependency("treesitter_vim", .{ .target = target, .optimize = optimize });
+    test_deps.dependOn(add_ts_parser(b, "vim", parser_vim.path("."), true, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "vim", parser_vim.path("."), true, target, optimize, .install));
+
+    const parser_vimdoc = b.dependency("treesitter_vimdoc", .{ .target = target, .optimize = optimize });
+    test_deps.dependOn(add_ts_parser(b, "vimdoc", parser_vimdoc.path("."), false, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "vimdoc", parser_vimdoc.path("."), false, target, optimize, .install));
+
+    const parser_lua = b.dependency("treesitter_lua", .{ .target = target, .optimize = optimize });
+    test_deps.dependOn(add_ts_parser(b, "lua", parser_lua.path("."), true, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "lua", parser_lua.path("."), true, target, optimize, .install));
+
+    const parser_query = b.dependency("treesitter_query", .{ .target = target, .optimize = optimize });
+    test_deps.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize, .test_));
+    install.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize, .install));
 
     var unit_headers: ?[]const LazyPath = null;
     if (support_unittests) {
@@ -702,6 +708,7 @@ pub fn add_ts_parser(
     scanner: bool,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    path: enum { test_, install },
 ) *std.Build.Step {
     const parser = b.addLibrary(.{
         .name = name,
@@ -716,10 +723,21 @@ pub fn add_ts_parser(
     parser.addIncludePath(parser_dir.path(b, "src"));
     parser.linkLibC();
 
-    const parser_install = b.addInstallArtifact(parser, .{
-        .dest_sub_path = b.fmt("parser/{s}.so", .{name}),
-    });
-    return &parser_install.step;
+    switch (path) {
+        .install => {
+            const parser_install = b.addInstallArtifact(parser, .{
+                .dest_dir = .{ .override = .{ .custom = "share/nvim/runtime/parser" } },
+                .dest_sub_path = b.fmt("{s}.so", .{name}),
+            });
+            return &parser_install.step;
+        },
+        .test_ => {
+            const parser_install = b.addInstallArtifact(parser, .{
+                .dest_sub_path = b.fmt("parser/{s}.so", .{name}),
+            });
+            return &parser_install.step;
+        },
+    }
 }
 
 pub fn lua_version_info(b: *std.Build) []u8 {
