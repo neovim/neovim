@@ -1453,10 +1453,10 @@ syn match	vimHelp	"\<h\%[elp]\>"	skipwhite nextgroup=vimHelpBang,vimHelpArg,vimH
 syn region	vimHelpArg	contained
       \ start="\S"
       \ matchgroup=Special
-      \ end="\%(@\a\a\)\=\ze\s*\%($\|\%x0d\|\%x00\||\s*\S\)"
+      \ end="\%(@\a\a\)\=\ze\s*\%($\|\%x0d\|\%x00\||[^|]\)"
       \ oneline
+syn match	vimHelpNextCommand	contained	"\ze|[^|]"	skipwhite nextgroup=vimCmdSep
 syn match	vimHelpBang		contained	"\a\@1<=!"	skipwhite nextgroup=vimHelpArg,vimHelpNextCommand
-syn match	vimHelpNextCommand	contained	"\ze|\s*\S"	skipwhite nextgroup=vimCmdSep
 
 syn match	vimHelpgrep		"\<l\=helpg\%[rep]\>"	skipwhite nextgroup=vimHelpgrepBang,vimHelpgrepPattern
 syn region	vimHelpgrepPattern	contained
