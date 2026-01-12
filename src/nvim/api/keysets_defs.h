@@ -471,3 +471,9 @@ typedef struct {
   Integer c;
   String f;
 } Dict(_shada_buflist_item);
+
+typedef struct {
+  OptionalKeys is_set__marks_;
+  Window win;
+  Buffer buf;
+} Dict(marks);
