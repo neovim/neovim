@@ -16,6 +16,7 @@
 ^runtime/macros/life/
 ^runtime/macros/maze
 ^runtime/macros/urm
+^runtime/pack/dist/opt/comment/
 ^runtime/pack/dist/opt/dvorak/
 ^runtime/pack/dist/opt/editorconfig/
 ^runtime/print/

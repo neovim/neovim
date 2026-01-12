@@ -96,6 +96,7 @@ src/testdir/test_job_fails.vim
 src/testdir/test_json.vim
 src/testdir/test_listener.vim
 src/testdir/test_mzscheme.vim
+src/testdir/test_plugin_comment.vim
 src/testdir/test_plugin_glvs.vim
 src/testdir/test_python2.vim
 src/testdir/test_pyx2.vim
