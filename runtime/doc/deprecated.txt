@@ -62,6 +62,11 @@ API
 • nvim_err_write()	Use |nvim_echo()| with `{err=true}`.
 • nvim_err_writeln()	Use |nvim_echo()| with `{err=true}`.
 • nvim_buf_add_highlight()	Use |vim.hl.range()| or |nvim_buf_set_extmark()|
+• nvim_buf_set_mark()	Use |nvim_mark_set()| with {buf=bufnr}.
+• nvim_buf_get_mark()	Use |nvim_mark_get()| with {buf=bufnr}.
+• nvim_buf_del_mark()	Use |nvim_mark_del()| with {buf=bufnr}.
+• nvim_get_mark()	Use |nvim_mark_get()|.
+• nvim_del_mark()	Use |nvim_mark_del()|.
 
 DIAGNOSTICS
 • *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.

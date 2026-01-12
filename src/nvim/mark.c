@@ -569,11 +569,7 @@ fmark_T *mark_get_visual(buf_T *buf, int name)
     }
 
     if (buf->b_visual.vi_mode == 'V') {
-      if (name == '<') {
-        mark->mark.col = 0;
-      } else {
-        mark->mark.col = MAXCOL;
-      }
+      mark->mark.col = name == '<' ? 0 : MAXCOL;
       mark->mark.coladd = 0;
     }
   }

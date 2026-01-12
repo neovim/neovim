@@ -288,7 +288,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   return rv;
 }
 
-static buf_T *require_loaded_buffer(Buffer buffer, Error *err)
+buf_T *require_loaded_buffer(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -1055,130 +1055,6 @@ Boolean nvim_buf_is_valid(Buffer buffer)
   Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
   api_clear_error(&stub);
   return ret;
-}
-
-/// Deletes a named mark in the buffer. See |mark-motions|.
-///
-/// @note only deletes marks set in the buffer, if the mark is not set
-/// in the buffer it will return false.
-/// @param buffer     Buffer to set the mark on
-/// @param name       Mark name
-/// @return true if the mark was deleted, else false.
-/// @see |nvim_buf_set_mark()|
-/// @see |nvim_del_mark()|
-Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
-  FUNC_API_SINCE(8)
-{
-  bool res = false;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return res;
-  }
-
-  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
-    return res;
-  });
-
-  fmark_T *fm = mark_get(buf, curwin, NULL, kMarkAllNoResolve, *name.data);
-
-  // fm is NULL when there's no mark with the given name
-  VALIDATE_S((fm != NULL), "mark name", name.data, {
-    return res;
-  });
-
-  // mark.lnum is 0 when the mark is not valid in the buffer, or is not set.
-  if (fm->mark.lnum != 0 && fm->fnum == buf->handle) {
-    // since the mark belongs to the buffer delete it.
-    res = set_mark(buf, name, 0, 0, err);
-  }
-
-  return res;
-}
-
-/// Sets a named mark in the given buffer, all marks are allowed
-/// file/uppercase, visual, last change, etc. See |mark-motions|.
-///
-/// Marks are (1,0)-indexed. |api-indexing|
-///
-/// @note Passing 0 as line deletes the mark
-///
-/// @param buffer     Buffer to set the mark on
-/// @param name       Mark name
-/// @param line       Line number
-/// @param col        Column/row number
-/// @param opts       Optional parameters. Reserved for future use.
-/// @return true if the mark was set, else false.
-/// @see |nvim_buf_del_mark()|
-/// @see |nvim_buf_get_mark()|
-Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dict(empty) *opts,
-                          Error *err)
-  FUNC_API_SINCE(8)
-{
-  bool res = false;
-  buf_T *buf = require_loaded_buffer(buffer, err);
-
-  if (!buf) {
-    return res;
-  }
-
-  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
-    return res;
-  });
-
-  res = set_mark(buf, name, line, col, err);
-
-  return res;
-}
-
-/// Returns a `(row,col)` tuple representing the position of the named mark.
-/// "End of line" column position is returned as |v:maxcol| (big number).
-/// See |mark-motions|.
-///
-/// Marks are (1,0)-indexed. |api-indexing|
-///
-/// @param buffer     Buffer id, or 0 for current buffer
-/// @param name       Mark name
-/// @param[out] err   Error details, if any
-/// @return (row, col) tuple, (0, 0) if the mark is not set, or is an
-/// uppercase/file mark set in another buffer.
-/// @see |nvim_buf_set_mark()|
-/// @see |nvim_buf_del_mark()|
-ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
-{
-  Array rv = ARRAY_DICT_INIT;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return rv;
-  }
-
-  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
-    return rv;
-  });
-
-  fmark_T *fm;
-  pos_T pos;
-  char mark = *name.data;
-
-  fm = mark_get(buf, curwin, NULL, kMarkAllNoResolve, mark);
-  VALIDATE_S((fm != NULL), "mark name", name.data, {
-    return rv;
-  });
-  // (0, 0) uppercase/file mark set in another buffer.
-  if (fm->fnum != buf->handle) {
-    pos.lnum = 0;
-    pos.col = 0;
-  } else {
-    pos = fm->mark;
-  }
-
-  rv = arena_array(arena, 2);
-  ADD_C(rv, INTEGER_OBJ(pos.lnum));
-  ADD_C(rv, INTEGER_OBJ(pos.col));
-
-  return rv;
 }
 
 /// Call a function with buffer as temporary current buffer.

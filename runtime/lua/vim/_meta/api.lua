@@ -296,6 +296,7 @@ function vim.api.nvim_buf_del_keymap(buffer, mode, lhs) end
 
 --- Deletes a named mark in the buffer. See `mark-motions`.
 ---
+---
 --- Note:
 --- only deletes marks set in the buffer, if the mark is not set
 --- in the buffer it will return false.
@@ -457,6 +458,7 @@ function vim.api.nvim_buf_get_lines(buffer, start, end_, strict_indexing) end
 --- See `mark-motions`.
 ---
 --- Marks are (1,0)-indexed. `api-indexing`
+---
 ---
 --- @see vim.api.nvim_buf_set_mark
 --- @see vim.api.nvim_buf_del_mark
@@ -729,6 +731,7 @@ function vim.api.nvim_buf_set_lines(buffer, start, end_, strict_indexing, replac
 --- file/uppercase, visual, last change, etc. See `mark-motions`.
 ---
 --- Marks are (1,0)-indexed. `api-indexing`
+---
 ---
 --- Note:
 --- Passing 0 as line deletes the mark
@@ -1070,6 +1073,7 @@ function vim.api.nvim_del_current_line() end
 function vim.api.nvim_del_keymap(mode, lhs) end
 
 --- Deletes an uppercase/file named mark. See `mark-motions`.
+---
 ---
 --- Note:
 --- Lowercase name (or other buffer-local mark) is an error.
@@ -1435,6 +1439,7 @@ function vim.api.nvim_get_keymap(mode) end
 ---
 --- Marks are (1,0)-indexed. `api-indexing`
 ---
+---
 --- Note:
 --- Lowercase name (or other buffer-local mark) is an error.
 ---
@@ -1657,6 +1662,67 @@ function vim.api.nvim_list_wins() end
 --- @param dict table<string,any> `Context` map.
 --- @return any
 function vim.api.nvim_load_context(dict) end
+
+--- Delete a mark.
+---
+--- Mark types:
+--- - Buffer-local: a-z, ", ^, ., '[', ']', <, > (use "buf" option)
+--- - Global: A-Z, 0-9 (optionally use "buf" to delete only if mark is in that buffer)
+---
+--- Note: Marks ' (quote), ` (backtick), and : (prompt) cannot be deleted.
+---
+---
+--- @see `:help mark-motions`
+--- @param name string Mark name (single character string)
+--- @param opts vim.api.keyset.marks Optional parameters:
+--- - buf: Buffer number. For global marks, only deletes if mark is in that buffer.
+--- @return boolean # true if the mark was deleted, false if the mark was not set
+function vim.api.nvim_mark_del(name, opts) end
+
+--- Get a mark position.
+---
+--- Marks are (1,0)-indexed. `api-indexing`
+---
+--- Mark types:
+--- - Window-local: ' and ` (use "win" option)
+--- - Buffer-local: a-z, ", '[', ']', <, > etc. (use "buf" option)
+--- - Global: A-Z, 0-9 (optionally use "buf" to check if mark is in specific buffer)
+---
+---
+--- @see `:help mark-motions`
+--- @param name string Mark name (single character string)
+--- @param opts vim.api.keyset.marks Optional parameters:
+--- - win: `window-ID`. Used for window-local marks. Defaults to current window.
+--- - buf: Buffer number. Used for buffer-local marks. Defaults to current buffer.
+---        For global marks, checks if mark is in the specified buffer.
+--- @return vim.api.keyset.get_mark_info # Dictionary with the following fields:
+--- - line: Mark line (1-indexed), 0 if not set
+--- - col: Mark column (0-indexed)
+--- - buf: Buffer number (global marks only), 0 if from shada
+--- - file: File name (global marks only), empty if not available
+function vim.api.nvim_mark_get(name, opts) end
+
+--- Set a mark position.
+---
+--- Marks are (1,0)-indexed. `api-indexing`
+---
+--- Mark types:
+--- - Window-local: ' and ` (use "win" option)
+--- - Buffer-local: a-z, ", '[', ']', <, > (use "buf" option)
+--- - Global: A-Z, 0-9 (optionally use "buf" to set mark in specific buffer)
+---
+--- Note: Marks ^, ., : are set automatically and cannot be set manually.
+---
+---
+--- @see `:help mark-motions`
+--- @param name string Mark name (single character string)
+--- @param line integer Line number (1-indexed)
+--- @param col integer Column number (0-indexed)
+--- @param opts vim.api.keyset.marks Optional parameters:
+--- - win: `window-ID`. Used for window-local marks. Defaults to current window.
+--- - buf: Buffer number. Used for buffer-local and global marks. Defaults to current buffer.
+--- @return boolean # true if the mark was set successfully, false otherwise
+function vim.api.nvim_mark_set(name, line, col, opts) end
 
 --- @deprecated
 --- @param msg string
