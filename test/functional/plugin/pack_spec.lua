@@ -828,7 +828,8 @@ describe('vim.pack', function()
       local function assert_works()
         -- Should auto-install but wait before executing code after it
         n.clear({ args_rm = { '-u' } })
-        n.exec_lua('vim.wait(500, function() return _G.done end, 50)')
+        vim.uv.sleep(2000)
+        eq(true, exec_lua('return _G.done'))
         assert_loaded()
 
         -- Should only `:packadd!`/`:packadd` already installed plugin
