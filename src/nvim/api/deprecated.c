@@ -12,6 +12,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
@@ -29,7 +30,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos_defs.h"
-#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
@@ -1051,4 +1051,128 @@ void nvim_win_set_width(Window win, Integer width, Error *err)
   TRY_WRAP(err, {
     win_setwidth_win((int)width, w, true);
   });
+}
+
+/// Sets a named mark in the given buffer, all marks are allowed
+/// file/uppercase, visual, last change, etc. See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @note Passing 0 as line deletes the mark
+///
+/// @deprecated use |nvim_set_mark()| with {buf=bufnr}
+///
+/// @param buf        Buffer to set the mark on
+/// @param name       Mark name
+/// @param line       Line number
+/// @param col        Column/row number
+/// @param opts       Optional parameters. Reserved for future use.
+/// @return true if the mark was set, else false.
+/// @see |nvim_set_mark()|
+Boolean nvim_buf_set_mark(Buffer buf, String name, Integer line, Integer col, Dict(empty) *opts,
+                          Error *err)
+  FUNC_API_SINCE(8) FUNC_API_DEPRECATED_SINCE(15)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+
+  // Whatever the mark name, the buffer used to be validated and loaded.
+  if (api_buf_ensure_loaded(buf, err) == NULL) {
+    return false;
+  }
+
+  char mark = *name.data;
+  Dict(set_mark) args = KEYDICT_INIT;
+
+  // Window-local marks (' and `) don't take a buffer; all other marks do.
+  if (mark != '\'' && mark != '`') {
+    PUT_KEY(args, set_mark, buf, buf);
+  }
+
+  nvim_set_mark(name, line, col, &args, err);
+  return !ERROR_SET(err);
+}
+
+/// Returns a `(row,col)` tuple representing the position of the named mark.
+/// "End of line" column position is returned as |v:maxcol| (big number).
+/// See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @deprecated use |nvim_get_mark()| with {buf=bufnr}
+///
+/// @param buf        Buffer id, or 0 for current buffer
+/// @param name       Mark name
+/// @param[out] err   Error details, if any
+/// @return (row, col) tuple, (0, 0) if the mark is not set, or is an
+/// uppercase/file mark set in another buffer.
+/// @see |nvim_get_mark()|
+ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(15)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return rv;
+  });
+
+  if (find_buffer_by_handle(buf, err) == NULL) {
+    return rv;
+  }
+
+  // "buf" used to be ignored for ' and `, and motion marks were computed
+  // against the current buffer whatever was passed.
+  MarkClass mclass = mark_classify(*name.data);
+  bool has_buf = mclass != kMarkClassWindow && mclass != kMarkClassMotion;
+
+  MarkInfo mi = mark_query(*name.data, buf, has_buf, 0, false, arena, err);
+  if (ERROR_SET(err)) {
+    return rv;
+  }
+
+  rv = arena_array(arena, 2);
+  ADD_C(rv, INTEGER_OBJ(mi.line));
+  ADD_C(rv, INTEGER_OBJ(mi.col));
+
+  return rv;
+}
+
+/// Deletes a named mark in the buffer. See |mark-motions|.
+///
+/// @deprecated use |nvim_del_mark()| with {buf=bufnr}
+///
+/// @note only deletes marks set in the buffer, if the mark is not set
+/// in the buffer it will return false.
+/// @param buf        Buffer to set the mark on
+/// @param name       Mark name
+/// @return true if the mark was deleted, else false.
+/// @see |nvim_del_mark()|
+Boolean nvim_buf_del_mark(Buffer buf, String name, Error *err)
+  FUNC_API_SINCE(8) FUNC_API_DEPRECATED_SINCE(15)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+
+  if (find_buffer_by_handle(buf, err) == NULL) {
+    return false;
+  }
+
+  char mark = *name.data;
+
+  // nvim_del_mark() refuses ' and `. This used to clear the current window's
+  // pcmark when it had a position, ignoring "buf".
+  if (mark == '\'' || mark == '`') {
+    if (curwin->w_pcmark.lnum == 0) {
+      return false;
+    }
+    Dict(set_mark) wopts = KEYDICT_INIT;
+    nvim_set_mark(name, 0, 0, &wopts, err);
+    return !ERROR_SET(err);
+  }
+
+  Dict(del_mark) opts = KEYDICT_INIT;
+  PUT_KEY(opts, del_mark, buf, buf);
+  return nvim_del_mark(name, &opts, err);
 }
