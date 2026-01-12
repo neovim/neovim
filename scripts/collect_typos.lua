@@ -111,7 +111,9 @@ local function main()
       { 'gh', 'pr', 'diff', tostring(pr_number), '--patch' },
       'Failed to get patch of PR ' .. pr_number
     )
-    if run({ 'git', 'apply', '--index', '-' }, patch_file) then
+    -- Using --3way allows skipping changes already included in a previous commit.
+    -- If there are conflicts, it will fail and need manual conflict resolution.
+    if run({ 'git', 'apply', '--index', '--3way', '-' }, patch_file) then
       table.insert(close_pr_lines, ('Close #%d'):format(pr_number))
       for author in patch_file:gmatch('\nFrom: (.- <.->)\n') do
         local co_author_line = ('Co-authored-by: %s'):format(mime_decode(author))

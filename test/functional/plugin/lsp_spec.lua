@@ -5953,7 +5953,7 @@ describe('LSP', function()
           },
         }, { client_id = client_id })
 
-        -- Checks after registering without worspaceDiagnostics support
+        -- Checks after registering without workspaceDiagnostics support
         -- Returns false
         check('workspace/diagnostic')
 
