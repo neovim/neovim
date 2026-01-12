@@ -3911,6 +3911,7 @@ static void nv_gotofile(cmdarg_T *cap)
   } else {
     clearop(cap->oap);
   }
+  xfree(tag);
 }
 
 /// <End> command: to end of current line or last line.

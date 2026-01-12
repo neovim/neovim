@@ -1731,22 +1731,23 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
         *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
       }
     }
-  } else if (file_tag != NULL) {
+  }
+  if (file_tag != NULL) {
     char *p = ptr + len;
     if (*p != NUL) {
       if (*p == '#') {
-        p++; // skip the separator
+        p++;          // skip the separator
       }
-    }
-    p = skipwhite(p);
-    if (vim_iswordc((uint8_t)(*p))) {
-      size_t tag_len = 1; // We know the length is at least 1
-      while (vim_iswordc((uint8_t)(p[tag_len]))) {
-        tag_len++;
+      p = skipwhite(p);
+      if (vim_iswordc((uint8_t)(*p))) {
+        size_t tag_len = 1; // the length is at least 1
+        while (vim_iswordc((uint8_t)(p[tag_len]))) {
+          tag_len++;
+        }
+        char *tag = xmalloc(tag_len + 1);
+        xstrlcpy(tag, p, tag_len + 1);
+        *file_tag = tag;
       }
-      char *tag = (char *)xmalloc(tag_len + 1);
-      xstrlcpy(tag, p, tag_len);
-      *file_tag = tag;
     }
   }
 
