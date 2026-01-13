@@ -4100,10 +4100,7 @@ bool buf_contents_changed(buf_T *buf)
   return differ;
 }
 
-/// Wipe out a buffer and decrement the last buffer number if it was used for
-/// this buffer.  Call this to wipe out a temp buffer that does not contain any
-/// marks.
-///
+/// Wipe out a (typically temporary) buffer.
 /// @param aucmd  When true trigger autocommands.
 void wipe_buffer(buf_T *buf, bool aucmd)
 {
