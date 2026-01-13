@@ -2737,7 +2737,6 @@ void do_filetype_autocmd(buf_T *buf, bool force)
     return;  // disallow recursion
   }
 
-  char **varp = &buf->b_p_ft;
   int secure_save = secure;
 
   // Reset the secure flag, since the value of 'filetype' has
@@ -2751,9 +2750,5 @@ void do_filetype_autocmd(buf_T *buf, bool force)
   apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf);
   ft_recursive--;
 
-  // Just in case the old "buf" is now invalid
-  if (varp != &(buf->b_p_ft)) {
-    varp = NULL;
-  }
   secure = secure_save;
 }
