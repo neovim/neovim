@@ -60,27 +60,58 @@ int libuv_proc_spawn(LibuvProc *uvproc)
     uvproc->uvopts.env = NULL;
   }
 
+  int to_close[3] = { -1, -1, -1 };
+
   if (!proc->in.closed) {
-    uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+    uv_file pipe_pair[2];
+    int client_flags = 0;
 #ifdef MSWIN
-    uvproc->uvstdio[0].flags |= proc->overlapped ? UV_OVERLAPPED_PIPE : 0;
+    client_flags |= proc->overlapped ? UV_NONBLOCK_PIPE : 0;
 #endif
-    uvproc->uvstdio[0].data.stream = (uv_stream_t *)(&proc->in.uv.pipe);
+
+    // As of libuv 1.51, UV_CREATE_PIPE can only create pipes
+    // using socketpair(), not pipe(). We want the latter on linux
+    // as socket pairs behave different in some confusing ways, like
+    // breaking /proc/0/fd/0 which is disowned by the linux socket maintainer.
+    uv_pipe(pipe_pair, client_flags, UV_NONBLOCK_PIPE);
+
+    uvproc->uvstdio[0].flags = UV_INHERIT_FD;
+    uvproc->uvstdio[0].data.fd = pipe_pair[0];
+    to_close[0] = pipe_pair[0];
+
+    uv_pipe_open(&proc->in.uv.pipe, pipe_pair[1]);
   }
 
   if (!proc->out.s.closed) {
-    uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
 #ifdef MSWIN
+    // TODO(bfredl): in theory it would have been nice if the uv_pipe() branch
+    // also worked for windows but IOCP happens because of reasons.
+    uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     // pipe must be readable for IOCP to work on Windows.
     uvproc->uvstdio[1].flags |= proc->overlapped
                                 ? (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
-#endif
     uvproc->uvstdio[1].data.stream = (uv_stream_t *)(&proc->out.s.uv.pipe);
+#else
+    uv_file pipe_pair[2];
+    uv_pipe(pipe_pair, UV_NONBLOCK_PIPE, 0);
+
+    uvproc->uvstdio[1].flags = UV_INHERIT_FD;
+    uvproc->uvstdio[1].data.fd = pipe_pair[1];
+    to_close[1] = pipe_pair[1];
+
+    uv_pipe_open(&proc->out.s.uv.pipe, pipe_pair[0]);
+#endif
   }
 
   if (!proc->err.s.closed) {
-    uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-    uvproc->uvstdio[2].data.stream = (uv_stream_t *)(&proc->err.s.uv.pipe);
+    uv_file pipe_pair[2];
+    uv_pipe(pipe_pair, UV_NONBLOCK_PIPE, 0);
+
+    uvproc->uvstdio[2].flags = UV_INHERIT_FD;
+    uvproc->uvstdio[2].data.fd = pipe_pair[1];
+    to_close[2] = pipe_pair[1];
+
+    uv_pipe_open(&proc->err.s.uv.pipe, pipe_pair[0]);
   } else if (proc->fwd_err) {
     uvproc->uvstdio[2].flags = UV_INHERIT_FD;
     uvproc->uvstdio[2].data.fd = STDERR_FILENO;
@@ -92,10 +123,16 @@ int libuv_proc_spawn(LibuvProc *uvproc)
     if (uvproc->uvopts.env) {
       os_free_fullenv(uvproc->uvopts.env);
     }
-    return status;
+    goto exit;
   }
 
   proc->pid = uvproc->uv.pid;
+exit:
+  for (int i = 0; i < 3; i++) {
+    if (to_close[i] > -1) {
+      close(to_close[i]);
+    }
+  }
   return status;
 }
 

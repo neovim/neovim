@@ -515,7 +515,7 @@ function M.new_session(keep, ...)
       )
       io.stdout:flush()
     end
-  end)
+  end, true)
   n_processes = n_processes + 1
 
   local new_session = Session.new(proc)

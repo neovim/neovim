@@ -1339,6 +1339,30 @@ describe('jobs', function()
       ]])
     end
   end)
+
+  it('uses real pipes for stdin/stdout #35984', function()
+    if skip(is_os('win'), 'Not applicable for Windows') then
+      return
+    end
+    -- this fails on linux if we used socketpair() for stdin and stdout,
+    -- which libuv does if you ask to create stdio streams for you
+    local val = exec_lua(function()
+      local output
+      local job = vim.fn.jobstart('wc /dev/stdin > /dev/stdout', {
+        stdout_buffered = true,
+        on_stdout = function(_, data, _)
+          output = data
+        end,
+      })
+      vim.fn.chansend(job, 'foo\nbar baz\n')
+      vim.fn.chanclose(job, 'stdin')
+      vim.fn.jobwait({ job })
+      return output
+    end)
+    eq(2, #val, val)
+    eq({ '2', '3', '12', '/dev/stdin' }, vim.split(val[1], '%s+', { trimempty = true }))
+    eq('', val[2])
+  end)
 end)
 
 describe('pty process teardown', function()
