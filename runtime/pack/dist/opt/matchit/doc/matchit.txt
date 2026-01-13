@@ -286,8 +286,8 @@ Python example (simplified): >
 	  let pattern = get(s:keywords, keyword, '')
 	  if empty(pattern) | return [] | endif
 
-	  let flags = a:forward ? 'nW' : 'nbW'
-	  let [lnum, col] = searchpos('^\s*\%(' . pattern . '\)\>', flags, 0, 0,
+	  " Forward-only. Backwards left as an exercise for the reader.
+	  let [lnum, col] = searchpos('^\s*\%(' . pattern . '\)\>', 'nW' 0, 0,
 	  \                            'indent(".") != ' . indent('.'))
 	  return lnum > 0 ? [lnum, col] : []
 	endfunction
