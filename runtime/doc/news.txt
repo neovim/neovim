@@ -342,8 +342,7 @@ OPTIONS
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'diffopt' with 'inline:word' now automatically merges adjacent diff blocks
-  separated by small gaps to improve readability. Use 'wordgap:{n}' to
-  configure the maximum gap size (default: 2, range: 0-5). |'diffopt'|
+  separated by gaps and punctuation by 5 bytes to improve readability. |'diffopt'|
 • 'fillchars' has new flag "foldinner".
 • 'fsync' and 'grepformat' are now |global-local| options.
 • 'jumpoptions' flag "view" now applies when popping the |tagstack|.
