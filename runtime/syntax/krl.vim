@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language: Kuka Robot Language
 " Maintainer: Patrick Meiser-Knosowski <knosowski@graeffrobotics.de>
-" Version: 3.0.0
-" Last Change: 22. Jun 2023
+" Version: 3.1.0
+" Last Change: 13. Jan 2026
 " Credits: Thanks for contributions to this to Michael Jagusch
 "          Thanks for beta testing to Thomas Baginski
 "
@@ -58,12 +58,12 @@ syn match krlFoldComment /\c\v^\s*;\s*%(end)?fold>[^;]*/ containedin=krlFold con
 highlight default link krlFoldComment Comment
 
 " move fold comment until second ;
-syn match krlMoveFoldComment /\c\v^\s*;\s*fold>[^;]*<s?%(ptp|lin|circ|spl)(_rel)?>[^;]*/ containedin=krlFold contains=krlInteger,krlFloat,krlMovement,krlDelimiter
+syn match krlMoveFoldComment /\c\v^\s*;\s*fold>[^;]*<s?%(ptp|lin|circ?|spl)%(_rel)?>[^;]*/ containedin=krlFold contains=krlInteger,krlFloat,krlMovement,krlDelimiter
 highlight default link krlMoveFoldComment Comment
 
 " things to highlight in a fold line
-syn keyword krlFoldHighlights CONT IN SYN OUT containedin=krlFoldComment
-syn match krlFoldHighlights /\c\v<(M|F|E|A|t|i|bin|binin|UP|SPSMAKRO)\d+>/ containedin=krlFoldComment
+syn keyword krlFoldHighlights CONT IN SYN OUT contained containedin=krlFoldComment
+syn match krlFoldHighlights /\c\v<(M|F|E|A|t|i|bin|binin|UP|SPSMAKRO)\d+>/ contained containedin=krlFoldComment
 if g:krlGroupName
   highlight default link krlFoldHighlights Sysvars
 else
@@ -116,7 +116,9 @@ syn keyword krlType ext extfct extfctp extp
 syn keyword krlType signal channel
 highlight default link krlType Type
 " StorageClass
-syn keyword krlStorageClass decl global const struc enum
+syn keyword krlStorageClass const struc enum
+syn match krlStorageClass /\<decl\>/
+syn match krlStorageClass /\<global\>/
 highlight default link krlStorageClass StorageClass
 " .dat file public
 syn keyword krlDatStorageClass public
@@ -174,6 +176,11 @@ highlight default link krlEnumVal Constant
 " /r1/system/$config.dat as well as
 " basisTech, gripperTech and spotTech
 "
+syn keyword krlStructure call_stack
+" Predefined data types found in $operate*.dat
+syn keyword krlStructure aux_pt_mode correction_struc delta_workspace deri_exax deri_struc deri_vector emd_struc energy_data_struc energy_measuring_struc energy_module_struc extended_ret force_val_struc iobus_info_t krl_bp_t loop_axis_inc mbw_para_offset mbw_para_target mbw_result memory_info opc_par_bool_t opc_par_int_t opc_par_real_t opc_par_string_t pathtime_struc pos_axis prog_info p_last_info slave_axis_inc spl_fctctrl spl_fctdef spl_tech spl_techfct spl_techsys spl_tech_map spl_vel_restr_struc ssb_active_t strike_out_components strike_out_struc target_pt_mode tension_struc torqlimitparam t_cs vector vmdirection vmparam vmparam_pull vmparam_push vmstate vmstrategy ws_state
+syn keyword krlEnum abs_accur_state accu_state aux_pt_values axesmask_info ax_slave_type bin_parity_t braketest_time_info brake_state buff_mode_t eco_level ediagwritemode energy_config_state_t ext_ipo_mode integration_mode int_typ_e kcp_type laser_mode ldc_ereaction ldc_eresult mbw_error msgbufmsgtype_t prog_int_e prog_status recovery_pose remote_ctrl_mode req_status rob_stop_t seek_mode_t sigdtyp sigtyp spl_techfct_mode spl_tech_bound spl_vel_mode spo_reaction target_pt_values trigger_up_type vmcontrol_s vmerror vmoffoption vmpull vmredundancy_s vmselection_s waittype wait_cmd_e ws_reference
+"
 " Predefined data types found in krc1
 syn keyword krlStructure servopara keymove powermodul trace techangle tech techfct techcps techfctctrl axis_inc axis_cal date display_var pro_ip con bus 
 syn keyword krlEnum ident_state sig_state move_state async_state emt_mode boxmode msg_prm_typ msg_typ cmd_stat asys trace_state trace_mode direction techsys techgeoref techclass techmode hpu_key_val pro_state eax transsys mode_move cosys device rotsys emstop cause_t 
@@ -215,6 +222,9 @@ syn keyword krlEnum step_enum
 " BasisTech
 syn keyword krlStructure dig_out_type ctrl_in_t ctrl_out_t fct_out_t fct_in_t odat hdat basis_sugg_t out_sugg_t md_state machine_def_t machine_tool_t machine_frame_t trigger_para constvel_para condstop_para adat tm_sugg_t tqm_tqdat_t sps_prog_type
 syn keyword krlEnum bas_command out_modetype ipo_m_t apo_mode_t funct_type p00_command timer_actiontype
+"
+" Types found in System Variable demo
+syn keyword krlStructure int_info
 "
 " GripperTech
 syn keyword krlStructure grp_typ grp_types grp_sugg_t
@@ -262,9 +272,10 @@ else
   highlight default link krlContinue Statement
 endif
 " interrupt 
-syn match krlStatement /\v\c%(<global>\s+)?<INTERRUPT>%(\s+<decl>)?/ contains=krlStorageClass
+syn match krlStatement /\v\c%(<global>\s+)?<interrupt>%(\s+<decl>)?/ contains=krlStorageClass
 " keywords
-syn keyword krlStatement wait on off enable disable stop trigger with when distance onstart delay do prio import is minimum maximum confirm on_error_proceed
+syn keyword krlStatement wait on off enable disable stop trigger with when distance onstart delay prio import is minimum maximum confirm on_error_proceed
+syn match krlStatement /\<do\>/
 syn match krlStatement /\v\c%(<wait\s+)@7<=<sec>/
 syn match krlStatement /\v\c%(<when\s+)@7<=<path>/
 highlight default link krlStatement Statement
@@ -272,7 +283,10 @@ highlight default link krlStatement Statement
 syn keyword krlConditional if then else endif switch case default endswitch skip endskip
 highlight default link krlConditional Conditional
 " Repeat
-syn keyword krlRepeat for to endfor while endwhile repeat until loop endloop exit
+syn keyword krlRepeat to endfor endwhile repeat loop endloop exit
+syn match krlRepeat /\<for\>/
+syn match krlRepeat /\<while\>/
+syn match krlRepeat /\<until\>/
 " STEP is used as variable in VKRC, this pattern should match STEP -, 5(constant number) or VAR
 syn match krlRepeat /\v\cstep\s+%(-|\w)/me=e-1
 highlight default link krlRepeat Repeat
@@ -290,6 +304,9 @@ highlight default link krlException Exception
 
 " special keywords for movement commands {{{
 syn keyword krlMovement PTP PTP_REL LIN LIN_REL CIRC CIRC_REL SPL SPL_REL SPTP SPTP_REL SLIN SLIN_REL SCIRC SCIRC_REL
+" VKRC movement
+syn keyword krlMovement CIR KCIR KLIN
+" Async movement
 syn keyword krlMovement ASYPTP ASYCONT ASYSTOP ASYCANCEL MOVE_EMI
 syn match krlMovement /\v\c^\s*<BRAKE(\s+F)?>/
 if g:krlGroupName
@@ -328,11 +345,18 @@ syn keyword krlBuildInFunction contained set_opt_filter
 syn keyword krlBuildInFunction contained timer_limit 
 syn keyword krlBuildInFunction contained tool_adj 
 syn keyword krlBuildInFunction contained FRand 
-syn keyword krlBuildInFunction contained ExecFunc eb_test EB EK EO LK mbx_rec 
+syn keyword krlBuildInFunction contained ExecFunc eb_abs eb_test_abs eb_test EB EK EO LK mbx_rec 
+" $operate*.dat
+" brake point
+syn keyword krlBuildInFunction contained chg_krl_bp clr_all_krl_bp clr_krl_bp disable_krl_bp enable_krl_bp set_krl_bp
+" other
+syn keyword krlBuildInFunction contained InterimEnergy activate_force_mode DynBrakeTest test_brake
+" coll monitor
+syn keyword krlBuildInFunction contained get_collmon_set reset_collmon_set 
 " safe robot
 syn keyword krlbuildinfunction contained get_AxesMask get_BrakeTest_Time
 " math
-syn keyword krlBuildInFunction contained Abs Sin Cos Acos Tan Atan Atan2 Sqrt
+syn keyword krlBuildInFunction contained Abs Acos Atan2 Cos Sin Sqrt Tan
 syn keyword krlBuildInFunction contained Forward Inverse inv_pos
 " cFoo sFoo
 syn keyword krlBuildInFunction contained cClose cOpen cRead cWrite sRead sWrite 
@@ -371,11 +395,11 @@ syn keyword krlBuildInFunction contained GetSysState get_system_data set_system_
 " err
 syn keyword krlBuildInFunction contained err_clear err_raise
 " motion
-syn keyword krlBuildInFunction contained delete_backward_buffer rob_stop rob_stop_release set_brake_delay suppress_repositioning VectorMoveOn VectorMoveOff
+syn keyword krlBuildInFunction contained AdvancedVectorMoveOn delete_backward_buffer move_backward rob_stop rob_stop_release set_brake_delay suppress_repositioning VectorMoveOn VectorMoveOff
 " torque
 syn keyword krlBuildInFunction contained set_torque_limits reset_torque_limits
 " krc1
-syn keyword krlBuildInFunction contained cLcopy cCurpos cNew cClear cRelease cKey
+syn keyword krlBuildInFunction contained clCopy cCurPos cNew cClear cRelease cKey
 if g:krlGroupName
   highlight default link krlBuildInFunction BuildInFunction
 else
@@ -384,7 +408,7 @@ endif
 " }}} BuildInFunction
 
 " Function {{{
-syn match krlFunction /[a-zA-Z_]\w* *(/me=e-1 contains=krlBuildInFunction
+syn match krlFunction /[$a-zA-Z_]\w* *(/me=e-1 contains=krlBuildInFunction
 highlight default link krlFunction Function
 " }}} Function
 
@@ -402,10 +426,9 @@ if get(g:, 'krlShowError', 1)
   "        ||
   syn match krlError3 /\v%(^\s*for%(\(|\s)+[_$a-zA-Z]+[_$a-zA-Z0-9.\[\]()+\-*/ ]*\s*)@<=[:=]\=/
   "
-  " TODO optimize performance
   " wait for a=b
   "           |
-  syn match krlError4 /\v%(^\s*%(return|wait\s+for|if|while|until|%(global\s+)?interrupt\s+decl)>[^;]+[^;<>=])@<=\=[^=]/
+  syn match krlError4 /\v%(^\s*%(return|wait\s+for|if|while|until|%(global\s+)?interrupt\s+decl)>[^;]+[^;<>=])@<=:?\=[^=]/me=e-1
   "
   " wait for a><b
   "           ||
@@ -415,27 +438,28 @@ if get(g:, 'krlShowError', 1)
   "         |||
   syn match krlError6 /\v%(^\s*%(return|wait\s+for|if|while|until|%(global\s+)?interrupt\s+decl)>[^;]+[^;])@<=\)\s*\(/
   "
-  " TODO optimize performance
   " a == b + 1
   " a := b + 1
   "   ||
   syn match krlError7 /\v%(^\s*%(return|wait\s+for|if|while|until|%(global\s+)?interrupt\s+decl)>[^;]+[^;])@1<!%(^\s*[_$a-zA-Z]+[_$a-zA-Z0-9.\[\],+\-*/]*\s*)@<=[:=]\=/
-  syn match krlError7 /\v\c%(^\s*%(decl\s+)%(global\s+)?%(const\s+)?\w+\s+\w+\s*)@<=[:=]\=/
-  syn match krlError7 /\v\c%(^\s*%(decl\s+)?%(global\s+)?%(const\s+)?%(bool\s+|int\s+|real\s+|char\s+)\w+\s*)@<=[:=]\=/
+  syn match krlError7 /\v%(^\s*%(decl\s+)%(global\s+)?%(const\s+)?\w+\s+\w+\s*)@<=[:=]\=/
+  syn match krlError7 /\v%(^\s*%(decl\s+)?%(global\s+)?%(const\s+)?%(bool\s+|int\s+|real\s+|char\s+)\w+\s*)@<=[:=]\=/
   "
   " this one is tricky. Make sure this does not match trigger instructions; OK, next try, now search for false positives
-  " TODO optimize performance
   " a = b and c or (int1=int2)
   "                     |
-  syn match krlError8 /\v(^\s*[_$a-zA-Z]+[_$a-zA-Z0-9.\[\]()+\-*/]*\s*\=[^;]*[^;<>=])@<=\=\ze[^=]/
+  syn match krlError8 /\v%(^\s*[_$a-zA-Z]+[_$a-zA-Z0-9.\[\]()+\-*/]*\s*\=[^;]*[^;<>=])@<=\=\ze[^=]/
   "
-  " <(distance|delay|prio)> :=
-  " <(distance|delay|prio)> ==
-  "                         ||
-  syn match krlError9 /\v(^[^;]*<(distance|delay|prio|minimum|maximum)\s*)@<=[:=]\=/
+  " <(distance|delay|prio|minimum|maximum)> :=
+  " <(distance|delay|prio|minimum|maximum)> ==
+  "                                         ||
+  syn match krlError9 /\v%(^[^;]*<(distance|delay|prio|minimum|maximum)\s*)@<=[:=]\=/
   "
-  " 'for', 'while' or 'repeat' followed by 'do'
-  syn match krlError10 /\c\v^\s*(until|while|for)>[^;]*<do>/
+  " DO is not used at KRL repeat loops (for, while, until)
+  syn match krlError10 /\v%(^\s*%(for|while|until)[^;]+)@<=<do>/
+  "
+  " global decl must be decl global
+  syn match krlError11 /\v%(^\s*)@<=global\s+decl>/
   "
   highlight default link krlError0 Error
   highlight default link krlError1 Error
@@ -448,6 +472,7 @@ if get(g:, 'krlShowError', 1)
   highlight default link krlError8 Error
   highlight default link krlError9 Error
   highlight default link krlError10 Error
+  highlight default link krlError11 Error
 endif
 " }}} Error
 
