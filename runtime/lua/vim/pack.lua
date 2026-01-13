@@ -264,17 +264,12 @@ end
 --- @param url string
 --- @param path string
 local function git_clone(url, path)
-  local cmd = { 'clone', '--quiet', '--no-checkout', '--recurse-submodules' }
+  local cmd = { 'clone', '--quiet', '--no-checkout' }
 
   if vim.startswith(url, 'file://') then
     cmd[#cmd + 1] = '--no-hardlinks'
-  else
-    if git_version >= vim.version.parse('2.36') then
-      cmd[#cmd + 1] = '--filter=blob:none'
-      cmd[#cmd + 1] = '--also-filter-submodules'
-    elseif git_version >= vim.version.parse('2.27') then
-      cmd[#cmd + 1] = '--filter=blob:none'
-    end
+  elseif git_version >= vim.version.parse('2.27') then
+    cmd[#cmd + 1] = '--filter=blob:none'
   end
 
   vim.list_extend(cmd, { '--origin', 'origin', url, path })
@@ -654,17 +649,26 @@ end
 --- @async
 --- @param p vim.pack.Plug
 --- @param timestamp string
-local function checkout(p, timestamp)
+--- @param skip_stash? boolean
+local function checkout(p, timestamp, skip_stash)
   infer_revisions(p)
 
-  local stash_cmd = { 'stash', '--quiet' }
-  if git_version > vim.version.parse('2.13') then
-    stash_cmd[#stash_cmd + 1] = '--message'
-    stash_cmd[#stash_cmd + 1] = ('vim.pack: %s Stash before checkout'):format(timestamp)
+  if not skip_stash then
+    local stash_cmd = { 'stash', '--quiet' }
+    if git_version > vim.version.parse('2.13') then
+      stash_cmd[#stash_cmd + 1] = '--message'
+      stash_cmd[#stash_cmd + 1] = ('vim.pack: %s Stash before checkout'):format(timestamp)
+    end
+    git_cmd(stash_cmd, p.path)
   end
-  git_cmd(stash_cmd, p.path)
 
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
+
+  local submodule_cmd = { 'submodule', 'update', '--init', '--recursive' }
+  if git_version >= vim.version.parse('2.36') then
+    submodule_cmd[#submodule_cmd + 1] = '--filter=blob:none'
+  end
+  git_cmd(submodule_cmd, p.path)
 
   plugin_lock.plugins[p.spec.name].rev = p.info.sha_target
 
@@ -691,7 +695,7 @@ local function install_list(plug_list, confirm)
     -- Prefer revision from the lockfile instead of using `version`
     p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
 
-    checkout(p, timestamp)
+    checkout(p, timestamp, true)
     p.info.installed = true
 
     trigger_event(p, 'PackChanged', 'install')
