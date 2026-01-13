@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: Jan 06, 2025
+"  Last Change: Jan 09, 2026
 
 " Neovim does not support scriptversion
 if has("vimscript-4")
@@ -71,9 +71,8 @@ function matchit#Match_wrapper(word, forward, mode) range
 
   " Check for custom match function hook
   if exists("b:match_function")
-    let MatchFunc = b:match_function
     try
-      let result = call(MatchFunc, [a:forward])
+      let result = call(b:match_function, [a:forward])
       if !empty(result)
         call cursor(result)
         return s:CleanUp(restore_options, a:mode, startpos)
