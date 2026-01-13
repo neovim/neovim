@@ -1390,7 +1390,25 @@ function M.set(namespace, bufnr, diagnostics, opts)
         -- avoid ending an extmark before start of the line
         if end_col == 0 then
           end_row = end_row - 1
-          end_col = #lines[end_row + 1]
+
+          local end_line = lines[end_row + 1]
+
+          if not end_line then
+            error(
+              'Failed to adjust diagnostic position to the end of a previous line. #lines in a buffer: '
+                .. #lines
+                .. ', lnum: '
+                .. diagnostic.lnum
+                .. ', col: '
+                .. diagnostic.col
+                .. ', end_lnum: '
+                .. diagnostic.end_lnum
+                .. ', end_col: '
+                .. diagnostic.end_col
+            )
+          end
+
+          end_col = #end_line
         end
       end
 
