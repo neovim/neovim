@@ -3890,9 +3890,6 @@ static void nv_gotofile(cmdarg_T *cap)
   }
 
   char *ptr = grab_file_name(cap->count1, &lnum, &tag);
-  if (tag != NULL) {
-    semsg("UNIMPLEMENTED: go to tag (%s) in file name (nv_gotofile)", tag);
-  }
 
   if (ptr != NULL) {
     // do autowrite if necessary
@@ -3902,10 +3899,15 @@ static void nv_gotofile(cmdarg_T *cap)
     setpcmark();
     if (do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
                 buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == OK
-        && cap->nchar == 'F' && lnum >= 0) {
-      curwin->w_cursor.lnum = lnum;
-      check_cursor_lnum(curwin);
-      beginline(BL_SOL | BL_FIX);
+        && cap->nchar == 'F') {
+      // Handle `gF`
+      if (lnum >= 0) { // Go to line number
+        curwin->w_cursor.lnum = lnum;
+        check_cursor_lnum(curwin);
+        beginline(BL_SOL | BL_FIX);
+      } else if (tag != NULL) { // Go to tag
+        semsg("UNIMPLEMENTED: go to tag '%s' in file name (nv_gotofile)", tag);
+      }
     }
     xfree(ptr);
   } else {
