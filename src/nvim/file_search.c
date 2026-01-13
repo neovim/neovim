@@ -1603,13 +1603,21 @@ char *grab_file_name(int count, linenr_T *file_lnum, char **file_tag)
     if (get_visual_text(NULL, &ptr, &len) == FAIL) {
       return NULL;
     }
-    // Only recognize ":123" here
+    // Number must immediately follow ':' in visual mode
     if (file_lnum != NULL && ptr[len] == ':' && isdigit((uint8_t)ptr[len + 1])) {
       char *p = ptr + len + 1;
-
       *file_lnum = getdigits_int32(&p, false, 0);
+
+      // Tag name must immediately follow '#' in visual mode
     } else if (file_tag != NULL && ptr[len] == '#' && vim_iswordc((uint8_t)ptr[len + 1])) {
-      emsg("UNIMPLEMENTED: get tag after file name in visual mode (grab_file_name)");
+      char *p = ptr + len + 1;
+      size_t tag_len = 1;
+      while (vim_iswordc((uint8_t)(p[tag_len]))) {
+        tag_len++;
+      }
+      char *tag = xmalloc(tag_len + 1);
+      xstrlcpy(tag, p, tag_len + 1);
+      *file_tag = tag;
     }
     return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   }
