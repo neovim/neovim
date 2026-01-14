@@ -1127,7 +1127,9 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     return NULL;
   }
 
-  trigger_winnewpre();
+  if (new_wp == NULL) {
+    trigger_winnewpre();
+  }
 
   win_T *oldwin;
   if (flags & WSP_TOP) {

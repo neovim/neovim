@@ -1043,8 +1043,7 @@ func Test_win_splitmove()
   let s:triggered = []
   augroup WinSplitMove
     au!
-    " Nvim: WinNewPre not ported yet. Also needs full port of v9.1.0117 to pass.
-    " au WinNewPre * let s:triggered += ['WinNewPre']
+    au WinNewPre * let s:triggered += ['WinNewPre']
     au WinNew * let s:triggered += ['WinNew', win_getid()]
     au WinClosed * let s:triggered += ['WinClosed', str2nr(expand('<afile>'))]
   augroup END
