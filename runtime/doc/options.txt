@@ -2580,7 +2580,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|VimResized|,
 		|VimResume|,
 		|VimSuspend|,
-		|WinNew|
+		|WinNew|,
+		|WinNewPre|
 
 				*'expandtab'* *'et'* *'noexpandtab'* *'noet'*
 'expandtab' 'et'	boolean	(default off)

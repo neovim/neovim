@@ -1127,6 +1127,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     return NULL;
   }
 
+  trigger_winnewpre();
+
   win_T *oldwin;
   if (flags & WSP_TOP) {
     oldwin = firstwin;
@@ -3069,6 +3071,13 @@ int win_close(win_T *win, bool free_buf, bool force)
   return OK;
 }
 
+static void trigger_winnewpre(void)
+{
+  window_layout_lock();
+  apply_autocmds(EVENT_WINNEWPRE, NULL, NULL, false, NULL);
+  window_layout_unlock();
+}
+
 static void do_autocmd_winclosed(win_T *win)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4379,6 +4388,8 @@ int win_new_tabpage(int after, char *filename)
                        ? xstrdup(old_curtab->tp_localdir) : NULL;
 
   curtab = newtp;
+
+  trigger_winnewpre();
 
   // Create a new empty window.
   if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {

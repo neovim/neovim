@@ -218,6 +218,7 @@ error('Cannot require a meta file')
 --- |'WinEnter'
 --- |'WinLeave'
 --- |'WinNew'
+--- |'WinNewPre'
 --- |'WinResized'
 --- |'WinScrolled'
 
