@@ -129,6 +129,19 @@ typedef enum {
   kBffInitChangedtick = 2,
 } BufFreeFlags;
 
+static void trigger_undo_ftplugin(buf_T *buf, win_T *win)
+{
+  const bool win_was_locked = win->w_locked;
+  window_layout_lock();
+  buf->b_locked++;
+  win->w_locked = true;
+  // b:undo_ftplugin may be set, undo it
+  do_cmdline_cmd("if exists('b:undo_ftplugin') | exe b:undo_ftplugin | endif");
+  buf->b_locked--;
+  win->w_locked = win_was_locked;
+  window_layout_unlock();
+}
+
 /// Calculate the percentage that `part` is of the `whole`.
 int calc_percentage(int64_t part, int64_t whole)
 {
@@ -1945,6 +1958,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     assert(curbuf != NULL);
     buf = curbuf;
     set_bufref(&bufref, buf);
+    trigger_undo_ftplugin(buf, curwin);
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
     buf_freeall(buf, BFA_WIPE | BFA_DEL);
