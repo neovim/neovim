@@ -117,13 +117,13 @@ static int close_disallowed = 0;
 /// Used for autocommands that temporarily use another window and need to
 /// make sure the previously selected window is still there.
 /// Must be matched with exactly one call to window_layout_unlock()!
-static void window_layout_lock(void)
+void window_layout_lock(void)
 {
   split_disallowed++;
   close_disallowed++;
 }
 
-static void window_layout_unlock(void)
+void window_layout_unlock(void)
 {
   split_disallowed--;
   close_disallowed--;
