@@ -305,9 +305,20 @@ M.get = memoize('concat-2', function(lang, query_name)
           local is_optional = incl_lang:match('%(.*%)')
 
           if is_optional then
-            add_included_lang(base_langs, lang, incl_lang:sub(2, #incl_lang - 1))
+            local lang_name = incl_lang:sub(2, #incl_lang - 1)
+            if add_included_lang(base_langs, lang, lang_name) then
+              -- Explicit queries can inherit from the language itself
+              if lang_name == lang then
+                table.insert(base_langs, lang_name)
+              end
+            end
           else
-            add_included_lang(base_langs, lang, incl_lang)
+            if add_included_lang(base_langs, lang, incl_lang) then
+              -- Explicit queries can inherit from the language itself
+              if incl_lang == lang then
+                table.insert(base_langs, incl_lang)
+              end
+            end
           end
         end
       elseif line:match(EXTENDS_FORMAT) then
