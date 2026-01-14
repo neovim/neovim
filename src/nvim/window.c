@@ -108,6 +108,38 @@ static char *m_onlyone = N_("Already only one window");
 /// autocommands mess up the window structure.
 static int split_disallowed = 0;
 
+/// When non-zero closing a window is forbidden.  Used to avoid that nasty
+/// autocommands mess up the window structure.
+static int close_disallowed = 0;
+
+/// Disallow changing the window layout (split window, close window, move
+/// window).  Resizing is still allowed.
+/// Used for autocommands that temporarily use another window and need to
+/// make sure the previously selected window is still there.
+/// Must be matched with exactly one call to window_layout_unlock()!
+static void window_layout_lock(void)
+{
+  split_disallowed++;
+  close_disallowed++;
+}
+
+static void window_layout_unlock(void)
+{
+  split_disallowed--;
+  close_disallowed--;
+}
+
+/// When the window layout cannot be changed give an error and return true.
+bool window_layout_locked(void)
+{
+  // if (split_disallowed > 0 || close_disallowed > 0) {
+  if (close_disallowed > 0) {
+    emsg(_(e_not_allowed_to_change_window_layout_in_this_autocmd));
+    return true;
+  }
+  return false;
+}
+
 // #define WIN_DEBUG
 #ifdef WIN_DEBUG
 /// Call this method to log the current window layout.
@@ -2739,6 +2771,9 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_cannot_close_last_window));
     return FAIL;
   }
+  if (!win->w_floating && window_layout_locked()) {
+    return FAIL;
+  }
 
   if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
@@ -4313,6 +4348,9 @@ int win_new_tabpage(int after, char *filename)
 
   if (cmdwin_type != 0) {
     emsg(_(e_cmdwin));
+    return FAIL;
+  }
+  if (window_layout_locked()) {
     return FAIL;
   }
 

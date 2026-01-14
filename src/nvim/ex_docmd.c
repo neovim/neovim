@@ -5033,6 +5033,9 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
     emsg(_(e_autocmd_close));
     return;
   }
+  if (!win->w_floating && window_layout_locked()) {
+    return;
+  }
 
   buf_T *buf = win->w_buffer;
 
@@ -5074,6 +5077,10 @@ static void ex_tabclose(exarg_T *eap)
     return;
   }
 
+  if (window_layout_locked()) {
+    return;
+  }
+
   int tab_number = get_tabpage_arg(eap);
   if (eap->errmsg != NULL) {
     return;
@@ -5102,6 +5109,10 @@ static void ex_tabonly(exarg_T *eap)
 
   if (first_tabpage->tp_next == NULL) {
     msg(_("Already only one tab page"), 0);
+    return;
+  }
+
+  if (window_layout_locked()) {
     return;
   }
 
@@ -5175,9 +5186,12 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 /// ":only".
 static void ex_only(exarg_T *eap)
 {
-  win_T *wp;
+  if (window_layout_locked()) {
+    return;
+  }
 
   if (eap->addr_count > 0) {
+    win_T *wp;
     linenr_T wnr = eap->line2;
     for (wp = firstwin; --wnr > 0;) {
       if (wp->w_next == NULL) {
@@ -5185,11 +5199,9 @@ static void ex_only(exarg_T *eap)
       }
       wp = wp->w_next;
     }
-  } else {
-    wp = curwin;
-  }
-  if (wp != curwin) {
-    win_goto(wp);
+    if (wp != curwin) {
+      win_goto(wp);
+    }
   }
   close_others(true, eap->forceit);
 }
@@ -5201,11 +5213,11 @@ static void ex_hide(exarg_T *eap)
     return;
   }
 
+  win_T *win = NULL;
   if (eap->addr_count == 0) {
-    win_close(curwin, false, eap->forceit);  // don't free buffer
+    win = curwin;
   } else {
     int winnr = 0;
-    win_T *win = NULL;
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       winnr++;
@@ -5217,8 +5229,13 @@ static void ex_hide(exarg_T *eap)
     if (win == NULL) {
       win = lastwin;
     }
-    win_close(win, false, eap->forceit);
   }
+
+  if (!win->w_floating && window_layout_locked()) {
+    return;
+  }
+
+  win_close(win, false, eap->forceit);  // don't free buffer
 }
 
 /// ":stop" and ":suspend": Suspend Vim.

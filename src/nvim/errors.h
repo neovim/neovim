@@ -195,6 +195,8 @@ EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));
 EXTERN const char e_missing_close_curly_str[]
 INIT(= N_("E1279: Missing '}': %s"));
+EXTERN const char e_not_allowed_to_change_window_layout_in_this_autocmd[]
+INIT(= N_("E1312: Not allowed to change the window layout in this autocmd"));
 
 EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
 
