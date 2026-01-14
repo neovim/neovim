@@ -3311,4 +3311,36 @@ func Test_diff_add_prop_in_autocmd()
   call StopVimInTerminal(buf)
 endfunc
 
+" this was causing a use-after-free by callig winframe_remove() rerursively
+func Test_diffexpr_wipe_buffers()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    def DiffFuncExpr()
+      var in: list<string> = readfile(v:fname_in)
+      var new = readfile(v:fname_new)
+      var out: string = diff(in, new)
+      writefile(split(out, "n"), v:fname_out)
+    enddef
+
+    new
+    vnew
+    set diffexpr=DiffFuncExpr()
+    wincmd l
+    new
+    cal setline(1,range(20))
+    wind difft
+    wincm w
+    hid
+    %bw!
+  END
+  call writefile(lines, 'Xtest_diffexpr_wipe', 'D')
+
+  let buf = RunVimInTerminal('Xtest_diffexpr_wipe', {})
+  call term_sendkeys(buf, ":so\<CR>")
+  call WaitForAssert({-> assert_match('4 buffers wiped out', term_getline(buf, 20))})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

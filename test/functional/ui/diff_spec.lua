@@ -3350,3 +3350,32 @@ describe("'diffanchors'", function()
     ]])
   end)
 end)
+
+-- oldtest: Test_diffexpr_wipe_buffers()
+it(':%bwipe does not crash when using diffexpr', function()
+  local screen = Screen.new(70, 20)
+  exec([[
+    func DiffFuncExpr()
+      let in = readblob(v:fname_in)
+      let new = readblob(v:fname_new)
+      let out = v:lua.vim.text.diff(in, new)
+      call writefile(split(out, "\n"), v:fname_out)
+    endfunc
+
+    new
+    vnew
+    set diffexpr=DiffFuncExpr()
+    wincmd l
+    new
+    call setline(1,range(20))
+    windo diffthis
+    wincmd w
+    hide
+    %bw!
+  ]])
+  screen:expect([[
+    ^                                                                      |
+    {1:~                                                                     }|*18
+    4 buffers wiped out                                                   |
+  ]])
+end)
