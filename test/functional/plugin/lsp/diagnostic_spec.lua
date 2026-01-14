@@ -88,20 +88,6 @@ describe('vim.lsp.diagnostic', function()
         end
         return extmarks
       end
-
-      client_id = assert(vim.lsp.start({
-        cmd_env = {
-          NVIM_LUA_NOTRACK = '1',
-        },
-        cmd = {
-          vim.v.progpath,
-          '-es',
-          '-u',
-          'NONE',
-          '--headless',
-        },
-        offset_encoding = 'utf-16',
-      }, { attach = false }))
     end)
 
     fake_uri = 'file:///fake/uri'
@@ -116,6 +102,31 @@ describe('vim.lsp.diagnostic', function()
   end)
 
   describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
+    before_each(function()
+      exec_lua(function()
+        client_id = assert(vim.lsp.start({
+          cmd_env = {
+            NVIM_LUA_NOTRACK = '1',
+          },
+          cmd = {
+            vim.v.progpath,
+            '-es',
+            '-u',
+            'NONE',
+            '--headless',
+          },
+          offset_encoding = 'utf-16',
+        }, { attach = false }))
+      end)
+    end)
+
+    after_each(function()
+      exec_lua(function()
+        vim.lsp.get_client_by_id(client_id):stop()
+        vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+      end)
+    end)
+
     it('correctly handles UTF-16 offsets', function()
       local line = 'All 💼 and no 🎉 makes Jack a dull 👦'
       local result = exec_lua(function()
@@ -129,8 +140,6 @@ describe('vim.lsp.diagnostic', function()
         }, { client_id = client_id })
 
         local diags = vim.diagnostic.get(diagnostic_bufnr)
-        vim.lsp.get_client_by_id(client_id):stop()
-        vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
         return diags
       end)
       eq(1, #result)
@@ -255,7 +264,7 @@ describe('vim.lsp.diagnostic', function()
           return extmarks
         end
 
-        client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }))
       end)
     end)
 
@@ -374,7 +383,7 @@ describe('vim.lsp.diagnostic', function()
 
     it('keeps diagnostics when one client detaches and others still are attached', function()
       exec_lua(function()
-        _G.client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server.cmd })
+        _G.client_id2 = assert(vim.lsp.start({ name = 'dummy2', cmd = _G.server.cmd }))
 
         vim.lsp.diagnostic.on_diagnostic(nil, {
           kind = 'full',
@@ -632,7 +641,7 @@ describe('vim.lsp.diagnostic', function()
             end,
           },
         })
-        client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }))
       end)
 
       local diags = exec_lua(function()
@@ -694,7 +703,7 @@ describe('vim.lsp.diagnostic', function()
             end,
           },
         })
-        client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }))
       end)
 
       eq(
