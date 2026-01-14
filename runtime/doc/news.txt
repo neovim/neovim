@@ -529,6 +529,9 @@ These existing features changed their behavior.
 • |undo| no longer restores the old (wrong) position of a mark that you moved
   (|m|, |:mark|) later. The mark shifts with the text it was moved to, the
   same as a mark the change never touched.
+• |:helptags| finds help tags with the "vimdoc" |treesitter| parser, and
+  `:helptags ALL` reports |E152| for "doc" directories it cannot write,
+  instead of silently skipping them.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
