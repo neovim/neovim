@@ -6,6 +6,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/types_defs.h"
 
 #include "auevents_enum.generated.h"
 
@@ -32,6 +33,8 @@ typedef struct {
   int patlen;               ///< strlen() of pat
   int buflocal_nr;          ///< !=0 for buffer-local AutoPat
   char allow_dirs;          ///< Pattern may match whole path
+  char is_glob;            ///< 1 = glob pattern, 0 = regex pattern
+  LuaRef glob_lpeg_ref;    ///< Lua reference to LPeg pattern for glob matching
 } AutoPat;
 
 typedef struct {

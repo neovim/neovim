@@ -597,6 +597,52 @@ LuaRef nlua_get_empty_dict_ref(lua_State *lstate)
   return ref_state->empty_dict_ref;
 }
 
+LuaRef nlua_compile_glob(lua_State *lstate, const char *glob_pattern)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "glob");
+  lua_getfield(lstate, -1, "to_lpeg");
+  lua_pushstring(lstate, glob_pattern);
+
+  if (nlua_pcall(lstate, 1, 1)) {
+    nlua_error(lstate, _("E5108: Lua: %.*s"));
+    lua_pop(lstate, 2);
+    return LUA_NOREF;
+  }
+
+  LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
+
+  lua_pop(lstate, 2);
+
+  return ref;
+}
+
+bool nlua_match_glob(lua_State *lstate, LuaRef glob_ref, const char *filename)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (glob_ref == LUA_NOREF) {
+    return false;
+  }
+
+  lua_rawgeti(lstate, LUA_REGISTRYINDEX, glob_ref);
+
+  lua_getfield(lstate, -1, "match");
+  lua_pushvalue(lstate, -2);
+  lua_pushstring(lstate, filename);
+
+  if (nlua_pcall(lstate, 2, 1)) {
+    nlua_error(lstate, _("E5108: Lua: %.*s"));
+    lua_pop(lstate, 1);
+    return false;
+  }
+
+  bool matches = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 2);
+
+  return matches;
+}
+
 int nlua_get_global_ref_count(void)
 {
   return nlua_global_refs->ref_count;

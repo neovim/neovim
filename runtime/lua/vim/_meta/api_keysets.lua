@@ -231,7 +231,7 @@ error('Cannot require a meta file')
 --- @field group? integer|string
 --- @field nested? boolean
 --- @field once? boolean
---- @field pattern? string|string[]
+--- @field pattern? string|string[]|vim.api.keyset.glob_pattern
 
 --- @class vim.api.keyset.echo_opts
 --- @field err? boolean
@@ -293,6 +293,9 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.get_ns
 --- @field winid? integer
+
+--- @class vim.api.keyset.glob_pattern
+--- @field glob? string
 
 --- @class vim.api.keyset.highlight
 --- @field bold? boolean

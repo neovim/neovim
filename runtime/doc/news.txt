@@ -235,6 +235,8 @@ EVENTS
   support implicit marks like |'[| or |'<|, …).
 • |TabClosedPre| is triggered before closing a |tabpage|.
 • New `terminator` parameter for |TermRequest| event.
+• Autocommand patterns may be given as a table with a `glob` key, matching
+  LSP glob patterns
 
 HIGHLIGHTS
 

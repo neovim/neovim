@@ -298,6 +298,9 @@ static void aucmd_del(AutoCmd *ac)
   if (ac->pat != NULL && --ac->pat->refcount == 0) {
     XFREE_CLEAR(ac->pat->pat);
     vim_regfree(ac->pat->reg_prog);
+    if (ac->pat->is_glob && ac->pat->glob_lpeg_ref != LUA_NOREF) {
+      api_free_luaref(ac->pat->glob_lpeg_ref);
+    }
     xfree(ac->pat);
   }
   ac->pat = NULL;
@@ -962,7 +965,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
 
     if (is_adding_cmd) {
       Callback handler_fn = CALLBACK_INIT;
-      autocmd_register(0, event, pat, patlen, group, once, nested, NULL, cmd, &handler_fn);
+      autocmd_register(0, event, pat, patlen, group, once, nested, NULL, cmd, &handler_fn, false);
     }
 
     patlen = (int)aucmd_span_pattern(endpat, &pat);
@@ -978,7 +981,8 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
 /// @param handler_cmd Handler Ex command, or NULL if handler is a function (`handler_fn`).
 /// @param handler_fn Handler function, ignored if `handler_cmd` is not NULL.
 int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int group, bool once,
-                     bool nested, char *desc, const char *handler_cmd, Callback *handler_fn)
+                     bool nested, char *desc, const char *handler_cmd, Callback *handler_fn,
+                     bool is_glob)
 {
   // 0 is not a valid group.
   assert(group != 0);
@@ -1033,8 +1037,26 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
     if (is_buflocal) {
       ap->buflocal_nr = buflocal_nr;
       ap->reg_prog = NULL;
+      ap->is_glob = 0;
+      ap->glob_lpeg_ref = LUA_NOREF;
+    } else if (is_glob) {
+      ap->buflocal_nr = 0;
+      ap->is_glob = 1;
+      ap->allow_dirs = 1;
+
+      lua_State *lstate = get_global_lstate();
+      ap->glob_lpeg_ref = nlua_compile_glob(lstate, pat);
+
+      if (ap->glob_lpeg_ref == LUA_NOREF) {
+        xfree(ap);
+        return FAIL;
+      }
+
+      ap->reg_prog = NULL;
     } else {
       ap->buflocal_nr = 0;
+      ap->is_glob = 0;
+      ap->glob_lpeg_ref = LUA_NOREF;
       char *reg_pat = file_pat_to_reg_pat(pat, pat + patlen, &ap->allow_dirs, true);
       if (reg_pat != NULL) {
         ap->reg_prog = vim_regcomp(reg_pat, RE_MAGIC);
@@ -2086,7 +2108,10 @@ static void aucmd_next(AutoPatCmd *apc)
       }
       // Skip autocommands that don't match the pattern or buffer number.
       if (ap->buflocal_nr == 0
-          ? !match_file_pat(NULL, &ap->reg_prog, apc->fname, apc->sfname, apc->tail, ap->allow_dirs)
+          ? (ap->is_glob
+             ? !nlua_match_glob(get_global_lstate(), ap->glob_lpeg_ref, apc->fname)
+             : !match_file_pat(NULL, &ap->reg_prog, apc->fname, apc->sfname, apc->tail,
+                               ap->allow_dirs))
           : ap->buflocal_nr != apc->arg_bufnr) {
         continue;
       }
