@@ -368,19 +368,26 @@ static void flush_stream(Proc *proc, RStream *stream)
     return;
   }
 
-  // Maximal remaining data size of terminated process is system
-  // buffer size.
-  // Also helps with a child process that keeps the output streams open. If it
-  // keeps sending data, we only accept as much data as the system buffer size.
-  // Otherwise this would block cleanup/teardown.
-  int system_buffer_size = 0;
-  int err = uv_recv_buffer_size((uv_handle_t *)&stream->s.uv.pipe,
-                                &system_buffer_size);
-  if (err) {
-    system_buffer_size = ARENA_BLOCK_SIZE;
+  size_t max_bytes = SIZE_MAX;
+#ifdef MSWIN
+  if (true) {
+#else
+  // Don't limit remaining data size of PTY master unless when tearing down, as it may
+  // have more remaining data than system buffer size (at least on Linux). #3030
+  if (proc->type != kProcTypePty || proc_is_tearing_down) {
+#endif
+    // Maximal remaining data size of terminated process is system buffer size.
+    // Also helps with a child process that keeps the output streams open. If it
+    // keeps sending data, we only accept as much data as the system buffer size.
+    // Otherwise this would block cleanup/teardown.
+    int system_buffer_size = 0;
+    // All members of the stream->s.uv union share the same address.
+    int err = uv_recv_buffer_size((uv_handle_t *)&stream->s.uv, &system_buffer_size);
+    if (err != 0) {
+      system_buffer_size = ARENA_BLOCK_SIZE;
+    }
+    max_bytes = stream->num_bytes + (size_t)system_buffer_size;
   }
-
-  size_t max_bytes = stream->num_bytes + (size_t)system_buffer_size;
 
   // Read remaining data.
   while (!stream->s.closed && stream->num_bytes < max_bytes) {

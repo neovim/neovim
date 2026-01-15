@@ -758,6 +758,25 @@ describe(':terminal buffer', function()
     ]])
   end)
 
+  it('does not drop data when job exits immediately after output #3030', function()
+    local screen = Screen.new(50, 7)
+    api.nvim_create_autocmd('TermClose', { command = 'let g:did_termclose = 1' })
+    fn.jobstart({ testprg('shell-test'), 'REPFAST', '20000', 'TEST' }, { term = true })
+    retry(nil, nil, function()
+      eq(1, api.nvim_get_var('did_termclose'))
+    end)
+    feed('i')
+    screen:expect([[
+      19996: TEST                                       |
+      19997: TEST                                       |
+      19998: TEST                                       |
+      19999: TEST                                       |
+                                                        |
+      [Process exited 0]^                                |
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('handles unprintable chars', function()
     local screen = Screen.new(50, 7)
     feed 'i'
