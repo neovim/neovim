@@ -286,7 +286,9 @@ describe('jobs', function()
   end)
 
   it('error on non-executable `cwd`', function()
-    skip(is_os('win'), 'Not applicable for Windows')
+    if is_os('win') then
+      return -- Not applicable for Windows.
+    end
 
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
@@ -1341,9 +1343,10 @@ describe('jobs', function()
   end)
 
   it('uses real pipes for stdin/stdout #35984', function()
-    if skip(is_os('win'), 'Not applicable for Windows') then
-      return
+    if is_os('win') then
+      return -- Not applicable for Windows.
     end
+
     -- this fails on linux if we used socketpair() for stdin and stdout,
     -- which libuv does if you ask to create stdio streams for you
     local val = exec_lua(function()
