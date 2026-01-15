@@ -458,6 +458,9 @@ void flush_buffers(flush_buffers_T flush_typeahead)
       typebuf.tb_off += typebuf.tb_maplen;
       typebuf.tb_len -= typebuf.tb_maplen;
     }
+    if (typebuf.tb_len == 0) {
+      typebuf_was_filled = false;
+    }
   } else {
     // remove typeahead
     if (flush_typeahead == FLUSH_INPUT) {
@@ -1300,6 +1303,7 @@ static void alloc_typebuf(void)
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
   }
+  typebuf_was_filled = false;
 }
 
 /// Free the buffers of "typebuf".
