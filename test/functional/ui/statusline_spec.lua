@@ -99,6 +99,47 @@ for _, model in ipairs(mousemodels) do
       eq('0 1 l', eval('g:testvar'))
     end)
 
+    it('works with combined highlight attributes', function()
+      screen:add_extra_attr_ids({
+        [131] = { reverse = true, bold = true, background = Screen.colors.LightMagenta },
+        [132] = {
+          reverse = true,
+          foreground = Screen.colors.Magenta,
+          bold = true,
+          background = Screen.colors.LightMagenta,
+        },
+        [133] = { reverse = true, bold = true, foreground = Screen.colors.Magenta1 },
+        [134] = {
+          bold = true,
+          background = Screen.colors.LightMagenta,
+          reverse = true,
+          undercurl = true,
+          special = Screen.colors.Red,
+        },
+        [135] = {
+          bold = true,
+          background = Screen.colors.LightMagenta,
+          reverse = true,
+          undercurl = true,
+          foreground = Screen.colors.Fuchsia,
+          special = Screen.colors.Red,
+        },
+      })
+
+      api.nvim_set_option_value(
+        'statusline',
+        '\t%#Pmenu#foo%$SpellBad$bar%$String$baz%#Constant#qux',
+        {}
+      )
+
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|*5
+        {3:^I}{131:foo}{134:bar}{135:baz}{133:qux                          }|
+                                                |
+      ]])
+    end)
+
     it('works for winbar', function()
       api.nvim_set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
       api.nvim_input_mouse('left', 'press', '', 0, 0, 17)
