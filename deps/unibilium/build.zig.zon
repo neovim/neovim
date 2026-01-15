@@ -7,6 +7,7 @@
         .unibilium = .{
             .url = "git+https://github.com/neovim/unibilium?ref=v2.1.2#bfcb0350129dd76893bc90399cf37c45812268a2",
             .hash = "N-V-__8AADO1CgCggvx73yptnBlXbEm7TjOSO6VGIqc0CvYR",
+            .lazy = true,
         },
     },
 }
