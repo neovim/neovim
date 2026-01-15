@@ -3754,6 +3754,7 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
           *allow_dirs = true;
         }
         reg_pat[i++] = '\\';
+        reg_pat[i++] = *p;
       }
       break;
 #ifdef BACKSLASH_IN_FILENAME
