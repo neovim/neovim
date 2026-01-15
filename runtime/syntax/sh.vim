@@ -19,6 +19,7 @@
 "		2025 Jul 18 properly delete :commands #17785
 "		2025 Aug 23 bash: add support for ${ cmd;} and ${|cmd;} #18084
 "		2025 Sep 23 simplify ksh logic, update sh statements #18355
+"		2026 Jan 15 highlight command switches that contain a digit
 " }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
@@ -345,7 +346,7 @@ endif
 
 " Options: {{{1
 " ====================
-syn match   shOption	"\s\zs[-+][-_a-zA-Z#@]\+"
+syn match   shOption	"\s\zs[-+][-_a-zA-Z#@0-9]\+"
 syn match   shOption	"\s\zs--[^ \t$=`'"|);]\+"
 
 " File Redirection Highlighted As Operators: {{{1
