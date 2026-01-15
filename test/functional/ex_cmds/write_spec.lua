@@ -188,7 +188,7 @@ describe(':write', function()
     -- the file during conversion testing can overwrite the rest of the file during the real
     -- conversion.
 
-    api.nvim_buf_set_lines(0, 0, 1, true, { 'line 1', 'line 2', 'aaabbb\xEB\x80' })
+    api.nvim_buf_set_lines(0, 0, 1, true, { 'line 1', 'line 2', 'aaabbb\235\128' })
     command('set noendofline nofixendofline')
 
     eq(
@@ -202,7 +202,7 @@ describe(':write', function()
     -- right at the end of the 8 KiB buffer used for encoding conversions causes subsequent data to
     -- be overwritten.
 
-    local content = string.rep('a', 1024 * 8 - 1) .. '\xFB' .. string.rep('b', 20)
+    local content = string.rep('a', 1024 * 8 - 1) .. '\251' .. string.rep('b', 20)
     api.nvim_buf_set_lines(0, 0, 1, true, { content })
     command('set noendofline nofixendofline fenc=latin1')
     command('write ' .. fname)
@@ -212,52 +212,52 @@ describe(':write', function()
   end)
 
   it('converts to CP1251 with iconv', function()
-    api.nvim_buf_set_lines(0, 0, 1, true, {
-      '\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82, \xd0\xbc\xd0\xb8\xd1\x80!',
-      '\xd0\xad\xd1\x82\xd0\xbe \xd0\xbf\xd1\x80\xd0\xbe\xd1\x81\xd1\x82\xd0\xbe\xd0\xb9'
-        .. ' \xd1\x82\xd0\xb5\xd1\x81\xd1\x82.',
-    })
-    command('write ++enc=cp1251 ' .. fname)
+    api.nvim_buf_set_lines(
+      0,
+      0,
+      1,
+      true,
+      { 'Привет, мир!', 'Это простой тест.' }
+    )
+    command('write ++enc=cp1251 ++ff=unix ' .. fname)
 
     eq(
-      '\xcf\xf0\xe8\xe2\xe5\xf2, \xec\xe8\xf0!\n'
-        .. '\xdd\xf2\xee \xef\xf0\xee\xf1\xf2\xee\xe9 \xf2\xe5\xf1\xf2.\n',
+      '\207\240\232\226\229\242, \236\232\240!\n'
+        .. '\221\242\238 \239\240\238\241\242\238\233 \242\229\241\242.\n',
       read_file(fname)
     )
   end)
 
   it('converts to GB18030 with iconv', function()
-    api.nvim_buf_set_lines(0, 0, 1, true, {
-      '\xe4\xbd\xa0\xe5\xa5\xbd\xef\xbc\x8c\xe4\xb8\x96\xe7\x95\x8c\xef\xbc\x81',
-      '\xe8\xbf\x99\xe6\x98\xaf\xe4\xb8\x80\xe4\xb8\xaa\xe6\xb5\x8b\xe8\xaf\x95\xe3\x80\x82',
-    })
-    command('write ++enc=gb18030 ' .. fname)
+    api.nvim_buf_set_lines(0, 0, 1, true, { '你好，世界！', '这是一个测试。' })
+    command('write ++enc=gb18030 ++ff=unix ' .. fname)
 
     eq(
-      '\xc4\xe3\xba\xc3\xa3\xac\xca\xc0\xbd\xe7\xa3\xa1\n'
-        .. '\xd5\xe2\xca\xc7\xd2\xbb\xb8\xf6\xb2\xe2\xca\xd4\xa1\xa3\n',
+      '\196\227\186\195\163\172\202\192\189\231\163\161\n'
+        .. '\213\226\202\199\210\187\184\246\178\226\202\212\161\163\n',
       read_file(fname)
     )
   end)
 
   it('converts to Shift_JIS with iconv', function()
-    api.nvim_buf_set_lines(0, 0, 1, true, {
-      '\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3\x80'
-        .. '\x81\xe4\xb8\x96\xe7\x95\x8c\xef\xbc\x81',
-      '\xe3\x81\x93\xe3\x82\x8c\xe3\x81\xaf\xe3\x83\x86\xe3\x82\xb9\xe3\x83'
-        .. '\x88\xe3\x81\xa7\xe3\x81\x99\xe3\x80\x82',
-    })
-    command('write ++enc=sjis ' .. fname)
+    api.nvim_buf_set_lines(
+      0,
+      0,
+      1,
+      true,
+      { 'こんにちは、世界！', 'これはテストです。' }
+    )
+    command('write ++enc=sjis ++ff=unix ' .. fname)
 
     eq(
-      '\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81A\x90\xa2\x8aE\x81I\n'
-        .. '\x82\xb1\x82\xea\x82\xcd\x83e\x83X\x83g\x82\xc5\x82\xb7\x81B\n',
+      '\130\177\130\241\130\201\130\191\130\205\129A\144\162\138E\129I\n'
+        .. '\130\177\130\234\130\205\131e\131X\131g\130\197\130\183\129B\n',
       read_file(fname)
     )
   end)
 
   it('fails converting an illegal sequence with iconv', function()
-    api.nvim_buf_set_lines(0, 0, 1, true, { 'line 1', 'aaa\x80bbb' })
+    api.nvim_buf_set_lines(0, 0, 1, true, { 'line 1', 'aaa\128bbb' })
 
     -- iconv should fail with EILSEQ
     eq(
@@ -268,11 +268,11 @@ describe(':write', function()
 
   -- iconv fails with EINVAL but succeeds on subsequent call
   it('handles a multi-byte sequence crossing the buffer boundary converting with iconv', function()
-    local content = string.rep('a', 1024 * 8 - 1) .. '\xd0\x94bbbbb'
+    local content = string.rep('a', 1024 * 8 - 1) .. 'Дbbbbb'
     api.nvim_buf_set_lines(0, 0, 1, true, { content })
-    command('write ++enc=cp1251 ' .. fname)
+    command('write ++enc=cp1251 ++ff=unix ' .. fname)
 
-    local expected = string.rep('a', 1024 * 8 - 1) .. '\xc4bbbbb\n'
+    local expected = string.rep('a', 1024 * 8 - 1) .. '\196bbbbb\n'
     eq(expected, read_file(fname))
   end)
 end)
