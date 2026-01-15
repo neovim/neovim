@@ -113,7 +113,7 @@ local function schedule_foldupdate(bufnr)
   if not scheduled_foldupdate[bufnr] then
     scheduled_foldupdate[bufnr] = true
     api.nvim_create_autocmd('InsertLeave', {
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         foldupdate(bufnr)
@@ -230,7 +230,7 @@ function State:new(bufnr)
   })
   api.nvim_create_autocmd('LspNotify', {
     group = self.augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(args)
       local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
       if
