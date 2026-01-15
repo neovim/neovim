@@ -560,6 +560,8 @@ func Test_dict_literal_keys()
   " why *{} cannot be used for a literal dictionary
   let blue = 'blue'
   call assert_equal('6', trim(execute('echo 2 *{blue: 3}.blue')))
+
+  call assert_fails('eval 1 || #{a:', 'E15:') " used to leak
 endfunc
 
 " Nasty: deepcopy() dict that refers to itself (fails when noref used)
