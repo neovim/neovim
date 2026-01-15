@@ -801,12 +801,16 @@ enable({enable}, {filter})                           *vim.diagnostic.enable()*
                   • {bufnr}? (`integer`) Buffer number, or 0 for current
                     buffer, or `nil` for all buffers.
 
-fromqflist({list})                               *vim.diagnostic.fromqflist()*
+fromqflist({list}, {opts})                       *vim.diagnostic.fromqflist()*
     Convert a list of quickfix items to a list of diagnostics.
 
     Parameters: ~
-      • {list}  (`table[]`) List of quickfix items from |getqflist()| or
-                |getloclist()|.
+      • {list}  (`vim.quickfix.entry[]`) List of quickfix items from
+                |getqflist()| or |getloclist()|.
+      • {opts}  (`table?`) Configuration table with the following keys:
+                • {merge_continuation_lines}? (`boolean`) When true, items
+                  with valid=0 are appended to the previous valid item's
+                  message with a newline. (default: false)
 
     Return: ~
         (`vim.Diagnostic[]`) See |vim.Diagnostic|.

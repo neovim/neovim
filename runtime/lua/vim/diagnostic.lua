@@ -2895,12 +2895,18 @@ function M.toqflist(diagnostics)
   return list
 end
 
+--- Configuration table with the following keys:
+--- @class vim.diagnostic.fromqflist.Opts
+--- @inlinedoc
+---
+--- When true, items with valid=0 are appended to the previous valid item's
+--- message with a newline. (default: false)
+--- @field merge_continuation_lines? boolean
+
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
----@param list table[] List of quickfix items from |getqflist()| or |getloclist()|.
----@param opts? {merge_continuation_lines?: boolean} Options table.
----             - merge_continuation_lines: (boolean) When true, items with valid=0
----               are appended to the previous valid item's message. Default: false.
+---@param list vim.quickfix.entry[] List of quickfix items from |getqflist()| or |getloclist()|.
+---@param opts? vim.diagnostic.fromqflist.Opts
 ---@return vim.Diagnostic[]
 function M.fromqflist(list, opts)
   vim.validate('list', list, 'table')
