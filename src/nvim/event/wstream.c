@@ -23,14 +23,14 @@ typedef struct {
 void wstream_init_fd(Loop *loop, Stream *stream, int fd, size_t maxmem)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
-  stream_init(loop, stream, fd, NULL);
+  stream_init(loop, stream, fd, false, NULL);
   wstream_init(stream, maxmem);
 }
 
 void wstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t maxmem)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
-  stream_init(NULL, stream, -1, uvstream);
+  stream_init(NULL, stream, -1, false, uvstream);
   wstream_init(stream, maxmem);
 }
 
@@ -68,6 +68,7 @@ bool wstream_write(Stream *stream, WBuffer *buffer)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(stream->maxmem);
+  assert(!stream->use_poll);
   // This should not be called after a stream was freed
   assert(!stream->closed);
 

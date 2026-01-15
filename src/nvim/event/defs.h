@@ -78,12 +78,15 @@ typedef void (*stream_close_cb)(Stream *stream, void *data);
 
 struct stream {
   bool closed;
+  bool use_poll;
   union {
     uv_pipe_t pipe;
     uv_tcp_t tcp;
     uv_idle_t idle;
 #ifdef MSWIN
     uv_tty_t tty;
+#else
+    uv_poll_t poll;
 #endif
   } uv;
   uv_stream_t *uvstream;  ///< NULL when the stream is a file

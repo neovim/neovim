@@ -40,11 +40,14 @@ int stream_set_blocking(int fd, bool blocking)
   return retval;
 }
 
-void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
+void stream_init(Loop *loop, Stream *stream, int fd, bool poll, uv_stream_t *uvstream)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   // The underlying stream is either a file or an existing uv stream.
-  assert(uvstream == NULL ? fd >= 0 && loop != NULL : fd < 0 && loop == NULL);
+  assert(uvstream == NULL ? fd >= 0 && loop != NULL : fd < 0 && loop == NULL && !poll);
+#ifdef MSWIN
+  assert(!poll);
+#endif
   stream->uvstream = uvstream;
 
   if (fd >= 0) {
@@ -52,6 +55,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
     stream->fd = fd;
 
     if (type == UV_FILE) {
+      assert(!poll);
       // Non-blocking file reads are simulated with an idle handle that reads in
       // chunks of the ring buffer size, giving time for other events to be
       // processed between reads.
@@ -67,6 +71,11 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
         SetConsoleMode(stream->uv.tty.handle, dwMode);
       }
       stream->uvstream = (uv_stream_t *)&stream->uv.tty;
+#else
+    } else if (poll) {
+      uv_poll_init(&loop->uv, &stream->uv.poll, fd);
+      stream->uv.poll.data = stream;
+      stream->use_poll = true;
 #endif
     } else {
       assert(type == UV_NAMED_PIPE || type == UV_TTY);
@@ -125,7 +134,8 @@ void stream_close_handle(Stream *stream)
     }
     handle = (uv_handle_t *)stream->uvstream;
   } else {
-    handle = (uv_handle_t *)&stream->uv.idle;
+    // All members of the stream->uv union share the same address.
+    handle = (uv_handle_t *)&stream->uv;
   }
 
   assert(handle != NULL);
