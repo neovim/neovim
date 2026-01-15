@@ -239,7 +239,7 @@ int socket_watcher_accept(SocketWatcher *watcher, RStream *stream)
     return result;
   }
 
-  stream_init(NULL, &stream->s, -1, false, client);
+  stream_init(NULL, &stream->s, -1, client);
   return 0;
 }
 
@@ -332,7 +332,7 @@ tcp_retry:
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
   if (status == 0) {
-    stream_init(NULL, &stream->s, -1, false, uv_stream);
+    stream_init(NULL, &stream->s, -1, uv_stream);
     assert(uv_stream->data != &closed);  // Should have been set by stream_init().
     success = true;
   } else {
