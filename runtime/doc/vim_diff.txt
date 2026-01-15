@@ -162,6 +162,7 @@ you never want any default mappings, call |:mapclear| early in your config.
 - |[a| |]a| |[A| |]A|
 - |[b| |]b| |[B| |]B|
 - |[<Space>| |]<Space>|
+- |[p| |]p| |[P| |]P|
 - LSP defaults |lsp-defaults|
   - K |K-lsp-default|
   - |v_an| |v_in|

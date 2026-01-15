@@ -187,6 +187,7 @@ DEFAULTS
   Unset 'exrc' to stop further search.
 • Mappings:
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
+  • |[p|, |]p|, |[P|, |]P| paste linewise with indent adjustment
 
 DIAGNOSTICS
 

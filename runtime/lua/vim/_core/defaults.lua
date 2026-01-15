@@ -451,6 +451,31 @@ do
       vim.go.operatorfunc = "v:lua.require'vim._core.util'.space_below"
       return 'g@l'
     end, { expr = true, desc = 'Add empty line below cursor' })
+
+    -- Linewise paste
+    vim.keymap.set('n', '[p', function()
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._core.util'.put_above_linewise"
+      return 'g@l'
+    end, { expr = true, desc = 'Paste linewise above with indent adjustment' })
+
+    vim.keymap.set('n', ']p', function()
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._core.util'.put_below_linewise"
+      return 'g@l'
+    end, { expr = true, desc = 'Paste linewise below with indent adjustment' })
+
+    vim.keymap.set('n', '[P', function()
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._core.util'.put_above_linewise"
+      return 'g@l'
+    end, { expr = true, desc = 'Paste linewise above with indent adjustment' })
+
+    vim.keymap.set('n', ']P', function()
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._core.util'.put_below_linewise"
+      return 'g@l'
+    end, { expr = true, desc = 'Paste linewise below with indent adjustment' })
   end
 end
 

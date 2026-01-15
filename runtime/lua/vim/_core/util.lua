@@ -22,6 +22,47 @@ function M.space_below()
   add_blank()
 end
 
+--- Paste register content as linewise above or below the cursor.
+-- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
+--- @param above? boolean Paste above the cursor (default: below)
+local function put_linewise(above)
+  local reg = vim.v.register
+  local regcontents = vim.fn.getreg(reg)
+  if regcontents == '' then
+    return
+  end
+
+  local regtype = vim.fn.getregtype(reg)
+  local count = vim.v.count1
+  local put_cmd = above and '[p' or ']p'
+
+  -- Read-only registers (%, #, :, .) cannot be modified with setreg
+  local readonly_regs = { ['%'] = true, ['#'] = true, [':'] = true, ['.'] = true }
+  if readonly_regs[reg] then
+    local saved_unnamed = vim.fn.getreg('"')
+    local saved_unnamed_type = vim.fn.getregtype('"')
+    vim.fn.setreg('"', regcontents, 'V')
+    vim.cmd.normal({ bang = true, args = { count .. put_cmd } })
+    vim.fn.setreg('"', saved_unnamed, saved_unnamed_type)
+  elseif regtype ~= 'V' then
+    vim.fn.setreg(reg, regcontents, 'V')
+    vim.cmd.normal({ bang = true, args = { '"' .. reg .. count .. put_cmd } })
+    vim.fn.setreg(reg, regcontents, regtype)
+  else
+    vim.cmd.normal({ bang = true, args = { '"' .. reg .. count .. put_cmd } })
+  end
+end
+
+-- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
+function M.put_above_linewise()
+  put_linewise(true)
+end
+
+-- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
+function M.put_below_linewise()
+  put_linewise(false)
+end
+
 --- Edit a file in a specific window
 --- @param winnr number
 --- @param file string

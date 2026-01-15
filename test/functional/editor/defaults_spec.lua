@@ -342,6 +342,87 @@ describe('default', function()
           ]])
         end)
       end)
+
+      describe('[p', function()
+        it('pastes characterwise yank as linewise above', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'hello world' })
+          n.feed('wyw') -- yank "world" characterwise
+          n.feed('[p')
+          n.expect([[
+          world
+          hello world]])
+        end)
+
+        it('works with a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'test' })
+          n.feed('yy') -- yank linewise
+          n.feed('2[p')
+          n.expect([[
+          test
+          test
+          test]])
+        end)
+
+        it('supports dot repetition', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'line' })
+          n.feed('yy')
+          n.feed('[p')
+          n.feed('.')
+          n.expect([[
+          line
+          line
+          line]])
+        end)
+
+        it('works with named registers', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'content' })
+          n.feed('"ayy') -- yank to register a
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'other' })
+          n.feed('"a[p')
+          n.expect([[
+          content
+          other]])
+        end)
+      end)
+
+      describe(']p', function()
+        it('pastes characterwise yank as linewise below', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'hello world' })
+          n.feed('wyw') -- yank "world" characterwise
+          n.feed(']p')
+          n.expect([[
+          hello world
+          world]])
+        end)
+
+        it('works with a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'test' })
+          n.feed('yy')
+          n.feed('2]p')
+          n.expect([[
+          test
+          test
+          test]])
+        end)
+
+        it('supports dot repetition', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.api.nvim_buf_set_lines(0, 0, -1, true, { 'line' })
+          n.feed('yy')
+          n.feed(']p')
+          n.feed('.')
+          n.expect([[
+          line
+          line
+          line]])
+        end)
+      end)
     end)
   end)
 end)
