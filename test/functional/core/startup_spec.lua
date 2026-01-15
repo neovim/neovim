@@ -1192,6 +1192,22 @@ describe('sysinit', function()
       eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))')
     )
   end)
+
+  it('respects NVIM_APPNAME in XDG_CONFIG_DIRS', function()
+    local appname = 'mysysinitapp'
+    mkdir(xdgdir .. pathsep .. appname)
+    write_file(
+      table.concat({ xdgdir, appname, 'sysinit.vim' }, pathsep),
+      [[let g:appname_sysinit = 1]]
+    )
+    clear {
+      args_rm = { '-u' },
+      env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
+    }
+    eq(1, eval('g:appname_sysinit'))
+    -- Should not load from nvim/ subdir (which has the default sysinit.vim from before_each)
+    eq(0, eval('get(g:, "xdg", 0)'))
+  end)
 end)
 
 describe('user config init', function()
@@ -1471,6 +1487,29 @@ describe('user config init', function()
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
       }
       eq(1, eval('g:xdg_vim'))
+    end)
+
+    it('respects NVIM_APPNAME', function()
+      local appname = 'mytestapp'
+      mkdir_p(xdgdir .. pathsep .. appname)
+      -- Also create nvim/ with a config that should NOT be loaded
+      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.wrong = 1]])
+      write_file(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), [[vim.g.appname_lua = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = {
+          XDG_CONFIG_HOME = xconfig,
+          XDG_DATA_HOME = xdata,
+          XDG_CONFIG_DIRS = xdgdir,
+          NVIM_APPNAME = appname,
+        },
+      }
+      eq(1, eval('g:appname_lua'))
+      eq(0, eval('get(g:, "wrong", 0)'))
+      eq(
+        fn.fnamemodify(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), ':p'),
+        eval('$MYVIMRC')
+      )
     end)
   end)
 end)
