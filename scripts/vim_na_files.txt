@@ -83,6 +83,7 @@ src/terminal.c
 src/termlib.c
 src/testdir/Make_amiga.mak
 src/testdir/Make_dos.mak
+src/testdir/crash/heap_overflow3
 src/testdir/keycode_check.vim
 src/testdir/lsan-suppress.txt
 src/testdir/samples/crypt_sodium_invalid.txt

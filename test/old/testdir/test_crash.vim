@@ -220,6 +220,13 @@ func Test_crash1_3()
   call term_sendkeys(buf, args)
   call TermWait(buf, 150)
 
+  let file = 'crash/heap_overflow3'
+  let cmn_args = "%s -u NONE -i NONE -n -X -m -n -e -s -S %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args)
+  call TermWait(buf, 150)
+
+
   " clean up
   exe buf .. "bw!"
   bw!
