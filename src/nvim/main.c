@@ -2027,8 +2027,8 @@ static void do_system_initialization(void)
 /// Does one of the following things, stops after whichever succeeds:
 ///
 /// 1. Execution of VIMINIT environment variable.
-/// 2. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
-/// 3. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
+/// 2. Sourcing user config file ($XDG_CONFIG_HOME/nvim/init.lua or init.vim).
+/// 3. Sourcing other config files ($XDG_CONFIG_DIRS[1]/nvim/init.lua or init.vim, …).
 /// 4. Execution of EXINIT environment variable.
 ///
 /// @return True if it is needed to attempt to source exrc file according to
@@ -2073,6 +2073,11 @@ static bool do_user_initialization(void)
 
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
+    const char vim_path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
+                                   'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
+    const char lua_path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
+                                   'i', 'n', 'i', 't', '.', 'l', 'u', 'a', NUL };
+
     const void *iter = NULL;
     do {
       const char *dir;
@@ -2081,12 +2086,34 @@ static bool do_user_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      const char path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
-                                 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+
+      // Build: <xdg_dir>/<appname>/init.lua
+      char *init_lua = xmalloc(dir_len + sizeof(lua_path_tail) + 1);
+      memmove(init_lua, dir, dir_len);
+      init_lua[dir_len] = PATHSEP;
+      memmove(init_lua + dir_len + 1, lua_path_tail, sizeof(lua_path_tail));
+
+      // Build: <xdg_dir>/<appname>/init.vim
+      char *vimrc = xmalloc(dir_len + sizeof(vim_path_tail) + 1);
       memmove(vimrc, dir, dir_len);
       vimrc[dir_len] = PATHSEP;
-      memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
+      memmove(vimrc + dir_len + 1, vim_path_tail, sizeof(vim_path_tail));
+
+      if (os_path_exists(init_lua)
+          && do_source(init_lua, true, DOSO_VIMRC, NULL)) {
+        if (os_path_exists(vimrc)) {
+          semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua, vimrc);
+        }
+
+        xfree(vimrc);
+        xfree(init_lua);
+        xfree(config_dirs);
+        do_exrc = p_exrc;
+        return do_exrc;
+      }
+      xfree(init_lua);
+
+      // init.vim
       if (do_source(vimrc, true, DOSO_VIMRC, NULL) != FAIL) {
         do_exrc = p_exrc;
         if (do_exrc) {
