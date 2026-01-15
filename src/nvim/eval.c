@@ -5233,9 +5233,7 @@ static int eval_dict(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool
 
     *arg = skipwhite(*arg + 1);
     if (eval1(arg, &tv, evalarg) == FAIL) {  // Recursive!
-      if (evaluate) {
-        tv_clear(&tvkey);
-      }
+      tv_clear(&tvkey);
       goto failret;
     }
     if (evaluate) {
