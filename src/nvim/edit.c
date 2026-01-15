@@ -1586,36 +1586,115 @@ char *prompt_text(void)
   return buf_prompt_text(curbuf);
 }
 
+/// @return  the length of the last line of a prompt (for multi-line prompts).
+static size_t prompt_last_line_len(const char *prompt)
+{
+  const char *last_nl = strrchr(prompt, '\n');
+  if (last_nl == NULL) {
+    return strlen(prompt);
+  }
+  return strlen(last_nl + 1);
+}
+
 // Prepare for prompt mode: Make sure the last line has the prompt text.
 // Move the cursor to this line.
 static void init_prompt(int cmdchar_todo)
 {
   char *prompt = prompt_text();
+  size_t prompt_last_len = prompt_last_line_len(prompt);
 
   if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
     curwin->w_cursor.lnum = curbuf->b_prompt_start.mark.lnum;
   }
-  char *text = get_cursor_line_ptr();
-  if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
-       && strncmp(text, prompt, strlen(prompt)) != 0)
-      || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
-    // prompt is missing, insert it or append a line with it
-    if (*text == NUL) {
-      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
-    } else {
-      ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
-      curbuf->b_prompt_start.mark.lnum += 1;
+
+  // Split prompt into lines and check if all match the buffer.
+  // Count total prompt lines: "line1\nline2\n" has 3 lines (line1, line2, empty).
+  int total_prompt_lines = 1;
+  for (const char *p = prompt; *p; p++) {
+    if (*p == '\n') {
+      total_prompt_lines++;
     }
+  }
+
+  // Check if prompt is present by verifying all prompt lines match buffer lines
+  bool prompt_present = false;
+  if (curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
+      && curbuf->b_prompt_start.mark.lnum >= total_prompt_lines) {
+    prompt_present = true;
+    const char *p = prompt;
+    linenr_T start_lnum = curbuf->b_prompt_start.mark.lnum - total_prompt_lines + 1;
+
+    // Check each line of the prompt
+    for (int i = 0; i < total_prompt_lines && prompt_present; i++) {
+      const char *nl = strchr(p, '\n');
+      size_t line_len = nl ? (size_t)(nl - p) : strlen(p);
+      char *buf_line = ml_get(start_lnum + i);
+
+      // For the last line (where user types), only check if it starts with the prompt.
+      // For other lines, check exact match.
+      if (i == total_prompt_lines - 1) {
+        // Last line: check if it starts with the prompt (user input comes after)
+        if (strncmp(buf_line, p, line_len) != 0) {
+          prompt_present = false;
+        }
+      } else {
+        // Not last line: must match exactly
+        if (strncmp(buf_line, p, line_len) != 0 || buf_line[line_len] != NUL) {
+          prompt_present = false;
+        }
+      }
+
+      p = nl ? nl + 1 : p + line_len;
+    }
+  }
+
+  if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum && !prompt_present)
+      || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
+    // prompt is missing, insert it or append lines with it
+    // Split multi-line prompts on '\n' and insert each line separately
+    char *prompt_copy = xstrdup(prompt);
+    char *p = prompt_copy;
+    char *next_line = NULL;
+    linenr_T start_lnum = curbuf->b_ml.ml_line_count;
+    int lines_added = 0;
+
+    while (p != NULL) {
+        next_line = strchr(p, '\n');
+        if (next_line) {
+            *next_line++ = NUL;
+        }
+        // If this is the first line and the buffer ends with an empty line,
+        // replace it otherwise, append.
+        if (lines_added == 0 && *ml_get_buf(curbuf, curbuf->b_ml.ml_line_count) == NUL) {
+            ml_replace(curbuf->b_ml.ml_line_count, p, true);
+        } else {
+            ml_append(curbuf->b_ml.ml_line_count, p, 0, false);
+            lines_added++;
+        }
+
+        p = next_line;
+    }
+
+    xfree(prompt_copy);
+
+    // Notify about the changes BEFORE updating b_prompt_start
+    if (lines_added > 0) {
+      appended_lines_mark(start_lnum, lines_added);
+    }
+
+    // Update b_prompt_start to point to the last line of the multi-line prompt
+    curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
+
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
-    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)strlen(prompt));
+    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)prompt_last_len);
   }
 
   // Insert always starts after the prompt, allow editing text after it.
   if (Insstart_orig.lnum != curbuf->b_prompt_start.mark.lnum
-      || Insstart_orig.col != (colnr_T)strlen(prompt)) {
+      || Insstart_orig.col != (colnr_T)prompt_last_len) {
     Insstart.lnum = curbuf->b_prompt_start.mark.lnum;
-    Insstart.col = (colnr_T)strlen(prompt);
+    Insstart.col = (colnr_T)prompt_last_len;
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
     Insstart_blank_vcol = MAXCOL;
@@ -1626,7 +1705,7 @@ static void init_prompt(int cmdchar_todo)
     coladvance(curwin, MAXCOL);
   }
   if (curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum) {
-    curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
+    curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)prompt_last_len);
   }
   // Make sure the cursor is in a valid position.
   check_cursor(curwin);
@@ -1638,7 +1717,7 @@ bool prompt_curpos_editable(void)
 {
   return curwin->w_cursor.lnum > curbuf->b_prompt_start.mark.lnum
          || (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum
-             && curwin->w_cursor.col >= (int)strlen(prompt_text()));
+             && curwin->w_cursor.col >= (int)prompt_last_line_len(prompt_text()));
 }
 
 // Undo the previous edit_putchar().
