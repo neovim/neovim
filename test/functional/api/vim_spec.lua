@@ -3242,6 +3242,8 @@ describe('API', function()
       api.nvim_input(':<C-r>=')
       api.nvim_input('1bork/') -- #29648
       assert_alive()
+      api.nvim_input('<C-u>];')
+      assert_alive()
       api.nvim_parse_expression('a{b}', '', false)
       assert_alive()
     end)
