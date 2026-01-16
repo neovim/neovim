@@ -38,17 +38,19 @@ ext.msg = require('vim._extui.messages')
 ext.cmd = require('vim._extui.cmdline')
 local M = {}
 
-local function ui_callback(event, ...)
+local function ui_callback(redraw_msg, event, ...)
   local handler = ext.msg[event] or ext.cmd[event]
   ext.check_targets()
   handler(...)
-  -- Cmdline mode and non-empty showcmd requires an immediate redraw.
-  if ext.cmd[event] or event == 'msg_showcmd' and select(1, ...)[1] then
+  -- Cmdline mode, non-fast message and non-empty showcmd require an immediate redraw.
+  if ext.cmd[event] or redraw_msg or (event == 'msg_showcmd' and select(1, ...)[1]) then
+    ext.redrawing = true
     api.nvim__redraw({
       flush = handler ~= ext.cmd.cmdline_hide or nil,
       cursor = handler == ext.cmd[event] and true or nil,
       win = handler == ext.cmd[event] and ext.wins.cmd or nil,
     })
+    ext.redrawing = false
   end
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
@@ -86,10 +88,11 @@ function M.enable(opts)
     if not (ext.msg[event] or ext.cmd[event]) then
       return
     end
-    if vim.in_fast_event() then
-      scheduled_ui_callback(event, ...)
+    -- Ensure cmdline is placed after a scheduled message in block mode.
+    if vim.in_fast_event() or (event == 'cmdline_show' and ext.cmd.srow > 0) then
+      scheduled_ui_callback(false, event, ...)
     else
-      ui_callback(event, ...)
+      ui_callback(event == 'msg_show', event, ...)
     end
     return true
   end)

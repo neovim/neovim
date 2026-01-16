@@ -383,9 +383,6 @@ local function progress_report(len)
     -- percent=0 omits the reporting of percentage, so use 1% instead
     -- progress.percent = progress.percent == 0 and 1 or progress.percent
     progress.id = vim.api.nvim_echo({ { fmt:format(...) } }, false, progress)
-    -- extui/ui2 shows all messages at once after the healthchecks are finished.
-    -- This 1ms wait ensures the messages are shown separately
-    vim.wait(1)
   end
 end
 
