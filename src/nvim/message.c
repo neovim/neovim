@@ -286,8 +286,10 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
     s++;
   }
 
-  // Print the rest of the message
-  msg_outtrans_len(chunk, (int)(str.size - (size_t)(chunk - str.data)), hl_id, hist);
+  // Print the remainder or emit empty event if entire message is empty.
+  if (*chunk != NUL || chunk == str.data) {
+    msg_outtrans_len(chunk, (int)(str.size - (size_t)(chunk - str.data)), hl_id, hist);
+  }
 }
 
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
@@ -1748,7 +1750,7 @@ static void msg_home_replace_hl(const char *fname, int hl_id)
 /// @return  the number of characters it takes on the screen.
 int msg_outtrans(const char *str, int hl_id, bool hist)
 {
-  return *str == NUL ? 0 : msg_outtrans_len(str, (int)strlen(str), hl_id, hist);
+  return msg_outtrans_len(str, (int)strlen(str), hl_id, hist);
 }
 
 /// Output one character at "p".
