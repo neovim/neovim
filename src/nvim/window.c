@@ -2765,6 +2765,9 @@ static void win_unclose_buffer(win_T *win, bufref_T *bufref, bool did_decrement)
     // If the buffer was removed from the window we have to give it any buffer.
     win->w_buffer = firstbuf;
     firstbuf->b_nwindows++;
+    if (win == curwin) {
+      curbuf = curwin->w_buffer;
+    }
     win_init_empty(win);
   } else if (did_decrement && win->w_buffer == bufref->br_buf && bufref_valid(bufref)) {
     // close_buffer() decremented the window count, but we're keeping the window.
