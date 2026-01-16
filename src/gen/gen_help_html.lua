@@ -8,6 +8,7 @@
 -- USAGE (GENERATE HTML):
 --   1. `:helptags ALL` first; this script depends on vim.fn.taglist().
 --   2. nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('./runtime/doc', 'target/dir/')" +q
+--   2. nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('./one_doc', './pdf_docs')" +q
 --      - Read the docstring at gen().
 --   3. cd target/dir/ && jekyll serve --host 0.0.0.0
 --   4. Visit http://localhost:4000/…/help.txt.html
@@ -582,200 +583,203 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
 
   if node_name == 'help_file' then -- root node
     return text
-  elseif node_name == 'url' then
-    local fixed_url, removed_chars = fix_url(trimmed)
-    return ('%s<a href="%s">%s</a>%s'):format(ws(), fixed_url, fixed_url, removed_chars)
+  -- elseif node_name == 'url' then
+  --   local fixed_url, removed_chars = fix_url(trimmed)
+  --   return ('%s<a href="%s">%s</a>%s'):format(ws(), fixed_url, fixed_url, removed_chars)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
     return text
   elseif node_name == 'note' then
-    return ('<b>%s</b>'):format(text)
-  elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
-    if is_noise(text, stats.noise_lines) then
-      return '' -- Discard common "noise" lines.
-    end
-    -- Remove tags from ToC text.
-    local heading_node = first(root, 'heading')
-    local hname = trim(node_text(heading_node):gsub('%*.*%*', ''))
-    if not heading_node or hname == '' then
-      return '' -- Spurious "===" or "---" in the help doc.
-    end
-
-    -- Generate an anchor id from the heading text.
-    local tagname = to_heading_tag(hname)
-    if node_name == 'h1' or #headings == 0 then
-      ---@type nvim.gen_help_html.heading
-      local heading = { name = hname, subheadings = {}, tag = tagname }
-      headings[#headings + 1] = heading
-    else
-      table.insert(
-        headings[#headings].subheadings,
-        { name = hname, subheadings = {}, tag = tagname }
-      )
-    end
-    local el = node_name == 'h1' and 'h2' or 'h3'
-    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, trimmed, el)
+    return ('\\textbf{%s}'):format(text)
+  -- elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
+  --   if is_noise(text, stats.noise_lines) then
+  --     return '' -- Discard common "noise" lines.
+  --   end
+  --   -- Remove tags from ToC text.
+  --   local heading_node = first(root, 'heading')
+  --   local hname = trim(node_text(heading_node):gsub('%*.*%*', ''))
+  --   if not heading_node or hname == '' then
+  --     return '' -- Spurious "===" or "---" in the help doc.
+  --   end
+  --
+  --   -- Generate an anchor id from the heading text.
+  --   local tagname = to_heading_tag(hname)
+  --   if node_name == 'h1' or #headings == 0 then
+  --     ---@type nvim.gen_help_html.heading
+  --     local heading = { name = hname, subheadings = {}, tag = tagname }
+  --     headings[#headings + 1] = heading
+  --   else
+  --     table.insert(
+  --       headings[#headings].subheadings,
+  --       { name = hname, subheadings = {}, tag = tagname }
+  --     )
+  --   end
+  --   local el = node_name == 'h1' and 'h2' or 'h3'
+  --   return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, trimmed, el)
   elseif node_name == 'heading' then
     return trimmed
-  elseif node_name == 'column_heading' or node_name == 'column_name' then
-    if root:has_error() then
-      return text
-    end
-    return ('<div class="help-column_heading">%s</div>'):format(text)
-  elseif node_name == 'block' then
-    if is_blank(text) then
-      return ''
-    end
-    if opt.old then
-      -- XXX: Treat "old" docs as preformatted: they use indentation for layout.
-      --      Trim trailing newlines to avoid too much whitespace between divs.
-      return ('<div class="old-help-para">%s</div>\n'):format(trim(text, 2))
-    end
-    return string.format('<div class="help-para">\n%s\n</div>\n', text)
-  elseif node_name == 'line' then
-    if
-      (parent ~= 'codeblock' or parent ~= 'code')
-      and (is_blank(text) or is_noise(text, stats.noise_lines))
-    then
-      return '' -- Discard common "noise" lines.
-    end
-    -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
-    local div = opt.old
-      and root:child(0)
-      and vim.list_contains({ 'column_heading', 'h1', 'h2', 'h3' }, root:child(0):type())
-    return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
+  -- elseif node_name == 'column_heading' or node_name == 'column_name' then
+  --   if root:has_error() then
+  --     return text
+  --   end
+  --   return ('<div class="help-column_heading">%s</div>'):format(text)
+  -- elseif node_name == 'block' then
+  --   if is_blank(text) then
+  --     return ''
+  --   end
+  --   if opt.old then
+  --     -- XXX: Treat "old" docs as preformatted: they use indentation for layout.
+  --     --      Trim trailing newlines to avoid too much whitespace between divs.
+  --     return ('<div class="old-help-para">%s</div>\n'):format(trim(text, 2))
+  --   end
+  --   return string.format('<div class="help-para">\n%s\n</div>\n', text)
+  -- elseif node_name == 'line' then
+  --   if
+  --     (parent ~= 'codeblock' or parent ~= 'code')
+  --     and (is_blank(text) or is_noise(text, stats.noise_lines))
+  --   then
+  --     return '' -- Discard common "noise" lines.
+  --   end
+  --   -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
+  --   local div = opt.old
+  --     and root:child(0)
+  --     and vim.list_contains({ 'column_heading', 'h1', 'h2', 'h3' }, root:child(0):type())
+  --   return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
   elseif parent == 'line_li' and node_name == 'prefix' then
     return ''
-  elseif node_name == 'line_li' then
-    local prefix = first(root, 'prefix')
-    local numli = prefix and trim(node_text(prefix)):match('%d') -- Numbered listitem?
-    local sib = root:prev_sibling()
-    local prev_li = sib and sib:type() == 'line_li'
-    local cssclass = numli and 'help-li-num' or 'help-li'
-
-    if not prev_li then
-      opt.indent = 1
-    else
-      local sib_ws = ws(sib)
-      local this_ws = ws()
-      if get_indent(node_text()) == 0 then
-        opt.indent = 1
-      elseif this_ws > sib_ws then
-        -- Previous sibling is logically the _parent_ if it is indented less.
-        opt.indent = opt.indent + 1
-      elseif this_ws < sib_ws then
-        -- TODO(justinmk): This is buggy. Need to track exact whitespace length for each level.
-        opt.indent = math.max(1, opt.indent - 1)
-      end
-    end
-    local margin = opt.indent == 1 and '' or ('margin-left: %drem;'):format((1.5 * opt.indent))
-
-    return string.format('<div class="%s" style="%s">%s</div>', cssclass, margin, text)
-  elseif node_name == 'taglink' or node_name == 'optionlink' then
-    local helppage, tagname, ignored = validate_link(root, opt.buf, opt.fname)
-    if ignored or not helppage then
-      return html_esc(node_text(root))
-    end
-    local s = ('%s<a href="/doc/user/%s#%s">%s</a>'):format(
-      ws(),
-      helppage,
-      url_encode(tagname),
-      html_esc(tagname)
-    )
-    if opt.old and node_name == 'taglink' then
-      s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
-    end
-    return s
-  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
-    if root:has_error() then
-      return text
-    end
-    local s = ('%s<code>%s</code>'):format(ws(), trimmed)
-    if opt.old and node_name == 'codespan' then
-      s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
-    end
-    return s
-  elseif node_name == 'argument' then
-    return ('%s<code>%s</code>'):format(ws(), trim(node_text(root)))
+  -- elseif node_name == 'line_li' then
+  --   local prefix = first(root, 'prefix')
+  --   local numli = prefix and trim(node_text(prefix)):match('%d') -- Numbered listitem?
+  --   local sib = root:prev_sibling()
+  --   local prev_li = sib and sib:type() == 'line_li'
+  --   local cssclass = numli and 'help-li-num' or 'help-li'
+  --
+  --   if not prev_li then
+  --     opt.indent = 1
+  --   else
+  --     local sib_ws = ws(sib)
+  --     local this_ws = ws()
+  --     if get_indent(node_text()) == 0 then
+  --       opt.indent = 1
+  --     elseif this_ws > sib_ws then
+  --       -- Previous sibling is logically the _parent_ if it is indented less.
+  --       opt.indent = opt.indent + 1
+  --     elseif this_ws < sib_ws then
+  --       -- TODO(justinmk): This is buggy. Need to track exact whitespace length for each level.
+  --       opt.indent = math.max(1, opt.indent - 1)
+  --     end
+  --   end
+  --   local margin = opt.indent == 1 and '' or ('margin-left: %drem;'):format((1.5 * opt.indent))
+  --
+  --   return string.format('<div class="%s" style="%s">%s</div>', cssclass, margin, text)
+  -- elseif node_name == 'taglink' or node_name == 'optionlink' then
+  --   local helppage, tagname, ignored = validate_link(root, opt.buf, opt.fname)
+  --   if ignored or not helppage then
+  --     return html_esc(node_text(root))
+  --   end
+  --   local s = ('%s<a href="/doc/user/%s#%s">%s</a>'):format(
+  --     ws(),
+  --     helppage,
+  --     url_encode(tagname),
+  --     html_esc(tagname)
+  --   )
+  --   if opt.old and node_name == 'taglink' then
+  --     s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
+  --   end
+  --   return s
+  -- elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
+  --   if root:has_error() then
+  --     return text
+  --   end
+  --   local s = ('%s<code>%s</code>'):format(ws(), trimmed)
+  --   if opt.old and node_name == 'codespan' then
+  --     s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
+  --   end
+  --   return s
+  -- elseif node_name == 'argument' then
+  --   return ('%s<code>%s</code>'):format(ws(), trim(node_text(root)))
   elseif node_name == 'codeblock' then
     return text
-  elseif node_name == 'language' then
-    language = node_text(root)
-    return ''
-  elseif node_name == 'code' then -- Highlighted codeblock (child).
-    if is_blank(text) then
-      return ''
-    end
-    local code ---@type string
-    if language then
-      code = ('<pre><code class="language-%s">%s</code></pre>'):format(
-        language,
-        trim(trim_indent(text), 2)
-      )
-      language = nil
-    else
-      code = ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
-    end
-    return code
-  elseif node_name == 'tag' then -- anchor, h4 pseudo-heading
-    if root:has_error() then
-      return text
-    end
-    local in_heading = vim.list_contains({ 'h1', 'h2', 'h3' }, parent)
-    local h4 = not in_heading and not next_ and get_indent(node_text()) > 8 -- h4 pseudo-heading
-    local cssclass = h4 and 'help-tag-right' or 'help-tag'
-    local tagname = node_text(root:child(1), false)
-    if vim.tbl_count(stats.first_tags) < 2 then
-      -- Force the first 2 tags in the doc to be anchored at the main heading.
-      table.insert(stats.first_tags, tagname)
-      return ''
-    end
-    local el = 'span'
-    local encoded_tagname = url_encode(tagname)
-    local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(
-      ws(),
-      el,
-      encoded_tagname,
-      cssclass,
-      encoded_tagname,
-      trimmed,
-      el
-    )
-    if opt.old then
-      s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
-    end
+  -- elseif node_name == 'language' then
+  --   language = node_text(root)
+  --   return ''
+  -- elseif node_name == 'code' then -- Highlighted codeblock (child).
+  --   if is_blank(text) then
+  --     return ''
+  --   end
+  --   local code ---@type string
+  --   if language then
+  --     code = ('<pre><code class="language-%s">%s</code></pre>'):format(
+  --       language,
+  --       trim(trim_indent(text), 2)
+  --     )
+  --     language = nil
+  --   else
+  --     code = ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
+  --   end
+  --   return code
+  -- elseif node_name == 'tag' then -- anchor, h4 pseudo-heading
+  --   if root:has_error() then
+  --     return text
+  --   end
+  --   local in_heading = vim.list_contains({ 'h1', 'h2', 'h3' }, parent)
+  --   local h4 = not in_heading and not next_ and get_indent(node_text()) > 8 -- h4 pseudo-heading
+  --   local cssclass = h4 and 'help-tag-right' or 'help-tag'
+  --   local tagname = node_text(root:child(1), false)
+  --   if vim.tbl_count(stats.first_tags) < 2 then
+  --     -- Force the first 2 tags in the doc to be anchored at the main heading.
+  --     table.insert(stats.first_tags, tagname)
+  --     return ''
+  --   end
+  --   local el = 'span'
+  --   local encoded_tagname = url_encode(tagname)
+  --   local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(
+  --     ws(),
+  --     el,
+  --     encoded_tagname,
+  --     cssclass,
+  --     encoded_tagname,
+  --     trimmed,
+  --     el
+  --   )
+  --   if opt.old then
+  --     s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
+  --   end
+  --
+  --   if in_heading and prev ~= 'tag' then
+  --     -- Start the <span> container for tags in a heading.
+  --     -- This makes "justify-content:space-between" right-align the tags.
+  --     --    <h2>foo bar<span>tag1 tag2</span></h2>
+  --     return string.format('<span class="help-heading-tags">%s', s)
+  --   elseif in_heading and next_ == nil then
+  --     -- End the <span> container for tags in a heading.
+  --     return string.format('%s</span>', s)
+  --   end
+  --   return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
+  -- elseif node_name == 'delimiter' or node_name == 'modeline' then
+  --   return ''
+  -- elseif node_name == 'ERROR' then
+  --   if ignore_parse_error(opt.fname, trimmed) then
+  --     return text
+  --   end
+  --
+  --   -- Store the raw text to give context to the bug report.
+  --   local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
+  --   table.insert(stats.parse_errors, sample_text)
+  --   return ('<a class="parse-error" target="_blank" title="Report bug... (parse error)" href="%s">%s</a>'):format(
+  --     get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text),
+  --     trimmed
+  --   )
+  -- else -- Unknown token.
+  --   local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
+  --   return ('<a class="unknown-token" target="_blank" title="Report bug... (unhandled token "%s")" href="%s">%s</a>'):format(
+  --     node_name,
+  --     get_bug_url_nvim(opt.fname, opt.to_fname, sample_text, node_name),
+  --     trimmed
+  --   ),
+  --     ('unknown-token:"%s"'):format(node_name)
 
-    if in_heading and prev ~= 'tag' then
-      -- Start the <span> container for tags in a heading.
-      -- This makes "justify-content:space-between" right-align the tags.
-      --    <h2>foo bar<span>tag1 tag2</span></h2>
-      return string.format('<span class="help-heading-tags">%s', s)
-    elseif in_heading and next_ == nil then
-      -- End the <span> container for tags in a heading.
-      return string.format('%s</span>', s)
-    end
-    return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
-  elseif node_name == 'delimiter' or node_name == 'modeline' then
-    return ''
-  elseif node_name == 'ERROR' then
-    if ignore_parse_error(opt.fname, trimmed) then
-      return text
-    end
-
-    -- Store the raw text to give context to the bug report.
-    local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
-    table.insert(stats.parse_errors, sample_text)
-    return ('<a class="parse-error" target="_blank" title="Report bug... (parse error)" href="%s">%s</a>'):format(
-      get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text),
-      trimmed
-    )
-  else -- Unknown token.
-    local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
-    return ('<a class="unknown-token" target="_blank" title="Report bug... (unhandled token "%s")" href="%s">%s</a>'):format(
-      node_name,
-      get_bug_url_nvim(opt.fname, opt.to_fname, sample_text, node_name),
-      trimmed
-    ),
-      ('unknown-token:"%s"'):format(node_name)
+  else
+    return 'U_' .. node_name
   end
 end
 
@@ -886,7 +890,7 @@ local function validate_one(fname, request_urls)
   return stats
 end
 
---- Generates HTML from one :help file `fname` and writes the result to `to_fname`.
+--- Generates LaTeX from one :help file `fname` and writes the result to `to_fname`.
 ---
 --- @param fname string Source :help file.
 --- @param text string|nil Source :help file contents, or nil to read `fname`.
@@ -906,6 +910,19 @@ local function gen_one(fname, text, to_fname, old, commit)
   local headings = {} -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
   local title = to_titlecase(basename_noext(fname))
 
+  local latex = ([[\documentclass{book}
+
+\title{Neovim user documentation}
+\author{Neovim contributors}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+]]):format(title)
+
+
   local main = ''
   for _, tree in ipairs(lang_tree:trees()) do
     main = main
@@ -921,30 +938,12 @@ local function gen_one(fname, text, to_fname, old, commit)
       )
   end
 
-  local frontmatter = vim.json.encode({
-    title = title,
-    layout = 'single', -- Hugo-specific, to make _index.html the same as the other pages
-    aliases = { -- Hugo-specific, make /api.html redirect to /api/
-      vim.fs.joinpath('/doc/user', vim.fs.basename(to_fname)),
-    },
-    params = {
-      firstTag1 = stats.first_tags[1] or '',
-      firstTag2 = stats.first_tags[2] or '',
-      basename = vim.fs.basename(fname),
-      commit = commit,
-      parseErrors = #stats.parse_errors,
-      bugUrl = get_bug_url_nvim(fname, to_fname, 'TODO', nil),
-      noiseLines = html_esc(table.concat(stats.noise_lines, '\n')),
-      noiseLinesCount = #stats.noise_lines,
-      headings = headings,
-    },
-  }, { indent = '  ', sort_keys = true })
-
-  local html = ('%s\n%s'):format(frontmatter, main)
+  local footer = '\\end{document}'
+  latex = ('%s%s\n\n%s'):format(latex, main, footer)
 
   vim.cmd('q!')
   lang_tree:destroy()
-  return html, stats
+  return latex, stats
 end
 
 --- Generates a JSON map of tags to URL-encoded `filename#anchor` locations.
@@ -1098,6 +1097,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     local helpfile = vim.fs.basename(f)
     -- "to/dir/foo.html"
     local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile, true))
+    to_fname = 'foo.tex'
     local html, stats = gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?')
     tofile(to_fname, html)
     print(
@@ -1108,46 +1108,6 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
       )
     )
 
-    -- Generate redirect pages for renamed help files.
-    local helpfile_tag = (helpfile:gsub('%.txt$', '')):gsub('_', '-') -- "dev_tools.txt" => "dev-tools"
-    local redirect_from = redirects[helpfile]
-    if redirect_from then
-      local redirect_text = vim.text
-        .indent(
-          0,
-          [[
-          *%s*      Nvim
-
-          Document moved to: |%s|
-
-          ==============================================================================
-          Document moved
-
-          Document moved to: |%s|
-
-          ==============================================================================
-           vim:tw=78:ts=8:ft=help:norl:
-          ]]
-        )
-        :format(redirect_from, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag)
-      local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from, true))
-      local redirect_html, _ =
-        gen_one(redirect_from, redirect_text, redirect_to, false, commit or '?')
-      assert(
-        redirect_html:find(vim.pesc(helpfile_tag)),
-        ('not found in redirect html: %s'):format(helpfile_tag)
-      )
-      tofile(redirect_to, redirect_html)
-
-      print(
-        ('generated (redirect) : %-15s => %s'):format(
-          redirect_from .. '.txt',
-          vim.fs.basename(to_fname)
-        )
-      )
-      redirects_count = redirects_count + 1
-    end
-
     err_count = err_count + #stats.parse_errors
   end
 
@@ -1155,7 +1115,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   print(('total errors: %d'):format(err_count))
   -- Why aren't the netrw tags found in neovim/docs/ CI?
   print(('invalid tags: %s'):format(vim.inspect(invalid_links)))
-  eq(redirects_count, include and redirects_count or vim.tbl_count(redirects)) -- sanity check
+  -- eq(redirects_count, include and redirects_count or vim.tbl_count(redirects)) -- sanity check
   print(('redirects: %d'):format(redirects_count))
   print('\n')
 
