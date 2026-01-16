@@ -605,6 +605,7 @@ Commands:
 - |:wincmd| accepts a count.
 - `:write!` does not show a prompt if the file was updated externally.
 - |:=| does not accept |ex-flags|. With an arg it is equivalent to |:lua=|
+- `:smile` is less fun
 
 Command-line:
 - The meanings of arrow keys do not change depending on 'wildoptions'.
@@ -727,7 +728,6 @@ Commands:
 - :promptrepl
 - :scriptversion (always version 1)
 - :shell
-- :smile
 - :tearoff
 - :cstag
 - :cscope
