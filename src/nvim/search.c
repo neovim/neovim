@@ -3003,7 +3003,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
       char *p_fname = (curr_fname == curbuf->b_fname)
                       ? curbuf->b_ffname : curr_fname;
 
-      if (inc_opt != NULL && strstr(inc_opt, "\\zs") != NULL) {
+      if (strstr(inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.
         new_fname = find_file_name_in_path(incl_regmatch.startp[0],
                                            (size_t)(incl_regmatch.endp[0]
@@ -3077,8 +3077,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           } else {
             // Isolate the file name.
             // Include the surrounding "" or <> if present.
-            if (inc_opt != NULL
-                && strstr(inc_opt, "\\zs") != NULL) {
+            if (strstr(inc_opt, "\\zs") != NULL) {
               // pattern contains \zs, use the match
               p = incl_regmatch.startp[0];
               i = (int)(incl_regmatch.endp[0]
