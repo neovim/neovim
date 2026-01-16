@@ -244,6 +244,12 @@ func Test_crash1_3()
   call term_sendkeys(buf, args)
   call TermWait(buf, 50)
 
+  let file = 'crash/ex_redraw_crash'
+  let cmn_args = "%s -u NONE -i NONE -n -m -X -Z -e -s -S %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args)
+  call TermWait(buf, 150)
+
   " clean up
   exe buf .. "bw!"
   bw!
