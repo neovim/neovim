@@ -276,6 +276,7 @@ endfunc
 func Test_win_tab_autocmd()
   let g:record = []
 
+  defer CleanUpTestAuGroup()
   augroup testing
     au WinNewPre * call add(g:record, 'WinNewPre')
     au WinNew * call add(g:record, 'WinNew')
@@ -295,7 +296,7 @@ func Test_win_tab_autocmd()
 
   call assert_equal([
 	\ 'WinNewPre', 'WinLeave', 'WinNew', 'WinEnter',
-	\ 'WinLeave', 'TabLeave', 'WinNewPre', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
+	\ 'WinLeave', 'TabLeave', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
 	\ 'WinLeave', 'TabLeave', 'WinClosed', 'TabClosed', 'WinEnter', 'TabEnter',
 	\ 'WinLeave', 'WinClosed', 'WinEnter'
 	\ ], g:record)
@@ -306,7 +307,7 @@ func Test_win_tab_autocmd()
   bwipe somefile
 
   call assert_equal([
-	\ 'WinLeave', 'TabLeave', 'WinNewPre', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
+	\ 'WinLeave', 'TabLeave', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
 	\ 'WinLeave', 'TabLeave', 'WinEnter', 'TabEnter',
 	\ 'WinClosed', 'TabClosed'
 	\ ], g:record)
@@ -323,9 +324,6 @@ func Test_win_tab_autocmd()
 	\ 'WinNewPre', 'WinLeave', 'WinNew', 'WinEnter'
 	\ ], g:record)
 
-  augroup testing
-    au!
-  augroup END
   unlet g:record
 endfunc
 
@@ -337,17 +335,15 @@ func Test_WinNewPre()
     au WinNewPre * call add(g:layouts_pre, winlayout())
     au WinNew * call add(g:layouts_post, winlayout())
   augroup END
+  defer CleanUpTestAuGroup()
   split
   call assert_notequal(g:layouts_pre[0], g:layouts_post[0])
   split
   call assert_equal(g:layouts_pre[1], g:layouts_post[0])
   call assert_notequal(g:layouts_pre[1], g:layouts_post[1])
+  " not triggered for tabnew
   tabnew
-  call assert_notequal(g:layouts_pre[2], g:layouts_post[1])
-  call assert_notequal(g:layouts_pre[2], g:layouts_post[2])
-  augroup testing
-    au!
-  augroup END
+  call assert_equal(2, len(g:layouts_pre))
   unlet g:layouts_pre
   unlet g:layouts_post
 
@@ -390,9 +386,6 @@ func Test_WinNewPre()
     let g:caught += 1
   endtry
   call assert_equal(4, g:caught)
-  augroup testing
-    au!
-  augroup END
   unlet g:caught
 endfunc
 
@@ -2900,7 +2893,8 @@ endfunc
 
 func Test_autocmd_nested()
   let g:did_nested = 0
-  augroup Testing
+  defer CleanUpTestAuGroup()
+  augroup testing
     au WinNew * edit somefile
     au BufNew * let g:did_nested = 1
   augroup END
@@ -2910,7 +2904,7 @@ func Test_autocmd_nested()
   bwipe! somefile
 
   " old nested argument still works
-  augroup Testing
+  augroup testing
     au!
     au WinNew * nested edit somefile
     au BufNew * let g:did_nested = 1
@@ -4457,6 +4451,38 @@ func Test_BufEnter_botline()
   au! BufEnter Xxx1
   set hidden&vim
 endfunc
+
+" those commands caused null pointer access, see #15464
+func Test_WinNewPre_crash()
+  defer CleanUpTestAuGroup()
+  let _cmdheight=&cmdheight
+  augroup testing
+    au!
+    autocmd WinNewPre * redraw
+  augroup END
+  tabnew
+  tabclose
+  augroup testing
+    au!
+    autocmd WinNewPre * wincmd t
+  augroup END
+  tabnew
+  tabclose
+  augroup testing
+    au!
+    autocmd WinNewPre * wincmd b
+  augroup END
+  tabnew
+  tabclose
+  augroup testing
+    au!
+    autocmd WinNewPre * set cmdheight+=1
+  augroup END
+  tabnew
+  tabclose
+  let &cmdheight=_cmdheight
+endfunc
+
 
 " This was using freed memory
 func Test_autocmd_BufWinLeave_with_vsp()

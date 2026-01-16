@@ -4362,6 +4362,10 @@ void free_tabpage(tabpage_T *tp)
 ///
 /// It will edit the current buffer, like after :split.
 ///
+/// Does not trigger WinNewPre, since the window structures
+/// are not completely setup yet and could cause dereferencing
+/// NULL pointers
+///
 /// @param after Put new tabpage after tabpage "after", or after the current
 ///              tabpage in case of 0.
 /// @param filename Will be passed to apply_autocmds().
@@ -4390,8 +4394,6 @@ int win_new_tabpage(int after, char *filename)
                        ? xstrdup(old_curtab->tp_localdir) : NULL;
 
   curtab = newtp;
-
-  trigger_winnewpre();
 
   // Create a new empty window.
   if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {
