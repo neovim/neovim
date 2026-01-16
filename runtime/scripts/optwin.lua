@@ -430,6 +430,7 @@ local options_list = {
     { 'delcombine', N_ 'delete combining (composing) characters on their own' },
     { 'ambiwidth', N_ 'width of ambiguous width characters' },
     { 'emoji', N_ 'emoji characters are full width' },
+    { 'tuigraphemefix', N_ 'proper drawing on scrolling with legacy grapheme-clusters' },
   },
   {
     header = N_ 'various',
