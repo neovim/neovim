@@ -3241,9 +3241,11 @@ describe('API', function()
       end
     end
 
-    it('does not crash parsing invalid VimL expression #29648', function()
+    it('does not crash parsing invalid VimL expression', function()
       api.nvim_input(':<C-r>=')
-      api.nvim_input('1bork/')
+      api.nvim_input('1bork/') -- #29648
+      assert_alive()
+      api.nvim_parse_expression('a{b}', '', false)
       assert_alive()
     end)
 

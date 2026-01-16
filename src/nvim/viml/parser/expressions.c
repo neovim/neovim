@@ -2638,7 +2638,9 @@ viml_pexpr_parse_figure_brace_closing_error:
           ADD_IDENT(do {
             NEW_NODE_WITH_CUR_POS(cur_node,
                                   kExprNodeCurlyBracesIdentifier);
-            cur_node->data.fig.opening_hl_idx = kv_size(*pstate->colors);
+            if (pstate->colors) {
+              cur_node->data.fig.opening_hl_idx = kv_size(*pstate->colors);
+            }
             cur_node->data.fig.type_guesses.allow_lambda = false;
             cur_node->data.fig.type_guesses.allow_dict = false;
             cur_node->data.fig.type_guesses.allow_ident = true;
