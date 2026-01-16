@@ -9405,6 +9405,25 @@ describe('builtin popupmenu', function()
         assert_alive()
         eq({ 4, 1 }, { #fn.complete_info({ 'items' }).items, fn.pumvisible() })
       end)
+
+      it("works with 'pummaxwidth'", function()
+        exec([[
+          set pummaxwidth=10
+          set cot+=menuone
+          let g:list = [#{word: repeat('fo', 10)}]
+        ]])
+        feed('S<C-x><C-o>')
+        if not multigrid then
+          screen:expect([[
+            fofofofofofofofofofo^          |
+            ╭──────────╮{1:                  }|
+            │{12:fofofofof>}│{1:                  }|
+            ╰──────────╯{1:                  }|
+            {1:~                             }|*6
+            {5:-- The only match}             |
+          ]])
+        end
+      end)
     end)
   end
 
