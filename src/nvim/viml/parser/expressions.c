@@ -2408,7 +2408,7 @@ viml_pexpr_parse_valid_colon:
         // Always drop the topmost value:
         //
         // 1. When want_node != kENodeValue topmost item on stack is
-        //    a *finished* left operand, which may as well be "{@a}" which
+        //    a *finished* left operand, which may as well be "[@a]" which
         //    needs not be finished again.
         // 2. Otherwise it is pointing to NULL what nobody wants.
         kv_drop(ast_stack, 1);
@@ -2419,6 +2419,7 @@ viml_pexpr_parse_valid_colon:
             cur_node->children = *top_node_p;
           }
           *top_node_p = cur_node;
+          new_top_node_p = top_node_p;
           goto viml_pexpr_parse_bracket_closing_error;
         }
         if (want_node == kENodeValue) {
