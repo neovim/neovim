@@ -293,9 +293,12 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
       }
 
       Object res;
+      int save_msg_silent = msg_silent;
+      msg_silent = 0;
       TEXTLOCK_WRAP({
         res = nlua_call_ref(cb.on_lines, "lines", args, kRetNilBool, NULL, NULL);
       });
+      msg_silent = save_msg_silent;
 
       if (LUARET_TRUTHY(res)) {
         buffer_update_callbacks_free(cb);
@@ -343,9 +346,12 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
       ADD_C(args, INTEGER_OBJ(new_byte));
 
       Object res;
+      int save_msg_silent = msg_silent;
+      msg_silent = 0;
       TEXTLOCK_WRAP({
         res = nlua_call_ref(cb.on_bytes, "bytes", args, kRetNilBool, NULL, NULL);
       });
+      msg_silent = save_msg_silent;
 
       if (LUARET_TRUTHY(res)) {
         buffer_update_callbacks_free(cb);
@@ -379,9 +385,12 @@ void buf_updates_changedtick(buf_T *buf)
       ADD_C(args, INTEGER_OBJ(buf_get_changedtick(buf)));
 
       Object res;
+      int save_msg_silent = msg_silent;
+      msg_silent = 0;
       TEXTLOCK_WRAP({
         res = nlua_call_ref(cb.on_changedtick, "changedtick", args, kRetNilBool, NULL, NULL);
       });
+      msg_silent = save_msg_silent;
 
       if (LUARET_TRUTHY(res)) {
         buffer_update_callbacks_free(cb);
