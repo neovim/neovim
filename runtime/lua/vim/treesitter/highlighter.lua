@@ -427,14 +427,21 @@ local function on_range_impl(
 
           local spell, spell_pri_offset = get_spell(capture_name)
 
+          local is_noconceal = capture_name == 'noconceal'
+          -- The "conceal" attribute can be set at the pattern level or on a particular capture
+          local conceal_attr = metadata.conceal or (metadata[capture] and metadata[capture].conceal)
+          local conceal = is_noconceal and '\f' or conceal_attr
+
+          -- Give noconceal a higher priority so it always overrides conceal captures.
+          local conceal_pri_offset = is_noconceal and 1 or 0
+
           -- The "priority" attribute can be set at the pattern level or on a particular capture
           local priority = (
             tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
             or vim.hl.priorities.treesitter
-          ) + spell_pri_offset
-
-          -- The "conceal" attribute can be set at the pattern level or on a particular capture
-          local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+          )
+            + spell_pri_offset
+            + conceal_pri_offset
 
           local url = get_url(match, buf, capture, metadata)
 
