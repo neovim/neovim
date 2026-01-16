@@ -35,6 +35,7 @@ local M = {
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
   on_dialog_key = 0, -- vim.on_key namespace for paging in the dialog window.
+  global_hl = {}, --- @type table<integer, string>  map highlight IDs to group with global attributes.
 }
 
 function M.msg:close()
@@ -281,7 +282,7 @@ function M.show_msg(tar, content, replace_last, append)
       width = tar == 'msg' and math.max(width, api.nvim_strwidth(curline)) or 0
 
       if chunk[3] > 0 then
-        hlopts.end_col, hlopts.hl_group = end_col, chunk[3]
+        hlopts.end_col, hlopts.hl_group = end_col, M.global_hl[chunk[3]] or chunk[3]
         api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, row, col, hlopts)
       end
 
