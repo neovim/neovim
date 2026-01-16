@@ -1127,6 +1127,10 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     return NULL;
   }
 
+  if (new_wp == NULL) {
+    trigger_winnewpre();
+  }
+
   win_T *oldwin;
   if (flags & WSP_TOP) {
     oldwin = firstwin;
@@ -3069,6 +3073,13 @@ int win_close(win_T *win, bool free_buf, bool force)
   return OK;
 }
 
+static void trigger_winnewpre(void)
+{
+  window_layout_lock();
+  apply_autocmds(EVENT_WINNEWPRE, NULL, NULL, false, NULL);
+  window_layout_unlock();
+}
+
 static void do_autocmd_winclosed(win_T *win)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4350,6 +4361,10 @@ void free_tabpage(tabpage_T *tp)
 /// Create a new tabpage with one window.
 ///
 /// It will edit the current buffer, like after :split.
+///
+/// Does not trigger WinNewPre, since the window structures
+/// are not completely setup yet and could cause dereferencing
+/// NULL pointers
 ///
 /// @param after Put new tabpage after tabpage "after", or after the current
 ///              tabpage in case of 0.
