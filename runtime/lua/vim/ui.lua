@@ -10,6 +10,16 @@ local M = {}
 --- individual item from `items`. Defaults to `tostring`.
 ---@field format_item? fun(item: any):string
 ---
+--- Function to preview an individual item from `items`.
+--- If missing, no special preview is used.
+--- Should ensure a buffer with contents (text, highlighting) providing details about an item.
+--- Should return a table with information that `vim.ui.select` implementations may
+--- use to show the preview buffer in the way they see fit:
+---     - {buf} (`integer`) - buffer id with preview
+---     - {pos}? (`[integer, integer]`) - (1,0)-indexed tuple of where to position cursor
+---       in the preview buffer.
+---@field preview_item? fun(item: any):table
+---
 --- Arbitrary hint string indicating the item shape.
 --- Plugins reimplementing `vim.ui.select` may wish to
 --- use this to infer the structure or semantics of
@@ -27,12 +37,15 @@ local M = {}
 ---     format_item = function(item)
 ---         return "I'd like to choose " .. item
 ---     end,
+---     preview_item = function(item)
+---         local lines = { 'This is ' .. vim.inspect(item) }
+---         local buf = vim.api.nvim_create_buf(false, true)
+---         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+---         vim.bo[buf].bufhidden = 'wipe'
+---         return { buf = buf }
+---     end,
 --- }, function(choice)
----     if choice == 'spaces' then
----         vim.o.expandtab = true
----     else
----         vim.o.expandtab = false
----     end
+---     vim.o.expandtab = choice == 'spaces'
 --- end)
 --- ```
 ---
