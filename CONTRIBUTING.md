@@ -235,7 +235,7 @@ See [#549][549] for more details.
 The Lua [`runtime/lua/vim/_core/`](./runtime/lua/vim/_core/) modules are
 precompiled to bytecode, so changes won't be usable unless you (1) rebuild Nvim
 or (2) start Nvim with `--luamod-dev` and `$VIMRUNTIME`. For example try adding
-a function to `runtime/lua/vim/editor.lua`, then:
+a function to `runtime/lua/vim/_core/editor.lua`, then:
 
 ```bash
 VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
