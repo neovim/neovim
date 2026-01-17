@@ -66,7 +66,7 @@ vim.keymap.set('n', '[[', function()
   require('vim.treesitter._headings').jump({ count = -1 })
 end, { buffer = 0, silent = false, desc = 'Jump to previous section' })
 
-local parser = assert(vim.treesitter.get_parser(0, 'vimdoc', { error = false }))
+local parser = assert(vim.treesitter.get_parser(0, 'vimdoc'))
 
 local function runnables()
   ---@type table<integer, { lang: string, code: string }>

@@ -1021,10 +1021,7 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
 
     If needed, this will create the parser.
 
-    If no parser can be created, an error is thrown. Set `opts.error = false`
-    to suppress this and return nil (and an error message) instead. WARNING:
-    This behavior will become default in Nvim 0.12 and the option will be
-    removed.
+    If no parser can be created, nil (and an error message) is returned
 
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer the parser should be tied to (default:
