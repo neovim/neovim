@@ -322,6 +322,247 @@ describe('semantic token highlighting', function()
       eq(true, called_range)
     end)
 
+    it('range requests preserve highlights outside updated range', function()
+      insert(text)
+      local server_id, bufnr = exec_lua(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.bo[bufnr].filetype = 'some-filetype'
+        _G.server_range_preserve = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              range = true,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+          },
+        })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server_range_preserve.cmd }), bufnr
+      end, legend, response)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+
+      exec_lua(function()
+        local client = vim.lsp.get_client_by_id(server_id)
+        assert(client)
+        vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].process_response(
+          vim.lsp.semantic_tokens.__STHighlighter.active[bufnr],
+          { data = { 4, 8, 1, 1, 1024 } },
+          client,
+          vim.lsp.util.buf_versions[bufnr],
+          true
+        )
+      end, bufnr)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {2:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+    end)
+
+    it('range response extends beyond requested range', function()
+      insert(text)
+      local server_id, bufnr = exec_lua(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.bo[bufnr].filetype = 'some-filetype'
+        _G.server_extended = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              range = true,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+          },
+        })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server_extended.cmd }), bufnr
+      end, legend, response)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+
+      exec_lua(function()
+        local client = vim.lsp.get_client_by_id(server_id)
+        assert(client)
+        ---@type lsp.Range
+        local range = {
+          start = {
+            line = 2,
+            character = 0,
+          },
+          ['end'] = {
+            line = 3,
+            character = 0,
+          },
+        }
+        vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].process_response(
+          vim.lsp.semantic_tokens.__STHighlighter.active[bufnr],
+          { data = vim.fn.json_decode(response).data },
+          client,
+          vim.lsp.util.buf_versions[bufnr],
+          range
+        )
+      end, bufnr, response)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+    end)
+
+    it('range request for already cached range', function()
+      insert(text)
+      local server_id, bufnr = exec_lua(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.bo[bufnr].filetype = 'some-filetype'
+        _G.server_cached = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              range = true,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+          },
+        })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server_cached.cmd }), bufnr
+      end, legend, response)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+
+      exec_lua(function()
+        local client = vim.lsp.get_client_by_id(server_id)
+        assert(client)
+        ---@type lsp.Range
+        local range = {
+          start = {
+            line = 2,
+            character = 0,
+          },
+          ['end'] = {
+            line = 5,
+            character = 0,
+          },
+        }
+        vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].process_response(
+          vim.lsp.semantic_tokens.__STHighlighter.active[bufnr],
+          { data = { 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 } },
+          client,
+          vim.lsp.util.buf_versions[bufnr],
+          range
+        )
+      end, bufnr)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int {8:main}()                              |
+        {                                       |
+            int {7:x};                              |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+    end)
+
     it('use LspTokenUpdate and highlight_token', function()
       insert(text)
       exec_lua(function()

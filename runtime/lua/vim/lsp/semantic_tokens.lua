@@ -305,7 +305,13 @@ function STHighlighter:send_request()
             return
           end
 
-          coroutine.wrap(STHighlighter.process_response)(highlighter, response, client, version)
+          coroutine.wrap(STHighlighter.process_response)(
+            highlighter,
+            response,
+            client,
+            version,
+            params.range and true
+          )
         end, self.bufnr)
 
         if success then
@@ -360,8 +366,9 @@ end
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@param client vim.lsp.Client
 ---@param version integer
+---@param range boolean?
 ---@private
-function STHighlighter:process_response(response, client, version)
+function STHighlighter:process_response(response, client, version, range)
   local state = self.client_state[client.id]
   if not state then
     return
@@ -374,6 +381,41 @@ function STHighlighter:process_response(response, client, version)
 
   if not api.nvim_buf_is_valid(self.bufnr) then
     return
+  end
+
+  if range then
+    local old_tokens = state.current_result.tokens or {}
+    state.current_result.tokens = old_tokens
+
+    if #response.data == 0 then
+      response.edits = { nil }
+    elseif #old_tokens == 0 then
+      response.edits = { { start = 0, deleteCount = 0, data = response.data } }
+    else
+      local last_line = response.data[1]
+      for i = 6, #response.data, 5 do
+        last_line = last_line + response.data[i]
+      end
+
+      local idx, delete_count, current_line, prev_line = 1, 0, 0, 0
+      for i = 1, #old_tokens, 5 do
+        if (current_line + old_tokens[i]) > last_line then
+          break
+        end
+        current_line = current_line + old_tokens[i]
+        if current_line < response.data[1] then
+          ---@type integer
+          prev_line = current_line
+          idx = i + 5
+        elseif current_line <= last_line then
+          delete_count = delete_count + 1
+        end
+      end
+
+      response.data[1] = response.data[1] - prev_line
+
+      response.edits = { { start = idx - 1, deleteCount = delete_count * 5, data = response.data } }
+    end
   end
 
   -- if we have a response to a delta request, update the state of our tokens
