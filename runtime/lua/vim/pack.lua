@@ -842,9 +842,13 @@ local function lock_sync(confirm)
   end
 
   -- Compute installed plugins
+  local plug_dir = get_plug_dir()
+  if vim.uv.fs_stat(plug_dir) == nil then
+    vim.fn.mkdir(plug_dir, 'p')
+  end
+
   -- NOTE: The directory traversal is done on every startup, but it is very fast.
   -- Also, single `vim.fs.dir()` scales better than on demand `uv.fs_stat()` checks.
-  local plug_dir = get_plug_dir()
   local installed = {} --- @type table<string,string>
   for name, fs_type in vim.fs.dir(plug_dir) do
     installed[name] = fs_type
