@@ -694,15 +694,20 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   // Autocommands may have opened or closed windows for this buffer.
   // Decrement the count for the close we do here.
   // Don't decrement b_nwindows if the buffer wasn't displayed in any window
-  // before calling buf_freeall(),
+  // before calling buf_freeall().
   if (nwindows > 0 && buf->b_nwindows > 0) {
     buf->b_nwindows--;
   }
 
   // Remove the buffer from the list.
   // Do not wipe out the buffer if it is used in a window, or if autocommands
-  // wiped out all other buffers.
-  if (wipe_buf && buf->b_nwindows <= 0 && (buf->b_prev != NULL || buf->b_next != NULL)) {
+  // wiped out all other buffers (unless when inside free_all_mem() where all
+  // buffers need to be freed and autocommands are blocked).
+  if (wipe_buf && buf->b_nwindows <= 0 && (buf->b_prev != NULL || buf->b_next != NULL
+#if defined(EXITFREE)
+                                           || entered_free_all_mem
+#endif
+                                           )) {
     if (clear_w_buf) {
       win->w_buffer = NULL;
     }
