@@ -209,6 +209,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     name: build using zig build (linux)
+    env:
+      OPTS: -Doptimize=ReleaseSafe
     steps:
       - uses: actions/checkout@v6
       - uses: mlugg/setup-zig@v2
@@ -216,10 +218,10 @@ jobs:
           version: 0.15.2
       - run: sudo apt-get install -y inotify-tools
 
-      - run: zig build test_nlua0
-      - run: zig build nvim_bin && ./zig-out/bin/nvim --version
-      - run: zig build unittest
-      - run: zig build functionaltest
+      - run: zig build $OPTS test_nlua0
+      - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build $OPTS unittest
+      - run: zig build $OPTS functionaltest
       # `zig build` uses a lua script for doctags in order to support cross-compiling
       # compare with the builtin generator that they match
       - run: cd runtime; ../zig-out/bin/nvim -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit

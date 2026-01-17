@@ -138,7 +138,8 @@ return {
     WinClosed = true, -- after closing a window
     WinEnter = true, -- after entering a window
     WinLeave = true, -- before leaving a window
-    WinNew = false, -- when entering a new window
+    WinNewPre = false, -- before creating a new window
+    WinNew = false, -- after creating a new window
     WinResized = true, -- after a window was resized
     WinScrolled = true, -- after a window was scrolled or resized
   },

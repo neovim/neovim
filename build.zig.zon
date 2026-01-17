@@ -6,30 +6,35 @@
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#a4d08d97795c312e63a0f09d456f7c6d280610b4",
-            .hash = "zlua-0.1.0-hGRpC5c9BQAfU5bkkFfLV9B4a7Prw8N7JPIFAZBbRCkq",
+            .url = "git+https://github.com/natecraddock/ziglua#dca1800ea46f5a19fc9abf88b2f8c1617f86ac23",
+            .hash = "zlua-0.1.0-hGRpC1dCBQDf-IqqUifYvyr8B9-4FlYXqY8cl7HIetrC",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
             .hash = "N-V-__8AAMnaAwCEutreuREG3QayBVEZqUTDQFY1Nsrv2OIt",
+            .lazy = true,
         },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.51.0-1#4c9fbc6cf6f3338bb0e0426710cf885ee557b540",
             .hash = "N-V-__8AAMlNDwCY07jUoMiq3iORXdZy0uFWKiHsy8MaDBJA",
+            .lazy = true,
         },
         .lua_compat53 = .{
             .url = "https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz",
             .hash = "N-V-__8AADi-AwDnVoXwDCQvv2wcYOmN0bJLqZ44J3lwoQY2",
+            .lazy = true,
         },
         .treesitter = .{
             .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.26.3#cd4b6e2ef996d4baca12caadb78dffc8b55bc869",
             .hash = "tree_sitter-0.26.3-Tw2sRwKWCwB6DronNIXBd7Aq5TY4WlnmS4d8PB_M7TIU",
+            .lazy = true,
         },
         .libuv = .{
             .url = "git+https://github.com/allyourcodebase/libuv#a2dfd385bd2a00d6d290fda85a40a55a9d6cffc5",
             .hash = "libuv-1.51.0-htqqv6liAADxBLIBCZT-qUh_3nRRwtNYsOFQOUmrd_sx",
+            .lazy = true,
         },
-        .utf8proc = .{ .path = "./deps/utf8proc/" },
+        .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
         .unibilium = .{ .path = "./deps/unibilium/", .lazy = true },
         .libiconv = .{
             .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",

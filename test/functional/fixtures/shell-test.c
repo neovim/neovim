@@ -32,12 +32,14 @@ static void help(void)
   puts("  shell-test -t {prompt text} EXE \"prog args...\"");
   puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
   puts("  shell-test REP N {text}");
-  puts("    Prints \"{lnr}: {text}\\n\" to stdout N times, taking N milliseconds.");
+  puts("    Prints \"{lnr}: {text}\\n\" to stdout N times, pausing every 100 lines.");
   puts("    Example:");
   puts("      shell-test REP 97 \"foo bar\"");
   puts("      0: foo bar");
   puts("      ...");
   puts("      96: foo bar");
+  puts("  shell-test REPFAST N {text}");
+  puts("    Like REP, but print as fast as possible and then exit immediately.");
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
   puts("  shell-test EXIT {code}");
@@ -71,9 +73,10 @@ int main(int argc, char **argv)
       } else {
         fprintf(stderr, "ready $ ");
       }
-    } else if (strcmp(argv[1], "REP") == 0) {
+    } else if (strcmp(argv[1], "REP") == 0 || strcmp(argv[1], "REPFAST") == 0) {
+      bool fast = strcmp(argv[1], "REPFAST") == 0;
       if (argc != 4) {
-        fprintf(stderr, "REP expects exactly 3 arguments\n");
+        fprintf(stderr, "REP/REPFAST expects exactly 3 arguments\n");
         return 4;
       }
       int count = 0;
@@ -83,7 +86,7 @@ int main(int argc, char **argv)
       }
       for (int i = 0; i < count; i++) {
         printf("%d: %s\n", i, argv[3]);
-        if (i % 100 == 0) {
+        if (!fast && i % 100 == 0) {
           usleep(1000);  // Wait 1 ms (simulate typical output).
         }
         fflush(NULL);

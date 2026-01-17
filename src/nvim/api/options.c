@@ -13,11 +13,13 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 #include "api/options.c.generated.h"
 
@@ -99,8 +101,10 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
 }
 
 /// Create a dummy buffer and run the FileType autocmd on it.
-static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
+static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, Error *err)
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4)
 {
+  *aco_used = false;
   if (filetype == NULL) {
     return NULL;
   }
@@ -112,20 +116,59 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
     return NULL;
   }
 
+  // Open a memline for use by autocommands.
+  if (ml_open(ftbuf) == FAIL) {
+    api_set_error(err, kErrorTypeException, "Could not load internal buffer");
+    return ftbuf;
+  }
+
+  bufref_T bufref;
+  set_bufref(&bufref, ftbuf);
+
   // Set curwin/curbuf to buf and save a few things.
   aucmd_prepbuf(aco, ftbuf);
+  *aco_used = true;
+
+  set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, SID_NONE);
+  set_option_direct(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, SID_NONE);
+  assert(ftbuf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
+  ftbuf->b_p_swf = false;
+  ftbuf->b_p_ml = false;
+  ftbuf->b_p_ft = xstrdup(filetype);
 
   TRY_WRAP(err, {
-    set_option_value(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
-    set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
-    set_option_value(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
-    set_option_value(kOptModeline, BOOLEAN_OPTVAL(false), OPT_LOCAL);  // 'nomodeline'
-
-    ftbuf->b_p_ft = xstrdup(filetype);
     do_filetype_autocmd(ftbuf, false);
   });
 
+  if (!bufref_valid(&bufref)) {
+    if (!ERROR_SET(err)) {
+      api_set_error(err, kErrorTypeException, "Internal buffer was deleted");
+    }
+    return NULL;
+  }
+
   return ftbuf;
+}
+
+static void wipe_ft_buf(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  block_autocmds();
+
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
+  close_windows(buf, false);
+  // Autocommands are blocked, but 'bufhidden' may have wiped it already.
+  // Also can't wipe if the buffer is somehow still in a window or current.
+  if (bufref_valid(&bufref) && buf != curbuf && buf->b_nwindows == 0) {
+    wipe_buffer(buf, false);
+  }
+  if (bufref_valid(&bufref)) {
+    buf->b_flags &= ~BF_DUMMY;  // Couldn't wipe; keep it instead.
+  }
+
+  unblock_autocmds();
 }
 
 /// Gets the value of an option. The behavior of this function matches that of
@@ -161,17 +204,17 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   }
 
   aco_save_T aco;
+  bool aco_used;
 
-  buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
+  buf_T *ftbuf = do_ft_buf(filetype, &aco, &aco_used, err);
   if (ERROR_SET(err)) {
-    if (ftbuf != NULL) {
+    if (aco_used) {
       // restore curwin/curbuf and a few other things
       aucmd_restbuf(&aco);
-
-      assert(curbuf != ftbuf);  // safety check
-      wipe_buffer(ftbuf, false);
     }
-
+    if (ftbuf != NULL) {
+      wipe_ft_buf(ftbuf);
+    }
     return (Object)OBJECT_INIT;
   }
 
@@ -183,11 +226,11 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
 
   if (ftbuf != NULL) {
-    // restore curwin/curbuf and a few other things
-    aucmd_restbuf(&aco);
-
-    assert(curbuf != ftbuf);  // safety check
-    wipe_buffer(ftbuf, false);
+    if (aco_used) {
+      // restore curwin/curbuf and a few other things
+      aucmd_restbuf(&aco);
+    }
+    wipe_ft_buf(ftbuf);
   }
 
   if (ERROR_SET(err)) {

@@ -5,6 +5,7 @@
 " Contributor:		Johannes Zellner <johannes@zellner.org>
 " Last Change:		2024 Jan 14
 " 			2024 May 23 by Riley Bruins ('commentstring')
+" 			2026 Jan 15 improved matchit support
 
 if exists("b:did_ftplugin")
   finish
@@ -31,7 +32,7 @@ let b:undo_ftplugin = "setlocal com< cms< fo<"
 if exists("loaded_matchit") && !exists("b:match_words")
   let s:line_start = '\%(^\s*\)\@<='
   let b:match_words =
-	\ s:line_start .. 'if\s*(.*)\s*then\>:' ..
+	\ s:line_start .. 'if\s*!\?\s*(.*)\s*then\>:' ..
 	\   s:line_start .. 'else\s\+if\s*(.*)\s*then\>:' .. s:line_start .. 'else\>:' ..
 	\   s:line_start .. 'endif\>,' ..
 	\ s:line_start .. '\%(\<foreach\s\+\h\w*\|while\)\s*(:' ..

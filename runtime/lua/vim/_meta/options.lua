@@ -2258,7 +2258,8 @@ vim.go.ei = vim.go.eventignore
 --- 	`VimResized`,
 --- 	`VimResume`,
 --- 	`VimSuspend`,
---- 	`WinNew`
+--- 	`WinNew`,
+--- 	`WinNewPre`
 ---
 --- @type string
 vim.o.eventignorewin = ""

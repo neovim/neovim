@@ -6,6 +6,7 @@
 " 2024 Feb 29 by Vim project: disable mulitline indent by default
 " 2024 Aug 14 by Vim project: fix re-indenting when commenting out lines
 " 2026 Jan 08 by Vim project: fix object indentation in array
+" 2026 Jan 15 by Vim project: fix double shiftwidth from previous change
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -146,7 +147,7 @@ function GetYAMLIndent(lnum)
             " Previous mapping key is in a list item (- key:)
             " The key effectively starts at indent + 2 (after "- ")
             " Content under it should be indented relative to the key position
-            return indent(prevmapline) + 2 + shiftwidth()
+            return indent(prevmapline) + 2
         else
             return indent(prevmapline)
         endif

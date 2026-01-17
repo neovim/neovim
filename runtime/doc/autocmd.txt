@@ -1232,6 +1232,20 @@ WinLeave			Before leaving a window.  If the window to be
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
 				Before WinClosed.
+							*WinNewPre*
+WinNewPre			Before creating a new window.  Triggered
+				before commands that modify window layout by
+				creating a split.
+				Not done when creating tab pages and for the
+				first window, as the window structure is not
+				initialized yet and so is generally not safe.
+				It is not allowed to modify window layout
+				while executing commands for the WinNewPre
+				event.
+				Most useful to store current window layout
+				and compare it with the new layout after the
+				Window has been created.
+
 							*WinNew*
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
