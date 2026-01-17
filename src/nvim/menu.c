@@ -1438,18 +1438,18 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
   int idx = mode_idx;
 
   if (idx < 0) {
-    // Use the Insert mode entry when returning to Insert mode.
-    if (((State & MODE_INSERT) || restart_edit) && current_sctx.sc_sid == 0) {
-      idx = MENU_INDEX_INSERT;
+    if (State & MODE_TERMINAL) {
+      idx = MENU_INDEX_TERMINAL;
     } else if (State & MODE_CMDLINE) {
       idx = MENU_INDEX_CMDLINE;
-    } else if (State & MODE_TERMINAL) {
-      idx = MENU_INDEX_TERMINAL;
     } else if (get_real_state() & MODE_VISUAL) {
       // Detect real visual mode -- if we are really in visual mode we
       // don't need to do any guesswork to figure out what the selection
       // is. Just execute the visual binding for the menu.
       idx = MENU_INDEX_VISUAL;
+    } else if (((State & MODE_INSERT) || restart_edit) && current_sctx.sc_sid == 0) {
+      // Use the Insert mode entry when returning to Insert mode.
+      idx = MENU_INDEX_INSERT;
     } else if (eap != NULL && eap->addr_count) {
       pos_T tpos;
 
