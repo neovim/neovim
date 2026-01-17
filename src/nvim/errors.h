@@ -214,6 +214,8 @@ EXTERN const char e_diff_anchors_with_hidden_windows[] INIT( = N_("E1562: Diff a
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \"%s\""));
 
+EXTERN const char e_conflicting_configs[] INIT(= N_("E5422: Conflicting configs: \"%s\" \"%s\""));
+
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
