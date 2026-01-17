@@ -23,6 +23,7 @@ local function client_positional_params(params)
 end
 
 local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
+local rename_ns = api.nvim_create_namespace('nvim.lsp.rename_range')
 
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
@@ -743,6 +744,7 @@ function M.rename(new_name, opts)
 
     if client:supports_method('textDocument/prepareRename') then
       local params = util.make_position_params(win, client.offset_encoding)
+      ---@param result? lsp.Range|{ range: lsp.Range, placeholder: string }
       client:request('textDocument/prepareRename', params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
@@ -760,10 +762,33 @@ function M.rename(new_name, opts)
           return
         end
 
+        local range ---@type lsp.Range?
+        if result.start then
+          ---@cast result lsp.Range
+          range = result
+        elseif result.range then
+          ---@cast result { range: lsp.Range, placeholder: string }
+          range = result.range
+        end
+        if range then
+          local start = range.start
+          local end_ = range['end']
+          local start_idx = util._get_line_byte_from_position(bufnr, start, client.offset_encoding)
+          local end_idx = util._get_line_byte_from_position(bufnr, end_, client.offset_encoding)
+
+          vim.hl.range(
+            bufnr,
+            rename_ns,
+            'LspReferenceTarget',
+            { start.line, start_idx },
+            { end_.line, end_idx },
+            { priority = vim.hl.priorities.user }
+          )
+        end
+
         local prompt_opts = {
           prompt = 'New Name: ',
         }
-        -- result: Range | { range: Range, placeholder: string }
         if result.placeholder then
           prompt_opts.default = result.placeholder
         elseif result.start then
@@ -774,10 +799,10 @@ function M.rename(new_name, opts)
           prompt_opts.default = cword
         end
         vim.ui.input(prompt_opts, function(input)
-          if not input or #input == 0 then
-            return
+          if input and #input ~= 0 then
+            rename(input)
           end
-          rename(input)
+          api.nvim_buf_clear_namespace(bufnr, rename_ns, 0, -1)
         end)
       end, bufnr)
     else
