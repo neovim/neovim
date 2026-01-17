@@ -139,11 +139,16 @@ bool frames_locked(void)
 }
 
 /// When the window layout cannot be changed give an error and return true.
-bool window_layout_locked(void)
+/// "cmd" indicates the action being performed and is used to pick the relevant
+/// error message.
+bool window_layout_locked(cmdidx_T cmd)
 {
-  // if (split_disallowed > 0 || close_disallowed > 0) {
-  if (close_disallowed > 0) {
-    emsg(_(e_not_allowed_to_change_window_layout_in_this_autocmd));
+  if (split_disallowed > 0 || close_disallowed > 0) {
+    if (close_disallowed == 0 && cmd == CMD_tabnew) {
+      emsg(_(e_cannot_split_window_when_closing_buffer));
+    } else {
+      emsg(_(e_not_allowed_to_change_window_layout_in_this_autocmd));
+    }
     return true;
   }
   return false;
@@ -2784,7 +2789,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_cannot_close_last_window));
     return FAIL;
   }
-  if (!win->w_floating && window_layout_locked()) {
+  if (!win->w_floating && window_layout_locked(CMD_close)) {
     return FAIL;
   }
 
@@ -4378,7 +4383,7 @@ int win_new_tabpage(int after, char *filename)
     emsg(_(e_cmdwin));
     return FAIL;
   }
-  if (window_layout_locked()) {
+  if (window_layout_locked(CMD_tabnew)) {
     return FAIL;
   }
 

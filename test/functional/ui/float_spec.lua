@@ -1075,7 +1075,8 @@ describe('float window', function()
     -- Try switching tab pages and moving windows between tab pages via nvim_win_set_config.
     -- Simplest if :fclose skips windows in non-current tabpages.
     local w5 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 2 })
-    command('autocmd WinEnter * ++once tabnew')
+    command('tabnew | tabprevious')
+    command('autocmd WinEnter * ++once tabnext')
     eq(w4, api.nvim_get_current_win())
     local tp1 = api.nvim_get_current_tabpage()
     command('fclose!')
