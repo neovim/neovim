@@ -2049,8 +2049,7 @@ static bool do_user_initialization(void)
   if (os_path_exists(init_lua_path)
       && do_source(init_lua_path, true, DOSO_VIMRC, NULL)) {
     if (os_path_exists(user_vimrc)) {
-      semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
-            user_vimrc);
+      semsg(e_conflicting_configs, init_lua_path, user_vimrc);
     }
 
     xfree(user_vimrc);
@@ -2102,7 +2101,7 @@ static bool do_user_initialization(void)
       if (os_path_exists(init_lua)
           && do_source(init_lua, true, DOSO_VIMRC, NULL)) {
         if (os_path_exists(vimrc)) {
-          semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua, vimrc);
+          semsg(e_conflicting_configs, init_lua, vimrc);
         }
 
         xfree(vimrc);
