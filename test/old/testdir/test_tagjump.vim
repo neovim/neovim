@@ -221,7 +221,7 @@ func Test_tag_symbolic()
   call assert_equal('Xtest.c', expand('%:t'))
   call assert_equal(2, col('.'))
 
-  set nohidden
+  set nohidden  " Accommodate Nvim default
   set tags&
   enew!
   call delete('Xtags')
