@@ -23,10 +23,12 @@ local M = {}
 --- @field highlights? STTokenRange[] cache of highlight ranges for this document version
 --- @field tokens? integer[] raw token array as received by the server. used for calculating delta responses
 --- @field namespace_cleared? boolean whether the namespace was cleared for this result yet
+--- @field cleared_range? lsp.Range range that was cleared (for range requests)
 
 --- @class (private) STActiveRequest
 --- @field request_id? integer the LSP request ID of the most recent request sent to the server
 --- @field version? integer the document version associated with the most recent request
+--- @field range? lsp.Range the range requested (nil for full document requests)
 
 --- @class (private) STClientState
 --- @field namespace integer
@@ -284,9 +286,11 @@ function STHighlighter:send_request()
         ---@type vim.lsp.protocol.Method.ClientToServer.Request
         local method = 'textDocument/semanticTokens/full'
 
+        local request_range --- @type lsp.Range?
         if state.supports_range then
           method = 'textDocument/semanticTokens/range'
-          params.range = self:get_visible_range()
+          request_range = self:get_visible_range()
+          params.range = request_range
         elseif state.supports_delta and current_result.result_id then
           method = 'textDocument/semanticTokens/full/delta'
           params.previousResultId = current_result.result_id
@@ -305,12 +309,13 @@ function STHighlighter:send_request()
             return
           end
 
-          coroutine.wrap(STHighlighter.process_response)(highlighter, response, client, version)
+          coroutine.wrap(STHighlighter.process_response)(highlighter, response, client, version, request_range)
         end, self.bufnr)
 
         if success then
           active_request.request_id = request_id
           active_request.version = version
+          active_request.range = request_range
         end
       end
     end
@@ -360,8 +365,9 @@ end
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@param client vim.lsp.Client
 ---@param version integer
+---@param range? lsp.Range the range that was requested (nil for full document requests)
 ---@private
-function STHighlighter:process_response(response, client, version)
+function STHighlighter:process_response(response, client, version, range)
   local state = self.client_state[client.id]
   if not state then
     return
@@ -409,11 +415,50 @@ function STHighlighter:process_response(response, client, version)
 
   -- update the state with the new results
   local current_result = state.current_result
+
+  if range then
+    -- For range requests, merge new highlights with existing ones
+    -- First, filter out old highlights that fall within the requested range
+    local dominated_start = range.start.line
+    local dominated_end = range['end'].line
+    local old_highlights = current_result.highlights or {}
+    local merged = {} --- @type STTokenRange[]
+
+    -- Keep highlights outside the requested range
+    for _, hl in ipairs(old_highlights) do
+      if hl.end_line < dominated_start or hl.line > dominated_end then
+        table.insert(merged, hl)
+      end
+    end
+
+    -- Add all new highlights from the range request
+    for _, hl in ipairs(highlights) do
+      table.insert(merged, hl)
+    end
+
+    -- Sort by line number for consistent ordering
+    table.sort(merged, function(a, b)
+      if a.line == b.line then
+        return a.start_col < b.start_col
+      end
+      return a.line < b.line
+    end)
+
+    current_result.highlights = merged
+    current_result.cleared_range = range
+    -- For range requests, we need to clear and re-apply highlights in the specific range
+    current_result.namespace_cleared = false
+  else
+    -- For full/delta requests, replace all highlights
+    current_result.version = version
+    current_result.result_id = response.resultId
+    current_result.tokens = tokens
+    current_result.highlights = highlights
+    current_result.namespace_cleared = false
+    current_result.cleared_range = nil
+  end
+
   current_result.version = version
-  current_result.result_id = response.resultId
-  current_result.tokens = tokens
-  current_result.highlights = highlights
-  current_result.namespace_cleared = false
 
   -- redraw all windows displaying buffer (if still valid)
   if api.nvim_buf_is_valid(self.bufnr) then
@@ -476,8 +521,24 @@ function STHighlighter:on_win(topline, botline)
     local current_result = state.current_result
     if current_result.version == util.buf_versions[self.bufnr] then
       if not current_result.namespace_cleared then
-        api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
+        if current_result.cleared_range then
+          -- For range requests, only clear extmarks within the requested range
+          -- This avoids blinking highlights outside the visible area
+          local range = current_result.cleared_range
+          api.nvim_buf_clear_namespace(self.bufnr, state.namespace, range.start.line, range['end'].line + 1)
+          -- Mark highlights in the cleared range as unmarked so they get re-applied
+          local highlights = current_result.highlights or {}
+          for _, hl in ipairs(highlights) do
+            if hl.line >= range.start.line and hl.end_line <= range['end'].line then
+              hl.marked = false
+            end
+          end
+        else
+          -- For full/delta requests, clear the entire namespace
+          api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
+        end
         current_result.namespace_cleared = true
+        current_result.cleared_range = nil
       end
 
       -- We can't use ephemeral extmarks because the buffer updates are not in
