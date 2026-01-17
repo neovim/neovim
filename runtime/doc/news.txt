@@ -234,6 +234,8 @@ EVENTS
 • |MarkSet| is triggered after a |mark| is set by the user (currently doesn't
   support implicit marks like |'[| or |'<|, …).
 • New `terminator` parameter for |TermRequest| event.
+• Autocommand patterns may be given as a table with a `glob` key, matching
+  LSP glob patterns
 
 HIGHLIGHTS
 
