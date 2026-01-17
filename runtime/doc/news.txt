@@ -430,6 +430,7 @@ These existing features changed their behavior.
   for input and output. This matters mostly for Linux where some command lines
   using "/dev/stdin" and similiar would break as these special files can be
   reopened when backed by pipes but not when backed by socket pairs.
+• |:helptags| is now implemented with Treesitter.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
