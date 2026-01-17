@@ -2117,7 +2117,7 @@ func Test_bufunload_all()
     endfunc
     au BufUnload * call UnloadAllBufs()
     au VimLeave * call writefile(['Test Finished'], 'Xout')
-    set nohidden
+    set nohidden  " Accommodate Nvim default
     edit Xxx1
     split Xxx2
     q
