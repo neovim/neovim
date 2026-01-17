@@ -77,6 +77,37 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
   return 0;
 }
 
+/// Callback for closing probe connection handle
+static void probe_close_cb(uv_handle_t *handle)
+{
+  bool *closed = handle->data;
+  *closed = true;
+}
+
+/// Check if a socket is alive by attempting to connect to it.
+/// @param loop Event loop
+/// @param addr Socket address to probe
+/// @return true if socket is alive (connection succeeded), false otherwise
+static bool socket_alive(Loop *loop, const char *addr)
+{
+  RStream stream;
+  const char *error = NULL;
+
+  // Try to connect with a 500ms timeout (fast failure for dead sockets)
+  bool connected = socket_connect(loop, &stream, false, addr, 500, &error);
+  if (!connected) {
+    return false;
+  }
+
+  // Connection succeeded - socket is alive. Close the probe connection properly.
+  bool closed = false;
+  stream.s.uv.pipe.data = &closed;
+  uv_close((uv_handle_t *)&stream.s.uv.pipe, probe_close_cb);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
+
+  return true;
+}
+
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -112,6 +143,40 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
     result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+
+    // If bind failed with EACCES/EADDRINUSE, check if socket is stale
+    if (result == UV_EACCES || result == UV_EADDRINUSE) {
+      Loop *loop = watcher->stream->loop->data;
+
+      if (!socket_alive(loop, watcher->addr)) {
+        // Socket exists but is dead - remove it
+        ILOG("Removing stale socket: %s", watcher->addr);
+        int rm_result = os_remove(watcher->addr);
+
+        if (rm_result != 0) {
+          WLOG("Failed to remove stale socket %s: %s",
+               watcher->addr, uv_strerror(rm_result));
+        } else {
+          // Close and reinit the pipe handle before retrying bind
+          uv_loop_t *uv_loop = watcher->uv.pipe.handle.loop;
+          bool closed = false;
+          watcher->uv.pipe.handle.data = &closed;
+          uv_close((uv_handle_t *)&watcher->uv.pipe.handle, probe_close_cb);
+          LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
+
+          uv_pipe_init(uv_loop, &watcher->uv.pipe.handle, 0);
+          watcher->stream = (uv_stream_t *)(&watcher->uv.pipe.handle);
+          watcher->stream->data = watcher;
+
+          // Retry bind with fresh handle
+          result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+        }
+      } else {
+        // Socket is alive - this is a real error
+        ELOG("Socket already in use by another Nvim instance: %s", watcher->addr);
+      }
+    }
+
     if (result == 0) {
       result = uv_listen(watcher->stream, backlog, connection_cb);
     }
