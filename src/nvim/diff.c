@@ -99,6 +99,7 @@ static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF
                         | DIFF_LINEMATCH | DIFF_INLINE_CHAR;
 
 static int diff_algorithm = XDF_INDENT_HEURISTIC;
+static int diff_word_gap = 5;  // gap threshold for inline:word
 static int linematch_lines = 40;
 
 #define LBUFLEN 50               // length of line in diff file
@@ -3093,6 +3094,113 @@ static void diff_refine_inline_char_highlight(diff_T *dp_orig, garray_T *linemap
   } while (pass++ < 4);  // use limited number of passes to avoid excessive looping
 }
 
+/// Refine inline word diff blocks by merging blocks that are only separated
+/// by whitespace or punctuation. This creates more coherent highlighting.
+static void diff_refine_inline_word_highlight(diff_T *dp_orig, garray_T *linemap, int idx1,
+                                              linenr_T start_lnum)
+{
+  int pass = 1;
+  do {
+    diff_T *dp = dp_orig;
+
+    while (dp != NULL && dp->df_next != NULL) {
+      // Only merge blocks on the same line
+      if (dp->df_lnum[idx1] + dp->df_count[idx1] - 1 >= linemap[idx1].ga_len
+          || dp->df_next->df_lnum[idx1] - 1 >= linemap[idx1].ga_len) {
+        dp = dp->df_next;
+        continue;
+      }
+
+      linemap_entry_T *entry1 =
+        &((linemap_entry_T *)linemap[idx1].ga_data)[dp->df_lnum[idx1]
+                                                    + dp->df_count[idx1] - 2];
+      linemap_entry_T *entry2 =
+        &((linemap_entry_T *)linemap[idx1].ga_data)[dp->df_next->df_lnum[idx1] - 1];
+
+      // Skip if blocks are on different lines
+      if (entry1->lineoff != entry2->lineoff) {
+        dp = dp->df_next;
+        continue;
+      }
+
+      // Calculate the gap between blocks
+      int gap_start = entry1->byte_start + entry1->num_bytes;
+      int gap_end = entry2->byte_start;
+      int gap_size = gap_end - gap_start;
+
+      // Merge adjacent diff blocks separated by small gaps to reduce visual
+      // fragmentation. Gap threshold is set to 5 bytes which handles most
+      // common separators (spaces, punctuation, short variable names) while
+      // still preserving visually distinct changes.
+      if (gap_size <= 0 || gap_size > diff_word_gap) {
+        dp = dp->df_next;
+        continue;
+      }
+
+      // Get the text between the two blocks
+      char *line = ml_get_buf(curtab->tp_diffbuf[idx1],
+                              start_lnum + entry1->lineoff);
+      char *gap_text = line + gap_start;
+
+      // Check if gap contains only whitespace and/or punctuation
+      bool only_non_word = true;
+      bool has_content = false;
+      for (int i = 0; i < gap_size && gap_text[i] != NUL; i++) {
+        has_content = true;
+        int char_class = mb_get_class_tab(gap_text + i,
+                                          curtab->tp_diffbuf[idx1]->b_chartab);
+        // class 2 is word characters, if we find any, don't merge
+        if (char_class == 2) {
+          only_non_word = false;
+          break;
+        }
+      }
+
+      // Merge if the gap is small and contains only non-word characters
+      if (has_content && only_non_word) {
+        long total_change_bytes = 0;
+        for (int i = 0; i < DB_COUNT; i++) {
+          if (curtab->tp_diffbuf[i] != NULL) {
+            // count bytes in the first block
+            for (int k = 0; k < dp->df_count[i]; k++) {
+              int idx = dp->df_lnum[i] + k - 1;
+              if (idx < linemap[i].ga_len) {
+                total_change_bytes += ((linemap_entry_T *)linemap[i].ga_data)[idx].num_bytes;
+              }
+            }
+            // count bytes in the next block
+            for (int k = 0; k < dp->df_next->df_count[i]; k++) {
+              int idx = dp->df_next->df_lnum[i] + k - 1;
+              if (idx < linemap[i].ga_len) {
+                total_change_bytes += ((linemap_entry_T *)linemap[i].ga_data)[idx].num_bytes;
+              }
+            }
+          }
+        }
+
+        if (total_change_bytes >= gap_size * 2) {
+          // Merge the blocks by extending the first block to include the next
+          for (int i = 0; i < DB_COUNT; i++) {
+            if (curtab->tp_diffbuf[i] != NULL) {
+              dp->df_count[i] = dp->df_next->df_lnum[i] + dp->df_next->df_count[i]
+                                - dp->df_lnum[i];
+            }
+          }
+
+          diff_T *dp_next = dp->df_next;
+          dp->df_next = dp_next->df_next;
+          clear_diffblock(dp_next);
+
+          // Don't advance dp, check if can merge with the next block too
+          continue;
+        }
+      }
+
+      dp = dp->df_next;
+    }
+  } while (pass++ < 4);  // use limited number of passes to avoid excessive looping
+}
+
 /// Find the inline difference within a diff block among different buffers.  Do
 /// this by splitting each block's content into characters or words, and then
 /// use internal xdiff to calculate the per-character/word diff.  The result is
@@ -3319,7 +3427,9 @@ static void diff_find_change_inline_diff(diff_T *dp)
   }
   diff_T *new_diff = curtab->tp_first_diff;
 
-  if (diff_flags & DIFF_INLINE_CHAR && file1_idx != -1) {
+  if (diff_flags & DIFF_INLINE_WORD && file1_idx != -1) {
+    diff_refine_inline_word_highlight(new_diff, linemap, file1_idx, dp->df_lnum[file1_idx]);
+  } else if (diff_flags & DIFF_INLINE_CHAR && file1_idx != -1) {
     diff_refine_inline_char_highlight(new_diff, linemap, file1_idx);
   }
 
