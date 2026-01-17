@@ -817,6 +817,23 @@ void pum_redraw(void)
             if (width_limit - totwidth < cells + pad) {
               need_fcs_trunc = true;
             }
+            if (need_fcs_trunc) {
+              int available_cells = width_limit - totwidth;
+              // Find the truncation point by counting display cells
+              char *p_end = st;
+              int displayed = 0;
+              while (*p_end != NUL) {
+                int char_cells = utf_ptr2cells(p_end);
+                if (displayed + char_cells > available_cells) {
+                  break;
+                }
+                displayed += char_cells;
+                MB_PTR_ADV(p_end);
+              }
+              *p_end = NUL;
+              cells = displayed;
+              width = displayed;
+            }
 
             if (attrs == NULL) {
               grid_line_puts(grid_col, st, -1, attr);
