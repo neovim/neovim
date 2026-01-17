@@ -5033,7 +5033,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
     emsg(_(e_autocmd_close));
     return;
   }
-  if (!win->w_floating && window_layout_locked()) {
+  if (!win->w_floating && window_layout_locked(CMD_close)) {
     return;
   }
 
@@ -5077,7 +5077,7 @@ static void ex_tabclose(exarg_T *eap)
     return;
   }
 
-  if (window_layout_locked()) {
+  if (window_layout_locked(CMD_tabclose)) {
     return;
   }
 
@@ -5112,7 +5112,7 @@ static void ex_tabonly(exarg_T *eap)
     return;
   }
 
-  if (window_layout_locked()) {
+  if (window_layout_locked(CMD_tabonly)) {
     return;
   }
 
@@ -5146,6 +5146,10 @@ static void ex_tabonly(exarg_T *eap)
 /// Close the current tab page.
 void tabpage_close(int forceit)
 {
+  if (window_layout_locked(CMD_tabclose)) {
+    return;
+  }
+
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
   while (curwin->w_floating) {
@@ -5186,7 +5190,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 /// ":only".
 static void ex_only(exarg_T *eap)
 {
-  if (window_layout_locked()) {
+  if (window_layout_locked(CMD_only)) {
     return;
   }
 
@@ -5231,7 +5235,7 @@ static void ex_hide(exarg_T *eap)
     }
   }
 
-  if (!win->w_floating && window_layout_locked()) {
+  if (!win->w_floating && window_layout_locked(CMD_hide)) {
     return;
   }
 
