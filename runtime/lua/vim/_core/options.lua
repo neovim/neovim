@@ -687,33 +687,13 @@ local function remove_value(info, current, new)
   return remove_methods[info.metatype](convert_value_to_lua(info, current), new)
 end
 
-local function create_option_accessor(scope)
-  --- @diagnostic disable-next-line: no-unknown
-  local option_mt
-
-  local function make_option(name, value)
-    local info = assert(get_options_info(name), 'Not a valid option name: ' .. name)
-
-    if type(value) == 'table' and getmetatable(value) == option_mt then
-      assert(name == value._name, "must be the same value, otherwise that's weird.")
-
-      --- @diagnostic disable-next-line: no-unknown
-      value = value._value
-    end
-
-    return setmetatable({
-      _name = name,
-      _value = value,
-      _info = info,
-    }, option_mt)
-  end
-
-  option_mt = {
+vim.make_option_mt = function(make_option, setopt)
+  local option_mt = {
     -- To set a value, instead use:
     --  opt[my_option] = value
     _set = function(self)
       local value = convert_value_to_vim(self._name, self._info, self._value)
-      api.nvim_set_option_value(self._name, value, { scope = scope })
+      setopt(self, value)
     end,
 
     get = function(self)
@@ -751,6 +731,33 @@ local function create_option_accessor(scope)
     end,
   }
   option_mt.__index = option_mt
+  return option_mt
+end
+
+local function create_option_accessor(scope)
+  --- @diagnostic disable-next-line: no-unknown
+  local option_mt
+
+  local function make_option(name, value)
+    local info = assert(get_options_info(name), 'Not a valid option name: ' .. name)
+
+    if type(value) == 'table' and getmetatable(value) == option_mt then
+      assert(name == value._name, "must be the same value, otherwise that's weird.")
+
+      --- @diagnostic disable-next-line: no-unknown
+      value = value._value
+    end
+
+    return setmetatable({
+      _name = name,
+      _value = value,
+      _info = info,
+    }, option_mt)
+  end
+
+  option_mt = vim.make_option_mt(make_option, function(self, value)
+    api.nvim_set_option_value(self._name, value, { scope = scope })
+  end)
 
   return setmetatable({}, {
     __index = function(_, k)
