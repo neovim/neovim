@@ -1119,6 +1119,23 @@ get_clients({filter})                                  *vim.lsp.get_clients()*
     Return: ~
         (`vim.lsp.Client[]`) List of |vim.lsp.Client| objects
 
+get_configs({filter})                                  *vim.lsp.get_configs()*
+    Get LSP configs.
+
+    Note: Will eagerly evaluate config files in `'runtimepath'` if necessary.
+
+    Parameters: ~
+      • {filter}  (`table?`) Key-value pairs used to filter the returned
+                  configs.
+                  • {enabled}? (`boolean`) If true, only return enabled
+                    configs. If false, only return configs that aren't
+                    enabled.
+                  • {filetype}? (`string`) Only return configs which attach to
+                    the given filetype.
+
+    Return: ~
+        (`vim.lsp.Config[]`) List of |vim.lsp.Config| objects
+
 is_enabled({name})                                      *vim.lsp.is_enabled()*
     Checks if the given LSP config is enabled (globally, not per-buffer).
 
