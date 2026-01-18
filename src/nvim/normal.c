@@ -2562,7 +2562,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
           linelen = linetabsize(curwin, curwin->w_cursor.lnum);
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
-            assert(curwin->w_curswant <= INT_MAX - w);
+            assert(w <= 0 || curwin->w_curswant <= INT_MAX - w);
             curwin->w_curswant += w;
           }
         }
