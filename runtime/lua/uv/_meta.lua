@@ -1469,8 +1469,9 @@ function uv.disable_stdio_inheritance() end
 --- @param path string
 --- @param options uv.spawn.options
 --- @param on_exit fun(code: integer, signal: integer)
---- @return uv.uv_process_t handle
---- @return integer pid
+--- @return uv.uv_process_t? handle
+--- @return integer|string pid_or_err
+--- @return uv.error_name? err_name
 function uv.spawn(path, options, on_exit) end
 
 --- Sends the specified signal to the given process handle. Check the documentation
