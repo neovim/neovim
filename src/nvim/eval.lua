@@ -8666,7 +8666,7 @@ M.funcs = {
 
     ]=],
     name = 'readdir',
-    params = { { 'directory', 'string' }, { 'expr', 'integer' } },
+    params = { { 'directory', 'string' }, { 'expr', 'integer|string|fun(name: string): integer' } },
     signature = 'readdir({directory} [, {expr}])',
   },
   readfile = {

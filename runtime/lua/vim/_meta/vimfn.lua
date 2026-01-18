@@ -7129,7 +7129,7 @@ function vim.fn.readblob(fname, offset, size) end
 --- Returns an empty List on error.
 ---
 --- @param directory string
---- @param expr? integer
+--- @param expr? integer|string|fun(name: string): integer
 --- @return any
 function vim.fn.readdir(directory, expr) end
 

@@ -7848,7 +7848,7 @@ readdir({directory} [, {expr}])                                      *readdir()*
 
                 Parameters: ~
                   • {directory} (`string`)
-                  • {expr} (`integer?`)
+                  • {expr} (`integer|string|fun(name: string): integer?`)
 
                 Return: ~
                   (`any`)
