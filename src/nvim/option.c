@@ -2715,11 +2715,11 @@ static void do_syntax_autocmd(buf_T *buf, bool value_changed)
   static int syn_recursive = 0;
 
   syn_recursive++;
+  buf->b_flags |= BF_SYN_SET;
   // Only pass true for "force" when the value changed or not used
   // recursively, to avoid endless recurrence.
   apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
                  value_changed || syn_recursive == 1, buf);
-  buf->b_flags |= BF_SYN_SET;
   syn_recursive--;
 }
 
