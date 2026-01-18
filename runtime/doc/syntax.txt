@@ -2229,33 +2229,33 @@ there are extensions to the language primitives.  For example, in AT&T troff
 you access the year as a 2-digit number with the request \(yr.  In groff you
 can use the same request, recognized for compatibility, or you can use groff's
 native syntax, \[yr].  Furthermore, you can use a 4-digit year directly:
-\[year].  Macro requests can be longer than 2 characters, for example, GNU mm
+\[year].  Macro requests can be longer than 2 characters; for example, GNU mm
 accepts the requests ".VERBON" and ".VERBOFF" for creating verbatim
 environments.
 
 In order to obtain the best formatted output g/troff can give you, you should
 follow a few simple rules about spacing and punctuation.
 
-1. Do not leave empty spaces at the end of lines.
+1. Break the line (put a carriage return) at the end of every sentence.  Don't
+   permit trailing spaces before the newline.
 
-2. Leave one space and one space only after an end-of-sentence period,
-   exclamation mark, etc.
+2. If a line ends with a period, question mark, or exclamation point that does
+   not end a sentence, follow it with the dummy character escape sequence \&.
 
-3. For reasons stated below, it is best to follow all period marks with a
-   carriage return.
+3. If you're using a macro package, employ its paragraphing macros to achieve
+   indentation of paragraphs and spacing between them.
 
-The reason behind these unusual tips is that g/n/troff have a line breaking
-algorithm that can be easily upset if you don't follow the rules given above.
+4. Use the empty request, a '.' on a line by itself, freely to visually
+   separate material for ease of document maintenance.
 
-Unlike TeX, troff fills text line-by-line, not paragraph-by-paragraph and,
-furthermore, it does not have a concept of glue or stretch, all horizontal and
-vertical space input will be output as is.
+The reason for these tips is that g/n/troff attempts to detect the ends of
+sentences, and can use that information to apply inter-sentence space.  Using
+them also minimizes the size of diffs where lines change due only to refilling
+in the text editor.
 
-Therefore, you should be careful about not using more space between sentences
-than you intend to have in your final document.  For this reason, the common
-practice is to insert a carriage return immediately after all punctuation
-marks.  If you want to have "even" text in your final processed output, you
-need to maintain regular spacing in the input text.  To mark both trailing
+Unlike TeX, troff fills text line-by-line, not paragraph-by-paragraph.  If you
+desire consistent spacing between words and sentences in formatted output, you
+must maintain consistent spacing in the input text.  To mark both trailing
 spaces and two or more spaces after a punctuation as an error, use: >
 
   :let nroff_space_errors = 1
@@ -2274,12 +2274,11 @@ file: >
 
 	let b:preprocs_as_sections = 1
 
-As well, the syntax file adds an extra paragraph marker for the extended
-paragraph macro (.XP) in the ms package.
+Further, the syntax file adds an extra paragraph marker for the XP
+paragraphing macro in the ms package, a Berkeley and GNU extension.
 
-Finally, there is a |ft-groff-syntax| syntax file that can be used for
-enabling groff syntax highlighting either on a file basis or globally by
-default.
+Finally, there is a |ft-groff-syntax| file that can be used to enable groff
+syntax highlighting either on a file basis or globally by default.
 
 
 OCAML							*ft-ocaml-syntax*
