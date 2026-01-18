@@ -1298,6 +1298,7 @@ local extension = {
   text = 'text',
   tfvars = 'terraform-vars',
   thrift = 'thrift',
+  tig = 'tiger',
   tla = 'tla',
   tli = 'tli',
   toml = 'toml',
