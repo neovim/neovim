@@ -716,6 +716,15 @@ describe('autocmd', function()
     ]]
   end)
 
+  it('no use-after-free when wiping buffer in Syntax autocommand', function()
+    exec([[
+      new
+      autocmd Syntax * ++once bwipe!
+      setlocal syntax=vim
+    ]])
+    assert_alive()
+  end)
+
   it('no use-after-free from win_enter autocommands in win_move_after', function()
     exec [[
       split foo
