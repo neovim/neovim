@@ -109,7 +109,8 @@ return {
     StdinReadPre = false, -- before reading from stdin
     SwapExists = false, -- found existing swap file
     Syntax = false, -- syntax selected
-    TabClosed = false, -- a tab has closed
+    TabClosed = false, -- after closing a tab page
+    TabClosedPre = false, -- before closing a tab page
     TabEnter = false, -- after entering a tab page
     TabLeave = false, -- before leaving a tab page
     TabNew = false, -- when creating a new tab

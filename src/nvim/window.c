@@ -3102,6 +3102,35 @@ static void do_autocmd_winclosed(win_T *win)
   recursive = false;
 }
 
+static void trigger_tabclosedpre(tabpage_T *tp)
+{
+  static bool recursive = false;
+  tabpage_T *ptp = curtab;
+
+  // Quickly return when no TabClosedPre autocommands to be executed or
+  // already executing
+  if (!has_event(EVENT_TABCLOSEDPRE) || recursive) {
+    return;
+  }
+
+  if (valid_tabpage(tp)) {
+    goto_tabpage_tp(tp, false, false);
+  }
+  recursive = true;
+  window_layout_lock();
+  apply_autocmds(EVENT_TABCLOSEDPRE, NULL, NULL, false, NULL);
+  window_layout_unlock();
+  recursive = false;
+  // tabpage may have been modified or deleted by autocmds
+  if (valid_tabpage(ptp)) {
+    // try to recover the tappage first
+    goto_tabpage_tp(ptp, false, false);
+  } else {
+    // fall back to the first tappage
+    goto_tabpage_tp(first_tabpage, false, false);
+  }
+}
+
 // Close window "win" in tab page "tp", which is not the current tab page.
 // This may be the last window in that tab page and result in closing the tab,
 // thus "tp" may become invalid!
@@ -3151,6 +3180,14 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   // and win_close() should have already triggered WinClosed.
   if (win->w_buffer != NULL) {
     do_autocmd_winclosed(win);
+    // autocmd may have freed the window already.
+    if (!win_valid_any_tab(win)) {
+      return false;
+    }
+  }
+
+  if (tp->tp_firstwin == tp->tp_lastwin) {
+    trigger_tabclosedpre(tp);
     // autocmd may have freed the window already.
     if (!win_valid_any_tab(win)) {
       return false;

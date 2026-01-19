@@ -4636,6 +4636,165 @@ func Test_WinScrolled_Resized_eiw()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that TabClosedPre and TabClosed are triggered when closing a tab.
+func Test_autocmd_tabclosedpre()
+  augroup testing
+    au TabClosedPre * call add(g:tabpagenr_pre, t:testvar)
+    au TabClosed * call add(g:tabpagenr_post, t:testvar)
+  augroup END
+
+  " Test 'tabclose' triggering
+  let g:tabpagenr_pre = []
+  let g:tabpagenr_post = []
+  let t:testvar = 1
+  tabnew
+  let t:testvar = 2
+  tabnew
+  let t:testvar = 3
+  tabnew
+  let t:testvar = 4
+  tabnext
+  tabclose
+  tabclose
+  tabclose
+  call assert_equal([1, 2, 3], g:tabpagenr_pre)
+  call assert_equal([2, 3, 4], g:tabpagenr_post)
+
+  " Test 'tabclose {count}' triggering
+  let g:tabpagenr_pre = []
+  let g:tabpagenr_post = []
+  let t:testvar = 1
+  tabnew
+  let t:testvar = 2
+  tabnew
+  let t:testvar = 3
+  tabclose 2
+  tabclose 2
+  call assert_equal([2, 3], g:tabpagenr_pre)
+  call assert_equal([3, 1], g:tabpagenr_post)
+
+  " Test 'tabonly' triggering
+  let g:tabpagenr_pre = []
+  let g:tabpagenr_post = []
+  let t:testvar = 1
+  tabnew
+  let t:testvar = 2
+  tabonly
+  call assert_equal([1], g:tabpagenr_pre)
+  call assert_equal([2], g:tabpagenr_post)
+
+  " Test 'q' and 'close' triggering (closing the last window in a tab)
+  let g:tabpagenr_pre = []
+  let g:tabpagenr_post = []
+  split
+  let t:testvar = 1
+  tabnew
+  let t:testvar = 2
+  split
+  vsplit
+  tabnew
+  let t:testvar = 3
+  tabnext
+  only
+  quit
+  quit
+  close
+  close
+  call assert_equal([1, 2], g:tabpagenr_pre)
+  call assert_equal([2, 3], g:tabpagenr_post)
+
+  func ClearAutomcdAndCreateTabs()
+    au! TabClosedPre
+    bw!
+    e Z
+    tabonly
+    tabnew A
+    tabnew B
+    tabnew C
+  endfunc
+
+  func GetTabs()
+    redir => tabsout
+      tabs
+    redir END
+    let tabsout = substitute(tabsout, '\n', '', 'g')
+    let tabsout = substitute(tabsout, 'Tab page ', '', 'g')
+    let tabsout = substitute(tabsout, '#', '', 'g')  " Nvim: remove '#'
+    let tabsout = substitute(tabsout, ' ', '', 'g')
+    return tabsout
+  endfunc
+
+  call CleanUpTestAuGroup()
+
+  " Close tab in TabClosedPre autocmd
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabclose
+  call assert_fails('tabclose', 'E1312')
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabclose
+  call assert_fails('tabclose 2', 'E1312')
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabclose 1
+  call assert_fails('tabclose', 'E1312')
+
+  " Close other (all) tabs in TabClosedPre autocmd
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabonly
+  call assert_fails('tabclose', 'E1312')
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabonly
+  call assert_fails('tabclose 2', 'E1312')
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabclose 4
+  call assert_fails('tabclose 2', 'E1312')
+
+  " Open new tabs in TabClosedPre autocmd
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabnew D
+  call assert_fails('tabclose', 'E1312')
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabnew D
+  call assert_fails('tabclose 1', 'E1312')
+
+  " Moving the tab page in TabClosedPre autocmd
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabmove 0
+  tabclose
+  call assert_equal('1Z2A3>B', GetTabs())
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabmove 0
+  tabclose 1
+  call assert_equal('1A2B3>C', GetTabs())
+  tabonly
+  call assert_equal('1>C', GetTabs())
+
+  " Switching tab page in TabClosedPre autocmd
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabnext | e Y
+  tabclose
+  call assert_equal('1Y2A3>B', GetTabs())
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * tabnext | e Y
+  tabclose 1
+  call assert_equal('1Y2B3>C', GetTabs())
+  tabonly
+  call assert_equal('1>Y', GetTabs())
+
+  " Create new windows in TabClosedPre autocmd
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * split | e X| vsplit | e Y | split | e Z
+  call assert_fails('tabclose', 'E242')
+  call ClearAutomcdAndCreateTabs()
+  au TabClosedPre * new X | new Y | new Z
+  call assert_fails('tabclose 1', 'E242')
+
+  " Clean up
+  au!
+  only
+  tabonly
+  bw!
+endfunc
+
 func Test_eventignorewin_non_current()
   defer CleanUpTestAuGroup()
   let s:triggered = ''

@@ -2561,6 +2561,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|SwapExists|,
 		|Syntax|,
 		|TabClosed|,
+		|TabClosedPre|,
 		|TabEnter|,
 		|TabLeave|,
 		|TabNew|,
