@@ -1387,7 +1387,8 @@ static int command_line_execute(VimState *state, int key)
 
   int wild_type = 0;
   const bool key_is_wc = (s->c == p_wc && KeyTyped) || s->c == p_wcm;
-  if ((cmdline_pum_active() || wild_menu_showing || s->did_wild_list) && !key_is_wc) {
+  if ((cmdline_pum_active() || wild_menu_showing || s->did_wild_list)
+      && !key_is_wc && s->xpc.xp_numfiles > 0) {
     // Ctrl-Y: Accept the current selection and close the popup menu.
     // Ctrl-E: cancel the cmdline popup menu and return the original text.
     if (s->c == Ctrl_E || s->c == Ctrl_Y) {
