@@ -4698,9 +4698,9 @@ static void ex_highlight(exarg_T *eap)
 
 /// Call this function if we thought we were going to exit, but we won't
 /// (because of an error).  May need to restore the terminal mode.
-void not_exiting(void)
+void not_exiting(bool save_exiting)
 {
-  exiting = false;
+  exiting = save_exiting;
 }
 
 bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
@@ -4770,6 +4770,7 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
+  bool save_exiting = exiting;
   // If there is only one relevant window we will exit.
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
@@ -4780,7 +4781,7 @@ static void ex_quit(exarg_T *eap)
                         | CCGD_EXCMD))
       || check_more(true, eap->forceit) == FAIL
       || (only_one_window() && check_changed_any(eap->forceit, true))) {
-    not_exiting();
+    not_exiting(save_exiting);
   } else {
     // quit last window
     // Note: only_one_window() returns true, even so a help window is
@@ -4791,7 +4792,7 @@ static void ex_quit(exarg_T *eap)
     if (only_one_window() && (ONE_WINDOW || eap->addr_count == 0)) {
       getout(0);
     }
-    not_exiting();
+    not_exiting(save_exiting);
     // close window; may free buffer
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit, eap->forceit);
   }
@@ -4837,11 +4838,12 @@ static void ex_quit_all(exarg_T *eap)
   if (before_quit_all(eap) == FAIL) {
     return;
   }
+  bool save_exiting = exiting;
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
     getout(0);
   }
-  not_exiting();
+  not_exiting(save_exiting);
 }
 
 /// ":close": close current window, unless it is the last one
@@ -5104,6 +5106,7 @@ static void ex_exit(exarg_T *eap)
     return;
   }
 
+  bool save_exiting = exiting;
   // we plan to exit if there is only one relevant window
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
@@ -5115,13 +5118,13 @@ static void ex_exit(exarg_T *eap)
       || before_quit_autocmds(curwin, false, eap->forceit)
       || check_more(true, eap->forceit) == FAIL
       || (only_one_window() && check_changed_any(eap->forceit, false))) {
-    not_exiting();
+    not_exiting(save_exiting);
   } else {
     if (only_one_window()) {
       // quit last window, exit Vim
       getout(0);
     }
-    not_exiting();
+    not_exiting(save_exiting);
     // Quit current window, may free the buffer.
     win_close(curwin, !buf_hide(curwin->w_buffer), eap->forceit);
   }
