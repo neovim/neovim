@@ -1341,6 +1341,7 @@ protocol._request_name_allows_registration = {
   ['textDocument/selectionRange'] = true,
   ['textDocument/semanticTokens/full'] = true,
   ['textDocument/semanticTokens/full/delta'] = true,
+  ['textDocument/semanticTokens/range'] = true,
   ['textDocument/signatureHelp'] = true,
   ['textDocument/typeDefinition'] = true,
   ['textDocument/willSave'] = true,

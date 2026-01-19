@@ -298,6 +298,10 @@ LSP
 • Support for dynamic registration for `textDocument/diagnostic`
 • |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
   |hl-LspReferenceTarget| highlight group.
+• Support for `textDocument/semanticTokens/range` which requests tokens
+  for the viewport (visible screen) until a full request is processed,
+  allowing faster highlighting for supported LSP servers and highlighting
+  for servers that only support the range request.
 
 LUA
 
@@ -350,8 +354,6 @@ PERFORMANCE
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
 • |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
-• LSP `textDocument/semanticTokens/range` is supported which requests tokens
-  for the viewport (visible screen) only.
 
 PLUGINS
 
