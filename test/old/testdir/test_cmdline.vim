@@ -166,6 +166,16 @@ func Test_complete_wildmenu()
   call feedkeys(":sign un zz\<Left>\<Left>\<Left>\<Tab>\<Tab>\<C-Y> yy\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign unplace yy zz', @:)
 
+  " This used to crash
+  call feedkeys(":sign un\<Tab>\<S-Tab>\<C-A>\<C-Y>\<C-B>\"\<CR>", 'tx')
+  " Ctrl-Y is inserted literally like before 9.1.1714
+  call assert_equal("\"sign undefine unplace\<C-Y>", @:)
+  " Also test Ctrl-Y after Ctrl-A with selected item (the result is the same)
+  call feedkeys(":sign un\<Tab>\<C-A>\<C-Y>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign undefine unplace\<C-Y>", @:)
+  call feedkeys(":sign un\<Tab>\<Tab>\<C-A>\<C-Y>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign undefine unplace\<C-Y>", @:)
+
   " cleanup
   %bwipe
   set nowildmenu
