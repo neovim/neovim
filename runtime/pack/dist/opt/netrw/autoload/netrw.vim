@@ -17,6 +17,7 @@
 " 2025 Nov 18 by Vim Project use UNC paths when using scp and Windows paths #18764
 " 2025 Nov 28 by Vim Project fix undefined variable in *NetrwMenu #18829
 " 2025 Dec 26 by Vim Project fix use of g:netrw_cygwin #19015
+" 2026 Jan 19 by Vim Project do not create swapfiles #18854
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -4261,12 +4262,12 @@ endfunction
 "    NetrwKeepj [keepalt] <OPT> <CMD> <FILENAME>
 function s:NetrwEditFile(cmd,opt,fname)
     if exists("g:netrw_altfile") && g:netrw_altfile && &ft == "netrw"
-        exe "NetrwKeepj keepalt ".a:opt." ".a:cmd." ".fnameescape(a:fname)
+        exe "NetrwKeepj noswapfile keepalt ".a:opt." ".a:cmd." ".fnameescape(a:fname)
     else
         if a:cmd =~# 'e\%[new]!' && !&hidden && getbufvar(bufname('%'), '&modified', 0)
             call setbufvar(bufname('%'), '&bufhidden', 'hide')
         endif
-        exe "NetrwKeepj ".a:opt." ".a:cmd." ".fnameescape(a:fname)
+        exe "NetrwKeepj noswapfile ".a:opt." ".a:cmd." ".fnameescape(a:fname)
     endif
 endfunction
 
