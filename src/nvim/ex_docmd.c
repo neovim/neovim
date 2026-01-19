@@ -5174,6 +5174,10 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int done = 0;
   char prev_idx[NUMBUFLEN];
 
+  if (window_layout_locked(CMD_SIZE)) {
+    return;
+  }
+
   trigger_tabclosedpre(tp, true);
 
   // Limit to 1000 windows, autocommands may add a window while we close

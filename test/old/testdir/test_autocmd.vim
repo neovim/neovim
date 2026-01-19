@@ -4566,6 +4566,7 @@ func Test_OptionSet_cmdheight()
   call Ntest_setmouse(&lines - 2, 1)
   call feedkeys("\<LeftDrag>", 'xt')
   call assert_equal(2, &l:ch)
+  call feedkeys("\<LeftRelease>", 'xt')
 
   tabnew | resize +1
   call assert_equal(1, &l:ch)
@@ -4637,7 +4638,7 @@ func Test_WinScrolled_Resized_eiw()
 endfunc
 
 " Test that TabClosedPre and TabClosed are triggered when closing a tab.
-func Test_autocmd_tabclosedpre()
+func Test_autocmd_TabClosedPre()
   augroup testing
     au TabClosedPre * call add(g:tabpagenr_pre, t:testvar)
     au TabClosed * call add(g:tabpagenr_post, t:testvar)
@@ -4703,7 +4704,7 @@ func Test_autocmd_tabclosedpre()
   call assert_equal([1, 2], g:tabpagenr_pre)
   call assert_equal([2, 3], g:tabpagenr_post)
 
-  func ClearAutomcdAndCreateTabs()
+  func ClearAutocmdAndCreateTabs()
     au! TabClosedPre
     bw!
     e Z
@@ -4727,41 +4728,41 @@ func Test_autocmd_tabclosedpre()
   call CleanUpTestAuGroup()
 
   " Close tab in TabClosedPre autocmd
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabclose
   call assert_fails('tabclose', 'E1312:')
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabclose
   call assert_fails('tabclose 2', 'E1312:')
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabclose 1
   call assert_fails('tabclose', 'E1312:')
 
   " Close other (all) tabs in TabClosedPre autocmd
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabonly
   call assert_fails('tabclose', 'E1312:')
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabonly
   call assert_fails('tabclose 2', 'E1312:')
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabclose 4
   call assert_fails('tabclose 2', 'E1312:')
 
   " Open new tabs in TabClosedPre autocmd
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabnew D
   call assert_fails('tabclose', 'E1312:')
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabnew D
   call assert_fails('tabclose 1', 'E1312:')
 
   " Moving the tab page in TabClosedPre autocmd
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabmove 0
   tabclose
   call assert_equal('1>Z2A3B', GetTabs())
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabmove 0
   tabclose 1
   call assert_equal('1A2B3>C', GetTabs())
@@ -4769,11 +4770,11 @@ func Test_autocmd_tabclosedpre()
   call assert_equal('1>C', GetTabs())
 
   " Switching tab page in TabClosedPre autocmd
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabnext | e Y
   tabclose
   call assert_equal('1Y2A3>B', GetTabs())
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * tabnext | e Y
   tabclose 1
   call assert_equal('1Y2B3>C', GetTabs())
@@ -4781,10 +4782,10 @@ func Test_autocmd_tabclosedpre()
   call assert_equal('1>Y', GetTabs())
 
   " Create new windows in TabClosedPre autocmd
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * split | e X| vsplit | e Y | split | e Z
   call assert_fails('tabclose', 'E242:')
-  call ClearAutomcdAndCreateTabs()
+  call ClearAutocmdAndCreateTabs()
   au TabClosedPre * new X | new Y | new Z
   call assert_fails('tabclose 1', 'E242:')
 
@@ -4819,6 +4820,94 @@ func Test_autocmd_tabclosedpre()
   only
   tabonly
   bw!
+  delfunc ClearAutocmdAndCreateTabs
+  delfunc GetTabs
+endfunc
+
+" This used to cause heap-use-after-free.
+func Run_test_TabClosedPre_wipe_buffer(split_cmds)
+  file Xa
+  exe a:split_cmds
+  autocmd TabClosedPre * ++once tabnext | bwipe! Xa
+  " Closing window inside TabClosedPre is not allowed.
+  call assert_fails('tabonly', 'E1312:')
+
+  %bwipe!
+endfunc
+
+func Test_TabClosedPre_wipe_buffer()
+  " Test with Xa only in other tab pages.
+  call Run_test_TabClosedPre_wipe_buffer('split | tab split | tabnew Xb')
+  " Test with Xa in both current and other tab pages.
+  call Run_test_TabClosedPre_wipe_buffer('split | tab split | new Xb')
+endfunc
+
+func Test_TabClosedPre_mouse()
+  func MyTabline()
+    let cnt = tabpagenr('$')
+    return range(1, cnt)->mapnew({_, n -> $'%{n}X|Close{n}|%X'})->join('')
+  endfunc
+
+  let save_mouse = &mouse
+  if has('gui')
+    set guioptions-=e
+  endif
+  set mouse=a tabline=%!MyTabline()
+
+  func OpenTwoTabPages()
+    %bwipe!
+    file Xa | split | split
+    let g:Xa_bufnr = bufnr()
+    tabnew Xb | split
+    let g:Xb_bufnr = bufnr()
+    redraw!
+    call assert_match('^|Close1||Close2| *$', Screenline(1))
+    call assert_equal(2, tabpagenr('$'))
+  endfunc
+
+  autocmd! TabClosedPre
+  call OpenTwoTabPages()
+  let g:autocmd_bufnrs = []
+  autocmd TabClosedPre * let g:autocmd_bufnrs += [tabpagebuflist()]
+  call Ntest_setmouse(1, 2)
+  call feedkeys("\<LeftMouse>\<LeftRelease>", 'tx')
+  call assert_equal(1, tabpagenr('$'))
+  call assert_equal([[g:Xa_bufnr]->repeat(3)], g:autocmd_bufnrs)
+  call assert_equal([g:Xb_bufnr]->repeat(2), tabpagebuflist())
+
+  call OpenTwoTabPages()
+  let g:autocmd_bufnrs = []
+  autocmd TabClosedPre * call feedkeys("\<LeftRelease>\<LeftMouse>", 'tx')
+  call Ntest_setmouse(1, 2)
+  " Closing tab page inside TabClosedPre is not allowed.
+  call assert_fails('call feedkeys("\<LeftMouse>", "tx")', 'E1312:')
+  call feedkeys("\<LeftRelease>", 'tx')
+
+  autocmd! TabClosedPre
+  call OpenTwoTabPages()
+  let g:autocmd_bufnrs = []
+  autocmd TabClosedPre * let g:autocmd_bufnrs += [tabpagebuflist()]
+  call Ntest_setmouse(1, 10)
+  call feedkeys("\<LeftMouse>\<LeftRelease>", 'tx')
+  call assert_equal(1, tabpagenr('$'))
+  call assert_equal([[g:Xb_bufnr]->repeat(2)], g:autocmd_bufnrs)
+  call assert_equal([g:Xa_bufnr]->repeat(3), tabpagebuflist())
+
+  call OpenTwoTabPages()
+  let g:autocmd_bufnrs = []
+  autocmd TabClosedPre * call feedkeys("\<LeftRelease>\<LeftMouse>", 'tx')
+  call Ntest_setmouse(1, 10)
+  " Closing tab page inside TabClosedPre is not allowed.
+  call assert_fails('call feedkeys("\<LeftMouse>", "tx")', 'E1312:')
+  call feedkeys("\<LeftRelease>", 'tx')
+
+  autocmd! TabClosedPre
+  %bwipe!
+  unlet g:Xa_bufnr g:Xb_bufnr g:autocmd_bufnrs
+  let &mouse = save_mouse
+  set tabline& guioptions&
+  delfunc MyTabline
+  delfunc OpenTwoTabPages
 endfunc
 
 func Test_eventignorewin_non_current()
