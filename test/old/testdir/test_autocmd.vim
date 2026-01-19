@@ -4760,7 +4760,7 @@ func Test_autocmd_tabclosedpre()
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabmove 0
   tabclose
-  call assert_equal('1Z2A3>B', GetTabs())
+  call assert_equal('1>Z2A3B', GetTabs())
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabmove 0
   tabclose 1
@@ -4788,7 +4788,33 @@ func Test_autocmd_tabclosedpre()
   au TabClosedPre * new X | new Y | new Z
   call assert_fails('tabclose 1', 'E242')
 
+  " Test directly closing the tab page with ':tabclose'
+  au!
+  tabonly
+  bw!
+  e Z
+  au TabClosedPre * mksession!
+  tabnew A
+  sp
+  tabclose
+  source Session.vim
+  call assert_equal('1Z2>AA', GetTabs())
+
+  " Test directly closing the tab page with ':tabonly'
+  " Z is closed before A. Hence A overwrites the session.
+  au!
+  tabonly
+  bw!
+  e Z
+  au TabClosedPre * mksession!
+  tabnew A
+  tabnew B
+  tabonly
+  source Session.vim
+  call assert_equal('1>A2B', GetTabs())
+
   " Clean up
+  call delete('Session.vim')
   au!
   only
   tabonly

@@ -5150,6 +5150,8 @@ void tabpage_close(int forceit)
     return;
   }
 
+  trigger_tabclosedpre(curtab, true);
+
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
   while (curwin->w_floating) {
@@ -5171,6 +5173,8 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 {
   int done = 0;
   char prev_idx[NUMBUFLEN];
+
+  trigger_tabclosedpre(tp, true);
 
   // Limit to 1000 windows, autocommands may add a window while we close
   // one.  OK, so I'm paranoid...
