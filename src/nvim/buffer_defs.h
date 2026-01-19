@@ -841,9 +841,10 @@ struct tabpage_S {
   win_T *tp_firstwin;         ///< first window in this Tab page
   win_T *tp_lastwin;          ///< last window in this Tab page
   int64_t tp_old_Rows_avail;  ///< ROWS_AVAIL when Tab page was left
-  int64_t tp_old_Columns;        ///< Columns when Tab page was left, -1 when
-                                 ///< calling win_new_screen_cols() postponed
+  int64_t tp_old_Columns;     ///< Columns when Tab page was left, -1 when
+                              ///< calling win_new_screen_cols() postponed
   OptInt tp_ch_used;          ///< value of 'cmdheight' when frame size was set
+  bool tp_did_tabclosedpre;   ///< whether TabClosedPre was triggered
 
   diff_T *tp_first_diff;
   buf_T *(tp_diffbuf[DB_COUNT]);

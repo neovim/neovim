@@ -640,7 +640,7 @@ endfunc
 func Test_clear_arglist_in_all()
   n 0 00 000 0000 00000 000000
   au WinNew 0 n 0
-  call assert_fails("all", "E1156")
+  call assert_fails("all", "E1156:")
   au! *
 endfunc
 

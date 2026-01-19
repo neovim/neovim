@@ -1041,6 +1041,13 @@ Syntax				When the 'syntax' option has been set.  The
 				this option was set. <amatch> expands to the
 				new value of 'syntax'.
 				See |:syn-on|.
+							*TabClosed*
+TabClosed			After closing a tab page. <afile> expands to
+				the tab page number.
+							*TabClosedPre*
+TabClosedPre			Before closing a tab page.  The window layout
+				is locked, thus opening and closing of windows
+				is prohibited.
 							*TabEnter*
 TabEnter			Just after entering a tab page. |tab-page|
 				After WinEnter.
@@ -1055,9 +1062,6 @@ TabNew				When creating a new tab page. |tab-page|
 							*TabNewEntered*
 TabNewEntered			After entering a new tab page. |tab-page|
 				After BufEnter.
-							*TabClosed*
-TabClosed			After closing a tab page. <afile> expands to
-				the tab page number.
 							*TermOpen*
 TermOpen			When a |terminal| job is starting.  Can be
 				used to configure the terminal buffer. To get

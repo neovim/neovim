@@ -2239,6 +2239,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`SwapExists`,
 --- 	`Syntax`,
 --- 	`TabClosed`,
+--- 	`TabClosedPre`,
 --- 	`TabEnter`,
 --- 	`TabLeave`,
 --- 	`TabNew`,
