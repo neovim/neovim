@@ -3817,10 +3817,10 @@ func Test_autocmd_normal_mess()
     au BufLeave,BufWinLeave,BufHidden,BufUnload,BufDelete,BufWipeout * norm 7q/qc
   augroup END
   " Nvim has removed :open
-  " call assert_fails('o4', 'E1159')
-  call assert_fails('e4', 'E1159')
+  " call assert_fails('o4', 'E1159:')
+  call assert_fails('e4', 'E1159:')
   silent! H
-  call assert_fails('e xx', 'E1159')
+  call assert_fails('e xx', 'E1159:')
   normal G
 
   augroup aucmd_normal_test
@@ -4729,32 +4729,32 @@ func Test_autocmd_tabclosedpre()
   " Close tab in TabClosedPre autocmd
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabclose
-  call assert_fails('tabclose', 'E1312')
+  call assert_fails('tabclose', 'E1312:')
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabclose
-  call assert_fails('tabclose 2', 'E1312')
+  call assert_fails('tabclose 2', 'E1312:')
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabclose 1
-  call assert_fails('tabclose', 'E1312')
+  call assert_fails('tabclose', 'E1312:')
 
   " Close other (all) tabs in TabClosedPre autocmd
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabonly
-  call assert_fails('tabclose', 'E1312')
+  call assert_fails('tabclose', 'E1312:')
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabonly
-  call assert_fails('tabclose 2', 'E1312')
+  call assert_fails('tabclose 2', 'E1312:')
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabclose 4
-  call assert_fails('tabclose 2', 'E1312')
+  call assert_fails('tabclose 2', 'E1312:')
 
   " Open new tabs in TabClosedPre autocmd
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabnew D
-  call assert_fails('tabclose', 'E1312')
+  call assert_fails('tabclose', 'E1312:')
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * tabnew D
-  call assert_fails('tabclose 1', 'E1312')
+  call assert_fails('tabclose 1', 'E1312:')
 
   " Moving the tab page in TabClosedPre autocmd
   call ClearAutomcdAndCreateTabs()
@@ -4783,10 +4783,10 @@ func Test_autocmd_tabclosedpre()
   " Create new windows in TabClosedPre autocmd
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * split | e X| vsplit | e Y | split | e Z
-  call assert_fails('tabclose', 'E242')
+  call assert_fails('tabclose', 'E242:')
   call ClearAutomcdAndCreateTabs()
   au TabClosedPre * new X | new Y | new Z
-  call assert_fails('tabclose 1', 'E242')
+  call assert_fails('tabclose 1', 'E242:')
 
   " Test directly closing the tab page with ':tabclose'
   au!

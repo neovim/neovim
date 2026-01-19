@@ -320,13 +320,13 @@ func Test_CmdErrors()
       vim9script
       com! -complete=file DoCmd :
   END
-  call CheckScriptFailure(lines, 'E1208', 2)
+  call CheckScriptFailure(lines, 'E1208:', 2)
 
   let lines =<< trim END
       vim9script
       com! -nargs=0 -complete=file DoCmd :
   END
-  call CheckScriptFailure(lines, 'E1208', 2)
+  call CheckScriptFailure(lines, 'E1208:', 2)
 
   com! -nargs=0 DoCmd :
   call assert_fails('DoCmd x', 'E488:')

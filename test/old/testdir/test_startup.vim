@@ -1356,7 +1356,7 @@ func Test_cq_zero_exmode()
   let logfile = 'Xcq_log.txt'
   let out = system(GetVimCommand() .. ' --clean --log ' .. logfile .. ' -es -X -c "argdelete foobar" -c"7cq"')
   call assert_equal(8, v:shell_error)
-  let log = filter(readfile(logfile), {idx, val -> val =~ "E480"})
+  let log = filter(readfile(logfile), {idx, val -> val =~ "E480:"})
   call assert_match('E480: No match: foobar', log[0])
   call delete(logfile)
 
@@ -1367,7 +1367,7 @@ func Test_cq_zero_exmode()
   else
     call assert_equal(256, v:shell_error)
   endif
-  let log = filter(readfile(logfile), {idx, val -> val =~ "E480"})
+  let log = filter(readfile(logfile), {idx, val -> val =~ "E480:"})
   call assert_match('E480: No match: foobar', log[0])
   call delete('Xcq_log.txt')
 endfunc
