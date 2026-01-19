@@ -2468,6 +2468,22 @@ describe('TUI', function()
     screen:expect({ any = vim.pesc('[Process exited 1]') })
   end)
 
+  it('exits properly when :quit non-last window in event handler #14379', function()
+    local code = [[
+      vim.defer_fn(function()
+        vim.cmd('vsplit | quit')
+      end, 0)
+      vim.cmd('quit')
+    ]]
+    child_session:notify('nvim_exec_lua', code, {})
+    screen:expect([[
+                                                        |
+      [Process exited 0]^                                |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('no stack-use-after-scope with cursor color #22432', function()
     screen:set_option('rgb', true)
     command('set termguicolors')
