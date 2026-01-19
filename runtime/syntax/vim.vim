@@ -1890,7 +1890,7 @@ syn keyword	vimSyncCcomment	contained	ccomment	skipwhite	nextgroup=vimGroupName
 syn keyword	vimSyncClear	contained	clear	skipwhite	nextgroup=vimSyncGroupName
 syn keyword	vimSyncFromstart	contained	fromstart
 syn keyword	vimSyncMatch	contained	match	skipwhite	nextgroup=vimSyncGroupName
-syn keyword	vimSyncRegion	contained	region	skipwhite	nextgroup=vimSynReg
+syn keyword	vimSyncRegion	contained	region	skipwhite	nextgroup=vimSynRegion
 syn match	vimSyncLinebreak	contained	"\<linebreaks="		nextgroup=vimNumber
 syn keyword	vimSyncLinecont	contained	linecont	skipwhite	nextgroup=vimSynRegPat
 syn match	vimSyncLines	contained	"\<lines="		nextgroup=vimNumber
