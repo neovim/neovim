@@ -4704,6 +4704,64 @@ func Test_autocmd_TabClosedPre()
   call assert_equal([1, 2], g:tabpagenr_pre)
   call assert_equal([2, 3], g:tabpagenr_post)
 
+  " Test failing to close tab page
+  let g:tabpagenr_pre = []
+  let g:tabpagenr_post = []
+  let t:testvar = 1
+  call setline(1, 'foo')
+  setlocal bufhidden=wipe
+  tabnew
+  let t:testvar = 2
+  tabnew
+  let t:testvar = 3
+  call setline(1, 'bar')
+  setlocal bufhidden=wipe
+  tabnew
+  let t:testvar = 4
+  call setline(1, 'baz')
+  setlocal bufhidden=wipe
+  new
+  call assert_fails('tabclose', 'E445:')
+  call assert_equal([4], g:tabpagenr_pre)
+  call assert_equal([], g:tabpagenr_post)
+  " :tabclose! after failed :tabclose should trigger TabClosedPre again.
+  tabclose!
+  call assert_equal([4, 4], g:tabpagenr_pre)
+  call assert_equal([3], g:tabpagenr_post)
+  call assert_fails('tabclose', 'E37:')
+  call assert_equal([4, 4, 3], g:tabpagenr_pre)
+  call assert_equal([3], g:tabpagenr_post)
+  " The same for :close! if the tab page only has one window.
+  close!
+  call assert_equal([4, 4, 3, 3], g:tabpagenr_pre)
+  call assert_equal([3, 2], g:tabpagenr_post)
+  " Also test with :close! after failed :tabonly.
+  call assert_fails('tabonly', 'E37:')
+  call assert_equal([4, 4, 3, 3, 1], g:tabpagenr_pre)
+  call assert_equal([3, 2], g:tabpagenr_post)
+  tabprevious | close!
+  call assert_equal([4, 4, 3, 3, 1, 1], g:tabpagenr_pre)
+  call assert_equal([3, 2, 2], g:tabpagenr_post)
+  %bwipe!
+
+  " Test closing another tab page in BufWinLeave
+  let g:tabpagenr_pre = []
+  let g:tabpagenr_post = []
+  split
+  let t:testvar = 1
+  tabnew
+  let t:testvar = 2
+  tabnew Xsomebuf
+  let t:testvar = 3
+  new
+  autocmd BufWinLeave Xsomebuf ++once ++nested tabclose 1
+  tabclose
+  " TabClosedPre should not be triggered for tab page 3 twice.
+  call assert_equal([3, 1], g:tabpagenr_pre)
+  " When tab page 1 was closed, tab page 3 was still the current tab page.
+  call assert_equal([3, 2], g:tabpagenr_post)
+  %bwipe!
+
   func ClearAutocmdAndCreateTabs()
     au! TabClosedPre
     bw!

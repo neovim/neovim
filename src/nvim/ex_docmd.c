@@ -5150,7 +5150,9 @@ void tabpage_close(int forceit)
     return;
   }
 
-  trigger_tabclosedpre(curtab, true);
+  trigger_tabclosedpre(curtab);
+  curtab->tp_did_tabclosedpre = true;
+  tabpage_T *const save_curtab = curtab;
 
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
@@ -5162,6 +5164,11 @@ void tabpage_close(int forceit)
   }
   if (ONE_WINDOW) {
     ex_win_close(forceit, curwin, NULL);
+  }
+  if (curtab == save_curtab) {
+    // When closing the tab page failed, reset tp_did_tabclosedpre so that
+    // TabClosedPre behaves consistently on next :close vs :tabclose.
+    curtab->tp_did_tabclosedpre = false;
   }
 }
 
@@ -5178,7 +5185,8 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     return;
   }
 
-  trigger_tabclosedpre(tp, true);
+  trigger_tabclosedpre(tp);
+  tp->tp_did_tabclosedpre = true;
 
   // Limit to 1000 windows, autocommands may add a window while we close
   // one.  OK, so I'm paranoid...
@@ -5187,11 +5195,21 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     win_T *wp = tp->tp_lastwin;
     ex_win_close(forceit, wp, tp);
 
-    // Autocommands may delete the tab page under our fingers and we may
-    // fail to close a window with a modified buffer.
-    if (!valid_tabpage(tp) || tp->tp_lastwin == wp) {
+    // Autocommands may delete the tab page under our fingers.
+    if (!valid_tabpage(tp)) {
       break;
     }
+    // We may fail to close a window with a modified buffer.
+    if (tp->tp_lastwin == wp) {
+      done = 1000;
+      break;
+    }
+  }
+  if (done >= 1000) {
+    // When closing the tab page failed, reset tp_did_tabclosedpre so that
+    // TabClosedPre behaves consistently on next :close vs :tabclose.
+    tp->tp_did_tabclosedpre = false;
+    return;
   }
 }
 
