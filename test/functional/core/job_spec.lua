@@ -105,7 +105,7 @@ describe('jobs', function()
           vim.v.progpath,
           '--clean',
           '--headless',
-          '+lua print(vim.uv.new_tty(1, false):get_winsize())',
+          '+lua tty = vim.uv.new_tty(1, false) print(tty:get_winsize()) tty:close()',
         }, {
           term = true,
           width = 11,
