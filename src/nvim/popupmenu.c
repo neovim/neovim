@@ -643,7 +643,7 @@ void pum_redraw(void)
     }
   }
 
-  if (pum_scrollbar > 0 && !fconfig.border) {
+  if (pum_scrollbar > 0 && (!fconfig.border || fconfig.shadow)) {
     grid_width++;
     if (pum_rl) {
       col_off++;
@@ -917,8 +917,10 @@ void pum_redraw(void)
     if (pum_scrollbar > 0) {
       bool thumb = i >= thumb_pos && i < thumb_pos + thumb_height;
       int scrollbar_col = col_off + (pum_rl ? -pum_width : pum_width);
-      grid_line_put_schar(scrollbar_col, (has_border && !thumb) ? border_char : fill_char,
-                          thumb ? attr_thumb : (has_border ? border_attr : attr_scroll));
+      bool use_border_style = has_border && !fconfig.shadow;
+      grid_line_put_schar(scrollbar_col,
+                          (use_border_style && !thumb) ? border_char : fill_char,
+                          thumb ? attr_thumb : (use_border_style ? border_attr : attr_scroll));
     }
     grid_line_flush();
     row++;

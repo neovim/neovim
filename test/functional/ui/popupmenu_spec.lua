@@ -9286,6 +9286,57 @@ describe('builtin popupmenu', function()
             {5:-- }{6:match 1 of 3}               |
           ]])
         end
+        command('set pumheight=2')
+        feed('<C-x><C-O>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*10
+              [3:------------------------------]|
+            ## grid 2
+              oneone^                        |
+              line1                         |
+              line2line2line2line2          |
+              line3                         |
+              line4line4line4               |
+              line5line5                    |
+              {1:~                             }|*4
+            ## grid 3
+              {5:-- }{6:match 1 of 3}               |
+            ## grid 4
+              {n:1info}|
+            ## grid 5
+              {12: one            }{c: }{114: }|
+              {n: two            }{12: }{115: }|
+              {114: }{115:                 }|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 2, false, 100, 2, 1, 2 },
+              [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
+            },
+          })
+        else
+          screen:expect([[
+            oneone^                        |
+            li{12: one            }{c: }{116: }{n:info}      |
+            li{n: two            }{12: }{117:2}          |
+            li{116:n}{117:e3               }          |
+            line4line4line4               |
+            line5line5                    |
+            {1:~                             }|*4
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
       end)
       it("'pumborder' with none #36207", function()
         command('set wildoptions=pum pumborder=none')
