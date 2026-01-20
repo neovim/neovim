@@ -15,11 +15,9 @@ local M = {}
 --- completion. The `body` field in the response object contains the raw response data (text or binary).
 --- Called with (err, nil) on failure, or (nil, { body = string|boolean }) on success.
 function M.request(url, opts, on_response)
-  vim.validate({
-    url = { url, 'string' },
-    opts = { opts, 'table', true },
-    on_response = { on_response, 'function' },
-  })
+  vim.validate('url', url, 'string')
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('on_response', on_response, 'function')
 
   opts = opts or {}
   local retry = opts.retry or 3

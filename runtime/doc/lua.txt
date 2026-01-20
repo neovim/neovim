@@ -1478,8 +1478,8 @@ vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
                                                          *vim.str_byteindex()*
 vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
     Convert UTF-32, UTF-16 or UTF-8 {index} to byte index. If
-    {strict_indexing} is false then then an out of range index will return
-    byte length instead of throwing an error.
+    {strict_indexing} is false then an out of range index will return byte
+    length instead of throwing an error.
 
     Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
     in the middle of a UTF-16 sequence is rounded upwards to the end of that
@@ -4169,7 +4169,7 @@ Provides operations to compare, calculate, and convert ranges represented by
                      |Range:has()|.
       • {intersect}  (`fun(r1: vim.Range, r2: vim.Range): vim.Range?`) See
                      |Range:intersect()|.
-      • {to_lsp}     (`fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind)`)
+      • {to_lsp}     (`fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind): lsp.Range`)
                      See |Range:to_lsp()|.
       • {lsp}        (`fun(buf: integer, range: lsp.Range, position_encoding: lsp.PositionEncodingKind)`)
                      See |Range:lsp()|.
@@ -4236,6 +4236,9 @@ Range:to_lsp({range}, {position_encoding})                    *Range:to_lsp()*
     Parameters: ~
       • {range}              (`vim.Range`) See |vim.Range|.
       • {position_encoding}  (`lsp.PositionEncodingKind`)
+
+    Return: ~
+        (`lsp.Range`)
 
 
 ==============================================================================

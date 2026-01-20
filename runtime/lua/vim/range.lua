@@ -143,6 +143,7 @@ end
 --- ```
 ---@param range vim.Range
 ---@param position_encoding lsp.PositionEncodingKind
+---@return lsp.Range
 function Range.to_lsp(range, position_encoding)
   validate('range', range, 'table')
   validate('position_encoding', position_encoding, 'string', true)
