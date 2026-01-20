@@ -256,8 +256,15 @@ describe('server', function()
 
     -- Second instance should fail without removing live socket
     local result = n.exec_lua(function(sock)
-      return vim.system({ vim.v.progpath, '--headless', '--listen', sock }, { text = true }):wait()
+      return vim
+        .system(
+          { vim.v.progpath, '--headless', '--listen', sock },
+          { text = true, env = { NVIM_LOG_FILE = testlog } }
+        )
+        :wait()
     end, socket_path)
+    t.assert_log('Socket already in use by another Nvim instance: ', testlog, 100)
+    t.assert_log('Failed to start server: address already in use: ', testlog, 100)
 
     neq(0, result.code)
     matches('Failed.*listen', result.stderr)
