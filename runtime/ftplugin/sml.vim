@@ -3,6 +3,7 @@
 " Filenames:		*.sml *.sig
 " Maintainer: 		tocariimaa <tocariimaa@firemail.cc>
 " Last Change:		2025 Nov 04
+" 2026 Jan 19 by Vim Project: add 'include' setting
 
 if exists('b:did_ftplugin')
   finish
@@ -12,11 +13,12 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let b:undo_ftplugin = 'setl com< cms< fo<'
+let b:undo_ftplugin = 'setl com< cms< fo< inc<'
 
 setlocal formatoptions+=croql formatoptions-=t
 setlocal commentstring=(*\ %s\ *)
 setlocal comments=sr:(*,mb:*,ex:*)
+setlocal include=^\\s*use\\>
 
 if exists('loaded_matchit')
   let b:match_ignorecase = 0
