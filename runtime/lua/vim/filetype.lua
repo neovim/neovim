@@ -1299,6 +1299,8 @@ local extension = {
   tfvars = 'terraform-vars',
   thrift = 'thrift',
   tig = 'tiger',
+  Tiltfile = 'tiltfile',
+  tiltfile = 'tiltfile',
   tla = 'tla',
   tli = 'tli',
   toml = 'toml',
@@ -1935,6 +1937,8 @@ local filename = {
   ['tidy.conf'] = 'tidy',
   tidyrc = 'tidy',
   ['.tidyrc'] = 'tidy',
+  Tiltfile = 'tiltfile',
+  tiltfile = 'tiltfile',
   ['.tmux.conf'] = 'tmux',
   ['Cargo.lock'] = 'toml',
   ['/.cargo/config'] = 'toml',
@@ -2757,6 +2761,7 @@ local pattern = {
     ['termcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('term')
     end),
+    ['^Tiltfile%.'] = starsetf('tiltfile'),
     ['%.t%.html$'] = 'tilde',
     ['%.vhdl_[0-9]'] = starsetf('vhdl'),
     ['vimrc'] = starsetf('vim'),
