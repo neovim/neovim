@@ -186,28 +186,19 @@ describe('channels', function()
     eq({ 'notification', 'stdout', { id, { "OnPrint:[1, ['howdy'], 'stdin']" } } }, next_msg())
   end)
 
-  local function expect_twoline(id, stream, line1, line2, nobr)
-    local msg = next_msg()
-    local joined = nobr and { line1 .. line2 } or { line1, line2 }
-    if not pcall(eq, { 'notification', stream, { id, joined } }, msg) then
-      local sep = (not nobr) and '' or nil
-      eq({ 'notification', stream, { id, { line1, sep } } }, msg)
-      eq({ 'notification', stream, { id, { line2 } } }, next_msg())
-    end
-  end
-
   -- Helper to accumulate PTY stdout data until expected string is received.
   -- PTY reads are non-atomic and may deliver data in chunks.
   local function expect_stdout(id, expected)
     local accumulated = ''
     while #accumulated < #expected do
-      local msg = next_msg()
+      local msg = next_msg(1000)
+      if not msg then
+        break
+      end
       eq('notification', msg[1])
       eq('stdout', msg[2])
       eq(id, msg[3][1])
-      for _, chunk in ipairs(msg[3][2]) do
-        accumulated = accumulated .. chunk
-      end
+      accumulated = accumulated .. table.concat(msg[3][2], '\n')
     end
     eq(expected, accumulated)
   end
@@ -239,32 +230,28 @@ describe('channels', function()
     ok(id > 0)
 
     command("call chansend(id, 'TEXT\n')")
-    expect_twoline(id, 'stdout', 'TEXT\r', "[1, ['TEXT', ''], 'stdin']")
+    expect_stdout(id, "TEXT\r\n[1, ['TEXT', ''], 'stdin']")
 
     command('call chansend(id, 0z426c6f6273210a)')
-    expect_twoline(id, 'stdout', 'Blobs!\r', "[1, ['Blobs!', ''], 'stdin']")
+    expect_stdout(id, "Blobs!\r\n[1, ['Blobs!', ''], 'stdin']")
 
     command("call chansend(id, 'neovan')")
     expect_stdout(id, 'neovan')
     command("call chansend(id, '\127\127im\n')")
-    expect_twoline(id, 'stdout', '\b \b\b \bim\r', "[1, ['neovim', ''], 'stdin']")
+    expect_stdout(id, "\b \b\b \bim\r\n[1, ['neovim', ''], 'stdin']")
 
     command("call chansend(id, 'incomplet\004')")
 
     local bsdlike = is_os('bsd') or is_os('mac')
     local extra = bsdlike and '^D\008\008' or ''
-    expect_twoline(id, 'stdout', 'incomplet' .. extra, "[1, ['incomplet'], 'stdin']", true)
+    expect_stdout(id, 'incomplet' .. extra .. "[1, ['incomplet'], 'stdin']")
 
     command("call chansend(id, '\004')")
-    if bsdlike then
-      expect_twoline(id, 'stdout', extra, "[1, [''], 'stdin']", true)
-    else
-      eq({ 'notification', 'stdout', { id, { "[1, [''], 'stdin']" } } }, next_msg())
-    end
+    expect_stdout(id, extra .. "[1, [''], 'stdin']")
 
     -- channel is still open
     command("call chansend(id, 'hi again!\n')")
-    eq({ 'notification', 'stdout', { id, { 'hi again!\r', '' } } }, next_msg())
+    expect_stdout(id, 'hi again!\r\n')
   end)
 
   it('stdio channel can use rpc and stderr simultaneously', function()
