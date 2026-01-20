@@ -885,6 +885,7 @@ func s:GetFilenameChecks() abort
     \ 'tidy': ['.tidyrc', 'tidyrc', 'tidy.conf'],
     \ 'tiger': ['file.tig'],
     \ 'tilde': ['file.t.html'],
+    \ 'tiltfile': ['Tiltfile', 'tiltfile', 'file.Tiltfile', 'file.tiltfile', 'Tiltfile.debian'],
     \ 'tla': ['file.tla'],
     \ 'tli': ['file.tli'],
     \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf', '.tmux-file.conf', '.tmux.conf', 'tmux-file.conf', 'tmux.conf', 'tmux.conf.local'],
