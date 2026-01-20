@@ -2212,26 +2212,23 @@ If you don't want to highlight these errors, leave it unset.
 
 NROFF							*ft-nroff-syntax*
 
-The nroff syntax file works with AT&T n/troff out of the box.  You need to
-activate the GNU groff extra features included in the syntax file before you
-can use them.
-
-For example, Linux and BSD distributions use groff as their default text
-processing package.  In order to activate the extra syntax highlighting
-features for groff, arrange for files to be recognized as groff (see
+The nroff syntax file works with AT&T n/troff as-is.  To support GNU troff
+(groff), which Linux and BSD distributions use as their default typesetting
+package, arrange for files to be recognized as groff input (see
 |ft-groff-syntax|) or add the following option to your start-up files: >
 
   :let nroff_is_groff = 1
 
-Groff is different from the old AT&T n/troff that you may still find in
-Solaris.  Groff macro and request names can be longer than 2 characters and
-there are extensions to the language primitives.  For example, in AT&T troff
-you access the year as a 2-digit number with the request \(yr.  In groff you
-can use the same request, recognized for compatibility, or you can use groff's
-native syntax, \[yr].  Furthermore, you can use a 4-digit year directly:
-\[year].  Macro requests can be longer than 2 characters; for example, GNU mm
-accepts the requests ".VERBON" and ".VERBOFF" for creating verbatim
-environments.
+GNU troff differs from older AT&T n/troff programs (that you may still find in
+Solaris or Plan 9) by extending the "*roff" language syntax.  For example, in
+AT&T troff, you access the count of years since 1900 with the escape sequence
+\(yr.  In groff you can do the same, which it recognizes for compatibility, or
+use groff's extended syntax, \[yr].  AT&T troff documented the yr register as
+storing the "last two digits of current year", but had a Y2K problem; in
+groff, you can access the Gregorian year correctly: \[year].  In groff, font,
+register, macro, string, and request names can exceed two characters; for
+example, with groff's mm package, the control lines ".VERBON" and ".VERBOFF"
+call macros of those names to bracket displays of "verbatim" content.
 
 In order to obtain the best formatted output g/troff can give you, you should
 follow a few simple rules about spacing and punctuation.
@@ -2251,7 +2248,10 @@ follow a few simple rules about spacing and punctuation.
 The reason for these tips is that g/n/troff attempts to detect the ends of
 sentences, and can use that information to apply inter-sentence space.  Using
 them also minimizes the size of diffs where lines change due only to refilling
-in the text editor.
+in the text editor.  Macro packages typically employ inter-paragraph spacing
+amounts other than one vee (which is the result of a blank input line), and
+typically store that spacing amount, and that of paragraph indentation, in
+user-configurable registers so that pages lay out consistently.
 
 Unlike TeX, troff fills text line-by-line, not paragraph-by-paragraph.  If you
 desire consistent spacing between words and sentences in formatted output, you
@@ -2278,7 +2278,7 @@ Further, the syntax file adds an extra paragraph marker for the XP
 paragraphing macro in the ms package, a Berkeley and GNU extension.
 
 Finally, there is a |ft-groff-syntax| file that can be used to enable groff
-syntax highlighting either on a file basis or globally by default.
+syntax highlighting either on a per-file basis or globally by default.
 
 
 OCAML							*ft-ocaml-syntax*
