@@ -33,21 +33,35 @@ describe(':terminal buffer', function()
   end)
 
   it('terminal-mode forces various options', function()
+    local expr =
+      '[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'
+
     feed([[<C-\><C-N>]])
     command('setlocal cursorline cursorlineopt=both cursorcolumn scrolloff=4 sidescrolloff=7')
-    eq(
-      { 'both', 1, 1, 4, 7 },
-      eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]')
-    )
+    eq({ 'both', 1, 1, 4, 7 }, eval(expr))
     eq('nt', eval('mode(1)'))
 
-    -- Enter terminal-mode ("insert" mode in :terminal).
+    -- Enter Terminal mode ("insert" mode in :terminal).
     feed('i')
     eq('t', eval('mode(1)'))
-    eq(
-      { 'number', 1, 0, 0, 0 },
-      eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]')
-    )
+    eq({ 'number', 1, 0, 0, 0 }, eval(expr))
+
+    -- Return to Normal mode.
+    feed([[<C-\><C-N>]])
+    eq('nt', eval('mode(1)'))
+    eq({ 'both', 1, 1, 4, 7 }, eval(expr))
+
+    -- Enter Terminal mode again.
+    feed('i')
+    eq('t', eval('mode(1)'))
+    eq({ 'number', 1, 0, 0, 0 }, eval(expr))
+
+    -- Delete the terminal buffer and return to the previous buffer.
+    command('bwipe!')
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    eq('n', eval('mode(1)'))
+    -- Window options in the old buffer should be unchanged. #37484
+    eq({ 'both', 0, 0, -1, -1 }, eval(expr))
   end)
 
   it('terminal-mode does not change cursorlineopt if cursorline is disabled', function()
