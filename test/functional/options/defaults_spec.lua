@@ -691,6 +691,10 @@ describe('XDG defaults', function()
       })
     end)
 
+    after_each(function()
+      rmdir(',=,=,')
+    end)
+
     it('are escaped properly', function()
       local vimruntime, libdir = vimruntime_and_libdir()
       local path_sep = is_os('win') and '\\' or '/'
@@ -1074,15 +1078,19 @@ describe('stdpath()', function()
           env = {
             XDG_STATE_HOME = '$VARIABLES',
             VARIABLES = 'this-should-not-happen',
+            NVIM_LOG_FILE = testlog,
           },
         })
         eq('$VARIABLES/' .. statedir, t.fix_slashes(fn.stdpath('state')))
       end)
 
       it("doesn't expand ~/", function()
-        clear({ env = {
-          XDG_STATE_HOME = '~/frobnitz',
-        } })
+        clear({
+          env = {
+            XDG_STATE_HOME = '~/frobnitz',
+            NVIM_LOG_FILE = testlog,
+          },
+        })
         eq('~/frobnitz/' .. statedir, t.fix_slashes(fn.stdpath('state')))
       end)
     end)
