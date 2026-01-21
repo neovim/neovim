@@ -67,11 +67,17 @@ describe('has()', function()
   it('"terminfo"', function()
     -- Looks like "HAVE_UNIBILIUM ", "HAVE_UNIBILIUM=1", "HAVE_UNIBILIUM off", ….
     -- Capture group returns the "1"/"off"/….
-    local build_flag =
-      vim.trim((n.exec_capture('verbose version'):match('HAVE_UNIBILIUM([^-]+)') or ''):lower())
+    local build_flag = vim.trim(
+      (n.exec_capture('verbose version'):match('HAVE_UNIBILIUM([^-]+)') or 'missing'):lower()
+    )
     -- XXX: the match() above fails in CI so currently we assume CI always builds with unibilium.
     local is_enabled = t.is_ci()
-      or not (build_flag == '' or build_flag == 'false' or build_flag == '0' or build_flag == 'off')
+      or not (
+        build_flag == 'missing'
+        or build_flag == 'false'
+        or build_flag == '0'
+        or build_flag == 'off'
+      )
     eq(is_enabled and 1 or 0, fn.has('terminfo'))
   end)
 
