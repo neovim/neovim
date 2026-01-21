@@ -460,9 +460,11 @@ function M._convert_results(
 
   if server_start_boundary then
     for _, match in ipairs(matches) do
+      --- @type lsp.CompletionItem
       local item = match.user_data.nvim.lsp.completion_item
       if item.textEdit then
-        local item_start_char = nil
+        --- @type integer?
+        local item_start_char
         if item.textEdit.range and item.textEdit.range.start.line == lnum then
           item_start_char = item.textEdit.range.start.character
         elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
@@ -473,6 +475,7 @@ function M._convert_results(
           local item_start_byte = vim.str_byteindex(line, encoding, item_start_char, false)
           if item_start_byte > server_start_boundary then
             local missing_prefix = line:sub(server_start_boundary + 1, item_start_byte)
+            --- @type string
             match.word = missing_prefix .. match.word
           end
         end
