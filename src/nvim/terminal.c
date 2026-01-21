@@ -729,29 +729,50 @@ static void unset_terminal_winopts(TerminalState *const s)
 
   win_T *const wp = handle_get_window(s->save_curwin_handle);
   if (!wp) {
-    free_string_option(s->save_w_p_culopt);
-    s->save_curwin_handle = 0;
-    return;
+    goto end;
   }
 
-  if (win_valid(wp)) {  // No need to redraw if window not in curtab.
-    if (s->save_w_p_cuc != wp->w_p_cuc) {
-      redraw_later(wp, UPD_SOME_VALID);
-    } else if (s->save_w_p_cul != wp->w_p_cul
-               || (s->save_w_p_cul && s->save_w_p_culopt_flags != wp->w_p_culopt_flags)) {
-      redraw_later(wp, UPD_VALID);
+  winopt_T *winopts = NULL;
+  if (wp->w_buffer->handle != s->term->buf_handle) {  // Buffer no longer in "wp".
+    buf_T *buf = handle_get_buffer(s->term->buf_handle);
+    if (buf == NULL) {
+      goto end;  // Nothing to restore as the buffer was deleted.
     }
+    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+      WinInfo *wip = kv_A(buf->b_wininfo, i);
+      if (wip->wi_win == wp && wip->wi_optset) {
+        winopts = &wip->wi_opt;
+        break;
+      }
+    }
+    if (winopts == NULL) {
+      goto end;  // Nothing to restore as there is no matching WinInfo.
+    }
+  } else {
+    winopts = &wp->w_onebuf_opt;
+    if (win_valid(wp)) {  // No need to redraw if window not in curtab.
+      if (s->save_w_p_cuc != wp->w_p_cuc) {
+        redraw_later(wp, UPD_SOME_VALID);
+      } else if (s->save_w_p_cul != wp->w_p_cul
+                 || (s->save_w_p_cul && s->save_w_p_culopt_flags != wp->w_p_culopt_flags)) {
+        redraw_later(wp, UPD_VALID);
+      }
+    }
+    wp->w_p_culopt_flags = s->save_w_p_culopt_flags;
   }
 
-  wp->w_p_cul = s->save_w_p_cul;
   if (s->save_w_p_culopt) {
-    free_string_option(wp->w_p_culopt);
-    wp->w_p_culopt = s->save_w_p_culopt;
+    free_string_option(winopts->wo_culopt);
+    winopts->wo_culopt = s->save_w_p_culopt;
+    s->save_w_p_culopt = NULL;
   }
-  wp->w_p_culopt_flags = s->save_w_p_culopt_flags;
-  wp->w_p_cuc = s->save_w_p_cuc;
-  wp->w_p_so = s->save_w_p_so;
-  wp->w_p_siso = s->save_w_p_siso;
+  winopts->wo_cul = s->save_w_p_cul;
+  winopts->wo_cuc = s->save_w_p_cuc;
+  winopts->wo_so = s->save_w_p_so;
+  winopts->wo_siso = s->save_w_p_siso;
+
+end:
+  free_string_option(s->save_w_p_culopt);
   s->save_curwin_handle = 0;
 }
 
