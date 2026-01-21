@@ -166,7 +166,9 @@ describe('autocmd TermClose', function()
     retry(nil, nil, function()
       eq('3', eval('g:abuf'))
     end)
-    feed('<c-c>:qa!<cr>')
+    feed('<c-c>')
+    n.poke_eventloop() -- Wait for input to be flushed
+    n.expect_exit(1000, feed, ':qa!<cr>')
   end)
 
   it('exposes v:event.status', function()
