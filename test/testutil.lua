@@ -49,7 +49,7 @@ function M.fix_slashes(obj)
 end
 
 --- @param ... string|string[]
---- @return string
+--- @return string[]
 function M.argss_to_cmd(...)
   local cmd = {} --- @type string[]
   for i = 1, select('#', ...) do

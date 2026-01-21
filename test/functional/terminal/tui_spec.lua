@@ -543,7 +543,7 @@ end
 describe('TUI', function()
   local screen --[[@type test.functional.ui.screen]]
   local child_session --[[@type test.Session]]
-  local child_exec_lua
+  local child_exec_lua --[[@type fun(code: string, ...):any]]
 
   before_each(function()
     clear()
@@ -2987,8 +2987,8 @@ describe('TUI UIEnter/UILeave', function()
 end)
 
 describe('TUI FocusGained/FocusLost', function()
-  local screen
-  local child_session
+  local screen --[[@type test.functional.ui.screen]]
+  local child_session --[[@type test.Session]]
 
   before_each(function()
     clear()
@@ -3181,7 +3181,7 @@ end)
 
 -- These tests require `tt` because --headless/--embed does not initialize the TUI.
 describe("TUI 't_Co' (terminal colors)", function()
-  local screen
+  local screen --[[@type test.functional.ui.screen]]
 
   local function assert_term_colors(term, colorterm, maxcolors)
     clear({ env = { TERM = term }, args = {} })
@@ -3199,7 +3199,7 @@ describe("TUI 't_Co' (terminal colors)", function()
       },
     })
 
-    local tline
+    local tline --[[@type string]]
     if maxcolors == 8 then
       tline = '{112:~                                                 }'
     elseif maxcolors == 16 then
@@ -3460,7 +3460,7 @@ end)
 
 -- These tests require `tt` because --headless/--embed does not initialize the TUI.
 describe("TUI 'term' option", function()
-  local screen
+  local screen --[[@type test.functional.ui.screen]]
 
   local function assert_term(term_envvar, term_expected)
     clear()
@@ -3511,7 +3511,7 @@ end)
 
 -- These tests require `tt` because --headless/--embed does not initialize the TUI.
 describe('TUI', function()
-  local screen
+  local screen --[[@type test.functional.ui.screen]]
 
   -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
   local function nvim_tui(extra_args)
