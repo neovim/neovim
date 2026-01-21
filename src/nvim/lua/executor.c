@@ -81,6 +81,9 @@ static bool in_script = false;
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
 
+// Tracks the currently executing Lua thread (main or coroutine).
+lua_State *active_lstate = NULL;
+
 static LuaRef require_ref = LUA_REFNIL;
 
 static uv_thread_t main_thread;
@@ -883,6 +886,7 @@ void nlua_init(char **argv, int argc, int lua_arg0)
 
   luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
   global_lstate = lstate;
+  active_lstate = lstate;
   main_thread = uv_thread_self();
   nlua_init_argv(lstate, argv, argc, lua_arg0);
 }
@@ -1484,6 +1488,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
   }
 
   lua_State *const lstate = global_lstate;
+
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, name)) {
     nlua_error(lstate, _("E5107: Lua: %.*s"));
     return;
@@ -2131,7 +2136,7 @@ void nlua_set_sctx(sctx_T *current)
   if (p_verbose <= 0) {
     return;
   }
-  lua_State *const lstate = global_lstate;
+  lua_State *const lstate = active_lstate;
   lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
 
   // Files where internal wrappers are defined so we can ignore them
