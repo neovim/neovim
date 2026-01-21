@@ -169,7 +169,7 @@ void os_conpty_set_size(conpty_t *conpty_object, uint16_t width, uint16_t height
   assert(height <= SHRT_MAX);
   COORD size = { (int16_t)width, (int16_t)height };
   if (pResizePseudoConsole(conpty_object->pty, size) != S_OK) {
-    ELOG("ResizePseudoConsoel failed: error code: %d",
+    ELOG("ResizePseudoConsole failed: error code: %d",
          os_translate_sys_error((int)GetLastError()));
   }
 }
