@@ -4023,7 +4023,7 @@ describe('TUI client', function()
     screen_client:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
-  local function start_headless_server_and_client()
+  local function start_headless_server_and_client(use_testlog)
     local server = n.new_session(false, {
       args_rm = { '--cmd' },
       args = {
@@ -4033,7 +4033,8 @@ describe('TUI client', function()
         nvim_set .. ' notermguicolors background=dark',
       },
     })
-    local client_super = n.new_session(true, { env = { NVIM_LOG_FILE = testlog } })
+    local client_super =
+      n.new_session(true, use_testlog and { env = { NVIM_LOG_FILE = testlog } } or {})
     finally(function()
       client_super:close()
       server:close()
@@ -4062,7 +4063,7 @@ describe('TUI client', function()
   end
 
   it('connects to remote instance (--headless)', function()
-    local server, server_pipe, screen_client = start_headless_server_and_client()
+    local server, server_pipe, screen_client = start_headless_server_and_client(false)
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
@@ -4077,6 +4078,7 @@ describe('TUI client', function()
 
     eq(0, api.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
+    -- Use system() without input so that stdin is closed.
     fn.system({ nvim_prog, '--remote-ui', '--server', server_pipe })
     eq(1, api.nvim_get_vvar('shell_error'))
 
@@ -4095,16 +4097,10 @@ describe('TUI client', function()
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
-
-    if is_os('mac') then
-      -- this might either be "Unknown system error %-102" or
-      -- "inappropriate ioctl for device" depending on the phase of the moon
-      assert_log('uv_tty_set_mode failed', testlog)
-    end
   end)
 
   it(':restart works when connecting to remote instance (--headless)', function()
-    local _, server_pipe, screen_client = start_headless_server_and_client()
+    local _, server_pipe, screen_client = start_headless_server_and_client(false)
 
     -- Run :restart on the client.
     -- The client should start a new server while the original server should exit.
@@ -4127,7 +4123,7 @@ describe('TUI client', function()
   end)
 
   it('does not crash or hang with a very long title', function()
-    local server, _, screen_client = start_headless_server_and_client()
+    local server, _, screen_client = start_headless_server_and_client(true)
 
     local server_exec_lua = tt.make_lua_executor(server)
     if not server_exec_lua('return pcall(require, "ffi")') then
@@ -4165,7 +4161,7 @@ describe('TUI client', function()
   end)
 
   it('nvim_ui_send works with remote client #36317', function()
-    local server, _, _ = start_headless_server_and_client()
+    local server, _, _ = start_headless_server_and_client(false)
     server:request('nvim_ui_send', '\027]2;TEST_TITLE\027\\')
     retry(nil, nil, function()
       eq('TEST_TITLE', api.nvim_buf_get_var(0, 'term_title'))

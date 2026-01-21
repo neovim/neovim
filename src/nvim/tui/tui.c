@@ -1389,7 +1389,7 @@ void tui_mode_change(TUIData *tui, String mode, Integer mode_idx)
   // If stdin is not a TTY, the LHS of pipe may change the state of the TTY
   // after calling uv_tty_set_mode. So, set the mode of the TTY again here.
   // #13073
-  if (tui->is_starting && !stdin_isatty) {
+  if (tui->out_isatty && tui->is_starting && !stdin_isatty) {
     int ret = uv_tty_set_mode(&tui->output_handle.tty, UV_TTY_MODE_NORMAL);
     if (ret) {
       ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
