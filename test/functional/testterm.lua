@@ -33,6 +33,8 @@ function M.feed_csi(data)
   M.feed_termcode('[' .. data)
 end
 
+--- @param session test.Session
+--- @return fun(code: string, ...):any
 function M.make_lua_executor(session)
   return function(code, ...)
     local status, rv = session:request('nvim_exec_lua', code, { ... })

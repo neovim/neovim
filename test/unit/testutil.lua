@@ -201,8 +201,10 @@ local function is_child_cdefs()
   return os.getenv('NVIM_TEST_MAIN_CDEFS') ~= '1'
 end
 
--- use this helper to import C files, you can pass multiple paths at once,
--- this helper will return the C namespace of the nvim library.
+--- use this helper to import C files, you can pass multiple paths at once,
+--- this helper will return the C namespace of the nvim library.
+---
+--- @param ... string
 local function cimport(...)
   local previous_defines --- @type string
   local preprocess_cache --- @type table<string,string>
