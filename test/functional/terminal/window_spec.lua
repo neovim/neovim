@@ -436,7 +436,7 @@ describe(':terminal window', function()
       file foo
       setlocal cursorline
       vsplit
-      setlocal nocursorline cursorcolumn
+      setlocal nocursorline cursorcolumn cursorlineopt=number
     ]])
     screen:expect([[
       {19:t}ty ready                │tty ready               |
@@ -580,6 +580,49 @@ describe(':terminal window', function()
       {7:[No Name]                 }{18:foo [-]                 }|
                                                         |
     ]])
+
+    command('wincmd l | enew | setlocal cursorline nocursorcolumn')
+    screen:expect([[
+      {1: }{5:2}{1: [No Name] }{2: foo }{4:                               }{2:X}|
+                               │{12:^                        }|
+      {6:~                        }│{6:~                       }|*3
+      {4:[No Name]                 }{7:[No Name]               }|
+                                                        |
+    ]])
+    command('buffer # | startinsert')
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+                               │rows: 5, cols: 25       |
+      {6:~                        }│rows: 5, cols: 50       |
+      {6:~                        }│^                        |
+      {6:~                        }│                        |
+      {4:[No Name]                 }{17:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    -- Switching to another buffer shouldn't change window options there. #37484
+    command('buffer # | call setline(1, ["aaa", "bbb", "ccc"]) | normal! jl')
+    screen:expect([[
+      {1: }{5:2}{1:+ [No Name] }{2: foo }{4:                              }{2:X}|
+                               │aaa                     |
+      {6:~                        }│{12:b^bb                     }|
+      {6:~                        }│ccc                     |
+      {6:~                        }│{6:~                       }|
+      {4:[No Name]                 }{7:[No Name] [+]           }|
+                                                        |
+    ]])
+    -- Window options are restored when switching back to the terminal buffer.
+    command('buffer #')
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+                               │{19:r}ows: 5, cols: 25       |
+      {6:~                        }│{19:r}ows: 5, cols: 50       |
+      {6:~                        }│^                        |
+      {6:~                        }│{19: }                       |
+      {4:[No Name]                 }{17:foo [-]                 }|
+                                                        |
+    ]])
+    -- 'cursorlineopt' should still be "number".
+    eq('number', eval('&l:cursorlineopt'))
   end)
 
   it('not unnecessarily redrawn by events', function()
