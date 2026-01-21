@@ -393,16 +393,16 @@ local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
   for _, item in pairs(items) do
     if item.textEdit then
+      local start_char = nil
       if item.textEdit.range and item.textEdit.range.start.line == lnum then
-        if min_start_char and min_start_char ~= item.textEdit.range.start.character then
-          return nil
-        end
-        min_start_char = item.textEdit.range.start.character
+        start_char = item.textEdit.range.start.character
       elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
-        if min_start_char and min_start_char ~= item.textEdit.insert.start.character then
-          return nil
+        start_char = item.textEdit.insert.start.character
+      end
+      if start_char then
+        if not min_start_char or start_char < min_start_char then
+          min_start_char = start_char
         end
-        min_start_char = item.textEdit.insert.start.character
       end
     end
   end
@@ -457,6 +457,31 @@ function M._convert_results(
   end
   local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
   local matches = M._lsp_to_complete_items(result, prefix, client_id)
+
+  if server_start_boundary then
+    for _, match in ipairs(matches) do
+      local item = match.user_data.nvim.lsp.completion_item
+      local item_start_char = nil
+      if item.textEdit then
+        if item.textEdit.range and item.textEdit.range.start.line == lnum then
+          item_start_char = item.textEdit.range.start.character
+        elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
+          item_start_char = item.textEdit.insert.start.character
+        end
+      end
+
+      local item_start_byte = client_start_boundary
+      if item_start_char then
+        item_start_byte = vim.str_byteindex(line, encoding, item_start_char, false)
+      end
+
+
+      if item_start_byte > server_start_boundary then
+        local missing_prefix = line:sub(server_start_boundary + 1, item_start_byte)
+        match.word = missing_prefix .. match.word
+      end
+    end
+  end
   return matches, server_start_boundary
 end
 
