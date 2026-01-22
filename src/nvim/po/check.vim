@@ -4,6 +4,8 @@
 " - All %...s items in "msgid" are identical to the ones in "msgstr".
 " - An error or warning code in "msgid" matches the one in "msgstr".
 
+" Last Update: 2025 Jul 10
+
 if 1	" Only execute this if the eval feature is available.
 
 " using line continuation
@@ -210,19 +212,19 @@ let cte = search('^"Content-Transfer-Encoding:\s\+8-bit', 'n')
 let ctc = search('^"Content-Type:.*;\s\+\<charset=[iI][sS][oO]_', 'n')
 let ctu = search('^"Content-Type:.*;\s\+\<charset=utf-8', 'n')
 if cte
-  echomsg "Content-Transfer-Encoding should be 8bit instead of 8-bit"
+  echomsg "Warn: Content-Transfer-Encoding should be 8bit instead of 8-bit"
   " TODO: make this an error
   " if error == 0
   "   let error = cte
   " endif
 elseif ctc
-  echomsg "Content-Type charset should be 'ISO-...' instead of 'ISO_...'"
+  echomsg "Warn: Content-Type charset should be 'ISO-...' instead of 'ISO_...'"
   " TODO: make this an error
   " if error == 0
   "   let error = ct
   " endif
 elseif ctu
-  echomsg "Content-Type charset should be 'UTF-8' instead of 'utf-8'"
+  echomsg "Warn: Content-Type charset should be 'UTF-8' instead of 'utf-8'"
   " TODO: make this an error
   " if error == 0
   "   let error = ct
@@ -232,7 +234,17 @@ endif
 " Check that no lines are longer than 80 chars (except comments)
 let overlong = search('^[^#]\%>80v', 'n')
 if overlong > 0
-  echomsg "Lines should be wrapped at 80 columns"
+  echomsg "Warn: Lines should be wrapped at 80 columns"
+  " TODO: make this an error
+  " if error == 0
+  "   let error = overlong
+  " endif
+endif
+
+" Check that there is no trailing whitespace
+let overlong = search('\s\+$', 'n')
+if overlong > 0
+  echomsg $"Warn: Trailing whitespace at line: {overlong}"
   " TODO: make this an error
   " if error == 0
   "   let error = overlong
