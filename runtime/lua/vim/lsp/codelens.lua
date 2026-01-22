@@ -3,9 +3,9 @@ local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
---- bufnr → true|nil
---- to throttle refreshes to at most one at a time
-local active_refreshes = {} --- @type table<integer,true>
+--- bufnr → client_id → true|nil
+--- to throttle refreshes to at most one at a time per buffer per client
+local active_refreshes = {} --- @type table<integer, table<integer, true>>
 
 ---@type table<integer, table<integer, lsp.CodeLens[]>>
 --- bufnr -> client_id -> lenses
@@ -295,7 +295,12 @@ function M.on_codelens(err, result, ctx)
   local bufnr = assert(ctx.bufnr)
 
   if err then
-    active_refreshes[bufnr] = nil
+    if active_refreshes[bufnr] then
+      active_refreshes[bufnr][ctx.client_id] = nil
+      if vim.tbl_isempty(active_refreshes[bufnr]) then
+        active_refreshes[bufnr] = nil
+      end
+    end
     log.error('codelens', err)
     return
   end
@@ -305,13 +310,19 @@ function M.on_codelens(err, result, ctx)
   -- Eager display for any resolved lenses and refresh them once resolved.
   M.display(result, bufnr, ctx.client_id)
   resolve_lenses(result, bufnr, ctx.client_id, function()
-    active_refreshes[bufnr] = nil
+    if active_refreshes[bufnr] then
+      active_refreshes[bufnr][ctx.client_id] = nil
+      if vim.tbl_isempty(active_refreshes[bufnr]) then
+        active_refreshes[bufnr] = nil
+      end
+    end
   end)
 end
 
 --- @class vim.lsp.codelens.refresh.Opts
 --- @inlinedoc
 --- @field bufnr integer? filter by buffer. All buffers if nil, 0 for current buffer
+--- @field client_id integer? Restrict refresh to the client with ID (client.id) matching this field.
 
 --- Refresh the lenses.
 ---
@@ -331,21 +342,27 @@ function M.refresh(opts)
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
 
   for _, buf in ipairs(buffers) do
-    if not active_refreshes[buf] then
-      local params = {
-        textDocument = util.make_text_document_params(buf),
-      }
-      active_refreshes[buf] = true
+    local clients = vim.lsp.get_clients({
+      id = opts.client_id,
+      bufnr = buf,
+      method = 'textDocument/codeLens',
+    })
 
-      local request_ids = vim.lsp.buf_request(
-        buf,
-        'textDocument/codeLens',
-        params,
-        M.on_codelens,
-        function() end
-      )
-      if vim.tbl_isempty(request_ids) then
-        active_refreshes[buf] = nil
+    local params = {
+      textDocument = util.make_text_document_params(buf),
+    }
+
+    for _, client in ipairs(clients) do
+      if not (active_refreshes[buf] or {})[client.id] then
+        active_refreshes[buf] = active_refreshes[buf] or {}
+        active_refreshes[buf][client.id] = true
+        local ok = client:request('textDocument/codeLens', params, M.on_codelens, buf)
+        if not ok then
+          active_refreshes[buf][client.id] = nil
+          if vim.tbl_isempty(active_refreshes[buf]) then
+            active_refreshes[buf] = nil
+          end
+        end
       end
     end
   end

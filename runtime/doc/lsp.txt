@@ -1940,6 +1940,8 @@ refresh({opts})                                   *vim.lsp.codelens.refresh()*
       • {opts}  (`table?`) Optional fields
                 • {bufnr} (`integer?`) filter by buffer. All buffers if nil, 0
                   for current buffer
+                • {client_id} (`integer?`) Restrict refresh to the client with
+                  ID (client.id) matching this field.
 
 run()                                                 *vim.lsp.codelens.run()*
     Run the code lens available in the current line.

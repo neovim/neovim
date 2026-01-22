@@ -5153,6 +5153,52 @@ describe('LSP', function()
       eq({ command = 'Dummy', title = 'Lens1' }, cmds['file:///fake/uri1'])
       eq({ command = 'Dummy', title = 'Lens2' }, cmds['file:///fake/uri2'])
     end)
+
+    it('refresh with client_id filter', function()
+      exec_lua(create_server_definition)
+
+      -- setup server and client
+      exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            codeLensProvider = {},
+          },
+          handlers = {
+            ['textDocument/codeLens'] = function(_, _, callback)
+              callback(nil, {})
+            end,
+          },
+        })
+
+        _G.CLIENT_ID = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'test' })
+        vim.lsp.buf_attach_client(bufnr, _G.CLIENT_ID)
+
+        _G.RESPONSES = 0
+        local on_codelens = vim.lsp.codelens.on_codelens
+        vim.lsp.codelens.on_codelens = function(...)
+          _G.RESPONSES = _G.RESPONSES + 1
+          return on_codelens(...)
+        end
+      end)
+
+      local result = exec_lua(function()
+        -- non-matching client_id should not trigger request
+        vim.lsp.codelens.refresh({ client_id = _G.CLIENT_ID + 1 })
+        vim.wait(100)
+        local non_matching = _G.RESPONSES
+
+        -- matching client_id should trigger request
+        vim.lsp.codelens.refresh({ client_id = _G.CLIENT_ID })
+        vim.wait(100, function()
+          return _G.RESPONSES > 0
+        end)
+        return { non_matching = non_matching, matching = _G.RESPONSES }
+      end)
+      eq(0, result.non_matching)
+      eq(1, result.matching)
+    end)
   end)
 
   describe('vim.lsp.buf.format', function()
