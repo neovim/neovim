@@ -7192,6 +7192,52 @@ describe('LSP', function()
       exec_lua([[vim.lsp.enable('foo', false)]])
       eq(false, exec_lua([[return vim.lsp.is_enabled('foo')]]))
     end)
+
+    it('vim.lsp.get_configs()', function()
+      exec_lua(function()
+        vim.lsp.config('foo', {
+          cmd = { 'foo' },
+          filetypes = { 'foofile' },
+          root_markers = { '.foorc' },
+        })
+        vim.lsp.config('bar', {
+          cmd = { 'bar' },
+          root_markers = { '.barrc' },
+        })
+        vim.lsp.enable('foo')
+      end)
+
+      local function names(configs)
+        local config_names = vim
+          .iter(configs)
+          :map(function(config)
+            return config.name
+          end)
+          :totable()
+        table.sort(config_names)
+        return config_names
+      end
+
+      -- With no filter, return all configs
+      eq({ 'bar', 'foo' }, names(exec_lua([[return vim.lsp.get_configs()]])))
+
+      -- Confirm `enabled` works
+      eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { enabled = true }]])))
+      eq({ 'bar' }, names(exec_lua([[return vim.lsp.get_configs { enabled = false }]])))
+
+      -- Confirm `filetype` works
+      eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile' }]])))
+
+      -- Confirm filters combine
+      eq(
+        { 'foo' },
+        names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile', enabled = true }]]))
+      )
+      eq(
+        {},
+        names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile', enabled = false }]]))
+      )
+    end)
   end)
 
   describe('vim.lsp.buf.workspace_diagnostics()', function()
