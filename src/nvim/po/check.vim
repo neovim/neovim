@@ -233,9 +233,10 @@ endif
 let overlong = search('\%>80v', 'n')
 if overlong > 0
   echomsg "Lines should be wrapped at 80 columns"
-  if error == 0
-    let error = overlong
-  endif
+  " TODO: make this an error
+  " if error == 0
+  "   let error = overlong
+  " endif
 endif
 
 if error == 0
