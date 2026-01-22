@@ -429,7 +429,7 @@ function M.enable(enable)
   M.enabled = enable
 
   if enable then
-    vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
+    vim.fn.mkdir(vim.fs.abspath(M.path), 'p')
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)

@@ -215,7 +215,7 @@ local function check_rplugin_manifest()
       local contents = vim.fn.join(vim.fn.readfile(script))
       if vim.regex([[\<\%(from\|import\)\s\+neovim\>]]):match_str(contents) then
         if vim.regex([[[\/]__init__\.py$]]):match_str(script) then
-          script = vim.fn.tr(vim.fn.fnamemodify(script, ':h'), '\\', '/')
+          script = vim.fs.normalize(vim.fs.dirname(script))
         end
         if not existing_rplugins[script] then
           local msg = vim.fn.printf('"%s" is not registered.', vim.fs.basename(path))

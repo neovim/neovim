@@ -262,7 +262,7 @@ local function get_path(name, sect)
   -- find any that match the specified name
   --- @param v string
   local namematches = vim.tbl_filter(function(v)
-    local tail = fn.fnamemodify(v, ':t')
+    local tail = vim.fs.basename(v)
     return tail:find(name, 1, true) ~= nil
   end, results) or {}
   local sectmatches = {}
@@ -364,7 +364,7 @@ end
 --- @return string name
 --- @return string sect
 local function parse_path(path)
-  local tail = fn.fnamemodify(path, ':t')
+  local tail = vim.fs.basename(path)
   if
     path:match('%.[glx]z$')
     or path:match('%.bz2$')
