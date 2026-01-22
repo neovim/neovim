@@ -1485,7 +1485,7 @@ end
 ---@param bufnr? integer Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
 ---@param opts? vim.diagnostic.GetOpts
----@return table : Table with actually present severity values as keys
+---@return table<integer, integer> : Table with actually present severity values as keys
 ---                (see |diagnostic-severity|) and integer counts as values.
 function M.count(bufnr, opts)
   vim.validate('bufnr', bufnr, 'number', true)

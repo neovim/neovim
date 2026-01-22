@@ -783,8 +783,9 @@ count({bufnr}, {opts})                                *vim.diagnostic.count()*
       • {opts}   (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
 
     Return: ~
-        (`table`) Table with actually present severity values as keys (see
-        |diagnostic-severity|) and integer counts as values.
+        (`table<integer, integer>`) Table with actually present severity
+        values as keys (see |diagnostic-severity|) and integer counts as
+        values.
 
 enable({enable}, {filter})                           *vim.diagnostic.enable()*
     Enables or disables diagnostics.

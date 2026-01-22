@@ -1191,6 +1191,7 @@ end
 --- Note: Some language server capabilities can be file specific.
 --- @param method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration
 --- @param bufnr? integer
+--- @return boolean
 function Client:supports_method(method, bufnr)
   -- Deprecated form
   if type(bufnr) == 'table' then
