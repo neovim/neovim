@@ -229,6 +229,14 @@ elseif ctu
   " endif
 endif
 
+" Check that all lines are no longer than 80 chars
+let overlong = search('\%>80v', 'n')
+if overlong > 0
+  echomsg "Lines should be wrapped at 80 columns"
+  if error == 0
+    let error = overlong
+  endif
+endif
 
 if error == 0
   " If all was OK restore the view.
