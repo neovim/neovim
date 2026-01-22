@@ -282,9 +282,21 @@ end
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
 --- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
+--- @param server_start_boundary integer? server start boundary
+--- @param line string? current line content
+--- @param lnum integer? 0-indexed line number
+--- @param encoding string? encoding
 --- @return table[]
 --- @see complete-items
-function M._lsp_to_complete_items(result, prefix, client_id)
+function M._lsp_to_complete_items(
+  result,
+  prefix,
+  client_id,
+  server_start_boundary,
+  line,
+  lnum,
+  encoding
+)
   local items = get_items(result)
   if vim.tbl_isempty(items) then
     return {}
@@ -320,6 +332,25 @@ function M._lsp_to_complete_items(result, prefix, client_id)
     local match, score = matches(item)
     if match then
       local word = get_completion_word(item, prefix, match_item_by_value)
+
+      if server_start_boundary and line and lnum and encoding and item.textEdit then
+        --- @type integer?
+        local item_start_char
+        if item.textEdit.range and item.textEdit.range.start.line == lnum then
+          item_start_char = item.textEdit.range.start.character
+        elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
+          item_start_char = item.textEdit.insert.start.character
+        end
+
+        if item_start_char then
+          local item_start_byte = vim.str_byteindex(line, encoding, item_start_char, false)
+          if item_start_byte > server_start_boundary then
+            local missing_prefix = line:sub(server_start_boundary + 1, item_start_byte)
+            word = missing_prefix .. word
+          end
+        end
+      end
+
       local hl_group = ''
       if
         item.deprecated
@@ -456,32 +487,9 @@ function M._convert_results(
     server_start_boundary = client_start_boundary
   end
   local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
-  local matches = M._lsp_to_complete_items(result, prefix, client_id)
+  local matches =
+    M._lsp_to_complete_items(result, prefix, client_id, server_start_boundary, line, lnum, encoding)
 
-  if server_start_boundary then
-    for _, match in ipairs(matches) do
-      --- @type lsp.CompletionItem
-      local item = match.user_data.nvim.lsp.completion_item
-      if item.textEdit then
-        --- @type integer?
-        local item_start_char
-        if item.textEdit.range and item.textEdit.range.start.line == lnum then
-          item_start_char = item.textEdit.range.start.character
-        elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
-          item_start_char = item.textEdit.insert.start.character
-        end
-
-        if item_start_char then
-          local item_start_byte = vim.str_byteindex(line, encoding, item_start_char, false)
-          if item_start_byte > server_start_boundary then
-            local missing_prefix = line:sub(server_start_boundary + 1, item_start_byte)
-            --- @type string
-            match.word = missing_prefix .. match.word
-          end
-        end
-      end
-    end
-  end
   return matches, server_start_boundary
 end
 
