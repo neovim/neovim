@@ -1,15 +1,20 @@
 " Vim script for checking .po files.
 "
-" Go through the file and verify that:
-" - All %...s items in "msgid" are identical to the ones in "msgstr".
-" - An error or warning code in "msgid" matches the one in "msgstr".
+" Goes through the xx.po file (more than once)
+" and verify various congruences
+" See the comments in the code
 
-" Last Update: 2025 Jul 10
+" Last Update: 2025 Jul 22
 
-if 1	" Only execute this if the eval feature is available.
+if 1" Only execute this if the eval feature is available.
 
-" using line continuation
+" Using line continuation (set cpo to vim default value)
+let s:save_cpo = &cpo
 set cpo&vim
+
+" This only works when 'wrapscan' is not set.
+let s:save_wrapscan = &wrapscan
+set nowrapscan
 
 let filename = "check-" . expand("%:t:r") . ".log"
 exe 'redir! > ' . filename
@@ -46,9 +51,15 @@ func! GetMline()
   return substitute(idline, '[^%]*\(%([1-9][0-9]*\$)\=[-+ #''.0-9*]*l\=[dsuxXpoc%]\)\=', '\1', 'g')
 endfunc
 
-" This only works when 'wrapscan' is not set.
-let s:save_wrapscan = &wrapscan
-set nowrapscan
+func! CountNl(first, last)
+  let nl = 0
+  for lnum in range(a:first, a:last)
+    let nl += count(getline(lnum), "\n")
+  endfor
+  return nl
+endfunc
+
+" main
 
 " Start at the first "msgid" line.
 let wsv = winsaveview()
@@ -60,63 +71,72 @@ keeppatterns /^msgid\>
 let error = 0
 
 while 1
+  " for each "msgid"
+
+  " check msgid "Text;editor;"
+  " translation must have two ";" as well
   let lnum = line('.')
   if getline(lnum) =~ 'msgid "Text;.*;"'
-    if getline(lnum + 1) !~ '^msgstr "\([^;]\+;\)\+"'
+    if getline(lnum + 1) !~ '^msgstr "\([^;]\+;\)\+"$'
       echomsg 'Mismatching ; in line ' . (lnum + 1)
-      echomsg 'Did you forget the trailing semicolon?'
+      echomsg 'Wrong semicolon count'
       if error == 0
-	let error = lnum + 1
+        let error = lnum + 1
       endif
     endif
   endif
 
+  " check for equal number of % in msgid and msgstr
+  " it is skipping the no-c-format strings
   if getline(line('.') - 1) !~ "no-c-format"
-    " go over the "msgid" and "msgid_plural" lines
+    " skip the "msgid_plural" lines
     let prevfromline = 'foobar'
     let plural = 0
     while 1
       if getline('.') =~ 'msgid_plural'
-	let plural += 1
+        let plural += 1
       endif
       let fromline = GetMline()
       if prevfromline != 'foobar' && prevfromline != fromline
-	    \ && (plural != 1
-	    \     || count(prevfromline, '%') + 1 != count(fromline, '%'))
-	echomsg 'Mismatching % in line ' . (line('.') - 1)
-	echomsg 'msgid: ' . prevfromline
-	echomsg 'msgid: ' . fromline
-	if error == 0
-	  let error = line('.')
-	endif
+            \ && (plural != 1
+            \     || count(prevfromline, '%') + 1 != count(fromline, '%'))
+        echomsg 'possibly mismatching % in line ' . (line('.') - 1)
+        echomsg 'msgid: ' . prevfromline
+        echomsg 'msgid: ' . fromline
+        if error == 0
+          let error = line('.')
+        endif
       endif
       if getline('.') !~ 'msgid_plural'
-	break
+        break
       endif
       let prevfromline = fromline
     endwhile
 
+    " checks that for each 'msgid' there is a 'msgstr'
     if getline('.') !~ '^msgstr'
       echomsg 'Missing "msgstr" in line ' . line('.')
       if error == 0
-	let error = line('.')
+        let error = line('.')
       endif
     endif
 
-    " check all the 'msgstr' lines
+    " check all the 'msgstr' lines have the same number of '%'
+    " only the number of '%' is checked,
+    " %d vs. %s or %d vs. %ld  go undetected
     while getline('.') =~ '^msgstr'
       let toline = GetMline()
       if fromline != toline
-	    \ && (plural == 0 || count(fromline, '%') != count(toline, '%') + 1)
-	echomsg 'Mismatching % in line ' . (line('.') - 1)
-	echomsg 'msgid: ' . fromline
-	echomsg 'msgstr: ' . toline
-	if error == 0
-	  let error = line('.')
-	endif
+            \ && (plural == 0 || count(fromline, '%') != count(toline, '%') + 1)
+        echomsg 'possibly mismatching % in line ' . (line('.') - 1)
+        echomsg 'msgid: ' . fromline
+        echomsg 'msgstr: ' . toline
+        if error == 0
+          let error = line('.')
+        endif
       endif
       if line('.') == line('$')
-	break
+        break
       endif
     endwhile
   endif
@@ -145,14 +165,6 @@ if search('msgid "\("\n"\)\?\([EW][0-9]\+:\).*\nmsgstr "\("\n"\)\?[^"]\@=\2\@!')
   endif
 endif
 
-func! CountNl(first, last)
-  let nl = 0
-  for lnum in range(a:first, a:last)
-    let nl += count(getline(lnum), "\n")
-  endfor
-  return nl
-endfunc
-
 " Check that the \n at the end of the msgid line is also present in the msgstr
 " line.  Skip over the header.
 1
@@ -175,6 +187,55 @@ while 1
     if error == 0
       let error = lnum
     endif
+  endif
+endwhile
+
+" Check that the eventual continuation of 'msgstr' is well formed
+" final '""', '\n"', ' "' are OK
+" Beware, it can give false positives if the message is split
+" in the middle of a word
+1
+keeppatterns /^"MIME-Version:
+while 1
+  let lnum = search('^msgid\>')
+  if lnum <= 0
+    break
+  endif
+  " "msgstr" goes from strlnum to end-1
+  let strlnum = search('^msgstr\>')
+  let end = search('^$')
+  if end <= 0
+    let end = line('$') + 1
+  endif
+  " only if there is a continuation line...
+  if end > strlnum + 1
+    let ilnum = strlnum
+    while ilnum < end - 1
+      let iltype = 0
+      if getline( ilnum ) =~ "^msgid_plural"
+        let iltype = 99
+      endif
+      if getline( ilnum ) =~ "^msgstr["
+        let iltype = 98
+      endif
+      if getline( ilnum ) =~ "\"\""
+        let iltype = 1
+      endif
+      if getline( ilnum ) =~ " \"$"
+        let iltype = 2
+      endif
+      if getline( ilnum ) =~ "\\\\n\"$"
+        let iltype = 3
+      endif
+      if iltype == 0
+        echomsg 'Possibly incorrect final at line: ' . ilnum
+        " TODO: make this an error
+        " if error == 0
+        "   let error = ilnum
+        " endif
+      endif
+      let ilnum += 1
+    endwhile
   endif
 endwhile
 
@@ -262,7 +323,14 @@ endif
 
 redir END
 
+" restore original wrapscan
 let &wrapscan = s:save_wrapscan
 unlet s:save_wrapscan
 
+" restore original cpo
+let &cpo = s:save_cpo
+unlet s:save_cpo
+
 endif
+
+" vim:sts=2:sw=2:et
