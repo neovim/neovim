@@ -364,7 +364,7 @@ lsp.config = setmetatable({ _configs = {} }, {
           --- @type vim.lsp.Config?
           rtp_config = vim.tbl_deep_extend('force', rtp_config or {}, config)
         else
-          log.warn(('%s does not return a table, ignoring'):format(v))
+          error(('%s: not a table'):format(v))
         end
       end
 

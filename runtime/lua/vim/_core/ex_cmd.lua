@@ -79,14 +79,16 @@ local function ex_lsp_enable(config_names)
   if #config_names == 0 then
     local filetype = vim.bo.filetype
     for _, name in ipairs(get_config_names()) do
-      local config = lsp.config[name]
-      if config then
-        local filetypes = config.filetypes
+      local success, result = pcall(function()
+        return lsp.config[name]
+      end)
+      if success then
+        local filetypes = result.filetypes
         if filetypes == nil or vim.list_contains(filetypes, filetype) then
           table.insert(config_names, name)
         end
       else
-        echo_err(("Unable to check filetype for '%s': Broken config"):format(name))
+        echo_err(result --[[@as string]])
       end
     end
     if #config_names == 0 then
