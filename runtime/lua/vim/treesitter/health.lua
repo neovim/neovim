@@ -101,7 +101,7 @@ function M.check()
       end)
 
       for _, query in ipairs(queries) do
-        local dir = vim.fn.fnamemodify(query.path, ':h')
+        local dir = vim.fs.dirname(query.path)
         health.ok(string.format('%-15s %-15s %s', lang, query.type, dir))
       end
     end
