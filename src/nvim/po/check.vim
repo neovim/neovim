@@ -25,7 +25,7 @@ exe 'redir! > ' . filename
 func! GetMline()
   let idline = substitute(getline('.'), '"\(.*\)"$', '\1', '')
   while line('.') < line('$')
-    +
+    silent +
     let line = getline('.')
     if line[0] != '"'
       break
@@ -63,8 +63,8 @@ endfunc
 
 " Start at the first "msgid" line.
 let wsv = winsaveview()
-1
-keeppatterns /^msgid\>
+silent 1
+silent keeppatterns /^msgid\>
 
 " When an error is detected this is set to the line number.
 " Note: this is used in the Makefile.
@@ -157,7 +157,7 @@ endwhile
 " - msgstr "E123 ..."     missing colon
 " - msgstr "..."          missing error code
 "
-1
+silent 1
 if search('msgid "\("\n"\)\?\([EW][0-9]\+:\).*\nmsgstr "\("\n"\)\?[^"]\@=\2\@!') > 0
   echomsg 'Mismatching error/warning code in line ' . line('.')
   if error == 0
@@ -167,8 +167,8 @@ endif
 
 " Check that the \n at the end of the msgid line is also present in the msgstr
 " line.  Skip over the header.
-1
-keeppatterns /^"MIME-Version:
+silent 1
+silent keeppatterns /^"MIME-Version:
 while 1
   let lnum = search('^msgid\>')
   if lnum <= 0
@@ -194,8 +194,8 @@ endwhile
 " final '""', '\n"', ' "' '/"' '."' '-"' are OK
 " Beware, it can give false positives if the message is split
 " in the middle of a word
-1
-keeppatterns /^"MIME-Version:
+silent 1
+silent keeppatterns /^"MIME-Version:
 while 1
   let lnum = search('^msgid\>')
   if lnum <= 0
@@ -262,7 +262,7 @@ if executable("msgfmt")
 endif
 
 " Check that the plural form is properly initialized
-1
+silent 1
 let plural = search('^msgid_plural ', 'n')
 if (plural && search('^"Plural-Forms: ', 'n') == 0) || (plural && search('^msgstr\[0\] ".\+"', 'n') != plural + 1)
   if search('^"Plural-Forms: ', 'n') == 0
