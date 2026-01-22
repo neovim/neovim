@@ -4,9 +4,9 @@
 " and verify various congruences
 " See the comments in the code
 
-" Last Update: 2025 Jul 22
+" Last Update: 2025 Aug 06
 
-if 1" Only execute this if the eval feature is available.
+if 1 " Only execute this if the eval feature is available.
 
 " Using line continuation (set cpo to vim default value)
 let s:save_cpo = &cpo
@@ -74,7 +74,7 @@ while 1
   " for each "msgid"
 
   " check msgid "Text;editor;"
-  " translation must have two ";" as well
+  " translation must have two or more ";" (in case of more categories)
   let lnum = line('.')
   if getline(lnum) =~ 'msgid "Text;.*;"'
     if getline(lnum + 1) !~ '^msgstr "\([^;]\+;\)\+"$'
@@ -191,7 +191,7 @@ while 1
 endwhile
 
 " Check that the eventual continuation of 'msgstr' is well formed
-" final '""', '\n"', ' "' are OK
+" final '""', '\n"', ' "' '/"' '."' '-"' are OK
 " Beware, it can give false positives if the message is split
 " in the middle of a word
 1
@@ -213,19 +213,28 @@ while 1
     while ilnum < end - 1
       let iltype = 0
       if getline( ilnum ) =~ "^msgid_plural"
-        let iltype = 99
+        let iltype = 2
       endif
       if getline( ilnum ) =~ "^msgstr["
-        let iltype = 98
+        let iltype = 2
       endif
       if getline( ilnum ) =~ "\"\""
         let iltype = 1
       endif
       if getline( ilnum ) =~ " \"$"
-        let iltype = 2
+        let iltype = 1
+      endif
+      if getline( ilnum ) =~ "-\"$"
+        let iltype = 1
+      endif
+      if getline( ilnum ) =~ "/\"$"
+        let iltype = 1
+      endif
+      if getline( ilnum ) =~ "\\.\"$"
+        let iltype = 1
       endif
       if getline( ilnum ) =~ "\\\\n\"$"
-        let iltype = 3
+        let iltype = 1
       endif
       if iltype == 0
         echomsg 'Possibly incorrect final at line: ' . ilnum
