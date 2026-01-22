@@ -777,37 +777,6 @@ describe('vim.lsp.completion: item conversion', function()
     end
   )
 
-  it('prepends prefix for items with different start positions', function()
-    local text = 'div.foo|'
-
-    local item_emmet = {
-      label = 'div.foo',
-      insertTextFormat = 1,
-      textEdit = {
-        newText = '<div class="foo"></div>',
-        range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 7 } },
-      },
-    }
-
-    local item_regular = {
-      label = 'foobar',
-      textEdit = {
-        newText = 'foobar',
-        range = { start = { line = 0, character = 4 }, ['end'] = { line = 0, character = 7 } },
-      },
-    }
-
-    local result = complete(text, { items = { item_emmet, item_regular } })
-
-    eq(0, result.server_start_boundary)
-
-    for _, item in ipairs(result.items) do
-      if item.abbr == 'foobar' then
-        eq('div.foobar', item.word)
-      end
-    end
-  end)
-
   it('uses the start boundary from an insertReplace response', function()
     local completion_list = {
       isIncomplete = false,
@@ -1425,6 +1394,39 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
   end)
+
+  it('prepends prefix for items with different start positions', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'div.foo',
+          insertTextFormat = 2,
+          textEdit = {
+            newText = '<div class="foo">$0</div>',
+            range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 7 } },
+          },
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list)
+    feed('Adiv.foo<C-x><C-O>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-Y>')
+    eq('<div class="foo"></div>', n.api.nvim_get_current_line())
+    eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
+  end)
+
   it('sorts items when fuzzy is enabled and prefix not empty #33610', function()
     local completion_list = {
       isIncomplete = false,
