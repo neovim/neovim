@@ -296,10 +296,14 @@ local function on_changedtree(bufnr, tree_changes)
       -- If a parser doesn't have any ranges explicitly set, treesitter will
       -- return a range with end_row and end_bytes with a value of UINT32_MAX,
       -- so clip end_row to the max buffer line.
+      -- On 32-bit platforms, UINT32_MAX cannot be represented as a positive
+      -- integer and wraps to -1 when converted to a signed integer.
       -- TODO(lewis6991): Handle this generally
-      if erow > max_erow then
+      if erow < 0 or erow > max_erow then
         erow = max_erow
-      elseif ecol > 0 then
+      elseif ecol > 0 and ecol ~= -1 then
+        -- Only increment erow if ecol is a valid positive value
+        -- (not -1 from UINT32_MAX overflow on 32-bit)
         erow = erow + 1
       end
       -- Start from `srow - foldminlines`, because this edit may have shrunken the fold below limit.
