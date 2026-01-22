@@ -229,8 +229,8 @@ elseif ctu
   " endif
 endif
 
-" Check that all lines are no longer than 80 chars
-let overlong = search('\%>80v', 'n')
+" Check that no lines are longer than 80 chars (except comments)
+let overlong = search('^[^#]\%>80v', 'n')
 if overlong > 0
   echomsg "Lines should be wrapped at 80 columns"
   " TODO: make this an error
