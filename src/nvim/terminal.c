@@ -1022,6 +1022,11 @@ static int terminal_execute(VimState *state, int key)
     map_execute_lua(false);
     break;
 
+  case K_IGNORE:
+  case K_NOP:
+    // Do not interrupt a Ctrl-\ sequence or close a finished terminal.
+    break;
+
   case Ctrl_N:
     if (s->got_bsl) {
       return 0;
