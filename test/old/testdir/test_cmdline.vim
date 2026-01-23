@@ -2644,10 +2644,20 @@ func Test_recalling_cmdline_with_mappings()
   call assert_equal("echo 'bar'", histget(':', -1))
   call assert_equal("echo 'foo'", histget(':', -2))
 
+  let g:cmdline = ''
   " This command comes completely from a mapping.
   nmap <F3> :echo 'baz'<F2><CR>
   call feedkeys("\<F3>", 'tx')
   call assert_equal('baz', Screenline(&lines)->trim())
+  call assert_equal("echo 'baz'", g:cmdline)
+  call assert_equal("echo 'bar'", @:)
+  call assert_equal("echo 'bar'", histget(':', -1))
+  call assert_equal("echo 'foo'", histget(':', -2))
+
+  let g:cmdline = ''
+  " A command coming from :normal is ignored in the history even if the keys
+  " don't explicitly leave Cmdline mode.
+  exe "normal :echo 'baz'\<F2>"
   call assert_equal("echo 'baz'", g:cmdline)
   call assert_equal("echo 'bar'", @:)
   call assert_equal("echo 'bar'", histget(':', -1))
