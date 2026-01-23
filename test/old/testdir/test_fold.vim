@@ -1334,6 +1334,7 @@ endfunc
 func Test_foldtextresult_rightleft()
   CheckFeature rightleft
 
+  let save_columns = &columns
   new
   set columns=70
   setlocal rightleft
@@ -1349,6 +1350,7 @@ func Test_foldtextresult_rightleft()
   call assert_equal('+--  2 lines: ' .. multibyte, foldtextresult(1))
 
   bw!
+  let &columns = save_columns
 endfunc
 
 " Test for merging two recursive folds when an intermediate line with no fold
