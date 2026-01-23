@@ -1097,7 +1097,7 @@ func Test_fold_expr_error()
   endfor
 
   set foldmethod& foldexpr&
-  close!
+  bw!
 endfunc
 
 func Test_undo_fold_deletion()
