@@ -4063,7 +4063,7 @@ the region, but not the contents of the region, are marked as concealable.
 Whether or not they are actually concealed depends on the setting on the
 'conceallevel' option. The ends of a region can only be concealed separately
 in this way when they have their own highlighting via "matchgroup".  The
-|synconcealed()| function can be used to retrieve information about conealed
+|synconcealed()| function can be used to retrieve information about concealed
 items.
 
 cchar							*:syn-cchar*
