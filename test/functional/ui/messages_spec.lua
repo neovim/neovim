@@ -637,7 +637,7 @@ describe('ui/ext_messages', function()
         {10:line} 2                   |
         {1:~                        }|*3
       ]],
-      messages = { { content = { { '/line          W [1/2]' } }, kind = 'search_count' } },
+      messages = { { content = { { '/line W [1/2]' } }, kind = 'search_count' } },
     }
 
     feed('n')
@@ -647,7 +647,7 @@ describe('ui/ext_messages', function()
         {10:^line} 2                   |
         {1:~                        }|*3
       ]],
-      messages = { { content = { { '/line            [2/2]' } }, kind = 'search_count' } },
+      messages = { { content = { { '/line [2/2]' } }, kind = 'search_count' } },
     }
   end)
 

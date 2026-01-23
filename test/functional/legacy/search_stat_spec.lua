@@ -32,7 +32,7 @@ describe('search stat', function()
       foo                           |
       fooooobar                     |
       foba                          |
-      /find this             [1/2]  |
+      /find this [1/2]              |
     ]])
     command('nnoremap <silent> n n')
     feed('gg0n')
@@ -45,7 +45,7 @@ describe('search stat', function()
       foo                           |
       fooooobar                     |
       foba                          |
-                             [1/2]  |
+      [1/2]                         |
     ]])
   end)
 
@@ -65,7 +65,7 @@ describe('search stat', function()
       endif                         |
                                     |
       {1:~                             }|*5
-      /foo                   [1/2]  |
+      /foo [1/2]                    |
     ]])
     feed('n')
     screen:expect([[
@@ -74,7 +74,7 @@ describe('search stat', function()
       endif                         |
                                     |
       {1:~                             }|*5
-      /foo                 W [1/2]  |
+      /foo W [1/2]                  |
     ]])
     feed('n')
     -- Note: there is an intermediate state where the search stat disappears.
@@ -94,7 +94,7 @@ describe('search stat', function()
       int {10:^dog};                      |
       cat = {10:dog};                    |
       {1:~                             }|*6
-      /dog                   [1/2]  |
+      /dog [1/2]                    |
     ]])
     feed('G0gD')
     screen:expect([[
@@ -170,7 +170,7 @@ describe('search stat', function()
       {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
-      /\<test\>                                          W [1/1]  |
+      /\<test\> W [1/1]                                           |
     ]])
 
     feed('N')
@@ -178,7 +178,7 @@ describe('search stat', function()
       {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
-      ?\<test\>                                          W [1/1]  |
+      ?\<test\> W [1/1]                                           |
     ]])
 
     command('set shm+=S')
@@ -204,7 +204,7 @@ describe('search stat', function()
        {10:Mainmainmain}mm{10:main^mAin}       |
                                     |
       {1:~                             }|*7
-      /main                  [5/5]  |
+      /main [5/5]                   |
     ]])
 
     feed('/mAin<cr>')
@@ -212,7 +212,7 @@ describe('search stat', function()
        Mainmainmainmmmain{10:^mAin}       |
                                     |
       {1:~                             }|*7
-      /mAin                W [1/1]  |
+      /mAin W [1/1]                 |
     ]])
   end)
 end)

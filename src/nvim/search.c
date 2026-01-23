@@ -2665,11 +2665,30 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
   if (len > msgbuflen) {
     len = msgbuflen;
   }
-  memmove(msgbuf + msgbuflen - len, t, len);
+  size_t insert_pos = msgbuflen;
+  while (insert_pos > 0 && msgbuf[insert_pos - 1] == ' ') {
+    insert_pos--;
+  }
+
+  if (insert_pos == 0) {
+    memmove(msgbuf, t, len);
+  } else if (insert_pos + 1 + len <= msgbuflen) {
+    msgbuf[insert_pos] = ' ';
+    memmove(msgbuf + insert_pos + 1, t, len);
+  } else {
+    memmove(msgbuf + msgbuflen - len, t, len);
+  }
 
   if (dirc == '?' && stat.cur == maxcount + 1) {
     stat.cur = -1;
   }
+
+  // Trim trailing spaces for the message UI payload.
+  char *end = msgbuf + msgbuflen;
+  while (end > msgbuf && end[-1] == ' ') {
+    end--;
+  }
+  *end = NUL;
 
   // keep the message even after redraw, but don't put in history
   msg_ext_overwrite = true;
