@@ -296,6 +296,8 @@ LSP
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 • Support for dynamic registration for `textDocument/diagnostic`
+• |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
+  |hl-LspReferenceTarget| highlight group.
 
 LUA
 
