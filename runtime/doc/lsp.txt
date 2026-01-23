@@ -1482,6 +1482,9 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                     • {name}? (`string`) Restrict clients used for rename to
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
+                    • {float}? (`boolean|vim.api.keyset.win_config`) Use
+                      floating window for input. true for default config, or
+                      table for custom config.
 
                                                *vim.lsp.buf.selection_range()*
 selection_range({direction}, {timeout_ms})

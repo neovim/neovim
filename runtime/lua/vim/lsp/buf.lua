@@ -680,6 +680,9 @@ end
 ---
 --- (default: current buffer)
 --- @field bufnr? integer
+---
+--- Use floating window for input. true for default config, or table for custom config.
+--- @field float? boolean|vim.api.keyset.win_config
 
 --- Renames all references to the symbol under the cursor.
 ---
@@ -742,6 +745,33 @@ function M.rename(new_name, opts)
       end, bufnr)
     end
 
+    --- @param prompt_opts vim.ui.input.Opts
+    local perform_rename = function(prompt_opts)
+      if opts.float then
+        prompt_opts.float = vim.tbl_deep_extend('force', {
+          width = math.floor(vim.o.columns * 0.4),
+          height = 1,
+          relative = 'cursor',
+          row = 1,
+          col = 0,
+          style = 'minimal',
+        }, type(opts.float) == 'table' and opts.float or {})
+      end
+      vim.ui.input(prompt_opts, function(input)
+        if not input or #input == 0 then
+          return
+        end
+        api.nvim_buf_clear_namespace(bufnr, rename_ns, 0, -1)
+        rename(input)
+      end)
+      if opts.float then
+        local float_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_cursor(float_win, { 1, #prompt_opts.prompt })
+        local keys = vim.api.nvim_replace_termcodes('v$<C-g>', true, false, true)
+        vim.api.nvim_feedkeys(keys, 'n', false)
+      end
+    end
+
     if client:supports_method('textDocument/prepareRename') then
       local params = util.make_position_params(win, client.offset_encoding)
       ---@param result? lsp.Range|{ range: lsp.Range, placeholder: string }
@@ -798,12 +828,7 @@ function M.rename(new_name, opts)
         else
           prompt_opts.default = cword
         end
-        vim.ui.input(prompt_opts, function(input)
-          if input and #input ~= 0 then
-            rename(input)
-          end
-          api.nvim_buf_clear_namespace(bufnr, rename_ns, 0, -1)
-        end)
+        perform_rename(prompt_opts)
       end, bufnr)
     else
       assert(
@@ -819,12 +844,7 @@ function M.rename(new_name, opts)
         prompt = 'New Name: ',
         default = cword,
       }
-      vim.ui.input(prompt_opts, function(input)
-        if not input or #input == 0 then
-          return
-        end
-        rename(input)
-      end)
+      perform_rename(prompt_opts)
     end
   end
 

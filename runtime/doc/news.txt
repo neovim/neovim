@@ -298,6 +298,7 @@ LSP
 • Support for dynamic registration for `textDocument/diagnostic`
 • |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
   |hl-LspReferenceTarget| highlight group.
+• |vim.lsp.buf.rename()| supports floating window for input.
 
 LUA
 

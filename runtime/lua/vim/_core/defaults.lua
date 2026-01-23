@@ -202,7 +202,7 @@ do
   --- See |grr|, |grn|, |gra|, |gri|, |grt| |gO|, |i_CTRL-S|.
   do
     vim.keymap.set('n', 'grn', function()
-      vim.lsp.buf.rename()
+      vim.lsp.buf.rename(nil, { float = true })
     end, { desc = 'vim.lsp.buf.rename()' })
 
     vim.keymap.set({ 'n', 'x' }, 'gra', function()
