@@ -382,10 +382,18 @@ static void nlua_schedule_event(void **argv)
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, cb);
   nlua_unref_global(lstate, cb);
+
+  // Don't impose textlock restrictions upon UI event handlers.
+  int save_expr_map_lock = expr_map_lock;
+  int save_textlock = textlock;
+  expr_map_lock = ns_id > 0 ? 0 : expr_map_lock;
+  textlock = ns_id > 0 ? 0 : textlock;
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("vim.schedule callback: %.*s"));
     ui_remove_cb(ns_id, true);
   }
+  expr_map_lock = save_expr_map_lock;
+  textlock = save_textlock;
 }
 
 /// Schedule Lua callback on main loop's event queue
