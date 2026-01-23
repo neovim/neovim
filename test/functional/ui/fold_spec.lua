@@ -1079,7 +1079,6 @@ describe('folded lines', function()
         ]])
       end
 
-      -- Note: too much of the folded line gets cut off.This is a vim bug.
       feed_command('set rightleft')
       if multigrid then
         screen:expect([[
