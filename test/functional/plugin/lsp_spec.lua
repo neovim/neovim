@@ -6861,6 +6861,44 @@ describe('LSP', function()
       )
     end)
 
+    it('work in FileType event', function()
+      local tmp = t.tmpname(true)
+      local str = string.dump(create_server_definition)
+      local encoded = exec_lua(function()
+        return vim.base64.encode(str)
+      end)
+      n.clear({
+        args = {
+          '--cmd',
+          string.format([[lua assert(loadstring(vim.base64.decode([==[%s]==])))()]], encoded),
+          '--cmd',
+          [[lua _G.server = _G._create_server({ handlers = {initialize = function(_, _, callback) callback(nil, {capabilities = {}}) end} })]],
+          '--cmd',
+          [[lua vim.lsp.config('foo', { cmd = _G.server.cmd, filetypes = { 'foo' }, root_markers = { '.foorc' } })]],
+          '--cmd',
+          [[au FileType * ++once lua vim.lsp.enable('foo')]],
+          '-c',
+          'set ft=foo',
+          tmp,
+        },
+      })
+
+      eq(
+        { 1, 'foo' },
+        exec_lua(function()
+          local foos = vim.lsp.get_clients({ bufnr = 0 })
+          return { #foos, (foos[1] or {}).name }
+        end)
+      )
+      exec_lua([[vim.lsp.enable('foo', false)]])
+      eq(
+        0,
+        exec_lua(function()
+          return #vim.lsp.get_clients({ bufnr = 0 })
+        end)
+      )
+    end)
+
     it('does not attach to buffers more than once if no root_dir', function()
       exec_lua(create_server_definition)
 
