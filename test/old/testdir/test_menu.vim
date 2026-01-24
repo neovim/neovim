@@ -638,4 +638,25 @@ func Test_unmenu_while_listing_menus()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for opening a menu drawn in the cmdline area
+func Test_popupmenu_cmdline()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set mousemodel=popup
+    menu PopUp.Test1 :<CR>
+    menu PopUp.Test2 :<CR>
+    menu PopUp.Test3 :<CR>
+    call setline(1, repeat(['abcde'], 5))
+  END
+  call writefile(lines, 'Xpopupcmdline', 'D')
+  let buf = RunVimInTerminal('-S Xpopupcmdline', {'rows': 4})
+
+  " cmdline area should be cleared when popupmenu that covered it is closed
+  call term_sendkeys(buf, "\<RightMouse>\<RightRelease>\<Esc>")
+  call VerifyScreenDump(buf, 'Test_popupmenu_cmdline_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
