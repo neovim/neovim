@@ -1301,7 +1301,7 @@ static char *shell_xescape_xquote(const char *cmd)
   }
 
   const char *ecmd = cmd;
-  if (*p_sxe != NUL && strcmp(p_sxq, "(") == 0) {
+  if (*p_sxe != NUL && *p_sxq == '(') {
     ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', false);
   }
   size_t ncmd_size = strlen(ecmd) + strlen(p_sxq) * 2 + 1;
@@ -1309,9 +1309,9 @@ static char *shell_xescape_xquote(const char *cmd)
 
   // When 'shellxquote' is ( append ).
   // When 'shellxquote' is "( append )".
-  if (strcmp(p_sxq, "(") == 0) {
+  if (*p_sxq == '(') {
     vim_snprintf(ncmd, ncmd_size, "(%s)", ecmd);
-  } else if (strcmp(p_sxq, "\"(") == 0) {
+  } else if (*p_sxq == '"' && *(p_sxq + 1) == '(') {
     vim_snprintf(ncmd, ncmd_size, "\"(%s)\"", ecmd);
   } else {
     vim_snprintf(ncmd, ncmd_size, "%s%s%s", p_sxq, ecmd, p_sxq);
