@@ -39,6 +39,7 @@
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option_vars.h"
+#include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
@@ -959,6 +960,8 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   if (!buf) {
     return;
   }
+
+  MUTATE_PATH_FOR_VIM(name.data);
 
   int ren_ret = OK;
   TRY_WRAP(err, {
