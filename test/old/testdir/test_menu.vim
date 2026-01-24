@@ -614,7 +614,7 @@ func Test_only_modifier()
   tunmenu a.b
 endfunc
 
-func Test_mapclear_while_listing()
+func Test_unmenu_while_listing_menus()
   CheckRunVimInTerminal
 
   let lines =<< trim END
