@@ -7,7 +7,12 @@ CheckScreendump
 " Run the command in terminal and wait for it to complete via notification
 func s:RunCommandAndWait(buf, cmd)
   call term_sendkeys(a:buf, a:cmd .. "; printf '" .. TermNotifyParentCmd(v:false) .. "'\<cr>")
-  call WaitForChildNotification()
+  if ValgrindOrAsan()
+    " test times out on ASAN CI builds
+    call WaitForChildNotification(10000)
+  else
+    call WaitForChildNotification()
+  endif
 endfunc
 
 func Test_crash1()
