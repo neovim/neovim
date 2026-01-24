@@ -1700,7 +1700,10 @@ void ins_compl_show_pum(void)
   }
 
   if (compl_match_array == NULL) {
-    if (compl_started && has_event(EVENT_COMPLETECHANGED)) {
+    // Stop completion when completion is exhausted
+    if (ctrl_x_mode_not_default()) {
+      ins_compl_prep(' ');
+    } else if (compl_started && has_event(EVENT_COMPLETECHANGED)) {
       trigger_complete_changed_event(cur);
     }
     return;
