@@ -5006,3 +5006,11 @@ void f_wildtrigger(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     ins_typebuf((char *)key_string, REMAP_NONE, 0, true, false);
   }
 }
+
+bool cmdline_in_input(void)
+{
+  if (ui_has(kUIMessages)) {
+    return false;
+  }
+  return ccline.input_fn && (State & MODE_CMDLINE);
+}
