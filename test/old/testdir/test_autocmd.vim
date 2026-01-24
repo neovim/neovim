@@ -580,6 +580,7 @@ func Test_WinScrolled_close_curwin()
 endfunc
 
 func Test_WinScrolled_once_only()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -609,6 +610,7 @@ endfunc
 " Check that WinScrolled is not triggered immediately when defined and there
 " are split windows.
 func Test_WinScrolled_not_when_defined()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -3015,6 +3017,7 @@ endfunc
 func Test_autocmd_nested_switch_window()
   " run this in a separate Vim so that SafeState works
   CheckRunVimInTerminal
+  CheckScreendump
 
   let lines =<< trim END
       vim9script

@@ -728,6 +728,7 @@ func Test_sub_cmd_9()
 endfunc
 
 func Test_sub_highlight_zero_match()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END

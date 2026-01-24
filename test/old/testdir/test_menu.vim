@@ -3,6 +3,8 @@
 source check.vim
 CheckFeature menu
 
+source screendump.vim
+
 func Test_load_menu()
   try
     source $VIMRUNTIME/menu.vim
@@ -610,6 +612,52 @@ func Test_only_modifier()
   call assert_equal(exp, split(execute('tmenu'), "\n"))
 
   tunmenu a.b
+endfunc
+
+func Test_unmenu_while_listing_menus()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      set nocompatible
+      unmenu *
+      for i in range(1, 999)
+        exe 'menu ' .. 'foo.' .. i .. ' bar'
+      endfor
+      au CmdlineLeave : call timer_start(0, {-> execute('unmenu *')})
+  END
+  call writefile(lines, 'Xmenuclear', 'D')
+  let buf = RunVimInTerminal('-S Xmenuclear', {'rows': 10})
+
+  " this was using freed memory
+  call term_sendkeys(buf, ":menu\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "G")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<CR>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test for opening a menu drawn in the cmdline area
+func Test_popupmenu_cmdline()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set mousemodel=popup
+    menu PopUp.Test1 :<CR>
+    menu PopUp.Test2 :<CR>
+    menu PopUp.Test3 :<CR>
+    call setline(1, repeat(['abcde'], 5))
+  END
+  call writefile(lines, 'Xpopupcmdline', 'D')
+  let buf = RunVimInTerminal('-S Xpopupcmdline', {'rows': 4})
+
+  " cmdline area should be cleared when popupmenu that covered it is closed
+  call term_sendkeys(buf, "\<RightMouse>\<RightRelease>\<Esc>")
+  call VerifyScreenDump(buf, 'Test_popupmenu_cmdline_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

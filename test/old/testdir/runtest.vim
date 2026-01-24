@@ -643,6 +643,8 @@ for g:testfunc in sort(s:tests)
   " A test can set g:test_is_flaky to retry running the test.
   let g:test_is_flaky = 0
 
+  let g:check_screendump_called = v:false
+
   " A test can set g:max_run_nr to change the max retry count.
   let g:max_run_nr = 5
   if has('mac')

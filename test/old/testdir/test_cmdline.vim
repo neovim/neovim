@@ -2849,6 +2849,7 @@ endfunc
 " Test for using a popup menu for the command line completion matches
 " (wildoptions=pum)
 func Test_wildmenu_pum()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let commands =<< trim [CODE]
@@ -3201,10 +3202,35 @@ func Test_wildmenumode_with_pum()
   cunmap <F2>
 endfunc
 
+func Test_wildmenu_with_pum_foldexpr()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      call setline(1, ['folded one', 'folded two', 'some more text'])
+      func MyFoldText()
+        return 'foo'
+      endfunc
+      set foldtext=MyFoldText() wildoptions=pum
+      normal ggzfj
+  END
+  call writefile(lines, 'Xpumfold')
+  let buf = RunVimInTerminal('-S Xpumfold', #{rows: 10})
+  call term_sendkeys(buf, ":set\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_with_pum_foldexpr_1', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_with_pum_foldexpr_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xpumfold')
+endfunc
+
 " Test for opening the cmdline completion popup menu from the terminal window.
 " The popup menu should be positioned correctly over the status line of the
 " bottom-most window.
 func Test_wildmenu_pum_from_terminal()
+  CheckScreendump
   CheckRunVimInTerminal
   let python = PythonProg()
   call CheckPython(python)
@@ -3225,6 +3251,7 @@ func Test_wildmenu_pum_from_terminal()
 endfunc
 
 func Test_wildmenu_pum_odd_wildchar()
+  CheckScreendump
   CheckRunVimInTerminal
 
   " Test odd wildchar interactions with pum. Make sure they behave properly

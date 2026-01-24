@@ -326,6 +326,37 @@ describe('cmdline', function()
     ]])
   end)
 
+  -- oldtest: Test_wildmenu_with_pum_foldexpr()
+  it('pum when using &foldtext', function()
+    local screen = Screen.new(60, 10)
+    exec([[
+      call setline(1, ['folded one', 'folded two', 'some more text'])
+      func MyFoldText()
+        return 'foo'
+      endfunc
+      set foldtext=MyFoldText() wildoptions=pum
+      normal ggzfj
+    ]])
+    feed(':set<Tab>')
+    screen:expect([[
+      {13:foo·························································}|
+      some more text                                              |
+      {1:~                                                           }|*3
+      {12: set            }{1:                                            }|
+      {4: setfiletype    }{1:                                            }|
+      {4: setglobal      }{1:                                            }|
+      {4: setlocal       }{1:                                            }|
+      :set^                                                        |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      {13:^foo·························································}|
+      some more text                                              |
+      {1:~                                                           }|*7
+                                                                  |
+    ]])
+  end)
+
   -- oldtest: Test_rulerformat_position()
   it("ruler has correct position with 'rulerformat' set", function()
     local screen = Screen.new(20, 3)
