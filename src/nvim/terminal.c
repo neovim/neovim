@@ -583,9 +583,6 @@ void terminal_close(Terminal **termpp, int status)
   FUNC_ATTR_NONNULL_ALL
 {
   Terminal *term = *termpp;
-  if (term->destroy) {
-    return;
-  }
 
 #ifdef EXITFREE
   if (entered_free_all_mem) {
@@ -595,6 +592,10 @@ void terminal_close(Terminal **termpp, int status)
     return;
   }
 #endif
+
+  if (term->destroy) {  // Destruction already scheduled on the main loop.
+    return;
+  }
 
   bool only_destroy = false;
 
