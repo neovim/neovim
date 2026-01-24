@@ -650,7 +650,7 @@ int main(int argc, char **argv)
       msg_putchar('\n');
       msg_didout = false;
     }
-    getout(lua_ok ? 0 : 1);
+    getout(lua_ok ? ex_exitval : 2);
   }
 
   TIME_MSG("before starting main loop");
@@ -700,6 +700,8 @@ void os_exit(int r)
 }
 
 /// Exit properly
+///
+/// @param exitval Exitcode, may be added to `ex_exitval`.
 void getout(int exitval)
   FUNC_ATTR_NORETURN
 {
@@ -709,8 +711,7 @@ void getout(int exitval)
   // make sure startuptimes have been flushed
   time_finish();
 
-  // On error during Ex mode, exit with a non-zero code.
-  // POSIX requires this, although it's not 100% clear from the standard.
+  // Exit nonzero on error during Ex/script mode (-es). POSIX requirement.
   if (exmode_active) {
     exitval += ex_exitval;
   }
@@ -1299,7 +1300,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
         }
         FALLTHROUGH;
-      case 'S':    // "-S {file}" execute Vim script
+      case 'S':    // "-S {file}" execute Vimscript/Lua
       case 'i':    // "-i {shada}" use for ShaDa file
       case 'l':    // "-l {file}" Lua mode
       case 'u':    // "-u {vimrc}" vim inits file
