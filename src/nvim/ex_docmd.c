@@ -6871,7 +6871,7 @@ static void ex_redir(exarg_T *eap)
 /// ":redraw": force redraw
 static void ex_redraw(exarg_T *eap)
 {
-  if (cmdpreview) {
+  if (cmdpreview || cmdline_in_input()) {
     return;  // Ignore :redraw during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;

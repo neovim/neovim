@@ -722,6 +722,14 @@ static void ui_ext_cmdline_hide(bool abort)
   }
 }
 
+bool cmdline_in_input(void)
+{
+  if (ui_has(kUIMessages)) {
+    return false;
+  }
+  return ccline.input_fn && (State & MODE_CMDLINE);
+}
+
 /// Internal entry point for cmdline mode.
 ///
 /// @param count  only used for incremental search

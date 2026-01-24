@@ -5924,4 +5924,25 @@ describe('API', function()
       ^:call getchar()                         |
     ]])
   end)
+
+  it(
+    'nvim__redraw() does not clear multiline prompt when triggered on CmdlineEnter #34662',
+    function()
+      clear()
+      local screen = Screen.new(60, 10)
+      command([[
+    autocmd CmdlineEnter * call nvim__redraw({'flush': v:true})
+  ]])
+      feed(':call input("line1\\nline2\\nline3: ")<CR>')
+      screen:expect([[
+                                                                |
+    {1:~                                                           }|*5
+    {3:                                                            }|
+    line1                                                       |
+    line2                                                       |
+    line3: ^                                                     |
+  ]])
+      feed('<Esc>')
+    end
+  )
 end)

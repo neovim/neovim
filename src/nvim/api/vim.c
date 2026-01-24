@@ -36,6 +36,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/getchar_defs.h"
@@ -2482,7 +2483,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   // Redraw pending screen updates when explicitly requested or when determined
   // that it is necessary to properly draw other requested components.
-  if (opts->flush && !cmdpreview) {
+  if (opts->flush && !cmdpreview && !cmdline_in_input()) {
     validate_cursor(curwin);
     update_topline(curwin);
     update_screen();

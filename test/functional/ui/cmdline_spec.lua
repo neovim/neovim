@@ -1028,6 +1028,22 @@ describe('cmdline redraw', function()
       1 substitution on 1 line                                                   |
     ]])
   end)
+
+  it('multiline input() prompt not cleared by :redraw command', function()
+    screen:try_resize(60, 10)
+    feed(':call input("line1\\nline2\\nline3: ")<CR>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {3:                                                            }|
+      line1                                                       |
+      line2                                                       |
+      line3: ^                                                     |
+    ]])
+    feed('<C-R>=execute("redraw")<CR>')
+    screen:expect_unchanged(true)
+    feed('<Esc>')
+  end)
 end)
 
 describe('statusline is redrawn on entering cmdline', function()
