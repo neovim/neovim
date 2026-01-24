@@ -58,8 +58,8 @@
             .hash = "N-V-__8AAHCmCAAf-5sa_C1N5Ts8B7V-vTKqUEMJZVnNkq_y",
         },
         .treesitter_vim = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-vim?ref=v0.7.0#3dd4747082d1b717b8978211c06ef7b6cd16125b",
-            .hash = "N-V-__8AAMArVAB4uo2wg2XRs8HBviQ4Pq366cC_iRolX4Vc",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-vim?ref=v0.8.0#1cd0a0892b389bd314a9bd09545160e5ee3c9137",
+            .hash = "N-V-__8AAHWbVADvoQDYiOUyiNwPlykZsk1a9jIrlsvLNHL1",
         },
         .treesitter_vimdoc = .{
             .url = "git+https://github.com/neovim/tree-sitter-vimdoc?ref=v4.1.0#f061895a0eff1d5b90e4fb60d21d87be3267031a",
