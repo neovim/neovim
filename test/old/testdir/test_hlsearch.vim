@@ -68,6 +68,7 @@ func Test_hlsearch_eol_highlight()
 endfunc
 
 func Test_hlsearch_Ctrl_R()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END
@@ -86,6 +87,7 @@ func Test_hlsearch_Ctrl_R()
 endfunc
 
 func Test_hlsearch_clipboard()
+  CheckScreendump
   CheckRunVimInTerminal
   CheckFeature clipboard_working
 

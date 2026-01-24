@@ -886,6 +886,7 @@ func Test_incsearch_cmdline_modifier()
 endfunc
 
 func Test_incsearch_scrolling()
+  CheckScreendump
   CheckRunVimInTerminal
   call assert_equal(0, &scrolloff)
   call writefile([

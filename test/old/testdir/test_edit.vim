@@ -2057,6 +2057,7 @@ endfunc
 
 " Test for positioning cursor after CTRL-R expression failed
 func Test_edit_ctrl_r_failed()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let buf = RunVimInTerminal('', #{rows: 6, cols: 60})

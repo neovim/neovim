@@ -951,6 +951,8 @@ endfunc
 
 " Verify a screendump with both the internal and external diff.
 func VerifyBoth(buf, dumpfile, extra)
+  CheckScreendump
+
   " trailing : for leaving the cursor on the command line
   for cmd in [":set diffopt=filler" . a:extra . "\<CR>:", ":set diffopt+=internal\<CR>:"]
     call term_sendkeys(a:buf, cmd)
@@ -970,6 +972,8 @@ endfunc
 
 " Verify a screendump with the internal diff only.
 func VerifyInternal(buf, dumpfile, extra)
+  CheckScreendump
+
   call term_sendkeys(a:buf, ":diffupdate!\<CR>")
   " trailing : for leaving the cursor on the command line
   call term_sendkeys(a:buf, ":set diffopt=internal,filler" . a:extra . "\<CR>:")

@@ -640,6 +640,7 @@ endfunc
 
 " Test for opening a menu drawn in the cmdline area
 func Test_popupmenu_cmdline()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let lines =<< trim END

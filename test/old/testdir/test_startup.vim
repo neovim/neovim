@@ -835,6 +835,7 @@ func Test_issue_3969()
 endfunc
 
 func Test_start_with_tabs()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let buf = RunVimInTerminal('-p a b c', {})
