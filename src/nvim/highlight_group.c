@@ -936,6 +936,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     g->sg_link = 0;
   }
 
+  bool update = HAS_KEY(dict, highlight, update) && dict->update;
   g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
 
   g->sg_rgb_fg = attrs.rgb_fg_color;
@@ -954,20 +955,29 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   };
 
   for (int j = 0; cattrs[j].dest; j++) {
-    if (cattrs[j].val < 0) {
+    if (cattrs[j].name.type != kObjectTypeNil) {
+      if (cattrs[j].val < 0) {
+        *cattrs[j].dest = kColorIdxNone;
+      } else if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
+        name_to_color(cattrs[j].name.data.string.data, cattrs[j].dest);
+      } else {
+        *cattrs[j].dest = kColorIdxHex;
+      }
+    } else if (!update) {
       *cattrs[j].dest = kColorIdxNone;
-    } else if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
-      name_to_color(cattrs[j].name.data.string.data, cattrs[j].dest);
-    } else {
-      *cattrs[j].dest = kColorIdxHex;
     }
   }
 
   g->sg_cterm = attrs.cterm_ae_attr &~HL_DEFAULT;
   g->sg_cterm_bg = attrs.cterm_bg_color;
   g->sg_cterm_fg = attrs.cterm_fg_color;
+
   g->sg_cterm_bold = g->sg_cterm & HL_BOLD;
-  g->sg_blend = attrs.hl_blend;
+  if (attrs.hl_blend != -1) {
+    g->sg_blend = attrs.hl_blend;
+  } else if (!update) {
+    g->sg_blend = -1;
+  }
 
   g->sg_script_ctx = current_sctx;
   g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
@@ -3227,4 +3237,31 @@ int name_to_ctermcolor(const char *name)
   }
   TriState bold = kNone;
   return lookup_color(i, false, &bold);
+}
+
+/// Get global namespace highlight attributes for a highlight group
+///
+/// @param hl_id Highlight group ID (1-based)
+/// @param[out] attrs Pointer to store the attributes
+/// @return true if highlight group exists and has attributes
+bool hl_group_get_attrs(int hl_id, HlAttrs *attrs)
+{
+  if (hl_id <= 0 || hl_id > highlight_ga.ga_len) {
+    return false;
+  }
+
+  int idx = hl_id - 1;
+  HlGroup *sgp = &hl_table[idx];
+
+  attrs->cterm_ae_attr = (int16_t)sgp->sg_cterm;
+  attrs->cterm_fg_color = (int16_t)sgp->sg_cterm_fg;
+  attrs->cterm_bg_color = (int16_t)sgp->sg_cterm_bg;
+  attrs->rgb_ae_attr = (int16_t)sgp->sg_gui;
+  attrs->rgb_fg_color = sgp->sg_rgb_fg_idx != kColorIdxNone ? sgp->sg_rgb_fg : -1;
+  attrs->rgb_bg_color = sgp->sg_rgb_bg_idx != kColorIdxNone ? sgp->sg_rgb_bg : -1;
+  attrs->rgb_sp_color = sgp->sg_rgb_sp_idx != kColorIdxNone ? sgp->sg_rgb_sp : -1;
+  attrs->hl_blend = sgp->sg_blend;
+  attrs->url = -1;
+
+  return true;
 }
