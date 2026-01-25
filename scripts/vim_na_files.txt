@@ -99,6 +99,7 @@ src/testdir/test_listener.vim
 src/testdir/test_mzscheme.vim
 src/testdir/test_plugin_comment.vim
 src/testdir/test_plugin_glvs.vim
+src/testdir/test_plugin_osc52.vim
 src/testdir/test_python2.vim
 src/testdir/test_pyx2.vim
 src/testdir/test_restricted.vim
