@@ -5,7 +5,7 @@
 
                                       Type |gO| to see the table of contents.
 
-===============================================================================
+==============================================================================
 1. Introduction
 							*vietnamese-intro*
 Vim supports Vietnamese language in the following ways:
@@ -14,7 +14,7 @@ Vim supports Vietnamese language in the following ways:
   in |Insert-mode| and |search-commands| using US keyboard layout.
 - Localization in Vietnamese. See |vietnamese-l10n|
 
-===============================================================================
+==============================================================================
 2. Vietnamese keymaps
 							*vietnamese-keymap*
 To switch between languages you can use your system native keyboard switcher,
@@ -39,12 +39,12 @@ Since these keymaps were designed to be minimalistic, they do not support all
 features of the corresponding input methods. The differences are described
 below:
 
-- You can only type each character individually, entering the base letter first
-  and then the diacritics later.  For example, to type the word `nến` using
-  |vietnamese-vni_utf-8|, you must type `ne61n`, not `nen61` or `ne6n1`
-- For characters with more than 1 diacritic, you need to type vowel mark before
-  tone mark. For example, to type `ồ` using |vietnamese-telex_utf-8|, you need
-  to type `oof`, not `ofo`.
+- You can only type each character individually, entering the base letter
+  first and then the diacritics later.  For example, to type the word `nến`
+  using |vietnamese-vni_utf-8|, you must type `ne61n`, not `nen61` or `ne6n1`
+- For characters with more than 1 diacritic, you need to type vowel mark
+  before tone mark. For example, to type `ồ` using |vietnamese-telex_utf-8|, you
+  need to type `oof`, not `ofo`.
 - With |vietnamese-telex_utf-8|, you need to type all uppercase letters to
   produce uppercase characters with diacritics. For example, `Ừ` must be typed
   as `UWF`.
@@ -56,7 +56,7 @@ below:
   supported.
 - Removing diacritics using `z` in Telex or `0` in VNI and VIQR is not supported.
 
-===============================================================================
+==============================================================================
 3. Localization
 							*vietnamese-l10n*
 Vim |messages| are also available in Vietnamese.  If you wish to see messages
