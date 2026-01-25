@@ -170,9 +170,8 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - underdotted: boolean
 ///                - underdouble: boolean
 ///                - underline: boolean
+///                - update: boolean false by default; true updates only specified attributes, leaving others unchanged.
 /// @param[out] err Error details, if any
-///
-// TODO(bfredl): val should take update vs reset flag
 void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
@@ -188,7 +187,14 @@ void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight
     return;
   }
 
-  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
+  bool update = HAS_KEY(val, highlight, update) && val->update;
+  HlAttrs *base = NULL;
+  HlAttrs base_attrs;
+  if (update && hl_ns_get_attrs((int)ns_id, hl_id, NULL, &base_attrs)) {
+    base = &base_attrs;
+  }
+
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, base, err);
   if (!ERROR_SET(err)) {
     WITH_SCRIPT_CONTEXT(channel_id, {
       ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);

@@ -2225,6 +2225,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - underdotted: boolean
 --- - underdouble: boolean
 --- - underline: boolean
+--- - update: boolean false by default; true updates only specified attributes, leaving others unchanged.
 function vim.api.nvim_set_hl(ns_id, name, val) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()`. This can be set for

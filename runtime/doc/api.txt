@@ -1585,6 +1585,8 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                  • underdotted: boolean
                  • underdouble: boolean
                  • underline: boolean
+                 • update: boolean false by default; true updates only
+                   specified attributes, leaving others unchanged.
 
 nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
     Set active namespace for highlights defined with |nvim_set_hl()|. This can
