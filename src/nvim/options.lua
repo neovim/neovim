@@ -3995,9 +3995,7 @@ local options = {
     {
       abbreviation = 'gfn',
       defaults = {
-        condition = 'MSWIN',
-        if_true = 'Cascadia Code, Consolas',
-        if_false = 'SF Mono, Source Code Pro, Menlo, DejaVu Sans Mono',
+        if_true = macros('DFLT_GFN', 'string'),
       },
       desc = [=[
         This is a list of fonts which will be used for the GUI version of Vim.
