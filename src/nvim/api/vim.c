@@ -165,9 +165,10 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                         cterm attributes will match those from the attribute map
 ///                         documented above.
 ///                - force: if true force update the highlight group when it exists.
+///                - update: When true, merge with existing attributes instead of replacing.
+///                         Only specified attributes are changed; others are preserved.
+///                         To explicitly clear a color, set it to -1 or 'NONE'.
 /// @param[out] err Error details, if any
-///
-// TODO(bfredl): val should take update vs reset flag
 void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
@@ -183,7 +184,16 @@ void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight
     val->url = NULL_STRING;
   }
 
-  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
+  bool update = HAS_KEY(val, highlight, update) && val->update;
+  HlAttrs *base = NULL;
+  HlAttrs base_attrs;
+  if (update) {
+    if (hl_ns_get_attrs((int)ns_id, hl_id, &base_attrs)) {
+      base = &base_attrs;
+    }
+  }
+
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, base, err);
   if (!ERROR_SET(err)) {
     WITH_SCRIPT_CONTEXT(channel_id, {
       ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);

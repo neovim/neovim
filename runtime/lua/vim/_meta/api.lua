@@ -2221,6 +2221,9 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 ---          cterm attributes will match those from the attribute map
 ---          documented above.
 --- - force: if true force update the highlight group when it exists.
+--- - update: When true, merge with existing attributes instead of replacing.
+---          Only specified attributes are changed; others are preserved.
+---          To explicitly clear a color, set it to -1 or 'NONE'.
 function vim.api.nvim_set_hl(ns_id, name, val) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()`. This can be set for
