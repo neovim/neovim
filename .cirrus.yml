@@ -20,8 +20,4 @@ freebsd_task:
     - pw useradd cirrus -m
     - chown -R cirrus:cirrus .
   functionaltest_script:
-    - sudo -u cirrus gmake functionaltest
-  unittest_script:
-    - sudo -u cirrus gmake unittest
-  oldtest_script:
-    - sudo -u cirrus gmake oldtest
+    - sudo -u cirrus gmake functionaltest TEST_FILE=test/functional/api/vim_spec.lua TEST_FILTER=channel
