@@ -741,8 +741,26 @@ static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
   msg_schedule_semsg_multiline("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
 }
 
-void ui_call_event(char *name, bool fast, Array args)
+void ui_call_event(char *name, Array args)
 {
+  // Internal messages are considered unsafe and are executed in fast context.
+  bool fast = strcmp(name, "msg_show") == 0;
+  const char *not_fast[] = {
+    "empty",
+    "echo",
+    "echomsg",
+    "echoerr",
+    "list_cmd",
+    "lua_error",
+    "lua_print",
+    "progress",
+    NULL,
+  };
+
+  for (int i = 0; fast && not_fast[i]; i++) {
+    fast = !strequal(not_fast[i], args.items[0].data.string.data);
+  }
+
   bool handled = false;
   UIEventCallback *event_cb;
 

@@ -5,6 +5,7 @@ local M = {
   ns = api.nvim_create_namespace('nvim._ext_ui'),
   augroup = api.nvim_create_augroup('nvim._ext_ui', {}),
   cmdheight = vim.o.cmdheight, -- 'cmdheight' option value set by user.
+  redrawing = false, -- True when redrawing to display UI event.
   wins = { cmd = -1, dialog = -1, msg = -1, pager = -1 },
   bufs = { cmd = -1, dialog = -1, msg = -1, pager = -1 },
   cfg = {
