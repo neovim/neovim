@@ -3554,6 +3554,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   uint16_t width = (uint16_t)tv_dict_get_number(job_opts, "width");
   uint16_t height = (uint16_t)tv_dict_get_number(job_opts, "height");
   char *term_name = NULL;
+  size_t term_pending_limit = 0;
 
   if (term) {
     if (text_locked()) {
@@ -3582,6 +3583,11 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     stdin_mode = kChannelStdinPipe;
     width = width ? width : (uint16_t)MAX(0, curwin->w_view_width - win_col_off(curwin));
     height = height ? height : (uint16_t)curwin->w_view_height;
+
+    // TODO(lewis6991): This limit size isn't always sufficient. Not all terminal output occupy
+    // cells, and some output can overwrite existing cells instead of scrolling up the scrollback.
+    size_t scbk = (size_t)(curbuf->b_p_scbk < 1 ? SB_MAX : curbuf->b_p_scbk);
+    term_pending_limit = (scbk + height) * width;
   }
 
   if (pty) {
@@ -3594,11 +3600,17 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Channel *chan = channel_job_start(argv, NULL, on_stdout, on_stderr, on_exit, pty,
                                     rpc, overlapped, detach, stdin_mode, cwd,
                                     width, height, env, &rettv->vval.v_number);
+
   if (!chan) {
     return;
   } else if (!term) {
     channel_create_event(chan, NULL);
   } else {
+    // If channel is for terminal, buffer output until terminal attaches.
+    // We need to do this as the job is started immediately, but the terminal
+    // is attached later (after BufFile* autocmds).
+    chan->term_pending_limit = term_pending_limit;
+
     if (rettv->vval.v_number <= 0) {
       return;
     }

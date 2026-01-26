@@ -220,6 +220,8 @@ Channel *channel_alloc(ChannelStreamType type)
   chan->exit_status = -1;
   chan->streamtype = type;
   chan->detach = false;
+  chan->term_pending_buf = (garray_T)GA_EMPTY_INIT_VALUE;
+  chan->term_pending_limit = 0;
   assert(chan->id <= VARNUMBER_MAX);
   pmap_put(uint64_t)(&channels, chan->id, chan);
   return chan;
@@ -297,6 +299,7 @@ static void channel_destroy(Channel *chan)
   callback_reader_free(&chan->on_data);
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
+  ga_clear(&chan->term_pending_buf);
 
   multiqueue_free(chan->events);
   xfree(chan);
@@ -659,7 +662,7 @@ size_t on_job_stderr(RStream *stream, const char *buf, size_t count, void *data,
 static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf, size_t count,
                                 bool eof, CallbackReader *reader)
 {
-  if (chan->term) {
+  if (chan->term || chan->term_pending_limit > 0) {
     if (count) {
       const char *p = buf;
       const char *end = buf + count;
@@ -675,7 +678,22 @@ static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf,
       }
     }
 
-    terminal_receive(chan->term, buf, count);
+    if (chan->term) {
+      terminal_receive(chan->term, buf, count);
+    } else if (chan->term_pending_limit > 0) {
+      // Terminal not yet opened, buffer data.
+      // Buffer will be flushed when terminal is opened in channel_terminal_open()
+      if (chan->term_pending_limit > 0) {
+        if (chan->term_pending_buf.ga_itemsize == 0) {
+          ga_init(&chan->term_pending_buf, 1, 1024);
+        }
+        size_t pending_buf_len = (size_t)chan->term_pending_buf.ga_len;
+        if (pending_buf_len < chan->term_pending_limit) {
+          size_t avail = chan->term_pending_limit - pending_buf_len;
+          ga_concat_len(&chan->term_pending_buf, buf, MIN(count, avail));
+        }
+      }
+    }
   }
 
   if (eof) {
@@ -831,6 +849,26 @@ void channel_terminal_open(buf_T *buf, Channel *chan)
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
+
+  if (!chan->term) {
+    return;  // Terminal has already been destroyed.
+  }
+
+  // Flush any terminal output received before the terminal attached.
+  if (chan->term_pending_limit > 0) {
+    if (chan->term_pending_buf.ga_len > 0) {
+      terminal_receive(chan->term, chan->term_pending_buf.ga_data,
+                       (size_t)chan->term_pending_buf.ga_len);
+    }
+    ga_clear(&chan->term_pending_buf);
+    chan->term_pending_limit = 0;
+  }
+
+  // If the job exited before the terminal attached, close now to emit
+  // the exit status and avoid leaving the terminal running.
+  if (chan->exit_status >= 0) {
+    terminal_close(&chan->term, chan->exit_status);
+  }
 }
 
 static void term_write(const char *buf, size_t size, void *data)

@@ -184,6 +184,58 @@ describe(':terminal', function()
     api.nvim_set_current_buf(buf1)
     eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
   end)
+
+  it('does not drop output when autocmds are running', function()
+    local line_count = 10000
+
+    local payload = ('x'):rep(8)
+    local lines = {}
+    for i = 1, line_count do
+      lines[i] = ('line %04d %s'):format(i, payload)
+    end
+
+    local path = t.tmpname()
+    t.write_file(path, table.concat(lines, '\n'))
+    finally(function()
+      os.remove(path)
+    end)
+
+    local received = n.exec_lua(function()
+      vim.cmd [=[
+      function! BigLoop() abort
+        let i = 0
+        while i < 100000
+          let i += 1
+        endwhile
+      endfunction
+      ]=]
+      vim.api.nvim_create_autocmd('BufFilePost', {
+        callback = function()
+          vim.cmd.call('BigLoop()')
+        end,
+      })
+
+      vim.cmd.term('cat ' .. vim.fn.shellescape(path))
+
+      local buf_lines
+      local did_exit = vim.wait(10000, function()
+        buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+        for _, line in ipairs(buf_lines) do
+          if vim.startswith(line, '[Process exited') then
+            return true
+          end
+        end
+        return false
+      end, 10)
+      assert(did_exit, 'terminal did not exit')
+
+      return buf_lines
+    end)
+
+    lines[#lines + 1] = '[Process exited 0]'
+
+    eq(lines, received)
+  end)
 end)
 
 local function test_terminal_with_fake_shell(backslash)

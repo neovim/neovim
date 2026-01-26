@@ -36,6 +36,8 @@ struct Channel {
                 ///< not FORCE self-exit.
   RpcState rpc;
   Terminal *term;
+  garray_T term_pending_buf;
+  size_t term_pending_limit;  // Max buffered bytes before terminal attaches.
 
   CallbackReader on_data;
   CallbackReader on_stderr;
