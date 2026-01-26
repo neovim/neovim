@@ -418,6 +418,14 @@ local function check_external_tools()
     health.warn('ripgrep not available')
   end
 
+  local open_cmd, err = vim.ui._get_open_cmd()
+  if open_cmd then
+    health.ok(('vim.ui.open: handler found (%s)'):format(open_cmd[1]))
+  else
+    --- @cast err string
+    health.warn(err)
+  end
+
   -- `vim.pack` prefers git 2.36 but tries to work with 2.x.
   if vim.fn.executable('git') == 1 then
     local git = vim.fn.exepath('git')

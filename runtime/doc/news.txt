@@ -363,6 +363,8 @@ PLUGINS
   unrelated Python virtual environments are activated.
   |provider-python|
 
+• |:checkhealth| now checks for an available |vim.ui.open()| handler.
+
 STARTUP
 
 • todo
