@@ -489,6 +489,16 @@ describe('ui/ext_messages', function()
       },
     })
 
+    feed(':colorscheme<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = { { content = { { 'default' } }, history = true, kind = 'list_cmd' } },
+    })
+
     feed(':version<CR>')
     screen:expect({
       grid = [[

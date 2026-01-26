@@ -4758,6 +4758,7 @@ static void ex_colorscheme(exarg_T *eap)
     emsg_off--;
     xfree(expr);
 
+    msg_ext_set_kind("list_cmd");
     if (p != NULL) {
       msg(p, 0);
       xfree(p);
