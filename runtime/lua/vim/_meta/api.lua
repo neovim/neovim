@@ -2166,6 +2166,11 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
 --- - fg: color name or "#RRGGBB", see note.
 --- - bg: color name or "#RRGGBB", see note.
+--- - fg_indexed: boolean
+---   When true, fg is a terminal palette index (0-255).
+---   Default is false.
+--- - bg_indexed: boolean
+---   Same as fg_indexed, but for background color.
 --- - sp: color name or "#RRGGBB"
 --- - blend: integer between 0 and 100
 --- - bold: boolean
