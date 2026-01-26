@@ -2222,10 +2222,10 @@ package, arrange for files to be recognized as groff input (see
 GNU troff differs from older AT&T n/troff programs (that you may still find in
 Solaris or Plan 9) by extending the "*roff" language syntax.  For example, in
 AT&T troff, you access the count of years since 1900 with the escape sequence
-\(yr.  In groff you can do the same, which it recognizes for compatibility, or
-use groff's extended syntax, \[yr].  AT&T troff documented the yr register as
-storing the "last two digits of current year", but had a Y2K problem; in
-groff, you can access the Gregorian year correctly: \[year].  In groff, font,
+\n(yr.  In groff you can do the same, which it recognizes for compatibility,
+or use groff's extended syntax, \n[yr].  AT&T troff documented the yr register
+as storing the "last two digits of current year", but had a Y2K problem; in
+groff, you can access the Gregorian year correctly: \n[year].  In groff, font,
 register, macro, string, and request names can exceed two characters; for
 example, with groff's mm package, the control lines ".VERBON" and ".VERBOFF"
 call macros of those names to bracket displays of "verbatim" content.
@@ -4168,7 +4168,7 @@ the region, but not the contents of the region, are marked as concealable.
 Whether or not they are actually concealed depends on the setting on the
 'conceallevel' option.  The ends of a region can only be concealed separately
 in this way when they have their own highlighting via "matchgroup".  The
-|synconcealed()| function can be used to retrieve information about conealed
+|synconcealed()| function can be used to retrieve information about concealed
 items.
 
 cchar							*:syn-cchar*

@@ -19,6 +19,7 @@
 ^runtime/pack/dist/opt/comment/
 ^runtime/pack/dist/opt/dvorak/
 ^runtime/pack/dist/opt/editorconfig/
+^runtime/pack/dist/opt/osc52/
 ^runtime/print/
 ^runtime/spell/.*\.latin1
 ^runtime/syntax/generator/

@@ -490,7 +490,6 @@ function M._check(mods, plugin_names)
     s_output[#s_output + 1] = ''
     s_output = vim.list_extend(header, s_output)
     vim.fn.append(vim.fn.line('$'), s_output)
-    vim.cmd.redraw()
   end
 
   progress_msg('success', 0, 'checks done')

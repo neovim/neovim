@@ -40,6 +40,7 @@ runtime/doc/usr_90.txt
 runtime/doc/workshop.txt
 runtime/evim.vim
 runtime/macmap.vim
+runtime/macros/README.txt
 runtime/macros/editexisting.vim
 runtime/macros/justify.vim
 runtime/macros/matchit.vim
@@ -58,6 +59,7 @@ runtime/tools/ccfilter_README.txt
 runtime/tools/demoserver.py
 runtime/tools/efm_filter.txt
 runtime/tools/mve.txt
+runtime/tools/preproc_indent.vim
 runtime/tools/ref
 runtime/tools/unicode.vim
 runtime/tools/vim132
@@ -99,12 +101,13 @@ src/testdir/test_listener.vim
 src/testdir/test_mzscheme.vim
 src/testdir/test_plugin_comment.vim
 src/testdir/test_plugin_glvs.vim
+src/testdir/test_plugin_osc52.vim
 src/testdir/test_python2.vim
 src/testdir/test_pyx2.vim
 src/testdir/test_restricted.vim
 src/testdir/test_shortpathname.vim
-src/testdir/test_termencoding.vim
 src/testdir/test_tcl.vim
+src/testdir/test_termencoding.vim
 src/testdir/test_xxd.vim
 src/testdir/util/amiga.vim
 src/testdir/util/dos.vim

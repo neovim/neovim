@@ -477,22 +477,16 @@ If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 h
 ### OpenBSD
 
 ```sh
-doas pkg_add gmake cmake curl gettext-tools git
+doas pkg_add gmake cmake curl gettext-tools git ninja
 ```
 
-Build can sometimes fail when using the top level `Makefile`, apparently due to some third-party component (see [#2445-comment](https://github.com/neovim/neovim/issues/2445#issuecomment-108124236)). The following instructions use CMake:
+While `ninja` is technically optional, the build is likely to fail without it. This is because `cmake` will use `make` in that case, and the bundled LuaJIT requires `gmake`. Instead of installing `ninja`, you could work around this by installing `luajit` and disabling the bundled LuaJIT:
 
 ```sh
-mkdir .deps
-cd .deps
-cmake ../cmake.deps/
-gmake
-cd ..
-mkdir build
-cd build
-cmake ..
-gmake
+gmake DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUAJIT=0"
 ```
+
+Another workaround is to edit `cmake/Deps.cmake` and comment out the line `set(MAKE_PRG "$(MAKE)")`. This will leave `MAKE_PRG` set to `gmake`, so LuaJIT will be built with `gmake`.
 
 ### macOS
 

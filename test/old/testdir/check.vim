@@ -124,12 +124,38 @@ func CheckNotMacM1()
   endif
 endfunc
 
+func SetupWindowSizeToForVisualDumps()
+  " The dumps used as reference in these tests were created with a terminal
+  " width of 75 columns. The vim window that uses the remainder of the GUI
+  " window width must be at least 3 columns. In theory this means we need the
+  " GUI shell to provide 78+ columns. However the GTK3 resize logic is flaky,
+  " sometimes resulting in X11 Configure events that are narrower than
+  " expected by a number of pixels equal to 2 column widths. Therefore
+  " setting 80 columns ensures that the GUI shell can still provide 78+
+  " columns. This is very likely papering over a GTK3 resize bug but one that
+  " has existed for a very long time. Establishing this workaround is meant to
+  " get the GTK3 code working under CI so that we can focus on removing this
+  " over the long term.
+  if &columns != 80
+    set columns=80
+  endif
+  " Without resetting lines, some GTK3 resize events can carry over between
+  " tests, which invalidate assumptions in the scrollbar offset calculations.
+  if &lines != 25
+    set lines=25
+  endif
+endfunc
+
 " Command to check that making screendumps is supported.
 " Caller must source screendump.vim
 command CheckScreendump call CheckScreendump()
 func CheckScreendump()
+  let g:check_screendump_called = v:true
   if !CanRunVimInTerminal()
     throw 'Skipped: cannot make screendumps'
+  endif
+  if has('gui_running')
+    call SetupWindowSizeToForVisualDumps()
   endif
 endfunc
 

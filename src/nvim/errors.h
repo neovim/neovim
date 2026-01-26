@@ -195,6 +195,8 @@ EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));
 EXTERN const char e_missing_close_curly_str[]
 INIT(= N_("E1279: Missing '}': %s"));
+EXTERN const char e_cannot_change_menus_while_listing[]
+INIT(= N_("E1310: Cannot change menus while listing"));
 EXTERN const char e_not_allowed_to_change_window_layout_in_this_autocmd[]
 INIT(= N_("E1312: Not allowed to change the window layout in this autocmd"));
 

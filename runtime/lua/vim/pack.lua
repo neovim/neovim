@@ -1210,6 +1210,9 @@ end
 ---
 --- Notes:
 --- - Every actual update is logged in "nvim-pack.log" file inside "log" |stdpath()|.
+--- - It doesn't update source's default branch if it has changed (like from `master` to `main`).
+---   To have `version = nil` point to a new default branch, re-install the plugin
+---   (|vim.pack.del()| + |vim.pack.add()|).
 ---
 --- @param names? string[] List of plugin names to update. Must be managed
 --- by |vim.pack|, not necessarily already added to current session.

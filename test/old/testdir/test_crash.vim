@@ -7,7 +7,12 @@ CheckScreendump
 " Run the command in terminal and wait for it to complete via notification
 func s:RunCommandAndWait(buf, cmd)
   call term_sendkeys(a:buf, a:cmd .. "; printf '" .. TermNotifyParentCmd(v:false) .. "'\<cr>")
-  call WaitForChildNotification()
+  if ValgrindOrAsan()
+    " test times out on ASAN CI builds
+    call WaitForChildNotification(10000)
+  else
+    call WaitForChildNotification()
+  endif
 endfunc
 
 func Test_crash1()
@@ -241,6 +246,7 @@ func Test_crash1_3()
 endfunc
 
 func Test_crash2()
+  CheckScreendump
   " The following used to crash Vim
   let opts = #{wait_for_ruler: 0, rows: 20}
   let args = ' -u NONE -i NONE -n -e -s -S '

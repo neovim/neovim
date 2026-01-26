@@ -8,13 +8,13 @@ Russian language localization and support in Vim	   *russian* *Russian*
 
                                       Type |gO| to see the table of contents.
 
-===============================================================================
+==============================================================================
 1. Introduction							*russian-intro*
 
 Russian language is supported perfectly well in Vim.  You can type and view
 Russian text just as any other, without the need to tweak the settings.
 
-===============================================================================
+==============================================================================
 2. Russian keymaps					       *russian-keymap*
 
 To switch between languages you can use your system native keyboard switcher,
@@ -37,7 +37,7 @@ enter Normal mode command, you can also set 'langmap' option:
 You have to type this command in one line, it is wrapped for the sake of
 readability.
 
-===============================================================================
+==============================================================================
 3. Localization							 *russian-l18n*
 
 If you wish to use messages, help files, menus and other items translated to
@@ -52,7 +52,7 @@ $VIMRUNTIME directory.  We recommend using UTF-8 archive.
 In order to use the Russian documentation, make sure you have set the
 'helplang' option to "ru".
 
-===============================================================================
+==============================================================================
 4. Known issues						       *russian-issues*
 
 -- If you are using Russian message translations in Win32 console, then
