@@ -386,6 +386,7 @@ local function progress_report(len)
     -- extui/ui2 shows all messages at once after the healthchecks are finished.
     -- This 1ms wait ensures the messages are shown separately
     vim.wait(1)
+    vim.cmd.redraw()
   end
 end
 
@@ -493,7 +494,6 @@ function M._check(mods, plugin_names)
     s_output[#s_output + 1] = ''
     s_output = vim.list_extend(header, s_output)
     vim.fn.append(vim.fn.line('$'), s_output)
-    vim.cmd.redraw()
   end
 
   progress_msg('success', 0, 'checks done')
