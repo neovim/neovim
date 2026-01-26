@@ -6861,16 +6861,13 @@ describe('LSP', function()
       )
     end)
 
-    it('work in FileType event', function()
-      local tmp = t.tmpname(true)
-      local str = string.dump(create_server_definition)
-      local encoded = exec_lua(function()
-        return vim.base64.encode(str)
-      end)
+    it('in first FileType event (on startup)', function()
+      local tmp = tmpname()
+      write_file(tmp, string.dump(create_server_definition))
       n.clear({
         args = {
           '--cmd',
-          string.format([[lua assert(loadstring(vim.base64.decode([==[%s]==])))()]], encoded),
+          string.format([[lua assert(loadfile(%q))()]], tmp),
           '--cmd',
           [[lua _G.server = _G._create_server({ handlers = {initialize = function(_, _, callback) callback(nil, {capabilities = {}}) end} })]],
           '--cmd',
@@ -6879,7 +6876,6 @@ describe('LSP', function()
           [[au FileType * ++once lua vim.lsp.enable('foo')]],
           '-c',
           'set ft=foo',
-          tmp,
         },
       })
 
