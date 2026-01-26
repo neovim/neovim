@@ -168,9 +168,9 @@ g:rustfmt_detect_version ~
 <
                                                        *g:rustfmt_find_toml*
 g:rustfmt_find_toml ~
-    When set to 1, will try to find `rustfmt.toml` file by searching from
-    current path upwards.  Disabled by default for performance reasons >vim
-        let g:rustfmt_find_toml = 1
+	When set to 1, will try to find `rustfmt.toml` file by searching from
+	current path upwards.  Disabled by default for performance reasons >vim
+	    let g:rustfmt_find_toml = 1
 <
 							  *g:rust_playpen_url*
 g:rust_playpen_url ~
