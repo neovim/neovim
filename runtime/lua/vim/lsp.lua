@@ -514,6 +514,14 @@ end
 --- To disable, pass `enable=false`: Stops related clients and servers (force-stops servers after
 --- a timeout, unless `exit_timeout=false`).
 ---
+--- Raises an error under the following conditions:
+--- - `{name}` is not a valid LSP config name (for example, `'*'`).
+--- - `{name}` corresponds to an LSP config file which raises an error.
+---
+--- If an error is raised when multiple names are provided, this function will
+--- have no side-effects; it will not enable/disable any configs, including
+--- ones which contain no errors.
+---
 --- Examples:
 ---
 --- ```lua
@@ -544,10 +552,22 @@ function lsp.enable(name, enable)
   validate('name', name, { 'string', 'table' })
 
   local names = vim._ensure_list(name) --[[@as string[] ]]
+
+  -- Check for errors, and abort with no side-effects if there is one.
   for _, nm in ipairs(names) do
-    if nm == '*' then
-      error('Invalid name')
+    if nm:match('%*') then
+      error('LSP config name cannot contain wildcard ("*")')
     end
+
+    -- Raise error if `lsp.config[nm]` raises an error, instead of waiting for
+    -- the error to be triggered by `lsp_enable_callback()`.
+    if enable ~= false then
+      _ = lsp.config[nm]
+    end
+  end
+
+  -- Now that there can be no errors, enable/disable all names.
+  for _, nm in ipairs(names) do
     lsp._enabled_configs[nm] = enable ~= false and {} or nil
   end
 
