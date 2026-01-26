@@ -391,8 +391,9 @@ static void flush_stream(Proc *proc, RStream *stream)
 
   // Read remaining data.
   while (!stream->s.closed && stream->num_bytes < max_bytes) {
-    // Remember number of bytes before polling
+    // Remember progress before polling
     size_t num_bytes = stream->num_bytes;
+    size_t available = rstream_available(stream);
 
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
@@ -400,8 +401,9 @@ static void flush_stream(Proc *proc, RStream *stream)
       multiqueue_process_events(stream->s.events);
     }
 
-    // Stream can be closed if it is empty.
-    if (num_bytes == stream->num_bytes) {
+    // Only treat the stream as drained if no progress and no buffered change.
+    if (num_bytes == stream->num_bytes
+        && available == rstream_available(stream)) {
       if (stream->read_cb && !stream->did_eof) {
         // Stream callback could miss EOF handling if a child keeps the stream
         // open. But only send EOF if we haven't already.
