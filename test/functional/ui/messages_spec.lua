@@ -2054,10 +2054,8 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                                                                                       |
                                Help poor children in Uganda!                          |
                        type  :help Kuwasha{18:<Enter>}    for information                  |
-                                                                                      |*2
-      {3:                                                                                }|
-                                                                                      |
-      {6:Press ENTER or type command to continue}^                                         |
+                                                                                      |*4
+      ^                                                                                |
     ]])
     feed('<CR>')
     assert_alive()
@@ -2189,14 +2187,6 @@ describe('ui/ext_messages', function()
                          type  :help Kuwasha{18:<Enter>}    for information                  |
                                                                                         |*5
       ]],
-      cmdline = {
-        {
-          content = { { '' } },
-          hl = 'MoreMsg',
-          pos = 0,
-          prompt = 'Press any key to continue',
-        },
-      },
     }
 
     feed('<cr>')
