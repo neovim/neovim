@@ -537,7 +537,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
 
   aucmd_restbuf(&aco);
 
-  if (*termpp == NULL) {
+  if (*termpp == NULL || term->buf_handle == 0) {
     return;  // Terminal has already been destroyed.
   }
 

@@ -220,6 +220,16 @@ describe('no crash when TermOpen autocommand', function()
     }
     assert_alive()
   end)
+
+  it('wipes buffer when using jobstart(…,{term=true}) during Nvim exit', function()
+    n.expect_exit(n.exec_lua, function()
+      vim.schedule(function()
+        vim.fn.jobstart(term_args, { term = true })
+      end)
+      vim.cmd('autocmd TermOpen * bwipe!')
+      vim.cmd('qall!')
+    end)
+  end)
 end)
 
 describe('nvim_open_term', function()
