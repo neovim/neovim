@@ -566,7 +566,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
 
   aucmd_restbuf(&aco);
 
-  if (*termpp == NULL) {
+  if (*termpp == NULL || term->buf_handle == 0) {
     return;  // Terminal has already been destroyed.
   }
 
@@ -1416,6 +1416,7 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
   }
 
   Error err = ERROR_INIT;
+  buf->b_locked++;
   dict_set_var(buf->b_vars,
                STATIC_CSTR_AS_STRING("term_title"),
                STRING_OBJ(((String){ .data = (char *)title, .size = len })),
@@ -1423,6 +1424,7 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
                false,
                NULL,
                &err);
+  buf->b_locked--;
   api_clear_error(&err);
   status_redraw_buf(buf);
 }
