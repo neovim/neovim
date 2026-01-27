@@ -7,6 +7,7 @@
 "                    @Konfekt
 "                    @tpope (s:Help())
 " 2025 Aug 16 by Vim Project set com depending on Vim9 or legacy script
+" 2026 Jan 26 by Vim Project set path to common Vim directories #19219
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -21,7 +22,7 @@ set cpo&vim
 
 if !exists('*VimFtpluginUndo')
   func VimFtpluginUndo()
-    setl fo< isk< com< tw< commentstring< keywordprg<
+    setl fo< isk< com< tw< commentstring< keywordprg< path<
     sil! delc -buffer VimKeywordPrg
     if exists('b:did_add_maps')
       silent! nunmap <buffer> [[
@@ -116,6 +117,10 @@ endif
 if &tw == 0
   setlocal tw=78
 endif
+
+" set 'path' to common Vim directories
+setlocal path-=/usr/include
+setlocal path+=pack/**,runtime/**,autoload/**,colors/**,compiler/**,ftplugin/**,indent/**,keymap/**,macros/**,plugin/**,syntax/**,after/**
 
 if !exists("no_plugin_maps") && !exists("no_vim_maps")
   let b:did_add_maps = 1
