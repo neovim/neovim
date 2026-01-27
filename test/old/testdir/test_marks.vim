@@ -321,5 +321,17 @@ func Test_jump_mark_autocmd()
   bwipe!
 endfunc
 
+func Test_mark_formatprg_on_empty()
+  new
+  if has('win32')
+    set formatprg=cmd\ /c\ type
+  else
+    set formatprg=cat
+  endif
+  normal! gqG
+  call assert_equal('', v:errmsg)
+  set formatprg&
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
