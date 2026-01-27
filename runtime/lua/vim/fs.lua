@@ -809,8 +809,8 @@ function M.relpath(base, target, opts)
   vim.validate('target', target, 'string')
   vim.validate('opts', opts, 'table', true)
 
-  base = vim.fs.normalize(vim.fs.abspath(base))
-  target = vim.fs.normalize(vim.fs.abspath(target))
+  base = M.normalize(M.abspath(base))
+  target = M.normalize(M.abspath(target))
   if base == target then
     return '.'
   end

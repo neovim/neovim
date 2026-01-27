@@ -655,7 +655,7 @@ end
 
 --- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
 --- If {strict_indexing} is false
---- then then an out of range index will return byte length
+--- then an out of range index will return byte length
 --- instead of throwing an error.
 ---
 --- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
