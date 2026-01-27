@@ -3603,7 +3603,17 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
 
-    int pid = chan->stream.pty.proc.pid;
+    const int pid = chan->stream.pty.proc.pid;
+    buf_T *const buf = curbuf;
+
+    channel_incref(chan);
+    channel_terminal_alloc(buf, chan);
+
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf);
+
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed during autocommands.
+    }
 
     // "./…" => "/home/foo/…"
     vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);
@@ -3623,23 +3633,32 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // Terminal URI: "term://$CWD//$PID:$CMD"
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
     // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
-    curbuf->b_p_swf = false;
+    buf->b_p_swf = false;
 
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-    setfname(curbuf, NameBuff, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+    setfname(buf, NameBuff, NULL, true);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf);
+
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed during autocommands.
+    }
 
     Error err = ERROR_INIT;
+    buf->b_locked++;
     // Set (deprecated) buffer-local vars (prefer 'channel' buffer-local option).
-    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+    dict_set_var(buf->b_vars, cstr_as_string("terminal_job_id"),
                  INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
     api_clear_error(&err);
-    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+    dict_set_var(buf->b_vars, cstr_as_string("terminal_job_pid"),
                  INTEGER_OBJ(pid), false, false, NULL, &err);
     api_clear_error(&err);
+    buf->b_locked--;
 
-    channel_incref(chan);
-    channel_terminal_open(curbuf, chan);
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed in dict watchers.
+    }
+
+    terminal_open(&chan->term, buf);
+term_done:
     channel_create_event(chan, NULL);
     channel_decref(chan);
   }
