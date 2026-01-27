@@ -1155,7 +1155,8 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   }
 
   channel_incref(chan);
-  terminal_open(&chan->term, buf, topts);
+  chan->term = terminal_alloc(buf, topts);
+  terminal_open(&chan->term, buf);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }

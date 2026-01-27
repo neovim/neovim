@@ -813,11 +813,11 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
   }
 }
 
-/// Open terminal for channel
+/// Allocate terminal for channel
 ///
 /// Channel `chan` is assumed to be an open pty channel,
 /// and `buf` is assumed to be a new, unmodified buffer.
-void channel_terminal_open(buf_T *buf, Channel *chan)
+void channel_terminal_alloc(buf_T *buf, Channel *chan)
 {
   TerminalOptions topts = {
     .data = chan,
@@ -830,7 +830,7 @@ void channel_terminal_open(buf_T *buf, Channel *chan)
   };
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);
-  terminal_open(&chan->term, buf, topts);
+  chan->term = terminal_alloc(buf, topts);
 }
 
 static void term_write(const char *buf, size_t size, void *data)

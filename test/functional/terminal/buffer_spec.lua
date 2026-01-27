@@ -801,10 +801,9 @@ describe(':terminal buffer', function()
     check_term_rep_20000('REPFAST')
   end)
 
-  -- it('does not drop data when autocommands poll for events #37559', function()
-  it('does not drop data when TermOpen polls for events', function()
-    -- api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
-    -- api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
+  it('does not drop data when autocommands poll for events #37559', function()
+    api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
+    api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
     api.nvim_create_autocmd('TermOpen', { command = 'sleep 50m', nested = true })
     -- REP pauses 1 ms every 100 lines, so each autocommand processes some output.
     check_term_rep_20000('REP')
@@ -1143,6 +1142,26 @@ describe(':terminal buffer', function()
     api.nvim_chan_send(chan, '\027]2;OTHER_TITLE\007')
     eq('OTHER_TITLE', api.nvim_buf_get_var(0, 'term_title'))
     matches('^E937: ', api.nvim_get_vvar('errmsg'))
+  end)
+
+  it('using NameBuff in BufFilePre does not interfere with buffer rename', function()
+    local oldbuf = api.nvim_get_current_buf()
+    n.exec([[
+      file Xoldfile
+      new Xotherfile
+      wincmd w
+      let g:BufFilePre_bufs = []
+      let g:BufFilePost_bufs = []
+      autocmd BufFilePre * call add(g:BufFilePre_bufs, [bufnr(), bufname()])
+      autocmd BufFilePost * call add(g:BufFilePost_bufs, [bufnr(), bufname()])
+      autocmd BufFilePre,BufFilePost * call execute('ls')
+    ]])
+    fn.jobstart({ testprg('shell-test') }, { term = true })
+    eq({ { oldbuf, 'Xoldfile' } }, api.nvim_get_var('BufFilePre_bufs'))
+    local buffilepost_bufs = api.nvim_get_var('BufFilePost_bufs')
+    eq(1, #buffilepost_bufs)
+    eq(oldbuf, buffilepost_bufs[1][1])
+    matches('^term://', buffilepost_bufs[1][2])
   end)
 end)
 
