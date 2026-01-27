@@ -224,9 +224,12 @@ describe('jobs', function()
     eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
-  it('changes to given `cwd` directory', function()
+  local function test_job_cwd()
     local dir = eval('resolve(tempname())'):gsub('/', get_pathsep())
     mkdir(dir)
+    finally(function()
+      rmdir(dir)
+    end)
     command("let g:job_opts.cwd = '" .. dir .. "'")
     if is_os('win') then
       command("let j = jobstart('cd', g:job_opts)")
@@ -247,7 +250,15 @@ describe('jobs', function()
         { 'notification', 'exit', { 0, 0 } },
       }
     )
-    rmdir(dir)
+  end
+
+  it('changes to given `cwd` directory', function()
+    test_job_cwd()
+  end)
+
+  it('changes to given `cwd` directory with pty', function()
+    command('let g:job_opts.pty = v:true')
+    test_job_cwd()
   end)
 
   it('fails to change to invalid `cwd`', function()

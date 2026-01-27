@@ -283,8 +283,10 @@ static void init_child(PtyProc *ptyproc)
   signal(SIGALRM, SIG_DFL);
 
   Proc *proc = (Proc *)ptyproc;
-  if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    ELOG("chdir(%s) failed: %s", proc->cwd, strerror(errno));
+  int err = 0;
+  // Don't use os_chdir() as that may buffer UI events unnecessarily.
+  if (proc->cwd && (err = uv_chdir(proc->cwd)) != 0) {
+    ELOG("chdir(%s) failed: %s", proc->cwd, uv_strerror(err));
     return;
   }
 
