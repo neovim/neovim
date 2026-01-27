@@ -590,7 +590,7 @@ function lsp.enable(name, enable)
 
   -- Ensure any pre-existing buffers start/stop their LSP clients.
   if enable ~= false then
-    if vim.v.vim_did_enter == 1 and next(lsp._enabled_configs) then
+    if (vim.v.vim_did_enter == 1 or vim.fn.did_filetype() == 1) and next(lsp._enabled_configs) then
       vim.cmd.doautoall('nvim.lsp.enable FileType')
     end
   else
