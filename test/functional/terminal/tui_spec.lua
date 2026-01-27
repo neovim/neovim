@@ -2744,7 +2744,7 @@ describe('TUI', function()
 
   it('argv[0] can be overridden #23953', function()
     if not exec_lua('return pcall(require, "ffi")') then
-      pending('missing LuaJIT FFI')
+      pending('N/A: missing LuaJIT FFI')
     end
     local script_file = 'Xargv0.lua'
     write_file(
@@ -3674,7 +3674,7 @@ describe('TUI', function()
   it('queries the terminal for OSC 52 support with XTGETTCAP', function()
     clear()
     if not exec_lua('return pcall(require, "ffi")') then
-      pending('missing LuaJIT FFI')
+      pending('N/A: missing LuaJIT FFI')
     end
 
     -- Change vterm's DA1 response so that it doesn't include 52
@@ -4122,33 +4122,29 @@ describe('TUI client', function()
     screen_client:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
+  local ffi_str_defs = [[
+    local ffi = require('ffi')
+    local cstr = ffi.typeof('char[?]')
+    ffi.cdef('typedef struct { char *data; size_t size; } String;')
+    local function to_api_string(str)
+      return ffi.new('String', { data = cstr(#str + 1, str), size = #str })
+    end
+  ]]
+
   it('does not crash or hang with a very long title', function()
     local server, _, screen_client = start_headless_server_and_client(true)
-
     local server_exec_lua = tt.make_lua_executor(server)
     if not server_exec_lua('return pcall(require, "ffi")') then
-      pending('missing LuaJIT FFI')
+      pending('N/A: missing LuaJIT FFI')
     end
 
     local bufname = api.nvim_buf_get_name(0)
     -- Normally a title cannot be longer than the 65535-byte buffer as maketitle()
     -- limits it length. Use FFI to send a very long title directly.
-    server_exec_lua([=[
-      local ffi = require('ffi')
-      local cstr = ffi.typeof('char[?]')
-      local function to_cstr(string)
-        return cstr(#string + 1, string)
-      end
-
-      ffi.cdef([[
-        typedef struct { char *data; size_t size; } String;
-        void ui_call_set_title(String title);
-      ]])
-
-      local len = 65536
-      local title = ffi.new('String', { data = to_cstr(('a'):rep(len)), size = len })
-      ffi.C.ui_call_set_title(title)
-    ]=])
+    server_exec_lua(ffi_str_defs .. [[
+      ffi.cdef('void ui_call_set_title(String title);')
+      ffi.C.ui_call_set_title(to_api_string(('a'):rep(65536)))
+    ]])
     screen_client:expect_unchanged()
     assert_log('set_title: title string too long!', testlog)
     eq(bufname, api.nvim_buf_get_var(0, 'term_title'))
@@ -4158,6 +4154,22 @@ describe('TUI client', function()
     retry(nil, nil, function()
       eq('[No Name] + - Nvim', api.nvim_buf_get_var(0, 'term_title'))
     end)
+  end)
+
+  it('logs chdir failure properly', function()
+    local server, _, screen_client = start_headless_server_and_client(true)
+    local server_exec_lua = tt.make_lua_executor(server)
+    if not server_exec_lua('return pcall(require, "ffi")') then
+      pending('N/A: missing LuaJIT FFI')
+    end
+
+    -- Use FFI to send a chdir event to a non-directory path.
+    server_exec_lua(ffi_str_defs .. [[
+      ffi.cdef('void ui_call_chdir(String path);')
+      ffi.C.ui_call_chdir(to_api_string('README.md'))
+    ]])
+    screen_client:expect_unchanged()
+    assert_log('Failed to chdir to README.md: not a directory', testlog)
   end)
 
   it('nvim_ui_send works with remote client #36317', function()

@@ -749,7 +749,7 @@ describe('jobs', function()
 
   it('lists passed to callbacks are freed if not stored #25891', function()
     if not exec_lua('return pcall(require, "ffi")') then
-      pending('missing LuaJIT FFI')
+      pending('N/A: missing LuaJIT FFI')
     end
 
     source([[

@@ -12,7 +12,7 @@ local read_file = t.read_file
 local feed = n.feed
 local retry = t.retry
 
-if skip(is_os('win'), 'Only applies to POSIX systems') then
+if skip(is_os('win'), 'N/A: Only applies to POSIX systems') then
   return
 end
 

@@ -220,12 +220,10 @@ describe('server', function()
   end)
 
   it('removes stale socket files automatically #26053', function()
-    if is_os('win') then
-      -- Windows named pipes are ephemeral kernel objects that are automatically
-      -- cleaned up when the process terminates. Unix domain sockets persist as
-      -- files on the filesystem and can become stale after crashes.
-      return
-    end
+    -- Windows named pipes are ephemeral kernel objects that are automatically
+    -- cleaned up when the process terminates. Unix domain sockets persist as
+    -- files on the filesystem and can become stale after crashes.
+    t.skip(is_os('win'), 'N/A on Windows')
 
     clear()
     clear_serverlist()
@@ -246,9 +244,7 @@ describe('server', function()
   end)
 
   it('does not remove live sockets #26053', function()
-    if is_os('win') then
-      return
-    end
+    t.skip(is_os('win'), 'N/A on Windows')
 
     clear()
     local socket_path = './Xtest-live-socket'

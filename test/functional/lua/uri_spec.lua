@@ -206,7 +206,7 @@ describe('URI methods', function()
 
   describe('uri from bufnr', function()
     it('Windows paths should not be treated as uris', function()
-      skip(not is_os('win'), 'Not applicable on non-Windows')
+      skip(not is_os('win'), 'N/A on non-Windows')
 
       local file = t.tmpname()
       write_file(file, 'Test content')
