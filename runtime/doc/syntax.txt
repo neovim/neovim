@@ -2752,7 +2752,7 @@ The first option implies the second one.
 For highlighted trailing whitespace and mix of spaces and tabs: >
 	:let python_space_error_highlight = 1
 
-For highlighted built-in constants distinguished from other keywords:
+For highlighted built-in constants distinguished from other keywords: >
 	:let python_constant_highlight = 1
 
 If you want all possible Python highlighting: >
