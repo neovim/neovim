@@ -298,7 +298,7 @@ end
 ---
 ---@param method vim.lsp.protocol.Method The invoked LSP method
 ---@param params table? Parameters for the invoked LSP method
----@param callback fun(err?: lsp.ResponseError, result: any) Callback to invoke
+---@param callback fun(err?: lsp.ResponseError, result: any, message_id: integer) Callback to invoke
 ---@param notify_reply_callback? fun(message_id: integer) Callback to invoke as soon as a request is no longer pending
 ---@return boolean success `true` if request could be sent, `false` if not
 ---@return integer? message_id if request could be sent, `nil` if not
@@ -467,7 +467,8 @@ function Client:handle_body(body)
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
         callback,
         decoded.error,
-        decoded.result ~= vim.NIL and decoded.result or nil
+        decoded.result ~= vim.NIL and decoded.result or nil,
+        result_id
       )
     else
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
@@ -505,7 +506,7 @@ end
 --- @class vim.lsp.rpc.PublicClient
 ---
 --- See [vim.lsp.rpc.request()]
---- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
+--- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
 ---
 --- See [vim.lsp.rpc.notify()]
 --- @field notify fun(method: vim.lsp.protocol.Method.ClientToServer.Notification, params: any): boolean

@@ -731,10 +731,11 @@ function Client:request(method, params, handler, bufnr)
   local request_registered = false
 
   -- NOTE: rpc.request might call an in-process (Lua) server, thus may be synchronous.
-  local success, request_id = self.rpc.request(method, params, function(err, result)
+  local success, request_id = self.rpc.request(method, params, function(err, result, request_id)
     handler(err, result, {
       method = method,
       client_id = self.id,
+      request_id = request_id,
       bufnr = bufnr,
       params = params,
       version = version,
@@ -896,7 +897,7 @@ function Client:stop(force)
   end
 
   -- Sending a signal after a process has exited is acceptable.
-  rpc.request('shutdown', nil, function(err, _)
+  rpc.request('shutdown', nil, function(err, _, _)
     if err == nil then
       rpc.notify('exit')
     else
