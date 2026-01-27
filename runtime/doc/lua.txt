@@ -2462,12 +2462,14 @@ Example: >lua
 
 
 vim.fs.abspath({path})                                      *vim.fs.abspath()*
-    Convert path to an absolute path. A tilde (~) character at the beginning
-    of the path is expanded to the user's home directory. Does not check if
-    the path exists, normalize the path, resolve symlinks or hardlinks
-    (including `.` and `..`), or expand environment variables. If the path is
-    already absolute, it is returned unchanged. Also converts `\` path
-    separators to `/`.
+    Converts `path` to an absolute path. Expands tilde (~) at the beginning of
+    the path to the user's home directory. Does not check if the path exists,
+    normalize the path, resolve symlinks or hardlinks (including `.` and
+    `..`), or expand environment variables. If the path is already absolute,
+    it is returned unchanged. Also converts `\` path separators to `/`.
+
+    Attributes: ~
+        Since: 0.11.0
 
     Parameters: ~
       • {path}  (`string`) Path
@@ -2476,7 +2478,7 @@ vim.fs.abspath({path})                                      *vim.fs.abspath()*
         (`string`) Absolute path
 
 vim.fs.basename({file})                                    *vim.fs.basename()*
-    Return the basename of the given path
+    Gets the basename of the given path (not expanded/resolved).
 
     Attributes: ~
         Since: 0.8.0
@@ -2488,17 +2490,17 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
         (`string?`) Basename of {file}
 
 vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
-    Return an iterator over the items located in {path}
+    Gets an iterator over items found in `path` (normalized via
+    |vim.fs.normalize()|).
 
     Attributes: ~
         Since: 0.8.0
 
     Parameters: ~
-      • {path}  (`string`) An absolute or relative path to the directory to
-                iterate over. The path is first normalized
+      • {path}  (`string`) Directory to iterate over, normalized via
                 |vim.fs.normalize()|.
       • {opts}  (`table?`) Optional keyword arguments:
-                • {depth}? (`integer`, default: `1`) How deep the traverse.
+                • {depth}? (`integer`, default: `1`) How deep to traverse.
                 • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1 Return an
@@ -2567,18 +2569,17 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  The function should return `true` if the given item is
                  considered a match.
       • {opts}   (`table?`) Optional keyword arguments:
-                 • {path}? (`string`) Path to begin searching from. If
-                   omitted, the |current-directory| is used.
+                 • {path}? (`string`) Path to begin searching from, defaults
+                   to |current-directory|. Not expanded.
                  • {upward}? (`boolean`, default: `false`) Search upward
-                   through parent directories. Otherwise, search through child
+                   through parent directories. Otherwise, search child
                    directories (recursively).
                  • {stop}? (`string`) Stop searching when this directory is
                    reached. The directory itself is not searched.
                  • {type}? (`string`) Find only items of the given type. If
                    omitted, all items that match {names} are included.
-                 • {limit}? (`number`, default: `1`) Stop the search after
-                   finding this many matches. Use `math.huge` to place no
-                   limit on the number of matches.
+                 • {limit}? (`number`, default: `1`) Stop searching after this
+                   many matches. Use `math.huge` for "unlimited".
                  • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
 
@@ -2590,6 +2591,7 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenates partial paths (one absolute or relative path followed by zero
     or more relative paths). Slashes are normalized: redundant slashes are
     removed, and (on Windows) backslashes are replaced with forward-slashes.
+    Paths are not expanded/resolved.
 
     Examples:
     • "foo/", "/bar" => "foo/bar"
@@ -2686,6 +2688,9 @@ vim.fs.relpath({base}, {target}, {opts})                    *vim.fs.relpath()*
         vim.fs.relpath('/var', '/usr/bin') -- nil
 <
 
+    Attributes: ~
+        Since: 0.11.0
+
     Parameters: ~
       • {base}    (`string`)
       • {target}  (`string`)
@@ -2695,19 +2700,22 @@ vim.fs.relpath({base}, {target}, {opts})                    *vim.fs.relpath()*
         (`string?`)
 
 vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
-    Remove files or directories
+    Removes a file or directory.
+
+    Removes symlinks without touching the origin. To remove the origin,
+    resolve it explicitly with |uv.fs_realpath()|: >lua
+        vim.fs.rm(vim.uv.fs_realpath('symlink-dir'), { recursive = true })
+<
 
     Attributes: ~
         Since: 0.11.0
 
     Parameters: ~
-      • {path}  (`string`) Path to remove. Removes symlinks without touching
-                the origin. To remove the origin, resolve explicitly with
-                |uv.fs_realpath()|.
+      • {path}  (`string`) Path to remove (not expanded/resolved).
       • {opts}  (`table?`) A table with the following fields:
-                • {recursive}? (`boolean`) Remove directories and their
-                  contents recursively
-                • {force}? (`boolean`) Ignore nonexistent files and arguments
+                • {recursive}? (`boolean`) Remove directory contents
+                  recursively.
+                • {force}? (`boolean`) Ignore nonexistent files and arguments.
 
 vim.fs.root({source}, {marker})                                *vim.fs.root()*
     Find the first parent directory containing a specific "marker", relative
@@ -2738,7 +2746,7 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
 
     Parameters: ~
       • {source}  (`integer|string`) Buffer number (0 for current buffer) or
-                  file path (absolute or relative to the |current-directory|)
+                  file path (absolute or relative, expanded via `abspath()`)
                   to begin the search from.
       • {marker}  (`(string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean`)
                   Filename, function, or list thereof, that decides how to
