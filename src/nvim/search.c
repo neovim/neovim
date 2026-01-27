@@ -3014,7 +3014,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
         // Use text after match with 'include'.
         new_fname = file_name_in_line(incl_regmatch.endp[0], 0,
                                       FNAME_EXP|FNAME_INCL|FNAME_REL, 1, p_fname,
-                                      NULL);
+                                      NULL, NULL);
       }
       bool already_searched = false;
       if (new_fname != NULL) {

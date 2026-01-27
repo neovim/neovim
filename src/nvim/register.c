@@ -860,7 +860,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
       return false;
     }
     *argp = file_name_at_cursor(FNAME_MESS | FNAME_HYP | (regname == Ctrl_P ? FNAME_EXP : 0),
-                                1, NULL);
+                                1, NULL, NULL);
     *allocated = true;
     return true;
 
