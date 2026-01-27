@@ -550,7 +550,7 @@ void ui_flush(void)
 
   win_ui_flush(false);
   // Avoid flushing callbacks expected to change text during textlock.
-  if (textlock == 0) {
+  if (textlock == 0 && expr_map_lock == 0) {
     cmdline_ui_flush();
     msg_ext_ui_flush();
   }
@@ -761,9 +761,14 @@ void ui_call_event(char *name, Array args)
     fast = !strequal(not_fast[i], args.items[0].data.string.data);
   }
 
+  // Don't impose textlock restrictions upon UI event handlers.
+  int save_expr_map_lock = expr_map_lock;
+  int save_textlock = textlock;
+  expr_map_lock = 0;
+  textlock = 0;
+
   bool handled = false;
   UIEventCallback *event_cb;
-
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;
@@ -778,6 +783,8 @@ void ui_call_event(char *name, Array args)
     }
     api_clear_error(&err);
   })
+  expr_map_lock = save_expr_map_lock;
+  textlock = save_textlock;
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);

@@ -429,21 +429,13 @@ describe('messages2', function()
     exec_lua(function()
       vim.schedule(function()
         print('foo')
-        vim.uv.sleep(100)
-        print('bar')
+        vim.fn.getchar()
       end)
     end)
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
       foo                                                  |
-    ]])
-    screen:expect([[
-      ^                                                     |
-      {1:~                                                    }|*10
-      {3:                                                     }|
-      foo                                                  |
-      bar                                                  |
     ]])
   end)
 
@@ -475,6 +467,48 @@ describe('messages2', function()
                                                            |
       {9:baz}{15:obar}                                              |
       {15:bar}{9:baz}                                               |
+    ]])
+  end)
+
+  it('can show message during textlock', function()
+    exec_lua(function()
+      _G.omnifunc = function()
+        print('x!')
+        vim.cmd.sleep('100m')
+      end
+      vim.bo.omnifunc = 'v:lua.omnifunc'
+    end)
+    feed('i<C-X>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {5:-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)}           |
+    ]])
+    feed('<C-O>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      x!                                                   |
+    ]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {5:-- Omni completion (^O^N^P) }{9:Pattern not found}        |
+    ]])
+    exec_lua(function()
+      vim.keymap.set('n', '<F1>', function()
+        print('i hate locks so much!!!!')
+        vim.cmd.messages()
+      end, { expr = true })
+    end)
+    feed('<Esc><F1>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      x^!                                                   |
+      x!                                                   |
+      i hate locks so much!!!!                             |*2
     ]])
   end)
 end)
