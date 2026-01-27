@@ -39,9 +39,9 @@ For Python 3 plugins:
 2. Install either uv (https://docs.astral.sh/uv/) or pipx
    (https://pipx.pypa.io/stable/).
 3. Install the module: >bash
-   uv tool install --upgrade pynvim
+   pipx install pynvim
    # or:
-   pipx install --upgrade pynvim
+   uv tool install --upgrade pynvim
 
 The `--upgrade` flag ensures that you get the latest version even if
 a previous version was already installed.
