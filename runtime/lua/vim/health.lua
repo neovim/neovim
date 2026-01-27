@@ -383,6 +383,7 @@ local function progress_report(len)
     -- percent=0 omits the reporting of percentage, so use 1% instead
     -- progress.percent = progress.percent == 0 and 1 or progress.percent
     progress.id = vim.api.nvim_echo({ { fmt:format(...) } }, false, progress)
+    vim.cmd.redraw()
   end
 end
 
