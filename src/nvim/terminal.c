@@ -583,7 +583,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   for (int i = 0; i < 16; i++) {
     char var[64];
     snprintf(var, sizeof(var), "terminal_color_%d", i);
-    char *name = get_config_string(var);
+    char *name = get_config_string(buf, var);
     if (name) {
       int dummy;
       RgbValue color_val = name_to_color(name, &dummy);
@@ -2451,11 +2451,10 @@ static bool is_focused(Terminal *term)
   return State & MODE_TERMINAL && curbuf->terminal == term;
 }
 
-static char *get_config_string(char *key)
+static char *get_config_string(buf_T *buf, char *key)
 {
   Error err = ERROR_INIT;
-  // Only called from terminal_open where curbuf->terminal is the context.
-  Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), NULL, &err);
+  Object obj = dict_get_value(buf->b_vars, cstr_as_string(key), NULL, &err);
   api_clear_error(&err);
   if (obj.type == kObjectTypeNil) {
     obj = dict_get_value(get_globvar_dict(), cstr_as_string(key), NULL, &err);
