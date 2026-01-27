@@ -134,8 +134,12 @@ local function attach(client, bufnr)
 
   local client_id = client.id
   ---@type lsp.DocumentOnTypeFormattingOptions
-  local otf_capabilities =
-    assert(vim.tbl_get(client.server_capabilities, 'documentOnTypeFormattingProvider'))
+  local otf_capabilities = assert(
+    vim.tbl_get(client.server_capabilities, 'documentOnTypeFormattingProvider')
+      -- If static registration was not passed in the server capabilities, then we must have
+      -- registered dynamically. In this case, we get the OTF options from the registration options.
+      or client.dynamic_capabilities:get(method, { bufnr = bufnr }).registerOptions
+  )
 
   -- Set on_key callback, clearing first in case it was already registered.
   vim.on_key(nil, ns)
@@ -241,7 +245,7 @@ end
 --- ```
 ---
 --- @param enable? boolean true/nil to enable, false to disable.
---- @param filter vim.lsp.on_type_formatting.enable.Filter?
+--- @param filter? vim.lsp.capability.enable.Filter
 function M.enable(enable, filter)
   vim.validate('enable', enable, 'boolean', true)
   vim.validate('filter', filter, 'table', true)
@@ -256,6 +260,13 @@ function M.enable(enable, filter)
   else
     toggle_globally(enable)
   end
+end
+
+--- Whether `textDocument/onTypeFormatting` is enabled for the filtered scope.
+--- @param filter? vim.lsp.capability.enable.Filter
+--- @return boolean
+function M.is_enabled(filter)
+  return vim.lsp._capability.is_enabled('on_type_formatting', filter)
 end
 
 return M
