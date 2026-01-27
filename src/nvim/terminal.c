@@ -444,6 +444,34 @@ static void term_output_callback(const char *s, size_t len, void *user_data)
   terminal_send((Terminal *)user_data, s, len);
 }
 
+/// Allocates a terminal's scrollback buffer if it hasn't been allocated yet.
+/// Does nothing if it's already allocated, unlike adjust_scrollback().
+///
+/// @param term Terminal instance.
+/// @param buf  The terminal's buffer, or NULL to get it from buf_handle.
+///
+/// @return whether the terminal now has a scrollback buffer.
+static bool term_may_alloc_scrollback(Terminal *term, buf_T *buf)
+{
+  if (term->sb_buffer != NULL) {
+    return true;
+  }
+  if (buf == NULL) {
+    buf = handle_get_buffer(term->buf_handle);
+    if (buf == NULL) {  // No need to allocate scrollback if buffer is deleted.
+      return false;
+    }
+  }
+
+  if (buf->b_p_scbk < 1) {
+    buf->b_p_scbk = SB_MAX;
+  }
+  // Configure the scrollback buffer.
+  term->sb_size = (size_t)buf->b_p_scbk;
+  term->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * term->sb_size);
+  return true;
+}
+
 // public API {{{
 
 /// Initializes terminal properties, and triggers TermOpen.
@@ -529,9 +557,11 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   RESET_BINDING(curwin);
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
-  // Initialize to check if the scrollback buffer has been allocated in a TermOpen autocmd.
-  term->sb_buffer = NULL;
-  // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
+
+  // Apply TermOpen autocmds _before_ configuring the scrollback buffer, to avoid
+  // over-allocating in case TermOpen reduces 'scrollback'.
+  // In the rare case where TermOpen polls for events, the scrollback buffer will be
+  // allocated anyway if needed.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
 
   aucmd_restbuf(&aco);
@@ -540,14 +570,9 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
     return;  // Terminal has already been destroyed.
   }
 
-  if (term->sb_buffer == NULL) {
-    // Local 'scrollback' _after_ autocmds.
-    if (buf->b_p_scbk < 1) {
-      buf->b_p_scbk = SB_MAX;
-    }
-    // Configure the scrollback buffer.
-    term->sb_size = (size_t)buf->b_p_scbk;
-    term->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * term->sb_size);
+  // Local 'scrollback' _after_ autocmds.
+  if (!term_may_alloc_scrollback(term, buf)) {
+    abort();
   }
 
   // Configure the color palette. Try to get the color from:
@@ -1494,9 +1519,10 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
 {
   Terminal *term = data;
 
-  if (!term->sb_size) {
+  if (!term_may_alloc_scrollback(term, NULL)) {
     return 0;
   }
+  assert(term->sb_size > 0);
 
   // copy vterm cells into sb_buffer
   size_t c = (size_t)cols;

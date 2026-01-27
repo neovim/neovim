@@ -140,17 +140,18 @@ end)
 
 describe('no crash when TermOpen autocommand', function()
   local screen
+  -- Use REPFAST for immediately output after start.
+  local term_args = { testprg('shell-test'), 'REPFAST', '50', 'TEST' }
 
   before_each(function()
     clear()
-    api.nvim_set_option_value('shell', testprg('shell-test'), {})
-    command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
     screen = Screen.new(60, 4)
+    command([[call setline(1, 'OLDBUF') | enew]])
   end)
 
-  it('processes job exit event on jobstart(…,{term=true})', function()
+  it('processes job exit event when using jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * call input('')]])
-    async_meths.nvim_command('terminal foobar')
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
     screen:expect([[
                                                                   |
       {1:~                                                           }|*2
@@ -158,14 +159,21 @@ describe('no crash when TermOpen autocommand', function()
     ]])
     feed('<CR>')
     screen:expect([[
-      ^ready $ foobar                                              |
-                                                                  |
-      [Process exited 0]                                          |
+      ^0: TEST                                                     |
+      1: TEST                                                     |
+      2: TEST                                                     |
                                                                   |
     ]])
-    feed('i<CR>')
+    feed('i')
     screen:expect([[
-      ^                                                            |
+      49: TEST                                                    |
+                                                                  |
+      [Process exited 0]^                                          |
+      {5:-- TERMINAL --}                                              |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^OLDBUF                                                      |
       {1:~                                                           }|*2
                                                                   |
     ]])
@@ -174,7 +182,7 @@ describe('no crash when TermOpen autocommand', function()
 
   it('wipes buffer and processes events when using jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * bwipe! | call input('')]])
-    async_meths.nvim_command('terminal foobar')
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
     screen:expect([[
                                                                   |
       {1:~                                                           }|*2
@@ -182,7 +190,7 @@ describe('no crash when TermOpen autocommand', function()
     ]])
     feed('<CR>')
     screen:expect([[
-      ^                                                            |
+      ^OLDBUF                                                      |
       {1:~                                                           }|*2
                                                                   |
     ]])
@@ -199,7 +207,7 @@ describe('no crash when TermOpen autocommand', function()
     ]])
     feed('<CR>')
     screen:expect([[
-      ^                                                            |
+      ^OLDBUF                                                      |
       {1:~                                                           }|*2
                                                                   |
     ]])
