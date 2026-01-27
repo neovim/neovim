@@ -493,6 +493,7 @@ struct file_buffer {
   u_header_T *b_u_curhead;     // pointer to current header
   int b_u_numhead;             // current number of headers
   bool b_u_synced;             // entry lists are synced
+  bool b_u_warned_large;       // warned about large undo file
   int b_u_seq_last;            // last used undo sequence number
   int b_u_save_nr_last;        // counter for last file write
   int b_u_seq_cur;             // uh_seq of header below which we are now
