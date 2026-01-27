@@ -692,7 +692,9 @@ func s:GdbOutCallback(job_id, msgs, event)
 
   " Add the output above the current prompt.
   for line in lines
-    call append(line('$') - 1, line)
+    " Nvim supports multi-line input in prompt-buffer, so the prompt line is
+    " not always the last line.
+    call append(line("':") - 1, line)
   endfor
   if !empty(lines)
     set modified
