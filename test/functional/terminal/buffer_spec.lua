@@ -772,10 +772,12 @@ describe(':terminal buffer', function()
     ]])
   end)
 
-  it('does not drop data when job exits immediately after output #3030', function()
+  --- @param subcmd 'REP'|'REPFAST'
+  local function check_term_rep_20000(subcmd)
     local screen = Screen.new(50, 7)
+    api.nvim_set_option_value('scrollback', 30000, {})
     api.nvim_create_autocmd('TermClose', { command = 'let g:did_termclose = 1' })
-    fn.jobstart({ testprg('shell-test'), 'REPFAST', '20000', 'TEST' }, { term = true })
+    fn.jobstart({ testprg('shell-test'), subcmd, '20000', 'TEST' }, { term = true })
     retry(nil, nil, function()
       eq(1, api.nvim_get_var('did_termclose'))
     end)
@@ -789,6 +791,23 @@ describe(':terminal buffer', function()
       [Process exited 0]^                                |
       {5:-- TERMINAL --}                                    |
     ]])
+    local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+    for i = 0, 19999 do
+      eq(('%d: TEST'):format(i), lines[i + 1])
+    end
+  end
+
+  it('does not drop data when job exits immediately after output #3030', function()
+    check_term_rep_20000('REPFAST')
+  end)
+
+  -- it('does not drop data when autocommands poll for events #37559', function()
+  it('does not drop data when TermOpen polls for events', function()
+    -- api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
+    -- api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
+    api.nvim_create_autocmd('TermOpen', { command = 'sleep 50m', nested = true })
+    -- REP pauses 1 ms every 100 lines, so each autocommand processes some output.
+    check_term_rep_20000('REP')
   end)
 
   it('handles unprintable chars', function()
