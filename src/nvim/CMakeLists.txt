@@ -89,6 +89,7 @@ if(NOT MSVC)
     -Wmissing-format-attribute
     -Wmissing-prototypes
     -Wno-unused-function # because #35129
+    -Wno-free-nonheap-object # see #37250
     -fsigned-char)
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
