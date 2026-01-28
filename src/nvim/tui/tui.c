@@ -1755,7 +1755,7 @@ void tui_chdir(TUIData *tui, String path)
 {
   int err = uv_chdir(path.data);
   if (err != 0) {
-    ELOG("Failed to chdir to %s: %s", path.data, strerror(err));
+    ELOG("Failed to chdir to %s: %s", path.data, uv_strerror(err));
   }
 }
 
