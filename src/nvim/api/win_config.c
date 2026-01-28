@@ -320,20 +320,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     tp = win_find_tabpage(wp);
   }
   if (tp && bufref_valid(&bufref) && buf != wp->w_buffer) {
-    // win_set_buf temporarily makes `wp` the curwin to set the buffer.
-    // If not entering `wp`, block Enter and Leave events. (cringe)
-    const bool au_no_enter_leave = curwin != wp && !fconfig.noautocmd;
-    if (au_no_enter_leave) {
-      autocmd_no_enter++;
-      autocmd_no_leave++;
-    }
     win_set_buf(wp, buf, err);
     if (!fconfig.noautocmd) {
       tp = win_find_tabpage(wp);
-    }
-    if (au_no_enter_leave) {
-      autocmd_no_enter--;
-      autocmd_no_leave--;
     }
   }
   if (!tp) {

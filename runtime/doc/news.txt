@@ -57,6 +57,8 @@ API
 • Decoration provider has `on_range()` callback.
 • |nvim_get_commands()| returns `complete` as a Lua function, if it was
   defined as such.
+• |nvim_win_set_buf()| no longer triggers `Enter` or `Leave` autocommands if the
+  window is not the current window.
 
 BUILD
 
