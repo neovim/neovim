@@ -42,7 +42,7 @@ typedef enum {
 typedef struct {
   char *full_name;        ///< mode description
   CursorShape shape;      ///< cursor shape: one of the SHAPE_ defines
-  int mshape;             ///< mouse shape: one of the MSHAPE defines
+  char *mshape;           ///< mouse shape: one of the MSHAPE defines
   int percentage;         ///< percentage of cell for bar
   int blinkwait;          ///< blinking, wait time before blinking starts
   int blinkon;            ///< blinking, on time

@@ -624,6 +624,7 @@ void set_init_2(bool headless)
 void set_init_3(void)
 {
   parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
+  parse_shape_opt(SHAPE_MOUSE);    // set mouse shapes from 'mouseshape'
 
   // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
   // This is done after other initializations, where 'shell' might have been
