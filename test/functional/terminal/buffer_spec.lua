@@ -773,40 +773,56 @@ describe(':terminal buffer', function()
   end)
 
   --- @param subcmd 'REP'|'REPFAST'
-  local function check_term_rep_20000(subcmd)
+  local function check_term_rep(subcmd, count)
     local screen = Screen.new(50, 7)
-    api.nvim_set_option_value('scrollback', 30000, {})
     api.nvim_create_autocmd('TermClose', { command = 'let g:did_termclose = 1' })
-    fn.jobstart({ testprg('shell-test'), subcmd, '20000', 'TEST' }, { term = true })
+    fn.jobstart({ testprg('shell-test'), subcmd, count, 'TEST' }, { term = true })
     retry(nil, nil, function()
       eq(1, api.nvim_get_var('did_termclose'))
     end)
     feed('i')
-    screen:expect([[
-      19996: TEST                                       |
-      19997: TEST                                       |
-      19998: TEST                                       |
-      19999: TEST                                       |
+    screen:expect(([[
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
                                                         |
       [Process exited 0]^                                |
       {5:-- TERMINAL --}                                    |
-    ]])
+    ]]):format(count - 4, count - 3, count - 2, count - 1))
     local lines = api.nvim_buf_get_lines(0, 0, -1, true)
-    for i = 0, 19999 do
-      eq(('%d: TEST'):format(i), lines[i + 1])
+    for i = 1, count do
+      eq(('%d: TEST'):format(i - 1), lines[i])
     end
   end
 
   it('does not drop data when job exits immediately after output #3030', function()
-    check_term_rep_20000('REPFAST')
+    api.nvim_set_option_value('scrollback', 30000, {})
+    check_term_rep('REPFAST', 20000)
   end)
 
   it('does not drop data when autocommands poll for events #37559', function()
+    api.nvim_set_option_value('scrollback', 30000, {})
     api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
     api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
     api.nvim_create_autocmd('TermOpen', { command = 'sleep 50m', nested = true })
     -- REP pauses 1 ms every 100 lines, so each autocommand processes some output.
-    check_term_rep_20000('REP')
+    check_term_rep('REP', 20000)
+  end)
+
+  describe('scrollback is correct if all output is drained by', function()
+    for _, event in ipairs({ 'BufFilePre', 'BufFilePost', 'TermOpen' }) do
+      describe(('%s autocommand that lasts for'):format(event), function()
+        for _, delay in ipairs({ 5, 15, 25 }) do
+          -- Terminal refresh delay is 10 ms.
+          it(('%.1f * terminal refresh delay'):format(delay / 10), function()
+            local cmd = ('sleep %dm'):format(delay)
+            api.nvim_create_autocmd(event, { command = cmd, nested = true })
+            check_term_rep('REPFAST', 200)
+          end)
+        end
+      end)
+    end
   end)
 
   it('handles unprintable chars', function()

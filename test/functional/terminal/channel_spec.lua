@@ -160,14 +160,21 @@ local function test_autocmd_no_crash(event, extra_tests)
     ]])
   end)
 
+  local input_prompt_screen = [[
+                                                                |
+    {1:~                                                           }|*2
+    ^                                                            |
+  ]]
+  local oldbuf_screen = [[
+    ^OLDBUF                                                      |
+    {1:~                                                           }|*2
+                                                                |
+  ]]
+
   it('processes job exit event when using jobstart(…,{term=true})', function()
     api.nvim_create_autocmd(event, { command = "call input('')" })
     async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
-    env.screen:expect([[
-                                                                  |
-      {1:~                                                           }|*2
-      ^                                                            |
-    ]])
+    env.screen:expect(input_prompt_screen)
     vim.uv.sleep(20)
     feed('<CR>')
     env.screen:expect([[
@@ -184,29 +191,40 @@ local function test_autocmd_no_crash(event, extra_tests)
       {5:-- TERMINAL --}                                              |
     ]])
     feed('<CR>')
-    env.screen:expect([[
-      ^OLDBUF                                                      |
-      {1:~                                                           }|*2
-                                                                  |
-    ]])
+    env.screen:expect(oldbuf_screen)
     assert_alive()
   end)
 
   it('wipes buffer and processes events when using jobstart(…,{term=true})', function()
     api.nvim_create_autocmd(event, { command = "call Wipe() | call input('')" })
     async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
-    env.screen:expect([[
-                                                                  |
-      {1:~                                                           }|*2
-      ^                                                            |
-    ]])
+    env.screen:expect(input_prompt_screen)
     vim.uv.sleep(20)
     feed('<CR>')
-    env.screen:expect([[
-      ^OLDBUF                                                      |
-      {1:~                                                           }|*2
-                                                                  |
-    ]])
+    env.screen:expect(oldbuf_screen)
+    assert_alive()
+    eq('Xoldbuf', eval('bufname()'))
+    eq(0, eval([[exists('b:term_title')]]))
+  end)
+
+  it('processes :bwipe from TermClose when using jobstart(…,{term=true})', function()
+    local term_buf = api.nvim_get_current_buf()
+    api.nvim_create_autocmd('TermClose', { command = ('bwipe! %d'):format(term_buf) })
+    api.nvim_create_autocmd(event, { command = "call input('')", nested = true })
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
+    env.screen:expect(input_prompt_screen)
+    vim.uv.sleep(20)
+    feed('<CR>')
+    env.screen:expect(oldbuf_screen)
+    assert_alive()
+    eq('Xoldbuf', eval('bufname()'))
+    eq(0, eval([[exists('b:term_title')]]))
+  end)
+
+  it('only wipes buffer when using jobstart(…,{term=true})', function()
+    api.nvim_create_autocmd(event, { command = 'call Wipe()' })
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
+    env.screen:expect(oldbuf_screen)
     assert_alive()
     eq('Xoldbuf', eval('bufname()'))
     eq(0, eval([[exists('b:term_title')]]))
