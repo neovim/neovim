@@ -4527,7 +4527,7 @@ skip:
       emsg(_(e_interr));
     } else if (got_match) {
       // did find something but nothing substituted
-      if (p_ch > 0) {
+      if (p_ch > 0 && !ui_has(kUIMessages)) {
         msg("", 0);
       }
     } else if (subflags.do_error) {
