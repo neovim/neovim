@@ -10,13 +10,13 @@ end
 
 --- @return string[]
 local function get_client_names()
-  local client_names = vim
+  return vim
     .iter(lsp.get_clients())
     :map(function(client)
       return client.name
     end)
+    :unique()
     :totable()
-  return vim.list.unique(client_names)
 end
 
 --- @return string[]
@@ -34,7 +34,8 @@ local function get_config_names()
   vim.list_extend(config_names, vim.tbl_keys(lsp.config._configs))
 
   return vim
-    .iter(vim.list.unique(config_names))
+    .iter(config_names)
+    :unique()
     --- @param name string
     :filter(function(name)
       return name ~= '*'
