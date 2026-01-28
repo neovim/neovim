@@ -2203,7 +2203,7 @@ describe('vim.diagnostic', function()
       )
 
       eq(
-        '[(1/1) err-code] Some error',
+        { '[(1/1) err-code] Some error', 'SpecialKey' },
         exec_lua(function()
           local diagnostics = {
             _G.make_error('Some error', 0, 0, 0, 0, nil, 'err-code'),
@@ -2213,7 +2213,7 @@ describe('vim.diagnostic', function()
             underline = false,
             virtual_text = {
               prefix = function(diag, i, total)
-                return string.format('[(%d/%d) %s]', i, total, diag.code)
+                return string.format('[(%d/%d) %s]', i, total, diag.code), 'SpecialKey'
               end,
               suffix = '',
             },
@@ -2222,7 +2222,7 @@ describe('vim.diagnostic', function()
           local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
           local prefix = extmarks[1][4].virt_text[2][1]
           local message = extmarks[1][4].virt_text[3][1]
-          return prefix .. message
+          return { prefix .. message, extmarks[1][4].virt_text[2][2] }
         end)
       )
     end)
