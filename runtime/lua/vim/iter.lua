@@ -75,6 +75,8 @@ local M = {}
 
 ---@nodoc
 ---@class Iter
+---@field _peeked any
+---@field _next fun():... The underlying function that returns the next value(s) from the source.
 local Iter = {}
 Iter.__index = Iter
 Iter.__call = function(self)
@@ -521,8 +523,14 @@ end
 ---
 ---@return any
 function Iter:next()
-  -- This function is provided by the source iterator in Iter.new. This definition exists only for
-  -- the docstring
+  if self._peeked then
+    local v = self._peeked
+    self._peeked = nil
+
+    return unpack(v)
+  end
+
+  return self._next()
 end
 
 ---@private
@@ -559,7 +567,10 @@ function ArrayIter:rev()
   return self
 end
 
---- Gets the next value in a |list-iterator| without consuming it.
+--- Gets the next value from the iterator without consuming it.
+---
+--- The value returned by |Iter:peek()| will be returned again by the next call
+--- to |Iter:next()|.
 ---
 --- Example:
 ---
@@ -577,7 +588,11 @@ end
 ---
 ---@return any
 function Iter:peek()
-  error('peek() requires an array-like table')
+  if not self._peeked then
+    self._peeked = pack(self:next())
+  end
+
+  return unpack(self._peeked)
 end
 
 ---@private
@@ -805,8 +820,11 @@ function ArrayIter:rpeek()
   end
 end
 
---- Skips `n` values of an iterator pipeline, or all values satisfying a
---- predicate of a |list-iterator|.
+--- Skips `n` values of an iterator pipeline, or skips values while a predicate returns |lua-truthy|.
+---
+--- When a predicate is used, skipping stops at the first value for which the
+--- predicate returns non-truthy. That value is not consumed and will be returned
+--- by the next call to |Iter:next()|
 ---
 --- Example:
 ---
@@ -825,13 +843,30 @@ end
 ---@param n integer|fun(...):boolean Number of values to skip or a predicate.
 ---@return Iter
 function Iter:skip(n)
-  if type(n) == 'function' then
-    -- We would need to evaluate the perdicate without advancing iterator
-    error('skip() with predicate requires an array-like table')
-  end
+  if type(n) == 'number' then
+    for _ = 1, n do
+      self._peeked = nil
+      local _ = self:next()
+    end
+  elseif type(n) == 'function' then
+    local next = self.next
 
-  for _ = 1, n do
-    local _ = self:next()
+    self.next = function()
+      while true do
+        local peeked = self._peeked or pack(next(self))
+
+        if not peeked then
+          return nil
+        end
+
+        if not n(unpack(peeked)) then
+          self._peeked = nil
+          return unpack(peeked)
+        end
+
+        self._peeked = nil
+      end
+    end
   end
   return self
 end
@@ -839,11 +874,13 @@ end
 ---@private
 function ArrayIter:skip(n)
   if type(n) == 'function' then
-    local inc = self._head < self._tail and 1 or -1
-    local i = self._head
-    while n(unpack(self:peek())) and i ~= self._tail do
-      self:next()
-      i = i + inc
+    while self._head ~= self._tail do
+      local v = self._table[self._head]
+      if not n(unpack(v)) then
+        break
+      end
+
+      self._head = self._head + (self._head < self._tail and 1 or -1)
     end
     return self
   end
@@ -1077,7 +1114,7 @@ function Iter.new(src, ...)
     local mt = getmetatable(src)
     if mt and type(mt.__call) == 'function' then
       ---@private
-      function it.next()
+      it._next = function()
         return src()
       end
 
@@ -1111,7 +1148,7 @@ function Iter.new(src, ...)
     end
 
     ---@private
-    function it.next()
+    it._next = function()
       return fn(src(s, var))
     end
 

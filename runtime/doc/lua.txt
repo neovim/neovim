@@ -3166,7 +3166,10 @@ Iter:nth({n})                                                     *Iter:nth()*
         (`any`)
 
 Iter:peek()                                                      *Iter:peek()*
-    Gets the next value in a |list-iterator| without consuming it.
+    Gets the next value from the iterator without consuming it.
+
+    The value returned by |Iter:peek()| will be returned again by the next
+    call to |Iter:next()|.
 
     Example: >lua
 
@@ -3272,8 +3275,12 @@ Iter:rskip({n})                                                 *Iter:rskip()*
         (`Iter`)
 
 Iter:skip({n})                                                   *Iter:skip()*
-    Skips `n` values of an iterator pipeline, or all values satisfying a
-    predicate of a |list-iterator|.
+    Skips `n` values of an iterator pipeline, or skips values while a
+    predicate returns |lua-truthy|.
+
+    When a predicate is used, skipping stops at the first value for which the
+    predicate returns non-truthy. That value is not consumed and will be
+    returned by the next call to |Iter:next()|
 
     Example: >lua
 
