@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local clear = n.clear
 local command = n.command
@@ -36,5 +37,14 @@ describe(':normal!', function()
     command('normal! \027')
     eq('n', fn.mode(1))
     eq(':', fn.getcmdwintype())
+  end)
+
+  it('no crash when performing two scrolls #11019', function()
+    clear { args = { '--clean', '-u', 'NORC' } }
+    Screen.new(20, 8)
+    command('set redrawdebug=invalid')
+    n.insert('\n\n\n\n\n\n\n\n\n\nhello')
+    command('normal Gzz=ko')
+    n.assert_alive()
   end)
 end)
