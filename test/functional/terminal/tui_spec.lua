@@ -440,6 +440,38 @@ describe('TUI :restart', function()
     restart_pid_check()
     gui_running_check()
   end)
+
+  it('filters stdin marker from v:argv on restart #34417', function()
+    if t.skip(is_os('win'), 'unstable on Windows') then
+      return
+    end
+    clear()
+    finally(function()
+      n.check_close()
+    end)
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'set notermguicolors',
+      '-', -- stdin marker
+    })
+    tt.feed_data(':echo index(v:argv, "-") >= 0 ? v:true : v:false\013')
+    screen:expect({ any = 'v:true' })
+    tt.feed_data('\013')
+    tt.feed_data(':restart\013')
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*3
+      {2:[No Name]                       0,0-1          All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    tt.feed_data(':echo index(v:argv, "-") >= 0 ? v:true : v:false\013')
+    screen:expect({ any = 'v:false' })
+  end)
 end)
 
 describe('TUI :connect', function()
