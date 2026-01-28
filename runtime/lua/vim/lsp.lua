@@ -113,26 +113,6 @@ function lsp._buf_get_full_text(bufnr)
   return text
 end
 
---- Memoizes a function. On first run, the function return value is saved and
---- immediately returned on subsequent runs. If the function returns a multival,
---- only the first returned value will be memoized and returned. The function will only be run once,
---- even if it has side effects.
----
----@generic T: function
----@param fn (T) Function to run
----@return T
-local function once(fn)
-  local value --- @type function
-  local ran = false
-  return function(...)
-    if not ran then
-      value = fn(...) --- @type function
-      ran = true
-    end
-    return value
-  end
-end
-
 --- @param client vim.lsp.Client
 --- @param config vim.lsp.ClientConfig
 --- @return boolean
@@ -830,42 +810,7 @@ end
 ---Buffer lifecycle handler for textDocument/didSave
 --- @param bufnr integer
 local function text_document_did_save_handler(bufnr)
-  bufnr = vim._resolve_bufnr(bufnr)
-  local uri = vim.uri_from_bufnr(bufnr)
-  local text = once(lsp._buf_get_full_text)
-  for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
-    local name = api.nvim_buf_get_name(bufnr)
-    local old_name = changetracking._get_and_set_name(client, bufnr, name)
-    if old_name and name ~= old_name then
-      client:notify('textDocument/didClose', {
-        textDocument = {
-          uri = vim.uri_from_fname(old_name),
-        },
-      })
-      client:notify('textDocument/didOpen', {
-        textDocument = {
-          version = 0,
-          uri = uri,
-          languageId = client.get_language_id(bufnr, vim.bo[bufnr].filetype),
-          text = lsp._buf_get_full_text(bufnr),
-        },
-      })
-      util.buf_versions[bufnr] = 0
-    end
-    local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
-    if save_capability then
-      local included_text --- @type string?
-      if type(save_capability) == 'table' and save_capability.includeText then
-        included_text = text(bufnr)
-      end
-      client:notify('textDocument/didSave', {
-        textDocument = {
-          uri = uri,
-        },
-        text = included_text,
-      })
-    end
-  end
+  changetracking.send_did_save(bufnr)
 end
 
 --- @type table<integer,true>
