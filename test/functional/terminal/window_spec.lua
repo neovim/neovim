@@ -10,8 +10,10 @@ local poke_eventloop = n.poke_eventloop
 local exec_lua = n.exec_lua
 local command = n.command
 local retry = t.retry
+local testprg = n.testprg
 local eq = t.eq
 local eval = n.eval
+local fn = n.fn
 local skip = t.skip
 local is_os = t.is_os
 
@@ -32,6 +34,28 @@ describe(':terminal window', function()
     command('new')
     eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
     eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+  end)
+
+  it('does not scroll horizontally on resize #35331', function()
+    local screen = Screen.new(50, 7)
+    fn.jobstart({ testprg('shell-test'), 'INTERACT' }, { term = true })
+    screen:expect([[
+      ^interact $                                        |
+                                                        |*6
+    ]])
+    feed(('A'):rep(30))
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAA^          |
+                                                        |*5
+      {5:-- TERMINAL --}                                    |
+    ]])
+    screen:try_resize(30, 7)
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAAA|
+      AAAAAAAAAA^                    |
+                                    |*4
+      {5:-- TERMINAL --}                |
+    ]])
   end)
 end)
 

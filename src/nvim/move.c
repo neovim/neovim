@@ -877,10 +877,12 @@ void curs_columns(win_T *wp, int may_scroll)
       wp->w_wrow += n;
     }
   } else if (may_scroll
-             && !wp->w_cline_folded) {
+             && !wp->w_cline_folded
+             && !bt_terminal(wp->w_buffer)) {
     // No line wrapping: compute wp->w_leftcol if scrolling is on and line
     // is not folded.
-    // If scrolling is off, wp->w_leftcol is assumed to be 0
+    // If scrolling is off or the wp->w_buffer is a terminal buffer,
+    // wp->w_leftcol is assumed to be 0
 
     // If Cursor is left of the screen, scroll rightwards.
     // If Cursor is right of the screen, scroll leftwards
