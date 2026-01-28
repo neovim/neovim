@@ -581,6 +581,23 @@ describe('vim.iter', function()
     matches(flat_err, pcall_err(nested_non_lists.flatten, nested_non_lists, math.huge))
   end)
 
+  it('unique()', function()
+    eq({ 1, 2, 3, 4, 5 }, vim.iter({ 1, 2, 2, 3, 4, 4, 5 }):unique():totable())
+    eq(
+      { 1, 2, 3, 4, 5 },
+      vim.iter({ 1, 2, 3, 4, 4, 5, 1, 2, 3, 2, 1, 2, 3, 4, 5 }):unique():totable()
+    )
+    eq(
+      { { 1 }, { 2 }, { 3 } },
+      vim
+        .iter({ { 1 }, { 1 }, { 2 }, { 2 }, { 3 }, { 3 } })
+        :unique(function(x)
+          return x[1]
+        end)
+        :totable()
+    )
+  end)
+
   it('handles map-like tables', function()
     local it = vim.iter({ a = 1, b = 2, c = 3 }):map(function(k, v)
       if v % 2 ~= 0 then
