@@ -4089,6 +4089,98 @@ describe('vim.diagnostic', function()
       end)
       eq(result[1], result[2])
     end)
+
+    it('merges continuation lines when merge_continuation_lines is true', function()
+      local result = exec_lua(function()
+        local qflist = {
+          {
+            bufnr = 1,
+            lnum = 10,
+            col = 5,
+            end_lnum = 10,
+            end_col = 10,
+            text = 'error: [GHC-83865]',
+            type = 'E',
+            nr = 0,
+            valid = 1,
+          },
+          {
+            bufnr = 1,
+            lnum = 0,
+            col = 0,
+            end_lnum = 0,
+            end_col = 0,
+            text = "    Couldn't match expected type",
+            type = '',
+            nr = 0,
+            valid = 0,
+          },
+          {
+            bufnr = 1,
+            lnum = 0,
+            col = 0,
+            end_lnum = 0,
+            end_col = 0,
+            text = '    with actual type',
+            type = '',
+            nr = 0,
+            valid = 0,
+          },
+          {
+            bufnr = 1,
+            lnum = 20,
+            col = 1,
+            end_lnum = 20,
+            end_col = 5,
+            text = 'warning: unused',
+            type = 'W',
+            nr = 0,
+            valid = 1,
+          },
+        }
+        return vim.diagnostic.fromqflist(qflist, { merge_continuation_lines = true })
+      end)
+
+      eq(2, #result)
+      eq(
+        "error: [GHC-83865]\n    Couldn't match expected type\n    with actual type",
+        result[1].message
+      )
+      eq('warning: unused', result[2].message)
+    end)
+
+    it('ignores continuation lines by default', function()
+      local result = exec_lua(function()
+        local qflist = {
+          {
+            bufnr = 1,
+            lnum = 10,
+            col = 5,
+            end_lnum = 10,
+            end_col = 10,
+            text = 'error: main',
+            type = 'E',
+            nr = 0,
+            valid = 1,
+          },
+          {
+            bufnr = 1,
+            lnum = 0,
+            col = 0,
+            end_lnum = 0,
+            end_col = 0,
+            text = 'continuation',
+            type = '',
+            nr = 0,
+            valid = 0,
+          },
+        }
+        return vim.diagnostic.fromqflist(qflist)
+      end)
+
+      eq(1, #result)
+      eq('error: main', result[1].message)
+    end)
   end)
 
   describe('status()', function()
