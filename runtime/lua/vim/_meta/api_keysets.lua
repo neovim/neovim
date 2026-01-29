@@ -324,6 +324,7 @@ error('Cannot require a meta file')
 --- @field fg_indexed? boolean
 --- @field bg_indexed? boolean
 --- @field force? boolean
+--- @field update? boolean
 --- @field url? string
 
 --- @class vim.api.keyset.highlight_cterm
