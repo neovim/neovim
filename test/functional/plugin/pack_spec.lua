@@ -612,6 +612,7 @@ describe('vim.pack', function()
       -- Mock clean initial install, but with lockfile present
       vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
       n.clear()
+      watch_events({ 'PackChangedPre', 'PackChanged' })
 
       local basic_rev = git_get_hash('feat-branch', 'basic')
       local defbranch_rev = git_get_hash('HEAD', 'defbranch')
@@ -636,6 +637,17 @@ describe('vim.pack', function()
       -- Should install `defbranch` (as it is in lockfile), but not load it
       eq(true, pack_exists('defbranch'))
       eq(false, exec_lua('return pcall(require, "defbranch")'))
+
+      -- Should trigger `kind=install` events
+      local log = exec_lua('return _G.event_log')
+      local find_event = make_find_packchanged(log)
+      local installpre_basic = find_event('Pre', 'install', 'basic', 'feat-branch', false)
+      local installpre_defbranch = find_event('Pre', 'install', 'defbranch', nil, false)
+      local install_basic = find_event('', 'install', 'basic', 'feat-branch', false)
+      local install_defbranch = find_event('', 'install', 'defbranch', nil, false)
+      eq(4, #log)
+      eq(true, installpre_basic < install_basic)
+      eq(true, installpre_defbranch < install_defbranch)
 
       -- Running `update()` should still update to use `main`
       exec_lua(function()

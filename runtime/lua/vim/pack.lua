@@ -18,9 +18,10 @@
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 ---is used to persistently track data about plugins.
 ---For a more robust config treat lockfile like its part: put under version control, etc.
----In this case all plugins from the lockfile will be installed at once and
----at lockfile's revision (instead of inferring from `version`).
----Should not be edited by hand. Corrupted data for installed plugins is repaired
+---In this case all plugins from the lockfile will be installed at once and at lockfile's revision
+---(instead of inferring from `version`). This is done on the very first `vim.pack` function call
+---to ensure that lockfile is aligned with what is actually on the disk.
+---Lockfile should not be edited by hand. Corrupted data for installed plugins is repaired
 ---(including after deleting whole file), but `version` fields will be missing
 ---for not yet added plugins.
 ---
@@ -160,6 +161,7 @@
 ---
 ---[vim.pack-events]()
 ---
+---Performing actions via `vim.pack` functions can trigger these events:
 ---- [PackChangedPre]() - before trying to change plugin's state.
 ---- [PackChanged]() - after plugin's state has changed.
 ---
@@ -195,6 +197,7 @@
 ---end
 ---
 ----- If hooks need to run on install, run this before `vim.pack.add()`
+----- To act on install from lockfile, run before very first `vim.pack.add()`
 ---vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
 ---```
 
