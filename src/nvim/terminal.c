@@ -567,6 +567,8 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     // If scrollback has been allocated by autocommands between terminal_alloc()
     // and terminal_open(), it also needs to be refreshed.
     refresh_scrollback(term, buf);
+  } else {
+    assert(term->invalid_start >= 0);
   }
   refresh_screen(term, buf);
   set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
