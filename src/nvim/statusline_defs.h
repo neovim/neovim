@@ -44,6 +44,7 @@ typedef enum {
   STL_TRUNCMARK       = '<',  ///< Truncation mark if line is too long.
   STL_USER_HL         = '*',  ///< Highlight from (User)1..9 or 0.
   STL_HIGHLIGHT       = '#',  ///< Highlight name.
+  STL_HIGHLIGHT_COMB  = '$',  ///< Highlight name (combining previous attrs).
   STL_TABPAGENR       = 'T',  ///< Tab page label nr.
   STL_TABCLOSENR      = 'X',  ///< Tab page close nr.
   STL_CLICK_FUNC      = '@',  ///< Click region start.
@@ -88,6 +89,7 @@ struct stl_item {
     Group,
     Separate,
     Highlight,
+    HighlightCombining,
     HighlightSign,
     HighlightFold,
     TabPage,
