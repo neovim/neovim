@@ -353,3 +353,64 @@ describe('autocmd TextChangedT,WinResized', function()
     eq({}, api.nvim_get_chan_info(term2)) -- Channel should've been cleaned up.
   end)
 end)
+
+describe('no crash if :bwipe from TermClose is processed by', function()
+  local oldwin --- @type integer
+  local chan --- @type integer
+
+  before_each(function()
+    clear()
+    command('autocmd! nvim.terminal')
+    oldwin = api.nvim_get_current_win()
+    command('new')
+    local buf = api.nvim_get_current_buf()
+    chan = api.nvim_open_term(buf, {})
+    api.nvim_set_var('chan', chan)
+    command(('autocmd TermClose <buffer> bwipe! %d'):format(buf))
+    command('let g:done = 0')
+    feed('i')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+  end)
+
+  --- @param event string Event name.
+  --- @param trigger_cmd string The Ex command to trigger the event.
+  local function test_case(event, trigger_cmd)
+    api.nvim_create_autocmd(
+      event,
+      { nested = true, once = true, command = 'sleep 40m | let g:done = 1' }
+    )
+    exec_lua(function()
+      vim.cmd(trigger_cmd)
+      vim.defer_fn(function()
+        vim.fn.chanclose(chan)
+      end, 25)
+    end)
+    retry(nil, 1000, function()
+      eq(1, api.nvim_get_var('done'))
+    end)
+    assert_alive()
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    eq({ oldwin }, api.nvim_list_wins())
+    feed('<Ignore>') -- Add input to separate two RPC requests.
+    -- Channel should have been released.
+    eq({}, api.nvim_get_chan_info(chan))
+  end
+
+  it('WinResized autocommand in Terminal mode', function()
+    test_case('WinResized', 'vsplit')
+  end)
+
+  it('TextChangedT autocommand in Terminal mode', function()
+    test_case('TextChangedT', [[call chansend(g:chan, "foo\r\nbar")]])
+  end)
+
+  it('TermRequest autocommand in Terminal mode', function()
+    test_case('TermRequest', [[call chansend(g:chan, "\x1b]11;?\x1b\\")]])
+  end)
+
+  it('TermRequest autocommand in Normal mode', function()
+    feed([[<C-\><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    test_case('TermRequest', [[call chansend(g:chan, "\x1b]11;?\x1b\\")]])
+  end)
+end)
