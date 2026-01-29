@@ -170,6 +170,16 @@ describe('cmdline2', function()
     ]])
     t.eq(n.eval('v:errmsg'), "E1514: 'findfunc' did not return a List type")
   end)
+
+  it('substitution match does not clear cmdline', function()
+    exec('call setline(1, "foo")')
+    feed(':s/f')
+    screen:expect([[
+      {10:f}oo                                                  |
+      {1:~                                                    }|*12
+      {16::}{15:s}{16:/f}^                                                 |
+    ]])
+  end)
 end)
 
 describe('cmdline2', function()
