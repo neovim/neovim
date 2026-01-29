@@ -1077,7 +1077,8 @@ TermLeave			After leaving |Terminal-mode|.
 							*TermClose*
 TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
-				    status
+				    status	job exit status, or -1 if the
+						terminal buffer is deleted
 							*TermRequest*
 TermRequest			When a |:terminal| child process emits an OSC,
 				DCS, or APC sequence. Sets |v:termrequest|. The

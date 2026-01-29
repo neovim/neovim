@@ -3632,7 +3632,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     // Terminal URI: "term://$CWD//$PID:$CMD"
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
-    // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
+    // Unset 'swapfile' to ensure no swapfile is created.
     buf->b_p_swf = false;
 
     setfname(buf, NameBuff, NULL, true);
