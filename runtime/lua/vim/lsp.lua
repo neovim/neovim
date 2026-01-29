@@ -1155,6 +1155,12 @@ api.nvim_create_autocmd('VimLeavePre', {
     for _, client in pairs(active_clients) do
       client:stop(client.exit_timeout)
     end
+
+    vim.wait(math.huge, function()
+      return vim.iter(active_clients):all(function(client)
+        return client._shutdown_timer == nil
+      end)
+    end)
   end,
 })
 
