@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     8th
-" Version:      25.04.01
-" Last Change:  2025 Jun 10
+" Version:      26.02
+" Last Change:  2026 Jan 28
 " Maintainer:   Ron Aaron <ron@aaron-tech.com>
 " URL:          https://8th-dev.com/
 " Filetypes:    *.8th
@@ -53,10 +53,10 @@ Builtin  K G:K NaN G:NaN NaN? G:NaN? SED-CHECK G:SED-CHECK SED: G:SED: SED: G:SE
 Builtin  _swap G:_swap actor: G:actor: again G:again ahead G:ahead all-words G:all-words and G:and apropos G:apropos
 Builtin  argc G:argc args G:args array? G:array? assert G:assert base G:base base>n G:base>n bi G:bi
 Builtin  bits G:bits break G:break break? G:break? breakif G:breakif build? G:build? buildver? G:buildver?
-Builtin  bye G:bye c/does G:c/does case: G:case: catch G:catch chdir G:chdir clip-mime> G:clip-mime>
-Builtin  clip-mime? G:clip-mime? clip> G:clip> clone G:clone clone-shallow G:clone-shallow cold G:cold
-Builtin  compile G:compile compile? G:compile? compiling? G:compiling? conflict G:conflict const G:const
-Builtin  container? G:container? counting-allocations G:counting-allocations cr G:cr critical: G:critical:
+Builtin  bye G:bye c/does G:c/does case: G:case: catch G:catch chdir G:chdir clip-mime-types G:clip-mime-types
+Builtin  clip-mime> G:clip-mime> clip-mime? G:clip-mime? clip> G:clip> clone G:clone clone-shallow G:clone-shallow
+Builtin  cold G:cold compile G:compile compile? G:compile? compiling? G:compiling? conflict G:conflict
+Builtin  const G:const container? G:container? counting-allocations G:counting-allocations cr G:cr critical: G:critical:
 Builtin  critical; G:critical; curlang G:curlang curry G:curry curry: G:curry: decimal G:decimal default: G:default:
 Builtin  defer: G:defer: deferred: G:deferred: deg>rad G:deg>rad depth G:depth die G:die dip G:dip drop G:drop
 Builtin  dstack G:dstack dump G:dump dup G:dup dup>r G:dup>r dup? G:dup? e# G:e# enum: G:enum: error? G:error?
@@ -70,25 +70,25 @@ Builtin  l: G:l: last G:last lib G:lib libbin G:libbin libc G:libc libimg G:libi
 Builtin  locals: G:locals: lock G:lock lock-to G:lock-to locked? G:locked? log G:log logl G:logl long-days G:long-days
 Builtin  long-months G:long-months longjmp G:longjmp lookup G:lookup loop G:loop loop- G:loop- map? G:map?
 Builtin  mark G:mark mark? G:mark? mobile? G:mobile? n# G:n# name>os G:name>os name>sem G:name>sem ndrop G:ndrop
-Builtin  needs G:needs needs-throws G:needs-throws new G:new next-arg G:next-arg nip G:nip noop G:noop
-Builtin  not G:not nothrow G:nothrow ns G:ns ns: G:ns: ns>ls G:ns>ls ns>s G:ns>s ns? G:ns? null G:null
-Builtin  null; G:null; null? G:null? nullvar G:nullvar number? G:number? of: G:of: off G:off on G:on
-Builtin  onexit G:onexit only G:only op! G:op! or G:or os G:os os-names G:os-names os>long-name G:os>long-name
-Builtin  os>name G:os>name over G:over p: G:p: pack G:pack parse G:parse parse-csv G:parse-csv parse-date G:parse-date
-Builtin  parsech G:parsech parseln G:parseln parsews G:parsews pick G:pick poke G:poke pool-clear G:pool-clear
-Builtin  pool-clear-all G:pool-clear-all prior G:prior private G:private process-args G:process-args
-Builtin  process-args-fancy G:process-args-fancy process-args-help G:process-args-help prompt G:prompt
-Builtin  public G:public putc G:putc puts G:puts quote G:quote r! G:r! r> G:r> r@ G:r@ rad>deg G:rad>deg
-Builtin  rand-float G:rand-float rand-float-signed G:rand-float-signed rand-jit G:rand-jit rand-jsf G:rand-jsf
-Builtin  rand-native G:rand-native rand-normal G:rand-normal rand-pcg G:rand-pcg rand-pcg-seed G:rand-pcg-seed
-Builtin  rand-range G:rand-range rand-select G:rand-select randbuf-pcg G:randbuf-pcg random G:random
-Builtin  rdrop G:rdrop recurse G:recurse recurse-stack G:recurse-stack ref@ G:ref@ reg! G:reg! reg@ G:reg@
-Builtin  regbin@ G:regbin@ remaining-args G:remaining-args repeat G:repeat requires G:requires reset G:reset
-Builtin  roll G:roll rop! G:rop! rot G:rot rpick G:rpick rreset G:rreset rroll G:rroll rstack G:rstack
-Builtin  rswap G:rswap rusage G:rusage s>ns G:s>ns same? G:same? scriptdir G:scriptdir scriptfile G:scriptfile
-Builtin  sem G:sem sem-post G:sem-post sem-rm G:sem-rm sem-wait G:sem-wait sem-wait? G:sem-wait? sem>name G:sem>name
-Builtin  semi-throw G:semi-throw set-wipe G:set-wipe setenv G:setenv setjmp G:setjmp settings! G:settings!
-Builtin  settings![] G:settings![] settings-clear G:settings-clear settings-db-name G:settings-db-name
+Builtin  needs G:needs needs-throws G:needs-throws new G:new next-arg G:next-arg next-num-var G:next-num-var
+Builtin  next-var G:next-var nip G:nip noop G:noop not G:not nothrow G:nothrow ns G:ns ns: G:ns: ns>ls G:ns>ls
+Builtin  ns>s G:ns>s ns? G:ns? null G:null null; G:null; null? G:null? nullvar G:nullvar number? G:number?
+Builtin  of: G:of: off G:off on G:on onexit G:onexit only G:only op! G:op! or G:or os G:os os-names G:os-names
+Builtin  os>long-name G:os>long-name os>name G:os>name over G:over p: G:p: pack G:pack parse G:parse
+Builtin  parse-csv G:parse-csv parse-date G:parse-date parsech G:parsech parseln G:parseln parsews G:parsews
+Builtin  pick G:pick poke G:poke pool-clear G:pool-clear pool-clear-all G:pool-clear-all prior G:prior
+Builtin  private G:private process-args G:process-args process-args-fancy G:process-args-fancy process-args-help G:process-args-help
+Builtin  prompt G:prompt public G:public putc G:putc puts G:puts quote G:quote r! G:r! r> G:r> r@ G:r@
+Builtin  rad>deg G:rad>deg rand-float G:rand-float rand-float-signed G:rand-float-signed rand-jit G:rand-jit
+Builtin  rand-jsf G:rand-jsf rand-native G:rand-native rand-normal G:rand-normal rand-pcg G:rand-pcg
+Builtin  rand-pcg-seed G:rand-pcg-seed rand-range G:rand-range rand-select G:rand-select randbuf-pcg G:randbuf-pcg
+Builtin  random G:random rdrop G:rdrop recurse G:recurse recurse-stack G:recurse-stack ref@ G:ref@ reg! G:reg!
+Builtin  reg@ G:reg@ regbin@ G:regbin@ remaining-args G:remaining-args repeat G:repeat requires G:requires
+Builtin  reset G:reset roll G:roll rop! G:rop! rot G:rot rpick G:rpick rreset G:rreset rroll G:rroll
+Builtin  rstack G:rstack rswap G:rswap rusage G:rusage s>ns G:s>ns same? G:same? scriptdir G:scriptdir
+Builtin  scriptfile G:scriptfile sem G:sem sem-post G:sem-post sem-rm G:sem-rm sem-wait G:sem-wait sem-wait? G:sem-wait?
+Builtin  sem>name G:sem>name semi-throw G:semi-throw set-wipe G:set-wipe setenv G:setenv setjmp G:setjmp
+Builtin  settings! G:settings! settings![] G:settings![] settings-clear G:settings-clear settings-db-name G:settings-db-name
 Builtin  settings-gather G:settings-gather settings-load G:settings-load settings-save G:settings-save
 Builtin  settings-save-these G:settings-save-these settings-ungather G:settings-ungather settings@ G:settings@
 Builtin  settings@? G:settings@? settings@[] G:settings@[] sh G:sh sh! G:sh! sh!to G:sh!to sh$ G:sh$
@@ -108,19 +108,20 @@ Builtin  dot a:dot each a:each each! a:each! each-par a:each-par each-slice a:ea
 Builtin  filter a:filter filter-par a:filter-par generate a:generate group a:group indexof a:indexof
 Builtin  insert a:insert intersect a:intersect join a:join len a:len map a:map map+ a:map+ map-par a:map-par
 Builtin  map= a:map= maxlen a:maxlen mean a:mean mean&variance a:mean&variance merge a:merge new a:new
-Builtin  op! a:op! open a:open pigeon a:pigeon pivot a:pivot pop a:pop push a:push qsort a:qsort randeach a:randeach
-Builtin  reduce a:reduce reduce+ a:reduce+ remove a:remove rev a:rev rindexof a:rindexof shift a:shift
-Builtin  shuffle a:shuffle slice a:slice slice+ a:slice+ slide a:slide smear a:smear sort a:sort split a:split
-Builtin  squash a:squash switch a:switch union a:union uniq a:uniq unzip a:unzip x a:x x-each a:x-each
-Builtin  xchg a:xchg y a:y zip a:zip 8thdir app:8thdir asset app:asset atrun app:atrun atrun app:atrun
-Builtin  atrun app:atrun basedir app:basedir basename app:basename config-file-name app:config-file-name
+Builtin  op! a:op! open a:open pigeon a:pigeon pivot a:pivot pop a:pop push a:push push-n a:push-n qsort a:qsort
+Builtin  randeach a:randeach reduce a:reduce reduce+ a:reduce+ remove a:remove rev a:rev rindexof a:rindexof
+Builtin  search a:search shift a:shift shuffle a:shuffle slice a:slice slice+ a:slice+ slide a:slide
+Builtin  smear a:smear sort a:sort split a:split squash a:squash union a:union uniq a:uniq unzip a:unzip
+Builtin  when-n a:when-n x a:x x-each a:x-each xchg a:xchg y a:y zip a:zip 8thdir app:8thdir asset app:asset
+Builtin  atrun app:atrun atrun app:atrun atrun app:atrun basedir app:basedir basename app:basename config-file-name app:config-file-name
 Builtin  current app:current datadir app:datadir display-moved app:display-moved exename app:exename
 Builtin  localechanged app:localechanged lowmem app:lowmem main app:main meta! app:meta! meta@ app:meta@
 Builtin  name app:name onback app:onback oncrash app:oncrash opts! app:opts! opts@ app:opts@ orientation app:orientation
 Builtin  orientation! app:orientation! pid app:pid post-main app:post-main pre-main app:pre-main privdir app:privdir
 Builtin  quiet? app:quiet? raise app:raise read-config app:read-config read-config-map app:read-config-map
-Builtin  read-config-var app:read-config-var request-perm app:request-perm restart app:restart resumed app:resumed
-Builtin  signal app:signal standalone app:standalone standalone! app:standalone! subdir app:subdir suspended app:suspended
+Builtin  read-config-var app:read-config-var read-config-vars app:read-config-vars request-perm app:request-perm
+Builtin  restart app:restart resumed app:resumed save-config-vars app:save-config-vars signal app:signal
+Builtin  standalone app:standalone standalone! app:standalone! subdir app:subdir suspended app:suspended
 Builtin  sysquit app:sysquit terminated app:terminated theme? app:theme? themechanged app:themechanged
 Builtin  ticks app:ticks timeout app:timeout trap app:trap dawn astro:dawn do-dawn astro:do-dawn do-dusk astro:do-dusk
 Builtin  do-rise astro:do-rise dst! astro:dst! dusk astro:dusk latitude astro:latitude location! astro:location!
@@ -197,14 +198,16 @@ Builtin  prev-dow d:prev-dow relative d:relative rfc5322 d:rfc5322 start-timer d
 Builtin  ticks/sec d:ticks/sec timer d:timer timer-ctrl d:timer-ctrl tzadjust d:tzadjust unix> d:unix>
 Builtin  unknown d:unknown unknown? d:unknown? updatetz d:updatetz year@ d:year@ ymd d:ymd ymd> d:ymd>
 Builtin  MYSQLLIB db:MYSQLLIB ODBCLIB db:ODBCLIB add-func db:add-func aes! db:aes! again? db:again?
-Builtin  begin db:begin bind db:bind bind-exec db:bind-exec bind-exec{} db:bind-exec{} close db:close
-Builtin  col db:col col{} db:col{} commit db:commit db db:db dbpush db:dbpush disuse db:disuse each db:each
-Builtin  err-handler db:err-handler exec db:exec exec-cb db:exec-cb exec-name db:exec-name exec{} db:exec{}
-Builtin  get db:get get-sub db:get-sub key db:key kind? db:kind? last-rowid db:last-rowid mysql? db:mysql?
-Builtin  odbc? db:odbc? open db:open open? db:open? prep-name db:prep-name prepare db:prepare query db:query
-Builtin  query-all db:query-all rekey db:rekey rollback db:rollback set db:set set-sub db:set-sub sql@ db:sql@
-Builtin  sql[] db:sql[] sql[np] db:sql[np] sql{np} db:sql{np} sql{} db:sql{} use db:use zip db:zip .state dbg:.state
-Builtin  bp dbg:bp bt dbg:bt except-task@ dbg:except-task@ go dbg:go prompt dbg:prompt see dbg:see stop dbg:stop
+Builtin  begin db:begin begin! db:begin! bind db:bind bind-exec db:bind-exec bind-exec{} db:bind-exec{}
+Builtin  close db:close col db:col col{} db:col{} commit db:commit commit! db:commit! db db:db dbpush db:dbpush
+Builtin  disuse db:disuse each db:each ensure db:ensure err-handler db:err-handler exec db:exec exec-cb db:exec-cb
+Builtin  exec-name db:exec-name exec{} db:exec{} get db:get get-sub db:get-sub get-sub[] db:get-sub[]
+Builtin  get[] db:get[] key db:key kind? db:kind? last-rowid db:last-rowid mysql? db:mysql? odbc? db:odbc?
+Builtin  open db:open open? db:open? prep-name db:prep-name prepare db:prepare query db:query query-all db:query-all
+Builtin  rekey db:rekey rollback db:rollback rollback! db:rollback! rowid@ db:rowid@ set db:set set-sub db:set-sub
+Builtin  set-sub[] db:set-sub[] set[] db:set[] sql@ db:sql@ sql[] db:sql[] sql[np] db:sql[np] sql{np} db:sql{np}
+Builtin  sql{} db:sql{} table-exists db:table-exists use db:use zip db:zip .state dbg:.state bp dbg:bp
+Builtin  bt dbg:bt except-task@ dbg:except-task@ go dbg:go prompt dbg:prompt see dbg:see stop dbg:stop
 Builtin  trace dbg:trace pso ds:pso / f:/ >posix f:>posix abspath f:abspath absrel f:absrel append f:append
 Builtin  associate f:associate atime f:atime autodel f:autodel canwrite? f:canwrite? chmod f:chmod close f:close
 Builtin  copy f:copy copydir f:copydir create f:create ctime f:ctime dir? f:dir? dname f:dname eachbuf f:eachbuf
@@ -214,47 +217,49 @@ Builtin  getline f:getline getmod f:getmod glob f:glob glob-links f:glob-links g
 Builtin  globfilter f:globfilter gunz f:gunz homedir f:homedir homedir! f:homedir! include f:include
 Builtin  ioctl f:ioctl join f:join launch f:launch link f:link link> f:link> link? f:link? lock f:lock
 Builtin  mkdir f:mkdir mmap f:mmap mmap-range f:mmap-range mmap-range? f:mmap-range? mtime f:mtime mv f:mv
-Builtin  name@ f:name@ open f:open open! f:open! open-ro f:open-ro popen f:popen popen3 f:popen3 print f:print
-Builtin  read f:read read-buf f:read-buf read? f:read? relpath f:relpath rglob f:rglob rm f:rm rmdir f:rmdir
-Builtin  seek f:seek sep f:sep size f:size slurp f:slurp sparse? f:sparse? spit f:spit stderr f:stderr
-Builtin  stdin f:stdin stdout f:stdout tell f:tell tempfile f:tempfile tilde f:tilde tilde? f:tilde?
-Builtin  times f:times tmpspit f:tmpspit trash f:trash truncate f:truncate ungetb f:ungetb ungetc f:ungetc
-Builtin  unzip f:unzip unzip-entry f:unzip-entry watch f:watch write f:write writen f:writen zip+ f:zip+
-Builtin  zip@ f:zip@ zipentry f:zipentry zipnew f:zipnew zipopen f:zipopen zipsave f:zipsave atlas! font:atlas!
-Builtin  atlas@ font:atlas@ default-size font:default-size default-size@ font:default-size@ info font:info
-Builtin  ls font:ls measure font:measure new font:new oversample font:oversample pixels font:pixels
-Builtin  pixels? font:pixels? system font:system system font:system filebrowser g:filebrowser media? g:media?
-Builtin  event-loop game:event-loop init game:init state! game:state! state@ game:state@ distance geo:distance
-Builtin  km/deg-lat geo:km/deg-lat km/deg-lon geo:km/deg-lon nearest geo:nearest close gpio:close flags! gpio:flags!
-Builtin  info gpio:info init gpio:init line gpio:line open gpio:open read gpio:read req gpio:req write gpio:write
-Builtin  +edge gr:+edge +edge+w gr:+edge+w +node gr:+node connect gr:connect edges gr:edges edges! gr:edges!
+Builtin  name@ f:name@ open f:open open! f:open! open-ro f:open-ro popen f:popen popen3 f:popen3 prepend f:prepend
+Builtin  print f:print read f:read read-buf f:read-buf read? f:read? relpath f:relpath rglob f:rglob
+Builtin  rm f:rm rmdir f:rmdir seek f:seek sep f:sep size f:size slurp f:slurp sparse? f:sparse? spit f:spit
+Builtin  stderr f:stderr stdin f:stdin stdout f:stdout tell f:tell tempfile f:tempfile tilde f:tilde
+Builtin  tilde? f:tilde? times f:times tmpspit f:tmpspit trash f:trash truncate f:truncate ungetb f:ungetb
+Builtin  ungetc f:ungetc unzip f:unzip unzip-entry f:unzip-entry watch f:watch write f:write writen f:writen
+Builtin  zip+ f:zip+ zip@ f:zip@ zipentry f:zipentry zipnew f:zipnew zipopen f:zipopen zipsave f:zipsave
+Builtin  atlas font:atlas atlas! font:atlas! atlas@ font:atlas@ default-size font:default-size default-size@ font:default-size@
+Builtin  info font:info ls font:ls ls font:ls measure font:measure new font:new oversample font:oversample
+Builtin  pixels font:pixels pixels? font:pixels? pt2pix font:pt2pix system font:system filebrowser g:filebrowser
+Builtin  media? g:media? event-loop game:event-loop init game:init state! game:state! state@ game:state@
+Builtin  distance geo:distance km/deg-lat geo:km/deg-lat km/deg-lon geo:km/deg-lon nearest geo:nearest
+Builtin  close gpio:close flags! gpio:flags! info gpio:info init gpio:init line gpio:line open gpio:open
+Builtin  read gpio:read req gpio:req ver gpio:ver write gpio:write +edge gr:+edge +edge+w gr:+edge+w
+Builtin  +node gr:+node connect gr:connect each gr:each edges gr:edges edges! gr:edges! info gr:info
 Builtin  m! gr:m! m@ gr:m@ neighbors gr:neighbors new gr:new node-edges gr:node-edges nodes gr:nodes
-Builtin  traverse gr:traverse weight! gr:weight! + h:+ @ h:@ clear h:clear cmp! h:cmp! len h:len max! h:max!
-Builtin  new h:new peek h:peek pop h:pop push h:push unique h:unique parse html:parse arm? hw:arm? camera hw:camera
-Builtin  camera-img hw:camera-img camera? hw:camera? cpu? hw:cpu? device? hw:device? displays? hw:displays?
-Builtin  displaysize? hw:displaysize? finger-match hw:finger-match finger-support hw:finger-support
-Builtin  i2c hw:i2c i2c! hw:i2c! i2c!reg hw:i2c!reg i2c@ hw:i2c@ i2c@reg hw:i2c@reg isround? hw:isround?
-Builtin  iswatch? hw:iswatch? mac? hw:mac? mem? hw:mem? model? hw:model? poll hw:poll sensor hw:sensor
-Builtin  sensor-event hw:sensor-event sensors? hw:sensors? start hw:start stop hw:stop touch? hw:touch?
-Builtin  uid? hw:uid? fetch-full imap:fetch-full fetch-uid-mail imap:fetch-uid-mail login imap:login
-Builtin  logout imap:logout new imap:new search imap:search select-inbox imap:select-inbox >file img:>file
-Builtin  >fmt img:>fmt ECC-HIGH img:ECC-HIGH ECC-LOW img:ECC-LOW ECC-MEDIUM img:ECC-MEDIUM ECC-QUARTILE img:ECC-QUARTILE
-Builtin  copy img:copy crop img:crop data img:data desat img:desat draw img:draw draw-sub img:draw-sub
-Builtin  exif img:exif exif-rotate? img:exif-rotate? fill img:fill fillrect img:fillrect filter img:filter
-Builtin  fit img:fit flip img:flip from-svg img:from-svg line img:line new img:new pikchr img:pikchr
-Builtin  pix! img:pix! pix@ img:pix@ qr-black img:qr-black qr-block img:qr-block qr-gen img:qr-gen qr-margin img:qr-margin
-Builtin  qr-parse img:qr-parse qr-white img:qr-white qr>img img:qr>img rect img:rect rotate img:rotate
-Builtin  scale img:scale scroll img:scroll size img:size countries iso:countries languages iso:languages
+Builtin  search gr:search traverse gr:traverse weight! gr:weight! + h:+ >a h:>a @ h:@ clear h:clear
+Builtin  cmp! h:cmp! len h:len max! h:max! new h:new peek h:peek pop h:pop push h:push unique h:unique
+Builtin  parse html:parse arm? hw:arm? camera hw:camera camera-img hw:camera-img camera? hw:camera?
+Builtin  cpu? hw:cpu? device? hw:device? displays? hw:displays? displaysize? hw:displaysize? finger-match hw:finger-match
+Builtin  finger-support hw:finger-support i2c hw:i2c i2c! hw:i2c! i2c!reg hw:i2c!reg i2c@ hw:i2c@ i2c@reg hw:i2c@reg
+Builtin  isround? hw:isround? iswatch? hw:iswatch? mac? hw:mac? mem? hw:mem? model? hw:model? poll hw:poll
+Builtin  sensor hw:sensor sensor-event hw:sensor-event sensors? hw:sensors? start hw:start stop hw:stop
+Builtin  touch? hw:touch? uid? hw:uid? fetch-full imap:fetch-full fetch-uid-mail imap:fetch-uid-mail
+Builtin  login imap:login logout imap:logout new imap:new search imap:search select-inbox imap:select-inbox
+Builtin  >file img:>file >fmt img:>fmt ECC-HIGH img:ECC-HIGH ECC-LOW img:ECC-LOW ECC-MEDIUM img:ECC-MEDIUM
+Builtin  ECC-QUARTILE img:ECC-QUARTILE copy img:copy crop img:crop data img:data desat img:desat draw img:draw
+Builtin  draw-sub img:draw-sub exif img:exif exif-rotate? img:exif-rotate? fill img:fill fillrect img:fillrect
+Builtin  filter img:filter fit img:fit flip img:flip from-svg img:from-svg line img:line new img:new
+Builtin  pikchr img:pikchr pix! img:pix! pix@ img:pix@ qr-black img:qr-black qr-block img:qr-block qr-gen img:qr-gen
+Builtin  qr-margin img:qr-margin qr-parse img:qr-parse qr-white img:qr-white qr>img img:qr>img rect img:rect
+Builtin  rotate img:rotate scale img:scale scroll img:scroll size img:size countries iso:countries languages iso:languages
 Builtin  bearing loc:bearing city loc:city city-db loc:city-db city-exact loc:city-exact city-exact loc:city-exact
 Builtin  city-version loc:city-version city_country loc:city_country find loc:find sort loc:sort console log:console
 Builtin  file log:file hook log:hook level log:level local log:local qsize log:qsize syslog log:syslog
 Builtin  task log:task time log:time ! m:! !? m:!? + m:+ +? m:+? - m:- <> m:<> = m:= >arr m:>arr @ m:@
 Builtin  @? m:@? _! m:_! _@ m:_@ _@? m:_@? accumulate m:accumulate alias m:alias arr> m:arr> bitmap m:bitmap
 Builtin  clear m:clear data m:data each m:each exists? m:exists? filter m:filter ic m:ic iter m:iter
-Builtin  iter-all m:iter-all keys m:keys len m:len map m:map merge m:merge new m:new op! m:op! open m:open
-Builtin  slice m:slice vals m:vals xchg m:xchg zip m:zip ! mat:! * mat:* + mat:+ = mat:= @ mat:@ affine mat:affine
-Builtin  col mat:col data mat:data det mat:det dim? mat:dim? get-n mat:get-n ident mat:ident inv mat:inv
-Builtin  m. mat:m. minor mat:minor n* mat:n* new mat:new new-minor mat:new-minor rotate mat:rotate row mat:row
+Builtin  iter-all m:iter-all iter-sorted m:iter-sorted iter-sorted-vals m:iter-sorted-vals keys m:keys
+Builtin  len m:len map m:map merge m:merge new m:new op! m:op! open m:open slice m:slice vals m:vals
+Builtin  xchg m:xchg zip m:zip ! mat:! * mat:* + mat:+ = mat:= @ mat:@ affine mat:affine col mat:col
+Builtin  data mat:data det mat:det dim? mat:dim? get-n mat:get-n ident mat:ident inv mat:inv m. mat:m.
+Builtin  minor mat:minor n* mat:n* new mat:new new-minor mat:new-minor rotate mat:rotate row mat:row
 Builtin  same-size? mat:same-size? scale mat:scale shear mat:shear trans mat:trans translate mat:translate
 Builtin  xform mat:xform 2console md:2console 2html md:2html 2nk md:2nk 8th? md:8th? user! md:user!
 Builtin  user!@ md:user!@ user@ md:user@ user@@ md:user@@ color meta:color console meta:console gui meta:gui
@@ -283,140 +288,146 @@ Builtin  head net:head ifaces? net:ifaces? interp8th net:interp8th ipv6? net:ipv
 Builtin  listen net:listen map>url net:map>url mime-type net:mime-type net-socket net:net-socket opts net:opts
 Builtin  port-is-ssl? net:port-is-ssl? post net:post proxy! net:proxy! put net:put read net:read read-all net:read-all
 Builtin  read-buf net:read-buf recvfrom net:recvfrom s>url net:s>url sendto net:sendto server net:server
-Builtin  setsockopt net:setsockopt socket net:socket socket-mcast net:socket-mcast tcp-connect net:tcp-connect
-Builtin  tlserr net:tlserr tlshello net:tlshello udp-connect net:udp-connect url> net:url> user-agent net:user-agent
-Builtin  valid-email? net:valid-email? vpncheck net:vpncheck wait net:wait webserver net:webserver write net:write
+Builtin  setsockopt net:setsockopt socket net:socket socket-mcast net:socket-mcast spamcheck net:spamcheck
+Builtin  tcp-connect net:tcp-connect tlserr net:tlserr tlshello net:tlshello udp-connect net:udp-connect
+Builtin  url> net:url> user-agent net:user-agent valid-email? net:valid-email? vpncheck net:vpncheck
+Builtin  wait net:wait webserver net:webserver write net:write ws-parse net:ws-parse init nfc:init list nfc:list
+Builtin  name nfc:name open nfc:open present? nfc:present? read nfc:read ver nfc:ver write nfc:write
 Builtin  (begin) nk:(begin) (chart-begin) nk:(chart-begin) (chart-begin-colored) nk:(chart-begin-colored)
 Builtin  (chart-end) nk:(chart-end) (end) nk:(end) (group-begin) nk:(group-begin) (group-end) nk:(group-end)
 Builtin  (property) nk:(property) >img nk:>img PIXEL-FORMATS nk:PIXEL-FORMATS addfont nk:addfont affine nk:affine
-Builtin  anti-alias nk:anti-alias any-clicked? nk:any-clicked? bounds nk:bounds bounds! nk:bounds! button nk:button
-Builtin  button-color nk:button-color button-label nk:button-label button-set-behavior nk:button-set-behavior
-Builtin  button-symbol nk:button-symbol button-symbol-label nk:button-symbol-label calendar nk:calendar
-Builtin  chart-add-slot nk:chart-add-slot chart-add-slot-colored nk:chart-add-slot-colored chart-push nk:chart-push
-Builtin  chart-push-slot nk:chart-push-slot checkbox nk:checkbox circle nk:circle clicked? nk:clicked?
-Builtin  close-this! nk:close-this! close-this? nk:close-this? close? nk:close? color-chooser nk:color-chooser
-Builtin  color-picker nk:color-picker combo nk:combo combo-begin-color nk:combo-begin-color combo-begin-label nk:combo-begin-label
-Builtin  combo-cb nk:combo-cb combo-end nk:combo-end contextual-begin nk:contextual-begin contextual-close nk:contextual-close
-Builtin  contextual-end nk:contextual-end contextual-item-image-text nk:contextual-item-image-text contextual-item-symbol-text nk:contextual-item-symbol-text
-Builtin  contextual-item-text nk:contextual-item-text cp! nk:cp! cp@ nk:cp@ curpos nk:curpos cursor-load nk:cursor-load
-Builtin  cursor-set nk:cursor-set cursor-show nk:cursor-show display-info nk:display-info display-scale@ nk:display-scale@
-Builtin  display@ nk:display@ do nk:do down? nk:down? draw-image nk:draw-image draw-image-at nk:draw-image-at
-Builtin  draw-image-centered nk:draw-image-centered draw-sub-image nk:draw-sub-image draw-text nk:draw-text
-Builtin  draw-text-centered nk:draw-text-centered draw-text-high nk:draw-text-high draw-text-wrap nk:draw-text-wrap
-Builtin  driver nk:driver drivers nk:drivers dropped nk:dropped dropping nk:dropping edit-focus nk:edit-focus
-Builtin  edit-string nk:edit-string event nk:event event-boost nk:event-boost event-msec nk:event-msec
-Builtin  event-wait nk:event-wait event? nk:event? fill-arc nk:fill-arc fill-circle nk:fill-circle fill-color nk:fill-color
-Builtin  fill-poly nk:fill-poly fill-rect nk:fill-rect fill-rect-color nk:fill-rect-color fill-triangle nk:fill-triangle
-Builtin  finger nk:finger flags! nk:flags! flags@ nk:flags@ flash nk:flash fullscreen nk:fullscreen
-Builtin  gesture nk:gesture get nk:get get-row-height nk:get-row-height getfont nk:getfont getmap nk:getmap
-Builtin  getmap! nk:getmap! gget nk:gget grid nk:grid grid-peek nk:grid-peek grid-push nk:grid-push
-Builtin  group-scroll-ofs nk:group-scroll-ofs group-scroll-ofs! nk:group-scroll-ofs! gset nk:gset hints nk:hints
-Builtin  hovered? nk:hovered? hrule nk:hrule ident nk:ident image nk:image init nk:init init-flags nk:init-flags
-Builtin  init-sub nk:init-sub input-button nk:input-button input-key nk:input-key input-motion nk:input-motion
-Builtin  input-scroll nk:input-scroll input-string nk:input-string key-down? nk:key-down? key-pressed? nk:key-pressed?
-Builtin  key-released? nk:key-released? knob nk:knob label nk:label label-colored nk:label-colored label-wrap nk:label-wrap
-Builtin  label-wrap-colored nk:label-wrap-colored layout-bounds nk:layout-bounds layout-grid-begin nk:layout-grid-begin
-Builtin  layout-grid-end nk:layout-grid-end layout-push-dynamic nk:layout-push-dynamic layout-push-static nk:layout-push-static
-Builtin  layout-push-variable nk:layout-push-variable layout-ratio-from-pixel nk:layout-ratio-from-pixel
+Builtin  anti-alias nk:anti-alias any-active nk:any-active any-clicked? nk:any-clicked? app-render nk:app-render
+Builtin  app-template nk:app-template bounds nk:bounds bounds! nk:bounds! button nk:button button-color nk:button-color
+Builtin  button-label nk:button-label button-set-behavior nk:button-set-behavior button-symbol nk:button-symbol
+Builtin  button-symbol-label nk:button-symbol-label calendar nk:calendar chart-add-slot nk:chart-add-slot
+Builtin  chart-add-slot-colored nk:chart-add-slot-colored chart-push nk:chart-push chart-push-slot nk:chart-push-slot
+Builtin  checkbox nk:checkbox circle nk:circle clicked? nk:clicked? clipping nk:clipping close-this! nk:close-this!
+Builtin  close-this? nk:close-this? close? nk:close? color-chooser nk:color-chooser color-picker nk:color-picker
+Builtin  combo nk:combo combo-begin-color nk:combo-begin-color combo-begin-label nk:combo-begin-label
+Builtin  combo-cb nk:combo-cb combo-end nk:combo-end content-region nk:content-region contextual-begin nk:contextual-begin
+Builtin  contextual-close nk:contextual-close contextual-end nk:contextual-end contextual-item-image-text nk:contextual-item-image-text
+Builtin  contextual-item-symbol-text nk:contextual-item-symbol-text contextual-item-text nk:contextual-item-text
+Builtin  cp! nk:cp! cp@ nk:cp@ curpos nk:curpos cursor-load nk:cursor-load cursor-set nk:cursor-set
+Builtin  cursor-show nk:cursor-show density@ nk:density@ display-change nk:display-change display-info nk:display-info
+Builtin  display-scale@ nk:display-scale@ display@ nk:display@ do nk:do down? nk:down? draw-image nk:draw-image
+Builtin  draw-image-at nk:draw-image-at draw-image-centered nk:draw-image-centered draw-sub-image nk:draw-sub-image
+Builtin  draw-text nk:draw-text draw-text-centered nk:draw-text-centered draw-text-high nk:draw-text-high
+Builtin  draw-text-wrap nk:draw-text-wrap driver nk:driver drivers nk:drivers dropped nk:dropped dropping nk:dropping
+Builtin  edit-focus nk:edit-focus edit-pwd nk:edit-pwd edit-string nk:edit-string event nk:event event-boost nk:event-boost
+Builtin  event-msec nk:event-msec event-wait nk:event-wait event? nk:event? file-dlg nk:file-dlg fill-arc nk:fill-arc
+Builtin  fill-circle nk:fill-circle fill-color nk:fill-color fill-poly nk:fill-poly fill-rect nk:fill-rect
+Builtin  fill-rect-color nk:fill-rect-color fill-triangle nk:fill-triangle finger nk:finger flags! nk:flags!
+Builtin  flags@ nk:flags@ flash nk:flash fullscreen nk:fullscreen get nk:get get-row-height nk:get-row-height
+Builtin  getfont nk:getfont getmap nk:getmap getmap! nk:getmap! gget nk:gget grid nk:grid grid! nk:grid!
+Builtin  grid-peek nk:grid-peek grid-push nk:grid-push group-scroll-ofs nk:group-scroll-ofs group-scroll-ofs! nk:group-scroll-ofs!
+Builtin  gset nk:gset hints nk:hints hovered? nk:hovered? hrule nk:hrule ident nk:ident image nk:image
+Builtin  init nk:init init-flags nk:init-flags init-sub nk:init-sub input-button nk:input-button input-key nk:input-key
+Builtin  input-motion nk:input-motion input-scroll nk:input-scroll input-string nk:input-string key-down? nk:key-down?
+Builtin  key-pressed? nk:key-pressed? key-released? nk:key-released? knob nk:knob label nk:label label-colored nk:label-colored
+Builtin  label-wrap nk:label-wrap label-wrap-colored nk:label-wrap-colored layout-bounds nk:layout-bounds
+Builtin  layout-grid-begin nk:layout-grid-begin layout-grid-end nk:layout-grid-end layout-push-dynamic nk:layout-push-dynamic
+Builtin  layout-push-static nk:layout-push-static layout-push-variable nk:layout-push-variable layout-ratio-from-pixel nk:layout-ratio-from-pixel
 Builtin  layout-reset-row-height nk:layout-reset-row-height layout-row nk:layout-row layout-row-begin nk:layout-row-begin
 Builtin  layout-row-dynamic nk:layout-row-dynamic layout-row-end nk:layout-row-end layout-row-height nk:layout-row-height
 Builtin  layout-row-push nk:layout-row-push layout-row-static nk:layout-row-static layout-row-template-begin nk:layout-row-template-begin
 Builtin  layout-row-template-end nk:layout-row-template-end layout-space-begin nk:layout-space-begin
 Builtin  layout-space-end nk:layout-space-end layout-space-push nk:layout-space-push layout-widget-bounds nk:layout-widget-bounds
 Builtin  line-rel nk:line-rel line-to nk:line-to list-begin nk:list-begin list-end nk:list-end list-new nk:list-new
-Builtin  list-ofs nk:list-ofs list-range nk:list-range m! nk:m! m@ nk:m@ make-style nk:make-style max-vertex-element nk:max-vertex-element
-Builtin  maximize nk:maximize measure nk:measure measure-font nk:measure-font menu-begin nk:menu-begin
-Builtin  menu-close nk:menu-close menu-end nk:menu-end menu-item-image nk:menu-item-image menu-item-label nk:menu-item-label
-Builtin  menu-item-symbol nk:menu-item-symbol menubar-begin nk:menubar-begin menubar-end nk:menubar-end
-Builtin  minimize nk:minimize mouse-pos nk:mouse-pos move-back nk:move-back move-rel nk:move-rel move-to nk:move-to
-Builtin  msg nk:msg msgdlg nk:msgdlg ontop nk:ontop option nk:option pen-color nk:pen-color pen-width nk:pen-width
-Builtin  pix! nk:pix! plot nk:plot plot-fn nk:plot-fn polygon nk:polygon pop-font nk:pop-font popup-begin nk:popup-begin
-Builtin  popup-close nk:popup-close popup-end nk:popup-end popup-scroll-ofs nk:popup-scroll-ofs popup-scroll-ofs! nk:popup-scroll-ofs!
-Builtin  progress nk:progress prop-int nk:prop-int pt-in? nk:pt-in? pt>local nk:pt>local pt>screen nk:pt>screen
-Builtin  push-font nk:push-font raise nk:raise rect-rel nk:rect-rel rect-to nk:rect-to rect>local nk:rect>local
-Builtin  rect>screen nk:rect>screen released? nk:released? render nk:render render! nk:render! render-loop nk:render-loop
-Builtin  render-loop-max nk:render-loop-max render-loop-timed nk:render-loop-timed render-timed nk:render-timed
-Builtin  render@ nk:render@ renderers nk:renderers rendering nk:rendering restore nk:restore rotate nk:rotate
-Builtin  rotate-rel nk:rotate-rel rtl! nk:rtl! rtl? nk:rtl? safe-bounds nk:safe-bounds save nk:save
-Builtin  scale nk:scale scale@ nk:scale@ scancode? nk:scancode? screen-saver nk:screen-saver screen-size nk:screen-size
-Builtin  screen-win-close nk:screen-win-close selectable nk:selectable set nk:set set-font nk:set-font
-Builtin  set-hint nk:set-hint set-num-vertices nk:set-num-vertices set-radius nk:set-radius setpos nk:setpos
-Builtin  setwin nk:setwin show nk:show skew nk:skew slider nk:slider slider-int nk:slider-int space nk:space
-Builtin  spacing nk:spacing start-text nk:start-text stroke-arc nk:stroke-arc stroke-circle nk:stroke-circle
-Builtin  stroke-curve nk:stroke-curve stroke-line nk:stroke-line stroke-polygon nk:stroke-polygon stroke-polyline nk:stroke-polyline
-Builtin  stroke-rect nk:stroke-rect stroke-tri nk:stroke-tri style-from-table nk:style-from-table swipe nk:swipe
-Builtin  swipe-dir-threshold nk:swipe-dir-threshold swipe-threshold nk:swipe-threshold text nk:text
-Builtin  text-align nk:text-align text-font nk:text-font text-pad nk:text-pad text? nk:text? timer-delay nk:timer-delay
-Builtin  timer? nk:timer? toast nk:toast tooltip nk:tooltip translate nk:translate tree-pop nk:tree-pop
-Builtin  tree-state-push nk:tree-state-push triangle nk:triangle use-style nk:use-style vsync nk:vsync
-Builtin  widget nk:widget widget-bounds nk:widget-bounds widget-disable nk:widget-disable widget-fitting nk:widget-fitting
-Builtin  widget-high nk:widget-high widget-hovered? nk:widget-hovered? widget-mouse-click-down? nk:widget-mouse-click-down?
-Builtin  widget-mouse-clicked? nk:widget-mouse-clicked? widget-pos nk:widget-pos widget-size nk:widget-size
-Builtin  widget-size-allot nk:widget-size-allot widget-wide nk:widget-wide win nk:win win-bounds nk:win-bounds
-Builtin  win-bounds! nk:win-bounds! win-close nk:win-close win-closed? nk:win-closed? win-collapse nk:win-collapse
-Builtin  win-collapsed? nk:win-collapsed? win-content-bounds nk:win-content-bounds win-focus nk:win-focus
-Builtin  win-focused? nk:win-focused? win-hidden? nk:win-hidden? win-high nk:win-high win-hovered? nk:win-hovered?
-Builtin  win-icon! nk:win-icon! win-pos nk:win-pos win-scroll-ofs nk:win-scroll-ofs win-scroll-ofs! nk:win-scroll-ofs!
-Builtin  win-show nk:win-show win-size nk:win-size win-title! nk:win-title! win-wide nk:win-wide win? nk:win?
-Builtin  MAX ns:MAX ! o:! + o:+ +? o:+? ??? o:??? @ o:@ class o:class exec o:exec isa o:isa method o:method
-Builtin  mutate o:mutate new o:new super o:super POSIX os:POSIX chroot os:chroot devname os:devname
-Builtin  docker? os:docker? env os:env lang os:lang locales os:locales notify os:notify power-state os:power-state
-Builtin  region os:region waitpid os:waitpid bezier pdf:bezier bezierq pdf:bezierq circle pdf:circle
-Builtin  color pdf:color ellipse pdf:ellipse font pdf:font img pdf:img line pdf:line new pdf:new page pdf:page
-Builtin  page-size pdf:page-size rect pdf:rect save pdf:save size pdf:size text pdf:text text-rotate pdf:text-rotate
-Builtin  text-size pdf:text-size text-width pdf:text-width text-wrap pdf:text-wrap text-wrap-rotate pdf:text-wrap-rotate
-Builtin  cast ptr:cast deref ptr:deref len ptr:len null? ptr:null? pack ptr:pack unpack ptr:unpack unpack_orig ptr:unpack_orig
-Builtin  publish pubsub:publish qsize pubsub:qsize subscribe pubsub:subscribe + q:+ clear q:clear len q:len
-Builtin  new q:new notify q:notify overwrite q:overwrite peek q:peek pick q:pick pop q:pop push q:push
-Builtin  remove q:remove shift q:shift size q:size slide q:slide throwing q:throwing wait q:wait ++match r:++match
-Builtin  +/ r:+/ +match r:+match / r:/ @ r:@ _@ r:_@ len r:len match r:match match[] r:match[] matchall[] r:matchall[]
-Builtin  new r:new rx r:rx str r:str * rat:* + rat:+ - rat:- / rat:/ >n rat:>n >s rat:>s new rat:new
-Builtin  proper rat:proper ! rect:! /high rect:/high /wide rect:/wide = rect:= >a rect:>a >pts rect:>pts
-Builtin  >pts4 rect:>pts4 @ rect:@ center rect:center center-pt rect:center-pt intersect rect:intersect
-Builtin  new rect:new new-pt rect:new-pt ofs rect:ofs open rect:open pad rect:pad pos rect:pos pt-open rect:pt-open
-Builtin  pt>a rect:pt>a pt>rect rect:pt>rect pts> rect:pts> restrict rect:restrict shrink rect:shrink
-Builtin  size rect:size union rect:union ! s:! * s:* + s:+ - s:- / s:/ /scripts s:/scripts /ws s:/ws
-Builtin  2len s:2len <+ s:<+ <> s:<> = s:= =ic s:=ic >base64 s:>base64 >ucs2 s:>ucs2 @ s:@ _len s:_len
-Builtin  append s:append base64> s:base64> clear s:clear cmp s:cmp cmpi s:cmpi compress s:compress count-match s:count-match
-Builtin  days! s:days! dist s:dist each s:each each! s:each! eachline s:eachline escape s:escape expand s:expand
-Builtin  expand-env s:expand-env fill s:fill fold s:fold gen-uid s:gen-uid globmatch s:globmatch hexupr s:hexupr
-Builtin  insert s:insert intl s:intl intl! s:intl! lang s:lang lc s:lc lc? s:lc? len s:len lsub s:lsub
-Builtin  ltrim s:ltrim map s:map months! s:months! n> s:n> new s:new norm s:norm reduce s:reduce repinsert s:repinsert
-Builtin  replace s:replace replace! s:replace! rev s:rev rsearch s:rsearch rsub s:rsub rtl s:rtl rtrim s:rtrim
-Builtin  scan-match s:scan-match script? s:script? search s:search size s:size slice s:slice soundex s:soundex
-Builtin  strfmap s:strfmap strfmt s:strfmt term s:term text-wrap s:text-wrap tr s:tr transform s:transform
-Builtin  trim s:trim tsub s:tsub uc s:uc uc? s:uc? ucs2> s:ucs2> utf8? s:utf8? zt s:zt >a set:>a add set:add
-Builtin  add[] set:add[] del set:del difference set:difference has set:has intersect set:intersect new set:new
-Builtin  union set:union bits! sio:bits! bits@ sio:bits@ close sio:close enum sio:enum hz! sio:hz! hz@ sio:hz@
-Builtin  mode! sio:mode! mode@ sio:mode@ open sio:open open sio:open opts! sio:opts! opts@ sio:opts@
-Builtin  read sio:read read sio:read write sio:write write sio:write @ slv:@ auto slv:auto build slv:build
-Builtin  constraint slv:constraint dump slv:dump edit slv:edit named-variable slv:named-variable new slv:new
-Builtin  relation slv:relation reset slv:reset suggest slv:suggest term slv:term update slv:update v[] slv:v[]
-Builtin  variable slv:variable v{} slv:v{} new smtp:new send smtp:send apply-filter snd:apply-filter
-Builtin  devices? snd:devices? end-record snd:end-record filter snd:filter freq snd:freq gain snd:gain
-Builtin  gain? snd:gain? init snd:init len snd:len loop snd:loop loop? snd:loop? mix snd:mix new snd:new
-Builtin  pause snd:pause play snd:play played snd:played rate snd:rate ready? snd:ready? record snd:record
-Builtin  resume snd:resume seek snd:seek stop snd:stop stopall snd:stopall volume snd:volume volume? snd:volume?
-Builtin  + st:+ . st:. clear st:clear dot-depth st:dot-depth len st:len list st:list ndrop st:ndrop
-Builtin  new st:new op! st:op! peek st:peek pick st:pick pop st:pop push st:push roll st:roll shift st:shift
-Builtin  size st:size slide st:slide swap st:swap throwing st:throwing >buf struct:>buf arr> struct:arr>
-Builtin  buf struct:buf buf> struct:buf> byte struct:byte double struct:double field! struct:field!
-Builtin  field@ struct:field@ float struct:float ignore struct:ignore int struct:int long struct:long
-Builtin  struct; struct:struct; word struct:word ! t:! @ t:@ by-name t:by-name curtask t:curtask def-queue t:def-queue
-Builtin  def-stack t:def-stack done? t:done? dtor t:dtor err! t:err! err? t:err? errno? t:errno? extra t:extra
-Builtin  getq t:getq handler t:handler handler@ t:handler@ kill t:kill list t:list main t:main max-exceptions t:max-exceptions
-Builtin  name! t:name! name@ t:name@ notify t:notify parent t:parent pop t:pop priority t:priority push t:push
-Builtin  push! t:push! q-notify t:q-notify q-wait t:q-wait qlen t:qlen result t:result set-affinity t:set-affinity
-Builtin  setq t:setq task t:task task-n t:task-n task-stop t:task-stop ticks t:ticks to? t:to? wait t:wait
-Builtin  add tree:add binary tree:binary bk tree:bk btree tree:btree cmp! tree:cmp! data tree:data del tree:del
-Builtin  find tree:find iter tree:iter next tree:next nodes tree:nodes parent tree:parent parse tree:parse
-Builtin  prev tree:prev root tree:root search tree:search trie tree:trie ! w:! (is) w:(is) @ w:@ alias: w:alias:
-Builtin  cb w:cb deprecate w:deprecate dlcall w:dlcall dlopen w:dlopen dlsym w:dlsym exec w:exec exec? w:exec?
-Builtin  ffifail w:ffifail find w:find forget w:forget is w:is name w:name undo w:undo xt w:xt xt> w:xt>
-Builtin  close ws:close decode ws:decode encode ws:encode encode-nomask ws:encode-nomask gen-accept-header ws:gen-accept-header
-Builtin  gen-accept-key ws:gen-accept-key opcodes ws:opcodes open ws:open >s xml:>s >txt xml:>txt md-init xml:md-init
-Builtin  md-parse xml:md-parse parse xml:parse parse-html xml:parse-html parse-stream xml:parse-stream
-Builtin  getmsg[] zmq:getmsg[] sendmsg[] zmq:sendmsg[]
+Builtin  list-ofs nk:list-ofs list-range nk:list-range longpress nk:longpress m! nk:m! m@ nk:m@ make-style nk:make-style
+Builtin  max-vertex-element nk:max-vertex-element maximize nk:maximize measure nk:measure measure-font nk:measure-font
+Builtin  menu-begin nk:menu-begin menu-close nk:menu-close menu-end nk:menu-end menu-item-image nk:menu-item-image
+Builtin  menu-item-label nk:menu-item-label menu-item-symbol nk:menu-item-symbol menubar-begin nk:menubar-begin
+Builtin  menubar-end nk:menubar-end minimize nk:minimize mouse-moved? nk:mouse-moved? mouse-pos nk:mouse-pos
+Builtin  move-back nk:move-back move-rel nk:move-rel move-to nk:move-to msg nk:msg msgdlg nk:msgdlg
+Builtin  ontop nk:ontop option nk:option params! nk:params! pen-color nk:pen-color pen-width nk:pen-width
+Builtin  pinch nk:pinch pix! nk:pix! plot nk:plot plot-fn nk:plot-fn polygon nk:polygon pop-font nk:pop-font
+Builtin  popup-begin nk:popup-begin popup-close nk:popup-close popup-end nk:popup-end popup-scroll-ofs nk:popup-scroll-ofs
+Builtin  popup-scroll-ofs! nk:popup-scroll-ofs! progress nk:progress prop-float nk:prop-float prop-int nk:prop-int
+Builtin  pt-in? nk:pt-in? pt>local nk:pt>local pt>screen nk:pt>screen pump nk:pump push-font nk:push-font
+Builtin  raise nk:raise rect-rel nk:rect-rel rect-to nk:rect-to rect>local nk:rect>local rect>screen nk:rect>screen
+Builtin  released? nk:released? render nk:render render! nk:render! render-loop nk:render-loop render-loop-max nk:render-loop-max
+Builtin  render-loop-timed nk:render-loop-timed render-timed nk:render-timed render@ nk:render@ renderers nk:renderers
+Builtin  rendering nk:rendering restore nk:restore rotate nk:rotate rotate-rel nk:rotate-rel rtl! nk:rtl!
+Builtin  rtl? nk:rtl? safe-bounds nk:safe-bounds save nk:save scale nk:scale scale@ nk:scale@ scancode? nk:scancode?
+Builtin  screen-saver nk:screen-saver screen-size nk:screen-size screen-win-close nk:screen-win-close
+Builtin  selectable nk:selectable set nk:set set-font nk:set-font set-hint nk:set-hint set-num-vertices nk:set-num-vertices
+Builtin  set-radius nk:set-radius setpos nk:setpos setwin nk:setwin show nk:show skew nk:skew slider nk:slider
+Builtin  slider-int nk:slider-int space nk:space spacing nk:spacing start-text nk:start-text stroke-arc nk:stroke-arc
+Builtin  stroke-circle nk:stroke-circle stroke-curve nk:stroke-curve stroke-line nk:stroke-line stroke-polygon nk:stroke-polygon
+Builtin  stroke-polyline nk:stroke-polyline stroke-rect nk:stroke-rect stroke-tri nk:stroke-tri style-from-table nk:style-from-table
+Builtin  swipe nk:swipe text nk:text text-align nk:text-align text-font nk:text-font text-pad nk:text-pad
+Builtin  text? nk:text? timer-delay nk:timer-delay timer? nk:timer? toast nk:toast tooltip nk:tooltip
+Builtin  translate nk:translate tree-pop nk:tree-pop tree-state-push nk:tree-state-push triangle nk:triangle
+Builtin  use-style nk:use-style vsync nk:vsync widget nk:widget widget-bounds nk:widget-bounds widget-disable nk:widget-disable
+Builtin  widget-fitting nk:widget-fitting widget-high nk:widget-high widget-hovered? nk:widget-hovered?
+Builtin  widget-mouse-click-down? nk:widget-mouse-click-down? widget-mouse-clicked? nk:widget-mouse-clicked?
+Builtin  widget-pos nk:widget-pos widget-size nk:widget-size widget-size-allot nk:widget-size-allot
+Builtin  widget-wide nk:widget-wide win nk:win win-bounds nk:win-bounds win-bounds! nk:win-bounds! win-close nk:win-close
+Builtin  win-closed? nk:win-closed? win-collapse nk:win-collapse win-collapsed? nk:win-collapsed? win-content-bounds nk:win-content-bounds
+Builtin  win-focus nk:win-focus win-focused? nk:win-focused? win-hidden? nk:win-hidden? win-high nk:win-high
+Builtin  win-hovered? nk:win-hovered? win-icon! nk:win-icon! win-pos nk:win-pos win-scroll-ofs nk:win-scroll-ofs
+Builtin  win-scroll-ofs! nk:win-scroll-ofs! win-show nk:win-show win-size nk:win-size win-title! nk:win-title!
+Builtin  win-wide nk:win-wide win? nk:win? xchg nk:xchg MAX ns:MAX ! o:! + o:+ +? o:+? ??? o:??? @ o:@
+Builtin  class o:class exec o:exec isa o:isa method o:method mutate o:mutate new o:new super o:super
+Builtin  POSIX os:POSIX chroot os:chroot devname os:devname docker? os:docker? env os:env lang os:lang
+Builtin  locales os:locales notify os:notify power-state os:power-state region os:region waitpid os:waitpid
+Builtin  bezier pdf:bezier bezierq pdf:bezierq circle pdf:circle color pdf:color ellipse pdf:ellipse
+Builtin  font pdf:font img pdf:img line pdf:line new pdf:new page pdf:page page-size pdf:page-size rect pdf:rect
+Builtin  save pdf:save size pdf:size text pdf:text text-rotate pdf:text-rotate text-size pdf:text-size
+Builtin  text-width pdf:text-width text-wrap pdf:text-wrap text-wrap-rotate pdf:text-wrap-rotate cast ptr:cast
+Builtin  deref ptr:deref len ptr:len null? ptr:null? pack ptr:pack unpack ptr:unpack unpack_orig ptr:unpack_orig
+Builtin  publish pubsub:publish qsize pubsub:qsize subscribe pubsub:subscribe + q:+ >a q:>a clear q:clear
+Builtin  len q:len new q:new notify q:notify overwrite q:overwrite peek q:peek pick q:pick pop q:pop
+Builtin  push q:push remove q:remove shift q:shift size q:size slide q:slide throwing q:throwing wait q:wait
+Builtin  ++match r:++match +/ r:+/ +match r:+match / r:/ @ r:@ _@ r:_@ len r:len match r:match match[] r:match[]
+Builtin  matchall[] r:matchall[] new r:new rx r:rx str r:str * rat:* + rat:+ - rat:- / rat:/ >n rat:>n
+Builtin  >s rat:>s new rat:new proper rat:proper ! rect:! /high rect:/high /wide rect:/wide = rect:=
+Builtin  >a rect:>a >pts rect:>pts >pts4 rect:>pts4 @ rect:@ center rect:center center-pt rect:center-pt
+Builtin  intersect rect:intersect new rect:new new-pt rect:new-pt ofs rect:ofs open rect:open pad rect:pad
+Builtin  pos rect:pos pt-open rect:pt-open pt>a rect:pt>a pt>rect rect:pt>rect pts> rect:pts> restrict rect:restrict
+Builtin  shrink rect:shrink size rect:size union rect:union ! s:! * s:* + s:+ - s:- / s:/ /scripts s:/scripts
+Builtin  /ws s:/ws 2len s:2len <+ s:<+ <> s:<> = s:= =ic s:=ic >base64 s:>base64 >ucs2 s:>ucs2 @ s:@
+Builtin  _len s:_len append s:append base64> s:base64> clear s:clear cmp s:cmp cmpi s:cmpi compress s:compress
+Builtin  count-match s:count-match days! s:days! dist s:dist each s:each each! s:each! eachline s:eachline
+Builtin  escape s:escape expand s:expand expand-env s:expand-env fill s:fill fold s:fold gen-uid s:gen-uid
+Builtin  globmatch s:globmatch hexupr s:hexupr insert s:insert intl s:intl intl! s:intl! lang s:lang
+Builtin  lc s:lc lc? s:lc? len s:len lsub s:lsub ltrim s:ltrim map s:map months! s:months! n> s:n> new s:new
+Builtin  norm s:norm reduce s:reduce repinsert s:repinsert replace s:replace replace! s:replace! rev s:rev
+Builtin  rsearch s:rsearch rsub s:rsub rtl s:rtl rtrim s:rtrim scan-match s:scan-match script? s:script?
+Builtin  search s:search size s:size slice s:slice soundex s:soundex strfmap s:strfmap strfmt s:strfmt
+Builtin  term s:term text-wrap s:text-wrap tr s:tr transform s:transform trim s:trim tsub s:tsub uc s:uc
+Builtin  uc? s:uc? ucs2> s:ucs2> utf8? s:utf8? zt s:zt >a set:>a add set:add add[] set:add[] del set:del
+Builtin  difference set:difference has set:has intersect set:intersect new set:new union set:union bits! sio:bits!
+Builtin  bits@ sio:bits@ close sio:close enum sio:enum hz! sio:hz! hz@ sio:hz@ mode! sio:mode! mode@ sio:mode@
+Builtin  open sio:open open sio:open opts! sio:opts! opts@ sio:opts@ read sio:read read sio:read write sio:write
+Builtin  write sio:write @ slv:@ auto slv:auto build slv:build constraint slv:constraint edit slv:edit
+Builtin  named-variable slv:named-variable new slv:new relation slv:relation reset slv:reset suggest slv:suggest
+Builtin  term slv:term update slv:update v[] slv:v[] variable slv:variable v{} slv:v{} new smtp:new
+Builtin  send smtp:send apply-filter snd:apply-filter devices? snd:devices? end-record snd:end-record
+Builtin  filter snd:filter freq snd:freq gain snd:gain gain? snd:gain? init snd:init len snd:len loop snd:loop
+Builtin  loop? snd:loop? mix snd:mix new snd:new pause snd:pause play snd:play played snd:played rate snd:rate
+Builtin  ready? snd:ready? record snd:record resume snd:resume seek snd:seek stop snd:stop stopall snd:stopall
+Builtin  volume snd:volume volume? snd:volume? + st:+ . st:. >a st:>a clear st:clear dot-depth st:dot-depth
+Builtin  len st:len list st:list ndrop st:ndrop new st:new op! st:op! peek st:peek pick st:pick pop st:pop
+Builtin  push st:push roll st:roll shift st:shift size st:size slide st:slide swap st:swap throwing st:throwing
+Builtin  >buf struct:>buf arr> struct:arr> buf struct:buf buf> struct:buf> byte struct:byte double struct:double
+Builtin  field! struct:field! field@ struct:field@ float struct:float ignore struct:ignore int struct:int
+Builtin  long struct:long struct; struct:struct; word struct:word ! t:! @ t:@ by-name t:by-name curtask t:curtask
+Builtin  def-queue t:def-queue def-stack t:def-stack done? t:done? dtor t:dtor err! t:err! err? t:err?
+Builtin  errno? t:errno? extra t:extra getq t:getq handler t:handler handler@ t:handler@ kill t:kill
+Builtin  list t:list main t:main max-exceptions t:max-exceptions name! t:name! name@ t:name@ notify t:notify
+Builtin  parent t:parent pop t:pop priority t:priority push t:push push! t:push! q-notify t:q-notify
+Builtin  q-wait t:q-wait qlen t:qlen result t:result set-affinity t:set-affinity setq t:setq task t:task
+Builtin  task-n t:task-n task-stop t:task-stop ticks t:ticks to? t:to? wait t:wait add tree:add binary tree:binary
+Builtin  bk tree:bk btree tree:btree cmp! tree:cmp! data tree:data del tree:del find tree:find iter tree:iter
+Builtin  next tree:next nodes tree:nodes parent tree:parent parse tree:parse prev tree:prev root tree:root
+Builtin  search tree:search trie tree:trie ! w:! (is) w:(is) @ w:@ alias: w:alias: cb w:cb deprecate w:deprecate
+Builtin  dlcall w:dlcall dlopen w:dlopen dlsym w:dlsym exec w:exec exec? w:exec? ffifail w:ffifail find w:find
+Builtin  forget w:forget is w:is name w:name undo w:undo xt w:xt xt> w:xt> close ws:close decode ws:decode
+Builtin  encode ws:encode encode-nomask ws:encode-nomask gen-accept-header ws:gen-accept-header gen-accept-key ws:gen-accept-key
+Builtin  opcodes ws:opcodes open ws:open >s xml:>s >txt xml:>txt md-init xml:md-init md-parse xml:md-parse
+Builtin  parse xml:parse parse-html xml:parse-html parse-stream xml:parse-stream getmsg[] zmq:getmsg[]
+Builtin  sendmsg[] zmq:sendmsg[]
 
 
 " numbers
