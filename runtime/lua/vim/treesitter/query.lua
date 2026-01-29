@@ -763,11 +763,6 @@ local directive_handlers = {
 ---
 --- Override an existing predicate of the same name
 --- @field force? boolean
----
---- Use the correct implementation of the match table where capture IDs map to
---- a list of nodes instead of a single node. Defaults to true. This option will
---- be removed in a future release.
---- @field all? boolean
 
 --- Adds a new predicate to be used in queries
 ---
@@ -787,21 +782,7 @@ function M.add_predicate(name, handler, opts)
     error(string.format('Overriding existing predicate %s', name))
   end
 
-  if opts.all ~= false then
-    predicate_handlers[name] = handler
-  else
-    --- @param match table<integer, TSNode[]>
-    local function wrapper(match, ...)
-      local m = {} ---@type table<integer, TSNode>
-      for k, v in pairs(match) do
-        if type(k) == 'number' then
-          m[k] = v[#v]
-        end
-      end
-      return handler(m, ...)
-    end
-    predicate_handlers[name] = wrapper
-  end
+  predicate_handlers[name] = handler
 end
 
 --- Adds a new directive to be used in queries
@@ -830,19 +811,7 @@ function M.add_directive(name, handler, opts)
     error(string.format('Overriding existing directive %s', name))
   end
 
-  if opts.all then
-    directive_handlers[name] = handler
-  else
-    --- @param match table<integer, TSNode[]>
-    local function wrapper(match, ...)
-      local m = {} ---@type table<integer, TSNode>
-      for k, v in pairs(match) do
-        m[k] = v[#v]
-      end
-      handler(m, ...)
-    end
-    directive_handlers[name] = wrapper
-  end
+  directive_handlers[name] = handler
 end
 
 --- Lists the currently available directives to use in queries.
@@ -1079,9 +1048,6 @@ end
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
----   - all (boolean) When `false` (default `true`), the returned table maps capture IDs to a single
----     (last) node instead of the full list of matching nodes. This option is only for backward
----     compatibility and will be removed in a future release.
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)
@@ -1125,17 +1091,6 @@ function Query:iter_matches(node, source, start, stop, opts)
       end
       local directives = processed_pattern.directives
       metadata = self:_apply_directives(directives, pattern_i, captures, source)
-    end
-
-    if opts.all == false then
-      -- Convert the match table into the old buggy version for backward
-      -- compatibility. This is slow, but we only do it when the caller explicitly opted into it by
-      -- setting `all` to `false`.
-      local old_match = {} ---@type table<integer, TSNode>
-      for k, v in pairs(captures or {}) do
-        old_match[k] = v[#v]
-      end
-      return pattern_i, old_match, metadata
     end
 
     -- TODO(lewis6991): create a new function that returns {match, metadata}
