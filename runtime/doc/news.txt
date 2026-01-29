@@ -350,7 +350,7 @@ PERFORMANCE
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
 • |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
-• LSP `textDocument/semanticTokens/range` is supported which, requests tokens
+• LSP `textDocument/semanticTokens/range` is supported, which requests tokens
   for the viewport (visible screen) only.
 
 PLUGINS
