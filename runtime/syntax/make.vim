@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Makefile
-" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>, <https://github.com/rohieb>
-" Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>, Roland Hieber <https://github.com/rohieb>
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
 " Last Change:	2022 Nov 06
 " 2025 Apr 15 by Vim project: rework Make flavor detection (#17089)
