@@ -89,11 +89,10 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = api.nvim_exec('swapname', true):gsub('\n', '')
-      eq(nil, io.open(swapfile))
+      eq('No swap file', n.exec_capture('swapname'))
     end)
 
-    it('does not create undofiles files', function()
+    it('does not create undo files', function()
       local undofile = api.nvim_eval('undofile(bufname("%"))')
       eq(nil, io.open(undofile))
     end)
