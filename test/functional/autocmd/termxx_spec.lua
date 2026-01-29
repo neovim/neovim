@@ -184,6 +184,13 @@ describe('autocmd TermClose', function()
     retry(nil, nil, function()
       eq(42, eval('g:status'))
     end)
+
+    command('set shellcmdflag= | terminal INTERACT')
+    retry(nil, nil, function()
+      matches('^interact %$ ?$', api.nvim_buf_get_lines(0, 0, 1, true)[1])
+    end)
+    command('bwipe!')
+    eq(-1, eval('g:status'))
   end)
 end)
 
