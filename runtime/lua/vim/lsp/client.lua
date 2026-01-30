@@ -1341,7 +1341,7 @@ local function reset_defaults(bufnr)
 end
 
 --- @private
---- Invoked on client exit.
+--- Invoked on server exit.
 ---
 --- @param code integer) exit code of the process
 --- @param signal integer the signal used to terminate (if any)
@@ -1377,7 +1377,7 @@ function Client:_on_exit(code, signal)
     end
     if code ~= 0 or (signal ~= 0 and signal ~= 15) then
       local msg = string.format(
-        'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
+        'LSP server "%s" exited (code: %s, signal: %s). Check log for errors: %s',
         self and self.name or 'unknown',
         code,
         signal,
