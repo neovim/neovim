@@ -24,6 +24,7 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -821,316 +822,29 @@ void ex_viusage(exarg_T *eap)
   do_cmdline_cmd("help normal-index");
 }
 
-/// Generate tags in one help directory
-///
-/// @param dir  Path to the doc directory
-/// @param ext  Suffix of the help files (".txt", ".itx", ".frx", etc.)
-/// @param tagname  Name of the tags file ("tags" for English, "tags-fr" for
-///                 French)
-/// @param add_help_tags  Whether to add the "help-tags" tag
-/// @param ignore_writeerr  ignore write error
-static void helptags_one(char *dir, const char *ext, const char *tagfname, bool add_help_tags,
-                         bool ignore_writeerr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  garray_T ga;
-  int filecount;
-  char **files;
-  char *s;
-
-  // Find all *.txt files.
-  size_t dirlen = xstrlcpy(NameBuff, dir, sizeof(NameBuff));
-  if (dirlen >= MAXPATHL
-      || xstrlcat(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
-      || xstrlcat(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
-    emsg(_(e_fnametoolong));
-    return;
-  }
-
-  // Note: We cannot just do `&NameBuff` because it is a statically sized array
-  //       so `NameBuff == &NameBuff` according to C semantics.
-  char *buff_list[1] = { NameBuff };
-  const int res = gen_expand_wildcards(1, buff_list, &filecount, &files,
-                                       EW_FILE|EW_SILENT);
-  if (res == FAIL || filecount == 0) {
-    if (!got_int) {
-      semsg(_("E151: No match: %s"), NameBuff);
-    }
-    if (res != FAIL) {
-      FreeWild(filecount, files);
-    }
-    return;
-  }
-
-  // Open the tags file for writing.
-  // Do this before scanning through all the files.
-  memcpy(NameBuff, dir, dirlen + 1);
-  if (!add_pathsep(NameBuff)
-      || xstrlcat(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
-    emsg(_(e_fnametoolong));
-    return;
-  }
-
-  FILE *const fd_tags = os_fopen(NameBuff, "w");
-  if (fd_tags == NULL) {
-    if (!ignore_writeerr) {
-      semsg(_("E152: Cannot open %s for writing"), NameBuff);
-    }
-    FreeWild(filecount, files);
-    return;
-  }
-
-  // If using the "++t" argument or generating tags for "$VIMRUNTIME/doc"
-  // add the "help-tags" tag.
-  ga_init(&ga, (int)sizeof(char *), 100);
-  if (add_help_tags
-      || path_full_compare("$VIMRUNTIME/doc", dir, false, true) == kEqualFiles) {
-    size_t s_len = 18 + strlen(tagfname);
-    s = xmalloc(s_len);
-    snprintf(s, s_len, "help-tags\t%s\t1\n", tagfname);
-    GA_APPEND(char *, &ga, s);
-  }
-
-  // Go over all the files and extract the tags.
-  for (int fi = 0; fi < filecount && !got_int; fi++) {
-    FILE *const fd = os_fopen(files[fi], "r");
-    if (fd == NULL) {
-      semsg(_("E153: Unable to open %s for reading"), files[fi]);
-      continue;
-    }
-    const char *const fname = files[fi] + dirlen + 1;
-
-    bool in_example = false;
-    while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
-      if (in_example) {
-        // skip over example; a non-white in the first column ends it
-        if (vim_strchr(" \t\n\r", (uint8_t)IObuff[0])) {
-          continue;
-        }
-        in_example = false;
-      }
-      char *p1 = vim_strchr(IObuff, '*');       // find first '*'
-      while (p1 != NULL) {
-        char *p2 = strchr(p1 + 1, '*');  // Find second '*'.
-        if (p2 != NULL && p2 > p1 + 1) {         // Skip "*" and "**".
-          for (s = p1 + 1; s < p2; s++) {
-            if (*s == ' ' || *s == '\t' || *s == '|') {
-              break;
-            }
-          }
-
-          // Only accept a *tag* when it consists of valid
-          // characters, there is white space before it and is
-          // followed by a white character or end-of-line.
-          if (s == p2
-              && (p1 == IObuff || p1[-1] == ' ' || p1[-1] == '\t')
-              && (vim_strchr(" \t\n\r", (uint8_t)s[1]) != NULL
-                  || s[1] == NUL)) {
-            *p2 = NUL;
-            p1++;
-            size_t s_len = (size_t)(p2 - p1) + strlen(fname) + 2;
-            s = xmalloc(s_len);
-            GA_APPEND(char *, &ga, s);
-            snprintf(s, s_len, "%s\t%s", p1, fname);
-
-            // find next '*'
-            p2 = vim_strchr(p2 + 1, '*');
-          }
-        }
-        p1 = p2;
-      }
-      size_t off = strlen(IObuff);
-      if (off >= 2 && IObuff[off - 1] == '\n') {
-        off -= 2;
-        while (off > 0 && (ASCII_ISLOWER(IObuff[off]) || ascii_isdigit(IObuff[off]))) {
-          off--;
-        }
-        if (IObuff[off] == '>' && (off == 0 || IObuff[off - 1] == ' ')) {
-          in_example = true;
-        }
-      }
-      line_breakcheck();
-    }
-
-    fclose(fd);
-  }
-
-  FreeWild(filecount, files);
-
-  if (!got_int && ga.ga_data != NULL) {
-    // Sort the tags.
-    sort_strings(ga.ga_data, ga.ga_len);
-
-    // Check for duplicates.
-    for (int i = 1; i < ga.ga_len; i++) {
-      char *p1 = ((char **)ga.ga_data)[i - 1];
-      char *p2 = ((char **)ga.ga_data)[i];
-      while (*p1 == *p2) {
-        if (*p2 == '\t') {
-          *p2 = NUL;
-          vim_snprintf(NameBuff, MAXPATHL,
-                       _("E154: Duplicate tag \"%s\" in file %s/%s"),
-                       ((char **)ga.ga_data)[i], dir, p2 + 1);
-          emsg(NameBuff);
-          *p2 = '\t';
-          break;
-        }
-        p1++;
-        p2++;
-      }
-    }
-
-    // Write the tags into the file.
-    for (int i = 0; i < ga.ga_len; i++) {
-      s = ((char **)ga.ga_data)[i];
-      if (strncmp(s, "help-tags\t", 10) == 0) {
-        // help-tags entry was added in formatted form
-        fputs(s, fd_tags);
-      } else {
-        fprintf(fd_tags, "%s\t/" "*", s);
-        for (char *p1 = s; *p1 != '\t'; p1++) {
-          // insert backslash before '\\' and '/'
-          if (*p1 == '\\' || *p1 == '/') {
-            putc('\\', fd_tags);
-          }
-          putc(*p1, fd_tags);
-        }
-        fprintf(fd_tags, "*\n");
-      }
-    }
-  }
-
-  GA_DEEP_CLEAR_PTR(&ga);
-  fclose(fd_tags);          // there is no check for an error...
-}
-
-/// Generate tags in one help directory, taking care of translations.
-static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  garray_T ga;
-  char lang[2];
-  char ext[5];
-  char fname[8];
-  int filecount;
-  char **files;
-
-  // Get a list of all files in the help directory and in subdirectories.
-  xstrlcpy(NameBuff, dirname, sizeof(NameBuff));
-  if (!add_pathsep(NameBuff)
-      || xstrlcat(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
-    emsg(_(e_fnametoolong));
-    return;
-  }
-
-  // Note: We cannot just do `&NameBuff` because it is a statically sized array
-  //       so `NameBuff == &NameBuff` according to C semantics.
-  char *buff_list[1] = { NameBuff };
-  if (gen_expand_wildcards(1, buff_list, &filecount, &files,
-                           EW_FILE|EW_SILENT) == FAIL
-      || filecount == 0) {
-    semsg(_("E151: No match: %s"), NameBuff);
-    return;
-  }
-
-  // Go over all files in the directory to find out what languages are
-  // present.
-  int j;
-  ga_init(&ga, 1, 10);
-  for (int i = 0; i < filecount; i++) {
-    int len = (int)strlen(files[i]);
-    if (len <= 4) {
-      continue;
-    }
-
-    if (STRICMP(files[i] + len - 4, ".txt") == 0) {
-      // ".txt" -> language "en"
-      lang[0] = 'e';
-      lang[1] = 'n';
-    } else if (files[i][len - 4] == '.'
-               && ASCII_ISALPHA(files[i][len - 3])
-               && ASCII_ISALPHA(files[i][len - 2])
-               && TOLOWER_ASC(files[i][len - 1]) == 'x') {
-      // ".abx" -> language "ab"
-      lang[0] = (char)TOLOWER_ASC(files[i][len - 3]);
-      lang[1] = (char)TOLOWER_ASC(files[i][len - 2]);
-    } else {
-      continue;
-    }
-
-    // Did we find this language already?
-    for (j = 0; j < ga.ga_len; j += 2) {
-      if (strncmp(lang, ((char *)ga.ga_data) + j, 2) == 0) {
-        break;
-      }
-    }
-    if (j == ga.ga_len) {
-      // New language, add it.
-      ga_grow(&ga, 2);
-      ((char *)ga.ga_data)[ga.ga_len++] = lang[0];
-      ((char *)ga.ga_data)[ga.ga_len++] = lang[1];
-    }
-  }
-
-  // Loop over the found languages to generate a tags file for each one.
-  for (j = 0; j < ga.ga_len; j += 2) {
-    STRCPY(fname, "tags-xx");
-    fname[5] = ((char *)ga.ga_data)[j];
-    fname[6] = ((char *)ga.ga_data)[j + 1];
-    if (fname[5] == 'e' && fname[6] == 'n') {
-      // English is an exception: use ".txt" and "tags".
-      fname[4] = NUL;
-      STRCPY(ext, ".txt");
-    } else {
-      // Language "ab" uses ".abx" and "tags-ab".
-      STRCPY(ext, ".xxx");
-      ext[1] = fname[5];
-      ext[2] = fname[6];
-    }
-    helptags_one(dirname, ext, fname, add_help_tags, ignore_writeerr);
-  }
-
-  ga_clear(&ga);
-  FreeWild(filecount, files);
-}
-
-static bool helptags_cb(int num_fnames, char **fnames, bool all, void *cookie)
-  FUNC_ATTR_NONNULL_ALL
-{
-  for (int i = 0; i < num_fnames; i++) {
-    do_helptags(fnames[i], *(bool *)cookie, true);
-    if (!all) {
-      return true;
-    }
-  }
-
-  return num_fnames > 0;
-}
-
 /// ":helptags"
 void ex_helptags(exarg_T *eap)
 {
-  expand_T xpc;
   bool add_help_tags = false;
 
-  // Check for ":helptags ++t {dir}".
+  // Check for ++t in ":helptags ++t {dir}".
   if (strncmp(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
     add_help_tags = true;
     eap->arg = skipwhite(eap->arg + 3);
   }
 
-  if (strcmp(eap->arg, "ALL") == 0) {
-    do_in_path(p_rtp, "", "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
-  } else {
-    ExpandInit(&xpc);
-    xpc.xp_context = EXPAND_DIRECTORIES;
-    char *dirname =
-      ExpandOne(&xpc, eap->arg, NULL, WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
-    if (dirname == NULL || !os_isdir(dirname)) {
-      semsg(_("E150: Not a directory: %s"), eap->arg);
-    } else {
-      do_helptags(dirname, add_help_tags, false);
-    }
-    xfree(dirname);
+  MAXSIZE_TEMP_ARRAY(args, 2);
+
+  bool is_all = strcmp(eap->arg, "ALL") == 0;
+  ADD_C(args, is_all ? NIL : CSTR_AS_OBJ(eap->arg));
+
+  ADD_C(args, BOOLEAN_OBJ(add_help_tags));
+
+  Error err = ERROR_INIT;
+  NLUA_EXEC_STATIC("require('vim._core.help').gen_tags(...)", args,
+                   kRetNilBool, NULL, &err);
+
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
   }
 }
