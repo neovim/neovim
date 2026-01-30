@@ -1904,64 +1904,58 @@ Client:supports_method({method}, {bufnr})           *Client:supports_method()*
 ==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
-clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
-    Clear the lenses
+enable({enable}, {filter})                         *vim.lsp.codelens.enable()*
+    Enables or disables code lens for the {filter}ed scope.
 
-    Parameters: ~
-      • {client_id}  (`integer?`) filter by client_id. All clients if nil
-      • {bufnr}      (`integer?`) filter by buffer. All buffers if nil, 0 for
-                     current buffer
-
-display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
-    Display the lenses using virtual text
-
-    Parameters: ~
-      • {lenses}     (`lsp.CodeLens[]?`) lenses to display
-      • {bufnr}      (`integer`)
-      • {client_id}  (`integer`)
-
-get({bufnr})                                          *vim.lsp.codelens.get()*
-    Return all lenses for the given buffer
-
-    Parameters: ~
-      • {bufnr}  (`integer`) Buffer number. 0 can be used for the current
-                 buffer.
-
-    Return: ~
-        (`lsp.CodeLens[]`)
-
-on_codelens({err}, {result}, {ctx})           *vim.lsp.codelens.on_codelens()*
-    |lsp-handler| for the method `textDocument/codeLens`
-
-    Parameters: ~
-      • {err}     (`lsp.ResponseError?`)
-      • {result}  (`lsp.CodeLens[]`)
-      • {ctx}     (`lsp.HandlerContext`)
-
-refresh({opts})                                   *vim.lsp.codelens.refresh()*
-    Refresh the lenses.
-
-    It is recommended to trigger this using an autocmd or via keymap.
-
-    Example: >vim
-        autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh({ bufnr = 0 })
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled())
 <
 
-    Parameters: ~
-      • {opts}  (`table?`) Optional fields
-                • {bufnr} (`integer?`) filter by buffer. All buffers if nil, 0
-                  for current buffer
-
-run()                                                 *vim.lsp.codelens.run()*
-    Run the code lens available in the current line.
-
-save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
-    Store lenses for a specific buffer and client
+    To run a code lens, see |vim.lsp.codelens.run()|.
 
     Parameters: ~
-      • {lenses}     (`lsp.CodeLens[]?`) lenses to store
-      • {bufnr}      (`integer`)
-      • {client_id}  (`integer`)
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+get({filter})                                         *vim.lsp.codelens.get()*
+    Get all code lenses in the {filter}ed scope.
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|:
+                  • {bufnr}? (`integer`, default: 0) Buffer handle, or 0 for
+                    current.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+    Return: ~
+        (`table[]`) A list of objects with the following fields:
+        • {client_id} (`integer`)
+        • {lens} (`lsp.CodeLens`)
+
+is_enabled({filter})                           *vim.lsp.codelens.is_enabled()*
+    Query whether code lens is enabled in the {filter}ed scope
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+    Return: ~
+        (`boolean`) whether code lens is enabled.
+
+run({opts})                                           *vim.lsp.codelens.run()*
+    Run code lens above the current cursor position.
+
+    Parameters: ~
+      • {opts}  (`table?`) Optional parameters |kwargs|:
+                • {client_id}? (`integer`, default: all) Client ID, or nil for
+                  all.
 
 
 ==============================================================================

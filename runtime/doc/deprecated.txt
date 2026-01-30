@@ -42,6 +42,11 @@ LSP
 • *vim.lsp.get_buffers_by_client_id()*	Use `vim.lsp.get_client_by_id(id).attached_buffers`
 					instead
 • *vim.lsp.stop_client()*		Use |Client:stop()| instead
+• *vim.lsp.codelens.refresh()*		Use `vim.lsp.codelens.enable(true)` instead
+• *vim.lsp.codelens.clear()*		Use `vim.lsp.codelens.enable(false)` instead
+• *vim.lsp.codelens.display()*
+• *vim.lsp.codelens.save()*
+• *vim.lsp.codelens.on_codelens()*
 
 LUA
 
