@@ -1448,6 +1448,10 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, colnr_
   // last change position
   COL_ADJUST(&(curbuf->b_last_change.mark));
 
+  if (bt_prompt(curbuf)) {
+    COL_ADJUST(&(curbuf->b_prompt_start.mark));
+  }
+
   // list of change positions
   for (int i = 0; i < curbuf->b_changelistlen; i++) {
     COL_ADJUST(&(curbuf->b_changelist[i].mark));
