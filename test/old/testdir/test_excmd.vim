@@ -248,8 +248,15 @@ endfunc
 func Test_language_cmd()
   CheckFeature multi_lang
 
-  call assert_fails('language ctype non_existing_lang', 'E197:')
-  call assert_fails('language time non_existing_lang', 'E197:')
+  " OpenBSD allows nearly arbitrary locale names, since it largely ignores them
+  " (see setlocale(3)). One useful exception for this test is that in doesn't
+  " allow names containing dots unless they end in '.UTF-8'.
+  "
+  " Windows also allows nonsensical locale names, though it seems to reject
+  " names with multiple underscores (possibly expecting 'language_region', but
+  " not 'language_region_additional').
+  call assert_fails('language ctype non_existing_lang.bad', 'E197:')
+  call assert_fails('language time non_existing_lang.bad', 'E197:')
 endfunc
 
 " Test for the :confirm command dialog
