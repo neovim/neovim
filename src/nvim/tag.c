@@ -1229,7 +1229,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
 
   // create 'info' dict argument
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
-  if (tag != NULL && tag->user_data != NULL) {
+  if (!(flags & TAG_INS_COMP) && tag != NULL && tag->user_data != NULL) {
     tv_dict_add_str(d, S_LEN("user_data"), tag->user_data);
   }
   if (buf_ffname != NULL) {
