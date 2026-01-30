@@ -5754,7 +5754,7 @@ vim.go.ssop = vim.go.sessionoptions
 --- security reasons.
 ---
 --- @type string
-vim.o.shada = "!,'100,<50,s10,h"
+vim.o.shada = "!,'100,<50,s10,h,r/tmp/,r/private/"
 vim.o.sd = vim.o.shada
 vim.go.shada = vim.o.shada
 vim.go.sd = vim.go.shada

@@ -7445,12 +7445,7 @@ local options = {
       abbreviation = 'sd',
       alias = { 'vi', 'viminfo' },
       cb = 'did_set_shada',
-      defaults = {
-        if_true = "!,'100,<50,s10,h",
-        doc = [[for
-               Win32:  !,'100,<50,s10,h,rA:,rB:
-               others: !,'100,<50,s10,h]],
-      },
+      defaults = "!,'100,<50,s10,h,r/tmp/,r/private/",
       deny_duplicates = true,
       desc = [=[
         When non-empty, the shada file is read upon startup and written

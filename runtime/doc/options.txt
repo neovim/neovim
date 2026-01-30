@@ -5354,9 +5354,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the session.
 
 					*'shada'* *'sd'* *E526* *E527* *E528*
-'shada' 'sd'		string	(default for
-                                   Win32:  !,'100,<50,s10,h,rA:,rB:
-                                   others: !,'100,<50,s10,h)
+'shada' 'sd'		string	(default "!,'100,<50,s10,h,r/tmp/,r/private/")
 			global
 	When non-empty, the shada file is read upon startup and written
 	when exiting Vim (see |shada-file|).  The string should be a comma-
