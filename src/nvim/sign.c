@@ -299,7 +299,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
             vim_snprintf(groupbuf, MSG_BUF_LEN, _("  group=%s"), describe_ns((int)mark.ns, ""));
           }
           vim_snprintf(lbuf, MSG_BUF_LEN, _("    line=%" PRIdLINENR "  id=%u%s%s  priority=%d"),
-                       mark.pos.row + 1, mark.id, groupbuf, namebuf, sh->priority);
+                       (linenr_T)mark.pos.row + 1, mark.id, groupbuf, namebuf, sh->priority);
           msg_puts(lbuf);
           msg_putchar('\n');
         }
