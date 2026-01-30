@@ -3379,3 +3379,50 @@ it(':%bwipe does not crash when using diffexpr', function()
     4 buffers wiped out                                                   |
   ]])
 end)
+
+-- oldtest: Test_diffput_to_empty_buf()
+it(':diffput to empty buffer redraws properly', function()
+  local screen = Screen.new(75, 20)
+  exec([[
+    set ruler
+    call setline(1, ['foo', 'bar', 'baz'])
+    rightbelow vnew
+    windo diffthis
+    windo set cursorline nofoldenable
+    wincmd t
+  ]])
+  screen:add_extra_attr_ids({
+    [100] = { underline = true, background = Screen.colors.LightBlue },
+  })
+  screen:expect([[
+    {7:  }{100:^foo                                }│{7:  }{23:-----------------------------------}|
+    {7:  }{22:bar                                }│{7:  }{23:-----------------------------------}|
+    {7:  }{22:baz                                }│{7:  }{23:-----------------------------------}|
+    {1:~                                    }│{7:  }{21:                                   }|
+    {1:~                                    }│{1:~                                    }|*14
+    {3:[No Name] [+]      1,1            All }{2:[No Name]          0,0-1          All}|
+                                                                               |
+  ]])
+  feed('0') -- Trigger an initial 'cursorbind' check.
+  screen:expect_unchanged()
+  command('diffput')
+  screen:expect([[
+    {7:  }{21:^foo                                }│{7:  }foo                                |
+    {7:  }bar                                │{7:  }bar                                |
+    {7:  }baz                                │{7:  }{21:baz                                }|
+    {1:~                                    }│{1:~                                    }|*15
+    {3:[No Name] [+]      1,1            All }{2:[No Name] [+]      3,1            All}|
+                                                                               |
+  ]])
+  command(':redraw!')
+  screen:expect_unchanged()
+  feed('j')
+  screen:expect([[
+    {7:  }foo                                │{7:  }foo                                |
+    {7:  }{21:^bar                                }│{7:  }{21:bar                                }|
+    {7:  }baz                                │{7:  }baz                                |
+    {1:~                                    }│{1:~                                    }|*15
+    {3:[No Name] [+]      2,1            All }{2:[No Name] [+]      2,1            All}|
+                                                                               |
+  ]])
+end)
