@@ -255,11 +255,6 @@ RCS['textDocument/diagnostic'] = function(...)
 end
 
 --- @private
-RCS['textDocument/codeLens'] = function(...)
-  return vim.lsp.codelens.on_codelens(...)
-end
-
---- @private
 RCS['textDocument/inlayHint'] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end

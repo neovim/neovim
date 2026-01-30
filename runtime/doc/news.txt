@@ -298,6 +298,8 @@ LSP
 • Support for dynamic registration for `textDocument/diagnostic`
 • |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
   |hl-LspReferenceTarget| highlight group.
+• Support for `textDocument/codeLens` |lsp-codelens| has been reimplemented:
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_codeLens
 
 LUA
 
