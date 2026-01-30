@@ -538,10 +538,22 @@ void ui_flush(void)
 
   static bool was_busy = false;
 
-  if (!(State & MODE_CMDLINE) && curwin->w_floating && curwin->w_config.hide) {
-    if (!was_busy) {
-      ui_call_busy_start();
-      was_busy = true;
+  if (!(State & MODE_CMDLINE)) {
+    if (curwin->w_floating && curwin->w_config.hide) {
+      if (!was_busy) {
+        ui_call_busy_start();
+        was_busy = true;
+      }
+    } else {
+      if (was_busy) {
+        ui_call_busy_stop();
+        was_busy = false;
+      }
+      int new_idx = win_behind_float(curwin) ? SHAPE_IDX_R : cursor_get_mode_idx();
+      if (ui_mode_idx != new_idx) {
+        ui_mode_idx = new_idx;
+        pending_mode_update = true;
+      }
     }
   } else if (was_busy) {
     ui_call_busy_stop();
