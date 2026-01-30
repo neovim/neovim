@@ -203,16 +203,18 @@ describe('startup defaults', function()
     -- Handles viminfo/viminfofile as alias for shada/shadafile.
     eq('\n  shadafile=', eval('execute("set shadafile?")'))
     eq('\n  shadafile=', eval('execute("set viminfofile?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
-    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
+    eq("\n  shada=!,'100,<50,s10,h,r/tmp/,r/private/,rhealth:", eval('execute("set shada?")'))
+    eq("\n  shada=!,'100,<50,s10,h,r/tmp/,r/private/,rhealth:", eval('execute("set viminfo?")'))
 
     -- Check that shada data (such as v:oldfiles) is saved/restored.
+    n.clear_shada_path_exclusions()
     command('edit Xtest-foo')
     command('write')
     local f = eval('fnamemodify(@%,":p")')
     assert(string.len(f) > 3)
     expect_exit(command, 'qall')
     clear { args = {}, args_rm = { '-i' }, env = env }
+    n.clear_shada_path_exclusions()
     eq({ f }, eval('v:oldfiles'))
   end)
 

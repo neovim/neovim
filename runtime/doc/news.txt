@@ -115,6 +115,7 @@ LUA
 OPTIONS
 
 • 'shelltemp' defaults to "false".
+• 'shada' default now excludes "/tmp/", "/private/", and "health:" paths to reduce clutter in |:oldfiles|.
 
 PLUGINS
 

@@ -22,6 +22,7 @@ local function _clear()
     },
     args_rm = { '-i', '--cmd' },
   }
+  n.clear_shada_path_exclusions()
 end
 
 describe(':oldfiles', function()

@@ -23,6 +23,7 @@ describe('context functions', function()
 
   before_each(function()
     clear()
+    n.clear_shada_path_exclusions()
     write_file(fname1, '1\n2\n3')
     write_file(fname2, 'a\nb\nc')
   end)
