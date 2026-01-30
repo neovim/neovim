@@ -873,12 +873,12 @@ ArrayOf(DictAs(get_keymap)) nvim_buf_get_keymap(Buffer buffer, String mode, Aren
 ///
 /// @see |nvim_set_keymap()|
 ///
-/// @param  buffer  Buffer id, or 0 for current buffer
-void nvim_buf_set_keymap(uint64_t channel_id, Buffer buffer, String mode, String lhs, String rhs,
+/// @param  buf  Buffer id, or 0 for current buffer
+void nvim_buf_set_keymap(uint64_t channel_id, Buffer buf, String mode, String lhs, String rhs,
                          Dict(keymap) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  modify_keymap(channel_id, buffer, false, mode, lhs, rhs, opts, err);
+  modify_keymap(channel_id, buf, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmaps a buffer-local |mapping| for the given mode.
