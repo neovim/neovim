@@ -608,7 +608,7 @@ local function update_editor_highlights(query_win, base_win, lang)
           end_col = end_col,
           hl_group = 'Visual',
           virt_text = {
-            { capture_name, 'Title' },
+            { capture_name, 'DiagnosticVirtualTextHint' },
           },
         })
       end
