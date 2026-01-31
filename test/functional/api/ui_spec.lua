@@ -71,6 +71,23 @@ describe('nvim_ui_attach()', function()
       pcall_err(request, 'nvim_ui_attach', 40, 10, { rgb = false })
     )
   end)
+
+  it('does not crash if maximum UI count is reached', function()
+    t.skip(t.is_os('win'), 'n.connect() hangs on Windows')
+    local server = api.nvim_get_vvar('servername')
+    local screens = {} --- @type test.functional.ui.screen[]
+    for i = 1, 16 do
+      screens[i] = Screen.new(nil, nil, nil, n.connect(server))
+    end
+    eq(
+      -- 0 is kErrorTypeException
+      { false, { 0, 'Maximum UI count reached' } },
+      { n.connect(server):request('nvim_ui_attach', 80, 24, {}) }
+    )
+    for i = 1, 16 do
+      screens[i]:detach()
+    end
+  end)
 end)
 
 describe('nvim_ui_send', function()
@@ -100,9 +117,9 @@ describe('nvim_ui_send', function()
     poke_eventloop()
 
     screen:expect([[
-        ^                                                  |
-        {1:~                                                 }|*8
-                                                          |
+      ^                                                  |
+      {1:~                                                 }|*8
+                                                        |
     ]])
 
     eq('Hello world', table.concat(read_data))
@@ -130,9 +147,9 @@ describe('nvim_ui_send', function()
     poke_eventloop()
 
     screen:expect([[
-        ^                                                  |
-        {1:~                                                 }|*8
-                                                          |
+      ^                                                  |
+      {1:~                                                 }|*8
+                                                        |
     ]])
 
     eq('', table.concat(read_data))

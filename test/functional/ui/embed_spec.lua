@@ -299,7 +299,7 @@ end)
 
 describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
-    t.skip(t.is_os('win'))
+    t.skip(t.is_os('win'), 'n.connect() hangs on Windows')
     clear()
     local child_server = assert(n.new_pipename())
     fn.jobstart({

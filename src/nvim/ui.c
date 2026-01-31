@@ -371,9 +371,14 @@ void do_autocmd_uienter_all(void)
   }
 }
 
+bool ui_can_attach_more(void)
+{
+  return ui_count < MAX_UI_COUNT;
+}
+
 void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
 {
-  if (ui_count == MAX_UI_COUNT) {
+  if (ui_count >= MAX_UI_COUNT) {
     abort();
   }
   if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]
@@ -419,7 +424,7 @@ void ui_detach_impl(RemoteUI *ui, uint64_t chanid)
     }
   }
 
-  if (shift_index == MAX_UI_COUNT) {
+  if (shift_index >= MAX_UI_COUNT) {
     abort();
   }
 
