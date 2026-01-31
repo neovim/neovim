@@ -21,7 +21,7 @@ include(Util)
 # User settings
 #-------------------------------------------------------------------------------
 
-set(DEPS_IGNORE_SHA FALSE)
+set(DEPS_IGNORE_SHA TRUE)
 
 # Options
 option(USE_BUNDLED "Use bundled dependencies." ON)
