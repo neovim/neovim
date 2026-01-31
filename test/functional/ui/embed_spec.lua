@@ -284,7 +284,7 @@ describe('--embed UI', function()
   end)
 
   it('closing stdio with another remote UI does not leak memory #36392', function()
-    t.skip(t.is_os('win')) -- n.connect() hangs on Windows
+    t.skip(t.is_os('win'), 'n.connect() hangs on Windows')
     clear({ args_rm = { '--headless' } })
     Screen.new()
     eq(1, #api.nvim_list_uis())
