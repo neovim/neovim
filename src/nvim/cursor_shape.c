@@ -13,6 +13,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mouse.h"
 #include "nvim/option_vars.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -26,24 +27,25 @@ static const char e_digit_expected[] = N_("E548: Digit expected");
 cursorentry_T shape_table[SHAPE_IDX_COUNT] = {
   // Values are set by 'guicursor' and 'mouseshape'.
   // Adjust the SHAPE_IDX_ defines when changing this!
-  { "normal", 0, 0, 0, 700, 400, 250, 0, 0, "n", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "visual", 0, 0, 0, 700, 400, 250, 0, 0, "v", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "insert", 0, 0, 0, 700, 400, 250, 0, 0, "i", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "replace", 0, 0, 0, 700, 400, 250, 0, 0, "r", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_normal", 0, 0, 0, 700, 400, 250, 0, 0, "c", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_insert", 0, 0, 0, 700, 400, 250, 0, 0, "ci", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_replace", 0, 0, 0, 700, 400, 250, 0, 0, "cr", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "operator", 0, 0, 0, 700, 400, 250, 0, 0, "o", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "visual_select", 0, 0, 0, 700, 400, 250, 0, 0, "ve", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_hover", 0, 0, 0,   0,   0,   0, 0, 0, "e", SHAPE_MOUSE },
-  { "statusline_hover", 0, 0, 0,   0,   0,   0, 0, 0, "s", SHAPE_MOUSE },
-  { "statusline_drag", 0, 0, 0,   0,   0,   0, 0, 0, "sd", SHAPE_MOUSE },
-  { "vsep_hover", 0, 0, 0,   0,   0,   0, 0, 0, "vs", SHAPE_MOUSE },
-  { "vsep_drag", 0, 0, 0,   0,   0,   0, 0, 0, "vd", SHAPE_MOUSE },
-  { "more", 0, 0, 0,   0,   0,   0, 0, 0, "m", SHAPE_MOUSE },
-  { "more_lastline", 0, 0, 0,   0,   0,   0, 0, 0, "ml", SHAPE_MOUSE },
-  { "showmatch", 0, 0, 0, 100, 100, 100, 0, 0, "sm", SHAPE_CURSOR },
-  { "terminal", 0, 0, 0, 0, 0, 0, 0, 0, "t", SHAPE_CURSOR },
+  { "normal", 0, NULL, 0, 700, 400, 250, 0, 0, "n", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "visual", 0, NULL, 0, 700, 400, 250, 0, 0, "v", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "insert", 0, NULL, 0, 700, 400, 250, 0, 0, "i", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "replace", 0, NULL, 0, 700, 400, 250, 0, 0, "r", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_normal", 0, NULL, 0, 700, 400, 250, 0, 0, "c", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_insert", 0, NULL, 0, 700, 400, 250, 0, 0, "ci", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_replace", 0, NULL, 0, 700, 400, 250, 0, 0, "cr",
+    SHAPE_CURSOR + SHAPE_MOUSE },
+  { "operator", 0, NULL, 0, 700, 400, 250, 0, 0, "o", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "visual_select", 0, NULL, 0, 700, 400, 250, 0, 0, "ve", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_hover", 0, NULL, 0,   0,   0,   0, 0, 0, "e", SHAPE_MOUSE },
+  { "statusline_hover", 0, NULL, 0,   0,   0,   0, 0, 0, "s", SHAPE_MOUSE },
+  { "statusline_drag", 0, NULL, 0,   0,   0,   0, 0, 0, "sd", SHAPE_MOUSE },
+  { "vsep_hover", 0, NULL, 0,   0,   0,   0, 0, 0, "vs", SHAPE_MOUSE },
+  { "vsep_drag", 0, NULL, 0,   0,   0,   0, 0, 0, "vd", SHAPE_MOUSE },
+  { "more", 0, NULL, 0,   0,   0,   0, 0, 0, "m", SHAPE_MOUSE },
+  { "more_lastline", 0, NULL, 0,   0,   0,   0, 0, 0, "ml", SHAPE_MOUSE },
+  { "showmatch", 0, NULL, 0, 100, 100, 100, 0, 0, "sm", SHAPE_CURSOR },
+  { "terminal", 0, NULL, 0, 0, 0, 0, 0, 0, "t", SHAPE_CURSOR },
 };
 
 /// Converts cursor_shapes into an Array of Dictionaries
@@ -56,11 +58,12 @@ Array mode_style_array(Arena *arena)
 
   for (int i = 0; i < SHAPE_IDX_COUNT; i++) {
     cursorentry_T *cur = &shape_table[i];
-    Dict dic = arena_dict(arena, 3 + ((cur->used_for & SHAPE_CURSOR) ? 9 : 0));
+    Dict dic = arena_dict(arena, 4 + ((cur->used_for & SHAPE_CURSOR) ? 9 : 0));
     PUT_C(dic, "name", CSTR_AS_OBJ(cur->full_name));
     PUT_C(dic, "short_name", CSTR_AS_OBJ(cur->name));
+    PUT_C(dic, "used_for", INTEGER_OBJ(cur->used_for));
     if (cur->used_for & SHAPE_MOUSE) {
-      PUT_C(dic, "mouse_shape", INTEGER_OBJ(cur->mshape));
+      PUT_C(dic, "mouse_shape", CSTR_AS_OBJ(cur->mshape));
     }
     if (cur->used_for & SHAPE_CURSOR) {
       String shape_str;
@@ -100,6 +103,12 @@ Array mode_style_array(Arena *arena)
 /// @returns error message for an illegal option, NULL otherwise.
 const char *parse_shape_opt(int what)
 {
+  if (what == SHAPE_MOUSE) {
+    // Should replace with parsing mouseshape option.
+    clear_shape_table_for_mouse();
+    ui_mode_info_set();
+    return NULL;
+  }
   char *p = NULL;
   int idx = 0;                          // init for GCC
   int len;
@@ -315,9 +324,19 @@ bool cursor_mode_uses_syn_id(int syn_id)
 }
 
 /// Return the index into shape_table[] for the current mode.
-int cursor_get_mode_idx(void)
+int cursor_get_mode_idx(bool with_mouse)
   FUNC_ATTR_PURE
 {
+  if (with_mouse && p_mousemev) {
+    pos_T m_pos = { 0 };
+    int mpos_flag = get_fpos_of_mouse(&m_pos);
+    if (mpos_flag & IN_STATUS_LINE) {
+      return is_dragging() ? SHAPE_IDX_SDRAG : SHAPE_IDX_STATUS;
+    }
+    if (mpos_flag & IN_SEP_LINE) {
+      return is_dragging() ? SHAPE_IDX_VDRAG : SHAPE_IDX_VSEP;
+    }
+  }
   if (State == MODE_SHOWMATCH) {
     return SHAPE_IDX_SM;
   } else if (State == MODE_TERMINAL) {
@@ -359,5 +378,13 @@ static void clear_shape_table(void)
     shape_table[idx].blinkoff = 0;
     shape_table[idx].id = 0;
     shape_table[idx].id_lm = 0;
+  }
+}
+
+static void clear_shape_table_for_mouse(void)
+{
+  for (int idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
+    xfree(shape_table[idx].mshape);
+    shape_table[idx].mshape = NULL;
   }
 }

@@ -197,6 +197,7 @@ function Screen.new(width, height, options, session)
     visual_bell = false,
     suspended = false,
     mode = 'normal',
+    mode_stack = {},
     options = {},
     pwd = '',
     popupmenu = nil,
@@ -782,6 +783,9 @@ function Screen:_wait(check, flags)
   local did_flush = true
   local warn_immediate = not (flags.unchanged or flags.intermediate)
 
+  -- Clear mode_stack at the start of each expect() to track modes for this expectation
+  self.mode_stack = {}
+
   if flags.intermediate and flags.unchanged then
     error("Choose only one of 'intermediate' and 'unchanged', not both")
   end
@@ -1034,6 +1038,7 @@ function Screen:_reset()
   self.msg_grid_pos = nil
   self.msg_scrolled = false
   self.msg_sep_char = nil
+  self.mode_stack = {}
 end
 
 --- @param cursor_style_enabled boolean
@@ -1190,6 +1195,7 @@ end
 function Screen:_handle_mode_change(mode, idx)
   assert(mode == self._mode_info[idx + 1].name)
   self.mode = mode
+  table.insert(self.mode_stack, mode)
 end
 
 function Screen:_handle_set_scroll_region(top, bot, left, right)

@@ -5,8 +5,11 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = n.clear, n.feed, n.insert
 local command = n.command
 local retry = t.retry
+local api = n.api
+local eq = t.eq
 
 describe('ui mode_change event', function()
+  ---@type test.functional.ui.screen
   local screen
 
   before_each(function()
@@ -317,5 +320,155 @@ describe('ui mode_change event', function()
     ]],
       mode = 'normal',
     }
+  end)
+
+  describe('mouse shape modes', function()
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 8)
+      api.nvim_set_option_value('mouse', 'a', {})
+      api.nvim_set_option_value('mousemoveevent', true, {})
+      -- Create a split to test statusline and vsep
+      command('split')
+      command('vsplit')
+    end)
+
+    it('sends statusline_hover mode on statusline hover with mousemev', function()
+      -- Move mouse to statusline (row 3 is the statusline between splits)
+      api.nvim_input_mouse('move', '', '', 0, 3, 10)
+      screen:expect({
+        mode = 'statusline_hover',
+        condition = function()
+          -- Check exact mode_stack: cursor mode (normal) then mouse mode (statusline_hover)
+          eq({ 'normal', 'normal', 'statusline_hover' }, screen.mode_stack)
+        end,
+      })
+    end)
+
+    it('sends statusline_drag mode when dragging statusline', function()
+      -- Move mouse to statusline - should trigger hover first
+      api.nvim_input_mouse('move', '', '', 0, 3, 10)
+      screen:expect({
+        mode = 'statusline_hover',
+        condition = function()
+          eq({ 'normal', 'normal', 'statusline_hover' }, screen.mode_stack)
+        end,
+      })
+      -- Start drag on statusline - should transition to drag
+      api.nvim_input_mouse('left', 'press', '', 0, 3, 10)
+      screen:expect({
+        mode = 'statusline_drag',
+        condition = function()
+          eq({ 'normal', 'statusline_drag' }, screen.mode_stack)
+        end,
+      })
+      api.nvim_input_mouse('left', 'drag', '', 0, 4, 10)
+      screen:expect({
+        mode = 'statusline_drag',
+        condition = function()
+          eq({ 'normal', 'statusline_drag' }, screen.mode_stack)
+        end,
+      })
+      api.nvim_input_mouse('left', 'release', '', 0, 4, 10)
+    end)
+
+    it('sends vsep_hover mode on vertical separator hover with mousemev', function()
+      -- Move mouse to vertical separator (column 20 is the separator)
+      api.nvim_input_mouse('move', '', '', 0, 1, 20)
+      screen:expect({
+        mode = 'vsep_hover',
+        condition = function()
+          -- Check exact mode_stack: cursor mode (normal) then mouse mode (vsep_hover)
+          eq({ 'normal', 'normal', 'vsep_hover' }, screen.mode_stack)
+        end,
+      })
+    end)
+
+    it('sends vsep_drag mode when dragging vertical separator', function()
+      -- Start drag on vsep
+      api.nvim_input_mouse('move', '', '', 0, 1, 20)
+      screen:expect({
+        mode = 'vsep_hover',
+        condition = function()
+          -- Check exact mode_stack: includes intermediate mode changes during drag
+          eq({ 'normal', 'normal', 'vsep_hover' }, screen.mode_stack)
+        end,
+      })
+      api.nvim_input_mouse('left', 'press', '', 0, 1, 20)
+      screen:expect({
+        mode = 'vsep_drag',
+        condition = function()
+          -- Check exact mode_stack: includes intermediate mode changes during drag
+          eq({ 'normal', 'vsep_drag' }, screen.mode_stack)
+        end,
+      })
+      api.nvim_input_mouse('left', 'drag', '', 0, 1, 25)
+      screen:expect({
+        mode = 'vsep_drag',
+        condition = function()
+          -- Check exact mode_stack: includes intermediate mode changes during drag
+          eq({ 'normal', 'vsep_drag' }, screen.mode_stack)
+        end,
+      })
+      api.nvim_input_mouse('left', 'release', '', 0, 1, 25)
+    end)
+
+    it('returns to normal mode when mouse leaves statusline', function()
+      -- Move to statusline
+      api.nvim_input_mouse('move', '', '', 0, 3, 10)
+      screen:expect({ mode = 'statusline_hover' })
+      -- Move away from statusline to normal text area
+      api.nvim_input_mouse('move', '', '', 0, 1, 10)
+      screen:expect({ mode = 'normal' })
+    end)
+
+    it('returns to normal mode when mouse leaves vsep', function()
+      -- Move to vsep
+      api.nvim_input_mouse('move', '', '', 0, 1, 20)
+      screen:expect({ mode = 'vsep_hover' })
+      -- Move away from vsep to normal text area
+      api.nvim_input_mouse('move', '', '', 0, 1, 10)
+      screen:expect({ mode = 'normal' })
+    end)
+
+    it('does not send mouse shape modes without mousemev', function()
+      api.nvim_set_option_value('mousemoveevent', false, {})
+      -- Move mouse to statusline
+      api.nvim_input_mouse('move', '', '', 0, 3, 10)
+      screen:expect({ mode = 'normal', unchanged = true })
+      -- Move to vsep
+      api.nvim_input_mouse('move', '', '', 0, 1, 20)
+      screen:expect({ mode = 'normal', unchanged = true })
+      -- Re-enable mousemoveevent to trigger mode update
+      api.nvim_set_option_value('mousemoveevent', true, {})
+      screen:expect({ mode = 'vsep_hover' })
+    end)
+
+    it('preserves cursor mode shape while sending mouse shape mode', function()
+      -- Enter insert mode
+      api.nvim_input('i')
+      screen:expect({ mode = 'insert' })
+      -- Move mouse to statusline while in insert mode
+      api.nvim_input_mouse('move', '', '', 0, 3, 10)
+      screen:expect({
+        -- Should send both insert mode and statusline_hover mode
+        -- The UI should receive statusline_hover for mouse cursor
+        mode = 'statusline_hover',
+        condition = function()
+          -- Check exact mode_stack: cursor in insert, mouse in statusline_hover
+          eq({ 'insert', 'statusline_hover' }, screen.mode_stack)
+        end,
+      })
+      -- Exit insert mode and move mouse away from statusline
+      api.nvim_input('<Esc>')
+      api.nvim_input_mouse('move', '', '', 0, 1, 5)
+      screen:expect({
+        mode = 'normal',
+        condition = function()
+          -- Check exact mode_stack: when cursor and mouse modes are the same, only one mode is sent
+          eq({ 'normal' }, screen.mode_stack)
+        end,
+      })
+    end)
   end)
 end)

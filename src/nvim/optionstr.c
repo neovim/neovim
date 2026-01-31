@@ -35,6 +35,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
@@ -1545,6 +1546,14 @@ const char *did_set_mouse(optset_T *args)
 int expand_set_mouse(optexpand_T *args, int *numMatches, char ***matches)
 {
   return expand_set_opt_listflag(args, MOUSE_ALL, numMatches, matches);
+}
+
+/// Handle setting 'mousemoveevent'.
+/// @return error message, NULL if it's OK.
+const char *did_set_mousemev(optset_T *args FUNC_ATTR_UNUSED)
+{
+  setmouse();
+  return NULL;
 }
 
 /// Handle setting 'mousescroll'.
