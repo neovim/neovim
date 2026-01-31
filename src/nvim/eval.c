@@ -2784,7 +2784,8 @@ static int eval7_leader(typval_T *const rettv, const bool numeric_only,
           break;
         }
         if (rettv->v_type == VAR_FLOAT) {
-          f = !(bool)f;
+          rettv->v_type = VAR_BOOL;
+          val = f == 0.0 ? kBoolVarTrue : kBoolVarFalse;
         } else {
           val = !val;
         }
