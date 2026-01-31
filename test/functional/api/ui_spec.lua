@@ -73,7 +73,6 @@ describe('nvim_ui_attach()', function()
   end)
 
   it('does not crash if maximum UI count is reached', function()
-    t.skip(t.is_os('win'), 'n.connect() hangs on Windows')
     local server = api.nvim_get_vvar('servername')
     local screens = {} --- @type test.functional.ui.screen[]
     for i = 1, 16 do
