@@ -57,6 +57,17 @@ describe(':emenu', function()
     -- Assert that Edit.Paste pasted @" into the commandline.
     eq('thiscmdmode', eval('getcmdline()'))
   end)
+
+  it('popup menu in visual mode via <C-o> from insert mode #19473', function()
+    n.exec([[
+      aunmenu *
+      source $VIMRUNTIME/menu.vim
+    ]])
+    feed('itext<C-o>V')
+    command('emenu PopUp.Cut')
+    eq('', fn.getline(1))
+    eq('', n.api.nvim_get_vvar('errmsg'))
+  end)
 end)
 
 local test_menus_cmd = [=[
