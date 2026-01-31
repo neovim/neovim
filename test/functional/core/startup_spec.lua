@@ -1194,6 +1194,55 @@ describe('sysinit', function()
   end)
 end)
 
+describe('sysinit with NVIM_APPNAME', function()
+  local xdgdir = 'Xxdg'
+  local xhome = 'Xhome'
+  local pathsep = n.get_pathsep()
+  local appname = 'mysysinitapp'
+
+  before_each(function()
+    rmdir(xdgdir)
+    rmdir(xhome)
+
+    mkdir(xdgdir)
+    mkdir(xdgdir .. pathsep .. appname)
+    write_file(
+      table.concat({ xdgdir, appname, 'sysinit.vim' }, pathsep),
+      [[
+      let g:loaded = get(g:, "loaded", 0) + 1
+      let g:xdg = 1
+    ]]
+    )
+
+    mkdir(xhome)
+  end)
+
+  after_each(function()
+    rmdir(xdgdir)
+    rmdir(xhome)
+  end)
+
+  it('uses NVIM_APPNAME subdir in XDG_CONFIG_DIRS for sysinit.vim', function()
+    clear {
+      args_rm = { '-u' },
+      env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
+    }
+    eq(1, eval('g:loaded'))
+    eq(1, eval('get(g:, "xdg", 0)'))
+  end)
+
+  it('does not load from nvim/ subdir when NVIM_APPNAME is set', function()
+    mkdir_p(xdgdir .. pathsep .. 'nvim')
+    write_file(table.concat({ xdgdir, 'nvim', 'sysinit.vim' }, pathsep), [[let g:wrong_subdir = 1]])
+
+    clear {
+      args_rm = { '-u' },
+      env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
+    }
+    eq(0, eval('get(g:, "wrong_subdir", 0)'))
+  end)
+end)
+
 describe('user config init', function()
   local xhome = 'Xhome'
   local pathsep = n.get_pathsep()
@@ -1420,6 +1469,212 @@ describe('user config init', function()
         eval('v:errmsg')
       )
     end)
+  end)
+end)
+
+describe('user config init from XDG_CONFIG_DIRS', function()
+  local xhome = 'Xhome'
+  local pathsep = n.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
+  local xdgdir = 'Xxdgconfigdirs'
+
+  before_each(function()
+    rmdir(xhome)
+    rmdir(xdgdir)
+
+    -- Create XDG_CONFIG_HOME directories but WITHOUT any init files
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
+
+    -- Create XDG_CONFIG_DIRS directory with init.lua
+    mkdir_p(xdgdir .. pathsep .. 'nvim')
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+    rmdir(xdgdir)
+  end)
+
+  it('loads init.lua from XDG_CONFIG_DIRS when no config in XDG_CONFIG_HOME', function()
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+      [[vim.g.xdg_config_dirs_lua = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_lua'))
+    eq(
+      fn.fnamemodify(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), ':p'),
+      eval('$MYVIMRC')
+    )
+  end)
+
+  it('prefers init.lua over init.vim in same XDG_CONFIG_DIRS directory', function()
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+      [[vim.g.xdg_config_dirs_lua = 1]]
+    )
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep),
+      [[let g:xdg_config_dirs_vim = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_lua'))
+    -- init.vim should NOT be loaded since init.lua takes precedence
+    eq(0, eval('get(g:, "xdg_config_dirs_vim", 0)'))
+    -- Error should be shown for conflicting configs
+    local init_lua_path = table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep)
+    local init_vim_path = table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep)
+    t.matches(
+      'E5422: Conflicting configs: "' .. init_lua_path .. '" "' .. init_vim_path .. '"',
+      eval('v:errmsg')
+    )
+  end)
+
+  it('falls back to init.vim in XDG_CONFIG_DIRS when no init.lua', function()
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep),
+      [[let g:xdg_config_dirs_vim = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_vim'))
+  end)
+end)
+
+describe('user config init from XDG_CONFIG_DIRS with NVIM_APPNAME', function()
+  local xhome = 'Xhome'
+  local pathsep = n.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
+  local xdgdir = 'Xxdgconfigdirs'
+  local appname = 'mytestapp'
+
+  before_each(function()
+    rmdir(xhome)
+    rmdir(xdgdir)
+
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
+
+    mkdir_p(xdgdir .. pathsep .. appname)
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+    rmdir(xdgdir)
+  end)
+
+  it('loads init.lua from XDG_CONFIG_DIRS/$NVIM_APPNAME/', function()
+    write_file(
+      table.concat({ xdgdir, appname, 'init.lua' }, pathsep),
+      [[vim.g.xdg_config_dirs_appname_lua = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+        NVIM_APPNAME = appname,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_appname_lua'))
+    eq(
+      fn.fnamemodify(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), ':p'),
+      eval('$MYVIMRC')
+    )
+  end)
+
+  it('prefers init.lua over init.vim in XDG_CONFIG_DIRS/$NVIM_APPNAME/', function()
+    write_file(
+      table.concat({ xdgdir, appname, 'init.lua' }, pathsep),
+      [[vim.g.xdg_config_dirs_appname_lua = 1]]
+    )
+    write_file(
+      table.concat({ xdgdir, appname, 'init.vim' }, pathsep),
+      [[let g:xdg_config_dirs_appname_vim = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+        NVIM_APPNAME = appname,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_appname_lua'))
+    eq(0, eval('get(g:, "xdg_config_dirs_appname_vim", 0)'))
+  end)
+
+  it('falls back to init.vim in XDG_CONFIG_DIRS/$NVIM_APPNAME/', function()
+    write_file(
+      table.concat({ xdgdir, appname, 'init.vim' }, pathsep),
+      [[let g:xdg_config_dirs_appname_vim = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+        NVIM_APPNAME = appname,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_appname_vim'))
+  end)
+
+  it('does not load from nvim/ subdir when NVIM_APPNAME is set', function()
+    mkdir_p(xdgdir .. pathsep .. 'nvim')
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+      [[vim.g.wrong_subdir_lua = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+        NVIM_APPNAME = appname,
+      },
+    }
+
+    eq(0, eval('get(g:, "wrong_subdir_lua", 0)'))
   end)
 end)
 
