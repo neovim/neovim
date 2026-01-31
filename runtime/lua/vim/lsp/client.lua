@@ -1153,7 +1153,7 @@ function Client:on_attach(bufnr)
   self:_run_callbacks(self._on_attach_cbs, lsp.client_errors.ON_ATTACH_ERROR, self, bufnr)
   -- schedule the initialization of capabilities to give the above
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
-  -- opt-out (deleting the semanticTokensProvider from capabilities)
+  -- opt-out (such as deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
     if not vim.api.nvim_buf_is_valid(bufnr) then
       return
