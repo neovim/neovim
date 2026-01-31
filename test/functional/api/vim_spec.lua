@@ -2383,6 +2383,8 @@ describe('API', function()
   end)
 
   describe('nvim_get_context', function()
+    before_each(n.clear_shada_path_exclusions)
+
     it('validation', function()
       eq("Invalid key: 'blah'", pcall_err(api.nvim_get_context, { blah = {} }))
       eq(

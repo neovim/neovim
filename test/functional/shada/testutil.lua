@@ -30,6 +30,7 @@ local function reset(o)
     args_rm = args_rm,
     args = args,
   }
+  n.clear_shada_path_exclusions()
   api.nvim_set_var('tmpname', tmpname)
 end
 

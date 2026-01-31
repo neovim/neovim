@@ -125,6 +125,13 @@ function M.set_session(s)
   session = s
 end
 
+--- Clear path exclusions from 'shada' that interfere with tests running in /tmp/
+function M.clear_shada_path_exclusions()
+  local shada = M.api.nvim_get_option_value('shada', {})
+  shada = shada:gsub(',r/tmp/', ''):gsub(',r/private/', '') --[[@as string]]
+  M.api.nvim_set_option_value('shada', shada, {})
+end
+
 --- @param method string
 --- @param ... any
 --- @return any
