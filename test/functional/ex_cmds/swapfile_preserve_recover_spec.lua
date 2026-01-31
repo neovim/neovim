@@ -114,7 +114,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end)
 
   it('killing TUI process without :preserve #22096', function()
-    t.skip(t.is_os('win'))
+    t.skip(t.is_os('win'), 'n.connect() hangs on Windows')
     local screen0 = Screen.new()
     local child_server = new_pipename()
     fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
