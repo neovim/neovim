@@ -765,7 +765,77 @@ startup.
   Command table needs to be updated, run 'make'
 
 This can only happen when changing the source code, after adding a command in
-src/ex_cmds.lua.  Update the lookup table by re-running the build. >
+src/ex_cmds.lua.  Update the lookup table by re-running the build.
+
+								*E970*  >
+  Failed to initialize lua interpreter
+  Failed to initialize builtin lua modules
+
+Nvim failed to initialize the Lua interpreter or its builtin modules during
+startup. This is a fatal error that prevents Nvim from running.
+
+								*E5107*  >
+  Lua: {error}
+
+Lua code compilation (loadbuffer) failed when executing |:lua| commands or
+functions. {error} contains the Lua syntax or compilation error message.
+
+								*E5108*  >
+  Lua function: {error}
+  Lua: {error}
+
+Lua code execution (pcall) failed. This can occur when executing |:lua|
+commands, during Lua function completion, or in other Lua code execution
+contexts. {error} contains the Lua runtime error message and traceback.
+
+								*E5109*  >
+  Lua: {error}
+
+Lua code compilation (loadbuffer) failed when executing the |:luado| command.
+{error} contains the Lua syntax or compilation error message.
+
+								*E5110*  >
+  Lua: {error}
+
+Lua code execution (pcall) failed during |:luado| command initialization.
+{error} contains the Lua runtime error message and traceback.
+
+								*E5111*  >
+  Lua: {error}
+
+Lua code execution failed in |:luado| callback or during Lua script loading.
+{error} contains the Lua runtime error message and traceback.
+
+								*E5112*  >
+  Lua chunk: {error}
+
+Lua chunk compilation failed. The loadstring() function returned an error
+when trying to compile the Lua code. {error} contains the compilation error
+message.
+
+								*E5113*  >
+  Lua chunk: {error}
+
+Lua chunk execution failed after successful compilation. {error} contains the
+Lua runtime error message and traceback.
+
+								*E5114*  >
+  Converting print argument #{i}: {error}
+
+Failed to convert argument number {i} to a string in the Lua print()
+function. {error} contains the conversion error details.
+
+								*E5115*  >
+  Loading Lua debug string: {error}
+
+Failed to load (compile) a Lua debug command string. {error} contains the
+compilation error message.
+
+								*E5116*  >
+  Calling Lua debug string: {error}
+
+Failed to execute a Lua debug command string. {error} contains the runtime
+error message and traceback.
 
 ==============================================================================
 3. Messages						*messages*
