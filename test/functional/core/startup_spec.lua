@@ -1423,6 +1423,102 @@ describe('user config init', function()
   end)
 end)
 
+describe('user config init from XDG_CONFIG_DIRS', function()
+  local xhome = 'Xhome'
+  local pathsep = n.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
+  local xdgdir = 'Xxdgconfigdirs'
+
+  before_each(function()
+    rmdir(xhome)
+    rmdir(xdgdir)
+
+    -- Create XDG_CONFIG_HOME directories but WITHOUT any init files
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
+
+    -- Create XDG_CONFIG_DIRS directory with init.lua
+    mkdir_p(xdgdir .. pathsep .. 'nvim')
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+    rmdir(xdgdir)
+  end)
+
+  it('loads init.lua from XDG_CONFIG_DIRS when no config in XDG_CONFIG_HOME', function()
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+      [[vim.g.xdg_config_dirs_lua = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_lua'))
+    eq(
+      fn.fnamemodify(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), ':p'),
+      eval('$MYVIMRC')
+    )
+  end)
+
+  it('prefers init.lua over init.vim in same XDG_CONFIG_DIRS directory', function()
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+      [[vim.g.xdg_config_dirs_lua = 1]]
+    )
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep),
+      [[let g:xdg_config_dirs_vim = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_lua'))
+    -- init.vim should NOT be loaded since init.lua takes precedence
+    eq(0, eval('get(g:, "xdg_config_dirs_vim", 0)'))
+    -- Error should be shown for conflicting configs
+    local init_lua_path = table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep)
+    local init_vim_path = table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep)
+    t.matches(
+      'E5422: Conflicting configs: "' .. init_lua_path .. '" "' .. init_vim_path .. '"',
+      eval('v:errmsg')
+    )
+  end)
+
+  it('falls back to init.vim in XDG_CONFIG_DIRS when no init.lua', function()
+    write_file(
+      table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep),
+      [[let g:xdg_config_dirs_vim = 1]]
+    )
+
+    clear {
+      args_rm = { '-u' },
+      env = {
+        XDG_CONFIG_HOME = xconfig,
+        XDG_DATA_HOME = xdata,
+        XDG_CONFIG_DIRS = xdgdir,
+      },
+    }
+
+    eq(1, eval('g:xdg_config_dirs_vim'))
+  end)
+end)
+
 describe('runtime:', function()
   local xhome = 'Xhome'
   local pathsep = n.get_pathsep()
