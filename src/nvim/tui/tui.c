@@ -36,6 +36,7 @@
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
+#include "nvim/tui/terminfo_builtin.h"
 #include "nvim/tui/tui.h"
 #include "nvim/types_defs.h"
 #include "nvim/ugrid.h"
@@ -186,6 +187,45 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   *height = tui->height;
   *term = tui->term;
   *rgb = tui->rgb;
+}
+
+typedef struct {
+  const char *name;
+  int index;
+} TermcapMap;
+
+static const TermcapMap t_opts[] = {
+#define X(name) { #name, kTerm_##name },
+  XLIST_TERMINFO_BUILTIN
+#undef X
+#define X(name, code) { #name, kTerm_##name },
+  XLIST_TERMINFO_EXT
+#undef X
+  { NULL, 0 }
+};
+
+static void apply_t_overrides(TerminfoEntry *entry)
+{
+  for (int i = 0; t_opts[i].name != NULL; i++) {
+    char env_name[128];
+
+    snprintf(env_name, sizeof(env_name), "NVIM_T_%s", t_opts[i].name);
+
+    for (char *p = env_name; *p; p++) {
+      if (*p >= 'a' && *p <= 'z') {
+        *p -= 32;
+      }
+    }
+
+    const char *val = os_getenv(env_name);
+    if (val) {
+      if (val[0] == '\0' || strequal(val, "DISABLE")) {
+        entry->defs[t_opts[i].index] = NULL;
+      } else {
+        entry->defs[t_opts[i].index] = xstrdup(val);
+      }
+    }
+  }
 }
 
 /// Request the terminal's mode (DECRQM).
@@ -429,6 +469,7 @@ static void terminfo_start(TUIData *tui)
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
+  apply_t_overrides(&tui->ti);
 
 #define TI_HAS(name) (tui->ti.defs[name] != NULL)
   tui->can_change_scroll_region = TI_HAS(kTerm_change_scroll_region);
