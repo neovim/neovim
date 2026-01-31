@@ -2431,6 +2431,207 @@ int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
   return ml_append_flags(lnum, line, len, newfile ? ML_APPEND_NEW : 0);
 }
 
+/// Append a charwise range after lnum and col (use lnum 1 and col 0 to
+/// insert before the first character in first line).
+/// "line" does not need to be allocated, but can't be another line in a
+/// buffer, unlocking may make it invalid.
+///
+/// "newfile": true when starting to edit a new file, meaning that pe_old_lnum
+///              will be set for recovery
+/// Check: The caller of this function should probably also call
+/// appended_lines().
+///
+/// @param lnum  append after this line (can not be 0)
+/// @param text  text to append
+/// @param len  length of text including NUL, or 0
+/// @param newfile  flag, see above
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_replace_range_in_line(linenr_T lnum, pos_T range_start, pos_T range_end,
+  char *text, bool newfile)
+{
+  if (range_start.lnum == lnum  // range spans only one line
+      && range_end.lnum == lnum) {
+    char *old_line = ml_get(lnum);
+    size_t old_chars_indx = (size_t)range_start.col;
+    char *old_txt = xcalloc(old_chars_indx, sizeof(char));
+    memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
+    char *new_line = concat_str(concat_str(old_txt, text),
+                                old_line + range_end.col + 1);
+    ml_replace_buf_len(curbuf, lnum, new_line, (int)strlen(new_line), false, true);
+  } else if (range_start.lnum == lnum) { // we are at the start of the range
+    char *old_line = ml_get(lnum);
+    size_t old_chars_indx = (size_t)range_start.col;
+    char *old_txt = xcalloc(old_chars_indx, sizeof(char));
+    memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
+    char *new_line = concat_str(old_txt, text);
+    ml_replace_buf_len(curbuf, lnum, new_line, (int)strlen(new_line), false, true);
+  } else if (range_end.lnum == lnum) { // we are at the end of the range
+    char *old_line = ml_get(lnum);
+    if ((int)strlen(old_line) > range_end.col)
+    {
+      char *old_text_append = old_line + range_end.col + 1;
+      char *new_line = concat_str(text, old_text_append);
+      ml_replace_buf_len(curbuf, lnum, new_line, (int)strlen(new_line), false, true);
+    } else {
+      ml_replace_buf_len(curbuf, lnum, text, (int)strlen(text), false, true);
+    }
+  } else {
+    ml_replace_buf_len(curbuf, lnum, text, (int)strlen(text), false, true);
+  }
+
+  return OK;
+}
+
+size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
+{
+  if (!output) {
+    return 0;
+  }
+
+  char *start = output;
+  size_t off = 0;
+  int cur_ln_nr = (int)pos.lnum;
+  // we need to copy text before pos and after pos
+  // before pos, is prepended to 'output' and after is appended
+  char *old_line = ml_get(pos.lnum);
+  size_t old_chars_indx = (size_t)pos.col;
+  char *text_to_prepend = xcalloc(old_chars_indx, sizeof(char));
+  memcpy(text_to_prepend, old_line, old_chars_indx * sizeof(char));
+
+  // size_t append_size = ml_get_len(pos.lnum) - old_chars_indx;
+  // char *old_appended_text = xcalloc(append_size, sizeof(char));
+  // memcpy(old_appended_text, old_line + old_chars_indx, append_size * sizeof(char));
+  char *text_to_append = old_line + old_chars_indx;
+
+  while (off < remaining) {
+    if (output[off] == CAR || output[off] == NL) {
+
+      size_t skip = off + 1;
+
+      // CRLF
+      if (output[off] == CAR && output[off + 1] == NL) {
+        skip = off + 2;
+      }
+
+      output[off] = NUL;
+
+      if (pos.lnum == cur_ln_nr) { // we are at the first line of operation
+        char *new_line = concat_str(text_to_prepend, output);
+        ml_replace(cur_ln_nr, new_line, false);
+        text_to_prepend = NUL; // reset what to prepent
+      } else {
+        ml_append(cur_ln_nr++, output, (int)strlen(output) + 1, false);
+      }
+
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      cur_ln_nr++;
+      continue;
+    }
+
+    if (output[off] == NUL) {
+      // Translate NUL to NL
+      output[off] = NL;
+    }
+    off++;
+  }
+
+  // TODO(616b2f): figure out a better way to handle
+  // - text that is only one line not ending with NL
+
+  // remaining can be also output that 
+  if (remaining) {
+    // append unfinished line
+    char *new_line = concat_str(output, text_to_append);
+    // char *new_line = concat_str(concat_str(text_to_prepend, output), text_to_append);
+    if (pos.lnum == cur_ln_nr) { // we are at the first line of operation
+      new_line = concat_str(concat_str(text_to_prepend, output), text_to_append);
+      ml_replace(cur_ln_nr, new_line, false);
+    } else {
+      ml_append(cur_ln_nr -1, new_line, (int)strlen(new_line) + 1, false);
+    }
+    // remember that the line ending was missing
+    // curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
+    output += remaining;
+  }
+  else if (text_to_append) {
+    ml_append(cur_ln_nr - 1, text_to_append, (int)strlen(text_to_append) + 1, false);
+    // curbuf->b_no_eol_lnum = 0;
+  }
+
+  ui_flush();
+
+  return (size_t)(output - start);
+}
+
+size_t ml_replace_range(pos_T range_start, pos_T range_end, char *output, size_t remaining)
+{
+  if (!output) {
+    return 0;
+  }
+
+  char *start = output;
+  size_t off = 0;
+  int cur_ln_nr = (int)range_start.lnum;
+  while (off < remaining) {
+    if (output[off] == CAR || output[off] == NL) {
+
+      size_t skip = off + 1;
+
+      // CRLF
+      if (output[off] == CAR && output[off + 1] == NL) {
+        skip = off + 2;
+      }
+
+      output[off] = NUL;
+
+      bool lnum_in_range = cur_ln_nr >= range_start.lnum && cur_ln_nr <= range_end.lnum;
+
+      if (lnum_in_range) {
+        ml_replace_range_in_line(cur_ln_nr, range_start, range_end,
+          output, false);
+      } else {
+        ml_append(cur_ln_nr + 1, output, (int)strlen(output) + 1, false);
+      }
+
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      cur_ln_nr++;
+      continue;
+    }
+
+    if (output[off] == NUL) {
+      // Translate NUL to NL
+      output[off] = NL;
+    }
+    off++;
+  }
+
+  if (remaining) {
+    // append unfinished 
+    bool lnum_in_range = cur_ln_nr >= range_start.lnum && cur_ln_nr <= range_end.lnum;
+
+    if (lnum_in_range) {
+      ml_replace_range_in_line(cur_ln_nr, range_start, range_end,
+        output, false);
+    } else {
+      ml_append(cur_ln_nr + 1, output, (int)strlen(output) + 1, false);
+    }
+    // remember that the line ending was missing
+    // curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
+    output += remaining;
+  } else {
+    curbuf->b_no_eol_lnum = 0;
+  }
+
+  ui_flush();
+
+  return (size_t)(output - start);
+}
+
 /// @param lnum  append after this line (can be 0)
 /// @param line  text of the new line
 /// @param len  length of new line, including nul, or 0

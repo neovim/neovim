@@ -4252,7 +4252,7 @@ describe('API', function()
         cmd = 'substitute',
         args = { '/math.random/math.max/' },
         bang = false,
-        range = { 4, 6 },
+        range = { 4, 6, 0, 2 },
         addr = 'line',
         magic = {
           file = false,
@@ -4570,7 +4570,7 @@ describe('API', function()
         cmd = 'delete',
         args = {},
         bang = false,
-        range = { 3, 7 },
+        range = { 3, 7, 0, 2 },
         count = 7,
         reg = '*',
         addr = 'line',
@@ -4740,7 +4740,7 @@ describe('API', function()
         cmd = 'MyCommand',
         args = { 'test', 'it' },
         bang = true,
-        range = { 4, 6 },
+        range = { 4, 6, 0, 2 },
         addr = 'line',
         magic = {
           file = false,
@@ -4954,7 +4954,7 @@ describe('API', function()
         cmd = 'normal',
         args = { 'x' },
         bang = true,
-        range = { 3, 4 },
+        range = { 3, 4, 0, 2 },
         addr = 'line',
         magic = {
           file = false,
@@ -5271,6 +5271,105 @@ describe('API', function()
       ]]
     end)
 
+    -- TODO(616b2f): document different expected addresses ranges
+    -- 3.5,0.0 -> single position e.g. cursor position (currently abandoned)
+    -- 3.5,3.5 -> smallest possible range both ends always inclusive
+    it('works with charwise range before |read| command with filter', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input(':3.5read !echo "abc"<CR>')
+      expect [[
+        line1
+        line2
+        line3abc
+
+        line4
+        line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input([[:3.5read !echo -n "abc"<CR>]])
+      expect [[
+        line1
+        line2
+        line3abc
+        line4
+        line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input([[:3.0read !echo -n "abc"<CR>]])
+      expect [[
+        line1
+        line2
+        abcline3
+        line4
+        line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input([[:3.2read !echo -en 'abc\nabc'<CR>]])
+      expect [[
+        line1
+        line2
+        liabc
+        abcne3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    -- it('works with charwise range before |read| command reading from file', function()
+    --   insert [[
+    --     line1
+    --     line2
+    --     line3
+    --     line4
+    --     line5
+    --     line6
+    --   ]]
+    --   api.nvim_input([[:3.5read !echo "abc"<CR>]])
+    --   expect [[
+    --     line1
+    --     line2
+    --     line3abc
+    --     line4
+    --     line5
+    --     line6
+    --   ]]
+    -- end)
+
     it('works with count', function()
       insert [[
         line1
@@ -5331,6 +5430,7 @@ describe('API', function()
       api.nvim_buf_set_mark(buf, '<', 3, 2, {})
       api.nvim_buf_set_mark(buf, '>', 5, 10, {})
       command("`<,`>!tr 'a' 'b'")
+      print(vim.inspect(n.curbuf_contents()))
       expect [[
         line1
         line2

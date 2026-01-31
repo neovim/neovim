@@ -699,7 +699,11 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
   kv_destroy(input);
 
   if (output) {
-    write_output(output, nread, true, true);
+    if (opts & kShellOptWrite) {
+      ml_replace_range(curbuf->b_op_start, curbuf->b_op_end, output, nread);
+    } else {
+      ml_append_pos(curbuf->b_op_start, output, nread);
+    }
     xfree(output);
   }
 
@@ -1214,92 +1218,6 @@ static size_t word_length(const char *str)
 static void read_input(StringBuilder *buf)
 {
   read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, buf);
-}
-
-static size_t write_output(char *output, size_t remaining, bool eof, bool run_charwise)
-{
-  if (!output) {
-    return 0;
-  }
-
-  char *start = output;
-  size_t off = 0;
-  int cur_ln_nr = curbuf->b_op_start.lnum;
-  while (off < remaining) {
-    // CRLF
-    if (output[off] == CAR && output[off + 1] == NL) {
-      output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
-      size_t skip = off + 2;
-      output += skip;
-      remaining -= skip;
-      off = 0;
-      cur_ln_nr++;
-      continue;
-    } else if (output[off] == CAR || output[off] == NL) {
-      // Insert the line
-      output[off] = NUL;
-      // // Position the cursor relative to the end of the line, the
-      // // previous substitute may have inserted or deleted characters
-      // // before the cursor.
-      // len_change = (int)strlen(new_line) - (int)strlen(orig_line);
-      // curwin->w_cursor.col += len_change;
-      if (curbuf->b_op_start.lnum == cur_ln_nr
-          && curbuf->b_op_end.lnum == cur_ln_nr
-          && run_charwise) {
-        char *old_line = ml_get(cur_ln_nr);
-        size_t old_chars_indx = (size_t)curbuf->b_op_start.col;
-        char *old_txt = xcalloc(old_chars_indx, sizeof(char));
-        memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
-        char *new_line = concat_str(concat_str(old_txt, output),
-                                    old_line + curbuf->b_op_end.col + 1);
-        ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
-      } else if (curbuf->b_op_start.lnum == cur_ln_nr
-                 && run_charwise) {
-        char *old_line = ml_get(cur_ln_nr);
-        size_t old_chars_indx = (size_t)curbuf->b_op_start.col;
-        char *old_txt = xcalloc(old_chars_indx, sizeof(char));
-        memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
-        char *new_line = concat_str(old_txt, output);
-        ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
-      } else if (curbuf->b_op_end.lnum == cur_ln_nr
-                 && run_charwise) {
-        char *old_line = ml_get(cur_ln_nr);
-        char *new_line = concat_str(output, old_line + curbuf->b_op_end.col + 1);
-        ml_append(curwin->w_cursor.lnum++, new_line, (int)strlen(new_line) + 1, false);
-      } else {
-        ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
-      }
-      size_t skip = off + 1;
-      output += skip;
-      remaining -= skip;
-      off = 0;
-      cur_ln_nr++;
-      continue;
-    }
-
-    if (output[off] == NUL) {
-      // Translate NUL to NL
-      output[off] = NL;
-    }
-    off++;
-  }
-
-  if (eof) {
-    if (remaining) {
-      // append unfinished line
-      ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the line ending was missing
-      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-      output += remaining;
-    } else {
-      curbuf->b_no_eol_lnum = 0;
-    }
-  }
-
-  ui_flush();
-
-  return (size_t)(output - start);
 }
 
 static void shell_write_cb(Stream *stream, void *data, int status)

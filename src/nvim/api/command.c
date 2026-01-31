@@ -191,7 +191,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     }
     ADD_C(range, INTEGER_OBJ(ea.line2));
 
-    if (ea.addr_mode == kOmCharWise) {
+    if (ea.addr_type == ADDR_POSITIONS) {
       ADD_C(range, INTEGER_OBJ(ea.col1));
       ADD_C(range, INTEGER_OBJ(ea.col2));
     }
@@ -892,6 +892,9 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   if (eap->argt & EX_RANGE) {
     if (eap->addr_count == 1) {
       kv_printf(cmdline, "%" PRIdLINENR, eap->line2);
+    } else if (eap->addr_count == 4) {
+      kv_printf(cmdline, "%" PRIdLINENR ".%" PRIdCOLNR ",%" PRIdLINENR ".%" PRIdCOLNR,
+          eap->line1, eap->col1, eap->line2, eap->col2);
     } else if (eap->addr_count > 1) {
       kv_printf(cmdline, "%" PRIdLINENR ",%" PRIdLINENR, eap->line1, eap->line2);
       eap->addr_count = 2;  // Make sure address count is not greater than 2
