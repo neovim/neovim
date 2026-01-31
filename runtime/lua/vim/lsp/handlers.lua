@@ -255,11 +255,6 @@ RCS['textDocument/diagnostic'] = function(...)
 end
 
 --- @private
-RCS['textDocument/codeLens'] = function(...)
-  return vim.lsp.codelens.on_codelens(...)
-end
-
---- @private
 RCS['textDocument/inlayHint'] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end
@@ -652,6 +647,11 @@ RSC['window/showDocument'] = function(_, params, ctx)
     focus = params.takeFocus,
   })
   return { success = success or false }
+end
+
+---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
+RSC['workspace/codeLens/refresh'] = function(err, result, ctx)
+  return vim.lsp.codelens.on_refresh(err, result, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh

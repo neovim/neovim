@@ -604,6 +604,9 @@ function protocol.make_client_capabilities()
         dynamicRegistration = sysname == 'Darwin' or sysname == 'Windows_NT',
         relativePatternSupport = true,
       },
+      codeLens = {
+        refreshSupport = true,
+      },
       inlayHint = {
         refreshSupport = true,
       },
