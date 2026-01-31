@@ -506,30 +506,86 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   return region
 end
 
---- Defers calling {fn} until {timeout} ms passes.
+local function make_defer_autocmd(event, pattern, fn)
+  local function cb()
+    fn()
+    -- Execute exactly once, not once per event or pattern match
+    return true
+  end
+
+  local group = vim.api.nvim_create_augroup('nvim.defer_fn', { clear = false })
+  local opts = { group = group, pattern = pattern, callback = cb, nested = true }
+  return vim.api.nvim_create_autocmd(event, opts)
+end
+
+--- Defers calling {fn} until {when} condition.
 ---
---- Use to do a one-shot timer that calls {fn}
---- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
---- safe to call.
----@param fn function Callback to call once `timeout` expires
----@param timeout integer Number of milliseconds to wait before calling `fn`
----@return table timer luv timer object
-function vim.defer_fn(fn, timeout)
+--- Condition can be:
+--- - Integer - treated as a number of milliseconds to wait until before calling {fn}.
+---   Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are safe to call.
+--- - String starting with `event:` - {fn} will be called exactly once when first matching event
+---   triggers. Events must be listed after `event:`, like `event:Event1` or `event:Event1,Event2`.
+---   Can also specify |autocmd-pattern| after `~`: `event:Event1,Event2~pat1,pat2`.
+--- - String starting with `filetype:` - {fn} will be called exactly once when first matching
+---   filetype is set. Filetypes must be listed after `filetype:`, like `filetype:ft1` or
+---   `filetype:ft1,ft2`. Equivalent to `events:FileType~ft1,ft2` but with extra attention to
+---   working with filetypes.
+---
+---@param fn function Callback to call
+---@param when integer|string Condition describing when to execute {fn}
+---@return any If {when} is integer - |luv-timer-handle|. If {when} describes
+---event - autocommand id (number).
+function vim.defer_fn(fn, when)
   vim.validate('fn', fn, 'callable', true)
-  local timer = assert(vim.uv.new_timer())
-  timer:start(
-    timeout,
-    0,
-    vim.schedule_wrap(function()
+
+  if type(when) == 'number' then
+    local timer = assert(vim.uv.new_timer())
+    local function cb()
       if not timer:is_closing() then
         timer:close()
       end
-
       fn()
-    end)
-  )
+    end
+    timer:start(when, 0, vim.schedule_wrap(cb))
+    return timer
+  end
 
-  return timer
+  if type(when) ~= 'string' then
+    error('`when` should be number or string')
+  end
+
+  local events = when:match('^event:(.+)$') --- @type string?
+  if events then
+    local ev, patt = events:match('^(.+)~(.+)$') --- @type string?, string?
+    local event = vim.split(ev or events, ',', { trimempty = true })
+    local pattern = vim.split(patt or '', ',', { trimempty = true })
+    return make_defer_autocmd(event, pattern, fn)
+  end
+
+  local filetypes = when:match('^filetype:(.+)$')
+  if filetypes then
+    local ft_list = vim.split(filetypes, ',')
+    local function fn_and_redetect()
+      fn()
+
+      for _, buf_id in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.tbl_contains(ft_list, vim.bo[buf_id].filetype) then
+          vim.api.nvim_buf_call(buf_id, function()
+            -- For detect new filetypes
+            vim.cmd('filetype detect')
+
+            -- Force execution of 'ftplugin' scripts
+            vim.bo.filetype = vim.bo.filetype
+          end)
+        end
+      end
+    end
+
+    -- NOTE: Needs `vim.schedule_wrap()` for a correct redect
+    return make_defer_autocmd('FileType', ft_list, vim.schedule_wrap(fn_and_redetect))
+  end
+
+  error('Could not parse `when`')
 end
 
 --- Displays a notification to the user.
