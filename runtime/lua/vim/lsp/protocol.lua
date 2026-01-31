@@ -508,6 +508,10 @@ function protocol.make_client_capabilities()
         linkSupport = true,
         dynamicRegistration = true,
       },
+      documentLink = {
+        dynamicRegistration = false,
+        tooltipSupport = false,
+      },
       implementation = {
         linkSupport = true,
       },

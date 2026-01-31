@@ -307,6 +307,7 @@ LSP
 • Code lenses now display as virtual lines
 • Support for `workspace/codeLens/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
+• `gx` will use `textDocument/documentLink` if available.
 
 LUA
 
