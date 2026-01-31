@@ -536,7 +536,7 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
 ~~~ cmd
         :s/thee/the/
 ~~~
-    NOTE: The [:s](:s) command only changed the first match of "thee" in the line.
+    NOTE: The [:s](:s) command only changes the first match of "thee" in the line.
 
  3. Now type
 ~~~ cmd
