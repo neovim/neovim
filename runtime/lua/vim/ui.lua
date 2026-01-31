@@ -81,6 +81,10 @@ end
 ---Function that will be used for highlighting
 ---user inputs.
 ---@field highlight? function
+---
+---Show input in a floating window.
+---Note: completion and highlight are not supported in float mode.
+---@field float? vim.api.keyset.win_config
 
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
@@ -104,6 +108,27 @@ function M.input(opts, on_confirm)
   vim.validate('on_confirm', on_confirm, 'function')
 
   opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
+
+  if opts.float then
+    vim.validate('opts.float', opts.float, 'table')
+    local buf = vim.api.nvim_create_buf(false, false)
+    vim.bo[buf].buftype = 'prompt'
+    vim.bo[buf].bufhidden = 'wipe'
+    local prompt = opts.prompt or ''
+    local default = opts.default or ''
+    vim.fn.prompt_setprompt(buf, prompt)
+    local win = vim.api.nvim_open_win(buf, true, opts.float)
+    if #default > 0 then
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, { prompt .. default })
+    end
+    vim.fn.prompt_setcallback(buf, function(text)
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+      end
+      on_confirm(#text > 0 and text or nil)
+    end)
+    return
+  end
 
   -- Note that vim.fn.input({}) returns an empty string when cancelled.
   -- vim.ui.input() should distinguish aborting from entering an empty string.
