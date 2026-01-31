@@ -92,7 +92,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills job trapping SIGTERM', function()
-    skip(is_os('win'))
+    skip(is_os('win'), 'N/A for Windows')
     api.nvim_set_option_value('shell', 'sh', {})
     api.nvim_set_option_value('shellcmdflag', '-c', {})
     command(
@@ -118,7 +118,7 @@ describe('autocmd TermClose', function()
   end)
 
   it('kills PTY job trapping SIGHUP and SIGTERM', function()
-    skip(is_os('win'))
+    skip(is_os('win'), 'N/A for Windows')
     api.nvim_set_option_value('shell', 'sh', {})
     api.nvim_set_option_value('shellcmdflag', '-c', {})
     command(
