@@ -81,6 +81,10 @@ end
 ---Function that will be used for highlighting
 ---user inputs.
 ---@field highlight? function
+---
+---Hide user input if set to `true`. The {completion} and
+---{highlight} fields are ignored. See |inputsecret()|.
+---@field hide? boolean
 
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
@@ -110,7 +114,8 @@ function M.input(opts, on_confirm)
   local _canceled = vim.NIL
   opts = vim.tbl_extend('keep', opts, { cancelreturn = _canceled })
 
-  local ok, input = pcall(vim.fn.input, opts)
+  local inputfn = opts.hide and vim.fn.inputsecret or vim.fn.input
+  local ok, input = pcall(inputfn, opts)
   if not ok or input == _canceled then
     on_confirm(nil)
   else
