@@ -67,8 +67,13 @@ function SocketStream.open(file)
     _stream_error = nil,
   }, SocketStream)
   uv.pipe_connect(socket, file, function(err)
+    uv.stop()
     self._stream_error = self._stream_error or err
   end)
+  uv.run()
+  if self._stream_error then
+    error(self._stream_error)
+  end
   return self
 end
 
