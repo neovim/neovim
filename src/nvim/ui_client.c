@@ -227,7 +227,7 @@ static HlAttrs ui_client_dict2hlattrs(Dict d, bool rgb)
     return HLATTRS_INIT;
   }
 
-  HlAttrs attrs = dict2hlattrs(&dict, rgb, NULL, &err);
+  HlAttrs attrs = dict2hlattrs(&dict, rgb, NULL, NULL, &err);
 
   if (HAS_KEY(&dict, highlight, url)) {
     attrs.url = tui_add_url(tui, dict.url.data);

@@ -197,6 +197,7 @@ typedef struct {
   Boolean fg_indexed;
   Boolean bg_indexed;
   Boolean force;
+  Boolean update;
   String url;
 } Dict(highlight);
 
