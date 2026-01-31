@@ -11251,6 +11251,132 @@ describe('float window', function()
       eq('Vim(set):E474: Invalid argument: winborder=+,-,+,|,+,-,+,', pcall_err(command, [[set winborder=+,-,+,\|,+,-,+,]]))
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
     end)
+    it('cursor shape when the cursor is covered by a floating window', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two' })
+      api.nvim_win_set_cursor(0, { 2, 2 })
+      local buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, 0, true, { 'the only line' })
+      local win = api.nvim_open_win(buf, false, { relative = 'editor', row = 0, col = 0, height = 2, width = 20 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            tw^o                                     |
+            {0:~                                       }|*4
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:                    }|
+          ]],
+          win_pos = { [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 } },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 } },
+          mode = 'replace',
+        })
+      else
+        screen:expect {
+          grid = [[
+            {1:the only line       }                    |
+            {1:  ^                  }                    |
+            {0:~                                       }|*4
+                                                    |
+        ]],
+          mode = 'replace',
+        }
+      end
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two', 'three' })
+      feed('<Down>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            two                                     |
+            th^ree                                   |
+            {0:~                                       }|*3
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:                    }|
+          ]],
+          win_pos = { [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 } },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 } },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:the only line       }                    |
+          {1:                    }                    |
+          th^ree                                   |
+          {0:~                                       }|*3
+                                                  |
+        ]],
+          mode = 'normal',
+        }
+      end
+      -- Cursor shape on a lower z-index floating window
+      buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, 0, true, { 'highest' })
+      api.nvim_open_win(buf, false, { relative = 'editor', row = 0, col = 0, height = 2, width = 7, zindex = 150 })
+      api.nvim_set_current_win(win)
+      api.nvim_win_set_cursor(win, { 2, 1 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            two                                     |
+            three                                   |
+            {0:~                                       }|*3
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:^                    }|
+          ## grid 5
+            {1:highest}|
+            {1:       }|
+          ]],
+          win_pos = {
+            [2] = {
+              height = 6,
+              startcol = 0,
+              startrow = 0,
+              width = 40,
+              win = 1000,
+            },
+          },
+          float_pos = {
+            [5] = { 1002, 'NW', 1, 0, 0, true, 150, 2, 0, 0 },
+            [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 },
+          },
+          mode = 'replace',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:highesty line       }                    |
+          {1:^                    }                    |
+          three                                   |
+          {0:~                                       }|*3
+                                                  |
+        ]],
+          mode = 'replace',
+        }
+      end
+    end)
   end
 
   describe('with ext_multigrid and actual mouse grid', function()

@@ -471,3 +471,31 @@ win_T *win_float_create_preview(bool enter, bool new_buf)
   }
   return wp;
 }
+
+bool win_behind_float(win_T *wp)
+{
+  if (!wp) {
+    return false;
+  }
+
+  int cursor_row = wp->w_winrow + wp->w_wrow;
+  int cursor_col = wp->w_wincol + wp->w_wcol;
+
+  FOR_ALL_WINDOWS_IN_TAB(other_wp, curtab) {
+    if (!other_wp->w_floating || other_wp->w_config.hide || other_wp == wp) {
+      continue;
+    }
+
+    int win_top = other_wp->w_winrow;
+    int win_bottom = other_wp->w_winrow + other_wp->w_height;
+    int win_left = other_wp->w_wincol;
+    int win_right = other_wp->w_wincol + other_wp->w_width;
+
+    if (cursor_row >= win_top && cursor_row < win_bottom
+        && cursor_col >= win_left && cursor_col < win_right) {
+      return true;
+    }
+  }
+
+  return false;
+}
