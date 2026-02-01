@@ -722,6 +722,10 @@ vim.schedule({fn})                                            *vim.schedule()*
     Parameters: ~
       • {fn}  (`fun()`)
 
+    Return (multiple): ~
+        (`nil`) result
+        (`string?`) err Error message if scheduling failed, `nil` otherwise.
+
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
     (character) that {index} points to.
@@ -1272,7 +1276,7 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     Defers calling {fn} until {timeout} ms passes.
 
     Use to do a one-shot timer that calls {fn} Note: The {fn} is
-    |vim.schedule_wrap()|ped automatically, so API functions are safe to call.
+    |vim.schedule()|d automatically, so API functions are safe to call.
 
     Parameters: ~
       • {fn}       (`function`) Callback to call once `timeout` expires
