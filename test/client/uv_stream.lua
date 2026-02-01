@@ -67,8 +67,15 @@ function SocketStream.open(file)
     _stream_error = nil,
   }, SocketStream)
   uv.pipe_connect(socket, file, function(err)
+    uv.stop()
     self._stream_error = self._stream_error or err
   end)
+  -- On Windows, writing to the pipe doesn't work if it's not connected yet,
+  -- so wait for the connect callback to be called.
+  uv.run()
+  if self._stream_error then
+    error(self._stream_error)
+  end
   return self
 end
 
