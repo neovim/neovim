@@ -114,7 +114,7 @@ end)
 
 describe('TUI :detach', function()
   it('does not stop server', function()
-    local job_opts = { env = env_notermguicolors }
+    local job_opts = { env = t.shallowcopy(env_notermguicolors) }
 
     if is_os('win') then
       -- TODO(justinmk): on Windows,
@@ -259,8 +259,7 @@ describe('TUI :restart', function()
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
       '--cmd',
       'echo getpid()',
-    }) -- FIXME: why does using env_notermguicolors cause immediate exit on Windows?
-    -- }, { env = env_notermguicolors })
+    }, { env = env_notermguicolors })
 
     --- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
     --- Remove this function when that's fixed.
