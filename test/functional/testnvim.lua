@@ -510,8 +510,8 @@ function M.new_session(keep, ...)
     end
     if delta > 500 then
       print(
-        ('Nvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
-          .. 'This indicates a likely problem with the test even if it passed!\n'
+        ('\nNvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
+          .. 'This indicates a likely problem with the test even if it passed!'
       )
       io.stdout:flush()
     end

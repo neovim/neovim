@@ -178,6 +178,8 @@ function vim.iconv(str, from, to, opts) end
 --- Schedules {fn} to be invoked soon by the main event-loop. Useful
 --- to avoid |textlock| or other temporary restrictions.
 --- @param fn fun()
+--- @return nil result
+--- @return string? err Error message if scheduling failed, `nil` otherwise.
 function vim.schedule(fn) end
 
 --- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
