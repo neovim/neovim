@@ -1,6 +1,7 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local api = vim.api
+local validate = vim.validate
 local M = {}
 
 --- bufnr → true|nil
@@ -325,6 +326,8 @@ end
 ---
 --- @param opts? vim.lsp.codelens.refresh.Opts Optional fields
 function M.refresh(opts)
+  validate('opts', opts, 'table', true)
+
   opts = opts or {}
   local bufnr = opts.bufnr and vim._resolve_bufnr(opts.bufnr)
   local buffers = bufnr and { bufnr }
