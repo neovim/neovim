@@ -354,4 +354,31 @@ function M.refresh(opts)
   end
 end
 
+--- |lsp-handler| for the method `workspace/codeLens/refresh`
+---@param ctx lsp.HandlerContext
+---@private
+function M.on_refresh(err, _, ctx)
+  if err then
+    return vim.NIL
+  end
+
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  if not client then
+    return vim.NIL
+  end
+
+  local buffers = vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
+
+  for _, buf in ipairs(buffers) do
+    if not active_refreshes[buf] then
+      local params = {
+        textDocument = util.make_text_document_params(buf),
+      }
+      active_refreshes[buf] = true
+
+      client:request('textDocument/codeLens', params, M.on_codelens, buf)
+    end
+  end
+end
+
 return M

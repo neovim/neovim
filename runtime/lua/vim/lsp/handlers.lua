@@ -669,6 +669,11 @@ RSC['workspace/semanticTokens/refresh'] = function(err, result, ctx)
   return vim.lsp.semantic_tokens._refresh(err, result, ctx)
 end
 
+---@see https://microsoft.github.io/language-server-protocol/specification/#codeLens_refresh
+RSC['workspace/codeLens/refresh'] = function(err, result, ctx)
+  return vim.lsp.codelens.on_refresh(err, result, ctx)
+end
+
 --- @nodoc
 --- @type table<string, lsp.Handler>
 M = vim.tbl_extend('force', M, RSC, NSC, RCS)

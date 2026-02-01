@@ -577,6 +577,9 @@ function protocol.make_client_capabilities()
       },
     },
     workspace = {
+      codeLens = {
+        refreshSupport = true,
+      },
       symbol = {
         dynamicRegistration = false,
         symbolKind = {
