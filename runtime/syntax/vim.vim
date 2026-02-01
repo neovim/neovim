@@ -1156,11 +1156,11 @@ syn region	vimLetVarSubscript contained
       \ skipwhite nextgroup=vimLetVarSubscript,vimLetHeredoc
       \ contains=@vimExprList
 
-VimL syn keyword	vimUnlet		unl[et]	skipwhite nextgroup=vimUnletBang,vimUnletVars
+syn keyword	vimUnlet		unl[et]	skipwhite nextgroup=vimUnletBang,vimUnletVars
 syn match	vimUnletBang	contained	"\a\@1<=!"	skipwhite nextgroup=vimUnletVars
 syn region	vimUnletVars	contained
-      \ start="$\I\|\h" skip=+\n\s*\%(\\\|"\\ \)\|^\s*"\\ + end="$" end="\ze[|"]"
-      \ nextgroup=vimCmdSep,vimComment
+      \ start="$\I\|\h" skip=+\n\s*\%(\\\|["#]\\ \)\|^\s*["#]\\ + end="$" end=+\ze\s*[|"#]+
+      \ skipwhite nextgroup=vimCmdSep,vimComment,vim9Comment
       \ contains=@vimContinue,vimEnvvar,vimVar,vimVimVar
 
 " TODO: type error after register or environment variables (strings)
