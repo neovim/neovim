@@ -13222,7 +13222,8 @@ M.funcs = {
     desc = [=[
       Go to window with ID {expr}.  This may also change the current
       tabpage.
-      Return TRUE if successful, FALSE if the window cannot be found.
+      Return TRUE if successful, FALSE if the window cannot be
+      found.
 
     ]=],
     name = 'win_gotoid',

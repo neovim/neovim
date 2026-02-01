@@ -209,8 +209,9 @@ vim.o.aw = vim.o.autowrite
 vim.go.autowrite = vim.o.autowrite
 vim.go.aw = vim.go.autowrite
 
---- Like 'autowrite', but also used for commands ":edit", ":enew", ":quit",
---- ":qall", ":exit", ":xit", ":recover" and closing the Vim window.
+--- Like 'autowrite', but also used for commands ":edit", ":enew",
+--- ":quit", ":qall", ":exit", ":xit", ":recover" and closing the Vim
+--- window.
 --- Setting this option also implies that Vim behaves like 'autowrite' has
 --- been set.
 ---
@@ -1401,8 +1402,9 @@ vim.bo.ci = vim.bo.copyindent
 --- 		This makes "y0" fail in the first column.
 --- 							*cpo-f*
 --- 	f	When included, a ":read" command with a file name
---- 		argument will set the file name for the current buffer,
---- 		if the current buffer doesn't have a file name yet.
+--- 		argument will set the file name for the current
+--- 		buffer, if the current buffer doesn't have a file name
+--- 		yet.
 --- 							*cpo-F*
 --- 	F	When included, a ":write" command with a file name
 --- 		argument will set the file name for the current
@@ -1836,8 +1838,8 @@ vim.go.dex = vim.go.diffexpr
 --- 	hiddenoff	Do not use diff mode for a buffer when it
 --- 			becomes hidden.
 ---
---- 	iblank		Ignore changes where lines are all blank.  Adds
---- 			the "-B" flag to the "diff" command if
+--- 	iblank		Ignore changes where lines are all blank.
+--- 			Adds the "-B" flag to the "diff" command if
 --- 			'diffexpr' is empty.  Check the documentation
 --- 			of the "diff" command for what this does
 --- 			exactly.
@@ -2451,9 +2453,9 @@ vim.bo.ff = vim.bo.fileformat
 ---   edit a file, a check is done for the <EOL>:
 ---   1. If all lines end in <CR><NL>, and 'fileformats' includes "dos",
 ---      'fileformat' is set to "dos".
----   2. If a <NL> is found and 'fileformats' includes "unix", 'fileformat'
----      is set to "unix".  Note that when a <NL> is found without a
----      preceding <CR>, "unix" is preferred over "dos".
+---   2. If a <NL> is found and 'fileformats' includes "unix",
+---      'fileformat' is set to "unix".  Note that when a <NL> is found
+---      without a preceding <CR>, "unix" is preferred over "dos".
 ---   3. If 'fileformat' has not yet been set, and if a <CR> is found, and
 ---      if 'fileformats' includes "mac", 'fileformat' is set to "mac".
 ---      This means that "mac" is only chosen when:
@@ -4251,8 +4253,8 @@ vim.o.mef = vim.o.makeef
 vim.go.makeef = vim.o.makeef
 vim.go.mef = vim.go.makeef
 
---- Encoding used for reading the output of external commands.  When empty,
---- encoding is not converted.
+--- Encoding used for reading the output of external commands.  When
+--- empty, encoding is not converted.
 --- This is used for `:make`, `:lmake`, `:grep`, `:lgrep`, `:grepadd`,
 --- `:lgrepadd`, `:cfile`, `:cgetfile`, `:caddfile`, `:lfile`, `:lgetfile`,
 --- and `:laddfile`.
@@ -6850,9 +6852,10 @@ vim.wo.stc = vim.wo.statuscolumn
 ---       highlighting is used, also for the statusline of non-current
 ---       windows.
 --- * -   Set highlight group to User{N}, where {N} is taken from the
----       minwid field, e.g. %1*.  Restore normal highlight with %* or %0*.
----       The difference between User{N} and StatusLine will be applied to
----       StatusLineNC for the statusline of non-current windows.
+---       minwid field, e.g. %1*.  Restore normal highlight with %* or
+---       %0*.  The difference between User{N} and StatusLine will be
+---       applied to StatusLineNC for the statusline of non-current
+---       windows.
 ---       The number N must be between 1 and 9.  See `hl-User1..9`
 ---
 --- When displaying a flag, Vim removes the leading comma, if any, when
@@ -7589,9 +7592,9 @@ vim.bo.udf = vim.bo.undofile
 
 --- Maximum number of changes that can be undone.  Since undo information
 --- is kept in memory, higher numbers will cause more memory to be used.
---- Nevertheless, a single change can already use a large amount of memory.
---- Set to 0 for Vi compatibility: One level of undo and "u" undoes
---- itself:
+--- Nevertheless, a single change can already use a large amount of
+--- memory.  Set to 0 for Vi compatibility: One level of undo and "u"
+--- undoes itself:
 ---
 --- ```vim
 --- 	set ul=0
@@ -7908,10 +7911,11 @@ vim.go.wildchar = vim.o.wildchar
 vim.go.wc = vim.go.wildchar
 
 --- 'wildcharm' works exactly like 'wildchar', except that it is
---- recognized when used inside a macro.  You can find "spare" command-line
---- keys suitable for this option by looking at `ex-edit-index`.  Normally
---- you'll never actually type 'wildcharm', just use it in mappings that
---- automatically invoke completion mode, e.g.:
+--- recognized when used inside a macro.  You can find "spare"
+--- command-line keys suitable for this option by looking at
+--- `ex-edit-index`.  Normally you'll never actually type 'wildcharm',
+--- just use it in mappings that automatically invoke completion mode,
+--- e.g.:
 ---
 --- ```vim
 --- 	set wcm=<C-Z>
