@@ -649,6 +649,10 @@ can go back to the unfiltered list using the |:colder|/|:lolder| command.
 			errors.  If the window is already open and there are
 			no recognized errors, close the window.
 
+			When opening the window and [height] is given, the
+			window becomes that high (if there is room).  When
+			[height] is omitted the window is made ten lines high.
+
 							*:lw* *:lwindow*
 :lw[indow] [height]	Same as ":cwindow", except use the window showing the
 			location list for the current window.
