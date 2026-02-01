@@ -26,7 +26,7 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 
 msgid "E249: Window layout changed unexpectedly"
-msgstr "E249: Розміщення вікна несподівано змінилася"
+msgstr "E249: Розміщення вікна несподівано змінилося"
 
 msgid "E163: There is only one file to edit"
 msgstr "E163: Редагується лише один файл"
@@ -149,7 +149,7 @@ msgid "E84: No modified buffer found"
 msgstr "E84: Жоден буфер не змінено"
 
 msgid "E85: There is no listed buffer"
-msgstr "E85: У списку немає буферів"
+msgstr "E85: У списку немає показуваних буферів"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Це вже останній буфер"
