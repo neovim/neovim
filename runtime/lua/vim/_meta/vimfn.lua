@@ -10924,7 +10924,8 @@ function vim.fn.win_gettype(nr) end
 
 --- Go to window with ID {expr}.  This may also change the current
 --- tabpage.
---- Return TRUE if successful, FALSE if the window cannot be found.
+--- Return TRUE if successful, FALSE if the window cannot be
+--- found.
 ---
 --- @param expr integer
 --- @return 0|1
