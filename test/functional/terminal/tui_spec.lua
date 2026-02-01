@@ -291,18 +291,10 @@ describe('TUI :restart', function()
     screen_expect(s0)
     gui_running_check()
 
-    local server_session --[[@type test.Session]]
-    local server_pid --[[@type any]]
-    -- FIXME: On Windows connect() hangs.
-    if not is_os('win') then
-      server_session = n.connect(server_pipe)
-      _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
-    end
+    local server_session = n.connect(server_pipe)
+    local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
 
     local function restart_pid_check()
-      if is_os('win') then
-        return
-      end
       server_session:close()
       server_session = n.connect(server_pipe)
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
