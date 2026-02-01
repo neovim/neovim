@@ -789,12 +789,12 @@ function M.references(context, opts)
           bufnr = bufnr,
         },
       }
-      if opts.loclist then
-        vim.fn.setloclist(0, {}, ' ', list)
-        vim.cmd.lopen()
-      elseif opts.on_list then
+      if opts.on_list then
         assert(vim.is_callable(opts.on_list), 'on_list is not a function')
         opts.on_list(list)
+      elseif opts.loclist then
+        vim.fn.setloclist(0, {}, ' ', list)
+        vim.cmd.lopen()
       else
         vim.fn.setqflist({}, ' ', list)
         vim.cmd('botright copen')
