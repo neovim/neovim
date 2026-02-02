@@ -65,6 +65,51 @@ describe('fileio', function()
     return screen
   end
 
+  it('W13 warning prompts Load All(!) for multiple files #1785', function()
+    clear()
+
+    local screen = Screen.new(60, 4)
+    command('set shortmess-=F')
+
+    command('e Xtest-loadall1')
+    screen:expect([[
+    ^                                                            |
+    {1:~                                                           }|*2
+    "Xtest-loadall1" [New]                                      |
+    ]])
+    command('e Xtest-loadall2')
+    screen:expect([[
+    ^                                                            |
+    {1:~                                                           }|*2
+    "Xtest-loadall2" [New]                                      |
+    ]])
+
+    write_file('Xtest-loadall1', 'foobar1')
+    write_file('Xtest-loadall2', 'foobar2')
+
+    feed(':checkt<cr>')
+    screen:expect([[
+    :checkt                                                     |
+    {6:W13: Warning: File "Xtest-loadall2" has been created after e}|
+    {6:diting started}                                              |
+    {6:[O]K, (L)oad File, Load All(!), Load File (a)nd Options: }^   |
+    ]])
+
+    feed('!')
+    screen:expect([[
+    ^foobar2                                                     |
+    {1:~                                                           }|*2
+    "Xtest-loadall2" [noeol] 1L, 7B                             |
+    ]])
+
+    feed(':bp<cr>')
+    screen:expect([[
+    ^foobar1                                                     |
+    {1:~                                                           }|*2
+    "Xtest-loadall1" line 1 of 1 --100%-- col 1                 |
+    ]])
+  end)
+
   it("fsync() with 'nofsync' #8304", function()
     clear({ args = { '--cmd', 'set nofsync directory=Xtest_startup_swapdir' } })
 

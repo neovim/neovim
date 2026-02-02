@@ -2836,6 +2836,36 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   return retval;
 }
 
+bool buf_check_W13(buf_T *buf)
+{
+  int retval = 0;
+
+  // If its a terminal, there is no file name, the buffer is not loaded,
+  // 'buftype' is set, we are in the middle of a save or being called
+  // recursively: ignore this buffer.
+  if (buf->terminal
+      || buf->b_ffname == NULL
+      || buf->b_ml.ml_mfp == NULL
+      || !bt_normal(buf)
+      || buf->b_saving) {
+    return 0;
+  }
+
+  FileInfo file_info;
+  bool file_info_ok;
+  if (!(buf->b_flags & BF_NOTEDITED)
+      && buf->b_mtime != 0
+      && (!(file_info_ok = os_fileinfo(buf->b_ffname, &file_info))
+          || time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns)
+          || (int)file_info.stat.st_mode !=
+          buf->b_orig_mode)) {} else if ((buf->b_flags & BF_NEW) && !(buf->b_flags & BF_NEW_W)
+                                         && os_path_exists(buf->b_ffname)) {
+    retval = 1;
+    buf->b_flags |= BF_NEW_W;
+  }
+  return retval;
+}
+
 /// Check if buffer "buf" has been changed.
 /// Also check if the file for a new buffer unexpectedly appeared.
 ///
@@ -2853,6 +2883,7 @@ int buf_check_timestamp(buf_T *buf)
   enum {
     RELOAD_NONE,
     RELOAD_NORMAL,
+    RELOAD_ALL,
     RELOAD_DETECT,
   } reload = RELOAD_NONE;
 
@@ -3010,12 +3041,15 @@ int buf_check_timestamp(buf_T *buf)
         snprintf(tbuf + tbuflen, tbufsize - (size_t)tbuflen, "\n%s", mesg2);
       }
       switch (do_dialog(VIM_WARNING, _("Warning"), tbuf,
-                        _("&OK\n&Load File\nLoad File &and Options"),
+                        _("&OK\n&Load File\nLoad All&!\nLoad File &and Options"),
                         1, NULL, true)) {
       case 2:
         reload = RELOAD_NORMAL;
         break;
       case 3:
+        reload = RELOAD_ALL;
+        break;
+      case 4:
         reload = RELOAD_DETECT;
         break;
       }
@@ -3046,7 +3080,7 @@ int buf_check_timestamp(buf_T *buf)
     xfree(path);
   }
 
-  if (reload != RELOAD_NONE) {
+  if (reload != RELOAD_NONE && reload != RELOAD_ALL) {
     // Reload the buffer.
     buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
     if (buf->b_p_udf && buf->b_ffname != NULL) {
@@ -3055,6 +3089,32 @@ int buf_check_timestamp(buf_T *buf)
       // Any existing undo file is unusable, write it now.
       u_compute_hash(buf, hash);
       u_write_undo(NULL, false, buf, hash);
+    }
+  } else if (reload == RELOAD_ALL) {
+    // Reload all buffers that are created outside the current nvim session.
+    // caonima
+    FOR_ALL_BUFFERS(cur_buf) {
+      // printf("test: %d\n", buf_check_W13(cur_buf));
+      if (cur_buf == buf) {
+        buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
+        if (buf->b_p_udf && buf->b_ffname != NULL) {
+          uint8_t hash[UNDO_HASH_SIZE];
+
+          // Any existing undo file is unusable, write it now.
+          u_compute_hash(buf, hash);
+          u_write_undo(NULL, false, buf, hash);
+        }
+      } else if (buf_check_W13(cur_buf)) {
+        // Reload the buffer.
+        buf_reload(cur_buf, orig_mode, reload == RELOAD_DETECT);
+        if (cur_buf->b_p_udf && buf->b_ffname != NULL) {
+          uint8_t hash[UNDO_HASH_SIZE];
+
+          // Any existing undo file is unusable, write it now.
+          u_compute_hash(buf, hash);
+          u_write_undo(NULL, false, buf, hash);
+        }
+      }
     }
   }
 
