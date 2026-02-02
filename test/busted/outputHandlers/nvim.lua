@@ -107,13 +107,13 @@ return function(options)
   local errorCount = 0
 
   local naCheck = function(pending)
-    if pending.name:find(' N/A[: ]') or pending.name:find(' N/A$') then
+    if vim.list_contains(vim.split(pending.name, '[ :]'), 'N/A') then
       return true
     end
     if type(pending.message) ~= 'string' then
       return false
     end
-    if pending.message:find(' N/A[: ]') or pending.message:find(' N/A$') then
+    if vim.list_contains(vim.split(pending.message, '[ :]'), 'N/A') then
       return true
     end
     return false
