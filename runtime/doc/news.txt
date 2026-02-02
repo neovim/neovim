@@ -60,6 +60,7 @@ API
 
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|, |vim.lsp.buf.definition()|,
   and |vim.lsp.buf.implementation()| now follows 'switchbuf'.
+• |nvim_set_hl()| supports config font.
 
 BUILD
 

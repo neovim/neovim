@@ -208,6 +208,7 @@ typedef struct {
   Boolean force;
   Boolean update;
   String url;
+  String font;
 } Dict(highlight);
 
 typedef struct {
