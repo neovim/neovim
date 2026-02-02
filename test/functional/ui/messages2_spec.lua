@@ -102,11 +102,28 @@ describe('messages2', function()
       {1:~                                                    }|*12
                                ^R         1,1           All|
     ]])
-    feed('-')
+    feed('-<Esc>')
     screen:expect([[
-      x^                                                    |
+      ^x                                                    |
       {1:~                                                    }|*12
-                                          1,2           All|
+                                          1,1           All|
+    ]])
+    -- Switching tabpage closes expanded cmdline #37659.
+    command('tabnew | echo "foo\nbar"')
+    screen:expect([[
+      {24: + [No Name] }{5: }{100:2}{5: [No Name] }{2:                          }{24:X}|
+      ^                                                     |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
+    ]])
+    feed('gt')
+    screen:expect([[
+      {5: + [No Name] }{24: [No Name] }{2:                            }{24:X}|
+      ^x                                                    |
+      {1:~                                                    }|*11
+      foo [+1]                            1,1           All|
     ]])
   end)
 
