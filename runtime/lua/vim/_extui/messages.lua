@@ -469,25 +469,20 @@ end
 ---@param type? 'cmd'|'dialog'|'msg'|'pager' Type of to be positioned window (nil for all).
 function M.set_pos(type)
   local function win_set_pos(win)
+    local cfg = { hide = false, relative = 'laststatus', col = 10000 }
     local texth = type and api.nvim_win_text_height(win, {}) or {}
-    local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
     local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-    local border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
-    local config = {
-      hide = false,
-      relative = (win == ext.wins.pager or win == ext.wins.dialog) and 'editor' or 'laststatus',
-      border = border,
-      height = height,
-      row = (win == ext.wins.pager or win == ext.wins.dialog) and o.lines - o.cmdheight or 0,
-      col = 10000,
-      focusable = type == 'cmd' or nil, -- Allow entering the cmdline window.
-    }
-    api.nvim_win_set_config(win, config)
+    cfg.height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
+    cfg.border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
+    cfg.focusable = type == 'cmd' or nil
+    cfg.row = (win == ext.wins.msg and 0 or 1) - ext.cmd.wmnumode
+    cfg.row = cfg.row - ((win == ext.wins.pager and o.laststatus == 3) and 1 or 0)
+    api.nvim_win_set_config(win, cfg)
 
     if type == 'cmd' and not cmd_on_key then
       -- Temporarily showing a full message in the cmdline, until next key press.
       local save_spill = M.virt.msg[M.virt.idx.spill][1]
-      local spill = texth.all > height and (' [+%d]'):format(texth.all - height)
+      local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       set_virttext('msg', 'cmd')
       M.virt.msg[M.virt.idx.spill][1] = save_spill
@@ -554,7 +549,7 @@ function M.set_pos(type)
       end)
     elseif type == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
-      local row = (texth.all > height and texth.end_row or 0) + 1
+      local row = (texth.all > cfg.height and texth.end_row or 0) + 1
       api.nvim_win_set_cursor(ext.wins.msg, { row, 0 })
     elseif type == 'pager' then
       if fn.getcmdwintype() ~= '' then
@@ -571,10 +566,10 @@ function M.set_pos(type)
         api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
           callback = function(ev)
             if api.nvim_win_is_valid(ext.wins.pager) then
-              local cfg = ev.event == 'CmdwinLeave' and config
+              local config = ev.event == 'CmdwinLeave' and cfg
                 or ev.event == 'WinEnter' and { hide = true }
                 or { relative = 'win', win = 0, row = 0, col = 0 }
-              api.nvim_win_set_config(ext.wins.pager, cfg)
+              api.nvim_win_set_config(ext.wins.pager, config)
             end
             return ev.event == 'WinEnter'
           end,
