@@ -41,6 +41,7 @@ typedef struct {
   int16_t cterm_fg_color, cterm_bg_color;
   int32_t hl_blend;
   int32_t url;
+  int32_t font;
 } HlAttrs;
 
 #define HLATTRS_INIT (HlAttrs) { \
@@ -53,6 +54,7 @@ typedef struct {
   .cterm_bg_color = 0, \
   .hl_blend = -1, \
   .url = -1, \
+  .font = -1, \
 }
 
 /// Values for index in highlight_attr[].
