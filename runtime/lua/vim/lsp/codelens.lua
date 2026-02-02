@@ -123,9 +123,10 @@ function Provider:handler(err, result, ctx)
   self.version = ctx.version
 end
 
----@private
+---@package
 ---@param client_id? integer
-function Provider:request(client_id)
+---@param on_response? function
+function Provider:request(client_id, on_response)
   ---@type lsp.CodeLensParams
   local params = { textDocument = util.make_text_document_params(self.bufnr) }
   for id in pairs(self.client_state) do
@@ -133,6 +134,10 @@ function Provider:request(client_id)
       local client = assert(vim.lsp.get_client_by_id(id))
       client:request('textDocument/codeLens', params, function(...)
         self:handler(...)
+
+        if on_response then
+          on_response()
+        end
       end, self.bufnr)
     end
   end
@@ -402,6 +407,28 @@ function M.run(opts)
       end
     end)
   end
+end
+
+--- |lsp-handler| for the method `workspace/codeLens/refresh`
+---
+---@private
+---@type lsp.Handler
+function M.on_refresh(err, _, ctx)
+  if err then
+    return vim.NIL
+  end
+
+  for bufnr, provider in pairs(Provider.active) do
+    for client_id in pairs(provider.client_state) do
+      if client_id == ctx.client_id then
+        provider:request(client_id, function()
+          provider.row_version = {}
+          vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+        end)
+      end
+    end
+  end
+  return vim.NIL
 end
 
 ---@deprecated

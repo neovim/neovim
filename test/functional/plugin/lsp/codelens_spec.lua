@@ -9,6 +9,7 @@ local eq = t.eq
 local api = n.api
 local exec_lua = n.exec_lua
 local insert = n.insert
+local feed = n.feed
 
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition
@@ -240,6 +241,58 @@ describe('vim.lsp.codelens', function()
         },
       },
     }, result)
+  end)
+
+  it('refreshes code lenses on request', function()
+    feed('ggdd')
+
+    screen:expect([[
+          ^a: i32, {1:1 implementation}                         |
+          b: String,                                       |
+      }                                                    |
+                                                           |
+      impl S {                                             |
+          fn new(a: i32, b: String) -> Self {              |
+              S { a, b }                                   |
+          }                                                |
+      }                                                    |
+                                                           |
+      fn main() { {1:▶︎ Run }                                   |
+          let s = S::new(42, String::from("Hello, world!"))|
+      ;                                                    |
+          println!("S.a: {}, S.b: {}", s.a, s.b);          |
+      }                                                    |
+                                                           |
+      {1:~                                                    }|*3
+                                                           |
+    ]])
+    exec_lua(function()
+      vim.lsp.codelens.on_refresh(
+        nil,
+        nil,
+        { method = 'workspace/codeLens/refresh', client_id = client_id }
+      )
+    end)
+    screen:expect([[
+          ^a: i32, {1:1 implementation}                         |
+          b: String,                                       |
+      }                                                    |
+                                                           |
+      impl S {                                             |
+          fn new(a: i32, b: String) -> Self {              |
+              S { a, b }                                   |
+          }                                                |
+      }                                                    |
+                                                           |
+      fn main() {                                          |
+          let s = S::new(42, String::from("Hello, world!"))|
+      ; {1:▶︎ Run }                                             |
+          println!("S.a: {}, S.b: {}", s.a, s.b);          |
+      }                                                    |
+                                                           |
+      {1:~                                                    }|*3
+                                                           |
+    ]])
   end)
 
   after_each(function()
