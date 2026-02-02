@@ -235,7 +235,6 @@ describe(':terminal buffer', function()
   end)
 
   it('requires bang (!) to close a running job #15402', function()
-    skip(is_os('win'), 'Test freezes the CI and makes it time out')
     eq('Vim(wqall):E948: Job still running (add ! to end the job)', exc_exec('wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(

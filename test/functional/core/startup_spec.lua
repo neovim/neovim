@@ -734,7 +734,7 @@ describe('startup', function()
     exec([[
       func Normalize(data) abort
         " Windows: remove ^M and term escape sequences
-        return map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        return mapnew(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
       endfunc
       func OnOutput(id, data, event) dict
         let g:stdout = Normalize(a:data)

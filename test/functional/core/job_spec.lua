@@ -48,12 +48,16 @@ describe('jobs', function()
     function! Normalize(data) abort
       " Windows: remove ^M and term escape sequences
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        \ ? mapnew(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
       let userdata = get(self, 'user')
       let data     = Normalize(a:data)
+      " If Normalize() made non-empty data empty, doesn't send a notification.
+      if type([]) == type(data) && len(data) == 1 && !empty(a:data[0]) && empty(data[0])
+        return
+      endif
       call rpcnotify(g:channel, a:event, userdata, data)
     endfunction
     let g:job_opts = {
@@ -719,7 +723,7 @@ describe('jobs', function()
     source([[
     function PrintArgs(a1, a2, id, data, event)
       " Windows: remove ^M
-      let normalized = map(a:data, 'substitute(v:val, "\r", "", "g")')
+      let normalized = mapnew(a:data, 'substitute(v:val, "\r", "", "g")')
       call rpcnotify(g:channel, '1', a:a1,  a:a2, normalized, a:event)
     endfunction
     let Callback = function('PrintArgs', ["foo", "bar"])

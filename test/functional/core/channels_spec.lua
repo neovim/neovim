@@ -21,7 +21,7 @@ describe('channels', function()
     function! Normalize(data) abort
       " Windows: remove ^M
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
+        \ ? mapnew(a:data, 'substitute(v:val, "\r", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict

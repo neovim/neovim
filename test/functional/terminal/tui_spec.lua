@@ -170,13 +170,11 @@ describe('TUI :detach', function()
       nvim_set .. ' laststatus=2 background=dark',
     }, job_opts)
 
-    --- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
-    --- Remove the {MATCH:} when that's fixed.
     tt.feed_data('iHello, World')
     screen:expect([[
       Hello, World^                                      |
       {100:~                                                 }|*3
-      {3:[No Name] [+]{MATCH: *}}{MATCH: *}|
+      {3:[No Name] [+]                                     }|
       {5:-- INSERT --}                                      |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -267,7 +265,6 @@ describe('TUI :restart', function()
     --- @param s string
     local function screen_expect(s)
       if is_os('win') then
-        s = s:gsub(' +%}%|\n', '{MATCH: *}}{MATCH: *}|\n')
         s = s:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
         s = s:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
       end
@@ -527,10 +524,6 @@ describe('TUI :connect', function()
   end)
 end)
 
-if t.skip(is_os('win')) then
-  return
-end
-
 describe('TUI', function()
   local screen --[[@type test.functional.ui.screen]]
   local child_session --[[@type test.Session]]
@@ -625,6 +618,7 @@ describe('TUI', function()
   end)
 
   it('accepts resize while pager is active', function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     child_session:request(
       'nvim_exec2',
       [[
@@ -829,6 +823,7 @@ describe('TUI', function()
   end)
 
   it('interprets <Esc><Nul> as <M-C-Space> #17198', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows')
     feed_data('i\022\027\000')
     screen:expect([[
       <M-C-Space>^                                       |
@@ -886,6 +881,7 @@ describe('TUI', function()
   end)
 
   local function test_mouse_wheel(esc)
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     child_session:request(
       'nvim_exec2',
       [[
@@ -1617,6 +1613,7 @@ describe('TUI', function()
   end)
 
   it('paste: normal-mode (+CRLF #10872)', function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     feed_data(':set ruler | echo')
     wait_for_mode('c')
     feed_data('\n')
@@ -1854,6 +1851,7 @@ describe('TUI', function()
   end)
 
   it("paste: 'nomodifiable' buffer", function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     child_exec_lua([[
       vim.bo.modifiable = false
       -- Truncate the error message to hide the line number
@@ -1995,6 +1993,7 @@ describe('TUI', function()
   end)
 
   it('paste: split "start paste" code', function()
+    t.skip(is_os('win'), 'FIXME: wrong behavior on Windows')
     feed_data('i')
     wait_for_mode('i')
     -- Send split "start paste" sequence.
@@ -2010,6 +2009,7 @@ describe('TUI', function()
   end)
 
   it('paste: split "stop paste" code', function()
+    t.skip(is_os('win'), 'FIXME: wrong behavior on Windows')
     feed_data('i')
     wait_for_mode('i')
     -- Send split "stop paste" sequence.
@@ -2062,6 +2062,7 @@ describe('TUI', function()
   end)
 
   it('allows termguicolors to be set at runtime', function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     screen:set_option('rgb', true)
     feed_data(':hi SpecialKey ctermfg=3 guifg=SeaGreen\n')
     feed_data('i')
@@ -2186,7 +2187,7 @@ describe('TUI', function()
 
   it('in nvim_list_uis(), sets nvim_set_client_info()', function()
     -- $TERM in :terminal.
-    local exp_term = is_os('bsd') and 'xterm' or 'xterm-256color'
+    local exp_term = (is_os('bsd') or is_os('win')) and 'xterm' or 'xterm-256color'
     local ui_chan = 1
     local expected = {
       {
@@ -2251,6 +2252,7 @@ describe('TUI', function()
   end)
 
   it('allows grid to assume wider ambiwidth chars than host terminal', function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     child_session:request(
       'nvim_buf_set_lines',
       0,
@@ -2295,6 +2297,7 @@ describe('TUI', function()
   end)
 
   it('allows grid to assume wider non-ambiwidth chars than host terminal', function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     child_session:request(
       'nvim_buf_set_lines',
       0,
@@ -2433,7 +2436,7 @@ describe('TUI', function()
 
   it('no assert failure on deadly signal #21896', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect([[
+    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
       Nvim: Caught deadly signal 'SIGTERM'              |
                                                         |
       [Process exited 1]^                                |
@@ -2445,7 +2448,9 @@ describe('TUI', function()
   it('exit status 1 and error message with deadly signal sent to server', function()
     local _, server_pid = child_session:request('nvim_call_function', 'getpid', {})
     exec_lua([[vim.uv.kill(..., 'sigterm')]], server_pid)
-    screen:expect({ any = vim.pesc([[Nvim: Caught deadly signal 'SIGTERM']]) })
+    if not is_os('win') then
+      screen:expect({ any = vim.pesc([[Nvim: Caught deadly signal 'SIGTERM']]) })
+    end
     screen:expect({ any = vim.pesc('[Process exited 1]') })
   end)
 
@@ -2505,6 +2510,9 @@ describe('TUI', function()
   end)
 
   it('redraws on SIGWINCH even if terminal size is unchanged #23411', function()
+    -- On Windows, SIGWINCH cannot be sent as a signal with uv_kill(), while
+    -- SIGWINCH handlers are only called on terminal resize.
+    t.skip(is_os('win'), 'N/A for Windows')
     child_session:request('nvim_echo', { { 'foo' } }, false, {})
     screen:expect([[
       ^                                                  |
@@ -2577,6 +2585,7 @@ describe('TUI', function()
   end)
 
   it('emits hyperlinks with OSC 8', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows')
     exec_lua([[
       local buf = vim.api.nvim_get_current_buf()
       _G.urls = {}
@@ -2684,13 +2693,13 @@ describe('TUI', function()
       sleep 500m
       vs new
     ]])
-    screen:expect([[
+    screen:expect(([[
       ^                         │                        |
       {1:~                        }│{100:~                       }|*6
       {1:~                        }│                        |
-      {3:new                       }{101:{MATCH:<.*[/\]nvim} [-] }|
+      {3:new                       }{101:{MATCH:<.*%s} [-] }|
                                                         |
-    ]])
+    ]]):format(is_os('win') and '[/\\]nvim%.exe' or '/nvim'))
   end)
 
   -- #28667, #28668
@@ -2734,6 +2743,7 @@ describe('TUI', function()
   end
 
   it('argv[0] can be overridden #23953', function()
+    t.skip(is_os('win'), 'N/A for Windows')
     if not exec_lua('return pcall(require, "ffi")') then
       pending('N/A: missing LuaJIT FFI')
     end
@@ -2793,6 +2803,7 @@ describe('TUI', function()
   end)
 
   it('with non-tty (pipe) stdout/stderr', function()
+    t.skip(is_os('win'), 'N/A for Windows')
     finally(function()
       os.remove('testF')
       os.remove(testlog)
@@ -2819,6 +2830,7 @@ describe('TUI', function()
   end)
 
   it('<C-h> #10134', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows #36660')
     local screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
@@ -2907,6 +2919,7 @@ describe('TUI', function()
   end)
 
   it('no heap-buffer-overflow when changing &columns', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows')
     -- Set a different bg colour and change $TERM to something dumber so the `print_spaces()`
     -- codepath in `clear_region()` is hit.
     local screen = tt.setup_child_nvim({
@@ -3114,6 +3127,7 @@ describe('TUI FocusGained/FocusLost', function()
 
   it('in terminal-mode', function()
     feed_data(':set shell=' .. testprg('shell-test') .. ' shellcmdflag=EXE\n')
+    feed_data(':set shellxquote=\n') -- win: avoid extra quotes
     feed_data(':set noshowmode laststatus=0\n')
 
     feed_data(':terminal zia\n')
@@ -3152,6 +3166,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in press-enter prompt', function()
+    t.skip(is_os('win'), 'FIXME: some spaces have wrong attrs on Windows')
     feed_data(":echom 'msg1'|echom 'msg2'|echom 'msg3'|echom 'msg4'|echom 'msg5'\n")
     -- Execute :messages to provoke the press-enter prompt.
     feed_data(':messages\n')
@@ -3224,9 +3239,15 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   -- ansi and no terminal type at all:
 
-  it('no TERM uses 8 colors', function()
-    assert_term_colors(nil, nil, 8)
-  end)
+  if is_os('win') then
+    it('guessed vtpcon with no TERM uses 256 colors', function()
+      assert_term_colors(nil, nil, 256)
+    end)
+  else
+    it('no TERM uses 8 colors', function()
+      assert_term_colors(nil, nil, 8)
+    end)
+  end
 
   it('TERM=ansi no COLORTERM uses 8 colors', function()
     assert_term_colors('ansi', nil, 8)
@@ -3278,12 +3299,12 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   -- screen:
   --
-  -- FreeBSD falls back to the built-in screen-256colour entry.
+  -- FreeBSD and Windows fall back to the built-in screen-256colour entry.
   -- Linux and MacOS have a screen entry in external terminfo with 8 colours,
   -- which is raised to 16 by COLORTERM.
 
   it('TERM=screen no COLORTERM uses 8/256 colors', function()
-    if is_os('freebsd') then
+    if is_os('freebsd') or is_os('win') then
       assert_term_colors('screen', nil, 256)
     else
       assert_term_colors('screen', nil, 8)
@@ -3291,7 +3312,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   end)
 
   it('TERM=screen COLORTERM=screen uses 16/256 colors', function()
-    if is_os('freebsd') then
+    if is_os('freebsd') or is_os('win') then
       assert_term_colors('screen', 'screen', 256)
     else
       assert_term_colors('screen', 'screen', 16)
@@ -3560,6 +3581,7 @@ describe('TUI', function()
   end)
 
   it('queries the terminal for truecolor support', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows')
     clear()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
@@ -3663,6 +3685,7 @@ describe('TUI', function()
   end)
 
   it('queries the terminal for OSC 52 support with XTGETTCAP', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows')
     clear()
     if not exec_lua('return pcall(require, "ffi")') then
       pending('N/A: missing LuaJIT FFI')
@@ -3731,6 +3754,7 @@ describe('TUI', function()
   end)
 
   it('determines OSC 52 support from DA1 response', function()
+    t.skip(is_os('win'), 'FIXME: does not work on Windows')
     clear()
     exec_lua([[
       -- Check that we do not emit an XTGETTCAP request when DA1 indicates support
@@ -3805,6 +3829,10 @@ describe('TUI', function()
 end)
 
 describe('TUI bg color', function()
+  if t.skip(is_os('win')) then
+    return
+  end
+
   before_each(clear)
 
   it('is properly set in a nested Nvim instance when background=dark', function()
@@ -4059,7 +4087,7 @@ describe('TUI client', function()
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen_client:expect([[
+    screen_client:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
       Nvim: Caught deadly signal 'SIGTERM'              |
                                                         |
       [Process exited 1]^                                |
@@ -4130,6 +4158,10 @@ describe('TUI client', function()
     end
 
     local bufname = api.nvim_buf_get_name(0)
+    local old_title = api.nvim_buf_get_var(0, 'term_title')
+    if not is_os('win') then
+      eq(bufname, old_title)
+    end
     -- Normally a title cannot be longer than the 65535-byte buffer as maketitle()
     -- limits it length. Use FFI to send a very long title directly.
     server_exec_lua(ffi_str_defs .. [[
@@ -4138,7 +4170,7 @@ describe('TUI client', function()
     ]])
     screen_client:expect_unchanged()
     assert_log('set_title: title string too long!', testlog)
-    eq(bufname, api.nvim_buf_get_var(0, 'term_title'))
+    eq(old_title, api.nvim_buf_get_var(0, 'term_title'))
 
     -- Following escape sequences are not affected.
     server:request('nvim_set_option_value', 'title', true, {})
@@ -4148,6 +4180,7 @@ describe('TUI client', function()
   end)
 
   it('logs chdir failure properly', function()
+    t.skip(is_os('win'), 'N/A for Windows')
     local server, _, screen_client = start_headless_server_and_client(true)
     local server_exec_lua = tt.make_lua_executor(server)
     if not server_exec_lua('return pcall(require, "ffi")') then
@@ -4210,6 +4243,7 @@ describe('TUI client', function()
   end)
 
   it('suspend/resume works with multiple clients', function()
+    t.skip(is_os('win'), 'N/A for Windows')
     local server_super, screen_server, screen_client = start_tui_and_remote_client()
     local server_super_exec_lua = tt.make_lua_executor(server_super)
 
