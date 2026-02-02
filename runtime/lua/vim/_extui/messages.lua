@@ -496,10 +496,10 @@ function M.set_pos(type)
           return
         end
         vim.schedule(function()
-          local entered = api.nvim_get_current_win() == win
+          local entered = api.nvim_get_current_win() == ext.wins.cmd
           cmd_on_key = nil
-          if api.nvim_win_is_valid(win) then
-            api.nvim_win_close(win, true)
+          if api.nvim_win_is_valid(ext.wins.cmd) then
+            api.nvim_win_close(ext.wins.cmd, true)
           end
           ext.check_targets()
           -- Show or clear the message depending on if the pager was opened.
@@ -566,15 +566,15 @@ function M.set_pos(type)
 
       -- Cmdwin is actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
-        api.nvim_set_current_win(win)
+        api.nvim_set_current_win(ext.wins.pager)
         -- Make pager relative to cmdwin when it is opened, restore when it is closed.
         api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
           callback = function(ev)
-            if api.nvim_win_is_valid(win) then
+            if api.nvim_win_is_valid(ext.wins.pager) then
               local cfg = ev.event == 'CmdwinLeave' and config
                 or ev.event == 'WinEnter' and { hide = true }
                 or { relative = 'win', win = 0, row = 0, col = 0 }
-              api.nvim_win_set_config(win, cfg)
+              api.nvim_win_set_config(ext.wins.pager, cfg)
             end
             return ev.event == 'WinEnter'
           end,
