@@ -969,6 +969,25 @@ describe('ui/ext_messages', function()
       {1:~                        }|*2
       {3:<] [+] 2,0-1          All}|
     ]])
+    -- ruler of float is not part of statusline and is cleared when leaving the float #37649.
+    command('set rulerformat=foo')
+    api.nvim_open_win(0, true, { relative = 'editor', row = 1, col = 1, width = 10, height = 10 })
+    screen:expect({
+      grid = [[
+        a{4:abcde     }              |
+         {4:^          }              |
+        {1:~}{11:~         }{1:              }|*2
+        {2:[}{11:~         }{2:+]         foo}|
+      ]],
+      ruler = { { 'foo', 'MsgArea' } },
+    })
+    command('wincmd p')
+    screen:expect([[
+      a{4:abcde     }              |
+      ^ {4:          }              |
+      {1:~}{11:~         }{1:              }|*2
+      {3:[}{11:~         }{3:+]         foo}|
+    ]])
   end)
 
   it('keeps history of message of different kinds', function()
