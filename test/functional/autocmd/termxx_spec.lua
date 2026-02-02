@@ -81,7 +81,6 @@ describe('autocmd TermClose', function()
   end)
 
   it('triggers when long-running terminal job gets stopped', function()
-    skip(is_os('win'))
     api.nvim_set_option_value('shell', is_os('win') and 'cmd.exe' or 'sh', {})
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')

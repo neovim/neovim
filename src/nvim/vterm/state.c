@@ -18,7 +18,7 @@
 // Primary Device Attributes (DA1) response.
 // We make this a global (extern) variable so that we can override it with FFI
 // in tests.
-char vterm_primary_device_attr[] = "61;22;52";
+DLLEXPORT char vterm_primary_device_attr[] = "61;22;52";
 
 // Some convenient wrappers to make callback functions easier
 

@@ -5,10 +5,6 @@ local tt = require('test.functional.testterm')
 local clear = n.clear
 local feed_data = tt.feed_data
 
-if t.skip(t.is_os('win')) then
-  return
-end
-
 describe('autoread TUI FocusGained/FocusLost', function()
   local f1 = 'xtest-foo'
   local screen
