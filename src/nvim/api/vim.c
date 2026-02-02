@@ -151,6 +151,8 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - default: boolean Don't override existing definition |:hi-default|
 ///                - fg: color name or "#RRGGBB", see note.
 ///                - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
+///                - font: GUI font name (string). Sets |highlight-font|.
+///                        Use "NONE" to clear.
 ///                - force: if true force update the highlight group when it exists.
 ///                - link: Name of highlight group to link to. |:hi-link|
 ///                - sp: color name or "#RRGGBB"

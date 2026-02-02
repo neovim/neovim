@@ -202,6 +202,7 @@ typedef struct {
   Boolean bg_indexed;
   Boolean force;
   String url;
+  String font;
 } Dict(highlight);
 
 typedef struct {
