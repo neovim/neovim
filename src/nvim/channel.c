@@ -12,8 +12,13 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/channel.h"
+#include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
+#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
@@ -34,6 +39,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
@@ -42,6 +48,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
+#include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 
@@ -1062,7 +1069,49 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  const char *text = tv_get_string(&argvars[1]);
+  const char *new_prompt = tv_get_string(&argvars[1]);
+  int new_prompt_len = (int)strlen(new_prompt);
+
+  if (bt_prompt(buf)) {
+    if (buf->b_prompt_start.mark.lnum > buf->b_ml.ml_line_count) {
+      // In case the mark is set to a nonexistent line.
+      buf->b_prompt_start.mark.lnum = buf->b_ml.ml_line_count;
+    }
+
+    linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
+    char *old_prompt = buf_prompt_text(buf);
+    char *old_line = ml_get_buf(buf, prompt_lno);
+    old_line = old_line != NULL ? old_line : "";
+
+    int old_prompt_len = (int)strlen(old_prompt);
+    colnr_T cursor_col = curwin->w_cursor.col;
+
+    if (buf->b_prompt_start.mark.col < old_prompt_len
+        || curbuf->b_prompt_start.mark.col < old_prompt_len
+        || !strnequal(old_prompt, old_line + curbuf->b_prompt_start.mark.col - old_prompt_len,
+                      (size_t)old_prompt_len)) {
+      // in case if for some odd reason the old prompt is missing
+      // replace the prompt line with new-prompt (discards user-input)
+      ml_replace_buf(buf, prompt_lno, (char *)new_prompt, true, false);
+      cursor_col = new_prompt_len;
+    } else {
+      // Replace prev-prompt + user-input with new-prompt + user-input
+      char *new_line = concat_str(new_prompt, old_line + buf->b_prompt_start.mark.col);
+      if (ml_replace_buf(buf, prompt_lno, new_line, false, false) != OK) {
+        xfree(new_line);
+      }
+      cursor_col += new_prompt_len - old_prompt_len;
+    }
+
+    if (curwin->w_buffer == buf) {
+      coladvance(curwin, cursor_col);
+    }
+    changed_lines_redraw_buf(buf, prompt_lno, prompt_lno + 1, 0);
+    redraw_buf_later(buf, UPD_INVERTED);
+  }
+
+  // Clear old prompt text and replace with the new one
   xfree(buf->b_prompt_text);
-  buf->b_prompt_text = xstrdup(text);
+  buf->b_prompt_text = xstrdup(new_prompt);
+  buf->b_prompt_start.mark.col = (colnr_T)new_prompt_len;
 }

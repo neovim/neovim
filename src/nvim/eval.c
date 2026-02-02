@@ -6668,7 +6668,6 @@ void prompt_invoke_callback(void)
   curwin->w_cursor.lnum = lnum + 1;
   curwin->w_cursor.col = 0;
   curbuf->b_prompt_start.mark.lnum = lnum + 1;
-  curbuf->b_prompt_start.mark.col = 0;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
     xfree(user_input);

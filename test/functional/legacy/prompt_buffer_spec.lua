@@ -62,7 +62,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -149,7 +149,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:                     |
       {1:~                        }|*3
-      {2:[Prompt] [+]             }|
+      {2:[Prompt]                 }|
       ^other buffer             |
       {1:~                        }|*3
                                |
@@ -158,7 +158,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -167,7 +167,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:^                     |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -290,8 +290,8 @@ describe('prompt buffer', function()
     source([[
       bwipeout!
       set formatoptions+=r
-      set buftype=prompt
       call prompt_setprompt(bufnr(), "% ")
+      set buftype=prompt
     ]])
     feed('iline1<s-cr>line2')
     screen:expect([[
@@ -792,5 +792,59 @@ describe('prompt buffer', function()
     feed('<cr>')
 
     eq({ 2, 0 }, api.nvim_buf_get_mark(0, ':'))
+  end)
+
+  it('prompt can be changed without interrupting user input', function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    local buf = api.nvim_get_current_buf()
+
+    local function set_prompt(prompt)
+      fn('prompt_setprompt', buf, prompt)
+    end
+
+    set_prompt('> ')
+
+    source('startinsert')
+
+    feed('user input')
+    -- Move the cursor a bit to check cursor maintaining position
+    feed('<esc>hhi')
+
+    screen:expect([[
+      > user in^put             |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+
+    eq({ 1, 2 }, api.nvim_buf_get_mark(0, ':'))
+
+    set_prompt('new-prompt > ')
+
+    screen:expect([[
+      new-prompt > user in^put  |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+
+    eq({ 1, 13 }, api.nvim_buf_get_mark(0, ':'))
+
+    set_prompt('new-prompt(status) > ')
+
+    screen:expect([[
+      new-prompt(status) > user|
+       in^put                   |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
+    eq({ 1, 21 }, api.nvim_buf_get_mark(0, ':'))
+
+    set_prompt('new-prompt > ')
+
+    screen:expect([[
+      new-prompt > user in^put  |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+    eq({ 1, 13 }, api.nvim_buf_get_mark(0, ':'))
   end)
 end)
