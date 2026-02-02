@@ -208,6 +208,7 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
   }
 }
 
+static bool did_show_ext_ruler = false;
 /// Redraw the status line, window bar, ruler or tabline.
 /// @param wp  target window, NULL for 'tabline'
 /// @param draw_winbar  redraw 'winbar'
@@ -390,6 +391,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
 
   if (ui_event) {
     ui_call_msg_ruler(content);
+    did_show_ext_ruler = true;
     api_free_array(content);
     goto theend;
   }
@@ -434,13 +436,12 @@ void win_redr_winbar(win_T *wp)
 void redraw_ruler(void)
 {
   static int did_ruler_col = -1;
-  static bool did_show_ext_ruler = false;
   win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.
   if (!p_ru || wp->w_status_height > 0 || is_stl_global || (p_ch == 0 && !ui_has(kUIMessages))) {
-    if (did_ruler_col > 0 && ui_has(kUIMessages)) {
+    if (did_show_ext_ruler && ui_has(kUIMessages)) {
       ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
       did_show_ext_ruler = false;
     } else if (did_ruler_col > 0) {
