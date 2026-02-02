@@ -1427,6 +1427,48 @@ describe('vim.lsp.completion: integration', function()
     eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
   end)
 
+  it('does not empty server start boundary', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'div.foo',
+          insertTextFormat = 2,
+          textEdit = {
+            newText = '<div class="foo">$0</div>',
+            range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 7 } },
+          },
+        },
+      },
+    }
+    local completion_list2 = {
+      isIncomplete = false,
+      items = {
+        {
+          insertTextFormat = 1,
+          label = 'foo',
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list)
+    create_server('dummy2', completion_list2)
+    feed('Adiv.foo<C-x><C-O>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-Y>')
+    eq('<div class="foo"></div>', n.api.nvim_get_current_line())
+    eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
+  end)
+
   it('sorts items when fuzzy is enabled and prefix not empty #33610', function()
     local completion_list = {
       isIncomplete = false,
