@@ -71,17 +71,17 @@ describe('semantic token highlighting', function()
 
     local response = [[{
       "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025, 1, 7, 11, 19, 8192, 1, 4, 3, 15, 8448, 0, 5, 4, 0, 8448, 0, 8, 1, 1, 1024, 1, 0, 5, 20, 0, 1, 0, 22, 20, 0, 1, 0, 6, 20, 0 ],
-      "resultId": 1
+      "resultId": "1"
     }]]
 
     local range_response = [[{
       "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 ],
-      "resultId": "1"
+      "resultId": "2"
     }]]
 
     local edit_response = [[{
       "edits": [ {"data": [ 2, 8, 1, 3, 8193, 1, 7, 11, 19, 8192, 1, 4, 3, 15, 8448, 0, 5, 4, 0, 8448, 0, 8, 1, 3, 8192 ], "deleteCount": 25, "start": 5 } ],
-      "resultId":"2"
+      "resultId": "3"
     }]]
 
     before_each(function()
@@ -104,7 +104,7 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-      end, legend, response, edit_response)
+      end)
     end)
 
     it('buffer is highlighted when attached', function()
@@ -142,7 +142,7 @@ describe('semantic token highlighting', function()
         _G.server2 = _G._create_server({
           capabilities = {
             semanticTokensProvider = {
-              full = { delta = true },
+              full = { delta = false },
               legend = vim.fn.json_decode(legend),
             },
           },
@@ -183,14 +183,14 @@ describe('semantic token highlighting', function()
       }
     end)
 
-    it('does not call full when only range is supported', function()
+    it('calls both range and full when range is supported', function()
       insert(text)
       exec_lua(function()
-        _G.server_range_only = _G._create_server({
+        _G.server_range = _G._create_server({
           capabilities = {
             semanticTokensProvider = {
+              full = { delta = false },
               range = true,
-              full = false,
               legend = vim.fn.json_decode(legend),
             },
           },
@@ -203,11 +203,11 @@ describe('semantic token highlighting', function()
             end,
           },
         })
-      end, legend, range_response)
+      end)
       exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
-        vim.lsp.start({ name = 'dummy', cmd = _G.server_range_only.cmd })
+        vim.lsp.start({ name = 'dummy', cmd = _G.server_range.cmd })
       end)
 
       screen:expect {
@@ -217,11 +217,11 @@ describe('semantic token highlighting', function()
         int {8:main}()                              |
         {                                       |
             int {7:x};                              |
-        #ifdef __cplusplus                      |
-            std::cout << x << "\n";             |
-        #else                                   |
-            printf("%d\n", x);                  |
-        #endif                                  |
+        #ifdef {5:__cplusplus}                      |
+            {4:std}::{2:cout} << {2:x} << "\n";             |
+        {6:#else}                                   |
+        {6:    printf("%d\n", x);}                  |
+        {6:#endif}                                  |
         }                                       |
         ^}                                       |
         {1:~                                       }|*3
@@ -229,7 +229,7 @@ describe('semantic token highlighting', function()
       ]],
       }
 
-      local messages = exec_lua('return server_range_only.messages')
+      local messages = exec_lua('return _G.server_range.messages')
       local called_range = false
       local called_full = false
       for _, m in ipairs(messages) do
@@ -241,7 +241,7 @@ describe('semantic token highlighting', function()
         end
       end
       eq(true, called_range)
-      eq(false, called_full)
+      eq(true, called_full)
     end)
 
     it('does not call range when only full is supported', function()
@@ -266,9 +266,9 @@ describe('semantic token highlighting', function()
           },
         })
         return vim.lsp.start({ name = 'dummy', cmd = _G.server_full.cmd })
-      end, legend, response, range_response)
+      end)
 
-      local messages = exec_lua('return server_full.messages')
+      local messages = exec_lua('return _G.server_full.messages')
       local called_full = false
       local called_range = false
       for _, m in ipairs(messages) do
@@ -283,14 +283,14 @@ describe('semantic token highlighting', function()
       eq(false, called_range)
     end)
 
-    it('prefers range when both are supported', function()
+    it('does not call range after full request received', function()
       exec_lua(create_server_definition)
       insert(text)
       exec_lua(function()
         _G.server_full = _G._create_server({
           capabilities = {
             semanticTokensProvider = {
-              full = { delta = true },
+              full = { delta = false },
               range = true,
               legend = vim.fn.json_decode(legend),
             },
@@ -305,21 +305,24 @@ describe('semantic token highlighting', function()
           },
         })
         return vim.lsp.start({ name = 'dummy', cmd = _G.server_full.cmd })
-      end, legend, response, range_response)
+      end)
 
-      local messages = exec_lua('return server_full.messages')
-      local called_full = false
-      local called_range = false
+      -- modify the buffer
+      feed('o<ESC>')
+
+      local messages = exec_lua('return _G.server_full.messages')
+      local called_full = 0
+      local called_range = 0
       for _, m in ipairs(messages) do
         if m.method == 'textDocument/semanticTokens/full' then
-          called_full = true
+          called_full = called_full + 1
         end
         if m.method == 'textDocument/semanticTokens/range' then
-          called_range = true
+          called_range = called_range + 1
         end
       end
-      eq(false, called_full)
-      eq(true, called_range)
+      eq(2, called_full)
+      eq(1, called_range)
     end)
 
     it('range requests preserve highlights outside updated range', function()
@@ -327,17 +330,15 @@ describe('semantic token highlighting', function()
       insert(text)
       feed('gg')
 
-      local small_range_response = [[{
-        "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 ]
-      }]]
-
-      local client_id, bufnr = exec_lua(function(l, resp)
-        _G.response = resp
+      local client_id, bufnr = exec_lua(function()
+        _G.response = [[{
+          "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 ]
+        }]]
         _G.server2 = _G._create_server({
           capabilities = {
             semanticTokensProvider = {
               range = true,
-              legend = vim.fn.json_decode(l),
+              legend = vim.fn.json_decode(legend),
             },
           },
           handlers = {
@@ -349,10 +350,10 @@ describe('semantic token highlighting', function()
         local bufnr = vim.api.nvim_get_current_buf()
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd }))
         vim.schedule(function()
-          vim.lsp.semantic_tokens._start(bufnr, client_id, 10)
+          vim.lsp.semantic_tokens._start(bufnr, client_id, 0)
         end)
         return client_id, bufnr
-      end, legend, small_range_response)
+      end)
 
       screen:expect {
         grid = [[
@@ -372,13 +373,11 @@ describe('semantic token highlighting', function()
         end)
       )
 
-      small_range_response = [[{
+      exec_lua(function()
+        _G.response = [[{
         "data": [ 7, 0, 5, 20, 0, 1, 0, 22, 20, 0, 1, 0, 6, 20, 0 ]
       }]]
-
-      exec_lua(function(resp)
-        _G.response = resp
-      end, small_range_response)
+      end)
 
       feed('G')
 
@@ -400,13 +399,11 @@ describe('semantic token highlighting', function()
         end)
       )
 
-      small_range_response = [[{
+      exec_lua(function()
+        _G.response = [[{
         "data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025, 1, 7, 11, 19, 8192 ]
       }]]
-
-      exec_lua(function(resp)
-        _G.response = resp
-      end, small_range_response)
+      end)
       feed('ggLj0')
 
       screen:expect {

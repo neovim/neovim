@@ -292,7 +292,7 @@ local function write_to_vim_protocol(protocol)
     })
 
     for _, item in ipairs(all) do
-      if item.registrationOptions then
+      if item.registrationMethod or item.registrationOptions then
         output[#output + 1] = ("  ['%s'] = %s,"):format(item.method, true)
       end
     end

@@ -299,6 +299,7 @@ LSP
 • Support for dynamic registration for `textDocument/diagnostic`
 • |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
   |hl-LspReferenceTarget| highlight group.
+• Support for `textDocument/semanticTokens/range`.
 • Support for `textDocument/codeLens` |lsp-codelens| has been reimplemented:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_codeLens
 • Support for `workspace/codeLens/refresh`:
@@ -355,8 +356,6 @@ PERFORMANCE
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
 • |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
-• LSP `textDocument/semanticTokens/range` is supported which requests tokens
-  for the viewport (visible screen) only.
 
 PLUGINS
 
