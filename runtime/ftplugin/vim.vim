@@ -1,11 +1,11 @@
 " Vim filetype plugin
 " Language:          Vim
 " Maintainer:        Doug Kearns <dougkearns@gmail.com>
-" Last Change:       2025 Mar 05
 " Former Maintainer: Bram Moolenaar <Bram@vim.org>
-" Contributors:      Riley Bruins <ribru17@gmail.com> ('commentstring'),
+" Contributors:      Riley Bruins <ribru17@gmail.com> ('commentstring')
 "                    @Konfekt
 "                    @tpope (s:Help())
+" Last Change:       2025 Aug 07
 " 2025 Aug 16 by Vim Project set com depending on Vim9 or legacy script
 " 2026 Jan 26 by Vim Project set path to common Vim directories #19219
 
@@ -58,41 +58,42 @@ if !exists("*" .. expand("<SID>") .. "Help")
   function s:Help(topic) abort
     let topic = a:topic
 
+    " keyword is not necessarily under the cursor, see :help K
+    let line = getline('.')
+    let i = match(line, '\V' .. escape(topic, '\'), col('.') - len(topic))
+    let pre = strpart(line, 0, i)
+    let post = strpart(line, i + len(topic))
+
+    " local/global option vars
+    if topic =~# '[lg]' && pre ==# '&' && post =~# ':\k\+'
+      let topic = matchstr(post, '\k\+')
+    endif
+
     if get(g:, 'syntax_on', 0)
       let syn = synIDattr(synID(line('.'), col('.'), 1), 'name')
       if syn ==# 'vimFuncName'
-        return topic.'()'
-      elseif syn ==# 'vimOption'
-        return "'".topic."'"
-      elseif syn ==# 'vimUserAttrbKey'
-        return ':command-'.topic
-      elseif syn =~# 'vimCommand'
-        return ':'.topic
+        return topic .. '()'
+      elseif syn ==# 'vimOption' || syn ==# 'vimOptionVarName'
+        return "'" .. topic .. "'"
+      elseif syn ==# 'vimUserCmdAttrKey'
+        return ':command-' .. topic
+      elseif syn ==# 'vimCommand'
+        return ':' .. topic
       endif
     endif
 
-    let col = col('.') - 1
-    while col && getline('.')[col] =~# '\k'
-      let col -= 1
-    endwhile
-    let pre = col == 0 ? '' : getline('.')[0 : col]
-
-    let col = col('.') - 1
-    while col && getline('.')[col] =~# '\k'
-      let col += 1
-    endwhile
-    let post = getline('.')[col : -1]
-
-    if pre =~# '^\s*:\=$'
-      return ':'.topic
+    if pre =~# '^\s*:\=$' || pre =~# '\%(\\\||\)\@<!|\s*:\=$'
+      return ':' .. topic
     elseif pre =~# '\<v:$'
-      return 'v:'.topic
+      return 'v:' .. topic
     elseif pre =~# '<$'
-      return '<'.topic.'>'
+      return '<' .. topic .. '>'
     elseif pre =~# '\\$'
-      return '/\'.topic
+      return '/\' .. topic
     elseif topic ==# 'v' && post =~# ':\w\+'
-      return 'v'.matchstr(post, ':\w\+')
+      return 'v' .. matchstr(post, ':\w\+')
+    elseif pre =~# '&\%([lg]:\)\=$'
+      return "'" .. topic .. "'"
     else
       return topic
     endif
