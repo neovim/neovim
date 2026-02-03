@@ -3608,12 +3608,14 @@ describe('progress-message', function()
     )
     eq('str-id', id7)
 
+    -- internal messages are also assigned an ID (and thus advance the next progress ID)
+    feed('Q')
     local id8 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
       { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq(12, id8)
+    eq(13, id8)
   end)
 
   it('supports string ids', function()

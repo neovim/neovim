@@ -152,7 +152,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
-static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 0 };
+static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 1 };
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
@@ -365,12 +365,10 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
 
   // provide a new id if not given
   if (id.type == kObjectTypeNil) {
-    id = INTEGER_OBJ(msg_id_next++);
+    id = INTEGER_OBJ(msg_id_next);
   } else if (id.type == kObjectTypeInteger) {
-    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
-    if (msg_id_next < id.data.integer) {
-      msg_id_next = id.data.integer + 1;
-    }
+    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next);
+    msg_id_next = MAX(msg_id_next, id.data.integer);
   }
   msg_ext_id = id;
 
@@ -395,7 +393,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
 
   if (history && kv_size(hl_msg)) {
-    msg_hist_add_multihl(id, hl_msg, false, msg_data);
+    msg_hist_add_multihl(hl_msg, false, msg_data);
   }
 
   msg_ext_skip_flush = false;
@@ -1107,7 +1105,7 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(INTEGER_OBJ(0), msg, false, NULL);
+  msg_hist_add_multihl(msg, false, NULL);
 }
 
 static bool do_clear_hist_temp = true;
@@ -1138,7 +1136,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   kv_destroy(messages);
 }
 
-static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageData *msg_data)
+static void msg_hist_add_multihl(HlMessage msg, bool temp, MessageData *msg_data)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -3319,14 +3317,15 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(INTEGER_OBJ(0), msg, true, NULL);
+      msg_hist_add_multihl(msg, true, NULL);
     }
     xfree(tofree);
     msg_ext_overwrite = false;
     msg_ext_history = false;
     msg_ext_append = false;
     msg_ext_kind = NULL;
-    msg_ext_id = INTEGER_OBJ(0);
+    msg_id_next += (msg_ext_id.data.integer == msg_id_next);
+    msg_ext_id = INTEGER_OBJ(msg_id_next);
   }
 }
 
