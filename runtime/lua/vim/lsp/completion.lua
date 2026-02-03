@@ -586,8 +586,8 @@ local function trigger(bufnr, clients, ctx)
       if result then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local encoding = client and client.offset_encoding or 'utf-16'
-        local client_matches
-        client_matches, server_start_boundary = M._convert_results(
+        local client_matches, tmp_server_start_boundary
+        client_matches, tmp_server_start_boundary = M._convert_results(
           line,
           cursor_row - 1,
           cursor_col,
@@ -598,6 +598,7 @@ local function trigger(bufnr, clients, ctx)
           encoding
         )
 
+        server_start_boundary = tmp_server_start_boundary or server_start_boundary
         vim.list_extend(matches, client_matches)
       end
     end
