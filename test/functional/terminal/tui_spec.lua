@@ -2830,7 +2830,6 @@ describe('TUI', function()
   end)
 
   it('<C-h> #10134', function()
-    t.skip(is_os('win'), 'FIXME: does not work on Windows #36660')
     local screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
