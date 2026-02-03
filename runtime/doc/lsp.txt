@@ -57,7 +57,7 @@ Follow these steps to get LSP features:
 5. Check that LSP is active ("attached") for the buffer: >vim
      :checkhealth vim.lsp
 6. Please note that certain LSP features are disabled by default,
-   you may choose to enable them mannually. See:
+   you may choose to enable them manually. See:
      - |lsp-codelens|
      - |lsp-document_color|
      - |lsp-linked_editing_range|
