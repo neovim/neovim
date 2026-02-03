@@ -1685,7 +1685,7 @@ static const TerminfoEntry conemu_terminfo = {
     [kTerm_set_underline_style] = NULL,
   },
   .keys = {
-    [kTermKey_backspace] = {"\b", NULL},
+    [kTermKey_backspace] = {"\177", NULL},
     [kTermKey_beg] = {"\033OE", NULL},
     [kTermKey_btab] = {"\033[Z", NULL},
     [kTermKey_clear] = {NULL, NULL},
@@ -1806,7 +1806,7 @@ static const TerminfoEntry vtpcon_terminfo = {
     [kTerm_set_underline_style] = NULL,
   },
   .keys = {
-    [kTermKey_backspace] = {"\b", NULL},
+    [kTermKey_backspace] = {"\177", NULL},
     [kTermKey_beg] = {"\033OE", NULL},
     [kTermKey_btab] = {"\033[Z", NULL},
     [kTermKey_clear] = {NULL, NULL},

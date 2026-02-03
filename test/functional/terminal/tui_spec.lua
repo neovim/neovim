@@ -2830,7 +2830,10 @@ describe('TUI', function()
   end)
 
   it('<C-h> #10134', function()
-    t.skip(is_os('win'), 'FIXME: does not work on Windows #36660')
+    local job_opts = { env = t.shallowcopy(env_notermguicolors) }
+    if is_os('win') then
+      job_opts.env['TERM'] = ''
+    end
     local screen = tt.setup_child_nvim({
       '--clean',
       '--cmd',
@@ -2839,7 +2842,7 @@ describe('TUI', function()
       'set noruler',
       '--cmd',
       ':nnoremap <C-h> :echomsg "\\<C-h\\>"<CR>',
-    }, { env = env_notermguicolors })
+    }, job_opts)
     screen:expect([[
       ^                                                  |
       {100:~                                                 }|*3
