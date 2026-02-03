@@ -2515,18 +2515,28 @@ static void flush_buf(TUIData *tui)
 
 /// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
 /// unreliable." (Vim, Bash, and tmux also do this.)
+/// On Windows, use 0x7f as Backspace if VT input has been enabled by stream_init().
 ///
 /// @see tmux/tty-keys.c fe4e9470bb504357d073320f5d305b22663ee3fd
 /// @see https://bugzilla.redhat.com/show_bug.cgi?id=142659
-static const char *tui_get_stty_erase(int fd)
+/// @see https://github.com/microsoft/terminal/issues/4949
+static const char *tui_get_stty_erase(TermInput *input)
 {
   static char stty_erase[2] = { 0 };
 #if defined(HAVE_TERMIOS_H)
   struct termios t;
-  if (tcgetattr(fd, &t) != -1) {
+  if (tcgetattr(input->in_fd, &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = NUL;
     DLOG("stty/termios:erase=%s", stty_erase);
+  }
+#elif defined(MSWIN)
+  DWORD dwMode;
+  if (((uv_handle_t *)&input->read_stream.s.uv)->type == UV_TTY
+      && GetConsoleMode(input->read_stream.s.uv.tty.handle, &dwMode)
+      && (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)) {
+    stty_erase[0] = '\x7f';
+    stty_erase[1] = NUL;
   }
 #endif
   return stty_erase;
@@ -2539,7 +2549,7 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value, void *d
   TermInput *input = data;
   static const char *stty_erase = NULL;
   if (stty_erase == NULL) {
-    stty_erase = tui_get_stty_erase(input->in_fd);
+    stty_erase = tui_get_stty_erase(input);
   }
 
   if (strequal(name, "key_backspace")) {
