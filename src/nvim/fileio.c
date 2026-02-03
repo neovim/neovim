@@ -3060,7 +3060,7 @@ int buf_check_timestamp(buf_T *buf)
   if (reload != RELOAD_NONE) {
     // Reload the buffer.
     buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
-    if (buf->b_p_udf && buf->b_ffname != NULL) {
+    if (bufref_valid(&bufref) && buf->b_p_udf && buf->b_ffname != NULL) {
       uint8_t hash[UNDO_HASH_SIZE];
 
       // Any existing undo file is unusable, write it now.
