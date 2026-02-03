@@ -222,13 +222,13 @@ function FoldInfo:foldupdate(bufnr, srow, erow)
     -- foldUpdate() is guarded in insert mode. So update folds on InsertLeave
     if #(api.nvim_get_autocmds({
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
     })) > 0 then
       return
     end
     api.nvim_create_autocmd('InsertLeave', {
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         self:do_foldupdate(bufnr)
@@ -392,7 +392,7 @@ function M.foldexpr(lnum)
   if not foldinfos[bufnr] then
     foldinfos[bufnr] = FoldInfo.new(bufnr)
     api.nvim_create_autocmd({ 'BufUnload', 'VimEnter', 'FileType' }, {
-      buffer = bufnr,
+      buf = bufnr,
       once = true,
       callback = function()
         foldinfos[bufnr] = nil

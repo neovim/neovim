@@ -1132,7 +1132,7 @@ local function show_confirm_buf(lines, on_finish)
     delete_buffer()
   end
   -- - Use `nested` to allow other events (useful for statuslines)
-  api.nvim_create_autocmd('BufWriteCmd', { buffer = bufnr, nested = true, callback = finish })
+  api.nvim_create_autocmd('BufWriteCmd', { buf = bufnr, nested = true, callback = finish })
 
   -- Define action to cancel confirm
   --- @type integer

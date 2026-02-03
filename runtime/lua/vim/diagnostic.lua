@@ -418,7 +418,7 @@ do
       assert(bufnr > 0, 'Invalid buffer number')
       api.nvim_create_autocmd('BufWipeout', {
         group = group,
-        buffer = bufnr,
+        buf = bufnr,
         callback = function()
           rawset(t, bufnr, nil)
         end,
@@ -836,7 +836,7 @@ local function schedule_display(namespace, bufnr, args)
     local group = api.nvim_create_augroup(key, { clear = true })
     api.nvim_create_autocmd(insert_leave_auto_cmds, {
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         execute_scheduled_display(namespace, bufnr)
       end,
@@ -1321,8 +1321,8 @@ local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    return api.nvim_create_autocmd('BufRead', {
-      buffer = bufnr,
+    api.nvim_create_autocmd('BufRead', {
+      buf = bufnr,
       once = true,
       callback = function()
         fn()
@@ -1424,7 +1424,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
-    buffer = bufnr,
+    buf = bufnr,
     -- TODO(lewis6991): should this be deepcopy()'d like they are in vim.diagnostic.get()
     data = { diagnostics = diagnostics },
   })
@@ -1913,10 +1913,23 @@ M.handlers.virtual_text = {
           { clear = true }
         )
       end
-
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buf = bufnr })
 
       local line_diagnostics = diagnostic_lines(diagnostics, true)
+      if opts.virtual_text.current_line ~= nil then
+        api.nvim_create_autocmd('CursorMoved', {
+          buf = bufnr,
+          group = ns.user_data.virt_text_augroup,
+          callback = function()
+            render_virtual_text(
+              ns.user_data.virt_text_ns,
+              bufnr,
+              line_diagnostics,
+              opts.virtual_text
+            )
+          end,
+        })
+      end
 
       if opts.virtual_text.current_line ~= nil then
         api.nvim_create_autocmd('CursorMoved', {
@@ -1945,7 +1958,7 @@ M.handlers.virtual_text = {
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_text_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
-        api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
+        api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buf = bufnr })
       end
     end
   end,
@@ -2161,7 +2174,7 @@ M.handlers.virtual_lines = {
         )
       end
 
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buf = bufnr })
 
       diagnostics =
         reformat_diagnostics(opts.virtual_lines.format or format_virtual_lines, diagnostics)
@@ -2171,7 +2184,7 @@ M.handlers.virtual_lines = {
         -- diagnostics we need when the cursor line doesn't change.
         local line_diagnostics = diagnostic_lines(diagnostics, true)
         api.nvim_create_autocmd('CursorMoved', {
-          buffer = bufnr,
+          buf = bufnr,
           group = ns.user_data.virt_lines_augroup,
           callback = function()
             render_virtual_lines(
@@ -2201,7 +2214,7 @@ M.handlers.virtual_lines = {
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_lines_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_lines_ns, 0, -1)
-        api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
+        api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buf = bufnr })
       end
     end
   end,
@@ -2674,7 +2687,7 @@ function M.reset(namespace, bufnr)
     if api.nvim_buf_is_valid(iter_bufnr) then
       api.nvim_exec_autocmds('DiagnosticChanged', {
         modeline = false,
-        buffer = iter_bufnr,
+        buf = iter_bufnr,
         data = { diagnostics = {} },
       })
     else

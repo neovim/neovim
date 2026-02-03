@@ -805,7 +805,7 @@ local function enable_completions(client_id, bufnr, opts)
     local group = api.nvim_create_augroup(get_augroup(bufnr), { clear = true })
     api.nvim_create_autocmd('CompleteDone', {
       group = group,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         local reason = api.nvim_get_vvar('event').reason --- @type string
         if reason == 'accept' then
@@ -816,14 +816,14 @@ local function enable_completions(client_id, bufnr, opts)
     if opts.autotrigger then
       api.nvim_create_autocmd('InsertCharPre', {
         group = group,
-        buffer = bufnr,
+        buf = bufnr,
         callback = function()
           on_insert_char_pre(buf_handles[bufnr])
         end,
       })
       api.nvim_create_autocmd('InsertLeave', {
         group = group,
-        buffer = bufnr,
+        buf = bufnr,
         callback = on_insert_leave,
       })
     end

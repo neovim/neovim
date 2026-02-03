@@ -697,12 +697,12 @@ function vim.api.nvim_buf_set_extmark(buffer, ns_id, line, col, opts) end
 ---
 ---
 --- @see vim.api.nvim_set_keymap
---- @param buffer integer Buffer id, or 0 for current buffer
+--- @param buf integer Buffer id, or 0 for current buffer
 --- @param mode string
 --- @param lhs string
 --- @param rhs string
 --- @param opts vim.api.keyset.keymap
-function vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts) end
+function vim.api.nvim_buf_set_keymap(buf, mode, lhs, rhs, opts) end
 
 --- Sets (replaces) a line-range in the buffer.
 ---
@@ -846,7 +846,10 @@ function vim.api.nvim_chan_send(chan, data) end
 ---           match the pattern.
 ---     - defaults to clearing all patterns.
 ---     - NOTE: Cannot be used with {buffer}
---- - buffer: (bufnr)
+--- - buf: (bufnr)
+---     - clear only `autocmd-buflocal` autocommands.
+---     - NOTE: Cannot be used with {pattern}
+--- - buffer: (bufnr) (deprecatd) use buf.
 ---     - clear only `autocmd-buflocal` autocommands.
 ---     - NOTE: Cannot be used with {pattern}
 --- - group: (string|int) The augroup name or id.
@@ -947,7 +950,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- @param opts vim.api.keyset.create_autocmd Options dict:
 --- - group (string|integer) optional: autocommand group name or id to match against.
 --- - pattern (string|array) optional: pattern(s) to match literally `autocmd-pattern`.
---- - buffer (integer) optional: buffer number for buffer-local autocommands
+--- - buf (integer) optional: buffer number for buffer-local autocommands
+--- - buffer (integer) optional: buffer number for buffer-local autocommands. (deprecated) use buf.
 --- `autocmd-buflocal`. Cannot be used with {pattern}.
 --- - desc (string) optional: description (for documentation and troubleshooting).
 --- - callback (function|string) optional: Lua function (or Vimscript function name, if
@@ -1196,10 +1200,12 @@ function vim.api.nvim_exec2(src, opts) end
 --- id to match against. `autocmd-groups`.
 --- - pattern (string|array) optional: defaults to "*" `autocmd-pattern`. Cannot be used
 --- with {buffer}.
---- - buffer (integer) optional: buffer number `autocmd-buflocal`. Cannot be used with
+--- - buf (integer) optional: buffer number `autocmd-buflocal`. Cannot be used with
 --- {pattern}.
 --- - modeline (bool) optional: defaults to true. Process the
 --- modeline after the autocommands [<nomodeline>].
+--- - buffer (integer) optional: buffer number `autocmd-buflocal`. Cannot be used with
+--- {pattern}. (deprecated) use buf.
 --- - data (any): arbitrary data to send to the autocommand callback. See
 --- `nvim_create_autocmd()` for details.
 function vim.api.nvim_exec_autocmds(event, opts) end
@@ -1261,7 +1267,7 @@ function vim.api.nvim_get_all_options_info() end
 --- match any combination of them.
 ---
 --- @param opts vim.api.keyset.get_autocmds Dict with at least one of the following:
---- - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands
+--- - buf: (integer) Buffer number or list of buffer numbers for buffer local autocommands
 --- `autocmd-buflocal`. Cannot be used with {pattern}
 --- - event: (vim.api.keyset.events|vim.api.keyset.events[])
 ---   event or events to match against `autocmd-events`.

@@ -692,7 +692,7 @@ function Client:_process_request(id, req_type, bufnr, method)
   self.requests[id] = req_type ~= 'complete' and request or nil
 
   api.nvim_exec_autocmds('LspRequest', {
-    buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
+    buf = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
     modeline = false,
     data = { client_id = self.id, request_id = id, request = request },
   })
@@ -1145,7 +1145,7 @@ function Client:on_attach(bufnr)
   lsp.document_color.enable(true, bufnr)
 
   api.nvim_exec_autocmds('LspAttach', {
-    buffer = bufnr,
+    buf = bufnr,
     modeline = false,
     data = { client_id = self.id },
   })
@@ -1282,7 +1282,7 @@ end
 function Client:_on_detach(bufnr)
   if self.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
     api.nvim_exec_autocmds('LspDetach', {
-      buffer = bufnr,
+      buf = bufnr,
       modeline = false,
       data = { client_id = self.id },
     })

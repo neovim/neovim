@@ -1534,7 +1534,7 @@ describe('autocmd api', function()
   describe('nvim_clear_autocmds', function()
     it('validation', function()
       eq(
-        "Cannot use both 'pattern' and 'buffer'",
+        "Cannot use both 'pattern' and 'buf'",
         pcall_err(api.nvim_clear_autocmds, {
           pattern = '*',
           buffer = 42,
