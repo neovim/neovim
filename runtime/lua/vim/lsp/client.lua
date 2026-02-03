@@ -1358,34 +1358,34 @@ function Client:_on_exit(code, signal)
         reset_defaults(bufnr)
       end
     end
+
+    -- Schedule the deletion of the client object
+    -- so that it exists in the execution of autocommands
+    vim.schedule(function()
+      all_clients[self.id] = nil
+
+      -- Client can be absent if executable starts, but initialize fails
+      -- init/attach won't have happened
+      if self then
+        changetracking.reset(self)
+      end
+      if code ~= 0 or (signal ~= 0 and signal ~= 15) then
+        local msg = string.format(
+          'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
+          self and self.name or 'unknown',
+          code,
+          signal,
+          log.get_filename()
+        )
+        vim.notify(msg, vim.log.levels.WARN)
+      end
+    end)
   end)
 
   if self._handle_restart ~= nil then
     self._handle_restart()
     self._handle_restart = nil
   end
-
-  -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
-  -- autocommands
-  vim.schedule(function()
-    all_clients[self.id] = nil
-
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if self then
-      changetracking.reset(self)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg = string.format(
-        'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
-        self and self.name or 'unknown',
-        code,
-        signal,
-        log.get_filename()
-      )
-      vim.notify(msg, vim.log.levels.WARN)
-    end
-  end)
 
   self:_run_callbacks(
     self._on_exit_cbs,
