@@ -16,7 +16,7 @@ describe('cmdline2', function()
       [101] = { background = Screen.colors.Yellow, foreground = Screen.colors.Grey0 },
     })
     exec_lua(function()
-      require('vim._extui').enable({})
+      require('vim._core.ui2').enable({})
     end)
   end)
 
@@ -245,7 +245,7 @@ describe('cmdline2', function()
     clear({
       args = {
         '--clean',
-        '+lua require("vim._extui").enable({})',
+        '+lua require("vim._core.ui2").enable({})',
         "+call feedkeys(':')",
       },
     })

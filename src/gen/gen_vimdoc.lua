@@ -184,14 +184,14 @@ local config = {
       'version.lua',
 
       -- Sections at the end, in a specific order:
-      '_extui.lua',
+      'ui2.lua',
     },
     files = {
       'runtime/lua/vim/_core/editor.lua',
       'runtime/lua/vim/_core/options.lua',
       'runtime/lua/vim/_core/shared.lua',
       'runtime/lua/vim/_core/system.lua',
-      'runtime/lua/vim/_extui.lua',
+      'runtime/lua/vim/_core/ui2.lua',
       'runtime/lua/vim/_inspector.lua',
       'runtime/lua/vim/_meta/base64.lua',
       'runtime/lua/vim/_meta/builtin.lua',
@@ -235,6 +235,7 @@ local config = {
     end,
     section_name = {
       ['_inspector.lua'] = 'inspector',
+      ['ui2.lua'] = '_core.ui2',
     },
     section_fmt = function(name)
       name = name:lower()

@@ -397,7 +397,7 @@ UI
   address.
 • |:checkhealth| shows a summary in the header for every healthcheck.
 • |ui-multigrid| provides composition information and absolute coordinates.
-• `vim._extui` provides an experimental commandline and message UI intended to
+• `vim._core.ui2` provides an experimental commandline and message UI intended to
   replace the message grid in the TUI.
 • Error messages are more concise:
   • "Error detected while processing:" changed to "Error in:".
