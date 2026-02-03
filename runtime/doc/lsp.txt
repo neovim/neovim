@@ -56,7 +56,14 @@ Follow these steps to get LSP features:
    a |lsp-root_markers| file so the workspace can be recognized.
 5. Check that LSP is active ("attached") for the buffer: >vim
      :checkhealth vim.lsp
-6. (Optional) Configure keymaps and autocommands to use LSP features.
+6. Please note that certain LSP features are disabled by default,
+   you may choose to enable them mannually. See:
+     - |lsp-codelens|
+     - |lsp-document_color|
+     - |lsp-linked_editing_range|
+     - |lsp-inlay_hint|
+     - |lsp-inline_completion|
+7. (Optional) Configure keymaps and autocommands to use LSP features.
    |lsp-attach|
 
 ==============================================================================
