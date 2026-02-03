@@ -762,4 +762,35 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
   end)
+
+  it('works correctly with empty string as prompt', function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setprompt(buf, '')
+    end)
+
+    source('startinsert')
+
+    -- mark correctly set
+    eq({ 1, 0 }, api.nvim_buf_get_mark(0, ':'))
+
+    feed('asdf')
+    screen:expect([[
+      asdf^                     |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+
+    -- can clear all of it
+    feed('<backspace><backspace><backspace><backspace>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+    feed('<cr>')
+
+    eq({ 2, 0 }, api.nvim_buf_get_mark(0, ':'))
+  end)
 end)
