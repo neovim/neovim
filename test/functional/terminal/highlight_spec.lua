@@ -58,7 +58,6 @@ describe(':terminal highlight', function()
       end)
 
       local function pass_attrs()
-        skip(is_os('win'))
         screen:expect(sub([[
           tty ready                                         |
           {NUM:text}text^                                          |
@@ -70,7 +69,6 @@ describe(':terminal highlight', function()
       it('will pass the corresponding attributes', pass_attrs)
 
       it('will pass the corresponding attributes on scrollback', function()
-        skip(is_os('win'))
         pass_attrs()
         local lines = {}
         for i = 1, 8 do
@@ -244,11 +242,6 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
                                                       |
   ]])
 
-  -- Skip the rest of these tests on Windows #31587
-  if is_os('win') then
-    return
-  end
-
   -- CursorLine and CursorColumn are combined with terminal colors.
   tt.set_reverse()
   tt.feed_data(' foobar')
@@ -357,7 +350,6 @@ local function test_term_hl_custom_palette(buflocal)
   end)
 
   it('will use the custom color with jobstart()', function()
-    skip(is_os('win'))
     command(("call jobstart(['%s'], {'term': v:true})"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
