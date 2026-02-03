@@ -13,6 +13,7 @@ describe('cmdline2', function()
     screen = Screen.new()
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.Magenta1, bold = true },
+      [101] = { background = Screen.colors.Yellow, foreground = Screen.colors.Grey0 },
     })
     exec_lua(function()
       require('vim._extui').enable({})
@@ -178,6 +179,44 @@ describe('cmdline2', function()
       {10:f}oo                                                  |
       {1:~                                                    }|*12
       {16::}{15:s}{16:/f}^                                                 |
+    ]])
+  end)
+
+  it('dialog position is adjusted for toggled wildmenu', function()
+    exec([[
+      set wildmode=list:full,full wildoptions-=pum
+      func Foo()
+      endf
+      func Fooo()
+      endf
+    ]])
+    feed(':call Fo<C-Z>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      Foo()   Fooo()                                       |
+                                                           |
+      {16::}{15:call} Fo^                                             |
+    ]])
+    feed('<C-Z>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      Foo()   Fooo()                                       |
+                                                           |
+      {101:Foo()}{3:  Fooo()                                        }|
+      {16::}{15:call} {25:Foo}{16:()}^                                          |
+    ]])
+    feed('()')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      Foo()   Fooo()                                       |
+                                                           |
+      {16::}{15:call} {25:Foo}{16:()()}^                                        |
     ]])
   end)
 end)

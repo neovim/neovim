@@ -33,7 +33,7 @@ local tab = 0
 ---Ensure target buffers and windows are still valid.
 function M.check_targets()
   local curtab = api.nvim_get_current_tabpage()
-  for _, type in ipairs({ 'cmd', 'dialog', 'msg', 'pager' }) do
+  for i, type in ipairs({ 'cmd', 'dialog', 'msg', 'pager' }) do
     local setopt = not api.nvim_buf_is_valid(M.bufs[type])
     if setopt then
       M.bufs[type] = api.nvim_create_buf(false, false)
@@ -50,8 +50,8 @@ function M.check_targets()
         anchor = type ~= 'cmd' and 'SE' or nil,
         hide = type ~= 'cmd' or M.cmdheight == 0 or nil,
         border = type ~= 'msg' and 'none' or nil,
-        -- kZIndexMessages < zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
-        zindex = 200 + (type == 'cmd' and 1 or type == 'pager' and -1 or 0),
+        -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
+        zindex = 201 - i,
         _cmdline_offset = type == 'cmd' and 0 or nil,
       })
       if tab ~= curtab and api.nvim_win_is_valid(M.wins[type]) then
