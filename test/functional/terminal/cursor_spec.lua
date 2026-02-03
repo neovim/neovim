@@ -534,7 +534,10 @@ describe('buffer cursor position is correct in terminal without number column', 
     ]])
   end
 
-  before_each(clear)
+  before_each(function()
+    clear()
+    command('autocmd! nvim.terminal')
+  end)
 
   describe('in a line with no multibyte chars or trailing spaces,', function()
     before_each(function()
@@ -813,10 +816,6 @@ describe('buffer cursor position is correct in terminal without number column', 
 end)
 
 describe('buffer cursor position is correct in terminal with number column', function()
-  if t.is_ci('cirrus') then
-    return
-  end
-
   local screen
 
   local function setup_ex_register(str)
@@ -851,7 +850,10 @@ describe('buffer cursor position is correct in terminal with number column', fun
 
   before_each(function()
     clear()
-    command('au TermOpen * set number')
+    command('autocmd! nvim.terminal')
+    -- 'number' should be set before the terminal process starts, otherwise the resize
+    -- from setting 'number' may cause a redraw that removes the "Entering Ex mode".
+    command('set number')
   end)
 
   describe('in a line with no multibyte chars or trailing spaces,', function()
