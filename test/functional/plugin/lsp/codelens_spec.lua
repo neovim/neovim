@@ -16,6 +16,7 @@ local create_server_definition = t_lsp.create_server_definition
 
 describe('vim.lsp.codelens', function()
   local text = dedent([[
+    https://github.com/neovim/neovim/issues/16166
     struct S {
         a: i32,
         b: String,
@@ -34,7 +35,9 @@ describe('vim.lsp.codelens', function()
   ]])
 
   local grid_with_lenses = dedent([[
-    struct S { {1:1 implementation}                          |
+    ^https://github.com/neovim/neovim/issues/16166        |
+    {1:1 implementation}                                     |
+    struct S {                                           |
         a: i32,                                          |
         b: String,                                       |
     }                                                    |
@@ -45,17 +48,18 @@ describe('vim.lsp.codelens', function()
         }                                                |
     }                                                    |
                                                          |
-    fn main() { {1:▶︎ Run }                                   |
+    {1:▶︎ Run }                                               |
+    fn main() {                                          |
         let s = S::new(42, String::from("Hello, world!"))|
     ;                                                    |
         println!("S.a: {}, S.b: {}", s.a, s.b);          |
     }                                                    |
-    ^                                                     |
-    {1:~                                                    }|*2
+                                                         |
                                                          |
   ]])
 
   local grid_without_lenses = dedent([[
+    ^https://github.com/neovim/neovim/issues/16166        |
     struct S {                                           |
         a: i32,                                          |
         b: String,                                       |
@@ -72,7 +76,7 @@ describe('vim.lsp.codelens', function()
     ;                                                    |
         println!("S.a: {}, S.b: {}", s.a, s.b);          |
     }                                                    |
-    ^                                                     |
+                                                         |
     {1:~                                                    }|*2
                                                          |
   ]])
@@ -87,7 +91,7 @@ describe('vim.lsp.codelens', function()
     clear_notrace()
     exec_lua(create_server_definition)
 
-    screen = Screen.new(nil, 20)
+    screen = Screen.new(nil, 21)
 
     client_id = exec_lua(function()
       _G.server = _G._create_server({
@@ -105,7 +109,7 @@ describe('vim.lsp.codelens', function()
                     impls = {
                       position = {
                         character = 7,
-                        line = 0,
+                        line = 1,
                       },
                     },
                   },
@@ -114,11 +118,11 @@ describe('vim.lsp.codelens', function()
                 range = {
                   ['end'] = {
                     character = 8,
-                    line = 0,
+                    line = 1,
                   },
                   start = {
                     character = 7,
-                    line = 0,
+                    line = 1,
                   },
                 },
               },
@@ -131,11 +135,11 @@ describe('vim.lsp.codelens', function()
                 range = {
                   ['end'] = {
                     character = 7,
-                    line = 11,
+                    line = 12,
                   },
                   start = {
                     character = 3,
-                    line = 11,
+                    line = 12,
                   },
                 },
               },
@@ -152,11 +156,11 @@ describe('vim.lsp.codelens', function()
                 range = {
                   ['end'] = {
                     character = 8,
-                    line = 0,
+                    line = 1,
                   },
                   start = {
                     character = 7,
-                    line = 0,
+                    line = 1,
                   },
                 },
               })
@@ -174,6 +178,7 @@ describe('vim.lsp.codelens', function()
       vim.lsp.codelens.enable()
     end)
 
+    feed('gg')
     screen:expect({ grid = grid_with_lenses })
   end)
 
@@ -211,11 +216,11 @@ describe('vim.lsp.codelens', function()
           range = {
             ['end'] = {
               character = 8,
-              line = 0,
+              line = 1,
             },
             start = {
               character = 7,
-              line = 0,
+              line = 1,
             },
           },
         },
@@ -231,11 +236,11 @@ describe('vim.lsp.codelens', function()
           range = {
             ['end'] = {
               character = 7,
-              line = 11,
+              line = 12,
             },
             start = {
               character = 3,
-              line = 11,
+              line = 12,
             },
           },
         },
@@ -244,10 +249,12 @@ describe('vim.lsp.codelens', function()
   end)
 
   it('refreshes code lenses on request', function()
-    feed('ggdd')
+    feed('2Gdd')
 
     screen:expect([[
-          ^a: i32, {1:1 implementation}                         |
+      https://github.com/neovim/neovim/issues/16166        |
+      {1:1 implementation}                                     |
+          ^a: i32,                                          |
           b: String,                                       |
       }                                                    |
                                                            |
@@ -257,13 +264,14 @@ describe('vim.lsp.codelens', function()
           }                                                |
       }                                                    |
                                                            |
-      fn main() { {1:▶︎ Run }                                   |
+      {1:▶︎ Run }                                               |
+      fn main() {                                          |
           let s = S::new(42, String::from("Hello, world!"))|
       ;                                                    |
           println!("S.a: {}, S.b: {}", s.a, s.b);          |
       }                                                    |
                                                            |
-      {1:~                                                    }|*3
+      {1:~                                                    }|*1
                                                            |
     ]])
     exec_lua(function()
@@ -274,7 +282,9 @@ describe('vim.lsp.codelens', function()
       )
     end)
     screen:expect([[
-          ^a: i32, {1:1 implementation}                         |
+      https://github.com/neovim/neovim/issues/16166        |
+      {1:    1 implementation}                                 |
+          ^a: i32,                                          |
           b: String,                                       |
       }                                                    |
                                                            |
@@ -285,13 +295,36 @@ describe('vim.lsp.codelens', function()
       }                                                    |
                                                            |
       fn main() {                                          |
+      {1:    ▶︎ Run }                                           |
           let s = S::new(42, String::from("Hello, world!"))|
-      ; {1:▶︎ Run }                                             |
+      ;                                                    |
           println!("S.a: {}, S.b: {}", s.a, s.b);          |
       }                                                    |
                                                            |
-      {1:~                                                    }|*3
+      {1:~                                                    }|*1
                                                            |
+    ]])
+  end)
+
+  it('clears extmarks beyond the bottom of the buffer', function()
+    feed('13G4dd')
+    screen:expect([[
+      https://github.com/neovim/neovim/issues/16166        |
+      {1:1 implementation}                                     |
+      struct S {                                           |
+          a: i32,                                          |
+          b: String,                                       |
+      }                                                    |
+                                                           |
+      impl S {                                             |
+          fn new(a: i32, b: String) -> Self {              |
+              S { a, b }                                   |
+          }                                                |
+      }                                                    |
+                                                           |
+      ^                                                     |
+      {1:~                                                    }|*6
+      4 fewer lines                                        |
     ]])
   end)
 
