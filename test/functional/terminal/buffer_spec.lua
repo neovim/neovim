@@ -1465,12 +1465,12 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
       pcall_err(fn.termopen, 'bar')
     )
   end)
+end)
+
+describe('jobstart(…,{term=true})', function()
+  before_each(clear)
 
   describe('$COLORTERM value', function()
-    if skip(is_os('win'), 'Not applicable for Windows') then
-      return
-    end
-
     before_each(function()
       -- Outer value should never be propagated to :terminal
       fn.setenv('COLORTERM', 'wrongvalue')
@@ -1478,7 +1478,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
 
     local function test_term_colorterm(expected, opts)
       local screen = Screen.new(50, 4)
-      fn.termopen({
+      fn.jobstart({
         nvim_prog,
         '-u',
         'NONE',
@@ -1487,7 +1487,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         '--headless',
         '-c',
         'echo $COLORTERM | quit',
-      }, opts)
+      }, vim.tbl_extend('error', opts, { term = true }))
       screen:expect(([[
         ^%s{MATCH:%%s+}|
         [Process exited 0]                                |
@@ -1500,7 +1500,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         command('set notermguicolors')
       end)
       it('is empty by default', function()
-        test_term_colorterm('')
+        test_term_colorterm('', {})
       end)
       it('can be overridden', function()
         test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })
@@ -1512,7 +1512,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         command('set termguicolors')
       end)
       it('is "truecolor" by default', function()
-        test_term_colorterm('truecolor')
+        test_term_colorterm('truecolor', {})
       end)
       it('can be overridden', function()
         test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })

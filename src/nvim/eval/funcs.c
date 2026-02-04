@@ -3327,8 +3327,8 @@ static const char *pty_ignored_env_vars[] = {
   "LINES",
   "TERMCAP",
   "COLORFGBG",
-  "COLORTERM",
 #endif
+  "COLORTERM",
   // Nvim-owned env vars. #6764
   "VIM",
   "VIMRUNTIME",
@@ -3376,12 +3376,10 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
           tv_dict_item_remove(env, dv);
         }
       }
-#ifndef MSWIN
       // Set COLORTERM to "truecolor" if termguicolors is set
       if (p_tgc) {
         tv_dict_add_str(env, S_LEN("COLORTERM"), "truecolor");
       }
-#endif
     }
   }
 
