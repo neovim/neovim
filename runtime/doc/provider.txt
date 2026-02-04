@@ -199,7 +199,11 @@ registers. Nvim supports these clipboard tools, in order of priority:
 								 *g:clipboard*
 To configure a custom clipboard tool, set `g:clipboard` to a string name (from
 the above |clipboard-tool| list), or dict (to explicitly specify the shell
-commands or |lambda| functions).
+commands or |lambda| functions) before clipboard providers are initialized.
+
+Note: Clipboard providers are initialized by calling `has('clipboard')`, which
+is best avoided before setting `g:clipboard`. See "G:CLIPBOARD SETTINGS ARE NOT
+USED" in |faq-runtime| for workarounds.
 
 If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
