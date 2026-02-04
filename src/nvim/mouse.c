@@ -225,7 +225,7 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
 /// Translate window coordinates to buffer position without any side effects.
 /// Returns IN_BUFFER and sets "mpos->col" to the column when in buffer text.
 /// The column is one for the first column.
-static int get_fpos_of_mouse(pos_T *mpos)
+int get_fpos_of_mouse(pos_T *mpos)
 {
   int grid = mouse_grid;
   int row = mouse_row;
@@ -246,13 +246,6 @@ static int get_fpos_of_mouse(pos_T *mpos)
   // compute the position in the buffer line from the posn on the screen
   bool below_buffer = mouse_comp_pos(wp, &row, &col, &mpos->lnum);
 
-  if (!below_buffer && *wp->w_p_stc != NUL
-      && (wp->w_p_rl
-          ? wincol >= wp->w_view_width - win_col_off(wp)
-          : wincol < win_col_off(wp))) {
-    return MOUSE_STATUSCOL;
-  }
-
   // winpos and height may change in win_enter()!
   if (winrow >= wp->w_view_height + wp->w_status_height) {  // Below window
     if (mouse_grid <= 1 && mouse_row < Rows - p_ch
@@ -262,6 +255,13 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return IN_UNKNOWN;
   } else if (winrow >= wp->w_view_height) {  // In window status line
     return IN_STATUS_LINE;
+  }
+
+  if (!below_buffer && *wp->w_p_stc != NUL
+      && (wp->w_p_rl
+          ? wincol >= wp->w_view_width - win_col_off(wp)
+          : wincol < win_col_off(wp))) {
+    return MOUSE_STATUSCOL;
   }
 
   if (winrow < 0 && winrow + wp->w_winbar_height >= 0) {  // In winbar
@@ -403,6 +403,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     break;
   }
 
+  // Always update the mouse shape based on mouse move position and mouse state, due to short
+  // circuiting below.
+  setmouse();
   if (c == K_MOUSEMOVE) {
     // Mouse moved without a button pressed.
     return false;
@@ -651,6 +654,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   int old_active = VIsual_active;
   pos_T save_cursor = curwin->w_cursor;
   jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
+  // Update mouse shape (potentially again) after mouse jump as state may have changed.
+  setmouse();
 
   bool moved = (jump_flags & CURSOR_MOVED);
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
@@ -1165,6 +1170,11 @@ static win_T *dragwin = NULL;  ///< window being dragged
 void reset_dragwin(void)
 {
   dragwin = NULL;
+}
+
+bool is_dragging(void)
+{
+  return dragwin != NULL;
 }
 
 /// Move the cursor to the specified row and column on the screen.

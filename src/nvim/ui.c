@@ -56,6 +56,7 @@ static RemoteUI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
 static size_t ui_count = 0;
 static int ui_mode_idx = SHAPE_IDX_N;
+static int mouse_ui_mode_idx = SHAPE_IDX_N;
 static int cursor_row = 0, cursor_col = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
@@ -582,6 +583,10 @@ void ui_flush(void)
   if (pending_mode_update && !starting) {
     char *full_name = shape_table[ui_mode_idx].full_name;
     ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
+    if (mouse_ui_mode_idx != ui_mode_idx) {
+      full_name = shape_table[mouse_ui_mode_idx].full_name;
+      ui_call_mode_change(cstr_as_string(full_name), mouse_ui_mode_idx);
+    }
     pending_mode_update = false;
   }
   if (pending_has_mouse != has_mouse) {
@@ -656,10 +661,15 @@ void ui_cursor_shape_no_check_conceal(void)
   if (!full_screen) {
     return;
   }
-  int new_mode_idx = cursor_get_mode_idx();
+  int new_mode_idx = cursor_get_mode_idx(false);
+  int new_mouse_mode_idx = cursor_get_mode_idx(true);
 
   if (new_mode_idx != ui_mode_idx) {
     ui_mode_idx = new_mode_idx;
+    pending_mode_update = true;
+  }
+  if (new_mouse_mode_idx != mouse_ui_mode_idx) {
+    mouse_ui_mode_idx = new_mouse_mode_idx;
     pending_mode_update = true;
   }
 }
