@@ -372,6 +372,10 @@ PERFORMANCE
 • |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
 • LSP `textDocument/semanticTokens/range` is supported, which requests tokens
   for the viewport (visible screen) only.
+• |:packadd| doesn't invalidate the cached Lua package path. Instead the cache
+  gets updated in place. This might make a big startuptime difference for
+  certain |init.lua| patterns where multiple |:packadd| or |vim.pack.add()|
+  calls are interspersed with other code.
 
 PLUGINS
 

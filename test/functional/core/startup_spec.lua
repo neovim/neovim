@@ -1128,6 +1128,44 @@ describe('startup', function()
     }, exec_lua [[ return _G.test_loadorder ]])
   end)
 
+  it('does an incremental update for packadd', function()
+    pack_clear [[ lua _G.test_loadorder = {} ]]
+    command [[
+      " need to use the runtime to make the initial cache:
+      runtime! non_exist_ent
+      " this should now incrementally update it:
+      packadd! superspecial
+    ]]
+
+    local check = api.nvim__runtime_inspect()
+    local check_copy = vim.deepcopy(check)
+    local any_incremental = false
+    for _, item in ipairs(check_copy) do
+      any_incremental = any_incremental or item.pack_inserted
+      item.pack_inserted = nil
+    end
+    eq(true, any_incremental, 'no pack_inserted in ' .. vim.inspect(check))
+
+    command [[
+      let &rtp = &rtp
+      runtime! phantom_ghost
+    ]]
+
+    local new_check = api.nvim__runtime_inspect()
+    eq(check_copy, new_check)
+
+    command [[ runtime! filen.lua ]]
+    eq({
+      'ordinary',
+      'SuperSpecial',
+      'FANCY',
+      'mittel',
+      'FANCY after',
+      'SuperSpecial after',
+      'ordinary after',
+    }, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
   it('handles the correct order with opt packages and globpath(&rtp, ...)', function()
     pack_clear [[ set loadplugins | lua _G.test_loadorder = {} ]]
     command [[
