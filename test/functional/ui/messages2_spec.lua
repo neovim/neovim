@@ -528,4 +528,73 @@ describe('messages2', function()
       i hate locks so much!!!!                             |*2
     ]])
   end)
+
+  it('replace by message ID', function()
+    exec_lua(function()
+      vim.api.nvim_echo({ { 'foo' } }, true, { id = 1 })
+      vim.api.nvim_echo({ { 'bar\nbaz' } }, true, { id = 2 })
+      vim.api.nvim_echo({ { 'foo' } }, true, { id = 3 })
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
+      baz                                                  |
+      foo                                                  |
+    ]])
+    exec_lua(function()
+      vim.api.nvim_echo({ { 'foo' } }, true, { id = 2 })
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      foo                                                  |*3
+    ]])
+    exec_lua(function()
+      vim.api.nvim_echo({ { 'bar\nbaz' } }, true, { id = 1 })
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      bar                                                  |
+      baz                                                  |
+      foo                                                  |*2
+    ]])
+    exec_lua(function()
+      vim.o.cmdheight = 0
+      vim.api.nvim_echo({ { 'foo' } }, true, { id = 1 })
+      vim.api.nvim_echo({ { 'bar\nbaz' } }, true, { id = 2 })
+      vim.api.nvim_echo({ { 'foo' } }, true, { id = 3 })
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*9
+      {1:~                                                 }{4:foo}|
+      {1:~                                                 }{4:bar}|
+      {1:~                                                 }{4:baz}|
+      {1:~                                                 }{4:foo}|
+    ]])
+    exec_lua(function()
+      vim.api.nvim_echo({ { 'foo' } }, true, { id = 2 })
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {1:~                                                 }{4:foo}|*3
+    ]])
+    exec_lua(function()
+      vim.api.nvim_echo({ { 'f', 'Conceal' }, { 'oo\nbar' } }, true, { id = 3 })
+    end)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*9
+      {1:~                                                 }{4:foo}|*2
+      {1:~                                                 }{14:f}{4:oo}|
+      {1:~                                                 }{4:bar}|
+    ]])
+  end)
 end)
