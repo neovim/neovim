@@ -758,7 +758,7 @@ describe(':terminal buffer', function()
   end)
 
   it('handles split UTF-8 sequences #16245', function()
-    local screen = Screen.new(50, 7)
+    local screen = Screen.new(50, 10)
     fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
     screen:expect([[
       ^å                                                 |
@@ -766,7 +766,24 @@ describe(':terminal buffer', function()
       1: å̲                                              |
       2: å̲                                              |
       3: å̲                                              |
-                                                        |*2
+                                                        |
+      [Process exited 0]                                |
+                                                        |*3
+    ]])
+    -- Test with Unicode char at right edge using a 4-wide terminal
+    command('bwipe! | set laststatus=0 | 4vnew')
+    fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
+    screen:expect([[
+      ^å   │                                             |
+      ref:│{1:~                                            }|
+       å̲  │{1:~                                            }|
+      1: å̲│{1:~                                            }|
+      2: å̲│{1:~                                            }|
+      3: å̲│{1:~                                            }|
+          │{1:~                                            }|
+      [Pro│{1:~                                            }|
+      cess│{1:~                                            }|
+                                                        |
     ]])
   end)
 

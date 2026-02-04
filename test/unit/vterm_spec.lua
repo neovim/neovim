@@ -992,6 +992,7 @@ describe('vterm', function()
     push('e' .. string.rep('\xCC\x81', 20), vt)
     expect('putglyph 65,301,301,301,301,301,301,301,301,301,301,301,301,301,301 1 0,0') -- and nothing more
 
+    -- Combining across buffers multiple times
     reset(state, nil)
     push('e', vt)
     expect('putglyph 65 1 0,0')
@@ -999,6 +1000,32 @@ describe('vterm', function()
     expect('putglyph 65,301 1 0,0')
     push('\xCC\x82', vt)
     expect('putglyph 65,301,302 1 0,0')
+
+    -- Combining across buffers at right edge
+    reset(state, nil)
+    push('\x1b[5;80H', vt)
+    push('e', vt)
+    expect('putglyph 65 1 4,79')
+    push('\xCC\x81', vt)
+    expect('putglyph 65,301 1 4,79')
+    push('\xCC\x82Z', vt)
+    expect('putglyph 65,301,302 1 4,79\nputglyph 5a 1 5,0')
+
+    -- Combining regional indicators
+    reset(state, nil)
+    push('\x1b[5;77H', vt)
+    push('🇦', vt)
+    expect('putglyph 1f1e6 2 4,76')
+    push('🇩', vt)
+    expect('putglyph 1f1e6,1f1e9 2 4,76')
+    push('🇱', vt)
+    expect('putglyph 1f1f1 2 4,78')
+    push('🇮', vt)
+    expect('putglyph 1f1f1,1f1ee 2 4,78')
+    push('🇲', vt)
+    expect('putglyph 1f1f2 2 5,0')
+    push('🇨', vt)
+    expect('putglyph 1f1f2,1f1e8 2 5,0')
 
     -- emoji with ZWJ and variant selectors, as one chunk
     reset(state, nil)
