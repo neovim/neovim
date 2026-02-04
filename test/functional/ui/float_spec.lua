@@ -11469,7 +11469,7 @@ describe('float window', function()
         zindex = 1,
       })
       local buf2 = api.nvim_create_buf(false, false)
-      api.nvim_open_win(buf2, false, {
+      local float_win_above = api.nvim_open_win(buf2, false, {
         relative = 'editor',
         width = 10,
         height = 10,
@@ -11660,6 +11660,74 @@ describe('float window', function()
         })
       else
         screen:expect { mode = 'replace' }
+      end
+
+      -- Not obscured by a hidden floatwin.
+      api.nvim_win_set_config(float_win_above, { hide = true })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+                                                              |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:^    x}{5:│}|
+            {5:│}{2:    ~}{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8 (hidden)
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 8, true, 1, 1, 8, 8 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect { mode = 'normal' }
+      end
+
+      -- Not obscured in the command-line if curwin's cursor is obscured.
+      api.nvim_win_set_config(float_win_above, { hide = false })
+      feed(':')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+            :^                                                 |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:    x}{5:│}|
+            {5:│}{2:    ~}{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 8, true, 1, 1, 8, 8 },
+            [8] = { 1005, 'NW', 1, 0, 0, true, 2, 2, 0, 0 },
+          },
+          mode = 'cmdline_normal',
+        })
+      else
+        screen:expect { mode = 'cmdline_normal' }
       end
     end)
   end
