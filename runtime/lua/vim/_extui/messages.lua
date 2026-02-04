@@ -209,7 +209,8 @@ local function expand_msg(src)
   local tar = hidden and 'cmd' or 'pager'
   if tar ~= src then
     local srow = hidden and 0 or api.nvim_buf_line_count(ext.bufs.pager)
-    local marks = api.nvim_buf_get_extmarks(ext.bufs[src], -1, 0, -1, { details = true })
+    local opts = { details = true, type = 'highlight' }
+    local marks = api.nvim_buf_get_extmarks(ext.bufs[src], -1, 0, -1, opts)
     local lines = api.nvim_buf_get_lines(ext.bufs[src], 0, -1, false)
     api.nvim_buf_set_lines(ext.bufs[src], 0, -1, false, {})
     api.nvim_buf_set_lines(ext.bufs[tar], srow, -1, false, lines)
@@ -226,6 +227,7 @@ local function expand_msg(src)
 
     M.virt.msg[M.virt.idx.spill][1] = nil
     M[src].ids = {}
+    M.msg:close()
   else
     for _, id in pairs(M.virt.ids) do
       api.nvim_buf_del_extmark(ext.bufs.cmd, ext.ns, id)

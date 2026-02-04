@@ -596,5 +596,20 @@ describe('messages2', function()
       {1:~                                                 }{14:f}{4:oo}|
       {1:~                                                 }{4:bar}|
     ]])
+    -- No error expanding the cmdline when trying to copy over message span marks #37672.
+    screen:try_resize(screen._width, 6)
+    command('ls!')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|
+      {3:                                                     }|
+      foo                                                  |*2
+      {14:f}oo                                                  |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*5
+    ]])
   end)
 end)
