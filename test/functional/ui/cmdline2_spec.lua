@@ -182,7 +182,7 @@ describe('cmdline2', function()
     ]])
   end)
 
-  it('dialog position is adjusted for toggled wildmenu', function()
+  it('dialog position is adjusted for toggled non-pum wildmenu', function()
     exec([[
       set wildmode=list:full,full wildoptions-=pum
       func Foo()
@@ -207,6 +207,25 @@ describe('cmdline2', function()
       Foo()   Fooo()                                       |
                                                            |
       {101:Foo()}{3:  Fooo()                                        }|
+      {16::}{15:call} {25:Foo}{16:()}^                                          |
+    ]])
+    feed('()')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      Foo()   Fooo()                                       |
+                                                           |
+      {16::}{15:call} {25:Foo}{16:()()}^                                        |
+    ]])
+    exec('set wildoptions+=pum laststatus=2')
+    feed('<C-U>call Fo<C-Z><C-Z>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      Foo(){12: Foo()          }                                |
+           {4: Fooo()         }                                |
       {16::}{15:call} {25:Foo}{16:()}^                                          |
     ]])
     feed('()')
