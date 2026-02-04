@@ -8,7 +8,7 @@ local M = {
   srow = 0, -- Buffer row at which the current cmdline starts; > 0 in block mode.
   erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
   level = -1, -- Current cmdline level; 0 when inactive, -1 one loop iteration after closing.
-  wmnumode = 0, -- Return value of wildmenumode(), dialog position adjusted when toggled.
+  wmnumode = 0, -- wildmenumode() when not using the pum, dialog position adjusted when toggled.
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -29,7 +29,7 @@ local function win_config(win, hide, height)
       vim.o.cmdheight = height
     end)
     ext.msg.set_pos()
-  elseif M.wmnumode ~= (M.prompt and fn.wildmenumode() or 0) then
+  elseif M.wmnumode ~= (M.prompt and fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
     M.wmnumode = (M.wmnumode == 1 and 0 or 1)
     ext.msg.set_pos()
   end
