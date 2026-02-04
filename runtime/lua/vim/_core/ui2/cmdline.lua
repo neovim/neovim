@@ -4,10 +4,11 @@ local api, fn = vim.api, vim.fn
 local M = {
   highlighter = nil, ---@type vim.treesitter.highlighter?
   indent = 0, -- Current indent for block event.
-  prompt = false, -- Whether a prompt is active; messages are placed in the 'dialog' window.
+  prompt = false, -- Whether a prompt is active; route to dialog regardless of ui.cfg.msg.target.
+  dialog = false, -- Whether a dialog window was opened.
   srow = 0, -- Buffer row at which the current cmdline starts; > 0 in block mode.
   erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
-  level = -1, -- Current cmdline level; 0 when inactive, -1 one loop iteration after closing.
+  level = 0, -- Current cmdline level; 0 when inactive.
   wmnumode = 0, -- wildmenumode() when not using the pum, dialog position adjusted when toggled.
 }
 
@@ -29,7 +30,7 @@ local function win_config(win, hide, height)
       vim.o.cmdheight = height
     end)
     ui.msg.set_pos()
-  elseif M.wmnumode ~= (M.prompt and fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
+  elseif M.wmnumode ~= (M.dialog and fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
     M.wmnumode = (M.wmnumode == 1 and 0 or 1)
     ui.msg.set_pos()
   end
@@ -66,7 +67,7 @@ end
 ---@param level integer
 ---@param hl_id integer
 function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
-  M.level, M.indent, M.prompt = level, indent, M.prompt or #prompt > 0
+  M.level, M.indent, M.prompt = level, indent, #prompt > 0
   if M.highlighter == nil or M.highlighter.bufnr ~= ui.bufs.cmd then
     local parser = assert(vim.treesitter.get_parser(ui.bufs.cmd, 'vim', {}))
     M.highlighter = vim.treesitter.highlighter.new(parser)
@@ -130,28 +131,21 @@ function M.cmdline_hide(level, abort)
 
   fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
   api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 })
-  if abort then
-    -- Clear cmd buffer for aborted command (non-abort is left visible).
+  if M.prompt or abort then
+    -- Clear cmd buffer prompt or aborted command (non-abort is left visible).
     api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
   end
 
-  local clear = vim.schedule_wrap(function(was_prompt)
+  vim.schedule(function()
     -- Avoid clearing prompt window when it is re-entered before the next event
     -- loop iteration. E.g. when a non-choice confirm button is pressed.
-    if was_prompt and not M.prompt then
-      api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
+    if M.dialog and M.level == 0 then
       api.nvim_buf_set_lines(ui.bufs.dialog, 0, -1, false, {})
       api.nvim_win_set_config(ui.wins.dialog, { hide = true })
       vim.on_key(nil, ui.msg.dialog_on_key)
+      M.dialog = false
     end
-    -- Messages emitted as a result of a typed command are treated specially:
-    -- remember if the cmdline was used this event loop iteration.
-    -- NOTE: Message event callbacks are themselves scheduled, so delay two iterations.
-    vim.schedule(function()
-      M.level = -1
-    end)
   end)
-  clear(M.prompt)
 
   M.prompt, M.level, curpos[1], curpos[2] = false, 0, 0, 0
   win_config(ui.wins.cmd, true, ui.cmdheight)
