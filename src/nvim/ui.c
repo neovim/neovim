@@ -571,6 +571,17 @@ void ui_flush(void)
     // by nvim core, not the compositor)
     win_ui_flush(false);
   }
+
+  // Show "empty box" (underline style) cursor if behind a floatwin.
+  if (!(State & MODE_CMDLINE)) {
+    bool cursor_obscured = ui_cursor_is_behind_floatwin();
+    int new_idx = cursor_obscured ? SHAPE_IDX_R : cursor_get_mode_idx();
+    if (ui_mode_idx != new_idx) {
+      ui_mode_idx = new_idx;
+      pending_mode_update = true;
+    }
+  }
+
   if (pending_mode_info_update) {
     Arena arena = ARENA_EMPTY;
     Array style = mode_style_array(&arena);
@@ -672,6 +683,22 @@ void ui_cursor_shape(void)
 {
   ui_cursor_shape_no_check_conceal();
   conceal_check_cursor_line();
+}
+
+/// Check if the cursor is behind a floating window (only in compositor mode).
+/// @return true if cursor is obscured by a float with higher zindex
+static bool ui_cursor_is_behind_floatwin(void)
+{
+  if (!ui_comp_should_draw()) {
+    return false;
+  }
+
+  int crow = curwin->w_winrow + curwin->w_winrow_off + curwin->w_wrow;
+  int ccol = curwin->w_wincol + curwin->w_wincol_off
+             + (curwin->w_p_rl ? curwin->w_view_width - curwin->w_wcol - 1 : curwin->w_wcol);
+
+  ScreenGrid *top_grid = ui_comp_get_grid_at_coord(crow, ccol);
+  return top_grid != &curwin->w_grid_alloc && top_grid != &default_grid;
 }
 
 /// Returns true if the given UI extension is enabled.
