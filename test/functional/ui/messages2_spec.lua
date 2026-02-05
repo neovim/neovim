@@ -15,11 +15,11 @@ describe('messages2', function()
       [100] = { foreground = Screen.colors.Magenta1, bold = true },
     })
     exec_lua(function()
-      require('vim._extui').enable({})
+      require('vim._core.ui2').enable({})
     end)
   end)
   after_each(function()
-    -- Since vim._extui lasts until Nvim exits, there may be unfinished timers.
+    -- Since ui2 module lasts until Nvim exits, there may be unfinished timers.
     -- Close unfinished timers to avoid 2s delay on exit with ASAN or TSAN.
     exec_lua(function()
       vim.uv.walk(function(handle)

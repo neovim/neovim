@@ -227,6 +227,7 @@ describe('vim._core', function()
       'vim._core.shared',
       'vim._core.stringbuffer',
       'vim._core.system',
+      'vim._core.ui2',
       'vim._core.util',
       'vim._init_packages',
       'vim.filetype',
