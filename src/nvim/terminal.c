@@ -2150,12 +2150,23 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  refresh_size(term, buf);
+  bool resized = refresh_size(term, buf);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline_cursor(term, buf, ml_added);
+
+  // Resized window may have scrolled horizontally to keep its cursor in-view using the old terminal
+  // size. Reset the scroll, and let curs_columns correct it if that sends the cursor out-of-view.
+  if (resized) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf && wp->w_leftcol != 0) {
+        wp->w_leftcol = 0;
+        curs_columns(wp, true);
+      }
+    }
+  }
 
   // Copy pending events back to the main event queue
   multiqueue_move_events(main_loop.events, term->pending.events);
@@ -2227,10 +2238,10 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   unblock_autocmds();
 }
 
-static void refresh_size(Terminal *term, buf_T *buf)
+static bool refresh_size(Terminal *term, buf_T *buf)
 {
   if (!term->pending.resize || term->closed) {
-    return;
+    return false;
   }
 
   term->pending.resize = false;
@@ -2239,6 +2250,7 @@ static void refresh_size(Terminal *term, buf_T *buf)
   term->invalid_start = 0;
   term->invalid_end = height;
   term->opts.resize_cb((uint16_t)width, (uint16_t)height, term->opts.data);
+  return true;
 }
 
 void on_scrollback_option_changed(Terminal *term)

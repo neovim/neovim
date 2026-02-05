@@ -14,6 +14,7 @@ local eq = t.eq
 local eval = n.eval
 local skip = t.skip
 local is_os = t.is_os
+local testprg = n.testprg
 
 describe(':terminal window', function()
   before_each(clear)
@@ -32,6 +33,46 @@ describe(':terminal window', function()
     command('new')
     eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
     eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+  end)
+
+  it('resets horizontal scroll on resize #35331', function()
+    local screen = tt.setup_screen(0, { testprg('shell-test'), 'INTERACT' })
+    command('set statusline=%{win_getid()} splitright')
+    screen:expect([[
+      interact $ ^                                       |
+                                                        |*5
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(('A'):rep(30))
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA^         |
+                                                        |*5
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('vnew | wincmd p')
+    screen:expect([[
+      interact $ AAAAAAAAAAAAA│                         |
+      AAAAAAAAAAAAAAAAA^       │{4:~                        }|
+                              │{4:~                        }|*3
+      {17:1000                     }{1:1001                     }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    feed([[<C-\><C-N><C-W>o]])
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         |
+      ^                                                  |
+                                                        |*5
+    ]])
+    -- Window with less room scrolls anyway to keep its cursor in-view.
+    feed('gg$20<C-W>v')
+    screen:expect([[
+      interact $ AAAAAAAAAAAAAAAAAA│$ AAAAAAAAAAAAAAAAA^A|
+      AAAAAAAAAAAA                 │AAA                 |
+                                   │                    |*3
+      {18:1000                          }{17:1002                }|
+                                                        |
+    ]])
   end)
 end)
 
