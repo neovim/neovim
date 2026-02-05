@@ -3,6 +3,7 @@ local keymap = {}
 --- Table of |:map-arguments|.
 --- Same as |nvim_set_keymap()| {opts}, except:
 --- - {replace_keycodes} defaults to `true` if "expr" is `true`.
+--- - {noremap} is not supported; use {remap} instead (see below).
 ---
 --- Also accepts:
 --- @class vim.keymap.set.Opts : vim.api.keyset.keymap
