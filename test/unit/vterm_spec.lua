@@ -1827,11 +1827,20 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     expect('putglyph 2592 1 0,1')
 
     vterm.vterm_set_utf8(vt, true)
+
+    -- Mixed US-ASCII and UTF-8
     -- U+0108 == c4 88
     reset(state, nil)
     push('\x1b(B', vt)
     push('AB\xc4\x88D', vt)
     expect('putglyph 41 1 0,0\nputglyph 42 1 0,1\nputglyph 108 1 0,2\nputglyph 44 1 0,3')
+
+    -- Split UTF-8 after US-ASCII
+    reset(state, nil)
+    push('AB\xc4', vt)
+    expect('putglyph 41 1 0,0\nputglyph 42 1 0,1')
+    push('\x88D', vt)
+    expect('putglyph 108 1 0,2\nputglyph 44 1 0,3')
   end)
 
   itp('15state_mode', function()
