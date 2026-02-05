@@ -29,8 +29,10 @@
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
+#include "nvim/api/ops.h"
 #include "nvim/lua/base64.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/ops.h"
 #include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/xdiff.h"
@@ -729,6 +731,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // vim.base64
     luaopen_base64(lstate);
     lua_setfield(lstate, -2, "base64");
+
+    // vim.op
+    luaopen_vim_op(lstate);
+    lua_setfield(lstate, -2, "op");
 
     nlua_state_add_internal(lstate);
   }

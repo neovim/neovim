@@ -22,6 +22,7 @@
 #include "auto/config.h"  // IWYU pragma: keep
 #include "klib/kvec.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/ops.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
@@ -154,6 +155,7 @@ static const char *err_extra_cmd =
 void event_init(void)
 {
   loop_init(&main_loop, NULL);
+  ops_init();
   env_init();
   resize_events = multiqueue_new_child(main_loop.events);
 
