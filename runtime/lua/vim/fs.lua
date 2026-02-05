@@ -735,12 +735,13 @@ end
 
 --- Remove files or directories
 --- @since 13
---- @param path string Path to remove
+--- @param path string Path to remove. Removes symlinks without touching the origin.
+---To remove the origin, resolve explicitly with |uv.fs_realpath()|.
 --- @param opts? vim.fs.rm.Opts
 function M.rm(path, opts)
   opts = opts or {}
 
-  local stat, err, errnm = uv.fs_stat(path)
+  local stat, err, errnm = uv.fs_lstat(path)
   if stat then
     rm(path, stat.type, opts.recursive, opts.force)
   elseif not opts.force or errnm ~= 'ENOENT' then
