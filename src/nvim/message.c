@@ -365,10 +365,10 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
 
   // provide a new id if not given
   if (id.type == kObjectTypeNil) {
-    id = INTEGER_OBJ(msg_id_next);
+    id = INTEGER_OBJ(msg_id_next++);
   } else if (id.type == kObjectTypeInteger) {
-    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next);
-    msg_id_next = MAX(msg_id_next, id.data.integer);
+    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
+    msg_id_next = MAX(msg_id_next, id.data.integer + 1);
   }
   msg_ext_id = id;
 
