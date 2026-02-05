@@ -660,21 +660,6 @@ static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf,
                                 bool eof, CallbackReader *reader)
 {
   if (chan->term) {
-    if (count) {
-      const char *p = buf;
-      const char *end = buf + count;
-      while (p < end) {
-        // Don't pass incomplete UTF-8 sequences to libvterm. #16245
-        // Composing chars can be passed separately, so utf_ptr2len_len() is enough.
-        int clen = utf_ptr2len_len(p, (int)(end - p));
-        if (clen > end - p) {
-          count = (size_t)(p - buf);
-          break;
-        }
-        p += clen;
-      }
-    }
-
     terminal_receive(chan->term, buf, count);
   }
 
