@@ -2965,7 +2965,9 @@ void buflist_list(exarg_T *eap)
       ro_char = terminal_running(buf->terminal) ? 'R' : 'F';
     }
 
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || msg_col > 0) {
+      msg_putchar('\n');
+    }
     int len = (int)vim_snprintf_safelen(IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
                                         buf->b_fnum,
                                         buf->b_p_bl ? ' ' : 'u',

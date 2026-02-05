@@ -845,7 +845,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     });
 
     if (ERROR_SET(&err)) {
-      msg_putchar('\n');
+      if (!ui_has(kUIMessages)) {
+        msg_putchar('\n');
+      }
       msg_scroll = true;
       msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);
@@ -977,7 +979,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   redir_off = false;
 
   if (ERROR_SET(&err)) {
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     emsg(err.msg);
     did_emsg = false;
     api_clear_error(&err);
@@ -2841,7 +2845,9 @@ static void do_autocmd_cmdlinechanged(int firstc)
       restore_v_event(dict, &save_v_event);
     });
     if (ERROR_SET(&err)) {
-      msg_putchar('\n');
+      if (!ui_has(kUIMessages)) {
+        msg_putchar('\n');
+      }
       msg_scroll = true;
       msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);

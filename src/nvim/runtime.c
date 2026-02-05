@@ -2445,12 +2445,15 @@ void ex_scriptnames(exarg_T *eap)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i)->sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i)->sn_name, NameBuff, MAXPATHL, true);
       vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
-        msg_putchar('\n');
+        if (msg_col > 0) {
+          msg_putchar('\n');
+        }
         msg_outtrans(IObuff, 0, false);
         line_breakcheck();
       }

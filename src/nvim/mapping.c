@@ -214,8 +214,7 @@ static void showmap(mapblock_T *mp, bool local)
     return;
   }
 
-  // When ext_messages is active, msg_didout is never set.
-  if (msg_didout || msg_silent != 0 || ui_has(kUIMessages)) {
+  if (msg_col > 0 || msg_silent != 0) {
     msg_putchar('\n');
     if (got_int) {          // 'q' typed at MORE prompt
       return;

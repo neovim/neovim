@@ -3356,7 +3356,9 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
     return;
   }
 
-  msg_putchar('\n');
+  if (msg_col > 0) {
+    msg_putchar('\n');
+  }
   msg_outtrans(IObuff, cursel ? HLF_QFL : qfFile_hl_id, false);
 
   if (qfp->qf_lnum != 0) {
@@ -3368,7 +3370,9 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
   ga_append(gap, NUL);
-  msg_puts_hl(gap->ga_data, qfLine_hl_id, false);
+  if (*(char *)gap->ga_data != NUL) {
+    msg_puts_hl(gap->ga_data, qfLine_hl_id, false);
+  }
   msg_puts_hl(":", qfSep_hl_id, false);
   if (qfp->qf_pattern != NULL) {
     gap = qfga_get();
@@ -3453,6 +3457,7 @@ void qf_list(exarg_T *eap)
   if (qfl->qf_nonevalid) {
     all = true;
   }
+  msg_ext_set_kind("list_cmd");
   qfline_T *qfp;
   FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
     if ((qfp->qf_valid || all) && idx1 <= i && i <= idx2) {

@@ -1900,7 +1900,9 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
   bool adjust = true;
 
   if (!did_header) {
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || msg_col > 0) {
+      msg_putchar('\n');
+    }
     if (got_int) {
       return true;
     }

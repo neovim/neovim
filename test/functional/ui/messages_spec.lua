@@ -175,7 +175,7 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\n@character     ' },
+            { '@character     ' },
             { 'xxx', 26, '@character' },
             { ' ' },
             { 'links to', 18, 'Directory' },
@@ -292,44 +292,38 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\nDiffAdd        ' },
+            { 'DiffAdd        ' },
             { 'xxx', 22, 'DiffAdd' },
             { ' ' },
             { 'ctermbg=', 18, 'Directory' },
             { '81 ' },
             { 'guibg=', 18, 'Directory' },
-            { 'LightBlue' },
-          },
-          kind = 'list_cmd',
-        },
-        {
-          content = { { '\n\tLast set from Lua (run Nvim with -V1 for more details)' } },
-          kind = 'verbose',
-        },
-        {
-          content = {
-            { '\nDiffChange     ' },
+            {
+              'LightBlue\n\tLast set from Lua (run Nvim with -V1 for more details)\nDiffChange     ',
+            },
             { 'xxx', 4, 'DiffChange' },
             { ' ' },
             { 'ctermbg=', 18, 'Directory' },
             { '225 ' },
             { 'guibg=', 18, 'Directory' },
-            { 'LightMagenta' },
+            { 'LightMagenta\n\tLast set from Lua (run Nvim with -V1 for more details)' },
           },
           kind = 'list_cmd',
-        },
-        {
-          content = { { '\n\tLast set from Lua (run Nvim with -V1 for more details)' } },
-          kind = 'verbose',
         },
       },
     })
 
     exec([[
       set verbose=9
-      augroup verbose
+      augroup group1
         autocmd BufEnter * echoh "BufEnter"
         autocmd BufWinEnter * bdelete
+        autocmd ExitPre pat1 foo
+        autocmd ExitPre pat2 bar
+      augroup END
+      augroup group2
+        autocmd ExitPre pat1 foo
+        autocmd ExitPre pat2 bar
       augroup END
     ]])
     feed(':edit! foo<CR>')
@@ -357,8 +351,39 @@ describe('ui/ext_messages', function()
         { content = { { '\n' } }, kind = '' },
       },
     })
-    command('autocmd! verbose')
-    command('augroup! verbose')
+    feed(':au ExitPre<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = {
+        {
+          content = {
+            { '--- Autocommands ---', 101, 'Title' },
+            { '\n' },
+            { 'group1', 101, 'Title' },
+            { '  ' },
+            { 'ExitPre', 101, 'Title' },
+            {
+              '\n    pat1      foo\n\tLast set from anonymous :source line 5\n    pat2      bar\n\tLast set from anonymous :source line 6\n',
+            },
+            { 'group2', 101, 'Title' },
+            { '  ' },
+            { 'ExitPre', 101, 'Title' },
+            {
+              '\n    pat1      foo\n\tLast set from anonymous :source line 9\n    pat2      bar\n\tLast set from anonymous :source line 10',
+            },
+          },
+          kind = 'list_cmd',
+        },
+      },
+    })
+    command('autocmd! group1')
+    command('autocmd! group2')
+    command('augroup! group1')
+    command('augroup! group2')
     command('set verbose=0')
 
     n.add_builddir_to_rtp()
@@ -432,7 +457,7 @@ describe('ui/ext_messages', function()
       ]],
       messages = {
         {
-          content = { { '\nType Name Content', 101, 'Title' }, { '\n  c  ".   ' } },
+          content = { { 'Type Name Content', 101, 'Title' }, { '\n  c  ".   ' } },
           kind = 'list_cmd',
         },
       },
@@ -448,10 +473,10 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\n--- Autocommands ---', 101, 'Title' },
+            { '--- Autocommands ---', 101, 'Title' },
             { '\n' },
             { 'ChanInfo', 101, 'Title' },
-            { '\n*foo' },
+            { '\n    *         foo' },
           },
           kind = 'list_cmd',
         },
@@ -476,10 +501,7 @@ describe('ui/ext_messages', function()
         ^line                     |
         {1:~                        }|*3
       ]],
-      messages = {
-        { content = { { '\n' } }, kind = '' },
-        { content = { { 'line 1\nline ' } }, kind = 'list_cmd' },
-      },
+      messages = { { content = { { 'line 1\nline ' } }, kind = 'list_cmd' } },
     })
 
     command('command Foo Bar')
@@ -493,7 +515,7 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\n    Name              Args Address Complete    Definition', 101, 'Title' },
+            { '    Name              Args Address Complete    Definition', 101, 'Title' },
             { '\n    ' },
             { 'Foo', 18, 'Directory' },
             { '               0                        Bar' },
@@ -540,6 +562,17 @@ describe('ui/ext_messages', function()
         { content = {}, kind = 'empty' },
         { content = {}, kind = 'empty' },
       },
+    })
+
+    -- No empty message event for empty option value
+    feed(':set foldclose<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = { { content = { { '  foldclose=' } }, history = true, kind = 'list_cmd' } },
     })
   end)
 
@@ -1192,7 +1225,7 @@ stack traceback:
       messages = {
         {
           content = {
-            { '\nn  Q             @@\nn  Y             y$\nn  j           ' },
+            { 'n  Q             @@\nn  Y             y$\nn  j           ' },
             { '*', 18, 'SpecialKey' },
             { ' k' },
           },
@@ -1213,10 +1246,7 @@ stack traceback:
         ^                         |
         {1:~                        }|*6
       ]],
-      messages = {
-        { content = { { '\n' } }, kind = '' },
-        { content = { { 'wildmenu  wildmode\n' } }, kind = 'wildlist' },
-      },
+      messages = { { content = { { 'wildmenu  wildmode\n' } }, kind = 'wildlist' } },
       cmdline = { { firstc = ':', content = { { 'set wildm' } }, pos = 9 } },
     }
   end)
@@ -1322,10 +1352,7 @@ stack traceback:
         {1:~                        }|*4
       ]],
       messages = {
-        {
-          content = { { '\n  1 %a   "[No Name]"                    line 1' } },
-          kind = 'list_cmd',
-        },
+        { content = { { '  1 %a   "[No Name]"                    line 1' } }, kind = 'list_cmd' },
       },
     }
 

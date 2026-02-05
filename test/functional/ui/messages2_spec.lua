@@ -82,11 +82,10 @@ describe('messages2', function()
     feed('Q')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*8
+      {1:~                                                    }|*9
       {3:                                                     }|
       foo                                                  |
       bar                                                  |
-                                                           |
         1 %a   "[No Name]"                    line 1       |
     ]])
     feed('<C-L>')
