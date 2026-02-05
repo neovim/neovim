@@ -1676,6 +1676,8 @@ void print_line_no_prefix(linenr_T lnum, bool use_number, bool list)
   msg_prt_line(ml_get(lnum), list);
 }
 
+static bool global_need_msg_kind = false;  // Start new message only once during :global.
+
 /// Print a text line.  Also in silent mode ("ex -s").
 void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 {
@@ -1688,9 +1690,10 @@ void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 
   silent_mode = false;
   info_message = true;  // use stdout, not stderr
-  if (first) {
+  if ((!global_busy || global_need_msg_kind) && first) {
     msg_start();
     msg_ext_set_kind("list_cmd");
+    global_need_msg_kind = false;
   } else if (!save_silent) {
     msg_putchar('\n');  // don't want trailing newline with regular messaging
   }
@@ -4764,6 +4767,7 @@ void global_exe(char *cmd)
 
   sub_nsubs = 0;
   sub_nlines = 0;
+  global_need_msg_kind = true;
   global_need_beginline = false;
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;
