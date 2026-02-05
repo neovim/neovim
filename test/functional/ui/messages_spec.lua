@@ -468,6 +468,20 @@ describe('ui/ext_messages', function()
       messages = { { content = { { 'line 1\nline ' } }, kind = 'list_cmd' } },
     })
 
+    -- single message for :global command #37726
+    feed(':g/line<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = {
+        { content = { { '\n' } }, kind = '' },
+        { content = { { 'line 1\nline ' } }, kind = 'list_cmd' },
+      },
+    })
+
     command('command Foo Bar')
     feed(':command<CR>')
     screen:expect({
