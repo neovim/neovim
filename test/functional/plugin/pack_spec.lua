@@ -276,6 +276,15 @@ local function watch_events(event)
   end)
 end
 
+local function find_index(l, val)
+  for i, v in ipairs(l) do
+    if vim.deep_equal(v, val) then
+      return i
+    end
+  end
+  return 0
+end
+
 --- @param log table[]
 local function make_find_packchanged(log)
   --- @param suffix string
@@ -285,15 +294,8 @@ local function make_find_packchanged(log)
     local data = { active = active, kind = kind, path = path, spec = spec }
     local entry = { event = 'PackChanged' .. suffix, match = vim.fs.abspath(path), data = data }
 
-    local res = 0
-    for i, tbl in ipairs(log) do
-      if vim.deep_equal(tbl, entry) then
-        res = i
-        break
-      end
-    end
+    local res = find_index(log, entry)
     eq(true, res > 0)
-
     return res
   end
 end
@@ -1093,6 +1095,83 @@ describe('vim.pack', function()
       eq(ref_environ, fn.environ())
     end)
 
+    it('loads unmanaged plugins', function()
+      local basic_unmanaged = vim.fs.joinpath(repos_dir, 'basic')
+      local plugindirs_unmanaged = vim.fs.joinpath(repos_dir, 'plugindirs')
+      local semver_unmanaged = vim.fs.joinpath(repos_dir, 'semver')
+      local semver_rel = 'test/functional/lua/pack-test-repos/semver'
+
+      -- Should resolve source to work with envvars, `~`, and relative path
+      fn.setenv('REPOS_DIR', repos_dir)
+      vim_pack_add({ basic_unmanaged, repos_src.defbranch, '$REPOS_DIR/plugindirs', semver_rel })
+
+      -- Should be able to load plugin code
+      eq('basic main', exec_lua('return require("basic")'))
+      eq('defbranch dev', exec_lua('return require("defbranch")'))
+      eq('plugindirs main', exec_lua('return require("plugindirs")'))
+      eq('semver v1.0.0', exec_lua('return require("semver")'))
+
+      -- Should execute all plugin scripts
+      eq({ true, true }, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
+      eq({ 'p', 'a' }, n.exec_lua('return _G.DL'))
+
+      -- Should not be present in lockfile
+      eq(vim.tbl_keys(get_lock_tbl().plugins), { 'defbranch' })
+
+      -- Should be added to 'runtimepath' respecting order from `add()`
+      local rtp = t.fix_slashes(api.nvim_list_runtime_paths()) --- @type string[]
+      local semver_index = find_index(rtp, semver_unmanaged)
+      local plugindirs_index = find_index(rtp, plugindirs_unmanaged)
+      local defbranch_index = find_index(rtp, pack_get_plug_path('defbranch'))
+      local basic_index = find_index(rtp, basic_unmanaged)
+      eq(semver_index > 0, true)
+      eq(plugindirs_index, semver_index + 1)
+      eq(defbranch_index, plugindirs_index + 1)
+      eq(basic_index, defbranch_index + 1)
+
+      local plugindirs_after_index = find_index(rtp, plugindirs_unmanaged .. '/after')
+      eq(plugindirs_after_index > basic_index, true)
+
+      -- Should not create side effects due to using symlinks
+      for name, _ in vim.fs.dir(pack_get_dir()) do
+        if name:match('_unmanaged') then
+          error('There is an unwanted side effect')
+        end
+      end
+      for name, _ in vim.fs.dir('.') do
+        if name:match('_unmanaged') then
+          error('There is an unwanted side effect')
+        end
+      end
+
+      -- Should work if there is installed plugin with the same name
+      vim_pack_add({ { src = repos_src.basic, version = 'feat-branch' } })
+      pack_assert_content('basic', 'return "basic feat-branch"')
+
+      n.clear()
+      vim_pack_add({ basic_unmanaged })
+      eq('basic main', exec_lua('return require("basic")'))
+
+      n.clear()
+      vim_pack_add({ { src = repos_src.basic, version = 'feat-branch' } })
+      eq('basic feat-branch', exec_lua('return require("basic")'))
+
+      -- Should still use function `opts.load`
+      n.clear()
+      exec_lua(function()
+        _G.load_log = {}
+        local function load(...)
+          table.insert(_G.load_log, { ... })
+        end
+        vim.pack.add({ basic_unmanaged }, { load = load })
+      end)
+      matches("module 'basic' not found", pcall_err(exec_lua, 'require("basic")'))
+      local ref_log = {
+        { { path = basic_unmanaged, spec = { src = basic_unmanaged, name = 'basic' } } },
+      }
+      eq(ref_log, exec_lua('return _G.load_log'))
+    end)
+
     it('validates input', function()
       local function assert(err_pat, input)
         local function add_input()
@@ -1651,6 +1730,20 @@ describe('vim.pack', function()
         n.exec('llast')
         eq(21, api.nvim_win_get_cursor(0)[1])
       end)
+
+      it('ignores unmanaged plugins', function()
+        vim_pack_add({ vim.fs.joinpath(repos_dir, 'basic') })
+        exec_lua(function()
+          vim.pack.update()
+        end)
+        local basic_mention = 0
+        for i, l in ipairs(api.nvim_buf_get_lines(0, 0, -1, false)) do
+          if l:match('pack%-test%-repos/basic') then
+            basic_mention = i
+          end
+        end
+        eq(basic_mention, 0)
+      end)
     end)
 
     it('works with not active plugins', function()
@@ -2073,6 +2166,11 @@ describe('vim.pack', function()
       eq(2, exec_lua('return #vim.pack.get()'))
       eq(2, vim.tbl_count(get_lock_tbl().plugins))
     end)
+
+    it('ignores unmanaged plugins', function()
+      vim_pack_add({ vim.fs.joinpath(repos_dir, 'basic') })
+      eq({}, exec_lua('return vim.pack.get()'))
+    end)
   end)
 
   describe('del()', function()
@@ -2173,6 +2271,11 @@ describe('vim.pack', function()
       exec_lua('vim.pack.del({ "basic" })')
       eq(1, exec_lua('return #vim.pack.get()'))
       eq({ 'plugindirs' }, vim.tbl_keys(get_lock_tbl().plugins))
+    end)
+
+    it('ignores unmanaged plugins', function()
+      vim_pack_add({ vim.fs.joinpath(repos_dir, 'basic') })
+      matches('Plugin `basic` is not installed', pcall_err(exec_lua, 'vim.pack.del({ "basic" })'))
     end)
 
     it('validates input', function()
