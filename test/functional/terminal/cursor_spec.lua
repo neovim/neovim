@@ -155,13 +155,19 @@ describe(':terminal cursor', function()
 
       -- Cursor is hidden; now request to show it while in a TermLeave autocmd.
       -- Process events (via :sleep) to handle the escape sequence now.
-      command([[autocmd TermLeave * ++once call chansend(&channel, "\e[?25h") | sleep 1m]])
+      n.exec([[
+        autocmd TermLeave * ++once call chansend(&channel, "\e[?25h") | sleep 1m
+                                 \ | let g:did_termleave = 1]])
       feed([[<C-\><C-N>]]) -- Exit terminal mode; cursor should not remain hidden
       screen:expect([[
         tty ready                                         |
         ^                                                  |
                                                           |*5
       ]])
+      -- Wait for the TermLeave autocommand to finish. Sometimes :sleep can be slow.
+      retry(nil, 1000, function()
+        eq(1, api.nvim_get_var('did_termleave'))
+      end)
 
       command('bwipeout! | let chan = nvim_open_term(0, {})')
       feed('i')
