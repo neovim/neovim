@@ -147,7 +147,7 @@ describe('cmdline2', function()
   end)
 
   it('highlights after deleting buffer', function()
-    feed(':%bw!<CR>:call foo()')
+    feed(':sil %bw!<CR>:call foo()')
     screen:expect([[
                                                            |
       {1:~                                                    }|*12
@@ -209,17 +209,17 @@ describe('cmdline2', function()
       {101:Foo()}{3:  Fooo()                                        }|
       {16::}{15:call} {25:Foo}{16:()}^                                          |
     ]])
-    feed('()')
+    feed('<BS><BS>')
+    exec('set wildoptions+=pum laststatus=2')
     screen:expect([[
                                                            |
       {1:~                                                    }|*9
       {3:                                                     }|
       Foo()   Fooo()                                       |
                                                            |
-      {16::}{15:call} {25:Foo}{16:()()}^                                        |
+      {16::}{15:call} Foo^                                            |
     ]])
-    exec('set wildoptions+=pum laststatus=2')
-    feed('<C-U>call Fo<C-Z><C-Z>')
+    feed('<C-Z><C-Z>')
     screen:expect([[
                                                            |
       {1:~                                                    }|*9
@@ -227,15 +227,6 @@ describe('cmdline2', function()
       Foo(){12: Foo()          }                                |
            {4: Fooo()         }                                |
       {16::}{15:call} {25:Foo}{16:()}^                                          |
-    ]])
-    feed('()')
-    screen:expect([[
-                                                           |
-      {1:~                                                    }|*9
-      {3:                                                     }|
-      Foo()   Fooo()                                       |
-                                                           |
-      {16::}{15:call} {25:Foo}{16:()()}^                                        |
     ]])
   end)
 end)

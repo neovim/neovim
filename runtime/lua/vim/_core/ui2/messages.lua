@@ -286,7 +286,7 @@ function M.show_msg(tar, content, replace_last, append, id)
   local start_col = col
 
   -- Accumulate to be inserted and highlighted message chunks.
-  for _, chunk in ipairs(content) do
+  for i, chunk in ipairs(content) do
     -- Split at newline and write to start of line after carriage return.
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
       local repl, pat = str:sub(1, -2), str:sub(-1)
@@ -302,7 +302,6 @@ function M.show_msg(tar, content, replace_last, append, id)
         api.nvim_buf_set_text(buf, row, col, erow, ecol, { repl })
       end
       curline = api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
-      width = tar == 'msg' and math.max(width, api.nvim_strwidth(curline)) or 0
       mark[3] = nil
 
       if chunk[3] > 0 then
@@ -314,6 +313,11 @@ function M.show_msg(tar, content, replace_last, append, id)
         row, col = row + 1, 0
       else
         col = pat == '\r' and 0 or end_col
+      end
+      if tar == 'msg' and (pat == '\n' or (i == #content and pat == '\0')) then
+        width = api.nvim_win_call(ui.wins.msg, function()
+          return math.max(width, fn.strdisplaywidth(curline))
+        end)
       end
     end
   end
@@ -398,21 +402,23 @@ function M.msg_show(kind, content, replace_last, _, append, id)
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last')
-  elseif (ui.cmd.prompt or kind == 'wildlist') and ui.cmd.srow == 0 then
-    -- Route to dialog that stays open so long as the cmdline prompt is active.
+  elseif
+    (ui.cmd.prompt or (ui.cmd.level > 0 and ui.cfg.msg.target == 'cmd')) and ui.cmd.srow == 0
+  then
+    -- Route to dialog when a prompt is active, or message would overwrite active cmdline.
     replace_last = api.nvim_win_get_config(ui.wins.dialog).hide or kind == 'wildlist'
     if kind == 'wildlist' then
       api.nvim_buf_set_lines(ui.bufs.dialog, 0, -1, false, {})
-      ui.cmd.prompt = true -- Ensure dialog is closed when cmdline is hidden.
     end
+    ui.cmd.dialog = true -- Ensure dialog is closed when cmdline is hidden.
     M.show_msg('dialog', content, replace_last, append, id)
     M.set_pos('dialog')
   else
     -- Set the entered search command in the cmdline (if available).
     local tar = kind == 'search_cmd' and 'cmd' or ui.cfg.msg.target
     if tar == 'cmd' then
-      if ui.cmdheight == 0 or (ui.cmd.level > 0 and ui.cmd.srow == 0) then
-        return -- Do not overwrite an active cmdline unless in block mode.
+      if ui.cmdheight == 0 and ui.cmd.srow == 0 then
+        return
       end
       -- Store the time when an important message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline so that the user has a chance to read it.
@@ -531,7 +537,7 @@ function M.set_pos(type)
             if entered then
               api.nvim_command('norm! g<') -- User entered the cmdline window: open the pager.
             end
-          elseif ui.cfg.msg.target == 'cmd' and ui.cmd.level <= 0 then
+          elseif ui.cfg.msg.target == 'cmd' and ui.cmd.level == 0 then
             ui.check_targets()
             set_virttext('msg')
           end
