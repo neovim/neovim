@@ -342,13 +342,15 @@ static int on_text(const char bytes[], size_t len, void *user)
 
   // See if the cursor has moved since
   if (state->pos.row == state->combine_pos.row
-      && state->pos.col == state->combine_pos.col + state->combine_width) {
+      && state->pos.col >= state->combine_pos.col
+      && state->pos.col <= state->combine_pos.col + state->combine_width) {
     // This is a combining char. that needs to be merged with the previous glyph output
     if (utf_iscomposing((int)state->grapheme_last, (int)codepoints[i], &state->grapheme_state)) {
       // Find where we need to append these combining chars
       grapheme_len = state->grapheme_len;
       grapheme_state = state->grapheme_state;
       state->pos.col = state->combine_pos.col;
+      state->at_phantom = 0;
       recombine = true;
     } else {
       DEBUG_LOG("libvterm: TODO: Skip over split char+combining\n");
