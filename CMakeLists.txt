@@ -132,6 +132,8 @@ endif()
 option(ENABLE_LIBINTL "enable libintl" ON)
 option(ENABLE_UNIBILIUM "enable unibilium" ON)
 option(ENABLE_WASMTIME "enable wasmtime" OFF)
+option(ENABLE_WASI_FS_BACKEND "enable WASI filesystem backend" OFF)
+option(ENABLE_VFS_BACKEND "enable virtual filesystem backend" ON)
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
