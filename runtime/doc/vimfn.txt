@@ -3295,7 +3295,7 @@ getcharsearch()                                                *getcharsearch()*
 <		Also see |setcharsearch()|.
 
                 Return: ~
-                  (`table`)
+                  (`{ char: string, forward: 1|0, until: 1|0 }`)
 
 getcharstr([{expr} [, {opts}]])                                   *getcharstr()*
 		The same as |getchar()|, except that this always returns a
@@ -8947,7 +8947,7 @@ setcharsearch({dict})                                          *setcharsearch()*
 <		Also see |getcharsearch()|.
 
                 Parameters: ~
-                  • {dict} (`string`)
+                  • {dict} (`{ char?: string, forward?: 1|0, until?: 1|0 }`)
 
                 Return: ~
                   (`any`)

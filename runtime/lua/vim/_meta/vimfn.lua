@@ -2953,7 +2953,7 @@ function vim.fn.getcharpos(expr) end
 ---   nnoremap <expr> , getcharsearch().forward ? ',' : ';'
 --- <Also see |setcharsearch()|.
 ---
---- @return table
+--- @return { char: string, forward: 1|0, until: 1|0 }
 function vim.fn.getcharsearch() end
 
 --- The same as |getchar()|, except that this always returns a
@@ -8152,7 +8152,7 @@ function vim.fn.setcharpos(expr, list) end
 ---   call setcharsearch(prevsearch)
 --- <Also see |getcharsearch()|.
 ---
---- @param dict string
+--- @param dict { char?: string, forward?: 1|0, until?: 1|0 }
 --- @return any
 function vim.fn.setcharsearch(dict) end
 
