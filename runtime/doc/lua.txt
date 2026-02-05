@@ -2696,7 +2696,9 @@ vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
         Since: 0.11.0
 
     Parameters: ~
-      • {path}  (`string`) Path to remove
+      • {path}  (`string`) Path to remove. Removes symlinks without touching
+                the origin. To remove the origin, resolve explicitly with
+                |uv.fs_realpath()|.
       • {opts}  (`table?`) A table with the following fields:
                 • {recursive}? (`boolean`) Remove directories and their
                   contents recursively

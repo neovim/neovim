@@ -9,6 +9,7 @@ local rmdir = n.rmdir
 local nvim_dir = n.nvim_dir
 local command = n.command
 local api = n.api
+local fn = n.fn
 local test_build_dir = t.paths.test_build_dir
 local test_source_path = t.paths.test_source_path
 local nvim_prog = n.nvim_prog
@@ -712,6 +713,43 @@ describe('vim.fs', function()
         eq('.', vim.fs.relpath('\\\\foo\\bar\\baz', '\\\\foo\\bar\\baz'))
         eq(nil, vim.fs.relpath('C:\\foo\\test', 'C:\\foo\\Test\\bar\\package.json'))
       end
+    end)
+  end)
+
+  describe('rm()', function()
+    before_each(function()
+      t.mkdir('Xtest_fs-rm')
+      t.write_file('Xtest_fs-rm/file-to-link', 'File to link')
+      t.mkdir('Xtest_fs-rm/dir-to-link')
+      t.write_file('Xtest_fs-rm/dir-to-link/file', 'File in dir to link')
+    end)
+
+    after_each(function()
+      vim.uv.fs_unlink('Xtest_fs-rm/dir-to-link/file')
+      vim.uv.fs_rmdir('Xtest_fs-rm/dir-to-link')
+      vim.uv.fs_unlink('Xtest_fs-rm/file-to-link')
+      vim.uv.fs_rmdir('Xtest_fs-rm')
+    end)
+
+    it('works with symlink', function()
+      -- File
+      vim.uv.fs_symlink('Xtest_fs-rm/file-to-link', 'Xtest_fs-rm/file-as-link')
+      vim.fs.rm('Xtest_fs-rm/file-as-link')
+      eq(vim.uv.fs_stat('Xtest_fs-rm/file-as-link'), nil)
+      eq({ 'File to link' }, fn.readfile('Xtest_fs-rm/file-to-link'))
+
+      -- Directory
+      local function assert_rm_symlinked_dir(opts)
+        vim.uv.fs_symlink('Xtest_fs-rm/dir-to-link', 'Xtest_fs-rm/dir-as-link')
+        vim.fs.rm('Xtest_fs-rm/dir-as-link', opts)
+        eq(vim.uv.fs_stat('Xtest_fs-rm/dir-as-link'), nil)
+        eq({ 'File in dir to link' }, fn.readfile('Xtest_fs-rm/dir-to-link/file'))
+      end
+
+      assert_rm_symlinked_dir({})
+      assert_rm_symlinked_dir({ force = true })
+      assert_rm_symlinked_dir({ recursive = true })
+      assert_rm_symlinked_dir({ recursive = true, force = true })
     end)
   end)
 end)
