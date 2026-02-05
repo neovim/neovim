@@ -2500,7 +2500,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
         return FAIL;
       }
       tnp->tn_hf_idx++;
-      STRCPY(buf, p_hf);
+      xstrlcpy(buf, p_hf, MAXPATHL);
       STRCPY(path_tail(buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
