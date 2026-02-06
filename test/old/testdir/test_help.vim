@@ -302,6 +302,11 @@ func Test_helpfile_overflow()
   let &helpfile = repeat('A', 5000)
   help
   helpclose
+  for i in range(4089, 4096)
+    let &helpfile = repeat('A', i) .. '/A'
+    help
+    helpclose
+  endfor
   let &helpfile = _helpfile
 endfunc
 
