@@ -1950,7 +1950,7 @@ is_enabled({filter})                           *vim.lsp.codelens.is_enabled()*
         (`boolean`) whether code lens is enabled.
 
 run({opts})                                           *vim.lsp.codelens.run()*
-    Run code lens above the current cursor position.
+    Run code lens at the current cursor position.
 
     Parameters: ~
       • {opts}  (`table?`) Optional parameters |kwargs|:
