@@ -424,9 +424,11 @@ describe(':terminal window', function()
     ]])
   end)
 
-  it('in new tabpage has correct terminal size', function()
+  it('updates terminal size', function()
+    skip(is_os('win'), "Windows doesn't show all lines?")
     screen:set_default_attr_ids({
       [1] = { reverse = true },
+      [2] = { background = 225, foreground = Screen.colors.Gray0 },
       [3] = { bold = true },
       [17] = { background = 2, foreground = Screen.colors.Grey0 },
       [18] = { background = 2, foreground = 8 },
@@ -451,6 +453,68 @@ describe(':terminal window', function()
       rows: 5, cols: 50                                 |
       ^                                                  |
                                                         |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    command('quit | botright split')
+    -- NOTE: right window's cursor not on the last line, so it's not tailing.
+    screen:expect([[
+      rows: 5, cols: 50        │rows: 5, cols: 25       |
+      rows: 2, cols: 50        │rows: 5, cols: 50       |
+      {18:foo [-]                   foo [-]                 }|
+      rows: 2, cols: 50                                 |
+      ^                                                  |
+      {17:foo [-]                                           }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('quit')
+    screen:expect([[
+      rows: 5, cols: 25        │tty ready               |
+      rows: 5, cols: 50        │rows: 5, cols: 25       |
+      rows: 2, cols: 50        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('call nvim_open_win(0, 0, #{relative: "editor", row: 0, col: 0, width: 40, height: 3})')
+    screen:expect([[
+      {2:rows: 5, cols: 25                       }          |
+      {2:rows: 5, cols: 40                       } 25       |
+      {2:                                        } 50       |
+      rows: 5, cols: 40        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('fclose!')
+    screen:expect([[
+      rows: 2, cols: 50        │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 40        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('tab split')
+    screen:expect([[
+      {19: }{20:2}{19: foo }{3: foo }{1:                                     }{19:X}|
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 40                                 |
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('tabfirst | tabonly')
+    screen:expect([[
+      rows: 5, cols: 40        │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
+      {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
   end)
