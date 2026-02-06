@@ -683,15 +683,16 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   --     s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
   --   end
   --   return s
-  -- elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
-  --   if root:has_error() then
-  --     return text
-  --   end
-  --   local s = ('%s<code>%s</code>'):format(ws(), trimmed)
-  --   if opt.old and node_name == 'codespan' then
-  --     s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
-  --   end
-  --   return s
+  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
+    if root:has_error() then
+      return text
+    end
+    local s = ('%s\\texttt{%s}'):format(ws(), trimmed)
+    -- TODO
+    -- if opt.old and node_name == 'codespan' then
+    --   s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
+    -- end
+    return s
   -- elseif node_name == 'argument' then
   --   return ('%s<code>%s</code>'):format(ws(), trim(node_text(root)))
   elseif node_name == 'codeblock' then
