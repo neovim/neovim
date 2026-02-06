@@ -11532,6 +11532,7 @@ M.funcs = {
     ]=],
     name = 'strcharlen',
     params = { { 'string', 'string' } },
+    returns = 'integer',
     signature = 'strcharlen({string})',
   },
   strcharpart = {
@@ -11559,8 +11560,9 @@ M.funcs = {
       { 'src', 'string' },
       { 'start', 'integer' },
       { 'len', 'integer' },
-      { 'skipcc', 'boolean' },
+      { 'skipcc', '0|1|boolean' },
     },
+    returns = 'string',
     signature = 'strcharpart({src}, {start} [, {len} [, {skipcc}]])',
   },
   strchars = {
@@ -11596,7 +11598,7 @@ M.funcs = {
       <
     ]=],
     name = 'strchars',
-    params = { { 'string', 'string' }, { 'skipcc', 'boolean' } },
+    params = { { 'string', 'string' }, { 'skipcc', '0|1|boolean' } },
     returns = 'integer',
     signature = 'strchars({string} [, {skipcc}])',
   },

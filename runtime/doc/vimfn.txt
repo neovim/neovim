@@ -10488,7 +10488,7 @@ strcharlen({string})                                              *strcharlen()*
                   • {string} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 strcharpart({src}, {start} [, {len} [, {skipcc}]])               *strcharpart()*
 		Like |strpart()| but using character index and length instead
@@ -10509,10 +10509,10 @@ strcharpart({src}, {start} [, {len} [, {skipcc}]])               *strcharpart()*
                   • {src} (`string`)
                   • {start} (`integer`)
                   • {len} (`integer?`)
-                  • {skipcc} (`boolean?`)
+                  • {skipcc} (`0|1|boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 strchars({string} [, {skipcc}])                                     *strchars()*
 		The result is a Number, which is the number of characters
@@ -10545,7 +10545,7 @@ strchars({string} [, {skipcc}])                                     *strchars()*
 
                 Parameters: ~
                   • {string} (`string`)
-                  • {skipcc} (`boolean?`)
+                  • {skipcc} (`0|1|boolean?`)
 
                 Return: ~
                   (`integer`)
