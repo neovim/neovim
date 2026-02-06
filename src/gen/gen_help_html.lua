@@ -1104,8 +1104,8 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     -- "foo.txt"
     local helpfile = vim.fs.basename(f)
     -- "to/dir/foo.html"
-    local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile, true))
-    to_fname = 'foo.tex'
+    -- local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile, true))
+    local to_fname = ('%s/foo.tex'):format(to_dir, get_helppage(helpfile, true))
     local html, stats = gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?')
     tofile(to_fname, html)
     print(
