@@ -1006,6 +1006,9 @@ theend:
   char *p = ccline.cmdbuff;
 
   if (ui_has(kUICmdline)) {
+    if (exmode_active) {
+      ui_ext_cmdline_block_append(0, p);
+    }
     ui_ext_cmdline_hide(s->gotesc);
   }
   if (!cmd_silent) {
