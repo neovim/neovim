@@ -580,31 +580,36 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return text
   elseif node_name == 'note' then
     return ('\\textbf{%s}'):format(text)
-  -- elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
-  --   if is_noise(text, stats.noise_lines) then
-  --     return '' -- Discard common "noise" lines.
-  --   end
-  --   -- Remove tags from ToC text.
-  --   local heading_node = first(root, 'heading')
-  --   local hname = trim(node_text(heading_node):gsub('%*.*%*', ''))
-  --   if not heading_node or hname == '' then
-  --     return '' -- Spurious "===" or "---" in the help doc.
-  --   end
-  --
-  --   -- Generate an anchor id from the heading text.
-  --   local tagname = to_heading_tag(hname)
-  --   if node_name == 'h1' or #headings == 0 then
-  --     ---@type nvim.gen_help_html.heading
-  --     local heading = { name = hname, subheadings = {}, tag = tagname }
-  --     headings[#headings + 1] = heading
-  --   else
-  --     table.insert(
-  --       headings[#headings].subheadings,
-  --       { name = hname, subheadings = {}, tag = tagname }
-  --     )
-  --   end
-  --   local el = node_name == 'h1' and 'h2' or 'h3'
-  --   return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, trimmed, el)
+  elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
+    if is_noise(text, stats.noise_lines) then
+      return '' -- Discard common "noise" lines.
+    end
+    -- -- Remove tags from ToC text.
+    -- local heading_node = first(root, 'heading')
+    -- local hname = trim(node_text(heading_node):gsub('%*.*%*', ''))
+    -- if not heading_node or hname == '' then
+    --   return '' -- Spurious "===" or "---" in the help doc.
+    -- end
+    --
+    -- -- Generate an anchor id from the heading text.
+    -- local tagname = to_heading_tag(hname)
+    -- if node_name == 'h1' or #headings == 0 then
+    --   ---@type nvim.gen_help_html.heading
+    --   local heading = { name = hname, subheadings = {}, tag = tagname }
+    --   headings[#headings + 1] = heading
+    -- else
+    --   table.insert(
+    --     headings[#headings].subheadings,
+    --     { name = hname, subheadings = {}, tag = tagname }
+    --   )
+    -- end
+    if node_name == 'h1' then
+      return ('\\section{%s}'):format(trimmed)
+    elseif node_name == 'h1' then
+      return ('\\subsection{%s}'):format(trimmed)
+    else -- Has to be h3
+      return ('\\subsubsection{%s}'):format(trimmed)
+    end
   elseif node_name == 'heading' then
     return trimmed
   -- elseif node_name == 'column_heading' or node_name == 'column_name' then
@@ -612,17 +617,19 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   --     return text
   --   end
   --   return ('<div class="help-column_heading">%s</div>'):format(text)
-  -- elseif node_name == 'block' then
-  --   if is_blank(text) then
-  --     return ''
-  --   end
-  --   if opt.old then
-  --     -- XXX: Treat "old" docs as preformatted: they use indentation for layout.
-  --     --      Trim trailing newlines to avoid too much whitespace between divs.
-  --     return ('<div class="old-help-para">%s</div>\n'):format(trim(text, 2))
-  --   end
-  --   return string.format('<div class="help-para">\n%s\n</div>\n', text)
-  -- elseif node_name == 'line' then
+  elseif node_name == 'block' then
+    if is_blank(text) then
+      return ''
+    end
+    return text .. '\n\n'
+    -- if opt.old then
+    --   -- XXX: Treat "old" docs as preformatted: they use indentation for layout.
+    --   --      Trim trailing newlines to avoid too much whitespace between divs.
+    --   return ('<div class="old-help-para">%s</div>\n'):format(trim(text, 2))
+    -- end
+    -- return string.format('<div class="help-para">\n%s\n</div>\n', text)
+  elseif node_name == 'line' then
+    return text .. ' '
   --   if
   --     (parent ~= 'codeblock' or parent ~= 'code')
   --     and (is_blank(text) or is_noise(text, stats.noise_lines))
@@ -769,7 +776,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   --     ('unknown-token:"%s"'):format(node_name)
 
   else
-    return 'U_' .. node_name
+    return 'U-' .. node_name:gsub("_", "-") -- LaTeX doesn't like underscores
   end
 end
 
