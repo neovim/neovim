@@ -5925,6 +5925,9 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                         || eap->cmdidx == CMD_view)) {
     exmode_active = false;
     ex_pressedreturn = false;
+    if (ui_has(kUICmdline)) {
+      ui_ext_cmdline_block_leave();
+    }
     if (*eap->arg == NUL) {
       // Special case:  ":global/pat/visual\NLvi-commands"
       if (global_busy) {
