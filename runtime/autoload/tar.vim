@@ -17,6 +17,7 @@
 "   2025 Apr 16 by Vim Project: decouple from netrw by adding s:WinPath()
 "   2025 May 19 by Vim Project: restore working directory after read/write
 "   2025 Jul 13 by Vim Project: warn with path traversal attacks
+"   2026 Feb 06 by Vim Project: consider 'nowrapscan' (#19333)
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -225,7 +226,7 @@ fun! tar#Browse(tarfile)
 
   " remove tar: Removing leading '/' from member names
   " Note: the message could be localized
-  if search('^tar: ') > 0 || search(g:tar_leading_pat) > 0
+  if search('^tar: ', 'w') > 0 || search(g:tar_leading_pat, 'w') > 0
     call append(3,'" Note: Path Traversal Attack detected!')
     let b:leading_slash = 1
     " remove the message output
