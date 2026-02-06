@@ -3039,6 +3039,9 @@ int win_close(win_T *win, bool free_buf, bool force)
       win_fix_scroll(false);
     }
   }
+  if (bufref.br_buf && bufref_valid(&bufref) && bufref.br_buf->terminal) {
+    terminal_check_size(bufref.br_buf->terminal);
+  }
 
   if (close_curwin) {
     win_enter_ext(wp, WEE_CURWIN_INVALID | WEE_TRIGGER_ENTER_AUTOCMDS
@@ -3264,6 +3267,9 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   int dir;
   win_free_mem(win, &dir, tp);
 
+  if (bufref.br_buf && bufref_valid(&bufref) && bufref.br_buf->terminal) {
+    terminal_check_size(bufref.br_buf->terminal);
+  }
   if (free_tp_idx > 0) {
     free_tabpage(tp);
 
