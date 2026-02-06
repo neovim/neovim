@@ -59,13 +59,14 @@ describe('TabClosed', function()
           setlocal bufhidden=wipe
           tabnew
           au TabClosed * ++once let g:tp_valid = nvim_tabpage_is_valid(s:tp)
+                             \| let g:curbuf = bufnr()
                              \| let g:abuf = expand('<abuf>')
 
           call nvim_buf_delete(g:buf, #{force: 1})
         ]])
         eq(false, eval('g:tp_valid'))
         eq(false, eval('nvim_buf_is_valid(g:buf)'))
-        eq('', eval('g:abuf'))
+        eq(eval('g:curbuf'), tonumber(eval('g:abuf'))) -- Falls back to curbuf.
 
         exec([[
           tabnew
