@@ -3263,7 +3263,6 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   }
 
   // Free the memory used for the window.
-  buf_T *buf = win->w_buffer;
   int dir;
   win_free_mem(win, &dir, tp);
 
@@ -3276,7 +3275,8 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
     if (has_event(EVENT_TABCLOSED)) {
       char prev_idx[NUMBUFLEN];
       vim_snprintf(prev_idx, NUMBUFLEN, "%i", free_tp_idx);
-      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, buf);
+      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false,
+                     bufref.br_buf && bufref_valid(&bufref) ? bufref.br_buf : curbuf);
     }
   }
   return true;
