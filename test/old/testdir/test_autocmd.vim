@@ -4008,7 +4008,7 @@ func Test_autocmd_invalidates_undo_on_textchanged()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_autocmd_creates_new_buffer_on_bufleave()
+func Test_autocmd_creates_new_window_on_bufleave()
   e a.txt
   e b.txt
   setlocal bufhidden=wipe
