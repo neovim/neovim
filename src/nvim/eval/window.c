@@ -509,6 +509,7 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   args->curpos = wp->w_cursor;
   args->cwd_status = FAIL;
   args->apply_acd = false;
+  args->save_sfname = NULL;
 
   // Getting and setting directory can be slow on some systems, only do
   // this when the current or target window/tab have a local directory or
@@ -523,6 +524,9 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   // If 'acd' is set, check we are using that directory.  If yes, then
   // apply 'acd' afterwards, otherwise restore the current directory.
   if (args->cwd_status == OK && p_acd) {
+    if (curbuf->b_sfname != NULL && curbuf->b_fname == curbuf->b_sfname) {
+      args->save_sfname = xstrdup(curbuf->b_sfname);
+    }
     do_autochdir();
     char autocwd[MAXPATHL];
     if (os_dirname(autocwd, MAXPATHL) == OK) {
@@ -543,9 +547,15 @@ void win_execute_after(win_execute_T *args)
   restore_win_noblock(&args->switchwin, true);
 
   if (args->apply_acd) {
+    xfree(args->save_sfname);
     do_autochdir();
   } else if (args->cwd_status == OK) {
     os_chdir(args->cwd);
+    if (args->save_sfname != NULL) {
+      xfree(curbuf->b_sfname);
+      curbuf->b_sfname = args->save_sfname;
+      curbuf->b_fname = curbuf->b_sfname;
+    }
   }
 
   // Update the status line if the cursor moved.
