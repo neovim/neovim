@@ -2976,6 +2976,10 @@ int win_close(win_T *win, bool free_buf, bool force)
     }
   }
 
+  // About to free the window. Remember its final buffer for terminal_check_size,
+  // which may have changed since the last set_bufref. (e.g: close_buffer autocmds)
+  set_bufref(&bufref, win->w_buffer);
+
   // Free the memory used for the window and get the window that received
   // the screen space.
   int dir;
@@ -3261,6 +3265,10 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
       win_new_screen_rows();
     }
   }
+
+  // About to free the window. Remember its final buffer for terminal_check_size/TabClosed,
+  // which may have changed since the last set_bufref. (e.g: close_buffer autocmds)
+  set_bufref(&bufref, win->w_buffer);
 
   // Free the memory used for the window.
   int dir;
