@@ -8,9 +8,9 @@ local feed = n.feed
 
 describe('screenrow() and screencol() function', function()
   local function with_ext_multigrid(multigrid)
-    setup(function()
+    before_each(function()
       clear()
-      Screen.new(40, 40, { ext_multigrid = multigrid })
+      Screen.new(41, 41, { ext_multigrid = multigrid })
     end)
 
     it('works in floating window', function()
@@ -37,11 +37,21 @@ describe('screenrow() and screencol() function', function()
     it('works in vertical split', function()
       command('vsplit')
       command('wincmd l')  -- move to right split
-      feed('iA<CR>B<ESC>')  -- insert two lines
+      feed('iA<CR>BC<ESC>')  -- insert two lines
       command('redraw')
 
-      eq(2, fn.screenrow())  -- line 2
-      eq(21, fn.screencol())  -- 40 / 2 + 1
+      eq(2, fn.screenrow())
+      eq(23, fn.screencol()) -- 20 (left) | 1 (border) | 2 (2nd col)
+    end)
+
+    it('works in horizontal split', function()
+      command('split')
+      command('wincmd j')  -- move to bottom split
+      feed('iA<CR>BC<ESC>')  -- insert two lines
+      command('redraw')
+
+      eq(22, fn.screenrow()) -- 19 (top) | 1 (border) | 2 (2nd row) + 17 (rest) | 2 (cmd)
+      eq(2, fn.screencol())
     end)
   end
 
