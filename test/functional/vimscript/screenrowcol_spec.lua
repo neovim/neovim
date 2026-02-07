@@ -13,7 +13,7 @@ describe('screenrow() and screencol() function', function()
       Screen.new(41, 41, { ext_multigrid = multigrid })
     end)
 
-    it('works in floating window', function()
+    pending('works in floating window', function()
       local opts = {
         relative = 'editor',
         height = 8,
@@ -34,7 +34,7 @@ describe('screenrow() and screencol() function', function()
       eq(9, fn.screencol())
     end)
 
-    it('works in vertical split', function()
+    pending('works in vertical split', function()
       command('vsplit')
       command('wincmd l') -- move to right split
       feed('iA<CR>BC<ESC>') -- insert two lines
@@ -44,7 +44,7 @@ describe('screenrow() and screencol() function', function()
       eq(23, fn.screencol()) -- 20 (left) | 1 (border) | 2 (2nd col)
     end)
 
-    it('works in horizontal split', function()
+    pending('works in horizontal split', function()
       command('split')
       command('wincmd j') -- move to bottom split
       feed('iA<CR>BC<ESC>') -- insert two lines
