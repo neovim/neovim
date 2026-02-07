@@ -489,6 +489,9 @@ local function new_progress_report(action)
     progress.status = kind == 'end' and 'success' or 'running'
     progress.percent = percent
     local msg = ('%s %s'):format(action, fmt:format(...))
+    if #api.nvim_list_uis() == 0 then
+      msg = msg .. '\n'
+    end
     progress.id = api.nvim_echo({ { msg } }, kind ~= 'report', progress)
     -- Force redraw to show installation progress during startup
     vim.cmd.redraw({ bang = true })
