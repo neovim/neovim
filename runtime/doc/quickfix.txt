@@ -1656,6 +1656,13 @@ b/g:mypy_makeprg_params variable.  For example: >
 
 The global default is "--strict --ignore-missing-imports".
 
+PYRIGHT TYPE CHECKER					*compiler-pyright*
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:pyright_makeprg_params variable.
+
+The global default is "pyright".
+
 TY TYPE CHECKER					*compiler-ty*
 
 Commonly used compiler options and executable can be set by the
