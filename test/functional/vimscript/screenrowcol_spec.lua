@@ -36,8 +36,8 @@ describe('screenrow() and screencol() function', function()
 
     it('works in vertical split', function()
       command('vsplit')
-      command('wincmd l')  -- move to right split
-      feed('iA<CR>BC<ESC>')  -- insert two lines
+      command('wincmd l') -- move to right split
+      feed('iA<CR>BC<ESC>') -- insert two lines
       command('redraw')
 
       eq(2, fn.screenrow())
@@ -46,8 +46,8 @@ describe('screenrow() and screencol() function', function()
 
     it('works in horizontal split', function()
       command('split')
-      command('wincmd j')  -- move to bottom split
-      feed('iA<CR>BC<ESC>')  -- insert two lines
+      command('wincmd j') -- move to bottom split
+      feed('iA<CR>BC<ESC>') -- insert two lines
       command('redraw')
 
       eq(22, fn.screenrow()) -- 19 (top) | 1 (border) | 2 (2nd row) + 17 (rest) | 2 (cmd)
