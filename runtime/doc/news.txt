@@ -414,6 +414,7 @@ VIMSCRIPT
 • |prompt_getinput()| gets current user-input in prompt-buffer.
 • |wildtrigger()| triggers command-line expansion.
 • |v:vim_did_init| is set after sourcing |init.vim| but before |load-plugins|.
+• |prompt_appendbuffer()| appends text to prompt-buffer.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

@@ -269,6 +269,27 @@ void f_appendbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   buf_set_append_line(argvars, rettv, true);
 }
 
+/// "prompt_appendbuffer({buffer}, string/list)" function
+void f_prompt_appendbuffer(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const int did_emsg_before = did_emsg;
+
+  // Return an 1 by default, e.g. append failed or not a prompt buffer
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 1;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL || !bt_prompt(buf)) {
+    return;
+  }
+
+  linenr_T lnum = MAX(0, buf->b_prompt_start.mark.lnum - 1);
+  if (did_emsg == did_emsg_before) {
+    set_buffer_lines(buf, lnum, true, &argvars[1], rettv);
+  }
+}
+
 /// "bufadd(expr)" function
 void f_bufadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
