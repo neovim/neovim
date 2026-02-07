@@ -1638,6 +1638,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   bufref_T prevbufref;
   set_bufref(&prevbufref, prevbuf);
   set_bufref(&newbufref, buf);
+  const int prev_nwindows = prevbuf->b_nwindows;
 
   // Autocommands may delete the current buffer and/or the buffer we want to
   // go to.  In those cases don't close the buffer.
@@ -1650,8 +1651,8 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     // autocommands may have opened a new window
     // with prevbuf, grr
     if (unload
-        || (last_winid != get_last_winid()
-            && strchr("wdu", prevbuf->b_p_bh[0]) != NULL)) {
+        || (prev_nwindows <= 1 && last_winid != get_last_winid()
+            && action == DOBUF_GOTO && !buf_hide(prevbuf))) {
       close_windows(prevbuf, false);
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
