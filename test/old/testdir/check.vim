@@ -108,6 +108,17 @@ func CheckNotBSD()
   endif
 endfunc
 
+" Command to check for not running on OpenBSD
+command CheckNotOpenBSD call CheckNotOpenBSD()
+func CheckNotOpenBSD()
+  if has('bsd')
+    let uname = trim(system('uname'))
+    if uname == 'OpenBSD'
+      throw 'Skipped: does not work on OpenBSD'
+    endif
+  endif
+endfunc
+
 " Command to check for not running on a MacOS
 command CheckNotMac call CheckNotMac()
 func CheckNotMac()
