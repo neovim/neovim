@@ -430,6 +430,8 @@ describe(':terminal window', function()
       [1] = { reverse = true },
       [2] = { background = 225, foreground = Screen.colors.Gray0 },
       [3] = { bold = true },
+      [4] = { foreground = 12 },
+      [5] = { reverse = true, bold = true },
       [17] = { background = 2, foreground = Screen.colors.Grey0 },
       [18] = { background = 2, foreground = 8 },
       [19] = { underline = true, foreground = Screen.colors.Grey0, background = 7 },
@@ -516,6 +518,53 @@ describe(':terminal window', function()
       ^                         │rows: 5, cols: 25       |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- Sizing logic should only consider the final buffer shown in a window, even if autocommands
+    -- changed it at the last moment.
+    exec_lua(function()
+      vim.g.fired = 0
+      vim.api.nvim_create_autocmd('BufHidden', {
+        callback = function(ev)
+          vim.api.nvim_win_set_buf(vim.fn.win_findbuf(ev.buf)[1], vim.fn.bufnr('foo'))
+          vim.g.fired = vim.g.fired + 1
+          return vim.g.fired == 2
+        end,
+      })
+    end)
+    command('botright new')
+    screen:expect([[
+      rows: 2, cols: 25        │rows: 5, cols: 50       |
+                               │rows: 2, cols: 50       |
+      {18:foo [-]                   foo [-]                 }|
+      ^                                                  |
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+    ]])
+    command('quit')
+    eq(1, eval('g:fired'))
+    screen:expect([[
+      rows: 5, cols: 50        │rows: 5, cols: 25       |
+      rows: 5, cols: 25        │rows: 5, cols: 50       |
+      rows: 2, cols: 25        │rows: 2, cols: 50       |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │rows: 5, cols: 40       |
+      {17:foo [-]                   }{18:foo [-]                 }|
+                                                        |
+    ]])
+    -- Check it doesn't use the size of the closed window in the other tab page; size should only
+    -- change via the :wincmd below. Hide tabline so it doesn't affect sizes.
+    command('set showtabline=0 | tabnew | tabprevious | wincmd > | tabonly')
+    eq(2, eval('g:fired'))
+    screen:expect([[
+      rows: 5, cols: 25         │rows: 5, cols: 25      |
+      rows: 2, cols: 25         │rows: 5, cols: 50      |
+      rows: 5, cols: 25         │rows: 2, cols: 50      |
+      rows: 5, cols: 26         │rows: 5, cols: 25      |
+      ^                          │rows: 5, cols: 40      |
+      {17:foo [-]                    }{18:foo [-]                }|
+                                                        |
     ]])
   end)
 
