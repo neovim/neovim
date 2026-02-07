@@ -34,6 +34,16 @@ describe('terminal channel is closed and later released if', function()
     feed('<Ignore>') -- add input to separate two RPC requests
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
+
+    command('autocmd BufWipeout * ++once let id2 = nvim_open_term(str2nr(expand("<abuf>")), {})')
+    -- channel hasn't been released yet
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[bdelete! | call chansend(id2, 'test')]])
+    )
+    feed('<Ignore>') -- add input to separate two RPC requests
+    -- channel has been released after one main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   it('opened by nvim_open_term(), closed by chanclose(), and deleted by pressing a key', function()
