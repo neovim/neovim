@@ -365,7 +365,7 @@ Where possible, these patterns apply to _both_ Lua and the API:
   If `opts` is omitted (or `nil`) it returns the current configuration.
   - Example: See |vim.diagnostic.config()|.
 - "Enable" ("toggle") interface and behavior:
-  - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control the
+  - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control
     the "global" enablement of a feature.
     - `is_enabled(nil)` and `is_enabled({buf=nil})`, likewise, query the
       global state of the feature.
