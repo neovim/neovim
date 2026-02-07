@@ -18,6 +18,7 @@
 "   2025 May 19 by Vim Project: restore working directory after read/write
 "   2025 Jul 13 by Vim Project: warn with path traversal attacks
 "   2026 Feb 06 by Vim Project: consider 'nowrapscan' (#19333)
+"   2026 Feb 07 by Vim Project: make the path traversal detection more robust (#19341)
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -110,7 +111,7 @@ if !exists("g:tar_shq")
 endif
 
 let g:tar_secure=' -- '
-let g:tar_leading_pat='^\%([.]\{,2\}/\)\+'
+let g:tar_leading_pat='\m^\%([.]\{,2\}/\)\+'
 
 " ----------------
 "  Functions: {{{1
@@ -226,7 +227,7 @@ fun! tar#Browse(tarfile)
 
   " remove tar: Removing leading '/' from member names
   " Note: the message could be localized
-  if search('^tar: ', 'w') > 0 || search(g:tar_leading_pat, 'w') > 0
+  if search('\m^g\?tar: ', 'w') > 0 || search(g:tar_leading_pat, 'w') > 0
     call append(3,'" Note: Path Traversal Attack detected!')
     let b:leading_slash = 1
     " remove the message output
