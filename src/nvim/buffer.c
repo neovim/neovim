@@ -902,6 +902,13 @@ void buf_freeall(buf_T *buf, int flags)
     }
   }
 
+  // Autocommands may have opened another terminal. Block them this time.
+  if (buf->terminal) {
+    block_autocmds();
+    buf_close_terminal(buf);
+    unblock_autocmds();
+  }
+
   ml_close(buf, true);              // close and delete the memline/memfile
   buf->b_ml.ml_line_count = 0;      // no lines in buffer
   if ((flags & BFA_KEEP_UNDO) == 0) {
