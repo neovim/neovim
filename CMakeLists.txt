@@ -166,6 +166,8 @@ option(ENABLE_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer fo
 option(ENABLE_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)
 # TSAN exists to test Luv threads.
 option(ENABLE_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
+option(ENABLE_FUZZING "Build fuzz testing targets (requires Clang)" OFF)
+set(FUZZ_ENGINE "-fsanitize=fuzzer" CACHE STRING "Fuzzer engine link flags")
 
 if((ENABLE_ASAN_UBSAN AND ENABLE_MSAN)
     OR (ENABLE_ASAN_UBSAN AND ENABLE_TSAN)

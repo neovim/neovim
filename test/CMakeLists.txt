@@ -45,3 +45,8 @@ add_custom_target(benchmark
   DEPENDS tty-test
   USES_TERMINAL)
 add_dependencies(benchmark lua_dev_deps nvim)
+
+# Fuzz testing (opt-in via -DENABLE_FUZZING=ON)
+if(ENABLE_FUZZING)
+  add_subdirectory(fuzz)
+endif()

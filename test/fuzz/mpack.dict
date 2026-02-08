@@ -1,0 +1,62 @@
+# MessagePack format bytes
+# Positive fixint (0x00-0x7f)
+"\x00"
+"\x7f"
+# Fixmap (0x80-0x8f)
+"\x80"
+"\x81"
+"\x8f"
+# Fixarray (0x90-0x9f)
+"\x90"
+"\x91"
+"\x9f"
+# Fixstr (0xa0-0xbf)
+"\xa0"
+"\xa1"
+"\xbf"
+# nil
+"\xc0"
+# false
+"\xc2"
+# true
+"\xc3"
+# bin 8/16/32
+"\xc4"
+"\xc5"
+"\xc6"
+# ext 8/16/32
+"\xc7"
+"\xc8"
+"\xc9"
+# float 32/64
+"\xca"
+"\xcb"
+# uint 8/16/32/64
+"\xcc"
+"\xcd"
+"\xce"
+"\xcf"
+# int 8/16/32/64
+"\xd0"
+"\xd1"
+"\xd2"
+"\xd3"
+# fixext 1/2/4/8/16
+"\xd4"
+"\xd5"
+"\xd6"
+"\xd7"
+"\xd8"
+# str 8/16/32
+"\xd9"
+"\xda"
+"\xdb"
+# array 16/32
+"\xdc"
+"\xdd"
+# map 16/32
+"\xde"
+"\xdf"
+# Negative fixint (0xe0-0xff)
+"\xe0"
+"\xff"

@@ -1,0 +1,33 @@
+# Base64 alphabet and special characters
+"A"
+"Z"
+"a"
+"z"
+"0"
+"9"
+"+"
+"/"
+"="
+"=="
+# Valid base64 strings
+"AA=="
+"AAA="
+"AAAA"
+"QUJD"
+"/+//"
+"//8="
+# Edge cases
+"AB"
+"ABC"
+"ABCD"
+# Invalid base64
+"@@@@"
+"!!!!"
+"A==="
+"=AAA"
+# Long padding
+"========"
+# Whitespace (should be rejected)
+" "
+"\x0a"
+"\x0d\x0a"
