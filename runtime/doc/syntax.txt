@@ -1397,6 +1397,14 @@ The backticks for inline java are highlighted according to the htmlError
 group to make them easier to see.
 
 
+GDB							*ft-gdb-syntax*
+
+The GDB syntax file provides syntax |folding| (see |:syn-fold|) for comments
+and block statements. This can be enabled with: >
+
+	:set foldmethod=syntax
+
+
 GROFF							*ft-groff-syntax*
 
 The groff syntax file is a wrapper for |ft-nroff-syntax|, see the notes
