@@ -2707,6 +2707,71 @@ describe('TUI', function()
     end)
   end)
 
+  it('TermResponse from unblock_autocmds() sets "data"', function()
+    if not child_exec_lua('return pcall(require, "ffi")') then
+      pending('N/A: missing LuaJIT FFI')
+    end
+    child_exec_lua([[
+      local ffi = require('ffi')
+      ffi.cdef[=[
+        void block_autocmds(void);
+        void unblock_autocmds(void);
+      ]=]
+      ffi.C.block_autocmds()
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev)
+          _G.data = ev.data
+        end,
+      })
+    ]])
+    feed_data('\027P0$r\027\\')
+    retry(nil, 4000, function()
+      eq('\027P0$r', child_exec_lua('return vim.v.termresponse'))
+    end)
+    eq(vim.NIL, child_exec_lua('return _G.data'))
+    child_exec_lua('require("ffi").C.unblock_autocmds()')
+    eq({ sequence = '\027P0$r' }, child_exec_lua('return _G.data'))
+
+    -- If TermResponse during TermResponse changes v:termresponse, data.sequence contains the actual
+    -- response that triggered the autocommand.
+    -- The second autocommand below forces a use-after-free when v:termresponse's value changes
+    -- during TermResponse if data.sequence didn't allocate its own copy.
+    child_exec_lua([[
+      require('ffi').C.block_autocmds()
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev)
+          _G.au1_termresponse1 = vim.v.termresponse
+          _G.au1_sequence1 = ev.data.sequence
+          local chan = vim.fn.sockconnect('pipe', vim.v.servername, { rpc = true })
+          vim.rpcrequest(chan, 'nvim_ui_term_event', 'termresponse', 'baz')
+          _G.au1_termresponse2 = vim.v.termresponse
+          _G.au1_sequence2 = ev.data.sequence
+        end,
+      })
+      _G.au2_sequences = {}
+      vim.api.nvim_create_autocmd('TermResponse', {
+        callback = function(ev)
+          table.insert(_G.au2_sequences, ev.data.sequence)
+        end,
+      })
+    ]])
+    child_session:request('nvim_ui_term_event', 'termresponse', 'foobar')
+    eq('foobar', child_exec_lua('return vim.v.termresponse'))
+    -- For good measure, check deferred TermResponse doesn't try to fire if autocmds are still
+    -- blocked after unblock_autocmds.
+    child_exec_lua('require("ffi").C.block_autocmds() require("ffi").C.unblock_autocmds()')
+    eq(vim.NIL, child_exec_lua('return _G.au1_termresponse1'))
+    child_exec_lua('require("ffi").C.unblock_autocmds()')
+    eq('foobar', child_exec_lua('return _G.au1_termresponse1'))
+    eq('foobar', child_exec_lua('return _G.au1_sequence1'))
+    eq('baz', child_exec_lua('return _G.au1_termresponse2'))
+    eq('foobar', child_exec_lua('return _G.au1_sequence2')) -- unchanged
+    -- Second autocmd triggers due to "baz" (via the nested TermResponse), then from "foobar".
+    eq({ 'baz', 'foobar' }, child_exec_lua('return _G.au2_sequences'))
+  end)
+
   it('nvim_ui_send works', function()
     child_session:request('nvim_ui_send', '\027]2;TEST_TITLE\027\\')
     retry(nil, nil, function()
