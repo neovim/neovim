@@ -3695,7 +3695,7 @@ M.funcs = {
     ]=],
     name = 'getcharsearch',
     params = {},
-    returns = 'table',
+    returns = '{ char: string, forward: 1|0, until: 1|0 }',
     signature = 'getcharsearch()',
   },
   getcharstr = {
@@ -9886,7 +9886,7 @@ M.funcs = {
 
     ]=],
     name = 'setcharsearch',
-    params = { { 'dict', 'string' } },
+    params = { { 'dict', '{ char?: string, forward?: 1|0, until?: 1|0 }' } },
     signature = 'setcharsearch({dict})',
   },
   setcmdline = {
