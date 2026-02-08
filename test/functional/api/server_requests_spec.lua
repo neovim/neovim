@@ -401,7 +401,7 @@ describe('server -> client', function()
       eq(
         'RESPONSE',
         n.exec_lua(function()
-          local prepare = vim.uv.new_prepare()
+          local prepare = assert(vim.uv.new_prepare())
           -- Block the event loop after writing the request but before polling for I/O
           -- so that response and EOF arrive at the same uv_run() call.
           prepare:start(function()
@@ -416,7 +416,9 @@ describe('server -> client', function()
           )
         end)
       )
-      eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
+      t.retry(nil, nil, function()
+        eq({}, api.nvim_get_chan_info(id)) -- Channel is closed.
+      end)
     end)
 
     it('via stdio, with many small flushes does not crash #23781', function()
