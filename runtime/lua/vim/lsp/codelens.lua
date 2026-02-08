@@ -210,9 +210,10 @@ function Provider:on_win(toprow, botrow)
   for row = toprow, botrow do
     if self.row_version[row] ~= self.version then
       for client_id, state in pairs(self.client_state) do
+        local bufnr = self.bufnr
         local namespace = state.namespace
 
-        api.nvim_buf_clear_namespace(self.bufnr, namespace, row, row + 1)
+        api.nvim_buf_clear_namespace(bufnr, namespace, row, row + 1)
 
         local lenses = state.row_lenses[row]
         if lenses then
@@ -220,30 +221,48 @@ function Provider:on_win(toprow, botrow)
             return a.range.start.character < b.range.start.character
           end)
 
-          ---@type [string, string][]
-          local virt_text = {}
+          ---@type integer
+          local indent = api.nvim_buf_call(bufnr, function()
+            return vim.fn.indent(row + 1)
+          end)
+
+          ---@type [string, string|integer][][]
+          local virt_lines = { { { string.rep(' ', indent), 'LspCodeLensSeparator' } } }
+          local virt_text = virt_lines[1]
           for _, lens in ipairs(lenses) do
             -- A code lens is unresolved when no command is associated to it.
             if not lens.command then
-              local client = assert(vim.lsp.get_client_by_id(client_id))
+              local client = assert(vim.lsp.get_client_by_id(client_id)) ---@type vim.lsp.Client
               self:resolve(client, lens)
             else
-              vim.list_extend(virt_text, {
-                { lens.command.title, 'LspCodeLens' },
-                { ' | ', 'LspCodeLensSeparator' },
-              })
+              virt_text[#virt_text + 1] = { lens.command.title, 'LspCodeLens' }
+              virt_text[#virt_text + 1] = { ' | ', 'LspCodeLensSeparator' }
             end
           end
-          -- Remove trailing separator.
-          table.remove(virt_text)
 
-          api.nvim_buf_set_extmark(self.bufnr, namespace, row, 0, {
-            virt_text = virt_text,
+          if #virt_text > 1 then
+            -- Remove trailing separator.
+            virt_text[#virt_text] = nil
+          else
+            -- Use a placeholder to prevent flickering caused by layout shifts.
+            virt_text[#virt_text + 1] = { '...', 'LspCodeLens' }
+          end
+
+          api.nvim_buf_set_extmark(bufnr, namespace, row, 0, {
+            virt_lines = virt_lines,
+            virt_lines_above = true,
+            virt_lines_overflow = 'scroll',
             hl_mode = 'combine',
           })
         end
         self.row_version[row] = self.version
       end
+    end
+  end
+
+  if botrow == api.nvim_buf_line_count(self.bufnr) - 1 then
+    for _, state in pairs(self.client_state) do
+      api.nvim_buf_clear_namespace(self.bufnr, state.namespace, botrow, -1)
     end
   end
 end
