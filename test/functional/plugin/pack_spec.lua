@@ -1372,25 +1372,31 @@ describe('vim.pack', function()
         local other_tabpage = api.nvim_get_current_tabpage()
         n.exec('tabnext')
         n.exec('write')
-        eq(true, api.nvim_tabpage_is_valid(other_tabpage))
+        eq(true, api.nvim_get_current_tabpage() == other_tabpage)
         eq(false, api.nvim_tabpage_is_valid(confirm_tabpage))
 
         -- Not confirm with `:quit`
         n.exec('tab split other-tab-2')
         local other_tabpage_2 = api.nvim_get_current_tabpage()
-        exec_lua(function()
-          vim.pack.update()
-        end)
+        exec_lua('vim.pack.update()')
         confirm_tabpage = api.nvim_get_current_tabpage()
 
-        -- - Temporary split window in tabpage should not matter
+        -- - Temporary split window in tabpage should prevent from closing
         n.exec('vsplit other-buf')
         n.exec('wincmd w')
 
         n.exec('tabclose ' .. api.nvim_tabpage_get_number(other_tabpage_2))
         eq(confirm_tabpage, api.nvim_get_current_tabpage())
         n.exec('quit')
+        eq(confirm_tabpage, api.nvim_get_current_tabpage())
+        n.exec('quit')
         eq(false, api.nvim_tabpage_is_valid(confirm_tabpage))
+
+        -- Should work even if it is the last tabpage
+        exec_lua('vim.pack.update()')
+        n.exec('tabonly')
+        n.exec('write')
+        eq('', n.eval('v:errmsg'))
       end)
 
       it('has in-process LSP features', function()
