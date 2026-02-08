@@ -36,6 +36,7 @@ describe(':terminal window', function()
   end)
 
   it('resets horizontal scroll on resize #35331', function()
+    skip(is_os('win'), 'Too flaky on Windows')
     local screen = tt.setup_screen(0, { testprg('shell-test'), 'INTERACT' })
     command('set statusline=%{win_getid()} splitright')
     screen:expect([[
