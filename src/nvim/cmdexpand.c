@@ -1140,7 +1140,9 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, bool nos
   if (display_list) {
     msg_didany = false;                 // lines_left will be set
     msg_start();                        // prepare for paging
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     ui_flush();
     cmdline_row = msg_row;
     msg_didany = false;                 // lines_left will be set again

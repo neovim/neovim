@@ -1673,7 +1673,7 @@ void msg_start(void)
   if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
     msg_col = 0;
-  } else if (msg_didout || (p_ch == 0 && !ui_has(kUIMessages))) {  // start message on next line
+  } else if ((msg_didout || p_ch == 0) && !ui_has(kUIMessages)) {  // start message on next line
     msg_putchar('\n');
     did_return = true;
     cmdline_row = msg_row;
@@ -2232,6 +2232,7 @@ void msg_puts(const char *s)
 
 void msg_puts_title(const char *s)
 {
+  s += (ui_has(kUIMessages) && *s == '\n');
   msg_puts_hl(s, HLF_T, false);
 }
 
@@ -3457,10 +3458,14 @@ void verbose_enter(void)
   if (*p_vfile != NUL) {
     msg_silent++;
   }
-  if (msg_ext_kind != verbose_kind) {
-    pre_verbose_kind = msg_ext_kind;
+  // last_set_msg unsets p_verbose to avoid setting the verbose kind.
+  if (!msg_ext_skip_verbose) {
+    if (msg_ext_kind != verbose_kind) {
+      pre_verbose_kind = msg_ext_kind;
+    }
+    msg_ext_set_kind("verbose");
   }
-  msg_ext_set_kind("verbose");
+  msg_ext_skip_verbose = false;
 }
 
 /// After giving verbose message.

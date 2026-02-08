@@ -4089,7 +4089,7 @@ static void showoptions(bool all, int opt_flags)
       }
       int col = 0;
       for (int i = row; i < item_count; i += rows) {
-        msg_col = col;                          // make columns
+        msg_advance(col);                       // make columns
         showoneopt(items[i], opt_flags);
         col += INC;
       }
@@ -4160,7 +4160,9 @@ static void showoneopt(vimoption_T *opt, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(opt, opt_flags);
-    msg_outtrans(NameBuff, 0, false);
+    if (*NameBuff != NUL) {
+      msg_outtrans(NameBuff, 0, false);
+    }
   }
 
   silent_mode = save_silent;

@@ -245,7 +245,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
           return;
         }
 
-        msg_col = 4;
+        msg_advance(4);
         msg_outtrans(ac->pat->pat, 0, false);
       }
 
@@ -256,7 +256,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       if (msg_col >= 14) {
         msg_putchar('\n');
       }
-      msg_col = 14;
+      msg_advance(14);
       if (got_int) {
         return;
       }

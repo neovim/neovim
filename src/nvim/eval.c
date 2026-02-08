@@ -6310,6 +6310,7 @@ void last_set_msg(sctx_T script_ctx)
 
   bool should_free;
   char *p = get_scriptname(script_ctx, &should_free);
+  msg_ext_skip_verbose = true;  // no verbose kind for last set messages: too noisy
 
   verbose_enter();
   msg_puts(_("\n\tLast set from "));

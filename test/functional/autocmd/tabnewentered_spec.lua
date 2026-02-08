@@ -86,7 +86,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
           Tab page 1
               [No Name]
           Tab page 2
@@ -137,7 +136,6 @@ describe('tabpage/previous', function()
       feed(characters)
       eq(
         dedent([=[
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -189,7 +187,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
          #   [No Name]
          Tab page 2
@@ -241,7 +238,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
          >   [No Name]
          Tab page 2
@@ -291,7 +287,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -343,7 +338,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
          #   [No Name]
          Tab page 2
@@ -393,7 +387,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -445,7 +438,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -544,7 +536,6 @@ describe('tabpage/previous', function()
 
       eq(
         dedent([=[
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -681,7 +672,6 @@ describe('tabpage/previous', function()
 
     eq(
       dedent([=[
-
          Tab page 1
              [No Name]
          Tab page 2

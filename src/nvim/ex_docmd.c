@@ -5697,6 +5697,7 @@ static void ex_tabs(exarg_T *eap)
 {
   int tabcount = 1;
 
+  msg_ext_set_kind("list_cmd");
   msg_start();
   msg_scroll = true;
 
@@ -5709,7 +5710,9 @@ static void ex_tabs(exarg_T *eap)
       break;
     }
 
-    msg_putchar('\n');
+    if (msg_col > 0) {
+      msg_putchar('\n');
+    }
     vim_snprintf(IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans(IObuff, HLF_T, false);
     os_breakcheck();

@@ -1323,7 +1323,9 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   no_wait_return++;             // don't call wait_return() while busy
   if (itmp != NULL && buf_write(curbuf, itmp, NULL, line1, line2, eap,
                                 false, false, false, true) == FAIL) {
-    msg_putchar('\n');  // Keep message from buf_write().
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');  // Keep message from buf_write().
+    }
     no_wait_return--;
     if (!aborting()) {
       // will call wait_return()
@@ -3981,7 +3983,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
               char *resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL,
                                              CALLBACK_NONE, false, NULL);
-              msg_putchar('\n');
+              if (!ui_has(kUIMessages)) {
+                msg_putchar('\n');
+              }
               xfree(prompt);
               if (resp != NULL) {
                 typed = (uint8_t)(*resp);

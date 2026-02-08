@@ -601,6 +601,7 @@ void ex_history(exarg_T *eap)
   char *end;
   char *arg = eap->arg;
 
+  msg_ext_set_kind("list_cmd");
   if (hislen == 0) {
     msg(_("'history' option is zero"), 0);
     return;

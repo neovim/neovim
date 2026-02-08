@@ -2717,6 +2717,7 @@ void ex_undolist(exarg_T *eap)
     }
   }
 
+  msg_ext_set_kind("list_cmd");
   if (GA_EMPTY(&ga)) {
     msg(_("Nothing to undo"), 0);
   } else {

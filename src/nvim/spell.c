@@ -3187,16 +3187,21 @@ void ex_spellinfo(exarg_T *eap)
     return;
   }
 
+  msg_ext_set_kind("list_cmd");
   msg_start();
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len && !got_int; lpi++) {
     langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     msg_puts("file: ");
     msg_puts(lp->lp_slang->sl_fname);
-    msg_putchar('\n');
     const char *const p = lp->lp_slang->sl_info;
+    if (lpi < curwin->w_s->b_langp.ga_len || p != NULL) {
+      msg_putchar('\n');
+    }
     if (p != NULL) {
       msg_puts(p);
-      msg_putchar('\n');
+      if (lpi < curwin->w_s->b_langp.ga_len - 1) {
+        msg_putchar('\n');
+      }
     }
   }
   msg_end();
