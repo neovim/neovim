@@ -1115,14 +1115,10 @@ local function show_confirm_buf(lines, on_finish)
   api.nvim_buf_set_name(bufnr, 'nvim-pack://confirm#' .. bufnr)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.cmd.sbuffer({ bufnr, mods = { tab = vim.fn.tabpagenr() } })
-  local tab_id = api.nvim_get_current_tabpage()
   local win_id = api.nvim_get_current_win()
 
   local delete_buffer = vim.schedule_wrap(function()
     pcall(api.nvim_buf_delete, bufnr, { force = true })
-    if api.nvim_tabpage_is_valid(tab_id) then
-      vim.cmd.tabclose(api.nvim_tabpage_get_number(tab_id))
-    end
     vim.cmd.redraw()
   end)
 
