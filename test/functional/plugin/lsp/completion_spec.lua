@@ -1455,6 +1455,7 @@ describe('vim.lsp.completion: integration', function()
     end)
     create_server('dummy', completion_list)
     create_server('dummy2', completion_list2)
+    create_server('dummy3', { isIncomplete = false, items = {} })
     feed('Adiv.foo<C-x><C-O>')
     retry(nil, nil, function()
       eq(
