@@ -2302,7 +2302,7 @@ let b:current_syntax = "nginx"
 " Enable nested LUA syntax highlighting
 unlet b:current_syntax
 syn include @LUA syntax/lua.vim
-syn region ngxLua start=+^\s*\w\+_by_lua_block\s*{+ end=+}+me=s-1 contains=ngxBlock,@LUA
+syn region ngxLua start=+^\s*\w\+_by_lua_block\s*\(\$\w\+\s*\)\?{+ end=+}+me=s-1 contains=ngxBlock,@LUA
 let b:current_syntax = "nginx"
 
 
