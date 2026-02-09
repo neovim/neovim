@@ -580,7 +580,9 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     assert(term->invalid_start >= 0);
   }
   refresh_screen(term, buf);
+  buf->b_locked++;
   set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
+  buf->b_locked--;
 
   if (buf->b_ffname != NULL) {
     buf_set_term_title(buf, buf->b_ffname, strlen(buf->b_ffname));
