@@ -826,7 +826,7 @@ describe('vim.lsp.completion: item conversion', function()
 end)
 
 --- @param name string
---- @param completion_result lsp.CompletionList
+--- @param completion_result vim.lsp.CompletionResult
 --- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer, cmp?: string}
 --- @return integer
 local function create_server(name, completion_result, opts)
@@ -1020,14 +1020,18 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     })
+    create_server('dummy3', {
+      { label = 'hallo' },
+    })
 
     feed('ih')
     trigger_at_pos({ 1, 1 })
 
     assert_matches(function(matches)
-      eq(2, #matches)
+      eq(3, #matches)
       eq('hello', matches[1].word)
       eq('hallo', matches[2].word)
+      eq('hallo', matches[3].word)
     end)
   end)
 
