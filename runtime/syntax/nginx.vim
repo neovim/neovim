@@ -1,8 +1,7 @@
 " Vim syntax file
 " Language: nginx.conf
 " Maintainer: Chris Aumann <me@chr4.org>
-" Last Change: Nov 25, 2023
-" 2025 Jun 08 by Vim Project: improve syntax (#17458)
+" Last Change: Jan 09, 2026
 
 if exists("b:current_syntax")
   finish
@@ -390,7 +389,6 @@ syn keyword ngxDirective proxy_buffering
 syn keyword ngxDirective proxy_buffers
 syn keyword ngxDirective proxy_busy_buffers_size
 syn keyword ngxDirective proxy_cache
-syn keyword ngxDirective proxy_cache_background_update
 syn keyword ngxDirective proxy_cache_bypass
 syn keyword ngxDirective proxy_cache_convert_head
 syn keyword ngxDirective proxy_cache_key
