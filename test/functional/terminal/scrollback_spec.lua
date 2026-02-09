@@ -1102,3 +1102,96 @@ describe('pending scrollback line handling', function()
     assert_alive()
   end)
 end)
+
+describe('nvim_open_term()', function()
+  local screen --- @type test.functional.ui.screen
+  local buf --- @type integer
+  local win --- @type integer
+
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 7)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = tonumber('0xe00000'), fg_indexed = true },
+      [101] = { foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
+      [102] = {
+        bold = true,
+        foreground = Screen.colors.White,
+        background = Screen.colors.DarkGreen,
+      },
+    })
+    api.nvim_buf_set_lines(0, 0, -1, true, { '\027[31mTEST\027[0m 0' })
+    feed('yy99pG$<C-V>98kg<C-A>')
+    screen:expect([[
+      {18:^[}[31mTEST{18:^[}[0m 0             |
+      {18:^[}[31mTEST{18:^[}[0m ^1             |
+      {18:^[}[31mTEST{18:^[}[0m 2             |
+      {18:^[}[31mTEST{18:^[}[0m 3             |
+      {18:^[}[31mTEST{18:^[}[0m 4             |
+      {18:^[}[31mTEST{18:^[}[0m 5             |
+      99 lines changed              |
+    ]])
+    buf = api.nvim_get_current_buf()
+    win = api.nvim_get_current_win()
+    command('set winwidth=10 | 10vnew')
+  end)
+
+  local function check_buffer_lines(start, stop)
+    local lines = api.nvim_buf_get_lines(buf, 0, -1, true)
+    for i = start, stop do
+      eq(('TEST %d'):format(i), lines[i - start + 1])
+    end
+  end
+
+  local function check_common()
+    feed('<C-W>lG')
+    screen:expect([[
+                │{100:TEST} 96            |
+      {1:~         }│{100:TEST} 97            |
+      {1:~         }│{100:TEST} 98            |
+      {1:~         }│{100:TEST} 99            |
+      {1:~         }│^                   |
+      {2:[No Name]  }{102:[Scratch] [-]      }|
+      99 lines changed              |
+    ]])
+  end
+
+  it('on buffer with fewer lines than scrollback', function()
+    exec_lua(function()
+      vim.api.nvim_open_term(buf, {})
+      vim.api.nvim_win_set_cursor(win, { 3, 0 })
+    end)
+    screen:expect([[
+      ^          │{100:TEST} 0             |
+      {1:~         }│{100:TEST} 1             |
+      {1:~         }│{100:TEST} 2             |
+      {1:~         }│{100:TEST} 3             |
+      {1:~         }│{100:TEST} 4             |
+      {3:[No Name]  }{101:[Scratch] [-]      }|
+      99 lines changed              |
+    ]])
+    eq({ 3, 0 }, api.nvim_win_get_cursor(win))
+    check_buffer_lines(0, 99)
+    check_common()
+  end)
+
+  it('on buffer with more lines than scrollback', function()
+    api.nvim_set_option_value('scrollback', 10, { buf = buf })
+    exec_lua(function()
+      vim.api.nvim_open_term(buf, {})
+      vim.api.nvim_win_set_cursor(win, { 3, 3 })
+    end)
+    screen:expect([[
+      ^          │{100:TEST} 86            |
+      {1:~         }│{100:TEST} 87            |
+      {1:~         }│{100:TEST} 88            |
+      {1:~         }│{100:TEST} 89            |
+      {1:~         }│{100:TEST} 90            |
+      {3:[No Name]  }{101:[Scratch] [-]      }|
+      99 lines changed              |
+    ]])
+    eq({ 1, 0 }, api.nvim_win_get_cursor(win))
+    check_buffer_lines(86, 99)
+    check_common()
+  end)
+end)

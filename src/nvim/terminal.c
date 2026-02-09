@@ -544,8 +544,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   }
   vterm_state_set_termprop(state, VTERM_PROP_CURSORBLINK, &cursor_blink);
 
-  // force a initial refresh of the screen to ensure the buffer will always
-  // have as many lines as screen rows when refresh_scrollback is called
+  // Force a initial refresh of the screen to ensure the buffer will always
+  // have as many lines as screen rows when refresh_scrollback() is called.
   term->invalid_start = 0;
   term->invalid_end = opts.height;
 
@@ -555,6 +555,12 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // This queue is never processed directly: when the terminal is refreshed, all
   // events from this queue are copied back onto the main event queue.
   term->pending.events = multiqueue_new(NULL, NULL);
+
+  linenr_T line_count = buf->b_ml.ml_line_count;
+  while (!(buf->b_ml.ml_flags & ML_EMPTY)) {
+    ml_delete_buf(buf, 1, false);
+  }
+  deleted_lines_buf(buf, 1, line_count);
 
   return term;
 }
