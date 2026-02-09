@@ -351,6 +351,10 @@ error('Cannot require a meta file')
 --- @field desc? string
 --- @field replace_keycodes? boolean
 
+--- @class vim.api.keyset.marks
+--- @field win? integer
+--- @field buf? integer
+
 --- @class vim.api.keyset.ns_opts
 --- @field wins? any[]
 

@@ -4011,64 +4011,6 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_del_mark', function()
-    it('works', function()
-      local buf = api.nvim_create_buf(false, true)
-      api.nvim_buf_set_lines(buf, -1, -1, true, { 'a', 'bit of', 'text' })
-      eq(true, api.nvim_buf_set_mark(buf, 'F', 2, 2, {}))
-      eq(true, api.nvim_del_mark('F'))
-      eq({ 0, 0 }, api.nvim_buf_get_mark(buf, 'F'))
-    end)
-    it('validation', function()
-      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(api.nvim_del_mark, 'f'))
-      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(api.nvim_del_mark, '!'))
-      eq("Invalid mark name (must be a single char): 'fail'", pcall_err(api.nvim_del_mark, 'fail'))
-    end)
-  end)
-  describe('nvim_get_mark', function()
-    it('works', function()
-      local buf = api.nvim_create_buf(false, true)
-      api.nvim_buf_set_lines(buf, -1, -1, true, { 'a', 'bit of', 'text' })
-      api.nvim_buf_set_mark(buf, 'F', 2, 2, {})
-      api.nvim_buf_set_name(buf, 'mybuf')
-      local mark = api.nvim_get_mark('F', {})
-      -- Compare the path tail only
-      matches('mybuf$', mark[4])
-      eq({ 2, 2, buf, mark[4] }, mark)
-    end)
-    it('validation', function()
-      eq("Invalid mark name (must be file/uppercase): 'f'", pcall_err(api.nvim_get_mark, 'f', {}))
-      eq("Invalid mark name (must be file/uppercase): '!'", pcall_err(api.nvim_get_mark, '!', {}))
-      eq(
-        "Invalid mark name (must be a single char): 'fail'",
-        pcall_err(api.nvim_get_mark, 'fail', {})
-      )
-    end)
-    it('returns the expected when mark is not set', function()
-      eq(true, api.nvim_del_mark('A'))
-      eq({ 0, 0, 0, '' }, api.nvim_get_mark('A', {}))
-    end)
-    it('works with deleted buffers', function()
-      local fname = tmpname()
-      write_file(fname, 'a\nbit of\text')
-      command('edit ' .. fname)
-      local buf = api.nvim_get_current_buf()
-
-      api.nvim_buf_set_mark(buf, 'F', 2, 2, {})
-      command('new') -- Create new buf to avoid :bd failing
-      command('bd! ' .. buf)
-      os.remove(fname)
-
-      local mark = api.nvim_get_mark('F', {})
-      -- To avoid comparing relative vs absolute path
-      local mfname = mark[4]
-      local tail_patt = [[[\/][^\/]*$]]
-      -- tail of paths should be equals
-      eq(fname:match(tail_patt), mfname:match(tail_patt))
-      eq({ 2, 2, buf, mark[4] }, mark)
-    end)
-  end)
-
   describe('nvim_eval_statusline', function()
     it('works', function()
       eq({

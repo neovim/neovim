@@ -12,7 +12,9 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/vimscript.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
@@ -22,6 +24,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
+#include "nvim/mark.h"
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
@@ -1004,4 +1007,203 @@ Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error
   ADD_C(args, DICT_OBJ(opts));
 
   return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
+}
+
+/// Sets a named mark in the given buffer, all marks are allowed
+/// file/uppercase, visual, last change, etc. See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @note Passing 0 as line deletes the mark
+///
+/// @deprecated use |nvim_mark_set()| with {buf=bufnr}
+///
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @param line       Line number
+/// @param col        Column/row number
+/// @param opts       Optional parameters. Reserved for future use.
+/// @return true if the mark was set, else false.
+/// @see |nvim_buf_del_mark()|
+/// @see |nvim_buf_get_mark()|
+Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dict(empty) *opts,
+                          Error *err)
+  FUNC_API_SINCE(8)
+{
+  Dict(marks) args = {
+    .buf = buffer,
+    .is_set__marks_ = (1 << 1)
+  };
+  return nvim_mark_set(name, line, col, &args, err);
+}
+
+/// Returns a `(row,col)` tuple representing the position of the named mark.
+/// "End of line" column position is returned as |v:maxcol| (big number).
+/// See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @deprecated use |nvim_mark_get()| with {buf=bufnr}
+///
+/// @param buffer     Buffer id, or 0 for current buffer
+/// @param name       Mark name
+/// @param[out] err   Error details, if any
+/// @return (row, col) tuple, (0, 0) if the mark is not set, or is an
+/// uppercase/file mark set in another buffer.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_buf_del_mark()|
+ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Arena *arena, Error *err)
+  FUNC_API_SINCE(1)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return rv;
+  });
+
+  char mark = *name.data;
+  Dict(marks) opts;
+
+  // window-local marks
+  if (mark == '\'' || mark == '`') {
+    opts.is_set__marks_ = 0;
+    opts.win = 0;
+  } else {
+    opts.buf = buffer;
+    opts.is_set__marks_ = (1 << 1);
+  }
+
+  Dict result = nvim_mark_get(name, &opts, arena, err);
+
+  if (ERROR_SET(err)) {
+    return rv;
+  }
+
+  Object line_obj = OBJECT_INIT;
+  Object col_obj = OBJECT_INIT;
+
+  for (size_t i = 0; i < result.size; i++) {
+    if (strequal(result.items[i].key.data, "line")) {
+      line_obj = result.items[i].value;
+    } else if (strequal(result.items[i].key.data, "col")) {
+      col_obj = result.items[i].value;
+    }
+  }
+
+  rv = arena_array(arena, 2);
+  ADD_C(rv, line_obj);
+  ADD_C(rv, col_obj);
+
+  return rv;
+}
+
+/// Deletes a named mark in the buffer. See |mark-motions|.
+///
+/// @deprecated use |nvim_mark_del()| with {buf=bufnr}
+///
+/// @note only deletes marks set in the buffer, if the mark is not set
+/// in the buffer it will return false.
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @return true if the mark was deleted, else false.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_del_mark()|
+Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
+  FUNC_API_SINCE(8)
+{
+  Dict(marks) opts = { .buf = buffer, .is_set__marks_ = (1 << 1) };
+  return nvim_mark_del(name, &opts, err);
+}
+
+/// Returns a `(row, col, buffer, buffername)` tuple representing the position
+/// of the uppercase/file named mark. "End of line" column position is returned
+/// as |v:maxcol| (big number). See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @deprecated use |nvim_mark_get()| instead.
+///
+/// @note Lowercase name (or other buffer-local mark) is an error.
+/// @param name       Mark name
+/// @param opts       Optional parameters. Reserved for future use.
+/// @return 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
+/// not set.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_del_mark()|
+Tuple(Integer, Integer, Buffer, String) nvim_get_mark(String name, Dict(empty) *opts, Arena *arena,
+                                                      Error *err)
+  FUNC_API_SINCE(8)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return rv;
+  });
+  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
+             "mark name (must be file/uppercase)", name.data, {
+    return rv;
+  });
+
+  Dict(marks) mark_opts = { .is_set__marks_ = 0 };
+  Dict result = nvim_mark_get(name, &mark_opts, arena, err);
+
+  if (ERROR_SET(err)) {
+    return rv;
+  }
+
+  Object line_obj = OBJECT_INIT;
+  Object col_obj = OBJECT_INIT;
+  Object buf_obj = OBJECT_INIT;
+  Object file_obj = OBJECT_INIT;
+
+  for (size_t i = 0; i < result.size; i++) {
+    if (strequal(result.items[i].key.data, "line")) {
+      line_obj = result.items[i].value;
+    } else if (strequal(result.items[i].key.data, "col")) {
+      col_obj = result.items[i].value;
+    } else if (strequal(result.items[i].key.data, "buf")) {
+      buf_obj = result.items[i].value;
+    } else if (strequal(result.items[i].key.data, "file")) {
+      file_obj = result.items[i].value;
+    }
+  }
+
+  rv = arena_array(arena, 4);
+  ADD_C(rv, line_obj);
+  ADD_C(rv, col_obj);
+  ADD_C(rv, buf_obj);
+  ADD_C(rv, file_obj);
+
+  return rv;
+}
+
+/// Deletes an uppercase/file named mark. See |mark-motions|.
+///
+/// @deprecated use |nvim_mark_del()| instead.
+///
+/// @note Lowercase name (or other buffer-local mark) is an error.
+/// @param name       Mark name
+/// @return true if the mark was deleted, else false.
+/// @see |nvim_buf_del_mark()|
+/// @see |nvim_get_mark()|
+Boolean nvim_del_mark(String name, Error *err)
+  FUNC_API_SINCE(8)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+  // Only allow file/uppercase marks
+  VALIDATE_S((ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)),
+             "mark name (must be file/uppercase)", name.data, {
+    return false;
+  });
+
+  Dict(marks) opts = { .is_set__marks_ = 0 };
+  nvim_mark_del(name, &opts, err);
+
+  if (ERROR_SET(err)) {
+    return false;
+  }
+
+  return true;
 }
