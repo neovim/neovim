@@ -1102,3 +1102,82 @@ describe('pending scrollback line handling', function()
     assert_alive()
   end)
 end)
+
+describe('nvim_open_term()', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 7)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = tonumber('0xe00000'), fg_indexed = true },
+    })
+    api.nvim_buf_set_lines(0, 0, -1, true, { '\027[31mTEST\027[0m 0' })
+    feed('yy99pG$<C-V>98kg<C-A>')
+    screen:expect([[
+      {18:^[}[31mTEST{18:^[}[0m 0             |
+      {18:^[}[31mTEST{18:^[}[0m ^1             |
+      {18:^[}[31mTEST{18:^[}[0m 2             |
+      {18:^[}[31mTEST{18:^[}[0m 3             |
+      {18:^[}[31mTEST{18:^[}[0m 4             |
+      {18:^[}[31mTEST{18:^[}[0m 5             |
+      99 lines changed              |
+    ]])
+    fn.setpos("'a", { 0, 3, 5, 0 })
+    fn.setpos("'b", { 0, 97, 5, 0 })
+  end)
+
+  local function check_buffer_lines(start, stop)
+    local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+    for i = start, stop do
+      eq(('TEST %d'):format(i), lines[i - start + 1])
+    end
+  end
+
+  local function check_common()
+    feed('G')
+    screen:expect([[
+      {100:TEST} 95                       |
+      {100:TEST} 96                       |
+      {100:TEST} 97                       |
+      {100:TEST} 98                       |
+      {100:TEST} 99                       |
+      ^                              |
+      99 lines changed              |
+    ]])
+    -- Check that marks are invalidated.
+    eq({ 0, 0, 0, 0 }, fn.getpos("'a"))
+    eq({ 0, 0, 0, 0 }, fn.getpos("'b"))
+  end
+
+  it('on buffer with fewer lines than scrollback', function()
+    api.nvim_open_term(0, {})
+    screen:expect([[
+      {100:^TEST} 0                        |
+      {100:TEST} 1                        |
+      {100:TEST} 2                        |
+      {100:TEST} 3                        |
+      {100:TEST} 4                        |
+      {100:TEST} 5                        |
+      99 lines changed              |
+    ]])
+    check_buffer_lines(0, 99)
+    check_common()
+  end)
+
+  it('on buffer with more lines than scrollback', function()
+    api.nvim_set_option_value('scrollback', 10, { buf = 0 })
+    api.nvim_open_term(0, {})
+    screen:expect([[
+      {100:^TEST} 85                       |
+      {100:TEST} 86                       |
+      {100:TEST} 87                       |
+      {100:TEST} 88                       |
+      {100:TEST} 89                       |
+      {100:TEST} 90                       |
+      99 lines changed              |
+    ]])
+    check_buffer_lines(85, 99)
+    check_common()
+  end)
+end)

@@ -544,8 +544,12 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   }
   vterm_state_set_termprop(state, VTERM_PROP_CURSORBLINK, &cursor_blink);
 
-  // force a initial refresh of the screen to ensure the buffer will always
-  // have as many lines as screen rows when refresh_scrollback is called
+  // If the buffer has existing lines, let refresh_scrollback() invalidate marks and
+  // delete extra lines at the top to avoid interfering with scrollback update.
+  term->sb_deleted = (size_t)buf->b_ml.ml_line_count;
+
+  // Force a initial refresh of the screen to ensure the buffer will always
+  // have as many lines as screen rows when refresh_scrollback() is called.
   term->invalid_start = 0;
   term->invalid_end = opts.height;
 
