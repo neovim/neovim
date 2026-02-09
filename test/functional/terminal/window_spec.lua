@@ -534,8 +534,8 @@ describe(':terminal window', function()
     end)
     command('botright new')
     screen:expect([[
-      rows: 2, cols: 25        │rows: 5, cols: 50       |
-                               │rows: 2, cols: 50       |
+      rows: 2, cols: 25        │rows: 5, cols: 25       |
+                               │rows: 5, cols: 50       |
       {18:foo [-]                   foo [-]                 }|
       ^                                                  |
       {4:~                                                 }|
@@ -545,11 +545,11 @@ describe(':terminal window', function()
     command('quit')
     eq(1, eval('g:fired'))
     screen:expect([[
-      rows: 5, cols: 50        │rows: 5, cols: 25       |
-      rows: 5, cols: 25        │rows: 5, cols: 50       |
-      rows: 2, cols: 25        │rows: 2, cols: 50       |
+      rows: 5, cols: 50        │tty ready               |
       rows: 5, cols: 25        │rows: 5, cols: 25       |
-      ^                         │rows: 5, cols: 40       |
+      rows: 2, cols: 25        │rows: 5, cols: 50       |
+      rows: 5, cols: 25        │rows: 2, cols: 50       |
+      ^                         │rows: 5, cols: 25       |
       {17:foo [-]                   }{18:foo [-]                 }|
                                                         |
     ]])
@@ -558,14 +558,28 @@ describe(':terminal window', function()
     command('set showtabline=0 | tabnew | tabprevious | wincmd > | tabonly')
     eq(2, eval('g:fired'))
     screen:expect([[
-      rows: 5, cols: 25         │rows: 5, cols: 25      |
-      rows: 2, cols: 25         │rows: 5, cols: 50      |
-      rows: 5, cols: 25         │rows: 2, cols: 50      |
-      rows: 5, cols: 26         │rows: 5, cols: 25      |
-      ^                          │rows: 5, cols: 40      |
+      rows: 5, cols: 25         │tty ready              |
+      rows: 2, cols: 25         │rows: 5, cols: 25      |
+      rows: 5, cols: 25         │rows: 5, cols: 50      |
+      rows: 5, cols: 26         │rows: 2, cols: 50      |
+      ^                          │rows: 5, cols: 25      |
       {17:foo [-]                    }{18:foo [-]                }|
                                                         |
     ]])
+    n.expect([[
+      tty ready
+      rows: 5, cols: 25
+      rows: 5, cols: 50
+      rows: 2, cols: 50
+      rows: 5, cols: 25
+      rows: 5, cols: 40
+      rows: 5, cols: 25
+      rows: 5, cols: 50
+      rows: 5, cols: 25
+      rows: 2, cols: 25
+      rows: 5, cols: 25
+      rows: 5, cols: 26
+      ]])
   end)
 
   it('restores window options when switching terminals', function()

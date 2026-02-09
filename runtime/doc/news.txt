@@ -378,6 +378,7 @@ TERMINAL
 
 • |nvim_open_term()| can be called with a non-empty buffer. The buffer
   contents are piped to the PTY and displayed as terminal output.
+• CSI 3 J (the sequence to clear terminal scrollback) is now supported.
 
 TREESITTER
 
@@ -433,9 +434,8 @@ These existing features changed their behavior.
 • 'scrollback' maximum value increased from 100000 to 1000000
 • |matchfuzzy()| and |matchfuzzypos()| use an improved fuzzy matching algorithm
   (same as fzy).
-- Windows: Paths like "\Windows" and "/Windows" are now considered to be
+• Windows: Paths like "\Windows" and "/Windows" are now considered to be
   absolute paths (to the current drive) and no longer relative.
-
 • When 'shelltemp' is off, shell commands now use `pipe()` and not `socketpair()`
   for input and output. This matters mostly for Linux where some command lines
   using "/dev/stdin" and similiar would break as these special files can be
