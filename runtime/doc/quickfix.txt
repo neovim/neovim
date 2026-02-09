@@ -190,15 +190,15 @@ processing a quickfix or location list command, it will be aborted.
 			the [count] next error.  See |:cc| for [!] and
 			'switchbuf'.
 
-							*]CTRL-Q*
-]CTRL-Q			Mapped to |:cnfile|. |default-mappings|
+							*]_CTRL-Q*
+]_CTRL-Q		Mapped to |:cnfile|. |default-mappings|
 
 							*:lnf* *:lnfile*
 :[count]lnf[ile][!]	Same as ":cnfile", except the location list for the
 			current window is used instead of the quickfix list.
 
-							*]CTRL-L*
-]CTRL-L			Mapped to |:lnfile|. |default-mappings|
+							*]_CTRL-L*
+]_CTRL-L			Mapped to |:lnfile|. |default-mappings|
 
 :[count]cNf[ile][!]			*:cpf* *:cpfile* *:cNf* *:cNfile*
 :[count]cpf[ile][!]	Display the last error in the [count] previous file in
@@ -207,8 +207,8 @@ processing a quickfix or location list command, it will be aborted.
 			the [count] previous error.  See |:cc| for [!] and
 			'switchbuf'.
 
-								*[CTRL-Q*
-[CTRL-Q			Mapped to |:cpfile|. |default-mappings|
+								*[_CTRL-Q*
+[_CTRL-Q		Mapped to |:cpfile|. |default-mappings|
 
 
 :[count]lNf[ile][!]			*:lpf* *:lpfile* *:lNf* *:lNfile*
@@ -216,8 +216,8 @@ processing a quickfix or location list command, it will be aborted.
 			list for the current window is used instead of the
 			quickfix list.
 
-							*[CTRL-L*
-[CTRL-L			Mapped to |:lpfile|. |default-mappings|
+							*[_CTRL-L*
+[_CTRL-L		Mapped to |:lpfile|. |default-mappings|
 
 							*:crewind* *:cr*
 :cr[ewind][!] [nr]	Display error [nr].  If [nr] is omitted, the FIRST

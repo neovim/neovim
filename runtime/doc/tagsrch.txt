@@ -350,14 +350,14 @@ the same as above, with a "p" prepended.
 							*:ptn* *:ptnext*
 :[count]ptn[ext][!]	":tnext" in the preview window.  See |:ptag|.
 
-								*]CTRL-T*
-]CTRL-T			Mapped to |:ptnext|. |default-mappings|
+								*]_CTRL-T*
+]_CTRL-T		Mapped to |:ptnext|. |default-mappings|
 
 							*:ptp* *:ptprevious*
 :[count]ptp[revious][!]	":tprevious" in the preview window.  See |:ptag|.
 
-								*[CTRL-T*
-[CTRL-T			Mapped to |:ptprevious|. |default-mappings|
+								*[_CTRL-T*
+[_CTRL-T		Mapped to |:ptprevious|. |default-mappings|
 
 							*:ptN* *:ptNext*
 :[count]ptN[ext][!]	Same as ":ptprevious".
