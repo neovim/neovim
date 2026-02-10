@@ -8,6 +8,9 @@ compile_commands.json
 /.vs/
 /.vscode/
 /.idea/
+.nvimrc
+.exrc
+.nvim.lua
 
 # Build/deps dir
 /.zig-cache/
