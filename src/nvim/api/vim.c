@@ -526,12 +526,16 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
 /// @param[out] err   Lua error raised while parsing or executing the Lua code.
 ///
 /// @return           Value returned by the Lua code (if any), or NIL.
-Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
+Object nvim_exec_lua(uint64_t channel_id, String code, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
   // TODO(bfredl): convert directly from msgpack to lua and then back again
-  return nlua_exec(code, NULL, args, kRetObject, arena, err);
+  Object ret;
+  WITH_SCRIPT_CONTEXT(channel_id, {
+    ret = nlua_exec(code, NULL, args, kRetObject, arena, err);
+  });
+  return ret;
 }
 
 /// EXPERIMENTAL: this API may change or be removed in the future.
@@ -550,12 +554,12 @@ Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim__exec_lua_fast(String code, Array args, Arena *arena, Error *err)
+Object nvim__exec_lua_fast(uint64_t channel_id, String code, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(14)
   FUNC_API_REMOTE_ONLY
   FUNC_API_FAST
 {
-  return nvim_exec_lua(code, args, arena, err);
+  return nvim_exec_lua(channel_id, code, args, arena, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.
@@ -1721,6 +1725,8 @@ Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *
   if (chan < 0) {
     return (Dict)ARRAY_DICT_INIT;
   }
+
+  channel_id = current_sctx.sc_chan ? current_sctx.sc_chan : channel_id;
 
   if (chan == 0 && !is_internal_call(channel_id)) {
     assert(channel_id <= INT64_MAX);

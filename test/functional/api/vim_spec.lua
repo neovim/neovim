@@ -2746,6 +2746,18 @@ describe('API', function()
       eq({ [1] = testinfo, [2] = stderr }, api.nvim_list_chans())
       -- 0 should return current channel
       eq(testinfo, api.nvim_get_chan_info(0))
+      eq(testinfo, api.nvim_exec_lua('return vim.api.nvim_get_chan_info(0)', {}))
+      eq(
+        testinfo,
+        api.nvim_eval(api.nvim_exec2('echo nvim_get_chan_info(0)', { output = true }).output)
+      )
+      eq(
+        testinfo,
+        api.nvim_eval(
+          api.nvim_cmd({ cmd = 'echo', args = { 'nvim_get_chan_info(0)' } }, { output = true })
+        )
+      )
+
       eq(testinfo, api.nvim_get_chan_info(1))
       eq(stderr, api.nvim_get_chan_info(2))
 
