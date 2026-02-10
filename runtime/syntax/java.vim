@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Oct 08
+" Last Change:		2026 Feb 06
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -37,6 +37,8 @@ set cpo&vim
 
 """" STRIVE TO REMAIN COMPATIBLE FOR AT LEAST VIM 7.0.
 let s:ff = {}
+let s:vv = {}
+let s:vv.ignore_folding = get(g:, 'java_ignore_folding', '')
 
 function! s:ff.LeftConstant(x, y) abort
   return a:x
@@ -60,7 +62,7 @@ else
 endif
 
 function! s:ff.QueryFoldArgForSyntaxItems(kind) abort
-  return stridx(s:java_ignore_folding, a:kind) < 0 ? "fold" : ""
+  return stridx(s:vv.ignore_folding, a:kind) < 0 ? "fold" : ""
 endfunction
 
 if !exists("*s:ReportOnce")
@@ -93,8 +95,6 @@ if exists("g:java_foldtext_show_first_or_second_line")
   " E120 for "fdt=s:JavaSyntaxFoldTextExpr()" before v8.2.3900.
   setlocal foldtext=JavaSyntaxFoldTextExpr()
 endif
-
-let s:java_ignore_folding = get(g:, 'java_ignore_folding', '')
 
 " Admit the ASCII dollar sign to keyword characters (JLS-17, §3.8):
 try
@@ -210,6 +210,15 @@ endif
 let s:with_html = !exists("g:java_ignore_html")
 let s:with_markdown = !exists("g:java_ignore_markdown")
 lockvar s:with_html s:with_markdown
+
+" Note that the delimiting angle brackets are omitted.
+let s:vv.type_param_list = '\%([^(){}]\|\n\)\+[[:space:]-]\@' . s:ff.Peek('1', '') . '<!'
+" COMBAK: Revisit reference types once JDK-8259731 and JDK-8316779
+" will have been resolved.
+let s:vv.param_type_head = 'b\%%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%%(\<\K\k*\>\.\)*%s\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>'
+" Allow for org.example.TopLevelType<T>.MemberType return types.
+let s:vv.void_or_param_type = 'void\|\%(' . printf(s:vv.param_type_head, '\%(') . '\%(<' . s:vv.type_param_list . '>\.\=\)\=\)\+\)\%(\[\]\)*'
+let s:vv.param_type_head = printf(s:vv.param_type_head, '')
 
 " Java module declarations (JLS-17, §7.7).
 "
@@ -344,13 +353,13 @@ if exists("g:java_highlight_generics")
 
   " Match sections of generic methods and constructors and their
   " parameterised use.
-  exec 'syn region javaTypeParamSection transparent matchgroup=javaGenericsCX start=/' . s:ff.Engine('\%#=2', '') . '\%(^\|\s\)\@' . s:ff.Peek('1', '') . '<=<\%(\%([^(){}]\|\n\)\+[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\_s\+\%(\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\%(<\%([^(){}]\|\n\)\+[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\)\%(\[\]\)*\)\_s\+\)\=\<\K\k*\>\s*(\)\@=/ end=/>/ contains=javaGenerics,@javaTypeParams'
+  exec 'syn region javaTypeParamSection transparent matchgroup=javaGenericsCX start=/' . s:ff.Engine('\%#=2', '') . '\%(^\|\s\)\@' . s:ff.Peek('1', '') . '<=<\%(' . s:vv.type_param_list . '>\_s\+\%(\%(' . s:vv.void_or_param_type . '\)\_s\+\)\=\<\K\k*\>\s*(\)\@=/ end=/>/ contains=javaGenerics,@javaTypeParams'
   exec 'syn region javaTypeParamSection transparent matchgroup=javaGenericsCX start=/\%(\%(\<new\|::\|\.\)[[:space:]\n]*\)\@' . s:ff.PeekFor('javaTypeParamSection', 80) . '<=<>\@!/ end=/>/ contains=javaGenerics,@javaTypeParams'
 
   for s:ctx in [{'gsg': 'javaGenerics', 'ghg': 'javaGenericsC1', 'csg': 'javaGenericsX', 'c': ''},
       \ {'gsg': 'javaGenericsX', 'ghg': 'javaGenericsC2', 'csg': 'javaGenerics', 'c': ' contained'}]
     " Match sections of generic types and their parameterised use.
-    exec 'syn region ' . s:ctx.gsg . s:ctx.c . ' transparent matchgroup=' . s:ctx.ghg . ' start=/' . s:ff.Engine('\%#=2', '') . '\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\><\%([[:space:]\n]*\%([?@]\|\<\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\)\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\)\)\@=/ end=/>/ contains=' . s:ctx.csg . ',@javaTypeParams'
+    exec 'syn region ' . s:ctx.gsg . s:ctx.c . ' transparent matchgroup=' . s:ctx.ghg . ' start=/' . s:ff.Engine('\%#=2', '') . '\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\><\%([[:space:]\n]*\%([?@]\|' . s:vv.param_type_head . '\)\)\@=/ end=/>/ contains=' . s:ctx.csg . ',@javaTypeParams'
   endfor
 
   unlet s:ctx
@@ -745,8 +754,8 @@ if exists("g:java_highlight_functions")
     " "[^=]*", all records with "\<record\s", and let the "*Skip*"
     " definitions take care of constructor declarations and enum
     " constants (with no support for @Foo(value = "bar")).  Also,
-    " reject inlined declarations with "[^{]" for signature.
-    exec 'syn region javaFuncDef ' . s:ff.GroupArgs('transparent matchgroup=javaFuncDefStart', '') . ' start="' . s:ff.PeekTo('\%(', '') . '^' . s:indent . '\%(<\%(/\*.\{-}\*/\|[^(){}>]\|\n\)\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^={]*\%(\<record\)\@' . s:ff.Peek('6', '') . '<!\s' . s:ff.PeekFrom('\)\@' . s:ff.PeekFor('javaFuncDef', 120) . '<=', '') . '\K\k*\s*(" end=")" contains=@javaFuncParams'
+    " reject inlined declarations with "[^{;]" for signature.
+    exec 'syn region javaFuncDef ' . s:ff.GroupArgs('transparent matchgroup=javaFuncDefStart', '') . ' start="' . s:ff.PeekTo('\%(', '') . '^' . s:indent . '\%(<\%(/\*.\{-}\*/\|[^(){}>]\|\n\)\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^={;]*\%(\<record\)\@' . s:ff.Peek('6', '') . '<!\s' . s:ff.PeekFrom('\)\@' . s:ff.PeekFor('javaFuncDef', 120) . '<=', '') . '\K\k*\s*(" end=")" contains=@javaFuncParams'
     " As long as package-private constructors cannot be matched with
     " javaFuncDef, do not look with javaConstructorSkipDeclarator for
     " them.  (Approximate "javaTypeParamSection" if necessary.)
@@ -755,9 +764,10 @@ if exists("g:java_highlight_functions")
     " javaFuncDef, make related adjustments:
     " (1) Claim all enum constants of a line as a unit.
     exec 'syn match javaEnumSkipConstant contained transparent /^' . s:indent . '\%(\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\K\k*\s*\%((.*)\)\=\s*[,;({]\s*\)\+/ contains=@javaEnumConstants'
-    " (2) Define a syntax group for top level enumerations and tell
-    " apart their constants from method declarations.
-    exec 'syn region javaTopEnumDeclaration transparent start=/\%(^\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(strictfp\s\+\)\=\<enum\_s\+\)\@' . s:ff.PeekFor('javaTopEnumDeclaration', 80) . '<=\K\k*\%(\_s\+implements\_s.\+\)\=\_s*{/ end=/}/ contains=@javaTop,javaEnumSkipConstant'
+    " (2) Define javaTopEnum{Block,Declaration} for top level enums
+    " and tell apart their constants from method declarations.
+    syn region javaTopEnumBlock contained transparent matchgroup=javaTopEnumBlockStart start="{" end="}" contains=@javaTop,javaEnumSkipConstant
+    exec 'syn match javaTopEnumDeclaration transparent /\%(^\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(strictfp\s\+\)\=\<enum\_s\+\)\@' . s:ff.PeekFor('javaTopEnumDeclaration', 80) . '<=\K\k*\%(\_s\+implements\_s.\+\)\=\_s*{\@=/ nextgroup=javaTopEnumBlock skipwhite skipempty'
     " (3) Define a base variant of javaParenT without using @javaTop
     " in order to not include javaFuncDef.
     syn region javaParenE transparent matchgroup=javaParen start="(" end=")" contains=@javaEnumConstants,javaInParen
@@ -769,7 +779,7 @@ if exists("g:java_highlight_functions")
 
     " Match arbitrarily indented camelCasedName method declarations.
     " Match: [@ɐ] [abstract] [<α, β>] Τʬ[<γ>][[][]] μʭʭ(/* ... */);
-    exec 'syn region javaFuncDef ' . s:ff.GroupArgs('transparent matchgroup=javaFuncDefStart', '') . ' start=/' . s:ff.Engine('\%#=2', '') . s:ff.PeekTo('\%(', '') . '^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<\%([^(){}]\|\n\)\+[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\s\+\)\=\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\%(<\%([^(){}]\|\n\)\+[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\)\%(\[\]\)*\)\s\+' . s:ff.PeekFrom('\)\@' . s:ff.PeekFor('javaFuncDef', 120) . '<=', '') . '\<' . s:ff.LowerCase('[$_[:lower:]]', '[^A-Z0-9]') . '\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams'
+    exec 'syn region javaFuncDef ' . s:ff.GroupArgs('transparent matchgroup=javaFuncDefStart', '') . ' start=/' . s:ff.Engine('\%#=2', '') . s:ff.PeekTo('\%(', '') . '^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<' . s:vv.type_param_list . '>\s\+\)\=\%(' . s:vv.void_or_param_type . '\)\s\+' . s:ff.PeekFrom('\)\@' . s:ff.PeekFor('javaFuncDef', 120) . '<=', '') . '\<' . s:ff.LowerCase('[$_[:lower:]]', '[^A-Z0-9]') . '\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams'
   endif
 endif
 
@@ -977,7 +987,7 @@ endif
 
 let b:spell_options = "contained"
 let &cpo = s:cpo_save
-unlet s:cpo_save s:ff s:java_ignore_folding s:with_html s:with_markdown
+unlet s:cpo_save s:ff s:vv s:with_html s:with_markdown
 
 " See ":help vim9-mix".
 if !has("vim9script")
