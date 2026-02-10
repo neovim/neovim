@@ -1647,6 +1647,26 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   return 1;
 }
 
+static int term_sb_clear(void *data)
+{
+  Terminal *term = data;
+
+  if (term->in_altscreen || !term->sb_size || !term->sb_current) {
+    return 1;
+  }
+
+  for (size_t i = 0; i < term->sb_current; i++) {
+    xfree(term->sb_buffer[i]);
+  }
+
+  term->sb_deleted += term->sb_current;
+  term->sb_current = 0;
+  term->sb_pending = 0;
+  invalidate_terminal(term, -1, -1);
+
+  return 1;
+}
+
 static void term_clipboard_set(void **argv)
 {
   VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
@@ -1691,26 +1711,6 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
     char *data = xmemdupz(term->selection.items, kv_size(term->selection));
     multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
   }
-
-  return 1;
-}
-
-static int term_sb_clear(void *data)
-{
-  Terminal *term = data;
-
-  if (term->in_altscreen || !term->sb_size || !term->sb_current) {
-    return 1;
-  }
-
-  for (size_t i = 0; i < term->sb_current; i++) {
-    xfree(term->sb_buffer[i]);
-  }
-
-  term->sb_deleted += term->sb_current;
-  term->sb_current = 0;
-  term->sb_pending = 0;
-  invalidate_terminal(term, -1, -1);
 
   return 1;
 }
