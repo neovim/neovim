@@ -1824,9 +1824,11 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
     Only the first occurrence of each value is kept. The operation is
     performed in-place and the input table is modified.
 
-    Accepts an optional `key` argument that if provided is called for each
+    Accepts an optional `key` argument, which if provided is called for each
     value in the list to compute a hash key for uniqueness comparison. This is
-    useful for deduplicating table values or complex objects.
+    useful for deduplicating table values or complex objects. If `key` returns
+    `nil` for a value, that value will be considered unique, even if multiple
+    values return `nil`.
 
     Example: >lua
 
@@ -1846,6 +1848,9 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
 
     Return: ~
         (`any[]`) The deduplicated list
+
+    See also: ~
+      • |Iter:unique()|
 
 vim.list_contains({t}, {value})                          *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
@@ -3365,6 +3370,43 @@ Iter:totable()                                                *Iter:totable()*
 
     Return: ~
         (`table`)
+
+Iter:unique({key})                                             *Iter:unique()*
+    Removes duplicate values from an iterator pipeline.
+
+    Only the first occurrence of each value is kept.
+
+    Accepts an optional `key` argument, which if provided is called for each
+    value in the iterator to compute a hash key for uniqueness comparison.
+    This is useful for deduplicating table values or complex objects. If `key`
+    returns `nil` for a value, that value will be considered unique, even if
+    multiple values return `nil`.
+
+    If a function-based iterator returns multiple arguments, uniqueness is
+    checked based on the first return value. To change this behavior, specify
+    `key`.
+
+    Examples: >lua
+        vim.iter({ 1, 2, 2, 3, 2 }):unique():totable()
+        -- { 1, 2, 3 }
+
+        vim.iter({ {id=1}, {id=2}, {id=1} })
+          :unique(function(x)
+            return x.id
+          end)
+          :totable()
+        -- { {id=1}, {id=2} }
+<
+
+    Parameters: ~
+      • {key}  (`fun(...):any?`) Optional hash function to determine
+               uniqueness of values.
+
+    Return: ~
+        (`Iter`)
+
+    See also: ~
+      • |vim.list.unique()|
 
 
 ==============================================================================

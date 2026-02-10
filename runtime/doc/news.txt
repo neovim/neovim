@@ -318,7 +318,8 @@ LUA
 • |vim.version.intersect()| computes intersection of two version ranges.
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 • Built-in plugin manager |vim.pack|
-• |vim.list.unique()| to deduplicate lists.
+• |vim.list.unique()| and |Iter:unique()| to deduplicate lists and iterators,
+  respectively.
 • |vim.list.bisect()| for binary search.
 • Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
 • |vim.json.encode()| has an `indent` option for pretty-formatting.

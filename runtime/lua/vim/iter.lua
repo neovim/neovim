@@ -213,6 +213,57 @@ function ArrayIter:filter(f)
   return self
 end
 
+--- Removes duplicate values from an iterator pipeline.
+---
+--- Only the first occurrence of each value is kept.
+---
+--- Accepts an optional `key` argument, which if provided is called for each
+--- value in the iterator to compute a hash key for uniqueness comparison. This is
+--- useful for deduplicating table values or complex objects.
+--- If `key` returns `nil` for a value, that value will be considered unique,
+--- even if multiple values return `nil`.
+---
+--- If a function-based iterator returns multiple arguments, uniqueness is
+--- checked based on the first return value. To change this behavior, specify
+--- `key`.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.iter({ 1, 2, 2, 3, 2 }):unique():totable()
+--- -- { 1, 2, 3 }
+---
+--- vim.iter({ {id=1}, {id=2}, {id=1} })
+---   :unique(function(x)
+---     return x.id
+---   end)
+---   :totable()
+--- -- { {id=1}, {id=2} }
+--- ```
+---
+---@param key? fun(...):any Optional hash function to determine uniqueness of values.
+---@return Iter
+---@see |vim.list.unique()|
+function Iter:unique(key)
+  local seen = {} --- @type table<any,boolean>
+
+  key = key or function(a)
+    return a
+  end
+
+  return self:filter(function(...)
+    local hash = key(...)
+    if hash == nil then
+      return true
+    elseif not seen[hash] then
+      seen[hash] = true
+      return true
+    else
+      return false
+    end
+  end)
+end
+
 --- Flattens a |list-iterator|, un-nesting nested values up to the given {depth}.
 --- Errors if it attempts to flatten a dict-like value.
 ---

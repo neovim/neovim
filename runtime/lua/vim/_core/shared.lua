@@ -365,9 +365,11 @@ end
 --- Only the first occurrence of each value is kept.
 --- The operation is performed in-place and the input table is modified.
 ---
---- Accepts an optional `key` argument that if provided is called for each
+--- Accepts an optional `key` argument, which if provided is called for each
 --- value in the list to compute a hash key for uniqueness comparison.
 --- This is useful for deduplicating table values or complex objects.
+--- If `key` returns `nil` for a value, that value will be considered unique,
+--- even if multiple values return `nil`.
 ---
 --- Example:
 --- ```lua
@@ -385,6 +387,7 @@ end
 --- @param t T[]
 --- @param key? fun(x: T): any Optional hash function to determine uniqueness of values
 --- @return T[] : The deduplicated list
+--- @see |Iter:unique()|
 function vim.list.unique(t, key)
   vim.validate('t', t, 'table')
   local seen = {} --- @type table<any,boolean>
