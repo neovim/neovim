@@ -1,7 +1,7 @@
 *terminal.txt*   Nvim
 
 
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
 Terminal emulator				*terminal* *terminal-emulator*
@@ -259,7 +259,8 @@ Use |jobwait()| to check if the terminal job has finished: >vim
     let running = jobwait([&channel], 0)[0] == -1
 <
 ==============================================================================
-:Termdebug plugin	*terminal-debug* *terminal-debugger* *package-termdebug*
+:Termdebug plugin			*terminal-debug* *terminal-debugger*
+					*package-termdebug* *termdebug*
 
 The Terminal debugging plugin can be used to debug a program with gdb and view
 the source code in a Vim window.  Since this is completely contained inside
@@ -344,7 +345,7 @@ breakpoint was set.  The line where the debugger stopped is highlighted.  You
 can now step through the program.  You will see the highlighting move as the
 debugger executes a line of source code.
 
-Run ":Next" a few times until the for loop is highlighted.  Put the cursor on
+Run |:Over| a few times until the for loop is highlighted.  Put the cursor on
 the end of "eap->arg", then call ":Eval".  You will see this displayed:
 	"eap->arg": 0x555555e68855 "gui" ~
 This way you can inspect the value of local variables.  You can also focus the

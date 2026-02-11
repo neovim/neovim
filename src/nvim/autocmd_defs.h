@@ -64,3 +64,13 @@ struct AutoPatCmd_S {
 };
 
 typedef kvec_t(AutoCmd) AutoCmdVec;
+
+typedef struct {
+  event_T event;
+  char *fname;
+  char *fname_io;
+  Buffer buf;
+  int group;
+  exarg_T *eap;
+  Object *data;
+} AutoCmdEvent;  // Used for "deferred" events, but can represent any event.

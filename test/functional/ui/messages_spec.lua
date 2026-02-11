@@ -117,7 +117,6 @@ describe('ui/ext_messages', function()
         { content = { { '/i ' } }, kind = 'search_cmd' },
         {
           content = { { 'search hit BOTTOM, continuing at TOP', 19, 'WarningMsg' } },
-          history = true,
           kind = 'wmsg',
         },
       },
@@ -176,7 +175,7 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\n@character     ' },
+            { '@character     ' },
             { 'xxx', 26, '@character' },
             { ' ' },
             { 'links to', 18, 'Directory' },
@@ -293,44 +292,38 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\nDiffAdd        ' },
+            { 'DiffAdd        ' },
             { 'xxx', 22, 'DiffAdd' },
             { ' ' },
             { 'ctermbg=', 18, 'Directory' },
             { '81 ' },
             { 'guibg=', 18, 'Directory' },
-            { 'LightBlue' },
-          },
-          kind = 'list_cmd',
-        },
-        {
-          content = { { '\n\tLast set from Lua (run Nvim with -V1 for more details)' } },
-          kind = 'verbose',
-        },
-        {
-          content = {
-            { '\nDiffChange     ' },
+            {
+              'LightBlue\n\tLast set from Lua (run Nvim with -V1 for more details)\nDiffChange     ',
+            },
             { 'xxx', 4, 'DiffChange' },
             { ' ' },
             { 'ctermbg=', 18, 'Directory' },
             { '225 ' },
             { 'guibg=', 18, 'Directory' },
-            { 'LightMagenta' },
+            { 'LightMagenta\n\tLast set from Lua (run Nvim with -V1 for more details)' },
           },
           kind = 'list_cmd',
-        },
-        {
-          content = { { '\n\tLast set from Lua (run Nvim with -V1 for more details)' } },
-          kind = 'verbose',
         },
       },
     })
 
     exec([[
       set verbose=9
-      augroup verbose
+      augroup group1
         autocmd BufEnter * echoh "BufEnter"
         autocmd BufWinEnter * bdelete
+        autocmd ExitPre pat1 foo
+        autocmd ExitPre pat2 bar
+      augroup END
+      augroup group2
+        autocmd ExitPre pat1 foo
+        autocmd ExitPre pat2 bar
       augroup END
     ]])
     feed(':edit! foo<CR>')
@@ -358,8 +351,39 @@ describe('ui/ext_messages', function()
         { content = { { '\n' } }, kind = '' },
       },
     })
-    command('autocmd! verbose')
-    command('augroup! verbose')
+    feed(':au ExitPre<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = {
+        {
+          content = {
+            { '--- Autocommands ---', 101, 'Title' },
+            { '\n' },
+            { 'group1', 101, 'Title' },
+            { '  ' },
+            { 'ExitPre', 101, 'Title' },
+            {
+              '\n    pat1      foo\n\tLast set from anonymous :source line 5\n    pat2      bar\n\tLast set from anonymous :source line 6\n',
+            },
+            { 'group2', 101, 'Title' },
+            { '  ' },
+            { 'ExitPre', 101, 'Title' },
+            {
+              '\n    pat1      foo\n\tLast set from anonymous :source line 9\n    pat2      bar\n\tLast set from anonymous :source line 10',
+            },
+          },
+          kind = 'list_cmd',
+        },
+      },
+    })
+    command('autocmd! group1')
+    command('autocmd! group2')
+    command('augroup! group1')
+    command('augroup! group2')
     command('set verbose=0')
 
     n.add_builddir_to_rtp()
@@ -433,7 +457,7 @@ describe('ui/ext_messages', function()
       ]],
       messages = {
         {
-          content = { { '\nType Name Content', 101, 'Title' }, { '\n  c  ".   ' } },
+          content = { { 'Type Name Content', 101, 'Title' }, { '\n  c  ".   ' } },
           kind = 'list_cmd',
         },
       },
@@ -449,10 +473,10 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\n--- Autocommands ---', 101, 'Title' },
+            { '--- Autocommands ---', 101, 'Title' },
             { '\n' },
             { 'ChanInfo', 101, 'Title' },
-            { '\n*foo' },
+            { '\n    *         foo' },
           },
           kind = 'list_cmd',
         },
@@ -460,6 +484,17 @@ describe('ui/ext_messages', function()
     })
 
     feed(':1,2p<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = { { content = { { 'line 1\nline ' } }, kind = 'list_cmd' } },
+    })
+
+    -- single message for :global command #37726
+    feed(':g/line<CR>')
     screen:expect({
       grid = [[
         line 1                   |
@@ -480,7 +515,7 @@ describe('ui/ext_messages', function()
       messages = {
         {
           content = {
-            { '\n    Name              Args Address Complete    Definition', 101, 'Title' },
+            { '    Name              Args Address Complete    Definition', 101, 'Title' },
             { '\n    ' },
             { 'Foo', 18, 'Directory' },
             { '               0                        Bar' },
@@ -488,6 +523,16 @@ describe('ui/ext_messages', function()
           kind = 'list_cmd',
         },
       },
+    })
+
+    feed(':colorscheme<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = { { content = { { 'default' } }, history = true, kind = 'list_cmd' } },
     })
 
     feed(':version<CR>')
@@ -503,8 +548,8 @@ describe('ui/ext_messages', function()
       end,
     })
 
-    -- Empty messages
-    feed(':echo "foo" | echo "" | lua print()<CR>')
+    -- 3 empty message events, not for an empty chunk after a non-printable character
+    feed(':echo "foo\\n" | echo "" | echom "" | lua print()<CR>')
     screen:expect({
       grid = [[
         line 1                   |
@@ -512,10 +557,22 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       messages = {
-        { content = { { 'foo' } }, kind = 'echo' },
+        { content = { { 'foo\n' } }, kind = 'echo' },
+        { content = {}, kind = 'empty' },
         { content = {}, kind = 'empty' },
         { content = {}, kind = 'empty' },
       },
+    })
+
+    -- No empty message event for empty option value
+    feed(':set foldclose<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      messages = { { content = { { '  foldclose=' } }, history = true, kind = 'list_cmd' } },
     })
   end)
 
@@ -959,6 +1016,25 @@ describe('ui/ext_messages', function()
       {1:~                        }|*2
       {3:<] [+] 2,0-1          All}|
     ]])
+    -- ruler of float is not part of statusline and is cleared when leaving the float #37649.
+    command('set rulerformat=foo')
+    api.nvim_open_win(0, true, { relative = 'editor', row = 1, col = 1, width = 10, height = 10 })
+    screen:expect({
+      grid = [[
+        a{4:abcde     }              |
+         {4:^          }              |
+        {1:~}{11:~         }{1:              }|*2
+        {2:[}{11:~         }{2:+]         foo}|
+      ]],
+      ruler = { { 'foo', 'MsgArea' } },
+    })
+    command('wincmd p')
+    screen:expect([[
+      a{4:abcde     }              |
+      ^ {4:          }              |
+      {1:~}{11:~         }{1:              }|*2
+      {3:[}{11:~         }{3:+]         foo}|
+    ]])
   end)
 
   it('keeps history of message of different kinds', function()
@@ -1149,7 +1225,7 @@ stack traceback:
       messages = {
         {
           content = {
-            { '\nn  Q             @@\nn  Y             y$\nn  j           ' },
+            { 'n  Q             @@\nn  Y             y$\nn  j           ' },
             { '*', 18, 'SpecialKey' },
             { ' k' },
           },
@@ -1170,10 +1246,7 @@ stack traceback:
         ^                         |
         {1:~                        }|*6
       ]],
-      messages = {
-        { content = { { '\n' } }, kind = '' },
-        { content = { { 'wildmenu  wildmode\n' } }, kind = 'wildlist' },
-      },
+      messages = { { content = { { 'wildmenu  wildmode\n' } }, kind = 'wildlist' } },
       cmdline = { { firstc = ':', content = { { 'set wildm' } }, pos = 9 } },
     }
   end)
@@ -1279,10 +1352,7 @@ stack traceback:
         {1:~                        }|*4
       ]],
       messages = {
-        {
-          content = { { '\n  1 %a   "[No Name]"                    line 1' } },
-          kind = 'list_cmd',
-        },
+        { content = { { '  1 %a   "[No Name]"                    line 1' } }, kind = 'list_cmd' },
       },
     }
 
@@ -2044,16 +2114,15 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                                                                                       |
                                Help poor children in Uganda!                          |
                        type  :help Kuwasha{18:<Enter>}    for information                  |
-                                                                                      |*2
-      {3:                                                                                }|
-                                                                                      |
-      {6:Press ENTER or type command to continue}^                                         |
+                                                                                      |*4
+      ^                                                                                |
     ]])
     feed('<CR>')
     assert_alive()
   end)
 
   it('no wait return before delayed exception error message', function()
+    screen:try_resize(70, 7)
     feed('ia<esc>:lua vim.cmd.quit()<CR>')
     screen:expect({
       any = {
@@ -2178,14 +2247,6 @@ describe('ui/ext_messages', function()
                          type  :help Kuwasha{18:<Enter>}    for information                  |
                                                                                         |*5
       ]],
-      cmdline = {
-        {
-          content = { { '' } },
-          hl = 'MoreMsg',
-          pos = 0,
-          prompt = 'Press any key to continue',
-        },
-      },
     }
 
     feed('<cr>')
@@ -3112,7 +3173,6 @@ aliquip ex ea commodo consequat.]]
 end)
 
 it('pager works in headless mode with UI attached', function()
-  skip(is_os('win'))
   clear()
   local child_server = assert(n.new_pipename())
   fn.jobstart({ nvim_prog, '--clean', '--headless', '--listen', child_server })
@@ -3589,12 +3649,14 @@ describe('progress-message', function()
     )
     eq('str-id', id7)
 
+    -- internal messages are also assigned an ID (and thus advance the next progress ID)
+    feed('Q')
     local id8 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
       { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq(12, id8)
+    eq(13, id8)
   end)
 
   it('supports string ids', function()

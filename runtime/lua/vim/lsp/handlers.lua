@@ -158,6 +158,11 @@ RSC['client/registerCapability'] = function(_, params, ctx)
         end
       end
     end
+    if reg.method == 'textDocument/diagnostic' then
+      for bufnr in pairs(client.attached_buffers) do
+        vim.lsp.diagnostic._refresh(bufnr, client.id)
+      end
+    end
   end
   return vim.NIL
 end
@@ -247,11 +252,6 @@ end
 --- @private
 RCS['textDocument/diagnostic'] = function(...)
   return vim.lsp.diagnostic.on_diagnostic(...)
-end
-
---- @private
-RCS['textDocument/codeLens'] = function(...)
-  return vim.lsp.codelens.on_codelens(...)
 end
 
 --- @private
@@ -647,6 +647,16 @@ RSC['window/showDocument'] = function(_, params, ctx)
     focus = params.takeFocus,
   })
   return { success = success or false }
+end
+
+---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
+RSC['workspace/codeLens/refresh'] = function(err, result, ctx)
+  return vim.lsp.codelens.on_refresh(err, result, ctx)
+end
+
+---@see https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
+RSC['workspace/diagnostic/refresh'] = function(err, result, ctx)
+  return vim.lsp.diagnostic.on_refresh(err, result, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh

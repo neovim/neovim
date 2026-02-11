@@ -3,6 +3,7 @@
 " Maintainer:	Chris Morgan <me@chrismorgan.info>
 " Last Change:	2024 Mar 17
 "		2024 May 23 by Riley Bruins <ribru17@gmail.com ('commentstring')
+"		2025 Dec 09 update 'textwidth# to 100 #18892
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists("b:did_ftplugin")
@@ -49,7 +50,7 @@ setlocal smartindent nocindent
 if get(g:, 'rust_recommended_style', 1)
     let b:rust_set_style = 1
     setlocal shiftwidth=4 softtabstop=4 expandtab
-    setlocal textwidth=99
+    setlocal textwidth=100
 endif
 
 setlocal include=\\v^\\s*(pub\\s+)?use\\s+\\zs(\\f\|:)+

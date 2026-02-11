@@ -1,13 +1,7 @@
-*matchit.txt*   Extended |%| matching
+*matchit.txt* Extended |%| matching  Last change: 2026 Jan 06
 
-For instructions on installing this file, type
-	`:help matchit-install`
-inside Vim.
+		VIM REFERENCE MANUAL    by Benji Fisher et al
 
-For Vim version 9.1.  Last change:  2024 May 20
-
-
-		  VIM REFERENCE MANUAL    by Benji Fisher et al
 
 *matchit* *matchit.vim*
 
@@ -176,7 +170,7 @@ defined automatically.
 
 2.1 Temporarily disable the matchit plugin	*matchit-disable* *:MatchDisable*
 
-To temporarily disable the matchit plugin, after it hat been loaded,
+To temporarily disable the matchit plugin, after it has been loaded,
 execute this command: >
 	:MatchDisable
 
@@ -263,6 +257,45 @@ Examples:
 	See the $VIMRUNTIME/ftplugin/vim.vim for an example that uses both
 	syntax and a regular expression.
 
+						*b:match_function*
+If b:match_function is defined, matchit.vim will first call this function to
+perform matching.  This is useful for languages with an indentation-based block
+structure (such as Python) or other complex matching requirements that cannot
+be expressed with regular expression patterns.
+
+The function should accept one argument:
+	forward - 1 for forward search (% command)
+	          0 for backward search (g% command)
+
+The function should return a list with one of these values:
+	[line, col]  - Match found at the specified position
+	[]           - No match found; fall through to regular matching
+	               (|b:match_words|, matchpairs, etc.)
+
+The cursor position is not changed by the function; matchit handles cursor
+movement based on the returned position.
+
+If the function throws an error, matchit gives up and doesn't continue.
+Enable |b:match_debug| to see error messages from custom match functions.
+
+Python example (simplified): >
+	let s:keywords = {'if': 'elif\|else', 'elif': 'elif\|else'}
+
+	function! s:PythonMatch(forward) abort
+	  let keyword = matchstr(getline('.'), '^\s*\zs\w\+')
+	  let pattern = get(s:keywords, keyword, '')
+	  if empty(pattern) | return [] | endif
+
+	  " Forward-only. Backwards left as an exercise for the reader.
+	  let [lnum, col] = searchpos('^\s*\%(' . pattern . '\)\>', 'nW' 0, 0,
+	  \                            'indent(".") != ' . indent('.'))
+	  return lnum > 0 ? [lnum, col] : []
+	endfunction
+
+	let b:match_function = function('s:PythonMatch')
+<
+See |matchit-newlang| below for more details on supporting new languages.
+
 ==============================================================================
 4. Supporting a New Language				*matchit-newlang*
 							*b:match_words*
@@ -274,9 +307,9 @@ Vim's |regular-expression|s.
 
 The format for |b:match_words| is similar to that of the 'matchpairs' option:
 it is a comma (,)-separated list of groups; each group is a colon(:)-separated
-list of patterns (regular expressions).  Commas and backslashes that are part
-of a pattern should be escaped with backslashes ('\:' and '\,').  It is OK to
-have only one group; the effect is undefined if a group has only one pattern.
+list of patterns (regular expressions).  Commas and colons that are part of a
+pattern should be escaped with backslashes ('\:' and '\,').  It is OK to have
+only one group; the effect is undefined if a group has only one pattern.
 A simple example is >
 	:let b:match_words = '\<if\>:\<endif\>,'
 		\ . '\<while\>:\<continue\>:\<break\>:\<endwhile\>'
@@ -319,7 +352,7 @@ expression >
 if keywords are only recognized after the start of a line or after a
 semicolon (;), with optional white space.
 
-					*matchit-backref* *matchit-\1*
+						*matchit-backref*
 In any group, the expressions |\1|, |\2|, ..., |\9| refer to parts of the
 INITIAL pattern enclosed in |\(|escaped parentheses|\)|.  These are referred
 to as back references, or backrefs.  For example, >

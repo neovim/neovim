@@ -1,21 +1,60 @@
+--- @brief
+--- Asks the user to download missing spellfiles. The spellfile is written to
+--- `stdpath('data') .. 'site/spell'` or the first writable directory in the
+--- 'runtimepath'.
+---
+--- The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
+
 local M = {}
 
---- @class vim.spellfile.Config
+--- @class nvim.spellfile.Info
+--- @inlinedoc
+--- @field files string[]
+--- @field key string
+--- @field lang string
+--- @field encoding string
+--- @field dir string
+
+--- A table with the following fields:
+--- @class nvim.spellfile.Opts
+---
+--- The base URL from where the spellfiles are downloaded. Uses `g:spellfile_URL`
+--- if it's set, otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
 --- @field url string
+---
+--- Number of milliseconds after which the [vim.net.request()] times out.
+--- (default: 15000)
 --- @field timeout_ms integer
+---
+--- Whether to ask user to confirm download.
+--- (default: `true`)
+--- @field confirm boolean
 
----@class vim.spellfile.Info
----@field files string[]
----@field key string
----@field lang string
----@field encoding string
----@field dir string
-
----@type vim.spellfile.Config
-M.config = {
-  url = 'https://ftp.nluug.nl/pub/vim/runtime/spell',
+--- @type nvim.spellfile.Opts
+local config = {
+  url = vim.g.spellfile_URL or 'https://ftp.nluug.nl/pub/vim/runtime/spell',
   timeout_ms = 15000,
+  confirm = true,
 }
+
+--- Configure spellfile download options. For example:
+--- ```lua
+--- require('nvim.spellfile').config({ url = '...' })
+--- ```
+--- @param opts nvim.spellfile.Opts? When omitted or `nil`, retrieve the
+---   current configuration. Otherwise, a configuration table.
+--- @return nvim.spellfile.Opts? : Current config if {opts} is omitted.
+function M.config(opts)
+  vim.validate('opts', opts, 'table', true)
+  if not opts then
+    return vim.deepcopy(config, true)
+  end
+  for k, v in
+    pairs(opts --[[@as table<any,any>]])
+  do
+    config[k] = v
+  end
+end
 
 --- TODO(justinmk): add on_done/on_err callbacks to download(), instead of exposing this?
 ---@type table<string, boolean>
@@ -26,6 +65,8 @@ local function rtp_list()
   return vim.opt.rtp:get()
 end
 
+---@param msg string
+---@param level vim.log.levels?
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO)
 end
@@ -37,15 +78,20 @@ local function normalize_lang(lang)
   return (l:match('^[^,%s]+') or l)
 end
 
+---@param path string
+---@return boolean
 local function file_ok(path)
   local s = vim.uv.fs_stat(path)
-  return s and s.type == 'file' and (s.size or 0) > 0
+  return s ~= nil and s.type == 'file' and (s.size or 0) > 0
 end
 
+---@param dir string
+---@return boolean
 local function can_use_dir(dir)
   return not not (vim.fn.isdirectory(dir) == 1 and vim.uv.fs_access(dir, 'W'))
 end
 
+---@return string[]
 local function writable_spell_dirs_from_rtp()
   local dirs = {}
   for _, dir in ipairs(rtp_list()) do
@@ -57,6 +103,7 @@ local function writable_spell_dirs_from_rtp()
   return dirs
 end
 
+---@return string?
 local function ensure_target_dir()
   local dir = vim.fs.abspath(vim.fs.joinpath(vim.fn.stdpath('data'), 'site/spell'))
   if vim.fn.isdirectory(dir) == 0 and pcall(vim.fn.mkdir, dir, 'p') then
@@ -72,6 +119,7 @@ local function ensure_target_dir()
     return dirs[1]
   end
 
+  -- vim.fs.relpath does not prepend '~/' while fnamemodify does
   dir = vim.fn.fnamemodify(dir, ':~')
   error(('cannot find a writable spell/ dir in runtimepath, and %s is not usable'):format(dir))
 end
@@ -88,13 +136,15 @@ end
 ---
 --- Treats status==0 as success if file exists.
 ---
+--- @param url string
+--- @param outpath string
 --- @return boolean ok, integer|nil status, string|nil err
-local function fetch_file_sync(url, outpath, timeout_ms)
+local function fetch_file_sync(url, outpath)
   local done, err, res = false, nil, nil
   vim.net.request(url, { outpath = outpath }, function(e, r)
     err, res, done = e, r, true
   end)
-  vim.wait(timeout_ms or M.config.timeout_ms, function()
+  vim.wait(config.timeout_ms, function()
     return done
   end, 50, false)
 
@@ -103,6 +153,8 @@ local function fetch_file_sync(url, outpath, timeout_ms)
   return not not ok, (status ~= 0 and status or nil), err
 end
 
+---@param lang string
+---@return nvim.spellfile.Info
 local function parse(lang)
   local code = normalize_lang(lang)
   local enc = 'utf-8'
@@ -128,7 +180,7 @@ local function parse(lang)
   }
 end
 
----@param info vim.spellfile.Info
+---@param info nvim.spellfile.Info
 local function download(info)
   local dir = info.dir or ensure_target_dir()
   if not dir then
@@ -143,10 +195,10 @@ local function download(info)
   local spl_ascii = string.format('%s.ascii.spl', lang)
   local sug_name = string.format('%s.%s.sug', lang, enc)
 
-  local url_utf8 = M.config.url .. '/' .. spl_utf8
+  local url_utf8 = config.url .. '/' .. spl_utf8
   local out_utf8 = vim.fs.joinpath(dir, spl_utf8)
   notify('Downloading ' .. spl_utf8 .. ' …')
-  local ok, st, err = fetch_file_sync(url_utf8, out_utf8, M.config.timeout_ms)
+  local ok, st, err = fetch_file_sync(url_utf8, out_utf8)
   if not ok then
     notify(
       ('Could not get %s (status %s): trying %s …'):format(
@@ -155,9 +207,9 @@ local function download(info)
         spl_ascii
       )
     )
-    local url_ascii = M.config.url .. '/' .. spl_ascii
+    local url_ascii = config.url .. '/' .. spl_ascii
     local out_ascii = vim.fs.joinpath(dir, spl_ascii)
-    local ok2, st2, err2 = fetch_file_sync(url_ascii, out_ascii, M.config.timeout_ms)
+    local ok2, st2, err2 = fetch_file_sync(url_ascii, out_ascii)
     if not ok2 then
       notify(
         ('No spell file available for %s (utf8:%s ascii:%s) — %s'):format(
@@ -182,10 +234,10 @@ local function download(info)
   reload_spell_silent()
 
   if not file_ok(vim.fs.joinpath(dir, sug_name)) then
-    local url_sug = M.config.url .. '/' .. sug_name
+    local url_sug = config.url .. '/' .. sug_name
     local out_sug = vim.fs.joinpath(dir, sug_name)
     notify('Downloading ' .. sug_name .. ' …')
-    local ok3, st3, err3 = fetch_file_sync(url_sug, out_sug, M.config.timeout_ms)
+    local ok3, st3, err3 = fetch_file_sync(url_sug, out_sug)
     if ok3 then
       notify('Saved ' .. sug_name .. ' to ' .. out_sug)
     else
@@ -211,7 +263,10 @@ local function download(info)
   M._done[info.key] = true
 end
 
-function M.load_file(lang)
+--- Download spellfiles for language {lang} if available.
+--- @param lang string Language code.
+--- @return nvim.spellfile.Info?
+function M.get(lang)
   local info = parse(lang)
   if #info.files == 0 then
     return
@@ -221,14 +276,22 @@ function M.load_file(lang)
     return
   end
 
-  local answer = vim.fn.input(
-    string.format('No spell file found for %s (%s). Download? [y/N] ', info.lang, info.encoding)
-  )
-  if (answer or ''):lower() ~= 'y' then
-    return
+  if config.confirm then
+    local prompt = ('No spell file found for %s (%s). Download? [y/N] '):format(
+      info.lang,
+      info.encoding
+    )
+    vim.ui.input({ prompt = prompt }, function(input)
+      -- properly clear the message window
+      vim.api.nvim_echo({ { ' ' } }, false, { kind = 'empty' })
+      if not input or input:lower() ~= 'y' then
+        return
+      end
+      download(info)
+    end)
+  else
+    download(info)
   end
-
-  download(info)
 
   return info
 end

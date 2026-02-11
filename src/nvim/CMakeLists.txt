@@ -72,7 +72,7 @@ else()
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUAJIT_INCLUDE_DIR})
   target_link_libraries(main_lib INTERFACE ${LUAJIT_LIBRARY})
   target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUAJIT_INCLUDE_DIR})
-  if(WIN32)
+  if(WIN32 OR CYGWIN)
     target_link_libraries(nlua0 PUBLIC ${LUAJIT_LIBRARY})
   endif()
 endif()
@@ -98,7 +98,7 @@ if(NOT MSVC)
 endif()
 
 # -fstack-protector breaks Mingw-w64 builds
-if(NOT MINGW)
+if(NOT MINGW AND NOT CMAKE_SYSTEM_NAME STREQUAL "Haiku")
   check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
     target_compile_options(main_lib INTERFACE -fstack-protector-strong)
@@ -150,7 +150,10 @@ endif()
 # Platform specific options
 if(UNIX)
   target_link_libraries(main_lib INTERFACE m)
-  if (NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  if (CMAKE_SYSTEM_NAME STREQUAL "Haiku")
+    target_link_libraries(main_lib INTERFACE bsd)
+    target_link_libraries(nvim_bin PRIVATE -lnetwork)
+  elseif (NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_link_libraries(main_lib INTERFACE util)
   endif()
 endif()
@@ -337,19 +340,24 @@ set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 
 # NVIM_RUNTIME_DIR
-set(LUA_DEFAULTS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_defaults.lua)
-set(LUA_EDITOR_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_editor.lua)
-set(LUA_SYSTEM_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_system.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/filetype.lua)
 set(LUA_FS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/fs.lua)
 set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/F.lua)
+# Must be item 1 in `builtin_modules`, for `--luamod-dev`.
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_init_packages.lua)
+# Must be item 2 in `builtin_modules`, for `--luamod-dev`.
 set(LUA_INSPECT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/inspect.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
 set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
-set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
-set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
 set(LUA_TEXT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/text.lua)
+
+# Find all Lua modules in the _core/ directory.
+file(GLOB LUA_CORE_MODULE_SOURCES ${NVIM_RUNTIME_DIR}/lua/vim/_core/*.lua)
+set(LUA_CORE_COMMAND_ARGS)
+foreach(core_source ${LUA_CORE_MODULE_SOURCES})
+  get_filename_component(core_filename ${core_source} NAME_WE)
+  list(APPEND LUA_CORE_COMMAND_ARGS ${core_source} "vim._core.${core_filename}")
+endforeach()
 
 file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
@@ -423,6 +431,10 @@ list(SORT NVIM_SOURCES)
 list(SORT NVIM_HEADERS)
 
 list(APPEND UNCRUSTIFY_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
+list(APPEND UNCRUSTIFY_NVIM_SOURCES
+  ${PROJECT_SOURCE_DIR}/src/tee/tee.c
+  ${PROJECT_SOURCE_DIR}/src/xxd/xxd.c
+)
 
 foreach(sfile ${NVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
@@ -454,6 +466,10 @@ foreach(hfile ${NVIM_HEADERS})
 endforeach()
 
 list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
+list(APPEND LINT_NVIM_SOURCES
+  ${PROJECT_SOURCE_DIR}/src/tee/tee.c
+  ${PROJECT_SOURCE_DIR}/src/xxd/xxd.c
+)
 
 # Log level (NVIM_LOG_DEBUG in log.h)
 if(CI_BUILD)
@@ -619,32 +635,24 @@ add_custom_command(
       # respectively, otherwise --luamod-dev won't work properly.
       ${LUA_INIT_PACKAGES_MODULE_SOURCE} "vim._init_packages"
       ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
-      ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
-      ${LUA_SYSTEM_MODULE_SOURCE} "vim._system"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_FS_MODULE_SOURCE} "vim.fs"
       ${LUA_F_MODULE_SOURCE} "vim.F"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
       ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
-      ${LUA_DEFAULTS_MODULE_SOURCE} "vim._defaults"
-      ${LUA_OPTIONS_MODULE_SOURCE} "vim._options"
-      ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
       ${LUA_TEXT_MODULE_SOURCE} "vim.text"
+      ${LUA_CORE_COMMAND_ARGS}
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
-    ${LUA_EDITOR_MODULE_SOURCE}
-    ${LUA_SYSTEM_MODULE_SOURCE}
     ${LUA_FILETYPE_MODULE_SOURCE}
     ${LUA_FS_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
     ${LUA_KEYMAP_MODULE_SOURCE}
     ${LUA_LOADER_MODULE_SOURCE}
-    ${LUA_DEFAULTS_MODULE_SOURCE}
-    ${LUA_OPTIONS_MODULE_SOURCE}
-    ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_TEXT_MODULE_SOURCE}
+    ${LUA_CORE_MODULE_SOURCES}
   VERBATIM
 )
 
@@ -816,6 +824,16 @@ if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
     COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${DEPS_PREFIX}/lib/nvim/parser ${BINARY_LIB_DIR}/parser)
 endif()
 
+if(CYGWIN)
+  if(NOT PREFER_LUA)
+    add_custom_command(
+      TARGET nvim_runtime_deps
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_PREFIX}/bin/cyglua51.dll ${PROJECT_BINARY_DIR}/bin)
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/bin/cyglua51.dll DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
+endif()
+
 install(DIRECTORY ${BINARY_LIB_DIR}
   DESTINATION ${CMAKE_INSTALL_LIBDIR}
   USE_SOURCE_PERMISSIONS)
@@ -849,7 +867,7 @@ target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
 find_program(CLANG_TIDY_PRG clang-tidy)
 mark_as_advanced(CLANG_TIDY_PRG)
-set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h)
+set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h xxd/xxd.c)
 if(WIN32)
   list(APPEND EXCLUDE_CLANG_TIDY
     os/pty_proc_unix.h
@@ -907,11 +925,13 @@ else()
 endif()
 add_glob_target(
   TARGET lintc-clint
-  COMMAND ${PROJECT_SOURCE_DIR}/src/clint.py
-  FLAGS --output=${LINT_OUTPUT_FORMAT}
+  COMMAND $<TARGET_FILE:nvim_bin>
+  FLAGS --clean -l ${PROJECT_SOURCE_DIR}/src/clint.lua --output=${LINT_OUTPUT_FORMAT}
   FILES ${LINT_NVIM_SOURCES}
   EXCLUDE
-    tui/terminfo_defs.h)
+    tui/terminfo_defs.h
+    xxd/xxd.c)
+add_dependencies(lintc-clint nvim_bin)
 
 set(UNCRUSTIFY_PRG ${DEPS_BIN_DIR}/uncrustify)
 set(UNCRUSTIFY_CONFIG ${PROJECT_SOURCE_DIR}/src/uncrustify.cfg)
@@ -999,3 +1019,9 @@ add_target(lintdoc
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
+
+add_target(lintdocurls
+  COMMAND ${NVIM_LUA} scripts/lintdoc.lua true
+  DEPENDS ${DOCFILES}
+  CUSTOM_COMMAND_ARGS USES_TERMINAL)
+add_dependencies(lintdocurls nvim)

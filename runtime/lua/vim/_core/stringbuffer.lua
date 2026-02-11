@@ -13,7 +13,7 @@ if has_strbuffer then
   -- Lua 5.1 does not have __len metamethod so we need to provide a len()
   -- function to use instead.
 
-  --- @param buf vim._stringbuffer
+  --- @param buf vim._core.stringbuffer
   --- @return integer
   function M.len(buf)
     return #buf
@@ -22,7 +22,7 @@ if has_strbuffer then
   return M
 end
 
---- @class vim._stringbuffer
+--- @class vim._core.stringbuffer
 --- @field private buf string[]
 --- @field package len integer absolute length of the `buf`
 --- @field package skip_ptr integer
@@ -77,9 +77,10 @@ function StrBuffer:set(str)
   return self:reset():put(str)
 end
 
---- @param n integer
+--- @param n? integer
 --- @return string
 function StrBuffer:get(n)
+  n = n or self.len
   local r = self:_peak(n)
   self:skip(n)
   return r
@@ -102,7 +103,7 @@ function M.new()
   return setmetatable({}, StrBuffer):reset()
 end
 
---- @param buf vim._stringbuffer
+--- @param buf vim._core.stringbuffer
 function M.len(buf)
   return buf.len - buf.skip_ptr
 end

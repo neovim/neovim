@@ -131,8 +131,14 @@ EXTERN const char e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
 EXTERN const char e_empty_buffer[] INIT(= N_("E749: Empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
+EXTERN const char e_no_write_since_last_change[] INIT(= N_("E37: No write since last change"));
+EXTERN const char e_no_write_since_last_change_add_bang_to_override[] INIT(= N_("E37: No write since last change (add ! to override)"));
+EXTERN const char e_no_write_since_last_change_for_buffer_nr_add_bang_to_override[] INIT(= N_("E89: No write since last change for buffer %d (add ! to override)"));
+EXTERN const char e_buffer_nr_not_found[] INIT(= N_("E92: Buffer %d not found"));
 EXTERN const char e_unknown_function_str[] INIT(= N_("E117: Unknown function: %s"));
 EXTERN const char e_str_not_inside_function[] INIT(= N_("E193: %s not inside a function"));
+EXTERN const char e_job_still_running[] INIT(= N_("E948: Job still running"));
+EXTERN const char e_job_still_running_add_bang_to_end_the_job[] INIT(= N_("E948: Job still running (add ! to end the job)"));
 
 EXTERN const char e_invalpat[] INIT(= N_("E682: Invalid search pattern or delimiter"));
 EXTERN const char e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
@@ -165,6 +171,8 @@ EXTERN const char e_cant_find_file_str_in_path[] INIT(= N_("E345: Can't find fil
 EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No more directory \"%s\" found in cdpath"));
 EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
 
+EXTERN const char e_problem_creating_internal_diff[] INIT(= N_("E960: Problem creating the internal diff"));
+
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 EXTERN const char e_cannot_change_arglist_recursively[] INIT(= N_("E1156: Cannot change the argument list recursively"));
 
@@ -187,6 +195,10 @@ EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));
 EXTERN const char e_missing_close_curly_str[]
 INIT(= N_("E1279: Missing '}': %s"));
+EXTERN const char e_cannot_change_menus_while_listing[]
+INIT(= N_("E1310: Cannot change menus while listing"));
+EXTERN const char e_not_allowed_to_change_window_layout_in_this_autocmd[]
+INIT(= N_("E1312: Not allowed to change the window layout in this autocmd"));
 
 EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
 
@@ -203,6 +215,8 @@ EXTERN const char e_diff_anchors_with_hidden_windows[] INIT( = N_("E1562: Diff a
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \"%s\""));
+
+EXTERN const char e_conflicting_configs[] INIT(= N_("E5422: Conflicting configs: \"%s\" \"%s\""));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 

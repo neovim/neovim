@@ -378,7 +378,7 @@ function M.inspect_tree(opts)
   local opts_title = opts.title
   if not opts_title then
     local bufname = api.nvim_buf_get_name(buf)
-    title = string.format('Syntax tree for %s', vim.fn.fnamemodify(bufname, ':.'))
+    title = ('Syntax tree for %s'):format(vim.fs.relpath('.', bufname))
   elseif type(opts_title) == 'function' then
     title = opts_title(buf)
   end
@@ -394,6 +394,7 @@ function M.inspect_tree(opts)
   api.nvim_buf_clear_namespace(buf, treeview.ns, 0, -1)
   api.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
     desc = 'Jump to the node under the cursor in the source buffer',
+    nowait = true,
     callback = function()
       local row = api.nvim_win_get_cursor(w)[1]
       local lnum, col = treeview:get(row).node:start()
@@ -409,6 +410,7 @@ function M.inspect_tree(opts)
   })
   api.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
+    nowait = true,
     callback = function()
       local row, col = unpack(api.nvim_win_get_cursor(w)) ---@type integer, integer
       local curnode = treeview:get(row)
@@ -435,6 +437,7 @@ function M.inspect_tree(opts)
   })
   api.nvim_buf_set_keymap(b, 'n', 'I', '', {
     desc = 'Toggle language display',
+    nowait = true,
     callback = function()
       treeview.opts.lang = not treeview.opts.lang
       treeview:draw(b)
@@ -442,6 +445,7 @@ function M.inspect_tree(opts)
   })
   api.nvim_buf_set_keymap(b, 'n', 'o', '', {
     desc = 'Toggle query editor',
+    nowait = true,
     callback = function()
       local edit_w = vim.b[buf].dev_edit
       if not edit_w or not close_win(edit_w) then
@@ -449,8 +453,10 @@ function M.inspect_tree(opts)
       end
     end,
   })
-
-  api.nvim_buf_set_keymap(b, 'n', 'q', '<Cmd>wincmd c<CR>', { desc = 'Close language tree window' })
+  api.nvim_buf_set_keymap(b, 'n', 'q', '<Cmd>wincmd c<CR>', {
+    desc = 'Close language tree window',
+    nowait = true,
+  })
 
   local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
 
@@ -591,10 +597,12 @@ local function update_editor_highlights(query_win, base_win, lang)
     end
     local root = tree:root()
     local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
-    for id, node in query:iter_captures(root, base_buf, topline - 1, botline) do
+    for id, node, metadata in query:iter_captures(root, base_buf, topline - 1, botline) do
       local capture_name = query.captures[id]
       if capture_name == cursor_word then
-        local lnum, col, end_lnum, end_col = node:range()
+        local lnum, col, end_lnum, end_col =
+          Range.unpack4(vim.treesitter.get_range(node, base_buf, metadata[id]))
+
         api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
           end_row = end_lnum,
           end_col = end_col,

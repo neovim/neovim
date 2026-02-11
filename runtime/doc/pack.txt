@@ -207,8 +207,8 @@ sourcing the plugins.
 ==============================================================================
 Plugin manager                                                      *vim.pack*
 
-WORK IN PROGRESS built-in plugin manager! Early testing of existing features
-is appreciated, but expect breaking changes without notice.
+Install, update, and delete external plugins. WARNING: It is still considered
+experimental, yet should be stable enough for daily use.
 
 Manages plugins only in a dedicated *vim.pack-directory* (see |packages|):
 `$XDG_DATA_HOME/nvim/site/pack/core/opt`. `$XDG_DATA_HOME/nvim/site` needs to
@@ -217,20 +217,24 @@ or setting |$XDG_DATA_HOME| during startup. Plugin's subdirectory name matches
 plugin's name in specification. It is assumed that all plugins in the
 directory are managed exclusively by `vim.pack`.
 
-Uses Git to manage plugins and requires present `git` executable of at least
-version 2.36. Target plugins should be Git repositories with versions as named
-tags following semver convention `v<major>.<minor>.<patch>`.
+Uses Git to manage plugins and requires present `git` executable. Target
+plugins should be Git repositories with versions as named tags following
+semver convention `v<major>.<minor>.<patch>`.
 
 The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
 located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 is used to persistently track data about plugins. For a more robust config
-treat lockfile like its part: put under version control, etc. In this case
-initial install prefers revision from the lockfile instead of inferring from
-`version`. Should not be edited by hand or deleted.
+treat lockfile like its part: put under version control, etc. In this case all
+plugins from the lockfile will be installed at once and at lockfile's revision
+(instead of inferring from `version`). This is done on the very first
+`vim.pack` function call to ensure that lockfile is aligned with what is
+actually on the disk. Lockfile should not be edited by hand. Corrupted data
+for installed plugins is repaired (including after deleting whole file), but
+`version` fields will be missing for not yet added plugins.
 
-Example workflows ~
+                                                           *vim.pack-examples*
 
-Basic install and management:
+Basic install and management ~
 • Add |vim.pack.add()| call(s) to 'init.lua': >lua
 
     vim.pack.add({
@@ -270,32 +274,87 @@ Basic install and management:
     updates execute |:quit|.
   • (Optionally) |:restart| to start using code from updated plugins.
 
-Switch plugin's version:
-• Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
-  named 'plugin1' has changed to `vim.version.range('*')`.
-• |:restart|. The plugin's actual state on disk is not yet changed. Only
-  plugin's `version` in |vim.pack-lockfile| is updated.
-• Execute `vim.pack.update({ 'plugin1' })`.
-• Review changes and either confirm or discard them. If discarded, revert any
-  changes in 'init.lua' as well or you will be prompted again next time you
-  run |vim.pack.update()|.
+Use shorter source ~
 
-Freeze plugin from being updated:
+Create custom Lua helpers: >lua
+
+    local gh = function(x) return 'https://github.com/' .. x end
+    local cb = function(x) return 'https://codeberg.org/' .. x end
+    vim.pack.add({ gh('user/plugin1'), cb('user/plugin2') })
+<
+
+Another approach is to utilize Git's `insteadOf` configuration:
+• `git config --global url."https://github.com/".insteadOf "gh:"`
+• `git config --global url."https://codeberg.org/".insteadOf "cb:"`
+• In 'init.lua': `vim.pack.add({ 'gh:user/plugin1', 'cb:user/plugin2' })`.
+  These sources will be used verbatim in |vim.pack-lockfile|, so reusing the
+  config on different machine will require the same Git configuration.
+
+Explore installed plugins ~
+• `vim.pack.update(nil, { offline = true })`
+• Navigate between plugins with `[[` and `]]`. List them with `gO`
+  (|vim.lsp.buf.document_symbol()|).
+
+Switch plugin's version and/or source ~
+• Update 'init.lua' for plugin to have desired `version` and/or `src`. Let's
+  say, the switch is for plugin named 'plugin1'.
+• |:restart|. The plugin's state on disk (revision and/or tracked source) is
+  not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
+• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated. If
+  only switching version, use `{ offline = true }` option table.
+• Review changes and either confirm or discard them. If discarded, revert
+  `version` change in 'init.lua' as well or you will be prompted again next
+  time you run |vim.pack.update()|.
+
+Freeze plugin from being updated ~
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
   it from |vim.pack-lockfile| (plugin's field `rev`; looks like `abc12345`).
 • |:restart|.
 
-Unfreeze plugin to start receiving updates:
+Unfreeze plugin to start receiving updates ~
 • Update 'init.lua' for plugin to have `version` set to whichever version you
   want it to be updated.
 • |:restart|.
 
-Remove plugins from disk:
-• Use |vim.pack.del()| with a list of plugin names to remove. Make sure their
-  specs are not included in |vim.pack.add()| call in 'init.lua' or they will
-  be reinstalled.
+Revert plugin after an update ~
+• Revert the |vim.pack-lockfile| to the state before the update:
+  • If Git tracked: `git checkout HEAD -- nvim-pack-lock.json`
+  • If not tracked: examine log file ("nvim-pack.log" at "log" |stdpath()|),
+    locate the revisions before the latest update, and (carefully) adjust
+    current lockfile to have those revisions.
+• |:restart|.
+• `vim.pack.update({ 'plugin' }, { offline = true, target = 'lockfile' })`.
+  Read and confirm.
 
-Available events to hook into ~
+Synchronize config across machines ~
+• On main machine:
+  • Add |vim.pack-lockfile| to VCS.
+  • Push to the remote server.
+• On secondary machine:
+  • Pull from the server.
+  • |:restart|. New plugins (not present locally, but present in the lockfile)
+    are installed at proper revision.
+  • `vim.pack.update(nil, { target = 'lockfile' })`. Read and confirm.
+  • Manually delete outdated plugins (present locally, but were not present in
+    the lockfile prior to restart) with `vim.pack.del( { 'plugin' })`. They
+    can be located by examining the VCS difference of the lockfile
+    (`git diff -- nvim-pack-lock.json` for Git).
+
+Remove plugins from disk ~
+• Remove plugin specs from |vim.pack.add()| calls in 'init.lua' or they will
+  be reinstalled later.
+• |:restart|.
+• Use |vim.pack.del()| with a list of plugin names to remove. Use
+  |vim.pack.get()| to get all non-active plugins: >lua
+    vim.iter(vim.pack.get())
+     :filter(function(x) return not x.active end)
+     :map(function(x) return x.spec.name end)
+     :totable()
+<
+
+                                                             *vim.pack-events*
+
+Performing actions via `vim.pack` functions can trigger these events:
 • *PackChangedPre* - before trying to change plugin's state.
 • *PackChanged* - after plugin's state has changed.
 
@@ -314,6 +373,7 @@ These events can be used to execute plugin hooks. For example: >lua
 
       -- Run build script after plugin's code has changed
       if name == 'plug-1' and (kind == 'install' or kind == 'update') then
+        -- Append `:wait()` if you need synchronous execution
         vim.system({ 'make' }, { cwd = ev.data.path })
       end
 
@@ -329,6 +389,7 @@ These events can be used to execute plugin hooks. For example: >lua
     end
 
     -- If hooks need to run on install, run this before `vim.pack.add()`
+    -- To act on install from lockfile, run before very first `vim.pack.add()`
     vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
 <
 
@@ -354,10 +415,13 @@ add({specs}, {opts})                                          *vim.pack.add()*
     Add plugin to current session
     • For each specification check that plugin exists on disk in
       |vim.pack-directory|:
-      • If exists, do nothing in this step.
+      • If exists, check if its `src` is the same as input. If not - delete
+        immediately to clean install from the new source. Otherwise do
+        nothing.
       • If doesn't exist, install it by downloading from `src` into `name`
-        subdirectory (via `git clone`) and update state to match `version`
-        (via `git checkout`).
+        subdirectory (via partial blobless `git clone`) and update revision to
+        match `version` (via `git checkout`). Plugin will not be on disk if
+        any step resulted in an error.
     • For each plugin execute |:packadd| (or customizable `load` function)
       making it reachable by Nvim.
 
@@ -365,7 +429,7 @@ add({specs}, {opts})                                          *vim.pack.add()*
     • Installation is done in parallel, but waits for all to finish before
       continuing next code execution.
     • If plugin is already present on disk, there are no checks about its
-      present state. The specified `version` can be not the one actually
+      current revision. The specified `version` can be not the one actually
       present on disk. Execute |vim.pack.update()| to synchronize.
     • Adding plugin second and more times during single session does nothing:
       only the data from the first adding is registered.
@@ -379,17 +443,20 @@ add({specs}, {opts})                                          *vim.pack.add()*
                    Load `plugin/` files and `ftdetect/` scripts. If `false`,
                    works like `:packadd!`. If function, called with plugin
                    data and is fully responsible for loading plugin. Default
-                   `false` during startup and `true` afterwards.
+                   `false` during |init.lua| sourcing and `true` afterwards.
                  • {confirm}? (`boolean`) Whether to ask user to confirm
                    initial install. Default `true`.
 
-del({names})                                                  *vim.pack.del()*
+del({names}, {opts})                                          *vim.pack.del()*
     Remove plugins from disk
 
     Parameters: ~
       • {names}  (`string[]`) List of plugin names to remove from disk. Must
                  be managed by |vim.pack|, not necessarily already added to
                  current session.
+      • {opts}   (`table?`) A table with the following fields:
+                 • {force}? (`boolean`) Whether to allow deleting an active
+                   plugin. Default `false`.
 
 get({names}, {opts})                                          *vim.pack.get()*
     Gets |vim.pack| plugin info, optionally filtered by `names`.
@@ -416,7 +483,7 @@ get({names}, {opts})                                          *vim.pack.get()*
 update({names}, {opts})                                    *vim.pack.update()*
     Update plugins
     • Download new changes from source.
-    • Infer update info (current/target state, changelog, etc.).
+    • Infer update info (current/target revisions, changelog, etc.).
     • Depending on `force`:
       • If `false`, show confirmation buffer. It lists data about all set to
         update plugins. Pending changes starting with `>` will be applied
@@ -431,7 +498,8 @@ update({names}, {opts})                                    *vim.pack.update()*
           details of particular pending change or newer tag.
         • 'textDocument/codeAction' (`gra` via |lsp-defaults| or
           |vim.lsp.buf.code_action()|) - show code actions available for
-          "plugin at cursor". Like "delete", "update", or "skip updating".
+          "plugin at cursor". Like "delete" (if plugin is not active),
+          "update" or "skip updating" (if there are pending updates).
         Execute |:write| to confirm update, execute |:quit| to discard the
         update.
       • If `true`, make updates right away.
@@ -439,6 +507,9 @@ update({names}, {opts})                                    *vim.pack.update()*
     Notes:
     • Every actual update is logged in "nvim-pack.log" file inside "log"
       |stdpath()|.
+    • It doesn't update source's default branch if it has changed (like from
+      `master` to `main`). To have `version = nil` point to a new default
+      branch, re-install the plugin (|vim.pack.del()| + |vim.pack.add()|).
 
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names to update. Must be managed
@@ -447,6 +518,14 @@ update({names}, {opts})                                    *vim.pack.update()*
       • {opts}   (`table?`) A table with the following fields:
                  • {force}? (`boolean`) Whether to skip confirmation and make
                    updates immediately. Default `false`.
+                 • {offline}? (`boolean`) Whether to skip downloading new
+                   updates. Default: `false`.
+                 • {target}? (`string`) How to compute a new plugin revision.
+                   One of:
+                   • "version" (default) - use latest revision matching
+                     `version` from plugin specification.
+                   • "lockfile" - use revision from the lockfile. Useful for
+                     reverting or performing controlled update.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

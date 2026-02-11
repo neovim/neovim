@@ -80,6 +80,10 @@ local set_list = ([[
 vim.api.nvim_exec2(set_list, {})
 
 vim.api.nvim_create_autocmd('User', { pattern = 'set_mouse', callback = cb })
+
+coroutine.wrap(function()
+  vim.o.busy = 2
+end)()
 ]=]
     )
     exec(cmd .. ' ' .. script_file)
@@ -277,6 +281,19 @@ TestHL2        xxx guibg=Green
   list
 	Last set from %s]],
         get_last_set_location(54)
+      ),
+      result
+    )
+  end)
+
+  it('for option set in coroutine', function()
+    local result = exec_capture(':verbose set busy?')
+    eq(
+      string.format(
+        [[
+  busy=2
+	Last set from %s]],
+        get_last_set_location(59)
       ),
       result
     )

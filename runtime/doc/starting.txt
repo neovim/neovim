@@ -1,7 +1,7 @@
 *starting.txt*  Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Starting Vim						*starting*
@@ -694,7 +694,7 @@ CTRL-Z			Suspend Nvim, like ":stop".
 			Works in Normal and in Visual mode.  In Insert and
 			Command-line mode, the CTRL-Z is inserted as a normal
 			character.  In Visual mode Nvim goes back to Normal
-			mode.
+			mode before suspending.
 
 :sus[pend][!]	or			*:sus* *:suspend* *:st* *:stop*
 :st[op][!]		Suspend Nvim using OS "job control"; it will continue
@@ -1377,7 +1377,7 @@ paths.
 
 						*base-directories* *xdg*
 The "base" (root) directories conform to the XDG Base Directory Specification.
-https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+https://specifications.freedesktop.org/basedir/latest/
 The $XDG_CONFIG_HOME, $XDG_DATA_HOME, $XDG_RUNTIME_DIR, $XDG_STATE_HOME,
 $XDG_CACHE_HOME, $XDG_CONFIG_DIRS and $XDG_DATA_DIRS environment variables
 are used if defined, else default values (listed below) are used.

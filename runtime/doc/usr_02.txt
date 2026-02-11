@@ -1,6 +1,8 @@
 *usr_02.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			    The first steps in Vim
 
@@ -496,8 +498,8 @@ Summary:					*help-summary*  >
 <   You can see the user guide topics |03.9| and |usr_27.txt| in the
    introduction.
 
-3) Options are enclosed in single apostrophes.  To go to the help topic for the
-   list option: >
+3) Options are enclosed in single apostrophes.  To go to the help topic for
+   the list option: >
 	:help 'list'
 <   If you only know you are looking for a certain option, you can also do: >
 	:help options.txt

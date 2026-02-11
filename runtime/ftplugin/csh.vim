@@ -3,8 +3,8 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Johannes Zellner <johannes@zellner.org>
-" Last Change:		2024 Jan 14
-" 			2024 May 23 by Riley Bruins ('commentstring')
+" 			Riley Bruins <ribru17@gmail.com>
+" Last Change:		2026 Jan 16
 
 if exists("b:did_ftplugin")
   finish
@@ -21,28 +21,51 @@ setlocal formatoptions+=crql
 
 let b:undo_ftplugin = "setlocal com< cms< fo<"
 
-" Csh: thanks to Johannes Zellner
-" - Both foreach and end must appear alone on separate lines.
-" - The words else and endif must appear at the beginning of input lines;
-"   the if must appear alone on its input line or after an else.
-" - Each case label and the default label must appear at the start of a
-"   line.
-" - while and end must appear alone on their input lines.
 if exists("loaded_matchit") && !exists("b:match_words")
-  let s:line_start = '\%(^\s*\)\@<='
-  let b:match_words =
-	\ s:line_start .. 'if\s*(.*)\s*then\>:' ..
-	\   s:line_start .. 'else\s\+if\s*(.*)\s*then\>:' .. s:line_start .. 'else\>:' ..
-	\   s:line_start .. 'endif\>,' ..
-	\ s:line_start .. '\%(\<foreach\s\+\h\w*\|while\)\s*(:' ..
-	\   '\<break\>:\<continue\>:' ..
-	\   s:line_start .. 'end\>,' ..
-	\ s:line_start .. 'switch\s*(:' ..
-	\   s:line_start .. 'case\s\+:' .. s:line_start .. 'default\>:\<breaksw\>:' ..
-	\   s:line_start .. 'endsw\>'
-  unlet s:line_start
-  let b:undo_ftplugin ..= " | unlet! b:match_words"
+  let b:match_ignorecase = 0
+  let b:match_words = "CshMatchWords()"
+  let b:match_skip = "CshMatchSkip()"
+  let b:undo_ftplugin ..= " | unlet! b:match_ignorecase b:match_skip b:match_words"
 endif
+
+" skip single line 'if' commands
+function CshMatchSkip()
+  return getline(".") =~# '^\s*if\>' && !s:CshIsIfThenCommand()
+endfunction
+
+function CshMatchWords()
+  let line_start = '\%(^\s*\)\@<='
+  let match_words =
+	\ line_start .. '\%(foreach\s\+\h\w*\s*(\|while\>\):' ..
+	\   '\<break\>:\<continue\>:' ..
+	\   line_start .. 'end\>,' ..
+	\ line_start .. 'switch\s*(:' ..
+	\   line_start .. 'case\s\+:' .. line_start .. 'default\>:\<breaksw\>:' ..
+	\   line_start .. 'endsw\>'
+
+  if expand("<cword>") =~# '\<if\>' && !s:CshIsIfThenCommand()
+    return match_words
+  else
+    return match_words .. "," ..
+	\ line_start .. 'if\>:' ..
+	\   line_start .. 'else\s\+if\>:' .. line_start .. 'else\>:' ..
+	\   line_start .. 'endif\>'
+  endif
+endfunction
+
+function s:CshIsIfThenCommand()
+  let lnum = line(".")
+  let line = getline(lnum)
+
+  " join continued lines
+  while lnum < line("$") && line =~ '^\%([^\\]\|\\\\\)*\\$'
+    let lnum += 1
+    let line = substitute(line, '\\$', '', '') .. getline(lnum)
+  endwhile
+
+  " TODO: confirm with syntax checks when the highlighting is more accurate
+  return line =~# '^\s*if\>.*\<then\s*\%(#.*\)\=$'
+endfunction
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "csh Scripts (*.csh)\t*.csh\n"

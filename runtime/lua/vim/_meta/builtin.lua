@@ -94,11 +94,12 @@ function vim.empty_dict() end
 --- @param ...? any
 function vim.rpcnotify(channel, method, ...) end
 
---- Sends a request to {channel} to invoke {method} via |RPC| and blocks until
---- a response is received.
+--- Invokes |RPC| `method` on `channel` and blocks until a response is received.
 ---
---- Note: NIL values as part of the return value is represented as |vim.NIL|
---- special value
+--- Note: Msgpack NIL values in the response are represented as |vim.NIL|.
+---
+--- Example: see [nvim_exec_lua()]
+---
 --- @param channel integer
 --- @param method string
 --- @param ...? any
@@ -177,6 +178,8 @@ function vim.iconv(str, from, to, opts) end
 --- Schedules {fn} to be invoked soon by the main event-loop. Useful
 --- to avoid |textlock| or other temporary restrictions.
 --- @param fn fun()
+--- @return nil result
+--- @return string? err Error message if scheduling failed, `nil` otherwise.
 function vim.schedule(fn) end
 
 --- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
@@ -195,8 +198,8 @@ function vim.schedule(fn) end
 --- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
 --- vim.wait(1000, function() return vim.g.foo end, 500)
 ---
---- -- Wait up to 100 ms or until `vim.g.foo` is true, and get the callback results.
---- local ok, rv1, rv2, rv3 = vim.wait(100, function()
+--- -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+--- local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
 ---   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
 --- end)
 ---
@@ -208,7 +211,8 @@ function vim.schedule(fn) end
 --- end
 --- ```
 ---
---- @param time integer Number of milliseconds to wait
+--- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
+--- part is truncated.
 --- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
 --- @param interval? integer (Approximate) number of milliseconds to wait between polls
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
@@ -225,8 +229,9 @@ function vim.wait(time, callback, interval, fast_only) end
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
 ---
---- Callbacks for `msg_show` events are executed in |api-fast| context; showing
---- the message should be scheduled.
+--- Callbacks for `msg_show` events originating from internal messages (as
+--- opposed to events from commands or API calls) are executed in |api-fast|
+--- context; showing the message needs to be scheduled.
 ---
 --- Excessive errors inside the callback will result in forced detachment.
 ---

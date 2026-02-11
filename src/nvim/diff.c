@@ -103,6 +103,10 @@ static int linematch_lines = 40;
 
 #define LBUFLEN 50               // length of line in diff file
 
+// Max file size xdiff is equipped to deal with. The value (1GB - 1MB) comes
+// from Git's implementation.
+#define MAX_XDIFF_SIZE (1024L * 1024 * 1023)
+
 // kTrue when "diff -a" works, kFalse when it doesn't work,
 // kNone when not checked yet
 static TriState diff_a_works = kNone;
@@ -230,7 +234,7 @@ void diff_buf_add(buf_T *buf)
     }
   }
 
-  semsg(_("E96: Cannot diff more than %" PRId64 " buffers"), (int64_t)DB_COUNT);
+  semsg(_("E96: Cannot diff more than %d buffers"), DB_COUNT);
 }
 
 /// Remove all buffers to make diffs for.
@@ -851,6 +855,14 @@ static int diff_write(buf_T *buf, diffin_T *din, linenr_T start, linenr_T end)
     return diff_write_buffer(buf, &din->din_mmfile, start, end);
   }
 
+  // Writing the diff buffers may trigger changes in the window structure
+  // via aucmd_prepbuf()/aucmd_restbuf() commands.
+  // This may cause recursively calling winframe_remove() which is not safe and causes
+  // use after free, so let's stop it here.
+  if (frames_locked()) {
+    return FAIL;
+  }
+
   if (end < 0) {
     end = buf->b_ml.ml_line_count;
   }
@@ -1221,10 +1233,15 @@ static int diff_file_internal(diffio_T *diffio)
   emit_cfg.ctxlen = 0;  // don't need any diff_context here
   emit_cb.priv = &diffio->dio_diff;
   emit_cfg.hunk_func = xdiff_out;
+  if (diffio->dio_orig.din_mmfile.size > MAX_XDIFF_SIZE
+      || diffio->dio_new.din_mmfile.size > MAX_XDIFF_SIZE) {
+    emsg(_(e_problem_creating_internal_diff));
+    return FAIL;
+  }
   if (xdl_diff(&diffio->dio_orig.din_mmfile,
                &diffio->dio_new.din_mmfile,
                &param, &emit_cfg, &emit_cb) < 0) {
-    emsg(_("E960: Problem creating the internal diff"));
+    emsg(_(e_problem_creating_internal_diff));
     return FAIL;
   }
   return OK;
@@ -2526,7 +2543,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   }
 
   // When w_topline changes need to recompute w_botline and cursor position
-  invalidate_botline(towin);
+  invalidate_botline_win(towin);
   changed_line_abv_curs_win(towin);
 
   check_topfill(towin, false);
@@ -3873,6 +3890,10 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           // lines.
           if (curwin->w_cursor.lnum >= lnum + count) {
             curwin->w_cursor.lnum += added;
+            // When the buffer was previously empty, the cursor may
+            // now be beyond the last line, so clamp cursor lnum.
+            curwin->w_cursor.lnum = MIN(curwin->w_cursor.lnum,
+                                        curbuf->b_ml.ml_line_count);
           } else if (added < 0) {
             curwin->w_cursor.lnum = lnum;
           }

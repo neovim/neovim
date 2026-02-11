@@ -847,6 +847,7 @@ func Test_undo_mark()
 endfunc
 
 func Test_undo_after_write()
+  CheckScreendump
   " use a terminal to make undo work like when text is typed
   CheckRunVimInTerminal
 
@@ -882,5 +883,45 @@ func Test_undo_range_normal()
   call assert_equal(['asa', 'bsb'], getline(1, '$'))
   bwipe!
 endfunc
+
+func Test_load_existing_undofile()
+  CheckFeature persistent_undo
+  sp samples/test_undo.txt
+  let mess=execute(':verbose rundo samples/test_undo.txt.undo')
+  call assert_match('Finished reading undo file', mess)
+
+  call assert_equal(['one', 'two', 'three'], getline(1, '$'))
+  norm! u
+  call assert_equal(['one', 'two'], getline(1, '$'))
+  norm! u
+  call assert_equal(['one'], getline(1, '$'))
+  norm! u
+  call assert_equal([''], getline(1, '$'))
+  let mess = execute(':norm! u')
+  call assert_equal([''], getline(1, '$'))
+  call assert_match('Already at oldest change', mess)
+  exe ":norm! \<c-r>"
+  call assert_equal(['one'], getline(1, '$'))
+  exe ":norm! \<c-r>"
+  call assert_equal(['one', 'two'], getline(1, '$'))
+  exe ":norm! \<c-r>"
+  call assert_equal(['one', 'two', 'three'], getline(1, '$'))
+  let mess = execute(":norm! \<c-r>")
+  call assert_equal(['one', 'two', 'three'], getline(1, '$'))
+  call assert_match('Already at newest change', mess)
+  bw!
+endfunc
+
+func Test_restore_cursor_position_after_undo()
+  CheckFeature persistent_undo
+  sp samples/test_undo.txt
+
+  3 | exe "norm! gqk" | undojoin | 1 delete
+  call assert_equal(1, line('.'))
+  norm! u
+  call assert_equal(3, line('.'))
+  bw!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

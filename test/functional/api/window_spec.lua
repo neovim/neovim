@@ -2000,6 +2000,13 @@ describe('API/win', function()
     it('checks if splitting disallowed', function()
       command('split | autocmd WinEnter * ++once call nvim_open_win(0, 0, #{split: "right"})')
       matches("E242: Can't split a window while closing another$", pcall_err(command, 'quit'))
+      -- E242 is not needed for floats.
+      exec([[
+        split
+        autocmd WinEnter * ++once let g:win = nvim_open_win(0, 0, #{relative: "editor", row: 0, col: 0, width: 5, height: 5})
+        quit
+      ]])
+      eq('editor', eval('nvim_win_get_config(g:win).relative'))
 
       command('only | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left"})')
       matches(
@@ -2033,10 +2040,10 @@ describe('API/win', function()
         only
         new
         let g:buf = bufnr()
-        autocmd BufUnload * ++once let g:win = nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
+        autocmd BufUnload * ++once call nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
         setlocal bufhidden=unload
       ]])
-      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      matches('E1159: Cannot open a float when closing the buffer$', pcall_err(command, 'quit'))
       eq(false, eval('nvim_buf_is_loaded(g:buf)'))
       eq(0, eval('win_findbuf(g:buf)->len()'))
 
@@ -2052,7 +2059,7 @@ describe('API/win', function()
               \| call nvim_open_win(g:buf2, 1, #{relative: 'editor', width: 5, height: 5, col: 5, row: 5})
         setlocal bufhidden=wipe
       ]])
-      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      matches('E1159: Cannot open a float when closing the buffer$', pcall_err(command, 'quit'))
       eq(false, eval('nvim_buf_is_loaded(g:buf)'))
       eq(0, eval('win_findbuf(g:buf)->len()'))
       -- BufLeave shouldn't run here (buf2 isn't deleted and remains hidden)
@@ -2283,6 +2290,31 @@ describe('API/win', function()
       eq(22, api.nvim_win_get_height(0))
       api.nvim_open_win(0, true, { split = 'below' })
       eq(11, api.nvim_win_get_height(0))
+    end)
+
+    it('no leak when win_set_buf fails and window is closed immediately', function()
+      -- Following used to leak.
+      command('autocmd BufEnter * ++once quit! | throw 1337')
+      eq(
+        'Window was closed immediately',
+        pcall_err(
+          api.nvim_open_win,
+          api.nvim_create_buf(true, true),
+          true,
+          { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+        )
+      )
+      -- If the window wasn't closed, still set errors from win_set_buf.
+      command('autocmd BufEnter * ++once throw 1337')
+      eq(
+        'BufEnter Autocommands for "*": 1337',
+        pcall_err(
+          api.nvim_open_win,
+          api.nvim_create_buf(true, true),
+          true,
+          { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+        )
+      )
     end)
   end)
 
@@ -3117,6 +3149,18 @@ describe('API/win', function()
       api.nvim_win_set_config(t2_cur_win, { split = 'left', win = 0 })
       eq(t2_alt_win, api.nvim_tabpage_get_win(t2))
       eq(t1, api.nvim_win_get_tabpage(t2_cur_win))
+    end)
+
+    it('set_config cannot change "noautocmd" #36409', function()
+      local cfg = { relative = 'editor', row = 1, col = 1, height = 2, width = 2, noautocmd = true }
+      local win = api.nvim_open_win(0, false, cfg)
+      cfg.height = 10
+      eq(true, pcall(api.nvim_win_set_config, win, cfg))
+      cfg.noautocmd = false
+      eq(
+        "'noautocmd' cannot be changed with existing windows",
+        pcall_err(api.nvim_win_set_config, win, cfg)
+      )
     end)
   end)
 

@@ -108,9 +108,9 @@ func Test_options_command()
 
   " Check if the option-window is opened horizontally.
   wincmd j
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   wincmd k
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
@@ -118,9 +118,9 @@ func Test_options_command()
   vert options
   " Check if the option-window is opened vertically.
   wincmd l
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   wincmd h
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
@@ -141,16 +141,16 @@ func Test_options_command()
   tab options
   " Check if the option-window is opened in a tab.
   normal gT
-  call assert_notequal('option-window', bufname(''))
+  call assert_notequal('nvim-optwin://optwin', bufname(''))
   normal gt
-  call assert_equal('option-window', bufname(''))
+  call assert_equal('nvim-optwin://optwin', bufname(''))
   " close option-window
   close
 
   " Open the options window browse
   if has('browse')
     browse set
-    call assert_equal('option-window', bufname(''))
+    call assert_equal('nvim-optwin://optwin', bufname(''))
     close
   endif
 endfunc
@@ -543,7 +543,7 @@ func Test_set_completion_string_values()
   endif
   call assert_equal('.', getcompletion('set complete=', 'cmdline')[1])
   call assert_equal('menu', getcompletion('set completeopt=', 'cmdline')[1])
-  call assert_equal('keyword', getcompletion('set completefuzzycollect=', 'cmdline')[0])
+  " call assert_equal('keyword', getcompletion('set completefuzzycollect=', 'cmdline')[0])
   if exists('+completeslash')
     call assert_equal('backslash', getcompletion('set completeslash=', 'cmdline')[1])
   endif
@@ -1662,27 +1662,36 @@ endfunc
 
 " Test for setting boolean global-local option value
 func Test_set_boolean_global_local_option()
-  setglobal autoread
-  setlocal noautoread
+  CheckUnix
+
+  setglobal autoread fsync
+  setlocal noautoread nofsync
   call assert_equal(1, &g:autoread)
   call assert_equal(0, &l:autoread)
   call assert_equal(0, &autoread)
+  call assert_equal(1, &g:fsync)
+  call assert_equal(0, &l:fsync)
+  call assert_equal(0, &fsync)
 
   " :setlocal {option}< set the effective value of {option} to its global value.
-  "set autoread<
-  setlocal autoread<
+  "set autoread< fsync<
+  setlocal autoread< fsync<
   call assert_equal(1, &l:autoread)
   call assert_equal(1, &autoread)
+  call assert_equal(1, &l:fsync)
+  call assert_equal(1, &fsync)
 
   " :set {option}< removes the local value, so that the global value will be used.
-  setglobal noautoread
-  setlocal autoread
-  "setlocal autoread<
-  set autoread<
+  setglobal noautoread nofsync
+  setlocal autoread fsync
+  "setlocal autoread< fsync<
+  set autoread< fsync<
   call assert_equal(-1, &l:autoread)
   call assert_equal(0, &autoread)
+  call assert_equal(-1, &l:fsync)
+  call assert_equal(0, &fsync)
 
-  set autoread&
+  set autoread& fsync&
 endfunc
 
 func Test_set_in_sandbox()

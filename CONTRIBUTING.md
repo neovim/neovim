@@ -55,6 +55,7 @@ Developer guidelines
 Pull requests (PRs)
 ---------------------
 
+- Fork the repository first.
 - To avoid duplicate work, create a draft pull request.
 - Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
@@ -231,10 +232,10 @@ See [#549][549] for more details.
 
 ### Lua runtime files
 
-Most of the Lua core [`runtime/`](./runtime) modules are precompiled to
-bytecode, so changes to those files won't get used unless you rebuild Nvim or
-by passing `--luamod-dev` and `$VIMRUNTIME`. For example, try adding a function
-to `runtime/lua/vim/_editor.lua` then:
+The Lua [`runtime/lua/vim/_core/`](./runtime/lua/vim/_core/) modules are
+precompiled to bytecode, so changes won't be usable unless you (1) rebuild Nvim
+or (2) start Nvim with `--luamod-dev` and `$VIMRUNTIME`. For example try adding
+a function to `runtime/lua/vim/editor.lua`, then:
 
 ```bash
 VIMRUNTIME=./runtime ./build/bin/nvim --luamod-dev
@@ -372,6 +373,6 @@ as context, use the `-W` argument as well.
 [nvim-lspconfig/clangd]: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 [pr-draft]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
-[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
+[run-tests]: https://github.com/neovim/neovim/blob/master/runtime/doc/dev_test.txt
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [wiki-faq]: https://neovim.io/doc/user/faq.html

@@ -631,6 +631,38 @@ describe('decorations providers', function()
     }
   end)
 
+  it('eol_right_align: second text much longer than first', function()
+    insert('short')
+    setup_provider [[
+      local test_ns = api.nvim_create_namespace "test_length_diff"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'AA', 'Comment'}};
+            virt_text_pos = 'eol_right_align';
+            priority = 100;
+            ephemeral = true;
+          })
+
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'BBBBBBBBBBBBBBBBBBBB', 'ErrorMsg'}};
+            virt_text_pos = 'eol_right_align';
+            priority = 200;
+            ephemeral = true;
+          })
+        end
+      end
+    ]]
+
+    screen:expect([[
+      shor^t            {4:AA} {2:BBBBBBBBBBBBBBBBBBBB}|
+      {1:~                                       }|*6
+                                              |
+    ]])
+  end)
+
   it('virtual text works with wrapped lines', function()
     insert(mulholland)
     feed('ggJj3JjJ')
@@ -3571,6 +3603,42 @@ describe('extmark decorations', function()
       ]],
     })
   end)
+
+  it('line("w$", win) considers conceal_lines', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'line 1', 'line 2', 'line 3' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { conceal_lines = '' }) -- conceal line 1
+
+    local win = exec_lua(function()
+      local provider_ns = vim.api.nvim_create_namespace('test_f_line')
+      _G.line_w_dollar = {}
+      vim.api.nvim_set_decoration_provider(provider_ns, {
+        on_start = function()
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            table.insert(_G.line_w_dollar, { win, vim.fn.line('w$', win) })
+          end
+        end,
+      })
+
+      local win = vim.api.nvim_open_win(0, false, {
+        relative = 'editor',
+        width = 20,
+        height = 1,
+        row = 0,
+        col = 0,
+        border = 'single',
+      })
+      vim.api.nvim_set_option_value('conceallevel', 2, { scope = 'local', win = win })
+
+      return win
+    end)
+
+    local line_w_dollar = exec_lua('return _G.line_w_dollar')
+    for _, win_line in ipairs(line_w_dollar) do
+      if win_line[1] == win then
+        eq(2, win_line[2])
+      end
+    end
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
@@ -5871,6 +5939,17 @@ describe('decorations: inline virtual text', function()
       {1:~                                                 }|*5
                                                         |
     ]])
+  end)
+
+  it("virtcol('$') is correct with inline virt text at EOL", function()
+    insert(('1234567890\n'):rep(6))
+    for _, v in ipairs({ { 2, 'a' }, { 3, 'ab' }, { 4, 'abc' }, { 5, 'abcd' }, { 6, 'αβγ口' } }) do
+      local ln, tx = unpack(v)
+      local co = fn.col({ ln, '$' })
+      eq(11, fn.virtcol({ ln, '$' }))
+      api.nvim_buf_set_extmark(0, ns, ln - 1, co - 1, { virt_text = { { tx } }, virt_text_pos = 'inline' })
+      eq(11 + fn.strwidth(tx), fn.virtcol({ ln, '$' }))
+    end
   end)
 end)
 

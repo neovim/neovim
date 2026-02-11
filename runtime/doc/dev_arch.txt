@@ -20,16 +20,63 @@ The purpose of this document is to give:
                                   Type |gO| to see the table of contents.
 
 ==============================================================================
-Filename conventions
+Project layout: where things go
 
-The source filenames use extensions to hint about their purpose.
+C CODE
 
+- Nvim C code lives in `src/nvim/`.
+    - This includes third-party components which we have forked and fully
+      "own", meaning we no longer track the upstream. In particular: `vterm/`
+      and `tui/termkey/`.
+- Vendored third-party components live in `src/*`.
+    - `src/tee/` and `src/xxd/` have their own build files. They are shipped
+      with the Windows artifact to ensure those tools exists there.
+    - Other components like `src/cjson/` and `src/mpack/` are included with
+      Nvim itself. These vendored sources are synced from upstream, we do not
+      "own" them.
+
+See also "MAINTAIN.md".
+
+Generated C files use these filename conventions to hint their purpose:
 - `*.c`, `*.generated.c` - full C files, with all includes, etc.
 - `*.c.h` - parametrized C files, contain all necessary includes, but require
   defining macros before actually using. Example: `typval_encode.c.h`
-- `*.h` - full headers, with all includes. Does *not* apply to `*.generated.h`.
+- `*.h` - full headers, with all includes. Does not apply to `*.generated.h`.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
+
+
+LUA CODE
+
+Lua code lives in one of four places:
+
+1. Plugins! Not everything needs to live on `vim.*`. Plugins are the correct
+   model for non-essential features which the user may disable or replace with
+   a third-party plugin, and which do not have a formal API. Examples:
+   "editorconfig", "comment".
+   - "opt-out": `runtime/plugin/`
+   - "opt-in": `runtime/pack/dist/opt/`
+2. `runtime/lua/vim/` (the runtime): Lazy-loaded modules. Examples: `treesitter`, `lpeg`.
+3. `runtime/lua/vim/_core/shared.lua`: pure Lua functions which always are available.
+   Used in the test runner, and worker threads/processes launched from Nvim.
+4. `runtime/lua/vim/_core/`: Eager-loaded code which directly interacts with the Nvim
+   editor state. Only available in the main thread. See |dev-lua-builtin|
+   below.
+
+The top-level `vim.` namespace is for fundamental Lua and editor features. Use
+submodules (`vim.foo`) for everything else (but avoid excessive "nesting"), or
+plugins (see above).
+
+Compatibility with Vim's `if_lua` is explicitly a non-goal.
+
+                                                             *dev-lua-builtin*
+Lua modules that are necessary even if VIMRUNTIME is invalid (generally, data
+structures and essential utilities), must be compiled into the `nvim` binary.
+There are two ways to do that:
+- if they are private, put the code file in `runtime/lua/vim/_core/`
+- if they are public, choose a new filepath in `runtime/lua/vim/`
+  and add it to VIM_MODULE_FILE in src/nvim/CMakeLists.txt.
+
 
 ==============================================================================
 Data structures
@@ -38,7 +85,7 @@ Data structures
 - kvec or garray.c for dynamic lists / vectors (use StringBuilder for strings)
 
 Use `kvec.h` for most lists. When you absolutely need a linked list, use
-`lib/queue_defs.h` which defines an "intrusive" linked list.
+`src/nvim/lib/queue_defs.h` which defines an "intrusive" linked list.
 
 Buffer text is stored as a tree of line segments, defined in `src/nvim/memline.c`.
 The central idea is found in `ml_find_line`.
@@ -60,9 +107,9 @@ the Nvim editor. (There is an unrelated, low-level concept defined by the
 `event/defs.h#Event` struct, which is just a bag of data passed along the
 internal |event-loop|.)
 
-All new editor events must be implemented using `aucmd_defer()` (and where
-possible, old events should be migrated to this), so that they are processed
-in a predictable manner, which avoids crashes and race conditions. See
+Where possible, new editor events should be implemented using `aucmd_defer()`
+(and where possible, old events migrate to this), so they are processed in
+a predictable manner, which avoids crashes and race conditions. See
 `do_markset_autocmd` for an example.
 
 ==============================================================================
@@ -86,7 +133,7 @@ The source files most directly involved with UI events are:
 
 UI events are defined in `src/nvim/api/ui_events.in.h` , this file is not
 compiled directly, rather it parsed by
-`src/nvim/generators/gen_api_ui_events.lua` which autogenerates wrapper
+`src/gen/gen_api_ui_events.lua` which autogenerates wrapper
 functions used by the source files above. It also generates metadata
 accessible as `api_info().ui_events`.
 
@@ -144,19 +191,17 @@ asynchronous events, which can include:
 Nvim implements this functionality by entering another event loop while
 waiting for characters, so instead of: >py
 
-  def state_enter(state_callback, data):
+  def state_enter(on_state, data):
     do
-      key = readkey()                 # read a key from the user
-    while state_callback(data, key)   # invoke the callback for the current state
-<
+      key = readkey()           # Read a key from the user
+    while on_state(data, key)   # Invoke callback for the current state
 
-The Nvim program loop is more like: >py
+the Nvim program loop is more like: >py
 
-  def state_enter(state_callback, data):
+  def state_enter(on_state, data):
     do
-      event = read_next_event()       # read an event from the operating system
-    while state_callback(data, event) # invoke the callback for the current state
-<
+      event = read_next_event() # Read an event from the OS
+    while on_state(data, event) # Invoke callback for current state
 
 where `event` is something the operating system delivers to us, including (but
 not limited to) user input. The `read_next_event()` part is internally

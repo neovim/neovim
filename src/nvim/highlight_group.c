@@ -175,6 +175,7 @@ static const char *highlight_init_both[] = {
   "default link PmenuKindSel     PmenuSel",
   "default link PmenuSbar        Pmenu",
   "default link PmenuBorder        Pmenu",
+  "default link PmenuShadow        FloatShadow",
   "default link PmenuShadowThrough FloatShadowThrough",
   "default link PreInsert        Added",
   "default link ComplMatchIns    NONE",
@@ -381,7 +382,6 @@ static const char *highlight_init_light[] = {
   "OkMsg                guifg=NvimDarkGreen                                  ctermfg=2",
   "Pmenu                                     guibg=NvimLightGrey3            cterm=reverse",
   "PmenuThumb                                guibg=NvimLightGrey4",
-  "PmenuShadow                               guibg=NvimLightGrey4            ctermbg=0 blend=100",
   "Question             guifg=NvimDarkCyan                                   ctermfg=6",
   "QuickFixLine         guifg=NvimDarkCyan                                   ctermfg=6",
   "RedrawDebugClear                          guibg=NvimLightYellow           ctermfg=15 ctermbg=3",
@@ -395,8 +395,8 @@ static const char *highlight_init_light[] = {
   "SpellCap             guisp=NvimDarkYellow gui=undercurl                   cterm=undercurl",
   "SpellLocal           guisp=NvimDarkGreen  gui=undercurl                   cterm=undercurl",
   "SpellRare            guisp=NvimDarkCyan   gui=undercurl                   cterm=undercurl",
-  "StatusLine           guifg=NvimLightGrey3 guibg=NvimDarkGrey3             cterm=reverse",
-  "StatusLineNC         guifg=NvimDarkGrey2  guibg=NvimLightGrey4            cterm=bold,underline",
+  "StatusLine           guifg=NvimDarkGrey2  guibg=NvimLightGrey4            cterm=reverse",
+  "StatusLineNC         guifg=NvimDarkGrey3  guibg=NvimLightGrey3            cterm=bold,underline",
   "Title                guifg=NvimDarkGrey2                        gui=bold  cterm=bold",
   "Visual                                    guibg=NvimLightGrey4            ctermfg=15 ctermbg=0",
   "WarningMsg           guifg=NvimDarkYellow                                 ctermfg=3",
@@ -467,7 +467,6 @@ static const char *highlight_init_dark[] = {
   "OkMsg                guifg=NvimLightGreen                                ctermfg=10",
   "Pmenu                                      guibg=NvimDarkGrey3           cterm=reverse",
   "PmenuThumb                                 guibg=NvimDarkGrey4",
-  "PmenuShadow                                guibg=NvimDarkGrey4           ctermbg=0 blend=100",
   "Question             guifg=NvimLightCyan                                 ctermfg=14",
   "QuickFixLine         guifg=NvimLightCyan                                 ctermfg=14",
   "RedrawDebugClear                           guibg=NvimDarkYellow          ctermfg=0 ctermbg=11",
@@ -481,8 +480,8 @@ static const char *highlight_init_dark[] = {
   "SpellCap             guisp=NvimLightYellow gui=undercurl                 cterm=undercurl",
   "SpellLocal           guisp=NvimLightGreen  gui=undercurl                 cterm=undercurl",
   "SpellRare            guisp=NvimLightCyan   gui=undercurl                 cterm=undercurl",
-  "StatusLine           guifg=NvimDarkGrey3   guibg=NvimLightGrey3          cterm=reverse",
-  "StatusLineNC         guifg=NvimLightGrey2  guibg=NvimDarkGrey4           cterm=bold,underline",
+  "StatusLine           guifg=NvimLightGrey2  guibg=NvimDarkGrey4           cterm=reverse",
+  "StatusLineNC         guifg=NvimLightGrey3  guibg=NvimDarkGrey3           cterm=bold,underline",
   "Title                guifg=NvimLightGrey2                       gui=bold cterm=bold",
   "Visual                                     guibg=NvimDarkGrey4           ctermfg=0 ctermbg=15",
   "WarningMsg           guifg=NvimLightYellow                               ctermfg=11",
@@ -1901,7 +1900,9 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
   bool adjust = true;
 
   if (!did_header) {
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || msg_col > 0) {
+      msg_putchar('\n');
+    }
     if (got_int) {
       return true;
     }
@@ -2393,6 +2394,7 @@ static void highlight_list_two(int cnt, int id)
   msg_puts_hl(&("N \bI \b!  \b"[cnt / 11]), id, false);
   msg_clr_eos();
   ui_flush();
+  // TODO(justinmk): is this delay needed? ":hi" seems to work without it.
   os_delay(cnt == 99 ? 40 : (uint64_t)cnt * 50, false);
 }
 

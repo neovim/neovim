@@ -1378,6 +1378,34 @@ describe('CursorLine and CursorLineNr highlights', function()
                                                         |
     ]])
   end)
+
+  it('CursorLine overlays hl group linked to Normal', function()
+    local screen = Screen.new(50, 12)
+    screen:add_extra_attr_ids({
+      [101] = { background = Screen.colors.Grey90, foreground = Screen.colors.Grey100 },
+      [102] = { background = Screen.colors.DarkGray, foreground = Screen.colors.WebGreen },
+    })
+    command('hi Normal guibg=black guifg=white')
+    command('hi def link Test Normal')
+    feed('ifoo bar<ESC>')
+    feed(':call matchadd("Test", "bar")<cr>')
+    command('set cursorline')
+    screen:expect([[
+      {21:foo }{101:ba^r}{21:                                           }|
+      {1:~                                                 }|*10
+      :call matchadd("Test", "bar")                     |
+    ]])
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'aaaaa', 'bbbbb' })
+    command('hi AAA guifg=Green guibg=DarkGrey ctermfg=Green ctermbg=DarkGrey')
+    fn.matchadd('AAA', 'aaaaa')
+    command('setlocal winhighlight=Normal:NormalFloat')
+    screen:expect([[
+      {102:aaaa^a}{21:                                             }|
+      {4:bbbbb                                             }|
+      {11:~                                                 }|*9
+      :call matchadd("Test", "bar")                     |
+    ]])
+  end)
 end)
 
 describe('CursorColumn highlight', function()

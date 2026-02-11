@@ -956,7 +956,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       if (!shortmess(SHM_SEARCH)
           && shortmess(SHM_SEARCHCOUNT)
           && (options & SEARCH_MSG)) {
-        give_warning(_(dir == BACKWARD ? top_bot_msg : bot_top_msg), true);
+        give_warning(_(dir == BACKWARD ? top_bot_msg : bot_top_msg), true, false);
       }
       if (extra_arg != NULL) {
         extra_arg->sa_wrapped = true;
@@ -1358,9 +1358,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       *dircp = (char)search_delim;  // restore second '/' or '?' for normal_cmd()
     }
 
-    if (!shortmess(SHM_SEARCH)
-        && ((dirc == '/' && lt(pos, curwin->w_cursor))
-            || (dirc == '?' && lt(curwin->w_cursor, pos)))) {
+    if (!shortmess(SHM_SEARCH) && sia && sia->sa_wrapped) {
       show_top_bot_msg = true;
     }
 
@@ -1484,7 +1482,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
       if (p_ws) {
         pos->lnum = buf->b_ml.ml_line_count;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(top_bot_msg), true);
+          give_warning(_(top_bot_msg), true, false);
         }
       } else {
         pos->lnum = 1;
@@ -1494,7 +1492,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
       if (p_ws) {
         pos->lnum = 1;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning(_(bot_top_msg), true);
+          give_warning(_(bot_top_msg), true, false);
         }
       } else {
         pos->lnum = 1;
@@ -2676,11 +2674,9 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
   }
 
   // keep the message even after redraw, but don't put in history
-  msg_hist_off = true;
   msg_ext_overwrite = true;
   msg_ext_set_kind("search_count");
-  give_warning(msgbuf, false);
-  msg_hist_off = false;
+  give_warning(msgbuf, false, false);
 }
 
 // Add the search count information to "stat".
@@ -3009,7 +3005,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
       char *p_fname = (curr_fname == curbuf->b_fname)
                       ? curbuf->b_ffname : curr_fname;
 
-      if (inc_opt != NULL && strstr(inc_opt, "\\zs") != NULL) {
+      if (strstr(inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.
         new_fname = find_file_name_in_path(incl_regmatch.startp[0],
                                            (size_t)(incl_regmatch.endp[0]
@@ -3083,8 +3079,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           } else {
             // Isolate the file name.
             // Include the surrounding "" or <> if present.
-            if (inc_opt != NULL
-                && strstr(inc_opt, "\\zs") != NULL) {
+            if (strstr(inc_opt, "\\zs") != NULL) {
               // pattern contains \zs, use the match
               p = incl_regmatch.startp[0];
               i = (int)(incl_regmatch.endp[0]

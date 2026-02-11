@@ -55,16 +55,10 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   list(SORT NVIM_RELATIVE_SOURCES)
   add_custom_command(
     OUTPUT ${NVIM_POT}
-    COMMAND $<TARGET_FILE:nvim_bin> -u NONE -i NONE -n --headless --cmd "set cpo+=+"
-      -c "silent source ${CMAKE_CURRENT_SOURCE_DIR}/tojavascript.vim"
-      ${NVIM_POT} ${PROJECT_SOURCE_DIR}/runtime/optwin.vim
     COMMAND ${XGETTEXT_PRG} -o ${NVIM_POT} --default-domain=nvim
       --add-comments --keyword=_ --keyword=N_ --keyword=NGETTEXT:1,2
       -D ${CMAKE_CURRENT_SOURCE_DIR} -D ${CMAKE_CURRENT_BINARY_DIR}
-      ${NVIM_RELATIVE_SOURCES} optwin.js
-    COMMAND $<TARGET_FILE:nvim_bin> -u NONE -i NONE -n --headless --cmd "set cpo+=+"
-      -c "silent source ${CMAKE_CURRENT_SOURCE_DIR}/fixfilenames.vim"
-      ${NVIM_POT} ${PROJECT_SOURCE_DIR}/runtime/optwin.vim
+      ${NVIM_RELATIVE_SOURCES} ${PROJECT_SOURCE_DIR}/runtime/scripts/optwin.lua
     VERBATIM
     DEPENDS ${NVIM_SOURCES} nvim_bin nvim_runtime_deps)
 

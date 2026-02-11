@@ -88,6 +88,7 @@ describe(':checkhealth', function()
       return vim.api.nvim_win_get_config(0).relative
     ]])
     )
+    matches('health%.lua:%d+>$', fn.maparg('q', 'n', false, false))
 
     -- gO should not close the :checkhealth floating window. #34784
     command('checkhealth full_render')
@@ -227,6 +228,7 @@ describe('vim.health', function()
         h2 = { foreground = tonumber('0x6a0dad') },
         Ok = { foreground = Screen.colors.LightGreen },
         Error = { foreground = Screen.colors.Red },
+        Done = { foreground = Screen.colors.NvimDarkGreen },
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
       command('checkhealth foo success1')
@@ -244,7 +246,7 @@ describe('vim.health', function()
                                                           |
         {h2:report 1}                                          |
         - ✅ {Ok:OK} everything is fine                        |
-                                                          |
+        {Done:checkhealth}: checks done                          |
       ]],
       }
     end)
@@ -311,6 +313,7 @@ describe(':checkhealth window', function()
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
+      Done = { foreground = Screen.colors.NvimDarkGreen },
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
       [32] = { foreground = Screen.colors.PaleGreen2 },
@@ -334,7 +337,7 @@ describe(':checkhealth window', function()
                                                         |
       {h2:report 2}                                          |
     ## grid 3
-                                                        |
+      {Done:checkhealth}: checks done                          |
     ]],
     }
   end)
@@ -344,6 +347,7 @@ describe(':checkhealth window', function()
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
+      Done = { foreground = Screen.colors.NvimDarkGreen },
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
       [32] = { foreground = Screen.colors.PaleGreen2 },
@@ -361,7 +365,7 @@ describe(':checkhealth window', function()
       %s                   |
       {1:~                       }|*18
     ## grid 3
-                                                        |
+      {Done:checkhealth}: checks done                          |
     ## grid 4
       ^                         |
       {14:                         }|*3
@@ -422,7 +426,7 @@ describe(':checkhealth window', function()
       %s                                             |
       ~                                                 |*10
     ## grid 3
-                                                        |
+      checkhealth: checks done                          |
     ## grid 4
       ^                                                  |
                                                         |

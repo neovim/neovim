@@ -365,9 +365,11 @@ end
 --- Only the first occurrence of each value is kept.
 --- The operation is performed in-place and the input table is modified.
 ---
---- Accepts an optional `key` argument that if provided is called for each
+--- Accepts an optional `key` argument, which if provided is called for each
 --- value in the list to compute a hash key for uniqueness comparison.
 --- This is useful for deduplicating table values or complex objects.
+--- If `key` returns `nil` for a value, that value will be considered unique,
+--- even if multiple values return `nil`.
 ---
 --- Example:
 --- ```lua
@@ -385,6 +387,7 @@ end
 --- @param t T[]
 --- @param key? fun(x: T): any Optional hash function to determine uniqueness of values
 --- @return T[] : The deduplicated list
+--- @see |Iter:unique()|
 function vim.list.unique(t, key)
   vim.validate('t', t, 'table')
   local seen = {} --- @type table<any,boolean>
@@ -717,6 +720,7 @@ end
 --- vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
 --- vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
 --- ```
+---@see |unpack()|
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
@@ -1472,13 +1476,13 @@ local get_context_state = function(context)
 
       -- Do not override already set state and fall back to `vim.NIL` for
       -- state `nil` values (which still needs restoring later)
-      res[sc][name] = res[sc][name] or vim[sc][name] or vim.NIL
+      res[sc][name] = vim.F.if_nil(res[sc][name], vim[sc][name], vim.NIL)
 
       -- Always track global option value to properly restore later.
       -- This matters for at least `o` and `wo` (which might set either/both
       -- local and global option values).
-      if sc ~= 'env' then
-        res.go[name] = res.go[name] or vim.go[name]
+      if sc ~= 'env' and res.go[name] == nil then
+        res.go[name] = vim.go[name]
       end
     end
   end

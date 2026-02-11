@@ -94,6 +94,9 @@ end
 --- Options for floating windows. See |vim.diagnostic.Opts.Float|.
 --- @field float? boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float
 ---
+--- Options for the statusline component.
+--- @field status? vim.diagnostic.Opts.Status
+---
 --- Update diagnostics in Insert mode
 --- (if `false`, diagnostics are updated on |InsertLeave|)
 --- (default: `false`)
@@ -119,7 +122,7 @@ end
 --- @field signs vim.diagnostic.Opts.Signs
 --- @field severity_sort {reverse?:boolean}
 
---- @class vim.diagnostic.Opts.Float
+--- @class vim.diagnostic.Opts.Float : vim.lsp.util.open_floating_preview.Opts
 ---
 --- Buffer number to show diagnostics from.
 --- (default: current buffer)
@@ -128,7 +131,7 @@ end
 --- Limit diagnostics to the given namespace(s).
 --- @field namespace? integer|integer[]
 ---
---- Show diagnostics from the whole buffer (`buffer"`, the current cursor line
+--- Show diagnostics from the whole buffer (`buffer`), the current cursor line
 --- (`line`), or the current cursor position (`cursor`). Shorthand versions
 --- are also accepted (`c` for `cursor`, `l` for `line`, `b` for `buffer`).
 --- (default: `line`)
@@ -183,10 +186,11 @@ end
 --- prepending it.
 --- Overrides the setting from |vim.diagnostic.config()|.
 --- @field suffix? string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)
+
+--- @class vim.diagnostic.Opts.Status
 ---
---- @field focus_id? string
----
---- @field border? string|string[] see |nvim_open_win()|.
+--- A table mapping |diagnostic-severity| to the text to use for each severity section.
+--- @field text? table<vim.diagnostic.Severity,string>
 
 --- @class vim.diagnostic.Opts.Underline
 ---
@@ -651,6 +655,10 @@ local sign_highlight_map = make_highlight_map('Sign')
 --- @return integer end_col
 --- @return boolean valid
 local function get_logical_pos(diagnostic)
+  if not diagnostic._extmark_id then
+    return diagnostic.lnum, diagnostic.col, diagnostic.end_lnum, diagnostic.end_col, true
+  end
+
   local ns = M.get_namespace(diagnostic.namespace)
   local extmark = api.nvim_buf_get_extmark_by_id(
     diagnostic.bufnr,
@@ -1009,13 +1017,55 @@ local function set_list(loclist, opts)
   end
 end
 
+--- @param a vim.Diagnostic
+--- @param b vim.Diagnostic
+--- @param primary_key string Primary sort key ('severity', 'col', etc)
+--- @param reverse boolean Whether to reverse primary comparison
+--- @param col_fn (fun(diagnostic: vim.Diagnostic): integer)? Optional function to get column value
+--- @return boolean
+local function diagnostic_cmp(a, b, primary_key, reverse, col_fn)
+  local a_val, b_val --- @type integer, integer
+  if col_fn then
+    a_val, b_val = col_fn(a), col_fn(b)
+  else
+    a_val = a[primary_key] --[[@as integer]]
+    b_val = b[primary_key] --[[@as integer]]
+  end
+
+  local cmp = function(x, y)
+    if reverse then
+      return x > y
+    else
+      return x < y
+    end
+  end
+
+  if a_val ~= b_val then
+    return cmp(a_val, b_val)
+  end
+  if a.lnum ~= b.lnum then
+    return cmp(a.lnum, b.lnum)
+  end
+  if a.col ~= b.col then
+    return cmp(a.col, b.col)
+  end
+  if a.end_lnum ~= b.end_lnum then
+    return cmp(a.end_lnum, b.end_lnum)
+  end
+  if a.end_col ~= b.end_col then
+    return cmp(a.end_col, b.end_col)
+  end
+
+  return cmp(a._extmark_id or 0, b._extmark_id or 0)
+end
+
 --- Jump to the diagnostic with the highest severity. First sort the
 --- diagnostics by severity. The first diagnostic then contains the highest severity, and we can
 --- discard all diagnostics with a lower severity.
 --- @param diagnostics vim.Diagnostic[]
 local function filter_highest(diagnostics)
   table.sort(diagnostics, function(a, b)
-    return a.severity < b.severity
+    return diagnostic_cmp(a, b, 'severity', false)
   end)
 
   -- Find the first diagnostic where the severity does not match the highest severity, and remove
@@ -1073,7 +1123,7 @@ local function next_diagnostic(search_forward, opts, use_logical_pos)
 
   --- @param diagnostic vim.Diagnostic
   --- @return integer
-  local function col(diagnostic)
+  local function col_fn(diagnostic)
     return use_logical_pos and select(2, get_logical_pos(diagnostic)) or diagnostic.col
   end
 
@@ -1093,17 +1143,17 @@ local function next_diagnostic(search_forward, opts, use_logical_pos)
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b)
-          return col(a) < col(b)
+          return diagnostic_cmp(a, b, 'col', false, col_fn)
         end
         is_next = function(d)
-          return math.min(col(d), math.max(line_length - 1, 0)) > position[2]
+          return math.min(col_fn(d), math.max(line_length - 1, 0)) > position[2]
         end
       else
         sort_diagnostics = function(a, b)
-          return col(a) > col(b)
+          return diagnostic_cmp(a, b, 'col', true, col_fn)
         end
         is_next = function(d)
-          return math.min(col(d), math.max(line_length - 1, 0)) < position[2]
+          return math.min(col_fn(d), math.max(line_length - 1, 0)) < position[2]
         end
       end
       table.sort(line_diagnostics[lnum], sort_diagnostics)
@@ -1340,7 +1390,25 @@ function M.set(namespace, bufnr, diagnostics, opts)
         -- avoid ending an extmark before start of the line
         if end_col == 0 then
           end_row = end_row - 1
-          end_col = #lines[end_row + 1]
+
+          local end_line = lines[end_row + 1]
+
+          if not end_line then
+            error(
+              'Failed to adjust diagnostic position to the end of a previous line. #lines in a buffer: '
+                .. #lines
+                .. ', lnum: '
+                .. diagnostic.lnum
+                .. ', col: '
+                .. diagnostic.col
+                .. ', end_lnum: '
+                .. diagnostic.end_lnum
+                .. ', end_col: '
+                .. diagnostic.end_col
+            )
+          end
+
+          end_col = #end_line
         end
       end
 
@@ -1417,7 +1485,7 @@ end
 ---@param bufnr? integer Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
 ---@param opts? vim.diagnostic.GetOpts
----@return table : Table with actually present severity values as keys
+---@return table<integer, integer> : Table with actually present severity values as keys
 ---                (see |diagnostic-severity|) and integer counts as values.
 function M.count(bufnr, opts)
   vim.validate('bufnr', bufnr, 'number', true)
@@ -1734,29 +1802,30 @@ M.handlers.underline = {
       local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
 
       for _, diagnostic in ipairs(diagnostics) do
-        local higroup = underline_highlight_map[diagnostic.severity]
+        local higroups = { underline_highlight_map[diagnostic.severity] }
 
         if diagnostic._tags then
-          -- TODO(lewis6991): we should be able to stack these.
           if diagnostic._tags.unnecessary then
-            higroup = 'DiagnosticUnnecessary'
+            table.insert(higroups, 'DiagnosticUnnecessary')
           end
           if diagnostic._tags.deprecated then
-            higroup = 'DiagnosticDeprecated'
+            table.insert(higroups, 'DiagnosticDeprecated')
           end
         end
 
         local lines =
           api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
 
-        vim.hl.range(
-          bufnr,
-          underline_ns,
-          higroup,
-          { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
-          { diagnostic.end_lnum, diagnostic.end_col },
-          { priority = get_priority(diagnostic.severity) }
-        )
+        for _, higroup in ipairs(higroups) do
+          vim.hl.range(
+            bufnr,
+            underline_ns,
+            higroup,
+            { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
+            { diagnostic.end_lnum, diagnostic.end_col },
+            { priority = get_priority(diagnostic.severity) }
+          )
+        end
       end
       save_extmarks(underline_ns, bufnr)
     end)
@@ -1904,11 +1973,7 @@ end
 --- @param diagnostics vim.Diagnostic[]
 local function render_virtual_lines(namespace, bufnr, diagnostics)
   table.sort(diagnostics, function(d1, d2)
-    if d1.lnum == d2.lnum then
-      return d1.col < d2.col
-    else
-      return d1.lnum < d2.lnum
-    end
+    return diagnostic_cmp(d1, d2, 'lnum', false)
   end)
 
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
@@ -2304,11 +2369,11 @@ function M.show(namespace, bufnr, diagnostics, opts)
   if opts_res.severity_sort then
     if type(opts_res.severity_sort) == 'table' and opts_res.severity_sort.reverse then
       table.sort(diagnostics, function(a, b)
-        return a.severity < b.severity
+        return diagnostic_cmp(a, b, 'severity', false)
       end)
     else
       table.sort(diagnostics, function(a, b)
-        return a.severity > b.severity
+        return diagnostic_cmp(a, b, 'severity', true)
       end)
     end
   end
@@ -2402,11 +2467,11 @@ function M.open_float(opts, ...)
   if severity_sort then
     if type(severity_sort) == 'table' and severity_sort.reverse then
       table.sort(diagnostics, function(a, b)
-        return a.severity > b.severity
+        return diagnostic_cmp(a, b, 'severity', true)
       end)
     else
       table.sort(diagnostics, function(a, b)
-        return a.severity < b.severity
+        return diagnostic_cmp(a, b, 'severity', false)
       end)
     end
   end
@@ -2524,8 +2589,8 @@ function M.open_float(opts, ...)
         '%s%s:%s:%s%s',
         default_pre,
         file_name,
-        location.range.start.line,
-        location.range.start.character,
+        location.range.start.line + 1,
+        location.range.start.character + 1,
         info_suffix
       )
       highlights[#highlights + 1] = {
@@ -2879,14 +2944,21 @@ function M.fromqflist(list)
   return diagnostics
 end
 
+local hl_map = {
+  [M.severity.ERROR] = 'DiagnosticSignError',
+  [M.severity.WARN] = 'DiagnosticSignWarn',
+  [M.severity.INFO] = 'DiagnosticSignInfo',
+  [M.severity.HINT] = 'DiagnosticSignHint',
+}
+
 --- Returns formatted string with diagnostics for the current buffer.
 --- The severities with 0 diagnostics are left out.
 --- Example `E:2 W:3 I:4 H:5`
 ---
---- To customise appearance, set diagnostic signs text with
+--- To customise appearance, set diagnostic text for each severity with
 --- ```lua
 --- vim.diagnostic.config({
----   signs = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
+---   status = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
 --- })
 --- ```
 ---@param bufnr? integer Buffer number to get diagnostics from.
@@ -2897,14 +2969,18 @@ function M.status(bufnr)
   vim.validate('bufnr', bufnr, 'number', true)
   bufnr = bufnr or 0
   local counts = M.count(bufnr)
-  local user_signs = vim.tbl_get(M.config() --[[@as vim.diagnostic.Opts]], 'signs', 'text') or {}
+  local user_signs = vim.tbl_get(M.config() --[[@as vim.diagnostic.Opts]], 'status', 'text') or {}
   local signs = vim.tbl_extend('keep', user_signs, { 'E', 'W', 'I', 'H' })
   local result_str = vim
     .iter(pairs(counts))
     :map(function(severity, count)
-      return ('%s:%s'):format(signs[severity], count)
+      return ('%%#%s#%s:%s'):format(hl_map[severity], signs[severity], count)
     end)
     :join(' ')
+
+  if result_str:len() > 0 then
+    result_str = result_str .. '%##'
+  end
 
   return result_str
 end

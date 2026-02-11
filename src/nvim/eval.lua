@@ -314,9 +314,9 @@ M.funcs = {
       always matters.
       Example: >vim
       	call assert_equal('foo', 'bar', 'baz')
-      <Will add the following to |v:errors|:
-      	test.vim line 12: baz: Expected 'foo' but got 'bar' ~
-
+      <Will add the following to |v:errors|: >
+      	test.vim line 12: baz: Expected 'foo' but got 'bar'
+      <
     ]=],
     name = 'assert_equal',
     params = { { 'expected', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
@@ -470,9 +470,9 @@ M.funcs = {
 
       Example: >vim
       	call assert_match('^f.*o$', 'foobar')
-      <Will result in a string to be added to |v:errors|:
-      	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
-
+      <Will result in a string to be added to |v:errors|: >
+      	test.vim line 12: Pattern '^f.*o$' does not match 'foobar'
+      <
     ]=],
     name = 'assert_match',
     params = { { 'pattern', 'string' }, { 'actual', 'string' }, { 'msg', 'string' } },
@@ -1494,57 +1494,6 @@ M.funcs = {
     returns = 'table',
     signature = 'complete_info([{what}])',
   },
-  complete_match = {
-    args = { 0, 2 },
-    base = 0,
-    desc = [=[
-      Searches backward from the given position and returns a List
-      of matches according to the 'isexpand' option.  When no
-      arguments are provided, uses the current cursor position.
-
-      Each match is represented as a List containing
-      [startcol, trigger_text] where:
-      - startcol: column position where completion should start,
-        or -1 if no trigger position is found.  For multi-character
-        triggers, returns the column of the first character.
-      - trigger_text: the matching trigger string from 'isexpand',
-        or empty string if no match was found or when using the
-        default 'iskeyword' pattern.
-
-      When 'isexpand' is empty, uses the 'iskeyword' pattern "\k\+$"
-      to find the start of the current keyword.
-
-      Examples: >vim
-        set isexpand=.,->,/,/*,abc
-        func CustomComplete()
-          let res = complete_match()
-          if res->len() == 0 | return | endif
-          let [col, trigger] = res[0]
-          let items = []
-          if trigger == '/*'
-            let items = ['/** */']
-          elseif trigger == '/'
-            let items = ['/*! */', '// TODO:', '// fixme:']
-          elseif trigger == '.'
-            let items = ['length()']
-          elseif trigger =~ '^\->'
-            let items = ['map()', 'reduce()']
-          elseif trigger =~ '^\abc'
-            let items = ['def', 'ghk']
-          endif
-          if items->len() > 0
-            let startcol = trigger =~ '^/' ? col : col + len(trigger)
-            call complete(startcol, items)
-          endif
-        endfunc
-        inoremap <Tab> <Cmd>call CustomComplete()<CR>
-      <
-    ]=],
-    name = 'complete_match',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
-    returns = 'table',
-    signature = 'complete_match([{lnum}, {col}])',
-  },
   confirm = {
     args = { 1, 4 },
     base = 1,
@@ -2209,12 +2158,17 @@ M.funcs = {
       then the name is also tried without adding an extension.
       On MS-Windows it only checks if the file exists and is not a
       directory, not if it's really executable.
+
       On MS-Windows an executable in the same directory as the Vim
       executable is always found (it's added to $PATH at |startup|).
-      			*NoDefaultCurrentDirectoryInExePath*
-      On MS-Windows an executable in Vim's current working directory
-      is also normally found, but this can be disabled by setting
-      the $NoDefaultCurrentDirectoryInExePath environment variable.
+      			*$NoDefaultCurrentDirectoryInExePath*
+      On MS-Windows when using cmd.exe as 'shell' an executable in
+      Vim's current working directory is also normally found, which
+      can be disabled by setting the
+      `$NoDefaultCurrentDirectoryInExePath` environment variable.
+      This variable is always set by Vim when executing external
+      commands (e.g., via |:!|, |:make|, or |system()|) for security
+      reasons.
 
       The result is a Number:
       	1	exists
@@ -2957,12 +2911,13 @@ M.funcs = {
     desc = [=[
       Escape {string} for use as file name command argument.  All
       characters that have a special meaning, such as `'%'` and `'|'`
-      are escaped with a backslash.
-      For most systems the characters escaped are
-      " \t\n*?[{`$\\%#'\"|!<".  For systems where a backslash
-      appears in a filename, it depends on the value of 'isfname'.
-      A leading '+' and '>' is also escaped (special after |:edit|
-      and |:write|).  And a "-" by itself (special after |:cd|).
+      are escaped with a backslash. For most systems the characters
+      escaped are: >
+      	\t\n *?[{`$\\%#'\"|!<
+      <For systems where a backslash appears in a filename, it
+      depends on the value of 'isfname'. A leading '+' and '>' is
+      also escaped (special after |:edit| and |:write|).  And a "-"
+      by itself (special after |:cd|).
       Returns an empty string on error.
       Example: >vim
       	let fname = '+some str%nge|name'
@@ -3740,7 +3695,7 @@ M.funcs = {
     ]=],
     name = 'getcharsearch',
     params = {},
-    returns = 'table',
+    returns = '{ char: string, forward: 1|0, until: 1|0 }',
     signature = 'getcharsearch()',
   },
   getcharstr = {
@@ -4410,33 +4365,30 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Get the position for String {expr}.
-      The accepted values for {expr} are:
-          .	    The cursor position.
-          $	    The last line in the current buffer.
+      Gets a position, where {expr} is one of:
+          .	    Cursor position.
+          $	    Last line in the current buffer.
           'x	    Position of mark x (if the mark is not set, 0 is
       	    returned for all values).
           w0	    First line visible in current window (one if the
       	    display isn't updated, e.g. in silent Ex mode).
           w$	    Last line visible in current window (this is one
       	    less than "w0" if no lines are visible).
-          v	    When not in Visual mode, returns the cursor
-      	    position.  In Visual mode, returns the other end
-      	    of the Visual area.  A good way to think about
-      	    this is that in Visual mode "v" and "." complement
-      	    each other.  While "." refers to the cursor
-      	    position, "v" refers to where |v_o| would move the
-      	    cursor.  As a result, you can use "v" and "."
-      	    together to work on all of a selection in
-      	    characterwise Visual mode.  If the cursor is at
-      	    the end of a characterwise Visual area, "v" refers
-      	    to the start of the same Visual area.  And if the
-      	    cursor is at the start of a characterwise Visual
-      	    area, "v" refers to the end of the same Visual
-      	    area.  "v" differs from |'<| and |'>| in that it's
-      	    updated right away.
-      Note that a mark in another file can be used.  The line number
-      then applies to another buffer.
+          v	    End of the current Visual selection (unlike |'<|
+      	    |'>| which give the previous, not current, Visual
+      	    selection), or the cursor position if not in Visual
+      	    mode.
+
+      	    To get the current selected region: >vim
+      	      let region = getregionpos(getpos('v'), getpos('.'))
+      <
+      	    Explanation: in Visual mode "v" and "." complement each
+      	    other.  While "." refers to the cursor position, "v"
+      	    refers to where |v_o| would move the cursor.  So you can
+      	    use "v" and "." together to get the selected region.
+
+      Note that if a mark in another file is used, the line number
+      applies to that buffer.
 
       The result is a |List| with four numbers:
           [bufnum, lnum, col, off]
@@ -4453,6 +4405,11 @@ M.funcs = {
       The column number in the returned List is the byte position
       within the line.  To get the character position in the line,
       use |getcharpos()|.
+
+      The visual marks |'<| and |'>| refer to the beginning and end
+      of the visual selection relative to the buffer.  Note that
+      this differs from |setpos()|, where they are relative to the
+      cursor position.
 
       Note that for '< and '> Visual mode matters: when it is "V"
       (visual line mode) the column of '< is zero and the column of
@@ -4746,8 +4703,14 @@ M.funcs = {
       the offset of the character's first cell not included in the
       selection, otherwise all its cells are included.
 
-      Apart from the options supported by |getregion()|, {opts} also
-      supports the following:
+      To get the current visual selection: >vim
+        let region = getregionpos(getpos('v'), getpos('.'))
+      <
+      The {opts} Dict supports the following items:
+
+      	type		See |getregion()|.
+
+      	exclusive	See |getregion()|.
 
       	eol		If |TRUE|, indicate positions beyond
       			the end of a line with "col" values
@@ -5005,8 +4968,12 @@ M.funcs = {
       			'wrap' is off
       	loclist		1 if showing a location list
       	quickfix	1 if quickfix or location list window
-      	terminal	1 if a terminal window
+      	status_height	status lines height (0 or 1)
       	tabnr		tab page number
+      	terminal	1 if a terminal window
+      	textoff		number of columns occupied by any
+      			'foldcolumn', 'signcolumn' and line
+      			number in front of the text
       	topline		first displayed buffer line
       	variables	a reference to the dictionary with
       			window-local variables
@@ -5015,9 +4982,6 @@ M.funcs = {
       			otherwise
       	wincol		leftmost screen column of the window;
       			"col" from |win_screenpos()|
-      	textoff		number of columns occupied by any
-      			'foldcolumn', 'signcolumn' and line
-      			number in front of the text
       	winid		|window-ID|
       	winnr		window number
       	winrow		topmost screen line of the window;
@@ -8342,54 +8306,54 @@ M.funcs = {
       					*E1500*
       You cannot mix positional and non-positional arguments: >vim
           echo printf("%s%1$s", "One", "Two")
-      <    E1500: Cannot mix positional and non-positional arguments:
-          %s%1$s
-
+          " E1500: Cannot mix positional and non-positional arguments:
+          " %s%1$s
+      <
       					*E1501*
       You cannot skip a positional argument in a format string: >vim
           echo printf("%3$s%1$s", "One", "Two", "Three")
-      <    E1501: format argument 2 unused in $-style format:
-          %3$s%1$s
-
+          " E1501: format argument 2 unused in $-style format:
+          " %3$s%1$s
+      <
       					*E1502*
       You can re-use a [field-width] (or [precision]) argument: >vim
-          echo printf("%1$d at width %2$d is: %01$*2$d", 1, 2)
-      <    1 at width 2 is: 01
-
+          echo printf("%1$d at width %2$d is: %1$0*2$d", 1, 2)
+          " 1 at width 2 is: 01
+      <
       However, you can't use it as a different type: >vim
-          echo printf("%1$d at width %2$ld is: %01$*2$d", 1, 2)
-      <    E1502: Positional argument 2 used as field width reused as
-          different type: long int/int
-
+          echo printf("%1$d at width %2$ld is: %1$0*2$d", 1, 2)
+          " E1502: Positional argument 2 used as field width reused as
+          " different type: long int/int
+      <
       					*E1503*
       When a positional argument is used, but not the correct number
       or arguments is given, an error is raised: >vim
-          echo printf("%1$d at width %2$d is: %01$*2$.*3$d", 1, 2)
-      <    E1503: Positional argument 3 out of bounds: %1$d at width
-          %2$d is: %01$*2$.*3$d
-
+          echo printf("%1$d at width %2$d is: %1$0*2$.*3$d", 1, 2)
+          " E1503: Positional argument 3 out of bounds: %1$d at width
+          " %2$d is: %1$0*2$.*3$d
+      <
       Only the first error is reported: >vim
-          echo printf("%01$*2$.*3$d %4$d", 1, 2)
-      <    E1503: Positional argument 3 out of bounds: %01$*2$.*3$d
-          %4$d
-
+          echo printf("%1$0*2$.*3$d %4$d", 1, 2)
+          " E1503: Positional argument 3 out of bounds: %1$0*2$.*3$d
+          " %4$d
+      <
       					*E1504*
       A positional argument can be used more than once: >vim
           echo printf("%1$s %2$s %1$s", "One", "Two")
-      <    One Two One
-
+          " One Two One
+      <
       However, you can't use a different type the second time: >vim
           echo printf("%1$s %2$s %1$d", "One", "Two")
-      <    E1504: Positional argument 1 type used inconsistently:
-          int/string
-
+          " E1504: Positional argument 1 type used inconsistently:
+          " int/string
+      <
       					*E1505*
       Various other errors that lead to a format string being
       wrongly formatted lead to: >vim
           echo printf("%1$d at width %2$d is: %01$*2$.3$d", 1, 2)
-      <    E1505: Invalid format specifier: %1$d at width %2$d is:
-          %01$*2$.3$d
-
+          " E1505: Invalid format specifier: %1$d at width %2$d is:
+          " %01$*2$.3$d
+      <
       					*E1507*
       This internal error indicates that the logic to parse a
       positional format argument ran into a problem that couldn't be
@@ -9922,7 +9886,7 @@ M.funcs = {
 
     ]=],
     name = 'setcharsearch',
-    params = { { 'dict', 'string' } },
+    params = { { 'dict', '{ char?: string, forward?: 1|0, until?: 1|0 }' } },
     signature = 'setcharsearch({dict})',
   },
   setcmdline = {
@@ -10088,7 +10052,12 @@ M.funcs = {
 
     ]=],
     name = 'setloclist',
-    params = { { 'nr', 'integer' }, { 'list', 'any' }, { 'action', 'string' }, { 'what', 'table' } },
+    params = {
+      { 'nr', 'integer' },
+      { 'list', 'vim.quickfix.entry[]' },
+      { 'action', 'string' },
+      { 'what', 'vim.fn.setqflist.what' },
+    },
     signature = 'setloclist({nr}, {list} [, {action} [, {what}]])',
   },
   setmatches = {
@@ -10144,9 +10113,14 @@ M.funcs = {
       preferred column is not set.  When it is present and setting a
       mark position it is not used.
 
-      Note that for '< and '> changing the line number may result in
-      the marks to be effectively be swapped, so that '< is always
-      before '>.
+      Note that for |'<| and |'>| changing the line number may
+      result in the marks to be effectively swapped, so that |'<| is
+      always before |'>|.
+
+      The visual marks |'<| and |'>| refer to the beginning and end
+      of the visual selection relative to the cursor position.
+      Note that this differs from |getpos()|, where they are
+      relative to the buffer.
 
       Returns 0 when the position could be set, -1 otherwise.
       An error message is given if {expr} is invalid.
@@ -11558,6 +11532,7 @@ M.funcs = {
     ]=],
     name = 'strcharlen',
     params = { { 'string', 'string' } },
+    returns = 'integer',
     signature = 'strcharlen({string})',
   },
   strcharpart = {
@@ -11585,8 +11560,9 @@ M.funcs = {
       { 'src', 'string' },
       { 'start', 'integer' },
       { 'len', 'integer' },
-      { 'skipcc', 'boolean' },
+      { 'skipcc', '0|1|boolean' },
     },
+    returns = 'string',
     signature = 'strcharpart({src}, {start} [, {len} [, {skipcc}]])',
   },
   strchars = {
@@ -11622,7 +11598,7 @@ M.funcs = {
       <
     ]=],
     name = 'strchars',
-    params = { { 'string', 'string' }, { 'skipcc', 'boolean' } },
+    params = { { 'string', 'string' }, { 'skipcc', '0|1|boolean' } },
     returns = 'integer',
     signature = 'strchars({string} [, {skipcc}])',
   },
@@ -12215,7 +12191,7 @@ M.funcs = {
   synconcealed = {
     args = 2,
     desc = [=[
-      The result is a |List| with currently three items:
+      The result is a |List| with three items:
       1. The first item in the list is 0 if the character at the
          position {lnum} and {col} is not part of a concealable
          region, 1 if it is.  {lnum} is used like with |getline()|.
@@ -13248,7 +13224,8 @@ M.funcs = {
     desc = [=[
       Go to window with ID {expr}.  This may also change the current
       tabpage.
-      Return TRUE if successful, FALSE if the window cannot be found.
+      Return TRUE if successful, FALSE if the window cannot be
+      found.
 
     ]=],
     name = 'win_gotoid',

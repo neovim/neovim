@@ -1,7 +1,7 @@
 *if_perl.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Jacques Germishuys
+		  VIM REFERENCE MANUAL	  by Jacques Germishuys
 
 The perl Interface to Vim				*if_perl* *perl*
 

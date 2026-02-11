@@ -2,7 +2,7 @@
 " Language: ABB Rapid Command
 " Maintainer: Patrick Meiser-Knosowski <knosowski@graeffrobotics.de>
 " Version: 2.3.0
-" Last Change: 21. Jul 2023
+" Last Change: 28. Oct 2025
 " Credits: Thanks for beta testing to Thomas Baginski
 "
 " Suggestions of improvement are very welcome. Please email me!
@@ -20,7 +20,7 @@
 "
 " TODO:   - highlight rapid constants and maybe constants from common
 "           technology packages
-"         - optimize rapidErrorStringTooLong 
+"         - optimize rapidErrorStringTooLong
 "         - error highlight for missing 2nd point in MoveCirc et al
 
 " Init {{{
@@ -36,13 +36,13 @@ let s:keepcpo= &cpo
 set cpo&vim
 
 " if colorscheme is tortus rapidNoHighLink defaults to 1
-if (get(g:,'colors_name'," ")=="tortus" || get(g:,'colors_name'," ")=="tortusless") 
+if (get(g:,'colors_name'," ")=="tortus" || get(g:,'colors_name'," ")=="tortusless")
       \&& !exists("g:rapidGroupName")
-  let g:rapidGroupName=1 
+  let g:rapidGroupName=1
 endif
 " rapidGroupName defaults to 0 if it's not initialized yet or 0
 if !get(g:,"rapidGroupName",0)
-  let g:rapidGroupName=0 
+  let g:rapidGroupName=0
 endif
 
 " Rapid does ignore case
@@ -131,7 +131,7 @@ else
   " sync for regions from a line comment or the start of a function
   syn sync match rapidSync grouphere NONE /\v\c^\s*%(!|%(task\s+|local\s+)?%(module|proc|func|trap|record)>)/
 
-  " Comment {{{ 
+  " Comment {{{
   " TODO Comment
   syn match rapidTodoComment contained /\<TODO\>\|\<FIXME\>\|\<XXX\>/
   highlight default link rapidTodoComment Todo
@@ -141,7 +141,7 @@ else
   " Line comment
   syn match rapidComment /!.*$/ contains=rapidTodoComment,rapidDebugComment,@Spell
   highlight default link rapidComment Comment
-  " }}} Comment 
+  " }}} Comment
 
   " Header {{{
   syn match rapidHeader /^%%%/
@@ -174,19 +174,21 @@ else
   " syn keyword rapidType num
   syn keyword rapidType opcalc opnum orient paridnum paridvalidnum pathrecid pnpdata pos pose proc_times progdisp o_jointtarget o_robtarget
   syn keyword rapidType rawbytes restartdata rmqheader rmqmessage rmqslot robjoint robtarget
-  syn keyword rapidType searchdata sensor sensorstate sensorvardata shapedata signalai signalao signaldi signaldo signalgi signalgo signalorigin singdata socketdev socketstatus speeddata stopmovestartmove_mem stoppoint stoppointdata string stringdig sup_timeouts supervtype switch symnum syncident 
+  syn keyword rapidType searchdata sensor sensorstate sensorvardata shapedata signalai signalao signaldi signaldo signalgi signalgo signalorigin singdata socketdev socketstatus speeddata stopmovestartmove_mem stoppoint stoppointdata string stringdig sup_timeouts supervtype switch symnum syncident
   syn keyword rapidType taskid tasks tasksatstart testsignal tooldata tpnum trapdata triggdata triggflag triggios triggiosdnum triggmode triggstrgo tsp_status tunegtype tunetype
   syn keyword rapidType uishownum veldata visiondata wobjdata wzstationary wztemporary zonedata
   " SoftMove data types
   syn keyword rapidType css_offset_dir css_soft_dir cssframe
   " arc data types
-  syn keyword rapidType advSeamData arcdata flystartdata seamdata arctrackdata opttrackdata weavedata welddata 
+  syn keyword rapidType advSeamData arcdata flystartdata seamdata arctrackdata opttrackdata weavedata welddata
   " conveyor tracking data types
   syn keyword rapidType indcnvdata
   " Integrated Vision data types
-  syn keyword rapidType cameradev cameratarget 
+  syn keyword rapidType cameradev cameratarget
   " arc Weldguide and MultiPass data types
-  syn keyword rapidType adaptdata trackdata multidata 
+  syn keyword rapidType adaptdata trackdata multidata
+  " GAP
+  syn keyword rapidType partdata partadv ee_event menudata
   " dispense data types
   syn keyword rapidType beaddata equipdata
   " Spot data types
@@ -194,7 +196,7 @@ else
   " Tool change data types
   syn keyword rapidType standno ToolInfo toolno
   " Continuous Application Platform data types
-  syn keyword rapidType capaptrreferencedata capdata capevent caplatrackdata capmvsttim capspeeddata capspeeddata capstopmode captestno captrackdata capweavedata flypointdata processtimes restartblkdata supervtimeouts weavestartdata 
+  syn keyword rapidType capaptrreferencedata capdata capevent caplatrackdata capmvsttim capspeeddata capspeeddata capstopmode captestno captrackdata capweavedata flypointdata processtimes restartblkdata supervtimeouts weavestartdata
   " Bulls Eye data types
   syn keyword rapidType be_device be_scan be_tooldesign
   " Force Control data types
@@ -202,29 +204,29 @@ else
   " Discrete application platform data types
   syn keyword rapidType dadescapp dadescprc daintdata
   " VW Konzernstandard VWKS_1.07.02
-  syn keyword rapidType merker 
-  syn keyword rapidType frgnum frgwert robnum 
-  syn keyword rapidType fmnum applid calibdatavorr stepdata 
+  syn keyword rapidType merker
+  syn keyword rapidType frgnum frgwert robnum
+  syn keyword rapidType fmnum applid calibdatavorr stepdata
   syn keyword rapidType tsmethode tsdaten teilspeicherdaten
-  syn keyword rapidType greiferdaten greiferposition bauteildaten bauteilkontrolle g_datenident g_sensor g_signal g_teilident g_ventil 
-  syn keyword rapidType strgnum typnum 
-  syn keyword rapidType hubnum kopfnum 
-  syn keyword rapidType applservicetype 
-  syn keyword rapidType applfraesdaten kwdionum 
+  syn keyword rapidType greiferdaten greiferposition bauteildaten bauteilkontrolle g_datenident g_sensor g_signal g_teilident g_ventil
+  syn keyword rapidType strgnum typnum
+  syn keyword rapidType hubnum kopfnum
+  syn keyword rapidType applservicetype
+  syn keyword rapidType applfraesdaten kwdionum
   syn keyword rapidType butechnum
-  syn keyword rapidType toolnum dbnum 
+  syn keyword rapidType toolnum dbnum
   " das folgende sind datentypen aber das kann man doch nicht machen...
   " syn keyword rapidType position wert
   syn keyword rapidType camdata camlimitdata cammode camprotocoldata camstatus camsequence campositionstatus
-  syn keyword rapidType saposnum sabereichnum autofocusnum focusposnum lascaledata laleistungnum larobnum laprognum uebwnum dgbanum dgjobnum gasspuelnum davalve gasuebwnum 
-  syn keyword rapidType lsfigurnum lsstarttype 
-  syn keyword rapidType lwprognum lwdiodnum lsstarttype 
-  syn keyword rapidType lztype diskrethubnum lztipnum 
+  syn keyword rapidType saposnum sabereichnum autofocusnum focusposnum lascaledata laleistungnum larobnum laprognum uebwnum dgbanum dgjobnum gasspuelnum davalve gasuebwnum
+  syn keyword rapidType lsfigurnum lsstarttype
+  syn keyword rapidType lwprognum lwdiodnum lsstarttype
+  syn keyword rapidType lztype diskrethubnum lztipnum
   syn keyword rapidType gblmethod
-  syn keyword rapidType buatypenum buatechnum buadirnum 
+  syn keyword rapidType buatypenum buatechnum buadirnum
   highlight default link rapidType Type
   " Storage class
-  syn keyword rapidStorageClass LOCAL TASK VAR PERS CONST ALIAS NOVIEW NOSTEPIN VIEWONLY READONLY SYSMODULE INOUT
+  syn keyword rapidStorageClass LOCAL TASK VAR PERS CONST ALIAS NOVIEW NOSTEPIN VIEWONLY READONLY SYSMODULE INOUT REF
   highlight default link rapidStorageClass StorageClass
   " Not a typedef but I like to have those highlighted different then types,
   " structures or strorage classes
@@ -251,10 +253,10 @@ else
   syn keyword rapidKeyword AccSet ActEventBuffer ActUnit Add AliasCamera AliasIO AliasIOReset BitClear BitSet BookErrNo BrakeCheck
   syn keyword rapidKeyword CallByVar CancelLoad CheckProgRef CirPathMode Clear ClearIOBuff ClearPath ClearRawBytes ClkReset ClkStart ClkStop Close CloseDir ConfJ ConfL CONNECT CopyFile CopyRawBytes CornerPathWarning CorrClear CorrCon CorrDiscon CorrWrite
   syn keyword rapidKeyword CSSAct CSSDeact CSSForceOffsetAct CSSForceOffsetDeact CSSOffsetTune CyclicBrakeCheck
-  syn keyword rapidKeyword DeactEventBuffer DeactUnit Decr DitherAct DitherDeact DropSensor 
+  syn keyword rapidKeyword DeactEventBuffer DeactUnit Decr DitherAct DitherDeact DropSensor
   syn keyword rapidKeyword EGMActJoint EGMActMove EGMActPose EGMGetId EGMReset EGMSetupAI EGMSetupAO EGMSetupGI EGMSetupLTAPP EGMSetupUC EOffsOff EOffsOn EOffsSet EraseModule ErrLog ErrWrite
-  syn keyword rapidKeyword FitCircle FricIdInit FricIdEvaluate FricIdSetFricLevels 
-  syn keyword rapidKeyword GetDataVal GetGroupSignalInfo GetJointData GetSysData GetTorqueMargin GetTrapData GripLoad HollowWristReset 
+  syn keyword rapidKeyword FitCircle FricIdInit FricIdEvaluate FricIdSetFricLevels
+  syn keyword rapidKeyword GetDataVal GetGroupSignalInfo GetJointData GetSysData GetTorqueMargin GetTrapData GripLoad HollowWristReset
   syn keyword rapidKeyword IDelete IDisable IEnable IError Incr IndReset InvertDO IOBusStart IOBusState IoCtrlAxis_RefSync IoCtrlAxis_RefSyncOff IoCtrlAxis_RefSyncOn IODisable IOEnable IPers IRMQMessage ISignalAI ISignalAO ISignalDI ISignalDO ISignalGI ISignalGO ISleep ITimer IVarValue IWatch
   syn keyword rapidKeyword Load LoadId MakeDir ManLoadIdProc MatrixSolve MatrixSolveQR MatrixSVD MechUnitLoad MotionProcessModeSet MotionSup MToolRotCalib MToolTCPCalib Open OpenDir
   syn keyword rapidKeyword PackDNHeader PackRawBytes PathAccLim PathLengthReset PathLengthStart PathLengthStop PathRecStart PathRecStop PathResol PDispOff PDispOn PDispSet ProcerrRecovery PrxActivAndStoreRecord PrxActivRecord PrxDbgStoreRecord PrxDeactRecord PrxResetPos PrxResetRecords PrxSetPosOffset PrxSetRecordSampleTime PrxSetSyncalarm PrxStartRecord PrxStopRecord PrxStoreRecord PrxUseFileRecord PulseDO
@@ -263,34 +265,34 @@ else
   syn keyword rapidKeyword TestSignDefine TestSignReset TextTabInstall TPErase TPReadDnum TPReadFK TPReadNum TPShow TPWrite TriggCheckIO TriggDataCopy TriggDataReset TriggEquip TriggInt TriggIO TriggRampAO TriggSpeed TriggStopProc TryInt TuneReset TuneServo
   syn keyword rapidKeyword UIMsgBox UIMsgWrite UIMsgWriteAbort UIShow UnLoad UnpackRawBytes VelSet WaitAI WaitAO WaitDI WaitDO WaitGI WaitGO WaitLoad WaitRob WaitSensor WaitSyncTask WaitTestAndSet WaitTime WaitUntil WarmStart WITH WorldAccLim Write WriteAnyBin WriteBin WriteBlock WriteCfgData WriteRawBytes WriteStrBin WriteVar WriteVarArr WZBoxDef WZCylDef WZDisable WZDOSet WZEnable WZFree WZHomeJointDef WZLimJointDef WZLimSup WZSphDef
   " arc instructions
-  syn keyword rapidKeyword ArcRefresh RecoveryMenu RecoveryMenuWR RecoveryPosSet RecoveryPosReset SetWRProcName 
+  syn keyword rapidKeyword ArcRefresh RecoveryMenu RecoveryMenuWR RecoveryPosSet RecoveryPosReset SetWRProcName
   " conveyor tracking instructions
-  syn keyword rapidKeyword UseACCProfile WaitWObj DropWObj RecordProfile WaitAndRecProf StoreProfile LoadProfile ActivateProfile DeactProfile CnvGenInstr CnvSync CnvGenInstr IndCnvInit IndCnvEnable IndCnvDisable IndCnvReset IndCnvAddObject 
+  syn keyword rapidKeyword UseACCProfile WaitWObj DropWObj RecordProfile WaitAndRecProf StoreProfile LoadProfile ActivateProfile DeactProfile CnvGenInstr CnvSync CnvGenInstr IndCnvInit IndCnvEnable IndCnvDisable IndCnvReset IndCnvAddObject
   syn keyword rapidKeyword UseReachableTargets GetMaxUsageTime ResetMaxUsageTime CnvPredictReach
   " Integrated Vision instructions
-  syn keyword rapidKeyword CamFlush CamGetParameter CamGetResult CamLoadJob CamReqImage CamSetExposure CamSetParameter CamSetProgramMode CamSetRunMode CamStartLoadJob CamWaitLoadJob 
+  syn keyword rapidKeyword CamFlush CamGetParameter CamGetResult CamLoadJob CamReqImage CamSetExposure CamSetParameter CamSetProgramMode CamSetRunMode CamStartLoadJob CamWaitLoadJob
   " arc Weldguide and MultiPass instructions
   syn keyword rapidKeyword MPSavePath MPLoadPath MPReadInPath MPOffsEaxOnPath
   " Paint instructions
   syn keyword rapidKeyword ConsoleWrite IpsSetParam PntProdUserLog SetBrush SetBrushFac
   " Spot instructions
-  syn keyword rapidKeyword SetForce Calibrate ReCalcTCP IndGunMove IndGunMoveReset OpenHighLift CloseHighLift SwSetIntSpotData SwSetIntForceData SwSetIntGunData SwSetIntSimData SwGetCalibData SwGetFixTipData 
+  syn keyword rapidKeyword SetForce Calibrate ReCalcTCP IndGunMove IndGunMoveReset OpenHighLift CloseHighLift SwSetIntSpotData SwSetIntForceData SwSetIntGunData SwSetIntSimData SwGetCalibData SwGetFixTipData
   " Tool change instructions
   syn keyword rapidKeyword TcCloseCover TcDropOffTool TcLockTool TcOpenCover TcPickupTool TcUnlockTool
   " dispense instructions
   syn keyword rapidKeyword SetTmSignal SyncWWObj
   " Continuous Application Platform instructions
-  syn keyword rapidKeyword CapAPTrSetup CapAPTrSetupAI CapAPTrSetupAO  CapAPTrSetupPERS CapCondSetDO CapEquiDist CapNoProcess CapRefresh CAPSetStopMode CapWeaveSync ICap InitSuperv IPathPos RemoveSuperv SetupSuperv 
+  syn keyword rapidKeyword CapAPTrSetup CapAPTrSetupAI CapAPTrSetupAO  CapAPTrSetupPERS CapCondSetDO CapEquiDist CapNoProcess CapRefresh CAPSetStopMode CapWeaveSync ICap InitSuperv IPathPos RemoveSuperv SetupSuperv
   " Bulls Eye instructions
   syn keyword rapidKeyword BECheckTcp BEDebugState BERefPointer BESetupToolJ BETcpExtend BEUpdateTcp
   " Force Control instructions
-  syn keyword rapidKeyword FCAct FCCalib FCCondForce FCCondOrient FCCondPos FCCondReoriSpeed FCCondTCPSpeed FCCondTorque FCCondWaitWhile FCDeact FCPress1LStart FCPressC FCPressEnd FCPressL FCRefCircle FCRefForce FCRefLine FCRefMoveFrame FCRefRot FCRefSpiral FCRefSprForceCart FCRefStart FCRefStop FCRefTorque FCResetDampingTune FCResetLPFilterTune FCSpdChgAct FCSpdChgDeact FCSpdChgTunSet FCSpdChgTunReset FCSetDampingTune FCSetLPFilterTune FCSupvForce FCSupvOrient FCSupvPos FCSupvReoriSpeed FCSupvTCPSpeed FCSupvTorque 
+  syn keyword rapidKeyword FCAct FCCalib FCCondForce FCCondOrient FCCondPos FCCondReoriSpeed FCCondTCPSpeed FCCondTorque FCCondWaitWhile FCDeact FCPress1LStart FCPressC FCPressEnd FCPressL FCRefCircle FCRefForce FCRefLine FCRefMoveFrame FCRefRot FCRefSpiral FCRefSprForceCart FCRefStart FCRefStop FCRefTorque FCResetDampingTune FCResetLPFilterTune FCSpdChgAct FCSpdChgDeact FCSpdChgTunSet FCSpdChgTunReset FCSetDampingTune FCSetLPFilterTune FCSupvForce FCSupvOrient FCSupvPos FCSupvReoriSpeed FCSupvTCPSpeed FCSupvTorque
   " Discrete application platform instructions
-  syn keyword rapidKeyword DaActProc DaDeactAllProc DaDeactProc DaDefExtSig DaDefProcData DaDefProcSig DaDefUserData DaGetCurrData DaSetCurrData DaSetupAppBehav DaStartManAction DaGetAppDescr DaGetAppIndex DaGetNumOfProcs DaGetNumOfRob DaGetPrcDescr 
+  syn keyword rapidKeyword DaActProc DaDeactAllProc DaDeactProc DaDefExtSig DaDefProcData DaDefProcSig DaDefUserData DaGetCurrData DaSetCurrData DaSetupAppBehav DaStartManAction DaGetAppDescr DaGetAppIndex DaGetNumOfProcs DaGetNumOfRob DaGetPrcDescr
   " Production Manager instructions
   syn keyword rapidKeyword ExecEngine PMgrGetNextPart PMgrSetNextPart PMgrRunMenu
   " Homepos-Running instructions
-  syn keyword rapidKeyword HR_Exit HR_ExitCycle HR_SavePos HR_SetMoveToStartPos HR_SetTypeDIndex HR_SetTypeIndex 
+  syn keyword rapidKeyword HR_Exit HR_ExitCycle HR_SavePos HR_SetMoveToStartPos HR_SetTypeDIndex HR_SetTypeIndex
   highlight default link rapidKeyword Keyword
   " Exception
   syn keyword rapidException Exit ErrRaise ExitCycle Raise RaiseToUser Retry Return TryNext
@@ -302,47 +304,47 @@ else
   " uncategorized yet
   syn keyword rapidMovement MovePnP
   syn keyword rapidMovement EGMMoveC EGMMoveL EGMRunJoint EGMRunPose EGMStop
-  syn keyword rapidMovement IndAMove IndCMove IndDMove IndRMove 
+  syn keyword rapidMovement IndAMove IndCMove IndDMove IndRMove
   " common instructions
-  syn keyword rapidMovement MoveAbsJ MoveC MoveExtJ MoveJ MoveL 
-  syn keyword rapidMovement MoveCAO MoveCDO MoveCGO MoveCSync MoveJAO MoveJDO MoveJGO MoveJSync MoveLAO MoveLDO MoveLGO MoveLSync 
+  syn keyword rapidMovement MoveAbsJ MoveC MoveExtJ MoveJ MoveL
+  syn keyword rapidMovement MoveCAO MoveCDO MoveCGO MoveCSync MoveJAO MoveJDO MoveJGO MoveJSync MoveLAO MoveLDO MoveLGO MoveLSync
   syn keyword rapidMovement SearchC SearchExtJ SearchL
-  syn keyword rapidMovement TriggC TriggJ TriggL TriggJIOs TriggLIOs
+  syn keyword rapidMovement TriggAbsJ TriggC TriggJ TriggL TriggJIOs TriggLIOs
   " Arc instructions
-  syn keyword rapidMovement ArcC ArcC1 ArcC2 ArcCEnd ArcC1End ArcC2End ArcCStart ArcC1Start ArcC2Start 
-  syn keyword rapidMovement ArcL ArcL1 ArcL2 ArcLEnd ArcL1End ArcL2End ArcLStart ArcL1Start ArcL2Start ArcMoveExtJ 
+  syn keyword rapidMovement ArcC ArcC1 ArcC2 ArcCEnd ArcC1End ArcC2End ArcCStart ArcC1Start ArcC2Start
+  syn keyword rapidMovement ArcL ArcL1 ArcL2 ArcLEnd ArcL1End ArcL2End ArcLStart ArcL1Start ArcL2Start ArcMoveExtJ
   " Arc Weldguide and MultiPass instructions
-  syn keyword rapidMovement ArcRepL ArcAdaptLStart ArcAdaptL ArcAdaptC ArcAdaptLEnd ArcAdaptCEnd ArcCalcLStart ArcCalcL ArcCalcC ArcCalcLEnd ArcCalcCEnd ArcAdaptRepL 
-  syn keyword rapidMovement Break 
+  syn keyword rapidMovement ArcRepL ArcAdaptLStart ArcAdaptL ArcAdaptC ArcAdaptLEnd ArcAdaptCEnd ArcCalcLStart ArcCalcL ArcCalcC ArcCalcLEnd ArcCalcCEnd ArcAdaptRepL
+  syn keyword rapidMovement Break
   " Continuous Application Platform instructions
   syn keyword rapidMovement CapC CapL CapLATrSetup CSSDeactMoveL ContactL
   " Dispense instructions
   syn keyword rapidMovement DispL DispC
   " Nut instructions"
   syn keyword rapidMovement NutL NutJ
-  syn keyword rapidMovement PathRecMoveBwd PathRecMoveFwd 
+  syn keyword rapidMovement PathRecMoveBwd PathRecMoveFwd
   " Paint instructions"
   syn keyword rapidMovement PaintL PaintLSig PaintLDO PaintC
   syn keyword rapidMovement StartMove StartMoveRetry StepBwdPath StopMove StopMoveReset
   " Spot instructions
-  syn keyword rapidMovement SpotL SpotJ SpotML SpotMJ CalibL CalibJ MeasureWearL 
+  syn keyword rapidMovement SpotL SpotJ SpotML SpotMJ CalibL CalibJ MeasureWearL
   " Homepos-Running instructions
   syn keyword rapidMovement SMoveJ SMoveJDO SMoveJGO SMoveJSync SMoveL SMoveLDO SMoveLGO SMoveLSync SSearchL STriggJ STriggL
-  syn keyword rapidMovement HR_ContMove HR_MoveBack HR_MoveRoutine HR_MoveTo HR_MoveToHome SCSSDeactMoveL 
+  syn keyword rapidMovement HR_ContMove HR_MoveBack HR_MoveRoutine HR_MoveTo HR_MoveToHome SCSSDeactMoveL
   " Discrete application platform instructions
   syn keyword rapidMovement DaProcML DaProcMJ
   " VW Konzernstandard VWKS_1.07.02
   syn keyword rapidMovement MoveABS  MoveABS_FB  MoveABS_FRG  MoveABS_ROB
   syn keyword rapidMovement MoveCIRC MoveCIRC_FB MoveCIRC_FRG MoveCIRC_ROB
-  syn keyword rapidMovement MoveLIN  MoveLIN_FB  MoveLIN_FRG  MoveLIN_ROB 
-  syn keyword rapidMovement MovePTP  MovePTP_FB  MovePTP_FRG  MovePTP_ROB 
-  syn keyword rapidMovement SearchCIRC SearchCIRC_M 
-  syn keyword rapidMovement SearchLIN  SearchLIN_M 
+  syn keyword rapidMovement MoveLIN  MoveLIN_FB  MoveLIN_FRG  MoveLIN_ROB
+  syn keyword rapidMovement MovePTP  MovePTP_FB  MovePTP_FRG  MovePTP_ROB
+  syn keyword rapidMovement SearchCIRC SearchCIRC_M
+  syn keyword rapidMovement SearchLIN  SearchLIN_M
   syn keyword rapidMovement MoveABS_AO  MoveABS_DO  MoveABS_GO
   syn keyword rapidMovement MoveCIRC_AO MoveCIRC_DO MoveCIRC_GO
   syn keyword rapidMovement MoveLIN_AO  MoveLIN_DO  MoveLIN_GO
   syn keyword rapidMovement KW_LoesenLIN
-  syn keyword rapidMovement SPZ_FraesenLIN SPZ_FraesenPTP SPZ_MessenLIN SPZ_MessenPTP SPZ_LIN SPZ_PTP 
+  syn keyword rapidMovement SPZ_FraesenLIN SPZ_FraesenPTP SPZ_MessenLIN SPZ_MessenPTP SPZ_LIN SPZ_PTP
   syn keyword rapidMovement BZ_LIN BZ_PTP
   syn keyword rapidMovement KL_LIN KL_CIRC
   syn keyword rapidMovement BP_LIN BP_PTP
@@ -350,27 +352,27 @@ else
   syn keyword rapidMovement CZ_LIN CZ_LIN_V CZ_PTP CZ_PTP_V
   syn keyword rapidMovement FD_LIN FD_PTP
   syn keyword rapidMovement KG_LIN KG_PTP
-  syn keyword rapidMovement DA_LIN 
-  syn keyword rapidMovement LK_CIRC LK_LIN 
+  syn keyword rapidMovement DA_LIN
+  syn keyword rapidMovement LK_CIRC LK_LIN
   syn keyword rapidMovement LL_CIRC LL_LIN
   syn keyword rapidMovement LS_CIRC LS_LIN LS_LIN_F LS_PTP_F
   syn keyword rapidMovement LW_CIRC LW_LIN
   syn keyword rapidMovement LZ_LIN LZ_PTP LZ_ReinigenLIN LZ_ReinigenPTP
   syn keyword rapidMovement MS_CIRC MS_LIN MS_ReinigenLIN MS_SearchLIN MS_PTP_CS MS_LIN_CS GBL_LIN GBL_PTP GBL_RefPointLIN
   syn keyword rapidMovement NK_LIN
-  syn keyword rapidMovement NZ_LIN NZ_LIN_V NZ_PTP NZ_PTP_V 
+  syn keyword rapidMovement NZ_LIN NZ_LIN_V NZ_PTP NZ_PTP_V
   syn keyword rapidMovement PR_LIN PR_PTP
   syn keyword rapidMovement RF_CIRC RF_LIN
-  syn keyword rapidMovement STP_FraesenLIN STP_FraesenPTP STP_LIN STP_PTP 
+  syn keyword rapidMovement STP_FraesenLIN STP_FraesenPTP STP_LIN STP_PTP
   syn keyword rapidMovement SM_LIN SM_PTP
   syn keyword rapidMovement BUA_CIRC BUA_LIN BUA_MessenLIN BUA_MessenPTP
-  syn keyword rapidMovement KE_LIN 
+  syn keyword rapidMovement KE_LIN
   if g:rapidGroupName
     highlight default link rapidMovement Movement
   else
     highlight default link rapidMovement Special
   endif
-  " }}} special keyword for move command 
+  " }}} special keyword for move command
 
   " Any name {{{
   syn match rapidNames /\v[[:upper:][:lower:]](\k|\.)*/
@@ -383,9 +385,13 @@ else
 
   " Structure value {{{
   " rapid structrure values. added to be able to conceal them
-  syn region rapidConcealableString matchgroup=rapidConcealableString start=/"/ skip=/""/ end=/"/ oneline keepend extend contained contains=rapidStringDoubleQuote,rapidEscapedBackSlash,rapidCharCode,rapidErrorSingleBackslash,rapidErrorStringTooLong,@Spell conceal 
+  if getbufvar('%', "&buftype")=="quickfix"
+    " don't conceal in quickfix window
+    setlocal conceallevel=0 concealcursor=
+  endif
+  syn region rapidConcealableString matchgroup=rapidConcealableString start=/"/ skip=/""/ end=/"/ oneline keepend extend contained contains=rapidStringDoubleQuote,rapidEscapedBackSlash,rapidCharCode,rapidErrorSingleBackslash,rapidErrorStringTooLong,@Spell conceal
   highlight default link rapidConcealableString String
-  syn region rapidStructVal matchgroup=rapidStructDelimiter start=/\[/ end=/\]/ contains=rapidStructVal,rapidBoolean,rapidDec,rapidHex,rapidOct,rapidBin,rapidFloat,rapidConcealableString,rapidDelimiter,rapidConstant,rapidErrNo,rapidIntNo,rapidOperator keepend extend conceal cchar=* 
+  syn region rapidStructVal matchgroup=rapidStructDelimiter start=/\[/ end=/\]/ contains=rapidStructVal,rapidBoolean,rapidDec,rapidHex,rapidOct,rapidBin,rapidFloat,rapidConcealableString,rapidDelimiter,rapidConstant,rapidErrNo,rapidIntNo,rapidOperator keepend extend conceal cchar=*
   highlight default link rapidStructDelimiter Delimiter
   " check edge cases like this one:
   "  LOCAL CONST listitem lstAuswService{18}:=[["","Service Position"],["","Bremsentest"],["","Referenzfahrt"],["","Manuelles Abfahren"],["","Justagestellung"],["","Transportposition"],
@@ -403,13 +409,13 @@ else
   " dispense functions
   syn keyword rapidBuildInFunction contained GetSignal GetSignalDnum
   " Integrated Vision Platform functions
-  syn keyword rapidBuildInFunction contained CamGetExposure CamGetLoadedJob CamGetName CamNumberOfResults 
+  syn keyword rapidBuildInFunction contained CamGetExposure CamGetLoadedJob CamGetName CamNumberOfResults
   " Continuous Application Platform functions
-  syn keyword rapidBuildInFunction contained CapGetFailSigs 
+  syn keyword rapidBuildInFunction contained CapGetFailSigs
   syn keyword rapidBuildInFunction contained Abs AbsDnum ACos ACosDnum AInput AOutput ArgName ASin ASinDnum ATan ATanDnum ATan2 ATan2Dnum
   syn keyword rapidBuildInFunction contained BitAnd BitAndDnum BitCheck BitCheckDnum BitLSh BitLShDnum BitNeg BitNegDnum BitOr BitOrDnum BitRSh BitRShDnum BitXOr BitXOrDnum ByteToStr
   syn keyword rapidBuildInFunction contained CalcJointT CalcRobT CalcRotAxFrameZ CalcRotAxisFrame CDate CJointT ClkRead CorrRead Cos CosDnum CPos CRobT CrossProd CSpeedOverride CTime CTool CWObj
-  syn keyword rapidBuildInFunction contained DecToHex DefAccFrame DefDFrame DefFrame Dim DInput Distance DnumToNum DnumToStr DotProd DOutput 
+  syn keyword rapidBuildInFunction contained DecToHex DefAccFrame DefDFrame DefFrame Dim DInput Distance DnumToNum DnumToStr DotProd DOutput
   syn keyword rapidBuildInFunction contained EGMGetState EulerZYX EventType ExecHandler ExecLevel Exp
   syn keyword rapidBuildInFunction contained FileSize FileTime FileTimeDnum FSSize
   syn keyword rapidBuildInFunction contained GetAxisDistance GetAxisMoveTime GetMaxNumberOfCyclicBool GetMecUnitName GetModalPayLoadMode GetMotorTorque GetNextCyclicBool GetNextMechUnit GetNextSym GetNumberOfCyclicBool GetServiceInfo GetSignalOrigin GetSysInfo GetTaskName GetTime GetTSPStatus GetUASUserName GInput GInputDnum GOutput GOutputDnum
@@ -433,11 +439,11 @@ else
   " Production Manager functions
   syn keyword rapidBuildInFunction contained PMgrAtSafe PMgrAtService PMgrAtState PMgrAtStation PMgrNextStation PMgrTaskNumber PMgrTaskName
   " Spot functions
-  syn keyword rapidBuildInFunction contained SwGetCurrTargetName SwGetCurrSpotName 
+  syn keyword rapidBuildInFunction contained SwGetCurrTargetName SwGetCurrSpotName
   " Homepos-Running functions
   syn keyword rapidBuildInFunction contained HR_RobotInHome HR_GetTypeDIndex HR_GetTypeIndex
   " Paint functions
-  syn keyword rapidBuildInFunction contained IndexLookup IpsCommand IpsGetParam PaintCommand PntQueueExtraGet PntQueueExtraSet PntQueuePeek 
+  syn keyword rapidBuildInFunction contained IndexLookup IpsCommand IpsGetParam PaintCommand PntQueueExtraGet PntQueueExtraSet PntQueuePeek
   if g:rapidGroupName
     highlight default link rapidBuildInFunction BuildInFunction
   else
@@ -520,6 +526,11 @@ else
   syn keyword rapidConstant AW_IGNI_ERR AW_EQIP_ERR AW_START_ERR AW_STOP_ERR AW_TRACK_ERR AW_TRACKCORR_ERR AW_TRACKSTA_ERR AW_USERSIG_ERR AW_WELD_ERR AW_WIRE_ERR
   " EGM egmframetype
   syn keyword rapidConstant EGM_FRAME_BASE EGM_FRAME_TOOL EGM_FRAME_WOBJ EGM_FRAME_WORLD EGM_FRAME_JOINT
+  " EGM egmstate
+  syn keyword rapidConstant EGM_STATE_DISCONNECTED EGM_STATE_CONNECTED EGM_STATE_RUNNING
+  " EGM egmstopmode
+  syn keyword rapidConstant EGM_STOP_HOLD EGM_STOP_RAMP_DOWN
+  syn keyword rapidConstant EGM_MAX_RAPID_DNUM
   " Events
   syn keyword rapidConstant EE_START EE_CYCLE_START EE_PROC_START EE_PRE_PROD EE_CLOSE_JIG EE_INDEX EE_PRE_PART EE_POST_PART EE_OPEN_JIG EE_SERVICE EE_POST_PROD EE_ABORT EE_WAIT_ORDER EE_POST_PROC
   syn keyword rapidConstant EE_POWERON EE_POWERON_OR_START EE_RESTART EE_START_OR_RESTART EE_STOP EE_QSTOP EE_STOP_OR_QSTOP EE_RESET EE_STEP EE_STEP_FWD EE_STEP_BCK EE_BEFORE_INIT EE_AFTER_INIT EE_BEFORE_PROD EE_AFTER_PROD EE_BEFORE_MENU EE_AFTER_MENU
@@ -543,15 +554,15 @@ else
   " tpnum
   syn keyword rapidConstant TP_LATEST TP_PROGRAM TP_SCREENVIEWER
   " paridvalidnum
-  syn keyword rapidConstant ROB_LOAD_VAL ROB_NOT_LOAD_VAL ROB_LM1_LOAD_VAL 
+  syn keyword rapidConstant ROB_LOAD_VAL ROB_NOT_LOAD_VAL ROB_LM1_LOAD_VAL
   " paridnum
   syn keyword rapidConstant TOOL_LOAD_ID PAY_LOAD_ID IRBP_K IRBP_L IRBP_C IRBP_C_INDEX IRBP_T IRBP_R IRBP_A IRBP_B IRBP_D
   " loadidnum
   syn keyword rapidConstant MASS_KNOWN MASS_WITH_AX3
   " sensorstate
-  syn keyword rapidConstant STATE_ERROR STATE_UNDEFINED STATE_CONNECTED STATE_OPERATING STATE_CLOSED 
+  syn keyword rapidConstant STATE_ERROR STATE_UNDEFINED STATE_CONNECTED STATE_OPERATING STATE_CLOSED
   " signalorigin
-  syn keyword rapidConstant SIGORIG_NONE SIGORIG_CFG SIGORIG_ALIAS 
+  syn keyword rapidConstant SIGORIG_NONE SIGORIG_CFG SIGORIG_ALIAS
   " aiotrigg
   syn keyword rapidConstant AIO_ABOVE_HIGH AIO_BELOW_HIGH AIO_ABOVE_LOW AIO_BELOW_LOW AIO_BETWEEN AIO_OUTSIDE AIO_ALWAYS
   " socketstatus
@@ -599,15 +610,15 @@ else
   " Bulls Eye
   syn keyword rapidConstant BESuccess BENoOverwrite BENoNameMatch BENoBEDataMod BEArrayFull BEToolNotFound BEInvalidSignal BEAliasSet BERangeLimFail BERangeSingFail BERangeTiltFail BEScanPlaneErr BEBFrameNotRead BEScanRadZero BEHeightSrchErr BEBeamNotFound BEBeamSpinErr BESrchErrInBeam BESrchErrNoDet BENumOfScansErr BEDiaZeroOrLess BESliceCountErr BEGetNewTcpMax BEBeamOriFail BEGetTcpDelErr BERefPosSetErr BERefToolSetErr BERefBeamSetErr BEBFrameDefErr BESetupAlready BERefResetErr BESetupFailed BEToolNotSet BEStartChanged BEBeamMoveErr BECheckTcp BECheckErr BESkipUpdate BEStrtningErr BEAllNotSet BEQuikRefNotDef BEConvergErr BEInstFwdErr BEGetGantryErr BEUnknownErr
   " Continuous Application Platform constants
-  syn keyword rapidConstant CAP_START START_PRE PRE_STARTED START_MAIN MAIN_STARTED STOP_WEAVESTART WEAVESTART_REGAIN MOTION_DELAY STARTSPEED_TIME MAIN_MOTION MOVE_STARTED RESTART NEW_INSTR AT_POINT AT_RESTARTPOINT LAST_SEGMENT PROCESS_END_POINT END_MAIN MAIN_ENDED PATH_END_POINT PROCESS_ENDED END_POST1 POST1_ENDED END_POST2 POST2_ENDED CAP_STOP CAP_PF_RESTART EQUIDIST AT_ERRORPOINT FLY_START FLY_END LAST_INSTR_ENDED END_PRE PRE_ENDED START_POST1 POST1_STARTED START_POST2 POST2_STARTED 
-  syn keyword rapidConstant CAP_PRE_ERR CAP_PRESTART_ERR CAP_END_PRE_ERR CAP_START_ERR CAP_MAIN_ERR CAP_ENDMAIN_ERR CAP_START_POST1_ERR CAP_POST1_ERR CAP_POST1END_ERR CAP_START_POST2_ERR CAP_POST2_ERR CAP_POST2END_ERR CAP_TRACK_ERR CAP_TRACKSTA_ERR CAP_TRACKCOR_ERR CAP_TRACKCOM_ERR CAP_TRACKPFR_ERR CAP_SEN_NO_MEAS CAP_SEN_NOREADY CAP_SEN_GENERRO CAP_SEN_BUSY CAP_SEN_UNKNOWN CAP_SEN_ILLEGAL CAP_SEN_EXALARM CAP_SEN_CAALARM CAP_SEN_TEMP CAP_SEN_VALUE CAP_SEN_CAMCHECK CAP_SEN_TIMEOUT 
-  " Machine Tending grppos 
+  syn keyword rapidConstant CAP_START START_PRE PRE_STARTED START_MAIN MAIN_STARTED STOP_WEAVESTART WEAVESTART_REGAIN MOTION_DELAY STARTSPEED_TIME MAIN_MOTION MOVE_STARTED RESTART NEW_INSTR AT_POINT AT_RESTARTPOINT LAST_SEGMENT PROCESS_END_POINT END_MAIN MAIN_ENDED PATH_END_POINT PROCESS_ENDED END_POST1 POST1_ENDED END_POST2 POST2_ENDED CAP_STOP CAP_PF_RESTART EQUIDIST AT_ERRORPOINT FLY_START FLY_END LAST_INSTR_ENDED END_PRE PRE_ENDED START_POST1 POST1_STARTED START_POST2 POST2_STARTED
+  syn keyword rapidConstant CAP_PRE_ERR CAP_PRESTART_ERR CAP_END_PRE_ERR CAP_START_ERR CAP_MAIN_ERR CAP_ENDMAIN_ERR CAP_START_POST1_ERR CAP_POST1_ERR CAP_POST1END_ERR CAP_START_POST2_ERR CAP_POST2_ERR CAP_POST2END_ERR CAP_TRACK_ERR CAP_TRACKSTA_ERR CAP_TRACKCOR_ERR CAP_TRACKCOM_ERR CAP_TRACKPFR_ERR CAP_SEN_NO_MEAS CAP_SEN_NOREADY CAP_SEN_GENERRO CAP_SEN_BUSY CAP_SEN_UNKNOWN CAP_SEN_ILLEGAL CAP_SEN_EXALARM CAP_SEN_CAALARM CAP_SEN_TEMP CAP_SEN_VALUE CAP_SEN_CAMCHECK CAP_SEN_TIMEOUT
+  " Machine Tending grppos
   syn keyword rapidConstant gsOpen gsVacuumOff gsBackward gsClose gsVacuumOn gsForward gsReset
   " Machine Tending grpaction
   syn keyword rapidConstant gaSetAndCheck gaSet gaCheck gaCheckClose gaCheckClose
   " Palletizing PowerPac
   syn keyword rapidConstant PM_ERR_AXLIM PM_ERR_CALCCONF PM_ERR_FLOW_NOT_FOUND PM_ERR_INVALID_FLOW_STOP_OPTION PM_ERR_JOB_EMPTY PM_ERR_LIM_VALUE PM_ERR_NO_RUNNING_PROJECT PM_ERR_NO_TASK PM_ERR_NOT_VALID_RECOVER_ACTION PM_ERR_OPERATION_LOST PM_ERR_PALLET_EMPTY PM_ERR_PALLET_REDUCED PM_ERR_PART_VAL PM_ERR_PROJ_NOT_FOUND PM_ERR_REDO_LAST_PICK_REJECTED PM_ERR_TIMEOUT PM_ERR_WA_NOT_FOUND PM_ERR_WOBJ PM_ERR_WORKAREA_EXPECTED PM_ERR_WRONG_FLOW_STATE
-  syn keyword rapidConstant PM_ACK PM_NACK PM_LOST PM_RECOVER_CONTINUE_OPERATION PM_RECOVER_REDO_LAYER PM_RECOVER_NEXT_PALLET PM_RECOVER_REDO_LAST_PICK PM_FLOW_ERROR PM_FLOW_FINISH_CYCLE PM_FLOW_FINISH_LAYER PM_FLOW_FINISH_PALLET PM_FLOW_RUNNING PM_FLOW_STOP_IMMEDIATELY PM_FLOW_STOPPED PM_FLOW_STOPPING_AFTER_CYCLE PM_FLOW_STOPPING_AFTER_LAYER PM_FLOW_STOPPING_AFTER_PALLET PM_APPROACH_POS PM_DEPART_POS PM_TARGET_POS PM_EVENT_PROC PM_EVENT_DO PM_EVENT_GO PM_MOVE_JOINT PM_MOVE_LIN PM_SEARCH_X PM_SEARCH_Y PM_SEARCH_Z PM_SING_AREA_OFF PM_SING_AREA_WRI PM_STOP_NOT_USED PM_STOP PM_PSTOP PM_SSTOP PM_PROJECT_STOPPED PM_PROJECT_STOPPING PM_PROJECT_STARTING PM_PROJECT_RUNNING PM_PROJECT_ERROR 
+  syn keyword rapidConstant PM_ACK PM_NACK PM_LOST PM_RECOVER_CONTINUE_OPERATION PM_RECOVER_REDO_LAYER PM_RECOVER_NEXT_PALLET PM_RECOVER_REDO_LAST_PICK PM_FLOW_ERROR PM_FLOW_FINISH_CYCLE PM_FLOW_FINISH_LAYER PM_FLOW_FINISH_PALLET PM_FLOW_RUNNING PM_FLOW_STOP_IMMEDIATELY PM_FLOW_STOPPED PM_FLOW_STOPPING_AFTER_CYCLE PM_FLOW_STOPPING_AFTER_LAYER PM_FLOW_STOPPING_AFTER_PALLET PM_APPROACH_POS PM_DEPART_POS PM_TARGET_POS PM_EVENT_PROC PM_EVENT_DO PM_EVENT_GO PM_MOVE_JOINT PM_MOVE_LIN PM_SEARCH_X PM_SEARCH_Y PM_SEARCH_Z PM_SING_AREA_OFF PM_SING_AREA_WRI PM_STOP_NOT_USED PM_STOP PM_PSTOP PM_SSTOP PM_PROJECT_STOPPED PM_PROJECT_STOPPING PM_PROJECT_STARTING PM_PROJECT_RUNNING PM_PROJECT_ERROR
   syn keyword rapidConstant MaxToolAngle MinToolAngle
   " other constants
   syn keyword rapidConstant GAP_SERVICE_TYPE GAP_SETUP_TYPE GAP_STATE_IDLE GAP_STATE_PART GAP_STATE_SERV GAP_STATE_SETUP GAP_STATE_UNKN GAP_TASK_NAME GAP_TASK_NO GAP_SHOW_ALWAYS GAP_SHOW_NEVER GAP_SHOW_SAFE GAP_SHOW_SERVICE

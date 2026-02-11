@@ -92,9 +92,8 @@ void change_warning(buf_T *buf, int col)
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     msg_end();
-    if (msg_silent == 0 && !silent_mode && ui_active() && !ui_has(kUIMessages)) {
-      ui_flush();
-      os_delay(1002, true);  // give the user time to think about it
+    if (msg_silent == 0 && !silent_mode && ui_active()) {
+      msg_delay(1002, true);  // give the user time to think about it
     }
     buf->b_did_warn = true;
     redraw_cmdline = false;  // don't redraw and erase the message
@@ -132,8 +131,7 @@ void changed(buf_T *buf)
       // message.  Since we could be anywhere, call wait_return() now,
       // and don't let the emsg() set msg_scroll.
       if (need_wait_return && emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-        ui_flush();
-        os_delay(2002, true);
+        msg_delay(2002, true);
         wait_return(true);
         msg_scroll = save_msg_scroll;
       } else {
@@ -179,9 +177,13 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
     changed_cline_bef_curs(wp);
   }
   if (wp->w_botline >= lnum) {
-    // Assume that botline doesn't change (inserted lines make
-    // other lines scroll down below botline).
-    approximate_botline_win(wp);
+    if (xtra < 0) {
+      invalidate_botline_win(wp);
+    } else {
+      // Assume that botline doesn't change (inserted lines make
+      // other lines scroll down below botline).
+      approximate_botline_win(wp);
+    }
   }
 
   // If lines have been inserted/deleted and the buffer has virt_lines, or
@@ -956,14 +958,14 @@ int del_bytes_pos(linenr_T lnum, colnr_T startcol, colnr_T count, bool fixpos_ar
     ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, oldlen);
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
-    newp = xmalloc((size_t)newlen + 1);
+    newp = xmallocz((size_t)newlen);
     memmove(newp, oldp, (size_t)startcol);
   }
   memmove(newp + startcol, oldp + startcol + count, (size_t)movelen);
   if (alloc_newp) {
     ml_replace(lnum, newp, false);
   } else {
-    curbuf->b_ml.ml_line_len -= count;
+    curbuf->b_ml.ml_line_textlen = newlen + 1;
   }
 
   // mark the buffer as changed and prepare for displaying

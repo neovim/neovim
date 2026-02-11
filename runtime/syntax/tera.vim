@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Tera
 " Maintainer:	Muntasir Mahmud <muntasir.joypurhat@gmail.com>
-" Last Change:	2025 Mar 11
+" Last Change:	2026 Jan 29
 
 if exists("b:current_syntax")
   finish
@@ -31,20 +31,20 @@ else
 endif
 
 " Tera comment blocks: {# comment #}
-syn region teraCommentBlock start="{#" end="#}" contains=@Spell
+syn region teraCommentBlock start="{#-?" end="-?#}" contains=@Spell
 
 " Tera statements: {% if condition %}
-syn region teraStatement start="{%" end="%}" contains=teraKeyword,teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator
+syn region teraStatement start="{%-?" end="-?%}" contains=teraKeyword,teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator,teraIdentifier,teraTest,teraNamespace,teraProperty,teraBracket,teraArgument
 
 " Tera expressions: {{ variable }}
-syn region teraExpression start="{{" end="}}" contains=teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator,teraIdentifier
+syn region teraExpression start="{{-?" end="-?}}" contains=teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator,teraIdentifier,teraTest,teraNamespace,teraProperty,teraBracket
 
 " Special handling for raw blocks - content inside shouldn't be processed
-syn region teraRawBlock start="{% raw %}" end="{% endraw %}" contains=TOP,teraCommentBlock,teraStatement,teraExpression
+syn region teraRawBlock start="{%-\?\s*raw\s*-%}\?" end="{%-\?\s*endraw\s*-%}\?" contains=TOP,teraCommentBlock,teraStatement,teraExpression
 
 " Control structure keywords
 syn keyword teraKeyword contained if else elif endif for endfor in macro endmacro
-syn keyword teraKeyword contained block endblock extends include import set endset
+syn keyword teraKeyword contained block endblock extends include import set endset set_global
 syn keyword teraKeyword contained break continue filter endfilter raw endraw
 
 " Identifiers - define before operators for correct priority
@@ -70,6 +70,25 @@ syn match teraNumber contained "\<\d\+\.\d\+\>"
 " Boolean values
 syn keyword teraBoolean contained true false
 
+" Special variables (loop, __tera_context)
+syn keyword teraSpecialVariable contained loop __tera_context
+
+" 'is' test patterns: 'is not test_name' or 'is test_name'
+syn match teraTest contained "\<is\s\+not\?\s\+\w\+\>"
+
+" Namespace function calls: namespace::function()
+syn match teraNamespace contained "\<\w\+::"
+
+" Property/member access: .property or ["key"] or [variable]
+syn match teraProperty contained "\.\w\+"
+syn region teraBracket contained start="\[" end="\]" contains=teraString,teraIdentifier,teraNumber,teraOperator
+
+" Backtick strings for raw content
+syn region teraString contained start="`" skip="\\`" end="`" contains=@Spell
+
+" String escape sequences
+syn match teraStringEscape contained "\\."
+
 " Highlighting links
 hi def link teraCommentBlock Comment
 hi def link teraKeyword Statement
@@ -77,8 +96,14 @@ hi def link teraOperator Operator
 hi def link teraFunction Function
 hi def link teraIdentifier Identifier
 hi def link teraString String
+hi def link teraStringEscape SpecialChar
 hi def link teraNumber Number
 hi def link teraBoolean Boolean
+hi def link teraSpecialVariable Special
+hi def link teraTest Keyword
+hi def link teraNamespace Function
+hi def link teraProperty Identifier
+hi def link teraBracket Operator
 hi def link teraFilter Function
 hi def link teraStatement Statement
 hi def link teraExpression Statement

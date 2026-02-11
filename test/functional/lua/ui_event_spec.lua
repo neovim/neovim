@@ -429,7 +429,7 @@ describe('vim.ui_attach', function()
     exec_lua([[
       vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
         if ev == 'msg_show' then
-          vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] })
+          error('foo')
         end
       end)
     ]])
@@ -437,10 +437,13 @@ describe('vim.ui_attach', function()
     screen:expect({
       grid = [[
                                                                           |
-        {1:~                                                                 }|*5
+        {1:~                                                                 }|*2
         {3:                                                                  }|
-        {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}       |
-        {9:fast context failure}                                              |
+        {9:Lua callback:}                                                     |
+        {9:[string "<nvim>"]:3: foo}                                          |
+        {9:stack traceback:}                                                  |
+        {9:        [C]: in function 'error'}                                  |
+        {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}    |
         {100:Press ENTER or type command to continue}^                           |
       ]],
       condition = function()
@@ -448,17 +451,12 @@ describe('vim.ui_attach', function()
       end,
     })
     feed('<Esc>')
-    screen:expect([[
-      ^                                                                  |
-      {1:~                                                                 }|*8
-                                                                        |
-    ]])
 
     -- Also when scheduled
     exec_lua([[
       vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
         if ev == 'msg_show' then
-          vim.schedule(function() vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] }) end)
+          vim.schedule(function() error('foo') end)
         end
       end)
     ]])

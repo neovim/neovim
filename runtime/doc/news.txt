@@ -33,7 +33,7 @@ LSP
 
 OPTIONS
 
-• todo
+• `'completefuzzycollect'` and `'isexpand'` have been removed.
 
 TREESITTER
 
@@ -43,6 +43,9 @@ UI
 
 • `progress` attribute removed form |ui-messages| msg_show event
 
+VIMSCRIPT
+
+• `complete_match()` has been removed.
 
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*
@@ -52,6 +55,8 @@ These changes may require adaptations in your config or plugins.
 API
 
 • Decoration provider has `on_range()` callback.
+• |nvim_get_commands()| returns `complete` as a Lua function, if it was
+  defined as such.
 
 BUILD
 
@@ -68,9 +73,14 @@ DIAGNOSTICS
 
 EDITOR
 
-- |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
+• |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
   pasting instead of like user input. Improves performance, avoids broken
   formatting. To get the old behavior you can use `<C-R>=@x`.
+• Buffer name URI scheme parsing more closely follows RFC3986, so for example
+  "svn+ssh:", "ed2k:", and "iris.xpc:" are recognized as URI schemes.
+• On Windows, Nvim no longer searches the current directory for executables
+  for running external commands; prefix a relative or absolute path if you
+  want the old behavior |$NoDefaultCurrentDirectoryInExePath|.
 
 EVENTS
 
@@ -133,8 +143,7 @@ The following new features were added.
 
 API
 
-• |api-contract| allows existing functions to change return-type from `void =>
-  non-void`.
+• |api-contract| allows existing functions to change return-type from `void => non-void`.
 • |nvim_win_text_height()| can limit the lines checked when a certain
   `max_height` is reached, and returns the `end_row` and `end_vcol` for which
   `max_height` or the calculated height is reached.
@@ -147,6 +156,12 @@ API
   escape sequences to the terminal when Nvim is running in the |TUI|.
 • |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
 • |nvim_echo()| can create |Progress| messages
+• |nvim_get_commands()| returns `preview` and `callback` as Lua functions if
+  they were so specified in `nvim_create_user_command()`.
+• |nvim_open_win()| floating windows can show a 'statusline'. Plugins can use
+  `style='minimal'` or `:setlocal statusline=` to hide the statusline.
+• Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
+  execute code while nvim is blocking for input.
 
 BUILD
 
@@ -155,10 +170,13 @@ BUILD
   for the time being.
 • Nvim can be built without Unibilium (terminfo implementation), in which case
   the user's terminfo database won't be loaded and only internal definitions
-  for the most common terminals are used. >
+  for the most common terminals are used: >
 
-  make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+  make distclean && make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS"-DUSE_BUNDLED_UNIBILIUM=0"
 <
+• On Windows, `tee.exe` is installed with `nvim.exe` by default so that
+  commands like :make, :grep work out of the box.
+
 DEFAULTS
 
 • 'diffopt' default value now includes "indent-heuristic" and "inline:char".
@@ -169,6 +187,7 @@ DEFAULTS
   Unset 'exrc' to stop further search.
 • Mappings:
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
+• 'shada' default now excludes "/tmp/" and "/private/" paths to reduce clutter in |:oldfiles|.
 
 DIAGNOSTICS
 
@@ -197,6 +216,8 @@ EDITOR
   "(v)iew" then run `:trust`.
 • |gx| in help buffers opens the online documentation for the tag under the
   cursor.
+• |:source| with a range in non-Lua files (e.g., vimdoc) now detects Lua
+  codeblocks via treesitter and executes them as Lua instead of Vimscript.
 • |:Undotree| for visually navigating the |undo-tree|
 • |:wall| permits a |++p| option for creating parent directories when writing
   changed buffers.
@@ -211,6 +232,10 @@ EVENTS
 • New `msg_id` parameter for |ui-messages| `msg_show` event.
 • 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
 • Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
+• |MarkSet| is triggered after a |mark| is set by the user (currently doesn't
+  support implicit marks like |'[| or |'<|, …).
+• |TabClosedPre| is triggered before closing a |tabpage|.
+• New `terminator` parameter for |TermRequest| event.
 
 HIGHLIGHTS
 
@@ -221,6 +246,7 @@ HIGHLIGHTS
 
 LSP
 
+• |:lsp| can be used to interactively manage LSP clients.
 • |vim.lsp.ClientConfig| gained `workspace_required`.
 • You can control the priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
@@ -260,8 +286,25 @@ LSP
 • Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 • The filter option of |vim.lsp.buf.code_action()| now receives the client ID as an argument.
-• |Client:stop()| now accepts a numerical `force` argument to be interpreted as the time to wait
-  before forcing the shutdown.
+• |vim.lsp.ClientConfig| `exit_timeout` decides the time waited before "stop"
+  escalates to "force-stop" for |vim.lsp.enable()|, |Client:stop()|, and
+  during Nvim shutdown.
+  • `exit_timeout` graduated from "experimental" `flags.exit_timeout`
+    to a top-level field. Defaults to `false`.
+• |Client:stop()| accepts `force` as an integer, which is treated as the time
+  to wait before before stop escalates to force-stop.
+• Add cmp field to opts of |vim.lsp.completion.enable()| for custom completion ordering.
+• Support for `workspace/diagnostic/refresh`:
+  https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
+• Support for dynamic registration for `textDocument/diagnostic`
+• |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
+  |hl-LspReferenceTarget| highlight group.
+• Support for `textDocument/semanticTokens/range`.
+• Support for `textDocument/codeLens` |lsp-codelens| has been reimplemented:
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_codeLens
+• Code lenses now display as virtual lines
+• Support for `workspace/codeLens/refresh`:
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
 
 LUA
 
@@ -275,19 +318,20 @@ LUA
 • |vim.version.intersect()| computes intersection of two version ranges.
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 • Built-in plugin manager |vim.pack|
-• |vim.list.unique()| to deduplicate lists.
+• |vim.list.unique()| and |Iter:unique()| to deduplicate lists and iterators,
+  respectively.
 • |vim.list.bisect()| for binary search.
 • Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
 • |vim.json.encode()| has an `indent` option for pretty-formatting.
 • |vim.json.encode()| has an `sort_keys` option.
+• |Range:is_empty()| to check if a |vim.Range| is empty.
+• |vim.json.decode()| has an `skip_comments` option.
 
 OPTIONS
 
 • 'autocomplete' enables |ins-autocompletion|.
 • 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 • 'chistory' and 'lhistory' set size of the |quickfix-stack|.
-• 'completefuzzycollect' enables fuzzy collection of candidates for (some)
-  |ins-completion| modes.
 • 'complete' new flags:
   • "F{func}"   complete using given function
   • "F"         complete using 'completefunc'
@@ -297,13 +341,15 @@ OPTIONS
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'fillchars' has new flag "foldinner".
-• 'grepformat' is now a |global-local| option.
+• 'fsync' and 'grepformat' are now |global-local| options.
+• 'jumpoptions' flag "view" now applies when popping the |tagstack|.
 • 'maxsearchcount' sets maximum value for |searchcount()| and defaults to 999.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
 • 'pumborder' adds a border to the popup menu.
+• |g:clipboard| autodetection only selects tmux when running inside tmux
 
 PERFORMANCE
 
@@ -312,7 +358,7 @@ PERFORMANCE
   support for nested braces and follows LSP 3.17 specification with
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
-- |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
+• |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
 
 PLUGINS
 
@@ -324,6 +370,8 @@ PLUGINS
   unrelated Python virtual environments are activated.
   |provider-python|
 
+• |:checkhealth| now checks for an available |vim.ui.open()| handler.
+
 STARTUP
 
 • todo
@@ -332,11 +380,13 @@ TERMINAL
 
 • |nvim_open_term()| can be called with a non-empty buffer. The buffer
   contents are piped to the PTY and displayed as terminal output.
+• CSI 3 J (the sequence to clear terminal scrollback) is now supported.
 
 TREESITTER
 
 • |Query:iter_captures()| supports specifying starting and ending columns.
 • |:EditQuery| command gained tab-completion, works with injected languages.
+• |LanguageTree:parse()| now accepts a list of ranges.
 
 TUI
 
@@ -351,7 +401,7 @@ UI
   address.
 • |:checkhealth| shows a summary in the header for every healthcheck.
 • |ui-multigrid| provides composition information and absolute coordinates.
-• `vim._extui` provides an experimental commandline and message UI intended to
+• `vim._core.ui2` provides an experimental commandline and message UI intended to
   replace the message grid in the TUI.
 • Error messages are more concise:
   • "Error detected while processing:" changed to "Error in:".
@@ -386,6 +436,12 @@ These existing features changed their behavior.
 • 'scrollback' maximum value increased from 100000 to 1000000
 • |matchfuzzy()| and |matchfuzzypos()| use an improved fuzzy matching algorithm
   (same as fzy).
+• Windows: Paths like "\Windows" and "/Windows" are now considered to be
+  absolute paths (to the current drive) and no longer relative.
+• When 'shelltemp' is off, shell commands now use `pipe()` and not `socketpair()`
+  for input and output. This matters mostly for Linux where some command lines
+  using "/dev/stdin" and similiar would break as these special files can be
+  reopened when backed by pipes but not when backed by socket pairs.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

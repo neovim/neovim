@@ -1,27 +1,5 @@
 -- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
 --
--- Lua code lives in one of four places:
---    1. Plugins! Not everything needs to live on "vim.*". Plugins are the correct model for
---       non-essential features which the user may want to disable or replace with a third-party
---       plugin. Examples: "editorconfig", "comment".
---       - "opt-out": runtime/plugin/*.lua
---       - "opt-in": runtime/pack/dist/opt/
---    2. runtime/lua/vim/ (the runtime): Lazy-loaded modules. Examples: `inspect`, `lpeg`.
---    3. runtime/lua/vim/shared.lua: pure Lua functions which always are available. Used in the test
---       runner, and worker threads/processes launched from Nvim.
---    4. runtime/lua/vim/_editor.lua: Eager-loaded code which directly interacts with the Nvim
---       editor state. Only available in the main thread.
---
--- The top level "vim.*" namespace is for fundamental Lua and editor features. Use submodules for
--- everything else (but avoid excessive "nesting"), or plugins (see above).
---
--- Compatibility with Vim's `if_lua` is explicitly a non-goal.
---
--- Reference (#6580):
---    - https://github.com/luafun/luafun
---    - https://github.com/rxi/lume
---    - http://leafo.net/lapis/reference/utilities.html
---    - https://github.com/bakpakin/Fennel (pretty print, repl)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
@@ -410,6 +388,11 @@ vim.cmd = setmetatable({}, {
 --- @field [string] any
 --- @field [integer] vim.var_accessor
 
+--- @class (private) vim.g: { [string]: any }
+--- @class (private) vim.b: vim.var_accessor
+--- @class (private) vim.w: vim.var_accessor
+--- @class (private) vim.t: vim.var_accessor
+
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   --- @param scope string
@@ -430,11 +413,11 @@ do
     return setmetatable({}, mt)
   end
 
-  vim.g = make_dict_accessor('g', false)
+  vim.g = make_dict_accessor('g', false) --[[@as vim.g]]
   vim.v = make_dict_accessor('v', false) --[[@as vim.v]]
-  vim.b = make_dict_accessor('b')
-  vim.w = make_dict_accessor('w')
-  vim.t = make_dict_accessor('t')
+  vim.b = make_dict_accessor('b') --[[@as vim.b]]
+  vim.w = make_dict_accessor('w') --[[@as vim.w]]
+  vim.t = make_dict_accessor('t') --[[@as vim.t]]
 end
 
 --- @deprecated
@@ -526,25 +509,28 @@ end
 --- Defers calling {fn} until {timeout} ms passes.
 ---
 --- Use to do a one-shot timer that calls {fn}
---- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
+--- Note: The {fn} is |vim.schedule()|d automatically, so API functions are
 --- safe to call.
 ---@param fn function Callback to call once `timeout` expires
 ---@param timeout integer Number of milliseconds to wait before calling `fn`
 ---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate('fn', fn, 'callable', true)
+
   local timer = assert(vim.uv.new_timer())
-  timer:start(
-    timeout,
-    0,
-    vim.schedule_wrap(function()
+  timer:start(timeout, 0, function()
+    local _, err = vim.schedule(function()
       if not timer:is_closing() then
         timer:close()
       end
 
       fn()
     end)
-  )
+
+    if err then
+      timer:close()
+    end
+  end)
 
   return timer
 end
@@ -604,7 +590,8 @@ local on_key_cbs = {} --- @type table<integer,[function, table]>
 ---          are applied, and {typed} is the key(s) before mappings are applied.
 ---          {typed} may be empty if {key} is produced by non-typed key(s) or by the
 ---          same typed key(s) that produced a previous {key}.
----          If {fn} returns an empty string, {key} is discarded/ignored.
+---          If {fn} returns an empty string, {key} is discarded/ignored, and if {key}
+---          is [<Cmd>] then the "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
 ---          When {fn} is `nil`, the callback associated with namespace {ns_id} is removed.
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
 ---                      new |nvim_create_namespace()| id.
@@ -671,7 +658,7 @@ end
 
 --- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
 --- If {strict_indexing} is false
---- then then an out of range index will return byte length
+--- then an out of range index will return byte length
 --- instead of throwing an error.
 ---
 --- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
@@ -1251,7 +1238,7 @@ local function traceback()
     if not info then
       break
     end
-    local msg = ('  %s:%s'):format(info.source:sub(2), info.currentline)
+    local msg = ('  %s:%s'):format(info.source:gsub('^@', ''), info.currentline)
     table.insert(backtrace, msg)
     level = level + 1
   end
@@ -1315,7 +1302,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   end
 end
 
-require('vim._options')
+require('vim._core.options')
 
 --- Remove at Nvim 1.0
 ---@deprecated

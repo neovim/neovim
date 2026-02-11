@@ -1977,6 +1977,82 @@ describe('API', function()
       ]])
       eq(false, api.nvim_get_option_value('modified', {}))
     end)
+
+    it('errors if autocmds wipe the dummy buffer', function()
+      -- Wipe the dummy buffer. This will throw E813, but the buffer will still be wiped; check that
+      -- such errors from setting the filetype have priority.
+      command 'autocmd FileType * ++once bwipeout!'
+      eq(
+        'FileType Autocommands for "*": Vim(bwipeout):E813: Cannot close autocmd window',
+        pcall_err(api.nvim_get_option_value, 'formatexpr', { filetype = 'lua' })
+      )
+
+      -- Silence E813 to check that the error for wiping the dummy buffer is set.
+      command 'autocmd FileType * ++once silent! bwipeout!'
+      eq(
+        'Internal buffer was deleted',
+        pcall_err(api.nvim_get_option_value, 'formatexpr', { filetype = 'lua' })
+      )
+    end)
+
+    it('does not crash if autocmds open dummy buffer in other windows', function()
+      exec [[
+        autocmd FileType * ++once let g:dummy_buf = bufnr() | split
+
+        " Autocommands should be blocked while Nvim attempts to wipe the buffer.
+        let g:wipe_events = []
+        autocmd WinClosed * if winbufnr(expand('<amatch>')) == g:dummy_buf
+                         \| let g:wipe_events += ['WinClosed']
+                         \| endif
+        autocmd BufWipeout * if expand('<abuf>') == g:dummy_buf
+                         \| let g:wipe_events += ['BufWipeout']
+                         \| endif
+      ]]
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      eq(0, eval('bufexists(g:dummy_buf)'))
+      eq({}, eval('win_findbuf(g:dummy_buf)'))
+      eq({}, eval('g:wipe_events'))
+
+      -- Be an ABSOLUTE nuisance and make it the only window to prevent it from wiping.
+      -- Do it this way to avoid E813 from :only trying to close the autocmd window.
+      command('autocmd FileType * ++once let g:dummy_buf = bufnr() | split | wincmd w | quit')
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      eq(1, eval('bufexists(g:dummy_buf)'))
+
+      -- Ensure the buffer does not remain as a dummy by checking that we can switch to it.
+      local old_win = api.nvim_get_current_win()
+      command('execute g:dummy_buf "sbuffer"')
+      eq(eval('g:dummy_buf'), api.nvim_get_current_buf())
+      neq(old_win, api.nvim_get_current_win())
+      eq({}, eval('g:wipe_events'))
+    end)
+
+    it('does not crash if dummy buffer wiped after autocommands', function()
+      -- Autocommands are blocked while Nvim attempts to wipe the buffer, but check something like
+      -- &bufhidden = "wipe" causing a premature wipe doesn't crash.
+      command('autocmd FileType * ++once setlocal bufhidden=wipe | split')
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      assert_alive()
+    end)
+
+    it('sets dummy buffer options without side-effects', function()
+      exec [[
+        let g:events = []
+        autocmd OptionSet * let g:events += [expand("<amatch>")]
+        autocmd FileType * ++once let g:bufhidden = &l:bufhidden
+                               \| let g:buftype = &l:buftype
+                               \| let g:swapfile = &l:swapfile
+                               \| let g:modeline = &l:modeline
+                               \| let g:bufloaded = bufloaded(bufnr())
+      ]]
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      eq({}, eval('g:events'))
+      eq('hide', eval('g:bufhidden'))
+      eq('nofile', eval('g:buftype'))
+      eq(0, eval('g:swapfile'))
+      eq(0, eval('g:modeline'))
+      eq(1, eval('g:bufloaded'))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
@@ -2001,6 +2077,16 @@ describe('API', function()
       eq(api.nvim_list_wins()[1], api.nvim_get_current_win())
       api.nvim_set_current_win(api.nvim_list_wins()[2])
       eq(api.nvim_list_wins()[2], api.nvim_get_current_win())
+    end)
+
+    it('resets Visual mode when switching to different buffer #37072', function()
+      command('new | wincmd w')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a', 'b' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('<C-q>')
+      eq({ mode = '\022', blocking = false }, api.nvim_get_mode())
+      api.nvim_set_current_win(fn.win_getid(fn.winnr('#')))
+      eq(true, pcall(command, 'redraw'))
     end)
 
     it('failure modes', function()
@@ -3152,9 +3238,13 @@ describe('API', function()
       end
     end
 
-    it('does not crash parsing invalid VimL expression #29648', function()
+    it('does not crash parsing invalid VimL expression', function()
       api.nvim_input(':<C-r>=')
-      api.nvim_input('1bork/')
+      api.nvim_input('1bork/') -- #29648
+      assert_alive()
+      api.nvim_input('<C-u>];')
+      assert_alive()
+      api.nvim_parse_expression('a{b}', '', false)
       assert_alive()
     end)
 
@@ -3762,6 +3852,12 @@ describe('API', function()
         {1:~                                       }|*6
         {9:Error}{16:Message}                            |
       ]])
+    end)
+
+    it('increments message ID', function()
+      eq(1, api.nvim_echo({ { 'foo' } }, false, {}))
+      eq(4, api.nvim_echo({ { 'foo' } }, false, { id = 4 }))
+      eq(5, api.nvim_echo({ { 'foo' } }, false, {}))
     end)
   end)
 

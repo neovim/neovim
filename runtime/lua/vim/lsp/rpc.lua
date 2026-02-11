@@ -1,6 +1,7 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local lsp_transport = require('vim.lsp._transport')
+local strbuffer = require('vim._core.stringbuffer')
 local validate, schedule_wrap = vim.validate, vim.schedule_wrap
 
 --- Embeds the given string into a table and correctly computes `Content-Length`.
@@ -16,19 +17,58 @@ local function format_message_with_content_length(message)
   })
 end
 
---- Extract content-length from the header
+--- Extract `content-length` from the header.
 ---
+--- The structure of header fields conforms to [HTTP semantics](https://tools.ietf.org/html/rfc7230#section-3.2),
+--- i.e., `header-field = field-name : OWS field-value OWS`. OWS means optional whitespace (space/horizontal tabs).
+---
+--- We ignore lines ending with `\n` that don't contain `content-length`, since some servers
+--- write log to standard output and there's no way to avoid it.
+--- See https://github.com/neovim/neovim/pull/35743#pullrequestreview-3379705828
 --- @param header string The header to parse
 --- @return integer
 local function get_content_length(header)
-  for line in header:gmatch('(.-)\r\n') do
-    if line == '' then
-      break
+  local state = 'name'
+  local i, len = 1, #header
+  local j, name = 1, 'content-length'
+  local buf = strbuffer.new()
+  local digit = true
+  while i <= len do
+    local c = header:byte(i)
+    if state == 'name' then
+      if c >= 65 and c <= 90 then -- lower case
+        c = c + 32
+      end
+      if (c == 32 or c == 9) and j == 1 then -- luacheck: ignore 542
+        -- skip OWS for compatibility only
+      elseif c == name:byte(j) then
+        j = j + 1
+      elseif c == 58 and j == 15 then
+        state = 'colon'
+      else
+        state = 'invalid'
+      end
+    elseif state == 'colon' then
+      if c ~= 32 and c ~= 9 then -- skip OWS normally
+        state = 'value'
+        i = i - 1
+      end
+    elseif state == 'value' then
+      if c == 13 and header:byte(i + 1) == 10 then -- must end with \r\n
+        local value = buf:get()
+        return assert(digit and tonumber(value), 'value of Content-Length is not number: ' .. value)
+      else
+        buf:put(string.char(c))
+      end
+      if c < 48 and c ~= 32 and c ~= 9 or c > 57 then
+        digit = false
+      end
+    elseif state == 'invalid' then
+      if c == 10 then -- reset for next line
+        state, j = 'name', 1
+      end
     end
-    local key, value = line:match('^%s*(%S+)%s*:%s*(%d+)%s*$')
-    if key and key:lower() == 'content-length' then
-      return assert(tonumber(value))
-    end
+    i = i + 1
   end
   error('Content-Length not found in header: ' .. header)
 end
@@ -149,8 +189,6 @@ local default_dispatchers = {
   end,
 }
 
-local strbuffer = require('vim._stringbuffer')
-
 --- @async
 local function request_parser_loop()
   local buf = strbuffer.new()
@@ -260,7 +298,7 @@ end
 ---
 ---@param method vim.lsp.protocol.Method The invoked LSP method
 ---@param params table? Parameters for the invoked LSP method
----@param callback fun(err?: lsp.ResponseError, result: any) Callback to invoke
+---@param callback fun(err?: lsp.ResponseError, result: any, message_id: integer) Callback to invoke
 ---@param notify_reply_callback? fun(message_id: integer) Callback to invoke as soon as a request is no longer pending
 ---@return boolean success `true` if request could be sent, `false` if not
 ---@return integer? message_id if request could be sent, `nil` if not
@@ -429,7 +467,8 @@ function Client:handle_body(body)
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
         callback,
         decoded.error,
-        decoded.result ~= vim.NIL and decoded.result or nil
+        decoded.result ~= vim.NIL and decoded.result or nil,
+        result_id
       )
     else
       self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
@@ -467,7 +506,7 @@ end
 --- @class vim.lsp.rpc.PublicClient
 ---
 --- See [vim.lsp.rpc.request()]
---- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
+--- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
 ---
 --- See [vim.lsp.rpc.notify()]
 --- @field notify fun(method: vim.lsp.protocol.Method.ClientToServer.Notification, params: any): boolean

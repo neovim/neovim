@@ -166,6 +166,16 @@ func Test_complete_wildmenu()
   call feedkeys(":sign un zz\<Left>\<Left>\<Left>\<Tab>\<Tab>\<C-Y> yy\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign unplace yy zz', @:)
 
+  " This used to crash
+  call feedkeys(":sign un\<Tab>\<S-Tab>\<C-A>\<C-Y>\<C-B>\"\<CR>", 'tx')
+  " Ctrl-Y is inserted literally like before 9.1.1714
+  call assert_equal("\"sign undefine unplace\<C-Y>", @:)
+  " Also test Ctrl-Y after Ctrl-A with selected item (the result is the same)
+  call feedkeys(":sign un\<Tab>\<C-A>\<C-Y>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign undefine unplace\<C-Y>", @:)
+  call feedkeys(":sign un\<Tab>\<Tab>\<C-A>\<C-Y>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign undefine unplace\<C-Y>", @:)
+
   " cleanup
   %bwipe
   set nowildmenu
@@ -1289,7 +1299,7 @@ func Test_cmdline_complete_various()
 
   " completion for a command with a trailing command
   call feedkeys(":ls | ls\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal("\"ls | ls", @:)
+  call assert_equal("\"ls | ls lsp", @:)
 
   " completion for a command with an CTRL-V escaped argument
   call feedkeys(":ls \<C-V>\<C-V>a\<C-A>\<C-B>\"\<CR>", 'xt')
@@ -1306,6 +1316,26 @@ func Test_cmdline_complete_various()
   " completion for a command with a command modifier
   call feedkeys(":topleft new\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"topleft new", @:)
+
+  " completion for the :disassemble command
+  " call feedkeys(":disas deb\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"disas debug", @:)
+  " call feedkeys(":disas pro\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"disas profile", @:)
+  " call feedkeys(":disas debug Test_cmdline_complete_var\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"disas debug Test_cmdline_complete_various", @:)
+  " call feedkeys(":disas profile Test_cmdline_complete_var\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"disas profile Test_cmdline_complete_various", @:)
+  " call feedkeys(":disas Test_cmdline_complete_var\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"disas Test_cmdline_complete_various", @:)
+
+  " call feedkeys(":disas s:WeirdF\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_match('"disas <SNR>\d\+_WeirdFunc', @:)
+
+  " call feedkeys(":disas \<S-Tab>\<C-B>\"\<CR>", 'xt')
+  " call assert_match('"disas <SNR>\d\+_', @:)
+  " call feedkeys(":disas debug \<S-Tab>\<C-B>\"\<CR>", 'xt')
+  " call assert_match('"disas debug <SNR>\d\+_', @:)
 
   " completion for the :match command
   call feedkeys(":match Search /pat/\<C-A>\<C-B>\"\<CR>", 'xt')
@@ -2561,6 +2591,14 @@ func Test_cmdwin_insert_mode_close()
   call assert_equal(1, winnr('$'))
 endfunc
 
+func Test_cmdwin_ex_mode_with_modifier()
+  " this was accessing memory after allocated text in Ex mode
+  new
+  call setline(1, ['some', 'text', 'lines'])
+  silent! call feedkeys("gQnormal vq:atopleft\<C-V>\<CR>\<CR>", 'xt')
+  bwipe!
+endfunc
+
 " test that ";" works to find a match at the start of the first line
 func Test_zero_line_search()
   new
@@ -2692,10 +2730,20 @@ func Test_recalling_cmdline_with_mappings()
   call assert_equal("echo 'bar'", histget(':', -1))
   call assert_equal("echo 'foo'", histget(':', -2))
 
+  let g:cmdline = ''
   " This command comes completely from a mapping.
   nmap <F3> :echo 'baz'<F2><CR>
   call feedkeys("\<F3>", 'tx')
   call assert_equal('baz', Screenline(&lines)->trim())
+  call assert_equal("echo 'baz'", g:cmdline)
+  call assert_equal("echo 'bar'", @:)
+  call assert_equal("echo 'bar'", histget(':', -1))
+  call assert_equal("echo 'foo'", histget(':', -2))
+
+  let g:cmdline = ''
+  " A command coming from :normal is ignored in the history even if the keys
+  " don't explicitly leave Cmdline mode.
+  exe "normal :echo 'baz'\<F2>"
   call assert_equal("echo 'baz'", g:cmdline)
   call assert_equal("echo 'bar'", @:)
   call assert_equal("echo 'bar'", histget(':', -1))
@@ -2801,6 +2849,7 @@ endfunc
 " Test for using a popup menu for the command line completion matches
 " (wildoptions=pum)
 func Test_wildmenu_pum()
+  CheckScreendump
   CheckRunVimInTerminal
 
   let commands =<< trim [CODE]
@@ -3153,10 +3202,35 @@ func Test_wildmenumode_with_pum()
   cunmap <F2>
 endfunc
 
+func Test_wildmenu_with_pum_foldexpr()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      call setline(1, ['folded one', 'folded two', 'some more text'])
+      func MyFoldText()
+        return 'foo'
+      endfunc
+      set foldtext=MyFoldText() wildoptions=pum
+      normal ggzfj
+  END
+  call writefile(lines, 'Xpumfold')
+  let buf = RunVimInTerminal('-S Xpumfold', #{rows: 10})
+  call term_sendkeys(buf, ":set\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_with_pum_foldexpr_1', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_with_pum_foldexpr_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xpumfold')
+endfunc
+
 " Test for opening the cmdline completion popup menu from the terminal window.
 " The popup menu should be positioned correctly over the status line of the
 " bottom-most window.
 func Test_wildmenu_pum_from_terminal()
+  CheckScreendump
   CheckRunVimInTerminal
   let python = PythonProg()
   call CheckPython(python)
@@ -3177,6 +3251,7 @@ func Test_wildmenu_pum_from_terminal()
 endfunc
 
 func Test_wildmenu_pum_odd_wildchar()
+  CheckScreendump
   CheckRunVimInTerminal
 
   " Test odd wildchar interactions with pum. Make sure they behave properly
@@ -5038,11 +5113,20 @@ func Test_wildtrigger_update_screen()
   call term_sendkeys(buf, "x")
   call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_2', {})
 
-  " pum window is closed when no completion candidates are available
+  " pum is closed when no completion candidates are available
   call term_sendkeys(buf, "\<F8>")
   call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_3', {})
 
-  call term_sendkeys(buf, "\<esc>")
+  call term_sendkeys(buf, "\<BS>\<F8>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_1', {})
+
+  call term_sendkeys(buf, "x")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_2', {})
+
+  " pum is closed when leaving cmdline mode
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildtrigger_update_screen_4', {})
+
   call StopVimInTerminal(buf)
 endfunc
 
@@ -5140,6 +5224,11 @@ func Test_update_screen_after_wildtrigger()
 
   call term_sendkeys(buf, "\<esc>")
   call StopVimInTerminal(buf)
+endfunc
+
+func Test_breaklist_args_fails()
+  call assert_match('No breakpoints defined', execute(':breaklist'))
+  call assert_fails(':breaklist extra', 'E488:')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

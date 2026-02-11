@@ -306,7 +306,7 @@ local is_win = vim.fn.has('win32') == 1
 --- @param opts uv.spawn.options
 --- @param on_exit fun(code: integer, signal: integer)
 --- @param on_error fun()
---- @return uv.uv_process_t, integer
+--- @return uv.uv_process_t?, integer?
 local function spawn(cmd, opts, on_exit, on_error)
   if is_win then
     local cmd1 = vim.fn.exepath(cmd)

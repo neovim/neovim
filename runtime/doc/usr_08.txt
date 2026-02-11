@@ -1,6 +1,8 @@
 *usr_08.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			      Splitting windows
 
@@ -441,7 +443,8 @@ To go the other way use: >
 
 	[c
 
-Prepended a count to jump further away.
+Prepend a count to jump further away. Thus "4]c" jumps to the fourth next
+change, and "3[c" jumps to the third previous change.
 
 
 REMOVING CHANGES

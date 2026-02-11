@@ -264,7 +264,7 @@ M.cmds = {
   },
   {
     command = 'breaklist',
-    flags = bit.bor(EXTRA, TRLBAR, CMDWIN, LOCK_OK),
+    flags = bit.bor(TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'ex_breaklist',
   },
@@ -1106,8 +1106,8 @@ M.cmds = {
   },
   {
     command = 'helpclose',
-    flags = bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    flags = TRLBAR,
+    addr_type = 'ADDR_NONE',
     func = 'ex_helpclose',
   },
   {
@@ -1669,6 +1669,12 @@ M.cmds = {
     flags = bit.bor(BANG, EXTRA, TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'buflist_list',
+  },
+  {
+    command = 'lsp',
+    flags = bit.bor(NEEDARG, EXTRA),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_lsp',
   },
   {
     command = 'move',
@@ -2911,8 +2917,8 @@ M.cmds = {
   },
   {
     command = 'tlunmenu',
-    flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
-    addr_type = 'ADDR_OTHER',
+    flags = bit.bor(EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
     func = 'ex_menu',
   },
   {

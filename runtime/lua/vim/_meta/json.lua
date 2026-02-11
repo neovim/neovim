@@ -11,14 +11,19 @@ vim.json = {}
 --- Convert `null` in JSON objects and/or arrays to Lua `nil` instead of |vim.NIL|.
 --- (default: `nil`)
 --- @field luanil? { object?: boolean, array?: boolean }
+---
+--- Allows JavaScript-style comments within JSON data. Comments are treated as whitespace and may
+--- appear anywhere whitespace is valid in JSON. Supports single-line comments beginning with '//'
+--- and block comments enclosed with '/*' and '*/'.
+--- (default: `false`)
+--- @field skip_comments? boolean
 
 --- @class vim.json.encode.Opts
 --- @inlinedoc
 ---
----  Escape slash characters "/" in string values.
+--- Escape slash characters "/" in string values.
 --- (default: `false`)
 --- @field escape_slash? boolean
----
 ---
 --- If non-empty, the returned JSON is formatted with newlines and whitespace, where `indent`
 --- defines the whitespace at each nesting level.

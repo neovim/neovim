@@ -1,7 +1,7 @@
 *repeat.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 Repeating commands, Vim scripts and debugging			*repeating*
@@ -624,7 +624,8 @@ Additionally, these commands can be used:
 							*>bt*
 							*>backtrace*
 							*>where*
-	backtrace	Show the call stacktrace for current debugging session.
+	backtrace	Show the call stacktrace for current debugging
+			session.
 	bt
 	where
 							*>frame*

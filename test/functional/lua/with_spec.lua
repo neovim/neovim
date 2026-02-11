@@ -71,6 +71,11 @@ describe('vim._with', function()
         vim.bo[cur_buf].undolevels = 250
         vim.go.undolevels = 500
 
+        -- 'autoread' is global or local to buffer (global-local) and boolean
+        vim.bo[other_buf].autoread = false
+        vim.bo[cur_buf].autoread = false
+        vim.go.autoread = true
+
         _G.get_state = function()
           return {
             bo = {
@@ -78,10 +83,13 @@ describe('vim._with', function()
               cms_other = vim.bo[other_buf].commentstring,
               ul_cur = vim.bo[cur_buf].undolevels,
               ul_other = vim.bo[other_buf].undolevels,
+              ar_cur = vim.bo[cur_buf].autoread,
+              ar_other = vim.bo[other_buf].autoread,
             },
             go = {
               cms = vim.go.commentstring,
               ul = vim.go.undolevels,
+              ar = vim.go.autoread,
             },
           }
         end
@@ -90,7 +98,7 @@ describe('vim._with', function()
 
     it('works', function()
       local out = exec_lua [[
-        local context = { bo = { commentstring = '-- %s', undolevels = 0 } }
+        local context = { bo = { commentstring = '-- %s', undolevels = 0, autoread = true } }
 
         local before = get_state()
         local inner = vim._with(context, function()
@@ -102,15 +110,22 @@ describe('vim._with', function()
       ]]
 
       eq({
-        bo = { cms_cur = '-- %s', cms_other = '## %s', ul_cur = 0, ul_other = 100 },
-        go = { cms = '$$ %s', ul = 500 },
+        bo = {
+          cms_cur = '-- %s',
+          cms_other = '## %s',
+          ul_cur = 0,
+          ul_other = 100,
+          ar_cur = true,
+          ar_other = false,
+        },
+        go = { cms = '$$ %s', ul = 500, ar = true },
       }, out.inner)
       eq(out.before, out.after)
     end)
 
     it('sets options in `buf` context', function()
       local out = exec_lua [[
-        local context = { buf = other_buf, bo = { commentstring = '-- %s', undolevels = 0 } }
+        local context = { buf = other_buf, bo = { commentstring = '-- %s', undolevels = 0, autoread = true } }
 
         local before = get_state()
         local inner = vim._with(context, function()
@@ -122,8 +137,15 @@ describe('vim._with', function()
       ]]
 
       eq({
-        bo = { cms_cur = '// %s', cms_other = '-- %s', ul_cur = 250, ul_other = 0 },
-        go = { cms = '$$ %s', ul = 500 },
+        bo = {
+          cms_cur = '// %s',
+          cms_other = '-- %s',
+          ul_cur = 250,
+          ul_other = 0,
+          ar_cur = false,
+          ar_other = true,
+        },
+        go = { cms = '$$ %s', ul = 500, ar = true },
       }, out.inner)
       eq(out.before, out.after)
     end)
@@ -143,12 +165,26 @@ describe('vim._with', function()
       ]]
 
       eq({
-        bo = { cms_cur = '!! %s', cms_other = '## %s', ul_cur = 750, ul_other = 100 },
-        go = { cms = '$$ %s', ul = 500 },
+        bo = {
+          cms_cur = '!! %s',
+          cms_other = '## %s',
+          ul_cur = 750,
+          ul_other = 100,
+          ar_cur = false,
+          ar_other = false,
+        },
+        go = { cms = '$$ %s', ul = 500, ar = true },
       }, out.inner)
       eq({
-        bo = { cms_cur = '// %s', cms_other = '## %s', ul_cur = 750, ul_other = 100 },
-        go = { cms = '$$ %s', ul = 500 },
+        bo = {
+          cms_cur = '// %s',
+          cms_other = '## %s',
+          ul_cur = 750,
+          ul_other = 100,
+          ar_cur = false,
+          ar_other = false,
+        },
+        go = { cms = '$$ %s', ul = 500, ar = true },
       }, out.after)
     end)
 
@@ -164,9 +200,9 @@ describe('vim._with', function()
     it('can be nested', function()
       local out = exec_lua [[
         local before, before_inner, after_inner = get_state(), nil, nil
-        vim._with({ bo = { commentstring = '-- %s', undolevels = 0 } }, function()
+        vim._with({ bo = { commentstring = '-- %s', undolevels = 0, autoread = true } }, function()
           before_inner = get_state()
-          inner = vim._with({ bo = { commentstring = '!! %s' } }, get_state)
+          inner = vim._with({ bo = { commentstring = '!! %s', autoread = false } }, get_state)
           after_inner = get_state()
         end)
         return {
@@ -177,6 +213,7 @@ describe('vim._with', function()
       ]]
       eq('!! %s', out.inner.bo.cms_cur)
       eq(0, out.inner.bo.ul_cur)
+      eq(false, out.inner.bo.ar_cur)
       eq(out.before_inner, out.after_inner)
       eq(out.before, out.after)
     end)
@@ -326,7 +363,7 @@ describe('vim._with', function()
         exec_lua,
         [[
           _G.f = function()
-            error('This error should not interfer with execution', 0)
+            error('This error should not interfere with execution', 0)
           end
           -- Should produce error same as `_G.f()`
           vim._with({ emsg_silent = true }, function()
@@ -404,6 +441,7 @@ describe('vim._with', function()
         vim.wo.winblend = 25
         vim.go.winblend = 50
         vim.go.langmap = 'xy,yx'
+        vim.go.confirm = false
 
         _G.get_state = function()
           return {
@@ -413,6 +451,7 @@ describe('vim._with', function()
               cms = vim.go.commentstring,
               winbl = vim.go.winblend,
               lmap = vim.go.langmap,
+              cf = vim.go.confirm,
             },
           }
         end
@@ -422,7 +461,7 @@ describe('vim._with', function()
     it('works', function()
       local out = exec_lua [[
         local context = {
-          go = { commentstring = '-- %s', winblend = 75, langmap = 'ab,ba' },
+          go = { commentstring = '-- %s', winblend = 75, langmap = 'ab,ba', cf = true },
         }
         local before = get_state()
         local inner = vim._with(context, get_state)
@@ -432,7 +471,7 @@ describe('vim._with', function()
       eq({
         bo = { cms = '## %s' },
         wo = { winbl = 25 },
-        go = { cms = '-- %s', winbl = 75, lmap = 'ab,ba' },
+        go = { cms = '-- %s', winbl = 75, lmap = 'ab,ba', cf = true },
       }, out.inner)
       eq(out.before, out.after)
     end)
@@ -467,12 +506,12 @@ describe('vim._with', function()
       eq({
         bo = { cms = '## %s' },
         wo = { winbl = 25 },
-        go = { cms = '!! %s', winbl = 75, lmap = 'uv,vu' },
+        go = { cms = '!! %s', winbl = 75, lmap = 'uv,vu', cf = false },
       }, out.inner)
       eq({
         bo = { cms = '## %s' },
         wo = { winbl = 25 },
-        go = { cms = '!! %s', winbl = 75, lmap = 'xy,yx' },
+        go = { cms = '!! %s', winbl = 75, lmap = 'xy,yx', cf = false },
       }, out.after)
     end)
 
@@ -806,6 +845,7 @@ describe('vim._with', function()
         vim.go.winblend = 50
 
         vim.go.langmap = 'xy,yx'
+        vim.go.confirm = false
 
         _G.get_state = function()
           return {
@@ -827,6 +867,7 @@ describe('vim._with', function()
               ve = vim.go.virtualedit,
               winbl = vim.go.winblend,
               lmap = vim.go.langmap,
+              cf = vim.go.confirm,
             },
           }
         end
@@ -842,6 +883,7 @@ describe('vim._with', function()
             virtualedit = 'all',
             winblend = 75,
             langmap = 'ab,ba',
+            confirm = true,
           },
         }
 
@@ -861,7 +903,7 @@ describe('vim._with', function()
       eq({
         bo = { cms_cur = '-- %s', cms_other = '## %s', ul_cur = -123456, ul_other = 100 },
         wo = { ve_cur = 'all', ve_other = 'block', winbl_cur = 75, winbl_other = 10 },
-        go = { cms = '-- %s', ul = 0, ve = 'all', winbl = 75, lmap = 'ab,ba' },
+        go = { cms = '-- %s', ul = 0, ve = 'all', winbl = 75, lmap = 'ab,ba', cf = true },
       }, out.inner)
       eq(out.before, out.after)
     end)
@@ -886,7 +928,7 @@ describe('vim._with', function()
         -- to 50. It seems to be equal to 0 because `context.buf` uses
         -- `aucmd_prepbuf` C approach which has no guarantees about window or
         -- window option values inside context.
-        go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 0, lmap = 'xy,yx' },
+        go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 0, lmap = 'xy,yx', cf = false },
       }, out.inner)
       eq(out.before, out.after)
     end)
@@ -907,7 +949,7 @@ describe('vim._with', function()
       eq({
         bo = { cms_cur = '// %s', cms_other = '## %s', ul_cur = 250, ul_other = 100 },
         wo = { winbl_cur = 25, winbl_other = 75, ve_cur = 'insert', ve_other = 'all' },
-        go = { cms = '$$ %s', ul = 500, winbl = 75, ve = 'all', lmap = 'xy,yx' },
+        go = { cms = '$$ %s', ul = 500, winbl = 75, ve = 'all', lmap = 'xy,yx', cf = false },
       }, out.inner)
       eq(out.before, out.after)
     end)
@@ -934,12 +976,12 @@ describe('vim._with', function()
       eq({
         bo = { cms_cur = '!! %s', cms_other = '## %s', ul_cur = -123456, ul_other = 100 },
         wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 99, winbl_other = 10 },
-        go = { cms = '!! %s', ul = 750, ve = 'onemore', winbl = 99, lmap = 'uv,vu' },
+        go = { cms = '!! %s', ul = 750, ve = 'onemore', winbl = 99, lmap = 'uv,vu', cf = false },
       }, out.inner)
       eq({
         bo = { cms_cur = '!! %s', cms_other = '## %s', ul_cur = 250, ul_other = 100 },
         wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
-        go = { cms = '!! %s', ul = 500, ve = 'onemore', winbl = 50, lmap = 'xy,yx' },
+        go = { cms = '!! %s', ul = 500, ve = 'onemore', winbl = 50, lmap = 'xy,yx', cf = false },
       }, out.after)
     end)
 
@@ -1236,6 +1278,11 @@ describe('vim._with', function()
         vim.wo[cur_win].winblend = 25
         vim.go.winblend = 50
 
+        -- 'number' is local to window and boolean
+        vim.wo[other_win].number = false
+        vim.wo[cur_win].number = false
+        vim.go.number = true
+
         _G.get_state = function()
           return {
             wo = {
@@ -1243,10 +1290,13 @@ describe('vim._with', function()
               ve_other = vim.wo[other_win].virtualedit,
               winbl_cur = vim.wo[cur_win].winblend,
               winbl_other = vim.wo[other_win].winblend,
+              nu_cur = vim.wo[cur_win].number,
+              nu_other = vim.wo[other_win].number,
             },
             go = {
               ve = vim.go.virtualedit,
               winbl = vim.go.winblend,
+              nu = vim.go.number,
             },
           }
         end
@@ -1255,7 +1305,7 @@ describe('vim._with', function()
 
     it('works', function()
       local out = exec_lua [[
-        local context = { wo = { virtualedit = 'all', winblend = 75 } }
+        local context = { wo = { virtualedit = 'all', winblend = 75, number = true } }
 
         local before = get_state()
         local inner = vim._with(context, function()
@@ -1267,15 +1317,22 @@ describe('vim._with', function()
       ]]
 
       eq({
-        wo = { ve_cur = 'all', ve_other = 'block', winbl_cur = 75, winbl_other = 10 },
-        go = { ve = 'none', winbl = 75 },
+        wo = {
+          ve_cur = 'all',
+          ve_other = 'block',
+          winbl_cur = 75,
+          winbl_other = 10,
+          nu_cur = true,
+          nu_other = false,
+        },
+        go = { ve = 'none', winbl = 75, nu = true },
       }, out.inner)
       eq(out.before, out.after)
     end)
 
     it('sets options in `win` context', function()
       local out = exec_lua [[
-        local context = { win = other_win, wo = { virtualedit = 'all', winblend = 75 } }
+        local context = { win = other_win, wo = { virtualedit = 'all', winblend = 75, number = true } }
 
         local before = get_state()
         local inner = vim._with(context, function()
@@ -1287,8 +1344,15 @@ describe('vim._with', function()
       ]]
 
       eq({
-        wo = { ve_cur = 'insert', ve_other = 'all', winbl_cur = 25, winbl_other = 75 },
-        go = { ve = 'none', winbl = 75 },
+        wo = {
+          ve_cur = 'insert',
+          ve_other = 'all',
+          winbl_cur = 25,
+          winbl_other = 75,
+          nu_cur = false,
+          nu_other = true,
+        },
+        go = { ve = 'none', winbl = 75, nu = true },
       }, out.inner)
       eq(out.before, out.after)
     end)
@@ -1308,12 +1372,26 @@ describe('vim._with', function()
       ]]
 
       eq({
-        wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 99, winbl_other = 10 },
-        go = { ve = 'none', winbl = 99 },
+        wo = {
+          ve_cur = 'onemore',
+          ve_other = 'block',
+          winbl_cur = 99,
+          winbl_other = 10,
+          nu_cur = false,
+          nu_other = false,
+        },
+        go = { ve = 'none', winbl = 99, nu = true },
       }, out.inner)
       eq({
-        wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
-        go = { ve = 'none', winbl = 50 },
+        wo = {
+          ve_cur = 'onemore',
+          ve_other = 'block',
+          winbl_cur = 25,
+          winbl_other = 10,
+          nu_cur = false,
+          nu_other = false,
+        },
+        go = { ve = 'none', winbl = 50, nu = true },
       }, out.after)
     end)
 
@@ -1329,9 +1407,9 @@ describe('vim._with', function()
     it('can be nested', function()
       local out = exec_lua [[
         local before, before_inner, after_inner = get_state(), nil, nil
-        vim._with({ wo = { winblend = 75, virtualedit = 'all' } }, function()
+        vim._with({ wo = { winblend = 75, virtualedit = 'all', number = true } }, function()
           before_inner = get_state()
-          inner = vim._with({ wo = { winblend = 99 } }, get_state)
+          inner = vim._with({ wo = { winblend = 99, number = false } }, get_state)
           after_inner = get_state()
         end)
         return {
@@ -1342,6 +1420,7 @@ describe('vim._with', function()
       ]]
       eq(99, out.inner.wo.winbl_cur)
       eq('all', out.inner.wo.ve_cur)
+      eq(false, out.inner.wo.nu_cur)
       eq(out.before_inner, out.after_inner)
       eq(out.before, out.after)
     end)

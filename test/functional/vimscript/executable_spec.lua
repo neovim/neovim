@@ -202,9 +202,9 @@ describe('executable() (Windows)', function()
     clear({ env = { PATHEXT = '' } })
     command('set shell=sh')
     for _, ext in ipairs(exts) do
-      eq(1, call('executable', 'test_executable_' .. ext .. '.' .. ext))
+      eq(0, call('executable', 'test_executable_' .. ext .. '.' .. ext))
     end
-    eq(1, call('executable', 'test_executable_zzz.zzz'))
+    eq(0, call('executable', 'test_executable_zzz.zzz'))
   end)
 
   it("relative path, Unix-style 'shell' (backslashes)", function()

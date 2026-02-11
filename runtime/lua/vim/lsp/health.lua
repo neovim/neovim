@@ -91,6 +91,7 @@ local function check_active_clients()
       else
         dirs_info = string.format(
           '- Root directory: %s',
+          -- vim.fs.relpath does not prepend '~/' while fnamemodify does
           client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
         ) or nil
       end
@@ -215,6 +216,8 @@ end
 local function check_enabled_configs()
   vim.health.start('vim.lsp: Enabled Configurations')
 
+  local valid_filetypes = vim.fn.getcompletion('', 'filetype')
+
   for name in vim.spairs(vim.lsp._enabled_configs) do
     local config = vim.lsp.config[name]
     local text = {} --- @type string[]
@@ -240,6 +243,18 @@ local function check_enabled_configs()
 
         if k == 'cmd' and type(v) == 'table' and vim.fn.executable(v[1]) == 0 then
           report_warn(("'%s' is not executable. Configuration will not be used."):format(v[1]))
+        end
+
+        if k == 'filetypes' and type(v) == 'table' then
+          for _, filetype in
+            ipairs(v --[[@as string[] ]])
+          do
+            if not vim.list_contains(valid_filetypes, filetype) then
+              report_warn(
+                ("Unknown filetype '%s' (Hint: filename extension != filetype)."):format(filetype)
+              )
+            end
+          end
         end
 
         if v_str then

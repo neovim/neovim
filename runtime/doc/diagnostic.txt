@@ -40,7 +40,7 @@ requires a namespace.
 
                                 *vim.diagnostic.severity* *diagnostic-severity*
 The "severity" key in a diagnostic is one of the values defined in
-`vim.diagnostic.severity`:
+`vim.diagnostic.severity`: >
 
     vim.diagnostic.severity.ERROR
     vim.diagnostic.severity.WARN
@@ -54,20 +54,17 @@ Functions that take a severity as an optional parameter (e.g.
 
     vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
 
-2. A table with a "min" or "max" key (or both): >lua
+2. A table with a "min" or "max" key (or both). This form allows users to
+   specify a range of severities: >lua
 
     vim.diagnostic.get(0, { severity = { min = vim.diagnostic.severity.WARN } })
-<
-    This form allows users to specify a range of severities.
-
-3. A list-like table: >lua
+3. A list-like table. This form allows filtering for specific severities: >lua
 
     vim.diagnostic.get(0, { severity = {
         vim.diagnostic.severity.WARN,
         vim.diagnostic.severity.INFO,
     } })
 <
-    This form allows users to filter for specific severities
 
 ==============================================================================
 DEFAULTS                                              *diagnostic-defaults*
@@ -200,14 +197,14 @@ following uses the `virtual_lines` handler when jumping to a diagnostic: >lua
   --- @param diagnostic? vim.Diagnostic
   --- @param bufnr integer
   local function on_jump(diagnostic, bufnr)
-      if not diagnostic then return end
+    if not diagnostic then return end
 
-      vim.diagnostic.show(
-          virt_lines_ns,
-          bufnr,
-          { diagnostic },
-          { virtual_lines = { current_line = true }, virtual_text = false }
-      )
+    vim.diagnostic.show(
+      virt_lines_ns,
+      bufnr,
+      { diagnostic },
+      { virtual_lines = { current_line = true }, virtual_text = false }
+    )
   end
 
   vim.diagnostic.config({ jump = { on_jump = on_jump } })
@@ -553,6 +550,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {float}?             (`boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float`)
                              Options for floating windows. See
                              |vim.diagnostic.Opts.Float|.
+      • {status}?            (`vim.diagnostic.Opts.Status`) Options for the
+                             statusline component. See
+                             |vim.diagnostic.Opts.Status|.
       • {update_in_insert}?  (`boolean`, default: `false`) Update diagnostics
                              in Insert mode (if `false`, diagnostics are
                              updated on |InsertLeave|)
@@ -568,6 +568,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              |vim.diagnostic.Opts.Jump|.
 
 *vim.diagnostic.Opts.Float*
+    Extends: |vim.lsp.util.open_floating_preview.Opts|
+
 
     Fields: ~
       • {bufnr}?          (`integer`, default: current buffer) Buffer number
@@ -576,7 +578,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           namespace(s).
       • {scope}?          (`'line'|'buffer'|'cursor'|'c'|'l'|'b'`, default:
                           `line`) Show diagnostics from the whole buffer
-                          (`buffer"`, the current cursor line (`line`), or the
+                          (`buffer`), the current cursor line (`line`), or the
                           current cursor position (`cursor`). Shorthand
                           versions are also accepted (`c` for `cursor`, `l`
                           for `line`, `b` for `buffer`).
@@ -625,8 +627,6 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           Same as {prefix}, but appends the text to the
                           diagnostic instead of prepending it. Overrides the
                           setting from |vim.diagnostic.config()|.
-      • {focus_id}?       (`string`)
-      • {border}?         (`string|string[]`) see |nvim_open_win()|.
 
 *vim.diagnostic.Opts.Jump*
 
@@ -664,6 +664,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {linehl}?    (`table<vim.diagnostic.Severity,string>`) A table mapping
                      |diagnostic-severity| to the highlight group used for the
                      whole line the sign is placed in.
+
+*vim.diagnostic.Opts.Status*
+
+    Fields: ~
+      • {text}?  (`table<vim.diagnostic.Severity,string>`) A table mapping
+                 |diagnostic-severity| to the text to use for each severity
+                 section.
 
 *vim.diagnostic.Opts.Underline*
 
@@ -776,8 +783,9 @@ count({bufnr}, {opts})                                *vim.diagnostic.count()*
       • {opts}   (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
 
     Return: ~
-        (`table`) Table with actually present severity values as keys (see
-        |diagnostic-severity|) and integer counts as values.
+        (`table<integer, integer>`) Table with actually present severity
+        values as keys (see |diagnostic-severity|) and integer counts as
+        values.
 
 enable({enable}, {filter})                           *vim.diagnostic.enable()*
     Enables or disables diagnostics.
@@ -1023,9 +1031,9 @@ status({bufnr})                                      *vim.diagnostic.status()*
     Returns formatted string with diagnostics for the current buffer. The
     severities with 0 diagnostics are left out. Example `E:2 W:3 I:4 H:5`
 
-    To customise appearance, set diagnostic signs text with >lua
+    To customise appearance, set diagnostic text for each severity with >lua
         vim.diagnostic.config({
-          signs = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
+          status = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
         })
 <
 

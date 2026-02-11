@@ -281,8 +281,9 @@ void evalvars_init(void)
       hash_add(&compat_hashtab, p->vv_di.di_key);
     }
   }
-  set_vim_var_nr(VV_VERSION, VIM_VERSION_100);
-  set_vim_var_nr(VV_VERSIONLONG, VIM_VERSION_100 * 10000 + highest_patch());
+  const int vim_version = min_vim_version();
+  set_vim_var_nr(VV_VERSION, vim_version);
+  set_vim_var_nr(VV_VERSIONLONG, vim_version * 10000 + highest_patch());
 
   dict_T *const msgpack_types_dict = tv_dict_alloc();
   for (size_t i = 0; i < ARRAY_SIZE(msgpack_type_names); i++) {
@@ -915,9 +916,6 @@ void ex_let(exarg_T *eap)
   if (argend == NULL) {
     return;
   }
-  if (argend > arg && argend[-1] == '.') {  // For var.='str'.
-    argend--;
-  }
   expr = skipwhite(argend);
   bool concat = strncmp(expr, "..=", 3) == 0;
   bool has_assign = *expr == '=' || (vim_strchr("+-*/%.", (uint8_t)(*expr)) != NULL
@@ -1520,7 +1518,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 /// ":unlet[!] var1 ... " command.
 void ex_unlet(exarg_T *eap)
 {
-  ex_unletlock(eap, eap->arg, 0, do_unlet_var);
+  ex_unletlock(eap, eap->arg, 0, eap->forceit ? GLV_QUIET : 0, do_unlet_var);
 }
 
 /// ":lockvar" and ":unlockvar" commands
@@ -1536,7 +1534,7 @@ void ex_lockvar(exarg_T *eap)
     arg = skipwhite(arg);
   }
 
-  ex_unletlock(eap, arg, deep, do_lock_var);
+  ex_unletlock(eap, arg, deep, 0, do_lock_var);
 }
 
 /// Common parsing logic for :unlet, :lockvar and :unlockvar.
@@ -1548,7 +1546,8 @@ void ex_lockvar(exarg_T *eap)
 /// @param[in]  deep  Levels to (un)lock for :(un)lockvar, -1 to (un)lock
 ///                   everything.
 /// @param[in]  callback  Appropriate handler for the command.
-static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_callback callback)
+static void ex_unletlock(exarg_T *eap, char *argstart, int deep, int glv_flags,
+                         ex_unletlock_callback callback)
   FUNC_ATTR_NONNULL_ALL
 {
   char *arg = argstart;
@@ -1573,7 +1572,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
     } else {
       // Parse the name and find the end.
       name_end = get_lval(arg, NULL, &lv, true, eap->skip || error,
-                          0, FNE_CHECK_START);
+                          glv_flags, FNE_CHECK_START);
       if (lv.ll_name == NULL) {
         error = true;  // error, but continue parsing.
       }
@@ -2485,7 +2484,6 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
 static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char **varname,
                                    dict_T **d)
 {
-  funccall_T *funccal = get_funccal();
   *d = NULL;
 
   if (name_len == 0) {
@@ -2505,11 +2503,12 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
       return &compat_hashtab;
     }
 
-    if (funccal == NULL) {  // global variable
-      *d = get_globvar_dict();
-    } else {  // l: variable
-      *d = &funccal->fc_l_vars;
+    *d = get_funccal_local_dict();
+    if (*d != NULL) {  // local variable
+      goto end;
     }
+
+    *d = get_globvar_dict();  // global variable
     goto end;
   }
 
@@ -2531,10 +2530,10 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
     *d = curtab->tp_vars;
   } else if (*name == 'v') {  // v: variable
     *d = get_vimvar_dict();
-  } else if (*name == 'a' && funccal != NULL) {  // function argument
-    *d = &funccal->fc_l_avars;
-  } else if (*name == 'l' && funccal != NULL) {  // local variable
-    *d = &funccal->fc_l_vars;
+  } else if (*name == 'a') {  // a: function argument
+    *d = get_funccal_args_dict();
+  } else if (*name == 'l') {  // l: local variable
+    *d = get_funccal_local_dict();
   } else if (*name == 's'  // script variable
              && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_STR
                  || current_sctx.sc_sid == SID_LUA)
@@ -2971,7 +2970,7 @@ bool var_check_lock(const int flags, const char *name, size_t name_len)
     name_len = strlen(name);
   }
 
-  semsg(_("E1122: Variable is locked: %*s"), (int)name_len, name);
+  semsg(_("E1122: Variable is locked: %.*s"), (int)name_len, name);
 
   return true;
 }

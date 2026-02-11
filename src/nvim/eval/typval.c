@@ -116,8 +116,8 @@ bool tv_in_free_unref_items = false;
 
 const char *const tv_empty_string = "";
 
-//{{{1 Lists
-//{{{2 List item
+// Lists:
+// List item:
 
 /// Allocate a list item
 ///
@@ -150,7 +150,7 @@ listitem_T *tv_list_item_remove(list_T *const l, listitem_T *const item)
   return next_item;
 }
 
-//{{{2 List watchers
+// List watchers:
 
 /// Add a watcher to a list
 ///
@@ -198,7 +198,7 @@ static void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
   }
 }
 
-//{{{2 Alloc/free
+// Alloc/free:
 
 /// Allocate an empty list
 ///
@@ -335,7 +335,7 @@ void tv_list_unref(list_T *const l)
   }
 }
 
-//{{{2 Add/remove
+// Add/remove:
 
 /// Remove items "item" to "item2" from list "l"
 ///
@@ -578,7 +578,7 @@ void tv_list_append_number(list_T *const l, const varnumber_T n)
   });
 }
 
-//{{{2 Operations on the whole list
+// Operations on the whole list:
 
 /// Make a copy of list
 ///
@@ -1285,12 +1285,8 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
     res = ITEM_COMPARE_FAIL;
     sortinfo->item_compare_func_err = true;
   } else {
-    res = (int)tv_get_number_chk(&rettv, &sortinfo->item_compare_func_err);
-    if (res > 0) {
-      res = 1;
-    } else if (res < 0) {
-      res = -1;
-    }
+    varnumber_T n = tv_get_number_chk(&rettv, &sortinfo->item_compare_func_err);
+    res = (n > 0) ? 1 : (n < 0) ? -1 : 0;
   }
   if (sortinfo->item_compare_func_err) {
     res = ITEM_COMPARE_FAIL;  // return value has wrong type
@@ -1573,7 +1569,7 @@ void tv_list_reverse(list_T *const l)
   l->lv_idx = l->lv_len - l->lv_idx - 1;
 }
 
-//{{{2 Indexing/searching
+// Indexing/searching:
 
 /// Locate item with a given index in a list and return it
 ///
@@ -1723,8 +1719,8 @@ int tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
   return -1;
 }
 
-//{{{1 Dictionaries
-//{{{2 Dictionary watchers
+// Dictionaries:
+// Dictionary watchers:
 
 /// Perform all necessary cleanup for a `DictWatcher` instance
 ///
@@ -2018,7 +2014,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key, typval_T 
   }
 }
 
-//{{{2 Dictionary item
+// Dictionary item:
 
 /// Allocate a dictionary item
 ///
@@ -2033,7 +2029,9 @@ dictitem_T *tv_dict_item_alloc_len(const char *const key, const size_t key_len)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
   FUNC_ATTR_MALLOC
 {
-  dictitem_T *const di = xmalloc(offsetof(dictitem_T, di_key) + key_len + 1);
+  // Allocating a struct smaller than its static size is UB (#37160)
+  dictitem_T *const di = xmalloc(MAX(sizeof(dictitem_T),
+                                     offsetof(dictitem_T, di_key) + key_len + 1));
   memcpy(di->di_key, key, key_len);
   di->di_key[key_len] = NUL;
   di->di_flags = DI_FLAGS_ALLOC;
@@ -2098,7 +2096,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
   tv_dict_item_free(item);
 }
 
-//{{{2 Alloc/free
+// Alloc/free:
 
 /// Allocate an empty dictionary.
 /// Caller should take care of the reference count.
@@ -2208,7 +2206,7 @@ void tv_dict_unref(dict_T *const d)
   }
 }
 
-//{{{2 Indexing/searching
+// Indexing/searching:
 
 /// Find item in dictionary
 ///
@@ -2432,7 +2430,7 @@ int tv_dict_wrong_func_name(dict_T *d, typval_T *tv, const char *name)
          && var_wrong_func_name(name, true);
 }
 
-//{{{2 dict_add*
+// dict_add*:
 
 /// Add item to dictionary
 ///
@@ -2663,7 +2661,7 @@ int tv_dict_add_func(dict_T *const d, const char *const key, const size_t key_le
   return OK;
 }
 
-//{{{2 Operations on the whole dict
+// Operations on the whole dict:
 
 /// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
 ///
@@ -2872,8 +2870,8 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
   });
 }
 
-//{{{1 Blobs
-//{{{2 Alloc/free
+// Blobs:
+// Alloc/free:
 
 /// Allocate an empty blob.
 ///
@@ -2910,7 +2908,7 @@ void tv_blob_unref(blob_T *const b)
   }
 }
 
-//{{{2 Operations on the whole blob
+// Operations on the whole blob:
 
 /// Check whether two blobs are equal.
 ///
@@ -3176,9 +3174,9 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   });
 }
 
-//{{{1 Generic typval operations
-//{{{2 Init/alloc/clear
-//{{{3 Alloc
+// Generic typval operations:
+// Init/alloc/clear:
+// Alloc:
 
 /// Allocate an empty list for a return value
 ///
@@ -3371,7 +3369,7 @@ void tv_blob_copy(blob_T *const from, typval_T *const to)
   }
 }
 
-//{{{3 Clear
+// Clear:
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 #define TYPVAL_ENCODE_CHECK_BEFORE
 
@@ -3440,7 +3438,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv, char *const fun)
   }
   return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix) \
   do { \
     if (_nothing_conv_func_start(tv, fun) != NOTDONE) { \
       return OK; \
@@ -3638,7 +3636,7 @@ void tv_clear(typval_T *const tv)
   assert(evn_ret == OK);
 }
 
-//{{{3 Free
+// Free:
 
 /// Free allocated Vimscript object and value stored inside
 ///
@@ -3678,7 +3676,7 @@ void tv_free(typval_T *tv)
   xfree(tv);
 }
 
-//{{{3 Copy
+// Copy:
 
 /// Copy typval from one location to another
 ///
@@ -3734,7 +3732,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
   }
 }
 
-//{{{2 Locks
+// Locks:
 
 /// Lock or unlock an item
 ///
@@ -3913,7 +3911,7 @@ bool value_check_lock(VarLockStatus lock, const char *name, size_t name_len)
   return true;
 }
 
-//{{{2 Comparison
+// Comparison:
 
 static int tv_equal_recurse_limit;
 
@@ -4004,7 +4002,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic)
   return false;
 }
 
-//{{{2 Type checks
+// Type checks:
 
 /// Check that given value is a number or string
 ///
@@ -4141,7 +4139,7 @@ bool tv_check_str(const typval_T *const tv)
   return false;
 }
 
-//{{{2 Get
+// Get:
 
 /// Get the number value of a Vimscript object
 ///
@@ -4233,7 +4231,7 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   if (lnum <= 0 && did_emsg_before == did_emsg && tv->v_type != VAR_NUMBER) {
     int fnum;
     // No valid number, try using same function as line() does.
-    pos_T *const fp = var2fpos(tv, true, &fnum, false);
+    pos_T *const fp = var2fpos(tv, true, &fnum, false, curwin);
     if (fp != NULL) {
       lnum = fp->lnum;
     }

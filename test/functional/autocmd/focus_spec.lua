@@ -3,12 +3,7 @@ local n = require('test.functional.testnvim')()
 local tt = require('test.functional.testterm')
 
 local clear = n.clear
-local feed_command = n.feed_command
 local feed_data = tt.feed_data
-
-if t.skip(t.is_os('win')) then
-  return
-end
 
 describe('autoread TUI FocusGained/FocusLost', function()
   local f1 = 'xtest-foo'
@@ -52,7 +47,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    feed_command('edit ' .. path)
+    n.feed(':edit ' .. path .. '<CR>')
     screen:expect([[
       ^                                                  |
       {100:~                                                 }|*3

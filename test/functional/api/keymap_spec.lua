@@ -45,6 +45,7 @@ describe('nvim_get_keymap', function()
     silent = 0,
     rhs = 'bar',
     expr = 0,
+    replace_keycodes = 0,
     sid = 0,
     scriptversion = 1,
     buffer = 0,
@@ -306,6 +307,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = 0,
       scriptversion = 1,
       buffer = 0,
@@ -378,6 +380,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = 0,
       scriptversion = 1,
       buffer = 0,
@@ -425,6 +428,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = sid_lua,
       scriptversion = 1,
       buffer = 0,
@@ -446,6 +450,7 @@ describe('nvim_get_keymap', function()
       script = 0,
       silent = 0,
       expr = 0,
+      replace_keycodes = 0,
       sid = sid_api_client,
       scriptversion = 1,
       buffer = 0,
@@ -467,6 +472,7 @@ describe('nvim_get_keymap', function()
       abbr = 1,
       buffer = 0,
       expr = 0,
+      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
       lnum = 0,
@@ -484,6 +490,7 @@ describe('nvim_get_keymap', function()
       abbr = 1,
       buffer = 1,
       expr = 0,
+      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
       lnum = 0,
@@ -549,6 +556,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.silent = not opts.silent and 0 or 1
     to_return.nowait = not opts.nowait and 0 or 1
     to_return.expr = not opts.expr and 0 or 1
+    to_return.replace_keycodes = not opts.replace_keycodes and 0 or 1
     to_return.sid = not opts.sid and sid_api_client or opts.sid
     to_return.scriptversion = 1
     to_return.buffer = not opts.buffer and 0 or opts.buffer

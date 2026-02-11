@@ -1851,10 +1851,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
 
   // Make msg_col a multiple of list_width by using spaces.
   if (msg_col % list_width != 0) {
-    int spaces = (msg_col / list_width + 1) * list_width - msg_col;
-    while (spaces--) {
-      msg_putchar(' ');
-    }
+    msg_advance((msg_col / list_width + 1) * list_width);
   }
 
   char *p = &buf[0];

@@ -162,10 +162,13 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
                   "UI already attached to channel: %" PRId64, channel_id);
     return;
   }
+  if (!ui_can_attach_more()) {
+    api_set_error(err, kErrorTypeException, "Maximum UI count reached");
+    return;
+  }
 
   if (width <= 0 || height <= 0) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Expected width > 0 and height > 0");
+    api_set_error(err, kErrorTypeValidation, "Expected width > 0 and height > 0");
     return;
   }
   RemoteUI *ui = xcalloc(1, sizeof(RemoteUI));
@@ -311,6 +314,7 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
         || (!strequal(arg, "--embed") && !strequal(arg, "--headless") && !skipping_minc)) {
       ADD_C(argv, CSTR_AS_OBJ(arg));
     }
+    skipping_minc = false;
   });
   ADD_C(args, ARRAY_OBJ(argv));
 

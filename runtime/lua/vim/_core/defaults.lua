@@ -1,3 +1,5 @@
+-- Default user-commands, autocmds, mappings, menus.
+
 --- Default user commands
 do
   vim.api.nvim_create_user_command('Inspect', function(cmd)
@@ -219,11 +221,11 @@ do
       vim.lsp.buf.type_definition()
     end, { desc = 'vim.lsp.buf.type_definition()' })
 
-    vim.keymap.set('x', 'an', function()
+    vim.keymap.set({ 'x', 'o' }, 'an', function()
       vim.lsp.buf.selection_range(vim.v.count1)
     end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1)' })
 
-    vim.keymap.set('x', 'in', function()
+    vim.keymap.set({ 'x', 'o' }, 'in', function()
       vim.lsp.buf.selection_range(-vim.v.count1)
     end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
 
@@ -440,13 +442,13 @@ do
     -- Add empty lines
     vim.keymap.set('n', '[<Space>', function()
       -- TODO: update once it is possible to assign a Lua function to options #25672
-      vim.go.operatorfunc = "v:lua.require'vim._buf'.space_above"
+      vim.go.operatorfunc = "v:lua.require'vim._core.util'.space_above"
       return 'g@l'
     end, { expr = true, desc = 'Add empty line above cursor' })
 
     vim.keymap.set('n', ']<Space>', function()
       -- TODO: update once it is possible to assign a Lua function to options #25672
-      vim.go.operatorfunc = "v:lua.require'vim._buf'.space_below"
+      vim.go.operatorfunc = "v:lua.require'vim._core.util'.space_below"
       return 'g@l'
     end, { expr = true, desc = 'Add empty line below cursor' })
   end
@@ -567,7 +569,14 @@ do
           red, green, blue = 65535, 65535, 65535
         end
         local command = fg_request and 10 or 11
-        local data = string.format('\027]%d;rgb:%04x/%04x/%04x\007', command, red, green, blue)
+        local data = string.format(
+          '\027]%d;rgb:%04x/%04x/%04x%s',
+          command,
+          red,
+          green,
+          blue,
+          args.data.terminator
+        )
         vim.api.nvim_chan_send(channel, data)
       end
     end,
@@ -951,37 +960,6 @@ do
       end
     end
   end
-
-  vim.api.nvim_create_autocmd('VimEnter', {
-    group = vim.api.nvim_create_augroup('nvim.exrc', {}),
-    desc = 'Find exrc files in parent directories',
-    callback = function()
-      if not vim.o.exrc then
-        return
-      end
-      local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
-        type = 'file',
-        upward = true,
-        limit = math.huge,
-        -- exrc in cwd already handled from C, thus start in parent directory.
-        path = vim.fs.dirname((vim.uv.cwd())),
-      })
-      for _, file in ipairs(files) do
-        local trusted = vim.secure.read(file) --[[@as string|nil]]
-        if trusted then
-          if vim.endswith(file, '.lua') then
-            assert(loadstring(trusted, '@' .. file))()
-          else
-            vim.api.nvim_exec2(trusted, {})
-          end
-        end
-        -- If the user unset 'exrc' in the current exrc then stop searching
-        if not vim.o.exrc then
-          return
-        end
-      end
-    end,
-  })
 
   if tty then
     -- Show progress bars in supporting terminals

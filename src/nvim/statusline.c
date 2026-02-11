@@ -77,7 +77,6 @@ void win_redr_status(win_T *wp)
     return;
   }
   busy = true;
-
   wp->w_redr_status = false;
   if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
     // no status line, either global statusline is enabled or the window is a last window
@@ -86,7 +85,8 @@ void win_redr_status(win_T *wp)
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
-  } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
+  } else if (*wp->w_p_stl != NUL
+             || (*p_stl != NUL && (!wp->w_floating || (is_stl_global && wp == curwin)))) {
     // redraw custom status line
     redraw_custom_statusline(wp);
   }
@@ -208,6 +208,7 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
   }
 }
 
+static bool did_show_ext_ruler = false;
 /// Redraw the status line, window bar, ruler or tabline.
 /// @param wp  target window, NULL for 'tabline'
 /// @param draw_winbar  redraw 'winbar'
@@ -229,7 +230,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
   StlClickRecord *tabtab;
   bool is_stl_global = global_stl_height() > 0;
 
-  ScreenGrid *grid = &default_grid;
+  ScreenGrid *grid = wp && wp->w_floating && !is_stl_global ? &wp->w_grid_alloc : &default_grid;
 
   // There is a tiny chance that this gets called recursively: When
   // redrawing a status line triggers redrawing the ruler or tabline.
@@ -269,10 +270,16 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
                                                    &wp->w_winbar_click_defs_size);
   } else {
-    row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-    fillchar = fillchar_status(&group, wp);
     const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
-    maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
+    if (wp->w_floating && !is_stl_global && !draw_ruler) {
+      row = wp->w_winrow_off + wp->w_view_height;
+      col = wp->w_wincol_off;
+      maxwidth = wp->w_view_width;
+    } else {
+      row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
+      maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
+    }
+    fillchar = fillchar_status(&group, wp);
     stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
@@ -310,7 +317,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     }
 
     attr = win_hl_attr(wp, (int)group);
-    if (in_status_line && !is_stl_global) {
+    if (!wp->w_floating && in_status_line && !is_stl_global) {
       col += wp->w_wincol;
     }
   }
@@ -384,6 +391,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
 
   if (ui_event) {
     ui_call_msg_ruler(content);
+    did_show_ext_ruler = true;
     api_free_array(content);
     goto theend;
   }
@@ -428,13 +436,12 @@ void win_redr_winbar(win_T *wp)
 void redraw_ruler(void)
 {
   static int did_ruler_col = -1;
-  static bool did_show_ext_ruler = false;
   win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.
   if (!p_ru || wp->w_status_height > 0 || is_stl_global || (p_ch == 0 && !ui_has(kUIMessages))) {
-    if (did_ruler_col > 0 && ui_has(kUIMessages)) {
+    if (did_show_ext_ruler && ui_has(kUIMessages)) {
       ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
       did_show_ext_ruler = false;
     } else if (did_ruler_col > 0) {
@@ -485,7 +492,10 @@ void redraw_ruler(void)
 #define RULER_BUF_LEN 70
   char buffer[RULER_BUF_LEN];
 
-  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
+  // row number, column number is appended
+  // l10n: leave as-is unless a space after the comma is preferred
+  // l10n: do not add any row/column label, due to the limited space
+  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, _("%" PRId64 ","),
                                (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
                                ? 0
                                : (int64_t)wp->w_cursor.lnum);
@@ -704,7 +714,7 @@ void draw_tabline(void)
       bool modified = false;
 
       for (wincount = 0; wp != NULL; wp = wp->w_next, wincount++) {
-        if (!wp->w_config.focusable) {
+        if (!wp->w_config.focusable || wp->w_config.hide) {
           wincount--;
         } else if (bufIsChanged(wp->w_buffer)) {
           modified = true;
@@ -1902,7 +1912,7 @@ stcsign:
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
-    int item_idx = 0;
+    int item_idx = evalstart;
     char *trunc_p;
 
     // If there are no items, truncate from beginning
@@ -1912,8 +1922,7 @@ stcsign:
       // Otherwise, look for the truncation item
     } else {
       // Default to truncating at the first item
-      trunc_p = stl_items[0].start;
-      item_idx = 0;
+      trunc_p = stl_items[item_idx].start;
 
       for (int i = evalstart; i < itemcnt + evalstart; i++) {
         if (stl_items[i].type == Trunc) {

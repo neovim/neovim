@@ -188,9 +188,9 @@ let test_values = {
       \		's', 's/tmp/dir\\\ with\\\ space/*',
       \		'w,b,k/tmp/dir\\\ with\\\ space/*,s'],
       \		['xxx']],
-      \ 'completefuzzycollect': [['', 'keyword', 'files', 'whole_line',
-      \		'keyword,whole_line', 'files,whole_line', 'keyword,files,whole_line'],
-      \		['xxx', 'keyword,,,whole_line,']],
+      "\ 'completefuzzycollect': [['', 'keyword', 'files', 'whole_line',
+      "\ "		'keyword,whole_line', 'files,whole_line', 'keyword,files,whole_line'],
+      "\ "		['xxx', 'keyword,,,whole_line,']],
       \ 'completeitemalign': [['abbr,kind,menu', 'menu,abbr,kind'],
       \		['', 'xxx', 'abbr', 'abbr,menu', 'abbr,menu,kind,abbr',
       \		'abbr1234,kind,menu']],
@@ -265,7 +265,6 @@ let test_values = {
       \ 'helplang': [['', 'de', 'de,it'], ['xxx']],
       "\ 'highlight': [['', 'e:Error'], ['xxx']],
       "\ 'imactivatekey': [['', 'S-space'], ['xxx']],
-      \ 'isexpand': [['', '.,->', '/,/*,\\,'], [',,', '\\,,']],
       \ 'isfname': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'isident': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'iskeyword': [['', '@', '@,48-52'], ['xxx', '@48']],
@@ -528,7 +527,7 @@ catch
   " Append errors to test.log
   let error = $'Error: {v:exception} in {v:throwpoint}'
   echo error
-  split test.log
+  split gen_opt_test.log
   call append('$', error)
   write
 endtry

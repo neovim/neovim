@@ -184,6 +184,10 @@ Examples: >lua
     -- ba
     print(string.match("foo.bar", "%.bar"))
     -- .bar
+<
+                                                                  *lua-truthy*
+Only `false` and `nil` evaluate to "false" in Lua. All other values are "true".
+
 
 ==============================================================================
 IMPORTING LUA MODULES                                        *lua-module-load*
@@ -232,7 +236,7 @@ Note:
 
                                                          *lua-script-location*
 To get its own location, Lua scripts/modules can use |debug.getinfo()|: >
-    debug.getinfo(1, 'S').source:sub(2)
+    debug.getinfo(1, 'S').source:gsub('^@', '')
 <
 
 ==============================================================================
@@ -699,11 +703,12 @@ vim.rpcnotify({channel}, {method}, {...})                    *vim.rpcnotify()*
       • {...}      (`any?`)
 
 vim.rpcrequest({channel}, {method}, {...})                  *vim.rpcrequest()*
-    Sends a request to {channel} to invoke {method} via |RPC| and blocks until
-    a response is received.
+    Invokes |RPC| `method` on `channel` and blocks until a response is
+    received.
 
-    Note: NIL values as part of the return value is represented as |vim.NIL|
-    special value
+    Note: Msgpack NIL values in the response are represented as |vim.NIL|.
+
+    Example: see |nvim_exec_lua()|
 
     Parameters: ~
       • {channel}  (`integer`)
@@ -716,6 +721,10 @@ vim.schedule({fn})                                            *vim.schedule()*
 
     Parameters: ~
       • {fn}  (`fun()`)
+
+    Return (multiple): ~
+        (`nil`) result
+        (`string?`) err Error message if scheduling failed, `nil` otherwise.
 
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
@@ -796,8 +805,9 @@ vim.ui_attach({ns}, {opts}, {callback})                      *vim.ui_attach()*
     |ui-popupmenu| and the sections below for event format for respective
     events.
 
-    Callbacks for `msg_show` events are executed in |api-fast| context;
-    showing the message should be scheduled.
+    Callbacks for `msg_show` events originating from internal messages (as
+    opposed to events from commands or API calls) are executed in |api-fast|
+    context; showing the message needs to be scheduled.
 
     Excessive errors inside the callback will result in forced detachment.
 
@@ -858,8 +868,8 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
         -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
         vim.wait(1000, function() return vim.g.foo end, 500)
 
-        -- Wait up to 100 ms or until `vim.g.foo` is true, and get the callback results.
-        local ok, rv1, rv2, rv3 = vim.wait(100, function()
+        -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+        local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
           return vim.g.foo, 'a', 42, { ok = { 'yes' } }
         end)
 
@@ -872,7 +882,8 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
 <
 
     Parameters: ~
-      • {time}       (`integer`) Number of milliseconds to wait
+      • {time}       (`number`) Number of milliseconds to wait. Must be
+                     non-negative number, any fractional part is truncated.
       • {callback}   (`fun(): boolean, ...?`) Optional callback. Waits until
                      {callback} returns true
       • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
@@ -1265,7 +1276,7 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     Defers calling {fn} until {timeout} ms passes.
 
     Use to do a one-shot timer that calls {fn} Note: The {fn} is
-    |vim.schedule_wrap()|ped automatically, so API functions are safe to call.
+    |vim.schedule()|d automatically, so API functions are safe to call.
 
     Parameters: ~
       • {fn}       (`function`) Callback to call once `timeout` expires
@@ -1379,8 +1390,10 @@ vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
                  applied. {typed} may be empty if {key} is produced by
                  non-typed key(s) or by the same typed key(s) that produced a
                  previous {key}. If {fn} returns an empty string, {key} is
-                 discarded/ignored. When {fn} is `nil`, the callback
-                 associated with namespace {ns_id} is removed.
+                 discarded/ignored, and if {key} is <Cmd> then the
+                 "<Cmd>…<CR>" sequence is discarded as a whole. When {fn} is
+                 `nil`, the callback associated with namespace {ns_id} is
+                 removed.
       • {ns_id}  (`integer?`) Namespace ID. If nil or 0, generates and returns
                  a new |nvim_create_namespace()| id.
       • {opts}   (`table?`) Optional parameters
@@ -1470,8 +1483,8 @@ vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
                                                          *vim.str_byteindex()*
 vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
     Convert UTF-32, UTF-16 or UTF-8 {index} to byte index. If
-    {strict_indexing} is false then then an out of range index will return
-    byte length instead of throwing an error.
+    {strict_indexing} is false then an out of range index will return byte
+    length instead of throwing an error.
 
     Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
     in the middle of a UTF-16 sequence is rounded upwards to the end of that
@@ -1811,9 +1824,11 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
     Only the first occurrence of each value is kept. The operation is
     performed in-place and the input table is modified.
 
-    Accepts an optional `key` argument that if provided is called for each
+    Accepts an optional `key` argument, which if provided is called for each
     value in the list to compute a hash key for uniqueness comparison. This is
-    useful for deduplicating table values or complex objects.
+    useful for deduplicating table values or complex objects. If `key` returns
+    `nil` for a value, that value will be considered unique, even if multiple
+    values return `nil`.
 
     Example: >lua
 
@@ -1833,6 +1848,9 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
 
     Return: ~
         (`any[]`) The deduplicated list
+
+    See also: ~
+      • |Iter:unique()|
 
 vim.list_contains({t}, {value})                          *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
@@ -2083,6 +2101,9 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
 
     Return: ~
         (`any`) Nested value indexed by key (if it exists), else nil
+
+    See also: ~
+      • |unpack()|
 
 vim.tbl_isempty({t})                                       *vim.tbl_isempty()*
     Checks if a table is empty.
@@ -2410,15 +2431,13 @@ vim.filetype.match({args})                              *vim.filetype.match()*
                   Mutually exclusive with {buf}.
 
     Return (multiple): ~
-        (`string?`) If a match was found, the matched filetype.
-        (`function?`) A function that modifies buffer state when called (for
-        example, to set some filetype specific buffer variables). The function
-        accepts a buffer number as its only argument.
-        (`boolean?`) Return true if a match was found by falling back to a
-        generic configuration file (i.e., ".conf"). If true, the filetype
-        should be set with `:setf FALLBACK conf`, which enables a later
-        |:setf| command to override the filetype. See `:help setf` for more
-        information.
+        (`string?`) The matched filetype, if any.
+        (`function?`) A function `fun(buf: integer)` that modifies buffer
+        state when called (for example, to set some filetype specific buffer
+        variables).
+        (`boolean?`) true if a match was found by falling back to a generic
+        filetype (i.e., ".conf"), which indicates the filetype should be set
+        with `:setf FALLBACK conf`. See |:setfiletype|.
 
 
 ==============================================================================
@@ -2432,6 +2451,13 @@ Example: >lua
   if vim.uv.fs_stat(file) then
     vim.print('file exists')
   end
+<
+
+                                                               *vim.fs.read()*
+You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+
+Example: >lua
+  vim.print(vim.fn.readblob('.git/config'))
 <
 
 
@@ -2675,7 +2701,9 @@ vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
         Since: 0.11.0
 
     Parameters: ~
-      • {path}  (`string`) Path to remove
+      • {path}  (`string`) Path to remove. Removes symlinks without touching
+                the origin. To remove the origin, resolve explicitly with
+                |uv.fs_realpath()|.
       • {opts}  (`table?`) A table with the following fields:
                 • {recursive}? (`boolean`) Remove directories and their
                   contents recursively
@@ -3343,6 +3371,43 @@ Iter:totable()                                                *Iter:totable()*
     Return: ~
         (`table`)
 
+Iter:unique({key})                                             *Iter:unique()*
+    Removes duplicate values from an iterator pipeline.
+
+    Only the first occurrence of each value is kept.
+
+    Accepts an optional `key` argument, which if provided is called for each
+    value in the iterator to compute a hash key for uniqueness comparison.
+    This is useful for deduplicating table values or complex objects. If `key`
+    returns `nil` for a value, that value will be considered unique, even if
+    multiple values return `nil`.
+
+    If a function-based iterator returns multiple arguments, uniqueness is
+    checked based on the first return value. To change this behavior, specify
+    `key`.
+
+    Examples: >lua
+        vim.iter({ 1, 2, 2, 3, 2 }):unique():totable()
+        -- { 1, 2, 3 }
+
+        vim.iter({ {id=1}, {id=2}, {id=1} })
+          :unique(function(x)
+            return x.id
+          end)
+          :totable()
+        -- { {id=1}, {id=2} }
+<
+
+    Parameters: ~
+      • {key}  (`fun(...):any?`) Optional hash function to determine
+               uniqueness of values.
+
+    Return: ~
+        (`Iter`)
+
+    See also: ~
+      • |vim.list.unique()|
+
 
 ==============================================================================
 Lua module: vim.json                                                *vim.json*
@@ -3368,6 +3433,11 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
                 • {luanil}? (`{ object?: boolean, array?: boolean }`, default:
                   `nil`) Convert `null` in JSON objects and/or arrays to Lua
                   `nil` instead of |vim.NIL|.
+                • {skip_comments}? (`boolean`, default: `false`) Allows
+                  JavaScript-style comments within JSON data. Comments are
+                  treated as whitespace and may appear anywhere whitespace is
+                  valid in JSON. Supports single-line comments beginning with
+                  '//' and block comments enclosed with '/' and '/'.
 
     Return: ~
         (`any`)
@@ -3424,7 +3494,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     See also: ~
       • |vim.keymap.set()|
 
-vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
+vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
     Defines a |mapping| of |keycodes| to a function or keycodes.
 
     Examples: >lua
@@ -3438,23 +3508,37 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
         end, { expr = true })
         -- Map "[%%" to a <Plug> mapping:
         vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+
+        -- Use `getregionpos(getpos('v'))` to get the "current visual selection":
+        vim.keymap.set('x', 'M', function()
+          local region = vim.fn.getregionpos(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+            type = 'v',
+            exclusive = false,
+            eol = false,
+          })
+          local line1 = region[1][1][2]
+          local line2 = region[#region][1][2]
+          vim.print({ line1, line2 })
+        end)
 <
 
     Parameters: ~
-      • {mode}  (`string|string[]`) Mode "short-name" (see
-                |nvim_set_keymap()|), or a list thereof.
-      • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
-      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
-                can be a Lua function.
-      • {opts}  (`table?`) Table of |:map-arguments|. Same as
-                |nvim_set_keymap()| {opts}, except:
-                • {replace_keycodes} defaults to `true` if "expr" is `true`.
+      • {modes}  (`string|string[]`) Mode "short-name" (see
+                 |nvim_set_keymap()|), or a list thereof.
+      • {lhs}    (`string`) Left-hand side |{lhs}| of the mapping.
+      • {rhs}    (`string|function`) Right-hand side |{rhs}| of the mapping,
+                 can be a Lua function.
+      • {opts}   (`table?`) Table of |:map-arguments|. Same as
+                 |nvim_set_keymap()| {opts}, except:
+                 • {replace_keycodes} defaults to `true` if "expr" is `true`.
+                 • {noremap} is not supported; use {remap} instead (see
+                   below).
 
-                Also accepts:
-                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
-                  `0` or `true` for current buffer.
-                • {remap}? (`boolean`, default: `false`) Make the mapping
-                  recursive. Inverse of {noremap}.
+                 Also accepts:
+                 • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
+                   `0` or `true` for current buffer.
+                 • {remap}? (`boolean`, default: `false`) Make the mapping
+                   recursive. Inverse of {noremap}.
 
     See also: ~
       • |nvim_set_keymap()|
@@ -4136,11 +4220,12 @@ Provides operations to compare, calculate, and convert ranges represented by
     Fields: ~
       • {start}      (`vim.Pos`) Start position.
       • {end_}       (`vim.Pos`) End position, exclusive.
+      • {is_empty}   (`fun(self: vim.Range): boolean`) See |Range:is_empty()|.
       • {has}        (`fun(outer: vim.Range, inner: vim.Range): boolean`) See
                      |Range:has()|.
       • {intersect}  (`fun(r1: vim.Range, r2: vim.Range): vim.Range?`) See
                      |Range:intersect()|.
-      • {to_lsp}     (`fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind)`)
+      • {to_lsp}     (`fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind): lsp.Range`)
                      See |Range:to_lsp()|.
       • {lsp}        (`fun(buf: integer, range: lsp.Range, position_encoding: lsp.PositionEncodingKind)`)
                      See |Range:lsp()|.
@@ -4166,6 +4251,12 @@ Range:intersect({r1}, {r2})                                *Range:intersect()*
     Return: ~
         (`vim.Range?`) range that is present inside both `r1` and `r2`. `nil`
         if such range does not exist. See |vim.Range|.
+
+Range:is_empty()                                            *Range:is_empty()*
+    Checks whether the given range is empty; i.e., start >= end.
+
+    Return: ~
+        (`boolean`) `true` if the given range is empty
 
 Range:lsp({buf}, {range}, {position_encoding})                   *Range:lsp()*
     Creates a new |vim.Range| from `lsp.Range`.
@@ -4201,6 +4292,9 @@ Range:to_lsp({range}, {position_encoding})                    *Range:to_lsp()*
     Parameters: ~
       • {range}              (`vim.Range`) See |vim.Range|.
       • {position_encoding}  (`lsp.PositionEncodingKind`)
+
+    Return: ~
+        (`lsp.Range`)
 
 
 ==============================================================================
@@ -5165,13 +5259,13 @@ vim.version.range({spec})                                *vim.version.range()*
 
 
 ==============================================================================
-Lua module: vim._extui                                            *vim._extui*
+Lua module: vim._core.ui2                                      *vim._core.ui2*
 
 WARNING: This is an experimental interface intended to replace the message
 grid in the TUI.
 
 To enable the experimental UI (default opts shown): >lua
-    require('vim._extui').enable({
+    require('vim._core.ui2').enable({
      enable = true, -- Whether to enable or disable the UI.
      msg = { -- Options related to the message module.
        ---@type 'cmd'|'msg' Where to place regular messages, either in the

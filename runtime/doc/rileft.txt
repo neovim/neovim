@@ -1,7 +1,7 @@
 *rileft.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Avner Lottem
+		  VIM REFERENCE MANUAL	  by Avner Lottem
 					  updated by Nadim Shaikli
 
 

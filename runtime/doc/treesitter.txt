@@ -996,9 +996,9 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
 
     Return (multiple): ~
         (`integer`) start_row
-        (`integer`) start_col
+        (`integer`) start_col (byte offset)
         (`integer`) end_row
-        (`integer`) end_col
+        (`integer`) end_col (byte offset)
 
                                               *vim.treesitter.get_node_text()*
 get_node_text({node}, {source}, {opts})
@@ -1345,7 +1345,9 @@ LanguageTree:is_valid({exclude_children}, {range})
     Parameters: ~
       • {exclude_children}  (`boolean?`) whether to ignore the validity of
                             children (default `false`)
-      • {range}             (`Range?`) range to check for validity
+      • {range}             (`Range|Range[]?`) range (or list of ranges,
+                            sorted by starting point in ascending order) to
+                            check for validity
 
     Return: ~
         (`boolean`)
@@ -1421,11 +1423,12 @@ LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
     if {range} is `true`).
 
     Parameters: ~
-      • {range}     (`boolean|Range?`) Parse this range in the parser's
-                    source. Set to `true` to run a complete parse of the
-                    source (Note: Can be slow!) Set to `false|nil` to only
-                    parse regions with empty ranges (typically only the root
-                    tree without injections).
+      • {range}     (`boolean|Range|Range[]?`) Parse this range (or list of
+                    ranges, sorted by starting point in ascending order) in
+                    the parser's source. Set to `true` to run a complete parse
+                    of the source (Note: Can be slow!) Set to `false|nil` to
+                    only parse regions with empty ranges (typically only the
+                    root tree without injections).
       • {on_parse}  (`fun(err?: string, trees?: table<integer, TSTree>)?`)
                     Function invoked when parsing completes. When provided and
                     `vim.g._ts_force_sync_parsing` is not set, parsing will
@@ -1468,10 +1471,10 @@ LanguageTree:register_cbs({cbs}, {recursive})
                      callbacks.
 
 LanguageTree:source()                                  *LanguageTree:source()*
-    Returns the source bufnr of the language tree.
+    Returns the source content of the language tree (bufnr or string).
 
     Return: ~
-        (`integer`)
+        (`integer|string`)
 
                                                *LanguageTree:tree_for_range()*
 LanguageTree:tree_for_range({range}, {opts})

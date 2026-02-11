@@ -845,7 +845,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     });
 
     if (ERROR_SET(&err)) {
-      msg_putchar('\n');
+      if (!ui_has(kUIMessages)) {
+        msg_putchar('\n');
+      }
       msg_scroll = true;
       msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);
@@ -933,6 +935,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   // sure to still clean up to avoid memory corruption.
   if (cmdline_pum_active()) {
     cmdline_pum_remove(false);
+  } else {
+    // A previous cmdline_pum_remove() may have deferred redraw.
+    pum_check_clear();
   }
   wildmenu_cleanup(&ccline);
   s->did_wild_list = false;
@@ -974,7 +979,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   redir_off = false;
 
   if (ERROR_SET(&err)) {
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     emsg(err.msg);
     did_emsg = false;
     api_clear_error(&err);
@@ -1003,6 +1010,9 @@ theend:
   char *p = ccline.cmdbuff;
 
   if (ui_has(kUICmdline)) {
+    if (exmode_active) {
+      ui_ext_cmdline_block_append(0, p);
+    }
     ui_ext_cmdline_hide(s->gotesc);
   }
   if (!cmd_silent) {
@@ -1038,7 +1048,7 @@ static int command_line_check(VimState *state)
                            // that occurs while typing a command should
                            // cause the command not to be executed.
 
-  if (stuff_empty() && typebuf.tb_len == 0) {
+  if (ex_normal_busy == 0 && stuff_empty() && typebuf.tb_len == 0) {
     // There is no pending input from sources other than user input, so
     // Vim is going to wait for the user to type a key.  Consider the
     // command line typed even if next key will trigger a mapping.
@@ -1300,7 +1310,7 @@ static int command_line_execute(VimState *state, int key)
       };
       do_cmdline(&ea, DOCMD_NOWAIT);
     } else {
-      map_execute_lua(false);
+      map_execute_lua(false, false);
     }
     // If the window changed incremental search state is not valid.
     if (s->is_state.winid != curwin->handle) {
@@ -1391,7 +1401,8 @@ static int command_line_execute(VimState *state, int key)
 
   int wild_type = 0;
   const bool key_is_wc = (s->c == p_wc && KeyTyped) || s->c == p_wcm;
-  if ((cmdline_pum_active() || wild_menu_showing || s->did_wild_list) && !key_is_wc) {
+  if ((cmdline_pum_active() || wild_menu_showing || s->did_wild_list)
+      && !key_is_wc && s->xpc.xp_numfiles > 0) {
     // Ctrl-Y: Accept the current selection and close the popup menu.
     // Ctrl-E: cancel the cmdline popup menu and return the original text.
     if (s->c == Ctrl_E || s->c == Ctrl_Y) {
@@ -2844,7 +2855,9 @@ static void do_autocmd_cmdlinechanged(int firstc)
       restore_v_event(dict, &save_v_event);
     });
     if (ERROR_SET(&err)) {
-      msg_putchar('\n');
+      if (!ui_has(kUIMessages)) {
+        msg_putchar('\n');
+      }
       msg_scroll = true;
       msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);
@@ -4656,7 +4669,7 @@ static int open_cmdwin(void)
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
-  invalidate_botline(curwin);
+  invalidate_botline_win(curwin);
   ui_ext_cmdline_hide(false);
   redraw_later(curwin, UPD_SOME_VALID);
 

@@ -12,7 +12,7 @@
 // - If it's a numeric option, add any necessary bounds checks to check_num_option_bounds().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
 // - Add documentation! "desc" in options.lua, and any other related places.
-// - Add an entry in runtime/optwin.vim.
+// - Add an entry in runtime/scripts/optwin.lua.
 
 #define IN_OPTION_C
 #include <assert.h>
@@ -111,6 +111,7 @@
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef BACKSLASH_IN_FILENAME
 # include "nvim/arglist.h"
@@ -386,6 +387,7 @@ void set_init_1(bool clean_arg)
   curbuf->b_p_initialized = true;
   curbuf->b_p_ac = -1;
   curbuf->b_p_ar = -1;          // no local 'autoread' value
+  curbuf->b_p_fs = -1;          // no local 'fsync' value
   curbuf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   check_buf_options(curbuf);
   check_win_options(curwin);
@@ -1046,6 +1048,7 @@ static const char *find_tty_option_end(const char *arg)
     p++;
   }
   if (p[0] == 't' && p[1] == '_' && p[2] && p[3]) {
+    // "t_xx" ("t_Co") option.
     p += 4;
   } else if (delimit) {
     // Search for delimiting >.
@@ -2116,6 +2119,7 @@ static const char *did_set_laststatus(optset_T *args)
 
   status_redraw_curbuf();
   last_status(false);  // (re)set last window status line.
+  win_float_update_statusline();
   return NULL;
 }
 
@@ -2361,7 +2365,6 @@ static const char *did_set_previewwindow(optset_T *args)
 static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 {
   hl_invalidate_blends();
-  pum_grid.blending = (p_pb > 0);
   if (pum_drawn()) {
     pum_redraw();
   }
@@ -2712,11 +2715,11 @@ static void do_syntax_autocmd(buf_T *buf, bool value_changed)
   static int syn_recursive = 0;
 
   syn_recursive++;
+  buf->b_flags |= BF_SYN_SET;
   // Only pass true for "force" when the value changed or not used
   // recursively, to avoid endless recurrence.
   apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
                  value_changed || syn_recursive == 1, buf);
-  buf->b_flags |= BF_SYN_SET;
   syn_recursive--;
 }
 
@@ -3388,6 +3391,7 @@ static OptVal get_option_unset_value(OptIndex opt_idx)
     switch (opt_idx) {
     case kOptAutocomplete:
     case kOptAutoread:
+    case kOptFsync:
       return BOOLEAN_OPTVAL(kNone);
     case kOptScrolloff:
     case kOptSidescrolloff:
@@ -4085,7 +4089,7 @@ static void showoptions(bool all, int opt_flags)
       }
       int col = 0;
       for (int i = row; i < item_count; i += rows) {
-        msg_col = col;                          // make columns
+        msg_advance(col);                       // make columns
         showoneopt(items[i], opt_flags);
         col += INC;
       }
@@ -4156,7 +4160,9 @@ static void showoneopt(vimoption_T *opt, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(opt, opt_flags);
-    msg_outtrans(NameBuff, 0, false);
+    if (*NameBuff != NUL) {
+      msg_outtrans(NameBuff, 0, false);
+    }
   }
 
   silent_mode = save_silent;
@@ -4431,6 +4437,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
     switch (opt_idx) {
     case kOptFormatprg:
       return &(buf->b_p_fp);
+    case kOptFsync:
+      return &(buf->b_p_fs);
     case kOptFindfunc:
       return &(buf->b_p_ffu);
     case kOptErrorformat:
@@ -4465,8 +4473,6 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_inc);
     case kOptCompleteopt:
       return &(buf->b_p_cot);
-    case kOptIsexpand:
-      return &(buf->b_p_ise);
     case kOptDictionary:
       return &(buf->b_p_dict);
     case kOptDiffanchors:
@@ -4556,8 +4562,6 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_inc != NUL ? &(buf->b_p_inc) : p->var;
   case kOptCompleteopt:
     return *buf->b_p_cot != NUL ? &(buf->b_p_cot) : p->var;
-  case kOptIsexpand:
-    return *buf->b_p_ise != NUL ? &(buf->b_p_ise) : p->var;
   case kOptDictionary:
     return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : p->var;
   case kOptDiffanchors:
@@ -4568,6 +4572,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
   case kOptFormatprg:
     return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
+  case kOptFsync:
+    return buf->b_p_fs >= 0 ? &(buf->b_p_fs) : p->var;
   case kOptFindfunc:
     return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
   case kOptErrorformat:
@@ -5242,6 +5248,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // are not copied, start using the global value
       buf->b_p_ac = -1;
       buf->b_p_ar = -1;
+      buf->b_p_fs = -1;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_string_option;
       buf->b_bkc_flags = 0;
@@ -5265,7 +5272,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_dict = empty_string_option;
       buf->b_p_dia = empty_string_option;
       buf->b_p_tsr = empty_string_option;
-      buf->b_p_ise = empty_string_option;
       buf->b_p_tsrfu = empty_string_option;
       buf->b_p_qe = xstrdup(p_qe);
       COPY_OPT_SCTX(buf, kBufOptQuoteescape);

@@ -37,12 +37,22 @@ func Test_version()
   call assert_true(has('patch-6.9.999'))
   call assert_true(has('patch-7.1.999'))
   call assert_true(has('patch-7.4.123'))
+  call assert_true(has('patch-7.4.123 ')) " Traling space can be allowed.
 
   call assert_false(has('patch-7'))
   call assert_false(has('patch-7.4'))
   call assert_false(has('patch-7.4.'))
   call assert_false(has('patch-9.1.0'))
   call assert_false(has('patch-9.9.1'))
+
+  call assert_false(has('patch-abc'))
+  call assert_false(has('patchabc'))
+
+  call assert_false(has('patch-8x001'))
+  call assert_false(has('patch-9X0X0'))
+  call assert_false(has('patch-9-0-0'))
+  call assert_false(has('patch-09.0.0'))
+  call assert_false(has('patch-9.00.0'))
 endfunc
 
 func Test_op_ternary()
@@ -203,10 +213,10 @@ func Test_method_with_prefix()
   call CheckLegacyAndVim9Success(lines)
 
   call assert_equal([0, 1, 2], --3->range())
-  call CheckDefAndScriptFailure(['eval --3->range()'], 'E15')
+  call CheckDefAndScriptFailure(['eval --3->range()'], 'E15:')
 
   call assert_equal(1, !+-+0)
-  call CheckDefAndScriptFailure(['eval !+-+0'], 'E15')
+  call CheckDefAndScriptFailure(['eval !+-+0'], 'E15:')
 endfunc
 
 func Test_option_value()
@@ -826,7 +836,7 @@ endfunc
 " Test for errors in expression evaluation
 func Test_expr_eval_error()
   call CheckLegacyAndVim9Failure(["VAR i = 'abc' .. []"], ['E730:', 'E1105:', 'E730:'])
-  call CheckLegacyAndVim9Failure(["VAR l = [] + 10"], ['E745:', 'E1051:', 'E745'])
+  call CheckLegacyAndVim9Failure(["VAR l = [] + 10"], ['E745:', 'E1051:', 'E745:'])
   call CheckLegacyAndVim9Failure(["VAR v = 10 + []"], ['E745:', 'E1051:', 'E745:'])
   call CheckLegacyAndVim9Failure(["VAR v = 10 / []"], ['E745:', 'E1036:', 'E745:'])
   call CheckLegacyAndVim9Failure(["VAR v = -{}"], ['E728:', 'E1012:', 'E728:'])

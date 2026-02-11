@@ -575,7 +575,6 @@ struct file_buffer {
   char *b_p_fo;                 ///< 'formatoptions'
   char *b_p_flp;                ///< 'formatlistpat'
   int b_p_inf;                  ///< 'infercase'
-  char *b_p_ise;                ///< 'isexpand' local value
   char *b_p_isk;                ///< 'iskeyword'
   char *b_p_def;                ///< 'define' local value
   char *b_p_inc;                ///< 'include'
@@ -587,6 +586,7 @@ struct file_buffer {
   char *b_p_fp;                 ///< 'formatprg'
   char *b_p_fex;                ///< 'formatexpr'
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
+  int b_p_fs;                   ///< 'fsync'
   char *b_p_kp;                 ///< 'keywordprg'
   int b_p_lisp;                 ///< 'lisp'
   char *b_p_lop;                ///< 'lispoptions'
@@ -822,9 +822,10 @@ struct diffline_S {
   int lineoff;
 };
 
-#define SNAP_HELP_IDX   0
-#define SNAP_AUCMD_IDX 1
-#define SNAP_COUNT     2
+#define SNAP_HELP_IDX       0
+#define SNAP_AUCMD_IDX      1
+#define SNAP_QUICKFIX_IDX   2
+#define SNAP_COUNT          3
 
 /// Tab pages point to the top frame of each tab page.
 /// Note: Most values are NOT valid for the current tab page!  Use "curwin",
@@ -840,9 +841,10 @@ struct tabpage_S {
   win_T *tp_firstwin;         ///< first window in this Tab page
   win_T *tp_lastwin;          ///< last window in this Tab page
   int64_t tp_old_Rows_avail;  ///< ROWS_AVAIL when Tab page was left
-  int64_t tp_old_Columns;        ///< Columns when Tab page was left, -1 when
-                                 ///< calling win_new_screen_cols() postponed
+  int64_t tp_old_Columns;     ///< Columns when Tab page was left, -1 when
+                              ///< calling win_new_screen_cols() postponed
   OptInt tp_ch_used;          ///< value of 'cmdheight' when frame size was set
+  bool tp_did_tabclosedpre;   ///< whether TabClosedPre was triggered
 
   diff_T *tp_first_diff;
   buf_T *(tp_diffbuf[DB_COUNT]);

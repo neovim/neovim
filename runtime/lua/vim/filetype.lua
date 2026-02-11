@@ -212,6 +212,7 @@ local extension = {
   aml = 'aml',
   run = 'ampl',
   g4 = 'antlr4',
+  app = detect.app,
   applescript = 'applescript',
   scpt = 'applescript',
   ino = 'arduino',
@@ -259,7 +260,7 @@ local extension = {
   com = detect_seq(detect.bindzone, 'dcl'),
   db = detect.bindzone,
   bicep = 'bicep',
-  bicepparam = 'bicep',
+  bicepparam = 'bicep-params',
   zone = 'bindzone',
   bb = 'bitbake',
   bbappend = 'bitbake',
@@ -267,6 +268,7 @@ local extension = {
   bl = 'blank',
   blp = 'blueprint',
   bp = 'bp',
+  bt = 'bpftrace',
   bs = 'brighterscript',
   brs = 'brightscript',
   bsd = 'bsdl',
@@ -402,6 +404,8 @@ local extension = {
   dhall = 'dhall',
   diff = 'diff',
   rej = 'diff',
+  dj = 'djot',
+  djot = 'djot',
   Dockerfile = 'dockerfile',
   dockerfile = 'dockerfile',
   bat = 'dosbatch',
@@ -470,6 +474,7 @@ local extension = {
   fwt = 'fan',
   lib = 'faust',
   fnl = 'fennel',
+  fnlm = 'fennel',
   fga = 'fga',
   m4gl = 'fgl',
   ['4gl'] = 'fgl',
@@ -477,6 +482,7 @@ local extension = {
   fir = 'firrtl',
   fish = 'fish',
   flix = 'flix',
+  ftl = 'fluent',
   focexec = 'focexec',
   fex = 'focexec',
   ft = 'forth',
@@ -549,6 +555,8 @@ local extension = {
   graphql = 'graphql',
   graphqls = 'graphql',
   gretl = 'gretl',
+  groff = 'groff',
+  mom = 'groff',
   gradle = 'groovy',
   groovy = 'groovy',
   gsp = 'gsp',
@@ -610,6 +618,7 @@ local extension = {
   module = detect.hw,
   pkg = detect.hw,
   hy = 'hy',
+  hylo = 'hylo',
   iba = 'ibasic',
   ibi = 'ibasic',
   icn = 'icon',
@@ -684,6 +693,8 @@ local extension = {
   kerml = 'kerml',
   kv = 'kivy',
   kix = 'kix',
+  kk = 'koka',
+  kos = 'kos',
   kts = 'kotlin',
   kt = 'kotlin',
   ktm = 'kotlin',
@@ -703,6 +714,7 @@ local extension = {
   journal = 'ledger',
   ldg = 'ledger',
   ledger = 'ledger',
+  xrl = 'leex',
   leo = 'leo',
   less = 'less',
   lex = 'lex',
@@ -836,13 +848,17 @@ local extension = {
   NSP = 'natural',
   NSS = 'natural',
   ncf = 'ncf',
+  axs = 'netlinx',
+  axi = 'netlinx',
   nginx = 'nginx',
+  ncl = 'nickel',
   nim = 'nim',
   nims = 'nim',
   nimble = 'nim',
   ninja = 'ninja',
   nix = 'nix',
   norg = 'norg',
+  nq = 'nq',
   nqc = 'nqc',
   ['0'] = detect.nroff,
   ['1'] = detect.nroff,
@@ -874,7 +890,6 @@ local extension = {
   roff = 'nroff',
   tmac = 'nroff',
   man = 'nroff',
-  mom = 'nroff',
   nr = 'nroff',
   tr = 'nroff',
   nsi = 'nsis',
@@ -1051,6 +1066,7 @@ local extension = {
   MODX = 'rapid',
   MODx = 'rapid',
   rasi = 'rasi',
+  rasinc = 'rasi',
   rbs = 'rbs',
   rego = 'rego',
   rem = 'remind',
@@ -1099,6 +1115,7 @@ local extension = {
   rjs = 'ruby',
   rxml = 'ruby',
   rb = 'ruby',
+  rbi = 'ruby',
   rant = 'ruby',
   ru = 'ruby',
   rbw = 'ruby',
@@ -1207,6 +1224,7 @@ local extension = {
   ass = 'ssa',
   st = 'st',
   ipd = 'starlark',
+  sky = 'starlark',
   star = 'starlark',
   starlark = 'starlark',
   imata = 'stata',
@@ -1282,6 +1300,9 @@ local extension = {
   text = 'text',
   tfvars = 'terraform-vars',
   thrift = 'thrift',
+  tig = 'tiger',
+  Tiltfile = 'tiltfile',
+  tiltfile = 'tiltfile',
   tla = 'tla',
   tli = 'tli',
   toml = 'toml',
@@ -1602,6 +1623,7 @@ local filename = {
   Earthfile = 'earthfile',
   ['.editorconfig'] = 'editorconfig',
   ['elinks.conf'] = 'elinks',
+  ['rebar.config'] = 'erlang',
   ['mix.lock'] = 'elixir',
   ['filter-rules'] = 'elmfilt',
   ['exim.conf'] = 'exim',
@@ -1844,6 +1866,7 @@ local filename = {
   ['requirements.in'] = 'requirements',
   ['resolv.conf'] = 'resolv',
   ['robots.txt'] = 'robots',
+  Brewfile = 'ruby',
   Gemfile = 'ruby',
   Puppetfile = 'ruby',
   ['.irbrc'] = 'ruby',
@@ -1883,6 +1906,8 @@ local filename = {
   ['.tcshrc'] = detect.tcsh,
   ['tcsh.login'] = detect.tcsh,
   ['tcsh.tcshrc'] = detect.tcsh,
+  ['.skhdrc'] = 'skhd',
+  ['skhdrc'] = 'skhd',
   ['/etc/slp.conf'] = 'slpconf',
   ['/etc/slp.reg'] = 'slpreg',
   ['/etc/slp.spi'] = 'slpspi',
@@ -1916,6 +1941,8 @@ local filename = {
   ['tidy.conf'] = 'tidy',
   tidyrc = 'tidy',
   ['.tidyrc'] = 'tidy',
+  Tiltfile = 'tiltfile',
+  tiltfile = 'tiltfile',
   ['.tmux.conf'] = 'tmux',
   ['Cargo.lock'] = 'toml',
   ['/.cargo/config'] = 'toml',
@@ -2094,6 +2121,24 @@ local pattern = {
     ['/etc/systemd/system/.*%.d/.*%.conf$'] = 'systemd',
     ['/etc/systemd/system/.*%.d/%.#'] = 'systemd',
     ['/etc/systemd/system/%.#'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.artifact$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.build$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.container$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.image$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.kube$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.network$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.pod$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.volume$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.artifact$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.build$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.container$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.image$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.kube$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.network$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.pod$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.volume$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*/.*%.d/.*%.conf$'] = 'systemd',
+    ['/etc/containers/systemd/users/.*%.d/.*%.conf$'] = 'systemd',
     ['/etc/config/'] = starsetf(detect.uci),
     ['/etc/udev/udev%.conf$'] = 'udevconf',
     ['/etc/udev/permissions%.d/.*%.permissions$'] = 'udevperm',
@@ -2344,6 +2389,14 @@ local pattern = {
     ['/%.config/systemd/user/%.#'] = 'systemd',
     ['/%.config/systemd/user/.*%.d/%.#'] = 'systemd',
     ['/%.config/systemd/user/.*%.d/.*%.conf$'] = 'systemd',
+    ['/containers/systemd/.*%.artifact$'] = 'systemd',
+    ['/containers/systemd/.*%.build$'] = 'systemd',
+    ['/containers/systemd/.*%.container$'] = 'systemd',
+    ['/containers/systemd/.*%.image$'] = 'systemd',
+    ['/containers/systemd/.*%.kube$'] = 'systemd',
+    ['/containers/systemd/.*%.network$'] = 'systemd',
+    ['/containers/systemd/.*%.pod$'] = 'systemd',
+    ['/containers/systemd/.*%.volume$'] = 'systemd',
     ['/systemd/.*%.automount$'] = 'systemd',
     ['/systemd/.*%.dnssd$'] = 'systemd',
     ['/systemd/.*%.link$'] = 'systemd',
@@ -2482,6 +2535,7 @@ local pattern = {
     ['/pipewire/.*%.conf$'] = 'spajson',
     ['/wireplumber/.*%.conf$'] = 'spajson',
     ['/%.ssh/.*%.conf$'] = 'sshconfig',
+    ['/containers/systemd/.*%.d/.*%.conf$'] = 'systemd',
     ['^%.?tmux.*%.conf$'] = 'tmux',
     ['^%.?tmux.*%.conf'] = starsetf('tmux'),
     ['/containers/containers%.conf$'] = 'toml',
@@ -2627,6 +2681,7 @@ local pattern = {
     ['^www%.conf'] = starsetf('dosini'),
     ['^drac%.'] = starsetf('dracula'),
     ['/dtrace/.*%.d$'] = 'dtrace',
+    ['%.app%.src$'] = 'erlang',
     ['esmtprc$'] = 'esmtprc',
     ['/0%.orig/'] = starsetf(detect.foam),
     ['/0/'] = starsetf(detect.foam),
@@ -2710,6 +2765,7 @@ local pattern = {
     ['termcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('term')
     end),
+    ['^Tiltfile%.'] = starsetf('tiltfile'),
     ['%.t%.html$'] = 'tilde',
     ['%.vhdl_[0-9]'] = starsetf('vhdl'),
     ['vimrc'] = starsetf('vim'),
@@ -2805,15 +2861,6 @@ local function normalize_path(path, as_pattern)
     end
   end
   return normal
-end
-
-local abspath = function(x)
-  return fn.fnamemodify(x, ':p')
-end
-if fn.has('win32') == 1 then
-  abspath = function(x)
-    return (fn.fnamemodify(x, ':p'):gsub('\\', '/'))
-  end
 end
 
 --- @class vim.filetype.add.filetypes
@@ -3098,14 +3145,12 @@ end
 ---
 ---@param args vim.filetype.match.args Table specifying which matching strategy to use.
 ---                 Accepted keys are:
----@return string|nil # If a match was found, the matched filetype.
----@return function|nil # A function that modifies buffer state when called (for example, to set some
----                     filetype specific buffer variables). The function accepts a buffer number as
----                     its only argument.
----@return boolean|nil # Return true if a match was found by falling back to a generic configuration
----                    file (i.e., ".conf"). If true, the filetype should be set with
----                    `:setf FALLBACK conf`, which enables a later |:setf| command to override the
----                    filetype. See `:help setf` for more information.
+---@return string|nil   # The matched filetype, if any.
+---@return function|nil # A function `fun(buf: integer)` that modifies buffer state when called (for
+---                     example, to set some filetype specific buffer variables).
+---@return boolean|nil  # true if a match was found by falling back to a generic filetype
+---                     (i.e., ".conf"), which indicates the filetype should be set with
+---                     `:setf FALLBACK conf`. See |:setfiletype|.
 function M.match(args)
   vim.validate('arg', args, 'table')
 
@@ -3124,7 +3169,7 @@ function M.match(args)
   if name then
     name = normalize_path(name)
 
-    local path = abspath(name)
+    local path = vim.fs.abspath(name)
     do -- First check for the simple case where the full path exists as a key
       local ft, on_detect = dispatch(filename[path], path, bufnr)
       if ft then
@@ -3132,7 +3177,7 @@ function M.match(args)
       end
     end
 
-    local tail = fn.fnamemodify(name, ':t')
+    local tail = vim.fs.basename(name)
 
     do -- Next check against just the file name
       local ft, on_detect = dispatch(filename[tail], path, bufnr)

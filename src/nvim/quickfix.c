@@ -735,7 +735,7 @@ static int qf_get_next_str_line(qfstate_T *state)
   return QF_OK;
 }
 
-/// Get the next string from state->p_Li.
+/// Get the next string from the List item state->p_li.
 static int qf_get_next_list_line(qfstate_T *state)
 {
   listitem_T *p_li = state->p_li;
@@ -1249,7 +1249,8 @@ static void qf_store_title(qf_list_T *qfl, const char *title)
 /// that created the quickfix list with the ":" prefix.
 /// Create a quickfix list title string by prepending ":" to a user command.
 /// Returns a pointer to a static buffer with the title.
-static char *qf_cmdtitle(char *cmd)
+static char *qf_cmdtitle(const char *cmd)
+  FUNC_ATTR_NONNULL_ALL
 {
   static char qftitle_str[IOSIZE];
 
@@ -3076,12 +3077,13 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
       update_screen();
     }
   }
-  vim_snprintf(IObuff, IOSIZE, _("(%d of %d)%s%s: "), qf_index,
-               qf_get_curlist(qi)->qf_count,
-               qf_ptr->qf_cleared ? _(" (line deleted)") : "",
-               qf_types(qf_ptr->qf_type, qf_ptr->qf_nr));
+  size_t IObufflen = vim_snprintf_safelen(IObuff, IOSIZE,
+                                          _("(%d of %d)%s%s: "), qf_index,
+                                          qf_get_curlist(qi)->qf_count,
+                                          qf_ptr->qf_cleared ? _(" (line deleted)") : "",
+                                          qf_types(qf_ptr->qf_type, qf_ptr->qf_nr));
   // Add the message, skipping leading whitespace and newlines.
-  ga_concat(gap, IObuff);
+  ga_concat_len(gap, IObuff, IObufflen);
   qf_fmt_text(gap, skipwhite(qf_ptr->qf_text));
   ga_append(gap, NUL);
 
@@ -3354,7 +3356,9 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
     return;
   }
 
-  msg_putchar('\n');
+  if (msg_col > 0) {
+    msg_putchar('\n');
+  }
   msg_outtrans(IObuff, cursel ? HLF_QFL : qfFile_hl_id, false);
 
   if (qfp->qf_lnum != 0) {
@@ -3366,7 +3370,9 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
   ga_append(gap, NUL);
-  msg_puts_hl(gap->ga_data, qfLine_hl_id, false);
+  if (*(char *)gap->ga_data != NUL) {
+    msg_puts_hl(gap->ga_data, qfLine_hl_id, false);
+  }
   msg_puts_hl(":", qfSep_hl_id, false);
   if (qfp->qf_pattern != NULL) {
     gap = qfga_get();
@@ -3451,6 +3457,7 @@ void qf_list(exarg_T *eap)
   if (qfl->qf_nonevalid) {
     all = true;
   }
+  msg_ext_set_kind("list_cmd");
   qfline_T *qfp;
   FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
     if ((qfp->qf_valid || all) && idx1 <= i && i <= idx2) {
@@ -3485,26 +3492,24 @@ static void qf_fmt_text(garray_T *gap, const char *restrict text)
 /// of a quickfix entry to the grow array "gap".
 static void qf_range_text(garray_T *gap, const qfline_T *qfp)
 {
-  char *const buf = IObuff;
-  const size_t bufsize = IOSIZE;
+  String buf = cbuf_as_string(IObuff, 0);
 
-  vim_snprintf(buf, bufsize, "%" PRIdLINENR, qfp->qf_lnum);
-  size_t len = strlen(buf);
+  buf.size = vim_snprintf_safelen(buf.data, IOSIZE, "%" PRIdLINENR, qfp->qf_lnum);
 
   if (qfp->qf_end_lnum > 0 && qfp->qf_lnum != qfp->qf_end_lnum) {
-    vim_snprintf(buf + len, bufsize - len, "-%" PRIdLINENR, qfp->qf_end_lnum);
-    len += strlen(buf + len);
+    buf.size += vim_snprintf_safelen(buf.data + buf.size, IOSIZE - buf.size,
+                                     "-%" PRIdLINENR, qfp->qf_end_lnum);
   }
   if (qfp->qf_col > 0) {
-    vim_snprintf(buf + len, bufsize - len, " col %d", qfp->qf_col);
-    len += strlen(buf + len);
+    buf.size += vim_snprintf_safelen(buf.data + buf.size, IOSIZE - buf.size,
+                                     " col %d", qfp->qf_col);
     if (qfp->qf_end_col > 0 && qfp->qf_col != qfp->qf_end_col) {
-      vim_snprintf(buf + len, bufsize - len, "-%d", qfp->qf_end_col);
-      len += strlen(buf + len);
+      buf.size += vim_snprintf_safelen(buf.data + buf.size, IOSIZE - buf.size,
+                                       "-%d", qfp->qf_end_col);
     }
   }
 
-  ga_concat_len(gap, buf, len);
+  ga_concat_len(gap, buf.data, buf.size);
 }
 
 /// Display information (list number, list size and the title) about a
@@ -3883,6 +3888,13 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
     flags = IS_QF_STACK(qi) ? WSP_BOT : WSP_BELOW;
   }
   flags |= WSP_NEWLOC;
+
+  // Create a snapshot for quickfix window (not for location list)
+  // so that when closing it, we can restore to the previous window
+  if (IS_QF_STACK(qi)) {
+    flags |= WSP_QUICKFIX;
+  }
+
   if (win_split(height, flags) == FAIL) {
     return FAIL;  // not enough room for window
   }
@@ -4320,6 +4332,7 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, int start_idx, int e
     args[0].v_type = VAR_DICT;
     args[0].vval.v_dict = dict;
 
+    textlock++;
     if (callback_call(cb, 1, args, &rettv)) {
       if (rettv.v_type == VAR_LIST) {
         qftf_list = rettv.vval.v_list;
@@ -4327,6 +4340,7 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, int start_idx, int e
       }
       tv_clear(&rettv);
     }
+    textlock--;
     tv_dict_unref(dict);
   }
 
@@ -6615,7 +6629,7 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, dict_T *d, bool first_entry, b
   if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
     if (!did_bufnr_emsg) {
       did_bufnr_emsg = true;
-      semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)bufnum);
+      semsg(_("E92: Buffer %d not found"), bufnum);
     }
     valid = false;
     bufnum = 0;
@@ -6623,7 +6637,7 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, dict_T *d, bool first_entry, b
 
   // If the 'valid' field is present it overrules the detected value.
   if (tv_dict_find(d, "valid", -1) != NULL) {
-    valid = tv_dict_get_number(d, "valid");
+    valid = tv_dict_get_bool(d, "valid", false);
   }
 
   const int status = qf_add_entry(qfl,
@@ -7344,30 +7358,27 @@ static char *cexpr_get_auname(cmdidx_T cmdidx)
   }
 }
 
-/// ":cexpr {expr}", ":cgetexpr {expr}", ":caddexpr {expr}" command.
-/// ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
-void ex_cexpr(exarg_T *eap)
+static int trigger_cexpr_autocmd(int cmdidx)
 {
-  char *au_name = cexpr_get_auname(eap->cmdidx);
+  char *au_name = cexpr_get_auname(cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
                                         curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
-      return;
+      return FAIL;
     }
   }
+  return OK;
+}
 
+int cexpr_core(const exarg_T *eap, typval_T *tv)
+  FUNC_ATTR_NONNULL_ALL
+{
   win_T *wp = NULL;
   qf_info_T *qi = qf_cmd_get_or_alloc_stack(eap, &wp);
 
-  // Evaluate the expression.  When the result is a string or a list we can
-  // use it to fill the errorlist.
-  typval_T *tv = eval_expr(eap->arg, eap);
-  if (tv == NULL) {
-    return;
-  }
-
   if ((tv->v_type == VAR_STRING && tv->vval.v_string != NULL)
       || tv->v_type == VAR_LIST) {
+    char *au_name = cexpr_get_auname(eap->cmdidx);
     incr_quickfix_busy();
     int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, tv, p_efm,
                           (eap->cmdidx != CMD_caddexpr
@@ -7376,7 +7387,7 @@ void ex_cexpr(exarg_T *eap)
                           qf_cmdtitle(*eap->cmdlinep), NULL);
     if (qf_stack_empty(qi)) {
       decr_quickfix_busy();
-      goto cleanup;
+      return FAIL;
     }
     if (res >= 0) {
       qf_list_changed(qf_get_curlist(qi));
@@ -7396,10 +7407,30 @@ void ex_cexpr(exarg_T *eap)
       qf_jump_first(qi, save_qfid, eap->forceit);
     }
     decr_quickfix_busy();
+    return OK;
   } else {
     emsg(_("E777: String or List expected"));
   }
-cleanup:
+  return FAIL;
+}
+
+/// ":cexpr {expr}", ":cgetexpr {expr}", ":caddexpr {expr}" command.
+/// ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
+/// Also: ":caddexpr", ":cgetexpr", "laddexpr" and "laddexpr".
+void ex_cexpr(exarg_T *eap)
+{
+  if (trigger_cexpr_autocmd(eap->cmdidx) == FAIL) {
+    return;
+  }
+
+  // Evaluate the expression.  When the result is a string or a list we can
+  // use it to fill the errorlist.
+  typval_T *tv = eval_expr(eap->arg, eap);
+  if (tv == NULL) {
+    return;
+  }
+
+  (void)cexpr_core(eap, tv);
   tv_free(tv);
 }
 

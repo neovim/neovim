@@ -57,8 +57,7 @@
 /// If -1 is provided, a top-level split will be created. `vertical` and `split` are
 /// only valid for normal windows, and are used to control split direction. For `vertical`,
 /// the exact direction is determined by 'splitright' and 'splitbelow'.
-/// Split windows cannot have `bufpos`/`row`/`col`/`border`/`title`/`footer`
-/// properties.
+/// Split windows cannot have `bufpos`, `row`, `col`, `border`, `title`, `footer` properties.
 ///
 /// With relative=editor (row=0,col=0) refers to the top-left corner of the
 /// screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
@@ -71,90 +70,30 @@
 /// could let floats hover outside of the main window like a tooltip, but
 /// this should not be used to specify arbitrary WM screen positions.
 ///
-/// Example (Lua): window-relative float
+/// Examples:
 ///
 /// ```lua
+/// -- Window-relative float with 'statusline' enabled:
+/// local w1 = vim.api.nvim_open_win(0, false,
+///   {relative='win', row=3, col=3, width=40, height=4})
+/// vim.wo[w1].statusline = vim.o.statusline
+///
+/// -- Buffer-relative float (travels as buffer is scrolled):
 /// vim.api.nvim_open_win(0, false,
-///   {relative='win', row=3, col=3, width=12, height=3})
-/// ```
+///   {relative='win', width=40, height=4, bufpos={100,10}})
 ///
-/// Example (Lua): buffer-relative float (travels as buffer is scrolled)
-///
-/// ```lua
-/// vim.api.nvim_open_win(0, false,
-///   {relative='win', width=12, height=3, bufpos={100,10}})
-/// ```
-///
-/// Example (Lua): vertical split left of the current window
-///
-/// ```lua
-/// vim.api.nvim_open_win(0, false, {
-///   split = 'left',
-///   win = 0
-/// })
+/// -- Vertical split left of the current window:
+/// vim.api.nvim_open_win(0, false, { split = 'left', win = 0, })
 /// ```
 ///
 /// @param buffer Buffer to display, or 0 for current buffer
 /// @param enter  Enter the window (make it the current window)
 /// @param config Map defining the window configuration. Keys:
-///   - relative: Sets the window layout to "floating", placed at (row,col)
-///                 coordinates relative to:
-///      - "cursor"     Cursor position in current window.
-///      - "editor"     The global editor grid.
-///      - "laststatus" 'laststatus' if present, or last row.
-///      - "mouse"      Mouse position.
-///      - "tabline"    Tabline if present, or first row.
-///      - "win"        Window given by the `win` field, or current window.
-///   - win: |window-ID| window to split, or relative window when creating a
-///      float (relative="win").
 ///   - anchor: Decides which corner of the float to place at (row,col):
 ///      - "NW" northwest (default)
 ///      - "NE" northeast
 ///      - "SW" southwest
 ///      - "SE" southeast
-///   - width: Window width (in character cells). Minimum of 1.
-///   - height: Window height (in character cells). Minimum of 1.
-///   - bufpos: Places float relative to buffer text (only when
-///       relative="win"). Takes a tuple of zero-indexed `[line, column]`.
-///       `row` and `col` if given are applied relative to this
-///       position, else they default to:
-///       - `row=1` and `col=0` if `anchor` is "NW" or "NE"
-///       - `row=0` and `col=0` if `anchor` is "SW" or "SE"
-///         (thus like a tooltip near the buffer text).
-///   - row: Row position in units of "screen cell height", may be fractional.
-///   - col: Column position in units of screen cell width, may be fractional.
-///   - focusable: Enable focus by user actions (wincmds, mouse events).
-///       Defaults to true. Non-focusable windows can be entered by
-///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
-///       by mouse events. See |focusable|.
-///   - mouse: Specify how this window interacts with mouse events.
-///       Defaults to `focusable` value.
-///       - If false, mouse events pass through this window.
-///       - If true, mouse events interact with this window normally.
-///   - external: GUI should display the window as an external
-///       top-level window. Currently accepts no other positioning
-///       configuration together with this.
-///   - zindex: Stacking order. floats with higher `zindex` go on top on
-///               floats with lower indices. Must be larger than zero. The
-///               following screen elements have hard-coded z-indices:
-///       - 100: insert completion popupmenu
-///       - 200: message scrollback
-///       - 250: cmdline completion popupmenu (when wildoptions+=pum)
-///     The default value for floats are 50.  In general, values below 100 are
-///     recommended, unless there is a good reason to overshadow builtin
-///     elements.
-///   - style: (optional) Configure the appearance of the window. Currently
-///       only supports one value:
-///       - "minimal"  Nvim will display the window with many UI options
-///                    disabled. This is useful when displaying a temporary
-///                    float where the text should not be edited. Disables
-///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
-///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
-///                    is changed to `auto` and 'colorcolumn' is cleared.
-///                    'statuscolumn' is changed to empty. The end-of-buffer
-///                     region is hidden by setting `eob` flag of
-///                    'fillchars' to a space char, and clearing the
-///                    |hl-EndOfBuffer| region in 'winhighlight'.
 ///   - border: (`string|string[]`) (defaults to 'winborder' option) Window border. The string form
 ///     accepts the same values as the 'winborder' option. The array form must have a length of
 ///     eight or any divisor of eight, specifying the chars that form the border in a clockwise
@@ -178,30 +117,83 @@
 ///     [ "", "", "", ">", "", "", "", "<" ]
 ///     ```
 ///     By default, |hl-FloatBorder| highlight is used, which links to |hl-WinSeparator| when not
-///     defined.  Each border side can specify an optional highlight:
+///     defined. Each border side can specify an optional highlight:
 ///     ```
 ///     [ ["+", "MyCorner"], ["x", "MyBorder"] ].
 ///     ```
-///   - title: (optional) Title in window border, string or list.
-///     List should consist of `[text, highlight]` tuples.
-///     If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
-///   - title_pos: Title position. Must be set with `title` option.
-///     Value can be one of "left", "center", or "right".
-///     Default is `"left"`.
-///   - footer: (optional) Footer in window border, string or list.
-///     List should consist of `[text, highlight]` tuples.
-///     If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
-///   - footer_pos: Footer position. Must be set with `footer` option.
-///     Value can be one of "left", "center", or "right".
-///     Default is `"left"`.
-///   - noautocmd: If true then all autocommands are blocked for the duration of
-///     the call.
+///   - bufpos: Places float relative to buffer text (only when
+///       relative="win"). Takes a tuple of zero-indexed `[line, column]`.
+///       `row` and `col` if given are applied relative to this
+///       position, else they default to:
+///       - `row=1` and `col=0` if `anchor` is "NW" or "NE"
+///       - `row=0` and `col=0` if `anchor` is "SW" or "SE"
+///         (thus like a tooltip near the buffer text).
+///   - col: Column position in units of screen cell width, may be fractional.
+///   - external: GUI should display the window as an external
+///       top-level window. Currently accepts no other positioning
+///       configuration together with this.
 ///   - fixed: If true when anchor is NW or SW, the float window
 ///            would be kept fixed even if the window would be truncated.
+///   - focusable: Enable focus by user actions (wincmds, mouse events).
+///       Defaults to true. Non-focusable windows can be entered by
+///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
+///       by mouse events. See |focusable|.
+///   - footer: (optional) Footer in window border, string or list.
+///       List should consist of `[text, highlight]` tuples.
+///       If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
+///   - footer_pos: Footer position. Must be set with `footer` option.
+///       Value can be one of "left", "center", or "right".
+///       Default is `"left"`.
+///   - height: Window height (in character cells). Minimum of 1.
 ///   - hide: If true the floating window will be hidden and the cursor will be invisible when
 ///           focused on it.
-///   - vertical: Split vertically |:vertical|.
+///   - mouse: Specify how this window interacts with mouse events.
+///       Defaults to `focusable` value.
+///       - If false, mouse events pass through this window.
+///       - If true, mouse events interact with this window normally.
+///   - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
+///     |nvim_win_set_config()|.
+///   - relative: Sets the window layout to "floating", placed at (row,col)
+///                 coordinates relative to:
+///      - "cursor"     Cursor position in current window.
+///      - "editor"     The global editor grid.
+///      - "laststatus" 'laststatus' if present, or last row.
+///      - "mouse"      Mouse position.
+///      - "tabline"    Tabline if present, or first row.
+///      - "win"        Window given by the `win` field, or current window.
+///   - row: Row position in units of "screen cell height", may be fractional.
 ///   - split: Split direction: "left", "right", "above", "below".
+///   - style: (optional) Configure the appearance of the window. Currently
+///       only supports one value:
+///       - "minimal"  Nvim will display the window with many UI options
+///                    disabled. This is useful when displaying a temporary
+///                    float where the text should not be edited. Disables
+///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
+///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
+///                    is changed to `auto` and 'colorcolumn' is cleared.
+///                    'statuscolumn' is changed to empty. The end-of-buffer
+///                     region is hidden by setting `eob` flag of
+///                    'fillchars' to a space char, and clearing the
+///                    |hl-EndOfBuffer| region in 'winhighlight'.
+///   - title: (optional) Title in window border, string or list.
+///       List should consist of `[text, highlight]` tuples.
+///       If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
+///   - title_pos: Title position. Must be set with `title` option.
+///       Value can be one of "left", "center", or "right".
+///       Default is `"left"`.
+///   - vertical: Split vertically |:vertical|.
+///   - width: Window width (in character cells). Minimum of 1.
+///   - win: |window-ID| window to split, or relative window when creating a
+///      float (relative="win").
+///   - zindex: Stacking order. floats with higher `zindex` go on top on
+///               floats with lower indices. Must be larger than zero. The
+///               following screen elements have hard-coded z-indices:
+///       - 100: insert completion popupmenu
+///       - 200: message scrollback
+///       - 250: cmdline completion popupmenu (when wildoptions+=pum)
+///     The default value for floats are 50.  In general, values below 100 are
+///     recommended, unless there is a good reason to overshadow builtin
+///     elements.
 ///   - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the |cmdline-completion|
 ///     popupmenu to this window, with an offset in screen cell width.
 ///
@@ -288,8 +280,12 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       }
     }
   } else {
-    if (!check_split_disallowed_err(curwin, err)) {
-      goto cleanup;  // error already set
+    // Unlike check_split_disallowed_err, ignore `split_disallowed`, as opening a float shouldn't
+    // mess with the frame structure. Still check `b_locked_split` to avoid opening more windows
+    // into a closing buffer, though.
+    if (curwin->w_buffer->b_locked_split) {  // Can't instead check `buf` in case win_set_buf fails!
+      api_set_error(err, kErrorTypeException, "E1159: Cannot open a float when closing the buffer");
+      goto cleanup;
     }
     wp = win_new_float(NULL, false, fconfig, err);
   }
@@ -341,6 +337,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
     }
   }
   if (!tp) {
+    api_clear_error(err);  // may have been set by win_set_buf
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
     goto cleanup;
   }
@@ -389,17 +386,22 @@ static int win_split_flags(WinSplit split, bool toplevel)
   return flags;
 }
 
-/// Configures window layout. Cannot be used to move the last window in a
-/// tabpage to a different one.
+/// Reconfigures the layout of a window.
 ///
-/// When reconfiguring a window, absent option keys will not be changed.
-/// `row`/`col` and `relative` must be reconfigured together.
+/// - Absent (`nil`) keys will not be changed.
+/// - `row` / `col` / `relative` must be reconfigured together.
+/// - Cannot be used to move the last window in a tabpage to a different one.
+///
+/// Example: to convert a floating window to a "normal" split window, specify the `win` field:
+///
+/// ```lua
+/// vim.api.nvim_win_set_config(0, { split = 'above', win = vim.fn.win_getid(1), })
+/// ```
 ///
 /// @see |nvim_open_win()|
 ///
 /// @param      window  |window-ID|, or 0 for current window
-/// @param      config  Map defining the window configuration,
-///                     see |nvim_open_win()|
+/// @param      config  Map defining the window configuration, see [nvim_open_win()]
 /// @param[out] err     Error details, if any
 void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   FUNC_API_SINCE(6)
@@ -707,11 +709,10 @@ static void config_put_bordertext(Dict(win_config) *config, WinConfig *fconfig,
   }
 }
 
-/// Gets window configuration.
+/// Gets window configuration in the form of a dict which can be passed as the `config` parameter of
+/// |nvim_open_win()|.
 ///
-/// The returned value may be given to |nvim_open_win()|.
-///
-/// `relative` is empty for normal windows.
+/// For non-floating windows, `relative` is empty.
 ///
 /// @param      window |window-ID|, or 0 for current window
 /// @param[out] err Error details, if any
@@ -1380,8 +1381,9 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, noautocmd)) {
-    if (wp) {
-      api_set_error(err, kErrorTypeValidation, "'noautocmd' cannot be used with existing windows");
+    if (wp && config->noautocmd != fconfig->noautocmd) {
+      api_set_error(err, kErrorTypeValidation,
+                    "'noautocmd' cannot be changed with existing windows");
       goto fail;
     }
     fconfig->noautocmd = config->noautocmd;

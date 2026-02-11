@@ -561,7 +561,7 @@ func Test_execute_register()
   new
   call feedkeys("@=\<BS>ax\<CR>y", 'xt')
   call assert_equal(['x', 'y'], getline(1, '$'))
-  close!
+  bw!
 
   " cannot execute a register in operator pending mode
   call assert_beeps('normal! c@r')
@@ -1144,6 +1144,13 @@ func Test_insert_small_delete_linewise()
   exe ":norm! \"-cc\<C-R>-"
   call assert_equal(['foo', ''], getline(1, '$'))
   bwipe!
+endfunc
+
+func Test_writing_readonly_regs()
+  call assert_fails('let @. = "foo"', 'E354:')
+  call assert_fails('let @% = "foo"', 'E354:')
+  call assert_fails('let @: = "foo"', 'E354:')
+  call assert_fails('let @~ = "foo"', 'E354:')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -25,9 +25,11 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
+#include "nvim/normal.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/pos_defs.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -327,12 +329,13 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   dict_T *const dict = tv_dict_alloc();
 
   // make sure w_botline is valid
-  validate_botline(wp);
+  validate_botline_win(wp);
 
   tv_dict_add_nr(dict, S_LEN("tabnr"), tpnr);
   tv_dict_add_nr(dict, S_LEN("winnr"), winnr);
   tv_dict_add_nr(dict, S_LEN("winid"), wp->handle);
   tv_dict_add_nr(dict, S_LEN("height"), wp->w_view_height);
+  tv_dict_add_nr(dict, S_LEN("status_height"), wp->w_status_height);
   tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
   tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
   tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
@@ -506,6 +509,7 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   args->curpos = wp->w_cursor;
   args->cwd_status = FAIL;
   args->apply_acd = false;
+  args->save_sfname = NULL;
 
   // Getting and setting directory can be slow on some systems, only do
   // this when the current or target window/tab have a local directory or
@@ -520,6 +524,9 @@ bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
   // If 'acd' is set, check we are using that directory.  If yes, then
   // apply 'acd' afterwards, otherwise restore the current directory.
   if (args->cwd_status == OK && p_acd) {
+    if (curbuf->b_sfname != NULL && curbuf->b_fname == curbuf->b_sfname) {
+      args->save_sfname = xstrdup(curbuf->b_sfname);
+    }
     do_autochdir();
     char autocwd[MAXPATHL];
     if (os_dirname(autocwd, MAXPATHL) == OK) {
@@ -540,9 +547,15 @@ void win_execute_after(win_execute_T *args)
   restore_win_noblock(&args->switchwin, true);
 
   if (args->apply_acd) {
+    xfree(args->save_sfname);
     do_autochdir();
   } else if (args->cwd_status == OK) {
     os_chdir(args->cwd);
+    if (args->save_sfname != NULL) {
+      xfree(curbuf->b_sfname);
+      curbuf->b_sfname = args->save_sfname;
+      curbuf->b_fname = curbuf->b_sfname;
+    }
   }
 
   // Update the status line if the cursor moved.
@@ -607,6 +620,10 @@ void f_win_gotoid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->handle == id) {
+      // When jumping to another buffer stop Visual mode.
+      if (VIsual_active && wp->w_buffer != curbuf) {
+        end_visual_mode();
+      }
       goto_tabpage_win(tp, wp);
       rettv->vval.v_number = 1;
       return;
@@ -848,12 +865,12 @@ void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (!win_has_winnr(wp, curtab)) {
         continue;
       }
-      snprintf(buf, sizeof(buf), "%dresize %d|", winnr,
-               wp->w_height);
-      ga_concat(&ga, buf);
-      snprintf(buf, sizeof(buf), "vert %dresize %d|", winnr,
-               wp->w_width);
-      ga_concat(&ga, buf);
+      size_t buflen = vim_snprintf_safelen(buf, sizeof(buf),
+                                           "%dresize %d|", winnr, wp->w_height);
+      ga_concat_len(&ga, buf, buflen);
+      buflen = vim_snprintf_safelen(buf, sizeof(buf),
+                                    "vert %dresize %d|", winnr, wp->w_width);
+      ga_concat_len(&ga, buf, buflen);
       winnr++;
     }
   }

@@ -8,7 +8,7 @@
 ~~~ cmd
         :Tutor vim-01-beginner
 ~~~
-  または、チャプター 1 をクリックしてください。
+  または、[チャプター 1](@tutor:vim-01-beginner) をクリックしてください。
 
   このチャプターを完了するのに必要な時間は、練習にどれだけ時間をかけるかによりま
   すが、おおよそ 8~10 分です。
@@ -19,32 +19,32 @@
 ** Store two yanked words concurrently and then paste them **
 ** ヤンクした二つの単語を同時に保存し、それらをペーストします **
 
-  1. 以下の "--->" と示された行にカーソルを移動します。
+  1. 以下の ✓ と示された行にカーソルを移動します。
 
-  2. 単語 'Edward' の上に移動した後、""ayiw" とタイプします。
+  2. 単語 'Edward' の上に移動した後、`"ayiw`{normal} とタイプします。
 
 **覚え方**: *into register(") named (a) (y)ank (i)nner (w)ord* 
          *( レジスタに  aという名の ヤンク  内側    単語 )*
 
-  3. 単語 'cookie' に移動("fk", "2fc", "$2b" や "/co <ENTER>")し、""byiw" とタイプします。
+  3. 単語 'cookie' に移動(`fk`{normal}, `3fc`{normal}, `$2b`{normal} や `/co`{normal} `<ENTER>`{normal})し、`"byiw`{normal} とタイプします。
 
-  4. 単語 'Vince' の上に移動した後、"ciw<CTRL-r>a<ESC>" とタイプします。
+  4. 単語 'Vince' の上に移動した後、`ciw<CTRL-r>a<ESC>`{normal} とタイプします。
 
 **覚え方**: *(c)hange (i)nner (w)ord with <contents of (r)egister> named (a)*
         *( 変更    内側    単語   で     <レジスタの内容>    aという名の )*
 
-  5. 単語 'cake' の上に移動した後、"ciw<CTRL-r>b<ESC>" とタイプします。
+  5. 単語 'cake' の上に移動した後、`ciw<CTRL-r>b<ESC>`{normal} とタイプします。
 
----> a) Edward will henceforth be in charge of the cookie rations
+a) Edward will henceforth be in charge of the cookie rations
 b) In this capacity, Vince will have sole cake discretionary powers
 
-NOTE: 削除した文字列もレジスタに格納されます。例えば ""sdiw" はカーソル下の単語を
+NOTE: 削除した文字列もレジスタに格納されます。例えば `"sdiw`{normal} はカーソル下の単語を
       削除し、レジスタ s に格納します。
 
-REFERENCE: レジスタ
-           名前付きレジスタ
-           モーション
-           CTRL-R
+REFERENCE: [レジスタ](registers)
+           [名前付きレジスタ](quotea)
+           [モーション](text-objects)
+           [CTRL-R](i_CTRL-R)
 
 
 # レッスン 2.1.2: EXPRESSION レジスタ
@@ -55,42 +55,42 @@ REFERENCE: レジスタ
 
   2. 行内の数字の上に移動します。
 
-  3. 次のようにタイプします: "ciw<CTRL-r>="60\*60\*24 "<ENTER>"
+  3. 次のようにタイプします: `ciw<CTRL-r>=`{normal}60\*60\*24 `<ENTER>`{normal}
 
   4. 次の行の末尾で挿入モードに入り、以下をタイプして今日の日付を追加します:
-     "<CTRL-r>=""system('date') <ENTER>"
+     `<CTRL-r>=`{normal}`system('date')`{vim} `<ENTER>`{normal}
 
 NOTE: すべてのシステムコールは OS 依存です。例えば Windows では以下を使います:
-      "system('date /t')"   または  ":r!date /t"
+      `system('date /t')`{vim}   または  `:r!date /t`{vim}
 
 一日って何秒だっけ、 84600 秒かな?
----> 本日の日付は: 
+本日の日付は: 
 
-NOTE: 日付を入力するには、":pu=""system('date')" や、よりキーストロークの少ない
-      ":r!date" でも可能です。
+NOTE: 日付を入力するには、`:pu=`{normal}`system('date')`{vim} や、よりキーストロークの少ない
+      `:r!date`{vim} でも可能です。
 
-REFERENCE: Expression レジスタ
+REFERENCE: [Expression レジスタ](quote=)
 
 
 # レッスン 2.1.3: 番号付きレジスタ
 
-** "yy" と "dd" のレジスタに対する効果を確認する **
+** `yy`{normal} と `dd`{normal} のレジスタに対する効果を確認する **
 
-  1. "--->" と示された行にカーソルを移動します。
+  1. ✓ と示された行にカーソルを移動します。
 
-  2. 0番目の行をヤンクした後、":reg" '<ENTER>'{normal} でレジスタを調べます。
+  2. 0番目の行をヤンクした後、`:reg`{vim} '<ENTER>'{normal} でレジスタを調べます。
 
-  3. ""cdd" で 0番目の行を削除して、再度レジスタを確認します。
+  3. `"cdd`{normal} で 0番目の行を削除して、再度レジスタを確認します。
      (0番目の行はどこにあると思いますか?)
 
-  4. 残りの行もそれぞれ削除しつつ、その都度 ":reg" 確認します。
+  4. 残りの行もそれぞれ削除しつつ、その都度 `:reg`{vim} 確認します。
 
 NOTE: 新たに削除された項目が追加される度に、古い項目がリストの下に移動しているこ
       とに気づきましたか?
 
-  5. 次の順番でレジスタをペーストします: c, 7, 4, 8, 2。例: ""7p"
+  5. 次の順番でレジスタをペーストします: c, 7, 4, 8, 2。例: `"7p`{normal}
 
----> 0. ねがわくは
+0. ねがわくは
 9. おちゃめな
 8. ゔぃまーと
 7. いつまでも
@@ -101,10 +101,10 @@ NOTE: 新たに削除された項目が追加される度に、古い項目が�
 2. ならんことを
 1. します
 
-NOTE: 行全体削除("dd")は行全体ヤンクや一行以下の小さな削除に比べて、長期間番号付き
+NOTE: 行全体削除(`dd`{normal})は行全体ヤンクや一行以下の小さな削除に比べて、長期間番号付き
       レジスタに保存されます。
 
-REFERENCE: 番号付きレジスタ
+REFERENCE: [番号付きレジスタ](quote0)
 
 
 # レッスン 2.1.4: マークの美
@@ -112,30 +112,30 @@ REFERENCE: 番号付きレジスタ
 ** Code monkey arithmetic avoidance **
 
 NOTE: 大きなコードの塊を動かすことはコーディングにおける面倒事の一つです。例えば
-      ""a147d" や ":945,1091d a" 、さらには "i<CTRL-r>="1091-945 "<ENTER>" のような、コ
+      `"a147d`{normal} や `:945,1091d a`{vim} 、さらには `i<CTRL-r>=`{normal}1091-945 `<ENTER>`{normal} のような、コ
       ード操作の為に行数の計算をするような事を避ける為のテクニックを紹介します。
 
-  1. "--->" と示された行にカーソルを移動します。
+  1. ✓ と示された行にカーソルを移動します。
 
-  2. 関数の最初の行に移動して "ma" でマークします。
+  2. 関数の最初の行に移動して `ma`{normal} でマークします。
 
 NOTE: 行内におけるカーソル位置は重要ではありません!
 
-  3. "$%" で行末からさらにコードブロックの末尾に移動します。
+  3. `$%`{normal} で行末からさらにコードブロックの末尾に移動します。
 
-  4. ""ad'a" でコードブロックを削除しレジスタ a に格納します。
+  4. `"ad'a`{normal} でコードブロックを削除しレジスタ a に格納します。
 
 **覚え方**: *into register(") named (a) put the (d)eletion from the cursor to
           the LINE containing mark(') (a)*
         *( レジスタに  a という名の  格納     削除を      カーソルから
               マーク a を含む行までの )*
 
-  5. ""ap" でコードブロックを BBB と CCC の間にペーストします。
+  5. `"ap`{normal} でコードブロックを BBB と CCC の間にペーストします。
 
-NOTE: "ma$%"ad'a" という操作に慣れるまで何度も練習しましょう。
+NOTE: `ma$%"ad'a`{normal} という操作に慣れるまで何度も練習しましょう。
 
 ~~~ cmd
----> AAA
+AAA
 function itGotRealBigRealFast() {
   if ( somethingIsTrue ) {
     doIt()
@@ -154,30 +154,30 @@ CCC
 NOTE: レジスタとマークは名前空間を共有しません。したがってレジスタ a と マーク a
       は完全に独立しています。レジスタとマクロの場合、これは該当しません。
 
-REFERENCE: マーク
-           マークにおけるモーション  (' と \` の違いについて)
+REFERENCE: [マーク](marks)
+           [マークにおけるモーション](mark-motions)  (' と \` の違いについて)
 
 
 # レッスン 2.1 要約
 
   1. テキストを格納(ヤンク、削除)したり、取り出し(ペースト)できるレジスタが計26
      個(a-z)存在する。
-  2. 単語全体をヤンクするには単語内の任意の位置で: "yiw"
-  3. 単語全体を変更するには単語内の任意の位置で: "ciw"
-  4. 挿入モードでレジスタから直接テキストを挿入するには: "<CTRL-r>a"
+  2. 単語全体をヤンクするには単語内の任意の位置で: `yiw`{normal}
+  3. 単語全体を変更するには単語内の任意の位置で: `ciw`{normal}
+  4. 挿入モードでレジスタから直接テキストを挿入するには: `<CTRL-r>a`{normal}
 
   5. 単純な算術計算の結果を挿入するには、挿入モードで次のタイプ:
-     "<CTRL-r>="60\*60 "<ENTER>"
+     `<CTRL-r>=`{normal}60\*60 `<ENTER>`{normal}
   6. システムコールの結果を挿入するには、挿入モードで次をタイプ: 
-     "<CTRL-r>=""system('ls -1')"
+     `<CTRL-r>=`{normal}`system('ls -1')`{vim}
 
-  7. レジスタを確認するには: ":reg"
-  8. "dd" は 1 - 9 で降順の番号レジスタに格納される。行全体削除は他の操作より長期
+  7. レジスタを確認するには: `:reg`{vim}
+  8. `dd`{normal} は 1 - 9 で降順の番号レジスタに格納される。行全体削除は他の操作より長期
      間番号付きレジスタに保持される。
   9. 番号付きレジスタにおいて、ヤンクされた内容は短時間で破棄される。
 
- 10. コマンドモードでマークを設定するには: "m[a-zA-Z0-9]"
- 11. マークへ行単位で移動するには "'"
+ 10. コマンドモードでマークを設定するには: `m[a-zA-Z0-9]`{normal}
+ 11. マークへ行単位で移動するには `'`{normal}
 
 
 # おわりに

@@ -989,6 +989,11 @@ static char *format_typename(const char *type)
 static int adjust_types(const char ***ap_types, int arg, int *num_posarg, const char *type)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (arg <= 0) {
+    semsg(_(e_invalid_format_specifier_str), type);
+    return FAIL;
+  }
+
   if (*ap_types == NULL || *num_posarg < arg) {
     const char **new_types = *ap_types == NULL
                              ? xcalloc((size_t)arg, sizeof(const char *))

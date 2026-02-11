@@ -53,8 +53,7 @@ describe('startup', function()
 
   it('prevents remote UI infinite loop', function()
     clear()
-    local screen
-    screen = Screen.new(84, 3)
+    local screen = Screen.new(84, 3)
     fn.jobstart(
       { nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' },
       { term = true }
@@ -73,7 +72,7 @@ describe('startup', function()
     clear({ args = { '--startuptime', testfile } })
     assert_log('Embedded', testfile, 100)
     assert_log('sourcing', testfile, 100)
-    assert_log("require%('vim%._editor'%)", testfile, 100)
+    assert_log("require%('vim%._core.editor'%)", testfile, 100)
   end)
 
   it('--startuptime does not crash on error #31125', function()
@@ -84,8 +83,7 @@ describe('startup', function()
 
   it('-D does not hang #12647', function()
     clear()
-    local screen
-    screen = Screen.new(60, 7)
+    local screen = Screen.new(60, 7)
     -- not the same colors on windows for some reason
     screen._default_attr_ids = nil
     local id = fn.jobstart({
@@ -672,6 +670,29 @@ describe('startup', function()
     )
   end)
 
+  it('-es does not exit early with closed stdin', function()
+    write_file('Xinput.txt', 'line1\nline2\nline3\nline4\n')
+    write_file('Xoutput.txt', 'OUT\n')
+    finally(function()
+      os.remove('Xinput.txt')
+      os.remove('Xoutput.txt')
+    end)
+    -- Use system() without input so that stdin is closed.
+    fn.system({
+      nvim_prog,
+      '--clean',
+      '-es',
+      '-c',
+      -- 'showcmd' leads to a char_avail() call just after the 'Q' (no more input).
+      [[set showcmd | exe "g/^/vi|Vgg:w>>Xoutput.txt\rgQ"]],
+      'Xinput.txt',
+    })
+    eq(
+      'OUT\nline1\nline1\nline2\nline1\nline2\nline3\nline1\nline2\nline3\nline4\n',
+      read_file('Xoutput.txt')
+    )
+  end)
+
   it('ENTER dismisses early message #7967', function()
     local screen
     screen = Screen.new(60, 6)
@@ -713,7 +734,7 @@ describe('startup', function()
     exec([[
       func Normalize(data) abort
         " Windows: remove ^M and term escape sequences
-        return map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        return mapnew(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
       endfunc
       func OnOutput(id, data, event) dict
         let g:stdout = Normalize(a:data)
@@ -1171,6 +1192,22 @@ describe('sysinit', function()
       eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))')
     )
   end)
+
+  it('respects NVIM_APPNAME in XDG_CONFIG_DIRS', function()
+    local appname = 'mysysinitapp'
+    mkdir(xdgdir .. pathsep .. appname)
+    write_file(
+      table.concat({ xdgdir, appname, 'sysinit.vim' }, pathsep),
+      [[let g:appname_sysinit = 1]]
+    )
+    clear {
+      args_rm = { '-u' },
+      env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
+    }
+    eq(1, eval('g:appname_sysinit'))
+    -- Should not load from nvim/ subdir (which has the default sysinit.vim from before_each)
+    eq(0, eval('get(g:, "xdg", 0)'))
+  end)
 end)
 
 describe('user config init', function()
@@ -1187,12 +1224,7 @@ describe('user config init', function()
     mkdir_p(xconfig .. pathsep .. 'nvim')
     mkdir_p(xdata)
 
-    write_file(
-      init_lua_path,
-      [[
-      vim.g.lua_rc = 1
-    ]]
-    )
+    write_file(init_lua_path, [[vim.g.lua_rc = 1]])
   end)
 
   after_each(function()
@@ -1219,10 +1251,10 @@ describe('user config init', function()
           exrc_path,
           string.format(
             [[
-          vim.g.exrc_file = "%s"
-          vim.g.exrc_path = debug.getinfo(1, 'S').source:sub(2)
-          vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
-        ]],
+              vim.g.exrc_file = "%s"
+              vim.g.exrc_path = debug.getinfo(1, 'S').source:gsub('^@', '')
+              vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
+            ]],
             exrc_path
           )
         )
@@ -1231,10 +1263,10 @@ describe('user config init', function()
           exrc_path,
           string.format(
             [[
-          let g:exrc_file = "%s"
-          " let g:exrc_path = ??
-          let g:exrc_count = get(g:, 'exrc_count', 0) + 1
-        ]],
+              let g:exrc_file = "%s"
+              " let g:exrc_path = ??
+              let g:exrc_count = get(g:, 'exrc_count', 0) + 1
+            ]],
             exrc_path
           )
         )
@@ -1249,9 +1281,9 @@ describe('user config init', function()
       write_file(
         init_lua_path,
         [[
-        vim.o.exrc = true
-        vim.g.exrc_file = '---'
-      ]]
+          vim.o.exrc = true
+          vim.g.exrc_file = '---'
+        ]]
       )
       mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
     end)
@@ -1374,8 +1406,8 @@ describe('user config init', function()
       write_file(
         custom_lua_path,
         [[
-      vim.g.custom_lua_rc = 1
-      ]]
+          vim.g.custom_lua_rc = 1
+        ]]
       )
     end)
 
@@ -1391,16 +1423,93 @@ describe('user config init', function()
       write_file(
         table.concat({ xconfig, 'nvim', 'init.vim' }, pathsep),
         [[
-      let g:vim_rc = 1
-      ]]
+          let g:vim_rc = 1
+        ]]
       )
     end)
 
     it('loads default lua config, but shows an error', function()
       clear { args_rm = { '-u' }, env = xenv }
-      feed('<cr><c-c>') -- Dismiss "Conflicting config …" message.
       eq(1, eval('g:lua_rc'))
-      matches('^E5422: Conflicting configs', exec_capture('messages'))
+      t.matches(
+        'E5422: Conflicting configs: "Xhome.Xconfig.nvim.init.lua" "Xhome.Xconfig.nvim.init.vim"',
+        eval('v:errmsg')
+      )
+    end)
+  end)
+
+  describe('from XDG_CONFIG_DIRS', function()
+    local xdgdir = 'Xxdgconfigdirs'
+
+    before_each(function()
+      -- Remove init.lua from XDG_CONFIG_HOME so nvim falls back to XDG_CONFIG_DIRS
+      os.remove(init_lua_path)
+      rmdir(xdgdir)
+      mkdir_p(xdgdir .. pathsep .. 'nvim')
+    end)
+
+    after_each(function()
+      rmdir(xdgdir)
+    end)
+
+    it('loads init.lua from XDG_CONFIG_DIRS when no config in XDG_CONFIG_HOME', function()
+      write_file(
+        table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+        [[vim.g.xdg_config_dirs_lua = 1]]
+      )
+      clear {
+        args_rm = { '-u' },
+        env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
+      }
+      eq(1, eval('g:xdg_config_dirs_lua'))
+      eq(
+        fn.fnamemodify(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), ':p'),
+        eval('$MYVIMRC')
+      )
+    end)
+
+    it('prefers init.lua over init.vim, shows E5422', function()
+      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.xdg_lua = 1]])
+      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
+      }
+      eq(1, eval('g:xdg_lua'))
+      eq(0, eval('get(g:, "xdg_vim", 0)'))
+      t.matches('E5422: Conflicting configs:', eval('v:errmsg'))
+    end)
+
+    it('falls back to init.vim when no init.lua', function()
+      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
+      }
+      eq(1, eval('g:xdg_vim'))
+    end)
+
+    it('respects NVIM_APPNAME', function()
+      local appname = 'mytestapp'
+      mkdir_p(xdgdir .. pathsep .. appname)
+      -- Also create nvim/ with a config that should NOT be loaded
+      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.wrong = 1]])
+      write_file(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), [[vim.g.appname_lua = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = {
+          XDG_CONFIG_HOME = xconfig,
+          XDG_DATA_HOME = xdata,
+          XDG_CONFIG_DIRS = xdgdir,
+          NVIM_APPNAME = appname,
+        },
+      }
+      eq(1, eval('g:appname_lua'))
+      eq(0, eval('get(g:, "wrong", 0)'))
+      eq(
+        fn.fnamemodify(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), ':p'),
+        eval('$MYVIMRC')
+      )
     end)
   end)
 end)
@@ -1500,16 +1609,16 @@ describe('runtime:', function()
     write_file(
       table.concat({ plugin_folder_path, 'plugin.vim' }, pathsep),
       [[
-      let &runtimepath = &runtimepath
-      let g:vim_plugin = 1
-    ]]
+        let &runtimepath = &runtimepath
+        let g:vim_plugin = 1
+      ]]
     )
     write_file(
       table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep),
       [[
-      vim.o.runtimepath = vim.o.runtimepath
-      vim.g.lua_plugin = 1
-    ]]
+        vim.o.runtimepath = vim.o.runtimepath
+        vim.g.lua_plugin = 1
+      ]]
     )
 
     clear { args_rm = { '-u' }, args = { '--cmd', 'packloadall' }, env = xenv }
@@ -1587,8 +1696,8 @@ describe('user session', function()
     write_file(
       session_file,
       [[
-      vim.g.lua_session = 1
-    ]]
+        vim.g.lua_session = 1
+      ]]
     )
   end)
 

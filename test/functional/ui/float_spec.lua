@@ -524,6 +524,11 @@ describe('float window', function()
       it('if called from non-floating window', function()
         api.nvim_set_current_win(old_win)
         eq('Vim:E444: Cannot close last window', pcall_err(api.nvim_win_close, old_win, false))
+        -- Start with many tab pages, but make autocommands from closing floats leave us with just
+        -- one (where we're now the last window).
+        command('tabnew | autocmd WinClosed * ++once tabonly')
+        api.nvim_open_win(0, false, float_opts)
+        eq('Vim:E444: Cannot close last window', pcall_err(api.nvim_win_close, 0, true))
       end)
       it('if called from floating window', function()
         eq('Vim:E444: Cannot close last window', pcall_err(api.nvim_win_close, old_win, false))
@@ -811,7 +816,7 @@ describe('float window', function()
       assert_alive()
     end)
 
-    pending('does not crash if BufUnload makes it the only non-float in tabpage', function()
+    it('does not crash if BufUnload makes it the only non-float in tabpage', function()
       exec([[
         tabnew
         let g:buf = bufnr()
@@ -823,8 +828,58 @@ describe('float window', function()
               \ #{relative: 'editor', row: 5, col: 5, width: 5, height: 5})
         autocmd BufUnload * ++once exe g:buf .. 'bwipe!'
       ]])
-      command('close')
+      eq('Vim(close):E5601: Cannot close window, only floating window would remain', pcall_err(command, 'close'))
       assert_alive()
+    end)
+
+    describe('does not crash if WinClosed makes it the only non-float', function()
+      before_each(function()
+        exec([[
+          let g:buf = bufnr()
+          new
+          setlocal bufhidden=wipe
+          autocmd WinClosed * ++once exe g:buf .. 'bwipe!'
+        ]])
+      end)
+
+      local opts = { relative = 'editor', row = 5, col = 5, width = 5, height = 5 }
+      local floatwin
+
+      describe('and there is a float window with the same buffer', function()
+        before_each(function()
+          floatwin = api.nvim_open_win(0, false, opts)
+        end)
+
+        it('with multiple tabpages', function()
+          command('tabnew | tabprev')
+          eq('Vim(close):E5601: Cannot close window, only floating window would remain', pcall_err(command, 'close'))
+          api.nvim_win_close(floatwin, true)
+          assert_alive()
+        end)
+
+        it('with only one tabpage', function()
+          command('close')
+          api.nvim_win_close(floatwin, true)
+          assert_alive()
+        end)
+      end)
+
+      describe('and there is a float with a different buffer', function()
+        before_each(function()
+          floatwin = api.nvim_open_win(api.nvim_create_buf(true, false), false, opts)
+        end)
+
+        it('with multiple tabpages', function()
+          command('tabnew | tabprev')
+          eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+          assert_alive()
+        end)
+
+        it('with only one tabpage', function()
+          eq('Vim(close):E855: Autocommands caused command to abort', pcall_err(command, 'close'))
+          assert_alive()
+        end)
+      end)
     end)
 
     it('does not crash if WinClosed from floating window closes it', function()
@@ -1020,7 +1075,8 @@ describe('float window', function()
     -- Try switching tab pages and moving windows between tab pages via nvim_win_set_config.
     -- Simplest if :fclose skips windows in non-current tabpages.
     local w5 = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 5, height = 5, zindex = 2 })
-    command('autocmd WinEnter * ++once tabnew')
+    command('tabnew | tabprevious')
+    command('autocmd WinEnter * ++once tabnext')
     eq(w4, api.nvim_get_current_win())
     local tp1 = api.nvim_get_current_tabpage()
     command('fclose!')
@@ -2047,10 +2103,10 @@ describe('float window', function()
       eq('center', footer_pos)
     end)
 
-    it('center aligned title longer than window width #25746', function()
+    it('truncates title longer than window width #25746 #23602', function()
       local buf = api.nvim_create_buf(false, false)
       api.nvim_buf_set_lines(buf, 0, -1, true, { ' halloj! ', ' BORDAA  ' })
-      local win = api.nvim_open_win(buf, false, {
+      local config = {
         relative = 'editor',
         width = 9,
         height = 2,
@@ -2059,8 +2115,9 @@ describe('float window', function()
         border = 'double',
         title = 'abcdefghijklmnopqrstuvwxyz',
         title_pos = 'center',
-      })
-
+        footer = 'abcdefghi', -- exactly fits window width #36872
+      }
+      local win = api.nvim_open_win(buf, false, config)
       if multigrid then
         screen:expect {
           grid = [[
@@ -2073,10 +2130,10 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 4
-          {5:╔}{11:abcdefghi}{5:╗}|
+          {5:╔}{11:<stuvwxyz}{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
-          {5:╚═════════╝}|
+          {5:╚}{11:abcdefghi}{5:╝}|
         ]],
           float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
@@ -2089,15 +2146,17 @@ describe('float window', function()
           grid = [[
           ^                                        |
           {0:~                                       }|
-          {0:~    }{5:╔}{11:abcdefghi}{5:╗}{0:                        }|
+          {0:~    }{5:╔}{11:<stuvwxyz}{5:╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
-          {0:~    }{5:╚═════════╝}{0:                        }|
+          {0:~    }{5:╚}{11:abcdefghi}{5:╝}{0:                        }|
                                                   |
         ]],
         }
       end
-
+      config.title = { { 'abcd' }, { 'stuvw' }, { 'xyz' } }
+      api.nvim_win_set_config(win, config)
+      screen:expect_unchanged()
       api.nvim_win_close(win, false)
       assert_alive()
     end)
@@ -11191,6 +11250,485 @@ describe('float window', function()
       eq('Vim(set):E474: Invalid argument: winborder=,,', pcall_err(command, 'set winborder=,,'))
       eq('Vim(set):E474: Invalid argument: winborder=+,-,+,|,+,-,+,', pcall_err(command, [[set winborder=+,-,+,\|,+,-,+,]]))
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
+    end)
+
+    it('cursor shape when the cursor is covered by a floating window', function()
+      local normal_win = api.nvim_get_current_win()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two' })
+      api.nvim_win_set_cursor(0, { 2, 2 })
+      local buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, 0, true, { 'the only line' })
+      local win = api.nvim_open_win(buf, false, { relative = 'editor', row = 0, col = 0, height = 2, width = 20 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            tw^o                                     |
+            {0:~                                       }|*4
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:                    }|
+          ]],
+          win_pos = {
+            [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 },
+          },
+          float_pos = {
+            [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:the only line       }                    |
+          {1:  ^                  }                    |
+          {0:~                                       }|*4
+                                                  |
+        ]],
+          mode = 'replace',
+        }
+      end
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two', 'three' })
+      feed('<Down>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            two                                     |
+            th^ree                                   |
+            {0:~                                       }|*3
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:                    }|
+          ]],
+          win_pos = {
+            [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 },
+          },
+          float_pos = {
+            [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect { mode = 'normal' }
+      end
+      -- Cursor shape on a lower z-index floating window
+      buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, 0, true, { 'highest' })
+      local high_win = api.nvim_open_win(buf, false, { relative = 'editor', row = 0, col = 0, height = 2, width = 7, zindex = 150 })
+      api.nvim_set_current_win(win)
+      api.nvim_win_set_cursor(win, { 2, 1 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            two                                     |
+            three                                   |
+            {0:~                                       }|*3
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:^                    }|
+          ## grid 5
+            {1:highest}|
+            {1:       }|
+          ]],
+          win_pos = {
+            [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 },
+          },
+          float_pos = {
+            [5] = { 1002, 'NW', 1, 0, 0, true, 150, 2, 0, 0 },
+            [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect { mode = 'replace' }
+      end
+
+      api.nvim_set_current_win(high_win)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            two                                     |
+            three                                   |
+            {0:~                                       }|*3
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:                    }|
+          ## grid 5
+            {1:^highest}|
+            {1:       }|
+          ]],
+          win_pos = {
+            [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 },
+          },
+          float_pos = {
+            [5] = { 1002, 'NW', 1, 0, 0, true, 150, 2, 0, 0 },
+            [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:^highesty line       }                    |
+          {1:                    }                    |
+          three                                   |
+          {0:~                                       }|*3
+                                                  |
+        ]],
+          mode = 'normal',
+        }
+      end
+
+      buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, 0, true, { 'another' })
+      api.nvim_open_win(buf, true, { relative = 'editor', row = 0, col = 0, height = 2, width = 7, zindex = 160 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            one                                     |
+            two                                     |
+            three                                   |
+            {0:~                                       }|*3
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:the only line       }|
+            {1:                    }|
+          ## grid 5
+            {1:highest}|
+            {1:       }|
+          ## grid 6
+            {1:^another}|
+            {1:       }|
+          ]],
+          win_pos = {
+            [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 },
+          },
+          float_pos = {
+            [4] = { 1001, 'NW', 1, 0, 0, true, 50, 1, 0, 0 },
+            [5] = { 1002, 'NW', 1, 0, 0, true, 150, 2, 0, 0 },
+            [6] = { 1003, 'NW', 1, 0, 0, true, 160, 3, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:^anothery line       }                    |
+          {1:                    }                    |
+          three                                   |
+          {0:~                                       }|*3
+                                                  |
+        ]],
+          mode = 'normal',
+        }
+      end
+      api.nvim_set_current_win(normal_win)
+      command('only')
+      screen:try_resize(50, 20)
+      buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, -1, true, { 'x' })
+      local float_win = api.nvim_open_win(buf, true, {
+        relative = 'editor',
+        width = 5,
+        height = 5,
+        row = 8,
+        col = 9,
+        border = 'single',
+        zindex = 1,
+      })
+      local buf2 = api.nvim_create_buf(false, false)
+      local float_win_above = api.nvim_open_win(buf2, false, {
+        relative = 'editor',
+        width = 10,
+        height = 10,
+        row = 0,
+        col = 0,
+        zindex = 2,
+      })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+                                                              |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:^x    }{5:│}|
+            {5:│}{2:~    }{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          win_pos = {
+            [2] = { height = 19, startcol = 0, startrow = 0, width = 50, win = 1000 },
+          },
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 9, true, 1, 1, 8, 9 },
+            [8] = { 1005, 'NW', 1, 0, 0, true, 2, 2, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:          }                                        |
+          {2:~         }                                        |*2
+          {2:~         }{0:                                        }|*5
+          {2:~         }{5:─────┐}{0:                                  }|
+          {2:~         }{1:^x    }{5:│}{0:                                  }|
+          {0:~        }{5:│}{2:~    }{5:│}{0:                                  }|*4
+          {0:~        }{5:└─────┘}{0:                                  }|
+          {0:~                                                 }|*4
+                                                            |
+        ]],
+          mode = 'normal',
+        }
+      end
+      -- Move window
+      api.nvim_win_set_config(float_win, { relative = 'editor', row = 9, col = 8 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+                                                              |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:^x    }{5:│}|
+            {5:│}{2:~    }{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          win_pos = {
+            [2] = { height = 19, startcol = 0, startrow = 0, width = 50, win = 1000 },
+          },
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 9, 8, true, 1, 1, 9, 8 },
+            [8] = { 1005, 'NW', 1, 0, 0, true, 2, 2, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:          }                                        |
+          {2:~         }                                        |*2
+          {2:~         }{0:                                        }|*6
+          {2:~         }{5:────┐}{0:                                   }|
+          {0:~       }{5:│}{1:^x    }{5:│}{0:                                   }|
+          {0:~       }{5:│}{2:~    }{5:│}{0:                                   }|*4
+          {0:~       }{5:└─────┘}{0:                                   }|
+          {0:~                                                 }|*3
+                                                            |
+        ]],
+          mode = 'normal',
+        }
+      end
+
+      -- rightleft
+      api.nvim_win_set_config(float_win, { relative = 'editor', row = 8, col = 8 })
+      command('set rightleft')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+                                                              |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:    ^x}{5:│}|
+            {5:│}{2:    ~}{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          win_pos = {
+            [2] = { height = 19, startcol = 0, startrow = 0, width = 50, win = 1000 },
+          },
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 8, true, 1, 1, 8, 8 },
+            [8] = { 1005, 'NW', 1, 0, 0, true, 2, 2, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect {
+          grid = [[
+          {1:          }                                        |
+          {2:~         }                                        |*2
+          {2:~         }{0:                                        }|*5
+          {2:~         }{5:────┐}{0:                                   }|
+          {2:~         }{1:   ^x}{5:│}{0:                                   }|
+          {0:~       }{5:│}{2:    ~}{5:│}{0:                                   }|*4
+          {0:~       }{5:└─────┘}{0:                                   }|
+          {0:~                                                 }|*4
+                                                            |
+        ]],
+          mode = 'normal',
+        }
+      end
+
+      command('set virtualedit=all')
+      fn.setpos('.', { 0, 1, 1, 4 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+                                                              |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:^    x}{5:│}|
+            {5:│}{2:    ~}{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          win_pos = {
+            [2] = { height = 19, startcol = 0, startrow = 0, width = 50, win = 1000 },
+          },
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 8, true, 1, 1, 8, 8 },
+            [8] = { 1005, 'NW', 1, 0, 0, true, 2, 2, 0, 0 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect { mode = 'replace' }
+      end
+
+      -- Not obscured by a hidden floatwin.
+      api.nvim_win_set_config(float_win_above, { hide = true })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+                                                              |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:^    x}{5:│}|
+            {5:│}{2:    ~}{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8 (hidden)
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 8, true, 1, 1, 8, 8 },
+          },
+          mode = 'normal',
+        })
+      else
+        screen:expect { mode = 'normal' }
+      end
+
+      -- Not obscured in the command-line if curwin's cursor is obscured.
+      api.nvim_win_set_config(float_win_above, { hide = false })
+      feed(':')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*19
+            [3:--------------------------------------------------]|
+          ## grid 2
+            one                                               |
+            two                                               |
+            three                                             |
+            {0:~                                                 }|*16
+          ## grid 3
+            :^                                                 |
+          ## grid 7
+            {5:┌─────┐}|
+            {5:│}{1:    x}{5:│}|
+            {5:│}{2:    ~}{5:│}|*4
+            {5:└─────┘}|
+          ## grid 8
+            {1:          }|
+            {2:~         }|*9
+          ]],
+          float_pos = {
+            [7] = { 1004, 'NW', 1, 8, 8, true, 1, 1, 8, 8 },
+            [8] = { 1005, 'NW', 1, 0, 0, true, 2, 2, 0, 0 },
+          },
+          mode = 'cmdline_normal',
+        })
+      else
+        screen:expect { mode = 'cmdline_normal' }
+      end
     end)
   end
 

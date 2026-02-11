@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	Wget configuration file (/etc/wgetrc ~/.wgetrc)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2023 Nov 05
+" Last Change:	2026 Jan 07
 
-" GNU Wget 1.21 built on linux-gnu.
+" GNU Wget 1.25 built on linux-gnu.
 
 if exists("b:current_syntax")
   finish

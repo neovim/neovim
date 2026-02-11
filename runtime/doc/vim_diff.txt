@@ -97,6 +97,8 @@ Defaults                                            *defaults* *nvim-defaults*
 - |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >vim
     :let loaded_matchit = 1
+- |spellfile.lua| plugin is enabled, spellfiles are installed by default if
+  missing.
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
@@ -154,9 +156,9 @@ you never want any default mappings, call |:mapclear| early in your config.
 - [D |[D-default|
 - ]D |]D-default|
 - <C-W>d |CTRL-W_d-default|
-- |[q| |]q| |[Q| |]Q| |[CTRL-Q| |]CTRL-Q|
-- |[l| |]l| |[L| |]L| |[CTRL-L| |]CTRL-L|
-- |[t| |]t| |[T| |]T| |[CTRL-T| |]CTRL-T|
+- |[q| |]q| |[Q| |]Q| |[_CTRL-Q| |]_CTRL-Q|
+- |[l| |]l| |[L| |]L| |[_CTRL-L| |]_CTRL-L|
+- |[t| |]t| |[T| |]T| |[_CTRL-T| |]_CTRL-T|
 - |[a| |]a| |[A| |]A|
 - |[b| |]b| |[B| |]B|
 - |[<Space>| |]<Space>|
@@ -305,6 +307,7 @@ Commands:
 - |:EditQuery|
 - |:Inspect|
 - |:InspectTree|
+- |:lsp|
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
 - |:restart|
@@ -741,6 +744,7 @@ Editor:
 - *cscope* support was removed in favour of plugin-based solutions such as:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 - *popup-window* : Use |floating-windows| instead.
+- *spellfile.vim* : Replaced by |spellfile.lua|.
 - *textprop* : Use |extmarks| instead.
 
 Eval:

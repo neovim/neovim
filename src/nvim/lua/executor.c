@@ -3,6 +3,7 @@
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,6 +80,9 @@ static bool in_script = false;
 
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
+
+// Tracks the currently executing Lua thread (main or coroutine).
+lua_State *active_lstate = NULL;
 
 static LuaRef require_ref = LUA_REFNIL;
 
@@ -378,10 +382,18 @@ static void nlua_schedule_event(void **argv)
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, cb);
   nlua_unref_global(lstate, cb);
+
+  // Don't impose textlock restrictions upon UI event handlers.
+  int save_expr_map_lock = expr_map_lock;
+  int save_textlock = textlock;
+  expr_map_lock = ns_id > 0 ? 0 : expr_map_lock;
+  textlock = ns_id > 0 ? 0 : textlock;
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("vim.schedule callback: %.*s"));
     ui_remove_cb(ns_id, true);
   }
+  expr_map_lock = save_expr_map_lock;
+  textlock = save_textlock;
 }
 
 /// Schedule Lua callback on main loop's event queue
@@ -395,17 +407,20 @@ static int nlua_schedule(lua_State *const lstate)
     return lua_error(lstate);
   }
 
+  lua_pushnil(lstate);
   // If main_loop is closing don't schedule tasks to run in the future,
   // otherwise any refs allocated here will not be cleaned up.
   if (main_loop.closing) {
-    return 0;
+    lua_pushliteral(lstate, "main loop is closing");
+    return 2;
   }
 
   LuaRef cb = nlua_ref_global(lstate, 1);
   // Pass along UI event handler to disable on error.
   multiqueue_put(main_loop.events, nlua_schedule_event, (void *)(ptrdiff_t)cb,
                  (void *)(ptrdiff_t)ui_event_ns_id);
-  return 0;
+  lua_pushnil(lstate);
+  return 2;
 }
 
 // Dummy timer callback. Used by f_wait().
@@ -451,10 +466,13 @@ static int nlua_wait(lua_State *lstate)
     return luaL_error(lstate, e_fast_api_disabled, "vim.wait");
   }
 
-  intptr_t timeout = luaL_checkinteger(lstate, 1);
-  if (timeout < 0) {
+  double timeout_number = luaL_checknumber(lstate, 1);
+  if (timeout_number < 0) {
     return luaL_error(lstate, "timeout must be >= 0");
   }
+  int64_t timeout = (isnan(timeout_number) || timeout_number > (double)INT64_MAX)
+                    ? INT64_MAX
+                    : (int64_t)timeout_number;
 
   int lua_top = lua_gettop(lstate);
 
@@ -510,7 +528,7 @@ static int nlua_wait(lua_State *lstate)
 
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop,
                             loop_events,
-                            (int)timeout,
+                            timeout,
                             got_int || (is_function ? nlua_wait_condition(lstate,
                                                                           &pcall_status,
                                                                           &callback_result,
@@ -879,6 +897,7 @@ void nlua_init(char **argv, int argc, int lua_arg0)
 
   luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
   global_lstate = lstate;
+  active_lstate = lstate;
   main_thread = uv_thread_self();
   nlua_init_argv(lstate, argv, argc, lua_arg0);
 }
@@ -1480,6 +1499,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
   }
 
   lua_State *const lstate = global_lstate;
+
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, name)) {
     nlua_error(lstate, _("E5107: Lua: %.*s"));
     return;
@@ -2127,14 +2147,14 @@ void nlua_set_sctx(sctx_T *current)
   if (p_verbose <= 0) {
     return;
   }
-  lua_State *const lstate = global_lstate;
+  lua_State *const lstate = active_lstate;
   lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
 
   // Files where internal wrappers are defined so we can ignore them
   // like vim.o/opt etc are defined in _options.lua
   char *ignorelist[] = {
-    "vim/_editor.lua",
-    "vim/_options.lua",
+    "vim/_core/editor.lua",
+    "vim/_core/options.lua",
     "vim/keymap.lua",
   };
   int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
@@ -2400,14 +2420,14 @@ plain: {}
   return arena_printf(arena, "<Lua %d>", ref).data;
 }
 
-/// Execute the vim._defaults module to set up default mappings and autocommands
+/// Execute the vim._core.defaults module to set up default mappings and autocommands
 void nlua_init_defaults(void)
 {
   lua_State *const L = global_lstate;
   assert(L);
 
   lua_getglobal(L, "require");
-  lua_pushstring(L, "vim._defaults");
+  lua_pushstring(L, "vim._core.defaults");
   if (nlua_pcall(L, 1, 0)) {
     fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }

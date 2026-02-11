@@ -120,12 +120,22 @@ To build from the command line (i.e. invoke the `cmake` commands yourself),
 
 ### Windows / Cygwin
 
-Install all dependencies the normal way, then build Neovim the normal way for a random CMake application (i.e. do not use the `Makefile` that automatically downloads and builds "bundled" dependencies).
+Since https://github.com/neovim/neovim/pull/36417 , building on Cygwin may be as easy as:
 
-The `cygport` repo contains Cygport files (e.g. `APKBUILD`, `PKGBUILD`) for all the dependencies not available in the Cygwin distribution, and describes any special commands or arguments needed to build. The Cygport definitions also try to describe the required dependencies for each one. Unless custom commands are provided, Cygport just calls `autogen`/`cmake`, `make`, `make install`, etc. in a clean and consistent way.
+    make && make install
 
-https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv` should require slightly less patching. Some SSP stuff changed in Cygwin 2.10.0, so that might change things too when building Neovim.
+If that fails, an alternative is:
 
+1. Install all dependencies the normal way.
+    - The `cygport` repo contains Cygport files (e.g. `APKBUILD`, `PKGBUILD`) for all the dependencies not available in the Cygwin distribution, and describes any special commands or arguments needed to build. The Cygport definitions also try to describe the required dependencies for each one. Unless custom commands are provided, Cygport just calls `autogen`/`cmake`, `make`, `make install`, etc. in a clean and consistent way.
+    - https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv` should require slightly less patching. Some SSP stuff changed in Cygwin 2.10.0, so that might change things too when building Neovim.
+2. Build without "bundled" dependencies (except treesitter parsers).
+   ```
+   cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_TS=ON
+   cmake --build .deps
+   cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+   cmake --build build
+   ```
 
 ### Windows / MSYS2 / MinGW
 
@@ -268,7 +278,7 @@ cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build
 ```
 
-### How to build without "bundled" dependencies
+### Build without "bundled" dependencies
 
 1. Manually install the dependencies:
     - libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
@@ -288,7 +298,24 @@ cmake --build build
     - Using `ninja` is strongly recommended.
 4. If treesitter parsers are not bundled, they need to be available in a `parser/` runtime directory (e.g. `/usr/share/nvim/runtime/parser/`).
 
-### How to build without unibilium
+### Build offline
+
+On systems with old or missing libraries, *without* network access, you may want
+to build *with* bundled dependencies. This is supported as follows.
+
+1. On a network-enabled machine, do either of the following, to get the
+   dependency sources in `.deps` in a form that the build will work with:
+    - Fetch https://github.com/neovim/deps/tree/master/src into `.deps/build/src/`.
+      (https://github.com/neovim/deps/tree/master/src is an auto-updated, "cleaned up", snapshot of `.deps/build/src/`).
+    - Run `make deps` to generate `.deps/`, then clean it up using [these commands](https://github.com/neovim/neovim/blob/1c12073db6c64eb365748f153f96be9b0fe61070/.github/workflows/build.yml#L67-L74).
+2. Copy the prepared `.deps` to the isolated machine (without network access).
+3. Build with `USE_EXISTING_SRC_DIR` enabled, on the isolated machine:
+   ```
+   make deps DEPS_CMAKE_FLAGS=-DUSE_EXISTING_SRC_DIR=ON
+   make
+   ```
+
+### Build without unibilium
 
 Unibilium is the only dependency which is licensed under LGPLv3 (there are no
 GPLv3-only dependencies). This library is used for loading the terminfo database at
@@ -297,10 +324,20 @@ are good enough. To avoid this dependency, build with support for loading
 custom terminfo at runtime, use
 
 ```sh
-make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED_UNIBILIUM=0"
+make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_UNIBILIUM=0"
 ```
 
-### How to build static binary (on Linux)
+To confirm at runtime that unibilium was not included, check `has('terminfo') == 1`.
+
+### Build with specific "bundled" dependencies
+
+Example of building with specific bundled and non-bundled dependencies:
+
+```
+make DEPS_CMAKE_FLAGS="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBUV=ON"
+```
+
+### Build static binary (Linux)
 
 1. Use a linux distribution which uses musl C. We will use Alpine Linux but any distro with musl should work. (glibc does not support static linking)
 2. Run make passing the `STATIC_BUILD` variable: `make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"`
@@ -322,27 +359,6 @@ The resulting binary in `build/bin/nvim` will have all the dependencies statical
 ```
 build/bin/nvim: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, BuildID[sha1]=b93fa8e678d508ac0a76a2e3da20b119105f1b2d, with debug_info, not stripped
 ```
-
-#### Debian 10 (Buster) example:
-
-```sh
-sudo apt install luajit libluajit-5.1-dev lua-lpeg libunibilium-dev
-cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBUV=ON -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_UTF8PROC=ON
-cmake --build .deps
-cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
-cmake --build build
-```
-
-#### Example of using a Makefile
-
-- Example of using a package with all dependencies:
-  ```
-  make USE_BUNDLED=OFF
-  ```
-- Example of using a package with some dependencies:
-  ```
-  make BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBUV=ON"
-  ```
 
 ## Build prerequisites
 
@@ -443,6 +459,13 @@ Similarly to develop on Neovim: `nix run github:nix-community/neovim-nightly-ove
 To use a specific version of Neovim, you can pass `--override-input neovim-src .` to use your current directory,
 or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f8f4e754e70cbe1624f030fb61bded41bc2`.
 
+### Haiku
+
+Some deps can be pulled from haiku repos, the rest need "bundled" deps:
+
+    cmake -DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_UNIBILIUM=OFF -DUSE_BUNDLED_LUAJIT=OFF -B .deps ./cmake.deps
+    make -C .deps
+
 ### FreeBSD
 
 ```
@@ -454,22 +477,16 @@ If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 h
 ### OpenBSD
 
 ```sh
-doas pkg_add gmake cmake curl gettext-tools git
+doas pkg_add gmake cmake curl gettext-tools git ninja
 ```
 
-Build can sometimes fail when using the top level `Makefile`, apparently due to some third-party component (see [#2445-comment](https://github.com/neovim/neovim/issues/2445#issuecomment-108124236)). The following instructions use CMake:
+While `ninja` is technically optional, the build is likely to fail without it. This is because `cmake` will use `make` in that case, and the bundled LuaJIT requires `gmake`. Instead of installing `ninja`, you could work around this by installing `luajit` and disabling the bundled LuaJIT:
 
 ```sh
-mkdir .deps
-cd .deps
-cmake ../cmake.deps/
-gmake
-cd ..
-mkdir build
-cd build
-cmake ..
-gmake
+gmake DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUAJIT=0"
 ```
+
+Another workaround is to edit `cmake/Deps.cmake` and comment out the line `set(MAKE_PRG "$(MAKE)")`. This will leave `MAKE_PRG` set to `gmake`, so LuaJIT will be built with `gmake`.
 
 ### macOS
 
@@ -519,3 +536,19 @@ make CMAKE_BUILD_TYPE=Release MACOSX_DEPLOYMENT_TARGET=10.13 DEPS_CMAKE_FLAGS="-
 
 Note that the C++ compiler is explicitly set so that it can be found when the deployment target is set.
 
+## Building with zig
+### Prerequisites
+ - zig 0.15.2
+### Instructions
+ - Build the editor: `zig build`, run it with `./zig-out/bin/nvim`
+ - Complete installation with runtime: `zig build install --prefix ~/.local`
+ - Tests:
+   + `zig build functionaltest` to run all functionaltests
+   + `zig build functionaltest -- test/functional/autocmd/bufenter_spec.lua` to run the tests in one file
+   + `zig build unittest` to run all unittests
+#### Using system dependencies
+  See "Available System Integrations" in `zig build -h` to see available system integrations. Enabling an integration, e.g. `zig build -fsys=utf8proc` will use the system's installation of utf8proc.
+
+`zig build --system deps_dir` will enable all integrations and turn off dependency fetching. This requires you to pre-download the dependencies which don't have a system integration into `deps_dir` (at the time of writing these are ziglua, [`lua_dev_deps`](https://github.com/neovim/deps/blob/master/opt/lua-dev-deps.tar.gz), and the built-in tree-sitter parsers). You have to create subdirectories whose names are the respective package's hash under `deps_dir` and unpack the dependencies inside that directory - ziglua should go under `deps_dir/zlua-0.1.0-hGRpC1dCBQDf-IqqUifYvyr8B9-4FlYXqY8cl7HIetrC` and so on. Hashes should be taken from `build.zig.zon`.
+
+See the `prepare` function of [this `PKGBUILD`](https://git.sr.ht/~chinmay/nvim_build/tree/26364a4cf9b4819f52a3e785fa5a43285fb9cea2/item/PKGBUILD#L90) for an example.

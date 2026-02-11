@@ -286,6 +286,17 @@ static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
         c = n > 1 ? (unsigned)utf_ptr2char(*bufp + wlen)
                   : (uint8_t)(*bufp)[wlen];
       }
+      // Check that there is enough space
+      if (!(flags & FIO_LATIN1)) {
+        size_t need = (flags & FIO_UCS4) ? 4 : 2;
+        if ((flags & FIO_UTF16) && c >= 0x10000) {
+          need = 4;
+        }
+
+        if ((size_t)(p - ip->bw_conv_buf) + need > ip->bw_conv_buflen) {
+          return FAIL;
+        }
+      }
 
       if (ucs2bytes(c, &p, flags) && !ip->bw_conv_error) {
         ip->bw_conv_error = true;
@@ -333,7 +344,7 @@ static int buf_write_bytes(struct bw_info *ip)
     // Only checking conversion, which is OK if we get here.
     return OK;
   }
-  int wlen = write_eintr(ip->bw_fd, buf, (size_t)len);
+  int wlen = (int)write_eintr(ip->bw_fd, buf, (size_t)len);
   return (wlen < len) ? FAIL : OK;
 }
 
@@ -715,6 +726,40 @@ static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
   return OK;
 }
 
+/// @return The backup file name
+char *buf_get_backup_name(char *fname, char **dirp, bool no_prepend_dot, char *backup_ext)
+{
+  char *backup = NULL;
+  // Isolate one directory name, using an entry in 'bdir'.
+  size_t dir_len = copy_option_part(dirp, IObuff, IOSIZE, ",");
+  char *p = IObuff + dir_len;
+  if (**dirp == NUL && !os_isdir(IObuff)) {
+    int ret;
+    char *failed_dir;
+    if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir, NULL)) != 0) {
+      semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+            failed_dir, os_strerror(ret));
+      xfree(failed_dir);
+    }
+  }
+  if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
+    // path ends with '//', use full path
+    if ((p = make_percent_swname(IObuff, p, fname))
+        != NULL) {
+      backup = modname(p, backup_ext, no_prepend_dot);
+      xfree(p);
+    }
+  }
+  if (backup == NULL) {
+    char *rootname = get_file_in_dir(fname, IObuff);
+    if (rootname != NULL) {
+      backup = modname(rootname, backup_ext, no_prepend_dot);
+      xfree(rootname);
+    }
+  }
+  return backup;
+}
+
 static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_old, vim_acl_T acl,
                                  int perm, unsigned bkc, bool file_readonly, bool forceit,
                                  bool *backup_copyp, char **backupp, Error_T *err)
@@ -810,48 +855,14 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
     // and reused. Creation of a backup COPY will be attempted.
     char *dirp = p_bdir;
     while (*dirp) {
-      // Isolate one directory name, using an entry in 'bdir'.
-      size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
-      char *p = IObuff + dir_len;
-      if (*dirp == NUL && !os_isdir(IObuff)) {
-        int ret;
-        char *failed_dir;
-        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir, NULL)) != 0) {
-          semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
-                failed_dir, os_strerror(ret));
-          xfree(failed_dir);
-        }
-      }
-      if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
-        // Ends with '//', Use Full path
-        if ((p = make_percent_swname(IObuff, p, fname))
-            != NULL) {
-          *backupp = modname(p, backup_ext, no_prepend_dot);
-          xfree(p);
-        }
-      }
-
-      char *rootname = get_file_in_dir(fname, IObuff);
-      if (rootname == NULL) {
+      *backupp = buf_get_backup_name(fname, &dirp, no_prepend_dot, backup_ext);
+      if (*backupp == NULL) {
         some_error = true;                // out of memory
         goto nobackup;
       }
 
       FileInfo file_info_new;
       {
-        //
-        // Make the backup file name.
-        //
-        if (*backupp == NULL) {
-          *backupp = modname(rootname, backup_ext, no_prepend_dot);
-        }
-
-        if (*backupp == NULL) {
-          xfree(rootname);
-          some_error = true;                          // out of memory
-          goto nobackup;
-        }
-
         // Check if backup file already exists.
         if (os_fileinfo(*backupp, &file_info_new)) {
           if (os_fileinfo_id_equal(&file_info_new, file_info_old)) {
@@ -880,7 +891,6 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
           }
         }
       }
-      xfree(rootname);
 
       // Try to create the backup file
       if (*backupp != NULL) {
@@ -946,43 +956,13 @@ nobackup:
     // that works is used.
     char *dirp = p_bdir;
     while (*dirp) {
-      // Isolate one directory name and make the backup file name.
-      size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
-      char *p = IObuff + dir_len;
-      if (*dirp == NUL && !os_isdir(IObuff)) {
-        int ret;
-        char *failed_dir;
-        if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir, NULL)) != 0) {
-          semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
-                failed_dir, os_strerror(ret));
-          xfree(failed_dir);
-        }
-      }
-      if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
-        // path ends with '//', use full path
-        if ((p = make_percent_swname(IObuff, p, fname))
-            != NULL) {
-          *backupp = modname(p, backup_ext, no_prepend_dot);
-          xfree(p);
-        }
-      }
-
-      if (*backupp == NULL) {
-        char *rootname = get_file_in_dir(fname, IObuff);
-        if (rootname == NULL) {
-          *backupp = NULL;
-        } else {
-          *backupp = modname(rootname, backup_ext, no_prepend_dot);
-          xfree(rootname);
-        }
-      }
-
+      *backupp = buf_get_backup_name(fname, &dirp, no_prepend_dot, backup_ext);
       if (*backupp != NULL) {
         // If we are not going to keep the backup file, don't
         // delete an existing one, try to use another name.
         // Change one character, just before the extension.
         if (!p_bk && os_path_exists(*backupp)) {
-          p = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
+          char *p = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
           p = MAX(p, *backupp);  // empty file name ???
           *p = 'z';
           while (*p > 'a' && os_path_exists(*backupp)) {
@@ -1257,7 +1237,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // the original file.
   // Don't do this if there is a backup file and we are exiting.
   if (reset_changed && !newfile && overwriting && !(exiting && backup != NULL)) {
-    ml_preserve(buf, false, !!p_fs);
+    ml_preserve(buf, false, !!(buf->b_p_fs >= 0 ? buf->b_p_fs : p_fs));
     if (got_int) {
       err = set_err(_(e_interr));
       goto restore_backup;
@@ -1289,11 +1269,13 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (converted) {
     wb_flags = get_fio_flags(fenc);
     if (wb_flags & (FIO_UCS2 | FIO_UCS4 | FIO_UTF16 | FIO_UTF8)) {
+      // overallocate a bit, in case we read incomplete multi-byte chars
+      int size = bufsize + CONV_RESTLEN;
       // Need to allocate a buffer to translate into.
       if (wb_flags & (FIO_UCS2 | FIO_UTF16 | FIO_UTF8)) {
-        write_info.bw_conv_buflen = (size_t)bufsize * 2;
+        write_info.bw_conv_buflen = (size_t)size * 2;
       } else {       // FIO_UCS4
-        write_info.bw_conv_buflen = (size_t)bufsize * 4;
+        write_info.bw_conv_buflen = (size_t)size * 4;
       }
       write_info.bw_conv_buf = verbose_try_malloc(write_info.bw_conv_buflen);
       if (!write_info.bw_conv_buf) {
@@ -1606,9 +1588,9 @@ restore_backup:
     // (could be a pipe).
     // If the 'fsync' option is false, don't fsync().  Useful for laptops.
     int error;
-    if (p_fs && (error = os_fsync(fd)) != 0 && !device
+    if ((buf->b_p_fs >= 0 ? buf->b_p_fs : p_fs) && (error = os_fsync(fd)) != 0
         // fsync not supported on this storage.
-        && error != UV_ENOTSUP) {
+        && error != UV_ENOTSUP && !device) {
       err = set_err_arg(e_fsync, error);
       end = 0;
     }

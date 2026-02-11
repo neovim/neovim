@@ -1,6 +1,8 @@
 *usr_12.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 				Clever tricks
 
@@ -109,9 +111,9 @@ command.  The "%" is the line range, which stands for the whole file.  Thus
 the substitution is done in every line in the file.
    The arguments for the substitute command are "/from/to/".  The slashes
 separate the "from" pattern and the "to" string.  This is what the "from"
-pattern contains:
-							\([^,]*\), \(.*\) ~
-
+pattern contains: >
+							\([^,]*\), \(.*\)
+<
 	The first part between \( \) matches "Last"	\(     \)
 	    match anything but a comma			  [^,]
 	    any number of times				      *

@@ -371,9 +371,14 @@ void do_autocmd_uienter_all(void)
   }
 }
 
+bool ui_can_attach_more(void)
+{
+  return ui_count < MAX_UI_COUNT;
+}
+
 void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
 {
-  if (ui_count == MAX_UI_COUNT) {
+  if (ui_count >= MAX_UI_COUNT) {
     abort();
   }
   if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]
@@ -419,7 +424,7 @@ void ui_detach_impl(RemoteUI *ui, uint64_t chanid)
     }
   }
 
-  if (shift_index == MAX_UI_COUNT) {
+  if (shift_index >= MAX_UI_COUNT) {
     abort();
   }
 
@@ -538,8 +543,6 @@ void ui_flush(void)
 
   static bool was_busy = false;
 
-  cmdline_ui_flush();
-
   if (!(State & MODE_CMDLINE) && curwin->w_floating && curwin->w_config.hide) {
     if (!was_busy) {
       ui_call_busy_start();
@@ -551,7 +554,11 @@ void ui_flush(void)
   }
 
   win_ui_flush(false);
-  msg_ext_ui_flush();
+  // Avoid flushing callbacks expected to change text during textlock.
+  if (textlock == 0 && expr_map_lock == 0) {
+    cmdline_ui_flush();
+    msg_ext_ui_flush();
+  }
   msg_scroll_flush();
 
   if (pending_cursor_update) {
@@ -572,11 +579,18 @@ void ui_flush(void)
     arena_mem_free(arena_finish(&arena));
     pending_mode_info_update = false;
   }
-  if (pending_mode_update && !starting) {
-    char *full_name = shape_table[ui_mode_idx].full_name;
-    ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
+
+  static bool cursor_was_obscured = false;
+  bool cursor_obscured = ui_cursor_is_behind_floatwin();
+  if ((cursor_obscured != cursor_was_obscured || pending_mode_update) && !starting) {
+    // Show "empty box" (underline style) cursor instead if behind a floatwin.
+    int idx = cursor_obscured ? SHAPE_IDX_R : ui_mode_idx;
+    char *full_name = shape_table[idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), idx);
     pending_mode_update = false;
+    cursor_was_obscured = cursor_obscured;
   }
+
   if (pending_has_mouse != has_mouse) {
     (has_mouse ? ui_call_mouse_on : ui_call_mouse_off)();
     pending_has_mouse = has_mouse;
@@ -667,6 +681,22 @@ void ui_cursor_shape(void)
   conceal_check_cursor_line();
 }
 
+/// Check if the cursor is behind a floating window (only in compositor mode).
+/// @return true if cursor is obscured by a float with higher zindex
+static bool ui_cursor_is_behind_floatwin(void)
+{
+  if ((State & MODE_CMDLINE) || !ui_comp_should_draw()) {
+    return false;
+  }
+
+  int crow = curwin->w_winrow + curwin->w_winrow_off + curwin->w_wrow;
+  int ccol = curwin->w_wincol + curwin->w_wincol_off
+             + (curwin->w_p_rl ? curwin->w_view_width - curwin->w_wcol - 1 : curwin->w_wcol);
+
+  ScreenGrid *top_grid = ui_comp_get_grid_at_coord(crow, ccol);
+  return top_grid != &curwin->w_grid_alloc && top_grid != &default_grid;
+}
+
 /// Returns true if the given UI extension is enabled.
 bool ui_has(UIExtension ext)
 {
@@ -739,15 +769,34 @@ static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
   msg_schedule_semsg_multiline("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
 }
 
-void ui_call_event(char *name, bool fast, Array args)
+void ui_call_event(char *name, Array args)
 {
-  bool handled = false;
-  UIEventCallback *event_cb;
+  // Internal messages are considered unsafe and are executed in fast context.
+  bool fast = strcmp(name, "msg_show") == 0;
+  const char *not_fast[] = {
+    "empty",
+    "echo",
+    "echomsg",
+    "echoerr",
+    "list_cmd",
+    "lua_error",
+    "lua_print",
+    "progress",
+    NULL,
+  };
 
-  // UI callbacks need to be allowed to change text.
+  for (int i = 0; fast && not_fast[i]; i++) {
+    fast = !strequal(not_fast[i], args.items[0].data.string.data);
+  }
+
+  // Don't impose textlock restrictions upon UI event handlers.
+  int save_expr_map_lock = expr_map_lock;
   int save_textlock = textlock;
+  expr_map_lock = 0;
   textlock = 0;
 
+  bool handled = false;
+  UIEventCallback *event_cb;
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;
@@ -762,6 +811,7 @@ void ui_call_event(char *name, bool fast, Array args)
     }
     api_clear_error(&err);
   })
+  expr_map_lock = save_expr_map_lock;
   textlock = save_textlock;
 
   if (!handled) {

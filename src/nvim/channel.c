@@ -474,7 +474,9 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
   channel = channel_alloc(kChannelStreamSocket);
   if (!socket_connect(&main_loop, &channel->stream.socket,
                       tcp, address, timeout, error)) {
-    channel_destroy_early(channel);
+    // Don't use channel_destroy_early() as new channels may have been allocated
+    // by channel_from_connection() while polling for uv events.
+    channel_decref(channel);
     return 0;
   }
 
@@ -660,21 +662,6 @@ static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf,
                                 bool eof, CallbackReader *reader)
 {
   if (chan->term) {
-    if (count) {
-      const char *p = buf;
-      const char *end = buf + count;
-      while (p < end) {
-        // Don't pass incomplete UTF-8 sequences to libvterm. #16245
-        // Composing chars can be passed separately, so utf_ptr2len_len() is enough.
-        int clen = utf_ptr2len_len(p, (int)(end - p));
-        if (clen > end - p) {
-          count = (size_t)(p - buf);
-          break;
-        }
-        p += clen;
-      }
-    }
-
     terminal_receive(chan->term, buf, count);
   }
 
@@ -807,13 +794,17 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
   typval_T rettv = TV_INITIAL_VALUE;
   callback_call(cb, 3, argv, &rettv);
   tv_clear(&rettv);
+
+  if (reader) {
+    tv_list_unref(argv[1].vval.v_list);
+  }
 }
 
-/// Open terminal for channel
+/// Allocate terminal for channel
 ///
 /// Channel `chan` is assumed to be an open pty channel,
 /// and `buf` is assumed to be a new, unmodified buffer.
-void channel_terminal_open(buf_T *buf, Channel *chan)
+void channel_terminal_alloc(buf_T *buf, Channel *chan)
 {
   TerminalOptions topts = {
     .data = chan,
@@ -826,7 +817,7 @@ void channel_terminal_open(buf_T *buf, Channel *chan)
   };
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);
-  terminal_open(&chan->term, buf, topts);
+  chan->term = terminal_alloc(buf, topts);
 }
 
 static void term_write(const char *buf, size_t size, void *data)
@@ -900,6 +891,8 @@ static void set_info_event(void **argv)
   channel_decref(chan);
 }
 
+/// Unlike terminal_running(), this returns false immediately after stopping a job.
+/// However, this always returns false for nvim_open_term() terminals.
 bool channel_job_running(uint64_t id)
 {
   Channel *chan = find_channel(id);

@@ -7,6 +7,7 @@ local loaders = package.loaders
 local _loadfile = loadfile
 
 local VERSION = 4
+local is_appimage = (os.getenv('APPIMAGE') ~= nil)
 
 local M = {}
 
@@ -116,6 +117,12 @@ end
 --- @param name string can be a module name, or a file name
 --- @return string file_name
 local function cache_filename(name)
+  if is_appimage then
+    -- Avoid cache pollution caused by AppImage randomizing the program root. #31165
+    -- "/tmp/.mount_nvimAmpHPH/usr/share/nvim/runtime" => "/usr/share/nvim/runtime"
+    name = name:match('(/usr/.*)') or name
+  end
+
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
@@ -422,7 +429,7 @@ function M.enable(enable)
   M.enabled = enable
 
   if enable then
-    vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
+    vim.fn.mkdir(vim.fs.abspath(M.path), 'p')
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)
@@ -485,7 +492,7 @@ function M._profile(opts)
 
   if opts and opts.loaders then
     for l, loader in pairs(loaders) do
-      local loc = debug.getinfo(loader, 'Sn').source:sub(2)
+      local loc = debug.getinfo(loader, 'Sn').source:gsub('^@', '')
       loaders[l] = track('loader ' .. l .. ': ' .. loc, loader)
     end
   end

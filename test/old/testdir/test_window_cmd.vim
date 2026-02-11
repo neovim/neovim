@@ -599,11 +599,12 @@ func Test_window_jump_tag()
 
   help
   /Kuwasha
-  call assert_match('^|Kuwasha|',  getline('.'))
+  call assert_match('^- |Kuwasha|',  getline('.'))
   call assert_equal(2, winnr('$'))
+  norm! fK
   2wincmd }
   call assert_equal(3, winnr('$'))
-  call assert_match('^|Kuwasha|',  getline('.'))
+  call assert_match('^- |Kuwasha|',  getline('.'))
   wincmd k
   call assert_match('\*Kuwasha\*',  getline('.'))
   call assert_equal(2, winheight(0))
@@ -612,6 +613,7 @@ func Test_window_jump_tag()
   set previewheight=4
   help
   /bugs
+  norm! fb
   wincmd }
   wincmd k
   call assert_match('\*bugs\*',  getline('.'))
@@ -1041,8 +1043,7 @@ func Test_win_splitmove()
   let s:triggered = []
   augroup WinSplitMove
     au!
-    " Nvim: WinNewPre not ported yet. Also needs full port of v9.1.0117 to pass.
-    " au WinNewPre * let s:triggered += ['WinNewPre']
+    au WinNewPre * let s:triggered += ['WinNewPre']
     au WinNew * let s:triggered += ['WinNew', win_getid()]
     au WinClosed * let s:triggered += ['WinClosed', str2nr(expand('<afile>'))]
   augroup END
@@ -1864,7 +1865,7 @@ func Test_splitkeep_cmdwin_cursor_position()
   set splitkeep=screen
   call setline(1, range(&lines))
 
-  " No scroll when cursor is at near bottom of window and cusor position
+  " No scroll when cursor is at near bottom of window and cursor position
   " recompution (done by line('w0') in this test) happens while in cmdwin.
   normal! G
   let firstline = line('w0')

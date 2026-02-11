@@ -329,10 +329,10 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   }
   // If the name is too long we might crash further on, quit here.
   if (fname != NULL && *fname != NUL) {
-    size_t namelen = strlen(fname);
+    size_t fnamelen = strlen(fname);
 
     // If the name is too long we might crash further on, quit here.
-    if (namelen >= MAXPATHL) {
+    if (fnamelen >= MAXPATHL) {
       filemess(curbuf, fname, _("Illegal file name"));
       msg_end();
       msg_scroll = msg_save;
@@ -342,7 +342,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // If the name ends in a path separator, we can't open it.  Check here,
     // because reading the file may actually work, but then creating the
     // swap file may destroy it!  Reported on MS-DOS and Win 95.
-    if (after_pathsep(fname, fname + namelen)) {
+    if (after_pathsep(fname, fname + fnamelen)) {
       if (!silent) {
         filemess(curbuf, fname, _(msg_is_a_directory));
       }
@@ -1700,55 +1700,57 @@ failed:
       add_quoted_fname(IObuff, IOSIZE, curbuf, sfname);
       c = false;
 
+      int buflen = (int)strlen(IObuff);
 #ifdef UNIX
       if (S_ISFIFO(perm)) {             // fifo
-        xstrlcat(IObuff, _("[fifo]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[fifo]"));
         c = true;
       }
       if (S_ISSOCK(perm)) {            // or socket
-        xstrlcat(IObuff, _("[socket]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[socket]"));
         c = true;
       }
 # ifdef OPEN_CHR_FILES
       if (S_ISCHR(perm)) {                          // or character special
-        xstrlcat(IObuff, _("[character special]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[character special]"));
         c = true;
       }
 # endif
 #endif
       if (curbuf->b_p_ro) {
-        xstrlcat(IObuff, shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), "%s",
+                           shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"));
         c = true;
       }
       if (read_no_eol_lnum) {
-        xstrlcat(IObuff, _("[noeol]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[noeol]"));
         c = true;
       }
       if (ff_error == EOL_DOS) {
-        xstrlcat(IObuff, _("[CR missing]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[CR missing]"));
         c = true;
       }
       if (split) {
-        xstrlcat(IObuff, _("[long lines split]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[long lines split]"));
         c = true;
       }
       if (notconverted) {
-        xstrlcat(IObuff, _("[NOT converted]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[NOT converted]"));
         c = true;
       } else if (converted) {
-        xstrlcat(IObuff, _("[converted]"), IOSIZE);
+        buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[converted]"));
         c = true;
       }
       if (conv_error != 0) {
-        snprintf(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff),
+        snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen),
                  _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
         c = true;
       } else if (illegal_byte > 0) {
-        snprintf(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff),
+        snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen),
                  _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = true;
       } else if (error) {
-        xstrlcat(IObuff, _("[READ ERRORS]"), IOSIZE);
+        snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), _("[READ ERRORS]"));
         c = true;
       }
       if (msg_add_fileformat(fileformat)) {
@@ -2141,22 +2143,19 @@ bool msg_add_fileformat(int eol_type)
 /// Append line and character count to IObuff.
 void msg_add_lines(int insert_space, linenr_T lnum, off_T nchars)
 {
-  char *p = IObuff + strlen(IObuff);
+  size_t len = strlen(IObuff);
 
-  if (insert_space) {
-    *p++ = ' ';
-  }
   if (shortmess(SHM_LINES)) {
-    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)), "%" PRId64 "L, %" PRId64 "B",
-                 (int64_t)lnum, (int64_t)nchars);
+    snprintf(IObuff + len, IOSIZE - len,
+             _("%s%" PRId64 "L, %" PRId64 "B"),  // l10n: L as in line, B as in byte
+             insert_space ? " " : "", (int64_t)lnum, (int64_t)nchars);
   } else {
-    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)),
-                 NGETTEXT("%" PRId64 " line, ", "%" PRId64 " lines, ", lnum),
-                 (int64_t)lnum);
-    p += strlen(p);
-    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)),
-                 NGETTEXT("%" PRId64 " byte", "%" PRId64 " bytes", nchars),
-                 (int64_t)nchars);
+    len += (size_t)snprintf(IObuff + len, IOSIZE - len,
+                            NGETTEXT("%s%" PRId64 " line, ", "%s%" PRId64 " lines, ", lnum),
+                            insert_space ? " " : "", (int64_t)lnum);
+    snprintf(IObuff + len, IOSIZE - len,
+             NGETTEXT("%" PRId64 " byte", "%" PRId64 " bytes", nchars),
+             (int64_t)nchars);
   }
 }
 
@@ -2401,11 +2400,13 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   }
 
   // the file name has at most BASENAMELEN characters.
-  if (strlen(ptr) > BASENAMELEN) {
-    ptr[BASENAMELEN] = NUL;
+  size_t ptrlen = fnamelen - (size_t)(ptr - retval);
+  if (ptrlen > (unsigned)BASENAMELEN) {
+    ptrlen = BASENAMELEN;
+    ptr[ptrlen] = NUL;
   }
 
-  char *s = ptr + strlen(ptr);
+  char *s = ptr + ptrlen;
 
   // Append the extension.
   // ext can start with '.' and cannot exceed 3 more characters.
@@ -2414,7 +2415,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   char *e;
   // Prepend the dot if needed.
   if (prepend_dot && *(e = path_tail(retval)) != '.') {
-    STRMOVE(e + 1, e);
+    memmove(e + 1, e, ((fnamelen + extlen) - (size_t)(e - retval)) + 1);  // +1 for NUL
     *e = '.';
   }
 
@@ -2809,7 +2810,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   // Copy the lines in "frombuf" to "tobuf".
   curbuf = tobuf;
   for (linenr_T lnum = 1; lnum <= frombuf->b_ml.ml_line_count; lnum++) {
-    char *p = xstrdup(ml_get_buf(frombuf, lnum));
+    char *p = xmemdupz(ml_get_buf(frombuf, lnum), (size_t)ml_get_buf_len(frombuf, lnum));
     if (ml_append(lnum - 1, p, 0, false) == FAIL) {
       xfree(p);
       retval = FAIL;
@@ -2907,24 +2908,31 @@ int buf_check_timestamp(buf_T *buf)
       reload = RELOAD_NORMAL;
     } else {
       char *reason;
+      size_t reasonlen;
+
       if (!file_info_ok) {
         reason = "deleted";
+        reasonlen = STRLEN_LITERAL("deleted");
       } else if (bufIsChanged(buf)) {
         reason = "conflict";
+        reasonlen = STRLEN_LITERAL("conflict");
       } else if (orig_size != buf->b_orig_size || buf_contents_changed(buf)) {
         reason = "changed";
+        reasonlen = STRLEN_LITERAL("changed");
       } else if (orig_mode != buf->b_orig_mode) {
         reason = "mode";
+        reasonlen = STRLEN_LITERAL("mode");
       } else {
         reason = "time";
+        reasonlen = STRLEN_LITERAL("time");
       }
 
       // Only give the warning if there are no FileChangedShell
       // autocommands.
       // Avoid being called recursively by setting "busy".
       busy = true;
-      set_vim_var_string(VV_FCS_REASON, reason, -1);
-      set_vim_var_string(VV_FCS_CHOICE, "", -1);
+      set_vim_var_string(VV_FCS_REASON, reason, (int)reasonlen);
+      set_vim_var_string(VV_FCS_CHOICE, "", 0);
       allbuf_lock++;
       bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf);
       allbuf_lock--;
@@ -2990,16 +2998,16 @@ int buf_check_timestamp(buf_T *buf)
     if (!helpmesg) {
       mesg2 = "";
     }
-    const size_t tbuf_len = strlen(path) + strlen(mesg) + strlen(mesg2) + 2;
-    char *const tbuf = xmalloc(tbuf_len);
-    snprintf(tbuf, tbuf_len, mesg, path);
+    // +2 for either '\n' or "; " and +1 for NUL
+    const size_t tbufsize = strlen(path) + strlen(mesg) + strlen(mesg2) + 3;
+    char *const tbuf = xmalloc(tbufsize);
+    int tbuflen = snprintf(tbuf, tbufsize, mesg, path);
     // Set warningmsg here, before the unimportant and output-specific
     // mesg2 has been appended.
-    set_vim_var_string(VV_WARNINGMSG, tbuf, -1);
+    set_vim_var_string(VV_WARNINGMSG, tbuf, tbuflen);
     if (can_reload) {
       if (*mesg2 != NUL) {
-        xstrlcat(tbuf, "\n", tbuf_len - 1);
-        xstrlcat(tbuf, mesg2, tbuf_len - 1);
+        snprintf(tbuf + tbuflen, tbufsize - (size_t)tbuflen, "\n%s", mesg2);
       }
       switch (do_dialog(VIM_WARNING, _("Warning"), tbuf,
                         _("&OK\n&Load File\nLoad File &and Options"),
@@ -3013,8 +3021,7 @@ int buf_check_timestamp(buf_T *buf)
       }
     } else if (State > MODE_NORMAL_BUSY || (State & MODE_CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {
-        xstrlcat(tbuf, "; ", tbuf_len - 1);
-        xstrlcat(tbuf, mesg2, tbuf_len - 1);
+        snprintf(tbuf + tbuflen, tbufsize - (size_t)tbuflen, "; %s", mesg2);
       }
       emsg(tbuf);
       retval = 2;
@@ -3028,25 +3035,21 @@ int buf_check_timestamp(buf_T *buf)
         msg_clr_eos();
         msg_end();
         if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-          ui_flush();
-          // give the user some time to think about it
-          os_delay(1004, true);
-
-          // don't redraw and erase the message
-          redraw_cmdline = false;
+          msg_delay(1004, true);  // give the user some time to think about it
+          redraw_cmdline = false;  // don't redraw and erase the message
         }
       }
       already_warned = true;
     }
 
-    xfree(path);
     xfree(tbuf);
+    xfree(path);
   }
 
   if (reload != RELOAD_NONE) {
     // Reload the buffer.
     buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
-    if (buf->b_p_udf && buf->b_ffname != NULL) {
+    if (bufref_valid(&bufref) && buf->b_p_udf && buf->b_ffname != NULL) {
       uint8_t hash[UNDO_HASH_SIZE];
 
       // Any existing undo file is unusable, write it now.
@@ -3394,8 +3397,10 @@ int delete_recursive(const char *name)
     char *exp = xstrdup(name);
     garray_T ga;
     if (readdir_core(&ga, exp, NULL, NULL) == OK) {
+      int len = snprintf(NameBuff, MAXPATHL, "%s/", exp);
+
       for (int i = 0; i < ga.ga_len; i++) {
-        vim_snprintf(NameBuff, MAXPATHL, "%s/%s", exp, ((char **)ga.ga_data)[i]);
+        snprintf(NameBuff + len, MAXPATHL - (size_t)len, "%s", ((char **)ga.ga_data)[i]);
         if (delete_recursive(NameBuff) != 0) {
           // Remember the failure but continue deleting any further
           // entries.
@@ -3501,8 +3506,12 @@ static bool vim_settempdir(char *tempdir)
   }
 
   vim_FullName(tempdir, buf, MAXPATHL, false);
-  add_pathsep(buf);
-  vim_tempdir = xstrdup(buf);
+  size_t buflen = strlen(buf);
+  if (!after_pathsep(buf, buf + buflen)) {
+    strcpy(buf + buflen, PATHSEPSTR);  // NOLINT(runtime/printf)
+    buflen += STRLEN_LITERAL(PATHSEPSTR);
+  }
+  vim_tempdir = xmemdupz(buf, buflen);
 #ifdef HAVE_DIRFD_AND_FLOCK
   vim_opentempdir();
 #endif
@@ -3529,8 +3538,8 @@ char *vim_tempname(void)
   // There is no need to check if the file exists, because we own the directory
   // and nobody else creates a file in it.
   char templ[TEMP_FILE_PATH_MAXLEN];
-  snprintf(templ, TEMP_FILE_PATH_MAXLEN, "%s%" PRIu64, tempdir, temp_count++);
-  return xstrdup(templ);
+  int itmplen = snprintf(templ, TEMP_FILE_PATH_MAXLEN, "%s%" PRIu64, tempdir, temp_count++);
+  return xmemdupz(templ, (size_t)itmplen);
 }
 
 /// Tries matching a filename with a "pattern" ("prog" is NULL), or use the
@@ -3802,39 +3811,49 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
 
 #if defined(EINTR)
 
+// Type of buffer size argument of read() and write() is platform-dependent.
+# ifdef MSWIN
+#  define BUFSIZE(x) (unsigned)(x)
+# else
+#  define BUFSIZE(x) (x)
+# endif
+
 /// Version of read() that retries when interrupted by EINTR (possibly
 /// by a SIGWINCH).
-int read_eintr(int fd, void *buf, size_t bufsize)
+ssize_t read_eintr(int fd, void *buf, size_t bufsize)
 {
   ssize_t ret;
 
   while (true) {
-    ret = read(fd, buf, (unsigned)bufsize);
+    ret = read(fd, buf, BUFSIZE(bufsize));
     if (ret >= 0 || errno != EINTR) {
       break;
     }
   }
-  return (int)ret;
+  return ret;
 }
 
 /// Version of write() that retries when interrupted by EINTR (possibly
 /// by a SIGWINCH).
-int write_eintr(int fd, void *buf, size_t bufsize)
+ssize_t write_eintr(int fd, void *buf, size_t bufsize)
 {
-  int ret = 0;
+  ssize_t ret = 0;
 
   // Repeat the write() so long it didn't fail, other than being interrupted
   // by a signal.
-  while (ret < (int)bufsize) {
-    ssize_t wlen = write(fd, (char *)buf + ret, (unsigned)(bufsize - (size_t)ret));
+  while ((size_t)ret < bufsize) {
+    ssize_t wlen = write(fd, (char *)buf + ret, BUFSIZE(bufsize - (size_t)ret));
     if (wlen < 0) {
       if (errno != EINTR) {
         break;
       }
     } else {
-      ret += (int)wlen;
+      ret += wlen;
     }
   }
   return ret;
 }
+
+# undef BUFSIZE
+
 #endif

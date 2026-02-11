@@ -11,47 +11,60 @@ func Test_maparg()
   new
   set cpo-=<
   set encoding=utf8
-  " Test maparg() with a string result
   let sid = s:SID()
+
   let lnum = expand('<sflnum>')
   map foo<C-V> is<F4>foo
   vnoremap <script> <buffer> <expr> <silent> bar isbar
-  call assert_equal("is<F4>foo", maparg('foo<C-V>'))
-  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo<C-V>',
-        \ 'lhsraw': "foo\x80\xfc\x04V", 'lhsrawalt': "foo\x16",
-        \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
-        \ 'lnum': lnum + 1,
-	\ 'rhs': 'is<F4>foo', 'buffer': 0, 'abbr': 0, 'mode_bits': 0x47},
-	\ maparg('foo<C-V>', '', 0, 1))
-  call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar',
-        \ 'lhsraw': 'bar', 'mode': 'v',
-        \ 'nowait': 0, 'expr': 1, 'sid': sid, 'scriptversion': 1,
-        \ 'lnum': lnum + 2,
-	\ 'rhs': 'isbar', 'buffer': 1, 'abbr': 0, 'mode_bits': 0x42},
+  call assert_equal("is<F4>foo", maparg('foo<C-V>')) " maparg() string result
+  call assert_equal({'mode': ' ', 'mode_bits': 0x47, 'abbr': 0, 'buffer': 0,
+        \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 0, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
+        \ 'lhs': 'foo<C-V>', 'lhsraw': "foo\x80\xfc\x04V", 'rhs': 'is<F4>foo',
+        \ 'lhsrawalt': "foo\x16",
+        \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
+        \ maparg('foo<C-V>', '', 0, 1))
+  call assert_equal({'mode': 'v', 'mode_bits': 0x42, 'abbr': 0, 'buffer': 1,
+        \ 'noremap': 1, 'script': 1, 'expr': 1, 'nowait': 0, 'silent': 1,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
+        \ 'lhs': 'bar', 'lhsraw': 'bar', 'rhs': 'isbar',
+        \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 2},
         \ 'bar'->maparg('', 0, 1))
+  unmap foo<C-V>
+  vunmap <buffer> bar
+
   let lnum = expand('<sflnum>')
   map <buffer> <nowait> foo bar
-  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo',
-        \ 'lhsraw': 'foo', 'mode': ' ',
-        \ 'nowait': 1, 'expr': 0, 'sid': sid, 'scriptversion': 1,
-        \ 'lnum': lnum + 1, 'rhs': 'bar',
-	\ 'buffer': 1, 'abbr': 0, 'mode_bits': 0x47},
+  call assert_equal({'mode': ' ', 'mode_bits': 0x47, 'abbr': 0, 'buffer': 1,
+        \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 1, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
+        \ 'lhs': 'foo', 'lhsraw': 'foo', 'rhs': 'bar',
+        \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('foo', '', 0, 1))
+  unmap <buffer> foo
+
   let lnum = expand('<sflnum>')
   tmap baz foo
-  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'baz',
-        \ 'lhsraw': 'baz', 'mode': 't',
-        \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
-        \ 'lnum': lnum + 1, 'rhs': 'foo',
-        \ 'buffer': 0, 'abbr': 0, 'mode_bits': 0x80},
+  call assert_equal({'mode': 't', 'mode_bits': 0x80, 'abbr': 0, 'buffer': 0,
+        \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 0, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
+        \ 'lhs': 'baz', 'lhsraw': 'baz', 'rhs': 'foo',
+        \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('baz', 't', 0, 1))
+  tunmap baz
+
   let lnum = expand('<sflnum>')
   iab A B
-  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'A',
-        \ 'lhsraw': 'A', 'mode': 'i',
-        \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
-        \ 'lnum': lnum + 1, 'rhs': 'B',
-	\ 'buffer': 0, 'abbr': 1, 'mode_bits': 0x0010},
+  call assert_equal({'mode': 'i', 'mode_bits': 0x10, 'abbr': 1, 'buffer': 0,
+        \ 'noremap': 0, 'script': 0, 'expr': 0, 'nowait': 0, 'silent': 0,
+        "\ Nvim-specific field "replace_keycodes"
+        \ 'replace_keycodes': 0,
+        \ 'lhs': 'A', 'lhsraw': 'A', 'rhs': 'B',
+        \ 'sid': sid, 'scriptversion': 1, 'lnum': lnum + 1},
         \ maparg('A', 'i', 1, 1))
   iuna A
 
@@ -115,6 +128,19 @@ func Test_maparg()
   abclear
   unlet d
 endfunc
+
+" def Test_vim9_maparg()
+"   nmap { w
+"   var one: string = maparg('{')
+"   assert_equal('w', one)
+"   var two: string = maparg('{', 'n')
+"   assert_equal('w', two)
+"   var three: string = maparg('{', 'n', 0)
+"   assert_equal('w', three)
+"   var four: dict<any> = maparg('{', 'n', 0, 1)
+"   assert_equal(['{', 'w', 'n'], [four.lhs, four.rhs, four.mode])
+"   nunmap {
+" enddef
 
 func Test_mapcheck()
   call assert_equal('', mapcheck('a'))

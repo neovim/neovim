@@ -17,6 +17,7 @@
 " 2025 Mar 11 by Vim Project: handle filenames with leading '-' correctly
 " 2025 Jul 12 by Vim Project: drop ../ on write to prevent path traversal attacks
 " 2025 Sep 22 by Vim Project: support PowerShell Core
+" 2025 Dec 20 by Vim Project: use :lcd instead of :cd
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -371,7 +372,7 @@ fun! zip#Write(fname)
   call mkdir(tmpdir,"p")
 
   " attempt to change to the indicated directory
-  if s:ChgDir(tmpdir,s:ERROR,"(zip#Write) cannot cd to temporary directory")
+  if s:ChgDir(tmpdir,s:ERROR,"(zip#Write) cannot lcd to temporary directory")
     return
   endif
 
@@ -380,7 +381,7 @@ fun! zip#Write(fname)
     call delete("_ZIPVIM_", "rf")
   endif
   call mkdir("_ZIPVIM_")
-  cd _ZIPVIM_
+  lcd _ZIPVIM_
 
   if has("unix")
     let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
@@ -455,7 +456,7 @@ fun! zip#Write(fname)
   endif
 
   " cleanup and restore current directory
-  cd ..
+  lcd ..
   call delete("_ZIPVIM_", "rf")
   call s:ChgDir(curdir,s:WARNING,"(zip#Write) unable to return to ".curdir."!")
   call delete(tmpdir, "rf")
@@ -536,7 +537,7 @@ endfun
 " s:ChgDir: {{{2
 fun! s:ChgDir(newdir,errlvl,errmsg)
   try
-   exe "cd ".fnameescape(a:newdir)
+   exe "lcd ".fnameescape(a:newdir)
   catch /^Vim\%((\a\+)\)\=:E344/
    redraw!
    if a:errlvl == s:NOTE

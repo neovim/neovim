@@ -1,10 +1,9 @@
 " Vim syntax file
 " Language: sway config file
-" Original Author: Josef Litos (JosefLitos/i3config.vim)
+" Original Author: Josef Litos (litoj/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 1.2.4
-" Last Change: 2024 Oct 17
-" 2025 Sep 23 by Vim Project update swayconfig syntax #18293
+" Version: 1.2.7
+" Last Change: 2025-12-02
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -22,6 +21,9 @@ syn cluster i3ConfigCommand contains=i3ConfigCommand,i3ConfigAction,i3ConfigActi
 
 runtime! syntax/i3config.vim
 
+" In sway, popup_during_fullscreen does not have options like all option.
+syn cluster i3ConfigPopupFullscreenOpts remove=i3ConfigPopupFullscreenOptsExtra
+
 " Sway extensions to i3
 syn keyword i3ConfigActionKeyword opacity urgent shortcuts_inhibitor splitv splith splitt contained contained skipwhite nextgroup=i3ConfigOption
 syn keyword i3ConfigOption set plus minus allow deny csd v h t contained contained skipwhite nextgroup=i3ConfigOption,@i3ConfigValue
@@ -37,6 +39,7 @@ syn region i3ConfigBindCombo matchgroup=i3ConfigParen start=/{$/ end=/^\s*}$/ co
 " hack for blocks with start outside parsing range
 syn region swayConfigBlockOrphan start=/^\s\+\(--[a-z-]\+ \)*\([$A-Z][$0-9A-Za-z_+]\+\|[a-z]\) [a-z[]/ skip=/\\$\|$\n^\s*}$/ end=/$/ contains=i3ConfigBindArgument,i3ConfigBindCombo,i3ConfigParen keepend extend
 
+" Note: braces highlighted by @i3ConfigSh already
 syn region i3ConfigExec start=/ {$/ end=/^\s*}$/ contained contains=i3ConfigExecAction,@i3ConfigSh,i3ConfigComment fold keepend extend
 
 syn keyword swayConfigFloatingModifierOpts normal inverse none contained
@@ -44,6 +47,10 @@ syn match i3ConfigKeyword /floating_modifier \(none\|[$A-Z][0-9A-Za-z]\+ \(norma
 
 syn match swayConfigI3Param /--i3/ contains=i3ConfigShParam skipwhite nextgroup=i3ConfigEdgeOpts
 syn keyword i3ConfigKeyword hide_edge_borders contained skipwhite nextgroup=swayConfigI3Param,i3ConfigEdgeOpts
+
+" accept bar ids in the form: bar <id> { ... }
+syn match swayConfigBarIdent /[^{ ,;]\+/ contained contains=@i3ConfigStrVar skipwhite nextgroup=i3ConfigBarBlock
+syn keyword i3ConfigKeyword bar contained skipwhite nextgroup=swayConfigBarIdent,i3ConfigBarBlock
 
 syn keyword i3ConfigBarOpts swaybar_command contained skipwhite nextgroup=@i3ConfigSh
 syn region i3ConfigBarOpts matchgroup=i3ConfigBarOpts start=/gaps/ end=/$/ contained contains=@i3ConfigNumVar
@@ -62,8 +69,7 @@ syn keyword swayConfigInhibitOpts focus fullscreen open none visible contained
 syn keyword i3ConfigActionKeyword inhibit_idle contained skipwhite nextgroup=swayConfigInhibitOpts
 
 " Primary selection
-" Allow tearing
-syn keyword i3ConfigKeyword primary_selection allow_tearing contained skipwhite nextgroup=i3ConfigBoolean
+syn keyword i3ConfigKeyword primary_selection contained skipwhite nextgroup=i3ConfigBoolean
 
 " Swaybg command
 " Swaynag command
@@ -109,43 +115,46 @@ syn match swayConfigInputAngle /\(3[0-5][0-9]\|[1-2]\?[0-9]\{1,2\}\)\(\.[0-9]\+\
 syn keyword swayConfigInputOpts rotation_angle contained skipwhite nextgroup=swayConfigInputAngle
 
 syn region swayConfigInput start=/\s/ skip=/\\$/ end=/\ze[,;]\|$/ contained contains=swayConfigInputOpts,@i3ConfigValue keepend
-syn region swayConfigInput matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigInputOpts,@i3ConfigValue,i3ConfigComment keepend extend
-syn keyword swayConfigInputType touchpad pointer keyboard touch tablet_tool tablet_pad switch contained nextgroup=swayConfigInput
-syn match swayConfigInputIdent /type:!\?/ contained contains=swayConfigDeviceOper nextgroup=swayConfigInputType
-syn match swayConfigInputIdent /[^t '"]\S*/ contained contains=i3ConfigOutputIdent nextgroup=swayConfigInput
-syn region swayConfigInputIdent start=/['"]/ end=/\ze/ contained contains=i3ConfigOutputIdent nextgroup=swayConfigInput
-syn keyword i3ConfigKeyword input contained skipwhite nextgroup=swayConfigInputIdent
+syn region swayConfigInput matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigInputOpts,@i3ConfigValue,i3ConfigComment keepend
+syn keyword swayConfigInputType touchpad pointer keyboard touch tablet_tool tablet_pad switch contained skipwhite nextgroup=swayConfigInput
+syn match swayConfigInputTypeIdent /type:!\?/ contained contains=swayConfigDeviceOper skipwhite nextgroup=swayConfigInputType
+syn match swayConfigInputIdent /[^t ,;][^ ,;]*/ contained contains=@i3ConfigStrVar skipwhite nextgroup=swayConfigInput extend
+syn keyword i3ConfigKeyword input contained skipwhite nextgroup=swayConfigInputTypeIdent,swayConfigInputIdent
 
 " Seat
 syn keyword swayConfigSeatOpts cursor fallback hide_cursor keyboard_grouping shortcuts_inhibitor pointer_constraint xcursor_theme contained skipwhite nextgroup=swayConfigSeatOptVals,@i3ConfigValue
-syn match swayConfigInputTypeSeq / \w\+/ contained contains=swayConfigInputType nextgroup=swayConfigInputTypeSeq,swayConfigSeatOpts
+syn match swayConfigInputTypeSeq / \w\+/ contained contains=swayConfigInputType skipwhite nextgroup=swayConfigInputTypeSeq,swayConfigSeatOpts
 syn keyword swayConfigSeatOpts idle_inhibit idle_wake contained nextgroup=swayConfigInputTypeSeq
 syn keyword swayConfigSeatOpts attach contained skipwhite nextgroup=swayConfigSeatIdent
 syn match swayConfigSeatOptVals /when-typing/ contained skipwhite nextgroup=swayConfigSeatOptVals
 syn keyword swayConfigSeatOptVals move set press release none smart activate deactivate toggle escape enable disable contained skipwhite nextgroup=swayConfigSeatOpts
 syn region swayConfigSeat start=/\s/ skip=/\\$/ end=/\ze[,;]\|$/ contained contains=swayConfigSeatOpts,@i3ConfigValue keepend
-syn region swayConfigSeat matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigSeatOpts,@i3ConfigValue,i3ConfigComment keepend extend
-syn match swayConfigSeatIdent /[^ ]\+/ contained contains=i3ConfigOutputIdent skipwhite nextgroup=swayConfigSeat
+syn region swayConfigSeat matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigSeatOpts,@i3ConfigValue,i3ConfigComment keepend
+syn match swayConfigSeatIdent /[^ ,;]\+/ contained contains=@i3ConfigStrVar nextgroup=swayConfigSeat extend
 syn keyword i3ConfigKeyword seat contained skipwhite nextgroup=swayConfigSeatIdent
 
 " Output monitors
-syn keyword swayConfigOutputOpts mode resolution res modeline position pos scale scale_filter subpixel transform disable enable power dpms max_render_time adaptive_sync render_bit_depth color_profile allow_tearing contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,swayConfigOutputMode
-syn keyword swayConfigOutputOptVals linear nearest smart rgb bgr vrgb vbgr none clockwise anticlockwise toggle srgb icc contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,i3ConfigShOper
+syn keyword swayConfigOutputOpts mode resolution res modeline position pos scale scale_filter subpixel transform disable enable toggle power dpms max_render_time adaptive_sync render_bit_depth color_profile allow_tearing contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue,swayConfigOutputMode
+syn keyword swayConfigOutputOptVals linear nearest smart rgb bgr vrgb vbgr none toggle srgb contained skipwhite nextgroup=swayConfigOutputOptVals,@i3ConfigValue
 syn keyword swayConfigOutputBgVals solid_color fill stretch fit center tile contained skipwhite nextgroup=@i3ConfigColVar
-syn match swayConfigOutputBg /[#$]\S\+ solid_color/ contained contains=@i3ConfigColVar,swayConfigOutputBgVals
-syn match swayConfigOutputBg /[^b# '"]\S*/ contained contains=i3ConfigShOper skipwhite nextgroup=swayConfigOutputBgVals
-syn region swayConfigOutputBg start=/['"]/ end=/\ze/ contained contains=@i3ConfigIdent skipwhite nextgroup=swayConfigOutputBgVals
+syn match swayConfigOutputBg /[#$]\S\+ solid_color/ contained contains=@i3ConfigColVar,swayConfigOutputBgVals skipwhite nextgroup=swayConfigOutputOpts
+syn match swayConfigOutputBg /[^b# ,;][^ ,;]*/ contained contains=@i3ConfigStrVar skipwhite nextgroup=swayConfigOutputBgVals extend
 syn keyword swayConfigOutputOpts bg background contained skipwhite nextgroup=swayConfigOutputBg
 syn match swayConfigOutputFPS /@[0-9.]\+Hz/ contained skipwhite nextgroup=swayConfigOutputOpts
 syn match swayConfigOutputMode /\(--custom \)\?[0-9]\+x[0-9]\+/ contained contains=i3ConfigShParam skipwhite nextgroup=swayConfigOutputFPS,swayConfigOutputOpts
-syn match swayConfigOutputOptVals /\(flipped-\)\?\(90\|180\|270\)\|flipped\|normal/ contained contains=i3ConfigNumber skipwhite nextgroup=swayConfigOutputOptsVals
+" clockwise and anticlockwise are relative -> only as bindings / user actions - not in config setup
+syn match swayConfigOutputOptVals /\(\(flipped-\)\?\(90\|180\|270\)\|flipped\|normal\)\( \(anti\)\?clockwise\)\?/ contained contains=i3ConfigNumber skipwhite nextgroup=swayConfigOutputOpts
+syn match swayConfigOutputICCPath /\S\+/ contained contains=@i3ConfigStrVar skipwhite nextgroup=swayConfigOutputOpts extend
+syn keyword swayConfigOutputOptVals icc contained skipwhite nextgroup=swayConfigOutputICCPath
 syn region swayConfigOutput start=/\s/ skip=/\\$/ end=/\ze[,;]\|$/ contained contains=swayConfigOutputOpts,@i3ConfigValue keepend
-syn region swayConfigOutput matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigOutputOpts,@i3ConfigValue,i3ConfigComment keepend extend
-syn match swayConfigOutputIdent /[^ ]\+/ contained contains=i3ConfigOutputIdent skipwhite nextgroup=swayConfigOutput
+syn region swayConfigOutput matchgroup=i3ConfigParen start=/ {$/ end=/^\s*}$/ contained contains=swayConfigOutputOpts,@i3ConfigValue,i3ConfigComment keepend
+syn match swayConfigOutputIdent /[^ ,;]\+/ contained contains=@i3ConfigIdent skipwhite nextgroup=swayConfigOutput extend
 syn keyword i3ConfigKeyword output contained skipwhite nextgroup=swayConfigOutputIdent
+syn keyword i3ConfigActionKeyword output contained skipwhite nextgroup=swayConfigOutputIdent
 
 " Define the highlighting.
 hi def link swayConfigFloatingModifierOpts   i3ConfigOption
+hi def link swayConfigBarIdent               i3ConfigIdent
 hi def link swayConfigXOpt                   i3ConfigOption
 hi def link swayConfigInhibitOpts            i3ConfigOption
 hi def link swayConfigBindswitchArgument     i3ConfigBindArgument
@@ -156,7 +165,8 @@ hi def link swayConfigBindgestureType        i3ConfigMoveType
 hi def link swayConfigBindgestureDir         i3ConfigMoveDir
 hi def link swayConfigDeviceOper             i3ConfigOperator
 hi def link swayConfigInputType              i3ConfigMoveType
-hi def link swayConfigInputIdent             i3ConfigMoveDir
+hi def link swayConfigInputTypeIdent         i3ConfigMoveDir
+hi def link swayConfigInputIdent             i3ConfigIdent
 hi def link swayConfigInputOptVals           i3ConfigShParam
 hi def link swayConfigInputOpts              i3ConfigOption
 hi def link swayConfigInputAngle             i3ConfigNumber
@@ -165,10 +175,14 @@ hi def link swayConfigXkbOptsPair            i3ConfigShParam
 hi def link swayConfigXkbLayout              i3ConfigParamLine
 hi def link swayConfigSeatOptVals            swayConfigInputOptVals
 hi def link swayConfigSeatOpts               swayConfigInputOpts
+hi def link swayConfigSeatIdent              i3ConfigIdent
 hi def link swayConfigOutputOptVals          swayConfigInputOptVals
 hi def link swayConfigOutputBgVals           swayConfigInputOptVals
+hi def link swayConfigOutputBg               i3ConfigString
+hi def link swayConfigOutputICCPath          i3ConfigString
 hi def link swayConfigOutputOpts             swayConfigInputOpts
 hi def link swayConfigOutputFPS              Constant
 hi def link swayConfigOutputMode             i3ConfigNumber
+hi def link swayConfigOutputIdent            i3ConfigIdent
 
 let b:current_syntax = "swayconfig"

@@ -239,6 +239,7 @@ void screenclear(void)
   mode_displayed = false;
 
   redraw_all_later(UPD_NOT_VALID);
+  cmdline_was_last_drawn = false;
   redraw_cmdline = true;
   redraw_tabline = true;
   redraw_popupmenu = true;
@@ -362,7 +363,7 @@ void screen_resize(int width, int height)
     maketitle();
 
     changed_line_abv_curs();
-    invalidate_botline(curwin);
+    invalidate_botline_win(curwin);
 
     // We only redraw when it's needed:
     // - While at the more prompt or executing an external command, don't
@@ -683,6 +684,8 @@ int update_screen(void)
   if (pum_drawn() && must_redraw_pum) {
     win_check_ns_hl(curwin);
     pum_redraw();
+  } else if (State & MODE_CMDLINE) {
+    pum_check_clear();
   }
 
   win_check_ns_hl(NULL);
@@ -1364,6 +1367,12 @@ static void draw_sep_connectors_win(win_T *wp)
 /// bot: from bot_start to last row (when scrolled up)
 static void win_update(win_T *wp)
 {
+  // Return early when the windows would overflow the shrunk terminal window
+  // avoiding invalid drawing an assert failure
+  if (wp->w_grid.target == &default_grid && wp->w_wincol >= Columns) {
+    return;
+  }
+
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
   int mid_start = 999;          // first row of the mid area that needs
@@ -1373,6 +1382,7 @@ static void win_update(win_T *wp)
   int bot_start = 999;          // first row of the bot area that needs
                                 // updating.  999 when no bot area updating
   bool scrolled_down = false;   // true when scrolled down when w_topline got smaller a bit
+  bool scrolled_for_mod = false;  // true after scrolling for changed lines
   bool top_to_mod = false;      // redraw above mod_top
 
   int bot_scroll_start = 999;   // first line that needs to be redrawn due to
@@ -2035,10 +2045,13 @@ static void win_update(win_T *wp)
       // When at start of changed lines: May scroll following lines
       // up or down to minimize redrawing.
       // Don't do this when the change continues until the end.
-      // Don't scroll when redrawing the top, scrolled already above.
-      if (lnum == mod_top
-          && mod_bot != MAXLNUM
-          && row >= top_end) {
+      // Don't scroll for changed lines in the top area if that's already
+      // done above, but do scroll for changed lines below the top area.
+      if (!scrolled_for_mod && mod_bot != MAXLNUM
+          && lnum >= mod_top && lnum < MAX(mod_bot, mod_top + 1)
+          && (!scrolled_down || row >= top_end)) {
+        scrolled_for_mod = true;
+
         int old_cline_height = 0;
         int old_rows = 0;
         linenr_T l;
@@ -2807,7 +2820,7 @@ bool conceal_cursor_line(const win_T *wp)
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+  return wp->w_p_cul || (wp == curwin && wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
 /// Update w_cursorline, taking care to set it to the to the start of a closed fold.

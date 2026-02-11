@@ -96,7 +96,6 @@ describe(':terminal cursor', function()
 
   describe('when invisible', function()
     it('is not highlighted', function()
-      skip(is_os('win'), '#31587')
       hide_cursor()
       screen:expect([[
         tty ready                                         |
@@ -123,7 +122,6 @@ describe(':terminal cursor', function()
     end)
 
     it('becomes visible when exiting Terminal mode', function()
-      skip(is_os('win'), '#31587')
       hide_cursor()
       screen:expect([[
         tty ready                                         |
@@ -145,13 +143,19 @@ describe(':terminal cursor', function()
 
       -- Cursor is hidden; now request to show it while in a TermLeave autocmd.
       -- Process events (via :sleep) to handle the escape sequence now.
-      command([[autocmd TermLeave * ++once call chansend(&channel, "\e[?25h") | sleep 1m]])
+      n.exec([[
+        autocmd TermLeave * ++once call chansend(&channel, "\e[?25h") | sleep 1m
+                                 \ | let g:did_termleave = 1]])
       feed([[<C-\><C-N>]]) -- Exit terminal mode; cursor should not remain hidden
       screen:expect([[
         tty ready                                         |
         ^                                                  |
                                                           |*5
       ]])
+      -- Wait for the TermLeave autocommand to finish. Sometimes :sleep can be slow.
+      retry(nil, 1000, function()
+        eq(1, api.nvim_get_var('did_termleave'))
+      end)
 
       command('bwipeout! | let chan = nvim_open_term(0, {})')
       feed('i')
@@ -182,7 +186,6 @@ describe(':terminal cursor', function()
     end)
 
     it('becomes visible on TermLeave if hidden immediately by events #32456', function()
-      skip(is_os('win'), '#31587')
       -- Reproducing the issue is quite fragile; it's easiest done in a lone test case like this
       -- with no prior commands.
       feed([[<C-\><C-N>]])
@@ -213,8 +216,6 @@ describe(':terminal cursor', function()
   end)
 
   it('can be modified by application #3681 #31685', function()
-    skip(is_os('win'), '#31587')
-
     local states = {
       [1] = { blink = true, shape = 'block' },
       [2] = { blink = false, shape = 'block' },
@@ -269,8 +270,6 @@ describe(':terminal cursor', function()
   end)
 
   it('can be modified per terminal', function()
-    skip(is_os('win'), '#31587')
-
     -- Set cursor to vertical bar with blink
     tt.feed_csi('5 q')
     screen:expect({
@@ -541,7 +540,10 @@ describe('buffer cursor position is correct in terminal without number column', 
     ]])
   end
 
-  before_each(clear)
+  before_each(function()
+    clear()
+    command('autocmd! nvim.terminal')
+  end)
 
   describe('in a line with no multibyte chars or trailing spaces,', function()
     before_each(function()
@@ -820,10 +822,6 @@ describe('buffer cursor position is correct in terminal without number column', 
 end)
 
 describe('buffer cursor position is correct in terminal with number column', function()
-  if t.is_ci('cirrus') then
-    return
-  end
-
   local screen
 
   local function setup_ex_register(str)
@@ -858,7 +856,10 @@ describe('buffer cursor position is correct in terminal with number column', fun
 
   before_each(function()
     clear()
-    command('au TermOpen * set number')
+    command('autocmd! nvim.terminal')
+    -- 'number' should be set before the terminal process starts, otherwise the resize
+    -- from setting 'number' may cause a redraw that removes the "Entering Ex mode".
+    command('set number')
   end)
 
   describe('in a line with no multibyte chars or trailing spaces,', function()

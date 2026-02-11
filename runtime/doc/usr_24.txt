@@ -1,6 +1,8 @@
 *usr_24.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			     Inserting quickly
 
@@ -565,8 +567,8 @@ that combination.  Thus CTRL-K dP also works.  Since there is no digraph for
 
 	Note:
 	The digraphs depend on the character set that Vim assumes you are
-	using.  Always use ":digraphs" to find out which digraphs are currently
-	available.
+	using.  Always use ":digraphs" to find out which digraphs are
+	currently available.
 
 You can define your own digraphs by specifying the target character with a
 decimal number.  Example: >

@@ -9,6 +9,15 @@
 ---     vim.print('file exists')
 ---   end
 --- <
+---
+--- *vim.fs.read()*
+--- You can use |readblob()| to get a file's contents without explicitly opening/closing it.
+---
+--- Example:
+---
+--- >lua
+---   vim.print(vim.fn.readblob('.git/config'))
+--- <
 
 local uv = vim.uv
 
@@ -437,11 +446,12 @@ function M.root(source, marker)
   for _, mark in ipairs(markers) do
     local paths = M.find(mark, {
       upward = true,
-      path = vim.fn.fnamemodify(path, ':p:h'),
+      path = M.abspath(path),
     })
 
     if #paths ~= 0 then
-      return vim.fs.dirname(paths[1])
+      local dir = M.dirname(paths[1])
+      return dir and M.abspath(dir) or nil
     end
   end
 
@@ -725,12 +735,13 @@ end
 
 --- Remove files or directories
 --- @since 13
---- @param path string Path to remove
+--- @param path string Path to remove. Removes symlinks without touching the origin.
+---To remove the origin, resolve explicitly with |uv.fs_realpath()|.
 --- @param opts? vim.fs.rm.Opts
 function M.rm(path, opts)
   opts = opts or {}
 
-  local stat, err, errnm = uv.fs_stat(path)
+  local stat, err, errnm = uv.fs_lstat(path)
   if stat then
     rm(path, stat.type, opts.recursive, opts.force)
   elseif not opts.force or errnm ~= 'ENOENT' then
@@ -746,6 +757,8 @@ end
 --- @param path string Path
 --- @return string Absolute path
 function M.abspath(path)
+  -- TODO(justinmk): mark f_fnamemodify as API_FAST and use it, ":p:h" should be safe...
+
   vim.validate('path', path, 'string')
 
   -- Expand ~ to user's home directory
@@ -772,7 +785,10 @@ function M.abspath(path)
   -- Convert cwd path separator to `/`
   cwd = cwd:gsub(os_sep, '/')
 
-  -- Prefix is not needed for expanding relative paths, as `cwd` already contains it.
+  if path == '.' then
+    return cwd
+  end
+  -- Prefix is not needed for expanding relative paths, `cwd` already contains it.
   return M.joinpath(cwd, path)
 end
 
@@ -794,8 +810,8 @@ function M.relpath(base, target, opts)
   vim.validate('target', target, 'string')
   vim.validate('opts', opts, 'table', true)
 
-  base = vim.fs.normalize(vim.fs.abspath(base))
-  target = vim.fs.normalize(vim.fs.abspath(target))
+  base = M.normalize(M.abspath(base))
+  target = M.normalize(M.abspath(target))
   if base == target then
     return '.'
   end

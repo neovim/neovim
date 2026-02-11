@@ -214,8 +214,7 @@ static void showmap(mapblock_T *mp, bool local)
     return;
   }
 
-  // When ext_messages is active, msg_didout is never set.
-  if (msg_didout || msg_silent != 0 || ui_has(kUIMessages)) {
+  if (msg_col > 0 || msg_silent != 0) {
     msg_putchar('\n');
     if (got_int) {          // 'q' typed at MORE prompt
       return;
@@ -2128,9 +2127,7 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   PUT_C(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
   PUT_C(dict, "buffer", INTEGER_OBJ(buffer_value));
   PUT_C(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
-  if (mp->m_replace_keycodes) {
-    PUT_C(dict, "replace_keycodes", INTEGER_OBJ(1));
-  }
+  PUT_C(dict, "replace_keycodes", INTEGER_OBJ(mp->m_replace_keycodes ? 1 : 0));
   PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
   PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
@@ -2577,21 +2574,23 @@ const char *did_set_langmap(optset_T *args)
         p++;
       }
       int from = utf_ptr2char(p);
+      const char *const from_ptr = p;
       int to = NUL;
+      const char *to_ptr = "";
       if (p2 == NULL) {
         MB_PTR_ADV(p);
         if (p[0] != ',') {
           if (p[0] == '\\') {
             p++;
           }
-          to = utf_ptr2char(p);
+          to = utf_ptr2char(to_ptr = p);
         }
       } else {
         if (p2[0] != ',') {
           if (p2[0] == '\\') {
             p2++;
           }
-          to = utf_ptr2char(p2);
+          to = utf_ptr2char(to_ptr = p2);
         }
       }
       if (to == NUL) {
@@ -2604,7 +2603,10 @@ const char *did_set_langmap(optset_T *args)
       if (from >= 256) {
         langmap_set_entry(from, to);
       } else {
-        assert(to <= UCHAR_MAX);
+        if (to > UCHAR_MAX) {
+          swmsg(true, "'langmap': Mapping from %.*s to %.*s will not work properly",
+                utf_ptr2len(from_ptr), from_ptr, utf_ptr2len(to_ptr), to_ptr);
+        }
         langmap_mapchar[from & 255] = (uint8_t)to;
       }
 

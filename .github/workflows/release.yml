@@ -55,7 +55,7 @@ jobs:
     outputs:
       version: ${{ steps.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -67,14 +67,14 @@ jobs:
           ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: nvim-appimage-${{ matrix.arch }}
           path: |
             build/bin/nvim-linux-${{ matrix.arch }}.appimage
             build/bin/nvim-linux-${{ matrix.arch }}.appimage.zsync
           retention-days: 1
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: nvim-linux-${{ matrix.arch }}
           path: |
@@ -101,7 +101,7 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -124,7 +124,7 @@ jobs:
       - name: Package
         run: cpack --config build/CPackConfig.cmake
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: nvim-macos-${{ matrix.arch }}
           path: build/nvim-macos-${{ matrix.arch }}.tar.gz
@@ -143,7 +143,7 @@ jobs:
             archive_name: nvim-win-arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -164,7 +164,7 @@ jobs:
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build build --target package
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: nvim-win-${{ matrix.arch }}
           path: |
@@ -183,9 +183,9 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y gettext-base

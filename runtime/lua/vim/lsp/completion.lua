@@ -260,18 +260,20 @@ end
 ---@param value string
 ---@param prefix string
 ---@return boolean
+---@return integer?
 local function match_item_by_value(value, prefix)
   if prefix == '' then
-    return true
+    return true, nil
   end
   if vim.o.completeopt:find('fuzzy') ~= nil then
-    return next(vim.fn.matchfuzzy({ value }, prefix)) ~= nil
+    local score = vim.fn.matchfuzzypos({ value }, prefix)[3] ---@type table
+    return #score > 0, score[1]
   end
 
   if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
-    return vim.startswith(value:lower(), prefix:lower())
+    return vim.startswith(value:lower(), prefix:lower()), nil
   end
-  return vim.startswith(value, prefix)
+  return vim.startswith(value, prefix), nil
 end
 
 --- Turns the result of a `textDocument/completion` request into vim-compatible
@@ -280,9 +282,21 @@ end
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
 --- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
+--- @param server_start_boundary integer? server start boundary
+--- @param line string? current line content
+--- @param lnum integer? 0-indexed line number
+--- @param encoding string? encoding
 --- @return table[]
 --- @see complete-items
-function M._lsp_to_complete_items(result, prefix, client_id)
+function M._lsp_to_complete_items(
+  result,
+  prefix,
+  client_id,
+  server_start_boundary,
+  line,
+  lnum,
+  encoding
+)
   local items = get_items(result)
   if vim.tbl_isempty(items) then
     return {}
@@ -301,7 +315,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
         return match_item_by_value(item.filterText, prefix)
       end
 
-      if item.textEdit then
+      if item.textEdit and not item.textEdit.newText then
         -- server took care of filtering
         return true
       end
@@ -313,9 +327,30 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   local candidates = {}
   local bufnr = api.nvim_get_current_buf()
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
+  local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
   for _, item in ipairs(items) do
-    if matches(item) then
+    local match, score = matches(item)
+    if match then
       local word = get_completion_word(item, prefix, match_item_by_value)
+
+      if server_start_boundary and line and lnum and encoding and item.textEdit then
+        --- @type integer?
+        local item_start_char
+        if item.textEdit.range and item.textEdit.range.start.line == lnum then
+          item_start_char = item.textEdit.range.start.character
+        elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
+          item_start_char = item.textEdit.insert.start.character
+        end
+
+        if item_start_char then
+          local item_start_byte = vim.str_byteindex(line, encoding, item_start_char, false)
+          if item_start_byte > server_start_boundary then
+            local missing_prefix = line:sub(server_start_boundary + 1, item_start_byte)
+            word = missing_prefix .. word
+          end
+        end
+      end
+
       local hl_group = ''
       if
         item.deprecated
@@ -341,6 +376,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
             },
           },
         },
+        _fuzzy_score = score,
       }
       if user_convert then
         completion_item = vim.tbl_extend('keep', user_convert(item), completion_item)
@@ -348,15 +384,34 @@ function M._lsp_to_complete_items(result, prefix, client_id)
       table.insert(candidates, completion_item)
     end
   end
-  ---@diagnostic disable-next-line: no-unknown
-  table.sort(candidates, function(a, b)
-    ---@type lsp.CompletionItem
-    local itema = a.user_data.nvim.lsp.completion_item
-    ---@type lsp.CompletionItem
-    local itemb = b.user_data.nvim.lsp.completion_item
-    return (itema.sortText or itema.label) < (itemb.sortText or itemb.label)
-  end)
 
+  if not user_cmp then
+    local compare_by_sortText_and_label = function(a, b)
+      ---@type lsp.CompletionItem
+      local itema = a.user_data.nvim.lsp.completion_item
+      ---@type lsp.CompletionItem
+      local itemb = b.user_data.nvim.lsp.completion_item
+      return (itema.sortText or itema.label) < (itemb.sortText or itemb.label)
+    end
+
+    local use_fuzzy_sort = vim.o.completeopt:find('fuzzy') ~= nil
+      and vim.o.completeopt:find('nosort') == nil
+      and not result.isIncomplete
+      and #prefix > 0
+
+    local compare_fn = use_fuzzy_sort
+        and function(a, b)
+          local score_a = a._fuzzy_score or 0
+          local score_b = b._fuzzy_score or 0
+          if score_a ~= score_b then
+            return score_a > score_b
+          end
+          return compare_by_sortText_and_label(a, b)
+        end
+      or compare_by_sortText_and_label
+
+    table.sort(candidates, compare_fn)
+  end
   return candidates
 end
 
@@ -368,11 +423,18 @@ end
 local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
   for _, item in pairs(items) do
-    if item.textEdit and item.textEdit.range and item.textEdit.range.start.line == lnum then
-      if min_start_char and min_start_char ~= item.textEdit.range.start.character then
-        return nil
+    if item.textEdit then
+      local start_char = nil
+      if item.textEdit.range and item.textEdit.range.start.line == lnum then
+        start_char = item.textEdit.range.start.character
+      elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
+        start_char = item.textEdit.insert.start.character
       end
-      min_start_char = item.textEdit.range.start.character
+      if start_char then
+        if not min_start_char or start_char < min_start_char then
+          min_start_char = start_char
+        end
+      end
     end
   end
   if min_start_char then
@@ -425,7 +487,9 @@ function M._convert_results(
     server_start_boundary = client_start_boundary
   end
   local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
-  local matches = M._lsp_to_complete_items(result, prefix, client_id)
+  local matches =
+    M._lsp_to_complete_items(result, prefix, client_id, server_start_boundary, line, lnum, encoding)
+
   return matches, server_start_boundary
 end
 
@@ -519,11 +583,11 @@ local function trigger(bufnr, clients, ctx)
       end
 
       local result = response.result
-      if result then
+      if result and #(result.items or result) > 0 then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local encoding = client and client.offset_encoding or 'utf-16'
-        local client_matches
-        client_matches, server_start_boundary = M._convert_results(
+        local client_matches, tmp_server_start_boundary
+        client_matches, tmp_server_start_boundary = M._convert_results(
           line,
           cursor_row - 1,
           cursor_col,
@@ -534,6 +598,7 @@ local function trigger(bufnr, clients, ctx)
           encoding
         )
 
+        server_start_boundary = tmp_server_start_boundary or server_start_boundary
         vim.list_extend(matches, client_matches)
       end
     end
@@ -551,6 +616,10 @@ local function trigger(bufnr, clients, ctx)
     end, prev_matches)
 
     matches = vim.list_extend(prev_matches, matches)
+    local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
+    if user_cmp then
+      table.sort(matches, user_cmp)
+    end
 
     local start_col = (server_start_boundary or word_boundary) + 1
     Context.cursor = { cursor_row, start_col }
@@ -712,6 +781,7 @@ end
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean  (default: false) When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
+--- @field cmp? fun(a: table, b: table): boolean Comparator for sorting merged completion items from all servers.
 
 ---@param client_id integer
 ---@param bufnr integer
@@ -719,7 +789,7 @@ end
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {}, convert = opts.convert }
+    buf_handle = { clients = {}, triggers = {}, convert = opts.convert, cmp = opts.cmp }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.

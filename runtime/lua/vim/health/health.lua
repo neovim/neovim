@@ -10,7 +10,7 @@ local function system(cmd)
   return result.code == 0, vim.trim(('%s\n%s'):format(result.stdout, result.stderr))
 end
 
-local suggest_faq = 'https://github.com/neovim/neovim/blob/master/BUILD.md#building'
+local suggest_faq = 'https://neovim.io/doc/build/#building'
 
 local function check_runtime()
   health.start('Runtime')
@@ -175,7 +175,8 @@ local function check_performance()
   -- check for slow shell invocation
   local slow_cmd_time = 1.5e9
   local start_time = vim.uv.hrtime()
-  system({ 'echo' })
+  -- Vimscript's system() is used to actually invoke a shell
+  vim.fn.system('echo')
   local elapsed_time = vim.uv.hrtime() - start_time
   if elapsed_time > slow_cmd_time then
     health.warn(
@@ -214,7 +215,7 @@ local function check_rplugin_manifest()
       local contents = vim.fn.join(vim.fn.readfile(script))
       if vim.regex([[\<\%(from\|import\)\s\+neovim\>]]):match_str(contents) then
         if vim.regex([[[\/]__init__\.py$]]):match_str(script) then
-          script = vim.fn.tr(vim.fn.fnamemodify(script, ':h'), '\\', '/')
+          script = vim.fs.normalize(vim.fs.dirname(script))
         end
         if not existing_rplugins[script] then
           local msg = vim.fn.printf('"%s" is not registered.', vim.fs.basename(path))
@@ -355,7 +356,7 @@ local function check_terminal()
     return
   end
 
-  health.start('terminal')
+  health.start('Terminal')
   local cmd = { 'infocmp', '-L' }
   local ok, out = system(cmd)
   local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
@@ -417,21 +418,19 @@ local function check_external_tools()
     health.warn('ripgrep not available')
   end
 
-  -- `vim.pack` requires `git` executable with version at least 2.36
+  local open_cmd, err = vim.ui._get_open_cmd()
+  if open_cmd then
+    health.ok(('vim.ui.open: handler found (%s)'):format(open_cmd[1]))
+  else
+    --- @cast err string
+    health.warn(err)
+  end
+
+  -- `vim.pack` prefers git 2.36 but tries to work with 2.x.
   if vim.fn.executable('git') == 1 then
     local git = vim.fn.exepath('git')
-    local out = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
-    local version = vim.version.parse(out)
-    if version < vim.version.parse('2.36') then
-      local msg = string.format(
-        'git is available (%s), but needs at least version 2.36 (not %s) to work with `vim.pack`',
-        git,
-        tostring(version)
-      )
-      health.warn(msg)
-    else
-      health.ok(('%s (%s)'):format(vim.trim(out), git))
-    end
+    local version = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
+    health.ok(('%s (%s)'):format(vim.trim(version), git))
   else
     health.warn('git not available (required by `vim.pack`)')
   end
@@ -461,7 +460,7 @@ local function check_external_tools()
       local lines = { string.format('curl %s (%s)', curl_version, curl_path) }
 
       for line in vim.gsplit(curl_out, '\n', { plain = true }) do
-        if line ~= '' and not line:match('^curl') then
+        if line ~= '' then
           table.insert(lines, line)
         end
       end
@@ -503,7 +502,180 @@ local function check_external_tools()
   end
 end
 
+local function detect_terminal()
+  local e = vim.env
+  if e.TERM_PROGRAM then
+    local v = e.TERM_PROGRAM_VERSION --- @type string?
+    return e.TERM_PROGRAM_VERSION and (e.TERM_PROGRAM .. ' ' .. v) or e.TERM_PROGRAM
+  end
+
+  local map = {
+    KITTY_WINDOW_ID = 'kitty',
+    ALACRITTY_SOCKET = 'alacritty',
+    ALACRITTY_LOG = 'alacritty',
+    WEZTERM_EXECUTABLE = 'wezterm',
+    KONSOLE_VERSION = function()
+      return 'konsole ' .. e.KONSOLE_VERSION
+    end,
+    VTE_VERSION = function()
+      return 'vte ' .. e.VTE_VERSION
+    end,
+  }
+
+  for key, val in pairs(map) do
+    local env = e[key] --- @type string?
+    if env then
+      return type(val) == 'function' and val() or val
+    end
+  end
+
+  return 'unknown'
+end
+
+---@param nvim_version string
+local function check_stable_version(nvim_version)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', '--tags', 'https://github.com/neovim/neovim' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local stable_sha = result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
+    or result.stdout:match('(%x+)%s+refs/tags/stable\n')
+  if not stable_sha then
+    return
+  end
+  local latest_version = result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}')
+  if not latest_version then
+    return
+  end
+  local current_version = nvim_version:match('v?(%d+%.%d+%.%d+)')
+  if not current_version then
+    return
+  end
+  local current = vim.version.parse(current_version)
+  local latest = vim.version.parse(latest_version)
+  if current and latest and vim.version.lt(current, latest) then
+    vim.health.warn(('Nvim %s is available (current: %s)'):format(latest_version, current_version))
+  else
+    vim.health.ok(('Up to date (%s)'):format(current_version))
+  end
+end
+
+---@param commit string
+local function check_head_hash(commit)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local upstream = result.stdout:match('^(%x+)')
+  if not upstream then
+    return
+  end
+  if not vim.startswith(upstream, commit) then
+    vim.health.warn(
+      ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
+    )
+  else
+    vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
+  end
+end
+
+local function check_sysinfo()
+  vim.health.start('System Info')
+
+  -- Use :version because `vim.version().build` returns "Homebrew" for brew installs.
+  local version_out = vim.api.nvim_exec2('version', { output = true }).output
+  local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
+  local commit --[[@type string]] = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
+
+  if vim.fn.executable('git') ~= 1 then
+    vim.health.warn('Cannot check for updates: git not found')
+  elseif vim.trim(commit) ~= '' then
+    check_head_hash(commit)
+  else
+    check_stable_version(nvim_version)
+  end
+
+  local os_info = vim.uv.os_uname()
+  local os_string = os_info.sysname .. ' ' .. os_info.release
+  local terminal = detect_terminal()
+  local term_env = vim.env.TERM or 'unknown'
+
+  vim.health.info(('Nvim version: `%s` %s'):format(nvim_version, commit))
+  vim.health.info('Operating system: ' .. os_string)
+  vim.health.info('Terminal: ' .. terminal)
+  vim.health.info('$TERM: ' .. term_env)
+
+  local body = vim.text.indent(
+    0,
+    string.format(
+      [[
+    ## Problem
+
+    ## Steps to reproduce
+
+    ```
+    nvim --clean
+    ```
+
+    ## Expected behavior
+
+    ## System info
+
+    - Nvim version (nvim -v): `%s` neovim/neovim@%s
+    - Vim (not Nvim) behaves the same?: ?
+    - Operating system/version: %s
+    - Terminal name/version: %s
+    - $TERM environment variable: `%s`
+    - Installation: ?
+
+]],
+      nvim_version,
+      commit,
+      os_string,
+      terminal,
+      term_env
+    )
+  )
+
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'checkhealth',
+    once = true,
+    callback = function(args)
+      local buf = args.buf
+      local win = vim.fn.bufwinid(buf)
+      if win == -1 then
+        return
+      end
+      local encoded_body = vim.uri_encode(body) --- @type string
+      local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
+
+      _G.nvim_health_bugreport_open = function()
+        vim.ui.open(issue_url)
+      end
+      vim.wo[win].winbar =
+        '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
+
+      vim.api.nvim_create_autocmd('BufDelete', {
+        buffer = buf,
+        once = true,
+        command = 'lua _G.nvim_health_bugreport_open = nil',
+      })
+    end,
+  })
+end
+
 function M.check()
+  check_sysinfo()
   check_config()
   check_runtime()
   check_performance()

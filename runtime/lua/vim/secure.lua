@@ -47,7 +47,7 @@ local function compute_hash(fullpath, bufnr)
     end
   else
     do
-      local f = io.open(fullpath, 'r')
+      local f = io.open(fullpath, 'rb')
       if not f then
         return nil, nil
       end

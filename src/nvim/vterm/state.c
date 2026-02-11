@@ -18,7 +18,7 @@
 // Primary Device Attributes (DA1) response.
 // We make this a global (extern) variable so that we can override it with FFI
 // in tests.
-char vterm_primary_device_attr[] = "61;22;52";
+DLLEXPORT char vterm_primary_device_attr[] = "61;22;52";
 
 // Some convenient wrappers to make callback functions easier
 
@@ -321,6 +321,9 @@ static int on_text(const char bytes[], size_t len, void *user)
                                                 : state->vt->mode.utf8 ? &state->encoding_utf8
                                                                        : &state->encoding[state->
                                                                                           gr_set];
+  if (encoding->enc == state->encoding_utf8.enc) {
+    encoding = &state->encoding_utf8;  // Only use one UTF-8 encoding state.
+  }
 
   (*encoding->enc->decode)(encoding->enc, encoding->data,
                            codepoints, &npoints, state->gsingle_set ? 1 : (int)maxpoints,
@@ -342,13 +345,15 @@ static int on_text(const char bytes[], size_t len, void *user)
 
   // See if the cursor has moved since
   if (state->pos.row == state->combine_pos.row
-      && state->pos.col == state->combine_pos.col + state->combine_width) {
+      && state->pos.col >= state->combine_pos.col
+      && state->pos.col <= state->combine_pos.col + state->combine_width) {
     // This is a combining char. that needs to be merged with the previous glyph output
     if (utf_iscomposing((int)state->grapheme_last, (int)codepoints[i], &state->grapheme_state)) {
       // Find where we need to append these combining chars
       grapheme_len = state->grapheme_len;
       grapheme_state = state->grapheme_state;
       state->pos.col = state->combine_pos.col;
+      state->at_phantom = 0;
       recombine = true;
     } else {
       DEBUG_LOG("libvterm: TODO: Skip over split char+combining\n");

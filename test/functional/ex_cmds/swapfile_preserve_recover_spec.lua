@@ -114,7 +114,6 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end)
 
   it('killing TUI process without :preserve #22096', function()
-    t.skip(t.is_os('win'))
     local screen0 = Screen.new()
     local child_server = new_pipename()
     fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
@@ -126,6 +125,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set_session(child_session)
     local swappath1 = setup_swapname()
     set_session(nvim0)
+    -- n.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     command('call chanclose(&channel)') -- Kill the child process.
     screen0:expect({ any = pesc('[Process exited 1]') }) -- Wait for the child process to stop.
     neq(nil, uv.fs_stat(swappath1))
@@ -220,8 +220,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       [104] = { foreground = Screen.colors.NvimLightCyan },
       [105] = { foreground = Screen.colors.NvimDarkGrey4 },
       [106] = {
-        foreground = Screen.colors.NvimDarkGrey3,
-        background = Screen.colors.NvimLightGrey3,
+        foreground = Screen.colors.NvimLightGrey2,
+        background = Screen.colors.NvimDarkGrey4,
       },
       [107] = { foreground = Screen.colors.NvimLightGrey2, bold = true },
       [108] = { foreground = Screen.colors.NvimLightBlue },

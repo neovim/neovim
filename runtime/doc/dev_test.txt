@@ -1,4 +1,4 @@
-*dev_test*          Nvim
+*dev_test.txt*          Nvim
 
 
                             NVIM REFERENCE MANUAL
@@ -33,7 +33,7 @@ Tests are broadly divided into unit tests (`test/unit/`), functional tests
   opposed to Lua). They are essentially "integration" tests, they test the
   full system. But they are fast.
 
-You can learn the [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
+You can learn [Lua concepts 15 minutes](https://learnxinyminutes.com/docs/lua/),
 see also |lua-guide|. Use any existing test as a template to start writing new
 tests, or see |dev-quickstart|.
 
@@ -270,8 +270,8 @@ Limitations:
       require("lldebugger").start()
     end
 <  This is a [local-lua-debugger limitation](https://github.com/tomblind/local-lua-debugger-vscode?tab=readme-ov-file#busted)
-- You cannot step into code of files which get baked into the nvim binary like
-  the `shared.lua`.
+- You cannot step into code of files which get baked into the nvim binary
+  (such as `_core/*.lua` and `inspect.lua`).
 
 
 ------------------------------------------------------------------------------
@@ -418,8 +418,7 @@ Number; !must be defined to function properly):
   Currently only compilers with gcc-compatible arguments are supported.
 
 - `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be
-  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote
-  :7777` inside.
+  accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote :7777` inside.
 
 - `GDBSERVER_PORT` (F) (I): overrides port used for `GDB`.
 
@@ -438,6 +437,8 @@ Number; !must be defined to function properly):
 
 - `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
   suite run is killed
+
+- `NVIM_TEST` (FU) (D): lets Nvim process detect that it is running in a test.
 
 - `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 

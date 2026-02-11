@@ -1524,8 +1524,7 @@ endfunc
 func Test_pum_completefuzzycollect()
   CheckScreendump
   let lines =<< trim END
-    set completefuzzycollect=keyword,files
-    set completeopt=menu,menuone
+    set completeopt=menu,menuone,fuzzy
   END
   call writefile(lines, 'Xscript', 'D')
   let  buf = RunVimInTerminal('-S Xscript', {})

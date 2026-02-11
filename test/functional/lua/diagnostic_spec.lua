@@ -608,6 +608,21 @@ describe('vim.diagnostic', function()
         vim.diagnostic.hide(_G.diagnostic_ns)
       end)
     end)
+
+    it('handles diagnostics without extmark_id', function()
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error message', 0, 0, 0, 5),
+        })
+
+        local diags = vim.diagnostic.get(_G.diagnostic_bufnr, { namespace = _G.diagnostic_ns })
+        diags[1]._extmark_id = nil
+
+        vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr, diags)
+      end)
+    end)
   end)
 
   describe('enable() and disable()', function()
@@ -2023,6 +2038,35 @@ describe('vim.diagnostic', function()
       eq('DiagnosticUnderlineInfo', underline_hl)
     end)
 
+    it(
+      'shows deprecated and unnecessary highlights in addition to severity-based highlights',
+      function()
+        ---@type string[]
+        local result = exec_lua(function()
+          local diagnostic = _G.make_error('Some error', 0, 0, 0, 0, 'source x')
+          diagnostic._tags = {
+            deprecated = true,
+            unnecessary = true,
+          }
+
+          local diagnostics = { diagnostic }
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
+
+          local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
+          local hl_groups = vim.tbl_map(function(extmark)
+            return extmark[4].hl_group
+          end, extmarks)
+          return hl_groups
+        end)
+
+        eq({
+          'DiagnosticDeprecated',
+          'DiagnosticUnnecessary',
+          'DiagnosticUnderlineError',
+        }, result)
+      end
+    )
+
     it('can show diagnostic sources in virtual text', function()
       local result = exec_lua(function()
         local diagnostics = {
@@ -2508,6 +2552,31 @@ describe('vim.diagnostic', function()
         return extmarks[1][4].virt_lines
       end)
       eq('Error here!', result[1][3][1])
+    end)
+
+    it('sorts by severity with stable tiebreaker #37137', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ severity_sort = true, virtual_lines = { current_line = true } })
+        local m = 100
+        local diagnostics = {
+          { end_col = m, lnum = 0, message = 'a', severity = 2 },
+          { end_col = m, lnum = 0, message = 'b', severity = 2 },
+          { end_col = m, lnum = 0, message = 'c', severity = 2 },
+          { end_col = m, lnum = 2, message = 'd', severity = 2 },
+          { end_col = m, lnum = 2, message = 'e', severity = 2 },
+          { end_col = m, lnum = 2, message = 'f', severity = 2 },
+        }
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics, {})
+        vim.diagnostic.show(_G.diagnostic_ns, _G.diagnostic_bufnr)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        local result = {}
+        for _, d in ipairs(extmarks[1][4].virt_lines) do
+          table.insert(result, d[3][1])
+        end
+        return result
+      end)
+      eq({ 'c', 'b', 'a' }, result)
     end)
   end)
 
@@ -3490,8 +3559,8 @@ describe('vim.diagnostic', function()
       eq(
         {
           '1. Some warning',
-          '   uri:1:0: Some extra info',
-          '   uri:2:3: Some more extra info',
+          '   uri:2:1: Some extra info',
+          '   uri:3:4: Some more extra info',
         },
         exec_lua(function()
           ---@type vim.Diagnostic
@@ -4052,7 +4121,10 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('E:1 W:2 I:3 H:4', result)
+      eq(
+        '%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:2 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
+        result
+      )
 
       exec_lua('vim.cmd.enew()')
 
@@ -4065,10 +4137,10 @@ describe('vim.diagnostic', function()
       )
     end)
 
-    it('uses text from diagnostic.config().signs.text[severity]', function()
+    it('uses text from diagnostic.config().status.text[severity]', function()
       local result = exec_lua(function()
         vim.diagnostic.config({
-          signs = {
+          status = {
             text = {
               [vim.diagnostic.severity.ERROR] = '⨯',
               [vim.diagnostic.severity.WARN] = '⚠︎',
@@ -4084,7 +4156,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('⨯:1 ⚠︎:1', result)
+      eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
     end)
   end)
 

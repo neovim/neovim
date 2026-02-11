@@ -1,17 +1,18 @@
 " Vim indent file
 " Language:     SML
-" Maintainer:	Saikat Guha <sg266@cornell.edu>
-" 				Hubert Chao <hc85@cornell.edu>
+" Maintainer:   Saikat Guha <sg266@cornell.edu>
+"               Hubert Chao <hc85@cornell.edu>
 " Original OCaml Version:
-" 				Jean-Francois Yuen  <jfyuen@ifrance.com>
+"               Jean-Francois Yuen  <jfyuen@ifrance.com>
 "               Mike Leary          <leary@nwlink.com>
 "               Markus Mottl        <markus@oefai.at>
 " OCaml URL:    http://www.oefai.at/~markus/vim/indent/ocaml.vim
 " Last Change:  2022 Apr 06
-" 				2002 Nov 06 - Some fixes (JY)
+"               2002 Nov 06 - Some fixes (JY)
 "               2002 Oct 28 - Fixed bug with indentation of ']' (MM)
 "               2002 Oct 22 - Major rewrite (JY)
-"		2022 April: b:undo_indent added by Doug Kearns
+"               2022 Apr 08 - b:undo_indent added by Doug Kearns
+"               2025 Nov 04 - Move comments and formatoptions to ftplugin
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -28,12 +29,6 @@ setlocal textwidth=80
 setlocal shiftwidth=2
 
 let b:undo_indent = "setl et< inde< indk< lisp< si< sw< tw<"
-
-" Comment formatting
-if (has("comments"))
-  set comments=sr:(*,mb:*,ex:*)
-  set fo=cqort
-endif
 
 " Only define the function once.
 "if exists("*GetSMLIndent")

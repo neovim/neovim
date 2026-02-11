@@ -139,7 +139,7 @@ void decor_providers_invoke_win(win_T *wp)
          && decor_state.future_begin == (int)kv_size(decor_state.ranges_i));
 
   if (kv_size(decor_providers) > 0) {
-    validate_botline(wp);
+    validate_botline_win(wp);
   }
   linenr_T botline = MIN(wp->w_botline, wp->w_buffer->b_ml.ml_line_count);
 

@@ -15,11 +15,11 @@ jobs:
       VERSION_BRANCH: marvim/ci-version-update
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: vim/vim
           path: ${{ env.VIM_SOURCE_DIR }}
@@ -50,6 +50,9 @@ jobs:
         if: ${{ steps.update-version.outputs.NEW_PATCHES != 0 }}
         run: |
           git add -u
-          git commit -m 'docs: update version.c'
+          TMP_FILE=$(mktemp)
+          printf 'docs: update version.c\n\n' > ${TMP_FILE}
+          bash scripts/vim-patch.sh -n >> ${TMP_FILE}
+          git commit -F ${TMP_FILE}
           git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} ${VERSION_BRANCH}
           gh pr create --draft --fill --label vim-patch --base ${GITHUB_REF#refs/heads/} --head ${VERSION_BRANCH} || true

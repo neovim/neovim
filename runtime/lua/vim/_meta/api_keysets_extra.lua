@@ -126,13 +126,14 @@ error('Cannot require a meta file')
 --- @field bar boolean
 --- @field register boolean
 --- @field keepscript boolean
---- @field preview boolean
+--- @field preview? function
 --- @field nargs string
---- @field complete? string
+--- @field complete? string|function
 --- @field complete_arg? string
 --- @field count? string
 --- @field range? string
 --- @field addr? string
+--- @field callback? function
 
 --- @class vim.api.keyset.hl_info.base
 --- @field reverse? true
@@ -213,26 +214,26 @@ error('Cannot require a meta file')
 --- @field allows_duplicates boolean
 
 --- @class vim.api.keyset.cmd.mods
---- @field filter { force: boolean, pattern: string }
---- @field silent boolean
---- @field emsg_silent boolean
---- @field unsilent boolean
---- @field sandbox boolean
---- @field noautocmd boolean
---- @field tab integer
---- @field verbose integer
---- @field browse boolean
---- @field confirm boolean
---- @field hide boolean
---- @field keepalt boolean
---- @field keepjumps boolean
---- @field keepmarks boolean
---- @field keeppatterns boolean
---- @field lockmarks boolean
---- @field noswapfile boolean
---- @field vertical boolean
---- @field horizontal boolean
---- @field split ''|'botright'|'topleft'|'belowright'|'aboveleft'
+--- @field filter? { force: boolean, pattern: string }
+--- @field silent? boolean
+--- @field emsg_silent? boolean
+--- @field unsilent? boolean
+--- @field sandbox? boolean
+--- @field noautocmd? boolean
+--- @field tab? integer
+--- @field verbose? integer
+--- @field browse? boolean
+--- @field confirm? boolean
+--- @field hide? boolean
+--- @field keepalt? boolean
+--- @field keepjumps? boolean
+--- @field keepmarks? boolean
+--- @field keeppatterns? boolean
+--- @field lockmarks? boolean
+--- @field noswapfile? boolean
+--- @field vertical? boolean
+--- @field horizontal? boolean
+--- @field split? ''|'botright'|'topleft'|'belowright'|'aboveleft'
 
 --- @class vim.api.keyset.cmd.magic
 --- @field bar boolean

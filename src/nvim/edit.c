@@ -396,31 +396,6 @@ static int insert_check(VimState *state)
 {
   InsertState *s = (InsertState *)state;
 
-  // If typed something may trigger CursorHoldI again.
-  if (s->c != K_EVENT
-      // but not in CTRL-X mode, a script can't restore the state
-      && ctrl_x_mode_normal()) {
-    did_cursorhold = false;
-  }
-
-  // Check if we need to cancel completion mode because the window
-  // or tab page was changed
-  if (ins_compl_active() && !ins_compl_win_active(curwin)) {
-    ins_compl_cancel();
-  }
-
-  // If the cursor was moved we didn't just insert a space
-  if (arrow_used) {
-    s->inserted_space = false;
-  }
-
-  if (can_cindent
-      && cindent_on()
-      && ctrl_x_mode_normal()
-      && !ins_compl_active()) {
-    insert_do_cindent(s);
-  }
-
   if (!revins_legal) {
     revins_scol = -1;     // reset on illegal motions
   } else {
@@ -565,6 +540,7 @@ static int insert_check(VimState *state)
         ins_compl_enable_autocomplete();
         ins_compl_init_get_longest();
         insert_do_complete(s);
+        insert_handle_key_post(s);
         return 1;
       }
     }
@@ -648,7 +624,7 @@ static int insert_execute(VimState *state, int key)
         if (ins_compl_preinsert_longest() && !ins_compl_is_match_selected()) {
           ins_compl_insert(false, true);
           ins_compl_init_get_longest();
-          return 1;
+          return 1;  // continue
         } else {
           ins_compl_insert(false, false);
         }
@@ -697,6 +673,7 @@ static int insert_execute(VimState *state, int key)
 
   if ((s->c == Ctrl_V || s->c == Ctrl_Q) && ctrl_x_mode_cmdline()) {
     insert_do_complete(s);
+    insert_handle_key_post(s);
     return 1;
   }
 
@@ -715,7 +692,6 @@ static int insert_execute(VimState *state, int key)
       do_c_expr_indent();
       return 1;  // continue
     }
-
     // A key name preceded by a star means that indenting has to be
     // done before inserting the key.
     if (can_cindent && in_cinkeys(s->c, '*', s->line_is_white)
@@ -994,7 +970,7 @@ static int insert_handle_key(InsertState *s)
     goto check_pum;
 
   case K_LUA:
-    map_execute_lua(false);
+    map_execute_lua(false, false);
 
 check_pum:
     // nvim_select_popupmenu_item() can be called from the handling of
@@ -1293,6 +1269,7 @@ normalchar:
     break;
   }       // end of switch (s->c)
 
+  insert_handle_key_post(s);
   return 1;  // continue
 }
 
@@ -1316,6 +1293,31 @@ static void insert_do_cindent(InsertState *s)
       // re-indent the current line
       do_c_expr_indent();
     }
+  }
+}
+
+static void insert_handle_key_post(InsertState *s)
+{
+  // If typed something may trigger CursorHoldI again.
+  if (s->c != K_EVENT
+      // but not in CTRL-X mode, a script can't restore the state
+      && ctrl_x_mode_normal()) {
+    did_cursorhold = false;
+  }
+
+  // Check if we need to cancel completion mode because the window
+  // or tab page was changed
+  if (ins_compl_active() && !ins_compl_win_active(curwin)) {
+    ins_compl_cancel();
+  }
+
+  // If the cursor was moved we didn't just insert a space
+  if (arrow_used) {
+    s->inserted_space = false;
+  }
+
+  if (can_cindent && cindent_on() && ctrl_x_mode_normal()) {
+    insert_do_cindent(s);
   }
 }
 
@@ -1597,35 +1599,35 @@ char *prompt_text(void)
 static void init_prompt(int cmdchar_todo)
 {
   char *prompt = prompt_text();
+  int prompt_len = (int)strlen(prompt);
 
-  if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum
-      || (cmdchar_todo != 'O'
-          && curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum
-          && (curwin->w_cursor.col < (int)strlen(prompt_text())))) {
-    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    coladvance(curwin, MAXCOL);
+  if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
+    curwin->w_cursor.lnum = curbuf->b_prompt_start.mark.lnum;
   }
   char *text = get_cursor_line_ptr();
   if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
-       && strncmp(text, prompt, strlen(prompt)) != 0)
+       && (curbuf->b_prompt_start.mark.col < prompt_len
+           || strncmp(text + curbuf->b_prompt_start.mark.col - prompt_len, prompt,
+                      (size_t)prompt_len) != 0))
       || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
       ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
     } else {
       ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
-      curbuf->b_prompt_start.mark.lnum += 1;
+      curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
     }
+    curbuf->b_prompt_start.mark.col = prompt_len;
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
-    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)strlen(prompt));
+    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)prompt_len);
   }
 
   // Insert always starts after the prompt, allow editing text after it.
   if (Insstart_orig.lnum != curbuf->b_prompt_start.mark.lnum
-      || Insstart_orig.col != (colnr_T)strlen(prompt)) {
+      || Insstart_orig.col != curbuf->b_prompt_start.mark.col) {
     Insstart.lnum = curbuf->b_prompt_start.mark.lnum;
-    Insstart.col = (colnr_T)strlen(prompt);
+    Insstart.col = curbuf->b_prompt_start.mark.col;
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
     Insstart_blank_vcol = MAXCOL;
@@ -1636,7 +1638,7 @@ static void init_prompt(int cmdchar_todo)
     coladvance(curwin, MAXCOL);
   }
   if (curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum) {
-    curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
+    curwin->w_cursor.col = MAX(curwin->w_cursor.col, curbuf->b_prompt_start.mark.col);
   }
   // Make sure the cursor is in a valid position.
   check_cursor(curwin);
@@ -1648,7 +1650,7 @@ bool prompt_curpos_editable(void)
 {
   return curwin->w_cursor.lnum > curbuf->b_prompt_start.mark.lnum
          || (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum
-             && curwin->w_cursor.col >= (int)strlen(prompt_text()));
+             && curwin->w_cursor.col >= curbuf->b_prompt_start.mark.col);
 }
 
 // Undo the previous edit_putchar().
@@ -3397,11 +3399,17 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // again when auto-formatting.
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
-          char *ptr = ml_get_buf_mut(curbuf, curwin->w_cursor.lnum);
+          const char *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum);
           int len = get_cursor_line_len();
           if (len > 0 && ptr[len - 1] == ' ') {
-            ptr[len - 1] = NUL;
-            curbuf->b_ml.ml_line_len--;
+            char *newp = xmemdupz(ptr, (size_t)(len - 1));
+
+            if (curbuf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {
+              xfree(curbuf->b_ml.ml_line_ptr);
+            }
+            curbuf->b_ml.ml_line_ptr = newp;
+            curbuf->b_ml.ml_line_textlen--;
+            curbuf->b_ml.ml_flags |= ML_LINE_DIRTY;
           }
         }
 
@@ -4049,17 +4057,18 @@ static bool ins_tab(void)
       int i = cursor->col - fpos.col;
       if (i > 0) {
         if (!(State & VREPLACE_FLAG)) {
-          char *newp = xmalloc((size_t)(curbuf->b_ml.ml_line_len - i));
+          const colnr_T newp_len = curbuf->b_ml.ml_line_textlen - i;
+          char *newp = xmalloc((size_t)newp_len);
           ptrdiff_t col = ptr - curbuf->b_ml.ml_line_ptr;
           if (col > 0) {
             memmove(newp, ptr - col, (size_t)col);
           }
-          memmove(newp + col, ptr + i, (size_t)(curbuf->b_ml.ml_line_len - col - i));
+          memmove(newp + col, ptr + i, (size_t)(newp_len - col));
           if (curbuf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {
             xfree(curbuf->b_ml.ml_line_ptr);
           }
           curbuf->b_ml.ml_line_ptr = newp;
-          curbuf->b_ml.ml_line_len -= i;
+          curbuf->b_ml.ml_line_textlen = newp_len;
           curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
           inserted_bytes(fpos.lnum, change_col,
                          cursor->col - change_col, fpos.col - change_col);

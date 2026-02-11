@@ -33,7 +33,8 @@ usage() {
   echo "    -l [git-log opts]  List missing Vim patches."
   echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
   echo "    -m {vim-revision}  List previous (older) missing Vim patches."
-  echo "    -M                 List all merged patch-numbers (at current v:version)."
+  echo "    -M                 List all merged patch-numbers (since current v:version) in ascending order."
+  echo "    -n                 List possible N/A Vim patches."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.1.xxx) or a Git hash."
   echo "    -P {vim-revision}  Download, generate and apply a Vim patch."
@@ -178,10 +179,10 @@ assign_commit_details() {
   local vim_coauthor0
   vim_coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
   # Extract co-authors from the commit message.
-  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-authored-by: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
+  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-[Aa]uthored-[Bb]y: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
   vim_coauthors="$(echo "${vim_coauthor0}"; echo "${vim_coauthors}")"
   # Remove Co-authored-by and Signed-off-by lines from the commit message.
-  vim_message="$(echo "${vim_message}" | grep -Ev '^(Co-authored|Signed-off)-by: ')"
+  vim_message="$(echo "${vim_message}" | grep -Ev '^(Co-[Aa]uthored|Signed-[Oo]ff)-[Bb]y: ')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -Ee '1s/^patch /vim-patch:/')"
@@ -207,7 +208,7 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/\<\%('"${na_rt}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove unwanted Vim doc files.
-  local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|testing\.txt\|todo\.txt\|vim9\.txt\|tags'
+  local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|testing\.txt\|todo\.txt\|vim9\.txt\|tags\|test_urls\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git [ab]/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
@@ -306,6 +307,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/keymap\.h/\1\/keycodes.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename term.c to keycodes.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/term\.c/\1\/keycodes.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename option.h to option_vars.h
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/option\.h/\1\/option_vars.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
@@ -324,10 +329,6 @@ preprocess_patch() {
 
   # Rename sponsor.txt to intro.txt
   LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/sponsor\.txt/\1\/intro.txt/g' \
-    "$file" > "$file".tmp && mv "$file".tmp "$file"
-
-  # Rename test_urls.vim to check_urls.vim
-  LC_ALL=C sed -Ee 's/( [ab])\/runtime\/doc\/test(_urls\.vim)/\1\/scripts\/check\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename path to check_colors.vim
@@ -573,13 +574,23 @@ list_vimpatch_tokens() {
     | sed -nEe 's/^(vim-patch:([0-9]+\.[^ ]+|[0-9a-z]{7,7})).*/\1/p'
 }
 
-# Prints all patch-numbers (for the current v:version) for which there is
-# a "vim-patch:xxx" token in the Nvim git log.
+# Prints all merged patches (since current v:version) in ascending order.
+#
+# Search "vim-patch:xxx" tokens in the Nvim git log.
+# Ignore tokens older than current v:version.
+# Left-pad the patch number of "vim-patch:xxx" for stable sort + dedupe.
+# Filter reverted Vim tokens.
 list_vimpatch_numbers() {
-  # Transform "vim-patch:X.Y.ZZZZ" to "ZZZZ".
-  list_vimpatch_tokens | while read -r vimpatch_token; do
-    echo "$vimpatch_token" | grep -F '8.1.' | sed -Ee 's/.*vim-patch:8\.1\.([0-9a-z]+).*/\1/'
-  done
+  local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
+    git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+    grep -oE "^[* ]*vim-patch:${patch_pat}" |
+    sed -nEe 's/^[* ]*vim-patch:('"${patch_pat}"').*$/\1/p' |
+    awk '{split($0, a, "."); printf "%d.%d.%04d\n", a[1], a[2], a[3]}' |
+    sort |
+    uniq ) |
+    grep -e '^> ' |
+    sed -e 's/^> //'
 }
 
 declare -A tokens
@@ -886,7 +897,42 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlLmMVp:P:g:r:s" opt; do
+is_na_patch() {
+  local patch=$1
+  local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
+  local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
+
+  local FILES_REMAINING
+  FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
+    grep '^<')" || true
+  test -z "$FILES_REMAINING" && return 0
+  if test "$FILES_REMAINING" == "$(printf "< src/version.c\n")"; then
+    local VERSION_LNUM
+    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- src/version.c | grep -c '^2\s\+0')
+    test "$VERSION_LNUM" -ne 1 && return 1
+    local VERSION_VNUM
+    VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U1 -r "$patch" -- src/version.c |
+      grep -Pzc '[ +]\/\*\*\/\n\+\s+[0-9]+,\n[ +]\/\*\*\/\n')" || true
+    test "$VERSION_VNUM" -eq 1 && return 0
+  fi
+  return 1
+}
+
+list_na_patches() {
+  list_missing_vimpatches 0 | while read -r patch; do
+    if is_na_patch "$patch"; then
+      GIT_MSG="$(git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
+      if (echo "$patch" | grep -q '^v[0-9]\.[0-9]\.[0-9]') && (echo "${GIT_MSG}" | grep -q ' patch [0-9]\.'); then
+        # shellcheck disable=SC2001
+        echo "vim-patch:$(echo "${GIT_MSG}" | sed 's/^[0-9a-zA-Z]\+ patch //')"
+      else
+        echo "vim-patch:${GIT_MSG}"
+      fi
+    fi
+  done
+}
+
+while getopts "hlLmnMVp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -909,6 +955,10 @@ while getopts "hlLmMVp:P:g:r:s" opt; do
     m)
       shift  # remove opt
       list_missing_previous_vimpatches_for_patch "$@"
+      exit 0
+      ;;
+    n)
+      list_na_patches
       exit 0
       ;;
     p)

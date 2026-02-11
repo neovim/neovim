@@ -239,6 +239,34 @@ Some github labels are used to trigger certain jobs:
 * `needs:response` - close PR after a certain amount of time if author doesn't
   respond
 
+Vim patches
+-----------
+
+Multiple Vim versions are tracked in `version.c`, so that `has('patch-x.y.z')`
+works even if `v:version` is "behind". Whenever we "complete" merging all
+patches from a Vim `v:version`, the steps to bump `v:version` are:
+
+1. Remove the fully-merged version from `vim-patch.sh` by adjusting the regexp.
+   For example, to remove version "8.1":
+   ```diff
+   diff --git a/scripts/vim-patch.sh b/scripts/vim-patch.sh
+   index d64f6b6..1d3dcdf 100755
+   --- a/scripts/vim-patch.sh
+   +++ b/scripts/vim-patch.sh
+   @@ -577,7 +577,7 @@ list_vimpatch_tokens() {
+    # Left-pad the patch number of "vim-patch:xxx" for stable sort + dedupe.
+    # Filter reverted Vim tokens.
+    list_vimpatch_numbers() {
+   -  local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
+   +  local patch_pat='(8\.[2]|9\.[0-9])\.[0-9]{1,4}'
+      diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
+        git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+        grep -oE "^[* ]*vim-patch:${patch_pat}" |
+   ```
+2. Run `nvim -l scripts/vimpatch.lua` to regenerate `version.c`. Or wait for the
+   `vim_patches.yml` CI job to do it.
+
+
 See also
 --------
 

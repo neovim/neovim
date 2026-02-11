@@ -152,7 +152,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
-static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 0 };
+static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 1 };
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
@@ -286,8 +286,10 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
     s++;
   }
 
-  // Print the rest of the message
-  msg_outtrans_len(chunk, (int)(str.size - (size_t)(chunk - str.data)), hl_id, hist);
+  // Print the remainder or emit empty event if entire message is empty.
+  if (*chunk != NUL || chunk == str.data) {
+    msg_outtrans_len(chunk, (int)(str.size - (size_t)(chunk - str.data)), hl_id, hist);
+  }
 }
 
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
@@ -366,9 +368,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     id = INTEGER_OBJ(msg_id_next++);
   } else if (id.type == kObjectTypeInteger) {
     id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
-    if (msg_id_next < id.data.integer) {
-      msg_id_next = id.data.integer + 1;
-    }
+    msg_id_next = MAX(msg_id_next, id.data.integer + 1);
   }
   msg_ext_id = id;
 
@@ -393,7 +393,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
 
   if (history && kv_size(hl_msg)) {
-    msg_hist_add_multihl(id, hl_msg, false, msg_data);
+    msg_hist_add_multihl(hl_msg, false, msg_data);
   }
 
   msg_ext_skip_flush = false;
@@ -1052,8 +1052,11 @@ char *msg_may_trunc(bool force, char *s)
     return s;
   }
 
+  // If something unexpected happened "room" may be negative, check for that
+  // just in case.
   int room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
-  if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
+  if (room > 0
+      && (force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (int)strlen(s) - room > 0) {
     int size = vim_strsize(s);
 
@@ -1102,7 +1105,7 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(INTEGER_OBJ(0), msg, false, NULL);
+  msg_hist_add_multihl(msg, false, NULL);
 }
 
 static bool do_clear_hist_temp = true;
@@ -1133,7 +1136,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   kv_destroy(messages);
 }
 
-static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageData *msg_data)
+static void msg_hist_add_multihl(HlMessage msg, bool temp, MessageData *msg_data)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1394,6 +1397,11 @@ void wait_return(int redraw)
     msg_puts(" ");              // make sure the cursor is on the right line
     c = CAR;                    // no need for a return in ex mode
     got_int = false;
+  } else if (!stuff_empty()) {
+    // When there are stuffed characters, the next stuffed character will
+    // dismiss the hit-enter prompt immediately and have to be put back, so
+    // instead just don't show the hit-enter prompt at all.
+    c = CAR;
   } else {
     State = MODE_HITRETURN;
     setmouse();
@@ -1485,7 +1493,7 @@ void wait_return(int redraw)
       if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
           || c == K_X1MOUSE || c == K_X2MOUSE) {
         jump_to_mouse(MOUSE_SETPOS, NULL, 0);
-      } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C) {
+      } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C && c != 'q') {
         // Put the character back in the typeahead buffer.  Don't use the
         // stuff buffer, because lmaps wouldn't work.
         ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
@@ -1665,7 +1673,7 @@ void msg_start(void)
   if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
     msg_col = 0;
-  } else if (msg_didout || (p_ch == 0 && !ui_has(kUIMessages))) {  // start message on next line
+  } else if ((msg_didout || p_ch == 0) && !ui_has(kUIMessages)) {  // start message on next line
     msg_putchar('\n');
     did_return = true;
     cmdline_row = msg_row;
@@ -1740,7 +1748,7 @@ static void msg_home_replace_hl(const char *fname, int hl_id)
 /// @return  the number of characters it takes on the screen.
 int msg_outtrans(const char *str, int hl_id, bool hist)
 {
-  return *str == NUL ? 0 : msg_outtrans_len(str, (int)strlen(str), hl_id, hist);
+  return msg_outtrans_len(str, (int)strlen(str), hl_id, hist);
 }
 
 /// Output one character at "p".
@@ -2224,6 +2232,7 @@ void msg_puts(const char *s)
 
 void msg_puts_title(const char *s)
 {
+  s += (ui_has(kUIMessages) && *s == '\n');
   msg_puts_hl(s, HLF_T, false);
 }
 
@@ -2862,9 +2871,10 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
 /// @return  true when messages should be printed to stdout/stderr:
 ///          - "batch mode" ("silent mode", -es/-Es/-l)
 ///          - no UI and not embedded
+///          - no ext_messages
 int msg_use_printf(void)
 {
-  return !embedded_mode && !ui_active();
+  return !embedded_mode && !ui_active() && !ui_has(kUIMessages);
 }
 
 /// Print a message when there is no valid screen.
@@ -3308,14 +3318,15 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(INTEGER_OBJ(0), msg, true, NULL);
+      msg_hist_add_multihl(msg, true, NULL);
     }
     xfree(tofree);
     msg_ext_overwrite = false;
     msg_ext_history = false;
     msg_ext_append = false;
     msg_ext_kind = NULL;
-    msg_ext_id = INTEGER_OBJ(0);
+    msg_id_next += (msg_ext_id.data.integer == msg_id_next);
+    msg_ext_id = INTEGER_OBJ(msg_id_next);
   }
 }
 
@@ -3447,10 +3458,14 @@ void verbose_enter(void)
   if (*p_vfile != NUL) {
     msg_silent++;
   }
-  if (msg_ext_kind != verbose_kind) {
-    pre_verbose_kind = msg_ext_kind;
+  // last_set_msg unsets p_verbose to avoid setting the verbose kind.
+  if (!msg_ext_skip_verbose) {
+    if (msg_ext_kind != verbose_kind) {
+      pre_verbose_kind = msg_ext_kind;
+    }
+    msg_ext_set_kind("verbose");
   }
-  msg_ext_set_kind("verbose");
+  msg_ext_skip_verbose = false;
 }
 
 /// After giving verbose message.
@@ -3517,13 +3532,16 @@ int verbose_open(void)
 
 /// Give a warning message (for searching).
 /// Use 'w' highlighting and may repeat the message after redrawing
-void give_warning(const char *message, bool hl)
+void give_warning(const char *message, bool hl, bool hist)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   // Don't do this for ":silent".
   if (msg_silent != 0) {
     return;
   }
+
+  bool save_msg_hist_off = msg_hist_off;
+  msg_hist_off = !hist;
 
   // Don't want a hit-enter prompt here.
   no_wait_return++;
@@ -3548,6 +3566,7 @@ void give_warning(const char *message, bool hl)
   msg_col = 0;
 
   no_wait_return--;
+  msg_hist_off = save_msg_hist_off;
 }
 
 /// Shows a warning, with optional highlighting.
@@ -3566,7 +3585,7 @@ void swmsg(bool hl, const char *const fmt, ...)
   vim_vsnprintf(IObuff, IOSIZE, fmt, args);
   va_end(args);
 
-  give_warning(IObuff, hl);
+  give_warning(IObuff, hl, true);
 }
 
 /// Advance msg cursor to column "col".
@@ -3910,6 +3929,25 @@ int vim_dialog_yesnoallcancel(int type, char *title, char *message, int dflt)
   return VIM_CANCEL;
 }
 
+/// Only for legacy UI (`!ui_has(kUIMessages)`): Pause to display a message for `ms` milliseconds.
+///
+/// TODO(justinmk): Most of these cases may not be needed after "ui2"...
+void msg_delay(uint64_t ms, bool ignoreinput)
+{
+  if (ui_has(kUIMessages)) {
+    return;
+  }
+
+  if (nvim_testing) {
+    // XXX: Skip non-functional (UI only) delay in tests/CI.
+    ms = 100;
+  }
+
+  DLOG("%" PRIu64 " ms%s", ms, nvim_testing ? " (skipped by NVIM_TEST)" : "");
+  ui_flush();
+  os_delay(ms, ignoreinput);
+}
+
 /// Check if there should be a delay to allow the user to see a message.
 ///
 /// Used before clearing or redrawing the screen or the command line.
@@ -3917,8 +3955,7 @@ void msg_check_for_delay(bool check_msg_scroll)
 {
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
       && !did_wait_return && emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-    ui_flush();
-    os_delay(1006, true);
+    msg_delay(1006, true);
     emsg_on_display = false;
     if (check_msg_scroll) {
       msg_scroll = false;

@@ -41,6 +41,7 @@
 #include "nvim/ugrid.h"
 #include "nvim/ui_client.h"
 #include "nvim/ui_defs.h"
+#include "nvim/vim_defs.h"
 
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
@@ -220,7 +221,10 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   case kTermModePermanentlyReset:
     // TODO(bfredl): This is really ILOG but we want it in all builds.
     // add to show_verbose_terminfo() without being too racy ????
-    WLOG("TUI: terminal mode %d unavailable, state %d", mode, state);
+    if (!nvim_testing) {
+      // Very noisy in CI, don't log during tests. #33599
+      WLOG("TUI: terminal mode %d unavailable, state %d", mode, state);
+    }
     // If the mode is not recognized, or if the terminal emulator does not allow it to be changed,
     // then there is nothing to do
     break;
@@ -230,7 +234,10 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     FALLTHROUGH;
   case kTermModeReset:
     // The terminal supports changing the given mode
-    WLOG("TUI: terminal mode %d detected, state %d", mode, state);
+    if (!nvim_testing) {
+      // Very noisy in CI, don't log during tests. #33599
+      WLOG("TUI: terminal mode %d detected, state %d", mode, state);
+    }
     switch (mode) {
     case kTermModeSynchronizedOutput:
       // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
@@ -330,11 +337,9 @@ static void tui_reset_key_encoding(TUIData *tui)
   }
 }
 
-/// Write the OSC 11 sequence to the terminal emulator to query the current
-/// background color.
+/// Write the OSC 11 sequence to the terminal emulator to query the current background color.
 ///
-/// The response will be handled by the TermResponse autocommand created in
-/// _defaults.lua.
+/// Response will be handled by the TermResponse handler in _core/defaults.lua.
 void tui_query_bg_color(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1384,7 +1389,7 @@ void tui_mode_change(TUIData *tui, String mode, Integer mode_idx)
   // If stdin is not a TTY, the LHS of pipe may change the state of the TTY
   // after calling uv_tty_set_mode. So, set the mode of the TTY again here.
   // #13073
-  if (tui->is_starting && !stdin_isatty) {
+  if (tui->out_isatty && tui->is_starting && !stdin_isatty) {
     int ret = uv_tty_set_mode(&tui->output_handle.tty, UV_TTY_MODE_NORMAL);
     if (ret) {
       ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
@@ -1750,7 +1755,7 @@ void tui_chdir(TUIData *tui, String path)
 {
   int err = uv_chdir(path.data);
   if (err != 0) {
-    ELOG("Failed to chdir to %s: %s", path.data, strerror(err));
+    ELOG("Failed to chdir to %s: %s", path.data, uv_strerror(err));
   }
 }
 
@@ -1977,7 +1982,7 @@ static void terminfo_set_str(TUIData *tui, TerminfoDef str, const char *val)
 /// Determine if the terminal supports truecolor or not.
 ///
 /// note: We get another chance at detecting these in the nvim server process, see
-/// the use of vim.termcap in runtime/lua/vim/_defaults.lua
+/// the use of vim.termcap in runtime/lua/vim/_core/defaults.lua
 ///
 /// If terminfo contains Tc, RGB, or both setrgbf and setrgbb capabilities, return true.
 static bool term_has_truecolor(TUIData *tui, const char *colorterm)
@@ -2510,18 +2515,28 @@ static void flush_buf(TUIData *tui)
 
 /// Try to get "kbs" code from stty because "the terminfo kbs entry is extremely
 /// unreliable." (Vim, Bash, and tmux also do this.)
+/// On Windows, use 0x7f as Backspace if VT input has been enabled by stream_init().
 ///
 /// @see tmux/tty-keys.c fe4e9470bb504357d073320f5d305b22663ee3fd
 /// @see https://bugzilla.redhat.com/show_bug.cgi?id=142659
-static const char *tui_get_stty_erase(int fd)
+/// @see https://github.com/microsoft/terminal/issues/4949
+static const char *tui_get_stty_erase(TermInput *input)
 {
   static char stty_erase[2] = { 0 };
 #if defined(HAVE_TERMIOS_H)
   struct termios t;
-  if (tcgetattr(fd, &t) != -1) {
+  if (tcgetattr(input->in_fd, &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = NUL;
     DLOG("stty/termios:erase=%s", stty_erase);
+  }
+#elif defined(MSWIN)
+  DWORD dwMode;
+  if (((uv_handle_t *)&input->read_stream.s.uv)->type == UV_TTY
+      && GetConsoleMode(input->read_stream.s.uv.tty.handle, &dwMode)
+      && (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)) {
+    stty_erase[0] = '\x7f';
+    stty_erase[1] = NUL;
   }
 #endif
   return stty_erase;
@@ -2534,7 +2549,7 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value, void *d
   TermInput *input = data;
   static const char *stty_erase = NULL;
   if (stty_erase == NULL) {
-    stty_erase = tui_get_stty_erase(input->in_fd);
+    stty_erase = tui_get_stty_erase(input);
   }
 
   if (strequal(name, "key_backspace")) {

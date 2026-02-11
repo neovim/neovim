@@ -109,8 +109,8 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///        Else the first notification will be `nvim_buf_changedtick_event`.
 ///        Not for Lua callbacks.
 /// @param  opts  Optional parameters.
-///             - on_lines: Lua callback invoked on change.
-///               Return a truthy value (not `false` or `nil`) to detach. Args:
+///             - on_lines: Called on linewise changes. Not called on buffer reload (`:checktime`,
+///               `:edit`, …), see `on_reload:`. Return a [lua-truthy] value to detach. Args:
 ///               - the string "lines"
 ///               - buffer id
 ///               - b:changedtick
@@ -120,10 +120,9 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - byte count of previous contents
 ///               - deleted_codepoints (if `utf_sizes` is true)
 ///               - deleted_codeunits (if `utf_sizes` is true)
-///             - on_bytes: Lua callback invoked on change.
-///               This callback receives more granular information about the
-///               change compared to on_lines.
-///               Return a truthy value (not `false` or `nil`) to detach. Args:
+///             - on_bytes: Called on granular changes (compared to on_lines). Not called on buffer
+///               reload (`:checktime`, `:edit`, …), see `on_reload:`. Return a [lua-truthy] value
+///               to detach. Args:
 ///               - the string "bytes"
 ///               - buffer id
 ///               - b:changedtick
@@ -139,16 +138,15 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - new end column of the changed text
 ///                 (if new end row = 0, offset from start column)
 ///               - new end byte length of the changed text
-///             - on_changedtick: Lua callback invoked on changedtick
-///               increment without text change. Args:
+///             - on_changedtick: Called on [changetick] increment without text change. Args:
 ///               - the string "changedtick"
 ///               - buffer id
 ///               - b:changedtick
-///             - on_detach: Lua callback invoked on detach. Args:
+///             - on_detach: Called on detach. Args:
 ///               - the string "detach"
 ///               - buffer id
-///             - on_reload: Lua callback invoked on reload. The entire buffer
-///                          content should be considered changed. Args:
+///             - on_reload: Called on whole-buffer load (`:checktime`, `:edit`, …). Clients should
+///               typically re-fetch the entire buffer contents. Args:
 ///               - the string "reload"
 ///               - buffer id
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
@@ -157,7 +155,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               events.
 /// @param[out] err Error details, if any
 /// @return False if attach failed (invalid parameter, or buffer isn't loaded);
-///         otherwise True. TODO: LUA_API_NO_EVAL
+///         otherwise True.
 Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
                         Dict(buf_attach) *opts, Error *err)
   FUNC_API_SINCE(4)
@@ -290,6 +288,22 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   return rv;
 }
 
+static buf_T *require_loaded_buffer(Buffer buffer, Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return NULL;
+  }
+
+  // Load buffer if necessary
+  if (buf->b_ml.ml_mfp == NULL && !buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return NULL;
+  }
+
+  return buf;
+}
+
 /// Sets (replaces) a line-range in the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
@@ -317,15 +331,9 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = require_loaded_buffer(buffer, err);
 
   if (!buf) {
-    return;
-  }
-
-  // Load buffer if necessary. #22670
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -482,14 +490,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     replacement = scratch;
   }
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = require_loaded_buffer(buffer, err);
   if (!buf) {
-    return;
-  }
-
-  // Load buffer if necessary. #22670
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -1114,7 +1116,7 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
   FUNC_API_SINCE(8)
 {
   bool res = false;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = require_loaded_buffer(buffer, err);
 
   if (!buf) {
     return res;
@@ -1271,7 +1273,7 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
     win->w_valid &= ~(VALID_BOTLINE_AP);
     update_topline(win);
   } else {
-    invalidate_botline(win);
+    invalidate_botline_win(win);
   }
 }
 
@@ -1345,7 +1347,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
 
   check_cursor_col(win);
   changed_cline_bef_curs(win);
-  invalidate_botline(win);
+  invalidate_botline_win(win);
 }
 
 /// Initialise a string array either:

@@ -27,7 +27,6 @@ Follow these steps to get LSP features:
 1. Install language servers using your package manager or by following the
    upstream installation instructions. You can find language servers here:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
-
 2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
      vim.lsp.config['lua_ls'] = {
@@ -49,18 +48,14 @@ Follow these steps to get LSP features:
          }
        }
      }
-
 3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
      vim.lsp.enable('lua_ls')
-<
 4. Open a code file matching one of the `filetypes` specified in the config.
    Note: Depending on the LSP server, you may need to ensure your project has
    a |lsp-root_markers| file so the workspace can be recognized.
-
 5. Check that LSP is active ("attached") for the buffer: >vim
-    :checkhealth vim.lsp
-<
+     :checkhealth vim.lsp
 6. (Optional) Configure keymaps and autocommands to use LSP features.
    |lsp-attach|
 
@@ -73,20 +68,21 @@ listed below, if (1) the language server supports the functionality and (2)
 the options are empty or were set by the builtin runtime (ftplugin) files. The
 options are not restored when the LSP client is stopped or detached.
 
-GLOBAL DEFAULTS
-                                *gra* *gri* *grn* *grr* *grt* *i_CTRL-S* *v_an* *v_in*
+GLOBAL DEFAULTS         *gra* *gri* *grn* *grr* *grt* *i_CTRL-S* *v_an* *v_in*
+
 These GLOBAL keymaps are created unconditionally when Nvim starts:
-- "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
-- "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
-- "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
-- "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
-- "grt" is mapped in Normal mode to |vim.lsp.buf.type_definition()|
-- "gO" is mapped in Normal mode to |vim.lsp.buf.document_symbol()|
-- CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
-- "an" and "in" are mapped in Visual mode to outer and inner incremental
+- "gra" (Normal and Visual mode) is mapped to |vim.lsp.buf.code_action()|
+- "gri" is mapped to |vim.lsp.buf.implementation()|
+- "grn" is mapped to |vim.lsp.buf.rename()|
+- "grr" is mapped to |vim.lsp.buf.references()|
+- "grt" is mapped to |vim.lsp.buf.type_definition()|
+- "gO" is mapped to |vim.lsp.buf.document_symbol()|
+- CTRL-S (Insert mode) is mapped to |vim.lsp.buf.signature_help()|
+- "an" and "in" (Visual and Operator-pending mode) are mapped to outer and inner incremental
   selections, respectively, using |vim.lsp.buf.selection_range()|
 
 BUFFER-LOCAL DEFAULTS
+
 - 'omnifunc' is set to |vim.lsp.omnifunc()|, use |i_CTRL-X_CTRL-O| to trigger
   completion.
 - 'tagfunc' is set to |vim.lsp.tagfunc()|. This enables features like
@@ -101,6 +97,7 @@ BUFFER-LOCAL DEFAULTS
   - To opt out call `vim.lsp.document_color.enable(false, args.buf)` on |LspAttach|.
 
 DISABLING DEFAULTS                                      *lsp-defaults-disable*
+
 You can remove GLOBAL keymaps at any time using |vim.keymap.del()| or
 |:unmap|. See also |gr-default|.
 
@@ -120,6 +117,25 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
     })
 <
 ==============================================================================
+COMMANDS                                                 *:lsp* *lsp-commands*
+
+:lsp enable [config_name]                                 *:lsp-enable*
+    Activates LSP for current and future buffers. See |vim.lsp.enable()|.
+
+:lsp disable [config_name]                                *:lsp-disable*
+    Disables LSP (and stops if running) for current and future buffers. See
+    |vim.lsp.enable()|.
+
+:lsp restart [client_name]                                *:lsp-restart*
+    Restarts LSP clients and servers. If no client names are given, all active
+    clients attached to the current buffer are restarted.
+
+:lsp stop [client_name]                                   *:lsp-stop*
+    Stops LSP clients and servers. If no client names are given, all active
+    clients attached to the current buffer are stopped. Use |Client:stop()|
+    for non-interactive use.
+
+==============================================================================
 CONFIG                                                  *lsp-config*
 
 You can configure LSP behavior statically via vim.lsp.config(), and
@@ -130,7 +146,7 @@ Use |vim.lsp.config()| to define or modify LSP configurations, and
 |vim.lsp.start()| which allows you to share and merge configs (provided by
 Nvim, plugins, and your local config).
 
-                                                        *lsp-new-config*
+NEW CONFIG                                            *lsp-new-config*
 To create a new config you can either use `vim.lsp.config()` or create
 a `lsp/<config-name>.lua` file.
 
@@ -155,17 +171,23 @@ EXAMPLE: DEFINE A CONFIG AS A FILE ~
    :lua vim.lsp.enable('foo')
 5. Run `:checkhealth vim.lsp`, check "Enabled Configurations". 🌈
 
-                                                        *lsp-config-merge*
+HOW CONFIGS ARE MERGED                                  *lsp-config-merge*
 When an LSP client starts, it resolves its configuration by merging the
 following sources (merge semantics defined by |vim.tbl_deep_extend()| with
 "force" behavior), in order of increasing priority:
 
 1. Configuration defined for the `'*'` name.
-2. Configuration from the result of merging all tables returned by
-   `lsp/<config>.lua` files in 'runtimepath' for the config named `<config>`.
-3. Configurations defined anywhere else.
+2. The merged configuration of all `lsp/<config>.lua` files in 'runtimepath'
+   for the config named `<config>`.
+3. The merged configuration of all `after/lsp/<config>.lua` files in
+   'runtimepath'.
+   - This behavior of the "after/" directory is a standard Vim feature
+     |after-directory| which allows you to override `lsp/*.lua` configs
+     provided by plugins (such as nvim-lspconfig).
+4. Configurations defined anywhere else.
 
 Example: given the following configs... >lua
+
   -- Defined in init.lua
   vim.lsp.config('*', {
     capabilities = {
@@ -177,20 +199,19 @@ Example: given the following configs... >lua
     },
     root_markers = { '.git' },
   })
-
   -- Defined in <rtp>/lsp/clangd.lua
   return {
     cmd = { 'clangd' },
     root_markers = { '.clangd', 'compile_commands.json' },
     filetypes = { 'c', 'cpp' },
   }
-
   -- Defined in init.lua
   vim.lsp.config('clangd', {
     filetypes = { 'c' },
   })
 <
 ...the merged result is: >lua
+
   {
     -- From the clangd configuration in <rtp>/lsp/clangd.lua
     cmd = { 'clangd' },
@@ -213,7 +234,7 @@ Example: given the following configs... >lua
     }
   }
 <
-                                                        *lsp-attach*
+CONFIGURE ON ATTACH                                     *lsp-attach*
 To use LSP features beyond those provided by Nvim (see |lsp-buf|), you can set
 keymaps and options on |Client:on_attach()| or |LspAttach|. Not all language
 servers provide the same capabilities; check `supports_method()` in your
@@ -261,10 +282,10 @@ To see the capabilities for a given server, try this in a LSP-enabled buffer: >v
 FAQ                                                     *lsp-faq*
 
 - Q: How to force-reload LSP?
-- A: Stop all clients, then reload the buffer. >vim
-     :lua vim.lsp.stop_client(vim.lsp.get_clients())
+- A: Use `:lsp restart`. You can also stop all clients, then reload the buffer: >vim
+     :lsp stop
      :edit
-
+<
 - Q: Why isn't completion working?
 - A: In the buffer where you want to use LSP, check that 'omnifunc' is set to
      "v:lua.vim.lsp.omnifunc": `:verbose set omnifunc?`
@@ -314,49 +335,6 @@ current buffer.
                                                                   *lsp-method*
 Requests and notifications defined by the LSP specification are referred to as
 "LSP methods". These are handled by Lua |lsp-handler| functions.
-
-The |vim.lsp.handlers| global table defines default handlers (only for
-server-to-client requests/notifications, not client-to-server). Note: depends
-on server support; they won't run if your server doesn't support them.
-
-You can list them with: >vim
-
-    :lua vim.print(vim.tbl_keys(vim.lsp.handlers))
-<
-They are also listed below.
-
-- `'callHierarchy/incomingCalls'`
-- `'callHierarchy/outgoingCalls'`
-- `'client/registerCapability'`
-- `'client/unregisterCapability'`
-- `'signature_help'`
-- `'textDocument/codeLens'`
-- `'textDocument/completion'`
-- `'textDocument/diagnostic'`
-- `'textDocument/documentHighlight'`
-- `'textDocument/documentSymbol'`
-- `'textDocument/formatting'`
-- `'textDocument/hover'`
-- `'textDocument/inlayHint'`
-- `'textDocument/inlineCompletion'`
-- `'textDocument/publishDiagnostics'`
-- `'textDocument/rangeFormatting'`
-- `'textDocument/rename'`
-- `'textDocument/signatureHelp'`
-- `'typeHierarchy/subtypes'`
-- `'typeHierarchy/supertypes'`
-- `'window/logMessage'`
-- `'window/showDocument'`
-- `'window/showMessage'`
-- `'window/showMessageRequest'`
-- `'window/workDoneProgress/create'`
-- `'workspace/applyEdit'`
-- `'workspace/configuration'`
-- `'workspace/executeCommand'`
-- `'workspace/inlayHint/refresh'`
-- `'workspace/semanticTokens/refresh'`
-- `'workspace/symbol'`
-- `'workspace/workspaceFolders'`
 
                                                                  *lsp-handler*
 LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
@@ -1009,18 +987,23 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
 
 enable({name}, {enable})                                    *vim.lsp.enable()*
-    Auto-starts LSP when a buffer is opened, based on the |lsp-config|
-    `filetypes`, `root_markers`, and `root_dir` fields.
+    Auto-activates LSP in each buffer based on the |lsp-config| `filetypes`,
+    `root_markers`, and `root_dir`.
+
+    To disable, pass `enable=false`: Stops related clients and servers
+    (force-stops servers after a timeout, unless `exit_timeout=false`).
+
+    Raises an error under the following conditions:
+    • `{name}` is not a valid LSP config name (for example, `'*'`).
+    • `{name}` corresponds to an LSP config file which raises an error.
+
+    If an error is raised when multiple names are provided, this function will
+    have no side-effects; it will not enable/disable any configs, including
+    ones which contain no errors.
 
     Examples: >lua
         vim.lsp.enable('clangd')
         vim.lsp.enable({'lua_ls', 'pyright'})
-<
-
-    Example: *lsp-restart* Passing `false` stops and detaches the client(s).
-    Thus you can "restart" LSP by disabling and re-enabling a given config: >lua
-        vim.lsp.enable('clangd', false)
-        vim.lsp.enable('clangd', true)
 <
 
     Example: To dynamically decide whether LSP is activated, define a
@@ -1040,8 +1023,11 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
     Parameters: ~
       • {name}    (`string|string[]`) Name(s) of client(s) to enable.
-      • {enable}  (`boolean?`) `true|nil` to enable, `false` to disable
-                  (actively stops and detaches clients as needed)
+      • {enable}  (`boolean?`) If `true|nil`, enables auto-activation of the
+                  given LSP config on current and future buffers. If `false`,
+                  disables auto-activation and stops related LSP clients and
+                  servers (force-stops servers after `exit_timeout`
+                  milliseconds).
 
 foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
     Close all {kind} of folds in the the window with {winid}.
@@ -1111,16 +1097,6 @@ formatexpr({opts})                                      *vim.lsp.formatexpr()*
       • {opts}  (`table?`) A table with the following fields:
                 • {timeout_ms} (`integer`, default: 500ms) The timeout period
                   for the formatting request..
-
-                                          *vim.lsp.get_buffers_by_client_id()*
-get_buffers_by_client_id({client_id})
-    Returns list of buffers attached to client_id.
-
-    Parameters: ~
-      • {client_id}  (`integer`) client id
-
-    Return: ~
-        (`integer[]`) buffers list of buffer ids
 
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
     Gets a client by id, or nil if the id is invalid or the client was
@@ -1248,22 +1224,6 @@ status()                                                    *vim.lsp.status()*
     Return: ~
         (`string`)
 
-stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
-    Stops a client(s).
-
-    You can also use the `stop()` function on a |vim.lsp.Client| object. To
-    stop all clients: >lua
-        vim.lsp.stop_client(vim.lsp.get_clients())
-<
-
-    By default asks the server to shutdown, unless stop was requested already
-    for this client, then force-shutdown is attempted.
-
-    Parameters: ~
-      • {client_id}  (`integer|integer[]|vim.lsp.Client[]`) id, list of id's,
-                     or list of |vim.lsp.Client| objects
-      • {force}      (`boolean?`) shutdown forcefully
-
 tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
     Provides an interface between the built-in client and 'tagfunc'.
 
@@ -1319,7 +1279,7 @@ the current buffer.
 *vim.lsp.LocationOpts.OnList*
 
     Fields: ~
-      • {items}     (`table[]`) Structured like |setqflist-what|
+      • {items}     (`vim.quickfix.entry[]`) See |setqflist-what|
       • {title}?    (`string`) Title for the list.
       • {context}?  (`{ bufnr: integer, method: string }`) Subset of `ctx`
                     from |lsp-handler|.
@@ -1531,13 +1491,16 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
 
-selection_range({direction})                   *vim.lsp.buf.selection_range()*
+                                               *vim.lsp.buf.selection_range()*
+selection_range({direction}, {timeout_ms})
     Perform an incremental selection at the cursor position based on ranges
     given by the LSP. The `direction` parameter specifies the number of times
     to expand the selection. Negative values will shrink the selection.
 
     Parameters: ~
-      • {direction}  (`integer`)
+      • {direction}   (`integer`)
+      • {timeout_ms}  (`integer?`) (default: `1000`) Maximum time
+                      (milliseconds) to wait for a result.
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
@@ -1607,21 +1570,20 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 |vim.lsp.ClientConfig|.
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
                                 provided at runtime (after startup).
-      • {flags}                 (`table`) A table with flags for the client.
-                                The current (experimental) flags are:
+      • {exit_timeout}          (`integer|boolean`, default: `false`)
+                                Milliseconds to wait for server to exit
+                                cleanly after sending the "shutdown" request
+                                before sending kill -15. If set to false,
+                                waits indefinitely. If set to true, nvim will
+                                kill the server immediately.
+      • {flags}                 (`table`) Experimental client flags:
                                 • {allow_incremental_sync}? (`boolean`,
                                   default: `true`) Allow using incremental
                                   sync for buffer edits
-                                • {debounce_text_changes} (`integer`, default:
-                                  `150`) Debounce `didChange` notifications to
-                                  the server by the given number in
-                                  milliseconds. No debounce occurs if `nil`.
-                                • {exit_timeout} (`integer|false`, default:
-                                  `false`) Milliseconds to wait for server to
-                                  exit cleanly after sending the "shutdown"
-                                  request before sending kill -15. If set to
-                                  false, nvim exits immediately after sending
-                                  the "shutdown" request to the server.
+                                • {debounce_text_changes}? (`integer`,
+                                  default: `150`) Debounce `didChange`
+                                  notifications to the server by the given
+                                  number in milliseconds.
       • {get_language_id}       (`fun(bufnr: integer, filetype: string): string`)
                                 See |vim.lsp.ClientConfig|.
       • {handlers}              (`table<string,lsp.Handler>`) See
@@ -1667,7 +1629,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:notify()|.
       • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
                                 See |Client:cancel_request()|.
-      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean|integer?)`)
+      • {stop}                  (`fun(self: vim.lsp.Client, force: integer|boolean?)`)
                                 See |Client:stop()|.
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
@@ -1675,7 +1637,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:exec_cmd()|.
       • {on_attach}             (`fun(self: vim.lsp.Client, bufnr: integer)`)
                                 See |Client:on_attach()|.
-      • {supports_method}       (`fun(self: vim.lsp.Client, method: string, bufnr: integer?)`)
+      • {supports_method}       (`fun(self: vim.lsp.Client, method: string|string, bufnr: integer?): boolean`)
                                 See |Client:supports_method()|.
 
 *vim.lsp.Client.Progress*
@@ -1734,21 +1696,20 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                process on exit, but if Nvim fails to exit
                                cleanly this could leave behind orphaned server
                                processes.
-      • {flags}?               (`table`) A table with flags for the client.
-                               The current (experimental) flags are:
+      • {exit_timeout}?        (`integer|boolean`, default: `false`)
+                               Milliseconds to wait for server to exit cleanly
+                               after sending the "shutdown" request before
+                               sending kill -15. If set to false, waits
+                               indefinitely. If set to true, nvim will kill
+                               the server immediately.
+      • {flags}?               (`table`) Experimental client flags:
                                • {allow_incremental_sync}? (`boolean`,
                                  default: `true`) Allow using incremental sync
                                  for buffer edits
-                               • {debounce_text_changes} (`integer`, default:
+                               • {debounce_text_changes}? (`integer`, default:
                                  `150`) Debounce `didChange` notifications to
                                  the server by the given number in
-                                 milliseconds. No debounce occurs if `nil`.
-                               • {exit_timeout} (`integer|false`, default:
-                                 `false`) Milliseconds to wait for server to
-                                 exit cleanly after sending the "shutdown"
-                                 request before sending kill -15. If set to
-                                 false, nvim exits immediately after sending
-                                 the "shutdown" request to the server.
+                                 milliseconds.
       • {get_language_id}?     (`fun(bufnr: integer, filetype: string): string`)
                                Language ID as string. Defaults to the buffer
                                filetype.
@@ -1909,20 +1870,22 @@ Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
       • |vim.lsp.buf_request_sync()|
 
 Client:stop({force})                                           *Client:stop()*
-    Stops a client, optionally with force.
+    Stops a client, optionally with force after a timeout.
 
-    By default, it will just request the server to shutdown without force. If
+    By default, it will request the server to shutdown, then force a shutdown
+    if the server has not exited after `self.exit_timeout` milliseconds. If
     you request to stop a client which has previously been requested to
-    shutdown, it will automatically escalate and force shutdown.
-
-    If `force` is a number, it will be treated as the time in milliseconds to
-    wait before forcing the shutdown.
+    shutdown, it will automatically escalate and force shutdown immediately,
+    regardless of the value of `force` (or `self.exit_timeout` if `nil`).
 
     Note: Forcing shutdown while a server is busy writing out project or index
     files can lead to file corruption.
 
     Parameters: ~
-      • {force}  (`boolean|integer?`)
+      • {force}  (`integer|boolean?`, default: `self.exit_timeout`) Time in
+                 milliseconds to wait before forcing a shutdown. If false,
+                 only request the server to shutdown, but don't force it. If
+                 true, force a shutdown immediately.
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Checks if a client supports a given method. Always returns true for
@@ -1931,71 +1894,68 @@ Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Note: Some language server capabilities can be file specific.
 
     Parameters: ~
-      • {method}  (`string`)
+      • {method}  (`string|string`)
       • {bufnr}   (`integer?`)
+
+    Return: ~
+        (`boolean`)
 
 
 ==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
-clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*
-    Clear the lenses
+enable({enable}, {filter})                         *vim.lsp.codelens.enable()*
+    Enables or disables code lens for the {filter}ed scope.
 
-    Parameters: ~
-      • {client_id}  (`integer?`) filter by client_id. All clients if nil
-      • {bufnr}      (`integer?`) filter by buffer. All buffers if nil, 0 for
-                     current buffer
-
-display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
-    Display the lenses using virtual text
-
-    Parameters: ~
-      • {lenses}     (`lsp.CodeLens[]?`) lenses to display
-      • {bufnr}      (`integer`)
-      • {client_id}  (`integer`)
-
-get({bufnr})                                          *vim.lsp.codelens.get()*
-    Return all lenses for the given buffer
-
-    Parameters: ~
-      • {bufnr}  (`integer`) Buffer number. 0 can be used for the current
-                 buffer.
-
-    Return: ~
-        (`lsp.CodeLens[]`)
-
-on_codelens({err}, {result}, {ctx})           *vim.lsp.codelens.on_codelens()*
-    |lsp-handler| for the method `textDocument/codeLens`
-
-    Parameters: ~
-      • {err}     (`lsp.ResponseError?`)
-      • {result}  (`lsp.CodeLens[]`)
-      • {ctx}     (`lsp.HandlerContext`)
-
-refresh({opts})                                   *vim.lsp.codelens.refresh()*
-    Refresh the lenses.
-
-    It is recommended to trigger this using an autocmd or via keymap.
-
-    Example: >vim
-        autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh({ bufnr = 0 })
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled())
 <
 
-    Parameters: ~
-      • {opts}  (`table?`) Optional fields
-                • {bufnr} (`integer?`) filter by buffer. All buffers if nil, 0
-                  for current buffer
-
-run()                                                 *vim.lsp.codelens.run()*
-    Run the code lens available in the current line.
-
-save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
-    Store lenses for a specific buffer and client
+    To run a code lens, see |vim.lsp.codelens.run()|.
 
     Parameters: ~
-      • {lenses}     (`lsp.CodeLens[]?`) lenses to store
-      • {bufnr}      (`integer`)
-      • {client_id}  (`integer`)
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+get({filter})                                         *vim.lsp.codelens.get()*
+    Get all code lenses in the {filter}ed scope.
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|:
+                  • {bufnr}? (`integer`, default: 0) Buffer handle, or 0 for
+                    current.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+    Return: ~
+        (`table[]`) A list of objects with the following fields:
+        • {client_id} (`integer`)
+        • {lens} (`lsp.CodeLens`)
+
+is_enabled({filter})                           *vim.lsp.codelens.is_enabled()*
+    Query whether code lens is enabled in the {filter}ed scope
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+    Return: ~
+        (`boolean`) whether code lens is enabled.
+
+run({opts})                                           *vim.lsp.codelens.run()*
+    Run code lens at the current cursor position.
+
+    Parameters: ~
+      • {opts}  (`table?`) Optional parameters |kwargs|:
+                • {client_id}? (`integer`, default: all) Client ID, or nil for
+                  all.
 
 
 ==============================================================================
@@ -2064,6 +2024,8 @@ enable({enable}, {client_id}, {bufnr}, {opts})
                        `triggerCharacters`.
                      • {convert}? (`fun(item: lsp.CompletionItem): table`)
                        Transforms an LSP CompletionItem to |complete-items|.
+                     • {cmp}? (`fun(a: table, b: table): boolean`) Comparator
+                       for sorting merged completion items from all servers.
 
 get({opts})                                         *vim.lsp.completion.get()*
     Triggers LSP completion once in the current buffer, if LSP completion is
@@ -2326,10 +2288,13 @@ get({opts})                                  *vim.lsp.inline_completion.get()*
       • {opts}  (`table?`) A table with the following fields:
                 • {bufnr}? (`integer`, default: 0) Buffer handle, or 0 for
                   current.
-                • {on_accept}? (`fun(item: vim.lsp.inline_completion.Item)`)
-                  Accept handler, called with the accepted item. If not
-                  provided, the default handler is used, which applies changes
-                  to the buffer based on the completion item.
+                • {on_accept}?
+                  (`fun(item: vim.lsp.inline_completion.Item): vim.lsp.inline_completion.Item?`)
+                  A callback triggered when a completion item is accepted. You
+                  can use it to modify the completion item that is about to be
+                  accepted and return it to apply the changes, or return `nil`
+                  to prevent the changes from being applied to the buffer so
+                  you can implement custom behavior.
 
     Return: ~
         (`boolean`) `true` if a completion was applied, else `false`.
@@ -2476,7 +2441,7 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
     Client RPC object
 
     Fields: ~
-      • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
+      • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
                       See |vim.lsp.rpc.request()|
       • {notify}      (`fun(method: string, params: any): boolean`) See
                       |vim.lsp.rpc.notify()|

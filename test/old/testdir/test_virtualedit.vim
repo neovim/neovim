@@ -395,7 +395,7 @@ func Test_delete_break_tab()
   normal v3ld
   call assert_equal('    two', getline(1))
   set virtualedit&
-  close!
+  bw!
 endfunc
 
 " Test for using <BS>, <C-W> and <C-U> in virtual edit mode
@@ -413,7 +413,7 @@ func Test_ve_backspace()
   call assert_equal([0, 1, 1, 0], getpos('.'))
   set backspace&
   set virtualedit&
-  close!
+  bw!
 endfunc
 
 " Test for delete (x) on EOL character and after EOL
@@ -727,6 +727,27 @@ func Test_virtualedit_set_cursor_pos_maxcol()
   call cursor(1, 1)
   call cursor(pos[1:])
   call assert_equal([0, 1, 7, 0], getpos('.'))
+
+  set virtualedit&
+  bwipe!
+endfunc
+
+" Verify that getpos() remains consistent when the cursor is past EOL after
+" toggling Visual mode with virtualedit=all.
+func Test_virtualedit_getpos_stable_past_eol_after_visual()
+  new
+  set virtualedit=all
+  call setline(1, 'abc')
+
+  normal! gg$3l
+  let p1 = getpos('.')
+
+  normal! v
+  redraw
+  exe "normal! \<Esc>"
+
+  let p2 = getpos('.')
+  call assert_equal(p1, p2, 'Position should not be re-encoded after leaving Visual mode')
 
   set virtualedit&
   bwipe!

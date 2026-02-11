@@ -270,8 +270,11 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
       return array;
     }
 
-    MTPair pair;
-    while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+    while ((int64_t)kv_size(array) < amount) {
+      MTPair pair;
+      if (!marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+        break;
+      }
       push_mark(&array, ns_id, type_filter, pair);
     }
   } else {
@@ -509,7 +512,7 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
                       new_row, 0, new_byte, undo);
 }
 
-// Adjust extmarks following a text edit.
+// Adjusts extmarks after a text edit, and emits the `on_bytes` event (`:h api-buffer-updates`).
 //
 // @param buf
 // @param start_row   Start row of the region to be changed

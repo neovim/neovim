@@ -313,9 +313,9 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
 
             /// The Virtual Text of the decor item we're looking ahead to
             DecorVirtText *lookaheadVt = NULL;
-            if (item->kind == kDecorKindVirtText) {
-              assert(item->data.vt);
-              lookaheadVt = item->data.vt;
+            if (lookaheadItem->kind == kDecorKindVirtText) {
+              assert(lookaheadItem->data.vt);
+              lookaheadVt = lookaheadItem->data.vt;
             }
 
             if (decor_virt_pos_kind(lookaheadItem) == kVPosEndOfLineRightAlign) {
@@ -1668,7 +1668,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     = !has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0;
   int virt_line_index = -1;
   int virt_line_flags = 0;
-  // Repeat for the whole displayed line.
+
+  // Repeat for each cell in the displayed line.
   while (true) {
     int has_match_conc = 0;  ///< match wants to conceal
     int decor_conceal = 0;
@@ -2924,7 +2925,33 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
     if (wlv.filler_todo <= 0) {
       // Apply lowest-priority line attr now, so everything can override it.
-      wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+      int low = wlv.line_attr_lowprio;
+      int high = wlv.char_attr;
+
+      if (wlv.line_attr_lowprio != 0) {
+        HlAttrs line_ae = syn_attr2entry(wlv.line_attr_lowprio);
+        HlAttrs char_ae = syn_attr2entry(wlv.char_attr);
+        int win_normal_bg = normal_bg;
+        int win_normal_cterm_bg = cterm_normal_bg_color;
+
+        // Get window-local Normal background (respects 'winhighlight' option).
+        if (bg_attr != 0) {
+          HlAttrs norm_ae = syn_attr2entry(bg_attr);
+          win_normal_bg = norm_ae.rgb_bg_color;
+          win_normal_cterm_bg = norm_ae.cterm_bg_color;
+        }
+        bool char_is_normal_bg = ui_rgb_attached()
+                                 ? (char_ae.rgb_bg_color == win_normal_bg)
+                                 : (char_ae.cterm_bg_color == win_normal_cterm_bg);
+
+        // If line has background (CursorLine) and char's background equals Normal's background,
+        // reverse the combination order to let CursorLine override normal_bg.
+        if ((line_ae.rgb_bg_color >= 0 || line_ae.cterm_bg_color > 0) && char_is_normal_bg) {
+          low = wlv.char_attr;
+          high = wlv.line_attr_lowprio;
+        }
+      }
+      wlv.char_attr = hl_combine_attr(low, high);
     }
 
     if (wlv.filler_todo <= 0) {

@@ -70,6 +70,10 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       }
       wp->w_p_wbr = empty_string_option;
     }
+    if (wp->w_p_stl && wp->w_p_stl != empty_string_option) {
+      free_string_option(wp->w_p_stl);
+      wp->w_p_stl = empty_string_option;
+    }
   } else {
     assert(!last);
     assert(!wp->w_floating);
@@ -104,14 +108,13 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     win_append(lastwin_nofloating(), wp, NULL);
   }
   wp->w_floating = true;
-  wp->w_status_height = 0;
+  wp->w_status_height = wp->w_p_stl && *wp->w_p_stl != NUL
+                        && (p_ls == 1 || p_ls == 2) ? STATUS_HEIGHT : 0;
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
-  win_set_inner_size(wp, true);
-  wp->w_pos_changed = true;
   redraw_later(wp, UPD_VALID);
   return wp;
 }
@@ -164,7 +167,16 @@ void win_set_minimal_style(win_T *wp)
   // statuscolumn: cleared
   if (wp->w_p_stc != NULL && *wp->w_p_stc != NUL) {
     free_string_option(wp->w_p_stc);
-    wp->w_p_stc = xstrdup("");
+    wp->w_p_stc = empty_string_option;
+  }
+
+  // statusline: cleared (for floating windows)
+  if (wp->w_floating && wp->w_p_stl != NULL && *wp->w_p_stl != NUL) {
+    free_string_option(wp->w_p_stl);
+    wp->w_p_stl = empty_string_option;
+    if (wp->w_status_height > 0) {
+      win_config_float(wp, wp->w_config);
+    }
   }
 }
 
@@ -180,6 +192,14 @@ int win_border_width(win_T *wp)
 
 void win_config_float(win_T *wp, WinConfig fconfig)
 {
+  // Process statusline changes before applying new height from config
+  bool show_stl = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2);
+  if (wp->w_status_height && !show_stl) {
+    win_remove_status_line(wp, false);
+  } else if (wp->w_status_height == 0 && show_stl) {
+    wp->w_status_height = STATUS_HEIGHT;
+  }
+
   wp->w_width = MAX(fconfig.width, 1);
   wp->w_height = MAX(fconfig.height, 1);
 
@@ -225,7 +245,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
 
   win_set_inner_size(wp, true);
   set_must_redraw(UPD_VALID);
-
+  wp->w_redr_status = wp->w_status_height;
   wp->w_pos_changed = true;
   if (change_external || change_border) {
     wp->w_hl_needs_update = true;
@@ -308,6 +328,17 @@ void win_check_anchored_floats(win_T *win)
   }
 }
 
+void win_float_update_statusline(void)
+{
+  for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    bool has_status = wp->w_status_height > 0;
+    bool should_show = *wp->w_p_stl != NUL && (p_ls == 1 || p_ls == 2);
+    if (should_show != has_status) {
+      win_config_float(wp, wp->w_config);
+    }
+  }
+}
+
 void win_float_anchor_laststatus(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
@@ -372,7 +403,7 @@ win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
   return (wp->w_config.focusable && !wp->w_config.hide) ? wp : tp->tp_firstwin;
 }
 
-/// Inline helper function for handling errors and cleanup in win_float_create.
+/// Inline helper function for handling errors and cleanup in win_float_create_preview.
 static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 {
   if (ERROR_SET(err)) {
@@ -393,7 +424,7 @@ static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
 /// @param[in] bool create a new buffer for window.
 ///
 /// @return win_T
-win_T *win_float_create(bool enter, bool new_buf)
+win_T *win_float_create_preview(bool enter, bool new_buf)
 {
   WinConfig config = WIN_CONFIG_INIT;
   config.col = curwin->w_wcol;
@@ -433,6 +464,8 @@ win_T *win_float_create(bool enter, bool new_buf)
   unblock_autocmds();
   wp->w_p_diff = false;
   wp->w_float_is_info = true;
+  wp->w_p_wrap = true;  // 'wrap' is default on
+  wp->w_p_so = 0;       // 'scrolloff' zero
   if (enter) {
     win_enter(wp, false);
   }

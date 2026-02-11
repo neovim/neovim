@@ -102,6 +102,7 @@
 ///
 /// @param  tv  Pointer to typval where value is stored. May not be NULL.
 /// @param  fun  Function name. May be NULL.
+/// @param  prefix  Prefix for converting to a string.
 
 /// @def TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
 /// @brief Macros used before starting to convert partial arguments
@@ -344,15 +345,19 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                             tv_blob_len(tv->vval.v_blob));
     break;
   case VAR_FUNC:
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, tv->vval.v_string);
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, tv->vval.v_string, "");
     TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, 0);
     TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, -1);
     TYPVAL_ENCODE_CONV_FUNC_END(tv);
     break;
   case VAR_PARTIAL: {
     partial_T *const pt = tv->vval.v_partial;
-    (void)pt;
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));
+    char *const fun = pt == NULL ? NULL : partial_name(pt);
+    // When using uf_name prepend "g:" for a global function.
+    const char *const prefix = fun != NULL && pt != NULL && pt->pt_name == NULL
+                               && ASCII_ISUPPER(fun[0]) ? "g:" : "";
+    (void)prefix;
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, fun, prefix);
     kvi_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvPartial,
         .tv = tv,

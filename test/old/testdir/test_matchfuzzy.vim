@@ -62,6 +62,7 @@ func Test_matchfuzzy()
   let l = getbufinfo()->map({_, v -> fnamemodify(v.name, ':t')})->matchfuzzy('ndl')
   call assert_equal(1, len(l))
   call assert_match('needle', l[0])
+  %bw!
 
   " Test for fuzzy matching dicts
   let l = [{'id' : 5, 'val' : 'crayon'}, {'id' : 6, 'val' : 'camera'}]
@@ -311,11 +312,20 @@ func Test_matchfuzzy_initialized()
 
   let buf = RunVimInTerminal('-u NONE -X -Z', {})
   call term_sendkeys(buf, ":source XTest_matchfuzzy\n")
-  call TermWait(buf, 2000)
+  " Use term_wait directly rather than the TermWait wrapper; otherwise,
+  " retries become very slow.
+  call term_wait(buf, 2000)
 
   let job = term_getjob(buf)
   if job_status(job) == "run"
     call job_stop(job, "int")
+    " The search might or might not have been completed. If the search is
+    " finished and Vim receives a SIGINT, then that will trigger a message
+    " next time Vim is active:
+    "   Type  :qa  and press <Enter> to exit Vim
+    " If we do not send something here to trigger displaying the message, before
+    " TermWait(), then the exit sequence sent afterward does not work.
+    call term_sendkeys(buf, "\<C-O>")
     call TermWait(buf, 50)
   endif
 

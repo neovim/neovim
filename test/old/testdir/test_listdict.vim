@@ -567,6 +567,8 @@ func Test_dict_literal_keys()
   " why *{} cannot be used for a literal dictionary
   let blue = 'blue'
   call assert_equal('6', trim(execute('echo 2 *{blue: 3}.blue')))
+
+  call assert_fails('eval 1 || #{a:', 'E15:') " used to leak
 endfunc
 
 " Nasty: deepcopy() dict that refers to itself (fails when noref used)
@@ -1364,7 +1366,7 @@ func Test_listdict_index()
   call CheckLegacyAndVim9Failure(['VAR d = {"k": 10}', 'echo d[1 : 2]'], 'E719:')
 
   call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
-  call CheckDefAndScriptFailure(['var v = [4, 6][() => 1]'], ['E1012', 'E703:'])
+  call CheckDefAndScriptFailure(['var v = [4, 6][() => 1]'], ['E1012:', 'E703:'])
 
   call CheckLegacyAndVim9Failure(['VAR v = range(5)[2 : []]'], ['E730:', 'E1012:', 'E730:'])
 

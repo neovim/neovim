@@ -35,13 +35,6 @@ local changetracking = lsp._changetracking
 ---@nodoc
 lsp.rpc_response_error = lsp.rpc.rpc_response_error
 
-lsp._resolve_to_request = {
-  ['codeAction/resolve'] = 'textDocument/codeAction',
-  ['codeLens/resolve'] = 'textDocument/codeLens',
-  ['documentLink/resolve'] = 'textDocument/documentLink',
-  ['inlayHint/resolve'] = 'textDocument/inlayHint',
-}
-
 -- TODO improve handling of scratch buffers with LSP attached.
 
 --- Called by the client when trying to call a method that's not
@@ -345,12 +338,12 @@ end
 
 --- @nodoc
 --- @class vim.lsp.config
---- @field [string] vim.lsp.Config
+--- @field [string] vim.lsp.Config?
 --- @field package _configs table<string,vim.lsp.Config>
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
-  --- @return vim.lsp.Config
+  --- @return vim.lsp.Config?
   __index = function(self, name)
     validate_config_name(name)
 
@@ -371,7 +364,7 @@ lsp.config = setmetatable({ _configs = {} }, {
           --- @type vim.lsp.Config?
           rtp_config = vim.tbl_deep_extend('force', rtp_config or {}, config)
         else
-          log.warn(('%s does not return a table, ignoring'):format(v))
+          error(('%s: not a table'):format(v))
         end
       end
 
@@ -515,22 +508,25 @@ local function lsp_enable_callback(bufnr)
   end
 end
 
---- Auto-starts LSP when a buffer is opened, based on the |lsp-config| `filetypes`, `root_markers`,
---- and `root_dir` fields.
+--- Auto-activates LSP in each buffer based on the |lsp-config| `filetypes`, `root_markers`, and
+--- `root_dir`.
+---
+--- To disable, pass `enable=false`: Stops related clients and servers (force-stops servers after
+--- a timeout, unless `exit_timeout=false`).
+---
+--- Raises an error under the following conditions:
+--- - `{name}` is not a valid LSP config name (for example, `'*'`).
+--- - `{name}` corresponds to an LSP config file which raises an error.
+---
+--- If an error is raised when multiple names are provided, this function will
+--- have no side-effects; it will not enable/disable any configs, including
+--- ones which contain no errors.
 ---
 --- Examples:
 ---
 --- ```lua
 --- vim.lsp.enable('clangd')
 --- vim.lsp.enable({'lua_ls', 'pyright'})
---- ```
----
---- Example: [lsp-restart]() Passing `false` stops and detaches the client(s). Thus you can
---- "restart" LSP by disabling and re-enabling a given config:
----
---- ```lua
---- vim.lsp.enable('clangd', false)
---- vim.lsp.enable('clangd', true)
 --- ```
 ---
 --- Example: To _dynamically_ decide whether LSP is activated, define a |lsp-root_dir()| function
@@ -549,16 +545,29 @@ end
 ---@since 13
 ---
 --- @param name string|string[] Name(s) of client(s) to enable.
---- @param enable? boolean `true|nil` to enable, `false` to disable (actively stops and detaches
---- clients as needed)
+--- @param enable? boolean If `true|nil`, enables auto-activation of the given LSP config on current
+--- and future buffers. If `false`, disables auto-activation and stops related LSP clients and
+--- servers (force-stops servers after `exit_timeout` milliseconds).
 function lsp.enable(name, enable)
   validate('name', name, { 'string', 'table' })
 
   local names = vim._ensure_list(name) --[[@as string[] ]]
+
+  -- Check for errors, and abort with no side-effects if there is one.
   for _, nm in ipairs(names) do
-    if nm == '*' then
-      error('Invalid name')
+    if nm:match('%*') then
+      error('LSP config name cannot contain wildcard ("*")')
     end
+
+    -- Raise error if `lsp.config[nm]` raises an error, instead of waiting for
+    -- the error to be triggered by `lsp_enable_callback()`.
+    if enable ~= false then
+      _ = lsp.config[nm]
+    end
+  end
+
+  -- Now that there can be no errors, enable/disable all names.
+  for _, nm in ipairs(names) do
     lsp._enabled_configs[nm] = enable ~= false and {} or nil
   end
 
@@ -581,13 +590,13 @@ function lsp.enable(name, enable)
 
   -- Ensure any pre-existing buffers start/stop their LSP clients.
   if enable ~= false then
-    if vim.v.vim_did_enter == 1 then
+    if (vim.v.vim_did_enter == 1 or vim.fn.did_filetype() == 1) and next(lsp._enabled_configs) then
       vim.cmd.doautoall('nvim.lsp.enable FileType')
     end
   else
     for _, nm in ipairs(names) do
       for _, client in ipairs(lsp.get_clients({ name = nm })) do
-        client:stop()
+        client:stop(client.exit_timeout)
       end
     end
   end
@@ -1033,9 +1042,15 @@ end
 
 --- Returns list of buffers attached to client_id.
 ---
+---@deprecated
 ---@param client_id integer client id
 ---@return integer[] buffers list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
+  vim.deprecate(
+    'vim.lsp.get_buffers_by_client_id()',
+    'vim.lsp.get_client_by_id(id).attached_buffers',
+    '0.13'
+  )
   local client = lsp.get_client_by_id(client_id)
   return client and vim.tbl_keys(client.attached_buffers) or {}
 end
@@ -1049,12 +1064,16 @@ end
 --- vim.lsp.stop_client(vim.lsp.get_clients())
 --- ```
 ---
---- By default asks the server to shutdown, unless stop was requested
---- already for this client, then force-shutdown is attempted.
+--- By default asks the server to shutdown, unless stop was requested already for this client (then
+--- force-shutdown is attempted, unless `exit_timeout=false`).
 ---
+---@deprecated
 ---@param client_id integer|integer[]|vim.lsp.Client[] id, list of id's, or list of |vim.lsp.Client| objects
----@param force? boolean shutdown forcefully
+---@param force? boolean|integer Whether to shutdown forcefully.
+--- If `force` is a number, it will be treated as the time in milliseconds to
+--- wait before forcing the shutdown.
 function lsp.stop_client(client_id, force)
+  vim.deprecate('vim.lsp.stop_client()', 'vim.lsp.Client:stop()', '0.13')
   --- @type integer[]|vim.lsp.Client[]
   local ids = type(client_id) == 'table' and client_id or { client_id }
   for _, id in ipairs(ids) do
@@ -1134,7 +1153,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     log.info('exit_handler', active_clients)
 
     for _, client in pairs(active_clients) do
-      client:stop(client.flags.exit_timeout)
+      client:stop(client.exit_timeout)
     end
   end,
 })

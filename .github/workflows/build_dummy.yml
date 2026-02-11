@@ -19,15 +19,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Test the minimum supported cmake.
   old-cmake:
-    name: Test oldest supported cmake
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - run: echo "success"
 
+  # Offline build (USE_EXISTING_SRC_DIR=ON with no network access)
   use-existing-src:
-    name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
     runs-on: ubuntu-latest
     steps:
       - run: echo "success"

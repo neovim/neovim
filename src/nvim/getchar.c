@@ -425,7 +425,7 @@ bool stuff_empty(void)
 }
 
 /// @return  true if readbuf1 is empty.  There may still be redo characters in
-///          redbuf2.
+///          readbuf2.
 bool readbuf1_empty(void)
   FUNC_ATTR_PURE
 {
@@ -449,9 +449,18 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   while (read_readbuffers(true) != NUL) {}
 
   if (flush_typeahead == FLUSH_MINIMAL) {
-    // remove mapped characters at the start only
-    typebuf.tb_off += typebuf.tb_maplen;
-    typebuf.tb_len -= typebuf.tb_maplen;
+    // remove mapped characters at the start only,
+    // but only when enough space left in typebuf
+    if (typebuf.tb_off + typebuf.tb_maplen >= typebuf.tb_buflen) {
+      typebuf.tb_off = MAXMAPLEN;
+      typebuf.tb_len = 0;
+    } else {
+      typebuf.tb_off += typebuf.tb_maplen;
+      typebuf.tb_len -= typebuf.tb_maplen;
+    }
+    if (typebuf.tb_len == 0) {
+      typebuf_was_filled = false;
+    }
   } else {
     // remove typeahead
     if (flush_typeahead == FLUSH_INPUT) {
@@ -1294,6 +1303,7 @@ static void alloc_typebuf(void)
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
   }
+  typebuf_was_filled = false;
 }
 
 /// Free the buffers of "typebuf".
@@ -1798,6 +1808,16 @@ int vgetc(void)
   // Execute Lua on_key callbacks.
   kvi_push(on_key_buf, NUL);
   if (nlua_execute_on_key(c, on_key_buf.items)) {
+    // Keys following K_COMMAND/K_LUA/K_PASTE_START aren't normally received by
+    // vim.on_key() callbacks, so discard them along with the current key.
+    if (c == K_COMMAND) {
+      xfree(getcmdkeycmd(NUL, NULL, 0, false));
+    } else if (c == K_LUA) {
+      map_execute_lua(false, true);
+    } else if (c == K_PASTE_START) {
+      paste_repeat(0);
+    }
+    // Discard the current key.
     c = K_IGNORE;
   }
   kvi_destroy(on_key_buf);
@@ -3005,7 +3025,7 @@ static int vgetorpeek(bool advance)
 ///  Return -1 when end of input script reached.
 ///
 /// @param wait_time  milliseconds
-int inchar(uint8_t *buf, int maxlen, long wait_time)
+static int inchar(uint8_t *buf, int maxlen, long wait_time)
 {
   int len = 0;  // Init for GCC.
   int retesc = false;  // Return ESC with gotint.
@@ -3182,7 +3202,7 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       emsg(_(e_cmd_mapping_must_end_with_cr_before_second_cmd));
       aborted = true;
     } else if (c1 == K_SNR) {
-      ga_concat(&line_ga, "<SNR>");
+      ga_concat_len(&line_ga, S_LEN("<SNR>"));
     } else {
       if (cmod != 0) {
         ga_append(&line_ga, K_SPECIAL);
@@ -3213,9 +3233,10 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 /// Handle a Lua mapping: get its LuaRef from typeahead and execute it.
 ///
 /// @param may_repeat  save the LuaRef for redoing with "." later
+/// @param discard     discard the keys instead of executing the LuaRef
 ///
 /// @return  false if getting the LuaRef was aborted, true otherwise
-bool map_execute_lua(bool may_repeat)
+bool map_execute_lua(bool may_repeat, bool discard)
 {
   garray_T line_ga;
   int c1 = -1;
@@ -3241,9 +3262,9 @@ bool map_execute_lua(bool may_repeat)
 
   no_mapping--;
 
-  if (aborted) {
+  if (aborted || discard) {
     ga_clear(&line_ga);
-    return false;
+    return !aborted;
   }
 
   LuaRef ref = (LuaRef)atoi(line_ga.ga_data);

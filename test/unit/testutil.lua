@@ -163,6 +163,8 @@ local function filter_complex_blocks(body)
         -- used by macOS headers
         or string.find(line, 'typedef enum : ')
         or string.find(line, 'mach_vm_range_recipe')
+        or string.find(line, 'ipc_info_object_type_t')
+        or string.find(line, '__Reply__mach_port_kobject_t')
       )
     then
       -- Remove GCC's extension keyword which is just used to disable warnings.
@@ -199,8 +201,10 @@ local function is_child_cdefs()
   return os.getenv('NVIM_TEST_MAIN_CDEFS') ~= '1'
 end
 
--- use this helper to import C files, you can pass multiple paths at once,
--- this helper will return the C namespace of the nvim library.
+--- use this helper to import C files, you can pass multiple paths at once,
+--- this helper will return the C namespace of the nvim library.
+---
+--- @param ... string
 local function cimport(...)
   local previous_defines --- @type string
   local preprocess_cache --- @type table<string,string>

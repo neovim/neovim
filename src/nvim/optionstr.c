@@ -54,6 +54,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "optionstr.c.generated.h"
 
@@ -89,8 +90,6 @@ void didset_string_options(void)
   check_str_opt(kOptCasemap, NULL);
   check_str_opt(kOptBackupcopy, NULL);
   check_str_opt(kOptBelloff, NULL);
-  check_str_opt(kOptCompletefuzzycollect, NULL);
-  check_str_opt(kOptIsexpand, NULL);
   check_str_opt(kOptCompleteopt, NULL);
   check_str_opt(kOptSessionoptions, NULL);
   check_str_opt(kOptViewoptions, NULL);
@@ -712,7 +711,7 @@ const char *did_set_buftype(optset_T *args)
     // Set default value for 'comments'
     set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
     // set the prompt start position to lastline.
-    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
+    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 0, .coladd = 0 };
     RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
   }
   if (win->w_status_height || global_stl_height()) {
@@ -1384,44 +1383,6 @@ const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_str_generic(args);
 }
 
-/// The 'isexpand' option is changed.
-const char *did_set_isexpand(optset_T *args)
-{
-  char *ise = p_ise;
-  char *p;
-  bool last_was_comma = false;
-
-  if (args->os_flags & OPT_LOCAL) {
-    ise = curbuf->b_p_ise;
-  }
-
-  for (p = ise; *p != NUL;) {
-    if (*p == '\\' && p[1] == ',') {
-      p += 2;
-      last_was_comma = false;
-      continue;
-    }
-
-    if (*p == ',') {
-      if (last_was_comma) {
-        return e_invarg;
-      }
-      last_was_comma = true;
-      p++;
-      continue;
-    }
-
-    last_was_comma = false;
-    MB_PTR_ADV(p);
-  }
-
-  if (last_was_comma) {
-    return e_invarg;
-  }
-
-  return NULL;
-}
-
 /// The 'iskeyword' option is changed.
 const char *did_set_iskeyword(optset_T *args)
 {
@@ -1898,14 +1859,20 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
   }
   const char *errmsg = NULL;
   char *s = *varp;
+  bool is_stl = args->os_idx == kOptStatusline;
 
   // reset statusline to default when setting global option and empty string is being set
-  if (args->os_idx == kOptStatusline
+  if (is_stl
       && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
       && s[0] == NUL) {
     xfree(*varp);
     *varp = xstrdup(get_option_default(args->os_idx, args->os_flags).data.string.data);
     s = *varp;
+  }
+
+  // handle floating window statusline changes
+  if (is_stl && win && win->w_floating) {
+    win_config_float(win, win->w_config);
   }
 
   if (rulerformat && *s == '%') {

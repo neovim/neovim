@@ -1,7 +1,7 @@
 *indent.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 This file is about indenting C programs and other files.

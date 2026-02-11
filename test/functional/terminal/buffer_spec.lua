@@ -33,21 +33,35 @@ describe(':terminal buffer', function()
   end)
 
   it('terminal-mode forces various options', function()
+    local expr =
+      '[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'
+
     feed([[<C-\><C-N>]])
     command('setlocal cursorline cursorlineopt=both cursorcolumn scrolloff=4 sidescrolloff=7')
-    eq(
-      { 'both', 1, 1, 4, 7 },
-      eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]')
-    )
+    eq({ 'both', 1, 1, 4, 7 }, eval(expr))
     eq('nt', eval('mode(1)'))
 
-    -- Enter terminal-mode ("insert" mode in :terminal).
+    -- Enter Terminal mode ("insert" mode in :terminal).
     feed('i')
     eq('t', eval('mode(1)'))
-    eq(
-      { 'number', 1, 0, 0, 0 },
-      eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]')
-    )
+    eq({ 'number', 1, 0, 0, 0 }, eval(expr))
+
+    -- Return to Normal mode.
+    feed([[<C-\><C-N>]])
+    eq('nt', eval('mode(1)'))
+    eq({ 'both', 1, 1, 4, 7 }, eval(expr))
+
+    -- Enter Terminal mode again.
+    feed('i')
+    eq('t', eval('mode(1)'))
+    eq({ 'number', 1, 0, 0, 0 }, eval(expr))
+
+    -- Delete the terminal buffer and return to the previous buffer.
+    command('bwipe!')
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    eq('n', eval('mode(1)'))
+    -- Window options in the old buffer should be unchanged. #37484
+    eq({ 'both', 0, 0, -1, -1 }, eval(expr))
   end)
 
   it('terminal-mode does not change cursorlineopt if cursorline is disabled', function()
@@ -64,26 +78,6 @@ describe(':terminal buffer', function()
     eq({ 0, 'line' }, eval('[&l:cursorline, &l:cursorlineopt]'))
   end)
 
-  describe('when a new file is edited', function()
-    before_each(function()
-      feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew<cr>')
-      screen:expect([[
-        ^                                                  |
-        {100:~                                                 }|*5
-        :enew                                             |
-      ]])
-    end)
-
-    it('will hide the buffer, ignoring the bufhidden option', function()
-      feed(':bnext:l<esc>')
-      screen:expect([[
-        ^                                                  |
-        {100:~                                                 }|*5
-                                                          |
-      ]])
-    end)
-  end)
-
   describe('swap and undo', function()
     before_each(function()
       feed('<c-\\><c-n>')
@@ -95,11 +89,10 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = api.nvim_exec('swapname', true):gsub('\n', '')
-      eq(nil, io.open(swapfile))
+      eq('No swap file', n.exec_capture('swapname'))
     end)
 
-    it('does not create undofiles files', function()
+    it('does not create undo files', function()
       local undofile = api.nvim_eval('undofile(bufname("%"))')
       eq(nil, io.open(undofile))
     end)
@@ -242,8 +235,7 @@ describe(':terminal buffer', function()
   end)
 
   it('requires bang (!) to close a running job #15402', function()
-    skip(is_os('win'), 'Test freezes the CI and makes it time out')
-    eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+    eq('Vim(wqall):E948: Job still running (add ! to end the job)', exc_exec('wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
         '^Vim%('
@@ -255,6 +247,10 @@ describe(':terminal buffer', function()
     command('call jobstop(&channel)')
     assert(0 >= eval('jobwait([&channel], 1000)[0]'))
     command('bdelete')
+  end)
+
+  it(':wqall! closes a running job', function()
+    n.expect_exit(command, 'wqall!')
   end)
 
   it('stops running jobs with :quit', function()
@@ -424,6 +420,35 @@ describe(':terminal buffer', function()
                                                         |
     ]])
     eq('TermLeave bar false', exec_lua('return _G.last_event'))
+  end)
+
+  it('no crash with race between buffer close and OSC 2', function()
+    skip(is_os('win'), 'tty-test cannot forward OSC 2 on Windows?')
+    exec_lua(function()
+      vim.api.nvim_chan_send(vim.bo.channel, '\027]2;SOME_TITLE\007')
+    end)
+    retry(nil, 4000, function()
+      eq('SOME_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    end)
+    screen:expect_unchanged()
+    --- @type string
+    local title_before_del = exec_lua(function()
+      vim.wait(10) -- Ensure there are no pending events so that a write isn't queued.
+      vim.api.nvim_chan_send(vim.bo.channel, '\027]2;OTHER_TITLE\007')
+      vim.uv.sleep(50) -- Block the event loop and wait for tty-test to forward OSC 2.
+      local term_title = vim.b.term_title
+      vim.api.nvim_buf_delete(0, { force = true })
+      vim.wait(10, nil, nil, true) -- Process fast events only.
+      return term_title
+    end)
+    -- Title isn't changed until the second vim.wait().
+    eq('SOME_TITLE', title_before_del)
+    screen:expect([[
+      ^                                                  |
+      {100:~                                                 }|*5
+                                                        |
+    ]])
+    assert_alive()
   end)
 end)
 
@@ -658,6 +683,34 @@ describe(':terminal buffer', function()
                                                           |
       ]])
     end)
+
+    describe('no heap-use-after-free after', function()
+      local term
+
+      before_each(function()
+        term = exec_lua(function()
+          vim.api.nvim_create_autocmd('TermRequest', { callback = function() end })
+          return vim.api.nvim_open_term(0, {})
+        end)
+      end)
+
+      it('wiping buffer with pending TermRequest #37226', function()
+        exec_lua(function()
+          vim.api.nvim_chan_send(term, '\027]8;;https://example.com\027\\')
+          vim.api.nvim_buf_delete(0, { force = true })
+        end)
+        assert_alive()
+      end)
+
+      it('unloading buffer with pending TermRequest #37226', function()
+        api.nvim_create_buf(true, false) -- Create a buffer to switch to.
+        exec_lua(function()
+          vim.api.nvim_chan_send(term, '\027]8;;https://example.com\027\\')
+          vim.api.nvim_buf_delete(0, { force = true, unload = true })
+        end)
+        assert_alive()
+      end)
+    end)
   end)
 
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
@@ -705,7 +758,7 @@ describe(':terminal buffer', function()
   end)
 
   it('handles split UTF-8 sequences #16245', function()
-    local screen = Screen.new(50, 7)
+    local screen = Screen.new(50, 10)
     fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
     screen:expect([[
       ^å                                                 |
@@ -713,8 +766,78 @@ describe(':terminal buffer', function()
       1: å̲                                              |
       2: å̲                                              |
       3: å̲                                              |
-                                                        |*2
+                                                        |
+      [Process exited 0]                                |
+                                                        |*3
     ]])
+    -- Test with Unicode char at right edge using a 4-wide terminal
+    command('bwipe! | set laststatus=0 | 4vnew')
+    fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
+    screen:expect([[
+      ^å   │                                             |
+      ref:│{1:~                                            }|
+       å̲  │{1:~                                            }|
+      1: å̲│{1:~                                            }|
+      2: å̲│{1:~                                            }|
+      3: å̲│{1:~                                            }|
+          │{1:~                                            }|
+      [Pro│{1:~                                            }|
+      cess│{1:~                                            }|
+                                                        |
+    ]])
+  end)
+
+  --- @param subcmd 'REP'|'REPFAST'
+  local function check_term_rep(subcmd, count)
+    local screen = Screen.new(50, 7)
+    api.nvim_create_autocmd('TermClose', { command = 'let g:did_termclose = 1' })
+    fn.jobstart({ testprg('shell-test'), subcmd, count, 'TEST' }, { term = true })
+    retry(nil, nil, function()
+      eq(1, api.nvim_get_var('did_termclose'))
+    end)
+    feed('i')
+    screen:expect(([[
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+                                                        |
+      [Process exited 0]^                                |
+      {5:-- TERMINAL --}                                    |
+    ]]):format(count - 4, count - 3, count - 2, count - 1))
+    local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+    for i = 1, count do
+      eq(('%d: TEST'):format(i - 1), lines[i])
+    end
+  end
+
+  it('does not drop data when job exits immediately after output #3030', function()
+    api.nvim_set_option_value('scrollback', 30000, {})
+    check_term_rep('REPFAST', 20000)
+  end)
+
+  it('does not drop data when autocommands poll for events #37559', function()
+    api.nvim_set_option_value('scrollback', 30000, {})
+    api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
+    api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
+    api.nvim_create_autocmd('TermOpen', { command = 'sleep 50m', nested = true })
+    -- REP pauses 1 ms every 100 lines, so each autocommand processes some output.
+    check_term_rep('REP', 20000)
+  end)
+
+  describe('scrollback is correct if all output is drained by', function()
+    for _, event in ipairs({ 'BufFilePre', 'BufFilePost', 'TermOpen' }) do
+      describe(('%s autocommand that lasts for'):format(event), function()
+        for _, delay in ipairs({ 5, 15, 25 }) do
+          -- Terminal refresh delay is 10 ms.
+          it(('%.1f * terminal refresh delay'):format(delay / 10), function()
+            local cmd = ('sleep %dm'):format(delay)
+            api.nvim_create_autocmd(event, { command = cmd, nested = true })
+            check_term_rep('REPFAST', 200)
+          end)
+        end
+      end)
+    end
   end)
 
   it('handles unprintable chars', function()
@@ -818,6 +941,264 @@ describe(':terminal buffer', function()
     ]])
     eq(false, api.nvim_buf_is_valid(term_buf))
   end)
+
+  local enew_screen = [[
+    ^                                                  |
+    {1:~                                                 }|*5
+                                                      |
+  ]]
+
+  local function test_enew_in_buf_with_running_term(env)
+    describe('editing a new file', function()
+      it('hides terminal buffer ignoring bufhidden=wipe', function()
+        local old_snapshot = env.screen:get_snapshot()
+        command('setlocal bufhidden=wipe')
+        command('enew')
+        neq(env.buf, api.nvim_get_current_buf())
+        env.screen:expect(enew_screen)
+        feed('<C-^>')
+        eq(env.buf, api.nvim_get_current_buf())
+        env.screen:expect(old_snapshot)
+      end)
+    end)
+  end
+
+  local function test_open_term_in_buf_with_running_term(env)
+    describe('does not allow opening another terminal', function()
+      it('with jobstart() in same buffer', function()
+        eq(
+          ('Vim:Terminal already connected to buffer %d'):format(env.buf),
+          pcall_err(fn.jobstart, { testprg('tty-test') }, { term = true })
+        )
+        env.screen:expect_unchanged()
+      end)
+
+      it('with nvim_open_term() in same buffer', function()
+        eq(
+          ('Terminal already connected to buffer %d'):format(env.buf),
+          pcall_err(api.nvim_open_term, env.buf, {})
+        )
+        env.screen:expect_unchanged()
+      end)
+    end)
+  end
+
+  describe('with running terminal job', function()
+    local env = {}
+
+    before_each(function()
+      env.screen = Screen.new(50, 7)
+      fn.jobstart({ testprg('tty-test') }, { term = true })
+      env.screen:expect([[
+        ^tty ready                                         |
+                                                          |*6
+      ]])
+      env.buf = api.nvim_get_current_buf()
+      api.nvim_set_option_value('modified', false, { buf = env.buf })
+    end)
+
+    test_enew_in_buf_with_running_term(env)
+    test_open_term_in_buf_with_running_term(env)
+  end)
+
+  describe('with open nvim_open_term() channel', function()
+    local env = {}
+
+    before_each(function()
+      env.screen = Screen.new(50, 7)
+      local chan = api.nvim_open_term(0, {})
+      api.nvim_chan_send(chan, 'TEST')
+      env.screen:expect([[
+        ^TEST                                              |
+                                                          |*6
+      ]])
+      env.buf = api.nvim_get_current_buf()
+      api.nvim_set_option_value('modified', false, { buf = env.buf })
+    end)
+
+    test_enew_in_buf_with_running_term(env)
+    test_open_term_in_buf_with_running_term(env)
+  end)
+
+  local function test_enew_in_buf_with_finished_term(env)
+    describe('editing a new file', function()
+      it('hides terminal buffer with bufhidden=hide', function()
+        local old_snapshot = env.screen:get_snapshot()
+        command('setlocal bufhidden=hide')
+        command('enew')
+        neq(env.buf, api.nvim_get_current_buf())
+        env.screen:expect(enew_screen)
+        feed('<C-^>')
+        eq(env.buf, api.nvim_get_current_buf())
+        env.screen:expect(old_snapshot)
+      end)
+
+      it('wipes terminal buffer with bufhidden=wipe', function()
+        command('setlocal bufhidden=wipe')
+        command('enew')
+        neq(env.buf, api.nvim_get_current_buf())
+        eq(false, api.nvim_buf_is_valid(env.buf))
+        env.screen:expect(enew_screen)
+        feed('<C-^>')
+        env.screen:expect([[
+          ^                                                  |
+          {1:~                                                 }|*5
+          {9:E23: No alternate file}                            |
+        ]])
+      end)
+    end)
+  end
+
+  local function test_open_term_in_buf_with_finished_term(env)
+    describe('does not leak memory when opening another terminal', function()
+      describe('with jobstart() in same buffer', function()
+        it('in Normal mode', function()
+          fn.jobstart({ testprg('tty-test') }, { term = true })
+          env.screen:expect([[
+            ^tty ready                                         |
+                                                              |*6
+          ]])
+        end)
+
+        it('in Terminal mode', function()
+          feed('i')
+          eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+          fn.jobstart({ testprg('tty-test') }, { term = true })
+          env.screen:expect([[
+            tty ready                                         |
+            ^                                                  |
+                                                              |*4
+            {5:-- TERMINAL --}                                    |
+          ]])
+        end)
+      end)
+
+      describe('with nvim_open_term() in same buffer', function()
+        it('in Normal mode', function()
+          local chan = api.nvim_open_term(env.buf, {})
+          api.nvim_chan_send(chan, 'OTHER')
+          env.screen:expect([[
+            ^OTHER                                             |
+                                                              |*6
+          ]])
+        end)
+
+        it('in Terminal mode', function()
+          feed('i')
+          eq({ blocking = false, mode = 't' }, api.nvim_get_mode())
+          local chan = api.nvim_open_term(env.buf, {})
+          api.nvim_chan_send(chan, 'OTHER')
+          env.screen:expect([[
+            OTHER^                                             |
+                                                              |*5
+            {5:-- TERMINAL --}                                    |
+          ]])
+        end)
+      end)
+    end)
+  end
+
+  describe('with exited terminal job', function()
+    local env = {}
+
+    before_each(function()
+      env.screen = Screen.new(50, 7)
+      fn.jobstart({ testprg('shell-test') }, { term = true })
+      env.screen:expect([[
+        ^ready $                                           |
+        [Process exited 0]                                |
+                                                          |*5
+      ]])
+      env.buf = api.nvim_get_current_buf()
+      api.nvim_set_option_value('modified', false, { buf = env.buf })
+    end)
+
+    test_enew_in_buf_with_finished_term(env)
+    test_open_term_in_buf_with_finished_term(env)
+  end)
+
+  describe('with closed nvim_open_term() channel', function()
+    local env = {}
+
+    before_each(function()
+      env.screen = Screen.new(50, 7)
+      local chan = api.nvim_open_term(0, {})
+      api.nvim_chan_send(chan, 'TEST')
+      fn.chanclose(chan)
+      env.screen:expect([[
+        ^TEST                                              |
+        [Terminal closed]                                 |
+                                                          |*5
+      ]])
+      env.buf = api.nvim_get_current_buf()
+      api.nvim_set_option_value('modified', false, { buf = env.buf })
+    end)
+
+    test_enew_in_buf_with_finished_term(env)
+    test_open_term_in_buf_with_finished_term(env)
+  end)
+
+  it('with nvim_open_term() channel and only 1 line is not reused by :enew', function()
+    command('1new')
+    local oldbuf = api.nvim_get_current_buf()
+    api.nvim_open_term(oldbuf, {})
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    feed('i')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed([[<C-\><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+
+    command('enew')
+    neq(oldbuf, api.nvim_get_current_buf())
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    feed('i')
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
+    feed('<Esc>')
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+
+    command('buffer #')
+    eq(oldbuf, api.nvim_get_current_buf())
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    feed('i')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed([[<C-\><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+  end)
+
+  it('does not allow OptionSet or b:term_title watcher to delete buffer', function()
+    local au = api.nvim_create_autocmd('OptionSet', { command = 'bwipeout!' })
+    local chan = api.nvim_open_term(0, {})
+    matches('^E937: ', api.nvim_get_vvar('errmsg'))
+    api.nvim_del_autocmd(au)
+    api.nvim_set_vvar('errmsg', '')
+
+    api.nvim_chan_send(chan, '\027]2;SOME_TITLE\007')
+    eq('SOME_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    command([[call dictwatcheradd(b:, 'term_title', {-> execute('bwipe!')})]])
+    api.nvim_chan_send(chan, '\027]2;OTHER_TITLE\007')
+    eq('OTHER_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    matches('^E937: ', api.nvim_get_vvar('errmsg'))
+  end)
+
+  it('using NameBuff in BufFilePre does not interfere with buffer rename', function()
+    local oldbuf = api.nvim_get_current_buf()
+    n.exec([[
+      file Xoldfile
+      new Xotherfile
+      wincmd w
+      let g:BufFilePre_bufs = []
+      let g:BufFilePost_bufs = []
+      autocmd BufFilePre * call add(g:BufFilePre_bufs, [bufnr(), bufname()])
+      autocmd BufFilePost * call add(g:BufFilePost_bufs, [bufnr(), bufname()])
+      autocmd BufFilePre,BufFilePost * call execute('ls')
+    ]])
+    fn.jobstart({ testprg('shell-test') }, { term = true })
+    eq({ { oldbuf, 'Xoldfile' } }, api.nvim_get_var('BufFilePre_bufs'))
+    local buffilepost_bufs = api.nvim_get_var('BufFilePost_bufs')
+    eq(1, #buffilepost_bufs)
+    eq(oldbuf, buffilepost_bufs[1][1])
+    matches('^term://', buffilepost_bufs[1][2])
+  end)
 end)
 
 describe('on_lines does not emit out-of-bounds line indexes when', function()
@@ -855,14 +1236,18 @@ describe('on_lines does not emit out-of-bounds line indexes when', function()
 end)
 
 describe('terminal input', function()
+  local chan --- @type integer
+
   before_each(function()
     clear()
-    exec_lua([[
+    chan = exec_lua(function()
       _G.input_data = ''
-      vim.api.nvim_open_term(0, { on_input = function(_, _, _, data)
-        _G.input_data = _G.input_data .. data
-      end })
-    ]])
+      return vim.api.nvim_open_term(0, {
+        on_input = function(_, _, _, data)
+          _G.input_data = _G.input_data .. data
+        end,
+      })
+    end)
     feed('i')
     poke_eventloop()
   end)
@@ -875,6 +1260,35 @@ describe('terminal input', function()
   it('unknown special keys are not sent', function()
     feed('aaa<Help>bbb')
     eq('aaabbb', exec_lua([[return _G.input_data]]))
+  end)
+
+  it('<Ignore> is no-op', function()
+    feed('aaa<Ignore>bbb')
+    eq('aaabbb', exec_lua([[return _G.input_data]]))
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed([[<C-\><Ignore><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    feed('v')
+    eq({ mode = 'v', blocking = false }, api.nvim_get_mode())
+    feed('<Esc>')
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    feed('i')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed([[<C-\><Ignore><C-O>]])
+    eq({ mode = 'ntT', blocking = false }, api.nvim_get_mode())
+    feed('v')
+    eq({ mode = 'v', blocking = false }, api.nvim_get_mode())
+    feed('<Esc>')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    fn.chanclose(chan)
+    feed('<MouseMove>')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed('<Ignore>')
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    feed('<Space>')
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    eq('', api.nvim_get_option_value('buftype', { buf = 0 }))
   end)
 end)
 
@@ -1073,12 +1487,12 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
       pcall_err(fn.termopen, 'bar')
     )
   end)
+end)
+
+describe('jobstart(…,{term=true})', function()
+  before_each(clear)
 
   describe('$COLORTERM value', function()
-    if skip(is_os('win'), 'Not applicable for Windows') then
-      return
-    end
-
     before_each(function()
       -- Outer value should never be propagated to :terminal
       fn.setenv('COLORTERM', 'wrongvalue')
@@ -1086,7 +1500,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
 
     local function test_term_colorterm(expected, opts)
       local screen = Screen.new(50, 4)
-      fn.termopen({
+      fn.jobstart({
         nvim_prog,
         '-u',
         'NONE',
@@ -1095,7 +1509,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         '--headless',
         '-c',
         'echo $COLORTERM | quit',
-      }, opts)
+      }, vim.tbl_extend('error', opts, { term = true }))
       screen:expect(([[
         ^%s{MATCH:%%s+}|
         [Process exited 0]                                |
@@ -1108,7 +1522,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         command('set notermguicolors')
       end)
       it('is empty by default', function()
-        test_term_colorterm('')
+        test_term_colorterm('', {})
       end)
       it('can be overridden', function()
         test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })
@@ -1120,7 +1534,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         command('set termguicolors')
       end)
       it('is "truecolor" by default', function()
-        test_term_colorterm('truecolor')
+        test_term_colorterm('truecolor', {})
       end)
       it('can be overridden', function()
         test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })

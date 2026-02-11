@@ -65,6 +65,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -143,6 +144,11 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 /// @param val   Highlight definition map, accepts the following keys:
 ///                - fg: color name or "#RRGGBB", see note.
 ///                - bg: color name or "#RRGGBB", see note.
+///                - fg_indexed: boolean
+///                  When true, fg is a terminal palette index (0-255).
+///                  Default is false.
+///                - bg_indexed: boolean
+///                  Same as fg_indexed, but for background color.
 ///                - sp: color name or "#RRGGBB"
 ///                - blend: integer between 0 and 100
 ///                - bold: boolean
@@ -232,7 +238,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
 
 /// Set active namespace for highlights defined with |nvim_set_hl()| while redrawing.
 ///
-/// This function meant to be called while redrawing, primarily from
+/// This function is meant to be called while redrawing, primarily from
 /// |nvim_set_decoration_provider()| on_win and on_line callbacks, which
 /// are allowed to change the namespace during a redraw cycle.
 ///
@@ -497,6 +503,41 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
   return cstr_as_string(ptr);
 }
 
+/// Executes Lua code. Arguments are available as `...` inside the chunk. The chunk can return
+/// a value.
+///
+/// Only statements are executed. To evaluate an expression, prefix it with "return": `return
+/// my_function(...)`
+///
+/// Example:
+/// ```lua
+/// local peer = vim.fn.jobstart({ vim.v.progpath, '--clean', '--embed' }, { rpc=true })
+/// vim.print(vim.rpcrequest(peer, 'nvim_exec_lua', [[
+///       local a, b = ...
+///       return ('result: %s'):format(a + b)
+///     ]],
+///     { 1, 3 }
+///   )
+/// )
+/// ```
+///
+/// @param code       Lua code to execute.
+/// @param args       Arguments to the Lua code.
+/// @param[out] err   Lua error raised while parsing or executing the Lua code.
+///
+/// @return           Value returned by the Lua code (if any), or NIL.
+Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_REMOTE_ONLY
+{
+  // TODO(bfredl): convert directly from msgpack to lua and then back again
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
+}
+
+/// EXPERIMENTAL: this API may change or be removed in the future.
+///
+/// Like |nvim_exec_lua()|, but can be called during |api-fast| contexts.
+///
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -509,12 +550,12 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
-  FUNC_API_SINCE(7)
+Object nvim__exec_lua_fast(String code, Array args, Arena *arena, Error *err)
+  FUNC_API_SINCE(14)
   FUNC_API_REMOTE_ONLY
+  FUNC_API_FAST
 {
-  // TODO(bfredl): convert directly from msgpack to lua and then back again
-  return nlua_exec(code, NULL, args, kRetObject, arena, err);
+  return nvim_exec_lua(code, args, arena, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.
@@ -940,6 +981,9 @@ void nvim_set_current_win(Window window, Error *err)
   }
 
   TRY_WRAP(err, {
+    if (win->w_buffer != curbuf) {
+      reset_VIsual_and_resel();
+    }
     goto_tabpage_win(win_find_tabpage(win), win);
   });
 }
@@ -1072,6 +1116,17 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     return 0;
   }
 
+  bool may_read_buffer = true;
+  if (buf->terminal) {
+    if (terminal_running(buf->terminal)) {
+      api_set_error(err, kErrorTypeException,
+                    "Terminal already connected to buffer %d", buf->handle);
+      return 0;
+    }
+    buf_close_terminal(buf);
+    may_read_buffer = false;
+  }
+
   LuaRef cb = LUA_NOREF;
   if (HAS_KEY(opts, open_term, on_input)) {
     cb = opts->on_input;
@@ -1095,12 +1150,15 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
 
   // Read existing buffer contents (if any)
   StringBuilder contents = KV_INITIAL_VALUE;
-  pos_T start_pos = { 1, 0, 0 };
-  pos_T end_pos = { buf->b_ml.ml_line_count,  ml_get_len(buf->b_ml.ml_line_count) - 1, 0 };
-  read_buffer_into(buf, &start_pos, &end_pos, &contents);
+  if (may_read_buffer) {
+    pos_T start_pos = { 1, 0, 0 };
+    pos_T end_pos = { buf->b_ml.ml_line_count,  ml_get_len(buf->b_ml.ml_line_count) - 1, 0 };
+    read_buffer_into(buf, &start_pos, &end_pos, &contents);
+  }
 
   channel_incref(chan);
-  terminal_open(&chan->term, buf, topts);
+  chan->term = terminal_alloc(buf, topts);
+  terminal_open(&chan->term, buf);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }

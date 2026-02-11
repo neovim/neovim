@@ -1,7 +1,7 @@
 *insert.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
 						*Insert* *Insert-mode*
@@ -1620,30 +1620,27 @@ The completions provided by CTRL-X CTRL-O are sensitive to the context:
 
 	  CONTEXT			   COMPLETIONS PROVIDED ~
 
- 1. Not inside a class definition    Classes, constants and globals
-
- 2. Inside a class definition	     Methods or constants defined in the class
-
- 3. After '.', '::' or ':'	     Methods applicable to the object being
-				       dereferenced
-
- 4. After ':' or ':foo'		     Symbol name (beginning with "foo")
+ 1. Not inside a class definition:   Classes, constants and globals
+ 2. Inside a class definition:	     Methods or constants defined in the class
+ 3. After '.', '::' or ':':	     Methods applicable to the object being
+				     dereferenced
+ 4. After ':' or ':foo':	     Symbol name (beginning with "foo")
 
 Notes:
- - Vim will load/evaluate code in order to provide completions.  This may
-   cause some code execution, which may be a concern.  This is no longer
-   enabled by default, to enable this feature add >
+- Vim will load/evaluate code in order to provide completions.  This may
+  cause some code execution, which may be a concern.  This is no longer
+  enabled by default, to enable this feature add >
      let g:rubycomplete_buffer_loading = 1
-<- In context 1 above, Vim can parse the entire buffer to add a list of
-   classes to the completion results.  This feature is turned off by default,
-   to enable it add >
+- In context 1 above, Vim can parse the entire buffer to add a list of
+  classes to the completion results.  This feature is turned off by default,
+  to enable it add >
      let g:rubycomplete_classes_in_global = 1
 <  to your vimrc
- - In context 2 above, anonymous classes are not supported.
- - In context 3 above, Vim will attempt to determine the methods supported by
-   the object.
- - Vim can detect and load the Rails environment for files within a rails
-   project.  The feature is disabled by default, to enable it add >
+- In context 2 above, anonymous classes are not supported.
+- In context 3 above, Vim will attempt to determine the methods supported by
+  the object.
+- Vim can detect and load the Rails environment for files within a rails
+  project.  The feature is disabled by default, to enable it add >
      let g:rubycomplete_rails = 1
 <  to your vimrc
 
@@ -1737,15 +1734,15 @@ SQL file (:e syntax.sql) you can use the ":syntax list" command to see the
 various groups and syntax items.  For example: >
     syntax list
 
-Yields data similar to this:
-    sqlOperator    xxx some prior all like and any escape exists in is not ~
-                       or intersect minus between distinct ~
-                       links to Operator ~
-    sqlType        xxx varbit varchar nvarchar bigint int uniqueidentifier ~
-                       date money long tinyint unsigned xml text smalldate ~
-                       double datetime nchar smallint numeric time bit char ~
-                       varbinary binary smallmoney ~
-                       image float integer timestamp real decimal ~
+Yields data similar to this: >
+    sqlOperator    xxx some prior all like and any escape exists in is not
+                       or intersect minus between distinct
+                       links to Operator
+    sqlType        xxx varbit varchar nvarchar bigint int uniqueidentifier
+                       date money long tinyint unsigned xml text smalldate
+                       double datetime nchar smallint numeric time bit char
+                       varbinary binary smallmoney
+                       image float integer timestamp real decimal
 
 There are two syntax groups listed here: sqlOperator and sqlType.  To retrieve
 a List of syntax items you can call OmniSyntaxList a number of different
@@ -1948,9 +1945,6 @@ i			Insert text before the cursor [count] times.
 							*I*
 I			Insert text before the first non-blank in the line
 			[count] times.
-			When the 'H' flag is present in 'cpoptions' and the
-			line only contains blanks, insert start just before
-			the last blank.
 			For using "I" in Visual block mode see |v_b_I|.
 
 							*gI*

@@ -116,6 +116,7 @@ CLEAN_FILES := *.out \
   *.tlog            \
   opt_test.vim      \
   test_result.log   \
+  gen_opt_test.log  \
   $(CLEANUP_FILES)  \
   $(RM_ON_RUN)      \
   $(RM_ON_START)    \
@@ -158,8 +159,8 @@ GEN_OPT_DEPS = gen_opt_test.vim ../../../src/nvim/options.lua ../../../runtime/d
 
 opt_test.vim: $(GEN_OPT_DEPS)
 	$(NVIM_PRG) -e -s -u NONE $(NO_INITS) -S $(GEN_OPT_DEPS)
-	@if test -f test.log; then \
-		cat test.log; \
+	@if test -f gen_opt_test.log; then \
+		cat gen_opt_test.log; \
 		exit 1; \
 	fi
 

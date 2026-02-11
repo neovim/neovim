@@ -1,7 +1,7 @@
 *sign.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL    by Gordon Prieur
+		  VIM REFERENCE MANUAL	  by Gordon Prieur
 					  and Bram Moolenaar
 
 

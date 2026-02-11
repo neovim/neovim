@@ -1,6 +1,8 @@
 *usr_30.txt*	Nvim
 
-		     VIM USER MANUAL - by Bram Moolenaar
+
+		     VIM USER MANUAL	by Bram Moolenaar
+
 
 			      Editing programs
 
@@ -35,9 +37,9 @@ you give) and captures the results: >
 
 If errors were generated, they are captured and the editor positions you where
 the first error occurred.
-   Take a look at an example ":make" session.  (Typical :make sessions generate
-far more errors and fewer stupid ones.)  After typing ":make" the screen looks
-like this:
+   Take a look at an example ":make" session.  (Typical :make sessions
+generate far more errors and fewer stupid ones.)  After typing ":make" the
+screen looks like this:
 
 	:!make | &tee /tmp/vim215953.err ~
 	gcc -g -Wall -o prog main.c sub.c ~
@@ -542,7 +544,7 @@ reach the nearest soft tab stop.  The following example uses
 	<Tab><Tab>a<Tab><BS>	------->a
 
   To maintain global coherence, one can `:set softtabstop=-1` so that
-the value of 'shiftwidth' is use for the number of columns between two soft
+the value of 'shiftwidth' is used for the number of columns between two soft
 tab stops.
 
   If you prefer to have different values for 'shiftwidth' and 'softtabstop',

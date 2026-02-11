@@ -125,6 +125,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -670,33 +671,27 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     return;
   }
 
-  switchwin_T switchwin;
-  bool winchanged = false;
+  win_T *wp = curwin;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     // use the window specified in the second argument
     tabpage_T *tp;
-    win_T *wp = win_id2wp_tp((int)tv_get_number(&argvars[1]), &tp);
+    wp = win_id2wp_tp((int)tv_get_number(&argvars[1]), &tp);
     if (wp == NULL || tp == NULL) {
       return;
     }
-
-    if (switch_win_noblock(&switchwin, wp, tp, true) != OK) {
-      return;
-    }
-
-    check_cursor(curwin);
-    winchanged = true;
+    check_cursor(wp);
   }
 
+  buf_T *bp = wp->w_buffer;
   colnr_T col = 0;
-  int fnum = curbuf->b_fnum;
-  pos_T *fp = var2fpos(&argvars[0], false, &fnum, charcol);
-  if (fp != NULL && fnum == curbuf->b_fnum) {
+  int fnum = bp->b_fnum;
+  pos_T *fp = var2fpos(&argvars[0], false, &fnum, charcol, wp);
+  if (fp != NULL && fnum == bp->b_fnum) {
     if (fp->col == MAXCOL) {
       // '> can be MAXCOL, get the length of the line then
-      if (fp->lnum <= curbuf->b_ml.ml_line_count) {
-        col = ml_get_len(fp->lnum) + 1;
+      if (fp->lnum <= bp->b_ml.ml_line_count) {
+        col = ml_get_buf_len(bp, fp->lnum) + 1;
       } else {
         col = MAXCOL;
       }
@@ -704,11 +699,11 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       col = fp->col + 1;
       // col(".") when the cursor is on the NUL at the end of the line
       // because of "coladd" can be seen as an extra column.
-      if (virtual_active(curwin) && fp == &curwin->w_cursor) {
-        char *p = get_cursor_pos_ptr();
-        if (curwin->w_cursor.coladd >=
-            (colnr_T)win_chartabsize(curwin, p,
-                                     curwin->w_virtcol - curwin->w_cursor.coladd)) {
+      if (virtual_active(wp) && fp == &wp->w_cursor) {
+        char *p = ml_get_buf(bp, wp->w_cursor.lnum) + wp->w_cursor.col;
+        if (wp->w_cursor.coladd >=
+            (colnr_T)win_chartabsize(wp, p,
+                                     wp->w_virtcol - wp->w_cursor.coladd)) {
           int l;
           if (*p != NUL && p[(l = utfc_ptr2len(p))] == NUL) {
             col += l;
@@ -718,10 +713,6 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
     }
   }
   rettv->vval.v_number = col;
-
-  if (winchanged) {
-    restore_win_noblock(&switchwin, true);
-  }
 }
 
 /// "charcol()" function
@@ -2046,7 +2037,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos, bool
       fp = &pos;
     }
   } else {
-    fp = var2fpos(&argvars[0], true, &fnum, charcol);
+    fp = var2fpos(&argvars[0], true, &fnum, charcol, curwin);
   }
 
   list_T *const l = tv_list_alloc_ret(rettv, 4 + getcurpos);
@@ -2298,8 +2289,10 @@ static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2
     }
   } else if (*region_type == kMTBlockWise) {
     colnr_T sc1, ec1, sc2, ec2;
+    const bool lbr_saved = reset_lbr();
     getvvcol(curwin, p1, &sc1, NULL, &ec1);
     getvvcol(curwin, p2, &sc2, NULL, &ec2);
+    restore_lbr(lbr_saved);
     oap->motion_type = kMTBlockWise;
     oap->inclusive = true;
     oap->op_type = OP_NOP;
@@ -2764,6 +2757,9 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "tablineat",
     "tag_binary",
     "termguicolors",
+#ifdef HAVE_UNIBILIUM
+    "terminfo",
+#endif
     "termresponse",
     "textobjects",
     "timers",
@@ -2805,20 +2801,21 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else if (STRNICMP(name, "patch", 5) == 0) {
       if (name[5] == '-'
           && strlen(name) >= 11
-          && ascii_isdigit(name[6])
-          && ascii_isdigit(name[8])
-          && ascii_isdigit(name[10])) {
-        int major = atoi(name + 6);
-        int minor = atoi(name + 8);
+          && (name[6] >= '1' && name[6] <= '9')) {
+        char *end;
 
-        // Expect "patch-9.9.01234".
-        n = (major < VIM_VERSION_MAJOR
-             || (major == VIM_VERSION_MAJOR
-                 && (minor < VIM_VERSION_MINOR
-                     || (minor == VIM_VERSION_MINOR
-                         && has_vim_patch(atoi(name + 10))))));
-      } else {
-        n = has_vim_patch(atoi(name + 5));
+        // This works for patch-8.1.2, patch-9.0.3, patch-10.0.4, etc.
+        // Not for patch-9.10.5.
+        int major = (int)strtoul(name + 6, &end, 10);
+        if (*end == '.' && ascii_isdigit(end[1])
+            && end[2] == '.' && ascii_isdigit(end[3])) {
+          int minor = atoi(end + 1);
+
+          // Expect "patch-9.9.01234".
+          n = has_vim_patch(atoi(end + 3), major * 100 + minor);
+        }
+      } else if (ascii_isdigit(name[5])) {
+        n = has_vim_patch(atoi(name + 5), 0);
       }
     } else if (STRNICMP(name, "nvim-", 5) == 0) {
       // Expect "nvim-x.y.z"
@@ -3337,8 +3334,8 @@ static const char *pty_ignored_env_vars[] = {
   "LINES",
   "TERMCAP",
   "COLORFGBG",
-  "COLORTERM",
 #endif
+  "COLORTERM",
   // Nvim-owned env vars. #6764
   "VIM",
   "VIMRUNTIME",
@@ -3386,12 +3383,10 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
           tv_dict_item_remove(env, dv);
         }
       }
-#ifndef MSWIN
       // Set COLORTERM to "truecolor" if termguicolors is set
       if (p_tgc) {
         tv_dict_add_str(env, S_LEN("COLORTERM"), "truecolor");
       }
-#endif
     }
   }
 
@@ -3576,6 +3571,14 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       shell_free_argv(argv);
       return;
     }
+    if (curbuf->terminal) {
+      if (terminal_running(curbuf->terminal)) {
+        semsg(_("Terminal already connected to buffer %d"), curbuf->handle);
+        shell_free_argv(argv);
+        return;
+      }
+      buf_close_terminal(curbuf);
+    }
     assert(!rpc);
     term_name = "xterm-256color";
     cwd = cwd ? cwd : ".";
@@ -3605,7 +3608,17 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
 
-    int pid = chan->stream.pty.proc.pid;
+    const int pid = chan->stream.pty.proc.pid;
+    buf_T *const buf = curbuf;
+
+    channel_incref(chan);
+    channel_terminal_alloc(buf, chan);
+
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf);
+
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed during autocommands.
+    }
 
     // "./…" => "/home/foo/…"
     vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);
@@ -3624,24 +3637,33 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     // Terminal URI: "term://$CWD//$PID:$CMD"
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
-    // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
-    curbuf->b_p_swf = false;
+    // Unset 'swapfile' to ensure no swapfile is created.
+    buf->b_p_swf = false;
 
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-    setfname(curbuf, NameBuff, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+    setfname(buf, NameBuff, NULL, true);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf);
+
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed during autocommands.
+    }
 
     Error err = ERROR_INIT;
+    buf->b_locked++;
     // Set (deprecated) buffer-local vars (prefer 'channel' buffer-local option).
-    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+    dict_set_var(buf->b_vars, cstr_as_string("terminal_job_id"),
                  INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
     api_clear_error(&err);
-    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+    dict_set_var(buf->b_vars, cstr_as_string("terminal_job_pid"),
                  INTEGER_OBJ(pid), false, false, NULL, &err);
     api_clear_error(&err);
+    buf->b_locked--;
 
-    channel_incref(chan);
-    channel_terminal_open(curbuf, chan);
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed in dict watchers.
+    }
+
+    terminal_open(&chan->term, buf);
+term_done:
     channel_create_event(chan, NULL);
     channel_decref(chan);
   }
@@ -3938,22 +3960,18 @@ static void f_line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tabpage_T *tp;
     win_T *wp = win_id2wp_tp(id, &tp);
     if (wp != NULL && tp != NULL) {
-      switchwin_T switchwin;
-      if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
-        // With 'splitkeep' != cursor and in diff mode, prevent that the
-        // window scrolls and keep the topline.
-        if (*p_spk != 'c' || (curwin->w_p_diff && switchwin.sw_curwin->w_p_diff)) {
-          skip_update_topline = true;
-        }
-        check_cursor(curwin);
-        fp = var2fpos(&argvars[0], true, &fnum, false);
+      // With 'splitkeep' != cursor and in diff mode, prevent that the
+      // window scrolls and keep the topline.
+      if (*p_spk != 'c' || (wp->w_p_diff && curwin->w_p_diff)) {
+        skip_update_topline = true;
       }
+      check_cursor(wp);
+      fp = var2fpos(&argvars[0], true, &fnum, false, wp);
       skip_update_topline = false;
-      restore_win_noblock(&switchwin, true);
     }
   } else {
     // use current window
-    fp = var2fpos(&argvars[0], true, &fnum, false);
+    fp = var2fpos(&argvars[0], true, &fnum, false, curwin);
   }
 
   if (fp != NULL) {
@@ -7668,39 +7686,33 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   colnr_T vcol_start = 0;
   colnr_T vcol_end = 0;
-  switchwin_T switchwin;
-  bool winchanged = false;
+  win_T *wp = curwin;
 
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
     // use the window specified in the third argument
     tabpage_T *tp;
-    win_T *wp = win_id2wp_tp((int)tv_get_number(&argvars[2]), &tp);
+    wp = win_id2wp_tp((int)tv_get_number(&argvars[2]), &tp);
     if (wp == NULL || tp == NULL) {
       goto theend;
     }
-
-    if (switch_win_noblock(&switchwin, wp, tp, true) != OK) {
-      goto theend;
-    }
-
-    check_cursor(curwin);
-    winchanged = true;
+    check_cursor(wp);
   }
 
-  int fnum = curbuf->b_fnum;
-  pos_T *fp = var2fpos(&argvars[0], false, &fnum, false);
-  if (fp != NULL && fp->lnum <= curbuf->b_ml.ml_line_count
-      && fnum == curbuf->b_fnum) {
+  buf_T *bp = wp->w_buffer;
+  int fnum = bp->b_fnum;
+  pos_T *fp = var2fpos(&argvars[0], false, &fnum, false, wp);
+  if (fp != NULL && fp->lnum <= bp->b_ml.ml_line_count
+      && fnum == bp->b_fnum) {
     // Limit the column to a valid value, getvvcol() doesn't check.
     if (fp->col < 0) {
       fp->col = 0;
     } else {
-      const colnr_T len = ml_get_len(fp->lnum);
+      const colnr_T len = ml_get_buf_len(bp, fp->lnum);
       if (fp->col > len) {
         fp->col = len;
       }
     }
-    getvvcol(curwin, fp, &vcol_start, NULL, &vcol_end);
+    getvvcol(wp, fp, &vcol_start, NULL, &vcol_end);
     vcol_start++;
     vcol_end++;
   }
@@ -7712,10 +7724,6 @@ theend:
     tv_list_append_number(rettv->vval.v_list, vcol_end);
   } else {
     rettv->vval.v_number = vcol_end;
-  }
-
-  if (winchanged) {
-    restore_win_noblock(&switchwin, true);
   }
 }
 

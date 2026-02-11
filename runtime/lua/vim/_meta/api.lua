@@ -182,8 +182,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- Else the first notification will be `nvim_buf_changedtick_event`.
 --- Not for Lua callbacks.
 --- @param opts vim.api.keyset.buf_attach Optional parameters.
---- - on_lines: Lua callback invoked on change.
----   Return a truthy value (not `false` or `nil`) to detach. Args:
+--- - on_lines: Called on linewise changes. Not called on buffer reload (`:checktime`,
+---   `:edit`, …), see `on_reload:`. Return a [lua-truthy] value to detach. Args:
 ---   - the string "lines"
 ---   - buffer id
 ---   - b:changedtick
@@ -193,10 +193,9 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---   - byte count of previous contents
 ---   - deleted_codepoints (if `utf_sizes` is true)
 ---   - deleted_codeunits (if `utf_sizes` is true)
---- - on_bytes: Lua callback invoked on change.
----   This callback receives more granular information about the
----   change compared to on_lines.
----   Return a truthy value (not `false` or `nil`) to detach. Args:
+--- - on_bytes: Called on granular changes (compared to on_lines). Not called on buffer
+---   reload (`:checktime`, `:edit`, …), see `on_reload:`. Return a [lua-truthy] value
+---   to detach. Args:
 ---   - the string "bytes"
 ---   - buffer id
 ---   - b:changedtick
@@ -212,16 +211,15 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---   - new end column of the changed text
 ---     (if new end row = 0, offset from start column)
 ---   - new end byte length of the changed text
---- - on_changedtick: Lua callback invoked on changedtick
----   increment without text change. Args:
+--- - on_changedtick: Called on [changetick] increment without text change. Args:
 ---   - the string "changedtick"
 ---   - buffer id
 ---   - b:changedtick
---- - on_detach: Lua callback invoked on detach. Args:
+--- - on_detach: Called on detach. Args:
 ---   - the string "detach"
 ---   - buffer id
---- - on_reload: Lua callback invoked on reload. The entire buffer
----              content should be considered changed. Args:
+--- - on_reload: Called on whole-buffer load (`:checktime`, `:edit`, …). Clients should
+---   typically re-fetch the entire buffer contents. Args:
 ---   - the string "reload"
 ---   - buffer id
 --- - utf_sizes: include UTF-32 and UTF-16 size of the replaced
@@ -229,7 +227,7 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- - preview: also attach to command preview (i.e. 'inccommand')
 ---   events.
 --- @return boolean # False if attach failed (invalid parameter, or buffer isn't loaded);
---- otherwise True. TODO: LUA_API_NO_EVAL
+--- otherwise True.
 function vim.api.nvim_buf_attach(buffer, send_buffer, opts) end
 
 --- Call a function with buffer as temporary current buffer.
@@ -1027,16 +1025,13 @@ function vim.api.nvim_create_namespace(name) end
 --- - mods: (string) Command modifiers, if any [<mods>]
 --- - smods: (table) Command modifiers in a structured format. Has the same
 --- structure as the "mods" key of `nvim_parse_cmd()`.
---- @param opts vim.api.keyset.user_command Optional `command-attributes`.
---- - Set boolean attributes such as `:command-bang` or `:command-bar` to true (but
----   not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
---- - "complete" `:command-complete` also accepts a Lua function which works like
----   `:command-completion-customlist`.
---- - Other parameters:
----   - desc: (string) Used for listing the command when a Lua function is used for
----                    {command}.
----   - force: (boolean, default true) Override any previous definition.
----   - preview: (function) Preview callback for 'inccommand' `:command-preview`
+--- @param opts vim.api.keyset.user_command Optional flags
+--- - `desc` (string) Command description.
+--- - `force` (boolean, default true) Override any previous definition.
+--- - `complete` `:command-complete` command or function like `:command-completion-customlist`.
+--- - `preview` (function) Preview handler for 'inccommand' `:command-preview`
+--- - Set boolean `command-attributes` such as `:command-bang` or `:command-bar` to
+---   true (but not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
 function vim.api.nvim_create_user_command(name, command, opts) end
 
 --- Delete an autocommand group by id.
@@ -1728,8 +1723,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- If -1 is provided, a top-level split will be created. `vertical` and `split` are
 --- only valid for normal windows, and are used to control split direction. For `vertical`,
 --- the exact direction is determined by 'splitright' and 'splitbelow'.
---- Split windows cannot have `bufpos`/`row`/`col`/`border`/`title`/`footer`
---- properties.
+--- Split windows cannot have `bufpos`, `row`, `col`, `border`, `title`, `footer` properties.
 ---
 --- With relative=editor (row=0,col=0) refers to the top-left corner of the
 --- screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
@@ -1742,90 +1736,30 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- could let floats hover outside of the main window like a tooltip, but
 --- this should not be used to specify arbitrary WM screen positions.
 ---
---- Example (Lua): window-relative float
+--- Examples:
 ---
 --- ```lua
+--- -- Window-relative float with 'statusline' enabled:
+--- local w1 = vim.api.nvim_open_win(0, false,
+---   {relative='win', row=3, col=3, width=40, height=4})
+--- vim.wo[w1].statusline = vim.o.statusline
+---
+--- -- Buffer-relative float (travels as buffer is scrolled):
 --- vim.api.nvim_open_win(0, false,
----   {relative='win', row=3, col=3, width=12, height=3})
---- ```
+---   {relative='win', width=40, height=4, bufpos={100,10}})
 ---
---- Example (Lua): buffer-relative float (travels as buffer is scrolled)
----
---- ```lua
---- vim.api.nvim_open_win(0, false,
----   {relative='win', width=12, height=3, bufpos={100,10}})
---- ```
----
---- Example (Lua): vertical split left of the current window
----
---- ```lua
---- vim.api.nvim_open_win(0, false, {
----   split = 'left',
----   win = 0
---- })
+--- -- Vertical split left of the current window:
+--- vim.api.nvim_open_win(0, false, { split = 'left', win = 0, })
 --- ```
 ---
 --- @param buffer integer Buffer to display, or 0 for current buffer
 --- @param enter boolean Enter the window (make it the current window)
 --- @param config vim.api.keyset.win_config Map defining the window configuration. Keys:
---- - relative: Sets the window layout to "floating", placed at (row,col)
----               coordinates relative to:
----    - "cursor"     Cursor position in current window.
----    - "editor"     The global editor grid.
----    - "laststatus" 'laststatus' if present, or last row.
----    - "mouse"      Mouse position.
----    - "tabline"    Tabline if present, or first row.
----    - "win"        Window given by the `win` field, or current window.
---- - win: `window-ID` window to split, or relative window when creating a
----    float (relative="win").
 --- - anchor: Decides which corner of the float to place at (row,col):
 ---    - "NW" northwest (default)
 ---    - "NE" northeast
 ---    - "SW" southwest
 ---    - "SE" southeast
---- - width: Window width (in character cells). Minimum of 1.
---- - height: Window height (in character cells). Minimum of 1.
---- - bufpos: Places float relative to buffer text (only when
----     relative="win"). Takes a tuple of zero-indexed `[line, column]`.
----     `row` and `col` if given are applied relative to this
----     position, else they default to:
----     - `row=1` and `col=0` if `anchor` is "NW" or "NE"
----     - `row=0` and `col=0` if `anchor` is "SW" or "SE"
----       (thus like a tooltip near the buffer text).
---- - row: Row position in units of "screen cell height", may be fractional.
---- - col: Column position in units of screen cell width, may be fractional.
---- - focusable: Enable focus by user actions (wincmds, mouse events).
----     Defaults to true. Non-focusable windows can be entered by
----     `nvim_set_current_win()`, or, when the `mouse` field is set to true,
----     by mouse events. See `focusable`.
---- - mouse: Specify how this window interacts with mouse events.
----     Defaults to `focusable` value.
----     - If false, mouse events pass through this window.
----     - If true, mouse events interact with this window normally.
---- - external: GUI should display the window as an external
----     top-level window. Currently accepts no other positioning
----     configuration together with this.
---- - zindex: Stacking order. floats with higher `zindex` go on top on
----             floats with lower indices. Must be larger than zero. The
----             following screen elements have hard-coded z-indices:
----     - 100: insert completion popupmenu
----     - 200: message scrollback
----     - 250: cmdline completion popupmenu (when wildoptions+=pum)
----   The default value for floats are 50.  In general, values below 100 are
----   recommended, unless there is a good reason to overshadow builtin
----   elements.
---- - style: (optional) Configure the appearance of the window. Currently
----     only supports one value:
----     - "minimal"  Nvim will display the window with many UI options
----                  disabled. This is useful when displaying a temporary
----                  float where the text should not be edited. Disables
----                  'number', 'relativenumber', 'cursorline', 'cursorcolumn',
----                  'foldcolumn', 'spell' and 'list' options. 'signcolumn'
----                  is changed to `auto` and 'colorcolumn' is cleared.
----                  'statuscolumn' is changed to empty. The end-of-buffer
----                   region is hidden by setting `eob` flag of
----                  'fillchars' to a space char, and clearing the
----                  `hl-EndOfBuffer` region in 'winhighlight'.
 --- - border: (`string|string[]`) (defaults to 'winborder' option) Window border. The string form
 ---   accepts the same values as the 'winborder' option. The array form must have a length of
 ---   eight or any divisor of eight, specifying the chars that form the border in a clockwise
@@ -1849,30 +1783,83 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---   [ "", "", "", ">", "", "", "", "<" ]
 ---   ```
 ---   By default, `hl-FloatBorder` highlight is used, which links to `hl-WinSeparator` when not
----   defined.  Each border side can specify an optional highlight:
+---   defined. Each border side can specify an optional highlight:
 ---   ```
 ---   [ ["+", "MyCorner"], ["x", "MyBorder"] ].
 ---   ```
---- - title: (optional) Title in window border, string or list.
----   List should consist of `[text, highlight]` tuples.
----   If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
---- - title_pos: Title position. Must be set with `title` option.
----   Value can be one of "left", "center", or "right".
----   Default is `"left"`.
---- - footer: (optional) Footer in window border, string or list.
----   List should consist of `[text, highlight]` tuples.
----   If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
---- - footer_pos: Footer position. Must be set with `footer` option.
----   Value can be one of "left", "center", or "right".
----   Default is `"left"`.
---- - noautocmd: If true then all autocommands are blocked for the duration of
----   the call.
+--- - bufpos: Places float relative to buffer text (only when
+---     relative="win"). Takes a tuple of zero-indexed `[line, column]`.
+---     `row` and `col` if given are applied relative to this
+---     position, else they default to:
+---     - `row=1` and `col=0` if `anchor` is "NW" or "NE"
+---     - `row=0` and `col=0` if `anchor` is "SW" or "SE"
+---       (thus like a tooltip near the buffer text).
+--- - col: Column position in units of screen cell width, may be fractional.
+--- - external: GUI should display the window as an external
+---     top-level window. Currently accepts no other positioning
+---     configuration together with this.
 --- - fixed: If true when anchor is NW or SW, the float window
 ---          would be kept fixed even if the window would be truncated.
+--- - focusable: Enable focus by user actions (wincmds, mouse events).
+---     Defaults to true. Non-focusable windows can be entered by
+---     `nvim_set_current_win()`, or, when the `mouse` field is set to true,
+---     by mouse events. See `focusable`.
+--- - footer: (optional) Footer in window border, string or list.
+---     List should consist of `[text, highlight]` tuples.
+---     If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
+--- - footer_pos: Footer position. Must be set with `footer` option.
+---     Value can be one of "left", "center", or "right".
+---     Default is `"left"`.
+--- - height: Window height (in character cells). Minimum of 1.
 --- - hide: If true the floating window will be hidden and the cursor will be invisible when
 ---         focused on it.
---- - vertical: Split vertically `:vertical`.
+--- - mouse: Specify how this window interacts with mouse events.
+---     Defaults to `focusable` value.
+---     - If false, mouse events pass through this window.
+---     - If true, mouse events interact with this window normally.
+--- - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
+---   `nvim_win_set_config()`.
+--- - relative: Sets the window layout to "floating", placed at (row,col)
+---               coordinates relative to:
+---    - "cursor"     Cursor position in current window.
+---    - "editor"     The global editor grid.
+---    - "laststatus" 'laststatus' if present, or last row.
+---    - "mouse"      Mouse position.
+---    - "tabline"    Tabline if present, or first row.
+---    - "win"        Window given by the `win` field, or current window.
+--- - row: Row position in units of "screen cell height", may be fractional.
 --- - split: Split direction: "left", "right", "above", "below".
+--- - style: (optional) Configure the appearance of the window. Currently
+---     only supports one value:
+---     - "minimal"  Nvim will display the window with many UI options
+---                  disabled. This is useful when displaying a temporary
+---                  float where the text should not be edited. Disables
+---                  'number', 'relativenumber', 'cursorline', 'cursorcolumn',
+---                  'foldcolumn', 'spell' and 'list' options. 'signcolumn'
+---                  is changed to `auto` and 'colorcolumn' is cleared.
+---                  'statuscolumn' is changed to empty. The end-of-buffer
+---                   region is hidden by setting `eob` flag of
+---                  'fillchars' to a space char, and clearing the
+---                  `hl-EndOfBuffer` region in 'winhighlight'.
+--- - title: (optional) Title in window border, string or list.
+---     List should consist of `[text, highlight]` tuples.
+---     If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
+--- - title_pos: Title position. Must be set with `title` option.
+---     Value can be one of "left", "center", or "right".
+---     Default is `"left"`.
+--- - vertical: Split vertically `:vertical`.
+--- - width: Window width (in character cells). Minimum of 1.
+--- - win: `window-ID` window to split, or relative window when creating a
+---    float (relative="win").
+--- - zindex: Stacking order. floats with higher `zindex` go on top on
+---             floats with lower indices. Must be larger than zero. The
+---             following screen elements have hard-coded z-indices:
+---     - 100: insert completion popupmenu
+---     - 200: message scrollback
+---     - 250: cmdline completion popupmenu (when wildoptions+=pum)
+---   The default value for floats are 50.  In general, values below 100 are
+---   recommended, unless there is a good reason to overshadow builtin
+---   elements.
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
 --- @return integer # |window-ID|, or 0 on error
@@ -1967,7 +1954,7 @@ function vim.api.nvim_parse_cmd(str, opts) end
 ---   - "error": Dict with error, present only if parser saw some
 ---            error. Contains the following keys:
 ---     - "message": String, error message in printf format, translated.
----                  Must contain exactly one "%.*s".
+---                  Must contain exactly one `%.*s`.
 ---     - "arg": String, error message argument.
 ---   - "len": Amount of bytes successfully parsed. With flags equal to ""
 ---            that should be equal to the length of expr string.
@@ -2215,6 +2202,11 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
 --- - fg: color name or "#RRGGBB", see note.
 --- - bg: color name or "#RRGGBB", see note.
+--- - fg_indexed: boolean
+---   When true, fg is a terminal palette index (0-255).
+---   Default is false.
+--- - bg_indexed: boolean
+---   Same as fg_indexed, but for background color.
 --- - sp: color name or "#RRGGBB"
 --- - blend: integer between 0 and 100
 --- - bold: boolean
@@ -2246,7 +2238,7 @@ function vim.api.nvim_set_hl_ns(ns_id) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()` while redrawing.
 ---
---- This function meant to be called while redrawing, primarily from
+--- This function is meant to be called while redrawing, primarily from
 --- `nvim_set_decoration_provider()` on_win and on_line callbacks, which
 --- are allowed to change the namespace during a redraw cycle.
 ---
@@ -2416,11 +2408,10 @@ function vim.api.nvim_win_del_var(window, name) end
 --- @return integer # Buffer id
 function vim.api.nvim_win_get_buf(window) end
 
---- Gets window configuration.
+--- Gets window configuration in the form of a dict which can be passed as the `config` parameter of
+--- `nvim_open_win()`.
 ---
---- The returned value may be given to `nvim_open_win()`.
----
---- `relative` is empty for normal windows.
+--- For non-floating windows, `relative` is empty.
 ---
 --- @param window integer `window-ID`, or 0 for current window
 --- @return vim.api.keyset.win_config_ret # Map defining the window configuration, see |nvim_open_win()|
@@ -2501,17 +2492,22 @@ function vim.api.nvim_win_is_valid(window) end
 --- @param buffer integer Buffer id
 function vim.api.nvim_win_set_buf(window, buffer) end
 
---- Configures window layout. Cannot be used to move the last window in a
---- tabpage to a different one.
+--- Reconfigures the layout of a window.
 ---
---- When reconfiguring a window, absent option keys will not be changed.
---- `row`/`col` and `relative` must be reconfigured together.
+--- - Absent (`nil`) keys will not be changed.
+--- - `row` / `col` / `relative` must be reconfigured together.
+--- - Cannot be used to move the last window in a tabpage to a different one.
+---
+--- Example: to convert a floating window to a "normal" split window, specify the `win` field:
+---
+--- ```lua
+--- vim.api.nvim_win_set_config(0, { split = 'above', win = vim.fn.win_getid(1), })
+--- ```
 ---
 ---
 --- @see vim.api.nvim_open_win
 --- @param window integer `window-ID`, or 0 for current window
---- @param config vim.api.keyset.win_config Map defining the window configuration,
---- see `nvim_open_win()`
+--- @param config vim.api.keyset.win_config Map defining the window configuration, see [nvim_open_win()]
 function vim.api.nvim_win_set_config(window, config) end
 
 --- Sets the (1,0)-indexed cursor position in the window. `api-indexing`

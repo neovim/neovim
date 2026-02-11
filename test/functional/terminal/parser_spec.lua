@@ -1,11 +1,13 @@
 local n = require('test.functional.testnvim')()
 
-local clear = n.clear
 local api = n.api
 local assert_alive = n.assert_alive
+local clear = n.clear
+local exec_lua = n.exec_lua
 
 local OSC_PREFIX = string.char(0x1b, 0x5d)
 local BEL = string.char(0x07)
+local ST = string.char(0x1b, 0x5c)
 local NUL = string.char(0x00)
 
 describe(':terminal', function()
@@ -59,5 +61,35 @@ describe(':terminal', function()
     input = input .. NUL .. NUL
     api.nvim_chan_send(chan, input)
     assert_alive()
+  end)
+
+  it('uses terminator matching query for OSC TermRequest #37018', function()
+    local chan = api.nvim_open_term(0, {})
+    exec_lua([[
+      vim.api.nvim_create_autocmd("TermRequest", {
+        callback = function(args)
+          _G.osc10_response = {sequence = args.data.sequence, terminator = args.data.terminator }
+        end
+      })
+    ]])
+
+    local function send_osc_with_terminator(terminator)
+      local input = OSC_PREFIX .. '10;?' .. terminator
+      api.nvim_chan_send(chan, input)
+    end
+
+    send_osc_with_terminator(BEL)
+    --- @type string
+    assert.same(
+      { sequence = OSC_PREFIX .. '10;?', terminator = BEL },
+      exec_lua([[return _G.osc10_response]])
+    )
+
+    send_osc_with_terminator(ST)
+    --- @type string
+    assert.same(
+      { sequence = OSC_PREFIX .. '10;?', terminator = ST },
+      exec_lua([[return _G.osc10_response]])
+    )
   end)
 end)
