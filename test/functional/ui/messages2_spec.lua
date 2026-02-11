@@ -441,6 +441,18 @@ describe('messages2', function()
     ]])
   end)
 
+  it('echon append message', function()
+    command([[echo 1 | echon 2]])
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      ^12                                                   |
+                                                           |
+    ]])
+  end)
+
   it('shows message from still running command', function()
     exec_lua(function()
       vim.schedule(function()
