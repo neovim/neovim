@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
 local ok = t.ok
@@ -12,8 +13,10 @@ local is_os = t.is_os
 local poke_eventloop = n.poke_eventloop
 
 describe('vim.ui', function()
+  local screen
   before_each(function()
     clear({ args_rm = { '-u' }, args = { '--clean' } })
+    screen = Screen.new()
   end)
 
   describe('select()', function()
@@ -101,6 +104,14 @@ describe('vim.ui', function()
       eq('', exec_lua('return result'))
     end)
 
+    it('can hide inputted text', function()
+      feed(':lua vim.ui.input({ hide = true }, function(input) result = input end)<cr>')
+      feed('nvim')
+      screen:expect({ any = '%*%*%*%*' })
+      feed('<cr>')
+      eq('nvim', exec_lua('return result'))
+    end)
+
     it('can return nil when aborted with ESC #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
       feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
@@ -109,7 +120,7 @@ describe('vim.ui', function()
       eq(true, exec_lua('return (nil == result)'))
     end)
 
-    it('can return opts.cacelreturn when aborted with ESC with cancelreturn opt #18144', function()
+    it('can return opts.cancelreturn when aborted with ESC with cancelreturn opt #18144', function()
       feed(':lua result = "on_confirm not called"<cr>')
       feed(':lua vim.ui.input({ cancelreturn = "CANCEL" }, function(input) result = input end)<cr>')
       feed('Inputted Text<esc>')
