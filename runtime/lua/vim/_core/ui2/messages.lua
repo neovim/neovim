@@ -324,7 +324,13 @@ function M.show_msg(tar, content, replace_last, append, id)
 
   if M[tar] then
     -- Keep track of message span to replace by ID.
-    local opts = { end_row = row, end_col = col, invalidate = true, undo_restore = false }
+    local opts = {
+      end_row = row,
+      end_col = col,
+      invalidate = true,
+      undo_restore = false,
+      right_gravity = false,
+    }
     M[tar].ids[id] = M[tar].ids[id] or {}
     M[tar].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
   end
