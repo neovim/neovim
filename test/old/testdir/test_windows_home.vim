@@ -38,7 +38,7 @@ endfunc
 
 func CheckHome(exp, ...)
   call assert_equal(a:exp, $HOME)
-  call assert_equal(a:exp, expand('~', ':p'))
+  call assert_equal(substitute(a:exp, '\\', '/', 'g'), expand('~', ':p'))
   if !a:0
     call CheckHomeIsMissingFromSubprocessEnvironment()
   else
@@ -65,7 +65,7 @@ func Test_WindowsHome()
     " Same, but with $HOMEPATH not set
     UnletEnv $HOMEPATH
     let $HOME = ''  " Force recomputing "homedir"
-    call CheckHome('C:\')
+    call CheckHome('C:/')
 
     " Use $USERPROFILE if $HOMEPATH and $HOMEDRIVE are empty
     UnletEnv $HOMEDRIVE $HOMEPATH

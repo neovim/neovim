@@ -29,7 +29,7 @@ describe('title', function()
   end)
 
   it('has correct default title with named file', function()
-    local expected = (is_os('win') and 'myfile (C:\\mydir) - Nvim' or 'myfile (/mydir) - Nvim')
+    local expected = (is_os('win') and 'myfile (C:/mydir) - Nvim' or 'myfile (/mydir) - Nvim')
     command('set title')
     command(is_os('win') and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
     screen:expect(function()
@@ -106,7 +106,7 @@ describe('title', function()
   describe('is not changed by', function()
     local file1 = is_os('win') and 'C:\\mydir\\myfile1' or '/mydir/myfile1'
     local file2 = is_os('win') and 'C:\\mydir\\myfile2' or '/mydir/myfile2'
-    local expected = (is_os('win') and 'myfile1 (C:\\mydir) - Nvim' or 'myfile1 (/mydir) - Nvim')
+    local expected = (is_os('win') and 'myfile1 (C:/mydir) - Nvim' or 'myfile1 (/mydir) - Nvim')
     local buf2
 
     before_each(function()

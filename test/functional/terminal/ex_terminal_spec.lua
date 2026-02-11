@@ -303,11 +303,7 @@ local function test_terminal_with_fake_shell(backslash)
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
     command([[find */Xuniquefile]])
-    if is_os('win') then
-      eq('Xsomedir\\Xuniquefile', eval('bufname("%")'))
-    else
-      eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
-    end
+    eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
   end)
 
   it('works with gf', function()

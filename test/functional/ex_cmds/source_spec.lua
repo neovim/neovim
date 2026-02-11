@@ -66,9 +66,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.vim]])
-      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack1'))
       matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack2'))
-      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack3'))
+      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack3'))
     end
 
     write_file(
@@ -84,9 +84,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.lua]])
-      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack1'))
       matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack2'))
-      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack3'))
+      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack3'))
     end
 
     rmdir('Xshellslash')
@@ -326,8 +326,8 @@ describe(':source', function()
 end)
 
 it('$HOME is not shortened in filepath in v:stacktrace from sourced file', function()
-  local sep = n.get_pathsep()
-  local xhome = table.concat({ vim.uv.cwd(), 'Xhome' }, sep)
+  local sep = '/'
+  local xhome = t.fix_slashes(table.concat({ vim.uv.cwd(), 'Xhome' }, sep))
   mkdir(xhome)
   clear({ env = { HOME = xhome } })
   finally(function()

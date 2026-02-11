@@ -3272,6 +3272,7 @@ shada_read_next_item_start:
     }
     if (HAS_KEY(&it, _shada_mark, f)) {
       entry->data.filemark.fname = xmemdupz(it.f.data, it.f.size);
+      TO_SLASH(entry->data.filemark.fname);
     }
 
     if (entry->data.filemark.fname == NULL) {
@@ -3458,6 +3459,7 @@ shada_read_next_item_start:
       }
       if (HAS_KEY(&it, _shada_buflist_item, f)) {
         e->fname = xmemdupz(it.f.data, it.f.size);
+        TO_SLASH(e->fname);
       }
 
       if (e->pos.lnum <= 0) {

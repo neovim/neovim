@@ -97,7 +97,7 @@ describe('vim.secure', function()
       screen:expect([[
         ^let g:foobar = 42{MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:]] .. fn.fnamemodify(cwd, ':~') .. pathsep .. [[Xfile [RO]{MATCH: +}}|
+        {2:]] .. t.fix_slashes(fn.fnamemodify(cwd, ':~')) .. [[/Xfile [RO]{MATCH: +}}|
         {MATCH: +}|
         {1:~{MATCH: +}}|
         {4:[No Name]{MATCH: +}}|
@@ -147,7 +147,7 @@ describe('vim.secure', function()
       screen:expect([[
         ^let g:foobar = 42{MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:]] .. fn.fnamemodify(cwd, ':~') .. pathsep .. [[Xfile [RO]{MATCH: +}}|
+        {2:]] .. t.fix_slashes(fn.fnamemodify(cwd, ':~')) .. [[/Xfile [RO]{MATCH: +}}|
         {MATCH: +}|
         {1:~{MATCH: +}}|
         {4:[No Name]{MATCH: +}}|
@@ -259,7 +259,7 @@ describe('vim.secure', function()
       screen:expect([[
         ^{MATCH: +}|
         {1:~{MATCH: +}}|*2
-        {2:]] .. fn.fnamemodify(cwd, ':~') .. pathsep .. [[Xdir [RO]{MATCH: +}}|
+        {2:]] .. t.fix_slashes(fn.fnamemodify(cwd, ':~')) .. [[/Xdir [RO]{MATCH: +}}|
         {MATCH: +}|
         {1:~{MATCH: +}}|
         {4:[No Name]{MATCH: +}}|
