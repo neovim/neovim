@@ -1818,6 +1818,35 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
         (`integer`) index serves as either the lower bound or the upper bound
         position.
 
+vim.list.filter({t}, {fn})                                 *vim.list.filter()*
+    Filters a |lua-list| in-place, excluding items for which `fn(item)`
+    returns false or nil.
+
+    Example: >lua
+        local t = { 1, 2, 3, 4 }
+        vim.list.filter(t, function(x)
+          return x <= 2
+        end)
+        -- t is now { 1, 2 }
+
+        local t = { { id = 1 }, { id = 2 }, { id = 3 } }
+        -- Use deepcopy() to avoid mutating t.
+        local filtered = vim.list.filter(vim.deepcopy(t), function(x)
+          return x.id == 2
+        end)
+        -- filtered is now { { id = 2 } }
+<
+
+    Parameters: ~
+      • {t}   (`any[]`) A comparable list.
+      • {fn}  (`fun(x: T): boolean`) The filter predicate
+
+    Return: ~
+        (`any[]`) The filtered list
+
+    See also: ~
+      • |Iter:filter()|
+
 vim.list.unique({t}, {key})                                *vim.list.unique()*
     Removes duplicate values from a list-like table in-place.
 
@@ -2999,6 +3028,9 @@ Iter:filter({f})                                               *Iter:filter()*
 
     Return: ~
         (`Iter`)
+
+    See also: ~
+      • |vim.list.filter()|
 
 Iter:find({f})                                                   *Iter:find()*
     Find the first value in the iterator that satisfies the given predicate.

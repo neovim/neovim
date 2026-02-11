@@ -190,6 +190,7 @@ end
 ---                       in the pipeline and returns false or nil if the
 ---                       current iterator element should be removed.
 ---@return Iter
+---@see |vim.list.filter()|
 function Iter:filter(f)
   return self:map(function(...)
     if f(...) then
