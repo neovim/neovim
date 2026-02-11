@@ -443,6 +443,11 @@ describe('messages2', function()
 
   it('echon append message', function()
     command([[echo 1 | echon 2]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      12                                                   |
+    ]])
     feed('g<lt>')
     screen:expect([[
                                                            |
