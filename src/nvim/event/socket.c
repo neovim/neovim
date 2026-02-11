@@ -77,8 +77,8 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
   return 0;
 }
 
-/// Callback for closing probe connection handle
-static void probe_close_cb(uv_handle_t *handle)
+/// Callback for closing a handle initialized by socket_connect().
+static void connect_close_cb(uv_handle_t *handle)
 {
   bool *closed = handle->data;
   *closed = true;
@@ -102,7 +102,7 @@ static bool socket_alive(Loop *loop, const char *addr)
   // Connection succeeded - socket is alive. Close the probe connection properly.
   bool closed = false;
   stream.s.uv.pipe.data = &closed;
-  uv_close((uv_handle_t *)&stream.s.uv.pipe, probe_close_cb);
+  uv_close((uv_handle_t *)&stream.s.uv.pipe, connect_close_cb);
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
 
   return true;
@@ -161,7 +161,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
           uv_loop_t *uv_loop = watcher->uv.pipe.handle.loop;
           bool closed = false;
           watcher->uv.pipe.handle.data = &closed;
-          uv_close((uv_handle_t *)&watcher->uv.pipe.handle, probe_close_cb);
+          uv_close((uv_handle_t *)&watcher->uv.pipe.handle, connect_close_cb);
           LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
 
           uv_pipe_init(uv_loop, &watcher->uv.pipe.handle, 0);
@@ -257,7 +257,7 @@ static void connect_cb(uv_connect_t *req, int status)
   *ret_status = status;
   uv_handle_t *handle = (uv_handle_t *)req->handle;
   if (status != 0 && !uv_is_closing(handle)) {
-    uv_close(handle, NULL);
+    uv_close(handle, connect_close_cb);
   }
 }
 
@@ -265,6 +265,7 @@ bool socket_connect(Loop *loop, RStream *stream, bool is_tcp, const char *addres
                     const char **error)
 {
   bool success = false;
+  bool closed;
   int status;
   uv_connect_t req;
   req.data = &status;
@@ -306,21 +307,21 @@ tcp_retry:
     uv_pipe_connect(&req,  pipe, address, connect_cb);
     uv_stream = (uv_stream_t *)pipe;
   }
+  uv_stream->data = &closed;
+  closed = false;
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
   if (status == 0) {
     stream_init(NULL, &stream->s, -1, false, uv_stream);
+    assert(uv_stream->data != &closed);  // Should have been set by stream_init().
     success = true;
   } else {
     if (!uv_is_closing((uv_handle_t *)uv_stream)) {
-      uv_close((uv_handle_t *)uv_stream, NULL);
-      if (status == 1) {
-        // The uv_close() above will make libuv call connect_cb() with UV_ECANCELED.
-        // Make sure connect_cb() has been called here, as if it's called after this
-        // function ends it will cause a stack-use-after-scope.
-        LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, status != 1);
-      }
+      uv_close((uv_handle_t *)uv_stream, connect_close_cb);
     }
+    // Wait for the close callback to arrive before retrying or returning, otherwise
+    // it may lead to a hang or stack-use-after-return.
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
 
     if (is_tcp && addrinfo->ai_next) {
       addrinfo = addrinfo->ai_next;

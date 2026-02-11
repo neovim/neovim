@@ -478,7 +478,6 @@ describe('channels', function()
     end)
 
     it('in "tcp" mode', function()
-      skip(not is_os('linux'), 'FIXME: hangs on non-Linux')
       eq(
         'Vim:connection failed: connection refused',
         pcall_err(fn.sockconnect, 'tcp', '127.0.0.1:0')
