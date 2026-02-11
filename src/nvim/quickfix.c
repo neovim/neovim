@@ -2313,12 +2313,6 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
     return 0;
   }
 
-#ifdef BACKSLASH_IN_FILENAME
-  if (directory != NULL) {
-    slash_adjust(directory);
-  }
-  slash_adjust(fname);
-#endif
   if (directory != NULL && !vim_isAbsName(fname)) {
     ptr = concat_fnames(directory, fname, true);
     // Here we check if the file really exists.
@@ -2339,6 +2333,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
   } else {
     bufname = fname;
   }
+  TO_SLASH(bufname);
 
   if (qf_last_bufname != NULL
       && strcmp(bufname, qf_last_bufname) == 0

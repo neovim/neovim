@@ -11,6 +11,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
 #include "nvim/os/pty_proc_win.h"
+#include "nvim/path.h"
 
 #include "os/pty_proc_win.c.generated.h"
 
@@ -262,6 +263,9 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
     arg_node->arg = xmalloc(buf_len);
     if (is_cmdexe) {
       xstrlcpy(arg_node->arg, *argv, buf_len);
+      if (argc == 0) {
+        TO_BACKSLASH(arg_node->arg);
+      }
     } else {
       quote_cmd_arg(arg_node->arg, buf_len, *argv);
     }

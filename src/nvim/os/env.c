@@ -475,7 +475,7 @@ void init_homedir(void)
     char *homedrive = os_getenv("HOMEDRIVE");
     char *homepath = os_getenv("HOMEPATH");
     if (homepath == NULL) {
-      homepath = xstrdup("\\");
+      homepath = xstrdup(PATHSEPSTR);
     }
     if (homedrive != NULL
         && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
@@ -680,7 +680,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
           }
 #endif
         *var = NUL;
-        var = vim_getenv(dst);
+        var = vim_getenv_path(dst);
         mustfree = true;
 #if defined(UNIX)
       }
@@ -723,21 +723,6 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         tail = "";  // for gcc
 #endif  // UNIX
       }
-
-#ifdef BACKSLASH_IN_FILENAME
-      // If 'shellslash' is set change backslashes to forward slashes.
-      // Can't use slash_adjust(), p_ssl may be set temporarily.
-      if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
-        char *p = xstrdup(var);
-
-        if (mustfree) {
-          xfree(var);
-        }
-        var = p;
-        mustfree = true;
-        forward_slash(var);
-      }
-#endif
 
       // If "var" contains white space, escape it with a backslash.
       // Required for ":e ~/tt" when $HOME includes a space.
@@ -1048,6 +1033,15 @@ char *vim_getenv(const char *name)
   return vim_path;
 }
 
+/// Wrapper around vim_getenv for path-like environment variables.
+/// Converts backslash to slash on Windows.
+char *vim_getenv_path(const char *name)
+{
+  char *p = vim_getenv(name);
+  TO_SLASH(p);
+  return p;
+}
+
 /// Replace home directory by "~" in each space or comma separated file name in
 /// 'src'.
 ///
@@ -1095,6 +1089,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     homedir_env = os_getenv("USERPROFILE");
   }
 #endif
+  TO_SLASH(homedir_env);
   char *homedir_env_mod = homedir_env;
   bool must_free = false;
 

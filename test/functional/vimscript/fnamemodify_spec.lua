@@ -25,7 +25,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles the root path', function()
-    local root = n.pathroot()
+    local root = t.fix_slashes(n.pathroot())
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
     if is_os('win') then

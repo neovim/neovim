@@ -305,11 +305,7 @@ local function test_terminal_with_fake_shell(backslash)
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
     feed_command([[find */shadacat.py]])
-    if is_os('win') then
-      eq('scripts\\shadacat.py', eval('bufname("%")'))
-    else
-      eq('scripts/shadacat.py', eval('bufname("%")'))
-    end
+    eq('scripts/shadacat.py', eval('bufname("%")'))
   end)
 
   it('works with gf', function()

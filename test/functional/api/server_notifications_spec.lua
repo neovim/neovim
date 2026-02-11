@@ -79,7 +79,7 @@ describe('notify', function()
 
   it('cancels stale events on channel close #13537', function()
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
-    local catpath = eval('exepath("cat")')
+    local catpath = t.fix_slashes(eval('exepath("cat")'))
     api.nvim_set_var('somevar', 0)
     eq(
       { id = catchan, argv = { catpath }, stream = 'job', mode = 'rpc', client = {} },

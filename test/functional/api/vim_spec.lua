@@ -2775,7 +2775,7 @@ describe('API', function()
 
     it('stream=job channel', function()
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
-      local catpath = eval('exepath("cat")')
+      local catpath = t.fix_slashes(eval('exepath("cat")'))
       local info = {
         stream = 'job',
         id = 3,
@@ -2822,7 +2822,7 @@ describe('API', function()
       local info = {
         stream = 'job',
         id = 3,
-        argv = { eval('exepath(&shell)') },
+        argv = { t.fix_slashes(eval('exepath(&shell)')) },
         mode = 'terminal',
         buffer = 1,
         pty = '?',
@@ -5190,7 +5190,7 @@ describe('API', function()
         end, { nargs = 1 })
       ]])
       eq(
-        uv.cwd(),
+        t.fix_slashes(uv.cwd()),
         api.nvim_cmd(
           { cmd = 'Foo', args = { '%:p:h' }, magic = { file = true } },
           { output = true }

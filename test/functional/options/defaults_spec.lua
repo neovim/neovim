@@ -291,10 +291,8 @@ describe('XDG defaults', function()
     clear()
     local rtp = eval('split(&runtimepath, ",")')
     local rv = {}
-    local expected = (
-      is_os('win') and { [[\nvim-data\site]], [[\nvim-data\site\after]] }
-      or { '/nvim/site', '/nvim/site/after' }
-    )
+    local data_dir = is_os('win') and 'nvim-data' or 'nvim'
+    local expected = { '/' .. data_dir .. '/site', '/' .. data_dir .. '/site/after' }
 
     for _, v in ipairs(rtp) do
       local m = string.match(v, [=[[/\]nvim[^/\]*[/\]site.*$]=])
@@ -695,7 +693,7 @@ describe('XDG defaults', function()
 
     it('are escaped properly', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-      local path_sep = is_os('win') and '\\' or '/'
+      local path_sep = '/'
       eq(
         (
           '\\, \\, \\,'
@@ -870,14 +868,7 @@ describe('XDG defaults', function()
         api.nvim_get_option_value('undodir', {})
       )
       eq(
-        '\\,=\\,=\\,'
-          .. path_sep
-          .. ''
-          .. state_dir
-          .. ''
-          .. path_sep
-          .. 'view'
-          .. (path_sep):rep(2),
+        ',=,=,' .. path_sep .. '' .. state_dir .. '' .. path_sep .. 'view' .. (path_sep):rep(2),
         api.nvim_get_option_value('viewdir', {})
       )
     end)

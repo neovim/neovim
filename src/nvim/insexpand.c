@@ -3994,30 +3994,9 @@ static void get_next_filename_completion(void)
   int max_score = 0;
   Direction dir = compl_direction;
 
-#ifdef BACKSLASH_IN_FILENAME
-  char pathsep = (curbuf->b_p_csl[0] == 's')
-                 ? '/' : (curbuf->b_p_csl[0] == 'b') ? '\\' : PATHSEP;
-#else
-  char pathsep = PATHSEP;
-#endif
-
   if (in_fuzzy_collect) {
-#ifdef BACKSLASH_IN_FILENAME
-    if (curbuf->b_p_csl[0] == 's') {
-      for (size_t i = 0; i < leader_len; i++) {
-        if (leader[i] == '\\') {
-          leader[i] = '/';
-        }
-      }
-    } else if (curbuf->b_p_csl[0] == 'b') {
-      for (size_t i = 0; i < leader_len; i++) {
-        if (leader[i] == '/') {
-          leader[i] = '\\';
-        }
-      }
-    }
-#endif
-    char *last_sep = strrchr(leader, pathsep);
+    TO_SLASH(leader);
+    char *last_sep = strrchr(leader, PATHSEP);
     if (last_sep == NULL) {
       // No path separator or separator is the last character,
       // fuzzy match the whole leader
@@ -4049,16 +4028,12 @@ static void get_next_filename_completion(void)
   // May change home directory back to "~".
   tilde_replace(compl_pattern.data, num_matches, matches);
 #ifdef BACKSLASH_IN_FILENAME
-  if (curbuf->b_p_csl[0] != NUL) {
+  if ((curbuf->b_p_csl[0] == NUL && !p_ssl) || curbuf->b_p_csl[0] == 'b') {
     for (int i = 0; i < num_matches; i++) {
-      char *ptr = matches[i];
-      while (*ptr != NUL) {
-        if (curbuf->b_p_csl[0] == 's' && *ptr == '\\') {
-          *ptr = '/';
-        } else if (curbuf->b_p_csl[0] == 'b' && *ptr == '/') {
+      for (char *ptr = matches[i]; *ptr; ptr++) {
+        if (*ptr == '/') {
           *ptr = '\\';
         }
-        ptr += utfc_ptr2len(ptr);
       }
     }
   }

@@ -17,9 +17,9 @@ local function last_set_lua_verbose_tests(cmd, v1)
   setup(function()
     clear(v1 and { args = { '-V1' } } or nil)
     script_file = 'test_verbose.lua'
-    local current_dir = fn.getcwd()
+    local current_dir = t.fix_slashes(fn.getcwd())
     current_dir = fn.fnamemodify(current_dir, ':~')
-    script_location = table.concat({ current_dir, n.get_pathsep(), script_file })
+    script_location = table.concat({ current_dir, '/', script_file })
 
     write_file(
       script_file,
@@ -326,9 +326,9 @@ describe(':verbose when using API from Vimscript', function()
   setup(function()
     clear()
     script_file = 'test_verbose.vim'
-    local current_dir = fn.getcwd()
+    local current_dir = t.fix_slashes(fn.getcwd())
     current_dir = fn.fnamemodify(current_dir, ':~')
-    script_location = table.concat({ current_dir, n.get_pathsep(), script_file })
+    script_location = table.concat({ current_dir, '/', script_file })
 
     write_file(
       script_file,

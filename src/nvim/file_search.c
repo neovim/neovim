@@ -1593,6 +1593,7 @@ theend:
 char *grab_file_name(int count, linenr_T *file_lnum)
 {
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
+  char *fname;
   if (VIsual_active) {
     size_t len;
     char *ptr;
@@ -1605,9 +1606,12 @@ char *grab_file_name(int count, linenr_T *file_lnum)
 
       *file_lnum = getdigits_int32(&p, false, 0);
     }
-    return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
+    fname = find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
+  } else {
+    fname = file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
   }
-  return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
+  TO_SLASH(fname);
+  return fname;
 }
 
 /// Return the file name under or after the cursor.
