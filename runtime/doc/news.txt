@@ -325,6 +325,7 @@ LUA
 • |vim.json.encode()| has an `indent` option for pretty-formatting.
 • |vim.json.encode()| has an `sort_keys` option.
 • |Range:is_empty()| to check if a |vim.Range| is empty.
+• |vim.json.decode()| has an `skip_comments` option.
 
 OPTIONS
 

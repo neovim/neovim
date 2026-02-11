@@ -3433,6 +3433,11 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
                 • {luanil}? (`{ object?: boolean, array?: boolean }`, default:
                   `nil`) Convert `null` in JSON objects and/or arrays to Lua
                   `nil` instead of |vim.NIL|.
+                • {skip_comments}? (`boolean`, default: `false`) Allows
+                  JavaScript-style comments within JSON data. Comments are
+                  treated as whitespace and may appear anywhere whitespace is
+                  valid in JSON. Supports single-line comments beginning with
+                  '//' and block comments enclosed with '/' and '/'.
 
     Return: ~
         (`any`)
