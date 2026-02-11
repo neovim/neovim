@@ -255,7 +255,9 @@ function M.show_msg(tar, content, replace_last, append, id)
       for _, chunk in ipairs(content) do
         msg = msg .. chunk[2]
       end
-      dupe = (not extid and msg == M.prev_msg and ui.cmd.srow == 0 and M.dupe + 1 or 0)
+      dupe = (
+        not extid and msg == M.prev_msg and ui.cmd.srow == 0 and not append and M.dupe + 1 or 0
+      )
     end
 
     cr = next(M[tar].ids) ~= nil and msg:sub(1, 1) == '\r'

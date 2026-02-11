@@ -451,6 +451,20 @@ describe('messages2', function()
       ^12                                                   |
                                                            |
     ]])
+    feed([[q:echo 1 | echon 2 | echon 2 | echon 3<CR>]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      1223                                                 |
+    ]])
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      ^1223                                                 |
+                                                           |
+    ]])
   end)
 
   it('shows message from still running command', function()
