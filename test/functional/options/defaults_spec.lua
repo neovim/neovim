@@ -867,10 +867,7 @@ describe('XDG defaults', function()
           .. (path_sep):rep(2),
         api.nvim_get_option_value('undodir', {})
       )
-      eq(
-        ',=,=,' .. path_sep .. '' .. state_dir .. '' .. path_sep .. 'view' .. (path_sep):rep(2),
-        api.nvim_get_option_value('viewdir', {})
-      )
+      eq(',=,=,/' .. state_dir .. '/view//', api.nvim_get_option_value('viewdir', {}))
     end)
   end)
 end)
