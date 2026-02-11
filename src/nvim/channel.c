@@ -474,7 +474,9 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
   channel = channel_alloc(kChannelStreamSocket);
   if (!socket_connect(&main_loop, &channel->stream.socket,
                       tcp, address, timeout, error)) {
-    channel_destroy_early(channel);
+    // Don't use channel_destroy_early() as new channels may have been allocated
+    // by channel_from_connection() while polling for uv events.
+    channel_decref(channel);
     return 0;
   }
 
