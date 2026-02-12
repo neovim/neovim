@@ -317,6 +317,7 @@ LUA
 • |vim.version.range()| output can be converted to a human-readable string with |tostring()|.
 • |vim.version.intersect()| computes intersection of two version ranges.
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
+• |Iter:peek()| now works for all iterator types, not just |list-iterator|.
 • Built-in plugin manager |vim.pack|
 • |vim.list.unique()| and |Iter:unique()| to deduplicate lists and iterators,
   respectively.
