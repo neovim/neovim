@@ -210,6 +210,7 @@ describe(':TOhtml', function()
     exec('set termguicolors')
     local bg = fn.synIDattr(fn.hlID('Normal'), 'bg#', 'gui')
     local fg = fn.synIDattr(fn.hlID('Normal'), 'fg#', 'gui')
+    exec_lua [[vim.o.guifont='Courier New' ]]
     n.command('2,2TOhtml')
     local out_file = api.nvim_buf_get_name(api.nvim_get_current_buf())
     eq({
@@ -221,7 +222,7 @@ describe(':TOhtml', function()
       '<title></title>',
       ('<meta name="colorscheme" content="%s"></meta>'):format(api.nvim_get_var('colors_name')),
       '<style>',
-      '* {font-family: monospace}',
+      ('* {font-family: "%s",monospace}'):format(n.eval('&guifont')),
       ('body {background-color: %s; color: %s}'):format(bg, fg),
       '.Visual {background-color: #9b9ea4}',
       '</style>',

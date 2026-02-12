@@ -53,6 +53,7 @@ describe('UI receives option updates', function()
 
   it('for defaults', function()
     local expected = reset()
+    expected.guifont = eval('&guifont')
     screen:expect(function()
       eq(expected, screen.options)
     end)
@@ -94,6 +95,7 @@ describe('UI receives option updates', function()
 
     command('set termguicolors')
     expected.termguicolors = true
+    expected.guifont = eval('&guifont')
     screen:expect(function()
       eq(expected, screen.options)
     end)
@@ -166,6 +168,7 @@ describe('UI receives option updates', function()
     end)
 
     command('set all&')
+    defaults.guifont = eval('&guifont')
     screen:expect(function()
       eq(defaults, screen.options)
     end)
@@ -176,6 +179,7 @@ describe('UI receives option updates', function()
 
     expected.ext_cmdline = true
     expected.ext_wildmenu = true
+    expected.guifont = eval('&guifont')
     screen:expect(function()
       eq(expected, screen.options)
     end)
