@@ -145,12 +145,12 @@ describe('vim.ui', function()
       if not is_os('bsd') then
         local rv = exec_lua([[
           local cmd, err = vim.ui.open('non-existent-file')
-          if err then return nil end
+          if err and err:find('no handler found') then
+            return -1
+          end
           return cmd:wait(100).code
         ]])
-        if type(rv) == 'number' then
-          ok(rv ~= 0, 'nonzero exit code', rv)
-        end
+        ok(type(rv) == 'number' and rv ~= 0, 'nonzero exit code', rv)
       end
 
       exec_lua [[

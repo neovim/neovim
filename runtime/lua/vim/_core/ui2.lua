@@ -11,7 +11,7 @@
 ---    ---@type 'cmd'|'msg' Default message target, either in the
 ---    ---cmdline or in a separate ephemeral message window.
 ---    ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
----    or table mapping |ui-messages| kinds and triggers to a target.
+---    ---or table mapping |ui-messages| kinds and triggers to a target.
 ---    targets = 'cmd',
 ---    timeout = 4000, -- Time a message is visible in the message window.
 ---  },
@@ -32,7 +32,9 @@
 ---
 ---Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 ---not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
----spilled lines. To see the full message, the |g<| command can be used.
+---spilled lines. To see the full message, use either:
+--- - ENTER immediately after a message from interactive |:| cmdline.
+--- - |g<| at any time.
 
 local api = vim.api
 local M = {

@@ -752,7 +752,7 @@ describe('vim.lsp.completion: item conversion', function()
     eq('foobar', result.items[1].user_data.nvim.lsp.completion_item.textEdit.newText)
   end)
 
-  it('shows snippet source in doc popup if completeopt include popup', function()
+  it('shows snippet source in doc popup if completeopt=popup', function()
     exec_lua([[
       vim.opt.completeopt:append('popup')
       vim.bo.filetype = 'lua'
@@ -1362,7 +1362,7 @@ describe('vim.lsp.completion: integration', function()
     eq('w-1/2', n.api.nvim_get_current_line())
   end)
 
-  it('completionItem/resolve', function()
+  it('selecting an item triggers completionItem/resolve + preview', function()
     local screen = Screen.new(50, 20)
     screen:add_extra_attr_ids({
       [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
