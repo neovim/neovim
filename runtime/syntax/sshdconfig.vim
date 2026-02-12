@@ -4,11 +4,12 @@
 " Maintainer:	Jakub Jelen <jakuje at gmail dot com>
 " Previous Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
 " Contributor:	Thilo Six
-" Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
+" Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
+" Contributor:  Fionn Fitzmaurice (github.com/fionn)
 " Originally:	2009-07-09
-" Last Change:	2022 Nov 10
-" SSH Version:	8.5p1
+" Last Change:	2026-02-11
+" SSH Version:	10.2p1
 "
 
 " Setup
@@ -40,6 +41,8 @@ syn keyword sshdconfigPrivilegeSeparation sandbox
 syn keyword sshdconfigTcpForwarding local remote
 
 syn keyword sshdconfigRootLogin prohibit-password without-password forced-commands-only
+
+syn keyword sshdconfigPubkeyAuthOptions touch-required verify-required
 
 syn keyword sshdconfigCiphers 3des-cbc
 syn keyword sshdconfigCiphers blowfish-cbc
@@ -121,6 +124,10 @@ syn keyword sshdconfigKexAlgo diffie-hellman-group-exchange-sha256
 syn keyword sshdconfigKexAlgo ecdh-sha2-nistp256
 syn keyword sshdconfigKexAlgo ecdh-sha2-nistp384
 syn keyword sshdconfigKexAlgo ecdh-sha2-nistp521
+syn keyword sshdconfigKexAlgo mlkem768x25519-sha256
+syn keyword sshdconfigKexAlgo mlkem768nistp256-sha256
+syn keyword sshdconfigKexAlgo mlkem1024nistp384-sha384
+
 syn match sshdconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
 syn match sshdconfigKexAlgo "\<sntrup4591761x25519-sha512@tinyssh\.org\>"
 syn match sshdconfigKexAlgo "\<sntrup761x25519-sha512@openssh\.com\>"
@@ -187,9 +194,9 @@ syn keyword sshdconfigKeyword GSSAPIEnablek5users
 syn keyword sshdconfigKeyword GSSAPIKexAlgorithms
 syn keyword sshdconfigKeyword GSSAPIKeyExchange
 syn keyword sshdconfigKeyword GSSAPIStoreCredentialsOnRekey
+syn keyword sshdconfigKeyword GSSAPIDelegateCredentials
 syn keyword sshdconfigKeyword GSSAPIStrictAcceptorCheck
 syn keyword sshdconfigKeyword HostbasedAcceptedAlgorithms
-syn keyword sshdconfigKeyword HostbasedAcceptedKeyTypes
 syn keyword sshdconfigKeyword HostbasedAuthentication
 syn keyword sshdconfigKeyword HostbasedUsesNameFromPacketOnly
 syn keyword sshdconfigKeyword HostCertificate
@@ -205,10 +212,7 @@ syn keyword sshdconfigKeyword KerberosAuthentication
 syn keyword sshdconfigKeyword KerberosGetAFSToken
 syn keyword sshdconfigKeyword KerberosOrLocalPasswd
 syn keyword sshdconfigKeyword KerberosTicketCleanup
-syn keyword sshdconfigKeyword KerberosUniqueCCache
-syn keyword sshdconfigKeyword KerberosUseKuserok
 syn keyword sshdconfigKeyword KexAlgorithms
-syn keyword sshdconfigKeyword KeyRegenerationInterval
 syn keyword sshdconfigKeyword ListenAddress
 syn keyword sshdconfigKeyword LoginGraceTime
 syn keyword sshdconfigKeyword LogLevel
@@ -219,8 +223,8 @@ syn keyword sshdconfigKeyword MaxAuthTries
 syn keyword sshdconfigKeyword MaxSessions
 syn keyword sshdconfigKeyword MaxStartups
 syn keyword sshdconfigKeyword ModuliFile
+syn keyword sshdconfigKeyword PAMServiceName
 syn keyword sshdconfigKeyword PasswordAuthentication
-syn keyword sshdconfigKeyword PermitBlacklistedKeys
 syn keyword sshdconfigKeyword PermitEmptyPasswords
 syn keyword sshdconfigKeyword PermitListen
 syn keyword sshdconfigKeyword PermitOpen
@@ -231,25 +235,25 @@ syn keyword sshdconfigKeyword PermitUserEnvironment
 syn keyword sshdconfigKeyword PermitUserRC
 syn keyword sshdconfigKeyword PerSourceMaxStartups
 syn keyword sshdconfigKeyword PerSourceNetBlockSize
+syn keyword sshdconfigKeyword PerSourcePenalties
+syn keyword sshdconfigKeyword PerSourcePenaltyExemptList
 syn keyword sshdconfigKeyword PidFile
 syn keyword sshdconfigKeyword Port
 syn keyword sshdconfigKeyword PrintLastLog
 syn keyword sshdconfigKeyword PrintMotd
-syn keyword sshdconfigKeyword Protocol
 syn keyword sshdconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshdconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshdconfigKeyword PubkeyAuthentication
 syn keyword sshdconfigKeyword PubkeyAuthOptions
 syn keyword sshdconfigKeyword RDomain
+syn keyword sshdconfigKeyword RefuseConnection
 syn keyword sshdconfigKeyword RekeyLimit
 syn keyword sshdconfigKeyword RequiredRSASize
 syn keyword sshdconfigKeyword RevokedKeys
-syn keyword sshdconfigKeyword RhostsRSAAuthentication
-syn keyword sshdconfigKeyword RSAAuthentication
 syn keyword sshdconfigKeyword SecurityKeyProvider
-syn keyword sshdconfigKeyword ServerKeyBits
 syn keyword sshdconfigKeyword SetEnv
-syn keyword sshdconfigKeyword ShowPatchLevel
+syn keyword sshdconfigKeyword SshdAuthPath
+syn keyword sshdconfigKeyword SshdSessionPath
 syn keyword sshdconfigKeyword StreamLocalBindMask
 syn keyword sshdconfigKeyword StreamLocalBindUnlink
 syn keyword sshdconfigKeyword StrictModes
@@ -258,10 +262,7 @@ syn keyword sshdconfigKeyword SyslogFacility
 syn keyword sshdconfigKeyword TCPKeepAlive
 syn keyword sshdconfigKeyword TrustedUserCAKeys
 syn keyword sshdconfigKeyword UnusedConnectionTimeout
-syn keyword sshdconfigKeyword UseBlacklist
-syn keyword sshdconfigKeyword UseBlocklist
 syn keyword sshdconfigKeyword UseDNS
-syn keyword sshdconfigKeyword UseLogin
 syn keyword sshdconfigKeyword UsePAM
 syn keyword sshdconfigKeyword VersionAddendum
 syn keyword sshdconfigKeyword X11DisplayOffset
@@ -295,6 +296,7 @@ hi def link sshdconfigIPQoS                sshdconfigEnum
 hi def link sshdconfigKexAlgo              sshdconfigEnum
 hi def link sshdconfigTunnel               sshdconfigEnum
 hi def link sshdconfigSubsystem            sshdconfigEnum
+hi def link sshdconfigPubkeyAuthOptions    sshdconfigEnum
 hi def link sshdconfigEnum                 Function
 hi def link sshdconfigSpecial              Special
 hi def link sshdconfigKeyword              Keyword
