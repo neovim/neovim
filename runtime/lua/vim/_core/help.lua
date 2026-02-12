@@ -122,10 +122,75 @@ function M.escape_subject(word)
     -- E.g. '`command`,' --> 'command' (backticks are removed too, but '``' stays '``')
     word = word:gsub([[^'([^']*)'.*]], [['%1']])
     word = word:gsub([[^{([^}]*)}.*]], '{%1}')
-    word = word:gsub([[^`([^`]+)`.*]], '%1')
+    word = word:gsub([[.*`([^`]+)`.*]], '%1')
   end
 
   return word
+end
+
+---Populates the |local-additions| section of a help buffer with references to locally-installed
+---help files. These are help files outside of $VIMRUNTIME (typically from plugins) whose first
+---line contains a tag (e.g. *plugin-name.txt*) and a short description.
+---
+---For each help file found in 'runtimepath', the first line is extracted and added to the buffer
+---as a reference (converting '*tag*' to '|tag|'). If a translated version of a help file exists
+---in the same language as the current buffer (e.g. 'plugin.nlx' alongside 'plugin.txt'), the
+---translated version is preferred over the '.txt' file.
+function M.local_additions()
+  local buf = vim.api.nvim_get_current_buf()
+  local bufname = vim.fs.basename(vim.api.nvim_buf_get_name(buf))
+
+  -- "help.txt" or "help.??x" where ?? is a language code, see |help-translated|.
+  local lang = bufname:match('^help%.(%a%a)x$')
+  if bufname ~= 'help.txt' and not lang then
+    return
+  end
+
+  -- Find local help files
+  ---@type table<string, string>
+  local plugins = {}
+  local pattern = lang and ('doc/*.{txt,%sx}'):format(lang) or 'doc/*.txt'
+  for _, docpath in ipairs(vim.api.nvim_get_runtime_file(pattern, true)) do
+    if not vim.fs.relpath(vim.env.VIMRUNTIME, docpath) then
+      -- '/path/to/doc/plugin.txt' --> 'plugin'
+      local plugname = vim.fs.basename(docpath):sub(1, -5)
+      -- prefer language-specific files over .txt
+      if not plugins[plugname] or vim.endswith(plugins[plugname], '.txt') then
+        plugins[plugname] = docpath
+      end
+    end
+  end
+
+  -- Format plugin list lines
+  local lines = {}
+  for _, path in vim.spairs(plugins) do
+    local fp = io.open(path, 'r')
+    if fp then
+      local tagline = fp:read('*l') or ''
+      fp:close()
+      if tagline:sub(1, 1) == '*' then
+        ---@type string, string
+        local tag, desc = tagline:match('^%*([^*]+)%*%s*(.*)$')
+        -- left-align taglink and right-align description
+        -- max(l, 78) for if 'textwidth' is not set via modeline (e.g. in sandbox)
+        -- max(l, 1) for if the description doesn't fit
+        local num_spaces = math.max(math.max(vim.bo[buf].textwidth, 78) - #desc - #tag - 2, 1)
+        local spaces = string.rep(' ', num_spaces)
+        local fmt = string.format('|%s|%s%s', tag, spaces, desc)
+        table.insert(lines, fmt)
+      end
+    end
+  end
+
+  -- Add plugin list to local-additions section
+  for linenr, line in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, false)) do
+    if line:find('*local-additions*', 1, true) then
+      vim._with({ buf = buf, bo = { modifiable = true, readonly = false } }, function()
+        vim.api.nvim_buf_set_lines(buf, linenr, linenr, true, lines)
+      end)
+      break
+    end
+  end
 end
 
 return M

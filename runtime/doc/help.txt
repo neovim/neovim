@@ -143,7 +143,7 @@ Standard plugins ~
 See |standard-plugin-list|.
 
 Local additions ~
-							*local-additions*
+							     *local-additions*
 
 ------------------------------------------------------------------------------
 Bars example								*bars*
