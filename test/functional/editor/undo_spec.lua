@@ -229,7 +229,7 @@ end)
 describe('undo', function()
   before_each(clear)
 
-  it('u_savecommon uses correct buffer with reload = true', function()
+  it('u_savecommon(reload=true) uses correct buffer', function()
     -- Easiest to repro in a prompt buffer. prompt_setprompt's buffer must not yet have an undo
     -- header to trigger this. Will crash if it wrongly uses the unloaded curbuf in nvim_buf_call,
     -- as that has no undo buffer.

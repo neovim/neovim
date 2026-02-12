@@ -3983,6 +3983,7 @@ local options = {
 
         Examples of cursor highlighting: >vim
             highlight Cursor gui=reverse guifg=NONE guibg=NONE
+            " Note: gui=reverse overrides colors.
             highlight Cursor gui=NONE guifg=bg guibg=fg
         <
       ]=],
@@ -3998,10 +3999,11 @@ local options = {
       abbreviation = 'gfn',
       defaults = {
         if_true = macros('DFLT_GFN', 'string'),
-        doc = [[(MS-Windows) "Cascadia Code,Cascadia Mono,Consolas,Courier New,monospace"
-                     (Mac) "SF Mono,Menlo,Monaco,Courier New,monospace"
-                   (Linux) "Source Code Pro,DejaVu Sans Mono,Courier New,monospace"
-                  (others) "DejaVu Sans Mono,Courier New,monospace"]],
+        doc = [["DejaVu Sans Mono,Courier New,monospace"
+          Mac: "SF Mono,Menlo,Monaco,Courier New,monospace"
+          Linux: "Source Code Pro,DejaVu Sans Mono,Courier New,monospace"
+          MS-Windows: "Cascadia Code,Cascadia Mono,Consolas,Courier New,monospace"]],
+        meta = 'DFLT_GFN',
       },
       desc = [=[
         This is a list of fonts which will be used for the GUI version of Vim.

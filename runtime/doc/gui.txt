@@ -327,26 +327,26 @@ configure which ones appear with the 'guioptions' option.
 
 The interface looks like this (with `:set guioptions=mlrb`):
 >
-                       +------------------------------+ `
-                       | File  Edit              Help | <- Menu bar (m) `
-                       +-+--------------------------+-+ `
-                       |^|                          |^| `
-                       |#| Text area.               |#| `
-                       | |                          | | `
-                       |v|__________________________|v| `
- Normal status line -> |-+ File.c              5,2  +-| `
- between Vim windows   |^|""""""""""""""""""""""""""|^| `
-                       | |                          | | `
-                       | | Another file buffer.     | | `
-                       | |                          | | `
-                       |#|                          |#| `
- Left scrollbar (l) -> |#|                          |#| <- Right `
-                       |#|                          |#|    scrollbar (r) `
-                       | |                          | | `
-                       |v|                          |v| `
-                       +-+--------------------------+-+ `
-                       | |< ####                   >| | <- Bottom `
-                       +-+--------------------------+-+    scrollbar (b) `
+                       +------------------------------+
+                       | File  Edit              Help | <- Menu bar (m)
+                       +-+--------------------------+-+
+                       |^|                          |^|
+                       |#| Text area.               |#|
+                       | |                          | |
+                       |v|__________________________|v|
+ Normal status line -> |-+ File.c              5,2  +-|
+ between Vim windows   |^|""""""""""""""""""""""""""|^|
+                       | |                          | |
+                       | | Another file buffer.     | |
+                       | |                          | |
+                       |#|                          |#|
+ Left scrollbar (l) -> |#|                          |#| <- Right
+                       |#|                          |#|    scrollbar (r)
+                       | |                          | |
+                       |v|                          |v|
+                       +-+--------------------------+-+
+                       | |< ####                   >| | <- Bottom
+                       +-+--------------------------+-+    scrollbar (b)
 <
 Any of the scrollbar or menu components may be turned off by not putting the
 appropriate letter in the 'guioptions' string.  The bottom scrollbar is

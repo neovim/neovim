@@ -503,6 +503,9 @@ local function should_render_field_or_param(p)
     and not vim.startswith(p.name, '_')
 end
 
+--- Gets a field's description and its "(default: …)" value, if any (see `lsp/client.lua` for
+--- examples).
+---
 --- @param desc? string
 --- @return string?, string?
 local function get_default(desc)
@@ -798,7 +801,8 @@ local function render_fun(fun, classes, cfg)
       local s = 'WARNING: This feature is experimental/unstable.'
       table.insert(ret, md_to_vimdoc(s, INDENTATION, INDENTATION, TEXT_WIDTH))
       table.insert(ret, '\n')
-    else
+    end
+    if since > 0 then
       local v = assert(util.version_level[since], 'invalid @since on ' .. fun.name)
       fun.attrs = fun.attrs or {}
       table.insert(fun.attrs, fmt('Since: %s', v))
