@@ -1103,7 +1103,7 @@ describe('pending scrollback line handling', function()
   end)
 end)
 
-describe('nvim_open_term()', function()
+describe('scrollback is correct', function()
   local screen --- @type test.functional.ui.screen
   local buf --- @type integer
   local win --- @type integer
@@ -1141,6 +1141,8 @@ describe('nvim_open_term()', function()
     for i = start, stop do
       eq(('TEST %d'):format(i), lines[i - start + 1])
     end
+    eq('', lines[#lines])
+    eq(stop - start + 2, #lines)
   end
 
   local function check_common()
@@ -1156,7 +1158,7 @@ describe('nvim_open_term()', function()
     ]])
   end
 
-  it('on buffer with fewer lines than scrollback', function()
+  it('with nvim_open_term() on buffer with fewer lines than scrollback', function()
     exec_lua(function()
       vim.api.nvim_open_term(buf, {})
       vim.api.nvim_win_set_cursor(win, { 3, 0 })
@@ -1175,7 +1177,7 @@ describe('nvim_open_term()', function()
     check_common()
   end)
 
-  it('on buffer with more lines than scrollback', function()
+  it('with nvim_open_term() on buffer with more lines than scrollback', function()
     api.nvim_set_option_value('scrollback', 10, { buf = buf })
     exec_lua(function()
       vim.api.nvim_open_term(buf, {})
@@ -1193,5 +1195,145 @@ describe('nvim_open_term()', function()
     eq({ 1, 0 }, api.nvim_win_get_cursor(win))
     check_buffer_lines(86, 99)
     check_common()
+  end)
+
+  describe('when window height', function()
+    before_each(function()
+      feed('<C-W>lGV4kdgg')
+      screen:try_resize(30, 20)
+      command('botright 9new | wincmd p')
+      exec_lua(function()
+        vim.g.chan = vim.api.nvim_open_term(buf, {})
+        vim.cmd('$')
+      end)
+      screen:expect([[
+                  │{100:TEST} 88            |
+        {1:~         }│{100:TEST} 89            |
+        {1:~         }│{100:TEST} 90            |
+        {1:~         }│{100:TEST} 91            |
+        {1:~         }│{100:TEST} 92            |
+        {1:~         }│{100:TEST} 93            |
+        {1:~         }│{100:TEST} 94            |
+        {1:~         }│^                   |
+        {2:[No Name]  }{102:[Scratch] [-]      }|
+                                      |
+        {1:~                             }|*8
+        {2:[No Name]                     }|
+                                      |
+      ]])
+      check_buffer_lines(0, 94)
+    end)
+
+    local send_cmd = 'call chansend(g:chan, @")'
+
+    describe('increases in the same refresh cycle as outputting lines', function()
+      --- @type string[][]
+      local perms = t.concat_tables(
+        t.permutations({ 'resize +2', send_cmd }),
+        t.permutations({ 'resize +4', 'resize -2', send_cmd }),
+        t.permutations({ 'resize +6', 'resize -4', send_cmd })
+      )
+      assert(#perms == 2 + 6 + 6)
+      local screen_final = [[
+                  │{100:TEST} 91            |
+        {1:~         }│{100:TEST} 92            |
+        {1:~         }│{100:TEST} 93            |
+        {1:~         }│{100:TEST} 94            |
+        {1:~         }│{100:TEST} 95            |
+        {1:~         }│{100:TEST} 96            |
+        {1:~         }│{100:TEST} 97            |
+        {1:~         }│{100:TEST} 98            |
+        {1:~         }│{100:TEST} 99            |
+        {1:~         }│^                   |
+        {2:[No Name]  }{102:[Scratch] [-]      }|
+                                      |
+        {1:~                             }|*6
+        {2:[No Name]                     }|
+                                      |
+      ]]
+
+      for i, perm in ipairs(perms) do
+        it(('permutation %d'):format(i), function()
+          exec_lua(function()
+            for _, cmd in ipairs(perm) do
+              vim.cmd(cmd)
+            end
+          end)
+          screen:expect(screen_final)
+          check_buffer_lines(0, 99)
+        end)
+      end
+    end)
+
+    describe('decreases in the same refresh cycle as outputting lines', function()
+      --- @type string[][]
+      local perms = t.concat_tables(
+        t.permutations({ 'resize -2', send_cmd }),
+        t.permutations({ 'resize -4', 'resize +2', send_cmd }),
+        t.permutations({ 'resize -6', 'resize +4', send_cmd })
+      )
+      assert(#perms == 2 + 6 + 6)
+      local screen_final = [[
+                  │{100:TEST} 95            |
+        {1:~         }│{100:TEST} 96            |
+        {1:~         }│{100:TEST} 97            |
+        {1:~         }│{100:TEST} 98            |
+        {1:~         }│{100:TEST} 99            |
+        {1:~         }│^                   |
+        {2:[No Name]  }{102:[Scratch] [-]      }|
+                                      |
+        {1:~                             }|*10
+        {2:[No Name]                     }|
+                                      |
+      ]]
+
+      for i, perm in ipairs(perms) do
+        it(('permutation %d'):format(i), function()
+          exec_lua(function()
+            for _, cmd in ipairs(perm) do
+              vim.cmd(cmd)
+            end
+          end)
+          screen:expect(screen_final)
+          check_buffer_lines(0, 99)
+        end)
+      end
+    end)
+
+    describe("decreases by more than 'scrollback'", function()
+      before_each(function()
+        api.nvim_set_option_value('scrollback', 4, { buf = buf })
+        check_buffer_lines(84, 94)
+      end)
+
+      local perms = {
+        { send_cmd, 'resize -6' },
+        { 'resize -6', send_cmd },
+        { send_cmd, 'resize +6', 'resize -12' },
+        { 'resize +6', send_cmd, 'resize -12' },
+        { 'resize +6', 'resize -12', send_cmd },
+      }
+      local screen_final = [[
+                  │{100:TEST} 99            |
+        {1:~         }│^                   |
+        {2:[No Name]  }{102:[Scratch] [-]      }|
+                                      |
+        {1:~                             }|*14
+        {2:[No Name]                     }|
+                                      |
+      ]]
+
+      for i, perm in ipairs(perms) do
+        it(('permutation %d'):format(i), function()
+          exec_lua(function()
+            for _, cmd in ipairs(perm) do
+              vim.cmd(cmd)
+            end
+          end)
+          screen:expect(screen_final)
+          check_buffer_lines(95, 99)
+        end)
+      end
+    end)
   end)
 end)
