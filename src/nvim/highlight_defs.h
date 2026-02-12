@@ -163,6 +163,8 @@ typedef struct {
 } ColorKey;
 #define ColorKey(n, s) (ColorKey) { .ns_id = (int)(n), .syn_id = (s) }
 
+#define HlAttrKey(a, b) ((uint64_t)(uint32_t)(a) << 32 | (uint32_t)(b))
+
 typedef struct {
   int attr_id;
   int link_id;
