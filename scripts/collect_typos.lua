@@ -88,6 +88,21 @@ local function mime_decode(encoded)
   return vim.trim(result.stdout)
 end
 
+local function get_commit_msg(close_pr_lines, co_author_lines)
+  return ('docs: misc\n\n%s\n\n%s\n'):format(
+    table.concat(close_pr_lines, '\n'),
+    table.concat(co_author_lines, '\n')
+  )
+end
+
+local function get_fail_msg(msg, pr_number, close_pr_lines, co_author_lines)
+  return ('%s %s\n\nPending commit message:\n%s'):format(
+    msg,
+    pr_number or '',
+    get_commit_msg(close_pr_lines, co_author_lines)
+  )
+end
+
 local function main()
   local pr_list = vim.json.decode(
     run_die(
@@ -107,9 +122,10 @@ local function main()
   local close_pr_lines = {}
   local co_author_lines = {}
   for _, pr_number in ipairs(pr_numbers) do
+    print(('PR #%s'):format(pr_number))
     local patch_file = run_die(
       { 'gh', 'pr', 'diff', tostring(pr_number), '--patch' },
-      'Failed to get patch of PR ' .. pr_number
+      get_fail_msg('Failed to get patch for PR', pr_number, close_pr_lines, co_author_lines)
     )
     -- Using --3way allows skipping changes already included in a previous commit.
     -- If there are conflicts, it will fail and need manual conflict resolution.
@@ -128,15 +144,20 @@ local function main()
         end
       end
     else
-      print('Failed to apply patch of PR ' .. pr_number)
+      print(
+        get_fail_msg('Failed to apply patch for PR', pr_number, close_pr_lines, co_author_lines)
+      )
     end
   end
 
-  local msg = ('docs: misc\n\n%s\n\n%s\n'):format(
-    table.concat(close_pr_lines, '\n'),
-    table.concat(co_author_lines, '\n')
+  local msg = get_commit_msg(close_pr_lines, co_author_lines)
+  print(
+    run_die(
+      { 'git', 'commit', '--file', '-' },
+      get_fail_msg('Failed to create commit', nil, close_pr_lines, co_author_lines),
+      msg
+    )
   )
-  print(run_die({ 'git', 'commit', '--file', '-' }, 'Failed to create commit', msg))
 end
 
 main()
