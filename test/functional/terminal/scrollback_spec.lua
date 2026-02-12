@@ -1263,6 +1263,25 @@ describe('scrollback is correct', function()
           check_buffer_lines(0, 99)
         end)
       end
+
+      describe('with full scrollback,', function()
+        before_each(function()
+          api.nvim_set_option_value('scrollback', 6, { buf = buf })
+          check_buffer_lines(82, 94)
+        end)
+
+        it('output first', function()
+          command(send_cmd .. ' | resize +2')
+          screen:expect(screen_final)
+          check_buffer_lines(87, 99)
+        end)
+
+        it('resize first', function()
+          command('resize +2 | ' .. send_cmd)
+          screen:expect(screen_final)
+          check_buffer_lines(85, 99)
+        end)
+      end)
     end)
 
     describe('decreases in the same refresh cycle as outputting lines', function()
