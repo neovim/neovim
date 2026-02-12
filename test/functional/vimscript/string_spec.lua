@@ -192,7 +192,7 @@ describe('string() function', function()
       eval('add(l, l)')
       -- Regression: the below line used to crash (add returns original list and
       -- there was error in dumping partials). Tested explicitly in
-      -- test/unit/api/private_t_spec.lua.
+      -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
       eq(
         [=[Vim(echo):E724: unable to correctly dump variable with self-referencing container]=],
