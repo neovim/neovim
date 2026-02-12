@@ -441,7 +441,7 @@ describe('messages2', function()
     ]])
   end)
 
-  it('echon append message', function()
+  it(':echon appends message', function()
     command([[echo 1 | echon 2]])
     screen:expect([[
       ^                                                     |
