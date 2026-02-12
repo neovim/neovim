@@ -17,7 +17,7 @@ enum {
 enum {
   FNAME_MESS  = 1,   ///< give error message
   FNAME_EXP   = 2,   ///< expand to path
-  FNAME_HYP   = 4,   ///< check for hypertext link
+  FNAME_HYP   = 4,   ///< check for hyperlink url ("foo://")
   FNAME_INCL  = 8,   ///< apply 'includeexpr'
   FNAME_REL   = 16,  ///< ".." and "./" are relative to the (current)
                      ///< file instead of the current directory

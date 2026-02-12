@@ -243,6 +243,7 @@ end
 --- -- { {id=1}, {id=2} }
 --- ```
 ---
+---@since 14
 ---@param key? fun(...):any Optional hash function to determine uniqueness of values.
 ---@return Iter
 ---@see |vim.list.unique()|
@@ -282,6 +283,7 @@ end
 --- -- error: attempt to flatten a dict-like table
 --- ```
 ---
+---@since 12
 ---@param depth? number Depth to which |list-iterator| should be flattened
 ---                        (defaults to 1)
 ---@return Iter
@@ -331,6 +333,7 @@ end
 --- -- { 6, 12 }
 --- ```
 ---
+---@since 12
 ---@param f fun(...):...:any Mapping function. Takes all values returned from
 ---                      the previous stage in the pipeline as arguments
 ---                      and returns one or more new values, which are used
@@ -399,6 +402,7 @@ end
 ---
 --- For functions with side effects. To modify the values in the iterator, use |Iter:map()|.
 ---
+---@since 12
 ---@param f fun(...) Function to execute for each item in the pipeline.
 ---                  Takes all of the values returned by the previous stage
 ---                  in the pipeline as arguments.
@@ -446,6 +450,7 @@ end
 --- To create a map-like table with arbitrary keys, use |Iter:fold()|.
 ---
 ---
+---@since 12
 ---@return table
 function Iter:totable()
   local t = {}
@@ -498,6 +503,7 @@ end
 ---
 --- Consumes the iterator.
 ---
+--- @since 12
 --- @param delim string Delimiter
 --- @return string
 function Iter:join(delim)
@@ -527,6 +533,7 @@ end
 ---
 ---@generic A
 ---
+---@since 12
 ---@param init A Initial value of the accumulator.
 ---@param f fun(acc:A, ...):A Accumulation function.
 ---@return A
@@ -572,6 +579,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return any
 function Iter:next()
   if self._peeked then
@@ -606,6 +614,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return Iter
 function Iter:rev()
   error('rev() requires an array-like table')
@@ -637,6 +646,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return any
 function Iter:peek()
   if not self._peeked then
@@ -674,6 +684,7 @@ end
 --- -- 12
 ---
 --- ```
+---@since 12
 ---@param f any
 ---@return any
 function Iter:find(f)
@@ -720,6 +731,7 @@ end
 ---
 ---@see |Iter:find()|
 ---
+---@since 12
 ---@param f any
 ---@return any
 ---@diagnostic disable-next-line: unused-local
@@ -769,6 +781,7 @@ end
 --- -- nil
 --- ```
 ---
+---@since 12
 ---@param n integer|fun(...):boolean Number of values to take or a predicate.
 ---@return Iter
 function Iter:take(n)
@@ -828,6 +841,7 @@ end
 --- -- 3
 --- ```
 ---
+---@since 12
 ---@return any
 function Iter:pop()
   error('pop() requires an array-like table')
@@ -858,6 +872,7 @@ end
 ---
 ---@see |Iter:last()|
 ---
+---@since 12
 ---@return any
 function Iter:rpeek()
   error('rpeek() requires an array-like table')
@@ -891,6 +906,7 @@ end
 --- -- 12
 --- ```
 ---
+---@since 12
 ---@param n integer|fun(...):boolean Number of values to skip or a predicate.
 ---@return Iter
 function Iter:skip(n)
@@ -956,6 +972,7 @@ end
 --- -- 3
 --- ```
 ---
+---@since 12
 ---@param n number Number of values to skip.
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
@@ -993,6 +1010,7 @@ end
 --- -- 3
 --- ```
 ---
+---@since 12
 ---@param n number Index of the value to return. May be negative if the source is a |list-iterator|.
 ---@return any
 function Iter:nth(n)
@@ -1007,6 +1025,7 @@ end
 ---
 --- Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 ---
+---@since 12
 ---@param first number
 ---@param last number
 ---@return Iter
@@ -1022,6 +1041,7 @@ end
 
 --- Returns true if any of the items in the iterator match the given predicate.
 ---
+---@since 12
 ---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
@@ -1046,6 +1066,7 @@ end
 
 --- Returns true if all items in the iterator match the given predicate.
 ---
+---@since 12
 ---@param pred fun(...):boolean Predicate function. Takes all values returned from the previous
 ---                          stage in the pipeline as arguments and returns true if the
 ---                          predicate matches.
@@ -1083,6 +1104,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@see |Iter:rpeek()|
 ---
 ---@return any
@@ -1135,6 +1157,7 @@ end
 ---
 --- ```
 ---
+---@since 12
 ---@return Iter
 function Iter:enumerate()
   local i = 0

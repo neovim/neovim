@@ -63,6 +63,18 @@ Pull requests (PRs)
 - Use a _rebase workflow_ for all PRs.
   - After addressing review comments, it's fine to force-push.
 
+### AI-assisted work
+
+Using AI for contributions is acceptable and encouraged, given the following:
+- YOU review the output before sending a non-Draft PR. Do NOT request review
+  until YOU have checked the AI generated PR and verify the following:
+- REMOVE verbosity and blathering from documentation, comments, PR description,
+  commit message, etc. These resources should be CONCISE and CLEAR. They should
+  contain USEFUL information and nothing more. They should use concise, clear
+  sentence structure and avoid discursion and blathering.
+- REMOVE and DE-DUPLICATE redundant code, tests, explanations, etc. Explicitness
+  and clarity are GOOD but verbosity, over-explanation, and redundancy is BAD.
+
 ### Merging to master
 
 For maintainers: when a PR is ready to merge to master,

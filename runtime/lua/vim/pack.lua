@@ -1186,9 +1186,8 @@ end
 --- @field offline? boolean Whether to skip downloading new updates. Default: `false`.
 ---
 --- How to compute a new plugin revision. One of:
----     - "version" (default) - use latest revision matching `version` from plugin specification.
----     - "lockfile" - use revision from the lockfile. Useful for reverting or performing controlled
----       update.
+---   - "version" (default): use latest revision matching `version` from plugin specification.
+---   - "lockfile": use revision from the lockfile. For reverting or performing controlled update.
 --- @field target? string
 
 --- Update plugins

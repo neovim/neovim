@@ -1767,8 +1767,8 @@ vim.islist({t})                                                 *vim.islist()*
       • |vim.isarray()|
 
 vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
-    Search for a position in a sorted list {t} where {val} can be inserted
-    while keeping the list sorted.
+    Search for a position in a sorted |lua-list| {t} where {val} can be
+    inserted while keeping the list sorted.
 
     Use {bound} to determine whether to return the first or the last position,
     defaults to "lower", i.e., the first position.
@@ -1799,6 +1799,9 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
         end
 <
 
+    Attributes: ~
+        Since: 0.12.0
+
     Parameters: ~
       • {t}     (`any[]`) A comparable list.
       • {val}   (`any`) The value to search.
@@ -1820,7 +1823,7 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
         position.
 
 vim.list.unique({t}, {key})                                *vim.list.unique()*
-    Removes duplicate values from a list-like table in-place.
+    Removes duplicate values from a |lua-list| in-place.
 
     Only the first occurrence of each value is kept. The operation is
     performed in-place and the input table is modified.
@@ -1841,6 +1844,9 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
         vim.list.unique(t, function(x) return x.id end)
         -- t is now { {id=1}, {id=2} }
 <
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {t}    (`any[]`)
@@ -2942,6 +2948,9 @@ Examples: >lua
 Iter:all({pred})                                                  *Iter:all()*
     Returns true if all items in the iterator match the given predicate.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
                 returned from the previous stage in the pipeline as arguments
@@ -2950,6 +2959,9 @@ Iter:all({pred})                                                  *Iter:all()*
 Iter:any({pred})                                                  *Iter:any()*
     Returns true if any of the items in the iterator match the given
     predicate.
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {pred}  (`fun(...):boolean`) Predicate function. Takes all values
@@ -2962,6 +2974,9 @@ Iter:each({f})                                                   *Iter:each()*
 
     For functions with side effects. To modify the values in the iterator, use
     |Iter:map()|.
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {f}  (`fun(...)`) Function to execute for each item in the pipeline.
@@ -2990,6 +3005,9 @@ Iter:enumerate()                                            *Iter:enumerate()*
         it:next()
         -- 3	'c'
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Return: ~
         (`Iter`)
@@ -3030,6 +3048,9 @@ Iter:find({f})                                                   *Iter:find()*
         -- 12
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {f}  (`any`)
 
@@ -3050,6 +3071,9 @@ Iter:flatten({depth})                                         *Iter:flatten()*
         vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
         -- error: attempt to flatten a dict-like table
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {depth}  (`number?`) Depth to which |list-iterator| should be
@@ -3078,6 +3102,9 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
           end) --> { max = 42 }
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {init}  (`any`) Initial value of the accumulator.
       • {f}     (`fun(acc:A, ...):A`) Accumulation function.
@@ -3091,6 +3118,9 @@ Iter:join({delim})                                               *Iter:join()*
     Each element in the iterator is joined into a string separated by {delim}.
 
     Consumes the iterator.
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {delim}  (`string`) Delimiter
@@ -3112,6 +3142,9 @@ Iter:last()                                                      *Iter:last()*
         -- 15
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Return: ~
         (`any`)
 
@@ -3132,6 +3165,9 @@ Iter:map({f})                                                     *Iter:map()*
         it:totable()
         -- { 6, 12 }
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {f}  (`fun(...):...:any`) Mapping function. Takes all values returned
@@ -3156,6 +3192,9 @@ Iter:next()                                                      *Iter:next()*
         -- 3
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Return: ~
         (`any`)
 
@@ -3177,6 +3216,9 @@ Iter:nth({n})                                                     *Iter:nth()*
         it2:nth(-2)
         -- 3
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {n}  (`number`) Index of the value to return. May be negative if the
@@ -3202,6 +3244,9 @@ Iter:peek()                                                      *Iter:peek()*
         -- 3
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Return: ~
         (`any`)
 
@@ -3217,6 +3262,9 @@ Iter:pop()                                                        *Iter:pop()*
         -- 3
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Return: ~
         (`any`)
 
@@ -3229,6 +3277,9 @@ Iter:rev()                                                        *Iter:rev()*
         it:totable()
         -- { 12, 9, 6, 3 }
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Return: ~
         (`Iter`)
@@ -3248,6 +3299,9 @@ Iter:rfind({f})                                                 *Iter:rfind()*
         it:rfind(1)
         -- 1	1
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {f}  (`any`)
@@ -3271,6 +3325,9 @@ Iter:rpeek()                                                    *Iter:rpeek()*
         -- 4
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Return: ~
         (`any`)
 
@@ -3287,6 +3344,9 @@ Iter:rskip({n})                                                 *Iter:rskip()*
         it:pop()
         -- 3
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {n}  (`number`) Number of values to skip.
@@ -3314,6 +3374,9 @@ Iter:skip({n})                                                   *Iter:skip()*
         -- 12
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {n}  (`integer|fun(...):boolean`) Number of values to skip or a
              predicate.
@@ -3325,6 +3388,9 @@ Iter:slice({first}, {last})                                     *Iter:slice()*
     Sets the start and end of a |list-iterator| pipeline.
 
     Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {first}  (`number`)
@@ -3353,6 +3419,9 @@ Iter:take({n})                                                   *Iter:take()*
         it2:next()
         -- nil
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {n}  (`integer|fun(...):boolean`) Number of values to take or a
@@ -3384,6 +3453,9 @@ Iter:totable()                                                *Iter:totable()*
     indices. To create a map-like table with arbitrary keys, use
     |Iter:fold()|.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Return: ~
         (`table`)
 
@@ -3413,6 +3485,9 @@ Iter:unique({key})                                             *Iter:unique()*
           :totable()
         -- { {id=1}, {id=2} }
 <
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {key}  (`fun(...):any?`) Optional hash function to determine
@@ -4475,10 +4550,11 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
 
     Parameters: ~
       • {opts}  (`table`) A table with the following fields:
-                • {action} (`'allow'|'deny'|'remove'`) - `'allow'` to add a
-                  file to the trust database and trust it,
-                • `'deny'` to add a file to the trust database and deny it,
-                • `'remove'` to remove file from the trust database
+                • {action} (`'allow'|'deny'|'remove'`) One of:
+                  • `'allow'` to add a file to the trust database and trust
+                    it,
+                  • `'deny'` to add a file to the trust database and deny it,
+                  • `'remove'` to remove file from the trust database
                 • {path}? (`string`) Path to a file to update. Mutually
                   exclusive with {bufnr}. Cannot be used when {action} is
                   "allow".
@@ -5188,9 +5264,10 @@ vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
         (`boolean`)
 
 vim.version.intersect({r1}, {r2})                    *vim.version.intersect()*
-    WARNING: This feature is experimental/unstable.
-
     Computes the common range shared by the given ranges.
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {r1}  (`vim.VersionRange`) First range to intersect. See
@@ -5308,6 +5385,8 @@ options for these windows and their respective buffers.
 
 Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
-spilled lines. To see the full message, the |g<| command can be used.
+spilled lines. To see the full message, use either:
+• |g<| at any time
+• ENTER immediately after a message is displayed.
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

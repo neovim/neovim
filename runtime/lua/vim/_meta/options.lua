@@ -3158,6 +3158,7 @@ vim.go.gp = vim.go.grepprg
 ---
 --- ```vim
 ---     highlight Cursor gui=reverse guifg=NONE guibg=NONE
+---     " Note: gui=reverse overrides colors.
 ---     highlight Cursor gui=NONE guifg=bg guibg=fg
 --- ```
 ---
@@ -3239,7 +3240,7 @@ vim.go.gcr = vim.go.guicursor
 ---
 ---
 --- @type string
-vim.o.guifont = "Source Code Pro,DejaVu Sans Mono,Courier New,monospace"
+vim.o.guifont = "DFLT_GFN"
 vim.o.gfn = vim.o.guifont
 vim.go.guifont = vim.o.guifont
 vim.go.gfn = vim.go.guifont

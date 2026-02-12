@@ -342,7 +342,7 @@ preference):
                                                         *dev-patterns*
 Interface conventions ~
 
-Where possible, these patterns apply to _both_ Lua and the API:
+Where applicable, these patterns apply to _both_ Lua and the API:
 
 - When accepting a buffer id, etc., 0 means "current buffer", nil means "all
   buffers".  Likewise for window id, tabpage id, etc.
@@ -379,6 +379,12 @@ Where possible, these patterns apply to _both_ Lua and the API:
   appropriate): when the function returns a nil value it excludes (filters
   out) its input, else the transformed value is used.
   - Example: See the format() field of |vim.diagnostic.Opts.Float|.
+- Do not add "foreach" functions (e.g. |LanguageTree:for_each_tree()|).
+  Instead return an |iterable|, which is more flexible and composable: >
+    vim.iter(parser.tree_iter()):each(function()
+      ...
+    end)
+<
 
 API DESIGN GUIDELINES                                   *dev-api*
 

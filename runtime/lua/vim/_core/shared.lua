@@ -360,7 +360,7 @@ local function key_fn(v, key)
   return key and key(v) or v
 end
 
---- Removes duplicate values from a list-like table in-place.
+--- Removes duplicate values from a |lua-list| in-place.
 ---
 --- Only the first occurrence of each value is kept.
 --- The operation is performed in-place and the input table is modified.
@@ -383,6 +383,7 @@ end
 --- -- t is now { {id=1}, {id=2} }
 --- ```
 ---
+--- @since 14
 --- @generic T
 --- @param t T[]
 --- @param key? fun(x: T): any Optional hash function to determine uniqueness of values
@@ -482,8 +483,8 @@ local function upper_bound(t, val, lo, hi, key)
   return lo
 end
 
---- Search for a position in a sorted list {t}
---- where {val} can be inserted while keeping the list sorted.
+--- Search for a position in a sorted |lua-list| {t} where {val} can be inserted while keeping the
+--- list sorted.
 ---
 --- Use {bound} to determine whether to return the first or the last position,
 --- defaults to "lower", i.e., the first position.
@@ -514,6 +515,7 @@ end
 ---   print(t[i]) -- { 3, 3, 3 }
 --- end
 --- ```
+---@since 14
 ---@generic T
 ---@param t T[] A comparable list.
 ---@param val T The value to search.

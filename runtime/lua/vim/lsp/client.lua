@@ -68,9 +68,11 @@ local all_clients = {}
 --- (default: `true`)
 --- @field detached? boolean
 ---
---- Milliseconds to wait for server to exit cleanly after sending the "shutdown" request before
---- sending kill -15. If set to false, waits indefinitely. If set to true, nvim will kill the
---- server immediately.
+--- Decides if/when to force-stop the server after sending the "shutdown" request. See |Client:stop()|.
+--- Note: when Nvim itself is exiting,
+--- - if `exit_timeout=false`: Nvim will not force-stop LSP server(s).
+--- - if `exit_timeout=true`: Nvim will force-stop LSP server(s) that did not comply with the "shutdown" request.
+--- - if `exit_timeout` is a number: Nvim will wait up to `exit_timeout` milliseconds before performing force-stop.
 --- (default: `false`)
 --- @field exit_timeout? integer|boolean
 ---
@@ -156,9 +158,7 @@ local all_clients = {}
 --- Capabilities provided at runtime (after startup).
 --- @field dynamic_capabilities lsp.DynamicCapabilities
 ---
---- Milliseconds to wait for server to exit cleanly after sending the "shutdown" request before
---- sending kill -15. If set to false, waits indefinitely. If set to true, nvim will kill the
---- server immediately.
+--- See [vim.lsp.ClientConfig].
 --- (default: `false`)
 --- @field exit_timeout integer|boolean
 ---
@@ -861,11 +861,11 @@ end
 --- Note: Forcing shutdown while a server is busy writing out project or index
 --- files can lead to file corruption.
 ---
---- @param force? integer|boolean Time in milliseconds to wait before forcing
----                               a shutdown. If false, only request the
----                               server to shutdown, but don't force it. If
----                               true, force a shutdown immediately.
----                               (default: `self.exit_timeout`)
+--- @param force? integer|boolean (default: `self.exit_timeout`) Decides whether to force-stop the server.
+--- - `nil`: Defaults to `exit_timeout` from |vim.lsp.ClientConfig|.
+--- - `true`: Force-stop after "shutdown" request.
+--- - `false`: Do not force-stop after "shutdown" request.
+--- - number: Wait up to `force` milliseconds before force-stop.
 function Client:stop(force)
   validate('force', force, { 'number', 'boolean' }, true)
 
