@@ -2739,7 +2739,7 @@ static void store_sb_text(const char **sb_str, const char *s, int hl_id, int *sb
 void may_clear_sb_text(void)
 {
   do_clear_sb_text = SB_CLEAR_ALL;
-  do_clear_hist_temp = true;
+  do_clear_hist_temp = !msg_ext_append;
 }
 
 /// Starting to edit the command line: do not clear messages now.
