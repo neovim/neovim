@@ -46,7 +46,7 @@ function M.make_lua_executor(session)
   end
 end
 
--- some t for controlling the terminal. the codes were taken from
+-- some helpers for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm
 function M.hide_cursor()
@@ -116,7 +116,6 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   cmd = cmd and cmd or default_command
   cols = cols and cols or 50
 
-  api.nvim_command('highlight TermCursor cterm=reverse')
   api.nvim_command('highlight StatusLineTerm ctermbg=2 ctermfg=0')
   api.nvim_command('highlight StatusLineTermNC ctermbg=2 ctermfg=8')
 
