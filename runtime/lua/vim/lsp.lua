@@ -198,7 +198,7 @@ end
 --- provide the root dir, or LSP will not be activated for the buffer. Thus a `root_dir()` function
 --- can dynamically decide per-buffer whether to activate (or skip) LSP.
 --- See example at |vim.lsp.enable()|.
---- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
+--- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string)) #
 ---
 --- [lsp-root_markers]()
 --- Filename(s) (".git/", "package.json", …) used to decide the workspace root. Unused if `root_dir`

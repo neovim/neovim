@@ -731,7 +731,7 @@ describe('vim.fs', function()
       vim.uv.fs_rmdir('Xtest_fs-rm')
     end)
 
-    it('works with symlink', function()
+    it('symlink', function()
       -- File
       vim.uv.fs_symlink('Xtest_fs-rm/file-to-link', 'Xtest_fs-rm/file-as-link')
       vim.fs.rm('Xtest_fs-rm/file-as-link')

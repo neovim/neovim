@@ -41,7 +41,7 @@ TREESITTER
 
 UI
 
-• `progress` attribute removed form |ui-messages| msg_show event
+• `progress` attribute removed from |ui-messages| msg_show event
 
 VIMSCRIPT
 
@@ -255,7 +255,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
-• |vim.lsp.enable()| start/stops clients as necessary. And detaches
+• |vim.lsp.enable()| start/stops clients as necessary and detaches
   non-applicable LSP clients.
 • |vim.lsp.is_enabled()| checks if a LSP config is enabled (without
   "resolving" it).
@@ -314,7 +314,7 @@ LUA
 • |vim.hl.range()| now allows multiple timed highlights.
 • |vim.tbl_extend()| and |vim.tbl_deep_extend()| now accept a function behavior argument.
 • |vim.fs.root()| can define "equal priority" via nested lists.
-• |vim.version.range()| output can be converted to human-readable string with |tostring()|.
+• |vim.version.range()| output can be converted to a human-readable string with |tostring()|.
 • |vim.version.intersect()| computes intersection of two version ranges.
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 • Built-in plugin manager |vim.pack|
@@ -359,17 +359,17 @@ PERFORMANCE
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
 • |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
+• LSP `textDocument/semanticTokens/range` is supported, which requests tokens
+  for the viewport (visible screen) only.
 
 PLUGINS
 
 • Customize :checkhealth by handling a `FileType checkhealth` event.
   |health-usage|
-
 • Simplify Python provider setup to a single step: `uv tool install pynvim`
   Nvim will detect the plugin's location without user configuration, even if
   unrelated Python virtual environments are activated.
   |provider-python|
-
 • |:checkhealth| now checks for an available |vim.ui.open()| handler.
 
 STARTUP
@@ -407,6 +407,7 @@ UI
   • "Error detected while processing:" changed to "Error in:".
   • "Error executing Lua:" changed to "Lua:".
 • 'busy' status is shown in default statusline with symbol ◐
+• Cursor shape indicates when it is behind an unfocused floating window.
 • Improved LSP signature help rendering.
 • Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
 

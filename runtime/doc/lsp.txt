@@ -56,7 +56,14 @@ Follow these steps to get LSP features:
    a |lsp-root_markers| file so the workspace can be recognized.
 5. Check that LSP is active ("attached") for the buffer: >vim
      :checkhealth vim.lsp
-6. (Optional) Configure keymaps and autocommands to use LSP features.
+6. Please note that certain LSP features are disabled by default,
+   you may choose to enable them manually. See:
+     - |lsp-codelens|
+     - |lsp-document_color|
+     - |lsp-linked_editing_range|
+     - |lsp-inlay_hint|
+     - |lsp-inline_completion|
+7. (Optional) Configure keymaps and autocommands to use LSP features.
    |lsp-attach|
 
 ==============================================================================
@@ -657,18 +664,16 @@ LspProgress                                                       *LspProgress*
     Redraw the statusline whenever an LSP progress message arrives: >vim
         autocmd LspProgress * redrawstatus
 <
-    Tell the parent terminal to indicate progress using a native progress
-    indicator (requires a supporting terminal): >lua
-        vim.api.nvim_create_autocmd('LspProgress', {
-          callback = function(ev)
+    Emit a |progress-message| on LSP progress events: >lua
+        vim.api.nvim_create_autocmd('LspProgress', { buffer = buf, callback = function(ev)
             local value = ev.data.params.value
-            if value.kind == 'begin' then
-              vim.api.nvim_ui_send('\027]9;4;1;0\027\\')
-            elseif value.kind == 'end' then
-              vim.api.nvim_ui_send('\027]9;4;0\027\\')
-            elseif value.kind == 'report' then
-              vim.api.nvim_ui_send(string.format('\027]9;4;1;%d\027\\', value.percentage or 0))
-            end
+            vim.api.nvim_echo({ { value.message or 'done' } }, false, {
+              id = 'lsp',
+              kind = 'progress',
+              title = value.title,
+              status = value.kind ~= 'end' and 'running' or 'success',
+              percent = value.percentage,
+            })
           end,
         })
 <
