@@ -1871,7 +1871,11 @@ vim.go.dex = vim.go.diffexpr
 --- 				difference.  Non-alphanumeric
 --- 				multi-byte characters such as emoji
 --- 				and CJK characters are considered
---- 				individual words.
+--- 				individual words.  Adjacent diff
+--- 				blocks separated by small gaps are
+--- 				automatically merged to reduce
+--- 				fragmentation and improve
+--- 				readability.
 ---
 --- 	internal	Use the internal diff library.  This is
 --- 			ignored when 'diffexpr' is set.  *E960*
