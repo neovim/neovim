@@ -310,7 +310,12 @@ describe('semantic token highlighting', function()
       -- modify the buffer
       feed('o<ESC>')
 
-      local messages = exec_lua('return _G.server_full.messages')
+      local messages = exec_lua(function()
+        vim.wait(1000, function()
+          return #_G.server_full.messages >= 4
+        end)
+        return _G.server_full.messages
+      end)
       local called_full = 0
       local called_range = 0
       for _, m in ipairs(messages) do
