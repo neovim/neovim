@@ -2397,19 +2397,18 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   mark_adjust_buf(buf, 1, deleted, MAXLNUM, -deleted, true, kMarkAdjustTerm, kExtmarkUndo);
   term->old_sb_deleted = term->sb_deleted;
 
+  int old_height = term->old_height;
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
-  int max_line_count = (int)term->sb_current - term->sb_pending + height;
-  // Remove extra lines at the top if scrollback lines have been deleted.
-  while (deleted > 0 && buf->b_ml.ml_line_count > max_line_count) {
+  // Remove deleted scrollback lines at the top, but don't unnecessarily remove
+  // lines that will be overwritten by refresh_screen().
+  while (deleted > 0 && buf->b_ml.ml_line_count > old_height) {
     ml_delete_buf(buf, 1, false);
     deleted_lines_buf(buf, 1, 1);
     deleted--;
   }
-  max_line_count += term->sb_pending;
 
-  int old_height = MIN(term->old_height, buf->b_ml.ml_line_count);
   while (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
@@ -2422,6 +2421,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     term->sb_pending--;
   }
 
+  int max_line_count = (int)term->sb_current + height;
   // Remove extra lines at the bottom.
   while (buf->b_ml.ml_line_count > max_line_count) {
     ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
