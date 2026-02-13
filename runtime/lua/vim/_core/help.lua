@@ -162,21 +162,23 @@ function M.local_additions()
   end
 
   -- Format plugin list lines
+  -- Default to 78 if 'textwidth' is not set (e.g. in sandbox)
+  local textwidth = math.max(vim.bo[buf].textwidth, 78)
   local lines = {}
   for _, path in vim.spairs(plugins) do
     local fp = io.open(path, 'r')
     if fp then
       local tagline = fp:read('*l') or ''
       fp:close()
-      if tagline:sub(1, 1) == '*' then
-        ---@type string, string
-        local tag, desc = tagline:match('^%*([^*]+)%*%s*(.*)$')
-        -- left-align taglink and right-align description
-        -- max(l, 78) for if 'textwidth' is not set via modeline (e.g. in sandbox)
-        -- max(l, 1) for if the description doesn't fit
-        local num_spaces = math.max(math.max(vim.bo[buf].textwidth, 78) - #desc - #tag - 2, 1)
-        local spaces = string.rep(' ', num_spaces)
-        local fmt = string.format('|%s|%s%s', tag, spaces, desc)
+      ---@type string, string
+      local plugname, desc = tagline:match('^%*([^*]+)%*%s*(.*)$')
+      if plugname and desc then
+        -- left-align taglink and right-align description by inserting spaces in between
+        local plug_width = vim.fn.strdisplaywidth(plugname)
+        local desc_width = vim.fn.strdisplaywidth(desc)
+        -- max(l, 1) forces at least one space for if the description is too long
+        local spaces = string.rep(' ', math.max(textwidth - desc_width - plug_width - 2, 1))
+        local fmt = string.format('|%s|%s%s', plugname, spaces, desc)
         table.insert(lines, fmt)
       end
     end

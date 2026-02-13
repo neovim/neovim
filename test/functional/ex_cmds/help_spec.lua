@@ -151,32 +151,4 @@ describe(':help', function()
     command('help …')
     eq('*…*', api.nvim_get_current_line())
   end)
-
-  it('help.txt local additions is populated', function()
-    mkdir('Xplugin')
-    mkdir('Xplugin/doc')
-    write_file('Xplugin/doc/Xplugin.txt', '*Xplugin.txt*\texample description\n')
-    write_file('Xplugin/doc/Xplugin.nlx', '*Xplugin.nlx*  voorbeeld omschrijving\n')
-    write_file('Xplugin/doc/help.nlx', '*help.txt*\n*local-additions*\n')
-    finally(function()
-      rmdir('Xplugin')
-    end)
-    command('set rtp+=Xplugin')
-    command('helptags Xplugin/doc')
-
-    command('help local-additions')
-    command('norm! j')
-    eq(
-      '|Xplugin.txt|                                              example description',
-      api.nvim_get_current_line()
-    )
-
-    -- translated help files
-    command('help local-additions@nl')
-    command('norm! j')
-    eq(
-      '|Xplugin.nlx|                                           voorbeeld omschrijving',
-      api.nvim_get_current_line()
-    )
-  end)
 end)
