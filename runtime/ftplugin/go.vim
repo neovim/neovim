@@ -8,6 +8,7 @@
 " 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 " 2025 Jul 02 by Vim Project (add section movement mappings #17641)
 " 2025 Jul 05 by Vim Project (update b:undo_ftplugin #17664)
+" 2026 Feb 13 by Vim Project (remove formatprg #19108)
 
 if exists('b:did_ftplugin')
   finish
@@ -18,7 +19,6 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 setlocal formatoptions-=t
-setlocal formatprg=gofmt
 
 setlocal comments=s1:/*,mb:*,ex:*/,://
 setlocal commentstring=//\ %s
@@ -26,7 +26,7 @@ setlocal keywordprg=:GoKeywordPrg
 
 command! -buffer -nargs=* GoKeywordPrg call s:GoKeywordPrg()
 
-let b:undo_ftplugin = 'setl fo< com< cms< fp< kp<'
+let b:undo_ftplugin = 'setl fo< com< cms< kp<'
                   \ . '| delcommand -buffer GoKeywordPrg'
 
 if get(g:, 'go_recommended_style', 1)
