@@ -1100,9 +1100,7 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
 
   while (*p != NUL) {
     if (*p != '%') {
-      char *q = strchr(p + 1, '%');
-      size_t n = (q == NULL) ? strlen(p) : (size_t)(q - p);
-
+      size_t n = (size_t)(xstrchrnul(p + 1, '%') - p);
       p += n;
     } else {
       // allowed values: \0, h, l, L
