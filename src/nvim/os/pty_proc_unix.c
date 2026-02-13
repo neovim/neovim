@@ -239,6 +239,11 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
+void pty_proc_resume(PtyProc *ptyproc)
+{
+  kill(((Proc *)ptyproc)->pid, SIGCONT);
+}
+
 void pty_proc_close(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -397,10 +402,19 @@ static void chld_handler(uv_signal_t *handle, int signum)
   for (size_t i = 0; i < kv_size(loop->children); i++) {
     Proc *proc = kv_A(loop->children, i);
     do {
-      pid = waitpid(proc->pid, &stat, WNOHANG);
+      pid = waitpid(proc->pid, &stat, WNOHANG|WUNTRACED|WCONTINUED);
     } while (pid < 0 && errno == EINTR);
 
     if (pid <= 0) {
+      continue;
+    }
+
+    if (WIFSTOPPED(stat)) {
+      proc->state_cb(proc, true, proc->data);
+      continue;
+    }
+    if (WIFCONTINUED(stat)) {
+      proc->state_cb(proc, false, proc->data);
       continue;
     }
 

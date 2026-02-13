@@ -450,6 +450,105 @@ describe(':terminal buffer', function()
     ]])
     assert_alive()
   end)
+
+  describe('handles suspended PTY process', function()
+    if skip(is_os('win'), 'N/A for Windows') then
+      return
+    end
+
+    --- @param external_resume boolean
+    local function test_term_process_suspend_resume(external_resume)
+      command('set mousemodel=extend')
+      local pid = eval('jobpid(&channel)')
+      vim.uv.kill(pid, 'sigstop')
+      screen:expect([[
+        tty ready                                         |
+                                                          |*4
+        ^[Process suspended]                               |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      command('set laststatus=0 | botright vsplit')
+      screen:expect([[
+        tty ready               │tty ready                |
+                                │                         |*4
+        [Process suspended]     │^[Process suspended]      |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      -- Resize is detected by the process on resume.
+      if external_resume then
+        vim.uv.kill(pid, 'sigcont')
+      else
+        feed('a')
+      end
+      screen:expect([[
+        tty ready               │tty ready                |
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+                                │^                         |
+                                │                         |*3
+        {5:-- TERMINAL --}                                    |
+      ]])
+      tt.enable_mouse()
+      tt.feed_data('mouse enabled\n\n\n\n')
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+                                │^                         |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 25)
+      screen:expect({ any = vim.pesc('"!!^') })
+      api.nvim_input_mouse('right', 'release', '', 0, 0, 25)
+      screen:expect({ any = vim.pesc('#!!^') })
+      vim.uv.kill(pid, 'sigstop')
+      local s1 = [[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+        [Process suspended]     │^[Process suspended]      |
+        {5:-- TERMINAL --}                                    |
+      ]]
+      screen:expect(s1)
+      -- Mouse isn't forwarded when process is suspended.
+      api.nvim_input_mouse('right', 'press', '', 0, 1, 27)
+      api.nvim_input_mouse('right', 'release', '', 0, 1, 27)
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mo{108:use enabled}           │mo^u{108:se enabled}            |
+        {108: }                       │{108: }                        |*3
+        [Process suspended]     │[Process suspended]      |
+        {5:-- VISUAL --}                                      |
+      ]])
+      feed('<Esc>i')
+      screen:expect(s1)
+      if external_resume then
+        vim.uv.kill(pid, 'sigcont')
+      else
+        feed('a')
+      end
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+           #!!                  │   #!!^                   |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      -- Mouse is forwarded after process is resumed.
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 28)
+      screen:expect({ any = vim.pesc('"$!^') })
+      api.nvim_input_mouse('right', 'release', '', 0, 0, 28)
+      screen:expect({ any = vim.pesc('#$!^') })
+    end
+
+    it('resumed by an external signal', function()
+      skip(is_os('mac'), 'FIXME: does not work on macOS')
+      test_term_process_suspend_resume(true)
+    end)
+
+    it('resumed by pressing a key', function()
+      test_term_process_suspend_resume(false)
+    end)
+  end)
 end)
 
 describe(':terminal buffer', function()

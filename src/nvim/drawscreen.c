@@ -1441,6 +1441,17 @@ static void win_update(win_T *wp)
 
   decor_providers_invoke_win(wp);
 
+  if (buf->terminal && terminal_suspended(buf->terminal)) {
+    static VirtTextChunk chunk = { .text = "[Process suspended]", .hl_id = -1 };
+    static DecorVirtText virt_text = {
+      .priority = DECOR_PRIORITY_BASE,
+      .pos = kVPosWinCol,
+      .data.virt_text = { .items = &chunk, .size = 1 },
+    };
+    decor_range_add_virt(&decor_state, buf->b_ml.ml_line_count - 1, 0,
+                         buf->b_ml.ml_line_count - 1, 0, &virt_text, false);
+  }
+
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
       changed_line_abv_curs_win(win);

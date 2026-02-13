@@ -1144,6 +1144,7 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .height = (uint16_t)curwin->w_view_height,
     .write_cb = term_write,
     .resize_cb = term_resize,
+    .resume_cb = term_resume,
     .close_cb = term_close,
     .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
@@ -1192,6 +1193,10 @@ static void term_write(const char *buf, size_t size, void *data)
 static void term_resize(uint16_t width, uint16_t height, void *data)
 {
   // TODO(bfredl): Lua callback
+}
+
+static void term_resume(void *data)
+{
 }
 
 static void term_close(void *data)
