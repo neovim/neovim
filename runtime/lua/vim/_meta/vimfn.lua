@@ -7547,7 +7547,7 @@ function vim.fn.screencol() end
 --- @param winid integer
 --- @param lnum integer
 --- @param col integer
---- @return any
+--- @return { col: integer, curscol: integer, endcol: integer, row: integer }
 function vim.fn.screenpos(winid, lnum, col) end
 
 --- The result is a Number, which is the current screen row of the

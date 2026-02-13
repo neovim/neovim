@@ -8295,7 +8295,7 @@ screenpos({winid}, {lnum}, {col})                                  *screenpos()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`{ col: integer, curscol: integer, endcol: integer, row: integer }`)
 
 screenrow()                                                        *screenrow()*
 		The result is a Number, which is the current screen row of the

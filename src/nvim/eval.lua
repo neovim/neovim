@@ -9206,6 +9206,7 @@ M.funcs = {
     ]=],
     name = 'screenpos',
     params = { { 'winid', 'integer' }, { 'lnum', 'integer' }, { 'col', 'integer' } },
+    returns = '{ col: integer, curscol: integer, endcol: integer, row: integer }',
     signature = 'screenpos({winid}, {lnum}, {col})',
   },
   screenrow = {
