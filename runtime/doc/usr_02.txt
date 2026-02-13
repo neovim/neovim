@@ -34,7 +34,7 @@ To start Nvim, enter this command: >
 On Unix you can type this at any command prompt.  If you are running Microsoft
 Windows, open a Command Prompt and enter the command.  In either case, Vim
 starts editing a file called file.txt.  Because this is a new file, you get a
-blank window. This is what your screen will look like:
+blank window.  This is what your screen will look like:
 >
 	+---------------------------------------+
 	|#					|
@@ -300,7 +300,7 @@ the "a" (append) command.
 to
 	and that's not saying much for the turtle!!! ~
 
-move the cursor over to the dot at the end of the line. Then type "x" to
+move the cursor over to the dot at the end of the line.  Then type "x" to
 delete the period.  The cursor is now positioned at the end of the line on the
 e in turtle.  Now type >
 
@@ -513,7 +513,7 @@ Summary:					*help-summary*  >
 <   And for the 'guioptions' flags: >
 	:help go-<letter>
 
-4) Normal mode commands do not have a prefix. To go to the help page for the
+4) Normal mode commands do not have a prefix.  To go to the help page for the
    "gt" command: >
 	:help gt
 
@@ -563,26 +563,26 @@ Summary:					*help-summary*  >
     at: >
 	:help pattern.txt
 
-12) Registers always start with "quote". To find out about the special ":"
+12) Registers always start with "quote".  To find out about the special ":"
     register: >
 	:help quote:
 
-13) Vim Script is available at >
+13) Vim script is available at >
 	:help vimeval.txt
-<   Certain aspects of the language are available at :h expr-X where "X" is a
-   single letter. E.g.  >
+<    Certain aspects of the language are available at :h expr-X where "X" is a
+    single letter. E.g.  >
 	:help expr-!
-<   will take you to the topic describing the "!" (Not) operator for Vim
-   Script.
-   Also important is >
+<    will take you to the topic describing the "!" (Not) operator for Vim
+    Script.
+    Also important is >
 	:help function-list
-<   to find a short description of all functions available.  Help topics for
-   Vim script functions always include the "()", so: >
+<    to find a short description of all functions available.  Help topics for
+    Vim script functions always include the "()", so: >
 	:help append()
-<   talks about the append Vim script function rather than how to append text
-   in the current buffer.
+<    talks about the append Vim script function rather than how to append text
+    in the current buffer.
 
-14) Mappings are talked about in the help page :h |map.txt|. Use >
+14) Mappings are talked about in the help page :h |map.txt|.  Use >
 	:help mapmode-i
 <    to find out about the |:imap| command.  Also use :map-topic
     to find out about certain subtopics particular for mappings.  e.g: >
@@ -618,7 +618,7 @@ Summary:					*help-summary*  >
     friendly way.  Start at |usr_toc.txt| to find the table of content (as you
     might have guessed): >
 	:help usr_toc.txt
-<    Skim over the contents to find interesting topics. The "Digraphs" and
+<    Skim over the contents to find interesting topics.  The "Digraphs" and
     "Entering special characters" items are in chapter 24, so to go to that
     particular help page: >
 	:help usr_24.txt

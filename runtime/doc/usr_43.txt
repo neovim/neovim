@@ -64,7 +64,7 @@ buffer.  This works with any mapping command: ":map!", ":vmap", etc.  The
 
 The line to set b:undo_ftplugin is for when the filetype is set to another
 value.  In that case you will want to undo your preferences.  The
-b:undo_ftplugin variable is executed as a command. Watch out for characters
+b:undo_ftplugin variable is executed as a command.  Watch out for characters
 with a special meaning inside a string, such as a backslash.
 
 You can find examples for filetype plugins in this directory: >
