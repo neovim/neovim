@@ -423,12 +423,18 @@ static int nlua_schedule(lua_State *const lstate)
   return 2;
 }
 
-// Dummy timer callback. Used by f_wait().
+// Dummy timer callback. Used by vim.wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
 {
+  // If the main loop is closing, the condition won't be checked again.
+  // Close the timer to avoid leaking resources.
+  if (main_loop.closing) {
+    time_watcher_stop(tw);
+    time_watcher_close(tw, dummy_timer_close_cb);
+  }
 }
 
-// Dummy timer close callback. Used by f_wait().
+// Dummy timer close callback. Used by vim.wait().
 static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
 {
   xfree(tw);
@@ -512,12 +518,10 @@ static int nlua_wait(lua_State *lstate)
 
   // Start dummy timer.
   time_watcher_init(&main_loop, tw, NULL);
-  tw->events = loop_events;
-  tw->blockable = true;
-  time_watcher_start(tw,
-                     dummy_timer_due_cb,
-                     (uint64_t)interval,
-                     (uint64_t)interval);
+  // Don't schedule the due callback, as that'll lead to two different types of events
+  // on each interval, causing the condition to be checked twice.
+  tw->events = NULL;
+  time_watcher_start(tw, dummy_timer_due_cb, (uint64_t)interval, (uint64_t)interval);
 
   int pcall_status = 0;
   bool callback_result = false;
