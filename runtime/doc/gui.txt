@@ -74,8 +74,8 @@ Restart Nvim
                 Restarts Nvim.
 
                 1. Stops Nvim using `:qall` (or |+cmd|, if given).
-                2. Starts a new Nvim server using the same |v:argv|,
-                   optionally running [command] at startup. |-c|
+                2. Starts a new Nvim server using the same |v:argv| (except
+                   `-- [file…]` files), appended with `-c [command]`.
                 3. Attaches the current UI to the new Nvim server. Other UIs
                    (if any) will not reattach on restart (this may change in
                    the future).
