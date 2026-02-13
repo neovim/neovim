@@ -1072,6 +1072,9 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *new_prompt = tv_get_string(&argvars[1]);
   int new_prompt_len = (int)strlen(new_prompt);
 
+  // Update the prompt-text and prompt-marks in prompt-buffer so we get live
+  // update of prompts even while user is editing their input. This is skipped
+  // for non-prompt buffer because previous prompt only exists in prompt-buffer
   if (bt_prompt(buf)) {
     if (buf->b_prompt_start.mark.lnum > buf->b_ml.ml_line_count) {
       // In case the mark is set to a nonexistent line.
