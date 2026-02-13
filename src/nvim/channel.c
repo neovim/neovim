@@ -393,6 +393,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
   proc->argv = argv;
   proc->exepath = exepath;
   proc->cb = channel_proc_exit_cb;
+  proc->state_cb = channel_proc_state_cb;
   proc->events = chan->events;
   proc->detach = detach;
   proc->cwd = cwd;
@@ -762,6 +763,14 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
   channel_decref(chan);
 }
 
+static void channel_proc_state_cb(Proc *proc, bool suspended, void *data)
+{
+  Channel *chan = data;
+  if (chan->term) {
+    terminal_set_state(chan->term, suspended);
+  }
+}
+
 static void channel_callback_call(Channel *chan, CallbackReader *reader)
 {
   Callback *cb;
@@ -812,6 +821,7 @@ void channel_terminal_alloc(buf_T *buf, Channel *chan)
     .height = chan->stream.pty.height,
     .write_cb = term_write,
     .resize_cb = term_resize,
+    .resume_cb = term_resume,
     .close_cb = term_close,
     .force_crlf = false,
   };
@@ -837,6 +847,14 @@ static void term_resize(uint16_t width, uint16_t height, void *data)
 {
   Channel *chan = data;
   pty_proc_resize(&chan->stream.pty, width, height);
+}
+
+static void term_resume(void *data)
+{
+#ifdef UNIX
+  Channel *chan = data;
+  pty_proc_resume(&chan->stream.pty);
+#endif
 }
 
 static inline void term_delayed_free(void **argv)

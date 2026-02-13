@@ -174,6 +174,8 @@ struct terminal {
   bool in_altscreen;
   // program exited
   bool closed;
+  // program suspended
+  bool suspended;
   // when true, the terminal's destruction is already enqueued.
   bool destroy;
 
@@ -672,7 +674,6 @@ void terminal_close(Terminal **termpp, int status)
     // only need to call the close callback to clean up the terminal object.
     only_destroy = true;
   } else {
-    term->forward_mouse = false;
     // flush any pending changes to the buffer
     if (!exiting) {
       block_autocmds();
@@ -726,7 +727,33 @@ void terminal_close(Terminal **termpp, int status)
   }
 }
 
+static void terminal_state_change_event(void **argv)
+{
+  handle_T buf_handle = (handle_T)(intptr_t)argv[0];
+  buf_T *buf = handle_get_buffer(buf_handle);
+  if (buf && buf->terminal) {
+    // Don't change the actual terminal content to indicate the suspended state here,
+    // as unlike the process exit case the change needs to be reversed on resume.
+    // Instead, the code in win_update() will add a "[Process suspended]" virtual text
+    // at the botton-left of the buffer.
+    redraw_buf_line_later(buf, buf->b_ml.ml_line_count, false);
+  }
+}
+
+/// Updates the suspended state of the terminal program.
+void terminal_set_state(Terminal *term, bool suspended)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->suspended != suspended) {
+    // Trigger a main loop iteration to redraw the buffer.
+    multiqueue_put(main_loop.events, terminal_state_change_event,
+                   (void *)(intptr_t)term->buf_handle);
+  }
+  term->suspended = suspended;
+}
+
 void terminal_check_size(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (term->closed) {
     return;
@@ -951,9 +978,14 @@ static void terminal_check_cursor(void)
   if (topline != curwin->w_topline) {
     set_topline(curwin, topline);
   }
-  // Nudge cursor when returning to normal-mode.
-  int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
-  coladvance(curwin, MAX(0, term->cursor.col + off));
+  if (term->suspended) {
+    // If the terminal process is suspended, keep cursor at the bottom-left corner.
+    curwin->w_cursor = (pos_T){ .lnum = curbuf->b_ml.ml_line_count };
+  } else {
+    // Nudge cursor when returning to normal-mode.
+    int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
+    coladvance(curwin, MAX(0, term->cursor.col + off));
+  }
 }
 
 static bool terminal_check_focus(TerminalState *const s)
@@ -1127,6 +1159,13 @@ static int terminal_execute(VimState *state, int key)
     }
     if (mod_key == Ctrl_BSL && !s->got_bsl) {
       s->got_bsl = true;
+      break;
+    }
+    if (s->term->suspended) {
+      s->term->opts.resume_cb(s->term->opts.data);
+      // XXX: detecting continued process via waitpid() on SIGCHLD doesn't always work
+      // (e.g. on macOS), so also consider it continued after sending SIGCONT.
+      terminal_set_state(s->term, false);
       break;
     }
     if (s->term->closed) {
@@ -1393,13 +1432,21 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 }
 
 Buffer terminal_buf(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
   return term->buf_handle;
 }
 
 bool terminal_running(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
   return !term->closed;
+}
+
+bool terminal_suspended(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return term->suspended;
 }
 
 void terminal_notify_theme(Terminal *term, bool dark)
@@ -2063,7 +2110,8 @@ static bool send_mouse_event(Terminal *term, int c)
   }
 
   int offset;
-  if (term->forward_mouse && mouse_win->w_buffer->terminal == term && row >= 0
+  if (!term->suspended && !term->closed
+      && term->forward_mouse && mouse_win->w_buffer->terminal == term && row >= 0
       && (grid > 1 || row + mouse_win->w_winbar_height < mouse_win->w_height)
       && col >= (offset = win_col_off(mouse_win))
       && (grid > 1 || col < mouse_win->w_width)) {
