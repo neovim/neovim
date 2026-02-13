@@ -808,9 +808,9 @@ fromqflist({list}, {opts})                       *vim.diagnostic.fromqflist()*
       • {list}  (`vim.quickfix.entry[]`) List of quickfix items from
                 |getqflist()| or |getloclist()|.
       • {opts}  (`table?`) Configuration table with the following keys:
-                • {merge_continuation_lines}? (`boolean`) When true, items
-                  with valid=0 are appended to the previous valid item's
-                  message with a newline. (default: false)
+                • {merge_lines}? (`boolean`) When true, items with valid=0 are
+                  appended to the previous valid item's message with a
+                  newline. (default: false)
 
     Return: ~
         (`vim.Diagnostic[]`) See |vim.Diagnostic|.

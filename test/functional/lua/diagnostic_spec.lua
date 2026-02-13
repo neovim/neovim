@@ -4090,7 +4090,7 @@ describe('vim.diagnostic', function()
       eq(result[1], result[2])
     end)
 
-    it('merges continuation lines when merge_continuation_lines is true', function()
+    it('merges continuation lines when merge_lines is true', function()
       local result = exec_lua(function()
         local qflist = {
           {
@@ -4138,7 +4138,7 @@ describe('vim.diagnostic', function()
             valid = 1,
           },
         }
-        return vim.diagnostic.fromqflist(qflist, { merge_continuation_lines = true })
+        return vim.diagnostic.fromqflist(qflist, { merge_lines = true })
       end)
 
       eq(2, #result)

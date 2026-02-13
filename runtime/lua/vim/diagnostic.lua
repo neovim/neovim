@@ -2901,7 +2901,7 @@ end
 ---
 --- When true, items with valid=0 are appended to the previous valid item's
 --- message with a newline. (default: false)
---- @field merge_continuation_lines? boolean
+--- @field merge_lines? boolean
 
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
@@ -2912,7 +2912,7 @@ function M.fromqflist(list, opts)
   vim.validate('list', list, 'table')
 
   opts = opts or {}
-  local merge = opts.merge_continuation_lines
+  local merge = opts.merge_lines
 
   local diagnostics = {} --- @type vim.Diagnostic[]
   local last_diag --- @type vim.Diagnostic?
