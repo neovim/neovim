@@ -2567,6 +2567,12 @@ static void f_gettagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
 {
+  // If the main loop is closing, the condition won't be checked again.
+  // Close the timer to avoid leaking resources.
+  if (main_loop.closing) {
+    time_watcher_stop(tw);
+    time_watcher_close(tw, dummy_timer_close_cb);
+  }
 }
 
 /// Dummy timer close callback. Used by f_wait().
@@ -2600,8 +2606,9 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Start dummy timer.
   time_watcher_init(&main_loop, tw, NULL);
-  tw->events = main_loop.events;
-  tw->blockable = true;
+  // Don't schedule the due callback, as that'll lead to two different types of events
+  // on each interval, causing the condition to be checked twice.
+  tw->events = NULL;
   time_watcher_start(tw, dummy_timer_due_cb, (uint64_t)interval, (uint64_t)interval);
 
   typval_T argv = TV_INITIAL_VALUE;
