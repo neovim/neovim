@@ -4390,8 +4390,8 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         || curbuf->b_prompt_start.mark.col < old_prompt_len
         || !strnequal(old_prompt, old_line + curbuf->b_prompt_start.mark.col - old_prompt_len,
                       (size_t)old_prompt_len)) {
-      // in case if for some odd reason the old prompt is missing
-      // replace the prompt line with new-prompt (discards user-input)
+      // If for some odd reason the old prompt is missing,
+      // replace prompt line with new-prompt (discards user-input).
       ml_replace_buf(buf, prompt_lno, (char *)new_prompt, true, false);
       cursor_col = new_prompt_len;
     } else {
