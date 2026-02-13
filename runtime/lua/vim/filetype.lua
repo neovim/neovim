@@ -296,6 +296,7 @@ local extension = {
   cdl = 'cdl',
   toc = detect_line1('\\contentsline', 'tex', 'cdrtoc'),
   cedar = 'cedar',
+  cel = 'cel',
   cfc = 'cf',
   cfm = 'cf',
   cfi = 'cf',
