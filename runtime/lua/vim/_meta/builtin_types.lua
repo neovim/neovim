@@ -60,6 +60,7 @@
 --- @field botline integer
 --- @field bufnr integer
 --- @field height integer
+--- @field leftcol integer
 --- @field loclist integer
 --- @field quickfix integer
 --- @field tabnr integer
