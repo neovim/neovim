@@ -1336,7 +1336,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // non-floating window doesn't store float config or have a border.
     merge_win_config(&wp->w_config, WIN_CONFIG_INIT);
     CLEAR_FIELD(wp->w_border_adj);
-    // Restore the style for later re-application
+    // Restore WinConfig style. #37067
     wp->w_config.style = saved_style;
   }
 
