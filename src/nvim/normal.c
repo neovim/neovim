@@ -82,6 +82,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/terminal.h"
 #include "nvim/textformat.h"
 #include "nvim/textobject.h"
 #include "nvim/types_defs.h"
@@ -1445,6 +1446,8 @@ static int normal_check(VimState *state)
     skip_redraw = false;
     setcursor();
   } else if (do_redraw || stuff_empty()) {
+    terminal_check_refresh();
+
     // Ensure curwin->w_topline and curwin->w_leftcol are up to date
     // before triggering a WinScrolled autocommand.
     update_topline(curwin);

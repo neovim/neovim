@@ -746,7 +746,7 @@ void terminal_set_state(Terminal *term, bool suspended)
 {
   if (term->suspended != suspended) {
     // Trigger a main loop iteration to redraw the buffer.
-    multiqueue_put(main_loop.events, terminal_state_change_event,
+    multiqueue_put(refresh_timer.events, terminal_state_change_event,
                    (void *)(intptr_t)term->buf_handle);
   }
   term->suspended = suspended;
@@ -1032,6 +1032,8 @@ static int terminal_check(VimState *state)
   if (stop_insert_mode || !terminal_check_focus(s)) {
     return 0;
   }
+
+  terminal_check_refresh();
 
   // Validate topline and cursor position for autocommands. Especially important for WinScrolled.
   terminal_check_cursor();
@@ -2281,6 +2283,14 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
     time_watcher_start(&refresh_timer, refresh_timer_cb, REFRESH_DELAY, 0);
     refresh_pending = true;
   }
+}
+
+/// Normally refresh_timer_cb() is called when processing main_loop.events, but with
+/// partial mappings main_loop.events isn't processed, while terminal buffers still
+/// need refreshing after processing a key, so call this function before redrawing.
+void terminal_check_refresh(void)
+{
+  multiqueue_process_events(refresh_timer.events);
 }
 
 static void refresh_terminal(Terminal *term)
