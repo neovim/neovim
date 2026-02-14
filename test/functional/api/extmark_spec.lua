@@ -1774,13 +1774,14 @@ describe('API/extmarks', function()
   it('invalidated marks are deleted', function()
     screen = Screen.new(40, 6)
     feed('dd6iaaa bbb ccc<CR><ESC>gg')
-    api.nvim_set_option_value('signcolumn', 'auto:2', {})
+    api.nvim_set_option_value('signcolumn', 'auto:3', {})
     set_extmark(ns, 1, 0, 0, { invalidate = true, sign_text = 'S1', end_row = 1 })
-    set_extmark(ns, 2, 1, 0, { invalidate = true, sign_text = 'S2', end_row = 2 })
+    set_extmark(ns, 2, 1, 0, { invalidate = true, sign_text = 'S2', end_row = 2, end_col = 0 })
+    set_extmark(ns, 3, 1, 0, { invalidate = true, sign_text = 'S3', end_row = 2, end_col = 1 })
     -- mark with invalidate is removed
     command('d2')
     screen:expect([[
-      {7:S2}^aaa bbb ccc                           |
+      {7:S3}^aaa bbb ccc                           |
       {7:  }aaa bbb ccc                           |*3
       {7:  }                                      |
                                               |
@@ -1788,15 +1789,16 @@ describe('API/extmarks', function()
     -- mark is restored with undo_restore == true
     command('silent undo')
     screen:expect([[
-      {7:S1  }^aaa bbb ccc                         |
-      {7:S2S1}aaa bbb ccc                         |
-      {7:S2  }aaa bbb ccc                         |
-      {7:    }aaa bbb ccc                         |*2
+      {7:S1    }^aaa bbb ccc                       |
+      {7:S3S2S1}aaa bbb ccc                       |
+      {7:S3S2  }aaa bbb ccc                       |
+      {7:      }aaa bbb ccc                       |*2
                                               |
     ]])
     -- decor is not removed twice
     command('d3')
     api.nvim_buf_del_extmark(0, ns, 1)
+    api.nvim_buf_del_extmark(0, ns, 3)
     command('silent undo')
     -- mark is deleted with undo_restore == false
     set_extmark(ns, 1, 0, 0, { invalidate = true, undo_restore = false, sign_text = 'S1' })
@@ -1806,7 +1808,6 @@ describe('API/extmarks', function()
     -- mark is not removed when deleting bytes before the range
     set_extmark(ns, 3, 0, 4, {
       invalidate = true,
-      undo_restore = true,
       hl_group = 'Error',
       end_col = 7,
       right_gravity = false,
