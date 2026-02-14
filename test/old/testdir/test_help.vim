@@ -107,8 +107,8 @@ func Test_help_local_additions()
   help local-additions
   let lines = getline(line(".") + 1, search("^$") - 1)
   call assert_equal([
-  \ '|mydoc-ext.txt| my extended awesome doc',
-  \ '|mydoc.txt| my awesome doc'
+  \ '|mydoc.txt|                                                     my awesome doc',
+  \ '|mydoc-ext.txt|                                        my extended awesome doc'
   \ ], lines)
   call delete('Xruntime/doc/mydoc-ext.txt')
   close
@@ -124,17 +124,17 @@ func Test_help_local_additions()
   help local-additions@en
   let lines = getline(line(".") + 1, search("^$") - 1)
   call assert_equal([
-  \ '|mydoc.txt| my awesome doc'
+  \ '|mydoc.txt|                                                     my awesome doc'
   \ ], lines)
   close
 
   help local-additions@ja
   let lines = getline(line(".") + 1, search("^$") - 1)
   call assert_equal([
-  \ '|mydoc.txt| my awesome doc',
-  \ '|help.txt| This is jax file',
-  \ '|work.txt| This is jax file',
-  \ '|work2.txt| This is jax file',
+  \ '|help.txt|                                                    This is jax file',
+  \ '|mydoc.txt|                                                     my awesome doc',
+  \ '|work.txt|                                                    This is jax file',
+  \ '|work2.txt|                                                   This is jax file',
   \ ], lines)
   close
 
