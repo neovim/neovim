@@ -4943,27 +4943,42 @@ static void ex_restart(exarg_T *eap)
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
   list_T *argv_cpy = tv_list_alloc(eap->arg ? argc + 2 : argc);
-  bool added_startup_arg = false;
 
-  TV_LIST_ITER_CONST(l, li, {
+  // Copy v:argv, skipping unwanted items.
+  for (listitem_T *li = l != NULL ? l->lv_first : NULL; li != NULL; li = li->li_next) {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
     size_t arg_size = strlen(arg);
     assert(arg_size <= (size_t)SSIZE_MAX);
-    // Skip "-" argument (stdin input marker).
-    if (strequal(arg, "-")) {
-      continue;
+
+    if (strequal(arg, "--embed") || strequal(arg, "--headless")) {
+      continue;  // Drop --embed/--headless: the client decides how to start+attach the server.
+    } else if (strequal(arg, "-")) {
+      continue;  // Drop stdin ("-") argument.
+    } else if (strequal(arg, "+:::")) {
+      // The special placeholder "+:::" marks a previous :restart command.
+      // Drop the `"+:::", "-c", "…"` triplet, to avoid "stacking" commands from previous :restart(s).
+      listitem_T *next1 = li->li_next;
+      if (next1 != NULL && strequal(tv_get_string(TV_LIST_ITEM_TV(next1)), "-c")) {
+        listitem_T *next2 = next1->li_next;
+        if (next2 != NULL) {
+          li = next2;
+          continue;
+        }
+      }
+      continue;  // If the triplet is incomplete, just skip "+:::"
+    } else if (strequal(arg, "--")) {
+      break;  // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
     }
 
     tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
-
-    // Patch v:argv to include "-c <arg>" when it restarts.
-    if (eap->arg && !added_startup_arg) {
-      tv_list_append_string(argv_cpy, "-c", 2);
-      tv_list_append_string(argv_cpy, eap->arg, (ssize_t)strlen(eap->arg));
-      added_startup_arg = true;
-    }
-  });
-
+  }
+  // Append `"+:::", "-c", "<command>"` to end of v:argv.
+  // The "+:::" item is a no-op placeholder to mark the :restart "<command>".
+  if (eap->arg && eap->arg[0] != '\0') {
+    tv_list_append_string(argv_cpy, S_LEN("+:::"));
+    tv_list_append_string(argv_cpy, S_LEN("-c"));
+    tv_list_append_string(argv_cpy, eap->arg, (ssize_t)strlen(eap->arg));
+  }
   set_vim_var_list(VV_ARGV, argv_cpy);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";

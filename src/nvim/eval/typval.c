@@ -1014,8 +1014,8 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
 
 /// Join list into a string using given separator
 ///
-/// @param[out]  gap  Garray where result will be saved.
-/// @param[in]  l  Joined list.
+/// @param[out]  gap  Garray where the joined list will be saved.
+/// @param[in]  l  List.
 /// @param[in]  sep  Separator.
 ///
 /// @return OK in case of success, FAIL otherwise.
