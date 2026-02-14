@@ -45,6 +45,7 @@ describe('UI receives option updates', function()
     table.insert(clear_opts.args_rm or {}, '--cmd')
     clear(clear_opts)
     screen = Screen.new(20, 5, screen_opts)
+    defaults.guifont = eval('&guifont')
     -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
     -- In both cases check that the received value is the one requested.
     defaults.ext_linegrid = screen._options.ext_linegrid or false
@@ -53,7 +54,6 @@ describe('UI receives option updates', function()
 
   it('for defaults', function()
     local expected = reset()
-    expected.guifont = eval('&guifont')
     screen:expect(function()
       eq(expected, screen.options)
     end)
@@ -95,7 +95,6 @@ describe('UI receives option updates', function()
 
     command('set termguicolors')
     expected.termguicolors = true
-    expected.guifont = eval('&guifont')
     screen:expect(function()
       eq(expected, screen.options)
     end)
@@ -168,7 +167,6 @@ describe('UI receives option updates', function()
     end)
 
     command('set all&')
-    defaults.guifont = eval('&guifont')
     screen:expect(function()
       eq(defaults, screen.options)
     end)
@@ -179,7 +177,6 @@ describe('UI receives option updates', function()
 
     expected.ext_cmdline = true
     expected.ext_wildmenu = true
-    expected.guifont = eval('&guifont')
     screen:expect(function()
       eq(expected, screen.options)
     end)
