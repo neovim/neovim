@@ -768,6 +768,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
 
   init_ccline(s->firstc, s->indent);
+  assert(ccline.cmdbuff != NULL);
   ccline.prompt_id = last_prompt_id++;
   ccline.level = cmdline_level;
 

@@ -414,6 +414,9 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
 
 void ui_detach_impl(RemoteUI *ui, uint64_t chanid)
 {
+  if (ui_count > MAX_UI_COUNT) {
+    abort();
+  }
   size_t shift_index = MAX_UI_COUNT;
 
   // Find the index that will be removed
