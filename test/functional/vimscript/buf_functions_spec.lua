@@ -7,7 +7,6 @@ local fn = n.fn
 local api = n.api
 local command = n.command
 local exc_exec = n.exc_exec
-local get_pathsep = n.get_pathsep
 local rmdir = n.rmdir
 local pcall_err = t.pcall_err
 local mkdir = t.mkdir
@@ -82,8 +81,8 @@ describe('bufname() function', function()
   it('returns expected buffer name', function()
     eq('', fn.bufname('%')) -- Buffer has no name yet
     command('file ' .. fname)
-    local wd = vim.uv.cwd()
-    local sep = get_pathsep()
+    local wd = t.fix_slashes(vim.uv.cwd())
+    local sep = '/'
     local curdirname = fn.fnamemodify(wd, ':t')
     for _, arg in ipairs({ '%', 1, 'X', wd }) do
       eq(fname, fn.bufname(arg))

@@ -913,6 +913,7 @@ void ml_recover(bool checkext)
 
   // If .swp file name given directly, use name from swapfile for buffer.
   if (directly) {
+    TO_SLASH(b0p->b0_fname);
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
     if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
@@ -3483,6 +3484,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         fd = os_open(fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
+            TO_SLASH(b0.b0_fname);
             proc_running = swapfile_proc_running(&b0, fname);
 
             // If the swapfile has the same directory as the

@@ -14,8 +14,7 @@ local rmdir = n.rmdir
 local write_file = t.write_file
 
 local function join_path(...)
-  local pathsep = (is_os('win') and '\\' or '/')
-  return table.concat({ ... }, pathsep)
+  return table.concat({ ... }, '/')
 end
 
 describe('path collapse', function()

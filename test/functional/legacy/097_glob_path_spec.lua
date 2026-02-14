@@ -47,9 +47,9 @@ describe('glob() and globpath()', function()
 
         Xxx{
         Xxx$
-        'sautest\autoload\Test104.vim
-        sautest\autoload\footest.vim'
-        ['sautest\autoload\Test104.vim', 'sautest\autoload\footest.vim']]=])
+        'sautest/autoload/Test104.vim
+        sautest/autoload/footest.vim'
+        ['sautest/autoload/Test104.vim', 'sautest/autoload/footest.vim']]=])
     else
       command([[$put =glob('Xxx\{')]])
       command([[$put =glob('Xxx\$')]])

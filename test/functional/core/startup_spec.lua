@@ -1550,6 +1550,7 @@ describe('runtime:', function()
       table.concat({ xconfig, 'nvim', 'pack', 'category', 'start', 'test_plugin' }, pathsep)
     local plugin_folder_path = table.concat({ plugin_path, 'plugin' }, pathsep)
     local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
+    plugin_file_path = t.fix_slashes(plugin_file_path)
     local profiler_file = 'test_startuptime.log'
     mkdir_p(plugin_folder_path)
     finally(function()

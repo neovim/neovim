@@ -19,22 +19,15 @@ describe('executable()', function()
   end)
 
   if is_os('win') then
-    it('exepath respects shellslash', function()
+    it('exepath returns consistent path separator #13787', function()
       command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
-      eq(
-        [[test\functional\fixtures\bin\null.CMD]],
-        call('fnamemodify', call('exepath', 'null'), ':.')
-      )
-      command('set shellslash')
       eq(
         'test/functional/fixtures/bin/null.CMD',
         call('fnamemodify', call('exepath', 'null'), ':.')
       )
     end)
 
-    it('stdpath respects shellslash', function()
-      eq([[build\Xtest_xdg\share\nvim-data]], call('fnamemodify', call('stdpath', 'data'), ':.'))
-      command('set shellslash')
+    it('stdpath returns consistent path separator #13787', function()
       eq('build/Xtest_xdg/share/nvim-data', call('fnamemodify', call('stdpath', 'data'), ':.'))
     end)
   end

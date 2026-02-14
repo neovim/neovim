@@ -3630,8 +3630,8 @@ func Test_glob2()
     call assert_equal([], (glob('\[XglobDir]\*', 0, 1)))
     call assert_equal([], (glob('abc\[glob]def\*', 0, 1)))
     set noshellslash
-    call assert_equal(['[XglobDir]\Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
-    call assert_equal(['abc[glob]def\Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
+    call assert_equal(['[XglobDir]/Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
+    call assert_equal(['abc[glob]def/Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
     set shellslash
     call assert_equal(['[XglobDir]/Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
     call assert_equal(['abc[glob]def/Xglob'], (glob('abc[[]glob]def/*', 0, 1)))

@@ -941,8 +941,8 @@ func Test_ins_completeslash()
   call delete('Xdir', 'rf')
 
   set noshellslash
-  set completeslash=slash
-  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+  set completeslash=backslash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') == -1)
 
   let &shellslash = orig_shellslash
   set completeslash=
@@ -1556,8 +1556,8 @@ func Test_issue_7021()
   let orig_shellslash = &shellslash
   set noshellslash
 
-  set completeslash=slash
-  call assert_false(expand('~') =~ '/')
+  set completeslash=backslash
+  call assert_false(expand('~') =~ '\\')
 
   let &shellslash = orig_shellslash
   set completeslash=

@@ -469,7 +469,7 @@ void get_local_additions(void)
       char *p = p_rtp;
       while (*p != NUL) {
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
-        char *const rt = vim_getenv("VIMRUNTIME");
+        char *const rt = vim_getenv_path("VIMRUNTIME");
         if (rt != NULL
             && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
           int fcount;

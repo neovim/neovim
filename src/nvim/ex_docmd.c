@@ -4110,6 +4110,8 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
       }
       repl_cmdline(eap, eap->arg, strlen(eap->arg), p, cmdlinep);
       xfree(p);
+    } else {
+      TO_SLASH(eap->arg);
     }
   }
   return OK;
@@ -5456,7 +5458,7 @@ int expand_findfunc(char *pat, char ***files, int *numMatches)
   int idx = 0;
   TV_LIST_ITER_CONST(l, li, {
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-      (*files)[idx] = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
+      (*files)[idx] = TO_SLASH_SAVE(TV_LIST_ITEM_TV(li)->vval.v_string);
       idx++;
     }
   });
@@ -5487,7 +5489,7 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
     } else {
       listitem_T *li = tv_list_find(fname_list, count - 1);
       if (li != NULL && TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-        ret_fname = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
+        ret_fname = TO_SLASH_SAVE(TV_LIST_ITEM_TV(li)->vval.v_string);
       }
     }
   }

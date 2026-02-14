@@ -316,6 +316,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     }
     // Translate string into pattern and expand it.
     const int use_options = (options
+                             | WILD_USE_COMPLETESLASH
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
@@ -2718,16 +2719,13 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     xfree(pat);
   }
 #ifdef BACKSLASH_IN_FILENAME
-  if (p_csl[0] != NUL && (options & WILD_IGNORE_COMPLETESLASH) == 0) {
+  if ((options & WILD_USE_COMPLETESLASH) && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b')) {
     for (int j = 0; j < *numMatches; j++) {
       char *ptr = (*matches)[j];
-      while (*ptr != NUL) {
-        if (p_csl[0] == 's' && *ptr == '\\') {
-          *ptr = '/';
-        } else if (p_csl[0] == 'b' && *ptr == '/') {
+      for (; *ptr; ptr++) {
+        if (*ptr == '/') {
           *ptr = '\\';
         }
-        ptr += utfc_ptr2len(ptr);
       }
     }
   }

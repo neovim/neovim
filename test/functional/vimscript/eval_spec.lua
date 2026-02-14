@@ -81,7 +81,7 @@ describe('backtick expansion', function()
     eq({ 'file2' }, eval('argv()'))
     if t.is_os('win') then
       command(':silent args `dir /s/b *4`')
-      eq({ 'subdir\\file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
+      eq({ 'subdir/file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
     else
       command(':silent args `echo */*4`')
       eq({ 'subdir/file4' }, eval('argv()'))

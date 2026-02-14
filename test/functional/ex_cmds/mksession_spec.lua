@@ -145,7 +145,7 @@ describe(':mksession', function()
 
   it('restores buffers with tab-local CWD', function()
     local tmpfile_base = file_prefix .. '-tmpfile'
-    local cwd_dir = fn.getcwd()
+    local cwd_dir = t.fix_slashes(fn.getcwd())
     local session_path = cwd_dir .. get_pathsep() .. session_file
 
     command('edit ' .. tmpfile_base .. '1')
@@ -161,9 +161,9 @@ describe(':mksession', function()
     -- Use :silent to avoid press-enter prompt due to long path
     command('silent source ' .. session_path)
     command('tabnext 1')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', fn.expand('%:p'))
+    eq(cwd_dir .. '/' .. tmpfile_base .. '1', fn.expand('%:p'))
     command('tabnext 2')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', fn.expand('%:p'))
+    eq(cwd_dir .. '/' .. tmpfile_base .. '2', fn.expand('%:p'))
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
