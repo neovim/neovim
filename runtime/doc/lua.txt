@@ -854,9 +854,9 @@ vim.ui_detach({ns})                                          *vim.ui_detach()*
 
 vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Waits up to `time` milliseconds, until `callback` returns `true`
-    (success). Executes `callback` immediately, then at intervals of
-    approximately `interval` milliseconds (default 200). Returns all
-    `callback` results on success.
+    (success). Executes `callback` immediately, then on user events, internal
+    events, and approximately every `interval` milliseconds (default 200).
+    Returns all `callback` results on success.
 
     Nvim processes other events while waiting. Cannot be called during an
     |api-fast| event.
