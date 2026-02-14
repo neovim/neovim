@@ -318,7 +318,6 @@ local function write_to_vim_protocol(protocol)
 
     --- These methods have no registrationOptions but can still be registered
     --- TODO: remove if resolved upstream: https://github.com/microsoft/language-server-protocol/issues/2218
-
     local methods_with_no_registration_options = {
       ['workspace/didChangeWorkspaceFolders'] = true,
     }
