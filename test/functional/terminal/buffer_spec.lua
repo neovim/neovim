@@ -612,6 +612,46 @@ end)
 describe(':terminal buffer', function()
   before_each(clear)
 
+  it('can resume suspended PTY process running in fish', function()
+    skip(is_os('win'), 'N/A for Windows')
+    skip(fn.executable('fish') == 0, 'missing "fish" command')
+
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({
+      [100] = {
+        foreground = Screen.colors.NvimDarkGrey2,
+        background = Screen.colors.NvimLightGrey2,
+      },
+      [101] = {
+        foreground = Screen.colors.NvimLightGrey4,
+        background = Screen.colors.NvimLightGrey2,
+      },
+      [102] = {
+        foreground = Screen.colors.NvimDarkGrey2,
+        background = Screen.colors.NvimLightGrey4,
+      },
+    })
+    command('set shell=fish termguicolors')
+    command(('terminal %s -u NONE -i NONE'):format(fn.shellescape(nvim_prog)))
+    command('startinsert')
+    local s0 = [[
+      {100:^                                                  }|
+      {101:~                                                 }|*3
+      {102:[No Name]                       0,0-1          All}|
+      {100:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(s0)
+    feed('<C-Z>')
+    screen:expect([[
+                                                        |*5
+      ^[Process suspended]                               |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed('<Space>')
+    screen:expect(s0)
+  end)
+
   it('term_close() use-after-free #4393', function()
     command('terminal yes')
     feed('<Ignore>') -- Add input to separate two RPC requests
