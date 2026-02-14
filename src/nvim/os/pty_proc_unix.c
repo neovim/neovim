@@ -241,7 +241,9 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
 
 void pty_proc_resume(PtyProc *ptyproc)
 {
-  kill(((Proc *)ptyproc)->pid, SIGCONT);
+  // Send SIGCONT to the entire process group, as some shells (e.g. fish) don't
+  // propagate SIGCONT to suspended child processes.
+  killpg(((Proc *)ptyproc)->pid, SIGCONT);
 }
 
 void pty_proc_close(PtyProc *ptyproc)
