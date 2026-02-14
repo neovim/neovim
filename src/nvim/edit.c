@@ -1596,15 +1596,14 @@ static void init_prompt(int cmdchar_todo)
   if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
     curwin->w_cursor.lnum = curbuf->b_prompt_start.mark.lnum;
   }
-  char *text = get_cursor_line_ptr();
+  char *text = ml_get(curbuf->b_prompt_start.mark.lnum);
   if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
        && (curbuf->b_prompt_start.mark.col < prompt_len
-           || strncmp(text + curbuf->b_prompt_start.mark.col - prompt_len, prompt,
-                      (size_t)prompt_len) != 0))
-      || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
+           || !strnequal(text + curbuf->b_prompt_start.mark.col - prompt_len, prompt,
+                         (size_t)prompt_len)))) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
-      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
+      ml_replace(curbuf->b_prompt_start.mark.lnum, prompt, true);
     } else {
       ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
       curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
