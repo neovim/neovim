@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local clear, eq = n.clear, t.eq
+local clear, eq, neq = n.clear, t.eq, t.neq
 local command = n.command
 local exec_capture = n.exec_capture
 local api = n.api
@@ -548,6 +548,8 @@ describe('API: get highlight', function()
 end)
 
 describe('API: set/get highlight namespace', function()
+  before_each(clear)
+
   it('set/get highlight namespace', function()
     eq(0, api.nvim_get_hl_ns({}))
     local ns = api.nvim_create_namespace('')
@@ -563,16 +565,38 @@ describe('API: set/get highlight namespace', function()
   end)
 
   it('setting namespace takes priority over &winhighlight', function()
+    local win = api.nvim_get_current_win()
+    eq(-1, api.nvim_get_hl_ns({ winid = win }))
     command('set winhighlight=Visual:Search')
+    local winhl_ns = api.nvim_get_hl_ns({ winid = win })
+    neq(0, winhl_ns)
+    eq('Search', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
     n.insert('foobar')
     local ns = api.nvim_create_namespace('')
-    api.nvim_win_set_hl_ns(0, ns)
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
-    command('enew') -- switching buffer keeps namespace #30904
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    neq(winhl_ns, ns)
+    api.nvim_win_set_hl_ns(win, ns)
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
+    command('enew') -- Switching buffer keeps namespace. #30904
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
     command('set winhighlight=')
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
-    command('set winhighlight=Visual:Search')
-    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
+    -- Setting 'winhighlight' changes its namespace even when not using it.
+    command('set winhighlight=Visual:IncSearch')
+    eq('IncSearch', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
+    eq(ns, api.nvim_get_hl_ns({ winid = win }))
+    -- Setting 'winhighlight' works with global namespace. #37865
+    api.nvim_win_set_hl_ns(win, 0)
+    eq(0, api.nvim_get_hl_ns({ winid = win }))
+    command('set winhighlight=Visual:IncSearch')
+    eq('IncSearch', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
+    eq(winhl_ns, api.nvim_get_hl_ns({ winid = win }))
+    command('set winhighlight=')
+    eq(0, api.nvim_get_hl_ns({ winid = win }))
+    -- 'winhighlight' keeps the same namespace.
+    api.nvim_win_set_hl_ns(win, winhl_ns)
+    eq(winhl_ns, api.nvim_get_hl_ns({ winid = win }))
+    command('set winhighlight=Visual:Substitute')
+    eq('Substitute', api.nvim_get_hl(winhl_ns, { name = 'Visual' }).link)
+    eq(winhl_ns, api.nvim_get_hl_ns({ winid = win }))
   end)
 end)
