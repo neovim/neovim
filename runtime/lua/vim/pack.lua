@@ -1122,6 +1122,7 @@ local function show_confirm_buf(lines, on_finish)
   local win_id = api.nvim_get_current_win()
 
   local delete_buffer = vim.schedule_wrap(function()
+    pcall(api.nvim_win_close, win_id, true)
     pcall(api.nvim_buf_delete, bufnr, { force = true })
     vim.cmd.redraw()
   end)
