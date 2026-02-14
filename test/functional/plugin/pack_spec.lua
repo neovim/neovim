@@ -1397,6 +1397,16 @@ describe('vim.pack', function()
         n.exec('tabonly')
         n.exec('write')
         eq('', n.eval('v:errmsg'))
+
+        -- Should cleanly close tabpage even if there are only scratch buffers
+        n.exec('%bwipeout')
+        local init_buf = api.nvim_get_current_buf()
+        api.nvim_set_current_buf(api.nvim_create_buf(false, true))
+        api.nvim_buf_delete(init_buf, { force = true })
+        exec_lua('vim.pack.update()')
+        n.exec('write')
+        eq(1, #api.nvim_list_tabpages())
+        eq(1, #api.nvim_list_bufs())
       end)
 
       it('has in-process LSP features', function()
