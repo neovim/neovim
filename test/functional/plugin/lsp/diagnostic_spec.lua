@@ -774,6 +774,15 @@ describe('vim.lsp.diagnostic', function()
         end)
       )
 
+      eq(
+        { vim.NIL },
+        exec_lua(function()
+          local client = vim.lsp.get_client_by_id(client_id)
+          assert(client)
+          return client:_provider_value_get('workspace/diagnostic', 'identifier')
+        end)
+      )
+
       local requests, diags = exec_lua(function()
         vim.lsp.diagnostic.on_refresh(nil, nil, {
           method = 'workspace/diagnostic/refresh',

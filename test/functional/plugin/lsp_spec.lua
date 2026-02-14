@@ -5688,13 +5688,14 @@ describe('LSP', function()
         }, { client_id = client_id })
 
         local result = {}
-        local function check(method, fname)
+        local function check(method, fname, ...)
           local bufnr = fname and vim.fn.bufadd(fname) or nil
           local client = assert(vim.lsp.get_client_by_id(client_id))
           result[#result + 1] = {
             method = method,
             fname = fname,
-            supported = client:supports_method(method, { bufnr = bufnr }),
+            supported = client:supports_method(method, bufnr),
+            cap = select('#', ...) > 0 and client:_provider_value_get(method, ...) or nil,
           }
         end
 
@@ -5736,6 +5737,7 @@ describe('LSP', function()
               id = 'diag1',
               method = 'textDocument/diagnostic',
               registerOptions = {
+                identifier = 'diag-ident-1',
                 -- workspaceDiagnostics field omitted
               },
             },
@@ -5744,7 +5746,7 @@ describe('LSP', function()
 
         -- Checks after registering without workspaceDiagnostics support
         -- Returns false
-        check('workspace/diagnostic')
+        check('workspace/diagnostic', nil, 'identifier')
 
         vim.lsp.handlers['client/registerCapability'](nil, {
           registrations = {
@@ -5752,6 +5754,7 @@ describe('LSP', function()
               id = 'diag2',
               method = 'textDocument/diagnostic',
               registerOptions = {
+                identifier = 'diag-ident-2',
                 workspaceDiagnostics = true,
               },
             },
@@ -5760,7 +5763,7 @@ describe('LSP', function()
 
         -- Check after second registration with support
         -- Returns true
-        check('workspace/diagnostic')
+        check('workspace/diagnostic', nil, 'identifier')
 
         vim.lsp.handlers['client/unregisterCapability'](nil, {
           unregisterations = {
@@ -5770,7 +5773,7 @@ describe('LSP', function()
 
         -- Check after unregistering
         -- Returns false
-        check('workspace/diagnostic')
+        check('workspace/diagnostic', nil, 'identifier')
 
         check('textDocument/codeAction')
         check('codeAction/resolve')
@@ -5790,10 +5793,21 @@ describe('LSP', function()
         check('textDocument/codeAction')
         check('codeAction/resolve')
 
+        check('workspace/didChangeWorkspaceFolders')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didChangeWorkspaceFolders-id',
+              method = 'workspace/didChangeWorkspaceFolders',
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/didChangeWorkspaceFolders')
+
         return result
       end)
 
-      eq(17, #result)
+      eq(19, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -5810,13 +5824,19 @@ describe('LSP', function()
         result[9]
       )
       eq({ method = 'workspace/diagnostic', supported = false }, result[10])
-      eq({ method = 'workspace/diagnostic', supported = false }, result[11])
-      eq({ method = 'workspace/diagnostic', supported = true }, result[12])
-      eq({ method = 'workspace/diagnostic', supported = false }, result[13])
+      eq({ method = 'workspace/diagnostic', supported = false, cap = {} }, result[11])
+      eq({
+        method = 'workspace/diagnostic',
+        supported = true,
+        cap = { 'diag-ident-2' },
+      }, result[12])
+      eq({ method = 'workspace/diagnostic', supported = false, cap = {} }, result[13])
       eq({ method = 'textDocument/codeAction', supported = false }, result[14])
       eq({ method = 'codeAction/resolve', supported = false }, result[15])
       eq({ method = 'textDocument/codeAction', supported = true }, result[16])
       eq({ method = 'codeAction/resolve', supported = true }, result[17])
+      eq({ method = 'workspace/didChangeWorkspaceFolders', supported = false }, result[18])
+      eq({ method = 'workspace/didChangeWorkspaceFolders', supported = true }, result[19])
     end)
 
     it('identifies client dynamic registration capability', function()
@@ -5832,6 +5852,9 @@ describe('LSP', function()
                 dynamicRegistration = true,
               },
               synchronization = {
+                dynamicRegistration = true,
+              },
+              diagnostic = {
                 dynamicRegistration = true,
               },
             },
@@ -5851,15 +5874,19 @@ describe('LSP', function()
         check('textDocument/didSave')
         check('textDocument/didOpen')
         check('textDocument/codeLens')
+        check('textDocument/diagnostic')
+        check('workspace/diagnostic')
 
         return result
       end)
 
-      eq(4, #result)
+      eq(6, #result)
       eq({ method = 'textDocument/formatting', supports_reg = true }, result[1])
       eq({ method = 'textDocument/didSave', supports_reg = true }, result[2])
       eq({ method = 'textDocument/didOpen', supports_reg = true }, result[3])
       eq({ method = 'textDocument/codeLens', supports_reg = false }, result[4])
+      eq({ method = 'textDocument/diagnostic', supports_reg = true }, result[5])
+      eq({ method = 'workspace/diagnostic', supports_reg = true }, result[6])
     end)
 
     it('supports static registration', function()
@@ -5869,17 +5896,67 @@ describe('LSP', function()
         local server = _G._create_server({
           capabilities = {
             colorProvider = { id = 'color-registration' },
+            diagnosticProvider = {
+              id = 'diag-registration',
+              identifier = 'diag-ident-static',
+              workspaceDiagnostics = true,
+            },
           },
         })
 
         return assert(vim.lsp.start({ name = 'dynamic-test', cmd = server.cmd }))
       end)
 
+      local function sort_method(tbl)
+        local result_t = vim.deepcopy(tbl)
+        table.sort(result_t, function(a, b)
+          return (a.method or '') < (b.method or '')
+        end)
+        return result_t
+      end
+
       eq(
-        true,
+        {
+          {
+            id = 'color-registration',
+            method = 'textDocument/colorPresentation',
+            registerOptions = { id = 'color-registration' },
+          },
+          {
+            id = 'color-registration',
+            method = 'textDocument/documentColor',
+            registerOptions = { id = 'color-registration' },
+          },
+        },
+        sort_method(exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          return client.dynamic_capabilities:get('colorProvider')
+        end))
+      )
+
+      eq(
+        {
+          {
+            id = 'diag-registration',
+            method = 'textDocument/diagnostic',
+            registerOptions = {
+              id = 'diag-registration',
+              identifier = 'diag-ident-static',
+              workspaceDiagnostics = true,
+            },
+          },
+        },
+        sort_method(exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          return client.dynamic_capabilities:get('diagnosticProvider')
+        end))
+      )
+
+      eq(
+        { 'diag-ident-static' },
         exec_lua(function()
           local client = assert(vim.lsp.get_client_by_id(client_id))
-          return client.dynamic_capabilities:get('colorProvider') ~= nil
+          return client:_provider_value_get('textDocument/diagnostic', 'identifier')
         end)
       )
     end)
