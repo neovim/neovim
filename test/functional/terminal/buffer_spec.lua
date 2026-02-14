@@ -296,6 +296,64 @@ describe(':terminal buffer', function()
     eq('t', fn.mode(1))
   end)
 
+  it('is refreshed with partial mappings in Terminal mode #9167', function()
+    command([[set timeoutlen=20000 | tnoremap jk <C-\><C-N>]])
+    feed('j') -- Won't reach the terminal until the next character is typed
+    screen:expect_unchanged()
+    feed('j') -- Refresh scheduled for the first 'j' but not processed
+    screen:expect_unchanged()
+    for i = 1, 10 do
+      eq({ mode = 't', blocking = true }, api.nvim_get_mode())
+      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      screen:expect(([[
+        tty ready                                         |
+        %s^%s|
+                                                          |*4
+        {5:-- TERMINAL --}                                    |
+      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+    end
+    feed('l') -- No partial mapping, so all pending refreshes should be processed
+    screen:expect([[
+      tty ready                                         |
+      jjjjjjjjjjjjl^                                     |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('is refreshed with partial mappings in Normal mode', function()
+    command('set timeoutlen=20000 | nnoremap jk :')
+    command('nnoremap j <Cmd>call chansend(&channel, "j")<CR>')
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*5
+    ]])
+    feed('j') -- Won't reach the terminal until the next character is typed
+    screen:expect_unchanged()
+    feed('j') -- Refresh scheduled for the first 'j' but not processed
+    screen:expect_unchanged()
+    for i = 1, 10 do
+      eq({ mode = 'nt', blocking = true }, api.nvim_get_mode())
+      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      screen:expect(([[
+        tty ready                                         |
+        ^%s%s|
+                                                          |*4
+                                                          |
+      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+    end
+    feed('l') -- No partial mapping, so all pending refreshes should be processed
+    screen:expect([[
+      tty ready                                         |
+      j^jjjjjjjjjjj                                      |
+                                                        |*5
+    ]])
+  end)
+
   it('writing to an existing file with :w fails #13549', function()
     eq(
       'Vim(write):E13: File exists (add ! to override)',
