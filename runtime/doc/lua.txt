@@ -255,7 +255,7 @@ arguments separated by " " (space) instead of "\t" (tab).
 :lua {chunk}
     Executes Lua chunk {chunk}. If {chunk} starts with "=" the rest of the
     chunk is evaluated as an expression and printed. `:lua =expr` and `:=expr`
-    are equivalent to `:lua print(vim.inspect(expr))`.
+    are equivalent to `:lua print(vim.inspect(expr))`. |E5107| |E5108|
 
     Examples: >vim
         :lua vim.api.nvim_command('echo "Hello, Nvim!"')
@@ -298,7 +298,7 @@ arguments separated by " " (space) instead of "\t" (tab).
     line in [range], where `line` is the current line text (without <EOL>),
     and `linenr` is the current line number. If the function returns a string
     that becomes the text of the corresponding buffer line. Default [range] is
-    the whole file: "1,$".
+    the whole file: "1,$". |E5109| |E5110| |E5111|
 
     Examples: >vim
         :luado return string.format("%s\t%d", line:reverse(), #line)
@@ -313,6 +313,7 @@ arguments separated by " " (space) instead of "\t" (tab).
     Execute Lua script in {file}.
     The whole argument is used as the filename (like |:edit|), spaces do not
     need to be escaped. Alternatively you can |:source| Lua files.
+    |E5111| |E5112| |E5113|
 
     Examples: >vim
         :luafile script.lua
