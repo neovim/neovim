@@ -4149,7 +4149,7 @@ describe('vim.diagnostic', function()
       eq('warning: unused', result[2].message)
     end)
 
-    it('ignores continuation lines by default', function()
+    it('merge_lines=false ignores continuation lines', function()
       local result = exec_lua(function()
         local qflist = {
           {
