@@ -198,6 +198,8 @@ DIAGNOSTICS
   enabled or disabled diagnostics.
 • |vim.diagnostic.status()| returns a formatted string with current buffer
   diagnostics
+• |vim.diagnostic.fromqflist()| now accepts an `opts` table with
+  `merge_lines` to merge multi-line compiler messages.
 
 EDITOR
 

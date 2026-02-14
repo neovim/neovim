@@ -2913,14 +2913,27 @@ function M.toqflist(diagnostics)
   return list
 end
 
+--- Configuration table with the following keys:
+--- @class vim.diagnostic.fromqflist.Opts
+--- @inlinedoc
+---
+--- When true, items with valid=0 are appended to the previous valid item's
+--- message with a newline. (default: false)
+--- @field merge_lines? boolean
+
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
----@param list table[] List of quickfix items from |getqflist()| or |getloclist()|.
+---@param list vim.quickfix.entry[] List of quickfix items from |getqflist()| or |getloclist()|.
+---@param opts? vim.diagnostic.fromqflist.Opts
 ---@return vim.Diagnostic[]
-function M.fromqflist(list)
+function M.fromqflist(list, opts)
   vim.validate('list', list, 'table')
 
+  opts = opts or {}
+  local merge = opts.merge_lines
+
   local diagnostics = {} --- @type vim.Diagnostic[]
+  local last_diag --- @type vim.Diagnostic?
   for _, item in ipairs(list) do
     if item.valid == 1 then
       local lnum = math.max(0, item.lnum - 1)
@@ -2929,7 +2942,7 @@ function M.fromqflist(list)
       local end_col = item.end_col > 0 and (item.end_col - 1) or col
       local code = item.nr > 0 and item.nr or nil
       local severity = item.type ~= '' and M.severity[item.type:upper()] or M.severity.ERROR
-      diagnostics[#diagnostics + 1] = {
+      local diag = {
         bufnr = item.bufnr,
         lnum = lnum,
         col = col,
@@ -2939,6 +2952,10 @@ function M.fromqflist(list)
         message = item.text,
         code = code,
       }
+      diagnostics[#diagnostics + 1] = diag
+      last_diag = diag
+    elseif merge and last_diag then
+      last_diag.message = last_diag.message .. '\n' .. item.text
     end
   end
   return diagnostics
