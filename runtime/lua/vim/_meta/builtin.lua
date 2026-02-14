@@ -183,8 +183,8 @@ function vim.iconv(str, from, to, opts) end
 function vim.schedule(fn) end
 
 --- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
---- `callback` immediately, then at intervals of approximately `interval` milliseconds (default
---- 200). Returns all `callback` results on success.
+--- `callback` immediately, then on user events, internal events, and approximately every
+--- `interval` milliseconds (default 200). Returns all `callback` results on success.
 ---
 --- Nvim processes other events while waiting.
 --- Cannot be called during an |api-fast| event.
