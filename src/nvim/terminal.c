@@ -172,10 +172,10 @@ struct terminal {
   // no way to know if the memory was reused.
   handle_T buf_handle;
   bool in_altscreen;
-  // program exited
-  bool closed;
   // program suspended
   bool suspended;
+  // program exited
+  bool closed;
   // when true, the terminal's destruction is already enqueued.
   bool destroy;
 
