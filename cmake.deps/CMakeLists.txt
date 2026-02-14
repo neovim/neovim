@@ -168,8 +168,6 @@ endif()
 if(WIN32)
   include(GetBinaryDeps)
 
-  GetExecutable(TARGET xxd)
-
   GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_BIN_DIR})
 endif()
