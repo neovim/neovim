@@ -1052,7 +1052,7 @@ struct window_S {
   synblock_T *w_s;                 ///< for :ownsyntax
 
   int w_ns_hl;
-  int w_ns_hl_winhl;  ///< when set to -1, 'winhighlight' shouldn't be used
+  int w_ns_hl_winhl;
   int w_ns_hl_active;
   int *w_ns_hl_attr;
 
