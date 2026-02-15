@@ -562,11 +562,11 @@ void hl_invalidate_blends(void)
 
 /// Combine HlAttrFlags.
 /// The underline attribute in "prim_ae" overrules the one in "char_ae" if both are present.
-static int16_t hl_combine_ae(int16_t char_ae, int16_t prim_ae)
+static int32_t hl_combine_ae(int32_t char_ae, int32_t prim_ae)
 {
-  int16_t char_ul = char_ae & HL_UNDERLINE_MASK;
-  int16_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
-  int16_t new_ul = prim_ul ? prim_ul : char_ul;
+  int32_t char_ul = char_ae & HL_UNDERLINE_MASK;
+  int32_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
+  int32_t new_ul = prim_ul ? prim_ul : char_ul;
   return (char_ae & ~HL_UNDERLINE_MASK) | (prim_ae & ~HL_UNDERLINE_MASK) | new_ul;
 }
 
@@ -997,8 +997,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   int32_t ctermbg = -1;
   int32_t sp = -1;
   int blend = -1;
-  int16_t mask = 0;
-  int16_t cterm_mask = 0;
+  int32_t mask = 0;
+  int32_t cterm_mask = 0;
   bool cterm_mask_provided = false;
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
