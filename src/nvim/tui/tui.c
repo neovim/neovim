@@ -753,6 +753,7 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool strikethrough = attr & HL_STRIKETHROUGH;
   bool altfont = attr & HL_ALTFONT;
   bool dim = attr & HL_DIM;
+  bool blink = attr & HL_BLINK;
 
   bool underline;
   bool undercurl;
@@ -778,12 +779,12 @@ static void update_attrs(TUIData *tui, int attr_id)
                            || underdouble || underdotted || underdashed;
 
   if (tui->ti.defs[kTerm_set_attributes] != NULL) {
-    if (bold || dim || reverse || underline || standout) {
+    if (bold || dim || blink || reverse || underline || standout) {
       TPVAR params[9] = { 0 };
       params[0].num = standout;
       params[1].num = underline;
       params[2].num = reverse;
-      params[3].num = 0;   // blink
+      params[3].num = blink;
       params[4].num = dim;
       params[5].num = bold;
       params[6].num = 0;   // blank
@@ -811,6 +812,9 @@ static void update_attrs(TUIData *tui, int attr_id)
     }
     if (dim) {
       terminfo_out(tui, kTerm_enter_dim_mode);
+    }
+    if (blink) {
+      terminfo_out(tui, kTerm_enter_blink_mode);
     }
   }
   if (italic) {
@@ -902,13 +906,13 @@ static void update_attrs(TUIData *tui, int attr_id)
   }
 
   tui->default_attr = fg == -1 && bg == -1
-                      && !bold && !dim && !italic
+                      && !bold && !dim && !blink && !italic
                       && !has_any_underline && !reverse && !standout && !strikethrough;
 
   // Non-BCE terminals can't clear with non-default background color. Some BCE
   // terminals don't support attributes either, so don't rely on it. But assume
   // italic and bold has no effect if there is no text.
-  tui->can_clear_attr = !reverse && !standout && !dim
+  tui->can_clear_attr = !reverse && !standout && !dim && !blink
                         && !has_any_underline && !strikethrough && (tui->bce || bg == -1);
 }
 

@@ -7371,6 +7371,8 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   case 'b':
     if (TOLOWER_ASC(what[1]) == 'g') {  // bg[#]
       p = highlight_color(id, what, modec);
+    } else if (TOLOWER_ASC(what[1]) == 'l') {  // blink
+      p = highlight_has_attr(id, HL_BLINK, modec);
     } else {  // bold
       p = highlight_has_attr(id, HL_BOLD, modec);
     }

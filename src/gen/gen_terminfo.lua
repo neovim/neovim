@@ -53,6 +53,7 @@ local wanted_strings = {
   'cursor_up',
   'cursor_right',
   'delete_line',
+  'enter_blink_mode',
   'enter_bold_mode',
   'enter_ca_mode',
   'enter_dim_mode',

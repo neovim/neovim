@@ -180,6 +180,7 @@ typedef struct {
   Boolean reverse;
   Boolean altfont;
   Boolean dim;
+  Boolean blink;
   Boolean nocombine;
   Boolean default_ DictKey(default);
   DictAs(highlight_cterm) cterm;
@@ -214,6 +215,7 @@ typedef struct {
   Boolean reverse;
   Boolean altfont;
   Boolean dim;
+  Boolean blink;
   Boolean nocombine;
 } Dict(highlight_cterm);
 

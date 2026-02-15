@@ -17,6 +17,7 @@ typedef enum {
   kTerm_cursor_up,
   kTerm_cursor_right,
   kTerm_delete_line,
+  kTerm_enter_blink_mode,
   kTerm_enter_bold_mode,
   kTerm_enter_ca_mode,
   kTerm_enter_dim_mode,
