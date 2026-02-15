@@ -22,7 +22,6 @@ typedef struct {
   char *tp_localdir;              ///< saved value of tp_localdir
   char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
-  int save_State;                 ///< saved State
   int save_prompt_insert;         ///< saved b_prompt_insert
 } aco_save_T;
 
