@@ -681,6 +681,8 @@ describe('LSP', function()
               { section = 'testSetting2' },
               { section = 'test.Setting3' },
               { section = 'test.Setting4' },
+              {},
+              { section = '' },
             },
           },
           { method = 'workspace/configuration', client_id = 1 },
