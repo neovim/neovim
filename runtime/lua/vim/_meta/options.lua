@@ -6857,6 +6857,8 @@ vim.wo.stc = vim.wo.statuscolumn
 ---       Thus use %#HLname# for highlight group HLname.  The same
 ---       highlighting is used, also for the statusline of non-current
 ---       windows.
+--- $ -   Same as `#`, except the `%$HLname$` group will inherit from
+---       preceding highlight attributes.
 --- * -   Set highlight group to User{N}, where {N} is taken from the
 ---       minwid field, e.g. %1*.  Restore normal highlight with %* or
 ---       %0*.  The difference between User{N} and StatusLine will be
