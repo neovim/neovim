@@ -370,6 +370,9 @@ static bool cin_islabel(void)  // XXX
     return false;
   }
 
+  if (ind_find_start_CORS(NULL)) {
+    return false;  // Don't accept a label in a comment or a raw string.
+  }
   // Only accept a label if the previous line is terminated or is a case
   // label.
   pos_T cursor_save;
