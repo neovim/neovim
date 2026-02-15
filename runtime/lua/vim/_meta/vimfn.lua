@@ -7966,7 +7966,7 @@ function vim.fn.searchpairpos(start, middle, end_, flags, skip, stopline, timeou
 --- @param stopline? integer
 --- @param timeout? integer
 --- @param skip? string|function
---- @return any
+--- @return { [1]: integer, [2]: integer, [3]: integer? }
 function vim.fn.searchpos(pattern, flags, stopline, timeout, skip) end
 
 --- Returns a list of server addresses, or empty if all servers

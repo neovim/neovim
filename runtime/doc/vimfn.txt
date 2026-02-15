@@ -8739,7 +8739,7 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
                   • {skip} (`string|function?`)
 
                 Return: ~
-                  (`any`)
+                  (`{ [1]: integer, [2]: integer, [3]: integer? }`)
 
 serverlist([{opts}])                                              *serverlist()*
 		Returns a list of server addresses, or empty if all servers
