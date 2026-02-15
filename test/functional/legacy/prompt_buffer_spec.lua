@@ -201,8 +201,16 @@ describe('prompt buffer', function()
       endfunc
       call prompt_setcallback(bufnr(), function('s:TextEntered'))
 
-      func DoAppend()
+      func DoAppend(cmd_before = '')
+        exe a:cmd_before
         call appendbufline('prompt', '$', 'Test')
+        return ''
+      endfunc
+
+      autocmd User SwitchTabPages tabprevious | tabnext
+      func DoAutoAll(cmd_before = '')
+        exe a:cmd_before
+        doautoall User SwitchTabPages
         return ''
       endfunc
     ]])
@@ -218,6 +226,17 @@ describe('prompt buffer', function()
     eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
     command('call DoAppend()')
     eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
+    command("call DoAppend('stopinsert')")
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    command("call DoAppend('startreplace')")
+    eq({ mode = 'R', blocking = false }, api.nvim_get_mode())
+    feed('<Esc>')
+    command('tabnew')
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    command("call DoAutoAll('startinsert')")
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
+    command("call DoAutoAll('stopinsert')")
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
   end)
 
   -- oldtest: Test_prompt_leave_modify_hidden()

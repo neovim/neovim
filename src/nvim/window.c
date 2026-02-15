@@ -2492,7 +2492,9 @@ void leaving_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.
-  if (!bt_prompt(win->w_buffer)) {
+  // Don't do mode changes for a prompt buffer in an autocommand window, as
+  // it's only used temporarily during an autocommand.
+  if (!bt_prompt(win->w_buffer) || is_aucmd_win(win)) {
     return;
   }
 
@@ -2519,7 +2521,9 @@ void entering_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.
-  if (!bt_prompt(win->w_buffer)) {
+  // Don't do mode changes for a prompt buffer in an autocommand window, as
+  // it's only used temporarily during an autocommand.
+  if (!bt_prompt(win->w_buffer) || is_aucmd_win(win)) {
     return;
   }
 
