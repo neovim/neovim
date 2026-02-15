@@ -18,6 +18,7 @@
 " 2025 Nov 28 by Vim Project fix undefined variable in *NetrwMenu #18829
 " 2025 Dec 26 by Vim Project fix use of g:netrw_cygwin #19015
 " 2026 Jan 19 by Vim Project do not create swapfiles #18854
+" 2026 Feb 15 by Vim Project fix global variable initialization for MS-Windows #19287
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -265,8 +266,8 @@ if !exists("g:netrw_localcopycmd")
     let g:netrw_localcopycmdopt = ''
 
     if has("win32") && !g:netrw_cygwin
-        let g:netrw_localcopycmd   = expand("$COMSPEC", v:true)
-        let g:netrw_localcopycmdopt = '/c copy'
+        let g:netrw_localcopycmd = $COMSPEC
+        let g:netrw_localcopycmdopt = ' /c copy'
     endif
 endif
 
@@ -275,30 +276,31 @@ if !exists("g:netrw_localcopydircmd")
     let g:netrw_localcopydircmdopt = '-R'
 
     if has("win32") && !g:netrw_cygwin
-        let g:netrw_localcopydircmd   = "cp"
-        call s:NetrwInit("g:netrw_localcopydircmdopt", "-R")
+        let g:netrw_localcopydircmd = "xcopy"
+        let g:netrw_localcopydircmdopt = " /E /I /H /C /Y"
     endif
 endif
 
-if has("win32")
-  if g:netrw_cygwin
-    call s:NetrwInit("g:netrw_localmkdir","mkdir")
+if !exists("g:netrw_localmkdir")
+  if has("win32")
+    if g:netrw_cygwin
+      let g:netrw_localmkdir= "mkdir"
+    else
+      let g:netrw_localmkdir = $COMSPEC
+      let g:netrw_localmkdiropt= " /c mkdir"
+    endif
   else
-    call s:NetrwInit("g:netrw_localmkdir",expand("$COMSPEC", v:true))
-    call s:NetrwInit("g:netrw_localmkdiropt"," /c mkdir")
+    let g:netrw_localmkdir= "mkdir"
   endif
-else
-  call s:NetrwInit("g:netrw_localmkdir","mkdir")
 endif
-call s:NetrwInit("g:netrw_remote_mkdir","mkdir")
 
 if !exists("g:netrw_localmovecmd")
   if has("win32")
     if g:netrw_cygwin
       let g:netrw_localmovecmd= "mv"
     else
-      let g:netrw_localmovecmd   = expand("$COMSPEC", v:true)
-      call s:NetrwInit("g:netrw_localmovecmdopt"," /c move")
+      let g:netrw_localmovecmd = $COMSPEC
+      let g:netrw_localmovecmdopt= " /c move"
     endif
   elseif has("unix") || has("macunix")
     let g:netrw_localmovecmd= "mv"
@@ -980,7 +982,7 @@ function netrw#Obtain(islocal,fname,...)
     " obtain a file from local b:netrw_curdir to (local) tgtdir
     if exists("b:netrw_curdir") && getcwd() != b:netrw_curdir
       let topath = netrw#fs#ComposePath(tgtdir,"")
-      if has("win32")
+      if has("win32") && !g:netrw_cygwin
         " transfer files one at time
         for fname in fnamelist
           call system(g:netrw_localcopycmd.g:netrw_localcopycmdopt." ".netrw#os#Escape(fname)." ".netrw#os#Escape(topath))
@@ -4735,38 +4737,16 @@ function s:NetrwMakeDir(usrhost)
 
         " requested new local directory is neither a pre-existing file or
         " directory, so make it!
-        if exists("*mkdir")
-            if has("unix")
-                call mkdir(fullnewdir,"p",xor(0777, system("umask")))
-            else
-                call mkdir(fullnewdir,"p")
-            endif
+        if has("unix")
+            call mkdir(fullnewdir,"p",xor(0777, system("umask")))
         else
-            let netrw_origdir= netrw#fs#Cwd(1)
-            if s:NetrwLcd(b:netrw_curdir)
-                return
-            endif
-            call netrw#os#Execute("sil! !".g:netrw_localmkdir.g:netrw_localmkdiropt.' '.netrw#os#Escape(newdirname,1))
-            if v:shell_error != 0
-                let @@= ykeep
-                call netrw#msg#Notify('ERROR', printf('consider setting g:netrw_localmkdir<%s> to something that works', g:netrw_localmkdir))
-                return
-            endif
-            if !g:netrw_keepdir
-                if s:NetrwLcd(netrw_origdir)
-                    return
-                endif
-            endif
+            call mkdir(fullnewdir,"p")
         endif
 
-        if v:shell_error == 0
-            " refresh listing
-            let svpos= winsaveview()
-            call s:NetrwRefresh(1,s:NetrwBrowseChgDir(1,'./',0))
-            call winrestview(svpos)
-        else
-            call netrw#msg#Notify('ERROR', printf('unable to make directory<%s>', newdirname))
-        endif
+        " on success refresh listing
+        let svpos= winsaveview()
+        call s:NetrwRefresh(1,s:NetrwBrowseChgDir(1,'./',0))
+        call winrestview(svpos)
 
     elseif !exists("b:netrw_method") || b:netrw_method == 4
         " Remote mkdir:  using ssh
@@ -5350,17 +5330,14 @@ function s:NetrwMarkFileCopy(islocal,...)
 
     let curdir   = s:NetrwGetCurdir(a:islocal)
     let curbufnr = bufnr("%")
-    if b:netrw_curdir !~ '/$'
-        if !exists("b:netrw_curdir")
-            let b:netrw_curdir= curdir
-        endif
-        let b:netrw_curdir= b:netrw_curdir."/"
+    if !exists("b:netrw_curdir")
+        let b:netrw_curdir= curdir
     endif
 
     " sanity check
     if !exists("s:netrwmarkfilelist_{curbufnr}") || empty(s:netrwmarkfilelist_{curbufnr})
         call netrw#msg#Notify('ERROR', 'there are no marked files in this window (:help netrw-mf)')
-        return
+        return 0
     endif
 
     if !exists("s:netrwmftgt")
@@ -5368,7 +5345,7 @@ function s:NetrwMarkFileCopy(islocal,...)
         return 0
     endif
 
-    if a:islocal &&  s:netrwmftgt_islocal
+    if a:islocal && s:netrwmftgt_islocal
         " Copy marked files, local directory to local directory
         if !executable(g:netrw_localcopycmd)
             call netrw#msg#Notify('ERROR', printf('g:netrw_localcopycmd<%s> not executable on your system, aborting', g:netrw_localcopycmd))
@@ -5376,69 +5353,85 @@ function s:NetrwMarkFileCopy(islocal,...)
         endif
 
         " copy marked files while within the same directory (ie. allow renaming)
-        if simplify(s:netrwmftgt) ==# simplify(b:netrw_curdir)
-            if len(s:netrwmarkfilelist_{bufnr('%')}) == 1
-                " only one marked file
-                let args    = netrw#os#Escape(b:netrw_curdir.s:netrwmarkfilelist_{bufnr('%')}[0])
-                let oldname = s:netrwmarkfilelist_{bufnr('%')}[0]
-            elseif a:0 == 1
-                " this happens when the next case was used to recursively call s:NetrwMarkFileCopy()
-                let args    = netrw#os#Escape(b:netrw_curdir.a:1)
-                let oldname = a:1
-            else
-                " copy multiple marked files inside the same directory
-                let s:recursive= 1
-                for oldname in s:netrwmarkfilelist_{bufnr("%")}
-                    let ret= s:NetrwMarkFileCopy(a:islocal,oldname)
-                    if ret == 0
-                        break
-                    endif
-                endfor
-                unlet s:recursive
-                call s:NetrwUnmarkList(curbufnr,curdir)
-                return ret
-            endif
+        if simplify(s:netrwmftgt."/") ==# simplify(b:netrw_curdir."/")
+            " copy multiple marked files inside the same directory
+            for oldname in s:netrwmarkfilelist_{curbufnr}
+                call inputsave()
+                let newname= input(printf("Copy %s to: ", oldname), oldname, 'file')
+                call inputrestore()
 
-            call inputsave()
-            let newname= input(printf("Copy %s to: ", oldname), oldname, 'file')
-            call inputrestore()
+                if empty(newname)
+                    return 0
+                endif
 
-            if empty(newname)
-                return 0
-            endif
+                let tgt = netrw#fs#ComposePath(s:netrwmftgt, newname)
+                let oldname = netrw#fs#ComposePath(b:netrw_curdir, oldname)
+                if tgt ==# oldname
+                    continue
+                endif
 
-            let args = netrw#os#Escape(oldname)
-            let tgt = netrw#os#Escape(s:netrwmftgt.'/'.newname)
+                let ret = filecopy(oldname, tgt)
+                if ret == v:false
+                    call netrw#msg#Notify('ERROR', $'copy failed, unable to filecopy() <{oldname}> to <{tgt}>')
+                    break
+                endif
+            endfor
+            call s:NetrwUnmarkList(curbufnr,curdir)
+            NetrwKeepj call s:NetrwRefreshDir(a:islocal, b:netrw_curdir)
+            return ret
         else
-            let args = join(map(deepcopy(s:netrwmarkfilelist_{bufnr('%')}),"netrw#os#Escape(b:netrw_curdir.\"/\".v:val)"))
-            let tgt = netrw#os#Escape(s:netrwmftgt)
+            let args = []
+            for arg in s:netrwmarkfilelist_{curbufnr}
+                call add(args, netrw#fs#ComposePath(b:netrw_curdir, arg))
+            endfor
+            let tgt = s:netrwmftgt
         endif
-
-        if !g:netrw_cygwin && has("win32")
-            let args = substitute(args,'/','\\','g')
-            let tgt = substitute(tgt, '/','\\','g')
-        endif
-
-        if args =~ "'" |let args= substitute(args,"'\\(.*\\)'",'\1','')|endif
-        if tgt  =~ "'" |let tgt = substitute(tgt ,"'\\(.*\\)'",'\1','')|endif
-        if args =~ '//'|let args= substitute(args,'//','/','g')|endif
-        if tgt  =~ '//'|let tgt = substitute(tgt ,'//','/','g')|endif
 
         let copycmd = g:netrw_localcopycmd
         let copycmdopt = g:netrw_localcopycmdopt
 
-        if isdirectory(s:NetrwFile(args))
+        " on Windows, no builtin command supports copying multiple files at once
+        " (powershell's Copy-Item cmdlet does but requires , as file separator)
+        if len(s:netrwmarkfilelist_{curbufnr}) > 1 && has("win32") && !g:netrw_cygwin
+            " copy multiple marked files
+            for file in args
+                let dest = netrw#fs#ComposePath(tgt, fnamemodify(file, ':t'))
+                let ret = filecopy(file, dest)
+                if ret == v:false
+                    call netrw#msg#Notify('ERROR', $'copy failed, unable to filecopy() <{file}> to <{dest}>')
+                    break
+                endif
+            endfor
+            call s:NetrwUnmarkList(curbufnr,curdir)
+            NetrwKeepj call s:NetrwRefreshDir(a:islocal, b:netrw_curdir)
+            return ret
+        endif
+
+        if len(args) == 1 && isdirectory(s:NetrwFile(args[0]))
             let copycmd = g:netrw_localcopydircmd
             let copycmdopt = g:netrw_localcopydircmdopt
-            if has('win32') && !g:netrw_cygwin
+            if has('win32') && g:netrw_localcopydircmd == "xcopy"
                 " window's xcopy doesn't copy a directory to a target properly.  Instead, it copies a directory's
                 " contents to a target.  One must append the source directory name to the target to get xcopy to
                 " do the right thing.
-                let tgt= tgt.'\'.substitute(a:1,'^.*[\\/]','','')
+                let tgt = netrw#fs#ComposePath(tgt, fnamemodify(simplify(netrw#fs#PathJoin(args[0],".")),":t"))
             endif
         endif
 
-        call system(printf("%s %s '%s' '%s'", copycmd, copycmdopt, args, tgt))
+        " prepare arguments for shell call
+        let args = join(map(args,'netrw#os#Escape(v:val)'))
+        let tgt = netrw#os#Escape(tgt)
+
+        " enforce noshellslash for system calls
+        if exists('+shellslash') && &shellslash
+            for var in ['copycmd', 'args', 'tgt']
+                let {var} = substitute({var}, '/', '\', 'g')
+            endfor
+        endif
+
+        " shell call
+        let shell_cmd = printf("%s %s %s %s", copycmd, copycmdopt, args, tgt)
+        call system(shell_cmd)
         if v:shell_error != 0
             if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && g:netrw_keepdir
                 call netrw#msg#Notify('ERROR', printf("copy failed; perhaps due to vim's current directory<%s> not matching netrw's (%s) (see :help netrw-cd)", getcwd(), b:netrw_curdir))
@@ -5450,11 +5443,11 @@ function s:NetrwMarkFileCopy(islocal,...)
 
     elseif  a:islocal && !s:netrwmftgt_islocal
         " Copy marked files, local directory to remote directory
-        NetrwKeepj call s:NetrwUpload(s:netrwmarkfilelist_{bufnr('%')},s:netrwmftgt)
+        NetrwKeepj call s:NetrwUpload(s:netrwmarkfilelist_{curbufnr},s:netrwmftgt)
 
     elseif !a:islocal &&  s:netrwmftgt_islocal
         " Copy marked files, remote directory to local directory
-        NetrwKeepj call netrw#Obtain(a:islocal,s:netrwmarkfilelist_{bufnr('%')},s:netrwmftgt)
+        NetrwKeepj call netrw#Obtain(a:islocal,s:netrwmarkfilelist_{curbufnr},s:netrwmftgt)
 
     elseif !a:islocal && !s:netrwmftgt_islocal
         " Copy marked files, remote directory to remote directory
@@ -5463,24 +5456,16 @@ function s:NetrwMarkFileCopy(islocal,...)
         if tmpdir !~ '/'
             let tmpdir= curdir."/".tmpdir
         endif
-        if exists("*mkdir")
-            call mkdir(tmpdir)
-        else
-            call netrw#os#Execute("sil! !".g:netrw_localmkdir.g:netrw_localmkdiropt.' '.netrw#os#Escape(tmpdir,1))
-            if v:shell_error != 0
-                call netrw#msg#Notify('WARNING', printf("consider setting g:netrw_localmkdir<%s> to something that works", g:netrw_localmkdir))
-                return
-            endif
-        endif
+        call mkdir(tmpdir)
         if isdirectory(s:NetrwFile(tmpdir))
             if s:NetrwLcd(tmpdir)
                 return
             endif
-            NetrwKeepj call netrw#Obtain(a:islocal,s:netrwmarkfilelist_{bufnr('%')},tmpdir)
-            let localfiles= map(deepcopy(s:netrwmarkfilelist_{bufnr('%')}),'substitute(v:val,"^.*/","","")')
+            NetrwKeepj call netrw#Obtain(a:islocal,s:netrwmarkfilelist_{curbufnr},tmpdir)
+            let localfiles= map(deepcopy(s:netrwmarkfilelist_{curbufnr}),'substitute(v:val,"^.*/","","")')
             NetrwKeepj call s:NetrwUpload(localfiles,s:netrwmftgt)
             if getcwd() == tmpdir
-                for fname in s:netrwmarkfilelist_{bufnr('%')}
+                for fname in s:netrwmarkfilelist_{curbufnr}
                     call netrw#fs#Remove(fname)
                 endfor
                 if s:NetrwLcd(curdir)
@@ -5502,18 +5487,13 @@ function s:NetrwMarkFileCopy(islocal,...)
     " -------
     " remove markings from local buffer
     call s:NetrwUnmarkList(curbufnr,curdir)                   " remove markings from local buffer
-    if exists("s:recursive")
-    else
-    endif
     " see s:LocalFastBrowser() for g:netrw_fastbrowse interpretation (refreshing done for both slow and medium)
     if g:netrw_fastbrowse <= 1
         NetrwKeepj call s:LocalBrowseRefresh()
     else
         " refresh local and targets for fast browsing
-        if !exists("s:recursive")
-            " remove markings from local buffer
-            NetrwKeepj call s:NetrwUnmarkList(curbufnr,curdir)
-        endif
+        " remove markings from local buffer
+        NetrwKeepj call s:NetrwUnmarkList(curbufnr,curdir)
 
         " refresh buffers
         if s:netrwmftgt_islocal
@@ -5882,28 +5862,35 @@ function s:NetrwMarkFileMove(islocal)
             call netrw#msg#Notify('ERROR', printf('g:netrw_localmovecmd<%s> not executable on your system, aborting', g:netrw_localmovecmd))
             return
         endif
+
         let tgt = netrw#os#Escape(s:netrwmftgt)
-        if !g:netrw_cygwin && has("win32")
-            let tgt= substitute(tgt, '/','\\','g')
-            if g:netrw_localmovecmd =~ '\s'
-                let movecmd     = substitute(g:netrw_localmovecmd,'\s.*$','','')
-                let movecmdargs = substitute(g:netrw_localmovecmd,'^.\{-}\(\s.*\)$','\1','')
-                let movecmd     = netrw#fs#WinPath(movecmd).movecmdargs
-            else
-                let movecmd = netrw#fs#WinPath(g:netrw_localmovecmd)
-            endif
+        if has("win32") && !g:netrw_cygwin && g:netrw_localmovecmd =~ '\s' && g:netrw_localmovecmdopt == ""
+            let movecmd     = substitute(g:netrw_localmovecmd,'\s.*$','','')
+            let movecmdargs = substitute(g:netrw_localmovecmd,'^.\{-}\(\s.*\)$','\1','')
         else
-            let movecmd = netrw#fs#WinPath(g:netrw_localmovecmd)
+            let movecmd = g:netrw_localmovecmd
+            let movecmdargs = g:netrw_localmovecmdopt
         endif
-        for fname in s:netrwmarkfilelist_{bufnr("%")}
+
+        " build args list
+        let args = []
+        for fname in s:netrwmarkfilelist_{curbufnr}
             if g:netrw_keepdir
                 " Jul 19, 2022: fixing file move when g:netrw_keepdir is 1
-                let fname= b:netrw_curdir."/".fname
+                let fname= netrw#fs#ComposePath(b:netrw_curdir, fname)
             endif
-            if !g:netrw_cygwin && has("win32")
-                let fname= substitute(fname,'/','\\','g')
-            endif
-            let ret= system(movecmd.g:netrw_localmovecmdopt." ".netrw#os#Escape(fname)." ".tgt)
+            call add(args, netrw#os#Escape(fname))
+        endfor
+
+        " enforce noshellslash for system calls
+        if exists('+shellslash') && &shellslash
+            let tgt = substitute(tgt, '/', '\', 'g')
+            call map(args, "substitute(v:val, '/', '\\', 'g')")
+        endif
+
+        for fname in args
+            let shell_cmd = printf("%s %s %s %s", movecmd, movecmdargs, fname, tgt)
+            let ret= system(shell_cmd)
             if v:shell_error != 0
                 if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && !g:netrw_keepdir
                     call netrw#msg#Notify('ERROR', printf("move failed; perhaps due to vim's current directory<%s> not matching netrw's (%s) (see :help netrw-cd)", getcwd(), b:netrw_curdir))
@@ -5916,7 +5903,7 @@ function s:NetrwMarkFileMove(islocal)
 
     elseif  a:islocal && !s:netrwmftgt_islocal
         " move: local -> remote
-        let mflist= s:netrwmarkfilelist_{bufnr("%")}
+        let mflist= s:netrwmarkfilelist_{curbufnr}
         NetrwKeepj call s:NetrwMarkFileCopy(a:islocal)
         for fname in mflist
             let barefname = substitute(fname,'^\(.*/\)\(.\{-}\)$','\2','')
@@ -5926,7 +5913,7 @@ function s:NetrwMarkFileMove(islocal)
 
     elseif !a:islocal &&  s:netrwmftgt_islocal
         " move: remote -> local
-        let mflist= s:netrwmarkfilelist_{bufnr("%")}
+        let mflist= s:netrwmarkfilelist_{curbufnr}
         NetrwKeepj call s:NetrwMarkFileCopy(a:islocal)
         for fname in mflist
             let barefname = substitute(fname,'^\(.*/\)\(.\{-}\)$','\2','')
@@ -5936,7 +5923,7 @@ function s:NetrwMarkFileMove(islocal)
 
     elseif !a:islocal && !s:netrwmftgt_islocal
         " move: remote -> remote
-        let mflist= s:netrwmarkfilelist_{bufnr("%")}
+        let mflist= s:netrwmarkfilelist_{curbufnr}
         NetrwKeepj call s:NetrwMarkFileCopy(a:islocal)
         for fname in mflist
             let barefname = substitute(fname,'^\(.*/\)\(.\{-}\)$','\2','')
