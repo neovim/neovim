@@ -800,7 +800,7 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       cursor_col += new_prompt_len - old_prompt_len;
     }
 
-    if (curwin->w_buffer == buf) {
+    if (curwin->w_buffer == buf && curwin->w_cursor.lnum == prompt_lno) {
       coladvance(curwin, cursor_col);
     }
     changed_lines_redraw_buf(buf, prompt_lno, prompt_lno + 1, 0);

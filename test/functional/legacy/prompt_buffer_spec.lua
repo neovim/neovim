@@ -858,7 +858,24 @@ describe('prompt buffer', function()
     ]])
     eq({ 1, 13 }, api.nvim_buf_get_mark(0, ':'))
 
+    -- Cursor not moved when not on the prompt line.
+    feed('<CR>user input<Esc>k')
+    screen:expect([[
+      new-prompt > user inpu^t  |
+      new-prompt > user input  |
+      {1:~                        }|*7
+                               |
+    ]])
+    set_prompt('<>< ')
+    screen:expect([[
+      new-prompt > user inpu^t  |
+      <>< user input           |
+      {1:~                        }|*7
+                               |
+    ]])
+
     -- No crash when setting shorter prompt than curbuf's in other buffer.
+    feed('i<C-O>zt')
     command('new | setlocal buftype=prompt')
     set_prompt('looooooooooooooooooooooooooooooooooooooooooooong > ', '') -- curbuf
     set_prompt('foo > ')
