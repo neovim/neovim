@@ -116,28 +116,25 @@ should be stated explicitly and publicly.
 Third-party dependencies
 ------------------------
 
-For some dependencies we maintain temporary "forks", which are simply private
-branches with a few extra patches, while we wait for the upstream project to
-merge the patches. This is done instead of maintaining the patches as (fragile)
-CMake `PATCH_COMMAND` steps.
-
-These "bundled" dependencies can be updated by bumping their versions in `cmake.deps/deps.txt`.
+"Bundled" dependencies can be updated by bumping their versions in `cmake.deps/deps.txt`.
 Some can be auto-bumped by `scripts/bump_deps.lua`.
 
 * [LuaJIT](https://github.com/LuaJIT/LuaJIT)
 * [Lua](https://www.lua.org/download.html)
+* [libuv](https://github.com/libuv/libuv)
+    * Requires a PR to update the [Zig package](https://github.com/allyourcodebase/libuv) first. If the script fails, run `zig fetch --save git+https://github.com/allyourcodebase/libuv.git#<refname>` manually.
 * [Luv](https://github.com/luvit/luv)
     * When bumping, also sync
       - [our bundled meta file](https://github.com/neovim/neovim/blob/master/runtime/lua/uv/_meta.lua) with [the upstream meta file](https://github.com/luvit/luv/blob/master/docs/meta.lua);
       - [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs/docs.md).
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
-* [libuv](https://github.com/libuv/libuv)
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
-* [unibilium](https://github.com/neovim/unibilium)
-    * The original project [was abandoned](https://github.com/neovim/neovim/issues/10302), so the [neovim/unibilium](https://github.com/neovim/unibilium) fork is considered "upstream" and is maintained on the `master` branch.
 * [treesitter parsers](https://github.com/neovim/neovim/blob/7e97c773e3ba78fcddbb2a0b9b0d572c8210c83e/cmake.deps/deps.txt#L47-L62)
+* (Deprecated) [unibilium](https://github.com/neovim/unibilium)
+    * The original project [was abandoned](https://github.com/neovim/neovim/issues/10302), so the [neovim/unibilium](https://github.com/neovim/unibilium) fork is considered "upstream" and is maintained on the `master` branch.
+    * **Note:** unibilium is NOT required. See [BUILD.md](./BUILD.md#build-without-unibilium) to build Nvim without unibilium.
 
 ### Vendored dependencies
 

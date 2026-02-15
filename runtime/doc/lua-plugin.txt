@@ -142,7 +142,8 @@ initialization may be useful in specific cases:
 Keep in mind that this approach requires users to call `setup` in order to
 use your plugin, even if the default configuration is enough for them.
 Consider carefully whether your plugin benefits from combined `setup()` pattern
-before adopting it.
+before adopting it. This article chronicles the history and tradeoffs of
+`setup()`: https://mrcjkb.dev/posts/2023-08-22-setup.html
 
 NOTE: A well designed plugin has minimal impact on startup time. See also
 |lua-plugin-lazy|.

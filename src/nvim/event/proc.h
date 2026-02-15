@@ -25,6 +25,7 @@ static inline Proc proc_init(Loop *loop, ProcType type, void *data)
     .out = { .s.closed = false, .s.fd = STDOUT_FILENO },
     .err = { .s.closed = false, .s.fd = STDERR_FILENO },
     .cb = NULL,
+    .state_cb = NULL,
     .closed = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,

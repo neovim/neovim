@@ -3890,6 +3890,10 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           // lines.
           if (curwin->w_cursor.lnum >= lnum + count) {
             curwin->w_cursor.lnum += added;
+            // When the buffer was previously empty, the cursor may
+            // now be beyond the last line, so clamp cursor lnum.
+            curwin->w_cursor.lnum = MIN(curwin->w_cursor.lnum,
+                                        curbuf->b_ml.ml_line_count);
           } else if (added < 0) {
             curwin->w_cursor.lnum = lnum;
           }

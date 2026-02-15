@@ -1152,13 +1152,15 @@ x	A single character, with no special meaning, matches itself
 *[:graph:]*	  [:graph:]   isgraph	ASCII printable characters excluding
 					space
 *[:lower:]*	  [:lower:]   (1)	lowercase letters (all letters when
-					'ignorecase' is used)
+					'ignorecase' is used and the old
+					engine is in use |two-engines|)
 *[:print:]*	  [:print:]   (2)	printable characters including space
 *[:punct:]*	  [:punct:]   ispunct	ASCII punctuation characters
 *[:space:]*	  [:space:]		whitespace characters: space, tab, CR,
 					NL, vertical tab, form feed
 *[:upper:]*	  [:upper:]   (3)	uppercase letters (all letters when
-					'ignorecase' is used)
+					'ignorecase' is used and the old
+					engine is in use |two-engines|)
 *[:xdigit:]*	  [:xdigit:]		hexadecimal digits: 0-9, a-f, A-F
 *[:return:]*	  [:return:]		the <CR> character
 *[:tab:]*	  [:tab:]		the <Tab> character

@@ -613,6 +613,18 @@ pub fn build(b: *std.Build) !void {
         &flags,
     ));
 
+    // tee: vendored in src/tee/
+    const tee_exe = b.addExecutable(.{
+        .name = "tee",
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    tee_exe.addCSourceFile(.{ .file = b.path("src/tee/tee.c") });
+    tee_exe.linkLibC();
+    test_deps.dependOn(&b.addInstallArtifact(tee_exe, .{}).step);
+
     // xxd - hex dump utility (vendored from Vim)
     const xxd_exe = b.addExecutable(.{
         .name = "xxd",

@@ -62,6 +62,11 @@ option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing s
 
 set_default_buildtype(Release)
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
+if (NOT DEFINED DEPS_CMAKE_ARGS) 
+  set(DEPS_CMAKE_ARGS) 
+endif() 
+
 if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 endif()
@@ -71,6 +76,13 @@ set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
 check_c_compiler_flag(-Og HAS_OG_FLAG)
 if(HAS_OG_FLAG)
   set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
+endif()
+
+# Always pass the toolchain if it exists
+if(CMAKE_TOOLCHAIN_FILE)
+  list(APPEND DEPS_CMAKE_ARGS
+    -D CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+  )
 endif()
 
 set(DEPS_INCLUDE_FLAGS "-I\"${DEPS_INSTALL_DIR}/include\" -I\"${DEPS_INSTALL_DIR}/include/luajit-2.1\"")
@@ -155,8 +167,6 @@ endif()
 
 if(WIN32)
   include(GetBinaryDeps)
-
-  GetExecutable(TARGET xxd)
 
   GetBinaryDep(TARGET win32yank_X86_64
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_BIN_DIR})

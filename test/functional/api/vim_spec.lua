@@ -3853,6 +3853,12 @@ describe('API', function()
         {9:Error}{16:Message}                            |
       ]])
     end)
+
+    it('increments message ID', function()
+      eq(1, api.nvim_echo({ { 'foo' } }, false, {}))
+      eq(4, api.nvim_echo({ { 'foo' } }, false, { id = 4 }))
+      eq(5, api.nvim_echo({ { 'foo' } }, false, {}))
+    end)
   end)
 
   describe('nvim_open_term', function()

@@ -1591,31 +1591,39 @@ char *prompt_text(void)
 static void init_prompt(int cmdchar_todo)
 {
   char *prompt = prompt_text();
+  int prompt_len = (int)strlen(prompt);
 
-  if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
-    curwin->w_cursor.lnum = curbuf->b_prompt_start.mark.lnum;
-  }
-  char *text = get_cursor_line_ptr();
+  // In case the mark is set to a nonexistent line.
+  curbuf->b_prompt_start.mark.lnum = MIN(curbuf->b_prompt_start.mark.lnum,
+                                         curbuf->b_ml.ml_line_count);
+
+  curwin->w_cursor.lnum = MAX(curwin->w_cursor.lnum, curbuf->b_prompt_start.mark.lnum);
+  char *text = ml_get(curbuf->b_prompt_start.mark.lnum);
+  colnr_T text_len = ml_get_len(curbuf->b_prompt_start.mark.lnum);
+
   if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
-       && strncmp(text, prompt, strlen(prompt)) != 0)
-      || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
+       && (curbuf->b_prompt_start.mark.col < prompt_len
+           || curbuf->b_prompt_start.mark.col > text_len
+           || !strnequal(text + curbuf->b_prompt_start.mark.col - prompt_len, prompt,
+                         (size_t)prompt_len)))) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
-      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
+      ml_replace(curbuf->b_prompt_start.mark.lnum, prompt, true);
     } else {
       ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
-      curbuf->b_prompt_start.mark.lnum += 1;
+      curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
     }
+    curbuf->b_prompt_start.mark.col = prompt_len;
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
-    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)strlen(prompt));
+    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)prompt_len);
   }
 
   // Insert always starts after the prompt, allow editing text after it.
   if (Insstart_orig.lnum != curbuf->b_prompt_start.mark.lnum
-      || Insstart_orig.col != (colnr_T)strlen(prompt)) {
+      || Insstart_orig.col != curbuf->b_prompt_start.mark.col) {
     Insstart.lnum = curbuf->b_prompt_start.mark.lnum;
-    Insstart.col = (colnr_T)strlen(prompt);
+    Insstart.col = curbuf->b_prompt_start.mark.col;
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
     Insstart_blank_vcol = MAXCOL;
@@ -1626,7 +1634,7 @@ static void init_prompt(int cmdchar_todo)
     coladvance(curwin, MAXCOL);
   }
   if (curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum) {
-    curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
+    curwin->w_cursor.col = MAX(curwin->w_cursor.col, curbuf->b_prompt_start.mark.col);
   }
   // Make sure the cursor is in a valid position.
   check_cursor(curwin);
@@ -1638,7 +1646,7 @@ bool prompt_curpos_editable(void)
 {
   return curwin->w_cursor.lnum > curbuf->b_prompt_start.mark.lnum
          || (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum
-             && curwin->w_cursor.col >= (int)strlen(prompt_text()));
+             && curwin->w_cursor.col >= curbuf->b_prompt_start.mark.col);
 }
 
 // Undo the previous edit_putchar().

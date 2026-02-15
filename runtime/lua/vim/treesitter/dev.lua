@@ -378,7 +378,7 @@ function M.inspect_tree(opts)
   local opts_title = opts.title
   if not opts_title then
     local bufname = api.nvim_buf_get_name(buf)
-    title = string.format('Syntax tree for %s', vim.fn.fnamemodify(bufname, ':.'))
+    title = ('Syntax tree for %s'):format(vim.fs.relpath('.', bufname))
   elseif type(opts_title) == 'function' then
     title = opts_title(buf)
   end
@@ -608,7 +608,7 @@ local function update_editor_highlights(query_win, base_win, lang)
           end_col = end_col,
           hl_group = 'Visual',
           virt_text = {
-            { capture_name, 'Title' },
+            { capture_name, 'DiagnosticVirtualTextHint' },
           },
         })
       end

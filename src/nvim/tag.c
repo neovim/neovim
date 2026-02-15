@@ -1229,7 +1229,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
 
   // create 'info' dict argument
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
-  if (tag != NULL && tag->user_data != NULL) {
+  if (!(flags & TAG_INS_COMP) && tag != NULL && tag->user_data != NULL) {
     tv_dict_add_str(d, S_LEN("user_data"), tag->user_data);
   }
   if (buf_ffname != NULL) {
@@ -2500,7 +2500,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
         return FAIL;
       }
       tnp->tn_hf_idx++;
-      STRCPY(buf, p_hf);
+      xstrlcpy(buf, p_hf, MAXPATHL - STRLEN_LITERAL("tags"));
       STRCPY(path_tail(buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);

@@ -734,7 +734,7 @@ describe('startup', function()
     exec([[
       func Normalize(data) abort
         " Windows: remove ^M and term escape sequences
-        return map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        return mapnew(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
       endfunc
       func OnOutput(id, data, event) dict
         let g:stdout = Normalize(a:data)
@@ -1192,6 +1192,22 @@ describe('sysinit', function()
       eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))')
     )
   end)
+
+  it('respects NVIM_APPNAME in XDG_CONFIG_DIRS', function()
+    local appname = 'mysysinitapp'
+    mkdir(xdgdir .. pathsep .. appname)
+    write_file(
+      table.concat({ xdgdir, appname, 'sysinit.vim' }, pathsep),
+      [[let g:appname_sysinit = 1]]
+    )
+    clear {
+      args_rm = { '-u' },
+      env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
+    }
+    eq(1, eval('g:appname_sysinit'))
+    -- Should not load from nvim/ subdir (which has the default sysinit.vim from before_each)
+    eq(0, eval('get(g:, "xdg", 0)'))
+  end)
 end)
 
 describe('user config init', function()
@@ -1418,6 +1434,81 @@ describe('user config init', function()
       t.matches(
         'E5422: Conflicting configs: "Xhome.Xconfig.nvim.init.lua" "Xhome.Xconfig.nvim.init.vim"',
         eval('v:errmsg')
+      )
+    end)
+  end)
+
+  describe('from XDG_CONFIG_DIRS', function()
+    local xdgdir = 'Xxdgconfigdirs'
+
+    before_each(function()
+      -- Remove init.lua from XDG_CONFIG_HOME so nvim falls back to XDG_CONFIG_DIRS
+      os.remove(init_lua_path)
+      rmdir(xdgdir)
+      mkdir_p(xdgdir .. pathsep .. 'nvim')
+    end)
+
+    after_each(function()
+      rmdir(xdgdir)
+    end)
+
+    it('loads init.lua from XDG_CONFIG_DIRS when no config in XDG_CONFIG_HOME', function()
+      write_file(
+        table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
+        [[vim.g.xdg_config_dirs_lua = 1]]
+      )
+      clear {
+        args_rm = { '-u' },
+        env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
+      }
+      eq(1, eval('g:xdg_config_dirs_lua'))
+      eq(
+        fn.fnamemodify(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), ':p'),
+        eval('$MYVIMRC')
+      )
+    end)
+
+    it('prefers init.lua over init.vim, shows E5422', function()
+      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.xdg_lua = 1]])
+      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
+      }
+      eq(1, eval('g:xdg_lua'))
+      eq(0, eval('get(g:, "xdg_vim", 0)'))
+      t.matches('E5422: Conflicting configs:', eval('v:errmsg'))
+    end)
+
+    it('falls back to init.vim when no init.lua', function()
+      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
+      }
+      eq(1, eval('g:xdg_vim'))
+    end)
+
+    it('respects NVIM_APPNAME', function()
+      local appname = 'mytestapp'
+      mkdir_p(xdgdir .. pathsep .. appname)
+      -- Also create nvim/ with a config that should NOT be loaded
+      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.wrong = 1]])
+      write_file(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), [[vim.g.appname_lua = 1]])
+      clear {
+        args_rm = { '-u' },
+        env = {
+          XDG_CONFIG_HOME = xconfig,
+          XDG_DATA_HOME = xdata,
+          XDG_CONFIG_DIRS = xdgdir,
+          NVIM_APPNAME = appname,
+        },
+      }
+      eq(1, eval('g:appname_lua'))
+      eq(0, eval('get(g:, "wrong", 0)'))
+      eq(
+        fn.fnamemodify(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), ':p'),
+        eval('$MYVIMRC')
       )
     end)
   end)

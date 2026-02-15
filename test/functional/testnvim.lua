@@ -26,7 +26,7 @@ M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 M.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent startofline'
   .. ' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  .. ' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid'
+  .. " belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid shada=!,'100,<50,s10,h"
   .. [[ statusline=%<%f\ %{%nvim_eval_statusline('%h%w%m%r',\ {'maxwidth':\ 30}).width\ >\ 0\ ?\ '%h%w%m%r\ '\ :\ ''%}%=%{%\ &showcmdloc\ ==\ 'statusline'\ ?\ '%-10.S\ '\ :\ ''\ %}%{%\ exists('b:keymap_name')\ ?\ '<'..b:keymap_name..'>\ '\ :\ ''\ %}%{%\ &ruler\ ?\ (\ &rulerformat\ ==\ ''\ ?\ '%-14.(%l,%c%V%)\ %P'\ :\ &rulerformat\ )\ :\ ''\ %}]]
 )
 M.nvim_argv = {
@@ -510,8 +510,8 @@ function M.new_session(keep, ...)
     end
     if delta > 500 then
       print(
-        ('Nvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
-          .. 'This indicates a likely problem with the test even if it passed!\n'
+        ('\nNvim session %s took %d milliseconds to exit\n'):format(test_id, delta)
+          .. 'This indicates a likely problem with the test even if it passed!'
       )
       io.stdout:flush()
     end

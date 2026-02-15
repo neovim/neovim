@@ -82,6 +82,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/terminal.h"
 #include "nvim/textformat.h"
 #include "nvim/textobject.h"
 #include "nvim/types_defs.h"
@@ -1445,6 +1446,8 @@ static int normal_check(VimState *state)
     skip_redraw = false;
     setcursor();
   } else if (do_redraw || stuff_empty()) {
+    terminal_check_refresh();
+
     // Ensure curwin->w_topline and curwin->w_leftcol are up to date
     // before triggering a WinScrolled autocommand.
     update_topline(curwin);
@@ -6485,7 +6488,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
 
   if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
     if (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
-      curwin->w_cursor.col = (int)strlen(prompt_text());
+      curwin->w_cursor.col = curbuf->b_prompt_start.mark.col;
       // Since we've shifted the cursor to the first editable char. We want to
       // paste before that.
       cap->cmdchar = 'P';

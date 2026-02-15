@@ -208,6 +208,67 @@ describe('vim.lsp.diagnostic', function()
         end)
       )
     end)
+
+    it('clears diagnostics for the client namespace on empty publish', function()
+      local before_clear, after_clear = exec_lua(function()
+        local ns = vim.lsp.diagnostic.get_namespace(client_id)
+
+        -- Publish diagnostics
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = fake_uri,
+          diagnostics = {
+            _G.make_error('Diagnostic', 0, 0, 0, 0),
+          },
+        }, { client_id = client_id })
+
+        local before_clear = vim.diagnostic.get(diagnostic_bufnr, { namespace = ns })
+
+        -- Publish empty diagnostics
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = fake_uri,
+          diagnostics = {},
+        }, { client_id = client_id })
+
+        local after_clear = vim.diagnostic.get(diagnostic_bufnr, { namespace = ns })
+
+        return before_clear, after_clear
+      end)
+
+      eq(1, #before_clear)
+      eq(0, #after_clear)
+    end)
+
+    it('clears diagnostics when buffer is deleted', function()
+      local before_delete, after_delete = exec_lua(function()
+        local ns = vim.lsp.diagnostic.get_namespace(client_id)
+
+        -- Publish diagnostics
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = fake_uri,
+          diagnostics = {
+            _G.make_error('Diagnostic', 0, 0, 0, 0),
+          },
+        }, { client_id = client_id })
+
+        local before_delete = vim.diagnostic.get(diagnostic_bufnr, { namespace = ns })
+
+        -- Avoid deleting the currently displayed buffer (Windows teardown edge case)
+        local scratch = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_win_set_buf(0, scratch)
+
+        -- Delete the buffer deterministically
+        vim.api.nvim_buf_delete(diagnostic_bufnr, { force = true })
+
+        -- Query remaining diagnostics via valid access path
+        -- (deleted buffer cannot be queried directly)
+        local after_delete = vim.diagnostic.get(nil, { namespace = ns })
+
+        return before_delete, after_delete
+      end)
+
+      eq(1, #before_delete)
+      eq(0, #after_delete)
+    end)
   end)
 
   describe('vim.lsp.diagnostic.on_diagnostic', function()
@@ -710,6 +771,15 @@ describe('vim.lsp.diagnostic', function()
         0,
         exec_lua(function()
           return #vim.diagnostic.get()
+        end)
+      )
+
+      eq(
+        { vim.NIL },
+        exec_lua(function()
+          local client = vim.lsp.get_client_by_id(client_id)
+          assert(client)
+          return client:_provider_value_get('workspace/diagnostic', 'identifier')
         end)
       )
 

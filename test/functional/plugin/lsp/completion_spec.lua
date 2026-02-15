@@ -826,7 +826,7 @@ describe('vim.lsp.completion: item conversion', function()
 end)
 
 --- @param name string
---- @param completion_result lsp.CompletionList
+--- @param completion_result vim.lsp.CompletionResult
 --- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem, delay?: integer, cmp?: string}
 --- @return integer
 local function create_server(name, completion_result, opts)
@@ -1020,14 +1020,18 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     })
+    create_server('dummy3', {
+      { label = 'hallo' },
+    })
 
     feed('ih')
     trigger_at_pos({ 1, 1 })
 
     assert_matches(function(matches)
-      eq(2, #matches)
+      eq(3, #matches)
       eq('hello', matches[1].word)
       eq('hallo', matches[2].word)
+      eq('hallo', matches[3].word)
     end)
   end)
 
@@ -1394,6 +1398,82 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
   end)
+
+  it('prepends prefix for items with different start positions', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'div.foo',
+          insertTextFormat = 2,
+          textEdit = {
+            newText = '<div class="foo">$0</div>',
+            range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 7 } },
+          },
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list)
+    feed('Adiv.foo<C-x><C-O>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-Y>')
+    eq('<div class="foo"></div>', n.api.nvim_get_current_line())
+    eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
+  end)
+
+  it('does not empty server start boundary', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'div.foo',
+          insertTextFormat = 2,
+          textEdit = {
+            newText = '<div class="foo">$0</div>',
+            range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 7 } },
+          },
+        },
+      },
+    }
+    local completion_list2 = {
+      isIncomplete = false,
+      items = {
+        {
+          insertTextFormat = 1,
+          label = 'foo',
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list)
+    create_server('dummy2', completion_list2)
+    create_server('dummy3', { isIncomplete = false, items = {} })
+    feed('Adiv.foo<C-x><C-O>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-Y>')
+    eq('<div class="foo"></div>', n.api.nvim_get_current_line())
+    eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
+  end)
+
   it('sorts items when fuzzy is enabled and prefix not empty #33610', function()
     local completion_list = {
       isIncomplete = false,

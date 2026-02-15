@@ -3295,7 +3295,7 @@ getcharsearch()                                                *getcharsearch()*
 <		Also see |setcharsearch()|.
 
                 Return: ~
-                  (`table`)
+                  (`{ char: string, forward: 1|0, until: 1|0 }`)
 
 getcharstr([{expr} [, {opts}]])                                   *getcharstr()*
 		The same as |getchar()|, except that this always returns a
@@ -8947,7 +8947,7 @@ setcharsearch({dict})                                          *setcharsearch()*
 <		Also see |getcharsearch()|.
 
                 Parameters: ~
-                  • {dict} (`string`)
+                  • {dict} (`{ char?: string, forward?: 1|0, until?: 1|0 }`)
 
                 Return: ~
                   (`any`)
@@ -10488,7 +10488,7 @@ strcharlen({string})                                              *strcharlen()*
                   • {string} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 strcharpart({src}, {start} [, {len} [, {skipcc}]])               *strcharpart()*
 		Like |strpart()| but using character index and length instead
@@ -10509,10 +10509,10 @@ strcharpart({src}, {start} [, {len} [, {skipcc}]])               *strcharpart()*
                   • {src} (`string`)
                   • {start} (`integer`)
                   • {len} (`integer?`)
-                  • {skipcc} (`boolean?`)
+                  • {skipcc} (`0|1|boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 strchars({string} [, {skipcc}])                                     *strchars()*
 		The result is a Number, which is the number of characters
@@ -10545,7 +10545,7 @@ strchars({string} [, {skipcc}])                                     *strchars()*
 
                 Parameters: ~
                   • {string} (`string`)
-                  • {skipcc} (`boolean?`)
+                  • {skipcc} (`0|1|boolean?`)
 
                 Return: ~
                   (`integer`)
@@ -12003,7 +12003,8 @@ win_gettype([{nr}])                                              *win_gettype()*
 win_gotoid({expr})                                                *win_gotoid()*
 		Go to window with ID {expr}.  This may also change the current
 		tabpage.
-		Return TRUE if successful, FALSE if the window cannot be found.
+		Return TRUE if successful, FALSE if the window cannot be
+		found.
 
                 Parameters: ~
                   • {expr} (`integer`)

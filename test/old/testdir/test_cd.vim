@@ -192,6 +192,28 @@ func Test_lcd_split()
   quit!
 endfunc
 
+" Test that a temporary override of 'autochdir' via :lcd isn't clobbered by win_execute() in a split window.
+func Test_lcd_win_execute()
+  CheckFunction test_autochdir
+  CheckOption autochdir
+
+  let startdir = getcwd()
+  call mkdir('Xsubdir', 'R')
+  call test_autochdir()
+  set autochdir
+  edit Xsubdir/file
+  call assert_match('testdir.Xsubdir.file$', expand('%:p'))
+  split
+  lcd ..
+  call assert_match('testdir.Xsubdir.file$', expand('%:p'))
+  call win_execute(win_getid(2), "")
+  call assert_match('testdir.Xsubdir.file$', expand('%:p'))
+
+  set noautochdir
+  bwipe!
+  call chdir(startdir)
+endfunc
+
 func Test_cd_from_non_existing_dir()
   CheckNotMSWindows
 

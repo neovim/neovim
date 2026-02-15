@@ -2454,9 +2454,9 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
   }
   curwin->w_p_sms = prev_sms;
 
-  return curwin->w_topline == prev_topline
-         && curwin->w_topfill == prev_topfill
-         && curwin->w_skipcol == prev_skipcol;
+  return curwin->w_topline != prev_topline
+         || curwin->w_topfill != prev_topfill
+         || curwin->w_skipcol != prev_skipcol;
 }
 
 /// Move screen "count" (half) pages up ("dir" is BACKWARD) or down ("dir" is
@@ -2466,7 +2466,7 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
 /// @return  FAIL for failure, OK otherwise.
 int pagescroll(Direction dir, int count, bool half)
 {
-  int nochange = true;
+  bool did_move = false;
   int buflen = curbuf->b_ml.ml_line_count;
   colnr_T prev_col = curwin->w_cursor.col;
   colnr_T prev_curswant = curwin->w_curswant;
@@ -2498,7 +2498,7 @@ int pagescroll(Direction dir, int count, bool half)
 
     // (Try to) scroll the window unless already at the end of the buffer.
     if (count > 0) {
-      nochange = scroll_with_sms(dir, count, &curscount);
+      did_move = scroll_with_sms(dir, count, &curscount);
       curwin->w_cursor.lnum = prev_lnum;
       curwin->w_cursor.col = prev_col;
       curwin->w_curswant = prev_curswant;
@@ -2517,9 +2517,9 @@ int pagescroll(Direction dir, int count, bool half)
     // Scroll [count] times 'window' or current window height lines.
     count *= ((ONE_WINDOW && p_window > 0 && p_window < Rows - 1)
               ? MAX(1, (int)p_window - 2) : get_scroll_overlap(dir));
-    nochange = scroll_with_sms(dir, count, &count);
+    did_move = scroll_with_sms(dir, count, &count);
 
-    if (!nochange) {
+    if (did_move) {
       // Place cursor at top or bottom of window.
       validate_botline_win(curwin);
       linenr_T lnum = (dir == FORWARD ? curwin->w_topline : curwin->w_botline - 1);
@@ -2535,12 +2535,12 @@ int pagescroll(Direction dir, int count, bool half)
   // Move cursor to first line of closed fold.
   foldAdjustCursor(curwin);
 
-  nochange = nochange
-             && prev_col == curwin->w_cursor.col
-             && prev_lnum == curwin->w_cursor.lnum;
+  did_move = did_move
+             || prev_col != curwin->w_cursor.col
+             || prev_lnum != curwin->w_cursor.lnum;
 
   // Error if both the viewport and cursor did not change.
-  if (nochange) {
+  if (!did_move) {
     beep_flush();
   } else if (!curwin->w_p_sms) {
     beginline(BL_SOL | BL_FIX);
@@ -2548,7 +2548,7 @@ int pagescroll(Direction dir, int count, bool half)
     nv_g_home_m_cmd(&ca);
   }
 
-  return nochange;
+  return did_move ? OK : FAIL;
 }
 
 void do_check_cursorbind(void)

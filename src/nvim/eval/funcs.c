@@ -2567,6 +2567,12 @@ static void f_gettagstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
 {
+  // If the main loop is closing, the condition won't be checked again.
+  // Close the timer to avoid leaking resources.
+  if (main_loop.closing) {
+    time_watcher_stop(tw);
+    time_watcher_close(tw, dummy_timer_close_cb);
+  }
 }
 
 /// Dummy timer close callback. Used by f_wait().
@@ -2600,8 +2606,9 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Start dummy timer.
   time_watcher_init(&main_loop, tw, NULL);
-  tw->events = main_loop.events;
-  tw->blockable = true;
+  // Don't schedule the due callback, as that'll lead to two different types of events
+  // on each interval, causing the condition to be checked twice.
+  tw->events = NULL;
   time_watcher_start(tw, dummy_timer_due_cb, (uint64_t)interval, (uint64_t)interval);
 
   typval_T argv = TV_INITIAL_VALUE;
@@ -3327,8 +3334,8 @@ static const char *pty_ignored_env_vars[] = {
   "LINES",
   "TERMCAP",
   "COLORFGBG",
-  "COLORTERM",
 #endif
+  "COLORTERM",
   // Nvim-owned env vars. #6764
   "VIM",
   "VIMRUNTIME",
@@ -3376,12 +3383,10 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
           tv_dict_item_remove(env, dv);
         }
       }
-#ifndef MSWIN
       // Set COLORTERM to "truecolor" if termguicolors is set
       if (p_tgc) {
         tv_dict_add_str(env, S_LEN("COLORTERM"), "truecolor");
       }
-#endif
     }
   }
 
@@ -3603,7 +3608,17 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
 
-    int pid = chan->stream.pty.proc.pid;
+    const int pid = chan->stream.pty.proc.pid;
+    buf_T *const buf = curbuf;
+
+    channel_incref(chan);
+    channel_terminal_alloc(buf, chan);
+
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf);
+
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed during autocommands.
+    }
 
     // "./…" => "/home/foo/…"
     vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);
@@ -3622,24 +3637,33 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     // Terminal URI: "term://$CWD//$PID:$CMD"
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
-    // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
-    curbuf->b_p_swf = false;
+    // Unset 'swapfile' to ensure no swapfile is created.
+    buf->b_p_swf = false;
 
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-    setfname(curbuf, NameBuff, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+    setfname(buf, NameBuff, NULL, true);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf);
+
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed during autocommands.
+    }
 
     Error err = ERROR_INIT;
+    buf->b_locked++;
     // Set (deprecated) buffer-local vars (prefer 'channel' buffer-local option).
-    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+    dict_set_var(buf->b_vars, cstr_as_string("terminal_job_id"),
                  INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
     api_clear_error(&err);
-    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+    dict_set_var(buf->b_vars, cstr_as_string("terminal_job_pid"),
                  INTEGER_OBJ(pid), false, false, NULL, &err);
     api_clear_error(&err);
+    buf->b_locked--;
 
-    channel_incref(chan);
-    channel_terminal_open(curbuf, chan);
+    if (chan->term == NULL || terminal_buf(chan->term) == 0) {
+      goto term_done;  // Terminal may be destroyed in dict watchers.
+    }
+
+    terminal_open(&chan->term, buf);
+term_done:
     channel_create_event(chan, NULL);
     channel_decref(chan);
   }

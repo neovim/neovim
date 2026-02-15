@@ -215,7 +215,7 @@ local function check_rplugin_manifest()
       local contents = vim.fn.join(vim.fn.readfile(script))
       if vim.regex([[\<\%(from\|import\)\s\+neovim\>]]):match_str(contents) then
         if vim.regex([[[\/]__init__\.py$]]):match_str(script) then
-          script = vim.fn.tr(vim.fn.fnamemodify(script, ':h'), '\\', '/')
+          script = vim.fs.normalize(vim.fs.dirname(script))
         end
         if not existing_rplugins[script] then
           local msg = vim.fn.printf('"%s" is not registered.', vim.fs.basename(path))
@@ -418,6 +418,14 @@ local function check_external_tools()
     health.warn('ripgrep not available')
   end
 
+  local open_cmd, err = vim.ui._get_open_cmd()
+  if open_cmd then
+    health.ok(('vim.ui.open: handler found (%s)'):format(open_cmd[1]))
+  else
+    --- @cast err string
+    health.warn(err)
+  end
+
   -- `vim.pack` prefers git 2.36 but tries to work with 2.x.
   if vim.fn.executable('git') == 1 then
     local git = vim.fn.exepath('git')
@@ -524,6 +532,54 @@ local function detect_terminal()
   return 'unknown'
 end
 
+---@param nvim_version string
+local function check_stable_version(nvim_version)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', '--tags', 'https://github.com/neovim/neovim' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local stable_sha = assert(
+    result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
+      or result.stdout:match('(%x+)%s+refs/tags/stable\n')
+  )
+  local latest_version =
+    assert(result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}'))
+  local current_version = assert(nvim_version:match('v?(%d+%.%d+%.%d+)'))
+  local current = vim.version.parse(current_version)
+  local latest = vim.version.parse(latest_version)
+  if current and latest and vim.version.lt(current, latest) then
+    vim.health.warn(('Nvim %s is available (current: %s)'):format(latest_version, current_version))
+  else
+    vim.health.ok(('Up to date (%s)'):format(current_version))
+  end
+end
+
+---@param commit string
+local function check_head_hash(commit)
+  local result = vim
+    .system(
+      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' },
+      { text = true, timeout = 5000 }
+    )
+    :wait()
+  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+    return
+  end
+  local upstream = assert(result.stdout:match('^(%x+)'))
+  if not vim.startswith(upstream, commit) then
+    vim.health.warn(
+      ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
+    )
+  else
+    vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
+  end
+end
+
 local function check_sysinfo()
   vim.health.start('System Info')
 
@@ -532,34 +588,12 @@ local function check_sysinfo()
   local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
   local commit --[[@type string]] = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
 
-  if vim.trim(commit) ~= '' then
-    local has_git = vim.fn.executable('git') == 1
-    local has_curl = vim.fn.executable('curl') == 1
-    local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' }
-      or has_curl and {
-        'curl',
-        '-s',
-        'https://api.github.com/repos/neovim/neovim/commits/master',
-        '-H',
-        'Accept: application/vnd.github.sha',
-      }
-      or nil
-
-    if cmd then
-      local result = vim.system(cmd, { text = true }):wait()
-      if result.code == 0 then
-        local upstream = assert(result.stdout:match('^(%x+)') or result.stdout)
-        if not upstream:find(commit) then
-          vim.health.warn(
-            ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
-          )
-        else
-          vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
-        end
-      end
-    else
-      vim.health.warn('Cannot check for updates: git or curl not found')
-    end
+  if vim.fn.executable('git') ~= 1 then
+    vim.health.warn('Cannot check for updates: git not found')
+  elseif vim.trim(commit) ~= '' then
+    check_head_hash(commit)
+  else
+    check_stable_version(nvim_version)
   end
 
   local os_info = vim.uv.os_uname()
@@ -577,6 +611,8 @@ local function check_sysinfo()
     string.format(
       [[
     ## Problem
+
+    Describe the problem (concisely).
 
     ## Steps to reproduce
 
@@ -604,25 +640,31 @@ local function check_sysinfo()
     )
   )
 
-  local encoded_body = vim.uri_encode(body) --- @type string
-  local issue_url = 'https://github.com/neovim/neovim/issues/new?labels=bug&body=' .. encoded_body
-  vim.schedule(function()
-    local win = vim.api.nvim_get_current_win()
-    local buf = vim.api.nvim_win_get_buf(win)
-    if vim.bo[buf].filetype ~= 'checkhealth' then
-      return
-    end
-    _G.nvim_health_bugreport_open = function()
-      vim.ui.open(issue_url)
-    end
-    vim.wo[win].winbar =
-      '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
-    vim.api.nvim_create_autocmd('BufDelete', {
-      buffer = buf,
-      once = true,
-      command = 'lua _G.nvim_health_bugreport_open = nil',
-    })
-  end)
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'checkhealth',
+    once = true,
+    callback = function(args)
+      local buf = args.buf
+      local win = vim.fn.bufwinid(buf)
+      if win == -1 then
+        return
+      end
+      local encoded_body = vim.uri_encode(body) --- @type string
+      local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
+
+      _G.nvim_health_bugreport_open = function()
+        vim.ui.open(issue_url)
+      end
+      vim.wo[win].winbar =
+        '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
+
+      vim.api.nvim_create_autocmd('BufDelete', {
+        buffer = buf,
+        once = true,
+        command = 'lua _G.nvim_health_bugreport_open = nil',
+      })
+    end,
+  })
 end
 
 function M.check()

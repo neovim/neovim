@@ -882,4 +882,37 @@ func Test_bdelete_skip_closing_bufs()
   %bw!
 endfunc
 
+func Test_split_window_in_BufLeave_from_tab_sbuffer()
+  tabnew Xa
+  setlocal bufhidden=wipe
+  let t0 = tabpagenr()
+  let b0 = bufnr()
+  let b1 = bufadd('Xb')
+  autocmd BufLeave Xa ++once split
+  exe 'tab sbuffer' b1
+  call assert_equal(t0 + 1, tabpagenr())
+  call assert_equal([b1, b0], tabpagebuflist())
+  call assert_equal([b0], tabpagebuflist(t0))
+  tabclose
+  call assert_equal(t0, tabpagenr())
+  call assert_equal([b0], tabpagebuflist())
+
+  bwipe! Xa
+  bwipe! Xb
+endfunc
+
+func Test_split_window_in_BufLeave_from_switching_buffer()
+  tabnew Xa
+  setlocal bufhidden=wipe
+  split
+  let b0 = bufnr()
+  let b1 = bufadd('Xb')
+  autocmd BufLeave Xa ++once split
+  exe 'buffer' b1
+  call assert_equal([b1, b0, b0], tabpagebuflist())
+
+  bwipe! Xa
+  bwipe! Xb
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

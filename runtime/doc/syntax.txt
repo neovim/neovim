@@ -1397,6 +1397,14 @@ The backticks for inline java are highlighted according to the htmlError
 group to make them easier to see.
 
 
+GDB							*ft-gdb-syntax*
+
+The GDB syntax file provides syntax |folding| (see |:syn-fold|) for comments
+and block statements. This can be enabled with: >
+
+	:set foldmethod=syntax
+
+
 GROFF							*ft-groff-syntax*
 
 The groff syntax file is a wrapper for |ft-nroff-syntax|, see the notes
@@ -2732,7 +2740,7 @@ Pascal.  Use this if you don't use assembly and Pascal: >
 
 PYTHON							*ft-python-syntax*
 
-There are six options to control Python syntax highlighting.
+There are seven options to control Python syntax highlighting.
 
 For highlighted numbers: >
 	:let python_no_number_highlight = 1
@@ -2752,14 +2760,17 @@ The first option implies the second one.
 For highlighted trailing whitespace and mix of spaces and tabs: >
 	:let python_space_error_highlight = 1
 
+For highlighted built-in constants distinguished from other keywords: >
+	:let python_constant_highlight = 1
+
 If you want all possible Python highlighting: >
 	:let python_highlight_all = 1
-This has the same effect as setting python_space_error_highlight and
-unsetting all the other ones.
+This has the same effect as setting python_space_error_highlight,
+python_constant_highlight and unsetting all the other ones.
 
 If you use Python 2 or straddling code (Python 2 and 3 compatible),
 you can enforce the use of an older syntax file with support for
-Python 2 and up to Python 3.5.  >
+Python 2 and up to Python 3.5. >
 	:let python_use_python2_syntax = 1
 This option will exclude all modern Python 3.6 or higher features.
 

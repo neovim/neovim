@@ -167,8 +167,6 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
-    skip(is_os('win'), 'causes rmdir() to fail')
-
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     cwd_dir = t.fix_slashes(cwd_dir) -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file

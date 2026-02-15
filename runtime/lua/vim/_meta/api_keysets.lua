@@ -308,7 +308,7 @@ error('Cannot require a meta file')
 --- @field altfont? boolean
 --- @field nocombine? boolean
 --- @field default? boolean
---- @field cterm? integer|string
+--- @field cterm? vim.api.keyset.highlight_cterm
 --- @field foreground? integer|string
 --- @field fg? integer|string
 --- @field background? integer|string

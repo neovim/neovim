@@ -18,9 +18,10 @@
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 ---is used to persistently track data about plugins.
 ---For a more robust config treat lockfile like its part: put under version control, etc.
----In this case all plugins from the lockfile will be installed at once and
----at lockfile's revision (instead of inferring from `version`).
----Should not be edited by hand. Corrupted data for installed plugins is repaired
+---In this case all plugins from the lockfile will be installed at once and at lockfile's revision
+---(instead of inferring from `version`). This is done on the very first `vim.pack` function call
+---to ensure that lockfile is aligned with what is actually on the disk.
+---Lockfile should not be edited by hand. Corrupted data for installed plugins is repaired
 ---(including after deleting whole file), but `version` fields will be missing
 ---for not yet added plugins.
 ---
@@ -160,6 +161,7 @@
 ---
 ---[vim.pack-events]()
 ---
+---Performing actions via `vim.pack` functions can trigger these events:
 ---- [PackChangedPre]() - before trying to change plugin's state.
 ---- [PackChanged]() - after plugin's state has changed.
 ---
@@ -195,6 +197,7 @@
 ---end
 ---
 ----- If hooks need to run on install, run this before `vim.pack.add()`
+----- To act on install from lockfile, run before very first `vim.pack.add()`
 ---vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
 ---```
 
@@ -481,6 +484,7 @@ end
 --- @return fun(kind: 'begin'|'report'|'end', percent: integer, fmt: string, ...:any): nil
 local function new_progress_report(action)
   local progress = { kind = 'progress', title = 'vim.pack' }
+  local headless = #api.nvim_list_uis() == 0
 
   return vim.schedule_wrap(function(kind, percent, fmt, ...)
     progress.status = kind == 'end' and 'success' or 'running'
@@ -488,7 +492,10 @@ local function new_progress_report(action)
     local msg = ('%s %s'):format(action, fmt:format(...))
     progress.id = api.nvim_echo({ { msg } }, kind ~= 'report', progress)
     -- Force redraw to show installation progress during startup
-    vim.cmd.redraw({ bang = true })
+    -- TODO: redraw! not needed with ui2.
+    if not headless then
+      vim.cmd.redraw({ bang = true })
+    end
   end)
 end
 
@@ -842,9 +849,13 @@ local function lock_sync(confirm)
   end
 
   -- Compute installed plugins
+  local plug_dir = get_plug_dir()
+  if vim.uv.fs_stat(plug_dir) == nil then
+    vim.fn.mkdir(plug_dir, 'p')
+  end
+
   -- NOTE: The directory traversal is done on every startup, but it is very fast.
   -- Also, single `vim.fs.dir()` scales better than on demand `uv.fs_stat()` checks.
-  local plug_dir = get_plug_dir()
   local installed = {} --- @type table<string,string>
   for name, fs_type in vim.fs.dir(plug_dir) do
     installed[name] = fs_type
@@ -1108,14 +1119,11 @@ local function show_confirm_buf(lines, on_finish)
   api.nvim_buf_set_name(bufnr, 'nvim-pack://confirm#' .. bufnr)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.cmd.sbuffer({ bufnr, mods = { tab = vim.fn.tabpagenr() } })
-  local tab_id = api.nvim_get_current_tabpage()
   local win_id = api.nvim_get_current_win()
 
   local delete_buffer = vim.schedule_wrap(function()
+    pcall(api.nvim_win_close, win_id, true)
     pcall(api.nvim_buf_delete, bufnr, { force = true })
-    if api.nvim_tabpage_is_valid(tab_id) then
-      vim.cmd.tabclose(api.nvim_tabpage_get_number(tab_id))
-    end
     vim.cmd.redraw()
   end)
 
@@ -1210,6 +1218,9 @@ end
 ---
 --- Notes:
 --- - Every actual update is logged in "nvim-pack.log" file inside "log" |stdpath()|.
+--- - It doesn't update source's default branch if it has changed (like from `master` to `main`).
+---   To have `version = nil` point to a new default branch, re-install the plugin
+---   (|vim.pack.del()| + |vim.pack.add()|).
 ---
 --- @param names? string[] List of plugin names to update. Must be managed
 --- by |vim.pack|, not necessarily already added to current session.

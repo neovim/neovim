@@ -31,9 +31,7 @@ describe('completion', function()
   end)
 
   it('ctrl-x_ctrl-f completes Windows drive letter', function()
-    if not t.is_os('win') then
-      return
-    end
+    t.skip(not t.is_os('win'), 'N/A for non-Windows')
     feed('iblablaC:/W<C-x><C-f>')
     screen:expect {
       any = [[C:\Windows\]],

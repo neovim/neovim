@@ -273,8 +273,8 @@ size_t xstrnlen(const char *s, size_t n)
 char *xstrchrnul(const char *str, char c)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char *p = strchr(str, c);
-  return p ? p : (char *)(str + strlen(str));
+  const char *p = strchr(str, c);
+  return p ? (char *)p : (char *)(str + strlen(str));
 }
 
 /// A version of memchr() that returns a pointer one past the end
@@ -288,8 +288,8 @@ char *xstrchrnul(const char *str, char c)
 void *xmemscan(const void *addr, char c, size_t size)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  char *p = memchr(addr, c, size);
-  return p ? p : (char *)addr + size;
+  const char *p = memchr(addr, c, size);
+  return p ? (char *)p : (char *)addr + size;
 }
 
 /// Replaces every instance of `c` with `x`.
@@ -524,7 +524,7 @@ char *xstrndup(const char *str, size_t len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = memchr(str, NUL, len);
+  const char *p = memchr(str, NUL, len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 

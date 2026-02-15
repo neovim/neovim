@@ -2,6 +2,7 @@
 " Language:    SystemVerilog
 " Maintainer:  kocha <kocha.lsifrontend@gmail.com>
 " Last Change: 07-May-2021
+" 2026 Feb 13 by Vim project: correct matchit covergroup block #19394
 
 if exists("b:did_ftplugin")
   finish
@@ -32,7 +33,7 @@ if exists("loaded_matchit")
     \ '\<checker\>:\<endchecker\>,' .
     \ '\<class\>:\<endclass\>,' .
     \ '\<clocking\>:\<endclocking\>,' .
-    \ '\<group\>:\<endgroup\>,' .
+    \ '\<covergroup\>:\<endgroup\>,' .
     \ '\<interface\>:\<endinterface\>,' .
     \ '\<package\>:\<endpackage\>,' .
     \ '\<program\>:\<endprogram\>,' .

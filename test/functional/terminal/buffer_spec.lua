@@ -89,11 +89,10 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = api.nvim_exec('swapname', true):gsub('\n', '')
-      eq(nil, io.open(swapfile))
+      eq('No swap file', n.exec_capture('swapname'))
     end)
 
-    it('does not create undofiles files', function()
+    it('does not create undo files', function()
       local undofile = api.nvim_eval('undofile(bufname("%"))')
       eq(nil, io.open(undofile))
     end)
@@ -236,7 +235,6 @@ describe(':terminal buffer', function()
   end)
 
   it('requires bang (!) to close a running job #15402', function()
-    skip(is_os('win'), 'Test freezes the CI and makes it time out')
     eq('Vim(wqall):E948: Job still running (add ! to end the job)', exc_exec('wqall'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
@@ -296,6 +294,64 @@ describe(':terminal buffer', function()
       {5:-- TERMINAL --}                                    |
     ]])
     eq('t', fn.mode(1))
+  end)
+
+  it('is refreshed with partial mappings in Terminal mode #9167', function()
+    command([[set timeoutlen=20000 | tnoremap jk <C-\><C-N>]])
+    feed('j') -- Won't reach the terminal until the next character is typed
+    screen:expect_unchanged()
+    feed('j') -- Refresh scheduled for the first 'j' but not processed
+    screen:expect_unchanged()
+    for i = 1, 10 do
+      eq({ mode = 't', blocking = true }, api.nvim_get_mode())
+      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      screen:expect(([[
+        tty ready                                         |
+        %s^%s|
+                                                          |*4
+        {5:-- TERMINAL --}                                    |
+      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+    end
+    feed('l') -- No partial mapping, so all pending refreshes should be processed
+    screen:expect([[
+      tty ready                                         |
+      jjjjjjjjjjjjl^                                     |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('is refreshed with partial mappings in Normal mode', function()
+    command('set timeoutlen=20000 | nnoremap jk :')
+    command('nnoremap j <Cmd>call chansend(&channel, "j")<CR>')
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*5
+    ]])
+    feed('j') -- Won't reach the terminal until the next character is typed
+    screen:expect_unchanged()
+    feed('j') -- Refresh scheduled for the first 'j' but not processed
+    screen:expect_unchanged()
+    for i = 1, 10 do
+      eq({ mode = 'nt', blocking = true }, api.nvim_get_mode())
+      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      screen:expect(([[
+        tty ready                                         |
+        ^%s%s|
+                                                          |*4
+                                                          |
+      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+    end
+    feed('l') -- No partial mapping, so all pending refreshes should be processed
+    screen:expect([[
+      tty ready                                         |
+      j^jjjjjjjjjjj                                      |
+                                                        |*5
+    ]])
   end)
 
   it('writing to an existing file with :w fails #13549', function()
@@ -452,10 +508,164 @@ describe(':terminal buffer', function()
     ]])
     assert_alive()
   end)
+
+  describe('handles suspended PTY process', function()
+    if skip(is_os('win'), 'N/A for Windows') then
+      return
+    end
+
+    --- @param external_resume boolean
+    local function test_term_process_suspend_resume(external_resume)
+      command('set mousemodel=extend')
+      local pid = eval('jobpid(&channel)')
+      vim.uv.kill(pid, 'sigstop')
+      -- In Terminal mode the cursor is at the "[Process suspended]" text to hint that
+      -- pressing a key will change the suspended state.
+      local s0 = [[
+        tty ready                                         |
+                                                          |*4
+        ^[Process suspended]                               |
+        {5:-- TERMINAL --}                                    |
+      ]]
+      screen:expect(s0)
+      feed([[<C-\><C-N>]])
+      -- Returning to Normal mode puts the cursor at its previous position as that's
+      -- closer to the terminal output, making it easier for the user to copy.
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*3
+        [Process suspended]                               |
+                                                          |
+      ]])
+      feed('i')
+      screen:expect(s0)
+      command('set laststatus=0 | botright vsplit')
+      screen:expect([[
+        tty ready               │tty ready                |
+                                │                         |*4
+        [Process suspended]     │^[Process suspended]      |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      -- Resize is detected by the process on resume.
+      if external_resume then
+        vim.uv.kill(pid, 'sigcont')
+      else
+        feed('a')
+      end
+      screen:expect([[
+        tty ready               │tty ready                |
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+                                │^                         |
+                                │                         |*3
+        {5:-- TERMINAL --}                                    |
+      ]])
+      tt.enable_mouse()
+      tt.feed_data('mouse enabled\n\n\n\n')
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+                                │^                         |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 25)
+      screen:expect({ any = vim.pesc('"!!^') })
+      api.nvim_input_mouse('right', 'release', '', 0, 0, 25)
+      screen:expect({ any = vim.pesc('#!!^') })
+      vim.uv.kill(pid, 'sigstop')
+      local s1 = [[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+        [Process suspended]     │^[Process suspended]      |
+        {5:-- TERMINAL --}                                    |
+      ]]
+      screen:expect(s1)
+      -- Mouse isn't forwarded when process is suspended.
+      api.nvim_input_mouse('right', 'press', '', 0, 1, 27)
+      api.nvim_input_mouse('right', 'release', '', 0, 1, 27)
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mo{108:use enabled}           │mo^u{108:se enabled}            |
+        {108: }                       │{108: }                        |*3
+        [Process suspended]     │[Process suspended]      |
+        {5:-- VISUAL --}                                      |
+      ]])
+      feed('<Esc>i')
+      screen:expect(s1)
+      if external_resume then
+        vim.uv.kill(pid, 'sigcont')
+      else
+        feed('a')
+      end
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+           #!!                  │   #!!^                   |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      -- Mouse is forwarded after process is resumed.
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 28)
+      screen:expect({ any = vim.pesc('"$!^') })
+      api.nvim_input_mouse('right', 'release', '', 0, 0, 28)
+      screen:expect({ any = vim.pesc('#$!^') })
+    end
+
+    it('resumed by an external signal', function()
+      skip(is_os('mac'), 'FIXME: does not work on macOS')
+      test_term_process_suspend_resume(true)
+    end)
+
+    it('resumed by pressing a key', function()
+      test_term_process_suspend_resume(false)
+    end)
+  end)
 end)
 
 describe(':terminal buffer', function()
   before_each(clear)
+
+  it('can resume suspended PTY process running in fish', function()
+    skip(is_os('win'), 'N/A for Windows')
+    skip(fn.executable('fish') == 0, 'missing "fish" command')
+
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({
+      [100] = {
+        foreground = Screen.colors.NvimDarkGrey2,
+        background = Screen.colors.NvimLightGrey2,
+      },
+      [101] = {
+        foreground = Screen.colors.NvimLightGrey4,
+        background = Screen.colors.NvimLightGrey2,
+      },
+      [102] = {
+        foreground = Screen.colors.NvimDarkGrey2,
+        background = Screen.colors.NvimLightGrey4,
+      },
+    })
+    command('set shell=fish termguicolors')
+    command(('terminal %s -u NONE -i NONE'):format(fn.shellescape(nvim_prog)))
+    command('startinsert')
+    local s0 = [[
+      {100:^                                                  }|
+      {101:~                                                 }|*3
+      {102:[No Name]                       0,0-1          All}|
+      {100:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(s0)
+    feed('<C-Z>')
+    screen:expect([[
+                                                        |*5
+      ^[Process suspended]                               |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed('<Space>')
+    screen:expect(s0)
+  end)
 
   it('term_close() use-after-free #4393', function()
     command('terminal yes')
@@ -760,7 +970,7 @@ describe(':terminal buffer', function()
   end)
 
   it('handles split UTF-8 sequences #16245', function()
-    local screen = Screen.new(50, 7)
+    local screen = Screen.new(50, 10)
     fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
     screen:expect([[
       ^å                                                 |
@@ -768,27 +978,78 @@ describe(':terminal buffer', function()
       1: å̲                                              |
       2: å̲                                              |
       3: å̲                                              |
-                                                        |*2
+                                                        |
+      [Process exited 0]                                |
+                                                        |*3
+    ]])
+    -- Test with Unicode char at right edge using a 4-wide terminal
+    command('bwipe! | set laststatus=0 | 4vnew')
+    fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
+    screen:expect([[
+      ^å   │                                             |
+      ref:│{1:~                                            }|
+       å̲  │{1:~                                            }|
+      1: å̲│{1:~                                            }|
+      2: å̲│{1:~                                            }|
+      3: å̲│{1:~                                            }|
+          │{1:~                                            }|
+      [Pro│{1:~                                            }|
+      cess│{1:~                                            }|
+                                                        |
     ]])
   end)
 
-  it('does not drop data when job exits immediately after output #3030', function()
+  --- @param subcmd 'REP'|'REPFAST'
+  local function check_term_rep(subcmd, count)
     local screen = Screen.new(50, 7)
     api.nvim_create_autocmd('TermClose', { command = 'let g:did_termclose = 1' })
-    fn.jobstart({ testprg('shell-test'), 'REPFAST', '20000', 'TEST' }, { term = true })
+    fn.jobstart({ testprg('shell-test'), subcmd, count, 'TEST' }, { term = true })
     retry(nil, nil, function()
       eq(1, api.nvim_get_var('did_termclose'))
     end)
     feed('i')
-    screen:expect([[
-      19996: TEST                                       |
-      19997: TEST                                       |
-      19998: TEST                                       |
-      19999: TEST                                       |
+    screen:expect(([[
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
+      %d: TEST{MATCH: +}|
                                                         |
       [Process exited 0]^                                |
       {5:-- TERMINAL --}                                    |
-    ]])
+    ]]):format(count - 4, count - 3, count - 2, count - 1))
+    local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+    for i = 1, count do
+      eq(('%d: TEST'):format(i - 1), lines[i])
+    end
+  end
+
+  it('does not drop data when job exits immediately after output #3030', function()
+    api.nvim_set_option_value('scrollback', 30000, {})
+    check_term_rep('REPFAST', 20000)
+  end)
+
+  it('does not drop data when autocommands poll for events #37559', function()
+    api.nvim_set_option_value('scrollback', 30000, {})
+    api.nvim_create_autocmd('BufFilePre', { command = 'sleep 50m', nested = true })
+    api.nvim_create_autocmd('BufFilePost', { command = 'sleep 50m', nested = true })
+    api.nvim_create_autocmd('TermOpen', { command = 'sleep 50m', nested = true })
+    -- REP pauses 1 ms every 100 lines, so each autocommand processes some output.
+    check_term_rep('REP', 20000)
+  end)
+
+  describe('scrollback is correct if all output is drained by', function()
+    for _, event in ipairs({ 'BufFilePre', 'BufFilePost', 'TermOpen' }) do
+      describe(('%s autocommand that lasts for'):format(event), function()
+        for _, delay in ipairs({ 5, 15, 25 }) do
+          -- Terminal refresh delay is 10 ms.
+          it(('%.1f * terminal refresh delay'):format(delay / 10), function()
+            local cmd = ('sleep %dm'):format(delay)
+            api.nvim_create_autocmd(event, { command = cmd, nested = true })
+            check_term_rep('REPFAST', 200)
+          end)
+        end
+      end)
+    end
   end)
 
   it('handles unprintable chars', function()
@@ -1115,6 +1376,41 @@ describe(':terminal buffer', function()
     feed([[<C-\><C-N>]])
     eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
   end)
+
+  it('does not allow OptionSet or b:term_title watcher to delete buffer', function()
+    local au = api.nvim_create_autocmd('OptionSet', { command = 'bwipeout!' })
+    local chan = api.nvim_open_term(0, {})
+    matches('^E937: ', api.nvim_get_vvar('errmsg'))
+    api.nvim_del_autocmd(au)
+    api.nvim_set_vvar('errmsg', '')
+
+    api.nvim_chan_send(chan, '\027]2;SOME_TITLE\007')
+    eq('SOME_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    command([[call dictwatcheradd(b:, 'term_title', {-> execute('bwipe!')})]])
+    api.nvim_chan_send(chan, '\027]2;OTHER_TITLE\007')
+    eq('OTHER_TITLE', api.nvim_buf_get_var(0, 'term_title'))
+    matches('^E937: ', api.nvim_get_vvar('errmsg'))
+  end)
+
+  it('using NameBuff in BufFilePre does not interfere with buffer rename', function()
+    local oldbuf = api.nvim_get_current_buf()
+    n.exec([[
+      file Xoldfile
+      new Xotherfile
+      wincmd w
+      let g:BufFilePre_bufs = []
+      let g:BufFilePost_bufs = []
+      autocmd BufFilePre * call add(g:BufFilePre_bufs, [bufnr(), bufname()])
+      autocmd BufFilePost * call add(g:BufFilePost_bufs, [bufnr(), bufname()])
+      autocmd BufFilePre,BufFilePost * call execute('ls')
+    ]])
+    fn.jobstart({ testprg('shell-test') }, { term = true })
+    eq({ { oldbuf, 'Xoldfile' } }, api.nvim_get_var('BufFilePre_bufs'))
+    local buffilepost_bufs = api.nvim_get_var('BufFilePost_bufs')
+    eq(1, #buffilepost_bufs)
+    eq(oldbuf, buffilepost_bufs[1][1])
+    matches('^term://', buffilepost_bufs[1][2])
+  end)
 end)
 
 describe('on_lines does not emit out-of-bounds line indexes when', function()
@@ -1403,12 +1699,12 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
       pcall_err(fn.termopen, 'bar')
     )
   end)
+end)
+
+describe('jobstart(…,{term=true})', function()
+  before_each(clear)
 
   describe('$COLORTERM value', function()
-    if skip(is_os('win'), 'Not applicable for Windows') then
-      return
-    end
-
     before_each(function()
       -- Outer value should never be propagated to :terminal
       fn.setenv('COLORTERM', 'wrongvalue')
@@ -1416,7 +1712,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
 
     local function test_term_colorterm(expected, opts)
       local screen = Screen.new(50, 4)
-      fn.termopen({
+      fn.jobstart({
         nvim_prog,
         '-u',
         'NONE',
@@ -1425,7 +1721,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         '--headless',
         '-c',
         'echo $COLORTERM | quit',
-      }, opts)
+      }, vim.tbl_extend('error', opts, { term = true }))
       screen:expect(([[
         ^%s{MATCH:%%s+}|
         [Process exited 0]                                |
@@ -1438,7 +1734,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         command('set notermguicolors')
       end)
       it('is empty by default', function()
-        test_term_colorterm('')
+        test_term_colorterm('', {})
       end)
       it('can be overridden', function()
         test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })
@@ -1450,7 +1746,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
         command('set termguicolors')
       end)
       it('is "truecolor" by default', function()
-        test_term_colorterm('truecolor')
+        test_term_colorterm('truecolor', {})
       end)
       it('can be overridden', function()
         test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })

@@ -144,6 +144,11 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 /// @param val   Highlight definition map, accepts the following keys:
 ///                - fg: color name or "#RRGGBB", see note.
 ///                - bg: color name or "#RRGGBB", see note.
+///                - fg_indexed: boolean
+///                  When true, fg is a terminal palette index (0-255).
+///                  Default is false.
+///                - bg_indexed: boolean
+///                  Same as fg_indexed, but for background color.
 ///                - sp: color name or "#RRGGBB"
 ///                - blend: integer between 0 and 100
 ///                - bold: boolean
@@ -1139,6 +1144,7 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .height = (uint16_t)curwin->w_view_height,
     .write_cb = term_write,
     .resize_cb = term_resize,
+    .resume_cb = term_resume,
     .close_cb = term_close,
     .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
@@ -1150,7 +1156,8 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   }
 
   channel_incref(chan);
-  terminal_open(&chan->term, buf, topts);
+  chan->term = terminal_alloc(buf, topts);
+  terminal_open(&chan->term, buf);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }
@@ -1186,6 +1193,10 @@ static void term_write(const char *buf, size_t size, void *data)
 static void term_resize(uint16_t width, uint16_t height, void *data)
 {
   // TODO(bfredl): Lua callback
+}
+
+static void term_resume(void *data)
+{
 }
 
 static void term_close(void *data)

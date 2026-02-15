@@ -7,7 +7,6 @@ local eval, eq = n.eval, t.eq
 local command = n.command
 local api = n.api
 local exc_exec = n.exc_exec
-local is_os = t.is_os
 
 describe('msgpack*() functions', function()
   setup(clear)
@@ -474,11 +473,7 @@ describe('msgpackparse() function', function()
     eval(cmd)
     eval(cmd) -- do it again (try to force segfault)
     local api_info = eval(cmd) -- do it again
-    if is_os('win') then
-      n.assert_alive()
-      pending('msgpackparse() has a bug on windows')
-      return
-    end
+    n.assert_alive()
     eq({ 'error_types', 'functions', 'types', 'ui_events', 'ui_options', 'version' }, api_info)
   end)
 

@@ -1323,7 +1323,9 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   no_wait_return++;             // don't call wait_return() while busy
   if (itmp != NULL && buf_write(curbuf, itmp, NULL, line1, line2, eap,
                                 false, false, false, true) == FAIL) {
-    msg_putchar('\n');  // Keep message from buf_write().
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');  // Keep message from buf_write().
+    }
     no_wait_return--;
     if (!aborting()) {
       // will call wait_return()
@@ -1676,6 +1678,8 @@ void print_line_no_prefix(linenr_T lnum, bool use_number, bool list)
   msg_prt_line(ml_get(lnum), list);
 }
 
+static bool global_need_msg_kind = false;  // Start new message only once during :global.
+
 /// Print a text line.  Also in silent mode ("ex -s").
 void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 {
@@ -1688,9 +1692,10 @@ void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 
   silent_mode = false;
   info_message = true;  // use stdout, not stderr
-  if (first) {
+  if ((!global_busy || global_need_msg_kind) && first) {
     msg_start();
     msg_ext_set_kind("list_cmd");
+    global_need_msg_kind = false;
   } else if (!save_silent) {
     msg_putchar('\n');  // don't want trailing newline with regular messaging
   }
@@ -3978,7 +3983,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
               char *resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL,
                                              CALLBACK_NONE, false, NULL);
-              msg_putchar('\n');
+              if (!ui_has(kUIMessages)) {
+                msg_putchar('\n');
+              }
               xfree(prompt);
               if (resp != NULL) {
                 typed = (uint8_t)(*resp);
@@ -4527,7 +4534,7 @@ skip:
       emsg(_(e_interr));
     } else if (got_match) {
       // did find something but nothing substituted
-      if (p_ch > 0) {
+      if (p_ch > 0 && !ui_has(kUIMessages)) {
         msg("", 0);
       }
     } else if (subflags.do_error) {
@@ -4764,6 +4771,7 @@ void global_exe(char *cmd)
 
   sub_nsubs = 0;
   sub_nlines = 0;
+  global_need_msg_kind = true;
   global_need_beginline = false;
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;

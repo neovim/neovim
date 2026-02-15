@@ -2241,6 +2241,7 @@ static void list_functions(regmatch_T *regmatch)
   size_t todo = func_hashtab.ht_used;
   const hashitem_T *const ht_array = func_hashtab.ht_array;
 
+  msg_ext_set_kind("list_cmd");
   for (const hashitem_T *hi = ht_array; todo > 0 && !got_int; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       ufunc_T *fp = HI2UF(hi);
@@ -2318,6 +2319,7 @@ static ufunc_T *list_one_function(exarg_T *eap, char *name, char *p)
   // the more prompt.  "fp" may then be invalid.
   const int prev_ht_changed = func_hashtab.ht_changed;
 
+  msg_ext_set_kind("list_cmd");
   if (list_func_head(fp, !eap->forceit, eap->forceit) != OK) {
     return fp;
   }

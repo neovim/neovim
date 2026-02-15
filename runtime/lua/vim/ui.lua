@@ -166,25 +166,42 @@ function M.open(path, opt)
 
   if opt.cmd then
     cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
-  elseif vim.fn.has('mac') == 1 then
-    cmd = { 'open', path }
-  elseif vim.fn.has('win32') == 1 then
-    cmd = { 'cmd.exe', '/c', 'start', '', path }
-  elseif vim.fn.executable('xdg-open') == 1 then
-    cmd = { 'xdg-open', path }
-    job_opt.stdout = false
-    job_opt.stderr = false
-  elseif vim.fn.executable('wslview') == 1 then
-    cmd = { 'wslview', path }
-  elseif vim.fn.executable('explorer.exe') == 1 then
-    cmd = { 'explorer.exe', path }
-  elseif vim.fn.executable('lemonade') == 1 then
-    cmd = { 'lemonade', 'open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+    local open_cmd, err = M._get_open_cmd()
+    if err then
+      return nil, err
+    end
+    ---@cast open_cmd string[]
+    if open_cmd[1] == 'xdg-open' then
+      job_opt.stdout = false
+      job_opt.stderr = false
+    end
+    cmd = vim.list_extend(open_cmd, { path })
   end
 
   return vim.system(cmd, job_opt), nil
+end
+
+--- Get an available command used to open the path or URL.
+---
+--- @return string[]|nil # Command, or nil if not found.
+--- @return nil|string # Error message on failure, or nil on success.
+function M._get_open_cmd()
+  if vim.fn.has('mac') == 1 then
+    return { 'open' }, nil
+  elseif vim.fn.has('win32') == 1 then
+    return { 'cmd.exe', '/c', 'start', '' }, nil
+  elseif vim.fn.executable('xdg-open') == 1 then
+    return { 'xdg-open' }, nil
+  elseif vim.fn.executable('wslview') == 1 then
+    return { 'wslview' }, nil
+  elseif vim.fn.executable('explorer.exe') == 1 then
+    return { 'explorer.exe' }, nil
+  elseif vim.fn.executable('lemonade') == 1 then
+    return { 'lemonade', 'open' }, nil
+  else
+    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+  end
 end
 
 --- Returns all URLs at cursor, if any.

@@ -1,7 +1,8 @@
 " Author: Stephen Sugden <stephen@stephensugden.com>
 " Last Modified: 2023-09-11
 " Last Change:
-" 2025 Oct 27 by Vim project don't use rustfmt as 'formatprg' by default
+" 2025 Oct 27 by Vim project: don't use rustfmt as 'formatprg' by default
+" 2026 Jan 25 by Vim project: don't hide rustfmt errors, restore default var
 "
 "
 " Adapted from https://github.com/fatih/vim-go
@@ -69,6 +70,12 @@ function! s:RustfmtWriteMode()
 endfunction
 
 function! s:RustfmtConfigOptions()
+    let default = '--edition 2018'
+
+    if !get(g:, 'rustfmt_find_toml', 0)
+        return default
+    endif
+
     let l:rustfmt_toml = findfile('rustfmt.toml', expand('%:p:h') . ';')
     if l:rustfmt_toml !=# ''
         return '--config-path '.shellescape(fnamemodify(l:rustfmt_toml, ":p"))
@@ -199,7 +206,7 @@ function! s:RunRustfmt(command, tmpname, from_writepre)
             echo "rust.vim: was not able to parse rustfmt messages. Here is the raw output:"
             echo "\n"
             for l:line in l:stderr
-                echo l:line
+                echomsg l:line
             endfor
         endif
 
@@ -218,7 +225,10 @@ function! s:RunRustfmt(command, tmpname, from_writepre)
 
     " Open lwindow after we have changed back to the previous directory
     if l:open_lwindow == 1
+        try
         lwindow
+        catch /^Vim\%((\S\+)\)\=:E776:/
+        endtry
     endif
 
     call winrestview(l:view)

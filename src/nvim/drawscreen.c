@@ -678,6 +678,14 @@ int update_screen(void)
     }
   }
 
+  // Draw separator connectors for all windows after all window updates, so that
+  // connectors overwrite vsep/hsep characters regardless of which windows were redrawn.
+  if (did_one) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      draw_sep_connectors_win(wp);
+    }
+  }
+
   end_search_hl();
 
   // May need to redraw the popup menu.
@@ -1412,7 +1420,6 @@ static void win_update(win_T *wp)
   if (wp->w_view_height == 0) {
     // draw the horizontal separator below this window
     draw_hsep_win(wp);
-    draw_sep_connectors_win(wp);
     wp->w_redr_type = 0;
     return;
   }
@@ -1421,7 +1428,6 @@ static void win_update(win_T *wp)
   if (wp->w_view_width == 0) {
     // draw the vertical separator right of this window
     draw_vsep_win(wp);
-    draw_sep_connectors_win(wp);
     wp->w_redr_type = 0;
     return;
   }
@@ -1440,6 +1446,17 @@ static void win_update(win_T *wp)
   decor_redraw_reset(wp, &decor_state);
 
   decor_providers_invoke_win(wp);
+
+  if (buf->terminal && terminal_suspended(buf->terminal)) {
+    static VirtTextChunk chunk = { .text = "[Process suspended]", .hl_id = -1 };
+    static DecorVirtText virt_text = {
+      .priority = DECOR_PRIORITY_BASE,
+      .pos = kVPosWinCol,
+      .data.virt_text = { .items = &chunk, .size = 1 },
+    };
+    decor_range_add_virt(&decor_state, buf->b_ml.ml_line_count - 1, 0,
+                         buf->b_ml.ml_line_count - 1, 0, &virt_text, false);
+  }
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
@@ -2394,7 +2411,6 @@ redr_statuscol:
   if (wp->w_redr_type >= UPD_REDRAW_TOP) {
     draw_vsep_win(wp);
     draw_hsep_win(wp);
-    draw_sep_connectors_win(wp);
   }
   syn_set_timeout(NULL);
 

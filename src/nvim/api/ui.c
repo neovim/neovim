@@ -162,10 +162,13 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
                   "UI already attached to channel: %" PRId64, channel_id);
     return;
   }
+  if (!ui_can_attach_more()) {
+    api_set_error(err, kErrorTypeException, "Maximum UI count reached");
+    return;
+  }
 
   if (width <= 0 || height <= 0) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Expected width > 0 and height > 0");
+    api_set_error(err, kErrorTypeValidation, "Expected width > 0 and height > 0");
     return;
   }
   RemoteUI *ui = xcalloc(1, sizeof(RemoteUI));
@@ -283,35 +286,9 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
   int argc = tv_list_len(l);
   assert(argc > 0);
   Array argv = arena_array(&arena, (size_t)argc + 1);
-  bool had_minmin = false;
-  bool skipping_minc = false;  // Skip -c <cmd> from argv.
-  bool first_minc = true;  // Avoid skipping the first -c <cmd> from argv.
   TV_LIST_ITER_CONST(l, li, {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
-    if (argv.size > 0 && !had_minmin && strequal(arg, "--")) {
-      had_minmin = true;
-      skipping_minc = false;
-    }
-    bool startswith_min = strlen(arg) > 0 && arg[0] == '-';
-    bool startswith_minmin = strlen(arg) > 1 && arg[0] == '-' && arg[1] == '-';
-    if (skipping_minc && (startswith_min || startswith_minmin)) {
-      skipping_minc = false;
-    }
-    if (!had_minmin && !skipping_minc && strequal(arg, "-c")) {
-      if (!first_minc) {
-        skipping_minc = true;
-        continue;
-      }
-      first_minc = false;
-    }
-    // Exclude --embed/--headless/-c <cmd> from `argv`, as the client may start the server in a
-    // different way than how the server was originally started.
-    // Eg: 'nvim -c foo -c bar --embed --headless -- example.txt' would be parsed as { 'nvim', '-c', 'foo', '--', 'example.txt' }.
-    if (argv.size == 0 || had_minmin
-        || (!strequal(arg, "--embed") && !strequal(arg, "--headless") && !skipping_minc)) {
-      ADD_C(argv, CSTR_AS_OBJ(arg));
-    }
-    skipping_minc = false;
+    ADD_C(argv, CSTR_AS_OBJ(arg));
   });
   ADD_C(args, ARRAY_OBJ(argv));
 

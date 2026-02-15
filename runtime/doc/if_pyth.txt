@@ -168,8 +168,10 @@ vim.eval(str)						*python-eval*
 	Evaluates the expression str using the vim internal expression
 	evaluator (see |expression|).  Returns the expression result as:
 	- a string if the Vim expression evaluates to a string or number
-	- a list if the Vim expression evaluates to a Vim list
-	- a dictionary if the Vim expression evaluates to a Vim dictionary
+	- a list if the Vim expression evaluates to a Vim |list|
+	- a dictionary if the Vim expression evaluates to a Vim |dict|
+	- a boolean if Vim exression evaluates to |v:true| or |v:false|
+	- `None` if Vim expression evaluates to |v:null|
 	Dictionaries and lists are recursively expanded.
 	Examples: >vim
 	    :py text_width = vim.eval("&tw")
@@ -314,7 +316,7 @@ the list of paths found in 'runtimepath': with this directory in sys.path and
 vim.path_hooks in sys.path_hooks python will try to load module from
 {rtp}/python3 and {rtp}/pythonx for each {rtp} found in 'runtimepath'.
 
-Implementation is similar to the following, but written in C: >python
+Implementation is similar to the following: >python
 
     from imp import find_module, load_module
     import vim

@@ -239,6 +239,13 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
+void pty_proc_resume(PtyProc *ptyproc)
+{
+  // Send SIGCONT to the entire process group, as some shells (e.g. fish) don't
+  // propagate SIGCONT to suspended child processes.
+  killpg(((Proc *)ptyproc)->pid, SIGCONT);
+}
+
 void pty_proc_close(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -263,7 +270,7 @@ void pty_proc_teardown(Loop *loop)
 }
 
 static void init_child(PtyProc *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NORETURN
 {
 #if defined(HAVE__NSGETENVIRON)
 # define environ (*_NSGetEnviron())
@@ -281,9 +288,11 @@ static void init_child(PtyProc *ptyproc)
   signal(SIGALRM, SIG_DFL);
 
   Proc *proc = (Proc *)ptyproc;
-  if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    ELOG("chdir(%s) failed: %s", proc->cwd, strerror(errno));
-    return;
+  int err = 0;
+  // Don't use os_chdir() as that may buffer UI events unnecessarily.
+  if (proc->cwd && (err = uv_chdir(proc->cwd)) != 0) {
+    ELOG("chdir(%s) failed: %s", proc->cwd, uv_strerror(err));
+    _exit(122);
   }
 
   const char *prog = proc_get_exepath(proc);
@@ -395,10 +404,19 @@ static void chld_handler(uv_signal_t *handle, int signum)
   for (size_t i = 0; i < kv_size(loop->children); i++) {
     Proc *proc = kv_A(loop->children, i);
     do {
-      pid = waitpid(proc->pid, &stat, WNOHANG);
+      pid = waitpid(proc->pid, &stat, WNOHANG|WUNTRACED|WCONTINUED);
     } while (pid < 0 && errno == EINTR);
 
     if (pid <= 0) {
+      continue;
+    }
+
+    if (WIFSTOPPED(stat)) {
+      proc->state_cb(proc, true, proc->data);
+      continue;
+    }
+    if (WIFCONTINUED(stat)) {
+      proc->state_cb(proc, false, proc->data);
       continue;
     }
 

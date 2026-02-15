@@ -4758,6 +4758,7 @@ static void ex_colorscheme(exarg_T *eap)
     emsg_off--;
     xfree(expr);
 
+    msg_ext_set_kind("list_cmd");
     if (p != NULL) {
       msg(p, 0);
       xfree(p);
@@ -4939,27 +4940,46 @@ static void ex_quitall(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and add -c <command> to the new server.
 static void ex_restart(exarg_T *eap)
 {
-  // Patch v:argv to include "-c <arg>" when it restarts.
-  if (eap->arg != NULL) {
-    const list_T *l = get_vim_var_list(VV_ARGV);
-    int argc = tv_list_len(l);
-    list_T *argv_cpy = tv_list_alloc(argc + 2);
-    bool added_startup_arg = false;
-    TV_LIST_ITER_CONST(l, li, {
-      const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
-      size_t arg_size = strlen(arg);
-      assert(arg_size <= (size_t)SSIZE_MAX);
-      tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
-      if (!added_startup_arg) {
-        tv_list_append_string(argv_cpy, "-c", 2);
-        size_t cmd_size = strlen(eap->arg);
-        assert(cmd_size <= (size_t)SSIZE_MAX);
-        tv_list_append_string(argv_cpy, eap->arg, (ssize_t)cmd_size);
-        added_startup_arg = true;
+  const list_T *l = get_vim_var_list(VV_ARGV);
+  int argc = tv_list_len(l);
+  list_T *argv_cpy = tv_list_alloc(eap->arg ? argc + 2 : argc);
+
+  // Copy v:argv, skipping unwanted items.
+  for (listitem_T *li = l != NULL ? l->lv_first : NULL; li != NULL; li = li->li_next) {
+    const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
+    size_t arg_size = strlen(arg);
+    assert(arg_size <= (size_t)SSIZE_MAX);
+
+    if (strequal(arg, "--embed") || strequal(arg, "--headless")) {
+      continue;  // Drop --embed/--headless: the client decides how to start+attach the server.
+    } else if (strequal(arg, "-")) {
+      continue;  // Drop stdin ("-") argument.
+    } else if (strequal(arg, "+:::")) {
+      // The special placeholder "+:::" marks a previous :restart command.
+      // Drop the `"+:::", "-c", "…"` triplet, to avoid "stacking" commands from previous :restart(s).
+      listitem_T *next1 = li->li_next;
+      if (next1 != NULL && strequal(tv_get_string(TV_LIST_ITEM_TV(next1)), "-c")) {
+        listitem_T *next2 = next1->li_next;
+        if (next2 != NULL) {
+          li = next2;
+          continue;
+        }
       }
-    });
-    set_vim_var_list(VV_ARGV, argv_cpy);
+      continue;  // If the triplet is incomplete, just skip "+:::"
+    } else if (strequal(arg, "--")) {
+      break;  // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
+    }
+
+    tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
   }
+  // Append `"+:::", "-c", "<command>"` to end of v:argv.
+  // The "+:::" item is a no-op placeholder to mark the :restart "<command>".
+  if (eap->arg && eap->arg[0] != '\0') {
+    tv_list_append_string(argv_cpy, S_LEN("+:::"));
+    tv_list_append_string(argv_cpy, S_LEN("-c"));
+    tv_list_append_string(argv_cpy, eap->arg, (ssize_t)strlen(eap->arg));
+  }
+  set_vim_var_list(VV_ARGV, argv_cpy);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
@@ -5696,6 +5716,7 @@ static void ex_tabs(exarg_T *eap)
 {
   int tabcount = 1;
 
+  msg_ext_set_kind("list_cmd");
   msg_start();
   msg_scroll = true;
 
@@ -5708,7 +5729,9 @@ static void ex_tabs(exarg_T *eap)
       break;
     }
 
-    msg_putchar('\n');
+    if (msg_col > 0) {
+      msg_putchar('\n');
+    }
     vim_snprintf(IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans(IObuff, HLF_T, false);
     os_breakcheck();
@@ -5924,6 +5947,9 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                         || eap->cmdidx == CMD_view)) {
     exmode_active = false;
     ex_pressedreturn = false;
+    if (ui_has(kUICmdline)) {
+      ui_ext_cmdline_block_leave();
+    }
     if (*eap->arg == NUL) {
       // Special case:  ":global/pat/visual\NLvi-commands"
       if (global_busy) {

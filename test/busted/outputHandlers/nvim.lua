@@ -106,6 +106,19 @@ return function(options)
   local failureCount = 0
   local errorCount = 0
 
+  local naCheck = function(pending)
+    if vim.list_contains(vim.split(pending.name, '[ :]'), 'N/A') then
+      return true
+    end
+    if type(pending.message) ~= 'string' then
+      return false
+    end
+    if vim.list_contains(vim.split(pending.message, '[ :]'), 'N/A') then
+      return true
+    end
+    return false
+  end
+
   local pendingDescription = function(pending)
     local string = ''
 
@@ -156,10 +169,21 @@ return function(options)
 
       local testString = summaryStrings[status].test
       if testString then
+        local naCount = 0
         for _, t in ipairs(list) do
-          local fullname = getFileLine(t.element) .. colors.bright(t.name)
-          string = string .. testString:format(fullname)
-          string = string .. getDescription(t)
+          if status == 'skipped' and naCheck(t) then
+            naCount = naCount + 1
+          else
+            local fullname = getFileLine(t.element) .. colors.bright(t.name)
+            string = string .. testString:format(fullname)
+            string = string .. getDescription(t)
+          end
+        end
+        if naCount > 0 then
+          string = string
+            .. colors.bright(
+              ('%d N/A %s not shown\n'):format(naCount, naCount == 1 and 'test' or 'tests')
+            )
         end
       end
     end

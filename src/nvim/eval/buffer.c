@@ -11,12 +11,15 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
+#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memline.h"
@@ -25,6 +28,7 @@
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
@@ -703,4 +707,108 @@ void restore_buffer(bufref_T *save_curbuf)
     curbuf = save_curbuf->br_buf;
     curbuf->b_nwindows++;
   }
+}
+
+/// "prompt_setcallback({buffer}, {callback})" function
+void f_prompt_setcallback(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  Callback prompt_callback = CALLBACK_INIT;
+
+  if (check_secure()) {
+    return;
+  }
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+    if (!callback_from_typval(&prompt_callback, &argvars[1])) {
+      return;
+    }
+  }
+
+  callback_free(&buf->b_prompt_callback);
+  buf->b_prompt_callback = prompt_callback;
+}
+
+/// "prompt_setinterrupt({buffer}, {callback})" function
+void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  Callback interrupt_callback = CALLBACK_INIT;
+
+  if (check_secure()) {
+    return;
+  }
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+    if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
+      return;
+    }
+  }
+
+  callback_free(&buf->b_prompt_interrupt);
+  buf->b_prompt_interrupt = interrupt_callback;
+}
+
+/// "prompt_setprompt({buffer}, {text})" function
+void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (check_secure()) {
+    return;
+  }
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  const char *new_prompt = tv_get_string(&argvars[1]);
+  int new_prompt_len = (int)strlen(new_prompt);
+
+  // Update the prompt-text and prompt-marks if a plugin calls prompt_setprompt()
+  // even while user is editing their input.
+  if (bt_prompt(buf)) {
+    // In case the mark is set to a nonexistent line.
+    buf->b_prompt_start.mark.lnum = MIN(buf->b_prompt_start.mark.lnum, buf->b_ml.ml_line_count);
+
+    linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
+    char *old_prompt = buf_prompt_text(buf);
+    char *old_line = ml_get_buf(buf, prompt_lno);
+    colnr_T old_line_len = ml_get_buf_len(buf, prompt_lno);
+
+    int old_prompt_len = (int)strlen(old_prompt);
+    colnr_T cursor_col = curwin->w_cursor.col;
+
+    if (buf->b_prompt_start.mark.col < old_prompt_len
+        || buf->b_prompt_start.mark.col > old_line_len
+        || !strnequal(old_prompt, old_line + buf->b_prompt_start.mark.col - old_prompt_len,
+                      (size_t)old_prompt_len)) {
+      // If for some odd reason the old prompt is missing,
+      // replace prompt line with new-prompt (discards user-input).
+      ml_replace_buf(buf, prompt_lno, (char *)new_prompt, true, false);
+      cursor_col = new_prompt_len;
+    } else {
+      // Replace prev-prompt + user-input with new-prompt + user-input
+      char *new_line = concat_str(new_prompt, old_line + buf->b_prompt_start.mark.col);
+      if (ml_replace_buf(buf, prompt_lno, new_line, false, false) != OK) {
+        xfree(new_line);
+      }
+      cursor_col += new_prompt_len - old_prompt_len;
+    }
+
+    if (curwin->w_buffer == buf && curwin->w_cursor.lnum == prompt_lno) {
+      coladvance(curwin, cursor_col);
+    }
+    changed_lines_redraw_buf(buf, prompt_lno, prompt_lno + 1, 0);
+    redraw_buf_later(buf, UPD_INVERTED);
+  }
+
+  // Clear old prompt text and replace with the new one
+  xfree(buf->b_prompt_text);
+  buf->b_prompt_text = xstrdup(new_prompt);
+  buf->b_prompt_start.mark.col = (colnr_T)new_prompt_len;
 }

@@ -21,7 +21,7 @@ describe('channels', function()
     function! Normalize(data) abort
       " Windows: remove ^M
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
+        \ ? mapnew(a:data, 'substitute(v:val, "\r", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
@@ -480,7 +480,28 @@ describe('channels', function()
     it('in "tcp" mode', function()
       eq(
         'Vim:connection failed: connection refused',
-        pcall_err(fn.sockconnect, 'pipe', '127.0.0.1:0')
+        pcall_err(fn.sockconnect, 'tcp', '127.0.0.1:0')
+      )
+    end)
+
+    it('with another connection accepted while polling #37807', function()
+      local server = api.nvim_get_vvar('servername')
+      local invalid_pipe = n.new_pipename()
+      exec_lua(function()
+        vim.defer_fn(function()
+          vim.uv.sleep(50) -- Block the uv event loop.
+          vim.fn.sockconnect('pipe', invalid_pipe)
+        end, 10)
+      end)
+      vim.uv.sleep(20)
+      -- The server uv event loop is currently blocked, so the connection will
+      -- be accepted when sockconnect() polls.
+      local other_session = n.connect(server)
+      eq({ true, { 1000 } }, { other_session:request('nvim_list_wins') })
+      other_session:close()
+      matches(
+        '^vim.schedule callback: Vim:connection failed: connection refused\n',
+        api.nvim_get_vvar('errmsg')
       )
     end)
   end)

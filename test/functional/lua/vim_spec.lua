@@ -1786,6 +1786,24 @@ describe('lua stdlib', function()
     eq(true, exec_lua [[return vim.g.test]])
   end)
 
+  it('nested vim.defer_fn does not leak handles on exit #19727', function()
+    n.expect_exit(exec_lua, function()
+      vim.defer_fn(function()
+        vim.defer_fn(function()
+          vim.defer_fn(function() end, 0)
+        end, 0)
+      end, 0)
+      vim.cmd('qall')
+    end)
+  end)
+
+  it('vim.defer_fn with timeout does not leak handles on exit', function()
+    n.expect_exit(exec_lua, function()
+      vim.defer_fn(function() end, 50)
+      vim.cmd('qall')
+    end)
+  end)
+
   describe('vim.region', function()
     it('charwise', function()
       insert(dedent([[
@@ -2359,6 +2377,15 @@ stack traceback:
         return vim.g.wait_count < 5
       ]]
       )
+    end)
+
+    it('does not leak when Nvim exits while waiting', function()
+      n.expect_exit(500, exec_lua, function()
+        vim.defer_fn(function()
+          vim.cmd('qall!')
+        end, 10)
+        vim.wait(10000)
+      end)
     end)
 
     it('plays nice with `not` when fails', function()

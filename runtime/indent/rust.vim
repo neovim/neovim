@@ -5,6 +5,7 @@
 " 2024 Jul 04 by Vim Project: use shiftwidth() instead of hard-coding shifted values #15138
 " 2025 Dec 29 by Vim Project: clean up
 " 2025 Dec 31 by Vim Project: correcly indent after nested array literal #19042
+" 2026 Jan 28 by Vim Project: fix indentation when a string literal contains 'if' #19265
 
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 " Note: upstream seems umaintained: https://github.com/rust-lang/rust.vim/issues/502
@@ -139,9 +140,24 @@ function GetRustIndent(lnum)
     let l:standalone_close = line =~# '\V\^\s\*}\s\*\$'
     let l:standalone_where = line =~# '\V\^\s\*where\s\*\$'
     if l:standalone_open || l:standalone_close || l:standalone_where
-        " ToDo: we can search for more items than 'fn' and 'if'.
-        let [l:found_line, l:col, l:submatch] =
-                    \ searchpos('\<\(fn\)\|\(if\)\>', 'bnWp')
+        let l:orig_line = line('.')
+        let l:orig_col = col('.')
+        let l:i = 0
+        while 1
+            " ToDo: we can search for more items than 'fn' and 'if'.
+            let [l:found_line, l:col, l:submatch] =
+                        \ searchpos('\<\(fn\|if\)\>', 'bWp')
+            if l:found_line ==# 0 || !s:is_string_comment(l:found_line, l:col)
+                break
+            endif
+            let l:i += 1
+            " Limit to 10 iterations as a failsafe against endless looping.
+            if l:i >= 10
+                let l:found_line = 0
+                break
+            endif
+        endwhile
+        call cursor(l:orig_line, l:orig_col)
         if l:found_line !=# 0
             " Now we count the number of '{' and '}' in between the match
             " locations and the current line (there is probably a better

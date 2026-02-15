@@ -1981,15 +1981,17 @@ static void exe_commands(mparm_T *parmp)
 ///
 /// Does one of the following things, stops after whichever succeeds:
 ///
-/// 1. Source system vimrc file from $XDG_CONFIG_DIRS/nvim/sysinit.vim
+/// 1. Source system vimrc file from $XDG_CONFIG_DIRS/$NVIM_APPNAME/sysinit.vim
 /// 2. Source system vimrc file from $VIM
 static void do_system_initialization(void)
 {
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
     const void *iter = NULL;
-    const char path_tail[] = {
-      'n', 'v', 'i', 'm', PATHSEP,
+    const char *appname = get_appname(false);
+    size_t appname_len = strlen(appname);
+    const char sysinit_suffix[] = {
+      PATHSEP,
       's', 'y', 's', 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL
     };
     do {
@@ -1999,13 +2001,15 @@ static void do_system_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      size_t path_len = dir_len + 1 + appname_len + sizeof(sysinit_suffix);
+      char *vimrc = xmalloc(path_len);
       memcpy(vimrc, dir, dir_len);
       if (vimrc[dir_len - 1] != PATHSEP) {
         vimrc[dir_len] = PATHSEP;
         dir_len += 1;
       }
-      memcpy(vimrc + dir_len, path_tail, sizeof(path_tail));
+      memcpy(vimrc + dir_len, appname, appname_len);
+      memcpy(vimrc + dir_len + appname_len, sysinit_suffix, sizeof(sysinit_suffix));
       if (do_source(vimrc, false, DOSO_NONE, NULL) != FAIL) {
         xfree(vimrc);
         xfree(config_dirs);
@@ -2027,8 +2031,8 @@ static void do_system_initialization(void)
 /// Does one of the following things, stops after whichever succeeds:
 ///
 /// 1. Execution of VIMINIT environment variable.
-/// 2. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
-/// 3. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
+/// 2. Sourcing user config file ($XDG_CONFIG_HOME/$NVIM_APPNAME/init.lua or init.vim).
+/// 3. Sourcing other config files ($XDG_CONFIG_DIRS[1]/$NVIM_APPNAME/init.lua or init.vim, …).
 /// 4. Execution of EXINIT environment variable.
 ///
 /// @return True if it is needed to attempt to source exrc file according to
@@ -2049,8 +2053,7 @@ static bool do_user_initialization(void)
   if (os_path_exists(init_lua_path)
       && do_source(init_lua_path, true, DOSO_VIMRC, NULL)) {
     if (os_path_exists(user_vimrc)) {
-      semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
-            user_vimrc);
+      semsg(e_conflicting_configs, init_lua_path, user_vimrc);
     }
 
     xfree(user_vimrc);
@@ -2073,6 +2076,9 @@ static bool do_user_initialization(void)
 
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
+    const char *appname = get_appname(false);
+    size_t appname_len = strlen(appname);
+
     const void *iter = NULL;
     do {
       const char *dir;
@@ -2081,22 +2087,49 @@ static bool do_user_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      const char path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
-                                 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
-      memmove(vimrc, dir, dir_len);
-      vimrc[dir_len] = PATHSEP;
-      memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
-      if (do_source(vimrc, true, DOSO_VIMRC, NULL) != FAIL) {
+
+      // Build: <xdg_dir>/<appname>/init.lua
+      const char init_lua_suffix[] = { PATHSEP, 'i', 'n', 'i', 't', '.', 'l', 'u', 'a', NUL };
+      size_t init_lua_len = dir_len + 1 + appname_len + sizeof(init_lua_suffix);
+      char *init_lua = xmalloc(init_lua_len);
+      memcpy(init_lua, dir, dir_len);
+      init_lua[dir_len] = PATHSEP;
+      memcpy(init_lua + dir_len + 1, appname, appname_len);
+      memcpy(init_lua + dir_len + 1 + appname_len, init_lua_suffix, sizeof(init_lua_suffix));
+
+      // Build: <xdg_dir>/<appname>/init.vim
+      const char init_vim_suffix[] = { PATHSEP, 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
+      size_t init_vim_len = dir_len + 1 + appname_len + sizeof(init_vim_suffix);
+      char *init_vim = xmalloc(init_vim_len);
+      memcpy(init_vim, dir, dir_len);
+      init_vim[dir_len] = PATHSEP;
+      memcpy(init_vim + dir_len + 1, appname, appname_len);
+      memcpy(init_vim + dir_len + 1 + appname_len, init_vim_suffix, sizeof(init_vim_suffix));
+
+      if (os_path_exists(init_lua)
+          && do_source(init_lua, true, DOSO_VIMRC, NULL)) {
+        if (os_path_exists(init_vim)) {
+          semsg(e_conflicting_configs, init_lua, init_vim);
+        }
+
+        xfree(init_vim);
+        xfree(init_lua);
+        xfree(config_dirs);
+        do_exrc = p_exrc;
+        return do_exrc;
+      }
+      xfree(init_lua);
+
+      if (do_source(init_vim, true, DOSO_VIMRC, NULL) != FAIL) {
         do_exrc = p_exrc;
         if (do_exrc) {
-          do_exrc = (path_full_compare(VIMRC_FILE, vimrc, false, true) != kEqualFiles);
+          do_exrc = (path_full_compare(VIMRC_FILE, init_vim, false, true) != kEqualFiles);
         }
-        xfree(vimrc);
+        xfree(init_vim);
         xfree(config_dirs);
         return do_exrc;
       }
-      xfree(vimrc);
+      xfree(init_vim);
     } while (iter != NULL);
     xfree(config_dirs);
   }

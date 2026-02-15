@@ -105,7 +105,7 @@ static int autocmd_blocked = 0;  // block all autocmds
 static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
 
-static char *old_termresponse = NULL;
+static bool termresponse_changed = false;
 
 // Map of autocmd group names and ids.
 //  name -> ID
@@ -245,7 +245,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
           return;
         }
 
-        msg_col = 4;
+        msg_advance(4);
         msg_outtrans(ac->pat->pat, 0, false);
       }
 
@@ -256,7 +256,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       if (msg_col >= 14) {
         msg_putchar('\n');
       }
-      msg_col = 14;
+      msg_advance(14);
       if (got_int) {
         return;
       }
@@ -2033,13 +2033,22 @@ BYPASS_AU:
   return retval;
 }
 
+void do_termresponse_autocmd(const String sequence)
+{
+  MAXSIZE_TEMP_DICT(data, 1);
+  PUT_C(data, "sequence", STRING_OBJ(sequence));
+  apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
+                       &DICT_OBJ(data));
+  termresponse_changed = true;
+}
+
 // Block triggering autocommands until unblock_autocmd() is called.
 // Can be used recursively, so long as it's symmetric.
 void block_autocmds(void)
 {
-  // Remember the value of v:termresponse.
+  // Detect if v:termresponse is set while blocked.
   if (!is_autocmd_blocked()) {
-    old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
+    termresponse_changed = false;
   }
   autocmd_blocked++;
 }
@@ -2051,8 +2060,11 @@ void unblock_autocmds(void)
   // When v:termresponse was set while autocommands were blocked, trigger
   // the autocommands now.  Esp. useful when executing a shell command
   // during startup (nvim -d).
-  if (!is_autocmd_blocked() && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse) {
-    apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, false, curbuf);
+  if (!is_autocmd_blocked() && termresponse_changed && has_event(EVENT_TERMRESPONSE)) {
+    // Copied to a new allocation, as termresponse may be freed during the event.
+    const String sequence = cstr_to_string(get_vim_var_str(VV_TERMRESPONSE));
+    do_termresponse_autocmd(sequence);
+    api_free_string(sequence);
   }
 }
 

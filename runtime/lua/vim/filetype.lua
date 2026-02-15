@@ -296,6 +296,7 @@ local extension = {
   cdl = 'cdl',
   toc = detect_line1('\\contentsline', 'tex', 'cdrtoc'),
   cedar = 'cedar',
+  cel = 'cel',
   cfc = 'cf',
   cfm = 'cf',
   cfi = 'cf',
@@ -2863,15 +2864,6 @@ local function normalize_path(path, as_pattern)
   return normal
 end
 
-local abspath = function(x)
-  return fn.fnamemodify(x, ':p')
-end
-if fn.has('win32') == 1 then
-  abspath = function(x)
-    return (fn.fnamemodify(x, ':p'):gsub('\\', '/'))
-  end
-end
-
 --- @class vim.filetype.add.filetypes
 --- @inlinedoc
 --- @field pattern? vim.filetype.mapping
@@ -3178,7 +3170,7 @@ function M.match(args)
   if name then
     name = normalize_path(name)
 
-    local path = abspath(name)
+    local path = vim.fs.abspath(name)
     do -- First check for the simple case where the full path exists as a key
       local ft, on_detect = dispatch(filename[path], path, bufnr)
       if ft then
@@ -3186,7 +3178,7 @@ function M.match(args)
       end
     end
 
-    local tail = fn.fnamemodify(name, ':t')
+    local tail = vim.fs.basename(name)
 
     do -- Next check against just the file name
       local ft, on_detect = dispatch(filename[tail], path, bufnr)

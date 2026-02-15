@@ -1181,15 +1181,22 @@ list of buffers. |unlisted-buffer|
 :bd[elete][!] [N]
 		Unload buffer [N] (default: current buffer) and delete it from
 		the buffer list.  If the buffer was changed, this fails,
-		unless when [!] is specified, in which case changes are lost.
+		unless [!] is specified, in which case changes are lost.
 		The file remains unaffected.  Any windows for this buffer are
 		closed.  If buffer [N] is the current buffer, another buffer
 		will be displayed instead.  This is the most recent entry in
 		the jump list that points into a loaded buffer.
+
 		Actually, the buffer isn't completely deleted, it is removed
 		from the buffer list |unlisted-buffer| and option values,
 		variables and mappings/abbreviations for the buffer are
-		cleared.  Examples: >
+		cleared.  If [N] is the last listed buffer in a window (i.e.,
+		there is no other listed buffer to switch to), the buffer is
+		emptied instead of being unloaded.  The window is not closed,
+		and the buffer may be reused as a new buffer |buffer-reuse|.
+		This ensures every window always has a valid buffer.
+
+		Examples: >
 		    :.,$-bdelete    " delete buffers from the current one to
 				    " last but one
 		    :%bdelete	    " delete all buffers

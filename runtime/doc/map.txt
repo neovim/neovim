@@ -1414,7 +1414,9 @@ completion can be enabled:
 	-complete=scriptnames	sourced script names
 	-complete=shellcmd	Shell command
 	-complete=shellcmdline	First is a shell command and subsequent ones
-				are filenames.  The same behavior as |:!cmd|
+				are filenames.  The same behavior as |:!cmd|.
+				To get correct completion, |:command-nargs|
+				should be '*' or '+'
 	-complete=sign		|:sign| suboptions
 	-complete=syntax	syntax file names 'syntax'
 	-complete=syntime	|:syntime| suboptions
@@ -1450,7 +1452,8 @@ candidates as a Vim List.  Non-string items in the list are ignored.
 
 The function arguments are:
 	ArgLead		the leading portion of the argument currently being
-			completed on
+			completed on; note that this only captures the current
+			space-separated word, even when using "-nargs=1"
 	CmdLine		the entire command line
 	CursorPos	the cursor position in it (byte index)
 The function may use these for determining context.  For the "custom"
@@ -1578,7 +1581,7 @@ supports incremental command preview:
 	        preview_ns,
 	        'Substitute',
 	        {line1 + i - 2, start_idx - 1},
-	        {line1 + i - 2, end_idx},
+	        {line1 + i - 2, end_idx}
 	      )
 
 	      -- Add lines and set highlights in the preview buffer
@@ -1598,7 +1601,7 @@ supports incremental command preview:
 	          preview_ns,
 	          'Substitute',
 	          {preview_buf_line, #prefix + start_idx - 1},
-	          {preview_buf_line, #prefix + end_idx},
+	          {preview_buf_line, #prefix + end_idx}
 	        )
 	        preview_buf_line = preview_buf_line + 1
 	      end

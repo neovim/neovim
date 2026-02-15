@@ -1730,12 +1730,6 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
     p = wp->w_p_winhl;
   }
 
-  if (wp != NULL && wp->w_ns_hl_winhl < 0) {
-    // 'winhighlight' shouldn't be used for this window.
-    // Only check that the value is valid.
-    wp = NULL;
-  }
-
   if (!*p) {
     if (wp != NULL && wp->w_ns_hl_winhl > 0 && wp->w_ns_hl == wp->w_ns_hl_winhl) {
       wp->w_ns_hl = 0;
@@ -1754,8 +1748,10 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
       DecorProvider *dp = get_decor_provider(wp->w_ns_hl_winhl, true);
       dp->hl_valid++;
     }
-    wp->w_ns_hl = wp->w_ns_hl_winhl;
-    ns_hl = wp->w_ns_hl;
+    ns_hl = wp->w_ns_hl_winhl;
+    if (wp->w_ns_hl <= 0) {
+      wp->w_ns_hl = wp->w_ns_hl_winhl;
+    }
   }
 
   while (*p) {
@@ -4089,7 +4085,7 @@ static void showoptions(bool all, int opt_flags)
       }
       int col = 0;
       for (int i = row; i < item_count; i += rows) {
-        msg_col = col;                          // make columns
+        msg_advance(col);                       // make columns
         showoneopt(items[i], opt_flags);
         col += INC;
       }
@@ -4160,7 +4156,9 @@ static void showoneopt(vimoption_T *opt, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(opt, opt_flags);
-    msg_outtrans(NameBuff, 0, false);
+    if (*NameBuff != NUL) {
+      msg_outtrans(NameBuff, 0, false);
+    }
   }
 
   silent_mode = save_silent;

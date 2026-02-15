@@ -347,8 +347,9 @@ local options = {
       abbreviation = 'awa',
       defaults = false,
       desc = [=[
-        Like 'autowrite', but also used for commands ":edit", ":enew", ":quit",
-        ":qall", ":exit", ":xit", ":recover" and closing the Vim window.
+        Like 'autowrite', but also used for commands ":edit", ":enew",
+        ":quit", ":qall", ":exit", ":xit", ":recover" and closing the Vim
+        window.
         Setting this option also implies that Vim behaves like 'autowrite' has
         been set.
       ]=],
@@ -1906,8 +1907,9 @@ local options = {
         		This makes "y0" fail in the first column.
         							*cpo-f*
         	f	When included, a ":read" command with a file name
-        		argument will set the file name for the current buffer,
-        		if the current buffer doesn't have a file name yet.
+        		argument will set the file name for the current
+        		buffer, if the current buffer doesn't have a file name
+        		yet.
         							*cpo-F*
         	F	When included, a ":write" command with a file name
         		argument will set the file name for the current
@@ -2422,8 +2424,8 @@ local options = {
         	hiddenoff	Do not use diff mode for a buffer when it
         			becomes hidden.
 
-        	iblank		Ignore changes where lines are all blank.  Adds
-        			the "-B" flag to the "diff" command if
+        	iblank		Ignore changes where lines are all blank.
+        			Adds the "-B" flag to the "diff" command if
         			'diffexpr' is empty.  Check the documentation
         			of the "diff" command for what this does
         			exactly.
@@ -3099,9 +3101,9 @@ local options = {
           edit a file, a check is done for the <EOL>:
           1. If all lines end in <CR><NL>, and 'fileformats' includes "dos",
              'fileformat' is set to "dos".
-          2. If a <NL> is found and 'fileformats' includes "unix", 'fileformat'
-             is set to "unix".  Note that when a <NL> is found without a
-             preceding <CR>, "unix" is preferred over "dos".
+          2. If a <NL> is found and 'fileformats' includes "unix",
+             'fileformat' is set to "unix".  Note that when a <NL> is found
+             without a preceding <CR>, "unix" is preferred over "dos".
           3. If 'fileformat' has not yet been set, and if a <CR> is found, and
              if 'fileformats' includes "mac", 'fileformat' is set to "mac".
              This means that "mac" is only chosen when:
@@ -4893,7 +4895,13 @@ local options = {
         "w", "*", "[i", etc.  It is also used for "\k" in a |pattern|.  See
         'isfname' for a description of the format of this option.  For '@'
         characters above 255 check the "word" character class (any character
-        that is not white space or punctuation).
+        that is categorized as a letter, number or emoji according to the
+        Unicode general category).
+
+        Note that there is a difference between the "\k" character class and
+        the |word| motion.  The former matches any word character, while the
+        latter stops at a change of the character class.
+
         For C programs you could use "a-z,A-Z,48-57,_,.,-,>".
         For a help file it is set to all non-blank printable characters except
         "*", '"' and '|' (so that CTRL-] on a command finds the help for that
@@ -5548,8 +5556,8 @@ local options = {
       cb = 'did_set_encoding',
       defaults = '',
       desc = [=[
-        Encoding used for reading the output of external commands.  When empty,
-        encoding is not converted.
+        Encoding used for reading the output of external commands.  When
+        empty, encoding is not converted.
         This is used for `:make`, `:lmake`, `:grep`, `:lgrep`, `:grepadd`,
         `:lgrepadd`, `:cfile`, `:cgetfile`, `:caddfile`, `:lfile`, `:lgetfile`,
         and `:laddfile`.
@@ -7445,12 +7453,7 @@ local options = {
       abbreviation = 'sd',
       alias = { 'vi', 'viminfo' },
       cb = 'did_set_shada',
-      defaults = {
-        if_true = "!,'100,<50,s10,h",
-        doc = [[for
-               Win32:  !,'100,<50,s10,h,rA:,rB:
-               others: !,'100,<50,s10,h]],
-      },
+      defaults = "!,'100,<50,s10,h,r/tmp/,r/private/",
       deny_duplicates = true,
       desc = [=[
         When non-empty, the shada file is read upon startup and written
@@ -8912,9 +8915,10 @@ local options = {
               highlighting is used, also for the statusline of non-current
               windows.
         * -   Set highlight group to User{N}, where {N} is taken from the
-              minwid field, e.g. %1*.  Restore normal highlight with %* or %0*.
-              The difference between User{N} and StatusLine will be applied to
-              StatusLineNC for the statusline of non-current windows.
+              minwid field, e.g. %1*.  Restore normal highlight with %* or
+              %0*.  The difference between User{N} and StatusLine will be
+              applied to StatusLineNC for the statusline of non-current
+              windows.
               The number N must be between 1 and 9.  See |hl-User1..9|
 
         When displaying a flag, Vim removes the leading comma, if any, when
@@ -9841,9 +9845,9 @@ local options = {
       desc = [=[
         Maximum number of changes that can be undone.  Since undo information
         is kept in memory, higher numbers will cause more memory to be used.
-        Nevertheless, a single change can already use a large amount of memory.
-        Set to 0 for Vi compatibility: One level of undo and "u" undoes
-        itself: >vim
+        Nevertheless, a single change can already use a large amount of
+        memory.  Set to 0 for Vi compatibility: One level of undo and "u"
+        undoes itself: >vim
         	set ul=0
         <	But you can also get Vi compatibility by including the 'u' flag in
         'cpoptions', and still be able to use CTRL-R to repeat undo.
@@ -10240,10 +10244,11 @@ local options = {
       defaults = 0,
       desc = [=[
         'wildcharm' works exactly like 'wildchar', except that it is
-        recognized when used inside a macro.  You can find "spare" command-line
-        keys suitable for this option by looking at |ex-edit-index|.  Normally
-        you'll never actually type 'wildcharm', just use it in mappings that
-        automatically invoke completion mode, e.g.: >vim
+        recognized when used inside a macro.  You can find "spare"
+        command-line keys suitable for this option by looking at
+        |ex-edit-index|.  Normally you'll never actually type 'wildcharm',
+        just use it in mappings that automatically invoke completion mode,
+        e.g.: >vim
         	set wcm=<C-Z>
         	cnoremap ss so $vim/sessions/*.vim<C-Z>
         <	Then after typing :ss you can use CTRL-P & CTRL-N.

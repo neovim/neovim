@@ -48,10 +48,8 @@ describe(':source', function()
   end)
 
   it("changing 'shellslash' changes the result of expand()", function()
-    if not is_os('win') then
-      pending("'shellslash' only works on Windows")
-      return
-    end
+    t.skip(not is_os('win'), "N/A: 'shellslash' only works on Windows")
+
     api.nvim_set_option_value('shellslash', false, {})
     mkdir('Xshellslash')
 

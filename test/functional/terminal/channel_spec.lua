@@ -34,6 +34,16 @@ describe('terminal channel is closed and later released if', function()
     feed('<Ignore>') -- add input to separate two RPC requests
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
+
+    command('autocmd BufWipeout * ++once let id2 = nvim_open_term(str2nr(expand("<abuf>")), {})')
+    -- channel hasn't been released yet
+    eq(
+      "Vim(call):Can't send data to closed stream",
+      pcall_err(command, [[bdelete! | call chansend(id2, 'test')]])
+    )
+    feed('<Ignore>') -- add input to separate two RPC requests
+    -- channel has been released after one main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   it('opened by nvim_open_term(), closed by chanclose(), and deleted by pressing a key', function()
@@ -138,73 +148,140 @@ it('chansend sends lines to terminal channel in proper order', function()
   end
 end)
 
-describe('no crash when TermOpen autocommand', function()
-  local screen
+--- @param event string
+--- @param extra_tests fun(table, table)?
+local function test_autocmd_no_crash(event, extra_tests)
+  local env = {}
+  -- Use REPFAST for immediately output after start.
+  local term_args = { testprg('shell-test'), 'REPFAST', '50', 'TEST' }
 
   before_each(function()
     clear()
-    api.nvim_set_option_value('shell', testprg('shell-test'), {})
-    command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
-    screen = Screen.new(60, 4)
+    env.screen = Screen.new(60, 4)
+    command([[file Xoldbuf | call setline(1, 'OLDBUF') | enew]])
+    -- Wait before :bwipe to avoid closing PTY master before the child calls setsid(),
+    -- as that will cause SIGHUP to be also sent to the parent.
+    -- Use vim.uv.sleep() which blocks the event loop.
+    n.exec([[
+      func Wipe()
+        lua vim.uv.sleep(5)
+        bwipe!
+      endfunc
+    ]])
   end)
 
-  it('processes job exit event on jobstart(…,{term=true})', function()
-    command([[autocmd TermOpen * call input('')]])
-    async_meths.nvim_command('terminal foobar')
-    screen:expect([[
+  local input_prompt_screen = [[
+                                                                |
+    {1:~                                                           }|*2
+    ^                                                            |
+  ]]
+  local oldbuf_screen = [[
+    ^OLDBUF                                                      |
+    {1:~                                                           }|*2
+                                                                |
+  ]]
+
+  it('processes job exit event when using jobstart(…,{term=true})', function()
+    api.nvim_create_autocmd(event, { command = "call input('')" })
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
+    env.screen:expect(input_prompt_screen)
+    vim.uv.sleep(20)
+    feed('<CR>')
+    env.screen:expect([[
+      ^0: TEST                                                     |
+      1: TEST                                                     |
+      2: TEST                                                     |
                                                                   |
-      {1:~                                                           }|*2
-      ^                                                            |
+    ]])
+    feed('i')
+    env.screen:expect([[
+      49: TEST                                                    |
+                                                                  |
+      [Process exited 0]^                                          |
+      {5:-- TERMINAL --}                                              |
     ]])
     feed('<CR>')
-    screen:expect([[
-      ^ready $ foobar                                              |
-                                                                  |
-      [Process exited 0]                                          |
-                                                                  |
-    ]])
-    feed('i<CR>')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*2
-                                                                  |
-    ]])
+    env.screen:expect(oldbuf_screen)
     assert_alive()
   end)
 
   it('wipes buffer and processes events when using jobstart(…,{term=true})', function()
-    command([[autocmd TermOpen * bwipe! | call input('')]])
-    async_meths.nvim_command('terminal foobar')
-    screen:expect([[
-                                                                  |
-      {1:~                                                           }|*2
-      ^                                                            |
-    ]])
+    api.nvim_create_autocmd(event, { command = "call Wipe() | call input('')" })
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
+    env.screen:expect(input_prompt_screen)
+    vim.uv.sleep(20)
     feed('<CR>')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*2
-                                                                  |
-    ]])
+    env.screen:expect(oldbuf_screen)
     assert_alive()
+    eq('Xoldbuf', eval('bufname()'))
+    eq(0, eval([[exists('b:term_title')]]))
   end)
 
-  it('wipes buffer and processes events when using nvim_open_term()', function()
-    command([[autocmd TermOpen * bwipe! | call input('')]])
-    async_meths.nvim_open_term(0, {})
-    screen:expect([[
-                                                                  |
-      {1:~                                                           }|*2
-      ^                                                            |
-    ]])
+  it('processes :bwipe from TermClose when using jobstart(…,{term=true})', function()
+    local term_buf = api.nvim_get_current_buf()
+    api.nvim_create_autocmd('TermClose', { command = ('bwipe! %d'):format(term_buf) })
+    api.nvim_create_autocmd(event, { command = "call input('')", nested = true })
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
+    env.screen:expect(input_prompt_screen)
+    vim.uv.sleep(20)
     feed('<CR>')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*2
-                                                                  |
-    ]])
+    env.screen:expect(oldbuf_screen)
     assert_alive()
+    eq('Xoldbuf', eval('bufname()'))
+    eq(0, eval([[exists('b:term_title')]]))
   end)
+
+  it('only wipes buffer when using jobstart(…,{term=true})', function()
+    api.nvim_create_autocmd(event, { command = 'call Wipe()' })
+    async_meths.nvim_call_function('jobstart', { term_args, { term = true } })
+    env.screen:expect(oldbuf_screen)
+    assert_alive()
+    eq('Xoldbuf', eval('bufname()'))
+    eq(0, eval([[exists('b:term_title')]]))
+  end)
+
+  if extra_tests then
+    extra_tests(env, term_args)
+  end
+end
+
+describe('no crash when TermOpen autocommand', function()
+  test_autocmd_no_crash('TermOpen', function(env, term_args)
+    it('wipes buffer and processes events when using nvim_open_term()', function()
+      api.nvim_create_autocmd('TermOpen', { command = "call Wipe() | call input('')" })
+      async_meths.nvim_open_term(0, {})
+      env.screen:expect([[
+                                                                    |
+        {1:~                                                           }|*2
+        ^                                                            |
+      ]])
+      feed('<CR>')
+      env.screen:expect([[
+        ^OLDBUF                                                      |
+        {1:~                                                           }|*2
+                                                                    |
+      ]])
+      assert_alive()
+    end)
+
+    it('wipes buffer when using jobstart(…,{term=true}) during Nvim exit', function()
+      n.expect_exit(n.exec_lua, function()
+        vim.schedule(function()
+          vim.fn.jobstart(term_args, { term = true })
+        end)
+        vim.api.nvim_create_autocmd('TermOpen', { command = 'call Wipe()' })
+        vim.cmd('qall!')
+      end)
+    end)
+  end)
+end)
+
+describe('no crash when BufFilePre autocommand', function()
+  test_autocmd_no_crash('BufFilePre')
+end)
+
+describe('no crash when BufFilePost autocommand', function()
+  test_autocmd_no_crash('BufFilePost')
 end)
 
 describe('nvim_open_term', function()

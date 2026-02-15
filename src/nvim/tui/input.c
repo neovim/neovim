@@ -132,6 +132,9 @@ void tinput_init(TermInput *input, Loop *loop, TerminfoEntry *ti)
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
 
+  // setup input handle
+  rstream_init_fd(loop, &input->read_stream, input->in_fd);
+
   for (size_t i = 0; i < ARRAY_SIZE(kitty_key_map_entry); i++) {
     pmap_put(int)(&kitty_key_map, kitty_key_map_entry[i].key, (ptr_t)kitty_key_map_entry[i].name);
   }
@@ -144,9 +147,6 @@ void tinput_init(TermInput *input, Loop *loop, TerminfoEntry *ti)
 
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
-
-  // setup input handle
-  rstream_init_fd(loop, &input->read_stream, input->in_fd);
 
   // initialize a timer handle for handling ESC with libtermkey
   uv_timer_init(&loop->uv, &input->timer_handle);

@@ -94,7 +94,7 @@ function M.dirname(file)
   return dir
 end
 
---- Return the basename of the given path
+--- Gets the basename of the given path (not expanded/resolved).
 ---
 ---@since 10
 ---@generic T : string|nil
@@ -116,7 +116,7 @@ end
 
 --- Concatenates partial paths (one absolute or relative path followed by zero or more relative
 --- paths). Slashes are normalized: redundant slashes are removed, and (on Windows) backslashes are
---- replaced with forward-slashes.
+--- replaced with forward-slashes. Paths are not expanded/resolved.
 ---
 --- Examples:
 --- - "foo/", "/bar" => "foo/bar"
@@ -136,7 +136,7 @@ end
 --- @class vim.fs.dir.Opts
 --- @inlinedoc
 ---
---- How deep the traverse.
+--- How deep to traverse.
 --- (default: `1`)
 --- @field depth? integer
 ---
@@ -152,11 +152,10 @@ end
 
 ---@alias Iterator fun(): string?, string?
 
---- Return an iterator over the items located in {path}
+--- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
 ---
 ---@since 10
----@param path (string) An absolute or relative path to the directory to iterate
----            over. The path is first normalized |vim.fs.normalize()|.
+---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()|.
 ---@param opts? vim.fs.dir.Opts Optional keyword arguments:
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
@@ -214,25 +213,20 @@ end
 --- @class vim.fs.find.Opts
 --- @inlinedoc
 ---
---- Path to begin searching from. If
---- omitted, the |current-directory| is used.
+--- Path to begin searching from, defaults to |current-directory|. Not expanded.
 --- @field path? string
 ---
---- Search upward through parent directories.
---- Otherwise, search through child directories (recursively).
+--- Search upward through parent directories. Otherwise, search child directories (recursively).
 --- (default: `false`)
 --- @field upward? boolean
 ---
---- Stop searching when this directory is reached.
---- The directory itself is not searched.
+--- Stop searching when this directory is reached. The directory itself is not searched.
 --- @field stop? string
 ---
---- Find only items of the given type.
---- If omitted, all items that match {names} are included.
+--- Find only items of the given type. If omitted, all items that match {names} are included.
 --- @field type? string
 ---
---- Stop the search after finding this many matches.
---- Use `math.huge` to place no limit on the number of matches.
+--- Stop searching after this many matches. Use `math.huge` for "unlimited".
 --- (default: `1`)
 --- @field limit? number
 ---
@@ -416,7 +410,7 @@ end
 ---
 --- @since 12
 --- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
----               relative to the |current-directory|) to begin the search from.
+---               relative, expanded via `abspath()`) to begin the search from.
 --- @param marker (string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean
 ---               Filename, function, or list thereof, that decides how to find the root. To
 ---               indicate "equal priority", specify items in a nested list `{ { 'a.txt', 'b.lua' }, … }`.
@@ -727,20 +721,27 @@ end
 --- @class vim.fs.rm.Opts
 --- @inlinedoc
 ---
---- Remove directories and their contents recursively
+--- Remove directory contents recursively.
 --- @field recursive? boolean
 ---
---- Ignore nonexistent files and arguments
+--- Ignore nonexistent files and arguments.
 --- @field force? boolean
 
---- Remove files or directories
+--- Removes a file or directory.
+---
+--- Removes symlinks without touching the origin. To remove the origin, resolve it explicitly
+--- with |uv.fs_realpath()|:
+--- ```lua
+--- vim.fs.rm(vim.uv.fs_realpath('symlink-dir'), { recursive = true })
+--- ```
+---
 --- @since 13
---- @param path string Path to remove
+--- @param path string Path to remove (not expanded/resolved).
 --- @param opts? vim.fs.rm.Opts
 function M.rm(path, opts)
   opts = opts or {}
 
-  local stat, err, errnm = uv.fs_stat(path)
+  local stat, err, errnm = uv.fs_lstat(path)
   if stat then
     rm(path, stat.type, opts.recursive, opts.force)
   elseif not opts.force or errnm ~= 'ENOENT' then
@@ -748,11 +749,12 @@ function M.rm(path, opts)
   end
 end
 
---- Convert path to an absolute path. A tilde (~) character at the beginning of the path is expanded
+--- Converts `path` to an absolute path. Expands tilde (~) at the beginning of the path
 --- to the user's home directory. Does not check if the path exists, normalize the path, resolve
 --- symlinks or hardlinks (including `.` and `..`), or expand environment variables. If the path is
 --- already absolute, it is returned unchanged. Also converts `\` path separators to `/`.
 ---
+--- @since 13
 --- @param path string Path
 --- @return string Absolute path
 function M.abspath(path)
@@ -800,6 +802,7 @@ end
 --- vim.fs.relpath('/var', '/usr/bin') -- nil
 --- ```
 ---
+--- @since 13
 --- @param base string
 --- @param target string
 --- @param opts table? Reserved for future use
@@ -809,8 +812,8 @@ function M.relpath(base, target, opts)
   vim.validate('target', target, 'string')
   vim.validate('opts', opts, 'table', true)
 
-  base = vim.fs.normalize(vim.fs.abspath(base))
-  target = vim.fs.normalize(vim.fs.abspath(target))
+  base = M.normalize(M.abspath(base))
+  target = M.normalize(M.abspath(target))
   if base == target then
     return '.'
   end

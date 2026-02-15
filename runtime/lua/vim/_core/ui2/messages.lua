@@ -1,7 +1,8 @@
 local api, fn, o = vim.api, vim.fn, vim.o
-local ext = require('vim._extui.shared')
+local ui = require('vim._core.ui2')
 
----@class vim._extui.messages
+---@alias Msg { extid: integer, timer: uv.uv_timer_t? }
+---@class vim._core.ui2.messages
 local M = {
   -- Message window. Used for regular messages with 'cmdheight' == 0 or,
   -- cfg.msg.target == 'msg'. Automatically resizes to the text dimensions up to
@@ -9,21 +10,21 @@ local M = {
   -- A timer is started for each message whose callback will remove the message
   -- from the window again.
   msg = {
-    count = 0, -- Number of messages currently in the message window.
+    ids = {}, ---@type table<string|integer, Msg> List of visible messages.
     width = 1, -- Current width of the message window.
-    timer = nil, ---@type uv.uv_timer_t Timer that removes the most recent message.
   },
   -- Cmdline message window. Used for regular messages with 'cmdheight' > 0.
   -- Also contains 'ruler', 'showcmd' and search_cmd/count messages as virt_text.
   -- Messages that don't fit the 'cmdheight' are cut off and virt_text is added
   -- to indicate the number of spilled lines and repeated messages.
   cmd = {
-    count = 0, -- Number of messages currently in the message window.
+    ids = {}, ---@type table<string|integer, Msg> List of visible messages.
     msg_row = -1, -- Last row of message to distinguish for placing virt_text.
     last_col = o.columns, -- Crop text to start column of 'last' virt_text.
     last_emsg = 0, -- Time an error was printed that should not be overwritten.
   },
   dupe = 0, -- Number of times message is repeated.
+  prev_id = 0, ---@type string|integer Message id of the previous message.
   prev_msg = '', -- Concatenated content of the previous message.
   virt = { -- Stored virt_text state.
     last = { {}, {}, {}, {} }, ---@type MsgContent[] status in last cmdline row.
@@ -34,46 +35,65 @@ local M = {
     ids = {}, ---@type { ['last'|'msg'|'top'|'bot']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
-  on_dialog_key = 0, -- vim.on_key namespace for paging in the dialog window.
+  dialog_on_key = 0, -- vim.on_key namespace for paging in the dialog window.
 }
+
+local cmd_on_key ---@type integer? Set to vim.on_key namespace while cmdline is expanded.
+-- An external redraw indicates the start of a new batch of messages in the cmdline.
+api.nvim_set_decoration_provider(ui.ns, {
+  on_start = function()
+    M.cmd.ids = (ui.redrawing or cmd_on_key) and M.cmd.ids or {}
+  end,
+})
 
 function M.msg:close()
   self.width, M.virt.msg[M.virt.idx.dupe][1] = 1, nil
-  M.prev_msg = ext.cfg.msg.target == 'msg' and '' or M.prev_msg
-  api.nvim_buf_clear_namespace(ext.bufs.msg, -1, 0, -1)
-  if api.nvim_win_is_valid(ext.wins.msg) then
-    api.nvim_win_set_config(ext.wins.msg, { hide = true })
+  if api.nvim_win_is_valid(ui.wins.msg) then
+    api.nvim_win_set_config(ui.wins.msg, { hide = true })
   end
 end
 
 --- Start a timer whose callback will remove the message from the message window.
 ---
 ---@param buf integer Buffer the message was written to.
----@param len integer Number of rows that should be removed.
-function M.msg:start_timer(buf, len)
-  self.timer = vim.defer_fn(function()
-    if self.count == 0 or not api.nvim_buf_is_valid(buf) then
-      return -- Messages moved to pager or buffer was closed.
+---@param id integer|string Message ID.
+function M.msg:start_timer(buf, id)
+  if self.ids[id].timer then
+    self.ids[id].timer:stop()
+  end
+  self.ids[id].timer = vim.defer_fn(function()
+    local extid = api.nvim_buf_is_valid(buf) and self.ids[id] and self.ids[id].extid
+    local mark = extid and api.nvim_buf_get_extmark_by_id(buf, ui.ns, extid, { details = true })
+    self.ids[id] = nil
+    if not mark or not mark[1] then
+      return
     end
-    api.nvim_buf_set_lines(buf, 0, len, false, {})
-    self.count = self.count - 1
+    -- Clear prev_msg when line that may have dupe marker is removed.
+    local erow = api.nvim_buf_line_count(buf) - 1
+    M.prev_msg = ui.cfg.msg.target == 'msg' and mark[3].end_row == erow and '' or M.prev_msg
+
+    -- Remove message (including potentially leftover empty line).
+    api.nvim_buf_set_text(buf, mark[1], mark[2], mark[3].end_row, mark[3].end_col, {})
+    if fn.col({ mark[1] + 1, '$' }, ui.wins.msg) == 1 then
+      api.nvim_buf_set_lines(buf, mark[1], mark[1] + 1, false, {})
+    end
+
     -- Resize or hide message window for removed message.
-    if self.count > 0 then
+    if next(self.ids) then
       M.set_pos('msg')
     else
       self:close()
     end
-  end, ext.cfg.msg.timeout)
+  end, ui.cfg.msg.timeout)
 end
 
-local cmd_on_key = nil
 --- Place or delete a virtual text mark in the cmdline or message window.
 ---
 ---@param type 'last'|'msg'|'top'|'bot'
 ---@param tar? 'cmd'|'msg'|'dialog'
 local function set_virttext(type, tar)
-  if (type == 'last' and (ext.cmdheight == 0 or M.virt.delayed)) or cmd_on_key then
-    return -- Don't show virtual text while cmdline, error or full message in cmdline is shown.
+  if (type == 'last' and (ui.cmdheight == 0 or M.virt.delayed)) or cmd_on_key then
+    return -- Don't show virtual text while cmdline is expanded or delaying for error.
   end
 
   -- Concatenate the components of M.virt[type] and calculate the concatenated width.
@@ -85,17 +105,17 @@ local function set_virttext(type, tar)
       width = width + api.nvim_strwidth(chunk[2])
     end
   end
-  tar = tar or type == 'msg' and ext.cfg.msg.target or 'cmd'
+  tar = tar or type == 'msg' and ui.cfg.msg.target or 'cmd'
 
   if M.virt.ids[type] and #chunks == 0 then
-    api.nvim_buf_del_extmark(ext.bufs[tar], ext.ns, M.virt.ids[type])
+    api.nvim_buf_del_extmark(ui.bufs[tar], ui.ns, M.virt.ids[type])
     M.cmd.last_col = type == 'last' and o.columns or M.cmd.last_col
     M.virt.ids[type] = nil
   elseif #chunks > 0 then
-    local win = ext.wins[tar]
+    local win = ui.wins[tar]
     local line = (tar == 'msg' or type == 'top') and 'w0' or type == 'bot' and 'w$'
-    local srow = line and fn.line(line, ext.wins.dialog) - 1
-    local erow = tar == 'cmd' and math.min(M.cmd.msg_row, api.nvim_buf_line_count(ext.bufs.cmd) - 1)
+    local srow = line and fn.line(line, ui.wins.dialog) - 1
+    local erow = tar == 'cmd' and math.min(M.cmd.msg_row, api.nvim_buf_line_count(ui.bufs.cmd) - 1)
     local texth = api.nvim_win_text_height(win, {
       max_height = (type == 'top' or type == 'bot') and 1 or api.nvim_win_get_height(win),
       start_row = srow or nil,
@@ -127,20 +147,20 @@ local function set_virttext(type, tar)
 
       -- Give virt_text the same highlight as the message tail.
       local pos, opts = { row, col }, { details = true, overlap = true, type = 'highlight' }
-      local hl = api.nvim_buf_get_extmarks(ext.bufs[tar], ext.ns, pos, pos, opts)
+      local hl = api.nvim_buf_get_extmarks(ui.bufs[tar], ui.ns, pos, pos, opts)
       for _, chunk in ipairs(hl[1] and chunks or {}) do
         chunk[2] = hl[1][4].hl_group
       end
     else
       local mode = #M.virt.last[M.virt.idx.mode]
       local pad = o.columns - width ---@type integer
-      local newlines = math.max(0, ext.cmdheight - texth.all)
+      local newlines = math.max(0, ui.cmdheight - texth.all)
       row = row + newlines
       M.cmd.last_col = mode > 0 and 0 or o.columns - (newlines > 0 and 0 or width)
 
       if newlines > 0 then
         -- Add empty lines to place virt_text on the last screen row.
-        api.nvim_buf_set_lines(ext.bufs.cmd, -1, -1, false, fn['repeat']({ '' }, newlines))
+        api.nvim_buf_set_lines(ui.bufs.cmd, -1, -1, false, fn['repeat']({ '' }, newlines))
         col = 0
       else
         if scol > M.cmd.last_col then
@@ -159,7 +179,7 @@ local function set_virttext(type, tar)
           col = vcol <= 0 and 0 or fn.virtcol2col(win, row + 1, vcol)
           M.prev_msg = mode > 0 and '' or M.prev_msg
           M.virt.msg = mode > 0 and { {}, {} } or M.virt.msg
-          api.nvim_buf_set_text(ext.bufs.cmd, row, col, row, -1, { mode > 0 and ' ' or '' })
+          api.nvim_buf_set_text(ui.bufs.cmd, row, col, row, -1, { mode > 0 and ' ' or '' })
         end
 
         pad = pad - ((mode > 0 or col == 0) and 0 or math.min(M.cmd.last_col, scol))
@@ -168,7 +188,7 @@ local function set_virttext(type, tar)
       set_virttext('msg') -- Readjust to new M.cmd.last_col or clear for mode.
     end
 
-    M.virt.ids[type] = api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, row, col, {
+    M.virt.ids[type] = api.nvim_buf_set_extmark(ui.bufs[tar], ui.ns, row, col, {
       virt_text = chunks,
       virt_text_pos = 'overlay',
       right_gravity = false,
@@ -180,72 +200,74 @@ local function set_virttext(type, tar)
   end
 end
 
--- We need to keep track of the current message column to be able to
--- append or overwrite messages for :echon or carriage returns.
-local col, will_full, hlopts = 0, false, { undo_restore = false, invalidate = true, priority = 1 }
---- Move messages to cmdline or pager to show in full.
-local function msg_to_full(src)
-  if will_full then
-    return
-  end
-  will_full, M.prev_msg = true, ''
-
-  vim.schedule(function()
-    -- Copy and clear message from src to enlarged cmdline that is dismissed by any
-    -- key press, or append to pager in case that is already open (not hidden).
-    local hidden = api.nvim_win_get_config(ext.wins.pager).hide
-    local tar = hidden and 'cmd' or 'pager'
-    if tar ~= src then
-      local srow = hidden and 0 or api.nvim_buf_line_count(ext.bufs.pager)
-      local marks = api.nvim_buf_get_extmarks(ext.bufs[src], -1, 0, -1, { details = true })
-      local lines = api.nvim_buf_get_lines(ext.bufs[src], 0, -1, false)
-      api.nvim_buf_set_lines(ext.bufs[src], 0, -1, false, {})
-      api.nvim_buf_set_lines(ext.bufs[tar], srow, -1, false, lines)
-      for _, mark in ipairs(marks) do
-        hlopts.end_col, hlopts.hl_group = mark[4].end_col, mark[4].hl_group
-        api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, srow + mark[2], mark[3], hlopts)
-      end
-      if tar == 'cmd' and ext.cmd.highlighter then
-        ext.cmd.highlighter.active[ext.bufs.cmd] = nil
-      elseif tar == 'pager' then
-        api.nvim_command('norm! G')
-      end
-      M.virt.msg[M.virt.idx.spill][1] = nil
-    else
-      for _, id in pairs(M.virt.ids) do
-        api.nvim_buf_del_extmark(ext.bufs.cmd, ext.ns, id)
-      end
+local hlopts = { undo_restore = false, invalidate = true, priority = 1 }
+--- Move messages to expanded cmdline or pager to show in full.
+local function expand_msg(src)
+  -- Copy and clear message from src to enlarged cmdline that is dismissed by any
+  -- key press, or append to pager in case that is already open (not hidden).
+  local hidden = api.nvim_win_get_config(ui.wins.pager).hide
+  local tar = hidden and 'cmd' or 'pager'
+  if tar ~= src then
+    local srow = hidden and 0 or api.nvim_buf_line_count(ui.bufs.pager)
+    local opts = { details = true, type = 'highlight' }
+    local marks = api.nvim_buf_get_extmarks(ui.bufs[src], -1, 0, -1, opts)
+    local lines = api.nvim_buf_get_lines(ui.bufs[src], 0, -1, false)
+    api.nvim_buf_set_lines(ui.bufs[src], 0, -1, false, {})
+    api.nvim_buf_set_lines(ui.bufs[tar], srow, -1, false, lines)
+    for _, mark in ipairs(marks) do
+      hlopts.end_col, hlopts.hl_group = mark[4].end_col, mark[4].hl_group
+      api.nvim_buf_set_extmark(ui.bufs[tar], ui.ns, srow + mark[2], mark[3], hlopts)
     end
+
+    if tar == 'cmd' and ui.cmd.highlighter then
+      ui.cmd.highlighter.active[ui.bufs.cmd] = nil
+    elseif tar == 'pager' then
+      api.nvim_command('norm! G')
+    end
+
+    M.virt.msg[M.virt.idx.spill][1] = nil
+    M[src].ids = {}
     M.msg:close()
-    M.set_pos(tar)
-    M[src].count, col, will_full = 0, 0, false
-  end)
+  else
+    for _, id in pairs(M.virt.ids) do
+      api.nvim_buf_del_extmark(ui.bufs.cmd, ui.ns, id)
+    end
+  end
+  M.set_pos(tar)
 end
 
+-- Keep track of the current message column to be able to
+-- append or overwrite messages for :echon or carriage returns.
+local col = 0
+local cmd_timer ---@type uv.uv_timer_t? Timer resetting cmdline state next event loop.
 ---@param tar 'cmd'|'dialog'|'msg'|'pager'
 ---@param content MsgContent
 ---@param replace_last boolean
 ---@param append boolean
-function M.show_msg(tar, content, replace_last, append)
-  local msg, restart, cr, dupe, count = '', false, false, 0, 0
-  append = append and col > 0
+---@param id integer|string
+function M.show_msg(tar, content, replace_last, append, id)
+  local mark, msg, cr, dupe, buf = {}, '', false, 0, ui.bufs[tar]
 
   if M[tar] then -- tar == 'cmd'|'msg'
-    if tar == ext.cfg.msg.target then
+    local extid = M[tar].ids[id] and M[tar].ids[id].extid
+    if tar == ui.cfg.msg.target then
       -- Save the concatenated message to identify repeated messages.
       for _, chunk in ipairs(content) do
         msg = msg .. chunk[2]
       end
-      dupe = (msg == M.prev_msg and ext.cmd.srow == 0 and M.dupe + 1 or 0)
+      dupe = (
+        not extid and not append and msg == M.prev_msg and ui.cmd.srow == 0 and M.dupe + 1 or 0
+      )
     end
 
-    cr = M[tar].count > 0 and msg:sub(1, 1) == '\r'
-    restart = M[tar].count > 0 and (replace_last or dupe > 0)
-    count = M[tar].count + ((restart or msg == '\n') and 0 or 1)
+    cr = next(M[tar].ids) ~= nil and msg:sub(1, 1) == '\r'
+    replace_last = next(M[tar].ids) ~= nil and not extid and (replace_last or dupe > 0)
+    extid = extid or replace_last and M[tar].ids[M.prev_id] and M[tar].ids[M.prev_id].extid
+    mark = extid and api.nvim_buf_get_extmark_by_id(buf, ui.ns, extid, { details = true }) or {}
 
     -- Ensure cmdline is clear when writing the first message.
-    if tar == 'cmd' and not will_full and dupe == 0 and M.cmd.count == 0 and ext.cmd.srow == 0 then
-      api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
+    if tar == 'cmd' and dupe == 0 and not next(M.cmd.ids) and ui.cmd.srow == 0 then
+      api.nvim_buf_set_lines(buf, 0, -1, false, {})
     end
   end
 
@@ -254,35 +276,39 @@ function M.show_msg(tar, content, replace_last, append)
     return
   end
 
-  local line_count = api.nvim_buf_line_count(ext.bufs[tar])
+  local line_count = api.nvim_buf_line_count(buf)
   ---@type integer Start row after last line in the target buffer, unless
   ---this is the first message, or in case of a repeated or replaced message.
-  local row = M[tar] and count <= 1 and not will_full and (tar == 'cmd' and ext.cmd.erow or 0)
-    or line_count - ((replace_last or restart or cr or append) and 1 or 0)
-  local curline = (cr or append) and api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
+  local row = mark[1]
+    or (M[tar] and not next(M[tar].ids) and ui.cmd.srow == 0 and 0)
+    or (line_count - ((replace_last or cr or append) and 1 or 0))
+  local curline = (cr or append) and api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
   local start_row, width = row, M.msg.width
-  col = append and not cr and math.min(col, #curline) or 0
+  col = mark[2] or (append and not cr and math.min(col, #curline) or 0)
+  local start_col = col
 
-  -- Accumulate to be inserted and highlighted message chunks for a non-repeated message.
-  for _, chunk in ipairs((not M[tar] or dupe == 0) and content or {}) do
+  -- Accumulate to be inserted and highlighted message chunks.
+  for i, chunk in ipairs(content) do
     -- Split at newline and write to start of line after carriage return.
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
       local repl, pat = str:sub(1, -2), str:sub(-1)
       local end_col = col + #repl ---@type integer
 
-      if line_count < row + 1 then
-        api.nvim_buf_set_lines(ext.bufs[tar], row, -1, false, { repl })
+      -- Insert new line at end of buffer or when inserting lines for a replaced message.
+      if line_count < row + 1 or mark[1] and row > start_row then
+        api.nvim_buf_set_lines(buf, row, row > start_row and row or -1, false, { repl })
         line_count = line_count + 1
       else
-        local ecol = curline and math.min(end_col, #curline) or -1
-        api.nvim_buf_set_text(ext.bufs[tar], row, col, row, ecol, { repl })
+        local erow = mark[3] and mark[3].end_row or row
+        local ecol = mark[3] and mark[3].end_col or curline and math.min(end_col, #curline) or -1
+        api.nvim_buf_set_text(buf, row, col, erow, ecol, { repl })
       end
-      curline = api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
-      width = tar == 'msg' and math.max(width, api.nvim_strwidth(curline)) or 0
+      curline = api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
+      mark[3] = nil
 
       if chunk[3] > 0 then
         hlopts.end_col, hlopts.hl_group = end_col, chunk[3]
-        api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, row, col, hlopts)
+        api.nvim_buf_set_extmark(buf, ui.ns, row, col, hlopts)
       end
 
       if pat == '\n' then
@@ -290,65 +316,67 @@ function M.show_msg(tar, content, replace_last, append)
       else
         col = pat == '\r' and 0 or end_col
       end
-    end
-  end
-
-  if tar == 'msg' then
-    api.nvim_win_set_width(ext.wins.msg, width)
-    local texth = api.nvim_win_text_height(ext.wins.msg, { start_row = start_row })
-    if texth.all > math.ceil(o.lines * 0.5) then
-      msg_to_full(tar)
-      return
-    end
-
-    M.set_pos('msg')
-    M.msg.width = width
-    if restart then
-      M.msg.timer:stop()
-      M.msg.timer:set_repeat(4000)
-      M.msg.timer:again()
-    else
-      M.msg:start_timer(ext.bufs.msg, row - start_row + 1)
-    end
-  elseif tar == 'cmd' and dupe == 0 then
-    fn.clearmatches(ext.wins.cmd) -- Clear matchparen highlights.
-    if ext.cmd.srow > 0 then
-      -- In block mode the cmdheight is already dynamic, so just print the full message
-      -- regardless of height. Spoof cmdline_show to put cmdline below message.
-      ext.cmd.srow = ext.cmd.srow + 1 + row - start_row
-      ext.cmd.cmdline_show({}, 0, ':', '', ext.cmd.indent, 0, 0)
-      api.nvim__redraw({ flush = true, cursor = true, win = ext.wins.cmd })
-    else
-      api.nvim_win_set_cursor(ext.wins.cmd, { 1, 0 }) -- ensure first line is visible
-      if ext.cmd.highlighter then
-        ext.cmd.highlighter.active[ext.bufs.cmd] = nil
-      end
-      -- Place [+x] indicator for lines that spill over 'cmdheight'.
-      local texth = api.nvim_win_text_height(ext.wins.cmd, {})
-      local spill = texth.all > ext.cmdheight and (' [+%d]'):format(texth.all - ext.cmdheight)
-      M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
-      M.cmd.msg_row = texth.end_row
-
-      if texth.all > ext.cmdheight then
-        msg_to_full(tar)
-        return
+      if tar == 'msg' and (pat == '\n' or (i == #content and pat == '\0')) then
+        width = api.nvim_win_call(ui.wins.msg, function()
+          return math.max(width, fn.strdisplaywidth(curline))
+        end)
       end
     end
   end
 
   if M[tar] then
+    -- Keep track of message span to replace by ID.
+    local opts = { end_row = row, end_col = col, invalidate = true, undo_restore = false }
+    M[tar].ids[id] = M[tar].ids[id] or {}
+    M[tar].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
+  end
+
+  if tar == 'msg' then
+    api.nvim_win_set_width(ui.wins.msg, width)
+    local texth = api.nvim_win_text_height(ui.wins.msg, { start_row = start_row, end_row = row })
+    if texth.all > math.ceil(o.lines * 0.5) then
+      expand_msg(tar)
+    else
+      M.set_pos('msg')
+      M.msg.width = width
+      M.msg:start_timer(buf, id)
+    end
+  elseif tar == 'cmd' and dupe == 0 then
+    fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
+    if ui.cmd.srow > 0 then
+      -- In block mode the cmdheight is already dynamic, so just print the full message
+      -- regardless of height. Put cmdline below message.
+      ui.cmd.srow = row + 1
+    else
+      api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 }) -- ensure first line is visible
+      if ui.cmd.highlighter then
+        ui.cmd.highlighter.active[buf] = nil
+      end
+      -- Place [+x] indicator for lines that spill over 'cmdheight'.
+      local texth = api.nvim_win_text_height(ui.wins.cmd, {})
+      local spill = texth.all > ui.cmdheight and (' [+%d]'):format(texth.all - ui.cmdheight)
+      M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
+      M.cmd.msg_row = texth.end_row
+
+      if texth.all > ui.cmdheight then
+        expand_msg(tar)
+      end
+    end
+  end
+
+  if M[tar] and row == api.nvim_buf_line_count(buf) - 1 then
     -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
     -- resizing of the message window, but also placed in the cmdline.
     M.virt.msg[M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
-    M.prev_msg, M.dupe, M[tar].count = msg, dupe, count
+    M.prev_id, M.prev_msg, M.dupe = id, msg, dupe
     set_virttext('msg')
   end
 
   -- Reset message state the next event loop iteration.
-  if start_row == 0 or ext.cmd.srow > 0 then
-    vim.schedule(function()
-      col, M.cmd.count = 0, 0
-    end)
+  if not cmd_timer and (col > 0 or next(M.cmd.ids) ~= nil) then
+    cmd_timer = vim.defer_fn(function()
+      M.cmd.ids, cmd_timer, col = cmd_on_key and M.cmd.ids or {}, nil, 0
+    end, 0)
   end
 end
 
@@ -361,10 +389,11 @@ end
 ---@param replace_last boolean
 --@param history boolean
 ---@param append boolean
-function M.msg_show(kind, content, replace_last, _, append)
+---@param id integer|string
+function M.msg_show(kind, content, replace_last, _, append, id)
   if kind == 'empty' then
     -- A sole empty message clears the cmdline.
-    if ext.cfg.msg.target == 'cmd' and M.cmd.count == 0 and ext.cmd.srow == 0 then
+    if ui.cfg.msg.target == 'cmd' and not next(M.cmd.ids) and ui.cmd.srow == 0 then
       M.msg_clear()
     end
   elseif kind == 'search_count' then
@@ -375,21 +404,23 @@ function M.msg_show(kind, content, replace_last, _, append)
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last')
-  elseif (ext.cmd.prompt or kind == 'wildlist') and ext.cmd.srow == 0 then
-    -- Route to dialog that stays open so long as the cmdline prompt is active.
-    replace_last = api.nvim_win_get_config(ext.wins.dialog).hide or kind == 'wildlist'
+  elseif
+    (ui.cmd.prompt or (ui.cmd.level > 0 and ui.cfg.msg.target == 'cmd')) and ui.cmd.srow == 0
+  then
+    -- Route to dialog when a prompt is active, or message would overwrite active cmdline.
+    replace_last = api.nvim_win_get_config(ui.wins.dialog).hide or kind == 'wildlist'
     if kind == 'wildlist' then
-      api.nvim_buf_set_lines(ext.bufs.dialog, 0, -1, false, {})
-      ext.cmd.prompt = true -- Ensure dialog is closed when cmdline is hidden.
+      api.nvim_buf_set_lines(ui.bufs.dialog, 0, -1, false, {})
     end
-    M.show_msg('dialog', content, replace_last, append)
+    ui.cmd.dialog = true -- Ensure dialog is closed when cmdline is hidden.
+    M.show_msg('dialog', content, replace_last, append, id)
     M.set_pos('dialog')
   else
     -- Set the entered search command in the cmdline (if available).
-    local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.target
+    local tar = kind == 'search_cmd' and 'cmd' or ui.cfg.msg.target
     if tar == 'cmd' then
-      if ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.srow == 0) then
-        return -- Do not overwrite an active cmdline unless in block mode.
+      if ui.cmdheight == 0 and ui.cmd.srow == 0 then
+        return
       end
       -- Store the time when an important message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline so that the user has a chance to read it.
@@ -398,20 +429,20 @@ function M.msg_show(kind, content, replace_last, _, append)
       M.virt.last[M.virt.idx.search][1] = nil
     end
 
-    M.show_msg(tar, content, replace_last, append)
+    M.show_msg(tar, content, replace_last, append, id)
     -- Don't remember search_cmd message as actual message.
     if kind == 'search_cmd' then
-      M.cmd.count, M.prev_msg = 0, ''
+      M.cmd.ids, M.prev_msg = {}, ''
     end
   end
 end
 
 ---Clear currently visible messages.
 function M.msg_clear()
-  api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
-  api.nvim_buf_set_lines(ext.bufs.msg, 0, -1, false, {})
-  api.nvim_win_set_config(ext.wins.msg, { hide = true })
-  M.dupe, M[ext.cfg.msg.target].count, M.cmd.msg_row, M.msg.width = 0, 0, -1, 1
+  api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
+  api.nvim_buf_set_lines(ui.bufs.msg, 0, -1, false, {})
+  api.nvim_win_set_config(ui.wins.msg, { hide = true })
+  M[ui.cfg.msg.target].ids, M.dupe, M.cmd.msg_row, M.msg.width = {}, 0, -1, 1
   M.prev_msg, M.virt.msg = '', { {}, {} }
 end
 
@@ -419,7 +450,7 @@ end
 ---
 ---@param content MsgContent
 function M.msg_showmode(content)
-  M.virt.last[M.virt.idx.mode] = ext.cmd.level > 0 and {} or content
+  M.virt.last[M.virt.idx.mode] = ui.cmd.level > 0 and {} or content
   M.virt.last[M.virt.idx.search] = {}
   set_virttext('last')
 end
@@ -438,7 +469,7 @@ end
 ---
 ---@param content MsgContent
 function M.msg_ruler(content)
-  M.virt.last[M.virt.idx.ruler] = ext.cmd.level > 0 and {} or content
+  M.virt.last[M.virt.idx.ruler] = ui.cmd.level > 0 and {} or content
   set_virttext('last')
 end
 
@@ -452,12 +483,17 @@ function M.msg_history_show(entries, prev_cmd)
     return
   end
 
-  if prev_cmd then
-    M.msg_clear() -- Showing output of previous command, clear in case still visible.
+  if cmd_on_key then
+    -- Dismiss a still expanded cmdline.
+    api.nvim_feedkeys(vim.keycode('<CR>'), 'n', false)
+  elseif prev_cmd then
+    -- Showing output of previous command, clear in case still visible.
+    M.msg_clear()
   end
-  api.nvim_buf_set_lines(ext.bufs.pager, 0, -1, false, {})
+
+  api.nvim_buf_set_lines(ui.bufs.pager, 0, -1, false, {})
   for i, entry in ipairs(entries) do
-    M.show_msg('pager', entry[2], i == 1, entry[3])
+    M.show_msg('pager', entry[2], i == 1, entry[3], 0)
   end
 
   M.set_pos('pager')
@@ -468,25 +504,20 @@ end
 ---@param type? 'cmd'|'dialog'|'msg'|'pager' Type of to be positioned window (nil for all).
 function M.set_pos(type)
   local function win_set_pos(win)
+    local cfg = { hide = false, relative = 'laststatus', col = 10000 }
     local texth = type and api.nvim_win_text_height(win, {}) or {}
-    local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
     local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-    local border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
-    local config = {
-      hide = false,
-      relative = (win == ext.wins.pager or win == ext.wins.dialog) and 'editor' or 'laststatus',
-      border = border,
-      height = height,
-      row = (win == ext.wins.pager or win == ext.wins.dialog) and o.lines - o.cmdheight or 0,
-      col = 10000,
-      focusable = type == 'cmd' or nil, -- Allow entering the cmdline window.
-    }
-    api.nvim_win_set_config(win, config)
+    cfg.height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
+    cfg.border = win ~= ui.wins.msg and { '', top, '', '', '', '', '', '' } or nil
+    cfg.focusable = type == 'cmd' or nil
+    cfg.row = (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode
+    cfg.row = cfg.row - ((win == ui.wins.pager and o.laststatus == 3) and 1 or 0)
+    api.nvim_win_set_config(win, cfg)
 
-    if type == 'cmd' then
-      -- Temporarily showing a full message in the cmdline, until next key press.
+    if type == 'cmd' and not cmd_on_key then
+      -- Temporarily expand the cmdline, until next key press.
       local save_spill = M.virt.msg[M.virt.idx.spill][1]
-      local spill = texth.all > height and (' [+%d]'):format(texth.all - height)
+      local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       set_virttext('msg', 'cmd')
       M.virt.msg[M.virt.idx.spill][1] = save_spill
@@ -495,32 +526,32 @@ function M.set_pos(type)
           return
         end
         vim.schedule(function()
-          local entered = api.nvim_get_current_win() == win
+          local entered = api.nvim_get_current_win() == ui.wins.cmd
           cmd_on_key = nil
-          if api.nvim_win_is_valid(win) then
-            api.nvim_win_close(win, true)
+          if api.nvim_win_is_valid(ui.wins.cmd) then
+            api.nvim_win_close(ui.wins.cmd, true)
           end
-          ext.check_targets()
+          ui.check_targets()
           -- Show or clear the message depending on if the pager was opened.
-          if entered or not api.nvim_win_get_config(ext.wins.pager).hide then
+          if entered or not api.nvim_win_get_config(ui.wins.pager).hide then
             M.virt.msg[M.virt.idx.spill][1] = nil
-            api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
+            api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
             if entered then
               api.nvim_command('norm! g<') -- User entered the cmdline window: open the pager.
             end
-          elseif ext.cfg.msg.target == 'cmd' and ext.cmd.level <= 0 then
-            ext.check_targets()
+          elseif ui.cfg.msg.target == 'cmd' and ui.cmd.level == 0 then
+            ui.check_targets()
             set_virttext('msg')
           end
           api.nvim__redraw({ flush = true }) -- NOTE: redundant unless cmdline was opened.
         end)
-        vim.on_key(nil, ext.ns)
-      end, ext.ns)
+        vim.on_key(nil, ui.ns)
+      end, ui.ns)
     elseif type == 'dialog' then
       -- Add virtual [+x] text to indicate scrolling is possible.
       local function set_top_bot_spill()
-        local topspill = fn.line('w0', ext.wins.dialog) - 1
-        local botspill = api.nvim_buf_line_count(ext.bufs.dialog) - fn.line('w$', ext.wins.dialog)
+        local topspill = fn.line('w0', ui.wins.dialog) - 1
+        local botspill = api.nvim_buf_line_count(ui.bufs.dialog) - fn.line('w$', ui.wins.dialog)
         M.virt.top[1][1] = topspill > 0 and { 0, (' [+%d]'):format(topspill) } or nil
         set_virttext('top', 'dialog')
         M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill) } or nil
@@ -544,17 +575,17 @@ function M.set_pos(type)
           f = [[\<C-F>]],
           b = [[\<C-B>]],
         }
-        local info = page_keys[key] and fn.getwininfo(ext.wins.dialog)[1]
-        if info and (key ~= 'f' or info.botline < api.nvim_buf_line_count(ext.bufs.dialog)) then
-          fn.win_execute(ext.wins.dialog, ('exe "norm! %s"'):format(page_keys[key]))
+        local info = page_keys[key] and fn.getwininfo(ui.wins.dialog)[1]
+        if info and (key ~= 'f' or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
+          fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(page_keys[key]))
           set_top_bot_spill()
-          return fn.getwininfo(ext.wins.dialog)[1].topline ~= info.topline and '' or nil
+          return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
         end
       end)
     elseif type == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
-      local row = (texth.all > height and texth.end_row or 0) + 1
-      api.nvim_win_set_cursor(ext.wins.msg, { row, 0 })
+      local row = (texth.all > cfg.height and texth.end_row or 0) + 1
+      api.nvim_win_set_cursor(ui.wins.msg, { row, 0 })
     elseif type == 'pager' then
       if fn.getcmdwintype() ~= '' then
         -- Cannot leave the cmdwin to enter the pager, so close it.
@@ -565,15 +596,15 @@ function M.set_pos(type)
 
       -- Cmdwin is actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
-        api.nvim_set_current_win(win)
+        api.nvim_set_current_win(ui.wins.pager)
         -- Make pager relative to cmdwin when it is opened, restore when it is closed.
         api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
           callback = function(ev)
-            if api.nvim_win_is_valid(win) then
-              local cfg = ev.event == 'CmdwinLeave' and config
+            if api.nvim_win_is_valid(ui.wins.pager) then
+              local config = ev.event == 'CmdwinLeave' and cfg
                 or ev.event == 'WinEnter' and { hide = true }
                 or { relative = 'win', win = 0, row = 0, col = 0 }
-              api.nvim_win_set_config(win, cfg)
+              api.nvim_win_set_config(ui.wins.pager, config)
             end
             return ev.event == 'WinEnter'
           end,
@@ -583,7 +614,7 @@ function M.set_pos(type)
     end
   end
 
-  for t, win in pairs(ext.wins) do
+  for t, win in pairs(ui.wins) do
     local cfg = (t == type or (type == nil and t ~= 'cmd'))
       and api.nvim_win_is_valid(win)
       and api.nvim_win_get_config(win)

@@ -119,6 +119,7 @@ local function ensure_target_dir()
     return dirs[1]
   end
 
+  -- vim.fs.relpath does not prepend '~/' while fnamemodify does
   dir = vim.fn.fnamemodify(dir, ':~')
   error(('cannot find a writable spell/ dir in runtimepath, and %s is not usable'):format(dir))
 end

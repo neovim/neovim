@@ -3695,7 +3695,7 @@ M.funcs = {
     ]=],
     name = 'getcharsearch',
     params = {},
-    returns = 'table',
+    returns = '{ char: string, forward: 1|0, until: 1|0 }',
     signature = 'getcharsearch()',
   },
   getcharstr = {
@@ -9886,7 +9886,7 @@ M.funcs = {
 
     ]=],
     name = 'setcharsearch',
-    params = { { 'dict', 'string' } },
+    params = { { 'dict', '{ char?: string, forward?: 1|0, until?: 1|0 }' } },
     signature = 'setcharsearch({dict})',
   },
   setcmdline = {
@@ -11532,6 +11532,7 @@ M.funcs = {
     ]=],
     name = 'strcharlen',
     params = { { 'string', 'string' } },
+    returns = 'integer',
     signature = 'strcharlen({string})',
   },
   strcharpart = {
@@ -11559,8 +11560,9 @@ M.funcs = {
       { 'src', 'string' },
       { 'start', 'integer' },
       { 'len', 'integer' },
-      { 'skipcc', 'boolean' },
+      { 'skipcc', '0|1|boolean' },
     },
+    returns = 'string',
     signature = 'strcharpart({src}, {start} [, {len} [, {skipcc}]])',
   },
   strchars = {
@@ -11596,7 +11598,7 @@ M.funcs = {
       <
     ]=],
     name = 'strchars',
-    params = { { 'string', 'string' }, { 'skipcc', 'boolean' } },
+    params = { { 'string', 'string' }, { 'skipcc', '0|1|boolean' } },
     returns = 'integer',
     signature = 'strchars({string} [, {skipcc}])',
   },
@@ -13222,7 +13224,8 @@ M.funcs = {
     desc = [=[
       Go to window with ID {expr}.  This may also change the current
       tabpage.
-      Return TRUE if successful, FALSE if the window cannot be found.
+      Return TRUE if successful, FALSE if the window cannot be
+      found.
 
     ]=],
     name = 'win_gotoid',

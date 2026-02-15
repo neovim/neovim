@@ -902,6 +902,13 @@ void buf_freeall(buf_T *buf, int flags)
     }
   }
 
+  // Autocommands may have opened another terminal. Block them this time.
+  if (buf->terminal) {
+    block_autocmds();
+    buf_close_terminal(buf);
+    unblock_autocmds();
+  }
+
   ml_close(buf, true);              // close and delete the memline/memfile
   buf->b_ml.ml_line_count = 0;      // no lines in buffer
   if ((flags & BFA_KEEP_UNDO) == 0) {
@@ -1680,6 +1687,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   bufref_T prevbufref;
   set_bufref(&prevbufref, prevbuf);
   set_bufref(&newbufref, buf);
+  const int prev_nwindows = prevbuf->b_nwindows;
 
   // Autocommands may delete the current buffer and/or the buffer we want to
   // go to.  In those cases don't close the buffer.
@@ -1692,8 +1700,8 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     // autocommands may have opened a new window
     // with prevbuf, grr
     if (unload
-        || (last_winid != get_last_winid()
-            && strchr("wdu", prevbuf->b_p_bh[0]) != NULL)) {
+        || (prev_nwindows <= 1 && last_winid != get_last_winid()
+            && action == DOBUF_GOTO && !buf_hide(prevbuf))) {
       close_windows(prevbuf, false);
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
@@ -2097,7 +2105,8 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   buf->b_prompt_callback.type = kCallbackNone;
   buf->b_prompt_interrupt.type = kCallbackNone;
   buf->b_prompt_text = NULL;
-  clear_fmark(&buf->b_prompt_start, 0);
+  buf->b_prompt_start = (fmark_T)INIT_FMARK;
+  buf->b_prompt_start.mark.col = 2;  // default prompt is "% "
 
   return buf;
 }
@@ -2965,7 +2974,9 @@ void buflist_list(exarg_T *eap)
       ro_char = terminal_running(buf->terminal) ? 'R' : 'F';
     }
 
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || msg_col > 0) {
+      msg_putchar('\n');
+    }
     int len = (int)vim_snprintf_safelen(IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
                                         buf->b_fnum,
                                         buf->b_p_bl ? ' ' : 'u',

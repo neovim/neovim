@@ -509,25 +509,28 @@ end
 --- Defers calling {fn} until {timeout} ms passes.
 ---
 --- Use to do a one-shot timer that calls {fn}
---- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
+--- Note: The {fn} is |vim.schedule()|d automatically, so API functions are
 --- safe to call.
 ---@param fn function Callback to call once `timeout` expires
 ---@param timeout integer Number of milliseconds to wait before calling `fn`
 ---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate('fn', fn, 'callable', true)
+
   local timer = assert(vim.uv.new_timer())
-  timer:start(
-    timeout,
-    0,
-    vim.schedule_wrap(function()
+  timer:start(timeout, 0, function()
+    local _, err = vim.schedule(function()
       if not timer:is_closing() then
         timer:close()
       end
 
       fn()
     end)
-  )
+
+    if err then
+      timer:close()
+    end
+  end)
 
   return timer
 end
@@ -655,7 +658,7 @@ end
 
 --- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
 --- If {strict_indexing} is false
---- then then an out of range index will return byte length
+--- then an out of range index will return byte length
 --- instead of throwing an error.
 ---
 --- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.

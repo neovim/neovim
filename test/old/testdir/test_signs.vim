@@ -62,7 +62,7 @@ func Test_sign()
   " Check placed signs
   let a=execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
-		\ "    line=3  id=41  name=Sign1  priority=10\n", a)
+		\ "    line=3  id=41  name=Sign1  priority=10", a)
 
   " Unplace the sign and try jumping to it again should fail.
   sign unplace 41
@@ -75,7 +75,7 @@ func Test_sign()
   4
   sign unplace
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\n", a)
+  call assert_equal("\n--- Signs ---", a)
 
   " Try again to unplace sign on current line, it should fail this time.
   call assert_fails('sign unplace', 'E159:')
@@ -84,14 +84,14 @@ func Test_sign()
   exe 'sign place 41 line=3 name=Sign1 buffer=' . bufnr('%')
   sign unplace *
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\n", a)
+  call assert_equal("\n--- Signs ---", a)
 
   " Place a sign without specifying the filename or buffer
   sign place 77 line=9 name=Sign2
   let a=execute('sign place')
   " Nvim: sign line clamped to buffer length
   call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
-		\ "    line=4  id=77  name=Sign2  priority=10\n", a)
+		\ "    line=4  id=77  name=Sign2  priority=10", a)
   sign unplace *
 
   " Check :jump with file=...
@@ -184,7 +184,7 @@ func Test_sign()
   exe 'sign place 20 line=3 name=004 buffer=' . bufnr('')
   let a = execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for foo:\n" .
-		\ "    line=3  id=20  name=4  priority=10\n", a)
+		\ "    line=3  id=20  name=4  priority=10", a)
   exe 'sign unplace 20 buffer=' . bufnr('')
   sign undefine 004
   call assert_fails('sign list 4', 'E155:')
@@ -231,11 +231,11 @@ func Test_sign_undefine_still_placed()
   " Listing placed sign should show that sign is deleted.
   let a=execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for foobar:\n" .
-		\ "    line=1  id=41  name=[Deleted]  priority=10\n", a)
+		\ "    line=1  id=41  name=[Deleted]  priority=10", a)
 
   sign unplace 41
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\n", a)
+  call assert_equal("\n--- Signs ---", a)
 endfunc
 
 func Test_sign_completion()
@@ -742,23 +742,23 @@ func Test_sign_group()
   " :sign place file={fname}
   let a = execute('sign place file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " :sign place group={group} file={fname}
   let a = execute('sign place group=g2 file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  group=g2  name=sign1  priority=10", a)
 
   " :sign place group=* file={fname}
   let a = execute('sign place group=* file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  group=g2  name=sign1  priority=10\n" .
 	      \ "    line=10  id=5  group=g1  name=sign1  priority=10\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " Error case: non-existing group
   let a = execute('sign place group=xyz file=Xsign')
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:", a)
 
   call sign_unplace('*')
   let bnum = bufnr('Xsign')
@@ -769,28 +769,28 @@ func Test_sign_group()
   " :sign place buffer={fname}
   let a = execute('sign place buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " :sign place group={group} buffer={fname}
   let a = execute('sign place group=g2 buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=12  id=5  group=g2  name=sign1  priority=10", a)
 
   " :sign place group=* buffer={fname}
   let a = execute('sign place group=* buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "    line=11  id=5  group=g1  name=sign1  priority=10\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=12  id=5  group=g2  name=sign1  priority=10", a)
 
   " Error case: non-existing group
   let a = execute('sign place group=xyz buffer=' . bnum)
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:", a)
 
   " :sign place
   let a = execute('sign place')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
+	      \ "    line=10  id=5  name=sign1  priority=10", a)
 
   " Place signs in more than one buffer and list the signs
   split foo
@@ -801,21 +801,21 @@ func Test_sign_group()
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "Signs for foo:\n" .
-	      \ "    line=1  id=25  name=sign1  priority=99\n", a)
+	      \ "    line=1  id=25  name=sign1  priority=99", a)
   close
   bwipe foo
 
   " :sign place group={group}
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=11  id=5  group=g1  name=sign1  priority=10\n", a)
+	      \ "    line=11  id=5  group=g1  name=sign1  priority=10", a)
 
   " :sign place group=*
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "    line=11  id=5  group=g1  name=sign1  priority=10\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1  priority=10\n", a)
+	      \ "    line=12  id=5  group=g2  name=sign1  priority=10", a)
 
   " Test for ':sign jump' command with groups
   sign jump 5 group=g1 file=Xsign
@@ -1582,12 +1582,12 @@ func Test_sign_priority()
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=30\n" .
 	      \ "    line=10  id=5  group=g2  name=sign1  priority=25\n" .
-	      \ "    line=10  id=5  group=g1  name=sign1  priority=20\n", a)
+	      \ "    line=10  id=5  group=g1  name=sign1  priority=20", a)
 
   " Test for :sign place group={group}
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  group=g1  name=sign1  priority=20\n", a)
+	      \ "    line=10  id=5  group=g1  name=sign1  priority=20", a)
 
   call sign_unplace('*')
 
@@ -1606,7 +1606,7 @@ func Test_sign_priority()
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=3  id=1  group=g1  name=sign4  priority=60\n" .
-	      \ "    line=5  id=2  group=g1  name=sign4  priority=60\n", a)
+	      \ "    line=5  id=2  group=g1  name=sign4  priority=60", a)
 
   call sign_unplace('*')
   call sign_undefine()

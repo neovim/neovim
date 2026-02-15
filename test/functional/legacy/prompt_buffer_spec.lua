@@ -62,7 +62,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -149,7 +149,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:                     |
       {1:~                        }|*3
-      {2:[Prompt] [+]             }|
+      {2:[Prompt]                 }|
       ^other buffer             |
       {1:~                        }|*3
                                |
@@ -158,7 +158,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -167,7 +167,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:^                     |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -290,8 +290,8 @@ describe('prompt buffer', function()
     source([[
       bwipeout!
       set formatoptions+=r
-      set buftype=prompt
       call prompt_setprompt(bufnr(), "% ")
+      set buftype=prompt
     ]])
     feed('iline1<s-cr>line2')
     screen:expect([[
@@ -642,6 +642,7 @@ describe('prompt buffer', function()
     api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
     exec_lua(function()
       local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setprompt(buf, 'cmd > ')
       vim.fn.prompt_setcallback(buf, function(str)
         local last_line = vim.api.nvim_buf_line_count(buf)
         vim.api.nvim_buf_set_lines(buf, last_line - 1, last_line - 1, true, vim.split(str, '\n'))
@@ -649,12 +650,12 @@ describe('prompt buffer', function()
     end)
 
     feed('asdf')
-    eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
+    eq({ 1, 6 }, api.nvim_buf_get_mark(0, ':'))
     feed('<cr>')
-    eq({ 3, 1 }, api.nvim_buf_get_mark(0, ':'))
+    eq({ 3, 6 }, api.nvim_buf_get_mark(0, ':'))
     -- Multiline prompt.
     feed('<s-cr>line1<s-cr>line2<s-cr>line3<cr>')
-    eq({ 11, 1 }, api.nvim_buf_get_mark(0, ':'))
+    eq({ 11, 6 }, api.nvim_buf_get_mark(0, ':'))
 
     -- ': mark is only available in prompt buffer.
     api.nvim_set_option_value('buftype', '', { buf = 0 })
@@ -663,9 +664,20 @@ describe('prompt buffer', function()
     -- mark can be moved
     api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
     local last_line = api.nvim_buf_line_count(0)
-    eq({ last_line, 1 }, api.nvim_buf_get_mark(0, ':'))
-    eq(true, api.nvim_buf_set_mark(0, ':', 1, 1, {}))
-    eq({ 1, 1 }, api.nvim_buf_get_mark(0, ':'))
+    eq({ last_line, 6 }, api.nvim_buf_get_mark(0, ':'))
+    eq(true, api.nvim_buf_set_mark(0, ':', 1, 5, {}))
+    eq({ 1, 5 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- No crash from invalid col.
+    eq(true, api.nvim_buf_set_mark(0, ':', fn('line', '.'), 999, {}))
+    eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- No ml_get error from invalid lnum.
+    command('set messagesopt+=wait:0 messagesopt-=hit-enter')
+    fn('setpos', "':", { 0, 999, 7, 0 })
+    eq('', api.nvim_get_vvar('errmsg'))
+    command('set messagesopt&')
+    eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
   end)
 
   describe('prompt_getinput', function()
@@ -758,6 +770,135 @@ describe('prompt buffer', function()
       set_text3(multi-1)       |
       set_text3(multi-2)       |
       % ^                       |
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
+  it('works correctly with empty string as prompt', function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setprompt(buf, '')
+    end)
+
+    source('startinsert')
+
+    -- mark correctly set
+    eq({ 1, 0 }, api.nvim_buf_get_mark(0, ':'))
+
+    feed('asdf')
+    screen:expect([[
+      asdf^                     |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+
+    -- can clear all of it
+    feed('<backspace><backspace><backspace><backspace>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+    feed('<cr>')
+
+    eq({ 2, 0 }, api.nvim_buf_get_mark(0, ':'))
+  end)
+
+  it('prompt can be changed without interrupting user input', function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    local buf = api.nvim_get_current_buf()
+
+    local function set_prompt(prompt, b)
+      fn('prompt_setprompt', b or buf, prompt)
+    end
+
+    set_prompt('> ')
+
+    source('startinsert')
+
+    feed('user input')
+    -- Move the cursor a bit to check cursor maintaining position
+    feed('<esc>hhi')
+
+    screen:expect([[
+      > user in^put             |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+
+    eq({ 1, 2 }, api.nvim_buf_get_mark(0, ':'))
+
+    set_prompt('new-prompt > ')
+
+    screen:expect([[
+      new-prompt > user in^put  |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+
+    eq({ 1, 13 }, api.nvim_buf_get_mark(0, ':'))
+
+    set_prompt('new-prompt(status) > ')
+
+    screen:expect([[
+      new-prompt(status) > user|
+       in^put                   |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
+    eq({ 1, 21 }, api.nvim_buf_get_mark(0, ':'))
+
+    set_prompt('new-prompt > ')
+
+    screen:expect([[
+      new-prompt > user in^put  |
+      {1:~                        }|*8
+      {5:-- INSERT --}             |
+    ]])
+    eq({ 1, 13 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- Cursor not moved when not on the prompt line.
+    feed('<CR>user input<Esc>k')
+    screen:expect([[
+      new-prompt > user inpu^t  |
+      new-prompt > user input  |
+      {1:~                        }|*7
+                               |
+    ]])
+    set_prompt('<>< ')
+    screen:expect([[
+      new-prompt > user inpu^t  |
+      <>< user input           |
+      {1:~                        }|*7
+                               |
+    ]])
+
+    -- No crash when setting shorter prompt than curbuf's in other buffer.
+    feed('i<C-O>zt')
+    command('new | setlocal buftype=prompt')
+    set_prompt('looooooooooooooooooooooooooooooooooooooooooooong > ', '') -- curbuf
+    set_prompt('foo > ')
+    screen:expect([[
+      loooooooooooooooooooooooo|
+      ooooooooooooooooooooong >|
+       ^                        |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      foo > user input         |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    -- No prompt_setprompt crash from invalid ': col. Must happen in the same event.
+    exec_lua(function()
+      vim.cmd 'bwipeout!'
+      vim.api.nvim_buf_set_mark(0, ':', vim.fn.line('.'), 999, {})
+      vim.fn.prompt_setprompt('', 'new-prompt > ')
+    end)
+    screen:expect([[
+      new-prompt > ^            |
+      {1:~                        }|*8
       {5:-- INSERT --}             |
     ]])
   end)

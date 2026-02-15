@@ -189,7 +189,7 @@ normally only do that in a newly created buffer: >vim
 The user can edit and input text at the end of the buffer. Pressing Enter in
 the input section invokes the |prompt_setcallback()| callback, which is
 typically expected to process the prompt and show results by appending to the
-buffer. To input multiline text, use Shift-<Enter> to add a new line without
+buffer. To input multiline text, use *Shift-<Enter>* to add a new line without
 submitting the prompt, or just |put| or |paste| multiline text.
 
 Only the section starting with the mark |':| of the buffer (after the prompt)
