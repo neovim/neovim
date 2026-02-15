@@ -1618,6 +1618,40 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { 'test1', 'bytes', 1, 6, 2, 0, 6, 0, 0, 0, 1, 0, 1 },
         { 'test1', 'bytes', 1, 7, 2, 0, 6, 0, 0, 0, 0, 2, 2 },
       }
+      fn.prompt_setprompt('', 'foo > ')
+      check_events {
+        { 'test1', 'bytes', 1, 8, 2, 0, 6, 0, 2, 2, 0, 6, 6 },
+      }
+      feed('hello')
+      check_events {
+        { 'test1', 'bytes', 1, 9, 2, 6, 12, 0, 0, 0, 0, 5, 5 },
+      }
+      fn.prompt_setprompt('', 'uber-foo > ')
+      check_events {
+        { 'test1', 'bytes', 1, 10, 2, 0, 6, 0, 6, 6, 0, 11, 11 },
+      }
+      eq({ '% ', '% ', 'uber-foo > hello' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      -- Do this in the same event.
+      exec_lua(function()
+        vim.fn.setpos("':", { 0, vim.fn.line('.'), 999, 0 })
+        vim.fn.prompt_setprompt('', 'discard > ')
+      end)
+      check_events {
+        { 'test1', 'bytes', 1, 11, 2, 0, 6, 0, 16, 16, 0, 10, 10 },
+      }
+      eq({ '% ', '% ', 'discard > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      feed('sup<S-CR>dood')
+      check_events {
+        { 'test1', 'bytes', 1, 12, 2, 10, 16, 0, 0, 0, 0, 3, 3 },
+        { 'test1', 'bytes', 1, 13, 2, 13, 19, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 14, 3, 0, 20, 0, 0, 0, 0, 4, 4 },
+      }
+      eq({ '% ', '% ', 'discard > sup', 'dood' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      fn.prompt_setprompt('', 'cool > ')
+      check_events {
+        { 'test1', 'bytes', 1, 15, 2, 0, 6, 0, 10, 10, 0, 7, 7 },
+      }
+      eq({ '% ', '% ', 'cool > sup', 'dood' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
 
     local function test_lockmarks(mode)

@@ -20,6 +20,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memline.h"
@@ -790,6 +791,7 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       // If for some odd reason the old prompt is missing,
       // replace prompt line with new-prompt (discards user-input).
       ml_replace_buf(buf, prompt_lno, (char *)new_prompt, true, false);
+      extmark_splice_cols(buf, prompt_lno - 1, 0, old_line_len, new_prompt_len, kExtmarkUndo);
       cursor_col = new_prompt_len;
     } else {
       // Replace prev-prompt + user-input with new-prompt + user-input
@@ -797,6 +799,8 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (ml_replace_buf(buf, prompt_lno, new_line, false, false) != OK) {
         xfree(new_line);
       }
+      extmark_splice_cols(buf, prompt_lno - 1, 0, buf->b_prompt_start.mark.col, new_prompt_len,
+                          kExtmarkUndo);
       cursor_col += new_prompt_len - old_prompt_len;
     }
 
