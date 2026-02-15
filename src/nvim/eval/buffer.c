@@ -712,7 +712,7 @@ void restore_buffer(bufref_T *save_curbuf)
 /// "prompt_setcallback({buffer}, {callback})" function
 void f_prompt_setcallback(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  Callback prompt_callback = { .type = kCallbackNone };
+  Callback prompt_callback = CALLBACK_INIT;
 
   if (check_secure()) {
     return;
@@ -735,7 +735,7 @@ void f_prompt_setcallback(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "prompt_setinterrupt({buffer}, {callback})" function
 void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  Callback interrupt_callback = { .type = kCallbackNone };
+  Callback interrupt_callback = CALLBACK_INIT;
 
   if (check_secure()) {
     return;
@@ -772,10 +772,8 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // Update the prompt-text and prompt-marks if a plugin calls prompt_setprompt()
   // even while user is editing their input.
   if (bt_prompt(buf)) {
-    if (buf->b_prompt_start.mark.lnum > buf->b_ml.ml_line_count) {
-      // In case the mark is set to a nonexistent line.
-      buf->b_prompt_start.mark.lnum = buf->b_ml.ml_line_count;
-    }
+    // In case the mark is set to a nonexistent line.
+    buf->b_prompt_start.mark.lnum = MIN(buf->b_prompt_start.mark.lnum, buf->b_ml.ml_line_count);
 
     linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
     char *old_prompt = buf_prompt_text(buf);
@@ -786,8 +784,7 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     colnr_T cursor_col = curwin->w_cursor.col;
 
     if (buf->b_prompt_start.mark.col < old_prompt_len
-        || curbuf->b_prompt_start.mark.col < old_prompt_len
-        || !strnequal(old_prompt, old_line + curbuf->b_prompt_start.mark.col - old_prompt_len,
+        || !strnequal(old_prompt, old_line + buf->b_prompt_start.mark.col - old_prompt_len,
                       (size_t)old_prompt_len)) {
       // If for some odd reason the old prompt is missing,
       // replace prompt line with new-prompt (discards user-input).

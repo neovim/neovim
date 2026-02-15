@@ -798,8 +798,8 @@ describe('prompt buffer', function()
     api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
     local buf = api.nvim_get_current_buf()
 
-    local function set_prompt(prompt)
-      fn('prompt_setprompt', buf, prompt)
+    local function set_prompt(prompt, b)
+      fn('prompt_setprompt', b or buf, prompt)
     end
 
     set_prompt('> ')
@@ -846,5 +846,20 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
     eq({ 1, 13 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- No crash when setting shorter prompt than curbuf's in other buffer.
+    command('new | setlocal buftype=prompt')
+    set_prompt('looooooooooooooooooooooooooooooooooooooooooooong > ', '') -- curbuf
+    set_prompt('foo > ')
+    screen:expect([[
+      loooooooooooooooooooooooo|
+      ooooooooooooooooooooong >|
+       ^                        |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      foo > user input         |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
   end)
 end)
