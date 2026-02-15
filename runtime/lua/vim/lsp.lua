@@ -1132,9 +1132,25 @@ api.nvim_create_autocmd('VimLeavePre', {
     local active_clients = lsp.get_clients()
     log.info('exit_handler', active_clients)
 
+    local max_timeout = 0
     for _, client in pairs(active_clients) do
+      max_timeout = math.max(max_timeout, tonumber(client.exit_timeout) or 0)
       client:stop(client.exit_timeout)
     end
+    if max_timeout > 10 then
+      api.nvim_echo({
+        {
+          string.format('Waiting %ss for lsp exit (Press Ctrl-C to force exit)', max_timeout / 1e3),
+          'WarningMsg',
+        },
+      }, true, {})
+    end
+
+    vim.wait(max_timeout, function()
+      return vim.iter(active_clients):all(function(client)
+        return client.rpc.is_closing()
+      end)
+    end)
   end,
 })
 
