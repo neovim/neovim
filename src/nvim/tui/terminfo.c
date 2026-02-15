@@ -347,7 +347,7 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname, bool fro
 
 static int push(long num, char *string, TPSTACK *stack)
 {
-  if (stack->offset >= sizeof(stack->nums)) {
+  if (stack->offset >= ARRAY_SIZE(stack->nums)) {
     return -1;
   }
   stack->nums[stack->offset] = num;
