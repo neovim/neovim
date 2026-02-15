@@ -1593,6 +1593,10 @@ static void init_prompt(int cmdchar_todo)
   char *prompt = prompt_text();
   int prompt_len = (int)strlen(prompt);
 
+  // In case the mark is set to a nonexistent line.
+  curbuf->b_prompt_start.mark.lnum = MIN(curbuf->b_prompt_start.mark.lnum,
+                                         curbuf->b_ml.ml_line_count);
+
   curwin->w_cursor.lnum = MAX(curwin->w_cursor.lnum, curbuf->b_prompt_start.mark.lnum);
   char *text = ml_get(curbuf->b_prompt_start.mark.lnum);
   colnr_T text_len = ml_get_len(curbuf->b_prompt_start.mark.lnum);

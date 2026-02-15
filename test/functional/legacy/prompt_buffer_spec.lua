@@ -671,6 +671,13 @@ describe('prompt buffer', function()
     -- No crash from invalid col.
     eq(true, api.nvim_buf_set_mark(0, ':', fn('line', '.'), 999, {}))
     eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- No ml_get error from invalid lnum.
+    command('set messagesopt+=wait:0 messagesopt-=hit-enter')
+    fn('setpos', "':", { 0, 999, 7, 0 })
+    eq('', api.nvim_get_vvar('errmsg'))
+    command('set messagesopt&')
+    eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
   end)
 
   describe('prompt_getinput', function()
