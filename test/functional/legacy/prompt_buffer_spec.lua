@@ -667,6 +667,10 @@ describe('prompt buffer', function()
     eq({ last_line, 6 }, api.nvim_buf_get_mark(0, ':'))
     eq(true, api.nvim_buf_set_mark(0, ':', 1, 5, {}))
     eq({ 1, 5 }, api.nvim_buf_get_mark(0, ':'))
+
+    -- No crash from invalid col.
+    eq(true, api.nvim_buf_set_mark(0, ':', fn('line', '.'), 999, {}))
+    eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
   end)
 
   describe('prompt_getinput', function()
@@ -859,6 +863,18 @@ describe('prompt buffer', function()
       {3:[Prompt] [+]             }|
       foo > user input         |
       {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    -- No prompt_setprompt crash from invalid ': col. Must happen in the same event.
+    exec_lua(function()
+      vim.cmd 'bwipeout!'
+      vim.api.nvim_buf_set_mark(0, ':', vim.fn.line('.'), 999, {})
+      vim.fn.prompt_setprompt('', 'new-prompt > ')
+    end)
+    screen:expect([[
+      new-prompt > ^            |
+      {1:~                        }|*8
       {5:-- INSERT --}             |
     ]])
   end)

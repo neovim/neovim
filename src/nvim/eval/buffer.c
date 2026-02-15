@@ -778,12 +778,13 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
     char *old_prompt = buf_prompt_text(buf);
     char *old_line = ml_get_buf(buf, prompt_lno);
-    old_line = old_line != NULL ? old_line : "";
+    colnr_T old_line_len = ml_get_buf_len(buf, prompt_lno);
 
     int old_prompt_len = (int)strlen(old_prompt);
     colnr_T cursor_col = curwin->w_cursor.col;
 
     if (buf->b_prompt_start.mark.col < old_prompt_len
+        || buf->b_prompt_start.mark.col > old_line_len
         || !strnequal(old_prompt, old_line + buf->b_prompt_start.mark.col - old_prompt_len,
                       (size_t)old_prompt_len)) {
       // If for some odd reason the old prompt is missing,
