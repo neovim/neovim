@@ -1603,6 +1603,15 @@ describe('API/extmarks', function()
     eq('invalid', get_extmark_range(marks[3]))
     eq('invalid', get_extmark_range(marks[4]))
     eq({ 0, 10, 1, 0 }, get_extmark_range(marks[5]))
+
+    feed('hello')
+    eq({ 0, 15 }, get_extmark_range(marks[1]))
+    eq({ 0, 15, 1, 0 }, get_extmark_range(marks[5]))
+    -- init_prompt uses correct range for inserted_bytes when fixing empty prompt.
+    fn.setline('.', { '', 'last line' })
+    eq({ 'discard > ', 'last line' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq({ 0, 10 }, get_extmark_range(marks[1]))
+    eq({ 0, 10, 1, 0 }, get_extmark_range(marks[5]))
   end)
 
   it('can get details', function()

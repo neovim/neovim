@@ -463,6 +463,14 @@ describe('lua: nvim_buf_attach on_lines', function()
       { 'test1', 'lines', 1, 12, 0, 1, 1, 16 },
     }
     eq({ 'foo > hello', 'there' }, api.nvim_buf_get_lines(0, 0, -1, true))
+
+    -- init_prompt uses appended_lines_mark when appending to fix prompt.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'hi' })
+    eq({ 'hi', 'foo > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    check_events {
+      { 'test1', 'lines', 1, 13, 0, 2, 1, 18 },
+      { 'test1', 'lines', 1, 14, 1, 1, 2, 0 },
+    }
   end)
 end)
 
@@ -1652,6 +1660,14 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { 'test1', 'bytes', 1, 15, 2, 0, 6, 0, 10, 10, 0, 7, 7 },
       }
       eq({ '% ', '% ', 'cool > sup', 'dood' }, api.nvim_buf_get_lines(0, 0, -1, true))
+
+      -- init_prompt uses appended_lines_mark when appending to fix prompt.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'hi' })
+      eq({ 'hi', 'cool > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      check_events {
+        { 'test1', 'bytes', 1, 16, 0, 0, 0, 4, 0, 22, 1, 0, 3 },
+        { 'test1', 'bytes', 1, 17, 1, 0, 3, 0, 0, 0, 1, 0, 8 },
+      }
     end)
 
     local function test_lockmarks(mode)
