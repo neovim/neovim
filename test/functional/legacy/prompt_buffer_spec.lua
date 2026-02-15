@@ -62,7 +62,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt]                 }|
+      {3:[Prompt] [+]             }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -149,7 +149,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:                     |
       {1:~                        }|*3
-      {2:[Prompt]                 }|
+      {2:[Prompt] [+]             }|
       ^other buffer             |
       {1:~                        }|*3
                                |
@@ -158,7 +158,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt]                 }|
+      {3:[Prompt] [+]             }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -167,7 +167,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:^                     |
       {1:~                        }|*3
-      {3:[Prompt]                 }|
+      {3:[Prompt] [+]             }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -892,10 +892,42 @@ describe('prompt buffer', function()
       {1:~                        }|*7
                                |
     ]])
+    -- Correct col when prompt has multi-cell chars.
+    feed('i<Left><Left>')
+    screen:expect([[
+      new-prompt > user input  |
+      <>< user inp^ut           |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
+    set_prompt('\t > ')
+    screen:expect([[
+      new-prompt > user input  |
+               > user inp^ut    |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
+    -- Works with 'virtualedit': coladd remains sensible. Cursor is redrawn correctly.
+    -- Tab size visually changes due to multiples of 'tabstop'.
+    command('set virtualedit=all')
+    feed('<C-O>Sa<Tab>b<C-O>3h')
+    screen:expect([[
+      new-prompt > user input  |
+               > a  ^  b        |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
+    set_prompt('😊 > ')
+    screen:expect([[
+      new-prompt > user input  |
+      😊 > a ^ b                |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
 
     -- No crash when setting shorter prompt than curbuf's in other buffer.
-    feed('i<C-O>zt')
-    command('new | setlocal buftype=prompt')
+    feed('<C-O>zt')
+    command('set virtualedit& | new | setlocal buftype=prompt')
     set_prompt('looooooooooooooooooooooooooooooooooooooooooooong > ', '') -- curbuf
     set_prompt('foo > ')
     screen:expect([[
@@ -904,7 +936,7 @@ describe('prompt buffer', function()
        ^                        |
       {1:~                        }|
       {3:[Prompt] [+]             }|
-      foo > user input         |
+      foo > a b                |
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])

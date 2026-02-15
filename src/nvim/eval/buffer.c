@@ -801,10 +801,9 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     if (curwin->w_buffer == buf && curwin->w_cursor.lnum == prompt_lno) {
-      coladvance(curwin, cursor_col);
+      curwin->w_cursor.col = cursor_col;
     }
-    changed_lines_redraw_buf(buf, prompt_lno, prompt_lno + 1, 0);
-    redraw_buf_later(buf, UPD_INVERTED);
+    changed_lines(buf, prompt_lno, 0, prompt_lno + 1, 0, true);
   }
 
   // Clear old prompt text and replace with the new one

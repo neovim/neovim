@@ -422,6 +422,48 @@ describe('lua: nvim_buf_attach on_lines', function()
     feed('<C-v>I <ESC>')
     eq({ api.nvim_get_current_buf(), 0, 1, 1 }, exec_lua('return _G.res'))
   end)
+
+  it('prompt buffer', function()
+    local check_events = setup_eventcheck(false, nil, {})
+    api.nvim_set_option_value('buftype', 'prompt', {})
+    feed('i')
+    check_events {
+      { 'test1', 'lines', 1, 4, 0, 1, 1, 1 },
+    }
+    fn.prompt_setprompt('', 'foo > ')
+    check_events {
+      { 'test1', 'lines', 1, 5, 0, 1, 1, 3 },
+    }
+    feed('hello')
+    check_events {
+      { 'test1', 'lines', 1, 6, 0, 1, 1, 7 },
+    }
+    fn.prompt_setprompt('', 'super-foo > ')
+    check_events {
+      { 'test1', 'lines', 1, 7, 0, 1, 1, 12 },
+    }
+    eq({ 'super-foo > hello' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    -- Do this in the same event.
+    exec_lua(function()
+      vim.fn.setpos("':", { 0, 1, 999, 0 })
+      vim.fn.prompt_setprompt('', 'discard > ')
+    end)
+    check_events {
+      { 'test1', 'lines', 1, 8, 0, 1, 1, 18 },
+    }
+    eq({ 'discard > ' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    feed('hello<S-CR>there')
+    check_events {
+      { 'test1', 'lines', 1, 9, 0, 1, 1, 11 },
+      { 'test1', 'lines', 1, 10, 0, 1, 2, 16 },
+      { 'test1', 'lines', 1, 11, 1, 2, 2, 1 },
+    }
+    fn.prompt_setprompt('', 'foo > ')
+    check_events {
+      { 'test1', 'lines', 1, 12, 0, 1, 1, 16 },
+    }
+    eq({ 'foo > hello', 'there' }, api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
