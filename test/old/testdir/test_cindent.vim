@@ -127,7 +127,7 @@ func Test_cindent_func()
   bwipe!
 endfunc
 
-func Test_cindent_1()
+func Test_cindent_01()
   new
   setl cindent ts=4 sw=4
   setl cino& sts&
@@ -2150,7 +2150,7 @@ func Test_cindent_1()
   enew! | close
 endfunc
 
-func Test_cindent_2()
+func Test_cindent_02()
   new
   setl cindent ts=4 sw=4
   setl tw=0 noai fo=croq
@@ -2192,7 +2192,7 @@ func Test_cindent_2()
   enew! | close
 endfunc
 
-func Test_cindent_3()
+func Test_cindent_03()
   new
   setl nocindent ts=4 sw=4
 
@@ -2252,7 +2252,7 @@ func Test_cindent_3()
   enew! | close
 endfunc
 
-func Test_cindent_4()
+func Test_cindent_04()
   new
   setl cindent ts=4 sw=4
 
@@ -2282,7 +2282,7 @@ func Test_cindent_4()
   enew! | close
 endfunc
 
-func Test_cindent_5()
+func Test_cindent_05()
   new
   setl cindent ts=4 sw=4
   setl cino=}4
@@ -2332,7 +2332,7 @@ func Test_cindent_5()
   enew! | close
 endfunc
 
-func Test_cindent_6()
+func Test_cindent_06()
   new
   setl cindent ts=4 sw=4
   setl cino=(0,)20
@@ -2395,7 +2395,7 @@ func Test_cindent_6()
   enew! | close
 endfunc
 
-func Test_cindent_7()
+func Test_cindent_07()
   new
   setl cindent ts=4 sw=4
   setl cino=es,n0s
@@ -2436,7 +2436,7 @@ func Test_cindent_7()
   enew! | close
 endfunc
 
-func Test_cindent_8()
+func Test_cindent_08()
   new
   setl cindent ts=4 sw=4
   setl cino=
@@ -2484,7 +2484,7 @@ func Test_cindent_8()
   enew! | close
 endfunc
 
-func Test_cindent_9()
+func Test_cindent_09()
   new
   setl cindent ts=4 sw=4
 
