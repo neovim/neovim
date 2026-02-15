@@ -23,6 +23,7 @@ typedef enum {
   kTerm_enter_dim_mode,
   kTerm_enter_italics_mode,
   kTerm_enter_reverse_mode,
+  kTerm_enter_secure_mode,
   kTerm_enter_standout_mode,
   kTerm_enter_underline_mode,
   kTerm_erase_chars,

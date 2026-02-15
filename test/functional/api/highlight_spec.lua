@@ -48,6 +48,7 @@ describe('API: set highlight', function()
     altfont = true,
     dim = true,
     blink = true,
+    conceal = true,
     cterm = {
       italic = true,
       reverse = true,
@@ -55,6 +56,7 @@ describe('API: set highlight', function()
       altfont = true,
       dim = true,
       blink = true,
+      conceal = true,
       nocombine = true,
     },
   }
@@ -69,6 +71,7 @@ describe('API: set highlight', function()
     altfont = true,
     dim = true,
     blink = true,
+    conceal = true,
   }
   local highlight3_result_cterm = {
     ctermbg = highlight_color.ctermbg,
@@ -79,6 +82,7 @@ describe('API: set highlight', function()
     altfont = true,
     dim = true,
     blink = true,
+    conceal = true,
     nocombine = true,
   }
 
@@ -180,7 +184,7 @@ describe('API: set highlight', function()
 
     api.nvim_set_hl(0, 'Test_hl2', highlight3_config)
     eq(
-      'Test_hl2       xxx cterm=italic,reverse,strikethrough,altfont,dim,blink,nocombine ctermfg=8 ctermbg=15 gui=bold,underdashed,italic,reverse,strikethrough,altfont,dim,blink guifg=#ff0000 guibg=#0032aa',
+      'Test_hl2       xxx cterm=italic,reverse,strikethrough,altfont,dim,blink,conceal,nocombine ctermfg=8 ctermbg=15 gui=bold,underdashed,italic,reverse,strikethrough,altfont,dim,blink,conceal guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2')
     )
 
@@ -282,6 +286,7 @@ describe('API: get highlight', function()
     altfont = true,
     dim = true,
     blink = true,
+    conceal = true,
     cterm = {
       italic = true,
       reverse = true,
@@ -289,6 +294,7 @@ describe('API: get highlight', function()
       altfont = true,
       dim = true,
       blink = true,
+      conceal = true,
       nocombine = true,
     },
   }
@@ -305,6 +311,7 @@ describe('API: get highlight', function()
     altfont = true,
     dim = true,
     blink = true,
+    conceal = true,
     cterm = {
       italic = true,
       nocombine = true,
@@ -313,6 +320,7 @@ describe('API: get highlight', function()
       altfont = true,
       dim = true,
       blink = true,
+      conceal = true,
     },
   }
 
@@ -454,7 +462,7 @@ describe('API: get highlight', function()
     )
 
     -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,dim,blink,nocombine')
+    command('hi NewHighlight gui=underline,bold,italic,reverse,strikethrough,altfont,dim,blink,conceal,nocombine')
     eq({
       fg = 16711680,
       bg = 16776960,
@@ -462,6 +470,7 @@ describe('API: get highlight', function()
       altfont = true,
       blink = true,
       bold = true,
+      conceal = true,
       dim = true,
       italic = true,
       nocombine = true,

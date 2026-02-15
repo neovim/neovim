@@ -7377,6 +7377,9 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       p = highlight_has_attr(id, HL_BOLD, modec);
     }
     break;
+  case 'c':    // conceal
+    p = highlight_has_attr(id, HL_CONCEALED, modec);
+    break;
   case 'd':    // dim
     p = highlight_has_attr(id, HL_DIM, modec);
     break;

@@ -1406,6 +1406,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                    | (cell.attrs.blink ? HL_BLINK : 0)
+                   | (cell.attrs.conceal ? HL_CONCEALED : 0)
                    | (cell.attrs.italic ? HL_ITALIC : 0)
                    | (cell.attrs.reverse ? HL_INVERSE : 0)
                    | get_underline_hl_flag(cell.attrs)

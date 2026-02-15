@@ -59,6 +59,7 @@ local wanted_strings = {
   'enter_dim_mode',
   'enter_italics_mode',
   'enter_reverse_mode',
+  'enter_secure_mode',
   'enter_standout_mode',
   'enter_underline_mode',
   'erase_chars',

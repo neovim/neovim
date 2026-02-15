@@ -754,6 +754,7 @@ static void update_attrs(TUIData *tui, int attr_id)
   bool altfont = attr & HL_ALTFONT;
   bool dim = attr & HL_DIM;
   bool blink = attr & HL_BLINK;
+  bool conceal = attr & HL_CONCEALED;
 
   bool underline;
   bool undercurl;
@@ -825,6 +826,9 @@ static void update_attrs(TUIData *tui, int attr_id)
   }
   if (strikethrough) {
     terminfo_out(tui, kTerm_enter_strikethrough_mode);
+  }
+  if (conceal) {
+    terminfo_out(tui, kTerm_enter_secure_mode);
   }
   if (tui->ti.defs[kTerm_set_underline_style]) {
     if (undercurl) {
@@ -906,13 +910,13 @@ static void update_attrs(TUIData *tui, int attr_id)
   }
 
   tui->default_attr = fg == -1 && bg == -1
-                      && !bold && !dim && !blink && !italic
+                      && !bold && !dim && !blink && !conceal && !italic
                       && !has_any_underline && !reverse && !standout && !strikethrough;
 
   // Non-BCE terminals can't clear with non-default background color. Some BCE
   // terminals don't support attributes either, so don't rely on it. But assume
   // italic and bold has no effect if there is no text.
-  tui->can_clear_attr = !reverse && !standout && !dim && !blink
+  tui->can_clear_attr = !reverse && !standout && !dim && !blink && !conceal
                         && !has_any_underline && !strikethrough && (tui->bce || bg == -1);
 }
 
