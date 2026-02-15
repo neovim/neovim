@@ -978,12 +978,13 @@ static void terminal_check_cursor(void)
   if (topline != curwin->w_topline) {
     set_topline(curwin, topline);
   }
-  if (term->suspended) {
-    // If the terminal process is suspended, keep cursor at the bottom-left corner.
+  if (term->suspended && (State & MODE_TERMINAL)) {
+    // Put cursor at the "[Process suspended]" text to hint that pressing a key will
+    // change the suspended state.
     curwin->w_cursor = (pos_T){ .lnum = curbuf->b_ml.ml_line_count };
   } else {
     // Nudge cursor when returning to normal-mode.
-    int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
+    int off = (State & MODE_TERMINAL) ? 0 : (curwin->w_p_rl ? 1 : -1);
     coladvance(curwin, MAX(0, term->cursor.col + off));
   }
 }
