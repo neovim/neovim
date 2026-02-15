@@ -519,12 +519,27 @@ describe(':terminal buffer', function()
       command('set mousemodel=extend')
       local pid = eval('jobpid(&channel)')
       vim.uv.kill(pid, 'sigstop')
-      screen:expect([[
+      -- In Terminal mode the cursor is at the "[Process suspended]" text to hint that
+      -- pressing a key will change the suspended state.
+      local s0 = [[
         tty ready                                         |
                                                           |*4
         ^[Process suspended]                               |
         {5:-- TERMINAL --}                                    |
+      ]]
+      screen:expect(s0)
+      feed([[<C-\><C-N>]])
+      -- Returning to Normal mode puts the cursor at its previous position as that's
+      -- closer to the terminal output, making it easier for the user to copy.
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*3
+        [Process suspended]                               |
+                                                          |
       ]])
+      feed('i')
+      screen:expect(s0)
       command('set laststatus=0 | botright vsplit')
       screen:expect([[
         tty ready               │tty ready                |
