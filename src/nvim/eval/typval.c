@@ -99,8 +99,6 @@ static const char e_list_or_blob_required_for_argument_nr[]
   = N_("E1226: List or Blob required for argument %d");
 static const char e_blob_required_for_argument_nr[]
   = N_("E1238: Blob required for argument %d");
-static const char e_invalid_value_for_blob_nr[]
-  = N_("E1239: Invalid value for blob: %d");
 static const char e_string_list_or_blob_required_for_argument_nr[]
   = N_("E1252: String, List or Blob required for argument %d");
 static const char e_string_or_function_required_for_argument_nr[]

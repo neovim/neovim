@@ -895,4 +895,13 @@ func Test_blob_items()
   call CheckSourceLegacyAndVim9Success(lines)
 endfunc
 
+" Test for setting a byte in a blob with invalid value
+func Test_blob_byte_set_invalid_value()
+  let lines =<< trim END
+    VAR b = 0zD0C3E4E18E1B
+    LET b[0] = 229539777187355
+  END
+  call CheckSourceLegacyAndVim9Failure(lines, 'E1239: Invalid value for blob:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
