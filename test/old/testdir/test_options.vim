@@ -866,6 +866,7 @@ func Test_set_option_errors()
   call assert_fails('set rulerformat=%15(%%', 'E542:')
 
   " Test for 'statusline' errors
+  call assert_fails('set statusline=%^', 'E539:')  " Nvim: supports %$
   call assert_fails('set statusline=%{', 'E540:')
   call assert_fails('set statusline=%{%', 'E540:')
   call assert_fails('set statusline=%{%}', 'E539:')
@@ -873,6 +874,7 @@ func Test_set_option_errors()
   call assert_fails('set statusline=%)', 'E542:')
 
   " Test for 'tabline' errors
+  call assert_fails('set tabline=%^', 'E539:')  " Nvim: supports %$
   call assert_fails('set tabline=%{', 'E540:')
   call assert_fails('set tabline=%{%', 'E540:')
   call assert_fails('set tabline=%{%}', 'E539:')
