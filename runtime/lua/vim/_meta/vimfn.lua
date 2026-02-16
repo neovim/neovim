@@ -4901,7 +4901,7 @@ function vim.fn.isnan(expr) end
 --- Return a |List| with all key/index and value pairs of {expr}.
 --- Each |List| item is a list with two items:
 --- - for a |Dict|: the key and the value
---- - for a |List| or |String|: the index and the value
+--- - for a |List|, |Blob| or |String|: the index and the value
 --- The returned |List| is in arbitrary order for a |Dict|,
 --- otherwise it's in ascending order of the index.
 ---
@@ -4914,6 +4914,7 @@ function vim.fn.isnan(expr) end
 ---   endfor
 ---   echo items([1, 2, 3])
 ---   echo items("foobar")
+---   echo items(0z0102)
 --- <
 ---
 --- @param expr table|string

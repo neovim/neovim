@@ -1315,9 +1315,13 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, bool copy, const bool
         }
       } else {
         bool error = false;
-        const char val = (char)tv_get_number_chk(rettv, &error);
+        const varnumber_T val = tv_get_number_chk(rettv, &error);
         if (!error) {
-          tv_blob_set_append(lp->ll_blob, lp->ll_n1, (uint8_t)val);
+          if (val < 0 || val > 255) {
+            semsg(_(e_invalid_value_for_blob_nr), val);
+          } else {
+            tv_blob_set_append(lp->ll_blob, lp->ll_n1, (uint8_t)val);
+          }
         }
       }
     } else if (op != NULL && *op != '=') {

@@ -197,6 +197,7 @@ EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line numbe
 
 EXTERN const char e_reduce_of_an_empty_str_with_no_initial_value[] INIT(= N_("E998: Reduce of an empty %s with no initial value"));
 
+EXTERN const char e_invalid_value_for_blob_nr[] INIT(= N_("E1239: Invalid value for blob: 0x" PRIX64));
 EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));
 EXTERN const char e_missing_close_curly_str[]

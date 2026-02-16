@@ -93,14 +93,12 @@ static const char e_string_or_number_required_for_argument_nr[]
   = N_("E1220: String or Number required for argument %d");
 static const char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
-static const char e_string_list_or_dict_required_for_argument_nr[]
-  = N_("E1225: String, List or Dictionary required for argument %d");
+static const char e_list_dict_blob_or_string_required_for_argument_nr[]
+  = N_("E1225: List, Dictionary, Blob or String required for argument %d");
 static const char e_list_or_blob_required_for_argument_nr[]
   = N_("E1226: List or Blob required for argument %d");
 static const char e_blob_required_for_argument_nr[]
   = N_("E1238: Blob required for argument %d");
-static const char e_invalid_value_for_blob_nr[]
-  = N_("E1239: Invalid value for blob: %d");
 static const char e_string_list_or_blob_required_for_argument_nr[]
   = N_("E1252: String, List or Blob required for argument %d");
 static const char e_string_or_function_required_for_argument_nr[]
@@ -791,6 +789,30 @@ void tv_list_flatten(list_T *list, listitem_T *first, int64_t maxitems, int64_t 
     done++;
     item = next;
   }
+}
+
+/// "items(blob)" function
+/// Converts a Blob into a List of [index, byte] pairs.
+/// Caller must have already checked that argvars[0] is a Blob.
+/// A null blob behaves like an empty blob.
+static void tv_blob2items(typval_T *argvars, typval_T *rettv)
+{
+  blob_T *blob = argvars[0].vval.v_blob;
+
+  tv_list_alloc_ret(rettv, tv_blob_len(blob));
+
+  for (int i = 0; i < tv_blob_len(blob); i++) {
+    list_T *l2 = tv_list_alloc(2);
+    tv_list_append_list(rettv->vval.v_list, l2);
+    tv_list_append_number(l2, i);
+    tv_list_append_number(l2, tv_blob_get(blob, i));
+  }
+}
+
+/// "items(dict)" function
+static void tv_dict2items(typval_T *argvars, typval_T *rettv)
+{
+  tv_dict2list(argvars, rettv, kDict2ListItems);
 }
 
 /// "items(list)" function
@@ -3226,9 +3248,7 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
 /// @param[in] what    What to save in rettv.
 static void tv_dict2list(typval_T *const argvars, typval_T *const rettv, const DictListType what)
 {
-  if ((what == kDict2ListItems
-       ? tv_check_for_string_or_list_or_dict_arg(argvars, 0)
-       : tv_check_for_dict_arg(argvars, 0)) == FAIL) {
+  if (tv_check_for_dict_arg(argvars, 0) == FAIL) {
     tv_list_alloc_ret(rettv, 0);
     return;
   }
@@ -3267,15 +3287,19 @@ static void tv_dict2list(typval_T *const argvars, typval_T *const rettv, const D
   });
 }
 
-/// "items(dict)" function
+/// "items()" function
 void f_items(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (argvars[0].v_type == VAR_STRING) {
     tv_string2items(argvars, rettv);
   } else if (argvars[0].v_type == VAR_LIST) {
     tv_list2items(argvars, rettv);
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    tv_blob2items(argvars, rettv);
+  } else if (argvars[0].v_type == VAR_DICT) {
+    tv_dict2items(argvars, rettv);
   } else {
-    tv_dict2list(argvars, rettv, kDict2ListItems);
+    semsg(_(e_list_dict_blob_or_string_required_for_argument_nr), 1);
   }
 }
 
@@ -4509,19 +4533,6 @@ int tv_check_for_opt_string_or_list_arg(const typval_T *const args, const int id
 {
   return (args[idx].v_type == VAR_UNKNOWN
           || tv_check_for_string_or_list_arg(args, idx) != FAIL) ? OK : FAIL;
-}
-
-/// Give an error and return FAIL unless "args[idx]" is a string or a list or a dict
-int tv_check_for_string_or_list_or_dict_arg(const typval_T *const args, const int idx)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
-{
-  if (args[idx].v_type != VAR_STRING
-      && args[idx].v_type != VAR_LIST
-      && args[idx].v_type != VAR_DICT) {
-    semsg(_(e_string_list_or_dict_required_for_argument_nr), idx + 1);
-    return FAIL;
-  }
-  return OK;
 }
 
 /// Give an error and return FAIL unless "args[idx]" is a string
