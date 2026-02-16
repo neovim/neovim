@@ -1363,14 +1363,16 @@ M.funcs = {
       Insert mode completion.  The popup menu will appear if
       specified, see |ins-completion-menu|.
       Example: >vim
-      	inoremap <F5> <C-R>=ListMonths()<CR>
 
-      	func ListMonths()
-      	  call complete(col('.'), ['January', 'February', 'March',
-      	    \ 'April', 'May', 'June', 'July', 'August', 'September',
-      	    \ 'October', 'November', 'December'])
-      	  return ''
-      	endfunc
+      inoremap <F5> <C-R>=ListMonths()<CR>
+
+      func ListMonths()
+        call complete(col('.'), ['January', 'February', 'March',
+      	\ 'April', 'May', 'June', 'July', 'August',
+      	\ 'September', 'October', 'November', 'December'])
+        return ''
+      endfunc
+
       <This isn't very useful, but it shows how it works.  Note that
       an empty string is returned to avoid a zero being inserted.
 
