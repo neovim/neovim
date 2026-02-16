@@ -884,4 +884,15 @@ func Test_indexof()
   call assert_fails('let i = indexof(b, " ")', 'E15:')
 endfunc
 
+" Test for using the items() function with a blob
+func Test_blob_items()
+  let lines =<< trim END
+    call assert_equal([[0, 0xAA], [1, 0xBB], [2, 0xCC]], 0zAABBCC->items())
+    call assert_equal([[0, 0]], 0z00->items())
+    call assert_equal([], 0z->items())
+    call assert_equal([], v:_null_blob->items())
+  END
+  call CheckSourceLegacyAndVim9Success(lines)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

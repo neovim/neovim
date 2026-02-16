@@ -745,6 +745,7 @@ Blob manipulation:					*blob-functions*
 	reverse()		reverse the order of numbers in a blob
 	index()			index of a value in a Blob
 	indexof()		index in a Blob where an expression is true
+	items()			get List of Blob index-value pairs
 
 Other computation:					*bitwise-function*
 	and()			bitwise AND
