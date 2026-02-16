@@ -356,7 +356,7 @@ CALLING INPUTLIST(), ECHOMSG, ... IN FILETYPE PLUGINS AND AUTOCMD DOES NOT WORK
 - https://github.com/vim/vim/issues/4379
 
 This is because Nvim sets `shortmess+=F` by default. Vim behaves the same way
-with `set shortmes+=F`. There are plans to improve this, but meanwhile as a
+with `set shortmess+=F`. There are plans to improve this, but meanwhile as a
 workaround, use `set shortmess-=F` or use `unsilent` as follows.
 >vim
     unsilent let var = inputlist(['1. item1', '2. item2'])
@@ -386,7 +386,7 @@ Or, if you want automatic reloading when assigning to |g:clipboard|, set
       runtime autoload/provider/clipboard.vim
     endfunction
 
-    if !exists('s:loaded")
+    if !exists('s:loaded')
       call dictwatcheradd(g:, 'clipboard', function('s:clipboard_changed'))
     endif
     let s:loaded = v:true
