@@ -1044,7 +1044,7 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, EvalFuncData fp
   } else if (argvars[0].vval.v_dict == NULL) {
     const char *const arg_errmsg = _("dictwatcheradd() argument");
     const size_t arg_errmsg_len = strlen(arg_errmsg);
-    semsg(_(e_readonlyvar), (int)arg_errmsg_len, arg_errmsg);
+    semsg(_(e_cannot_change_readonly_variable_str), (int)arg_errmsg_len, arg_errmsg);
     return;
   }
 
