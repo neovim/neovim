@@ -3996,7 +3996,9 @@ local options = {
     },
     {
       abbreviation = 'gfn',
-      defaults = '',
+      defaults = {
+        if_true = macros('DFLT_GFN', 'string'),
+      },
       desc = [=[
         This is a list of fonts which will be used for the GUI version of Vim.
         In its simplest form the value is just one font name.  When
