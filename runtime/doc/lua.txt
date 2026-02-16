@@ -4237,8 +4237,8 @@ Provides operations to compare, calculate, and convert ranges represented by
       • {start}      (`vim.Pos`) Start position.
       • {end_}       (`vim.Pos`) End position, exclusive.
       • {is_empty}   (`fun(self: vim.Range): boolean`) See |Range:is_empty()|.
-      • {has}        (`fun(outer: vim.Range, inner: vim.Range): boolean`) See
-                     |Range:has()|.
+      • {has}        (`fun(outer: vim.Range, inner: vim.Range|vim.Pos): boolean`)
+                     See |Range:has()|.
       • {intersect}  (`fun(r1: vim.Range, r2: vim.Range): vim.Range?`) See
                      |Range:intersect()|.
       • {to_lsp}     (`fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind): lsp.Range`)
@@ -4248,14 +4248,15 @@ Provides operations to compare, calculate, and convert ranges represented by
 
 
 Range:has({outer}, {inner})                                      *Range:has()*
-    Checks whether {outer} range contains {inner} range.
+    Checks whether {outer} range contains {inner} range or position.
 
     Parameters: ~
       • {outer}  (`vim.Range`) See |vim.Range|.
-      • {inner}  (`vim.Range`) See |vim.Range|.
+      • {inner}  (`vim.Range|vim.Pos`)
 
     Return: ~
-        (`boolean`) `true` if {outer} range fully contains {inner} range.
+        (`boolean`) `true` if {outer} range fully contains {inner} range or
+        position.
 
 Range:intersect({r1}, {r2})                                *Range:intersect()*
     Computes the common range shared by the given ranges.
