@@ -94,8 +94,19 @@ describe('messages2', function()
       {1:~                                                    }|*12
                                           0,0-1         All|
     ]])
+    -- g< shows messages from last command
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      fo^o                                                  |
+      bar                                                  |
+        1 %a   "[No Name]"                    line 1       |
+                                          1,3           All|
+    ]])
     -- edit_unputchar() does not clear already updated screen #34515.
-    feed('ix<Esc>dwi<C-r>')
+    feed('qix<Esc>dwi<C-r>')
     screen:expect([[
       {18:^"}                                                    |
       {1:~                                                    }|*12
