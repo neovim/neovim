@@ -21,6 +21,7 @@
 "		2025 Sep 23 simplify ksh logic, update sh statements #18355
 "		2026 Jan 15 highlight command switches that contain a digit
 "		2026 Feb 11 improve support for KornShell function names and variables
+"		2026 Feb 15 improve comment handling #19414
 " }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
@@ -452,7 +453,7 @@ endif
 "======
 syn match   shWrapLineOperator "\\$"
 syn region  shCommandSubBQ   	start="`" skip="\\\\\|\\." end="`"	contains=shBQComment,@shCommandSubList
-syn match   shEscape	contained	'\%(^\)\@!\%(\\\\\)*\\.'	nextgroup=shComment
+syn match   shEscape	contained	'\%(^\)\@!\%(\\\\\)*\\.'
 
 " $() and $(()): {{{1
 " $(..) is not supported by sh (Bourne shell).  However, apparently
