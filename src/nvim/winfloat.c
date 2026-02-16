@@ -239,7 +239,8 @@ void win_config_float(win_T *wp, WinConfig fconfig)
   }
 
   if (!ui_has(kUIMultigrid)) {
-    wp->w_height = MIN(wp->w_height, Rows - win_border_height(wp));
+    int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
+    wp->w_height = MIN(wp->w_height, Rows - win_border_height(wp) - above_ch);
     wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));
   }
 
