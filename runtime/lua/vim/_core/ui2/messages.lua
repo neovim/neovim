@@ -501,21 +501,22 @@ end
 
 --- Adjust visibility and dimensions of the message windows after certain events.
 ---
----@param type? 'cmd'|'dialog'|'msg'|'pager' Type of to be positioned window (nil for all).
-function M.set_pos(type)
+---@param tar? 'cmd'|'dialog'|'msg'|'pager' To be positioned window (nil for all).
+function M.set_pos(tar)
   local function win_set_pos(win)
     local cfg = { hide = false, relative = 'laststatus', col = 10000 }
-    local texth = type and api.nvim_win_text_height(win, {}) or {}
+    local texth = tar and api.nvim_win_text_height(win, {}) or {}
     local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-    cfg.height = type == 'pager' and texth.all
-      or type and math.min(texth.all, math.ceil(o.lines * 0.5))
+    cfg.height = tar and math.min(texth.all, tar == 'pager' and 10000 or math.ceil(o.lines * 0.5))
     cfg.border = win ~= ui.wins.msg and { '', top, '', '', '', '', '', '' } or nil
-    cfg.focusable = type == 'cmd' or nil
+    cfg.focusable = tar == 'cmd' or nil
     cfg.row = (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode
     cfg.row = cfg.row - ((win == ui.wins.pager and o.laststatus == 3) and 1 or 0)
+    local title = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
+    cfg.title = tar == 'dialog' and cfg.height < texth.all and { title } or nil
     api.nvim_win_set_config(win, cfg)
 
-    if type == 'cmd' and not cmd_on_key then
+    if tar == 'cmd' and not cmd_on_key then
       -- Temporarily expand the cmdline, until next key press.
       local save_spill = M.virt.msg[M.virt.idx.spill][1]
       local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
@@ -551,7 +552,7 @@ function M.set_pos(type)
         end)
         vim.on_key(nil, ui.ns)
       end, ui.ns)
-    elseif type == 'dialog' then
+    elseif tar == 'dialog' then
       -- Add virtual [+x] text to indicate scrolling is possible.
       local function set_top_bot_spill()
         local topspill = fn.line('w0', ui.wins.dialog) - 1
@@ -565,10 +566,18 @@ function M.set_pos(type)
       set_top_bot_spill()
 
       -- Allow paging in the dialog window, consume the key if the topline changes.
-      M.dialog_on_key = vim.on_key(function(key, typed)
+      M.dialog_on_key = vim.on_key(function(_, typed)
+        typed = typed and fn.keytrans(typed)
         if not typed then
           return
+        elseif typed == '<Esc>' then
+          -- Stop paging, redraw empty title to reflect paging is no longer active.
+          api.nvim_win_set_config(ui.wins.dialog, { title = '' })
+          api.nvim__redraw({ flush = true })
+          vim.on_key(nil, M.dialog_on_key)
+          return ''
         end
+
         local page_keys = {
           g = 'gg',
           G = 'G',
@@ -579,18 +588,18 @@ function M.set_pos(type)
           f = [[\<C-F>]],
           b = [[\<C-B>]],
         }
-        local info = page_keys[key] and fn.getwininfo(ui.wins.dialog)[1]
-        if info and (key ~= 'f' or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
-          fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(page_keys[key]))
+        local info = page_keys[typed] and fn.getwininfo(ui.wins.dialog)[1]
+        if info and (typed ~= 'f' or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
+          fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(page_keys[typed]))
           set_top_bot_spill()
           return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
         end
       end, M.dialog_on_key)
-    elseif type == 'msg' then
+    elseif tar == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > cfg.height and texth.end_row or 0) + 1
       api.nvim_win_set_cursor(ui.wins.msg, { row, 0 })
-    elseif type == 'pager' then
+    elseif tar == 'pager' then
       if fn.getcmdwintype() ~= '' then
         -- Cannot leave the cmdwin to enter the pager, so close it.
         -- NOTE: regression w.r.t. the message grid, which allowed this.
@@ -621,10 +630,10 @@ function M.set_pos(type)
   end
 
   for t, win in pairs(ui.wins) do
-    local cfg = (t == type or (type == nil and t ~= 'cmd'))
+    local cfg = (t == tar or (tar == nil and t ~= 'cmd'))
       and api.nvim_win_is_valid(win)
       and api.nvim_win_get_config(win)
-    if cfg and (type or not cfg.hide) then
+    if cfg and (tar or not cfg.hide) then
       win_set_pos(win)
     end
   end
