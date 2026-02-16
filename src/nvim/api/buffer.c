@@ -49,7 +49,7 @@
 #include "api/buffer.c.generated.h"
 
 /// Ensures that a buffer is loaded.
-static buf_T *api_buf_ensure_loaded(Buffer buffer, Error *err)
+buf_T *api_buf_ensure_loaded(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
