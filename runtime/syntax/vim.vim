@@ -2338,7 +2338,7 @@ Vim9 syn region	vim9LineComment	start=+^[ \t:]*\zs#.*$+ skip=+\n\s*\%(\\\|#\\ \)
 VimL syn region	vimLineComment	start=+^[ \t:]*\zs".*$+ skip=+\n\s*\%(\\\|"\\ \)+ end="$" contains=@vimCommentGroup,vimCommentString,vimCommentTitle extend
 
 syn match	vimCommentTitle	'"\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	contained contains=vimCommentTitleLeader,vimTodo,@vimCommentGroup
-syn match	vim9CommentTitle	'#\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	contained contains=vim9CommentTitleLeader,vimTodo,@vimCommentGroup
+syn match	vim9CommentTitle	'#\s*\%([sS]:\|\h\w*#\)\=\%([A-DF-Z]\w*\|E\%(\d\{1,4}\>\)\@!\w*\)\(\s\+\u\w*\)*:'hs=s+1	contained contains=vim9CommentTitleLeader,vimTodo,@vimCommentGroup
 
 " allowed anywhere in the file
 if !s:vim9script
