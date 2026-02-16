@@ -17,7 +17,8 @@ These changes may require adaptations in your config or plugins.
 
 API
 
-• todo
+• |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
+  no longer treat an empty non-nil pattern as nil.
 
 DIAGNOSTICS
 

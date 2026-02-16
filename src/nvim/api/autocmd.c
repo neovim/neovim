@@ -449,6 +449,9 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   if (ERROR_SET(err)) {
     goto cleanup;
   }
+  VALIDATE(patterns.size > 0, "%s", "No non-empty patterns specified", {
+    goto cleanup;
+  });
 
   if (HAS_KEY(opts, create_autocmd, desc)) {
     desc = opts->desc.data;
@@ -830,9 +833,7 @@ static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, B
     }
 
     kvi_push(patterns, STRING_OBJ(arena_printf(arena, "<buffer=%d>", (int)buf->handle)));
-  }
-
-  if (kv_size(patterns) == 0 && fallback) {
+  } else if (fallback) {
     kvi_push(patterns, CSTR_AS_OBJ(fallback));
   }
 
