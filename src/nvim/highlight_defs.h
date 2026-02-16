@@ -28,6 +28,7 @@ typedef enum {
   HL_DIM           = 0x0200,
   HL_BLINK         = 0x8000,
   HL_CONCEALED     = 0x10000,
+  HL_OVERLINE      = 0x20000,
   HL_NOCOMBINE     = 0x0400,
   HL_BG_INDEXED    = 0x0800,
   HL_FG_INDEXED    = 0x1000,

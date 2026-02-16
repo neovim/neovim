@@ -182,6 +182,7 @@ typedef struct {
   Boolean dim;
   Boolean blink;
   Boolean conceal;
+  Boolean overline;
   Boolean nocombine;
   Boolean default_ DictKey(default);
   DictAs(highlight_cterm) cterm;
@@ -218,6 +219,7 @@ typedef struct {
   Boolean dim;
   Boolean blink;
   Boolean conceal;
+  Boolean overline;
   Boolean nocombine;
 } Dict(highlight_cterm);
 

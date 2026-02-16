@@ -338,6 +338,7 @@ numerical highlight ids to the actual attributes.
 	`dim`:			half-bright/faint text.
 	`blink`:		blinking text.
 	`conceal`:		concealed/hidden text.
+	`overline`:		overlined text.
 	`blend`:		blend level (0-100). Could be used by UIs to
 				support blending floating windows to the
 				background or to signal a transparent cursor.
@@ -510,6 +511,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 	`dim`:		half-bright/faint text.
 	`blink`:	blinking text.
 	`conceal`:	concealed/hidden text.
+	`overline`:	overlined text.
 
 ["put", text] ~
 	The (utf-8 encoded) string `text` is put at the cursor position

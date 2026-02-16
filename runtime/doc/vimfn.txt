@@ -11048,6 +11048,7 @@ synIDattr({synID}, {what} [, {mode}])                              *synIDattr()*
 		"dim"		"1" if half-bright/faint
 		"blink"		"1" if blinking
 		"conceal"	"1" if concealed
+		"overline"	"1" if overlined
 		"nocombine"	"1" if nocombine
 
 		Returns an empty string on error.

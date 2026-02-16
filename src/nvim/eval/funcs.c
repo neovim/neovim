@@ -7383,6 +7383,9 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   case 'd':    // dim
     p = highlight_has_attr(id, HL_DIM, modec);
     break;
+  case 'o':    // overline
+    p = highlight_has_attr(id, HL_OVERLINE, modec);
+    break;
   case 'f':    // fg[#] or font
     p = highlight_color(id, what, modec);
     break;
