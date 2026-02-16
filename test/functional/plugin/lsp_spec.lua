@@ -5644,6 +5644,9 @@ describe('LSP', function()
               didChangeWatchedFiles = {
                 dynamicRegistration = true,
               },
+              didChangeConfiguration = {
+                dynamicRegistration = true,
+              },
             },
           },
         }))
@@ -5806,10 +5809,24 @@ describe('LSP', function()
         }, { client_id = client_id })
         check('workspace/didChangeWorkspaceFolders')
 
+        check('workspace/didChangeConfiguration')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didChangeConfiguration-id',
+              method = 'workspace/didChangeConfiguration',
+              registerOptions = {
+                section = 'dummy-section',
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/didChangeConfiguration', nil, 'section')
+
         return result
       end)
 
-      eq(19, #result)
+      eq(21, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -5839,6 +5856,11 @@ describe('LSP', function()
       eq({ method = 'codeAction/resolve', supported = true }, result[17])
       eq({ method = 'workspace/didChangeWorkspaceFolders', supported = false }, result[18])
       eq({ method = 'workspace/didChangeWorkspaceFolders', supported = true }, result[19])
+      eq({ method = 'workspace/didChangeConfiguration', supported = false }, result[20])
+      eq(
+        { method = 'workspace/didChangeConfiguration', supported = true, cap = { 'dummy-section' } },
+        result[21]
+      )
     end)
 
     it('identifies client dynamic registration capability', function()
