@@ -38,20 +38,20 @@ The _build type_ determines the level of used compiler optimizations and debug i
 
 So, for a release build, just use:
 
-```
+```bash
 make CMAKE_BUILD_TYPE=Release
 ```
 (Do not add a `-j` flag if `ninja` is installed! The build will be in parallel automatically.)
 
 Afterwards, the `nvim` executable can be found in `build/bin`. To verify the build type after compilation, run:
 
-```sh
+```bash
 ./build/bin/nvim --version | grep ^Build
 ```
 
 To install the executable to a certain location, use:
 
-```
+```bash
 make CMAKE_INSTALL_PREFIX=$HOME/local/nvim install
 ```
 
@@ -65,7 +65,7 @@ make distclean
 VERBOSE=1 DEBUG=1 make deps
 ```
 -->
-```
+```bash
 make distclean
 make deps
 ```
@@ -73,14 +73,16 @@ make deps
 ### PUC Lua
 
 To build with "PUC Lua" instead of LuaJit:
-
-    make CMAKE_EXTRA_FLAGS="-DPREFER_LUA=ON" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_LUA=ON"
+```bash
+make CMAKE_EXTRA_FLAGS="-DPREFER_LUA=ON" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_LUA=ON"
+```
 
 ### Build options
 
 View the full list of CMake options defined in this project:
-
-    cmake -B build -LH
+```bash
+cmake -B build -LH
+```
 
 ## Building on Windows
 
@@ -115,7 +117,7 @@ To build from the command line (i.e. invoke the `cmake` commands yourself),
    'mingw32-gcc' is not recognized as an internal or external command
    ```
 2. From the "Developer PowerShell" or "Developer Command Prompt":
-   ```
+   ```bash
    cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=Release
    cmake --build .deps --config Release
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
@@ -133,16 +135,17 @@ To build from the command line (i.e. invoke the `cmake` commands yourself),
 ### Windows / Cygwin
 
 Since https://github.com/neovim/neovim/pull/36417 , building on Cygwin may be as easy as:
-
-    make && make install
+```bash
+make && make install
+```
 
 If that fails, an alternative is:
 
 1. Install all dependencies the normal way.
-    - The `cygport` repo contains Cygport files (e.g. `APKBUILD`, `PKGBUILD`) for all the dependencies not available in the Cygwin distribution, and describes any special commands or arguments needed to build. The Cygport definitions also try to describe the required dependencies for each one. Unless custom commands are provided, Cygport just calls `autogen`/`cmake`, `make`, `make install`, etc. in a clean and consistent way.
-    - https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv` should require slightly less patching. Some SSP stuff changed in Cygwin 2.10.0, so that might change things too when building Neovim.
+  - The `cygport` repo contains Cygport files (e.g. `APKBUILD`, `PKGBUILD`) for all the dependencies not available in the Cygwin distribution, and describes any special commands or arguments needed to build. The Cygport definitions also try to describe the required dependencies for each one. Unless custom commands are provided, Cygport just calls `autogen`/`cmake`, `make`, `make install`, etc. in a clean and consistent way.
+  - https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv` should require slightly less patching. Some SSP stuff changed in Cygwin 2.10.0, so that might change things too when building Neovim.
 2. Build without "bundled" dependencies (except treesitter parsers).
-   ```
+   ```bash
    cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_TS=ON
    cmake --build .deps
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -152,7 +155,7 @@ If that fails, an alternative is:
 ### Windows / MSYS2 / MinGW
 
 1. From the MSYS2 shell, install these packages:
-   ```
+   ```bash
    pacman -S \
        mingw-w64-ucrt-x86_64-gcc \
        mingw-w64-x86_64-{cmake,make,ninja,diffutils}
@@ -218,7 +221,7 @@ PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" make CMAKE_B
 Translations are turned off by default. Enable by building Nvim with the CMake flag `ENABLE_TRANSLATIONS=ON`.
 Doing this will create `.mo` files in `build/src/nvim/po`. Example:
 
-```
+```bash
 make CMAKE_EXTRA_FLAGS="-DENABLE_TRANSLATIONS=ON"
 ```
 
@@ -228,7 +231,7 @@ make CMAKE_EXTRA_FLAGS="-DENABLE_TRANSLATIONS=ON"
 
 To check the translations for `$LANG`, run `make -C build check-po-$LANG`. Examples:
 
-```
+```bash
 cmake --build build --target check-po-de
 cmake --build build --target check-po-pt_BR
 ```
@@ -239,7 +242,7 @@ cmake --build build --target check-po-pt_BR
 
 To update the `src/nvim/po/$LANG.po` file with the latest strings, run the following:
 
-```
+```bash
 cmake --build build --target update-po-$LANG
 ```
 
@@ -249,7 +252,7 @@ cmake --build build --target update-po-$LANG
 
 To see the chain of includes, use the `-H` option ([#918](https://github.com/neovim/neovim/issues/918)):
 
-```sh
+```bash
 echo '#include "./src/nvim/buffer.h"' | \
 > clang -I.deps/usr/include -Isrc -std=c99 -P -E -H - 2>&1 >/dev/null | \
 > grep -v /usr/
@@ -278,14 +281,14 @@ Reference the [Debian package](https://packages.debian.org/sid/source/neovim) (o
 
 To build the bundled dependencies using CMake:
 
-```sh
+```bash
 cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build .deps
 ```
 
 By default the libraries and headers are placed in `.deps/usr`. Now you can build Neovim:
 
-```sh
+```bash
 cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build
 ```
@@ -295,12 +298,12 @@ cmake --build build
 1. Manually install the dependencies:
     - libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
 2. Run CMake:
-   ```sh
+   ```bash
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
    cmake --build build
    ```
    If all the dependencies are not available in the package, you can use only some of the bundled dependencies as follows (example of using `ninja`):
-   ```sh
+   ```bash
    cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_TS=ON
    cmake --build .deps
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -322,7 +325,7 @@ to build *with* bundled dependencies. This is supported as follows.
     - Run `make deps` to generate `.deps/`, then clean it up using [these commands](https://github.com/neovim/neovim/blob/1c12073db6c64eb365748f153f96be9b0fe61070/.github/workflows/build.yml#L67-L74).
 2. Copy the prepared `.deps` to the isolated machine (without network access).
 3. Build with `USE_EXISTING_SRC_DIR` enabled, on the isolated machine:
-   ```
+   ```bash
    make deps DEPS_CMAKE_FLAGS=-DUSE_EXISTING_SRC_DIR=ON
    make
    ```
@@ -335,7 +338,7 @@ runtime, and can be disabled if the internal definitions for common terminals
 are good enough. To avoid this dependency, build with support for loading
 custom terminfo at runtime, use
 
-```sh
+```bash
 make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_UNIBILIUM=0"
 ```
 
@@ -345,7 +348,7 @@ To confirm at runtime that unibilium was not included, check `has('terminfo') ==
 
 Example of building with specific bundled and non-bundled dependencies:
 
-```
+```bash
 make DEPS_CMAKE_FLAGS="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBUV=ON"
 ```
 
@@ -356,7 +359,7 @@ make DEPS_CMAKE_FLAGS="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=O
 
 In case you are not using Alpine Linux you can use a container to do the build the binary:
 
-```sh
+```bash
 podman run \
   --rm \
   -it \
@@ -385,37 +388,37 @@ Platform-specific requirements are listed below.
 
 ### Ubuntu / Debian
 
-```sh
+```bash
 sudo apt-get install ninja-build gettext cmake curl build-essential git
 ```
 
 ### RHEL / Fedora
 
-```
+```bash
 sudo dnf -y install ninja-build cmake gcc make gettext curl glibc-gconv-extra git
 ```
 
 ### openSUSE
 
-```
+```bash
 sudo zypper install ninja cmake gcc-c++ gettext-tools curl git
 ```
 
 ### Arch Linux
 
-```
+```bash
 sudo pacman -S base-devel cmake ninja curl git
 ```
 
 ### Alpine Linux
 
-```
+```bash
 apk add build-base cmake coreutils curl gettext-tiny-dev git
 ```
 
 ### Void Linux
 
-```
+```bash
 xbps-install base-devel cmake curl git
 ```
 
@@ -423,25 +426,25 @@ xbps-install base-devel cmake curl git
 
 Starting from NixOS 18.03, the Neovim binary resides in the `neovim-unwrapped` Nix package (the `neovim` package being just a wrapper to setup runtime options like Ruby/Python support):
 
-```sh
+```bash
 cd path/to/neovim/src
 ```
 
 Drop into `nix-shell` to pull in the Neovim dependencies:
 
-```
+```bash
 nix-shell '<nixpkgs>' -A neovim-unwrapped
 ```
 
 Configure and build:
 
-```sh
+```bash
 rm -rf build && cmakeConfigurePhase
 buildPhase
 ```
 
 Tests are not available by default, because of some unfixed failures. You can enable them via adding this package in your overlay:
-```
+```nix
   neovim-dev = (super.pkgs.neovim-unwrapped.override  {
     doCheck=true;
   }).overrideAttrs(oa:{
@@ -456,7 +459,7 @@ Tests are not available by default, because of some unfixed failures. You can en
   });
 ```
 and replacing `neovim-unwrapped` with `neovim-dev`:
-```
+```bash
 nix-shell '<nixpkgs>' -A neovim-dev
 ```
 
@@ -474,13 +477,14 @@ or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f
 ### Haiku
 
 Some deps can be pulled from haiku repos, the rest need "bundled" deps:
-
-    cmake -DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_UNIBILIUM=OFF -DUSE_BUNDLED_LUAJIT=OFF -B .deps ./cmake.deps
-    make -C .deps
+```bash
+cmake -DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_UNIBILIUM=OFF -DUSE_BUNDLED_LUAJIT=OFF -B .deps ./cmake.deps
+make -C .deps
+```
 
 ### FreeBSD
 
-```
+```bash
 sudo pkg install cmake gmake sha wget gettext curl git
 ```
 
@@ -488,13 +492,13 @@ If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 h
 
 ### OpenBSD
 
-```sh
+```bash
 doas pkg_add gmake cmake curl gettext-tools git ninja
 ```
 
 While `ninja` is technically optional, the build is likely to fail without it. This is because `cmake` will use `make` in that case, and the bundled LuaJIT requires `gmake`. Instead of installing `ninja`, you could work around this by installing `luajit` and disabling the bundled LuaJIT:
 
-```sh
+```bash
 gmake DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUAJIT=0"
 ```
 
@@ -507,16 +511,16 @@ Another workaround is to edit `cmake/Deps.cmake` and comment out the line `set(M
 1. Install Xcode Command Line Tools: `xcode-select --install`
 2. Install [Homebrew](http://brew.sh)
 3. Install Neovim build dependencies:
-    ```
+    ```bash
     brew install ninja cmake gettext curl git
     ```
   - **Note**: If you see Wget certificate errors (for older macOS versions less than 10.10):
-    ```sh
+    ```bash
     brew install curl-ca-bundle
     echo CA_CERTIFICATE=$(brew --prefix curl-ca-bundle)/share/ca-bundle.crt >> ~/.wgetrc
     ```
   - **Note**: If you see `'stdio.h' file not found`, try the following:
-    ```
+    ```bash
     open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
     ```
 
@@ -525,16 +529,16 @@ Another workaround is to edit `cmake/Deps.cmake` and comment out the line `set(M
 1. Install Xcode Command Line Tools: `xcode-select --install`
 2. Install [MacPorts](http://www.macports.org)
 3. Install Neovim build dependencies:
-    ```
+    ```bash
     sudo port install ninja cmake gettext git
     ```
   - **Note**: If you see Wget certificate errors (for older macOS versions less than 10.10):
-    ```sh
+    ```bash
     sudo port install curl-ca-bundle
     echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
     ```
   - **Note**: If you see `'stdio.h' file not found`, try the following:
-    ```
+    ```bash
     open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
     ```
 
@@ -549,8 +553,10 @@ make CMAKE_BUILD_TYPE=Release MACOSX_DEPLOYMENT_TARGET=10.13 DEPS_CMAKE_FLAGS="-
 Note that the C++ compiler is explicitly set so that it can be found when the deployment target is set.
 
 ## Building with zig
+
 ### Prerequisites
  - zig 0.15.2
+
 ### Instructions
  - Build the editor: `zig build`, run it with `./zig-out/bin/nvim`
  - Complete installation with runtime: `zig build install --prefix ~/.local`
@@ -558,8 +564,10 @@ Note that the C++ compiler is explicitly set so that it can be found when the de
    + `zig build functionaltest` to run all functionaltests
    + `zig build functionaltest -- test/functional/autocmd/bufenter_spec.lua` to run the tests in one file
    + `zig build unittest` to run all unittests
+
 #### Using system dependencies
-  See "Available System Integrations" in `zig build -h` to see available system integrations. Enabling an integration, e.g. `zig build -fsys=utf8proc` will use the system's installation of utf8proc.
+
+See "Available System Integrations" in `zig build -h` to see available system integrations. Enabling an integration, e.g. `zig build -fsys=utf8proc` will use the system's installation of utf8proc.
 
 `zig build --system deps_dir` will enable all integrations and turn off dependency fetching. This requires you to pre-download the dependencies which don't have a system integration into `deps_dir` (at the time of writing these are ziglua, [`lua_dev_deps`](https://github.com/neovim/deps/blob/master/opt/lua-dev-deps.tar.gz), and the built-in tree-sitter parsers). You have to create subdirectories whose names are the respective package's hash under `deps_dir` and unpack the dependencies inside that directory - ziglua should go under `deps_dir/zlua-0.1.0-hGRpC1dCBQDf-IqqUifYvyr8B9-4FlYXqY8cl7HIetrC` and so on. Hashes should be taken from `build.zig.zon`.
 
