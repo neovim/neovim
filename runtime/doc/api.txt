@@ -1553,6 +1553,11 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                  • sp: color name or "#RRGGBB"
                  • blend: integer between 0 and 100
                  • bold: boolean
+                 • altfont: boolean
+                 • blink: boolean
+                 • dim: boolean
+                 • conceal: boolean
+                 • overline: boolean
                  • standout: boolean
                  • underline: boolean
                  • undercurl: boolean
@@ -1562,11 +1567,6 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                  • strikethrough: boolean
                  • italic: boolean
                  • reverse: boolean
-                 • altfont: boolean
-                 • dim: boolean
-                 • blink: boolean
-                 • conceal: boolean
-                 • overline: boolean
                  • nocombine: boolean
                  • link: name of another highlight group to link to, see
                    |:hi-link|.

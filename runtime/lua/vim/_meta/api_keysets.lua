@@ -306,6 +306,10 @@ error('Cannot require a meta file')
 --- @field italic? boolean
 --- @field reverse? boolean
 --- @field altfont? boolean
+--- @field dim? boolean
+--- @field blink? boolean
+--- @field conceal? boolean
+--- @field overline? boolean
 --- @field nocombine? boolean
 --- @field default? boolean
 --- @field cterm? vim.api.keyset.highlight_cterm
@@ -338,6 +342,10 @@ error('Cannot require a meta file')
 --- @field italic? boolean
 --- @field reverse? boolean
 --- @field altfont? boolean
+--- @field dim? boolean
+--- @field blink? boolean
+--- @field conceal? boolean
+--- @field overline? boolean
 --- @field nocombine? boolean
 
 --- @class vim.api.keyset.keymap

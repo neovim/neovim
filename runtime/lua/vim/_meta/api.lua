@@ -2208,6 +2208,11 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - sp: color name or "#RRGGBB"
 --- - blend: integer between 0 and 100
 --- - bold: boolean
+--- - altfont: boolean
+--- - blink: boolean
+--- - dim: boolean
+--- - conceal: boolean
+--- - overline: boolean
 --- - standout: boolean
 --- - underline: boolean
 --- - undercurl: boolean

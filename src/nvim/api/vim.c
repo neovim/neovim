@@ -152,6 +152,11 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - sp: color name or "#RRGGBB"
 ///                - blend: integer between 0 and 100
 ///                - bold: boolean
+///                - altfont: boolean
+///                - blink: boolean
+///                - dim: boolean
+///                - conceal: boolean
+///                - overline: boolean
 ///                - standout: boolean
 ///                - underline: boolean
 ///                - undercurl: boolean
