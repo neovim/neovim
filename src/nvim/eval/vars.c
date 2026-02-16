@@ -2935,9 +2935,9 @@ bool var_check_ro(const int flags, const char *name, size_t name_len)
 {
   const char *error_message = NULL;
   if (flags & DI_FLAGS_RO) {
-    error_message = _(e_readonlyvar);
+    error_message = N_(e_cannot_change_readonly_variable_str);
   } else if ((flags & DI_FLAGS_RO_SBX) && sandbox) {
-    error_message = N_("E794: Cannot set variable in the sandbox: \"%.*s\"");
+    error_message = N_(e_cannot_set_variable_in_sandbox_str);
   }
 
   if (error_message == NULL) {
@@ -3003,7 +3003,7 @@ bool var_check_fixed(const int flags, const char *name, size_t name_len)
     } else if (name_len == TV_CSTRING) {
       name_len = strlen(name);
     }
-    semsg(_("E795: Cannot delete variable %.*s"), (int)name_len, name);
+    semsg(_(e_cannot_delete_variable_str), (int)name_len, name);
     return true;
   }
   return false;

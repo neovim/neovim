@@ -3888,25 +3888,27 @@ bool value_check_lock(VarLockStatus lock, const char *name, size_t name_len)
   case VAR_UNLOCKED:
     return false;
   case VAR_LOCKED:
-    error_message = N_("E741: Value is locked: %.*s");
+    error_message = name == NULL ? N_(e_value_is_locked)
+                                 : N_(e_value_is_locked_str);
     break;
   case VAR_FIXED:
-    error_message = N_("E742: Cannot change value of %.*s");
+    error_message = name == NULL ? N_(e_cannot_change_value)
+                                 : N_(e_cannot_change_value_of_str);
     break;
   }
   assert(error_message != NULL);
 
   if (name == NULL) {
-    name = _("Unknown");
-    name_len = strlen(name);
-  } else if (name_len == TV_TRANSLATE) {
-    name = _(name);
-    name_len = strlen(name);
-  } else if (name_len == TV_CSTRING) {
-    name_len = strlen(name);
+    emsg(_(error_message));
+  } else {
+    if (name_len == TV_TRANSLATE) {
+      name = _(name);
+      name_len = strlen(name);
+    } else if (name_len == TV_CSTRING) {
+      name_len = strlen(name);
+    }
+    semsg(_(error_message), (int)name_len, name);
   }
-
-  semsg(_(error_message), (int)name_len, name);
 
   return true;
 }
