@@ -2738,8 +2738,9 @@ static void store_sb_text(const char **sb_str, const char *s, int hl_id, int *sb
 /// Finished showing messages, clear the scroll-back text on the next message.
 void may_clear_sb_text(void)
 {
+  msg_ext_ui_flush();  // ensure messages until now are emitted
   do_clear_sb_text = SB_CLEAR_ALL;
-  do_clear_hist_temp = !msg_ext_append;
+  do_clear_hist_temp = true;
 }
 
 /// Starting to edit the command line: do not clear messages now.

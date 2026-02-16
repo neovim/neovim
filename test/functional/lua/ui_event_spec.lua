@@ -439,8 +439,8 @@ describe('vim.ui_attach', function()
                                                                           |
         {1:~                                                                 }|*2
         {3:                                                                  }|
-        {9:Lua callback:}                                                     |
-        {9:[string "<nvim>"]:3: foo}                                          |
+        {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}       |
+        {9:Lua: [string "<nvim>"]:3: foo}                                     |
         {9:stack traceback:}                                                  |
         {9:        [C]: in function 'error'}                                  |
         {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}    |
