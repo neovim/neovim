@@ -11,7 +11,9 @@ local feed = n.feed
 local clear = n.clear
 local command = n.command
 local exec = n.exec
+local exec_lua = n.exec_lua
 local api = n.api
+local fn = n.fn
 local assert_alive = n.assert_alive
 
 local function expect(contents)
@@ -1562,10 +1564,54 @@ describe('API/extmarks', function()
 
   it('in prompt buffer', function()
     feed('dd')
-    local id = set_extmark(ns, marks[1], 0, 0, {})
+    set_extmark(ns, marks[1], 0, 0, {})
     api.nvim_set_option_value('buftype', 'prompt', {})
     feed('i<esc>')
-    eq({ { id, 0, 2 } }, get_extmarks(ns, 0, -1))
+    eq({ { marks[1], 0, 2 } }, get_extmarks(ns, 0, -1))
+    fn.prompt_setprompt('', 'foo > ')
+    eq({ { marks[1], 0, 6 } }, get_extmarks(ns, 0, -1))
+    feed('ihello')
+    eq({ { marks[1], 0, 11 } }, get_extmarks(ns, 0, -1))
+
+    local function get_extmark_range(id)
+      local rv = get_extmark_by_id(ns, id, { details = true })
+      return rv[3].invalid and 'invalid' or { rv[1], rv[2], rv[3].end_row, rv[3].end_col }
+    end
+
+    set_extmark(ns, marks[2], 0, 0, { invalidate = true, end_col = 6 })
+    set_extmark(ns, marks[3], 0, 6, { invalidate = true, end_col = 11 })
+    set_extmark(ns, marks[4], 0, 0, { invalidate = true, end_col = 11 })
+    set_extmark(ns, marks[5], 0, 0, { invalidate = true, end_row = 1 })
+    fn.prompt_setprompt('', 'floob > ')
+    eq({ 0, 13 }, get_extmark_range(marks[1]))
+    eq('invalid', get_extmark_range(marks[2])) -- extmark spanning old prompt invalidated
+    eq({ 0, 8, 0, 13 }, get_extmark_range(marks[3]))
+    eq({ 0, 8, 0, 13 }, get_extmark_range(marks[4]))
+    eq({ 0, 8, 1, 0 }, get_extmark_range(marks[5]))
+
+    set_extmark(ns, marks[2], 0, 0, { invalidate = true, end_col = 8 })
+    set_extmark(ns, marks[3], 0, 8, { invalidate = true, end_col = 13 })
+    set_extmark(ns, marks[4], 0, 0, { invalidate = true, end_col = 13 })
+    set_extmark(ns, marks[5], 0, 0, { invalidate = true, end_row = 1 })
+    -- Do this in the same event.
+    exec_lua(function()
+      vim.fn.setpos("':", { 0, 1, 999, 0 })
+      vim.fn.prompt_setprompt('', 'discard > ')
+    end)
+    eq({ 0, 10 }, get_extmark_range(marks[1]))
+    eq('invalid', get_extmark_range(marks[2])) -- all spans on line invalidated
+    eq('invalid', get_extmark_range(marks[3]))
+    eq('invalid', get_extmark_range(marks[4]))
+    eq({ 0, 10, 1, 0 }, get_extmark_range(marks[5]))
+
+    feed('hello')
+    eq({ 0, 15 }, get_extmark_range(marks[1]))
+    eq({ 0, 15, 1, 0 }, get_extmark_range(marks[5]))
+    -- init_prompt uses correct range for inserted_bytes when fixing empty prompt.
+    fn.setline('.', { '', 'last line' })
+    eq({ 'discard > ', 'last line' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq({ 0, 10 }, get_extmark_range(marks[1]))
+    eq({ 0, 10, 1, 0 }, get_extmark_range(marks[5]))
   end)
 
   it('can get details', function()
