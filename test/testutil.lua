@@ -646,6 +646,29 @@ function M.concat_tables(...)
   return ret
 end
 
+--- Get all permutations of an array.
+---
+--- @param arr any[]
+--- @return any[][]
+function M.permutations(arr)
+  local res = {} --- @type any[][]
+  --- @param a any[]
+  --- @param n integer
+  local function gen(a, n)
+    if n == 0 then
+      res[#res + 1] = M.shallowcopy(a)
+      return
+    end
+    for i = 1, n do
+      a[n], a[i] = a[i], a[n]
+      gen(a, n - 1)
+      a[n], a[i] = a[i], a[n]
+    end
+  end
+  gen(M.shallowcopy(arr), #arr)
+  return res
+end
+
 --- @param str string
 --- @param leave_indent? integer
 --- @return string

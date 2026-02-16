@@ -1017,14 +1017,16 @@ function vim.fn.col(expr, winid) end
 --- Insert mode completion.  The popup menu will appear if
 --- specified, see |ins-completion-menu|.
 --- Example: >vim
----   inoremap <F5> <C-R>=ListMonths()<CR>
 ---
----   func ListMonths()
----     call complete(col('.'), ['January', 'February', 'March',
----       \ 'April', 'May', 'June', 'July', 'August', 'September',
----       \ 'October', 'November', 'December'])
----     return ''
----   endfunc
+--- inoremap <F5> <C-R>=ListMonths()<CR>
+---
+--- func ListMonths()
+---   call complete(col('.'), ['January', 'February', 'March',
+---   \ 'April', 'May', 'June', 'July', 'August',
+---   \ 'September', 'October', 'November', 'December'])
+---   return ''
+--- endfunc
+---
 --- <This isn't very useful, but it shows how it works.  Note that
 --- an empty string is returned to avoid a zero being inserted.
 ---
@@ -4899,7 +4901,7 @@ function vim.fn.isnan(expr) end
 --- Return a |List| with all key/index and value pairs of {expr}.
 --- Each |List| item is a list with two items:
 --- - for a |Dict|: the key and the value
---- - for a |List| or |String|: the index and the value
+--- - for a |List|, |Blob| or |String|: the index and the value
 --- The returned |List| is in arbitrary order for a |Dict|,
 --- otherwise it's in ascending order of the index.
 ---
@@ -4912,6 +4914,7 @@ function vim.fn.isnan(expr) end
 ---   endfor
 ---   echo items([1, 2, 3])
 ---   echo items("foobar")
+---   echo items(0z0102)
 --- <
 ---
 --- @param expr table|string

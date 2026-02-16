@@ -37,7 +37,7 @@ EXTERN bool msg_ext_skip_flush INIT( = false);
 EXTERN bool msg_ext_append INIT( = false);
 /// Set to true when previous message should be overwritten.
 EXTERN bool msg_ext_overwrite INIT( = false);
-/// Set to true to avoid setting "verbose" kind for last set messages.
+/// Set to true to avoid setting "verbose" kind for "last set" messages.
 EXTERN bool msg_ext_skip_verbose INIT( = false);
 
 /// allocated grid for messages. Used unless ext_messages is active.

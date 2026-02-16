@@ -1601,26 +1601,32 @@ static void init_prompt(int cmdchar_todo)
   char *prompt = prompt_text();
   int prompt_len = (int)strlen(prompt);
 
-  if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
-    curwin->w_cursor.lnum = curbuf->b_prompt_start.mark.lnum;
-  }
-  char *text = get_cursor_line_ptr();
+  // In case the mark is set to a nonexistent line.
+  curbuf->b_prompt_start.mark.lnum = MIN(curbuf->b_prompt_start.mark.lnum,
+                                         curbuf->b_ml.ml_line_count);
+
+  curwin->w_cursor.lnum = MAX(curwin->w_cursor.lnum, curbuf->b_prompt_start.mark.lnum);
+  char *text = ml_get(curbuf->b_prompt_start.mark.lnum);
+  colnr_T text_len = ml_get_len(curbuf->b_prompt_start.mark.lnum);
+
   if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
        && (curbuf->b_prompt_start.mark.col < prompt_len
-           || strncmp(text + curbuf->b_prompt_start.mark.col - prompt_len, prompt,
-                      (size_t)prompt_len) != 0))
-      || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
+           || curbuf->b_prompt_start.mark.col > text_len
+           || !strnequal(text + curbuf->b_prompt_start.mark.col - prompt_len, prompt,
+                         (size_t)prompt_len)))) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
-      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
+      ml_replace(curbuf->b_prompt_start.mark.lnum, prompt, true);
+      inserted_bytes(curbuf->b_prompt_start.mark.lnum, 0, 0, prompt_len);
     } else {
-      ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
+      const linenr_T lnum = curbuf->b_ml.ml_line_count;
+      ml_append(lnum, prompt, 0, false);
+      appended_lines_mark(lnum, 1);
       curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
     }
     curbuf->b_prompt_start.mark.col = prompt_len;
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
-    inserted_bytes(curbuf->b_ml.ml_line_count, 0, 0, (colnr_T)prompt_len);
   }
 
   // Insert always starts after the prompt, allow editing text after it.

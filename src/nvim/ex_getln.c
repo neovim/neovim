@@ -768,6 +768,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
 
   init_ccline(s->firstc, s->indent);
+  assert(ccline.cmdbuff != NULL);
   ccline.prompt_id = last_prompt_id++;
   ccline.level = cmdline_level;
 
@@ -4889,7 +4890,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   typval_T *cancelreturn = NULL;
   typval_T cancelreturn_strarg2 = TV_INITIAL_VALUE;
   const char *xp_name = NULL;
-  Callback input_callback = { .type = kCallbackNone };
+  Callback input_callback = CALLBACK_INIT;
   char prompt_buf[NUMBUFLEN];
   char defstr_buf[NUMBUFLEN];
   char cancelreturn_buf[NUMBUFLEN];

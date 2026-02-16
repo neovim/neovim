@@ -41,7 +41,7 @@ TREESITTER
 
 UI
 
-• `progress` attribute removed form |ui-messages| msg_show event
+• `progress` attribute removed from |ui-messages| msg_show event
 
 VIMSCRIPT
 
@@ -198,6 +198,8 @@ DIAGNOSTICS
   enabled or disabled diagnostics.
 • |vim.diagnostic.status()| returns a formatted string with current buffer
   diagnostics
+• |vim.diagnostic.fromqflist()| now accepts an `opts` table with
+  `merge_lines` to merge multi-line compiler messages.
 
 EDITOR
 
@@ -255,7 +257,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
-• |vim.lsp.enable()| start/stops clients as necessary. And detaches
+• |vim.lsp.enable()| start/stops clients as necessary and detaches
   non-applicable LSP clients.
 • |vim.lsp.is_enabled()| checks if a LSP config is enabled (without
   "resolving" it).
@@ -305,6 +307,7 @@ LSP
 • Code lenses now display as virtual lines
 • Support for `workspace/codeLens/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
+• `gx` will use `textDocument/documentLink` if available.
 
 LUA
 
@@ -314,9 +317,10 @@ LUA
 • |vim.hl.range()| now allows multiple timed highlights.
 • |vim.tbl_extend()| and |vim.tbl_deep_extend()| now accept a function behavior argument.
 • |vim.fs.root()| can define "equal priority" via nested lists.
-• |vim.version.range()| output can be converted to human-readable string with |tostring()|.
+• |vim.version.range()| output can be converted to a human-readable string with |tostring()|.
 • |vim.version.intersect()| computes intersection of two version ranges.
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
+• |Iter:peek()| now works for all iterator types, not just |list-iterator|.
 • Built-in plugin manager |vim.pack|
 • |vim.list.unique()| and |Iter:unique()| to deduplicate lists and iterators,
   respectively.
@@ -350,6 +354,8 @@ OPTIONS
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
 • 'pumborder' adds a border to the popup menu.
 • |g:clipboard| autodetection only selects tmux when running inside tmux
+• 'statusline' allows "stacking" highlight groups (groups inherit from
+  previous highlight attributes)
 
 PERFORMANCE
 
@@ -359,17 +365,17 @@ PERFORMANCE
   additional constraints for improved correctness and resistance to
   backtracking edge cases.
 • |i_CTRL-R| inserts named/clipboard registers literally, 10x speedup.
+• LSP `textDocument/semanticTokens/range` is supported, which requests tokens
+  for the viewport (visible screen) only.
 
 PLUGINS
 
 • Customize :checkhealth by handling a `FileType checkhealth` event.
   |health-usage|
-
 • Simplify Python provider setup to a single step: `uv tool install pynvim`
   Nvim will detect the plugin's location without user configuration, even if
   unrelated Python virtual environments are activated.
   |provider-python|
-
 • |:checkhealth| now checks for an available |vim.ui.open()| handler.
 
 STARTUP
@@ -381,6 +387,8 @@ TERMINAL
 • |nvim_open_term()| can be called with a non-empty buffer. The buffer
   contents are piped to the PTY and displayed as terminal output.
 • CSI 3 J (the sequence to clear terminal scrollback) is now supported.
+• A suspended PTY process is now indicated by "[Process suspended]" at the
+  bottom-left of the buffer and can be resumed by pressing a key.
 
 TREESITTER
 
@@ -407,6 +415,7 @@ UI
   • "Error detected while processing:" changed to "Error in:".
   • "Error executing Lua:" changed to "Lua:".
 • 'busy' status is shown in default statusline with symbol ◐
+• Cursor shape indicates when it is behind an unfocused floating window.
 • Improved LSP signature help rendering.
 • Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
 

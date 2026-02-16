@@ -2354,7 +2354,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     ga_concat_len(&msg_ext_last_chunk, str, len);
 
     // Find last newline in the message and calculate the current message column
-    const char *lastline = strrchr(str, '\n');
+    const char *lastline = xmemrchr(str, '\n', len);
     maxlen -= (int)(lastline ? (lastline - str) : 0);
     const char *p = lastline ? lastline + 1 : str;
     int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)(maxlen)));
@@ -2738,6 +2738,7 @@ static void store_sb_text(const char **sb_str, const char *s, int hl_id, int *sb
 /// Finished showing messages, clear the scroll-back text on the next message.
 void may_clear_sb_text(void)
 {
+  msg_ext_ui_flush();  // ensure messages until now are emitted
   do_clear_sb_text = SB_CLEAR_ALL;
   do_clear_hist_temp = true;
 }

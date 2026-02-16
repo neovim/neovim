@@ -1298,7 +1298,6 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 
   aco->save_curwin_handle = curwin->handle;
   aco->save_prevwin_handle = prevwin == NULL ? 0 : prevwin->handle;
-  aco->save_State = State;
   if (bt_prompt(curbuf)) {
     aco->save_prompt_insert = curbuf->b_prompt_insert;
   }
@@ -1381,13 +1380,6 @@ void aucmd_restbuf(aco_save_T *aco)
     }
 win_found:
     curbuf->b_nwindows--;
-    const bool save_stop_insert_mode = stop_insert_mode;
-    // May need to stop Insert mode if we were in a prompt buffer.
-    leaving_window(curwin);
-    // Do not stop Insert mode when already in Insert mode before.
-    if (aco->save_State & MODE_INSERT) {
-      stop_insert_mode = save_stop_insert_mode;
-    }
     // Remove the window.
     win_remove(curwin, NULL);
     pmap_del(int)(&window_handles, curwin->handle, NULL);

@@ -99,6 +99,47 @@ for _, model in ipairs(mousemodels) do
       eq('0 1 l', eval('g:testvar'))
     end)
 
+    it('works with combined highlight attributes', function()
+      screen:add_extra_attr_ids({
+        [131] = { reverse = true, bold = true, background = Screen.colors.LightMagenta },
+        [132] = {
+          reverse = true,
+          foreground = Screen.colors.Magenta,
+          bold = true,
+          background = Screen.colors.LightMagenta,
+        },
+        [133] = { reverse = true, bold = true, foreground = Screen.colors.Magenta1 },
+        [134] = {
+          bold = true,
+          background = Screen.colors.LightMagenta,
+          reverse = true,
+          undercurl = true,
+          special = Screen.colors.Red,
+        },
+        [135] = {
+          bold = true,
+          background = Screen.colors.LightMagenta,
+          reverse = true,
+          undercurl = true,
+          foreground = Screen.colors.Fuchsia,
+          special = Screen.colors.Red,
+        },
+      })
+
+      api.nvim_set_option_value(
+        'statusline',
+        '\t%#Pmenu#foo%$SpellBad$bar%$String$baz%#Constant#qux',
+        {}
+      )
+
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|*5
+        {3:^I}{131:foo}{134:bar}{135:baz}{133:qux                          }|
+                                                |
+      ]])
+    end)
+
     it('works for winbar', function()
       api.nvim_set_option_value('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
       api.nvim_input_mouse('left', 'press', '', 0, 0, 17)
@@ -483,6 +524,72 @@ describe('global statusline', function()
       0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
       {3:test/functional/fixtures/bigfile.txt      8,1             0%}|
+                                                                  |
+    ]])
+  end)
+
+  it('vertical separator connector is not lost when switching window', function()
+    screen:add_extra_attr_ids {
+      [101] = { background = tonumber('0x282828') },
+      [102] = { bold = true, background = tonumber('0x282828'), foreground = Screen.colors.Blue1 },
+    }
+    command('hi NormalNC guibg=#282828')
+    command('vsplit | wincmd l | split')
+    -- Cursor is in top-right. Move to bottom-right.
+    feed('<C-w>j')
+    -- Verify the ├ connector is present.
+    screen:expect([[
+      {101:                              }│{101:                             }|
+      {102:~                             }│{102:~                            }|*6
+      {102:~                             }├─────────────────────────────|
+      {102:~                             }│^                             |
+      {102:~                             }│{1:~                            }|*5
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+    -- Navigate from bottom-right to left.
+    feed('<C-w>h')
+    -- The ├ connector must still be present.
+    screen:expect([[
+      ^                              │{101:                             }|
+      {1:~                             }│{102:~                            }|*6
+      {1:~                             }├─────────────────────────────|
+      {1:~                             }│{101:                             }|
+      {1:~                             }│{102:~                            }|*5
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+  end)
+
+  it('horizontal separator connector is not lost when switching window', function()
+    screen:add_extra_attr_ids {
+      [101] = { background = tonumber('0x282828') },
+      [102] = { bold = true, background = tonumber('0x282828'), foreground = Screen.colors.Blue1 },
+    }
+    command('hi NormalNC guibg=#282828')
+    command('split | wincmd j | vsplit')
+    -- Cursor is in bottom-left. Move to bottom-right.
+    feed('<C-w>l')
+    -- Verify the ┬ connector is present.
+    screen:expect([[
+      {101:                                                            }|
+      {102:~                                                           }|*6
+      ──────────────────────────────┬─────────────────────────────|
+      {101:                              }│^                             |
+      {102:~                             }│{1:~                            }|*5
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+    -- Navigate from bottom-right to top.
+    feed('<C-w>k')
+    -- The ┬ connector must still be present.
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*6
+      ──────────────────────────────┬─────────────────────────────|
+      {101:                              }│{101:                             }|
+      {102:~                             }│{102:~                            }|*5
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
   end)

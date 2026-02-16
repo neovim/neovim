@@ -1364,6 +1364,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // make the contents of the new window the same as the current one
     win_init(wp, curwin, flags);
   } else if (wp->w_floating) {
+    WinStyle saved_style = wp->w_config.style;
     ui_comp_remove_grid(&wp->w_grid_alloc);
     if (ui_has(kUIMultigrid)) {
       wp->w_pos_changed = true;
@@ -1388,6 +1389,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // non-floating window doesn't store float config or have a border.
     merge_win_config(&wp->w_config, WIN_CONFIG_INIT);
     CLEAR_FIELD(wp->w_border_adj);
+    // Restore WinConfig style. #37067
+    wp->w_config.style = saved_style;
   }
 
   // Going to reorganize frames now, make sure they're flat.
@@ -2489,7 +2492,9 @@ void leaving_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.
-  if (!bt_prompt(win->w_buffer)) {
+  // Don't do mode changes for a prompt buffer in an autocommand window, as
+  // it's only used temporarily during an autocommand.
+  if (!bt_prompt(win->w_buffer) || is_aucmd_win(win)) {
     return;
   }
 
@@ -2516,7 +2521,9 @@ void entering_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.
-  if (!bt_prompt(win->w_buffer)) {
+  // Don't do mode changes for a prompt buffer in an autocommand window, as
+  // it's only used temporarily during an autocommand.
+  if (!bt_prompt(win->w_buffer) || is_aucmd_win(win)) {
     return;
   }
 

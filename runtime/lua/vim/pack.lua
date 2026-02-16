@@ -484,6 +484,7 @@ end
 --- @return fun(kind: 'begin'|'report'|'end', percent: integer, fmt: string, ...:any): nil
 local function new_progress_report(action)
   local progress = { kind = 'progress', title = 'vim.pack' }
+  local headless = #api.nvim_list_uis() == 0
 
   return vim.schedule_wrap(function(kind, percent, fmt, ...)
     progress.status = kind == 'end' and 'success' or 'running'
@@ -491,7 +492,10 @@ local function new_progress_report(action)
     local msg = ('%s %s'):format(action, fmt:format(...))
     progress.id = api.nvim_echo({ { msg } }, kind ~= 'report', progress)
     -- Force redraw to show installation progress during startup
-    vim.cmd.redraw({ bang = true })
+    -- TODO: redraw! not needed with ui2.
+    if not headless then
+      vim.cmd.redraw({ bang = true })
+    end
   end)
 end
 
@@ -1118,6 +1122,7 @@ local function show_confirm_buf(lines, on_finish)
   local win_id = api.nvim_get_current_win()
 
   local delete_buffer = vim.schedule_wrap(function()
+    pcall(api.nvim_win_close, win_id, true)
     pcall(api.nvim_buf_delete, bufnr, { force = true })
     vim.cmd.redraw()
   end)

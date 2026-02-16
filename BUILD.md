@@ -70,6 +70,18 @@ make distclean
 make deps
 ```
 
+### PUC Lua
+
+To build with "PUC Lua" instead of LuaJit:
+
+    make CMAKE_EXTRA_FLAGS="-DPREFER_LUA=ON" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_LUA=ON"
+
+### Build options
+
+View the full list of CMake options defined in this project:
+
+    cmake -B build -LH
+
 ## Building on Windows
 
 ### Windows / MSVC

@@ -936,6 +936,61 @@ describe('startup', function()
                                |
     ]])
   end)
+
+  describe('opening a terminal before buffers are loaded #30765', function()
+    local lines = {} --- @type string[]
+    for i = 1, 50 do
+      lines[#lines + 1] = ('line%d'):format(i)
+    end
+
+    setup(function()
+      write_file('Xsomefile', table.concat(lines, '\n') .. '\n')
+    end)
+
+    teardown(function()
+      os.remove('Xsomefile')
+    end)
+
+    it('sends buffer content to terminal with nvim_open_term()', function()
+      clear({
+        args_rm = { '--headless' },
+        args = {
+          'Xsomefile',
+          '--cmd',
+          'let g:chan = nvim_open_term(0, {}) | startinsert',
+          '--cmd',
+          'call chansend(g:chan, "new_line1\nnew_line2\nnew_line3")',
+        },
+      })
+      local screen = Screen.new(50, 7)
+      screen:expect([[
+        line48                                            |
+        line49                                            |
+        line50                                            |
+        new_line1                                         |
+        new_line2                                         |
+        new_line3^                                         |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq(lines, api.nvim_buf_get_lines(0, 0, #lines, true))
+    end)
+
+    it('does not error with jobstart(…,{term=true})', function()
+      clear({
+        args_rm = { '--headless' },
+        args = {
+          'Xsomefile',
+          '--cmd',
+          ('lua vim.fn.jobstart({%q}, {term = true})'):format(n.testprg('tty-test')),
+        },
+      })
+      local screen = Screen.new(50, 7)
+      screen:expect([[
+        ^tty ready                                         |
+                                                          |*6
+      ]])
+    end)
+  end)
 end)
 
 describe('startup', function()

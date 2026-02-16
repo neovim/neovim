@@ -80,8 +80,6 @@ struct bw_info {
   char *bw_buf;                   // buffer with data to be written
   int bw_len;                     // length of data
   int bw_flags;                   // FIO_ flags
-  uint8_t bw_rest[CONV_RESTLEN];  // not converted bytes
-  int bw_restlen;                 // nr of bytes in bw_rest[]
   int bw_first;                   // first write call
   char *bw_conv_buf;              // buffer for writing converted chars
   size_t bw_conv_buflen;          // size of bw_conv_buf
@@ -160,30 +158,17 @@ static bool ucs2bytes(unsigned c, char **pp, int flags)
   return error;
 }
 
+/// Converts a buffer encoding based on values in ip using iconv.
+///
+/// See buf_write_convert for parameters and return value details.
 static int buf_write_convert_with_iconv(struct bw_info *ip, char **bufp, int *lenp)
 {
-  const char *from;
-  size_t fromlen;
-  size_t tolen;
-
   int len = *lenp;
 
   // Convert with iconv().
-  if (ip->bw_restlen > 0) {
-    // Need to concatenate the remainder of the previous call and
-    // the bytes of the current call.  Use the end of the
-    // conversion buffer for this.
-    fromlen = (size_t)len + (size_t)ip->bw_restlen;
-    char *fp = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
-    memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
-    memmove(fp + ip->bw_restlen, *bufp, (size_t)len);
-    from = fp;
-    tolen = ip->bw_conv_buflen - fromlen;
-  } else {
-    from = *bufp;
-    fromlen = (size_t)len;
-    tolen = ip->bw_conv_buflen;
-  }
+  const char *from = *bufp;
+  size_t fromlen = (size_t)len;
+  size_t tolen = ip->bw_conv_buflen;
   char *to = ip->bw_conv_buf;
 
   if (ip->bw_first) {
@@ -201,91 +186,50 @@ static int buf_write_convert_with_iconv(struct bw_info *ip, char **bufp, int *le
     ip->bw_first = false;
   }
 
-  // If iconv() has an error or there is not enough room, fail.
-  if ((iconv(ip->bw_iconv_fd, (void *)&from, &fromlen, &to, &tolen)
-       == (size_t)-1 && ICONV_ERRNO != ICONV_EINVAL)
-      || fromlen > CONV_RESTLEN) {
+  // If iconv() has an error, fail.
+  if (iconv(ip->bw_iconv_fd, (void *)&from, &fromlen, &to, &tolen)
+      == (size_t)-1 && ICONV_ERRNO != ICONV_EINVAL) {
     ip->bw_conv_error = true;
-    return FAIL;
+    return -1;
   }
-
-  // copy remainder to ip->bw_rest[] to be used for the next call.
-  if (fromlen > 0) {
-    memmove(ip->bw_rest, (void *)from, fromlen);
-  }
-  ip->bw_restlen = (int)fromlen;
 
   *bufp = ip->bw_conv_buf;
   *lenp = (int)(to - ip->bw_conv_buf);
 
-  return OK;
+  return len - (int)fromlen;
 }
 
+/// Converts a buffer encoding based on values in ip.
+///
+/// @param ip buf_write_bytes context
+/// @param[in,out] bufp Pointer to the input buffer. On return, pointer to the output buffer.
+/// @param[in,out] lenp Pointer to the input buffer length. On return the referenced value is set to
+///                     the length of the output buffer.
+///
+/// @return The number of input buffer bytes consumed for the conversion, which may be less than the
+///         initial input buffer size when the buffer ends with an incomplete character sequence.
 static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
 {
   int flags = ip->bw_flags;  // extra flags
 
-  if (flags & FIO_UTF8) {
-    // Convert latin1 in the buffer to UTF-8 in the file.
-    char *p = ip->bw_conv_buf;              // translate to buffer
-    for (int wlen = 0; wlen < *lenp; wlen++) {
-      p += utf_char2bytes((uint8_t)(*bufp)[wlen], p);
-    }
-    *bufp = ip->bw_conv_buf;
-    *lenp = (int)(p - ip->bw_conv_buf);
-  } else if (flags & (FIO_UCS4 | FIO_UTF16 | FIO_UCS2 | FIO_LATIN1)) {
+  int wlen = *lenp;
+  if (flags & (FIO_UCS4 | FIO_UTF16 | FIO_UCS2 | FIO_LATIN1)) {
     unsigned c;
     int n = 0;
     // Convert UTF-8 bytes in the buffer to UCS-2, UCS-4, UTF-16 or
     // Latin1 chars in the file.
     // translate in-place (can only get shorter) or to buffer
     char *p = flags & FIO_LATIN1 ? *bufp : ip->bw_conv_buf;
-    for (int wlen = 0; wlen < *lenp; wlen += n) {
-      if (wlen == 0 && ip->bw_restlen != 0) {
-        // Use remainder of previous call.  Append the start of
-        // buf[] to get a full sequence.  Might still be too
-        // short!
-        int l = MIN(*lenp, CONV_RESTLEN - ip->bw_restlen);
-        memmove(ip->bw_rest + ip->bw_restlen, *bufp, (size_t)l);
-        n = utf_ptr2len_len((char *)ip->bw_rest, ip->bw_restlen + l);
-        if (n > ip->bw_restlen + *lenp) {
-          // We have an incomplete byte sequence at the end to
-          // be written.  We can't convert it without the
-          // remaining bytes.  Keep them for the next call.
-          if (ip->bw_restlen + *lenp > CONV_RESTLEN) {
-            return FAIL;
-          }
-          ip->bw_restlen += *lenp;
-          break;
-        }
-        c = (n > 1) ? (unsigned)utf_ptr2char((char *)ip->bw_rest)
-                    : ip->bw_rest[0];
-        if (n >= ip->bw_restlen) {
-          n -= ip->bw_restlen;
-          ip->bw_restlen = 0;
-        } else {
-          ip->bw_restlen -= n;
-          memmove(ip->bw_rest, ip->bw_rest + n,
-                  (size_t)ip->bw_restlen);
-          n = 0;
-        }
-      } else {
-        n = utf_ptr2len_len(*bufp + wlen, *lenp - wlen);
-        if (n > *lenp - wlen) {
-          // We have an incomplete byte sequence at the end to
-          // be written.  We can't convert it without the
-          // remaining bytes.  Keep them for the next call.
-          if (*lenp - wlen > CONV_RESTLEN) {
-            return FAIL;
-          }
-          ip->bw_restlen = *lenp - wlen;
-          memmove(ip->bw_rest, *bufp + wlen,
-                  (size_t)ip->bw_restlen);
-          break;
-        }
-        c = n > 1 ? (unsigned)utf_ptr2char(*bufp + wlen)
-                  : (uint8_t)(*bufp)[wlen];
+    for (wlen = 0; wlen < *lenp; wlen += n) {
+      n = utf_ptr2len_len(*bufp + wlen, *lenp - wlen);
+      if (n > *lenp - wlen) {
+        // We have an incomplete byte sequence at the end to
+        // be written.  We can't convert it without the
+        // remaining bytes.  Keep them for the next call.
+        break;
       }
+      c = n > 1 ? (unsigned)utf_ptr2char(*bufp + wlen)
+                : (uint8_t)(*bufp)[wlen];
       // Check that there is enough space
       if (!(flags & FIO_LATIN1)) {
         size_t need = (flags & FIO_UCS4) ? 4 : 2;
@@ -315,12 +259,10 @@ static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
   }
 
   if (ip->bw_iconv_fd != (iconv_t)-1) {
-    if (buf_write_convert_with_iconv(ip, bufp, lenp) == FAIL) {
-      return FAIL;
-    }
+    return buf_write_convert_with_iconv(ip, bufp, lenp);
   }
 
-  return OK;
+  return wlen;
 }
 
 /// Call write() to write a number of bytes to the file.
@@ -333,19 +275,33 @@ static int buf_write_bytes(struct bw_info *ip)
   int len = ip->bw_len;      // length of data
   int flags = ip->bw_flags;  // extra flags
 
+  int converted = len;
+  int remaining = 0;
+
   // Skip conversion when writing the BOM.
   if (!(flags & FIO_NOCONVERT)) {
-    if (buf_write_convert(ip, &buf, &len) == FAIL) {
+    if ((converted = buf_write_convert(ip, &buf, &len)) < 0) {
+      return FAIL;
+    }
+
+    remaining = ip->bw_len - converted;
+  }
+
+  ip->bw_len = remaining;
+
+  // Skip writing while checking conversion
+  if (ip->bw_fd >= 0) {
+    int wlen = (int)write_eintr(ip->bw_fd, buf, (size_t)len);
+    if (wlen < len) {
       return FAIL;
     }
   }
 
-  if (ip->bw_fd < 0) {
-    // Only checking conversion, which is OK if we get here.
-    return OK;
+  if (remaining > 0) {
+    memmove(ip->bw_buf, ip->bw_buf + converted, (size_t)remaining);
   }
-  int wlen = (int)write_eintr(ip->bw_fd, buf, (size_t)len);
-  return (wlen < len) ? FAIL : OK;
+
+  return OK;
 }
 
 /// Check modification time of file, before writing to it.
@@ -1054,7 +1010,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   write_info.bw_conv_buf = NULL;
   write_info.bw_conv_error = false;
   write_info.bw_conv_error_lnum = 0;
-  write_info.bw_restlen = 0;
   write_info.bw_iconv_fd = (iconv_t)-1;
 
   // After writing a file changedtick changes but we don't want to display
@@ -1269,13 +1224,11 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (converted) {
     wb_flags = get_fio_flags(fenc);
     if (wb_flags & (FIO_UCS2 | FIO_UCS4 | FIO_UTF16 | FIO_UTF8)) {
-      // overallocate a bit, in case we read incomplete multi-byte chars
-      int size = bufsize + CONV_RESTLEN;
       // Need to allocate a buffer to translate into.
       if (wb_flags & (FIO_UCS2 | FIO_UTF16 | FIO_UTF8)) {
-        write_info.bw_conv_buflen = (size_t)size * 2;
+        write_info.bw_conv_buflen = (size_t)bufsize * 2;
       } else {       // FIO_UCS4
-        write_info.bw_conv_buflen = (size_t)size * 4;
+        write_info.bw_conv_buflen = (size_t)bufsize * 4;
       }
       write_info.bw_conv_buf = verbose_try_malloc(write_info.bw_conv_buflen);
       if (!write_info.bw_conv_buf) {
@@ -1477,11 +1430,10 @@ restore_backup:
       sha256_start(&sha_ctx);
     }
 
-    write_info.bw_len = bufsize;
+    write_info.bw_len = 0;
     write_info.bw_flags = wb_flags;
     fileformat = get_fileformat_force(buf, eap);
     char *s = buffer;
-    int len = 0;
     for (lnum = start; lnum <= end; lnum++) {
       // The next while loop is done once for each character written.
       // Keep it fast!
@@ -1499,16 +1451,15 @@ restore_backup:
           *s = c;
         }
         s++;
-        if (++len != bufsize) {
+        if (++write_info.bw_len != bufsize) {
           continue;
         }
         if (buf_write_bytes(&write_info) == FAIL) {
           end = 0;                        // write error: break loop
           break;
         }
-        nchars += bufsize;
-        s = buffer;
-        len = 0;
+        nchars += bufsize - write_info.bw_len;
+        s = buffer + write_info.bw_len;
         write_info.bw_start_lnum = lnum;
       }
       // write failed or last line has no EOL: stop here
@@ -1526,26 +1477,24 @@ restore_backup:
       } else {
         *s++ = CAR;                       // EOL_MAC or EOL_DOS: write CR
         if (fileformat == EOL_DOS) {      // write CR-NL
-          if (++len == bufsize) {
+          if (++write_info.bw_len == bufsize) {
             if (buf_write_bytes(&write_info) == FAIL) {
               end = 0;                    // write error: break loop
               break;
             }
-            nchars += bufsize;
-            s = buffer;
-            len = 0;
+            nchars += bufsize - write_info.bw_len;
+            s = buffer + write_info.bw_len;
           }
           *s++ = NL;
         }
       }
-      if (++len == bufsize) {
+      if (++write_info.bw_len == bufsize) {
         if (buf_write_bytes(&write_info) == FAIL) {
           end = 0;  // Write error: break loop.
           break;
         }
-        nchars += bufsize;
-        s = buffer;
-        len = 0;
+        nchars += bufsize - write_info.bw_len;
+        s = buffer + write_info.bw_len;
 
         os_breakcheck();
         if (got_int) {
@@ -1554,12 +1503,19 @@ restore_backup:
         }
       }
     }
-    if (len > 0 && end > 0) {
-      write_info.bw_len = len;
+    if (write_info.bw_len > 0 && end > 0) {
+      int remaining = write_info.bw_len;
       if (buf_write_bytes(&write_info) == FAIL) {
         end = 0;                      // write error
       }
-      nchars += len;
+      nchars += remaining - write_info.bw_len;
+    }
+
+    // Did we convert & write everything?
+    if (end != 0 && write_info.bw_len > 0) {
+      write_info.bw_conv_error = true;
+      write_info.bw_conv_error_lnum = end;
+      end = 0;
     }
 
     if (!buf->b_p_fixeol && buf->b_p_eof) {

@@ -113,26 +113,6 @@ function lsp._buf_get_full_text(bufnr)
   return text
 end
 
---- Memoizes a function. On first run, the function return value is saved and
---- immediately returned on subsequent runs. If the function returns a multival,
---- only the first returned value will be memoized and returned. The function will only be run once,
---- even if it has side effects.
----
----@generic T: function
----@param fn (T) Function to run
----@return T
-local function once(fn)
-  local value --- @type function
-  local ran = false
-  return function(...)
-    if not ran then
-      value = fn(...) --- @type function
-      ran = true
-    end
-    return value
-  end
-end
-
 --- @param client vim.lsp.Client
 --- @param config vim.lsp.ClientConfig
 --- @return boolean
@@ -218,7 +198,7 @@ end
 --- provide the root dir, or LSP will not be activated for the buffer. Thus a `root_dir()` function
 --- can dynamically decide per-buffer whether to activate (or skip) LSP.
 --- See example at |vim.lsp.enable()|.
---- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
+--- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string)) #
 ---
 --- [lsp-root_markers]()
 --- Filename(s) (".git/", "package.json", …) used to decide the workspace root. Unused if `root_dir`
@@ -832,7 +812,7 @@ end
 local function text_document_did_save_handler(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
-  local text = once(lsp._buf_get_full_text)
+  local text = vim.func._memoize('concat', lsp._buf_get_full_text)
   for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
@@ -1152,9 +1132,25 @@ api.nvim_create_autocmd('VimLeavePre', {
     local active_clients = lsp.get_clients()
     log.info('exit_handler', active_clients)
 
+    local max_timeout = 0
     for _, client in pairs(active_clients) do
+      max_timeout = math.max(max_timeout, tonumber(client.exit_timeout) or 0)
       client:stop(client.exit_timeout)
     end
+    if max_timeout > 10 then
+      api.nvim_echo({
+        {
+          string.format('Waiting %ss for lsp exit (Press Ctrl-C to force exit)', max_timeout / 1e3),
+          'WarningMsg',
+        },
+      }, true, {})
+    end
+
+    vim.wait(max_timeout, function()
+      return vim.iter(active_clients):all(function(client)
+        return client.rpc.is_closing()
+      end)
+    end)
   end,
 })
 

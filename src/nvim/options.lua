@@ -3996,7 +3996,9 @@ local options = {
     },
     {
       abbreviation = 'gfn',
-      defaults = '',
+      defaults = {
+        if_true = macros('DFLT_GFN', 'string'),
+      },
       desc = [=[
         This is a list of fonts which will be used for the GUI version of Vim.
         In its simplest form the value is just one font name.  When
@@ -8914,6 +8916,8 @@ local options = {
               Thus use %#HLname# for highlight group HLname.  The same
               highlighting is used, also for the statusline of non-current
               windows.
+        $ -   Same as `#`, except the `%$HLname$` group will inherit from
+              preceding highlight attributes.
         * -   Set highlight group to User{N}, where {N} is taken from the
               minwid field, e.g. %1*.  Restore normal highlight with %* or
               %0*.  The difference between User{N} and StatusLine will be

@@ -444,167 +444,17 @@ void prepare_help_buffer(void)
   set_buflisted(false);
 }
 
-/// After reading a help file: if help.txt, populate *local-additions*
+/// Populate *local-additions* in help.txt
 void get_local_additions(void)
 {
-  // In the "help.txt" and "help.abx" file, add the locally added help
-  // files.  This uses the very first line in the help file.
-  char *const fname = path_tail(curbuf->b_fname);
-  if (path_fnamecmp(fname, "help.txt") == 0
-      || (path_fnamencmp(fname, "help.", 5) == 0
-          && ASCII_ISALPHA(fname[5])
-          && ASCII_ISALPHA(fname[6])
-          && TOLOWER_ASC(fname[7]) == 'x'
-          && fname[8] == NUL)) {
-    for (linenr_T lnum = 1; lnum < curbuf->b_ml.ml_line_count; lnum++) {
-      char *line = ml_get_buf(curbuf, lnum);
-      if (strstr(line, "*local-additions*") == NULL) {
-        continue;
-      }
-
-      int lnum_start = lnum;
-
-      // Go through all directories in 'runtimepath', skipping
-      // $VIMRUNTIME.
-      char *p = p_rtp;
-      while (*p != NUL) {
-        copy_option_part(&p, NameBuff, MAXPATHL, ",");
-        char *const rt = vim_getenv("VIMRUNTIME");
-        if (rt != NULL
-            && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
-          int fcount;
-          char **fnames;
-          vimconv_T vc;
-
-          // Find all "doc/ *.txt" files in this directory.
-          if (!add_pathsep(NameBuff)
-              || xstrlcat(NameBuff, "doc/*.??[tx]",  // NOLINT
-                          sizeof(NameBuff)) >= MAXPATHL) {
-            emsg(_(e_fnametoolong));
-            continue;
-          }
-
-          // Note: We cannot just do `&NameBuff` because it is a statically sized array
-          //       so `NameBuff == &NameBuff` according to C semantics.
-          char *buff_list[1] = { NameBuff };
-          if (gen_expand_wildcards(1, buff_list, &fcount,
-                                   &fnames, EW_FILE|EW_SILENT) == OK
-              && fcount > 0) {
-            char *s;
-            char *cp;
-            // If foo.abx is found use it instead of foo.txt in
-            // the same directory.
-            for (int i1 = 0; i1 < fcount; i1++) {
-              const char *const f1 = fnames[i1];
-              const char *const t1 = path_tail(f1);
-              const char *const e1 = strrchr(t1, '.');
-              if (e1 == NULL) {
-                continue;
-              }
-              if (path_fnamecmp(e1, ".txt") != 0
-                  && path_fnamecmp(e1, fname + 4) != 0) {
-                // Not .txt and not .abx, remove it.
-                XFREE_CLEAR(fnames[i1]);
-                continue;
-              }
-
-              for (int i2 = i1 + 1; i2 < fcount; i2++) {
-                const char *const f2 = fnames[i2];
-                if (f2 == NULL) {
-                  continue;
-                }
-                const char *const t2 = path_tail(f2);
-                const char *const e2 = strrchr(t2, '.');
-                if (e2 == NULL) {
-                  continue;
-                }
-                if (e1 - f1 != e2 - f2
-                    || path_fnamencmp(f1, f2, (size_t)(e1 - f1)) != 0) {
-                  continue;
-                }
-                if (path_fnamecmp(e1, ".txt") == 0
-                    && path_fnamecmp(e2, fname + 4) == 0) {
-                  // use .abx instead of .txt
-                  XFREE_CLEAR(fnames[i1]);
-                }
-              }
-            }
-            for (int fi = 0; fi < fcount; fi++) {
-              if (fnames[fi] == NULL) {
-                continue;
-              }
-
-              FILE *const fd = os_fopen(fnames[fi], "r");
-              if (fd == NULL) {
-                continue;
-              }
-              vim_fgets(IObuff, IOSIZE, fd);
-              if (IObuff[0] == '*'
-                  && (s = vim_strchr(IObuff + 1, '*'))
-                  != NULL) {
-                TriState this_utf = kNone;
-                // Change tag definition to a
-                // reference and remove <CR>/<NL>.
-                IObuff[0] = '|';
-                *s = '|';
-                while (*s != NUL) {
-                  if (*s == '\r' || *s == '\n') {
-                    *s = NUL;
-                  }
-                  // The text is utf-8 when a byte
-                  // above 127 is found and no
-                  // illegal byte sequence is found.
-                  if ((uint8_t)(*s) >= 0x80 && this_utf != kFalse) {
-                    this_utf = kTrue;
-                    const int l = utf_ptr2len(s);
-                    if (l == 1) {
-                      this_utf = kFalse;
-                    }
-                    s += l - 1;
-                  }
-                  s++;
-                }
-                // The help file is latin1 or utf-8;
-                // conversion to the current
-                // 'encoding' may be required.
-                vc.vc_type = CONV_NONE;
-                convert_setup(&vc,
-                              (this_utf == kTrue ? "utf-8" : "latin1"),
-                              p_enc);
-                if (vc.vc_type == CONV_NONE) {
-                  // No conversion needed.
-                  cp = IObuff;
-                } else {
-                  // Do the conversion.  If it fails
-                  // use the unconverted text.
-                  cp = string_convert(&vc, IObuff, NULL);
-                  if (cp == NULL) {
-                    cp = IObuff;
-                  }
-                }
-                convert_setup(&vc, NULL, NULL);
-
-                ml_append(lnum, cp, 0, false);
-                if (cp != IObuff) {
-                  xfree(cp);
-                }
-                lnum++;
-              }
-              fclose(fd);
-            }
-            FreeWild(fcount, fnames);
-          }
-        }
-        xfree(rt);
-      }
-      linenr_T appended = lnum - lnum_start;
-      if (appended) {
-        mark_adjust(lnum_start + 1, (linenr_T)MAXLNUM, appended, 0, kExtmarkUndo);
-        changed_lines_redraw_buf(curbuf, lnum_start + 1, lnum_start + 1, appended);
-      }
-      break;
-    }
+  Error err = ERROR_INIT;
+  Object res = NLUA_EXEC_STATIC("return require'vim._core.help'.local_additions()",
+                                (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
+  if (ERROR_SET(&err)) {
+    emsg_multiline(err.msg, "lua_error", HLF_E, true);
   }
+  api_free_object(res);
+  api_clear_error(&err);
 }
 
 /// ":exusage"

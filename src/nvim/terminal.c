@@ -151,14 +151,16 @@ struct terminal {
   //  - receive data from libvterm as a result of key presses.
   char textbuf[TEXTBUF_SIZE];
 
-  ScrollbackLine **sb_buffer;       // Scrollback storage.
-  size_t sb_current;                // Lines stored in sb_buffer.
-  size_t sb_size;                   // Capacity of sb_buffer.
-  // "virtual index" that points to the first sb_buffer row that we need to
-  // push to the terminal buffer when refreshing the scrollback.
+  ScrollbackLine **sb_buffer;  ///< Scrollback storage.
+  size_t sb_current;           ///< Lines stored in sb_buffer.
+  size_t sb_size;              ///< Capacity of sb_buffer.
+  /// "virtual index" that points to the first sb_buffer row that we need to
+  /// push to the terminal buffer when refreshing the scrollback.
   int sb_pending;
-  size_t sb_deleted;                // Lines deleted from sb_buffer.
-  size_t sb_deleted_last;           // Value of sb_deleted on last refresh_scrollback()
+  size_t sb_deleted;      ///< Lines deleted from sb_buffer.
+  size_t old_sb_deleted;  ///< Value of sb_deleted on last refresh_scrollback().
+  /// Lines in the terminal buffer belonging to the screen instead of the scrollback.
+  int old_height;
 
   char *title;     // VTermStringFragment buffer
   size_t title_len;
@@ -170,6 +172,8 @@ struct terminal {
   // no way to know if the memory was reused.
   handle_T buf_handle;
   bool in_altscreen;
+  // program suspended
+  bool suspended;
   // program exited
   bool closed;
   // when true, the terminal's destruction is already enqueued.
@@ -561,6 +565,7 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
     ml_delete_buf(buf, 1, false);
   }
   deleted_lines_buf(buf, 1, line_count);
+  term->old_height = 1;
 
   return term;
 }
@@ -669,7 +674,6 @@ void terminal_close(Terminal **termpp, int status)
     // only need to call the close callback to clean up the terminal object.
     only_destroy = true;
   } else {
-    term->forward_mouse = false;
     // flush any pending changes to the buffer
     if (!exiting) {
       block_autocmds();
@@ -723,7 +727,33 @@ void terminal_close(Terminal **termpp, int status)
   }
 }
 
+static void terminal_state_change_event(void **argv)
+{
+  handle_T buf_handle = (handle_T)(intptr_t)argv[0];
+  buf_T *buf = handle_get_buffer(buf_handle);
+  if (buf && buf->terminal) {
+    // Don't change the actual terminal content to indicate the suspended state here,
+    // as unlike the process exit case the change needs to be reversed on resume.
+    // Instead, the code in win_update() will add a "[Process suspended]" virtual text
+    // at the botton-left of the buffer.
+    redraw_buf_line_later(buf, buf->b_ml.ml_line_count, false);
+  }
+}
+
+/// Updates the suspended state of the terminal program.
+void terminal_set_state(Terminal *term, bool suspended)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->suspended != suspended) {
+    // Trigger a main loop iteration to redraw the buffer.
+    multiqueue_put(refresh_timer.events, terminal_state_change_event,
+                   (void *)(intptr_t)term->buf_handle);
+  }
+  term->suspended = suspended;
+}
+
 void terminal_check_size(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (term->closed) {
     return;
@@ -948,9 +978,15 @@ static void terminal_check_cursor(void)
   if (topline != curwin->w_topline) {
     set_topline(curwin, topline);
   }
-  // Nudge cursor when returning to normal-mode.
-  int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
-  coladvance(curwin, MAX(0, term->cursor.col + off));
+  if (term->suspended && (State & MODE_TERMINAL)) {
+    // Put cursor at the "[Process suspended]" text to hint that pressing a key will
+    // change the suspended state.
+    curwin->w_cursor = (pos_T){ .lnum = curbuf->b_ml.ml_line_count };
+  } else {
+    // Nudge cursor when returning to normal-mode.
+    int off = (State & MODE_TERMINAL) ? 0 : (curwin->w_p_rl ? 1 : -1);
+    coladvance(curwin, MAX(0, term->cursor.col + off));
+  }
 }
 
 static bool terminal_check_focus(TerminalState *const s)
@@ -997,6 +1033,8 @@ static int terminal_check(VimState *state)
   if (stop_insert_mode || !terminal_check_focus(s)) {
     return 0;
   }
+
+  terminal_check_refresh();
 
   // Validate topline and cursor position for autocommands. Especially important for WinScrolled.
   terminal_check_cursor();
@@ -1132,6 +1170,13 @@ static int terminal_execute(VimState *state, int key)
     }
     if (mod_key == Ctrl_BSL && !s->got_bsl) {
       s->got_bsl = true;
+      break;
+    }
+    if (s->term->suspended) {
+      s->term->opts.resume_cb(s->term->opts.data);
+      // XXX: detecting continued process via waitpid() on SIGCHLD doesn't always work
+      // (e.g. on macOS), so also consider it continued after sending SIGCONT.
+      terminal_set_state(s->term, false);
       break;
     }
     if (s->term->closed) {
@@ -1398,13 +1443,21 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 }
 
 Buffer terminal_buf(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
   return term->buf_handle;
 }
 
 bool terminal_running(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
 {
   return !term->closed;
+}
+
+bool terminal_suspended(const Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return term->suspended;
 }
 
 void terminal_notify_theme(Terminal *term, bool dark)
@@ -1632,6 +1685,8 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 
   if (term->sb_pending > 0) {
     term->sb_pending--;
+  } else {
+    term->old_height++;
   }
 
   ScrollbackLine *sbrow = term->sb_buffer[0];
@@ -2066,7 +2121,8 @@ static bool send_mouse_event(Terminal *term, int c)
   }
 
   int offset;
-  if (term->forward_mouse && mouse_win->w_buffer->terminal == term && row >= 0
+  if (!term->suspended && !term->closed
+      && term->forward_mouse && mouse_win->w_buffer->terminal == term && row >= 0
       && (grid > 1 || row + mouse_win->w_winbar_height < mouse_win->w_height)
       && col >= (offset = win_col_off(mouse_win))
       && (grid > 1 || col < mouse_win->w_width)) {
@@ -2238,6 +2294,14 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
   }
 }
 
+/// Normally refresh_timer_cb() is called when processing main_loop.events, but with
+/// partial mappings main_loop.events isn't processed, while terminal buffers still
+/// need refreshing after processing a key, so call this function before redrawing.
+void terminal_check_refresh(void)
+{
+  multiqueue_process_events(refresh_timer.events);
+}
+
 static void refresh_terminal(Terminal *term)
 {
   buf_T *buf = handle_get_buffer(term->buf_handle);
@@ -2395,46 +2459,36 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
-  linenr_T deleted = (linenr_T)(term->sb_deleted - term->sb_deleted_last);
+  linenr_T deleted = (linenr_T)(term->sb_deleted - term->old_sb_deleted);
   deleted = MIN(deleted, buf->b_ml.ml_line_count);
   mark_adjust_buf(buf, 1, deleted, MAXLNUM, -deleted, true, kMarkAdjustTerm, kExtmarkUndo);
-  term->sb_deleted_last = term->sb_deleted;
+  term->old_sb_deleted = term->sb_deleted;
 
+  int old_height = term->old_height;
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
-  int max_line_count = (int)term->sb_current - term->sb_pending + height;
-  // Remove extra lines at the top if scrollback lines have been deleted.
-  while (deleted > 0 && buf->b_ml.ml_line_count > max_line_count) {
+  // Remove deleted scrollback lines at the top, but don't unnecessarily remove
+  // lines that will be overwritten by refresh_screen().
+  while (deleted > 0 && buf->b_ml.ml_line_count > old_height) {
     ml_delete_buf(buf, 1, false);
     deleted_lines_buf(buf, 1, 1);
     deleted--;
   }
-  max_line_count += term->sb_pending;
 
-  // May still have pending scrollback after increase in terminal height if the
-  // scrollback wasn't refreshed in time; append these to the top of the buffer.
-  int row_offset = term->sb_pending;
-  while (term->sb_pending > 0 && buf->b_ml.ml_line_count < height) {
-    fetch_row(term, term->sb_pending - row_offset - 1, width);
-    ml_append_buf(buf, 0, term->textbuf, 0, false);
-    appended_lines_buf(buf, 0, 1);
-    term->sb_pending--;
-  }
-
-  row_offset -= term->sb_pending;
   while (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer.
-    fetch_row(term, -term->sb_pending - row_offset, width);
-    int buf_index = buf->b_ml.ml_line_count - height;
+    fetch_row(term, -term->sb_pending, width);
+    int buf_index = buf->b_ml.ml_line_count - old_height;
     ml_append_buf(buf, buf_index, term->textbuf, 0, false);
     appended_lines_buf(buf, buf_index, 1);
     term->sb_pending--;
   }
 
+  int max_line_count = (int)term->sb_current + height;
   // Remove extra lines at the bottom.
   while (buf->b_ml.ml_line_count > max_line_count) {
     ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
@@ -2475,6 +2529,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
       added++;
     }
   }
+  term->old_height = height;
 
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;

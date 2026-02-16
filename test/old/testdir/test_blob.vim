@@ -884,4 +884,24 @@ func Test_indexof()
   call assert_fails('let i = indexof(b, " ")', 'E15:')
 endfunc
 
+" Test for using the items() function with a blob
+func Test_blob_items()
+  let lines =<< trim END
+    call assert_equal([[0, 0xAA], [1, 0xBB], [2, 0xCC]], 0zAABBCC->items())
+    call assert_equal([[0, 0]], 0z00->items())
+    call assert_equal([], 0z->items())
+    call assert_equal([], v:_null_blob->items())
+  END
+  call CheckSourceLegacyAndVim9Success(lines)
+endfunc
+
+" Test for setting a byte in a blob with invalid value
+func Test_blob_byte_set_invalid_value()
+  let lines =<< trim END
+    VAR b = 0zD0C3E4E18E1B
+    LET b[0] = 229539777187355
+  END
+  call CheckSourceLegacyAndVim9Failure(lines, 'E1239: Invalid value for blob:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

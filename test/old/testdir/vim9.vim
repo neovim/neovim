@@ -89,20 +89,24 @@ func CheckLegacyFailure(lines, error)
   endtry
 endfunc
 
+" Translate "lines" to legacy Vim script
+func s:LegacyTrans(lines)
+  return a:lines->mapnew({_, v ->
+		\ v->substitute('\<VAR\>', 'let', 'g')
+		\  ->substitute('\<LET\>', 'let', 'g')
+		\  ->substitute('\<LSTART\>', '{', 'g')
+		\  ->substitute('\<LMIDDLE\>', '->', 'g')
+		\  ->substitute('\<LEND\>', '}', 'g')
+		\  ->substitute('\<TRUE\>', '1', 'g')
+		\  ->substitute('\<FALSE\>', '0', 'g')
+		\  ->substitute('#"', ' "', 'g')
+		\ })
+endfunc
+
 " Execute "lines" in a legacy function, translated as in
 " CheckLegacyAndVim9Success()
 func CheckTransLegacySuccess(lines)
-  let legacylines = a:lines->mapnew({_, v ->
-                              \ v->substitute('\<VAR\>', 'let', 'g')
-                              \  ->substitute('\<LET\>', 'let', 'g')
-                              \  ->substitute('\<LSTART\>', '{', 'g')
-                              \  ->substitute('\<LMIDDLE\>', '->', 'g')
-                              \  ->substitute('\<LEND\>', '}', 'g')
-                              \  ->substitute('\<TRUE\>', '1', 'g')
-                              \  ->substitute('\<FALSE\>', '0', 'g')
-                              \  ->substitute('#"', ' "', 'g')
-                              \ })
-  call CheckLegacySuccess(legacylines)
+  call CheckLegacySuccess(s:LegacyTrans(a:lines))
 endfunc
 
 func CheckTransDefSuccess(lines)
@@ -141,6 +145,65 @@ func CheckLegacyAndVim9Failure(lines, error)
                               \  ->substitute('#"', ' "', 'g')
                               \ })
   call CheckLegacyFailure(legacylines, legacyError)
+endfunc
+
+" Check that "lines" inside a legacy function has no error.
+func CheckSourceLegacySuccess(lines)
+  let cwd = getcwd()
+  new
+  call setline(1, ['func Func()'] + a:lines + ['endfunc', 'call Func()'])
+  let bnr = bufnr()
+  try
+    :source
+  finally
+    delfunc! Func
+    call chdir(cwd)
+    exe $':bw! {bnr}'
+  endtry
+endfunc
+
+" Check that "lines" inside a legacy function results in the expected error
+func CheckSourceLegacyFailure(lines, error)
+  let cwd = getcwd()
+  new
+  call setline(1, ['func Func()'] + a:lines + ['endfunc', 'call Func()'])
+  let bnr = bufnr()
+  try
+    call assert_fails('source', a:error)
+  finally
+    delfunc! Func
+    call chdir(cwd)
+    exe $':bw! {bnr}'
+  endtry
+endfunc
+
+" Execute "lines" in a legacy function, translated as in
+" CheckSourceLegacyAndVim9Success()
+func CheckSourceTransLegacySuccess(lines)
+  call CheckSourceLegacySuccess(s:LegacyTrans(a:lines))
+endfunc
+
+" Execute "lines" in a :def function, translated as in
+" CheckLegacyAndVim9Success()
+func CheckSourceTransDefSuccess(lines)
+  return
+endfunc
+
+" Execute "lines" in a Vim9 script, translated as in
+" CheckLegacyAndVim9Success()
+func CheckSourceTransVim9Success(lines)
+  return
+endfunc
+
+" Execute "lines" in a legacy function, :def function and Vim9 script.
+" Use 'VAR' for a declaration.
+" Use 'LET' for an assignment
+" Use ' #"' for a comment
+" Use LSTART arg LMIDDLE expr LEND for lambda
+" Use 'TRUE' for 1 in legacy, true in Vim9
+" Use 'FALSE' for 0 in legacy, false in Vim9
+func CheckSourceLegacyAndVim9Success(lines)
+  call CheckSourceTransLegacySuccess(a:lines)
 endfunc
 
 " :source a list of "lines" and check whether it fails with "error"
@@ -195,23 +258,7 @@ func CheckSourceScriptSuccess(lines)
   endtry
 endfunc
 
-func CheckSourceSuccess(lines)
-  call CheckSourceScriptSuccess(a:lines)
-endfunc
-
-func CheckSourceFailure(lines, error, lnum = -3)
-  call CheckSourceScriptFailure(a:lines, a:error, a:lnum)
-endfunc
-
-func CheckSourceFailureList(lines, errors, lnum = -3)
-  call CheckSourceScriptFailureList(a:lines, a:errors, a:lnum)
-endfunc
-
 func CheckSourceDefSuccess(lines)
-  return
-endfunc
-
-func CheckSourceDefAndScriptSuccess(lines)
   return
 endfunc
 
@@ -233,5 +280,30 @@ endfunc
 
 func CheckSourceDefExecAndScriptFailure(lines, error, lnum = -3)
   return
+endfunc
+
+func CheckSourceSuccess(lines)
+  call CheckSourceScriptSuccess(a:lines)
+endfunc
+
+func CheckSourceFailure(lines, error, lnum = -3)
+  call CheckSourceScriptFailure(a:lines, a:error, a:lnum)
+endfunc
+
+func CheckSourceFailureList(lines, errors, lnum = -3)
+  call CheckSourceScriptFailureList(a:lines, a:errors, a:lnum)
+endfunc
+
+func CheckSourceDefAndScriptSuccess(lines)
+  return
+endfunc
+
+" Execute "lines" in a legacy function, :def function and Vim9 script.
+" Use 'VAR' for a declaration.
+" Use 'LET' for an assignment
+" Use ' #"' for a comment
+func CheckSourceLegacyAndVim9Failure(lines, error)
+  let legacyError = type(a:error) == type('string') ? a:error : a:error[0]
+  call CheckSourceLegacyFailure(s:LegacyTrans(a:lines), legacyError)
 endfunc
 

@@ -106,13 +106,19 @@ function Range:is_empty()
   return self.start >= self.end_
 end
 
---- Checks whether {outer} range contains {inner} range.
+--- Checks whether {outer} range contains {inner} range or position.
 ---
 ---@param outer vim.Range
----@param inner vim.Range
----@return boolean `true` if {outer} range fully contains {inner} range.
+---@param inner vim.Range|vim.Pos
+---@return boolean `true` if {outer} range fully contains {inner} range or position.
 function Range.has(outer, inner)
-  return outer.start <= inner.start and outer.end_ >= inner.end_
+  if inner.start then
+    -- inner is a range
+    return outer.start <= inner.start and outer.end_ >= inner.end_
+  else
+    -- inner is a position
+    return outer.start <= inner and outer.end_ >= inner
+  end
 end
 
 --- Computes the common range shared by the given ranges.

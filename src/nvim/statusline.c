@@ -374,7 +374,12 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
       curattr = attr;
       curgroup = (int)group;
     } else if (sp->userhl < 0) {
-      curattr = syn_id2attr(-sp->userhl);
+      int new_attr = syn_id2attr(-sp->userhl);
+      if (sp->item == STL_HIGHLIGHT_COMB) {
+        curattr = hl_combine_attr(curattr, new_attr);
+      } else {
+        curattr = new_attr;
+      }
       curgroup = -sp->userhl;
     } else {
       int *userhl = (wp != NULL && wp != curwin && wp->w_status_height != 0)
@@ -1081,7 +1086,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         // remove group if all items are empty and highlight group
         // doesn't change
         for (n = stl_groupitems[groupdepth] - 1; n >= 0; n--) {
-          if (stl_items[n].type == Highlight) {
+          if (stl_items[n].type == Highlight || stl_items[n].type == HighlightCombining) {
             group_start_userhl = group_end_userhl = stl_items[n].minwid;
             break;
           }
@@ -1090,7 +1095,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           if (stl_items[n].type == Normal) {
             break;
           }
-          if (stl_items[n].type == Highlight) {
+          if (stl_items[n].type == Highlight || stl_items[n].type == HighlightCombining) {
             group_end_userhl = stl_items[n].minwid;
           }
         }
@@ -1100,7 +1105,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           group_len = 0;
           for (n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
             // do not use the highlighting from the removed group
-            if (stl_items[n].type == Highlight) {
+            if (stl_items[n].type == Highlight || stl_items[n].type == HighlightCombining) {
               stl_items[n].type = Empty;
             }
             // adjust the start position of TabPage to the next
@@ -1682,17 +1687,18 @@ stcsign:
       }
       break;
 
+    case STL_HIGHLIGHT_COMB:
     case STL_HIGHLIGHT: {
-      // { The name of the highlight is surrounded by `#`
+      // { The name of the highlight is surrounded by `#` or `$`
       char *t = fmt_p;
-      while (*fmt_p != '#' && *fmt_p != NUL) {
+      while (*fmt_p != opt && *fmt_p != NUL) {
         fmt_p++;
       }
       // }
 
       // Create a highlight item based on the name
-      if (*fmt_p == '#') {
-        stl_items[curitem].type = Highlight;
+      if (*fmt_p == opt) {
+        stl_items[curitem].type = opt == STL_HIGHLIGHT_COMB ? HighlightCombining : Highlight;
         stl_items[curitem].start = out_p;
         stl_items[curitem].minwid = -syn_name2id_len(t, (size_t)(fmt_p - t));
         curitem++;
@@ -2073,12 +2079,14 @@ stcsign:
     *hltab = stl_hltab;
     stl_hlrec_t *sp = stl_hltab;
     for (int l = evalstart; l < itemcnt + evalstart; l++) {
-      if (stl_items[l].type == Highlight
+      if (stl_items[l].type == Highlight || stl_items[l].type == HighlightCombining
           || stl_items[l].type == HighlightFold || stl_items[l].type == HighlightSign) {
         sp->start = stl_items[l].start;
         sp->userhl = stl_items[l].minwid;
         unsigned type = stl_items[l].type;
-        sp->item = type == HighlightSign ? STL_SIGNCOL : type == HighlightFold ? STL_FOLDCOL : 0;
+        sp->item = type == HighlightSign ? STL_SIGNCOL : type ==
+                   HighlightFold ? STL_FOLDCOL : type ==
+                   HighlightCombining ? STL_HIGHLIGHT_COMB : 0;
         sp++;
       }
     }

@@ -32,6 +32,17 @@
   "%*[^\"]\"%f\"%*\\D%l: %m,\"%f\"%*\\D%l: %m,%-Gg%\\?make[%*\\d]: *** [%f:%l:%m,%-Gg%\\?make: *** [%f:%l:%m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%-GIn file included from %f:%l:%c:,%-GIn file included from %f:%l:%c\\,,%-GIn file included from %f:%l:%c,%-GIn file included from %f:%l,%-G%*[ ]from %f:%l:%c,%-G%*[ ]from %f:%l:,%-G%*[ ]from %f:%l\\,,%-G%*[ ]from %f:%l,%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,\"%f\"\\, line %l%*\\D%c%*[^ ] %m,%D%*\\a[%*\\d]: Entering directory %*[`']%f',%X%*\\a[%*\\d]: Leaving directory %*[`']%f',%D%*\\a: Entering directory %*[`']%f',%X%*\\a: Leaving directory %*[`']%f',%DMaking %*\\a in %f,%f|%l| %m"
 #endif
 
+// Default values for 'guifont'
+#ifdef MSWIN
+# define DFLT_GFN "Cascadia Code, Cascadia Mono, Consolas, Courier New"
+#elif defined(__APPLE__)
+# define DFLT_GFN "SF Mono, Menlo, Monaco, Courier New"
+#elif defined(__linux__)
+# define DFLT_GFN "Source Code Pro, DejaVu Sans Mono, Courier New"
+#else
+# define DFLT_GFN "DejaVu Sans Mono, Courier New"
+#endif
+
 #define DFLT_GREPFORMAT "%f:%l:%m,%f:%l%m,%f  %l%m"
 
 // Possible values for 'encoding'
@@ -222,8 +233,8 @@ enum {
     STL_PREVIEWFLAG, STL_PREVIEWFLAG_ALT, STL_MODIFIED, STL_MODIFIED_ALT, \
     STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
     STL_SHOWCMD, STL_FOLDCOL, STL_SIGNCOL, STL_VIM_EXPR, STL_SEPARATE, \
-    STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, \
-    STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
+    STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_HIGHLIGHT_COMB, STL_TABPAGENR, \
+    STL_TABCLOSENR, STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
     0, })
 
 // arguments for can_bs()

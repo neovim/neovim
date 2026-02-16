@@ -94,8 +94,19 @@ describe('messages2', function()
       {1:~                                                    }|*12
                                           0,0-1         All|
     ]])
+    -- g< shows messages from last command
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      fo^o                                                  |
+      bar                                                  |
+        1 %a   "[No Name]"                    line 1       |
+                                          1,3           All|
+    ]])
     -- edit_unputchar() does not clear already updated screen #34515.
-    feed('ix<Esc>dwi<C-r>')
+    feed('qix<Esc>dwi<C-r>')
     screen:expect([[
       {18:^"}                                                    |
       {1:~                                                    }|*12
@@ -438,6 +449,37 @@ describe('messages2', function()
       {1:~                                                    }|*11
       {3:                                                     }|
       {101:fo^o}{100:                                                  }|
+    ]])
+  end)
+
+  it(':echon appends message', function()
+    command([[echo 1 | echon 2]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      12                                                   |
+    ]])
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      ^12                                                   |
+                                                           |
+    ]])
+    feed([[q:echo 1 | echon 2 | echon 2 | echon 3<CR>]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      1223                                                 |
+    ]])
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      ^1223                                                 |
+                                                           |
     ]])
   end)
 

@@ -543,19 +543,13 @@ local function check_stable_version(nvim_version)
   if result.code ~= 0 or not result.stdout or result.stdout == '' then
     return
   end
-  local stable_sha = result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
-    or result.stdout:match('(%x+)%s+refs/tags/stable\n')
-  if not stable_sha then
-    return
-  end
-  local latest_version = result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}')
-  if not latest_version then
-    return
-  end
-  local current_version = nvim_version:match('v?(%d+%.%d+%.%d+)')
-  if not current_version then
-    return
-  end
+  local stable_sha = assert(
+    result.stdout:match('(%x+)%s+refs/tags/stable%^{}')
+      or result.stdout:match('(%x+)%s+refs/tags/stable\n')
+  )
+  local latest_version =
+    assert(result.stdout:match(stable_sha .. '%s+refs/tags/v?(%d+%.%d+%.%d+)%^{}'))
+  local current_version = assert(nvim_version:match('v?(%d+%.%d+%.%d+)'))
   local current = vim.version.parse(current_version)
   local latest = vim.version.parse(latest_version)
   if current and latest and vim.version.lt(current, latest) then
@@ -576,10 +570,7 @@ local function check_head_hash(commit)
   if result.code ~= 0 or not result.stdout or result.stdout == '' then
     return
   end
-  local upstream = result.stdout:match('^(%x+)')
-  if not upstream then
-    return
-  end
+  local upstream = assert(result.stdout:match('^(%x+)'))
   if not vim.startswith(upstream, commit) then
     vim.health.warn(
       ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
@@ -620,6 +611,8 @@ local function check_sysinfo()
     string.format(
       [[
     ## Problem
+
+    Describe the problem (concisely).
 
     ## Steps to reproduce
 

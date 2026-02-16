@@ -4,8 +4,9 @@
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
 " Latest Revision:      2024 Sep 02
 " Recent Changes:	Support for #include and #includedir.
-" 			Added many new options (Samuel D. Leslie)
-" 			Update allowed Tag_Spec Runas_Spec syntax items
+" 2018 Aug 28 by Vim project Added many new options (Samuel D. Leslie)
+" 2024 Sep 09 by Vim project Update allowed Tag_Spec Runas_Spec syntax items
+" 2026 Feb 13 by Vim project update regex for matching usernames #19396
 
 if exists("b:current_syntax")
   finish
@@ -35,28 +36,28 @@ syn keyword sudoersAlias              Host_Alias nextgroup=sudoersHostAlias skip
 syn keyword sudoersAlias              Cmnd_Alias nextgroup=sudoersCmndAlias skipwhite skipnl
 
 syn match   sudoersUserAlias          contained '\<\u[A-Z0-9_]*\>'  nextgroup=sudoersUserAliasEquals  skipwhite skipnl
-syn match   sudoersUserNameInList     contained '\<\l\+\>'          nextgroup=@sudoersUserList        skipwhite skipnl
+syn match   sudoersUserNameInList     contained '\<\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserList        skipwhite skipnl
 syn match   sudoersUIDInList          contained '#\d\+\>'           nextgroup=@sudoersUserList        skipwhite skipnl
-syn match   sudoersGroupInList        contained '%\l\+\>'           nextgroup=@sudoersUserList        skipwhite skipnl
-syn match   sudoersUserNetgroupInList contained '+\l\+\>'           nextgroup=@sudoersUserList        skipwhite skipnl
+syn match   sudoersGroupInList        contained '%\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserList        skipwhite skipnl
+syn match   sudoersUserNetgroupInList contained '+\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserList        skipwhite skipnl
 syn match   sudoersUserAliasInList    contained '\<\u[A-Z0-9_]*\>'  nextgroup=@sudoersUserList        skipwhite skipnl
 
-syn match   sudoersUserName           contained '\<\l\+\>'          nextgroup=@sudoersParameter       skipwhite skipnl
+syn match   sudoersUserName           contained '\<\l[-a-z0-9_]*\>'  nextgroup=@sudoersParameter       skipwhite skipnl
 syn match   sudoersUID                contained '#\d\+\>'           nextgroup=@sudoersParameter       skipwhite skipnl
-syn match   sudoersGroup              contained '%\l\+\>'           nextgroup=@sudoersParameter       skipwhite skipnl
-syn match   sudoersUserNetgroup       contained '+\l\+\>'           nextgroup=@sudoersParameter       skipwhite skipnl
+syn match   sudoersGroup              contained '%\l[-a-z0-9_]*\>'  nextgroup=@sudoersParameter       skipwhite skipnl
+syn match   sudoersUserNetgroup       contained '+\l[-a-z0-9_]*\>'  nextgroup=@sudoersParameter       skipwhite skipnl
 syn match   sudoersUserAliasRef       contained '\<\u[A-Z0-9_]*\>'  nextgroup=@sudoersParameter       skipwhite skipnl
 
-syn match   sudoersUserNameInSpec     contained '\<\l\+\>'          nextgroup=@sudoersUserSpec        skipwhite skipnl
+syn match   sudoersUserNameInSpec     contained '\<\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserSpec        skipwhite skipnl
 syn match   sudoersUIDInSpec          contained '#\d\+\>'           nextgroup=@sudoersUserSpec        skipwhite skipnl
-syn match   sudoersGroupInSpec        contained '%\l\+\>'           nextgroup=@sudoersUserSpec        skipwhite skipnl
-syn match   sudoersUserNetgroupInSpec contained '+\l\+\>'           nextgroup=@sudoersUserSpec        skipwhite skipnl
+syn match   sudoersGroupInSpec        contained '%\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserSpec        skipwhite skipnl
+syn match   sudoersUserNetgroupInSpec contained '+\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserSpec        skipwhite skipnl
 syn match   sudoersUserAliasInSpec    contained '\<\u[A-Z0-9_]*\>'  nextgroup=@sudoersUserSpec        skipwhite skipnl
 
-syn match   sudoersUserNameInRunas    contained '\<\l\+\>'          nextgroup=@sudoersUserRunas       skipwhite skipnl
+syn match   sudoersUserNameInRunas    contained '\<\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserRunas       skipwhite skipnl
 syn match   sudoersUIDInRunas         contained '#\d\+\>'           nextgroup=@sudoersUserRunas       skipwhite skipnl
-syn match   sudoersGroupInRunas       contained '%\l\+\>'           nextgroup=@sudoersUserRunas       skipwhite skipnl
-syn match   sudoersUserNetgroupInRunas contained '+\l\+\>'          nextgroup=@sudoersUserRunas       skipwhite skipnl
+syn match   sudoersGroupInRunas       contained '%\l[-a-z0-9_]*\>'  nextgroup=@sudoersUserRunas       skipwhite skipnl
+syn match   sudoersUserNetgroupInRunas contained '+\l[-a-z0-9_]*\>' nextgroup=@sudoersUserRunas       skipwhite skipnl
 syn match   sudoersUserAliasInRunas   contained '\<\u[A-Z0-9_]*\>'  nextgroup=@sudoersUserRunas       skipwhite skipnl
 
 syn match   sudoersHostAlias          contained '\<\u[A-Z0-9_]*\>'  nextgroup=sudoersHostAliasEquals  skipwhite skipnl

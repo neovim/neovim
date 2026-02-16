@@ -100,11 +100,11 @@ describe('TUI', function()
       ]])
     else -- resuming works on other platforms
       screen:expect([[
-        ^                                                  |
                                                           |*5
+        ^[Process suspended]                               |
         {5:-- TERMINAL --}                                    |
       ]])
-      exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+      n.feed('<Space>')
       screen:expect(s0)
     end
     feed_data(':')
@@ -237,7 +237,12 @@ describe('TUI :detach', function()
 end)
 
 describe('TUI :restart', function()
-  it('resets buffer to blank', function()
+  it('validation', function()
+    clear()
+    eq('Vim(restart):E481: No range allowed: :1restart', t.pcall_err(n.command, ':1restart'))
+  end)
+
+  it('works', function()
     clear()
     finally(function()
       n.check_close()
@@ -272,7 +277,7 @@ describe('TUI :restart', function()
     end
 
     -- The value of has("gui_running") should be 0 before and after :restart.
-    local function gui_running_check()
+    local function assert_no_gui_running()
       tt.feed_data(':echo "GUI Running: " .. has("gui_running")\013')
       screen:expect({ any = 'GUI Running: 0' })
     end
@@ -285,12 +290,12 @@ describe('TUI :restart', function()
       {5:-- TERMINAL --}                                    |
     ]]
     screen_expect(s0)
-    gui_running_check()
+    assert_no_gui_running()
 
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
 
-    local function restart_pid_check()
+    local function assert_new_pid()
       server_session:close()
       server_session = n.connect(server_pipe)
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
@@ -298,52 +303,58 @@ describe('TUI :restart', function()
       server_pid = new_pid
     end
 
-    tt.feed_data(':1restart\013')
-    screen:expect({ any = vim.pesc('{101:E481: No range allowed}') })
+    --- Gets the last `argn` items in v:argv as a joined string.
+    local function get_argv(argn)
+      local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
+      return table.concat(argv, ' ', #argv - argn, #argv)
+    end
 
     local s1 = [[
                                                         |
-                                                        |
-      {2:                                                  }|
+      ^Hello1                                            |
+      {100:~                                                 }|*2
+      {3:[No Name] [+]                                     }|
       {MATCH:%d+ +}|
-      Hello                                             |
-      {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]]
 
-    -- Check trailing characters are considered in -c
-    tt.feed_data(':restart echo "Hello"\013')
+    tt.feed_data(':set nomodified\013')
+    -- Command is added as "-c" arg.
+    tt.feed_data(":restart put ='Hello1'\013")
     screen_expect(s1)
     tt.feed_data('\013')
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
+    eq("--cmd echo getpid() +::: -c put ='Hello1'", get_argv(4))
 
-    -- Check trailing characters after +cmd are considered in -c
-    tt.feed_data(':restart +qall echo "Hello" | echo "World"\013')
+    -- Complex command following +cmd.
+    tt.feed_data(":restart +qall! put ='Hello2' | put ='World2'\013")
     screen_expect([[
                                                         |
-      {2:                                                  }|
+      Hello2                                            |
+      ^World2                                            |
+      {100:~                                                 }|
+      {3:[No Name] [+]                                     }|
       {MATCH:%d+ +}|
-      Hello                                             |
-      World                                             |
-      {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]])
-    tt.feed_data('\013')
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
+    eq("--cmd echo getpid() +::: -c put ='Hello2' | put ='World2'", get_argv(4))
 
     -- Check ":restart" on an unmodified buffer.
+    tt.feed_data(':set nomodified\013')
     tt.feed_data(':restart\013')
     screen_expect(s0)
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
 
     -- Check ":restart +qall!" on an unmodified buffer.
     tt.feed_data(':restart +qall!\013')
     screen_expect(s0)
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
+    eq('--cmd echo getpid()', get_argv(1))
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
@@ -375,15 +386,13 @@ describe('TUI :restart', function()
     tt.feed_data(':set noconfirm\013')
 
     -- Check ":confirm restart <cmd>" on a modified buffer.
-    tt.feed_data(':confirm restart echo "Hello"\013')
+    tt.feed_data(":confirm restart put ='Hello3'\013")
     screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('N\013')
-
-    -- Check if the -c <cmd> runs after restart.
-    screen_expect(s1)
-    tt.feed_data('\013')
-    restart_pid_check()
-    gui_running_check()
+    screen:expect({ any = '%^Hello3' })
+    assert_new_pid()
+    assert_no_gui_running()
+    eq("--cmd echo getpid() +::: -c put ='Hello3'", get_argv(4))
 
     -- Check ":confirm restart +echo" correctly ignores ":confirm"
     tt.feed_data(':confirm restart +echo\013')
@@ -398,14 +407,14 @@ describe('TUI :restart', function()
     tt.feed_data('ithis will be removed\027')
     tt.feed_data(':restart +qall!\013')
     screen_expect(s0)
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
 
     -- No --listen conflict when server exit is delayed.
     feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
     screen_expect(s0)
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
 
     screen:try_resize(60, 6)
     screen_expect([[
@@ -425,8 +434,62 @@ describe('TUI :restart', function()
       {MATCH:%d+ +}|
       {5:-- TERMINAL --}                                              |
     ]])
-    restart_pid_check()
-    gui_running_check()
+    assert_new_pid()
+    assert_no_gui_running()
+  end)
+
+  it('drops "-" and "-- [files…]" from v:argv #34417', function()
+    t.skip(is_os('win'), 'stdin behavior differs on Windows')
+    clear()
+    local server_session
+    finally(function()
+      if server_session then
+        server_session:close()
+      end
+      n.check_close()
+    end)
+    local server_pipe = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--listen',
+      server_pipe,
+      '--cmd',
+      'set notermguicolors',
+      '-',
+      '--',
+      'Xtest-file1',
+      'Xtest-file2',
+    })
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*3
+      {2:Xtest-file1                     0,0-1          All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    server_session = n.connect(server_pipe)
+    local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
+    eq({ true, true }, { server_session:request('nvim_eval', expr) })
+
+    tt.feed_data(":restart put='foo'\013")
+    screen:expect([[
+                                                        |
+      ^foo                                               |
+      ~                                                 |*2
+      {2:[No Name] [+]                   2,1            All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    server_session:close()
+    server_session = n.connect(server_pipe)
+
+    eq({ true, false }, { server_session:request('nvim_eval', expr) })
+    local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
+    eq(13, #argv)
+    eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
   end)
 end)
 
@@ -4361,7 +4424,6 @@ describe('TUI client', function()
   it('suspend/resume works with multiple clients', function()
     t.skip(is_os('win'), 'N/A for Windows')
     local server_super, screen_server, screen_client = start_tui_and_remote_client()
-    local server_super_exec_lua = tt.make_lua_executor(server_super)
 
     local screen_normal = [[
       Hello, Worl^d                                      |
@@ -4371,8 +4433,8 @@ describe('TUI client', function()
       {5:-- TERMINAL --}                                    |
     ]]
     local screen_suspended = [[
-      ^                                                  |
                                                         |*5
+      ^[Process suspended]                               |
       {5:-- TERMINAL --}                                    |
     ]]
 
@@ -4385,12 +4447,12 @@ describe('TUI client', function()
     screen_server:expect({ grid = screen_suspended })
 
     -- Resume the remote client.
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+    n.feed('<Space>')
     screen_client:expect({ grid = screen_normal })
     screen_server:expect({ grid = screen_suspended, unchanged = true })
 
     -- Resume the embedding client.
-    server_super_exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+    server_super:request('nvim_input', '<Space>')
     screen_server:expect({ grid = screen_normal })
     screen_client:expect({ grid = screen_normal, unchanged = true })
 
@@ -4400,7 +4462,7 @@ describe('TUI client', function()
     screen_server:expect({ grid = screen_suspended })
 
     -- Resume the remote client.
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+    n.feed('<Space>')
     screen_client:expect({ grid = screen_normal })
     screen_server:expect({ grid = screen_suspended, unchanged = true })
 
@@ -4410,12 +4472,12 @@ describe('TUI client', function()
     screen_server:expect({ grid = screen_suspended, unchanged = true })
 
     -- Resume the embedding client.
-    server_super_exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+    server_super:request('nvim_input', '<Space>')
     screen_server:expect({ grid = screen_normal })
     screen_client:expect({ grid = screen_suspended, unchanged = true })
 
     -- Resume the remote client.
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigcont')]])
+    n.feed('<Space>')
     screen_client:expect({ grid = screen_normal })
     screen_server:expect({ grid = screen_normal, unchanged = true })
 

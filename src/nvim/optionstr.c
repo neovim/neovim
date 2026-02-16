@@ -711,7 +711,8 @@ const char *did_set_buftype(optset_T *args)
     // Set default value for 'comments'
     set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
     // set the prompt start position to lastline.
-    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 0, .coladd = 0 };
+    pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = buf->b_prompt_start.mark.col,
+                          .coladd = 0 };
     RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
   }
   if (win->w_status_height || global_stl_height()) {

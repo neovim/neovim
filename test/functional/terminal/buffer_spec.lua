@@ -296,6 +296,64 @@ describe(':terminal buffer', function()
     eq('t', fn.mode(1))
   end)
 
+  it('is refreshed with partial mappings in Terminal mode #9167', function()
+    command([[set timeoutlen=20000 | tnoremap jk <C-\><C-N>]])
+    feed('j') -- Won't reach the terminal until the next character is typed
+    screen:expect_unchanged()
+    feed('j') -- Refresh scheduled for the first 'j' but not processed
+    screen:expect_unchanged()
+    for i = 1, 10 do
+      eq({ mode = 't', blocking = true }, api.nvim_get_mode())
+      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      screen:expect(([[
+        tty ready                                         |
+        %s^%s|
+                                                          |*4
+        {5:-- TERMINAL --}                                    |
+      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+    end
+    feed('l') -- No partial mapping, so all pending refreshes should be processed
+    screen:expect([[
+      tty ready                                         |
+      jjjjjjjjjjjjl^                                     |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('is refreshed with partial mappings in Normal mode', function()
+    command('set timeoutlen=20000 | nnoremap jk :')
+    command('nnoremap j <Cmd>call chansend(&channel, "j")<CR>')
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*5
+    ]])
+    feed('j') -- Won't reach the terminal until the next character is typed
+    screen:expect_unchanged()
+    feed('j') -- Refresh scheduled for the first 'j' but not processed
+    screen:expect_unchanged()
+    for i = 1, 10 do
+      eq({ mode = 'nt', blocking = true }, api.nvim_get_mode())
+      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      screen:expect(([[
+        tty ready                                         |
+        ^%s%s|
+                                                          |*4
+                                                          |
+      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+    end
+    feed('l') -- No partial mapping, so all pending refreshes should be processed
+    screen:expect([[
+      tty ready                                         |
+      j^jjjjjjjjjjj                                      |
+                                                        |*5
+    ]])
+  end)
+
   it('writing to an existing file with :w fails #13549', function()
     eq(
       'Vim(write):E13: File exists (add ! to override)',
@@ -450,10 +508,164 @@ describe(':terminal buffer', function()
     ]])
     assert_alive()
   end)
+
+  describe('handles suspended PTY process', function()
+    if skip(is_os('win'), 'N/A for Windows') then
+      return
+    end
+
+    --- @param external_resume boolean
+    local function test_term_process_suspend_resume(external_resume)
+      command('set mousemodel=extend')
+      local pid = eval('jobpid(&channel)')
+      vim.uv.kill(pid, 'sigstop')
+      -- In Terminal mode the cursor is at the "[Process suspended]" text to hint that
+      -- pressing a key will change the suspended state.
+      local s0 = [[
+        tty ready                                         |
+                                                          |*4
+        ^[Process suspended]                               |
+        {5:-- TERMINAL --}                                    |
+      ]]
+      screen:expect(s0)
+      feed([[<C-\><C-N>]])
+      -- Returning to Normal mode puts the cursor at its previous position as that's
+      -- closer to the terminal output, making it easier for the user to copy.
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*3
+        [Process suspended]                               |
+                                                          |
+      ]])
+      feed('i')
+      screen:expect(s0)
+      command('set laststatus=0 | botright vsplit')
+      screen:expect([[
+        tty ready               │tty ready                |
+                                │                         |*4
+        [Process suspended]     │^[Process suspended]      |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      -- Resize is detected by the process on resume.
+      if external_resume then
+        vim.uv.kill(pid, 'sigcont')
+      else
+        feed('a')
+      end
+      screen:expect([[
+        tty ready               │tty ready                |
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+                                │^                         |
+                                │                         |*3
+        {5:-- TERMINAL --}                                    |
+      ]])
+      tt.enable_mouse()
+      tt.feed_data('mouse enabled\n\n\n\n')
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+                                │^                         |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 25)
+      screen:expect({ any = vim.pesc('"!!^') })
+      api.nvim_input_mouse('right', 'release', '', 0, 0, 25)
+      screen:expect({ any = vim.pesc('#!!^') })
+      vim.uv.kill(pid, 'sigstop')
+      local s1 = [[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+        [Process suspended]     │^[Process suspended]      |
+        {5:-- TERMINAL --}                                    |
+      ]]
+      screen:expect(s1)
+      -- Mouse isn't forwarded when process is suspended.
+      api.nvim_input_mouse('right', 'press', '', 0, 1, 27)
+      api.nvim_input_mouse('right', 'release', '', 0, 1, 27)
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mo{108:use enabled}           │mo^u{108:se enabled}            |
+        {108: }                       │{108: }                        |*3
+        [Process suspended]     │[Process suspended]      |
+        {5:-- VISUAL --}                                      |
+      ]])
+      feed('<Esc>i')
+      screen:expect(s1)
+      if external_resume then
+        vim.uv.kill(pid, 'sigcont')
+      else
+        feed('a')
+      end
+      screen:expect([[
+        rows: 6, cols: 25       │rows: 6, cols: 25        |
+        mouse enabled           │mouse enabled            |
+                                │                         |*3
+           #!!                  │   #!!^                   |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      -- Mouse is forwarded after process is resumed.
+      api.nvim_input_mouse('right', 'press', '', 0, 0, 28)
+      screen:expect({ any = vim.pesc('"$!^') })
+      api.nvim_input_mouse('right', 'release', '', 0, 0, 28)
+      screen:expect({ any = vim.pesc('#$!^') })
+    end
+
+    it('resumed by an external signal', function()
+      skip(is_os('mac'), 'FIXME: does not work on macOS')
+      test_term_process_suspend_resume(true)
+    end)
+
+    it('resumed by pressing a key', function()
+      test_term_process_suspend_resume(false)
+    end)
+  end)
 end)
 
 describe(':terminal buffer', function()
   before_each(clear)
+
+  it('can resume suspended PTY process running in fish', function()
+    skip(is_os('win'), 'N/A for Windows')
+    skip(fn.executable('fish') == 0, 'missing "fish" command')
+
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({
+      [100] = {
+        foreground = Screen.colors.NvimDarkGrey2,
+        background = Screen.colors.NvimLightGrey2,
+      },
+      [101] = {
+        foreground = Screen.colors.NvimLightGrey4,
+        background = Screen.colors.NvimLightGrey2,
+      },
+      [102] = {
+        foreground = Screen.colors.NvimDarkGrey2,
+        background = Screen.colors.NvimLightGrey4,
+      },
+    })
+    command('set shell=fish termguicolors')
+    command(('terminal %s -u NONE -i NONE'):format(fn.shellescape(nvim_prog)))
+    command('startinsert')
+    local s0 = [[
+      {100:^                                                  }|
+      {101:~                                                 }|*3
+      {102:[No Name]                       0,0-1          All}|
+      {100:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(s0)
+    feed('<C-Z>')
+    screen:expect([[
+                                                        |*5
+      ^[Process suspended]                               |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed('<Space>')
+    screen:expect(s0)
+  end)
 
   it('term_close() use-after-free #4393', function()
     command('terminal yes')

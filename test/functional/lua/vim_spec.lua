@@ -2379,6 +2379,15 @@ stack traceback:
       )
     end)
 
+    it('does not leak when Nvim exits while waiting', function()
+      n.expect_exit(500, exec_lua, function()
+        vim.defer_fn(function()
+          vim.cmd('qall!')
+        end, 10)
+        vim.wait(10000)
+      end)
+    end)
+
     it('plays nice with `not` when fails', function()
       eq(
         true,

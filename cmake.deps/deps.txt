@@ -1,8 +1,8 @@
-LIBUV_URL https://github.com/libuv/libuv/archive/v1.51.0.tar.gz
-LIBUV_SHA256 27e55cf7083913bfb6826ca78cde9de7647cded648d35f24163f2d31bb9f51cd
+LIBUV_URL https://github.com/libuv/libuv/archive/v1.52.0.tar.gz
+LIBUV_SHA256 eee139c05f7c868f5ae7a54b1e155fd5b6ed13a22329958d2ba711faad016353
 
-LUAJIT_URL https://github.com/luajit/luajit/archive/707c12bf00dafdfd3899b1a6c36435dbbf6c7022.tar.gz
-LUAJIT_SHA256 ac2defd1e9b4ab07ac0a52f2403318ffb0d54505b975dff0cfc49a927ab84d90
+LUAJIT_URL https://github.com/luajit/luajit/archive/1c3b5a4d722598ecbb9219480142eda682e87bb1.tar.gz
+LUAJIT_SHA256 3e2b93dbb545df2eaa5107c348d6f700404eb5d4e1c04e010abd794b963362d8
 
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
@@ -18,9 +18,6 @@ LPEG_SHA256 4b155d67d2246c1ffa7ad7bc466c1ea899bbc40fef0257cc9c03cecbaed4352a
 
 LUA_COMPAT53_URL https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz
 LUA_COMPAT53_SHA256 f5dc30e7b1fda856ee4d392be457642c1f0c259264a9b9bfbcb680302ce88fc2
-
-XXD_URL https://github.com/neovim/deps/raw/21c5e8bdda33521a6ed497b315e03265a2785cbc/opt/xxd.exe
-XXD_SHA256 7a581e3882d28161cc52850f9a11d634b3eaf2c029276f093c1ed4c90e45a10c
 
 WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip
 WIN32YANK_X86_64_SHA256 247c9a05b94387a884b49d3db13f806b1677dfc38020f955f719be6902260cd6
