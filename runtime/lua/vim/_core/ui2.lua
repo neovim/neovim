@@ -141,7 +141,7 @@ function M.check_targets()
 end
 
 local function ui_callback(redraw_msg, event, ...)
-  local handler = M.msg[event] or M.cmd[event]
+  local handler = M.msg[event] or M.cmd[event] --[[@as function]]
   M.check_targets()
   handler(...)
   -- Cmdline mode, non-fast message and non-empty showcmd require an immediate redraw.
@@ -226,9 +226,11 @@ function M.enable(opts)
 
   api.nvim_create_autocmd('OptionSet', {
     group = M.augroup,
-    pattern = { 'cmdheight' },
-    callback = function()
-      check_cmdheight(vim.v.option_new)
+    pattern = { 'cmdheight', 'laststatus' },
+    callback = function(ev)
+      if ev.match == 'cmdheight' then
+        check_cmdheight(vim.v.option_new)
+      end
       M.msg.set_pos()
     end,
     desc = 'Set cmdline and message window dimensions for changed option values.',

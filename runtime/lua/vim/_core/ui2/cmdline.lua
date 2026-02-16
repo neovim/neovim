@@ -143,7 +143,7 @@ function M.cmdline_hide(level, abort)
       api.nvim_buf_set_lines(ui.bufs.dialog, 0, -1, false, {})
       api.nvim_win_set_config(ui.wins.dialog, { hide = true })
       vim.on_key(nil, ui.msg.dialog_on_key)
-      M.dialog = false
+      M.dialog, ui.msg.dialog_on_key = false, nil
     end
   end)
 

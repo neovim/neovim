@@ -35,7 +35,7 @@ local M = {
     ids = {}, ---@type { ['last'|'msg'|'top'|'bot']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
-  dialog_on_key = 0, -- vim.on_key namespace for paging in the dialog window.
+  dialog_on_key = nil, ---@type integer? vim.on_key namespace for paging in the dialog window.
 }
 
 local cmd_on_key ---@type integer? Set to vim.on_key namespace while cmdline is expanded.
@@ -507,7 +507,8 @@ function M.set_pos(type)
     local cfg = { hide = false, relative = 'laststatus', col = 10000 }
     local texth = type and api.nvim_win_text_height(win, {}) or {}
     local top = { vim.opt.fcs:get().msgsep or ' ', 'MsgSeparator' }
-    cfg.height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
+    cfg.height = type == 'pager' and texth.all
+      or type and math.min(texth.all, math.ceil(o.lines * 0.5))
     cfg.border = win ~= ui.wins.msg and { '', top, '', '', '', '', '', '' } or nil
     cfg.focusable = type == 'cmd' or nil
     cfg.row = (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode
@@ -522,11 +523,13 @@ function M.set_pos(type)
       set_virttext('msg', 'cmd')
       M.virt.msg[M.virt.idx.spill][1] = save_spill
       cmd_on_key = vim.on_key(function(_, typed)
-        if not typed or fn.keytrans(typed) == '<MouseMove>' then
+        typed = typed and fn.keytrans(typed)
+        if not typed or typed == '<MouseMove>' then
           return
         end
+
         vim.schedule(function()
-          local entered = api.nvim_get_current_win() == ui.wins.cmd
+          local entered = typed == '<CR>' or api.nvim_get_current_win() == ui.wins.cmd
           cmd_on_key = nil
           if api.nvim_win_is_valid(ui.wins.cmd) then
             api.nvim_win_close(ui.wins.cmd, true)
@@ -537,7 +540,8 @@ function M.set_pos(type)
             M.virt.msg[M.virt.idx.spill][1] = nil
             api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
             if entered then
-              api.nvim_command('norm! g<') -- User entered the cmdline window: open the pager.
+              -- User entered the cmdline window or pressed enter: open the pager.
+              api.nvim_command('norm! g<')
             end
           elseif ui.cfg.msg.target == 'cmd' and ui.cmd.level == 0 then
             ui.check_targets()
@@ -581,7 +585,7 @@ function M.set_pos(type)
           set_top_bot_spill()
           return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
         end
-      end)
+      end, M.dialog_on_key)
     elseif type == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > cfg.height and texth.end_row or 0) + 1
@@ -597,6 +601,8 @@ function M.set_pos(type)
       -- Cmdwin is actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
         api.nvim_set_current_win(ui.wins.pager)
+        -- Ensure cursor is at beginning of first message.
+        api.nvim_win_set_cursor(ui.wins.pager, { 1, 0 })
         -- Make pager relative to cmdwin when it is opened, restore when it is closed.
         api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
           callback = function(ev)
