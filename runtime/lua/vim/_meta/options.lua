@@ -3233,7 +3233,7 @@ vim.go.gcr = vim.go.guicursor
 ---
 ---
 --- @type string
-vim.o.guifont = "SF Mono, Menlo, Monaco, Courier New"
+vim.o.guifont = "Source Code Pro, DejaVu Sans Mono, Courier New"
 vim.o.gfn = vim.o.guifont
 vim.go.guifont = vim.o.guifont
 vim.go.gfn = vim.go.guifont
