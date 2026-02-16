@@ -1106,7 +1106,7 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = api_buf_ensure_loaded(buffer, err);
   if (!buf) {
     return 0;
   }
