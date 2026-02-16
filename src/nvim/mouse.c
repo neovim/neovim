@@ -1959,7 +1959,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     int height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
     // The height is adjusted by 1 when there is a bottom border. This is not
     // necessary for a top border since `row` starts at -1 in that case.
-    if (row < height + wp->w_border_adj[2]) {
+    if (row < height + wp->w_border_adj[kEdgeBottom]) {
       winid = wp->handle;
       winrow = row + 1 + wp->w_winrow_off;  // Adjust by 1 for top border
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border

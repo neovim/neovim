@@ -5226,6 +5226,9 @@ static void win_enter_ext(win_T *const wp, const int flags)
   if (!curwin_invalid) {
     prevwin = curwin;           // remember for CTRL-W p
     curwin->w_redr_status = true;
+    if (curwin->w_pad[0] || curwin->w_pad[1] || curwin->w_pad[2] || curwin->w_pad[3]) {
+      redraw_later(curwin, UPD_VALID);
+    }
   }
   curwin = wp;
   curbuf = wp->w_buffer;
@@ -6928,6 +6931,24 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   invalidate_botline_win(wp);
 }
 
+void win_pad_parse(win_T *wp)
+{
+  memset(wp->w_pad, 0, sizeof(wp->w_pad));
+  if (wp->w_p_winpadding == NULL) {
+    return;
+  }
+  char *p = wp->w_p_winpadding;
+  int i = 0;
+  while (*p != NUL && i < 4) {
+    char part[32];
+    size_t len = copy_option_part(&p, part, sizeof(part), ",");
+    if (len == 0) {
+      break;
+    }
+    wp->w_pad[i++] = atoi(part);
+  }
+}
+
 void win_set_inner_size(win_T *wp, bool valid_cursor)
 {
   int width = wp->w_width_request;
@@ -6940,6 +6961,21 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   if (height == 0) {
     height = MAX(0, wp->w_height - wp->w_winbar_height);
   }
+
+  // reparse padding from option string, then clamp in place.
+  win_pad_parse(wp);
+  int max_v = MAX(height - 1, 0);
+  if (wp->w_pad[kEdgeTop] + wp->w_pad[kEdgeBottom] > max_v) {
+    wp->w_pad[kEdgeTop] = MIN(wp->w_pad[kEdgeTop], max_v);
+    wp->w_pad[kEdgeBottom] = MIN(wp->w_pad[kEdgeBottom], max_v - wp->w_pad[kEdgeTop]);
+  }
+  int max_h = MAX(width - 1, 0);
+  if (wp->w_pad[kEdgeLeft] + wp->w_pad[kEdgeRight] > max_h) {
+    wp->w_pad[kEdgeLeft] = MIN(wp->w_pad[kEdgeLeft], max_h);
+    wp->w_pad[kEdgeRight] = MIN(wp->w_pad[kEdgeRight], max_h - wp->w_pad[kEdgeLeft]);
+  }
+  height -= (wp->w_pad[kEdgeTop] + wp->w_pad[kEdgeBottom]);
+  width -= (wp->w_pad[kEdgeLeft] + wp->w_pad[kEdgeRight]);
 
   if (height != prev_height) {
     if (height > 0 && valid_cursor) {
@@ -6985,16 +7021,24 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   }
 
   int float_stl_height = wp->w_floating && wp->w_status_height ? STATUS_HEIGHT : 0;
-  wp->w_height_outer = (wp->w_view_height + win_border_height(wp) + wp->w_winbar_height +
-                        float_stl_height);
-  wp->w_width_outer = (wp->w_view_width + win_border_width(wp));
-  wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
-  wp->w_wincol_off = wp->w_border_adj[3];
+  wp->w_height_outer = (wp->w_view_height
+                        + wp->w_pad[kEdgeTop] + wp->w_pad[kEdgeBottom]
+                        + win_border_height(wp) + wp->w_winbar_height
+                        + float_stl_height);
+  wp->w_width_outer = (wp->w_view_width
+                       + wp->w_pad[kEdgeLeft] + wp->w_pad[kEdgeRight]
+                       + win_border_width(wp));
+
+  wp->w_winrow_off = wp->w_border_adj[kEdgeTop] + wp->w_winbar_height + wp->w_pad[kEdgeTop];
+  wp->w_wincol_off = wp->w_border_adj[kEdgeLeft] + wp->w_pad[kEdgeLeft];
 
   if (ui_has(kUIMultigrid)) {
     ui_call_win_viewport_margins(wp->w_grid_alloc.handle, wp->handle,
-                                 wp->w_winrow_off, wp->w_border_adj[2],
-                                 wp->w_wincol_off, wp->w_border_adj[1]);
+                                 wp->w_winrow_off,
+                                 wp->w_border_adj[kEdgeBottom] + wp->w_pad[kEdgeBottom] +
+                                 float_stl_height,
+                                 wp->w_wincol_off,
+                                 wp->w_border_adj[kEdgeRight] + wp->w_pad[kEdgeRight]);
   }
 
   wp->w_redr_status = true;

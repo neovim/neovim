@@ -210,6 +210,8 @@ typedef struct {
 #define w_p_fcs w_onebuf_opt.wo_fcs    // 'fillchars'
   OptInt wo_winbl;
 #define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
+  char *wo_winpadding;
+#define w_p_winpadding w_onebuf_opt.wo_winpadding  // 'winpadding'
 
   // A few options have local flags for kOptFlagInsecure.
   uint32_t wo_wrap_flags;               // flags for 'wrap'
@@ -990,6 +992,13 @@ typedef enum {
   kBorderTextFooter = 1,
 } BorderTextType;
 
+typedef enum {
+  kEdgeTop = 0,
+  kEdgeRight,
+  kEdgeBottom,
+  kEdgeLeft,
+} EdgeType;
+
 /// See ":help nvim_open_win()" for documentation.
 typedef struct {
   Window window;
@@ -1210,6 +1219,8 @@ struct window_S {
   // outer size of window grid, including border
   int w_height_outer;
   int w_width_outer;
+
+  int w_pad[4];  // top, right, bottom, left
 
   // === start of cached values ====
 

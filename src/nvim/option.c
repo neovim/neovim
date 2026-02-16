@@ -2674,6 +2674,42 @@ static const char *did_set_winwidth(optset_T *args)
   return NULL;
 }
 
+/// Parse 'winpadding' option value.
+const char *did_set_winpadding(optset_T *args)
+{
+  char *p = *(char **)args->os_varp;
+  if (*p == NUL) {
+    win_T *wp = (win_T *)args->os_win;
+    if (wp != NULL) {
+      win_set_inner_size(wp, true);
+    }
+    return NULL;
+  }
+
+  int count = 0;
+  while (*p != NUL && count < 4) {
+    if (!ascii_isdigit(*p)) {
+      return e_invarg;
+    }
+    while (ascii_isdigit(*p)) {
+      p++;
+    }
+    count++;
+    if (*p == ',') {
+      p++;
+    }
+  }
+  if (count != 4 || *p != NUL) {
+    return e_invarg;
+  }
+
+  win_T *wp = (win_T *)args->os_win;
+  if (wp != NULL) {
+    win_set_inner_size(wp, true);
+  }
+  return NULL;
+}
+
 /// Process the updated 'wrap' option value.
 static const char *did_set_wrap(optset_T *args)
 {
@@ -4649,6 +4685,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_wfh);
   case kOptWinfixwidth:
     return &(win->w_p_wfw);
+  case kOptWinpadding:
+    return &(win->w_p_winpadding);
   case kOptPreviewwindow:
     return &(win->w_p_pvw);
   case kOptLhistory:
@@ -5011,6 +5049,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_ve);
   clear_string_option(&wop->wo_wbr);
   clear_string_option(&wop->wo_stc);
+  clear_string_option(&wop->wo_winpadding);
 }
 
 void didset_window_options(win_T *wp, bool valid_cursor)
