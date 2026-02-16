@@ -253,8 +253,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     opt_idx = kOptWinbar;
     stl = ((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
     opt_scope = ((*wp->w_p_wbr != NUL) ? OPT_LOCAL : 0);
-    row = -1;  // row zero is first row of text
-    col = 0;
+    row = -1 - wp->w_pad[kEdgeTop];  // row zero is first row of text
+    col = -wp->w_pad[kEdgeLeft];
     grid = grid_adjust(&wp->w_grid, &row, &col);
 
     if (row < 0) {
@@ -264,16 +264,16 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     fillchar = wp->w_p_fcs_chars.wbr;
     group = (wp == curwin) ? HLF_WBR : HLF_WBRNC;
     attr = win_hl_attr(wp, (int)group);
-    maxwidth = wp->w_view_width;
+    maxwidth = wp->w_view_width + wp->w_pad[kEdgeLeft] + wp->w_pad[kEdgeRight];
     stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
                                                    &wp->w_winbar_click_defs_size);
   } else {
     const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
     if (wp->w_floating && !is_stl_global && !draw_ruler) {
-      row = wp->w_winrow_off + wp->w_view_height;
-      col = wp->w_wincol_off;
-      maxwidth = wp->w_view_width;
+      row = wp->w_winrow_off + wp->w_view_height + wp->w_pad[kEdgeBottom];
+      col = wp->w_wincol_off - wp->w_pad[kEdgeLeft];
+      maxwidth = wp->w_view_width + wp->w_pad[kEdgeLeft] + wp->w_pad[kEdgeRight];
     } else {
       row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
       maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;

@@ -193,6 +193,8 @@ static const char *highlight_init_both[] = {
   "default link Whitespace       NonText",
   "default link WildMenu         PmenuSel",
   "default link WinSeparator     Normal",
+  "default link WinPadding       Normal",
+  "default link WinPaddingNC     Normal",
 
   // Syntax
   "default link Character      Constant",

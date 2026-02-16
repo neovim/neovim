@@ -377,6 +377,7 @@ let test_values = {
       \		['xxx', 'a4', 'full,full,full,full,full']],
       \ 'wildoptions': [['', 'tagfile', 'pum', 'fuzzy'], ['xxx']],
       \ 'winaltkeys': [['no', 'yes', 'menu'], ['', 'xxx']],
+      \ 'winpadding': [['1,0,1,0', '2,2,2,2'], ['xxx','1', '2,2', '3,3,2']],
       \
       "\ skipped options
       "\ 'luadll': [[], []],

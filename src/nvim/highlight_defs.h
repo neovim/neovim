@@ -139,6 +139,8 @@ typedef enum {
   HLF_SO,         ///< stdout messages (from shell)
   HLF_OK,         ///< OK message
   HLF_PRE,        ///< "preinsert" in 'completeopt'
+  HLF_WPADDING,   ///< win padding
+  HLF_WPADDINGNC,  ///< win padding for non-current window
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
