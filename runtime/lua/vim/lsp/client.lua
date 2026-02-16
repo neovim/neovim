@@ -947,7 +947,7 @@ end
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
 function Client:_registration_provider(method)
   local capability_path = lsp.protocol._request_name_to_server_capability[method]
-  return capability_path and capability_path[1]
+  return capability_path and capability_path[1] or method
 end
 
 --- @private
