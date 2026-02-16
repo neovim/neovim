@@ -188,6 +188,7 @@ DEFAULTS
 • Mappings:
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
 • 'shada' default now excludes "/tmp/" and "/private/" paths to reduce clutter in |:oldfiles|.
+• Enabled treesitter highlighting for Markdown files
 
 DIAGNOSTICS
 

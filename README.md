@@ -50,14 +50,16 @@ See [BUILD.md](./BUILD.md) and [supported platforms](https://neovim.io/doc/user/
 
 The build is CMake-based, but a Makefile is provided as a convenience.
 After installing the dependencies, run the following command.
-
-    make CMAKE_BUILD_TYPE=RelWithDebInfo
-    sudo make install
+```bash
+make CMAKE_BUILD_TYPE=RelWithDebInfo
+sudo make install
+```
 
 To install to a non-default location:
-
-    make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=/full/path/
-    make install
+```bash
+make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=/full/path/
+make install
+```
 
 CMake hints for inspecting the build:
 

@@ -1,3 +1,5 @@
+vim.treesitter.start()
+
 vim.keymap.set('n', 'gO', function()
   require('vim.treesitter._headings').show_toc()
 end, { buffer = 0, silent = true, desc = 'Show an Outline of the current buffer' })
