@@ -179,4 +179,36 @@ func Test_windows_external_cmd_in_cwd()
   set guioptions&
 endfunc
 
+func Test_system_with_powershell()
+  CheckPowerShell
+
+  let shell_save = &shell
+  let shellcmdflag_save = &shellcmdflag
+  let shellxquote_save = &shellxquote
+  let shellpipe_save = &shellpipe
+  let shellredir_save = &shellredir
+  try
+    if executable('powershell')
+       let &shell = 'powershell'
+       let &shellcmdflag = '-Command'
+       let &shellredir = '2>&1 | Out-File -Encoding default'
+    else
+       let &shell = 'pwsh'
+       let &shellcmdflag = '-c'
+       let &shellredir = '>%s 2>&1'
+    endif
+    let &shellxquote = has('win32') ? '"' : ''
+    let &shellpipe = &shellredir
+
+    " Make sure compound commands are handled properly.
+    call assert_equal("123\n456\n", system('echo 123; echo 456'))
+  finally
+    let &shell = shell_save
+    let &shellcmdflag = shellcmdflag_save
+    let &shellxquote = shellxquote_save
+    let &shellpipe = shellpipe_save
+    let &shellredir = shellredir_save
+  endtry
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

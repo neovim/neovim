@@ -1558,10 +1558,10 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
 
   len += is_fish_shell ? sizeof("begin; " "; end") - 1
                        : !is_pwsh ? sizeof("(" ")") - 1
-                                  : 0;
+                                  : sizeof("& { " " }") - 1;
 
   if (itmp != NULL) {
-    len += is_pwsh ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
+    len += is_pwsh ? strlen(itmp) + sizeof("Get-Content " " | & ") - 1 + 6  // +6: #20530
                    : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
 
@@ -1577,16 +1577,13 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
 
   if (is_pwsh) {
     if (itmp != NULL) {
-      xstrlcpy(buf, "& { Get-Content ", len - 1);  // FIXME: should we add "-Encoding utf8"?
-      xstrlcat(buf, itmp, len - 1);
-      xstrlcat(buf, " | & ", len - 1);  // FIXME: add `&` ourself or leave to user?
-      xstrlcat(buf, cmd, len - 1);
-      xstrlcat(buf, " }", len - 1);
+      // FIXME: should we add "-Encoding utf8"?
+      // FIXME: add `&` ourself or leave to user?
+      vim_snprintf(buf, len, "& { Get-Content %s | & %s }", itmp, cmd);
     } else if (do_in) {
-      xstrlcpy(buf, " $input | ", len - 1);
-      xstrlcat(buf, cmd, len);
+      vim_snprintf(buf, len, " $input | & { %s }", cmd);
     } else {
-      xstrlcpy(buf, cmd, len);
+      vim_snprintf(buf, len, "& { %s }", cmd);
     }
   } else {
 #if defined(UNIX)

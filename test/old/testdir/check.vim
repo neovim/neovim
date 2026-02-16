@@ -135,6 +135,14 @@ func CheckNotMacM1()
   endif
 endfunc
 
+" Command to check whether PowerShell is available
+command CheckPowerShell call CheckPowerShell()
+func CheckPowerShell()
+  if !executable('powershell') && !executable('pwsh')
+    throw 'Skipped: requires Powershell to be installed'
+  endif
+endfunc
+
 func SetupWindowSizeToForVisualDumps()
   " The dumps used as reference in these tests were created with a terminal
   " width of 75 columns. The vim window that uses the remainder of the GUI
