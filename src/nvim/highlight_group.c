@@ -77,12 +77,12 @@ static char *(hl_name_table[]) =
 { "bold", "standout", "underline",
   "undercurl", "underdouble", "underdotted", "underdashed",
   "italic", "reverse", "inverse", "strikethrough", "altfont",
-  "nocombine", "NONE" };
+  "dim", "nocombine", "NONE" };
 static int hl_attr_table[] =
 { HL_BOLD, HL_STANDOUT, HL_UNDERLINE,
   HL_UNDERCURL, HL_UNDERDOUBLE, HL_UNDERDOTTED, HL_UNDERDASHED,
   HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_ALTFONT,
-  HL_NOCOMBINE, 0 };
+  HL_DIM, HL_NOCOMBINE, 0 };
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in

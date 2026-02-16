@@ -946,6 +946,10 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
     PUT_C(*hl_attrs, "altfont", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_DIM) {
+    PUT_C(*hl_attrs, "dim", BOOLEAN_OBJ(true));
+  }
+
   if (mask & HL_NOCOMBINE) {
     PUT_C(*hl_attrs, "nocombine", BOOLEAN_OBJ(true));
   }
@@ -1020,6 +1024,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
   CHECK_FLAG(dict, mask, altfont, , HL_ALTFONT);
+  CHECK_FLAG(dict, mask, dim, , HL_DIM);
   if (use_rgb) {
     CHECK_FLAG(dict, mask, fg_indexed, , HL_FG_INDEXED);
     CHECK_FLAG(dict, mask, bg_indexed, , HL_BG_INDEXED);
@@ -1100,6 +1105,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
     CHECK_FLAG(cterm, cterm_mask, altfont, , HL_ALTFONT);
+    CHECK_FLAG(cterm, cterm_mask, dim, , HL_DIM);
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
   }
 #undef CHECK_FLAG

@@ -19,6 +19,7 @@ typedef enum {
   kTerm_delete_line,
   kTerm_enter_bold_mode,
   kTerm_enter_ca_mode,
+  kTerm_enter_dim_mode,
   kTerm_enter_italics_mode,
   kTerm_enter_reverse_mode,
   kTerm_enter_standout_mode,

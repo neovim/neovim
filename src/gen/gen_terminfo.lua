@@ -55,6 +55,7 @@ local wanted_strings = {
   'delete_line',
   'enter_bold_mode',
   'enter_ca_mode',
+  'enter_dim_mode',
   'enter_italics_mode',
   'enter_reverse_mode',
   'enter_standout_mode',

@@ -1562,6 +1562,8 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                  • strikethrough: boolean
                  • italic: boolean
                  • reverse: boolean
+                 • altfont: boolean
+                 • dim: boolean
                  • nocombine: boolean
                  • link: name of another highlight group to link to, see
                    |:hi-link|.

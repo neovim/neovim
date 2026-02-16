@@ -25,7 +25,7 @@ typedef enum {
   HL_STANDOUT      = 0x0040,
   HL_STRIKETHROUGH = 0x0080,
   HL_ALTFONT       = 0x0100,
-  // 0x0200 spare
+  HL_DIM           = 0x0200,
   HL_NOCOMBINE     = 0x0400,
   HL_BG_INDEXED    = 0x0800,
   HL_FG_INDEXED    = 0x1000,

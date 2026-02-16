@@ -7375,6 +7375,9 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       p = highlight_has_attr(id, HL_BOLD, modec);
     }
     break;
+  case 'd':    // dim
+    p = highlight_has_attr(id, HL_DIM, modec);
+    break;
   case 'f':    // fg[#] or font
     p = highlight_color(id, what, modec);
     break;

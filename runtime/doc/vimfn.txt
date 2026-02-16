@@ -11045,6 +11045,7 @@ synIDattr({synID}, {what} [, {mode}])                              *synIDattr()*
 		"underdashed"	"1" if dashed underlined
 		"strikethrough"	"1" if struckthrough
 		"altfont"	"1" if alternative font
+		"dim"		"1" if half-bright/faint
 		"nocombine"	"1" if nocombine
 
 		Returns an empty string on error.
