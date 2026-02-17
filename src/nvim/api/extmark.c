@@ -511,7 +511,8 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 ///                   character. Enable concealing similar to |:syn-conceal|.
 ///                   When a character is supplied it is used as |:syn-cchar|.
 ///                   "hl_group" is used as highlight for the cchar if provided,
-///                   otherwise it defaults to |hl-Conceal|.
+///                   otherwise it defaults to |hl-Conceal|. To remove an
+///                   existing conceal, use the form feed character "\f" (^L).
 ///               - conceal_lines: string which should be empty. When
 ///                   provided, lines in the range are not drawn at all
 ///                   (according to 'conceallevel'); the next unconcealed line
@@ -629,14 +630,19 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, conceal)) {
-    hl.flags |= kSHConceal;
     has_hl = true;
     if (opts->conceal.size > 0) {
       int ch;
       hl.conceal_char = utfc_ptr2schar(opts->conceal.data, &ch);
-      VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char has to be printable", {
-        goto error;
-      });
+      // Form feed (\f, 0x0C) is used to clear/remove conceal
+      if (ch != 0x0C) {
+        VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char must be printable", {
+          goto error;
+        });
+      }
+      hl.flags |= ch == 0x0C ? kSHConcealOff : kSHConceal;
+    } else {
+      hl.flags |= kSHConceal;
     }
   }
 
@@ -644,7 +650,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     hl.flags |= kSHConcealLines;
     has_hl = true;
     if (opts->conceal_lines.size > 0) {
-      VALIDATE(*opts->conceal_lines.data == NUL, "%s", "conceal_lines has to be an empty string", {
+      VALIDATE(*opts->conceal_lines.data == NUL, "%s", "conceal_lines must be an empty string", {
         goto error;
       });
     }
