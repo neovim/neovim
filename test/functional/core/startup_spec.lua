@@ -148,7 +148,7 @@ describe('startup', function()
       eq(1, proc.status)
     end)
 
-    it('os.exit() sets Nvim exitcode', function()
+    it('sets exitcode from os.exit()', function()
       -- tricky: LeakSanitizer triggers on os.exit() and disrupts the return value, disable it
       exec_lua [[
         local asan_options = os.getenv('ASAN_OPTIONS') or ''
@@ -157,6 +157,7 @@ describe('startup', function()
         end
         vim.uv.os_setenv('ASAN_OPTIONS', asan_options .. ':detect_leaks=0')
       ]]
+
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out(
         [[
@@ -171,18 +172,64 @@ describe('startup', function()
       eq(73, eval('v:shell_error'))
     end)
 
-    it('Lua-error sets Nvim exitcode', function()
+    it('sets exitcode=1 on config or -c (not -l) error', function()
+      assert_l_out(function(out)
+        return matches('Error detected while processing command line:\nnooo\nok', out)
+      end, { '+echoerr "nooo"', '-l', '-', 'print("ok")' }, nil, '-', 'print("ok")')
+      eq(1, eval('v:shell_error'))
+
+      local p = n.spawn_wait({
+        args = {
+          '-u',
+          'test/functional/fixtures/startup-fail.vim',
+          '-l',
+          'test/functional/fixtures/startup.lua',
+        },
+        merge = false,
+      })
+      eq(1, p.status)
+    end)
+
+    it('sets exitcode=2 if BOTH config and -l fail', function()
+      local p = n.spawn_wait({
+        args = {
+          '-u',
+          'test/functional/fixtures/startup-fail.vim',
+          '-l',
+          'test/functional/fixtures/startup-fail.lua',
+        },
+        merge = false,
+      })
+      eq(2, p.status)
+    end)
+
+    it('sets exitcode=2 on -l code error', function()
       local proc = n.spawn_wait('-l', 'test/functional/fixtures/startup-fail.lua')
       matches('E5113: .* my pearls!!', proc:output())
       eq(0, proc.signal)
-      eq(1, proc.status)
+      eq(2, proc.status)
 
       eq(0, eval('v:shell_error'))
       matches(
         'E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
         fn.system({ nvim_prog, '-l', '-' }, 'error("whoa")')
       )
-      eq(1, eval('v:shell_error'))
+      eq(2, eval('v:shell_error'))
+    end)
+
+    it('sets exitcode from :cquit regardless of -l or config failures', function()
+      eq(0, eval('v:shell_error'))
+
+      -- :cquit from config.
+      matches(
+        'foo from config',
+        fn.system({ nvim_prog, '-c', 'echo "foo from config"', '-l', '-' }, 'vim.cmd[[73cquit]]')
+      )
+      eq(73, eval('v:shell_error'))
+
+      -- :cquit from -l code.
+      fn.system({ nvim_prog, '-c', '74cquit', '-l', '-' }, 'error("not reached")')
+      eq(74, eval('v:shell_error'))
     end)
 
     it('executes stdin "-"', function()
@@ -655,6 +702,30 @@ describe('startup', function()
     end
   end)
 
+  it('-es/-Es sets exitcode on script error', function()
+    for _, arg in ipairs({ '-es', '-Es' }) do
+      local out = fn.system({ nvim_prog, arg, '-V1', '+echoerr "nooo"' })
+      matches('nooo', out)
+      eq(1, eval('v:shell_error'))
+      out = fn.system({ nvim_prog, arg, '-V1', '+throw "excepooo"' })
+      eq(1, eval('v:shell_error'))
+      matches('excepooo', out)
+      out = fn.system({
+        nvim_prog,
+        arg,
+        '-V1',
+        '+echo "fine"',
+        '-u',
+        'test/functional/fixtures/startup-fail.vim',
+      })
+      eq(1, eval('v:shell_error'))
+      matches('E605: Exception not caught: failed in TestFail', out)
+      -- Reset v:shell_error.
+      fn.system({ nvim_prog, arg, '-V1', '+echo "okay"' })
+      eq(0, eval('v:shell_error'))
+    end
+  end)
+
   it('fails on --embed with -es/-Es/-l', function()
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
@@ -799,7 +870,7 @@ describe('startup', function()
     ]])
   end)
 
-  it('-e sets ex mode', function()
+  it('-e sets Ex mode', function()
     clear('-e')
     local screen = Screen.new(25, 3)
     -- Verify we set the proper mode both before and after :vi.
