@@ -560,11 +560,13 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // events from this queue are copied back onto the main event queue.
   term->pending.events = multiqueue_new(NULL, NULL);
 
-  linenr_T line_count = buf->b_ml.ml_line_count;
-  while (!(buf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete_buf(buf, 1, false);
+  if (!(buf->b_ml.ml_flags & ML_EMPTY)) {
+    linenr_T line_count = buf->b_ml.ml_line_count;
+    while (!(buf->b_ml.ml_flags & ML_EMPTY)) {
+      ml_delete_buf(buf, 1, false);
+    }
+    deleted_lines_buf(buf, 1, line_count);
   }
-  deleted_lines_buf(buf, 1, line_count);
   term->old_height = 1;
 
   return term;
