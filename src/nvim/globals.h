@@ -704,8 +704,6 @@ EXTERN bool g_tag_at_cursor INIT( = false);  // whether the tag command comes
                                              // from the command line (0) or was
                                              // invoked as a normal command (1)
 
-EXTERN int replace_offset INIT( = 0);        // offset for replace_push()
-
 EXTERN char *escape_chars INIT( = " \t\\\"|");  // need backslash in cmd line
 
 EXTERN bool keep_help_flag INIT( = false);  // doing :ta from help file

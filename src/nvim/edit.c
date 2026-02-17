@@ -2708,28 +2708,11 @@ static bool echeck_abbr(int c)
 
 /// Push character that is replaced onto the replace stack.
 ///
-/// replace_offset is normally 0, in which case replace_push will add a new
-/// character at the end of the stack.  If replace_offset is not 0, that many
-/// characters will be left on the stack above the newly inserted character.
-///
 /// @param str character that is replaced (NUL is none)
 /// @param len length of character in bytes
 void replace_push(char *str, size_t len)
 {
-  // TODO(bfredl): replace_offset is suss af, if we don't need it, this
-  // function is just kv_concat() :p
-  if (kv_size(replace_stack) < (size_t)replace_offset) {  // nothing to do
-    return;
-  }
-
-  kv_ensure_space(replace_stack, len);
-
-  char *p = replace_stack.items + kv_size(replace_stack) - replace_offset;
-  if (replace_offset) {
-    memmove(p + len, p, (size_t)replace_offset);
-  }
-  memcpy(p, str, len);
-  kv_size(replace_stack) += len;
+  kv_concat_len(replace_stack, str, len);
 }
 
 /// push NUL as separator between entries in the stack
