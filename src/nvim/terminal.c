@@ -2470,6 +2470,8 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     deleted--;
   }
 
+  // Clamp old_height in case buffer lines have been deleted by the user.
+  old_height = MIN(old_height, buf->b_ml.ml_line_count);
   while (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
