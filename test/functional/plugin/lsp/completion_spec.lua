@@ -503,6 +503,41 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
+  it('handles multiword testEdits', function()
+    local range0 = {
+      start = { line = 0, character = 0 },
+      ['end'] = { line = 0, character = 0 },
+    }
+    local items = {
+      {
+        detail = 'abc',
+        filterText = 'abc',
+        kind = 7,
+        label = 'abc',
+        sortText = 'abc',
+        textEdit = {
+          newText = 'abc: Abc',
+          range = range0,
+        },
+      },
+    }
+    local result = complete('|', items)
+    result = vim.tbl_map(function(x)
+      return {
+        abbr = x.abbr,
+        word = x.word,
+      }
+    end, result.items)
+
+    local expected = {
+      {
+        abbr = 'abc',
+        word = 'abc: Abc',
+      },
+    }
+    eq(expected, result)
+  end)
+
   it('prefers wordlike components for snippets', function()
     -- There are two goals here:
     --
