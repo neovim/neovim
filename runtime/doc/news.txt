@@ -402,6 +402,8 @@ TUI
 • |TermResponse| now supports DA1 and APC query responses.
 • Native progress bars are displayed for |Progress| events using the OSC 9;4
   sequence.
+• Terminfo capabilities now can be overridden via `NVIM_T_<NAME>` environment
+  variables.
 
 UI
 
