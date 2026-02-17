@@ -931,9 +931,34 @@ describe('prompt buffer', function()
       {1:~                        }|*7
       {5:-- INSERT --}             |
     ]])
+    -- Minimum col should be 1. Same event to avoid corrections from the state loop.
+    feed('<Esc>0')
+    local colnr = exec_lua(function()
+      vim.fn.prompt_setprompt('', '')
+      return vim.fn.col('.')
+    end)
+    eq(1, colnr)
+    -- Correct cursor adjustment when old ': col and old prompt length differs.
+    set_prompt('foo > ')
+    fn('setpos', "':", { 0, fn('line', '.'), 10, 0 })
+    fn('setline', '.', '   foo > hello')
+    feed('fh')
+    screen:expect([[
+      new-prompt > user input  |
+         foo > ^hello           |
+      {1:~                        }|*7
+                               |
+    ]])
+    set_prompt('bar > ')
+    screen:expect([[
+      new-prompt > user input  |
+      bar > ^hello              |
+      {1:~                        }|*7
+                               |
+    ]])
 
     -- No crash when setting shorter prompt than curbuf's in other buffer.
-    feed('<C-O>zt')
+    feed('ztA')
     command('set virtualedit& | new | setlocal buftype=prompt')
     set_prompt('looooooooooooooooooooooooooooooooooooooooooooong > ', '') -- curbuf
     set_prompt('foo > ')
@@ -943,7 +968,7 @@ describe('prompt buffer', function()
        ^                        |
       {1:~                        }|
       {3:[Prompt] [+]             }|
-      foo > a b                |
+      foo > hello              |
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])

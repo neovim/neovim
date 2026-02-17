@@ -802,11 +802,12 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
       extmark_splice_cols(buf, prompt_lno - 1, 0, buf->b_prompt_start.mark.col, new_prompt_len,
                           kExtmarkUndo);
-      cursor_col += new_prompt_len - old_prompt_len;
+      cursor_col += new_prompt_len - buf->b_prompt_start.mark.col;
     }
 
     if (curwin->w_buffer == buf && curwin->w_cursor.lnum == prompt_lno) {
       curwin->w_cursor.col = cursor_col;
+      check_cursor_col(curwin);
     }
     changed_lines(buf, prompt_lno, 0, prompt_lno + 1, 0, true);
   }
