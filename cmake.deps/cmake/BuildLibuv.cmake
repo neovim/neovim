@@ -1,3 +1,12 @@
+if(CMAKE_C_COMPILER MATCHES "emcc$" OR CMAKE_C_COMPILER MATCHES "em\\+\\+$" OR DEFINED EMSCRIPTEN)
+  list(APPEND LIBUV_EXTRA_CMAKE_ARGS
+    -DCMAKE_SYSTEM_NAME=Emscripten
+    -DLIBUV_BUILD_TESTS=OFF
+    -DLIBUV_BUILD_BENCH=OFF
+    -DCMAKE_C_FLAGS=-Wno-implicit-function-declaration\ -UTHREAD_SETNAME_AVAILABILITY
+  )
+endif()
+
 get_externalproject_options(libuv ${DEPS_IGNORE_SHA})
 ExternalProject_Add(libuv
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
@@ -6,4 +15,5 @@ ExternalProject_Add(libuv
     -D BUILD_TESTING=OFF
     -D LIBUV_BUILD_SHARED=OFF
     -D UV_LINT_W4=OFF
+    ${LIBUV_EXTRA_CMAKE_ARGS}
   ${EXTERNALPROJECT_OPTIONS})
