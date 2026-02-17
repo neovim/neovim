@@ -6897,20 +6897,35 @@ describe('LSP', function()
         return exec_lua(function()
           local foos = vim.lsp.get_clients({ name = 'foo', bufnr = 0 })
           local bars = vim.lsp.get_clients({ name = 'bar', bufnr = 0 })
-          return { #foos, 'foo', #bars, 'bar' }
+          local bazs = vim.lsp.get_clients({ name = 'baz', bufnr = 0 })
+          return { #foos, 'foo', #bars, 'bar', #bazs, 'baz' }
         end)
       end
 
       -- No filetype on the buffer yet, so no LSPs.
-      eq({ 0, 'foo', 0, 'bar' }, count_clients())
+      eq({ 0, 'foo', 0, 'bar', 0, 'baz' }, count_clients())
 
-      -- Set the filetype to 'foo', confirm a LSP starts.
+      -- Start a LSP manually. This does not have a corresponding `lsp.config`, and should *not* get
+      -- cleaned up when the filetype changes.
+      exec_lua(function()
+        local server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = {} })
+            end,
+          },
+        })
+
+        vim.lsp.start({ name = 'baz', cmd = server.cmd }, { bufnr = 0 })
+      end)
+
+      -- Set the filetype to 'foo', confirm an LSP starts.
       exec_lua([[vim.bo.filetype = 'foo']])
-      eq({ 1, 'foo', 0, 'bar' }, count_clients())
+      eq({ 1, 'foo', 0, 'bar', 1, 'baz' }, count_clients())
 
       -- Set the filetype to 'bar', confirm a new LSP starts, and the old one goes away.
       exec_lua([[vim.bo.filetype = 'bar']])
-      eq({ 0, 'foo', 1, 'bar' }, count_clients())
+      eq({ 0, 'foo', 1, 'bar', 1, 'baz' }, count_clients())
     end)
 
     it('validates config on attach', function()
