@@ -1025,14 +1025,16 @@ static const uint32_t signtext_filter[kMTMetaCount] = {[kMTMetaSignText] = kMTFi
 ///
 /// @param add  1, -1 or 0 for an added, deleted or initialized range.
 /// @param clear  kFalse, kTrue or kNone for an, added/deleted, cleared, or initialized range.
-void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState clear)
+void buf_signcols_count_range(buf_T *buf, linenr_T row1, linenr_T row2, linenr_T add,
+                              TriState clear)
 {
   if (!buf->b_signcols.autom || row2 < row1 || !buf_meta_total(buf, kMTMetaSignText)) {
     return;
   }
 
   // Allocate an array of integers holding the number of signs in the range.
-  int *count = xcalloc((size_t)(row2 + 1 - row1), sizeof(int));
+  int row_diff = row2 - row1 + 1;
+  int *count = xcalloc((size_t)row_diff, sizeof(int));
   MarkTreeIter itr[1];
   MTPair pair = { 0 };
 
@@ -1068,7 +1070,7 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
   // For each row increment "b_signcols.count" at the number of counted signs,
   // and decrement at the previous number of signs. These two operations are
   // split in separate calls if "clear" is not kFalse (surrounding a marktree splice).
-  for (int i = 0; i < row2 + 1 - row1; i++) {
+  for (int i = 0; i < row_diff; i++) {
     int prevwidth = MIN(SIGN_SHOW_MAX, count[i] - add);
     if (clear != kNone && prevwidth > 0) {
       buf->b_signcols.count[prevwidth - 1]--;

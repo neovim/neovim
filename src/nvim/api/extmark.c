@@ -336,13 +336,13 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
     limit = INT64_MAX;
   }
 
-  int l_row;
+  linenr_T l_row;
   colnr_T l_col;
   if (!extmark_get_index_from_obj(buf, ns_id, start, &l_row, &l_col, err)) {
     return rv;
   }
 
-  int u_row;
+  linenr_T u_row;
   colnr_T u_col;
   if (!extmark_get_index_from_obj(buf, ns_id, end, &u_row, &u_col, err)) {
     return rv;
@@ -1123,7 +1123,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
 /// @param[out] colnr extmark column
 ///
 /// @return true if the extmark was found, else false
-static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int *row,
+static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, linenr_T *row,
                                        colnr_T *col, Error *err)
 {
   // Check if it is mark id
@@ -1164,8 +1164,8 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
 
     Integer pos_row = pos.items[0].data.integer;
     Integer pos_col = pos.items[1].data.integer;
-    *row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
-    *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
+    *row = pos_row >= 0 ? (linenr_T)pos_row : MAXLNUM;
+    *col = pos_col >= 0 ? (colnr_T)pos_col : MAXCOL;
     return true;
   } else {
     VALIDATE_EXP(false, "mark position", "mark id Integer or 2-item Array", NULL, {
