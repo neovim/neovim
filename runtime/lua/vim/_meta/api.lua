@@ -1860,6 +1860,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---   elements.
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
+--- - draggable: If true allow dragging the floating window by dragging within content area.
+---   mouse visual selection is disabled within the window as drag gestures
+---   will move the window instead. Default false.
 --- @return integer # |window-ID|, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 
