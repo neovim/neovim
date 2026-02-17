@@ -306,6 +306,7 @@ ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, A
         case kCallbackPartial:
           PUT_C(autocmd_info, "callback", CSTR_AS_OBJ(callback_to_string(cb, arena)));
           break;
+        case kCallbackC:
         case kCallbackNone:
           abort();
         }

@@ -1798,6 +1798,7 @@ bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
     return cb1->data.partial == cb2->data.partial;
   case kCallbackLua:
     return cb1->data.luaref == cb2->data.luaref;
+  case kCallbackC:
   case kCallbackNone:
     return true;
   }
@@ -1820,6 +1821,7 @@ void callback_free(Callback *callback)
   case kCallbackLua:
     NLUA_CLEAR_REF(callback->data.luaref);
     break;
+  case kCallbackC:
   case kCallbackNone:
     break;
   }

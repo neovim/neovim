@@ -54,12 +54,15 @@ typedef struct partial_S partial_T;
 typedef struct blobvar_S blob_T;
 
 typedef struct ufunc_S ufunc_T;
+typedef struct typval_S typval_T;
+typedef bool (*cfunc_T)(typval_T *);
 
 typedef enum {
   kCallbackNone = 0,
   kCallbackFuncref,
   kCallbackPartial,
   kCallbackLua,
+  kCallbackC,
 } CallbackType;
 
 typedef struct {
@@ -67,6 +70,7 @@ typedef struct {
     char *funcref;
     partial_T *partial;
     LuaRef luaref;
+    cfunc_T cfunc;
   } data;
   CallbackType type;
 } Callback;
@@ -131,7 +135,7 @@ enum {
 };
 
 /// Structure that holds an internal variable value
-typedef struct {
+struct typval_S {
   VarType v_type;               ///< Variable type.
   VarLockStatus v_lock;         ///< Variable lock status.
   union typval_vval_union {
@@ -145,7 +149,7 @@ typedef struct {
     partial_T *v_partial;       ///< Closure: function with args.
     blob_T *v_blob;             ///< Blob for VAR_BLOB, can be NULL.
   } vval;                       ///< Actual value.
-} typval_T;
+};
 
 #define TV_INITIAL_VALUE \
   ((typval_T) { \
