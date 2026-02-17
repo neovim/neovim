@@ -1,5 +1,8 @@
 local M = {}
 
+---@type vim.ui._img
+M._img = require('vim.ui._img')
+
 ---@class vim.ui.select.Opts
 ---@inlinedoc
 ---
