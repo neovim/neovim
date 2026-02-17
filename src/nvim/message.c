@@ -152,6 +152,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
+static const char *msg_ext_trigger = NULL;
 static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 1 };
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
@@ -1650,6 +1651,13 @@ void msg_ext_set_kind(const char *msg_kind)
   redir_col = msg_ext_append ? redir_col : 0;
 }
 
+void msg_ext_set_trigger(const char *trigger)
+{
+  // Don't change the trigger of an existing batch:
+  msg_ext_ui_flush();
+  msg_ext_trigger = trigger;
+}
+
 /// Prepare for outputting characters in the command line.
 void msg_start(void)
 {
@@ -2285,7 +2293,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
-                       INTEGER_OBJ(-1));
+                       INTEGER_OBJ(-1), (String)STRING_INIT);
     }
     return;
   }
@@ -3317,7 +3325,7 @@ void msg_ext_ui_flush(void)
     Array *tofree = msg_ext_init_chunks();
 
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
-                     msg_ext_append, msg_ext_id);
+                     msg_ext_append, msg_ext_id, cstr_as_string(msg_ext_trigger));
     // clear info after emitting message.
     if (msg_ext_history) {
       api_free_array(*tofree);
