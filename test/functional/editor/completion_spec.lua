@@ -1758,4 +1758,45 @@ describe('completion', function()
       {5:-- File name completion (^F^N^P) }{9:Pattern not found}          |
     ]])
   end)
+
+  it('is stopped when there are no more matches', function()
+    command([[
+      function Complete() abort
+        call complete(1, ['abcd', 'abdc', 'acbd'])
+        return ''
+      endfunction
+
+      inoremap <C-x> <C-r>=Complete()<CR>
+      set completeopt+=menuone,noselect
+      let g:completedone_count = 0
+      autocmd CompleteDone * let g:completedone_count += 1
+    ]])
+
+    feed('i<C-x>')
+    screen:expect([[
+      ^                                                            |
+      {1:abcd           }{0:                                             }|
+      {1:abdc           }{0:                                             }|
+      {1:acbd           }{0:                                             }|
+      {0:~                                                           }|*3
+      {3:-- INSERT --}                                                |
+    ]])
+    eq(0, eval('g:completedone_count'))
+
+    feed('ax')
+    screen:expect([[
+      ax^                                                          |
+      {0:~                                                           }|*6
+      {3:-- INSERT --}                                                |
+    ]])
+    eq(1, eval('g:completedone_count'))
+
+    feed('aa<ESC>')
+    screen:expect([[
+      axa^a                                                        |
+      {0:~                                                           }|*6
+                                                                  |
+    ]])
+    eq(1, eval('g:completedone_count'))
+  end)
 end)
