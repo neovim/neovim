@@ -2503,7 +2503,7 @@ static void flush_buf(TUIData *tui)
     }
   } else {
     int ret
-      = uv_write(&req, (uv_stream_t *)&tui->output_handle, bufs, ARRAY_SIZE(bufs), NULL);
+      = uv_write(&req, (uv_stream_t *)&tui->output_handle, bufs, bufs[2].len == 0 ? 2 : 3, NULL);
     if (ret) {
       ELOG("uv_write failed: %s", uv_strerror(ret));
     }
