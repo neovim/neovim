@@ -1101,6 +1101,31 @@ describe('pending scrollback line handling', function()
     ]]
     assert_alive()
   end)
+
+  it('does not crash after deleting buffer lines', function()
+    local buf = api.nvim_get_current_buf()
+    local chan = api.nvim_open_term(buf, {})
+    api.nvim_chan_send(chan, ('a\n'):rep(11) .. 'a')
+    screen:expect([[
+      ^a                             |
+      a                             |*5
+                                    |
+    ]])
+    api.nvim_set_option_value('modifiable', true, { buf = buf })
+    api.nvim_buf_set_lines(buf, 0, -1, true, {})
+    screen:expect([[
+      ^                              |
+      {1:~                             }|*5
+                                    |
+    ]])
+    api.nvim_chan_send(chan, ('\nb'):rep(11) .. '\n')
+    screen:expect([[
+      b                             |*5
+      ^                              |
+                                    |
+    ]])
+    assert_alive()
+  end)
 end)
 
 describe('scrollback is correct', function()
