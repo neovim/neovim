@@ -2836,6 +2836,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
           int col_attr = base_attr;
 
+          col_attr = hl_combine_attr(col_attr, wlv.line_attr);
+
           if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol
               && lnum != wp->w_cursor.lnum) {
             col_attr = hl_combine_attr(col_attr, cuc_attr);
@@ -2846,8 +2848,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           if (wp->w_buffer->terminal && wlv.vcol < TERM_ATTRS_MAX) {
             col_attr = hl_combine_attr(col_attr, term_attrs[wlv.vcol]);
           }
-
-          col_attr = hl_combine_attr(col_attr, wlv.line_attr);
 
           linebuf_attr[wlv.off] = col_attr;
           // linebuf_vcol[] already filled by the for loop above
