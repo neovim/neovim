@@ -75,11 +75,12 @@ listed below, if (1) the language server supports the functionality and (2)
 the options are empty or were set by the builtin runtime (ftplugin) files. The
 options are not restored when the LSP client is stopped or detached.
 
-GLOBAL DEFAULTS         *gra* *gri* *grn* *grr* *grt* *i_CTRL-S* *v_an* *v_in*
+GLOBAL DEFAULTS         *gra* *gri* *grl* *grn* *grr* *grt* *i_CTRL-S* *v_an* *v_in*
 
 These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "gra" (Normal and Visual mode) is mapped to |vim.lsp.buf.code_action()|
 - "gri" is mapped to |vim.lsp.buf.implementation()|
+- "grl" is mapped to |vim.lsp.codelens.run()|
 - "grn" is mapped to |vim.lsp.buf.rename()|
 - "grr" is mapped to |vim.lsp.buf.references()|
 - "grt" is mapped to |vim.lsp.buf.type_definition()|

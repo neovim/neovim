@@ -209,6 +209,10 @@ do
       vim.lsp.buf.code_action()
     end, { desc = 'vim.lsp.buf.code_action()' })
 
+    vim.keymap.set('n', 'grl', function()
+      vim.lsp.codelens.run()
+    end, { desc = 'vim.lsp.codelens.run()' })
+
     vim.keymap.set('n', 'grr', function()
       vim.lsp.buf.references()
     end, { desc = 'vim.lsp.buf.references()' })
