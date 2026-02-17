@@ -70,9 +70,7 @@ end
 ---
 --- If needed, this will create the parser.
 ---
---- If no parser can be created, an error is thrown. Set `opts.error = false` to suppress this and
---- return nil (and an error message) instead. WARNING: This behavior will become default in Nvim
---- 0.12 and the option will be removed.
+--- If no parser can be created, nil (and an error message) is returned
 ---
 ---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
 ---@param lang (string|nil) Language of this parser (default: from buffer filetype)
@@ -82,7 +80,6 @@ end
 ---@return string? error message, if applicable
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
-  local should_error = opts.error == nil or opts.error
 
   bufnr = vim._resolve_bufnr(bufnr)
 
@@ -92,25 +89,17 @@ function M.get_parser(bufnr, lang, opts)
 
   if not valid_lang(lang) then
     if not parsers[bufnr] then
-      local err_msg =
+      return nil,
         string.format('Parser not found for buffer %s: language could not be determined', bufnr)
-      if should_error then
-        error(err_msg)
-      end
-      return nil, err_msg
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     if not api.nvim_buf_is_loaded(bufnr) then
-      error(('Buffer %s must be loaded to create parser'):format(bufnr))
+      return nil, string.format('Buffer %s must be loaded to create parser', bufnr)
     end
     local parser = vim.F.npcall(M._create_parser, bufnr, lang, opts)
     if not parser then
-      local err_msg =
+      return nil,
         string.format('Parser could not be created for buffer %s and language "%s"', bufnr, lang)
-      if should_error then
-        error(err_msg)
-      end
-      return nil, err_msg
     end
     parsers[bufnr] = parser
   end
@@ -414,7 +403,7 @@ function M.get_node(opts)
 
   local ts_range = { row, col, row, col }
 
-  local root_lang_tree = M.get_parser(bufnr, opts.lang, { error = false })
+  local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
     return
   end
@@ -457,7 +446,7 @@ function M.start(bufnr, lang)
       vim.fn.bufload(bufnr)
     end
   end
-  local parser = assert(M.get_parser(bufnr, lang, { error = false }))
+  local parser = assert(M.get_parser(bufnr, lang))
   M.highlighter.new(parser)
 end
 

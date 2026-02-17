@@ -80,7 +80,7 @@ end
 function TSTreeView:new(bufnr, lang)
   bufnr = bufnr or 0
   lang = lang or vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
-  local parser = vim.treesitter.get_parser(bufnr, lang, { error = false })
+  local parser = vim.treesitter.get_parser(bufnr, lang)
   if not parser then
     return nil,
       string.format(
@@ -572,7 +572,7 @@ local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
   local root_lang = vim.treesitter.language.get_lang(vim.bo[base_buf].filetype)
-  local parser = assert(vim.treesitter.get_parser(base_buf, root_lang, { error = false }))
+  local parser = assert(vim.treesitter.get_parser(base_buf, root_lang))
   api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
@@ -642,7 +642,7 @@ function M.edit_query(lang)
   end
   vim.cmd(cmd)
 
-  local parser = vim.treesitter.get_parser(buf, lang, { error = false })
+  local parser = vim.treesitter.get_parser(buf, lang)
   if not parser then
     return nil,
       string.format('Failed to show query editor for buffer %s: no parser for lang "%s"', buf, lang)
