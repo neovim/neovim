@@ -2278,7 +2278,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
-                       INTEGER_OBJ(-1));
+                       INTEGER_OBJ(-1), false);
     }
     return;
   }
@@ -3310,7 +3310,7 @@ void msg_ext_ui_flush(void)
     Array *tofree = msg_ext_init_chunks();
 
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
-                     msg_ext_append, msg_ext_id);
+                     msg_ext_append, msg_ext_id, msg_ext_typed_cmd);
     // clear info after emitting message.
     if (msg_ext_history) {
       api_free_array(*tofree);
