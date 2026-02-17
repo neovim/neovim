@@ -25,6 +25,8 @@ end
 return function(options)
   local busted = require 'busted'
   local handler = require 'busted.outputHandlers.base'()
+  local args = options.arguments
+  args = vim.json.decode(#args > 0 and table.concat(args, ',') or '{}')
 
   local c = {
     succ = function(s)
@@ -254,13 +256,25 @@ return function(options)
     local elapsedTime_ms = getElapsedTime(suite)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
-    io.write(globalTeardown)
-    io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
-    io.write(getSummaryString())
-    if failureCount > 0 or errorCount > 0 then
-      io.write(t_global.read_nvim_log(nil, true))
+    if type(args.test_path) == 'string' then
+      files = files .. ' of ' .. args.test_path
     end
+    local sf = type(args.summary_file) == 'string'
+        and args.summary_file ~= '-'
+        and io.open(args.summary_file, 'w')
+      or io.stdout
+    io.write(globalTeardown)
     io.flush()
+    sf:write('\n')
+    sf:write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
+    sf:write(getSummaryString())
+    if failureCount > 0 or errorCount > 0 then
+      sf:write(t_global.read_nvim_log(nil, true))
+    end
+    sf:flush()
+    if sf ~= io.stdout then
+      sf:close()
+    end
 
     return nil, true
   end

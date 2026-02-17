@@ -2447,7 +2447,7 @@ describe('ui/msg_puts_printf', function()
     fn.mkdir(locale_dir, 'p')
     fn.filecopy(build_dir .. '/src/nvim/po/ja.mo', locale_dir .. '/nvim.mo')
     finally(function()
-      n.rmdir(build_dir .. '/share')
+      n.rmdir(vim.fs.dirname(locale_dir))
     end)
 
     cmd = cmd .. '"' .. nvim_prog .. '" -u NONE -i NONE -Es -V1'
