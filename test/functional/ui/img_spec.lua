@@ -71,12 +71,12 @@ describe('ui/img', function()
 
   it('should be able to load an image from disk', function()
     local image_id = exec_lua(function()
-      return vim.ui._img.load(img_file)
+      return vim.ui.img.load(img_file)
     end)
 
-    ---@type vim.ui._img.ImgOpts
+    ---@type vim.ui.img.ImgOpts
     local info = exec_lua(function()
-      return vim.ui._img.get(image_id)
+      return vim.ui.img.get(image_id)
     end)
 
     eq(img_file, info.filename)
@@ -127,8 +127,8 @@ describe('ui/img', function()
         _G.data = {} -- Reset our data to make sure we start clean
 
         -- Preload our image and place it somewhere
-        local id = vim.ui._img.load(img_file)
-        vim.ui._img.place(id, {
+        local id = vim.ui.img.load(img_file)
+        vim.ui.img.place(id, {
           col = 1,
           row = 2,
           width = 3,
@@ -191,13 +191,13 @@ describe('ui/img', function()
     it('can hide an image in neovim', function()
       local esc_codes = exec_lua(function()
         -- Preload our image and place it somewhere
-        local id = vim.ui._img.load(img_file)
-        vim.ui._img.place(id)
+        local id = vim.ui.img.load(img_file)
+        vim.ui.img.place(id)
 
         _G.data = {} -- Reset our data to make sure we start clean
 
         -- Hide the placement
-        vim.ui._img.hide(id)
+        vim.ui.img.hide(id)
 
         -- Return esc codes sent
         return table.concat(_G.data)
@@ -216,13 +216,13 @@ describe('ui/img', function()
     it('can hide a placement in neovim', function()
       local esc_codes = exec_lua(function()
         -- Preload our image and place it somewhere
-        local id = vim.ui._img.load(img_file)
-        local placement_id = vim.ui._img.place(id)
+        local id = vim.ui.img.load(img_file)
+        local placement_id = vim.ui.img.place(id)
 
         _G.data = {} -- Reset our data to make sure we start clean
 
         -- Hide the placement
-        vim.ui._img.hide(placement_id)
+        vim.ui.img.hide(placement_id)
 
         -- Return esc codes sent
         return table.concat(_G.data)
@@ -242,13 +242,13 @@ describe('ui/img', function()
     it('can update a placement in neovim', function()
       local esc_codes = exec_lua(function()
         -- Preload our image and place it somewhere
-        local id = vim.ui._img.load(img_file)
-        local placement_id = vim.ui._img.place(id)
+        local id = vim.ui.img.load(img_file)
+        local placement_id = vim.ui.img.place(id)
 
         _G.data = {} -- Reset our data to make sure we start clean
 
         -- Perform the update of the placement
-        vim.ui._img.place(placement_id, {
+        vim.ui.img.place(placement_id, {
           col = 5,
           row = 6,
           width = 7,

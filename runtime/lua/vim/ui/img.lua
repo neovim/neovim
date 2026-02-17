@@ -1,36 +1,35 @@
----@class vim.ui._img
 local M = {}
 
 ---@brief
 ---
 ---EXPERIMENTAL: This API may change in the future. Its semantics are not yet finalized.
 ---
----This provides a functional API for loading and displaying images in Neovim.
+---This provides a functional API for loading and displaying images in Nvim.
 ---Currently supports PNG images via the Kitty graphics protocol.
 ---
 ---Examples:
 ---
 ---```lua
 ----- Load an image from disk
----local image_id = vim.ui._img.load("/path/to/img.png")
+---local image_id = vim.ui.img.load("/path/to/img.png")
 ---
 ----- Place the image at row 5, column 10
----local placement_id = vim.ui._img.place(image_id, { row = 5, col = 10 })
+---local placement_id = vim.ui.img.place(image_id, { row = 5, col = 10 })
 ---
 ----- Update the placement position
----vim.ui._img.place(placement_id, { row = 8, col = 12 })
+---vim.ui.img.place(placement_id, { row = 8, col = 12 })
 ---
 ----- Remove the placement
----vim.ui._img.hide(placement_id)
+---vim.ui.img.hide(placement_id)
 ---
 ----- Remove the entire image (and all its placements)
----vim.ui._img.hide(image_id)
+---vim.ui.img.hide(image_id)
 ---```
 
 ---@nodoc
----@class vim.ui._img.State
----@field images table<integer, vim.ui._img.ImgOpts>
----@field placements table<integer, {img_id:integer}|vim.ui._img.PlacementOpts>
+---@class vim.ui.img.State
+---@field images table<integer, vim.ui.img.ImgOpts>
+---@field placements table<integer, {img_id:integer}|vim.ui.img.PlacementOpts>
 local state = {
   images = {},
   placements = {},
@@ -38,7 +37,7 @@ local state = {
 
 ---Retrieves a copy of the image or placement opts based on the id.
 ---@param id integer
----@return vim.ui._img.ImgOpts|vim.ui._img.PlacementOpts|nil opts, 'image'|'placement' kind
+---@return vim.ui.img.ImgOpts|vim.ui.img.PlacementOpts|nil opts, 'image'|'placement' kind
 function M.get(id)
   if type(state.images[id]) == 'table' then
     return vim.deepcopy(state.images[id]), 'image'
@@ -52,22 +51,24 @@ function M.get(id)
 end
 
 ---Returns an iterator over the loaded images, mapped by id.
+---@return Iter
 function M.images()
   return vim.iter(pairs(state.images))
 end
 
 ---Returns an iterator over the active placements, mapped by id.
+---@return Iter
 function M.placements()
   return vim.iter(pairs(state.placements))
 end
 
----@class vim.ui._img.ImgOpts
----@inlinedoc
+---Optional image arguments:
+---@class vim.ui.img.ImgOpts
 ---@field data? string data of a loaded file
 ---@field filename? string path to the file (e.g. path/to/img.png)
 
 ---Load an image from filename or data.
----@param opts string|vim.ui._img.ImgOpts
+---@param opts string|vim.ui.img.ImgOpts
 ---@return integer id
 function M.load(opts)
   vim.validate('opts', opts, { 'string', 'table' })
@@ -77,25 +78,25 @@ function M.load(opts)
     opts = { filename = opts }
   end
 
-  ---@type vim.ui._img._kitty
-  local provider = require('vim.ui._img._kitty')
+  ---@type vim.ui.img._kitty
+  local provider = require('vim.ui.img._kitty')
   local id = provider.load(opts)
   state.images[id] = opts
 
   return id
 end
 
----@class vim.ui._img.PlacementOpts
----@inlinedoc
+---Optional placment arguments:
+---@class vim.ui.img.PlacementOpts
 ---@field row? integer starting row where image will appear
 ---@field col? integer starting column where image will appear
 ---@field width? integer width (in cells) to resize the image
 ---@field height? integer height (in cells) to resize the image
 ---@field z? integer z-index of the placement relative to other placements with a higher number being placed over lower-indexed placements
 
----Places a loaded image within neovim, visually displaying it.
+---Places a loaded image within Nvim, visually displaying it.
 ---@param id integer id of image to place, or id of placement to overwrite
----@param opts? vim.ui._img.PlacementOpts
+---@param opts? vim.ui.img.PlacementOpts
 ---@return integer placement_id id of the created/updated placement
 function M.place(id, opts)
   opts = opts or {}
@@ -107,8 +108,8 @@ function M.place(id, opts)
   local _opts, kind = M.get(id)
   assert(_opts, 'invalid id: ' .. tostring(id))
 
-  ---@type vim.ui._img._kitty
-  local provider = require('vim.ui._img._kitty')
+  ---@type vim.ui.img._kitty
+  local provider = require('vim.ui.img._kitty')
   local placement_id = provider.place(id, opts)
   local img_id = id
 
@@ -125,7 +126,7 @@ function M.place(id, opts)
   return placement_id
 end
 
----Hide an image (or placement) within neovim.
+---Hide an image (or placement) within Nvim.
 ---@param id integer id of image or placement
 ---@return boolean true if an image or placement was hidden
 function M.hide(id)
@@ -141,8 +142,8 @@ function M.hide(id)
       end
     end
 
-    ---@type vim.ui._img._kitty
-    local provider = require('vim.ui._img._kitty')
+    ---@type vim.ui.img._kitty
+    local provider = require('vim.ui.img._kitty')
     provider.hide(id)
 
     return true
@@ -152,8 +153,8 @@ function M.hide(id)
     local placement = state.placements[id]
     state.placements[id] = nil
 
-    ---@type vim.ui._img._kitty
-    local provider = require('vim.ui._img._kitty')
+    ---@type vim.ui.img._kitty
+    local provider = require('vim.ui.img._kitty')
     provider.hide(placement.img_id, id)
 
     return true

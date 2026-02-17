@@ -49,7 +49,7 @@ TREESITTER
 UI
 
 • todo
-• `vim.ui._img` experimental module added to display images within neovim.
+• `vim.ui.img` experimental module added to display images within neovim.
 
 VIMSCRIPT
 
