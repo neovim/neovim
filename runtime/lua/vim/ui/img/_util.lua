@@ -1,5 +1,5 @@
 ---Utility functions tied to neovim's image api.
----@class vim.ui._img._util
+---@class vim.ui.img._util
 ---@field private _tmux_initialized boolean
 local M = {
   _tmux_initialized = false,

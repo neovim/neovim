@@ -1,15 +1,15 @@
 ---Implementation of neovim's image provider using kitty.
----@class vim.ui._img._kitty
+---@class vim.ui.img._kitty
 local M = {}
 
----@type table<integer, {img_id:integer, opts:vim.ui._img.PlacementOpts}>
+---@type table<integer, {img_id:integer, opts:vim.ui.img.PlacementOpts}>
 local placements = {}
 
 ---Load an image into kitty terminal without displaying it.
----@param opts vim.ui._img.ImgOpts
+---@param opts vim.ui.img.ImgOpts
 ---@return integer id
 function M.load(opts)
-  local util = require('vim.ui._img._util') ---@type vim.ui._img._util
+  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
   local id = util.generate_id()
 
   if util.is_remote() then
@@ -25,10 +25,10 @@ end
 
 ---Place an image somewhere in neovim.
 ---@param id integer image id
----@param opts? vim.ui._img.PlacementOpts
+---@param opts? vim.ui.img.PlacementOpts
 ---@return integer placement_id
 function M.place(id, opts)
-  local util = require('vim.ui._img._util') ---@type vim.ui._img._util
+  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
   opts = opts or {}
 
   local img_id = id
@@ -82,7 +82,7 @@ end
 ---@param id integer
 ---@param placement_id? integer
 function M.hide(id, placement_id)
-  local util = require('vim.ui._img._util') ---@type vim.ui._img._util
+  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
 
   if placement_id then
     placements[placement_id] = nil
@@ -114,7 +114,7 @@ end
 ---@param id integer id to associate with image in kitty
 ---@param filename string path to image file
 function M._transmit_file(id, filename)
-  local util = require('vim.ui._img._util') ---@type vim.ui._img._util
+  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
 
   local control = {
     f = '100', -- PNG format
@@ -133,7 +133,7 @@ end
 ---@param id integer id to associate with image in kitty
 ---@param data string
 function M._transmit_direct(id, data)
-  local util = require('vim.ui._img._util') ---@type vim.ui._img._util
+  local util = require('vim.ui.img._util') ---@type vim.ui.img._util
   local chunk_size = 4096
 
   local base64_data = vim.base64.encode(data)

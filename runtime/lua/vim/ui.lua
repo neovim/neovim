@@ -1,7 +1,6 @@
-local M = {}
-
----@type vim.ui._img
-M._img = require('vim.ui._img')
+local M = vim._defer_require('vim.ui', {
+  img = ..., --- @module 'vim.ui.img'
+})
 
 ---@class vim.ui.select.Opts
 ---@inlinedoc
