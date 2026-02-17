@@ -93,7 +93,7 @@ void grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer r
                  Integer cols)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_destroy(Integer grid)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_UI_MULTIGRID;
 
 // For performance and simplicity, we use the dense screen representation
 // in internal code, such as compositor and TUI. The remote_ui module will
@@ -104,17 +104,17 @@ void raw_line(Integer grid, Integer row, Integer startcol, Integer endcol, Integ
 
 void win_pos(Integer grid, Window win, Integer startrow, Integer startcol, Integer width,
              Integer height)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_UI_MULTIGRID;
 void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid, Float anchor_row,
                    Float anchor_col, Boolean mouse_enabled, Integer zindex, Integer compindex,
                    Integer screen_row, Integer screen_col)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_UI_MULTIGRID;
 void win_external_pos(Integer grid, Window win)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_UI_MULTIGRID;
 void win_hide(Integer grid)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_UI_MULTIGRID;
 void win_close(Integer grid)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_UI_MULTIGRID;
 
 void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char, Integer zindex,
                  Integer compindex)
@@ -126,7 +126,7 @@ void win_viewport(Integer grid, Window win, Integer topline, Integer botline, In
 
 void win_viewport_margins(Integer grid, Window win, Integer top, Integer bottom, Integer left,
                           Integer right)
-  FUNC_API_SINCE(12) FUNC_API_CLIENT_IGNORE;
+  FUNC_API_SINCE(12) FUNC_API_UI_MULTIGRID;
 
 void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id, Integer row, Integer col)
   FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
