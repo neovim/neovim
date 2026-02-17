@@ -772,9 +772,10 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Update the prompt-text and prompt-marks if a plugin calls prompt_setprompt()
   // even while user is editing their input.
-  if (bt_prompt(buf)) {
+  if (bt_prompt(buf) && buf->b_ml.ml_mfp != NULL) {
     // In case the mark is set to a nonexistent line.
-    buf->b_prompt_start.mark.lnum = MIN(buf->b_prompt_start.mark.lnum, buf->b_ml.ml_line_count);
+    buf->b_prompt_start.mark.lnum = MAX(1, MIN(buf->b_prompt_start.mark.lnum,
+                                               buf->b_ml.ml_line_count));
 
     linenr_T prompt_lno = buf->b_prompt_start.mark.lnum;
     char *old_prompt = buf_prompt_text(buf);

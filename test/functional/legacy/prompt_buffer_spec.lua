@@ -691,12 +691,19 @@ describe('prompt buffer', function()
     eq(true, api.nvim_buf_set_mark(0, ':', fn('line', '.'), 999, {}))
     eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
 
+    -- Clamps lnum to at least 1. Do in one event to repro the leak.
+    exec_lua(function()
+      vim.fn.setpos("':", { 0, 0, 0, 0 })
+      vim.fn.prompt_setprompt('', 'bar > ')
+    end)
+    eq({ 1, 6 }, api.nvim_buf_get_mark(0, ':'))
+
     -- No ml_get error from invalid lnum.
     command('set messagesopt+=wait:0 messagesopt-=hit-enter')
     fn('setpos', "':", { 0, 999, 7, 0 })
     eq('', api.nvim_get_vvar('errmsg'))
     command('set messagesopt&')
-    eq({ 12, 6 }, api.nvim_buf_get_mark(0, ':'))
+    eq({ 13, 6 }, api.nvim_buf_get_mark(0, ':'))
   end)
 
   describe('prompt_getinput', function()
@@ -952,5 +959,11 @@ describe('prompt buffer', function()
       {1:~                        }|*8
       {5:-- INSERT --}             |
     ]])
+
+    -- No leak if prompt_setprompt called for unloaded prompt buffer.
+    local unloaded_buf = fn('bufadd', '')
+    api.nvim_set_option_value('buftype', 'prompt', { buf = unloaded_buf })
+    fn('prompt_setprompt', unloaded_buf, 'hello unloaded! > ')
+    eq('hello unloaded! > ', fn('prompt_getprompt', unloaded_buf))
   end)
 end)
