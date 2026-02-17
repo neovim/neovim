@@ -526,9 +526,42 @@ do
   vim.api.nvim_create_autocmd('BufReadCmd', {
     pattern = 'term://*',
     group = nvim_terminal_augroup,
-    desc = 'Treat term:// buffers as terminal buffers',
+    desc = 'Starts a :terminal when a term:// URI is edited',
     nested = true,
-    command = "if !exists('b:term_title')|call jobstart(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'term': v:true, 'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
+    callback = function(ev)
+      if vim.b[ev.buf].term_title then
+        return
+      end
+      -- NOTE: the `(\d+:)` is ignored, for back-compat (old PID placement).
+      -- PID is now expected in the `#fragment` at the end.
+      -- NOTE: `#fragment` must not have "]", that would be ambiguous if cmdargs has "#": `["cmd", "oh#no"]`.
+      local cmdstr = vim.fn.matchstr(ev.match, [[\c\mterm://\%(.\{-}//\%(\d\+:\)\?\)\?\zs.*]])
+      local fragmentpat = '%#[^%]]*$'
+      local fragment = cmdstr:match(fragmentpat) or nil
+      cmdstr = cmdstr:gsub(fragmentpat, '')
+      local ok, cmd = pcall(vim.json.decode, cmdstr)
+      --[[@type string[]|string]]
+      cmd = (ok and vim.isarray(cmd)) and cmd or cmdstr
+      if ok and vim.isarray(cmd) and cmd[#cmd] == '...' then
+        error('Command was truncated') -- Don't attempt to execute a truncated command.
+      end
+      local cmdcwd = vim.fs.normalize(
+        vim.fs.abspath(vim.fn.matchlist(ev.match, [[\c\mterm://\(.\{-}\)//]])[2] or '.')
+      )
+      if vim.isarray(cmd) then
+        vim.fn.jobstart(cmd, {
+          term = true,
+          cwd = cmdcwd,
+          _uri_fragment = fragment, -- XXX: undocumented field
+        })
+      else
+        vim.fn.jobstart(cmdstr, {
+          term = true,
+          cwd = cmdcwd,
+          _uri_fragment = fragment, -- XXX: undocumented field
+        })
+      end
+    end,
   })
 
   vim.api.nvim_create_autocmd({ 'TermClose' }, {

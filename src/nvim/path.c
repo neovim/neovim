@@ -1346,7 +1346,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       // there is no match, and EW_NOTFOUND is given, add the pattern.
       // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
       // given.
-      if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
+      // For URLs, don't expand.
+      if ((path_has_exp_wildcard(p) || (flags & EW_ICASE)) && !path_with_url(p)) {
         if ((flags & (EW_PATH | EW_CDPATH))
             && !path_is_absolute(p)
             && !(p[0] == '.'
@@ -1534,7 +1535,8 @@ void addfile(garray_T *gap, char *f, int flags)
 
 #ifdef FNAME_ILLEGAL
   // if the file/dir contains illegal characters, don't add it
-  if (strpbrk(f, FNAME_ILLEGAL) != NULL) {
+  // but allow URLs even with illegal characters
+  if (!path_with_url(f) && strpbrk(f, FNAME_ILLEGAL) != NULL) {
     return;
   }
 #endif
@@ -2210,6 +2212,10 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
     // check all files in (*files)[]
     assert(*num_files == 0 || *files != NULL);
     for (int i = 0; i < *num_files; i++) {
+      // // Skip 'wildignore' check for URLs
+      // if (path_with_url((*files)[i])) {
+      //   continue;
+      // }
       char *ffname = FullName_save((*files)[i], false);
       assert((*files)[i] != NULL);
       assert(ffname != NULL);

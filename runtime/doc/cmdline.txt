@@ -929,9 +929,8 @@ Note: If you want to avoid the effects of special characters in a Vim script
 you may want to use |fnameescape()|.  Also see |`=|.
 
 
-In Ex commands, at places where a file name can be used, the following
-characters have a special meaning.  These can also be used in the expression
-function |expand()|.
+In Ex command filename arguments, the following characters have a special
+meaning, unless the filename is a URI.  These also are expanded by |expand()|.
 	%	Is replaced with the current file name.		  *:_%* *c_%*
 	#	Is replaced with the alternate file name.	  *:_#* *c_#*
 		This is remembered for every window.
@@ -945,8 +944,7 @@ function |expand()|.
 		number.							*E809*
 
 Note that these, except "#<n", give the file name as it was typed.  If an
-absolute path is needed (when using the file name from a different directory),
-you need to add ":p".  See |filename-modifiers|.
+absolute path is needed, add ":p".  See |filename-modifiers|.
 
 The "#<n" item returns an absolute path, but it will start with "~/" for files
 below your home directory.
@@ -966,6 +964,10 @@ it, no matter how many backslashes.
 	   \#			#
 	   \\#			\#
 Also see |`=|.
+								 *cmdline-uri*
+URIs given as Ex command filename arguments are treated literally, so you
+don't need to escape the |cmdline-special| characters.
+
 
 							*E499* *E500*
 Note: these are typed literally, they are not special keys!
@@ -1172,6 +1174,8 @@ variable, it needs to be preceded by a backslash.  Therefore you need to use
 	\\$home		file "\\", followed by expanded $home
 
 Also see |`=|.
+Note that URIs never require a backslash to escape |cmdline-special|
+characters. |cmdline-uri|
 
 ==============================================================================
 7. Command-line window				*cmdline-window* *cmdwin*

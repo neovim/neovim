@@ -4804,12 +4804,19 @@ local options = {
       },
       deny_duplicates = true,
       desc = [=[
-        The characters specified by this option are included in file names and
-        path names.  Filenames are used for commands like "gf", "[i" and in
-        the tags file.  It is also used for "\f" in a |pattern|.
+        Decides valid characters in a non-URI filename or path. URIs
+        (`xx://…`) are always treated literally, they are not affected by
+        'isfname'.
+
+        This option is how commands like "gf" and "[i" decide if the cursor is
+        near a valid filename. If a |word| has a character that is not
+        included in 'isfname', then that word is not treated as a filename.
+        The tags file and the "\f" |pattern| also use 'isfname'.
+
         Multi-byte characters 256 and above are always included, only the
         characters up to 255 are specified with this option.
         For UTF-8 the characters 0xa0 to 0xff are included as well.
+
         Think twice before adding white space to this option.  Although a
         space may appear inside a file name, the effect will be that Vim
         doesn't know where a file name starts or ends when doing completion.
@@ -4820,34 +4827,37 @@ local options = {
         tricky, since Vi originally used the backslash to escape special
         characters.  Vim will not remove a backslash in front of a normal file
         name character on these systems, but it will on Unix and alikes.  The
-        '&' and '^' are not included by default, because these are special for
+        "&" and "^" are not included by default, because these are special for
         cmd.exe.
 
-        The format of this option is a list of parts, separated with commas.
-        Each part can be a single character number or a range.  A range is two
-        character numbers with '-' in between.  A character number can be a
-        decimal number between 0 and 255 or the ASCII character itself (does
-        not work for digits).  Example:
-        	"_,-,128-140,#-43"	(include '_' and '-' and the range
-        				128 to 140 and '#' to 43)
-        If a part starts with '^', the following character number or range
-        will be excluded from the option.  The option is interpreted from left
-        to right.  Put the excluded character after the range where it is
-        included.  To include '^' itself use it as the last character of the
-        option or the end of a range.  Example:
-        	"^a-z,#,^"	(exclude 'a' to 'z', include '#' and '^')
-        If the character is '@', all characters where isalpha() returns TRUE
-        are included.  Normally these are the characters a to z and A to Z,
-        plus accented characters.  To include '@' itself use "@-@".  Examples:
-        	"@,^a-z"	All alphabetic characters, excluding lower
-        			case ASCII letters.
-        	"a-z,A-Z,@-@"	All letters plus the '@' character.
-        A comma can be included by using it where a character number is
-        expected.  Example:
-        	"48-57,,,_"	Digits, comma and underscore.
-        A comma can be excluded by prepending a '^'.  Example:
-        	" -~,^,,9"	All characters from space to '~', excluding
-        			comma, plus <Tab>.
+        The format is a comma-separated list of parts, interpreted from left
+        to right.
+        - Each part can be a single character number or a range.
+        - A range is two character numbers with "-" in between.
+        - A character number can be a decimal number between 0 and 255 or the
+          ASCII character itself (does not work for digits).
+        - Special case: "@" means alphabetic chars (a-z A-Z).
+        - Special case: To include "@" itself use "@-@".
+        - If a part starts with "^", the following character number or range
+          will be excluded. To include "^" itself use it as the last character
+          of the option or the end of a range.
+        - A comma can be included by using it where a character number is
+          expected.
+        - A comma can be excluded by prepending a "^".
+
+        Example: include "_" and "-" and the range 128 to 140 and "#" to 43:
+        	"_,-,128-140,#-43"
+        Example: exclude "a" to "z", include "#" and "^":
+        	"^a-z,#,^"
+        Example: All alphabetic characters, excluding lowercase ASCII letters.
+        	"@,^a-z"
+        Example: All letters plus the "@" character.
+        	"a-z,A-Z,@-@"
+        Example: Digits, comma and underscore.
+        	"48-57,,,_"	
+        Example: All characters from space to "~", excluding comma, plus <Tab>.
+        	" -~,^,,9"	
+
         See |option-backslash| about including spaces and backslashes.
       ]=],
       full_name = 'isfname',

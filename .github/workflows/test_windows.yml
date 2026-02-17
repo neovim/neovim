@@ -9,6 +9,10 @@ on:
         type: number
   workflow_dispatch:
 
+# env:
+#   TEST_FILE: test/functional/xx/foo_spec.lua
+#   TEST_FILTER: foo
+
 jobs:
   windows:
     runs-on: windows-2025

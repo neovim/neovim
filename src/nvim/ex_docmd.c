@@ -3973,7 +3973,9 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
   // the file name contains a wildcard it should not cause expanding.
   // (it will be expanded anyway if there is a wildcard before replacing).
   bool has_wildcards = path_has_wildcard(p);
-  while (*p != NUL) {
+
+  bool is_url = path_with_url(p);  // Treat URIs literally, don't expand "#", "%", etc.
+  while (is_url && *p != NUL) {
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
       p += 2;
@@ -4095,7 +4097,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, const char **errormsgp)
     backslash_halve(eap->arg);
 #endif
 
-    if (has_wildcards) {
+    if (has_wildcards && !path_with_url(eap->arg)) {
       expand_T xpc;
       int options = WILD_LIST_NOTFOUND | WILD_NOERROR | WILD_ADD_SLASH;
 
@@ -7487,19 +7489,19 @@ ssize_t find_cmdline_var(const char *src, size_t *usedlen)
 
 /// Evaluate cmdline variables.
 ///
-/// change "%"       to curbuf->b_ffname
-///        "#"       to curwin->w_alt_fnum
-///        "<cword>" to word under the cursor
-///        "<cWORD>" to WORD under the cursor
-///        "<cexpr>" to C-expression under the cursor
-///        "<cfile>" to path name under the cursor
-///        "<sfile>" to sourced file name
-///        "<stack>" to call stack
-///        "<script>" to current script name
-///        "<slnum>" to sourced file line number
-///        "<afile>" to file name for autocommand
-///        "<abuf>"  to buffer number for autocommand
-///        "<amatch>" to matching name for autocommand
+/// - "%"       to curbuf->b_ffname
+/// - "#"       to curwin->w_alt_fnum
+/// - "<cword>" to word under the cursor
+/// - "<cWORD>" to WORD under the cursor
+/// - "<cexpr>" to C-expression under the cursor
+/// - "<cfile>" to path name under the cursor
+/// - "<sfile>" to sourced file name
+/// - "<stack>" to call stack
+/// - "<script>" to current script name
+/// - "<slnum>" to sourced file line number
+/// - "<afile>" to file name for autocommand
+/// - "<abuf>"  to buffer number for autocommand
+/// - "<amatch>" to matching name for autocommand
 ///
 /// When an error is detected, "errormsg" is set to a non-NULL pointer (may be
 /// "" for error without a message) and NULL is returned.

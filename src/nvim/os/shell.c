@@ -11,6 +11,8 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
+#include "nvim/eval/encode.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/event/defs.h"
@@ -615,39 +617,43 @@ void shell_free_argv(char **argv)
   xfree(argv);
 }
 
-/// Joins shell arguments from `argv` into a new string.
-/// If the result is too long it is truncated with ellipsis ("...").
+/// Gets the JSON array representation of `argv`.
 ///
-/// @returns[allocated] `argv` joined to a string.
-char *shell_argv_to_str(char **const argv)
+/// @param truncate Truncate long command with "...".
+/// @returns `["cmd", "arg1", "arg 2", ...]`
+char *shell_argv_to_json(char **const argv, bool truncate)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t n = 0;
-  char **p = argv;
-  char *rv = xcalloc(256, sizeof(*rv));
-  const size_t maxsize = (256 * sizeof(*rv));
-  if (*p == NULL) {
-    return rv;
+  static size_t maxlen = 512;
+
+  if (*argv == NULL) {
+    return xstrdup("[]");
   }
-  while (*p != NULL) {
-    xstrlcat(rv, "'", maxsize);
-    xstrlcat(rv, *p, maxsize);
-    n = xstrlcat(rv,  "' ", maxsize);
-    if (n >= maxsize) {
+
+  list_T *const list = tv_list_alloc(kListLenShouldKnow);
+  size_t total_len = 0;
+
+  for (char **p = argv; *p != NULL; p++) {
+    size_t len = strlen(*p);
+    total_len += len;
+
+    if (truncate && total_len > maxlen) {
+      tv_list_append_string(list, S_LEN("..."));
       break;
     }
-    p++;
+
+    tv_list_append_string(list, *p, (ssize_t)len);
   }
-  if (n < maxsize) {
-    rv[n - 1] = NUL;
-  } else {
-    // Command too long, show ellipsis: "/bin/bash 'foo' 'bar'..."
-    rv[maxsize - 4] = '.';
-    rv[maxsize - 3] = '.';
-    rv[maxsize - 2] = '.';
-    rv[maxsize - 1] = NUL;
-  }
-  return rv;
+
+  typval_T tv = {
+    .v_type = VAR_LIST,
+    .vval.v_list = list,
+  };
+
+  char *json_str = encode_tv2json(&tv, NULL);
+  tv_list_free(list);
+
+  return json_str;
 }
 
 /// Calls the user-configured 'shell' (p_sh) for running a command or wildcard

@@ -3487,6 +3487,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
+  char *uri_fragment = NULL;  // "#fragment" part of term:// URI.
   dictitem_T *job_env = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
@@ -3494,6 +3495,8 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     detach = tv_dict_get_number(job_opts, "detach") != 0;
     rpc = tv_dict_get_number(job_opts, "rpc") != 0;
     term = tv_dict_get_number(job_opts, "term") != 0;
+    // XXX: undocumented field, used by the "nvim.terminal" default autocmd.
+    uri_fragment = tv_dict_get_string(job_opts, "_uri_fragment", false);
     pty = term || tv_dict_get_number(job_opts, "pty") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
@@ -3603,7 +3606,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   } else if (!term) {
     channel_create_event(chan, NULL);
-  } else {
+  } else {  // term=true
     if (rettv->vval.v_number <= 0) {
       return;
     }
@@ -3644,9 +3647,20 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       IObuff[2] = NUL;
     }
 
-    // Terminal URI: "term://$CWD//$PID:$CMD"
-    snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
-    // Unset 'swapfile' to ensure no swapfile is created.
+    // Terminal URI: "term://$CWD//$PID:$CMD#fragment"
+    char *cmdjson = NULL;
+    if (argvars[0].v_type == VAR_LIST) {
+      // Serialize command as a JSON array: ["cmd", "arg1", "arg 2", …].
+      // URI v2: https://github.com/neovim/neovim/issues/3278
+      cmdjson = shell_argv_to_json(argv, true);
+      cmd = shell_argv_to_json(argv, true);
+    }
+    snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s%s", IObuff, pid,
+             cmdjson ? cmdjson : cmd,
+             uri_fragment ? uri_fragment : "");
+    xfree(cmdjson);
+
+    // Buffer has no terminal associated yet; unset 'swapfile' to ensure no swapfile is created.
     buf->b_p_swf = false;
 
     setfname(buf, NameBuff, NULL, true);
