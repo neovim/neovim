@@ -917,4 +917,17 @@ describe('API: buffer events:', function()
     sendkeys(s)
     assert_match_somewhere(expected_lines, buffer_lines)
   end)
+
+  it('no spurious event with nvim_open_term() on empty buffer', function()
+    local b = api.nvim_get_current_buf()
+    local tick = api.nvim_buf_get_var(b, 'changedtick')
+    ok(api.nvim_buf_attach(b, true, {}))
+    expectn('nvim_buf_lines_event', { b, tick, 0, -1, { '' }, false })
+    api.nvim_open_term(0, {})
+    local expected_lines = {}
+    for _ = 1, 23 do
+      table.insert(expected_lines, '')
+    end
+    expectn('nvim_buf_lines_event', { b, tick + 1, 0, 1, expected_lines, false })
+  end)
 end)
