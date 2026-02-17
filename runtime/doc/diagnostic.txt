@@ -713,12 +713,16 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                               source.
       • {spacing}?            (`integer`) Amount of empty spaces inserted at
                               the beginning of the virtual text.
-      • {prefix}?             (`string|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string)`)
+      • {prefix}?             (`string|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string?)`)
                               Prepend diagnostic message with prefix. If a
                               `function`, {i} is the index of the diagnostic
                               being evaluated, and {total} is the total number
                               of diagnostics for the line. This can be used to
-                              render diagnostic symbols or error codes.
+                              render diagnostic symbols or error codes. The
+                              function can return two values: the prefix text
+                              and an optional highlight group name. If
+                              highlight group is not provided, the default
+                              diagnostic severity highlight is used.
       • {suffix}?             (`string|(fun(diagnostic:vim.Diagnostic): string)`)
                               Append diagnostic message with suffix. This can
                               be used to render an LSP diagnostic error code.
