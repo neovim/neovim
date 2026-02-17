@@ -1615,6 +1615,8 @@ static void init_prompt(int cmdchar_todo)
       ml_append(lnum, prompt, 0, false);
       appended_lines_mark(lnum, 1);
       curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
+      // Like submitting, undo history was relevant to the old prompt.
+      u_clearallandblockfree(curbuf);
     }
     curbuf->b_prompt_start.mark.col = prompt_len;
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;

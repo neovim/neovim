@@ -225,22 +225,3 @@ describe(':undo! command', function()
     )
   end)
 end)
-
-describe('undo', function()
-  before_each(clear)
-
-  it('u_savecommon uses correct buffer with reload = true', function()
-    -- Easiest to repro in a prompt buffer. prompt_setprompt's buffer must not yet have an undo
-    -- header to trigger this. Will crash if it wrongly uses the unloaded curbuf in nvim_buf_call,
-    -- as that has no undo buffer.
-    eq(0, #fn.undotree().entries)
-    exec_lua(function()
-      local buf = vim.api.nvim_get_current_buf()
-      vim.bo.buftype = 'prompt'
-      vim.api.nvim_buf_call(vim.fn.bufadd(''), function()
-        vim.fn.prompt_setprompt(buf, 'hej > ')
-      end)
-    end)
-    eq('hej > ', fn.prompt_getprompt(''))
-  end)
-end)

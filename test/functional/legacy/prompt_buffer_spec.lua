@@ -514,6 +514,60 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       1 line {MATCH:.*} |
     ]])
+
+    -- "S" does not clear undo
+    feed('ihello<Esc>S')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      cmd: ^                    |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+    feed('<Esc>u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      ^cmd: hello               |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 change; {MATCH:.*} |
+    ]])
+
+    -- undo cleared if prompt changes
+    -- (otherwise undoing would abort it and append a new prompt, which isn't useful)
+    fn('prompt_setprompt', '', 'cmd > ')
+    feed('u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      c^md > hello              |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      Already at oldest change |
+    ]])
+
+    -- new prompt line appended to fix missing prompt also clears undo
+    feed('A there')
+    fn('setpos', "':", { 0, fn('line', '.'), 99, 0 })
+    feed('<Esc>u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      cmd > hello there        |
+      cmd >^                    |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      Already at oldest change |
+    ]])
   end)
 
   it('o/O can create new lines', function()
