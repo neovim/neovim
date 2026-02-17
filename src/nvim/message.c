@@ -1655,6 +1655,10 @@ void msg_start(void)
     need_fileinfo = false;
   }
 
+  if (need_highlight_changed) {
+    highlight_changed();
+  }
+
   if (need_clr_eos || (p_ch == 0 && redrawing_cmdline)) {
     // Halfway an ":echo" command and getting an (error) message: clear
     // any text from the command.
