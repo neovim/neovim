@@ -160,13 +160,6 @@ local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 ---@nodoc
 function M.enable(opts)
   vim.validate('opts', opts, 'table', true)
-  if opts.msg then
-    vim.validate('opts.msg.pos', opts.msg.pos, 'nil', true, 'nil: "pos" moved to opts.target')
-    vim.validate('opts.msg.box', opts.msg.box, 'nil', true, 'nil: "timeout" moved to opts.msg')
-    vim.validate('opts.msg.target', opts.msg.target, function(tar)
-      return tar == 'cmd' or tar == 'msg'
-    end, "'cmd'|'msg'")
-  end
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
   M.cmd = require('vim._core.ui2.cmdline')
   M.msg = require('vim._core.ui2.messages')
@@ -210,11 +203,6 @@ function M.enable(opts)
     -- 'cmdheight' set; (un)hide cmdline window and set its height.
     local cfg = { height = math.max(value, 1), hide = value == 0 }
     api.nvim_win_set_config(M.wins.cmd, cfg)
-    -- Change message position when 'cmdheight' was or becomes 0.
-    if value == 0 or M.cmdheight == 0 then
-      M.cfg.msg.target = value == 0 and 'msg' or 'cmd'
-      M.msg.prev_msg = ''
-    end
     M.cmdheight = value
   end
 
