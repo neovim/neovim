@@ -792,7 +792,7 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       // If for some odd reason the old prompt is missing,
       // replace prompt line with new-prompt (discards user-input).
       ml_replace_buf(buf, prompt_lno, (char *)new_prompt, true, false);
-      extmark_splice_cols(buf, prompt_lno - 1, 0, old_line_len, new_prompt_len, kExtmarkUndo);
+      extmark_splice_cols(buf, prompt_lno - 1, 0, old_line_len, new_prompt_len, kExtmarkNoUndo);
       cursor_col = new_prompt_len;
     } else {
       // Replace prev-prompt + user-input with new-prompt + user-input
@@ -801,14 +801,17 @@ void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         xfree(new_line);
       }
       extmark_splice_cols(buf, prompt_lno - 1, 0, buf->b_prompt_start.mark.col, new_prompt_len,
-                          kExtmarkUndo);
-      cursor_col += new_prompt_len - old_prompt_len;
+                          kExtmarkNoUndo);
+      cursor_col += new_prompt_len - buf->b_prompt_start.mark.col;
     }
 
     if (curwin->w_buffer == buf && curwin->w_cursor.lnum == prompt_lno) {
       curwin->w_cursor.col = cursor_col;
+      check_cursor_col(curwin);
     }
     changed_lines(buf, prompt_lno, 0, prompt_lno + 1, 0, true);
+    // Undo history contains the old prompt.
+    u_clearallandblockfree(buf);
   }
 
   // Clear old prompt text and replace with the new one

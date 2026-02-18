@@ -514,6 +514,60 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       1 line {MATCH:.*} |
     ]])
+
+    -- "S" does not clear undo
+    feed('ihello<Esc>S')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      cmd: ^                    |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+    feed('<Esc>u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      ^cmd: hello               |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 change; {MATCH:.*} |
+    ]])
+
+    -- undo cleared if prompt changes
+    -- (otherwise undoing would abort it and append a new prompt, which isn't useful)
+    fn('prompt_setprompt', '', 'cmd > ')
+    feed('u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      c^md > hello              |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      Already at oldest change |
+    ]])
+
+    -- new prompt line appended to fix missing prompt also clears undo
+    feed('A there')
+    fn('setpos', "':", { 0, fn('line', '.'), 99, 0 })
+    feed('<Esc>u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      cmd > hello there        |
+      cmd >^                    |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      Already at oldest change |
+    ]])
   end)
 
   it('o/O can create new lines', function()
@@ -931,9 +985,34 @@ describe('prompt buffer', function()
       {1:~                        }|*7
       {5:-- INSERT --}             |
     ]])
+    -- Minimum col should be 1. Same event to avoid corrections from the state loop.
+    feed('<Esc>0')
+    local colnr = exec_lua(function()
+      vim.fn.prompt_setprompt('', '')
+      return vim.fn.col('.')
+    end)
+    eq(1, colnr)
+    -- Correct cursor adjustment when old ': col and old prompt length differs.
+    set_prompt('foo > ')
+    fn('setpos', "':", { 0, fn('line', '.'), 10, 0 })
+    fn('setline', '.', '   foo > hello')
+    feed('fh')
+    screen:expect([[
+      new-prompt > user input  |
+         foo > ^hello           |
+      {1:~                        }|*7
+                               |
+    ]])
+    set_prompt('bar > ')
+    screen:expect([[
+      new-prompt > user input  |
+      bar > ^hello              |
+      {1:~                        }|*7
+                               |
+    ]])
 
     -- No crash when setting shorter prompt than curbuf's in other buffer.
-    feed('<C-O>zt')
+    feed('ztA')
     command('set virtualedit& | new | setlocal buftype=prompt')
     set_prompt('looooooooooooooooooooooooooooooooooooooooooooong > ', '') -- curbuf
     set_prompt('foo > ')
@@ -943,7 +1022,7 @@ describe('prompt buffer', function()
        ^                        |
       {1:~                        }|
       {3:[Prompt] [+]             }|
-      foo > a b                |
+      foo > hello              |
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
