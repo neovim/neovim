@@ -1615,6 +1615,27 @@ stack traceback:
       },
     })
   end)
+
+  it('completion message overwrites previous', function()
+    command('set shortmess-=C | edit foo | edit bar | edit baz')
+    feed('i<C-N>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'Scanning tags.', 6, 'Question' } },
+          kind = 'completion',
+        },
+      },
+      showmode = {
+        { '-- Keyword completion (^N^P) ', 5, 'ModeMsg' },
+        { 'Pattern not found', 9, 'ErrorMsg' },
+      },
+    })
+  end)
 end)
 
 describe('ui/builtin messages', function()
