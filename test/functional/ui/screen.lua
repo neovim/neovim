@@ -809,6 +809,8 @@ function Screen:_wait(check, flags)
   -- must not change, so always wait this full time.
   if flags.unchanged then
     minimal_timeout = flags.timeout or default_timeout_factor * 20
+  elseif flags.intermediate then
+    minimal_timeout = default_timeout_factor * 20
   end
 
   assert(timeout >= minimal_timeout)
