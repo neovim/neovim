@@ -552,6 +552,16 @@ nvim_error_event({type}, {msg})                             *nvim_error_event*
                 `api_info().error_types`.
       • {msg}   (`string`) Error message.
 
+nvim_remote_wait_done()                              *nvim_remote_wait_done()*
+    WARNING: This feature is experimental/unstable.
+
+    Emitted by the server to notify a waiting --remote-wait client that a
+    buffer was unloaded. Decrements the pending buffer count; when it reaches
+    zero the client exits with code 0.
+
+    Attributes: ~
+        |RPC| only
+
 nvim_ui_term_event({event}, {value})                      *nvim_ui_term_event*
     Emitted by the TUI client to signal when a host-terminal event occurred.
 
