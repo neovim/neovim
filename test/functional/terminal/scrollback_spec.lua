@@ -97,9 +97,8 @@ local function test_terminal_scrollback(hide_curbuf)
     screen = tt.setup_screen(nil, nil, 30)
     buf = api.nvim_get_current_buf()
     chan = api.nvim_get_option_value('channel', { buf = buf })
-    if hide_curbuf then
-      otherbuf = api.nvim_create_buf(true, false)
-    end
+    otherbuf = hide_curbuf and api.nvim_create_buf(true, false) or nil
+    restore_terminal_mode = nil
   end)
 
   describe('when the limit is exceeded', function()
