@@ -2121,7 +2121,10 @@ char *path_shorten_fname(char *full_path, char *dir_name)
     return NULL;
   }
 
-  return p + 1;
+  do {
+    p++;
+  } while (vim_ispathsep_nocolon(*p));
+  return p;
 }
 
 /// Invoke expand_wildcards() for one pattern

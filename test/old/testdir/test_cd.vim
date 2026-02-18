@@ -414,4 +414,15 @@ func Test_cd_symlinks()
   call chdir(savedir)
 endfunc
 
+func Test_cd_shorten_bufname_with_duplicate_slashes()
+  let savedir = getcwd()
+  call mkdir('Xexistingdir', 'R')
+  new Xexistingdir//foo/bar
+  cd Xexistingdir
+  call assert_equal('foo/bar', bufname('%'))
+
+  call chdir(savedir)
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
