@@ -44,6 +44,19 @@ void nvim_error_event(uint64_t channel_id, Integer type, String msg)
   ELOG("async error on channel %" PRId64 ": %s", channel_id, msg.size ? msg.data : "");
 }
 
+/// Emitted by the server to notify a waiting --remote-wait client that a buffer
+/// was unloaded. Decrements the pending buffer count; when it reaches zero the
+/// client exits with code 0.
+///
+/// @param channel_id
+void nvim_remote_wait_done(uint64_t channel_id)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
+{
+  if (remote_wait_buf_count > 0) {
+    remote_wait_buf_count--;
+  }
+}
+
 /// Emitted by the TUI client to signal when a host-terminal event occurred.
 ///
 /// Supports these events:
