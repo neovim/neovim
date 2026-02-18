@@ -3998,6 +3998,10 @@ local options = {
       abbreviation = 'gfn',
       defaults = {
         if_true = macros('DFLT_GFN', 'string'),
+        doc = [[(MS-Windows) "Cascadia Code,Cascadia Mono,Consolas,Courier New,monospace"
+                     (Mac) "SF Mono,Menlo,Monaco,Courier New,monospace"
+                   (Linux) "Source Code Pro,DejaVu Sans Mono,Courier New,monospace"
+                  (others) "DejaVu Sans Mono,Courier New,monospace"]],
       },
       desc = [=[
         This is a list of fonts which will be used for the GUI version of Vim.

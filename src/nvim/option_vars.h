@@ -34,13 +34,13 @@
 
 // Default values for 'guifont'
 #ifdef MSWIN
-# define DFLT_GFN "Cascadia Code, Cascadia Mono, Consolas, Courier New"
+# define DFLT_GFN "Cascadia Code,Cascadia Mono,Consolas,Courier New,monospace"
 #elif defined(__APPLE__)
-# define DFLT_GFN "SF Mono, Menlo, Monaco, Courier New"
+# define DFLT_GFN "SF Mono,Menlo,Monaco,Courier New,monospace"
 #elif defined(__linux__)
-# define DFLT_GFN "Source Code Pro, DejaVu Sans Mono, Courier New"
+# define DFLT_GFN "Source Code Pro,DejaVu Sans Mono,Courier New,monospace"
 #else
-# define DFLT_GFN "DejaVu Sans Mono, Courier New"
+# define DFLT_GFN "DejaVu Sans Mono,Courier New,monospace"
 #endif
 
 #define DFLT_GREPFORMAT "%f:%l:%m,%f:%l%m,%f  %l%m"
