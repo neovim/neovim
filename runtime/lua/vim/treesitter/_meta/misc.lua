@@ -23,6 +23,7 @@ error('Cannot require a meta file')
 ---
 ---@class TSLangInfo
 ---@field abi_version integer
+---@field path string
 ---@field metadata? TSLangMetadata  -- ABI 15 only
 ---@field state_count integer
 ---@field fields string[]
