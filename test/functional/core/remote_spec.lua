@@ -11,6 +11,7 @@ local fn = n.fn
 local insert = n.insert
 local nvim_prog = n.nvim_prog
 local neq = t.neq
+local new_session = n.new_session
 local set_session = n.set_session
 local tmpname = t.tmpname
 local write_file = t.write_file
@@ -155,8 +156,128 @@ describe('Remote', function()
     it('expr without server', function()
       run_and_check_exit_code('--remote-expr', 'setline(1, "Yo")')
     end)
-    it('wait subcommand', function()
-      run_and_check_exit_code('--remote-wait', fname)
+  end)
+
+  describe('wait variants', function()
+    local server
+
+    before_each(function()
+      server = n.clear()
+    end)
+
+    after_each(function()
+      server:close()
+    end)
+
+    -- The client job runs inside a helper session so the server's event loop
+    -- stays free to process the client's setup RPCs while we sleep.
+    local function run_remote_wait(subcmd, file, action_fn)
+      set_session(server)
+      local addr = fn.serverlist()[1]
+
+      local helper = new_session(true)
+      set_session(helper)
+
+      exec_lua(
+        [[
+          _G.Remote_jobid = vim.fn.jobstart({...}, {
+            stdout_buffered = true,
+            stderr_buffered = true,
+            on_stdout = function(_, data) _G.Remote_stdout = table.concat(data, '\n') end,
+            on_stderr = function(_, data) _G.Remote_stderr = table.concat(data, '\n') end,
+          })
+        ]],
+        nvim_prog,
+        '--clean',
+        '--headless',
+        '--server',
+        addr,
+        subcmd,
+        file
+      )
+
+      exec_lua(
+        [[
+          local addr, file = ...
+          local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
+          local deadline = vim.uv.now() + 5000
+          repeat
+            vim.uv.sleep(20)
+            local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
+            for _, b in ipairs(bufs) do
+              if vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b) == file then
+                vim.fn.chanclose(chan)
+                return
+              end
+            end
+          until vim.uv.now() >= deadline
+          vim.fn.chanclose(chan)
+        ]],
+        addr,
+        file
+      )
+
+      set_session(server)
+      action_fn()
+
+      set_session(helper)
+      local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, 3000)')[1]
+      local stdout = exec_lua('return _G.Remote_stdout')
+      local stderr = exec_lua('return _G.Remote_stderr')
+      helper:close()
+      set_session(server)
+      return code, stdout, stderr
+    end
+
+    it('--remote-wait blocks until buffer is unloaded', function()
+      local code, stdout, stderr = run_remote_wait('--remote-wait', fname, function()
+        command('bdelete')
+      end)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('--remote-tab-wait blocks until buffer is unloaded', function()
+      local code, stdout, stderr = run_remote_wait('--remote-tab-wait', fname, function()
+        command('bdelete')
+      end)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('--remote-wait exits with 0 when server quits (VimLeave)', function()
+      local code, _, stderr = run_remote_wait('--remote-wait', fname, function()
+        fn.jobstart({
+          nvim_prog,
+          '--clean',
+          '--headless',
+          '--server',
+          fn.serverlist()[1],
+          '--remote-send',
+          '<C-\\><C-N>:qa!<CR>',
+        })
+      end)
+      eq(0, code)
+      eq('', stderr)
+    end)
+
+    it('--remote-wait-silent does not error when no server is found', function()
+      set_session(server)
+      local jobid = fn.jobstart({
+        nvim_prog,
+        '--clean',
+        '--headless',
+        '--server',
+        '/tmp/no-such-nvim-' .. math.random(1e9) .. '.sock',
+        '--remote-wait-silent',
+        fname,
+      })
+      exec_lua('vim.uv.sleep(300)')
+      local status = fn.jobwait({ jobid }, 0)[1]
+      fn.jobstop(jobid)
+      eq(-1, status)
     end)
   end)
 end)
