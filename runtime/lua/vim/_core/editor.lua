@@ -513,7 +513,7 @@ end
 --- safe to call.
 ---@param fn function Callback to call once `timeout` expires
 ---@param timeout integer Number of milliseconds to wait before calling `fn`
----@return table timer luv timer object
+---@return uv.uv_timer_t timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate('fn', fn, 'callable', true)
 

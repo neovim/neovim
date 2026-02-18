@@ -1285,7 +1285,7 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
                    `fn`
 
     Return: ~
-        (`table`) timer luv timer object
+        (`uv.uv_timer_t`) timer luv timer object
 
                                                              *vim.deprecate()*
 vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
