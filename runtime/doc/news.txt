@@ -122,6 +122,8 @@ PLUGINS
 
 TREESITTER
 
+• The |vim.treesitter.query.lint()| is no longer enabled by default in the
+  |ft-query-plugin|.
 • |treesitter-directive-offset!| can now be applied to quantified captures. It
   no longer sets `metadata[capture_id].range`; it instead sets
   `metadata[capture_id].offset`. The offset will be applied in
