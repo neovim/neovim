@@ -247,6 +247,9 @@ end
 --- Applies function `fn` to all values of table `t`, in `pairs()` iteration order (which is not
 --- guaranteed to be stable, even when the data doesn't change).
 ---
+--- This function is planned for eventual removal. Consider |Iter:map()| for
+--- new code.
+---@see https://github.com/neovim/neovim/issues/24572
 ---@generic T
 ---@param fn fun(value: T): any Function
 ---@param t table<any, T> Table
@@ -265,6 +268,9 @@ end
 
 --- Filter a table using a predicate function
 ---
+--- This function is planned for eventual removal. Consider |Iter:filter()| for
+--- new code.
+---@see https://github.com/neovim/neovim/issues/24572
 ---@generic T
 ---@param fn fun(value: T): boolean (function) Function
 ---@param t table<any, T> (table) Table
