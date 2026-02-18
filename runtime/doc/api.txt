@@ -1702,6 +1702,7 @@ nvim__exec_lua_fast({code}, {args})                    *nvim__exec_lua_fast()*
     Attributes: ~
         |api-fast|
         |RPC| only
+        Since: 0.12.0
 
     Parameters: ~
       • {code}  (`string`) Lua code to execute
@@ -3705,6 +3706,9 @@ nvim_ui_send({content})                                       *nvim_ui_send()*
     Emits a "ui_send" event to all UIs with the "stdout_tty" |ui-option| set.
     UIs are expected to write the received data to a connected TTY if one
     exists.
+
+    Attributes: ~
+        Since: 0.12.0
 
     Parameters: ~
       • {content}  (`string`) Content to write to the TTY

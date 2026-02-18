@@ -1049,9 +1049,7 @@ end
 ---
 ---@deprecated
 ---@param client_id integer|integer[]|vim.lsp.Client[] id, list of id's, or list of |vim.lsp.Client| objects
----@param force? boolean|integer Whether to shutdown forcefully.
---- If `force` is a number, it will be treated as the time in milliseconds to
---- wait before forcing the shutdown.
+---@param force? boolean|integer See |Client:stop()|
 function lsp.stop_client(client_id, force)
   vim.deprecate('vim.lsp.stop_client()', 'vim.lsp.Client:stop()', '0.13')
   --- @type integer[]|vim.lsp.Client[]
@@ -1141,9 +1139,8 @@ api.nvim_create_autocmd('VimLeavePre', {
       client:stop(client.exit_timeout)
     end
 
-    local exit_warning_timer --- @type uv.uv_timer_t?
-    if max_timeout > min_warn_exit_timeout then
-      exit_warning_timer = vim.defer_fn(function()
+    local exit_warning_timer = max_timeout > min_warn_exit_timeout
+      and vim.defer_fn(function()
         api.nvim_echo({
           {
             string.format(
@@ -1154,7 +1151,6 @@ api.nvim_create_autocmd('VimLeavePre', {
           },
         }, true, {})
       end, min_warn_exit_timeout)
-    end
 
     vim.wait(max_timeout, function()
       return vim.iter(active_clients):all(function(client)

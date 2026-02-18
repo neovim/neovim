@@ -162,9 +162,10 @@ end
 --- @class vim.trust.opts
 --- @inlinedoc
 ---
---- - `'allow'` to add a file to the trust database and trust it,
---- - `'deny'` to add a file to the trust database and deny it,
---- - `'remove'` to remove file from the trust database
+--- One of:
+---   - `'allow'` to add a file to the trust database and trust it,
+---   - `'deny'` to add a file to the trust database and deny it,
+---   - `'remove'` to remove file from the trust database
 --- @field action 'allow'|'deny'|'remove'
 ---
 --- Path to a file to update. Mutually exclusive with {bufnr}.

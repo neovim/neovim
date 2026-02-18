@@ -522,10 +522,10 @@ update({names}, {opts})                                    *vim.pack.update()*
                    updates. Default: `false`.
                  • {target}? (`string`) How to compute a new plugin revision.
                    One of:
-                   • "version" (default) - use latest revision matching
+                   • "version" (default): use latest revision matching
                      `version` from plugin specification.
-                   • "lockfile" - use revision from the lockfile. Useful for
-                     reverting or performing controlled update.
+                   • "lockfile": use revision from the lockfile. For reverting
+                     or performing controlled update.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
