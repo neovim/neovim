@@ -47,6 +47,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/proc.h"
+#include "nvim/event/socket.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
@@ -927,7 +928,7 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
   }
   CallbackReader on_data = CALLBACK_READER_INIT;
   const char *error = NULL;
-  bool is_tcp = strrchr(server_addr, ':') ? true : false;
+  bool is_tcp = socket_address_is_tcp(server_addr);
   // connected to channel
   uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 500, &error);
   if (error) {
