@@ -46,7 +46,7 @@
 #endif
 #define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM  // NOLINT(bugprone-suspicious-missing-comma)
 
-char *Versions[] = { "8.1", "8.2", "9.0", "9.1" };
+char *Versions[] = { "8.1", "8.2", "9.0", "9.1", "9.2" };
 char *longVersion = NVIM_VERSION_LONG;
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 // Reproducible builds: omit compile info in Release builds. #15424
@@ -57,9 +57,9 @@ char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 #include "version.c.generated.h"
 
 // clang-format off
-static const int vim_versions[] = { 801, 802, 900, 901 };
+static const int vim_versions[] = { 801, 802, 900, 901, 902 };
 
-static const int num_patches[] = { 2331, 3802, 1574, 1602 };
+static const int num_patches[] = { 2331, 3803, 1574, 1609, 3 };
 
 static const int *included_patchsets[] = {
   (const int[]) {  // 801
@@ -868,7 +868,9 @@ static const int *included_patchsets[] = {
     3848,
     // 3847
     3846, 3845, 3844, 3843,
-    // 3840-3842
+    // 3842
+    3841,
+    // 3840
     3839, 3838,
     // 3835-3837
     3834, 3833,
@@ -3065,6 +3067,8 @@ static const int *included_patchsets[] = {
     // 0
   },
   (const int[]) {  // 901
+    2147, 2146,
+    // 2139-2145
     2138,
     // 2137
     2136, 2135,
@@ -3073,17 +3077,15 @@ static const int *included_patchsets[] = {
     // 2131
     2130,
     // 2129
-    2128,
-    // 2124-2127
+    2128, 2127,
+    // 2126
+    2125,
+    // 2124
     2123, 2122,
     // 2120-2121
-    2119, 2118,
-    // 2117
-    2116,
+    2119, 2118, 2117, 2116,
     // 2113-2115
-    2112,
-    // 2111
-    2110, 2109, 2108, 2107,
+    2112, 2111, 2110, 2109, 2108, 2107,
     // 2106
     2105,
     // 2104
@@ -3136,8 +3138,8 @@ static const int *included_patchsets[] = {
     1965, 1964, 1963, 1962, 1961, 1960,
     // 1959
     1958, 1957,
-    // 1954-1956
-    1953, 1952, 1951, 1950, 1949, 1948, 1947,
+    // 1955-1956
+    1954, 1953, 1952, 1951, 1950, 1949, 1948, 1947,
     // 1946
     1945, 1944, 1943, 1942, 1941,
     // 1940
@@ -3815,6 +3817,14 @@ static const int *included_patchsets[] = {
     // 6
     5, 4, 3, 2, 1,
     // 0
+  },
+  (const int[]) {  // 902
+    9,
+    // 8
+    7,
+    // 5-6
+    4,
+    // 0-3
   },
 };
 // clang-format on
