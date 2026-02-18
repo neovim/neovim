@@ -45,7 +45,6 @@ if [[ $OS == Linux ]]; then
   fi
 elif [[ $OS == Darwin ]]; then
   brew update --quiet
-  brew install ninja
   if [[ -n $TEST ]]; then
     brew install cpanminus fish fswatch
 
