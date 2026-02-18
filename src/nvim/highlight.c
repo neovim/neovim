@@ -37,9 +37,9 @@
 static bool hlstate_active = false;
 
 static Set(HlEntry) attr_entries = SET_INIT;
-static Map(int, int) combine_attr_entries = MAP_INIT;
-static Map(int, int) blend_attr_entries = MAP_INIT;
-static Map(int, int) blendthrough_attr_entries = MAP_INIT;
+static Map(uint64_t, int) combine_attr_entries = MAP_INIT;
+static Map(uint64_t, int) blend_attr_entries = MAP_INIT;
+static Map(uint64_t, int) blendthrough_attr_entries = MAP_INIT;
 static Set(cstr_t) urls = SET_INIT;
 
 #define attr_entry(i) attr_entries.keys[i]
@@ -468,18 +468,11 @@ int win_bg_attr(win_T *wp)
 /// Gets HL_UNDERLINE highlight.
 int hl_get_underline(void)
 {
+  HlAttrs attrs = HLATTRS_INIT;
+  attrs.cterm_ae_attr = (int16_t)HL_UNDERLINE;
+  attrs.rgb_ae_attr = (int16_t)HL_UNDERLINE;
   return get_attr_entry((HlEntry){
-    .attr = (HlAttrs){
-      .cterm_ae_attr = (int16_t)HL_UNDERLINE,
-      .cterm_fg_color = 0,
-      .cterm_bg_color = 0,
-      .rgb_ae_attr = (int16_t)HL_UNDERLINE,
-      .rgb_fg_color = -1,
-      .rgb_bg_color = -1,
-      .rgb_sp_color = -1,
-      .hl_blend = -1,
-      .url = -1,
-    },
+    .attr = attrs,
     .kind = kHlUI,
     .id1 = 0,
     .id2 = 0,
@@ -541,9 +534,9 @@ void clear_hl_tables(bool reinit)
   if (reinit) {
     set_clear(HlEntry, &attr_entries);
     highlight_init();
-    map_clear(int, &combine_attr_entries);
-    map_clear(int, &blend_attr_entries);
-    map_clear(int, &blendthrough_attr_entries);
+    map_clear(uint64_t, &combine_attr_entries);
+    map_clear(uint64_t, &blend_attr_entries);
+    map_clear(uint64_t, &blendthrough_attr_entries);
     set_clear(cstr_t, &urls);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
@@ -551,9 +544,9 @@ void clear_hl_tables(bool reinit)
     screen_invalidate_highlights();
   } else {
     set_destroy(HlEntry, &attr_entries);
-    map_destroy(int, &combine_attr_entries);
-    map_destroy(int, &blend_attr_entries);
-    map_destroy(int, &blendthrough_attr_entries);
+    map_destroy(uint64_t, &combine_attr_entries);
+    map_destroy(uint64_t, &blend_attr_entries);
+    map_destroy(uint64_t, &blendthrough_attr_entries);
     map_destroy(ColorKey, &ns_hls);
     set_destroy(cstr_t, &urls);
   }
@@ -561,8 +554,8 @@ void clear_hl_tables(bool reinit)
 
 void hl_invalidate_blends(void)
 {
-  map_clear(int, &blend_attr_entries);
-  map_clear(int, &blendthrough_attr_entries);
+  map_clear(uint64_t, &blend_attr_entries);
+  map_clear(uint64_t, &blendthrough_attr_entries);
   highlight_changed();
   update_window_hl(curwin, true);
 }
@@ -591,9 +584,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
     return char_attr;
   }
 
-  // TODO(bfredl): could use a struct for clearer intent.
-  int combine_tag = (char_attr << 16) + prim_attr;
-  int id = map_get(int, int)(&combine_attr_entries, combine_tag);
+  uint64_t combine_tag = HlAttrKey(char_attr, prim_attr);
+  int id = map_get(uint64_t, int)(&combine_attr_entries, combine_tag);
   if (id > 0) {
     return id;
   }
@@ -654,7 +646,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
                                  .id1 = char_attr, .id2 = prim_attr });
   if (id > 0) {
-    map_put(int, int)(&combine_attr_entries, combine_tag, id);
+    map_put(uint64_t, int)(&combine_attr_entries, combine_tag, id);
   }
 
   return id;
@@ -709,11 +701,11 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     return front_attr;
   }
 
-  int combine_tag = (back_attr << 16) + front_attr;
-  Map(int, int) *map = (*through
-                        ? &blendthrough_attr_entries
-                        : &blend_attr_entries);
-  int id = map_get(int, int)(map, combine_tag);
+  uint64_t combine_tag = HlAttrKey(back_attr, front_attr);
+  Map(uint64_t, int) *map = (*through
+                             ? &blendthrough_attr_entries
+                             : &blend_attr_entries);
+  int id = map_get(uint64_t, int)(map, combine_tag);
   if (id > 0) {
     return id;
   }
@@ -725,8 +717,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   if (*through) {
     cattrs = battrs;
     cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color, fattrs.rgb_bg_color);
-    // Only apply special colors when the foreground attribute has an underline or undercurl.
-    if (fattrs_raw.rgb_ae_attr & (HL_UNDERLINE | HL_UNDERCURL)) {
+    // Only apply special colors when the foreground attribute has an underline style.
+    if (fattrs_raw.rgb_ae_attr & HL_UNDERLINE_MASK) {
       cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color, fattrs.rgb_bg_color);
     } else {
       cattrs.rgb_sp_color = -1;
@@ -764,7 +756,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
                                  .id1 = back_attr, .id2 = front_attr });
   if (id > 0) {
-    map_put(int, int)(map, combine_tag, id);
+    map_put(uint64_t, int)(map, combine_tag, id);
   }
   return id;
 }
