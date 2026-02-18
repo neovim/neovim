@@ -50,10 +50,12 @@ describe('WinResized', function()
     eq(0, eval('g:resized'))
 
     command('vsplit term://')
+    feed('<Ignore>') -- Add input to separate two RPC requests
     eq({ mode = 't', blocking = false }, api.nvim_get_mode())
     eq(1, eval('g:resized'))
 
     command('split')
+    feed('<Ignore>') -- Add input to separate two RPC requests
     eq({ mode = 't', blocking = false }, api.nvim_get_mode())
     eq(2, eval('g:resized'))
   end)
