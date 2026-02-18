@@ -12,10 +12,11 @@ set(ENV{NVIM_TEST} "1")
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
 set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
+set(TEST_XDG_PREFIX ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX})
+set(ENV{XDG_CONFIG_HOME} ${TEST_XDG_PREFIX}/config)
+set(ENV{XDG_DATA_HOME} ${TEST_XDG_PREFIX}/share)
+set(ENV{XDG_STATE_HOME} ${TEST_XDG_PREFIX}/state)
 set(ENV{NVIM_RPLUGIN_MANIFEST} ${BUILD_DIR}/Xtest_rplugin_manifest${TEST_SUFFIX})
-set(ENV{XDG_CONFIG_HOME} ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX}/config)
-set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX}/share)
-set(ENV{XDG_STATE_HOME} ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX}/state)
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
 unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
@@ -101,6 +102,8 @@ execute_process(
   RESULT_VARIABLE res
   ${EXTRA_ARGS})
 
+file(REMOVE_RECURSE ${TEST_XDG_PREFIX})
+file(REMOVE_RECURSE $ENV{NVIM_RPLUGIN_MANIFEST})
 file(REMOVE_RECURSE $ENV{TMPDIR})
 
 macro(PRINT_NVIM_LOG)
