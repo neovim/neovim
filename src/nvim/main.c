@@ -21,6 +21,7 @@
 
 #include "auto/config.h"  // IWYU pragma: keep
 #include "klib/kvec.h"
+#include "nvim/api/events.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -121,6 +122,8 @@
 #if defined(MSWIN) && !defined(MAKE_LIB)
 # include "nvim/mbyte.h"
 #endif
+
+int remote_wait_buf_count = 0;
 
 // values for "window_layout"
 enum {
@@ -995,6 +998,8 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 
   TriState should_exit = kNone;
   TriState tabbed = kNone;
+  TriState wait = kFalse;
+  int wait_count = 0;
 
   for (size_t i = 0; i < rvobj.data.dict.size; i++) {
     if (strequal(rvobj.data.dict.items[i].key.data, "errmsg")) {
@@ -1022,6 +1027,18 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
         os_exit(2);
       }
       should_exit = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
+    } else if (strequal(rvobj.data.dict.items[i].key.data, "wait")) {
+      if (rvobj.data.dict.items[i].value.type != kObjectTypeBoolean) {
+        fprintf(stderr, "vim._cs_remote returned an unexpected type for 'wait'\n");
+        os_exit(2);
+      }
+      wait = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
+    } else if (strequal(rvobj.data.dict.items[i].key.data, "wait_count")) {
+      if (rvobj.data.dict.items[i].value.type != kObjectTypeInteger) {
+        fprintf(stderr, "vim._cs_remote returned an unexpected type for 'wait_count'\n");
+        os_exit(2);
+      }
+      wait_count = (int)rvobj.data.dict.items[i].value.data.integer;
     }
   }
   if (should_exit == kNone || tabbed == kNone) {
@@ -1029,6 +1046,12 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
     os_exit(2);
   }
   api_free_object(o);
+
+  if (wait == kTrue && wait_count > 0) {
+    remote_wait_buf_count = wait_count;
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, remote_wait_buf_count <= 0);
+    os_exit(0);
+  }
 
   if (should_exit == kTrue) {
     os_exit(0);
