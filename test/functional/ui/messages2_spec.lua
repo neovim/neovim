@@ -142,6 +142,31 @@ describe('messages2', function()
       {1:~                                                    }|*11
       foo [+1]                            1,1           All|
     ]])
+    -- Changing 'laststatus' reveals the global statusline with a pager height
+    -- exceeding the available lines: #38008.
+    command('tabonly | call nvim_echo([["foo\n"]]->repeat(&lines), 1, {})')
+    screen:expect([[
+      ^x                                                    |
+      {1:~                                                    }|*5
+      {3:                                                     }|
+      foo                                                  |*6
+      foo [+8]                                             |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      {3:                                                     }|
+      ^foo                                                  |
+      foo                                                  |*11
+                                          1,1           Top|
+    ]])
+    command('set laststatus=3')
+    screen:expect([[
+      {3:                                                     }|
+      ^foo                                                  |
+      foo                                                  |*10
+      {3:[Pager]                            1,1            Top}|
+                                                           |
+    ]])
   end)
 
   it('new buffer, window and options after closing a buffer', function()
@@ -290,7 +315,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo [+1]                                             |
+                                                           |
     ]])
   end)
 
@@ -442,7 +467,7 @@ describe('messages2', function()
       ^foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofo|
                                                            |
     ]])
-    t.eq({ filetype = 5 }, n.eval('g:set')) -- still fires for 'filetype'
+    t.eq(5, n.eval('g:set').filetype) -- still fires for 'filetype'
   end)
 
   it('Search highlights only apply to pager', function()
@@ -598,6 +623,9 @@ describe('messages2', function()
       vim.api.nvim_echo({ { 'foo' } }, true, { id = 1 })
       vim.api.nvim_echo({ { 'bar\nbaz' } }, true, { id = 2 })
       vim.api.nvim_echo({ { 'foo' } }, true, { id = 3 })
+      vim.keymap.set('n', 'Q', function()
+        vim.api.nvim_echo({ { 'Syntax', 23 }, { '\n  - ', 0 }, { 'cCommentL', 439 } }, false, {})
+      end)
     end)
     screen:expect([[
       ^                                                     |
@@ -628,6 +656,19 @@ describe('messages2', function()
       baz                                                  |
       foo                                                  |*2
     ]])
+    -- Pressing a key immediately dismisses an expanded cmdline, and
+    -- replacing a multiline, multicolored message doesn't error due
+    -- to unneccesarily inserted lines #37994.
+    feed('Q')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      {100:Syntax}                                               |
+        - cCommentL                                        |
+    ]])
+    feed('Q')
+    screen:expect_unchanged()
     set_msg_target_zero_ch()
     exec_lua(function()
       vim.api.nvim_echo({ { 'foo' } }, true, { id = 1 })
@@ -716,6 +757,15 @@ describe('messages2', function()
       {6:foo}                                                  |
       {6:bar}                                                  |
       {6:[O]k: }^                                               |
+    ]])
+  end)
+
+  it('no search_cmd with cmdheight=0', function()
+    set_msg_target_zero_ch()
+    feed('ifoo<Esc>?foo<CR>')
+    screen:expect([[
+      {10:^foo}                                                  |
+      {1:~                                                    }|*13
     ]])
   end)
 end)

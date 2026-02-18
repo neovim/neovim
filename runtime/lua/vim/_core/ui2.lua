@@ -59,6 +59,7 @@ local wincfg = { -- Default cfg for nvim_open_win().
   width = 10000,
   height = 1,
   noautocmd = true,
+  focusable = false,
 }
 
 local tab = 0
@@ -77,7 +78,6 @@ function M.check_targets()
       or not api.nvim_win_get_config(M.wins[type]).zindex -- no longer floating
     then
       local cfg = vim.tbl_deep_extend('force', wincfg, {
-        focusable = type == 'pager',
         mouse = type ~= 'cmd' and true or nil,
         anchor = type ~= 'cmd' and 'SE' or nil,
         hide = type ~= 'cmd' or M.cmdheight == 0 or nil,
@@ -100,8 +100,7 @@ function M.check_targets()
     if setopt then
       -- Set options without firing OptionSet and BufFilePost.
       vim._with({ win = M.wins[type], noautocmd = true }, function()
-        local ignore = 'all,-FileType' .. (type == 'pager' and ',-TextYankPost' or '')
-        api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
+        api.nvim_set_option_value('eventignorewin', 'all,-FileType', { scope = 'local' })
         api.nvim_set_option_value('wrap', true, { scope = 'local' })
         api.nvim_set_option_value('linebreak', false, { scope = 'local' })
         api.nvim_set_option_value('smoothscroll', true, { scope = 'local' })
@@ -161,8 +160,9 @@ local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 function M.enable(opts)
   vim.validate('opts', opts, 'table', true)
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
-  M.cmd = require('vim._core.ui2.cmdline')
-  M.msg = require('vim._core.ui2.messages')
+  if #vim.api.nvim_list_uis() == 0 then
+    return -- Don't prevent stdout messaging when no UIs are attached.
+  end
 
   if M.cfg.enable == false then
     -- Detach and cleanup windows, buffers and autocommands.
@@ -181,6 +181,8 @@ function M.enable(opts)
     return
   end
 
+  M.cmd = require('vim._core.ui2.cmdline')
+  M.msg = require('vim._core.ui2.messages')
   vim.ui_attach(M.ns, { ext_messages = true, set_cmdheight = false }, function(event, ...)
     if not (M.msg[event] or M.cmd[event]) then
       return
