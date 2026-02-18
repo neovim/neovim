@@ -1155,19 +1155,25 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
 
   local f_silent = false
   local f_tab = false
+  local f_wait = false
 
   local subcmd = string.sub(args[1], 10)
   if subcmd == 'tab' then
     f_tab = true
   elseif subcmd == 'silent' then
     f_silent = true
-  elseif
-    subcmd == 'wait'
-    or subcmd == 'wait-silent'
-    or subcmd == 'tab-wait'
-    or subcmd == 'tab-wait-silent'
-  then
-    return { errmsg = 'E5600: Wait commands not yet implemented in Nvim' }
+  elseif subcmd == 'wait' then
+    f_wait = true
+  elseif subcmd == 'wait-silent' then
+    f_wait = true
+    f_silent = true
+  elseif subcmd == 'tab-wait' then
+    f_tab = true
+    f_wait = true
+  elseif subcmd == 'tab-wait-silent' then
+    f_tab = true
+    f_wait = true
+    f_silent = true
   elseif subcmd == 'tab-silent' then
     f_tab = true
     f_silent = true
@@ -1192,15 +1198,64 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
       vim.notify(connection_failure_errmsg('Editing locally'), vim.log.levels.WARN)
     end
   else
-    local command = {}
-    if f_tab then
-      table.insert(command, 'tab')
+    if not f_wait then
+      local command = {}
+      if f_tab then
+        table.insert(command, 'tab')
+      end
+      table.insert(command, 'drop')
+      for i = 2, #args do
+        table.insert(command, vim.fn.fnameescape(args[i]))
+      end
+      vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+    else
+      local file_count = #args - 1
+      if file_count > 0 then
+        local client_chan_id = vim.fn.rpcrequest(rcid, 'nvim_get_chan_info', 0).id --[[@as integer]]
+
+        for i = 2, #args do
+          local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(args[i])
+          local is_first = i == 2
+          vim.fn.rpcrequest(
+            rcid,
+            'nvim_exec_lua',
+            [[
+            local client_chan_id, open_cmd, is_first, n = ...
+            if is_first then
+              local grp = '_nvim_remote_wait_' .. client_chan_id
+              vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] = n
+              vim.api.nvim_create_autocmd('VimLeave', {
+                group = vim.api.nvim_create_augroup(grp, { clear = true }),
+                callback = function()
+                  local rem = vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] or 0
+                  for _ = 1, rem do
+                    vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done')
+                  end
+                  vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] = 0
+                end,
+              })
+            end
+            vim.cmd(open_cmd)
+            local buf = vim.api.nvim_get_current_buf()
+            vim.bo[buf].bufhidden = 'delete'
+            vim.api.nvim_create_autocmd('BufUnload', {
+              buffer = buf,
+              once = true,
+              callback = function()
+                local key = '_nvim_remote_wait_remaining_' .. client_chan_id
+                local rem = (vim.g[key] or 0) - 1
+                vim.g[key] = math.max(rem, 0)
+                vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done')
+              end,
+            })
+          ]],
+            { client_chan_id, open_cmd, is_first, file_count }
+          )
+        end
+
+        return { should_exit = false, tabbed = f_tab, wait = true, wait_count = file_count }
+      end
     end
-    table.insert(command, 'drop')
-    for i = 2, #args do
-      table.insert(command, vim.fn.fnameescape(args[i]))
-    end
-    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
   end
 
   return {
