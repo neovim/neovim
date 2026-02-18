@@ -74,7 +74,7 @@ alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
 Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
 filter the log, e.g. at DEBUG level you might want to exclude UI messages: >
 
-    tail -F ~/.local/state/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
+    tail -F ~/.local/state/nvim/nvim.log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
 
 
 ==============================================================================

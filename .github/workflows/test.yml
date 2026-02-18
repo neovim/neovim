@@ -20,7 +20,7 @@ env:
   BUILD_DIR: ${{ github.workspace }}/build
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
-  NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
+  NVIM_LOG_FILE: ${{ github.workspace }}/build/nvim.log
   TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
   VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
   # TEST_FILE: test/functional/core/startup_spec.lua
@@ -176,6 +176,7 @@ jobs:
           TEST_TIMEOUT: 600
         run: |
           set +e
+          # `-k 0` tells ninja to continue running all targets even if some fail.
           cmake --build build --target functionaltest_parallel -j 2 -- -k 0
           exit_code="$?"
           cmake --build build --target functionaltest_summary

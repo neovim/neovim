@@ -27,7 +27,7 @@ unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
 set(ENV{CIRRUS_CI} ${CIRRUS_CI})
 
 if(NOT DEFINED ENV{NVIM_LOG_FILE})
-  set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/.nvimlog)
+  set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/nvim.log)
 endif()
 set(ENV{NVIM_LOG_FILE} "$ENV{NVIM_LOG_FILE}${TEST_SUFFIX}")
 

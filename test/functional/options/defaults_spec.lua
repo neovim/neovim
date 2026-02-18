@@ -252,7 +252,7 @@ describe('startup defaults', function()
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
 
-    it('defaults to stdpath("log")/log if empty', function()
+    it('defaults to stdpath("log")/nvim.log if empty', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
         env = {
@@ -260,10 +260,10 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '', -- Empty is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
     end)
 
-    it('defaults to stdpath("log")/log if invalid', function()
+    it('defaults to stdpath("log")/nvim.log if invalid', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
         env = {
@@ -271,7 +271,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '.', -- Any directory is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
+      eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
       -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
       expect_exit(command, 'qall!')
     end)

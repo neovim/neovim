@@ -38,7 +38,7 @@ see also |lua-guide|. Use any existing test as a template to start writing new
 tests, or see |dev-quickstart|.
 
 Tests are run by the `/cmake/RunTests.cmake` script using `busted` (a Lua test-runner).
-For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+For some failures, `./build/nvim.log` (or `$NVIM_LOG_FILE`) may provide insight.
 
 Depending on the presence of binaries (e.g., `xclip`) some tests will be
 skipped.
@@ -79,6 +79,10 @@ To run only _unit_ tests: >
 
 To run only _functional_ tests: >
     make functionaltest
+
+To run functional tests in parallel (used in CI): >
+    cmake --build build --target functionaltest_parallel -j2
+    cmake --build build --target functionaltest_summary
 
 
 LEGACY TESTS
