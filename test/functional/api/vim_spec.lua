@@ -734,23 +734,24 @@ describe('API', function()
 
   describe('nvim_set_current_dir', function()
     local start_dir
+    local test_dir = 'Xtest_set_current_dir'
 
     before_each(function()
-      fn.mkdir('Xtestdir')
+      fn.mkdir(test_dir)
       start_dir = fn.getcwd()
     end)
 
     after_each(function()
-      n.rmdir('Xtestdir')
+      n.rmdir(test_dir)
     end)
 
     it('works', function()
-      api.nvim_set_current_dir('Xtestdir')
-      eq(start_dir .. n.get_pathsep() .. 'Xtestdir', fn.getcwd())
+      api.nvim_set_current_dir(test_dir)
+      eq(start_dir .. n.get_pathsep() .. test_dir, fn.getcwd())
     end)
 
     it('sets previous directory', function()
-      api.nvim_set_current_dir('Xtestdir')
+      api.nvim_set_current_dir(test_dir)
       command('cd -')
       eq(start_dir, fn.getcwd())
     end)
@@ -1670,8 +1671,9 @@ describe('API', function()
 
       -- Check if autoload works properly
       local pathsep = n.get_pathsep()
-      local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
-      local xdata = 'Xhome' .. pathsep .. 'Xdata'
+      local xhome = 'Xhome_api'
+      local xconfig = xhome .. pathsep .. 'Xconfig'
+      local xdata = xhome .. pathsep .. 'Xdata'
       local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
       local autoload_file = table.concat({ autoload_folder, 'testload.vim' }, pathsep)
       mkdir_p(autoload_folder)
@@ -1679,7 +1681,7 @@ describe('API', function()
 
       clear { args_rm = { '-u' }, env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata } }
       eq(2, api.nvim_get_var('testload#value'))
-      rmdir('Xhome')
+      rmdir(xhome)
     end)
 
     it('nvim_get_vvar, nvim_set_vvar', function()
@@ -2966,16 +2968,18 @@ describe('API', function()
   end)
 
   describe('nvim_list_runtime_paths', function()
+    local test_dir = 'Xtest_list_runtime_paths'
+
     setup(function()
       local pathsep = n.get_pathsep()
-      mkdir_p('Xtest' .. pathsep .. 'a')
-      mkdir_p('Xtest' .. pathsep .. 'b')
+      mkdir_p(test_dir .. pathsep .. 'a')
+      mkdir_p(test_dir .. pathsep .. 'b')
     end)
     teardown(function()
-      rmdir 'Xtest'
+      rmdir(test_dir)
     end)
     before_each(function()
-      api.nvim_set_current_dir 'Xtest'
+      api.nvim_set_current_dir(test_dir)
     end)
 
     it('returns nothing with empty &runtimepath', function()

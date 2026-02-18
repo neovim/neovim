@@ -54,7 +54,15 @@ jobs:
       - if: ${{ matrix.test == 'functional' }}
         name: functionaltest
         timeout-minutes: ${{ inputs.functionaltest_timeout }}
-        run: cmake --build build --target functionaltest
+        env:
+          # With parallel tests, use shorter timeout for a single group.
+          TEST_TIMEOUT: 600
+        run: |
+          $ErrorActionPreference = 'Continue'
+          cmake --build build --target functionaltest_parallel -j 2 -- -k 0
+          $exitCode = $LASTEXITCODE
+          cmake --build build --target functionaltest_summary
+          exit $exitCode
 
       - if: ${{ matrix.test == 'old' }}
         uses: msys2/setup-msys2@v2

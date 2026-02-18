@@ -143,7 +143,7 @@ describe('normal', function()
     fn.mkdir(locale_dir, 'p')
     fn.filecopy(build_dir .. '/src/nvim/po/tr.mo', locale_dir .. '/nvim.mo')
     finally(function()
-      n.rmdir(build_dir .. '/share')
+      n.rmdir(vim.fs.dirname(locale_dir))
     end)
 
     clear({ env = { LANG = 'tr_TR.UTF-8' } })

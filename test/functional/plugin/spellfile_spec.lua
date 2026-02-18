@@ -6,8 +6,8 @@ local neq = t.neq
 local exec_lua = n.exec_lua
 
 describe('nvim.spellfile', function()
-  local data_root = 'Xtest_data'
-  local rtp_dir = 'Xtest_rtp'
+  local data_root = 'Xtest_data_spellfile'
+  local rtp_dir = 'Xtest_rtp_spellfile'
 
   before_each(function()
     n.clear()

@@ -33,9 +33,15 @@ describe('executable()', function()
     end)
 
     it('stdpath respects shellslash', function()
-      eq([[build\Xtest_xdg\share\nvim-data]], call('fnamemodify', call('stdpath', 'data'), ':.'))
+      t.matches(
+        [[build\Xtest_xdg[%w_]*\share\nvim%-data]],
+        call('fnamemodify', call('stdpath', 'data'), ':.')
+      )
       command('set shellslash')
-      eq('build/Xtest_xdg/share/nvim-data', call('fnamemodify', call('stdpath', 'data'), ':.'))
+      t.matches(
+        'build/Xtest_xdg[%w_]*/share/nvim%-data',
+        call('fnamemodify', call('stdpath', 'data'), ':.')
+      )
     end)
   end
 
