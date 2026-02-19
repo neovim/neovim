@@ -13,63 +13,29 @@ Vim client-server communication				*client-server*
 
 Nvim's |RPC| functionality allows clients to programmatically control Nvim. Nvim
 itself takes command-line arguments that cause it to become a client to another
-Nvim running as a server. These arguments match those provided by Vim's
-clientserver option.
+Nvim running as a server.
 
 The following command line arguments are available:
 
     argument			meaning	~
 
    --remote [+{cmd}] {file} ...					*--remote*
-				Open the file list in a remote Vim.  When
-				there is no Vim server, execute locally.
-				Vim allows one init command: +{cmd}.
-				This must be an Ex command that can be
-				followed by "|". It's not yet supported by
-				Nvim.
-				The rest of the command line is taken as the
-				file list.  Thus any non-file arguments must
-				come before this.
+				Open the files in a remote Nvim server and
+				block until all opened buffers are unloaded
+				(closed) in the server. Exits with code 0.
+				If no server is found, a warning is printed
+				and files are edited locally.
+				Arguments starting with + are treated as
+				Ex commands and executed on the server after
+				opening the files. All other arguments are
+				treated as filenames.
 				You cannot edit stdin this way |--|.
-				The remote Vim is raised.  If you don't want
-				this use >
-				 nvim --remote-send "<C-\><C-N>:n filename<CR>"
-<
-   --remote-silent [+{cmd}] {file} ...			*--remote-silent*
-				As above, but don't complain if there is no
-				server and the file is edited locally.
-							*--remote-tab*
-   --remote-tab			Like --remote but open each file in a new
-				tabpage.
-							*--remote-tab-silent*
-   --remote-tab-silent		Like --remote-silent but open each file in a
-				new tabpage.
-							*--remote-wait*
-   --remote-wait [+{cmd}] {file} ...
-				Like --remote, but block until all opened
-				buffers are unloaded (closed) in the server.
-				Exits with code 0 on success. +{cmd} is not
-				yet supported by Nvim.
-							*--remote-wait-silent*
-   --remote-wait-silent [+{cmd}] {file} ...
-				Like --remote-wait, but don't complain if
-				there is no server; fall back to editing
-				locally instead.
-							*--remote-tab-wait*
-   --remote-tab-wait		Like --remote-wait but open each file in a new
-				tabpage.
-							*--remote-tab-wait-silent*
-   --remote-tab-wait-silent	Like --remote-wait-silent but open each file
-				in a new tabpage.
-								*--remote-send*
-   --remote-send {keys}		Send {keys} to server and exit.  The {keys}
-				are not mapped.  Special key names are
-				recognized, e.g., "<CR>" results in a CR
-				character.
-								*--remote-expr*
-   --remote-expr {expr}		Evaluate {expr} in server and print the result
-				on stdout.
-								*--remote-ui*
+				Use |-p| to open each file in a new tabpage: >
+				  nvim -p --server {addr} --remote {file} ...
+<				Use |-Es| to suppress the warning when no
+				server is found: >
+				  nvim -Es --server {addr} --remote {file} ...
+<								*--remote-ui*
    --remote-ui			Display the UI of the server in the terminal.
 				Fully interactive: keyboard and mouse input
 				are forwarded to the server.
@@ -84,53 +50,59 @@ Examples ~
 Start an Nvim server listening on a named pipe at '~/.cache/nvim/server.pipe': >
     nvim --listen ~/.cache/nvim/server.pipe
 
-Edit "file.txt" in an Nvim server listening at '~/.cache/nvim/server.pipe': >
+Edit "file.txt" in an Nvim server and wait for it to be closed: >
     nvim --server ~/.cache/nvim/server.pipe --remote file.txt
 
-This doesn't work, all arguments after --remote will be used as file names: >
-    nvim --remote --server ~/.cache/nvim/server.pipe file.txt
+Open "file.txt" in a new tabpage on the server: >
+    nvim -p --server ~/.cache/nvim/server.pipe --remote file.txt
 
-Tell the remote server to write all files and exit: >
-    nvim --server ~/.cache/nvim/server.pipe --remote-send '<C-\><C-N>:wqa<CR>'
+Fall back silently to local editing when no server is found: >
+    nvim -Es --server ~/.cache/nvim/server.pipe --remote file.txt
+
+Send input to the server via |nvim_input()|: >
+    nvim --server ~/.cache/nvim/server.pipe --remote "+call nvim_input('ifoo')"
 
 
 REMOTE EDITING
 
-The --remote argument will cause a |:drop| command to be constructed from the
-rest of the command line and sent as described above.
-Note that the --remote and --remote-wait arguments will consume the rest of
-the command line.  I.e. all remaining arguments will be regarded as filenames.
-You can not put options there!
+The --remote argument causes a |:drop| command to be constructed from the
+rest of the command line and sent to the server. All remaining arguments
+after --remote are treated as filenames. You cannot put options there.
 
 
 ==============================================================================
-2. Missing functionality			*clientserver-missing*
+2. Removed flags					*clientserver-removed*
 
-Vim supports additional functionality in clientserver that's not yet
-implemented in Nvim. The following command line arguments are not yet
-available:
+These Vim flags are not supported by Nvim. Use the alternatives shown.
 
-    argument			meaning	~
+*--remote-silent*               Removed. Use |-Es| instead: >
+                              nvim -Es --server {addr} --remote {file}
+<
+*--remote-tab*                  Removed. Use |-p| instead: >
+                              nvim -p --server {addr} --remote {file}
+<
+*--remote-tab-silent*           Removed. Use |-Es| |-p| instead: >
+                              nvim -Es -p --server {addr} --remote {file}
+<
+*--remote-wait*                 Removed. Use |--remote| instead.
 
-							    *--servername*
-   --servername {name}          Not yet supported by Nvim.
-				Become the server {name}.  When used together
-                                with one of the --remote commands: connect to
-                                server {name} instead of the default (see
-                                below).  The name used will be uppercase.
+*--remote-wait-silent*          Removed. Use |-Es| instead: >
+                              nvim -Es --server {addr} --remote {file}
+<
+*--remote-tab-wait*             Removed. Use |-p| instead: >
+                              nvim -p --server {addr} --remote {file}
+<
+*--remote-tab-wait-silent*      Removed. Use |-Es| |-p| instead: >
+                              nvim -Es -p --server {addr} --remote {file}
+<
+*--remote-send*                 Removed. Use |nvim_input()| instead: >
+                              nvim --server {addr} --remote "+call nvim_input('ifoo')"
+<
+*--remote-expr*                 Removed.
 
-							    *--serverlist*
-   --serverlist			Not yet supported by Nvim.
-				Output a list of server names.
+*--serverlist*                  Removed.
 
+*--servername*                  Removed.
 
-
-
-SERVER NAME						*client-server-name*
-
-By default Vim will try to register the name under which it was invoked (gvim,
-egvim ...).  This can be overridden with the --servername argument.  Nvim
-either listens on a named pipe or a socket and does not yet support this
---servername functionality.
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
