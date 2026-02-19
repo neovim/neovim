@@ -198,6 +198,7 @@ static struct vimvar {
   VV(VV_EVENT,            "event",            VAR_DICT, VV_RO),
   VV(VV_VERSIONLONG,      "versionlong",      VAR_NUMBER, VV_RO),
   VV(VV_ECHOSPACE,        "echospace",        VAR_NUMBER, VV_RO),
+  VV(VV_ARGF,             "argf",             VAR_LIST, VV_RO),
   VV(VV_ARGV,             "argv",             VAR_LIST, VV_RO),
   VV(VV_COLLATE,          "collate",          VAR_STRING, VV_RO),
   VV(VV_EXITING,          "exiting",          VAR_NUMBER, VV_RO),
