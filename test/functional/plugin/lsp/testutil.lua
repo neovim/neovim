@@ -110,6 +110,7 @@ M.create_server_definition = function()
 
       function srv.terminate()
         closing = true
+        dispatchers.on_exit(0, 15)
       end
 
       return srv

@@ -1,10 +1,22 @@
 local protocol = require 'vim.lsp.protocol'
 
+local pid = vim.uv.os_getpid()
+local stdin = ''
+vim.fn.stdioopen({
+  on_stdin = function(_, data, _)
+    stdin = stdin .. table.concat(data, '\n')
+  end,
+})
+
 -- Logs to $NVIM_LOG_FILE.
 --
 -- TODO(justinmk): remove after https://github.com/neovim/neovim/pull/7062
 local function log(loglevel, area, msg)
-  vim.fn.writefile({ string.format('%s %s: %s', loglevel, area, msg) }, vim.env.NVIM_LOG_FILE, 'a')
+  vim.fn.writefile(
+    { string.format('%d %s %s: %s', pid, loglevel, area, msg) },
+    vim.env.NVIM_LOG_FILE,
+    'a'
+  )
 end
 
 local function message_parts(sep, ...)
@@ -46,10 +58,30 @@ local function format_message_with_content_length(encoded_message)
   }
 end
 
+local function read_line()
+  vim.wait(math.huge, function()
+    return stdin:find('\n') ~= nil
+  end, 1)
+  local eol = assert(stdin:find('\n'))
+  local line = stdin:sub(1, eol - 1)
+  stdin = stdin:sub(eol + 1)
+  return line
+end
+
+--- @param len integer
+local function read_len(len)
+  vim.wait(math.huge, function()
+    return stdin:len() >= len
+  end, 1)
+  local content = stdin:sub(1, len)
+  stdin = stdin:sub(len + 1)
+  return content
+end
+
 local function read_message()
-  local line = io.read('*l')
+  local line = read_line()
   local length = line:lower():match('content%-length:%s*(%d+)')
-  return vim.json.decode(io.read(2 + length):sub(2))
+  return vim.json.decode(read_len(2 + length):sub(2))
 end
 
 local function send(payload)
@@ -1045,21 +1077,24 @@ end
 
 -- Tests will be indexed by test_name
 local test_name = arg[1]
-local timeout = arg[2]
+local timeout = tonumber(arg[2])
 assert(type(test_name) == 'string', 'test_name must be specified as first arg.')
 
-local kill_timer = assert(vim.uv.new_timer())
-kill_timer:start(timeout or 1e3, 0, function()
-  kill_timer:stop()
-  kill_timer:close()
+local kill_timer = vim.defer_fn(function()
   log('ERROR', 'LSP', 'TIMEOUT')
   io.stderr:write('TIMEOUT')
   os.exit(100)
-end)
+end, timeout or 1e3)
+
+-- Close the timer on exit (deadly signal or :cquit) to avoid delay with ASAN/TSAN.
+vim.api.nvim_create_autocmd('VimLeave', {
+  callback = function()
+    kill_timer:stop()
+    kill_timer:close()
+  end,
+})
 
 local status, err = pcall(assert(tests[test_name], 'Test not found'))
-kill_timer:stop()
-kill_timer:close()
 if not status then
   log('ERROR', 'LSP', tostring(err))
   io.stderr:write(err)

@@ -320,7 +320,9 @@ function M.run(request_cb, notification_cb, setup_cb, timeout)
 end
 
 function M.stop()
-  assert(session):stop()
+  if loop_running then
+    assert(session):stop()
+  end
 end
 
 -- Use for commands which expect nvim to quit.
