@@ -248,9 +248,7 @@ describe('TUI :restart', function()
       n.check_close()
     end)
 
-    if t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows') then
-      return
-    end
+    t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows')
 
     -- local server_pipe = new_pipename()
     local screen = tt.setup_child_nvim({
@@ -4215,9 +4213,7 @@ describe('TUI client', function()
   end)
 
   it(':restart works when connecting to remote instance (with its own TUI)', function()
-    if t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows') then
-      return
-    end
+    t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows')
 
     local _, screen_server, screen_client = start_tui_and_remote_client()
 
@@ -4317,9 +4313,7 @@ describe('TUI client', function()
   end)
 
   it(':restart works when connecting to remote instance (--headless)', function()
-    if t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows') then
-      return
-    end
+    t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows')
 
     local _, server_pipe, screen_client = start_headless_server_and_client(false)
 
