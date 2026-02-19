@@ -892,7 +892,12 @@ retry:
       }
 
       // Protect against the argument of lalloc() going negative.
-      if (size < 0 || size + linerest + 1 < 0 || linerest >= MAXCOL) {
+      // Also split lines that are too long for colnr_T.  After this check
+      // passes, we read up to 'size' more bytes.  We must ensure that even
+      // after that read, the line length won't exceed MAXCOL - 1 (because
+      // we add 1 for the NUL when casting to colnr_T).  If this check fires,
+      // we insert a synthetic newline immediately, so linerest doesn't grow.
+      if (size < 0 || size + linerest + 1 < 0 || linerest >= MAXCOL - size) {
         split++;
         *ptr = NL;  // split line by inserting a NL
         size = 1;
