@@ -72,6 +72,7 @@ int wstream_write(Stream *stream, WBuffer *buffer)
   // This should not be called after a stream was freed
   assert(!stream->closed);
 
+  int err = 0;
   uv_buf_t uvbuf;
   uvbuf.base = buffer->data;
   uvbuf.len = UV_BUF_LEN(buffer->size);
@@ -80,7 +81,7 @@ int wstream_write(Stream *stream, WBuffer *buffer)
     uv_fs_t req;
 
     // Synchronous write
-    uv_fs_write(stream->uv.idle.loop, &req, stream->fd, &uvbuf, 1, stream->fpos, NULL);
+    err = uv_fs_write(stream->uv.idle.loop, &req, stream->fd, &uvbuf, 1, stream->fpos, NULL);
 
     uv_fs_req_cleanup(&req);
 
@@ -89,10 +90,9 @@ int wstream_write(Stream *stream, WBuffer *buffer)
     assert(stream->write_cb == NULL);
 
     stream->fpos += MAX(req.result, 0);
-    return req.result > 0;
+    return req.result > 0 ? 0 : err != 0 ? err : UV_UNKNOWN;
   }
 
-  int err = 0;
   if (stream->curmem > stream->maxmem) {
     err = UV_ENOMEM;
     goto fail;
