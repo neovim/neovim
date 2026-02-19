@@ -30,136 +30,6 @@ describe('Remote', function()
 
   describe('connect to server and', function()
     local server
-    before_each(function()
-      server = n.clear()
-    end)
-
-    after_each(function()
-      server:close()
-    end)
-
-    -- Run a `nvim --remote*` command and return { stdout, stderr } of the process
-    local function run_remote(...)
-      set_session(server)
-      local addr = fn.serverlist()[1]
-
-      -- Create an nvim instance just to run the remote-invoking nvim. We want
-      -- to wait for the remote instance to exit and calling jobwait blocks
-      -- the event loop. If the server event loop is blocked, it can't process
-      -- our incoming --remote calls.
-      local client_starter = n.new_session(true)
-      set_session(client_starter)
-      -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-      eq(
-        { 0 },
-        exec_lua(
-          [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
-        stdout_buffered = true,
-        stderr_buffered = true,
-        on_stdout = function(_, data, _)
-          _G.Remote_stdout = table.concat(data, '\n')
-        end,
-        on_stderr = function(_, data, _)
-          _G.Remote_stderr = table.concat(data, '\n')
-        end,
-      }) })]],
-          nvim_prog,
-          '--clean',
-          '--headless',
-          '--server',
-          addr,
-          ...
-        )
-      )
-      local res = exec_lua([[return { _G.Remote_stdout, _G.Remote_stderr }]])
-      client_starter:close()
-      set_session(server)
-      return res
-    end
-
-    it('edit a single file', function()
-      eq({ '', '' }, run_remote('--remote', fname))
-      expect(contents)
-      eq(1, #fn.getbufinfo())
-    end)
-
-    it('tab edit a single file with a non-changed buffer', function()
-      eq({ '', '' }, run_remote('--remote-tab', fname))
-      expect(contents)
-      eq(1, #fn.gettabinfo())
-    end)
-
-    it('tab edit a single file with a changed buffer', function()
-      insert('hello')
-      eq({ '', '' }, run_remote('--remote-tab', fname))
-      expect(contents)
-      eq(2, #fn.gettabinfo())
-    end)
-
-    it('edit multiple files', function()
-      eq({ '', '' }, run_remote('--remote', fname, other_fname))
-      expect(contents)
-      command('next')
-      expect(other_contents)
-      eq(2, #fn.getbufinfo())
-    end)
-
-    it('send keys', function()
-      eq({ '', '' }, run_remote('--remote-send', ':edit ' .. fname .. '<CR><C-W>v'))
-      expect(contents)
-      eq(2, #fn.getwininfo())
-      -- Only a single buffer as we're using edit and not drop like --remote does
-      eq(1, #fn.getbufinfo())
-    end)
-
-    it('evaluate expressions', function()
-      eq({ '0', '' }, run_remote('--remote-expr', 'setline(1, "Yo")'))
-      eq({ 'Yo', '' }, run_remote('--remote-expr', 'getline(1)'))
-      expect('Yo')
-      eq({ ('k'):rep(1234), '' }, run_remote('--remote-expr', 'repeat("k", 1234)'))
-      eq({ '1.25', '' }, run_remote('--remote-expr', '1.25'))
-      eq({ 'no', '' }, run_remote('--remote-expr', '0z6E6F'))
-      eq({ '\t', '' }, run_remote('--remote-expr', '"\t"'))
-    end)
-  end)
-
-  it('creates server if not found', function()
-    clear('--remote', fname)
-    expect(contents)
-    eq(1, #fn.getbufinfo())
-    -- Since we didn't pass silent, we should get a complaint
-    neq(nil, string.find(exec_capture('messages'), 'E247:'))
-  end)
-
-  it('creates server if not found with tabs', function()
-    clear('--remote-tab-silent', fname, other_fname)
-    expect(contents)
-    eq(2, #fn.gettabinfo())
-    eq(2, #fn.getbufinfo())
-    -- We passed silent, so no message should be issued about the server not being found
-    eq(nil, string.find(exec_capture('messages'), 'E247:'))
-  end)
-
-  describe('exits with error on', function()
-    local function run_and_check_exit_code(...)
-      local p = n.spawn_wait { args = { ... } }
-      eq(2, p.status)
-    end
-    it('bogus subcommand', function()
-      run_and_check_exit_code('--remote-bogus')
-    end)
-
-    it('send without server', function()
-      run_and_check_exit_code('--remote-send', 'i')
-    end)
-
-    it('expr without server', function()
-      run_and_check_exit_code('--remote-expr', 'setline(1, "Yo")')
-    end)
-  end)
-
-  describe('wait variants', function()
-    local server
 
     before_each(function()
       server = n.clear()
@@ -169,14 +39,20 @@ describe('Remote', function()
       server:close()
     end)
 
-    -- The client job runs inside a helper session so the server's event loop
-    -- stays free to process the client's setup RPCs while we sleep.
-    local function run_remote_wait(subcmd, file, action_fn)
+    -- Run a `nvim --remote` command asynchronously, wait for the given file to
+    -- appear in the server, run action_fn on the server, then wait for the
+    -- client to exit. Returns { exit_code, stdout, stderr }.
+    local function run_remote(args, file, action_fn)
       set_session(server)
       local addr = fn.serverlist()[1]
 
       local helper = new_session(true)
       set_session(helper)
+
+      local job_args = { nvim_prog, '--clean', '--headless', '--server', addr }
+      for _, a in ipairs(args) do
+        table.insert(job_args, a)
+      end
 
       exec_lua(
         [[
@@ -187,38 +63,36 @@ describe('Remote', function()
             on_stderr = function(_, data) _G.Remote_stderr = table.concat(data, '\n') end,
           })
         ]],
-        nvim_prog,
-        '--clean',
-        '--headless',
-        '--server',
-        addr,
-        subcmd,
-        file
+        unpack(job_args)
       )
 
-      exec_lua(
-        [[
-          local addr, file = ...
-          local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
-          local deadline = vim.uv.now() + 5000
-          repeat
-            vim.uv.sleep(20)
-            local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
-            for _, b in ipairs(bufs) do
-              if vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b) == file then
-                vim.fn.chanclose(chan)
-                return
+      if file then
+        exec_lua(
+          [[
+            local addr, file = ...
+            local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
+            local deadline = vim.uv.now() + 5000
+            repeat
+              vim.uv.sleep(20)
+              local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
+              for _, b in ipairs(bufs) do
+                if vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b) == file then
+                  vim.fn.chanclose(chan)
+                  return
+                end
               end
-            end
-          until vim.uv.now() >= deadline
-          vim.fn.chanclose(chan)
-        ]],
-        addr,
-        file
-      )
+            until vim.uv.now() >= deadline
+            vim.fn.chanclose(chan)
+          ]],
+          addr,
+          file
+        )
+      end
 
       set_session(server)
-      action_fn()
+      if action_fn then
+        action_fn()
+      end
 
       set_session(helper)
       local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, 3000)')[1]
@@ -229,8 +103,8 @@ describe('Remote', function()
       return code, stdout, stderr
     end
 
-    it('--remote-wait blocks until buffer is unloaded', function()
-      local code, stdout, stderr = run_remote_wait('--remote-wait', fname, function()
+    it('edit a single file and wait for it to be closed', function()
+      local code, stdout, stderr = run_remote({ '--remote', fname }, fname, function()
         command('bdelete')
       end)
       eq(0, code)
@@ -238,46 +112,119 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
-    it('--remote-tab-wait blocks until buffer is unloaded', function()
-      local code, stdout, stderr = run_remote_wait('--remote-tab-wait', fname, function()
+    it('edit multiple files and wait for all to be closed', function()
+      local buf_count
+      local code, stdout, stderr = run_remote(
+        { '--remote', fname, other_fname },
+        other_fname,
+        function()
+          buf_count = #fn.getbufinfo({ buflisted = 1 })
+          command('bdelete!')
+          command('bdelete!')
+        end
+      )
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+      eq(2, buf_count)
+    end)
+
+    it('does not exit until all files are closed', function()
+      local code, _, _ = run_remote({ '--remote', fname, other_fname }, other_fname, function()
+        command('bdelete!')
+      end)
+      eq(-1, code)
+    end)
+
+    it('tab edit a single file with a non-changed buffer (-p)', function()
+      local tab_count
+      local code, stdout, stderr = run_remote({ '-p', '--remote', fname }, fname, function()
+        tab_count = #fn.gettabinfo()
         command('bdelete')
       end)
       eq(0, code)
       eq('', stdout)
       eq('', stderr)
+      eq(1, tab_count)
     end)
 
-    it('--remote-wait exits with 0 when server quits (VimLeave)', function()
-      local code, _, stderr = run_remote_wait('--remote-wait', fname, function()
-        fn.jobstart({
-          nvim_prog,
-          '--clean',
-          '--headless',
-          '--server',
-          fn.serverlist()[1],
-          '--remote-send',
-          '<C-\\><C-N>:qa!<CR>',
-        })
+    it('tab edit a single file with a changed buffer (-p)', function()
+      insert('hello')
+      local tab_count
+      local code, stdout, stderr = run_remote({ '-p', '--remote', fname }, fname, function()
+        tab_count = #fn.gettabinfo()
+        command('bdelete')
       end)
       eq(0, code)
+      eq('', stdout)
       eq('', stderr)
+      eq(2, tab_count)
     end)
 
-    it('--remote-wait-silent does not error when no server is found', function()
-      set_session(server)
-      local jobid = fn.jobstart({
-        nvim_prog,
-        '--clean',
-        '--headless',
-        '--server',
-        '/tmp/no-such-nvim-' .. math.random(1e9) .. '.sock',
-        '--remote-wait-silent',
+    it('tab edit multiple files (-p)', function()
+      local tab_count
+      local code, stdout, stderr = run_remote(
+        { '-p', '--remote', fname, other_fname },
+        other_fname,
+        function()
+          tab_count = #fn.gettabinfo()
+          command('bdelete!')
+          command('bdelete!')
+        end
+      )
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+      eq(2, tab_count)
+    end)
+
+    it('executes +cmd on the server', function()
+      local code, stdout, stderr = run_remote(
+        { '--remote', fname, '+call setline(1, "modified")' },
         fname,
-      })
-      exec_lua('vim.uv.sleep(300)')
-      local status = fn.jobwait({ jobid }, 0)[1]
-      fn.jobstop(jobid)
-      eq(-1, status)
+        function()
+          expect('modified')
+          command('bdelete!')
+        end
+      )
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
     end)
+
+    it('executes +cmd only (no files) and exits immediately', function()
+      local code, stdout, stderr =
+        run_remote({ '--remote', '+call setline(1, "remote-cmd")' }, nil, nil)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+      expect('remote-cmd')
+    end)
+
+    it('exits with 0 when server quits before buffer is closed (VimLeave)', function()
+      local code, _, stderr = run_remote({ '--remote', fname }, fname, function()
+        local chan = fn.sockconnect('pipe', fn.serverlist()[1], { rpc = 1 })
+        fn.rpcnotify(chan, 'nvim_command', 'qa!')
+      end)
+      eq(0, code)
+      eq('', stderr)
+    end)
+  end)
+
+  it('falls back to editing locally when no server is found', function()
+    clear('--remote', fname)
+    expect(contents)
+    eq(1, #fn.getbufinfo())
+    neq(nil, string.find(exec_capture('messages'), 'E247:'))
+  end)
+
+  it('suppresses warning with -Es when no server is found', function()
+    local p = n.spawn_wait { args = { '-Es', '--server', '/no-such.sock', '--remote', fname } }
+    eq(0, p.status)
+  end)
+
+  it('unknown --remote subcommand exits with error', function()
+    local p = n.spawn_wait { args = { '--remote-bogus' } }
+    eq(2, p.status)
   end)
 end)

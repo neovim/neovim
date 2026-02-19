@@ -976,11 +976,12 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 
   Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(a, 4);
+  MAXSIZE_TEMP_ARRAY(a, 5);
   ADD_C(a, INTEGER_OBJ((int)chan));
   ADD_C(a, CSTR_AS_OBJ(server_addr));
   ADD_C(a, CSTR_AS_OBJ(connect_error));
   ADD_C(a, ARRAY_OBJ(args));
+  ADD_C(a, BOOLEAN_OBJ(params->window_layout == WIN_TABS));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
   Object o = nlua_exec(s, NULL, a, kRetObject, NULL, &err);
   kv_destroy(args);
@@ -997,8 +998,6 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 
   TriState should_exit = kNone;
-  TriState tabbed = kNone;
-  TriState wait = kFalse;
   int wait_count = 0;
 
   for (size_t i = 0; i < rvobj.data.dict.size; i++) {
@@ -1009,30 +1008,12 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
       }
       fprintf(stderr, "%s\n", rvobj.data.dict.items[i].value.data.string.data);
       os_exit(2);
-    } else if (strequal(rvobj.data.dict.items[i].key.data, "result")) {
-      if (rvobj.data.dict.items[i].value.type != kObjectTypeString) {
-        fprintf(stderr, "vim._cs_remote returned an unexpected type for 'result'\n");
-        os_exit(2);
-      }
-      printf("%s", rvobj.data.dict.items[i].value.data.string.data);
-    } else if (strequal(rvobj.data.dict.items[i].key.data, "tabbed")) {
-      if (rvobj.data.dict.items[i].value.type != kObjectTypeBoolean) {
-        fprintf(stderr, "vim._cs_remote returned an unexpected type for 'tabbed'\n");
-        os_exit(2);
-      }
-      tabbed = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
     } else if (strequal(rvobj.data.dict.items[i].key.data, "should_exit")) {
       if (rvobj.data.dict.items[i].value.type != kObjectTypeBoolean) {
         fprintf(stderr, "vim._cs_remote returned an unexpected type for 'should_exit'\n");
         os_exit(2);
       }
       should_exit = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
-    } else if (strequal(rvobj.data.dict.items[i].key.data, "wait")) {
-      if (rvobj.data.dict.items[i].value.type != kObjectTypeBoolean) {
-        fprintf(stderr, "vim._cs_remote returned an unexpected type for 'wait'\n");
-        os_exit(2);
-      }
-      wait = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
     } else if (strequal(rvobj.data.dict.items[i].key.data, "wait_count")) {
       if (rvobj.data.dict.items[i].value.type != kObjectTypeInteger) {
         fprintf(stderr, "vim._cs_remote returned an unexpected type for 'wait_count'\n");
@@ -1041,13 +1022,13 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
       wait_count = (int)rvobj.data.dict.items[i].value.data.integer;
     }
   }
-  if (should_exit == kNone || tabbed == kNone) {
-    fprintf(stderr, "vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
+  if (should_exit == kNone) {
+    fprintf(stderr, "vim._cs_remote didn't return a value for should_exit, bailing\n");
     os_exit(2);
   }
   api_free_object(o);
 
-  if (wait == kTrue && wait_count > 0) {
+  if (wait_count > 0) {
     remote_wait_buf_count = wait_count;
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, remote_wait_buf_count <= 0);
     os_exit(0);
@@ -1055,10 +1036,6 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 
   if (should_exit == kTrue) {
     os_exit(0);
-  }
-  if (tabbed == kTrue) {
-    params->window_count = argc - remote_args - 1;
-    params->window_layout = WIN_TABS;
   }
 }
 
