@@ -304,7 +304,7 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     for i = 1, 10 do
       eq({ mode = 't', blocking = true }, api.nvim_get_mode())
-      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      vim.uv.sleep(15) -- Wait for the previously scheduled refresh timer to arrive
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
       screen:expect(([[
         tty ready                                         |
@@ -337,7 +337,7 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     for i = 1, 10 do
       eq({ mode = 'nt', blocking = true }, api.nvim_get_mode())
-      vim.uv.sleep(10) -- Wait for the previously scheduled refresh timer to arrive
+      vim.uv.sleep(15) -- Wait for the previously scheduled refresh timer to arrive
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
       screen:expect(([[
         tty ready                                         |
