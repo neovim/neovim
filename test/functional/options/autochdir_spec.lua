@@ -9,16 +9,16 @@ local mkdir = t.mkdir
 
 describe("'autochdir'", function()
   it('given on the shell gets processed properly', function()
-    local targetdir = 'test/functional/fixtures'
+    local start_dir = vim.uv.cwd()
+    local target_dir = t.paths.test_source_path .. '/test/functional/fixtures'
 
-    -- By default 'autochdir' is off, thus getcwd() returns the repo root.
-    clear(targetdir .. '/tty-test.c')
-    local rootdir = fn.getcwd()
-    local expected = rootdir .. '/' .. targetdir
+    -- By default 'autochdir' is off, thus getcwd() returns the initial directory.
+    clear(target_dir .. '/tty-test.c')
+    eq(start_dir, fn.getcwd())
 
     -- With 'autochdir' on, we should get the directory of tty-test.c.
-    clear('--cmd', 'set autochdir', targetdir .. '/tty-test.c')
-    eq(t.is_os('win') and expected:gsub('/', '\\') or expected, fn.getcwd())
+    clear('--cmd', 'set autochdir', target_dir .. '/tty-test.c')
+    eq(t.is_os('win') and target_dir:gsub('/', '\\') or target_dir, fn.getcwd())
   end)
 
   it('is not overwritten by getwinvar() call #17609', function()

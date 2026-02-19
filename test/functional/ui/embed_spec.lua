@@ -236,6 +236,7 @@ describe('--embed UI', function()
 
   it('updates cwd of attached UI #21771', function()
     clear { args_rm = { '--headless' } }
+    api.nvim_set_current_dir(t.paths.test_source_path)
 
     local screen = Screen.new(40, 8)
 

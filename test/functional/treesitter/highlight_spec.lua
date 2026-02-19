@@ -1443,7 +1443,7 @@ end)
 
 it('no nil index for missing highlight query', function()
   clear()
-  local cqueries = vim.uv.cwd() .. '/runtime/queries/c/'
+  local cqueries = t.paths.test_source_path .. '/runtime/queries/c/'
   os.rename(cqueries .. 'highlights.scm', cqueries .. '_highlights.scm')
   finally(function()
     os.rename(cqueries .. '_highlights.scm', cqueries .. 'highlights.scm')

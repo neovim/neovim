@@ -131,11 +131,16 @@ describe('system()', function()
 
     before_each(function()
       screen = Screen.new()
+      t.write_file('Xmorefile', ('line1\nline2\nline3\n'):rep(10))
+    end)
+
+    after_each(function()
+      os.remove('Xmorefile')
     end)
 
     if is_os('win') then
       local function test_more()
-        eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
+        eq('line1', eval([[get(split(system('"more" "Xmorefile"'), "\n"), 0, '')]]))
       end
       local function test_shell_unquoting()
         eval([[system('"ping" "-n" "1" "127.0.0.1"')]])

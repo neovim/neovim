@@ -202,6 +202,12 @@ local function test_terminal_with_fake_shell(backslash)
     api.nvim_set_option_value('shell', shell_path, {})
     api.nvim_set_option_value('shellcmdflag', 'EXE', {})
     api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
+    t.mkdir('Xsomedir')
+    t.write_file('Xsomedir/Xuniquefile', '')
+  end)
+
+  after_each(function()
+    n.rmdir('Xsomedir')
   end)
 
   it('with no argument, acts like jobstart(…,{term=true})', function()
@@ -290,7 +296,7 @@ local function test_terminal_with_fake_shell(backslash)
     command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
-    eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
+    eq('Xsomedir/Xuniquefile', eval('findfile("Xsomedir/Xuniquefile", ".")'))
   end)
 
   it('works with :find', function()
@@ -304,26 +310,26 @@ local function test_terminal_with_fake_shell(backslash)
     ]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
-    feed_command([[find */shadacat.py]])
+    feed_command([[find */Xuniquefile]])
     if is_os('win') then
-      eq('scripts\\shadacat.py', eval('bufname("%")'))
+      eq('Xsomedir\\Xuniquefile', eval('bufname("%")'))
     else
-      eq('scripts/shadacat.py', eval('bufname("%")'))
+      eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
     end
   end)
 
   it('works with gf', function()
-    feed_command([[terminal echo "scripts/shadacat.py"]])
+    feed_command([[terminal echo "Xsomedir/Xuniquefile"]])
     screen:expect([[
-      ^ready $ echo "scripts/shadacat.py"                |
+      ^ready $ echo "Xsomedir/Xuniquefile"               |
                                                         |
       [Process exited 0]                                |
-      :terminal echo "scripts/shadacat.py"              |
+      :terminal echo "Xsomedir/Xuniquefile"             |
     ]])
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[ggf"lgf]])
-    eq('scripts/shadacat.py', eval('bufname("%")'))
+    eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
   end)
 
   it('with bufhidden=delete #3958', function()

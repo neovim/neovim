@@ -45,6 +45,9 @@ describe('fnamemodify()', function()
   end)
 
   it('handles examples from ":help filename-modifiers"', function()
+    -- src/ cannot be a symlink in this test.
+    n.api.nvim_set_current_dir(t.paths.test_source_path)
+
     local filename = 'src/version.c'
     local cwd = getcwd()
 

@@ -38,7 +38,7 @@ describe('vim.treesitter.inspect_tree', function()
   it('sets correct buffer name', function()
     t.skip(t.is_zig_build(), 'vim.treesitter not found after chdir with build.zig')
 
-    n.api.nvim_set_current_dir('test/functional/fixtures')
+    n.api.nvim_set_current_dir(t.paths.test_source_path .. '/test/functional/fixtures')
     n.command('edit lua/syntax_error.lua')
     eq('lua/syntax_error.lua', n.fn.bufname('%'))
     local full_path = n.api.nvim_buf_get_name(0)

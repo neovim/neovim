@@ -1780,7 +1780,7 @@ describe('inccommand on ex mode', function()
       '-c',
       'set termguicolors background=dark',
       '-E',
-      'test/README.md',
+      'README.md',
     }, {
       term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
