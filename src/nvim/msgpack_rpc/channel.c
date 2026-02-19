@@ -416,7 +416,8 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
              "ch %" PRIu64 ": stream write failed: %s. "
              "RPC canceled; closing channel",
              channel->id, os_strerror(err));
-    chan_close_on_err(channel, buf, LOGLVL_ERR);
+    // UV_EPIPE can happen if pipe is closed by peer and shouldn't be an error.
+    chan_close_on_err(channel, buf, err == UV_EPIPE ? LOGLVL_INF : LOGLVL_ERR);
   }
 
   return err == 0;
