@@ -141,14 +141,17 @@ describe('vim.ui', function()
     it('validation', function()
       if is_os('win') or not is_ci('github') then
         exec_lua [[vim.system = function() return { wait=function() return { code=3 } end } end]]
-        local has_gui = exec_lua([[return vim.fn.executable('xdg-open') == 1]])
-        if not has_gui then
-          exec_lua [[vim.ui._get_open_cmd = function() return {'xdg-open'}, nil end]]
-        end
       end
       if not is_os('bsd') then
-        local rv =
-          exec_lua [[local cmd = vim.ui.open('non-existent-file'); return cmd:wait(100).code]]
+        local rv = exec_lua([[
+          local orig = vim.ui._get_open_cmd
+          if vim.fn.executable('xdg-open') ~= 1 then
+            vim.ui._get_open_cmd = function() return {'xdg-open'}, nil end
+          end
+          local cmd = vim.ui.open('non-existent-file')
+          vim.ui._get_open_cmd = orig
+          return cmd:wait(100).code
+        ]])
         ok(type(rv) == 'number' and rv ~= 0, 'nonzero exit code', rv)
       end
 
