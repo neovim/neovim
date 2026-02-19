@@ -44,8 +44,8 @@ void nvim_error_event(uint64_t channel_id, Integer type, String msg)
   ELOG("async error on channel %" PRId64 ": %s", channel_id, msg.size ? msg.data : "");
 }
 
-/// Emitted by the server to notify a waiting --remote-wait client that a buffer
-/// was unloaded. Decrements the pending buffer count; when it reaches zero the
+/// Emitted by the server to notify a waiting --remote client that a buffer was
+/// unloaded. Decrements the pending buffer count; when it reaches zero the
 /// client exits with code 0.
 ///
 /// @param channel_id
