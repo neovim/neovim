@@ -203,6 +203,29 @@ func Test_syn_and_match_conceal()
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 18))
   call assert_notequal(screenattr(lnum, 18), screenattr(lnum, 19))
 
+  5new | setlocal conceallevel=2 concealcursor=n
+  redraw!
+  call assert_equal(expect, Screenline(6 + lnum))
+
+  " Syntax conceal shouldn't interfere with matchadd() in another buffer.
+  call setline(1, 'foo bar baz')
+  call matchadd('Conceal', 'bar')
+  redraw!
+  call assert_equal('foo  baz', Screenline(1))
+  call assert_equal(expect, Screenline(6 + lnum))
+
+  " Syntax conceal shouldn't interfere with matchadd() in the same buffer.
+  syntax match MyOtherConceal /foo/ conceal cchar=!
+  redraw!
+  call assert_equal('!  baz', Screenline(1))
+  call assert_equal(expect, Screenline(6 + lnum))
+
+  syntax clear
+  redraw!
+  call assert_equal('foo  baz', Screenline(1))
+  call assert_equal(expect, Screenline(6 + lnum))
+  bwipe!
+
   "             123456789012345678
   let expect = '# ThisXis a Test'
   syntax clear MyConceal
