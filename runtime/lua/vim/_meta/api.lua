@@ -946,7 +946,10 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
 --- - group (string|integer) optional: autocommand group name or id to match against.
---- - pattern (string|array) optional: pattern(s) to match literally `autocmd-pattern`.
+--- - pattern (string|table) optional: pattern(s) to match literally
+--- `autocmd-pattern` provided as a string or an array of strings, or
+---   a single table of the form `{ glob = '<glob>' }` to compile an LSP-style glob
+---   pattern (using `vim.glob`). Only a single `glob` string is accepted.
 --- - buffer (integer) optional: buffer number for buffer-local autocommands
 --- `autocmd-buflocal`. Cannot be used with {pattern}.
 --- - desc (string) optional: description (for documentation and troubleshooting).
