@@ -378,7 +378,7 @@ function M.inspect_tree(opts)
   local opts_title = opts.title
   if not opts_title then
     local bufname = api.nvim_buf_get_name(buf)
-    title = ('Syntax tree for %s'):format(vim.fs.relpath('.', bufname))
+    title = ('Syntax tree for %s'):format(vim.fs.relpath('.', bufname) or bufname)
   elseif type(opts_title) == 'function' then
     title = opts_title(buf)
   end
