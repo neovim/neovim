@@ -10,7 +10,7 @@ set(TEST_OPTIONS
       -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
       -D NVIM_PRG=$<TARGET_FILE:nvim_bin>
       -D TEST_DIR=${TEST_DIR}
-      -D WORKING_DIR=${PROJECT_SOURCE_DIR})
+      -D ROOT_DIR=${PROJECT_SOURCE_DIR})
 
 check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
 if(LUA_HAS_FFI)

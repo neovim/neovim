@@ -1083,8 +1083,8 @@ describe('vim.pack', function()
     end)
 
     it('is not affected by special environment variables', function()
-      fn.setenv('GIT_WORK_TREE', fn.getcwd())
-      fn.setenv('GIT_DIR', vim.fs.joinpath(fn.getcwd(), '.git'))
+      fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
+      fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
       local ref_environ = fn.environ()
 
       vim_pack_add({ repos_src.basic })
@@ -1889,8 +1889,8 @@ describe('vim.pack', function()
     end)
 
     it('is not affected by special environment variables', function()
-      fn.setenv('GIT_WORK_TREE', fn.getcwd())
-      fn.setenv('GIT_DIR', vim.fs.joinpath(fn.getcwd(), '.git'))
+      fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
+      fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
       local ref_environ = fn.environ()
 
       vim_pack_add({ repos_src.fetch })
