@@ -1570,6 +1570,11 @@ end
 ---@param handler (lsp.Handler) See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
+  vim.deprecate(
+    'vim.lsp.with()',
+    'Pass the configuration to equivalent functions in `vim.lsp.buf`',
+    '0.12'
+  )
   return function(err, result, ctx, config)
     return handler(err, result, ctx, vim.tbl_deep_extend('force', config or {}, override_config))
   end
