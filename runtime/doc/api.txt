@@ -555,9 +555,9 @@ nvim_error_event({type}, {msg})                             *nvim_error_event*
 nvim_remote_wait_done()                              *nvim_remote_wait_done()*
     WARNING: This feature is experimental/unstable.
 
-    Emitted by the server to notify a waiting --remote-wait client that a
-    buffer was unloaded. Decrements the pending buffer count; when it reaches
-    zero the client exits with code 0.
+    Emitted by the server to notify a waiting --remote client that a buffer
+    was unloaded. Decrements the pending buffer count; when it reaches zero
+    the client exits with code 0.
 
     Attributes: ~
         |RPC| only
