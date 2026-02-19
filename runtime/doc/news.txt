@@ -233,8 +233,7 @@ EVENTS
 • A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
 • |CmdlineLeave| sets |v:char| to the character that stops the Cmdline mode.
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
-• New `append` parameter for |ui-messages| `msg_show` event.
-• New `msg_id` parameter for |ui-messages| `msg_show` event.
+• New `append`, `id` and `typed_cmd` parameter for |ui-messages| `msg_show` event.
 • 'rulerformat' is emitted as `msg_ruler` when not part of the statusline.
 • Creating or updating a progress message with |nvim_echo()| triggers a |Progress| event.
 • |MarkSet| is triggered after a |mark| is set by the user (currently doesn't

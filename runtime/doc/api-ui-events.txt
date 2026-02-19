@@ -821,9 +821,9 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last, history, append, msg_id] ~
+["msg_show", kind, content, replace_last, history, append, id, typed_cmd] ~
 	Display a message to the user. Update (replace) any existing message
-	matching `msg_id`.
+	matching `id`.
 
 	kind
 	    Name indicating the message kind:
@@ -879,9 +879,13 @@ must handle.
 	    True if the message should be appended to the previous message,
 	    rather than started on a new line. Is set for |:echon|.
 
-	msg_id
+	id
 	    Unique identifier for the message. It can either be an integer or
-	    string. When message of same id appears it should replace the older message.
+	    string. A (visible) message with the same id should be replaced.
+
+	typed_cmd
+	    True if the message was emitted directly as a result of a typed
+	    command in the |cmdline|.
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show", emitted after

@@ -671,7 +671,7 @@ screen:redraw_debug() to show all intermediate screen states.]]
     -- the ext_ feature being disabled, or the feature currently not activated
     -- (e.g. no external cmdline visible). Some extensions require
     -- preprocessing to represent highlights in a reproducible way.
-    local extstate = self:_extstate_repr(attr_state)
+    local extstate = self:_extstate_repr(attr_state, expected)
     if expected.mode ~= nil then
       extstate.mode = self.mode
     end
@@ -1440,7 +1440,7 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id, progress)
+function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id, typed_cmd)
   local pos = #self.messages
   if not replace_last or pos == 0 then
     pos = pos + 1
@@ -1451,7 +1451,7 @@ function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id
     history = history,
     append = append,
     id = id,
-    progress = progress,
+    typed_cmd = typed_cmd,
   }
 end
 
@@ -1560,7 +1560,7 @@ local function hl_id_to_name(self, id)
   return id and self.hl_names[id] or nil
 end
 
-function Screen:_extstate_repr(attr_state)
+function Screen:_extstate_repr(attr_state, exp)
   local cmdline = {}
   for i, entry in pairs(self.cmdline) do
     entry = shallowcopy(entry)
@@ -1578,13 +1578,18 @@ function Screen:_extstate_repr(attr_state)
 
   local messages = {}
   for i, entry in ipairs(self.messages) do
+    local typed_cmd = nil
+    if exp and exp.messages and exp.messages[i] and exp.messages[i].typed_cmd ~= nil then
+      -- Late addition, only include when expected state includes it.
+      typed_cmd = entry.typed_cmd
+    end
     messages[i] = {
       kind = entry.kind,
       content = self:_chunks_repr(entry.content, attr_state),
       history = entry.history or nil,
       append = entry.append or nil,
       id = entry.kind == 'progress' and entry.id or nil,
-      progress = entry.kind == 'progress' and entry.progress or nil,
+      typed_cmd = typed_cmd,
     }
   end
 

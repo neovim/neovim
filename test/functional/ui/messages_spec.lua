@@ -1615,6 +1615,34 @@ stack traceback:
       },
     })
   end)
+
+  it('typed_cmd', function()
+    command('echo "foo"')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = { { content = { { 'foo' } }, kind = 'echo', typed_cmd = false } },
+    })
+    command('map Q :echo "foo"<CR>')
+    feed('Q')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = { { content = { { 'foo' } }, kind = 'echo', typed_cmd = false } },
+    })
+    feed(':echo "foo"<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = { { content = { { 'foo' } }, kind = 'echo', typed_cmd = true } },
+    })
+  end)
 end)
 
 describe('ui/builtin messages', function()
