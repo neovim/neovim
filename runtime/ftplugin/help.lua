@@ -125,7 +125,7 @@ local function urls()
   local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
 
   if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
-    local base = 'https://neovim.io/doc/user/helptag.html?tag='
+    local base = 'https://neovim.io/doc/user/helptag/?tag='
     local query = vim.treesitter.query.parse(
       'vimdoc',
       [[
