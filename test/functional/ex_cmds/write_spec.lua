@@ -19,15 +19,10 @@ local fname_broken = fname_bak .. 'broken'
 
 describe(':write', function()
   local function cleanup()
-    os.remove('test_bkc_file.txt')
-    os.remove('test_bkc_link.txt')
-    os.remove('test_fifo')
-    os.remove('test/write/p_opt.txt')
-    os.remove('test/write')
-    os.remove('test/write2/p_opt.txt')
-    os.remove('test/write2/p_opt2.txt')
-    os.remove('test/write2')
-    os.remove('test')
+    n.rmdir('Xtest_write')
+    os.remove('Xtest_bkc_file.txt')
+    os.remove('Xtest_bkc_link.txt')
+    os.remove('Xtest_fifo')
     os.remove(fname)
     os.remove(fname_bak)
     os.remove(fname_broken)
@@ -42,43 +37,43 @@ describe(':write', function()
 
   it('&backupcopy=auto preserves symlinks', function()
     command('set backupcopy=auto')
-    write_file('test_bkc_file.txt', 'content0')
+    write_file('Xtest_bkc_file.txt', 'content0')
     if is_os('win') then
-      command('silent !mklink test_bkc_link.txt test_bkc_file.txt')
+      command('silent !mklink Xtest_bkc_link.txt Xtest_bkc_file.txt')
     else
-      command('silent !ln -s test_bkc_file.txt test_bkc_link.txt')
+      command('silent !ln -s Xtest_bkc_file.txt Xtest_bkc_link.txt')
     end
     if eval('v:shell_error') ~= 0 then
       pending('Cannot create symlink')
     end
     source([[
-      edit test_bkc_link.txt
+      edit Xtest_bkc_link.txt
       call setline(1, ['content1'])
       write
     ]])
-    eq(eval("['content1']"), eval("readfile('test_bkc_file.txt')"))
-    eq(eval("['content1']"), eval("readfile('test_bkc_link.txt')"))
+    eq(eval("['content1']"), eval("readfile('Xtest_bkc_file.txt')"))
+    eq(eval("['content1']"), eval("readfile('Xtest_bkc_link.txt')"))
   end)
 
   it('&backupcopy=no replaces symlink with new file', function()
     skip(is_ci('cirrus'))
     command('set backupcopy=no')
-    write_file('test_bkc_file.txt', 'content0')
+    write_file('Xtest_bkc_file.txt', 'content0')
     if is_os('win') then
-      command('silent !mklink test_bkc_link.txt test_bkc_file.txt')
+      command('silent !mklink Xtest_bkc_link.txt Xtest_bkc_file.txt')
     else
-      command('silent !ln -s test_bkc_file.txt test_bkc_link.txt')
+      command('silent !ln -s Xtest_bkc_file.txt Xtest_bkc_link.txt')
     end
     if eval('v:shell_error') ~= 0 then
       pending('Cannot create symlink')
     end
     source([[
-      edit test_bkc_link.txt
+      edit Xtest_bkc_link.txt
       call setline(1, ['content1'])
       write
     ]])
-    eq(eval("['content0']"), eval("readfile('test_bkc_file.txt')"))
-    eq(eval("['content1']"), eval("readfile('test_bkc_link.txt')"))
+    eq(eval("['content0']"), eval("readfile('Xtest_bkc_file.txt')"))
+    eq(eval("['content1']"), eval("readfile('Xtest_bkc_link.txt')"))
   end)
 
   it('appends FIFO file', function()
@@ -88,14 +83,14 @@ describe(':write', function()
     end
 
     local text = 'some fifo text from write_spec'
-    assert(os.execute('mkfifo test_fifo'))
+    assert(os.execute('mkfifo Xtest_fifo'))
     insert(text)
 
     -- Blocks until a consumer reads the FIFO.
-    feed_command('write >> test_fifo')
+    feed_command('write >> Xtest_fifo')
 
     -- Read the FIFO, this will unblock the :write above.
-    local fifo = assert(io.open('test_fifo'))
+    local fifo = assert(io.open('Xtest_fifo'))
     eq(text .. '\n', fifo:read('*all'))
     fifo:close()
   end)
@@ -111,26 +106,26 @@ describe(':write', function()
     eq(1, eval("filereadable('p_opt.txt')"))
     os.remove('p_opt.txt')
 
-    eq(0, eval("filereadable('test/write/p_opt.txt')"))
-    command('write ++p test/write/p_opt.txt')
-    eq(1, eval("filereadable('test/write/p_opt.txt')"))
+    eq(0, eval("filereadable('Xtest_write/write/p_opt.txt')"))
+    command('write ++p Xtest_write/write/p_opt.txt')
+    eq(1, eval("filereadable('Xtest_write/write/p_opt.txt')"))
 
-    eq(0, eval("filereadable('test/write2/p_opt.txt')"))
-    eq(0, eval("filereadable('test/write2/p_opt2.txt')"))
-    eq(0, eval("filereadable('test/write3/p_opt3.txt')"))
-    command('file test/write2/p_opt.txt')
+    eq(0, eval("filereadable('Xtest_write/write2/p_opt.txt')"))
+    eq(0, eval("filereadable('Xtest_write/write2/p_opt2.txt')"))
+    eq(0, eval("filereadable('Xtest_write/write3/p_opt3.txt')"))
+    command('file Xtest_write/write2/p_opt.txt')
     command('set modified')
-    command('sp test/write2/p_opt2.txt')
+    command('sp Xtest_write/write2/p_opt2.txt')
     command('set modified')
-    command('sp test/write3/p_opt3.txt')
+    command('sp Xtest_write/write3/p_opt3.txt')
     -- don't set p_opt3.txt modified - assert it isn't written
     -- and that write3/ isn't created
     command('wall ++p')
-    eq(1, eval("filereadable('test/write2/p_opt.txt')"))
-    eq(1, eval("filereadable('test/write2/p_opt2.txt')"))
-    eq(0, eval("filereadable('test/write3/p_opt3.txt')"))
+    eq(1, eval("filereadable('Xtest_write/write2/p_opt.txt')"))
+    eq(1, eval("filereadable('Xtest_write/write2/p_opt2.txt')"))
+    eq(0, eval("filereadable('Xtest_write/write3/p_opt3.txt')"))
 
-    eq('Vim(write):E32: No file name', pcall_err(command, 'write ++p test_write/'))
+    eq('Vim(write):E32: No file name', pcall_err(command, 'write ++p Xotherdir/'))
     if not is_os('win') then
       eq(
         ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
@@ -280,27 +275,27 @@ end)
 describe(':update', function()
   before_each(function()
     clear()
-    fn.mkdir('test_dir', 'p')
+    fn.mkdir('Xtest_update', 'p')
   end)
 
   after_each(function()
-    fn.delete('test_dir', 'rf')
+    fn.delete('Xtest_update', 'rf')
   end)
 
   it('works for a new buffer', function()
-    command('edit test_dir/foo/bar/nonexist.taz | update ++p')
-    eq(1, eval("filereadable('test_dir/foo/bar/nonexist.taz')"))
+    command('edit Xtest_update/foo/bar/nonexist.taz | update ++p')
+    eq(1, eval("filereadable('Xtest_update/foo/bar/nonexist.taz')"))
   end)
 
   it('writes modified buffer', function()
-    command('edit test_dir/modified.txt')
+    command('edit Xtest_update/modified.txt')
     command('call setline(1, "hello world")')
     command('update')
-    eq({ 'hello world' }, fn.readfile('test_dir/modified.txt'))
+    eq({ 'hello world' }, fn.readfile('Xtest_update/modified.txt'))
   end)
 
   it('does not write unmodified existing file', function()
-    local filename = 'test_dir/existing.txt'
+    local filename = 'Xtest_update/existing.txt'
     local fd = io.open(filename, 'w')
     fd:write('content')
     fd:close()
@@ -311,10 +306,10 @@ describe(':update', function()
   end)
 
   it('creates parent directories with ++p', function()
-    command('edit test_dir/deep/nested/path/file.txt')
+    command('edit Xtest_update/deep/nested/path/file.txt')
     command('call setline(1, "content")')
     command('update ++p')
-    eq(1, eval("filereadable('test_dir/deep/nested/path/file.txt')"))
+    eq(1, eval("filereadable('Xtest_update/deep/nested/path/file.txt')"))
   end)
 
   it('fails gracefully for unnamed buffer', function()
@@ -324,7 +319,7 @@ describe(':update', function()
   end)
 
   it('respects readonly files', function()
-    local filename = 'test_dir/readonly.txt'
+    local filename = 'Xtest_update/readonly.txt'
     local fd = io.open(filename, 'w')
     fd:write('readonly content')
     fd:close()
@@ -337,33 +332,33 @@ describe(':update', function()
     )
 
     command('update!')
-    eq({ 'modified' }, fn.readfile('test_dir/readonly.txt'))
+    eq({ 'modified' }, fn.readfile('Xtest_update/readonly.txt'))
   end)
 
   it('can write line ranges', function()
-    command('edit test_dir/range.txt')
+    command('edit Xtest_update/range.txt')
     command('call setline(1, ["line1", "line2", "line3", "line4"])')
     command('2,3update!')
-    eq({ 'line2', 'line3' }, fn.readfile('test_dir/range.txt'))
+    eq({ 'line2', 'line3' }, fn.readfile('Xtest_update/range.txt'))
   end)
 
   it('can append to existing file', function()
-    local filename = 'test_dir/append.txt'
+    local filename = 'Xtest_update/append.txt'
     local fd = io.open(filename, 'w')
     fd:write('existing\n')
     fd:close()
-    command('edit test_dir/new_content.txt')
+    command('edit Xtest_update/new_content.txt')
     command('call setline(1, "new content")')
     command('update >> ' .. filename)
 
-    eq({ 'existing', 'new content' }, fn.readfile('test_dir/append.txt'))
+    eq({ 'existing', 'new content' }, fn.readfile('Xtest_update/append.txt'))
   end)
 
   it('triggers autocmds properly', function()
     command('autocmd BufWritePre * let g:write_pre = 1')
     command('autocmd BufWritePost * let g:write_post = 1')
 
-    command('edit test_dir/autocmd.txt')
+    command('edit Xtest_update/autocmd.txt')
     command('call setline(1, "trigger autocmds")')
     command('update')
 
