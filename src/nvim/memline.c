@@ -2000,10 +2000,10 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
   if (len == 0) {
     len = (colnr_T)strlen(line) + 1;            // space needed for the text
   }
-  int space_needed = len + (int)INDEX_SIZE;     // space needed for text + index
+  int64_t space_needed = len + (int64_t)INDEX_SIZE;  // space needed for text + index
 
   memfile_T *mfp = buf->b_ml.ml_mfp;
-  int page_size = (int)mfp->mf_page_size;
+  int64_t page_size = mfp->mf_page_size;
 
   // find the data block containing the previous line
   // This also fills the stack with the blocks from the root to the data block
@@ -2033,7 +2033,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
   // - appending to the last line in the block
   // - not appending to the last line in the file
   // insert in front of the next block.
-  if ((int)dp->db_free < space_needed && db_idx == line_count - 1
+  if ((int64_t)dp->db_free < space_needed && db_idx == line_count - 1
       && lnum < buf->b_ml.ml_line_count) {
     // Now that the line is not going to be inserted in the block that we
     // expected, the line count has to be adjusted in the pointer blocks
@@ -2057,7 +2057,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
   }
   buf->b_ml.ml_line_count++;
 
-  if ((int)dp->db_free >= space_needed) {       // enough room in data block
+  if ((int64_t)dp->db_free >= space_needed) {  // enough room in data block
     // Insert the new line in an existing data block, or in the data block
     // allocated above.
     dp->db_txt_start -= (unsigned)len;
@@ -2135,7 +2135,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
         data_moved = (int)(((dp->db_index[db_idx]) & DB_INDEX_MASK) -
                            dp->db_txt_start);
         total_moved = data_moved + lines_moved * (int)INDEX_SIZE;
-        if ((int)dp->db_free + total_moved >= space_needed) {
+        if ((int64_t)dp->db_free + total_moved >= space_needed) {
           in_left = true;               // put new line in left block
           space_needed = total_moved;
         } else {
@@ -2145,7 +2145,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
       }
     }
 
-    int page_count = ((space_needed + (int)HEADER_SIZE) + page_size - 1) / page_size;
+    int64_t page_count = ((space_needed + (int64_t)HEADER_SIZE) + page_size - 1) / page_size;
     hp_new = ml_new_data(mfp, flags & ML_APPEND_NEW, page_count);
     if (db_idx < 0) {           // left block is new
       hp_left = hp_new;
@@ -2939,7 +2939,7 @@ static void ml_flush_line(buf_T *buf, bool noalloc)
 }
 
 /// create a new, empty, data block
-static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int page_count)
+static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int64_t page_count)
 {
   assert(page_count >= 0);
   bhdr_T *hp = mf_new(mfp, negative, (unsigned)page_count);
