@@ -35,6 +35,37 @@ describe('vim.treesitter.inspect_tree', function()
       ]]
   end)
 
+  it('sets correct buffer name', function()
+    t.skip(t.is_zig_build(), 'vim.treesitter not found after chdir with build.zig')
+
+    n.api.nvim_set_current_dir('test/functional/fixtures')
+    n.command('edit lua/syntax_error.lua')
+    eq('lua/syntax_error.lua', n.fn.bufname('%'))
+    local full_path = n.api.nvim_buf_get_name(0)
+
+    n.exec_lua('vim.treesitter.start(0, "lua")')
+    n.exec_lua('vim.treesitter.inspect_tree()')
+    local expected = [[
+      (chunk ; [0, 0] - [1, 0]
+        (ERROR ; [0, 0] - [0, 21]
+          (identifier) ; [0, 5] - [0, 8]
+          (identifier) ; [0, 9] - [0, 15]
+          (identifier))) ; [0, 16] - [0, 21]
+      ]]
+    expect_tree(expected)
+    eq('Syntax tree for lua/syntax_error.lua', n.fn.bufname('%'))
+
+    n.command('bwipe!')
+    eq('lua/syntax_error.lua', n.fn.bufname('%'))
+
+    n.api.nvim_set_current_dir('pack')
+    eq(full_path, n.fn.bufname('%'))
+
+    n.exec_lua('vim.treesitter.inspect_tree()')
+    expect_tree(expected)
+    eq('Syntax tree for ' .. full_path, n.fn.bufname('%'))
+  end)
+
   it('can toggle to show anonymous nodes', function()
     insert([[
       print('hello')
