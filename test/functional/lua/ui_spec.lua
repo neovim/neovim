@@ -141,6 +141,10 @@ describe('vim.ui', function()
     it('validation', function()
       if is_os('win') or not is_ci('github') then
         exec_lua [[vim.system = function() return { wait=function() return { code=3 } end } end]]
+        local has_gui = exec_lua([[return vim.fn.executable('xdg-open') == 1]])
+        if not has_gui then
+          exec_lua [[vim.ui._get_open_cmd = function() return {'xdg-open'}, nil end]]
+        end
       end
       if not is_os('bsd') then
         local rv =
