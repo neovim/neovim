@@ -13,6 +13,7 @@
 #include <uv.h>
 
 #ifdef MSWIN
+# include <io.h>
 # include <shlobj.h>
 #endif
 
@@ -483,9 +484,9 @@ FILE *os_fopen(const char *path, const char *flags)
   return fdopen(fd, flags);
 }
 
-/// Sets file descriptor `fd` to close-on-exec.
-//
-// @return -1 if failed to set, 0 otherwise.
+/// Sets file descriptor `fd` to close-on-exec (Unix) or non-inheritable (Windows).
+///
+/// @return -1 if failed to set, 0 otherwise.
 int os_set_cloexec(const int fd)
 {
 #ifdef HAVE_FD_CLOEXEC
@@ -505,11 +506,16 @@ int os_set_cloexec(const int fd)
     return -1;
   }
   return 0;
-#endif
-
-  // No FD_CLOEXEC flag. On Windows, the file should have been opened with
-  // O_NOINHERIT anyway.
+#elif defined(MSWIN)
+  HANDLE h = (HANDLE)_get_osfhandle(fd);
+  if (h == INVALID_HANDLE_VALUE
+      || !SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0)) {
+    return -1;
+  }
+  return 0;
+#else
   return -1;
+#endif
 }
 
 /// Close a file
