@@ -923,7 +923,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   if (has_input) {
     WBuffer *input_buffer = wstream_new_buffer((char *)input, len, 1, NULL);
 
-    if (!wstream_write(&proc->in, input_buffer)) {
+    if (wstream_write(&proc->in, input_buffer) != 0) {
       // couldn't write, stop the process and tell the user about it
       proc_stop(proc);
       goto end;

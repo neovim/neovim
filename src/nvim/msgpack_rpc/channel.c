@@ -393,7 +393,7 @@ bool rpc_write_raw(uint64_t id, WBuffer *buffer)
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
 {
-  bool success;
+  int err = 0;
 
   if (channel->rpc.closed) {
     wstream_release_wbuffer(buffer);
@@ -403,24 +403,24 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
   if (channel->streamtype == kChannelStreamInternal) {
     channel_incref(channel);
     CREATE_EVENT(channel->events, internal_read_event, channel, buffer);
-    success = true;
   } else {
     Stream *in = channel_instream(channel);
-    success = wstream_write(in, buffer);
+    err = wstream_write(in, buffer);
   }
 
-  if (!success) {
+  if (err != 0) {
     // If the write failed for any reason, close the channel
     char buf[256];
     snprintf(buf,
              sizeof(buf),
-             "ch %" PRIu64 ": stream write failed. "
+             "ch %" PRIu64 ": stream write failed: %s. "
              "RPC canceled; closing channel",
-             channel->id);
-    chan_close_on_err(channel, buf, LOGLVL_ERR);
+             channel->id, os_strerror(err));
+    // UV_EPIPE can happen if pipe is closed by peer and shouldn't be an error.
+    chan_close_on_err(channel, buf, err == UV_EPIPE ? LOGLVL_INF : LOGLVL_ERR);
   }
 
-  return success;
+  return err == 0;
 }
 
 static void internal_read_event(void **argv)
