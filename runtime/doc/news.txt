@@ -248,6 +248,8 @@ HIGHLIGHTS
 • |hl-OkMsg| |hl-StderrMsg| |hl-StdoutMsg|
 • |hl-SnippetTabstopActive| highlights the currently active tabstop.
 • |hl-PmenuBorder| |hl-PmenuShadow| |hl-PmenuShadowThrough| see 'pumborder'.
+• |nvim_set_hl()| and |nvim_get_hl()| support the SGR attributes "dim",
+  "blink", "conceal", and "overline".
 
 LSP
 
@@ -404,6 +406,8 @@ TUI
 • |TermResponse| now supports DA1 and APC query responses.
 • Native progress bars are displayed for |Progress| events using the OSC 9;4
   sequence.
+• The TUI now renders the SGR dim (faint), blink, conceal, and overline
+  attributes.
 
 UI
 
