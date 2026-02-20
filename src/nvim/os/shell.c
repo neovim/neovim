@@ -415,7 +415,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   os_remove(tempname);
   if (readlen != len) {
     // unexpected read error
-    semsg(_(e_notread), tempname);
+    semsg(_(e_cant_read_file_str), tempname);
     xfree(tempname);
     xfree(buffer);
     return FAIL;
@@ -809,7 +809,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   fclose(fd);
   os_remove(tempname);
   if (i != len) {
-    semsg(_(e_notread), tempname);
+    semsg(_(e_cant_read_file_str), tempname);
     XFREE_CLEAR(buffer);
   } else if (ret_len == NULL) {
     // Change NUL into SOH, otherwise the string is truncated.
