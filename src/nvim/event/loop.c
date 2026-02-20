@@ -124,7 +124,11 @@ void loop_on_put(MultiQueue *queue, void *data)
   // of the queues, the event would only be processed after the poll
   // returns (user hits a key for example). To avoid this scenario, we call
   // uv_stop when a event is enqueued.
-  uv_stop(&loop->uv);
+  // Only call uv_stop() when the loop is actually running, otherwise it will
+  // instead make the next uv_run() stop immediately.
+  if (loop->recursive) {
+    uv_stop(&loop->uv);
+  }
 }
 
 #if !defined(EXITFREE)
