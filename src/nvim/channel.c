@@ -755,8 +755,8 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
   bool exited = (status >= 0);
   if (exited && chan->on_exit.type != kCallbackNone) {
     schedule_channel_event(chan);
-    chan->exit_status = status;
   }
+  chan->exit_status = (exited) ? status : chan->exit_status;
 
   channel_decref(chan);
 }
@@ -974,6 +974,7 @@ Dict channel_info(uint64_t id, Arena *arena)
   } else if (chan->term) {
     mode_desc = "terminal";
     PUT_C(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
+    PUT_C(info, "code", INTEGER_OBJ(chan->exit_status));
   } else {
     mode_desc = "bytes";
   }
