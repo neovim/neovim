@@ -117,8 +117,8 @@ describe('command-line option', function()
       )
       feed('i:cq<CR>')
       screen:expect([[
-                                                |
-        [Process exited 1]^                      |
+        ^                                        |
+        [Process exited 1]                      |
                                                 |*5
         {5:-- TERMINAL --}                          |
       ]])

@@ -2477,7 +2477,7 @@ describe('ui/msg_puts_printf', function()
       ^Exモードに入ります。ノー |
       マルモードに戻るには "vis|
       ual" と入力してください。|
-      :                        |
+      [Process exited 0]       |
                                |
     ]])
   end)

@@ -1370,8 +1370,8 @@ describe('jobs', function()
 
     feed(':q<CR>')
     screen:expect([[
-                                                        |
-      [Process exited 0]^                                |
+      ^                                                  |
+      [Process exited 0]                                |
                                                         |*4
       {5:-- TERMINAL --}                                    |
     ]])
