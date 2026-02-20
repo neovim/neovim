@@ -82,6 +82,40 @@ describe('ui/img', function()
     eq(img_file, info.filename)
   end)
 
+  describe('provider', function()
+    it('defaults to kitty', function()
+      local provider = exec_lua(function()
+        return vim.ui.img.provider
+      end)
+      eq('kitty', provider)
+    end)
+
+    it('works with builtin alias', function()
+      setup_img_api()
+      local image_id = exec_lua(function()
+        vim.ui.img.provider = 'kitty'
+        return vim.ui.img.load(img_file)
+      end)
+
+      local info = exec_lua(function()
+        return vim.ui.img.get(image_id)
+      end)
+      eq(img_file, info.filename)
+    end)
+
+    it('errors on invalid provider', function()
+      local ok, err = exec_lua(function()
+        vim.ui.img.provider = 'nonexistent'
+        return pcall(vim.ui.img.load, img_file)
+      end)
+      eq(false, ok)
+      assert(
+        err:find('nonexistent'),
+        'expected error to mention module name, got: ' .. tostring(err)
+      )
+    end)
+  end)
+
   describe('kitty protocol', function()
     before_each(function()
       setup_img_api()
