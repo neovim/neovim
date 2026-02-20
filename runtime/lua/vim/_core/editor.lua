@@ -1216,15 +1216,18 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
   end
 
   local i = remote_arg_idx + 1
+  local remote_had_minmin = false
   while i <= #args do
     local arg = args[i] --- @type string
-    if arg:sub(1, 1) == '+' then
+    if not remote_had_minmin and arg == '--' then
+      remote_had_minmin = true
+    elseif not remote_had_minmin and arg:sub(1, 1) == '+' then
       if arg:sub(2) == 'async' then
         f_async = true
       end
-    elseif arg == '-c' then
+    elseif not remote_had_minmin and arg == '-c' then
       i = i + 1
-    elseif arg:sub(1, 2) == '-c' and #arg > 2 then
+    elseif not remote_had_minmin and arg:sub(1, 2) == '-c' and #arg > 2 then
     else
       table.insert(files, arg)
     end
@@ -1232,7 +1235,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
   end
 
   local function run_remote_cmds()
-    for _, cmd in ipairs(cmds) do
+    for idx, cmd in ipairs(cmds) do
       if is_quit_cmd(cmd) then
         local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_command', cmd)
         if not ok then
@@ -1244,7 +1247,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
       else
         local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_exec2', cmd, { output = true })
         if not ok then
-          if i == #cmds and tostring(result):find('closed by the peer', 1, true) then
+          if idx == #cmds and tostring(result):find('closed by the peer', 1, true) then
             break
           end
           error(result)
