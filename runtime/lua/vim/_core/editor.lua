@@ -1166,9 +1166,15 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
 
   local files = {}
   local cmds = {}
+  local f_async = false
   for i = 2, #args do
     if args[i]:sub(1, 1) == '+' then
-      table.insert(cmds, args[i]:sub(2))
+      local cmd = args[i]:sub(2)
+      if cmd == 'async' then
+        f_async = true
+      else
+        table.insert(cmds, cmd)
+      end
     else
       table.insert(files, args[i])
     end
@@ -1179,6 +1185,17 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
   end
 
   if #files == 0 then
+    for _, cmd in ipairs(cmds) do
+      vim.fn.rpcrequest(rcid, 'nvim_command', cmd)
+    end
+    return { should_exit = true }
+  end
+
+  if f_async then
+    for _, file in ipairs(files) do
+      local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(file)
+      vim.fn.rpcrequest(rcid, 'nvim_command', open_cmd)
+    end
     for _, cmd in ipairs(cmds) do
       vim.fn.rpcrequest(rcid, 'nvim_command', cmd)
     end
