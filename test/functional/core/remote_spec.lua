@@ -45,8 +45,9 @@ describe('Remote', function()
     --- @param args string[]
     --- @param file string|nil
     --- @param action_fn fun()|nil
+    --- @param wait_ms integer|nil
     --- @return integer, string, string
-    local function run_remote(args, file, action_fn)
+    local function run_remote(args, file, action_fn, wait_ms)
       set_session(server)
       local addr = fn.serverlist()[1] --- @type string
 
@@ -99,7 +100,8 @@ describe('Remote', function()
       end
 
       set_session(helper)
-      local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, 3000)')[1] --- @type integer
+      local timeout = wait_ms or 3000
+      local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, ...)', timeout)[1] --- @type integer
       local stdout = exec_lua('return _G.Remote_stdout') --- @type string
       local stderr = exec_lua('return _G.Remote_stderr') --- @type string
       helper:close()
@@ -136,7 +138,7 @@ describe('Remote', function()
     it('does not exit until all files are closed', function()
       local code, _, _ = run_remote({ '--remote', fname, other_fname }, other_fname, function()
         command('bdelete!')
-      end)
+      end, 100)
       eq(-1, code)
     end)
 
@@ -313,7 +315,7 @@ describe('Remote', function()
       local code, _, _ = run_remote({ '--remote', fname }, fname, function()
         command('set hidden')
         command('enew')
-      end)
+      end, 100)
       eq(-1, code)
     end)
 
