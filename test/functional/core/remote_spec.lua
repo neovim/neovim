@@ -12,6 +12,7 @@ local insert = n.insert
 local nvim_prog = n.nvim_prog
 local neq = t.neq
 local new_session = n.new_session
+local retry = t.retry
 local set_session = n.set_session
 local tmpname = t.tmpname
 local write_file = t.write_file
@@ -38,6 +39,36 @@ describe('Remote', function()
     after_each(function()
       server:close()
     end)
+
+    --- @param p string
+    --- @return string
+    local function normalized_path(p)
+      local normalized = fn.fnamemodify(p, ':p')
+      if fn.has('win32') == 1 then
+        normalized = normalized:gsub('\\', '/'):lower()
+      end
+      return normalized
+    end
+
+    --- @param a string
+    --- @param b string
+    --- @return boolean
+    local function path_eq(a, b)
+      return normalized_path(a) == normalized_path(b)
+    end
+
+    --- @param file string
+    local function wait_for_file_open(file)
+      local want = normalized_path(file)
+      retry(nil, 5000, function()
+        for _, info in ipairs(fn.getbufinfo()) do
+          if path_eq(info.name, want) then
+            return
+          end
+        end
+        error('file not found yet: ' .. want)
+      end)
+    end
 
     -- Run a `nvim --remote` command asynchronously, wait for the given file to
     -- appear in the server, run action_fn on the server, then wait for the
@@ -72,26 +103,8 @@ describe('Remote', function()
       )
 
       if file then
-        exec_lua(
-          [[
-            local addr, file = ...
-            local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
-            local deadline = vim.uv.now() + 5000
-            repeat
-              vim.uv.sleep(20)
-              local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
-              for _, b in ipairs(bufs) do
-                if vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b) == file then
-                  vim.fn.chanclose(chan)
-                  return
-                end
-              end
-            until vim.uv.now() >= deadline
-            vim.fn.chanclose(chan)
-          ]],
-          addr,
-          file
-        )
+        set_session(server)
+        wait_for_file_open(file)
       end
 
       set_session(server)
@@ -112,7 +125,7 @@ describe('Remote', function()
     --- @param s string
     --- @return string
     local function normalized_stdout(s)
-      return s:gsub('\r', ''):gsub('\n$', '')
+      return (s:gsub('\r', ''):gsub('\n$', ''))
     end
 
     it('edit a single file and wait for it to be closed', function()
@@ -327,7 +340,7 @@ describe('Remote', function()
         function()
           local found = false
           for _, info in ipairs(fn.getbufinfo()) do
-            if info.name == plus_file_abs then
+            if path_eq(info.name, plus_file_abs) then
               found = true
               break
             end
@@ -352,7 +365,7 @@ describe('Remote', function()
         function()
           local found = false
           for _, info in ipairs(fn.getbufinfo()) do
-            if info.name == minus_file_abs then
+            if path_eq(info.name, minus_file_abs) then
               found = true
               break
             end
@@ -418,26 +431,9 @@ describe('Remote', function()
       )
 
       if file then
-        exec_lua(
-          [[
-            local addr, file = ...
-            local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
-            local deadline = vim.uv.now() + 5000
-            repeat
-              vim.uv.sleep(20)
-              local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
-              for _, b in ipairs(bufs) do
-                if vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b) == file then
-                  vim.fn.chanclose(chan)
-                  return
-                end
-              end
-            until vim.uv.now() >= deadline
-            vim.fn.chanclose(chan)
-          ]],
-          addr,
-          file
-        )
+        set_session(server)
+        wait_for_file_open(file)
+        set_session(helper)
       end
 
       -- Wait for on_exit to fire (the job may have already exited).
