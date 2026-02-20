@@ -1171,8 +1171,11 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
   local exiting_cmds = {
     quit = true,
     qall = true,
+    exit = true,
     xit = true,
+    xall = true,
     wq = true,
+    wqall = true,
     cquit = true,
   } --- @type table<string, boolean>
 
@@ -1244,6 +1247,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
           end
           error(result)
         end
+        break
       else
         local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_exec2', cmd, { output = true })
         if not ok then

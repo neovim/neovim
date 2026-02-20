@@ -30,6 +30,8 @@ The following command line arguments are available:
 				executed on the server after opening the
 				files. Their output is written to stdout.
 				All other arguments are treated as filenames.
+				Use |--| before filenames to force literal
+				handling for names that start with "+" or "-c".
 				You cannot edit stdin this way |--|.
 				Use |-p| to open each file in a new tabpage: >
 				  nvim -p --server {addr} --remote {file} ...
