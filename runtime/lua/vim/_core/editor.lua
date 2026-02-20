@@ -1240,13 +1240,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
   local function run_remote_cmds()
     for idx, cmd in ipairs(cmds) do
       if is_quit_cmd(cmd) then
-        local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_command', cmd)
-        if not ok then
-          if tostring(result):find('closed by the peer', 1, true) then
-            break
-          end
-          error(result)
-        end
+        vim.fn.rpcnotify(rcid, 'nvim_command', cmd)
         break
       else
         local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_exec2', cmd, { output = true })
