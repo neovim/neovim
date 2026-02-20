@@ -164,6 +164,7 @@ API
   `style='minimal'` or `:setlocal statusline=` to hide the statusline.
 • Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
   execute code while nvim is blocking for input.
+• |nvim_set_hl()| supports updating specified attributes only.
 
 BUILD
 

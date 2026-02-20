@@ -221,7 +221,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
       fallback = false;
       Dict(highlight) dict = KEYDICT_INIT;
       if (api_dict_to_keydict(&dict, KeyDict_highlight_get_field, ret.data.dict, &err)) {
-        attrs = dict2hlattrs(&dict, true, &it.link_id, &err);
+        attrs = dict2hlattrs(&dict, true, &it.link_id, NULL, &err);
         fallback = GET_BOOL_OR_TRUE(&dict, highlight, fallback);
         tmp = dict.fallback;  // or false
         if (it.link_id >= 0) {
@@ -987,26 +987,30 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
   }
 }
 
-HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
+HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, HlAttrs *base, Error *err)
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, highlight, key)
   HlAttrs hlattrs = HLATTRS_INIT;
-  int32_t fg = -1;
-  int32_t bg = -1;
-  int32_t ctermfg = -1;
-  int32_t ctermbg = -1;
-  int32_t sp = -1;
-  int blend = -1;
-  int16_t mask = 0;
-  int16_t cterm_mask = 0;
+  int32_t fg = base ? base->rgb_fg_color : -1;
+  int32_t bg = base ? base->rgb_bg_color : -1;
+  int32_t ctermfg = base ? (base->cterm_fg_color == 0 ? -1 : base->cterm_fg_color - 1) : -1;
+  int32_t ctermbg = base ? (base->cterm_bg_color == 0 ? -1 : base->cterm_bg_color - 1) : -1;
+  int32_t sp = base ? base->rgb_sp_color : -1;
+  int blend = base ? base->hl_blend : -1;
+  int16_t mask = base ? base->rgb_ae_attr : 0;
+  int16_t cterm_mask = base ? base->cterm_ae_attr : 0;
   bool cterm_mask_provided = false;
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
-  if (d->name##extra) { \
-    if (flag & HL_UNDERLINE_MASK) { \
-      m &= ~HL_UNDERLINE_MASK; \
+  if (HAS_KEY_X(d, name)) { \
+    if (d->name##extra) { \
+      if (flag & HL_UNDERLINE_MASK) { \
+        m &= ~HL_UNDERLINE_MASK; \
+      } \
+      m |= flag; \
+    } else { \
+      m &= ~flag; \
     } \
-    m |= flag; \
   }
 
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
@@ -1089,6 +1093,17 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     }
 
     cterm_mask_provided = true;
+    cterm_mask = 0;
+
+#undef CHECK_FLAG
+#define CHECK_FLAG(d, m, name, extra, flag) \
+  if (d->name##extra) { \
+    if (flag & HL_UNDERLINE_MASK) { \
+      m &= ~HL_UNDERLINE_MASK; \
+    } \
+    m |= flag; \
+  }
+
     CHECK_FLAG(cterm, cterm_mask, reverse, , HL_INVERSE);
     CHECK_FLAG(cterm, cterm_mask, bold, , HL_BOLD);
     CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
