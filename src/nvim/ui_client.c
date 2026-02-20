@@ -320,14 +320,14 @@ void ui_client_event_restart(Array args)
   // NB: don't send nvim_ui_detach to server, as it may have already exited.
   // ui_client_detach();
 
-  // Save the arguments for ui_client_may_restart_server() later.
+  // Save the arguments for ui_client_attach_to_restarted_server() later.
   api_free_array(restart_args);
   restart_args = copy_array(args, NULL);
   restart_pending = true;
 }
 
 /// Called when the current server has exited.
-void ui_client_may_restart_server(void)
+void ui_client_attach_to_restarted_server(void)
 {
   if (!restart_pending) {
     return;

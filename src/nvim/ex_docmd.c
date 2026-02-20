@@ -5048,7 +5048,7 @@ static void ex_restart(exarg_T *eap)
 
   // Kill the new nvim server.
   const int pid = channel->stream.proc.pid;
-  if (!os_proc_tree_kill(pid, SIGKILL)) {
+  if (!os_proc_tree_kill(pid, SIGTERM)) {
     emsg("killing new nvim server failed");
   }
 }
