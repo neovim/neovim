@@ -971,7 +971,7 @@ int tv_list_slice_or_index(list_T *list, bool range, varnumber_T n1_arg, varnumb
 }
 
 typedef struct {
-  char *s;
+  String s;
   char *tofree;
 } Join;
 
@@ -995,25 +995,26 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
     if (got_int) {
       break;
     }
-    char *s;
-    size_t len;
-    s = encode_tv2echo(TV_LIST_ITEM_TV(item), &len);
-    if (s == NULL) {
+    String s;
+    s.data = encode_tv2echo(TV_LIST_ITEM_TV(item), &s.size);
+    if (s.data == NULL) {
       return FAIL;
     }
 
-    sumlen += len;
+    sumlen += s.size;
 
     Join *const p = GA_APPEND_VIA_PTR(Join, join_gap);
-    p->tofree = p->s = s;
+    p->s = s;
+    p->tofree = s.data;
 
     line_breakcheck();
   });
 
   // Allocate result buffer with its total size, avoid re-allocation and
   // multiple copy operations.  Add 2 for a tailing ']' and NUL.
+  size_t seplen = strlen(sep);
   if (join_gap->ga_len >= 2) {
-    sumlen += strlen(sep) * (size_t)(join_gap->ga_len - 1);
+    sumlen += seplen * (size_t)(join_gap->ga_len - 1);
   }
   ga_grow(gap, (int)sumlen + 2);
 
@@ -1021,12 +1022,12 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
     if (first) {
       first = false;
     } else {
-      ga_concat(gap, sep);
+      ga_concat_len(gap, sep, seplen);
     }
     const Join *const p = ((const Join *)join_gap->ga_data) + i;
 
-    if (p->s != NULL) {
-      ga_concat(gap, p->s);
+    if (p->s.data != NULL) {
+      ga_concat_len(gap, p->s.data, p->s.size);
     }
     line_breakcheck();
   }
@@ -1106,8 +1107,10 @@ void f_list2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char buf[MB_MAXBYTES + 1];
 
   TV_LIST_ITER_CONST(l, li, {
-    buf[utf_char2bytes((int)tv_get_number(TV_LIST_ITEM_TV(li)), buf)] = NUL;
-    ga_concat(&ga, buf);
+    const varnumber_T n = tv_get_number(TV_LIST_ITEM_TV(li));
+    const size_t buflen = (size_t)utf_char2bytes((int)n, buf);
+    buf[buflen] = NUL;
+    ga_concat_len(&ga, buf, buflen);
   });
   ga_append(&ga, NUL);
 
