@@ -43,19 +43,18 @@ describe(':edit term://*', function()
 
     local bufcontents = {}
     local winheight = api.nvim_win_get_height(0)
-    local buf_cont_start = rep - sb - winheight + 2
+    local buf_cont_start = rep - sb - winheight + 1
     for i = buf_cont_start, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
-    bufcontents[#bufcontents + 1] = '[Process exited 0]'
 
     local exp_screen = '\n'
     for i = 1, (winheight - 1) do
       local line = bufcontents[#bufcontents - winheight + i]
       exp_screen = (exp_screen .. line .. (' '):rep(columns - #line) .. '|\n')
     end
-    exp_screen = exp_screen .. '^[Process exited 0]  |\n'
+    exp_screen = exp_screen .. '^                    |\n'
 
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)

@@ -27,9 +27,11 @@ local is_ci = t.is_ci
 local is_os = t.is_os
 local new_pipename = n.new_pipename
 local set_session = n.set_session
+local get_session = n.get_session
 local write_file = t.write_file
 local eval = n.eval
 local assert_log = t.assert_log
+local expect_exitcode = tt.expect_exitcode
 
 local testlog = 'Xtest-tui-log'
 
@@ -49,8 +51,7 @@ describe('TUI', function()
       os.remove(testlog)
     end)
 
-    screen:expect({ any = vim.pesc('[Process exited 1]') })
-
+    expect_exitcode(1)
     -- When the address is very long, the error message may be only partly visible.
     if #addr_in_use <= 600 then
       screen:expect({
@@ -174,9 +175,7 @@ describe('TUI :detach', function()
     tt.feed_data('\027\027:detach\013')
     -- Note: "Process exited" message is misleading; tt.setup_child_nvim() sees the foreground
     -- process (client) exited, and doesn't know the server is still running?
-    screen:expect {
-      any = [[Process exited 0]],
-    }
+    expect_exitcode(0)
 
     child_uis --[[@type any[] ]] = ({ child_session:request('nvim_list_uis') })[2]
     eq(0, #child_uis)
@@ -503,7 +502,7 @@ describe('TUI :connect', function()
 
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
-    screen2:expect({ any = vim.pesc('[Process exited 0]') })
+    expect_exitcode(0)
 
     screen2:detach()
 
@@ -547,7 +546,7 @@ describe('TUI :connect', function()
 
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
-    screen2:expect({ any = vim.pesc('[Process exited 0]') })
+    expect_exitcode(0)
 
     screen2:detach()
   end)
@@ -2517,13 +2516,15 @@ describe('TUI', function()
 
   it('no assert failure on deadly signal #21896', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
-      Nvim: Caught deadly signal 'SIGTERM'              |
-                                                        |
-      [Process exited 1]^                                |
-                                                        |*3
-      {5:-- TERMINAL --}                                    |
-    ]])
+    if not is_os('win') then
+      screen:expect([[
+        Nvim: Caught deadly signal 'SIGTERM'              |
+        ^                                                  |
+                                                          |*4
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end
+    expect_exitcode(1)
   end)
 
   it('exit status 1 and error message with deadly signal sent to server', function()
@@ -2532,7 +2533,7 @@ describe('TUI', function()
     if not is_os('win') then
       screen:expect({ any = vim.pesc([[Nvim: Caught deadly signal 'SIGTERM']]) })
     end
-    screen:expect({ any = vim.pesc('[Process exited 1]') })
+    expect_exitcode(1)
   end)
 
   it('exits immediately when stdin is closed #35744', function()
@@ -2542,7 +2543,7 @@ describe('TUI', function()
     retry(nil, 50, function()
       eq(vim.NIL, api.nvim_get_proc(pid))
     end)
-    screen:expect({ any = vim.pesc('[Process exited 1]') })
+    expect_exitcode(1)
   end)
 
   it('exits properly when :quit non-last window in event handler #14379', function()
@@ -2554,11 +2555,11 @@ describe('TUI', function()
     ]]
     child_session:notify('nvim_exec_lua', code, {})
     screen:expect([[
-                                                        |
-      [Process exited 0]^                                |
-                                                        |*4
+      ^                                                  |
+                                                        |*5
       {5:-- TERMINAL --}                                    |
     ]])
+    expect_exitcode(0)
   end)
 
   it('no stack-use-after-scope with cursor color #22432', function()
@@ -2963,11 +2964,11 @@ describe('TUI', function()
       :w testF                                          |
       :q                                                |
       abc                                               |
-                                                        |
-      [Process exited 0]^                                |
-                                                        |
+      ^                                                  |
+                                                        |*2
       {5:-- TERMINAL --}                                    |
     ]])
+    expect_exitcode(0)
     assert_log('TUI: timed out waiting for DA1 response', testlog)
   end)
 
@@ -3275,9 +3276,7 @@ describe('TUI FocusGained/FocusLost', function()
     -- Wait for terminal to be ready.
     screen:expect([[
       ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
+                                                        |*4
       :terminal zia                                     |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -3286,9 +3285,7 @@ describe('TUI FocusGained/FocusLost', function()
     screen:expect {
       grid = [[
       ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
+                                                        |*4
       gained                                            |
       {5:-- TERMINAL --}                                    |
     ]],
@@ -3298,9 +3295,7 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data('\027[O')
     screen:expect([[
       ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
+                                                        |*4
       lost                                              |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -4162,7 +4157,7 @@ describe('TUI client', function()
   end)
 
   it(':restart works when connecting to remote instance (with its own TUI)', function()
-    local _, screen_server, screen_client = start_tui_and_remote_client()
+    local server_super, _, screen_client = start_tui_and_remote_client()
 
     -- Run :restart on the remote client.
     -- The remote client should start a new server while the original one should exit.
@@ -4174,13 +4169,16 @@ describe('TUI client', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
+    local save_session = get_session()
+    set_session(server_super)
+    expect_exitcode(0)
+    set_session(save_session)
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
 
     feed_data(':q!\r')
-    screen_client:expect({ any = vim.pesc('[Process exited 0]') })
+    expect_exitcode(0)
   end)
 
   local function start_headless_server_and_client(use_testlog)
@@ -4228,13 +4226,15 @@ describe('TUI client', function()
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen_client:expect(is_os('win') and { any = '%[Process exited 1%]' } or [[
-      Nvim: Caught deadly signal 'SIGTERM'              |
-                                                        |
-      [Process exited 1]^                                |
-                                                        |*3
-      {5:-- TERMINAL --}                                    |
-    ]])
+    if not is_os('win') then
+      screen_client:expect([[
+        Nvim: Caught deadly signal 'SIGTERM'              |
+        ^                                                  |
+                                                          |*4
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end
+    expect_exitcode(1)
 
     eq(0, api.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
@@ -4279,7 +4279,7 @@ describe('TUI client', function()
     screen_client:expect({ any = 'GUI Running: 0' })
 
     feed_data(':q!\r')
-    screen_client:expect({ any = vim.pesc('[Process exited 0]') })
+    expect_exitcode(0)
   end)
 
   local ffi_str_defs = [[
@@ -4355,22 +4355,24 @@ describe('TUI client', function()
 
     screen:expect([[
       Remote ui failed to start: {MATCH:.*}|
-                                                                  |
-      [Process exited 1]^                                          |
-                                                                  |*3
+      ^                                                            |
+                                                                  |*4
       {5:-- TERMINAL --}                                              |
     ]])
+    expect_exitcode(1)
   end)
 
   local function test_remote_tui_quit(status)
-    local server_super, screen_server, screen_client = start_tui_and_remote_client()
+    local server_super, _, _ = start_tui_and_remote_client()
 
+    local save_session = get_session()
     -- quitting the server
     set_session(server_super)
     feed_data(status and ':' .. status .. 'cquit!\n' or ':quit!\n')
     status = status and status or 0
-    screen_server:expect({ any = 'Process exited ' .. status })
-    screen_client:expect({ any = 'Process exited ' .. status })
+    expect_exitcode(status)
+    set_session(save_session)
+    expect_exitcode(status)
   end
 
   describe('exits when server quits', function()
@@ -4444,7 +4446,8 @@ describe('TUI client', function()
     screen_server:expect({ grid = screen_normal, unchanged = true })
 
     feed_data(':quit!\r')
-    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
-    screen_client:expect({ any = vim.pesc('[Process exited 0]') })
+    expect_exitcode(0)
+    set_session(server_super)
+    expect_exitcode(0)
   end)
 end)

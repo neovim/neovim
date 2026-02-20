@@ -81,4 +81,22 @@ function M.source_is_lua(bufnr, line1, line2)
   return lang_tree:lang() == 'lua'
 end
 
+--- Returns the exit code string for the current buffer, given:
+--- - Channel is attached to the current buffer
+--- - Current buffer is a terminal buffer
+---
+--- @return string
+function M.term_exitcode()
+  local chan_id = vim.bo.channel
+  if chan_id == 0 or vim.bo.buftype ~= 'terminal' then
+    return ''
+  end
+
+  local info = vim.api.nvim_get_chan_info(chan_id)
+  if info.exitcode and info.exitcode >= 0 then
+    return string.format('[Exit: %d]', info.exitcode)
+  end
+  return ''
+end
+
 return M

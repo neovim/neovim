@@ -165,6 +165,7 @@ API
 • Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
   execute code while nvim is blocking for input.
 • |vim.secure.trust()| accepts `path` for the `allow` action.
+• |nvim_get_chan_info()| includes `exitcode` field for terminal buffers
 
 BUILD
 
@@ -192,6 +193,7 @@ DEFAULTS
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
 • 'shada' default now excludes "/tmp/" and "/private/" paths to reduce clutter in |:oldfiles|.
 • Enabled treesitter highlighting for Markdown files
+• 'statusline' shows exit code of finished terminal buffers
 
 DIAGNOSTICS
 
@@ -469,6 +471,8 @@ These existing features changed their behavior.
   for input and output. This matters mostly for Linux where some command lines
   using "/dev/stdin" and similiar would break as these special files can be
   reopened when backed by pipes but not when backed by socket pairs.
+• On terminal exit, "[Process Exited]" is not added to the buffer contents,
+  instead exit code is shown in statusline
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

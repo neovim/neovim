@@ -182,6 +182,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       chan->stream.internal.cb = LUA_NOREF;
       chan->stream.internal.closed = true;
       terminal_close(&chan->term, 0);
+      chan->exit_status = 0;
     } else {
       channel_decref(chan);
     }
@@ -784,8 +785,8 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
   bool exited = (status >= 0);
   if (exited && chan->on_exit.type != kCallbackNone) {
     schedule_channel_event(chan);
-    chan->exit_status = status;
   }
+  chan->exit_status = exited ? status : chan->exit_status;
 
   channel_decref(chan);
 }
@@ -1001,6 +1002,7 @@ Dict channel_info(uint64_t id, Arena *arena)
   } else if (chan->term) {
     mode_desc = "terminal";
     PUT_C(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
+    PUT_C(info, "exitcode", INTEGER_OBJ(chan->exit_status));
   } else {
     mode_desc = "bytes";
   }

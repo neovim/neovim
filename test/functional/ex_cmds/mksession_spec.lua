@@ -202,9 +202,7 @@ describe(':mksession', function()
     screen = Screen.new(50, 6, { rgb = false })
     local expected_screen = [[
       ^/                                                 |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*3
+                                                        |*5
     ]]
 
     command('cd /')

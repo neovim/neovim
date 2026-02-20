@@ -35,6 +35,7 @@ local pcall_err = t.pcall_err
 local matches = t.matches
 local skip = t.skip
 local is_os = t.is_os
+local expect_exitcode = tt.expect_exitcode
 
 describe('jobs', function()
   local channel
@@ -1369,16 +1370,14 @@ describe('jobs', function()
     ]])
 
     feed(':q<CR>')
-    if is_os('freebsd') then
-      screen:expect { any = vim.pesc('[Process exited 0]') }
-    else
+    if not is_os('freebsd') then
       screen:expect([[
-                                                          |
-        [Process exited 0]^                                |
-                                                          |*4
+        ^                                                  |
+                                                          |*5
         {5:-- TERMINAL --}                                    |
       ]])
     end
+    expect_exitcode(0)
   end)
 
   it('uses real pipes for stdin/stdout #35984', function()
@@ -1443,8 +1442,8 @@ describe('pty process teardown', function()
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[
       ^                              |
-      [Process exited 0]            |
-                                    |*4
+                                    |*5
     ]])
+    expect_exitcode(0)
   end)
 end)

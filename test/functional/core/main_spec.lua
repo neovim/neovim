@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
+local tt = require('test.functional.testterm')
 
 local eq = t.eq
 local matches = t.matches
@@ -12,6 +13,7 @@ local fn = n.fn
 local write_file = t.write_file
 local is_os = t.is_os
 local skip = t.skip
+local expect_exitcode = tt.expect_exitcode
 
 describe('command-line option', function()
   describe('-s', function()
@@ -117,21 +119,20 @@ describe('command-line option', function()
       )
       feed('i:cq<CR>')
       screen:expect([[
-                                                |
-        [Process exited 1]^                      |
-                                                |*5
+        ^                                        |
+                                                |*6
         {5:-- TERMINAL --}                          |
       ]])
+      expect_exitcode(1)
       --[=[ Example of incorrect output:
       screen:expect([[
         ^nvim: /var/tmp/portage/dev-libs/libuv-1.|
         10.2/work/libuv-1.10.2/src/unix/core.c:5|
         19: uv__close: Assertion `fd > STDERR_FI|
         LENO' failed.                           |
-                                                |
-        [Process exited 6]                      |
-                                                |*2
+                                                |*4
       ]])
+      expect_exitcode(6)
       ]=]
     end)
 
