@@ -3946,6 +3946,31 @@ func Test_complete_fuzzy_collect()
   set completeopt& cpt& ignorecase& infercase&
 endfunc
 
+" Issue #19434
+" Fuzzy whole-line completion should not loop infinitely when the cursor is in
+" the middle of the line (non-zero column).
+func Test_complete_fuzzy_wholeline_no_hang()
+  new
+  set completeopt=preview,fuzzy,noinsert,menuone
+  call setline(1, [
+        \ '<!DOCTYPE html>',
+        \ '<html lang="en-US">',
+        \ '  <head>',
+        \ '  </head>',
+        \ '  <body>',
+        \ '    <div class="page-landscape">',
+        \ '    </div>',
+        \ '  </body>',
+        \ '</html>',
+        \ ])
+  call cursor(6, 1)
+  call feedkeys("faC\<C-X>\<C-L>\<Esc>0", 'tx!')
+  call assert_equal('    <div cl', getline(6))
+
+  bw!
+  set completeopt&
+endfunc
+
 " Issue #18752
 func Test_complete_fuzzy_collect_multiwin()
   new
@@ -5598,10 +5623,13 @@ func Test_autocomplete_trigger()
   call assert_equal(['fooze', 'faberge'], b:matches->mapnew('v:val.word'))
 
   " Test 9: Trigger autocomplete immediately upon entering Insert mode
+  " 'faberge' is filtered out because it doesn't start with the current prefix
+  " 'foo'; non-prefix omnifunc matches are excluded from the PUM when leader
+  " is NULL (compl_orig_text is used as a fallback filter).
   call feedkeys("Sprefix->foo\<Esc>a\<F2>\<Esc>0", 'tx!')
-  call assert_equal(['foobar', 'fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+  call assert_equal(['foobar', 'fooze'], b:matches->mapnew('v:val.word'))
   call feedkeys("Sprefix->fooxx\<Esc>hcw\<F2>\<Esc>0", 'tx!')
-  call assert_equal(['foobar', 'fooze', 'faberge'], b:matches->mapnew('v:val.word'))
+  call assert_equal(['foobar', 'fooze'], b:matches->mapnew('v:val.word'))
 
   bw!
   call Ntest_override("char_avail", 0)
@@ -6307,6 +6335,47 @@ func Test_helptags_autocomplete_timeout()
   call Ntest_override("char_avail", 0)
   set autocomplete& completeopt& complete&
   bw!
+endfunc
+
+func Test_autocomplete_preinsert_null_leader()
+  " Test that non-prefix matches from omnifunc are filtered when leader is NULL.
+  " When autocomplete first fires, compl_leader is NULL.  Previously the prefix
+  " filter was bypassed, allowing non-prefix fuzzy matches to be incorrectly
+  " shown in the PUM and preinserted.
+  func NonPrefixOmni(findstart, base)
+    if a:findstart
+      return col(".") - 1
+    endif
+    " Return "key" (doesn't start with 'y') and "yellow" (starts with 'y').
+    " Simulates what a fuzzy omnifunc returns (e.g. vimcomplete#Complete with
+    " wildoptions=fuzzy).
+    return ["key", "yellow"]
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  set omnifunc=NonPrefixOmni complete=o
+  set completeopt=preinsert autocomplete
+
+  func GetState()
+    let g:line = getline('.')
+    let g:col = col('.')
+    let g:matches = complete_info(['matches']).matches->mapnew('v:val.word')
+  endfunc
+  inoremap <buffer> <F5> <C-R>=GetState()<CR>
+
+  " Type 'y': "key" should be filtered out (doesn't start with 'y'),
+  " "yellow" should be the only PUM entry and preinserted with cursor after 'y'.
+  call feedkeys("iy\<F5>\<C-E>\<Esc>", 'tx')
+  call assert_equal("yellow", g:line)
+  call assert_equal(2, g:col)
+  call assert_equal(['yellow'], g:matches)
+
+  bw!
+  set omnifunc& complete& completeopt& autocomplete&
+  call Ntest_override("char_avail", 0)
+  delfunc NonPrefixOmni
+  delfunc GetState
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

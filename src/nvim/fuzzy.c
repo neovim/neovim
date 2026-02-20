@@ -614,7 +614,8 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
 
   while (true) {
     // Check if looped around and back to start position
-    if (looped_around && equalpos(current_pos, circly_end)) {
+    if (looped_around && (whole_line ? current_pos.lnum == circly_end.lnum
+                                     : equalpos(current_pos, circly_end))) {
       break;
     }
 
