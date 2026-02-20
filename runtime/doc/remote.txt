@@ -116,9 +116,13 @@ These Vim flags are not supported by Nvim. Use the alternatives shown.
 *--remote-send*                 Removed. Use |nvim_input()| instead: >
                               nvim --server {addr} --remote "+call nvim_input('ifoo')"
 <
-*--remote-expr*                 Removed.
+*--remote-expr*                 Removed. Use |-Es| |-V1| and |--remote| +cmd: >
+                              nvim -V1 -Es --server {addr} --remote "+echo 1+1" +q
+<
 
-*--serverlist*                  Removed.
+*--serverlist*                  Removed. Use instead: >
+                              nvim -V1 -Es --server {addr} --remote "+echom serverlist()" +q
+<
 
 *--servername*                  Removed.
 
