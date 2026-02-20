@@ -34,6 +34,7 @@ describe('vim.lsp.codelens', function()
   ]])
 
   local grid_with_lenses = dedent([[
+    {1:       1 implementation}                              |
     struct S {                                           |
         a: i32,                                          |
         b: String,                                       |
@@ -52,7 +53,6 @@ describe('vim.lsp.codelens', function()
         println!("S.a: {}, S.b: {}", s.a, s.b);          |
     }                                                    |
     ^                                                     |
-    {1:~                                                    }|
                                                          |
   ]])
 
@@ -248,6 +248,7 @@ describe('vim.lsp.codelens', function()
     feed('ggdd')
 
     screen:expect([[
+      {1:       1 implementation}                              |
           ^a: i32,                                          |
           b: String,                                       |
       }                                                    |
@@ -265,7 +266,7 @@ describe('vim.lsp.codelens', function()
           println!("S.a: {}, S.b: {}", s.a, s.b);          |
       }                                                    |
                                                            |
-      {1:~                                                    }|*2
+      {1:~                                                    }|
                                                            |
     ]])
     exec_lua(function()
@@ -276,6 +277,7 @@ describe('vim.lsp.codelens', function()
       )
     end)
     screen:expect([[
+      {1:       1 implementation}                              |
           ^a: i32,                                          |
           b: String,                                       |
       }                                                    |
@@ -293,7 +295,7 @@ describe('vim.lsp.codelens', function()
           println!("S.a: {}, S.b: {}", s.a, s.b);          |
       }                                                    |
                                                            |
-      {1:~                                                    }|*2
+      {1:~                                                    }|
                                                            |
     ]])
   end)
@@ -301,6 +303,7 @@ describe('vim.lsp.codelens', function()
   it('clears extmarks beyond the bottom of the buffer', function()
     feed('12G4dd')
     screen:expect([[
+      {1:       1 implementation}                              |
       struct S {                                           |
           a: i32,                                          |
           b: String,                                       |
@@ -313,7 +316,7 @@ describe('vim.lsp.codelens', function()
       }                                                    |
                                                            |
       ^                                                     |
-      {1:~                                                    }|*7
+      {1:~                                                    }|*6
       4 fewer lines                                        |
     ]])
   end)
