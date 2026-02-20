@@ -201,6 +201,115 @@ describe('Remote', function()
       expect('remote-cmd')
     end)
 
+    -- Runs a `nvim --remote +async` command, waits for the client to exit
+    -- (capturing exit code via on_exit so jobwait is not needed), optionally
+    -- waits for a file to appear in the server, then runs action_fn.
+    local function run_async(args, file, action_fn)
+      set_session(server)
+      local addr = fn.serverlist()[1]
+
+      local helper = new_session(true)
+      set_session(helper)
+
+      local job_args = { nvim_prog, '--clean', '--headless', '--server', addr }
+      for _, a in ipairs(args) do
+        table.insert(job_args, a)
+      end
+
+      exec_lua(
+        [[
+          _G.Async_exit_code = nil
+          _G.Async_stdout = ''
+          _G.Async_stderr = ''
+          _G.Async_jobid = vim.fn.jobstart({...}, {
+            stdout_buffered = true,
+            stderr_buffered = true,
+            on_stdout = function(_, data) _G.Async_stdout = table.concat(data, '\n') end,
+            on_stderr = function(_, data) _G.Async_stderr = table.concat(data, '\n') end,
+            on_exit = function(_, code) _G.Async_exit_code = code end,
+          })
+        ]],
+        unpack(job_args)
+      )
+
+      if file then
+        exec_lua(
+          [[
+            local addr, file = ...
+            local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
+            local deadline = vim.uv.now() + 5000
+            repeat
+              vim.uv.sleep(20)
+              local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
+              for _, b in ipairs(bufs) do
+                if vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b) == file then
+                  vim.fn.chanclose(chan)
+                  return
+                end
+              end
+            until vim.uv.now() >= deadline
+            vim.fn.chanclose(chan)
+          ]],
+          addr,
+          file
+        )
+      end
+
+      -- Wait for on_exit to fire (the job may have already exited).
+      -- vim.wait() pumps the event loop so callbacks can run.
+      exec_lua([[
+        vim.wait(3000, function() return _G.Async_exit_code ~= nil end, 10)
+      ]])
+
+      set_session(server)
+      if action_fn then
+        action_fn()
+      end
+
+      set_session(helper)
+      local code = exec_lua('return _G.Async_exit_code')
+      local stdout = exec_lua('return _G.Async_stdout')
+      local stderr = exec_lua('return _G.Async_stderr')
+      helper:close()
+      set_session(server)
+      return code, stdout, stderr
+    end
+
+    it('+async opens file and exits immediately without waiting', function()
+      local code, stdout, stderr = run_async({ '--remote', '+async', fname }, fname, nil)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('+async opens multiple files and exits immediately', function()
+      local code, stdout, stderr =
+        run_async({ '--remote', '+async', fname, other_fname }, other_fname, nil)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('+async with -p opens files in tabs and exits immediately', function()
+      local code, stdout, stderr = run_async({ '-p', '--remote', '+async', fname }, fname, nil)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('+async combined with other +cmd args', function()
+      local code, stdout, stderr = run_async(
+        { '--remote', '+async', fname, '+call setline(1, "async-modified")' },
+        fname,
+        function()
+          expect('async-modified')
+        end
+      )
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
     it('exits with 0 when server quits before buffer is closed (VimLeave)', function()
       local code, _, stderr = run_remote({ '--remote', fname }, fname, function()
         local chan = fn.sockconnect('pipe', fn.serverlist()[1], { rpc = 1 })
@@ -218,9 +327,15 @@ describe('Remote', function()
     neq(nil, string.find(exec_capture('messages'), 'E247:'))
   end)
 
+  it('prints E247 warning when no server is found', function()
+    clear('--server', '/no-such.sock', '--remote', fname)
+    neq(nil, string.find(exec_capture('messages'), 'E247:'))
+  end)
+
   it('suppresses warning with -Es when no server is found', function()
     local p = n.spawn_wait { args = { '-Es', '--server', '/no-such.sock', '--remote', fname } }
     eq(0, p.status)
+    eq('', p.stderr)
   end)
 
   it('unknown --remote subcommand exits with error', function()
