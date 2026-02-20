@@ -269,7 +269,7 @@ end
 ---@return function
 function vim.schedule_wrap(fn)
   return function(...)
-    local args = vim.F.pack_len(...)
+    local args = vim.F.pack_len(...) --- @type { n: integer, [integer]: any }
     vim.schedule(function()
       fn(vim.F.unpack_len(args))
     end)
@@ -1136,10 +1136,13 @@ function vim.keycode(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
 
+--- @param rcid integer
 --- @param server_addr string
 --- @param connect_error string
+--- @param args string[]
 --- @param f_tab boolean
-function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
+--- @param remote_arg_idx integer
+function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_arg_idx)
   --- @return string
   local function connection_failure_errmsg(consequence)
     local explanation --- @type string
@@ -1154,9 +1157,10 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
     return 'E247: ' .. explanation .. '. ' .. consequence
   end
 
-  local subcmd = string.sub(args[1], 10)
+  local remote_arg = args[remote_arg_idx] --- @type string
+  local subcmd = string.sub(remote_arg, 10)
   if subcmd ~= '' then
-    return { errmsg = 'Unknown option argument: ' .. tostring(args[1]) }
+    return { errmsg = 'Unknown option argument: ' .. tostring(remote_arg) }
   end
 
   if rcid == 0 then
@@ -1164,19 +1168,95 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
     return { should_exit = false }
   end
 
-  local files = {}
-  local cmds = {}
+  local exiting_cmds = {
+    quit = true,
+    qall = true,
+    xit = true,
+    wq = true,
+    cquit = true,
+  } --- @type table<string, boolean>
+
+  --- @param cmd string
+  --- @return boolean
+  local function is_quit_cmd(cmd)
+    local ok, parsed = pcall(vim.api.nvim_parse_cmd, cmd, {})
+    if not ok or type(parsed) ~= 'table' then
+      return false
+    end
+    local parsed_cmd = parsed.cmd --- @type string?
+    return parsed_cmd ~= nil and exiting_cmds[parsed_cmd] == true
+  end
+
+  local files = {} --- @type string[]
+  local cmds = {} --- @type string[]
   local f_async = false
-  for i = 2, #args do
-    if args[i]:sub(1, 1) == '+' then
-      local cmd = args[i]:sub(2)
+
+  local had_minmin = false
+  local j = 1
+  while j <= #args do
+    local arg = args[j] --- @type string
+    if not had_minmin and arg == '--' then
+      had_minmin = true
+    elseif not had_minmin and arg:sub(1, 1) == '+' then
+      local cmd = arg:sub(2) --- @type string
       if cmd == 'async' then
         f_async = true
       else
         table.insert(cmds, cmd)
       end
+    elseif not had_minmin and arg == '-c' then
+      if j + 1 <= #args then
+        table.insert(cmds, args[j + 1])
+        j = j + 1
+      end
+    elseif not had_minmin and arg:sub(1, 2) == '-c' and #arg > 2 then
+      table.insert(cmds, arg:sub(3))
+    end
+    j = j + 1
+  end
+
+  local i = remote_arg_idx + 1
+  while i <= #args do
+    local arg = args[i] --- @type string
+    if arg:sub(1, 1) == '+' then
+      if arg:sub(2) == 'async' then
+        f_async = true
+      end
+    elseif arg == '-c' then
+      i = i + 1
+    elseif arg:sub(1, 2) == '-c' and #arg > 2 then
     else
-      table.insert(files, args[i])
+      table.insert(files, arg)
+    end
+    i = i + 1
+  end
+
+  local function run_remote_cmds()
+    for _, cmd in ipairs(cmds) do
+      if is_quit_cmd(cmd) then
+        local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_command', cmd)
+        if not ok then
+          if tostring(result):find('closed by the peer', 1, true) then
+            break
+          end
+          error(result)
+        end
+      else
+        local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_exec2', cmd, { output = true })
+        if not ok then
+          if i == #cmds and tostring(result):find('closed by the peer', 1, true) then
+            break
+          end
+          error(result)
+        end
+        local output = result.output or ''
+        if output ~= '' then
+          io.stdout:write(output)
+        end
+      end
+    end
+    if #cmds > 0 then
+      io.stdout:flush()
     end
   end
 
@@ -1185,9 +1265,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
   end
 
   if #files == 0 then
-    for _, cmd in ipairs(cmds) do
-      vim.fn.rpcrequest(rcid, 'nvim_command', cmd)
-    end
+    run_remote_cmds()
     return { should_exit = true }
   end
 
@@ -1196,9 +1274,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
       local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(file)
       vim.fn.rpcrequest(rcid, 'nvim_command', open_cmd)
     end
-    for _, cmd in ipairs(cmds) do
-      vim.fn.rpcrequest(rcid, 'nvim_command', cmd)
-    end
+    run_remote_cmds()
     return { should_exit = true }
   end
 
@@ -1244,9 +1320,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab)
     )
   end
 
-  for _, cmd in ipairs(cmds) do
-    vim.fn.rpcrequest(rcid, 'nvim_command', cmd)
-  end
+  run_remote_cmds()
 
   return { should_exit = false, wait_count = file_count }
 end

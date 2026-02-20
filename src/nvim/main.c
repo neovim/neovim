@@ -970,18 +970,19 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 
   Array args = ARRAY_DICT_INIT;
-  kv_resize(args, (size_t)(argc - remote_args));
-  for (int t_argc = remote_args; t_argc < argc; t_argc++) {
+  kv_resize(args, (size_t)(argc - 1));
+  for (int t_argc = 1; t_argc < argc; t_argc++) {
     ADD_C(args, CSTR_AS_OBJ(argv[t_argc]));
   }
 
   Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(a, 5);
+  MAXSIZE_TEMP_ARRAY(a, 6);
   ADD_C(a, INTEGER_OBJ((int)chan));
   ADD_C(a, CSTR_AS_OBJ(server_addr));
   ADD_C(a, CSTR_AS_OBJ(connect_error));
   ADD_C(a, ARRAY_OBJ(args));
   ADD_C(a, BOOLEAN_OBJ(params->window_layout == WIN_TABS));
+  ADD_C(a, INTEGER_OBJ(remote_args));
   String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
   Object o = nlua_exec(s, NULL, a, kRetObject, NULL, &err);
   kv_destroy(args);
@@ -2285,7 +2286,7 @@ static void usage(void)
   printf(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   printf(_("  --headless            Don't start a user interface\n"));
   printf(_("  --listen <address>    Serve RPC API from this address\n"));
-  printf(_("  --remote[-subcommand] Execute commands remotely on a server\n"));
+  printf(_("  --remote              Execute commands remotely on a server\n"));
   printf(_("  --server <address>    Connect to this Nvim server\n"));
   printf(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   printf(_("\nSee \":help startup-options\" for all options.\n"));
