@@ -109,6 +109,12 @@ describe('Remote', function()
       return code, stdout, stderr
     end
 
+    --- @param s string
+    --- @return string
+    local function normalized_stdout(s)
+      return s:gsub('\r', ''):gsub('\n$', '')
+    end
+
     it('edit a single file and wait for it to be closed', function()
       local code, stdout, stderr = run_remote({ '--remote', fname }, fname, function()
         command('bdelete')
@@ -225,6 +231,54 @@ describe('Remote', function()
       local code, stdout, stderr = run_remote({ '--remote', '+echo 1+1' }, nil, nil)
       eq(0, code)
       neq(nil, string.find(stdout, '2'))
+      eq('', stderr)
+    end)
+
+    it('supports setline() replacement via +echo', function()
+      local code, stdout, stderr = run_remote({ '--remote', '+echo setline(1, "Yo")' }, nil, nil)
+      eq(0, code)
+      eq('0', normalized_stdout(stdout))
+      eq('', stderr)
+    end)
+
+    it('supports getline() replacement via +echo', function()
+      local code_set, _, stderr_set = run_remote({ '--remote', '+echo setline(1, "Yo")' }, nil, nil)
+      eq(0, code_set)
+      eq('', stderr_set)
+
+      local code_get, stdout_get, stderr_get = run_remote({ '--remote', '+echo getline(1)' }, nil, nil)
+      eq(0, code_get)
+      eq('Yo', normalized_stdout(stdout_get))
+      eq('', stderr_get)
+      expect('Yo')
+    end)
+
+    it('supports repeat() replacement via +echo', function()
+      local code, stdout, stderr = run_remote({ '--remote', '+echo repeat("k", 64)' }, nil, nil)
+      eq(0, code)
+      eq(('k'):rep(64), normalized_stdout(stdout))
+      eq('', stderr)
+    end)
+
+    it('supports float expression replacement via +echo', function()
+      local code, stdout, stderr = run_remote({ '--remote', '+echo 1.25' }, nil, nil)
+      eq(0, code)
+      eq('1.25', normalized_stdout(stdout))
+      eq('', stderr)
+    end)
+
+    it('supports tab-string replacement via +echo', function()
+      local code, stdout, stderr = run_remote({ '--remote', '+echo "\\t"' }, nil, nil)
+      eq(0, code)
+      eq('\t', normalized_stdout(stdout))
+      eq('', stderr)
+    end)
+
+    it('supports serverlist replacement via +echo serverlist()', function()
+      local addr = fn.serverlist()[1] --- @type string
+      local code, stdout, stderr = run_remote({ '--remote', '+echo join(serverlist(), ",")' }, nil, nil)
+      eq(0, code)
+      neq(nil, string.find(stdout, addr, 1, true))
       eq('', stderr)
     end)
 
@@ -514,5 +568,23 @@ describe('Remote', function()
   it('unknown --remote subcommand exits with error', function()
     local p = n.spawn_wait { args = { '--remote-bogus' } }
     eq(2, p.status)
+  end)
+
+  it('supports documented serverlist replacement via +echom', function()
+    local addr = fn.serverlist()[1] --- @type string
+    local p = n.spawn_wait {
+      args = {
+        '-es',
+        '-V1',
+        '--server',
+        addr,
+        '--remote',
+        '+echom join(serverlist(), ",")',
+        '+q',
+      },
+    }
+    eq(0, p.status)
+    local combined = (p.stdout or '') .. '\n' .. (p.stderr or '')
+    neq(nil, string.find(combined, addr, 1, true))
   end)
 end)
