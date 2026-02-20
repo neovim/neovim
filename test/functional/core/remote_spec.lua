@@ -246,7 +246,8 @@ describe('Remote', function()
       eq(0, code_set)
       eq('', stderr_set)
 
-      local code_get, stdout_get, stderr_get = run_remote({ '--remote', '+echo getline(1)' }, nil, nil)
+      local code_get, stdout_get, stderr_get =
+        run_remote({ '--remote', '+echo getline(1)' }, nil, nil)
       eq(0, code_get)
       eq('Yo', normalized_stdout(stdout_get))
       eq('', stderr_get)
@@ -276,7 +277,8 @@ describe('Remote', function()
 
     it('supports serverlist replacement via +echo serverlist()', function()
       local addr = fn.serverlist()[1] --- @type string
-      local code, stdout, stderr = run_remote({ '--remote', '+echo join(serverlist(), ",")' }, nil, nil)
+      local code, stdout, stderr =
+        run_remote({ '--remote', '+echo join(serverlist(), ",")' }, nil, nil)
       eq(0, code)
       neq(nil, string.find(stdout, addr, 1, true))
       eq('', stderr)
