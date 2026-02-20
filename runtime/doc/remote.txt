@@ -35,6 +35,17 @@ The following command line arguments are available:
 <				Use |-Es| to suppress the warning when no
 				server is found: >
 				  nvim -Es --server {addr} --remote {file} ...
+<			Use |+async| to open without waiting: >
+			  nvim --server {addr} --remote +async {file} ...
+<								*+async*
+   +async		Special +{cmd} token for |--remote|. When present,
+			the client opens the files on the server and exits
+			immediately without waiting for the buffers to be
+			closed. Can be combined with other +{cmd} arguments
+			and |-p|: >
+			  nvim --server {addr} --remote +async file.txt
+			  nvim -p --server {addr} --remote +async file.txt
+			  nvim --server {addr} --remote +async "+set ft=markdown" file.txt
 <								*--remote-ui*
    --remote-ui			Display the UI of the server in the terminal.
 				Fully interactive: keyboard and mouse input
@@ -61,6 +72,9 @@ Fall back silently to local editing when no server is found: >
 
 Send input to the server via |nvim_input()|: >
     nvim --server ~/.cache/nvim/server.pipe --remote "+call nvim_input('ifoo')"
+
+Open a file without waiting for it to be closed: >
+    nvim --server ~/.cache/nvim/server.pipe --remote +async file.txt
 
 
 REMOTE EDITING
