@@ -3946,6 +3946,31 @@ func Test_complete_fuzzy_collect()
   set completeopt& cpt& ignorecase& infercase&
 endfunc
 
+" Issue #19434
+" Fuzzy whole-line completion should not loop infinitely when the cursor is in
+" the middle of the line (non-zero column).
+func Test_complete_fuzzy_wholeline_no_hang()
+  new
+  set completeopt=preview,fuzzy,noinsert,menuone
+  call setline(1, [
+        \ '<!DOCTYPE html>',
+        \ '<html lang="en-US">',
+        \ '  <head>',
+        \ '  </head>',
+        \ '  <body>',
+        \ '    <div class="page-landscape">',
+        \ '    </div>',
+        \ '  </body>',
+        \ '</html>',
+        \ ])
+  call cursor(6, 1)
+  call feedkeys("faC\<C-X>\<C-L>\<Esc>0", 'tx!')
+  call assert_equal('    <div cl', getline(6))
+
+  bw!
+  set completeopt&
+endfunc
+
 " Issue #18752
 func Test_complete_fuzzy_collect_multiwin()
   new
