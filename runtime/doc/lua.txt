@@ -5034,6 +5034,10 @@ finalized.
 This provides a functional API for loading and displaying images in Nvim.
 Currently supports PNG images via the Kitty graphics protocol.
 
+The image provider can be changed by setting `vim.ui.img.provider` to a
+builtin name (e.g. `kitty`) or a module path string implementing
+|vim.ui.img.Provider|.
+
 Examples: >lua
     -- Load an image from disk
     local image_id = vim.ui.img.load("/path/to/img.png")
@@ -5070,6 +5074,20 @@ Examples: >lua
       • {z}?       (`integer`) z-index of the placement relative to other
                    placements with a higher number being placed over
                    lower-indexed placements
+
+*vim.ui.img.Provider*
+    An image provider implements the terminal-specific protocol for loading,
+    placing, and hiding images.
+
+    Nvim includes a built-in provider for the Kitty graphics protocol. To use
+    a custom provider, set `vim.ui.img.provider` to a module path: >lua
+        vim.ui.img.provider = 'my.custom.provider'
+<
+
+    Fields: ~
+      • {load}   (`fun(opts: vim.ui.img.ImgOpts): integer`)
+      • {place}  (`fun(id: integer, opts?: vim.ui.img.PlacementOpts): integer`)
+      • {hide}   (`fun(id: integer, placement_id?: integer)`)
 
 
 vim.ui.img.get({id})                                        *vim.ui.img.get()*
@@ -5122,6 +5140,11 @@ vim.ui.img.placements()                              *vim.ui.img.placements()*
 
     Return: ~
         (`Iter`)
+
+vim.ui.img.provider                                      *vim.ui.img.provider*
+    The name of the image provider. Builtin: `kitty`. Can also be set to a
+    module path (e.g. `my.custom.provider`) that returns a table implementing
+    |vim.ui.img.Provider|.
 
 
 ==============================================================================

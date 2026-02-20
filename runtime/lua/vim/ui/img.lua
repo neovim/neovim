@@ -7,6 +7,10 @@ local M = {}
 ---This provides a functional API for loading and displaying images in Nvim.
 ---Currently supports PNG images via the Kitty graphics protocol.
 ---
+---The image provider can be changed by setting `vim.ui.img.provider` to a
+---builtin name (e.g. `kitty`) or a module path string implementing
+---|vim.ui.img.Provider|.
+---
 ---Examples:
 ---
 ---```lua
@@ -25,6 +29,36 @@ local M = {}
 ----- Remove the entire image (and all its placements)
 ---vim.ui.img.hide(image_id)
 ---```
+
+--- An image provider implements the terminal-specific protocol for loading,
+--- placing, and hiding images.
+---
+--- Nvim includes a built-in provider for the Kitty graphics protocol.
+--- To use a custom provider, set `vim.ui.img.provider` to a module path:
+---
+--- ```lua
+--- vim.ui.img.provider = 'my.custom.provider'
+--- ```
+---@class vim.ui.img.Provider
+---@field load fun(opts: vim.ui.img.ImgOpts): integer
+---@field place fun(id: integer, opts?: vim.ui.img.PlacementOpts): integer
+---@field hide fun(id: integer, placement_id?: integer)
+
+---The name of the image provider. Builtin: `kitty`. Can also be set to
+---a module path (e.g. `my.custom.provider`) that returns a table
+---implementing |vim.ui.img.Provider|.
+---@type 'kitty'|string
+M.provider = 'kitty'
+
+---@return vim.ui.img.Provider
+local function get_provider()
+  local builtin = {
+    kitty = 'vim.ui.img._kitty',
+  }
+
+  local mod_path = builtin[M.provider] or M.provider
+  return require(mod_path)
+end
 
 ---@nodoc
 ---@class vim.ui.img.State
@@ -78,8 +112,7 @@ function M.load(opts)
     opts = { filename = opts }
   end
 
-  ---@type vim.ui.img._kitty
-  local provider = require('vim.ui.img._kitty')
+  local provider = get_provider()
   local id = provider.load(opts)
   state.images[id] = opts
 
@@ -108,8 +141,7 @@ function M.place(id, opts)
   local _opts, kind = M.get(id)
   assert(_opts, 'invalid id: ' .. tostring(id))
 
-  ---@type vim.ui.img._kitty
-  local provider = require('vim.ui.img._kitty')
+  local provider = get_provider()
   local placement_id = provider.place(id, opts)
   local img_id = id
 
@@ -142,8 +174,7 @@ function M.hide(id)
       end
     end
 
-    ---@type vim.ui.img._kitty
-    local provider = require('vim.ui.img._kitty')
+    local provider = get_provider()
     provider.hide(id)
 
     return true
@@ -153,8 +184,7 @@ function M.hide(id)
     local placement = state.placements[id]
     state.placements[id] = nil
 
-    ---@type vim.ui.img._kitty
-    local provider = require('vim.ui.img._kitty')
+    local provider = get_provider()
     provider.hide(placement.img_id, id)
 
     return true
