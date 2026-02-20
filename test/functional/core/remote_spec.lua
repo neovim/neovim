@@ -222,6 +222,96 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
+    it('executes +cmd and -c around --remote in order', function()
+      local code, stdout, stderr = run_remote(
+        {
+          '+call setline(1, "first")',
+          '--remote',
+          fname,
+          '-c',
+          'call append(1, "second")',
+          '+echo getline(1)',
+          '-c',
+          'echo getline(2)',
+        },
+        fname,
+        function()
+          expect('first\nsecond')
+          command('bdelete!')
+        end
+      )
+      eq(0, code)
+      local p1 = string.find(stdout, 'first', 1, true)
+      local p2 = string.find(stdout, 'second', 1, true)
+      neq(nil, p1)
+      neq(nil, p2)
+      eq(true, p1 < p2)
+      eq('', stderr)
+    end)
+
+    it('propagates command errors from remote execution', function()
+      local code, _, stderr = run_remote({ '--remote', '+nosuchcommand' }, nil, nil)
+      neq(0, code)
+      neq(nil, string.find(stderr, 'E492:'))
+    end)
+
+    it('supports "--" to treat +async as a literal filename', function()
+      local plus_file = '+async-literal-' .. tostring(math.random(1e9))
+      local plus_file_abs = fn.fnamemodify(plus_file, ':p')
+      write_file(plus_file, 'plus-literal')
+      local code, stdout, stderr = run_remote({ '--remote', '--', plus_file }, plus_file_abs, function()
+        local found = false
+        for _, info in ipairs(fn.getbufinfo()) do
+          if info.name == plus_file_abs then
+            found = true
+            break
+          end
+        end
+        eq(true, found)
+        command('bdelete!')
+      end)
+      fn.delete(plus_file)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('supports "--" to treat -c* as a literal filename', function()
+      local minus_file = '-c-literal-' .. tostring(math.random(1e9))
+      local minus_file_abs = fn.fnamemodify(minus_file, ':p')
+      write_file(minus_file, 'minus-literal')
+      local code, stdout, stderr = run_remote({ '--remote', '--', minus_file }, minus_file_abs, function()
+        local found = false
+        for _, info in ipairs(fn.getbufinfo()) do
+          if info.name == minus_file_abs then
+            found = true
+            break
+          end
+        end
+        eq(true, found)
+        command('bdelete!')
+      end)
+      fn.delete(minus_file)
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('keeps waiting when buffer is hidden but not unloaded', function()
+      local code, _, _ = run_remote({ '--remote', fname }, fname, function()
+        command('set hidden')
+        command('enew')
+      end)
+      eq(-1, code)
+    end)
+
+    it('keeps output enabled with -Es', function()
+      local code, stdout, stderr = run_remote({ '-Es', '--remote', '+echo 11+7' }, nil, nil)
+      eq(0, code)
+      neq(nil, string.find(stdout, '18'))
+      eq('', stderr)
+    end)
+
     -- Runs a `nvim --remote +async` command, waits for the client to exit
     -- (capturing exit code via on_exit so jobwait is not needed), optionally
     -- waits for a file to appear in the server, then runs action_fn.
@@ -328,6 +418,31 @@ describe('Remote', function()
       )
       eq(0, code)
       eq('', stdout)
+      eq('', stderr)
+    end)
+
+    it('+async returns output from remote commands', function()
+      local code, stdout, stderr = run_async({ '--remote', '+async', fname, '+echo 1+1' }, fname, nil)
+      eq(0, code)
+      neq(nil, string.find(stdout, '2'))
+      eq('', stderr)
+    end)
+
+    it('handles +q without peer-close errors', function()
+      local code, _, stderr = run_remote({ '--remote', '+q' }, nil, nil)
+      eq(0, code)
+      eq('', stderr)
+    end)
+
+    it('handles +quit without peer-close errors', function()
+      local code, _, stderr = run_remote({ '--remote', '+quit' }, nil, nil)
+      eq(0, code)
+      eq('', stderr)
+    end)
+
+    it('handles +qa! without peer-close errors', function()
+      local code, _, stderr = run_remote({ '--remote', '+qa!' }, nil, nil)
+      eq(0, code)
       eq('', stderr)
     end)
 
