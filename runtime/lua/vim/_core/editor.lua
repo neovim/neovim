@@ -1222,6 +1222,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
   local remote_had_minmin = false
   while i <= #args do
     local arg = args[i] --- @type string
+    local is_inline_c_cmd = not remote_had_minmin and arg:sub(1, 2) == '-c' and #arg > 2
     if not remote_had_minmin and arg == '--' then
       remote_had_minmin = true
     elseif not remote_had_minmin and arg:sub(1, 1) == '+' then
@@ -1230,8 +1231,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
       end
     elseif not remote_had_minmin and arg == '-c' then
       i = i + 1
-    elseif not remote_had_minmin and arg:sub(1, 2) == '-c' and #arg > 2 then
-    else
+    elseif not is_inline_c_cmd then
       table.insert(files, arg)
     end
     i = i + 1
