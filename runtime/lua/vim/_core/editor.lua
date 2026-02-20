@@ -1298,7 +1298,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
           callback = function()
             local rem = vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] or 0
             for _ = 1, rem do
-              vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done')
+              vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done_event')
             end
             vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] = 0
           end,
@@ -1313,7 +1313,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
           local key = '_nvim_remote_wait_remaining_' .. client_chan_id
           local rem = (vim.g[key] or 0) - 1
           vim.g[key] = math.max(rem, 0)
-          vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done')
+          vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done_event')
         end,
       })
     ]],
