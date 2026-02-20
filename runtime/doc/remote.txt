@@ -25,10 +25,11 @@ The following command line arguments are available:
 				(closed) in the server. Exits with code 0.
 				If no server is found, a warning is printed
 				and files are edited locally.
-				Arguments starting with + are treated as
-				Ex commands and executed on the server after
-				opening the files. All other arguments are
-				treated as filenames.
+				Arguments starting with + and any |-c|
+				commands are treated as Ex commands and
+				executed on the server after opening the
+				files. Their output is written to stdout.
+				All other arguments are treated as filenames.
 				You cannot edit stdin this way |--|.
 				Use |-p| to open each file in a new tabpage: >
 				  nvim -p --server {addr} --remote {file} ...
@@ -79,9 +80,10 @@ Open a file without waiting for it to be closed: >
 
 REMOTE EDITING
 
-The --remote argument causes a |:drop| command to be constructed from the
-rest of the command line and sent to the server. All remaining arguments
-after --remote are treated as filenames. You cannot put options there.
+The --remote argument causes each given file to be opened with |:drop| (or
+|:tab| + drop when |-p| is used) on the server. Command-line `+{cmd}` and
+|-c| commands are also executed on the server; their output is written to
+stdout.
 
 
 ==============================================================================
