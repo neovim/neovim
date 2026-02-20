@@ -974,6 +974,11 @@ function Client:_register(registrations)
     local method = reg.method
     if method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.register(reg, self.id)
+    elseif method == ms.textDocument_onTypeFormatting then
+      -- if we enabled OTF for this client before the capability was registered, reattach...
+      -- if vim.lsp.on_type_formatting.is_enabled({client_id = self.id}) then
+      --   vim.lsp.on_type_formatting.enable(true, { client_id = self.id })
+      -- end
     elseif not self:_supports_registration(method) then
       unsupported[#unsupported + 1] = method
     end
@@ -1009,6 +1014,9 @@ function Client:_unregister(unregistrations)
   for _, unreg in ipairs(unregistrations) do
     if unreg.method == 'workspace/didChangeWatchedFiles' then
       lsp._watchfiles.unregister(unreg, self.id)
+    elseif unreg.method == ms.textDocument_onTypeFormatting then
+      -- Detach OTF listeners upon unregistration
+      vim.lsp.on_type_formatting.enable(false, { client_id = self.id })
     end
   end
 end
