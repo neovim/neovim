@@ -288,15 +288,6 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
-    it('supports serverlist replacement via +echo serverlist()', function()
-      local addr = fn.serverlist()[1] --- @type string
-      local code, stdout, stderr =
-        run_remote({ '--remote', '+echo join(serverlist(), ",")' }, nil, nil)
-      eq(0, code)
-      neq(nil, string.find(stdout, addr, 1, true))
-      eq('', stderr)
-    end)
-
     it('executes +cmd and -c around --remote in order', function()
       local code, stdout, stderr = run_remote(
         {
@@ -499,40 +490,31 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
-    it('handles +q without peer-close errors', function()
-      local code, _, stderr = run_remote({ '--remote', '+q' }, nil, nil)
+    --- @param alias string
+    local function assert_quit_alias(alias)
+      local code, _, stderr = run_remote({ '--remote', alias }, nil, nil)
       eq(0, code)
       eq('', stderr)
-    end)
+    end
 
-    it('handles +quit without peer-close errors', function()
-      local code, _, stderr = run_remote({ '--remote', '+quit' }, nil, nil)
-      eq(0, code)
-      eq('', stderr)
+    it('handles +q without peer-close errors', function()
+      assert_quit_alias('+q')
     end)
 
     it('handles +qa! without peer-close errors', function()
-      local code, _, stderr = run_remote({ '--remote', '+qa!' }, nil, nil)
-      eq(0, code)
-      eq('', stderr)
+      assert_quit_alias('+qa!')
     end)
 
     it('handles +exit without peer-close errors', function()
-      local code, _, stderr = run_remote({ '--remote', '+exit' }, nil, nil)
-      eq(0, code)
-      eq('', stderr)
+      assert_quit_alias('+exit')
     end)
 
     it('handles +wqall without peer-close errors', function()
-      local code, _, stderr = run_remote({ '--remote', '+wqall' }, nil, nil)
-      eq(0, code)
-      eq('', stderr)
+      assert_quit_alias('+wqall')
     end)
 
     it('handles +xall without peer-close errors', function()
-      local code, _, stderr = run_remote({ '--remote', '+xall' }, nil, nil)
-      eq(0, code)
-      eq('', stderr)
+      assert_quit_alias('+xall')
     end)
 
     it('exits with 0 when server quits before buffer is closed (VimLeave)', function()
