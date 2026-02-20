@@ -908,14 +908,38 @@ function vim._expand_pat(pat, env)
 
   local keys = {} --- @type table<string,true>
 
+  --- @param base_parts table<integer, any>
+  local function build_full_path(base_parts, current_key)
+    if #base_parts == 0 then
+      return current_key
+    end
+
+    local path_parts = {}
+    for _, part in ipairs(base_parts) do
+      if type(part) == 'string' then
+        table.insert(path_parts, part)
+      end
+    end
+
+    if #path_parts > 0 then
+      table.insert(path_parts, current_key)
+      return table.concat(path_parts, '.')
+    else
+      return current_key
+    end
+  end
+
   --- @param obj table<any,any>
   local function insert_keys(obj)
+    ---@type boolean, table<string, boolean>?
+    local _, deprecated = pcall(require, 'vim._core.deprecated')
     for k, _ in pairs(obj) do
       if
         type(k) == 'string'
         and string.sub(k, 1, string.len(match_part)) == match_part
         and k:match('^[_%w]+$') ~= nil -- filter out invalid identifiers for field, e.g. 'foo#bar'
         and (last_char ~= '.' or string.sub(k, 1, 1) ~= '_') -- don't include private fields after '.'
+        and (not deprecated or not deprecated[build_full_path(parts, k)])
       then
         keys[k] = true
       end
