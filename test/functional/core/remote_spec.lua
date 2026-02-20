@@ -18,7 +18,7 @@ local tmpname = t.tmpname
 local write_file = t.write_file
 
 describe('Remote', function()
-  local fname, other_fname
+  local fname, other_fname --- @type string, string
   local contents = 'The call is coming from outside the process'
   local other_contents = "A second file's contents"
 
@@ -30,7 +30,7 @@ describe('Remote', function()
   end)
 
   describe('connect to server and', function()
-    local server
+    local server --- @type any
 
     before_each(function()
       server = n.clear()
@@ -43,14 +43,18 @@ describe('Remote', function()
     -- Run a `nvim --remote` command asynchronously, wait for the given file to
     -- appear in the server, run action_fn on the server, then wait for the
     -- client to exit. Returns { exit_code, stdout, stderr }.
+    --- @param args string[]
+    --- @param file string|nil
+    --- @param action_fn fun()|nil
+    --- @return integer, string, string
     local function run_remote(args, file, action_fn)
       set_session(server)
-      local addr = fn.serverlist()[1]
+      local addr = fn.serverlist()[1] --- @type string
 
-      local helper = new_session(true)
+      local helper = new_session(true) --- @type any
       set_session(helper)
 
-      local job_args = { nvim_prog, '--clean', '--headless', '--server', addr }
+      local job_args = { nvim_prog, '--clean', '--headless', '--server', addr } --- @type string[]
       for _, a in ipairs(args) do
         table.insert(job_args, a)
       end
@@ -96,9 +100,9 @@ describe('Remote', function()
       end
 
       set_session(helper)
-      local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, 3000)')[1]
-      local stdout = exec_lua('return _G.Remote_stdout')
-      local stderr = exec_lua('return _G.Remote_stderr')
+      local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, 3000)')[1] --- @type integer
+      local stdout = exec_lua('return _G.Remote_stdout') --- @type string
+      local stderr = exec_lua('return _G.Remote_stderr') --- @type string
       helper:close()
       set_session(server)
       return code, stdout, stderr
@@ -114,7 +118,7 @@ describe('Remote', function()
     end)
 
     it('edit multiple files and wait for all to be closed', function()
-      local buf_count
+      local buf_count --- @type integer
       local code, stdout, stderr = run_remote(
         { '--remote', fname, other_fname },
         other_fname,
@@ -138,7 +142,7 @@ describe('Remote', function()
     end)
 
     it('tab edit a single file with a non-changed buffer (-p)', function()
-      local tab_count
+      local tab_count --- @type integer
       local code, stdout, stderr = run_remote({ '-p', '--remote', fname }, fname, function()
         tab_count = #fn.gettabinfo()
         command('bdelete')
@@ -151,7 +155,7 @@ describe('Remote', function()
 
     it('tab edit a single file with a changed buffer (-p)', function()
       insert('hello')
-      local tab_count
+      local tab_count --- @type integer
       local code, stdout, stderr = run_remote({ '-p', '--remote', fname }, fname, function()
         tab_count = #fn.gettabinfo()
         command('bdelete')
@@ -163,7 +167,7 @@ describe('Remote', function()
     end)
 
     it('tab edit multiple files (-p)', function()
-      local tab_count
+      local tab_count --- @type integer
       local code, stdout, stderr = run_remote(
         { '-p', '--remote', fname, other_fname },
         other_fname,
@@ -260,17 +264,21 @@ describe('Remote', function()
       local plus_file = '+async-literal-' .. tostring(math.random(1e9))
       local plus_file_abs = fn.fnamemodify(plus_file, ':p')
       write_file(plus_file, 'plus-literal')
-      local code, stdout, stderr = run_remote({ '--remote', '--', plus_file }, plus_file_abs, function()
-        local found = false
-        for _, info in ipairs(fn.getbufinfo()) do
-          if info.name == plus_file_abs then
-            found = true
-            break
+      local code, stdout, stderr = run_remote(
+        { '--remote', '--', plus_file },
+        plus_file_abs,
+        function()
+          local found = false
+          for _, info in ipairs(fn.getbufinfo()) do
+            if info.name == plus_file_abs then
+              found = true
+              break
+            end
           end
+          eq(true, found)
+          command('bdelete!')
         end
-        eq(true, found)
-        command('bdelete!')
-      end)
+      )
       fn.delete(plus_file)
       eq(0, code)
       eq('', stdout)
@@ -281,17 +289,21 @@ describe('Remote', function()
       local minus_file = '-c-literal-' .. tostring(math.random(1e9))
       local minus_file_abs = fn.fnamemodify(minus_file, ':p')
       write_file(minus_file, 'minus-literal')
-      local code, stdout, stderr = run_remote({ '--remote', '--', minus_file }, minus_file_abs, function()
-        local found = false
-        for _, info in ipairs(fn.getbufinfo()) do
-          if info.name == minus_file_abs then
-            found = true
-            break
+      local code, stdout, stderr = run_remote(
+        { '--remote', '--', minus_file },
+        minus_file_abs,
+        function()
+          local found = false
+          for _, info in ipairs(fn.getbufinfo()) do
+            if info.name == minus_file_abs then
+              found = true
+              break
+            end
           end
+          eq(true, found)
+          command('bdelete!')
         end
-        eq(true, found)
-        command('bdelete!')
-      end)
+      )
       fn.delete(minus_file)
       eq(0, code)
       eq('', stdout)
@@ -316,14 +328,18 @@ describe('Remote', function()
     -- Runs a `nvim --remote +async` command, waits for the client to exit
     -- (capturing exit code via on_exit so jobwait is not needed), optionally
     -- waits for a file to appear in the server, then runs action_fn.
+    --- @param args string[]
+    --- @param file string|nil
+    --- @param action_fn fun()|nil
+    --- @return integer, string, string
     local function run_async(args, file, action_fn)
       set_session(server)
-      local addr = fn.serverlist()[1]
+      local addr = fn.serverlist()[1] --- @type string
 
-      local helper = new_session(true)
+      local helper = new_session(true) --- @type any
       set_session(helper)
 
-      local job_args = { nvim_prog, '--clean', '--headless', '--server', addr }
+      local job_args = { nvim_prog, '--clean', '--headless', '--server', addr } --- @type string[]
       for _, a in ipairs(args) do
         table.insert(job_args, a)
       end
@@ -379,9 +395,9 @@ describe('Remote', function()
       end
 
       set_session(helper)
-      local code = exec_lua('return _G.Async_exit_code')
-      local stdout = exec_lua('return _G.Async_stdout')
-      local stderr = exec_lua('return _G.Async_stderr')
+      local code = exec_lua('return _G.Async_exit_code') --- @type integer
+      local stdout = exec_lua('return _G.Async_stdout') --- @type string
+      local stderr = exec_lua('return _G.Async_stderr') --- @type string
       helper:close()
       set_session(server)
       return code, stdout, stderr
@@ -423,7 +439,8 @@ describe('Remote', function()
     end)
 
     it('+async returns output from remote commands', function()
-      local code, stdout, stderr = run_async({ '--remote', '+async', fname, '+echo 1+1' }, fname, nil)
+      local code, stdout, stderr =
+        run_async({ '--remote', '+async', fname, '+echo 1+1' }, fname, nil)
       eq(0, code)
       neq(nil, string.find(stdout, '2'))
       eq('', stderr)
@@ -443,6 +460,24 @@ describe('Remote', function()
 
     it('handles +qa! without peer-close errors', function()
       local code, _, stderr = run_remote({ '--remote', '+qa!' }, nil, nil)
+      eq(0, code)
+      eq('', stderr)
+    end)
+
+    it('handles +exit without peer-close errors', function()
+      local code, _, stderr = run_remote({ '--remote', '+exit' }, nil, nil)
+      eq(0, code)
+      eq('', stderr)
+    end)
+
+    it('handles +wqall without peer-close errors', function()
+      local code, _, stderr = run_remote({ '--remote', '+wqall' }, nil, nil)
+      eq(0, code)
+      eq('', stderr)
+    end)
+
+    it('handles +xall without peer-close errors', function()
+      local code, _, stderr = run_remote({ '--remote', '+xall' }, nil, nil)
       eq(0, code)
       eq('', stderr)
     end)
