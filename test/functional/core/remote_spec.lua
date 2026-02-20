@@ -13,7 +13,6 @@ local insert = n.insert
 local nvim_prog = n.nvim_prog
 local neq = t.neq
 local new_session = n.new_session
-local retry = t.retry
 local set_session = n.set_session
 local tmpname = t.tmpname
 local write_file = t.write_file
@@ -58,17 +57,40 @@ describe('Remote', function()
       return normalized_path(a) == normalized_path(b)
     end
 
+    --- @param helper any
+    --- @param addr string
     --- @param file string
-    local function wait_for_file_open(file)
-      local want = normalized_path(file)
-      retry(nil, 5000, function()
-        for _, info in ipairs(fn.getbufinfo()) do
-          if path_eq(info.name, want) then
-            return
+    local function wait_for_file_open(helper, addr, file)
+      set_session(helper)
+      exec_lua(
+        [[
+          local addr, file = ...
+          local function normalize(path)
+            local normalized = vim.fn.fnamemodify(path, ':p')
+            if vim.fn.has('win32') == 1 then
+              normalized = normalized:gsub('\\', '/'):lower()
+            end
+            return normalized
           end
-        end
-        error('file not found yet: ' .. want)
-      end)
+          local want = normalize(file)
+          local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
+          local deadline = vim.uv.now() + 5000
+          repeat
+            vim.uv.sleep(20)
+            local bufs = vim.fn.rpcrequest(chan, 'nvim_list_bufs')
+            for _, b in ipairs(bufs) do
+              if normalize(vim.fn.rpcrequest(chan, 'nvim_buf_get_name', b)) == want then
+                vim.fn.chanclose(chan)
+                return
+              end
+            end
+          until vim.uv.now() >= deadline
+          vim.fn.chanclose(chan)
+          error('file not found yet: ' .. want)
+        ]],
+        addr,
+        file
+      )
     end
 
     -- Run a `nvim --remote` command asynchronously, wait for the given file to
@@ -104,8 +126,7 @@ describe('Remote', function()
       )
 
       if file then
-        set_session(server)
-        wait_for_file_open(file)
+        wait_for_file_open(helper, addr, file)
       end
 
       set_session(server)
@@ -423,8 +444,7 @@ describe('Remote', function()
       )
 
       if file then
-        set_session(server)
-        wait_for_file_open(file)
+        wait_for_file_open(helper, addr, file)
         set_session(helper)
       end
 
