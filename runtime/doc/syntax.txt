@@ -5059,7 +5059,7 @@ the same syntax file on all UIs.
 					*underdouble* *underdotted*
 					*underdashed* *inverse* *italic*
 					*standout* *strikethrough* *altfont*
-					*nocombine*
+					*dim* *blink* *hl-conceal* *overline* *nocombine*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma-separated list (without spaces) of the
 	following items (in any order):
@@ -5075,6 +5075,10 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 		italic
 		standout
 		altfont
+		dim		half-bright/faint text
+		blink		blinking text
+		conceal		concealed/hidden text
+		overline	overlined text
 		nocombine	override attributes instead of combining them
 		NONE		no attributes used (used to reset it)
 

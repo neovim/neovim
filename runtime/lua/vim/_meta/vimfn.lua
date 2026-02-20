@@ -10078,6 +10078,10 @@ function vim.fn.synID(lnum, col, trans) end
 --- "strikethrough"  "1" if struckthrough
 --- "altfont"  "1" if alternative font
 --- "nocombine"  "1" if nocombine
+--- "dim"  "1" if half-bright/dimmed
+--- "blink"  "1" if blinking
+--- "conceal"  "1" if concealed
+--- "overline"  "1" if overlined
 ---
 --- Returns an empty string on error.
 ---

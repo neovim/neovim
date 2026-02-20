@@ -562,11 +562,11 @@ void hl_invalidate_blends(void)
 
 /// Combine HlAttrFlags.
 /// The underline attribute in "prim_ae" overrules the one in "char_ae" if both are present.
-static int16_t hl_combine_ae(int16_t char_ae, int16_t prim_ae)
+static int32_t hl_combine_ae(int32_t char_ae, int32_t prim_ae)
 {
-  int16_t char_ul = char_ae & HL_UNDERLINE_MASK;
-  int16_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
-  int16_t new_ul = prim_ul ? prim_ul : char_ul;
+  int32_t char_ul = char_ae & HL_UNDERLINE_MASK;
+  int32_t prim_ul = prim_ae & HL_UNDERLINE_MASK;
+  int32_t new_ul = prim_ul ? prim_ul : char_ul;
   return (char_ae & ~HL_UNDERLINE_MASK) | (prim_ae & ~HL_UNDERLINE_MASK) | new_ul;
 }
 
@@ -946,6 +946,22 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
     PUT_C(*hl_attrs, "altfont", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_DIM) {
+    PUT_C(*hl_attrs, "dim", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_BLINK) {
+    PUT_C(*hl_attrs, "blink", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_CONCEALED) {
+    PUT_C(*hl_attrs, "conceal", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_OVERLINE) {
+    PUT_C(*hl_attrs, "overline", BOOLEAN_OBJ(true));
+  }
+
   if (mask & HL_NOCOMBINE) {
     PUT_C(*hl_attrs, "nocombine", BOOLEAN_OBJ(true));
   }
@@ -997,8 +1013,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   int32_t ctermbg = -1;
   int32_t sp = -1;
   int blend = -1;
-  int16_t mask = 0;
-  int16_t cterm_mask = 0;
+  int32_t mask = 0;
+  int32_t cterm_mask = 0;
   bool cterm_mask_provided = false;
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
@@ -1020,6 +1036,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
   CHECK_FLAG(dict, mask, altfont, , HL_ALTFONT);
+  CHECK_FLAG(dict, mask, dim, , HL_DIM);
+  CHECK_FLAG(dict, mask, blink, , HL_BLINK);
+  CHECK_FLAG(dict, mask, conceal, , HL_CONCEALED);
+  CHECK_FLAG(dict, mask, overline, , HL_OVERLINE);
   if (use_rgb) {
     CHECK_FLAG(dict, mask, fg_indexed, , HL_FG_INDEXED);
     CHECK_FLAG(dict, mask, bg_indexed, , HL_BG_INDEXED);
@@ -1100,6 +1120,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
     CHECK_FLAG(cterm, cterm_mask, altfont, , HL_ALTFONT);
+    CHECK_FLAG(cterm, cterm_mask, dim, , HL_DIM);
+    CHECK_FLAG(cterm, cterm_mask, blink, , HL_BLINK);
+    CHECK_FLAG(cterm, cterm_mask, conceal, , HL_CONCEALED);
+    CHECK_FLAG(cterm, cterm_mask, overline, , HL_OVERLINE);
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
   }
 #undef CHECK_FLAG

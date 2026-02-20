@@ -77,12 +77,12 @@ static char *(hl_name_table[]) =
 { "bold", "standout", "underline",
   "undercurl", "underdouble", "underdotted", "underdashed",
   "italic", "reverse", "inverse", "strikethrough", "altfont",
-  "nocombine", "NONE" };
+  "dim", "blink", "conceal", "overline", "nocombine", "NONE" };
 static int hl_attr_table[] =
 { HL_BOLD, HL_STANDOUT, HL_UNDERLINE,
   HL_UNDERCURL, HL_UNDERDOUBLE, HL_UNDERDOTTED, HL_UNDERDASHED,
   HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_ALTFONT,
-  HL_NOCOMBINE, 0 };
+  HL_DIM, HL_BLINK, HL_CONCEALED, HL_OVERLINE, HL_NOCOMBINE, 0 };
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -1951,10 +1951,10 @@ static void set_hl_attr(int idx)
   HlAttrs at_en = HLATTRS_INIT;
   HlGroup *sgp = hl_table + idx;
 
-  at_en.cterm_ae_attr = (int16_t)sgp->sg_cterm;
+  at_en.cterm_ae_attr = (int32_t)sgp->sg_cterm;
   at_en.cterm_fg_color = (int16_t)sgp->sg_cterm_fg;
   at_en.cterm_bg_color = (int16_t)sgp->sg_cterm_bg;
-  at_en.rgb_ae_attr = (int16_t)sgp->sg_gui;
+  at_en.rgb_ae_attr = (int32_t)sgp->sg_gui;
   // FIXME(tarruda): The "unset value" for rgb is -1, but since hlgroup is
   // initialized with 0 (by garray functions), check for sg_rgb_{f,b}g_name
   // before setting attr_entry->{f,g}g_color to a other than -1

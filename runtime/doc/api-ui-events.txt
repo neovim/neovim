@@ -335,6 +335,10 @@ numerical highlight ids to the actual attributes.
 	`underdotted`:		underdotted text. The dots have `special` color.
 	`underdashed`:		underdashed text. The dashes have `special` color.
 	`altfont`:		alternative font.
+	`dim`:			half-bright/faint text.
+	`blink`:		blinking text.
+	`conceal`:		concealed/hidden text.
+	`overline`:		overlined text.
 	`blend`:		blend level (0-100). Could be used by UIs to
 				support blending floating windows to the
 				background or to signal a transparent cursor.
@@ -504,6 +508,10 @@ is not active. New UIs should implement |ui-linegrid| instead.
 	`underdouble`:	double underlined text. The lines have `special` color.
 	`underdotted`:	underdotted text. The dots have `special` color.
 	`underdashed`:	underdashed text. The dashes have `special` color.
+	`dim`:		half-bright/faint text.
+	`blink`:	blinking text.
+	`conceal`:	concealed/hidden text.
+	`overline`:	overlined text.
 
 ["put", text] ~
 	The (utf-8 encoded) string `text` is put at the cursor position

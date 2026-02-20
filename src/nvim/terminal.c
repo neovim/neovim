@@ -1405,6 +1405,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
     bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx - 1];
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
+                   | (cell.attrs.blink ? HL_BLINK : 0)
+                   | (cell.attrs.conceal ? HL_CONCEALED : 0)
                    | (cell.attrs.italic ? HL_ITALIC : 0)
                    | (cell.attrs.reverse ? HL_INVERSE : 0)
                    | get_underline_hl_flag(cell.attrs)
@@ -1416,10 +1418,10 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 
     if (hl_attrs || !fg_default || !bg_default) {
       attr_id = hl_get_term_attr(&(HlAttrs) {
-        .cterm_ae_attr = (int16_t)hl_attrs,
+        .cterm_ae_attr = (int32_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
-        .rgb_ae_attr = (int16_t)hl_attrs,
+        .rgb_ae_attr = (int32_t)hl_attrs,
         .rgb_fg_color = vt_fg,
         .rgb_bg_color = vt_bg,
         .rgb_sp_color = -1,

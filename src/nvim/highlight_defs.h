@@ -25,7 +25,10 @@ typedef enum {
   HL_STANDOUT      = 0x0040,
   HL_STRIKETHROUGH = 0x0080,
   HL_ALTFONT       = 0x0100,
-  // 0x0200 spare
+  HL_DIM           = 0x0200,
+  HL_BLINK         = 0x8000,
+  HL_CONCEALED     = 0x10000,
+  HL_OVERLINE      = 0x20000,
   HL_NOCOMBINE     = 0x0400,
   HL_BG_INDEXED    = 0x0800,
   HL_FG_INDEXED    = 0x1000,
@@ -36,7 +39,7 @@ typedef enum {
 /// Stores a complete highlighting entry, including colors and attributes
 /// for both TUI and GUI.
 typedef struct {
-  int16_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
+  int32_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int16_t cterm_fg_color, cterm_bg_color;
   int32_t hl_blend;
@@ -175,4 +178,4 @@ typedef struct {
 #define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1, \
                                  .is_default = false, .link_global = false }
 
-enum { HLATTRS_DICT_SIZE = 16, };
+enum { HLATTRS_DICT_SIZE = 20, };
