@@ -12,6 +12,7 @@
 #include "nvim/channel_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/event/socket.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
@@ -297,7 +298,7 @@ static void channel_connect_event(void **argv)
   char *server_addr = argv[0];
 
   const char *err = "";
-  bool is_tcp = !!strrchr(server_addr, ':');
+  bool is_tcp = socket_address_is_tcp(server_addr);
   CallbackReader on_data = CALLBACK_READER_INIT;
   uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err);
 
