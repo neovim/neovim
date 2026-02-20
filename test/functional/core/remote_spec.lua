@@ -192,6 +192,20 @@ describe('Remote', function()
       eq('', stderr)
     end)
 
+    it('executes -c on the server', function()
+      local code, stdout, stderr = run_remote(
+        { '--remote', fname, '-c', 'call setline(1, "modified-from-c")' },
+        fname,
+        function()
+          expect('modified-from-c')
+          command('bdelete!')
+        end
+      )
+      eq(0, code)
+      eq('', stdout)
+      eq('', stderr)
+    end)
+
     it('executes +cmd only (no files) and exits immediately', function()
       local code, stdout, stderr =
         run_remote({ '--remote', '+call setline(1, "remote-cmd")' }, nil, nil)
@@ -199,6 +213,13 @@ describe('Remote', function()
       eq('', stdout)
       eq('', stderr)
       expect('remote-cmd')
+    end)
+
+    it('returns output from remote commands', function()
+      local code, stdout, stderr = run_remote({ '--remote', '+echo 1+1' }, nil, nil)
+      eq(0, code)
+      neq(nil, string.find(stdout, '2'))
+      eq('', stderr)
     end)
 
     -- Runs a `nvim --remote +async` command, waits for the client to exit
