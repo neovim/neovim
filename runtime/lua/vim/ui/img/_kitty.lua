@@ -1,5 +1,5 @@
 ---Implementation of neovim's image provider using kitty.
----@class vim.ui.img._kitty
+---@class vim.ui.img._kitty: vim.ui.img.Provider
 local M = {}
 
 ---@type table<integer, {img_id:integer, opts:vim.ui.img.PlacementOpts}>
