@@ -570,19 +570,53 @@ describe('Remote', function()
 
   it('supports documented serverlist replacement via +echom', function()
     local addr = fn.serverlist()[1] --- @type string
+    local expected = table.concat(fn.serverlist(), ',')
+    local expr = '+echom join(serverlist(), ",")'
     local p = n.spawn_wait {
       args = {
         '-es',
-        '-V1',
         '--server',
         addr,
         '--remote',
-        '+echom join(serverlist(), ",")',
-        '+q',
+        expr,
       },
     }
     eq(0, p.status)
-    local combined = (p.stdout or '') .. '\n' .. (p.stderr or '')
-    neq(nil, string.find(combined, addr, 1, true))
+    local stdout = ((p.stdout or ''):gsub('\r', '')):gsub('\n$', '')
+    local stderr = ((p.stderr or ''):gsub('\r', '')):gsub('\n$', '')
+    eq(expected, stdout)
+    eq('', stderr)
+  end)
+
+  it('supports documented serverlist replacement via +echom with multiple addresses', function()
+    local addr = fn.serverlist()[1] --- @type string
+    local extra_addr = fn.serverstart('remote-spec-extra')
+    neq('', extra_addr)
+
+    local ok, err = pcall(function()
+      local expected = table.concat(fn.serverlist(), ',')
+      local expr = '+echom join(serverlist(), ",")'
+      local p = n.spawn_wait {
+        args = {
+          '-es',
+          '--server',
+          addr,
+          '--remote',
+          expr,
+        },
+      }
+      eq(0, p.status)
+      local stdout = ((p.stdout or ''):gsub('\r', '')):gsub('\n$', '')
+      local stderr = ((p.stderr or ''):gsub('\r', '')):gsub('\n$', '')
+      eq(expected, stdout)
+      eq('', stderr)
+    end)
+
+    if extra_addr ~= addr then
+      fn.serverstop(extra_addr)
+    end
+    if not ok then
+      error(err)
+    end
   end)
 end)
