@@ -663,6 +663,11 @@ int update_screen(void)
                        wp->w_ns_hl_attr);
     }
 
+    if ((wp->w_pad[kEdgeTop] || wp->w_pad[kEdgeRight] || wp->w_pad[kEdgeBottom]
+         || wp->w_pad[kEdgeLeft])) {
+      win_draw_padding(wp);
+    }
+
     if (wp->w_redr_type != 0) {
       if (!did_one) {
         did_one = true;
@@ -1345,6 +1350,59 @@ static void draw_sep_connectors_win(win_T *wp)
     grid_line_start(&default_gridview, W_ENDROW(wp));
     grid_line_put_schar(W_ENDCOL(wp), get_corner_sep_connector(wp, WC_BOTTOM_RIGHT), hl);
     grid_line_flush();
+  }
+}
+
+/// Draw internal padding for window "wp".
+/// Padding cells are filled with spaces using WinPadding highlight.
+static void win_draw_padding(win_T *wp)
+{
+  int pad_top = wp->w_pad[kEdgeTop];
+  int pad_right = wp->w_pad[kEdgeRight];
+  int pad_bot = wp->w_pad[kEdgeBottom];
+  int pad_left = wp->w_pad[kEdgeLeft];
+
+  if (pad_top == 0 && pad_right == 0 && pad_bot == 0 && pad_left == 0) {
+    return;
+  }
+
+  int pad_attr = win_hl_attr(wp, wp == curwin ? HLF_WPADDING : HLF_WPADDINGNC);
+  schar_T sp = schar_from_ascii(' ');
+
+  ScreenGrid *grid = wp->w_grid.target;
+  int cr = wp->w_grid.row_offset;   // content first row
+  int cc = wp->w_grid.col_offset;   // content first col
+  int vw = wp->w_view_width;
+  int vh = wp->w_view_height;
+  int inner_col = cc - pad_left;
+  int inner_width = pad_left + vw + pad_right;
+
+  // top padding rows
+  for (int r = 0; r < pad_top; r++) {
+    screengrid_line_start(grid, cr - pad_top + r, inner_col);
+    grid_line_fill(0, inner_width, sp, pad_attr);
+    grid_line_flush();
+  }
+
+  // bottom padding rows
+  for (int r = 0; r < pad_bot; r++) {
+    screengrid_line_start(grid, cr + vh + r, inner_col);
+    grid_line_fill(0, inner_width, sp, pad_attr);
+    grid_line_flush();
+  }
+
+  // left/right padding for each content row
+  for (int r = 0; r < vh; r++) {
+    if (pad_left > 0) {
+      screengrid_line_start(grid, cr + r, inner_col);
+      grid_line_fill(0, pad_left, sp, pad_attr);
+      grid_line_flush();
+    }
+    if (pad_right > 0) {
+      screengrid_line_start(grid, cr + r, cc + vw);
+      grid_line_fill(0, pad_right, sp, pad_attr);
+      grid_line_flush();
+    }
   }
 }
 
