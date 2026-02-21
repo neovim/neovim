@@ -14,6 +14,7 @@
 #include "nvim/event/stream.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/log.h"
+#include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/os/fs.h"
