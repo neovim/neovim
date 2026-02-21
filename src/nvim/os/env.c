@@ -100,34 +100,49 @@ end:
   return e;
 }
 
-/// Like getenv(), but returns a pointer to `NameBuff` instead of allocating, or NULL on failure.
-/// Value is truncated if it exceeds sizeof(NameBuff).
+/// Like getenv(), but stores the value in `buf` instead of allocating.
+/// Value is truncated if it exceeds `bufsize`.
+///
+/// @return `buf` on success, NULL on failure
 /// @see os_env_exists
-char *os_getenv_noalloc(const char *name)
+/// @see os_getenv_noalloc
+char *os_getenv_buf(const char *const name, char *const buf, const size_t bufsize)
   FUNC_ATTR_NONNULL_ALL
 {
   if (name[0] == NUL) {
     return NULL;
   }
 
-  size_t size = sizeof(NameBuff);
-  int r = uv_os_getenv(name, NameBuff, &size);
+  size_t size = bufsize;
+  int r = uv_os_getenv(name, buf, &size);
   if (r == UV_ENOBUFS) {
     char *e = xmalloc(size);
     r = uv_os_getenv(name, e, &size);
     if (r == 0 && size != 0 && e[0] != NUL) {
-      xmemcpyz(NameBuff, e, sizeof(NameBuff) - 1);
+      xmemcpyz(buf, e, MIN(bufsize, size) - 1);
     }
     xfree(e);
   }
 
-  if (r != 0 || size == 0 || NameBuff[0] == NUL) {
+  if (r != 0 || size == 0 || buf[0] == NUL) {
     if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
       ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
     }
     return NULL;
   }
-  return NameBuff;
+  return buf;
+}
+
+/// Like getenv(), but use `NameBuff` instead of allocating.
+/// Value is truncated if it exceeds sizeof(NameBuff).
+///
+/// @return pointer to `NameBuff` on success, NULL on failure
+/// @see os_env_exists
+/// @see os_getenv_buf
+char *os_getenv_noalloc(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return os_getenv_buf(name, NameBuff, sizeof(NameBuff));
 }
 
 /// Returns true if environment variable `name` is defined (even if empty).
