@@ -214,7 +214,10 @@ int pty_proc_spawn(PtyProc *ptyproc)
       && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  // The stream_init() call in proc_spawn() will initialize proc->out.s.uv.poll.
+  if (!proc->out.s.closed
+      && (status = set_duplicating_descriptor(master, &proc->out.s.uv.pipe))) {
+    goto error;
+  }
 
   ptyproc->tty_fd = master;
   proc->pid = pid;
