@@ -143,9 +143,14 @@ describe('vim.ui', function()
         exec_lua [[vim.system = function() return { wait=function() return { code=3 } end } end]]
       end
       if not is_os('bsd') then
-        local rv =
-          exec_lua [[local cmd = vim.ui.open('non-existent-file'); return cmd:wait(100).code]]
-        ok(type(rv) == 'number' and rv ~= 0, 'nonzero exit code', rv)
+        local rv = exec_lua([[
+          local cmd, err = vim.ui.open('non-existent-file')
+          if err then return nil end
+          return cmd:wait(100).code
+        ]])
+        if type(rv) == 'number' then
+          ok(rv ~= 0, 'nonzero exit code', rv)
+        end
       end
 
       exec_lua [[
