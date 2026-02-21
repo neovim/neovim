@@ -3,12 +3,27 @@
 --- Default user commands
 do
   vim.api.nvim_create_user_command('Inspect', function(cmd)
-    if cmd.bang then
-      vim.print(vim.inspect_pos())
-    else
-      vim.show_pos()
+    local opts = {} --- @type vim.inspect_pos.Opts
+    local row, col --- @type integer?, integer?
+    if cmd.range > 0 then
+      local s = vim.api.nvim_buf_get_mark(0, '<')
+      local e = vim.api.nvim_buf_get_mark(0, '>')
+      row = s[1] - 1
+      col = s[2]
+      opts.end_row = e[1] - 1
+      -- end_col is exclusive in our API; nvim_buf_get_mark returns 0-based inclusive col
+      opts.end_col = e[2] + 1
     end
-  end, { desc = 'Inspect highlights and extmarks at the cursor', bang = true })
+    if cmd.bang then
+      vim.print(vim.inspect_pos(0, row, col, opts))
+    else
+      vim.show_pos(0, row, col, opts)
+    end
+  end, {
+    desc = 'Inspect highlights and extmarks at the cursor or visual selection',
+    bang = true,
+    range = true,
+  })
 
   vim.api.nvim_create_user_command('InspectTree', function(cmd)
     local opts = { lang = cmd.fargs[1] }
