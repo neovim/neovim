@@ -6728,10 +6728,10 @@ vim.wo.stc = vim.wo.statuscolumn
 --- current window and buffer, while %{} items are evaluated in the
 --- context of the window that the statusline belongs to.
 ---
---- When there is error while evaluating the option then it will be made
---- empty to avoid further errors.  Otherwise screen updating would loop.
---- When the result contains unprintable characters the result is
---- unpredictable.
+--- When there is an error while evaluating the option it will be reset to
+--- its default value to avoid further errors.  Otherwise screen updating
+--- would loop.  When the result contains unprintable characters the
+--- result is unpredictable.
 ---
 --- Note that the only effect of 'ruler' when this option is set (and
 --- 'laststatus' is 2 or 3) is controlling the output of `CTRL-G`.

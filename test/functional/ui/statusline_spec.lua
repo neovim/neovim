@@ -949,6 +949,12 @@ describe('default statusline', function()
   it('setting statusline to empty string sets default statusline', function()
     exec_lua("vim.o.statusline = 'asdf'")
     eq('asdf', eval('&statusline'))
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:asdf                                                        }|
+                                                                  |
+    ]])
 
     local default_statusline = table.concat({
       '%<',
@@ -962,14 +968,36 @@ describe('default statusline', function()
     })
 
     exec_lua("vim.o.statusline = ''")
-
     eq(default_statusline, eval('&statusline'))
-
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
       {3:[No Name]                                 0,0-1          All}|
                                                                   |
+    ]])
+
+    -- Reset to default (via the correct scope) if there's an error.
+    command('setglobal statusline=%{a%}')
+    eq(default_statusline, eval('&statusline'))
+    eq(default_statusline, eval('&g:statusline'))
+    eq('', eval('&l:statusline'))
+    command('redrawstatus') -- like Vim, statusline isn't immediately redrawn after an error
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+      {9:E121: Undefined variable: a}                                 |
+    ]])
+    command('setlocal statusline=%{b%}')
+    eq(default_statusline, eval('&statusline'))
+    eq(default_statusline, eval('&g:statusline'))
+    eq('', eval('&l:statusline'))
+    command('redrawstatus') -- like Vim, statusline isn't immediately redrawn after an error
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+      {9:E121: Undefined variable: b}                                 |
     ]])
   end)
 
@@ -1064,7 +1092,7 @@ describe("'statusline' in floatwin", function()
 
     -- no statusline is displayed because the statusline option was cleared
     api.nvim_win_set_config(win, cfg)
-    screen:expect(without_stl)
+    screen:expect_unchanged()
 
     -- displayed after the option is reset
     command(set_stl)
@@ -1090,6 +1118,19 @@ describe("'statusline' in floatwin", function()
     ]])
     command('tabfirst')
     api.nvim_win_set_config(win2, { style = 'minimal' })
+    screen:expect([[
+      {5: }{101:2}{5:+ [No Name] }{24: }{102:2}{24:+ [No Name] }{2: }{24:X}|
+       ┌──────────┐                 |
+      {1:~}│{4:^1         }│{1:                 }|
+      {1:~}│{4:2         }│{1:                 }|
+      {1:~}│{4:3         }│{1:                 }|
+      {1:~}│{4:4         }│{1:                 }|
+      {1:~}│{3:<Name] [+]}│{1:                 }|
+      {1:~}└──────────┘{1:                 }|
+      {1:~                             }|*10
+      {2:[No Name]                     }|
+                                    |
+    ]])
     command('tabnext')
     screen:expect([[
       {24: }{102:2}{24:+ [No Name] }{5: }{101:2}{5:+ [No Name] }{2: }{24:X}|

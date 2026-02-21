@@ -85,8 +85,7 @@ void win_redr_status(win_T *wp)
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
-  } else if (*wp->w_p_stl != NUL
-             || (*p_stl != NUL && (!wp->w_floating || (is_stl_global && wp == curwin)))) {
+  } else if (*wp->w_p_stl != NUL || !wp->w_floating || (is_stl_global && wp == curwin)) {
     // redraw custom status line
     redraw_custom_statusline(wp);
   }
@@ -2136,13 +2135,12 @@ stcsign:
   redraw_not_allowed = save_redraw_not_allowed;
 
   // Check for an error.  If there is one the display will be messed up and
-  // might loop redrawing.  Avoid that by making the corresponding option
-  // empty.
+  // might loop redrawing.  Avoid that by setting the option to its default.
   // TODO(Bram): find out why using called_emsg_before makes tests fail, does it
   // matter?
   // if (called_emsg > called_emsg_before)
   if (opt_idx != kOptInvalid && did_emsg > did_emsg_before) {
-    set_option_direct(opt_idx, STATIC_CSTR_AS_OPTVAL(""), opt_scope, SID_ERROR);
+    set_option_direct(opt_idx, get_option_default(opt_idx, opt_scope), opt_scope, SID_ERROR);
   }
 
   // A user function may reset KeyTyped, restore it.
