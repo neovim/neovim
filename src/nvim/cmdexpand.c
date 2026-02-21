@@ -4059,7 +4059,7 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
   ga_concat_len(&ga, start_ptr, (size_t)segment_len);
   if (!is_single_line) {
     if (exacttext) {
-      ga_concat_len(&ga, S_LEN("\\n"));
+      GA_CONCAT_LITERAL(&ga, "\\n");
     } else {
       ga_append(&ga, '\n');
     }
@@ -4073,7 +4073,7 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
       ga_grow(&ga, linelen + 2);
       ga_concat_len(&ga, line, (size_t)linelen);
       if (exacttext) {
-        ga_concat_len(&ga, S_LEN("\\n"));
+        GA_CONCAT_LITERAL(&ga, "\\n");
       } else {
         ga_append(&ga, '\n');
       }
