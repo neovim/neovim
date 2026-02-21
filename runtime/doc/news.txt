@@ -119,6 +119,11 @@ OPTIONS
 PLUGINS
 
 • Removed "shellmenu" plugin, an old menu-based quasi-snippet plugin for shell scripts.
+• |tohtml| is now an "opt-in" plugin. Use |:packadd| to activate it: >
+  :packadd nvim.tohtml
+• The |tohtml| Lua module moved from the top-level of the module search-path
+  into the "nvim" namespace. Scripts must call `require('nvim.tohtml')`
+  instead of `require('tohtml')`.
 
 TREESITTER
 

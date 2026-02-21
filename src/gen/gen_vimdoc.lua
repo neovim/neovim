@@ -781,6 +781,10 @@ local function render_fun(fun, classes, cfg)
     return
   end
 
+  if not fun.name then
+    error(('fun.name is nil, check fn_xform(). fun: %s'):format(vim.inspect(fun)))
+  end
+
   if vim.startswith(fun.name, '_') or fun.name:find('[:.]_') then
     return
   end
@@ -979,6 +983,10 @@ end
 --- @param add_header? boolean
 local function render_section(section, add_header)
   local doc = {} --- @type string[]
+
+  if not section.title then
+    error(('section.title is nil, check section_fmt(). section: %s'):format(vim.inspect(section)))
+  end
 
   if add_header ~= false then
     vim.list_extend(doc, {
