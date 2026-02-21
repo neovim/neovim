@@ -127,4 +127,74 @@ function M.uri_to_bufnr(uri)
   return vim.fn.bufadd(M.uri_to_fname(uri))
 end
 
+--- @alias vim.uri.NvimCmd "edit"|"tabedit"|"split"|"vsplit"|"drop"|"tabnew"
+
+---@class vim.uri.NvimUri
+---@field cmd vim.uri.NvimCmd Vim command to use
+---@field file string File path
+---@field line? integer Line number
+---@field column? integer Column number
+---@field server? string Server address to connect to
+
+local nvim_uri_cmds = {
+  drop = true,
+  edit = true,
+  open = true,
+  split = true,
+  tabedit = true,
+  tabnew = true,
+  vsplit = true,
+}
+
+---Parses a nvim:// URI into its components.
+---
+---Format: `nvim://{cmd}?file={path}[&line={n}] [&column={n}] [&server={addr}]`
+---
+---@param uri string The nvim:// URI to parse
+---@return vim.uri.NvimUri? parsed The parsed URI components, or nil if invalid
+---@return string? err Error message if parsing failed
+function M.uri_parse_nvim(uri)
+  local rest = uri:match('^nvim://(.*)$')
+  if not rest then
+    return nil, 'URI scheme must be "nvim"'
+  end
+
+  local cmd, query = rest:match('^([^?]+)%?(.*)$') --- @type string?, string?
+  if cmd and query then
+    if not nvim_uri_cmds[cmd] then
+      local cmds = vim.tbl_keys(nvim_uri_cmds)
+      table.sort(cmds)
+      return nil,
+        'Unsupported command: ' .. cmd .. '. Expected one of: ' .. table.concat(cmds, ', ')
+    end
+
+    if cmd == 'open' then
+      cmd = vim.g.uri_opencmd or 'edit'
+      if not nvim_uri_cmds[cmd] or cmd == 'open' then
+        return nil, 'Invalid vim.g.uri_opencmd value: ' .. tostring(cmd)
+      end
+    end
+
+    local params = {} --- @type table<string, string>
+    --- @diagnostic disable-next-line: no-unknown
+    for key, value in query:gmatch('([^&=]+)=([^&]*)') do
+      params[key] = M.uri_decode(value)
+    end
+
+    if not params.file or params.file == '' then
+      return nil, 'Missing required "file" parameter'
+    end
+
+    return {
+      cmd = cmd,
+      file = params.file,
+      line = tonumber(params.line),
+      column = tonumber(params.column),
+      server = params.server,
+    }
+  end
+
+  return nil, 'Unsupported nvim:// URI format. Expected: nvim://{cmd}?file=...'
+end
+
 return M
