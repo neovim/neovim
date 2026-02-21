@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 
 local eq = t.eq
 local ok = t.ok
+local write_file = t.write_file
 local exec_lua = n.exec_lua
 local clear = n.clear
 local feed = n.feed
@@ -131,8 +132,8 @@ describe('vim.ui', function()
     it('opt.cmd #29490', function()
       t.matches(
         'ENOENT: no such file or directory',
-        t.pcall_err(exec_lua, function()
-          vim.ui.open('foo', { cmd = { 'non-existent-tool' } })
+        t.pcall_err(function()
+          exec_lua([[vim.ui.open('foo', { cmd = { 'non-existent-tool' } })]])
         end)
       )
 
@@ -181,6 +182,24 @@ describe('vim.ui', function()
       n.api.nvim_set_option_value('filetype', 'help', { buf = buf, scope = 'local' })
       local tags = n.api.nvim_buf_get_extmarks(buf, link_ns, 0, -1, {})
       eq(#tags, 0)
+    end)
+  end)
+
+  describe('edit()', function()
+    it('defaults open to edit', function()
+      local fname = 'Xui-edit-test'
+      write_file(fname, 'line1\nline2\nline3')
+      finally(function()
+        os.remove(fname)
+      end)
+
+      eq(
+        { fname, 2, 3 },
+        exec_lua(function(path)
+          vim.ui.edit(path, { cmd = 'open', line = 2, column = 3 })
+          return { vim.fn.expand('%:t'), vim.fn.line('.'), vim.fn.col('.') }
+        end, fname)
+      )
     end)
   end)
 end)

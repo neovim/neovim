@@ -613,6 +613,11 @@ int main(int argc, char **argv)
   // Makes "vim -c '/return' -t main" work.
   handle_tag(params.tagname);
 
+  // Handle nvim:// URI if provided
+  if (params.uri) {
+    uri_request(&params);
+  }
+
   // Execute any "+", "-c" and "-S" arguments.
   if (params.n_commands > 0) {
     exe_commands(&params);
@@ -1076,6 +1081,33 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 }
 
+/// Handle nvim:// URI scheme for "Open in Editor" functionality
+static void uri_request(mparm_T *params)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(a, 1);
+  ADD_C(a, CSTR_AS_OBJ(params->uri));
+  String s = STATIC_CSTR_AS_STRING("return vim._handle_uri(...)");
+  Object o = nlua_exec(s, NULL, a, kRetObject, NULL, &err);
+
+  if (ERROR_SET(&err)) {
+    fprintf(stderr, "%s\n", err.msg);
+    os_exit(2);
+  }
+
+  if (o.type == kObjectTypeBoolean) {
+    if (o.data.boolean) {
+      os_exit(0);  // sent to remote server, exit
+    }
+    // false = opened locally, continue startup
+  } else if (o.type == kObjectTypeString) {
+    fprintf(stderr, "%s\n", o.data.string.data);
+    os_exit(2);
+  }
+
+  api_free_object(o);
+}
+
 /// Decides whether text (as opposed to commands) will be read from stdin.
 /// @see EDIT_STDIN
 static bool edit_stdin(mparm_T *parmp)
@@ -1477,6 +1509,10 @@ scripterror:
           parmp->scriptout_append = (c == 'w');
         }
       }
+    } else if (STRNICMP(argv[0], "nvim://", 7) == 0) {
+      // Handle nvim:// URI scheme - store for later processing
+      argv_idx = -1;
+      parmp->uri = argv[0];
     } else {  // File name argument.
       argv_idx = -1;  // skip to next argument
 
@@ -1575,6 +1611,7 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->listen_addr = NULL;
   paramp->server_addr = NULL;
   paramp->remote = 0;
+  paramp->uri = NULL;
   paramp->luaf = NULL;
   paramp->lua_arg0 = -1;
 }
