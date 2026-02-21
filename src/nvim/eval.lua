@@ -9671,6 +9671,7 @@ M.funcs = {
       { 'timeout', 'integer' },
       { 'skip', 'string|function' },
     },
+    returns = '{ [1]: integer, [2]: integer, [3]: integer? }',
     signature = 'searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])',
   },
   serverlist = {
