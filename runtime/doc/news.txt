@@ -335,6 +335,7 @@ LUA
 • |vim.json.encode()| has an `sort_keys` option.
 • |Range:is_empty()| to check if a |vim.Range| is empty.
 • |vim.json.decode()| has an `skip_comments` option.
+• |vim.defer_fn()| allows more execution conditions.
 
 OPTIONS
 
