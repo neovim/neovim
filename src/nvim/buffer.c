@@ -4267,7 +4267,7 @@ void buf_set_changedtick(buf_T *const buf, const varnumber_T changedtick)
 }
 
 /// Read the given buffer contents into a string.
-void read_buffer_into(buf_T *buf, linenr_T start, linenr_T end, StringBuilder *sb)
+void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilder *sb)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(buf);
@@ -4279,9 +4279,12 @@ void read_buffer_into(buf_T *buf, linenr_T start, linenr_T end, StringBuilder *s
 
   size_t written = 0;
   size_t len = 0;
-  linenr_T lnum = start;
-  char *lp = ml_get_buf(buf, lnum);
-  size_t lplen = (size_t)ml_get_buf_len(buf, lnum);
+  linenr_T lnum = start_pos->lnum;
+  char *lp = ml_get_buf(buf, lnum) + start_pos->col;
+  size_t lplen = (size_t)ml_get_buf_len(buf, lnum) - (size_t)start_pos->col;
+  if (start_pos->lnum == end_pos->lnum) {
+    lplen = (size_t)end_pos->col - (size_t)start_pos->col + 1;
+  }
 
   while (true) {
     if (lplen == 0) {
@@ -4298,18 +4301,23 @@ void read_buffer_into(buf_T *buf, linenr_T start, linenr_T end, StringBuilder *s
 
     if (len == lplen - written) {
       // Finished a line, add a NL, unless this line should not have one.
-      if (lnum != end
-          || (!buf->b_p_bin && buf->b_p_fixeol)
+      if (lnum != end_pos->lnum
+          || (!buf->b_p_bin && buf->b_p_fixeol && lnum != end_pos->lnum)
           || (lnum != buf->b_no_eol_lnum
-              && (lnum != buf->b_ml.ml_line_count || buf->b_p_eol))) {
+              && (lnum != buf->b_ml.ml_line_count || buf->b_p_eol)
+              && (lnum != end_pos->lnum))) {
         kv_push(*sb, NL);
       }
       lnum++;
-      if (lnum > end) {
+      if (lnum > end_pos->lnum) {
         break;
       }
       lp = ml_get_buf(buf, lnum);
-      lplen = (size_t)ml_get_buf_len(buf, lnum);
+      if (lnum == end_pos->lnum) {
+        lplen = (size_t)end_pos->col + 1;
+      } else {
+        lplen = (size_t)ml_get_buf_len(buf, lnum);
+      }
       written = 0;
     } else if (len > 0) {
       written += len;
