@@ -42,8 +42,25 @@ local validate = vim.validate
 --- When specified, it indicates that this position belongs to a specific buffer.
 --- This field is required when performing position conversions.
 ---@field buf? integer
+---@field private [1] integer underlying representation of row
+---@field private [2] integer underlying representation of col
+---@field private [3] integer underlying representation of buf
 local Pos = {}
-Pos.__index = Pos
+
+---@private
+---@param pos vim.Pos
+---@param key any
+function Pos.__index(pos, key)
+  if key == 'row' then
+    return pos[1]
+  elseif key == 'col' then
+    return pos[2]
+  elseif key == 'buf' then
+    return pos[3]
+  end
+
+  return Pos[key]
+end
 
 ---@class vim.Pos.Optional
 ---@inlinedoc
@@ -62,9 +79,9 @@ function Pos.new(row, col, opts)
 
   ---@type vim.Pos
   local self = setmetatable({
-    row = row,
-    col = col,
-    buf = opts.buf,
+    row,
+    col,
+    opts.buf,
   }, Pos)
 
   return self
@@ -176,31 +193,42 @@ function Pos.lsp(buf, pos, position_encoding)
   return Pos.new(row, col, { buf = buf })
 end
 
---- Converts |vim.Pos| to cursor position.
+--- Converts |vim.Pos| to cursor position (see |api-indexing|).
 ---@param pos vim.Pos
----@return [integer, integer]
+---@return integer, integer
 function Pos.to_cursor(pos)
-  return { pos.row + 1, pos.col }
+  return pos.row + 1, pos.col
 end
 
---- Creates a new |vim.Pos| from cursor position.
+--- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 ---@param pos [integer, integer]
-function Pos.cursor(pos)
-  return Pos.new(pos[1] - 1, pos[2])
+---@param opts vim.Pos.Optional|nil
+function Pos.cursor(pos, opts)
+  return Pos.new(pos[1] - 1, pos[2], opts)
 end
 
---- Converts |vim.Pos| to extmark position.
+--- Converts |vim.Pos| to extmark position (see |api-indexing|).
 ---@param pos vim.Pos
----@return [integer, integer]
+---@return integer, integer
 function Pos.to_extmark(pos)
-  return { pos.row, pos.col }
+  local line_num = #api.nvim_buf_get_lines(pos.buf, 0, -1, true)
+
+  local row = pos.row
+  local col = pos.col
+  if pos.col == 0 and pos.row == line_num then
+    row = row - 1
+    col = #get_line(pos.buf, row)
+  end
+
+  return row, col
 end
 
---- Creates a new |vim.Pos| from extmark position.
----@param pos [integer, integer]
-function Pos.extmark(pos)
-  local row, col = unpack(pos)
-  return Pos.new(row, col)
+--- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+---@param row integer
+---@param col integer
+---@param opts vim.Pos.Optional|nil
+function Pos.extmark(row, col, opts)
+  return Pos.new(row, col, opts)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.
