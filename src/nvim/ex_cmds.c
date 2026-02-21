@@ -1373,7 +1373,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
                    READ_FILTER, false) != OK) {
         if (!aborting()) {
           msg_putchar('\n');
-          semsg(_(e_notread), otmp);
+          semsg(_(e_cant_read_file_str), otmp);
         }
         goto error;
       }

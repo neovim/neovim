@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
+#include "nvim/macros_defs.h"  // IWYU pragma: keep
 #include "nvim/memory.h"
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
@@ -45,3 +46,5 @@
 ///
 /// @param gap the garray to be freed
 #define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void *, FREE_PTR_PTR)
+
+#define GA_CONCAT_LITERAL(gap, s) ga_concat_len((gap), S_LEN(s))
