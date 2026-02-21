@@ -224,7 +224,7 @@ char *estack_sfile(estack_arg_T which)
                                                "[%" PRIdLINENR "]", lnum);
       }
       if (idx != exestack.ga_len - 1) {
-        ga_concat_len(&ga, S_LEN(".."));
+        GA_CONCAT_LITERAL(&ga, "..");
       }
     }
   }

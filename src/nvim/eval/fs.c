@@ -1307,7 +1307,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
 
   if (blob) {
     if (read_blob(fd, rettv, offset, size) == FAIL) {
-      semsg(_(e_notread), fname);
+      semsg(_(e_cant_read_file_str), fname);
     }
     fclose(fd);
     return;
