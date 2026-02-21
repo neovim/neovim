@@ -1860,6 +1860,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---   elements.
 --- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
 ---   popupmenu to this window, with an offset in screen cell width.
+--- - pinned: Prevent the window from being closed by commands like `:fclose` or
+---   `:only`. The window can only be closed when explicitly targeted. Immutable
+---   after creation. Default: false.
 --- @return integer # |window-ID|, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 

@@ -5181,7 +5181,7 @@ void tabpage_close(int forceit)
     ex_win_close(forceit, curwin, NULL);
   }
   if (!ONE_WINDOW) {
-    close_others(true, forceit);
+    close_others(true, forceit, true);
   }
   if (ONE_WINDOW) {
     ex_win_close(forceit, curwin, NULL);
@@ -5254,7 +5254,7 @@ static void ex_only(exarg_T *eap)
       win_goto(wp);
     }
   }
-  close_others(true, eap->forceit);
+  close_others(true, eap->forceit, false);
 }
 
 static void ex_hide(exarg_T *eap)
