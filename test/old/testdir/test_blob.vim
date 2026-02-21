@@ -706,8 +706,7 @@ endfunc
 
 func Test_blob_json_encode()
   let lines =<< trim END
-      #" call assert_equal('[222,173,190,239]', json_encode(0zDEADBEEF))
-      call assert_equal('[222, 173, 190, 239]', json_encode(0zDEADBEEF))
+      call assert_equal('[222,173,190,239]', json_encode(0zDEADBEEF))
       call assert_equal('[]', json_encode(0z))
   END
   call CheckLegacyAndVim9Success(lines)

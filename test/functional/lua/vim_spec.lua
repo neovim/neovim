@@ -1502,8 +1502,8 @@ describe('lua stdlib', function()
     )
 
     eq('{ {}, vim.empty_dict() }', exec_lua('return vim.inspect({{}, vim.empty_dict()})'))
-    eq('{}', exec_lua([[ return vim.fn.json_encode(vim.empty_dict()) ]]))
-    eq('{"a": {}, "b": []}', exec_lua([[ return vim.fn.json_encode({a=vim.empty_dict(), b={}}) ]]))
+    eq('{}', fn.json_encode(vim.empty_dict()))
+    eq({ a = {}, b = {} }, fn.json_decode(fn.json_encode({ a = vim.empty_dict(), b = {} })))
   end)
 
   it('vim.validate (fast form)', function()
