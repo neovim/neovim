@@ -232,6 +232,14 @@ actually on the disk. Lockfile should not be edited by hand. Corrupted data
 for installed plugins is repaired (including after deleting whole file), but
 `version` fields will be missing for not yet added plugins.
 
+                                                          *vim.pack-unmanaged*
+
+Plugins with existing local path (after applying |vim.fs.normalize()|) as a
+source are not managed (install, update, or delete) by `vim.pack` and assumed
+to be fully managed by the user. They can be loaded via |vim.pack.add()|, but
+there is no presence in `vim.pack` beyond that. To force install as a managed
+plugin, use `file://path/to/plugin` type of source.
+
                                                            *vim.pack-examples*
 
 Basic install and management ~
@@ -259,6 +267,9 @@ Basic install and management ~
         -- Git branch, tag, or commit hash
         version = 'main',
       },
+
+      -- Plugins with local (non-URI) path are loaded but not managed
+      '/home/user/my-plugins/my-plug'
     })
 
     -- Plugin's code can be used directly after `add()`
@@ -398,7 +409,9 @@ These events can be used to execute plugin hooks. For example: >lua
 
     Fields: ~
       • {src}       (`string`) URI from which to install and pull updates. Any
-                    format supported by `git clone` is allowed.
+                    format supported by `git clone` is allowed. If path to an
+                    existing directory on disk, the plugin will be loaded but
+                    not managed (see |vim.pack-unmanaged|).
       • {name}?     (`string`) Name of plugin. Will be used as directory name.
                     Default: `src` repository name.
       • {version}?  (`string|vim.VersionRange`) Version to use for install and
@@ -442,8 +455,9 @@ add({specs}, {opts})                                          *vim.pack.add()*
                    (`boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})`)
                    Load `plugin/` files and `ftdetect/` scripts. If `false`,
                    works like `:packadd!`. If function, called with plugin
-                   data and is fully responsible for loading plugin. Default
-                   `false` during |init.lua| sourcing and `true` afterwards.
+                   data and is fully responsible for loading plugin (including
+                   |vim.pack-unmanaged|). Default `false` during |init.lua|
+                   sourcing and `true` afterwards.
                  • {confirm}? (`boolean`) Whether to ask user to confirm
                    initial install. Default `true`.
 
@@ -459,7 +473,8 @@ del({names}, {opts})                                          *vim.pack.del()*
                    plugin. Default `false`.
 
 get({names}, {opts})                                          *vim.pack.get()*
-    Gets |vim.pack| plugin info, optionally filtered by `names`.
+    Gets info for plugins managed by |vim.pack|, optionally filtered by
+    `names`.
 
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names. Default: all plugins
