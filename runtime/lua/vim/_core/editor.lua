@@ -1209,6 +1209,75 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   }
 end
 
+--- Handle nvim:// URI scheme for "Open in Editor" functionality.
+--- Parses the URI and opens the file in an existing Neovim server if available.
+--- If no server is found, opens the file locally.
+---
+--- @param uri string The nvim:// URI to handle
+--- @return boolean|string true=exit after sending to server, false=continue startup, string=error
+function vim._handle_uri(uri)
+  local parsed, err = require('vim.uri').uri_parse_nvim(uri)
+  if not parsed then
+    return 'Failed to parse URI: ' .. (err or 'unknown error')
+  end
+
+  local rcid = 0
+
+  -- Try to connect to specified server, or find one automatically
+  if parsed.server then
+    local ok, chan = pcall(vim.fn.sockconnect, 'pipe', parsed.server, { rpc = true })
+    if ok and chan and chan > 0 then
+      rcid = chan
+    end
+  else
+    -- Auto-discover existing server via socket files
+    local current_server = vim.v.servername
+    local runtime_dir = vim.env.XDG_RUNTIME_DIR or ('/run/user/' .. vim.fn.getuid()) --- @type string
+    --- @type string[]
+    local sockets = vim.fn.glob(runtime_dir .. '/nvim.*.0', false, true)
+    for _, server in ipairs(sockets) do
+      if server ~= current_server then
+        local ok, chan = pcall(vim.fn.sockconnect, 'pipe', server, { rpc = true })
+        if ok and chan and chan > 0 then
+          rcid = chan
+          break
+        end
+      end
+    end
+  end
+
+  if rcid ~= 0 then
+    -- Open file in remote server
+    vim.fn.rpcrequest(rcid, 'nvim_command', parsed.cmd .. ' ' .. vim.fn.fnameescape(parsed.file))
+
+    -- Position cursor if line/column specified
+    if parsed.line then
+      if parsed.column then
+        vim.fn.rpcrequest(
+          rcid,
+          'nvim_command',
+          string.format('call cursor(%d, %d)', parsed.line, parsed.column)
+        )
+      else
+        vim.fn.rpcrequest(rcid, 'nvim_command', string.format('normal! %dG', parsed.line))
+      end
+    end
+
+    vim.fn.chanclose(rcid)
+    return true
+  else
+    -- No server found, open file locally.
+    -- Use defer_fn to ensure startup completes first.
+    vim.defer_fn(function()
+      vim.cmd[parsed.cmd](parsed.file)
+      if parsed.line then
+        vim.api.nvim_win_set_cursor(0, { parsed.line, (parsed.column or 1) - 1 })
+      end
+    end, 0)
+    return false
+  end
+end
+
 do
   local function truncated_echo(msg)
     -- Truncate message to avoid hit-enter-prompt
