@@ -1418,7 +1418,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             hl_table[idx].sg_rgb_fg_idx = kColorIdxNone;
           }
 
-          did_change = hl_table[idx].sg_rgb_fg != old_color || hl_table[idx].sg_rgb_fg != old_idx;
+          did_change = hl_table[idx].sg_rgb_fg != old_color
+                       || hl_table[idx].sg_rgb_fg_idx != old_idx;
         }
 
         if (is_normal_group) {
@@ -1442,7 +1443,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             hl_table[idx].sg_rgb_bg_idx = kColorIdxNone;
           }
 
-          did_change = hl_table[idx].sg_rgb_bg != old_color || hl_table[idx].sg_rgb_bg != old_idx;
+          did_change = hl_table[idx].sg_rgb_bg != old_color
+                       || hl_table[idx].sg_rgb_bg_idx != old_idx;
         }
 
         if (is_normal_group) {
@@ -1463,9 +1465,11 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             hl_table[idx].sg_rgb_sp = name_to_color(arg, indexp);
           } else {
             hl_table[idx].sg_rgb_sp = -1;
+            hl_table[idx].sg_rgb_sp_idx = kColorIdxNone;
           }
 
-          did_change = hl_table[idx].sg_rgb_sp != old_color || hl_table[idx].sg_rgb_sp != old_idx;
+          did_change = hl_table[idx].sg_rgb_sp != old_color
+                       || hl_table[idx].sg_rgb_sp_idx != old_idx;
         }
 
         if (is_normal_group) {
