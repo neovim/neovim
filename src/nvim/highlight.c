@@ -41,6 +41,7 @@ static Map(uint64_t, int) combine_attr_entries = MAP_INIT;
 static Map(uint64_t, int) blend_attr_entries = MAP_INIT;
 static Map(uint64_t, int) blendthrough_attr_entries = MAP_INIT;
 static Set(cstr_t) urls = SET_INIT;
+static Set(cstr_t) fonts = SET_INIT;
 
 #define attr_entry(i) attr_entries.keys[i]
 
@@ -516,6 +517,37 @@ const char *hl_get_url(uint32_t index)
   return urls.keys[index];
 }
 
+/// Add a font to the fonts set and return its index.
+///
+/// @param font_name The font name to add
+/// @return Font index, or -1 if font_name is NULL or empty
+int32_t hl_add_font_idx(const char *font_name)
+{
+  if (font_name == NULL || *font_name == '\0') {
+    return -1;
+  }
+
+  MHPutStatus status;
+  uint32_t k = set_put_idx(cstr_t, &fonts, font_name, &status);
+  if (status != kMHExisting) {
+    fonts.keys[k] = xstrdup(font_name);
+  }
+
+  return (int32_t)k;
+}
+
+/// Get a font name by its index.
+///
+/// @param index Font index
+/// @return Font name, or NULL if index is invalid
+const char *hl_get_font(int32_t index)
+{
+  if (index < 0 || !fonts.keys) {
+    return NULL;
+  }
+  return fonts.keys[index];
+}
+
 /// Get attribute code for forwarded :terminal highlights.
 int hl_get_term_attr(HlAttrs *aep)
 {
@@ -531,6 +563,11 @@ void clear_hl_tables(bool reinit)
     xfree((void *)url);
   });
 
+  const char *font = NULL;
+  set_foreach(&fonts, font, {
+    xfree((void *)font);
+  });
+
   if (reinit) {
     set_clear(HlEntry, &attr_entries);
     highlight_init();
@@ -538,6 +575,7 @@ void clear_hl_tables(bool reinit)
     map_clear(uint64_t, &blend_attr_entries);
     map_clear(uint64_t, &blendthrough_attr_entries);
     set_clear(cstr_t, &urls);
+    set_clear(cstr_t, &fonts);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
@@ -549,6 +587,7 @@ void clear_hl_tables(bool reinit)
     map_destroy(uint64_t, &blendthrough_attr_entries);
     map_destroy(ColorKey, &ns_hls);
     set_destroy(cstr_t, &urls);
+    set_destroy(cstr_t, &fonts);
   }
 }
 
@@ -1001,6 +1040,10 @@ void hlattrs2dict(Dict *hl, Dict *hl_attrs, HlAttrs ae, bool use_rgb, bool short
   if (ae.hl_blend > -1 && (use_rgb || !short_keys)) {
     PUT_C(*hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
+  const char *font = hl_get_font(ae.font);
+  if (font != NULL) {
+    PUT_C(*hl, "font", STRING_OBJ(cstr_as_string(font)));
+  }
 }
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
@@ -1159,6 +1202,13 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     hlattrs.cterm_bg_color = bg == -1 ? 0 : (int16_t)(bg + 1);
     hlattrs.cterm_fg_color = fg == -1 ? 0 : (int16_t)(fg + 1);
     hlattrs.cterm_ae_attr = mask;
+  }
+
+  if (HAS_KEY_X(dict, font)) {
+    String str = dict->font;
+    if (str.size > 0 && STRICMP(str.data, "NONE") != 0) {
+      hlattrs.font = hl_add_font_idx(str.data);
+    }
   }
 
   return hlattrs;

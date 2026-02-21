@@ -2230,6 +2230,8 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - cterm: cterm attribute map, like `highlight-args`. If not set,
 ---          cterm attributes will match those from the attribute map
 ---          documented above.
+--- - font: GUI font name (string). Sets `highlight-font`.
+---         Use "NONE" to clear.
 --- - force: if true force update the highlight group when it exists.
 function vim.api.nvim_set_hl(ns_id, name, val) end
 

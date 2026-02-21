@@ -254,6 +254,29 @@ describe('API: set highlight', function()
     )
     assert_alive()
   end)
+
+  it('supports config font', function()
+    local ns = api.nvim_create_namespace('test_font')
+    api.nvim_set_hl(ns, 'TestFont', { fg = '#ff0000', font = 'Courier New 10' })
+    local hl = api.nvim_get_hl(ns, { name = 'TestFont' })
+    eq('Courier New 10', hl.font)
+    eq(16711680, hl.fg)
+
+    api.nvim_set_hl(ns, 'TestFont', { font = 'Monaco' })
+    hl = api.nvim_get_hl(ns, { name = 'TestFont' })
+    eq('Monaco', hl.font)
+
+    -- Clear font with "NONE"
+    api.nvim_set_hl(ns, 'TestFont', { font = 'NONE' })
+    hl = api.nvim_get_hl(ns, { name = 'TestFont' })
+    eq(nil, hl.font)
+
+    -- global namespace
+    api.nvim_set_hl(0, 'TestFontGlobal', { bg = '#00ff00', font = 'JetBrains Mono' })
+    hl = api.nvim_get_hl(0, { name = 'TestFontGlobal' })
+    eq('JetBrains Mono', hl.font)
+    eq(65280, hl.bg)
+  end)
 end)
 
 describe('API: get highlight', function()
