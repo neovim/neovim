@@ -66,6 +66,7 @@ typedef struct {
   unsigned small     : 1;
   unsigned baseline  : 2;
   unsigned dim       : 1;
+  unsigned overline  : 1;
 } VTermScreenCellAttrs;
 
 typedef struct {
@@ -160,8 +161,9 @@ typedef enum {
   VTERM_ATTR_BASELINE_MASK   = 1 << 11,
   VTERM_ATTR_URI_MASK        = 1 << 12,
   VTERM_ATTR_DIM_MASK        = 1 << 13,
+  VTERM_ATTR_OVERLINE_MASK   = 1 << 14,
 
-  VTERM_ALL_ATTRS_MASK = (1 << 14) - 1,
+  VTERM_ALL_ATTRS_MASK = (1 << 15) - 1,
 } VTermAttrMask;
 
 typedef enum {
@@ -190,6 +192,7 @@ typedef enum {
   VTERM_ATTR_BASELINE,   // number: 73, 74, 75
   VTERM_ATTR_URI,        // number
   VTERM_ATTR_DIM,        // bool:   2, 22
+  VTERM_ATTR_OVERLINE,   // bool:   53, 55
 
   VTERM_N_ATTRS,
 } VTermAttr;
@@ -318,6 +321,7 @@ typedef struct {
   unsigned small     : 1;
   unsigned baseline  : 2;
   unsigned dim       : 1;
+  unsigned overline  : 1;
 
   // Extra state storage that isn't strictly pen-related
   unsigned protected_cell : 1;

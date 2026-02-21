@@ -183,6 +183,7 @@ void vterm_state_resetpen(VTermState *state)
   state->pen.small = 0;     setpenattr_bool(state, VTERM_ATTR_SMALL, 0);
   state->pen.baseline = 0;  setpenattr_int(state, VTERM_ATTR_BASELINE, 0);
   state->pen.dim = 0;       setpenattr_bool(state, VTERM_ATTR_DIM, 0);
+  state->pen.overline = 0;  setpenattr_bool(state, VTERM_ATTR_OVERLINE, 0);
 
   state->pen.fg = state->default_fg;
   setpenattr_col(state, VTERM_ATTR_FOREGROUND, state->default_fg);
@@ -210,6 +211,7 @@ void vterm_state_savepen(VTermState *state, int save)
     setpenattr_bool(state, VTERM_ATTR_SMALL,     state->pen.small);
     setpenattr_int(state, VTERM_ATTR_BASELINE,  state->pen.baseline);
     setpenattr_bool(state, VTERM_ATTR_DIM,      state->pen.dim);
+    setpenattr_bool(state, VTERM_ATTR_OVERLINE, state->pen.overline);
 
     setpenattr_col(state, VTERM_ATTR_FOREGROUND, state->pen.fg);
     setpenattr_col(state, VTERM_ATTR_BACKGROUND, state->pen.bg);
@@ -450,6 +452,16 @@ void vterm_state_setpen(VTermState *state, const long args[], int argcount)
       setpenattr_col(state, VTERM_ATTR_BACKGROUND, state->pen.bg);
       break;
 
+    case 53:  // Overline on
+      state->pen.overline = 1;
+      setpenattr_bool(state, VTERM_ATTR_OVERLINE, 1);
+      break;
+
+    case 55:  // Overline off
+      state->pen.overline = 0;
+      setpenattr_bool(state, VTERM_ATTR_OVERLINE, 0);
+      break;
+
     case 73:  // Superscript
     case 74:  // Subscript
     case 75:  // Superscript/subscript off
@@ -580,6 +592,10 @@ int vterm_state_getpen(VTermState *state, long args[], int argcount)
 
   argi = vterm_state_getpen_color(&state->pen.bg, argi, args, false);
 
+  if (state->pen.overline) {
+    args[argi++] = 53;
+  }
+
   if (state->pen.small) {
     if (state->pen.baseline == VTERM_BASELINE_RAISE) {
       args[argi++] = 73;
@@ -645,6 +661,9 @@ int vterm_state_set_penattr(VTermState *state, VTermAttr attr, VTermValueType ty
     break;
   case VTERM_ATTR_DIM:
     state->pen.dim = (unsigned)val->boolean;
+    break;
+  case VTERM_ATTR_OVERLINE:
+    state->pen.overline = (unsigned)val->boolean;
     break;
   default:
     return 0;
