@@ -123,7 +123,7 @@ static int tslua_add_language_from_wasm(lua_State *L)
 }
 #endif
 
-// Creates the language into the internal language map.
+// Creates and adds a language to the internal language map.
 //
 // Returns true if the language is correctly loaded in the language map
 static int tslua_add_language_from_object(lua_State *L)
@@ -234,6 +234,13 @@ static int add_language(lua_State *L, bool is_wasm)
                       path,
                       TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION,
                       TREE_SITTER_LANGUAGE_VERSION, lang_version);
+  }
+
+  bool present = map_has(cstr_t, &langs, lang_name);
+  if (present) {
+    cstr_t key;
+    pmap_del(cstr_t)(&langs, lang_name, &key);
+    xfree((void *)key);
   }
 
   pmap_put(cstr_t)(&langs, xstrdup(lang_name), (TSLanguage *)lang);

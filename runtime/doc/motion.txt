@@ -264,7 +264,7 @@ g<End>			Like |g$| but to the last non-blank character
 			|exclusive| motion.  Ceci n'est pas une pipe.
 
 							*f*
-f{char}			To [count]'th occurrence of {char} to the right.  The
+f{char}			To [count]th occurrence of {char} to the right.  The
 			cursor is placed on {char} |inclusive|.
 			{char} can be entered as a digraph |digraph-arg|.
 			When 'encoding' is set to Unicode, composing
@@ -274,18 +274,18 @@ f{char}			To [count]'th occurrence of {char} to the right.  The
 			|i_CTRL-^|.
 
 							*F*
-F{char}			To the [count]'th occurrence of {char} to the left.
+F{char}			To the [count]th occurrence of {char} to the left.
 			The cursor is placed on {char} |exclusive|.
 			{char} can be entered like with the |f| command.
 
 							*t*
-t{char}			Till before [count]'th occurrence of {char} to the
+t{char}			Till before [count]th occurrence of {char} to the
 			right.  The cursor is placed on the character left of
 			{char} |inclusive|.
 			{char} can be entered like with the |f| command.
 
 							*T*
-T{char}			Till after [count]'th occurrence of {char} to the
+T{char}			Till after [count]th occurrence of {char} to the
 			left.  The cursor is placed on the character right of
 			{char} |exclusive|.
 			{char} can be entered like with the |f| command.
@@ -620,14 +620,14 @@ ib			"inner block", select [count] blocks, from "[count] [("
 
 a>						*v_a>* *v_a<* *a>* *a<*
 a<			"a <> block", select [count] <> blocks, from the
-			[count]'th unmatched '<' backwards to the matching
+			[count]th unmatched '<' backwards to the matching
 			'>', including the '<' and '>'.  The |cpo-M| option flag
 			is used to handle escaped '<' and '>'.
 			When used in Visual mode it is made charwise.
 
 i>						*v_i>* *v_i<* *i>* *i<*
 i<			"inner <> block", select [count] <> blocks, from
-			the [count]'th unmatched '<' backwards to the matching
+			the [count]th unmatched '<' backwards to the matching
 			'>', excluding the '<' and '>'.  It's an error to
 			select an empty inner block like "<>".  The |cpo-M|
 			option flag is used to handle escaped '<' and '>'.
@@ -635,14 +635,14 @@ i<			"inner <> block", select [count] <> blocks, from
 
 						*v_at* *at*
 at			"a tag block", select [count] tag blocks, from the
-			[count]'th unmatched "<aaa>" backwards to the matching
+			[count]th unmatched "<aaa>" backwards to the matching
 			"</aaa>", including the "<aaa>" and "</aaa>".
 			See |tag-blocks| about the details.
 			When used in Visual mode it is made charwise.
 
 						*v_it* *it*
 it			"inner tag block", select [count] tag blocks, from the
-			[count]'th unmatched "<aaa>" backwards to the matching
+			[count]th unmatched "<aaa>" backwards to the matching
 			"</aaa>", excluding the "<aaa>" and "</aaa>".
 			See |tag-blocks| about the details.
 			When used in Visual mode it is made charwise.
