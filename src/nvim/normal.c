@@ -1331,16 +1331,6 @@ static void normal_check_text_changed(NormalState *s)
   }
 }
 
-static void normal_check_buffer_modified(NormalState *s)
-{
-  // Trigger BufModified if b_modified changed
-  if (!finish_op && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_invalid == true) {
-    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_invalid = false;
-  }
-}
-
 /// If nothing is pending and we are going to wait for the user to
 /// type a character, trigger SafeState.
 static void normal_check_safe_state(NormalState *s)
@@ -1456,7 +1446,6 @@ static int normal_check(VimState *state)
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
     normal_check_window_scrolled(s);
-    normal_check_buffer_modified(s);
     normal_check_safe_state(s);
 
     // Updating diffs from changed() does not always work properly,
