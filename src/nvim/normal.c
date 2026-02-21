@@ -703,11 +703,10 @@ static void normal_redraw_mode_message(NormalState *s)
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
   if (msg_scroll || emsg_on_display) {
-    msg_delay(1003, true);            // wait at least one second
+    msg_delay(1003, true);    // wait extra second for scrolled or error message
   }
-  if (ui_has(kUIMessages)) {
-    // TODO(justinmk): wtf is this delay for? From before 2014.
-    os_delay(3003, false);           // wait up to three seconds
+  if (!ui_has(kUIMessages)) {
+    os_delay(3003, false);    // wait three seconds before doing 'showmode'
   }
   State = save_State;
 
