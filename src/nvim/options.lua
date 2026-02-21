@@ -8763,6 +8763,7 @@ local options = {
         if_true = table.concat({
           '%<',
           '%f %h%w%m%r ',
+          "%{% v:lua.require('vim.term').get_code() %}",
           '%=',
           "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
           "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
