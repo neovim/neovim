@@ -871,7 +871,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
     }
     size_t cnt = find_ident_under_cursor(argp, (regname == Ctrl_W
                                                 ? (FIND_IDENT|FIND_STRING)
-                                                : FIND_STRING));
+                                                : FIND_STRING), NULL);
     *argp = cnt ? xmemdupz(*argp, cnt) : NULL;
     *allocated = true;
     return true;
