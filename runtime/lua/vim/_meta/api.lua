@@ -2187,7 +2187,6 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- values of the Normal group. If the Normal group has not been defined,
 --- using these values results in an error.
 ---
----
 --- If `link` is used in combination with other attributes; only the
 --- `link` will take effect (see |:hi-link|).
 ---
@@ -2198,39 +2197,35 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- `nvim_set_hl_ns()` or `nvim_win_set_hl_ns()` to activate them.
 --- @param name string Highlight group name, e.g. "ErrorMsg"
 --- @param val vim.api.keyset.highlight Highlight definition map, accepts the following keys:
---- - fg: color name or "#RRGGBB", see note.
 --- - bg: color name or "#RRGGBB", see note.
---- - fg_indexed: boolean
----   When true, fg is a terminal palette index (0-255).
----   Default is false.
---- - bg_indexed: boolean
----   Same as fg_indexed, but for background color.
---- - sp: color name or "#RRGGBB"
+--- - bg_indexed: boolean (default false) If true, bg is a terminal palette index (0-255).
 --- - blend: integer between 0 and 100
---- - bold: boolean
+--- - cterm: cterm attribute map, like `highlight-args`. If not set, cterm attributes
+---   will match those from the attribute map documented above.
+--- - ctermbg: Sets background of cterm color `ctermbg`
+--- - ctermfg: Sets foreground of cterm color `ctermfg`
+--- - default: boolean Don't override existing definition `:hi-default`
+--- - fg: color name or "#RRGGBB", see note.
+--- - fg_indexed: boolean (default false) If true, fg is a terminal palette index (0-255).
+--- - force: if true force update the highlight group when it exists.
+--- - link: Name of highlight group to link to. `:hi-link`
+--- - sp: color name or "#RRGGBB"
 --- - altfont: boolean
 --- - blink: boolean
+--- - bold: boolean
+--- - conceal: boolean Concealment at the UI level (terminal SGR), unrelated to `:syn-conceal`.
 --- - dim: boolean
---- - conceal: boolean
---- - overline: boolean
---- - standout: boolean
---- - underline: boolean
---- - undercurl: boolean
---- - underdouble: boolean
---- - underdotted: boolean
---- - underdashed: boolean
---- - strikethrough: boolean
 --- - italic: boolean
---- - reverse: boolean
 --- - nocombine: boolean
---- - link: name of another highlight group to link to, see `:hi-link`.
---- - default: Don't override existing definition `:hi-default`
---- - ctermfg: Sets foreground of cterm color `ctermfg`
---- - ctermbg: Sets background of cterm color `ctermbg`
---- - cterm: cterm attribute map, like `highlight-args`. If not set,
----          cterm attributes will match those from the attribute map
----          documented above.
---- - force: if true force update the highlight group when it exists.
+--- - overline: boolean
+--- - reverse: boolean
+--- - standout: boolean
+--- - strikethrough: boolean
+--- - undercurl: boolean
+--- - underdashed: boolean
+--- - underdotted: boolean
+--- - underdouble: boolean
+--- - underline: boolean
 function vim.api.nvim_set_hl(ns_id, name, val) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()`. This can be set for

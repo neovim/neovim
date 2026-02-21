@@ -27,6 +27,7 @@ typedef enum {
   HL_ALTFONT       = 0x0100,
   HL_DIM           = 0x0200,
   HL_BLINK         = 0x8000,
+  // SGR attribute, unrelated to HL_CONCEAL syntax flag.
   HL_CONCEALED     = 0x10000,
   HL_OVERLINE      = 0x20000,
   HL_NOCOMBINE     = 0x0400,

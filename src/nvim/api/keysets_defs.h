@@ -168,22 +168,22 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__highlight_;
+  Boolean altfont;
+  Boolean blink;
   Boolean bold;
+  Boolean conceal;
+  Boolean dim;
+  Boolean italic;
+  Boolean nocombine;
+  Boolean overline;
+  Boolean reverse;
   Boolean standout;
   Boolean strikethrough;
-  Boolean underline;
   Boolean undercurl;
-  Boolean underdouble;
-  Boolean underdotted;
   Boolean underdashed;
-  Boolean italic;
-  Boolean reverse;
-  Boolean altfont;
-  Boolean dim;
-  Boolean blink;
-  Boolean conceal;
-  Boolean overline;
-  Boolean nocombine;
+  Boolean underdotted;
+  Boolean underdouble;
+  Boolean underline;
   Boolean default_ DictKey(default);
   DictAs(highlight_cterm) cterm;
   Union(Integer, String) foreground;
