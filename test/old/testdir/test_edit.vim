@@ -929,7 +929,7 @@ func Test_edit_CTRL_S()
   bw!
 endfunc
 
-func Test_edit_CTRL_T()
+func Edit_CTRL_T()
   " Check for CTRL-T and CTRL-X CTRL-T in insert mode
   " 1) increase indent
   new
@@ -1000,6 +1000,29 @@ func Test_edit_CTRL_T()
   endtry
   call assert_equal(['mad'], getline(1, '$'))
   bw!
+endfunc
+
+func Test_edit_CTRL_T()
+  call Edit_CTRL_T()
+  set completeopt+=fuzzy
+  call Edit_CTRL_T()
+  set completeopt&
+endfunc
+
+func Test_edit_CTRL_T_longest()
+  " CTRL-X CTRL-T (thesaurus complete) with 'longest' should not insert
+  " longest match
+  set completeopt+=longest
+  new
+  call writefile(['angry furious mad madder maddest'], 'Xthesaurus', 'D')
+  set thesaurus=Xthesaurus
+  call setline(1, 'mad')
+  call cursor(1, 1)
+  call feedkeys("A\<c-x>\<c-t>\<cr>\<esc>", 'tnix')
+  call assert_equal(['mad', ''], getline(1, '$'))
+  bw!
+  set thesaurus=
+  set completeopt&
 endfunc
 
 " Test thesaurus completion with different encodings

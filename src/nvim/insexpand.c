@@ -865,7 +865,7 @@ static inline void free_cptext(char *const *const cptext)
 /// Check if fuzzy matching is enabled
 static bool cot_fuzzy(void)
 {
-  return (get_cot_flags() & kOptCotFlagFuzzy) != 0;
+  return (get_cot_flags() & kOptCotFlagFuzzy) != 0 && !ctrl_x_mode_thesaurus();
 }
 
 /// Returns true if matches should be sorted based on proximity to the cursor.
@@ -1054,7 +1054,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
 
   // Find the longest common string if still doing that.
   if (compl_get_longest && (flags & CP_ORIGINAL_TEXT) == 0 && !cot_fuzzy()
-      && !ins_compl_preinsert_longest()) {
+      && !ins_compl_preinsert_longest() && !ctrl_x_mode_thesaurus()) {
     ins_compl_longest_match(match);
   }
 
