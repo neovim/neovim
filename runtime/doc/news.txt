@@ -385,7 +385,8 @@ PLUGINS
 
 STARTUP
 
-• todo
+• `file://` URIs passed as command-line arguments are converted to file paths.
+  This enables file managers and `xdg-open` integration.
 
 TERMINAL
 

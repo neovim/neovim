@@ -1450,7 +1450,25 @@ scripterror:
 
       // Add the file to the global argument list.
       ga_grow(&global_alist.al_ga, 1);
-      char *p = xstrdup(argv[0]);
+      char *p;
+
+      // Convert file:// URI to path (for %U in .desktop files)
+      if (STRNICMP(argv[0], "file://", 7) == 0) {
+        const char *path = argv[0] + 7;
+        // Skip extra slashes for file:///path (Unix) or file:///C:/path (Windows)
+        while (*path == '/' && (path[1] == '/' || (path[1] != '\0' && path[2] == ':'))) {
+          path++;
+        }
+#ifdef MSWIN
+        // On Windows, file:///C:/path -> C:/path (skip leading slash before drive)
+        if (path[0] == '/' && path[1] != '\0' && path[2] == ':') {
+          path++;
+        }
+#endif
+        p = xstrdup(path);
+      } else {
+        p = xstrdup(argv[0]);
+      }
 
       // On Windows expand "~\" or "~/" prefix in file names to profile directory.
 #ifdef MSWIN

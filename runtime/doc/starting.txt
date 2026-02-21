@@ -34,6 +34,9 @@ filename	One or more file names.  The first one will be the current
 <		All arguments after "--" are interpreted as file names, no
 		other options or "+command" arguments can follow.
 
+		`file://` URIs are converted to file paths automatically,
+		to support file managers and `xdg-open` integration.
+
 							*--*
 `-`		Alias for stdin (standard input).
 		Example: >
