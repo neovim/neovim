@@ -260,9 +260,9 @@ jobs:
         with:
           version: 0.15.2
 
-      - run: zig build test_nlua0 -Dluajit=false
-      - run: zig build nvim_bin -Dluajit=false && ./zig-out/bin/nvim --version
-      - run: zig build functionaltest -Dluajit=false
+      - run: zig build test_nlua0
+      - run: zig build nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build functionaltest
 
   zig-build-windows:
     runs-on: windows-2025
