@@ -293,7 +293,7 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
-  set_argf_var();
+  set_argf_var(&params);
 
   nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
@@ -610,6 +610,9 @@ int main(int argc, char **argv)
   // Need to jump to the tag before executing the '-c command'.
   // Makes "vim -c '/return' -t main" work.
   handle_tag(params.tagname);
+
+  typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
+  nlua_call_typval("vim._core.uri", "handle_startup_uris", no_args, NULL);
 
   // Execute any "+", "-c" and "-S" arguments.
   if (params.n_commands > 0) {
@@ -1477,6 +1480,8 @@ scripterror:
           parmp->scriptout_append = (c == 'w');
         }
       }
+    } else if (STRNICMP(argv[0], "nvim://", 7) == 0) {
+      argv_idx = -1;
     } else {  // File name argument.
       argv_idx = -1;  // skip to next argument
 
@@ -1546,7 +1551,7 @@ scripterror:
   TIME_MSG("parsing arguments");
 }
 
-static void set_argf_var(void)
+static void set_argf_var(mparm_T *paramp)
 {
   list_T *list = tv_list_alloc(kListLenMayKnow);
 
@@ -1555,6 +1560,12 @@ static void set_argf_var(void)
     if (fname != NULL) {
       (void)vim_FullName(fname, NameBuff, sizeof(NameBuff), false);
       tv_list_append_string(list, NameBuff, -1);
+    }
+  }
+
+  for (int i = 1; i < paramp->argc; i++) {
+    if (STRNICMP(paramp->argv[i], "nvim://", 7) == 0) {
+      tv_list_append_string(list, paramp->argv[i], -1);
     }
   }
 

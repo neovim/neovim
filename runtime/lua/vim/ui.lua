@@ -148,6 +148,15 @@ end
 --- Command used to open the path or URL.
 ---@field cmd? string[]
 
+---@class vim.ui.edit.Opts
+---@inlinedoc
+---
+--- 1-indexed line number to jump to after opening.
+---@field line? integer
+---
+--- 1-indexed column number to jump to after opening.
+---@field column? integer
+
 --- Opens `path` with the system default handler (macOS `open`, Windows `explorer.exe`, Linux
 --- `xdg-open`, …), or returns (but does not show) an error message on failure.
 ---
@@ -204,6 +213,24 @@ function M.open(path, opt)
   end
 
   return vim.system(cmd, job_opt), nil
+end
+
+--- Opens `path` in the current Nvim instance.
+---
+--- Plugins may override `vim.ui.edit` to customize how paths are opened.
+---
+---@param path string Path to edit
+---@param opt? vim.ui.edit.Opts Options
+function M.edit(path, opt)
+  vim.validate('path', path, 'string')
+  vim.validate('opt', opt, 'table', true)
+
+  opt = opt or {}
+  vim.cmd.edit(path)
+
+  if opt.line then
+    vim.api.nvim_win_set_cursor(0, { opt.line, (opt.column or 1) - 1 })
+  end
 end
 
 --- Get an available command used to open the path or URL.

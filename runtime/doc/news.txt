@@ -351,7 +351,12 @@ PLUGINS
 
 STARTUP
 
-• todo
+• |nvim://| URI scheme for "Open in Editor" integration.  External tools
+  (browsers, file managers) should use `nvim://open?...` so users can
+  customize how files open in Nvim:
+  `nvim://open?file=/path/to/file.txt&line=10`
+  Use `nvim://open?...` with |vim.ui.edit()| for configurable in-Nvim editing,
+  and `&server={addr}` to target a specific instance.
 
 TERMINAL
 
