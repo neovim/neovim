@@ -424,6 +424,7 @@ struct {
   int small;
   int baseline;
   int dim;
+  int overline;
   VTermColor foreground;
   VTermColor background;
 } state_pen;
@@ -463,6 +464,9 @@ int state_setpenattr(VTermAttr attr, VTermValue *val, void *user)
     break;
   case VTERM_ATTR_DIM:
     state_pen.dim = val->boolean;
+    break;
+  case VTERM_ATTR_OVERLINE:
+    state_pen.overline = val->boolean;
     break;
   case VTERM_ATTR_FOREGROUND:
     state_pen.foreground = val->color;
@@ -623,6 +627,10 @@ int vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue 
     val->boolean = state->pen.dim;
     return 1;
 
+  case VTERM_ATTR_OVERLINE:
+    val->boolean = state->pen.overline;
+    return 1;
+
   case VTERM_N_ATTRS:
     return 0;
   }
@@ -672,6 +680,9 @@ static int attrs_differ(VTermAttrMask attrs, ScreenCell *a, ScreenCell *b)
     return 1;
   }
   if ((attrs & VTERM_ATTR_DIM_MASK) && (a->pen.dim != b->pen.dim)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_OVERLINE_MASK) && (a->pen.overline != b->pen.overline)) {
     return 1;
   }
 
