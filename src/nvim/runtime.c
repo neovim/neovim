@@ -2989,3 +2989,23 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
   xfree(tofree);
   return ret;
 }
+
+/// Validate $VIMRUNTIME by attempting to source a known harmless file.
+bool validate_vimruntime_env(void)
+{
+  char *val = vim_getenv("VIMRUNTIME");
+  if (val == NULL || *val == NUL) {
+    xfree(val);
+    return true;
+  }
+  const size_t env_len = strlen(val);
+  char *file = concat_fnames_realloc(val, "filetype.lua", true);
+  emsg_silent++;
+  bool failed = do_source(file, false, DOSO_NONE, NULL) == FAIL;
+  emsg_silent--;
+  if (failed) {
+    semsg(_("E5009: Invalid $VIMRUNTIME: %.*s"), (int)env_len, file);
+  }
+  xfree(file);
+  return !failed;
+}
