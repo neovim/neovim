@@ -342,7 +342,7 @@ set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 # NVIM_RUNTIME_DIR
 set(LUA_FILETYPE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/filetype.lua)
 set(LUA_FS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/fs.lua)
-set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/F.lua)
+set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/f.lua)
 # Must be item 1 in `builtin_modules`, for `--luamod-dev`.
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_init_packages.lua)
 # Must be item 2 in `builtin_modules`, for `--luamod-dev`.
@@ -637,7 +637,7 @@ add_custom_command(
       ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_FS_MODULE_SOURCE} "vim.fs"
-      ${LUA_F_MODULE_SOURCE} "vim.F"
+      ${LUA_F_MODULE_SOURCE} "vim.f"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
       ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
       ${LUA_TEXT_MODULE_SOURCE} "vim.text"
