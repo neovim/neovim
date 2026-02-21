@@ -6378,4 +6378,26 @@ func Test_autocomplete_preinsert_null_leader()
   delfunc GetState
 endfunc
 
+" Issue #19329: When register contents are inserted, remove preinserted text
+func Test_ins_register_preinsert_autocomplete()
+  func TestOmni(findstart, base)
+    if a:findstart
+      return col(".") - 1
+    endif
+    return ["foo", "foobar"]
+  endfunc
+
+  call Ntest_override("char_avail", 1)
+  new
+  set omnifunc=TestOmni complete^=o
+  set completeopt=preinsert autocomplete
+
+  call feedkeys("ifoo \<C-R>\<C-P>=\"xyz\"\<CR>\<Esc>", 'tx')
+  call assert_equal("foo xyz", getline('.'))
+  bw!
+  set omnifunc& complete& completeopt& autocomplete&
+  call Ntest_override("char_avail", 0)
+  delfunc TestOmni
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

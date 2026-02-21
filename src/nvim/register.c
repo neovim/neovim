@@ -23,6 +23,7 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -1300,6 +1301,11 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
   unsigned cur_ve_flags = get_ve_flags(curwin);
+
+  // Remove any preinserted text (issue vim/vim#19329)
+  if (ins_compl_preinsert_effect()) {
+    ins_compl_delete(false);
+  }
 
   curbuf->b_op_start = curwin->w_cursor;        // default for '[ mark
   curbuf->b_op_end = curwin->w_cursor;          // default for '] mark
