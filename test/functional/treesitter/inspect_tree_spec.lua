@@ -120,6 +120,45 @@ describe('vim.treesitter.inspect_tree', function()
       ]]
   end)
 
+  it('works with multiple injection on the same node', function()
+    insert([[--* #include<stdio.h>]])
+    exec_lua(function()
+      vim.treesitter.query.set(
+        'lua',
+        'injections',
+        [[
+        (comment
+          content: (_) @injection.content
+          (#set! injection.language "markdown"))
+        (comment
+          content: (_) @injection.content
+          (#set! injection.language "c")
+          (#offset! @injection.content 0 1 0 0))
+        ]]
+      )
+      vim.treesitter.start(0, 'lua')
+      vim.treesitter.get_parser():parse(true)
+      vim.treesitter.inspect_tree()
+    end)
+    feed('I')
+    expect_tree [[
+      (chunk ; [0, 0] - [1, 0] lua
+        (comment ; [0, 0] - [0, 21] lua
+          content: (comment_content ; [0, 2] - [0, 21] lua
+            (document ; [0, 2] - [0, 21] markdown
+              (section ; [0, 2] - [0, 21] markdown
+                (list ; [0, 2] - [0, 21] markdown
+                  (list_item ; [0, 2] - [0, 21] markdown
+                    (list_marker_star) ; [0, 2] - [0, 4] markdown
+                    (paragraph ; [0, 4] - [0, 21] markdown
+                      (inline ; [0, 4] - [0, 21] markdown
+                        (inline))))))) ; [0, 4] - [0, 21] markdown_inline
+            (translation_unit ; [0, 4] - [0, 21] c
+              (preproc_include ; [0, 4] - [0, 21] c
+                path: (system_lib_string)))))) ; [0, 12] - [0, 21] c
+    ]]
+  end)
+
   it('can toggle to show languages', function()
     insert([[
       ```lua
