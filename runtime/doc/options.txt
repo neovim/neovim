@@ -1611,11 +1611,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   fuzzy    Enable |fuzzy-matching| for completion candidates.  This
 		    allows for more flexible and intuitive matching, where
 		    characters can be skipped and matches can be found even
-		    if the exact sequence is not typed.
+		    if the exact sequence is not typed (disabled for thesaurus
+		    completion |compl-thesaurus|).
 
 	   longest
 		    When 'autocomplete' is not active, only the longest common
-		    prefix of the matches is inserted.  If the popup menu is
+		    prefix of the matches is inserted (disabled for thesaurus
+		    completion |compl-thesaurus|).  If the popup menu is
 		    displayed, you can use CTRL-L to add more characters.
 		    Whether case is ignored depends on the type of completion.
 		    For buffer text the 'ignorecase' option applies.
