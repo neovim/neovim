@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+# Register nvim as an alternative for vi and vim, view, editor
+update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
+update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60
+update-alternatives --install /usr/bin/view view /usr/bin/nvim 60
+
+#DEBHELPER#
+
+exit 0
