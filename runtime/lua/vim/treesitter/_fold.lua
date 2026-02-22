@@ -297,7 +297,7 @@ local function on_changedtree(bufnr, tree_changes)
       -- return a range with end_row and end_bytes with a value of UINT32_MAX,
       -- so clip end_row to the max buffer line.
       -- TODO(lewis6991): Handle this generally
-      if erow > max_erow then
+      if erow > max_erow or erow < 0 then
         erow = max_erow
       elseif ecol > 0 then
         erow = erow + 1
