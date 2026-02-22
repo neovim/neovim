@@ -89,20 +89,6 @@ local function setup_layout(with_qf)
       cleanup_layout(with_qf)
     end,
   })
-  if with_qf then
-    vim.api.nvim_create_autocmd('WinClosed', {
-      group = layout.group,
-      pattern = tostring(layout.qf_win),
-      callback = function()
-        -- For quickfix also close one of diff windows
-        if layout.left_win and vim.api.nvim_win_is_valid(layout.left_win) then
-          vim.api.nvim_win_close(layout.left_win, true)
-        end
-
-        cleanup_layout(with_qf)
-      end,
-    })
-  end
 end
 
 --- Diff two files
@@ -497,7 +483,7 @@ function M.open(left, right, opt)
 
       vim.w.lazyredraw = true
       vim.schedule(function()
-        diff_files(entry.user_data.left, entry.user_data.right, true)
+        diff_files(entry.user_data.left, entry.user_data.right)
         vim.w.lazyredraw = false
       end)
     end,

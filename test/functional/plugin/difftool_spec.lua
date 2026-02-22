@@ -92,6 +92,24 @@ describe('nvim.difftool', function()
     assert(#autocmds > 0)
   end)
 
+  it('keeps quickfix list functional after closing quickfix window', function()
+    command(('DiffTool %s %s'):format(testdir_left, testdir_right))
+    -- Verify qf list is populated
+    local qflist = fn.getqflist()
+    eq(3, #qflist)
+
+    -- Close the quickfix window
+    command('cclose')
+
+    -- Quickfix list should still be intact
+    qflist = fn.getqflist()
+    eq(3, #qflist)
+
+    -- Autocmds should still exist (session not destroyed)
+    local autocmds = fn.nvim_get_autocmds({ group = 'nvim.difftool.events' })
+    assert(#autocmds > 0, 'autocmds should still exist after closing qf window')
+  end)
+
   it('cleans up autocmds when diff window is closed', function()
     command(('DiffTool %s %s'):format(testdir_left, testdir_right))
     command('q')
