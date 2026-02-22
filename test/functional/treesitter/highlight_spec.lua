@@ -864,6 +864,55 @@ describe('treesitter highlighting (C)', function()
     })
   end)
 
+  it('supports @noconceal capture to clear conceal', function()
+    insert(hl_text_c)
+
+    exec_lua(function()
+      vim.opt.cole = 2
+      local parser = vim.treesitter.get_parser(0, 'c')
+      vim.treesitter.highlighter.new(parser, {
+        queries = {
+          c = [[
+        ; Use @noconceal before query to override and show "lua_error"
+        ((identifier) @noconceal
+         (#eq? @noconceal "lua_error"))
+
+        ; Conceal specific identifiers
+        ((identifier) @Identifier
+         (#any-of? @Identifier "lua_type" "lua_pushliteral" "lua_error" "nlua_ref")
+         (#set! conceal ""))
+
+        ; Use @noconceal after query to override and show "lua_type"
+        ((identifier) @noconceal
+         (#eq? @noconceal "lua_type"))
+      ]],
+        },
+      })
+    end)
+
+    screen:expect({
+      grid = [[
+        /// Schedule Lua callback on main loop's event queue             |
+        static int nlua_schedule(lua_State *const lstate)                |
+        {                                                                |
+          if (lua_type(lstate, 1) != LUA_TFUNCTION                       |
+              || lstate != lstate) {                                     |
+            (lstate, "vim.schedule: expected function");                 |
+            return lua_error(lstate);                                    |
+          }                                                              |
+                                                                         |
+          LuaRef cb = (lstate, 1);                                       |
+                                                                         |
+          multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                         1, (void *)(ptrdiff_t)cb);                      |
+          return 0;                                                      |
+        ^}                                                                |
+        {1:~                                                                }|*2
+                                                                         |
+      ]],
+    })
+  end)
+
   it('@foo.bar groups has the correct fallback behavior', function()
     local get_hl = function(name)
       return api.nvim_get_hl_by_name(name, 1).foreground
