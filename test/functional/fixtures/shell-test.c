@@ -31,6 +31,8 @@ static void help(void)
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
   puts("  shell-test -t {prompt text} EXE \"prog args...\"");
   puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
+  puts("  shell-test EXECVP \"prog\" \"arg0\" args...");
+  puts("    Executes prog arg0 args... using execvp().");
   puts("  shell-test REP N {text}");
   puts("    Prints \"{lnr}: {text}\\n\" to stdout N times, pausing every 100 lines.");
   puts("    Example:");
@@ -73,6 +75,14 @@ int main(int argc, char **argv)
       } else {
         fprintf(stderr, "ready $ ");
       }
+#ifndef _MSG_VER
+    } else if (strcmp(argv[1], "EXECVP") == 0) {
+      if (argc < 4) {
+        fprintf(stderr, "Not enough arguments for EXECVP\n");
+        return 6;
+      }
+      execvp(argv[2], argv + 3);
+#endif
     } else if (strcmp(argv[1], "REP") == 0 || strcmp(argv[1], "REPFAST") == 0) {
       bool fast = strcmp(argv[1], "REPFAST") == 0;
       if (argc != 4) {

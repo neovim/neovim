@@ -2924,22 +2924,12 @@ describe('TUI', function()
 
   it('argv[0] can be overridden #23953', function()
     t.skip(is_os('win'), 'N/A for Windows')
-    if not exec_lua('return pcall(require, "ffi")') then
-      pending('N/A: missing LuaJIT FFI')
-    end
-    local script_file = 'Xargv0.lua'
-    write_file(
-      script_file,
-      [=[
-      local ffi = require('ffi')
-      ffi.cdef([[int execl(const char *, const char *, ...);]])
-      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean', nil)
-    ]=]
+    local screen = Screen.new(50, 7, { rgb = false })
+    fn.jobstart(
+      { testprg('shell-test'), 'EXECVP', nvim_prog, 'Xargv0nvim', '--clean' },
+      { term = true, env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } }
     )
-    finally(function()
-      os.remove(script_file)
-    end)
-    local screen = tt.setup_child_nvim({ '--clean', '-l', script_file })
+    command('startinsert')
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
