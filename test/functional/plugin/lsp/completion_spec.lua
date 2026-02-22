@@ -1567,6 +1567,45 @@ describe('vim.lsp.completion: integration', function()
     feed('<C-y>')
     eq('w-1/2', n.api.nvim_get_current_line())
   end)
+  it('removes client from triggers and clients table on LspDetach', function()
+    local list1 = {
+      isIncomplete = false,
+      items = { { label = 'foo' } },
+    }
+    local list2 = {
+      isIncomplete = false,
+      items = { { label = 'bar' } },
+    }
+    local id1 = create_server('dummy1', list1, { trigger_chars = { '.' } })
+    local id2 = create_server('dummy2', list2, { trigger_chars = { '.' } })
+    n.command('set cot=menuone,menu')
+    local function assert_matches(expected)
+      retry(nil, nil, function()
+        eq(
+          1,
+          exec_lua(function()
+            return vim.fn.pumvisible()
+          end)
+        )
+      end)
+      eq(expected, n.api.nvim_get_current_line())
+    end
+    feed('Sw.')
+    assert_matches('w.foo')
+    exec_lua('vim.lsp.buf_detach_client(0, ' .. id1 .. ')')
+    feed('<ESC>Sw.')
+    assert_matches('w.bar')
+    exec_lua('vim.lsp.buf_detach_client(0, ' .. id2 .. ')')
+    feed('<ESC>Sw.')
+    retry(nil, nil, function()
+      eq(
+        0,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()

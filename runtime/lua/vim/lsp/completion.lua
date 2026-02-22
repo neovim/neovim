@@ -778,6 +778,28 @@ local function get_augroup(bufnr)
   return string.format('nvim.lsp.completion_%d', bufnr)
 end
 
+--- @param client_id integer
+--- @param bufnr integer
+local function disable_completions(client_id, bufnr)
+  local handle = buf_handles[bufnr]
+  if not handle then
+    return
+  end
+
+  handle.clients[client_id] = nil
+  if not next(handle.clients) then
+    buf_handles[bufnr] = nil
+    api.nvim_del_augroup_by_name(get_augroup(bufnr))
+  else
+    for char, clients in pairs(handle.triggers) do
+      --- @param c vim.lsp.Client
+      handle.triggers[char] = vim.tbl_filter(function(c)
+        return c.id ~= client_id
+      end, clients)
+    end
+  end
+end
+
 --- @inlinedoc
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean  (default: false) When true, completion triggers automatically based on the server's `triggerCharacters`.
@@ -805,6 +827,14 @@ local function enable_completions(client_id, bufnr, opts)
 
     -- Set up autocommands.
     local group = api.nvim_create_augroup(get_augroup(bufnr), { clear = true })
+    api.nvim_create_autocmd('LspDetach', {
+      group = group,
+      buffer = bufnr,
+      desc = 'vim.lsp.completion: clean up client on detach',
+      callback = function(args)
+        disable_completions(args.data.client_id, args.buf)
+      end,
+    })
     api.nvim_create_autocmd('CompleteDone', {
       group = group,
       buffer = bufnr,
@@ -857,28 +887,6 @@ local function enable_completions(client_id, bufnr, opts)
       if not client_exists then
         table.insert(clients_for_trigger, client)
       end
-    end
-  end
-end
-
---- @param client_id integer
---- @param bufnr integer
-local function disable_completions(client_id, bufnr)
-  local handle = buf_handles[bufnr]
-  if not handle then
-    return
-  end
-
-  handle.clients[client_id] = nil
-  if not next(handle.clients) then
-    buf_handles[bufnr] = nil
-    api.nvim_del_augroup_by_name(get_augroup(bufnr))
-  else
-    for char, clients in pairs(handle.triggers) do
-      --- @param c vim.lsp.Client
-      handle.triggers[char] = vim.tbl_filter(function(c)
-        return c.id ~= client_id
-      end, clients)
     end
   end
 end
