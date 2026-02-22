@@ -48,11 +48,14 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
   char *addr = watcher->addr;
-  char *host_end = strrchr(addr, ':');
 
   if (socket_address_is_tcp(addr)) {
     // Split user specified address into two strings, addr (hostname) and port.
     // The port part in watcher->addr will be updated later.
+    char *host_end = strrchr(addr, ':');
+    if (!host_end) {
+      return UV_EINVAL;
+    }
     *host_end = NUL;
     char *port = host_end + 1;
     intmax_t iport;
