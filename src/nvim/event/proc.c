@@ -3,6 +3,9 @@
 #include <signal.h>
 #include <string.h>
 #include <uv.h>
+#ifdef __linux__
+# include <poll.h>
+#endif
 
 #include "klib/kvec.h"
 #include "nvim/channel.h"
@@ -391,9 +394,17 @@ static void flush_stream(Proc *proc, RStream *stream)
 
   // Read remaining data.
   while (!stream->s.closed && stream->num_bytes < max_bytes) {
-    // Remember number of bytes before polling
+    // Remember number of bytes before polling.
     size_t num_bytes = stream->num_bytes;
 
+#ifdef __linux__
+    // On Linux, libuv's polling (which uses epoll) doesn't flush PTY master's pending
+    // work on kernel workqueue, so use an explcit poll() before that. #37982
+    if (proc->type == kProcTypePty && !stream->did_eof) {
+      struct pollfd pollfd = { .fd = ((PtyProc *)proc)->tty_fd, .events = POLLIN };
+      poll(&pollfd, 1, 0);
+    }
+#endif
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
     if (stream->s.events) {
