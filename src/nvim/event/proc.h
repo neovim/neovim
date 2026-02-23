@@ -30,7 +30,6 @@ static inline Proc proc_init(Loop *loop, ProcType type, void *data)
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
     .detach = false,
-    .fwd_err = false,
   };
 }
 

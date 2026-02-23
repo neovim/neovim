@@ -352,7 +352,7 @@ int main(int argc, char **argv)
   bool remote_ui = (ui_client_channel_id != 0);
 
   if (use_builtin_ui && !remote_ui) {
-    ui_client_forward_stdin = !stdin_isatty;
+    ui_client_forward_stdin = true;
     uint64_t rv = ui_client_start_server(get_vim_var_str(VV_PROGPATH),
                                          (size_t)params.argc, params.argv);
     if (!rv) {

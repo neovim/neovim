@@ -405,16 +405,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
     has_err = false;
   } else {
     has_out = rpc || callback_reader_set(chan->on_data);
-    has_err = callback_reader_set(chan->on_stderr);
-    proc->fwd_err = chan->on_stderr.fwd_err;
-#ifdef MSWIN
-    // DETACHED_PROCESS can't inherit console handles (like ConPTY stderr).
-    // Use a pipe relay: libuv creates a pipe, on_channel_output writes to stderr.
-    if (!has_err && proc->fwd_err && proc->detach) {
-      has_err = true;
-      proc->fwd_err = false;
-    }
-#endif
+    has_err = chan->on_stderr.fwd_err || callback_reader_set(chan->on_stderr);
   }
 
   bool has_in = stdin_mode == kChannelStdinPipe;
@@ -686,16 +677,10 @@ static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf,
     reader->eof = true;
   }
 
-#ifdef MSWIN
-  // Pipe relay for fwd_err on Windows: relay server stderr to stdout.
-  // DETACHED_PROCESS prevents inheriting console handles, so channel_job_start
-  // creates a pipe instead. Write to stdout because ConPTY only captures stdout.
-  // On non-Windows, fwd_err uses UV_INHERIT_FD directly; this path is never reached.
   if (reader->fwd_err && count > 0) {
-    os_write(STDOUT_FILENO, buf, count, false);
-    return count;
+    ptrdiff_t wres = os_write(STDERR_FILENO, buf, count, false);
+    return (size_t)MAX(wres, 0);
   }
-#endif
 
   if (callback_reader_set(*reader)) {
     ga_concat_len(&reader->buffer, buf, count);

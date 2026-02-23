@@ -429,7 +429,7 @@ describe('TUI :restart', function()
       '--',
       'Xtest-file1',
       'Xtest-file2',
-    })
+    }, { env = { NVIM_LOG_FILE = testlog } })
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
@@ -437,6 +437,9 @@ describe('TUI :restart', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+    -- This error happens as stdin (forwarded as fd 3) is not a pipe.
+    assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog, 50)
+
     server_session = n.connect(server_pipe)
     local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
     local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
@@ -4334,7 +4337,7 @@ describe('TUI client', function()
       ffi.C.ui_call_chdir(to_api_string('README.md'))
     ]])
     screen_client:expect_unchanged()
-    assert_log('Failed to chdir to README.md: not a directory', testlog)
+    assert_log('Failed to chdir to README%.md: not a directory', testlog)
   end)
 
   it('nvim_ui_send works with remote client #36317', function()
