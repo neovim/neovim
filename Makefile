@@ -175,6 +175,8 @@ endif
 distclean:
 	$(call rmdir, $(DEPS_BUILD_DIR))
 	$(call rmdir, build)
+	$(call rmdir, .zig-cache)
+	$(call rmdir, zig-out)
 	$(MAKE) clean
 
 install: checkprefix nvim
