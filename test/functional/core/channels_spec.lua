@@ -524,6 +524,8 @@ describe('loopback', function()
   it('are released when closed', function()
     local chans = eval('len(nvim_list_chans())')
     command('call chanclose(chan)')
+    n.poke_eventloop() -- Process rpc_close_event().
+    -- Channel has been released after processing free_channel_event().
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 end)
