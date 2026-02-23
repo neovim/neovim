@@ -343,7 +343,7 @@ void ui_client_attach_to_restarted_server(void)
   }
 
   char *listen_addr = restart_args.items[0].data.string.data;
-  bool is_tcp = socket_address_is_tcp(listen_addr);
+  bool is_tcp = socket_address_tcp_host_end(listen_addr) != NULL;
   const char *err = "";
   uint64_t chan_id = channel_connect(is_tcp, listen_addr, true, CALLBACK_READER_INIT, 50, &err);
 
