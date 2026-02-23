@@ -2684,4 +2684,10 @@ describe('fg/bg special colors', function()
       ]],
     })
   end)
+
+  it('change attr after background changed #26603', function()
+    command('hi String cterm=underline | set bg=light')
+    eq('String         xxx cterm=underline ctermfg=2 guifg=NvimDarkGreen',
+      helpers.exec_capture('hi String'))
+  end)
 end)
