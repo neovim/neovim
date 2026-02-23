@@ -563,7 +563,7 @@ int os_open_stdin_fd(void)
 
 /// Read from a file
 ///
-/// Handles EINTR and ENOMEM, but not other errors.
+/// Handles EINTR, but not other errors.
 ///
 /// @param[in]  fd  File descriptor to read from.
 /// @param[out]  ret_eof  Is set to true if EOF was encountered, otherwise set
