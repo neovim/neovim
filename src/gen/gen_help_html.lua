@@ -156,7 +156,9 @@ end
 
 ---@type fun(s: string): string
 local function html_esc(s)
-  return (s:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;'))
+  local html_entity =
+    { ['&'] = '&amp;', ['<'] = '&lt;', ['>'] = '&gt;', ['{'] = '&#123;', ['}'] = '&#125;' }
+  return (s and string.gsub(s, '[&<>{}]', html_entity) or nil)
 end
 
 local function url_encode(s)
@@ -275,19 +277,20 @@ local function get_bug_url_nvim(fname, to_fname, sample_text, token_name)
   return bug_url
 end
 
---- Gets a "foo.html" name from a "foo.txt" helpfile name.
-local function get_helppage(f)
+--- Gets a "foo" name from a "foo.txt" helpfile name.
+local function get_helppage(f, with_extension)
   if not f then
     return nil
   end
   -- Special case: help.txt is the "main landing page" of :help files, not index.txt.
   if f == 'index.txt' then
-    return 'vimindex.html'
+    return with_extension and 'vimindex.html' or 'vimindex/'
   elseif f == 'help.txt' then
-    return 'index.html'
+    -- Hugo needs an `_index.html` (note the underscore) file to recognize it as section
+    return with_extension and '_index.html' or ''
   end
 
-  return (f:gsub('%.txt$', '')) .. '.html'
+  return (f:gsub('%.txt$', '')) .. (with_extension and '.html' or '/')
 end
 
 --- Counts leading spaces (tab=8) to decide the indent size of multiline text.
@@ -665,7 +668,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if ignored or not helppage then
       return html_esc(node_text(root))
     end
-    local s = ('%s<a href="%s#%s">%s</a>'):format(
+    local s = ('%s<a href="/doc/user/%s#%s">%s</a>'):format(
       ws(),
       helppage,
       url_encode(tagname),
@@ -892,84 +895,6 @@ local function gen_one(fname, text, to_fname, old, commit)
   local headings = {} -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
   local title = to_titlecase(basename_noext(fname))
 
-  local html = ([[
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Neovim user documentation">
-
-    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
-    <link rel="preconnect" href="https://X185E15FPG-dsn.algolia.net" crossorigin />
-
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/css/main.css" rel="stylesheet">
-    <link href="help.css" rel="stylesheet">
-    <link href="/highlight/styles/neovim.min.css" rel="stylesheet">
-
-    <script src="/highlight/highlight.min.js"></script>
-    <script>hljs.highlightAll();</script>
-    <title>%s - Neovim docs</title>
-  </head>
-  <body>
-  ]]):format(title)
-
-  local logo_svg = [[
-    <svg xmlns="http://www.w3.org/2000/svg" role="img" width="173" height="50" viewBox="0 0 742 214" aria-label="Neovim">
-      <title>Neovim</title>
-      <defs>
-        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="a">
-          <stop stop-color="#16B0ED" stop-opacity=".8" offset="0%" />
-          <stop stop-color="#0F59B2" stop-opacity=".837" offset="100%" />
-        </linearGradient>
-        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="b">
-          <stop stop-color="#7DB643" offset="0%" />
-          <stop stop-color="#367533" offset="100%" />
-        </linearGradient>
-        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="c">
-          <stop stop-color="#88C649" stop-opacity=".8" offset="0%" />
-          <stop stop-color="#439240" stop-opacity=".84" offset="100%" />
-        </linearGradient>
-      </defs>
-      <g fill="none" fill-rule="evenodd">
-        <path
-          d="M.027 45.459L45.224-.173v212.171L.027 166.894V45.459z"
-          fill="url(#a)"
-          transform="translate(1 1)"
-        />
-        <path
-          d="M129.337 45.89L175.152-.149l-.928 212.146-45.197-45.104.31-121.005z"
-          fill="url(#b)"
-          transform="matrix(-1 0 0 1 305 1)"
-        />
-        <path
-          d="M45.194-.137L162.7 179.173l-32.882 32.881L12.25 33.141 45.194-.137z"
-          fill="url(#c)"
-          transform="translate(1 1)"
-        />
-        <path
-          d="M46.234 84.032l-.063 7.063-36.28-53.563 3.36-3.422 32.983 49.922z"
-          fill-opacity=".13"
-          fill="#000"
-        />
-        <g fill="#444">
-          <path
-            d="M227 154V64.44h4.655c1.55 0 2.445.75 2.685 2.25l.806 13.502c4.058-5.16 8.786-9.316 14.188-12.466 5.4-3.15 11.413-4.726 18.037-4.726 4.893 0 9.205.781 12.935 2.34 3.729 1.561 6.817 3.811 9.264 6.751 2.448 2.942 4.297 6.48 5.55 10.621 1.253 4.14 1.88 8.821 1.88 14.042V154h-8.504V96.754c0-8.402-1.91-14.987-5.729-19.757-3.82-4.771-9.667-7.156-17.544-7.156-5.851 0-11.28 1.516-16.292 4.545-5.013 3.032-9.489 7.187-13.427 12.467V154H227zM350.624 63c5.066 0 9.755.868 14.069 2.605 4.312 1.738 8.052 4.268 11.219 7.592s5.638 7.412 7.419 12.264C385.11 90.313 386 95.883 386 102.17c0 1.318-.195 2.216-.588 2.696-.393.48-1.01.719-1.851.719h-64.966v1.70c0 6.708.784 12.609 2.353 17.7 1.567 5.09 3.8 9.357 6.695 12.802 2.895 3.445 6.393 6.034 10.495 7.771 4.1 1.738 8.686 2.606 13.752 2.606 4.524 0 8.446-.494 11.762-1.483 3.317-.988 6.108-2.097 8.37-3.324 2.261-1.227 4.056-2.336 5.383-3.324 1.326-.988 2.292-1.482 2.895-1.482.784 0 1.388.3 1.81.898l2.352 2.875c-1.448 1.797-3.362 3.475-5.745 5.031-2.383 1.558-5.038 2.891-7.962 3.998-2.926 1.109-6.062 1.991-9.41 2.65a52.21 52.21 0 01-10.088.989c-6.152 0-11.762-1.064-16.828-3.19-5.067-2.125-9.415-5.225-13.043-9.298-3.63-4.074-6.435-9.06-8.415-14.96C310.99 121.655 310 114.9 310 107.294c0-6.408.92-12.323 2.76-17.744 1.84-5.421 4.493-10.093 7.961-14.016 3.467-3.922 7.72-6.991 12.758-9.209C338.513 64.11 344.229 63 350.624 63zm.573 6c-4.696 0-8.904.702-12.623 2.105-3.721 1.404-6.936 3.421-9.65 6.053-2.713 2.631-4.908 5.79-6.586 9.474S319.55 94.439 319 99h60c0-4.679-.672-8.874-2.013-12.588-1.343-3.712-3.232-6.856-5.67-9.43-2.44-2.571-5.367-4.545-8.782-5.92-3.413-1.374-7.192-2.062-11.338-2.062zM435.546 63c6.526 0 12.368 1.093 17.524 3.28 5.154 2.186 9.5 5.286 13.04 9.298 3.538 4.013 6.238 8.85 8.099 14.51 1.861 5.66 2.791 11.994 2.791 19.002 0 7.008-.932 13.327-2.791 18.957-1.861 5.631-4.561 10.452-8.099 14.465-3.54 4.012-7.886 7.097-13.04 9.254-5.156 2.156-10.998 3.234-17.524 3.234-6.529 0-12.369-1.078-17.525-3.234-5.155-2.157-9.517-5.242-13.085-9.254-3.57-4.013-6.285-8.836-8.145-14.465-1.861-5.63-2.791-11.95-2.791-18.957 0-7.008.93-13.342 2.791-19.002 1.861-5.66 4.576-10.496 8.145-14.51 3.568-4.012 7.93-7.112 13.085-9.299C423.177 64.094 429.017 63 435.546 63zm-.501 86c5.341 0 10.006-.918 13.997-2.757 3.99-1.838 7.32-4.474 9.992-7.909 2.67-3.435 4.664-7.576 5.986-12.428 1.317-4.85 1.98-10.288 1.98-16.316 0-5.965-.66-11.389-1.98-16.27-1.322-4.88-3.316-9.053-5.986-12.519-2.67-3.463-6-6.13-9.992-7.999-3.991-1.867-8.657-2.802-13.997-2.802s-10.008.935-13.997 2.802c-3.991 1.87-7.322 4.536-9.992 8-2.671 3.465-4.68 7.637-6.03 12.518-1.35 4.881-2.026 10.305-2.026 16.27 0 6.026.675 11.465 2.025 16.316 1.35 4.852 3.36 8.993 6.031 12.428 2.67 3.435 6 6.07 9.992 7.91 3.99 1.838 8.656 2.756 13.997 2.756z"
-            fill="currentColor"
-          />
-          <path
-            d="M530.57 152h-20.05L474 60h18.35c1.61 0 2.967.39 4.072 1.166 1.103.778 1.865 1.763 2.283 2.959l17.722 49.138a92.762 92.762 0 012.551 8.429c.686 2.751 1.298 5.5 1.835 8.25.537-2.75 1.148-5.499 1.835-8.25a77.713 77.713 0 012.64-8.429l18.171-49.138c.417-1.196 1.164-2.181 2.238-2.96 1.074-.776 2.356-1.165 3.849-1.165H567l-36.43 92zM572 61h23v92h-23zM610 153V60.443h13.624c2.887 0 4.78 1.354 5.682 4.06l1.443 6.856a52.7 52.7 0 015.097-4.962 32.732 32.732 0 015.683-3.879 30.731 30.731 0 016.496-2.57c2.314-.632 4.855-.948 7.624-.948 5.832 0 10.63 1.579 14.39 4.736 3.758 3.157 6.57 7.352 8.434 12.585 1.444-3.068 3.248-5.698 5.413-7.894 2.165-2.194 4.541-3.984 7.127-5.367a32.848 32.848 0 018.254-3.068 39.597 39.597 0 018.796-.992c5.111 0 9.653.783 13.622 2.345 3.97 1.565 7.307 3.849 10.014 6.857 2.706 3.007 4.766 6.675 6.18 11.005C739.29 83.537 740 88.5 740 94.092V153h-22.284V94.092c0-5.894-1.294-10.329-3.878-13.306-2.587-2.977-6.376-4.465-11.368-4.465-2.286 0-4.404.391-6.358 1.172a15.189 15.189 0 00-5.144 3.383c-1.473 1.474-2.631 3.324-3.474 5.548-.842 2.225-1.263 4.781-1.263 7.668V153h-22.37V94.092c0-6.194-1.249-10.704-3.744-13.532-2.497-2.825-6.18-4.24-11.051-4.24-3.19 0-6.18.798-8.976 2.391-2.799 1.593-5.399 3.775-7.804 6.54V153H610zM572 30h23v19h-23z"
-            fill="currentColor"
-            fill-opacity=".8"
-          />
-        </g>
-      </g>
-    </svg>
-  ]]
-
   local main = ''
   for _, tree in ipairs(lang_tree:trees()) do
     main = main
@@ -985,162 +910,30 @@ local function gen_one(fname, text, to_fname, old, commit)
       )
   end
 
-  main = ([[
-  <header class="container">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container-fluid">
-        <a href="/" class="navbar-brand" aria-label="logo">
-          <!--TODO: use <img src="….svg"> here instead. Need one that has green lettering instead of gray. -->
-          %s
-          <!--<img src="https://neovim.io/logos/neovim-logo.svg" width="173" height="50" alt="Neovim" />-->
-        </a>
-        <div id="docsearch"></div> <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
-      </div>
-    </nav>
-  </header>
+  local frontmatter = vim.json.encode({
+    title = title,
+    layout = 'single', -- Hugo-specific, to make _index.html the same as the other pages
+    aliases = { -- Hugo-specific, make /api.html redirect to /api/
+      vim.fs.joinpath('/doc/user', vim.fs.basename(to_fname)),
+    },
+    params = {
+      firstTag1 = stats.first_tags[1] or '',
+      firstTag2 = stats.first_tags[2] or '',
+      basename = vim.fs.basename(fname),
+      commit = commit,
+      parseErrors = #stats.parse_errors,
+      bugUrl = get_bug_url_nvim(fname, to_fname, 'TODO', nil),
+      noiseLines = html_esc(table.concat(stats.noise_lines, '\n')),
+      noiseLinesCount = #stats.noise_lines,
+      headings = headings,
+    },
+  }, { indent = '  ', sort_keys = true })
 
-  <div class="container golden-grid help-body">
-  <div class="col-wide">
-  <a name="%s" href="#%s"><h1 id="%s">%s</h1></a>
-  <p>
-    <i>
-    Nvim <code>:help</code> pages, <a href="https://github.com/neovim/neovim/blob/master/src/gen/gen_help_html.lua">generated</a>
-    from <a href="https://github.com/neovim/neovim/blob/master/runtime/doc/%s">source</a>
-    using the <a href="https://github.com/neovim/tree-sitter-vimdoc">tree-sitter-vimdoc</a> parser.
-    </i>
-  </p>
-  <hr/>
-  %s
-  </div>
-  ]]):format(
-    logo_svg,
-    stats.first_tags[1] or '',
-    stats.first_tags[2] or '',
-    stats.first_tags[2] or '',
-    title,
-    vim.fs.basename(fname),
-    main
-  )
+  local html = ('%s\n%s'):format(frontmatter, main)
 
-  ---@type string
-  local toc = [[
-    <div class="col-narrow toc">
-      <div><a href="index.html">Main</a></div>
-      <div><a href="vimindex.html">Commands index</a></div>
-      <div><a href="quickref.html">Quick reference</a></div>
-      <hr/>
-  ]]
-
-  local n = 0 -- Count of all headings + subheadings.
-  for _, h1 in ipairs(headings) do
-    n = n + 1 + #h1.subheadings
-  end
-  for _, h1 in ipairs(headings) do
-    ---@type string
-    toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(h1.tag, h1.name)
-    if n < 30 or #headings < 10 then -- Show subheadings only if there aren't too many.
-      for _, h2 in ipairs(h1.subheadings) do
-        toc = toc
-          .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(h2.tag, h2.name)
-      end
-    end
-    toc = toc .. '</div>'
-  end
-  toc = toc .. '</div>\n'
-
-  local bug_url = get_bug_url_nvim(fname, to_fname, 'TODO', nil)
-  local bug_link = string.format('(<a href="%s" target="_blank">report docs bug...</a>)', bug_url)
-
-  local footer = ([[
-  <footer>
-    <div class="container flex">
-      <div class="generator-stats">
-        Generated at %s from <code><a href="https://github.com/neovim/neovim/commit/%s">%s</a></code>
-      </div>
-      <div class="generator-stats">
-      parse_errors: %d %s | <span title="%s">noise_lines: %d</span>
-      </div>
-    <div>
-
-    <!-- algolia docsearch https://docsearch.algolia.com/docs/docsearch-v3/ -->
-    <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
-    <script type="module">
-      docsearch({
-        container: '#docsearch',
-        appId: 'X185E15FPG',
-        apiKey: 'b5e6b2f9c636b2b471303205e59832ed',
-        indexName: 'nvim',
-      });
-    </script>
-
-  </footer>
-  ]]):format(
-    os.date('%Y-%m-%d %H:%M'),
-    commit,
-    commit:sub(1, 7),
-    #stats.parse_errors,
-    bug_link,
-    html_esc(table.concat(stats.noise_lines, '\n')),
-    #stats.noise_lines
-  )
-
-  html = ('%s%s%s</div>\n%s</body>\n</html>\n'):format(html, main, toc, footer)
   vim.cmd('q!')
   lang_tree:destroy()
   return html, stats
-end
-
---- Generates an HTML page that does a client-side redirect to the tag given by the "?tag=…"
---- querystring parameter. The page gets tags from the "helptags.json" file.
-local function gen_helptag_html(fname)
-  local html = [[
-    <!doctype html>
-    <html lang="en">
-    <head>
-      <meta charset="utf-8">
-      <title>Redirecting…</title>
-      <script type="module">
-        async function do_redirect() {
-          const errorDiv = document.getElementById('error-message');
-          try {
-            const params = new URLSearchParams(window.location.search)
-            const tag = params.get('tag')
-            if (!tag) {
-              throw new Error('No tag parameter')
-            }
-
-            // helptags.json lives next to helptag.html
-            const res = await fetch('./helptags.json')
-            if (!res.ok) {
-              throw new Error('helptags.json not found')
-            }
-
-            const tagmap = await res.json()
-            if (!tagmap[tag]) {
-              throw new Error('helptag not found: "' + tag + '"')
-            }
-
-            window.location.href = tagmap[tag]
-          } catch (err) {
-            console.error(err)
-            if (errorDiv) {
-              errorDiv.textContent = err.message
-            }
-            // Optionally, redirect to index after showing error
-            // setTimeout(() => window.location.href = './index.html', 3000)
-          }
-        }
-
-        do_redirect()
-      </script>
-    </head>
-    <body>
-      <p>Redirecting…</p>
-      <div id="error-message" style="margin-top:1em; font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;"></div>
-    </body>
-    </html>
-  ]]
-  tofile(fname, html)
 end
 
 --- Generates a JSON map of tags to URL-encoded `filename#anchor` locations.
@@ -1160,193 +953,12 @@ local function gen_helptags_json(fname)
   tofile(fname, vim.json.encode(t, { indent = '  ', sort_keys = true }))
 end
 
-local function gen_css(fname)
-  local css = [[
-    :root {
-      --code-color: #004b4b;
-      --tag-color: #095943;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --code-color: #00c243;
-        --tag-color: #00b7b7;
-      }
-    }
-    @media (min-width: 40em) {
-      .toc {
-        position: fixed;
-        left: 67%;
-      }
-      .golden-grid {
-          display: grid;
-          grid-template-columns: 65% auto;
-          grid-gap: 1em;
-      }
-    }
-    @media (max-width: 40em) {
-      .golden-grid {
-        /* Disable grid for narrow viewport (mobile phone). */
-        display: block;
-      }
-    }
-    .toc {
-      /* max-width: 12rem; */
-      height: 85%;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
-      overflow: auto;  /* Scroll if there are too many items. https://github.com/neovim/neovim.github.io/issues/297 */
-    }
-    .toc > div {
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    html {
-      scroll-behavior: auto;
-    }
-    body {
-      font-size: 18px;
-      line-height: 1.5;
-    }
-    h1, h2, h3, h4, h5 {
-      font-family: sans-serif;
-      border-bottom: 1px solid var(--tag-color); /*rgba(0, 0, 0, .9);*/
-    }
-    h3, h4, h5 {
-      border-bottom-style: dashed;
-    }
-    .help-column_heading {
-      color: var(--code-color);
-    }
-    .help-body {
-      padding-bottom: 2em;
-    }
-    .help-line {
-      /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
-    }
-    .help-li {
-      display: list-item;
-      white-space: normal;
-      margin-left: 1.5rem; /* padding-left: 1rem; */
-      /* margin-top: .1em; */
-      /* margin-bottom: .1em; */
-    }
-    .help-li-num {
-      display: list-item;
-      list-style: none;
-      /* Sibling UNordered help-li items will increment the builtin counter :( */
-      /* list-style-type: decimal; */
-      white-space: normal;
-      margin-left: 1.5rem; /* padding-left: 1rem; */
-      margin-top: .1em;
-      margin-bottom: .1em;
-    }
-    .help-li-num::before {
-      margin-left: -1em;
-      counter-increment: my-li-counter;
-      content: counter(my-li-counter) ". ";
-    }
-    .help-para {
-      padding-top: 10px;
-      padding-bottom: 10px;
-      counter-reset: my-li-counter; /* Manually manage listitem numbering. */
-    }
-
-    .old-help-para {
-      padding-top: 10px;
-      padding-bottom: 10px;
-      /* Tabs are used for alignment in old docs, so we must match Vim's 8-char expectation. */
-      tab-size: 8;
-      white-space: pre-wrap;
-      font-size: 16px;
-      font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
-      word-wrap: break-word;
-      counter-reset: my-li-counter; /* Manually manage listitem numbering. */
-    }
-    .old-help-para pre, .old-help-para pre:hover {
-      /* Text following <pre> is already visually separated by the linebreak. */
-      margin-bottom: 0;
-      /* Long lines that exceed the textwidth should not be wrapped (no "pre-wrap").
-         Since text may overflow horizontally, we make the contents to be scrollable
-         (only if necessary) to prevent overlapping with the navigation bar at the right. */
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    /* TODO: should this rule be deleted? help tags are rendered as <code> or <span>, not <a> */
-    a.help-tag, a.help-tag:focus, a.help-tag:hover {
-      color: inherit;
-      text-decoration: none;
-    }
-    .help-tag {
-      color: var(--tag-color);
-    }
-    /* Tag pseudo-header common in :help docs. */
-    .help-tag-right {
-      color: var(--tag-color);
-      margin-left: auto;
-      margin-right: 0;
-      float: right;
-      display: block;
-    }
-    .help-tag a,
-    .help-tag-right a {
-      color: inherit;
-    }
-    .help-tag a:not(:hover),
-    .help-tag-right a:not(:hover) {
-      text-decoration: none;
-    }
-    h1 .help-tag, h2 .help-tag, h3 .help-tag {
-      font-size: smaller;
-    }
-    .help-heading {
-      white-space: normal;
-      display: flex;
-      flex-flow: row wrap;
-      justify-content: space-between;
-      gap: 0 15px;
-    }
-    /* The (right-aligned) "tags" part of a section heading. */
-    .help-heading-tags {
-      margin-right: 10px;
-    }
-    .help-toc-h1 {
-    }
-    .help-toc-h2 {
-      margin-left: 1em;
-    }
-    .parse-error {
-      background-color: red;
-    }
-    .unknown-token {
-      color: black;
-      background-color: yellow;
-    }
-    code {
-      color: var(--code-color);
-      font-size: 16px;
-    }
-    pre {
-      /* Tabs are used in codeblocks only for indentation, not alignment, so we can aggressively shrink them. */
-      tab-size: 2;
-      white-space: pre-wrap;
-      line-height: 1.3;  /* Important for ascii art. */
-      overflow: visible;
-      /* font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace; */
-      font-size: 16px;
-      margin-top: 10px;
-    }
-    pre:last-child {
-      margin-bottom: 0;
-    }
-    pre:hover {
-      overflow: visible;
-    }
-    .generator-stats {
-      color: gray;
-      font-size: smaller;
-    }
-  ]]
-  tofile(fname, css)
+local function gen_helptag_html(fname)
+  local frontmatter = vim.json.encode({
+    title = 'Helptag redirect',
+    layout = 'helptag', -- Hugo-specific
+  }, { indent = '  ', sort_keys = true })
+  tofile(fname, frontmatter)
 end
 
 -- Testing
@@ -1465,7 +1077,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
 
   print(('output dir: %s\n\n'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
-  gen_css(('%s/help.css'):format(to_dir))
+  -- NOTE: Better for Hugo to be in static/, but works fine with contents/ as to_dir
   gen_helptags_json(('%s/helptags.json'):format(to_dir))
   gen_helptag_html(('%s/helptag.html'):format(to_dir))
 
@@ -1473,7 +1085,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     -- "foo.txt"
     local helpfile = vim.fs.basename(f)
     -- "to/dir/foo.html"
-    local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile))
+    local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile, true))
     local html, stats = gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?')
     tofile(to_fname, html)
     print(
@@ -1506,7 +1118,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
           ]]
         )
         :format(redirect_from, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag, helpfile_tag)
-      local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from))
+      local redirect_to = ('%s/%s'):format(to_dir, get_helppage(redirect_from, true))
       local redirect_html, _ =
         gen_one(redirect_from, redirect_text, redirect_to, false, commit or '?')
       assert(
