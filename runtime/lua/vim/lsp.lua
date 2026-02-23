@@ -1141,9 +1141,8 @@ api.nvim_create_autocmd('VimLeavePre', {
       client:stop(client.exit_timeout)
     end
 
-    local exit_warning_timer --- @type uv.uv_timer_t?
-    if max_timeout > min_warn_exit_timeout then
-      exit_warning_timer = vim.defer_fn(function()
+    local exit_warning_timer = max_timeout > min_warn_exit_timeout
+      and vim.defer_fn(function()
         api.nvim_echo({
           {
             string.format(
@@ -1154,7 +1153,6 @@ api.nvim_create_autocmd('VimLeavePre', {
           },
         }, true, {})
       end, min_warn_exit_timeout)
-    end
 
     vim.wait(max_timeout, function()
       return vim.iter(active_clients):all(function(client)
