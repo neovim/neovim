@@ -64,7 +64,9 @@ func Test_statusline_will_be_disabled_with_error()
   catch
   endtry
   call assert_true(s:func_in_statusline_called)
-  call assert_equal('', &statusline)
+  " Nvim: resets to default value instead.
+  " call assert_equal('', &statusline)
+  call assert_equal(nvim_get_option_info2('statusline', {}).default, &statusline)
   set statusline=
 endfunc
 
