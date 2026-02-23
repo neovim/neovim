@@ -1230,38 +1230,49 @@ function Client:supports_method(method, bufnr)
   return required_capability == nil
 end
 
---- Retrieves all capability values for a given LSP method, handling both static and dynamic registrations.
---- This function abstracts over differences between capabilities declared in `server_capabilities`
---- and those registered dynamically at runtime, returning all matching capability values.
---- It also handles cases where the registration method differs from the calling method by abstracting to the Provider.
---- For example, `workspace/diagnostic` uses capabilities registered under `textDocument/diagnostic`.
---- This is useful for features like diagnostics and formatting, where servers may register multiple providers
---- with different options (such as specific filetypes or document selectors).
---- @param method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration LSP method name
---- @param ... any Additional keys to index into the capability
---- @return lsp.LSPAny[] # The capability value if it exists, empty table if not found
-function Client:_provider_value_get(method, ...)
-  local matched_regs = {} --- @type any[]
+--- Executes callback fn for all registrations for a given LSP method.
+---
+--- This handles both static capabilities (declared in server_capabilities during
+--- initialization) and dynamic registrations (registered at runtime via
+--- `client/registerCapability`).
+---
+--- Some methods may have multiple registrations (e.g., different documentSelectors
+--- or configurations). The callback is invoked once for each registration.
+---
+--- Example: Getting diagnostic identifiers from all registrations
+---     client:_provider_foreach('textDocument/diagnostic', function(cap)
+---       print(cap.identifier)  -- "static-id", "dynamic-id-1", "dynamic-id-2"
+---     end)
+---
+--- Note: Some capabilities alias to different providers. For example,
+--- `workspace/diagnostic` uses the same `diagnosticProvider` as `textDocument/diagnostic`.
+---
+---@param method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration LSP method name
+---@param fn fun(capability_value: lsp.LSPAny) Callback invoked for each matching capability
+function Client:_provider_foreach(method, fn)
   local provider = self:_registration_provider(method)
+  local required_capability = lsp.protocol._request_name_to_server_capability[method]
   local dynamic_regs = self:_get_registrations(provider)
   if not provider then
-    return matched_regs
+    return
   elseif not dynamic_regs then
     -- First check static capabilities
     local static_reg = vim.tbl_get(self.server_capabilities, provider)
     if static_reg then
-      matched_regs[1] = vim.tbl_get(static_reg, ...) or vim.NIL
+      if vim.tbl_get(static_reg, unpack(required_capability, 2)) then
+        fn(static_reg)
+      end
     end
   else
-    local required_capability = lsp.protocol._request_name_to_server_capability[method]
     for _, reg in ipairs(dynamic_regs) do
       if vim.tbl_get(reg, 'registerOptions', unpack(required_capability, 2)) then
-        matched_regs[#matched_regs + 1] = vim.tbl_get(reg, 'registerOptions', ...) or vim.NIL
+        local cap = vim.tbl_get(reg, 'registerOptions')
+        if cap then
+          fn(cap)
+        end
       end
     end
   end
-
-  return matched_regs
 end
 
 --- @private

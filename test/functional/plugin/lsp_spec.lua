@@ -5694,11 +5694,18 @@ describe('LSP', function()
         local function check(method, fname, ...)
           local bufnr = fname and vim.fn.bufadd(fname) or nil
           local client = assert(vim.lsp.get_client_by_id(client_id))
+          local keys = { ... }
+          local caps = {}
+          if #keys > 0 then
+            client:_provider_foreach(method, function(cap)
+              table.insert(caps, vim.tbl_get(cap, unpack(keys)) or vim.NIL)
+            end)
+          end
           result[#result + 1] = {
             method = method,
             fname = fname,
             supported = client:supports_method(method, bufnr),
-            cap = select('#', ...) > 0 and client:_provider_value_get(method, ...) or nil,
+            cap = #keys > 0 and caps or nil,
           }
         end
 
@@ -5978,7 +5985,11 @@ describe('LSP', function()
         { 'diag-ident-static' },
         exec_lua(function()
           local client = assert(vim.lsp.get_client_by_id(client_id))
-          return client:_provider_value_get('textDocument/diagnostic', 'identifier')
+          local result = {}
+          client:_provider_foreach('textDocument/diagnostic', function(cap)
+            table.insert(result, cap.identifier)
+          end)
+          return result
         end)
       )
     end)
