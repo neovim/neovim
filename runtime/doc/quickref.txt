@@ -1046,7 +1046,7 @@ Short explanation of each option:		*option-list*
 |c_<Del>|	<Del>		   delete the character under the cursor
 |c_CTRL-W|	CTRL-W		   delete the word in front of the cursor
 |c_CTRL-U|	CTRL-U		   remove all characters between the cursor
-				      position and the beginning of the line.
+				      and beginning of command-line
 
 |c_<Up>|	<Up>/<Down>	   recall older/newer command-line that starts
 				      with current command
