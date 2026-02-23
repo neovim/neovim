@@ -1417,6 +1417,7 @@ describe('float window', function()
         width = 20,
         zindex = 60,
         hide = false,
+        pinned = false,
       }
       eq(expected, api.nvim_win_get_config(win))
       eq(
@@ -1436,17 +1437,31 @@ describe('float window', function()
         )
       )
 
-      eq(
-        { external = false, focusable = true, mouse = true, hide = false, relative = '', split = 'left', width = 40, height = 6 },
-        api.nvim_win_get_config(0)
-      )
+      eq({
+        external = false,
+        focusable = true,
+        mouse = true,
+        hide = false,
+        relative = '',
+        split = 'left',
+        width = 40,
+        height = 6,
+        pinned = false,
+      }, api.nvim_win_get_config(0))
 
       if multigrid then
         api.nvim_win_set_config(win, { external = true, width = 10, height = 1 })
-        eq(
-          { external = true, focusable = true, mouse = true, width = 10, height = 1, relative = '', hide = false, border = 'none' },
-          api.nvim_win_get_config(win)
-        )
+        eq({
+          external = true,
+          focusable = true,
+          mouse = true,
+          width = 10,
+          height = 1,
+          relative = '',
+          hide = false,
+          border = 'none',
+          pinned = false,
+        }, api.nvim_win_get_config(win))
       end
     end)
 
@@ -4525,6 +4540,7 @@ describe('float window', function()
         focusable = true,
         mouse = true,
         zindex = 50,
+        pinned = false,
       }, api.nvim_win_get_config(win))
 
       feed('<c-e>')
@@ -11033,6 +11049,64 @@ describe('float window', function()
       end
       -- allow use with trailing bar
       eq('hello', n.exec_capture('fclose | echo "hello"'))
+    end)
+
+    it(':fclose and :only skip hidden and pinned floating windows #36123', function()
+      exec_lua(function()
+        require('vim._core.ui2').enable({ msg = { target = 'msg' } })
+      end)
+      local buf = api.nvim_create_buf(false, true)
+      local win = api.nvim_open_win(buf, false, {
+        relative = 'editor',
+        width = 20,
+        height = 2,
+        row = 0.9,
+        col = 0.9,
+        border = 'rounded',
+        style = 'minimal',
+      })
+      feed(':fclose<CR>')
+      eq(false, api.nvim_win_is_valid(win))
+      local config = {
+        relative = 'editor',
+        width = 10,
+        height = 3,
+        row = 1,
+        col = 1,
+        zindex = 200,
+        hide = true,
+      }
+      local win1 = api.nvim_open_win(api.nvim_create_buf(false, true), false, config)
+      local win2 = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        relative = 'editor',
+        width = 20,
+        height = 2,
+        row = 5,
+        col = 5,
+        zindex = 50, -- Lower zindex than hidden window
+        focusable = false,
+      })
+      command('fclose')
+      eq(true, api.nvim_win_is_valid(win1))
+      eq(false, api.nvim_win_is_valid(win2))
+      api.nvim_win_close(win1, true)
+      local pinned_win = exec_lua(function()
+        for _, w in ipairs(vim.api.nvim_list_wins()) do
+          if vim.api.nvim_win_get_config(w).pinned then
+            return w
+          end
+        end
+      end)
+      command(':only')
+      eq(true, api.nvim_win_is_valid(pinned_win))
+      eq("'pinned' cannot be changed after window creation", pcall_err(api.nvim_win_set_config, pinned_win, { pinned = false }))
+      api.nvim_win_close(pinned_win, true)
+      local tab1 = api.nvim_get_current_tabpage()
+      command('tabnew')
+      config.pinned = true
+      api.nvim_open_win(api.nvim_create_buf(false, true), false, config)
+      command('tabclose')
+      eq(tab1, api.nvim_get_current_tabpage())
     end)
 
     it('correctly placed in or above message area', function()

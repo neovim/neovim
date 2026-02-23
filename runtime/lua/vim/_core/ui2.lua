@@ -84,6 +84,7 @@ function M.check_targets()
         border = type ~= 'msg' and 'none' or nil,
         -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
         zindex = 201 - i,
+        pinned = type == 'cmd',
         _cmdline_offset = type == 'cmd' and 0 or nil,
       })
       if tab ~= curtab and api.nvim_win_is_valid(M.wins[type]) then
