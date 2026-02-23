@@ -235,7 +235,7 @@ local config = {
     end,
     section_name = {
       ['_inspector.lua'] = 'inspector',
-      ['ui2.lua'] = '_core.ui2',
+      ['ui2.lua'] = 'ui2',
     },
     section_fmt = function(name)
       name = name:lower()
@@ -247,6 +247,8 @@ local config = {
         return 'LUA-VIMSCRIPT BRIDGE'
       elseif name == 'builtin' then
         return 'VIM'
+      elseif name == 'ui2' then
+        return 'UI2'
       end
       return 'Lua module: vim.' .. name
     end,
@@ -257,6 +259,8 @@ local config = {
         return 'lua-vim-system'
       elseif name == 'Options' then
         return 'lua-vimscript'
+      elseif name == 'ui2' then
+        return 'ui2'
       end
       return 'vim.' .. name:lower()
     end,
