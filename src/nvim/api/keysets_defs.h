@@ -133,7 +133,7 @@ typedef struct {
   Integer width;
   Integer zindex;
   Enum("NW", "NE", "SW", "SE") anchor;
-  Union(ArrayOf(String), Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
+  Union(Array, Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
   ArrayOf(Integer) bufpos;
   Float col;
   Enum("left", "right", "above", "below") split;
