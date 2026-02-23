@@ -260,9 +260,6 @@ BufLeave			Before leaving to another buffer.  Also when
 				new current window is not for the same buffer.
 
 				Not used for ":qa" or ":q" when exiting Vim.
-							*BufModifiedSet*
-BufModifiedSet			After the `'modified'` value of a buffer has
-				been changed. Special-case of |OptionSet|.
 							*BufNew*
 BufNew				After creating a new buffer (except during
 				startup, see |VimEnter|) or renaming an
@@ -870,9 +867,9 @@ OptionSet			After setting an option (except during
 				always use |:noautocmd| to prevent triggering
 				OptionSet.
 
-				Note: Not triggered by the 'modified' option;
-				the |BufModifiedSet| event may be used to
-				handle that.
+				Note: The 'modified' option triggers
+				|OptionSet| deferred to the next event-loop
+				tick, even when set via |:set|.
 
 				Non-recursive: |:set| in the autocommand does
 				not trigger OptionSet again.

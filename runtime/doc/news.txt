@@ -90,6 +90,8 @@ EVENTS
   message UI that mimics the legacy message grid. Benefit: reduced UI event
   traffic and more flexibility for UIs.
   The `msg_history_show` event has an additional "prev_cmd" argument.
+• |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
+  "modified" instead.
 
 HIGHLIGHTS
 

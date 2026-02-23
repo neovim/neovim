@@ -10,7 +10,6 @@ return {
     BufFilePre = true, -- before renaming a buffer
     BufHidden = true, -- just after buffer becomes hidden
     BufLeave = true, -- before leaving a buffer
-    BufModifiedSet = true, -- after the 'modified' state of a buffer changes
     BufNew = true, -- after creating any buffer
     BufNewFile = true, -- when creating a buffer for a new file
     BufReadCmd = true, -- read buffer using command
@@ -156,7 +155,6 @@ return {
   --- @type table<string,true>
   --- List of Nvim-specific events or aliases for generating syntax file.
   nvim_specific = {
-    BufModifiedSet = true,
     DiagnosticChanged = true,
     LspAttach = true,
     LspDetach = true,

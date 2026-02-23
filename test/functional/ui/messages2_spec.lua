@@ -442,7 +442,7 @@ describe('messages2', function()
       ^foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofo|
                                                            |
     ]])
-    t.eq({ filetype = 5 }, n.eval('g:set')) -- still fires for 'filetype'
+    t.eq({ filetype = 5, modified = 2 }, n.eval('g:set')) -- still fires for 'filetype'
   end)
 
   it('Search highlights only apply to pager', function()
