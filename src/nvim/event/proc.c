@@ -43,9 +43,6 @@ static int exit_need_delay = 0;
 int proc_spawn(Proc *proc, bool in, bool out, bool err)
   FUNC_ATTR_NONNULL_ALL
 {
-  // forwarding stderr contradicts with processing it internally
-  assert(!(err && proc->fwd_err));
-
 #ifdef MSWIN
   const bool out_use_poll = false;
 #else
