@@ -34,6 +34,15 @@ describe('env.c', function()
     end
   end
 
+  local function os_getenv_buf(name, buf, bufsize)
+    local rval = cimp.os_getenv_buf(to_cstr(name), buf, bufsize)
+    if rval ~= NULL then
+      return ffi.string(rval)
+    else
+      return NULL
+    end
+  end
+
   local function os_getenv_noalloc(name)
     local rval = cimp.os_getenv_noalloc(to_cstr(name))
     if rval ~= NULL then
@@ -179,6 +188,29 @@ describe('env.c', function()
     end)
   end)
 
+  describe('os_getenv_buf', function()
+    itp('reads an env var into given buffer', function()
+      local name = 'NVIM_UNIT_TEST_GETENV_1N'
+      local value = 'NVIM_UNIT_TEST_GETENV_1V'
+      local bufsize = 200
+      local buf = cstr(bufsize, '')
+      eq(NULL, os_getenv_buf(name, buf, bufsize))
+      -- Use os_setenv because Lua doesn't have setenv.
+      os_setenv(name, value, 1)
+      eq(value, os_getenv_buf(name, buf, bufsize))
+
+      -- Shortest non-empty value
+      os_setenv(name, 'z', 1)
+      eq('z', os_getenv_buf(name, buf, bufsize))
+
+      -- Variable size above `bufsize` gets truncated
+      local verybigval = ('y'):rep(bufsize + 10)
+      local trunc = string.sub(verybigval, 0, bufsize - 1)
+      eq(OK, os_setenv(name, verybigval, 1))
+      eq(trunc, os_getenv_buf(name, buf, bufsize))
+    end)
+  end)
+
   describe('os_getenv_noalloc', function()
     itp('reads an env var without memory allocation', function()
       local name = 'NVIM_UNIT_TEST_GETENV_1N'
@@ -190,7 +222,7 @@ describe('env.c', function()
 
       -- Shortest non-empty value
       os_setenv(name, 'z', 1)
-      eq('z', os_getenv(name))
+      eq('z', os_getenv_noalloc(name))
 
       local bigval = ('x'):rep(256)
       eq(OK, os_setenv(name, bigval, 1))
@@ -205,7 +237,7 @@ describe('env.c', function()
 
       -- Set non-empty, then set empty.
       eq(OK, os_setenv(name, 'non-empty', 1))
-      eq('non-empty', os_getenv(name))
+      eq('non-empty', os_getenv_noalloc(name))
       eq(OK, os_setenv(name, '', 1))
       eq(NULL, os_getenv_noalloc(name))
     end)

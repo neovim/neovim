@@ -333,8 +333,9 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   // Get a name for this Nvim instance.
   // TODO(justinmk): expose this as v:name ?
   if (regen) {
+    char parent_buf[MAXPATHL];
     // Parent servername ($NVIM).
-    const char *parent = path_tail(os_getenv_noalloc(ENV_NVIM));
+    const char *parent = path_tail(os_getenv_buf(ENV_NVIM, parent_buf, sizeof(parent_buf)));
     // Servername. Empty until starting=false.
     const char *serv = path_tail(get_vim_var_str(VV_SEND_SERVER));
     if (parent[0] != NUL) {
