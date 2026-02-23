@@ -705,9 +705,7 @@ static void normal_redraw_mode_message(NormalState *s)
   if (msg_scroll || emsg_on_display) {
     msg_delay(1003, true);    // wait extra second for scrolled or error message
   }
-  if (!ui_has(kUIMessages)) {
-    os_delay(3003, false);    // wait three seconds before doing 'showmode'
-  }
+  msg_delay(3003, false);    // wait three seconds before doing 'showmode'
   State = save_State;
 
   msg_scroll = false;

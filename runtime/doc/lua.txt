@@ -5276,7 +5276,7 @@ vim.version.range({spec})                                *vim.version.range()*
 
 
 ==============================================================================
-Lua module: vim._core.ui2                                      *vim._core.ui2*
+UI2                                                                      *ui2*
 
 WARNING: This is an experimental interface intended to replace the message
 grid in the TUI.

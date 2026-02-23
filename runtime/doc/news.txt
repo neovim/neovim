@@ -411,13 +411,18 @@ TUI
 
 UI
 
+• |ui2| is a redesign of the core messages and commandline UI, which will
+  replace the legacy message grid in the TUI.
+  • Avoids "Press ENTER" interruptions.
+  • Avoids delays from |W10| "Changing a readonly file" and other warnings.
+  • Highlights the cmdline as you type.
+  • Provides the |pager| as a buffer + window.
+  • Currently experimental. To enable it: `require('vim._core.ui2').enable()`
 • |:restart| restarts Nvim and reattaches the current UI.
 • |:connect| dynamically connects the current UI to the server at the given
   address.
 • |:checkhealth| shows a summary in the header for every healthcheck.
 • |ui-multigrid| provides composition information and absolute coordinates.
-• `vim._core.ui2` provides an experimental commandline and message UI intended to
-  replace the message grid in the TUI.
 • Error messages are more concise:
   • "Error detected while processing:" changed to "Error in:".
   • "Error executing Lua:" changed to "Lua:".

@@ -3944,7 +3944,7 @@ void msg_delay(uint64_t ms, bool ignoreinput)
   }
 
   if (nvim_testing) {
-    // XXX: Skip non-functional (UI only) delay in tests/CI.
+    // XXX: Reduce non-functional (UI only) delay in tests/CI.
     ms = 100;
   }
 
