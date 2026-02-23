@@ -23,24 +23,24 @@
 
 #include "event/socket.c.generated.h"
 
-/// Checks if an address string looks like a TCP endpoint.
+/// Checks if an address string looks like a TCP endpoint, and returns the end of the host part.
 ///
 /// @param address Address string
-/// @return true if address looks like a TCP endpoint, false otherwise
-bool socket_address_is_tcp(const char *address)
+/// @return pointer to the end of the host part of the address, or NULL if it is not a TCP address
+char *socket_address_tcp_host_end(const char *address)
 {
   if (address == NULL) {
-    return false;
+    return NULL;
   }
 
   // Windows drive letter path: "X:\..." or "X:/..." is a local path, not TCP.
   if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':'
       && (address[2] == '\\' || address[2] == '/')) {
-    return false;
+    return NULL;
   }
 
-  const char *colon = strrchr(address, ':');
-  return colon != NULL && colon != address;
+  char *colon = strrchr(address, ':');
+  return colon != NULL && colon != address ? colon : NULL;
 }
 
 int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
@@ -48,9 +48,9 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
   char *addr = watcher->addr;
-  char *host_end = strrchr(addr, ':');
+  char *host_end = socket_address_tcp_host_end(addr);
 
-  if (socket_address_is_tcp(addr)) {
+  if (host_end) {
     // Split user specified address into two strings, addr (hostname) and port.
     // The port part in watcher->addr will be updated later.
     *host_end = NUL;

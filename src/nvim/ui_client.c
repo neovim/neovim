@@ -298,7 +298,7 @@ static void channel_connect_event(void **argv)
   char *server_addr = argv[0];
 
   const char *err = "";
-  bool is_tcp = socket_address_is_tcp(server_addr);
+  bool is_tcp = socket_address_tcp_host_end(server_addr) != NULL;
   CallbackReader on_data = CALLBACK_READER_INIT;
   uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err);
 

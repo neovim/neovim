@@ -928,7 +928,7 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
   }
   CallbackReader on_data = CALLBACK_READER_INIT;
   const char *error = NULL;
-  bool is_tcp = socket_address_is_tcp(server_addr);
+  bool is_tcp = socket_address_tcp_host_end(server_addr) != NULL;
   // connected to channel
   uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 500, &error);
   if (error) {
