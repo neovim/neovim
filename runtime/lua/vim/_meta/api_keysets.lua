@@ -468,7 +468,7 @@ error('Cannot require a meta file')
 --- @field width? integer
 --- @field zindex? integer
 --- @field anchor? "NW"|"NE"|"SW"|"SE"
---- @field border? string[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
+--- @field border? any[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
 --- @field bufpos? integer[]
 --- @field col? number
 --- @field split? "left"|"right"|"above"|"below"
