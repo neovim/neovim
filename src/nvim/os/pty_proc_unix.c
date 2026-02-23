@@ -31,6 +31,9 @@ int forkpty(int *, char *, const struct termios *, const struct winsize *);
 #ifdef __APPLE__
 # include <crt_externs.h>
 #endif
+#ifdef __linux__
+# include <poll.h>
+#endif
 
 #include "auto/config.h"
 #include "klib/kvec.h"
@@ -240,10 +243,27 @@ void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
 }
 
 void pty_proc_resume(PtyProc *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Send SIGCONT to the entire process group, as some shells (e.g. fish) don't
   // propagate SIGCONT to suspended child processes.
   killpg(((Proc *)ptyproc)->pid, SIGCONT);
+}
+
+/// On Linux, libuv's polling (which uses epoll) doesn't flush PTY master's pending
+/// work on kernel workqueue, so use an explcit poll() before that. #37982
+/// Note that poll() only flushes pending work if no data is immediately available,
+/// so this function is needed before every libuv poll in flush_stream().
+void pty_proc_flush_master(PtyProc *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
+{
+#ifdef __linux__
+  struct pollfd pollfd = { .fd = ptyproc->tty_fd, .events = POLLIN };
+  int n = 0;
+  do {
+    n = poll(&pollfd, 1, 0);
+  } while (n < 0 && errno == EINTR);
+#endif
 }
 
 void pty_proc_close(PtyProc *ptyproc)
@@ -256,7 +276,8 @@ void pty_proc_close(PtyProc *ptyproc)
   }
 }
 
-void pty_proc_close_master(PtyProc *ptyproc) FUNC_ATTR_NONNULL_ALL
+void pty_proc_close_master(PtyProc *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->tty_fd >= 0) {
     close(ptyproc->tty_fd);

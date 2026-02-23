@@ -849,10 +849,8 @@ static void term_resize(uint16_t width, uint16_t height, void *data)
 
 static void term_resume(void *data)
 {
-#ifdef UNIX
   Channel *chan = data;
   pty_proc_resume(&chan->stream.pty);
-#endif
 }
 
 static inline void term_delayed_free(void **argv)
