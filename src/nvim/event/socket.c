@@ -23,10 +23,10 @@
 
 #include "event/socket.c.generated.h"
 
-/// Checks if an address string looks like a TCP endpoint.
+/// Checks if an address string looks like a TCP endpoint, and returns the end of the host part.
 ///
 /// @param address Address string
-/// @return true if address looks like a TCP endpoint, false otherwise
+/// @return pointer to the end of the host part of the address, or NULL if it is not a TCP address
 char *socket_address_tcp_host_end(const char *address)
 {
   if (address == NULL) {
