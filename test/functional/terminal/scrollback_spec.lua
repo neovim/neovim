@@ -44,8 +44,11 @@ local function test_terminal_scrollback(hide_curbuf)
       else
         -- Cursor position was restored from wi_mark, not b_last_cursor.
         -- Check that b_last_cursor and wi_mark are the same.
-        local last_cursor = fn.getpos([['"]])
-        local restored_cursor = fn.getpos('.')
+        --- @type integer[], integer[]
+        local last_cursor, restored_cursor = unpack(exec_lua(function()
+          -- Get these two positions on the same RPC call.
+          return { vim.fn.getpos([['"]]), vim.fn.getpos('.') }
+        end))
         if last_cursor[2] > 0 then
           eq(restored_cursor, last_cursor)
         else
