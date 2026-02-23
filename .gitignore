@@ -84,4 +84,7 @@ tags
 /contrib/result
 /contrib/result-*
 
+# Generated from gen_deprecated.lua
+/runtime/lua/vim/_core/deprecated.lua
+
 CMakeUserPresets.json
