@@ -15,36 +15,36 @@ explanations are in chapter 27 |usr_27.txt|.
 1. Search commands				*search-commands*
 
 							*/*
-/{pattern}[/]<CR>	Search forward for the [count]'th occurrence of
+/{pattern}[/]<CR>	Search forward for the [count]th occurrence of
 			{pattern} |exclusive|.
 
-/{pattern}/{offset}<CR>	Search forward for the [count]'th occurrence of
+/{pattern}/{offset}<CR>	Search forward for the [count]th occurrence of
 			{pattern} and go |{offset}| lines up or down.
 			|linewise|.
 
 							*/<CR>*
-/<CR>			Search forward for the [count]'th occurrence of the
+/<CR>			Search forward for the [count]th occurrence of the
 			latest used pattern |last-pattern| with latest used
 			|{offset}|.
 
-//{offset}<CR>		Search forward for the [count]'th occurrence of the
+//{offset}<CR>		Search forward for the [count]th occurrence of the
 			latest used pattern |last-pattern| with new
 			|{offset}|.  If {offset} is empty no offset is used.
 
 							*?*
-?{pattern}[?]<CR>	Search backward for the [count]'th previous
+?{pattern}[?]<CR>	Search backward for the [count]th previous
 			occurrence of {pattern} |exclusive|.
 
-?{pattern}?{offset}<CR>	Search backward for the [count]'th previous
+?{pattern}?{offset}<CR>	Search backward for the [count]th previous
 			occurrence of {pattern} and go |{offset}| lines up or
 			down |linewise|.
 
 							*?<CR>*
-?<CR>			Search backward for the [count]'th occurrence of the
+?<CR>			Search backward for the [count]th occurrence of the
 			latest used pattern |last-pattern| with latest used
 			|{offset}|.
 
-??{offset}<CR>		Search backward for the [count]'th occurrence of the
+??{offset}<CR>		Search backward for the [count]th occurrence of the
 			latest used pattern |last-pattern| with new
 			|{offset}|.  If {offset} is empty no offset is used.
 
@@ -59,7 +59,7 @@ N			Repeat the latest "/" or "?" [count] times in
 			opposite direction. |last-pattern|
 
 							*star* *E348* *E349*
-*			Search forward for the [count]'th occurrence of the
+*			Search forward for the [count]th occurrence of the
 			word nearest to the cursor.  The word used for the
 			search is the first of:
 				1. the keyword under the cursor 'iskeyword'

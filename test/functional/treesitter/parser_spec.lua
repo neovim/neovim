@@ -383,7 +383,7 @@ void ui_refresh(void)
     insert(test_text)
 
     eq(
-      '.../treesitter.lua:0: Parser not found for buffer 1: language could not be determined',
+      '.../treesitter.lua:0: Parser not found for buffer 1: unknown language',
       pcall_err(exec_lua, 'vim.treesitter.get_parser(0)')
     )
 

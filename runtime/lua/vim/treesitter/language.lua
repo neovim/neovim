@@ -134,6 +134,10 @@ function M.add(lang, opts)
     path = paths[1]
   end
 
+  -- vim._ts_remove_language(lang)
+  -- vim._ts_add_language(path, lang, symbol_name)
+  -- return loadparser(path, lang, symbol_name) or nil,
+  --   string.format('Cannot load parser %s for language "%s"', path, lang)
   local res = loadparser(path, lang, symbol_name)
   return res,
     res == nil and string.format('Cannot load parser %s for language "%s"', path, lang) or nil

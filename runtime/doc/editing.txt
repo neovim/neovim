@@ -656,7 +656,7 @@ list of the current window.
 			list.
 			If [count] is omitted, the {name}s are added just
 			after the current entry in the argument list.
-			Otherwise they are added after the [count]'th file.
+			Otherwise they are added after the [count]th file.
 			If the argument list is "a b c", and "b" is the
 			current argument, then these commands result in:
 				command		new argument list ~

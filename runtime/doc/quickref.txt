@@ -213,7 +213,7 @@ N is used to indicate an optional count that can be given before the command.
 *Q_ta*		Using tags
 
 |:ta|      :ta[g][!] {tag}	jump to tag {tag}
-|:ta|      :[count]ta[g][!]	jump to [count]'th newer tag in tag list
+|:ta|      :[count]ta[g][!]	jump to [count]th newer tag in tag list
 |CTRL-]|      CTRL-]		jump to the tag under cursor, unless changes
 				   have been made
 |:ts|      :ts[elect][!] [tag]	list matching tags and select one to jump to
@@ -224,10 +224,10 @@ N is used to indicate an optional count that can be given before the command.
 
 |:tags|    :tags		print tag list
 |CTRL-T|   N  CTRL-T		jump back from Nth older tag in tag list
-|:po|      :[count]po[p][!]	jump back from [count]'th older tag in tag list
-|:tnext|   :[count]tn[ext][!]	jump to [count]'th next matching tag
-|:tp|      :[count]tp[revious][!] jump to [count]'th previous matching tag
-|:tr|      :[count]tr[ewind][!]	jump to [count]'th matching tag
+|:po|      :[count]po[p][!]	jump back from [count]th older tag in tag list
+|:tnext|   :[count]tn[ext][!]	jump to [count]th next matching tag
+|:tp|      :[count]tp[revious][!] jump to [count]th previous matching tag
+|:tr|      :[count]tr[ewind][!]	jump to [count]th matching tag
 |:tl|      :tl[ast][!]		jump to last matching tag
 
 |:ptag|    :pt[ag] {tag}	open a preview window to show tag {tag}
