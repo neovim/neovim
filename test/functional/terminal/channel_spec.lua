@@ -26,106 +26,96 @@ describe('terminal channel is closed and later released if', function()
   it('opened by nvim_open_term() and deleted by :bdelete!', function()
     command([[let id = nvim_open_term(0, {})]])
     local chans = eval('len(nvim_list_chans())')
-    -- channel hasn't been released yet
+    -- Channel hasn't been released yet.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[bdelete! | call chansend(id, 'test')]])
     )
-    feed('<Ignore>') -- add input to separate two RPC requests
-    -- channel has been released after one main loop iteration
+    -- Channel has been released after processing free_channel_event().
     eq(chans - 1, eval('len(nvim_list_chans())'))
 
     command('autocmd BufWipeout * ++once let id2 = nvim_open_term(str2nr(expand("<abuf>")), {})')
-    -- channel hasn't been released yet
+    -- Channel hasn't been released yet.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[bdelete! | call chansend(id2, 'test')]])
     )
-    feed('<Ignore>') -- add input to separate two RPC requests
-    -- channel has been released after one main loop iteration
+    -- Channel has been released after processing free_channel_event().
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   it('opened by nvim_open_term(), closed by chanclose(), and deleted by pressing a key', function()
     command('let id = nvim_open_term(0, {})')
     local chans = eval('len(nvim_list_chans())')
-    -- channel has been closed but not released
+    -- Channel has been closed but not released.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
     )
     screen:expect({ any = '%[Terminal closed%]' })
     eq(chans, eval('len(nvim_list_chans())'))
-    -- delete terminal
-    feed('i<CR>')
-    -- need to first process input
-    poke_eventloop()
-    feed('<Ignore>') -- add input to separate two RPC requests
-    -- channel has been released after another main loop iteration
+    feed('i<CR>') -- Delete terminal.
+    poke_eventloop() -- Process pending input.
+    -- Channel has been released after processing free_channel_event().
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   it('opened by nvim_open_term(), closed by chanclose(), and deleted by :bdelete', function()
     command('let id = nvim_open_term(0, {})')
     local chans = eval('len(nvim_list_chans())')
-    -- channel has been closed but not released
+    -- Channel has been closed but not released.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
     )
     screen:expect({ any = '%[Terminal closed%]' })
     eq(chans, eval('len(nvim_list_chans())'))
-    -- channel still hasn't been released yet
+    -- Channel still hasn't been released yet.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[bdelete | call chansend(id, 'test')]])
     )
-    feed('<Ignore>') -- add input to separate two RPC requests
-    -- channel has been released after one main loop iteration
+    -- Channel has been released after processing free_channel_event().
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   it('opened by jobstart(…,{term=true}), exited, and deleted by pressing a key', function()
     command([[let id = jobstart('echo',{'term':v:true})]])
     local chans = eval('len(nvim_list_chans())')
-    -- wait for process to exit
+    -- Wait for process to exit.
     screen:expect({ any = '%[Process exited 0%]' })
-    -- process has exited but channel has't been released
+    -- Process has exited but channel has't been released.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chansend(id, 'test')]])
     )
     eq(chans, eval('len(nvim_list_chans())'))
-    -- delete terminal
-    feed('i<CR>')
-    -- need to first process input
-    poke_eventloop()
-    feed('<Ignore>') -- add input to separate two RPC requests
-    -- channel has been released after another main loop iteration
-    t.retry(20, nil, function()
-      eq(chans - 1, eval('len(nvim_list_chans())'))
-    end)
+    feed('i<CR>') -- Delete terminal.
+    poke_eventloop() -- Process pending input.
+    poke_eventloop() -- Process term_delayed_free().
+    -- Channel has been released after processing free_channel_event().
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   -- This indirectly covers #16264
   it('opened by jobstart(…,{term=true}), exited, and deleted by :bdelete', function()
     command([[let id = jobstart('echo', {'term':v:true})]])
     local chans = eval('len(nvim_list_chans())')
-    -- wait for process to exit
+    -- Wait for process to exit.
     screen:expect({ any = '%[Process exited 0%]' })
-    -- process has exited but channel hasn't been released
+    -- Process has exited but channel hasn't been released.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chansend(id, 'test')]])
     )
     eq(chans, eval('len(nvim_list_chans())'))
-    -- channel still hasn't been released yet
+    -- Channel still hasn't been released yet.
     eq(
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[bdelete | call chansend(id, 'test')]])
     )
-    feed('<Ignore>') -- add input to separate two RPC requests
-    -- channel has been released after one main loop iteration
+    poke_eventloop() -- Process term_delayed_free().
+    -- Channel has been released after processing free_channel_event().
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 end)
