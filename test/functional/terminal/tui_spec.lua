@@ -2886,11 +2886,15 @@ describe('TUI', function()
   for _, guicolors in ipairs({ 'notermguicolors', 'termguicolors' }) do
     it('has no black flicker when clearing regions during startup with ' .. guicolors, function()
       local screen = Screen.new(50, 10)
-      -- Colorscheme is automatically detected as light during startup, so fg should be dark
+      -- Colorscheme is automatically detected as light in _core/defaults.lua, so fg
+      -- should be dark except on Windows, where it doesn't respond to the OSC11 query,
+      -- so bg is dark.
+      local fg = is_os('win') and Screen.colors.NvimLightGrey2 or Screen.colors.NvimDarkGrey2
+      local bg = is_os('win') and Screen.colors.NvimDarkGrey2 or Screen.colors.NvimLightGrey2
       screen:add_extra_attr_ids({
         [100] = {
-          foreground = Screen.colors.NvimDarkGrey2,
-          background = Screen.colors.NvimLightGrey2,
+          foreground = fg,
+          background = bg,
         },
       })
       fn.jobstart({
@@ -2904,6 +2908,7 @@ describe('TUI', function()
         'sleep 10',
       }, {
         term = true,
+        env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       })
       if guicolors == 'termguicolors' then
         screen:expect([[

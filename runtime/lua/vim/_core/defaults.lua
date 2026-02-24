@@ -814,7 +814,7 @@ do
       -- an OSC 11 response from the terminal emulator. If the user has set
       -- 'background' explicitly then we will delete this autocommand,
       -- effectively disabling automatic background setting.
-      local did_bg_detection = false
+      local did_dsr_response = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
@@ -822,16 +822,14 @@ do
         callback = function(args)
           local resp = args.data.sequence ---@type string
 
-          -- DA1 response that should come after the OSC 11 response if the
+          -- DSR response that should come after the OSC 11 response if the
           -- terminal supports it.
-          if string.match(resp, '^\x1b%[%?.-c$') then
-            did_bg_detection = true
+          if string.match(resp, '^\027%[0n$') then
+            did_dsr_response = true
             -- Don't delete the autocmd because the bg response may come
-            -- after the DA1 response if the terminal handles requests out
-            -- of sequence. This can occur, for instance, in a nested Nvim
-            -- instance since the bg request is handled by the TermRequest
-            -- autocmd. When this happens, the bg may be set later in the
-            -- startup sequence.
+            -- after the DSR response if the terminal handles requests out
+            -- of sequence. In that case, the background will simply be set
+            -- later in the startup sequence.
             return false
           end
 
@@ -881,14 +879,19 @@ do
         end,
       })
 
-      -- Send OSC 11 query along with DA1 request to determine whether terminal
-      -- supports the query. #32109
-      vim.api.nvim_ui_send('\027]11;?\007\027[c')
+      -- Send OSC 11 query along with DSR sequence to determine whether
+      -- terminal supports the query. If the DSR response comes first,
+      -- the terminal most likely doesn't support the bg color query,
+      -- and we don't have to keep waiting for a bg color response.
+      -- #32109
+      local osc11 = '\027]11;?\007'
+      local dsr = '\027[5n'
+      vim.api.nvim_ui_send(osc11 .. dsr)
 
       -- Wait until detection of OSC 11 capabilities is complete to
       -- ensure background is automatically set before user config.
       vim.wait(100, function()
-        return did_bg_detection
+        return did_dsr_response
       end, 1)
     end
 
