@@ -2912,7 +2912,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
     if (!(silent_mode && p_verbose == 0)) {
       // NL --> CR NL translation (for Unix, not for "--version")
       p = &buf[0];
-      if (*s == '\n' && !info_message) {
+      if (*s == '\n' && !info_message && !silent_mode && !headless_mode) {
         *p++ = '\r';
       }
       memcpy(p, s, (size_t)len);
