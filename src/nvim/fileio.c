@@ -2841,6 +2841,51 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   return retval;
 }
 
+/// Check if buffer "buf" can be reloaded.
+/// A buffer can be reloaded if
+///   1. there is a file on disk that corresponds to the buffer, and
+///   2. I have permission to read the file, and
+///   3. the timestamp of the file differs from that of the buffer, and
+///   4. the buffer is not a terminal.
+///
+/// @note This check is regardless of whether the buffer has unsaved changes,
+///       as per https://github.com/neovim/neovim/issues/1785#issuecomment-1605051577
+///
+/// @return  true if "buf" can be reloaded or,
+///          false otherwise.
+static bool buf_check_can_reload(buf_T *buf)
+{
+  // 4. If `buf` is a terminal, there is no file path, or is not a normal buffer,
+  // the buffer cannot be reloaded.
+  if (buf->terminal || buf->b_ffname == NULL || !bt_normal(buf)) {
+    return false;
+  }
+
+  FileInfo file_info;
+  // 1. & 2. `os_fileinfo` checks if the file exists on disk
+  // and if I have permission to read its metadata
+  if (!os_fileinfo(buf->b_ffname, &file_info)) {
+    return false;
+  }
+
+  if (os_isdir(buf->b_ffname)) {
+    return false;  // Should never reload a directory.
+  }
+
+  // 3. The timestamp of the file differs from that of the buffer.
+  if (buf->b_mtime != 0) {
+    return time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns);
+  }
+
+  // Edge case (W13): The buffer has no timestamp, but the file exists.
+  if ((buf->b_flags & BF_NEW) && !(buf->b_flags & BF_NEW_W)
+      && os_path_exists(buf->b_ffname)) {
+    return true;
+  }
+
+  return false;
+}
+
 /// Check if buffer "buf" has been changed.
 /// Also check if the file for a new buffer unexpectedly appeared.
 ///
@@ -2859,6 +2904,7 @@ int buf_check_timestamp(buf_T *buf)
     RELOAD_NONE,
     RELOAD_NORMAL,
     RELOAD_DETECT,
+    RELOAD_ALL,
   } reload = RELOAD_NONE;
 
   bool can_reload = false;
@@ -2869,9 +2915,9 @@ int buf_check_timestamp(buf_T *buf)
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
-  // If its a terminal, there is no file name, the buffer is not loaded,
-  // 'buftype' is set, we are in the middle of a save or being called
-  // recursively: ignore this buffer.
+// If its a terminal, there is no file name, the buffer is not loaded,
+// 'buftype' is set, we are in the middle of a save or being called
+// recursively: ignore this buffer.
   if (buf->terminal
       || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
@@ -3015,13 +3061,16 @@ int buf_check_timestamp(buf_T *buf)
         snprintf(tbuf + tbuflen, tbufsize - (size_t)tbuflen, "\n%s", mesg2);
       }
       switch (do_dialog(VIM_WARNING, _("Warning"), tbuf,
-                        _("&OK\n&Load File\nLoad File &and Options"),
+                        _("&OK\n&Load File\nLoad File &and Options\nLoad All&!"),
                         1, NULL, true)) {
       case 2:
         reload = RELOAD_NORMAL;
         break;
       case 3:
         reload = RELOAD_DETECT;
+        break;
+      case 4:
+        reload = RELOAD_ALL;
         break;
       }
     } else if (State > MODE_NORMAL_BUSY || (State & MODE_CMDLINE) || already_warned) {
@@ -3051,7 +3100,22 @@ int buf_check_timestamp(buf_T *buf)
     xfree(path);
   }
 
-  if (reload != RELOAD_NONE) {
+  if (reload == RELOAD_ALL) {
+    // Reload all buffers that meet the criteria of `can_reload`.
+    FOR_ALL_BUFFERS(buf2) {
+      if (buf2 == buf || buf_check_can_reload(buf2)) {
+        // The same logic of reloading a single buffer.
+        buf_reload(buf2, orig_mode, reload == RELOAD_DETECT);
+        if (bufref_valid(&bufref) && buf2->b_p_udf && buf2->b_ffname != NULL) {
+          uint8_t hash[UNDO_HASH_SIZE];
+
+          // Any existing undo file is unusable, write it now.
+          u_compute_hash(buf2, hash);
+          u_write_undo(NULL, false, buf2, hash);
+        }
+      }
+    }
+  } else if (reload != RELOAD_NONE) {
     // Reload the buffer.
     buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
     if (bufref_valid(&bufref) && buf->b_p_udf && buf->b_ffname != NULL) {
@@ -3063,7 +3127,7 @@ int buf_check_timestamp(buf_T *buf)
     }
   }
 
-  // Trigger FileChangedShell when the file was changed in any way.
+// Trigger FileChangedShell when the file was changed in any way.
   if (bufref_valid(&bufref) && retval != 0) {
     apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf);
   }
