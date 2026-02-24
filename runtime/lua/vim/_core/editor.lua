@@ -1261,6 +1261,20 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
     end
   end
 
+  --- Normalize ambiguous file args before building a :drop command.
+  ---
+  --- Ex parses a leading '+'/'-' in the argument as command/option syntax.
+  --- Convert to an absolute path so filenames like "+foo" or "-cbar" are
+  --- always treated as literal files.
+  --- @param file string
+  --- @return string
+  local function remote_file_arg(file)
+    if file:sub(1, 1) == '+' or file:sub(1, 1) == '-' then
+      return vim.fn.fnamemodify(file, ':p')
+    end
+    return file
+  end
+
   if #files == 0 and #cmds == 0 then
     return { should_exit = true }
   end
@@ -1272,7 +1286,8 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
 
   if f_async then
     for _, file in ipairs(files) do
-      local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(file)
+      local open_cmd = (f_tab and 'tab drop ' or 'drop ')
+        .. vim.fn.fnameescape(remote_file_arg(file))
       vim.fn.rpcrequest(rcid, 'nvim_command', open_cmd)
     end
     run_remote_cmds()
@@ -1283,7 +1298,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_ar
   local file_count = #files
 
   for idx, file in ipairs(files) do
-    local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(file)
+    local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(remote_file_arg(file))
     local is_first = idx == 1
     vim.fn.rpcrequest(
       rcid,
