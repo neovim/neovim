@@ -114,11 +114,13 @@ describe('Remote', function()
 
       exec_lua(
         [[
+          _G.Remote_exit_code = nil
           _G.Remote_jobid = vim.fn.jobstart({...}, {
             stdout_buffered = true,
             stderr_buffered = true,
             on_stdout = function(_, data) _G.Remote_stdout = table.concat(data, '\n') end,
             on_stderr = function(_, data) _G.Remote_stderr = table.concat(data, '\n') end,
+            on_exit = function(_, code) _G.Remote_exit_code = code end,
           })
         ]],
         unpack(job_args)
@@ -135,7 +137,14 @@ describe('Remote', function()
 
       set_session(helper)
       local timeout = wait_ms or 3000
-      local code = exec_lua('return vim.fn.jobwait({_G.Remote_jobid}, ...)', timeout)[1] --- @type integer
+      local code = exec_lua(
+        [[
+          local timeout = ...
+          vim.wait(timeout, function() return _G.Remote_exit_code ~= nil end, 10)
+          return _G.Remote_exit_code == nil and -1 or _G.Remote_exit_code
+        ]],
+        timeout
+      ) --- @type integer
       local stdout = exec_lua('return _G.Remote_stdout') --- @type string
       local stderr = exec_lua('return _G.Remote_stderr') --- @type string
       helper:close()
