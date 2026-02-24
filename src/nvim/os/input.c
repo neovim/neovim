@@ -285,7 +285,7 @@ size_t input_enqueue(uint64_t chan_id, String keys)
     // In the case of K_SPECIAL (0x80), 3 bytes are escaped and needed,
     // but since the keys are UTF-8, so the first byte cannot be
     // K_SPECIAL (0x80).
-    uint8_t buf[19] = { 0 };
+    uint8_t buf[19 + 100] = { 0 };
     // Do not simplify the keys here. Simplification will be done later.
     unsigned new_size
       = trans_special(&ptr, (size_t)(end - ptr), (char *)buf, FSK_KEYCODE, true, NULL);
