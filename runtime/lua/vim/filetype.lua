@@ -849,6 +849,7 @@ local extension = {
   NSP = 'natural',
   NSS = 'natural',
   ncf = 'ncf',
+  neon = 'neon',
   axs = 'netlinx',
   axi = 'netlinx',
   nginx = 'nginx',
