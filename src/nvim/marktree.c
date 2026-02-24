@@ -1860,16 +1860,17 @@ bool marktree_itr_step_overlap(MarkTree *b, MarkTreeIter *itr, MTPair *pair)
 
 static void swap_keys(MarkTree *b, MarkTreeIter *itr1, MarkTreeIter *itr2, DamageList *damage)
 {
-  if (itr1->x != itr2->x) {
-    if (mt_paired(rawkey(itr1))) {
-      kvi_push(*damage, ((Damage){ mt_lookup_key(rawkey(itr1)), itr1->x, itr2->x,
-                                   itr1->i, itr2->i }));
-    }
-    if (mt_paired(rawkey(itr2))) {
-      kvi_push(*damage, ((Damage){ mt_lookup_key(rawkey(itr2)), itr2->x, itr1->x,
-                                   itr2->i, itr1->i }));
-    }
+  // TODO(bfredl): redactor is planned, see TODO comment next to qsort in marktree_splice
+  if (mt_paired(rawkey(itr1))) {
+    kvi_push(*damage, ((Damage){ mt_lookup_key(rawkey(itr1)), itr1->x, itr2->x,
+                                 itr1->i, itr2->i }));
+  }
+  if (mt_paired(rawkey(itr2))) {
+    kvi_push(*damage, ((Damage){ mt_lookup_key(rawkey(itr2)), itr2->x, itr1->x,
+                                 itr2->i, itr1->i }));
+  }
 
+  if (itr1->x != itr2->x) {
     uint32_t meta_inc_1[kMTMetaCount];
     meta_describe_key(meta_inc_1, rawkey(itr1));
     uint32_t meta_inc_2[kMTMetaCount];
