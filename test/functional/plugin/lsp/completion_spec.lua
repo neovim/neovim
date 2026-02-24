@@ -1351,6 +1351,24 @@ describe('vim.lsp.completion: integration', function()
     end)
   end)
 
+  local assert_cleanup_after_detach = function(client_id)
+    exec_lua(function()
+      vim.lsp.buf_detach_client(0, client_id)
+    end)
+    -- After detach, trigger and verify this client no longer contributes
+    exec_lua(function()
+      vim.lsp.completion.get()
+    end)
+    retry(nil, nil, function()
+      eq(
+        0,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+  end
+
   it('puts cursor at the end of completed word', function()
     local completion_list = {
       isIncomplete = false,
@@ -1365,7 +1383,7 @@ describe('vim.lsp.completion: integration', function()
     exec_lua(function()
       vim.o.completeopt = 'menuone,noselect'
     end)
-    create_server('dummy', completion_list)
+    local client_id = create_server('dummy', completion_list)
     feed('i world<esc>0ih<c-x><c-o>')
     retry(nil, nil, function()
       eq(
@@ -1394,9 +1412,10 @@ describe('vim.lsp.completion: integration', function()
         return vim.api.nvim_win_get_cursor(0)[2]
       end)
     )
+    assert_cleanup_after_detach(client_id)
   end)
 
-  it('#clear multiple-lines word', function()
+  it('clear multiple-lines word', function()
     local completion_list = {
       isIncomplete = false,
       items = {
@@ -1412,7 +1431,7 @@ describe('vim.lsp.completion: integration', function()
     exec_lua(function()
       vim.o.completeopt = 'menuone,noselect'
     end)
-    create_server('dummy', completion_list)
+    local client_id = create_server('dummy', completion_list)
     feed('Sif true <C-X><C-O>')
     retry(nil, nil, function()
       eq(
@@ -1432,6 +1451,7 @@ describe('vim.lsp.completion: integration', function()
         }
       end)
     )
+    assert_cleanup_after_detach(client_id)
   end)
 
   it('prepends prefix for items with different start positions', function()
@@ -1451,7 +1471,7 @@ describe('vim.lsp.completion: integration', function()
     exec_lua(function()
       vim.o.completeopt = 'menu,menuone,noinsert'
     end)
-    create_server('dummy', completion_list)
+    local client_id = create_server('dummy', completion_list)
     feed('Adiv.foo<C-x><C-O>')
     retry(nil, nil, function()
       eq(
@@ -1464,6 +1484,7 @@ describe('vim.lsp.completion: integration', function()
     feed('<C-Y>')
     eq('<div class="foo"></div>', n.api.nvim_get_current_line())
     eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
+    assert_cleanup_after_detach(client_id)
   end)
 
   it('does not empty server start boundary', function()
@@ -1566,45 +1587,6 @@ describe('vim.lsp.completion: integration', function()
     end)
     feed('<C-y>')
     eq('w-1/2', n.api.nvim_get_current_line())
-  end)
-  it('removes client from triggers and clients table on LspDetach', function()
-    local list1 = {
-      isIncomplete = false,
-      items = { { label = 'foo' } },
-    }
-    local list2 = {
-      isIncomplete = false,
-      items = { { label = 'bar' } },
-    }
-    local id1 = create_server('dummy1', list1, { trigger_chars = { '.' } })
-    local id2 = create_server('dummy2', list2, { trigger_chars = { '.' } })
-    n.command('set cot=menuone,menu')
-    local function assert_matches(expected)
-      retry(nil, nil, function()
-        eq(
-          1,
-          exec_lua(function()
-            return vim.fn.pumvisible()
-          end)
-        )
-      end)
-      eq(expected, n.api.nvim_get_current_line())
-    end
-    feed('Sw.')
-    assert_matches('w.foo')
-    exec_lua('vim.lsp.buf_detach_client(0, ' .. id1 .. ')')
-    feed('<ESC>Sw.')
-    assert_matches('w.bar')
-    exec_lua('vim.lsp.buf_detach_client(0, ' .. id2 .. ')')
-    feed('<ESC>Sw.')
-    retry(nil, nil, function()
-      eq(
-        0,
-        exec_lua(function()
-          return vim.fn.pumvisible()
-        end)
-      )
-    end)
   end)
 end)
 
