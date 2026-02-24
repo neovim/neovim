@@ -213,7 +213,7 @@ describe('vim.ui_attach', function()
       cmdline = {
         { content = { { '' } }, hl = 'MoreMsg', pos = 0, prompt = '[Y]es, (N)o, (C)ancel: ' },
       },
-      messages = { { content = { { '\nSave changes?\n', 6, 'MoreMsg' } }, kind = 'confirm' } },
+      messages = { { content = { { 'Save changes?', 6, 'MoreMsg' } }, kind = 'confirm' } },
     })
     feed('n')
     screen:expect_unchanged()

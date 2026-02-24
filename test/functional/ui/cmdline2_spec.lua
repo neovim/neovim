@@ -245,11 +245,9 @@ describe('cmdline2', function()
     screen:try_resize(screen._width + 1, screen._height)
     screen:expect([[
                                                             |
-      {1:~                                                     }|*8
+      {1:~                                                     }|*10
       {3:                                                      }|
-                                                            |
       {6:Ok?}                                                   |
-                                                            |
       {6:[O]k: }^                                                |
     ]])
     -- And resizing the next event loop iteration also works.
@@ -257,11 +255,9 @@ describe('cmdline2', function()
     screen:try_resize(screen._width, screen._height + 1)
     screen:expect([[
                                                             |
-      {1:~                                                     }|*9
+      {1:~                                                     }|*11
       {3:                                                      }|
-                                                            |
       {6:Ok?}                                                   |
-                                                            |
       {6:[O]k: }^                                                |
     ]])
   end)
