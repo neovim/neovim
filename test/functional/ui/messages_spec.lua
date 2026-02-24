@@ -51,7 +51,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       cmdline = { { content = { { '' } }, hl = 'MoreMsg', pos = 0, prompt = '[O]k: ' } },
-      messages = { { content = { { '\ntest\n', 6, 'MoreMsg' } }, kind = 'confirm' } },
+      messages = { { content = { { 'test', 6, 'MoreMsg' } }, kind = 'confirm' } },
     })
     feed('<cr>')
     screen:expect({

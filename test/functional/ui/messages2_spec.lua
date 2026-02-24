@@ -710,12 +710,11 @@ describe('messages2', function()
     feed('<CR>')
     screen:expect([[
                                                            |
-      {1:~                                                    }|*7
+      {1:~                                                    }|*8
+      {1:~            }{9:E5108: Lua: [string ":lua"]:1: foo}{4:      }|
       {3:                                                     }|
-                                                           |
       {6:foo}                                                  |
       {6:bar}                                                  |
-                                                           |
       {6:[O]k: }^                                               |
     ]])
   end)

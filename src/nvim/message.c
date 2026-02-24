@@ -3779,7 +3779,7 @@ static char *console_dialog_alloc(const char *message, const char *buttons, bool
 
   // Now allocate space for the strings
   confirm_msg = xmalloc((size_t)msg_len);
-  snprintf(confirm_msg, (size_t)msg_len, "\n%s\n", message);
+  snprintf(confirm_msg, (size_t)msg_len, ui_has(kUIMessages) ? "%s" : "\n%s\n", message);
 
   xfree(confirm_buttons);
   confirm_buttons = xmalloc((size_t)button_len);
