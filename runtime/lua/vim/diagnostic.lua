@@ -666,7 +666,9 @@ local function get_logical_pos(diagnostic)
     diagnostic._extmark_id,
     { details = true }
   )
-
+  if next(extmark) == nil then
+    return diagnostic.lnum, diagnostic.col, diagnostic.end_lnum, diagnostic.end_col, true
+  end
   return extmark[1], extmark[2], extmark[3].end_row, extmark[3].end_col, not extmark[3].invalid
 end
 
