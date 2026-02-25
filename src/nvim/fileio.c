@@ -2915,9 +2915,9 @@ int buf_check_timestamp(buf_T *buf)
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
-// If its a terminal, there is no file name, the buffer is not loaded,
-// 'buftype' is set, we are in the middle of a save or being called
-// recursively: ignore this buffer.
+  // If its a terminal, there is no file name, the buffer is not loaded,
+  // 'buftype' is set, we are in the middle of a save or being called
+  // recursively: ignore this buffer.
   if (buf->terminal
       || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
@@ -3127,7 +3127,7 @@ int buf_check_timestamp(buf_T *buf)
     }
   }
 
-// Trigger FileChangedShell when the file was changed in any way.
+  // Trigger FileChangedShell when the file was changed in any way.
   if (bufref_valid(&bufref) && retval != 0) {
     apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf);
   }
