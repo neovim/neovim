@@ -221,39 +221,44 @@ function Provider:on_win(toprow, botrow)
             return a.range.start.character < b.range.start.character
           end)
 
-          ---@type integer
-          local indent = api.nvim_buf_call(bufnr, function()
-            return vim.fn.indent(row + 1)
-          end)
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          local range = vim.range.lsp(bufnr, lenses[1].range, client.offset_encoding)
+          ---@type [string, string][]
+          local virt_text = {
+            { string.rep(' ', range.start.col), 'LspCodeLensSeparator' },
+          }
 
-          ---@type [string, string|integer][][]
-          local virt_lines = { { { string.rep(' ', indent), 'LspCodeLensSeparator' } } }
-          local virt_text = virt_lines[1]
           for _, lens in ipairs(lenses) do
             -- A code lens is unresolved when no command is associated to it.
             if not lens.command then
-              local client = assert(vim.lsp.get_client_by_id(client_id)) ---@type vim.lsp.Client
               self:resolve(client, lens)
             else
-              virt_text[#virt_text + 1] = { lens.command.title, 'LspCodeLens' }
-              virt_text[#virt_text + 1] = { ' | ', 'LspCodeLensSeparator' }
+              vim.list_extend(virt_text, {
+                { lens.command.title, 'LspCodeLens' },
+                { ' | ', 'LspCodeLensSeparator' },
+              })
             end
           end
+          -- Remove trailing separator.
+          table.remove(virt_text)
 
-          if #virt_text > 1 then
-            -- Remove trailing separator.
-            virt_text[#virt_text] = nil
-          else
-            -- Use a placeholder to prevent flickering caused by layout shifts.
-            virt_text[#virt_text + 1] = { '...', 'LspCodeLens' }
+          -- Use a placeholder to prevent flickering caused by layout shifts.
+          if #virt_text == 1 then
+            table.insert(virt_text, { '', 'LspCodeLens' })
           end
 
           api.nvim_buf_set_extmark(bufnr, namespace, row, 0, {
-            virt_lines = virt_lines,
+            virt_lines = { virt_text },
             virt_lines_above = true,
             virt_lines_overflow = 'scroll',
             hl_mode = 'combine',
           })
+
+          -- Fix https://github.com/neovim/neovim/issues/16166
+          -- Make sure the code lens on the first line is visible when updating.
+          if row == 0 then
+            vim.cmd('normal! zb')
+          end
         end
         self.row_version[row] = self.version
       end
