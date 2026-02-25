@@ -3,13 +3,15 @@
 " Author:	David Necas (Yeti)
 " Maintainer:	Jakub Jelen <jakuje at gmail dot com>
 " Previous Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
-" Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
-" Contributor:  Karsten Hopp <karsten@redhat.com>
-" Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
+" Contributor:	Leonard Ehrenfried <leonard.ehrenfried@web.de>
+"		Karsten Hopp <karsten@redhat.com>
+"		Dean, Adam Kenneth <adam.ken.dean@hpe.com>
 " Last Change:	2022 Nov 10
+" Last Update:	2026 Feb 24
 "		Added RemoteCommand from pull request #4809
 "		Included additional keywords from Martin.
 "		Included PR #5753
+"		Update missing keywords #19488
 " SSH Version:	8.5p1
 "
 
@@ -221,6 +223,7 @@ syn keyword sshconfigKeyword ProxyUseFdpass
 syn keyword sshconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshconfigKeyword PubkeyAuthentication
+syn keyword sshconfigKeyword RefuseConnection
 syn keyword sshconfigKeyword RekeyLimit
 syn keyword sshconfigKeyword RemoteCommand
 syn keyword sshconfigKeyword RemoteForward
@@ -248,7 +251,9 @@ syn keyword sshconfigKeyword UseBlacklistedKeys
 syn keyword sshconfigKeyword User
 syn keyword sshconfigKeyword UserKnownHostsFile
 syn keyword sshconfigKeyword VerifyHostKeyDNS
+syn keyword sshconfigKeyword VersionAddendum
 syn keyword sshconfigKeyword VisualHostKey
+syn keyword sshconfigKeyword WarnWeakCrypto
 syn keyword sshconfigKeyword XAuthLocation
 
 " Deprecated/ignored/remove/unsupported keywords
