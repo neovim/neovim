@@ -136,8 +136,13 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, E
   ftbuf->b_p_ml = false;
   ftbuf->b_p_ft = xstrdup(filetype);
 
+  if (!has_event(EVENT_FILETYPE)) {
+    return ftbuf;  // Nothing more to do.
+  }
+
+  bool did_au_ft = false;
   TRY_WRAP(err, {
-    do_filetype_autocmd(ftbuf, false);
+    did_au_ft = do_filetype_autocmd(ftbuf, true);
   });
 
   if (!bufref_valid(&bufref)) {
@@ -147,6 +152,9 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, E
     return NULL;
   }
 
+  if (!did_au_ft && !ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException, "Could not execute FileType autocommands");
+  }
   return ftbuf;
 }
 
