@@ -67,7 +67,7 @@ function M.msg:start_timer(buf, id)
 
     -- Remove message (including potentially leftover empty line).
     api.nvim_buf_set_text(buf, mark[1], mark[2], mark[3].end_row, mark[3].end_col, {})
-    if fn.col({ mark[1] + 1, '$' }, ui.wins.msg) == 1 then
+    if api.nvim_buf_get_lines(ui.bufs.msg, mark[1], mark[1] + 1, false)[1] == '' then
       api.nvim_buf_set_lines(buf, mark[1], mark[1] + 1, false, {})
     end
 

@@ -6,9 +6,10 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, command, exec_lua, feed = n.clear, n.command, n.exec_lua, n.feed
 
+local msg_timeout = 200
 local function set_msg_target_zero_ch()
   exec_lua(function()
-    require('vim._core.ui2').enable({ msg = { target = 'msg' } })
+    require('vim._core.ui2').enable({ msg = { target = 'msg', timeout = msg_timeout } })
     vim.o.cmdheight = 0
   end)
 end
@@ -766,6 +767,26 @@ describe('messages2', function()
     screen:expect([[
       {10:^foo}                                                  |
       {1:~                                                    }|*13
+    ]])
+  end)
+
+  it('closed msg window timer removes empty lines', function()
+    set_msg_target_zero_ch()
+    command('echo "foo" | echo "bar\n"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {1:~                                                 }{4:foo}|
+      {1:~                                                 }{4:bar}|
+      {1:~                                                 }{4:   }|
+    ]])
+    command('fclose!')
+    screen:sleep(msg_timeout + 50)
+    command('echo "baz"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {1:~                                                 }{4:baz}|
     ]])
   end)
 end)
