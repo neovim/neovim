@@ -439,6 +439,12 @@ describe('API', function()
       assert_alive()
       eq(false, exec_lua('return _G.success'))
     end)
+
+    it('redir_write() message column is reset with ext_messages', function()
+      exec_lua('vim.ui_attach(1, { ext_messages = true }, function() end)')
+      api.nvim_exec2('hi VisualNC', { output = true })
+      eq('VisualNC       xxx cleared', api.nvim_exec2('hi VisualNC', { output = true }).output)
+    end)
   end)
 
   describe('nvim_command', function()
