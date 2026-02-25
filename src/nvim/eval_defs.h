@@ -118,6 +118,7 @@ typedef enum {
   VV_EVENT,
   VV_VERSIONLONG,
   VV_ECHOSPACE,
+  VV_ARGF,
   VV_ARGV,
   VV_COLLATE,
   VV_EXITING,
