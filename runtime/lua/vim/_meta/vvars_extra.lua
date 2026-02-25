@@ -53,7 +53,7 @@ error('Cannot require a meta file')
 --- `v:event.operator` is "y".
 --- @field operator? string
 --- Text stored in the register as a |readfile()|-style list of lines.
---- @field regcontents? string
+--- @field regcontents? string|string[]
 --- Requested register (e.g "x" for "xyy) or the empty string for an unnamed operation.
 --- @field regname? string
 --- @field regtype? string Type of register as returned by |getregtype()|.
