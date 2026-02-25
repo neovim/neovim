@@ -260,11 +260,11 @@ for, you can use a BufWritePre autocommand: >
 Vim saves undo trees in a separate undo file, one for each edited file, using
 a simple scheme that maps filesystem paths directly to undo files.  Vim will
 detect if an undo file is no longer synchronized with the file it was written
-for (with a hash of the file contents) and ignore it when the file was changed
-after the undo file was written, to prevent corruption.  An undo file is also
-ignored if its owner differs from the owner of the edited file, except when
-the owner of the undo file is the current user.  Set 'verbose' to get a
-message about that when opening a file.
+for (with a hash of the file contents) and, unless 'backup' is set, ignore it
+when the file was changed after the undo file was written, to prevent
+corruption. An undo file is also ignored if its owner differs from the owner
+of the edited file, except when the owner of the undo file is the current
+user.  Set 'verbose' to get a message about that when opening a file.
 
 Location of the undo files is controlled by the 'undodir' option, by default
 they are saved to the dedicated directory in the application data folder.
