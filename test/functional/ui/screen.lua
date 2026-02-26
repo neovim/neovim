@@ -296,6 +296,13 @@ function Screen:attach(session)
     options.ext_linegrid = true
   end
 
+  if options.ext_windows then
+    options.ext_multigrid = true
+  end
+  if options.ext_multigrid then
+    options.ext_linegrid = true
+  end
+
   self._session = session
   self._options = options
   self._clear_attrs = (not options.ext_linegrid) and {} or nil
@@ -960,6 +967,14 @@ function Screen:_redraw(updates)
     end
   end
   return did_flush
+end
+
+function Screen:set_on_event_handler(callback)
+  self._on_event = callback
+end
+
+function Screen:set_on_request_handler(callback)
+  self._on_request = callback
 end
 
 function Screen:_handle_resize(width, height)

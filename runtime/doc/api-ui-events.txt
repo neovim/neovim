@@ -53,6 +53,8 @@ with these (optional) keys:
 			'wildmenu'. |ui-popupmenu|
 - `ext_tabline`		Externalize the tabline. |ui-tabline|
 - `ext_termcolors`	Use external default colors.
+- `ext_windows`		Externalize window handling. |ui-windows|
+			Sets `ext_multigrid` and `ext_linegrid` implicitly.
 - `term_name`		Sets the name of the terminal 'term'.
 - `term_colors`		Sets the number of supported colors 't_Co'.
 - `stdin_fd`		Read buffer 1 from this fd as if it were stdin |--|.
@@ -109,6 +111,11 @@ compatibility); these suffice to implement a terminal-like interface. However
 the new |ui-linegrid| represents text more efficiently (especially highlighted
 text), and allows UI capabilities requiring multiple grids. New UIs should
 implement |ui-linegrid| instead of |ui-grid-old|.
+
+UIs can optionally choose to take care of window positioning and navigation
+(i.e. `wincmd` functions) if they so choose by setting the `ext_windows`
+option. This would implicitly enable the `ext_multigrid` and `ext_linegrid`
+options. See |ui-windows|.
 
 Nvim optionally sends various screen elements "semantically" as structured
 events instead of raw grid-lines, as specified by |ui-ext-options|. The UI
@@ -922,5 +929,71 @@ must handle.
 
 	prev_cmd
 	    True when sent with |g<| command, false with |:messages|.
+
+==============================================================================
+External Window Events						   *ui-windows*
+
+Only sent if `ext_windows` option is set in |ui-options|. Sets `ext_multigrid`
+and `ext_linegrid` implicitly.
+
+This option enables UIs to take care of how `wincmd`s are interpretted in nvim
+by delegating the position and navigation handling to them instead of nvim.
+Nvim will no longer maintain a frame structure for the windows but rather send
+the events to the UIs which will take the necessary actions.
+
+Only one UI with `ext_windows` option set should connect to one instance of
+nvim ideally, although multiple UIs without this option can connect to that
+instance.
+
+["win_move_cursor", direction, count]
+	NOTE: Implemented as a sync function.
+	Tell the UI to switch to the window "count" windows away in the given
+	"direction" (see below). The UI must return the handle of the window to
+	switch to.
+
+["win_split", win1, grid1, win2, grid2, flags]
+	Tell the UI that there has been a split in the "win1" and a new window
+	"win2" is created in the direction given by the flags (see below).
+
+["win_move", win, grid, flags]
+	Tell the UI that the window "win" is to be moved in the direction
+	specified in flags (see below).
+
+["win_close", win, grid]
+	Tell the UI that the window "win" is no longer open and the UI can get
+	rid of the resources for the same.
+
+["win_exchange", direction, count]
+	Tell the UI to exchange the current window with a window "count"
+	windows away in the given "direction" (either 0 or 1).
+
+["win_rotate", direction, count]
+	Tell the UI to rotate the current window "count" times in the given
+	"direction" (either 0 or 1).
+
+["win_resize_equal"]
+	Tell the UI to resize the windows to allocate equal screen estate to
+	all the windows in the current window row or column.
+
+["win_resize", win, grid, width, height]
+	Tell the UI to resize the window to "width" and "height". If "width" or
+	"height" is equal to 9999, resize to the maximum possible height. The
+	UI is expected to call back `try_resize_grid` with the width and height
+	to inform nvim about the size it finally decides on (which may be same
+	or different that sent with `win_resize`).
+
+The "direction" in the `win_move`, `win_move_cursor`, and `win_split` events
+is sent as an Integer with values:
+  0 : above
+  1 : below
+  2 : left
+  3 : right
+  4 : below/right
+  5 : above/left
+  6 : top-left
+  7 : bottom-right
+  8 : previous
+NOTE: The values after 3 (exclusive) are applicable for `win_move_cursor`
+only.
 
  vim:tw=78:ts=8:noet:ft=help:norl:
