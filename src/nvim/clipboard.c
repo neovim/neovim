@@ -209,7 +209,7 @@ void set_clipboard(int name, yankreg_T *reg)
   list_T *const lines = tv_list_alloc((ptrdiff_t)reg->y_size + (reg->y_type != kMTCharWise));
 
   for (size_t i = 0; i < reg->y_size; i++) {
-    tv_list_append_string(lines, reg->y_array[i].data, -1);
+    tv_list_append_string(lines, reg->y_array[i].data, (int)reg->y_array[i].size);
   }
 
   char regtype;
