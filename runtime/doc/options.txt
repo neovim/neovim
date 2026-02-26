@@ -2553,6 +2553,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|RemoteReply|,
 		|SafeState|,
 		|SessionLoadPost|,
+		|SessionLoadPre|,
 		|SessionWritePost|,
 		|ShellCmdPost|,
 		|Signal|,

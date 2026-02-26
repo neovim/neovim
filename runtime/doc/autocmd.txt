@@ -961,6 +961,9 @@ SafeState			When nothing is pending, going to wait for the
 				check more with `state()`, e.g. whether the
 				screen was scrolled for messages.
 
+							*SessionLoadPre*
+SessionLoadPre			Before loading the session file created using
+				the |:mksession| command.
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.

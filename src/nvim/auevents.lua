@@ -97,6 +97,7 @@ return {
     SafeState = false, -- going to wait for a character
     SearchWrapped = true, -- after the search wrapped around
     SessionLoadPost = false, -- after loading a session file
+    SessionLoadPre = false, -- before loading a session file
     SessionWritePost = false, -- after writing a session file
     ShellCmdPost = false, -- after ":!cmd"
     ShellFilterPost = true, -- after ":1,2!cmd", ":w !cmd", ":r !cmd".

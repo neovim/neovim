@@ -852,8 +852,8 @@ This saves the current Session, and starts off the command to load another.
 A session includes all tab pages, unless "tabpages" was removed from
 'sessionoptions'. |tab-page|
 
-The |SessionLoadPost| autocmd event is triggered after a session file is
-loaded/sourced.
+The |SessionLoadPre| autocmd event is triggered before a session file is
+loaded/sourced and |SessionLoadPost| autocmd event is triggered after.
 						*SessionLoad-variable*
 While the session file is loading, the SessionLoad global variable is set to
 1.  Plugins can use this to postpone some work until the SessionLoadPost event
