@@ -3084,9 +3084,9 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (!fuzzy) {
     regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
+      xfree(tofree);
       return FAIL;
     }
-
     // set ignore-case according to p_ic, p_scs and pat
     regmatch.rm_ic = ignorecase(pat);
   }
