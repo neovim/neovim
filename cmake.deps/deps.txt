@@ -10,8 +10,8 @@ LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 UNIBILIUM_URL https://github.com/neovim/unibilium/archive/v2.1.2.tar.gz
 UNIBILIUM_SHA256 370ecb07fbbc20d91d1b350c55f1c806b06bf86797e164081ccc977fc9b3af7a
 
-LUV_URL https://github.com/luvit/luv/archive/1.51.0-2.tar.gz
-LUV_SHA256 d70cf20b16ab05ceaa3bb448f3e1b3ef63a5949e34184255c52a3e92efcd39b4
+LUV_URL https://github.com/luvit/luv/archive/d2966afdb8d723c2de211fa0f94f5ba4be06a268.tar.gz
+LUV_SHA256 7d8ce105a73175aff5df3a23b4ecced52579c5b8d2b3a0d3ed73aa67e235c921
 
 LPEG_URL https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz
 LPEG_SHA256 4b155d67d2246c1ffa7ad7bc466c1ea899bbc40fef0257cc9c03cecbaed4352a

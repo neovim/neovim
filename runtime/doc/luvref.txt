@@ -1787,7 +1787,8 @@ uv.tcp_nodelay({tcp}, {enable})                               *uv.tcp_nodelay()*
 
                 Returns: `0` or `fail`
 
-uv.tcp_keepalive({tcp}, {enable} [, {delay}])               *uv.tcp_keepalive()*
+                                                            *uv.tcp_keepalive()*
+uv.tcp_keepalive({tcp}, {enable} [, {delay}, {intvl}, {cnt}])
 
                 > method form `tcp:keepalive(enable, [delay])`
 
@@ -1795,9 +1796,14 @@ uv.tcp_keepalive({tcp}, {enable} [, {delay}])               *uv.tcp_keepalive()*
                 - `tcp`: `uv_tcp_t userdata`
                 - `enable`: `boolean`
                 - `delay`: `integer` or `nil`
+                - `intvl`: `integer` or `nil`
+                - `cnt`: `integer` or `nil`
 
                 Enable / disable TCP keep-alive. `delay` is the initial delay
-                in seconds, ignored when enable is `false`.
+                in seconds, `intvl` is the time in seconds between individual
+                keep-alive probes, and `cnt` is the number of probes to send
+                before assuming the connection is dead.
+                Ignored when enable is `false`.
 
                 Returns: `0` or `fail`
 
@@ -2406,13 +2412,16 @@ uv.udp_get_send_queue_count()                    *uv.udp_get_send_queue_count()*
 
                 Returns: `integer`
 
-uv.udp_open({udp}, {fd})                                         *uv.udp_open()*
+uv.udp_open({udp}, {fd}, [{flags}])                              *uv.udp_open()*
 
                 > method form `udp:open(fd)`
 
                 Parameters:
                 - `udp`: `uv_udp_t userdata`
                 - `fd`: `integer`
+                - `flags`: `table` or `integer` or `nil`
+                  - `reuseaddr`: `boolean` or `nil`
+                  - `reuseport`: `boolean` or `nil`
 
                 Opens an existing file descriptor or Windows SOCKET as a UDP
                 handle.
@@ -3582,6 +3591,7 @@ uv.fs_statfs({path} [, {callback}])                             *uv.fs_statfs()*
                 - `bavail` : `integer`
                 - `files` : `integer`
                 - `ffree` : `integer`
+                - `frsize`: `integer` or `nil`
 
 ==============================================================================
 THREAD POOL WORK SCHEDULING                    *luv-thread-pool-work-scheduling*
@@ -4288,7 +4298,7 @@ uv.interface_addresses()                              *uv.interface_addresses()*
 
                 See |luv-constants| for supported address `family` output values.
 
-                Returns: `table`
+                Returns: `table` or `fail`
                 - `[name(s)]` : `table`
                   - `ip` : `string`
                   - `family` : `string`
