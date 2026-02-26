@@ -2233,11 +2233,19 @@ static void eval_addblob(typval_T *tv1, typval_T *tv2)
   const blob_T *const b2 = tv2->vval.v_blob;
   blob_T *const b = tv_blob_alloc();
 
-  for (int i = 0; i < tv_blob_len(b1); i++) {
-    ga_append(&b->bv_ga, tv_blob_get(b1, i));
-  }
-  for (int i = 0; i < tv_blob_len(b2); i++) {
-    ga_append(&b->bv_ga, tv_blob_get(b2, i));
+  int64_t len1 = tv_blob_len(b1);
+  int64_t len2 = tv_blob_len(b2);
+  int64_t totallen = len1 + len2;
+
+  if (totallen >= 0 && totallen <= INT_MAX) {
+    ga_grow(&b->bv_ga, (int)totallen);
+    if (len1 > 0) {
+      memmove((char *)b->bv_ga.ga_data, b1->bv_ga.ga_data, (size_t)len1);
+    }
+    if (len2 > 0) {
+      memmove((char *)b->bv_ga.ga_data + len1, b2->bv_ga.ga_data, (size_t)len2);
+    }
+    b->bv_ga.ga_len = (int)totallen;
   }
 
   tv_clear(tv1);
