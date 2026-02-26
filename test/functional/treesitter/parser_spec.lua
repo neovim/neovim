@@ -7,7 +7,6 @@ local dedent = t.dedent
 local eq = t.eq
 local insert = n.insert
 local exec_lua = n.exec_lua
-local pcall_err = t.pcall_err
 local feed = n.feed
 local run_query = ts_t.run_query
 local assert_alive = n.assert_alive
@@ -382,10 +381,7 @@ void ui_refresh(void)
   it('does not get parser for empty filetype', function()
     insert(test_text)
 
-    eq(
-      '.../treesitter.lua:0: Parser not found for buffer 1: language could not be determined',
-      pcall_err(exec_lua, 'vim.treesitter.get_parser(0)')
-    )
+    eq(vim.NIL, exec_lua('vim.treesitter.get_parser(0)'))
 
     -- Must provide language for buffers with an empty filetype
     exec_lua("vim.treesitter.get_parser(0, 'c')")

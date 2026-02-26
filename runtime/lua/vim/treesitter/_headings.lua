@@ -54,7 +54,7 @@ local get_headings = function(bufnr)
   if not lang then
     return {}
   end
-  local parser = assert(ts.get_parser(bufnr, lang, { error = false }))
+  local parser = assert(ts.get_parser(bufnr, lang))
   local query = ts.query.parse(lang, heading_queries[lang])
   local root = parser:parse()[1]:root()
   local headings = {}

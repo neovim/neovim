@@ -31,7 +31,7 @@ function FoldInfo.new(bufnr)
   return setmetatable({
     levels0 = {},
     levels = {},
-    parser = ts.get_parser(bufnr, nil, { error = false }),
+    parser = ts.get_parser(bufnr, nil),
   }, FoldInfo)
 end
 
