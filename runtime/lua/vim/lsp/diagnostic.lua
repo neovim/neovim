@@ -187,10 +187,15 @@ local client_pull_namespaces = {}
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
 ---@param client_id integer The id of the LSP client
----@param pull_id (boolean|string)? Pull diagnostics provider identifier
+---@param pull_id (boolean|string)? (default: nil) Pull diagnostics provider id
+---               (indicates "pull" client), or `nil` for a "push" client.
 function M.get_namespace(client_id, pull_id)
   vim.validate('client_id', client_id, 'number')
   vim.validate('pull_id', pull_id, { 'boolean', 'string' }, true)
+
+  if type(pull_id) == 'boolean' then
+    vim.deprecate('get_namespace(pull_id:boolean)', 'get_namespace(pull_id:string)', '0.14')
+  end
 
   local client = lsp.get_client_by_id(client_id)
   if pull_id then

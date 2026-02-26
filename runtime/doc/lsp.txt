@@ -2080,8 +2080,9 @@ get_namespace({client_id}, {pull_id})
 
     Parameters: ~
       • {client_id}  (`integer`) The id of the LSP client
-      • {pull_id}    (`(boolean|string)?`) Pull diagnostics provider
-                     identifier
+      • {pull_id}    (`(boolean|string)?`) (default: nil) Pull diagnostics
+                     provider id (indicates "pull" client), or `nil` for a
+                     "push" client.
 
                                           *vim.lsp.diagnostic.on_diagnostic()*
 on_diagnostic({error}, {result}, {ctx})

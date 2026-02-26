@@ -351,7 +351,7 @@ describe('vim.lsp.diagnostic', function()
       eq('Pull Diagnostic', diags[1].message)
     end)
 
-    it('does not clear push diagnostics when pull diagnostics are empty', function()
+    it('preserves push diagnostics when pull diagnostics are empty', function()
       local push_ns_count, pull_ns_count, all_diags_count, push_ns, pull_ns = exec_lua(function()
         vim.lsp.diagnostic.on_publish_diagnostics(nil, {
           uri = fake_uri,
