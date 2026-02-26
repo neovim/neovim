@@ -216,8 +216,6 @@ local function expand_msg(src)
 
     if tgt == 'cmd' and ui.cmd.highlighter then
       ui.cmd.highlighter.active[ui.bufs.cmd] = nil
-    elseif tgt == 'pager' then
-      api.nvim_command('norm! G')
     end
   else
     M.virt.msg[M.virt.idx.dupe][1] = nil
@@ -329,7 +327,6 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     if texth.all > math.ceil(o.lines * 0.5) then
       expand_msg(tgt)
     else
-      M.set_pos('msg')
       M.msg.width = width
       M.msg:start_timer(buf, id)
     end
@@ -356,6 +353,11 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
         expand_msg(tgt)
       end
     end
+  end
+
+  -- Set pager/dialog/msg dimensions unless sent to expanded cmdline.
+  if tgt ~= 'cmd' and (tgt ~= 'msg' or M.msg.ids[id]) then
+    M.set_pos(tgt)
   end
 
   if M[tgt] and (tgt == 'cmd' or row == api.nvim_buf_line_count(buf) - 1) then
@@ -385,7 +387,12 @@ end
 ---@param append boolean
 ---@param id integer|string
 function M.msg_show(kind, content, replace_last, _, append, id)
-  if kind == 'empty' then
+  -- Set the entered search command in the cmdline (if available).
+  local tgt = kind == 'search_cmd' and 'cmd' or ui.cfg.msg.targets[kind] or ui.cfg.msg.target
+  if kind == 'search_cmd' and ui.cmdheight == 0 then
+    -- Blocked by messaging() without ext_messages. TODO: look at other messaging() guards.
+    return
+  elseif kind == 'empty' then
     -- A sole empty message clears the cmdline.
     if ui.cfg.msg.target == 'cmd' and not next(M.cmd.ids) and ui.cmd.srow == 0 then
       M.msg_clear()
@@ -398,9 +405,7 @@ function M.msg_show(kind, content, replace_last, _, append, id)
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last')
-  elseif
-    (ui.cmd.prompt or (ui.cmd.level > 0 and ui.cfg.msg.target == 'cmd')) and ui.cmd.srow == 0
-  then
+  elseif (ui.cmd.prompt or (ui.cmd.level > 0 and tgt == 'cmd')) and ui.cmd.srow == 0 then
     -- Route to dialog when a prompt is active, or message would overwrite active cmdline.
     replace_last = api.nvim_win_get_config(ui.wins.dialog).hide or kind == 'wildlist'
     if kind == 'wildlist' then
@@ -408,14 +413,8 @@ function M.msg_show(kind, content, replace_last, _, append, id)
     end
     ui.cmd.dialog = true -- Ensure dialog is closed when cmdline is hidden.
     M.show_msg('dialog', kind, content, replace_last, append, id)
-    M.set_pos('dialog')
   else
-    -- Set the entered search command in the cmdline (if available).
-    local tgt = kind == 'search_cmd' and 'cmd' or ui.cfg.msg.target
-    if kind == 'search_cmd' and ui.cmdheight == 0 then
-      -- Blocked by messaging() without ext_messages. TODO: look at other messaging() guards.
-      return
-    elseif tgt == 'cmd' then
+    if tgt == 'cmd' then
       -- Store the time when an important message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline so that the user has a chance to read it.
       M.cmd.last_emsg = (kind == 'emsg' or kind == 'wmsg') and os.time() or M.cmd.last_emsg
@@ -423,10 +422,13 @@ function M.msg_show(kind, content, replace_last, _, append, id)
       M.virt.last[M.virt.idx.search][1] = nil
     end
 
-    M.show_msg(tgt, kind, content, replace_last, append, id)
+    local enter_pager = tgt == 'pager' and api.nvim_get_current_win() ~= ui.wins.pager
+    M.show_msg(tgt, kind, content, replace_last or enter_pager, append, id)
     -- Don't remember search_cmd message as actual message.
     if kind == 'search_cmd' then
       M.cmd.ids, M.prev_msg = {}, ''
+    elseif api.nvim_get_current_win() == ui.wins.pager and not enter_pager then
+      api.nvim_command('norm! G')
     end
   end
 end
@@ -522,7 +524,7 @@ function M.set_pos(tgt)
           return
         end
         vim.on_key(nil, ui.ns)
-        cmd_on_key, M[ui.cfg.msg.target].ids = nil, {}
+        cmd_on_key, M.cmd.ids = nil, {}
 
         -- Check if window was entered and reopen with original config.
         local entered = typed == '<CR>'
@@ -581,8 +583,7 @@ function M.set_pos(tgt)
       end, M.dialog_on_key)
     elseif tgt == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
-      local row = (texth.all > cfg.height and texth.end_row or 0) + 1
-      api.nvim_win_set_cursor(ui.wins.msg, { row, 0 })
+      fn.win_execute(ui.wins.msg, 'norm! Gzb')
     elseif tgt == 'pager' and api.nvim_get_current_win() ~= ui.wins.pager then
       if fn.getcmdwintype() ~= '' then
         -- Cannot leave the cmdwin to enter the pager, so close it.
