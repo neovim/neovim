@@ -351,6 +351,89 @@ describe('vim.lsp.diagnostic', function()
       eq('Pull Diagnostic', diags[1].message)
     end)
 
+    it('preserves push diagnostics when pull diagnostics are empty', function()
+      local push_ns_count, pull_ns_count, all_diags_count, push_ns, pull_ns = exec_lua(function()
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = fake_uri,
+          diagnostics = {
+            _G.make_error('Push Diagnostic', 0, 0, 0, 0),
+          },
+        }, { client_id = client_id })
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {},
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        local push_ns = vim.lsp.diagnostic.get_namespace(client_id, false)
+        local pull_ns = vim.lsp.diagnostic.get_namespace(client_id, true)
+
+        return #vim.diagnostic.get(diagnostic_bufnr, { namespace = push_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr, { namespace = pull_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr),
+          push_ns,
+          pull_ns
+      end)
+
+      eq(1, push_ns_count)
+      eq(0, pull_ns_count)
+      eq(1, all_diags_count)
+      neq(push_ns, pull_ns)
+    end)
+
+    it('uses pull_id to isolate pull diagnostic namespaces', function()
+      local first_count, second_count, total_count, first_ns, second_ns = exec_lua(function()
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {
+            _G.make_error('Pull Diagnostic A', 0, 0, 0, 0),
+          },
+        }, {
+          params = {
+            identifier = 'provider-a',
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {},
+        }, {
+          params = {
+            identifier = 'provider-b',
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        local first_ns = vim.lsp.diagnostic.get_namespace(client_id, 'provider-a')
+        local second_ns = vim.lsp.diagnostic.get_namespace(client_id, 'provider-b')
+
+        return #vim.diagnostic.get(diagnostic_bufnr, { namespace = first_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr, { namespace = second_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr),
+          first_ns,
+          second_ns
+      end)
+
+      eq(1, first_count)
+      eq(0, second_count)
+      eq(1, total_count)
+      neq(first_ns, second_ns)
+    end)
+
     it('handles multiline diagnostic ranges #33782', function()
       local diags = exec_lua(function()
         vim.lsp.diagnostic.on_diagnostic(nil, {
