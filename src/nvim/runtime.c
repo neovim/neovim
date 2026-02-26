@@ -94,7 +94,9 @@ typedef struct {
 typedef struct {
   char *path;
   bool after;
+  bool pack_inserted;
   TriState has_lua;
+  size_t pos_in_rtp;
 } SearchPathItem;
 
 typedef kvec_t(SearchPathItem) RuntimeSearchPath;
@@ -292,6 +294,7 @@ void f_getstacktrace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 static bool runtime_search_path_valid = false;
+static bool runtime_search_path_valid_thread = false;
 static int *runtime_search_path_ref = NULL;
 static RuntimeSearchPath runtime_search_path;
 static RuntimeSearchPath runtime_search_path_thread;
@@ -531,8 +534,9 @@ static RuntimeSearchPath copy_runtime_search_path(const RuntimeSearchPath src)
 {
   RuntimeSearchPath dst = KV_INITIAL_VALUE;
   for (size_t j = 0; j < kv_size(src); j++) {
-    SearchPathItem src_item = kv_A(src, j);
-    kv_push(dst, ((SearchPathItem){ xstrdup(src_item.path), src_item.after, src_item.has_lua }));
+    SearchPathItem item = kv_A(src, j);
+    kv_push(dst, ((SearchPathItem){ xstrdup(item.path), item.after, item.pack_inserted,
+                                    item.has_lua, item.pos_in_rtp }));
   }
 
   return dst;
@@ -642,13 +646,20 @@ Array runtime_inspect(Arena *arena)
 
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
-    Array entry = arena_array(arena, 3);
-    ADD_C(entry, CSTR_AS_OBJ(item->path));
-    ADD_C(entry, BOOLEAN_OBJ(item->after));
-    if (item->has_lua != kNone) {
-      ADD_C(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
+    Dict entry = arena_dict(arena, 5);
+    PUT_C(entry, "path", CSTR_AS_OBJ(item->path));
+    if (item->after) {
+      PUT_C(entry, "after", BOOLEAN_OBJ(true));
     }
-    ADD_C(rv, ARRAY_OBJ(entry));
+    if (item->pack_inserted) {
+      PUT_C(entry, "pack_inserted", BOOLEAN_OBJ(true));
+    }
+    if (item->has_lua != kNone) {
+      PUT_C(entry, "has_lua",  BOOLEAN_OBJ(item->has_lua == kTrue));
+    }
+    PUT_C(entry, "pos_in_rtp", INTEGER_OBJ((Integer)item->pos_in_rtp));
+
+    ADD_C(rv, DICT_OBJ(entry));
   }
   return rv;
 }
@@ -752,25 +763,27 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   return done;
 }
 
-static void push_path(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
-                      bool after)
+static bool push_path(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
+                      bool after, size_t pos_in_rtp)
 {
   String *key_alloc;
   if (set_put_ref(String, rtp_used, cstr_as_string(entry), &key_alloc)) {
     *key_alloc = cstr_to_string(entry);
-    kv_push(*search_path, ((SearchPathItem){ key_alloc->data, after, kNone }));
+    kv_push(*search_path, ((SearchPathItem){ key_alloc->data, after, false, kNone, pos_in_rtp }));
+    return true;
   }
+  return false;
 }
 
 static void expand_rtp_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used, char *entry,
-                             bool after)
+                             bool after, size_t pos_in_rtp)
 {
   if (set_has(String, rtp_used, cstr_as_string(entry))) {
     return;
   }
 
   if (!*entry) {
-    push_path(search_path, rtp_used, entry, after);
+    push_path(search_path, rtp_used, entry, after, pos_in_rtp);
   }
 
   int num_files;
@@ -778,14 +791,16 @@ static void expand_rtp_entry(RuntimeSearchPath *search_path, Set(String) *rtp_us
   char *(pat[]) = { entry };
   if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR | EW_NOBREAK) == OK) {
     for (int i = 0; i < num_files; i++) {
-      push_path(search_path, rtp_used, files[i], after);
+      // reuses position but it is ok, we need to be monotonic but not strictly
+      push_path(search_path, rtp_used, files[i], after, pos_in_rtp);
     }
     FreeWild(num_files, files);
   }
 }
 
 static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_used,
-                              CharVec *after_path, char *pack_entry, size_t pack_entry_len)
+                              CharVec *after_path, char *pack_entry, size_t pack_entry_len,
+                              size_t pos_in_rtp)
 {
   static char buf[MAXPATHL];
   char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };  // NOLINT
@@ -795,7 +810,7 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Set(String) *rtp_u
     }
     xstrlcpy(buf, pack_entry, sizeof buf);
     xstrlcpy(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
-    expand_rtp_entry(search_path, rtp_used, buf, false);
+    expand_rtp_entry(search_path, rtp_used, buf, false, pos_in_rtp);
     size_t after_size = strlen(buf) + 7;
     char *after = xmallocz(after_size);
     xstrlcpy(after, buf, after_size);
@@ -844,34 +859,45 @@ static RuntimeSearchPath runtime_search_path_build(void)
       break;
     }
 
+    size_t pos_in_rtp = (size_t)(cur_entry - p_rtp);
+
     // fact: &rtp entries can contain wild chars
-    expand_rtp_entry(&search_path, &rtp_used, buf, false);
+    expand_rtp_entry(&search_path, &rtp_used, buf, false, pos_in_rtp);
 
     handle_T *h = map_ref(String, int)(&pack_used, cstr_as_string(buf), NULL);
     if (h) {
       (*h)++;
-      expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen, pos_in_rtp);
     }
   }
+
+  // The following entries were not explicit in rtp.
+  // this is fine, but keep pos_in_rtp monotonic:
+  // use the comma between two entries as a sentinel
+  size_t sentinel_pos_in_rtp = (size_t)(rtp_entry - p_rtp);
+  sentinel_pos_in_rtp -= (sentinel_pos_in_rtp > 0) ? 1 : 0;
 
   for (size_t i = 0; i < kv_size(pack_entries); i++) {
     String item = kv_A(pack_entries, i);
     handle_T h = map_get(String, int)(&pack_used, item);
     if (h == 0) {
-      expand_pack_entry(&search_path, &rtp_used, &after_path, item.data, item.size);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, item.data, item.size,
+                        sentinel_pos_in_rtp);
     }
   }
 
   // "after" packages
   for (size_t i = 0; i < kv_size(after_path); i++) {
-    expand_rtp_entry(&search_path, &rtp_used, kv_A(after_path, i), true);
+    expand_rtp_entry(&search_path, &rtp_used, kv_A(after_path, i), true, sentinel_pos_in_rtp);
     xfree(kv_A(after_path, i));
   }
 
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
+    char *cur_entry = rtp_entry;
     copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
-    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, strlen(buf)));
+    size_t pos_in_rtp = (size_t)(cur_entry - p_rtp);
+    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, strlen(buf)), pos_in_rtp);
   }
 
   // strings are not owned
@@ -914,11 +940,21 @@ void runtime_search_path_validate(void)
     runtime_search_path = runtime_search_path_build();
     runtime_search_path_valid = true;
     runtime_search_path_ref = NULL;  // initially unowned
-    uv_mutex_lock(&runtime_search_path_mutex);
-    runtime_search_path_free(runtime_search_path_thread);
-    runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
-    uv_mutex_unlock(&runtime_search_path_mutex);
+    update_runtime_search_path_thread(true);
   }
+}
+
+void update_runtime_search_path_thread(bool force)
+{
+  if (!force && !(runtime_search_path_valid && !runtime_search_path_valid_thread)) {
+    return;
+  }
+
+  uv_mutex_lock(&runtime_search_path_mutex);
+  runtime_search_path_free(runtime_search_path_thread);
+  runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
+  uv_mutex_unlock(&runtime_search_path_mutex);
+  runtime_search_path_valid_thread = true;
 }
 
 /// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
@@ -1012,8 +1048,8 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   }
 
   // now we have:
-  // rtp/pack/name/start/name
-  //    p4   p3   p2   p1
+  // rtp/pack/name/(start|opt)/name
+  //    p4   p3   p2           p1
   //
   // find the part up to "pack" in 'runtimepath'
   p4++;  // append pathsep in order to expand symlink
@@ -1091,16 +1127,20 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   // We now have 'rtp' parts: {keep}{keep_after}{rest}.
   // Create new_rtp, first: {keep},{fname}
   size_t keep = (size_t)(insp - p_rtp);
+  size_t first_pos = keep;
   memmove(new_rtp, p_rtp, keep);
   size_t new_rtp_len = keep;
   if (*insp == NUL) {
     new_rtp[new_rtp_len++] = ',';  // add comma before
+    first_pos++;
   }
   memmove(new_rtp + new_rtp_len, fname, addlen - 1);
   new_rtp_len += addlen - 1;
   if (*insp != NUL) {
     new_rtp[new_rtp_len++] = ',';  // add comma after
   }
+
+  size_t after_pos = 0;
 
   if (afterlen > 0 && after_insp != NULL) {
     size_t keep_after = (size_t)(after_insp - p_rtp);
@@ -1112,6 +1152,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
     new_rtp_len += afterlen - 1;
     new_rtp[new_rtp_len++] = ',';
     keep = keep_after;
+    after_pos = keep_after;
   }
 
   if (p_rtp[keep] != NUL) {
@@ -1124,11 +1165,51 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   if (afterlen > 0 && after_insp == NULL) {
     // Append afterdir when "after" was not found:
     // {keep},{fname}{rest},{afterdir}
-    xstrlcat(new_rtp, ",", new_rtp_capacity);
+    after_pos = xstrlcat(new_rtp, ",", new_rtp_capacity);
     xstrlcat(new_rtp, afterdir, new_rtp_capacity);
   }
 
+  bool was_valid = runtime_search_path_valid;
   set_option_value_give_err(kOptRuntimepath, CSTR_AS_OPTVAL(new_rtp), 0);
+
+  assert(!runtime_search_path_valid);
+  // If this is the result of "packadd opt_pack", rebuilding runtime_search_pat
+  // from scratch is needlessly slow. splice in the package and its afterdir instead.
+  // But don't do this for "pack/*/start/*" (is_pack=true):
+  // we want properly expand wildcards in a "start" bundle.
+  if (was_valid && !is_pack) {
+    runtime_search_path_valid = true;
+    runtime_search_path_valid_thread = false;
+    kv_pushp(runtime_search_path);
+    ssize_t i = (ssize_t)(kv_size(runtime_search_path)) - 1;
+
+    if (afterlen > 0) {
+      kv_pushp(runtime_search_path);
+      i += 1;
+      for (; i >= 1; i--) {
+        if (i > 1 && kv_A(runtime_search_path, i - 2).pos_in_rtp >= after_pos) {
+          kv_A(runtime_search_path, i) = kv_A(runtime_search_path, i - 2);
+          kv_A(runtime_search_path, i).pos_in_rtp += addlen + afterlen;
+        } else {
+          kv_A(runtime_search_path, i) = (SearchPathItem){ xstrdup(afterdir), true, true, kNone,
+                                                           after_pos + addlen };
+          i--;
+          break;
+        }
+      }
+    }
+
+    for (; i >= 0; i--) {
+      if (i > 0 && kv_A(runtime_search_path, i - 1).pos_in_rtp >= first_pos) {
+        kv_A(runtime_search_path, i) = kv_A(runtime_search_path, i - 1);
+        kv_A(runtime_search_path, i).pos_in_rtp += addlen;
+      } else {
+        kv_A(runtime_search_path, i) = (SearchPathItem){ xstrdup(fname), false, true, kNone,
+                                                         first_pos };
+        break;
+      }
+    }
+  }
   xfree(new_rtp);
   retval = OK;
 
@@ -1280,6 +1361,8 @@ void load_start_packages(void)
              add_start_pack_plugins, &APP_LOAD);
   do_in_path(p_pp, "", "start/*", DIP_ALL + DIP_DIR,  // NOLINT
              add_start_pack_plugins, &APP_LOAD);
+
+  update_runtime_search_path_thread(false);
 }
 
 // ":packloadall"
@@ -1346,6 +1429,8 @@ void ex_packadd(exarg_T *eap)
   vim_snprintf(pat, len, plugpat, "opt", eap->arg);
   do_in_path(p_pp, "", pat, DIP_ALL + DIP_DIR + (res == FAIL ? DIP_ERR : 0),
              add_opt_pack_plugins, cookie);
+
+  update_runtime_search_path_thread(false);
 
   xfree(pat);
 }
