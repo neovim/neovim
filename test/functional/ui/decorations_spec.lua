@@ -3055,8 +3055,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       en^d                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
   end)

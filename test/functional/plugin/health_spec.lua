@@ -429,8 +429,7 @@ describe(':checkhealth window', function()
       checkhealth: checks done                          |
     ## grid 4
       ^                                                  |
-                                                        |
-                                                        |
+                                                        |*2
       test_plug.                                        |
       success1:                                         |
                       ✅                                |

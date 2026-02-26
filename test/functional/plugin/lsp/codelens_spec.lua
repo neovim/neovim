@@ -54,8 +54,7 @@ describe('vim.lsp.codelens', function()
     ;                                                    |
         println!("S.a: {}, S.b: {}", s.a, s.b);          |
     }                                                    |
-                                                         |
-                                                         |
+                                                         |*2
   ]])
 
   local grid_without_lenses = dedent([[

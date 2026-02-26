@@ -229,8 +229,7 @@ describe(':terminal window', function()
         line2                                             |
         line3                                             |
         line4                                             |
-                                                          |
-                                                          |
+                                                          |*2
       ]])
     end)
   end)

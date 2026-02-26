@@ -557,8 +557,7 @@ something
       {7:  }{8: 11 }^common line                                │{7:  }{8: 14 }common line                                 |
       {7:  }{8:    }{23:-------------------------------------------}│{7:  }{8: 15 }{22:DEF                                         }|
       {7:  }{8: 12 }something                                  │{7:  }{8: 16 }something                                   |
-      {1:~                                                }│{1:~                                                 }|
-      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|*2
       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
@@ -584,8 +583,7 @@ something
       {7:  }{8:    }{23:-------------------------------------------}│{7:  }{8: 14 }{22:DEF                                         }|
       {7:  }{8: 11 }common line                                │{7:  }{8: 15 }common line                                 |
       {7:  }{8: 12 }^something                                  │{7:  }{8: 16 }something                                   |
-      {1:~                                                }│{1:~                                                 }|
-      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|*2
       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1 [+]                }|
       :e                                                                                                  |
       ]])
