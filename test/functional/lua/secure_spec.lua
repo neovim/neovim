@@ -369,6 +369,33 @@ describe('vim.secure', function()
       eq('', vim.trim(trust))
     end)
 
+    it('trust then deny then remove a file using path', function()
+      local cwd = fn.getcwd()
+      local hash = fn.sha256(assert(read_file(test_file)))
+      local full_path = cwd .. pathsep .. test_file
+
+      eq(
+        { true, full_path },
+        exec_lua([[return {vim.secure.trust({action='allow', path=...})}]], test_file)
+      )
+      local trust = assert(read_file(stdpath('state') .. pathsep .. 'trust'))
+      eq(string.format('%s %s', hash, full_path), vim.trim(trust))
+
+      eq(
+        { true, full_path },
+        exec_lua([[return {vim.secure.trust({action='deny', path=...})}]], test_file)
+      )
+      trust = assert(read_file(stdpath('state') .. pathsep .. 'trust'))
+      eq(string.format('! %s', full_path), vim.trim(trust))
+
+      eq(
+        { true, full_path },
+        exec_lua([[return {vim.secure.trust({action='remove', path=...})}]], test_file)
+      )
+      trust = assert(read_file(stdpath('state') .. pathsep .. 'trust'))
+      eq('', vim.trim(trust))
+    end)
+
     it('deny then trust then remove a file using bufnr', function()
       local cwd = fn.getcwd()
       local hash = fn.sha256(assert(read_file(test_file)))

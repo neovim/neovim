@@ -4480,8 +4480,7 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
                 • `'deny'` to add a file to the trust database and deny it,
                 • `'remove'` to remove file from the trust database
                 • {path}? (`string`) Path to a file to update. Mutually
-                  exclusive with {bufnr}. Cannot be used when {action} is
-                  "allow".
+                  exclusive with {bufnr}.
                 • {bufnr}? (`integer`) Buffer number to update. Mutually
                   exclusive with {path}.
 
