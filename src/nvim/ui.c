@@ -29,6 +29,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -36,7 +37,6 @@
 #include "nvim/os/time.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
-#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
@@ -763,6 +763,17 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
     // non-positive indicates no request
     wp->w_height_request = MAX(height, 0);
     wp->w_width_request = MAX(width, 0);
+    // When ext_windows is active there is no frame tree, so sync
+    // w_height/w_width directly so that win_setheight/win_setwidth
+    // (e.g. <C-w>+) use correct base values.
+    if (ui_has(kUIWindows)) {
+      if (height > 0) {
+        wp->w_height = height;
+      }
+      if (width > 0) {
+        wp->w_width = width;
+      }
+    }
     win_set_inner_size(wp, true);
   }
 }

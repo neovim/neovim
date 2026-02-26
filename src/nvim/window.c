@@ -8,6 +8,7 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -74,7 +75,6 @@
 #include "nvim/tag.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
-#include "nvim/api/ui.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/ui_defs.h"
@@ -1612,8 +1612,9 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     }
   }  // end if (!ext_windows)
 
+  // Emit UI event for ext_windows
+  grid_assign_handle(&wp->w_grid_alloc);
   if (ext_windows) {
-    grid_assign_handle(&wp->w_grid_alloc);
     ui_call_win_split(curwin->handle, curwin->w_grid_alloc.handle, wp->handle,
                       wp->w_grid_alloc.handle, UI_WIN_FLAGS(flags));
   }
@@ -1886,13 +1887,13 @@ int make_windows(int count, bool vertical)
 // Exchange current and next window
 static void win_exchange(int Prenum)
 {
-  if (curwin->w_floating) {
-    emsg(e_floatexchange);
+  if (ui_has(kUIWindows)) {
+    ui_call_win_exchange(curwin->handle, curwin->w_grid_alloc.handle, Prenum);
     return;
   }
 
-  if (ui_has(kUIWindows)) {
-    ui_call_win_exchange(curwin->handle, curwin->w_grid_alloc.handle, Prenum);
+  if (curwin->w_floating) {
+    emsg(e_floatexchange);
     return;
   }
 
@@ -1983,14 +1984,14 @@ static void win_exchange(int Prenum)
 //                 if upwards false the first window becomes the second one
 static void win_rotate(bool upwards, int count)
 {
-  if (curwin->w_floating) {
-    emsg(e_floatexchange);
-    return;
-  }
-
   if (ui_has(kUIWindows)) {
     ui_call_win_rotate(curwin->handle, curwin->w_grid_alloc.handle,
                        upwards ? 1 : 0, count);
+    return;
+  }
+
+  if (curwin->w_floating) {
+    emsg(e_floatexchange);
     return;
   }
 
@@ -2075,7 +2076,7 @@ static void win_rotate(bool upwards, int count)
 int win_splitmove(win_T *wp, int size, int flags)
 {
   if (ui_has(kUIWindows)) {
-    ui_call_win_move(curwin->handle, curwin->w_grid_alloc.handle, UI_WIN_FLAGS(flags));
+    ui_call_win_move(wp->handle, wp->w_grid_alloc.handle, UI_WIN_FLAGS(flags));
     return OK;
   }
 
@@ -2134,6 +2135,11 @@ void win_move_after(win_T *win1, win_T *win2)
 {
   // check if the arguments are reasonable
   if (win1 == win2) {
+    return;
+  }
+
+  // ext_windows: frames don't exist, skip frame-based reordering
+  if (ui_has(kUIWindows)) {
     return;
   }
 
@@ -2918,9 +2924,13 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   bool other_buffer = false;
 
-  if (!ui_has(kUIWindows) && win == curwin) {
+  // Clear mode state (e.g. restart_edit) when leaving a prompt window.
+  // This must happen regardless of ext_windows, as it doesn't depend on frames.
+  if (win == curwin) {
     leaving_window(curwin);
+  }
 
+  if (!ui_has(kUIWindows) && win == curwin) {
     // Guess which window is going to be the new current window.
     // This may change because of the autocommands (sigh).
     win_T *wp = win->w_floating ? win_float_find_altwin(win, NULL)
@@ -6168,7 +6178,7 @@ void win_size_restore(garray_T *gap)
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         int width = ((int *)gap->ga_data)[i++];
         int height = ((int *)gap->ga_data)[i++];
-        if (!wp->w_floating) {
+        if (!wp->w_floating && !ui_has(kUIWindows)) {  // ext_windows: no frames to resize
           frame_setwidth(wp->w_frame, width);
           win_setheight_win(height, wp);
         }
@@ -6587,6 +6597,11 @@ const char *did_set_winminheight(optset_T *args FUNC_ATTR_UNUSED)
 // Check 'winminwidth' for a valid value and reduce it if needed.
 const char *did_set_winminwidth(optset_T *args FUNC_ATTR_UNUSED)
 {
+  // ext_windows: skip frame-based minimum width enforcement
+  if (ui_has(kUIWindows)) {
+    return NULL;
+  }
+
   bool first = true;
 
   // loop until there is a 'winminheight' that is possible
@@ -7146,6 +7161,13 @@ void win_comp_scroll(win_T *wp)
 /// command_height: called whenever p_ch has been changed.
 void command_height(void)
 {
+  // ext_windows: skip frame-based height adjustment, just update cmdrow
+  if (ui_has(kUIWindows)) {
+    curtab->tp_ch_used = p_ch;
+    compute_cmdrow();
+    return;
+  }
+
   int old_p_ch = (int)curtab->tp_ch_used;
 
   // Find bottom frame with width of screen.
@@ -7217,6 +7239,10 @@ static void frame_add_height(frame_T *frp, int n)
 /// @param morewin  pretend there are two or more windows if true.
 void last_status(bool morewin)
 {
+  // ext_windows: status line layout depends on topframe, skip
+  if (ui_has(kUIWindows)) {
+    return;
+  }
   // Don't make a difference between horizontal or vertical split.
   last_status_rec(topframe, last_stl_height(morewin) > 0, global_stl_height() > 0);
   win_float_anchor_laststatus();
@@ -7359,6 +7385,8 @@ int set_winbar_win(win_T *wp, bool make_room, bool valid_cursor)
       if (wp->w_floating) {
         emsg(_(e_noroom));
         return NOTDONE;
+      } else if (ui_has(kUIWindows)) {
+        // ext_windows: no frames, skip resize
       } else if (!make_room || !resize_frame_for_winbar(wp->w_frame)) {
         return FAIL;
       }
@@ -7434,6 +7462,11 @@ int min_rows(tabpage_T *tp) FUNC_ATTR_NONNULL_ALL
     return MIN_LINES;
   }
 
+  // ext_windows: no frame tree, skip frame_minheight calculation
+  if (ui_has(kUIWindows)) {
+    return MIN_LINES;
+  }
+
   int total = frame_minheight(tp->tp_topframe, NULL);
   total += tabline_height() + global_stl_height();
   if ((tp == curtab ? p_ch : tp->tp_ch_used) > 0) {
@@ -7447,6 +7480,11 @@ int min_rows(tabpage_T *tp) FUNC_ATTR_NONNULL_ALL
 int min_rows_for_all_tabpages(void)
 {
   if (firstwin == NULL) {       // not initialized yet
+    return MIN_LINES;
+  }
+
+  // ext_windows: no frame tree, skip frame_minheight calculation
+  if (ui_has(kUIWindows)) {
     return MIN_LINES;
   }
 
@@ -7567,6 +7605,10 @@ void reset_lnums(void)
 // Create a snapshot of the current frame sizes.
 void make_snapshot(int idx)
 {
+  // ext_windows: no frame tree to snapshot
+  if (ui_has(kUIWindows)) {
+    return;
+  }
   clear_snapshot(curtab, idx);
   make_snapshot_rec(topframe, &curtab->tp_snapshot[idx]);
 }
@@ -7641,6 +7683,11 @@ static win_T *get_snapshot_curwin(int idx)
 /// @param close_curwin  closing current window
 void restore_snapshot(int idx, int close_curwin)
 {
+  // ext_windows: no frame tree to restore
+  if (ui_has(kUIWindows)) {
+    clear_snapshot(curtab, idx);
+    return;
+  }
   if (curtab->tp_snapshot[idx] != NULL
       && curtab->tp_snapshot[idx]->fr_width == topframe->fr_width
       && curtab->tp_snapshot[idx]->fr_height == topframe->fr_height
