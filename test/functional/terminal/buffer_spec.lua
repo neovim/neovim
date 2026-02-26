@@ -114,9 +114,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |*2
-                                                        |
-                                                        |*2
-                                                        |
+                                                        |*4
     ]])
     -- operator count is also taken into consideration
     feed('3"ap')
@@ -134,8 +132,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |
-                                                        |
-                                                        |*3
+                                                        |*4
       :put a                                            |
     ]])
     -- line argument is only used to move the cursor
@@ -143,8 +140,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       tty ready                                         |
       appended tty ready                                |*2
-                                                        |
-                                                        |
+                                                        |*2
       ^                                                  |
       :6put a                                           |
     ]])
@@ -280,8 +276,7 @@ describe(':terminal buffer', function()
     feed [[:let g:x = 17]]
     screen:expect([[
       tty ready                                         |
-                                                        |
-                                                        |*4
+                                                        |*5
       :let g:x = 17^                                     |
     ]])
 
@@ -341,8 +336,7 @@ describe(':terminal buffer', function()
       screen:expect(([[
         tty ready                                         |
         ^%s%s|
-                                                          |*4
-                                                          |
+                                                          |*5
       ]]):format(('j'):rep(i), (' '):rep(50 - i)))
     end
     feed('l') -- No partial mapping, so all pending refreshes should be processed

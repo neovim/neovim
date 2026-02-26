@@ -290,8 +290,7 @@ describe(':terminal cursor', function()
     screen:expect({
       grid = [[
         tty ready                                         |
-                                                          |
-                                                          |*4
+                                                          |*5
         {5:-- TERMINAL --}                                    |
       ]],
       condition = function()

@@ -225,9 +225,7 @@ describe('messages2', function()
     command('echo "foo"')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*10
-      {1:~                                                    }|
-      {1:~                                                    }|
+      {1:~                                                    }|*12
       {1:~                                                 }{4:foo}|
     ]])
     command('mode')
@@ -239,9 +237,7 @@ describe('messages2', function()
     command('echo "foo"')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*10
-      {1:~                                                    }|
-      {1:~                                                    }|
+      {1:~                                                    }|*12
       {1:~                                                 }{4:foo}|
     ]])
     command('echo ""')
@@ -250,9 +246,7 @@ describe('messages2', function()
     screen:try_resize(screen._width, screen._height - 1)
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*9
-      {1:~                                                    }|
-      {1:~                                                    }|
+      {1:~                                                    }|*11
       {1:~                                                 }{4:foo}|
     ]])
     -- Moved up when opening cmdline
