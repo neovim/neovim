@@ -978,6 +978,27 @@ describe('treesitter highlighting (C)', function()
       ]],
     })
   end)
+
+  it('#35575', function()
+    clear()
+    -- Window size is 14x14, and first string literal ends at byte 14
+    -- See: https://github.com/neovim/neovim/pull/35587
+    screen = Screen.new(14, 15)
+
+    exec_lua(function()
+      local line = 'A a="\240\157\158\140\240\157\158\140" "aaaaaaaaaaaaaaaaaaaaaaaa";'
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, { line })
+      vim.cmd('set nowrap')
+      vim.treesitter.query.set('c', 'highlights', hl_query_c)
+      vim.treesitter.start(0, 'c')
+    end)
+
+    screen:expect([[
+      {6:^A} a={26:"𝞌𝞌"} {26:"aaaa}|
+      {1:~             }|*13
+                    |
+    ]])
+  end)
 end)
 
 describe('treesitter highlighting (lua)', function()
