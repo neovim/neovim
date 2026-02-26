@@ -933,10 +933,10 @@ must handle.
 ==============================================================================
 External Window Events						   *ui-windows*
 
-Only sent if `ext_windows` option is set in |ui-options|. Sets `ext_multigrid`
+Only sent if `ext_windows` option is set in |ui-option|. Sets `ext_multigrid`
 and `ext_linegrid` implicitly.
 
-This option enables UIs to take care of how `wincmd`s are interpretted in nvim
+This option enables UIs to take care of how `wincmd`s are interpreted in nvim
 by delegating the position and navigation handling to them instead of nvim.
 Nvim will no longer maintain a frame structure for the windows but rather send
 the events to the UIs which will take the necessary actions.
@@ -948,52 +948,42 @@ instance.
 ["win_move_cursor", direction, count]
 	NOTE: Implemented as a sync function.
 	Tell the UI to switch to the window "count" windows away in the given
-	"direction" (see below). The UI must return the handle of the window to
+	"direction". The UI must return the handle of the window to
 	switch to.
+	  direction = 0: down
+	  direction = 1: up
+	  direction = 2: right
+	  direction = 3: left
 
 ["win_split", win1, grid1, win2, grid2, flags]
-	Tell the UI that there has been a split in the "win1" and a new window
-	"win2" is created in the direction given by the flags (see below).
+	Tell the UI that there has been a split in "win1" and a new window
+	"win2" is created in the direction given by the flags.
+	  flags = 0: below
+	  flags = 1: above
+	  flags = 2: right
+	  flags = 3: left
 
 ["win_move", win, grid, flags]
 	Tell the UI that the window "win" is to be moved in the direction
-	specified in flags (see below).
+	specified in flags (same as win_split flags).
 
-["win_close", win, grid]
-	Tell the UI that the window "win" is no longer open and the UI can get
-	rid of the resources for the same.
-
-["win_exchange", direction, count]
+["win_exchange", win, grid, count]
 	Tell the UI to exchange the current window with a window "count"
-	windows away in the given "direction" (either 0 or 1).
+	windows away.
 
-["win_rotate", direction, count]
+["win_rotate", win, grid, direction, count]
 	Tell the UI to rotate the current window "count" times in the given
-	"direction" (either 0 or 1).
+	"direction" (0 for downward, 1 for upward).
 
 ["win_resize_equal"]
 	Tell the UI to resize the windows to allocate equal screen estate to
 	all the windows in the current window row or column.
 
 ["win_resize", win, grid, width, height]
-	Tell the UI to resize the window to "width" and "height". If "width" or
-	"height" is equal to 9999, resize to the maximum possible height. The
-	UI is expected to call back `try_resize_grid` with the width and height
-	to inform nvim about the size it finally decides on (which may be same
-	or different that sent with `win_resize`).
-
-The "direction" in the `win_move`, `win_move_cursor`, and `win_split` events
-is sent as an Integer with values:
-  0 : above
-  1 : below
-  2 : left
-  3 : right
-  4 : below/right
-  5 : above/left
-  6 : top-left
-  7 : bottom-right
-  8 : previous
-NOTE: The values after 3 (exclusive) are applicable for `win_move_cursor`
-only.
+	Tell the UI to resize the window to "width" and "height". The
+	UI is expected to call back `nvim_ui_try_resize_grid` with the
+	width and height to inform Nvim about the size it finally decides on
+	(which may be the same or different from what was sent with
+	`win_resize`).
 
  vim:tw=78:ts=8:noet:ft=help:norl:

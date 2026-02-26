@@ -3374,7 +3374,7 @@ static win_T *win_free_mem(win_T *win, int *dirp, tabpage_T *tp)
   tabpage_T *win_tp = tp == NULL ? curtab : tp;
 
   if (ui_has(kUIWindows)) {
-    // If not handling windows, send the next (or prev) window in the list
+    // ext_windows: no frame tree, just return the next (or prev) window in the list
     wp = win->w_next == NULL ? win->w_prev : win->w_next;
   } else if (!win->w_floating) {
     // Remove the window and its frame from the tree of frames.
