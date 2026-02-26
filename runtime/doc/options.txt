@@ -4346,7 +4346,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option has no direct effect, the menu must be refreshed first.
 
 						*'messagesopt'* *'mopt'*
-'messagesopt' 'mopt'	string	(default "hit-enter,history:500")
+'messagesopt' 'mopt'	string	(default "hit-enter,history:500,progress:c")
 			global
 	Option settings for outputting messages.  It can consist of the
 	following items.  Items must be separated by a comma.
@@ -4366,6 +4366,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			|:messages| history.  The maximum value is 10000.
 			Setting it to zero clears the message history.
 			This item must always be present.
+	progress:{s}
+			Determines where to show progress messages.
+			Valid values are:
+			    empty: progress messages are hidden in cmdline.
+			    "c": progress messages are shown in cmdline.
 
 						*'mkspellmem'* *'msm'*
 'mkspellmem' 'msm'	string	(default "460000,2000,500")
