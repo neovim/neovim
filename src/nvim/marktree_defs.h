@@ -36,8 +36,6 @@ typedef enum {
 // a filter should be set to kMTFilterSelect for the selected kinds, zero otherwise
 typedef const uint32_t *MetaFilter;
 
-typedef struct mtnode_s MTNode;
-
 typedef struct {
   MTPos pos;
   int lvl;

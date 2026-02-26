@@ -49,6 +49,7 @@ static const uint64_t value_init_uint64_t = 0;
 static const int64_t value_init_int64_t = 0;
 static const String value_init_String = STRING_INIT;
 static const ColorItem value_init_ColorItem = COLOR_ITEM_INITIALIZER;
+static const MTDamagePair value_init_MTDamagePair = MTDAMAGE_PAIR_INIT;
 
 // layer 0: type non-specific code
 
@@ -168,6 +169,7 @@ MAP_DECLS(uint32_t, uint32_t)
 MAP_DECLS(String, int)
 MAP_DECLS(int, String)
 MAP_DECLS(ColorKey, ColorItem)
+MAP_DECLS(uint64_t, MTDamagePair)
 
 #define set_has(T, set, key) set_has_##T(set, key)
 #define set_put(T, set, key) set_put_##T(set, key, NULL)
