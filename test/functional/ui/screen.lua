@@ -1181,6 +1181,49 @@ function Screen:_handle_win_close(grid)
   self.float_pos[grid] = nil
 end
 
+-- ext_windows event handlers: delegate to _on_event callback
+function Screen:_handle_win_split(...)
+  if self._on_event then
+    self._on_event('win_split', { ... })
+  end
+end
+
+function Screen:_handle_win_move_cursor(...)
+  if self._on_event then
+    self._on_event('win_move_cursor', { ... })
+  end
+end
+
+function Screen:_handle_win_exchange(...)
+  if self._on_event then
+    self._on_event('win_exchange', { ... })
+  end
+end
+
+function Screen:_handle_win_rotate(...)
+  if self._on_event then
+    self._on_event('win_rotate', { ... })
+  end
+end
+
+function Screen:_handle_win_move(...)
+  if self._on_event then
+    self._on_event('win_move', { ... })
+  end
+end
+
+function Screen:_handle_win_resize_equal(...)
+  if self._on_event then
+    self._on_event('win_resize_equal', { ... })
+  end
+end
+
+function Screen:_handle_win_resize(...)
+  if self._on_event then
+    self._on_event('win_resize', { ... })
+  end
+end
+
 function Screen:_handle_win_extmark(grid, ...)
   if self._grid_win_extmarks[grid] == nil then
     self._grid_win_extmarks[grid] = {}
