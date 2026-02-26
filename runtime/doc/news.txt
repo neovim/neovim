@@ -391,7 +391,7 @@ PLUGINS
 
 STARTUP
 
-• todo
+• Nvim warns when the intended log path is inaccessible or falls back to a different location.
 
 TERMINAL
 
