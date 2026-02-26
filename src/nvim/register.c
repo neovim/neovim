@@ -1215,7 +1215,7 @@ void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   // The yanked text contents.
   list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
   for (size_t i = 0; i < reg->y_size; i++) {
-    tv_list_append_string(list, reg->y_array[i].data, -1);
+    tv_list_append_string(list, reg->y_array[i].data, (int)reg->y_array[i].size);
   }
   tv_list_set_lock(list, VAR_FIXED);
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
@@ -2344,7 +2344,7 @@ void *get_reg_contents(int regname, int flags)
   if (flags & kGRegList) {
     list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
     for (size_t i = 0; i < reg->y_size; i++) {
-      tv_list_append_string(list, reg->y_array[i].data, -1);
+      tv_list_append_string(list, reg->y_array[i].data, (int)reg->y_array[i].size);
     }
 
     return list;

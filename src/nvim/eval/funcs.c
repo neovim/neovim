@@ -2161,17 +2161,19 @@ static void f_getpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Convert from block_def to string
-static char *block_def2str(struct block_def *bd)
+static String block_def2str(struct block_def *bd)
 {
   size_t size = (size_t)bd->startspaces + (size_t)bd->endspaces + (size_t)bd->textlen;
-  char *ret = xmalloc(size + 1);
-  char *p = ret;
-  memset(p, ' ', (size_t)bd->startspaces);
-  p += bd->startspaces;
-  memmove(p, bd->textstart, (size_t)bd->textlen);
-  p += bd->textlen;
-  memset(p, ' ', (size_t)bd->endspaces);
-  *(p + bd->endspaces) = NUL;
+  String ret = { .data = xmalloc(size + 1) };
+
+  memset(ret.data, ' ', (size_t)bd->startspaces);
+  ret.size += (size_t)bd->startspaces;
+  memmove(ret.data + ret.size, bd->textstart, (size_t)bd->textlen);
+  ret.size += (size_t)bd->textlen;
+  memset(ret.data + ret.size, ' ', (size_t)bd->endspaces);
+  ret.size += (size_t)bd->endspaces;
+  ret.data[ret.size] = NUL;
+
   return ret;
 }
 
@@ -2326,24 +2328,22 @@ static void f_getregion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
-    char *akt = NULL;
+    String akt = STRING_INIT;
 
-    if (region_type == kMTLineWise) {
-      akt = xstrdup(ml_get(lnum));
-    } else if (region_type == kMTBlockWise) {
+    if (region_type == kMTBlockWise) {
       struct block_def bd;
       block_prep(&oa, &bd, lnum, false);
       akt = block_def2str(&bd);
-    } else if (p1.lnum < lnum && lnum < p2.lnum) {
-      akt = xstrdup(ml_get(lnum));
+    } else if (region_type == kMTLineWise || (p1.lnum < lnum && lnum < p2.lnum)) {
+      akt = cbuf_to_string(ml_get(lnum), (size_t)ml_get_len(lnum));
     } else {
       struct block_def bd;
       charwise_block_prep(p1, p2, &bd, lnum, inclusive);
       akt = block_def2str(&bd);
     }
 
-    assert(akt != NULL);
-    tv_list_append_allocated_string(rettv->vval.v_list, akt);
+    assert(akt.data != NULL);
+    tv_list_append_allocated_string(rettv->vval.v_list, akt.data);
   }
 
   // getregionpos() may change curbuf and virtual_op
@@ -6949,12 +6949,18 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   assert(len <= INT_MAX);
   tv_list_alloc_ret(rettv, 2);
   tv_list_append_string(rettv->vval.v_list, word, (ssize_t)len);
-  tv_list_append_string(rettv->vval.v_list,
-                        (attr == HLF_SPB
-                         ? "bad" : (attr == HLF_SPR
-                                    ? "rare" : (attr == HLF_SPL
-                                                ? "local" : (attr == HLF_SPC
-                                                             ? "caps" : NULL)))), -1);
+  switch (attr) {
+  case HLF_SPB:
+    tv_list_append_string(rettv->vval.v_list, S_LEN("bad")); break;
+  case HLF_SPR:
+    tv_list_append_string(rettv->vval.v_list, S_LEN("rare")); break;
+  case HLF_SPL:
+    tv_list_append_string(rettv->vval.v_list, S_LEN("local")); break;
+  case HLF_SPC:
+    tv_list_append_string(rettv->vval.v_list, S_LEN("caps")); break;
+  default:
+    tv_list_append_string(rettv->vval.v_list, NULL, -1); break;
+  }
 }
 
 /// "spellsuggest()" function

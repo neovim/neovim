@@ -611,12 +611,16 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, bool retl
     }
     tv_list_alloc_ret(rettv, end - start + 1);
     while (start <= end) {
-      tv_list_append_string(rettv->vval.v_list, ml_get_buf(buf, start++), -1);
+      tv_list_append_string(rettv->vval.v_list,
+                            ml_get_buf(buf, start), (int)ml_get_buf_len(buf, start));
+      start++;
     }
   } else {
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = ((start >= 1 && start <= buf->b_ml.ml_line_count)
-                            ? xstrdup(ml_get_buf(buf, start)) : NULL);
+    rettv->vval.v_string =
+      start >= 1 && start <= buf->b_ml.ml_line_count
+      ? xstrnsave(ml_get_buf(buf, start), (size_t)ml_get_buf_len(buf, start))
+      : NULL;
   }
 }
 

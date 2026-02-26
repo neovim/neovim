@@ -238,11 +238,15 @@ static void get_framelayout(const frame_T *fr, list_T *l, bool outer)
 
   if (fr->fr_layout == FR_LEAF) {
     if (fr->fr_win != NULL) {
-      tv_list_append_string(fr_list, "leaf", -1);
+      tv_list_append_string(fr_list, S_LEN("leaf"));
       tv_list_append_number(fr_list, fr->fr_win->handle);
     }
   } else {
-    tv_list_append_string(fr_list, fr->fr_layout == FR_ROW ? "row" : "col", -1);
+    if (fr->fr_layout == FR_ROW) {
+      tv_list_append_string(fr_list, S_LEN("row"));
+    } else {
+      tv_list_append_string(fr_list, S_LEN("col"));
+    }
 
     list_T *const win_list = tv_list_alloc(kListLenUnknown);
     tv_list_append_list(fr_list, win_list);
