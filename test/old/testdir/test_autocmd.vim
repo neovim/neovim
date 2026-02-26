@@ -1135,6 +1135,71 @@ func Test_BufEnter()
   only
 endfunc
 
+func Test_autocmd_SessLoadPre()
+  tabnew
+  set noswapfile
+  mksession! Session.vim
+
+  call assert_false(exists('g:session_loaded_var'))
+
+  let content =<< trim [CODE]
+    set nocp noswapfile
+
+    func! Assert(cond, msg)
+      if !a:cond
+        echomsg "ASSERT_FAIL: " .. a:msg
+      else
+        echomsg "ASSERT_OK: " .. a:msg
+      endif
+    endfunc
+
+    func! OnSessionLoadPre()
+      call Assert(!exists('g:session_loaded_var'),
+            \ 'SessionLoadPre: var NOT set')
+    endfunc
+    au SessionLoadPre * call OnSessionLoadPre()
+
+    func! OnSessionLoadPost()
+      call Assert(exists('g:session_loaded_var'),
+            \ 'SessionLoadPost: var IS set')
+      echomsg "SessionLoadPost DONE"
+    endfunc
+    au SessionLoadPost * call OnSessionLoadPost()
+
+    func! WriteErrors()
+      call writefile([execute("messages")], "XerrorsPost")
+    endfunc
+    au VimLeave * call WriteErrors()
+  [CODE]
+
+  call writefile(content, 'Xvimrc', 'D')
+
+  call writefile(
+        \ ['let g:session_loaded_var = 1'],
+        \ 'Sessionx.vim',
+        \ 'b'
+        \ )
+
+  " --- Run child Vim ---
+  call system(
+        \ GetVimCommand('Xvimrc')
+        \ .. ' --headless --noplugins -S Session.vim -c cq'
+        \ )
+
+  call WaitForAssert({-> assert_true(filereadable('XerrorsPost'))})
+
+  let errors = join(readfile('XerrorsPost'), "\n")
+  call assert_notmatch('ASSERT_FAIL', errors)
+  call assert_match('ASSERT_OK: SessionLoadPre: var NOT set', errors)
+  call assert_match('ASSERT_OK: SessionLoadPost: var IS set', errors)
+  call assert_match('SessionLoadPost DONE', errors)
+
+  set swapfile
+  for file in ['Session.vim', 'Sessionx.vim', 'XerrorsPost']
+    call delete(file)
+  endfor
+endfunc
+
 " Closing a window might cause an endless loop
 " E814 for older Vims
 func Test_autocmd_bufwipe_in_SessLoadPost()

@@ -600,6 +600,9 @@ static int makeopens(FILE *fd, char *dirnow)
 
   // Begin by setting v:this_session, and then other sessionable variables.
   PUTLINE_FAIL("let v:this_session=expand(\"<sfile>:p\")");
+
+  PUTLINE_FAIL("doautoall SessionLoadPre");
+
   if (ssop_flags & kOptSsopFlagGlobals) {
     if (store_session_globals(fd) == FAIL) {
       return FAIL;

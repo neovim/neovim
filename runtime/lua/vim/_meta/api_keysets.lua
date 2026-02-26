@@ -176,6 +176,7 @@ error('Cannot require a meta file')
 --- |'SafeState'
 --- |'SearchWrapped'
 --- |'SessionLoadPost'
+--- |'SessionLoadPre'
 --- |'SessionWritePost'
 --- |'ShellCmdPost'
 --- |'ShellFilterPost'

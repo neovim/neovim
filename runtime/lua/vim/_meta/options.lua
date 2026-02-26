@@ -2231,6 +2231,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`RemoteReply`,
 --- 	`SafeState`,
 --- 	`SessionLoadPost`,
+--- 	`SessionLoadPre`,
 --- 	`SessionWritePost`,
 --- 	`ShellCmdPost`,
 --- 	`Signal`,
