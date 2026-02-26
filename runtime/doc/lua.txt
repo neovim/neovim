@@ -2592,10 +2592,11 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenates partial paths (one absolute or relative path followed by zero
     or more relative paths). Slashes are normalized: redundant slashes are
     removed, and (on Windows) backslashes are replaced with forward-slashes.
-    Paths are not expanded/resolved.
+    Empty segments are removed. Paths are not expanded/resolved.
 
     Examples:
     • "foo/", "/bar" => "foo/bar"
+    • "", "after/plugin" => "after/plugin"
     • Windows: "a\foo\", "\bar" => "a/foo/bar"
 
     Attributes: ~

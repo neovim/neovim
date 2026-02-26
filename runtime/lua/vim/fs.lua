@@ -116,21 +116,30 @@ end
 
 --- Concatenates partial paths (one absolute or relative path followed by zero or more relative
 --- paths). Slashes are normalized: redundant slashes are removed, and (on Windows) backslashes are
---- replaced with forward-slashes. Paths are not expanded/resolved.
+--- replaced with forward-slashes. Empty segments are removed. Paths are not expanded/resolved.
 ---
 --- Examples:
 --- - "foo/", "/bar" => "foo/bar"
+--- - "", "after/plugin" => "after/plugin"
 --- - Windows: "a\foo\", "\bar" => "a/foo/bar"
 ---
 ---@since 12
 ---@param ... string
 ---@return string
 function M.joinpath(...)
-  local path = table.concat({ ... }, '/')
-  if iswin then
-    path = path:gsub('\\', '/')
+  local n = select('#', ...)
+  ---@type string[]
+  local segments = {}
+  for i = 1, n do
+    local s = select(i, ...)
+    if s and #s > 0 then
+      segments[#segments + 1] = s
+    end
   end
-  return (path:gsub('//+', '/'))
+
+  local path = table.concat(segments, '/')
+
+  return (path:gsub(iswin and '[/\\][/\\]*' or '//+', '/'))
 end
 
 --- @class vim.fs.dir.Opts
