@@ -187,15 +187,14 @@ local client_pull_namespaces = {}
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
 ---@param client_id integer The id of the LSP client
----@param is_pull boolean? Whether the namespace is for a pull or push client. Defaults to push
----@param pull_id string? Pull diagnostics provider identifier
-function M.get_namespace(client_id, is_pull, pull_id)
+---@param pull_id (boolean|string)? Pull diagnostics provider identifier
+function M.get_namespace(client_id, pull_id)
   vim.validate('client_id', client_id, 'number')
-  vim.validate('pull_id', pull_id, 'string', true)
+  vim.validate('pull_id', pull_id, { 'boolean', 'string' }, true)
 
   local client = lsp.get_client_by_id(client_id)
-  if is_pull then
-    local provider_id = pull_id or 'nil'
+  if pull_id then
+    local provider_id = type(pull_id) == 'string' and pull_id or 'nil'
     local key = ('%d:%s'):format(client_id, provider_id)
     local name = ('nvim.lsp.%s.%d.%s'):format(
       client and client.name or 'unknown',
@@ -222,9 +221,8 @@ end
 --- @param uri string
 --- @param client_id? integer
 --- @param diagnostics lsp.Diagnostic[]
---- @param is_pull boolean
----@param pull_id string?
-local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
+--- @param pull_id boolean|string
+local function handle_diagnostics(uri, client_id, diagnostics, pull_id)
   local fname = vim.uri_to_fname(uri)
 
   if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
@@ -238,7 +236,7 @@ local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
 
   client_id = client_id or DEFAULT_CLIENT_ID
 
-  local namespace = M.get_namespace(client_id, is_pull, pull_id)
+  local namespace = M.get_namespace(client_id, pull_id)
 
   vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 end
@@ -286,11 +284,11 @@ function M.on_diagnostic(error, result, ctx)
 
   ---@type lsp.DocumentDiagnosticParams
   local params = ctx.params
-  handle_diagnostics(params.textDocument.uri, client_id, result.items, true, params.identifier)
+  handle_diagnostics(params.textDocument.uri, client_id, result.items, params.identifier or true)
 
   for uri, related_result in pairs(result.relatedDocuments or {}) do
     if related_result.kind == 'full' then
-      handle_diagnostics(uri, client_id, related_result.items, true, params.identifier)
+      handle_diagnostics(uri, client_id, related_result.items, params.identifier or true)
     end
 
     local related_bufnr = vim.uri_to_bufnr(uri)
@@ -527,7 +525,7 @@ function M._workspace_diagnostics(opts)
         -- We favor document pull requests over workspace results, so only update the buffer
         -- state if we're not pulling document diagnostics for this buffer.
         if bufstates[bufnr].pull_kind == 'workspace' and report.kind == 'full' then
-          handle_diagnostics(report.uri, ctx.client_id, report.items, true, params.identifier)
+          handle_diagnostics(report.uri, ctx.client_id, report.items, params.identifier or true)
           bufstates[bufnr].client_result_id[ctx.client_id] = report.resultId
         end
       end

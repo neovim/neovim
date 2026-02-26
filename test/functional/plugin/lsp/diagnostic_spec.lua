@@ -418,8 +418,8 @@ describe('vim.lsp.diagnostic', function()
           bufnr = diagnostic_bufnr,
         }, {})
 
-        local first_ns = vim.lsp.diagnostic.get_namespace(client_id, true, 'provider-a')
-        local second_ns = vim.lsp.diagnostic.get_namespace(client_id, true, 'provider-b')
+        local first_ns = vim.lsp.diagnostic.get_namespace(client_id, 'provider-a')
+        local second_ns = vim.lsp.diagnostic.get_namespace(client_id, 'provider-b')
 
         return #vim.diagnostic.get(diagnostic_bufnr, { namespace = first_ns }),
           #vim.diagnostic.get(diagnostic_bufnr, { namespace = second_ns }),
