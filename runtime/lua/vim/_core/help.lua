@@ -175,7 +175,8 @@ function M.local_additions()
       if plugname and desc then
         -- left-align taglink and right-align description by inserting spaces in between
         local plug_width = vim.fn.strdisplaywidth(plugname)
-        local desc_width = vim.fn.strdisplaywidth(desc)
+        local _, concealed_chars = desc:gsub('|', '')
+        local desc_width = vim.fn.strdisplaywidth(desc) - concealed_chars
         -- max(l, 1) forces at least one space for if the description is too long
         local spaces = string.rep(' ', math.max(textwidth - desc_width - plug_width - 2, 1))
         local fmt = string.format('|%s|%s%s', plugname, spaces, desc)
