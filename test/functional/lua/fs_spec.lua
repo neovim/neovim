@@ -470,6 +470,12 @@ describe('vim.fs', function()
         eq('foo/bar/baz/zub/', vim.fs.joinpath([[foo]], [[//bar////baz]], [[zub/]]))
       end
     end)
+    it('handles empty segments', function()
+      eq('foo/bar', vim.fs.joinpath('', 'foo', '', 'bar', ''))
+      eq('foo/bar', vim.fs.joinpath('', '', 'foo', 'bar', '', ''))
+      eq('', vim.fs.joinpath(''))
+      eq('', vim.fs.joinpath('', '', '', ''))
+    end)
   end)
 
   describe('normalize()', function()
