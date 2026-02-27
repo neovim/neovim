@@ -113,7 +113,7 @@ func Test_Ex_emptybuf()
   call setline(1, "abc")
   call assert_fails('call feedkeys("Q\<CR>", "xt")', 'E501:')
   call assert_fails('call feedkeys("Q%d\<CR>", "xt")', 'E749:')
-  close!
+  bw!
 endfunc
 
 " Test for the :open command
@@ -126,7 +126,7 @@ func Test_open_command()
   call feedkeys("Qopen /bar/\<CR>", 'xt')
   call assert_equal(5, col('.'))
   call assert_fails('call feedkeys("Qopen /baz/\<CR>", "xt")', 'E479:')
-  close!
+  bw!
 endfunc
 
 func Test_open_command_flush_line()
@@ -246,12 +246,12 @@ func Test_Ex_append()
   call setline(1, "\t   abc")
   call feedkeys("Qappend!\npqr\nxyz\n.\nvisual\n", 'xt')
   call assert_equal(["\t   abc", "\t   pqr", "\t   xyz"], getline(1, '$'))
-  close!
+  bw!
 
   new
   call feedkeys("Qappend\na\\\n.", 'xt')
   call assert_equal(['a\'], getline(1, '$'))
-  close!
+  bw!
 endfunc
 
 func Test_ex_mode_errors()
