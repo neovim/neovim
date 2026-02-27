@@ -174,6 +174,39 @@ func Test_Ex_global()
   call assert_equal('bax', getline(3))
   call assert_equal('bay', getline(5))
   bwipe!
+
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call setline(1, ['foo', 'bar'])
+  call feedkeys("Qg/./i\\\na\\\n.\\\na\\\nb\\\n.", "xt")
+  call assert_equal(['a', 'b', 'foo', 'a', 'b', 'bar'], getline(1, '$'))
+  bwipe!
+endfunc
+
+func Test_Ex_shell()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  CheckUnix
+
+  new
+  call feedkeys("Qr !echo foo\\\necho bar\n", 'xt')
+  call assert_equal(['', 'foo', 'bar'], getline(1, '$'))
+  bwipe!
+
+  new
+  call feedkeys("Qr !echo foo\\\\\nbar\n", 'xt')
+  call assert_equal(['', 'foobar'], getline(1, '$'))
+  bwipe!
+
+  new
+  call feedkeys("Qr !echo foo\\ \\\necho bar\n", 'xt')
+  call assert_equal(['', 'foo ', 'bar'], getline(1, '$'))
+  bwipe!
+
+  new
+  call setline(1, ['bar', 'baz'])
+  call feedkeys("Qg/./!echo \\\ns/b/c/", "xt")
+  call assert_equal(['car', 'caz'], getline(1, '$'))
+  bwipe!
 endfunc
 
 " Test for pressing Ctrl-C in :append inside a loop in Ex mode
@@ -214,19 +247,11 @@ func Test_Ex_append()
   call feedkeys("Qappend!\npqr\nxyz\n.\nvisual\n", 'xt')
   call assert_equal(["\t   abc", "\t   pqr", "\t   xyz"], getline(1, '$'))
   close!
-endfunc
 
-" In Ex-mode, backslashes at the end of a command should be halved.
-func Test_Ex_echo_backslash()
-  throw 'Skipped: Nvim only supports Vim Ex mode'
-  " This test works only when the language is English
-  CheckEnglish
-  let bsl = '\\\\'
-  let bsl2 = '\\\'
-  call assert_fails('call feedkeys("Qecho " .. bsl .. "\nvisual\n", "xt")',
-        \ 'E15: Invalid expression: "\\"')
-  call assert_fails('call feedkeys("Qecho " .. bsl2 .. "\nm\nvisual\n", "xt")',
-        \ "E15: Invalid expression: \"\\\nm\"")
+  new
+  call feedkeys("Qappend\na\\\n.", 'xt')
+  call assert_equal(['a\'], getline(1, '$'))
+  close!
 endfunc
 
 func Test_ex_mode_errors()
@@ -323,6 +348,15 @@ func Test_empty_command_visual_mode()
   call assert_equal(1, RunVim([], [], '-u NONE -e -s -S Xexmodescript'))
 
   call delete('Xexmodescript')
+endfunc
+
+" Test using backslash in ex-mode
+func Test_backslash_multiline()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call setline(1, 'enum')
+  call feedkeys('Qg/enum/i\\.', "xt")
+  call assert_equal(["", "enum"], getline(1, 2))
 endfunc
 
 " Testing implicit print command
