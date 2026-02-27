@@ -359,6 +359,14 @@ func Test_backslash_multiline()
   call assert_equal(["", "enum"], getline(1, 2))
 endfunc
 
+" Test using backslash in ex-mode after patch 9.1.0535
+func Test_backslash_multiline2()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call feedkeys('QaX \\Y.', "xt")
+  call assert_equal(['X \\', "Y"], getline(1, 2))
+endfunc
+
 " Testing implicit print command
 func Test_implicit_print()
   new
