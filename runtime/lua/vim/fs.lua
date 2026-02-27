@@ -81,13 +81,17 @@ function M.dirname(file)
       return file
     end
   end
+  -- Strip trailing slashes, but preserve root "/" and empty string.
+  if file ~= '/' and #file > 0 then
+    file = file:gsub('/+$', '')
+  end
   if not file:match('/') then
     return '.'
   elseif file == '/' or file:match('^/[^/]+$') then
     return '/'
   end
   ---@type string
-  local dir = file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
+  local dir = file:match('^(/?.+)/')
   if iswin and dir:match('^%w:$') then
     return dir .. '/'
   end
@@ -111,7 +115,11 @@ function M.basename(file)
       return ''
     end
   end
-  return file:match('/$') and '' or (file:match('[^/]*$'))
+  -- Strip trailing slashes, but preserve root "/" and empty string.
+  if file ~= '/' and #file > 0 then
+    file = file:gsub('/+$', '')
+  end
+  return file:match('[^/]*$')
 end
 
 --- Concatenates partial paths (one absolute or relative path followed by zero or more relative
