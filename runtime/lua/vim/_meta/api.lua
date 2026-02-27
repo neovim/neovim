@@ -568,7 +568,8 @@ function vim.api.nvim_buf_line_count(buffer) end
 --- @param opts vim.api.keyset.set_extmark Optional parameters.
 --- - id : id of the extmark to edit.
 --- - end_row : ending line of the mark, 0-based inclusive.
---- - end_col : ending col of the mark, 0-based exclusive.
+--- - end_col : ending col of the mark, 0-based exclusive, or -1
+---             to extend the range of the extmark to the end of the line.
 --- - hl_group : highlight group used for the text range. This and below
 ---     highlight groups can be supplied either as a string or as an integer,
 ---     the latter of which can be obtained using `nvim_get_hl_id_by_name()`.
@@ -593,8 +594,7 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---                        text is too long, it is truncated to
 ---                        fit in the window after the EOL
 ---                        character. If the line is wrapped, the
----                        virtual text is shown after the end of
----                        the line rather than the previous
+---                        virtual text is shown after the end of the line rather than the previous
 ---                        screen line.
 ---   - "overlay": display over the specified column, without
 ---                shifting the underlying text.
