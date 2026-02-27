@@ -51,6 +51,8 @@ struct VTermPen {
   unsigned font:4;  // To store 0-9
   unsigned small:1;
   unsigned baseline:2;
+  unsigned dim:1;
+  unsigned overline:1;
 };
 
 // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement

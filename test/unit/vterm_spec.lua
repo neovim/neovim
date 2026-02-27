@@ -285,7 +285,8 @@ local function lineinfo(row, expected, state)
 end
 
 local function pen(attribute, expected, state)
-  local is_bool = { bold = true, italic = true, blink = true, reverse = true }
+  local is_bool =
+    { bold = true, italic = true, blink = true, reverse = true, dim = true, overline = true }
   local vterm_attribute = {
     bold = vterm.VTERM_ATTR_BOLD,
     underline = vterm.VTERM_ATTR_UNDERLINE,
@@ -293,6 +294,8 @@ local function pen(attribute, expected, state)
     blink = vterm.VTERM_ATTR_BLINK,
     reverse = vterm.VTERM_ATTR_REVERSE,
     font = vterm.VTERM_ATTR_FONT,
+    dim = vterm.VTERM_ATTR_DIM,
+    overline = vterm.VTERM_ATTR_OVERLINE,
   }
 
   local val = t.ffi.new('VTermValue') --- @type {boolean: integer}
@@ -386,11 +389,13 @@ local function screen_cell(row, col, expected, screen)
   end
   actual = string.format('%s} width=%d attrs={', actual, cell['width'])
   actual = actual .. (cell['attrs'].bold ~= 0 and 'B' or '')
+  actual = actual .. (cell['attrs'].dim ~= 0 and 'D' or '')
   actual = actual
     .. (cell['attrs'].underline ~= 0 and string.format('U%d', cell['attrs'].underline) or '')
   actual = actual .. (cell['attrs'].italic ~= 0 and 'I' or '')
   actual = actual .. (cell['attrs'].blink ~= 0 and 'K' or '')
   actual = actual .. (cell['attrs'].reverse ~= 0 and 'R' or '')
+  actual = actual .. (cell['attrs'].overline ~= 0 and 'O' or '')
   actual = actual .. (cell['attrs'].font ~= 0 and string.format('F%d', cell['attrs'].font) or '')
   actual = actual .. (cell['attrs'].small ~= 0 and 'S' or '')
   if cell['attrs'].baseline ~= 0 then
@@ -2950,6 +2955,30 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     push('\x1b[11m\x1b[m', vt)
     pen('font', 0, state)
 
+    -- Dim
+    push('\x1b[2m', vt)
+    pen('dim', true, state)
+    push('\x1b[22m', vt)
+    pen('dim', false, state)
+    push('\x1b[2m\x1b[m', vt)
+    pen('dim', false, state)
+
+    -- Bold and Dim interaction (SGR 22 turns off both)
+    push('\x1b[1;2m', vt)
+    pen('bold', true, state)
+    pen('dim', true, state)
+    push('\x1b[22m', vt)
+    pen('bold', false, state)
+    pen('dim', false, state)
+
+    -- Overline
+    push('\x1b[53m', vt)
+    pen('overline', true, state)
+    push('\x1b[55m', vt)
+    pen('overline', false, state)
+    push('\x1b[53m\x1b[m', vt)
+    pen('overline', false, state)
+
     -- TODO(dundargoc): fix
     -- Foreground
     -- push "\x1b[31m"
@@ -3484,6 +3513,14 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     screen_cell(0, 8, '{78} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
     screen_cell(0, 9, '{30} width=1 attrs={S_} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
     screen_cell(0, 10, '{32} width=1 attrs={S^} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
+
+    -- Dim
+    push('\x1b[2mI\x1b[m', vt)
+    screen_cell(0, 11, '{49} width=1 attrs={D} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
+
+    -- Overline
+    push('\x1b[53mJ\x1b[m', vt)
+    screen_cell(0, 12, '{4a} width=1 attrs={O} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
 
     -- EL sets only colours to end of line, not other attrs
     push('\x1b[H\x1b[7;33;44m\x1b[K', vt)
