@@ -890,9 +890,14 @@ do
 
       -- Wait until detection of OSC 11 capabilities is complete to
       -- ensure background is automatically set before user config.
-      vim.wait(100, function()
+      if not vim.wait(100, function()
         return did_dsr_response
-      end, 1)
+      end, 1) then
+        vim.notify(
+          'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
+          vim.log.levels.WARN
+        )
+      end
     end
 
     --- If the TUI (term_has_truecolor) was able to determine that the host
