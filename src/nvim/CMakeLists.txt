@@ -53,7 +53,7 @@ if(ENABLE_UNIBILIUM)
 endif()
 
 if(ENABLE_WASMTIME)
-  find_package(Wasmtime 29.0.1 EXACT REQUIRED)
+  find_package(Wasmtime 36.0.6 EXACT REQUIRED)
   target_link_libraries(main_lib INTERFACE wasmtime)
   target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
 endif()
@@ -522,8 +522,13 @@ add_custom_command(
     "${NVIM_VERSION_DEF_H}"
   DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
 
-set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
-set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
+if(CMAKE_CROSSCOMPILING AND NLUA0_HOST_PRG)
+  set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} ${NLUA0_HOST_PRG} ${PROJECT_BINARY_DIR})
+  set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} ${NLUA0_HOST_PRG})
+else()
+  set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
+  set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
+endif()
 
 # Like LUA_GEN but includes also vim.fn, vim.api, vim.uv, etc
 set(NVIM_LUA $<TARGET_FILE:nvim_bin> -u NONE -l ${NVIM_LUA_PRELOAD} ${PROJECT_SOURCE_DIR})
