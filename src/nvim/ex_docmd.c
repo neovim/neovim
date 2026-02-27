@@ -4954,6 +4954,12 @@ static void ex_restart(exarg_T *eap)
       continue;  // Drop --embed/--headless: the client decides how to start+attach the server.
     } else if (strequal(arg, "-")) {
       continue;  // Drop stdin ("-") argument.
+    } else if (strequal(arg, "-s")) {
+      // Drop "-s <scriptfile>": skip the scriptfile arg too.
+      if (li->li_next != NULL) {
+        li = li->li_next;
+      }
+      continue;
     } else if (strequal(arg, "+:::")) {
       // The special placeholder "+:::" marks a previous :restart command.
       // Drop the `"+:::", "-c", "…"` triplet, to avoid "stacking" commands from previous :restart(s).

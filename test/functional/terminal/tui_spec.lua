@@ -458,6 +458,8 @@ describe('TUI :restart', function()
       server_pipe,
       '--cmd',
       'set notermguicolors',
+      '-s',
+      '-',
       '-',
       '--',
       'Xtest-file1',
@@ -472,7 +474,9 @@ describe('TUI :restart', function()
     ]])
     server_session = n.connect(server_pipe)
     local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
+    local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
     eq({ true, true }, { server_session:request('nvim_eval', expr) })
+    eq({ true, true }, { server_session:request('nvim_eval', has_s) })
 
     tt.feed_data(":restart put='foo'\013")
     screen:expect([[
@@ -487,6 +491,7 @@ describe('TUI :restart', function()
     server_session = n.connect(server_pipe)
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
+    eq({ true, false }, { server_session:request('nvim_eval', has_s) })
     local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     eq(13, #argv)
     eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
