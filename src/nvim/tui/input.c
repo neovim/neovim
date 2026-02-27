@@ -726,7 +726,31 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     break;
   case 'n':
     // Device Status Report (DSR)
-    if (nparams == 2) {
+    if (nparams == 1) {
+      // ECMA-48 DSR
+      // https://ecma-international.org/wp-content/uploads/ECMA-48_5th_edition_june_1991.pdf
+      int arg;
+      if (termkey_interpret_csi_param(params[0], &arg, NULL, NULL) != TERMKEY_RES_KEY) {
+        return;
+      }
+
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, STATIC_CSTR_AS_OBJ("termresponse"));
+
+      StringBuilder response = KV_INITIAL_VALUE;
+      kv_printf(response, "\x1b[%dn", arg);
+      ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
+
+      rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
+      kv_destroy(response);
+    } else if (nparams == 2) {
+      // Hard to find comprehensive docs on these responses. Some can be found at https://www.xfree86.org/current/ctlseqs.html
+      // under "Device Status Report (DSR, DEC-specific)"
+      // - Report Printer status
+      // - Report User Defined Key status
+      // - Report Locator status
+      // When the first parameter is 997, it's a theme update response based on
+      // contour terminal VT extensions, as described below.
       int args[2];
       for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
         if (termkey_interpret_csi_param(params[i], &args[i], NULL, NULL) != TERMKEY_RES_KEY) {
