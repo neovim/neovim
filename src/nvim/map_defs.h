@@ -38,7 +38,7 @@ static inline bool equal_String(String a, String b)
 }
 
 #define Set(type) Set_##type
-#define Map(T, U) Map_##T##U
+#define Map(T, U) Map_##T##_##U
 #define PMap(T) Map(T, ptr_t)
 
 static const int value_init_int = 0;
@@ -123,19 +123,19 @@ void mh_realloc(MapHash *h, uint32_t n_min_buckets);
     Set(T) set; \
     U *values; \
   } Map(T, U); \
-  static inline U map_get_##T##U(Map(T, U) *map, T key) \
+  static inline U map_get_##T##_##U(Map(T, U) *map, T key) \
   { \
     uint32_t k = mh_get_##T(&map->set, key); \
     return k == MH_TOMBSTONE ? value_init_##U : map->values[k]; \
   } \
-  U *map_ref_##T##U(Map(T, U) *map, T key, T **key_alloc); \
-  U *map_put_ref_##T##U(Map(T, U) *map, T key, T **key_alloc, bool *new_item); \
-  static inline void map_put_##T##U(Map(T, U) *map, T key, U value) \
+  U *map_ref_##T##_##U(Map(T, U) *map, T key, T **key_alloc); \
+  U *map_put_ref_##T##_##U(Map(T, U) *map, T key, T **key_alloc, bool *new_item); \
+  static inline void map_put_##T##_##U(Map(T, U) *map, T key, U value) \
   { \
-    U *val = map_put_ref_##T##U(map, key, NULL, NULL); \
+    U *val = map_put_ref_##T##_##U(map, key, NULL, NULL); \
     *val = value; \
   } \
-  U map_del_##T##U(Map(T, U) *map, T key, T *key_alloc); \
+  U map_del_##T##_##U(Map(T, U) *map, T key, T *key_alloc); \
 
 // NOTE: Keys AND values must be allocated! Map and Set does not make a copy.
 
@@ -183,12 +183,12 @@ MAP_DECLS(ColorKey, ColorItem)
     *(set) = (Set(T)) SET_INIT; \
   } while (0)
 
-#define map_get(T, U) map_get_##T##U
+#define map_get(T, U) map_get_##T##_##U
 #define map_has(T, map, key) set_has(T, &(map)->set, key)
-#define map_put(T, U) map_put_##T##U
-#define map_ref(T, U) map_ref_##T##U
-#define map_put_ref(T, U) map_put_ref_##T##U
-#define map_del(T, U) map_del_##T##U
+#define map_put(T, U) map_put_##T##_##U
+#define map_ref(T, U) map_ref_##T##_##U
+#define map_put_ref(T, U) map_put_ref_##T##_##U
+#define map_del(T, U) map_del_##T##_##U
 #define map_size(map) set_size(&(map)->set)
 #define map_clear(T, map) set_clear(T, &(map)->set)
 #define map_destroy(T, map) \
