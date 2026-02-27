@@ -749,7 +749,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
       // - Report Printer status
       // - Report User Defined Key status
       // - Report Locator status
-      // When the first parameter is 997, it's a theme update response based on 
+      // When the first parameter is 997, it's a theme update response based on
       // contour terminal VT extensions, as described below.
       int args[2];
       for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
