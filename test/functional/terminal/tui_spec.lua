@@ -221,8 +221,6 @@ describe('TUI :restart', function()
       n.check_close()
     end)
 
-    t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows')
-
     -- local server_pipe = new_pipename()
     local screen = tt.setup_child_nvim({
       '-u',
@@ -291,14 +289,14 @@ describe('TUI :restart', function()
     tt.feed_data(':set nomodified\013')
     -- Command is run on new server.
     tt.feed_data(":restart put ='Hello1'\013")
-    screen:expect(s1)
+    screen_expect(s1)
     -- assert_new_pid()
     assert_no_gui_running()
     -- eq("--cmd echo getpid() +::: -c put ='Hello1'", get_argv(4))
 
     -- Complex command following +cmd.
     tt.feed_data(":restart +qall! put ='Hello2' | put ='World2'\013")
-    screen:expect([[
+    screen_expect([[
                                                         |
       Hello2                                            |
       ^World2                                            |
@@ -314,23 +312,23 @@ describe('TUI :restart', function()
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':set nomodified\013')
     tt.feed_data(':restart\013')
-    screen:expect(s0)
+    screen_expect(s0)
     -- assert_new_pid()
     assert_no_gui_running()
 
     -- Check ":restart +qall!" on an unmodified buffer.
     tt.feed_data(':restart +qall!\013')
-    screen:expect(s0)
+    screen_expect(s0)
     -- assert_new_pid()
     assert_no_gui_running()
     -- eq('--cmd echo getpid()', get_argv(1))
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
-    screen:expect({ any = vim.pesc('+cmd did not quit the server') })
+    screen_expect({ any = vim.pesc('+cmd did not quit the server') })
 
     tt.feed_data('ithis will be removed\027')
-    screen:expect([[
+    screen_expect([[
       this will be remove^d                              |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
@@ -340,53 +338,53 @@ describe('TUI :restart', function()
 
     -- Check ":confirm restart" on a modified buffer.
     tt.feed_data(':confirm restart\013')
-    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    screen_expect({ any = vim.pesc('Save changes to "Untitled"?') })
 
     -- Cancel the operation (abandons restart).
     tt.feed_data('C\013')
-    screen:expect({ any = vim.pesc('[No Name]') })
+    screen_expect({ any = vim.pesc('[No Name]') })
 
     -- Check :restart respects 'confirm' option.
     tt.feed_data(':set confirm\013')
     tt.feed_data(':restart\013')
-    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    screen_expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('C\013')
-    screen:expect({ any = vim.pesc('[No Name]') })
+    screen_expect({ any = vim.pesc('[No Name]') })
     tt.feed_data(':set noconfirm\013')
 
     -- Check ":confirm restart <cmd>" on a modified buffer.
     tt.feed_data(":confirm restart put ='Hello3'\013")
-    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    screen_expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('N\013')
-    screen:expect({ any = '%^Hello3' })
+    screen_expect({ any = '%^Hello3' })
     -- assert_new_pid()
     assert_no_gui_running()
     -- eq("--cmd echo getpid() +::: -c put ='Hello3'", get_argv(4))
 
     -- Check ":confirm restart +echo" correctly ignores ":confirm"
     tt.feed_data(':confirm restart +echo\013')
-    screen:expect({ any = vim.pesc('+cmd did not quit the server') })
+    screen_expect({ any = vim.pesc('+cmd did not quit the server') })
 
     -- Check ":restart" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
     tt.feed_data(':restart\013')
-    screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
+    screen_expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
 
     -- Check ":restart +qall!" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
     tt.feed_data(':restart +qall!\013')
-    screen:expect(s0)
+    screen_expect(s0)
     -- assert_new_pid()
     assert_no_gui_running()
 
     -- No --listen conflict when server exit is delayed.
     feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
-    screen:expect(s0)
+    screen_expect(s0)
     -- assert_new_pid()
     assert_no_gui_running()
 
     screen:try_resize(60, 6)
-    screen:expect([[
+    screen_expect([[
       ^                                                            |
       {100:~                                                           }|*2
       {3:[No Name]                                                   }|
@@ -396,7 +394,7 @@ describe('TUI :restart', function()
 
     --- Check that ":restart" uses the updated size after terminal resize.
     tt.feed_data(':restart\013')
-    screen:expect([[
+    screen_expect([[
       ^                                                            |
       {100:~                                                           }|*2
       {3:[No Name]                                                   }|
