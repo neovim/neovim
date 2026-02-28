@@ -108,6 +108,22 @@ static void do_markset_autocmd(char c, pos_T *pos, buf_T *buf)
   aucmd_defer(EVENT_MARKSET, mark_str, NULL, AUGROUP_ALL, buf, NULL, &DICT_OBJ(data));
 }
 
+/// Schedules "MarkDeleted" event.
+///
+/// @param c The name of the mark, e.g., 'a'.
+/// @param buf The buffer of the mark.
+static void do_markdeleted_autocmd(char c, buf_T *buf)
+{
+  if (!has_event(EVENT_MARKDELETED)) {
+    return;
+  }
+
+  MAXSIZE_TEMP_DICT(data, 1);
+  char mark_str[2] = { c, '\0' };
+  PUT_C(data, "name", STRING_OBJ(((String){ .data = mark_str, .size = 1 })));
+  aucmd_defer(EVENT_MARKDELETED, mark_str, NULL, AUGROUP_ALL, buf, NULL, &DICT_OBJ(data));
+}
+
 // Set named mark "c" to position "pos".
 // When "c" is upper case use file "fnum".
 // Returns OK on success, FAIL if bad name given.
@@ -1039,6 +1055,9 @@ void ex_delmarks(exarg_T *eap)
 
         for (int i = from; i <= to; i++) {
           if (lower) {
+            if (curbuf->b_namedm[i - 'a'].mark.lnum != 0) {
+              do_markdeleted_autocmd((char)i, curbuf);
+            }
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
             curbuf->b_namedm[i - 'a'].timestamp = timestamp;
           } else {
@@ -1046,6 +1065,13 @@ void ex_delmarks(exarg_T *eap)
               n = i - '0' + NMARKS;
             } else {
               n = i - 'A';
+            }
+            if (namedfm[n].fmark.mark.lnum != 0) {
+              buf_T *buf = buflist_findnr(namedfm[n].fmark.fnum);
+              if (buf == NULL) {
+                buf = curbuf;
+              }
+              do_markdeleted_autocmd((char)i, buf);
             }
             namedfm[n].fmark.mark.lnum = 0;
             namedfm[n].fmark.fnum = 0;
@@ -1056,24 +1082,45 @@ void ex_delmarks(exarg_T *eap)
       } else {
         switch (*p) {
         case '"':
+          if (curbuf->b_last_cursor.mark.lnum != 0) {
+            do_markdeleted_autocmd('"', curbuf);
+          }
           clear_fmark(&curbuf->b_last_cursor, timestamp);
           break;
         case '^':
+          if (curbuf->b_last_insert.mark.lnum != 0) {
+            do_markdeleted_autocmd('^', curbuf);
+          }
           clear_fmark(&curbuf->b_last_insert, timestamp);
           break;
         case ':':
           // Readonly mark. No deletion allowed.
           break;
         case '.':
+          if (curbuf->b_last_change.mark.lnum != 0) {
+            do_markdeleted_autocmd('.', curbuf);
+          }
           clear_fmark(&curbuf->b_last_change, timestamp);
           break;
         case '[':
+          if (curbuf->b_op_start.lnum != 0) {
+            do_markdeleted_autocmd('[', curbuf);
+          }
           curbuf->b_op_start.lnum = 0; break;
         case ']':
+          if (curbuf->b_op_end.lnum != 0) {
+            do_markdeleted_autocmd(']', curbuf);
+          }
           curbuf->b_op_end.lnum = 0; break;
         case '<':
+          if (curbuf->b_visual.vi_start.lnum != 0) {
+            do_markdeleted_autocmd('<', curbuf);
+          }
           curbuf->b_visual.vi_start.lnum = 0; break;
         case '>':
+          if (curbuf->b_visual.vi_end.lnum != 0) {
+            do_markdeleted_autocmd('>', curbuf);
+          }
           curbuf->b_visual.vi_end.lnum = 0; break;
         case ' ':
           break;
