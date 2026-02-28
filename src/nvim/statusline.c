@@ -2081,7 +2081,7 @@ stcsign:
     // add characters at the separate marker (if there is one) to
     // fill up the available space.
   } else if (width < maxwidth
-             && strlen(out) + (size_t)(maxwidth - width) + 1 < outlen) {
+             && strlen(out) + (size_t)(maxwidth - width) * schar_len(fillchar) + 1 < outlen) {
     // Find how many separators there are, which we will use when
     // figuring out how many groups there are.
     int num_separators = 0;
