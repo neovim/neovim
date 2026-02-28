@@ -1579,4 +1579,18 @@ let g:test_data_aff_sal = [
       \"SAL Z                    S",
       \ ]
 
+func Test_suggest_spell_restore()
+  norm! z=
+  call assert_equal(0, &spell)
+  set spelllang=
+  sil! norm! z=
+  call assert_equal(0, &spell)
+  set spelllang=en
+  call setline(1, ['1','2'])
+  norm! vjz=
+  call assert_equal(0, &spell)
+  set spelllang&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
