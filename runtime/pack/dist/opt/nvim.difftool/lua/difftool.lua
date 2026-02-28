@@ -3,16 +3,16 @@
 ---:DiffTool {left} {right}                                           *:DiffTool*
 ---Compares two directories or files side-by-side.
 ---Supports directory diffing, rename detection, and highlights changes
----in quickfix list.
+---in quickfix list. Replaces the built-in `nvim -d` diff mode with this interface.
 ---</pre>
 ---
 --- The plugin is not loaded by default; use `:packadd nvim.difftool` before invoking `:DiffTool`.
 ---
---- Example `git difftool -d` integration using `DiffTool` command:
+--- Example `git difftool -d` integration using `nvim -d` replacement:
 ---
 --- ```ini
 --- [difftool "nvim_difftool"]
----   cmd = nvim -c \"packadd nvim.difftool\" -c \"DiffTool $LOCAL $REMOTE\"
+---   cmd = nvim -c \"packadd nvim.difftool\" -d \"$LOCAL\" \"$REMOTE\"
 --- [diff]
 ---   tool = nvim_difftool
 --- ```
