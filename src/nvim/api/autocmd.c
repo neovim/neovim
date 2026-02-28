@@ -363,7 +363,10 @@ cleanup:
 /// @param event Event(s) that will trigger the handler (`callback` or `command`).
 /// @param opts Options dict:
 ///             - group (string|integer) optional: autocommand group name or id to match against.
-///             - pattern (string|array) optional: pattern(s) to match literally |autocmd-pattern|.
+///             - pattern (string|table) optional: pattern(s) to match literally
+///             |autocmd-pattern| provided as a string or an array of strings, or
+///               a single table of the form `{ glob = '<glob>' }` to compile an LSP-style glob
+///               pattern (using |vim.glob|). Only a single `glob` string is accepted.
 ///             - buffer (integer) optional: buffer number for buffer-local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}.
 ///             - desc (string) optional: description (for documentation and troubleshooting).
@@ -474,6 +477,8 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
 
     int retval;
 
+    bool is_glob
+      = (HAS_KEY(opts, create_autocmd, pattern) && opts->pattern.type == kObjectTypeDict);
     FOREACH_ITEM(patterns, pat, {
       WITH_SCRIPT_CONTEXT(channel_id, {
         retval = autocmd_register(autocmd_id,
@@ -485,7 +490,8 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
                                   opts->nested,
                                   desc,
                                   handler_cmd,
-                                  &handler_fn);
+                                  &handler_fn,
+                                  is_glob);
       });
 
       if (retval == FAIL) {
@@ -842,6 +848,23 @@ static Array get_patterns_from_pattern_or_buf(Object pattern, bool has_buffer, B
           patlen = aucmd_span_pattern(pat + patlen, &pat);
         }
       })
+    } else if (pattern.type == kObjectTypeDict) {
+      Dict dict = pattern.data.dict;
+      Dict(glob_pattern) gp = KEYDICT_INIT;
+      if (!api_dict_to_keydict(&gp, KeyDict_glob_pattern_get_field, dict, err)) {
+        return (Array)ARRAY_DICT_INIT;
+      }
+      if (gp.glob.size == 0 || gp.glob.data == NULL) {
+        VALIDATE(false, "%s", "pattern table must contain 'glob' key", {
+          return (Array)ARRAY_DICT_INIT;
+        });
+      }
+      const char *pat = gp.glob.data;
+      size_t patlen = aucmd_span_pattern(pat, &pat);
+      VALIDATE((patlen > 0), "%s", "Empty 'glob' pattern", {
+        return (Array)ARRAY_DICT_INIT;
+      });
+      kvi_push(patterns, CBUF_TO_ARENA_OBJ(arena, pat, patlen));
     } else {
       VALIDATE_EXP(false, "pattern", "String or Table", api_typename(pattern.type), {
         return (Array)ARRAY_DICT_INIT;
