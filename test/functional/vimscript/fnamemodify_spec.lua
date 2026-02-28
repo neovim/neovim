@@ -8,6 +8,7 @@ local getcwd = n.fn.getcwd
 local command = n.command
 local write_file = t.write_file
 local is_os = t.is_os
+local chdir = n.fn.chdir
 
 local function eq_slashconvert(expected, got)
   eq(t.fix_slashes(expected), t.fix_slashes(got))
@@ -16,12 +17,15 @@ end
 describe('fnamemodify()', function()
   setup(function()
     write_file('Xtest-fnamemodify.txt', [[foobar]])
+    t.mkdir('foo')
+    write_file('foo/bar', [[bar]])
   end)
 
   before_each(clear)
 
   teardown(function()
     os.remove('Xtest-fnamemodify.txt')
+    n.rmdir('foo')
   end)
 
   it('handles the root path', function()
@@ -37,6 +41,19 @@ describe('fnamemodify()', function()
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
       eq(root, fnamemodify([[/]], ':p'))
+
+      local letter_colon = root:sub(1, 2)
+      local old_dir = getcwd() .. '/'
+      local foo_dir = old_dir .. 'foo/'
+      eq(old_dir, fnamemodify(letter_colon, ':p'))
+      eq(old_dir, fnamemodify(letter_colon .. '.', ':p'))
+      eq(old_dir, fnamemodify(letter_colon .. './', ':p'))
+      eq(foo_dir, fnamemodify(letter_colon .. './foo', ':p'))
+      eq(foo_dir, fnamemodify(letter_colon .. 'foo', ':p'))
+      chdir('foo')
+      eq(old_dir, fnamemodify(letter_colon .. '..', ':p'))
+      eq(old_dir, fnamemodify(letter_colon .. '../', ':p'))
+      eq(foo_dir .. 'bar', fnamemodify(letter_colon .. 'bar', ':p'))
     end
   end)
 
