@@ -302,7 +302,7 @@ func Test_tag_complete_with_overlong_line()
       inboundGovernor	a	2;"	kind:⊢	type:forall (muxMode :: MuxMode) socket peerAddr versionNumber m a b. (MonadAsync m, MonadCatch m, MonadEvaluate m, MonadThrow m, MonadThrow (STM m), MonadTime m, MonadTimer m, MonadMask m, Ord peerAddr, HasResponder muxMode ~ True) => Tracer m (RemoteTransitionTrace peerAddr) -> Tracer m (InboundGovernorTrace peerAddr) -> ServerControlChannel muxMode peerAddr ByteString m a b -> DiffTime -> MuxConnectionManager muxMode socket peerAddr versionNumber ByteString m a b -> StrictTVar m InboundGovernorObservableState -> m Void
       inboundGovernorCounters	a	3;"	kind:⊢	type:InboundGovernorState muxMode peerAddr m a b -> InboundGovernorCounters
   END
-  call writefile(tagslines, 'Xtags')
+  call writefile(tagslines, 'Xtags', 'D')
   set tags=Xtags
 
   " try with binary search
@@ -315,7 +315,37 @@ func Test_tag_complete_with_overlong_line()
   call assert_equal('"tag inboundGSV inboundGovernor inboundGovernorCounters', @:)
   set tagbsearch&
 
-  call delete('Xtags')
+  set tags&
+endfunc
+
+" This used to crash Vim
+func Test_evil_emacs_tagfile()
+  CheckFeature emacs_tags
+  let longline = repeat('a', 515)
+  call writefile([
+	\ "\x0c",
+	\ longline
+	\ ], 'Xtags', 'D')
+  set tags=Xtags
+
+  call assert_fails(':tag a', 'E426:')
+
+  set tags&
+endfunc
+
+" This used to crash Vim due to a heap-buffer-underflow
+func Test_emacs_tagfile_underflow()
+  CheckFeature emacs_tags
+  " The sequence from the crash artifact:
+  let lines = [
+    \ "\x0c\xff\xffT\x19\x8a",
+    \ "\x19\x19\x0dtags\x19\x19\x19\x00\xff\xff\xff",
+    \ "\x7f3\x0c"
+    \ ]
+  call writefile(lines, 'Xtags', 'D')
+  set tags=Xtags
+  call assert_fails(':tag a', 'E431:')
+
   set tags&
 endfunc
 
