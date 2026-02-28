@@ -599,7 +599,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     }
     buflist_setfpos(buf, win,
                     win->w_cursor.lnum == 1 ? 0 : win->w_cursor.lnum,
-                    win->w_cursor.col, true);
+                    win->w_cursor.col, win->w_config.style != kWinStyleMinimal);
   }
 
   bufref_T bufref;
@@ -3215,7 +3215,8 @@ void buflist_slash_adjust(void)
 /// Also save the local window option values.
 void buflist_altfpos(win_T *win)
 {
-  buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col, true);
+  buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col,
+                  win->w_config.style != kWinStyleMinimal);
 }
 
 /// Check that "ffname" is not the same file as current file.
