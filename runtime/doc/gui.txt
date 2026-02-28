@@ -64,7 +64,9 @@ Stop or detach the current UI
                 the channel to be closed, it may be (incorrectly) reported as
                 an error.
 
-                Note: Not supported on Windows yet.
+                Note: Not supported on Windows yet, unless you define
+                environment variable `__NVIM_DETACH=1` before starting `nvim`.
+                And even then it still might not work. Send a PR!
 
 ------------------------------------------------------------------------------
 Restart Nvim

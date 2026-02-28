@@ -18,6 +18,7 @@
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/event/proc.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
@@ -1667,6 +1668,37 @@ static void tui_suspend_cb(TUIData *tui)
   ui_client_attach(tui->width, tui->height, tui->term, tui->rgb);
 }
 #endif
+
+// static void detach_event(void **argv)
+//   FUNC_ATTR_NORETURN
+// {
+//   char *data = argv[0];
+//   ui_client_stop();
+//   if (data != NULL) {
+//     os_errmsg(data);
+//     os_errmsg("\n");
+//   }
+//   xfree(data);
+//   os_exit(0);
+// }
+
+void tui_detach(TUIData *tui, String msg)
+{
+  DLOG("UI 'detach' event");
+
+  // tui_stop(tui);
+  if (msg.data) {
+    // fprintf(stdout, "%s\n", msg.data);
+    fprintf(stderr, "%s\n", msg.data);
+  }
+
+  exit_on_closed_chan(0);
+  // multiqueue_put_event(resize_events, event_create(detach_event, 1, msg.data ? strdup(msg.data) : NULL));
+  // ui_client_detach();
+  // ui_client_stop();
+  // kill(0, SIGTERM);
+  // os_exit(0);
+}
 
 void tui_set_title(TUIData *tui, String title)
 {

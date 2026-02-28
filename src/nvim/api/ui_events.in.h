@@ -46,6 +46,8 @@ void chdir(String path)
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
+void detach(String msg)
+  FUNC_API_SINCE(13);
 void ui_send(String content)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_IMPL;
 
