@@ -173,23 +173,11 @@ local function url_encode(s)
 end
 
 local function to_titlecase(s)
-  local special = {
-    ['UI'] = true,
-    ['API'] = true,
-    ['TUI'] = true,
-    ['LSP'] = true,
-    ['TS'] = true,
-  }
-  ---@type string[]
-  local text = {}
+  local text = ''
   for w in vim.gsplit(s, '[ \t]+') do
-    local sub = vim.fn.toupper(w:sub(1, 1)) .. w:sub(2):lower()
-    if special[w:upper()] then
-      sub = w:upper()
-    end
-    text[#text + 1] = sub
+    text = ('%s %s%s'):format(text, vim.fn.toupper(w:sub(1, 1)), w:sub(2))
   end
-  return table.concat(text, ' ')
+  return text
 end
 
 local function to_heading_tag(text)
@@ -600,7 +588,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     -- Remove tags from ToC text.
     local heading_node = first(root, 'heading')
-    local hname = to_titlecase(trim(node_text(heading_node):gsub('%*.*%*', '')))
+    local hname = trim(node_text(heading_node):gsub('%*.*%*', ''))
     if not heading_node or hname == '' then
       return '' -- Spurious "===" or "---" in the help doc.
     end
@@ -618,12 +606,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       )
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
-    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(
-      el,
-      tagname,
-      to_titlecase(trimmed),
-      el
-    )
+    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, trimmed, el)
   elseif node_name == 'heading' then
     return trimmed
   elseif node_name == 'column_heading' or node_name == 'column_name' then
