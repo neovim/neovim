@@ -3,7 +3,7 @@
 " Maintainer:	Carlo Baldassi <carlobaldassi@gmail.com>
 " Homepage:	https://github.com/JuliaEditorSupport/julia-vim
 " Last Change:	2021 Aug 04
-" 2025 Dec 9 sync with upstream repo #18894
+" 2026 Feb 27 sync with upstream repo
 
 if exists("b:did_ftplugin")
   finish
@@ -16,7 +16,7 @@ set cpo&vim
 setlocal include=^\\s*\\%(reload\\\|include\\)\\>
 setlocal suffixesadd=.jl
 setlocal comments=:#
-setlocal commentstring=#=%s=#
+setlocal commentstring=#\ %s
 setlocal cinoptions+=#1
 setlocal define=^\\s*macro\\>
 setlocal fo-=t fo+=croql
