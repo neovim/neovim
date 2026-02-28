@@ -333,4 +333,20 @@ func Test_evil_emacs_tagfile()
   set tags&
 endfunc
 
+" This used to crash Vim due to a heap-buffer-underflow
+func Test_emacs_tagfile_underflow()
+  CheckFeature emacs_tags
+  " The sequence from the crash artifact:
+  let lines = [
+    \ "\x0c\xff\xffT\x19\x8a",
+    \ "\x19\x19\x0dtags\x19\x19\x19\x00\xff\xff\xff",
+    \ "\x7f3\x0c"
+    \ ]
+  call writefile(lines, 'Xtags', 'D')
+  set tags=Xtags
+  call assert_fails(':tag a', 'E431:')
+
+  set tags&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
