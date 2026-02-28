@@ -306,6 +306,19 @@ int main(int argc, char **argv)
   nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
 
+  // On Windows, channel_from_stdio() replaces fd 2 with CONOUT$ (for ConPTY
+  // support). Save a dup of the original stderr first so that if server_init()
+  // fails, print_mainerr() can write through the pipe to the TUI client's relay.
+#ifdef MSWIN
+  int startup_stderr_fd = -1;
+  if (embedded_mode) {
+    startup_stderr_fd = os_dup(STDERR_FILENO);
+    if (startup_stderr_fd >= 0) {
+      os_set_cloexec(startup_stderr_fd);
+    }
+  }
+#endif
+
   if (embedded_mode) {
     const char *err;
     if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
@@ -357,8 +370,26 @@ int main(int argc, char **argv)
   // Nvim server...
 
   if (!server_init(params.listen_addr)) {
+#ifdef MSWIN
+    // Restore the original stderr (pipe to TUI client) so print_mainerr()
+    // output is visible in the TUI terminal via the relay in on_channel_output.
+    if (startup_stderr_fd >= 0) {
+      dup2(startup_stderr_fd, STDERR_FILENO);
+      close(startup_stderr_fd);
+      startup_stderr_fd = -1;
+    }
+#endif
     mainerr(IObuff, NULL, NULL);
   }
+
+#ifdef MSWIN
+  // Server started successfully. Close the saved fd so the pipe write end is
+  // fully released — child processes inherit CONOUT$ (fd 2), not the pipe.
+  if (startup_stderr_fd >= 0) {
+    close(startup_stderr_fd);
+    startup_stderr_fd = -1;
+  }
+#endif
 
   TIME_MSG("expanding arguments");
 
@@ -957,6 +988,11 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 
   if (is_ui) {
     if (!chan) {
+#ifdef MSWIN
+      // The TUI client is spawned in a ConPTY which only captures stdout.
+      // Redirect stderr to stdout so this error appears in the terminal.
+      dup2(STDOUT_FILENO, STDERR_FILENO);
+#endif
       fprintf(stderr, "Remote ui failed to start: %s\n", connect_error);
       os_exit(1);
     } else if (strequal(server_addr, os_getenv_noalloc("NVIM"))) {

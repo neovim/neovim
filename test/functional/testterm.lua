@@ -8,6 +8,7 @@
 --    - NOTE: Only use this if your test actually needs the full lifecycle/capabilities of the
 --    builtin Nvim TUI. Most tests should just use `Screen.new()` directly, or plain old API calls.
 
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -205,6 +206,19 @@ function M.setup_child_nvim(args, opts)
   env.NVIM_TEST = env.NVIM_TEST or os.getenv('NVIM_TEST')
 
   return M.setup_screen(opts.extra_rows, argv, opts.cols, env)
+end
+
+--- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
+--- Remove this function when that's fixed.
+---
+--- @param screen test.functional.ui.screen
+--- @param s string
+function M.screen_expect(screen, s)
+  if t.is_os('win') then
+    s = s:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
+    s = s:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
+  end
+  screen:expect(s)
 end
 
 return M

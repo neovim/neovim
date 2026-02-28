@@ -50,18 +50,20 @@ describe('TUI', function()
     end)
 
     screen:expect({ any = vim.pesc('[Process exited 1]') })
+
     -- When the address is very long, the error message may be only partly visible.
     if #addr_in_use <= 600 then
       screen:expect({
         any = vim.pesc(
           ('%s: Failed to --listen: address already in use:'):format(
-            is_os('win') and 'nvim.exe' or 'nvim'
+            fn.fnamemodify(nvim_prog, ':t')
           )
         ),
         unchanged = true,
       })
     end
 
+    -- Always assert the log for the error message.
     assert_log(
       vim.pesc('Failed to start server: address already in use: ' .. addr_in_use),
       testlog,
@@ -116,41 +118,6 @@ describe('TUI :detach', function()
   it('does not stop server', function()
     local job_opts = { env = t.shallowcopy(env_notermguicolors) }
 
-    if is_os('win') then
-      -- TODO(justinmk): on Windows,
-      --    - tt.setup_child_nvim() is broken.
-      --    - session.lua is broken after the pipe closes.
-      -- So this test currently just exercises __NVIM_DETACH + :detach, without asserting anything.
-
-      -- TODO(justinmk): temporary hack for Windows.
-      job_opts.env['__NVIM_DETACH'] = '1'
-      n.clear(job_opts)
-
-      local screen = Screen.new(50, 10)
-      n.feed('iHello, World')
-      screen:expect([[
-        Hello, World^                                      |
-        {1:~                                                 }|*8
-        {5:-- INSERT --}                                      |
-      ]])
-
-      -- local addr = api.nvim_get_vvar('servername')
-      eq(1, #n.api.nvim_list_uis())
-
-      -- TODO(justinmk): test util should not freak out when the pipe closes.
-      n.expect_exit(n.command, 'detach')
-
-      -- n.get_session():close() -- XXX: hangs
-      -- n.set_session(n.connect(addr)) -- XXX: hangs
-      -- eq(0, #n.api.nvim_list_uis()) -- XXX: hangs
-
-      -- Avoid a dangling process.
-      n.get_session():close('kill')
-      -- n.expect_exit(n.command, 'qall!')
-
-      return
-    end
-
     n.clear()
     finally(function()
       n.check_close()
@@ -171,13 +138,16 @@ describe('TUI :detach', function()
     }, job_opts)
 
     tt.feed_data('iHello, World')
-    screen:expect([[
+    tt.screen_expect(
+      screen,
+      [[
       Hello, World^                                      |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
       {5:-- INSERT --}                                      |
       {5:-- TERMINAL --}                                    |
-    ]])
+    ]]
+    )
 
     local child_session = n.connect(child_server)
     finally(function()
@@ -226,13 +196,16 @@ describe('TUI :detach', function()
       child_server,
     }, job_opts)
 
-    screen_reattached:expect([[
+    tt.screen_expect(
+      screen_reattached,
+      [[
       We did it, pooky^.                                 |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
                                                         |
       {5:-- TERMINAL --}                                    |
-    ]])
+    ]]
+    )
   end)
 end)
 
@@ -264,16 +237,8 @@ describe('TUI :restart', function()
       'echo getpid()',
     }, { env = env_notermguicolors })
 
-    --- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
-    --- Remove this function when that's fixed.
-    ---
-    --- @param s string
     local function screen_expect(s)
-      if is_os('win') then
-        s = s:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
-        s = s:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
-      end
-      screen:expect(s)
+      tt.screen_expect(screen, s)
     end
 
     -- The value of has("gui_running") should be 0 before and after :restart.
@@ -499,10 +464,6 @@ describe('TUI :restart', function()
 end)
 
 describe('TUI :connect', function()
-  if t.skip(is_os('win'), "relies on :detach which currently doesn't work on windows") then
-    return
-  end
-
   local screen_empty = [[
     ^                                                  |
     {100:~                                                 }|*5

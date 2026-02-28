@@ -407,6 +407,14 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
     has_out = rpc || callback_reader_set(chan->on_data);
     has_err = callback_reader_set(chan->on_stderr);
     proc->fwd_err = chan->on_stderr.fwd_err;
+#ifdef MSWIN
+    // DETACHED_PROCESS can't inherit console handles (like ConPTY stderr).
+    // Use a pipe relay: libuv creates a pipe, on_channel_output writes to stderr.
+    if (!has_err && proc->fwd_err && proc->detach) {
+      has_err = true;
+      proc->fwd_err = false;
+    }
+#endif
   }
 
   bool has_in = stdin_mode == kChannelStdinPipe;
@@ -536,8 +544,18 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {
     stdin_dup_fd = os_dup(STDIN_FILENO);
-    os_replace_stdin_to_conin();
+    os_set_cloexec(stdin_dup_fd);
     stdout_dup_fd = os_dup(STDOUT_FILENO);
+    os_set_cloexec(stdout_dup_fd);
+
+    // The server may have no console (spawned with UV_PROCESS_DETACHED for
+    // :detach support). Allocate a hidden one so CONIN$/CONOUT$ and ConPTY
+    // (:terminal) work.
+    if (!GetConsoleWindow()) {
+      AllocConsole();
+      ShowWindow(GetConsoleWindow(), SW_HIDE);
+    }
+    os_replace_stdin_to_conin();
     os_replace_stdout_and_stderr_to_conout();
   }
 #else
@@ -667,6 +685,17 @@ static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf,
   if (eof) {
     reader->eof = true;
   }
+
+#ifdef MSWIN
+  // Pipe relay for fwd_err on Windows: relay server stderr to stdout.
+  // DETACHED_PROCESS prevents inheriting console handles, so channel_job_start
+  // creates a pipe instead. Write to stdout because ConPTY only captures stdout.
+  // On non-Windows, fwd_err uses UV_INHERIT_FD directly; this path is never reached.
+  if (reader->fwd_err && count > 0) {
+    os_write(STDOUT_FILENO, buf, count, false);
+    return count;
+  }
+#endif
 
   if (callback_reader_set(*reader)) {
     ga_concat_len(&reader->buffer, buf, count);
