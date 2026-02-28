@@ -1041,9 +1041,12 @@ void ml_recover(bool checkext)
             // This is slow, but it works.
             if (!cannot_open) {
               line_count = pp->pb_pointer[idx].pe_line_count;
-              if (readfile(curbuf->b_ffname, NULL, lnum,
-                           pp->pb_pointer[idx].pe_old_lnum - 1, line_count,
-                           NULL, 0, false) != OK) {
+              linenr_T pe_old_lnum = pp->pb_pointer[idx].pe_old_lnum;
+              // Validate pe_line_count and pe_old_lnum from the
+              // untrusted swap file before passing to readfile().
+              if (line_count <= 0 || pe_old_lnum < 1
+                  || readfile(curbuf->b_ffname, NULL, lnum, pe_old_lnum - 1,
+                              line_count, NULL, 0, false) != OK) {
                 cannot_open = true;
               } else {
                 lnum += line_count;
@@ -1066,6 +1069,23 @@ void ml_recover(bool checkext)
           bnum = pp->pb_pointer[idx].pe_bnum;
           line_count = pp->pb_pointer[idx].pe_line_count;
           page_count = (unsigned)pp->pb_pointer[idx].pe_page_count;
+          // Validate pe_bnum and pe_page_count from the untrusted
+          // swap file before passing to mf_get(), which uses
+          // page_count to calculate allocation size.  A bogus value
+          // (e.g. 0x40000000) would cause a multi-GB allocation.
+          // pe_page_count must be >= 1 and bnum + page_count must
+          // not exceed the number of pages in the swap file.
+          if (page_count < 1 || bnum + page_count > mfp->mf_blocknr_max + 1) {
+            error++;
+            ml_append(lnum++, _("???ILLEGAL BLOCK NUMBER"), (colnr_T)0, true);
+            // Skip this entry and pop back up the stack to keep
+            // recovering whatever else we can.
+            idx = ip->ip_index + 1;
+            bnum = ip->ip_bnum;
+            page_count = 1;
+            buf->b_ml.ml_stack_top--;
+            continue;
+          }
           idx = 0;
           continue;
         }

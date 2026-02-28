@@ -478,4 +478,41 @@ func Test_noname_buffer()
   call assert_equal(['one', 'two'], getline(1, '$'))
 endfunc
 
+" Test for recovering a corrupted swap file, those caused a crash
+func Test_recover_corrupted_swap_file1()
+  CheckUnix
+  " only works correctly on 64bit Unix systems:
+  if !has('nvim') && v:sizeoflong != 8 || !has('unix')
+    throw 'Skipped: Corrupt Swap file sample requires a 64bit Unix build'
+  endif
+  " Test 1: Heap buffer-overflow
+  new
+  let sample = 'samples/recover-crash1.swp'
+  let target = '.Xpoc1.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
+  call filecopy(sample, target)
+  try
+    sil recover! Xpoc1
+  catch /^Vim\%((\S\+)\)\=:E1364:/
+  endtry
+  let content = getline(1, '$')->join()
+  call assert_match('???ILLEGAL BLOCK NUMBER', content)
+  call delete(target)
+  bw!
+"
+"  " Test 2: Segfault
+  new
+  let sample = 'samples/recover-crash2.swp'
+  let target = '.Xpoc2.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
+  call filecopy(sample, target)
+  try
+    sil recover! Xpoc2
+  catch /^Vim\%((\S\+)\)\=:E1364:/
+  endtry
+  let content = getline(1, '$')->join()
+  call assert_match('???ILLEGAL BLOCK NUMBER', content)
+  call assert_match('???LINES MISSING', content)
+  call delete(target)
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
