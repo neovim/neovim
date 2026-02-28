@@ -351,6 +351,8 @@ OPTIONS
 • 'completeopt' flag "nearest" sorts completion results by distance to cursor.
 • 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'diffopt' with 'inline:word' now automatically merges adjacent diff blocks
+  separated by gaps and punctuation by 5 bytes to improve readability. |'diffopt'|
 • 'fillchars' has new flag "foldinner".
 • 'fsync' and 'grepformat' are now |global-local| options.
 • 'jumpoptions' flag "view" now applies when popping the |tagstack|.
