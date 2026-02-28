@@ -325,7 +325,7 @@ describe('TUI :restart', function()
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
-    screen_expect({ any = vim.pesc('+cmd did not quit the server') })
+    screen:expect({ any = vim.pesc('+cmd did not quit the server') })
 
     tt.feed_data('ithis will be removed\027')
     screen_expect([[
@@ -338,37 +338,37 @@ describe('TUI :restart', function()
 
     -- Check ":confirm restart" on a modified buffer.
     tt.feed_data(':confirm restart\013')
-    screen_expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
 
     -- Cancel the operation (abandons restart).
     tt.feed_data('C\013')
-    screen_expect({ any = vim.pesc('[No Name]') })
+    screen:expect({ any = vim.pesc('[No Name]') })
 
     -- Check :restart respects 'confirm' option.
     tt.feed_data(':set confirm\013')
     tt.feed_data(':restart\013')
-    screen_expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('C\013')
-    screen_expect({ any = vim.pesc('[No Name]') })
+    screen:expect({ any = vim.pesc('[No Name]') })
     tt.feed_data(':set noconfirm\013')
 
     -- Check ":confirm restart <cmd>" on a modified buffer.
     tt.feed_data(":confirm restart put ='Hello3'\013")
-    screen_expect({ any = vim.pesc('Save changes to "Untitled"?') })
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('N\013')
-    screen_expect({ any = '%^Hello3' })
+    screen:expect({ any = '%^Hello3' })
     -- assert_new_pid()
     assert_no_gui_running()
     -- eq("--cmd echo getpid() +::: -c put ='Hello3'", get_argv(4))
 
     -- Check ":confirm restart +echo" correctly ignores ":confirm"
     tt.feed_data(':confirm restart +echo\013')
-    screen_expect({ any = vim.pesc('+cmd did not quit the server') })
+    screen:expect({ any = vim.pesc('+cmd did not quit the server') })
 
     -- Check ":restart" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
     tt.feed_data(':restart\013')
-    screen_expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
+    screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
 
     -- Check ":restart +qall!" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
