@@ -171,6 +171,21 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, got)
   end)
 
+  it('generate "■" symbol with highlight group for CompletionItemKind.Color', function()
+    local completion_list = {
+      { label = 'text-red-300', kind = 16, documentation = 'color: rgb(252, 165, 165)' },
+    }
+    local result = complete('|', completion_list)
+    result = vim.tbl_map(function(x)
+      return {
+        word = x.word,
+        kind_hlgroup = x.kind_hlgroup,
+        kind = x.kind,
+      }
+    end, result.items)
+    eq({ { word = 'text-red-300', kind_hlgroup = '@lsp.color.fca5a5', kind = '■' } }, result)
+  end)
+
   ---@param prefix string
   ---@param items lsp.CompletionItem[]
   ---@param expected table[]

@@ -277,6 +277,51 @@ local function match_item_by_value(value, prefix)
   return vim.startswith(value, prefix), nil
 end
 
+--- Generate kind text for completion color items
+--- Parse color from doc and return colored symbol ■
+---
+---@param item table completion item with kind and documentation
+---@return string? kind text or "■" for colors
+---@return string? highlight group for colors
+local function generate_kind(item)
+  if not lsp.protocol.CompletionItemKind[item.kind] then
+    return 'Unknown'
+  end
+  if item.kind ~= lsp.protocol.CompletionItemKind.Color then
+    return lsp.protocol.CompletionItemKind[item.kind]
+  end
+  local doc = get_doc(item)
+  if #doc == 0 then
+    return
+  end
+
+  -- extract hex from RGB format
+  local r, g, b = doc:match('rgb%((%d+)%s*,?%s*(%d+)%s*,?%s*(%d+)%)')
+  local hex = r and string.format('%02x%02x%02x', tonumber(r), tonumber(g), tonumber(b))
+    or doc:match('#?([%da-fA-F]+)')
+
+  if not hex then
+    return
+  end
+
+  -- expand 3-digit hex to 6-digit
+  if #hex == 3 then
+    hex = hex:gsub('.', '%1%1')
+  end
+
+  if #hex ~= 6 then
+    return
+  end
+
+  hex = hex:lower()
+  local group = ('@lsp.color.%s'):format(hex)
+  if #api.nvim_get_hl(0, { name = group }) == 0 then
+    api.nvim_set_hl(0, group, { fg = '#' .. hex })
+  end
+
+  return '■', group
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -359,16 +404,18 @@ function M._lsp_to_complete_items(
       then
         hl_group = 'DiagnosticDeprecated'
       end
+      local kind, kind_hlgroup = generate_kind(item)
       local completion_item = {
         word = word,
         abbr = item.label,
-        kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
+        kind = kind,
         menu = item.detail or '',
         info = get_doc(item),
         icase = 1,
         dup = 1,
         empty = 1,
         abbr_hlgroup = hl_group,
+        kind_hlgroup = kind_hlgroup,
         user_data = {
           nvim = {
             lsp = {

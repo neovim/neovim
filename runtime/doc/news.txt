@@ -315,6 +315,7 @@ LSP
 • Support for `workspace/codeLens/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh
 • `gx` will use `textDocument/documentLink` if available.
+• |vim.lsp.completion.enable()| adds colored symbol preview for color items.
 
 LUA
 
