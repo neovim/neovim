@@ -627,6 +627,53 @@ describe('vim.lsp.diagnostic', function()
       )
     end)
 
+    it('refreshes all open buffers on didChange', function()
+      local fake_uri_2 = 'file:///fake/uri2'
+      local requests = exec_lua(function()
+        local second_buf = vim.uri_to_bufnr(fake_uri_2)
+        vim.fn.bufload(second_buf)
+
+        vim.api.nvim_win_set_buf(0, second_buf)
+        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          resultId = 'result1',
+          items = { _G.make_error('Diag buf1', 4, 4, 4, 4) },
+        }, {
+          method = 'textDocument/diagnostic',
+          params = { textDocument = { uri = fake_uri } },
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        })
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          resultId = 'result2',
+          items = { _G.make_error('Diag buf2', 4, 4, 4, 4) },
+        }, {
+          method = 'textDocument/diagnostic',
+          params = { textDocument = { uri = fake_uri_2 } },
+          client_id = client_id,
+          bufnr = second_buf,
+        })
+
+        _G.requests = 0
+
+        vim.api.nvim_exec_autocmds('LspNotify', {
+          buffer = diagnostic_bufnr,
+          data = {
+            method = 'textDocument/didChange',
+            client_id = client_id,
+          },
+        })
+
+        return _G.requests
+      end)
+
+      eq(2, requests)
+    end)
+
     it('handles relatedDocuments diagnostics', function()
       local fake_uri_2 = 'file:///fake/uri2'
       ---@type vim.Diagnostic[], vim.Diagnostic[], string?
