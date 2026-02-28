@@ -56,10 +56,9 @@ Follow these steps to get LSP features:
    a |lsp-root_markers| file so the workspace can be recognized.
 5. Check that LSP is active ("attached") for the buffer: >vim
      :checkhealth vim.lsp
-6. Please note that certain LSP features are disabled by default,
-   you may choose to enable them manually. See:
+6. Note: some LSP features are disabled by default, you can enable them
+   manually:
      - |lsp-codelens|
-     - |lsp-document_color|
      - |lsp-linked_editing_range|
      - |lsp-inlay_hint|
      - |lsp-inline_completion|
@@ -87,6 +86,13 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
 - CTRL-S (Insert mode) is mapped to |vim.lsp.buf.signature_help()|
 - "an" and "in" (Visual and Operator-pending mode) are mapped to outer and inner incremental
   selections, respectively, using |vim.lsp.buf.selection_range()|
+- |gx| handles `textDocument/documentLink`. Example: with gopls, invoking gx
+  on "os" in this Go code will open documentation externally: >
+    package nvim
+    import (
+       "os"
+    )
+<
 
 BUFFER-LOCAL DEFAULTS
 
@@ -1575,12 +1581,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 |vim.lsp.ClientConfig|.
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
                                 provided at runtime (after startup).
-      • {exit_timeout}          (`integer|boolean`, default: `false`)
-                                Milliseconds to wait for server to exit
-                                cleanly after sending the "shutdown" request
-                                before sending kill -15. If set to false,
-                                waits indefinitely. If set to true, nvim will
-                                kill the server immediately.
+      • {exit_timeout}          (`integer|boolean`, default: `false`) See
+                                |vim.lsp.ClientConfig|.
       • {flags}                 (`table`) Experimental client flags:
                                 • {allow_incremental_sync}? (`boolean`,
                                   default: `true`) Allow using incremental
@@ -1701,12 +1703,18 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                process on exit, but if Nvim fails to exit
                                cleanly this could leave behind orphaned server
                                processes.
-      • {exit_timeout}?        (`integer|boolean`, default: `false`)
-                               Milliseconds to wait for server to exit cleanly
-                               after sending the "shutdown" request before
-                               sending kill -15. If set to false, waits
-                               indefinitely. If set to true, nvim will kill
-                               the server immediately.
+      • {exit_timeout}?        (`integer|boolean`, default: `false`) Decides
+                               if/when to force-stop the server after sending
+                               the "shutdown" request. See |Client:stop()|.
+                               Note: when Nvim itself is exiting,
+                               • if `exit_timeout=false`: Nvim will not
+                                 force-stop LSP server(s).
+                               • if `exit_timeout=true`: Nvim will force-stop
+                                 LSP server(s) that did not comply with the
+                                 "shutdown" request.
+                               • if `exit_timeout` is a number: Nvim will wait
+                                 up to `exit_timeout` milliseconds before
+                                 performing force-stop.
       • {flags}?               (`table`) Experimental client flags:
                                • {allow_incremental_sync}? (`boolean`,
                                  default: `true`) Allow using incremental sync
@@ -1887,10 +1895,13 @@ Client:stop({force})                                           *Client:stop()*
     files can lead to file corruption.
 
     Parameters: ~
-      • {force}  (`integer|boolean?`, default: `self.exit_timeout`) Time in
-                 milliseconds to wait before forcing a shutdown. If false,
-                 only request the server to shutdown, but don't force it. If
-                 true, force a shutdown immediately.
+      • {force}  (`integer|boolean?`) (default: `self.exit_timeout`) Decides
+                 whether to force-stop the server.
+                 • `nil`: Defaults to `exit_timeout` from
+                   |vim.lsp.ClientConfig|.
+                 • `true`: Force-stop after "shutdown" request.
+                 • `false`: Do not force-stop after "shutdown" request.
+                 • number: Wait up to `force` milliseconds before force-stop.
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
     Checks if a client supports a given method. Always returns true for

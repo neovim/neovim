@@ -30,7 +30,9 @@
 ---
 ---Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 ---not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
----spilled lines. To see the full message, the |g<| command can be used.
+---spilled lines. To see the full message, use either:
+--- - |g<| at any time
+--- - ENTER immediately after a message is displayed.
 
 local api = vim.api
 local M = {

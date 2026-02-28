@@ -548,7 +548,6 @@ When multiple captures set this metadata over a region, only the innermost
 
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
-<
 
 Note the following information is adapted from:
 https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection
@@ -1583,10 +1582,8 @@ edit({lang})                                     *vim.treesitter.query.edit()*
 
     If you move the cursor to a capture name ("@foo"), text matching the
     capture is highlighted with |hl-DiagnosticVirtualTextHint| in the source
-    buffer.
-
-    The query editor is a scratch buffer, use `:write` to save it. You can
-    find example queries at `$VIMRUNTIME/queries/`.
+    buffer. The query editor is a scratch buffer, use `:write` to save it. You
+    can find example queries at `$VIMRUNTIME/queries/`.
 
     Parameters: ~
       • {lang}  (`string?`) language to open the query editor for. If omitted,

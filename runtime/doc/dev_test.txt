@@ -345,6 +345,10 @@ Writing tests                                                 *dev-write-test*
 
 GUIDELINES
 
+- CI runs tests in parallel via the `functionaltest_parallel` cmake target.
+- The Nvim test instance CWD is isolated to per "test group" (see
+  `WORKING_DIRECTORY` in `cmake/RunTests.cmake`), so tests can write files to
+  CWD without interferring with other tests running in parallel.
 - Luajit needs to know about type and constant declarations used in function
   prototypes. The
   [testutil.lua](https://github.com/neovim/neovim/blob/master/test/unit/testutil.lua)

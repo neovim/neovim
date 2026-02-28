@@ -113,8 +113,13 @@ Exceptions to this policy may be made (for experimental subsystems or when
 there is broad consensus among maintainers). The rationale for the exception
 should be stated explicitly and publicly.
 
-Third-party dependencies
-------------------------
+Dependencies
+------------
+
+### Third-party dependencies
+
+(Note: keep this in sync with the "external" section of `LICENSE.txt`).
+(TODO: declare deps in `sbom.json`, CycloneDX SBOM format).
 
 "Bundled" dependencies can be updated by bumping their versions in `cmake.deps/deps.txt`.
 Some can be auto-bumped by `scripts/bump_deps.lua`.
@@ -138,7 +143,8 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 
 ### Vendored dependencies
 
-These dependencies are "vendored" (inlined), we must update the sources manually:
+"Vendored" (inlined) dependencies are part of the repo tree and we must update
+the sources manually:
 
 * `src/mpack/`: [libmpack](https://github.com/libmpack/libmpack)
     * send improvements upstream!
@@ -162,7 +168,7 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
 
-Other dependencies
+Operational dependencies
 --------------------------
 
 * GitHub users:
@@ -178,7 +184,7 @@ Other dependencies
     * neovim.io
     * packspec.org
     * pkgjson.org
-* DNS for the above domains is managed in https://cloudflare.com (not the domain registrar)
+* The above domains are registered and managed in https://cloudflare.com
 
 
 Refactoring

@@ -83,11 +83,155 @@ describe('vim.range', function()
     }, range)
   end)
 
-  it('checks whether a range contains a position', function()
+  it(':has()', function()
+    -- has(vim.range)
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.range(0, 10, 0, 36))
+      end)
+    )
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(1, 2, 9, 99):has(vim.range(0, 10, 0, 36))
+      end)
+    )
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.range(0, 10, 1, 36))
+      end)
+    )
+
+    -- has(vim.pos)
     eq(
       true,
       exec_lua(function()
         return vim.range(0, 0, 1, 5):has(vim.pos(0, 1))
+      end)
+    )
+
+    -- has(vim.range) with identical ranges
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.range(0, 0, 1, 5))
+      end)
+    )
+
+    -- has(vim.range) where inner starts before outer
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(1, 0, 2, 0):has(vim.range(0, 5, 1, 5))
+      end)
+    )
+
+    -- has(vim.range) where inner ends after outer
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.range(0, 0, 2, 0))
+      end)
+    )
+
+    -- has(vim.range) single row ranges
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 0, 10):has(vim.range(0, 3, 0, 7))
+      end)
+    )
+
+    -- has(vim.range) single row range where inner extends beyond outer
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 0, 10):has(vim.range(0, 5, 0, 15))
+      end)
+    )
+
+    -- has(vim.pos) at start boundary
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.pos(0, 0))
+      end)
+    )
+
+    -- has(vim.pos) at end boundary (exclusive, should return false)
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.pos(1, 5))
+      end)
+    )
+
+    -- has(vim.pos) before range
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(1, 0, 2, 0):has(vim.pos(0, 5))
+      end)
+    )
+
+    -- has(vim.pos) after range
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 1, 5):has(vim.pos(2, 0))
+      end)
+    )
+
+    -- has(vim.pos) in middle of range on same line
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 0, 10):has(vim.pos(0, 5))
+      end)
+    )
+
+    -- has(vim.pos) in middle of multiline range
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 5, 10):has(vim.pos(2, 5))
+      end)
+    )
+
+    -- has(vim.range) with buffer field
+    local buf = exec_lua(function()
+      return vim.api.nvim_create_buf(false, true)
+    end)
+    eq(
+      true,
+      exec_lua(function(buf)
+        return vim.range(0, 0, 1, 5, { buf = buf }):has(vim.range(0, 1, 0, 3, { buf = buf }))
+      end, buf)
+    )
+
+    -- has(vim.pos) with buffer field
+    eq(
+      true,
+      exec_lua(function(buf)
+        return vim.range(0, 0, 1, 5, { buf = buf }):has(vim.pos(0, 2, { buf = buf }))
+      end, buf)
+    )
+
+    -- has(vim.range) empty range at start
+    eq(
+      true,
+      exec_lua(function()
+        return vim.range(0, 0, 2, 0):has(vim.range(0, 0, 0, 0))
+      end)
+    )
+
+    -- has(vim.range) empty range at end
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 2, 0):has(vim.range(2, 0, 2, 0))
       end)
     )
   end)
