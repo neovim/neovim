@@ -1747,7 +1747,7 @@ static bool itr_eq(MarkTreeIter *itr1, MarkTreeIter *itr2)
 /// @return false if we already know no marks can be found
 ///               even if "true" the first call to marktree_itr_step_overlap
 ///               could return false
-bool marktree_itr_get_overlap(MarkTree *b, int row, int col, MarkTreeIter *itr)
+bool marktree_itr_get_overlap(MarkTree *b, linenr_T row, int col, MarkTreeIter *itr)
 {
   if (b->n_keys == 0) {
     itr->x = NULL;
