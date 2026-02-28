@@ -77,8 +77,9 @@ Restart Nvim
                 2. Starts a new Nvim server using the same |v:argv| (except
                    `-- [file…]` files).
                 3. Attaches the current UI to the new Nvim server and runs
-                   `[command]` on it. Other UIs (if any) will not reattach
-                   on restart (this may change in the future).
+                   `[command]` on it.
+                4. Other UIs (if any) will also attach to the new Nvim server,
+                   but they don't run `[command]` on it.
 
                 Example: discard changes and stop with `:qall!`, then restart: >
                     :restart +qall!

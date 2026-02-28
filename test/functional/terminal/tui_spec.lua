@@ -4151,11 +4151,11 @@ describe('TUI client', function()
     }, { env = env_notermguicolors })
     screen_client:expect(s0)
 
-    return server_super, screen_server, screen_client
+    return server_super, screen_server, screen_client, server_pipe
   end
 
   it('connects to remote instance (with its own TUI)', function()
-    local _, screen_server, screen_client = start_tui_and_remote_client()
+    local _, screen_server, screen_client, _ = start_tui_and_remote_client()
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
@@ -4174,10 +4174,10 @@ describe('TUI client', function()
   end)
 
   it(':restart works when connecting to remote instance (with its own TUI)', function()
-    local _, screen_server, screen_client = start_tui_and_remote_client()
+    local _, screen_server, screen_client, _ = start_tui_and_remote_client()
 
     -- Run :restart on the remote client.
-    -- The remote client should start a new server while the original one should exit.
+    -- The remote client should start a new server and the original one should attach to it.
     feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |
@@ -4186,13 +4186,22 @@ describe('TUI client', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
+    -- screen_server:expect({ any = vim.pesc('[Process exited 0]') })
+    screen_server:expect([[
+      ^                                                  |
+      {100:~                                                 }|*3
+      {3:[No Name]                                         }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
+    screen_server:expect({ any = 'GUI Running: 0' })
 
     feed_data(':q!\r')
     screen_client:expect({ any = vim.pesc('[Process exited 0]') })
+    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
   local function start_headless_server_and_client(use_testlog)
@@ -4294,6 +4303,40 @@ describe('TUI client', function()
     screen_client:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
+  it(':restart can reattach all UIs', function()
+    local _, screen_server, screen_client, server_pipe = start_tui_and_remote_client()
+
+    feed_data(':restart +qall!\013')
+
+    retry(nil, nil, function()
+      eq(nil, vim.uv.fs_stat(server_pipe))
+    end)
+
+    screen_server:expect([[
+      ^                                                  |
+      {100:~                                                 }|*3
+      {3:[No Name]                                         }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    screen_client:expect([[
+      ^                                                  |
+      {100:~                                                 }|*3
+      {3:[No Name]                                         }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(':echo "GUI Running: " .. has("gui_running")\013')
+    screen_client:expect({ any = 'GUI Running: 0' })
+    screen_server:expect({ any = 'GUI Running: 0' })
+
+    feed_data(':q!\r')
+    screen_client:expect({ any = vim.pesc('[Process exited 0]') })
+    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
   local ffi_str_defs = [[
     local ffi = require('ffi')
     local cstr = ffi.typeof('char[?]')
@@ -4375,7 +4418,7 @@ describe('TUI client', function()
   end)
 
   local function test_remote_tui_quit(status)
-    local server_super, screen_server, screen_client = start_tui_and_remote_client()
+    local server_super, screen_server, screen_client, _ = start_tui_and_remote_client()
 
     -- quitting the server
     set_session(server_super)
@@ -4397,7 +4440,7 @@ describe('TUI client', function()
 
   it('suspend/resume works with multiple clients', function()
     t.skip(is_os('win'), 'N/A for Windows')
-    local server_super, screen_server, screen_client = start_tui_and_remote_client()
+    local server_super, screen_server, screen_client, _ = start_tui_and_remote_client()
 
     local screen_normal = [[
       Hello, Worl^d                                      |

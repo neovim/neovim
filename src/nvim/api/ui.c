@@ -267,21 +267,32 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   remote_ui_disconnect(channel_id, err, false);
 }
 
-/// Sends a "restart" UI event to the UI on the given channel.
+/// Sends a "restart" UI event to all connected UIs.
 ///
-/// @return  false if there is no UI on the channel, otherwise true
-bool remote_ui_restart(uint64_t channel_id, const char *listen_addr, String command, Error *err)
+/// @return  false if there is no current UI, otherwise true
+bool remote_ui_restart(const char *listen_addr, String command, Error *err)
 {
-  RemoteUI *ui = get_ui_or_err(channel_id, err);
-  if (!ui) {
+  RemoteUI *cui = get_ui_or_err(current_ui, err);
+  if (!cui) {
     return false;
   }
 
   MAXSIZE_TEMP_ARRAY(args, 2);
   ADD_C(args, CSTR_AS_OBJ(listen_addr));
   ADD_C(args, STRING_OBJ(command));
+  push_call(cui, "restart", args);
 
-  push_call(ui, "restart", args);
+  MAXSIZE_TEMP_ARRAY(other_args, 2);
+  ADD_C(other_args, CSTR_AS_OBJ(listen_addr));
+  ADD_C(other_args, CSTR_AS_OBJ(""));
+
+  uint64_t chan_id;
+  RemoteUI *ui;
+  map_foreach(&connected_uis, chan_id, ui, {
+    if (ui && chan_id != current_ui) {
+      push_call(ui, "restart", other_args);
+    }
+  })
   return true;
 }
 

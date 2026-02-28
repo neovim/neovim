@@ -5017,8 +5017,8 @@ static void ex_restart(exarg_T *eap)
   }
   arena_mem_free(result_mem);
 
-  // Send restart event to current UI.
-  if (!remote_ui_restart(current_ui, listen_addr, cstr_as_string(eap->arg), &err)) {
+  // Send restart event to all connected UIs.
+  if (!remote_ui_restart(listen_addr, cstr_as_string(eap->arg), &err)) {
     if (ERROR_SET(&err)) {
       ELOG("%s", err.msg);  // UI disappeared already?
       api_clear_error(&err);
