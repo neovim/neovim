@@ -8,9 +8,11 @@
 ---require('vim._core.ui2').enable({
 ---  enable = true, -- Whether to enable or disable the UI.
 ---  msg = { -- Options related to the message module.
----    ---@type 'cmd'|'msg' Where to place regular messages, either in the
+---    ---@type 'cmd'|'msg' Default message target, either in the
 ---    ---cmdline or in a separate ephemeral message window.
----    target = 'cmd',
+---    ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
+---    or table mapping |ui-messages| kinds to a target.
+---    targets = 'cmd',
 ---    timeout = 4000, -- Time a message is visible in the message window.
 ---  },
 ---})
@@ -43,9 +45,8 @@ local M = {
   cfg = {
     enable = true,
     msg = { -- Options related to the message module.
-      ---@type 'cmd'|'msg' Where to place regular messages, either in the
-      ---cmdline or in a separate ephemeral message window.
-      target = 'cmd',
+      target = 'cmd', ---@type 'cmd'|'msg' Default message target if not present in targets.
+      targets = {}, ---@type table<string, 'cmd'|'msg'|'pager'> Kind specific message targets.
       timeout = 4000, -- Time a message is visible in the message window.
     },
   },
@@ -160,6 +161,8 @@ local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 function M.enable(opts)
   vim.validate('opts', opts, 'table', true)
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
+  M.cfg.msg.target = type(M.cfg.msg.targets) == 'string' and M.cfg.msg.targets or M.cfg.msg.target
+  M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets or {}
   if #vim.api.nvim_list_uis() == 0 then
     return -- Don't prevent stdout messaging when no UIs are attached.
   end
