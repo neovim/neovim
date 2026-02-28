@@ -4181,8 +4181,6 @@ describe('TUI client', function()
   end)
 
   it(':restart works when connecting to remote instance (with its own TUI)', function()
-    t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows')
-
     local _, screen_server, screen_client = start_tui_and_remote_client()
 
     -- Run :restart on the remote client.
@@ -4281,8 +4279,6 @@ describe('TUI client', function()
   end)
 
   it(':restart works when connecting to remote instance (--headless)', function()
-    t.skip(is_os('win'), 'relies on chan.detach which is currently broken on Windows')
-
     local _, server_pipe, screen_client = start_headless_server_and_client(false)
 
     -- Run :restart on the client.
