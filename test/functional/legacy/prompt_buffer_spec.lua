@@ -27,15 +27,11 @@ describe('prompt buffer', function()
     source([[
       func TextEntered(text)
         if a:text == "exit"
-          " Reset &modified to allow the buffer to be closed.
-          set nomodified
           stopinsert
           close
         else
           " Add the output above the current prompt.
           call append(line("$") - 1, split('Command: "' . a:text . '"', '\n'))
-          " Reset &modified to allow the buffer to be closed.
-          set nomodified
           call timer_start(20, {id -> TimerFunc(a:text)})
         endif
       endfunc
@@ -43,8 +39,6 @@ describe('prompt buffer', function()
       func TimerFunc(text)
         " Add the output above the current prompt.
         call append(line("$") - 1, split('Result: "' . a:text .'"', '\n'))
-        " Reset &modified to allow the buffer to be closed.
-        set nomodified
       endfunc
 
       func SwitchWindows()
@@ -62,7 +56,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -98,7 +92,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: hel^                 |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -107,7 +101,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: -^hel                |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -116,7 +110,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: -hz^el               |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -125,7 +119,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: -hzelx^              |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -149,7 +143,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:                     |
       {1:~                        }|*3
-      {2:[Prompt] [+]             }|
+      {2:[Prompt]                 }|
       ^other buffer             |
       {1:~                        }|*3
                                |
@@ -158,7 +152,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -167,7 +161,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd:^                     |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -281,7 +275,7 @@ describe('prompt buffer', function()
       line 2                   |
       line 3^                   |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -403,7 +397,7 @@ describe('prompt buffer', function()
       line 2                   |
       line 3                   |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -433,7 +427,7 @@ describe('prompt buffer', function()
       line 2                   |
       line 3^                   |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -450,7 +444,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: tests-middle^-initial|
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -460,7 +454,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: tests-mid^le-initial |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
                                |
@@ -471,7 +465,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: tests-mid^dle-initial|
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       1 change; {MATCH:.*} |
@@ -484,7 +478,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: tests-^initial       |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       1 change; {MATCH:.*} |
@@ -509,7 +503,7 @@ describe('prompt buffer', function()
       Command: "tests-initial" |
       cmd:^                     |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       1 line {MATCH:.*} |
@@ -522,7 +516,7 @@ describe('prompt buffer', function()
       Command: "tests-initial" |
       cmd: ^                    |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -533,7 +527,7 @@ describe('prompt buffer', function()
       Command: "tests-initial" |
       ^cmd: hello               |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       1 change; {MATCH:.*} |
@@ -548,7 +542,7 @@ describe('prompt buffer', function()
       Command: "tests-initial" |
       c^md > hello              |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       Already at oldest change |
@@ -563,7 +557,7 @@ describe('prompt buffer', function()
       Command: "tests-initial" |
       cmd > hello there        |
       cmd >^                    |
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       Already at oldest change |
@@ -580,7 +574,7 @@ describe('prompt buffer', function()
       line 2                   |
       line 3^                   |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -592,7 +586,7 @@ describe('prompt buffer', function()
       line 2                   |
       after^                    |
       line 3                   |
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -608,7 +602,7 @@ describe('prompt buffer', function()
       before^                   |
       line 2                   |
       after                    |
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -637,7 +631,7 @@ describe('prompt buffer', function()
       line 3"                  |
       cmd: line 4              |
       after prompt^             |
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -649,7 +643,7 @@ describe('prompt buffer', function()
       line 3"                  |
       cmd: at prompt^           |
       line 4                   |
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -674,7 +668,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: asdf^                |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -684,7 +678,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -694,7 +688,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: asdf^                |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -704,7 +698,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: ^                    |
       {1:~                        }|*3
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
       {5:-- INSERT --}             |
@@ -1034,7 +1028,7 @@ describe('prompt buffer', function()
       ooooooooooooooooooooong >|
        ^                        |
       {1:~                        }|
-      {3:[Prompt] [+]             }|
+      {3:[Prompt]                 }|
       foo > hello              |
       {1:~                        }|*3
       {5:-- INSERT --}             |
