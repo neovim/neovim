@@ -40,6 +40,137 @@ vim._extra = {
   inspect_pos = true,
 }
 
+--- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
+--- `callback` immediately, then on user events, internal events, and approximately every
+--- `interval` milliseconds (default 200). Returns `true` plus any remaining callback
+--- results on success.
+---
+--- Nvim processes other events while waiting.
+--- Cannot be called during an |api-fast| event.
+---
+--- Examples:
+---
+--- ```lua
+--- -- Wait for 100 ms, allowing other events to process.
+--- vim.wait(100)
+---
+--- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+--- vim.wait(1000, function() return vim.g.foo end, 500)
+---
+--- -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+--- local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
+---   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+--- end)
+---
+--- -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+--- -- only waits 100ms because `vim.wait` processes other events while waiting.
+--- vim.defer_fn(function() vim.g.timer_result = true end, 100)
+--- if vim.wait(10000, function() return vim.g.timer_result end) then
+---   print('Only waiting a little bit of time!')
+--- end
+--- ```
+---
+--- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
+--- part is truncated.
+--- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
+--- @param interval? integer (Approximate) number of milliseconds to wait between polls
+--- @param fast_only? boolean If true, only |api-fast| events will be processed.
+--- @return boolean, nil|-1|-2, ...
+---     - If callback returns `true` before timeout: `true, ...` (remaining callback results).
+---     - On timeout: `false, -1`
+---     - On interrupt: `false, -2`
+---     - On error: the error is raised.
+function vim.wait(time, callback, interval, fast_only)
+  if vim.in_fast_event() then
+    error('E5560: vim.wait must not be called in a fast event context', 0)
+  end
+
+  vim.validate('time', time, 'number')
+  if time < 0 then
+    error('timeout must be >= 0')
+  end
+  local has_deadline = time == time and time ~= math.huge
+  if has_deadline then
+    time = math.floor(time)
+  end
+
+  vim.validate('callback', callback, 'callable', true)
+
+  vim.validate('interval', interval, 'number', true)
+  if interval then
+    interval = math.floor(interval)
+    if interval < 0 then
+      error('interval must be >= 0')
+    end
+  else
+    interval = 200
+  end
+
+  vim.validate('fast_only', fast_only, 'boolean', true)
+  if fast_only == nil then
+    fast_only = false
+  end
+
+  local start = vim.uv.hrtime()
+  local dummy_timer --- @type uv.uv_timer_t?
+
+  local function cleanup()
+    if dummy_timer and not dummy_timer:is_closing() then
+      dummy_timer:stop()
+      dummy_timer:close()
+    end
+  end
+
+  if interval > 0 then
+    dummy_timer = assert(vim.uv.new_timer())
+    dummy_timer:start(interval, interval, function()
+      -- If Nvim exits while loop_poll() is blocked, vim.wait() does not
+      -- resume.
+      if vim.v.exiting ~= vim.NIL then
+        cleanup()
+      end
+    end)
+  end
+
+  -- Flush screen updates before blocking.
+  vim._core.ui_flush()
+
+  while true do
+    if vim._core.check_interrupt() then
+      cleanup()
+      return false, -2
+    end
+
+    if callback then
+      local results = vim.F.pack_len(pcall(callback))
+      if not results[1] then
+        cleanup()
+        error(results[2], 0)
+      elseif results[2] then
+        cleanup()
+        return true, unpack(results, 3, results.n)
+      end
+    end
+
+    local poll_timeout = -1
+    if has_deadline then
+      local remaining_ms = time - (vim.uv.hrtime() - start) / 1e6
+      if remaining_ms <= 0 then
+        cleanup()
+        return false, -1
+      end
+
+      -- loop_poll() takes an integer timeout, so cap each individual poll
+      -- while still honoring larger overall waits.
+      poll_timeout = math.min(math.ceil(remaining_ms), vim._maxint)
+    end
+
+    -- The dummy timer wakes `vim._core.loop_poll()` on interval boundaries. Without it,
+    -- polling would only resume for unrelated events or the final timeout.
+    vim._core.loop_poll(poll_timeout, fast_only)
+  end
+end
+
 --- @nodoc
 vim.log = {
   --- @enum vim.log.levels
