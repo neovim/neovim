@@ -535,6 +535,51 @@ function vim.list.bisect(t, val, opts)
   end
 end
 
+--- Filters a |lua-list| in-place, excluding items for which `fn(item)` returns false or nil.
+---
+--- Example:
+--- ```lua
+--- local t = { 1, 2, 3, 4 }
+--- vim.list.filter(t, function(x)
+---   return x <= 2
+--- end)
+--- -- t is now { 1, 2 }
+---
+--- local t = { { id = 1 }, { id = 2 }, { id = 3 } }
+--- -- Use deepcopy() to avoid mutating t.
+--- local filtered = vim.list.filter(vim.deepcopy(t), function(x)
+---   return x.id == 2
+--- end)
+--- -- filtered is now { { id = 2 } }
+--- ```
+---
+--- @generic T
+--- @param t T[] A comparable list.
+--- @param fn fun(x: T): boolean The filter predicate
+--- @return T[] : The filtered list
+--- @see |Iter:filter()|
+function vim.list.filter(t, fn)
+  vim.validate('t', t, 'table')
+  vim.validate('f', fn, 'callable')
+
+  local finish = #t
+  local j = 1
+
+  for i = 1, finish do
+    local v = t[i]
+    if fn(v) then
+      t[j] = v
+      j = j + 1
+    end
+  end
+
+  for i = j, finish do
+    t[i] = nil
+  end
+
+  return t
+end
+
 --- Checks if a table is empty.
 ---
 ---@see https://github.com/premake/premake-core/blob/master/src/base/table.lua
