@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 -- Will generate files ex_cmds_enum.generated.h with cmdidx_T enum
 -- and ex_cmds_defs.generated.h with main Ex commands definitions.
 

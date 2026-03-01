@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 local do_not_run = true
 if do_not_run then
   print([[

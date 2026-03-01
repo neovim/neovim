@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 -- HASHY McHASHFACE
 
 local M = {}

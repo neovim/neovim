@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 if arg[1] == '--help' then
   print('Usage:')
   print('  ' .. arg[0] .. ' [-c] target source varname [source varname]...')
