@@ -122,8 +122,8 @@ MPACK_API mpack_token_t mpack_pack_number(double v)
     if (!tok.data.value.lo) tok.data.value.hi++;
     if (tok.data.value.lo == 0 && tok.data.value.hi == 0) tok.length = 1;
     else if (tok.data.value.lo < 0x80000000) tok.length = 8;
-    else if (tok.data.value.lo < 0xffff7fff) tok.length = 4;
-    else if (tok.data.value.lo < 0xffffff7f) tok.length = 2;
+    else if (tok.data.value.lo < 0xffff8000) tok.length = 4;
+    else if (tok.data.value.lo < 0xffffff80) tok.length = 2;
     else tok.length = 1;
   } else {
     tok.type = MPACK_TOKEN_UINT;
