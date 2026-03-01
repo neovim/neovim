@@ -243,6 +243,7 @@ EVENTS
 • |SessionLoadPre| is triggered before loading a |Session| file.
 • |TabClosedPre| is triggered before closing a |tabpage|.
 • New `terminator` parameter for |TermRequest| event.
+• Added |CmdlineCharPre| which works like InputCharPre for the cmdline
 
 HIGHLIGHTS
 
