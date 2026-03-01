@@ -72,7 +72,7 @@ uint64_t ui_client_start_server(const char *exepath, size_t argc, char **argv)
 
   // If stdin is not a pty, it is forwarded to the client.
   // Replace stdin in the TUI process with the tty fd.
-  if (ui_client_forward_stdin) {
+  if (!stdin_isatty) {
     close(0);
 #ifdef MSWIN
     os_open_conin_fd();

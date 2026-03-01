@@ -55,7 +55,7 @@ with these (optional) keys:
 - `ext_termcolors`	Use external default colors.
 - `term_name`		Sets the name of the terminal 'term'.
 - `term_colors`		Sets the number of supported colors 't_Co'.
-- `stdin_fd`		Read buffer 1 from this fd as if it were stdin |--|.
+- `stdin_fd`		Treat this fd as if it were stdin when using |--|.
 			Only from |--embed| UI on startup. |ui-startup-stdin|
 - `stdin_tty`		Tells if `stdin` is a `tty` or not.
 - `stdout_tty`		Tells if `stdout` is a `tty` or not.

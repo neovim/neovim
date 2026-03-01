@@ -112,9 +112,6 @@ int libuv_proc_spawn(LibuvProc *uvproc)
     to_close[2] = pipe_pair[1];
 
     uv_pipe_open(&proc->err.s.uv.pipe, pipe_pair[0]);
-  } else if (proc->fwd_err) {
-    uvproc->uvstdio[2].flags = UV_INHERIT_FD;
-    uvproc->uvstdio[2].data.fd = STDERR_FILENO;
   }
 
   int status;
