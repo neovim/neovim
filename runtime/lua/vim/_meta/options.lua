@@ -4438,9 +4438,14 @@ vim.go.mis = vim.go.menuitems
 --- 		`:messages` history.  The maximum value is 10000.
 --- 		Setting it to zero clears the message history.
 --- 		This item must always be present.
+--- progress:{s}
+--- 		Determines where to show progress messages.
+--- 		Valid values are:
+--- 		    empty: progress messages are hidden in cmdline.
+--- 		    "c": progress messages are shown in cmdline.
 ---
 --- @type string
-vim.o.messagesopt = "hit-enter,history:500"
+vim.o.messagesopt = "hit-enter,history:500,progress:c"
 vim.o.mopt = vim.o.messagesopt
 vim.go.messagesopt = vim.o.messagesopt
 vim.go.mopt = vim.go.messagesopt

@@ -680,7 +680,7 @@ func Test_set_completion_string_values()
   " call assert_equal("\"set hl=8bi i", @:)
 
   " messagesopt
-  call assert_equal(['history:', 'hit-enter', 'wait:'],
+  call assert_equal(['history:', 'hit-enter', 'progress:', 'wait:'],
         \ getcompletion('set messagesopt+=', 'cmdline')->sort())
 
   "

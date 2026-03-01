@@ -18,6 +18,7 @@ if exists('s:did_load')
   set laststatus=1
   set listchars=eol:$
   set maxsearchcount=99
+  set messagesopt=hit-enter,history:500
   set mousemodel=extend
   set nohidden nosmarttab noautoindent noautoread
   set nohlsearch noincsearch

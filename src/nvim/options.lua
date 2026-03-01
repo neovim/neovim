@@ -5756,8 +5756,8 @@ local options = {
     {
       abbreviation = 'mopt',
       cb = 'did_set_messagesopt',
-      defaults = 'hit-enter,history:500',
-      values = { 'hit-enter', 'wait:', 'history:' },
+      defaults = 'hit-enter,history:500,progress:c',
+      values = { 'hit-enter', 'wait:', 'history:', 'progress:' },
       flags = true,
       deny_duplicates = true,
       desc = [=[
@@ -5779,6 +5779,11 @@ local options = {
         		|:messages| history.  The maximum value is 10000.
         		Setting it to zero clears the message history.
         		This item must always be present.
+        progress:{s}
+        		Determines where to show progress messages.
+        		Valid values are:
+        		    empty: progress messages are hidden in cmdline.
+        		    "c": progress messages are shown in cmdline.
       ]=],
       full_name = 'messagesopt',
       list = 'onecommacolon',
