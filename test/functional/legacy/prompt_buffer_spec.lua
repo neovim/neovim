@@ -769,7 +769,7 @@ describe('prompt buffer', function()
     feed('abc<BS><BS>')
     eq('a', fn('prompt_getinput', fn('bufnr')))
 
-    feed('exit\n')
+    command('quit')
     eq(1, #api.nvim_list_wins())
   end)
 
