@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+  update-alternatives --remove vi /usr/bin/nvim
+  update-alternatives --remove vim /usr/bin/nvim
+  update-alternatives --remove view /usr/bin/nvim
+fi
+
+#DEBHELPER#
+
+exit 0
