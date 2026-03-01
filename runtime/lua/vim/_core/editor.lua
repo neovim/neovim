@@ -1310,5 +1310,7 @@ vim.loop = vim.uv
 
 -- Deprecated. Remove at Nvim 2.0
 vim.highlight = vim._defer_deprecated_module('vim.highlight', 'vim.hl')
+-- Deprecated. Remove at Nvim 0.13
+vim.F = vim._defer_deprecated_module('vim.F', 'vim.f')
 
 return vim
