@@ -548,8 +548,9 @@ void buf_close_terminal(buf_T *buf)
 bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool ignore_abort)
 {
   bool unload_buf = (action != 0);
-  bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
-  bool wipe_buf = (action == DOBUF_WIPE);
+  bool wipe_brutal = (action == DOBUF_WIPE_BRUTAL);
+  bool wipe_buf = (action == DOBUF_WIPE) || wipe_brutal;
+  bool del_buf = (action == DOBUF_DEL) || wipe_buf;
 
   bool is_curwin = (curwin != NULL && curwin->w_buffer == buf);
   win_T *the_curwin = curwin;
@@ -749,8 +750,10 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     if (clear_w_buf) {
       win->w_buffer = NULL;
     }
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      mark_forget_file(wp, buf->b_fnum);
+    if (wipe_brutal) {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
+        mark_forget_file(wp, buf->b_fnum);
+      }
     }
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
@@ -1177,7 +1180,7 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
         }
         if (!ascii_isdigit(*arg)) {
           char *p = skiptowhite_esc(arg);
-          bnr = buflist_findpat(arg, p, command == DOBUF_WIPE, false, false);
+          bnr = buflist_findpat(arg, p, command == DOBUF_WIPE_BRUTAL, false, false);
           if (bnr < 0) {                    // failed
             break;
           }
@@ -1295,7 +1298,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
   buf_T *bp;
   bool update_jumplist = true;
   bool unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
-                 || action == DOBUF_WIPE);
+                 || action == DOBUF_WIPE || action == DOBUF_WIPE_BRUTAL);
 
   switch (start) {
   case DOBUF_FIRST:
@@ -1390,7 +1393,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
 
     // When unloading or deleting a buffer that's already unloaded and
     // unlisted: fail silently.
-    if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl) {
+    if (action != DOBUF_WIPE_BRUTAL && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl) {
       return FAIL;
     }
 
@@ -1665,7 +1668,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
 {
   buf_T *prevbuf;
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
-                || action == DOBUF_WIPE);
+                || action == DOBUF_WIPE || action == DOBUF_WIPE_BRUTAL);
   OptInt old_tw = curbuf->b_p_tw;
   const int last_winid = get_last_winid();
 
