@@ -81,6 +81,9 @@ static void log_path_init(void)
     char *defaultpath = stdpaths_user_state_subpath("nvim.log", 0, true);
     size_t len = xstrlcpy(log_file_path, defaultpath, size);
     xfree(defaultpath);
+    if (len >= size || !log_try_create(log_file_path)) {
+      fprintf(stderr, "\r\nFailed to open $NVIM_LOG_FILE. NVIM_LOG_FILE is inaccessible.\r\n");
+    }
     // Fall back to $CWD/nvim.log
     if (len >= size || !log_try_create(log_file_path)) {
       len = xstrlcpy(log_file_path, "nvim.log", size);
