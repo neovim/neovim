@@ -21,6 +21,7 @@ local sleep = vim.uv.sleep
 local fn = n.fn
 local is_os = t.is_os
 local skip = t.skip
+local expect_exitcode = tt.expect_exitcode
 
 describe(':terminal buffer', function()
   local screen
@@ -970,10 +971,9 @@ describe(':terminal buffer', function()
       1: å̲                                              |
       2: å̲                                              |
       3: å̲                                              |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*3
+                                                        |*5
     ]])
+    expect_exitcode(0)
     -- Test with Unicode char at right edge using a 4-wide terminal
     command('bwipe! | set laststatus=0 | 4vnew')
     fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
@@ -985,8 +985,8 @@ describe(':terminal buffer', function()
       2: å̲│{1:~                                            }|
       3: å̲│{1:~                                            }|
           │{1:~                                            }|
-      [Pro│{1:~                                            }|
-      cess│{1:~                                            }|
+          │{1:~                                            }|
+          │{1:~                                            }|
                                                         |
     ]])
   end)
@@ -1000,15 +1000,16 @@ describe(':terminal buffer', function()
       eq(1, api.nvim_get_var('did_termclose'))
     end)
     feed('i')
+
     screen:expect(([[
       %d: TEST{MATCH: +}|
       %d: TEST{MATCH: +}|
       %d: TEST{MATCH: +}|
       %d: TEST{MATCH: +}|
-                                                        |
-      [Process exited 0]^                                |
+      %d: TEST{MATCH: +}|
+      ^                                                  |
       {5:-- TERMINAL --}                                    |
-    ]]):format(count - 4, count - 3, count - 2, count - 1))
+    ]]):format(count - 5, count - 4, count - 3, count - 2, count - 1))
     local lines = api.nvim_buf_get_lines(0, 0, -1, true)
     for i = 1, count do
       eq(('%d: TEST'):format(i - 1), lines[i])
@@ -1104,17 +1105,19 @@ describe(':terminal buffer', function()
 
     local old_buf = api.nvim_get_current_buf()
     command('new')
-    fn.chanclose(api.nvim_open_term(0, {}))
+    local chan = api.nvim_open_term(0, {})
+    fn.chanclose(chan)
     local term_buf = api.nvim_get_current_buf()
     screen:expect([[
       ^                                                  |
-      [Terminal closed]                                 |
+                                                        |
       {31:[Scratch] [-]                                     }|
                                                         |
       {1:~                                                 }|
       {2:[No Name]                                         }|
                                                         |
     ]])
+    expect_exitcode(0, chan)
 
     -- Autocommand should not result in the wrong buffer being wiped out.
     command('autocmd TermLeave * ++once wincmd p')
@@ -1131,8 +1134,7 @@ describe(':terminal buffer', function()
     fn.chanclose(api.nvim_open_term(term_buf, {}))
     screen:expect([[
       ^                                                  |
-      [Terminal closed]                                 |
-                                                        |*5
+                                                        |*6
     ]])
 
     -- Autocommand should not result in a heap UAF if it frees the terminal prematurely.
@@ -1310,9 +1312,9 @@ describe(':terminal buffer', function()
       fn.jobstart({ testprg('shell-test') }, { term = true })
       env.screen:expect([[
         ^ready $                                           |
-        [Process exited 0]                                |
-                                                          |*5
+                                                          |*6
       ]])
+      expect_exitcode(0)
       env.buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('modified', false, { buf = env.buf })
     end)
@@ -1331,9 +1333,9 @@ describe(':terminal buffer', function()
       fn.chanclose(chan)
       env.screen:expect([[
         ^TEST                                              |
-        [Terminal closed]                                 |
-                                                          |*5
+                                                          |*6
       ]])
+      expect_exitcode(0, chan)
       env.buf = api.nvim_get_current_buf()
       api.nvim_set_option_value('modified', false, { buf = env.buf })
     end)
@@ -1719,8 +1721,7 @@ describe('jobstart(…,{term=true})', function()
       }, vim.tbl_extend('error', opts, { term = true }))
       screen:expect(([[
         ^%s{MATCH:%%s+}|
-        [Process exited 0]                                |
-                                                          |*2
+                                                          |*3
       ]]):format(expected))
     end
 

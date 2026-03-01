@@ -16,6 +16,8 @@ local testprg = n.testprg
 local exec_lua = n.exec_lua
 local api = n.api
 local nvim_prog = n.nvim_prog
+local retry = t.retry
+local eq = t.eq
 
 local M = {}
 
@@ -219,6 +221,20 @@ function M.screen_expect(screen, s)
     s = s:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
   end
   screen:expect(s)
+end
+
+--- Asserts that the exit code of chan eventually matches the expected exit code
+---
+--- @param code integer expected exit code
+--- @param chan? integer channel id, defaults to current buffer's channel
+function M.expect_exitcode(code, chan)
+  chan = chan or api.nvim_get_option_value('channel', { buf = 0 }) or 0
+  eq(true, chan > 0, 'Expected a valid channel ID, but got: ' .. chan)
+
+  retry(nil, nil, function()
+    local info = api.nvim_get_chan_info(chan)
+    eq(code, info.exitcode)
+  end)
 end
 
 return M

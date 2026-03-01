@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local uv = vim.uv
 local eq, eval, expect, exec = t.eq, n.eval, n.expect, n.exec
@@ -24,6 +25,7 @@ local poke_eventloop = n.poke_eventloop
 local api = n.api
 local retry = t.retry
 local write_file = t.write_file
+local expect_exitcode = tt.expect_exitcode
 
 describe(':recover', function()
   before_each(clear)
@@ -127,7 +129,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     set_session(nvim0)
     -- n.exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     command('call chanclose(&channel)') -- Kill the child process.
-    screen0:expect({ any = pesc('[Process exited 1]') }) -- Wait for the child process to stop.
+    expect_exitcode(1) -- Wait for the child process to stop.
     neq(nil, uv.fs_stat(swappath1))
     test_recover(swappath1)
   end)
@@ -552,12 +554,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
-    end)
+    expect_exitcode(1)
   end)
 
   it('(A)bort at second file argument with -p', function()
@@ -585,12 +582,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'a')
-    retry(nil, nil, function()
-      eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
-      )
-    end)
+    expect_exitcode(1)
   end)
 
   it('(Q)uit at file opened by -t', function()
@@ -626,13 +618,6 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq(
-        { '[Process exited 1]' },
-        eval(
-          "[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})"
-        )
-      )
-    end)
+    expect_exitcode(1)
   end)
 end)

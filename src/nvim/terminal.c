@@ -706,13 +706,12 @@ void terminal_close(Terminal **termpp, int status)
   } else if (!only_destroy) {
     // Associated channel has been closed and the editor is not exiting.
     // Do not call the close callback now. Wait for the user to press a key.
-    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    if (((Channel *)term->opts.data)->streamtype == kChannelStreamInternal) {
-      snprintf(msg, sizeof msg, "\r\n[Terminal closed]");
-    } else {
-      snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
+    // Redraw statusline to show the exit code.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == buf) {
+        wp->w_redr_status = true;
+      }
     }
-    terminal_receive(term, msg, strlen(msg));
   }
 
   if (only_destroy) {
