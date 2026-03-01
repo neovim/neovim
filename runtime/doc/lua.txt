@@ -4969,6 +4969,16 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
+*vim.uri.NvimUri*
+
+    Fields: ~
+      • {cmd}      (`vim.uri.NvimCmd`) Vim command to use
+      • {file}     (`string`) File path
+      • {line}?    (`integer`) Line number
+      • {column}?  (`integer`) Column number
+      • {server}?  (`string`) Server address to connect to
+
+
 vim.uri_decode({str})                                       *vim.uri_decode()*
     URI-decodes a string containing percent escapes.
 
@@ -5005,6 +5015,20 @@ vim.uri_from_fname({path})                              *vim.uri_from_fname()*
 
     Return: ~
         (`string`) URI
+
+vim.uri_parse_nvim({uri})                               *vim.uri_parse_nvim()*
+    Parses a nvim:// URI into its components.
+
+    Format:
+    `nvim://{cmd}?file={path}[&line={n}] [&column={n}] [&server={addr}]`
+
+    Parameters: ~
+      • {uri}  (`string`) The nvim:// URI to parse
+
+    Return (multiple): ~
+        (`vim.uri.NvimUri?`) parsed The parsed URI components, or nil if
+        invalid. See |vim.uri.NvimUri|.
+        (`string?`) err Error message if parsing failed
 
 vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
     Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for

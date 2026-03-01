@@ -392,7 +392,12 @@ PLUGINS
 
 STARTUP
 
-• todo
+• `file://` URIs passed as command-line arguments are converted to file paths.
+  This enables file managers and `xdg-open` integration.
+• |nvim://| URI scheme for "Open in Editor" integration.  External tools
+  (browsers, file managers) can open files in a running Nvim instance:
+  `nvim://tabedit?file=/path/to/file.txt&line=10`
+  Use `nvim://open?...` with |g:uri_opencmd| for a configurable command.
 
 TERMINAL
 

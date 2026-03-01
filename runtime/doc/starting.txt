@@ -34,6 +34,44 @@ filename	One or more file names.  The first one will be the current
 <		All arguments after "--" are interpreted as file names, no
 		other options or "+command" arguments can follow.
 
+		`file://` URIs are converted to file paths automatically,
+		to support file managers and `xdg-open` integration.
+
+						*nvim://* *nvim-uri*
+nvim://{cmd}	Opens a file via the `nvim://` URI scheme.  Intended for
+		"Open in Editor" integration with browsers, file managers,
+		and other tools.
+
+		Format: `nvim://{cmd}?file={path}[&line={n}][&col={n}][&server={addr}]`
+
+		{cmd} is the Vim command to use:
+		  `edit`     - open in current window
+		  `tabedit`  - open in new tab
+		  `split`    - open in horizontal split
+		  `vsplit`   - open in vertical split
+		  `drop`     - reuse existing window or open new
+		  `open`     - use command from |g:uri_opencmd| (default: `edit`)
+
+					*g:uri_opencmd*
+		g:uri_opencmd	Command used when `nvim://open?...` URIs are opened.
+				Default: "edit". Can be set to any of the above commands.
+				Example: >lua
+					vim.g.uri_opencmd = 'tabedit'
+<
+		Nvim auto-discovers existing instances via socket files in
+		`$XDG_RUNTIME_DIR` and opens the file there.  If no instance
+		is found, the file opens locally.
+
+		Use `&server={addr}` to target a specific instance.
+
+		Examples: >
+			nvim "nvim://tabedit?file=/path/to/file.txt&line=10"
+			nvim "nvim://edit?file=/tmp/foo.lua&line=5&column=12"
+<
+		To register Nvim as a handler for `nvim://` URIs, use the
+		provided `nvim.desktop` file or run: >
+			xdg-mime default nvim.desktop x-scheme-handler/nvim
+<
 							*--*
 `-`		Alias for stdin (standard input).
 		Example: >
