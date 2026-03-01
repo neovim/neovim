@@ -42,6 +42,7 @@ TREESITTER
 UI
 
 • `progress` attribute removed from |ui-messages| msg_show event
+• `vim.ui.img` experimental module added to display images within neovim.
 
 VIMSCRIPT
 
