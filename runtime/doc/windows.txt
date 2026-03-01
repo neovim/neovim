@@ -945,6 +945,20 @@ set in the preview window to be able to recognize it.  The 'winfixheight'
 option is set to have it keep the same height when opening/closing other
 windows.
 
+                                                *preview-popup*
+Alternatively, a floating window can be used by setting the 'previewpopup'
+option.  When set, it overrules the 'previewwindow' and 'previewheight'
+settings.  The option is a comma-separated list of values:
+	height		height of the floating window
+	width		width of the floating window
+
+Note that the border of the preview floating window is controlled
+by the 'winborder' option.
+
+Example: >vim
+        :set previewpopup=height:10,width:60
+<
+
 						*:pt* *:ptag*
 :pt[ag][!] [tagname]
 		Does ":tag[!] [tagname]" and shows the found tag in a

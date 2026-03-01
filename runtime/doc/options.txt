@@ -4837,6 +4837,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Default height for a preview window.  Used for |:ptag| and associated
 	commands.  Used for |CTRL-W_}| when no count is given.
 
+						*'previewpopup'* *'pvp'*
+'previewpopup' 'pvp'	string	(default "")
+			global
+	When not empty a floating window is used for commands that would open
+	a preview window.  See |preview-popup|.
+	Not used for the insert completion info, add "popup" to
+	'completeopt' for that.
+
 		*'previewwindow'* *'pvw'* *'nopreviewwindow'* *'nopvw'* *E590*
 'previewwindow' 'pvw'	boolean	(default off)
 			local to window  |local-noglobal|

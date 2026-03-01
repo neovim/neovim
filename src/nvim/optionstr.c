@@ -2541,3 +2541,31 @@ const char *check_chars_options(void)
   }
   return NULL;
 }
+
+const char *did_set_previewpopup(optset_T *args)
+{
+  win_T *wp = win_float_find_preview(kWinFloatPreview);
+  WinConfig fconfig = wp ? wp->w_config : WIN_CONFIG_INIT;
+  if (!win_float_parse_option(wp, &fconfig)) {
+    return e_invarg;
+  }
+
+  if (wp) {
+    win_config_float(wp, fconfig);
+  }
+  return NULL;
+}
+
+int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
+{
+  expand_T *xp = args->oe_xp;
+  // Check if we're after a colon (inside a sub-option like "height:" or "width:")
+  if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
+    return FAIL;
+  }
+  return expand_set_opt_string(args,
+                               opt_pvp_values,
+                               ARRAY_SIZE(opt_pvp_values) - 1,
+                               numMatches,
+                               matches);
+}

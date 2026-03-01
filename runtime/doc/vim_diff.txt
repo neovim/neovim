@@ -693,7 +693,6 @@ These legacy Vim features are not yet implemented:
 - *'guitablabel'* *'gtl'*
 - *'guitabtooltip'* *'gtt'*
 - *'mouseshape'* *'mouses'*
-- *'previewpopup'*
 
 ==============================================================================
 Removed legacy features                                  *nvim-removed*
@@ -868,6 +867,7 @@ Options:
 - *'ttyscroll'* *'tsl'*
 - *'ttytype'* *'tty'*
 - weirdinvert
+- 'previewpopup' removed field *'border'*, use 'winborder' instead.
 
 Plugins:
 - logiPat
