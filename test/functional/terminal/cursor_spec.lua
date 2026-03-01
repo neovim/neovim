@@ -542,7 +542,7 @@ describe('buffer cursor position is correct in terminal without number column', 
 
   before_each(function()
     clear()
-    command('autocmd! nvim.terminal')
+    command('autocmd! nvim.terminal TermOpen')
   end)
 
   describe('in a line with no multibyte chars or trailing spaces,', function()
@@ -882,7 +882,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
 
   before_each(function()
     clear()
-    command('autocmd! nvim.terminal')
+    command('autocmd! nvim.terminal TermOpen')
     -- 'number' should be set before the terminal process starts, otherwise the resize
     -- from setting 'number' may cause a redraw that removes the "Entering Ex mode".
     command('set number')
