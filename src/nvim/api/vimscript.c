@@ -86,9 +86,10 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
       msg_col = 0;  // prevent leading spaces
     }
 
-    const sctx_T save_current_sctx = api_set_sctx(channel_id);
+    WITH_SCRIPT_CONTEXT(channel_id, {
+      do_source_str(src.data, "nvim_exec2()");
+    })
 
-    do_source_str(src.data, "nvim_exec2()");
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
@@ -96,8 +97,6 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }
-
-    current_sctx = save_current_sctx;
   });
 
   if (ERROR_SET(err)) {
