@@ -862,7 +862,11 @@ describe('vim.lsp.diagnostic', function()
         exec_lua(function()
           local client = vim.lsp.get_client_by_id(client_id)
           assert(client)
-          return client:_provider_value_get('workspace/diagnostic', 'identifier')
+          local result = {}
+          client:_provider_foreach('workspace/diagnostic', function(cap)
+            table.insert(result, cap.identifier or vim.NIL)
+          end)
+          return result
         end)
       )
 

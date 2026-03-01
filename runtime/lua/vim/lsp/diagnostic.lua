@@ -538,16 +538,16 @@ function M._workspace_diagnostics(opts)
   end
 
   for _, client in ipairs(clients) do
-    local identifiers = client:_provider_value_get('workspace/diagnostic', 'identifier')
-    for _, id in ipairs(identifiers) do
+    ---@param cap lsp.DiagnosticRegistrationOptions
+    client:_provider_foreach('workspace/diagnostic', function(cap)
       --- @type lsp.WorkspaceDiagnosticParams
       local params = {
-        identifier = type(id) == 'string' and id or nil,
+        identifier = cap.identifier,
         previousResultIds = previous_result_ids(client.id),
       }
 
       client:request('workspace/diagnostic', params, handler)
-    end
+    end)
   end
 end
 
