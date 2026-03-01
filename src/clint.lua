@@ -1,4 +1,5 @@
 #!/usr/bin/env nvim -l
+---@diagnostic disable: no-unknown
 
 -- Lints C files in the Neovim source tree.
 -- Based on Google "cpplint", modified for Neovim.

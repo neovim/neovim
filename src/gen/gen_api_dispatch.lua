@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 -- Generates C code to bridge API <=> Lua.
 
 -- to obtain how the script is invoked, look in build/build.ninja and grep for

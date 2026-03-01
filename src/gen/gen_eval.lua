@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 local mpack = vim.mpack
 
 local funcsfname = arg[1]

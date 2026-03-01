@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 -- Does the same as `nvim -c "helptags ++t doc" -c quit`
 -- without needing to run a "nvim" binary, which is needed for cross-compiling.
 local out = arg[1]
