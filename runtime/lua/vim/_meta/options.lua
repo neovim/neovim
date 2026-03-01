@@ -171,7 +171,8 @@ vim.bo.ai = vim.bo.autoindent
 --- it has not been changed inside of Vim, automatically read it again.
 --- When the file has been deleted this is not done, so you have the text
 --- from before it was deleted.  When it appears again then it is read.
---- `timestamp`
+--- Nvim uses file system watchers to detect changes in real-time for all
+--- loaded buffers; see `timestamp` for details.
 --- If this option has a local value, use this command to switch back to
 --- using the global value:
 ---

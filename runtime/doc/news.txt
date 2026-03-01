@@ -228,6 +228,8 @@ EDITOR
 • |:wall| permits a |++p| option for creating parent directories when writing
   changed buffers.
 • The |:DiffTool| command compares directories (and files).
+• |'autoread'| uses file system watchers to detect external changes in
+  real-time, instead of only on |FocusGained|/|:checktime|.
 
 EVENTS
 
