@@ -24,6 +24,7 @@ endfunction
 " netrw#fs#ComposePath: Appends a new part to a path taking different systems into consideration {{{
 
 function! netrw#fs#ComposePath(base, subdir)
+    const slash = !exists('+shellslash') || &shellslash ? '/' : '\'
     if has('amiga')
         let ec = a:base[strdisplaywidth(a:base)-1]
         if ec != '/' && ec != ':'
@@ -40,7 +41,7 @@ function! netrw#fs#ComposePath(base, subdir)
         if a:base =~ '[/\\]$'
             let ret = a:base . a:subdir
         else
-            let ret = a:base . '/' . a:subdir
+            let ret = a:base . slash . a:subdir
         endif
 
     elseif a:base =~ '^\a\{3,}://'
