@@ -212,7 +212,7 @@ function CppLintState:suppress_errors_from(fname)
     local ok2, data = pcall(vim.json.decode, line)
     if ok2 then
       local fname2, lines, category = data[1], data[2], data[3]
-      local lines_tuple = vim.tbl_islist(lines) and lines or { lines }
+      local lines_tuple = vim.islist(lines) and lines or { lines }
       self.suppressed_errors[fname2][vim.inspect(lines_tuple)][category] = true
     end
   end

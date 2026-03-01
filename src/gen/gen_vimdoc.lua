@@ -54,9 +54,14 @@ local INDENTATION = 4
 --- @field helptag_fmt fun(name: string): string|string[]
 ---
 --- Per-function helptag.
---- @field fn_helptag_fmt? fun(fun: nvim.luacats.parser.fun): string
+--- @field fn_helptag_fmt? fun(fun: nvim.gen_vimdoc.HelptagTarget): string
 ---
 --- @field append_only? string[]
+
+---@alias nvim.gen_vimdoc.HelptagTarget
+---| nvim.luacats.parser.fun
+---| nvim.luacats.parser.field
+---| nvim.luacats.parser.param
 
 local function contains(t, xs)
   return vim.tbl_contains(xs, t)
@@ -84,13 +89,13 @@ local function nvim_api_info()
         prerelease = m2 == 'true'
       end
     end
-    nvim_api_info_ = { level = level, prerelease = prerelease }
+    nvim_api_info_ = { level = assert(level), prerelease = assert(prerelease) }
   end
 
   return nvim_api_info_
 end
 
---- @param fun nvim.luacats.parser.fun
+--- @param fun nvim.gen_vimdoc.HelptagTarget
 --- @return string
 local function fn_helptag_fmt_common(fun)
   local fn_sfx = fun.table and '' or '()'

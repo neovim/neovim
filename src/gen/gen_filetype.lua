@@ -204,7 +204,7 @@ do
       end
     end
   end
-  local f = io.open(filetype_lua, 'w')
+  local f = assert(io.open(filetype_lua, 'w'))
   f:write(table.concat(lines, '\n') .. '\n')
   f:close()
 end

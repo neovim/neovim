@@ -6,8 +6,8 @@ local enumfname = arg[1] -- '/ex_cmds_enum.generated.h'
 local defsfname = arg[2] -- '/ex_cmds_defs.generated.h'
 local ex_cmds_name = arg[3] -- 'ex_cmds.lua'
 
-local enumfile = io.open(enumfname, 'w')
-local defsfile = io.open(defsfname, 'w')
+local enumfile = assert(io.open(enumfname, 'w'))
+local defsfile = assert(io.open(defsfname, 'w'))
 
 local bit = require 'bit'
 local ex_cmds = loadfile(ex_cmds_name)()
