@@ -50,11 +50,15 @@
 --- @class nvim.c_grammar.Empty
 --- @field [1] 'empty'
 
+--- @class nvim.c_grammar.Comment
+--- @field comment string
+
 --- @alias nvim.c_grammar.result
 --- | nvim.c_grammar.Proto
 --- | nvim.c_grammar.Preproc
 --- | nvim.c_grammar.Empty
 --- | nvim.c_grammar.Keyset
+--- | nvim.c_grammar.Comment
 
 --- @class nvim.c_grammar
 --- @field match fun(self, input: string): nvim.c_grammar.result[]

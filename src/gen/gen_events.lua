@@ -3,7 +3,9 @@ local names_file = arg[2]
 local auevents_file = arg[3]
 
 local hashy = require('gen.hashy')
-local auevents = loadfile(auevents_file)()
+
+---@type {events: table<string, boolean>, aliases: table<string, string>}
+local auevents = assert(loadfile(auevents_file))()
 local events = auevents.events
 local aliases = auevents.aliases
 
