@@ -7603,6 +7603,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	large number, it will cause errors when opening more than a few
 	windows.  A value of 0 to 12 is reasonable.
 
+							*'winpadding'*
+'winpadding'		string	(default "0,0,0,0")
+			local to window
+	Sets the internal window padding, in screen cells.
+	Format: "top,right,bottom,left" (e.g. "1,2,3,4").
+
+	Padding is drawn between the border or winbar and the content
+	area. Values must be non-negative integers.
+
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	number	(default 20)
 			global

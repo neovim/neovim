@@ -2110,6 +2110,43 @@ const char *did_set_winborder(optset_T *args)
   return NULL;
 }
 
+/// Parse 'winpadding' option value.
+const char *did_set_winpadding(optset_T *args)
+{
+  win_T *wp = (win_T *)args->os_win;
+  char **varp = (char **)args->os_varp;
+
+  if (*varp == NULL || **varp == NUL) {
+    if (varp == &wp->w_p_winpadding) {
+      memset(wp->w_pad, 0, sizeof(wp->w_pad));
+    }
+    return NULL;
+  }
+
+  char *p = *varp;
+  int count = 0;
+  while (*p != NUL && count < 4) {
+    if (!ascii_isdigit(*p)) {
+      return e_invarg;
+    }
+    while (ascii_isdigit(*p)) {
+      p++;
+    }
+    count++;
+    if (*p == ',') {
+      p++;
+    }
+  }
+  if (count != 4 || *p != NUL) {
+    return e_invarg;
+  }
+
+  if (varp == &wp->w_p_winpadding) {
+    win_set_inner_size(wp, true);
+  }
+  return NULL;
+}
+
 const char *did_set_pumborder(optset_T *args)
 {
   if (!parse_border_opt(p_pumborder)) {

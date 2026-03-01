@@ -10753,6 +10753,24 @@ local options = {
       varname = 'p_wmw',
     },
     {
+      cb = 'did_set_winpadding',
+      defaults = '0,0,0,0',
+      desc = [=[
+        Sets the internal window padding, in screen cells.
+        Format: "top,right,bottom,left" (e.g. "1,2,3,4").
+
+        Padding is drawn between the border or winbar and the content
+        area. Values must be non-negative integers.
+      ]=],
+      full_name = 'winpadding',
+      short_desc = N_('window internal padding'),
+      scope = { 'win' },
+      redraw = { 'current_window' },
+      list = 'comma',
+      type = 'string',
+      varname = 'p_winpadding',
+    },
+    {
       abbreviation = 'wiw',
       cb = 'did_set_winwidth',
       defaults = 20,

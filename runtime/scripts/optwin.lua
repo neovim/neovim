@@ -126,6 +126,7 @@ local options_list = {
     { 'winfixbuf', N_ 'keep window focused on a single buffer' },
     { 'winfixheight', N_ 'keep the height of the window' },
     { 'winfixwidth', N_ 'keep the width of the window' },
+    { 'winpadding', N_ 'set winpadding	internal window padding' },
     { 'winwidth', N_ 'minimal number of columns used for the current window' },
     { 'winminwidth', N_ 'minimal number of columns used for any window' },
     { 'helpheight', N_ 'initial height of the help window' },

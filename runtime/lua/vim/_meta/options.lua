@@ -8360,6 +8360,16 @@ vim.o.wmw = vim.o.winminwidth
 vim.go.winminwidth = vim.o.winminwidth
 vim.go.wmw = vim.go.winminwidth
 
+--- Sets the internal window padding, in screen cells.
+--- Format: "top,right,bottom,left" (e.g. "1,2,3,4").
+---
+--- Padding is drawn between the border or winbar and the content
+--- area. Values must be non-negative integers.
+---
+--- @type string
+vim.o.winpadding = "0,0,0,0"
+vim.wo.winpadding = vim.o.winpadding
+
 --- Minimal number of columns for the current window.  This is not a hard
 --- minimum, Vim will use fewer columns if there is not enough room.  If
 --- the current window is smaller, its size is increased, at the cost of

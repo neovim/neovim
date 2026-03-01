@@ -4649,6 +4649,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_wfh);
   case kOptWinfixwidth:
     return &(win->w_p_wfw);
+  case kOptWinpadding:
+    return &(win->w_p_winpadding);
   case kOptPreviewwindow:
     return &(win->w_p_pvw);
   case kOptLhistory:
@@ -4938,6 +4940,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_winhl = copy_option_val(from->wo_winhl);
   to->wo_winbl = from->wo_winbl;
   to->wo_stc = copy_option_val(from->wo_stc);
+  to->wo_winpadding = copy_option_val(from->wo_winpadding);
 
   to->wo_wrap_flags = from->wo_wrap_flags;
   to->wo_stl_flags = from->wo_stl_flags;
@@ -4983,6 +4986,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_ve);
   check_string_option(&wop->wo_wbr);
   check_string_option(&wop->wo_stc);
+  check_string_option(&wop->wo_winpadding);
 }
 
 /// Free the allocated memory inside a winopt_T.
@@ -5011,6 +5015,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_ve);
   clear_string_option(&wop->wo_wbr);
   clear_string_option(&wop->wo_stc);
+  clear_string_option(&wop->wo_winpadding);
 }
 
 void didset_window_options(win_T *wp, bool valid_cursor)
