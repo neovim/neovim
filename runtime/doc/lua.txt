@@ -2079,12 +2079,18 @@ vim.tbl_extend({behavior}, {...})                           *vim.tbl_extend()*
 vim.tbl_filter({fn}, {t})                                   *vim.tbl_filter()*
     Filter a table using a predicate function
 
+    This function is planned for eventual removal. Consider |Iter:filter()|
+    for new code.
+
     Parameters: ~
       • {fn}  (`function`) Function
       • {t}   (`table`) Table
 
     Return: ~
         (`any[]`) Table of filtered values
+
+    See also: ~
+      • https://github.com/neovim/neovim/issues/24572
 
 vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
     Index into a table (first argument) via string keys passed as subsequent
@@ -2137,12 +2143,18 @@ vim.tbl_map({fn}, {t})                                         *vim.tbl_map()*
     order (which is not guaranteed to be stable, even when the data doesn't
     change).
 
+    This function is planned for eventual removal. Consider |Iter:map()| for
+    new code.
+
     Parameters: ~
       • {fn}  (`fun(value: T): any`) Function
       • {t}   (`table<any, T>`) Table
 
     Return: ~
         (`table`) Table of transformed values
+
+    See also: ~
+      • https://github.com/neovim/neovim/issues/24572
 
 vim.tbl_values({t})                                         *vim.tbl_values()*
     Return a list of all values used in a table. However, the order of the
