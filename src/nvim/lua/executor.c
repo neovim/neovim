@@ -423,148 +423,36 @@ static int nlua_schedule(lua_State *const lstate)
   return 2;
 }
 
-// Dummy timer callback. Used by vim.wait().
-static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
-{
-  // If the main loop is closing, the condition won't be checked again.
-  // Close the timer to avoid leaking resources.
-  if (main_loop.closing) {
-    time_watcher_stop(tw);
-    time_watcher_close(tw, dummy_timer_close_cb);
-  }
-}
-
-// Dummy timer close callback. Used by vim.wait().
-static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
-{
-  xfree(tw);
-}
-
-static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_result,
-                                int *nresults)
-{
-  int top = lua_gettop(lstate);
-  lua_pushvalue(lstate, 2);
-  *status = nlua_pcall(lstate, 0, LUA_MULTRET);
-  if (*status) {
-    return true;  // break on error, but keep error on stack
-  }
-  *nresults = lua_gettop(lstate) - top;
-  if (*nresults == 0) {
-    *callback_result = false;
-    return false;
-  }
-  *callback_result = lua_toboolean(lstate, top + 1);
-  if (!*callback_result) {
-    lua_settop(lstate, top);
-    return false;
-  }
-  lua_remove(lstate, top + 1);
-  (*nresults)--;
-  return true;  // break if true
-}
-
-/// "vim.wait(timeout, condition[, interval])" function
-static int nlua_wait(lua_State *lstate)
+static int nlua_loop_poll(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (in_fast_callback) {
-    return luaL_error(lstate, e_fast_api_disabled, "vim.wait");
-  }
-
-  double timeout_number = luaL_checknumber(lstate, 1);
-  if (timeout_number < 0) {
-    return luaL_error(lstate, "timeout must be >= 0");
-  }
-  int64_t timeout = (isnan(timeout_number) || timeout_number > (double)INT64_MAX)
-                    ? INT64_MAX
-                    : (int64_t)timeout_number;
-
-  int lua_top = lua_gettop(lstate);
-
-  // Check if condition can be called.
-  bool is_function = false;
-  if (lua_top >= 2 && !lua_isnil(lstate, 2)) {
-    is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
-
-    // Check if condition is callable table
-    if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
-      is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
-      lua_pop(lstate, 1);
-    }
-
-    if (!is_function) {
-      lua_pushliteral(lstate, "vim.wait: callback must be callable");
-      return lua_error(lstate);
-    }
-  }
-
-  intptr_t interval = 200;
-  if (lua_top >= 3 && !lua_isnil(lstate, 3)) {
-    interval = luaL_checkinteger(lstate, 3);
-    if (interval < 0) {
-      return luaL_error(lstate, "interval must be >= 0");
-    }
-  }
-
-  bool fast_only = false;
-  if (lua_top >= 4) {
-    fast_only = lua_toboolean(lstate, 4);
-  }
+  int64_t timeout = (int64_t)luaL_checkinteger(lstate, 1);
+  bool fast_only = lua_toboolean(lstate, 2);
 
   MultiQueue *loop_events = fast_only ? main_loop.fast_events : main_loop.events;
+  LOOP_PROCESS_EVENTS(&main_loop, loop_events, timeout);
 
-  TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
+  return 0;
+}
 
-  // Start dummy timer.
-  time_watcher_init(&main_loop, tw, NULL);
-  // Don't schedule the due callback, as that'll lead to two different types of events
-  // on each interval, causing the condition to be checked twice.
-  tw->events = NULL;
-  time_watcher_start(tw, dummy_timer_due_cb, (uint64_t)interval, (uint64_t)interval);
-
-  int pcall_status = 0;
-  bool callback_result = false;
-  int nresults = 0;
-
-  // Flush screen updates before blocking.
+static int nlua_ui_flush(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
   ui_flush();
+  return 0;
+}
 
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop,
-                            loop_events,
-                            timeout,
-                            got_int || (is_function ? nlua_wait_condition(lstate,
-                                                                          &pcall_status,
-                                                                          &callback_result,
-                                                                          &nresults)
-                                                    : false));
-
-  // Stop dummy timer
-  time_watcher_stop(tw);
-  time_watcher_close(tw, dummy_timer_close_cb);
-
-  if (pcall_status) {
-    return lua_error(lstate);
-  } else if (callback_result) {
-    lua_pushboolean(lstate, 1);
-    if (nresults == 0) {
-      lua_pushnil(lstate);
-      nresults = 1;
-    } else {
-      lua_insert(lstate, -1 - nresults);
-    }
-    return nresults + 1;
-  } else if (got_int) {
+static int nlua_check_interrupt(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool interrupted = got_int;
+  if (got_int) {
     got_int = false;
     vgetc();
-    lua_pushboolean(lstate, 0);
-    lua_pushinteger(lstate, -2);
-    return 2;
-  } else {
-    lua_pushboolean(lstate, 0);
-    lua_pushinteger(lstate, -1);
-    return 2;
   }
+
+  lua_pushboolean(lstate, interrupted);
+  return 1;
 }
 
 static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
@@ -838,9 +726,13 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_rpcnotify);
   lua_setfield(lstate, -2, "rpcnotify");
 
-  // wait
-  lua_pushcfunction(lstate, &nlua_wait);
-  lua_setfield(lstate, -2, "wait");
+  // wait helpers
+  lua_pushcfunction(lstate, &nlua_loop_poll);
+  lua_setfield(lstate, -2, "_loop_poll");
+  lua_pushcfunction(lstate, &nlua_ui_flush);
+  lua_setfield(lstate, -2, "_ui_flush");
+  lua_pushcfunction(lstate, &nlua_check_interrupt);
+  lua_setfield(lstate, -2, "_check_interrupt");
 
   // ui_attach
   lua_pushcfunction(lstate, &nlua_ui_attach);
