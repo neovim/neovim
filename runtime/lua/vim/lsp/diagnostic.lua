@@ -439,9 +439,10 @@ function M._enable(bufnr)
       then
         return
       end
-      if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
-        local client_id = opts.data.client_id --- @type integer?
-        M._refresh(bufnr, client_id, true)
+      for buf, state in pairs(bufstates) do
+        if state.pull_kind == 'document' then
+          M._refresh(buf, opts.data.client_id, false)
+        end
       end
     end,
     group = augroup,
