@@ -270,7 +270,7 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
 /// Sends a "restart" UI event to the UI on the given channel.
 ///
 /// @return  false if there is no UI on the channel, otherwise true
-bool remote_ui_restart(uint64_t channel_id, Error *err)
+bool remote_ui_restart(uint64_t channel_id, const char *listen_addr, String command, Error *err)
 {
   RemoteUI *ui = get_ui_or_err(channel_id, err);
   if (!ui) {
@@ -278,22 +278,10 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
   }
 
   MAXSIZE_TEMP_ARRAY(args, 2);
-
-  ADD_C(args, CSTR_AS_OBJ(get_vim_var_str(VV_PROGPATH)));
-
-  Arena arena = ARENA_EMPTY;
-  const list_T *l = get_vim_var_list(VV_ARGV);
-  int argc = tv_list_len(l);
-  assert(argc > 0);
-  Array argv = arena_array(&arena, (size_t)argc + 1);
-  TV_LIST_ITER_CONST(l, li, {
-    const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
-    ADD_C(argv, CSTR_AS_OBJ(arg));
-  });
-  ADD_C(args, ARRAY_OBJ(argv));
+  ADD_C(args, CSTR_AS_OBJ(listen_addr));
+  ADD_C(args, STRING_OBJ(command));
 
   push_call(ui, "restart", args);
-  arena_mem_free(arena_finish(&arena));
   return true;
 }
 
