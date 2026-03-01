@@ -1827,8 +1827,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---    - "win"        Window given by the `win` field, or current window.
 --- - row: Row position in units of "screen cell height", may be fractional.
 --- - split: Split direction: "left", "right", "above", "below".
---- - style: (optional) Configure the appearance of the window. Currently
----     only supports one value:
+--- - style: (optional) Configure the appearance of the window:
+---     - ""         No special style.
 ---     - "minimal"  Nvim will display the window with many UI options
 ---                  disabled. This is useful when displaying a temporary
 ---                  float where the text should not be edited. Disables

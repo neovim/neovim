@@ -126,7 +126,7 @@ typedef struct {
   Boolean mouse;
   Enum("cursor", "editor", "laststatus", "mouse", "tabline", "win") relative;
   Float row;
-  Enum("minimal") style;
+  Enum("", "minimal") style;
   Boolean noautocmd;
   Boolean vertical;
   Window win;

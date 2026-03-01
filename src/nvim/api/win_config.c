@@ -163,8 +163,8 @@
 ///      - "win"        Window given by the `win` field, or current window.
 ///   - row: Row position in units of "screen cell height", may be fractional.
 ///   - split: Split direction: "left", "right", "above", "below".
-///   - style: (optional) Configure the appearance of the window. Currently
-///       only supports one value:
+///   - style: (optional) Configure the appearance of the window:
+///       - ""         No special style.
 ///       - "minimal"  Nvim will display the window with many UI options
 ///                    disabled. This is useful when displaying a temporary
 ///                    float where the text should not be edited. Disables
@@ -728,6 +728,9 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   /// Keep in sync with WinSplit in buffer_defs.h
   static const char *const win_split_str[] = { "left", "right", "above", "below" };
 
+  /// Keep in sync with WinStyle in buffer_defs.h
+  static const char *const win_style_str[] = { "", "minimal" };
+
   Dict(win_config) rv = KEYDICT_INIT;
 
   win_T *wp = find_window_by_handle(window, err);
@@ -741,6 +744,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   PUT_KEY_X(rv, external, config->external);
   PUT_KEY_X(rv, hide, config->hide);
   PUT_KEY_X(rv, mouse, config->mouse);
+  PUT_KEY_X(rv, style, cstr_as_string(win_style_str[config->style]));
 
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
