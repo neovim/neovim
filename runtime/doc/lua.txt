@@ -853,53 +853,6 @@ vim.ui_detach({ns})                                          *vim.ui_detach()*
     Parameters: ~
       • {ns}  (`integer`) Namespace ID
 
-vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
-    Waits up to `time` milliseconds, until `callback` returns `true`
-    (success). Executes `callback` immediately, then on user events, internal
-    events, and approximately every `interval` milliseconds (default 200).
-    Returns all `callback` results on success.
-
-    Nvim processes other events while waiting. Cannot be called during an
-    |api-fast| event.
-
-    Examples: >lua
-        -- Wait for 100 ms, allowing other events to process.
-        vim.wait(100)
-
-        -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
-        vim.wait(1000, function() return vim.g.foo end, 500)
-
-        -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
-        local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
-          return vim.g.foo, 'a', 42, { ok = { 'yes' } }
-        end)
-
-        -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
-        -- only waits 100ms because `vim.wait` processes other events while waiting.
-        vim.defer_fn(function() vim.g.timer_result = true end, 100)
-        if vim.wait(10000, function() return vim.g.timer_result end) then
-          print('Only waiting a little bit of time!')
-        end
-<
-
-    Parameters: ~
-      • {time}       (`number`) Number of milliseconds to wait. Must be
-                     non-negative number, any fractional part is truncated.
-      • {callback}   (`fun(): boolean, ...?`) Optional callback. Waits until
-                     {callback} returns true
-      • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
-                     between polls
-      • {fast_only}  (`boolean?`) If true, only |api-fast| events will be
-                     processed.
-
-    Return (multiple): ~
-        (`boolean`)
-        (`-1|-2?`)
-        • If callback returns `true` before timeout: `true, nil, ...`
-        • On timeout: `false, -1`
-        • On interrupt: `false, -2`
-        • On error: the error is raised.
-
 
 ==============================================================================
 LUA-VIMSCRIPT BRIDGE                                           *lua-vimscript*
@@ -1518,6 +1471,54 @@ vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
 
     Return: ~
         (`integer`)
+
+vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
+    Waits up to `time` milliseconds, until `callback` returns `true`
+    (success). Executes `callback` immediately, then on user events, internal
+    events, and approximately every `interval` milliseconds (default 200).
+    Returns all `callback` results on success.
+
+    Nvim processes other events while waiting. Cannot be called during an
+    |api-fast| event.
+
+    Examples: >lua
+        -- Wait for 100 ms, allowing other events to process.
+        vim.wait(100)
+
+        -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+        vim.wait(1000, function() return vim.g.foo end, 500)
+
+        -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+        local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
+          return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+        end)
+
+        -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+        -- only waits 100ms because `vim.wait` processes other events while waiting.
+        vim.defer_fn(function() vim.g.timer_result = true end, 100)
+        if vim.wait(10000, function() return vim.g.timer_result end) then
+          print('Only waiting a little bit of time!')
+        end
+<
+
+    Parameters: ~
+      • {time}       (`number`) Number of milliseconds to wait. Must be
+                     non-negative number, any fractional part is truncated.
+      • {callback}   (`fun(): boolean, ... : Optional?`) callback. Waits until
+                     {callback} returns true
+      • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
+                     between polls
+      • {fast_only}  (`boolean?`) If true, only |api-fast| events will be
+                     processed.
+
+    Return (multiple): ~
+        (`boolean`)
+        (`-1|-2?`)
+        • If callback returns `true` before timeout: `true, ...` (remaining
+          callback results)
+        • On timeout: `false, -1`
+        • On interrupt: `false, -2`
+        • On error: the error is raised.
 
 
 ==============================================================================
