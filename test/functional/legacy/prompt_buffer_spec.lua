@@ -760,6 +760,19 @@ describe('prompt buffer', function()
     eq({ 13, 6 }, api.nvim_buf_get_mark(0, ':'))
   end)
 
+  it("don't block closing when modified", function()
+    command('new')
+    command('set buftype=prompt')
+    command('set modified')
+    command('startinsert')
+
+    feed('abc<BS><BS>')
+    eq('a', fn('prompt_getinput', fn('bufnr')))
+
+    feed('exit\n')
+    eq(1, #api.nvim_list_wins())
+  end)
+
   describe('prompt_getinput', function()
     it('returns current prompts text', function()
       command('new')
