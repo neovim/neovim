@@ -669,7 +669,9 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
-  assert(0 <= row && row < grid->rows);
+  // Safety check. The assert is replaced with a bounds check + return
+  // to avoid crashes during UI attach with ext_windows where grid may
+  // not yet be resized to match window dimensions.
   // TODO(bfredl): check all callsites and eliminate
   // Check for illegal col, just in case
   if (endcol > grid->cols) {
@@ -677,7 +679,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   }
 
   // Safety check. Avoids clang warnings down the call stack.
-  if (grid->chars == NULL || row >= grid->rows || coloff >= grid->cols) {
+  if (grid->chars == NULL || row < 0 || row >= grid->rows || coloff >= grid->cols) {
     DLOG("invalid state, skipped");
     return;
   }

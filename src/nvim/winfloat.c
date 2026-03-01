@@ -101,8 +101,12 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       }
     }
     int dir;
-    winframe_remove(wp, &dir, NULL, NULL);
-    XFREE_CLEAR(wp->w_frame);
+    if (ui_has(kUIWindows)) {
+      // ext_windows: no frame tree, skip frame removal
+    } else {
+      winframe_remove(wp, &dir, NULL, NULL);
+      XFREE_CLEAR(wp->w_frame);
+    }
     win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
     win_append(lastwin_nofloating(), wp, NULL);

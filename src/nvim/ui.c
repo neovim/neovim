@@ -29,6 +29,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -62,6 +63,7 @@ static int busy = 0;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
 static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
+static uint64_t ext_win_ui_channel = 0;
 
 static PMap(uint32_t) ui_event_cbs = MAP_INIT;
 bool ui_cb_ext[kUIExtCount];  ///< Internalized UI capabilities.
@@ -761,6 +763,17 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
     // non-positive indicates no request
     wp->w_height_request = MAX(height, 0);
     wp->w_width_request = MAX(width, 0);
+    // When ext_windows is active there is no frame tree, so sync
+    // w_height/w_width directly so that win_setheight/win_setwidth
+    // (e.g. <C-w>+) use correct base values.
+    if (ui_has(kUIWindows)) {
+      if (height > 0) {
+        wp->w_height = height;
+      }
+      if (width > 0) {
+        wp->w_width = width;
+      }
+    }
     win_set_inner_size(wp, true);
   }
 }
@@ -878,4 +891,39 @@ void ui_remove_cb(uint32_t ns_id, bool checkerr)
       msg_schedule_semsg("Excessive errors in vim.ui_attach() callback (ns=%s)", ns);
     }
   }
+}
+
+void ui_set_ext_win_channel(uint64_t channel_id)
+{
+  ext_win_ui_channel = channel_id;
+}
+
+Integer ui_win_move_cursor(Integer direction, Integer count)
+{
+  Array args = ARRAY_DICT_INIT;
+  Error error = ERROR_INIT;
+
+  ADD(args, INTEGER_OBJ(direction));
+  ADD(args, INTEGER_OBJ(count));
+
+  ArenaMem res_mem = NULL;
+  Object result = rpc_send_call(ext_win_ui_channel, "win_move_cursor", args,
+                                &res_mem, &error);
+
+  if (ERROR_SET(&error)) {
+    semsg("Error invoking win_move_cursor: %s", error.msg);
+    api_clear_error(&error);
+    api_free_object(result);
+    arena_mem_free(res_mem);
+    return 0;
+  }
+
+  Integer ret = 0;
+  if (result.type == kObjectTypeInteger) {
+    ret = result.data.integer;
+  }
+
+  api_free_object(result);
+  arena_mem_free(res_mem);
+  return ret;
 }
