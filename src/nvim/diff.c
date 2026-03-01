@@ -501,7 +501,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     }
 
     // check if this block touches the previous one, may merge them.
-    if ((dprev != NULL) && !dp->is_linematched && !diff_busy
+    if ((dprev != NULL) && (dp->is_linematched == 0) && !diff_busy
         && (dprev->df_lnum[idx] + dprev->df_count[idx] == dp->df_lnum[idx])) {
       for (int i = 0; i < DB_COUNT; i++) {
         if (tp->tp_diffbuf[i] != NULL) {
@@ -559,7 +559,7 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = xcalloc(1, sizeof(*dnew));
 
-  dnew->is_linematched = false;
+  dnew->is_linematched = 0;
   dnew->df_next = dp;
   if (dprev == NULL) {
     tp->tp_first_diff = dnew;
@@ -2131,7 +2131,7 @@ static void apply_linematch_results(diff_T *dp, size_t decisions_length, const i
       // create new sub diff blocks to segment the original diff block which we
       // further divided by running the linematch algorithm
       dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
-      dp_s->is_linematched = true;
+      dp_s->is_linematched = 1;
       for (int j = 0; j < DB_COUNT; j++) {
         if (curtab->tp_diffbuf[j] != NULL) {
           dp_s->df_lnum[j] = line_numbers[j];
@@ -2147,7 +2147,7 @@ static void apply_linematch_results(diff_T *dp, size_t decisions_length, const i
       }
     }
   }
-  dp->is_linematched = true;
+  dp->is_linematched = 1;
 }
 
 static void run_linematch_algorithm(diff_T *dp)
@@ -2157,6 +2157,7 @@ static void run_linematch_algorithm(diff_T *dp)
   const mmfile_t *diffbufs[DB_COUNT];
   int diff_length[DB_COUNT];
   size_t ndiffs = 0;
+  bool linematchCanceled = false;
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
       if (dp->df_count[i] > 0) {
@@ -2184,13 +2185,18 @@ static void run_linematch_algorithm(diff_T *dp)
   // of integers (*decisions) and the length of that array (decisions_length)
   int *decisions = NULL;
   const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
-  size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite);
+  size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, &linematchCanceled);
 
   for (size_t i = 0; i < ndiffs; i++) {
     XFREE_CLEAR(diffbufs_mm[i].ptr);
   }
 
-  apply_linematch_results(dp, decisions_length, decisions);
+  if (linematchCanceled == false) {
+    apply_linematch_results(dp, decisions_length, decisions);
+  } else {
+    dp->is_linematched = -1; // -1 = the alignment algorithm was canceled by ctrl+c while running.
+  }
+
 
   xfree(decisions);
 }
@@ -2267,7 +2273,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   // Useful for scrollbind calculations which need to count all the filler lines
   // above the screen.
   if (lnum >= wp->w_topline && lnum < wp->w_botline
-      && !dp->is_linematched && diff_linematch(dp)
+      && (dp->is_linematched == 0) && diff_linematch(dp)
       && diff_check_sanity(curtab, dp)) {
     run_linematch_algorithm(dp);
   }
@@ -2522,7 +2528,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     }
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
-    if (lnum >= dp->df_lnum[fromidx]) {
+    if (lnum >= dp->df_lnum[fromidx] && dp->is_linematched == 1) {
       calculate_topfill_and_topline(fromidx, toidx,
                                     fromwin->w_topline, fromwin->w_topfill,
                                     &towin->w_topfill, &towin->w_topline);
