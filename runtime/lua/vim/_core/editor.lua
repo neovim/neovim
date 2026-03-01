@@ -269,7 +269,7 @@ end
 ---@return function
 function vim.schedule_wrap(fn)
   return function(...)
-    local args = vim.F.pack_len(...)
+    local args = vim.F.pack_len(...) --- @type { n: integer, [integer]: any }
     vim.schedule(function()
       fn(vim.F.unpack_len(args))
     end)
@@ -1136,9 +1136,13 @@ function vim.keycode(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
 
+--- @param rcid integer
 --- @param server_addr string
 --- @param connect_error string
-function vim._cs_remote(rcid, server_addr, connect_error, args)
+--- @param args string[]
+--- @param f_tab boolean
+--- @param remote_arg_idx integer
+function vim._cs_remote(rcid, server_addr, connect_error, args, f_tab, remote_arg_idx)
   --- @return string
   local function connection_failure_errmsg(consequence)
     local explanation --- @type string
@@ -1153,60 +1157,188 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     return 'E247: ' .. explanation .. '. ' .. consequence
   end
 
-  local f_silent = false
-  local f_tab = false
-
-  local subcmd = string.sub(args[1], 10)
-  if subcmd == 'tab' then
-    f_tab = true
-  elseif subcmd == 'silent' then
-    f_silent = true
-  elseif
-    subcmd == 'wait'
-    or subcmd == 'wait-silent'
-    or subcmd == 'tab-wait'
-    or subcmd == 'tab-wait-silent'
-  then
-    return { errmsg = 'E5600: Wait commands not yet implemented in Nvim' }
-  elseif subcmd == 'tab-silent' then
-    f_tab = true
-    f_silent = true
-  elseif subcmd == 'send' then
-    if rcid == 0 then
-      return { errmsg = connection_failure_errmsg('Send failed.') }
-    end
-    vim.rpcrequest(rcid, 'nvim_input', args[2])
-    return { should_exit = true, tabbed = false }
-  elseif subcmd == 'expr' then
-    if rcid == 0 then
-      return { errmsg = connection_failure_errmsg('Send expression failed.') }
-    end
-    local res = tostring(vim.rpcrequest(rcid, 'nvim_eval', args[2]))
-    return { result = res, should_exit = true, tabbed = false }
-  elseif subcmd ~= '' then
-    return { errmsg = 'Unknown option argument: ' .. tostring(args[1]) }
+  local remote_arg = args[remote_arg_idx] --- @type string
+  local subcmd = string.sub(remote_arg, 10)
+  if subcmd ~= '' then
+    return { errmsg = 'Unknown option argument: ' .. tostring(remote_arg) }
   end
 
   if rcid == 0 then
-    if not f_silent then
-      vim.notify(connection_failure_errmsg('Editing locally'), vim.log.levels.WARN)
-    end
-  else
-    local command = {}
-    if f_tab then
-      table.insert(command, 'tab')
-    end
-    table.insert(command, 'drop')
-    for i = 2, #args do
-      table.insert(command, vim.fn.fnameescape(args[i]))
-    end
-    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+    vim.notify(connection_failure_errmsg('Editing locally'), vim.log.levels.WARN)
+    return { should_exit = false }
   end
 
-  return {
-    should_exit = rcid ~= 0,
-    tabbed = f_tab,
-  }
+  local exiting_cmds = {
+    quit = true,
+    qall = true,
+    exit = true,
+    xit = true,
+    xall = true,
+    wq = true,
+    wqall = true,
+    cquit = true,
+  } --- @type table<string, boolean>
+
+  --- @param cmd string
+  --- @return boolean
+  local function is_quit_cmd(cmd)
+    local ok, parsed = pcall(vim.api.nvim_parse_cmd, cmd, {})
+    if not ok or type(parsed) ~= 'table' then
+      return false
+    end
+    local parsed_cmd = parsed.cmd --- @type string?
+    return parsed_cmd ~= nil and exiting_cmds[parsed_cmd] == true
+  end
+
+  local files = {} --- @type string[]
+  local cmds = {} --- @type string[]
+  local f_async = false
+
+  local had_minmin = false
+  local j = 1
+  while j <= #args do
+    local arg = args[j] --- @type string
+    if not had_minmin and arg == '--' then
+      had_minmin = true
+    elseif not had_minmin and arg:sub(1, 1) == '+' then
+      local cmd = arg:sub(2) --- @type string
+      if cmd == 'async' then
+        f_async = true
+      else
+        table.insert(cmds, cmd)
+      end
+    elseif not had_minmin and arg == '-c' then
+      if j + 1 <= #args then
+        table.insert(cmds, args[j + 1])
+        j = j + 1
+      end
+    elseif not had_minmin and arg:sub(1, 2) == '-c' and #arg > 2 then
+      table.insert(cmds, arg:sub(3))
+    end
+    j = j + 1
+  end
+
+  local i = remote_arg_idx + 1
+  local remote_had_minmin = false
+  while i <= #args do
+    local arg = args[i] --- @type string
+    local is_inline_c_cmd = not remote_had_minmin and arg:sub(1, 2) == '-c' and #arg > 2
+    if not remote_had_minmin and arg == '--' then
+      remote_had_minmin = true
+    elseif not remote_had_minmin and arg:sub(1, 1) == '+' then
+      if arg:sub(2) == 'async' then
+        f_async = true
+      end
+    elseif not remote_had_minmin and arg == '-c' then
+      i = i + 1
+    elseif not is_inline_c_cmd then
+      table.insert(files, arg)
+    end
+    i = i + 1
+  end
+
+  local function run_remote_cmds()
+    for idx, cmd in ipairs(cmds) do
+      if is_quit_cmd(cmd) then
+        vim.fn.rpcnotify(rcid, 'nvim_command', cmd)
+        break
+      else
+        local ok, result = pcall(vim.fn.rpcrequest, rcid, 'nvim_exec2', cmd, { output = true })
+        if not ok then
+          if idx == #cmds and tostring(result):find('closed by the peer', 1, true) then
+            break
+          end
+          error(result)
+        end
+        local output = result.output or ''
+        if output ~= '' then
+          io.stdout:write(output)
+        end
+      end
+    end
+    if #cmds > 0 then
+      io.stdout:flush()
+    end
+  end
+
+  --- Normalize ambiguous file args before building a :drop command.
+  ---
+  --- Ex parses a leading '+'/'-' in the argument as command/option syntax.
+  --- Convert to an absolute path so filenames like "+foo" or "-cbar" are
+  --- always treated as literal files.
+  --- @param file string
+  --- @return string
+  local function remote_file_arg(file)
+    if file:sub(1, 1) == '+' or file:sub(1, 1) == '-' then
+      return vim.fn.fnamemodify(file, ':p')
+    end
+    return file
+  end
+
+  if #files == 0 and #cmds == 0 then
+    return { should_exit = true }
+  end
+
+  if #files == 0 then
+    run_remote_cmds()
+    return { should_exit = true }
+  end
+
+  if f_async then
+    for _, file in ipairs(files) do
+      local open_cmd = (f_tab and 'tab drop ' or 'drop ')
+        .. vim.fn.fnameescape(remote_file_arg(file))
+      vim.fn.rpcrequest(rcid, 'nvim_command', open_cmd)
+    end
+    run_remote_cmds()
+    return { should_exit = true }
+  end
+
+  local client_chan_id = vim.fn.rpcrequest(rcid, 'nvim_get_chan_info', 0).id --[[@as integer]]
+  local file_count = #files
+
+  for idx, file in ipairs(files) do
+    local open_cmd = (f_tab and 'tab drop ' or 'drop ') .. vim.fn.fnameescape(remote_file_arg(file))
+    local is_first = idx == 1
+    vim.fn.rpcrequest(
+      rcid,
+      'nvim_exec_lua',
+      [[
+      local client_chan_id, open_cmd, is_first, n = ...
+      if is_first then
+        local grp = '_nvim_remote_wait_' .. client_chan_id
+        vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] = n
+        vim.api.nvim_create_autocmd('VimLeave', {
+          group = vim.api.nvim_create_augroup(grp, { clear = true }),
+          callback = function()
+            local rem = vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] or 0
+            for _ = 1, rem do
+              vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done_event')
+            end
+            vim.g['_nvim_remote_wait_remaining_' .. client_chan_id] = 0
+          end,
+        })
+      end
+      vim.cmd(open_cmd)
+      local buf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_create_autocmd('BufUnload', {
+        buffer = buf,
+        once = true,
+        callback = function()
+          local key = '_nvim_remote_wait_remaining_' .. client_chan_id
+          local rem = (vim.g[key] or 0) - 1
+          vim.g[key] = math.max(rem, 0)
+          vim.rpcnotify(client_chan_id, 'nvim_remote_wait_done_event')
+        end,
+      })
+    ]],
+      { client_chan_id, open_cmd, is_first, file_count }
+    )
+  end
+
+  run_remote_cmds()
+
+  return { should_exit = false, wait_count = file_count }
 end
 
 do
