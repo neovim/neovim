@@ -1863,6 +1863,12 @@ M.cmds = {
     func = 'ex_wrongmodifier',
   },
   {
+    command = 'nospecial',
+    flags = bit.bor(NEEDARG, EXTRA, NOTRLCOM, CTRLV, SBOXOK, CMDWIN),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_nospecial',
+  },
+  {
     command = 'normal',
     flags = bit.bor(RANGE, BANG, EXTRA, NEEDARG, NOTRLCOM, CTRLV, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',

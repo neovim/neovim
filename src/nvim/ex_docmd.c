@@ -7099,6 +7099,59 @@ bool expr_map_locked(void)
   return expr_map_lock > 0 && !(curbuf->b_flags & BF_DUMMY);
 }
 
+/// ":nospecial {cmd} {arg}...": execute an ex command with literal arguments.
+/// bypass special character handling (|, ", %, etc).
+static void ex_nospecial(exarg_T *eap)
+{
+  char *arg = skipwhite(eap->arg);
+
+  // find inner command name up to first space
+  char *cmd_end = arg;
+  while (*cmd_end != NUL && *cmd_end != ' ') {
+    cmd_end++;
+  }
+  char *cmd_name = xmemdupz(arg, (size_t)(cmd_end - arg));
+
+  // literal argument is everything after the first space
+  char *literal_arg = (*cmd_end == NUL) ? cmd_end : skipwhite(cmd_end);
+
+  // resolve inner command index WITHOUT re-parsing argument
+  exarg_T inner_ea = {
+    .line1 = 1,
+    .line2 = 1,
+    .forceit = false,
+  };
+  inner_ea.cmd = cmd_name;
+
+  find_ex_command(&inner_ea, NULL);
+  if (inner_ea.cmdidx == CMD_SIZE) {
+    semsg(_("E492: Not an editor command: %s"), cmd_name);
+    xfree(cmd_name);
+    return;
+  }
+
+  // set up exarg_T with LITERAL raw argument
+  inner_ea.argt = cmdnames[(int)inner_ea.cmdidx].cmd_argt;
+  inner_ea.argt &= ~EX_XFILE;
+  inner_ea.argt &= ~EX_TRLBAR;
+  inner_ea.addr_type = cmdnames[(int)inner_ea.cmdidx].cmd_addr_type;
+  char *inner_cmdline = xstrdup(literal_arg);
+  inner_ea.arg = inner_cmdline;
+  inner_ea.cmdlinep = &inner_cmdline;
+  inner_ea.ea_getline = eap->ea_getline;
+  inner_ea.cookie = eap->cookie;
+  inner_ea.cstack = eap->cstack;
+  inner_ea.skip = eap->skip;
+
+  CmdParseInfo cmdinfo;
+  CLEAR_POINTER(&cmdinfo);
+  inner_ea.nextcmd = NULL;
+  execute_cmd(&inner_ea, &cmdinfo, false);
+
+  xfree(inner_cmdline);
+  xfree(cmd_name);
+}
+
 /// ":normal[!] {commands}": Execute normal mode commands.
 static void ex_normal(exarg_T *eap)
 {
