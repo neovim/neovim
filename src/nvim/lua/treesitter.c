@@ -62,7 +62,65 @@ typedef struct {
 
 #include "lua/treesitter.c.generated.h"
 
+struct TSLoadedLang {
+  // Path this language was loaded from
+  const char *path;
+  // Language object
+  TSLanguage *lang;
+};
+
+static struct TSLoadedLang *alloc_loaded_lang(const char *path, TSLanguage *lang)
+{
+  struct TSLoadedLang *loaded = xmalloc(sizeof(struct TSLoadedLang));
+
+  loaded->path = xstrdup(path);
+  loaded->lang = lang;
+
+  return loaded;
+}
+
+static void free_loaded_lang(struct TSLoadedLang *loaded)
+{
+  if (!loaded) {
+    return;
+  }
+
+  // FIXME: do we need to unload the TSLanguage somehow?
+  xfree((void *)loaded->path);
+  xfree(loaded);
+}
+
 static PMap(cstr_t) langs = MAP_INIT;
+
+static bool langs_has(const char *lang_name)
+{
+  return map_has(cstr_t, &langs, lang_name);
+}
+
+/// @param lang_name name of the lua language, will be copied
+/// @param path path to the TSLanguage, will be copied
+/// @param lang TSLanguage object, will be moved (owned by the map)
+static void langs_put(const char *lang_name, const char *path, TSLanguage *lang)
+{
+  struct TSLoadedLang *loaded = alloc_loaded_lang(path, lang);
+
+  pmap_put(cstr_t)(&langs, xstrdup(lang_name), loaded);
+}
+
+/// @param lang_name name of the lua language
+/// @return the TSLoadedLang for lang_name or NULL if missing (needs to be freed)
+static struct TSLoadedLang *langs_del(const char *lang_name)
+{
+  cstr_t key;
+  struct TSLoadedLang *loaded = pmap_del(cstr_t)(&langs, lang_name, &key);
+  xfree((void *)key);
+  return loaded;
+}
+
+static struct TSLoadedLang *langs_get(const char *lang_name)
+{
+  return pmap_get(cstr_t)(&langs, lang_name);
+}
 
 #ifdef HAVE_WASMTIME
 static wasm_engine_t *wasmengine;
@@ -74,7 +132,7 @@ static TSWasmStore *ts_wasmstore;
 static int tslua_has_language(lua_State *L)
 {
   const char *lang_name = luaL_checkstring(L, 1);
-  lua_pushboolean(L, map_has(cstr_t, &langs, lang_name));
+  lua_pushboolean(L, langs_has(lang_name));
   return 1;
 }
 
@@ -217,7 +275,7 @@ static int add_language(lua_State *L, bool is_wasm)
     symbol_name = luaL_checkstring(L, 3);
   }
 
-  if (map_has(cstr_t, &langs, lang_name)) {
+  if (langs_has(lang_name)) {
     lua_pushboolean(L, true);
     return 1;
   }
@@ -236,7 +294,7 @@ static int add_language(lua_State *L, bool is_wasm)
                       TREE_SITTER_LANGUAGE_VERSION, lang_version);
   }
 
-  pmap_put(cstr_t)(&langs, xstrdup(lang_name), (TSLanguage *)lang);
+  langs_put(lang_name, path, (TSLanguage *)lang);
 
   lua_pushboolean(L, true);
   return 1;
@@ -245,31 +303,33 @@ static int add_language(lua_State *L, bool is_wasm)
 static int tslua_remove_lang(lua_State *L)
 {
   const char *lang_name = luaL_checkstring(L, 1);
-  bool present = map_has(cstr_t, &langs, lang_name);
+  bool present = langs_has(lang_name);
   if (present) {
-    cstr_t key;
-    pmap_del(cstr_t)(&langs, lang_name, &key);
-    xfree((void *)key);
+    free_loaded_lang(langs_del(lang_name));
   }
   lua_pushboolean(L, present);
   return 1;
 }
 
-static TSLanguage *lang_check(lua_State *L, int index)
+static struct TSLoadedLang *lang_check(lua_State *L, int index)
 {
   const char *lang_name = luaL_checkstring(L, index);
-  TSLanguage *lang = pmap_get(cstr_t)(&langs, lang_name);
-  if (!lang) {
+  struct TSLoadedLang *loaded = langs_get(lang_name);
+  if (!loaded) {
     luaL_error(L, "no such language: %s", lang_name);
   }
-  return lang;
+  return loaded;
 }
 
 static int tslua_inspect_lang(lua_State *L)
 {
-  TSLanguage *lang = lang_check(L, 1);
+  struct TSLoadedLang *loaded = lang_check(L, 1);
+  TSLanguage *lang = loaded->lang;
 
   lua_createtable(L, 0, 2);  // [retval]
+
+  lua_pushstring(L, loaded->path);  // [retval, path]
+  lua_setfield(L, -2, "path");  // [retval]
 
   {  // Symbols
     uint32_t nsymbols = ts_language_symbol_count(lang);
@@ -377,7 +437,7 @@ static struct luaL_Reg parser_meta[] = {
 
 static int tslua_push_parser(lua_State *L)
 {
-  TSLanguage *lang = lang_check(L, 1);
+  TSLanguage *lang = lang_check(L, 1)->lang;
 
   TSParser **parser = lua_newuserdata(L, sizeof(TSParser *));
   *parser = ts_parser_new();
@@ -1537,7 +1597,7 @@ static int tslua_parse_query(lua_State *L)
     return luaL_error(L, "string expected");
   }
 
-  TSLanguage *lang = lang_check(L, 1);
+  TSLanguage *lang = lang_check(L, 1)->lang;
 
   size_t len;
   const char *src = lua_tolstring(L, 2, &len);

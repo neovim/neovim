@@ -67,6 +67,7 @@ describe('treesitter language API', function()
       abi_version = true,
       fields = true,
       metadata = true,
+      path = true,
       symbols = true,
       state_count = true,
       supertypes = true,
