@@ -1779,17 +1779,32 @@ Vim9 syn match	vimWincmd	"\s\=\<winc\%[md]\>\ze\s\+=\s*\%([#|]\|$\)"	skipwhite n
 
 " Syntax: {{{2
 "=======
-syn match	vimGroupList	contained	"[^[:space:],]\+\%(\s*,\s*[^[:space:],]\+\)*" contains=vimGroupSpecial
-syn region	vimGroupList	contained	start=/^\s*["#]\\ \|^\s*\\\|[^[:space:],]\+\s*,/ skip=/\s*\n\s*\%(\\\|["#]\\ \)\|^\s*\%(\\\|["#]\\ \)/ end=/[^[:space:],]\s*$\|[^[:space:],]\ze\s\+\w/ contains=@vimContinue,vimGroupSpecial
+syn region	vimGroupList	contained
+      \ start="\S"
+      \ skip=+\n\s*\%(\\\|["#]\\ \)+
+      "\ need to consume the whitespace
+      \ end="\s"he=e-1
+      \ end="$"
+      \ contains=@vimGroupListContinue,vimGroupSpecial,vimGroupListContinueComma
 syn keyword	vimGroupSpecial	contained	ALL	ALLBUT	CONTAINED	TOP
+syn match	vimGroupListComma		contained	","
+syn match	vimGroupListContinueComma	contained	"\s\+,\s*\|,\s\+"	contains=vimGroupListComma
+syn match	vimGroupListContinueComma	contained	"\s*,\s*\%(\n\s*\%(\\\s\+\|["#]\\ .*\)\)\+"	contains=@vimGroupListContinue,vimGroupListComma
+
+syn match	vimGroupListEquals	contained	"="		skipwhite skipnl nextgroup=vimGroupListContinueStart,vimGroupList
+" the first continuation line does not terminate the list at whitepace after \
+syn match	vimGroupListContinueStart	contained	"^\%(\s*["#]\\ .*\n\)*\s*\\\s\+"	skipwhite        nextgroup=vimGroupList contains=@vimGroupListContinue transparent
+
+syn match	vimGroupListContinue	contained	"^\s*\\"	skipwhite skipnl nextgroup=@vimGroupListContinue,vimGroupListContinueComma contains=vimWhitespace
+syn match	vimGroupListContinueComment	contained	'^\s*["#]\\ .*'	skipwhite skipnl nextgroup=@vimGroupListContinue		   contains=vimWhitespace
+syn cluster	vimGroupListContinue	contains=vimGroupListContinue,vimGroupListContinueComment
 
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_novimsynerror")
- syn match	vimSynError	contained	"\i\+"
- syn match	vimSynError	contained	"\i\+="	nextgroup=vimGroupList
+ syn match	vimSynError		contained	"\i\+"
 endif
-syn match	vimSynContains	contained	"\<contain\%(s\|edin\)="	skipwhite skipnl nextgroup=vimGroupList
-syn match	vimSynKeyContainedin	contained	"\<containedin="	skipwhite skipnl nextgroup=vimGroupList
-syn match	vimSynNextgroup	contained	"\<nextgroup="		skipwhite skipnl nextgroup=vimGroupList
+syn match	vimSynContains		contained	"\<contains\>"	skipwhite nextgroup=vimGroupListEquals
+syn match	vimSynContainedin		contained	"\<containedin\>"	skipwhite nextgroup=vimGroupListEquals
+syn match	vimSynNextgroup		contained	"\<nextgroup\>"	skipwhite nextgroup=vimGroupListEquals
 if has("conceal")
  " no whitespace allowed after '='
  syn match	vimSynCchar	contained	"\<cchar="	nextgroup=vimSynCcharValue
@@ -1807,13 +1822,13 @@ endif
 syn keyword	vimSynCase	contained	ignore	match
 
 " Syntax: clear {{{2
-syn keyword	vimSynType	contained	clear	skipwhite nextgroup=vimGroupList
+syn keyword	vimSynType	contained	clear
 
 " Syntax: cluster {{{2
 syn keyword	vimSynType	contained	cluster	skipwhite nextgroup=vimClusterName
 syn region	vimClusterName	contained keepend	matchgroup=vimGroupName start="\h\w*\>" skip=+\\\\\|\\\|\n\s*\%(\\\|"\\ \)+ matchgroup=vimCmdSep end="$\||" contains=@vimContinue,vimGroupAdd,vimGroupRem,vimSynContains,vimSynError
-syn match	vimGroupAdd	contained keepend	"\<add="	skipwhite skipnl nextgroup=vimGroupList
-syn match	vimGroupRem	contained keepend	"\<remove="	skipwhite skipnl nextgroup=vimGroupList
+syn match	vimGroupAdd	contained	"\<add\>"	skipwhite nextgroup=vimGroupListEquals
+syn match	vimGroupRem	contained	"\<remove\>"	skipwhite nextgroup=vimGroupListEquals
 
 " Syntax: conceal {{{2
 syn match	vimSynType	contained	"\<conceal\>"	skipwhite nextgroup=vimSynConceal,vimSynConcealError
@@ -1836,16 +1851,17 @@ syn match	vimSynIskeyword		contained	"\S\+"	contains=vimSynIskeywordSep
 syn match	vimSynIskeywordSep	contained	","
 
 " Syntax: include {{{2
-syn keyword	vimSynType	contained	include	skipwhite nextgroup=vimGroupList
+syn keyword	vimSynType		contained	include	skipwhite nextgroup=vimSynIncludeCluster
+syn match	vimSynIncludeCluster	contained	"@[_a-zA-Z0-9]\+\>"
 
 " Syntax: keyword {{{2
-syn cluster	vimSynKeyGroup	contains=@vimContinue,vimSynCchar,vimSynNextgroup,vimSynKeyOpt,vimSynKeyContainedin
+syn cluster	vimSynKeyGroup	contains=@vimContinue,vimSynCchar,vimSynNextgroup,vimSynKeyOpt,vimSynContainedin
 syn keyword	vimSynType	contained	keyword	skipwhite nextgroup=vimSynKeyRegion
 syn region	vimSynKeyRegion	contained         keepend	matchgroup=vimGroupName start="\h\w*\>" skip=+\\\\\|\\|\|\n\s*\%(\\\|"\\ \)+ matchgroup=vimCmdSep end="|\|$" contains=@vimSynKeyGroup
 syn match	vimSynKeyOpt	contained	"\%#=1\<\%(conceal\|contained\|transparent\|skipempty\|skipwhite\|skipnl\)\>"
 
 " Syntax: match {{{2
-syn cluster	vimSynMtchGroup	contains=@vimContinue,vimSynCchar,vimSynContains,vimSynError,vimSynMtchOpt,vimSynNextgroup,vimSynRegPat,vimNotation,vimMtchComment
+syn cluster	vimSynMtchGroup	contains=@vimContinue,vimSynCchar,vimSynContains,vimSynContainedin,vimSynError,vimSynMtchOpt,vimSynNextgroup,vimSynRegPat,vimNotation,vimMtchComment
 syn keyword	vimSynType	contained	match	skipwhite nextgroup=vimSynMatchRegion
 syn region	vimSynMatchRegion	contained keepend	matchgroup=vimGroupName start="\h\w*\>" skip=+\\\\\|\\|\|\n\s*\%(\\\|"\\ \)+ matchgroup=vimCmdSep end="|\|$" contains=@vimSynMtchGroup
 syn match	vimSynMtchOpt	contained	"\%#=1\<\%(conceal\|transparent\|contained\|excludenl\|keepend\|skipempty\|skipwhite\|display\|extend\|skipnl\|fold\)\>"
@@ -1855,9 +1871,9 @@ syn keyword	vimSynType	contained	enable	list	manual	off	on	reset
 
 " Syntax: region {{{2
 syn cluster	vimSynRegPatGroup	contains=@vimContinue,vimPatSep,vimNotPatSep,vimSynPatRange,vimSynNotPatRange,vimSubstSubstr,vimPatRegion,vimPatSepErr,vimNotation
-syn cluster	vimSynRegGroup	contains=@vimContinue,vimSynCchar,vimSynContains,vimSynNextgroup,vimSynRegOpt,vimSynReg,vimSynMtchGrp
+syn cluster	vimSynRegGroup	contains=@vimContinue,vimSynCchar,vimSynContains,vimSynContainedin,vimSynNextgroup,vimSynRegOpt,vimSynReg,vimSynMtchGrp
 syn keyword	vimSynType	contained	region	skipwhite nextgroup=vimSynRegion
-syn region	vimSynRegion	contained keepend	matchgroup=vimGroupName start="\h\w*" skip=+\\\\\|\\\|\n\s*\%(\\\|"\\ \)+ matchgroup=vimCmdSep end="|\|$" contains=@vimSynRegGroup
+syn region	vimSynRegion	contained keepend	matchgroup=vimGroupName start="\h\w*" skip=+\\\\\|\\|\|\n\s*\%(\\\|"\\ \)+ matchgroup=vimCmdSep end="|\|$" contains=@vimSynRegGroup
 syn match	vimSynRegOpt	contained	"\%#=1\<\%(conceal\%(ends\)\=\|transparent\|contained\|excludenl\|skipempty\|skipwhite\|display\|keepend\|oneline\|extend\|skipnl\|fold\)\>"
 syn match	vimSynReg	contained	"\<\%(start\|skip\|end\)="	nextgroup=vimSynRegPat
 syn match	vimSynMtchGrp	contained	"matchgroup="	nextgroup=vimGroup,vimHLGroup,vimOnlyHLGroup,nvimHLGroup
@@ -2518,11 +2534,14 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimGrep	vimCommand
  hi def link vimGrepadd	vimCommand
  hi def link vimGrepBang	vimBang
+ hi def link vimGroup	Type
  hi def link vimGroupAdd	vimSynOption
+ hi def link vimGroupListEquals	vimSynOption
+ hi def link vimGroupListContinue		vimContinue
+ hi def link vimGroupListContinueComment	vimContinueComment
  hi def link vimGroupName	Normal
  hi def link vimGroupRem	vimSynOption
  hi def link vimGroupSpecial	Special
- hi def link vimGroup	Type
  hi def link vimHelp	vimCommand
  hi def link vimHelpBang	vimBang
  hi def link vimHelpgrep	vimCommand
@@ -2688,7 +2707,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSynFoldlevel	Type
  hi def link vimSynIskeyword	Type
  hi def link vimSynIskeywordSep	Delimiter
- hi def link vimSynKeyContainedin	vimSynContains
+ hi def link vimSynContainedin	vimSynContains
  hi def link vimSynKeyOpt	vimSynOption
  hi def link vimSynMtchGrp	vimSynOption
  hi def link vimSynMtchOpt	vimSynOption
