@@ -38,6 +38,124 @@ vim._extra = {
   inspect_pos = true,
 }
 
+--- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
+--- `callback` immediately, then on user events, internal events, and approximately every
+--- `interval` milliseconds (default 200). Returns all `callback` results on success.
+---
+--- Nvim processes other events while waiting.
+--- Cannot be called during an |api-fast| event.
+---
+--- Examples:
+---
+--- ```lua
+--- -- Wait for 100 ms, allowing other events to process.
+--- vim.wait(100)
+---
+--- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+--- vim.wait(1000, function() return vim.g.foo end, 500)
+---
+--- -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+--- local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
+---   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+--- end)
+---
+--- -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+--- -- only waits 100ms because `vim.wait` processes other events while waiting.
+--- vim.defer_fn(function() vim.g.timer_result = true end, 100)
+--- if vim.wait(10000, function() return vim.g.timer_result end) then
+---   print('Only waiting a little bit of time!')
+--- end
+--- ```
+---
+--- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
+--- part is truncated.
+--- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
+--- @param interval? integer (Approximate) number of milliseconds to wait between polls
+--- @param fast_only? boolean If true, only |api-fast| events will be processed.
+--- @return boolean, nil|-1|-2, ...
+---     - If callback returns `true` before timeout: `true, ...` (remaining callback results)
+---     - On timeout: `false, -1`
+---     - On interrupt: `false, -2`
+---     - On error: the error is raised.
+function vim.wait(time, callback, interval, fast_only)
+  if vim.in_fast_event() then
+    error('E5560: vim.wait must not be called in a fast event context', 0)
+  end
+
+  vim.validate('time', time, 'number')
+  if time < 0 then
+    error('timeout must be >= 0')
+  end
+  -- not nan and not too big
+  if time ~= time or time > vim._maxint then
+    time = vim._maxint
+  end
+
+  vim.validate('callback', callback, 'callable', true)
+
+  vim.validate('interval', interval, 'number', true)
+  if interval then
+    interval = math.floor(interval)
+    if interval < 0 then
+      error('interval must be >= 0')
+    end
+  else
+    interval = 200
+  end
+
+  vim.validate('fast_only', fast_only, 'boolean', true)
+  if fast_only == nil then
+    fast_only = false
+  end
+
+  local start = vim.uv.hrtime()
+
+  -- Flush screen updates before blocking.
+  vim._ui_flush()
+
+  while true do
+    if vim._check_interrupt() then
+      return false, -2
+    end
+
+    if callback then
+      local ok, results = pcall(function()
+        return vim.F.pack_len(callback())
+      end)
+      if not ok then
+        error(results, 0)
+      end
+      --- @cast results -string
+      local n = results.n
+      if n > 0 and results[1] then
+        return true, unpack(results, 2, n)
+      end
+    end
+
+    local elapsed_ms = (vim.uv.hrtime() - start) / 1e6
+    local remaining_ms = time - elapsed_ms
+    if remaining_ms <= 0 then
+      break
+    end
+
+    -- By default, block until the timeout expires.
+    local poll_ms = remaining_ms
+    if interval > 0 then
+      -- Wait until the next interval boundary after `elapsed_ms`.
+      -- This keeps callback checks aligned to fixed multiples of `interval`
+      -- in case some loops run late.
+      local next_wakeup_ms = (math.floor(elapsed_ms / interval) + 1) * interval
+      poll_ms = math.min(poll_ms, next_wakeup_ms - elapsed_ms)
+    end
+
+    -- `_loop_poll()` needs an integer timeout and > 0 to block. Round up small values
+    -- to avoid spinning.
+    vim._loop_poll(math.ceil(poll_ms), fast_only)
+  end
+
+  return false, -1
+end
+
 --- @nodoc
 vim.log = {
   --- @enum vim.log.levels

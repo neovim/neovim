@@ -182,46 +182,20 @@ function vim.iconv(str, from, to, opts) end
 --- @return string? err Error message if scheduling failed, `nil` otherwise.
 function vim.schedule(fn) end
 
---- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
---- `callback` immediately, then on user events, internal events, and approximately every
---- `interval` milliseconds (default 200). Returns all `callback` results on success.
----
---- Nvim processes other events while waiting.
---- Cannot be called during an |api-fast| event.
----
---- Examples:
----
---- ```lua
---- -- Wait for 100 ms, allowing other events to process.
---- vim.wait(100)
----
---- -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
---- vim.wait(1000, function() return vim.g.foo end, 500)
----
---- -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
---- local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
----   return vim.g.foo, 'a', 42, { ok = { 'yes' } }
---- end)
----
---- -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
---- -- only waits 100ms because `vim.wait` processes other events while waiting.
---- vim.defer_fn(function() vim.g.timer_result = true end, 100)
---- if vim.wait(10000, function() return vim.g.timer_result end) then
----   print('Only waiting a little bit of time!')
---- end
---- ```
----
---- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
---- part is truncated.
---- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
---- @param interval? integer (Approximate) number of milliseconds to wait between polls
---- @param fast_only? boolean If true, only |api-fast| events will be processed.
---- @return boolean, nil|-1|-2, ...
----     - If callback returns `true` before timeout: `true, nil, ...`
----     - On timeout: `false, -1`
----     - On interrupt: `false, -2`
----     - On error: the error is raised.
-function vim.wait(time, callback, interval, fast_only) end
+--- @nodoc
+--- Polls the main event loop for up to {timeout} milliseconds.
+--- @param timeout integer
+--- @param fast_only boolean
+function vim._loop_poll(timeout, fast_only) end
+
+--- @nodoc
+--- Flushes pending UI updates.
+function vim._ui_flush() end
+
+--- @nodoc
+--- Checks for interrupt, clears it, and consumes input if present.
+--- @return boolean
+function vim._check_interrupt() end
 
 --- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
 --- Used to implement screen elements like popupmenu or message handling in Lua.
