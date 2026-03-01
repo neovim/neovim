@@ -352,6 +352,7 @@ Functions:
 - |tempname()| tries to recover if the Nvim |tempdir| disappears.
 - |writefile()| with "p" flag creates parent directories.
 - |prompt_getinput()|
+- |prompt_appendbuffer()|
 
 Highlight groups:
 - |highlight-blend| controls blend level for a highlight group
