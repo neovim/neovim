@@ -1775,6 +1775,21 @@ describe('runtime:', function()
     command('edit FTDETECT')
     eq('SsABab', eval('g:aseq'))
   end)
+
+  it('shows E5009 when $VIMRUNTIME is inaccessible #27527', function()
+    local logfile = t.tmpname()
+    clear({
+      args_rm = { '-u' },
+      args = { '--clean' },
+      env = { VIMRUNTIME = '/foo/bar', NVIM_LOG_FILE = logfile },
+    })
+    matches('E5009: Invalid %$VIMRUNTIME', exec_capture('messages'))
+    if t.is_os('win') then
+      t.assert_log('neovim%.ico not found', logfile)
+    else
+      t.assert_nolog('.', logfile)
+    end
+  end)
 end)
 
 describe('user session', function()
