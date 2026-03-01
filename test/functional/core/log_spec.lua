@@ -99,4 +99,25 @@ describe('log', function()
     -- Child Nvim spawned by jobstart() prepends "c/" to parent name.
     assert_log('c/' .. tid .. '%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
   end)
+
+  it('warns when NVIM_LOG_FILE is inaccessible', function()
+    local invalid_path = '/foo/bar'
+    clear({
+      args_rm = { '-u' },
+      args = { '--clean' },
+      env = { NVIM_LOG_FILE = invalid_path },
+    })
+    t.matches('"' .. invalid_path .. '" is not accessible', n.exec_capture('messages'))
+  end)
+
+  it('warns when NVIM_LOG_FILE and $XDG_STATE_HOME is inaccessible', function()
+    local invalid_path = '/foo/bar'
+    clear({
+      args_rm = { '-u' },
+      args = { '--clean' },
+      env = { NVIM_LOG_FILE = invalid_path, XDG_STATE_HOME = invalid_path },
+    })
+
+    t.matches('"' .. invalid_path .. '" is not accessible', n.exec_capture('messages'))
+  end)
 end)

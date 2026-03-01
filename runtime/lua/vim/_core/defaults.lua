@@ -1016,6 +1016,17 @@ do
       end,
     })
   end
+  -- warn if $NVIM_LOG_FILE or $XDG_STATE_HOME are inaccessable. see #38039
+  if vim.v.vim_did_enter then
+    require('vim._core.util')._warn_log_file_fallback()
+  else
+    vim.api.nvim_create_autocmd('VimEnter', {
+      once = true,
+      callback = function()
+        require('vim._core.util')._warn_log_file_fallback()
+      end,
+    })
+  end
 end
 
 --- Default options

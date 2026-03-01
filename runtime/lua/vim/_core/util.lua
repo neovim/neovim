@@ -81,4 +81,30 @@ function M.source_is_lua(bufnr, line1, line2)
   return lang_tree:lang() == 'lua'
 end
 
+function M._warn_log_file_fallback()
+  local mode = vim.fn.mode()
+  if mode == 'c' then -- in es mode
+    return
+  end
+
+  local default_log_file = vim.fn.getenv('DEFAULT_NVIM_LOG_FILE')
+  if default_log_file == vim.NIL then
+    return
+  end
+
+  local log_file = vim.fn.getenv('NVIM_LOG_FILE')
+
+  if log_file == vim.NIL or log_file == '' then
+    vim.notify(
+      ('%q is not accessible, logging disabled (stderr)'):format(default_log_file),
+      vim.log.levels.WARN
+    )
+  elseif log_file ~= default_log_file then
+    vim.notify(
+      ('%q is not accessible, logging to: %q'):format(default_log_file, log_file),
+      vim.log.levels.WARN
+    )
+  end
+end
+
 return M
