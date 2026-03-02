@@ -624,6 +624,16 @@ describe('prompt buffer', function()
     ]])
 
     feed('line 4<s-cr>line 5')
+    screen:expect([[
+      after                    |
+      line 3"                  |
+      cmd: line 4              |
+      line 5^                   |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
 
     feed('<esc>k0oafter prompt')
     screen:expect([[
