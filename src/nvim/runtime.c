@@ -1177,7 +1177,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   // from scratch is needlessly slow. splice in the package and its afterdir instead.
   // But don't do this for "pack/*/start/*" (is_pack=true):
   // we want properly expand wildcards in a "start" bundle.
-  if (was_valid && !is_pack) {
+  if (was_valid && !is_pack && !runtime_search_path_ref) {
     runtime_search_path_valid = true;
     runtime_search_path_valid_thread = false;
     kv_pushp(runtime_search_path);
