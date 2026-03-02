@@ -448,7 +448,7 @@ describe('TUI :restart', function()
     tt.feed_data(':echo ' .. expr .. '\013')
     screen:expect({ any = 'v:true' })
     tt.feed_data(':echo ' .. has_s .. '\013')
-    screen:expect({ any = 'v:true' })
+    screen:expect({ any = 'v:true', unchanged = true })
 
     tt.feed_data(":restart put='foo'\013")
     screen:expect([[
@@ -467,7 +467,7 @@ describe('TUI :restart', function()
     tt.feed_data(':echo ' .. expr .. '\013')
     screen:expect({ any = 'v:false' })
     tt.feed_data(':echo ' .. has_s .. '\013')
-    screen:expect({ any = 'v:false' })
+    screen:expect({ any = 'v:false', unchanged = true })
 
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
