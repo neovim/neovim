@@ -890,9 +890,13 @@ do
 
       -- Wait until detection of OSC 11 capabilities is complete to
       -- ensure background is automatically set before user config.
-      if not vim.wait(100, function()
-        return did_dsr_response
-      end, 1) then
+      if
+        not vim.wait(100, function()
+          return did_dsr_response
+        end, 1)
+        -- Don't show the warning when running tests to avoid flakiness.
+        and os.getenv('NVIM_TEST') == nil
+      then
         vim.notify(
           'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
           vim.log.levels.WARN
