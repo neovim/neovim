@@ -155,7 +155,7 @@ bool aborted_in_try(void)
 /// When several messages appear in the same command, the first is usually the
 /// most specific one and used as the exception value.  The "severe" flag can be
 /// set to true, if a later but severer message should be used instead.
-bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
+bool cause_errthrow(const char *mesg, bool multiline, bool concat, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
   msglist_T *elem;
@@ -241,6 +241,12 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
     if (msg_list != NULL) {
       msglist_T **plist = msg_list;
       while (*plist != NULL) {
+        // Concatenate (a multihl message) instead.
+        if ((*plist)->next == NULL && concat) {
+          (*plist)->msg = xrealloc((*plist)->msg, strlen((*plist)->msg) + strlen(mesg) + 1);
+          (*plist)->throw_msg = strcat((*plist)->msg, mesg);
+          return true;
+        }
         plist = &(*plist)->next;
       }
 

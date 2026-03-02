@@ -445,6 +445,13 @@ describe('API', function()
       api.nvim_exec2('hi VisualNC', { output = true })
       eq('VisualNC       xxx cleared', api.nvim_exec2('hi VisualNC', { output = true }).output)
     end)
+
+    it('captures multi-chunk err nvim_echo() #36883', function()
+      eq(
+        'nvim_exec2(), line 1: Vim(call):abc',
+        pcall_err(request, 'nvim_exec2', 'call nvim_echo([["a"],["b"],["c"] ], 0, #{err:1})', {})
+      )
+    end)
   end)
 
   describe('nvim_command', function()
