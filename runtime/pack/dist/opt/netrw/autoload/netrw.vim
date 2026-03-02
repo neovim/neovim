@@ -21,6 +21,7 @@
 " 2026 Feb 15 by Vim Project fix global variable initialization for MS-Windows #19287
 " 2026 Feb 21 by Vim Project better absolute path detection on MS-Windows #19477
 " 2026 Feb 27 by Vim Project Make the hostname validation more strict
+" 2026 Mar 01 by Vim Project include portnumber in hostname checking #19533
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -2592,7 +2593,8 @@ endfunction
 
 " s:NetrwValidateHostname:  Validate that the hostname is valid {{{2
 " Input:
-"   hostname, may include an optional username, e.g. user@hostname
+"   hostname, may include an optional username and port number, e.g.
+"       user@hostname:port
 "   allow a alphanumeric hostname or an IPv(4/6) address
 " Output:
 "  true if g:netrw_machine is valid according to RFC1123 #Section 2
@@ -2601,17 +2603,19 @@ function s:NetrwValidateHostname(hostname)
   let user_pat = '\%([a-zA-Z0-9._-]\+@\)\?'
   " Hostname: 1-64 chars, alphanumeric/dots/hyphens.
   " No underscores. No leading/trailing dots/hyphens.
-  let host_pat = '[a-zA-Z0-9]\%([-a-zA-Z0-9.]{,62}[a-zA-Z0-9]\)\?$'
+  let host_pat = '[a-zA-Z0-9]\%([-a-zA-Z0-9.]\{0,62}[a-zA-Z0-9]\)\?'
+  " Port: 16 bit unsigned integer
+  let port_pat = '\%(:\d\{1,5\}\)\?$'
 
   " IPv4: 1-3 digits separated by dots
-  let ipv4_pat = '\%(\d\{1,3}\.\)\{3\}\d\{1,3\}$'
+  let ipv4_pat = '\%(\d\{1,3}\.\)\{3\}\d\{1,3\}'
 
   " IPv6: Hex, colons, and optional brackets
-  let ipv6_pat = '\[\?\%([a-fA-F0-9:]\{2,}\)\+\]\?$'
+  let ipv6_pat = '\[\?\%([a-fA-F0-9:]\{2,}\)\+\]\?'
 
-  return a:hostname =~? '^'.user_pat.host_pat ||
-       \ a:hostname =~? '^'.user_pat.ipv4_pat ||
-       \ a:hostname =~? '^'.user_pat.ipv6_pat
+  return a:hostname =~? '^'.user_pat.host_pat.port_pat ||
+       \ a:hostname =~? '^'.user_pat.ipv4_pat.port_pat ||
+       \ a:hostname =~? '^'.user_pat.ipv6_pat.port_pat
 endfunction
 
 " NetUserPass: set username and password for subsequent ftp transfer {{{2

@@ -133,6 +133,11 @@ function Test_NetrwFile(fname) abort
     return s:NetrwFile(a:fname)
 endfunction
 
+" Test hostname validation
+function Test_NetrwValidateHostname(hostname) abort
+    return s:NetrwValidateHostname(a:hostname)
+endfunction
+
 " }}}
 END
 
@@ -564,6 +569,30 @@ func Test_netrw_reject_evil_hostname()
   let msg = execute(':e scp://x;touch RCE;x/dir/')
   let msg = split(msg, "\n")[-1]
   call assert_match('Rejecting invalid hostname', msg)
-endfunction
+endfunc
+
+func Test_netrw_hostname()
+  let valid_hostnames = [
+  \   'localhost',
+  \   '127.0.0.1',
+  \   '::1',
+  \   '0:0:0:0:0:0:0:1',
+  \   'user@localhost',
+  \   'usuario@127.0.0.1',
+  \   'utilisateur@::1',
+  \   'benutzer@0:0:0:0:0:0:0:1',
+  \   'localhost:22',
+  \   '127.0.0.1:80',
+  \   '[::1]:443',
+  \   '[0:0:0:0:0:0:0:1]:5432',
+  \   'user@localhost:22',
+  \   'usuario@127.0.0.1:80',
+  \   'utilisateur@[::1]:443',
+  \   'benutzer@[0:0:0:0:0:0:0:1]:5432']
+
+  for hostname in valid_hostnames
+    call assert_true(Test_NetrwValidateHostname(hostname), $"Valid hostname {hostname} was rejected")
+  endfor
+endfunc
 
 " vim:ts=8 sts=2 sw=2 et
