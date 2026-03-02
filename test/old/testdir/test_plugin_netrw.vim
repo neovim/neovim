@@ -165,6 +165,8 @@ func s:appendDebugToNetrw(netrw_path, netrw_test_path)
 endfunction
 
 func SetUp()
+  let s:save_shell = $SHELL
+  let $SHELL = 'sh'
 
   " prepare modified netrw script
   call s:appendDebugToNetrw(s:netrw_path, s:netrw_test_path)
@@ -187,6 +189,7 @@ endfunction
 func TearDown()
   " cleanup
   call delete(s:netrw_test_path)
+  let $SHELL = s:save_shell
 endfunction
 
 func SetShell(shell)
