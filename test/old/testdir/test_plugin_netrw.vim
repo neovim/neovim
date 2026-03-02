@@ -113,7 +113,6 @@ function Test_NetrwMarkFileCopy_SameDir(dir = $HOME, symlink = 0) abort
     endif
 endfunction
 
-
 " Test file copy operations via s:NetrwMarkFileMove()
 function Test_NetrwMarkFileMove(source_dir, target_dir, marked_files) abort
     " set up
@@ -126,6 +125,12 @@ function Test_NetrwMarkFileMove(source_dir, target_dir, marked_files) abort
     call s:NetrwMarkFileMove(1)
     " wipe out the test buffer
     bw
+endfunction
+
+" Test how netrw fixes paths according with settings
+" (g:netrw_keepdir, g:netrw_cygwin, tree style ...)
+function Test_NetrwFile(fname) abort
+    return s:NetrwFile(a:fname)
 endfunction
 
 " }}}
@@ -301,6 +306,30 @@ func Test_netrw_wipe_empty_buffer_fastpath()
   bw
 
   unlet! netrw_fastbrowse
+endfunction
+
+" Test UNC paths on windows
+func Test_netrw_check_UNC_paths()
+  CheckMSWindows
+
+  let test_paths = [
+  \ '\\Server2\Share\Test\Foo.txt',
+  \ '//Server2/Share/Test/Foo.txt',
+  \ '\\Server2\Share\Test\',
+  \ '//Server2/Share/Test/',
+  \ '\\wsl.localhost\Ubuntu\home\user\_vimrc',
+  \ '//wsl.localhost/Ubuntu/home/user/_vimrc',
+  \ '\\wsl.localhost\Ubuntu\home\user',
+  \ '//wsl.localhost/Ubuntu/home/user']
+
+  " The paths must be interpreted as absolute ones
+  for path in test_paths
+    call assert_equal(
+    \   path,
+    \   Test_NetrwFile(path),
+    \   $"UNC path: {path} missinterpreted")
+  endfor
+
 endfunction
 
 " ---------------------------------

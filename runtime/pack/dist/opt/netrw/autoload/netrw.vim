@@ -19,6 +19,7 @@
 " 2025 Dec 26 by Vim Project fix use of g:netrw_cygwin #19015
 " 2026 Jan 19 by Vim Project do not create swapfiles #18854
 " 2026 Feb 15 by Vim Project fix global variable initialization for MS-Windows #19287
+" 2026 Feb 21 by Vim Project better absolute path detection on MS-Windows #19477
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -3239,7 +3240,7 @@ function s:NetrwFile(fname)
         endif
 
         if !g:netrw_cygwin && has("win32")
-            if fname =~ '^\' || fname =~ '^\a:\'
+            if isabsolutepath(fname)
                 " windows, but full path given
                 let ret= fname
             else
