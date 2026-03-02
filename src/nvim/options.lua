@@ -5464,6 +5464,15 @@ local options = {
         <
         		Where "XXX" denotes the first non-blank characters in
         		the line.
+        						*lcs-leadtab*
+          leadtab:xy[z]
+        		Like |lcs-tab|, but only for leading tabs.  When
+        		omitted, the "tab" setting is used for leading tabs.
+        		|lcs-tab| must also be set for this to work. *E1572*
+        		You can combine it with "tab:", for example:
+        		`:set listchars=tab:>-,leadtab:.\ `
+        		This shows leading tabs as periods(.) and other tabs
+        		as ">--".
         						*lcs-trail*
           trail:c	Character to show for trailing spaces.  When omitted,
         		trailing spaces are blank.  Overrides the "space" and

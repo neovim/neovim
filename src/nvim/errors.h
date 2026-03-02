@@ -219,6 +219,7 @@ EXTERN const char e_cannot_switch_to_a_closing_buffer[] INIT( = N_("E1546: Canno
 EXTERN const char e_cannot_have_more_than_nr_diff_anchors[] INIT( = N_("E1549: Cannot have more than %d diff anchors"));
 EXTERN const char e_failed_to_find_all_diff_anchors[] INIT( = N_("E1550: Failed to find all diff anchors"));
 EXTERN const char e_diff_anchors_with_hidden_windows[] INIT( = N_("E1562: Diff anchors cannot be used with hidden diff windows"));
+EXTERN const char e_leadtab_requires_tab[] INIT( = N_("E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \"%s\""));

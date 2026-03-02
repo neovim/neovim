@@ -2252,17 +2252,18 @@ static const struct chars_tab fcs_tab[] = {
 
 static lcs_chars_T lcs_chars;
 static const struct chars_tab lcs_tab[] = {
-  CHARSTAB_ENTRY(&lcs_chars.eol,     "eol",            NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.ext,     "extends",        NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.nbsp,    "nbsp",           NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.prec,    "precedes",       NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.space,   "space",          NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.tab2,    "tab",            NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.lead,    "lead",           NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.trail,   "trail",          NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.conceal, "conceal",        NULL, NULL),
-  CHARSTAB_ENTRY(NULL,               "multispace",     NULL, NULL),
-  CHARSTAB_ENTRY(NULL,               "leadmultispace", NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.eol,      "eol",            NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.ext,      "extends",        NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.nbsp,     "nbsp",           NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.prec,     "precedes",       NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.space,    "space",          NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.tab2,     "tab",            NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.leadtab2, "leadtab",        NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.lead,     "lead",           NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.trail,    "trail",          NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.conceal,  "conceal",        NULL, NULL),
+  CHARSTAB_ENTRY(NULL,                "multispace",     NULL, NULL),
+  CHARSTAB_ENTRY(NULL,                "leadmultispace", NULL, NULL),
 };
 
 #undef CHARSTAB_ENTRY
@@ -2326,6 +2327,8 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
       if (what == kListchars) {
         lcs_chars.tab1 = NUL;
         lcs_chars.tab3 = NUL;
+        lcs_chars.leadtab1 = NUL;
+        lcs_chars.leadtab3 = NUL;
 
         if (multispace_len > 0) {
           lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(schar_T));
@@ -2433,7 +2436,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         }
         schar_T c2 = 0;
         schar_T c3 = 0;
-        if (tab[i].cp == &lcs_chars.tab2) {
+        if (tab[i].cp == &lcs_chars.tab2 || tab[i].cp == &lcs_chars.leadtab2) {
           if (*s == NUL) {
             return field_value_err(errbuf, errbuflen,
                                    e_wrong_number_of_characters_for_field_str,
@@ -2461,6 +2464,10 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
               lcs_chars.tab1 = c1;
               lcs_chars.tab2 = c2;
               lcs_chars.tab3 = c3;
+            } else if (tab[i].cp == &lcs_chars.leadtab2) {
+              lcs_chars.leadtab1 = c1;
+              lcs_chars.leadtab2 = c2;
+              lcs_chars.leadtab3 = c3;
             } else if (tab[i].cp != NULL) {
               *(tab[i].cp) = c1;
             }
@@ -2482,6 +2489,10 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         p++;
       }
     }
+  }
+
+  if (what == kListchars && lcs_chars.leadtab2 != NUL && lcs_chars.tab2 == NUL) {
+    return e_leadtab_requires_tab;
   }
 
   if (apply) {

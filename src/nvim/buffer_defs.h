@@ -1056,6 +1056,9 @@ typedef struct {
   schar_T tab1;  ///< first tab character
   schar_T tab2;  ///< second tab character
   schar_T tab3;  ///< third tab character
+  schar_T leadtab1;
+  schar_T leadtab2;
+  schar_T leadtab3;
   schar_T lead;
   schar_T trail;
   schar_T *multispace;

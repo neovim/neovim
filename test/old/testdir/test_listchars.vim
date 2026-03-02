@@ -349,6 +349,91 @@ func Test_listchars()
   call Check_listchars(expected, 5, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
+  " Test leadtab basic functionality
+  normal ggdG
+  set listchars=tab:>-,leadtab:+*
+  set list
+  call append(0, [
+        \ "\ttext",
+        \ "\t\ttext",
+        \ "text\ttab"
+        \ ])
+  let expected = [
+        \ '+*******text        ',
+        \ '+*******+*******text',
+        \ 'text>---tab         '
+        \ ]
+  call Check_listchars(expected, 3, 20)
+
+  " Test leadtab with unicode characters
+  normal ggdG
+  set listchars=tab:>-,leadtab:├─┤
+  call append(0, ["\ttext"])
+  let expected = ['├──────┤text']
+  call Check_listchars(expected, 1, 12)
+
+  " Test leadtab with mixed indentation (spaces + tabs)
+  normal ggdG
+  set listchars=tab:>-,leadtab:+*,space:.
+  call append(0, [" \t text"])
+  let expected = ['.+******.text']
+  call Check_listchars(expected, 1, 13)
+
+  " Test leadtab with pipe character
+  normal ggdG
+  set listchars=tab:>-,leadtab:\|\ 
+  call append(0, ["\ttext"])
+  let expected = ['|       text']
+  call Check_listchars(expected, 1, 12)
+
+  " Test leadtab with unicode bar
+  normal ggdG
+  set listchars=tab:>-,leadtab:│\ 
+  call append(0, ["\ttext"])
+  let expected = ['│       text']
+  call Check_listchars(expected, 1, 12)
+
+  " Test leadtab vs tab distinction (leading vs non-leading)
+  normal ggdG
+  set listchars=tab:>-,leadtab:+*
+  call append(0, [
+        \ "\tleading",
+        \ "text\tnot leading",
+        \ "\t\tmultiple leading"
+        \ ])
+  let expected = [
+        \ '+*******leading                 ',
+        \ 'text>---not leading             ',
+        \ '+*******+*******multiple leading'
+        \ ]
+  call Check_listchars(expected, 3, 32)
+
+  " Test leadtab with trail and space
+  normal ggdG
+  set listchars=tab:>-,leadtab:+*,trail:<,space:.
+  call append(0, [
+        \ "\ttext  ",
+        \ "  \ttext",
+        \ "\t  text  "
+        \ ])
+  let expected = [
+        \ '+*******text<<  ',
+        \ '..+*****text    ',
+        \ '+*******..text<<'
+        \ ]
+  call Check_listchars(expected, 3, 16)
+
+  " Test leadtab with eol
+  normal ggdG
+  set listchars=tab:>-,leadtab:+*,eol:$
+  call append(0, ["\ttext", "text\ttab"])
+  let expected = [
+        \ '+*******text$',
+        \ 'text>---tab$ '
+        \ ]
+  call Check_listchars(expected, 2, 13)
+
+
   " test nbsp
   normal ggdG
   set listchars=nbsp:X,trail:Y

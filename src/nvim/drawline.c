@@ -1462,7 +1462,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       trailcol += (colnr_T)(ptr - line);
     }
     // find end of leading whitespace
-    if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
+    if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL
+        || wp->w_p_lcs_chars.leadtab1 != NUL) {
       leadcol = 0;
       while (ascii_iswhite(ptr[leadcol])) {
         leadcol++;
@@ -2420,6 +2421,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         if (mb_c == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
           int tab_len = 0;
           colnr_T vcol_adjusted = wlv.vcol;  // removed showbreak length
+          schar_T lcs_tab1 = wp->w_p_lcs_chars.tab1;
+          schar_T lcs_tab2 = wp->w_p_lcs_chars.tab2;
+          schar_T lcs_tab3 = wp->w_p_lcs_chars.tab3;
+          // check if leadtab is set in 'listchars'
+          if (wp->w_p_list && wp->w_p_lcs_chars.leadtab1 != NUL
+              && (leadcol == 0 || ptr < line + leadcol)) {
+            lcs_tab1 = wp->w_p_lcs_chars.leadtab1;
+            lcs_tab2 = wp->w_p_lcs_chars.leadtab2;
+            lcs_tab3 = wp->w_p_lcs_chars.leadtab3;
+          }
           char *const sbr = get_showbreak_value(wp);
 
           // Only adjust the tab_len, when at the first column after the
@@ -2442,8 +2453,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
               tab_len += wlv.vcol_off_co;
             }
             // boguscols before fix_for_boguscols() from above.
-            if (wp->w_p_lcs_chars.tab1 && wlv.old_boguscols > 0
-                && wlv.n_extra > tab_len) {
+            if (lcs_tab1 && wlv.old_boguscols > 0 && wlv.n_extra > tab_len) {
               tab_len += wlv.n_extra - tab_len;
             }
 
@@ -2451,15 +2461,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
               // If wlv.n_extra > 0, it gives the number of chars
               // to use for a tab, else we need to calculate the
               // width for a tab.
-              size_t tab2_len = schar_len(wp->w_p_lcs_chars.tab2);
+              size_t tab2_len = schar_len(lcs_tab2);
               size_t len = (size_t)tab_len * tab2_len;
-              if (wp->w_p_lcs_chars.tab3) {
-                len += schar_len(wp->w_p_lcs_chars.tab3) - tab2_len;
+              if (lcs_tab3) {
+                len += schar_len(lcs_tab3) - tab2_len;
               }
               if (wlv.n_extra > 0) {
                 len += (size_t)(wlv.n_extra - tab_len);
               }
-              mb_schar = wp->w_p_lcs_chars.tab1;
+              mb_schar = lcs_tab1;
               mb_c = schar_get_first_codepoint(mb_schar);
               char *p = get_extra_buf(len + 1);
               memset(p, ' ', len);
@@ -2470,11 +2480,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                   tab_len = i;
                   break;
                 }
-                schar_T lcs = wp->w_p_lcs_chars.tab2;
+                schar_T lcs = lcs_tab2;
 
                 // if tab3 is given, use it for the last char
-                if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
-                  lcs = wp->w_p_lcs_chars.tab3;
+                if (lcs_tab3 && i == tab_len - 1) {
+                  lcs = lcs_tab3;
                 }
                 size_t slen = schar_get_adv(&p, lcs);
                 wlv.n_extra += (int)slen - (saved_nextra > 0 ? 1 : 0);
@@ -2509,14 +2519,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           }
 
           if (wp->w_p_list) {
-            mb_schar = (wlv.n_extra == 0 && wp->w_p_lcs_chars.tab3)
-                       ? wp->w_p_lcs_chars.tab3 : wp->w_p_lcs_chars.tab1;
+            mb_schar = (wlv.n_extra == 0 && lcs_tab3) ? lcs_tab3 : lcs_tab1;
             if (wp->w_p_lbr && wlv.p_extra != NULL && *wlv.p_extra != NUL) {
               wlv.sc_extra = NUL;  // using p_extra from above
             } else {
-              wlv.sc_extra = wp->w_p_lcs_chars.tab2;
+              wlv.sc_extra = lcs_tab2;
             }
-            wlv.sc_final = wp->w_p_lcs_chars.tab3;
+            wlv.sc_final = lcs_tab3;
             wlv.n_attr = tab_len + 1;
             wlv.extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = wlv.char_attr;  // save current attr
