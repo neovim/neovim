@@ -291,7 +291,7 @@ func Test_netrw_parse_special_char_user()
   call assert_equal(result.path, 'test.txt')
 endfunction
 
-func Test_netrw_wipe_empty_buffer_fastpath()
+func Test_netrw_empty_buffer_fastpath_wipe()
   " SetUp() may have opened some buffers
   let previous = bufnr('$')
   let g:netrw_fastbrowse=0
@@ -559,5 +559,11 @@ func Test_netrw_filemove_pwsh()
   call SetShell('pwsh')
   call s:test_netrw_filemove()
 endfunc
+
+func Test_netrw_reject_evil_hostname()
+  let msg = execute(':e scp://x;touch RCE;x/dir/')
+  let msg = split(msg, "\n")[-1]
+  call assert_match('Rejecting invalid hostname', msg)
+endfunction
 
 " vim:ts=8 sts=2 sw=2 et

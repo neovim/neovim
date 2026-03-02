@@ -20,6 +20,7 @@
 " 2026 Jan 19 by Vim Project do not create swapfiles #18854
 " 2026 Feb 15 by Vim Project fix global variable initialization for MS-Windows #19287
 " 2026 Feb 21 by Vim Project better absolute path detection on MS-Windows #19477
+" 2026 Feb 27 by Vim Project Make the hostname validation more strict
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -2591,13 +2592,26 @@ endfunction
 
 " s:NetrwValidateHostname:  Validate that the hostname is valid {{{2
 " Input:
-"   hostname
+"   hostname, may include an optional username, e.g. user@hostname
+"   allow a alphanumeric hostname or an IPv(4/6) address
 " Output:
 "  true if g:netrw_machine is valid according to RFC1123 #Section 2
 function s:NetrwValidateHostname(hostname)
-    " RFC1123#section-2 mandates, a valid hostname starts with letters or digits
-    " so reject everyhing else
-    return a:hostname =~? '^[a-z0-9]'
+  " Username:
+  let user_pat = '\%([a-zA-Z0-9._-]\+@\)\?'
+  " Hostname: 1-64 chars, alphanumeric/dots/hyphens.
+  " No underscores. No leading/trailing dots/hyphens.
+  let host_pat = '[a-zA-Z0-9]\%([-a-zA-Z0-9.]{,62}[a-zA-Z0-9]\)\?$'
+
+  " IPv4: 1-3 digits separated by dots
+  let ipv4_pat = '\%(\d\{1,3}\.\)\{3\}\d\{1,3\}$'
+
+  " IPv6: Hex, colons, and optional brackets
+  let ipv6_pat = '\[\?\%([a-fA-F0-9:]\{2,}\)\+\]\?$'
+
+  return a:hostname =~? '^'.user_pat.host_pat ||
+       \ a:hostname =~? '^'.user_pat.ipv4_pat ||
+       \ a:hostname =~? '^'.user_pat.ipv6_pat
 endfunction
 
 " NetUserPass: set username and password for subsequent ftp transfer {{{2
@@ -8965,15 +8979,15 @@ endfunction
 " s:MakeSshCmd: transforms input command using USEPORT HOSTNAME into {{{2
 "               a correct command for use with a system() call
 function s:MakeSshCmd(sshcmd)
-    if s:user == ""
-        let sshcmd = substitute(a:sshcmd,'\<HOSTNAME\>',s:machine,'')
-    else
-        let sshcmd = substitute(a:sshcmd,'\<HOSTNAME\>',s:user."@".s:machine,'')
+    let machine = shellescape(s:machine, 1)
+    if s:user != ''
+        let machine    = shellescape(s:user, 1).'@'.machine
     endif
+    let sshcmd = substitute(a:sshcmd,'\<HOSTNAME\>',machine,'')
     if exists("g:netrw_port") && g:netrw_port != ""
-        let sshcmd= substitute(sshcmd,"USEPORT",g:netrw_sshport.' '.g:netrw_port,'')
+        let sshcmd= substitute(sshcmd,"USEPORT",g:netrw_sshport.' '.shellescape(g:netrw_port,1),'')
     elseif exists("s:port") && s:port != ""
-        let sshcmd= substitute(sshcmd,"USEPORT",g:netrw_sshport.' '.s:port,'')
+        let sshcmd= substitute(sshcmd,"USEPORT",g:netrw_sshport.' '.shellescape(s:port,1),'')
     else
         let sshcmd= substitute(sshcmd,"USEPORT ",'','')
     endif
