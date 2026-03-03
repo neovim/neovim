@@ -153,6 +153,21 @@ func Test_listchars()
   call Check_listchars(expected, 5, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
+  " In a line with only spaces, they aren't considered leading even if "trail"
+  " isn't set.
+  set listchars-=trail:<
+  let expected = [
+	      \ '>>>>ffffxxxx$',
+	      \ '>>>>>>>>>>gg$',
+	      \ 'hxxxxxxxxxxx$',
+	      \ 'xxxxxxxxxxxx$',
+	      \ '>>>>0xx0xxxx$',
+	      \ '$'
+	      \ ]
+  call Check_listchars(expected, 6)
+  call Check_listchars(expected, 5, -1, 6)
+  call assert_equal(expected, split(execute("%list"), "\n"))
+
   " Test multispace
   normal ggdG
   set listchars=eol:$  " Accommodate Nvim default
@@ -163,6 +178,7 @@ func Test_listchars()
 	      \ '    ffff    ',
 	      \ '  i i     gg',
 	      \ ' h          ',
+	      \ '            ',
 	      \ '          j ',
 	      \ '    0  0    ',
 	      \ ])
@@ -171,12 +187,13 @@ func Test_listchars()
 	      \ 'yYzZffffyYzZ$',
 	      \ 'yYi iyYzZygg$',
 	      \ ' hyYzZyYzZyY$',
+	      \ 'yYzZyYzZyYzZ$',
 	      \ 'yYzZyYzZyYj $',
 	      \ 'yYzZ0yY0yYzZ$',
 	      \ '$'
 	      \ ]
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " Test leadmultispace + multispace
@@ -189,6 +206,7 @@ func Test_listchars()
 	      \ '    ffff    ',
 	      \ '  i i     gg',
 	      \ ' h          ',
+	      \ '            ',
 	      \ '          j ',
 	      \ '    0  0    ',
 	      \ ])
@@ -197,16 +215,17 @@ func Test_listchars()
 	      \ '.-+*ffffyYzZ$',
 	      \ '.-i iSyYzZgg$',
 	      \ ' hyYzZyYzZyY$',
+	      \ 'yYzZyYzZyYzZ$',
 	      \ '.-+*.-+*.-j $',
 	      \ '.-+*0yY0yYzZ$',
 	      \ '$'
 	      \ ]
   call assert_equal('eol:$,multispace:yYzZ,nbsp:S,leadmultispace:.-+*', &listchars)
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 1)
-  call Check_listchars(expected, 5, -1, 2)
-  call Check_listchars(expected, 5, -1, 3)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 1)
+  call Check_listchars(expected, 6, -1, 2)
+  call Check_listchars(expected, 6, -1, 3)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " Test leadmultispace without multispace
@@ -219,6 +238,7 @@ func Test_listchars()
 	      \ '    ffff    ',
 	      \ '  i i     gg',
 	      \ ' h          ',
+	      \ '            ',
 	      \ '          j ',
 	      \ '    0  0    ',
 	      \ ])
@@ -227,16 +247,17 @@ func Test_listchars()
 	      \ '.-+*ffff>>>>$',
 	      \ '.-i+i+++++gg$',
 	      \ '+h>>>>>>>>>>$',
+	      \ '>>>>>>>>>>>>$',
 	      \ '.-+*.-+*.-j>$',
 	      \ '.-+*0++0>>>>$',
 	      \ '$'
 	      \ ]
   call assert_equal('eol:$,nbsp:S,leadmultispace:.-+*,space:+,trail:>,eol:$', &listchars)
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 1)
-  call Check_listchars(expected, 5, -1, 2)
-  call Check_listchars(expected, 5, -1, 3)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 1)
+  call Check_listchars(expected, 6, -1, 2)
+  call Check_listchars(expected, 6, -1, 3)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " Test leadmultispace only
@@ -249,6 +270,7 @@ func Test_listchars()
 	      \ '    ffff    ',
 	      \ '  i i     gg',
 	      \ ' h          ',
+	      \ '            ',
 	      \ '          j ',
 	      \ '    0  0    ',
 	      \ ])
@@ -257,12 +279,13 @@ func Test_listchars()
 	      \ '.-+*ffff    ',
 	      \ '.-i i     gg',
 	      \ ' h          ',
+	      \ '            ',
 	      \ '.-+*.-+*.-j ',
 	      \ '.-+*0  0    ',
 	      \ ' '
 	      \ ]
   call assert_equal('leadmultispace:.-+*', &listchars)
-  call Check_listchars(expected, 5, 12)
+  call Check_listchars(expected, 6, 12)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " Changing the value of 'ambiwidth' twice shouldn't cause double-free when
@@ -281,6 +304,7 @@ func Test_listchars()
 	      \ '    ffff    ',
 	      \ '  i i     gg',
 	      \ ' h          ',
+	      \ '            ',
 	      \ '          j ',
 	      \ '    0  0    ',
 	      \ ])
@@ -289,16 +313,17 @@ func Test_listchars()
 	      \ '.-+*ffff----$',
 	      \ '.-i-i-----gg$',
 	      \ '<h----------$',
+	      \ '------------$',
 	      \ '.-+*.-+*.-j-$',
 	      \ '.-+*0--0----$',
 	      \ '$'
 	      \ ]
   call assert_equal('eol:$,lead:<,space:-,leadmultispace:.-+*', &listchars)
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 1)
-  call Check_listchars(expected, 5, -1, 2)
-  call Check_listchars(expected, 5, -1, 3)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 1)
+  call Check_listchars(expected, 6, -1, 2)
+  call Check_listchars(expected, 6, -1, 3)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " the last occurrence of 'multispace:' is used
@@ -310,13 +335,14 @@ func Test_listchars()
 	      \ 'XyYXffffXyYX$',
 	      \ 'XyixiXyYXygg$',
 	      \ 'xhXyYXyYXyYX$',
+	      \ 'XyYXyYXyYXyY$',
 	      \ 'XyYXyYXyYXjx$',
 	      \ 'XyYX0Xy0XyYX$',
 	      \ '$'
 	      \ ]
   call assert_equal('eol:$,multispace:yYzZ,space:x,multispace:XyY', &listchars)
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   set listchars+=lead:>,trail:<
@@ -325,12 +351,13 @@ func Test_listchars()
 	      \ '>>>>ffff<<<<$',
 	      \ '>>ixiXyYXygg$',
 	      \ '>h<<<<<<<<<<$',
+	      \ '<<<<<<<<<<<<$',
 	      \ '>>>>>>>>>>j<$',
 	      \ '>>>>0Xy0<<<<$',
 	      \ '$'
 	      \ ]
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " removing 'multispace:'
@@ -341,12 +368,13 @@ func Test_listchars()
 	      \ '>>>>ffff<<<<$',
 	      \ '>>ixixxxxxgg$',
 	      \ '>h<<<<<<<<<<$',
+	      \ '<<<<<<<<<<<<$',
 	      \ '>>>>>>>>>>j<$',
 	      \ '>>>>0xx0<<<<$',
 	      \ '$'
 	      \ ]
-  call Check_listchars(expected, 6)
-  call Check_listchars(expected, 5, -1, 6)
+  call Check_listchars(expected, 7)
+  call Check_listchars(expected, 6, -1, 6)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
   " Test leadtab basic functionality
@@ -394,19 +422,22 @@ func Test_listchars()
   call Check_listchars(expected, 1, 12)
 
   " Test leadtab vs tab distinction (leading vs non-leading)
+  " In a line with only tabs, they aren't considered leading.
   normal ggdG
   set listchars=tab:>-,leadtab:+*
   call append(0, [
         \ "\tleading",
         \ "text\tnot leading",
-        \ "\t\tmultiple leading"
+        \ "\t\tmultiple leading",
+        \ "\t\t"
         \ ])
   let expected = [
         \ '+*******leading                 ',
         \ 'text>---not leading             ',
-        \ '+*******+*******multiple leading'
+        \ '+*******+*******multiple leading',
+        \ '>------->-------                '
         \ ]
-  call Check_listchars(expected, 3, 32)
+  call Check_listchars(expected, 4, 32)
 
   " Test leadtab with trail and space
   normal ggdG

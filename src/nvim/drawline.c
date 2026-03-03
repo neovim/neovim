@@ -2426,7 +2426,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           schar_T lcs_tab3 = wp->w_p_lcs_chars.tab3;
           // check if leadtab is set in 'listchars'
           if (wp->w_p_list && wp->w_p_lcs_chars.leadtab1 != NUL
-              && (leadcol == 0 || ptr < line + leadcol)) {
+              && ptr < line + leadcol) {
             lcs_tab1 = wp->w_p_lcs_chars.leadtab1;
             lcs_tab2 = wp->w_p_lcs_chars.leadtab2;
             lcs_tab3 = wp->w_p_lcs_chars.leadtab3;
