@@ -145,6 +145,10 @@ for i = 1, #events do
       call_output:write('  UI_CALL')
       write_signature(call_output, ev, '!ui->composed, ' .. ev.name .. ', ui', true)
       call_output:write(';\n')
+    elseif ev.ui_multigrid then
+      call_output:write('  UI_CALL')
+      write_signature(call_output, ev, '!ui->composed, ' .. ev.name .. ', ui', true)
+      call_output:write(';\n')
     else
       call_output:write('  UI_CALL')
       write_signature(call_output, ev, 'true, ' .. ev.name .. ', ui', true)
@@ -163,14 +167,25 @@ for i = 1, #events do
     call_output:write('}\n\n')
   end
 
-  if (not ev.remote_only) and not ev.noexport and not ev.client_impl and not ev.client_ignore then
+  if
+    not ev.remote_only
+    and not ev.noexport
+    and not ev.client_impl
+    and not ev.client_ignore
+    and not ev.ui_multigrid
+  then
     call_ui_event_method(client_output, ev)
   end
 end
 
 local client_events = {}
 for _, ev in ipairs(events) do
-  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) and not ev.client_ignore then
+  if
+    not ev.noexport
+    and ((not ev.remote_only) or ev.client_impl)
+    and not ev.client_ignore
+    and not ev.ui_multigrid
+  then
     client_events[ev.name] = ev
   end
 end
