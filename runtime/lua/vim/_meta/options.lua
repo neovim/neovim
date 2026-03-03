@@ -4097,7 +4097,7 @@ vim.go.lw = vim.go.lispwords
 --- position while displaying Tabs with spaces, use:
 ---
 --- ```vim
---- 	set list lcs=tab:\ \
+--- 	let &list = v:true | let &lcs = 'tab:  '
 --- ```
 ---
 --- Note that list mode will also affect formatting (set with 'textwidth'
@@ -4180,6 +4180,18 @@ vim.wo.list = vim.o.list
 ---
 --- 		Where "XXX" denotes the first non-blank characters in
 --- 		the line.
+--- 						*lcs-leadtab*
+---   leadtab:xy[z]
+--- 		Like `lcs-tab`, but only for leading tabs.  When
+--- 		omitted, the "tab" setting is used for leading tabs.
+--- 		`lcs-tab` must also be set for this to work. *E1572*
+--- 		You can combine it with "tab:", for example:
+---
+--- ```vim
+--- 			let &listchars = 'tab:>-,leadtab:. '
+--- ```
+--- This shows leading tabs as periods(.) and other tabs
+--- 		as ">--".
 --- 						*lcs-trail*
 ---   trail:c	Character to show for trailing spaces.  When omitted,
 --- 		trailing spaces are blank.  Overrides the "space" and
