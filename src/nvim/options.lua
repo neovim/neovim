@@ -5387,7 +5387,7 @@ local options = {
         The cursor is displayed at the start of the space a Tab character
         occupies, not at the end as usual in Normal mode.  To get this cursor
         position while displaying Tabs with spaces, use: >vim
-        	set list lcs=tab:\ \
+        	let &list = v:true | let &lcs = 'tab:  '
         <
         Note that list mode will also affect formatting (set with 'textwidth'
         or 'wrapmargin') when 'cpoptions' includes 'L'.  See 'listchars' for
@@ -5469,9 +5469,9 @@ local options = {
         		Like |lcs-tab|, but only for leading tabs.  When
         		omitted, the "tab" setting is used for leading tabs.
         		|lcs-tab| must also be set for this to work. *E1572*
-        		You can combine it with "tab:", for example:
-        		`:set listchars=tab:>-,leadtab:.\ `
-        		This shows leading tabs as periods(.) and other tabs
+        		You can combine it with "tab:", for example: >vim
+        			let &listchars = 'tab:>-,leadtab:. '
+        <			This shows leading tabs as periods(.) and other tabs
         		as ">--".
         						*lcs-trail*
           trail:c	Character to show for trailing spaces.  When omitted,
