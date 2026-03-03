@@ -1022,6 +1022,8 @@ end)
 ---@param alias string language or filetype name
 ---@return string? # resolved parser name
 local function resolve_lang(alias)
+  -- normalize: treesitter language names are always lower case and use underscores
+  alias = alias and alias:lower():gsub('-', '_')
   -- validate that `alias` is a legal language
   if not (alias and alias:match('[%w_]+') == alias) then
     return
@@ -1058,7 +1060,7 @@ function LanguageTree:_get_injection(match, metadata)
       -- Lang should override any other language tag
       if name == 'injection.language' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-        lang = resolve_lang(text:lower()) -- language names are always lower case
+        lang = resolve_lang(text)
       elseif name == 'injection.filename' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
         local ft = vim.filetype.match({ filename = text })
