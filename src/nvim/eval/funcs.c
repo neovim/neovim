@@ -2784,70 +2784,89 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "nvim",
   };
 
-  // XXX: eval_has_provider() may shell out :(
-  const int save_shell_error = (int)get_vim_var_nr(VV_SHELL_ERROR);
+  bool x = false;
   bool n = false;
   const char *const name = tv_get_string(&argvars[0]);
-  for (size_t i = 0; i < ARRAY_SIZE(has_list); i++) {
-    if (STRICMP(name, has_list[i]) == 0) {
-      n = true;
-      break;
+
+  // Fast-path: check features not in has_list[] first to avoid the full
+  // linear scan for very common queries like has('patch-...').
+  if (STRNICMP(name, "patch", 5) == 0) {
+    x = true;
+    if (name[5] == '-'
+        && strlen(name) >= 11
+        && (name[6] >= '1' && name[6] <= '9')) {
+      char *end;
+
+      // This works for patch-8.1.2, patch-9.0.3, patch-10.0.4, etc.
+      // Not for patch-9.10.5.
+      int major = (int)strtoul(name + 6, &end, 10);
+      if (*end == '.' && ascii_isdigit(end[1])
+          && end[2] == '.' && ascii_isdigit(end[3])) {
+        int minor = atoi(end + 1);
+
+        // Expect "patch-9.9.01234".
+        n = has_vim_patch(atoi(end + 3), major * 100 + minor);
+      }
+    } else if (ascii_isdigit(name[5])) {
+      n = has_vim_patch(atoi(name + 5), 0);
+    }
+  } else if (STRNICMP(name, "nvim-", 5) == 0) {
+    x = true;
+    // Expect "nvim-x.y.z"
+    n = has_nvim_version(name + 5);
+  } else if (STRICMP(name, "vim_starting") == 0) {
+    x = true;
+    n = (starting != 0);
+  } else if (STRICMP(name, "ttyin") == 0) {
+    x = true;
+    n = stdin_isatty;
+  } else if (STRICMP(name, "ttyout") == 0) {
+    x = true;
+    n = stdout_isatty;
+  } else if (STRICMP(name, "multi_byte_encoding") == 0) {
+    x = true;
+    n = true;
+  } else if (STRICMP(name, "gui_running") == 0) {
+    x = true;
+    n = ui_gui_attached();
+  } else if (STRICMP(name, "syntax_items") == 0) {
+    x = true;
+    n = syntax_present(curwin);
+  } else if (STRICMP(name, "wsl") == 0) {
+    x = true;
+    n = has_wsl();
+  }
+
+  // Look up in has_list[] only if not already handled above.
+  if (!x) {
+    for (size_t i = 0; i < ARRAY_SIZE(has_list); i++) {
+      if (STRICMP(name, has_list[i]) == 0) {
+        x = true;
+        n = true;
+        break;
+      }
     }
   }
 
-  if (!n) {
-    if (STRNICMP(name, "gui_running", 11) == 0) {
-      n = ui_gui_attached();
-    } else if (STRNICMP(name, "patch", 5) == 0) {
-      if (name[5] == '-'
-          && strlen(name) >= 11
-          && (name[6] >= '1' && name[6] <= '9')) {
-        char *end;
+  if (!x) {
+    // XXX: eval_has_provider() may shell out :(
+    const int save_shell_error = (int)get_vim_var_nr(VV_SHELL_ERROR);
 
-        // This works for patch-8.1.2, patch-9.0.3, patch-10.0.4, etc.
-        // Not for patch-9.10.5.
-        int major = (int)strtoul(name + 6, &end, 10);
-        if (*end == '.' && ascii_isdigit(end[1])
-            && end[2] == '.' && ascii_isdigit(end[3])) {
-          int minor = atoi(end + 1);
-
-          // Expect "patch-9.9.01234".
-          n = has_vim_patch(atoi(end + 3), major * 100 + minor);
-        }
-      } else if (ascii_isdigit(name[5])) {
-        n = has_vim_patch(atoi(name + 5), 0);
-      }
-    } else if (STRNICMP(name, "nvim-", 5) == 0) {
-      // Expect "nvim-x.y.z"
-      n = has_nvim_version(name + 5);
-    } else if (STRICMP(name, "vim_starting") == 0) {
-      n = (starting != 0);
-    } else if (STRICMP(name, "ttyin") == 0) {
-      n = stdin_isatty;
-    } else if (STRICMP(name, "ttyout") == 0) {
-      n = stdout_isatty;
-    } else if (STRICMP(name, "multi_byte_encoding") == 0) {
-      n = true;
-    } else if (STRICMP(name, "syntax_items") == 0) {
-      n = syntax_present(curwin);
-    } else if (STRICMP(name, "clipboard_working") == 0) {
+    if (STRICMP(name, "clipboard_working") == 0) {
       n = eval_has_provider("clipboard", true);
-    } else if (STRICMP(name, "pythonx") == 0) {
-      n = eval_has_provider("python3", true);
-    } else if (STRICMP(name, "wsl") == 0) {
-      n = has_wsl();
 #ifdef UNIX
     } else if (STRICMP(name, "unnamedplus") == 0) {
       n = eval_has_provider("clipboard", true);
 #endif
+    } else if (STRICMP(name, "pythonx") == 0) {
+      n = eval_has_provider("python3", true);
+    } else if (eval_has_provider(name, true)) {
+      n = true;
     }
+
+    set_vim_var_nr(VV_SHELL_ERROR, save_shell_error);
   }
 
-  if (!n && eval_has_provider(name, true)) {
-    n = true;
-  }
-
-  set_vim_var_nr(VV_SHELL_ERROR, save_shell_error);
   rettv->vval.v_number = n;
 }
 
