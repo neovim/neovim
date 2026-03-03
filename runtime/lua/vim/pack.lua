@@ -843,7 +843,10 @@ end
 --- - Install plugins that have proper lockfile data but are not on disk.
 --- - Repair corrupted lock data for installed plugins.
 --- - Remove unrepairable corrupted lock data and plugins.
-local function lock_sync(confirm)
+--- @param confirm boolean
+--- @param specs vim.pack.Spec[] Plugin specs provided by the user. Can contain
+--- fields outside of what is in the lockfile to be passed down to events.
+local function lock_sync(confirm, specs)
   if type(plugin_lock.plugins) ~= 'table' then
     plugin_lock.plugins = {}
   end
@@ -885,7 +888,22 @@ local function lock_sync(confirm)
       local t = installed[name] == 'directory' and to_repair or to_remove
       t[#t + 1] = name
     elseif not installed[name] then
-      local spec = { src = data.src, name = name, version = data.version }
+      local spec ---@type vim.pack.Spec
+      -- Try reusing spec from user's `vim.pack.add()` (matters for events)
+      -- Delay until this point when shaving milliseconds shouldn't matter much
+      for _, s in ipairs(specs) do
+        local ok, s_norm = pcall(normalize_spec, s)
+        if ok and s_norm.name == name then
+          spec = vim.deepcopy(s_norm)
+        end
+      end
+
+      -- Force fields relevant to actual installation, try to preserve others
+      spec = spec or {}
+      spec.src = data.src
+      spec.name = name
+      spec.version = spec.version or data.version
+
       to_install[#to_install + 1] = new_plug(spec, plug_dir)
     end
   end
@@ -917,7 +935,7 @@ local function lock_sync(confirm)
   end
 end
 
-local function lock_read(confirm)
+local function lock_read(confirm, specs)
   if plugin_lock then
     return
   end
@@ -932,7 +950,7 @@ local function lock_read(confirm)
     plugin_lock = { plugins = {} }
   end
 
-  lock_sync(vim.F.if_nil(confirm, true))
+  lock_sync(vim.F.if_nil(confirm, true), vim.F.if_nil(specs, {}))
 end
 
 --- @class vim.pack.keyset.add
@@ -973,7 +991,7 @@ function M.add(specs, opts)
   opts = vim.tbl_extend('force', { load = vim.v.vim_did_init == 1, confirm = true }, opts or {})
   vim.validate('opts', opts, 'table')
 
-  lock_read(opts.confirm)
+  lock_read(opts.confirm, specs)
 
   local plug_dir = get_plug_dir()
   local plugs = {} --- @type vim.pack.Plug[]
