@@ -3332,6 +3332,46 @@ describe('API/win', function()
       eq('right', api.nvim_win_get_config(win2).split)
       eq('right', api.nvim_win_get_config(float).split)
     end)
+
+    it('includes style', function()
+      local unused_style1 = api.nvim_open_win(0, false, {
+        width = 10,
+        height = 10,
+        relative = 'editor',
+        row = 10,
+        col = 10,
+      })
+      local unused_style2 = api.nvim_open_win(0, false, {
+        width = 10,
+        height = 10,
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        style = '',
+      })
+      local minimal_style = api.nvim_open_win(0, false, {
+        width = 10,
+        height = 10,
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        style = 'minimal',
+      })
+
+      eq('', api.nvim_win_get_config(unused_style1).style)
+      eq('', api.nvim_win_get_config(unused_style2).style)
+      eq('minimal', api.nvim_win_get_config(minimal_style).style)
+
+      -- "style" is allowed for splits too.
+      eq('', api.nvim_win_get_config(0).relative)
+      eq('', api.nvim_win_get_config(0).style)
+      api.nvim_win_set_config(0, { style = 'minimal' })
+      eq('minimal', api.nvim_win_get_config(0).style)
+      api.nvim_win_set_config(0, { height = 1 }) -- "style" unchanged when not included.
+      eq('minimal', api.nvim_win_get_config(0).style)
+      api.nvim_win_set_config(0, { style = '' })
+      eq('', api.nvim_win_get_config(0).style)
+    end)
   end)
 
   describe('set_config', function()
