@@ -2313,6 +2313,8 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
 
   // first round: check for valid value, second round: assign values
   for (int round = 0; round <= (apply ? 1 : 0); round++) {
+    bool has_tab = false, has_leadtab = false;
+
     if (round > 0) {
       // After checking that the value is valid: set defaults
       for (int i = 0; i < entries; i++) {
@@ -2456,6 +2458,11 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
                                      tab[i].name.data);
             }
           }
+          if (tab[i].cp == &lcs_chars.tab2) {
+            has_tab = true;
+          } else {  // tab[i].cp == &lcs_chars.leadtab2
+            has_leadtab = true;
+          }
         }
 
         if (*s == ',' || *s == NUL) {
@@ -2489,10 +2496,10 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         p++;
       }
     }
-  }
 
-  if (what == kListchars && lcs_chars.leadtab2 != NUL && lcs_chars.tab2 == NUL) {
-    return e_leadtab_requires_tab;
+    if (what == kListchars && has_leadtab && !has_tab) {
+      return e_leadtab_requires_tab;
+    }
   }
 
   if (apply) {

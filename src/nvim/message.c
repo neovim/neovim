@@ -2101,7 +2101,9 @@ void msg_prt_line(const char *s, bool list)
       }
     }
     // find end of leading whitespace
-    if (curwin->w_p_lcs_chars.lead || curwin->w_p_lcs_chars.leadmultispace != NULL) {
+    if (curwin->w_p_lcs_chars.lead
+        || curwin->w_p_lcs_chars.leadmultispace != NULL
+        || curwin->w_p_lcs_chars.leadtab1 != NUL) {
       lead = s;
       while (ascii_iswhite(lead[0])) {
         lead++;
@@ -2169,11 +2171,18 @@ void msg_prt_line(const char *s, bool list)
           sc = schar_from_ascii(' ');
           sc_extra = schar_from_ascii(' ');
         } else {
-          sc = (n_extra == 0 && curwin->w_p_lcs_chars.tab3)
-               ? curwin->w_p_lcs_chars.tab3
-               : curwin->w_p_lcs_chars.tab1;
-          sc_extra = curwin->w_p_lcs_chars.tab2;
-          sc_final = curwin->w_p_lcs_chars.tab3;
+          schar_T lcs_tab1 = curwin->w_p_lcs_chars.tab1;
+          schar_T lcs_tab2 = curwin->w_p_lcs_chars.tab2;
+          schar_T lcs_tab3 = curwin->w_p_lcs_chars.tab3;
+          // check if leadtab is set in 'listchars'
+          if (lead != NULL && s <= lead && curwin->w_p_lcs_chars.leadtab1 != NUL) {
+            lcs_tab1 = curwin->w_p_lcs_chars.leadtab1;
+            lcs_tab2 = curwin->w_p_lcs_chars.leadtab2;
+            lcs_tab3 = curwin->w_p_lcs_chars.leadtab3;
+          }
+          sc = (n_extra == 0 && lcs_tab3) ? lcs_tab3 : lcs_tab1;
+          sc_extra = lcs_tab2;
+          sc_final = lcs_tab3;
           hl_id = HLF_0;
         }
       } else if (c == NUL && list && curwin->w_p_lcs_chars.eol != NUL) {
