@@ -852,6 +852,23 @@ int x = INT_MAX;
         eq({ 'gsub!', 'offset!', 'set!', 'trim!' }, res_list)
       end)
     end)
+
+    it('normalizes hyphens to underscores in injection.language', function()
+      exec_lua(function()
+        -- register "c" as the parser for "shell_session" (normalized form of "shell-session")
+        vim.treesitter.language.register('c', 'shell_session')
+        _G.parser = vim.treesitter.get_parser(0, 'c', {
+          injections = {
+            c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "shell-session"))',
+          },
+        })
+        _G.parser:parse(true)
+      end)
+
+      -- injection.language "shell-session" should normalize to "shell_session",
+      -- which resolves via the registered alias to the "c" parser
+      eq('table', exec_lua('return type(parser:children().c)'))
+    end)
   end)
 
   describe('when getting the language for a range', function()
