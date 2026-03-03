@@ -612,6 +612,8 @@ describe('prompt buffer', function()
     eq('line 1\nbefore\nline 2\nafter\nline 3', fn('prompt_getinput', buf))
 
     feed('<cr>')
+    vim.uv.sleep(20)
+    eq('', fn('prompt_getinput', buf))
     screen:expect([[
       line 2                   |
       after                    |
@@ -660,6 +662,8 @@ describe('prompt buffer', function()
     ]])
 
     feed('<cr>')
+    vim.uv.sleep(20)
+    eq('', fn('prompt_getinput', buf))
     screen:expect([[
       line 4                   |
       after prompt             |
