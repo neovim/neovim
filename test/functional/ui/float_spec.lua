@@ -409,17 +409,40 @@ describe('float window', function()
 
   it("should re-apply 'style' when present and not leak to normal windows", function()
     local buf = api.nvim_create_buf(true, false)
+    local buf2 = api.nvim_create_buf(true, false)
     local float_opts = { style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1 }
     local float_win = api.nvim_open_win(buf, true, float_opts)
     api.nvim_set_option_value('number', true, { win = float_win })
     float_opts.row = 2
     api.nvim_win_set_config(float_win, float_opts)
     eq(false, api.nvim_get_option_value('number', { win = float_win }))
+    -- minimal float should preserve its own options when switching buffers
+    api.nvim_set_option_value('listchars', 'extends:…,precedes:…', { win = float_win, scope = 'local' })
+    api.nvim_win_set_buf(float_win, buf2)
+    api.nvim_win_set_buf(float_win, buf)
+    eq('extends:…,precedes:…', api.nvim_get_option_value('listchars', { win = float_win, scope = 'local' }))
     -- closing the float should not leak minimal style options to normal windows
     api.nvim_win_close(float_win, true)
     api.nvim_set_option_value('number', true, { win = 0 })
     command('bnext')
     eq(true, api.nvim_get_option_value('number', { win = 0 }))
+  end)
+
+  it('style=minimal options should not leak to other windows via wininfo', function()
+    command('set noswapfile cursorline')
+    command('edit foo')
+    local foo_buf = api.nvim_get_current_buf()
+    fn.setline(1, 'foo')
+    command('edit bar')
+    local bar_buf = api.nvim_get_current_buf()
+    fn.setline(1, 'bar')
+    local float_opts = { style = 'minimal', relative = 'editor', row = 5, col = 5, width = 5, height = 5 }
+    local minimal_win = api.nvim_open_win(foo_buf, false, float_opts)
+    eq(false, api.nvim_get_option_value('cursorline', { win = minimal_win }))
+    api.nvim_win_set_buf(minimal_win, bar_buf)
+    eq('', api.nvim_win_get_config(0).relative)
+    command('split foo')
+    eq(true, api.nvim_get_option_value('cursorline', { win = 0 }))
   end)
 
   it("should not re-apply 'style' when missing", function()
