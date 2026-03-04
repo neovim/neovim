@@ -5463,6 +5463,7 @@ int expand_findfunc(char *pat, char ***files, int *numMatches)
 
   int len = tv_list_len(l);
   if (len == 0) {  // empty List
+    tv_list_free(l);
     return FAIL;
   }
 
