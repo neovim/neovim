@@ -956,7 +956,8 @@ end
 local function gen_helptag_html(fname)
   local frontmatter = vim.json.encode({
     title = 'Helptag redirect',
-    layout = 'helptag', -- Hugo-specific
+    layout = 'helptag',
+    aliases = { vim.fs.basename(fname) },
   }, { indent = '  ', sort_keys = true })
   tofile(fname, frontmatter)
 end
