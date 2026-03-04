@@ -717,7 +717,19 @@ void os_exit(int r)
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
   }
-  if (!ui_client_channel_id) {
+  if (ui_client_channel_id) {
+#ifdef HAVE_TERMIOS_H
+    // Sometimes the final output to TTY can be lost (at least on FreeBSD).
+    // Call tcdrain() to ensure all output has been transmitted to host terminal.
+    // Do this after event_teardown() as libuv events may write to stderr.
+    if (stdout_isatty) {
+      tcdrain(STDOUT_FILENO);
+    }
+    if (stderr_isatty) {
+      tcdrain(STDERR_FILENO);
+    }
+#endif
+  } else {
     ml_close_all(true);  // remove all memfiles
   }
   if (used_stdin) {
@@ -901,7 +913,7 @@ void preserve_exit(const char *errmsg)
     ui_client_stop();
   }
   if (errmsg != NULL && errmsg[0] != NUL) {
-    size_t has_eol = '\n' == errmsg[strlen(errmsg) - 1];
+    bool has_eol = '\n' == errmsg[strlen(errmsg) - 1];
     fprintf(stderr, has_eol ? "%s" : "%s\n", errmsg);
   }
   if (ui_client_channel_id) {
