@@ -2495,6 +2495,12 @@ describe('API/win', function()
         "non-float with 'win' requires at least 'split' or 'vertical'",
         pcall_err(api.nvim_win_set_config, 0, { win = 0, relative = '' })
       )
+
+      -- "minimal" style takes effect immediately for a split.
+      api.nvim_set_option_value('cursorline', true, { win = win, scope = 'local' })
+      eq(true, api.nvim_get_option_value('cursorline', { win = win }))
+      api.nvim_win_set_config(win, { style = 'minimal' })
+      eq(false, api.nvim_get_option_value('cursorline', { win = win }))
     end)
 
     it('creates top-level splits', function()
