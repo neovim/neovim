@@ -684,6 +684,18 @@ to use '%' or '#' in a file name, precede them with a backslash.  The
 backslash is not required in a range and in the ":substitute" command.
 See also |`=|.
 
+						*:nospecial*
+:nospecial {cmd}	Execute {cmd} with raw arg, special characters
+			treated literally: '|' is not a command separator,
+			'"'  is not a comment, '%' and '#' are not expanded
+			to file names.
+			Example:
+
+			:nospecial edit a|b.txt
+
+			See also |cmdline-special|, |:bar|, |:quote|.
+
+
 							*:_!*
 The '!' (bang) character after an Ex command makes the command behave in a
 different way.  The '!' should be placed immediately after the command,
