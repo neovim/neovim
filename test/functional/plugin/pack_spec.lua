@@ -279,9 +279,9 @@ end
 --- @param log table[]
 local function make_find_packchanged(log)
   --- @param suffix string
-  return function(suffix, kind, repo_name, version, active)
-    local path = pack_get_plug_path(repo_name)
-    local spec = { name = repo_name, src = repos_src[repo_name], version = version }
+  return function(suffix, kind, name, version, active, user_data)
+    local path = pack_get_plug_path(name)
+    local spec = { name = name, src = repos_src[name], version = version, data = user_data }
     local data = { active = active, kind = kind, path = path, spec = spec }
     local entry = { event = 'PackChanged' .. suffix, match = vim.fs.abspath(path), data = data }
 
@@ -626,8 +626,10 @@ describe('vim.pack', function()
 
       mock_confirm(1)
       -- Should use revision from lockfile (pointing at latest 'feat-branch'
-      -- commit) and not use latest `main` commit
-      vim_pack_add({ { src = repos_src.basic, version = 'main' } })
+      -- commit) and not use latest `main` commit. Although should report
+      -- `version = 'main'` inside event data to preserve user input as much as possible.
+      -- Should also preserve `data` field in event data.
+      vim_pack_add({ { src = repos_src.basic, version = 'main', data = { 'd' } } })
       pack_assert_content('basic', 'return "basic feat-branch"')
 
       local confirm_log = exec_lua('return _G.confirm_log')
@@ -641,9 +643,9 @@ describe('vim.pack', function()
       -- Should trigger `kind=install` events
       local log = exec_lua('return _G.event_log')
       local find_event = make_find_packchanged(log)
-      local installpre_basic = find_event('Pre', 'install', 'basic', 'feat-branch', false)
+      local installpre_basic = find_event('Pre', 'install', 'basic', 'main', false, { 'd' })
       local installpre_defbranch = find_event('Pre', 'install', 'defbranch', nil, false)
-      local install_basic = find_event('', 'install', 'basic', 'feat-branch', false)
+      local install_basic = find_event('', 'install', 'basic', 'main', false, { 'd' })
       local install_defbranch = find_event('', 'install', 'defbranch', nil, false)
       eq(4, #log)
       eq(true, installpre_basic < install_basic)
@@ -658,6 +660,15 @@ describe('vim.pack', function()
       ref_lockfile.plugins.basic.rev = git_get_hash('main', 'basic')
       ref_lockfile.plugins.basic.version = "'main'"
       eq(ref_lockfile, get_lock_tbl())
+
+      -- Improper or string spec input should not interfere with initial install
+      vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
+      n.clear()
+
+      mock_confirm(1)
+      pcall_err(vim_pack_add, { repos_src.basic, 1 })
+      eq(true, pack_exists('basic'))
+      eq(true, pack_exists('defbranch'))
     end)
 
     it('handles lockfile during install errors', function()
