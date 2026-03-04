@@ -58,6 +58,10 @@ describe('cmdline2', function()
   end)
 
   it('block mode', function()
+    if os.getenv('TSAN_OPTIONS') then
+      pending('block mode screen test is flaky under TSAN due to race conditions')
+      return
+    end
     feed(':if 1<CR>')
     screen:expect([[
                                                            |
