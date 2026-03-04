@@ -137,7 +137,8 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
-  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+  # on GNU/Linux, glibc 2.43 is tainted with c11 features when you use _GNU_SOURCE
+  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_compile_options(main_lib INTERFACE -Wno-c11-extensions)
   endif()
 

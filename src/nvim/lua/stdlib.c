@@ -474,8 +474,8 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t s2_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
   const char *s2 = luaL_checklstring(lstate, 2, &s2_len);
-  char *nul1;
-  char *nul2;
+  const char *nul1;
+  const char *nul2;
   int ret = 0;
   assert(s1[s1_len] == NUL);
   assert(s2[s2_len] == NUL);

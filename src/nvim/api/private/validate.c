@@ -14,7 +14,7 @@ void api_err_invalid(Error *err, const char *name, const char *val_s, int64_t va
   ErrorType errtype = kErrorTypeValidation;
   // Treat `name` without whitespace as a parameter (surround in quotes).
   // Treat `name` with whitespace as a description (no quotes).
-  char *has_space = strchr(name, ' ');
+  const char *has_space = strchr(name, ' ');
 
   // No value.
   if (val_s && val_s[0] == NUL) {
@@ -43,7 +43,7 @@ void api_err_exp(Error *err, const char *name, const char *expected, const char 
   ErrorType errtype = kErrorTypeValidation;
   // Treat `name` without whitespace as a parameter (surround in quotes).
   // Treat `name` with whitespace as a description (no quotes).
-  char *has_space = strchr(name, ' ');
+  const char *has_space = strchr(name, ' ');
 
   if (!actual) {
     api_set_error(err, errtype,

@@ -1783,7 +1783,8 @@ static const char *find_cmd_after_isearch_cmd(expand_T *xp, const char *arg)
 /// Set the completion context for the :unlet command. Always returns NULL.
 static const char *set_context_in_unlet_cmd(expand_T *xp, const char *arg)
 {
-  while ((xp->xp_pattern = strchr(arg, ' ')) != NULL) {
+  // NOLINTNEXTLINE(*-casting): remove once CI uses glibc 2.43
+  while ((xp->xp_pattern = (char *)strchr(arg, ' ')) != NULL) {
     arg = xp->xp_pattern + 1;
   }
 
@@ -2165,7 +2166,8 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_bdelete:
   case CMD_bwipeout:
   case CMD_bunload:
-    while ((xp->xp_pattern = strchr(arg, ' ')) != NULL) {
+    // NOLINTNEXTLINE(*-casting): remove once CI uses glibc 2.43
+    while ((xp->xp_pattern = (char *)strchr(arg, ' ')) != NULL) {
       arg = xp->xp_pattern + 1;
     }
     FALLTHROUGH;
