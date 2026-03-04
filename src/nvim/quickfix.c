@@ -2390,7 +2390,7 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
         (*stackptr)->dirname = dirname;
         break;
       }
-
+      xfree(dirname);
       ds_new = ds_new->next;
     }
 
