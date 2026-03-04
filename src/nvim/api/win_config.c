@@ -386,6 +386,229 @@ static int win_split_flags(WinSplit split, bool toplevel)
   return flags;
 }
 
+static bool win_config_split(win_T *win, Dict(win_config) *config, WinConfig *fconfig, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+#define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
+  win_T *parent = NULL;
+  tabpage_T *parent_tp = NULL;
+  if (config->win == 0) {
+    parent = curwin;
+    parent_tp = curtab;
+  } else if (config->win > 0) {
+    parent = find_window_by_handle(fconfig->window, err);
+    if (!parent) {
+      return false;  // error already set
+    }
+    parent_tp = win_find_tabpage(parent);
+  }
+
+  tabpage_T *win_tp = win_find_tabpage(win);
+  if (parent) {
+    if (parent->w_floating) {
+      api_set_error(err, kErrorTypeException, "Cannot split a floating window");
+      return false;
+    }
+    if (is_aucmd_win(win) && win_tp != parent_tp) {
+      api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
+      return false;
+    }
+    // Can't move the cmdwin or its old curwin to a different tabpage.
+    if ((win == cmdwin_win || win == cmdwin_old_curwin) && win_tp != parent_tp) {
+      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
+      return false;
+    }
+  }
+
+  bool was_split = !win->w_floating;
+  bool has_split = HAS_KEY_X(config, split);
+  bool has_vertical = HAS_KEY_X(config, vertical);
+  WinSplit old_split = win_split_dir(win);
+  if (has_vertical && !has_split) {
+    if (config->vertical) {
+      fconfig->split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
+    } else {
+      fconfig->split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
+    }
+  }
+  merge_win_config(&win->w_config, *fconfig);
+
+  // If there's no "vertical" or "split" set, or if "split" is unchanged, then we can just change
+  // the size of the window.
+  if ((!has_vertical && !has_split)
+      || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig->split)) {
+    goto resize;
+  }
+
+  if (!check_split_disallowed_err(win, err)) {
+    return false;  // error already set
+  }
+
+  bool to_split_ok = false;
+  // If we are moving curwin to another tabpage, switch windows *before* we remove it from the
+  // window list or remove its frame (if non-floating), so it's valid for autocommands.
+  const bool curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
+  if (curwin_moving_tp) {
+    if (was_split) {
+      int dir;
+      win_T *altwin = winframe_find_altwin(win, &dir, NULL, NULL);
+      // Autocommands may still make this the last non-float after this check.
+      // That case will be caught later when trying to move the window.
+      if (!altwin) {
+        api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
+        return false;
+      }
+      win_goto(altwin);
+    } else {
+      win_goto(win_float_find_altwin(win, NULL));
+    }
+
+    // Autocommands may have been a real nuisance and messed things up...
+    if (curwin == win) {
+      api_set_error(err, kErrorTypeException, "Failed to switch away from window %d",
+                    win->handle);
+      return false;
+    }
+    win_tp = win_find_tabpage(win);
+    if (!win_tp || !win_valid_any_tab(parent)) {
+      api_set_error(err, kErrorTypeException, "Windows to split were closed");
+      goto restore_curwin;
+    }
+    if (was_split == win->w_floating || parent->w_floating) {
+      api_set_error(err, kErrorTypeException, "Floating state of windows to split changed");
+      goto restore_curwin;
+    }
+  }
+
+  int dir = 0;
+  frame_T *unflat_altfr = NULL;
+  win_T *altwin = NULL;
+
+  if (was_split) {
+    // If the window is the last in the tabpage or `fconfig.win` is a handle to itself, we can't
+    // split it.
+    if (win->w_frame->fr_parent == NULL) {
+      // FIXME(willothy): if the window is the last in the tabpage but there is another tabpage and
+      // the target window is in that other tabpage, should we move the window to that tabpage and
+      // close the previous one, or just error?
+      api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
+      goto restore_curwin;
+    } else if (parent != NULL && parent->handle == win->handle) {
+      int n_frames = 0;
+      for (frame_T *fr = win->w_frame->fr_parent->fr_child; fr != NULL; fr = fr->fr_next) {
+        n_frames++;
+      }
+
+      win_T *neighbor = NULL;
+
+      if (n_frames > 2) {
+        // There are three or more windows in the frame, we need to split a neighboring window.
+        frame_T *frame = win->w_frame->fr_parent;
+
+        if (frame->fr_parent) {
+          //   ┌──────────────┐
+          //   │      A       │
+          //   ├────┬────┬────┤
+          //   │ B  │ C  │ D  │
+          //   └────┴────┴────┘
+          //          ||
+          //          \/
+          // ┌───────────────────┐
+          // │         A         │
+          // ├─────────┬─────────┤
+          // │         │    C    │
+          // │    B    ├─────────┤
+          // │         │    D    │
+          // └─────────┴─────────┘
+          if (fconfig->split == kWinSplitAbove || fconfig->split == kWinSplitLeft) {
+            neighbor = win->w_next;
+          } else {
+            neighbor = win->w_prev;
+          }
+        }
+        // If the frame doesn't have a parent, the old frame was the root frame and we need to
+        // create a top-level split.
+        altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+      } else if (n_frames == 2) {
+        // There are two windows in the frame, we can just rotate it.
+        altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+        neighbor = altwin;
+      } else {
+        // There is only one window in the frame, we can't split it.
+        api_set_error(err, kErrorTypeException, "Cannot split window into itself");
+        goto restore_curwin;
+      }
+      // Set the parent to whatever the correct neighbor window was determined to be.
+      parent = neighbor;
+    } else {
+      altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
+    }
+  } else {
+    altwin = win_float_find_altwin(win, win_tp == curtab ? NULL : win_tp);
+  }
+
+  win_remove(win, win_tp == curtab ? NULL : win_tp);
+  if (win_tp == curtab) {
+    last_status(false);  // may need to remove last status line
+    win_comp_pos();  // recompute window positions
+  }
+
+  int flags = win_split_flags(fconfig->split, parent == NULL) | WSP_NOENTER;
+  parent_tp = parent ? win_find_tabpage(parent) : curtab;
+
+  TRY_WRAP(err, {
+    const bool need_switch = parent != NULL && parent != curwin;
+    switchwin_T switchwin;
+    if (need_switch) {
+      // `parent` is valid in its tabpage, so switch_win should not fail.
+      const int result = switch_win(&switchwin, parent, parent_tp, true);
+      (void)result;
+      assert(result == OK);
+    }
+    to_split_ok = win_split_ins(0, flags, win, 0, unflat_altfr) != NULL;
+    if (!to_split_ok) {
+      // Restore `win` to the window list now, so it's valid for restore_win (if used).
+      win_append(win->w_prev, win, win_tp == curtab ? NULL : win_tp);
+    }
+    if (need_switch) {
+      restore_win(&switchwin, true);
+    }
+  });
+  if (!to_split_ok) {
+    if (was_split) {
+      // win_split_ins doesn't change sizes or layout if it fails to insert an existing window, so
+      // just undo winframe_remove.
+      winframe_restore(win, dir, unflat_altfr);
+    }
+    if (!ERROR_SET(err)) {
+      api_set_error(err, kErrorTypeException, "Failed to move window %d into split", win->handle);
+    }
+
+restore_curwin:
+    // If `win` was the original curwin, and autocommands didn't move it outside of curtab, be a
+    // good citizen and try to return to it.
+    if (curwin_moving_tp && win_valid(win)) {
+      win_goto(win);
+    }
+    return false;
+  }
+
+  // If `win` moved tabpages and was the curwin of its old one, select a new curwin for it.
+  if (win_tp != parent_tp && win_tp->tp_curwin == win) {
+    win_tp->tp_curwin = altwin;
+  }
+
+resize:
+  if (HAS_KEY_X(config, width)) {
+    win_setwidth_win(fconfig->width, win);
+  }
+  if (HAS_KEY_X(config, height)) {
+    win_setheight_win(fconfig->height, win);
+  }
+  return true;
+#undef HAS_KEY_X
+}
+
 /// Reconfigures the layout of a window.
 ///
 /// - Absent (`nil`) keys will not be changed.
@@ -412,7 +635,6 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     return;
   }
 
-  tabpage_T *win_tp = win_find_tabpage(win);
   bool was_split = !win->w_floating;
   bool has_split = HAS_KEY_X(config, split);
   bool has_vertical = HAS_KEY_X(config, vertical);
@@ -433,219 +655,13 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     }
     redraw_later(win, UPD_NOT_VALID);
   } else if (to_split) {
-    win_T *parent = NULL;
-    tabpage_T *parent_tp = NULL;
-    if (config->win == 0) {
-      parent = curwin;
-      parent_tp = curtab;
-    } else if (config->win > 0) {
-      parent = find_window_by_handle(fconfig.window, err);
-      if (!parent) {
-        return;
-      }
-      parent_tp = win_find_tabpage(parent);
-    }
-    if (parent) {
-      if (parent->w_floating) {
-        api_set_error(err, kErrorTypeException, "Cannot split a floating window");
-        return;
-      }
-      if (is_aucmd_win(win) && win_tp != parent_tp) {
-        api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
-        return;
-      }
-      // Can't move the cmdwin or its old curwin to a different tabpage.
-      if ((win == cmdwin_win || win == cmdwin_old_curwin) && win_tp != parent_tp) {
-        api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-        return;
-      }
-    }
-
-    WinSplit old_split = win_split_dir(win);
-    if (has_vertical && !has_split) {
-      if (config->vertical) {
-        fconfig.split = (old_split == kWinSplitRight || p_spr) ? kWinSplitRight : kWinSplitLeft;
-      } else {
-        fconfig.split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
-      }
-    }
-    merge_win_config(&win->w_config, fconfig);
-
-    // If there's no "vertical" or "split" set, or if "split" is unchanged,
-    // then we can just change the size of the window.
-    if ((!has_vertical && !has_split)
-        || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig.split)) {
-      goto resize_split;
-    }
-
-    if (!check_split_disallowed_err(win, err)) {
-      return;  // error already set
-    }
-
-    bool to_split_ok = false;
-    // If we are moving curwin to another tabpage, switch windows *before* we remove it from the
-    // window list or remove its frame (if non-floating), so it's valid for autocommands.
-    const bool curwin_moving_tp = win == curwin && parent && win_tp != parent_tp;
-    if (curwin_moving_tp) {
-      if (was_split) {
-        int dir;
-        win_T *altwin = winframe_find_altwin(win, &dir, NULL, NULL);
-        // Autocommands may still make this the last non-float after this check.
-        // That case will be caught later when trying to move the window.
-        if (!altwin) {
-          api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
-          return;
-        }
-        win_goto(altwin);
-      } else {
-        win_goto(win_float_find_altwin(win, NULL));
-      }
-
-      // Autocommands may have been a real nuisance and messed things up...
-      if (curwin == win) {
-        api_set_error(err, kErrorTypeException, "Failed to switch away from window %d",
-                      win->handle);
-        return;
-      }
-      win_tp = win_find_tabpage(win);
-      if (!win_tp || !win_valid_any_tab(parent)) {
-        api_set_error(err, kErrorTypeException, "Windows to split were closed");
-        goto restore_curwin;
-      }
-      if (was_split == win->w_floating || parent->w_floating) {
-        api_set_error(err, kErrorTypeException, "Floating state of windows to split changed");
-        goto restore_curwin;
-      }
-    }
-
-    int dir = 0;
-    frame_T *unflat_altfr = NULL;
-    win_T *altwin = NULL;
-
-    if (was_split) {
-      // If the window is the last in the tabpage or `fconfig.win` is
-      // a handle to itself, we can't split it.
-      if (win->w_frame->fr_parent == NULL) {
-        // FIXME(willothy): if the window is the last in the tabpage but there is another tabpage
-        // and the target window is in that other tabpage, should we move the window to that
-        // tabpage and close the previous one, or just error?
-        api_set_error(err, kErrorTypeException, "Cannot move last non-floating window");
-        goto restore_curwin;
-      } else if (parent != NULL && parent->handle == win->handle) {
-        int n_frames = 0;
-        for (frame_T *fr = win->w_frame->fr_parent->fr_child; fr != NULL; fr = fr->fr_next) {
-          n_frames++;
-        }
-
-        win_T *neighbor = NULL;
-
-        if (n_frames > 2) {
-          // There are three or more windows in the frame, we need to split a neighboring window.
-          frame_T *frame = win->w_frame->fr_parent;
-
-          if (frame->fr_parent) {
-            //   ┌──────────────┐
-            //   │      A       │
-            //   ├────┬────┬────┤
-            //   │ B  │ C  │ D  │
-            //   └────┴────┴────┘
-            //          ||
-            //          \/
-            // ┌───────────────────┐
-            // │         A         │
-            // ├─────────┬─────────┤
-            // │         │    C    │
-            // │    B    ├─────────┤
-            // │         │    D    │
-            // └─────────┴─────────┘
-            if (fconfig.split == kWinSplitAbove || fconfig.split == kWinSplitLeft) {
-              neighbor = win->w_next;
-            } else {
-              neighbor = win->w_prev;
-            }
-          }
-          // If the frame doesn't have a parent, the old frame
-          // was the root frame and we need to create a top-level split.
-          altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
-        } else if (n_frames == 2) {
-          // There are two windows in the frame, we can just rotate it.
-          altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
-          neighbor = altwin;
-        } else {
-          // There is only one window in the frame, we can't split it.
-          api_set_error(err, kErrorTypeException, "Cannot split window into itself");
-          goto restore_curwin;
-        }
-        // Set the parent to whatever the correct neighbor window was determined to be.
-        parent = neighbor;
-      } else {
-        altwin = winframe_remove(win, &dir, win_tp == curtab ? NULL : win_tp, &unflat_altfr);
-      }
-    } else {
-      altwin = win_float_find_altwin(win, win_tp == curtab ? NULL : win_tp);
-    }
-
-    win_remove(win, win_tp == curtab ? NULL : win_tp);
-    if (win_tp == curtab) {
-      last_status(false);  // may need to remove last status line
-      win_comp_pos();  // recompute window positions
-    }
-
-    int flags = win_split_flags(fconfig.split, parent == NULL) | WSP_NOENTER;
-    parent_tp = parent ? win_find_tabpage(parent) : curtab;
-
-    TRY_WRAP(err, {
-      const bool need_switch = parent != NULL && parent != curwin;
-      switchwin_T switchwin;
-      if (need_switch) {
-        // `parent` is valid in its tabpage, so switch_win should not fail.
-        const int result = switch_win(&switchwin, parent, parent_tp, true);
-        (void)result;
-        assert(result == OK);
-      }
-      to_split_ok = win_split_ins(0, flags, win, 0, unflat_altfr) != NULL;
-      if (!to_split_ok) {
-        // Restore `win` to the window list now, so it's valid for restore_win (if used).
-        win_append(win->w_prev, win, win_tp == curtab ? NULL : win_tp);
-      }
-      if (need_switch) {
-        restore_win(&switchwin, true);
-      }
-    });
-    if (!to_split_ok) {
-      if (was_split) {
-        // win_split_ins doesn't change sizes or layout if it fails to insert an existing window, so
-        // just undo winframe_remove.
-        winframe_restore(win, dir, unflat_altfr);
-      }
-      if (!ERROR_SET(err)) {
-        api_set_error(err, kErrorTypeException, "Failed to move window %d into split", win->handle);
-      }
-
-restore_curwin:
-      // If `win` was the original curwin, and autocommands didn't move it outside of curtab, be a
-      // good citizen and try to return to it.
-      if (curwin_moving_tp && win_valid(win)) {
-        win_goto(win);
-      }
+    if (!win_config_split(win, config, &fconfig, err)) {
       return;
-    }
-
-    // If `win` moved tabpages and was the curwin of its old one, select a new curwin for it.
-    if (win_tp != parent_tp && win_tp->tp_curwin == win) {
-      win_tp->tp_curwin = altwin;
-    }
-
-resize_split:
-    if (HAS_KEY_X(config, width)) {
-      win_setwidth_win(fconfig.width, win);
-    }
-    if (HAS_KEY_X(config, height)) {
-      win_setheight_win(fconfig.height, win);
     }
   } else {
     win_config_float(win, fconfig);
   }
+
   if (HAS_KEY_X(config, style)) {
     if (fconfig.style == kWinStyleMinimal) {
       win_set_minimal_style(win);
