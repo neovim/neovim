@@ -645,6 +645,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   bool was_split = !win->w_floating;
   bool has_split = HAS_KEY_X(config, split);
   bool has_vertical = HAS_KEY_X(config, vertical);
+  WinStyle old_style = win->w_config.style;
   // reuse old values, if not overridden
   WinConfig fconfig = win->w_config;
 
@@ -669,7 +670,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     win_config_float(win, fconfig);
   }
 
-  if (HAS_KEY_X(config, style) && fconfig.style == kWinStyleMinimal) {
+  if (fconfig.style == kWinStyleMinimal && old_style != fconfig.style) {
     win_set_minimal_style(win);
     didset_window_options(win, true);
   }

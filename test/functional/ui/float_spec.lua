@@ -407,15 +407,11 @@ describe('float window', function()
     assert_alive()
   end)
 
-  it("should re-apply 'style' when present and not leak to normal windows", function()
+  it("should not leak 'style' option values to normal windows", function()
     local buf = api.nvim_create_buf(true, false)
     local buf2 = api.nvim_create_buf(true, false)
     local float_opts = { style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1 }
     local float_win = api.nvim_open_win(buf, true, float_opts)
-    api.nvim_set_option_value('number', true, { win = float_win })
-    float_opts.row = 2
-    api.nvim_win_set_config(float_win, float_opts)
-    eq(false, api.nvim_get_option_value('number', { win = float_win }))
     -- minimal float should preserve its own options when switching buffers
     api.nvim_set_option_value('listchars', 'extends:…,precedes:…', { win = float_win, scope = 'local' })
     api.nvim_win_set_buf(float_win, buf2)
