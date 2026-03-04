@@ -305,6 +305,83 @@ describe('vim.lsp.codelens', function()
     ]])
   end)
 
+  it('ignores stale codeLens/resolve responses', function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+
+    insert('line1\nline2\n')
+
+    exec_lua(function()
+      local codelens_request_count = 0
+      _G.stale_resolve_sent = false
+      _G.server = _G._create_server({
+        capabilities = {
+          codeLensProvider = {
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/codeLens'] = function(_, _, callback)
+            codelens_request_count = codelens_request_count + 1
+            if codelens_request_count == 1 then
+              callback(nil, {
+                {
+                  range = {
+                    ['end'] = {
+                      character = 1,
+                      line = 0,
+                    },
+                    start = {
+                      character = 0,
+                      line = 0,
+                    },
+                  },
+                },
+              })
+            else
+              callback(nil, {})
+            end
+          end,
+          ['codeLens/resolve'] = function(_, lens, callback)
+            vim.defer_fn(function()
+              _G.stale_resolve_sent = true
+              callback(nil, {
+                command = {
+                  arguments = {},
+                  command = 'dummy.command',
+                  title = 'resolved',
+                },
+                range = lens.range,
+              })
+            end, 100)
+          end,
+        },
+      })
+
+      local stale_client_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+      vim.lsp.codelens.enable()
+      vim.wait(1000, function()
+        return #vim.lsp.codelens.get() > 0
+      end)
+
+      vim.api.nvim__redraw({ flush = true })
+
+      vim.lsp.codelens.on_refresh(nil, nil, {
+        method = 'workspace/codeLens/refresh',
+        client_id = stale_client_id,
+      })
+
+      assert(
+        vim.wait(1000, function()
+          return _G.stale_resolve_sent
+        end),
+        'timed out waiting for stale resolve response'
+      )
+    end)
+
+    eq('', api.nvim_get_vvar('errmsg'))
+  end)
+
   it('clears extmarks beyond the bottom of the buffer', function()
     feed('13G4dd')
     screen:expect([[
