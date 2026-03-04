@@ -54,7 +54,7 @@ file(GLOB_RECURSE test_files RELATIVE "${TEST_DIR}/functional" "${TEST_DIR}/func
 foreach(test_file ${test_files})
   # Get test group: "test/functional/foo/bar_spec.lua" => "foo".
   string(REGEX REPLACE "/.*" "" test_group ${test_file})
-  set(group_target "functionaltest_${test_group}")
+  set(group_target "functionaltest__${test_group}")
   string(REGEX REPLACE "[^A-Za-z0-9_]" "_" group_target ${group_target})
   list(FIND group_targets ${group_target} group_idx)
   if(${group_idx} EQUAL -1)
@@ -72,5 +72,5 @@ foreach(test_file ${test_files})
   endif()
 endforeach()
 
-add_custom_target(functionaltest_parallel DEPENDS ${group_targets})
-add_custom_target(functionaltest_summary COMMAND ${CMAKE_COMMAND} -E cat ${summary_files} USES_TERMINAL)
+add_custom_target(functionaltest-parallel DEPENDS ${group_targets})
+add_custom_target(functionaltest-summary COMMAND ${CMAKE_COMMAND} -E cat ${summary_files} USES_TERMINAL)
