@@ -2471,8 +2471,10 @@ static void byteidx_common(typval_T *argvars, typval_T *rettv, bool comp)
       if (c > 0xFFFF) {
         idx--;
       }
-    }
-    if (idx > 0) {
+      if (idx > 0) {
+        t += clen;
+      }
+    } else if (idx > 0) {
       t += ptr2len(t);
     }
   }
@@ -2996,7 +2998,7 @@ void f_utf16idx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (c > 0xFFFF) {
       len++;
     }
-    p += ptr2len(p);
+    p += clen;
     if (charidx) {
       idx--;
     }
