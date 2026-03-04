@@ -216,10 +216,7 @@ local function node()
     manager = 'pnpm'
   end
 
-  local latest_npm_cmd = (
-    iswin and { 'cmd', '/c', manager, 'info', 'neovim', '--json' }
-    or { manager, 'info', 'neovim', '--json' }
-  )
+  local latest_npm_cmd = { manager, 'info', 'neovim', '--json' }
   local latest_npm
   ok, latest_npm = cmd_ok(latest_npm_cmd)
   if not ok or latest_npm:find('^%s$') then
@@ -904,10 +901,7 @@ local function ruby()
   end
   health.info('Host: ' .. host)
 
-  local latest_gem_cmd = (
-    iswin and { 'cmd', '/c', 'gem', 'list', '-ra', '"^^neovim$"' }
-    or { 'gem', 'list', '-ra', '^neovim$' }
-  )
+  local latest_gem_cmd = { 'gem', 'list', '-ra', '^neovim$' }
   local ok, latest_gem = cmd_ok(latest_gem_cmd)
   if not ok or latest_gem:find('^%s*$') then
     health.error(
