@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local assert_alive = n.assert_alive
 local clear, poke_eventloop = n.clear, n.poke_eventloop
@@ -16,6 +17,7 @@ local command = n.command
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci
+local expect_exitcode = tt.expect_exitcode
 
 describe(':terminal', function()
   local screen
@@ -215,9 +217,9 @@ local function test_terminal_with_fake_shell(backslash)
     command('terminal')
     screen:expect([[
       ^ready $                                           |
-      [Process exited 0]                                |
-                                                        |*2
+                                                        |*3
     ]])
+    expect_exitcode(0)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
@@ -238,10 +240,9 @@ local function test_terminal_with_fake_shell(backslash)
     command('terminal echo hi')
     screen:expect([[
       ^ready $ echo hi                                   |
-                                                        |
-      [Process exited 0]                                |
-                                                        |
+                                                        |*3
     ]])
+    expect_exitcode(0)
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
@@ -249,20 +250,18 @@ local function test_terminal_with_fake_shell(backslash)
     command('terminal echo hi')
     screen:expect([[
       ^jeff $ echo hi                                    |
-                                                        |
-      [Process exited 0]                                |
-                                                        |
+                                                        |*3
     ]])
+    expect_exitcode(0)
   end)
 
   it('allows quotes and slashes', function()
     command([[terminal echo 'hello' \ "world"]])
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
-                                                        |
-      [Process exited 0]                                |
-                                                        |
+                                                        |*3
     ]])
+    expect_exitcode(0)
   end)
 
   it('ex_terminal() double-free #4554', function()
@@ -297,9 +296,9 @@ local function test_terminal_with_fake_shell(backslash)
     command('terminal')
     screen:expect([[
       ^ready $                                           |
-      [Process exited 0]                                |
-                                                        |*2
+                                                        |*3
     ]])
+    expect_exitcode(0)
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
     command([[find */Xuniquefile]])
@@ -314,10 +313,9 @@ local function test_terminal_with_fake_shell(backslash)
     command([[terminal echo "Xsomedir/Xuniquefile"]])
     screen:expect([[
       ^ready $ echo "Xsomedir/Xuniquefile"               |
-                                                        |
-      [Process exited 0]                                |
-                                                        |
+                                                        |*3
     ]])
+    expect_exitcode(0)
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[ggf"lgf]])
@@ -343,9 +341,9 @@ local function test_terminal_with_fake_shell(backslash)
         command('terminal 42')
         screen:expect([[
           ^                                                  |
-          [Process exited 42]                               |
-                                                            |*2
+                                                            |*3
         ]])
+        expect_exitcode(42)
       end)
     end
   end)

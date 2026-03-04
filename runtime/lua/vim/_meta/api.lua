@@ -1309,6 +1309,7 @@ function vim.api.nvim_get_autocmds(opts) end
 --- -  "buffer"  (optional) Buffer connected to |terminal| instance.
 --- -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
 ---              by |nvim_set_client_info()|.
+--- - "exitcode" (optional) Exit code of the |terminal| process.
 ---
 function vim.api.nvim_get_chan_info(chan) end
 

@@ -2833,6 +2833,7 @@ describe('API', function()
         argv = { eval('exepath(&shell)') },
         mode = 'terminal',
         buffer = 1,
+        exitcode = -1,
         pty = '?',
       }
       local event = api.nvim_get_var('opened_event')
@@ -2868,6 +2869,7 @@ describe('API', function()
         }),
         mode = 'terminal',
         buffer = 2,
+        exitcode = -1,
         pty = '?',
       }
       local actual2 = eval('nvim_get_chan_info(&channel)')
@@ -2878,6 +2880,7 @@ describe('API', function()
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       expected2.pty = (is_os('win') and '?' or '') -- pty stream was closed.
+      expected2.exitcode = 129
       eq(expected2, eval('nvim_get_chan_info(&channel)'))
     end)
   end)

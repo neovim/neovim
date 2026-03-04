@@ -861,12 +861,12 @@ describe(':terminal prints more lines than the screen height and exits', functio
       ("call jobstart(['%s', '10'], {'term':v:true}) | startinsert"):format(testprg('tty-test'))
     )
     screen:expect([[
+      line5                         |
       line6                         |
       line7                         |
       line8                         |
       line9                         |
-                                    |
-      [Process exited 0]^            |
+      ^                              |
       {5:-- TERMINAL --}                |
     ]])
     feed('<cr>')
@@ -1096,9 +1096,8 @@ describe('pending scrollback line handling', function()
         or { 'printf', ('hi\n'):rep(12) }
     )
     screen:expect [[
-      hi                            |*4
-                                    |
-      [Process exited 0]^            |
+      hi                            |*5
+      ^                              |
       {5:-- TERMINAL --}                |
     ]]
     assert_alive()

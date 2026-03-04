@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local clear = n.clear
 local eq = t.eq
@@ -14,13 +15,12 @@ local api = n.api
 local async_meths = n.async_meths
 local testprg = n.testprg
 local assert_alive = n.assert_alive
+local expect_exitcode = tt.expect_exitcode
 
 describe('terminal channel is closed and later released if', function()
-  local screen
-
   before_each(function()
     clear()
-    screen = Screen.new()
+    Screen.new()
   end)
 
   it('opened by nvim_open_term() and deleted by :bdelete!', function()
@@ -52,7 +52,7 @@ describe('terminal channel is closed and later released if', function()
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
     )
-    screen:expect({ any = '%[Terminal closed%]' })
+    expect_exitcode(0, api.nvim_get_var('id'))
     eq(chans, eval('len(nvim_list_chans())'))
     feed('i<CR>') -- Delete terminal.
     poke_eventloop() -- Process pending input.
@@ -68,7 +68,7 @@ describe('terminal channel is closed and later released if', function()
       "Vim(call):Can't send data to closed stream",
       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]])
     )
-    screen:expect({ any = '%[Terminal closed%]' })
+    expect_exitcode(0, api.nvim_get_var('id'))
     eq(chans, eval('len(nvim_list_chans())'))
     -- Channel still hasn't been released yet.
     eq(
@@ -83,7 +83,7 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = jobstart('echo',{'term':v:true})]])
     local chans = eval('len(nvim_list_chans())')
     -- Wait for process to exit.
-    screen:expect({ any = '%[Process exited 0%]' })
+    expect_exitcode(0)
     -- Process has exited but channel has't been released.
     eq(
       "Vim(call):Can't send data to closed stream",
@@ -102,7 +102,7 @@ describe('terminal channel is closed and later released if', function()
     command([[let id = jobstart('echo', {'term':v:true})]])
     local chans = eval('len(nvim_list_chans())')
     -- Wait for process to exit.
-    screen:expect({ any = '%[Process exited 0%]' })
+    expect_exitcode(0)
     -- Process has exited but channel hasn't been released.
     eq(
       "Vim(call):Can't send data to closed stream",
@@ -185,11 +185,12 @@ local function test_autocmd_no_crash(event, extra_tests)
     ]])
     feed('i')
     env.screen:expect([[
+      48: TEST                                                    |
       49: TEST                                                    |
-                                                                  |
-      [Process exited 0]^                                          |
+      ^                                                            |
       {5:-- TERMINAL --}                                              |
     ]])
+    expect_exitcode(0)
     feed('<CR>')
     env.screen:expect(oldbuf_screen)
     assert_alive()

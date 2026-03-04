@@ -1719,6 +1719,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 ///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
 ///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
 ///                 by |nvim_set_client_info()|.
+///    - "exitcode" (optional) Exit code of the |terminal| process.
 ///
 Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)

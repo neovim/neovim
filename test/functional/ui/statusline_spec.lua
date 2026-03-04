@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local assert_alive = n.assert_alive
 local clear = n.clear
@@ -14,6 +15,8 @@ local exec_lua = n.exec_lua
 local eval = n.eval
 local sleep = vim.uv.sleep
 local pcall_err = t.pcall_err
+local testprg = n.testprg
+local expect_exitcode = tt.expect_exitcode
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 
@@ -959,6 +962,7 @@ describe('default statusline', function()
     local default_statusline = table.concat({
       '%<',
       '%f %h%w%m%r ',
+      "%{% v:lua.require('vim._core.util').term_exitcode() %}",
       '%=',
       "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
       "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
@@ -1025,6 +1029,16 @@ describe('default statusline', function()
       {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
+  end)
+
+  it('shows exit code when terminal exits #14986', function()
+    exec_lua("vim.o.statusline = ''")
+    api.nvim_set_option_value('shell', testprg('shell-test'), {})
+    api.nvim_set_option_value('shellcmdflag', 'EXIT', {})
+    api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
+    command('terminal 9')
+    screen:expect({ any = '%[Exit: 9%]' })
+    expect_exitcode(9)
   end)
 end)
 
