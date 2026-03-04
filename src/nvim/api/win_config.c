@@ -475,14 +475,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     // then we can just change the size of the window.
     if ((!has_vertical && !has_split)
         || (was_split && !HAS_KEY_X(config, win) && old_split == fconfig.split)) {
-      if (HAS_KEY_X(config, width)) {
-        win_setwidth_win(fconfig.width, win);
-      }
-      if (HAS_KEY_X(config, height)) {
-        win_setheight_win(fconfig.height, win);
-      }
-      redraw_later(win, UPD_NOT_VALID);
-      return;
+      goto resize_split;
     }
 
     if (!check_split_disallowed_err(win, err)) {
@@ -643,6 +636,7 @@ restore_curwin:
       win_tp->tp_curwin = altwin;
     }
 
+resize_split:
     if (HAS_KEY_X(config, width)) {
       win_setwidth_win(fconfig.width, win);
     }
