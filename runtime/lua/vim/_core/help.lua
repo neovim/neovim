@@ -128,6 +128,149 @@ function M.escape_subject(word)
   return word
 end
 
+--- Characters that are considered punctuation for trimming help tags.
+--- Dots (.) are NOT included here — they're trimmed separately as a last resort.
+local trimmable_punct = {
+  ['('] = true,
+  [')'] = true,
+  ['['] = true,
+  [']'] = true,
+  ['{'] = true,
+  ['}'] = true,
+  ['`'] = true,
+  ['|'] = true,
+  ['"'] = true,
+  [','] = true,
+  ["'"] = true,
+  [' '] = true,
+  ['\t'] = true,
+}
+
+---Trim one layer of punctuation from a help tag string.
+---Uses cursor offset to intelligently trim: if cursor is on trimmable punctuation,
+---removes everything before cursor and skips past punctuation after cursor.
+---
+---@param tag string The tag to trim
+---@param offset integer Cursor position within the tag (-1 if not applicable)
+---@return string? trimmed Trimmed string, or nil if unchanged
+function M.trim_tag(tag, offset)
+  if not tag or tag == '' then
+    return nil
+  end
+
+  -- Special cases: single character tags
+  if tag == '|' then
+    return 'bar'
+  end
+  if tag == '"' then
+    return 'quote'
+  end
+
+  local len = #tag
+  -- start/end are 1-indexed inclusive positions into tag
+  local s = 1
+  local e = len
+
+  if offset >= 0 and offset < len and trimmable_punct[tag:sub(offset + 1, offset + 1)] then
+    -- Heuristic: cursor is on trimmable punctuation, skip past it to the right
+    s = offset + 1
+    while s <= e and trimmable_punct[tag:sub(s, s)] do
+      s = s + 1
+    end
+  elseif offset >= 0 and offset < len then
+    -- Cursor is on non-trimmable char: find start of identifier at cursor
+    local cursor_pos = offset + 1 -- 1-indexed
+    while cursor_pos > s and not trimmable_punct[tag:sub(cursor_pos - 1, cursor_pos - 1)] do
+      cursor_pos = cursor_pos - 1
+    end
+    s = cursor_pos
+  else
+    -- No cursor info: trim leading punctuation
+    while s <= e and trimmable_punct[tag:sub(s, s)] do
+      s = s + 1
+    end
+  end
+
+  -- Trim trailing punctuation
+  while e >= s and trimmable_punct[tag:sub(e, e)] do
+    e = e - 1
+  end
+
+  -- Trim argument lists: "[{buf}]", "({opts})", "('arg')"
+  for i = s, e do
+    local c = tag:sub(i, i)
+    if c == '[' or c == '{' or (c == '(' and i + 1 <= e and tag:sub(i + 1, i + 1) ~= ')') then
+      e = i - 1
+      break
+    end
+  end
+
+  -- If nothing changed, return nil
+  if s == 1 and e == len then
+    return nil
+  end
+
+  -- If everything was trimmed, return nil
+  if s > e then
+    return nil
+  end
+
+  return tag:sub(s, e)
+end
+
+---Trim namespace prefix (dots) from a help tag.
+---Only call this if regular trimming didn't find a match.
+---Returns the tag with the leftmost dot-separated segment removed.
+---
+---@param tag string The tag to trim
+---@return string? trimmed Trimmed string, or nil if no dots found
+function M.trim_tag_dots(tag)
+  if not tag or tag == '' then
+    return nil
+  end
+  local after_dot = tag:match('^[^.]+%.(.+)$')
+  return after_dot
+end
+
+---DWIM resolve a help tag from a `<cWORD>` by iteratively trimming punctuation.
+---Tries the original tag first, then trims punctuation and dots until a valid help tag is found.
+---
+---@param tag string The raw `<cWORD>` text
+---@param offset integer Cursor position within the tag (-1 if not applicable)
+---@return string? resolved The resolved help tag, or nil if no match found
+function M.resolve_tag(tag, offset)
+  if not tag or tag == '' then
+    return nil
+  end
+
+  -- Try the original tag first.
+  if #vim.fn.getcompletion(tag, 'help') > 0 then
+    return tag
+  end
+
+  -- Iteratively trim punctuation and try again, up to 10 times.
+  local candidate = tag
+  for _ = 1, 10 do
+    local trimmed = M.trim_tag(candidate, offset)
+    if not trimmed then
+      -- Try trimming namespace dots as last resort.
+      trimmed = M.trim_tag_dots(candidate)
+      if not trimmed then
+        break
+      end
+    end
+    candidate = trimmed
+    -- After first trim, offset is no longer valid.
+    offset = -1
+
+    if #vim.fn.getcompletion(candidate, 'help') > 0 then
+      return candidate
+    end
+  end
+
+  return nil
+end
+
 ---Populates the |local-additions| section of a help buffer with references to locally-installed
 ---help files. These are help files outside of $VIMRUNTIME (typically from plugins) whose first
 ---line contains a tag (e.g. *plugin-name.txt*) and a short description.

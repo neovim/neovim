@@ -13,7 +13,7 @@ local write_file = t.write_file
 describe(':help', function()
   before_each(function()
     os.remove('test.log')
-    clear{
+    clear {
       env = {
         -- NVIM_LOG_FILE = 'test.log',
       },
@@ -162,10 +162,10 @@ end)
 
 describe(':help', function()
   setup(function()
-    n.clear{
+    n.clear {
       args = {
-        '+helptags $VIMRUNTIME/doc'
-      }
+        '+helptags $VIMRUNTIME/doc',
+      },
     }
     command('enew')
     command('set filetype=help')
@@ -187,7 +187,7 @@ describe(':help', function()
     local cursor = n.api.nvim_win_set_cursor
     local function open_helptag()
       -- TODO: also test ":help FOO" explicitly.
-      n.exec[[:normal! K]]
+      n.exec [[:normal! K]]
       local word = n.fn.expand('<cWORD>')
       local bufname = n.fn.fnamemodify(n.fn.bufname('%'), ':t')
       if n.fn.winnr('$') > 1 then
@@ -196,69 +196,69 @@ describe(':help', function()
       return { word, bufname }
     end
 
-    n.command[[set keywordprg=:help]]
+    n.command [[set keywordprg=:help]]
 
-    set_lines {'some plain text'}
-    cursor(0, {1, 5}) -- on 'plain'
-    eq({'*ft-plaintex-syntax*', 'syntax.txt'}, open_helptag())
+    set_lines { 'some plain text' }
+    cursor(0, { 1, 5 }) -- on 'plain'
+    eq({ '*ft-plaintex-syntax*', 'syntax.txt' }, open_helptag())
 
-    set_lines {':help command'}
-    cursor(0, {1, 4})
-    eq({'*:help*', 'helphelp.txt'}, open_helptag())
+    set_lines { ':help command' }
+    cursor(0, { 1, 4 })
+    eq({ '*:help*', 'helphelp.txt' }, open_helptag())
 
-    set_lines {' :help command'}
-    cursor(0, {1, 5})
-    eq({'*:help*', 'helphelp.txt'}, open_helptag())
+    set_lines { ' :help command' }
+    cursor(0, { 1, 5 })
+    eq({ '*:help*', 'helphelp.txt' }, open_helptag())
 
-    set_lines {'v:version name'}
-    cursor(0, {1, 5})
-    eq({'*v:version*', 'vvars.txt'}, open_helptag())
-    cursor(0, {1, 2})
-    eq({'*v:version*', 'vvars.txt'}, open_helptag())
+    set_lines { 'v:version name' }
+    cursor(0, { 1, 5 })
+    eq({ '*v:version*', 'vvars.txt' }, open_helptag())
+    cursor(0, { 1, 2 })
+    eq({ '*v:version*', 'vvars.txt' }, open_helptag())
 
-    set_lines {"See 'option' for more."}
-    cursor(0, {1, 6}) -- on 'option'
-    eq({"*'option'*", 'intro.txt'}, open_helptag())
+    set_lines { "See 'option' for more." }
+    cursor(0, { 1, 6 }) -- on 'option'
+    eq({ "*'option'*", 'helphelp.txt' }, open_helptag())
 
-    set_lines {':command-nargs'}
-    cursor(0, {1, 7}) -- on 'nargs'
-    eq({'*:command-nargs*', 'map.txt'}, open_helptag())
+    set_lines { ':command-nargs' }
+    cursor(0, { 1, 7 }) -- on 'nargs'
+    eq({ '*:command-nargs*', 'map.txt' }, open_helptag())
 
-    set_lines {'|("vim.lsp.foldtext()")|'}
-    cursor(0, {1, 10})
-    eq({'*vim.lsp.foldtext()*', 'lsp.txt'}, open_helptag())
+    set_lines { '|("vim.lsp.foldtext()")|' }
+    cursor(0, { 1, 10 })
+    eq({ '*vim.lsp.foldtext()*', 'lsp.txt' }, open_helptag())
 
-    set_lines {'nvim_buf_detach_event[{buf}]'}
-    cursor(0, {1, 10})
-    eq({'*nvim_buf_detach_event*', 'api.txt'}, open_helptag())
+    set_lines { 'nvim_buf_detach_event[{buf}]' }
+    cursor(0, { 1, 10 })
+    eq({ '*nvim_buf_detach_event*', 'api.txt' }, open_helptag())
 
-    set_lines {'{buf}'}
-    cursor(0, {1, 1})
-    eq({'*:buf*', 'windows.txt'}, open_helptag())
+    set_lines { '{buf}' }
+    cursor(0, { 1, 1 })
+    eq({ '*:buf*', 'windows.txt' }, open_helptag())
 
-    set_lines {'(`vim.lsp.ClientConfig`)'}
-    cursor(0, {1, 1})
-    eq({'*vim.lsp.ClientConfig*', 'lsp.txt'}, open_helptag())
+    set_lines { '(`vim.lsp.ClientConfig`)' }
+    cursor(0, { 1, 1 })
+    eq({ '*vim.lsp.ClientConfig*', 'lsp.txt' }, open_helptag())
 
-    set_lines {"vim.lsp.enable('clangd')"}
-    cursor(0, {1, 3})
-    eq({'*vim.lsp.enable()*', 'lsp.txt'}, open_helptag())
+    set_lines { "vim.lsp.enable('clangd')" }
+    cursor(0, { 1, 3 })
+    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
 
-    set_lines {"vim.lsp.enable('clangd')"}
-    cursor(0, {1, 6})
-    eq({'*vim.lsp.enable()*', 'lsp.txt'}, open_helptag())
+    set_lines { "vim.lsp.enable('clangd')" }
+    cursor(0, { 1, 6 })
+    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
 
-    set_lines {"vim.lsp.enable('clangd')"}
-    cursor(0, {1, 9})
-    eq({'*vim.lsp.enable()*', 'lsp.txt'}, open_helptag())
+    set_lines { "vim.lsp.enable('clangd')" }
+    cursor(0, { 1, 9 })
+    eq({ '*vim.lsp.enable()*', 'lsp.txt' }, open_helptag())
 
-    set_lines {'assert(vim.lsp.get_client_by_id(client_id))'}
-    cursor(0, {1, 12})
-    eq({'*vim.lsp.get_client_by_id()*', 'lsp.txt'}, open_helptag())
+    set_lines { 'assert(vim.lsp.get_client_by_id(client_id))' }
+    cursor(0, { 1, 12 })
+    eq({ '*vim.lsp.get_client_by_id()*', 'lsp.txt' }, open_helptag())
 
-    set_lines {"vim.api.nvim_create_autocmd('LspAttach', {"}
-    cursor(0, {1, 7})
-    eq({'*nvim_create_autocmd()*', 'api.txt'}, open_helptag())
+    set_lines { "vim.api.nvim_create_autocmd('LspAttach', {" }
+    cursor(0, { 1, 7 })
+    eq({ '*nvim_create_autocmd()*', 'api.txt' }, open_helptag())
 
     -- set_lines {' |vim.lsp.start()|. '}
     -- cursor(0, {1, 4})
