@@ -59,6 +59,7 @@ jobs:
           TEST_TIMEOUT: 600
         run: |
           $ErrorActionPreference = 'Continue'
+          # `-k 0` tells ninja to continue running all targets even if some fail.
           cmake --build build --target functionaltest-parallel -j 2 -- -k 0
           $exitCode = $LASTEXITCODE
           cmake --build build --target functionaltest-summary
