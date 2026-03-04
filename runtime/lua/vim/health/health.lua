@@ -573,20 +573,37 @@ end
 local function check_head_hash(commit)
   local result = vim
     .system(
-      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD' },
+      { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'HEAD', 'refs/tags/nightly' },
       { text = true, timeout = 5000 }
     )
     :wait()
   if result.code ~= 0 or not result.stdout or result.stdout == '' then
     return
   end
-  local upstream = assert(result.stdout:match('^(%x+)'))
-  if not vim.startswith(upstream, commit) then
-    vim.health.warn(
-      ('Build is outdated. Local: %s, Latest: %s'):format(commit, upstream:sub(1, 12))
-    )
+
+  local refs = {} ---@type table<string, string>
+  for line in result.stdout:gmatch('[^\n]+') do
+    local sha, ref = line:match('^(%x+)%s+(%S+)$')
+    if sha and ref then
+      refs[ref] = sha
+    end
+  end
+
+  local head_sha = assert(refs['HEAD'])
+  local nightly_sha = refs['refs/tags/nightly']
+
+  if vim.startswith(head_sha, commit) then
+    vim.health.ok('Up to date (HEAD)')
+  elseif nightly_sha and vim.startswith(nightly_sha, commit) then
+    vim.health.ok('Up to date (nightly)')
   else
-    vim.health.ok(('Using latest HEAD: %s'):format(upstream:sub(1, 12)))
+    vim.health.warn(
+      ('Build is outdated. Local: %s, HEAD: %s%s'):format(
+        commit,
+        head_sha:sub(1, 12),
+        nightly_sha and (', Nightly: ' .. nightly_sha:sub(1, 12)) or ''
+      )
+    )
   end
 end
 
