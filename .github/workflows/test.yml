@@ -186,9 +186,9 @@ jobs:
         run: |
           set +e
           # `-k 0` tells ninja to continue running all targets even if some fail.
-          cmake --build build --target functionaltest_parallel -j 2 -- -k 0
+          cmake --build build --target functionaltest-parallel -j 2 -- -k 0
           exit_code="$?"
-          cmake --build build --target functionaltest_summary
+          cmake --build build --target functionaltest-summary
           exit "$exit_code"
 
       - if: ${{ matrix.test == 'oldtest' }}

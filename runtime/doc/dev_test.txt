@@ -81,8 +81,8 @@ To run only _functional_ tests: >
     make functionaltest
 
 To run functional tests in parallel (used in CI): >
-    cmake --build build --target functionaltest_parallel -j2
-    cmake --build build --target functionaltest_summary
+    cmake --build build --target functionaltest-parallel -j2
+    cmake --build build --target functionaltest-summary
 
 
 LEGACY TESTS
