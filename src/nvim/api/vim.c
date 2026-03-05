@@ -186,8 +186,8 @@ void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight
 
   // Setting URLs directly through highlight attributes is not supported
   if (HAS_KEY(val, highlight, url)) {
-    api_free_string(val->url);
-    val->url = NULL_STRING;
+    api_set_error(err, kErrorTypeValidation, "Invalid Key: 'url'");
+    return;
   }
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
