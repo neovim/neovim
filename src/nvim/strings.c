@@ -509,12 +509,14 @@ char *vim_strchr(const char *const string, const int c)
   if (c <= 0) {
     return NULL;
   } else if (c < 0x80) {
-    return strchr(string, c);
+    // NOLINTNEXTLINE(*-casting): remove once CI uses glibc 2.43
+    return (char *)strchr(string, c);
   } else {
     char u8char[MB_MAXBYTES + 1];
     const int len = utf_char2bytes(c, u8char);
     u8char[len] = NUL;
-    return strstr(string, u8char);
+    // NOLINTNEXTLINE(*-casting): remove once CI uses glibc 2.43
+    return (char *)strstr(string, u8char);
   }
 }
 
