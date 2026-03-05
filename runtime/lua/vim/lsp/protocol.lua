@@ -1224,8 +1224,8 @@ protocol._provider_to_client_registration = {
 --- Maps method names to the required server capability
 -- A server capability equal to the method means there is no related server capability
 protocol._request_name_to_server_capability = {
-  ['callHierarchy/incomingCalls'] = { 'callHierarchy/incomingCalls' },
-  ['callHierarchy/outgoingCalls'] = { 'callHierarchy/outgoingCalls' },
+  ['callHierarchy/incomingCalls'] = { 'callHierarchyProvider' },
+  ['callHierarchy/outgoingCalls'] = { 'callHierarchyProvider' },
   ['client/registerCapability'] = { 'client/registerCapability' },
   ['client/unregisterCapability'] = { 'client/unregisterCapability' },
   ['codeAction/resolve'] = { 'codeActionProvider', 'resolveProvider' },
