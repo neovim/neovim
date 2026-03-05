@@ -186,20 +186,26 @@ function Provider:resolve(client, unresolved_lens)
     end
 
     local row = unresolved_lens.range.start.line
-    local lenses = assert(state.row_lenses[row])
-    for i, lens in ipairs(lenses) do
-      if lens == unresolved_lens then
-        lenses[i] = resolved_lens
-      end
+    local lenses = state.row_lenses[row]
+    -- A newer textDocument/codeLens response can replace row_lenses while resolve is in flight.
+    if not lenses then
+      return
     end
 
-    self.row_version[row] = nil
-    api.nvim__redraw({
-      buf = self.bufnr,
-      range = { row, row + 1 },
-      valid = true,
-      flush = false,
-    })
+    for i, lens in ipairs(lenses) do
+      -- Only apply if this exact unresolved lens still exists; otherwise response is stale.
+      if lens == unresolved_lens then
+        lenses[i] = resolved_lens
+        self.row_version[row] = nil
+        api.nvim__redraw({
+          buf = self.bufnr,
+          range = { row, row + 1 },
+          valid = true,
+          flush = false,
+        })
+        return
+      end
+    end
   end, self.bufnr)
 end
 
