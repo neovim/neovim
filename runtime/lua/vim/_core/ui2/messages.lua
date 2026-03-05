@@ -504,7 +504,7 @@ function M.set_pos(tgt)
     local lines = o.lines - (win == ui.wins.pager and ui.cmdheight + (o.ls == 3 and 2 or 0) or 0)
     cfg.height = math.min(texth.all, math.ceil(lines * (win == ui.wins.pager and 1 or 0.5)))
     cfg.border = win ~= ui.wins.msg and { '', top, '', '', '', '', '', '' } or nil
-    cfg.focusable = tgt == 'cmd' or nil
+    cfg.mouse = tgt == 'cmd' or nil
     cfg.row = (win == ui.wins.msg and 0 or 1) - ui.cmd.wmnumode
     cfg.row = cfg.row - ((win == ui.wins.pager and o.laststatus == 3) and 1 or 0)
     local title = { 'f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging', 'MsgSeparator' }
@@ -561,6 +561,7 @@ function M.set_pos(tgt)
           api.nvim_win_set_config(ui.wins.dialog, { title = '' })
           api.nvim__redraw({ flush = true })
           vim.on_key(nil, M.dialog_on_key)
+          M.dialog_on_key = nil
           return ''
         end
 

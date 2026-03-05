@@ -129,7 +129,7 @@ describe('messages2', function()
     -- Switching tabpage closes expanded cmdline #37659.
     command('tabnew | echo "foo\nbar"')
     screen:expect([[
-      {24: + [No Name] }{5: }{100:2}{5: [No Name] }{2:                          }{24:X}|
+      {24: + [No Name] }{5: [No Name] }{2:                            }{24:X}|
       ^                                                     |
       {1:~                                                    }|*9
       {3:                                                     }|
@@ -170,7 +170,7 @@ describe('messages2', function()
     ]])
   end)
 
-  it('new buffer, window and options after closing a buffer', function()
+  it('new buffer, window and options after closing a buffer or switching tabpage', function()
     command('set nomodifiable | echom "foo" | messages')
     screen:expect([[
                                                            |
@@ -181,6 +181,15 @@ describe('messages2', function()
     ]])
     command('bdelete | messages')
     screen:expect_unchanged()
+    set_msg_target_zero_ch()
+    command('quit | echo "foo\nbar" | tabnew')
+    screen:expect([[
+      {24: [No Name] }{5: [No Name] }{2:                              }{24:X}|
+      ^                                                     |
+      {1:~                                                    }|*10
+      {1:~                                                 }{4:foo}|
+      {1:~                                                 }{4:bar}|
+    ]])
   end)
 
   it('screenclear and empty message clears messages', function()
