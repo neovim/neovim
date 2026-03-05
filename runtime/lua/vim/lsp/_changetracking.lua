@@ -165,16 +165,56 @@ function M.init(client, bufnr)
   end
 end
 
---- @param client vim.lsp.Client
 --- @param bufnr integer
---- @param name string
---- @return string
-function M._get_and_set_name(client, bufnr, name)
-  local state = state_by_group[get_group(client)] or {}
-  local buf_state = (state.buffers or {})[bufnr]
-  local old_name = buf_state.name
-  buf_state.name = name
-  return old_name
+function M._send_did_save(bufnr)
+  local groups = {} ---@type table<string,vim.lsp.CTGroup>
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+    local group = get_group(client)
+    groups[group_key(group)] = group
+  end
+
+  local uri = vim.uri_from_bufnr(bufnr)
+  local text = vim.func._memoize('concat', vim.lsp._buf_get_full_text)
+
+  for _, group in pairs(groups) do
+    local name = api.nvim_buf_get_name(bufnr)
+    local state = state_by_group[group]
+    local buf_state = state.buffers[bufnr] or {}
+    local old_name = buf_state.name
+    buf_state.name = name
+
+    for _, client in pairs(state.clients) do
+      if old_name and name ~= old_name then
+        client:notify('textDocument/didClose', {
+          textDocument = {
+            uri = vim.uri_from_fname(old_name),
+          },
+        })
+        client:notify('textDocument/didOpen', {
+          textDocument = {
+            version = 0,
+            uri = uri,
+            languageId = client.get_language_id(bufnr, vim.bo[bufnr].filetype),
+            text = vim.lsp._buf_get_full_text(bufnr),
+          },
+        })
+        util.buf_versions[bufnr] = 0
+      end
+      local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
+      if save_capability then
+        local included_text --- @type string?
+        if type(save_capability) == 'table' and save_capability.includeText then
+          included_text = text(bufnr)
+        end
+        client:notify('textDocument/didSave', {
+          textDocument = {
+            uri = uri,
+          },
+          text = included_text,
+        })
+      end
+    end
+  end
 end
 
 ---@param buf_state vim.lsp.CTBufferState
