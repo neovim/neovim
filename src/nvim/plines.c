@@ -198,6 +198,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   }
 
   char *const sbr = get_showbreak_value(wp);
+  int wrap_width = win_wrap_width(wp);
 
   // May have to add something for 'breakindent' and/or 'showbreak'
   // string at the start of a screen line.
@@ -205,16 +206,16 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   // When "size" is 0, no new screen line is started.
   if (size > 0 && wp->w_p_wrap && (*sbr != NUL || wp->w_p_bri)) {
     int col_off_prev = win_col_off(wp);
-    int width2 = wp->w_view_width - col_off_prev + win_col_off2(wp);
+    int width2 = wrap_width - col_off_prev + win_col_off2(wp);
     colnr_T wcol = vcol + col_off_prev;
     colnr_T max_head_vcol = csarg->max_head_vcol;
     int added = 0;
 
     // cells taken by 'showbreak'/'breakindent' before current char
     int head_prev = 0;
-    if (wcol >= wp->w_view_width) {
-      wcol -= wp->w_view_width;
-      col_off_prev = wp->w_view_width - width2;
+    if (wcol >= wrap_width) {
+      wcol -= wrap_width;
+      col_off_prev = wrap_width - width2;
       if (wcol >= width2 && width2 > 0) {
         wcol %= width2;
       }
@@ -242,7 +243,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       wcol += col_off_prev;
     }
 
-    if (wcol + size > wp->w_view_width) {
+    if (wcol + size > wrap_width) {
       // cells taken by 'showbreak'/'breakindent' halfway current char
       int head_mid = csarg->indent_width;
       if (head_mid == INT_MIN) {
@@ -257,7 +258,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       }
       if (head_mid > 0) {
         // Calculate effective window width.
-        int prev_rem = wp->w_view_width - wcol;
+        int prev_rem = wrap_width - wcol;
         int width = width2 - head_mid;
 
         if (width <= 0) {
@@ -291,7 +292,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   bool need_lbr = false;
   // If 'linebreak' set check at a blank before a non-blank if the line
   // needs a break here.
-  if (wp->w_p_lbr && wp->w_p_wrap && wp->w_view_width != 0
+  if (wp->w_p_lbr && wp->w_p_wrap && wrap_width != 0
       && vim_isbreak((uint8_t)cur[0]) && !vim_isbreak((uint8_t)cur[1])) {
     char *t = csarg->line;
     while (vim_isbreak((uint8_t)t[0])) {
@@ -306,7 +307,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     // non-blank after a blank.
     int numberextra = win_col_off(wp);
     colnr_T col_adj = size - 1;
-    colnr_T colmax = (colnr_T)(wp->w_view_width - numberextra - col_adj);
+    colnr_T colmax = (colnr_T)(wrap_width - numberextra - col_adj);
     if (vcol >= colmax) {
       colmax += col_adj;
       int n = colmax + win_col_off2(wp);
@@ -399,6 +400,25 @@ int charsize_nowrap(buf_T *buf, const char *cur, bool use_tabstop, colnr_T vcol,
   } else {
     return ptr2cells(cur);
   }
+}
+
+/// Return the width at which lines visually wrap in window "wp".
+///
+/// Normally lines wrap at the window edge (w_view_width). When 'wrapcolumn'
+/// is set, lines wrap earlier — at the specified column plus any left-side
+/// margins (line numbers, signs, etc.). The result never exceeds the actual
+/// window width, so narrow windows fall back to edge wrapping.
+///
+/// @param  wp  window
+/// @return Wrap width in cells.
+int win_wrap_width(win_T *wp)
+{
+  int view = wp->w_view_width;
+  if (wp->w_p_wrap && wp->w_p_wcl > 0) {
+    int effective = wp->w_p_wcl + win_col_off(wp);
+    return MIN(effective, view);
+  }
+  return view;
 }
 
 /// Check that virtual column "vcol" is in the rightmost column of window "wp".
@@ -805,7 +825,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   }
 
   // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
-  int width = wp->w_view_width - win_col_off(wp);
+  int width = win_wrap_width(wp) - win_col_off(wp);
   if (width <= 0) {
     return 32000;  // bigger than the number of screen lines
   }
