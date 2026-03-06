@@ -429,7 +429,7 @@ describe('TUI :restart', function()
       '--',
       'Xtest-file1',
       'Xtest-file2',
-    }, { env = { NVIM_LOG_FILE = testlog } })
+    })
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
@@ -437,9 +437,6 @@ describe('TUI :restart', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    -- This error happens as stdin (forwarded as fd 3) is not a pipe.
-    assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog, 50)
-
     server_session = n.connect(server_pipe)
     local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
     local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
@@ -2809,6 +2806,13 @@ describe('TUI', function()
     retry(nil, nil, function()
       eq('TEST_TITLE', api.nvim_buf_get_var(0, 'term_title'))
     end)
+  end)
+
+  it('stdin and stdout are tty fds in embedded server #38172', function()
+    eq(
+      { 'tty', 'tty' },
+      child_exec_lua('return { vim.uv.guess_handle(0), vim.uv.guess_handle(1) }')
+    )
   end)
 end)
 
