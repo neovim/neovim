@@ -262,10 +262,23 @@ describe('TUI :restart', function()
     local server_session = n.connect(server_pipe)
     local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
     local function assert_new_pid()
-      tt.feed_data(':echo serverstart("' .. server_pipe .. '")\n')
-      screen:expect({ any = server_pipe })
+      --- HACK: On Windows, make a dummy serverstart from test env to create the pipe
+      --- and then stop it after the child has connected to it.
+      --- This avoids permission denied when the child nvim
+      --- tries to open the pipe by itself.
+      if is_os('win') then
+        local pipename = eval("serverstart('" .. server_pipe .. "')")
+        eq(server_pipe, pipename)
+      end
+      tt.feed_data(':call serverstart("' .. server_pipe .. '")\n')
+      screen:expect({ any = ':call serverstart' })
+      -- The :call command may sometimes overflow leaving the "Press ENTER" prompt.
+      tt.feed_data('\n')
 
       server_session = n.connect(server_pipe)
+      if is_os('win') then
+        fn.serverstop(server_pipe)
+      end
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
       t.neq(server_pid, new_pid)
       server_pid = new_pid
@@ -377,7 +390,7 @@ describe('TUI :restart', function()
     -- No --listen conflict when server exit is delayed.
     feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
     screen_expect(s0)
-    -- assert_new_pid()
+    assert_new_pid()
     assert_no_gui_running()
 
     screen:try_resize(60, 6)
@@ -402,12 +415,11 @@ describe('TUI :restart', function()
     assert_no_gui_running()
 
     -- Cleanup the environment
-    tt.feed_data(':echo serverstop("' .. server_pipe .. '")\013')
+    tt.feed_data(':call serverstop("' .. server_pipe .. '")\013')
     if server_session then
       server_session:close()
     end
     os.remove(server_pipe)
-    n.check_close()
   end)
 
   it('drops "-" and "-- [files…]" from v:argv #34417', function()
@@ -416,7 +428,7 @@ describe('TUI :restart', function()
     local server_session
     local server_pipe = new_pipename()
     finally(function()
-      tt.feed_data(':echo serverstop("' .. server_pipe .. '")\013')
+      tt.feed_data(':call serverstop("' .. server_pipe .. '")\013')
       if server_session then
         server_session:close()
       end
@@ -462,10 +474,23 @@ describe('TUI :restart', function()
       {5:-- TERMINAL --}                                    |
     ]])
     -- Tell the new server to start listening on the pipe again.
-    tt.feed_data(':echo serverstart("' .. server_pipe .. '")\013')
-    screen:expect({ any = server_pipe })
+    --- HACK: On Windows, make a dummy serverstart from test env to create the pipe
+    --- and then stop it after the child has connected to it.
+    --- This avoids permission denied when the child nvim
+    --- tries to open the pipe by itself.
+    if is_os('win') then
+      local pipename = eval("serverstart('" .. server_pipe .. "')")
+      eq(server_pipe, pipename)
+    end
+    tt.feed_data(':call serverstart("' .. server_pipe .. '")\013')
+    screen:expect({ any = ':call serverstart' })
+    -- The :call command may sometimes overflow leaving a "Press ENTER" prompt.
+    tt.feed_data('\013')
 
     server_session = n.connect(server_pipe)
+    if is_os('win') then
+      fn.serverstop(server_pipe)
+    end
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
