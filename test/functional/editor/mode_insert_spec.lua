@@ -472,4 +472,26 @@ describe('insert-mode', function()
       {5:-- REPLACE --}                 |
     ]])
   end)
+
+  it("auto-format ('a' flag) preserves spaces typed in the middle of a line", function()
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa it but',
+      'Lorem Ipsum is simply dummy text of the printing and typesetting dasddd',
+      'industry.',
+    })
+    command('set formatoptions=ta textwidth=70')
+    -- Prevent INPUT_BUFLEN batching so auto_format runs between keystrokes
+    command('autocmd InsertCharPre * " nothing')
+
+    -- Position at 't' of 'it' (col 68) and type space then Z
+    feed('gg67l')
+    feed('a Z<Esc>')
+
+    -- The space between 'it' and 'Z' must be preserved
+    local line1 = api.nvim_buf_get_lines(0, 0, 1, true)[1]
+    assert(line1:find('it Z'), 'Expected "it Z" in line 1, got: ' .. line1)
+
+    command('autocmd! InsertCharPre')
+    command('set formatoptions& textwidth&')
+  end)
 end)
