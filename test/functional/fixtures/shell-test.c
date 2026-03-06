@@ -6,6 +6,8 @@
 # include <windows.h>
 # define usleep(usecs) Sleep((usecs) / 1000)
 #else
+# include <stdlib.h>
+# include <termios.h>
 # include <unistd.h>
 #endif
 
@@ -48,10 +50,21 @@ static void help(void)
   puts("    Exits immediately with exit code \"{code}\".");
 }
 
+#ifndef MSWIN
+static void drain_tty(void) {
+  // Sometimes the final output to TTY can be lost (at least on FreeBSD).
+  // Call tcdrain() to ensure all output has been transmitted to host terminal.
+  tcdrain(STDOUT_FILENO);
+  tcdrain(STDERR_FILENO);
+}
+#endif
+
 int main(int argc, char **argv)
 {
 #ifdef MSWIN
   SetConsoleOutputCP(CP_UTF8);
+#else
+  atexit(drain_tty);
 #endif
 
   if (argc == 2 && strcmp(argv[1], "--help") == 0) {
