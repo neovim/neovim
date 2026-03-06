@@ -1023,7 +1023,7 @@ end)
 ---@return string? # resolved parser name
 local function resolve_lang(alias)
   -- normalize: treesitter language names are always lower case and use underscores
-  alias = alias and alias:lower():gsub('-', '_')
+  alias = alias and alias:lower():gsub('%-', '_')
   -- validate that `alias` is a legal language
   if not (alias and alias:match('[%w_]+') == alias) then
     return
