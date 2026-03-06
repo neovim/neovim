@@ -36,13 +36,13 @@ local M = {
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
   dialog_on_key = nil, ---@type integer? vim.on_key namespace for paging in the dialog window.
+  cmd_on_key = nil, ---@type integer? vim.on_key namespace for paging in the dialog window.
 }
 
-local cmd_on_key ---@type integer? Set to vim.on_key namespace while cmdline is expanded.
 -- An external redraw indicates the start of a new batch of messages in the cmdline.
 api.nvim_set_decoration_provider(ui.ns, {
   on_start = function()
-    M.cmd.ids = (ui.redrawing or cmd_on_key) and M.cmd.ids or {}
+    M.cmd.ids = (ui.redrawing or M.cmd_on_key) and M.cmd.ids or {}
   end,
 })
 
@@ -86,7 +86,7 @@ end
 ---@param type 'last'|'msg'|'top'|'bot'
 ---@param tgt? 'cmd'|'msg'|'dialog'
 local function set_virttext(type, tgt)
-  if (type == 'last' and (ui.cmdheight == 0 or M.virt.delayed)) or cmd_on_key then
+  if (type == 'last' and (ui.cmdheight == 0 or M.virt.delayed)) or M.cmd_on_key then
     return -- Don't show virtual text while cmdline is expanded or delaying for error.
   end
 
@@ -213,10 +213,6 @@ local function expand_msg(src)
       hlopts.end_col, hlopts.hl_group = mark[4].end_col, mark[4].hl_group
       api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, srow + mark[2], mark[3], hlopts)
     end
-
-    if tgt == 'cmd' and ui.cmd.highlighter then
-      ui.cmd.highlighter.active[ui.bufs.cmd] = nil
-    end
   else
     M.virt.msg[M.virt.idx.dupe][1] = nil
     for _, id in pairs(M.virt.ids) do
@@ -338,9 +334,6 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
       ui.cmd.srow = row + 1
     else
       api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 }) -- ensure first line is visible
-      if ui.cmd.highlighter then
-        ui.cmd.highlighter.active[buf] = nil
-      end
       -- Place [+x] indicator for lines that spill over 'cmdheight'.
       local texth = api.nvim_win_text_height(ui.wins.cmd, {})
       local spill = texth.all > ui.cmdheight and (' [+%d]'):format(texth.all - ui.cmdheight)
@@ -371,7 +364,7 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   -- Reset message state the next event loop iteration.
   if not cmd_timer and (col > 0 or next(M.cmd.ids) ~= nil) then
     cmd_timer = vim.defer_fn(function()
-      M.cmd.ids, cmd_timer, col = cmd_on_key and M.cmd.ids or {}, nil, 0
+      M.cmd.ids, cmd_timer, col = M.cmd_on_key and M.cmd.ids or {}, nil, 0
     end, 0)
   end
 end
@@ -480,7 +473,7 @@ function M.msg_history_show(entries, prev_cmd)
   end
 
   -- Showing output of previous command, clear in case still visible.
-  if cmd_on_key or prev_cmd then
+  if M.cmd_on_key or prev_cmd then
     M.msg_clear()
     api.nvim_feedkeys(vim.keycode('<Esc>'), 'n', false)
   end
@@ -511,20 +504,20 @@ function M.set_pos(tgt)
     cfg.title = tgt == 'dialog' and cfg.height < texth.all and { title } or nil
     api.nvim_win_set_config(win, cfg)
 
-    if tgt == 'cmd' and not cmd_on_key then
+    if tgt == 'cmd' and not M.cmd_on_key then
       -- Temporarily expand the cmdline, until next key press.
       local save_spill = M.virt.msg[M.virt.idx.spill][1]
       local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       set_virttext('msg', 'cmd')
       M.virt.msg[M.virt.idx.spill][1] = save_spill
-      cmd_on_key = vim.on_key(function(_, typed)
+      M.cmd_on_key = vim.on_key(function(_, typed)
         typed = typed and fn.keytrans(typed)
-        if not typed or typed == '<MouseMove>' then
+        if not typed or typed == '<MouseMove>' or typed == ':' then
           return
         end
         vim.on_key(nil, ui.ns)
-        cmd_on_key, M.cmd.ids = nil, {}
+        M.cmd_on_key, M.cmd.ids = nil, {}
 
         -- Check if window was entered and reopen with original config.
         local entered = typed == '<CR>'

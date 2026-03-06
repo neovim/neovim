@@ -334,10 +334,14 @@ describe('messages2', function()
     ]])
     command('echo "foo\nbar"')
     screen:expect_unchanged()
+    -- Place cmdline below expanded cmdline instead: #37653.
     feed(':')
     screen:expect([[
                                                            |
-      {1:~                                                    }|*12
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
       {16::}^                                                    |
     ]])
   end)
