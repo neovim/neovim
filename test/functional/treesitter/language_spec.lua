@@ -15,12 +15,7 @@ before_each(clear)
 describe('treesitter language API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
-    eq(
-      '.../treesitter.lua:0: Parser could not be created for buffer 1 and language "borklang"',
-      pcall_err(exec_lua, "parser = vim.treesitter.get_parser(0, 'borklang')")
-    )
-
-    eq(NIL, exec_lua("return vim.treesitter.get_parser(0, 'borklang', { error = false })"))
+    eq(NIL, exec_lua("return vim.treesitter.get_parser(0, 'borklang')"))
 
     -- actual message depends on platform
     matches(
@@ -107,11 +102,7 @@ describe('treesitter language API', function()
       eq('c', exec_lua('return vim.treesitter.get_parser(0):lang()'))
       command('set filetype=borklang')
       -- Should throw an error when filetype changes to borklang
-      eq(
-        '.../treesitter.lua:0: Parser could not be created for buffer 1 and language "borklang"',
-        pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0, 'borklang')")
-      )
-      eq(NIL, exec_lua("return vim.treesitter.get_parser(0, 'borklang', { error = false })"))
+      eq(NIL, exec_lua("return vim.treesitter.get_parser(0, 'borklang')"))
     end
   )
 
