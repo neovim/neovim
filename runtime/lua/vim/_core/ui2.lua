@@ -51,46 +51,35 @@ local M = {
     },
   },
 }
---- @type vim.api.keyset.win_config
-local wincfg = { -- Default cfg for nvim_open_win().
-  relative = 'laststatus',
-  style = 'minimal',
-  col = 0,
-  row = 1,
-  width = 10000,
-  height = 1,
-  noautocmd = true,
-  focusable = false,
-}
 
 local tab = 0
 ---Ensure target buffers and windows are still valid.
 function M.check_targets()
   local curtab = api.nvim_get_current_tabpage()
   for i, type in ipairs({ 'cmd', 'dialog', 'msg', 'pager' }) do
-    local setopt = not api.nvim_buf_is_valid(M.bufs[type])
-    if setopt then
-      M.bufs[type] = api.nvim_create_buf(false, false)
-    end
+    local oldbuf = api.nvim_buf_is_valid(M.bufs[type]) and M.bufs[type]
+    local oldwin, setopt = api.nvim_win_is_valid(M.wins[type]) and M.wins[type], not oldbuf
+    M.bufs[type] = oldbuf or api.nvim_create_buf(false, false)
 
-    if
-      tab ~= curtab
-      or not api.nvim_win_is_valid(M.wins[type])
-      or not api.nvim_win_get_config(M.wins[type]).zindex -- no longer floating
-    then
-      local cfg = vim.tbl_deep_extend('force', wincfg, {
-        mouse = type ~= 'cmd' and true or nil,
-        anchor = type ~= 'cmd' and 'SE' or nil,
-        hide = type ~= 'cmd' or M.cmdheight == 0 or nil,
-        border = type ~= 'msg' and 'none' or nil,
-        -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
-        zindex = 201 - i,
-        _cmdline_offset = type == 'cmd' and 0 or nil,
-      })
-      if tab ~= curtab and api.nvim_win_is_valid(M.wins[type]) then
-        cfg = api.nvim_win_get_config(M.wins[type])
-        api.nvim_win_close(M.wins[type], true)
-      end
+    if tab ~= curtab and oldwin then
+      -- Ensure dynamically set window configuration (M.msg.set_pos()) is copied
+      -- over when switching tabpage. TODO: move to tabpage instead after #35816.
+      M.wins[type] = api.nvim_open_win(M.bufs[type], false, api.nvim_win_get_config(oldwin))
+      api.nvim_win_close(oldwin, true)
+      setopt = true
+    elseif not oldwin or not api.nvim_win_get_config(M.wins[type]).zindex then
+      -- Open a new window when closed or no longer floating (e.g. wincmd J).
+      local cfg = { col = 0, row = 1, width = 10000, height = 1, mouse = false, noautocmd = true }
+      cfg.focusable = false
+      cfg.style = 'minimal'
+      cfg.relative = 'laststatus'
+      cfg.anchor = type ~= 'cmd' and 'SE' or nil
+      cfg.mouse = type == 'pager' or nil
+      cfg.border = type ~= 'msg' and 'none' or nil
+      cfg._cmdline_offset = type == 'cmd' and 0 or nil
+      cfg.hide = type ~= 'cmd' or M.cmdheight == 0 or nil
+      -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
+      cfg.zindex = 201 - i
       M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
       setopt = true
     elseif api.nvim_win_get_buf(M.wins[type]) ~= M.bufs[type] then
@@ -170,14 +159,10 @@ function M.enable(opts)
   if M.cfg.enable == false then
     -- Detach and cleanup windows, buffers and autocommands.
     for _, win in pairs(M.wins) do
-      if api.nvim_win_is_valid(win) then
-        api.nvim_win_close(win, true)
-      end
+      pcall(api.nvim_win_close, win, true)
     end
     for _, buf in pairs(M.bufs) do
-      if api.nvim_buf_is_valid(buf) then
-        api.nvim_buf_delete(buf, {})
-      end
+      pcall(api.nvim_buf_delete, buf, {})
     end
     api.nvim_clear_autocmds({ group = M.augroup })
     vim.ui_detach(M.ns)
@@ -232,6 +217,7 @@ function M.enable(opts)
   api.nvim_create_autocmd({ 'VimResized', 'TabEnter' }, {
     group = M.augroup,
     callback = function()
+      M.check_targets()
       M.msg.set_pos()
     end,
     desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
