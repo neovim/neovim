@@ -829,6 +829,37 @@ local function test_cmdline(linegrid)
                                |
     ]])
   end)
+
+  it('works with :lua debug.debug()', function()
+    feed(':lua debug.debug()<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { content = { { '' } }, pos = 0, prompt = 'lua_debug> ' } },
+    })
+    feed('print("foo")<CR>')
+    screen:expect({
+      grid = [[
+                                 |
+        {1:~                        }|*3
+        foo^                      |
+      ]],
+      cmdline = { { content = { { '' } }, pos = 0, prompt = 'lua_debug> ' } },
+      cmdline_block = { { { 'lua_debug> print("foo")' } } },
+    })
+    feed('<Esc>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { abort = true } },
+    })
+  end)
 end
 
 -- the representation of cmdline and cmdline_block contents changed with ext_linegrid

@@ -1161,14 +1161,25 @@ static int nlua_debug(lua_State *lstate)
     lua_settop(lstate, 0);
     typval_T input;
     get_user_input(input_args, &input, false, false);
-    msg_putchar('\n');  // Avoid outputting on input line.
+
+    if (ui_has(kUICmdline)) {
+      snprintf(IObuff, IOSIZE, "lua_debug> %s", input.vval.v_string);
+      ui_ext_cmdline_block_append(0, IObuff);
+    } else {
+      msg_putchar('\n');  // Avoid outputting on input line.
+    }
+
     if (input.v_type != VAR_STRING
         || input.vval.v_string == NULL
         || *input.vval.v_string == NUL
         || strcmp(input.vval.v_string, "cont") == 0) {
       tv_clear(&input);
+      if (ui_has(kUICmdline)) {
+        ui_ext_cmdline_block_leave();
+      }
       return 0;
     }
+
     if (luaL_loadbuffer(lstate, input.vval.v_string,
                         strlen(input.vval.v_string), "=(debug command)")) {
       nlua_error(lstate, _("E5115: Loading Lua debug string: %.*s"));
