@@ -161,7 +161,9 @@ end
 function Provider:automatic_request()
   self:reset_timer()
   self.timer = vim.defer_fn(function()
-    self:request()
+    if api.nvim_buf_is_loaded(self.bufnr) then
+      self:request()
+    end
   end, 200)
 end
 
