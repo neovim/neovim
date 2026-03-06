@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef _MSC_VER
-# include <Windows.h>
-# define usleep(usecs) Sleep(usecs/1000)
+#ifdef MSWIN
+# include <windows.h>
+# define usleep(usecs) Sleep((usecs) / 1000)
 #else
 # include <unistd.h>
 #endif
@@ -12,7 +12,7 @@
 static void flush_wait(void)
 {
   fflush(NULL);
-  usleep(10*1000);  // Wait 10 ms.
+  usleep(10 * 1000);  // Wait 10 ms.
 }
 
 static void help(void)
@@ -50,13 +50,13 @@ static void help(void)
 
 int main(int argc, char **argv)
 {
+#ifdef MSWIN
+  SetConsoleOutputCP(CP_UTF8);
+#endif
+
   if (argc == 2 && strcmp(argv[1], "--help") == 0) {
     help();
   }
-
-#ifdef _MSC_VER
-  SetConsoleOutputCP(CP_UTF8);
-#endif
 
   if (argc >= 2) {
     if (strcmp(argv[1], "-t") == 0) {
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
       } else {
         fprintf(stderr, "ready $ ");
       }
-#ifndef _MSG_VER
+#ifndef MSWIN
     } else if (strcmp(argv[1], "EXECVP") == 0) {
       if (argc < 4) {
         fprintf(stderr, "Not enough arguments for EXECVP\n");
