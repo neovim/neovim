@@ -1158,6 +1158,32 @@ func Test_fo_a_w()
   %bw!
 endfunc
 
+" Test that auto-format ('a' flag) preserves spaces typed in the middle of a line
+func Test_fo_a_midline_space()
+  new
+  let lines = [
+    \ 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa it but',
+    \ 'Lorem Ipsum is simply dummy text of the printing and typesetting dasddd',
+    \ 'industry.',
+    \ ]
+  call setline(1, lines)
+  set fo=ta tw=70
+
+  " Prevent INPUT_BUFLEN batching so auto_format runs between keystrokes
+  autocmd InsertCharPre * " nothing
+
+  " Position at 't' of 'it' (col 68) and type space then Z
+  call cursor(1, 68)
+  call feedkeys("a Z\<Esc>", 'xt')
+
+  " The space between 'it' and 'Z' must be preserved
+  call assert_match('it Z', getline(1))
+
+  autocmd! InsertCharPre
+  set fo& tw&
+  bw!
+endfunc
+
 " Test for formatting lines using gq in visual mode
 func Test_visual_gq_format()
   new
