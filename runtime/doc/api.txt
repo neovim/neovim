@@ -4156,7 +4156,10 @@ nvim_win_is_valid({window})                              *nvim_win_is_valid()*
         (`boolean`) true if the window is valid, false otherwise
 
 nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
-    Sets the current buffer in a window, without side effects
+    Sets the current buffer in a window.
+
+    Note: As a side-effect, this executes |BufEnter| and |BufLeave|
+    autocommands.
 
     Attributes: ~
         not allowed when |textlock| is active
