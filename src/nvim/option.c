@@ -4663,6 +4663,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_sms);
   case kOptWrap:
     return &(win->w_p_wrap);
+  case kOptWrapcolumn:
+    return &(win->w_p_wcl);
   case kOptLinebreak:
     return &(win->w_p_lbr);
   case kOptBreakindent:
@@ -4898,6 +4900,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_stl = copy_option_val(from->wo_stl);
   to->wo_wbr = copy_option_val(from->wo_wbr);
   to->wo_wrap = from->wo_wrap;
+  to->wo_wcl = from->wo_wcl;
   to->wo_wrap_save = from->wo_wrap_save;
   to->wo_lbr = from->wo_lbr;
   to->wo_bri = from->wo_bri;

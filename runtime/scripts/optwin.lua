@@ -60,6 +60,7 @@ local options_list = {
     { 'smoothscroll', N_ 'scroll by screen line' },
     { 'scrolloff', N_ 'number of screen lines to show around the cursor' },
     { 'wrap', N_ 'long lines wrap' },
+    { 'wrapcolumn', N_ 'column at which lines visually wrap' },
     { 'linebreak', N_ "wrap long lines at a character in 'breakat'" },
     { 'breakindent', N_ 'preserve indentation in wrapped text' },
     { 'breakindentopt', N_ 'adjust breakindent behaviour' },

@@ -184,6 +184,8 @@ typedef struct {
 #define w_p_diff_saved w_onebuf_opt.wo_diff_saved
   int wo_scb_save;              // 'scrollbind' saved for diff mode
 #define w_p_scb_save w_onebuf_opt.wo_scb_save
+  OptInt wo_wcl;
+#define w_p_wcl w_onebuf_opt.wo_wcl    // 'wrapcolumn'
   int wo_wrap;
 #define w_p_wrap w_onebuf_opt.wo_wrap   // 'wrap'
   int wo_wrap_save;             // 'wrap' state saved for diff mode
