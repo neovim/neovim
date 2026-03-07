@@ -21,7 +21,6 @@ local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 local link_limit = is_os('win') and 64 or (is_os('mac') or is_os('bsd')) and 33 or 41
 
 local test_basename_dirname_eq = {
-  '~/foo/',
   '~/foo',
   '~/foo/bar.lua',
   'foo.lua',
@@ -29,29 +28,23 @@ local test_basename_dirname_eq = {
   '',
   '.',
   '..',
-  '../',
   '~',
   '/usr/bin',
   '/usr/bin/gcc',
   '/',
-  '/usr/',
   '/usr',
   'c:/usr',
-  'c:/',
   'c:',
   'c:/users/foo',
   'c:/users/foo/bar.lua',
-  'c:/users/foo/bar/../',
   '~/foo/bar\\baz',
 }
 
 local tests_windows_paths = {
   'c:\\usr',
-  'c:\\',
   'c:',
   'c:\\users\\foo',
   'c:\\users\\foo\\bar.lua',
-  'c:\\users\\foo\\bar\\..\\',
 }
 
 setup(clear)
@@ -99,6 +92,17 @@ describe('vim.fs', function()
         test_paths(tests_windows_paths, true)
       end
     end)
+
+    it('strips trailing slashes', function()
+      eq('/', vim.fs.dirname('/'))
+      eq('/', vim.fs.dirname('/name'))
+      eq('/', vim.fs.dirname('/name/'))
+      eq('/', vim.fs.dirname('/name///'))
+      eq('.', vim.fs.dirname('name/'))
+      eq('.', vim.fs.dirname('name///'))
+      eq('/usr', vim.fs.dirname('/usr/bin/'))
+      eq('/usr', vim.fs.dirname('/usr/bin///'))
+    end)
   end)
 
   describe('basename()', function()
@@ -126,6 +130,17 @@ describe('vim.fs', function()
       if is_os('win') then
         test_paths(tests_windows_paths, true)
       end
+    end)
+
+    it('strips trailing slashes', function()
+      eq('', vim.fs.basename('/'))
+      eq('name', vim.fs.basename('/name'))
+      eq('name', vim.fs.basename('/name/'))
+      eq('name', vim.fs.basename('/name//////////'))
+      eq('name', vim.fs.basename('name/'))
+      eq('name', vim.fs.basename('name///'))
+      eq('bin', vim.fs.basename('/usr/bin/'))
+      eq('bin', vim.fs.basename('/usr/bin///'))
     end)
   end)
 
