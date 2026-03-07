@@ -1617,12 +1617,7 @@ static bool find_is_eval_item(const char *const ptr, int *const colp, int *const
   return false;
 }
 
-/// Find the identifier under or to the right of the cursor.
-/// "find_type" can have one of three values:
-/// FIND_IDENT:   find an identifier (keyword)
-/// FIND_STRING:  find any non-white text
-/// FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
-/// FIND_EVAL:  find text useful for C program debugging
+/// Finds the identifier under or to the right of the cursor, and stores it in `text`.
 ///
 /// There are three steps:
 /// 1. Search forward for the start of an identifier/text.  Doesn't move if
@@ -1633,15 +1628,25 @@ static bool find_is_eval_item(const char *const ptr, int *const colp, int *const
 /// 3. Search forward to the end of this identifier/text.
 ///    When FIND_IDENT isn't defined, we backup until a blank.
 ///
-/// @return  the length of the text, or zero if no text is found.
-///
-/// If text is found, a pointer to the text is put in "*text".  This
-/// points into the current buffer line and is not always NUL terminated.
-size_t find_ident_under_cursor(char **text, int find_type)
+/// @param text If text is found, a pointer to the text is put in `*text`. This points into the
+/// current buffer line and is not always NUL terminated.
+/// @param find_type One of three values:
+///        - FIND_IDENT:   find an identifier (keyword)
+///        - FIND_STRING:  find any non-white text
+///        - FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
+///        - FIND_EVAL:  find text useful for C program debugging
+/// @param offset  If not NULL, set to cursor position relative to start of text
+/// @return  Text length, or zero if no text is found.
+size_t find_ident_under_cursor(char **text, int find_type, int *offset)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  return find_ident_at_pos(curwin, curwin->w_cursor.lnum,
-                           curwin->w_cursor.col, text, NULL, find_type);
+  int textcol = 0;
+  size_t len = find_ident_at_pos(curwin, curwin->w_cursor.lnum,
+                                 curwin->w_cursor.col, text, offset ? &textcol : NULL, find_type);
+  if (offset) {
+    *offset = curwin->w_cursor.col - textcol;
+  }
+  return len;
 }
 
 /// Like find_ident_under_cursor(), but for any window and any position.
@@ -2311,7 +2316,7 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
 {
   size_t len;
   char *ptr;
-  if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
+  if ((len = find_ident_under_cursor(&ptr, FIND_IDENT, NULL)) == 0
       || !find_decl(ptr, len, nchar == 'd', thisblock, SEARCH_START)) {
     clearopbeep(oap);
     return;
@@ -2745,7 +2750,7 @@ static int nv_zg_zw(cmdarg_T *cap, int nchar)
     curwin->w_cursor = pos;
   }
 
-  if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
+  if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT, NULL)) == 0) {
     return FAIL;
   }
   assert(len <= INT_MAX);
@@ -3319,8 +3324,8 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
 {
   if (kp_help) {
     // in the help buffer
-    STRCPY(buf, "he! ");
-    *buflen = STRLEN_LITERAL("he! ");
+    STRCPY(buf, "help! FOO");
+    *buflen = STRLEN_LITERAL("help! FOO");
     return n;
   }
 
@@ -3411,11 +3416,12 @@ static void nv_ident(cmdarg_T *cap)
     }
   }
 
+  int ident_offset = 0;
   if (ptr == NULL && (n = find_ident_under_cursor(&ptr,
                                                   ((cmdchar == '*'
                                                     || cmdchar == '#')
                                                    ? FIND_IDENT|FIND_STRING
-                                                   : FIND_IDENT))) == 0) {
+                                                   : FIND_IDENT), &ident_offset)) == 0) {
     clearop(cap->oap);
     return;
   }
@@ -3484,7 +3490,11 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // Now grab the chars in the identifier
-  if (cmdchar == 'K' && !kp_help) {
+  if (cmdchar == 'K' && kp_help) {
+    // Do nothing. `nv_K_getcmd` set buf=":help! FOO" for this case.
+    STRCPY(buf, "help! FOO");
+    buflen = STRLEN_LITERAL("help! FOO");
+  } else if (cmdchar == 'K' && !kp_help) {
     ptr = xstrnsave(ptr, n);
     if (kp_ex) {
       // Escape the argument properly for an Ex command
@@ -3518,8 +3528,8 @@ static void nv_ident(cmdarg_T *cap)
     }
 
     p = buf + buflen;
+    // Escape various chars with a backslash "\".
     while (n-- > 0) {
-      // put a backslash before \ and some others
       if (vim_strchr(aux_ptr, (uint8_t)(*ptr)) != NULL) {
         *p++ = '\\';
       }
@@ -4227,7 +4237,7 @@ static void nv_brackets(cmdarg_T *cap)
     char *ptr;
     size_t len;
 
-    if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
+    if ((len = find_ident_under_cursor(&ptr, FIND_IDENT, NULL)) == 0) {
       clearop(cap->oap);
     } else {
       // Make a copy, if the line was changed it will be freed.
