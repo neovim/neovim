@@ -1882,24 +1882,32 @@ function uv.tcp_nodelay(tcp, enable) end
 --- @return uv.error_name? err_name
 function uv_tcp_t:nodelay(enable) end
 
---- Enable / disable TCP keep-alive. `delay` is the initial delay in seconds,
+--- Enable / disable TCP keep-alive. `delay` is the initial delay in seconds, `intvl` is the time in seconds between individual keep-alive probes, and `cnt` is the number of probes to send before assuming the connection is dead.
 --- ignored when enable is `false`.
+--- **Note**:
+--- `intvl` and `cnt` are only supported with Libuv >= 1.52.0.
 --- @param tcp uv.uv_tcp_t
 --- @param enable boolean
 --- @param delay integer?
+--- @param intvl integer?
+--- @param cnt integer?
 --- @return 0? success
 --- @return string? err
 --- @return uv.error_name? err_name
-function uv.tcp_keepalive(tcp, enable, delay) end
+function uv.tcp_keepalive(tcp, enable, delay, intvl, cnt) end
 
---- Enable / disable TCP keep-alive. `delay` is the initial delay in seconds,
+--- Enable / disable TCP keep-alive. `delay` is the initial delay in seconds, `intvl` is the time in seconds between individual keep-alive probes, and `cnt` is the number of probes to send before assuming the connection is dead.
 --- ignored when enable is `false`.
+--- **Note**:
+--- `intvl` and `cnt` are only supported with Libuv >= 1.52.0.
 --- @param enable boolean
 --- @param delay integer?
+--- @param intvl integer?
+--- @param cnt integer?
 --- @return 0? success
 --- @return string? err
 --- @return uv.error_name? err_name
-function uv_tcp_t:keepalive(enable, delay) end
+function uv_tcp_t:keepalive(enable, delay, intvl, cnt) end
 
 --- Enable / disable simultaneous asynchronous accept requests that are queued by
 --- the operating system when listening for new TCP connections.
@@ -2572,12 +2580,15 @@ function uv_udp_t:get_send_queue_count() end
 ---
 --- Note: The passed file descriptor or SOCKET is not checked for its type, but
 --- it's required that it represents a valid datagram socket.
+--- **Note**:
+--- `flags` is only supported with Libuv >= 1.52.0.
 --- @param udp uv.uv_udp_t
 --- @param fd integer
+--- @param flags integer|{ reuseaddr: boolean?, reuseport: boolean? }?
 --- @return 0? success
 --- @return string? err
 --- @return uv.error_name? err_name
-function uv.udp_open(udp, fd) end
+function uv.udp_open(udp, fd, flags) end
 
 --- Opens an existing file descriptor or Windows SOCKET as a UDP handle.
 ---
@@ -2590,28 +2601,91 @@ function uv.udp_open(udp, fd) end
 ---
 --- Note: The passed file descriptor or SOCKET is not checked for its type, but
 --- it's required that it represents a valid datagram socket.
+--- **Note**:
+--- `flags` is only supported with Libuv >= 1.52.0.
 --- @param fd integer
+--- @param flags integer|{ reuseaddr: boolean?, reuseport: boolean? }?
 --- @return 0? success
 --- @return string? err
 --- @return uv.error_name? err_name
-function uv_udp_t:open(fd) end
+function uv_udp_t:open(fd, flags) end
+
+--- @class uv.udp_bind.flags
+--- @field ipv6only boolean?
+--- @field reuseaddr boolean?
+--- @field linux_recverr boolean?
+--- @field reuseport boolean?
 
 --- Bind the UDP handle to an IP address and port. Any `flags` are set with a table
---- with fields `reuseaddr` or `ipv6only` equal to `true` or `false`.
+--- with fields `reuseaddr`, `ipv6only`, `linux_recverr`, `reuseport` equal to `true` or `false`.
+---
+--- - `reuseaddr`: Indicates if SO_REUSEADDR will be set when binding the handle.
+---   This sets the SO_REUSEPORT socket flag on the BSDs (except for
+---   DragonFlyBSD), OS X, and other platforms where SO_REUSEPORTs don't
+---   have the capability of load balancing, as the opposite of what
+---   `reuseport` would do. On other Unix platforms, it sets the
+---   SO_REUSEADDR flag. What that means is that multiple threads or
+---   processes can bind to the same address without error (provided
+---   they all set the flag) but only the last one to bind will receive
+---   any traffic, in effect "stealing" the port from the previous listener.
+--- - `ipv6only`: Disables dual stack mode.
+--- - `linux_recverr`: Indicates if IP_RECVERR/IPV6_RECVERR will be set when binding the handle.
+---   This sets IP_RECVERR for IPv4 and IPV6_RECVERR for IPv6 UDP sockets on
+---   Linux. This stops the Linux kernel from suppressing some ICMP error messages
+---   and enables full ICMP error reporting for faster failover.
+---   This flag is no-op on platforms other than Linux.
+--- - `reuseport`: Indicates if SO_REUSEPORT will be set when binding the handle.
+---   This sets the SO_REUSEPORT socket option on supported platforms.
+---   Unlike `reuseaddr`, this flag will make multiple threads or
+---   processes that are binding to the same address and port "share"
+---   the port, which means incoming datagrams are distributed across
+---   the receiving sockets among threads or processes.
+---   This flag is available only on Linux 3.9+, DragonFlyBSD 3.6+,
+---   FreeBSD 12.0+, Solaris 11.4, and AIX 7.2.5+ for now.
+--- **Note**:
+--- The flag `linux_recverr` is only supported with Libuv >= 1.42.0.
+--- The flag `reuseport` is only supported with Libuv >= 1.49.0.
 --- @param udp uv.uv_udp_t
 --- @param host string
 --- @param port number
---- @param flags { ipv6only: boolean?, reuseaddr: boolean? }?
+--- @param flags uv.udp_bind.flags?
 --- @return 0? success
 --- @return string? err
 --- @return uv.error_name? err_name
 function uv.udp_bind(udp, host, port, flags) end
 
 --- Bind the UDP handle to an IP address and port. Any `flags` are set with a table
---- with fields `reuseaddr` or `ipv6only` equal to `true` or `false`.
+--- with fields `reuseaddr`, `ipv6only`, `linux_recverr`, `reuseport` equal to `true` or `false`.
+---
+--- - `reuseaddr`: Indicates if SO_REUSEADDR will be set when binding the handle.
+---   This sets the SO_REUSEPORT socket flag on the BSDs (except for
+---   DragonFlyBSD), OS X, and other platforms where SO_REUSEPORTs don't
+---   have the capability of load balancing, as the opposite of what
+---   `reuseport` would do. On other Unix platforms, it sets the
+---   SO_REUSEADDR flag. What that means is that multiple threads or
+---   processes can bind to the same address without error (provided
+---   they all set the flag) but only the last one to bind will receive
+---   any traffic, in effect "stealing" the port from the previous listener.
+--- - `ipv6only`: Disables dual stack mode.
+--- - `linux_recverr`: Indicates if IP_RECVERR/IPV6_RECVERR will be set when binding the handle.
+---   This sets IP_RECVERR for IPv4 and IPV6_RECVERR for IPv6 UDP sockets on
+---   Linux. This stops the Linux kernel from suppressing some ICMP error messages
+---   and enables full ICMP error reporting for faster failover.
+---   This flag is no-op on platforms other than Linux.
+--- - `reuseport`: Indicates if SO_REUSEPORT will be set when binding the handle.
+---   This sets the SO_REUSEPORT socket option on supported platforms.
+---   Unlike `reuseaddr`, this flag will make multiple threads or
+---   processes that are binding to the same address and port "share"
+---   the port, which means incoming datagrams are distributed across
+---   the receiving sockets among threads or processes.
+---   This flag is available only on Linux 3.9+, DragonFlyBSD 3.6+,
+---   FreeBSD 12.0+, Solaris 11.4, and AIX 7.2.5+ for now.
+--- **Note**:
+--- The flag `linux_recverr` is only supported with Libuv >= 1.42.0.
+--- The flag `reuseport` is only supported with Libuv >= 1.49.0.
 --- @param host string
 --- @param port number
---- @param flags { ipv6only: boolean?, reuseaddr: boolean? }?
+--- @param flags uv.udp_bind.flags?
 --- @return 0? success
 --- @return string? err
 --- @return uv.error_name? err_name
@@ -3311,6 +3385,7 @@ function uv.fs_scandir_next(fs) end
 --- @field bavail integer
 --- @field files integer
 --- @field ffree integer
+--- @field frsize integer?
 
 --- Equivalent to `stat(2)`.
 --- @param path string
@@ -4274,7 +4349,9 @@ function uv.gettimeofday() end
 --- `internal`, and `mac`.
 ---
 --- See [Constants][] for supported address `family` output values.
---- @return table<string, uv.interface_addresses.addresses> addresses
+--- @return table<string, uv.interface_addresses.addresses>? addresses
+--- @return string? err
+--- @return uv.error_name? err_name
 function uv.interface_addresses() end
 
 --- IPv6-capable implementation of `if_indextoname(3)`.
