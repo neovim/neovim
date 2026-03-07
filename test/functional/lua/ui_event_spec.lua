@@ -390,6 +390,12 @@ describe('vim.ui_attach', function()
       9              bufname(       {12: }         |
       Excommand:call bufadd^(                  |
     ]])
+    -- _cmdline_offset remains set after being turned into a split.
+    exec_lua(function()
+      vim.fn.win_execute(_G.win, 'wincmd J')
+    end)
+    feed('<Tab>') -- Was a signed int overflow; offset was INT_MAX despite cmdline_win being set.
+    eq(9, exec_lua('return vim.api.nvim_win_get_config(_G.win)._cmdline_offset'))
     -- No crash after _cmdline_offset window is closed #35584.
     exec_lua(function()
       vim.ui_detach(_G.ns)
