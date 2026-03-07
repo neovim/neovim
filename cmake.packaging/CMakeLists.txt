@@ -70,6 +70,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # Unfortunately, you "just need to know" that this has a hidden
   # dependency on dpkg-shlibdeps whilst using a debian based host.
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS TRUE)
+
+  # Include postinst and prerm scripts for update-alternatives
+  set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+    "${CMAKE_CURRENT_LIST_DIR}/postinst"
+    "${CMAKE_CURRENT_LIST_DIR}/prerm")
 else()
   set(CPACK_GENERATOR TGZ)
 endif()
