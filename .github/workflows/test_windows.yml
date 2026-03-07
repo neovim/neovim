@@ -33,8 +33,10 @@ jobs:
           cmake --build .deps
 
       - name: Build
+        env:
+          BUILD_FLAGS: ${{ inputs.build_flags }}
         run: |
-          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' ${{ inputs.build_flags }}
+          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' $env:BUILD_FLAGS
           cmake --build build
 
       - name: Install test deps

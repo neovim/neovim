@@ -22,7 +22,9 @@ runs:
       shell: pwsh
 
     - name: Install dependencies
-      run: ./.github/scripts/install_deps.sh ${{ inputs.install_flags }}
+      env:
+        INSTALL_FLAGS: ${{ inputs.install_flags }}
+      run: ./.github/scripts/install_deps.sh ${INSTALL_FLAGS}
       shell: bash
 
     - name: Cache
