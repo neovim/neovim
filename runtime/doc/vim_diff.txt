@@ -425,6 +425,8 @@ Options:
 - 'winblend'    pseudo-transparency in floating windows |api-floatwin|
 - 'winhighlight' window-local highlights
 - 'busy' busy status for buffers
+- 'messagesopt' added progress:c to control if progress messages are shown in
+  cmdline
 
 Performance:
 - Signs are implemented using Nvim's internal "marktree" (btree) structure.

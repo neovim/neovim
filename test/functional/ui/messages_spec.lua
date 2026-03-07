@@ -3776,4 +3776,61 @@ describe('progress-message', function()
       data = {},
     }, 'progress autocmd receives progress messages')
   end)
+
+  it('can be hidden from cmdline with messagesopt-=progress:c', function()
+    exec('set messagesopt-=progress:c')
+    api.nvim_echo(
+      { { 'test-message: not shown in cmdline' } },
+      true,
+      { kind = 'progress', title = 'TestSuite', percent = 10, status = 'running' }
+    )
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*4
+    ]])
+
+    assert_progress_autocmd({
+      text = { 'test-message: not shown in cmdline' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuite',
+      id = 1,
+      data = {},
+    }, 'progress autocmd still receives progress even with progress messages hidden from cmd')
+
+    exec('set messagesopt+=progress:c')
+    api.nvim_echo(
+      { { 'test-message: shown in cmdline' } },
+      true,
+      { kind = 'progress', title = 'TestSuite', percent = 10, status = 'running' }
+    )
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = {
+            { 'TestSuite', 6, 'MoreMsg' },
+            { ': ' },
+            { ' 10% ', 19, 'WarningMsg' },
+            { 'test-message: shown in cmdline' },
+          },
+          history = true,
+          id = 2,
+          kind = 'progress',
+        },
+      },
+    })
+
+    assert_progress_autocmd({
+      text = { 'test-message: shown in cmdline' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuite',
+      id = 2,
+      data = {},
+    }, 'progress autocmd still receives progresswith progress messages shown in cmd')
+  end)
 end)
