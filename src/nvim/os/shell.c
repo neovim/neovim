@@ -1120,6 +1120,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
   const char *p = output;
   const char *end = output + *count;
   msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
+  msg_ext_append = true;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_SE : HLF_SO);
