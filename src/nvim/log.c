@@ -65,6 +65,10 @@ static void log_path_init(void)
 {
   size_t size = sizeof(log_file_path);
   expand_env("$" ENV_LOGFILE, log_file_path, (int)size - 1);
+  char default_log_file_path[ARRAY_SIZE(log_file_path)] = { 0 };
+  if (!strequal("$" ENV_LOGFILE, log_file_path)) {
+    xstrlcpy(default_log_file_path, log_file_path, size);
+  }
   if (strequal("$" ENV_LOGFILE, log_file_path)
       || log_file_path[0] == NUL
       || os_isdir(log_file_path)
@@ -72,19 +76,24 @@ static void log_path_init(void)
     // Make $XDG_STATE_HOME if it does not exist.
     char *loghome = get_xdg_home(kXDGStateHome);
     char *failed_dir = NULL;
-    bool log_dir_failure = false;
+    int log_dir_failure = 0;
     if (!os_isdir(loghome)) {
-      log_dir_failure = (os_mkdir_recurse(loghome, 0700, &failed_dir, NULL) != 0);
+      log_dir_failure = os_mkdir_recurse(loghome, 0700, &failed_dir, NULL);
     }
     XFREE_CLEAR(loghome);
     // Invalid $NVIM_LOG_FILE or failed to expand; fall back to default.
     char *defaultpath = stdpaths_user_state_subpath("nvim.log", 0, true);
     size_t len = xstrlcpy(log_file_path, defaultpath, size);
     xfree(defaultpath);
+    if (default_log_file_path[0] == NUL) {
+      xstrlcpy(default_log_file_path, log_file_path, size);
+    }
     // Fall back to $CWD/nvim.log
     if (len >= size || !log_try_create(log_file_path)) {
       len = xstrlcpy(log_file_path, "nvim.log", size);
     }
+    // setenv before stderr because it might return..
+    os_setenv("DEFAULT_NVIM_LOG_FILE", default_log_file_path, true);
     // Fall back to stderr
     if (len >= size || !log_try_create(log_file_path)) {
       log_file_path[0] = NUL;
