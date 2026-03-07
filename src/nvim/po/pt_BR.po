@@ -4780,12 +4780,8 @@ msgstr ""
 "Não foi possível executar o shell "
 
 #: ../os/shell.c:450
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"o shell devolveu "
+msgid "shell returned "
+msgstr "o shell devolveu "
 
 #: ../mark.c:673
 msgid "No marks set"

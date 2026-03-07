@@ -53,12 +53,8 @@ msgstr ""
 "Shell kann nicht ausführt werden "
 
 #: ../os/shell.c:450
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Shell beendet "
+msgid "shell returned "
+msgstr "Shell beendet "
 
 #: ../buffer.c:88
 msgid "[Location List]"

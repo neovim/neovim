@@ -5335,12 +5335,8 @@ msgid "Vim: Error reading input, exiting...\n"
 msgstr "Vim：读取输入时出错，正在退出……\n"
 
 #: ../os/shell.c:696
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Shell 返回了 "
+msgid "shell returned "
+msgstr "Shell 返回了 "
 
 #: ../os/shell.c:878
 msgid ""

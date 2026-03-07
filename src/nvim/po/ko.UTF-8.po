@@ -4602,12 +4602,8 @@ msgstr ""
 "Cannot execute shell "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"shell returned "
+msgid "shell returned "
+msgstr "shell returned "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""

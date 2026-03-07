@@ -4591,12 +4591,8 @@ msgstr ""
 "Nie mogę wykonać powłoki "
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"powłoka zwróciła "
+msgid "shell returned "
+msgstr "powłoka zwróciła "
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""

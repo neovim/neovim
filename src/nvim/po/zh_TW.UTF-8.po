@@ -4669,12 +4669,8 @@ msgstr ""
 "不能執行 shell"
 
 #: ../os/shell.c:439
-msgid ""
-"\n"
-"shell returned "
-msgstr ""
-"\n"
-"Shell 已返回"
+msgid "shell returned "
+msgstr "Shell 已返回"
 
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
