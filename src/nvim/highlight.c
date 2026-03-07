@@ -215,7 +215,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
 
     // TODO(bfredl): or "inherit", combine with global value?
     bool fallback = true;
-    int tmp = false;
+    bool tmp = false;
     HlAttrs attrs = HLATTRS_INIT;
     if (ret.type == kObjectTypeDict) {
       fallback = false;
@@ -231,7 +231,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
     }
 
     it.attr_id = fallback ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
-    it.version = p->hl_valid - tmp;
+    it.version = p->hl_valid - (int)tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
     it.link_global = attrs.rgb_ae_attr & HL_GLOBAL;
     map_put(ColorKey, ColorItem)(&ns_hls, ColorKey(ns_id, hl_id), it);
@@ -348,8 +348,10 @@ void update_window_hl(win_T *wp, bool invalid)
   if (ns_id != wp->w_ns_hl_active || wp->w_ns_hl_attr == NULL) {
     wp->w_ns_hl_active = ns_id;
 
-    wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
-    if (!wp->w_ns_hl_attr) {
+    NSHlAttr *hl_def_ptr = (NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
+    if (hl_def_ptr) {
+      wp->w_ns_hl_attr = *hl_def_ptr;
+    } else {
       // No specific highlights, use the defaults.
       wp->w_ns_hl_attr = highlight_attr;
     }
@@ -876,7 +878,7 @@ Dict hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *err)
     return dic;
   }
 
-  if (attr_id <= 0 || attr_id >= (int)set_size(&attr_entries)) {
+  if (attr_id < 0 || attr_id >= (int)set_size(&attr_entries)) {
     api_set_error(err, kErrorTypeException,
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
