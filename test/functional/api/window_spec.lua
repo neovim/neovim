@@ -3547,5 +3547,16 @@ describe('API/win', function()
       eq('', api.nvim_get_option_value('colorcolumn', { win = win }))
       eq('', api.nvim_get_option_value('statuscolumn', { win = win }))
     end)
+
+    it('minimal style not re-applied if style is unchanged', function()
+      api.nvim_open_win(0, true, { relative = 'editor', width = 10, height = 10, row = 5, col = 5 })
+      command('setlocal number rightleft')
+      api.nvim_win_set_config(0, { style = 'minimal' })
+      eq(0, eval('&number')) -- style changed; should've reset
+      command('setlocal number')
+      api.nvim_win_set_config(0, { style = 'minimal' })
+      eq(1, eval('&number'))
+      eq(1, eval('&rightleft')) -- unrelated option unaffected
+    end)
   end)
 end)
