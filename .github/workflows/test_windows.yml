@@ -19,6 +19,9 @@ jobs:
         test: [functional, old]
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Build deps

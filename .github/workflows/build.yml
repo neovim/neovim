@@ -30,6 +30,9 @@ jobs:
       CMAKE_VERSION: '3.16.0'
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install minimum required version of cmake
@@ -59,6 +62,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Build bundled dependencies

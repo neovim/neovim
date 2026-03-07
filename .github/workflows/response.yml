@@ -14,6 +14,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: actions/github-script@v8
         with:
           script: |
@@ -28,6 +31,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: actions/github-script@v8
         with:
           script: |

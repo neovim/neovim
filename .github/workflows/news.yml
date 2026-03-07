@@ -13,6 +13,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: news.txt needs to be updated
         run: |
           for commit in $(git rev-list HEAD~${{ github.event.pull_request.commits }}..HEAD); do

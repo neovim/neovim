@@ -9,6 +9,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - name: 'Remove reviewers'
         uses: actions/github-script@v8
         with:

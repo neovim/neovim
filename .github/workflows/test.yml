@@ -34,6 +34,9 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install stylua
@@ -97,6 +100,9 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
       - name: Build third-party deps
         run: |
@@ -142,6 +148,9 @@ jobs:
       NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
         with:
           install_flags: "--test"
@@ -236,6 +245,9 @@ jobs:
       OPTS: -Doptimize=ReleaseSafe
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.15.2
@@ -256,6 +268,9 @@ jobs:
     name: build using zig build (macos 15)
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.15.2
@@ -270,6 +285,9 @@ jobs:
     name: build using zig build (windows)
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.15.2
@@ -290,6 +308,9 @@ jobs:
       CC: gcc
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: ./.github/actions/setup
 
       - name: Install dependencies

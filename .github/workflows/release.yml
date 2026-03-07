@@ -59,6 +59,7 @@ jobs:
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
+          persist-credentials: false
       - run: ./.github/scripts/install_deps.sh
       - run: sudo apt-get install -y libfuse2
       - run: echo "CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}" >> $GITHUB_ENV
@@ -105,6 +106,7 @@ jobs:
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
+          persist-credentials: false
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
 
@@ -147,6 +149,7 @@ jobs:
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
+          persist-credentials: false
       - run: .github/scripts/env.ps1
         env:
           BUILD_ARCH: ${{ matrix.arch }}
@@ -184,6 +187,8 @@ jobs:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - uses: actions/download-artifact@v8
 
