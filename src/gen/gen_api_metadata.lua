@@ -9,12 +9,12 @@ local nvim_version_inputf = arg[5] -- nvim version
 local dump_bin_array_inputf = arg[6]
 local api_metadata_outputf = arg[7]
 
-local version = loadfile(nvim_version_inputf)()
+local version = loadfile(nvim_version_inputf)() --[[@as {[1]: string, [2]: any}[] ]]
 local git_version = io.open(git_version_inputf):read '*a'
 local version_build = git_version:match('#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
 
-local text = io.open(ui_options_inputf):read '*a'
-local ui_options_text = text:match('ui_ext_names%[][^{]+{([^}]+)}')
+local text = assert(io.open(ui_options_inputf)):read '*a'
+local ui_options_text = assert(text:match('ui_ext_names%[][^{]+{([^}]+)}')) --[[@as string]]
 local ui_options = { 'rgb' }
 for x in ui_options_text:gmatch('"([a-z][a-z_]+)"') do
   table.insert(ui_options, x)

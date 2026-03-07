@@ -244,6 +244,9 @@ local function is_noise(line, noise_lines)
 end
 
 --- Creates a github issue URL at neovim/tree-sitter-vimdoc with prefilled content.
+--- @param fname string
+--- @param to_fname string
+--- @param sample_text string
 --- @return string
 local function get_bug_url_vimdoc(fname, to_fname, sample_text)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
@@ -260,6 +263,10 @@ local function get_bug_url_vimdoc(fname, to_fname, sample_text)
 end
 
 --- Creates a github issue URL at neovim/neovim with prefilled content.
+--- @param fname string
+--- @param to_fname string
+--- @param sample_text string
+--- @param token_name? string
 --- @return string
 local function get_bug_url_nvim(fname, to_fname, sample_text, token_name)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
@@ -481,7 +488,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     and (not vim.tbl_contains({ 'codespan', 'taglink', 'tag' }, parent))
   then
     local text_nopunct = vim.fn.trim(text, '.,', 0) -- Ignore some punctuation.
-    local fname_basename = assert(vim.fs.basename(opt.fname))
+    local fname_basename = assert(vim.fs.basename(opt.fname --[[ @as string ]]))
     if spell_dict[text_nopunct] then
       local should_ignore = (
         spell_ignore_files[fname_basename] == true
@@ -791,12 +798,16 @@ local function get_helpfiles(dir, include)
 end
 
 --- Populates the helptags map.
+--- @param help_dir string
+--- @return table<string, string>
 local function _get_helptags(help_dir)
+  ---@type table<string, string>
   local m = {}
   -- Load a random help file to convince taglist() to do its job.
   vim.cmd(string.format('split %s/api.txt', help_dir))
   vim.cmd('lcd %:p:h')
-  for _, item in ipairs(vim.fn.taglist('.*')) do
+  local tags = vim.fn.taglist('.*') --[[ @as {name: string, filename: string}[] ]]
+  for _, item in ipairs(tags) do
     if vim.endswith(item.filename, '.txt') then
       m[item.name] = item.filename
     end

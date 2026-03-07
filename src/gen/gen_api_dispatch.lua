@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 -- Generates C code to bridge API <=> Lua.
 
 -- to obtain how the script is invoked, look in build/build.ninja and grep for
@@ -293,7 +294,6 @@ local metadata_output = assert(io.open(exported_funcs_metadata_outputf, 'wb'))
 metadata_output:write(vim.mpack.encode(exported_functions))
 metadata_output:close()
 
---- @type integer[]
 -- start building the dispatch wrapper output
 local output = assert(io.open(dispatch_outputf, 'wb'))
 
@@ -681,6 +681,8 @@ local mpack_output = assert(io.open(eval_funcs_metadata_outputf, 'wb'))
 mpack_output:write(vim.mpack.encode(functions))
 mpack_output:close()
 
+--- @param output_handle file*
+--- @param headers_to_include string[]
 local function include_headers(output_handle, headers_to_include)
   for i = 1, #headers_to_include do
     if headers_to_include[i]:sub(-12) ~= '.generated.h' then

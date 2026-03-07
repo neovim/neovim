@@ -1,3 +1,4 @@
+---@diagnostic disable: no-unknown
 local options_input_file = arg[5]
 
 --- @module 'nvim.options'

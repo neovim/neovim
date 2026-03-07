@@ -4027,6 +4027,21 @@ This module provides encoding and decoding of Lua objects to and from
 msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
 
+*vim.mpack.NIL*
+
+*vim.mpack.Packer*
+
+*vim.mpack.Session*
+
+    Fields: ~
+      • {receive}  (`fun(self: vim.mpack.Session, str: string): any[]`)
+      • {request}  (`fun(self: vim.mpack.Session, method: string, ...: any): string`)
+      • {reply}    (`fun(self: vim.mpack.Session, id: integer, err: any, result: any): string`)
+      • {notify}   (`fun(self: vim.mpack.Session, method: string, ...: any): string`)
+
+*vim.mpack.Unpacker*
+
+
 vim.mpack.decode({str})                                   *vim.mpack.decode()*
     Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
@@ -4044,6 +4059,24 @@ vim.mpack.encode({obj})                                   *vim.mpack.encode()*
 
     Return: ~
         (`string`)
+
+vim.mpack.Packer()                                        *vim.mpack.Packer()*
+    Creates a reusable msgpack encoder object.
+
+    Return: ~
+        (`vim.mpack.Packer`) See |vim.mpack.Packer|.
+
+vim.mpack.Session()                                      *vim.mpack.Session()*
+    Creates a msgpack-rpc session helper.
+
+    Return: ~
+        (`vim.mpack.Session`) See |vim.mpack.Session|.
+
+vim.mpack.Unpacker()                                    *vim.mpack.Unpacker()*
+    Creates a reusable msgpack decoder object.
+
+    Return: ~
+        (`vim.mpack.Unpacker`) See |vim.mpack.Unpacker|.
 
 
 ==============================================================================
