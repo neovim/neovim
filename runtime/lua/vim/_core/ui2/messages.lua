@@ -36,7 +36,7 @@ local M = {
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
   dialog_on_key = nil, ---@type integer? vim.on_key namespace for paging in the dialog window.
-  cmd_on_key = nil, ---@type integer? vim.on_key namespace for paging in the dialog window.
+  cmd_on_key = nil, ---@type integer? vim.on_key namespace while cmdline is expanded.
 }
 
 -- An external redraw indicates the start of a new batch of messages in the cmdline.

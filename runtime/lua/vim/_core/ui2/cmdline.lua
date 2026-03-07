@@ -144,13 +144,15 @@ end
 ---@param abort boolean
 function M.cmdline_hide(level, abort)
   if ui.msg.cmd_on_key then
-    if abort then
-      api.nvim_win_close(ui.wins.cmd, true)
-      ui.check_targets()
-    else
-      ui.msg.set_pos('cmd')
-    end
     ui.msg.cmd_on_key, M.srow = nil, 0
+    -- Close expanded cmdline if command did not emit a message, keep last line.
+    vim.schedule(function()
+      if ui.msg.cmd_on_key == nil then
+        api.nvim_win_close(ui.wins.cmd, true)
+        api.nvim_buf_set_lines(ui.bufs.cmd, 0, M.erow, false, {})
+        ui.check_targets()
+      end
+    end)
   elseif M.srow > 0 or level > (fn.getcmdwintype() == '' and 1 or 2) then
     return -- No need to hide when still in nested cmdline or cmdline_block.
   end
