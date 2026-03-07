@@ -2326,10 +2326,9 @@ stack traceback:
     end)
 
     it('callback must be a function', function()
-      eq(
-        { false, 'vim.wait: callback must be callable' },
-        exec_lua [[return {pcall(function() vim.wait(1000, 13) end)}]]
-      )
+      local result = exec_lua [[return {pcall(function() vim.wait(1000, 13) end)}]]
+      eq(false, result[1])
+      matches('callback: expected callable, got number$', remove_trace(result[2]))
     end)
 
     it('waits if callback arg is nil', function()
