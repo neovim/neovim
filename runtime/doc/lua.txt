@@ -5027,6 +5027,128 @@ vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
 
 
 ==============================================================================
+Lua module: vim.ui.img                                            *vim.ui.img*
+
+EXPERIMENTAL: This API may change in the future. Its semantics are not yet
+finalized.
+
+This provides a functional API for loading and displaying images in Nvim.
+Currently supports PNG images via the Kitty graphics protocol.
+
+The image provider can be changed by setting `vim.ui.img.provider` to a
+builtin name (e.g. `kitty`) or a module path string implementing
+|vim.ui.img.Provider|.
+
+Examples: >lua
+    -- Load an image from disk
+    local image_id = vim.ui.img.load("/path/to/img.png")
+
+    -- Place the image at row 5, column 10
+    local placement_id = vim.ui.img.place(image_id, { row = 5, col = 10 })
+
+    -- Update the placement position
+    vim.ui.img.place(placement_id, { row = 8, col = 12 })
+
+    -- Remove the placement
+    vim.ui.img.hide(placement_id)
+
+    -- Remove the entire image (and all its placements)
+    vim.ui.img.hide(image_id)
+<
+
+
+*vim.ui.img.ImgOpts*
+    Optional image arguments:
+
+    Fields: ~
+      • {data}?      (`string`) data of a loaded file
+      • {filename}?  (`string`) path to the file (e.g. path/to/img.png)
+
+*vim.ui.img.PlacementOpts*
+    Optional placment arguments:
+
+    Fields: ~
+      • {row}?     (`integer`) starting row where image will appear
+      • {col}?     (`integer`) starting column where image will appear
+      • {width}?   (`integer`) width (in cells) to resize the image
+      • {height}?  (`integer`) height (in cells) to resize the image
+      • {z}?       (`integer`) z-index of the placement relative to other
+                   placements with a higher number being placed over
+                   lower-indexed placements
+
+*vim.ui.img.Provider*
+    An image provider implements the terminal-specific protocol for loading,
+    placing, and hiding images.
+
+    Nvim includes a built-in provider for the Kitty graphics protocol. To use
+    a custom provider, set `vim.ui.img.provider` to a module path: >lua
+        vim.ui.img.provider = 'my.custom.provider'
+<
+
+    Fields: ~
+      • {load}   (`fun(opts: vim.ui.img.ImgOpts): integer`)
+      • {place}  (`fun(id: integer, opts?: vim.ui.img.PlacementOpts): integer`)
+      • {hide}   (`fun(id: integer, placement_id?: integer)`)
+
+
+vim.ui.img.get({id})                                        *vim.ui.img.get()*
+    Retrieves a copy of the image or placement opts based on the id.
+
+    Parameters: ~
+      • {id}  (`integer`)
+
+    Return (multiple): ~
+        (`vim.ui.img.ImgOpts|vim.ui.img.PlacementOpts?`) opts
+        (`'image'|'placement'`) kind
+
+vim.ui.img.hide({id})                                      *vim.ui.img.hide()*
+    Hide an image (or placement) within Nvim.
+
+    Parameters: ~
+      • {id}  (`integer`) id of image or placement
+
+    Return: ~
+        (`boolean`) true if an image or placement was hidden
+
+vim.ui.img.images()                                      *vim.ui.img.images()*
+    Returns an iterator over the loaded images, mapped by id.
+
+    Return: ~
+        (`Iter`)
+
+vim.ui.img.load({opts})                                    *vim.ui.img.load()*
+    Load an image from filename or data.
+
+    Parameters: ~
+      • {opts}  (`string|vim.ui.img.ImgOpts`)
+
+    Return: ~
+        (`integer`) id
+
+vim.ui.img.place({id}, {opts})                            *vim.ui.img.place()*
+    Places a loaded image within Nvim, visually displaying it.
+
+    Parameters: ~
+      • {id}    (`integer`) id of image to place, or id of placement to
+                overwrite
+      • {opts}  (`vim.ui.img.PlacementOpts?`) See |vim.ui.img.PlacementOpts|.
+
+    Return: ~
+        (`integer`) placement_id id of the created/updated placement
+
+vim.ui.img.placements()                              *vim.ui.img.placements()*
+    Returns an iterator over the active placements, mapped by id.
+
+    Return: ~
+        (`Iter`)
+
+vim.ui.img.provider                                      *vim.ui.img.provider*
+    The name of the image provider. Builtin: `kitty`. Can also be set to a
+    module path (e.g. `my.custom.provider`) that returns a table implementing
+    |vim.ui.img.Provider|.
+
+
+==============================================================================
 Lua module: vim.version                                          *vim.version*
 
 The `vim.version` module provides functions for comparing versions and ranges
