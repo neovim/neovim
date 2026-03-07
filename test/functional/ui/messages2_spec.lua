@@ -334,15 +334,31 @@ describe('messages2', function()
     ]])
     command('echo "foo\nbar"')
     screen:expect_unchanged()
-    -- Place cmdline below expanded cmdline instead: #37653.
+    -- Place cmdline and subsequent message below expanded cmdline instead: #37653.
     feed(':')
+    n.poke_eventloop()
+    feed('echo "baz"')
+    n.poke_eventloop()
+    feed('<CR>')
     screen:expect([[
-                                                           |
-      {1:~                                                    }|*9
+      ^                                                     |
+      {1:~                                                    }|*8
       {3:                                                     }|
       foo                                                  |
       bar                                                  |
-      {16::}^                                                    |
+      {16::}{15:echo} {26:"baz"}                                          |
+      baz                                                  |
+    ]])
+    -- No message closes expanded cmdline.
+    feed(':')
+    n.poke_eventloop()
+    feed('call setline(1, "foo")')
+    n.poke_eventloop()
+    feed('<CR>')
+    screen:expect([[
+      ^foo                                                  |
+      {1:~                                                    }|*12
+      {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}                              |
     ]])
   end)
 
