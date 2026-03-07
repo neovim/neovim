@@ -785,6 +785,10 @@ void ui_call_event(char *name, Array args)
     "lua_error",
     "lua_print",
     "progress",
+    "shell_cmd",
+    "shell_err",
+    "shell_out",
+    "shell_ret",
     NULL,
   };
 
