@@ -165,6 +165,7 @@ API
 • Added experimental |nvim__exec_lua_fast()| to allow remote API clients to
   execute code while nvim is blocking for input.
 • |vim.secure.trust()| accepts `path` for the `allow` action.
+• |vim.on_key()| accepts `mapping` boolean in the `opts` table.
 
 BUILD
 
