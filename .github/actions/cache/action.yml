@@ -3,22 +3,22 @@ description: "This action caches neovim dependencies"
 runs:
   using: "composite"
   steps:
-    - run: echo "CACHE_KEY=${GITHUB_WORKFLOW}" >> $GITHUB_ENV
+    - run: echo "CACHE_KEY=${GITHUB_WORKFLOW}" >> $GITHUB_ENV # zizmor: ignore[github-env]
       shell: bash
 
-    - run: echo "CACHE_KEY=${GITHUB_JOB}" >> $GITHUB_ENV
+    - run: echo "CACHE_KEY=${GITHUB_JOB}" >> $GITHUB_ENV # zizmor: ignore[github-env]
       shell: bash
 
     - if: ${{ matrix }}
       env:
         MATRIX_JOIN: ${{ join(matrix.*, '-') }}
-      run: echo "CACHE_KEY=${CACHE_KEY}-${MATRIX_JOIN}" >> $GITHUB_ENV
+      run: echo "CACHE_KEY=${CACHE_KEY}-${MATRIX_JOIN}" >> $GITHUB_ENV # zizmor: ignore[github-env]
       shell: bash
 
     - if: ${{ matrix.build }}
       env:
         MATRIX_JOIN: ${{ join(matrix.build.*, '-') }}
-      run: echo "CACHE_KEY=${CACHE_KEY}-${MATRIX_JOIN}" >> $GITHUB_ENV
+      run: echo "CACHE_KEY=${CACHE_KEY}-${MATRIX_JOIN}" >> $GITHUB_ENV # zizmor: ignore[github-env]
       shell: bash
 
     - id: image
