@@ -4,9 +4,9 @@
 --- experimental, yet should be stable enough for daily use.
 ---
 ---Manages plugins only in a dedicated [vim.pack-directory]() (see |packages|):
----`$XDG_DATA_HOME/nvim/site/pack/core/opt`. `$XDG_DATA_HOME/nvim/site` needs to
----be part of 'packpath'. It usually is, but might not be in cases like |--clean| or
----setting |$XDG_DATA_HOME| during startup.
+---`site/pack/core/opt` subdirectory of "data" |standard-path|. Subdirectory `site` of "data"
+---standard path needs to be part of 'packpath'. It usually is, but might not be
+---in cases like |--clean| or setting |$XDG_DATA_HOME| during startup.
 ---Plugin's subdirectory name matches plugin's name in specification.
 ---It is assumed that all plugins in the directory are managed exclusively by `vim.pack`.
 ---
@@ -123,7 +123,7 @@
 ---
 ---- Revert the |vim.pack-lockfile| to the state before the update:
 ---    - If Git tracked: `git checkout HEAD -- nvim-pack-lock.json`
----    - If not tracked: examine log file ("nvim-pack.log" at "log" |stdpath()|),
+---    - If not tracked: examine log file ("nvim-pack.log" at "log" |standard-path|),
 ---      locate the revisions before the latest update, and (carefully) adjust
 ---      current lockfile to have those revisions.
 ---- |:restart|.
@@ -1213,32 +1213,34 @@ end
 ---
 --- - Download new changes from source.
 --- - Infer update info (current/target revisions, changelog, etc.).
---- - Depending on `force`:
----     - If `false`, show confirmation buffer. It lists data about all set to
----       update plugins. Pending changes starting with `>` will be applied while
----       the ones starting with `<` will be reverted.
----       It has dedicated buffer-local mappings:
----       - |]]| and |[[| to navigate through plugin sections.
----
----       Some features are provided  via LSP:
----         - 'textDocument/documentSymbol' (`gO` via |lsp-defaults|
----           or |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
----         - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) -
----           show more information at cursor. Like details of particular pending
----           change or newer tag.
----         - 'textDocument/codeAction' (`gra` via |lsp-defaults| or |vim.lsp.buf.code_action()|) -
----           show code actions available for "plugin at cursor".
----           Like "delete" (if plugin is not active), "update" or "skip updating"
----           (if there are pending updates).
----
----       Execute |:write| to confirm update, execute |:quit| to discard the update.
----     - If `true`, make updates right away.
+--- - If `force` is `false` (default), show confirmation buffer.
+---   If `force` is `true`, make updates right away.
 ---
 --- Notes:
---- - Every actual update is logged in "nvim-pack.log" file inside "log" |stdpath()|.
+--- - Every actual update is logged in "nvim-pack.log" file inside "log" |standard-path|.
 --- - It doesn't update source's default branch if it has changed (like from `master` to `main`).
 ---   To have `version = nil` point to a new default branch, re-install the plugin
 ---   (|vim.pack.del()| + |vim.pack.add()|).
+---
+--- Confirmation buffer ~
+---
+--- The goal of the confirmation buffer is to show update details for the user to read, confirm
+--- (execute |:write|) or deny (execute |:quit|) the update.
+---
+--- Pending changes starting with `>` will be applied while the ones starting with `<` will be
+--- reverted.
+---
+--- There are convenience buffer-local mappings:
+--- - |]]| and |[[| to navigate through plugin sections.
+---
+--- Some features are provided via LSP:
+--- - 'textDocument/documentSymbol' (`gO` via |lsp-defaults| or |vim.lsp.buf.document_symbol()|) -
+---   show structure of the buffer.
+--- - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) - show more
+---   information at cursor. Like details of particular pending change or newer tag.
+--- - 'textDocument/codeAction' (`gra` via |lsp-defaults| or |vim.lsp.buf.code_action()|) - show
+---   code actions relevant for "plugin at cursor". Like "delete" (if plugin is not active),
+---   "update" or "skip updating" (if there are pending updates).
 ---
 --- @param names? string[] List of plugin names to update. Must be managed
 --- by |vim.pack|, not necessarily already added to current session.
