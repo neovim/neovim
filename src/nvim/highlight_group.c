@@ -55,9 +55,16 @@
 /// \addtogroup SG_SET
 /// @{
 enum {
-  SG_CTERM = 2,  // cterm has been set
-  SG_GUI = 4,    // gui has been set
-  SG_LINK = 8,   // link has been set
+  SG_CTERM      = 0x01,  // cterm= attr has been set
+  SG_CTERM_FG   = 0x02,  // ctermfg= has been set
+  SG_CTERM_BG   = 0x04,  // ctermbg= has been set
+  SG_GUI        = 0x08,  // gui= attr has been set
+  SG_GUI_FG     = 0x10,  // guifg= has been set
+  SG_GUI_BG     = 0x20,  // guibg= has been set
+  SG_GUI_SP     = 0x40,  // guisp= has been set
+  SG_LINK       = 0x80,  // link has been set
+  SG_CTERM_ALL  = SG_CTERM | SG_CTERM_FG | SG_CTERM_BG,
+  SG_GUI_ALL    = SG_GUI | SG_GUI_FG | SG_GUI_BG | SG_GUI_SP,
 };
 /// @}
 
@@ -1208,7 +1215,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (strcmp(key, "NONE") == 0) {
         if (!init || hl_table[idx].sg_set == 0) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_CTERM + SG_GUI;
+            hl_table[idx].sg_set |= SG_CTERM_ALL | SG_GUI_ALL;
           }
           highlight_clear(idx);
         }
@@ -1305,9 +1312,10 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       } else if (strcmp(key, "FONT") == 0) {
         // in non-GUI fonts are simply ignored
       } else if (strcmp(key, "CTERMFG") == 0 || strcmp(key, "CTERMBG") == 0) {
-        if (!init || !(hl_table[idx].sg_set & SG_CTERM)) {
+        int cterm_color_flag = (key[5] == 'F') ? SG_CTERM_FG : SG_CTERM_BG;
+        if (!init || !(hl_table[idx].sg_set & cterm_color_flag)) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_CTERM;
+            hl_table[idx].sg_set |= cterm_color_flag;
           }
 
           // When setting the foreground color, and previously the "bold"
@@ -1403,9 +1411,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       } else if (strcmp(key, "GUIFG") == 0) {
         int *indexp = &hl_table[idx].sg_rgb_fg_idx;
 
-        if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
+        if (!init || !(hl_table[idx].sg_set & SG_GUI_FG)) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_GUI;
+            hl_table[idx].sg_set |= SG_GUI_FG;
           }
 
           RgbValue old_color = hl_table[idx].sg_rgb_fg;
@@ -1427,9 +1435,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       } else if (strcmp(key, "GUIBG") == 0) {
         int *indexp = &hl_table[idx].sg_rgb_bg_idx;
 
-        if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
+        if (!init || !(hl_table[idx].sg_set & SG_GUI_BG)) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_GUI;
+            hl_table[idx].sg_set |= SG_GUI_BG;
           }
 
           RgbValue old_color = hl_table[idx].sg_rgb_bg;
@@ -1451,9 +1459,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       } else if (strcmp(key, "GUISP") == 0) {
         int *indexp = &hl_table[idx].sg_rgb_sp_idx;
 
-        if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
+        if (!init || !(hl_table[idx].sg_set & SG_GUI_SP)) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_GUI;
+            hl_table[idx].sg_set |= SG_GUI_SP;
           }
 
           RgbValue old_color = hl_table[idx].sg_rgb_sp;
