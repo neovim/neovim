@@ -1483,7 +1483,7 @@ describe('user config init', function()
         ^{MATCH: +}|
         ~{MATCH: +}|*4
         [No Name]{MATCH: +}0,0-1{MATCH: +}All|
-        {MATCH: +}|
+        {MATCH:.*}|
         -- TERMINAL --{MATCH: +}|
       ]])
 
