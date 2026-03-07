@@ -14,9 +14,9 @@ describe('vim.pos', function()
     local pos = exec_lua(function()
       return vim.pos(3, 5)
     end)
-    eq(3, pos.row)
-    eq(5, pos.col)
-    eq(nil, pos.buf)
+    eq(3, pos[1])
+    eq(5, pos[2])
+    eq(nil, pos[3])
 
     local buf = exec_lua(function()
       return vim.api.nvim_create_buf(false, true)
@@ -24,9 +24,9 @@ describe('vim.pos', function()
     pos = exec_lua(function()
       return vim.pos(3, 5, { buf = buf })
     end)
-    eq(3, pos.row)
-    eq(5, pos.col)
-    eq(buf, pos.buf)
+    eq(3, pos[1])
+    eq(5, pos[2])
+    eq(buf, pos[3])
   end)
 
   it('comparisons by overloaded operators', function()
@@ -82,9 +82,39 @@ describe('vim.pos', function()
       return vim.pos.lsp(buf, lsp_pos, 'utf-16')
     end)
     eq({
-      buf = buf,
-      row = 0,
-      col = 36,
+      0,
+      36,
+      buf,
     }, pos)
+  end)
+
+  it("converts between vim.Pos and extmark on buffer's last line", function()
+    local buf = exec_lua(function()
+      return vim.api.nvim_get_current_buf()
+    end)
+    insert('Some text')
+    local extmark_pos = {
+      exec_lua(function()
+        local pos = vim.pos(1, 0, { buf = buf })
+        return pos:to_extmark()
+      end),
+    }
+    eq({ 0, 9 }, extmark_pos)
+    local pos = exec_lua(function()
+      return vim.pos.extmark(extmark_pos[1], extmark_pos[2], { buf = buf })
+    end)
+    eq({ 0, 9, buf }, pos)
+
+    local extmark_pos2 = {
+      exec_lua(function()
+        local pos2 = vim.pos(0, 9, { buf = buf })
+        return pos2:to_extmark()
+      end),
+    }
+    eq({ 0, 9 }, extmark_pos2)
+    local pos2 = exec_lua(function()
+      return vim.pos.extmark(extmark_pos2[1], extmark_pos2[2], { buf = buf })
+    end)
+    eq({ 0, 9, buf }, pos2)
   end)
 end)

@@ -14,32 +14,29 @@ describe('vim.range', function()
     local range = exec_lua(function()
       return vim.range(3, 5, 4, 6)
     end)
-    eq(3, range.start.row)
-    eq(5, range.start.col)
-    eq(4, range.end_.row)
-    eq(6, range.end_.col)
-    eq(nil, range.start.buf)
-    eq(nil, range.end_.buf)
+    eq(3, range[1])
+    eq(5, range[2])
+    eq(4, range[3])
+    eq(6, range[4])
+    eq(nil, range[5])
     local buf = exec_lua(function()
       return vim.api.nvim_create_buf(false, true)
     end)
     range = exec_lua(function()
       return vim.range(3, 5, 4, 6, { buf = buf })
     end)
-    eq(buf, range.start.buf)
-    eq(buf, range.end_.buf)
+    eq(buf, range[5])
   end)
 
   it('creates a range from two positions when optional fields are not matched', function()
     local range = exec_lua(function()
       return vim.range(vim.pos(3, 5), vim.pos(4, 6))
     end)
-    eq(3, range.start.row)
-    eq(5, range.start.col)
-    eq(4, range.end_.row)
-    eq(6, range.end_.col)
-    eq(nil, range.start.buf)
-    eq(nil, range.end_.buf)
+    eq(3, range[1])
+    eq(5, range[2])
+    eq(4, range[3])
+    eq(6, range[4])
+    eq(nil, range[5])
 
     local buf1 = exec_lua(function()
       return vim.api.nvim_create_buf(false, true)
@@ -47,8 +44,7 @@ describe('vim.range', function()
     range = exec_lua(function()
       return vim.range(vim.pos(3, 5, { buf = buf1 }), vim.pos(4, 6, { buf = buf1 }))
     end)
-    eq(buf1, range.start.buf)
-    eq(buf1, range.end_.buf)
+    eq(buf1, range[5])
 
     local buf2 = exec_lua(function()
       return vim.api.nvim_create_buf(false, true)
@@ -78,8 +74,11 @@ describe('vim.range', function()
       return vim.range.lsp(buf, lsp_range, 'utf-16')
     end)
     eq({
-      start = { row = 0, col = 10, buf = buf },
-      end_ = { row = 0, col = 36, buf = buf },
+      0,
+      10,
+      0,
+      36,
+      buf,
     }, range)
   end)
 
@@ -88,6 +87,15 @@ describe('vim.range', function()
       true,
       exec_lua(function()
         return vim.range(0, 0, 1, 5):has(vim.pos(0, 1))
+      end)
+    )
+  end)
+
+  it('checks whether a range does not contain an empty range just outside it', function()
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 0, 4):has(vim.range(0, 0, 0, 0))
       end)
     )
   end)
