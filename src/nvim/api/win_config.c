@@ -431,7 +431,6 @@ static bool win_config_split(win_T *win, Dict(win_config) *config, WinConfig *fc
       fconfig->split = (old_split == kWinSplitBelow || p_sb) ? kWinSplitBelow : kWinSplitAbove;
     }
   }
-  merge_win_config(&win->w_config, *fconfig);
 
   // If there's no "vertical" or "split" set, or if "split" is unchanged, then we can just change
   // the size of the window.
@@ -605,6 +604,14 @@ resize:
   if (HAS_KEY_X(config, height)) {
     win_setheight_win(fconfig->height, win);
   }
+
+  // Merge configs now. If previously a float, clear fields irrelevant to splits that `fconfig` may
+  // have shallowly copied; don't free them as win_split_ins handled that. If already a split,
+  // clearing isn't needed, as parse_win_config shouldn't allow setting irrelevant fields.
+  if (!was_split) {
+    clear_float_config(fconfig, false);
+  }
+  merge_win_config(&win->w_config, *fconfig);
   return true;
 #undef HAS_KEY_X
 }
@@ -662,11 +669,9 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
     win_config_float(win, fconfig);
   }
 
-  if (HAS_KEY_X(config, style)) {
-    if (fconfig.style == kWinStyleMinimal) {
-      win_set_minimal_style(win);
-      didset_window_options(win, true);
-    }
+  if (HAS_KEY_X(config, style) && fconfig.style == kWinStyleMinimal) {
+    win_set_minimal_style(win);
+    didset_window_options(win, true);
   }
   if (fconfig._cmdline_offset < INT_MAX) {
     cmdline_win = win;

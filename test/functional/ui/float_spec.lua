@@ -8942,17 +8942,7 @@ describe('float window', function()
           unchanged = true,
         }
       else
-        screen:expect([[
-          Ut enim ad minim veniam, quis nostrud             |
-          exercitation ullamco laboris nisi ut aliquip ex   |
-          ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
-          repre{3:henderit in vol}uptate velit esse cillum      |
-          dolor{2:popup}{3:fugi}{2:text}{3:ul}la pariatur. Excepteur sint   |
-          occaecat cupidatat non proident, sunt in culpa    |
-          qui officia deserunt mollit anim id est           |
-          laborum^.                                          |
-                                                            |
-        ]])
+        screen:expect_unchanged()
       end
       api.nvim_buf_set_lines(buf, 0, -1, true, test_data)
 
