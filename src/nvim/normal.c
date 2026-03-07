@@ -3186,9 +3186,9 @@ static void nv_colon(cmdarg_T *cap)
     }
   }
 
-  // When typing, don't type below an old message
   if (KeyTyped) {
-    compute_cmdrow();
+    msg_ext_set_trigger("typed_cmd");  // distinguish msg_show emitted for typed cmd
+    compute_cmdrow();                  // when typing, don't type below an old message
   }
 
   if (is_lua) {
@@ -3198,6 +3198,7 @@ static void nv_colon(cmdarg_T *cap)
     cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
                             cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
   }
+  msg_ext_set_trigger("");
 
   if (cmd_result == false) {
     // The Ex command failed, do not execute the operator.

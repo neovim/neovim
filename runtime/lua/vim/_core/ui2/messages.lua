@@ -379,9 +379,14 @@ end
 --@param history boolean
 ---@param append boolean
 ---@param id integer|string
-function M.msg_show(kind, content, replace_last, _, append, id)
-  -- Set the entered search command in the cmdline (if available).
-  local tgt = kind == 'search_cmd' and 'cmd' or ui.cfg.msg.targets[kind] or ui.cfg.msg.target
+---@param trigger string
+function M.msg_show(kind, content, replace_last, _, append, id, trigger)
+  -- Set the entered search command in the cmdline (if available). Otherwise route
+  -- to configured target: 'trigger' takes precedence over 'kind.'
+  local tgt = kind == 'search_cmd' and 'cmd'
+    or ui.cfg.msg.targets[trigger]
+    or ui.cfg.msg.targets[kind]
+    or ui.cfg.msg.target
   if kind == 'search_cmd' and ui.cmdheight == 0 then
     -- Blocked by messaging() without ext_messages. TODO: look at other messaging() guards.
     return
