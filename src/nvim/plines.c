@@ -415,7 +415,7 @@ int win_wrap_width(win_T *wp)
 {
   int view = wp->w_view_width;
   if (wp->w_p_wrap && wp->w_p_wcl > 0) {
-    int effective = wp->w_p_wcl + win_col_off(wp);
+    int effective = (int)wp->w_p_wcl + win_col_off(wp);
     return MIN(effective, view);
   }
   return view;
