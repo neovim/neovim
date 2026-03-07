@@ -744,8 +744,7 @@ local function styletable_statuscolumn(state)
     signcolumn = 'auto'
   end
   if signcolumn ~= 'no' then
-    local max = tonumber(signcolumn:match('^%w-:(%d)')) --[[@as integer?]]
-      or 1
+    local max = tonumber(signcolumn:match('^%w-:(%d)')) --[[@as integer?]] or 1
     if signcolumn:match('^auto') then
       --- @type table<integer,integer>
       local signcount = {}
@@ -772,8 +771,7 @@ local function styletable_statuscolumn(state)
   local foldcolumn = state.opt.foldcolumn
   if foldcolumn ~= '0' then
     if foldcolumn:match('^auto') then
-      local max = tonumber(foldcolumn:match('^%w-:(%d)')) --[[@as integer?]]
-        or 1
+      local max = tonumber(foldcolumn:match('^%w-:(%d)')) --[[@as integer?]] or 1
       local maxfold = 0
       vim._with({ buf = state.bufnr }, function()
         for row = state.start, state.end_ do
