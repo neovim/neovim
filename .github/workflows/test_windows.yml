@@ -66,7 +66,7 @@ jobs:
           exit $exitCode
 
       - if: ${{ matrix.test == 'old' }}
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@4f806de0a5a7294ffabaff804b38a9b435a73bda # v2.30.0
         with:
           update: true
           install: unzip
