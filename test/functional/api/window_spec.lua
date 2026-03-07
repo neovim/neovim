@@ -3553,5 +3553,41 @@ describe('API/win', function()
       eq('', api.nvim_get_option_value('colorcolumn', { win = win }))
       eq('', api.nvim_get_option_value('statuscolumn', { win = win }))
     end)
+
+    it('merges configs only after successfully configuring split', function()
+      local win = api.nvim_open_win(0, true, {
+        relative = 'editor',
+        width = 10,
+        height = 10,
+        row = 5,
+        col = 5,
+      })
+      local cfg = api.nvim_win_get_config(win)
+      eq('', cfg.style)
+      command('set cursorline | tabnew')
+      local tp2_win = api.nvim_get_current_win()
+      command('tabfirst | autocmd WinEnter * ++once wincmd p')
+      eq(
+        'Failed to switch away from window 1001',
+        pcall_err(
+          api.nvim_win_set_config,
+          win,
+          { split = 'below', win = tp2_win, style = 'minimal' }
+        )
+      )
+      eq(cfg, api.nvim_win_get_config(win))
+      eq(true, api.nvim_get_option_value('cursorline', { win = win }))
+
+      exec([[
+        autocmd WinLeave * ++once let g:style_before = nvim_win_get_config(0).style
+                               \| let g:cul_before = &cursorline
+                               \| call nvim_win_set_config(0, #{style: ""})
+      ]])
+      api.nvim_win_set_config(win, { split = 'below', win = tp2_win, style = 'minimal' })
+      eq('', eval('g:style_before'))
+      eq(1, eval('g:cul_before'))
+      eq('minimal', api.nvim_win_get_config(win).style)
+      eq(false, api.nvim_get_option_value('cursorline', { win = win }))
+    end)
   end)
 end)

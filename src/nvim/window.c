@@ -864,6 +864,22 @@ void merge_win_config(WinConfig *dst, const WinConfig src)
   *dst = src;
 }
 
+/// Clear fields in `fconfig` that are only used for floating windows.
+/// Also clears fields unused after configure time, like width/height.
+void clear_float_config(WinConfig *fconfig, bool free_fields)
+  FUNC_ATTR_NONNULL_ALL
+{
+  WinStyle saved_style = fconfig->style;
+  int saved_cmdline_offset = fconfig->_cmdline_offset;
+  if (free_fields) {
+    merge_win_config(fconfig, WIN_CONFIG_INIT);
+  } else {
+    *fconfig = WIN_CONFIG_INIT;
+  }
+  fconfig->style = saved_style;
+  fconfig->_cmdline_offset = saved_cmdline_offset;
+}
+
 void ui_ext_win_position(win_T *wp, bool validate)
 {
   wp->w_pos_changed = false;
@@ -1364,7 +1380,6 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // make the contents of the new window the same as the current one
     win_init(wp, curwin, flags);
   } else if (wp->w_floating) {
-    WinStyle saved_style = wp->w_config.style;
     ui_comp_remove_grid(&wp->w_grid_alloc);
     if (ui_has(kUIMultigrid)) {
       wp->w_pos_changed = true;
@@ -1387,10 +1402,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     new_frame(wp);
 
     // non-floating window doesn't store float config or have a border.
-    merge_win_config(&wp->w_config, WIN_CONFIG_INIT);
+    clear_float_config(&wp->w_config, true);
     CLEAR_FIELD(wp->w_border_adj);
-    // Restore WinConfig style. #37067
-    wp->w_config.style = saved_style;
   }
 
   // Going to reorganize frames now, make sure they're flat.
