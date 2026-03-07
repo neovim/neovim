@@ -2845,7 +2845,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 
       // Make the preview window the current window.
       // Open a preview window when needed.
-      prepare_tagpreview(true);
+      prepare_tagpreview(true, *p_pvp != NUL);
     }
   }
 

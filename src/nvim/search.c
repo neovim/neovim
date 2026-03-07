@@ -3363,7 +3363,7 @@ search_line:
           // ":psearch" uses the preview window
           if (l_g_do_tagpreview != 0) {
             curwin_save = curwin;
-            prepare_tagpreview(true);
+            prepare_tagpreview(true, *p_pvp != NUL);
           }
           if (action == ACTION_SPLIT) {
             if (win_split(0, 0) == FAIL) {

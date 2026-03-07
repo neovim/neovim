@@ -3659,7 +3659,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     }
     if (ret == OK && (what_flag & CI_WHAT_SELECTED)) {
       ret = tv_dict_add_nr(retdict, S_LEN("selected"), selected_idx);
-      win_T *wp = win_float_find_preview();
+      win_T *wp = win_float_find_preview(kWinFloatInfo);
       if (wp != NULL) {
         tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
         tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
