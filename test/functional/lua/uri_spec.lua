@@ -260,4 +260,126 @@ describe('URI methods', function()
       eq('[%3a]', exec_lua('return vim.uri_encode(str, rfc)'))
     end)
   end)
+
+  describe('uri_parse_nvim', function()
+    it('parses basic nvim:// URI with edit command', function()
+      local result = exec_lua([[return vim.uri_parse_nvim('nvim://edit?file=/path/to/file.txt')]])
+      eq('edit', result.cmd)
+      eq('/path/to/file.txt', result.file)
+      eq(nil, result.line)
+      eq(nil, result.column)
+    end)
+
+    it('parses nvim:// URI with tabedit command', function()
+      local result =
+        exec_lua([[return vim.uri_parse_nvim('nvim://tabedit?file=/path/to/file.txt&line=42')]])
+      eq('tabedit', result.cmd)
+      eq('/path/to/file.txt', result.file)
+      eq(42, result.line)
+    end)
+
+    it('parses nvim:// URI with split command', function()
+      local result = exec_lua([[return vim.uri_parse_nvim('nvim://split?file=/path/to/file.txt')]])
+      eq('split', result.cmd)
+      eq('/path/to/file.txt', result.file)
+    end)
+
+    it('parses nvim:// URI with vsplit command', function()
+      local result = exec_lua([[return vim.uri_parse_nvim('nvim://vsplit?file=/path/to/file.txt')]])
+      eq('vsplit', result.cmd)
+      eq('/path/to/file.txt', result.file)
+    end)
+
+    it('parses nvim:// URI with line and column', function()
+      local result = exec_lua(
+        [[return vim.uri_parse_nvim('nvim://edit?file=/path/to/file.txt&line=42&column=10')]]
+      )
+      eq('/path/to/file.txt', result.file)
+      eq(42, result.line)
+      eq(10, result.column)
+    end)
+
+    it('parses nvim:// URI with server parameter', function()
+      local result = exec_lua(
+        [[return vim.uri_parse_nvim('nvim://tabedit?file=/path/to/file.txt&server=/tmp/nvim.sock')]]
+      )
+      eq('/path/to/file.txt', result.file)
+      eq('/tmp/nvim.sock', result.server)
+    end)
+
+    it('parses nvim:// URI with relative path', function()
+      local result =
+        exec_lua([[return vim.uri_parse_nvim('nvim://edit?file=./relative/path.txt&line=10')]])
+      eq('./relative/path.txt', result.file)
+      eq(10, result.line)
+    end)
+
+    it('decodes percent-encoded file paths', function()
+      local result =
+        exec_lua([[return vim.uri_parse_nvim('nvim://edit?file=/path/to/my%20file.txt')]])
+      eq('/path/to/my file.txt', result.file)
+    end)
+
+    it('returns error for non-nvim scheme', function()
+      local err = exec_lua([[
+        local _, e = vim.uri_parse_nvim('http://example.com')
+        return e
+      ]])
+      eq('URI scheme must be "nvim"', err)
+    end)
+
+    it('returns error for missing file parameter', function()
+      local err = exec_lua([[
+        local _, e = vim.uri_parse_nvim('nvim://edit?line=42')
+        return e
+      ]])
+      eq('Missing required "file" parameter', err)
+    end)
+
+    it('returns error for unsupported command', function()
+      local err = exec_lua([[
+        local _, e = vim.uri_parse_nvim('nvim://foo?file=/path/to/file.txt')
+        return e
+      ]])
+      eq(
+        'Unsupported command: foo. Expected one of: drop, edit, open, split, tabedit, tabnew, vsplit',
+        err
+      )
+    end)
+
+    it('resolves open command to default opencmd', function()
+      local result = exec_lua([[return vim.uri_parse_nvim('nvim://open?file=/path/to/file.txt')]])
+      eq('edit', result.cmd)
+      eq('/path/to/file.txt', result.file)
+    end)
+
+    it('resolves open command to custom opencmd', function()
+      local result = exec_lua([[
+        vim.g.uri_opencmd = 'tabedit'
+        local parsed = vim.uri_parse_nvim('nvim://open?file=/path/to/file.txt')
+        vim.g.uri_opencmd = nil  -- reset
+        return parsed
+      ]])
+      eq('tabedit', result.cmd)
+      eq('/path/to/file.txt', result.file)
+    end)
+
+    it('returns error for invalid opencmd value', function()
+      local err = exec_lua([[
+        vim.g.uri_opencmd = 'invalid'
+        local _, e = vim.uri_parse_nvim('nvim://open?file=/path/to/file.txt')
+        vim.g.uri_opencmd = nil  -- reset
+        return e
+      ]])
+      eq('Invalid vim.g.uri_opencmd value: invalid', err)
+    end)
+
+    it('returns error for missing query', function()
+      local err = exec_lua([[
+        local _, e = vim.uri_parse_nvim('nvim://edit')
+        return e
+      ]])
+      eq('Unsupported nvim:// URI format. Expected: nvim://{cmd}?file=...', err)
+    end)
+  end)
 end)
